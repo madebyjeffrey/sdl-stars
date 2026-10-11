@@ -275,10 +275,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
     LShowStartup:
         if (!hwndTitle) {
-            pt.x = GetSystemMetrics(SM_CXSCREEN);
-            pt.y = GetSystemMetrics(SM_CYSCREEN);
-            hwndTitle = CreateWindow(szTitle, "Stars!", WS_POPUP | WS_VISIBLE, 0, 0, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
-            fFreeingTitle = FALSE;
+            ShowTitleScreen();
         }
         ini.fStartupFile = FALSE;
         DestroyCurGame();
@@ -1490,10 +1487,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             ini.iObjSel = 0;
             ini.idPlayer = iplrNone;
             InitializeMenu(NULL);
-            pt.x = GetSystemMetrics(SM_CXSCREEN);
-            pt.y = GetSystemMetrics(SM_CYSCREEN);
-            hwndTitle = CreateWindow(szTitle, "Stars!", WS_POPUP | WS_VISIBLE, 0, 0, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
-            fFreeingTitle = FALSE;
+            ShowTitleScreen();
             ShowWindow(hwndFrame, SW_HIDE);
             break;
         case IDM_GAME_RESEARCH:
@@ -1805,7 +1799,6 @@ LGotFileName:
 }
 
 void BringUpHostDlg() {
-    POINT16 pt;
     FARPROC lpProc;
     int16_t fRet;
     HCURSOR hcurSav;
@@ -1859,10 +1852,7 @@ Top:
     if (ini.fGen) {
         return;
     }
-    pt.x = GetSystemMetrics(SM_CXSCREEN);
-    pt.y = GetSystemMetrics(SM_CYSCREEN);
-    hwndTitle = CreateWindow(szTitle, "Stars!", WS_POPUP | WS_VISIBLE, 0, 0, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
-    fFreeingTitle = FALSE;
+    ShowTitleScreen();
     return;
 }
 
@@ -2787,7 +2777,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 goto LTry16Color;
             SelectPalette(hdc, vhpalSplash, FALSE);
             RealizePalette(hdc);
-            DibBlt(hdc, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), vhdibTitle, 0, 0, 800, 600, 13369376);
+            DibBlt(hdc, 0, 0, rcWnd.right, rcWnd.bottom, vhdibTitle, 0, 0, 800, 600, 13369376);
         } else {
         LTry16Color:
             rc.left = 0;
@@ -2813,6 +2803,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         SetBkMode(hdc, TRANSPARENT);
         SzVersion();
         GetWindowRect(rghwndBtnSplash[0], &rcT);
+        MapWindowPoints(NULL, hwnd, (POINT *)&rcT, 2);
         rcWnd.top = rcT.top - (int16_t)(9 * dyArial8) / 2;
         rcWnd.bottom = (int16_t)(3 * dyArial8) / 2 + rcWnd.top;
         RcCtrTextOut(hdc, &rcWnd, szWork, strlen(szWork));

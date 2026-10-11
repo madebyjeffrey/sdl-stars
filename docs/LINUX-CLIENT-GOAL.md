@@ -1,5 +1,10 @@
 # Linux client completion goal
 
+The intro screen now uses a centered, decorated desktop window instead of
+fullscreen, including return-to-title and failed-load paths. Debug and fatal
+sanitizer startup/race-wizard tests pass on dummy and private X11 displays;
+the native file-workflow tests also pass. The main game layout is unchanged.
+
 Current priority: finish milestones 1 and 2 for the product. The broader goal
 is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.

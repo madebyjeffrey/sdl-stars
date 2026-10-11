@@ -89,8 +89,9 @@ The native `stars-sdl` preview now links the shared client; title-screen paintin
 New Game/wizard cancellation and process cleanup have integration tests.
 The splash image and buttons are painted before the first native show, with
 an integration check at that boundary.
-Screen-sized borderless popups use native fullscreen, with native ownership for
-dialogs above them. The SDL presets now link all 14 game unit-test programs against the client UI.
+The intro now opens as a centered, decorated desktop window with an 800x600
+client area, bounded by the desktop work area. Its startup, failed-load and
+return-to-title paths share the same creation function. The SDL presets now link all 14 game unit-test programs against the client UI.
 The race wizard retains one native window across page transitions. A
 default-width request now selects both frame dimensions, and native SDL menu
 popups retain their owner relationship. `FOpenGame` now accepts Linux paths;

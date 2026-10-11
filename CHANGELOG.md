@@ -8,6 +8,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- The intro screen opens in a centered desktop window with a title bar, close
+  and minimize buttons instead of covering the screen. Returning to the intro
+  uses the same window layout; its artwork and version text use client coordinates.
+
 - Linux SDL open/save calls use the desktop FileChooser portal through libdbus
   by default, preserving Stars filters and filename validation while returning
   native UTF-8 paths. Platform defines select an AppKit panel adapter on macOS;

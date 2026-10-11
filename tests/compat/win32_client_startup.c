@@ -1197,7 +1197,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     if (!lpFrame || !lpTitle || lpFrame == lpTitle || !IsWindowVisible(hwndTitle) ||
         !lpFrame->lpWindow || !lpTitle->lpWindow || lpFrame->id == lpTitle->id ||
         !lpTitle->lpRenderer || !lpTitle->lpCanvas ||
-        !(SDL_GetWindowFlags(lpTitle->lpWindow) & SDL_WINDOW_FULLSCREEN)) goto LDone;
+        (SDL_GetWindowFlags(lpTitle->lpWindow) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) ||
+        (GetWindowLongPtr(hwndTitle, GWL_STYLE) & WS_CAPTION) != WS_CAPTION ||
+        !GetClientRect(hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
+        rcScanner.right > 800 || rcScanner.bottom > 600) goto LDone;
     if (iStage == 1) {
         for (hwndWizard = GetWindow(hwndTitle, GW_HWNDFIRST); hwndWizard; hwndWizard = GetWindow(hwndWizard, GW_HWNDNEXT)) {
             if (hwndWizard->fDialog && hwndWizard->fModal && hwndWizard->hwndOwner == hwndTitle) break;
@@ -1206,9 +1209,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle) ||
-            (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-             SDL_GetWindowParent(hwndWizard->lpWindow) != lpTitle->lpWindow)) goto LDone;
+        if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle)) goto LDone;
         UpdateWindow(hwndWizard);
         for (hwnd = GetWindow(hwndWizard, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) UpdateWindow(hwnd);
         if (!FCompatPresent(hwndWizard) || (pszWizardCapture &&

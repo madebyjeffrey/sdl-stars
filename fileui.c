@@ -39,12 +39,27 @@ void PromptSaveGame() {
 
 // ShowTitleScreen brings back the title screen when FLoadGame fails.
 void ShowTitleScreen() {
-    POINT16 pt;
+    RECT rcWork;
+    RECT rc;
+    DWORD dwStyle;
+    int dx, dy, x, y;
 
     if (!hwndTitle) {
-        pt.x = GetSystemMetrics(SM_CXSCREEN);
-        pt.y = GetSystemMetrics(SM_CYSCREEN);
-        hwndTitle = CreateWindow(szTitle, "Stars!", WS_POPUP | WS_VISIBLE, 0, 0, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
+        dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        if (!SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0)) {
+            SetRect(&rcWork, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+        }
+        SetRect(&rc, 0, 0, 800, 600);
+// SDL window sizes describe the client area; Windows includes the frame.
+#ifndef STARS_UI_SDL
+        AdjustWindowRect(&rc, dwStyle, FALSE);
+#endif
+        dx = min(rc.right - rc.left, rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME));
+        dy = min(rc.bottom - rc.top, rcWork.bottom - rcWork.top -
+                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME));
+        x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
+        y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
+        hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
         fFreeingTitle = FALSE;
         ShowWindow(hwndFrame, SW_HIDE);
     }
