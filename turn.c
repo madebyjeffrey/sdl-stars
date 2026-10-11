@@ -1019,7 +1019,7 @@ void MoveThings(int16_t fPostProd) {
                 fTerra = GetRaceStat(&rgplr[lpth->iplr], rsMajorAdv) == raMassAccel;
                 iWarp2 = iWarp * iWarp;
                 iWarpPacket2 = iWarpPacket * iWarpPacket;
-                if (GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raStargate) {
+                if (lppl->iPlayer != iplrNone && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raStargate) {
                     iWarp2 /= 2;
                 }
                 if (iWarp2 >= iWarpPacket2) {

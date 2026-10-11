@@ -640,7 +640,8 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             fBrowserValid = FALSE;
             hmenu = GetASubMenu(hwndFrame, menuHelp);
             CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, MF_UNCHECKED);
-            EndDialog(hwnd, 1);
+            // The browser is modeless (CreateDialog), so no modal loop owns it.
+            DestroyWindow(hwnd);
             if (gd.fTutorial) {
                 AdvanceTutor();
             }

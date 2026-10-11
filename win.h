@@ -5,6 +5,7 @@
 // the UI's own headers. The game code includes only common.h.
 
 #include <windows.h>
+#include <commctrl.h>
 
 #include <direct.h>
 #include <io.h>
@@ -15,6 +16,7 @@
 #define WM_STARS_STARTUP  0x0464
 #define WM_STARS_HOST     0x0465
 #define WM_STARS_CONTINUE 0x0466
+#define WM_STARS_SCAN_RESIZE (WM_APP + 2)
 
 #include "battleui.h"
 #include "buildui.h"
@@ -34,6 +36,7 @@
 #include "reportui.h"
 #include "researchui.h"
 #include "scan.h"
+#include "scaninspect.h"
 #include "ship2ui.h"
 #include "shipui.h"
 #include "stars.h"

@@ -1691,7 +1691,9 @@ int16_t FOpenGame(HWND hwnd, int16_t fRaceOnly) {
 
     if (ini.fStartupFile) {
         strcpy(szFile, szBase);
-        *strrchr(szBase, 92) = 0;
+        pch = strrchr(szBase, chDirSep);
+        if (pch)
+            *pch = 0;
         pch = strrchr(szFile, 46);
         if (!pch) {
             SetSzWorkFromDt(dtHost, iplrNone);
@@ -1729,7 +1731,7 @@ LGotFileName:
     fRet = FWasRaceFile(&szFile[ofn.nFileOffset], fRaceOnly == 0);
     if (fRaceOnly) {
         if (fRet > 0) {
-            strcpy(szRaceFile, &szFile[ofn.nFileOffset]);
+            SetSzRaceFile(&szFile[ofn.nFileOffset]);
         }
         return fRet;
     }
@@ -1739,6 +1741,7 @@ LGotFileName:
         if (fRet == -1) {
             return -1;
         }
+        SetSzRaceFile(&szFile[ofn.nFileOffset]);
         RaceCreationWizard(hwnd, FALSE, FALSE);
         return 0;
     }
@@ -1755,7 +1758,7 @@ LGotFileName:
     if (ini.fStartupFile) {
         fFileErrSilent = FALSE;
         ini.fStartupFile = FALSE;
-        pch = strrchr(szFile, 92);
+        pch = strrchr(szFile, chDirSep);
         if (pch) {
             i = pch - szFile;
             strncpy(szDirName, szFile, i);
@@ -2677,6 +2680,13 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 SendMessage(rghwndBtnSplash[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             }
             xCur += dx + dxGap;
+        }
+        // Paint while the native window is hidden: startup cleanup can delay
+        // the first queued WM_PAINT after CreateWindow makes it visible.
+        InvalidateRect(hwnd, NULL, TRUE);
+        UpdateWindow(hwnd);
+        for (i = 0; i < 4; i++) {
+            UpdateWindow(rghwndBtnSplash[i]);
         }
         break;
     case WM_QUERYNEWPALETTE:

@@ -1,0 +1,70 @@
+/* SetRect and IntersectRect adapted from Free API include/winuser.h.
+ * Copyright (c) 2026 Robert Vokac. MIT license: ../LICENSE.free-api.
+ * Stars C11 adaptation and remaining rectangle operations, October 10, 2026.
+ */
+#include <windows.h>
+
+BOOL WINAPI SetRect(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom) {
+    if (!lprc)
+        return FALSE;
+    lprc->left = xLeft;
+    lprc->top = yTop;
+    lprc->right = xRight;
+    lprc->bottom = yBottom;
+    return TRUE;
+}
+
+BOOL WINAPI CopyRect(LPRECT lprcDst, const RECT *lprcSrc) {
+    if (!lprcDst || !lprcSrc)
+        return FALSE;
+    *lprcDst = *lprcSrc;
+    return TRUE;
+}
+
+BOOL WINAPI EqualRect(const RECT *lprc1, const RECT *lprc2) {
+    return lprc1 && lprc2 && lprc1->left == lprc2->left && lprc1->top == lprc2->top &&
+           lprc1->right == lprc2->right && lprc1->bottom == lprc2->bottom;
+}
+
+BOOL WINAPI IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprcSrc2) {
+    RECT rc;
+
+    if (!lprcDst || !lprcSrc1 || !lprcSrc2)
+        return FALSE;
+    rc.left = max(lprcSrc1->left, lprcSrc2->left);
+    rc.top = max(lprcSrc1->top, lprcSrc2->top);
+    rc.right = min(lprcSrc1->right, lprcSrc2->right);
+    rc.bottom = min(lprcSrc1->bottom, lprcSrc2->bottom);
+    // Win32 clears empty intersections; upstream leaves inverted coordinates.
+    if (rc.right <= rc.left || rc.bottom <= rc.top) {
+        SetRect(lprcDst, 0, 0, 0, 0);
+        return FALSE;
+    }
+    *lprcDst = rc;
+    return TRUE;
+}
+
+BOOL WINAPI OffsetRect(LPRECT lprc, int dx, int dy) {
+    if (!lprc)
+        return FALSE;
+    lprc->left += dx;
+    lprc->right += dx;
+    lprc->top += dy;
+    lprc->bottom += dy;
+    return TRUE;
+}
+
+BOOL WINAPI InflateRect(LPRECT lprc, int dx, int dy) {
+    if (!lprc)
+        return FALSE;
+    lprc->left -= dx;
+    lprc->right += dx;
+    lprc->top -= dy;
+    lprc->bottom += dy;
+    return TRUE;
+}
+
+BOOL WINAPI PtInRect(const RECT *lprc, POINT pt) {
+    return lprc && pt.x >= lprc->left && pt.x < lprc->right &&
+           pt.y >= lprc->top && pt.y < lprc->bottom;
+}

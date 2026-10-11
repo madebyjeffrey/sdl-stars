@@ -20,7 +20,8 @@ static inline POINT16 PointTo16(POINT pt) {
 
 // GetCursorPos16 stores the cursor position in a Stars point.
 static inline BOOL GetCursorPos16(POINT16 *ppt) {
-    POINT pt;
+    // Callers still use the point when a backend cannot report its position.
+    POINT pt = {0, 0};
     BOOL  ret = GetCursorPos(&pt);
     *ppt = PointTo16(pt);
     return ret;

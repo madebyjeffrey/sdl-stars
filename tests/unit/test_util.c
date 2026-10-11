@@ -125,7 +125,34 @@ static void test_ValidateWaypoints_pursuers_take_heaviest(void) {
                 lpflLight->id);
 }
 
-TEST_LIST = {{"ValidateWaypoints pursuers take the heaviest fleet", test_ValidateWaypoints_pursuers_take_heaviest},
+static void test_PtToScan_negative(void) {
+    int16_t iZoomSav = iScanZoom;
+
+    iScanZoom = zoom38;
+    TEST_CHECK(PtToScan(-341) == -128);
+    iScanZoom = zoom75;
+    TEST_CHECK(PtToScan(-341) == -256);
+    iScanZoom = zoom125;
+    TEST_CHECK(PtToScan(-341) == -427);
+    iScanZoom = zoom150;
+    TEST_CHECK(PtToScan(-341) == -512);
+    iScanZoom = iZoomSav;
+}
+
+static void test_FLookupPart_host(void) {
+    PART part;
+    int16_t idPlayerSav = idPlayer;
+
+    memset(&part, 0, sizeof(part));
+    idPlayer = iplrNone;
+    TEST_CHECK(FLookupPartX(&part, hstEngine, iengineSettlersDelight) == mdPartAvailAvailable);
+    TEST_CHECK(part.pengine == LpengineFromId(iengineSettlersDelight));
+    idPlayer = idPlayerSav;
+}
+
+TEST_LIST = {{"FLookupPart host sentinel", test_FLookupPart_host},
+             {"PtToScan negative coordinates", test_PtToScan_negative},
+             {"ValidateWaypoints pursuers take the heaviest fleet", test_ValidateWaypoints_pursuers_take_heaviest},
              {"UpdateShdefCost armor", test_UpdateShdefCost_armor},
              {"UpdateShdefCost RS armor overflow", test_UpdateShdefCost_rs_armor_overflow},
              {NULL, NULL}};

@@ -49,6 +49,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
     }
+    CloseScannerInspector();
     FreeStuff();
     return (int16_t)msg.wParam;
 }

@@ -1,0 +1,25 @@
+# Host and MinGW builds never load SDL. Native desktop presets opt in.
+option(STARS_SDL_FETCH "Download pinned SDL3 when no installed SDL3 package is found" OFF)
+find_package(SDL3 3.4 CONFIG QUIET)
+if(NOT SDL3_FOUND)
+    if(NOT STARS_SDL_FETCH)
+        message(FATAL_ERROR "SDL3 >= 3.4 is required. Set CMAKE_PREFIX_PATH to its install prefix, or enable STARS_SDL_FETCH (see docs/SDL3-DEVELOPMENT.md).")
+    endif()
+    include(FetchContent)
+    if(POLICY CMP0135)
+        cmake_policy(SET CMP0135 NEW)
+    endif()
+    set(SDL_SHARED ON CACHE BOOL "Build shared SDL3")
+    set(SDL_STATIC OFF CACHE BOOL "Build static SDL3")
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library")
+    set(SDL_TESTS OFF CACHE BOOL "Build SDL test programs")
+    set(SDL_EXAMPLES OFF CACHE BOOL "Build SDL examples")
+    FetchContent_Declare(SDL3
+        URL https://www.libsdl.org/release/SDL3-3.4.18.tar.gz
+        URL_HASH SHA256=9c75cf16330322c217dedd2e0609f1124f1b54b8633e763467b4684d0f4334a3
+    )
+    FetchContent_MakeAvailable(SDL3)
+    message(STATUS "Stars SDL3 dependency: fetched 3.4.18")
+else()
+    message(STATUS "Stars SDL3 dependency: installed ${SDL3_VERSION}")
+endif()

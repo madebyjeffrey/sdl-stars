@@ -747,7 +747,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
 }
 
 void WriteFleet(FLEET *lpfl) {
-    uint16_t *pus;
+    uint8_t  *pus;
     uint8_t   rgb[134];
     uint16_t  us;
     int16_t   i;
@@ -781,10 +781,11 @@ void WriteFleet(FLEET *lpfl) {
             }
         }
     } else {
-        pus = (uint16_t *)pb;
+        pus = pb;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
-                *pus++ = lpfl->rgcsh[i];
+                RawStore16(pus, lpfl->rgcsh[i]);
+                pus += 2;
             }
         }
         pb = (uint8_t *)pus;
@@ -792,7 +793,7 @@ void WriteFleet(FLEET *lpfl) {
     if (lpfl->det >= detMore) {
         fByte = FALSE;
         grMask = 3;
-        pus = (uint16_t *)pb;
+        pus = pb;
         pb += 2;
         us = 0;
         i = 0;
@@ -815,7 +816,7 @@ void WriteFleet(FLEET *lpfl) {
             i++;
             grMask *= 4;
         }
-        *pus = us;
+        RawStore16(pus, us);
     }
     if (lpfl->det < detAll) {
         wt = 0;
@@ -845,10 +846,11 @@ void WriteFleet(FLEET *lpfl) {
         }
         RawStore16(pb, us);
         pb += 2;
-        pus = (uint16_t *)pb;
+        pus = pb;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgdv[i].dp != 0) {
-                *pus++ = lpfl->rgdv[i].dp;
+                RawStore16(pus, lpfl->rgdv[i].dp);
+                pus += 2;
             }
         }
         pb = (uint8_t *)pus;
@@ -1149,7 +1151,8 @@ LBadFile:
 void WriteRt(RecordType rt, int16_t cb, void *rg) {
     HDR hdr;
 
-    memmove(rgbCur, rg, cb);
+    if (cb != 0)
+        memmove(rgbCur, rg, cb);
     if (rt == rtBOF) {
         SetFileXorStream(((RTBOF *)rgbCur)->lidGame, ((RTBOF *)rgbCur)->lSaltTime, ((RTBOF *)rgbCur)->turn, ((RTBOF *)rgbCur)->iPlayer,
                          ((RTBOF *)rgbCur)->fCrippled);
@@ -1207,7 +1210,8 @@ void SetVisPFInit(int16_t iPlr) {
     uint16_t      grbitPlr;
     int16_t       iSteal;
 
-    raMajor = GetRaceStat(&rgplr[iPlr], rsMajorAdv);
+    // Host visibility has no player race; every packet is included below.
+    raMajor = iPlr == iplrNone ? raNone : GetRaceStat(&rgplr[iPlr], rsMajorAdv);
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
     for (i = 0; i < game.cPlayer; i++) {
         rgplr[i].cPlanet = 0;

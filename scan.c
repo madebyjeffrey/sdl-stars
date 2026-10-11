@@ -371,8 +371,12 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         break;
     case WM_SIZE:
         SetScanScrollBars(hwnd);
-        PostMessage(hwndFrame, WM_COMMAND, iScanZoom + 3905, 0);
+        // A queued resize must not replay a zoom that changed before dispatch.
+        PostMessage(hwnd, WM_STARS_SCAN_RESIZE, 0, 0);
         goto Default;
+    case WM_STARS_SCAN_RESIZE:
+        SendMessage(hwndFrame, WM_COMMAND, iScanZoom + 3905, 0);
+        break;
     case WM_HSCROLL:
     case WM_VSCROLL:
         if (LOWORD(wParam) <= SB_THUMBTRACK) {
@@ -2023,6 +2027,7 @@ void SetScanScrollBars(HWND hwnd) {
     int16_t yMax;
     int16_t dx;
     RECT    rc;
+    SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 1000, 0, 0, 0, 0};
 
     fInScrollSet = TRUE;
     GetClientRect(hwnd, &rc);
@@ -2030,9 +2035,17 @@ void SetScanScrollBars(HWND hwnd) {
     dy = ScanToPt(rc.bottom - dySBar);
     xMax = ((1000 <= dGalInv - 1000 - dx ? dGalInv - 0x3e8 - dx : 0x3e8) + 3) & 0xfffc;
     yMax = ((1000 <= dGalInv - 1000 - dy ? dGalInv - 0x3e8 - dy : 0x3e8) + 3) & 0xfffc;
-    SetScrollRange(hwnd, SB_HORZ, 1000, xMax, TRUE);
+    /* The old maxima are the last scroll positions, not content extents.
+       Include the visible span while retaining those exact pan limits. */
+    si.nPage = (UINT)max(1, dx);
+    si.nMax = xMax + (int)si.nPage - 1;
+    si.nPos = xScanTop;
+    SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
     if (fInScrollSet) {
-        SetScrollRange(hwnd, SB_VERT, 1000, yMax, TRUE);
+        si.nPage = (UINT)max(1, dy);
+        si.nMax = yMax + (int)si.nPage - 1;
+        si.nPos = yScanTop;
+        SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
         if (fInScrollSet) {
             dScanPage = (int16_t)(dx >= dy ? dy : dx) / 3 & 0xfffc;
             dScanInc = (dScanPage / 8 + 2) & 0xfffc;

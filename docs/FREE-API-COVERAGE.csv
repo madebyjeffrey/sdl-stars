@@ -1,0 +1,190 @@
+category,source_symbol,calls,upstream_symbol,upstream_definition,upstream_declared_status,decision,local_definition
+Menus and accelerators,AppendMenu,23,,,,implemented as local C11 extension,compat/win32/src/menu.c:110
+Painting and device contexts,BeginPaint,37,,,,implemented as local C11 extension,compat/win32/src/paint.c:667
+GDI drawing text and state,BitBlt,52,,,,implemented as local C11 extension,compat/win32/src/paint.c:1072
+Windows and message dispatch,CallWindowProc,6,,,,implemented as local C11 extension,compat/win32/src/message.c:171
+Dialogs and controls,CheckDlgButton,1,,,,implemented as local C11 extension,compat/win32/src/control.c:35
+Menus and accelerators,CheckMenuItem,18,,,,implemented as local C11 extension,compat/win32/src/menu.c:144
+Dialogs and controls,CheckRadioButton,16,,,,implemented as local C11 extension,compat/win32/src/control.c:45
+Input coordinates and scrolling,ClientToScreen,3,ClientToScreen,src/winuser_cursor.cpp:90,PARTIAL,implemented as local C11 extension,compat/win32/src/window.c:989
+Rectangle operations,CopyRect,1,,,,implemented as local C11 extension,compat/win32/src/rect.c:17
+GDI objects and palettes,CreateCompatibleBitmap,4,,,,implemented as local C11 extension,compat/win32/src/paint.c:443
+Painting and device contexts,CreateCompatibleDC,11,CreateCompatibleDC,src/wingdi_dc.cpp:85,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:453
+Dialogs and controls,CreateDialog,3,,,,implemented as local C11 extension,compat/win32/src/dialog.c:179
+GDI objects and palettes,CreateFontIndirect,10,,,,implemented as local C11 extension,compat/win32/src/paint.c:222
+GDI objects and palettes,CreatePalette,2,,,,implemented as local C11 extension,compat/win32/src/paint.c:176
+GDI objects and palettes,CreatePatternBrush,4,,,,implemented as local C11 extension,compat/win32/src/paint.c:960
+GDI objects and palettes,CreatePen,12,,,,implemented as local C11 extension,compat/win32/src/paint.c:161
+Menus and accelerators,CreatePopupMenu,8,,,,implemented as local C11 extension,compat/win32/src/menu.c:57
+GDI objects and palettes,CreateRectRgn,2,,,,implemented as local C11 extension,compat/win32/src/paint.c:796
+GDI objects and palettes,CreateSolidBrush,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:172
+Windows and message dispatch,CreateWindow,32,CreateWindowA,src/winuser_window.cpp:156,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:255
+Windows and message dispatch,DefWindowProc,12,DefWindowProcA,src/winuser_message.cpp:221,PARTIAL,adapted in local C11 runtime,compat/win32/src/message.c:214
+Painting and device contexts,DeleteDC,14,DeleteDC,src/wingdi_dc.cpp:117,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:530
+Menus and accelerators,DeleteMenu,1,,,,implemented as local C11 extension,compat/win32/src/menu.c:142
+GDI objects and palettes,DeleteObject,48,DeleteObject,src/wingdi_bitmap.cpp:88,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:234
+Resources and movable memory,DestroyCursor,11,,,,implemented as local C11 extension,compat/win32/src/image.c:150
+Resources and movable memory,DestroyIcon,4,,,,implemented as local C11 extension,compat/win32/src/image.c:149
+Menus and accelerators,DestroyMenu,5,,,,implemented as local C11 extension,compat/win32/src/menu.c:113
+Windows and message dispatch,DestroyWindow,22,DestroyWindow,src/winuser_window.cpp:182,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:465
+Dialogs and controls,DialogBox,36,,,,implemented as local C11 extension,compat/win32/src/dialog.c:215
+Windows and message dispatch,DispatchMessage,2,DispatchMessageA,src/winuser_message.cpp:180,PARTIAL,adapted in local C11 runtime,compat/win32/src/message.c:190
+GDI drawing text and state,DrawIcon,6,,,,implemented as local C11 extension,compat/win32/src/paint.c:1903
+Menus and accelerators,DrawMenuBar,2,,,,implemented as local C11 extension,compat/win32/src/menu.c:280
+GDI drawing text and state,DrawText,26,,,,implemented as local C11 extension,compat/win32/src/paint.c:1583
+GDI drawing text and state,Ellipse,7,,,,implemented as local C11 extension,compat/win32/src/paint.c:1382
+Menus and accelerators,EnableMenuItem,8,,,,implemented as local C11 extension,compat/win32/src/menu.c:155
+Windows and message dispatch,EnableWindow,80,,,,implemented as local C11 extension,compat/win32/src/window.c:1075
+Dialogs and controls,EndDialog,39,,,,implemented as local C11 extension,compat/win32/src/dialog.c:182
+Painting and device contexts,EndPaint,37,,,,implemented as local C11 extension,compat/win32/src/paint.c:692
+Rectangle operations,EqualRect,1,,,,implemented as local C11 extension,compat/win32/src/rect.c:24
+GDI drawing text and state,Escape,3,,,,implemented as local C11 extension,compat/win32/src/print.c:260
+GDI drawing text and state,ExcludeClipRect,14,,,,implemented as local C11 extension,compat/win32/src/paint.c:883
+Legacy compatibility macros,ExitWindows,4,,,,platform difference; rejects desktop logoff and exits Stars only,
+GDI drawing text and state,ExtTextOut,23,,,,implemented as local C11 extension,compat/win32/src/paint.c:1574
+GDI drawing text and state,FillRect,84,,,,implemented as local C11 extension,compat/win32/src/paint.c:974
+Resources and movable memory,FindResource,4,FindResourceA,src/winbase_file.cpp:179,STUB,implemented as local C11 extension,compat/win32/src/resource.c:37
+Windows and message dispatch,FlashWindow,2,,,,implemented as local C11 extension,compat/win32/src/window.c:1039
+GDI drawing text and state,FrameRect,6,,,,implemented as local C11 extension,compat/win32/src/paint.c:981
+Legacy compatibility macros,FreeProcInstance,44,,,,local header macro; no separate implementation,
+Resources and movable memory,FreeResource,14,FreeResource,src/winbase_file.cpp:212,STUB,implemented as local C11 extension,compat/win32/src/resource.c:75
+Windows and message dispatch,GetActiveWindow,1,,,,implemented as local C11 extension,compat/win32/src/window.c:1134
+Input coordinates and scrolling,GetAsyncKeyState,24,,,,implemented as local C11 extension,compat/win32/src/input.c:235
+GDI drawing text and state,GetBkColor,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:1474
+Windows and message dispatch,GetClassNameA,1,,,,implemented as local C11 extension,compat/win32/src/window.c:904
+Windows and message dispatch,GetClientRect,143,GetClientRect,src/winuser_window.cpp:343,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:705
+Files configuration and time,GetCurrentThreadId,1,,,,implemented as local C11 extension,compat/win32/src/services.c:34
+Legacy compatibility macros,GetCurrentTime,2,,,,local header macro; no separate implementation,
+Input coordinates and scrolling,GetCursorPos,1,GetCursorPos,src/winuser_cursor.cpp:11,PARTIAL,implemented as local C11 extension,compat/win32/src/input.c:78
+Painting and device contexts,GetDC,52,,,,implemented as local C11 extension,compat/win32/src/paint.c:563
+GDI drawing text and state,GetDIBits,2,,,,implemented as local C11 extension,compat/win32/src/paint.c:1716
+Painting and device contexts,GetDeviceCaps,11,GetDeviceCaps,src/wingdi_misc.cpp:5,IMPLEMENTED,implemented as local C11 extension,compat/win32/src/paint.c:1479
+Dialogs and controls,GetDlgItem,323,,,,implemented as local C11 extension,compat/win32/src/window.c:952
+Dialogs and controls,GetDlgItemText,14,,,,implemented as local C11 extension,compat/win32/src/control.c:29
+Files configuration and time,GetFileSize,1,,,,implemented as local C11 extension,compat/win32/src/file.c:198
+Windows and message dispatch,GetFocus,8,,,,implemented as local C11 extension,compat/win32/src/window.c:1132
+Input coordinates and scrolling,GetKeyState,5,,,,implemented as local C11 extension,compat/win32/src/input.c:32
+Menus and accelerators,GetMenu,4,,,,implemented as local C11 extension,compat/win32/src/menu.c:194
+Menus and accelerators,GetMenuItemCount,1,,,,implemented as local C11 extension,compat/win32/src/menu.c:65
+Windows and message dispatch,GetMessage,1,GetMessageA,src/winuser_message.cpp:126,PARTIAL,adapted in local C11 runtime,compat/win32/src/message.c:135
+GDI objects and palettes,GetObject,1,GetObjectA,src/wingdi_bitmap.cpp:59,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:476
+File dialogs and printing,GetOpenFileName,1,,,,implemented as local C11 extension,compat/win32/src/filedialog.c:315
+Windows and message dispatch,GetParent,6,,,,implemented as local C11 extension,compat/win32/src/window.c:931
+Files configuration and time,GetPrivateProfileInt,35,,,,implemented as local C11 extension,compat/win32/src/profile.c:216
+Files configuration and time,GetPrivateProfileString,11,,,,implemented as local C11 extension,compat/win32/src/profile.c:164
+GDI drawing text and state,GetROP2,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:776
+File dialogs and printing,GetSaveFileName,2,,,,implemented as local C11 extension,compat/win32/src/filedialog.c:316
+Input coordinates and scrolling,GetScrollPos,7,,,,implemented as local C11 extension,compat/win32/src/scroll.c:30
+GDI objects and palettes,GetStockObject,21,,,,implemented as local C11 extension,compat/win32/src/paint.c:100
+Menus and accelerators,GetSubMenu,5,,,,implemented as local C11 extension,compat/win32/src/menu.c:69
+System settings help and sound,GetSysColor,8,,,,implemented as local C11 extension,compat/win32/src/control.c:5
+System settings help and sound,GetSystemMetrics,33,GetSystemMetrics,src/winuser_misc.cpp:57,PARTIAL,implemented as local C11 extension,compat/win32/src/system.c:37
+GDI drawing text and state,GetTextExtentPoint32A,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:1464
+GDI drawing text and state,GetTextMetrics,8,,,,implemented as local C11 extension,compat/win32/src/paint.c:1469
+Files configuration and time,GetTickCount,16,GetTickCount,src/winbase.cpp:79,IMPLEMENTED,adapted in local C11 runtime,compat/win32/src/time.c:8
+Windows and message dispatch,GetUpdateRect,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:646
+Windows and message dispatch,GetWindow,3,,,,implemented as local C11 extension,compat/win32/src/window.c:936
+Windows and message dispatch,GetWindowLongPtr,4,,,,implemented as local C11 extension,compat/win32/src/window.c:474
+Windows and message dispatch,GetWindowPlacement,1,,,,implemented as local C11 extension,compat/win32/src/window.c:581
+Windows and message dispatch,GetWindowRect,58,,,,implemented as local C11 extension,compat/win32/src/window.c:1014
+Windows and message dispatch,GetWindowText,11,,,,implemented as local C11 extension,compat/win32/src/window.c:898
+Windows and message dispatch,GetWindowThreadProcessId,1,,,,implemented as local C11 extension,compat/win32/src/system.c:78
+Resources and movable memory,GlobalAlloc,2,,,,implemented as local C11 extension,compat/win32/src/memory.c:41
+Resources and movable memory,GlobalFree,3,,,,implemented as local C11 extension,compat/win32/src/memory.c:71
+Resources and movable memory,GlobalLock,5,,,,implemented as local C11 extension,compat/win32/src/memory.c:90
+Resources and movable memory,GlobalReAlloc,1,,,,implemented as local C11 extension,compat/win32/src/memory.c:161
+Resources and movable memory,GlobalUnlock,21,,,,implemented as local C11 extension,compat/win32/src/memory.c:107
+Rectangle operations,InflateRect,10,,,,implemented as local C11 extension,compat/win32/src/rect.c:57
+Menus and accelerators,InsertMenu,1,,,,implemented as local C11 extension,compat/win32/src/menu.c:77
+GDI drawing text and state,IntersectClipRect,5,,,,implemented as local C11 extension,compat/win32/src/paint.c:879
+Rectangle operations,IntersectRect,2,IntersectRect,include/winuser.h:538,,adapted in local C11 runtime,compat/win32/src/rect.c:29
+Windows and message dispatch,InvalidateRect,89,InvalidateRect,src/winuser_window.cpp:304,STUB,implemented as local C11 extension,compat/win32/src/paint.c:619
+Dialogs and controls,IsDlgButtonChecked,17,,,,implemented as local C11 extension,compat/win32/src/control.c:41
+Windows and message dispatch,IsIconic,8,,,,implemented as local C11 extension,compat/win32/src/window.c:571
+Windows and message dispatch,IsWindowVisible,7,,,,implemented as local C11 extension,compat/win32/src/window.c:697
+Windows and message dispatch,IsZoomed,2,,,,implemented as local C11 extension,compat/win32/src/window.c:576
+Input coordinates and scrolling,KillTimer,11,KillTimer,src/winuser_timer.cpp:42,PARTIAL,implemented as local C11 extension,compat/win32/src/timer.c:54
+GDI drawing text and state,LineTo,35,,,,implemented as local C11 extension,compat/win32/src/paint.c:1295
+Menus and accelerators,LoadAccelerators,2,,,,implemented as local C11 extension,compat/win32/src/accelerator.c:50
+Resources and movable memory,LoadBitmap,11,,,,implemented as local C11 extension,compat/win32/src/resource.c:80
+Resources and movable memory,LoadCursor,22,LoadCursorA,src/winuser_cursor.cpp:138,STUB,implemented as local C11 extension,compat/win32/src/image.c:112
+Resources and movable memory,LoadIcon,11,LoadIconA,src/winuser_cursor.cpp:145,STUB,implemented as local C11 extension,compat/win32/src/image.c:94
+Resources and movable memory,LoadResource,3,LoadResource,src/winbase_file.cpp:187,STUB,implemented as local C11 extension,compat/win32/src/resource.c:59
+Resources and movable memory,LocalAlloc,8,,,,implemented as local C11 extension,compat/win32/src/memory.c:201
+Resources and movable memory,LocalFree,8,,,,implemented as local C11 extension,compat/win32/src/memory.c:202
+Resources and movable memory,LockResource,4,LockResource,src/winbase_file.cpp:201,STUB,implemented as local C11 extension,compat/win32/src/resource.c:64
+Legacy compatibility macros,MakeProcInstance,45,,,,local header macro; no separate implementation,
+Input coordinates and scrolling,MapWindowPoints,10,,,,implemented as local C11 extension,compat/win32/src/window.c:992
+System settings help and sound,MessageBeep,11,,,,implemented as local C11 extension,compat/win32/src/audio.c:13
+Dialogs and controls,MessageBox,4,MessageBoxA,src/winuser_misc.cpp:9,STUB,implemented as local C11 extension,compat/win32/src/messagebox.c:163
+GDI drawing text and state,MoveToEx,27,,,,implemented as local C11 extension,compat/win32/src/paint.c:1214
+Windows and message dispatch,MoveWindow,12,MoveWindow,src/winuser_window.cpp:291,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:888
+Files configuration and time,MulDiv,34,,,,implemented as local C11 extension,compat/win32/src/services.c:18
+Rectangle operations,OffsetRect,17,,,,implemented as local C11 extension,compat/win32/src/rect.c:47
+Files configuration and time,OpenFile,1,,,,implemented as local C11 extension,compat/win32/src/file.c:49
+GDI drawing text and state,PatBlt,289,,,,implemented as local C11 extension,compat/win32/src/paint.c:1208
+Windows and message dispatch,PeekMessage,5,PeekMessageA,src/winuser_message.cpp:30,IMPLEMENTED,adapted in local C11 runtime,compat/win32/src/message.c:123
+Windows and message dispatch,PostMessage,25,PostMessageA,src/winuser_message.cpp:24,IMPLEMENTED,adapted in local C11 runtime,compat/win32/src/message.c:20
+Windows and message dispatch,PostQuitMessage,6,PostQuitMessage,src/winuser_message.cpp:251,IMPLEMENTED,adapted in local C11 runtime,compat/win32/src/message.c:167
+File dialogs and printing,PrintDlg,1,,,,implemented as local C11 extension,compat/win32/src/print.c:59
+Rectangle operations,PtInRect,51,,,,implemented as local C11 extension,compat/win32/src/rect.c:67
+GDI objects and palettes,RealizePalette,17,,,,implemented as local C11 extension,compat/win32/src/paint.c:201
+GDI drawing text and state,Rectangle,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:1310
+Windows and message dispatch,RegisterClass,11,RegisterClassA,src/winuser_window.cpp:13,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:132
+Input coordinates and scrolling,ReleaseCapture,13,,,,implemented as local C11 extension,compat/win32/src/input.c:115
+Painting and device contexts,ReleaseDC,55,,,,implemented as local C11 extension,compat/win32/src/paint.c:569
+Input coordinates and scrolling,ScreenToClient,41,ScreenToClient,src/winuser_cursor.cpp:26,PARTIAL,implemented as local C11 extension,compat/win32/src/window.c:990
+Input coordinates and scrolling,ScrollWindow,2,,,,implemented as local C11 extension,compat/win32/src/paint.c:1142
+GDI drawing text and state,SelectClipRgn,5,,,,implemented as local C11 extension,compat/win32/src/paint.c:808
+GDI objects and palettes,SelectObject,591,SelectObject,src/wingdi_dc.cpp:101,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:248
+GDI objects and palettes,SelectPalette,23,,,,implemented as local C11 extension,compat/win32/src/paint.c:190
+Dialogs and controls,SendDlgItemMessage,16,,,,implemented as local C11 extension,compat/win32/src/control.c:19
+Windows and message dispatch,SendMessage,266,,,,implemented as local C11 extension,compat/win32/src/message.c:182
+GDI drawing text and state,SetBkColor,126,,,,implemented as local C11 extension,compat/win32/src/paint.c:1437
+GDI drawing text and state,SetBkMode,62,,,,implemented as local C11 extension,compat/win32/src/paint.c:1447
+GDI drawing text and state,SetBrushOrgEx,3,,,,implemented as local C11 extension,compat/win32/src/paint.c:768
+Input coordinates and scrolling,SetCapture,12,,,,implemented as local C11 extension,compat/win32/src/input.c:102
+Input coordinates and scrolling,SetCursor,40,SetCursor,src/winuser_cursor.cpp:65,PARTIAL,implemented as local C11 extension,compat/win32/src/image.c:211
+Dialogs and controls,SetDlgItemText,9,,,,implemented as local C11 extension,compat/win32/src/control.c:24
+Windows and message dispatch,SetFocus,23,SetFocus,src/winuser_window.cpp:379,PARTIAL,implemented as local C11 extension,compat/win32/src/window.c:1059
+GDI drawing text and state,SetPixel,1,SetPixel,src/wingdi_blit.cpp:181,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:931
+GDI drawing text and state,SetROP2,17,,,,implemented as local C11 extension,compat/win32/src/paint.c:781
+Rectangle operations,SetRect,82,SetRect,include/winuser.h:525,,adapted in local C11 runtime,compat/win32/src/rect.c:7
+Input coordinates and scrolling,SetScrollPos,10,,,,implemented as local C11 extension,compat/win32/src/scroll.c:50
+Input coordinates and scrolling,SetScrollRange,5,,,,implemented as local C11 extension,compat/win32/src/scroll.c:57
+GDI drawing text and state,SetTextColor,193,,,,implemented as local C11 extension,compat/win32/src/paint.c:1427
+Input coordinates and scrolling,SetTimer,9,SetTimer,src/winuser_timer.cpp:11,PARTIAL,implemented as local C11 extension,compat/win32/src/timer.c:27
+Windows and message dispatch,SetWindowLongPtr,4,,,,implemented as local C11 extension,compat/win32/src/window.c:505
+GDI drawing text and state,SetWindowOrgEx,2,,,,implemented as local C11 extension,compat/win32/src/paint.c:760
+Windows and message dispatch,SetWindowPos,82,,,,implemented as local C11 extension,compat/win32/src/window.c:814
+Windows and message dispatch,SetWindowText,52,SetWindowTextA,src/winuser_window.cpp:332,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:894
+Windows and message dispatch,ShowWindow,104,ShowWindow,src/winuser_window.cpp:230,PARTIAL,adapted in local C11 runtime,compat/win32/src/window.c:695
+Resources and movable memory,SizeofResource,1,SizeofResource,src/winbase_file.cpp:194,STUB,implemented as local C11 extension,compat/win32/src/resource.c:54
+GDI drawing text and state,StretchDIBits,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:1804
+System settings help and sound,SystemParametersInfo,1,,,,implemented as local C11 extension,compat/win32/src/system.c:63
+GDI drawing text and state,TextOut,212,,,,implemented as local C11 extension,compat/win32/src/paint.c:1569
+Menus and accelerators,TrackPopupMenu,3,,,,implemented as local C11 extension,compat/win32/src/menu.c:707
+Menus and accelerators,TranslateAccelerator,2,,,,implemented as local C11 extension,compat/win32/src/accelerator.c:75
+Windows and message dispatch,TranslateMessage,2,TranslateMessage,src/winuser_message.cpp:175,PARTIAL,adapted in local C11 runtime,compat/win32/src/message.c:203
+GDI objects and palettes,UnrealizeObject,1,,,,implemented as local C11 extension,compat/win32/src/paint.c:206
+Windows and message dispatch,UpdateWindow,12,UpdateWindow,src/winuser_window.cpp:318,PARTIAL,implemented as local C11 extension,compat/win32/src/paint.c:705
+Windows and message dispatch,ValidateRect,3,,,,implemented as local C11 extension,compat/win32/src/paint.c:715
+System settings help and sound,WinHelp,35,,,,implemented as local C11 extension,compat/win32/src/help.c:98
+Windows and message dispatch,WindowFromPoint,2,,,,implemented as local C11 extension,compat/win32/src/window.c:1114
+Files configuration and time,WritePrivateProfileString,42,,,,implemented as local C11 extension,compat/win32/src/profile.c:270
+Legacy compatibility macros,Yield,1,,,,local header macro; no separate implementation,
+Microsoft CRT dependencies,_access,2,,,,implemented as local C11 extension,compat/win32/src/services.c:94
+Files configuration and time,_lclose,1,_lclose,src/winbase_file.cpp:86,PARTIAL,implemented as local C11 extension,compat/win32/src/file.c:123
+Files configuration and time,_llseek,1,,,,implemented as local C11 extension,compat/win32/src/file.c:143
+Files configuration and time,_lread,1,_lread,src/winbase_file.cpp:71,PARTIAL,implemented as local C11 extension,compat/win32/src/file.c:159
+Files configuration and time,_lwrite,1,,,,implemented as local C11 extension,compat/win32/src/file.c:176
+Microsoft CRT dependencies,_mkdir,1,_mkdir,src/crt_direct.cpp:28,,implemented as local C11 extension,compat/win32/src/services.c:95
+Microsoft CRT dependencies,_strdate,2,,,,implemented as local C11 extension,compat/win32/src/services.c:123
+Microsoft CRT dependencies,_stricmp,5,,,,implemented as local C11 extension,compat/win32/src/services.c:100
+Microsoft CRT dependencies,_strnicmp,1,,,,implemented as local C11 extension,compat/win32/src/services.c:101
+Microsoft CRT dependencies,_strtime,1,,,,implemented as local C11 extension,compat/win32/src/services.c:124
+Windows string functions,lstrcat,1,,,,implemented as local C11 extension,compat/win32/src/services.c:38
+Windows string functions,lstrcmpiA,1,,,,implemented as local C11 extension,compat/win32/src/services.c:44
+Windows string functions,lstrcpy,1,,,,implemented as local C11 extension,compat/win32/src/services.c:39
+Windows string functions,lstrlen,12,,,,implemented as local C11 extension,compat/win32/src/services.c:43
+Windows string functions,wsprintf,339,wsprintfA,src/winuser_message.cpp:294,PARTIAL,implemented as local C11 extension,compat/win32/src/services.c:46

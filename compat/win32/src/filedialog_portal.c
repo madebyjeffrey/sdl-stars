@@ -1,0 +1,306 @@
+/* Native Linux chooser: libdbus wire protocol, without a GTK/Qt dependency. */
+#include "filedialog_backend.h"
+#include <dbus/dbus.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define PORTAL_SERVICE "org.freedesktop.portal.Desktop"
+#define PORTAL_PATH "/org/freedesktop/portal/desktop"
+#define PORTAL_CHOOSER "org.freedesktop.portal.FileChooser"
+#define PORTAL_REQUEST "org.freedesktop.portal.Request"
+
+typedef struct PORTALRESPONSES {
+    DBusMessage *rgMessage[16];
+    int cMessage;
+    BOOL fOverflow;
+} PORTALRESPONSES;
+static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *lpMessage, void *lpv) {
+    PORTALRESPONSES *lp = lpv;
+    (void)lpBus;
+    if (!dbus_message_is_signal(lpMessage, PORTAL_REQUEST, "Response")) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    if (lp->cMessage < 16) lp->rgMessage[lp->cMessage++] = dbus_message_ref(lpMessage);
+    else lp->fOverflow = TRUE;
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
+                    int type, const void *lpValue) {
+    DBusMessageIter entry, value;
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+           dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
+           dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, pszType, &value) &&
+           dbus_message_iter_append_basic(&value, type, lpValue) &&
+           dbus_message_iter_close_container(&entry, &value) &&
+           dbus_message_iter_close_container(lpOptions, &entry);
+}
+static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
+    DBusMessageIter entry, value, bytes;
+    const char *pszKey = "current_folder";
+    int cb = (int)strlen(pszFolder) + 1;
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+           dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
+           dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &value) &&
+           dbus_message_iter_open_container(&value, DBUS_TYPE_ARRAY, "y", &bytes) &&
+           dbus_message_iter_append_fixed_array(&bytes, DBUS_TYPE_BYTE, &pszFolder, cb) &&
+           dbus_message_iter_close_container(&value, &bytes) &&
+           dbus_message_iter_close_container(&entry, &value) &&
+           dbus_message_iter_close_container(lpOptions, &entry);
+}
+static char *PszPortalLabel(LPCSTR psz) {
+    return SDL_iconv_string("UTF-8", "WINDOWS-1252", psz, strlen(psz) + 1);
+}
+static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
+    DBusMessageIter filter, patterns, item;
+    const char *psz, *pszEnd;
+    char *pszLabel, *pszPatternUtf, szPattern[16385];
+    size_t i, c;
+    dbus_uint32_t kind = 0;
+    BOOL fOk = FALSE;
+    pszLabel = PszPortalLabel(lpFilter->pszName);
+    pszPatternUtf = PszPortalLabel(lpFilter->pszPattern);
+    if (!pszLabel || !pszPatternUtf) { SDL_free(pszLabel); SDL_free(pszPatternUtf); return FALSE; }
+    if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, NULL, &filter) ||
+        !dbus_message_iter_append_basic(&filter, DBUS_TYPE_STRING, &pszLabel) ||
+        !dbus_message_iter_open_container(&filter, DBUS_TYPE_ARRAY, "(us)", &patterns)) goto done;
+    for (psz = pszPatternUtf; *psz; psz = *pszEnd ? pszEnd + 1 : pszEnd) {
+        pszEnd = strchr(psz, ';'); if (!pszEnd) pszEnd = psz + strlen(psz);
+        c = 0;
+        if (pszEnd - psz == 3 && memcmp(psz, "*.*", 3) == 0) szPattern[c++] = '*';
+        else for (i = 0; i < (size_t)(pszEnd - psz); i++) {
+            if ((psz[i] >= 'a' && psz[i] <= 'z') || (psz[i] >= 'A' && psz[i] <= 'Z')) {
+                szPattern[c++] = '['; szPattern[c++] = (char)SDL_tolower((unsigned char)psz[i]);
+                szPattern[c++] = (char)SDL_toupper((unsigned char)psz[i]); szPattern[c++] = ']';
+            } else szPattern[c++] = psz[i];
+        }
+        szPattern[c] = 0;
+        {
+            const char *pszPattern = szPattern;
+            if (!dbus_message_iter_open_container(&patterns, DBUS_TYPE_STRUCT, NULL, &item) ||
+                !dbus_message_iter_append_basic(&item, DBUS_TYPE_UINT32, &kind) ||
+                !dbus_message_iter_append_basic(&item, DBUS_TYPE_STRING, &pszPattern) ||
+                !dbus_message_iter_close_container(&patterns, &item)) goto done;
+        }
+    }
+    fOk = dbus_message_iter_close_container(&filter, &patterns) && dbus_message_iter_close_container(lpIter, &filter);
+done:
+    SDL_free(pszLabel); SDL_free(pszPatternUtf); return fOk;
+}
+static BOOL FFilterOptions(DBusMessageIter *lpOptions, const COMPATFILEFILTER *rgfilter, int cFilter, int iFilter) {
+    DBusMessageIter entry, value, filters;
+    const char *pszKey = "filters";
+    int i;
+    if (cFilter == 0) return TRUE;
+    if (!dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) ||
+        !dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) ||
+        !dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "a(sa(us))", &value) ||
+        !dbus_message_iter_open_container(&value, DBUS_TYPE_ARRAY, "(sa(us))", &filters)) return FALSE;
+    for (i = 0; i < cFilter; i++) if (!FFilter(&filters, &rgfilter[i])) return FALSE;
+    if (!dbus_message_iter_close_container(&value, &filters) ||
+        !dbus_message_iter_close_container(&entry, &value) ||
+        !dbus_message_iter_close_container(lpOptions, &entry)) return FALSE;
+    pszKey = "current_filter";
+    return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, NULL, &entry) &&
+           dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
+           dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "(sa(us))", &value) &&
+           FFilter(&value, &rgfilter[iFilter]) && dbus_message_iter_close_container(&entry, &value) &&
+           dbus_message_iter_close_container(lpOptions, &entry);
+}
+static int IHex(char ch) {
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    return -1;
+}
+static BOOL FUriPath(LPCSTR pszUri, char *pszPath, size_t cbPath) {
+    size_t c = 0;
+    int hi, lo;
+    unsigned char ch;
+    if (strncmp(pszUri, "file://", 7) != 0) return FALSE;
+    pszUri += 7;
+    if (strncmp(pszUri, "localhost/", 10) == 0) pszUri += 9;
+    if (*pszUri != '/') return FALSE;
+    while (*pszUri) {
+        if (*pszUri == '?' || *pszUri == '#') return FALSE;
+        ch = (unsigned char)*pszUri++;
+        if (ch == '%') {
+            if (!pszUri[0] || !pszUri[1] || (hi = IHex(pszUri[0])) < 0 || (lo = IHex(pszUri[1])) < 0) return FALSE;
+            ch = (unsigned char)((hi << 4) | lo); pszUri += 2;
+            if (ch == 0) return FALSE;
+        }
+        if (c + 1 >= cbPath) return FALSE;
+        pszPath[c++] = (char)ch;
+    }
+    pszPath[c] = 0; return TRUE;
+}
+static int IResponse(DBusMessage *lpMessage, const COMPATFILEFILTER *rgfilter, int cFilter,
+                     int *lpiFilter, char *pszPath, size_t cbPath) {
+    DBusMessageIter args, results, entry, value, uris, filter;
+    dbus_uint32_t response;
+    const char *pszKey, *pszUri, *pszName;
+    char *pszLabel;
+    int i;
+    BOOL fUri = FALSE;
+    if (!dbus_message_has_signature(lpMessage, "ua{sv}")) return -1;
+    dbus_message_iter_init(lpMessage, &args); dbus_message_iter_get_basic(&args, &response);
+    if (response == 1) return 0;
+    if (response != 0) return -1;
+    dbus_message_iter_next(&args); dbus_message_iter_recurse(&args, &results);
+    while (dbus_message_iter_get_arg_type(&results) == DBUS_TYPE_DICT_ENTRY) {
+        dbus_message_iter_recurse(&results, &entry); dbus_message_iter_get_basic(&entry, &pszKey);
+        dbus_message_iter_next(&entry); dbus_message_iter_recurse(&entry, &value);
+        if (strcmp(pszKey, "uris") == 0) {
+            if (fUri || dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_ARRAY ||
+                dbus_message_iter_get_element_type(&value) != DBUS_TYPE_STRING) return -1;
+            dbus_message_iter_recurse(&value, &uris);
+            if (dbus_message_iter_get_arg_type(&uris) != DBUS_TYPE_STRING) return -1;
+            dbus_message_iter_get_basic(&uris, &pszUri);
+            if (!FUriPath(pszUri, pszPath, cbPath) || dbus_message_iter_next(&uris)) return -1;
+            fUri = TRUE;
+        } else if (strcmp(pszKey, "current_filter") == 0) {
+            if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT) return -1;
+            dbus_message_iter_recurse(&value, &filter);
+            if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return -1;
+            dbus_message_iter_get_basic(&filter, &pszName);
+            for (i = 0; i < cFilter; i++) {
+                pszLabel = PszPortalLabel(rgfilter[i].pszName); if (!pszLabel) return -1;
+                if (strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; SDL_free(pszLabel); break; }
+                SDL_free(pszLabel);
+            }
+        }
+        dbus_message_iter_next(&results);
+    }
+    return fUri ? 1 : -1;
+}
+static BOOL FPumpChooser(HWND hwndOwner) {
+    MSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return FALSE; }
+        TranslateMessage(&msg); DispatchMessageA(&msg);
+        if (hwndOwner && !IsWindow(hwndOwner)) return FALSE;
+    }
+    return !hwndOwner || IsWindow(hwndOwner);
+}
+int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+                     LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
+                     int *lpiFilter, char *pszPath, size_t cbPath) {
+    DBusConnection *lpBus = NULL;
+    DBusMessage *lpCall = NULL, *lpReply = NULL, *lpMessage, *lpClose;
+    DBusPendingCall *lpPending = NULL;
+    DBusMessageIter args, options;
+    DBusError error;
+    dbus_bool_t fTrue = TRUE, fFalse = FALSE;
+    const char *pszParent, *pszHandle = NULL;
+    char szParent[64] = "", szToken[64], szRequest[512], szSender[256];
+    FILE *lpRandom;
+    unsigned char rgbToken[16];
+    const char *pszUnique;
+    char *pszTitleUtf = NULL, *pszRequest = NULL, *pszSender = NULL, *pszWaylandParent = NULL;
+    Uint64 nsStart;
+    int iResult = -1;
+    PORTALRESPONSES responses = {0};
+    int i;
+    BOOL fFilter = FALSE;
+    Uint64 msOwnerCheck = 0;
+    SDL_PropertiesID props;
+    Sint64 xid;
+
+    dbus_error_init(&error);
+    lpBus = dbus_bus_get_private(DBUS_BUS_SESSION, &error);
+    if (!lpBus) goto done;
+    dbus_connection_set_exit_on_disconnect(lpBus, FALSE);
+    fFilter = dbus_connection_add_filter(lpBus, SavePortalResponse, &responses, NULL);
+    if (!fFilter) goto done;
+    dbus_bus_add_match(lpBus, "type='signal',sender='org.freedesktop.portal.Desktop',interface='org.freedesktop.portal.Request',member='Response'", &error);
+    if (dbus_error_is_set(&error)) goto done;
+    if (hwndOwner && hwndOwner->lpWindow) {
+        props = SDL_GetWindowProperties(hwndOwner->lpWindow);
+        /* SDL exports xdg-foreign asynchronously. Copy the handle before the
+           modal pump, which may destroy its window and property storage. */
+        nsStart = SDL_GetTicks();
+        while (strcmp(SDL_GetCurrentVideoDriver(), "wayland") == 0 &&
+               !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, NULL) &&
+               SDL_GetTicks() - nsStart < 1000) {
+            if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
+            SDL_Delay(1);
+        }
+        pszHandle = SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, NULL);
+        if (pszHandle && *pszHandle && SDL_asprintf(&pszWaylandParent, "wayland:%s", pszHandle) < 0) goto done;
+        xid = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+        if (xid != 0) snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
+    }
+    pszParent = pszWaylandParent ? pszWaylandParent : szParent;
+    lpRandom = fopen("/dev/urandom", "rb");
+    if (!lpRandom) goto done;
+    if (fread(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { fclose(lpRandom); goto done; }
+    fclose(lpRandom);
+    strcpy(szToken, "stars_");
+    for (i = 0; i < 16; i++) snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
+    pszUnique = dbus_bus_get_unique_name(lpBus);
+    if (!pszUnique || strlen(pszUnique) >= sizeof(szSender)) goto done;
+    strcpy(szSender, pszUnique + 1);
+    for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
+    snprintf(szRequest, sizeof(szRequest), PORTAL_PATH "/request/%s/%s", szSender, szToken);
+    pszRequest = strdup(szRequest); if (!pszRequest) goto done;
+    if (!dbus_validate_utf8(pszName, &error)) goto done;
+    pszTitleUtf = PszPortalLabel(pszTitle); if (!pszTitleUtf) goto done;
+    lpCall = dbus_message_new_method_call(PORTAL_SERVICE, PORTAL_PATH, PORTAL_CHOOSER, fSave ? "SaveFile" : "OpenFile");
+    if (!lpCall) goto done;
+    dbus_message_iter_init_append(lpCall, &args);
+    if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &pszParent) ||
+        !dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &pszTitleUtf) ||
+        !dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options)) goto done;
+    {
+        const char *pszToken = szToken;
+        if (!FOption(&options, "handle_token", "s", DBUS_TYPE_STRING, &pszToken) ||
+            !FOption(&options, "modal", "b", DBUS_TYPE_BOOLEAN, &fTrue) ||
+            (!fSave && !FOption(&options, "multiple", "b", DBUS_TYPE_BOOLEAN, &fFalse)) ||
+            !FFolderOption(&options, pszFolder) || !FFilterOptions(&options, rgfilter, cFilter, *lpiFilter) ||
+            (fSave && !FOption(&options, "current_name", "s", DBUS_TYPE_STRING, &pszName)) ||
+            !dbus_message_iter_close_container(&args, &options)) goto done;
+    }
+    if (!dbus_connection_send_with_reply(lpBus, lpCall, &lpPending, 10000) || !lpPending) goto done;
+    nsStart = SDL_GetTicks();
+    while (!dbus_pending_call_get_completed(lpPending)) {
+        if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
+        if (!dbus_connection_read_write_dispatch(lpBus, 10) || SDL_GetTicks() - nsStart > 11000) goto done;
+    }
+    lpReply = dbus_pending_call_steal_reply(lpPending);
+    if (!lpReply || dbus_message_get_type(lpReply) == DBUS_MESSAGE_TYPE_ERROR ||
+        !dbus_message_get_args(lpReply, &error, DBUS_TYPE_OBJECT_PATH, &pszHandle, DBUS_TYPE_INVALID)) goto done;
+    if (!dbus_message_get_sender(lpReply)) goto done;
+    free(pszRequest); pszRequest = strdup(pszHandle); pszSender = strdup(dbus_message_get_sender(lpReply));
+    if (!pszRequest || !pszSender) goto done;
+    for (;;) {
+        if (!FPumpChooser(hwndOwner)) { iResult = 0; break; }
+        if (!dbus_connection_read_write_dispatch(lpBus, 10) || responses.fOverflow) break;
+        for (i = 0; i < responses.cMessage; i++) {
+            lpMessage = responses.rgMessage[i];
+            if (dbus_message_has_path(lpMessage, pszRequest) && dbus_message_has_sender(lpMessage, pszSender)) {
+                iResult = IResponse(lpMessage, rgfilter, cFilter, lpiFilter, pszPath, cbPath); goto done;
+            }
+            dbus_message_unref(lpMessage); responses.rgMessage[i] = NULL;
+        }
+        responses.cMessage = 0;
+        if (SDL_GetTicks() - msOwnerCheck >= 1000) {
+            msOwnerCheck = SDL_GetTicks();
+            if (!dbus_bus_name_has_owner(lpBus, pszSender, &error)) break;
+        }
+    }
+done:
+    if (lpBus && pszRequest && iResult != 1) {
+        lpClose = dbus_message_new_method_call(PORTAL_SERVICE, pszRequest, PORTAL_REQUEST, "Close");
+        if (lpClose) { dbus_message_set_no_reply(lpClose, TRUE); dbus_connection_send(lpBus, lpClose, NULL); dbus_message_unref(lpClose); }
+    }
+    if (dbus_error_is_set(&error)) SDL_SetError("File chooser portal: %s", error.message);
+    else if (iResult < 0) SDL_SetError("File chooser portal failed or returned an invalid result");
+    dbus_error_free(&error);
+    if (lpPending) { dbus_pending_call_cancel(lpPending); dbus_pending_call_unref(lpPending); }
+    if (lpReply) dbus_message_unref(lpReply);
+    if (lpCall) dbus_message_unref(lpCall);
+    for (i = 0; i < responses.cMessage; i++) if (responses.rgMessage[i]) dbus_message_unref(responses.rgMessage[i]);
+    if (fFilter) dbus_connection_remove_filter(lpBus, SavePortalResponse, &responses);
+    if (lpBus) { dbus_connection_flush(lpBus); dbus_connection_close(lpBus); dbus_connection_unref(lpBus); }
+    SDL_free(pszTitleUtf); SDL_free(pszWaylandParent); free(pszRequest); free(pszSender);
+    return iResult;
+}

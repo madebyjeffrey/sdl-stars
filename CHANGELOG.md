@@ -8,6 +8,52 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Linux SDL open/save calls use the desktop FileChooser portal through libdbus
+  by default, preserving Stars filters and filename validation while returning
+  native UTF-8 paths. Platform defines select an AppKit panel adapter on macOS;
+  the existing Windows build keeps system common dialogs. Headless mode selects
+  the deterministic compatibility browser.
+
+- SDL open/save pickers resize their file list and fields, accept editable
+  locations, keep Back history, navigate Up/Home, toggle hidden files and create
+  folders through a cancellable name dialog. Existing filename contracts remain.
+
+- The SDL compatibility layer adds standard scrollbars with page-aware thumbs,
+  list horizontal scrolling and Ctrl-drag selection, multiline edit wrapping and
+  formatting rectangles, caret/context menus and basic SDL IME preedit. Combo
+  dropdown scroll styles retain the closed field's normal arrow and width.
+  Scanner and report bars now supply visible page sizes for proportional thumbs,
+  preserving their existing last scroll positions.
+
+- A built-in scanner inspector exposes copied player-client map objects and JSON
+  snapshots with stable game/turn/player/kind/ID keys, coordinates and filter
+  state. Select/reveal uses the normal secondary scanner selection path without
+  issuing orders. The hierarchy inspector opens it through a game UI callback.
+
+- The SDL compatibility UI uses Windows 95 colors and two-level raised/sunken
+  borders for menus, toolbars, buttons, fields, lists and scrollbars. Checkboxes
+  draw ticks; split menu arrows retain independent press state. Linux desktop
+  title bars and resize frames remain native.
+
+- Stars uses a standard Win32 toolbar with split filter buttons, dropdown menus
+  anchored to button rectangles, check groups and tooltips. The SDL compatibility
+  layer implements the toolbar subset; Windows uses `comctl32`. Scanner commands,
+  turn results and save layouts are unchanged.
+
+- The native compatibility headers declare additional standard styles, messages,
+  keys and GDI constants with shared MinGW value checks. The hierarchy inspector
+  expands styles and control kinds into names while preserving numeric values.
+
+- The SDL entry point accepts `--headless`; headless CTest presets run invisible
+  UI workflows sequentially with dummy video/audio and software rendering.
+
+- The SDL client has a built-in window/control hierarchy inspector, opened with
+  Ctrl+Shift+F12, with stable logical IDs and JSON snapshots for in-process
+  automation. Drawn scanner objects remain separate inspection work.
+- SDL edit controls support clipboard operations, undo, line queries and multiline
+  vertical navigation. Lists support extended ranges, drag/autoscroll and
+  incremental search; child scrollbars repeat held arrow/page requests.
+
 - The mouse wheel zooms the scanner at the cursor, one zoom level a notch;
   Ctrl+wheel (a touchpad pinch) zooms too. The tilt wheel and Shift+wheel
   scroll the scanner sideways.
@@ -34,6 +80,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Changed
 
+- Race-attribute masks now use an unsigned 32-bit operand, giving bit 31
+  defined shift behavior under native C sanitizers. Stored bits, file layouts
+  and turn results are unchanged.
+
 - The game's text and static data are now built from source files rather
   than checked-in C tables: the strings, messages, tutorial and planet names
   from `text/*.txt`, and the hulls, parts, starting designs, predefined and
@@ -42,6 +92,204 @@ produce different results from a 2.6j host for the same turn.
   The text, data, turns and files are unchanged.
 
 ### Fixed
+
+- `FSaveRace` and race-only `FOpenGame` bound the remembered race basename to
+  its existing 16-byte buffer. Native long filenames previously overwrote
+  adjacent globals; saving and reopening still use the full selected path.
+  Separate UI storage retains the complete repeat-save suggestion, while the
+  SDL cache boundary preserves complete UTF-8 characters.
+
+- SDL native file pickers preserve their owner's native focusability while
+  disabling game input, and use SDL's exported Wayland parent handle when
+  available. Fullscreen title ownership and cancellation have private-display
+  tests; the reported desktop disappearance still needs compositor verification.
+  Backend failures and overly long selected paths now show an error message;
+  cancellation remains quiet.
+
+- Edit undo combines adjacent Delete/Backspace removals in either direction
+  and extends an undoable replacement when typing continues at its end,
+  matching the shared Windows SDK control checks.
+
+- `GetCursorPos16` initializes its point when a backend cannot report a cursor
+  position, preventing an uninitialized coordinate read by legacy UI callers.
+  Successful cursor queries and on-disk point widths are unchanged.
+
+- `CompatComboProc` no longer invalidates an open dropdown on read-only item
+  queries. Owner-drawn Transport fields read their rows during painting; those
+  queries previously caused continuous repainting and starved UI timers.
+
+
+- The SDL resource generator now embeds the tutorial's three recorded data
+  resources. `FWriteTutorialMFile` previously could not load them, preventing
+  the native tutorial from generating its next year.
+
+- `PaintScroll` validates pending paint even after a scrollbar is resized to
+  zero width or height. Previously it returned before `BeginPaint`, repeatedly
+  producing paint messages and starving timers after waypoint task changes.
+
+- `DrawBtn`, `InitBtnTrack`, `FTrackBtn` and `FTrackXfer` copy rectangles from
+  packed button records before aligned Win32 access. Split/transfer rendering
+  and input previously loaded misaligned `RECT` objects under fatal UBSan.
+  Button layouts, hit targets and game/file behavior remain unchanged.
+
+- `UndoEdit` now marks text-changing undo/redo as modified and restores the
+  actual replacement range. It sends the SDK's final change notification after
+  selecting that range; previously redo collapsed the selection and restored an
+  outdated modified flag.
+
+
+- `UndoEdit` preserves the SDK's empty-history and read-only contracts. Empty
+  undo returns success, restores its retained position and sends only a change
+  notification; read-only single-line undo returns success without altering
+  pending history, while read-only multiline undo returns failure.
+
+
+- `CompatDialogProc` no longer ends a modal for an unhandled OK/Cancel command.
+  Stars' ship designer uses those buttons to leave edit mode while keeping the
+  designer open; default handling previously closed the whole window.
+
+
+- `ScannerWndProc` applies the current zoom when a deferred resize refresh
+  runs. Previously resize messages posted captured zoom commands; rapid zoom
+  changes and scrollbar visibility changes could replay alternating stale
+  values indefinitely, starving dialogs and timers. Loaded-game private-X11
+  workflows reproduced and verify the repair. Turn generation is unchanged.
+
+- `CompatDialogProc` preserves an application's `EndDialog` result when its
+  callback returns false. Default command handling previously overwrote zero
+  cancellation results with `IDCANCEL`, causing production Cancel to commit
+  edits. Shared SDK dialog checks and loaded-game SDL workflows cover cancel,
+  accept and reopening. Game rules and saved-file layouts are unchanged.
+
+- `CompatEditProc` normalizes initial text and `WM_SETTEXT` for uppercase and
+  lowercase edit styles. Previously only inserted text was converted. Both
+  single-line and multiline controls retain SDK text-limit, modified/undo and
+  notification behavior; read-only controls still accept programmatic text.
+  Game results and saved-file layouts are unchanged.
+
+- `CompatListProc` redraws single-selection owner-drawn rows synchronously with
+  `ODA_SELECT` when selection changes, instead of only queuing a full repaint.
+  Keyboard changes draw before notification, repeated selections draw nothing,
+  and owner callbacks may reset or destroy the control safely. Game results
+  and saved-file layouts are unchanged.
+
+- SDL edits group consecutive Backspace/Delete operations for undo and restore
+  the complete deleted selection, instead of undoing only the final character.
+  Cursor changes and focus changes end the group. Game results are unchanged.
+- SDL edits no longer add a spurious undo record when text-limit rejection
+  inserts nothing. Existing undo history survives; limit/update/change
+  notifications and the modified flag retain their SDK behavior.
+
+- The SDL list-box runtime sends owner-draw focus actions before focus
+  notifications, including the empty-list focus indicator used by production
+  and fleet panels. Previously it only queued a full repaint and omitted empty
+  owner-drawn lists. Focus drawing tolerates callbacks resetting or destroying
+  the control. Game results and saved-file layouts are unchanged.
+
+- `FFileDialog` keeps the selected folder, filename and filter when native file
+  validation fails or overwrite is declined, instead of reopening at the initial
+  location. A selected directory becomes the retry location. Game state and
+  saved-file formats are unchanged.
+
+- The SDL compositor fills the corner shared by horizontal and vertical
+  scrollbars with Windows 95 button-face gray instead of leaving it black.
+
+- `ScrollWindow` moves overlapping RGBA window pixels by rows instead of the
+  generic per-pixel raster-operation path. Captured scrollbar dragging presents
+  the completed content and thumb together once per update. `SetScrollPos`
+  invalidates only the changed standard bar, preserving the scanner's incremental
+  scrolling path instead of forcing a full map redraw.
+
+- `CompatScrollProc` repaints the scrollbar thumb during captured mouse movement,
+  instead of waiting for the mouse queue to empty. Unchanged nonclient bar layout
+  no longer repeats resize/show work. Consecutive native motion messages retain
+  the newest position to avoid drag lag behind expensive map redraws.
+
+- SDL combo arrow buttons retain their full raised bevel inside the sunken
+  field border, with a depressed button and offset triangle while open.
+
+- SDL mnemonic underlines leave a pixel below the text baseline instead of
+  touching the letter, matching ordinary font underline placement.
+
+- SDL split toolbar menu activation presses only the arrow area and shifts its
+  triangle, preserving the action button's appearance and checked state.
+
+- SDL split toolbar buttons use adjacent full-height classic bevels for the
+  action and menu-arrow areas, with a compact dropdown triangle.
+
+- SDL combo dropdowns keep row highlights separate from the selected value.
+  Hovering no longer changes game settings; clicking a row or pressing Enter
+  confirms it, while Escape and outside clicks cancel without selection changes.
+
+- SDL combo lists use owned compositor popups and paint their rows before
+  opening, fixing dropdowns appearing empty at the edge of the main window.
+
+- SDL radio buttons paint a round selected dot instead of a square.
+- `ExecuteButton` anchors toolbar filter, minefield and zoom menus below the
+  triggering button instead of at the mouse position. Turn results are unchanged.
+- `TooltipWndProc` anchors tips beside their control rectangles, keeping them
+  inside the frame. The SDL window adapter uses an owned, nonactivating native
+  tooltip role and converts moves to owner-relative coordinates.
+
+- The SDL window boundary converts CP1252 titles to UTF-8 on creation, updates
+  and wizard reuse, preserving narrow game text and avoiding X11 conversion
+  failures/leaks on non-ASCII titles.
+
+- `LpAlloc` and `LpReAlloc` align ordinary heap payloads for native pointers
+  and other C types, including reused and grown blocks. Battle allocation
+  boundaries and saved-file layouts remain unchanged.
+- `SetVisPFInit` skips the player-race lookup for the host's all-player
+  sentinel, avoiding an out-of-bounds read of player -1. Visibility rules
+  remain unchanged.
+- `PtToScan` multiplies signed coordinates instead of left-shifting negative
+  values. Scanner rounding and turn results remain unchanged.
+- `WriteFleet` writes compressed 16-bit values through byte-safe stores;
+  variable-length records can place them at odd offsets. Serialized bytes
+  remain unchanged.
+- Silent SDL process cleanup now frees list and combo storage even when
+  application destroy callbacks are skipped after game-state teardown.
+- `FLookupPart` skips player race/technology lookups for the host sentinel;
+  host part access has no player restrictions. `WriteRt` skips the memory
+  copy for empty records, whose caller may supply a null payload.
+- `DoCyberPackets` and `FEnumPktAttack` use byte-safe accesses to the
+  four-byte mineral limit in the two-byte-aligned AI workspace.
+- Packet movement skips the receiving-race lookup for an unowned planet,
+  whose nonexistent player was previously indexed as -1.
+
+- `TitleWndProc` paints the splash image and buttons during creation, before
+  the native window appears. Startup cleanup no longer leaves a blank title
+  screen while the first queued paint waits.
+
+- `ReadIniTileSettings` normalizes `isupper` to a boolean before storing the
+  one-bit expansion flag. Linux builds now restore expanded planet/fleet
+  sections from saved settings instead of silently collapsing them.
+
+- The SDL wrapper's `CreateWindowExA` now sends the initial top-level client
+  size notification. Stars can lay out its toolbar, scanner and other panes
+  immediately after opening a game, without requiring a manual resize.
+
+- `BrowserDlg` now destroys its modeless Technology Browser on Close or the
+  window's X instead of using `EndDialog`, which left the SDL browser open.
+  Turn generation and saved files are unchanged.
+
+- `FOpenGame` uses the platform directory separator and checks for a missing
+  separator when continuing a saved game. Linux Continue Game and relative
+  filenames no longer dereference a null pointer. Saved files and turns are unchanged.
+
+- The SDL client's `CreateWindowExA` now chooses both default dimensions
+  when the width is `CW_USEDEFAULT`, so a new main window has usable height.
+  Menu dropdowns use SDL's owned popup role so the desktop compositor does
+  not cancel them by deactivating their owner during creation.
+
+- The SDL race wizard retains one desktop window across Back/Next page
+  transitions, avoiding repeated close/open animations. Each page still
+  creates and destroys its own logical dialog and controls; Windows dialog
+  behavior and turn generation are unchanged.
+
+- `DrawRace2` no longer copies the habitat explanation into a 32-byte stack
+  buffer. The 67-character template corrupted the stack while painting the
+  race wizard’s habitat page and crashed the native Linux client. Displayed
+  text, game rules and turn generation are unchanged.
 
 - The scanner no longer leaves a band drawn out of place when it scrolls
   while a redraw is still pending (`ScrollScanner`), as after a wheel zoom

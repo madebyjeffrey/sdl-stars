@@ -419,7 +419,8 @@ void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16
         hdc = GetDC(hwnd);
     }
     pbtnt->hdc = hdc;
-    pbtnt->rc = *prc;
+    /* NATIVE: BTN rectangles can start on a two-byte boundary. */
+    memcpy(&pbtnt->rc, prc, sizeof(pbtnt->rc));
     pbtnt->btf = btf;
     pbtnt->dTimer = dTimer;
     pbtnt->fFirst = TRUE;
@@ -434,6 +435,7 @@ int16_t FTrackBtn(BTNT *pbtnt) {
     POINT16 pt;
     int16_t fInBtn;
     int32_t ticksNew;
+    RECT    rc;
 
     if (pbtnt->fFirst) {
         SetCapture(pbtnt->hwnd);
@@ -444,8 +446,9 @@ int16_t FTrackBtn(BTNT *pbtnt) {
     }
     pt.x = pbtnt->rc.left;
     pt.y = pbtnt->rc.top;
+    memcpy(&rc, &pbtnt->rc, sizeof(rc));
     while (FGetMouseMove(&pt)) {
-        fInBtn = PtInRect(&pbtnt->rc, PointFrom16(pt));
+        fInBtn = PtInRect(&rc, PointFrom16(pt));
         if (fInBtn != pbtnt->fDown) {
             pbtnt->fDown = fInBtn;
             DrawBtn(pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
@@ -486,11 +489,14 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText) {
     HBRUSH   hbrSav;
     int16_t  cpt;
     int16_t  x;
-    RECT     rc;
+    RECT     rc, rcButton;
     int16_t  dxyT;
     int16_t  bkMode;
     HFONT    hfontSav;
 
+    /* NATIVE: Packed BTN/BTNT storage does not guarantee RECT alignment. */
+    memcpy(&rcButton, prc, sizeof(rcButton));
+    prc = &rcButton;
     fDisabled = bt & 4;
     rc = *prc;
     hbrSav = SelectObject(hdc, hbrWindowFrame);

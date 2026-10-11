@@ -15,7 +15,7 @@ static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
     return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(STARS_UI_SDL)
 int16_t __wrap_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
@@ -23,7 +23,7 @@ int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType
 #endif
 
 int16_t FStarsTestInit(void) {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(STARS_UI_SDL)
     hInst = GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
@@ -33,7 +33,7 @@ int16_t FStarsTestInit(void) {
     Randomize2(12345);
     fFileErrSilent = TRUE;
     idPlayer = iplrNone;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(STARS_UI_SDL)
     return FCreateStuff();
 #else
     InitGameStuff();

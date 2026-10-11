@@ -20,13 +20,33 @@ make test-host CTEST_ARGS='-R test_turn'
 ```
 
 The native build leaves out what needs Windows: `test_native_ports.c`
-(`--wrap` is GNU ld's) and the dialog tests in `test_battle.c` and
-`test_race.c` (`#ifdef _WIN32`). Use `szDirSep` for paths and `getcwd` for
+(`--wrap` is GNU ld's) and the client dialog cases in `test_battle.c` and
+`test_race.c`. Use `szDirSep` for paths and `getcwd` for
 the working directory so a test builds on both.
 
 Acutest runs every test in its own process, so each test starts from the
 game's initial globals. Tests run in `<build>/tests`, where CMake copies the
 fixture race to `data/humanoid.r1`.
+
+## SDL client tests
+
+The SDL presets also build `stars-sdl-unit-tests`: all 14 unit-test programs
+linked with the shared UI and compatibility runtime, including Battle Plans,
+race-wizard choices, habitat painting/immunity redraw and native-port cases.
+`test_memory` checks aligned mixed allocations, free-list reuse/coalescing,
+reset, realloc growth, dedicated heap growth and the 16-bit capacity guard.
+They use the dummy backend, a separate `tests-client` fixture directory and
+`--wrap=AlertSz`; host tests keep `hostui.c`. OS-specific directory enumeration
+and `getcwd` retain their Linux implementations.
+
+```sh
+cmake --preset sdl-debug
+cmake --build --preset sdl-debug
+ctest --test-dir dist/sdl-debug -L client --output-on-failure
+```
+
+The `client` label also runs the real startup/race-wizard input tests on dummy
+and private X11/Openbox displays. See [client testing](../../docs/WIN32-CLIENT.md).
 
 ## Two kinds of test
 

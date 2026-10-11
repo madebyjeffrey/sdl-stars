@@ -60,6 +60,36 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "sdl-debug",
+      "displayName": "Linux SDL3 compatibility Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/dist/sdl-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_PREFIX_PATH": "$env{HOME}/.local/opt/stars-sdl3",
+        "STARS_BUILD_SDL_CLIENT": "ON",
+        "STARS_SDL_FETCH": "ON"
+      }
+    },
+    {
+      "name": "sdl-release",
+      "inherits": "sdl-debug",
+      "displayName": "Linux SDL3 compatibility Release",
+      "binaryDir": "${sourceDir}/dist/sdl-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "sdl-sanitize",
+      "inherits": "sdl-debug",
+      "displayName": "Linux SDL3 AddressSanitizer / UndefinedBehaviorSanitizer",
+      "binaryDir": "${sourceDir}/dist/sdl-sanitize",
+      "cacheVariables": {
+        "STARS_ENABLE_SANITIZERS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -100,6 +130,167 @@
       "name": "macos-host-release",
       "displayName": "Build stars-host (x86_64 macOS Release)",
       "configurePreset": "macos-host-release"
+    },
+    {
+      "name": "sdl-debug",
+      "configurePreset": "sdl-debug",
+      "targets": [
+        "stars-compat-smoke",
+        "stars-compat-abi",
+        "stars-ui-compat-check",
+        "stars-compat-runtime",
+        "stars-compat-windows",
+        "stars-compat-paint",
+        "stars-compat-gdi-reference",
+        "stars-compat-bitmap",
+        "stars-compat-dib",
+        "stars-compat-memory",
+        "stars-compat-timers",
+        "stars-compat-services",
+        "stars-compat-profile",
+        "stars-compat-file",
+        "stars-compat-font",
+        "stars-compat-regions",
+        "stars-compat-drawing-state",
+        "stars-compat-geometry",
+        "stars-compat-children",
+        "stars-compat-position",
+        "stars-compat-capture",
+        "stars-compat-input",
+        "stars-compat-nativeui-points",
+        "stars-compat-controls",
+        "stars-compat-edit",
+        "stars-compat-inspect",
+        "stars-compat-toolbar",
+        "stars-compat-list",
+        "stars-compat-desktop",
+        "stars-compat-state",
+        "stars-compat-attention",
+        "stars-compat-scroll",
+        "stars-compat-scrollwindow",
+        "stars-compat-menu",
+        "stars-compat-popup",
+        "stars-compat-ui-resources",
+        "stars-compat-menubar",
+        "stars-compat-images",
+        "stars-compat-dialog",
+        "stars-compat-combo",
+        "stars-compat-palette",
+        "stars-compat-messagebox",
+        "stars-compat-filedialog",
+        "stars-compat-fileportal",
+        "stars-compat-fileworkflow",
+        "stars-compat-print",
+        "stars-host",
+        "stars-host-unit-tests",
+        "stars-help-guide",
+        "stars-compat-help",
+        "stars-compat-help-viewer",
+        "stars-sdl",
+        "stars-compat-entry",
+        "stars-compat-session",
+        "stars-compat-process-exit",
+        "stars-compat-client-startup",
+        "stars-native-tutorial",
+        "stars-sdl-unit-tests"
+      ]
+    },
+    {
+      "name": "sdl-release",
+      "configurePreset": "sdl-release",
+      "targets": [
+        "stars-compat-smoke",
+        "stars-compat-abi",
+        "stars-ui-compat-check",
+        "stars-compat-runtime",
+        "stars-compat-windows",
+        "stars-compat-paint",
+        "stars-compat-gdi-reference",
+        "stars-compat-bitmap",
+        "stars-compat-dib",
+        "stars-compat-memory",
+        "stars-compat-timers",
+        "stars-compat-services",
+        "stars-compat-profile",
+        "stars-compat-file",
+        "stars-compat-font",
+        "stars-compat-regions",
+        "stars-compat-drawing-state",
+        "stars-compat-geometry",
+        "stars-compat-children",
+        "stars-compat-position",
+        "stars-compat-capture",
+        "stars-compat-input",
+        "stars-compat-nativeui-points",
+        "stars-compat-controls",
+        "stars-compat-edit",
+        "stars-compat-inspect",
+        "stars-compat-toolbar",
+        "stars-compat-list",
+        "stars-compat-desktop",
+        "stars-compat-state",
+        "stars-compat-attention",
+        "stars-compat-scroll",
+        "stars-compat-scrollwindow",
+        "stars-compat-menu",
+        "stars-compat-popup",
+        "stars-compat-ui-resources",
+        "stars-compat-menubar",
+        "stars-compat-images",
+        "stars-compat-dialog",
+        "stars-compat-combo",
+        "stars-compat-palette",
+        "stars-compat-messagebox",
+        "stars-compat-filedialog",
+        "stars-compat-fileportal",
+        "stars-compat-fileworkflow",
+        "stars-compat-print",
+        "stars-host",
+        "stars-host-unit-tests",
+        "stars-help-guide",
+        "stars-compat-help",
+        "stars-compat-help-viewer",
+        "stars-sdl",
+        "stars-compat-entry",
+        "stars-compat-session",
+        "stars-compat-process-exit",
+        "stars-compat-client-startup",
+        "stars-native-tutorial",
+        "stars-sdl-unit-tests"
+      ]
+    },
+    {
+      "name": "sdl-sanitize",
+      "inherits": "sdl-debug",
+      "configurePreset": "sdl-sanitize"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "sdl-headless",
+      "displayName": "Invisible SDL UI tests (sequential)",
+      "configurePreset": "sdl-debug",
+      "environment": {
+        "SDL_VIDEODRIVER": "dummy",
+        "SDL_AUDIODRIVER": "dummy",
+        "STARS_SDL_RENDERER": "software",
+        "STARS_FILE_DIALOG_BACKEND": "compat",
+        "DISPLAY": null,
+        "WAYLAND_DISPLAY": null
+      },
+      "filter": { "exclude": { "name": "_x11$" } },
+      "execution": { "jobs": 1, "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "sdl-headless-sanitize",
+      "inherits": "sdl-headless",
+      "displayName": "Invisible SDL UI tests with fatal sanitizers",
+      "configurePreset": "sdl-sanitize",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      }
     }
   ]
 }

@@ -1448,16 +1448,16 @@ int16_t PtToScan(int16_t d) {
         d >>= 2;
         break;
     case zoom38:
-        d = ((d << 1) + d) >> 3;
+        d = (d * 3) >> 3;
         break;
     case zoom75:
-        d = ((d << 1) + d) >> 2;
+        d = (d * 3) >> 2;
         break;
     case zoom125:
-        d = ((d << 2) + d) >> 2;
+        d = (d * 5) >> 2;
         break;
     case zoom150:
-        d = ((d << 1) + d) >> 1;
+        d = (d * 3) >> 1;
     }
     return d;
 }

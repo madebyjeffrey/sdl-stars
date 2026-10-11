@@ -1,21 +1,31 @@
 #include "win.h"
+#ifdef STARS_UI_SDL
+#include <stars_compat.h>
+#endif
 
 int16_t RaceCreationWizard(HWND hwndParent, int16_t fReadOnly, int16_t fDontWrite) {
     WizardButton mdRet;
     FARPROC      lpProc;
     RECT         rgrcStack[17];
     int16_t      cpts;
+    int16_t      fResult;
+#ifdef STARS_UI_SDL
+    BOOL         fSequence;
+#endif
 
     vrgrcRCW = rgrcStack;
     fRCWReadOnly = fReadOnly;
     hwndRaceParent = hwndParent;
+#ifdef STARS_UI_SDL
+    fSequence = StarsCompatBeginDialogSequence(hwndParent);
+#endif
 Step1:
     iPanelActive = rwPageRace;
     lpProc = MakeProcInstance(RaceWizardDlg1, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizFinish)
         goto Finish;
 Step2:
@@ -24,7 +34,7 @@ Step2:
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_4), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizBack)
         goto Step1;
     if (mdRet == wizFinish)
@@ -35,7 +45,7 @@ Step3:
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_5), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizBack)
         goto Step2;
     if (mdRet == wizFinish)
@@ -46,7 +56,7 @@ Step4:
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizBack)
         goto Step3;
     if (mdRet == wizFinish)
@@ -57,7 +67,7 @@ Step5:
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_3), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizBack)
         goto Step4;
     if (mdRet == wizFinish)
@@ -68,14 +78,14 @@ Step6:
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_6), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel)
-        return FALSE;
+        goto LCancel;
     if (mdRet == wizBack)
         goto Step5;
     if (mdRet == wizFinish)
         goto Finish;
 Finish:
     if (fRCWReadOnly) {
-        return FALSE;
+        goto LCancel;
     }
     cpts = CAdvantagePoints(&vplr);
     if (cpts < 0) {
@@ -102,7 +112,15 @@ Finish:
         goto Step1;
     if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr))
         goto Step1;
-    return TRUE;
+    fResult = TRUE;
+    goto LDone;
+LCancel:
+    fResult = FALSE;
+LDone:
+#ifdef STARS_UI_SDL
+    if (fSequence) StarsCompatEndDialogSequence();
+#endif
+    return fResult;
 }
 
 INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -605,8 +623,9 @@ void DrawRace2(HWND hwnd, HDC hdc, int16_t iDraw) {
             if (l2 == 1) {
                 cch = CchGetString(l == 1000000 ? idsPlanetsWillHabitableRace : idsVirtuallyPlanetsWillHabitableRace, szWork);
             } else {
-                CchGetString(idsCanExpect1DPlanetsWillHabitable, szT);
-                cch = wsprintf(szWork, szT, l2);
+                // The explanation exceeds szT's 32 bytes; format from the text
+                // table instead of corrupting the habitat page's stack.
+                cch = wsprintf(szWork, PszGetCompressedString(idsCanExpect1DPlanetsWillHabitable), l2);
             }
             rc.left = vrgrcRCW->left;
             rc.top = vrgrcRCW[15].top + dyArial8 + 8;
@@ -1353,6 +1372,22 @@ void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
     return;
 }
 
+static char szRaceFileSuggest[256];
+
+void SetSzRaceFile(const char *pszFile) {
+    size_t cch = min(strlen(pszFile), sizeof(szRaceFile) - 1);
+
+    /* Keep the full native suggestion in UI storage; the original cache stays
+       at its existing size and must not end inside a UTF-8 character. */
+    strncpy(szRaceFileSuggest, pszFile, sizeof(szRaceFileSuggest) - 1);
+    szRaceFileSuggest[sizeof(szRaceFileSuggest) - 1] = 0;
+#ifdef STARS_UI_SDL
+    while (cch != 0 && ((unsigned char)pszFile[cch] & 0xc0) == 0x80) cch--;
+#endif
+    memcpy(szRaceFile, pszFile, cch);
+    szRaceFile[cch] = 0;
+}
+
 int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
     uint16_t     icksum;
     char         szFileTitle[256];
@@ -1362,6 +1397,8 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
     char         szFile[256];
     OPENFILENAME ofn;
 
+    if (szFileSuggest == szRaceFile && szRaceFile[0] && szRaceFileSuggest[0] &&
+        strncmp(szRaceFile, szRaceFileSuggest, strlen(szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
     if (szFileSuggest) {
         strcpy(szFile, szFileSuggest);
     } else {
@@ -1395,7 +1432,7 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
         icksum = IRaceChecksum(pplr);
         WriteRt(rtEOF, 2, &icksum);
         StreamClose();
-        strcpy(szRaceFile, &szFile[ofn.nFileOffset]);
+        SetSzRaceFile(&szFile[ofn.nFileOffset]);
         return TRUE;
     }
     return FALSE;

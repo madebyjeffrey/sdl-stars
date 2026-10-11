@@ -4,6 +4,16 @@
 static int16_t dWheelRows;
 static int16_t dWheelCols;
 
+static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL fRedraw) {
+    SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 0, 0, 0, 0, 0};
+
+    /* Legacy report ranges describe the last row/column position. */
+    si.nPage = (UINT)max(1, cPage);
+    si.nMax = max(0, iMax) + (int)si.nPage - 1;
+    si.nPos = iPos;
+    SetScrollInfo(hwnd, SB_CTL, &si, fRedraw);
+}
+
 LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     HMENU       hmenu;
@@ -57,8 +67,8 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     vprptCur->irowFirst = 0;
                 }
             }
-            SetScrollPos(vprptCur->hwndVScroll, SB_CTL, vprptCur->irowFirst, FALSE);
-            SetScrollRange(vprptCur->hwndVScroll, SB_CTL, 0, vprptCur->cRows - vprptCur->cRowsVis, TRUE);
+            SetReportScrollInfo(vprptCur->hwndVScroll, vprptCur->cRows - vprptCur->cRowsVis,
+                                vprptCur->cRowsVis, vprptCur->irowFirst, TRUE);
         }
         dx = GetSystemMetrics(SM_CXVSCROLL);
         SetWindowPos(vprptCur->hwndVScroll, NULL, rc.right - dx, dyArial8 + 6, dx, (dyArial8 + 4) * vprptCur->cRowsVis + 1, swp);
@@ -279,6 +289,7 @@ void SetHScrollBar() {
     int16_t  dy;
     int16_t  ccolSkipped;
     int16_t  ccolHidden;
+    int16_t  ccolVisible;
     int16_t  i;
     int16_t  ibit;
     int16_t  xRight;
@@ -292,10 +303,12 @@ void SetHScrollBar() {
     xRight = rc.right - xTitle - 2 - dx;
     ccolSkipped = 0;
     ccolHidden = 0;
+    ccolVisible = 0;
     i = vprptCur->cFields - 1;
     ibit = 1 << vprptCur->cFields;
     while (i > 0) {
         if (ibit & vprptCur->grbitVisible) {
+            ccolVisible++;
             if (i < vprptCur->cFieldFirst) {
                 ccolSkipped++;
             }
@@ -318,8 +331,7 @@ void SetHScrollBar() {
             ccolSkipped = 0;
             vprptCur->cFieldFirst = 1;
         }
-        SetScrollPos(vprptCur->hwndHScroll, SB_CTL, ccolSkipped, FALSE);
-        SetScrollRange(vprptCur->hwndHScroll, SB_CTL, 0, ccolHidden, TRUE);
+        SetReportScrollInfo(vprptCur->hwndHScroll, ccolHidden, ccolVisible - ccolHidden, ccolSkipped, TRUE);
         vprptCur->cColScroll = ccolHidden;
     }
     dy = GetSystemMetrics(SM_CYHSCROLL);
@@ -2405,7 +2417,8 @@ void InvalidateReport(ReportType irpt, int16_t fReload) {
             vprptCur = prptSav;
             vlprgidRep = lprgidSav;
         } else if (fReload && hwndReportDlg && irpt == vprptCur->irpt) {
-            SetScrollRange(vprptCur->hwndVScroll, SB_CTL, 0, vprptCur->cRows - vprptCur->cRowsVis, FALSE);
+            SetReportScrollInfo(vprptCur->hwndVScroll, vprptCur->cRows - vprptCur->cRowsVis,
+                                vprptCur->cRowsVis, vprptCur->irowFirst, FALSE);
             InvalidateRect(hwndReportDlg, NULL, TRUE);
         }
     }

@@ -66,7 +66,12 @@ RunInstruction(bold, state) {
         case 152: SetTask("Colonize")
         case 153, 182: ScannerMode(0)
         case 154: ReadTo(1, true)
-        case 155, 166: PlanetClick("Stove Top", "Shift")
+        case 155: PlanetClick("Stove Top", "Shift")
+        case 166:
+            ; Append the return leg after Prune, not after the current location at Stove Top.
+            Waypoint(1)
+            WaitFor((s) => s["selection"] = "2|3|1", "Teamster #4's Prune waypoint")
+            PlanetClick("Stove Top", "Shift")
         case 156: ReadMessages(), PlanetClick("90210", , 2)
         case 158: DeleteWaypoint(0, 1)
         case 160: FleetSelect(3)

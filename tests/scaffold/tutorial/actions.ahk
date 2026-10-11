@@ -147,6 +147,34 @@ ClientPoint(hwnd, x, y) {
     return [NumGet(point, 0, "int"), NumGet(point, 4, "int")]
 }
 
+; GestureInput injects one normal keyboard/mouse event without AHK modifier normalization.
+GestureInput(kind, value, flags) {
+    size := A_PtrSize = 8 ? 40 : 28
+    offset := A_PtrSize = 8 ? 8 : 4
+    input := Buffer(size, 0)
+    NumPut("uint", kind, input, 0)
+    if kind = 1 {
+        NumPut("ushort", value, input, offset)
+        NumPut("uint", flags, input, offset + 4)
+    } else {
+        if value is Array {
+            left := DllCall("GetSystemMetrics", "int", 76, "int")
+            top := DllCall("GetSystemMetrics", "int", 77, "int")
+            width := DllCall("GetSystemMetrics", "int", 78, "int")
+            height := DllCall("GetSystemMetrics", "int", 79, "int")
+            if width <= 0 || height <= 0
+                throw Error("Cannot obtain virtual desktop bounds")
+            ; Target the center of the pixel in SendInput's normalized virtual desktop.
+            NumPut("int", Round((value[1] - left + 0.5) * 65536 / width), input, offset)
+            NumPut("int", Round((value[2] - top + 0.5) * 65536 / height), input, offset + 4)
+            flags |= 0xc001 ; MOVE | ABSOLUTE | VIRTUALDESK
+        }
+        NumPut("uint", flags, input, offset + 12)
+    }
+    if DllCall("SendInput", "uint", 1, "ptr", input, "int", size, "uint") != 1
+        throw Error("Cannot inject tutorial mouse/keyboard input: " A_LastError)
+}
+
 ; ClickPoint performs a real mouse gesture at a named surface's client point.
 ClickPoint(hwnd, x, y, modifier := "", button := "Left", count := 1) {
     global GamePid
@@ -164,17 +192,54 @@ ClickPoint(hwnd, x, y, modifier := "", button := "Left", count := 1) {
     hit := DllCall("WindowFromPoint", "int64", NumGet(hitPoint, 0, "int64"), "ptr")
     if hit != Integer(hwnd) && !DllCall("IsChild", "ptr", Integer(hwnd), "ptr", hit)
         throw Error("Click target is covered: " WinGetClass(hit) " " WinGetTitle(hit))
+    before := ReadState()
+    checkScanner := modifier != "" && button = "Left" && Integer(before["hwnd.scanner"]) = Integer(hwnd)
+    if !before.Has("scannerClickCount")
+        throw Error("Tutorial observer needs click-delivery tracking; start a fresh run with the rebuilt observer")
+    clicksBefore := Integer(before["scannerClickCount"])
+    vkModifier := modifier = "Shift" ? 0xa0 : modifier = "Ctrl" ? 0xa2 : modifier = "Alt" ? 0xa4 : 0
+    mouseFlags := button = "Left" ? [2, 4] : button = "Right" ? [8, 16] : [32, 64]
+    mouseDown := false
     try {
         if modifier != "" {
-            SendEvent "{" modifier " down}"
-            Sleep 50
+            GestureInput(1, vkModifier, 0)
+            ; Synchronize with the game's key state rather than assuming a fixed delay is enough.
+            if modifier = "Shift" || modifier = "Ctrl" {
+                held := WaitFor((s) => Integer(s["key" modifier]) & 0x8000, modifier " held before mouse gesture")
+                LogEvent("modifier-down", modifier "=" held["key" modifier])
+            }
+            else
+                Sleep 50
         }
-        MouseClick button, point[1], point[2], count, 0
-        if modifier != ""
-            Sleep 100
+        if modifier = ""
+            Click point[1] " " point[2] " " button " " count
+        else Loop count {
+            GestureInput(0, point, mouseFlags[1])
+            mouseDown := true
+            if checkScanner {
+                delivered := WaitFor((s) => Integer(s["scannerClickCount"]) > clicksBefore, "scanner button-down delivery")
+                clicksBefore := Integer(delivered["scannerClickCount"])
+                clickParts := StrSplit(delivered["scannerClick"], "|")
+                mask := modifier = "Shift" ? 4 : modifier = "Ctrl" ? 8 : 0
+                LogEvent("scanner-input", "message=" delivered["scannerClickMessage"] " keys/point=" delivered["scannerClick"] " expected=" x "," y)
+                if mask && !(Integer(clickParts[1]) & mask)
+                    throw Error("Scanner button-down lost " modifier ": " delivered["scannerClick"])
+                if Integer(clickParts[2]) != Integer(x) || Integer(clickParts[3]) != Integer(y)
+                    throw Error("Scanner button-down reached the wrong point: " delivered["scannerClick"])
+            } else
+                Sleep 20
+            GestureInput(0, 0, mouseFlags[2])
+            mouseDown := false
+            Sleep 20
+        }
     } finally {
-        if modifier != ""
-            SendEvent "{" modifier " up}"
+        if mouseDown
+            GestureInput(0, 0, mouseFlags[2])
+        if modifier != "" {
+            GestureInput(1, vkModifier, 2)
+            if modifier = "Shift" || modifier = "Ctrl"
+                WaitFor((s) => !(Integer(s["key" modifier]) & 0x8000), modifier " released after mouse gesture")
+        }
     }
     Sleep 50
     ReadState()

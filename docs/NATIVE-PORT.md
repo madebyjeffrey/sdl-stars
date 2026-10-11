@@ -71,3 +71,53 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 - **Original uninitialized reads left as is** (harmless): `ScoreXDlg` and
   `VCRDlg` call `EndDialog(hwnd, i)` with `i` unset, and `CreateChildWindows`
   creates the mine window with an unset `pt` as its size.
+
+## Race-bit masks and sanitizer qualification
+
+`ReadIniTileSettings` normalizes the C library's `isupper` mask before writing
+the one-bit panel expansion flag. Field widths and settings syntax remain
+unchanged. `FOpenGame` uses `chDirSep` and guards a missing separator; UI-loading
+tests exercise relative and absolute Linux filenames. Modeless Technology
+Browser teardown now uses `DestroyWindow` instead of `EndDialog`.
+
+Native file-workflow tests open games and save/reload races through a private
+FileChooser portal using UTF-8 directories and basenames. `FSaveRace` and
+race-only `FOpenGame` now bound copies into the existing `szRaceFile[16]`
+suggestion cache through `SetSzRaceFile`; a long native basename previously
+overwrote adjacent globals. Separate UI storage retains the full suggestion for
+repeat saving, and the SDL cache boundary preserves complete UTF-8 characters.
+The selected file path is not truncated, and no saved record changes.
+
+`GetRaceGrbit` and `SetRaceGrbit` now construct masks from `UINT32_C(1)` so
+bit 31 has defined unsigned-shift semantics. The 32-bit field and on-disk
+representation remain unchanged. `test_RaceGrbit_high_bit` checks independent
+setting, reading and clearing of bits 0 and 31.
+
+Ordinary heap payloads now satisfy `max_align_t`; header padding and allocation
+strides preserve alignment through reuse, reset and growth. Battle heaps retain
+two-byte boundaries because their record traversal depends on them. Heap
+counters and persisted structures retain their original widths.
+The subsequent sanitizer passes exposed host-sentinel reads in `SetVisPFInit`
+and `FLookupPart`, unaligned scalar accesses in `WriteFleet` and the Cybertron
+workspace, an empty-record null copy and negative scanner shifts. Those paths
+now use checked sentinel handling, byte-safe storage and defined multiplication.
+Silent process exit also frees list/combo storage without game callbacks.
+The memory-safety batch passes all 91 fatal ASan/UBSan/LSan tests without
+suppressions, 50 Windows units and 13 Linux host units. Both full native and
+host regressions return 519 matches, 87 unused-storage warnings and no behavioral
+differences/errors/skipped inputs. The previous run had 22 unused-storage warnings;
+the comparator confines those differences to unused bytes, not interpreted records. Baselines remain
+unchanged. Subsequent UI/inspector qualification is recorded separately in
+[window inspection](WIN32-INSPECTION.md).
+
+
+Packed `BTN`/`BTNT` records keep their two-byte packing, so native `RECT`
+members can be misaligned within arrays. `DrawBtn`, `InitBtnTrack`, `FTrackBtn`
+and `FTrackXfer` use byte copies into aligned rectangle storage before drawing
+or hit testing. This fixes the fatal UBSan load exposed by the fleet Split
+workflow without changing record sizes, hit targets or game behavior.
+
+The repair passes 99 fatal sanitizer tests, 51 Windows unit/reference tests and
+both Release fleet profiles. Full native regression still returns 519 matches,
+87 existing unused-storage warnings, zero differences/errors and no skipped
+inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).

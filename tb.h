@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <windows.h>
 
+#define IDC_STARS_TOOLBAR 16000
+#define IDC_STARS_TOOLBUTTON_FIRST 16100
+
 extern char    vrgTBBtn[29];
 extern int16_t vrgpctZoom[9];
 

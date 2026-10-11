@@ -1442,12 +1442,15 @@ int16_t FTrackXfer(HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
     int16_t iVal;
     BTN     btn;
     int32_t cNew;
-    RECT    rc;
+    RECT    rc, rcBtn;
 
     GetClientRect(hwnd, &rc);
     pt.x = x;
     pt.y = y;
-    for (i = 0; i < crgbtnXfer && ((rgbtnXfer[i].bt & 4) || PtInRect(&rgbtnXfer[i].rc, PointFrom16(pt)) == 0); i++) {
+    for (i = 0; i < crgbtnXfer; i++) {
+        /* NATIVE: Packed BTN arrays can misalign their Win32 RECT members. */
+        memcpy(&rcBtn, &rgbtnXfer[i].rc, sizeof(rcBtn));
+        if (!(rgbtnXfer[i].bt & 4) && PtInRect(&rcBtn, PointFrom16(pt))) break;
     }
     if (i == crgbtnXfer) {
         return FALSE;

@@ -47,6 +47,238 @@ statically, beside `stars.exe`. 2.9.0 is released (tag `v2.9.0`).
 The 2.8 reproduce-first items (5.3 below) still apply; fix them on `main`
 and cherry-pick to `2.8`.
 
+## Linux desktop compatibility
+
+The first SDL3 milestone is available through the `sdl-debug` and
+`sdl-release` presets: `stars-compat-smoke` exercises two independent
+windows, CPU surfaces, GPU presentation and a software fallback. It does
+not yet run the game UI. Milestone 2 adds scoped Win32 compatibility
+headers, `stars-ui-compat-check` to compile the existing UI on Linux, and
+ABI assertions shared with a real MinGW SDK reference test. The first Free
+API adaptation adds C11 rectangle operations and tick counts. The next
+milestone adds top-level window creation and message dispatch, verified by
+`stars-compat-windows` with two independent windows. See
+[window milestone](WIN32-WINDOWS.md). Basic GDI painting, pens/brushes,
+fixed-font text and a resize/close drawing test are now available through
+`stars-compat-paint`; see [painting milestone](WIN32-PAINTING.md). Memory DCs,
+compatible bitmaps and ROP3 bitmap blits are now implemented and checked
+against Windows; see [bitmap milestone](WIN32-BITMAPS.md). Uncompressed DIB
+conversion and all 38 bitmap resources now work and share pixel tests with
+Windows; see [DIB milestone](WIN32-DIBS.md). Fixed/movable heap handles and
+window/thread timers now pass shared native/Windows tests; see
+[memory/timer milestone](WIN32-MEMORY-TIMERS.md). Narrow UI formatting, strings,
+arithmetic and CRT helpers now pass SDK comparisons; see
+[UI services](WIN32-SERVICES.md). Profile settings and legacy file adapters now
+pass shared tests; see [files/profiles](WIN32-FILES-PROFILES.md). Bundled
+proportional/styled/rotated fonts and text layout now work; see
+[fonts/text](WIN32-FONTS.md). Copied application clipping regions and
+excluded holes now work across drawing paths; see [regions](WIN32-REGIONS.md).
+Logical origins, ROP2 operations and copied pattern brushes now work; see
+[drawing state](WIN32-DRAWING-STATE.md). Ellipses and cosmetic dash/dot
+lines and rectangles now work; see [geometry](WIN32-GEOMETRY.md).
+Logical child windows, nested composition, coordinate conversion, IDs, focus
+and enable state now work; see [child windows](WIN32-CHILDREN.md). Menu data, mutation and submenu ownership now work; see [menus](WIN32-MENUS.md). Window menu attachment and interactive popup menus now work; see [popup menus](WIN32-POPUPS.md). Menu resource loading and accelerator dispatch now work; see [UI resources](WIN32-UI-RESOURCES.md). Visible menu bars and dropdown routing now work; see [menu bars](WIN32-MENU-BARS.md). Icons/cursors now load and draw with preserved AND/XOR masks and hotspots; see [icons and cursors](WIN32-ICONS-CURSORS.md).
+Logical palettes and palette-indexed drawing now work on the true-color backend;
+see [palettes](WIN32-PALETTES.md). Interactive modal message boxes and asynchronous
+SDL audio alerts now work; see [message boxes](WIN32-MESSAGE-BOXES.md). Modal open/save
+pickers now preserve Stars wildcard filters and filename contracts; see
+[file dialogs](WIN32-FILE-DIALOGS.md). Default-printer DCs and legacy document/page
+escapes now emit PDFs and can submit them through CUPS; see [printing](WIN32-PRINTING.md). The original help archive now has a checked native reader and a CMake-generated HTML guide with 414 topics, formatted text/tables and all 133 images; all 413 numeric contexts, 1,498 text links and 28 image hotspots resolve. The `WinHelp` adapter now has tests for all 413 contexts; the user confirmed offline browser launch, with offline content checks still remaining; see [help](WIN32-HELP.md). Win32 subset coverage is **178/178 (100%)**, with six CRT helpers counted
+separately. This is basic inventory coverage, not complete Win32 conformance.
+The native `stars-sdl` preview now links the shared client; title-screen painting,
+New Game/wizard cancellation and process cleanup have integration tests.
+The splash image and buttons are painted before the first native show, with
+an integration check at that boundary.
+Screen-sized borderless popups use native fullscreen, with native ownership for
+dialogs above them. The SDL presets now link all 14 game unit-test programs against the client UI.
+The race wizard retains one native window across page transitions. A
+default-width request now selects both frame dimensions, and native SDL menu
+popups retain their owner relationship. `FOpenGame` now accepts Linux paths;
+Continue Game is tested with relative and absolute fixture paths. The
+initial top-level size notification now initializes pane layout, and the
+modeless Technology Browser closes correctly by button and native close request.
+A separate `sdl-sanitize` preset now instruments project code; unsigned race-bit masks are
+repaired. Ordinary heap alignment, host-sentinel access, unaligned scalar stores,
+empty-record copying and negative scanner shifts are repaired. The memory batch
+passes 91/91 fatal ASan/UBSan/LSan tests without suppressions and both full
+regressions match all 519 comparisons (87 unused-storage warnings).
+`DrawRace2` habitat-page stack corruption is fixed and tested; dialogs paint
+before native exposure to avoid an initial black frame. SDL input tests traverse
+the race wizard to the habitat page. Real-desktop qualification remains; see
+[client](WIN32-CLIENT.md).
+Positioning, sibling ordering, no-redraw behavior and minimum/maximum
+size callbacks now work; see [positioning](WIN32-POSITIONING.md). Mouse capture
+now routes child and cross-root input; see [capture](WIN32-CAPTURE.md). Queue-based
+keyboard state, asynchronous queries, point hit testing, CP1252 input, wheel
+delivery and double-click messages now work; see [input](WIN32-INPUT.md). Push/check/radio
+buttons, group boxes, text labels and dialog-item helpers now work. Stars now
+uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
+anchored tooltips; Windows uses `comctl32`. See [toolbars](WIN32-TOOLBARS.md). Radio
+selection dots are round, toolbar menus anchor below their triggers, and tooltips
+use control-relative placement with an owned native tooltip role; see
+[controls](WIN32-CONTROLS.md). Basic narrow edit fields now support selection, limits,
+read-only/password behavior and input; see [edit fields](WIN32-EDIT.md). Complete
+edit conformance remains. Fixed-height string lists, multiple-selection messages
+and owner drawing now work; see [list boxes](WIN32-LISTS.md). Additional list
+conformance remains. Editable and fixed-height string/owner-drawn combos now work;
+see [combo boxes](WIN32-COMBOS.md). All 34 canonical dialogs now create. Basic modal/modeless dialog lifecycles
+now work; see [dialogs](WIN32-DIALOGS.md). All 34 dialog templates
+now load and parse; see [dialog templates](WIN32-DIALOG-TEMPLATES.md).
+Display/work-area metrics, point-array mapping and window identity now work;
+see [desktop services](WIN32-DESKTOP.md). Active top-level window queries now
+distinguish keyboard focus from desktop activation; see [activation](WIN32-ACTIVATION.md).
+Minimize/maximize queries, child state transitions and saved normal placement
+now work; see [window state](WIN32-STATE.md). Root attention requests now use SDL
+without changing focus; see [attention](WIN32-ATTENTION.md). Standard/control
+scroll positions and ranges now work. Child scrollbar drawing, arrow/page clicks,
+thumb dragging, keyboard requests and held-arrow/page repeat now work; standard
+nonclient bars, client reflow and page-size thumb sizing now work. Drag updates
+present the completed map and thumb once; standard bar position changes no longer
+force full map invalidation, and window pixel scrolling uses overlap-safe row copies.
+The shared corner of both bars uses Windows 95 button-face gray. See [scroll controls](WIN32-SCROLL-CONTROLS.md).
+Edit controls now support clipboard/undo, line queries, Ctrl-word navigation and
+multiline Up/Down. Lists now support Shift ranges, Ctrl caret/toggle behavior,
+mouse drag/autoscroll and incremental search. Multiline wrapping, formatting rectangles, edit scrolling, caret/context menus,
+basic IME preedit, visible list bars, horizontal extents and Ctrl-drag now work.
+Broader control conformance remains; see [control qualification](WIN32-CONTROL-QUALIFICATION.md).
+A built-in [window inspector](WIN32-INSPECTION.md) exposes logical IDs,
+parent/owner relationships, state and JSON snapshots for in-process automation.
+Styles and control kinds now expand into symbolic names. The local headers add
+934 SDK-checked constants; declarations do not imply runtime support. See
+[constants](WIN32-CONSTANTS.md).
+The `--headless` launch mode and headless CTest presets now run the same UI
+invisibly and sequentially; see [headless testing](SDL3-HEADLESS.md).
+A game-aware map inspector now enumerates copied player-client object IDs, names,
+coordinates, filter/selection flags and supports selection/reveal with stale-key
+checks. Drawn objects are exposed separately from HWNDs. The
+[native tutorial runner](NATIVE-TUTORIAL-RUNNER.md) now drives a bounded
+startup/rejection/map-order smoke and bounded year-2400/2401 scenarios through
+real SDL input and copied inspection data. They check research, fleet orders and
+the 20-factory production task before generation to year 2402/page 7. Further
+bounded scenarios check three scouting routes and a remote-mining order through
+page 11, and summary-popup/cargo/colonization actions through generation to
+year 2403/page 13. Logistics actions cover message filtering, automatic production,
+cargo, transport presets and waypoint deletion through year 2404/page 17
+(17/80 visited, 21.25%; sixteen pages completed). Colonizer production covers
+Stalwart Defender waypoint deletion and Santa Maria queue insertion through
+year 2405/page 19 (19/80 visited, 23.75%; eighteen completed). Further scenarios
+cover cargo-gauge loading, scanner view buttons and Shaggy Dog colonization
+through year 2406/page 21, then QuikLoad/copy/QuikDrop, repeat orders and colonizer
+production through year 2407/page 23 (23/80 visited, 28.75%; twenty-two completed).
+Expansion covers Red Storm orders, larger production queues, mine filtering and
+enemy design-popup inspection through year 2408/page 26 (26/80 visited, 32.5%;
+twenty-five completed). Fleet splitting checks ship transfer, cargo loading,
+Slime orders and Split All through page 27 (27/80 visited, 33.75%; twenty-six
+completed), preserving ships, cargo and inherited orders. The research cycle
+adds waypoint dragging, unloading filtering, planet/component popup identity
+and research-budget checks through year 2409/page 30 (30/80 visited, 37.5%;
+twenty-nine completed). Oxygen colonization covers message Goto actions,
+Construction next-field selection, mining-message filtering, cargo and the
+Oxygen/Mozart routes through year 2410/page 32 (32/80 visited, 40%; thirty-one
+completed). Production templates add automatic factories/mines, nested preset
+Import, Bloop Goto and colonizer/transport queue insertion; the new bounded
+checkpoint reaches year 2411/page 34 (34/80 visited, 42.5%; thirty-three
+completed). Battle cycle adds scrap/scout routes, colonization, troop unloading,
+mine production, research, browser Close and VCR playback through a qualified
+stop at year 2412/page 38 (38/80 visited, 47.5%; thirty-seven completed). Cross-build
+qualification is recorded in the goal report. The default longest scenario checks every earlier
+checkpoint; replaying earlier stop-only profiles is opt-in.
+Mining uses a 900×700 frame;
+the task combo is clipped by its parent at 640×480, which remains an open layout
+issue. The native resource generator
+now includes the three recorded tutorial data resources, previously omitted.
+Full 80-page execution and later checkpoint evidence remain pending.
+`ScrollWindow` now moves client pixels, pending damage and whole-client children;
+paint regions preserve holes and support partial validation. See
+[content scrolling](WIN32-SCROLL-WINDOW.md). Compatibility window
+targets currently require X11/Xwayland; native Wayland root/popup adaptation is
+still unqualified, as documented in the positioning report. See
+[Free API adoption and coverage](FREE-API-ADOPTION.md),
+[compatibility headers](../compat/win32/README.md) and
+[SDL3 development](SDL3-DEVELOPMENT.md) for dependencies, CLion setup and
+smoke checks, and the [implementation plan](LINUX-SDL3-WIN32-PLAN.md) for
+remaining work.
+
+### Linux client follow-up priorities
+
+The broader goal is paused. Current work prioritizes finishing file dialogs and
+application-relevant controls (milestones 1 and 2); tutorial expansion is paused.
+The previously selected scope is milestones 1, 2, 3, 4, 7, 8 and 9. Track
+completion and evidence in [Linux client goal](LINUX-CLIENT-GOAL.md).
+PDF printing and offline help qualification are deferred outside this goal.
+Packaging is Flatpak plus the CMake install layout, selected by the user.
+
+
+- **Open/save dialog overhaul:** use native platform pickers (Linux libdbus
+  FileChooser portal, standard Windows dialogs, macOS AppKit behind defines).
+  Retain the custom picker for deterministic headless tests; improve its layout and usability,
+  directory navigation, file/filter presentation, filename editing, keyboard
+  interaction and error/overwrite feedback. Qualify non-ASCII filenames and
+  scaling. Preserve Stars' wildcard filters and open/save filename contracts;
+  cover actual game/race open and save flows with sequential headless tests and
+  desktop checks. See [file dialogs](WIN32-FILE-DIALOGS.md).
+- **Print Map to PDF and open (deferred):** complete and validate the game-map PDF, then
+  open the successfully generated file in the platform's default PDF viewer.
+  The user prints from that viewer. Handle cancellation, generation errors and
+  viewer-launch failure while retaining a completed PDF for recovery. Direct
+  printer submission, printer discovery and an in-app printer settings dialog
+  are outside this planned user flow. See [printing](WIN32-PRINTING.md).
+- **Control qualification:** owner-drawn lists now send focus actions, including
+  the empty-list focus indicator used by Stars. Shared SDK checks cover nonempty
+  focus and notification ordering; native checks cover empty painting and
+  callback mutation/destruction. Single-selection owner-drawn rows also send
+  synchronous selection actions, including keyboard changes. Multi-selection
+  action sequences, broader drawing state, notification and undo edges remain. Edit undo now groups adjacent Backspace/Delete operations
+  and retains history when insertion is rejected at the text limit; shared SDK
+  tests cover these boundaries. Upper/lower edit styles now normalize initial
+  and programmatically set text too. Empty/read-only undo now preserves SDK
+  return, selection, history and notification contracts. Text-changing undo/redo
+  now sets modified state and selects restored ranges with SDK notification
+  ordering. See [control qualification](WIN32-CONTROL-QUALIFICATION.md).
+
+Loaded-game workflow tests now cover research commit/reopen/restore and
+production edit/cancel/commit/reopen, battle-plan checkbox/tactic changes and
+player-relation radio changes through hierarchy inspection and SDL input.
+Ship-design copy/cancel/accept, rename/cancel/accept and deletion checks also
+pass headless/private-X11 qualification. They exposed default OK/Cancel commands
+prematurely ending the modal; default handling now leaves termination to the
+application. A dedicated fleet profile checks Merge list selection, Cancel
+without fleet changes and acceptance preserving aggregate ships/cargo/fuel.
+The fleet profile also checks Repeat Orders persistence/restoration and Split
+transfer/Cancel/OK with conserved ship/cargo/fuel totals. Hull/component editing,
+starbase design, broader cargo transfers and route editing remain outstanding.
+Planet/fleet mineral transfer now has Cancel/accept/reverse checks, and waypoint
+task changes have commit/reselection/restoration checks. Four built-in transport
+presets now have real popup-input assertions, and scanner Shift-click append,
+destination dragging and waypoint-list deletion restore the original order.
+Multiple route legs, Ctrl gestures and customized presets remain unqualified. Combined workflow
+qualification exposed paint starvation from empty scrollbar geometry; the
+handler now validates pending paint even for zero-width/height controls.
+Low-height fleet-panel reachability still needs layout qualification. Split
+qualification exposed misaligned packed-button rectangles; drawing and tracking
+now copy those rectangles before native access without widening records.
+Relations are tested by temporarily switching the copied human/AI fixture to
+multiplayer mode in memory; loading a multiplayer save remains unqualified.
+They exposed and guard against modal default handling overwriting an application
+cancellation result; see [goal evidence](LINUX-CLIENT-GOAL.md). Broader gameplay
+workflows and the native tutorial remain outstanding.
+
+These priorities remain subject to the completion evidence in the goal tracker. Basic API coverage stays
+178/178 (100%); the work improves behavior and user experience.
+
+## Unicode portability
+
+The native clients still use byte-oriented game text; the SDL UI interprets it
+as CP1252. The [Unicode audit](UNICODE-AUDIT.md) records the current encoding
+boundaries, 18 findings, runtime probes and proposed acceptance tests. First
+address Unicode filesystem access on Windows, native-path editing in the SDL
+fallback browser, UI/host password encoding, and multibyte filename caches.
+Unicode display, resources and editing also require text layout and capacity
+work. Persisted Unicode names/messages need an explicit compatibility design;
+do not reinterpret existing saved bytes or widen disk fields. The macOS host
+and Cocoa chooser source exist, but this checkout still enables the SDL client
+only on Linux. These items are open; the audit does not implement fixes.
+
 ## 2.8 (released)
 
 Work proceeded in this order:
@@ -165,3 +397,12 @@ are outside the game code and are not planned.
   scrolls the report tables and goes to the window under the cursor, and
   left-drag pans the scanner (done). Still to do: the wheel stepping
   through messages in the message pane.
+
+
+The year-2411 native tutorial development found and repaired an owner-drawn
+combo repaint loop: read-only row queries invalidated its popup while painting,
+starving timers. The combo regression now checks query-driven drawing leaves
+no pending popup damage. Qualification passes 103 fatal sanitizer tests,
+51 Windows unit/reference tests, the full 519-match native regression and all
+four Release tutorial profiles; see the [goal report](LINUX-CLIENT-GOAL.md).
+No game baseline changes.

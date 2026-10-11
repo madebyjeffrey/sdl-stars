@@ -19,6 +19,7 @@ INT_PTR CALLBACK RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 void             InvalidateAdvPtsRect(HWND hwnd);
 void             DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr);
 int16_t          FSaveRace(char *szFileSuggest, PLAYER *pplr);
+void             SetSzRaceFile(const char *pszFile);
 void             SetRCWTitle(HWND hwnd, int16_t iStep);
 
 #endif

@@ -23,7 +23,7 @@ int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal) {
 }
 
 int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
-    if (1 << ibit & pplr->grbitAttr) {
+    if (UINT32_C(1) << ibit & pplr->grbitAttr) {
         return TRUE;
     }
     return FALSE;
@@ -32,7 +32,7 @@ int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
 void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
     uint32_t grMask;
 
-    grMask = 1 << ibit;
+    grMask = UINT32_C(1) << ibit;
     if (fSet) {
         pplr->grbitAttr |= grMask;
     } else {

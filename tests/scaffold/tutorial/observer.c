@@ -11,14 +11,25 @@ static size_t    stateLength;
 LRESULT CALLBACK __real_ScannerWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 static WPARAM    lastMouseKeys;
 static LPARAM    lastMousePoint;
+static UINT      lastMouseMessage;
+static unsigned  cScannerClicks, cScannerInput;
+static BOOL      fStateReading;
 
 // __wrap_ScannerWndProc records delivered clicks and delegates all behavior to Stars!.
 LRESULT CALLBACK __wrap_ScannerWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
-    if (message == WM_LBUTTONDOWN) {
+    BOOL    fClick = message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK;
+    LRESULT lr;
+    if (fClick)
+        cScannerInput++;
+    lr = __real_ScannerWndProc(window, message, wParam, lParam);
+    if (fClick) {
+        cScannerInput--;
+        cScannerClicks++;
+        lastMouseMessage = message;
         lastMouseKeys = wParam;
         lastMousePoint = lParam;
     }
-    return __real_ScannerWndProc(window, message, wParam, lParam);
+    return lr;
 }
 
 // StateAppend appends one formatted observation, rejecting truncated snapshots.
@@ -78,6 +89,11 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     (void)message;
     (void)timer;
     (void)tick;
+    // Sent messages can reenter while UI code draws or builds a snapshot.
+    // Keep the previous complete observation until the input handler returns.
+    if (fStateReading || cScannerInput != 0)
+        return;
+    fStateReading = TRUE;
     stateLength = 0;
     memcpy(savedWork, szWork, sizeof(savedWork));
     StateAppend("version=1\nturn=%u\nyear=%u\nactive=%u\npage=%d\nbold=%d\nturnDone=%u\nautoComplete=%u\nerror=%d\nselection=%d|%d|%d\nmessage=%d\nfontHeight=%"
@@ -90,6 +106,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     StateWindow("title", hwndTitle);
     StateWindow("scanner", hwndScanner);
     StateAppend("scannerClick=%llu|%d|%d\n", (unsigned long long)lastMouseKeys, (int16_t)LOWORD(lastMousePoint), (int16_t)HIWORD(lastMousePoint));
+    StateAppend("scannerClickCount=%u\nscannerClickMessage=%u\n", cScannerClicks, lastMouseMessage);
     if (hwndScanner != NULL) {
         GetClientRect(hwndScanner, &rect);
         StateRect("scannerBounds", 0, hwndScanner, &rect);
@@ -215,7 +232,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
         }
         for (i = 0; i < crgbtnXfer; i++) {
             StateAppend("transferButton.%d=%d|%d|%u|%u|%ld|%ld|%ld|%ld\n", i, rgbtnXfer[i].iVal & 0x7f, rgbtnXfer[i].iSide, rgbtnXfer[i].fVisible,
-                        rgbtnXfer[i].fDisabled, (long)rgbtnXfer[i].rc.left, (long)rgbtnXfer[i].rc.top, (long)rgbtnXfer[i].rc.right,
+                        (rgbtnXfer[i].bt & 4) != 0, (long)rgbtnXfer[i].rc.left, (long)rgbtnXfer[i].rc.top, (long)rgbtnXfer[i].rc.right,
                         (long)rgbtnXfer[i].rc.bottom);
         }
     }
@@ -230,6 +247,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     }
     SetWindowTextA(stateEdit, stateText);
     memcpy(szWork, savedWork, sizeof(savedWork));
+    fStateReading = FALSE;
 }
 
 // StateWindowProc refreshes observations synchronously without changing game state.
@@ -261,5 +279,6 @@ int16_t __wrap_InitInstance(int16_t nCmdShow) {
         ExitProcess(2);
     }
     SendMessage(stateEdit, EM_SETLIMITTEXT, sizeof(stateText), 0);
+    StateTimer(stateWindow, WM_TIMER, 1, GetTickCount());
     return result;
 }

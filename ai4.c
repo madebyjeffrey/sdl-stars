@@ -496,7 +496,7 @@ void DoCyberPackets() {
     CYBERINFO     *lpciPlanDst;
     CYBERINFOTEMP *lpciPlanT;
     int16_t        iWarpSrc;
-    int32_t       *plMinMax;
+    uint8_t       *plMinMax;
     int32_t        lPackets;
     int32_t        lMineral;
     int16_t        cResLeft;
@@ -576,14 +576,14 @@ void DoCyberPackets() {
                 }
             }
             if (!lpciPlan->fNeedScanPkt && (rgplr[idPlayer].lvlAi > lvlAiStandard || (rgplr[idPlayer].lvlAi == lvlAiStandard && Random(3) == 0))) {
-                plMinMax = (int32_t *)(vlpbAiData + (dOffsetPlanTemp + game.cPlanMax * 2));
+                plMinMax = vlpbAiData + (dOffsetPlanTemp + game.cPlanMax * 2);
                 rgResAvail[0] -= rgResCost[0];
                 rgResAvail[1] -= rgResCost[1];
                 rgResAvail[2] -= rgResCost[2];
                 lMineral = rgResAvail[0] - 70 + (rgResAvail[1] - 70) + (rgResAvail[2] - 70);
                 cResLeft = LOWORD((int32_t)(rgResAvail[3] / 2));
                 lPackets = (int16_t)((int16_t)(cResLeft - 5) / 5);
-                *plMinMax = lMineral < (int32_t)(uint32_t)(lPackets * 70) ? lMineral : (uint32_t)(lPackets * 70);
+                RawStore32(plMinMax, lMineral < (int32_t)(uint32_t)(lPackets * 70) ? lMineral : (uint32_t)(lPackets * 70));
                 if (lMineral > 150) {
                     lpplDst = LpplFindClosestEnum(lppl, FEnumPktAttack);
                 } else {
@@ -1168,7 +1168,7 @@ int16_t FEnumPktAttack(PLANET *lpplSrc, PLANET *lpplTest) {
     int16_t    fTwoMA;
     double     dMod;
     int16_t    iWarp;
-    int32_t   *plMinMax;
+    uint8_t   *plMinMax;
     int32_t    lMineral;
     int32_t    lMinNeeded;
     CYBERINFO *lpciPlan;
@@ -1180,7 +1180,7 @@ int16_t FEnumPktAttack(PLANET *lpplSrc, PLANET *lpplTest) {
     iWarpDst = 0;
     dOffsetPlanTemp = game.cPlanMax * 2 + 2;
     lpciPlan = (CYBERINFO *)(vlpbAiData + 2);
-    plMinMax = (int32_t *)(vlpbAiData + (dOffsetPlanTemp + game.cPlanMax * 2));
+    plMinMax = vlpbAiData + (dOffsetPlanTemp + game.cPlanMax * 2);
     if (lpplTest->iPlayer == idPlayer || lpplTest->iPlayer == iplrNone || lpciPlan[lpplTest->id].iPktTarget > 0 ||
         GetRaceStat(&rgplr[lpplTest->iPlayer], rsMajorAdv) == raMacintosh) {
         return FALSE;
@@ -1202,9 +1202,9 @@ int16_t FEnumPktAttack(PLANET *lpplSrc, PLANET *lpplTest) {
     dDistanceTgt = DGetDistance(rgptPlan[lpplSrc->id].x, rgptPlan[lpplSrc->id].y, rgptPlan[lpplTest->id].x, rgptPlan[lpplTest->id].y);
     if ((long double)dDistanceTgt <= (long double)dDistance * 2.5) {
         if (fTwoMA) {
-            lMineral = (int32_t)((long double)*plMinMax * pow(0.875, (double)((long double)dDistanceTgt / dDistance)));
+            lMineral = (int32_t)((long double)(int32_t)RawLoad32(plMinMax) * pow(0.875, (double)((long double)dDistanceTgt / dDistance)));
         } else {
-            lMineral = (int32_t)((long double)*plMinMax * pow(0.75, (double)((long double)dDistanceTgt / dDistance)));
+            lMineral = (int32_t)((long double)(int32_t)RawLoad32(plMinMax) * pow(0.75, (double)((long double)dDistanceTgt / dDistance)));
         }
         if (lpplTest->uDefGuess > 99 || lpplTest->uPopGuess == 0) {
             return FALSE;
