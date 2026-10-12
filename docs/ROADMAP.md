@@ -25,8 +25,11 @@ workflows remain in `tests/compat`. Generated build trees are confined to `dist/
 untracked CMake trees and the empty backup directory, and archived 154 old scratch
 files plus 11 scratch/install directories under `dist/archive/pre-sdl-consolidation`.
 Current qualification logs are grouped under `dist/verification/sdl-migration`.
-Full SDL tutorial coverage and real-desktop/native-picker qualification remain
-outstanding. Historical Win32 milestones below describe the wrapper's API work,
+Actual Windows native open/save creation, owned modality and cancellation are
+verified. Manual selection/overwrite/scaling and fresh Linux/macOS execution remain
+outstanding. Windows Merge cycle reaches year 2413/page 42, then fails at stage
+216/instruction 332 during the Mini-Miner engine drag; the default smoke passes.
+Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.
 
 ## 2.9

@@ -1,5 +1,11 @@
 # Native tutorial runner
 
+The October 12 Windows SDL Merge cycle qualification reaches year 2413/page 42
+and 413 actions, then times out at stage 216/instruction 332 during the Mini-Miner
+engine drag. The default Windows smoke passes. This longer Windows run is a
+failure; the later Linux checkpoint evidence below does not qualify it. See
+[Windows verification](WINDOWS-SDL3.md) for artifacts and remaining coverage.
+
 `stars-native-tutorial` links the real SDL client, its resources and the game
 core. It runs the normal `WinMain` message loop and queues SDL mouse/keyboard
 events on the UI thread. No external desktop automation or AutoHotkey is used.

@@ -8,6 +8,11 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Added an opt-in Windows desktop check that opens actual system open/save
+  pickers and automatically cancels them, verifying native ownership, message
+  pumping and directory preservation. Final source-layout qualification records
+  the successful builds/regressions and the Windows tutorial's page-42 drag stop.
+
 - Archived the retired Wine/AutoHotkey tutorial and native new-game harness in
   `tests/reference/win32-tutorial`, retaining gestures and qualification evidence.
   Active test instructions use the SDL workflow runners; generated CLion build

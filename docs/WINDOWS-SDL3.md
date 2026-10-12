@@ -185,3 +185,29 @@ directories on PATH, the installed client and host report their versions and
 produce identical verification check files. Optional SDK reference targets build
 separately without rebuilding a native desktop client. Linux/macOS execution and
 full SDL tutorial qualification remain pending.
+
+
+## Final source-layout and native-picker checks (2026-10-12)
+
+The normal `windows-sdl-debug`, `windows-sdl-release` and `host-release` presets
+build the organized source tree without compiler warnings. Windows headless
+checks pass 44/44; host unit programs pass 15/15. Both final regressions match
+519 comparisons through turn 150, with 69 unused-storage warnings each and no
+differences/errors. The portable runtime launches with only system directories
+on PATH, and its client/host verification check files match. Flatpak tracked-source
+export succeeds with the new layout. Logs are under
+`dist/verification/sdl-migration/`.
+
+`stars-compat-filedialog-desktop` is an opt-in real Windows desktop check. It
+creates actual owned system open and save pickers, confirms owner disable/restore
+and hook pumping, cancels both, and checks unchanged output/filter/CWD. It passes
+on this Windows desktop; headless CI does not run it. Manual file selection,
+overwrite and desktop scaling acceptance remain separate from this cancellation
+check and the deterministic Unicode/filter SDK tests.
+
+The additional Merge cycle tutorial attempt reaches year 2413/page 42 after
+413 actions, then times out at stage 216/instruction 332 while inserting the
+Long Hump 6 engine into the Mini-Miner design. This is a failing qualification,
+not a walkthrough pass. The default tutorial smoke passes. Artifacts are in
+`dist/windows-sdl-debug/test-client/tutorial-merge-cycle-dummy/`; full tutorial
+coverage and fresh Linux/macOS execution remain pending.

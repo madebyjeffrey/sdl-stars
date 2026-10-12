@@ -8,6 +8,13 @@ if(STARS_NATIVE_FILE_DIALOGS)
     set_target_properties(stars-compat-filedialog-windows PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     add_test(NAME win32_sdl_native_filedialog COMMAND stars-compat-filedialog-windows)
     set_tests_properties(win32_sdl_native_filedialog PROPERTIES LABELS compat TIMEOUT 30)
+    # Real desktop checks are opt-in; headless CI never opens system windows.
+    add_executable(stars-compat-filedialog-desktop tests/compat/win32_filedialog_windows_desktop.c
+        $<TARGET_OBJECTS:stars_filedialog_windows>)
+    target_link_libraries(stars-compat-filedialog-desktop PRIVATE comdlg32)
+    target_include_directories(stars-compat-filedialog-desktop PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+    target_compile_options(stars-compat-filedialog-desktop PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    set_target_properties(stars-compat-filedialog-desktop PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     add_executable(stars-compat-filedialog-native-flow tests/compat/win32_filedialog_windows_flow.c)
     target_link_libraries(stars-compat-filedialog-native-flow PRIVATE stars_win32 SDL3::SDL3)
     target_include_directories(stars-compat-filedialog-native-flow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
