@@ -1675,6 +1675,7 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
             ReleaseDC(hwndPlanet, hdc);
         }
     }
+    QueuePlanetPaneLayout();
     return;
 }
 

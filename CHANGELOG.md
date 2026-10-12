@@ -8,6 +8,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- The planet/fleet pane now scrolls expanded sections at small window sizes,
+  with proportional thumbs, live dragging and accumulated wheel input. Its
+  existing controls keep their content coordinates and remain reachable.
+
 - `MessageWndProc` now supports wheel navigation between messages, accumulating
   partial notches and preserving the current message when Ctrl/Shift is held or
   a message is being composed. Long message edit controls retain text scrolling.

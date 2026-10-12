@@ -56,6 +56,9 @@ int16_t InitMDIApp() {
     if (RegisterClass(&wc) == 0) {
         return FALSE;
     }
+    wc.lpfnWndProc = PlanetPaneWndProc;
+    wc.lpszClassName = "StarsPlanetPane";
+    if (RegisterClass(&wc) == 0) return FALSE;
     wc.style = 2560;
     wc.lpfnWndProc = PopupWndProc;
     wc.hbrBackground = GetStockObject(WHITE_BRUSH);
@@ -154,7 +157,7 @@ void CreateChildWindows() {
             InvalidateRect(hwndMine, NULL, TRUE);
         }
         if (!hwndPlanet) {
-            hwndPlanet = CreateWindow(szPlanet, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
+            hwndPlanet = CreatePlanetPane(hwndFrame);
         } else {
             InvalidateRect(hwndPlanet, NULL, TRUE);
         }
@@ -2555,7 +2558,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dxPlanWant;
             }
-            vfs.xTop = vfs.xTop <= 198 ? 198 : vfs.xTop;
+            vfs.xTop = max(vfs.xTop, 198 + GetSystemMetrics(SM_CXVSCROLL));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dyMsgWant <= dyMsgMin ? dyMsgMin : vfs.dyMsgWant;
@@ -2587,7 +2590,7 @@ void RefitFrameChildren() {
                 yScanner = 0;
             }
             MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.dy - yScanner, TRUE);
-            MoveWindow(hwndPlanet, 0, 0, vfs.xTop, vfs.y1, TRUE);
+            MovePlanetPane(0, 0, vfs.xTop, vfs.y1);
             MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
             MoveWindow(hwndMine, 0, vfs.y2 + 8, vfs.xTop, dyMin, TRUE);
             break;
@@ -2598,7 +2601,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dx2PlanWant;
             }
-            vfs.xTop = vfs.xTop <= 198 ? 198 : vfs.xTop;
+            vfs.xTop = max(vfs.xTop, 198 + GetSystemMetrics(SM_CXVSCROLL));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dy2MsgWant <= dyMsgMin ? dyMsgMin : vfs.dy2MsgWant;
@@ -2622,7 +2625,7 @@ void RefitFrameChildren() {
                     yScanner = 0;
                 }
                 MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.y2 - yScanner, TRUE);
-                MoveWindow(hwndPlanet, 0, yScanner, vfs.xTop, vfs.y1 - yScanner, TRUE);
+                MovePlanetPane(0, yScanner, vfs.xTop, vfs.y1 - yScanner);
                 MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
                 MoveWindow(hwndMine, vfs.xTop + 8, vfs.y2 + 8, vfs.dx - vfs.xTop - 8, dyMin, TRUE);
             }

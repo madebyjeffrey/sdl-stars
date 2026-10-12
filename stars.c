@@ -63,6 +63,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
     CloseScannerInspector();
+    ClosePlanetPane();
     FreeStuff();
     return (int16_t)msg.wParam;
 }

@@ -321,10 +321,27 @@ bool __wrap_SDL_ShowWindow(SDL_Window *lpWindow) {
 }
 
 static BOOL FPushClick(HWND hwnd) {
-    RECT rc;
-    POINT pt;
+    RECT rc, rcPane;
+    POINT pt, ptEnd;
+    HWND hwndAncestor, hwndPane;
+    int i, iPosition;
     HWND lpTitle = HwndCompatRoot(hwnd);
     SDL_Event event = {0};
+    for (hwndAncestor = hwnd; hwndAncestor; hwndAncestor = GetParent(hwndAncestor)) {
+        if (hwndAncestor != hwndPlanet) continue;
+        hwndPane = GetParent(hwndPlanet);
+        for (i = 0; i < 2; i++) {
+            GetWindowRect(hwnd, &rc); GetClientRect(hwndPane, &rcPane);
+            pt = (POINT){rc.left, rc.top}; ptEnd = (POINT){rc.right, rc.bottom};
+            ScreenToClient(hwndPane, &pt); ScreenToClient(hwndPane, &ptEnd);
+            iPosition = GetScrollPos(hwndPane, i == 0 ? SB_VERT : SB_HORZ);
+            if ((i == 0 ? pt.y : pt.x) < 0) iPosition += i == 0 ? pt.y : pt.x;
+            else if ((i == 0 ? ptEnd.y : ptEnd.x) > (i == 0 ? rcPane.bottom : rcPane.right))
+                iPosition += i == 0 ? ptEnd.y - rcPane.bottom : ptEnd.x - rcPane.right;
+            SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, max(0, iPosition)), 0);
+        }
+        break;
+    }
     if (!lpTitle || !GetWindowRect(hwnd, &rc)) return FALSE;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
     if (!ScreenToClient(lpTitle, &pt)) return FALSE;
@@ -1061,7 +1078,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     int16_t fNoResearchSav, fSinglePlrSav;
     const char *pszWorkflow = getenv("STARS_CLIENT_WORKFLOW");
     if (pszWorkflow) {
-        if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel();
+        if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel() && FCheckPlanetPane();
         if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows() && FCheckSaveReloadWorkflow();
         return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows();
     }

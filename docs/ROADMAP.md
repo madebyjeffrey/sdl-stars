@@ -216,8 +216,11 @@ remaining work.
 
 ### Linux client follow-up priorities
 
-The broader goal is paused. Current work prioritizes finishing file dialogs and
-application-relevant controls (milestones 1 and 2); tutorial expansion is paused.
+The broader goal is paused. Current work completes gameplay workflows, UI polish
+and packaging (milestones 3, 8 and 9), after the private Mesa leak repair; tutorial
+expansion is paused.
+Message wheel navigation and a scrollable planet/fleet viewport are implemented;
+see [UI polish](UI-POLISH.md) for qualification.
 The previously selected scope is milestones 1, 2, 3, 4, 7, 8 and 9. Track
 completion and evidence in [Linux client goal](LINUX-CLIENT-GOAL.md).
 PDF printing and offline help qualification are deferred outside this goal.
@@ -410,8 +413,9 @@ are outside the game code and are not planned.
   images, so use another capture method or a Linux/Xvfb run.
 - **Mouse wheel and panning:** the wheel zooms the scanner at the cursor,
   scrolls the report tables and goes to the window under the cursor, and
-  left-drag pans the scanner (done). Still to do: the wheel stepping
-  through messages in the message pane.
+  left-drag pans the scanner. Message-pane wheel navigation and scrolling
+  expanded planet/fleet sections are also implemented and tested; see
+  [UI polish](UI-POLISH.md).
 
 
 The year-2411 native tutorial development found and repaired an owner-drawn
