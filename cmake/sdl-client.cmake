@@ -76,7 +76,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-target_link_options(stars-compat-client-startup PRIVATE "LINKER:--wrap=InitInstance" "LINKER:--wrap=AlertSz" "LINKER:--wrap=SDL_ShowWindow" "LINKER:--wrap=PromptPassword" "LINKER:--wrap=TrackPopupMenu" "LINKER:--wrap=SDL_RenderPresent")
+target_link_options(stars-compat-client-startup PRIVATE "LINKER:--wrap=InitInstance" "LINKER:--wrap=AlertSz" "LINKER:--wrap=SDL_ShowWindow" "LINKER:--wrap=PromptPassword" "LINKER:--wrap=TrackPopupMenu" "LINKER:--wrap=SDL_RenderPresent" "LINKER:--wrap=NewGameWizard" "LINKER:--wrap=FNativeSaveFileName")
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
 add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
 target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
@@ -224,6 +224,28 @@ if(STARS_BUILD_TESTS)
         "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_fleet_x11 PROPERTIES LABELS "client"
         ENVIRONMENT "SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_CLIENT_WORKFLOW=fleet" TIMEOUT 210)
+    add_test(NAME win32_client_designer_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_designer_dummy PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_CLIENT_WORKFLOW=designer" TIMEOUT 200)
+    add_test(NAME win32_client_designer_x11 COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_x11_wm.py"
+        --xvfb "${STARS_XVFB_RUN_EXECUTABLE}" --wm "${STARS_OPENBOX_EXECUTABLE}"
+        --xprop "${STARS_XPROP_EXECUTABLE}" --timeout 200 "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_designer_x11 PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_CLIENT_WORKFLOW=designer" TIMEOUT 210)
+    add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 100)
+    add_test(NAME win32_client_newgame_x11 COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_x11_wm.py"
+        --xvfb "${STARS_XVFB_RUN_EXECUTABLE}" --wm "${STARS_OPENBOX_EXECUTABLE}"
+        --xprop "${STARS_XPROP_EXECUTABLE}" --timeout 100 "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_newgame_x11 PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 110)
     foreach(STARS_STARTUP_BACKEND dummy x11)
         file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/${STARS_STARTUP_BACKEND}")
         if(STARS_STARTUP_BACKEND STREQUAL "x11")
@@ -834,8 +856,14 @@ if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/run_wayland.py"
             --weston "${STARS_WESTON_EXECUTABLE}" "$<TARGET_FILE:stars-compat-smoke>" --self-test)
     set_tests_properties(sdl_smoke_wayland PROPERTIES LABELS "compat;wayland" RUN_SERIAL TRUE TIMEOUT 60)
+    add_test(NAME win32_client_designer_wayland
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/run_wayland.py"
+            --weston "${STARS_WESTON_EXECUTABLE}" --timeout 200 "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_designer_wayland PROPERTIES LABELS "client;wayland" RUN_SERIAL TRUE TIMEOUT 210
+        ENVIRONMENT "STARS_CLIENT_WORKFLOW=designer")
     if(STARS_TEST_MESA_PREFIX)
-        set_property(TEST sdl_smoke_wayland win32_client_startup_wayland win32_client_race_wayland
+        set_property(TEST sdl_smoke_wayland win32_client_startup_wayland win32_client_race_wayland win32_client_designer_wayland
             win32_desktop_wayland_1_software win32_desktop_wayland_1_opengl
             win32_desktop_wayland_2_software win32_desktop_wayland_2_opengl
             APPEND PROPERTY ENVIRONMENT "STARS_TEST_MESA_PREFIX=${STARS_TEST_MESA_PREFIX}")

@@ -31,7 +31,7 @@ comparisons, with 87 existing warnings and no differences/errors or skips.
 | --- | --- | --- | --- |
 | 1 | Open/save dialog overhaul | Implementation complete; desktop/macOS qualification pending | Native selection, validation/retries/errors, Unicode game/race I/O and fullscreen ownership pass automated tests; saved compositor feedback and macOS execution remain unverified |
 | 2 | Application-relevant control behavior | Complete for Stars' used styles | Shared SDK/native control contracts, application workflows, fatal sanitizers and regression checks pass; generic extensions outside the product scope remain documented |
-| 3 | Gameplay UI workflow testing | In progress | Broader dialogs and complete workflows through inspection/headless tests, real input translation and stable state assertions |
+| 3 | Gameplay UI workflow testing | Critical product workflows automated and qualified | Designer component/hull/starbase, Save/MRU reload and Basic/Advanced creation join the existing gameplay matrix; real-desktop acceptance remains milestone 7 |
 | 4 | Native tutorial runner | In progress | Full tutorial driven in process through hierarchy and map inspection, without AutoHotkey; checkpoint/action evidence and failure artifacts |
 | 7 | Wayland and desktop qualification | Native Wayland implementation and Debug tests added; qualification incomplete | Native Wayland positions/popups, focus/capture, scale/multi-monitor and GPU/software presentation; documented platform limits |
 | 8 | UI polish | Pending | Message-pane wheel navigation and resolution of issues found during qualification |
@@ -320,6 +320,13 @@ deferred to milestone 4's native runner. Hull/component editing,
 starbase design and other broad gameplay workflows remain outstanding.
 
 ## Manual feedback saved for later
+
+Product milestone 3 now adds hull selection and component drag/remove/reinsert
+for ships and starbases, cancellation/acceptance/deletion with original-design
+preservation, actual Save/MRU reload and Basic/Advanced creation. All five focused
+cases and the full 120-case fatal sanitizer gate pass, alongside 55 Windows
+tests and 519 matching native regression comparisons. See
+[gameplay matrix](GAMEPLAY-QUALIFICATION.md). Tutorial expansion remains paused.
 
 The user is leaving the agent running and requests that further manual testing
 feedback/checks be saved for later rather than requested during unattended work.

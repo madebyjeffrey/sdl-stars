@@ -306,7 +306,7 @@
         "DISPLAY": null,
         "WAYLAND_DISPLAY": null
       },
-      "filter": { "exclude": { "name": "_x11$" } },
+      "filter": { "exclude": { "name": "_x11$|wayland" } },
       "execution": { "jobs": 1, "noTestsAction": "error" },
       "output": { "outputOnFailure": true }
     },

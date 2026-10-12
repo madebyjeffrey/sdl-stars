@@ -49,6 +49,12 @@ and cherry-pick to `2.8`.
 
 ## Linux desktop compatibility
 
+The native product workflow matrix now covers Basic/Advanced game creation,
+ship/starbase hulls and component drag/remove/reinsert, design accept/cancel/delete,
+and actual Save/MRU reload alongside the existing fleet, research, production,
+reports and map checks. See [gameplay qualification](GAMEPLAY-QUALIFICATION.md).
+The full tutorial and real desktop/hardware qualification remain separate.
+
 The Wayland graphics leak is traced to Mesa's runtime assembler retaining its
 empty executable heap across library unload. A private, pinned dependency patch
 releases the heap on its last free; lifetime/SDL/native Wayland sanitizer tests

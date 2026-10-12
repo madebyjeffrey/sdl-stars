@@ -488,6 +488,8 @@ static BOOL FCheckShipWorkflow(HWND hwndDialog) {
     return fWorkflowPassed;
 }
 
+static BOOL FCheckHullWorkflow(HWND hwndDialog);
+
 static BOOL FCheckMergeWorkflow(HWND hwndDialog) {
     HWND hwndList = HwndWorkflowControl(hwndDialog, IDC_MERGE_FLEETS_LIST, "ListBox"), hwndControl;
     int cSel;
@@ -642,6 +644,8 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
         if (!FCheckSplitWorkflow(hwndDialog)) goto LFail;
     } else if (iWorkflow >= 17 && iWorkflow <= 19) {
         if (!FCheckCargoWorkflow(hwndDialog)) goto LFail;
+    } else if (iWorkflow >= 20) {
+        if (!FCheckHullWorkflow(hwndDialog)) goto LFail;
     } else if (iWorkflow >= 8) {
         if (!FCheckShipWorkflow(hwndDialog)) goto LFail;
     } else {
@@ -1045,6 +1049,8 @@ LDone:
     return fPassed;
 }
 
+#include "win32_designer_workflow.h"
+
 static BOOL FCheckGameplayWorkflows(void) {
     PROD rgprodSav[64];
     SHDEF rgshdefSav[16];
@@ -1053,7 +1059,10 @@ static BOOL FCheckGameplayWorkflows(void) {
     int iResearchSav = rgplr[idPlayer].iTechNow, cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
     int16_t fNoResearchSav, fSinglePlrSav;
     const char *pszWorkflow = getenv("STARS_CLIENT_WORKFLOW");
-    if (pszWorkflow) return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows();
+    if (pszWorkflow) {
+        if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows() && FCheckSaveReloadWorkflow();
+        return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows();
+    }
     if (sel.grobj != grobjPlanet || sel.pl.iPlayer != idPlayer) {
         fprintf(stderr, "Workflow selection: grobj %u planet %d owner %d player %d\n", sel.grobj, sel.pl.id, sel.pl.iPlayer, idPlayer);
         return FALSE;
@@ -1119,6 +1128,8 @@ int16_t __wrap_AlertSz(char *sz, int16_t mbType) {
     return IDOK;
 }
 
+#include "win32_newgame_workflow.h"
+
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
     const char *pszCapture = getenv("STARS_CLIENT_CAPTURE");
@@ -1135,6 +1146,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (pszNewGame) {
+        if (!FCheckNewGameWorkflow()) goto LDone;
+        return;
+    }
     if (iStage == 10) return;
     lpFrame = LpCompatWindow(hwndFrame);
     lpTitle = LpCompatWindow(hwndTitle);
@@ -1328,6 +1343,7 @@ int16_t __wrap_InitInstance(int16_t nCmdShow) {
 int main(void) {
     char szCommand[] = "";
     int nResult;
+    pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
     if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "Stars.ini")) return 1;
     if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "Stars.ini") ||

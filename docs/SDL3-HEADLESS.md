@@ -17,7 +17,7 @@ ctest --preset sdl-headless
 ```
 
 The preset runs sequentially, clears DISPLAY/WAYLAND_DISPLAY, selects dummy
-video/audio plus software rendering, and excludes the separate `_x11` desktop
+video/audio plus software rendering, and excludes the separate X11 and Wayland desktop
 qualification tests. No new libraries are needed. Existing configure dependencies
 remain those in [SDL development](SDL3-DEVELOPMENT.md); this preset does not run
 Xvfb, Openbox or external mouse/keyboard automation.
