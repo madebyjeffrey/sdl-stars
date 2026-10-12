@@ -194,7 +194,12 @@ checkpoint reaches year 2411/page 34 (34/80 visited, 42.5%; thirty-three
 completed). Battle cycle adds scrap/scout routes, colonization, troop unloading,
 mine production, research, browser Close and VCR playback through a qualified
 stop at year 2412/page 38 (38/80 visited, 47.5%; thirty-seven completed). Cross-build
-qualification is recorded in the goal report. The default longest scenario checks every earlier
+qualification is recorded in the goal report. Subsequent native runner development
+extends through Mini-Miner design, terraforming templates, Value sorting and merge
+orders to year 2418/page 50 (50/80 visited, 62.5%). The extended checkpoint still
+reports partial coverage; later workflows and final year 2437 remain outstanding.
+See [NATIVE-TUTORIAL-RUNNER.md](NATIVE-TUTORIAL-RUNNER.md) for current verification.
+The default longest scenario checks every earlier
 checkpoint; replaying earlier stop-only profiles is opt-in.
 Mining uses a 900×700 frame;
 the task combo is clipped by its parent at 640×480, which remains an open layout

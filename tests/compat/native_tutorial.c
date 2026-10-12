@@ -10,7 +10,7 @@
 int16_t __real_InitInstance(int16_t nCmdShow);
 static UINT_PTR idTimer;
 static int iStage, cWait, cActions, cReadActions;
-static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle;
+static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle, fDesignCycle, fAutomationCycle, fReportCycle, fMergeCycle;
 static BOOL fExpectedRejection;
 static int idtBefore, cPage, iMsgBefore;
 static BOOL rgfPage[80];
@@ -23,6 +23,15 @@ static int iProdPass, cProdAdded, iProdReturn;
 static int pctResearchBefore;
 static int idflAction, cCargoGoal, iOrderCombo, iOrderRow, iStepBefore;
 static int mdProbeMessage;
+static int iDesignRow, iDesignSlot, idtDesignBefore = -1, cDesignVisits;
+static const char *pszDesignCategory, *pszDesignPart;
+static HWND hwndDesignCombo;
+static int iDesignCombo, iDesignReturn, iProductionInspect;
+static int idCargoFleet, idCargoPlanet = 13, cCargoExpected = 210, iCargoReturn = 203, iOrderReturn = 203;
+static const char *pszCargoSnapshot = "year-2413-cargo.json";
+static BOOL fValueReportChecked;
+static int iResearchNext = Propulsion, iResearchReturn = 203;
+static const char *pszResearchSnapshot = "year-2413-research.json", *pszOrderSnapshot = "year-2413-transport.json";
 static HWND HwndModal(void);
 static BOOL FSaveState(const char *pszName);
 
@@ -75,9 +84,10 @@ int WINAPI __wrap_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT
 
 static void LogState(const char *pszEvent) {
     if (!lpEvents) return;
-    fprintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u}\n",
+    fprintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u,\"productionSelection\":%ld}\n",
             pszEvent, iStage, game.turn, tutor.idt / 8 + 1, tutor.idtBold, gd.fTutorial, tutor.fAutoComplete, cActions, (unsigned long long)SDL_GetTicks(),
-            sel.grobj, sel.id, tutor.fTurnDone, grbitScan & grbitScanViewMask);
+            sel.grobj, sel.id, tutor.fTurnDone, grbitScan & grbitScanViewMask,
+            IsWindow(hwndPlanetProdLB) ? (long)SendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0) : -1L);
     fflush(lpEvents);
 }
 
@@ -167,6 +177,21 @@ static BOOL FClickComboRow(HWND hwndCombo, int iRow) {
     iTop = (int)CompatListProc(hwndCombo, LB_GETTOPINDEX, 0, 0);
     pt = (POINT){rc.right / 2, 1 + (iRow - iTop) * cy + cy / 2};
     return cy > 0 && pt.y >= 1 && pt.y < rc.bottom - 1 && FClickPoint(hwndDrop, pt, SDL_BUTTON_LEFT);
+}
+
+static BOOL FChooseCombo(HWND hwndCombo, const char *pszName) {
+    char szItem[256];
+    int i;
+    for (i = 0; i < SendMessage(hwndCombo, CB_GETCOUNT, 0, 0); i++) {
+        if (SendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) return FALSE;
+        SendMessage(hwndCombo, CB_GETLBTEXT, i, (LPARAM)szItem);
+        if (!strcmp(szItem, pszName)) break;
+    }
+    if (i == SendMessage(hwndCombo, CB_GETCOUNT, 0, 0) || !FClick(hwndCombo)) return FALSE;
+    // Commit by mouse after focus and keyboard navigation have settled.
+    hwndDesignCombo = hwndCombo;
+    iDesignCombo = i;
+    return TRUE;
 }
 
 static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
@@ -282,6 +307,7 @@ static BOOL FSaveOrders(const char *pszPath) {
     ORDER *lpord;
     PLANET *lppl;
     PROD prod;
+    SHDEF *lpshdef;
     int i, j, k, cWritten = 0;
     lpfile = fopen(pszPath, "w");
     if (!lpfile) return FALSE;
@@ -313,6 +339,16 @@ static BOOL FSaveOrders(const char *pszPath) {
         }
         fputs("],\"ships\":[", lpfile);
         for (j = 0; j < 16; j++) fprintf(lpfile, "%s%d", j ? "," : "", lpfl->rgcsh[j]);
+        fputs("]}", lpfile);
+    }
+    fputs("],\"designs\":[", lpfile);
+    cWritten = 0;
+    for (i = 0; i < 16; i++) {
+        lpshdef = &rglpshdef[idPlayer][i];
+        if (lpshdef->fFree) continue;
+        fprintf(lpfile, "%s{\"index\":%d,\"hull\":%u,\"parts\":[", cWritten++ ? "," : "", i, lpshdef->hul.ihuldef);
+        for (j = 0; j < lpshdef->hul.chs; j++)
+            fprintf(lpfile, "%s[%u,%u,%u]", j ? "," : "", lpshdef->hul.rghs[j].grhst, lpshdef->hul.rghs[j].iItem, lpshdef->hul.rghs[j].cItem);
         fputs("]}", lpfile);
     }
     fputs("],\"production\":[", lpfile);
@@ -409,6 +445,20 @@ static BOOL FSaveSalvage(void) {
     return fclose(lpfile) == 0 && !fError;
 }
 
+static BOOL FSaveReport(const char *pszPath) {
+    FILE *lpfile;
+    int i, fError;
+    if (!IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return FALSE;
+    lpfile = fopen(pszPath, "w");
+    if (!lpfile) return FALSE;
+    fprintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
+            game.turn, vprptCur->irpt, vprptCur->icolSort, vprptCur->iSubsort, vprptCur->fAscending ? "true" : "false");
+    for (i = 0; i < vprptCur->cRows; i++) fprintf(lpfile, "%s%u", i ? "," : "", lpPlanets[vlprgidRep[i]].id);
+    fputs("]}\n", lpfile);
+    fError = ferror(lpfile);
+    return fclose(lpfile) == 0 && !fError;
+}
+
 static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWORD tick) {
     HWND hwndModal;
     FLEET *lpfl;
@@ -438,7 +488,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         {"Teamster", 3, 1, 2, grobjFleet, FALSE, FALSE},
         {"Mine", mdIdleMine, 70, 0, grobjPlanet, TRUE, FALSE},
         {"Terraform Environment", mdIdleTerraform, 2, 0, grobjPlanet, FALSE, TRUE},
-        {"Teamster", 3, 2, 1, grobjFleet, FALSE, FALSE}
+        {"Teamster", 3, 2, 1, grobjFleet, FALSE, FALSE},
+        {"Mini-Miner", 6, 1, 1, grobjFleet, FALSE, FALSE},
+        {"Mine", mdIdleMine, 100, 0, grobjPlanet, FALSE, FALSE},
+        {"Min Terraform (Auto Build)", iobjMinTerraform, 2, 0, grobjPlanet, FALSE, TRUE},
+        {"Factories (Auto Build)", iobjFactory, 60, 0, grobjPlanet, TRUE, FALSE},
+        {"Mines (Auto Build)", iobjMine, 60, 1, grobjPlanet, TRUE, FALSE}
     };
     (void)hwndTimer; (void)message; (void)tick;
 
@@ -895,9 +950,9 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal && cWait == 20) fprintf(stderr, "Production item %s: selected %ld, expected row %d\n", rgProduction[iProdPass].pszName,
             (long)SendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0), iFactoryRow);
         if (!hwndModal || SendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
-        SDL_SetModState(rgProduction[iProdPass].fShift ? SDL_KMOD_LSHIFT : SDL_KMOD_NONE);
+        SDL_SetModState(iProdPass == 15 ? SDL_KMOD_LCTRL : rgProduction[iProdPass].fShift ? SDL_KMOD_LSHIFT : SDL_KMOD_NONE);
         if (!FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
-        cProdAdded += rgProduction[iProdPass].fShift ? 10 : 1;
+        cProdAdded += iProdPass == 15 ? 100 : rgProduction[iProdPass].fShift ? 10 : 1;
         break;
     case 47:
         if (!lpplProdGlob || lpplProdGlob->iprodMac <= rgProduction[iProdPass].iQueue) return;
@@ -2275,6 +2330,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (game.turn == 12) return;
         if (game.turn != 13 || !gd.fTutorial || tutor.idt != 320) { pszFailure = "thirteenth generation did not reach page forty-one"; goto LFail; }
         if (!FSaveState("year-2413")) goto LArtifact;
+        if (fDesignCycle) {
+            if (!FSaveOrders("year-2413-start-orders.json")) goto LArtifact;
+            iStage = 203; goto LQueued;
+        }
         fPassed = fRejected && cPage == 41;
         LogState("terraform-cycle-partial");
         KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
@@ -2290,6 +2349,552 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveState("armed-probe-goto")) goto LArtifact;
         LogState("armed-probe-goto");
         iStage = 192; goto LQueued;
+    case 203:
+        if (game.turn != 13) { pszFailure = "unexpected design cycle year"; goto LFail; }
+        idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
+        if (idtDesignBefore != tutor.idtBold) { idtDesignBefore = tutor.idtBold; cDesignVisits = 0; }
+        if (++cDesignVisits > 10) { pszFailure = "design instruction repeated without progress"; goto LFail; }
+        LogState("design-cycle-instruction");
+        if (tutor.idtBold == 320) {
+            if (iMsgCur < 1) {
+                if (!FClick(rghwndMsgBtn[2])) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            if (sel.grobj != grobjFleet || sel.id != 0) {
+                if (!FFindMapObject(grobjFleet, 0, NULL)) goto LInput;
+                pszMenu = objTarget.szName;
+                if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            idCargoFleet = 0; idCargoPlanet = 13; cCargoExpected = 210; iCargoReturn = 203; pszCargoSnapshot = "year-2413-cargo.json";
+            if (!FClick(rghwndBtn[7])) goto LInput;
+            iStage = 205; goto LQueued;
+        }
+        if (tutor.idtBold == 321) {
+            lpfl = LpflFromId(0);
+            if (!lpfl || sel.grobj != grobjFleet || sel.id != 0) goto LInput;
+            if (lpfl->cord == 1) {
+                if (!FFindPlanet("Slime") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            iOrderCombo = sel.fl.lpplord->rgord[1].grTask != grTaskXfer ? 0 :
+                sel.fl.lpplord->rgord[1].txp.rgia[3].iAction != iActionUnloadAll ? 1 : 2;
+            iOrderRow = iOrderCombo == 0 ? grTaskXfer : iOrderCombo == 1 ? 4 : iActionUnloadAll;
+            iOrderReturn = 203; pszOrderSnapshot = "year-2413-transport.json";
+            if (!FClick(rghwndOrderDD[iOrderCombo])) goto LInput;
+            iStage = 209; goto LQueued;
+        }
+        if (tutor.idtBold == 322 || tutor.idtBold == 324 || tutor.idtBold == 325) {
+            if (hwndModal && hwndModal->lpfnDlg == ResearchDlg) {
+                if (!FChooseCombo(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Propulsion")) goto LInput;
+                iDesignReturn = 211; iStage = 221; goto LQueued;
+            }
+            if (tutor.idtBold == 322 || (tutor.idtBold == 324 && mdMsgObj != mdMsgObjResearch) ||
+                (tutor.idtBold == 325 && mdMsgObj != mdMsgObjPart)) {
+                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            if (!FClick(rghwndMsgBtn[1])) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 327) {
+            if (IsWindow(hwndBrowser)) {
+                if (!FClick(GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F4, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F4, FALSE)) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 328 || tutor.idtBold == 329 || tutor.idtBold == 330) {
+            if (!IsWindow(hwndSlotDlg)) goto LInput;
+            if (tutor.idtBold == 328) {
+                if (!FClick(GetDlgItem(hwndSlotDlg, IDC_DESIGNER_HULLS))) goto LInput;
+            } else if (tutor.idtBold == 329) {
+                if (!FChooseCombo(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), "Mini-Miner")) goto LInput;
+                iDesignReturn = 204; iStage = 221; goto LQueued;
+            } else if (!FClick(GetDlgItem(hwndSlotDlg, IDC_IMPORT))) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 332 || tutor.idtBold == 333 || tutor.idtBold == 334 || tutor.idtBold == 335) {
+            if (!IsWindow(hwndSlotDlg) || mdBuild != mdBuildEdit || !lpshdefBuild) goto LInput;
+            iDesignSlot = tutor.idtBold == 332 ? 0 : tutor.idtBold == 333 ? 1 : lpshdefBuild->hul.rghs[2].cItem == 0 ? 2 : 3;
+            pszDesignCategory = iDesignSlot == 0 ? "Engines" : iDesignSlot == 1 ? "Scanners" : "Mining Robots";
+            pszDesignPart = iDesignSlot == 0 ? "Long Hump 6" : iDesignSlot == 1 ? "Rhino Scanner" : "Robo-Miner";
+            if (!FChooseCombo(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), pszDesignCategory)) goto LInput;
+            iDesignReturn = 213; iStage = 221; goto LQueued;
+        }
+        if (tutor.idtBold == 337 || tutor.idtBold == 338) {
+            if (!IsWindow(hwndSlotDlg) || !FSaveState("mini-miner-designed") ||
+                !FClick(GetDlgItem(hwndSlotDlg, tutor.idtBold == 337 ? IDOK : IDCANCEL))) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 339 || tutor.idtBold == 341 || tutor.idtBold == 342) {
+            if (sel.grobj != grobjPlanet || sel.id != 13) {
+                if (!FFindPlanet("Stove Top")) goto LInput;
+                pszMenu = objTarget.szName;
+                if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+                iStage = 204; goto LQueued;
+            }
+            iProdPass = tutor.idtBold == 339 ? 14 : 15; cProdAdded = 0; iProdReturn = 218;
+            if (!hwndModal && !FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
+            iStage = 68; goto LQueued;
+        }
+        if (tutor.idtBold == 344) {
+            hwndList = hwndPlanetProdLB;
+            if (!IsWindow(hwndList) || SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
+            iProductionInspect = 0;
+            if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
+            iStage = 219; goto LQueued;
+        }
+        if (tutor.idtBold == 345) {
+            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 348) {
+            if (sel.grobj != grobjFleet || sel.id != 8) {
+                if (!FFindMapObject(grobjFleet, 8, NULL)) goto LInput;
+                pszMenu = objTarget.szName;
+                if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+            } else if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            iStage = 204; goto LQueued;
+        }
+        if (tutor.idtBold == 350) {
+            if (!tutor.fTurnDone || !FSaveOrders("year-2413-orders.json") || !FSaveState("before-generate-2413")) goto LArtifact;
+            LogState("generate-ready");
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            iStage = 220; goto LQueued;
+        }
+        pszFailure = "unimplemented design cycle instruction"; goto LFail;
+    case 204:
+        if (pszMenu || (idtBefore == tutor.idtBold && iMsgBefore == iMsgCur && cWait < 3)) return;
+        iStage = 203; goto LQueued;
+    case 205:
+        if (!hwndModal) return;
+        if (hwndModal->lpfnDlg != TransferDlg || !pxfer || pxfer[0].id != idCargoFleet || pxfer[1].id != idCargoPlanet) goto LInput;
+        for (i = 0; i < crgbtnXfer; i++) {
+            if ((rgbtnXfer[i].iVal & 0x7f) == 3 && rgbtnXfer[i].iSide == 0 && !rgbtnXfer[i].fVisible && !(rgbtnXfer[i].bt & 4)) break;
+        }
+        if (i == crgbtnXfer) goto LInput;
+        memcpy(&rcRow, &rgbtnXfer[i].rc, sizeof(rcRow));
+        ptRow = (POINT){rcRow.left + 2, (rcRow.top + rcRow.bottom) / 2}; ptTo = (POINT){rcRow.right - 2, ptRow.y};
+        if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
+        break;
+    case 206:
+        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != cCargoExpected) return;
+        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        break;
+    case 207:
+        if (hwndModal) return;
+        if (!FSaveOrders(pszCargoSnapshot)) goto LArtifact;
+        if (iCargoReturn == 235) {
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE)) goto LInput;
+            iStage = 237; goto LQueued;
+        }
+        iStage = iCargoReturn; goto LQueued;
+    case 209:
+        if (!SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!FClickComboRow(rghwndOrderDD[iOrderCombo], iOrderRow)) goto LInput;
+        break;
+    case 210:
+        if (SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (iOrderCombo == 1) {
+            iOrderCombo = 2; iOrderRow = iActionUnloadAll;
+            if (!FClick(rghwndOrderDD[2])) goto LInput;
+            iStage = 209; goto LQueued;
+        }
+        if (!FSaveOrders(pszOrderSnapshot)) goto LArtifact;
+        iStage = iOrderReturn; goto LQueued;
+    case 211:
+        if (!hwndModal || SendMessage(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0) != iResearchNext + 1) return;
+        if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+        break;
+    case 212:
+        if (hwndModal) return;
+        if (!FSaveOrders(pszResearchSnapshot)) goto LArtifact;
+        iStage = iResearchReturn; goto LQueued;
+    case 213:
+        if (!IsWindow(hwndSlotDlg)) goto LInput;
+        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        iDesignRow = -1;
+        for (i = 0; i < SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
+            if (SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+            if (strlen(szItem) > 4 && !strcmp(szItem + 4, pszDesignPart)) { iDesignRow = i; break; }
+        }
+        if (iDesignRow < 0) return;
+        if (SendMessage(hwndList, LB_GETITEMRECT, SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        ptRow = (POINT){rcRow.right - 4, (rcRow.top + rcRow.bottom) / 2};
+        if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
+        break;
+    case 214:
+        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        if (GetFocus() != hwndList) return;
+        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        for (i = 0; i < iDesignRow; i++) {
+            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+        }
+        break;
+    case 215:
+        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        if (SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iDesignRow) return;
+        if (SendMessage(hwndList, LB_GETITEMRECT, iDesignRow, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        ptRow = (POINT){32, (rcRow.top + rcRow.bottom) / 2};
+        ptTo = (POINT){(vrgrcSlot[iDesignSlot].left + vrgrcSlot[iDesignSlot].right) / 2,
+                       (vrgrcSlot[iDesignSlot].top + vrgrcSlot[iDesignSlot].bottom) / 2};
+        ClientToScreen(hwndSlotDlg, &ptTo); ScreenToClient(hwndList, &ptTo);
+        if (!FDragPoint(hwndList, ptRow, ptTo)) goto LInput;
+        break;
+    case 216:
+        if (!lpshdefBuild || lpshdefBuild->hul.rghs[iDesignSlot].cItem != 1) return;
+        if (!FSaveState("mini-miner-part")) goto LArtifact;
+        iStage = 203; goto LQueued;
+    case 218:
+        if (hwndModal) return;
+        if (!FSaveOrders(iProdPass == 14 ? "year-2413-miner-queue.json" : "year-2413-mines.json")) goto LArtifact;
+        if (iProdPass == 15) {
+            // A progress flag can skip the prompt; still inspect the real item.
+            hwndList = hwndPlanetProdLB;
+            if (!IsWindow(hwndList) || SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
+            iProductionInspect = 0;
+            if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
+            iStage = 219; goto LQueued;
+        }
+        iStage = 203; goto LQueued;
+    case 219:
+        hwndList = hwndPlanetProdLB;
+        if (SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iProductionInspect) return;
+        LogState("production-item-inspected");
+        if (++iProductionInspect < SendMessage(hwndList, LB_GETCOUNT, 0, 0)) {
+            if (SendMessage(hwndList, LB_GETITEMRECT, iProductionInspect, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
+            if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
+            goto LQueued;
+        }
+        if (!FSaveState("production-items")) goto LArtifact;
+        iStage = 204; goto LQueued;
+    case 220:
+        if (hwndModal) { pszFailure = "unexpected fourteenth-generation dialog"; goto LFail; }
+        if (game.turn == 13) return;
+        if (game.turn != 14 || !gd.fTutorial || tutor.idt != 352) { pszFailure = "fourteenth generation did not reach page forty-five"; goto LFail; }
+        if (!FSaveState("year-2414")) goto LArtifact;
+        if (fAutomationCycle) {
+            if (!FSaveOrders("year-2414-start-orders.json")) goto LArtifact;
+            iStage = 224; goto LQueued;
+        }
+        fPassed = fRejected && cPage == 45;
+        LogState("design-cycle-partial");
+        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+    case 221:
+        if (!IsWindow(hwndDesignCombo) || !SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (GetFocus() != hwndDesignCombo) return;
+        // SDL assigns keyboard targets when translating the event batch.
+        // Translate these only after the preceding click establishes focus.
+        if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        for (i = 0; i < iDesignCombo; i++) {
+            if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+        }
+        iStage = 223; goto LQueued;
+    case 223:
+        if (!IsWindow(hwndDesignCombo) || !hwndDesignCombo->lpcombo || hwndDesignCombo->lpcombo->iHot != iDesignCombo) return;
+        if (!FClickComboRow(hwndDesignCombo, iDesignCombo)) goto LInput;
+        iStage = 222; goto LQueued;
+    case 222:
+        if (SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (SendMessage(hwndDesignCombo, CB_GETCURSEL, 0, 0) != iDesignCombo) goto LInput;
+        iStage = iDesignReturn; goto LQueued;
+    case 224:
+        if (game.turn != 14) { pszFailure = "unexpected automation year"; goto LFail; }
+        idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
+        LogState("automation-cycle-instruction");
+        if (tutor.idtBold == 352 || tutor.idtBold == 354) {
+            i = tutor.idtBold == 352 ? 17 : 2;
+            if (mdMsgObj != mdMsgObjPlanet || idMsgObj != i || (i == 2 && IMsgNext(FALSE) != imsgNone)) {
+                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            } else if (!FClick(rghwndMsgBtn[1])) goto LInput;
+            iStage = 225; goto LQueued;
+        }
+        if (tutor.idtBold == 356) {
+            if (sel.grobj != grobjPlanet || sel.id != 2) goto LInput;
+            iProdPass = 16; cProdAdded = 0; iProdReturn = 226;
+            if (!FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
+            iStage = 68; goto LQueued;
+        }
+        if (tutor.idtBold == 358) {
+            if (!tutor.fTurnDone || !FSaveOrders("year-2414-orders.json") || !FSaveState("before-generate-2414")) goto LArtifact;
+            LogState("generate-ready");
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            iStage = 234; goto LQueued;
+        }
+        pszFailure = "unimplemented automation instruction"; goto LFail;
+    case 225:
+        if (tutor.idtBold == idtBefore && iMsgBefore == iMsgCur && cWait < 3) return;
+        iStage = 224; goto LQueued;
+    case 226:
+        if (hwndModal) return;
+        if (!FSaveOrders("year-2414-terraform-queue.json") || !FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
+        break;
+    case 227:
+        if (!hwndModal) return;
+        if (hwndModal->lpfnDlg != ProductionDlg) goto LInput;
+        pszMenu = "<Customize>";
+        ptRow = (POINT){(rcProdDiamond.left + rcProdDiamond.right) / 2, (rcProdDiamond.top + rcProdDiamond.bottom) / 2};
+        if (!FClickPoint(hwndModal, ptRow, SDL_BUTTON_RIGHT)) goto LInput;
+        break;
+    case 228:
+        if (pszMenu || !hwndModal || hwndModal->lpfnDlg != ZipProdDlg) return;
+        if (!IsWindow(hwndModal->hwndOwner) || hwndModal->hwndOwner->lpfnDlg != ProductionDlg || IsWindowEnabled(hwndModal->hwndOwner)) goto LInput;
+        if (!FSaveState("terraform-template-open") || !FClick(GetDlgItem(hwndModal, IDC_ZIP_PROD_PRESET_1))) goto LInput;
+        break;
+    case 229:
+        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !IsDlgButtonChecked(hwndModal, IDC_ZIP_PROD_PRESET_1)) return;
+        if (!FClick(GetDlgItem(hwndModal, IDC_IMPORT))) goto LInput;
+        break;
+    case 230:
+        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !vrgZipProd[0].fValid || vrgZipProd[0].cpq < 3) return;
+        if (vrgZipProd[0].rgpq[0].mdIdle != iobjMinTerraform || vrgZipProd[0].rgpq[0].cQuan != 2) return;
+        if (!FSaveOrders("year-2414-imported-template.json") || !FSaveState("terraform-template-imported") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        break;
+    case 231:
+        if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg || !IsWindowEnabled(hwndModal)) return;
+        if (!FSaveState("terraform-template-owner-restored") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        break;
+    case 232:
+        if (hwndModal || lpplProdGlob) return;
+        if (!FSaveState("terraform-template-closed")) goto LArtifact;
+        iStage = 224; goto LQueued;
+    case 234:
+        if (hwndModal) { pszFailure = "unexpected fifteenth-generation dialog"; goto LFail; }
+        if (game.turn == 14) return;
+        if (game.turn != 15 || !gd.fTutorial || tutor.idt != 360) { pszFailure = "fifteenth generation did not reach page forty-six"; goto LFail; }
+        if (!FSaveState("year-2415")) goto LArtifact;
+        if (fReportCycle) {
+            if (!FSaveOrders("year-2415-start-orders.json")) goto LArtifact;
+            iStage = 235; goto LQueued;
+        }
+        fPassed = fRejected && cPage == 46;
+        LogState("automation-cycle-partial");
+        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+    case 235:
+        if (game.turn != 15) { pszFailure = "unexpected report cycle year"; goto LFail; }
+        idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
+        LogState("report-cycle-instruction");
+        if (tutor.idtBold == 360 || tutor.idtBold == 361 || tutor.idtBold == 372) {
+            idflAction = tutor.idtBold == 360 ? 8 : tutor.idtBold == 361 ? 6 : 11;
+            if (tutor.idtBold == 372 && IMsgNext(FALSE) != imsgNone) {
+                if (!FClick(rghwndMsgBtn[2])) goto LInput;
+                iStage = 236; goto LQueued;
+            }
+            if (sel.grobj != grobjFleet || sel.id != idflAction) {
+                if (mdMsgObj == mdMsgObjFleet && idMsgObj == idflAction) {
+                    if (!FClick(rghwndMsgBtn[1])) goto LInput;
+                } else {
+                    if (!FFindMapObject(grobjFleet, idflAction, NULL)) goto LInput;
+                    pszMenu = objTarget.szName;
+                    if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+                }
+                iStage = 236; goto LQueued;
+            }
+            if (idflAction == 6) {
+                idCargoFleet = 6; idCargoPlanet = 13; cCargoExpected = 210; iCargoReturn = 235; pszCargoSnapshot = "year-2415-cargo.json";
+                if (!FClick(rghwndBtn[7])) goto LInput;
+                iStage = 205; goto LQueued;
+            }
+            if (!FFindPlanet(idflAction == 8 ? "Neil" : "Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            iStage = 236; goto LQueued;
+        }
+        if (tutor.idtBold == 363 || tutor.idtBold == 364) {
+            if (!IsWindow(hwndReportDlg) && (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE))) goto LInput;
+            iStage = 237; goto LQueued;
+        }
+        if (tutor.idtBold == 366) {
+            if (IsWindow(hwndReportDlg) && (!FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE))) goto LInput;
+            iStage = 240; goto LQueued;
+        }
+        if (tutor.idtBold == 367) {
+            lpfl = LpflFromId(6);
+            if (!lpfl || sel.grobj != grobjFleet || sel.id != 6) goto LInput;
+            if (lpfl->cord == 1) {
+                if (!FFindPlanet("Wallaby") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                iStage = 236; goto LQueued;
+            }
+            iOrderCombo = lpfl->lpplord->rgord[1].grTask != grTaskXfer ? 0 : 1;
+            iOrderRow = iOrderCombo == 0 ? grTaskXfer : 4; iOrderReturn = 235; pszOrderSnapshot = "year-2415-transport.json";
+            if (!FClick(rghwndOrderDD[iOrderCombo])) goto LInput;
+            iStage = 209; goto LQueued;
+        }
+        if (tutor.idtBold == 368) {
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+            iStage = 241; goto LQueued;
+        }
+        if (tutor.idtBold == 371) {
+            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+            iStage = 242; goto LQueued;
+        }
+        if (tutor.idtBold == 374) {
+            if (!fValueReportChecked || !tutor.fTurnDone || !FSaveOrders("year-2415-orders.json") || !FSaveState("before-generate-2415")) goto LArtifact;
+            LogState("generate-ready");
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            iStage = 243; goto LQueued;
+        }
+        pszFailure = "unimplemented report cycle instruction"; goto LFail;
+    case 236:
+        if (pszMenu || (idtBefore == tutor.idtBold && iMsgBefore == iMsgCur && cWait < 3)) return;
+        iStage = 235; goto LQueued;
+    case 237:
+        if (!IsWindow(hwndReportDlg) || !vprptCur) return;
+        if (vprptCur->irpt != rptPlanets) goto LInput;
+        if (!GetClientRect(hwndReportDlg, &rcRow)) goto LInput;
+        if (rcRow.right < 1000) {
+            if (!SetWindowPos(hwndReportDlg, NULL, 0, 0, 1280, 700, SWP_NOZORDER)) goto LInput;
+            return;
+        }
+        if (!FSaveState("value-report-open")) goto LArtifact;
+        ptRow = (POINT){2, (dyArial8 + 8) / 2};
+        for (i = 0; i < 4; i++) {
+            if ((vprptCur->grbitVisible & (1 << i)) && (i == 0 || i >= vprptCur->cFieldFirst)) ptRow.x += vprptCur->rgbdx[i] * 2;
+        }
+        ptRow.x += vprptCur->rgbdx[4];
+        pszMenu = "Sort by Value";
+        if (!FClickPoint(hwndReportDlg, ptRow, SDL_BUTTON_RIGHT)) goto LInput;
+        break;
+    case 238:
+        if (pszMenu || !vprptCur || vprptCur->icolSort != 4) return;
+        if (!FSaveReport("value-report.json") || !FSaveState("value-report-sorted") ||
+            !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE)) goto LInput;
+        iStage = 240; goto LQueued;
+    case 240:
+        if (IsWindow(hwndReportDlg) || vprptCur) return;
+        if (!FSaveState("value-report-closed")) goto LArtifact;
+        fValueReportChecked = TRUE;
+        iStage = 235; goto LQueued;
+    case 241:
+        if (!hwndModal) return;
+        if (hwndModal->lpfnDlg != ResearchDlg || !FSaveState("propulsion-research-open")) goto LInput;
+        iStage = 235; goto LQueued;
+    case 242:
+        if (hwndModal) return;
+        if (!FSaveOrders("year-2415-research.json")) goto LArtifact;
+        iStage = 235; goto LQueued;
+    case 243:
+        if (hwndModal) { pszFailure = "unexpected sixteenth-generation dialog"; goto LFail; }
+        if (game.turn == 15) return;
+        if (game.turn != 16 || !gd.fTutorial || tutor.idt != 376) { pszFailure = "sixteenth generation did not reach page forty-eight"; goto LFail; }
+        if (!FSaveState("year-2416")) goto LArtifact;
+        if (fMergeCycle) {
+            if (!FSaveOrders("year-2416-start-orders.json")) goto LArtifact;
+            iStage = 244; goto LQueued;
+        }
+        fPassed = fRejected && cPage == 48;
+        LogState("report-cycle-partial");
+        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+    case 244:
+        if (game.turn != 16 && game.turn != 17) { pszFailure = "unexpected merge cycle year"; goto LFail; }
+        idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
+        LogState("merge-cycle-instruction");
+        if (tutor.idtBold == 376 || tutor.idtBold == 377 || tutor.idtBold == 378 || tutor.idtBold == 385) {
+            idflAction = tutor.idtBold == 376 ? 4 : tutor.idtBold == 385 ? 0 : 7;
+            if (sel.grobj != grobjFleet || sel.id != idflAction) {
+                if (mdMsgObj == mdMsgObjFleet && idMsgObj == idflAction) {
+                    if (!FClick(rghwndMsgBtn[1])) goto LInput;
+                } else {
+                    if (!FFindMapObject(grobjFleet, idflAction, NULL)) goto LInput;
+                    pszMenu = objTarget.szName;
+                    if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+                }
+                iStage = 245; goto LQueued;
+            }
+            lpfl = LpflFromId(idflAction);
+            if (!lpfl) goto LInput;
+            if (lpfl->cord == 1) {
+                if (!FFindPlanet(idflAction == 4 ? "Wallaby" : idflAction == 0 ? "Stove Top" : "Prune") ||
+                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) ||
+                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                iStage = 245; goto LQueued;
+            }
+            if (idflAction == 7) {
+                if (lpfl->lpplord->rgord[1].grTask != grTaskMerge) {
+                    iOrderCombo = 0; iOrderRow = grTaskMerge; iOrderReturn = 244; pszOrderSnapshot = "year-2416-merge.json";
+                    if (!FClick(rghwndOrderDD[0])) goto LInput;
+                    iStage = 209; goto LQueued;
+                }
+                if (lpfl->lpplord->rgord[1].grobj != grobjFleet || lpfl->lpplord->rgord[1].id != 5) {
+                    pszMenu = "Cotton Picker #6";
+                    ptRow = (POINT){(rgrcRef[12].left + rgrcRef[12].right) / 2, (rgrcRef[12].top + rgrcRef[12].bottom) / 2};
+                    if (!FClickPoint(hwndPlanet, ptRow, SDL_BUTTON_RIGHT)) goto LInput;
+                    iStage = 245; goto LQueued;
+                }
+            }
+            iStage = 245; goto LQueued;
+        }
+        if (tutor.idtBold == 380 || tutor.idtBold == 381) {
+            if (sel.grobj != grobjPlanet || sel.id != 13) {
+                if (!FFindPlanet("Stove Top")) goto LInput;
+                pszMenu = objTarget.szName;
+                if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
+                iStage = 245; goto LQueued;
+            }
+            iProdPass = 17; cProdAdded = 0; iProdReturn = 246;
+            if (LpplFromId(13)->lpplprod && LpplFromId(13)->lpplprod->iprodMac > 0 &&
+                LpplFromId(13)->lpplprod->rgprod[0].grobj == grobjPlanet && LpplFromId(13)->lpplprod->rgprod[0].iItem == iobjFactory)
+                cProdAdded = LpplFromId(13)->lpplprod->rgprod[0].cItem;
+            if (!FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
+            iStage = 68; goto LQueued;
+        }
+        if (tutor.idtBold == 382) {
+            if (!hwndModal) {
+                if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+                iStage = 245; goto LQueued;
+            }
+            if (hwndModal->lpfnDlg != ResearchDlg || !FChooseCombo(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Construction")) goto LInput;
+            iResearchNext = Construction; iResearchReturn = 244; pszResearchSnapshot = "year-2416-research.json";
+            iDesignReturn = 211; iStage = 221; goto LQueued;
+        }
+        if (tutor.idtBold == 384 || tutor.idtBold == 383 || tutor.idtBold == 387) {
+            if (IMsgNext(FALSE) != imsgNone) {
+                if (!FClick(rghwndMsgBtn[2])) goto LInput;
+                iStage = 245; goto LQueued;
+            }
+            if (tutor.idtBold == 384) { iStage = 245; goto LQueued; }
+            if (!tutor.fTurnDone) return;
+            if (!FSaveOrders(game.turn == 16 ? "year-2416-orders.json" : "year-2417-orders.json") ||
+                !FSaveState(game.turn == 16 ? "before-generate-2416" : "before-generate-2417")) goto LArtifact;
+            LogState("generate-ready");
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            iStage = game.turn == 16 ? 247 : 248; goto LQueued;
+        }
+        pszFailure = "unimplemented merge cycle instruction"; goto LFail;
+    case 245:
+        if (pszMenu || (idtBefore == tutor.idtBold && iMsgBefore == iMsgCur && cWait < 3)) return;
+        iStage = 244; goto LQueued;
+    case 246:
+        if (hwndModal) return;
+        if (iProdPass == 17) {
+            iProdPass = 18; cProdAdded = 0; iProdReturn = 246;
+            if (!FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
+            iStage = 68; goto LQueued;
+        }
+        if (!FSaveOrders("year-2416-production.json")) goto LArtifact;
+        iStage = 244; goto LQueued;
+    case 247:
+        if (hwndModal) { pszFailure = "unexpected seventeenth-generation dialog"; goto LFail; }
+        if (game.turn == 16) return;
+        if (game.turn != 17 || !gd.fTutorial || tutor.idt != 384) { pszFailure = "seventeenth generation did not reach page forty-nine"; goto LFail; }
+        if (!FSaveState("year-2417") || !FSaveOrders("year-2417-start-orders.json")) goto LArtifact;
+        iStage = 244; goto LQueued;
+    case 248:
+        if (hwndModal) { pszFailure = "unexpected eighteenth-generation dialog"; goto LFail; }
+        if (game.turn == 17) return;
+        if (game.turn != 18 || !gd.fTutorial || tutor.idt != 392) { pszFailure = "eighteenth generation did not reach page fifty"; goto LFail; }
+        if (!FSaveState("year-2418")) goto LArtifact;
+        fPassed = fRejected && cPage == 50;
+        LogState("merge-cycle-partial");
+        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
     default:
         pszFailure = "unknown runner stage";
         goto LFail;
@@ -2322,11 +2927,15 @@ int main(int argc, char **argv) {
     char szCommand[] = "";
     int nResult;
     FILE *lpfile;
-    if (argc != 2 || (strcmp(argv[1], "--smoke") && strcmp(argv[1], "--first-year") && strcmp(argv[1], "--two-years") && strcmp(argv[1], "--scouting") && strcmp(argv[1], "--mining") && strcmp(argv[1], "--colonization") && strcmp(argv[1], "--logistics") && strcmp(argv[1], "--colonizer-production") && strcmp(argv[1], "--second-colonization") && strcmp(argv[1], "--transport-cycle") && strcmp(argv[1], "--expansion") && strcmp(argv[1], "--fleet-split") && strcmp(argv[1], "--research-cycle") && strcmp(argv[1], "--oxygen-colonization") && strcmp(argv[1], "--production-templates") && strcmp(argv[1], "--battle-cycle") && strcmp(argv[1], "--terraform-cycle"))) {
-        fprintf(stderr, "Usage: stars-native-tutorial --smoke|--first-year|--two-years|--scouting|--mining|--colonization|--logistics|--colonizer-production|--second-colonization|--transport-cycle|--expansion|--fleet-split|--research-cycle|--oxygen-colonization|--production-templates|--battle-cycle|--terraform-cycle\nFull 80-page execution is not implemented yet.\n");
+    if (argc != 2 || (strcmp(argv[1], "--smoke") && strcmp(argv[1], "--first-year") && strcmp(argv[1], "--two-years") && strcmp(argv[1], "--scouting") && strcmp(argv[1], "--mining") && strcmp(argv[1], "--colonization") && strcmp(argv[1], "--logistics") && strcmp(argv[1], "--colonizer-production") && strcmp(argv[1], "--second-colonization") && strcmp(argv[1], "--transport-cycle") && strcmp(argv[1], "--expansion") && strcmp(argv[1], "--fleet-split") && strcmp(argv[1], "--research-cycle") && strcmp(argv[1], "--oxygen-colonization") && strcmp(argv[1], "--production-templates") && strcmp(argv[1], "--battle-cycle") && strcmp(argv[1], "--terraform-cycle") && strcmp(argv[1], "--design-cycle") && strcmp(argv[1], "--automation-cycle") && strcmp(argv[1], "--report-cycle") && strcmp(argv[1], "--merge-cycle"))) {
+        fprintf(stderr, "Usage: stars-native-tutorial --smoke|--first-year|--two-years|--scouting|--mining|--colonization|--logistics|--colonizer-production|--second-colonization|--transport-cycle|--expansion|--fleet-split|--research-cycle|--oxygen-colonization|--production-templates|--battle-cycle|--terraform-cycle|--design-cycle|--automation-cycle|--report-cycle|--merge-cycle\nFull 80-page execution is not implemented yet.\n");
         return 2;
     }
-    fTerraformCycle = !strcmp(argv[1], "--terraform-cycle");
+    fMergeCycle = !strcmp(argv[1], "--merge-cycle");
+    fReportCycle = fMergeCycle || !strcmp(argv[1], "--report-cycle");
+    fAutomationCycle = fReportCycle || !strcmp(argv[1], "--automation-cycle");
+    fDesignCycle = fAutomationCycle || !strcmp(argv[1], "--design-cycle");
+    fTerraformCycle = fDesignCycle || !strcmp(argv[1], "--terraform-cycle");
     fBattleCycle = fTerraformCycle || !strcmp(argv[1], "--battle-cycle");
     fProdTemplates = fBattleCycle || !strcmp(argv[1], "--production-templates");
     fOxygenColony = fProdTemplates || !strcmp(argv[1], "--oxygen-colonization");
@@ -2350,7 +2959,7 @@ int main(int argc, char **argv) {
     lpfile = fopen("result.json", "w");
     if (lpfile) {
         fprintf(lpfile, "{\"scenario\":\"%s\",\"status\":\"%s\",\"fullTutorial\":false,\"actions\":%d,\"pages\":%d,\"rejectedGenerate\":%s,\"detail\":\"%s\"}\n",
-                fTerraformCycle ? "terraform-cycle" : fBattleCycle ? "battle-cycle" : fProdTemplates ? "production-templates" : fOxygenColony ? "oxygen-colonization" : fResearchCycle ? "research-cycle" : fFleetSplit ? "fleet-split" : fExpansion ? "expansion" : fTransportCycle ? "transport-cycle" : fSecondColonization ? "second-colonization" : fColonizerProduction ? "colonizer-production" : fLogistics ? "logistics" : fColonization ? "colonization" : fMining ? "mining" : fScouting ? "scouting" : fTwoYears ? "two-years" : fFirstYear ? "first-year" : "smoke", fPassed && nResult == 0 ? (fFirstYear ? "partial" : "passed") : "failed",
+                fMergeCycle ? "merge-cycle" : fReportCycle ? "report-cycle" : fAutomationCycle ? "automation-cycle" : fDesignCycle ? "design-cycle" : fTerraformCycle ? "terraform-cycle" : fBattleCycle ? "battle-cycle" : fProdTemplates ? "production-templates" : fOxygenColony ? "oxygen-colonization" : fResearchCycle ? "research-cycle" : fFleetSplit ? "fleet-split" : fExpansion ? "expansion" : fTransportCycle ? "transport-cycle" : fSecondColonization ? "second-colonization" : fColonizerProduction ? "colonizer-production" : fLogistics ? "logistics" : fColonization ? "colonization" : fMining ? "mining" : fScouting ? "scouting" : fTwoYears ? "two-years" : fFirstYear ? "first-year" : "smoke", fPassed && nResult == 0 ? (fFirstYear ? "partial" : "passed") : "failed",
                 cActions, cPage, fRejected ? "true" : "false",
                 fPassed ? "bounded scenario; complete tutorial remains unverified" : pszFailure);
         if (fclose(lpfile)) fPassed = FALSE;

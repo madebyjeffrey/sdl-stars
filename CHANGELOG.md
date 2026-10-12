@@ -8,6 +8,12 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- The native SDL tutorial runner now drives Mini-Miner design and component
+  drags, automatic terraforming templates, planet Value sorting, merge orders
+  and further transport/production/research tasks through year 2418/page 50.
+  Checkpoints verify exact designs, cargo, routes and queues through normal UI
+  input. Coverage remains partial; the final year-2437 walkthrough is unfinished.
+
 - `CommandHandler` now starts one Print Map document and checks page/document
   completion instead of restarting each page and ignoring failures. The SDL
   PDF backend opens only completed output in the platform viewer; viewer

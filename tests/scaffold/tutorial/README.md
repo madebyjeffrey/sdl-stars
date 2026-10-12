@@ -27,12 +27,19 @@ Mozart waypoint drag through year 2410/page 32 (40% visited; thirty-one complete
 dialogs and queue insertion through year 2411/page 34 (42.5%; thirty-three
 completed). Cross-build qualification is recorded in the goal report.
 `--battle-cycle` adds year 2411 scout/scrap routes, colonization, troop unloading,
-mine production, research, browser Close and Battle VCR playback toward year
-2412/page 38 (47.5%; qualification pending in the goal report).
+mine production, research, browser Close and Battle VCR playback through year
+2412/page 38 (47.5%). `--terraform-cycle` adds salvage, Find and terraforming
+through year 2413/page 41.
+`--design-cycle` adds the Mini-Miner designer/component drags and production
+inspection through year 2414/page 45. `--automation-cycle` imports Oxygen's
+terraforming queue through year 2415/page 46. `--report-cycle` adds Value sorting,
+transport and research through year 2416/page 48. `--merge-cycle` adds the mining
+fleet merge, larger automatic queues and a return route through year 2418/page
+50 (62.5% visited). These stops remain partial; current verification, artifact
+paths and instruction 392's continuation are in the native runner guide.
 Default CTest profiles run smoke and the longest scenario on both backends;
 `STARS_TUTORIAL_CHECKPOINT_TESTS=ON` registers all earlier stop-only profiles.
-These
-bounded scenarios are not full walkthrough passes and do not
+These bounded scenarios are not full walkthrough passes and do not
 replace the Windows reference suite described below yet.
 
 The suite runs AutoHotkey **v2.0.28** and the rebuilt Stars! executable inside the same isolated Wine prefix. It drives normal Windows controls, menus, keyboard shortcuts and mouse gestures. The test build adds a hidden, read-only observation window; it does not complete tasks or modify game orders.

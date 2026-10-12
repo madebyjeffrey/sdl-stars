@@ -5,7 +5,7 @@ core. It runs the normal `WinMain` message loop and queues SDL mouse/keyboard
 events on the UI thread. No external desktop automation or AutoHotkey is used.
 The runner supports **`--smoke`, `--first-year`, `--two-years`, `--scouting`,
 `--mining`, `--colonization`, `--logistics`, `--colonizer-production`, `--second-colonization`,
-`--transport-cycle`, `--expansion`, `--fleet-split`, `--research-cycle`, `--oxygen-colonization`, `--production-templates`, `--battle-cycle` and `--terraform-cycle`**, not the complete tutorial.
+`--transport-cycle`, `--expansion`, `--fleet-split`, `--research-cycle`, `--oxygen-colonization`, `--production-templates`, `--battle-cycle`, `--terraform-cycle`, `--design-cycle`, `--automation-cycle`, `--report-cycle` and `--merge-cycle`**, not the complete tutorial.
 Calling it without an explicit supported scenario returns an error.
 
 The smoke opens New Game and Tutorial through real buttons, presses F9 before
@@ -135,12 +135,12 @@ Build and run the isolated headless scenario:
 cmake --preset sdl-debug
 cmake --build --preset sdl-debug
 ctest --test-dir dist/sdl-debug -R '^win32_native_tutorial_smoke_dummy$' --output-on-failure
-ctest --test-dir dist/sdl-debug -R '^win32_native_tutorial_terraform-cycle_dummy$' --output-on-failure
+ctest --test-dir dist/sdl-debug -R '^win32_native_tutorial_merge-cycle_dummy$' --output-on-failure
 ```
 
 Routine validation runs smoke and the longest scenario on both backends. The
-current longest scenario, Terraform cycle, is still under development; Battle
-cycle remains the latest qualified stop. The longest scenario
+current longest scenario is Merge cycle; its build/backend qualification after
+the binary64 migration is recorded below. The longest scenario
 replays every earlier action and checks every prior orders-before-generation
 checkpoint, so these four profiles retain all existing workflow assertions.
 Earlier bounded stop-only profiles can be registered for focused development:
@@ -167,7 +167,7 @@ first-year scenario; `win32_native_tutorial_two_years_x11` tests production.
 The scouting, mining, colonization, logistics, colonizer-production,
 second-colonization and transport-cycle scenarios each have matching private-X11
 profiles when `STARS_TUTORIAL_CHECKPOINT_TESTS=ON`. Expansion, fleet splitting, the research cycle and Oxygen colonization
-also have matching private-X11 profiles. The default four tutorial profiles, or all twenty-eight
+also have matching private-X11 profiles. The default four tutorial profiles, or all forty-two
 opt-in profiles, are serial and do not touch the desktop session. Restore the
 default registration with:
 
@@ -329,12 +329,11 @@ the harness never assigns these game globals.
 
 ## Remaining execution
 
-The development `--terraform-cycle` extends through year 2412: salvage inspection,
-View/Find fleet selection, message navigation and terraforming/transport production.
-Its headless Debug development stop is year 2413/page 41 (51.25% visited), with
-all state assertions passing; final sanitizer/SDK/regression/Release qualification
-is pending. The latest qualified stop remains the
-battle-cycle checkpoint at year 2412/page 38 (47.5% visited).
+The longest implemented scenario is `--merge-cycle`, stopping at year 2418/page
+50 (50/80 visited, 62.5%; forty-nine pages completed). It replays every earlier
+workflow and checks all eighteen before-generation checkpoints. This is a
+bounded stop: thirty pages and the final completion remain outstanding. Current
+build/backend results and the continuation point are recorded below.
 Event records now include `elapsedMs` for diagnosing slow or stalled actions.
 The existing Windows instruction table in
 `tests/scaffold/tutorial/steps.ahk` is a source reference for the gestures, not
@@ -347,3 +346,182 @@ dialogs and crashes must fail with artifacts. A partial development run cannot
 be reported as a complete tutorial pass. The existing Windows/AHK tutorial
 remains a separate reference; its previous Wine failure is not resolved by these
 bounded native scenarios. Native Wayland/compositor qualification remains separate.
+
+## Binary64 migration and extended checkpoints
+
+After migration to double, the Terraform cycle passes all assertions through
+41 pages/year 2413: Debug dummy (301.35 seconds), Release dummy (253.28 seconds)
+and Release private X11 (469.16 seconds). Release smoke also passes on both
+backends. The first sandboxed X11 launch failed before Openbox startup;
+rerunning with the display permissions required by Xvfb passed. These bounded
+runs retain `status: partial` and `fullTutorial: false`.
+
+The Windows walkthrough was attempted in Debug and Release. Stars exited with
+Wine's `free(): invalid next size (fast)` at page 15/QuikDrop and page 8/Dwarte
+respectively. A third Debug attempt stopped at page 23/Red Storm colonization
+with `free(): invalid pointer`. None is a complete tutorial pass. Their retained
+artifacts are in `dist/scaffold/tutorial/20261012T061159.054289Z` and
+`dist/scaffold/tutorial/20261012T061408.486019Z`, and
+`dist/scaffold/tutorial/20261012T062913.577094Z`.
+
+The new `--design-cycle` targets year 2414/page 45. It drives Teamster #1 cargo
+and Slime unloading, Biotechnology/Propulsion research, browser Close, F4,
+Mini-Miner hull copying and real component drags for Long Hump 6, Rhino Scanner
+and two Robo-Miners. It queues the new miner and uses Ctrl+Add for 100 mines,
+selects every production item and routes Armed Probe #9 to Stove Top before F9.
+Copied ship designs, cargo, routes, exact queues and unrelated state are checked
+before generation. `designs` is a test JSON addition; no game records change.
+
+Early development attempts reached page 42 but queued keyboard navigation before
+the preceding click established focus. Enter closed the designer, and arrow
+keys could target its radio buttons. The harness now waits for combo focus,
+then navigates and commits by clicking the observed popup row. No game dialog
+behavior was changed for that correction. Design-cycle passes Debug dummy (343.59 seconds), Release dummy (309.66
+seconds), Release private X11 (576.61 seconds) and fatal ASan/UBSan/LSan dummy
+(474.12 seconds). LeakSanitizer required execution outside the tracing sandbox.
+All 45 pages and fourteen before-generation checkpoints pass; the stop remains
+partial, with `fullTutorial: false`.
+
+`--automation-cycle` extends to year 2415/page 46 (57.5% visited), with 456
+actions in the Debug headless development run. It inspects Sea Squared and
+Oxygen through message Goto, inserts two Min Terraform (Auto Build) items,
+imports the resulting queue into the default preset through nested dialogs,
+and verifies exact queues, template items, owner restoration and unchanged
+fleets/designs/research before generation. All current launcher assertions pass
+against the retained run; Merge cycle repeats these checks in its longer run.
+
+`--report-cycle` stops at year 2416/page 48. It covers Neil
+scouting, Teamster colonists, Value sorting in the planet report, Wallaby
+unloading, Research inspection and a return freighter route. These modes
+retain partial coverage. The default CTest stop is now Merge cycle, which
+replays all earlier workflow assertions. Earlier stops can be registered through
+`STARS_TUTORIAL_CHECKPOINT_TESTS=ON`.
+
+`--report-cycle` reaches year 2416/page 48 in the Debug headless development
+run with 480 actions. All current launcher assertions pass against its saved
+artifacts. Value sorting puts Wallaby first; the report closes through Escape,
+and cargo, routes, production, research and unrelated state are checked.
+
+`--merge-cycle` adds years 2416 and 2417. It routes Stalwart Defender to Wallaby,
+sends Mini-Miner #8 to merge with Cotton Picker #6 at Prune, grows Stove Top's
+automatic queues to 60 factories/60 mines, selects Construction as the next
+research field and sends Teamster #1 home. The Debug development run reaches
+year 2418/page 50 (62.5% visited), with 514 actions and eighteen successful
+before-generation checkpoints. All current assertions pass against its saved
+artifacts. Fresh Debug dummy (562.02 seconds) and Release dummy (521.47 seconds)
+runs pass all launcher assertions, as do fatal ASan/UBSan/LSan dummy (709.39
+seconds) and Release private X11 (908.64 seconds). Debug/Release dummy smoke
+and Release private-X11 smoke also pass. Remaining
+execution starts with instruction 392 and includes the later transport,
+starbase/ship designs, reports, minefields, combat and final year-2437 completion.
+
+## Session handoff, 2026-10-12
+
+Work is on branch `win32_adapter`. Commit `95a20da` adds the differential
+precision/Craig comparison harness; `51b6d38` converts all 178 production
+extended-precision casts to double and updates the affected native baselines.
+The subsequent native tutorial extension changes only its test harness,
+registration and documentation. No game logic, tutorial observer signatures or
+on-disk layouts change in that extension.
+
+### Sources and reports
+
+All paths below are relative to `/home/jdrake/Projects/stars`:
+
+| Location | Contents |
+| --- | --- |
+| `docs/DOUBLE-PRECISION.md` | Migration results, known gameplay differences, possible rounding effects and platform limits |
+| `tests/scaffold/PRECISION.md` | Reproduction commands and exhaustive versus sampled domain definitions |
+| `tests/scaffold/precision*.py`, `precision_probe.c`, `precision_race.c`, `race_precision.py`, `craig_habitability.py`, `test_precision.py` | Historical x87 oracle, double comparisons, actual Craig Go comparison and harness tests |
+| `dist/scaffold/precision/report.json`, `report.md` | 9,382,918 expression inputs and whole-calculator measurements |
+| `dist/scaffold/precision/craig-habitability.json`, `craig-habitability.md` | 140,665 races and 49,454,448 planet inputs compared to Craig Stars |
+| `dist/scaffold/precision/turns/summary.json`, `comparison.json`, `ext/`, `dbl/` | Independent fixed-seed host runs, nine scenarios through turn 150 |
+| `dist/scaffold/precision/migration/` | Before/after native and host regression comparisons |
+| `tests/scaffold/fixtures/regression/native/` | Updated native baseline; only `oneai5` and `smallai6` move, from turn 1 |
+| `tests/compat/native_tutorial.c` | SDL gesture driver, copied state snapshots and stages 203–248 for the new workflows |
+| `tests/compat/run_native_tutorial.py` | Isolated launcher and exact cargo/design/order/queue/template/report assertions |
+| `cmake/sdl-client.cmake` | Default smoke plus Merge cycle on dummy/X11; earlier stops opt-in |
+| `tests/scaffold/tutorial/steps.ahk`, `actions.ahk`, `tutor.c`, `text/` | Original walkthrough gestures and actual tutorial task/text references |
+
+The Craig checkout is read-only at `/home/jdrake/Projects/craig-stars`, pinned
+in the comparison to `85b83c422f14529b61ec45716261c53d1ad515ce`. The old Stars
+precision source is pinned to `3c67394973aacf6b0bf24d0a302f42b50a87bfa0`.
+Generated `dist/` artifacts are ignored by Git; the scripts and documentation
+needed to reproduce them are committed.
+
+### Validation and retained artifacts
+
+The MinGW Debug build passes without new warnings in touched files. Windows
+units pass 55/55, host units 15/15 and precision harness tests 6/6. Both migrated
+Windows and Linux host regressions match all 519 checkpoint files through turn
+150; their 55 and 69 unused-storage warnings respectively remain documented
+warnings, not differences. The Windows regression and unit suite were repeated
+after the tutorial harness edits with the same result. Frozen original fixtures
+are unchanged.
+
+Each native tutorial artifact directory contains `result.json`, `events.jsonl`,
+`client.log`, copied per-year orders and hierarchy/map JSON snapshots:
+
+- `dist/sdl-debug/test-client/tutorial-merge-cycle-dummy/`
+- `dist/sdl-release/test-client/tutorial-merge-cycle-dummy/`
+- `dist/sdl-release/test-client/tutorial-merge-cycle-x11/`
+- `dist/sdl-sanitize/test-client/tutorial-merge-cycle-dummy/`
+
+All four final Merge cycle profiles pass the current launcher assertions with
+514 actions, 50 pages visited, eighteen generation checkpoints,
+`status: partial`, `fullTutorial: false` and auto-completion disabled. Their
+final event is stage 248, turn 18, instruction 392. The bounded executable
+returns 2 intentionally; the launcher validates that outcome and returns success.
+
+Earlier development stops are also retained in
+`dist/sdl-debug/test-client/tutorial-{design,automation,report}-cycle-dummy/`.
+Important new evidence includes `value-report.json`,
+`year-2413-orders.json` (Mini-Miner design), `year-2414-imported-template.json`,
+`year-2416-merge.json`, `year-2416-orders.json`, `year-2417-orders.json` and
+`year-2418-{hierarchy,map}.json`. Full-suite logs for this final checkpoint are
+`/tmp/stars-merge-{debug-dummy,release-dummy,release-x11,sanitize}.log`;
+required Windows regression/unit logs are
+`/tmp/stars-tutorial-advance-{regression,unit,host-unit}.log`. `/tmp` logs may
+disappear; the retained `dist/` artifacts are the useful evidence for resuming.
+
+The three failed Windows/Wine walkthroughs listed above remain unresolved.
+They are not complete tutorial passes. Earlier historical full Wine runs do
+not validate the current executable. Native Wayland, ARM execution and the
+entire SDL compatibility suite were not qualified by this session.
+
+To reproduce the current native stop:
+
+```sh
+cmake --preset sdl-debug
+cmake --build --preset sdl-debug --target stars-native-tutorial
+ctest --test-dir dist/sdl-debug -R '^win32_native_tutorial_(smoke|merge-cycle)_dummy$' --output-on-failure
+```
+
+Use the same target and CTest pattern with `sdl-release` and `sdl-sanitize`;
+Release X11 uses suffix `_x11`. Xvfb/Openbox need display permissions, and
+fatal ASan/UBSan/LSan needs execution outside the tracing sandbox. Earlier
+stop-only profiles require `STARS_TUTORIAL_CHECKPOINT_TESTS=ON`.
+
+### Exact continuation point
+
+Continue from native stage 248's bounded stop: **year 2418, page 50, highlighted
+instruction 392**, `tutor.c` case 18 and Windows instructions 392–399. The next
+workflow queues one Teamster at the front of Stove Top production, reads message
+5 and uses Goto to 90210, opens Research with F5, inspects the expected-benefit
+items, closes without changes, reads the remaining messages and generates year
+2419/page 51. Later workflows include transport templates, starbase/stargate
+design, report/mineral sorting, mine layers/minefields, further ship designs,
+combat and the final completion at year 2437.
+
+Reuse the focused combo helper (stages 221–223), cargo stages 205–207, order
+stages 209–210, research stages 211–212 and shared production stages. Add a
+bounded scenario with cascading flags, CLI support, page/turn/timeout mapping,
+exact launcher assertions and CMake registration. Preserve real SDL events and
+the rejection of auto-completion; copy evidence before every generation.
+
+There is **no live native game to resume**. The launcher creates an isolated
+temporary game, replays earlier actions, copies artifacts and exits. Saved JSON
+snapshots are evidence, not resumable game state. Extend the next scenario from
+the existing driver and replay from a fresh launch; do not assign tutorial flags
+or game orders to skip earlier tasks. Finish all 80 pages and turn 37 before
+reporting a complete tutorial pass.

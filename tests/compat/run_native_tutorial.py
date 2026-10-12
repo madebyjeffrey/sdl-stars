@@ -16,15 +16,15 @@ def main():
     executable = Path(sys.argv[1]).resolve()
     artifacts = Path(sys.argv[2]).resolve()
     scenario = sys.argv[3] if len(sys.argv) > 3 else "smoke"
-    assert scenario in ("smoke", "first-year", "two-years", "scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"), "unknown bounded tutorial scenario"
-    page = {"smoke": 3, "first-year": 6, "two-years": 7, "scouting": 10, "mining": 11, "colonization": 13, "logistics": 17, "colonizer-production": 19, "second-colonization": 21, "transport-cycle": 23, "expansion": 26, "fleet-split": 27, "research-cycle": 30, "oxygen-colonization": 32, "production-templates": 34, "battle-cycle": 38, "terraform-cycle": 41}[scenario]
-    timeout = {"smoke": 35, "first-year": 50, "two-years": 80, "scouting": 120, "mining": 120, "colonization": 180, "logistics": 240, "colonizer-production": 270, "second-colonization": 300, "transport-cycle": 360, "expansion": 420, "fleet-split": 450, "research-cycle": 510, "oxygen-colonization": 570, "production-templates": 630, "battle-cycle": 750, "terraform-cycle": 810}[scenario]
-    turn = 13 if scenario == "terraform-cycle" else 12 if scenario == "battle-cycle" else 11 if scenario == "production-templates" else 10 if scenario == "oxygen-colonization" else 9 if scenario == "research-cycle" else 8 if scenario in ("expansion", "fleet-split") else 7 if scenario == "transport-cycle" else 6 if scenario == "second-colonization" else 5 if scenario == "colonizer-production" else 4 if scenario == "logistics" else 3 if scenario == "colonization" else 2 if scenario in ("two-years", "scouting", "mining") else 1 if scenario != "smoke" else 0
+    assert scenario in ("smoke", "first-year", "two-years", "scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"), "unknown bounded tutorial scenario"
+    page = {"smoke": 3, "first-year": 6, "two-years": 7, "scouting": 10, "mining": 11, "colonization": 13, "logistics": 17, "colonizer-production": 19, "second-colonization": 21, "transport-cycle": 23, "expansion": 26, "fleet-split": 27, "research-cycle": 30, "oxygen-colonization": 32, "production-templates": 34, "battle-cycle": 38, "terraform-cycle": 41, "design-cycle": 45, "automation-cycle": 46, "report-cycle": 48, "merge-cycle": 50}[scenario]
+    timeout = {"smoke": 35, "first-year": 50, "two-years": 80, "scouting": 120, "mining": 120, "colonization": 180, "logistics": 240, "colonizer-production": 270, "second-colonization": 300, "transport-cycle": 360, "expansion": 420, "fleet-split": 450, "research-cycle": 510, "oxygen-colonization": 570, "production-templates": 630, "battle-cycle": 750, "terraform-cycle": 810, "design-cycle": 930, "automation-cycle": 990, "report-cycle": 1110, "merge-cycle": 1230}[scenario]
+    turn = 18 if scenario == "merge-cycle" else 16 if scenario == "report-cycle" else 15 if scenario == "automation-cycle" else 14 if scenario == "design-cycle" else 13 if scenario == "terraform-cycle" else 12 if scenario == "battle-cycle" else 11 if scenario == "production-templates" else 10 if scenario == "oxygen-colonization" else 9 if scenario == "research-cycle" else 8 if scenario in ("expansion", "fleet-split") else 7 if scenario == "transport-cycle" else 6 if scenario == "second-colonization" else 5 if scenario == "colonizer-production" else 4 if scenario == "logistics" else 3 if scenario == "colonization" else 2 if scenario in ("two-years", "scouting", "mining") else 1 if scenario != "smoke" else 0
     generations = turn
     artifacts.mkdir(parents=True, exist_ok=True)
-    for name in ("events.jsonl", "result.json", "client.log", "launcher-failure.txt", "year-2400-orders.json", "year-2401-orders.json", "year-2402-scout-orders.json", "year-2402-mining-orders.json", "year-2402-orders.json", "year-2403-start-orders.json", "year-2403-orders.json", "year-2404-start-orders.json", "year-2404-orders.json", "year-2405-start-orders.json", "year-2405-cargo.json", "year-2405-orders.json", "year-2406-start-orders.json", "year-2406-copied-orders.json", "year-2406-orders.json", "year-2407-start-orders.json", "year-2407-cargo.json", "year-2407-orders.json", "enemy-design.json", "year-2408-start-orders.json", "year-2408-after-transfer.json", "year-2408-split-cargo.json", "year-2408-before-split-all.json", "year-2408-split-orders.json", "year-2408-drag-orders.json", "year-2408-scout-orders.json", "year-2408-orders.json", "wallaby-radiation.json", "radiation-benefit.json", "year-2409-start-orders.json", "year-2409-research.json", "year-2409-cargo.json", "year-2409-orders.json", "year-2410-start-orders.json", "year-2410-shaggy-queue.json", "year-2410-imported-template.json", "year-2410-template-orders.json", "year-2410-orders.json", "year-2411-start-orders.json", "year-2411-colonizer-cargo.json", "year-2411-troop-cargo.json", "year-2411-mines.json", "year-2411-research.json", "year-2411-orders.json", "battle-open.json", "battle-playing.json", "battle-end.json", "battle-rewound.json", "battle-stepped.json", "salvage.json", "year-2412-start-orders.json", "year-2412-terraform-orders.json", "year-2412-teamster-orders.json", "year-2412-orders.json"):
+    for name in ("events.jsonl", "result.json", "client.log", "launcher-failure.txt", "year-2400-orders.json", "year-2401-orders.json", "year-2402-scout-orders.json", "year-2402-mining-orders.json", "year-2402-orders.json", "year-2403-start-orders.json", "year-2403-orders.json", "year-2404-start-orders.json", "year-2404-orders.json", "year-2405-start-orders.json", "year-2405-cargo.json", "year-2405-orders.json", "year-2406-start-orders.json", "year-2406-copied-orders.json", "year-2406-orders.json", "year-2407-start-orders.json", "year-2407-cargo.json", "year-2407-orders.json", "enemy-design.json", "year-2408-start-orders.json", "year-2408-after-transfer.json", "year-2408-split-cargo.json", "year-2408-before-split-all.json", "year-2408-split-orders.json", "year-2408-drag-orders.json", "year-2408-scout-orders.json", "year-2408-orders.json", "wallaby-radiation.json", "radiation-benefit.json", "year-2409-start-orders.json", "year-2409-research.json", "year-2409-cargo.json", "year-2409-orders.json", "year-2410-start-orders.json", "year-2410-shaggy-queue.json", "year-2410-imported-template.json", "year-2410-template-orders.json", "year-2410-orders.json", "year-2411-start-orders.json", "year-2411-colonizer-cargo.json", "year-2411-troop-cargo.json", "year-2411-mines.json", "year-2411-research.json", "year-2411-orders.json", "battle-open.json", "battle-playing.json", "battle-end.json", "battle-rewound.json", "battle-stepped.json", "salvage.json", "year-2412-start-orders.json", "year-2412-terraform-orders.json", "year-2412-teamster-orders.json", "year-2412-orders.json", "year-2413-start-orders.json", "year-2413-cargo.json", "year-2413-transport.json", "year-2413-research.json", "year-2413-miner-queue.json", "year-2413-mines.json", "year-2413-orders.json", "year-2414-start-orders.json", "year-2414-terraform-queue.json", "year-2414-imported-template.json", "year-2414-orders.json", "year-2415-start-orders.json", "year-2415-cargo.json", "year-2415-transport.json", "year-2415-research.json", "year-2415-orders.json", "value-report.json", "year-2416-start-orders.json", "year-2416-merge.json", "year-2416-production.json", "year-2416-research.json", "year-2416-orders.json", "year-2417-start-orders.json", "year-2417-orders.json"):
         (artifacts / name).unlink(missing_ok=True)
-    for name in ("start", "rejected", "page-two", "page-three", "before-generate", "year-2401", "year-2402", "before-generate-2401", "scouting", "mining", "summary-popup", "before-generate-2402", "year-2403", "before-generate-2403", "year-2404", "before-generate-2404", "year-2405", "habitability", "before-generate-2405", "year-2406", "before-generate-2406", "year-2407", "red-storm-view", "enemy-summary", "enemy-design-popup", "before-generate-2407", "year-2408", "ship-transfer", "fleet-split", "waypoint-drag", "wallaby-radiation", "research-benefits", "radiation-benefit", "before-generate-2408", "year-2409", "oxygen-summary", "mozart-waypoint", "before-generate-2409", "year-2410", "shaggy-dog-summary", "template-open", "template-imported", "template-owner-restored", "template-closed", "bloop-summary", "before-generate-2410", "year-2411", "technology-browser", "technology-browser-closed", "battle-open", "battle-playing", "battle-closed", "before-generate-2411", "year-2412", "armed-probe-message", "armed-probe-goto", "missing-menu", "salvage-summary", "find-teamster-open", "find-teamster-entered", "find-teamster-closed", "before-generate-2412", "year-2413", "failure"):
+    for name in ("start", "rejected", "page-two", "page-three", "before-generate", "year-2401", "year-2402", "before-generate-2401", "scouting", "mining", "summary-popup", "before-generate-2402", "year-2403", "before-generate-2403", "year-2404", "before-generate-2404", "year-2405", "habitability", "before-generate-2405", "year-2406", "before-generate-2406", "year-2407", "red-storm-view", "enemy-summary", "enemy-design-popup", "before-generate-2407", "year-2408", "ship-transfer", "fleet-split", "waypoint-drag", "wallaby-radiation", "research-benefits", "radiation-benefit", "before-generate-2408", "year-2409", "oxygen-summary", "mozart-waypoint", "before-generate-2409", "year-2410", "shaggy-dog-summary", "template-open", "template-imported", "template-owner-restored", "template-closed", "bloop-summary", "before-generate-2410", "year-2411", "technology-browser", "technology-browser-closed", "battle-open", "battle-playing", "battle-closed", "before-generate-2411", "year-2412", "armed-probe-message", "armed-probe-goto", "missing-menu", "salvage-summary", "find-teamster-open", "find-teamster-entered", "find-teamster-closed", "before-generate-2412", "year-2413", "mini-miner-designed", "mini-miner-part", "production-items", "before-generate-2413", "year-2414", "terraform-template-open", "terraform-template-imported", "terraform-template-owner-restored", "terraform-template-closed", "before-generate-2414", "year-2415", "value-report-open", "value-report-sorted", "value-report-closed", "propulsion-research-open", "before-generate-2415", "year-2416", "before-generate-2416", "year-2417", "before-generate-2417", "year-2418", "failure"):
         for kind in ("hierarchy", "map"):
             (artifacts / f"{name}-{kind}.json").unlink(missing_ok=True)
     with tempfile.TemporaryDirectory(prefix="stars-native-tutorial-") as directory:
@@ -71,13 +71,13 @@ def main():
                 assert fleets[fleet_id][1]["task"] == 0
                 assert fleets[fleet_id][1]["position"] == planets[planet_id]
             assert json.loads((work / "year-2401-map.json").read_text())["turn"] == 1
-            if scenario in ("two-years", "scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("two-years", "scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2401-orders.json").read_text())
                 assert checkpoint["turn"] == 1 and checkpoint["turnDone"] == 1
                 assert checkpoint["production"] == [{"planet": 13, "kind": 1, "item": 7, "quantity": 20}]
                 assert ready[1]["turn"] == 1 and ready[1]["turnDone"] == 1
                 assert json.loads((work / "year-2402-map.json").read_text())["turn"] == 2
-            if scenario in ("scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("scouting", "mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2402-scout-orders.json").read_text())
                 assert checkpoint["turn"] == 2 and checkpoint["turnDone"] == 0
                 fleets = {fleet["id"]: fleet["orders"] for fleet in checkpoint["fleets"]}
@@ -86,14 +86,14 @@ def main():
                     assert len(fleets[fleet_id]) == len(route) + 1
                     for order, planet_id in zip(fleets[fleet_id][1:], route):
                         assert (order["kind"], order["id"], order["task"], order["position"]) == (1, planet_id, 0, planets[planet_id])
-            if scenario in ("mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("mining", "colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2402-mining-orders.json").read_text())
                 assert checkpoint["turn"] == 2 and checkpoint["turnDone"] == 0
                 orders = next(fleet["orders"] for fleet in checkpoint["fleets"] if fleet["id"] == 5)
                 assert len(orders) == 2 and (orders[1]["kind"], orders[1]["id"], orders[1]["task"]) == (1, 12, 3)
                 planets = {obj["id"]: obj["universe"] for obj in json.loads((work / "mining-map.json").read_text())["objects"] if obj["kind"] == 1}
                 assert orders[1]["position"] == planets[12]
-            if scenario in ("colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("colonization", "logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 assert len([event for event in events if event["event"] == "summary-popup"]) == 1
                 popup = json.loads((work / "summary-popup-hierarchy.json").read_text())["windows"]
                 assert any(window["class"] == "starspopup" and window["visible"] and window["captured"] for window in popup)
@@ -111,7 +111,7 @@ def main():
                 for fleet_id in (0, 1, 4, 5):
                     assert fleets[fleet_id]["orders"] == next(fleet["orders"] for fleet in previous["fleets"] if fleet["id"] == fleet_id)
                 assert json.loads((work / "year-2403-map.json").read_text())["turn"] == 3
-            if scenario in ("logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("logistics", "colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2403-orders.json").read_text())
                 assert checkpoint["turn"] == 3 and checkpoint["turnDone"] == 1
                 assert checkpoint["filteredFactories"] is True
@@ -134,7 +134,7 @@ def main():
                 for fleet_id in previous.keys() - {0, 3}:
                     assert fleets[fleet_id]["orders"] == previous[fleet_id]["orders"]
                 assert json.loads((work / "year-2404-map.json").read_text())["turn"] == 4
-            if scenario in ("colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("colonizer-production", "second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2404-orders.json").read_text())
                 previous = json.loads((work / "year-2404-start-orders.json").read_text())
                 assert checkpoint["turn"] == 4 and checkpoint["turnDone"] == 1
@@ -155,7 +155,7 @@ def main():
                 assert checkpoint["research"] == previous["research"]
                 assert checkpoint["filteredFactories"] == previous["filteredFactories"]
                 assert json.loads((work / "year-2405-map.json").read_text())["turn"] == 5
-            if scenario in ("second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("second-colonization", "transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2405-orders.json").read_text())
                 previous = json.loads((work / "year-2405-start-orders.json").read_text())
                 cargo = json.loads((work / "year-2405-cargo.json").read_text())
@@ -189,7 +189,7 @@ def main():
                 for field in ("production", "planetFlags", "research", "filteredFactories"):
                     assert checkpoint[field] == previous[field]
                 assert json.loads((work / "year-2406-map.json").read_text())["turn"] == 6
-            if scenario in ("transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("transport-cycle", "expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2406-orders.json").read_text())
                 previous = json.loads((work / "year-2406-start-orders.json").read_text())
                 copied = json.loads((work / "year-2406-copied-orders.json").read_text())
@@ -220,7 +220,7 @@ def main():
                 for field in ("planetFlags", "research", "filteredFactories", "scannerMode"):
                     assert checkpoint[field] == previous[field]
                 assert json.loads((work / "year-2407-map.json").read_text())["turn"] == 7
-            if scenario in ("expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("expansion", "fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoint = json.loads((work / "year-2407-orders.json").read_text())
                 previous = json.loads((work / "year-2407-start-orders.json").read_text())
                 cargo = json.loads((work / "year-2407-cargo.json").read_text())
@@ -264,7 +264,7 @@ def main():
                 assert design["hideCounts"] is True and design["summary"] is True
                 assert design["showDamage"] is False and design["token"] is False
                 assert json.loads((work / "year-2408-map.json").read_text())["turn"] == 8
-            if scenario in ("fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("fleet-split", "research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 checkpoints = [json.loads((work / name).read_text()) for name in (
                     "year-2408-start-orders.json", "year-2408-after-transfer.json",
                     "year-2408-split-cargo.json", "year-2408-before-split-all.json", "year-2408-split-orders.json")]
@@ -289,7 +289,7 @@ def main():
                 assert final[9] == fleets[1][9]
                 assert all(item["turn"] == 8 and item["turnDone"] == 0 for item in checkpoints)
                 assert all(item["research"] == checkpoints[0]["research"] and item["production"] == checkpoints[0]["production"] for item in checkpoints)
-            if scenario in ("research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("research-cycle", "oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 split = json.loads((work / "year-2408-split-orders.json").read_text())
                 dragged = json.loads((work / "year-2408-drag-orders.json").read_text())
                 routed = json.loads((work / "year-2408-scout-orders.json").read_text())
@@ -331,7 +331,7 @@ def main():
                 for name in ("waypoint-dragged", "environment-popup", "research-benefit-popup"):
                     assert len([event for event in events if event["event"] == name]) == 1
                 assert json.loads((work / "year-2409-map.json").read_text())["turn"] == 9
-            if scenario in ("oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("oxygen-colonization", "production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 previous = json.loads((work / "year-2409-start-orders.json").read_text())
                 research = json.loads((work / "year-2409-research.json").read_text())
                 cargo = json.loads((work / "year-2409-cargo.json").read_text())
@@ -372,7 +372,7 @@ def main():
                 assert len([event for event in events if event["event"] == "oxygen-goto"]) == 1
                 assert len([event for event in events if event["event"] == "mozart-waypoint-dragged"]) == 1
                 assert json.loads((work / "year-2410-map.json").read_text())["turn"] == 10
-            if scenario in ("production-templates", "battle-cycle", "terraform-cycle"):
+            if scenario in ("production-templates", "battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 previous, queued, imported, accepted, checkpoint = [json.loads((work / name).read_text()) for name in (
                     "year-2410-start-orders.json", "year-2410-shaggy-queue.json", "year-2410-imported-template.json",
                     "year-2410-template-orders.json", "year-2410-orders.json")]
@@ -415,7 +415,7 @@ def main():
                 for name in ("shaggy-dog-goto", "template-nested-open", "template-owner-restored", "bloop-goto"):
                     assert len([event for event in events if event["event"] == name]) == 1
                 assert json.loads((work / "year-2411-map.json").read_text())["turn"] == 11
-            if scenario in ("battle-cycle", "terraform-cycle"):
+            if scenario in ("battle-cycle", "terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 previous, colonizer, troops, mines, research, checkpoint = [json.loads((work / name).read_text()) for name in (
                     "year-2411-start-orders.json", "year-2411-colonizer-cargo.json", "year-2411-troop-cargo.json",
                     "year-2411-mines.json", "year-2411-research.json", "year-2411-orders.json")]
@@ -468,7 +468,7 @@ def main():
                 for name in ("technology-browser-open", "technology-browser-closed", "battle-open", "battle-playing", "battle-closed"):
                     assert len([event for event in events if event["event"] == name]) == 1
                 assert json.loads((work / "year-2412-map.json").read_text())["turn"] == 12
-            if scenario == "terraform-cycle":
+            if scenario in ("terraform-cycle", "design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
                 previous, terraformed, queued, checkpoint = [json.loads((work / name).read_text()) for name in (
                     "year-2412-start-orders.json", "year-2412-terraform-orders.json", "year-2412-teamster-orders.json", "year-2412-orders.json")]
                 assert all(item["turn"] == 12 for item in (previous, terraformed, queued, checkpoint))
@@ -512,6 +512,154 @@ def main():
                 for name in ("armed-probe-goto", "salvage-selected", "teamster-found"):
                     assert len([event for event in events if event["event"] == name and event["turn"] == 12]) == 1
                 assert json.loads((work / "year-2413-map.json").read_text())["turn"] == 13
+            if scenario in ("design-cycle", "automation-cycle", "report-cycle", "merge-cycle"):
+                previous, cargo, transported, researched, miner, mines, checkpoint = [json.loads((work / name).read_text()) for name in (
+                    "year-2413-start-orders.json", "year-2413-cargo.json", "year-2413-transport.json", "year-2413-research.json",
+                    "year-2413-miner-queue.json", "year-2413-mines.json", "year-2413-orders.json")]
+                assert all(item["turn"] == 13 for item in (previous, cargo, transported, researched, miner, mines, checkpoint))
+                assert previous["turnDone"] == 0 and checkpoint["turnDone"] == ready[13]["turnDone"] == 1
+                before_fleets = {fleet["id"]: fleet for fleet in previous["fleets"]}
+                cargo_fleets = {fleet["id"]: fleet for fleet in cargo["fleets"]}
+                expected_cargo = dict(before_fleets[0], cargo=before_fleets[0]["cargo"][:])
+                expected_cargo["cargo"][3] = 210
+                assert cargo_fleets[0] == expected_cargo
+                assert {i: fleet for i, fleet in cargo_fleets.items() if i != 0} == {i: fleet for i, fleet in before_fleets.items() if i != 0}
+                final_fleets = {fleet["id"]: fleet for fleet in checkpoint["fleets"]}
+                assert set(final_fleets) == set(before_fleets)
+                for i in final_fleets:
+                    assert final_fleets[i]["ships"] == before_fleets[i]["ships"]
+                    assert final_fleets[i]["cargo"] == cargo_fleets[i]["cargo"]
+                    assert final_fleets[i]["repeatOrders"] == before_fleets[i]["repeatOrders"]
+                    if i not in (0, 8): assert final_fleets[i] == before_fleets[i]
+                objects = json.loads((work / "before-generate-2413-map.json").read_text())["objects"]
+                positions = {obj["id"]: obj["universe"] for obj in objects if obj["kind"] == 1}
+                for i, planet in ((0, 8), (8, 13)):
+                    assert len(final_fleets[i]["orders"]) == 2
+                    order = final_fleets[i]["orders"][1]
+                    assert order["kind"] == 1 and order["id"] == planet and order["position"] == positions[planet]
+                unload = final_fleets[0]["orders"][1]
+                assert unload["task"] == 1 and unload["transport"][3] == {"action": 2, "quantity": 0}
+                assert all(action == {"action": 0, "quantity": 0} for j, action in enumerate(unload["transport"]) if j != 3)
+                assert researched["research"] == checkpoint["research"] == [5, 2, 30]
+                assert len(previous["designs"]) == 6 and len(checkpoint["designs"]) == 7
+                assert checkpoint["designs"][:6] == previous["designs"]
+                assert checkpoint["designs"][6] == {"index": 6, "hull": 21, "parts": [[1, 3, 1], [2, 1, 1], [128, 2, 1], [128, 2, 1]]}
+                original_stove = [item for item in previous["production"] if item["planet"] == 13]
+                expected_miner = original_stove[:1] + [{"planet": 13, "kind": 2, "item": 6, "quantity": 1}] + original_stove[1:]
+                assert [item for item in miner["production"] if item["planet"] == 13] == expected_miner
+                expected_mines = [{"planet": 13, "kind": 1, "item": 8, "quantity": 100}] + expected_miner
+                assert [item for item in mines["production"] if item["planet"] == 13] == expected_mines
+                assert mines["production"] == checkpoint["production"]
+                assert checkpoint["planetFlags"] == previous["planetFlags"]
+                for item in (cargo, transported, researched, miner, mines, checkpoint):
+                    assert item["ownedFleetCount"] == previous["ownedFleetCount"]
+                    assert [entry for entry in item["production"] if entry["planet"] != 13] == [entry for entry in previous["production"] if entry["planet"] != 13]
+                    for key in ("scannerMode", "filteredFactories", "filteredMines", "filteredUnloads", "filteredMiningLoads", "filteredDismantles", "defaultTemplate"):
+                        assert item[key] == previous[key]
+                assert json.loads((work / "year-2414-map.json").read_text())["turn"] == 14
+                inspected = [event["productionSelection"] for event in events if event["event"] == "production-item-inspected" and event["turn"] == 13]
+                assert inspected == list(range(len(expected_mines)))
+            if scenario in ("automation-cycle", "report-cycle", "merge-cycle"):
+                previous, queued, imported, checkpoint = [json.loads((work / name).read_text()) for name in (
+                    "year-2414-start-orders.json", "year-2414-terraform-queue.json", "year-2414-imported-template.json", "year-2414-orders.json")]
+                assert all(item["turn"] == 14 for item in (previous, queued, imported, checkpoint))
+                assert previous["turnDone"] == 0 and checkpoint["turnDone"] == ready[14]["turnDone"] == 1
+                oxygen = [item for item in previous["production"] if item["planet"] == 2]
+                expected_queue = [{"planet": 2, "kind": 1, "item": 4, "quantity": 2}] + oxygen
+                assert [item for item in queued["production"] if item["planet"] == 2] == expected_queue
+                assert queued["production"] == imported["production"] == checkpoint["production"]
+                template = {"valid": True, "leftoverResearch": 1, "count": len(expected_queue),
+                            "items": [{"item": item["item"], "quantity": item["quantity"]} for item in expected_queue]}
+                assert imported["defaultTemplate"] == checkpoint["defaultTemplate"] == template
+                assert queued["defaultTemplate"] == previous["defaultTemplate"]
+                assert [item for item in checkpoint["production"] if item["planet"] != 2] == [item for item in previous["production"] if item["planet"] != 2]
+                flags = {item["planet"]: item["leftoverResearch"] for item in previous["planetFlags"]}
+                flags[2] = 1
+                assert {item["planet"]: item["leftoverResearch"] for item in checkpoint["planetFlags"]} == flags
+                for key in ("fleets", "designs", "research", "scannerMode", "ownedFleetCount", "filteredFactories", "filteredMines", "filteredUnloads", "filteredMiningLoads", "filteredDismantles"):
+                    assert all(item[key] == previous[key] for item in (queued, imported, checkpoint))
+                opened = json.loads((work / "terraform-template-open-hierarchy.json").read_text())["windows"]
+                child = next(window for window in opened if window["dialog"] and window["visible"] and window["text"] == "Customize Production Templates")
+                owner = next(window for window in opened if window["id"] == child["owner"])
+                assert not owner["enabled"] and child["enabled"]
+                closed = json.loads((work / "terraform-template-closed-hierarchy.json").read_text())["windows"]
+                assert not any(window["id"] in (child["id"], owner["id"]) for window in closed)
+                assert json.loads((work / "year-2415-map.json").read_text())["turn"] == 15
+            if scenario in ("report-cycle", "merge-cycle"):
+                previous, cargo, researched, checkpoint = [json.loads((work / name).read_text()) for name in (
+                    "year-2415-start-orders.json", "year-2415-cargo.json", "year-2415-research.json", "year-2415-orders.json")]
+                assert all(item["turn"] == 15 for item in (previous, cargo, researched, checkpoint))
+                assert previous["turnDone"] == 0 and checkpoint["turnDone"] == ready[15]["turnDone"] == 1
+                original = {fleet["id"]: fleet for fleet in previous["fleets"]}
+                filled = {fleet["id"]: fleet for fleet in cargo["fleets"]}
+                final = {fleet["id"]: fleet for fleet in checkpoint["fleets"]}
+                assert set(final) == set(original) == set(filled)
+                expected = dict(original[6], cargo=original[6]["cargo"][:])
+                expected["cargo"][3] = 210
+                assert filled[6] == expected
+                for i in final:
+                    assert final[i]["ships"] == original[i]["ships"] and final[i]["repeatOrders"] == original[i]["repeatOrders"]
+                    assert final[i]["cargo"] == filled[i]["cargo"]
+                    if i not in (6, 8, 11): assert final[i] == original[i]
+                objects = json.loads((work / "before-generate-2415-map.json").read_text())["objects"]
+                positions = {obj["id"]: obj["universe"] for obj in objects if obj["kind"] == 1}
+                for i, planet in ((8, 11), (6, 5), (11, 13)):
+                    assert len(final[i]["orders"]) == 2
+                    order = final[i]["orders"][1]
+                    assert order["kind"] == 1 and order["id"] == planet and order["position"] == positions[planet]
+                unload = final[6]["orders"][1]
+                assert unload["task"] == 1 and unload["transport"][3] == {"action": 2, "quantity": 0}
+                assert all(action == {"action": 0, "quantity": 0} for j, action in enumerate(unload["transport"]) if j != 3)
+                for item in (cargo, researched, checkpoint):
+                    for key in ("designs", "production", "research", "planetFlags", "defaultTemplate", "scannerMode", "ownedFleetCount", "filteredFactories", "filteredMines", "filteredUnloads", "filteredMiningLoads", "filteredDismantles"):
+                        assert item[key] == previous[key]
+                report = json.loads((work / "value-report.json").read_text())
+                assert report["turn"] == 15 and report["type"] == 0 and report["column"] == 4 and report["ascending"]
+                assert report["planetIds"][0] == 5
+                opened = json.loads((work / "value-report-open-hierarchy.json").read_text())["windows"]
+                window = next(window for window in opened if window["visible"] and "Planet Summary Report" in window["text"])
+                closed = json.loads((work / "value-report-closed-hierarchy.json").read_text())["windows"]
+                assert not any(item["id"] == window["id"] for item in closed)
+                research_window = json.loads((work / "propulsion-research-open-hierarchy.json").read_text())["windows"]
+                assert any(item["visible"] and item["dialog"] and item["text"] == "Research" for item in research_window)
+                assert json.loads((work / "year-2416-map.json").read_text())["turn"] == 16
+            if scenario == "merge-cycle":
+                previous, production, research, checkpoint = [json.loads((work / name).read_text()) for name in (
+                    "year-2416-start-orders.json", "year-2416-production.json", "year-2416-research.json", "year-2416-orders.json")]
+                assert all(item["turn"] == 16 for item in (previous, production, research, checkpoint))
+                assert checkpoint["turnDone"] == ready[16]["turnDone"] == 1
+                assert research["research"] == checkpoint["research"] == [2, 3, 30]
+                original = {fleet["id"]: fleet for fleet in previous["fleets"]}
+                final = {fleet["id"]: fleet for fleet in checkpoint["fleets"]}
+                assert set(final) == set(original)
+                objects = json.loads((work / "before-generate-2416-map.json").read_text())["objects"]
+                positions = {(obj["kind"], obj["id"]): obj["universe"] for obj in objects}
+                for i in final:
+                    assert final[i]["ships"] == original[i]["ships"] and final[i]["cargo"] == original[i]["cargo"]
+                    assert final[i]["repeatOrders"] == original[i]["repeatOrders"]
+                    if i not in (4, 7): assert final[i] == original[i]
+                assert len(final[4]["orders"]) == len(final[7]["orders"]) == 2
+                assert final[4]["orders"][1]["kind"] == 1 and final[4]["orders"][1]["id"] == 5
+                assert final[4]["orders"][1]["position"] == positions[1, 5]
+                merge = final[7]["orders"][1]
+                assert merge["kind"] == 2 and merge["id"] == 5 and merge["task"] == 4 and merge["position"] == positions[2, 5]
+                expected_queue = [{"planet": 13, "kind": 1, "item": 1, "quantity": 60}, {"planet": 13, "kind": 1, "item": 0, "quantity": 60}]
+                assert [item for item in production["production"] if item["planet"] == 13] == expected_queue
+                assert production["production"] == research["production"] == checkpoint["production"]
+                assert [item for item in checkpoint["production"] if item["planet"] != 13] == [item for item in previous["production"] if item["planet"] != 13]
+                for key in ("designs", "planetFlags", "defaultTemplate", "scannerMode", "ownedFleetCount", "filteredFactories", "filteredMines", "filteredUnloads", "filteredMiningLoads", "filteredDismantles"):
+                    assert checkpoint[key] == previous[key]
+                before_return, returned = [json.loads((work / name).read_text()) for name in ("year-2417-start-orders.json", "year-2417-orders.json")]
+                assert before_return["turn"] == returned["turn"] == 17 and returned["turnDone"] == ready[17]["turnDone"] == 1
+                original = {fleet["id"]: fleet for fleet in before_return["fleets"]}
+                final = {fleet["id"]: fleet for fleet in returned["fleets"]}
+                expected = dict(original[0], orders=original[0]["orders"][:])
+                expected["orders"].append({"kind": 1, "id": 13, "position": positions[1, 13], "task": 0, "warp": 6})
+                assert final[0] == expected
+                assert {i: fleet for i, fleet in final.items() if i != 0} == {i: fleet for i, fleet in original.items() if i != 0}
+                for key in ("designs", "production", "research", "planetFlags", "defaultTemplate", "scannerMode", "ownedFleetCount", "filteredFactories", "filteredMines", "filteredUnloads", "filteredMiningLoads", "filteredDismantles"):
+                    assert returned[key] == before_return[key]
+                assert json.loads((work / "year-2418-map.json").read_text())["turn"] == 18
     print(f"Native tutorial {scenario} checks passed (not full tutorial); artifacts: {artifacts}")
     return 0
 
