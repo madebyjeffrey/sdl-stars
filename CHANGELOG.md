@@ -8,6 +8,11 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- `GetCursorPos` in the SDL wrapper previously rejected the Windows video driver,
+  preventing native desktop cursor queries. It now reads SDL's desktop-relative
+  mouse state on Windows as on X11/Cocoa, retaining coordinate validation and
+  unsupported-backend errors. Turn generation and regression baselines are unchanged.
+
 - Added an opt-in Windows desktop check that opens actual system open/save
   pickers and automatically cancels them, verifying native ownership, message
   pumping and directory preservation. Final source-layout qualification records

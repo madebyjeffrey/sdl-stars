@@ -211,3 +211,12 @@ Long Hump 6 engine into the Mini-Miner design. This is a failing qualification,
 not a walkthrough pass. The default tutorial smoke passes. Artifacts are in
 `dist/windows-sdl-debug/test-client/tutorial-merge-cycle-dummy/`; full tutorial
 coverage and fresh Linux/macOS execution remain pending.
+
+
+The subsequent `GetCursorPos` repair passes all 44 headless checks and both full
+519-comparison regressions (69 unused-storage warnings each, zero differences or
+errors). The opt-in `stars-compat-cursor-desktop` check compares the wrapper's
+actual Windows SDL cursor query with the system cursor without moving it; it
+passes. Cursor-specific evidence is in the `cursor-*` logs under
+`dist/verification/sdl-migration/`. The page-42 tutorial qualification failure is
+still recorded separately; this cursor repair does not claim to resolve it.

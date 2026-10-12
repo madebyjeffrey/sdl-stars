@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
@@ -11,6 +12,9 @@ static bool rgfKeys[SDL_SCANCODE_COUNT];
 static SDL_Keymod modMock;
 static SDL_MouseButtonFlags buttonsMock;
 static float xMock, yMock;
+static const char *pszDriverMock;
+const char *__real_SDL_GetCurrentVideoDriver(void);
+const char *__wrap_SDL_GetCurrentVideoDriver(void) { return pszDriverMock ? pszDriverMock : __real_SDL_GetCurrentVideoDriver(); }
 const bool *__real_SDL_GetKeyboardState(int *c);
 SDL_Keymod __real_SDL_GetModState(void);
 SDL_MouseButtonFlags __real_SDL_GetGlobalMouseState(float *x, float *y);
@@ -178,6 +182,13 @@ static int TestPhysical(void) {
         xMock = -123.75f; yMock = 456.75f;
         CHECK(GetCursorPos(&pt) && pt.x == -123 && pt.y == 456);
     }
+    pszDriverMock = "windows"; xMock = -123.75f; yMock = 456.75f;
+    CHECK(GetCursorPos(&pt) && pt.x == -123 && pt.y == 456);
+    xMock = NAN;
+    CHECK(!GetCursorPos(&pt));
+    pszDriverMock = "unsupported";
+    CHECK(!GetCursorPos(&pt) && GetLastError() == ERROR_NOT_SUPPORTED);
+    pszDriverMock = NULL;
     CHECK(!GetCursorPos(NULL));
     fMock = FALSE;
     return 0;

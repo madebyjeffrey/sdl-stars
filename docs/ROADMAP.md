@@ -26,7 +26,8 @@ untracked CMake trees and the empty backup directory, and archived 154 old scrat
 files plus 11 scratch/install directories under `dist/archive/pre-sdl-consolidation`.
 Current qualification logs are grouped under `dist/verification/sdl-migration`.
 Actual Windows native open/save creation, owned modality and cancellation are
-verified. Manual selection/overwrite/scaling and fresh Linux/macOS execution remain
+verified. `GetCursorPos` now accepts the Windows SDL driver, repairing desktop
+cursor queries; driver/coordinate contracts have a regression test. Manual selection/overwrite/scaling and fresh Linux/macOS execution remain
 outstanding. Windows Merge cycle reaches year 2413/page 42, then fails at stage
 216/instruction 332 during the Mini-Miner engine drag; the default smoke passes.
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,

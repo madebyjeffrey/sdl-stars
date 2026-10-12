@@ -58,7 +58,13 @@ remain outside this implementation.
 
 ## Pointer and wheel routing
 
-`GetCursorPos` queries global coordinates on X11 and Cocoa. Native Wayland
+`GetCursorPos` queries global coordinates on Windows, X11 and Cocoa through
+[SDL_GetGlobalMouseState](https://wiki.libsdl.org/SDL3/SDL_GetGlobalMouseState).
+The Windows driver was previously rejected; a mocked-driver regression reproduces
+that failure and verifies desktop coordinates, non-finite rejection and the
+retained unsupported-driver error. The opt-in `stars-compat-cursor-desktop`
+check also compares a real Windows SDL query with the SDK cursor without moving
+it; the desktop check and full 44-test headless suite pass. Native Wayland
 uses the SDL mouse-focus window and translates its surface-relative point into
 the owner-local coordinate system. During queued/captured input it can retain
 the last delivered point while its source window still exists. It cannot query

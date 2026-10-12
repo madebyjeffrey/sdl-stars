@@ -117,7 +117,8 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
         SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
-    if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0)) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+    if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0 &&
+                       strcmp(pszDriver, "windows") != 0)) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
     SDL_GetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || (double)x < INT32_MIN || (double)x > INT32_MAX ||
         (double)y < INT32_MIN || (double)y > INT32_MAX) return FALSE;

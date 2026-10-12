@@ -46,10 +46,16 @@ foreach(STARS_COMPAT_TEST windows bitmap dib memory timers controls edit regions
 endforeach()
 target_sources(stars-compat-dib PRIVATE tests/compat/win32_dib_invalid.c)
 target_link_options(stars-compat-input PRIVATE
-    "LINKER:--wrap=SDL_GetKeyboardState,--wrap=SDL_GetModState,--wrap=SDL_GetGlobalMouseState")
+    "LINKER:--wrap=SDL_GetKeyboardState,--wrap=SDL_GetModState,--wrap=SDL_GetGlobalMouseState,--wrap=SDL_GetCurrentVideoDriver")
 
 add_executable(stars-compat-windows-platform tests/compat/win32_windows_platform.c)
 add_library(stars-compat-platform-fixture OBJECT tests/compat/win32_platform_fixture.c)
+add_executable(stars-compat-cursor-desktop tests/compat/win32_cursor_windows.c
+    $<TARGET_OBJECTS:stars-compat-platform-fixture>)
+target_link_libraries(stars-compat-cursor-desktop PRIVATE stars_win32 SDL3::SDL3)
+target_include_directories(stars-compat-cursor-desktop PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_compile_options(stars-compat-cursor-desktop PRIVATE -Wall -Wextra -Wpedantic -Werror)
+set_target_properties(stars-compat-cursor-desktop PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_sources(stars-compat-windows-platform PRIVATE $<TARGET_OBJECTS:stars-compat-platform-fixture>)
 target_link_libraries(stars-compat-windows-platform PRIVATE stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-windows-platform PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")

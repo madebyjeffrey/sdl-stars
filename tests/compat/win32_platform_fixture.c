@@ -2,6 +2,15 @@
 #include <windows.h>
 #include <winioctl.h>
 #include <io.h>
+#include <stdint.h>
+
+int FTestNativeCursor(int32_t *lpx, int32_t *lpy) {
+    POINT pt;
+
+    if (!GetCursorPos(&pt)) return 0;
+    *lpx = pt.x; *lpy = pt.y;
+    return 1;
+}
 
 int FTestSparseFile(int fd) {
     HANDLE h = (HANDLE)_get_osfhandle(fd);
