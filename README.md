@@ -96,11 +96,10 @@ make host               # or: cmake --preset host-release && cmake --build --pre
 dist/host-release/bin/stars-host -g1 /path/to/game.hst
 ```
 
-Turn generation rounds through x87 extended precision, which ARM lacks. On
-Apple silicon, `make host` builds the `macos-host-release` preset, an x86_64
-binary that Rosetta runs (`dist/macos-host-release/bin/stars-host`); it
-generates the same turns as `stars.exe`. A native arm64 build works, but
-its turns can differ, and CMake warns about it. `stars-host --version`
+Turn generation uses binary64 `double`. On Apple silicon, `make host` builds
+the native `macos-host-release` preset (`dist/macos-host-release/bin/stars-host`).
+The migration intentionally changes some host results; see
+[DOUBLE-PRECISION.md](docs/DOUBLE-PRECISION.md). ARM execution remains unqualified. `stars-host --version`
 prints the version, and `make test-host` runs the unit tests natively.
 
 Where `stars-host` differs from `stars.exe`:

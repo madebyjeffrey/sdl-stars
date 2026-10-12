@@ -592,7 +592,7 @@ void DrawVCReport(HDC hdc) {
         psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
-        dxDig = LOWORD((int32_t)((long double)(uint32_t)LOWORD(l) / 1.4142));
+        dxDig = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
         if (rgplr[i].fInclude && rgplr[i].fDead) {
             cr = 8355711;
         } else if (vlprgScoreX[i].fWinner) {
@@ -734,7 +734,7 @@ void DrawScoreReport(HDC hdc) {
         psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
         cch = strlen(psz);
         l = GetTextExtent(hdc, psz, cch);
-        dx45 = LOWORD((int32_t)((long double)(uint32_t)LOWORD(l) / 1.4142));
+        dx45 = LOWORD((int32_t)((double)(uint32_t)LOWORD(l) / 1.4142));
         if (rgplr[i].fInclude && rgplr[i].fDead) {
             cr = 8355711;
         } else if (vlprgScoreX[i].fWinner) {
@@ -1238,9 +1238,9 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             j = CMaxOperableDefenses(lppl, idPlayer, FALSE);
             if (i > 0) {
                 CalcPctSurvive(lppl, &pct, NULL);
-                pct = (float)((long double)1.0 - pct);
-                cch = wsprintf(szT, PCTDXPCTDPCTPCT, LOWORD((int32_t)((long double)pct * 100)),
-                               LOWORD((int32_t)((pct - (long double)(int16_t)LOWORD((int32_t)((long double)pct * 100)) / 100.0) * 10000)));
+                pct = (float)((double)1.0 - pct);
+                cch = wsprintf(szT, PCTDXPCTDPCTPCT, LOWORD((int32_t)((double)pct * 100)),
+                               LOWORD((int32_t)((pct - (double)(int16_t)LOWORD((int32_t)((double)pct * 100)) / 100.0) * 10000)));
                 goto DrawPlusDef;
             }
             szT[2] = '-';
@@ -1830,19 +1830,19 @@ TryTier2:
                 pct1 = (float)0;
             } else {
                 CalcPctSurvive(lppl1, &pct1, NULL);
-                pct1 = (float)((long double)1.0 - pct1);
+                pct1 = (float)((double)1.0 - pct1);
             }
             if (lppl2->cDefenses == 0) {
                 pct2 = (float)0;
             } else {
                 CalcPctSurvive(lppl2, &pct2, NULL);
-                pct2 = (float)((long double)1.0 - pct2);
+                pct2 = (float)((double)1.0 - pct2);
             }
-            if ((long double)pct1 < (long double)pct2) {
+            if ((double)pct1 < (double)pct2) {
                 iRet = -1;
                 break;
             }
-            if ((long double)pct1 > (long double)pct2) {
+            if ((double)pct1 > (double)pct2) {
                 iRet = 1;
                 break;
             }

@@ -1468,12 +1468,12 @@ void DrawRadarCircle(DRAWCIR *pdc, RECT *prc) {
                         dy = y - y2;
                         l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                         if (pdc->rgrad[i] < rad) {
-                            if ((long double)sqrt((double)l) + pdc->rgrad[i] <= (long double)rad) {
+                            if ((double)sqrt((double)l) + pdc->rgrad[i] <= (double)rad) {
                                 pdc->rgrad[i] = 0;
                                 iFree = i;
                             }
                         } else if (pdc->rgrad[i] > rad) {
-                            if ((long double)sqrt((double)l) + rad <= (long double)pdc->rgrad[i]) {
+                            if ((double)sqrt((double)l) + rad <= (double)pdc->rgrad[i]) {
                                 return;
                             }
                         } else if (x2 == x && y2 == y) {
@@ -1658,8 +1658,8 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             dy5 = dy >= 0 ? LOWORD(lWarp2) : -LOWORD(lWarp2);
         } else {
             lWarp2 = (uint32_t)(lWarp2 * lWarp2);
-            m = (double)((long double)dy / dx);
-            dx5 = LOWORD((int32_t)sqrt((double)(lWarp2 / ((long double)m * m + 1))));
+            m = (double)((double)dy / dx);
+            dx5 = LOWORD((int32_t)sqrt((double)(lWarp2 / ((double)m * m + 1))));
             if (dx < 0) {
                 dx5 = -dx5;
             }
@@ -1674,8 +1674,8 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             ptTick.x = 0;
             ptTick.y = dx >= 0 ? 4 : -4;
         } else {
-            m = (double)((long double)(int16_t)-dx / dy);
-            ptTick.x = LOWORD((int32_t)sqrt((double)(24.0 / ((long double)m * m + 1))));
+            m = (double)((double)(int16_t)-dx / dy);
+            ptTick.x = LOWORD((int32_t)sqrt((double)(24.0 / ((double)m * m + 1))));
             if (ptTick.x == 0) {
                 ptTick.y = dy >= 0 ? 4 : -4;
             } else {
@@ -1685,11 +1685,11 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
                 ptTick.y = LOWORD((int32_t)((int32_t)(ptTick.x * dx) / dy));
             }
         }
-        dAngle = (double)((long double)atan2((double)(int16_t)-dy, (double)(int16_t)-dx) - 0.7853982);
+        dAngle = (double)((double)atan2((double)(int16_t)-dy, (double)(int16_t)-dx) - 0.7853982);
         for (i = 0; i < 2; i++) {
-            rgptArrow[i].x = LOWORD((int32_t)((long double)5 * cos(dAngle) + 0.5));
-            rgptArrow[i].y = LOWORD((int32_t)((long double)5 * sin(dAngle) + 0.5));
-            dAngle = (double)((long double)dAngle + 1.5707964);
+            rgptArrow[i].x = LOWORD((int32_t)((double)5 * cos(dAngle) + 0.5));
+            rgptArrow[i].y = LOWORD((int32_t)((double)5 * sin(dAngle) + 0.5));
+            dAngle = (double)((double)dAngle + 1.5707964);
         }
         j = -5;
         for (i = -5; i <= 5; i++) {
@@ -2875,7 +2875,7 @@ void GetDxDyOrientation(int16_t dx, int16_t dy, POINT16 *ppt, POINT16 *pptD) {
     if (dx == 0 && dy == 0)
         goto LFinishUp;
 
-    dbl = (double)(((long double)atan2((double)dy, (double)dx) + 3.1415927) * 4.0 / 3.141592654 + 0.5);
+    dbl = (double)(((double)atan2((double)dy, (double)dx) + 3.1415927) * 4.0 / 3.141592654 + 0.5);
     iBmp = 8 - (LOWORD((int32_t)dbl) & 7);
     iBmp = (8 - (LOWORD((int32_t)dbl) & 7) + 1) & 7;
 
@@ -2997,7 +2997,7 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
 
     fMineFieldSel = pscanOld->grobj == grobjThing && lpThings[pscanOld->ith].ith == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD((int32_t)((long double)sqrt((double)lpThings[pscanOld->ith].thm.cMines) + 1.0));
+        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[pscanOld->ith].thm.cMines) + 1.0));
         rcMine.left = lpThings[pscanOld->ith].pt.x;
         rcMine.top = lpThings[pscanOld->ith].pt.y;
         rcMine.right = rcMine.left + iRad;
@@ -3037,7 +3037,7 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
     }
     fMineFieldSel = sel.scan.grobj == grobjThing && lpThings[sel.scan.ith].ith == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD((int32_t)((long double)sqrt((double)lpThings[sel.scan.ith].thm.cMines) + 1.0));
+        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[sel.scan.ith].thm.cMines) + 1.0));
         rcMine.left = lpThings[sel.scan.ith].pt.x;
         rcMine.top = lpThings[sel.scan.ith].pt.y;
         rcMine.right = rcMine.left + iRad;

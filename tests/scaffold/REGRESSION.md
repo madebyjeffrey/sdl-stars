@@ -149,11 +149,10 @@ and diagnostic logs are not treated as game-state files.
 `stars-host` built with the native compiler, without Wine, and compares
 them with the same baseline. `regression.py` runs an executable without an
 `.exe` suffix directly and gives it POSIX paths. On Apple silicon the
-target builds `stars-host` for x86_64 (Rosetta), because turn generation
-needs x87 extended precision: a native arm64 build diverges in the
-Cybertron AI from turn 1 (`IdGetBestScannerDest` truncates
-`(long double)iSize * 0.3`, which is just under 360 with x87 and exactly
-360 in a 64-bit `long double`).
+target builds a native host using binary64 `double`. The old x87 baseline's
+Cybertron scenarios intentionally changed from turn 1 during the migration;
+see [DOUBLE-PRECISION.md](../../docs/DOUBLE-PRECISION.md). Native ARM parity
+still requires execution on that platform.
 
 ## Compare
 

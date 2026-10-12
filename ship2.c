@@ -339,7 +339,7 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
     lpord->pt = rgptPlan[lppl->idRoute - 1];
     lpord->fValidTask = TRUE;
     iWarp = IFindIdealWarp(lpfl, FALSE);
-    dTravel = (int32_t)((long double)DGetDistance(lpfl->pt.x, lpfl->pt.y, lpord->pt.x, lpord->pt.y) + 0.999);
+    dTravel = (int32_t)((double)DGetDistance(lpfl->pt.x, lpfl->pt.y, lpord->pt.x, lpord->pt.y) + 0.999);
     if (lppl->iPlayer == lpplRoute->iPlayer && lppl->fStarbase && lpplRoute->fStarbase) {
         isbsDst = IStargateFromLppl(lpplRoute);
         isbsSrc = IStargateFromLppl(lppl);
@@ -680,13 +680,13 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
                     fUseFloat = TRUE;
                 }
                 if (fUseFloat) {
-                    dcPts = (double)(dcPts + (long double)cPtsCur * wtFleetCur);
+                    dcPts = (double)(dcPts + (double)cPtsCur * wtFleetCur);
                 } else {
                     cPts += (uint32_t)(cPtsCur * wtFleetCur);
                 }
             }
             if (fUseFloat) {
-                dwtFleet = (double)((long double)dwtFleet + wtFleetCur);
+                dwtFleet = (double)((double)dwtFleet + wtFleetCur);
             } else {
                 wtFleet += wtFleetCur;
             }
@@ -698,7 +698,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
     if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStealth) {
         if (fUseFloat) {
             for (i = 0; i <= 3; i++) {
-                dwtFleet = (double)((long double)dwtFleet + lpfl->rgwtMin[i]);
+                dwtFleet = (double)((double)dwtFleet + lpfl->rgwtMin[i]);
             }
         } else {
             for (i = 0; i <= 3; i++) {
@@ -707,7 +707,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
         }
     }
     if (fUseFloat) {
-        cPts = (int32_t)((long double)dcPts / dwtFleet);
+        cPts = (int32_t)((double)dcPts / dwtFleet);
     } else {
         cPts = (int32_t)(cPts / wtFleet);
     }

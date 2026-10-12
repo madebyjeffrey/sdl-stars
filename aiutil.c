@@ -2823,7 +2823,7 @@ void IncreaseAIMinefieldSizes() {
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
         if (lpth->ith == ithMinefield) {
-            cMines = (int32_t)((long double)sqrt((double)lpth->thm.cMines) + 10.5);
+            cMines = (int32_t)((double)sqrt((double)lpth->thm.cMines) + 10.5);
             lpth->thm.cMines = (uint32_t)(cMines * cMines);
         }
     }

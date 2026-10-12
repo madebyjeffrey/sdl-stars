@@ -114,8 +114,10 @@ Install Xcode Command Line Tools if absent:
 xcode-select --install
 ```
 
-The Mac presets deliberately build **x86_64** to retain the x87-style extended
-precision used in turn generation. On Apple silicon, install Rosetta if absent:
+The SDL Mac presets still build **x86_64** for their Intel dependency environment.
+Host presets now use the native architecture and binary64 arithmetic; see
+[DOUBLE-PRECISION.md](DOUBLE-PRECISION.md). For the SDL client on Apple silicon,
+install Rosetta if absent:
 
 ```sh
 softwareupdate --install-rosetta
@@ -128,7 +130,7 @@ Continue in that Intel shell. Intel Homebrew and target libraries must be under
 follow [Homebrew's installation instructions](https://docs.brew.sh/Installation)
 from the Intel shell. Intel Homebrew is currently a Tier 3 configuration; bottles
 may be unavailable and formulae may need source builds. Record dependency setup
-failures rather than changing the project to ARM and claiming turn parity.
+failures rather than claiming qualification for an untested dependency environment.
 
 In an Intel shell, or directly on an Intel Mac:
 

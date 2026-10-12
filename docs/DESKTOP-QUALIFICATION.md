@@ -50,8 +50,8 @@ cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset macos-sdl-debug
 ```
 
-The SDL preset uses x86_64, as the existing macOS host presets do, to retain
-x87 extended-precision turn generation. On Apple silicon it requires Rosetta
+The SDL preset uses x86_64 for its existing dependency environment. Host presets
+now use the native architecture; both use binary64 arithmetic. On Apple silicon it requires Rosetta
 and x86_64 dependencies from Intel Homebrew under `/usr/local`; an ARM-only
 Homebrew installation under `/opt/homebrew` does not provide those libraries.
 The commands above target an Intel dependency environment. ARM-native turn

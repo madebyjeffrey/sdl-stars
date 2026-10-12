@@ -173,25 +173,24 @@ endforeach()
 target_compile_options(stars_options INTERFACE
     $<$<COMPILE_LANGUAGE:C>:-Wno-pointer-sign>
     $<$<COMPILE_LANGUAGE:C>:-fsigned-char>
+    $<$<COMPILE_LANGUAGE:C>:-fno-fast-math>
+    $<$<COMPILE_LANGUAGE:C>:-ffp-contract=off>
 )
+
+# Binary64 operation boundaries are intentional; see docs/DOUBLE-PRECISION.md.
+include(CheckCSourceCompiles)
+check_c_source_compiles("
+    #include <float.h>
+    #if DBL_MANT_DIG != 53 || DBL_MAX_EXP != 1024 || FLT_EVAL_METHOD != 0
+    #error unsupported double evaluation
+    #endif
+    int main(void) { return 0; }" STARS_BINARY64_DOUBLE)
+if(NOT STARS_BINARY64_DOUBLE)
+    message(FATAL_ERROR "Stars requires binary64 double without excess evaluation precision")
+endif()
 
 if(NOT WIN32)
     target_link_libraries(stars_options INTERFACE m)
-    # Turn generation rounds through long double as the original's x87 code
-    # did (docs/NATIVE-PORT.md). Without x87 extended precision (a 64-bit
-    # mantissa), as on Apple silicon or other ARM, some turns differ from
-    # the Windows game's.
-    include(CheckCSourceCompiles)
-    check_c_source_compiles("
-        #include <float.h>
-        #if LDBL_MANT_DIG != 64
-        #error not x87 extended precision
-        #endif
-        int main(void) { return 0; }" STARS_X87_LONG_DOUBLE)
-    if(NOT STARS_X87_LONG_DOUBLE)
-        message(WARNING "long double is not x87 extended precision here, so stars-host's turns can differ "
-                        "from the Windows game's. On Apple silicon, use the macos-host presets (x86_64, run by Rosetta).")
-    endif()
     # Unit tests (tests/unit) that need no windows, with hostui.c for the
     # user interface. The Windows build below runs them all under Wine.
     option(STARS_BUILD_TESTS "Build the unit tests in tests/unit" ON)

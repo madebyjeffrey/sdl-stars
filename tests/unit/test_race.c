@@ -2,6 +2,26 @@
 
 #include "stars_test.h"
 
+static void test_LInnateRaceHabitability_double_rounding(void) {
+    PLAYER plr = {0};
+    int8_t rgAttr[16] = {10, 10, 10, 10, 10, 5, 10, 0, 1, 1, 1, 1, 1, 1, 9, 0};
+    int8_t rgLo[3] = {31, 61, 9};
+    int8_t rgHi[3] = {71, 97, 73};
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(plr.rgAttr, rgAttr, sizeof(rgAttr));
+    plr.pctIdealGrowth = 10;
+    for (i = 0; i < 3; i++) {
+        plr.rgEnvVarMin[i] = rgLo[i];
+        plr.rgEnvVarMax[i] = rgHi[i];
+        plr.rgEnvVar[i] = (rgLo[i] + rgHi[i]) / 2;
+    }
+    // Extended intermediates returned 1470286; binary64 crosses this boundary.
+    TEST_CHECK(LInnateRaceHabitability(&plr) == 1470287);
+    TEST_CHECK(CAdvantagePoints(&plr) == 541);
+}
+
 static void test_RaceGrbit_high_bit(void) {
     PLAYER plr = {0};
 
@@ -164,6 +184,7 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
 #endif
 
 TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
+             {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #if defined(_WIN32) || defined(STARS_UI_SDL)

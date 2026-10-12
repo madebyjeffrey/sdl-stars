@@ -103,9 +103,9 @@ void CalcPctSurvive(PLANET *lppl, float *ppct, float *ppctSmart) {
             if (cMax < cDefenses) {
                 cDefenses = cMax;
             }
-            pct = (float)pow((double)(1.0 - (long double)part.pplanetary->grAbility / 1000.0), (double)cDefenses);
+            pct = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 1000.0), (double)cDefenses);
             if (ppctSmart) {
-                *ppctSmart = (float)pow((double)(1.0 - (long double)part.pplanetary->grAbility / 2000.0), (double)cDefenses);
+                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 2000.0), (double)cDefenses);
             }
         } else {
             pct = (float)1.0;
@@ -435,9 +435,9 @@ int16_t FCalcFleetBombDamage(FLEET *lpfl, int32_t *pdmgPeople, int32_t *pdmgPeop
                         } else if (part.hs.cItem > 0) {
                             if (part.pbomb->dDmgBldg == 0) {
                                 cIter = (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
-                                dmgT = (double)(1.0 - (long double)part.pbomb->dDmgCol / 1000.0);
+                                dmgT = (double)(1.0 - (double)part.pbomb->dDmgCol / 1000.0);
                                 while (cIter-- > 0) {
-                                    dmgSmart = (double)((long double)dmgSmart * dmgT);
+                                    dmgSmart = (double)((double)dmgSmart * dmgT);
                                 }
                             } else {
                                 *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb->dDmgCol);
@@ -473,7 +473,7 @@ int16_t FCalcFleetBombDamage(FLEET *lpfl, int32_t *pdmgPeople, int32_t *pdmgPeop
             lpfl = NULL;
         }
     }
-    *pdmgPeopleSmart = (int32_t)(1000.0 - (long double)dmgSmart * 1000.0 + 0.5);
+    *pdmgPeopleSmart = (int32_t)(1000.0 - (double)dmgSmart * 1000.0 + 0.5);
     if (*pdmgPeopleSmart >= 1000) {
         *pdmgPeopleSmart = 1000;
     }
@@ -1229,7 +1229,7 @@ char *PszGetDistance(int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
     int32_t d2;
 
     fStarted = FALSE;
-    d = (int32_t)((long double)DGetDistance(x1, y1, x2, y2) * 100.0 + 0.5);
+    d = (int32_t)((double)DGetDistance(x1, y1, x2, y2) * 100.0 + 0.5);
     d2 = (int32_t)(d / 100);
     d -= (uint32_t)(d2 * 100);
     if (dyArial8 <= 14) {
@@ -1757,17 +1757,17 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
         case ihuldefScout:
         case ihuldefDestroyer:
         case ihuldefFrigate:
-            if ((long double)lBIR4 < (long double)0) {
+            if ((double)lBIR4 < (double)0) {
                 if (game.fTutorial) {
                     lBIR4 = 2.56e+06;
                     lBIPR4 = 160000.0;
                 } else {
                     lBIPR4 = (double)(int16_t)(rgplr[iplr].rgTech[4] * 10);
-                    lBIR4 = (double)((long double)lBIPR4 * 2);
-                    lBIPR4 = (double)((long double)lBIPR4 * lBIPR4);
-                    lBIPR4 = (double)((long double)lBIPR4 * lBIPR4);
-                    lBIR4 = (double)((long double)lBIR4 * lBIR4);
-                    lBIR4 = (double)((long double)lBIR4 * lBIR4);
+                    lBIR4 = (double)((double)lBIPR4 * 2);
+                    lBIPR4 = (double)((double)lBIPR4 * lBIPR4);
+                    lBIPR4 = (double)((double)lBIPR4 * lBIPR4);
+                    lBIR4 = (double)((double)lBIR4 * lBIR4);
+                    lBIR4 = (double)((double)lBIR4 * lBIR4);
                 }
             }
             lRange4 = lBIR4;
@@ -1783,10 +1783,10 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
             fHasScanner = TRUE;
             iScanner = lphs->iItem;
             lT = dRangeT = LpscannerFromId(lphs->iItem)->dRange;
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * (uint32_t)lphs->cItem);
-            lRange4 = (double)((long double)lRange4 + lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * (uint32_t)lphs->cItem);
+            lRange4 = (double)((double)lRange4 + lT);
             dRangeT = LpscannerFromId(iScanner)->grfAbilities;
             if (iScanner == iscannerChameleonScanner) {
                 dRangeT = 45;
@@ -1805,19 +1805,19 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
             dRangeT = dRangeT == 1 ? 50 : dRangeT == 2 ? 100 : 200;
         LPlanScan:
             lT = (double)dRangeT;
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * (uint32_t)lphs->cItem);
-            lPlanRange4 = (double)((long double)lPlanRange4 + lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * (uint32_t)lphs->cItem);
+            lPlanRange4 = (double)((double)lPlanRange4 + lT);
         } else if (lphs->grhst == hstArmor && lphs->iItem == iarmorMegaPolyShell) {
             dRangeT = 80;
             dRangeT2 = 40;
         LOddBallScanners:
             lT = (double)dRangeT;
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * lT);
-            lT = (double)((long double)lT * (uint32_t)lphs->cItem);
-            lRange4 = (double)((long double)lRange4 + lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * lT);
+            lT = (double)((double)lT * (uint32_t)lphs->cItem);
+            lRange4 = (double)((double)lRange4 + lT);
             dRangeT = dRangeT2;
             goto LPlanScan;
         } else if (lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
@@ -1832,7 +1832,7 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
             cDetectors += lphs->cItem;
         }
     }
-    if ((long double)lRange4 > (long double)0 || fHasScanner) {
+    if ((double)lRange4 > (double)0 || fHasScanner) {
         dRange = LOWORD((int32_t)sqrt((double)sqrt(lRange4)));
         if (iplr != iplrNone && GetRaceGrbit(&rgplr[iplr], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;

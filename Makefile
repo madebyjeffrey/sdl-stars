@@ -22,8 +22,8 @@ BASELINE_DIR     := tests/scaffold/fixtures/regression/native
 SCENARIOS ?= $(shell $(PYTHON) -c "import json; print(' '.join(json.load(open('$(BASELINE_DIR)/run.json'))['scenarios']))")
 THROUGH   ?= 150
 REGRESSION_ARGS = $(foreach s,$(SCENARIOS),--scenario $(s)) --through $(THROUGH)
-# stars-host with the native compiler. Apple silicon builds it for x86_64
-# (run by Rosetta) to keep x87 rounding; see docs/NATIVE-PORT.md.
+# stars-host with the native compiler, including Apple silicon.
+# Arithmetic uses binary64 double; see docs/DOUBLE-PRECISION.md.
 ifeq ($(shell uname -sm),Darwin arm64)
 HOST_PRESET ?= macos-host-release
 else

@@ -607,15 +607,15 @@ void DoCyberPackets() {
                     iWarp = IWarpMAFromLppl(lppl, &fTwoMA) + 3;
                     dDistance = (double)(int16_t)(iWarp * iWarp);
                     dDistanceTgt = DGetDistance(rgptPlan[lppl->id].x, rgptPlan[lppl->id].y, rgptPlan[lpplDst->id].x, rgptPlan[lpplDst->id].y);
-                    dMod = (double)((long double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplDst->uDefGuess + 5))) / 16000.0);
-                    lMinNeeded = (int32_t)((1000 >= (uint16_t)((lpplDst->uPopGuess + 25) * 4) ? (long double)(uint32_t)((lpplDst->uPopGuess + 25) * 4)
-                                                                                              : (long double)1000) /
+                    dMod = (double)((double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplDst->uDefGuess + 5))) / 16000.0);
+                    lMinNeeded = (int32_t)((1000 >= (uint16_t)((lpplDst->uPopGuess + 25) * 4) ? (double)(uint32_t)((lpplDst->uPopGuess + 25) * 4)
+                                                                                              : (double)1000) /
                                            dMod);
                     lMineral = lMinNeeded < lMineral ? lMinNeeded : lMineral;
                     if (fTwoMA) {
-                        lMineral = (int32_t)((long double)lMineral / pow(0.875, (double)((long double)dDistanceTgt / dDistance)));
+                        lMineral = (int32_t)((double)lMineral / pow(0.875, (double)((double)dDistanceTgt / dDistance)));
                     } else {
-                        lMineral = (int32_t)((long double)lMineral / pow(0.75, (double)((long double)dDistanceTgt / dDistance)));
+                        lMineral = (int32_t)((double)lMineral / pow(0.75, (double)((double)dDistanceTgt / dDistance)));
                     }
                     for (; lMineral > 0; lMineral -= 70) {
                         iMin = 0;
@@ -641,7 +641,7 @@ void DoCyberPackets() {
                     sel.pl.idFling = lpplDst->id + 1;
                     FLookupPlanet(idWriteBack, &sel.pl);
                     lpciPlanDst->iPktTarget = 3;
-                    if ((long double)dDistance < (long double)dDistanceTgt) {
+                    if ((double)dDistance < (double)dDistanceTgt) {
                         lpciPlan->fNeedScanPkt = TRUE;
                     }
                     lpciPlan->fLaunchedPkt = FALSE;
@@ -754,8 +754,8 @@ int16_t IdGetBestScannerDest(PLANET *lppl, CompassDir iDir) {
             ptEdge.y = iSize;
         }
     }
-    dAdjust = Random((int32_t)((long double)iSize * 0.3));
-    dAdjust -= LOWORD((int32_t)((long double)iSize * 0.15));
+    dAdjust = Random((int32_t)((double)iSize * 0.3));
+    dAdjust -= LOWORD((int32_t)((double)iSize * 0.15));
     if (ptEdge.x == 0 || ptEdge.x == iSize) {
         ptEdge.y += dAdjust;
         if (ptEdge.y > iSize) {
@@ -1153,9 +1153,9 @@ int16_t FEnumNeedMinerals(PLANET *lpplSrc, PLANET *lpplTest) {
         if (fTwoMA) {
             iWarpDst++;
         }
-        dDistance = (double)(iWarpSrc >= iWarpDst ? (long double)iWarpDst : (long double)iWarpSrc);
-        dDistance = (double)((long double)dDistance * dDistance * 3.5);
-        if ((long double)LDistance2(rgptPlan[lpplSrc->id], rgptPlan[lpplTest->id]) <= (long double)dDistance * dDistance) {
+        dDistance = (double)(iWarpSrc >= iWarpDst ? (double)iWarpDst : (double)iWarpSrc);
+        dDistance = (double)((double)dDistance * dDistance * 3.5);
+        if ((double)LDistance2(rgptPlan[lpplSrc->id], rgptPlan[lpplTest->id]) <= (double)dDistance * dDistance) {
             return TRUE;
         }
         return FALSE;
@@ -1198,20 +1198,20 @@ int16_t FEnumPktAttack(PLANET *lpplSrc, PLANET *lpplTest) {
     if (iWarp == iWarpDst) {
         return FALSE;
     }
-    dDistance = (double)((long double)dDistance * dDistance);
+    dDistance = (double)((double)dDistance * dDistance);
     dDistanceTgt = DGetDistance(rgptPlan[lpplSrc->id].x, rgptPlan[lpplSrc->id].y, rgptPlan[lpplTest->id].x, rgptPlan[lpplTest->id].y);
-    if ((long double)dDistanceTgt <= (long double)dDistance * 2.5) {
+    if ((double)dDistanceTgt <= (double)dDistance * 2.5) {
         if (fTwoMA) {
-            lMineral = (int32_t)((long double)(int32_t)RawLoad32(plMinMax) * pow(0.875, (double)((long double)dDistanceTgt / dDistance)));
+            lMineral = (int32_t)((double)(int32_t)RawLoad32(plMinMax) * pow(0.875, (double)((double)dDistanceTgt / dDistance)));
         } else {
-            lMineral = (int32_t)((long double)(int32_t)RawLoad32(plMinMax) * pow(0.75, (double)((long double)dDistanceTgt / dDistance)));
+            lMineral = (int32_t)((double)(int32_t)RawLoad32(plMinMax) * pow(0.75, (double)((double)dDistanceTgt / dDistance)));
         }
         if (lpplTest->uDefGuess > 99 || lpplTest->uPopGuess == 0) {
             return FALSE;
         }
-        dMod = (double)((long double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplTest->uDefGuess + 5))) / 16000.0);
+        dMod = (double)((double)(uint32_t)((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplTest->uDefGuess + 5))) / 16000.0);
         lMinNeeded =
-            (int32_t)((1000 >= (uint16_t)((lpplTest->uPopGuess + 25) * 4) ? (long double)(uint32_t)((lpplTest->uPopGuess + 25) * 4) : (long double)1000) /
+            (int32_t)((1000 >= (uint16_t)((lpplTest->uPopGuess + 25) * 4) ? (double)(uint32_t)((lpplTest->uPopGuess + 25) * 4) : (double)1000) /
                       dMod);
         if (lMinNeeded <= lMineral) {
             return TRUE;

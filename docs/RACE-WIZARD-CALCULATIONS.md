@@ -1,25 +1,30 @@
 # Race creation wizard calculations and numerical compatibility
 
+**Historical arithmetic specification:** the calculations below describe the
+pre-migration extended intermediates. Production now uses binary64 `double`;
+see [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md) for measured impacts. The diagnostic
+extracts the pinned pre-migration commit, not current production source.
+
 The race wizard stores a race definition in `PLAYER`, recalculates its advantage
 point balance after option changes, and refuses to finish with a negative
-balance. This specification describes the current calculations, their C types,
+balance. This specification describes the pre-migration calculations, their C types,
 their rounding boundaries, and the evidence required to change their arithmetic
 without changing results. It covers wizard pricing, displayed habitability,
 random race construction, and the conversion of leftover points into starting
 bonuses. The subsequent gameplay effects of every racial trait are outside this
 scope; selected related formulas are included to distinguish them from pricing.
 
-**The current supported x86 builds use 80-bit extended precision for some
+**The pre-migration x86 builds use 80-bit extended precision for some
 intermediate expressions. Simply replacing those expressions with `double`
 does change an integer result.** A reproduced race returns innate habitability
-`1470286` with the current code and `1470287` with the experimental replacement.
+`1470286` with the pre-migration code and `1470287` with the experimental replacement.
 Its displayed advantage balance is `541` in both versions. Preservation of all
 integer intermediates is therefore disproved for this replacement; preservation
 of the final displayed balance for all accepted races remains unproven.
 
 The specification describes `race.c`, `raceui.c`, and `planet.c` at commit
 `e7245dd3599e3a5dcf5e6ba74e90896321a251a5`, examined on October 10, 2026.
-The diagnostic below extracts the current source rather than maintaining a
+The diagnostic below extracts the pinned historical source rather than maintaining a
 separate handwritten implementation. No production arithmetic or baseline was
 changed to produce this specification.
 

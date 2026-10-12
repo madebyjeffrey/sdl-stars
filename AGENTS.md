@@ -101,8 +101,9 @@ When goals conflict, apply them in this order:
   widen `int16_t` to `BOOL`/`int` where storage, addresses (`&f…`) or file
   I/O depend on the width. See `docs/RECONSTRUCTION.md`, "Storage widths and
   boolean conventions".
-- `qsort16` and the x87 rounding casts decide tie order and rounding in turn
-  generation. Changing them is a behavior change, not a cleanup.
+- `qsort16` and the floating operation boundaries decide tie order and rounding
+  in turn generation. The intentional migration to binary64 is documented in
+  `docs/DOUBLE-PRECISION.md`; changing them is a behavior change, not a cleanup.
 - The tutorial observer depends on `InitInstance`, `ScannerWndProc`, the
   globals and struct layouts it reads, and the literal `tutor.c` signatures
   `int16_t FTutorTaskDone() {` and `int16_t FCheck`. Update the observer and

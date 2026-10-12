@@ -46,16 +46,16 @@
     {
       "name": "macos-host-debug",
       "inherits": "host-debug",
-      "displayName": "stars-host for x86_64 macOS, run by Rosetta on Apple silicon (Debug)",
+      "displayName": "stars-host for native macOS (Debug)",
       "binaryDir": "${sourceDir}/dist/macos-host-debug",
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+        "CMAKE_OSX_ARCHITECTURES": ""
       }
     },
     {
       "name": "macos-host-release",
       "inherits": "macos-host-debug",
-      "displayName": "stars-host for x86_64 macOS, run by Rosetta on Apple silicon (Release)",
+      "displayName": "stars-host for native macOS (Release)",
       "binaryDir": "${sourceDir}/dist/macos-host-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"

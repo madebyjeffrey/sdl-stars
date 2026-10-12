@@ -412,7 +412,7 @@ int16_t PctPlanetDesirability(PLANET *lppl, int16_t iPlr) {
     if (pctNeg != 0) {
         return -LOWORD(pctNeg);
     }
-    pctPos = (int32_t)((long double)sqrt((double)((long double)pctPos / 3.0)) + 0.9);
+    pctPos = (int32_t)((double)sqrt((double)((double)pctPos / 3.0)) + 0.9);
     pctPos = (int32_t)(pctPos * pctMod) / 10000;
     return LOWORD(pctPos);
 }
@@ -632,7 +632,7 @@ int16_t CResourcesAtPlanet(PLANET *lppl, int16_t iplr) {
         if (pctVal < 25) {
             pctVal = 25;
         }
-        cRes = LOWORD((int32_t)((long double)sqrt((double)((long double)lPop * iEnergy / iEff)) * pctVal / 10 + 0.999));
+        cRes = LOWORD((int32_t)((double)sqrt((double)((double)lPop * iEnergy / iEff)) * pctVal / 10 + 0.999));
         goto LFinishUp;
     }
     cRes = LOWORD((int32_t)(lPop / iEff));

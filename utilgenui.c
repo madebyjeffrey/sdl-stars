@@ -244,7 +244,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
             goto TryAgain;
         }
         angle = (double)atan2((double)(int16_t)(dy - dyEstFont), (double)dx);
-        rotate = (double)((long double)angle / 3.141592654 * 1800.0 + 0.5);
+        rotate = (double)((double)angle / 3.141592654 * 1800.0 + 0.5);
         plf->lfEscapement = LOWORD((int32_t)rotate);
         hfont = CreateFontIndirect(plf);
         hfontSav = SelectObject(hdc, hfont);
@@ -253,8 +253,8 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
         dyText = HIWORD(l);
         dsin = (double)sin(angle);
         dcos = (double)cos(angle);
-        dxFlat = LOWORD((int32_t)((long double)dcos * dxText + (long double)dsin * dyText));
-        dyFlat = LOWORD((int32_t)((long double)dsin * dxText + (long double)dcos * dyText));
+        dxFlat = LOWORD((int32_t)((double)dcos * dxText + (double)dsin * dyText));
+        dyFlat = LOWORD((int32_t)((double)dsin * dxText + (double)dcos * dyText));
         if (dxFlat + 8 > dx || dyFlat + 8 > dy) {
             SelectObject(hdc, hfontSav);
             DeleteObject(hfont);
@@ -274,7 +274,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
             goto TryAgain;
         }
         xStart = (int16_t)(dx - dxFlat) / 2 + prc->left;
-        yStart = prc->bottom - (int16_t)(dy - dyFlat) / 2 - LOWORD((int32_t)((long double)dcos * dyText));
+        yStart = prc->bottom - (int16_t)(dy - dyFlat) / 2 - LOWORD((int32_t)((double)dcos * dyText));
         TextOut(hdc, xStart, yStart, psz, cLen);
         SelectObject(hdc, hfontSav);
         DeleteObject(hfont);

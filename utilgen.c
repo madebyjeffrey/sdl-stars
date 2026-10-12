@@ -582,7 +582,7 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     dx2 = (uint32_t)(dx * dx);
     dy2 = (uint32_t)(dy * dy);
     if (dxdy > 500000 || dx2 > 500000 || dy2 > 500000) {
-        dxI = (double)(((long double)dxdy * (int16_t)(ptC.y - ptL1.y) + (long double)dx2 * ptC.x + (long double)dy2 * ptL1.x) / (dx2 + dy2));
+        dxI = (double)(((double)dxdy * (int16_t)(ptC.y - ptL1.y) + (double)dx2 * ptC.x + (double)dy2 * ptL1.x) / (dx2 + dy2));
         xI = (int32_t)dxI;
     } else {
         xI = (int32_t)((int32_t)((uint32_t)(dxdy * (int16_t)(ptC.y - ptL1.y)) + (uint32_t)(dx2 * ptC.x) + (uint32_t)(dy2 * ptL1.x)) / (dx2 + dy2));

@@ -445,26 +445,26 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
                 } else {
                     l1 = (uint32_t)(l1 * 11);
                 }
-                l2 = (double)((long double)l1 + l2);
+                l2 = (double)((double)l1 + l2);
             }
             if (pplr->rgEnvVar[1] >= 0) {
-                l2 = (double)((long double)l2 * rgInc[1] / 100);
+                l2 = (double)((double)l2 * rgInc[1] / 100);
             } else {
-                l2 = (double)((long double)l2 * 11);
+                l2 = (double)((double)l2 * 11);
             }
-            l3 = (double)((long double)l3 + l2);
+            l3 = (double)((double)l3 + l2);
         }
         if (pplr->rgEnvVar[0] >= 0) {
-            l3 = (double)((long double)l3 * rgInc[0] / 100);
+            l3 = (double)((double)l3 * rgInc[0] / 100);
         } else {
-            l3 = (double)((long double)l3 * 11);
+            l3 = (double)((double)l3 * 11);
         }
-        lInnate = (double)((long double)lInnate + l3);
+        lInnate = (double)((double)lInnate + l3);
     }
     if (pplr != rgplr) {
         rgplr[0] = plrT;
     }
-    return (int32_t)((long double)lInnate / 10.0 + 0.5);
+    return (int32_t)((double)lInnate / 10.0 + 0.5);
 }
 
 uint16_t IRaceChecksum(PLAYER *pplr) {

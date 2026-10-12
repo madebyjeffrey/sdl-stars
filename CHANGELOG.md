@@ -140,6 +140,14 @@ produce different results from a 2.6j host for the same turn.
 
 ### Changed
 
+- **Host results:** all 178 extended floating intermediates now use binary64
+  `double`, with fast-math and contraction disabled. Cybertron AI scenarios
+  `oneai5` and `smallai6` change from turn 1; the native baseline moves with
+  this change. Save layouts and field widths remain unchanged. Habitability
+  can change by one before wizard pricing, while the 140,665 tested races
+  retain their point balance. See [DOUBLE-PRECISION.md](docs/DOUBLE-PRECISION.md)
+  for coverage, other possible rounding effects and platform limits.
+
 - Race-attribute masks now use an unsigned 32-bit operand, giving bit 31
   defined shift behavior under native C sanitizers. Stored bits, file layouts
   and turn results are unchanged.
