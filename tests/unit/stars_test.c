@@ -1,8 +1,6 @@
 #include "stars_test.h"
 
-#ifndef _WIN32
 #include <dirent.h>
-#endif
 
 int  cStarsTestAlert;
 char szStarsTestAlert[512];
@@ -15,7 +13,7 @@ static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
     return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
 }
 
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
 int16_t __wrap_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
@@ -23,7 +21,7 @@ int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType
 #endif
 
 int16_t FStarsTestInit(void) {
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
     hInst = GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
@@ -33,7 +31,7 @@ int16_t FStarsTestInit(void) {
     Randomize2(12345);
     fFileErrSilent = TRUE;
     idPlayer = iplrNone;
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
     return FCreateStuff();
 #else
     InitGameStuff();
@@ -43,22 +41,7 @@ int16_t FStarsTestInit(void) {
 
 // DeleteGameFiles removes szDir's game.* files from an earlier run.
 static void DeleteGameFiles(const char *szDir) {
-    char szFile[MAX_PATH];
-#ifdef _WIN32
-    WIN32_FIND_DATAA fd;
-    HANDLE           hfind;
-    char             szPattern[MAX_PATH];
-
-    snprintf(szPattern, sizeof(szPattern), "%s\\game.*", szDir);
-    hfind = FindFirstFileA(szPattern, &fd);
-    if (hfind != INVALID_HANDLE_VALUE) {
-        do {
-            snprintf(szFile, sizeof(szFile), "%s\\%s", szDir, fd.cFileName);
-            DeleteFileA(szFile);
-        } while (FindNextFileA(hfind, &fd));
-        FindClose(hfind);
-    }
-#else
+    char          szFile[MAX_PATH];
     DIR           *pdir;
     struct dirent *pde;
 
@@ -72,7 +55,6 @@ static void DeleteGameFiles(const char *szDir) {
         }
     }
     closedir(pdir);
-#endif
 }
 
 int16_t FStarsTestDir(const char *pszName, char *szDir, size_t cchDir) {

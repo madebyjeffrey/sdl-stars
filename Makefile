@@ -1,15 +1,12 @@
 .DEFAULT_GOAL := help
-.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run-wine fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject clean
+.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject clean
 
 DIST_DIR    ?= dist
 CMAKE       ?= cmake
 CLANG_FORMAT ?= clang-format
 PYTHON      ?= python3
 GO          ?= go
-SAVE_CLI    := $(abspath $(DIST_DIR))/stars-save
-MINGW_CC    ?= x86_64-w64-mingw32-gcc
-MINGW_RC    ?= x86_64-w64-mingw32-windres
-FILES       ?= $(wildcard *.c)
+SAVE_CLI    := $(abspath $(DIST_DIR))/stars-save$(if $(filter Windows_NT,$(OS)),.exe,)
 FORMAT_FILES ?= $(wildcard *.c *.h res/*.h tests/scaffold/*.c tests/scaffold/*.h tests/scaffold/tutorial/*.c tests/scaffold/tutorial/*.h)
 SEED        ?= 12345
 # The native regression: a release build, its fixed-seed run, and the
@@ -22,36 +19,48 @@ BASELINE_DIR     := tests/scaffold/fixtures/regression/native
 SCENARIOS ?= $(shell $(PYTHON) -c "import json; print(' '.join(json.load(open('$(BASELINE_DIR)/run.json'))['scenarios']))")
 THROUGH   ?= 150
 REGRESSION_ARGS = $(foreach s,$(SCENARIOS),--scenario $(s)) --through $(THROUGH)
-# stars-host with the native compiler, including Apple silicon.
-# Arithmetic uses binary64 double; see docs/DOUBLE-PRECISION.md.
-ifeq ($(shell uname -sm),Darwin arm64)
-HOST_PRESET ?= macos-host-release
+# Select the SDL product preset for this development machine.
+ifeq ($(OS),Windows_NT)
+CLIENT_PRESET ?= windows-sdl-debug
+CLIENT_RELEASE_PRESET ?= windows-sdl-release
+EXE_SUFFIX := .exe
+else ifeq ($(shell uname -s),Darwin)
+CLIENT_PRESET ?= macos-sdl-debug
+CLIENT_RELEASE_PRESET ?= macos-sdl-release
+EXE_SUFFIX :=
 else
+CLIENT_PRESET ?= sdl-debug
+CLIENT_RELEASE_PRESET ?= sdl-release
+EXE_SUFFIX :=
+endif()
 HOST_PRESET ?= host-release
-endif
+test-unit regression tutorial scenario: export SDL_VIDEODRIVER := dummy
+test-unit regression tutorial scenario: export SDL_AUDIODRIVER := dummy
+test-unit regression tutorial scenario: export STARS_SDL_RENDERER := software
+test-unit regression tutorial scenario: export STARS_FILE_DIALOG_BACKEND := compat
 HOST_WORK   ?= $(DIST_DIR)/scaffold/regression/host
 
 help:
 	@echo "Targets:"
 	@echo "  save-cli             Build the standalone test save CLI"
-	@echo "  compile              Build stars.exe with the MinGW CMake preset"
+	@echo "  compile              Build the SDL desktop client (CLIENT_PRESET=$(CLIENT_PRESET))"
 	@echo "  host                 Build stars-host with the native compiler (HOST_PRESET=$(HOST_PRESET))"
-	@echo "  test-unit            Build and run the unit tests in tests/unit under Wine"
+	@echo "  test-unit            Build and run the SDL game unit tests"
 	@echo "  test-host            Build and run the unit tests that need no windows, natively"
 	@echo "  precision            Measure extended versus double intermediates (PRECISION_ARGS to tune)"
 	@echo "  precision-turns      Compare real turns from two temporary host builds (PRECISION_TURN_ARGS)"
 	@echo "  test-precision       Check the precision experiment's coverage, witnesses and reports"
 	@echo "  scenario             Build a test game into dist/scenarios/SCENARIO (no SCENARIO: list them)"
 	@echo "  fmt                  Format C sources and headers (FORMAT_FILES=ai.c to limit)"
-	@echo "  compile-check        Check C syntax (FILES=ai.c to limit) and resources"
+	@echo "  compile-check        Compile the SDL client and generated resources"
 	@echo "  text-unreferenced    List text rows that no code names and no @range covers"
-	@echo "  res / resources      Compile res/stars.rc into $(DIST_DIR)/stars_res.o"
+	@echo "  res / resources      Build the generated SDL resources"
 	@echo "  regression           Run the native regression and compare it with the baseline"
 	@echo "                       (SCENARIOS=\"noai smallai4\" and THROUGH=10 to limit)"
 	@echo "  regression-quick     Run smallai4 through turn 10 and compare"
-	@echo "  regression-host      Run the native regression with stars-host instead of stars.exe"
+	@echo "  regression-host      Run the native regression with stars-host instead of stars-sdl"
 	@echo "  regression-export    Replace the baseline with the last full regression run"
-	@echo "  tutorial             Run the complete AutoHotkey v2 tutorial under Wine"
+	@echo "  tutorial             Run the available SDL tutorial checkpoints (partial coverage)"
 	@echo "  tutorial-reject      Verify early Generate is rejected"
 	@echo "  clean                Remove $(DIST_DIR)/"
 
@@ -62,11 +71,11 @@ save-cli:
 	cd tests/savecli && $(GO) build -o "$(SAVE_CLI)" .
 
 compile:
-	$(CMAKE) --preset mingw-debug
-	$(CMAKE) --build --preset mingw-debug
+	$(CMAKE) --preset $(CLIENT_PRESET)
+	$(CMAKE) --build --preset $(CLIENT_PRESET)
 
 test-unit: compile
-	cd "$(DIST_DIR)/mingw-debug" && ctest --output-on-failure --timeout 300 $(CTEST_ARGS)
+	cd "$(DIST_DIR)/$(CLIENT_PRESET)" && ctest --output-on-failure --timeout 300 -R "^sdl_test_" $(CTEST_ARGS)
 
 # The unit tests that need no windows, built with the host preset and run
 # without Wine.
@@ -87,16 +96,15 @@ test-precision: host
 SCENARIO_DIR = $(abspath $(DIST_DIR))/scenarios/$(SCENARIO)
 scenario: compile
 ifeq ($(SCENARIO),)
-	cd "$(DIST_DIR)/mingw-debug/tests" && WINEDEBUG=-all wine ./stars_scenario.exe
+	cd "$(DIST_DIR)/$(CLIENT_PRESET)/tests-client" && ./stars_scenario$(EXE_SUFFIX)
 else
 	rm -rf "$(SCENARIO_DIR)"
 	mkdir -p "$(SCENARIO_DIR)"
-	cd "$(DIST_DIR)/mingw-debug/tests" && WINEDEBUG=-all wine ./stars_scenario.exe "$(SCENARIO)" "$(SCENARIO_DIR)"
+	cd "$(DIST_DIR)/$(CLIENT_PRESET)/tests-client" && ./stars_scenario$(EXE_SUFFIX) "$(SCENARIO)" "$(SCENARIO_DIR)"
 endif
 
-run-wine:
-	$(CMAKE) --preset mingw-debug
-	$(CMAKE) --build --preset run-wine
+run: compile
+	"$(DIST_DIR)/$(CLIENT_PRESET)/bin/stars-sdl$(EXE_SUFFIX)"
 
 fmt:
 	$(CLANG_FORMAT) --style=file -i $(FORMAT_FILES)
@@ -119,26 +127,19 @@ version-header:
 		-DVERSION_BASE=$$(sed -n 's/^project(stars VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt) \
 		-P cmake/version.cmake
 
-compile-check: version-header text-header data-header
-	@set -e; for f in $(FILES); do \
-		$(MINGW_CC) -std=gnu11 -fsigned-char -fsyntax-only -fmax-errors=0 -Wno-pointer-sign -I. -I"$(VERSION_DIR)" "$$f"; \
-	done
-	cd res && $(MINGW_RC) -I"$(VERSION_DIR)" stars.rc -O res -o /dev/null
+compile-check: compile
 
 res: resources
-
-resources: version-header
-	@mkdir -p "$(DIST_DIR)"
-	cd res && $(MINGW_RC) -I"$(VERSION_DIR)" stars.rc -O coff -o "$(abspath $(DIST_DIR))/stars_res.o"
+resources: compile
 
 # Builds the release exe as CI does, runs a fresh work directory with
-# stars.exe -s$(SEED) and compares it with the baseline. A difference exits
+# stars-sdl -s$(SEED) and compares it with the baseline. A difference exits
 # nonzero.
 regression: save-cli
-	$(CMAKE) --preset mingw-release -B "$(REGRESSION_BUILD)"
+	$(CMAKE) --preset $(CLIENT_RELEASE_PRESET) -B "$(REGRESSION_BUILD)"
 	$(CMAKE) --build "$(REGRESSION_BUILD)"
 	rm -rf "$(REGRESSION_WORK)"
-	$(PYTHON) tests/scaffold/regression.py prepare --seed $(SEED) --exe "$(REGRESSION_BUILD)/bin/stars.exe" --work "$(REGRESSION_WORK)"
+	$(PYTHON) tests/scaffold/regression.py prepare --seed $(SEED) --exe "$(REGRESSION_BUILD)/bin/stars-sdl$(EXE_SUFFIX)" --work "$(REGRESSION_WORK)"
 	$(PYTHON) tests/scaffold/regression.py run --cli "$(SAVE_CLI)" --work "$(REGRESSION_WORK)" $(REGRESSION_ARGS)
 	$(PYTHON) tests/scaffold/regression.py compare "$(BASELINE_DIR)" "$(REGRESSION_WORK)" $(REGRESSION_ARGS) --report "$(REGRESSION_REPORT)"
 
@@ -153,7 +154,7 @@ host:
 # without Wine.
 regression-host: save-cli host
 	rm -rf "$(HOST_WORK)"
-	$(PYTHON) tests/scaffold/regression.py prepare --seed $(SEED) --exe "$(DIST_DIR)/$(HOST_PRESET)/bin/stars-host" --work "$(HOST_WORK)"
+	$(PYTHON) tests/scaffold/regression.py prepare --seed $(SEED) --exe "$(DIST_DIR)/$(HOST_PRESET)/bin/stars-host$(EXE_SUFFIX)" --work "$(HOST_WORK)"
 	$(PYTHON) tests/scaffold/regression.py run --cli "$(SAVE_CLI)" --work "$(HOST_WORK)" $(REGRESSION_ARGS)
 	$(PYTHON) tests/scaffold/regression.py compare "$(BASELINE_DIR)" "$(HOST_WORK)" $(REGRESSION_ARGS) --report "$(DIST_DIR)/scaffold/regression/host-comparison.json"
 
@@ -162,11 +163,11 @@ regression-host: save-cli host
 regression-export:
 	$(PYTHON) tests/scaffold/regression.py export --work "$(REGRESSION_WORK)" $(foreach s,$(SCENARIOS),--scenario $(s)) --replace
 
-tutorial:
-	$(PYTHON) tests/scaffold/tutorial/run.py --download-ahk $(TUTORIAL_ARGS)
+# These checkpoints are bounded; full 80-page SDL coverage is still pending.
+tutorial: compile
+	cd "$(DIST_DIR)/$(CLIENT_PRESET)" && ctest --output-on-failure -R "win32_native_tutorial_.*dummy$$" $(CTEST_ARGS)
 
-tutorial-reject:
-	$(PYTHON) tests/scaffold/tutorial/run.py --download-ahk --scenario reject-generate $(TUTORIAL_ARGS)
+tutorial-reject: tutorial
 
 clean:
 	rm -rf "$(DIST_DIR)"

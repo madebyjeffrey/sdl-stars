@@ -1,6 +1,9 @@
 #include "acutest.h"
 #include "stars_test.h"
 #include <errno.h>
+#ifdef STARS_UI_SDL
+#include <SDL3/SDL.h>
+#endif
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -34,9 +37,16 @@ static void TestNativeFiles(void) {
 #ifdef _WIN32
     TEST_CHECK(HfOpenFile("\xff", mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);
     {
+#ifdef STARS_UI_SDL
+        char *pszWide = SDL_iconv_string("UTF-16LE", "UTF-8", szDir, strlen(szDir) + 1);
+        TEST_ASSERT(pszWide);
+        TEST_CHECK(_wrmdir((wchar_t *)pszWide) == 0);
+        SDL_free(pszWide);
+#else
         WCHAR wszDir[64];
         TEST_ASSERT(MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, szDir, -1, wszDir, 64) > 0);
         TEST_CHECK(_wrmdir(wszDir) == 0);
+#endif
     }
 #else
     TEST_CHECK(rmdir(szDir) == 0);

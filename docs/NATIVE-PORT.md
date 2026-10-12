@@ -1,9 +1,10 @@
 # Native port
 
 The SDL client now has a native Windows x64 build using the same source wrapper
-as Linux/macOS. Its SDK filesystem bridge is isolated in
+as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bridge is isolated in
 `compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
-to avoid SDK import collisions. This does not change disk layouts or core
+to avoid SDK import collisions. Native Unicode open/save lives in the separate
+`filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
 native I/O. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
 The reconstructed sources build as a native Win32/Win64 executable with

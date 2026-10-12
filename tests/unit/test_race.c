@@ -119,7 +119,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
         TEST_CHECK(buf.rgchGuard[i] == 0x55);
 }
 
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
 // Random race: the Random template is only the random-race bit, which
 // GenerateWorld replaces with a random race. Choosing Custom on the first
 // wizard page keeps the race being edited, so a race that had been Random
@@ -187,7 +187,7 @@ TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
              {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},
 #endif

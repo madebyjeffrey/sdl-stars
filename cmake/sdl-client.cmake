@@ -48,10 +48,16 @@ target_compile_options(stars-ui-compat-check PRIVATE
     -Werror=implicit-function-declaration -Werror=incompatible-pointer-types)
 add_dependencies(stars-ui-compat-check stars_version)
 add_executable(stars-sdl compat/win32/src/entry.c)
+option(STARS_TEST_TRACE "Log selected game calls for regression diagnostics" OFF)
+if(STARS_TEST_TRACE)
+    target_sources(stars-sdl PRIVATE tests/scaffold/regression_trace.c)
+    target_link_options(stars-sdl PRIVATE "LINKER:--wrap=Random,--wrap=PctPlanetCapacity")
+endif()
 target_link_libraries(stars-sdl PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-sdl PRIVATE -Wall -Wextra -Wpedantic -Werror)
 set_target_properties(stars-sdl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 include("${CMAKE_CURRENT_LIST_DIR}/install.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/sdl-unit-tests.cmake")
 if(NOT STARS_BUILD_TESTS)
     return()
 endif()
@@ -306,36 +312,6 @@ if(STARS_BUILD_TESTS)
     endforeach()
 endif()
 
-if(STARS_BUILD_TESTS)
-    set(STARS_CLIENT_TEST_DIR "${CMAKE_BINARY_DIR}/tests-client")
-    file(MAKE_DIRECTORY "${STARS_CLIENT_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1
-        "${STARS_CLIENT_TEST_DIR}/data/humanoid.r1" COPYONLY)
-    file(GLOB STARS_CLIENT_UNIT_SOURCES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/tests/unit/test_*.c")
-    set(STARS_CLIENT_TEST_TARGETS)
-    foreach(STARS_CLIENT_UNIT_SOURCE ${STARS_CLIENT_UNIT_SOURCES})
-        get_filename_component(STARS_CLIENT_TEST_NAME "${STARS_CLIENT_UNIT_SOURCE}" NAME_WE)
-        set(STARS_CLIENT_TEST_TARGET "sdl_${STARS_CLIENT_TEST_NAME}")
-        add_executable(${STARS_CLIENT_TEST_TARGET} "${STARS_CLIENT_UNIT_SOURCE}" tests/unit/stars_test.c)
-        target_link_libraries(${STARS_CLIENT_TEST_TARGET} PRIVATE stars_core stars-ui-compat-check
-            stars_options stars_win32 SDL3::SDL3)
-        target_include_directories(${STARS_CLIENT_TEST_TARGET} PRIVATE "${PROJECT_SOURCE_DIR}/tests/unit")
-        target_compile_definitions(${STARS_CLIENT_TEST_TARGET} PRIVATE
-            STARS_TEST_GOLDEN_DIR="${PROJECT_SOURCE_DIR}/tests/unit/golden")
-        target_link_options(${STARS_CLIENT_TEST_TARGET} PRIVATE "LINKER:--wrap=AlertSz")
-        set_target_properties(${STARS_CLIENT_TEST_TARGET} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${STARS_CLIENT_TEST_DIR}")
-        list(APPEND STARS_CLIENT_TEST_TARGETS ${STARS_CLIENT_TEST_TARGET})
-        add_test(NAME ${STARS_CLIENT_TEST_TARGET} COMMAND ${STARS_CLIENT_TEST_TARGET})
-        set_tests_properties(${STARS_CLIENT_TEST_TARGET} PROPERTIES LABELS "client"
-            WORKING_DIRECTORY "${STARS_CLIENT_TEST_DIR}"
-            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software"
-            TIMEOUT 60)
-    endforeach()
-    target_link_options(sdl_test_native_ports PRIVATE
-        "LINKER:--wrap=WriteRt,--wrap=ReadRt,--wrap=FCreateFile,--wrap=StreamOpen,--wrap=StreamClose,--wrap=DirtyGame")
-    add_custom_target(stars-sdl-unit-tests DEPENDS ${STARS_CLIENT_TEST_TARGETS})
-endif()
 
 add_executable(stars-compat-abi tests/compat/win32_abi.c tests/compat/win32_include_order.c)
 target_link_libraries(stars-compat-abi PRIVATE stars_options stars_win32_headers)

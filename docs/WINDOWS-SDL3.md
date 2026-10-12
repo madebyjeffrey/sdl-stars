@@ -4,8 +4,9 @@
 wrapper used on Linux and macOS as native Windows x64 executables. Neither the
 application nor its users need WSL, Wine or the MSYS runtime. MSYS2 UCRT64 is
 the development toolchain; the portable install includes the runtime DLLs.
-The original SDK-backed `stars.exe` and its reference/unit tests remain separate
-targets, using the same core objects as `stars-sdl.exe`.
+The native SDK-backed desktop target is retired. Optional SDK contract tests
+(`STARS_BUILD_WIN32_REFERENCE_TESTS=ON`) remain independent references; all desktop
+product and game unit-test targets use the SDL wrapper.
 
 ## Install development dependencies once
 
@@ -139,8 +140,9 @@ native chooser/printer and complete tutorial qualification remain separate work.
 ## Platform boundary and future Rust integration
 
 The SDK-backed core filesystem implementation remains in `native.c`. SDL UI
-sources include the wrapper's `windows.h`; `platform_windows.c` alone includes
-real SDK declarations for filesystem services. CMake generates Windows wrapper
+sources include the wrapper's `windows.h`; `platform_windows.c` includes
+real SDK declarations for filesystem services; `filedialog_windows_sdk.c` isolates
+the system Unicode open/save dialog APIs. CMake generates Windows wrapper
 symbol aliases such as `StarsCompat_CreateWindowExA`, so wrapper handles cannot
 accidentally reach identically named system APIs. Linux/macOS keep their current
 symbols. The wrapper's calling convention remains C, including its callbacks;
@@ -156,6 +158,30 @@ Rust panics through C callbacks. Rust bindings, a supported public game-core API
 an MSVC build and Windows ARM64/32-bit qualification are future work; this change
 qualifies the UCRT64 x64 toolchain without claiming those targets work.
 
-The Windows file chooser currently uses the shared SDL compatibility browser,
-and printing uses the shared PDF backend. Native Windows chooser and printer
-integration need separate SDK adapters; CUPS printer names are Linux-only.
+Windows open/save now defaults to native Unicode system dialogs through the
+wrapper. Filter labels and titles convert from CP1252, paths convert between UTF-8
+and UTF-16, and Stars retains extension/existence/overwrite validation. Native
+browsing and cancellation preserve the process directory. A hook pumps wrapper
+messages while the native modal dialog is open, cancelling on owner destruction
+or pending quit. `STARS_FILE_DIALOG_BACKEND=compat` selects the constructed picker
+for deterministic headless checks; `STARS_NATIVE_FILE_DIALOGS=OFF` builds only that
+picker. Native desktop interaction remains to be qualified. Printing continues
+through the PDF backend; CUPS printer names are Linux-only.
+
+
+## SDL-only consolidation verification (2026-10-12)
+
+Windows UCRT64 Debug and Release builds pass without compiler warnings. The SDL
+suite passes 44/44 checks, including all 17 game unit programs, native chooser
+SDK contracts and wrapper modal/cancellation/owner-destruction/quit flows. Native
+chooser tests intercept system selection; interactive desktop acceptance remains
+pending. The SDL tutorial smoke passes and retains its partial-coverage status.
+The independent Windows host suite passes 15/15 programs. Full SDL-client and host
+regressions each match all 519 comparisons through turn 150, with 69 unused-storage
+warnings and no differences/errors; no baselines changed.
+
+The runtime installs with DLLs and offline help. With only Windows system
+directories on PATH, the installed client and host report their versions and
+produce identical verification check files. Optional SDK reference targets build
+separately without rebuilding a native desktop client. Linux/macOS execution and
+full SDL tutorial qualification remain pending.

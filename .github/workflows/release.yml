@@ -10,7 +10,50 @@ permissions:
   contents: read
 
 jobs:
+  windows-sdl:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-yaml
+            mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype
+            mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo
+            mingw-w64-ucrt-x86_64-libwmf
+      - name: Build and test the Windows SDL client
+        shell: msys2 {0}
+        run: |
+          cmake --preset windows-sdl-debug
+          cmake --build --preset windows-sdl-debug --parallel 2
+          ctest --preset windows-sdl-headless
+      - name: Build and package Release
+        shell: msys2 {0}
+        run: |
+          cmake --preset windows-sdl-release
+          cmake --build --preset windows-sdl-release --parallel 2
+          cmake --install dist/windows-sdl-release --prefix "$PWD/dist/windows-portable" --component StarsRuntime
+      - name: Archive portable Windows runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/release | Out-Null
+          Compress-Archive -Path dist/windows-portable/* -DestinationPath dist/release/stars-sdl-windows-x64.zip
+          Copy-Item dist/windows-sdl-release/generated/version.h dist/release/version.h
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-sdl-runtime
+          path: dist/release/
+          if-no-files-found: error
   release:
+    needs: windows-sdl
     if: github.ref == 'refs/heads/main' || (github.ref_type == 'tag' && github.ref_name != 'latest')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -31,19 +74,16 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake ninja-build python3-yaml gcc-mingw-w64-x86-64
+          sudo apt-get install -y --no-install-recommends cmake ninja-build python3-yaml
 
-      - name: Build stars.exe and stage help
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-sdl-runtime
+          path: dist/release/
+      - name: Read and validate product version
         run: |
-          cmake --preset mingw-release
-          cmake --build --preset mingw-release --parallel 2
-          test -s dist/mingw-release/bin/stars.exe
-          test -s 'res/stars!.hlp'
-          mkdir -p dist/release
-          cp dist/mingw-release/bin/stars.exe dist/release/
-          cp 'res/stars!.hlp' dist/release/
-          version=$(sed -n 's/^#define STARS_VERSION_STRING "\(.*\)"$/\1/p' dist/mingw-release/generated/version.h)
-          display=$(sed -n 's/^#define STARS_VERSION_DISPLAY "\(.*\)"$/\1/p' dist/mingw-release/generated/version.h)
+          version=$(sed -n 's/^#define STARS_VERSION_STRING "\(.*\)"$/\1/p' dist/release/version.h)
+          display=$(sed -n 's/^#define STARS_VERSION_DISPLAY "\(.*\)"$/\1/p' dist/release/version.h)
           echo "Built Stars! $display"
           echo "STARS_VERSION=$version" >> "$GITHUB_ENV"
           echo "STARS_DISPLAY=$display" >> "$GITHUB_ENV"
@@ -54,7 +94,7 @@ jobs:
           fi
 
       # stars-host, the game's host without windows, for x86-64 Linux. The
-      # runner's gcc gives x87 long double, which turn generation needs.
+      # core uses binary64 arithmetic, matching the SDL client.
       # It links statically so it runs on older glibc. Refs from before
       # 2.9 have no host preset and publish only stars.exe.
       - name: Build Linux stars-host
@@ -76,8 +116,7 @@ jobs:
         with:
           name: stars-windows-x64-${{ github.sha }}
           path: |
-            dist/release/stars.exe
-            dist/release/stars!.hlp
+            dist/release/stars-sdl-windows-x64.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -96,7 +135,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           commit=$(git rev-parse HEAD)
-          assets=(dist/release/stars.exe 'dist/release/stars!.hlp')
+          assets=(dist/release/stars-sdl-windows-x64.zip)
           if [[ -n "${STARS_HOST_ASSET:-}" ]]; then
             assets+=("$STARS_HOST_ASSET")
           fi
@@ -120,7 +159,7 @@ jobs:
             cat > dist/release/notes.md <<EOF
           Stars! $STARS_DISPLAY: Windows x86-64 optimized Release build, built from main.
 
-          Download stars.exe and stars!.hlp into the same directory.
+          Extract stars-sdl-windows-x64.zip and run bin/stars-sdl.exe.
 
           stars-host-linux-x64.tar.gz holds stars-host, the game's host without
           windows, for x86-64 Linux. It takes stars.exe's host command line

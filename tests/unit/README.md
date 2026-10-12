@@ -1,36 +1,26 @@
 # Unit tests
 
-Each `test_<name>.c` here is an [acutest](https://github.com/mity/acutest)
-program linked with the game code (the `stars_core` and `stars_ui` object
-libraries) and its resources. They build as Windows console programs with
-the normal MinGW build, and CTest runs them through Wine:
+Each `test_<name>.c` is an Acutest program linked with the game core and SDL
+wrapper UI. `make test-unit` builds the platform SDL preset and runs the game
+unit programs; `CLIENT_PRESET` can override the preset. Use CTest's `-R` filter
+for a subset. Executables are in `<build>/tests-client/sdl_test_<name>`.
 
-```sh
-make test-unit                           # build mingw-debug and run them all
-make test-unit CTEST_ARGS='-R test_turn' # one file
-dist/mingw-debug/tests/test_turn.exe --list   # under wine: the tests in a file
-```
+Host presets instead link the core and `hostui.c`; `make test-host` runs these
+without SDL. UI cases select `STARS_UI_SDL`, independently of the operating system.
+Host builds omit the native-port and native-file-UI programs that need the client.
 
-They also build natively with the host presets, linked with the game code
-and `hostui.c` instead of the Windows interface, and run without Wine:
-
-```sh
-make test-host                           # macos-host-release on Apple silicon, host-release elsewhere
-make test-host CTEST_ARGS='-R test_turn'
-```
-
-The native build leaves out what needs Windows: `test_native_ports.c`
-(`--wrap` is GNU ld's) and the client dialog cases in `test_battle.c` and
-`test_race.c`. Use `szDirSep` for paths and `getcwd` for
-the working directory so a test builds on both.
+On Windows SDL, Acutest's SDK process/timer implementation is disabled because
+its system API types conflict with wrapper types. `run_isolated.py` enumerates
+cases and launches each in a fresh process, preserving the same isolation as
+Acutest on Linux and host-only Windows builds.
 
 Acutest runs every test in its own process, so each test starts from the
-game's initial globals. Tests run in `<build>/tests`, where CMake copies the
+game's initial globals. Client tests run in `<build>/tests-client` (host tests in `<build>/tests`), where CMake copies the
 fixture race to `data/humanoid.r1`.
 
 ## SDL client tests
 
-The SDL presets also build `stars-sdl-unit-tests`: all 14 unit-test programs
+The SDL presets also build `stars-sdl-unit-tests`: all game unit-test programs
 linked with the shared UI and compatibility runtime, including Battle Plans,
 race-wizard choices, habitat painting/immunity redraw and native-port cases.
 `test_memory` checks aligned mixed allocations, free-list reuse/coalescing,

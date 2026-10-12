@@ -13,7 +13,9 @@ Win16 shims into native Win32 code, while staying a game that plays like
 2.6j and reads its files. The `2.8` branch takes bug fixes for 2.8 patch
 releases. `main` is the 2.9 line, which splits the game into core, UI and
 host builds so the host can run on Linux; see `docs/ROADMAP.md`. These
-rules carry over from 2.8.
+rules carry over from 2.8. The desktop client now uses SDL3 through the
+Win32 wrapper on every platform; a native Win32 client is no longer maintained.
+The command-line host remains independent of SDL.
 
 When goals conflict, apply them in this order:
 
@@ -72,7 +74,7 @@ When goals conflict, apply them in this order:
 - The game code (`STARS_CORE_SOURCES` in `CMakeLists.txt`) includes only
   `common.h`, never `windows.h`, and builds without Windows headers. It
   reaches the player only through the functions in `ui.h`, which the
-  Windows UI and `hostui.c` implement. Put dialogs, drawing and window
+  SDL-backed desktop UI and `hostui.c` implement. Put dialogs, drawing and window
   state in the UI files (`*ui.c` and the others in `STARS_UI_SOURCES`,
   which include `win.h`); when a game file needs one, add a `ui.h` call.
 - A file split for 2.9 keeps its game logic under its original name, and
@@ -136,7 +138,8 @@ When goals conflict, apply them in this order:
 
 After each batch of edits:
 
-1. Build with `cmake --preset mingw-debug && cmake --build --preset mingw-debug`.
+1. Build with the platform SDL Debug preset (`windows-sdl-debug`, `sdl-debug`
+   or `macos-sdl-debug`). `mingw-debug` is a Windows SDL preset alias.
    Don't introduce new warnings in the files you touched.
 2. Run the native regression and compare it against the native baseline in
    `tests/scaffold/fixtures/regression/native/`: `make regression` (details
@@ -144,7 +147,8 @@ After each batch of edits:
    regression-quick`, one scenario through checkpoint 10; a batch is done
    only after the full suite.
 3. Run the unit tests (`make test-unit`, `tests/unit/README.md`).
-4. Run the tutorial (`make tutorial`).
+4. Run the SDL tutorial checkpoints (`make tutorial`). They provide partial
+   coverage; the full 80-page SDL tutorial remains unfinished.
 5. For changes to the game code, also run the host regression and the
    native unit tests (`make regression-host`, `make test-host`).
 

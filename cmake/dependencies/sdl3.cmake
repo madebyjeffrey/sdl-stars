@@ -1,4 +1,4 @@
-# Host and MinGW builds never load SDL. Native desktop presets opt in.
+# Host-only builds never load SDL. Every desktop build uses this dependency.
 option(STARS_SDL_FETCH "Download pinned SDL3 when no installed SDL3 package is found" OFF)
 find_package(SDL3 3.4 CONFIG QUIET)
 if(NOT SDL3_FOUND)

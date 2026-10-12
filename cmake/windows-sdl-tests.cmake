@@ -1,5 +1,25 @@
 # The Linux desktop harness uses X11, D-Bus and GNU ELF wrapping. Windows
 # exercises the same wrapper with portable tests and the shared game entry.
+if(STARS_NATIVE_FILE_DIALOGS)
+    add_executable(stars-compat-filedialog-windows tests/compat/win32_filedialog_windows.c
+        $<TARGET_OBJECTS:stars_filedialog_windows>)
+    target_include_directories(stars-compat-filedialog-windows PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+    target_compile_options(stars-compat-filedialog-windows PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    set_target_properties(stars-compat-filedialog-windows PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    add_test(NAME win32_sdl_native_filedialog COMMAND stars-compat-filedialog-windows)
+    set_tests_properties(win32_sdl_native_filedialog PROPERTIES LABELS compat TIMEOUT 30)
+    add_executable(stars-compat-filedialog-native-flow tests/compat/win32_filedialog_windows_flow.c)
+    target_link_libraries(stars-compat-filedialog-native-flow PRIVATE stars_win32 SDL3::SDL3)
+    target_include_directories(stars-compat-filedialog-native-flow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+    target_link_options(stars-compat-filedialog-native-flow PRIVATE "LINKER:--wrap=IChooseWindowsFile")
+    target_compile_options(stars-compat-filedialog-native-flow PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    set_target_properties(stars-compat-filedialog-native-flow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-native-filedialog")
+    add_test(NAME win32_sdl_native_fileflow COMMAND stars-compat-filedialog-native-flow)
+    set_tests_properties(win32_sdl_native_fileflow PROPERTIES LABELS compat TIMEOUT 30
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-native-filedialog"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
+endif()
 add_test(NAME win32_sdl_abi COMMAND stars-compat-abi)
 add_test(NAME sdl_smoke_software COMMAND stars-compat-smoke --self-test)
 set_tests_properties(sdl_smoke_software PROPERTIES LABELS compat TIMEOUT 30

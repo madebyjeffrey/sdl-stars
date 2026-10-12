@@ -8,7 +8,7 @@ static void TestTextBoundaries(void) {
     HWND hwnd, hwndEdit;
     WNDCLASSA wc = {0};
     char sz[32];
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     WCHAR wsz[32];
 #endif
     wc.lpfnWndProc = DefWindowProcA; wc.lpszClassName = "StarsNativeTitleProbe";
@@ -19,7 +19,7 @@ static void TestTextBoundaries(void) {
     TEST_ASSERT(hwndEdit && FSetLegacyWindowText(hwndEdit, "\xe9\x80"));
     TEST_CHECK(CchGetLegacyWindowText(hwndEdit, sz, sizeof(sz)) == 2 && strcmp(sz, "\xe9\x80") == 0);
     TEST_ASSERT(FSetNativeWindowTitle(hwnd, "caf\xc3\xa9-\xce\xa9"));
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     TEST_CHECK(GetWindowTextW(hwnd, wsz, 32) == 6 && wcscmp(wsz, L"caf\x00e9-\x03a9") == 0);
     TEST_ASSERT(SetWindowTextW(hwndEdit, L"\x6771\x4eac"));
     TEST_CHECK(CchGetLegacyWindowText(hwndEdit, sz, sizeof(sz)) == -1 && sz[0] == 0);
@@ -31,7 +31,7 @@ static void TestTextBoundaries(void) {
     StarsCompatProcessExit();
 #endif
 }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
 static int iChooser;
 static LPWSTR WINAPI FakeCommandLine(void) {
     static WCHAR wsz[] = L"\"C:\\Program Files\\Stars.exe\" -p\x00e9 file-\x03a9.hst";
@@ -78,7 +78,7 @@ static void TestWidePicker(void) {
 }
 #endif
 TEST_LIST = {{"native path captions and legacy password fields", TestTextBoundaries},
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
              {"wide Windows picker returns UTF-8 offsets", TestWidePicker},
              {"Windows arguments preserve UTF-8", TestWideArguments},
 #endif

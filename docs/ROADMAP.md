@@ -5,6 +5,21 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+## SDL desktop consolidation
+
+The desktop product uses SDL3 through `compat/win32` on every platform. The native
+Win32 client build is retired; the host remains independent of SDL. Desktop
+presets, unit tests, regression entry points and release packaging use `stars-sdl`.
+Windows SDK comparison tests remain opt-in, with no second product UI.
+Windows now uses Unicode native open/save dialogs through an isolated SDK bridge;
+Linux portal and macOS AppKit pickers retain their existing backends. Headless
+tests select the constructed picker with `STARS_FILE_DIALOG_BACKEND=compat`.
+
+Source/folder reorganization and refuse cleanup are separate follow-up changes.
+Full SDL tutorial coverage and real-desktop/native-picker qualification remain
+outstanding. Historical Win32 milestones below describe the wrapper's API work,
+not an additional maintained desktop backend.
+
 ## 2.9
 
 Split the game into separate builds so the host can run on Linux:
@@ -12,7 +27,7 @@ Split the game into separate builds so the host can run on Linux:
 - **Core:** turn generation and file I/O, with no Windows UI dependencies.
   Done: the game files (`STARS_CORE_SOURCES`) include only `common.h` and
   reach the player only through `ui.h`.
-- **UI:** the Win32 client on top of the core. Done: the `*ui.c` files and
+- **UI:** the SDL client using the Win32 wrapper on top of the core. Done: the `*ui.c` files and
   the other UI files (`STARS_UI_SOURCES`) include `win.h`.
 - **Host:** a command-line build of the core (`-g`, `-a` and the like) for
   Windows and Linux. Done: `stars-host` (`host.c`, `hostui.c`), released for
@@ -238,7 +253,7 @@ desktop/help/GPU-driver qualification.
 
 
 - **Open/save dialog overhaul:** use native platform pickers (Linux libdbus
-  FileChooser portal, standard Windows dialogs, macOS AppKit behind defines).
+  FileChooser portal, Unicode Windows dialogs (implemented), macOS AppKit behind defines).
   Retain the custom picker for deterministic headless tests; improve its layout and usability,
   directory navigation, file/filter presentation, filename editing, keyboard
   interaction and error/overwrite feedback. Qualify non-ASCII filenames and

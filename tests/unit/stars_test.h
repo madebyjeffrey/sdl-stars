@@ -5,7 +5,7 @@
 // in its own process, so each test starts from the game's initial globals
 // and calls FStarsTestInit first. Helpers return FALSE on failure.
 
-#if defined(_WIN32) || defined(STARS_UI_SDL)
+#ifdef STARS_UI_SDL
 #include "win.h"
 #else
 #include "common.h"

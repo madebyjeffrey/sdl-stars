@@ -370,7 +370,7 @@ static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD st
     }
     return hwndControl;
 }
-#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA)
+#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
 static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *pszName) {
     char szParent[PATH_MAX], szReal[PATH_MAX], *pch;
     struct stat st;
@@ -433,14 +433,14 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         }
     }
     hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL;
-#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA)
+#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !getenv("STARS_FILE_DIALOG_BACKEND") || strcmp(getenv("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
 #endif
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
     if (fEnable) EnableWindow(hwndRoot, FALSE);
     if (hwndRoot && !IsWindow(hwndRoot)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
-#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA)
+#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     /* Headless control tests opt into the compatibility browser explicitly. */
     if (fNative) {
         for (;;) {
@@ -504,7 +504,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         if (!IsDialogMessageA(hwnd, &msg)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
     }
     if (!IsWindow(hwnd) || !hwnd->fEndDialog || hwnd->lDlgResult != IDOK) goto restore;
-#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA)
+#if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
 selected:
 #endif
     {

@@ -78,6 +78,13 @@ elseif(STARS_NATIVE_FILE_DIALOGS AND APPLE)
     set_source_files_properties(src/filedialog_cocoa.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc;-fblocks")
     target_link_libraries(stars_win32 PRIVATE "-framework AppKit")
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_COCOA=1)
+elseif(STARS_NATIVE_FILE_DIALOGS AND WIN32)
+    # The SDK bridge must never inherit the wrapper include directories.
+    add_library(stars_filedialog_windows OBJECT src/filedialog_windows_sdk.c)
+    target_compile_options(stars_filedialog_windows PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_sources(stars_win32 PRIVATE src/filedialog_windows.c $<TARGET_OBJECTS:stars_filedialog_windows>)
+    target_link_libraries(stars_win32 PRIVATE comdlg32)
+    target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_WINDOWS=1)
 endif()
 
 target_compile_options(stars_win32 PRIVATE -Wall -Wextra -Wpedantic -Werror)

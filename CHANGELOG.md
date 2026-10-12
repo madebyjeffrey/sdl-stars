@@ -8,6 +8,15 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- The desktop client now builds only through SDL3 and the Win32 wrapper on
+  Windows, Linux and macOS. The native Win32 product target is retired; SDK
+  contract tests are opt-in. Presets, CI, game tests, regression commands and
+  Windows runtime packaging use the SDL client. Source locations are unchanged.
+- Windows wrapper open/save dialogs now use native Unicode system pickers,
+  preserving Stars wildcard filters and shared filename validation. Headless
+  tests retain the constructed picker. Game rules, disk layouts and regression
+  baselines are unchanged.
+
 - `FJoinFile` in the Windows SDL file browser now normalizes backslash paths before splitting
   filenames and changes Unicode directories through the wide CRT. New Game
   qualification now opens the actual save picker, tests Cancel, then creates

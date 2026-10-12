@@ -3,7 +3,7 @@ name: Stars unit tests
 on:
   pull_request:
   push:
-    branches: [main, '2.8']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,28 +17,19 @@ jobs:
   unit:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    env:
-      WINEDEBUG: '-all'
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-
-      - name: Install Wine, MinGW and virtual display
+      - name: Install SDL build and test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wine64 wine gcc-mingw-w64-x86-64 cmake ninja-build python3-yaml xvfb xauth
-
-      - name: Build and run unit tests
-        env:
-          WINEPREFIX: ${{ runner.temp }}/stars-unit
+          sudo apt-get install -y cmake ninja-build pkg-config python3-yaml libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libdbus-1-dev libwmf-bin libx11-dev libxtst-dev xvfb xauth openbox x11-utils poppler-utils
+      - name: Build and run SDL unit and wrapper tests
         run: |
-          mkdir -p "$WINEPREFIX"
-          xvfb-run -a -s '-screen 0 1600x1200x24' bash -e -o pipefail -c '
-            wineboot -u > /dev/null 2>&1
-            make test-unit
-          '
+          cmake --preset sdl-debug
+          cmake --build --preset sdl-debug --parallel 2
+          ctest --preset sdl-headless -LE tutorial-partial
 
   # The unit tests that need no windows, built natively with gcc.
   host-linux:
@@ -58,3 +49,29 @@ jobs:
 
       - name: Build and run unit tests
         run: make test-host
+
+  windows-sdl:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-yaml
+            mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype
+            mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo
+            mingw-w64-ucrt-x86_64-libwmf
+      - name: Build and test the Windows SDL client
+        shell: msys2 {0}
+        run: |
+          cmake --preset windows-sdl-debug
+          cmake --build --preset windows-sdl-debug --parallel 2
+          ctest --preset windows-sdl-headless

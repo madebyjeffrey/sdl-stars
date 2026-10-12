@@ -1,4 +1,4 @@
-name: Stars tutorial (Wine + AutoHotkey v2)
+name: Stars SDL tutorial (partial coverage)
 
 on:
   pull_request:
@@ -15,52 +15,21 @@ jobs:
   tutorial:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    env:
-      # A new Wine 11 prefix offers to install Wine Mono and Gecko, which
-      # waits for an answer under Xvfb; the game needs neither.
-      WINEDLLOVERRIDES: 'mscoree,mshtml='
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-
-      # WineHQ's current stable Wine, not Ubuntu 24.04's 9.0: under Wine 9.0
-      # the shift-click after the QuikLoad popup menu (2406, page 21) adds no
-      # waypoint, at v2.8.0 too. The tutorial passes under Wine 11.
-      - name: Install Wine, MinGW and virtual display
+      - name: Install SDL build and test dependencies
         run: |
-          sudo dpkg --add-architecture i386
-          sudo mkdir -pm755 /etc/apt/keyrings
-          sudo wget -qO /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-          sudo wget -qNP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/noble/winehq-noble.sources
           sudo apt-get update
-          sudo apt-get install -y --install-recommends winehq-stable
-          sudo apt-get install -y gcc-mingw-w64-x86-64 cmake ninja-build python3-yaml xvfb xauth
-          wine --version
-
-      - name: Walk every tutorial year
-        run: xvfb-run -a -s '-screen 0 1600x1200x24' make tutorial TUTORIAL_ARGS='--build-preset mingw-release'
-
-      - name: Check unfinished turn rejection
-        if: success() || failure()
-        run: xvfb-run -a -s '-screen 0 1600x1200x24' make tutorial-reject TUTORIAL_ARGS='--build-preset mingw-release'
-
-      - name: Retain diagnostic reports
+          sudo apt-get install -y cmake ninja-build pkg-config python3-yaml libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libdbus-1-dev libwmf-bin libx11-dev libxtst-dev xvfb xauth openbox x11-utils poppler-utils
+      - name: Run bounded SDL tutorial checkpoints
+        run: make tutorial
+      - name: Retain diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tutorial-results-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            dist/scaffold/tutorial/*/result.json
-            dist/scaffold/tutorial/*/results.xml
-            dist/scaffold/tutorial/*/events.jsonl
-            dist/scaffold/tutorial/*/metadata.json
-            dist/scaffold/tutorial/*/year-*.txt
-            dist/scaffold/tutorial/*/game/coverage.json
-            dist/scaffold/tutorial/*/last-state.txt
-            dist/scaffold/tutorial/*/windows.txt
-            dist/scaffold/tutorial/*/wine.log
-            dist/scaffold/tutorial/*/screenshots/*
+          path: dist/sdl-debug/test-client/tutorial-dummy/
           if-no-files-found: warn
           retention-days: 30

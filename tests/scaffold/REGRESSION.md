@@ -1,6 +1,7 @@
 # Fixed-seed AI regression runs
 
-This harness runs the native game under Wine with a fixed seed. It keeps
+This harness runs the SDL desktop client with a fixed seed, natively on each
+platform. It keeps
 separate saves at creation and turns 1, 10, 25, 50, 80, 100, and 150, then
 compares decrypted records with the standalone CLI in `tests/savecli/`.
 `make regression` runs it against the checked-in baseline.
@@ -21,7 +22,7 @@ There are two sets of checked-in checkpoints in `fixtures/regression/`:
   lists the scenarios it covers.
 
 GitHub Actions runs the native baseline's scenarios on pull requests and main
-pushes using `mingw-release` with the fixed seed. It generates native
+pushes using `sdl-release` with the fixed seed. It generates native
 checkpoints at turns 0, 1, 10, 25, 50, 80, 100, and 150 and compares them
 against `fixtures/regression/native/`. They contain save files, checkpoint manifests and the run
 metadata needed by `compare`, with no executables or logs. See the
@@ -57,21 +58,21 @@ bits. The runner passes the run's seed on every launch, so any build of
 
 ## Build and stage
 
-Run from the repository root. Python 3, Go, MinGW, CMake, Ninja, and Wine
+Run from the repository root. Python 3, Go, CMake, Ninja and the platform SDL build dependencies
 are needed. `make regression` does all of this; by hand:
 
 ```sh
-cmake --preset mingw-release
-cmake --build --preset mingw-release
+cmake --preset sdl-release
+cmake --build --preset sdl-release
 make save-cli
 
 python3 tests/scaffold/regression.py prepare --seed 12345 \
-  --exe dist/mingw-release/bin/stars.exe \
+  --exe dist/sdl-release/bin/stars-sdl \
   --work dist/scaffold/regression/native
 ```
 
 Choose a **fresh output directory** for each run; staging never overwrites
-prior results. The runner uses Wine's `Z:` host-filesystem mapping. Keep work
+prior results. Native SDL runs use ordinary filesystem paths. Keep work
 paths free of spaces because the Stars! parser cannot quote them. Staging
 writes CRLF definitions and absolute Windows paths for the race and output
 files, and records the executable's hash, the seed and the fixture hashes in
@@ -132,7 +133,7 @@ as well as the output files. At turn zero it runs
 Use `--cli` on `regression.py run` if the CLI is elsewhere. Under each scenario:
 
 ```text
-run-000.log                 Wine output for universe creation
+run-000.log                 Process output for universe creation
 run-001.log                 output for the first turn
 run-010.log ... run-150.log
 checkpoints/000/game.*      all .xy, .hst, .mN, .hN, and .xN files present
@@ -217,10 +218,10 @@ baseline from a complete release run of every scenario it covers. `make
 regression` followed by `make regression-export` does this; by hand:
 
 ```sh
-cmake --preset mingw-release
-cmake --build --preset mingw-release
+cmake --preset sdl-release
+cmake --build --preset sdl-release
 python3 tests/scaffold/regression.py prepare --seed 12345 \
-  --exe dist/mingw-release/bin/stars.exe --work dist/scaffold/baseline
+  --exe dist/sdl-release/bin/stars-sdl --work dist/scaffold/baseline
 python3 tests/scaffold/regression.py run --work dist/scaffold/baseline \
   --scenario noai --scenario oneai1 ...
 python3 tests/scaffold/regression.py compare \
@@ -296,12 +297,12 @@ range, result, caller address, and RNG seeds before the draw. Seeds allow replay
 the stream at any offset. `trace` resolves caller addresses to source lines:
 
 ```sh
-cmake --preset mingw-debug -B dist/regression-trace -DSTARS_TEST_TRACE=ON
+cmake --preset sdl-debug -B dist/regression-trace -DSTARS_TEST_TRACE=ON
 cmake --build dist/regression-trace
 python3 tests/scaffold/regression.py prepare --seed 12345 \
-  --exe dist/regression-trace/bin/stars.exe --work dist/scaffold/trace
+  --exe dist/regression-trace/bin/stars-sdl --work dist/scaffold/trace
 python3 tests/scaffold/regression.py trace <dir>/trace.log \
-  --exe dist/regression-trace/bin/stars.exe --turn 32 --player 1
+  --exe dist/regression-trace/bin/stars-sdl --turn 32 --player 1
 ```
 
 Trace both builds and compare, then replay the seeds at nearby offsets to

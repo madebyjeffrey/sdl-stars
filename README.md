@@ -32,58 +32,31 @@ The original 2.6jrc3 stars.exe included ~1MB of debug symbols with function name
 
 ## Build
 
-The SDL3 client on `win32_adapter` also builds natively on Windows x64 using
-MSYS2 UCRT64. See [Windows SDL3 build and packaging](docs/WINDOWS-SDL3.md).
+The desktop client uses SDL3 through the project's Win32 wrapper on Windows,
+Linux and macOS. There is no separate native Win32 desktop build. The command-line
+host remains independent of SDL.
 
-The game (`stars.exe`) uses Windows APIs. On macOS or Linux, build it as a
-Windows executable with CMake 3.23 or later, Ninja, Python 3 with PyYAML, and
-the x86_64 MinGW-w64 toolchain on PATH. The host alone (`stars-host`, below)
-builds with the native compiler. The build runs `text/textgen.py` to compile
-the game's strings, messages, tutorial and planet names from `text/*.txt`,
-and `data/datagen.py` to compile the parts, races, default battle plans, AI
-design recipes, part preferences and research orders from `data/**/*.yaml`.
-On macOS these build dependencies can be installed with Homebrew:
+On Windows, use MSYS2 UCRT64; see [Windows SDL3 build and packaging](docs/WINDOWS-SDL3.md):
 
 ```sh
-brew install cmake ninja mingw-w64
+cmake --preset windows-sdl-debug
+cmake --build --preset windows-sdl-debug
+ctest --preset windows-sdl-headless
 ```
 
-Homebrew's Python doesn't let `pip` install into it, so put PyYAML in a
-virtualenv and point CMake at it:
+On Linux, use `sdl-debug` / `sdl-release`; on macOS, use `macos-sdl-debug` /
+`macos-sdl-release`. See [SDL development](docs/SDL3-DEVELOPMENT.md) for dependencies
+and platform qualification. Windows `mingw-debug` / `mingw-release` are legacy
+aliases for the SDL builds, using the native UCRT64 compiler.
 
-```sh
-python3 -m venv ~/.venvs/stars && ~/.venvs/stars/bin/pip install pyyaml
-cmake --preset mingw-debug -DPython3_EXECUTABLE=$HOME/.venvs/stars/bin/python
-```
+The executable is `<build>/bin/stars-sdl` (`stars-sdl.exe` on Windows). CMake builds
+text and data tables from `text/*.txt` and `data/**/*.yaml` and generates the
+wrapper's resources from `res/`. Open/save uses native platform file pickers;
+`STARS_FILE_DIALOG_BACKEND=compat` selects the deterministic SDL picker for tests.
 
-On Debian or Ubuntu, install `python3-yaml`.
-
-From the project directory:
-
-```sh
-cmake --preset mingw-debug
-cmake --build --preset mingw-debug
-```
-
-The executable is written to `dist/mingw-debug/bin/stars.exe`. CMake also compiles the
-resources in `res/` and tracks their embedded files for rebuilds.
-
-Wine is optional for building. If `wine` is on PATH when configuring, run with:
-
-```sh
-cmake --build --preset run-wine
-```
-
-For a release build:
-
-```sh
-cmake --preset mingw-release
-cmake --build --preset mingw-release
-```
-
-This writes `dist/mingw-release/bin/stars.exe` with optimization enabled and
-debug data stripped. Test hooks are disabled in ordinary builds. The MinGW
-presets also build `stars-host.exe`.
+Set `STARS_BUILD_SDL_CLIENT=OFF` for a host-only configuration. Independent Windows
+SDK contract tests are optional (`STARS_BUILD_WIN32_REFERENCE_TESTS=ON`); they do
+not build a second desktop client.
 
 ### stars-host
 
@@ -118,34 +91,18 @@ Where `stars-host` differs from `stars.exe`:
 
 ## GitHub Actions
 
-Every push to `main` builds the optimized MinGW Release executable and updates
-the rolling [`latest` prerelease](https://github.com/sirgwain/stars/releases/tag/latest).
-Both `stars.exe` and `stars!.hlp` are attached; download them into the same
-directory. `stars-host-linux-x64.tar.gz` holds `stars-host` for x86-64 Linux,
-built with gcc and linked statically after its unit tests pass. Superseded
-main builds remain available as workflow artifacts.
+Every push to `main` builds the Windows SDL client, runs its headless checks,
+and packages the runtime DLLs and offline help in `stars-sdl-windows-x64.zip`.
+Extract the archive and run `bin/stars-sdl.exe`. The rolling
+[`latest` prerelease](https://github.com/sirgwain/stars/releases/tag/latest) also
+includes `stars-host-linux-x64.tar.gz`, built and unit-tested on Linux.
+Version tags build their tagged source with that revision's workflow.
 
-Pushing a version tag (for example `v2.8.0`) builds that tag's source, checks
-that it reports exactly that version, and publishes a release with the same
-files (tags from before 2.9 have no `stars-host`). Other tags (such as `2.6jrc3`) publish releases named after the
-tag. The rolling `latest` tag is excluded. See
-[versioning](docs/VERSIONING.md) for how build numbers are derived:
+Pull requests run SDL unit/wrapper tests on Linux and Windows, host unit tests,
+and full SDL-client and host regressions through turn 150 against the unchanged
+native baseline. The tutorial workflow runs bounded SDL checkpoints and retains
+diagnostics; full 80-page SDL tutorial coverage is still pending.
 
-```sh
-git tag v2.8.0
-git push origin v2.8.0
-```
-
-Pull requests build and run the complete tutorial and the unfinished-turn
-rejection check under Wine/Xvfb. Diagnostic reports are retained even on failure.
-The tutorial uses the same Release preset as the published builds, with the
-read-only test observer enabled. The native regression workflow also builds in
-Release mode on pull requests and main pushes, comparing
-all checkpoints through turn 150 against the checked-in native baseline
-(`tests/scaffold/fixtures/regression/native/`); it also runs every scenario
-through `stars-host` built natively on Linux (`make regression-host`), and
-the unit tests run natively there too (`make test-host`). The original game's
-checkpoints are kept alongside it as the record of 2.6j behavior.
 All workflows can also be run manually; the release workflow accepts `main`
 or a tag. Publishing uses the built-in `GITHUB_TOKEN` with `contents: write`;
 the tutorial uses read-only permissions.
@@ -162,7 +119,7 @@ make regression-export # after a full run, replace the baseline
 make regression-host   # the same run through stars-host, without Wine
 ```
 
-`make regression` builds the fixed-seed release `stars.exe` and
+`make regression` builds the fixed-seed release SDL client and
 `dist/stars-save`, runs a fresh `dist/scaffold/regression/native`, and
 compares it with the checked-in baseline in
 `tests/scaffold/fixtures/regression/native/`; any difference fails.
