@@ -1,5 +1,10 @@
 # Linux SDL3 Win32 compatibility implementation plan
 
+This is the historical implementation plan. Current SDL-only build policy,
+source layout, native Windows dialogs and remaining acceptance gaps are tracked
+in [ROADMAP.md](ROADMAP.md). Historical native Win32 build commands below are
+retained for context and no longer describe the maintained product.
+
 Date: October 10, 2026.
 
 Build a native Linux Stars client using the existing C game and UI sources, a source-level implementation of the Windows APIs they use, and SDL3 for desktop windows, input and accelerated presentation. Add a `stars-sdl` CMake executable target and Debug/Release presets that CLion can import. Keep the current Windows client and command-line host available for comparison.

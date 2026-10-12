@@ -64,6 +64,7 @@ dkms.conf
 # CMake build trees
 /dist/
 /build/
+/cmake-build-*/
 /CMakeUserPresets.json
 
 # Local CLion state and manually generated game/test outputs

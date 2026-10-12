@@ -336,7 +336,7 @@ bounded stop: thirty pages and the final completion remain outstanding. Current
 build/backend results and the continuation point are recorded below.
 Event records now include `elapsedMs` for diagnosing slow or stalled actions.
 The existing Windows instruction table in
-`tests/scaffold/tutorial/steps.ahk` is a source reference for the gestures, not
+`tests/reference/win32-tutorial/steps.ahk` is a source reference for the gestures, not
 an execution dependency of the native runner.
 
 The full runner still needs the remaining highlighted actions, dialogs, menu choices,
@@ -441,7 +441,7 @@ All paths below are relative to `/home/jdrake/Projects/stars`:
 | `tests/compat/native_tutorial.c` | SDL gesture driver, copied state snapshots and stages 203–248 for the new workflows |
 | `tests/compat/run_native_tutorial.py` | Isolated launcher and exact cargo/design/order/queue/template/report assertions |
 | `cmake/sdl-client.cmake` | Default smoke plus Merge cycle on dummy/X11; earlier stops opt-in |
-| `tests/scaffold/tutorial/steps.ahk`, `actions.ahk`, `tutor.c`, `text/` | Original walkthrough gestures and actual tutorial task/text references |
+| `tests/reference/win32-tutorial/steps.ahk`, `actions.ahk`, `tutor.c`, `text/` | Original walkthrough gestures and actual tutorial task/text references |
 
 The Craig checkout is read-only at `/home/jdrake/Projects/craig-stars`, pinned
 in the comparison to `85b83c422f14529b61ec45716261c53d1ad515ce`. The old Stars

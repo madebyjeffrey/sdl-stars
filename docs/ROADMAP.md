@@ -19,7 +19,12 @@ tests select the constructed picker with `STARS_FILE_DIALOG_BACKEND=compat`.
 
 Source reorganization is complete: `src/core`, `src/ui`, `src/host` and
 `src/platform` retain the original filenames. CMake, generators and source-reading
-test tools follow these paths. Refuse cleanup is a separate follow-up change.
+test tools follow these paths. The retired Wine/AutoHotkey tutorial and native
+new-game scripts are archived in `tests/reference/win32-tutorial`; active SDL
+workflows remain in `tests/compat`. Generated build trees are confined to `dist/`. Local cleanup removed 23 verified
+untracked CMake trees and the empty backup directory, and archived 154 old scratch
+files plus 11 scratch/install directories under `dist/archive/pre-sdl-consolidation`.
+Current qualification logs are grouped under `dist/verification/sdl-migration`.
 Full SDL tutorial coverage and real-desktop/native-picker qualification remain
 outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.

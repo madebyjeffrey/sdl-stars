@@ -1,4 +1,4 @@
-# Tutorial UI tests
+# Archived native Win32 tutorial harness
 
 The SDL client now also has an [in-process native runner](../../../docs/NATIVE-TUTORIAL-RUNNER.md).
 Its `--smoke` scenario checks startup, rejected generation and the first map
@@ -39,12 +39,18 @@ fleet merge, larger automatic queues and a return route through year 2418/page
 paths and instruction 392's continuation are in the native runner guide.
 Default CTest profiles run smoke and the longest scenario on both backends;
 `STARS_TUTORIAL_CHECKPOINT_TESTS=ON` registers all earlier stop-only profiles.
-These bounded scenarios are not full walkthrough passes and do not
-replace the Windows reference suite described below yet.
+These bounded scenarios are not full walkthrough passes. The retired Windows
+harness below is retained as a gesture/observer reference.
 
 The suite runs AutoHotkey **v2.0.28** and the rebuilt Stars! executable inside the same isolated Wine prefix. It drives normal Windows controls, menus, keyboard shortcuts and mouse gestures. The test build adds a hidden, read-only observation window; it does not complete tasks or modify game orders.
 
-## Run
+## Historical run instructions
+
+The following commands describe the retired native Win32 client. They do not
+apply to the current SDL-only tree. To reproduce old native results, use the
+harness from the chosen historical revision's own checkout. `newgame.sh` is also
+retained here as a native-client reference. Current `make tutorial` runs bounded
+SDL checks; the complete 80-page SDL walkthrough remains unfinished.
 
 Install Wine, Python 3, CMake, Ninja and the x86_64 MinGW toolchain used by `mingw-debug`. 
 

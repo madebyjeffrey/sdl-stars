@@ -111,7 +111,7 @@ When goals conflict, apply them in this order:
 - `qsort16` and the floating operation boundaries decide tie order and rounding
   in turn generation. The intentional migration to binary64 is documented in
   `docs/DOUBLE-PRECISION.md`; changing them is a behavior change, not a cleanup.
-- The tutorial observer depends on `InitInstance`, `ScannerWndProc`, the
+- The archived native tutorial observer (`tests/reference/win32-tutorial`) depends on `InitInstance`, `ScannerWndProc`, the
   globals and struct layouts it reads, and the literal `tutor.c` signatures
   `int16_t FTutorTaskDone() {` and `int16_t FCheck`. Update the observer and
   parser in the same change if any of these move.

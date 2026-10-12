@@ -8,6 +8,12 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Archived the retired Wine/AutoHotkey tutorial and native new-game harness in
+  `tests/reference/win32-tutorial`, retaining gestures and qualification evidence.
+  Active test instructions use the SDL workflow runners; generated CLion build
+  directories are ignored. Third-party origins, licenses and frozen checkpoints
+  remain intact.
+
 - Moved game, desktop, host and platform sources and headers into their own
   `src/` directories, preserving filenames and contents. Build paths, text ID
   usage scanning, precision experiments and the tutorial parser follow the new

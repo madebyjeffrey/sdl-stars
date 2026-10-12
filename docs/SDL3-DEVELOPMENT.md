@@ -35,12 +35,12 @@ UI against native compatibility declarations without linking it. See
 [compatibility headers](../compat/win32/README.md) for scope, the Windows
 reference test and CLion targets. Run both ABI and smoke tests with
 `ctest --test-dir dist/sdl-debug -L compat --output-on-failure`.
-Both SDL build presets also build `stars-host` and the `stars-host-unit-tests`
-aggregate target. A complete `ctest --test-dir dist/sdl-debug --output-on-failure`
-run therefore has all registered host and compatibility test executables after
-building the preset; use Xvfb for the X11 tests outside a desktop session.
+The SDL presets build `stars-host` and the `stars-sdl-unit-tests` aggregate
+target. Host unit programs build separately with the host presets (`make test-host`).
+Use `ctest --preset sdl-headless` for sequential headless client checks; use
+Xvfb for X11 checks outside a desktop session.
 
-The first SDL milestone builds `stars-compat-smoke`, a native Linux executable with two independent desktop windows. It exercises SDL window events, persistent CPU surfaces, GPU texture presentation and software fallback. It does not yet implement Win32 APIs or run the Stars UI. The existing host and MinGW targets retain their normal configuration.
+The smoke target `stars-compat-smoke` is a native SDL executable with two independent desktop windows. It exercises SDL window events, persistent CPU surfaces, GPU texture presentation and software fallback. The shared game client now uses the same backend through the Win32 wrapper. SDL is the only desktop build; host-only presets omit SDL.
 
 ## Sanitizer configuration
 
@@ -64,7 +64,7 @@ alignment report at `LpflNew` (`util.c`). No sanitizer finding is suppressed.
 
 ## Dependencies
 
-The SDL presets first search for installed SDL3 3.4 or newer, including `$HOME/.local/opt/stars-sdl3`. If none is found, `STARS_SDL_FETCH=ON` downloads SDL 3.4.18 into the build tree and checks its SHA-256. The first configure requires network access; subsequent builds reuse it. Host and MinGW presets do not fetch SDL. Turn fetching off with `-DSTARS_SDL_FETCH=OFF` when using an installed package.
+The SDL presets first search for installed SDL3 3.4 or newer, including `$HOME/.local/opt/stars-sdl3`. If none is found, `STARS_SDL_FETCH=ON` downloads SDL 3.4.18 into the build tree and checks its SHA-256. The first configure requires network access; subsequent builds reuse it. Host-only presets do not fetch SDL; the legacy Windows MinGW aliases now build SDL. Turn fetching off with `-DSTARS_SDL_FETCH=OFF` when using an installed package.
 
 For Pop!_OS/Ubuntu 24.04, install the desktop build dependencies:
 
