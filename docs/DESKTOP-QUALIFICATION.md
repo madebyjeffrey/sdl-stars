@@ -1,5 +1,9 @@
 # Desktop and platform qualification
 
+For transferring the committed work and resuming on a Mac or Windows desktop,
+use [the desktop handoff guide](DESKTOP-HANDOFF.md): platform dependencies,
+CLion/build commands, acceptance order and a ready-to-use resume request.
+
 Native Wayland startup no longer fails when SDL rejects desktop positioning.
 Top-level placement belongs to the compositor. Child controls and native popups
 use owner-local coordinates; global physical desktop coordinates and arbitrary
