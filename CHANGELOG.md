@@ -13,6 +13,10 @@ produce different results from a 2.6j host for the same turn.
   PDF backend opens only completed output in the platform viewer; viewer
   rejection retains the PDF and reports its UTF-8 path. Actual Letter/tiled/A4
   map tests verify all planet marks and unchanged game state.
+- Offline help now exports one self-contained document with all 414 topics,
+  original diagrams, fonts, navigation and popups. Context selection survives
+  OpenFile portal export without relative assets or URL fragments. Real
+  headless Firefox acceptance walks the entire guide without a content server.
 
 - The SDL entry point now sets the `org.starsgame.Stars` application identity
   and product version before creating windows, matching its installed launcher

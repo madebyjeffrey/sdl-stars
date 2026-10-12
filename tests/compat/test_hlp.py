@@ -467,10 +467,21 @@ class HelpTests(unittest.TestCase):
             self.assertEqual(len(list((output / 'fonts').glob('*.ttf'))), 4)
             self.assertTrue((output / 'fonts/LICENSE').is_file())
             self.assertEqual((output / 'complete.stamp').read_text().strip(), manifest['sha256'])
+            bundle = json.loads(re.search(r'id="guide-data">(.*?)</script>', (output / 'offline.html').read_text(), re.S)[1])
+            self.assertEqual(len(bundle['pages']), 415)
+            self.assertEqual(bundle['css'].count('data:font/ttf;base64,'), 4)
+            for page, value in bundle['pages'].items():
+                parsed = GuideHTML('<main>' + value['body'] + '</main>')
+                self.assertEqual(parsed.text, GuideHTML((output / page).read_text()).text)
+                for link in parsed.links:
+                    self.assertTrue(link['href'].startswith('#'))
+                    self.assertIn(link['href'][1:], bundle['pages'])
+                for image in parsed.images:
+                    self.assertTrue(image['src'].startswith(('data:image/png;base64,', 'data:image/svg+xml;base64,')))
             for path in output.glob('*.html'):
                 parsed = GuideHTML(path.read_text())
                 for link in parsed.links:
-                    self.assertTrue((output / link['href']).is_file())
+                    self.assertTrue(path.name == 'offline.html' and link['href'].startswith('#') and link['href'][1:] in bundle['pages'] or (output / link['href']).is_file())
                 for image in parsed.images:
                     self.assertTrue((output / image['src']).is_file())
 

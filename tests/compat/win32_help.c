@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <SDL3/SDL.h>
 #include <limits.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,8 +50,11 @@ int main(int argc, char **argv) {
     unsigned cBefore;
     int ch;
     FILE *lpFile;
+    DIR *lpDirectory;
+    struct dirent *lpEntry;
 
     CHECK(argc == 3 && mkdtemp(szRoot));
+    CHECK(SDL_setenv_unsafe("XDG_DATA_HOME", szRoot, 1) == 0);
     snprintf(szFile, sizeof(szFile), "%s/bin", szRoot); CHECK(mkdir(szFile, 0700) == 0);
     snprintf(szBase, sizeof(szBase), "%s/bin/", szRoot);
     snprintf(szArchive, sizeof(szArchive), "%s/bin/stars!.hlp", szRoot);
@@ -64,10 +68,10 @@ int main(int argc, char **argv) {
         CHECK(FCopy(szSource, szFile));
     }
     CHECK(WinHelp(NULL, "stars!.hlp", HELP_INDEX, UINTPTR_MAX));
-    CHECK(strstr(szUri, "file:///tmp/stars%20help%20%23%C3%A9-") && strstr(szUri, "/help/topic-0.html"));
-    CHECK(WinHelp(NULL, "STARS!.HLP", HELP_CONTEXT, 4501) && strstr(szUri, "/topic-65789.html"));
-    CHECK(WinHelp(NULL, argv[2], HELP_CONTEXT, 1070) && strstr(szUri, "/topic-3965119.html"));
-    CHECK(WinHelp(NULL, "stars!.hlp", HELP_CONTEXT, 1017) && strstr(szUri, "/topic-3442954.html"));
+    CHECK(strstr(szUri, "file:///tmp/stars%20help%20%23%C3%A9-") && strstr(szUri, "topic-0.html"));
+    CHECK(WinHelp(NULL, "STARS!.HLP", HELP_CONTEXT, 4501) && strstr(szUri, "topic-65789.html"));
+    CHECK(WinHelp(NULL, argv[2], HELP_CONTEXT, 1070) && strstr(szUri, "topic-3965119.html"));
+    CHECK(WinHelp(NULL, "stars!.hlp", HELP_CONTEXT, 1017) && strstr(szUri, "topic-3442954.html"));
     for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
         CHECK(WinHelp(NULL, "stars!.hlp", HELP_CONTEXT, rgHelpContext[i].idh));
         CHECK(strstr(szUri, rgHelpContext[i].pszPage));
@@ -95,6 +99,12 @@ int main(int argc, char **argv) {
     CHECK(fputs("wrong guide\n", lpFile) >= 0 && fclose(lpFile) == 0);
     CHECK(!WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0) && GetLastError() == ERROR_BAD_FORMAT && cOpen == cBefore);
     snprintf(szSource, sizeof(szSource), "%s/complete.stamp", argv[1]); CHECK(FCopy(szSource, szFile));
+    snprintf(szFile, sizeof(szFile), "%s/help/offline.html", szRoot);
+    lpFile = fopen(szFile, "r+b"); CHECK(lpFile);
+    CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && (ch = fgetc(lpFile)) != EOF);
+    CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && fputc(ch ^ 0xff, lpFile) != EOF && fclose(lpFile) == 0);
+    CHECK(!WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0) && GetLastError() == ERROR_BAD_FORMAT && cOpen == cBefore);
+    snprintf(szSource, sizeof(szSource), "%s/offline.html", argv[1]); CHECK(FCopy(szSource, szFile));
     lpFile = fopen(szArchive, "r+b"); CHECK(lpFile);
     CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && (ch = fgetc(lpFile)) != EOF);
     CHECK(fseek(lpFile, 1000, SEEK_SET) == 0 && fputc(ch ^ 0xff, lpFile) != EOF && fclose(lpFile) == 0);
@@ -117,7 +127,7 @@ int main(int argc, char **argv) {
     snprintf(szOther, sizeof(szOther), "%s/share/stars/help", szRoot);
     CHECK(rename(szFile, szOther) == 0);
     CHECK(WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0));
-    CHECK(strstr(szUri, "/share/stars/help/topic-0.html"));
+    CHECK(strstr(szUri, "topic-0.html"));
     CHECK(!WinHelp(NULL, szArchive, HELP_INDEX, 0) && GetLastError() == ERROR_FILE_NOT_FOUND);
     CHECK(rename(szOther, szFile) == 0);
     snprintf(szFile, sizeof(szFile), "%s/share/stars/stars!.hlp", szRoot);
@@ -132,7 +142,17 @@ int main(int argc, char **argv) {
     snprintf(szFile, sizeof(szFile), "%s/help", szRoot); CHECK(rmdir(szFile) == 0);
     CHECK(unlink(szArchive) == 0);
     snprintf(szFile, sizeof(szFile), "%s/bin", szRoot); CHECK(rmdir(szFile) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/stars/help", szRoot);
+    lpDirectory = opendir(szFile); CHECK(lpDirectory);
+    while ((lpEntry = readdir(lpDirectory))) {
+        if (lpEntry->d_name[0] == '.') continue;
+        snprintf(szOther, sizeof(szOther), "%s/stars/help/%s", szRoot, lpEntry->d_name);
+        CHECK(unlink(szOther) == 0);
+    }
+    closedir(lpDirectory); CHECK(rmdir(szFile) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/stars", szRoot); CHECK(rmdir(szFile) == 0);
     CHECK(rmdir(szRoot) == 0);
+    SDL_Quit();
     puts("Original WinHelp contents, 413 contexts, package failures and encoded launch requests passed");
     return 0;
 }

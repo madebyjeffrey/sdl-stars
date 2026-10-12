@@ -1,5 +1,5 @@
 /* WinHelp's separate viewer is adapted to the packaged original HTML guide. */
-#include <windows.h>
+#include "internal.h"
 #include <SDL3/SDL.h>
 #include <errno.h>
 #include <limits.h>
@@ -8,6 +8,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <zlib.h>
 #include "help_contexts.h"
 
@@ -74,35 +75,67 @@ static BOOL FHelpAssets(const char *pszDirectory) {
     return fStamp;
 }
 
-static char *PszHelpUri(const char *pszPath) {
-    static const char rgchHex[] = "0123456789ABCDEF";
-    const unsigned char *lpch;
-    char *pszUri, *lpchOut;
-    unsigned char ch;
+static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
+    static const char szMarker[] = "__STARS_HELP_START__";
+    char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
+    char *pszBase, *pszBody = NULL, *pszMarker, *pszResult = NULL;
+    FILE *lpSource = NULL, *lpTarget = NULL;
+    size_t cbPrefix, cbRead;
+    int fd, cch;
+    BOOL fOk;
 
-    pszUri = malloc(strlen(pszPath) * 3 + 8);
-    if (!pszUri) return NULL;
-    memcpy(pszUri, "file://", 7);
-    lpchOut = pszUri + 7;
-    for (lpch = (const unsigned char *)pszPath; *lpch; lpch++) {
-        ch = *lpch;
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') || strchr("/-._~", ch)) {
-            *lpchOut++ = (char)ch;
-        } else {
-            *lpchOut++ = '%';
-            *lpchOut++ = rgchHex[ch >> 4];
-            *lpchOut++ = rgchHex[ch & 15];
-        }
+    cch = snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
+    if (cch < 0 || (size_t)cch >= sizeof(szSource)) goto fail;
+    lpSource = fopen(szSource, "rb");
+    pszBody = malloc((size_t)STARS_HELP_BUNDLE_SIZE + 1);
+    if (!lpSource || !pszBody) goto fail;
+    cbRead = fread(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
+    fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !ferror(lpSource) && fgetc(lpSource) == EOF;
+    fclose(lpSource); lpSource = NULL;
+    if (!fOk || (uint32_t)crc32(0, (const BYTE *)pszBody, (uInt)cbRead) != STARS_HELP_BUNDLE_CRC) {
+        SetLastError(ERROR_BAD_FORMAT); goto done;
     }
-    *lpchOut = 0;
-    return pszUri;
+    pszBody[cbRead] = 0;
+    pszMarker = strstr(pszBody, szMarker);
+    if (!pszMarker || strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
+        SetLastError(ERROR_BAD_FORMAT); goto done;
+    }
+    // Put the requested context inside the exported file: OpenFile portals
+    // receive a descriptor and cannot carry a browser URL fragment with it.
+    pszBase = SDL_GetPrefPath("stars", "help");
+    if (!pszBase) goto fail;
+    cch = snprintf(szTarget, sizeof(szTarget), "%sguide-%08x-%s", pszBase, STARS_HELP_BUNDLE_CRC, pszPage);
+    SDL_free(pszBase);
+    if (cch < 0 || (size_t)cch >= sizeof(szTarget)) goto fail;
+    cch = snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
+    if (cch < 0 || (size_t)cch >= sizeof(szTemp)) goto fail;
+    fd = mkstemp(szTemp);
+    if (fd < 0) goto fail;
+    lpTarget = fdopen(fd, "wb");
+    if (!lpTarget) { close(fd); unlink(szTemp); goto fail; }
+    cbPrefix = (size_t)(pszMarker - pszBody);
+    fOk = fwrite(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
+          fputs(pszPage, lpTarget) >= 0 &&
+          fwrite(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
+    if (fflush(lpTarget) || fsync(fileno(lpTarget))) fOk = FALSE;
+    if (fclose(lpTarget)) fOk = FALSE;
+    lpTarget = NULL;
+    if (!fOk || rename(szTemp, szTarget)) { unlink(szTemp); goto fail; }
+    pszResult = strdup(szTarget);
+    if (!pszResult) goto fail;
+    goto done;
+fail:
+    SetLastError(ERROR_ACCESS_DENIED);
+done:
+    if (lpSource) fclose(lpSource);
+    free(pszBody);
+    return pszResult;
 }
 
 BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = NULL;
     char szFile[PATH_MAX], szDirectory[PATH_MAX];
-    char *pszDirectory, *pszUri;
+    char *pszDirectory, *pszDocument;
     size_t i;
     int cch;
     BOOL fLaunched;
@@ -182,19 +215,11 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         free(pszDirectory);
         return FALSE;
     }
-    cch = snprintf(szFile, sizeof(szFile), "%s/%s", pszDirectory, pszPage);
+    pszDocument = PszHelpDocument(pszDirectory, pszPage);
     free(pszDirectory);
-    if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        return FALSE;
-    }
-    pszUri = PszHelpUri(szFile);
-    if (!pszUri) {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
-    }
-    fLaunched = SDL_OpenURL(pszUri);
-    free(pszUri);
+    if (!pszDocument) return FALSE;
+    fLaunched = FCompatOpenDocument(pszDocument);
+    free(pszDocument);
     SetLastError(fLaunched ? NO_ERROR : ERROR_GEN_FAILURE);
     return fLaunched;
 }

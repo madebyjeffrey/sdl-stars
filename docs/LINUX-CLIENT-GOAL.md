@@ -12,7 +12,9 @@ implementation batches are committed. The saved broader goal
 is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.
 Previously selected scope: milestones 1, 2, 3, 4, 7, 8 and 9.
-PDF printing/viewer integration and offline help verification are deferred.
+PDF printing/viewer integration and self-contained offline help are now
+implemented and qualified through relocated CMake installs and the installed
+Flatpak, using private portal exports and isolated headless Firefox.
 Native filename/password encoding is implemented and qualified by 108 fatal
 sanitizer cases, 55 Windows tests, 15 host tests, 11 Release checks and both
 519-checkpoint regressions; see [encoding contracts](UNICODE-BOUNDARIES.md).
@@ -32,8 +34,15 @@ one stale executable relinked and successfully rerun; Windows units pass 55/55
 and native regression remains 519 matches. CMake relocation and a clean local
 Flatpak install both launch an 800x600 title and close normally on private X11.
 See [polish](UI-POLISH.md) and [packaging commands and limits](LINUX-PACKAGING.md).
-Real desktop/GPU and macOS acceptance, tutorial expansion, PDF printing and
-offline browser acceptance remain deferred.
+Real desktop/GPU and macOS acceptance and tutorial expansion remain deferred.
+PDF printing and offline help now have document/browser acceptance tests.
+This document batch passes 124/124 non-tutorial fatal sanitizer cases, 55/55
+Windows units and all 519 native regression comparisons (87 existing warnings,
+zero differences/errors or skipped inputs). Later test-only fixture preparation
+and error-edge cases pass focused sanitizer reruns. MinGW and Linux host builds
+pass; the baseline and save layouts are unchanged. Both installed products
+generate a map PDF and hand its exact completed bytes to the private portal,
+and both exported guides pass all 414 topic/browser checks.
 
 | Order | Milestone | Status | Completion evidence needed |
 | --- | --- | --- | --- |
@@ -41,6 +50,8 @@ offline browser acceptance remain deferred.
 | 2 | Application-relevant control behavior | Complete for Stars' used styles | Shared SDK/native control contracts, application workflows, fatal sanitizers and regression checks pass; generic extensions outside the product scope remain documented |
 | 3 | Gameplay UI workflow testing | Critical product workflows automated and qualified | Designer component/hull/starbase, Save/MRU reload and Basic/Advanced creation join the existing gameplay matrix; real-desktop acceptance remains milestone 7 |
 | 4 | Native tutorial runner | In progress | Full tutorial driven in process through hierarchy and map inspection, without AutoHotkey; checkpoint/action evidence and failure artifacts |
+| 5 | PDF printing and viewer handoff | Implemented and qualified on Linux | Actual Letter/tiled/A4 map PDFs, all 128 fixture planets, quiet cancellation, generation failure and retained output on viewer rejection |
+| 6 | Offline help acceptance | Implemented and qualified on Linux | All 414 topics, 413 contexts, embedded fonts/images, diagrams/popups/index/Back; private OpenFile export with requested context preserved |
 | 7 | Wayland and desktop qualification | Native Wayland implementation and Debug tests added; qualification incomplete | Native Wayland positions/popups, focus/capture, scale/multi-monitor and GPU/software presentation; documented platform limits |
 | 8 | UI polish | Current product polish implemented and qualified | Message wheel navigation and scrollable planet/fleet sections pass dummy/private X11 checks, fatal sanitizers, Windows units and unchanged native regression; desktop feedback remains queued |
 | 9 | Flatpak and relocatable Linux packaging | Implemented; local clean install qualified | Versioned, hashed source export, pinned SDL/build dependencies, runtime assets/notices and metadata; relocated CMake and installed Flatpak both open and close normally outside the checkout |
@@ -102,12 +113,10 @@ or extended in this product batch. The title repair passes private X11 ownership
 checks but needs confirmation on the user's compositor; macOS remains untested
 on this Linux machine. These checks stay queued for later, as requested.
 
-Packaging prerequisite audit: `flatpak`, `appstreamcli` and
-`desktop-file-validate` are installed; `flatpak-builder` is absent. The local
-runtime list has Freedesktop Platform 26.08 and SDK 25.08, so the packaging
-verification needs a matching SDK/platform pair as well as the builder. Save
-`sudo apt install flatpak-builder` for when the packaging milestone needs it;
-no installation or desktop prompt was requested during the tutorial test run.
+The earlier packaging prerequisite audit recorded: `flatpak`, `appstreamcli` and
+`desktop-file-validate` were installed; `flatpak-builder` was absent. At that point the runtime list had Freedesktop Platform 26.08 and SDK 25.08.
+The builder and matching 26.08 SDK have since been installed and the packaging
+checks pass; see [packaging](LINUX-PACKAGING.md).
 
 Windows and Linux host builds, save layouts and game behavior must remain intact.
 UI suites run sequentially; desktop automation uses private displays. Coverage

@@ -1,5 +1,6 @@
 /* Manual check of the packaged guide through the real desktop URL launcher. */
 #include <windows.h>
+#include <SDL3/SDL.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -26,8 +27,10 @@ int main(int argc, char **argv) {
     }
     if (!WinHelpA(NULL, "stars!.hlp", uCommand, idh)) {
         fprintf(stderr, "Help launch failed: error %lu\n", (unsigned long)GetLastError());
+        SDL_Quit();
         return 1;
     }
+    SDL_Quit();
     puts("Desktop accepted the guide launch; verify the page in your browser.");
     return 0;
 }

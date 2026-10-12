@@ -12,7 +12,7 @@ add_custom_command(OUTPUT "${STARS_HELP_GENERATED}/complete.stamp" "${STARS_HELP
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${PROJECT_SOURCE_DIR}/res/stars!.hlp" "${CMAKE_BINARY_DIR}/bin/stars!.hlp"
     DEPENDS res/stars!.hlp compat/win32/hlp.py compat/win32/hlp_format.py
         compat/win32/hlp_font.py compat/win32/hlp_image.py compat/win32/hlp_render.py
-        compat/win32/help.css compat/win32/help.js res/fonts/LICENSE
+        compat/win32/help.css compat/win32/help.js compat/win32/help_bundle.js res/fonts/LICENSE
         res/fonts/LiberationSans-Regular.ttf res/fonts/LiberationSans-Bold.ttf
         res/fonts/LiberationSans-Italic.ttf res/fonts/LiberationSans-BoldItalic.ttf
     COMMENT "Generating the original Stars! help guide" VERBATIM)
@@ -35,7 +35,7 @@ add_dependencies(stars-compat-help-viewer stars-help-guide)
 set_target_properties(stars-compat-help-viewer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 if(STARS_BUILD_TESTS AND NOT APPLE)
     add_test(NAME win32_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}" "${PROJECT_SOURCE_DIR}/res/stars!.hlp")
-    set_tests_properties(win32_help PROPERTIES LABELS "compat" TIMEOUT 30)
+    set_tests_properties(win32_help PROPERTIES LABELS "compat" TIMEOUT 90)
     add_test(NAME win32_help_archive COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/test_hlp.py")
     set_tests_properties(win32_help_archive PROPERTIES LABELS "compat" TIMEOUT 30)
 endif()
@@ -774,6 +774,12 @@ if(STARS_BUILD_TESTS)
     add_test(NAME win32_print_map COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_print_map.py"
         "$<TARGET_FILE:stars-compat-printmap>" "${CMAKE_BINARY_DIR}/print-map-test")
     set_tests_properties(win32_print_map PROPERTIES LABELS "client;compat" TIMEOUT 150 RUN_SERIAL TRUE)
+    find_program(STARS_GECKODRIVER_EXECUTABLE geckodriver)
+    if(STARS_GECKODRIVER_EXECUTABLE)
+        add_test(NAME win32_help_browser COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_help_browser.py"
+            "${STARS_HELP_GENERATED}/offline.html" --geckodriver "${STARS_GECKODRIVER_EXECUTABLE}")
+        set_tests_properties(win32_help_browser PROPERTIES LABELS "compat" TIMEOUT 180 RUN_SERIAL TRUE)
+    endif()
 endif()
 add_executable(stars-compat-print tests/compat/win32_print.c)
 target_link_libraries(stars-compat-print PRIVATE stars_win32 SDL3::SDL3)

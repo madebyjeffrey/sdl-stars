@@ -85,10 +85,11 @@ It requires a mapped, usable title window and sends the normal window-close
 request, requiring successful process exit. It does not touch desktop windows. Discovery tolerates X11 BadWindow races
 when SDL or Openbox removes a startup window; other protocol errors remain
 failures, and process cleanup runs on diagnostic exits.
-Installed help-path tests verify complete assets and context selection without
-opening a browser. Full offline browser acceptance remains the deferred help
-milestone; Flatpak document-portal access to the guide's relative assets also
-needs desktop acceptance.
+Installed help-path tests verify complete assets and context selection. The
+self-contained help export also passes real headless Firefox acceptance with
+only one file available, and its context survives the private OpenFile portal.
+See [offline acceptance](OFFLINE-HELP-ACCEPTANCE.md) and
+[PDF printing](WIN32-PRINTING.md) for the completed document workflows.
 
 The private patched Mesa qualification prefix is separate from this package.
 Flatpak uses its runtime GPU drivers; those drivers do not inherit the local

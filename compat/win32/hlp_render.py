@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Build a self-contained, navigable HTML edition of the original Stars! guide."""
 import argparse
+import base64
 import html
 import json
+import re
 import shutil
 import zlib
 from pathlib import Path
@@ -175,7 +177,7 @@ class Renderer:
         contexts = sorted((identifier, offset) for offset, topic in self.topics.items()
                           for identifier in topic['contexts'])
         files = [page_name(offset) for offset in self.topics]
-        files += ['help.css', 'help.js', 'index.html', 'manifest.json', 'complete.stamp']
+        files += ['help.css', 'help.js', 'index.html', 'manifest.json', 'complete.stamp', 'offline.html']
         files += ['fonts/LiberationSans-' + name + '.ttf' for name in ('Regular', 'Bold', 'Italic', 'BoldItalic')]
         files += ['fonts/LICENSE']
         files += ['images/' + name[1:] + ('.png' if image['kind'] == 'bitmap' else '.svg')
@@ -189,6 +191,8 @@ class Renderer:
                   f'#define STARS_HELP_ARCHIVE_CRC UINT32_C(0x{zlib.crc32(self.archive.data):08x})\n'
                   f'#define STARS_HELP_SHA "{self.archive.metadata()["sha256"]}"\n'
                   f'#define STARS_HELP_CONTENTS "{page_name(self.contents)}"\n'
+                  f'#define STARS_HELP_BUNDLE_SIZE {len(self.bundle)}u\n'
+                  f'#define STARS_HELP_BUNDLE_CRC UINT32_C(0x{zlib.crc32(self.bundle):08x})\n'
                   'static const STARS_HELP_CONTEXT rgHelpContext[] = {\n' + rows + '\n};\n'
                   'static const char *const rgHelpFile[] = {\n' + assets + '\n};\n#endif\n')
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -217,12 +221,43 @@ class Renderer:
         body = ('<h1>Stars! Player’s Guide — Topic index</h1><label>Filter topics '
                 '<input id="topic-filter" type="search"></label><ul id="topics">' + rows + '</ul>')
         (directory / 'index.html').write_text(self.document('Stars! Player’s Guide — Topic index', body))
+        self.write_bundle(directory, css, body)
         manifest = {'sha256': self.archive.metadata()['sha256'], 'contents': page_name(self.contents),
                     'topics': {offset: {'title': topic['title'], 'page': page_name(offset)} for offset, topic in self.topics.items()},
                     'contexts': {identifier: page_name(offset) for offset, topic in self.topics.items() for identifier in topic['contexts']}}
         (directory / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
         (directory / 'complete.stamp').write_text(manifest['sha256'] + '\n')
         return manifest
+
+    def write_bundle(self, directory, css, index):
+        # A document portal exports one file, not the surrounding asset tree.
+        # Keep every topic, image and font inside that file, and navigate in
+        # memory so both ordinary links and definition popups remain offline.
+        def data_uri(name):
+            path = directory / name
+            mime = {'.ttf': 'font/ttf', '.png': 'image/png', '.svg': 'image/svg+xml'}[path.suffix]
+            return 'data:' + mime + ';base64,' + base64.b64encode(path.read_bytes()).decode('ascii')
+
+        css = re.sub(r'url\((fonts/[^)]+)\)', lambda match: 'url("' + data_uri(match[1]) + '")', css)
+        def portable(body):
+            body = re.sub(r'src="(images/[^" ]+)"', lambda match: 'src="' + data_uri(match[1]) + '"', body)
+            return re.sub(r'href="(topic-[0-9]+\.html|index\.html)"', r'href="#\1"', body)
+        pages = {page_name(offset): {'title': topic['title'], 'body': portable(self.topic(topic))}
+                 for offset, topic in self.topics.items()}
+        pages['index.html'] = {'title': 'Stars! Player’s Guide — Topic index', 'body': portable(index)}
+        payload = json.dumps({'pages': pages, 'contents': page_name(self.contents), 'css': css}).replace('<', '\\u003c')
+        source = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+                  '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                  '<meta name="stars-help-start" content="__STARS_HELP_START__">'
+                  '<title>Stars! Player’s Guide</title><style id="guide-style"></style></head><body>'
+                  f'<nav aria-label="Guide navigation"><a href="#{page_name(self.contents)}">Contents</a> '
+                  '<a href="#index.html">Topic index</a><button type="button" id="back">Back</button></nav>'
+                  '<main></main><dialog id="popup"><button type="button" id="close-popup">Close</button>'
+                  '<iframe title="Help definition"></iframe></dialog>'
+                  '<script type="application/json" id="guide-data">' + payload + '</script><script>' +
+                  (DIRECTORY / 'help_bundle.js').read_text() + '</script></body></html>')
+        self.bundle = source.encode('utf-8')
+        (directory / 'offline.html').write_bytes(self.bundle)
 
 
 if __name__ == '__main__':

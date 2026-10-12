@@ -223,7 +223,9 @@ Message wheel navigation and a scrollable planet/fleet viewport are implemented;
 see [UI polish](UI-POLISH.md) for qualification.
 The previously selected scope is milestones 1, 2, 3, 4, 7, 8 and 9. Track
 completion and evidence in [Linux client goal](LINUX-CLIENT-GOAL.md).
-PDF printing and offline help qualification are deferred outside this goal.
+PDF printing/viewer handoff and self-contained offline help acceptance are now
+implemented; see [printing](WIN32-PRINTING.md) and
+[help acceptance](OFFLINE-HELP-ACCEPTANCE.md).
 Flatpak and the relocatable CMake runtime layout are now built and locally
 qualified: both launch and close normally outside the checkout on private X11.
 See [packaging](LINUX-PACKAGING.md) for commands, permissions and remaining
@@ -238,12 +240,11 @@ desktop/help/GPU-driver qualification.
   scaling. Preserve Stars' wildcard filters and open/save filename contracts;
   cover actual game/race open and save flows with sequential headless tests and
   desktop checks. See [file dialogs](WIN32-FILE-DIALOGS.md).
-- **Print Map to PDF and open (deferred):** complete and validate the game-map PDF, then
-  open the successfully generated file in the platform's default PDF viewer.
-  The user prints from that viewer. Handle cancellation, generation errors and
-  viewer-launch failure while retaining a completed PDF for recovery. Direct
-  printer submission, printer discovery and an in-app printer settings dialog
-  are outside this planned user flow. See [printing](WIN32-PRINTING.md).
+- **Print Map to PDF and open (implemented):** checked document/page lifecycle,
+  atomic PDF output and platform viewer handoff, with retained output and a
+  visible recovery path on viewer rejection. Actual Letter/tiled/A4 game-map
+  tests and Poppler verification cover every planet. Physical printing is done
+  in the user's viewer. See [printing](WIN32-PRINTING.md).
 - **Control qualification:** owner-drawn lists now send focus actions, including
   the empty-list focus indicator used by Stars. Shared SDK checks cover nonempty
   focus and notification ordering; native checks cover empty painting and
