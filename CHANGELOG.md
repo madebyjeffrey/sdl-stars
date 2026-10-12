@@ -8,6 +8,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- `MessageWndProc` now supports wheel navigation between messages, accumulating
+  partial notches and preserving the current message when Ctrl/Shift is held or
+  a message is being composed. Long message edit controls retain text scrolling.
 - A pinned, private Mesa dependency patch fixes the runtime assembler's empty
   executable-heap leak on driver unload. A concurrent lifetime regression,
   SDL-only Wayland check and optional CMake test prefix qualify the fix without

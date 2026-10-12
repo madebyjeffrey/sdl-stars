@@ -10,7 +10,10 @@ import tempfile
 
 def main():
     executable = Path(sys.argv[1]).resolve()
-    fixture = Path(__file__).resolve().parents[1] / "scaffold/fixtures/regression/native/oneai1/checkpoints/000"
+    checkpoint = os.environ.get("STARS_CLIENT_CHECKPOINT", "000")
+    if len(checkpoint) != 3 or not checkpoint.isascii() or not checkpoint.isdigit():
+        raise ValueError("checkpoint must be three ASCII digits")
+    fixture = Path(__file__).resolve().parents[1] / "scaffold/fixtures/regression/native/oneai1/checkpoints" / checkpoint
     for absolute, stem in ((False, "game"), (True, "game"), (False, "café-Ω"), (True, "café-Ω")):
         with tempfile.TemporaryDirectory(prefix="stars-continue-") as directory:
             work = Path(directory)

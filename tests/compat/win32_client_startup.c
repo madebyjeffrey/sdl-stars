@@ -1050,6 +1050,7 @@ LDone:
 }
 
 #include "win32_designer_workflow.h"
+#include "win32_ui_polish.h"
 
 static BOOL FCheckGameplayWorkflows(void) {
     PROD rgprodSav[64];
@@ -1060,6 +1061,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     int16_t fNoResearchSav, fSinglePlrSav;
     const char *pszWorkflow = getenv("STARS_CLIENT_WORKFLOW");
     if (pszWorkflow) {
+        if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel();
         if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows() && FCheckSaveReloadWorkflow();
         return strcmp(pszWorkflow, "fleet") == 0 && FCheckFleetWorkflows();
     }

@@ -1,5 +1,7 @@
 #include "win.h"
 
+static int16_t dWheelMessages;
+
 LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     int16_t     i;
@@ -32,6 +34,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     switch (message) {
     case WM_CREATE:
+        dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             hwndMessage = hwnd;
             rghwndMsgBtn[i] = CreateWindow("BUTTON", PszGetCompressedString(idsPrev2 + i), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
@@ -236,6 +239,12 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         SetBkColor(hdc, crBack);
         EndPaint(hwnd, &ps);
         break;
+    case WM_MOUSEWHEEL:
+        if (gd.fSendMsgMode || (LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) return 0;
+        i = CWheelNotches(&dWheelMessages, (int16_t)HIWORD(wParam));
+        while (i > 0) { SendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
+        while (i < 0) { SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
+        return 0;
     case WM_KEYDOWN:
         if (wParam == VK_DOWN)
             goto NextMsg;
