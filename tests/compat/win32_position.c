@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -78,7 +78,7 @@ static int TestRect(HWND hwnd, HWND hwndParent, int x, int y, int dx, int dy) {
     return 0;
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static COLORREF CrComposite(HWND hwnd, int x, int y) {
     BYTE *rgb = (BYTE *)hwnd->lpComposite->pixels + (size_t)y * hwnd->lpComposite->pitch + (size_t)x * 4;
     return RGB(rgb[0], rgb[1], rgb[2]);
@@ -128,7 +128,7 @@ int main(void) {
     int cChanging, cChanged, cMove, cSize, cShow;
     RECT rc;
     BOOL fWineOwnedMismatch = FALSE;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
@@ -206,7 +206,7 @@ int main(void) {
     CHECK(hwndFailure); failure.fDestroyChanged = TRUE;
     SetWindowPos(hwndFailure, NULL, 2, 2, 20, 20, flagsQuiet);
     CHECK(!IsWindow(hwndFailure));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestRedraw(hwnd, hwndA, hwndB, hwndC) == 0);
 #endif
     hwndOther = CreateWindow(wc.lpszClassName, "other root", WS_POPUP, 0, 0, 50, 50, NULL, NULL, hInstance, &other);
@@ -223,7 +223,7 @@ int main(void) {
     hwndOwned = CreateWindow(wc.lpszClassName, "owned root", WS_POPUP, 0, 0, 40, 40, hwnd, NULL, hInstance, &owned);
     CHECK(hwndOther && hwndOwned);
     CHECK(SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flagsZ));
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     if (!(GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)) {
         CHECK(GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_version"));
         CHECK(GetWindowLongPtr(hwndOwned, GWL_EXSTYLE) & WS_EX_TOPMOST);
@@ -241,7 +241,7 @@ int main(void) {
     CHECK(GetWindow(hwnd, GW_HWNDPREV) == hwndOwned);
     CHECK(SetWindowPos(hwndOther, NULL, 90, 100, 70, 80, flagsQuiet));
     CHECK(TestRect(hwndOther, NULL, 90, 100, 70, 80) == 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         SDL_Event event = {0};
         MSG msg;
@@ -280,7 +280,7 @@ int main(void) {
     CHECK(GetWindowRect(hwndMinmax, &rc) && rc.right - rc.left == 240 && rc.bottom - rc.top == 250);
     CHECK(DestroyWindow(hwndMinmax));
     CHECK(DestroyWindow(hwndOther) && DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 positioning contracts passed");

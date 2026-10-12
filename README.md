@@ -32,6 +32,9 @@ The original 2.6jrc3 stars.exe included ~1MB of debug symbols with function name
 
 ## Build
 
+The SDL3 client on `win32_adapter` also builds natively on Windows x64 using
+MSYS2 UCRT64. See [Windows SDL3 build and packaging](docs/WINDOWS-SDL3.md).
+
 The game (`stars.exe`) uses Windows APIs. On macOS or Linux, build it as a
 Windows executable with CMake 3.23 or later, Ninja, Python 3 with PyYAML, and
 the x86_64 MinGW-w64 toolchain on PATH. The host alone (`stars-host`, below)

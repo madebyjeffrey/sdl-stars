@@ -1,7 +1,7 @@
 /* The same ownership and pixel contracts run against the SDK and local GDI. */
 #include <windows.h>
 #include <stdio.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -26,7 +26,7 @@ int main(void) {
     CHECK(SelectClipRgn(hdc, hrgn) == SIMPLEREGION);
     CHECK(SelectClipRgn(hcopy, hrgn) == SIMPLEREGION && DeleteObject(hrgn));
     CHECK(ExcludeClipRect(hdc, 8, 8, 24, 24) == COMPLEXREGION);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     // Wine reads memory-bitmap pixels outside the application clip; the native
     // implementation follows Microsoft's documented GetPixel clip rejection.
     CHECK(GetPixel(hdc, 12, 12) == CLR_INVALID);
@@ -71,7 +71,7 @@ int main(void) {
     CHECK(SelectObject(hdc, hbmOld) == hbm && SelectObject(hcopy, hcopyOld) == hcopybm);
     CHECK(DeleteObject(hbm) && DeleteObject(hcopybm) && DeleteObject(hred) && DeleteObject(hblue));
     CHECK(DeleteDC(hdc) && DeleteDC(hcopy) && ReleaseDC(NULL, hscreen));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 region contracts passed");

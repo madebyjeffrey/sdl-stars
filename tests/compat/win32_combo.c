@@ -4,7 +4,7 @@
 #include <string.h>
 #include "../../res/resource.h"
 #include "ui_manifest.h"
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -36,7 +36,7 @@ static LRESULT CALLBACK ComboOwner(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return DefWindowProc(hwnd, msg, w, l);
 }
 static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); } }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static BOOL FComboButtonPainted(HWND hwnd, BOOL fDown) {
     RECT rc;
     HDC hdc;
@@ -73,7 +73,7 @@ int main(void) {
     int i, cBefore, cDialogs = 0;
     BYTE rgKeys[256] = {0};
     MSG msg = {0};
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     RECT rcField;
     SDL_Event event = {0};
     Uint64 msPopup;
@@ -90,7 +90,7 @@ int main(void) {
     CHECK(hcb && hother && hedit && howner); Drain();
     CHECK(GetClientRect(hcb, &rc) && rc.right == 150);
     CHECK(GetClientRect(hedit, &rc) && rc.right == 150);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!hcb->rghwndScroll[SB_VERT] && !hedit->rghwndScroll[SB_VERT]);
     CHECK(FComboButtonPainted(hedit, FALSE));
 #endif
@@ -151,7 +151,7 @@ int main(void) {
     CHECK(IsDialogMessage(hdlg, &msg) && GetFocus() == GetDlgItem(hdlg, IDC_HELP));
     rgKeys[VK_SHIFT] = 0; CHECK(SetKeyboardState(rgKeys)); CHECK(DestroyWindow(hdlg));
     Drain();
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     // Real SDL events arriving on the popup route through capture to the combo.
     CHECK(FComboButtonPainted(hcb, FALSE));
     SetFocus(hcb); SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
@@ -220,7 +220,7 @@ int main(void) {
     fDestroyDrop = TRUE; SendMessage(hother, CB_SHOWDROPDOWN, TRUE, 0); fDestroyDrop = FALSE;
     CHECK(!IsWindow(hother));
     CHECK(DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Combo data, interaction and all 34 dialog templates passed"); return 0;

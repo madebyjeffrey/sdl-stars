@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 static BOOL fMock;
@@ -69,7 +69,7 @@ static void Drain(void) {
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
 }
 static int QueueShift(HWND hwnd) {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     INPUT rg[2] = {{0}};
     rg[0].type = INPUT_KEYBOARD; rg[0].ki.wVk = VK_LSHIFT;
     rg[1] = rg[0]; rg[1].ki.dwFlags = KEYEVENTF_KEYUP;
@@ -88,7 +88,7 @@ static int WaitKey(HWND hwnd, MSG *lpmsg, UINT flags) {
     DWORD ms = GetTickCount();
     do {
         if (PeekMessage(lpmsg, hwnd, WM_KEYDOWN, WM_KEYUP, flags)) return 0;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
         Sleep(5);
 #else
         SDL_Delay(5);
@@ -97,7 +97,7 @@ static int WaitKey(HWND hwnd, MSG *lpmsg, UINT flags) {
     CHECK(FALSE);
     return 1;
 }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestWheelClicks(HWND hwnd, HINSTANCE hInstance) {
     SDL_Event event = {0};
     HWND hwndChild;
@@ -282,7 +282,7 @@ int main(void) {
     int i;
     static const UINT rgControl[] = {VK_BACK, VK_TAB, VK_RETURN, VK_ESCAPE};
     static const UINT rgScan[] = {0x0e, 0x0f, 0x1c, 0x01};
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
@@ -292,7 +292,7 @@ int main(void) {
     hwnd = CreateWindow(wc.lpszClassName, "input", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     CHECK(SetForegroundWindow(hwnd));
 #endif
     CHECK(TestPoints(hwnd, hInstance) == 0);
@@ -316,7 +316,7 @@ int main(void) {
         CHECK(TranslateMessage(&msg));
         CHECK(PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.wParam == rgControl[i]);
     }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     CHECK(SetCursorPos(120, 130) && GetCursorPos(&pt) && pt.x == 120 && pt.y == 130);
 #else
     (void)pt;
@@ -328,7 +328,7 @@ int main(void) {
     CHECK(TestSnapshots(hwnd) == 0 && TestPhysical() == 0 && TestWheelClicks(hwnd, hInstance) == 0);
 #endif
     CHECK(DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
     CHECK(GetKeyState('A') == 0 && GetAsyncKeyState('A') == 0);
 #endif

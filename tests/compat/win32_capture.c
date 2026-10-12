@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -24,7 +24,7 @@ static void Drain(void) {
     MSG msg;
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
 }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestRouting(HWND hwnd, HWND hwndChild, HWND hwndOther) {
     SDL_Event event = {0};
     MSG msg;
@@ -88,7 +88,7 @@ int main(void) {
     HWND hwnd, hwndChild, hwndOther;
     HINSTANCE hInstance;
     int c;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
@@ -116,7 +116,7 @@ int main(void) {
     CHECK(SetCapture(hwndChild) == NULL);
     SendMessage(hwndChild, WM_CANCELMODE, 0, 0);
     CHECK(!GetCapture() && hwndLost == hwndChild);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestRouting(hwnd, hwndChild, hwndOther) == 0);
 #endif
     CHECK(SetCapture(hwndChild) == NULL);
@@ -124,7 +124,7 @@ int main(void) {
     CHECK(SetCapture(hwndOther) == hwndChild && !IsWindow(hwndOther) && !GetCapture());
     CHECK(SetCapture(hwndChild) == NULL);
     CHECK(DestroyWindow(hwnd) && !GetCapture());
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 capture contracts passed");

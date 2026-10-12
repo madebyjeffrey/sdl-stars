@@ -1,6 +1,6 @@
 /* Shared Win32/Linux memory DC and bitmap contracts. */
 #include <windows.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #include <limits.h>
@@ -49,7 +49,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(DeleteObject(hbmColor));
     CHECK(!SelectObject(hother, hbmSrc));
     // Deleting selected bitmaps has driver-dependent/deferred semantics on Windows.
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!DeleteObject(hbmSrc) && !DeleteDC(hdc) && !ReleaseDC(hwnd, hsrc));
 #endif
     hbr = CreateSolidBrush(RGB(15, 35, 55));
@@ -116,7 +116,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(EndPaint(hwnd, &ps));
     CHECK(GetPixel(hdc, 4, 4) == 0 && GetPixel(hdc, 7, 7) == 0);
     CHECK(GetPixel(hdc, 3, 3) == RGB(255, 255, 255) && GetPixel(hdc, 8, 8) == RGB(255, 255, 255));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!BitBlt(hdst, 0, 0, 4, 4, NULL, 0, 0, SRCCOPY));
     CHECK(BitBlt(hdst, INT_MIN, INT_MIN, INT_MAX, INT_MAX, hsrc, 0, 0, SRCCOPY));
     CHECK(BitBlt(hdst, 0, 0, INT_MAX, INT_MAX, hsrc, 0, 0, SRCCOPY));
@@ -127,7 +127,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(DeleteDC(hsrc) && DeleteDC(hmono) && DeleteDC(hother));
     // DeleteDC releases the selected bitmap reference, without deleting the bitmap.
     CHECK(DeleteDC(hdst) && DeleteObject(hbmDst));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!DeleteDC(hdst) && GetPixel(hdst, 0, 0) == CLR_INVALID && !SelectObject(hdst, hbmDst));
 #endif
     CHECK(ReleaseDC(hwnd, hdc));
@@ -150,7 +150,7 @@ int main(void) {
                         20, 20, 200, 160, NULL, NULL, NULL, NULL);
     CHECK(hwnd && UpdateWindow(hwnd));
     result = TestBitmaps(hwnd);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     if (result == 0)

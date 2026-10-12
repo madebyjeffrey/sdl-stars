@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #include "fixtures/ellipse_sdk.h"
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
                 if (dw != rgEllipseSDK[j].dw) fprintf(stderr, "ellipse mode %d, %dx%d: %08x != %08x\n", i, cx, cy, dw, rgEllipseSDK[j].dw);
                 CHECK(dw == rgEllipseSDK[j].dw);
             }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
             // Wine's narrow-fill artifacts may extend beyond the bounding box.
             // They are deliberately not the native rasterization contract.
             for (y = 0; y < 40; y++) for (x = 0; x < 40; x++)
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 #endif
         }
     }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(SelectObject(hdc, hbrush));
     CHECK(!Ellipse(hdc, INT_MIN, INT_MIN, INT_MAX, INT_MAX));
     CHECK(Ellipse(hdc, -524288, -524288, 524288, 524288));
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     CHECK(SelectObject(hdc, hpenOld) && SelectObject(hdc, hbrushOld));
     CHECK(DeleteObject(hpen) && DeleteObject(hbrush));
     CHECK(SelectObject(hdc, hbmOld) && DeleteObject(hbm) && DeleteDC(hdc) && ReleaseDC(NULL, hs));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     if (!fDump) puts("Win32 geometry contracts passed");

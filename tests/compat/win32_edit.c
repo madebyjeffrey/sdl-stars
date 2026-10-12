@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -297,7 +297,7 @@ int main(void) {
                             210, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)102, NULL, NULL);
     CHECK(hwndEdit && hwndMulti && hwndRead);
     CHECK(TestEditing(hwndEdit, hwndMulti) == 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(SetWindowText(hwndEdit, ""));
     SendMessage(hwndEdit, WM_CHAR, 'a', 1); SendMessage(hwndEdit, WM_CHAR, 'b', 1); SendMessage(hwndEdit, WM_CHAR, 'c', 1);
     CHECK(SendMessage(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, ""));
@@ -369,7 +369,7 @@ int main(void) {
     CHECK(SendMessage(hwndEdit, EM_GETSEL, 0, 0) == MAKELONG(2, 2));
     SetFocus(hwndEdit); CHECK(UpdateWindow(hwndEdit) && UpdateWindow(hwndMulti) && UpdateWindow(hwndRead));
     CHECK(cChange != 0 && cUpdate != 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         SDL_Event event = {0};
         MSG msg;
@@ -391,7 +391,7 @@ int main(void) {
     SetWindowText(hwndKill, "destroy during update");
     CHECK(!IsWindow(hwndKill));
     CHECK(DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 edit controls passed");

@@ -8,6 +8,13 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Native Windows x64 SDL3 builds now use the same Win32 source wrapper as the
+  Linux/macOS client. UCRT64 Debug/Release presets and a PowerShell packaging
+  script produce a portable runtime without WSL or MSYS2 on the user's PC.
+  Wrapper symbols are isolated from SDK imports; Windows paths/settings use
+  UTF-8 at the boundary. Game rules, disk layouts and regression baselines
+  remain unchanged. See `docs/WINDOWS-SDL3.md` for scope and qualification.
+
 - The native SDL tutorial runner now drives Mini-Miner design and component
   drags, automatic terraforming templates, planet Value sorting, merge orders
   and further transport/production/research tasks through year 2418/page 50.

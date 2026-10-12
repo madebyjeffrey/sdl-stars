@@ -115,7 +115,7 @@ int16_t CWheelLines(int16_t cPage) {
     return (int16_t)cLines;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
 static DWORD dwNativeFileDialogError;
 
 static WCHAR *LpwszDialogText(const char *psz, UINT cp, int cch) {
@@ -225,14 +225,14 @@ BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return FReportNativeFileDialog(l
 DWORD DwNativeFileDialogError(void) { return dwNativeFileDialogError; }
 #endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return GetOpenFileNameA(lpof); }
 BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
 DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
 #endif
 
 int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     WCHAR *pwsz;
     BOOL fDefault = FALSE;
     int cch, cb;
@@ -256,7 +256,7 @@ int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {
 }
 
 BOOL FSetLegacyWindowText(HWND hwnd, const char *psz) {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     WCHAR *pwsz = LpwszDialogText(psz, 1252, -1);
     BOOL fResult;
     if (!pwsz) return FALSE;
@@ -267,7 +267,7 @@ BOOL FSetLegacyWindowText(HWND hwnd, const char *psz) {
 }
 
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     WCHAR *pwsz = LpwszDialogText(psz, CP_UTF8, -1);
     BOOL fResult;
     if (!pwsz) return FALSE;

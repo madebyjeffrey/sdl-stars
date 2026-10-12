@@ -132,6 +132,7 @@ static SDL_WindowID IdWindowWithTitle(const char *pszTitle) {
 static int PushDelayedKey(void *lpId) {
     SDL_Event event = {0};
 
+    SDL_zero(event);
     SDL_Delay(20);
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.windowID = *(SDL_WindowID *)lpId;

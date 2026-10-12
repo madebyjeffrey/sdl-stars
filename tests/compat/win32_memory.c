@@ -1,6 +1,6 @@
 /* Heap handle contracts shared with the actual Windows SDK. */
 #include <windows.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #include <stdio.h>
@@ -56,7 +56,7 @@ int main(void) {
     CHECK(hLocal && rgb && LocalHandle(rgb) == hLocal && rgb[11] == 0);
     CHECK(!LocalUnlock(hLocal) && !LocalFree(hLocal));
     CHECK(!GlobalFree(NULL) && !LocalFree(NULL));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!GlobalLock(h) && GetLastError() == ERROR_INVALID_HANDLE);
     CHECK(GlobalFree(h) == h && GlobalFlags(h) == GMEM_INVALID_HANDLE);
     CHECK(!GlobalAlloc(0x80000000u, 12) && GetLastError() == ERROR_INVALID_PARAMETER);

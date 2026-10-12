@@ -1,5 +1,6 @@
 /* Narrow strings and arithmetic for UI callers; core native.c stays authoritative. */
 #include <windows.h>
+#include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
 #include <ctype.h>
@@ -13,7 +14,7 @@
 #include <sys/stat.h>
 #ifdef __APPLE__
 #include <pthread.h>
-#else
+#elif !defined(_WIN32)
 #include <sys/syscall.h>
 #endif
 #include <time.h>
@@ -36,7 +37,9 @@ int WINAPI MulDiv(int nNumber, int nNumerator, int nDenominator) {
 }
 
 DWORD WINAPI GetCurrentThreadId(void) {
-#ifdef __APPLE__
+#ifdef _WIN32
+    return (DWORD)SDL_GetCurrentThreadID();
+#elif defined(__APPLE__)
     uint64_t id;
     return pthread_threadid_np(NULL, &id) == 0 ? (DWORD)id : 0;
 #else
@@ -100,6 +103,7 @@ LInvalid:
     return 0;
 }
 
+#ifndef _WIN32
 int _access(const char *pszPath, int mdAccess) { return access(pszPath, mdAccess); }
 int _mkdir(const char *pszPath) { return mkdir(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
@@ -144,3 +148,4 @@ char *itoa(int n, char *sz, int radix) {
     sz[i] = 0;
     return sz;
 }
+#endif

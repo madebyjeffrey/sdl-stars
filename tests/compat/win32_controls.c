@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -37,7 +37,7 @@ static HWND Button(HWND hwnd, HINSTANCE hInstance, int id, DWORD style, int y) {
     return CreateWindow("Button", "&Button", WS_CHILD | WS_VISIBLE | style,
                         20, y, 150, 24, hwnd, (HMENU)(INT_PTR)id, hInstance, NULL);
 }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic) {
     HDC hdc;
     BYTE *rgb;
@@ -79,7 +79,7 @@ int main(void) {
     HFONT hfont;
     POINT pt = {2, 2};
     int c, i;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
@@ -91,7 +91,7 @@ int main(void) {
     hwnd = CreateWindow(wc.lpszClassName, "controls", WS_POPUP | WS_VISIBLE, 40, 50, 400, 360,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     CHECK(SetForegroundWindow(hwnd));
 #endif
     hwndPush = Button(hwnd, hInstance, 100, BS_DEFPUSHBUTTON | WS_TABSTOP, 10);
@@ -161,7 +161,7 @@ int main(void) {
     CHECK(cClick == c + 1 && idClick == 100);
     CHECK(ClientToScreen(hwndStatic, &pt));
     CHECK(WindowFromPoint(pt) == hwnd);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestPaint(hwnd, hwndCheck, hwndRadio1, hwndStatic) == 0);
     CHECK(!CreateWindow("Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
 #endif
@@ -176,7 +176,7 @@ int main(void) {
     SendMessage(hwndKill, BM_CLICK, 0, 0);
     CHECK(!IsWindow(hwnd));
     CHECK(DeleteObject(hbrColor));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     CHECK((GetSysColor(COLOR_WINDOW) & 0xff000000) == 0);

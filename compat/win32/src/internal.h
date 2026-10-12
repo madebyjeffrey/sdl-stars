@@ -3,6 +3,7 @@
 #include <windows.h>
 #include "encoding.h"
 #include <SDL3/SDL.h>
+#include "platform.h"
 typedef struct COMPATPRINT COMPATPRINT;
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);

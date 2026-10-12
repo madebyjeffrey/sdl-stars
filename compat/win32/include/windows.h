@@ -1,8 +1,13 @@
 #ifndef STARS_WINCOMPAT_WINDOWS_H
 #define STARS_WINCOMPAT_WINDOWS_H
 
-#if defined(_WIN32) || defined(UNICODE) || defined(_UNICODE)
-#error The Stars compatibility headers are for native Linux narrow-character UI builds only
+#if defined(UNICODE) || defined(_UNICODE)
+#error The Stars compatibility headers require narrow-character UI builds
+#endif
+
+#ifdef _WIN32
+// Wrapper handles must never be passed to Windows itself or to SDL's Win32 backend.
+#include "wincompat_namespace.h"
 #endif
 
 #include <stddef.h>

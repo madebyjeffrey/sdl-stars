@@ -19,8 +19,8 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop compatibility targets" OFF)
-if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
-    message(FATAL_ERROR "The SDL compatibility targets require native Linux or macOS")
+if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin|Windows)$")
+    message(FATAL_ERROR "The SDL compatibility targets require Linux, macOS or Windows")
 endif()
 
 option(STARS_ENABLE_SANITIZERS "Instrument native Linux code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
@@ -226,6 +226,14 @@ if(NOT WIN32)
     endif()
     # The rest builds the Windows game and its tests.
     return()
+endif()
+
+if(STARS_BUILD_SDL_CLIENT)
+    option(STARS_BUILD_TESTS "Build the unit tests in tests/unit" ON)
+    if(STARS_BUILD_TESTS)
+        enable_testing()
+    endif()
+    include(cmake/sdl-client.cmake)
 endif()
 
 add_library(stars_ui OBJECT ${STARS_UI_SOURCES} "${STARS_GENERATED_DIR}/text_tutorial.c")

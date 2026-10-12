@@ -1,4 +1,7 @@
-# Linux Win32 source compatibility headers
+# SDL Win32 source compatibility headers
+
+The same wrapper now builds on Linux, macOS and Windows x64. Native Windows
+setup and portable packaging are documented in [Windows SDL3](../../docs/WINDOWS-SDL3.md).
 
 Milestone 2 supplies declarations for the Win32 UI surface recorded in
 `docs/WIN32-APIS.md`. The subsequent Free API adaptation adds the local C11
@@ -21,14 +24,15 @@ names; numeric values and unknown bits remain available.
 
 `stars_win32_headers` is an interface target. Only native SDL compatibility
 consumers inherit its include directory and `STARS_UI_SDL` definition.
-Windows builds continue to use the actual SDK; the Linux host never includes
-these headers. Do not add this directory to global include paths or define
+SDK-backed Windows targets continue to use the actual SDK; Windows SDL targets
+use these headers with generated `StarsCompat_` symbol aliases. The host never
+includes these headers. Do not add this directory to global include paths or define
 `_WIN32` for a native build.
 
 The initial supported ABI is 64-bit, narrow-character C, with Win32 LLP64
 widths: `LONG`, `DWORD` and `BOOL` are 32 bits; handles and message parameters
 are pointer-sized. Structures use SDK packing, including packed bitmap file
-headers. Callback functions use the native Linux calling convention. This is
+headers. Callback functions use the C calling convention on every platform. This is
 source compatibility, not the binary ABI needed to load Windows DLLs. Unicode
 and 32-bit native builds are not validated.
 

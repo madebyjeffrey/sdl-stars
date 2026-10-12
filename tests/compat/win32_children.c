@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -63,7 +63,7 @@ static int FillWindow(HWND hwnd, COLORREF cr) {
     return 0;
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static COLORREF CrComposite(HWND hwnd, int x, int y) {
     BYTE *rgb = (BYTE *)hwnd->lpComposite->pixels + (size_t)y * hwnd->lpComposite->pitch + (size_t)x * 4;
     return RGB(rgb[0], rgb[1], rgb[2]);
@@ -135,7 +135,7 @@ int main(void) {
     int cFocus, cBlur, cEnable;
     DWORD msStart;
     BOOL fTimer;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
@@ -188,7 +188,7 @@ int main(void) {
     CHECK(GetFocus() == hwndNested && nested.cFocus == cFocus + 1);
     CHECK(!EnableWindow(hwndChild, FALSE) && !IsWindowEnabled(hwndChild));
     CHECK(IsWindowEnabled(hwndNested));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     /* Microsoft documents descendant focus loss; Wine 9 retains it in this case. */
     CHECK(GetFocus() == NULL && nested.cBlur == cBlur + 1);
     CHECK(SetFocus(hwndNested) == NULL);
@@ -208,7 +208,7 @@ int main(void) {
     CHECK(PeekMessage(&msg, hwnd, msgChild, msgChild, PM_REMOVE) && msg.hwnd == hwndNested && msg.wParam == 47);
     CHECK(SetTimer(hwndNested, 18, 10, NULL));
     /* Wine 9 excludes descendant timers from an ancestor filter, even after generation. */
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     hwndTimerFilter = hwndNested;
 #else
     hwndTimerFilter = hwnd;
@@ -217,7 +217,7 @@ int main(void) {
     do {
         fTimer = PeekMessage(&msg, hwndTimerFilter, WM_TIMER, WM_TIMER, PM_REMOVE);
         if (fTimer) break;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
         Sleep(10);
 #else
         SDL_Delay(10);
@@ -235,7 +235,7 @@ int main(void) {
     /* Windows also sends initial WM_MOVE during creation; allow either path. */
     if (hwndReentrant) MoveWindow(hwndReentrant, 2, 2, 15, 15, TRUE);
     CHECK(reentrant.cDestroy == 1 && reentrant.cNcDestroy == 1);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestComposition(hwnd, hwndChild, hwndNested, hwndSibling) == 0);
 #else
     CHECK(FillWindow(hwndChild, RGB(10, 20, 30)) == 0);
@@ -251,7 +251,7 @@ int main(void) {
     CHECK(nested.iNcDestroy < child.iNcDestroy && child.iNcDestroy < parent.iNcDestroy);
     CHECK(!PostMessage(hwndNested, msgChild, 1, 0));
     CHECK(!ClientToScreen(hwndNested, &pt) && !GetWindowRect(hwndChild, &rc));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 child-window contracts passed");

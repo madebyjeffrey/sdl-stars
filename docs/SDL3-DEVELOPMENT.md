@@ -1,5 +1,8 @@
 # SDL3 compatibility development
 
+For native Windows x64 builds and portable runtime packaging, see
+[Windows SDL3](WINDOWS-SDL3.md). WSL is not required.
+
 The native `stars-sdl` client now links the shared game and UI. Select
 **stars-sdl** in CLion under `sdl-debug`, or run
 `./dist/sdl-debug/bin/stars-sdl`. See [client status and testing](WIN32-CLIENT.md).

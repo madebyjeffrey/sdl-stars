@@ -11,13 +11,24 @@ char *PszCompatFileUri(const char *pszPath) {
 
     pszAbsolute = realpath(pszPath, NULL);
     if (!pszAbsolute) return NULL;
-    pszUri = malloc(strlen(pszAbsolute) * 3 + 8);
+    pszUri = malloc(strlen(pszAbsolute) * 3 + 9);
     if (!pszUri) { free(pszAbsolute); return NULL; }
     memcpy(pszUri, "file://", 7); lpchOut = pszUri + 7;
-    for (lpch = (const unsigned char *)pszAbsolute; *lpch; lpch++) {
+#ifdef _WIN32
+    if (pszAbsolute[1] == ':') *lpchOut++ = '/';
+#endif
+    lpch = (const unsigned char *)pszAbsolute;
+#ifdef _WIN32
+    if (lpch[0] == '/' && lpch[1] == '/') lpch += 2;
+#endif
+    for (; *lpch; lpch++) {
         ch = *lpch;
         if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') || strchr("/-._~", ch)) *lpchOut++ = (char)ch;
+            (ch >= '0' && ch <= '9') || strchr("/-._~", ch)
+#ifdef _WIN32
+            || (ch == ':' && lpch == (const unsigned char *)pszAbsolute + 1)
+#endif
+        ) *lpchOut++ = (char)ch;
         else { *lpchOut++ = '%'; *lpchOut++ = rgchHex[ch >> 4]; *lpchOut++ = rgchHex[ch & 15]; }
     }
     *lpchOut = 0; free(pszAbsolute);

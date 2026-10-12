@@ -1,4 +1,4 @@
-/* Legacy HFILE adapters use owned POSIX descriptors, never arbitrary integer fds. */
+/* Legacy HFILE adapters use owned CRT/POSIX descriptors, never arbitrary integer fds. */
 #include "internal.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -14,8 +14,7 @@ typedef struct COMPATFILE {
     HFILE hf;
     int fd;
     UINT grAccess, grShare;
-    dev_t dev;
-    ino_t ino;
+    uint64_t dev, ino;
     struct COMPATFILE *lpNext;
 } COMPATFILE;
 
@@ -54,6 +53,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     int fd = -1, md;
     HFILE hf = HFILE_ERROR;
     DWORD dwError = NO_ERROR;
+    uint64_t dev, ino;
 
     if (!lpof) { SetLastError(ERROR_INVALID_PARAMETER); return HFILE_ERROR; }
     if (flags & OF_REOPEN) pszFile = lpof->szPathName;
@@ -65,7 +65,11 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (flags & ~(3u | 0x70u | OF_PARSE | OF_DELETE | OF_CREATE | OF_EXIST | OF_REOPEN | OF_CANCEL)) {
         dwError = ERROR_NOT_SUPPORTED; goto LReturn;
     }
-    if (*pszFile == '/') {
+    if (*pszFile == '/'
+#ifdef _WIN32
+        || *pszFile == '\\' || (pszFile[0] && pszFile[1] == ':')
+#endif
+    ) {
         if (strlen(pszFile) >= sizeof(szPath)) { dwError = ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
         strcpy(szPath, pszFile);
     } else {
@@ -84,20 +88,34 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     LockFiles();
     if (flags & OF_DELETE) {
         if (stat(szPath, &st) == 0) {
+#ifdef _WIN32
+            if (!FCompatFileIdentity(-1, szPath, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
+#else
+            dev = st.st_dev; ino = st.st_ino;
+#endif
             for (lp = lpFiles; lp; lp = lp->lpNext)
-                if (lp->dev == st.st_dev && lp->ino == st.st_ino) { dwError = ERROR_SHARING_VIOLATION; goto LUnlock; }
+                if (lp->dev == dev && lp->ino == ino) { dwError = ERROR_SHARING_VIOLATION; goto LUnlock; }
         }
         if (unlink(szPath) != 0) dwError = DwFileError();
         else hf = 1;
         goto LUnlock;
     }
     md = grAccess == 1 ? O_RDONLY : grAccess == 2 ? O_WRONLY : O_RDWR;
+#ifdef _WIN32
+    md |= O_BINARY;
+#endif
     // Check sharing before truncating an existing file.
     fd = open(szPath, md | O_CLOEXEC | (flags & OF_CREATE ? O_CREAT : 0), 0666);
     if (fd < 0 || fstat(fd, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (!S_ISREG(st.st_mode)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
+#ifdef _WIN32
+    // The Windows CRT reports zero inode numbers; use the volume/file identity.
+    if (!FCompatFileIdentity(fd, NULL, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
+#else
+    dev = st.st_dev; ino = st.st_ino;
+#endif
     for (lp = lpFiles; lp; lp = lp->lpNext)
-        if (lp->dev == st.st_dev && lp->ino == st.st_ino &&
+        if (lp->dev == dev && lp->ino == ino &&
             ((grAccess & ~lp->grShare) || (lp->grAccess & ~grShare))) {
             dwError = ERROR_SHARING_VIOLATION; goto LUnlock;
         }
@@ -107,7 +125,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (!lpNew) { dwError = ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = HFILE_ERROR; dwError = ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
-    lpNew->hf = hf; lpNew->fd = fd; lpNew->dev = st.st_dev; lpNew->ino = st.st_ino;
+    lpNew->hf = hf; lpNew->fd = fd; lpNew->dev = dev; lpNew->ino = ino;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
     lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = NULL; fd = -1;
 LUnlock:

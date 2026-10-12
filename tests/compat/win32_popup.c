@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -12,7 +12,7 @@ static UINT rgkey[16], cKey, iKey, idCommand;
 static int cEnter, cExit, cInit, cCommand;
 static BOOL fTracking, fCommandDuring, fDestroyOwner, fDestroyMenu;
 static HMENU hmenuCurrent;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int iMouse;
 static BOOL fPopupPixels, fNested, fNestedSafe, fEnd, fEndWorked, fQuit;
 static UINT idNested;
@@ -21,7 +21,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_ENTERMENULOOP) cEnter++;
     if (msg == WM_EXITMENULOOP) cExit++;
     if (msg == WM_INITMENUPOPUP) cInit++;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     if (msg == WM_INITMENUPOPUP && fNested) {
         HMENU hnested = CreatePopupMenu();
         fNested = FALSE; fNestedSafe = TRUE;
@@ -41,7 +41,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     UINT i;
     (void)msg; (void)ms;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     if (fEnd || fQuit) {
         KillTimer(hwnd, id);
         if (fEnd) fEndWorked = EndMenu(); else PostQuitMessage(17);
@@ -76,7 +76,7 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     i = iKey++;
     if (iKey == cKey) KillTimer(hwnd, id);
     if (rgkey[i] >= 'A' && rgkey[i] <= 'Z') {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
         INPUT rginput[2] = {{0}};
         rginput[0].type = rginput[1].type = INPUT_KEYBOARD;
         rginput[0].ki.wVk = rginput[1].ki.wVk = (WORD)rgkey[i];
@@ -93,7 +93,7 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
 static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg); }
 static BOOL Track(UINT flags, const UINT *rg, UINT c) {
     BOOL result;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     SDL_WarpMouseInWindow(hwndOwner->lpWindow, 2, 2);
 #else
     SetCursorPos(42, 42);
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     CHECK(hwndOwner && GetMenu(hwndOwner) == hbar);
     hwndChild = CreateWindow(wc.lpszClassName, "", WS_CHILD, 0, 0, 10, 10, hwndOwner, (HMENU)(UINT_PTR)123, NULL, NULL);
     CHECK(hwndChild && GetDlgCtrlID(hwndChild) == 123);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!GetMenu(hwndChild));
 #endif
     hother = CreateMenu(); CHECK(SetMenu(hwndOwner, hother));
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
             CHECK(AppendMenu(hmenuCurrent, MF_STRING, 501, "&Choice one"));
             CHECK(AppendMenu(hmenuCurrent, MF_STRING, 502, "&Choice two"));
             result = Track(TPM_RETURNCMD, rgMnemonic, 3);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
             // Wine 9 executes its first text match; native Windows cycles duplicates.
             CHECK(result == 502 || (result == 501 && GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_version")));
 #else
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 #endif
             CHECK(DestroyMenu(hmenuCurrent)); hmenuCurrent = hsaved;
         }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
         fEnd = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0 && fEndWorked); fEnd = FALSE;
         fQuit = TRUE; CHECK(Track(TPM_RETURNCMD, rgChoose, 0) == 0); fQuit = FALSE;
         {
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
     if (IsWindow(hwndOwner)) CHECK(DestroyWindow(hwndOwner));
     CHECK(!IsMenu(hbar));
     if (IsMenu(hmenuCurrent)) CHECK(DestroyMenu(hmenuCurrent));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Popup menu contracts passed");

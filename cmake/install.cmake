@@ -1,7 +1,10 @@
 # Product-only layout. Resources are located relative to the executable so a
 # staged installation can move without retaining paths into the source tree.
 include(GNUInstallDirs)
-install(TARGETS stars-host RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
+if(WIN32 AND STARS_BUILD_SDL_CLIENT)
+    set(STARS_RUNTIME_DEPENDENCIES RUNTIME_DEPENDENCY_SET StarsWindowsRuntime)
+endif()
+install(TARGETS stars-host ${STARS_RUNTIME_DEPENDENCIES} RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
 if(NOT STARS_BUILD_SDL_CLIENT)
     return()
 endif()
@@ -14,13 +17,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set_target_properties(stars-sdl stars-compat-help-viewer PROPERTIES
         INSTALL_RPATH "$ORIGIN/${STARS_LIB_FROM_BIN}")
 endif()
-install(TARGETS stars-sdl stars-compat-help-viewer
+install(TARGETS stars-sdl stars-compat-help-viewer ${STARS_RUNTIME_DEPENDENCIES}
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
 get_target_property(STARS_SDL_IMPORTED SDL3::SDL3-shared IMPORTED)
 if(NOT STARS_SDL_IMPORTED)
-    install(TARGETS SDL3-shared LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT StarsRuntime)
+    install(TARGETS SDL3-shared LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
     install(FILES "${sdl3_SOURCE_DIR}/LICENSE.txt"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/licenses/SDL3" COMPONENT StarsRuntime)
+endif()
+if(WIN32)
+    install(RUNTIME_DEPENDENCY_SET StarsWindowsRuntime
+        DIRECTORIES "$<TARGET_FILE_DIR:SDL3::SDL3-shared>"
+        PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*"
+        POST_EXCLUDE_REGEXES ".*[Ww][Ii][Nn][Dd][Oo][Ww][Ss][/\\\\].*"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
 endif()
 install(DIRECTORY "${STARS_HELP_GENERATED}/" DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/help"
     COMPONENT StarsRuntime PATTERN "*.h" EXCLUDE)

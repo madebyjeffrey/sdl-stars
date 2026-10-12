@@ -210,17 +210,17 @@ class Renderer:
             shutil.copyfile(ROOT / 'res/fonts' / f'LiberationSans-{name}.ttf',
                             directory / 'fonts' / f'LiberationSans-{name}.ttf')
         shutil.copyfile(ROOT / 'res/fonts/LICENSE', directory / 'fonts/LICENSE')
-        css = (DIRECTORY / 'help.css').read_text()
+        css = (DIRECTORY / 'help.css').read_text(encoding='utf-8')
         css += '\n' + '\n'.join(f'.f{index}{{{style(css_style(font))}}}' for index, font in enumerate(self.fonts))
-        (directory / 'help.css').write_text(css)
+        (directory / 'help.css').write_text(css, encoding='utf-8')
         shutil.copyfile(DIRECTORY / 'help.js', directory / 'help.js')
         for offset, topic in self.topics.items():
-            (directory / page_name(offset)).write_text(self.document(topic['title'], self.topic(topic)))
+            (directory / page_name(offset)).write_text(self.document(topic['title'], self.topic(topic)), encoding='utf-8')
         rows = ''.join(f'<li><a href="{page_name(offset)}">{html.escape(topic["title"] or "Untitled topic")}</a></li>'
                        for offset, topic in sorted(self.topics.items(), key=lambda item: item[1]['title'].casefold()))
         body = ('<h1>Stars! Player’s Guide — Topic index</h1><label>Filter topics '
                 '<input id="topic-filter" type="search"></label><ul id="topics">' + rows + '</ul>')
-        (directory / 'index.html').write_text(self.document('Stars! Player’s Guide — Topic index', body))
+        (directory / 'index.html').write_text(self.document('Stars! Player’s Guide — Topic index', body), encoding='utf-8')
         self.write_bundle(directory, css, body)
         manifest = {'sha256': self.archive.metadata()['sha256'], 'contents': page_name(self.contents),
                     'topics': {offset: {'title': topic['title'], 'page': page_name(offset)} for offset, topic in self.topics.items()},
@@ -255,7 +255,7 @@ class Renderer:
                   '<main></main><dialog id="popup"><button type="button" id="close-popup">Close</button>'
                   '<iframe title="Help definition"></iframe></dialog>'
                   '<script type="application/json" id="guide-data">' + payload + '</script><script>' +
-                  (DIRECTORY / 'help_bundle.js').read_text() + '</script></body></html>')
+                  (DIRECTORY / 'help_bundle.js').read_text(encoding='utf-8') + '</script></body></html>')
         self.bundle = source.encode('utf-8')
         (directory / 'offline.html').write_bytes(self.bundle)
 

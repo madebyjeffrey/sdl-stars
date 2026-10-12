@@ -1,6 +1,6 @@
 /* Timer generation and callbacks are UI-thread message contracts, not worker callbacks. */
 #include <windows.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #define Pause(ms) SDL_Delay(ms)
@@ -52,7 +52,7 @@ int main(void) {
     CHECK(msg.hwnd == NULL && msg.wParam == id && msg.lParam);
     CHECK(PeekMessage(&again, NULL, WM_TIMER, WM_TIMER, PM_NOREMOVE));
     CHECK(again.hwnd == msg.hwnd && again.wParam == msg.wParam && again.lParam == msg.lParam);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     // Wine can refresh a synthesized timer's timestamp between non-removing peeks.
     CHECK(again.time == msg.time);
 #endif
@@ -75,7 +75,7 @@ int main(void) {
     CHECK(PeekMessage(&msg, h2, WM_TIMER, WM_TIMER, PM_REMOVE) && msg.wParam == 19);
     CHECK(DestroyWindow(h2) && !KillTimer(h2, 19));
     CHECK(DestroyWindow(h1));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!SetTimer(h1, 1, 10, NULL) && GetLastError() == ERROR_INVALID_HANDLE);
     StarsCompatShutdown();
 #endif

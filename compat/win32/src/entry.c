@@ -1,14 +1,17 @@
-/* Linux entry point; the game's WinMain and its command parser stay shared. */
+/* SDL entry point; the game's WinMain and its command parser stay shared. */
 #include <windows.h>
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
 #include <stdio.h>
 #include <string.h>
 #include "version.h"
+#ifdef _WIN32
+#include "native.h"
+#endif
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 
-int main(int argc, char **argv) {
+static int ICompatMain(int argc, char **argv) {
     char szCmdLine[1024];
     size_t cch = 0, cchArg;
     int i, nResult, cArgs = 0;
@@ -62,4 +65,19 @@ int main(int argc, char **argv) {
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult;
+}
+
+int main(int argc, char **argv) {
+#ifdef _WIN32
+    char **rgpsz = RgpszNativeArguments(&argc);
+    int nResult;
+
+    (void)argv;
+    if (!rgpsz) return 2;
+    nResult = ICompatMain(argc, rgpsz);
+    free(rgpsz);
+    return nResult;
+#else
+    return ICompatMain(argc, argv);
+#endif
 }

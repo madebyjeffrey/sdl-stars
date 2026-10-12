@@ -1,6 +1,6 @@
 /* Shared native/SDK contracts for DIB conversion and the canonical bitmap resources. */
 #include <windows.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 int TestInvalidDibs(void);
 #endif
@@ -86,7 +86,7 @@ static int TestResources(HDC hdc) {
         CHECK(DeleteObject(hbm) && DeleteObject(hbmOther));
         CHECK(!FreeResource(hres) && LockResource(hres) == lpbi);
     }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!FindResource(NULL, MAKEINTRESOURCE(249), MAKEINTRESOURCE(3)));
     CHECK(!SizeofResource(NULL, (HRSRC)(UINT_PTR)123));
     CHECK(!LoadResource(NULL, (HRSRC)(UINT_PTR)123) && !LockResource((HGLOBAL)(UINT_PTR)123));
@@ -161,7 +161,7 @@ static int TestDibs(HDC hdc) {
     out.bi.biHeight = 4;
     CHECK(GetDIBits(hdc, hbm, 2, 1, rgbOut, (BITMAPINFO *)&out, DIB_RGB_COLORS) == 1);
     CHECK(rgbOut[0] == 33 && rgbOut[1] == 22 && rgbOut[2] == 11);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(GetDIBits(hdc, hbm, 4, 1, rgbOut, (BITMAPINFO *)&out, DIB_RGB_COLORS) == 0);
     info.bi.biCompression = BI_RLE8;
     CHECK(!StretchDIBits(hmem, 0, 0, 3, 2, 0, 0, 3, 2, rgb, (BITMAPINFO *)&info, DIB_RGB_COLORS, SRCCOPY));
@@ -213,11 +213,11 @@ int main(void) {
     result = TestResources(hdc);
     if (result == 0) result = TestDibs(hdc);
     if (result == 0) result = TestMonoReadback(hdc);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     if (result == 0) result = TestInvalidDibs();
 #endif
     CHECK(ReleaseDC(hwnd, hdc) && DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     if (result == 0) puts("DIBs/resources: PASS (38 assets, palettes, orientation, stretch, clipping, readback)");

@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -26,7 +26,7 @@ int main(void) {
     CHECK(GetSubMenu(hmenu, -1) == NULL && GetSubMenu(hmenu, 3) == NULL);
     CHECK(GetMenuItemID(hmenu, 2) == (UINT)-1);
     CHECK(GetMenuString(hnested, 42, sz, 4, MF_BYCOMMAND) == 3 && memcmp(sz, "Nes", 3) == 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     /* Wine 9 writes the fourth character rather than the expected terminator. */
     CHECK(sz[3] == 0);
 #endif
@@ -55,7 +55,7 @@ int main(void) {
     CHECK(RemoveMenu(hmenu, 2, MF_BYPOSITION));
     CHECK(DestroyMenu(hmenu) && IsMenu(hdetach));
     CHECK(DestroyMenu(hdetach));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!DestroyMenu(hmenu) && GetMenuItemCount(hmenu) == -1);
     CHECK(!IsMenu((HMENU)(UINT_PTR)1234));
     hmenu = CreateMenu(); hsub = CreatePopupMenu();

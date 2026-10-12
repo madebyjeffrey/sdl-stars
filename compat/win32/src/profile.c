@@ -9,6 +9,7 @@
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "platform.h"
 
 typedef struct COMPATPROFILE {
     char *szRaw, *szParsed, *pszSection, *pszKey, *pszValue;
@@ -120,8 +121,12 @@ static char *SzProfilePath(LPCSTR pszFile) {
     size_t cb;
 
     if (!pszFile || !*pszFile) { SetLastError(ERROR_INVALID_PARAMETER); return NULL; }
-    // Explicit POSIX paths remain literal. Bare settings names use the user config directory.
-    if (strchr(pszFile, '/')) { sz = strdup(pszFile); goto LReturn; }
+    // Explicit paths remain literal. Bare settings names use the user config directory.
+    if (strchr(pszFile, '/')
+#ifdef _WIN32
+        || strchr(pszFile, '\\') || strchr(pszFile, ':')
+#endif
+    ) { sz = strdup(pszFile); goto LReturn; }
     pszDir = getenv("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 2;
@@ -131,6 +136,15 @@ static char *SzProfilePath(LPCSTR pszFile) {
     }
     pszDir = getenv("XDG_CONFIG_HOME");
     pszHome = getenv("HOME");
+#ifdef _WIN32
+    pszDir = getenv("LOCALAPPDATA");
+    if (pszDir && *pszDir) {
+        cb = strlen(pszDir) + strlen(pszFile) + 8;
+        sz = malloc(cb);
+        if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
+    } else sz = strdup(pszFile);
+    (void)pszHome;
+#else
     if (pszDir && *pszDir == '/') {
         cb = strlen(pszDir) + strlen(pszFile) + 8;
         sz = malloc(cb);
@@ -142,6 +156,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     } else {
         sz = strdup(pszFile);
     }
+#endif
 LReturn:
     if (!sz) SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return sz;
@@ -149,13 +164,22 @@ LReturn:
 
 static BOOL FMakeProfileDir(char *szPath) {
     char *psz;
+    char ch;
     int err;
 
     for (psz = szPath + 1; *psz; psz++) {
-        if (*psz != '/') continue;
+        if (*psz != '/'
+#ifdef _WIN32
+            && *psz != '\\'
+#endif
+        ) continue;
+#ifdef _WIN32
+        if (psz == szPath + 2 && szPath[1] == ':') continue;
+#endif
+        ch = *psz;
         *psz = 0;
         err = mkdir(szPath, 0700);
-        *psz = '/';
+        *psz = ch;
         if (err != 0 && errno != EEXIST) { SetLastError(DwProfileError()); return FALSE; }
     }
     return TRUE;
@@ -239,16 +263,20 @@ static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
     FILE *fp;
     int fd;
     BOOL fRet = FALSE;
+#ifndef _WIN32
     struct stat st;
+#endif
 
     szTemp = malloc(strlen(pszPath) + 12);
     if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
     sprintf(szTemp, "%s.XXXXXX", pszPath);
     fd = mkstemp(szTemp);
     if (fd < 0) { SetLastError(DwProfileError()); goto LReturn; }
+#ifndef _WIN32
     if (stat(pszPath, &st) == 0 && fchmod(fd, st.st_mode & 0777) != 0) {
         SetLastError(DwProfileError()); close(fd); goto LReturn;
     }
+#endif
     fp = fdopen(fd, "wb");
     if (!fp) { SetLastError(DwProfileError()); close(fd); goto LReturn; }
     for (; lp; lp = lp->lpNext) {

@@ -52,7 +52,7 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     return (LRESULT)((UINT_PTR)wParam ^ (UINT_PTR)lParam);
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 int FTestIncludeOrder(void);
 #endif
 
@@ -70,7 +70,7 @@ int main(void) {
         (int16_t)LOWORD(MAKELPARAM(-12, -34)) != -12 ||
         (int16_t)HIWORD(MAKELPARAM(-12, -34)) != -34)
         return 2;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     if (!FTestIncludeOrder())
         return 3;
 #endif

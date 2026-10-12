@@ -441,3 +441,14 @@ conversion, fallback UTF-8 path fields, complete filename cache boundaries and
 strict native CLI password conversion preserve legacy records and hash values.
 General Unicode saved text, shaping, historical settings migration and real
 Windows/macOS qualification remain separate work.
+
+The SDL wrapper now also builds natively on Windows x64 through MSYS2 UCRT64,
+with separate SDK and wrapper symbols, Unicode filesystem services and portable
+DLL packaging; see [Windows SDL3](WINDOWS-SDL3.md). Windows ARM64/32-bit and
+MSVC qualification, native chooser/printer integration and a public Rust FFI
+remain open. Save layouts and the native regression baseline stay unchanged.
+The SDL Windows headless checks include actual New Game save-picker workflows;
+the separate SDK reference suite
+still has native desktop failures, including the Unicode caption/password
+probe in `test_native_fileui`. Their results are recorded in the Windows SDL
+build guide rather than treated as passing Windows SDK qualification.

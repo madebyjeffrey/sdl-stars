@@ -4,7 +4,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     MSG      msg;
     uint32_t lSeed;
     int16_t  fSeed;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     char *pszNativeCmdLine;
     int16_t fCmdLine;
 #endif
@@ -32,7 +32,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
         return 0;
     }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     (void)lpCmdLine;
     pszNativeCmdLine = PszNativeCommandLine();
     if (!pszNativeCmdLine) { FreeStuff(); return 2; }
