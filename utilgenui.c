@@ -1016,7 +1016,10 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                GetDlgItemText(hwnd, IDC_EDIT1, szPass, 60);
+                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    break;
+                }
                 lSalt = LSaltFromSz(szPass);
                 if (lSalt == lSaltCur) {
                     if (!gd.fHotSeat) {
@@ -1080,9 +1083,15 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                GetWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18);
+                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    break;
+                }
                 lSalt = LSaltFromSz(szPass);
-                GetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18);
+                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    break;
+                }
                 lSalt2 = LSaltFromSz(szPass);
                 if (lSalt != lSalt2) {
                     AlertSz(PszFormatIds(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);

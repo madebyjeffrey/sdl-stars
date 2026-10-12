@@ -57,9 +57,15 @@ set(STARS_UI_SOURCES
 add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers)
 
+# Encoding boundaries are shared by the native host and SDL UI without game state.
+add_library(stars_encoding STATIC encoding.c)
+target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}>")
+target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
+target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
+
 # Each set is built once for stars.exe and the unit tests.
 add_library(stars_core OBJECT ${STARS_CORE_SOURCES})
-target_link_libraries(stars_core PUBLIC stars_options)
+target_link_libraries(stars_core PUBLIC stars_options stars_encoding "$<$<PLATFORM_ID:Windows>:shell32>")
 
 # The command-line host: the game code and host.c, no windows.
 add_executable(stars-host host.c hostui.c)
@@ -197,7 +203,8 @@ if(NOT WIN32)
         file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
         # test_native_ports replaces the game's file I/O with --wrap, which
         # only GNU ld on Windows provides.
-        list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c")
+        list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_fileui.c")
         set(STARS_HOST_TEST_TARGETS)
         foreach(STARS_UNIT_TEST ${STARS_UNIT_TESTS})
             get_filename_component(STARS_TEST_NAME "${STARS_UNIT_TEST}" NAME_WE)

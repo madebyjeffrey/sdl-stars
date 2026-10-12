@@ -110,24 +110,35 @@ int16_t InitMDIApp() {
 }
 
 void CreateChildWindows() {
-    char    szData[100];
+    char    szData[512];
+    char    szNameUtf8[128], szPlayerUtf8[256];
+    size_t  cch;
     POINT16 pt;
     char   *psz;
     char    szGame[15];
 
     if (idPlayer != iplrNone) {
-        for (psz = &szBase[strlen(szBase) - 1]; psz > szBase && psz[-1] != '\\' && psz[-1] != ':'; psz--) {
-        }
-        szGame[8] = 0;
-        strncpy(szGame, psz, 8);
-        strlwr(szGame);
+        psz = strrchr(szBase, chDirSep);
+#ifdef _WIN32
+        if (!psz) psz = strrchr(szBase, '/');
+        if (!psz) psz = strrchr(szBase, ':');
+#endif
+        psz = psz ? psz + 1 : szBase;
+        cch = CchUtf8Prefix(psz, 8);
+        memcpy(szGame, psz, cch); szGame[cch] = 0;
+        for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         wsprintf(&szGame[strlen(szGame)], ".m%d", idPlayer + 1);
-        wsprintf(szData, "Stars! -- %s -- %s -- %s", game.szName, PszPlayerName(idPlayer, FALSE, TRUE, FALSE, 0, NULL), szGame);
+        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
+        psz = PszPlayerName(idPlayer, FALSE, TRUE, FALSE, 0, NULL);
+        CchLegacyToUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
+        snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         CchGetString(idsStarsSHostMode, szWork);
         wsprintf(szData, szWork, game.szName);
+        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
+        strcpy(szData, szNameUtf8);
     }
-    SetWindowText(hwndFrame, szData);
+    FSetNativeWindowTitle(hwndFrame, szData);
     if (idPlayer != iplrNone) {
         if (!hwndScanner) {
             hwndScanner = CreateWindow(szScan, NULL, WS_CHILD | WS_VISIBLE, -200, -200, 10, 10, hwndFrame, NULL, hInst, NULL);
@@ -1232,7 +1243,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                     }
                     strcpy(szWork, szBase);
                     strcat(szWork, ".x1");
-                    remove(szWork);
+                    RemoveNativeFile(szWork);
                     DirtyGame(FALSE);
                     ShowProgressGauge();
                     dwTickBase = GetTickCount();
@@ -1717,7 +1728,7 @@ int16_t FOpenGame(HWND hwnd, int16_t fRaceOnly) {
     ofn.nMaxFileTitle = 0x100;
     ofn.lpstrInitialDir = szDirName;
     ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-    if (GetOpenFileName(&ofn) == 0) {
+    if (FNativeOpenFileName(&ofn) == 0) {
         return 0;
     }
 LGotFileName:

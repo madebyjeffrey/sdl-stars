@@ -306,11 +306,11 @@ int16_t FGenerateTurn() {
             if (i >= 0) {
                 CchSprintf(pchCur, ".x%d", i + 1);
                 strcpy(pchBak, pchCur);
-                remove(szT);
+                RemoveNativeFile(szT);
                 if (!FFileExists(szBase)) {
                     rgfNoXFile[i] = TRUE;
                 } else {
-                    rename(szBase, szT);
+                    RenameNativeFile(szBase, szT);
                 }
                 pchBak[1] = 'm';
                 pchCur[1] = 'm';
@@ -318,11 +318,11 @@ int16_t FGenerateTurn() {
                 strcpy(pchCur, ".hst");
                 strcpy(pchBak, ".hst");
             }
-            remove(szT);
+            RemoveNativeFile(szT);
             if (i >= 0 && rgfNoXFile[i]) {
                 StarsCopyFile(szBase, szT);
             } else {
-                rename(szBase, szT);
+                RenameNativeFile(szBase, szT);
             }
             *pchCur = 0;
             i++;
@@ -592,13 +592,26 @@ LError:
     return fSuccess;
 }
 
+static int16_t FCopyCmdPath(const char *psz, size_t cb) {
+    if (cb >= sizeof(szBase)) {
+        AlertSz(PszGetCompressedString(idsNativeFilenameTooLong), MB_ICONHAND);
+        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
+        return FALSE;
+    }
+    memcpy(szBase, psz, cb); szBase[cb] = 0;
+    return TRUE;
+}
+
 // ParseCmdLine reads the command line's switches into ini and gd and its
 // file name into szBase; *pfSeed and *plSeed get a -s<seed>. The Windows
-// game and stars-host take the same command line.
-void ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
+// game and stars-host take the same UTF-8 command line. Invalid encoding or
+// capacity returns FALSE so neither caller executes a partially parsed command.
+int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
     char   *pch;
     char   *lpT;
     int16_t i;
+    int cchPass;
+    size_t cbPass;
 
     lpT = lpCmdLine;
     while (*lpT != 0) {
@@ -666,12 +679,9 @@ void ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                 case 'b':
                     for (lpT++; *lpT == ' '; lpT++) {
                     }
-                    pch = szBase;
-                    for (; *lpT != 0 && *lpT != ' '; lpT++) {
-                        *pch = *lpT;
-                        pch++;
-                    }
-                    *pch = 0;
+                    pch = lpT;
+                    while (*lpT != 0 && *lpT != ' ') lpT++;
+                    if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return FALSE;
                     lpT--;
                     if (!FSetUpBatchProcessing())
                         break;
@@ -711,29 +721,28 @@ void ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                 case 'p':
                     for (lpT++; *lpT == ' '; lpT++) {
                     }
-                    pch = szPassLast;
-                    for (; *lpT != 0 && *lpT != ' ' && pch < &szPassLast[15]; lpT++) {
-                        *pch = *lpT;
-                        pch++;
+                    pch = lpT;
+                    while (*lpT != 0 && *lpT != ' ') lpT++;
+                    cbPass = (size_t)(lpT - pch);
+                    cchPass = CchUtf8ToLegacy(szPassLast, sizeof(szPassLast), pch, cbPass);
+                    if (cchPass < 0) {
+                        AlertSz(PszGetCompressedString(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), MB_ICONHAND);
+                        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
+                        return FALSE;
                     }
-                    *pch = 0;
                     lpT--;
                     lSaltLast = LSaltFromSz(szPassLast);
                 }
             }
         } else {
-            pch = szBase;
-            while (*lpT != 0 && *lpT != ' ') {
-                *pch = *lpT;
-                lpT++;
-                pch++;
-            }
-            *pch = 0;
+            pch = lpT;
+            while (*lpT != 0 && *lpT != ' ') lpT++;
+            if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return FALSE;
             ini.fStartupFile = TRUE;
             ini.fCmdLine = TRUE;
         }
     }
-    return;
+    return TRUE;
 }
 
 // FRunCmdLine carries out a command line's host work: validating the host

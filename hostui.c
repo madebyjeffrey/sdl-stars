@@ -59,3 +59,8 @@ void AdvanceTutor() { return; }
 uint8_t *LpbLoadTutorLog() { return NULL; }
 
 void SetHdcTextColor(HDC hdc, uint32_t cr) { return; }
+
+void SetSzRaceFile(const char *pszFile) {
+    size_t cch = CchUtf8Prefix(pszFile, sizeof(szRaceFile) - 1);
+    memcpy(szRaceFile, pszFile, cch); szRaceFile[cch] = 0;
+}

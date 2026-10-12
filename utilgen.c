@@ -685,10 +685,11 @@ int32_t LSaltFromSz(char *psz) {
         return 0;
     }
     while (*psz != 0) {
-        lSalt += (int16_t)*psz;
+        // Original x86 arithmetic wraps at 32 bits and treats bytes as signed.
+        lSalt = (int32_t)((uint32_t)lSalt + (uint32_t)(int32_t)(int16_t)*psz);
         psz++;
         if (*psz != 0) {
-            lSalt = (uint32_t)(lSalt * (int16_t)*psz);
+            lSalt = (int32_t)((uint32_t)lSalt * (uint32_t)(int32_t)(int16_t)*psz);
             psz++;
         }
     }

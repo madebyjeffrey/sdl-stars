@@ -134,8 +134,10 @@ rejection, JSON escaping and selection/reveal, plus viewer close/reopen.
 state, focus/capture, duplicate control-ID rejection, off-thread rejection,
 password redaction, CP1252-to-UTF-8 JSON escaping, IDs above 2^53, snapshot lifetime,
 stale-ID rejection and monotonically increasing IDs across runtime restart.
-Non-ASCII native titles are converted to UTF-8 while snapshots and game text
-remain CP1252; title creation/update assertions cover that boundary.
+Snapshot text is CP1252 unless `fUtf8Text` marks an explicit UTF-8 path field
+or native caption. JSON always emits UTF-8, and the viewer converts its rows
+consistently. Game text remains CP1252; title, path-field and JSON assertions
+cover those separate boundaries.
 It also checks distinct logical IDs over a reused native wizard window, direct
 button activation, viewer refresh/details/painting, the diagnostic chord,
 close/reopen, and normal/silent teardown. Python parses the exported JSON.

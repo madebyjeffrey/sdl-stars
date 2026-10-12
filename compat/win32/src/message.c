@@ -317,6 +317,11 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (!lParam || wParam == 0)
             return 0;
         psz = lpwin->pszTitle;
+        if (lpwin->fUtf8Text || lpwin->fUtf8Title) {
+            cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
+            memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
+            return (LRESULT)cch;
+        }
         cch = SDL_strlcpy((char *)lParam, psz, (size_t)wParam);
         return (LRESULT)(cch < wParam ? cch : wParam - 1);
     case WM_GETTEXTLENGTH:

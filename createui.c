@@ -303,7 +303,7 @@ int16_t FGetNewGameName(char *szFileSuggest) {
     ofn.lpstrTitle = "Choose New Game Name";
     ofn.lpstrDefExt = szXY;
     ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN;
-    if (GetSaveFileName(&ofn) != 0) {
+    if (FNativeSaveFileName(&ofn) != 0) {
         if (ofn.nFileExtension != 0) {
             strcpy(&szFile[ofn.nFileExtension], szXY);
         } else {

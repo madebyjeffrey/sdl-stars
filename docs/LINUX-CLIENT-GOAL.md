@@ -11,6 +11,9 @@ is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.
 Previously selected scope: milestones 1, 2, 3, 4, 7, 8 and 9.
 PDF printing/viewer integration and offline help verification are deferred.
+Native filename/password encoding is implemented and qualified by 108 fatal
+sanitizer cases, 55 Windows tests, 15 host tests, 11 Release checks and both
+519-checkpoint regressions; see [encoding contracts](UNICODE-BOUNDARIES.md).
 Basic API coverage is 178/178 (100%); this measures API bodies, not completion
 of the behavior and release requirements below.
 

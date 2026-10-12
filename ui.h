@@ -19,6 +19,7 @@ void UpdateProgressGauge(ProgressStep pctX10);
 void    CreateChildWindows();
 void    PostOpenGame();
 void    ShowTitleScreen();
+void    SetSzRaceFile(const char *pszFile);
 void    AddMRUFile(char *pszFileName, char *pszExt);
 void    CloseGameWindows();
 int16_t FFinishPlrMsgEntry(int16_t dInc);

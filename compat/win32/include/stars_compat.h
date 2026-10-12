@@ -14,7 +14,8 @@ void StarsCompatEndDialogSequence(void);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are CP1252, copied without calling application procedures.
+ * Snapshot strings are CP1252 unless fUtf8Text marks native path/caption text.
+ * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
 typedef struct STARSCOMPATWINDOW {
@@ -25,6 +26,7 @@ typedef struct STARSCOMPATWINDOW {
     BOOL fDialog, fVisible, fEnabled, fFocused, fCaptured;
     RECT rcWindow, rcClient;
     char *pszClass, *pszText;
+    BOOL fUtf8Text;
 } STARSCOMPATWINDOW;
 typedef struct STARSCOMPATSNAPSHOT {
     STARSCOMPATWINDOW *rgWindow;
@@ -54,5 +56,8 @@ void StarsCompatShutdown(void);
  * invalid; call only on the UI thread and outside a window procedure.
  */
 void StarsCompatProcessExit(void);
+
+BOOL StarsCompatTextInputRejected(HWND hwnd);
+BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz);
 
 #endif

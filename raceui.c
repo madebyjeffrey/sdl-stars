@@ -178,7 +178,7 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         i = GetRaceStat(&vplr, rsUseLeftover);
         SendMessage(hwndCB, CB_SETCURSEL, i, 0);
         if (vplr.lSalt != 0) {
-            SetDlgItemText(hwnd, IDC_RACE_PASSWORD, szRacePass);
+            FSetLegacyWindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass);
         }
         if (fRCWReadOnly) {
             for (i = 268; i <= 269; i++) {
@@ -308,7 +308,10 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 GetDlgItemText(hwnd, IDC_RACE_NAME, vplr.szName, 32);
                 GetDlgItemText(hwnd, IDC_RACE_PLURAL_NAME, vplr.szNames, 32);
                 GetRaceStat(&vplr, rsUseLeftover);
-                GetDlgItemText(hwnd, IDC_RACE_PASSWORD, szRacePass, 16);
+                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass, 16) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    return TRUE;
+                }
                 j = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
                 SetRaceStat(&vplr, rsUseLeftover, j);
                 vplr.lSalt = LSaltFromSz(szRacePass);
@@ -1375,15 +1378,12 @@ void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
 static char szRaceFileSuggest[256];
 
 void SetSzRaceFile(const char *pszFile) {
-    size_t cch = min(strlen(pszFile), sizeof(szRaceFile) - 1);
+    size_t cch = CchUtf8Prefix(pszFile, sizeof(szRaceFile) - 1);
+    size_t cchSuggest = CchUtf8Prefix(pszFile, sizeof(szRaceFileSuggest) - 1);
 
-    /* Keep the full native suggestion in UI storage; the original cache stays
-       at its existing size and must not end inside a UTF-8 character. */
-    strncpy(szRaceFileSuggest, pszFile, sizeof(szRaceFileSuggest) - 1);
-    szRaceFileSuggest[sizeof(szRaceFileSuggest) - 1] = 0;
-#ifdef STARS_UI_SDL
-    while (cch != 0 && ((unsigned char)pszFile[cch] & 0xc0) == 0x80) cch--;
-#endif
+    /* Full native paths belong to UI storage; the original cache keeps its size. */
+    memcpy(szRaceFileSuggest, pszFile, cchSuggest);
+    szRaceFileSuggest[cchSuggest] = 0;
     memcpy(szRaceFile, pszFile, cch);
     szRaceFile[cch] = 0;
 }
@@ -1423,7 +1423,7 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
     ofn.lpstrInitialDir = szDirName;
     ofn.lpstrDefExt = "r1";
     ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN;
-    if (GetSaveFileName(&ofn) != 0) {
+    if (FNativeSaveFileName(&ofn) != 0) {
         if (!FCreateFile(dtRace, iplrNone, szFile)) {
             AlertSz(PszFormatIds(idsStarsUnableSaveRaceDataFilePlease, NULL), MB_ICONHAND);
             return FALSE;

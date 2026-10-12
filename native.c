@@ -9,6 +9,11 @@
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <share.h>
+#include <shellapi.h>
+#include <sys/stat.h>
 #else
 #include <errno.h>
 #include <fcntl.h>
@@ -170,30 +175,153 @@ int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator) {
 
 #ifdef _WIN32
 
-int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
-    OFSTRUCT of;
-    int16_t  hf;
-
-    hf = OpenFile(szFile, &of, mdOpen);
-    *pfMissing = hf == -1 && of.nErrCode == 2;
-    return hf;
+char *PszNativeCommandLine(void) {
+    const WCHAR *pwsz = GetCommandLineW();
+    char *psz;
+    int cb;
+    if (*pwsz == L'"') {
+        for (pwsz++; *pwsz && *pwsz != L'"'; pwsz++) {}
+        if (*pwsz) pwsz++;
+    } else {
+        while (*pwsz && *pwsz != L' ' && *pwsz != L'\t') pwsz++;
+    }
+    while (*pwsz == L' ' || *pwsz == L'\t') pwsz++;
+    cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, NULL, 0, NULL, NULL);
+    if (cb == 0 || !(psz = malloc(cb))) return NULL;
+    if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, psz, cb, NULL, NULL)) {
+        free(psz); return NULL;
+    }
+    return psz;
 }
 
-int32_t CbReadFile(int16_t hf, void *rg, uint16_t cb) { return _lread(hf, rg, cb); }
+char **RgpszNativeArguments(int *lpc) {
+    WCHAR **rgpwsz = CommandLineToArgvW(GetCommandLineW(), lpc);
+    char **rgpsz, *pch;
+    size_t cb;
+    int i, c;
+    if (!rgpwsz) return NULL;
+    cb = ((size_t)*lpc + 1) * sizeof(*rgpsz);
+    for (i = 0; i < *lpc; i++) {
+        c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
+        if (c == 0) { LocalFree(rgpwsz); return NULL; }
+        cb += c;
+    }
+    rgpsz = malloc(cb);
+    if (!rgpsz) { LocalFree(rgpwsz); return NULL; }
+    pch = (char *)(rgpsz + *lpc + 1);
+    for (i = 0; i < *lpc; i++) {
+        c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
+        rgpsz[i] = pch;
+        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, pch, c, NULL, NULL);
+        pch += c;
+    }
+    rgpsz[*lpc] = NULL; LocalFree(rgpwsz);
+    return rgpsz;
+}
 
-int32_t CbWriteFile(int16_t hf, void *rg, uint16_t cb) { return _lwrite(hf, rg, cb); }
+// CRT descriptors keep the core's signed 16-bit handles independent of HANDLE.
+static wchar_t *LpwszNativePath(const char *psz) {
+    wchar_t *pwsz;
+    int cch;
+    cch = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, psz, -1, NULL, 0);
+    if (cch == 0) { errno = EILSEQ; return NULL; }
+    pwsz = malloc((size_t)cch * sizeof(*pwsz));
+    if (!pwsz) { errno = ENOMEM; return NULL; }
+    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, psz, -1, pwsz, cch)) {
+        free(pwsz); errno = EILSEQ; return NULL;
+    }
+    return pwsz;
+}
 
-int32_t LSeekFile(int16_t hf, int32_t l, int16_t iOrigin) { return _llseek(hf, l, iOrigin); }
+int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
+    wchar_t *pwsz;
+    int fd, grf, grfShare;
+    *pfMissing = FALSE;
+    pwsz = LpwszNativePath(szFile);
+    if (!pwsz) return -1;
+    grf = (mdOpen & 3) == 1 ? _O_WRONLY : (mdOpen & 3) == 2 ? _O_RDWR : _O_RDONLY;
+    grf |= _O_BINARY | _O_NOINHERIT;
+    if (mdOpen & 0x1000) grf |= _O_CREAT | _O_TRUNC;
+    switch (mdOpen & 0x70) {
+    case 0x10: grfShare = _SH_DENYRW; break;
+    case 0x20: grfShare = _SH_DENYWR; break;
+    case 0x30: grfShare = _SH_DENYRD; break;
+    default: grfShare = _SH_DENYNO; break;
+    }
+    fd = _wsopen(pwsz, grf, grfShare, _S_IREAD | _S_IWRITE);
+    free(pwsz);
+    *pfMissing = fd == -1 && errno == ENOENT;
+    if (fd > SHRT_MAX) { _close(fd); fd = -1; errno = EMFILE; }
+    return (int16_t)fd;
+}
 
-int32_t CbFileSize(int16_t hf) { return (int32_t)GetFileSize((HANDLE)(INT_PTR)hf, NULL); }
+int32_t CbReadFile(int16_t hf, void *rg, uint16_t cb) { return _read(hf, rg, cb); }
 
-void CloseFile(int16_t hf) { _lclose(hf); }
+int32_t CbWriteFile(int16_t hf, void *rg, uint16_t cb) {
+    int64_t ib;
+    // Like _lwrite, a zero-byte write truncates or extends at the current offset.
+    if (cb != 0) return _write(hf, rg, cb);
+    ib = _telli64(hf);
+    return ib < 0 || _chsize_s(hf, ib) != 0 ? -1 : 0;
+}
 
-int16_t FFileExists(char *szFile) { return _access(szFile, 0) != -1; }
+int32_t LSeekFile(int16_t hf, int32_t l, int16_t iOrigin) {
+    int64_t ib = _lseeki64(hf, l, iOrigin == 0 ? SEEK_SET : iOrigin == 1 ? SEEK_CUR : SEEK_END);
+    return ib < 0 || ib > INT32_MAX ? -1 : (int32_t)ib;
+}
 
-int16_t FFileReadOnly(char *szFile) { return _access(szFile, 2) != 0; }
+int32_t CbFileSize(int16_t hf) {
+    int64_t cb = _filelengthi64(hf);
+    return cb < 0 || cb > INT32_MAX ? -1 : (int32_t)cb;
+}
 
-void MakeDir(char *szDir) { _mkdir(szDir); }
+void CloseFile(int16_t hf) { _close(hf); }
+
+int16_t FFileExists(char *szFile) {
+    wchar_t *pwsz = LpwszNativePath(szFile);
+    int f;
+    if (!pwsz) return FALSE;
+    f = _waccess(pwsz, 0) == 0; free(pwsz); return f;
+}
+
+int16_t FFileReadOnly(char *szFile) {
+    wchar_t *pwsz = LpwszNativePath(szFile);
+    int f;
+    if (!pwsz) return TRUE;
+    f = _waccess(pwsz, 2) != 0; free(pwsz); return f;
+}
+
+void MakeDir(char *szDir) {
+    wchar_t *pwsz = LpwszNativePath(szDir);
+    if (pwsz) { _wmkdir(pwsz); free(pwsz); }
+}
+
+int RemoveNativeFile(const char *psz) {
+    wchar_t *pwsz = LpwszNativePath(psz);
+    int result;
+    if (!pwsz) return -1;
+    result = _wremove(pwsz); free(pwsz); return result;
+}
+
+int RenameNativeFile(const char *pszOld, const char *pszNew) {
+    wchar_t *pwszOld = LpwszNativePath(pszOld), *pwszNew;
+    int result;
+    if (!pwszOld) return -1;
+    pwszNew = LpwszNativePath(pszNew);
+    if (!pwszNew) { free(pwszOld); return -1; }
+    result = _wrename(pwszOld, pwszNew);
+    free(pwszOld); free(pwszNew); return result;
+}
+
+FILE *PfOpenNativeFile(const char *psz, const char *pszMode) {
+    wchar_t *pwsz = LpwszNativePath(psz), wszMode[16];
+    FILE *pf;
+    size_t i, cch = strlen(pszMode);
+    if (!pwsz) return NULL;
+    if (cch >= sizeof(wszMode) / sizeof(*wszMode)) { free(pwsz); errno = EINVAL; return NULL; }
+    for (i = 0; i <= cch; i++) wszMode[i] = (unsigned char)pszMode[i];
+    pf = _wfopen(pwsz, wszMode); free(pwsz); return pf;
+}
 
 uint32_t DwTickCount() { return GetTickCount(); }
 
@@ -257,6 +385,10 @@ int16_t FFileExists(char *szFile) { return access(szFile, F_OK) == 0; }
 int16_t FFileReadOnly(char *szFile) { return access(szFile, W_OK) != 0; }
 
 void MakeDir(char *szDir) { mkdir(szDir, 0777); }
+
+int RemoveNativeFile(const char *psz) { return remove(psz); }
+int RenameNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
+FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return fopen(psz, pszMode); }
 
 uint32_t DwTickCount() {
     struct timespec ts;

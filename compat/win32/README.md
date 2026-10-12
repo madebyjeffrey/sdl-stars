@@ -405,3 +405,8 @@ The application now uses `ToolbarWindow32`, with a scoped `commctrl.h`, owned
 bitmap/text storage, check groups, split/whole dropdown notifications and anchored
 tooltips. Windows uses its native `comctl32` control. See
 [toolbar contracts, reference tests and remaining scope](../../docs/WIN32-TOOLBARS.md).
+
+Native filesystem path controls and captions have explicit UTF-8 modes; game
+text and general controls remain CP1252. See [encoding contracts](../../docs/UNICODE-BOUNDARIES.md).
+Hierarchy snapshots mark UTF-8 text with `fUtf8Text`; JSON always emits UTF-8.
+This is an application path boundary, not a general Win32 wide-character ABI.

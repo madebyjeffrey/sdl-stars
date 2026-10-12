@@ -106,7 +106,7 @@ static int16_t FReadHostIni(const char *szFile) {
     long  cb;
     FILE *pf;
 
-    pf = fopen(szFile, "rb");
+    pf = PfOpenNativeFile(szFile, "rb");
     if (!pf) {
         return FALSE;
     }
@@ -141,10 +141,21 @@ int main(int argc, char *argv[]) {
     uint32_t lSeed;
     int      i;
     char    *szIniPath;
+#ifdef _WIN32
+    char **rgpszNative;
+#endif
 
+#ifdef _WIN32
+    rgpszNative = RgpszNativeArguments(&argc);
+    if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
+    argv = rgpszNative;
+#endif
     // ParseCmdLine reads each letter after a '-' as a switch.
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
         printf("stars-host %s\n", STARS_VERSION_DISPLAY);
+#ifdef _WIN32
+        free(rgpszNative);
+#endif
         return 0;
     }
     // --ini <file> reads settings from a stars.ini, as stars.exe reads its
@@ -166,6 +177,9 @@ int main(int argc, char *argv[]) {
     for (i = 1; i < argc; i++) {
         if (strlen(szCmdLine) + strlen(argv[i]) + 2 > sizeof(szCmdLine)) {
             fprintf(stderr, "stars-host: command line too long\n");
+#ifdef _WIN32
+            free(rgpszNative);
+#endif
             return 2;
         }
         if (i > 1) {
@@ -179,11 +193,17 @@ int main(int argc, char *argv[]) {
     InitGameStuff();
     if (szIniPath && !FReadHostIni(szIniPath)) {
         fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
+#ifdef _WIN32
+        free(rgpszNative);
+#endif
         return 2;
     }
+#ifdef _WIN32
+    free(rgpszNative);
+#endif
     fSeed = FALSE;
     lSeed = 0;
-    ParseCmdLine(szCmdLine, &fSeed, &lSeed);
+    if (!ParseCmdLine(szCmdLine, &fSeed, &lSeed)) return 2;
     Randomize2(fSeed ? lSeed : DwTickCount());
     if (!ini.fCmdLine) {
         fprintf(

@@ -1,6 +1,7 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
 #include <windows.h>
+#include "encoding.h"
 #include <SDL3/SDL.h>
 typedef struct COMPATPRINT COMPATPRINT;
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
@@ -32,6 +33,9 @@ BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
                     void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
+BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
+BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
+                        void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
 DWORD DwCompatAnsiChar(BYTE ch);
 
@@ -75,7 +79,7 @@ struct HWND__ {
     UINT ichTypingEnd;
     UINT iEditUndoAction;
     UINT_PTR idEditCaretTimer;
-    BOOL fModified;
+    BOOL fModified, fUtf8Text, fUtf8Title, fEditInputRejected;
     char *pszEditUndo, *pszEditComposition;
     int ichComposition, cchComposition;
     UINT ichUndoPosition, cchUndoBefore, cchUndoAfter;

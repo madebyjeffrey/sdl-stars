@@ -409,3 +409,10 @@ no pending popup damage. Qualification passes 103 fatal sanitizer tests,
 51 Windows unit/reference tests, the full 519-match native regression and all
 four Release tutorial profiles; see the [goal report](LINUX-CLIENT-GOAL.md).
 No game baseline changes.
+
+Native Unicode filename and password boundaries are now implemented; see
+[encoding contracts](UNICODE-BOUNDARIES.md). Windows filesystem/common-dialog
+conversion, fallback UTF-8 path fields, complete filename cache boundaries and
+strict native CLI password conversion preserve legacy records and hash values.
+General Unicode saved text, shaping, historical settings migration and real
+Windows/macOS qualification remain separate work.

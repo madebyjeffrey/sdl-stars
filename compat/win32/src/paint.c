@@ -1513,9 +1513,16 @@ typedef struct COMPATTEXTDRAW {
     double cs, sn;
 } COMPATTEXTDRAW;
 
+static BOOL FTextUtf8(HDC lpdc) { return lpdc->hwnd && lpdc->hwnd->fUtf8Text; }
+
+static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
+    return FTextUtf8(lpdc) ? FCompatFontSizeUtf8(lpdc->lpfont->lpFont, psz, cch, lpsize) :
+                           FCompatFontSize(lpdc->lpfont->lpFont, psz, cch, lpsize);
+}
+
 BOOL WINAPI GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && FCompatFontSize(lpdc->lpfont->lpFont, psz, cch, lpsize);
+    return lpdc && FTextSize(lpdc, psz, cch, lpsize);
 }
 
 BOOL WINAPI GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
@@ -1594,7 +1601,7 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     int i;
     int64_t dx;
     RECT rcDevice;
-    if (!FCompatFontSize(lpdc->lpfont->lpFont, psz, cch, &size) || !FClip(lpdc, &draw.rc) ||
+    if (!FTextSize(lpdc, psz, cch, &size) || !FClip(lpdc, &draw.rc) ||
         ((options & (ETO_OPAQUE | ETO_CLIPPED)) && !lprc)) return FALSE;
     if (lprc) { rcDevice = RcDevice(lpdc, *lprc); lprc = &rcDevice; }
     // ETO_OPAQUE uses the DC background color, independent of its selected brush.
@@ -1612,7 +1619,9 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     if (rgdx) { dx = 0; for (i = 0; i < cch; i++) dx += rgdx[i]; }
     FCompatFontMetrics(lpdc->lpfont->lpFont, &tm);
     if (lpdc->iBkMode == OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);
-    if (!FCompatFontDraw(lpdc->lpfont->lpFont, psz, cch, rgdx, DrawFontPixel, &draw)) return FALSE;
+    if (FTextUtf8(lpdc)) {
+        if (rgdx || !FCompatFontDrawUtf8(lpdc->lpfont->lpFont, psz, cch, DrawFontPixel, &draw)) return FALSE;
+    } else if (!FCompatFontDraw(lpdc->lpfont->lpFont, psz, cch, rgdx, DrawFontPixel, &draw)) return FALSE;
     if (tm.tmUnderlined) DrawFontRect(&draw, dx, tm.tmAscent + 1, tm.tmAscent + 2, lpdc->crText);
     if (tm.tmStruckOut) DrawFontRect(&draw, dx, tm.tmAscent * 2 / 3, tm.tmAscent * 2 / 3 + 1, lpdc->crText);
     return TRUE;
@@ -1641,7 +1650,8 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     SIZE size;
     RECT rcOld;
     BOOL fOldClip, fUnderline = FALSE;
-    int i, j, c = 0, cLines = 0, iStart, iBreak, dxBreak, dxMax = 0, dyLine, dy, nReturn = 0;
+    int i, j, c = 0, cLines = 0, iStart, iBreak, dxBreak, dxMax = 0, dyLine, dy, nReturn = 0, cStep;
+    uint32_t ch;
     int64_t dx, dxAvail, x, y;
     UINT supported = DT_CENTER | DT_RIGHT | DT_VCENTER | DT_BOTTOM | DT_WORDBREAK | DT_SINGLELINE |
                      DT_EXPANDTABS | DT_NOCLIP | DT_EXTERNALLEADING | DT_CALCRECT | DT_NOPREFIX;
@@ -1676,7 +1686,9 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     while (i < c) {
         iStart = i; iBreak = -1; dxBreak = 0; dx = 0;
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
-            if (!GetTextExtentPoint32A(hdc, sz + i, 1, &size)) goto LReturn;
+            cStep = FTextUtf8(lpdc) ? CbUtf8Char(sz + i, (size_t)(c - i), &ch) : 1;
+            if (cStep == 0) cStep = 1;
+            if (!GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = (int)dx; }
             dx += size.cx;
             if (dx > INT_MAX) goto LReturn;
@@ -1686,7 +1698,7 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
                 while (i < c && sz[i] == ' ') i++;
                 goto LNextLine;
             }
-            i++;
+            i += cStep;
         }
         rgline[cLines++] = (COMPATTEXTLINE){iStart, i - iStart, (int)dx};
         if (i < c && sz[i++] == '\r' && i < c && sz[i] == '\n') i++;

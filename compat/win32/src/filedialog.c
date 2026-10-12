@@ -343,7 +343,10 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
 }
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id) {
     HWND hwndControl = CreateWindowExA(0, pszClass, pszText, WS_CHILD | WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, GetModuleHandleA(NULL), NULL);
-    if (hwndControl) SendMessageA(hwndControl, WM_SETFONT, (WPARAM)hwnd->hfontDialog, FALSE);
+    if (hwndControl) {
+        if (id == ID_FILE_NAME || id == ID_FILE_PATH || id == ID_FILE_LIST) hwndControl->fUtf8Text = TRUE;
+        SendMessageA(hwndControl, WM_SETFONT, (WPARAM)hwnd->hfontDialog, FALSE);
+    }
     return hwndControl;
 }
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA)

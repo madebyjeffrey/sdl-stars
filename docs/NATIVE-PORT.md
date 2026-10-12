@@ -36,8 +36,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
-  paths with `chDirSep`. On Win32 these are the original `OpenFile`,
-  `_lread` and related calls; on POSIX they use `open`, `read` and the like,
+  paths with `chDirSep`. Windows strictly converts UTF-8 paths to UTF-16 and
+  uses CRT descriptors through `_wsopen`, `_read`, `_write` and related calls;
+  backups/cleanup and native text-file opens use the same path boundary through
+  `RenameNativeFile`, `RemoveNativeFile` and `PfOpenNativeFile`. POSIX uses `open`, `read` and the like,
   which have no share modes, so a file another program has open is not
   refused. The game's heaps (`memory.c`) come from `calloc` and `realloc`.
 - **Formatting and rounding** (`native.c`): the game code formats with
@@ -85,7 +87,8 @@ FileChooser portal using UTF-8 directories and basenames. `FSaveRace` and
 race-only `FOpenGame` now bound copies into the existing `szRaceFile[16]`
 suggestion cache through `SetSzRaceFile`; a long native basename previously
 overwrote adjacent globals. Separate UI storage retains the full suggestion for
-repeat saving, and the SDL cache boundary preserves complete UTF-8 characters.
+repeat saving, and every native cache boundary preserves complete UTF-8 characters.
+Direct `FWasRaceFile` loads also use that UI/host setter.
 The selected file path is not truncated, and no saved record changes.
 
 `GetRaceGrbit` and `SetRaceGrbit` now construct masks from `UINT32_C(1)` so
@@ -121,3 +124,8 @@ The repair passes 99 fatal sanitizer tests, 51 Windows unit/reference tests and
 both Release fleet profiles. Full native regression still returns 519 matches,
 87 existing unused-storage warnings, zero differences/errors and no skipped
 inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).
+
+See [encoding contracts](UNICODE-BOUNDARIES.md) for Unicode filenames, strict
+CLI/password conversion and UTF-8 path-field editing. The original password
+hash uses explicit unsigned wrapping with signed input bytes; stored hashes,
+record widths and native regression baselines remain unchanged.

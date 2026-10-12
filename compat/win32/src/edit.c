@@ -22,6 +22,13 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     if (!pszUtf) pszUtf = "";
     psz = SDL_malloc(strlen(pszUtf) + 1);
     if (!psz) return;
+    if (hwnd->fUtf8Text) {
+        memcpy(psz, pszUtf, strlen(pszUtf) + 1);
+        SDL_free(hwnd->pszEditComposition); hwnd->pszEditComposition = psz;
+        hwnd->ichComposition = hwnd->cchComposition = 0;
+        InvalidateRect(hwnd, NULL, TRUE);
+        return;
+    }
     for (pch = psz, pchUtf = pszUtf; *pchUtf;) {
         ch = SDL_StepUTF8(&pchUtf, NULL);
         for (i = 1; i < 256 && DwCompatAnsiChar((BYTE)i) != ch; i++) {}
@@ -36,10 +43,38 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
 
 static UINT CchEdit(HWND hwnd) { return (UINT)strlen(hwnd->pszTitle); }
 
+static UINT IchEditBoundary(HWND hwnd, UINT ich) {
+    UINT i = 0, next, cch = CchEdit(hwnd);
+    uint32_t ch;
+    int c;
+    ich = min(ich, cch);
+    if (!hwnd->fUtf8Text) return ich;
+    while (i < ich) {
+        c = CbUtf8Char(hwnd->pszTitle + i, cch - i, &ch);
+        next = i + (c == 0 ? 1 : (UINT)c);
+        if (next > ich) break;
+        i = next;
+    }
+    return i;
+}
+
+static UINT IchEditNext(HWND hwnd, UINT ich) {
+    UINT cch = CchEdit(hwnd);
+    uint32_t ch;
+    int c;
+    if (ich >= cch) return cch;
+    c = hwnd->fUtf8Text ? CbUtf8Char(hwnd->pszTitle + ich, cch - ich, &ch) : 1;
+    return ich + (c == 0 ? 1 : (UINT)c);
+}
+
+static UINT IchEditPrev(HWND hwnd, UINT ich) {
+    return ich == 0 ? 0 : IchEditBoundary(hwnd, ich - 1);
+}
+
 static void SelectEdit(HWND hwnd, UINT ichAnchor, UINT ichCaret) {
     UINT cch = CchEdit(hwnd);
-    hwnd->ichAnchor = min(ichAnchor, cch);
-    hwnd->ichCaret = min(ichCaret, cch);
+    hwnd->ichAnchor = IchEditBoundary(hwnd, min(ichAnchor, cch));
+    hwnd->ichCaret = IchEditBoundary(hwnd, min(ichCaret, cch));
     hwnd->fEditTyping = FALSE;
     hwnd->iEditUndoAction = editUndoSeparate;
     hwnd->fEditManualScroll = FALSE;
@@ -47,6 +82,7 @@ static void SelectEdit(HWND hwnd, UINT ichAnchor, UINT ichCaret) {
 }
 
 static void ChangedEdit(HWND hwnd, BOOL fNotify) {
+    if (fNotify) hwnd->fEditInputRejected = FALSE;
     SyncEditScroll(hwnd);
     if (!IsWindow(hwnd)) return;
     InvalidateRect(hwnd, NULL, TRUE);
@@ -75,7 +111,7 @@ static BYTE ChEditCase(BYTE ch, BOOL fUpper) {
 
 static void NormalizeEditCase(HWND hwnd) {
     char *pch;
-    if (!(hwnd->dwStyle & (ES_UPPERCASE | ES_LOWERCASE))) return;
+    if (hwnd->fUtf8Text || !(hwnd->dwStyle & (ES_UPPERCASE | ES_LOWERCASE))) return;
     for (pch = hwnd->pszTitle; *pch; pch++)
         *pch = (char)ChEditCase((BYTE)*pch, (hwnd->dwStyle & ES_UPPERCASE) != 0);
 }
@@ -99,6 +135,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     if (fUser && (hwnd->dwStyle & ES_READONLY)) return;
     fLimit = cch > (hwnd->cchLimit > cchBase ? hwnd->cchLimit - cchBase : 0);
     if (fLimit) cch = hwnd->cchLimit > cchBase ? hwnd->cchLimit - cchBase : 0;
+    if (hwnd->fUtf8Text) cch = CchUtf8Prefix(psz, cch);
     if (fLimit && cch == 0 && ichFirst == ichLast) {
         // The SDK still notifies at the limit, but no text entered the undo buffer.
         hwnd->fModified = TRUE; NotifyEdit(hwnd, EN_MAXTEXT);
@@ -114,7 +151,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     memcpy(pszNew, hwnd->pszTitle, ichFirst);
     memcpy(pszNew + ichFirst, psz, cch);
     memcpy(pszNew + ichFirst + cch, hwnd->pszTitle + ichLast, cchOld - ichLast + 1);
-    for (i = ichFirst; i < ichFirst + cch; i++) {
+    for (i = ichFirst; !hwnd->fUtf8Text && i < ichFirst + cch; i++) {
         if (hwnd->dwStyle & ES_UPPERCASE) pszNew[i] = (char)ChEditCase((BYTE)pszNew[i], TRUE);
         else if (hwnd->dwStyle & ES_LOWERCASE) pszNew[i] = (char)ChEditCase((BYTE)pszNew[i], FALSE);
     }
@@ -173,8 +210,12 @@ static BOOL CopyEdit(HWND hwnd) {
     if (cch > (SIZE_MAX - 1) / 4) return FALSE;
     psz = SDL_malloc(cch * 4 + 1);
     if (!psz) return FALSE;
-    for (i = ichFirst, pch = psz; i < ichLast; i++) pch = SDL_UCS4ToUTF8(DwCompatAnsiChar((BYTE)hwnd->pszTitle[i]), pch);
-    *pch = 0;
+    if (hwnd->fUtf8Text) {
+        memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
+    } else {
+        for (i = ichFirst, pch = psz; i < ichLast; i++) pch = SDL_UCS4ToUTF8(DwCompatAnsiChar((BYTE)hwnd->pszTitle[i]), pch);
+        *pch = 0;
+    }
     fOk = SDL_SetClipboardText(psz);
     SDL_free(psz);
     return fOk;
@@ -184,12 +225,34 @@ static void PasteEdit(HWND hwnd) {
     char *pszUtf, *psz, *pch;
     const char *pchUtf;
     DWORD ch;
-    int i;
+    int i, c;
+    size_t cbUtf;
     if (hwnd->dwStyle & ES_READONLY) return;
     pszUtf = SDL_GetClipboardText();
     if (!pszUtf) return;
+    if (hwnd->fUtf8Text) {
+        pchUtf = pszUtf;
+        cbUtf = strlen(pszUtf);
+        while (cbUtf != 0) {
+            c = CbUtf8Char(pchUtf, cbUtf, &ch);
+            if (c == 0) { SDL_free(pszUtf); return; }
+            pchUtf += c; cbUtf -= c;
+        }
+        pch = strpbrk(pszUtf, "\r\n");
+        if (pch && !(hwnd->dwStyle & ES_MULTILINE)) *pch = 0;
+        ReplaceEdit(hwnd, pszUtf, TRUE, TRUE, editUndoSeparate);
+        SDL_free(pszUtf); return;
+    }
     psz = SDL_malloc(strlen(pszUtf) + 1);
     if (!psz) { SDL_free(pszUtf); return; }
+    if (hwnd->dwStyle & ES_PASSWORD) {
+        pch = strpbrk(pszUtf, "\r\n"); if (pch) *pch = 0;
+        if (CchUtf8ToLegacy(psz, strlen(pszUtf) + 1, pszUtf, strlen(pszUtf)) < 0) {
+            hwnd->fEditInputRejected = TRUE; SDL_free(psz); SDL_free(pszUtf); return;
+        }
+        ReplaceEdit(hwnd, psz, TRUE, TRUE, editUndoSeparate);
+        SDL_free(psz); SDL_free(pszUtf); return;
+    }
     for (pch = psz, pchUtf = pszUtf; *pchUtf;) {
         ch = SDL_StepUTF8(&pchUtf, NULL);
         if (!(hwnd->dwStyle & ES_MULTILINE) && (ch == '\r' || ch == '\n')) break;
@@ -477,8 +540,8 @@ static UINT IchEditPoint(HWND hwnd, LPARAM l) {
     cx = CxEdit(hdc, hwnd->pszTitle + ich, ichEnd - ich, (hwnd->dwStyle & ES_PASSWORD) != 0);
     if (hwnd->dwStyle & ES_RIGHT) x -= max(0, rc.right - rc.left - cx);
     else if (hwnd->dwStyle & ES_CENTER) x -= max(0, (rc.right - rc.left - cx) / 2);
-    for (; ich < ichEnd; ich++) {
-        cx = CxEdit(hdc, hwnd->pszTitle + ich, 1, (hwnd->dwStyle & ES_PASSWORD) != 0);
+    for (; ich < ichEnd; ich = IchEditNext(hwnd, ich)) {
+        cx = CxEdit(hdc, hwnd->pszTitle + ich, IchEditNext(hwnd, ich) - ich, (hwnd->dwStyle & ES_PASSWORD) != 0);
         if (x < cxPrev + cx / 2) break;
         cxPrev += cx;
     }
@@ -518,7 +581,8 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     LRESULT result;
     WORD cchMax;
     RECT rc;
-    char sz[3];
+    char sz[8];
+    char *pch;
     if (!lp) return 0;
     cch = CchEdit(hwnd);
     switch (msg) {
@@ -615,6 +679,7 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_SETTEXT:
         result = DefWindowProcA(hwnd, msg, w, l ? l : (LPARAM)"");
         if (result) {
+            lp->fEditInputRejected = FALSE;
             NormalizeEditCase(hwnd);
             EmptyEditUndo(hwnd);
             lp->ichAnchor = lp->ichCaret = 0; lp->fModified = FALSE;
@@ -674,10 +739,10 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fCtrl && w == 'Z') { UndoEdit(hwnd); return 0; }
         if (w == VK_LEFT) {
             if (fCtrl) ich = IchEditWord(hwnd, ich, FALSE);
-            else if (ich != 0) { ich--; if (ich != 0 && lp->pszTitle[ich] == '\n' && lp->pszTitle[ich - 1] == '\r') ich--; }
+            else if (ich != 0) { ich = IchEditPrev(hwnd, ich); if (ich != 0 && lp->pszTitle[ich] == '\n' && lp->pszTitle[ich - 1] == '\r') ich--; }
         } else if (w == VK_RIGHT) {
             if (fCtrl) ich = IchEditWord(hwnd, ich, TRUE);
-            else if (ich < cch) { if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') ich++; ich++; }
+            else if (ich < cch) { if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') ich++; ich = IchEditNext(hwnd, ich); }
         }
         else if (w == VK_HOME) ich = !fCtrl && (lp->dwStyle & ES_MULTILINE) ? IchLineStart(hwnd, ich) : 0;
         else if (w == VK_END) ich = !fCtrl && (lp->dwStyle & ES_MULTILINE) ? IchLineEnd(hwnd, ich) : cch;
@@ -693,9 +758,10 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         else if (w == VK_DELETE) {
             if (lp->dwStyle & ES_READONLY) return 0;
+            lp->fEditInputRejected = FALSE;
             iUndoAction = lp->ichAnchor == lp->ichCaret ? editUndoDelete : editUndoSeparate;
             if (lp->ichAnchor == ich && ich < cch) {
-                lp->ichCaret = ich + 1;
+                lp->ichCaret = IchEditNext(hwnd, ich);
                 if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') lp->ichCaret++;
             }
             if (lp->ichAnchor != lp->ichCaret) ReplaceEdit(hwnd, "", TRUE, TRUE, iUndoAction);
@@ -705,17 +771,25 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_CHAR:
         if (lp->dwStyle & ES_READONLY) return 0;
         if (w == '\b') {
+            lp->fEditInputRejected = FALSE;
             iUndoAction = lp->ichAnchor == lp->ichCaret ? editUndoBackspace : editUndoSeparate;
             if (lp->ichAnchor == lp->ichCaret && lp->ichCaret != 0) {
-                lp->ichAnchor--;
+                lp->ichAnchor = IchEditPrev(hwnd, lp->ichAnchor);
                 if (lp->ichAnchor != 0 && lp->pszTitle[lp->ichAnchor] == '\n' && lp->pszTitle[lp->ichAnchor - 1] == '\r') lp->ichAnchor--;
             }
             if (lp->ichAnchor != lp->ichCaret) ReplaceEdit(hwnd, "", TRUE, TRUE, iUndoAction);
         } else if (w == '\r' && (lp->dwStyle & ES_MULTILINE)) ReplaceEdit(hwnd, "\r\n", TRUE, TRUE, editUndoSeparate);
-        else if (w >= 32 && w <= 255 && (!(lp->dwStyle & ES_NUMBER) || (w >= '0' && w <= '9'))) {
+        else if (lp->fUtf8Text && w >= 32 && w <= 0x10ffff && !(w >= 0xd800 && w <= 0xdfff)) {
+            pch = SDL_UCS4ToUTF8((Uint32)w, sz); *pch = 0; ReplaceEdit(hwnd, sz, TRUE, TRUE, editUndoTyping);
+        } else if (w >= 32 && w <= 255 && (!(lp->dwStyle & ES_NUMBER) || (w >= '0' && w <= '9'))) {
             sz[0] = (char)w; sz[1] = 0; ReplaceEdit(hwnd, sz, TRUE, TRUE, editUndoTyping);
         }
         return 0;
     default: return DefWindowProcA(hwnd, msg, w, l);
     }
+}
+
+BOOL StarsCompatTextInputRejected(HWND hwnd) {
+    HWND lp = LpCompatWindow(hwnd);
+    return lp && lp->fEditInputRejected;
 }

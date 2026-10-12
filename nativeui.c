@@ -1,4 +1,7 @@
 #include "win.h"
+#ifdef STARS_UI_SDL
+#include <stars_compat.h>
+#endif
 
 DWORD GetTextExtent(HDC hdc, LPCSTR str, int len) {
     SIZE size;
@@ -110,4 +113,166 @@ int16_t CWheelLines(int16_t cPage) {
     if (cLines == WHEEL_PAGESCROLL || cLines > (UINT)cPage)
         return cPage;
     return (int16_t)cLines;
+}
+
+#ifdef _WIN32
+static DWORD dwNativeFileDialogError;
+
+static WCHAR *LpwszDialogText(const char *psz, UINT cp, int cch) {
+    WCHAR *pwsz;
+    int c;
+    if (!psz) return NULL;
+    c = MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, cch, NULL, 0);
+    if (c == 0) return NULL;
+    pwsz = calloc((size_t)c + 1, sizeof(*pwsz));
+    if (!pwsz || !MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, cch, pwsz, c)) {
+        free(pwsz); return NULL;
+    }
+    return pwsz;
+}
+
+static int CchDialogFilter(const char *psz) {
+    const char *pch = psz;
+    if (!psz) return 0;
+    while (*pch) pch += strlen(pch) + 1;
+    return (int)(pch - psz + 1);
+}
+
+static BOOL FNativeFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
+    OPENFILENAMEW ofw = {0};
+    WCHAR *pwszFile = NULL, *pwszInitial = NULL, *pwszTitle = NULL;
+    WCHAR *pwszFilter = NULL, *pwszExt = NULL;
+    char *pszFile = NULL, *pszTitle = NULL;
+    BOOL fRet = FALSE;
+    int cb, cbTitle, ibFile, ibExt;
+    dwNativeFileDialogError = 0;
+    if (!lpof || lpof->lStructSize != sizeof(*lpof)) {
+        dwNativeFileDialogError = CDERR_STRUCTSIZE; return FALSE;
+    }
+    if (!lpof->lpstrFile || lpof->nMaxFile == 0 || lpof->nMaxFile > INT_MAX ||
+        !memchr(lpof->lpstrFile, 0, lpof->nMaxFile) ||
+        (lpof->Flags & (OFN_ALLOWMULTISELECT | OFN_ENABLEHOOK | OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE)) ||
+        lpof->lpstrCustomFilter) {
+        dwNativeFileDialogError = FNERR_INVALIDFILENAME; return FALSE;
+    }
+    pwszFile = calloc(lpof->nMaxFile, sizeof(*pwszFile));
+    if (!pwszFile) { dwNativeFileDialogError = CDERR_MEMALLOCFAILURE; goto done; }
+    if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, lpof->lpstrFile, -1, pwszFile, (int)lpof->nMaxFile)) {
+        dwNativeFileDialogError = FNERR_INVALIDFILENAME; goto done;
+    }
+    pwszInitial = LpwszDialogText(lpof->lpstrInitialDir, CP_UTF8, -1);
+    pwszTitle = LpwszDialogText(lpof->lpstrTitle, 1252, -1);
+    pwszFilter = LpwszDialogText(lpof->lpstrFilter, 1252, CchDialogFilter(lpof->lpstrFilter));
+    pwszExt = LpwszDialogText(lpof->lpstrDefExt, 1252, -1);
+    if ((lpof->lpstrInitialDir && !pwszInitial) || (lpof->lpstrTitle && !pwszTitle) ||
+        (lpof->lpstrFilter && !pwszFilter) || (lpof->lpstrDefExt && !pwszExt)) {
+        dwNativeFileDialogError = FNERR_INVALIDFILENAME; goto done;
+    }
+    ofw.lStructSize = sizeof(ofw); ofw.hwndOwner = lpof->hwndOwner; ofw.hInstance = lpof->hInstance;
+    ofw.lpstrFilter = pwszFilter; ofw.nFilterIndex = lpof->nFilterIndex;
+    ofw.lpstrFile = pwszFile; ofw.nMaxFile = lpof->nMaxFile;
+    ofw.lpstrInitialDir = pwszInitial; ofw.lpstrTitle = pwszTitle;
+    ofw.lpstrDefExt = pwszExt; ofw.Flags = lpof->Flags; ofw.FlagsEx = lpof->FlagsEx;
+    if (!(fSave ? GetSaveFileNameW(&ofw) : GetOpenFileNameW(&ofw))) {
+        dwNativeFileDialogError = CommDlgExtendedError();
+        if (dwNativeFileDialogError == FNERR_BUFFERTOOSMALL && lpof->nMaxFile >= 2)
+            memcpy(lpof->lpstrFile, pwszFile, 2);
+        goto done;
+    }
+    cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwszFile, -1, NULL, 0, NULL, NULL);
+    if (cb == 0) { dwNativeFileDialogError = FNERR_INVALIDFILENAME; goto done; }
+    if ((DWORD)cb > lpof->nMaxFile) {
+        WORD cbRequired = (WORD)min(cb, UINT16_MAX);
+        dwNativeFileDialogError = FNERR_BUFFERTOOSMALL;
+        if (lpof->nMaxFile >= 2) memcpy(lpof->lpstrFile, &cbRequired, sizeof(cbRequired));
+        goto done;
+    }
+    pszFile = malloc(cb);
+    if (!pszFile) { dwNativeFileDialogError = CDERR_MEMALLOCFAILURE; goto done; }
+    if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwszFile, -1, pszFile, cb, NULL, NULL)) goto invalid;
+    ibFile = ofw.nFileOffset == 0 ? 0 : WideCharToMultiByte(CP_UTF8, 0, pwszFile, ofw.nFileOffset, NULL, 0, NULL, NULL);
+    ibExt = ofw.nFileExtension == 0 ? 0 : WideCharToMultiByte(CP_UTF8, 0, pwszFile, ofw.nFileExtension, NULL, 0, NULL, NULL);
+    if (ibFile > UINT16_MAX || ibExt > UINT16_MAX) goto invalid;
+    cbTitle = cb - ibFile;
+    if (lpof->lpstrFileTitle && lpof->nMaxFileTitle != 0) {
+        if ((DWORD)cbTitle > lpof->nMaxFileTitle) {
+            dwNativeFileDialogError = FNERR_BUFFERTOOSMALL; goto done;
+        }
+        pszTitle = malloc(cbTitle);
+        if (!pszTitle) { dwNativeFileDialogError = CDERR_MEMALLOCFAILURE; goto done; }
+        memcpy(pszTitle, pszFile + ibFile, cbTitle);
+    }
+    memcpy(lpof->lpstrFile, pszFile, cb);
+    if (pszTitle) memcpy(lpof->lpstrFileTitle, pszTitle, cbTitle);
+    lpof->nFileOffset = (WORD)ibFile; lpof->nFileExtension = (WORD)ibExt;
+    lpof->nFilterIndex = ofw.nFilterIndex; lpof->Flags = ofw.Flags;
+    fRet = TRUE; goto done;
+invalid:
+    dwNativeFileDialogError = FNERR_INVALIDFILENAME;
+done:
+    free(pwszFile); free(pwszInitial); free(pwszTitle); free(pwszFilter); free(pwszExt);
+    free(pszFile); free(pszTitle);
+    return fRet;
+}
+static BOOL FReportNativeFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
+    BOOL fRet = FNativeFileDialog(lpof, fSave);
+    if (!fRet && dwNativeFileDialogError != 0)
+        AlertSz(PszGetCompressedString(idsNativeFileSelectionFailed), MB_ICONHAND);
+    return fRet;
+}
+BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return FReportNativeFileDialog(lpof, FALSE); }
+BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return FReportNativeFileDialog(lpof, TRUE); }
+DWORD DwNativeFileDialogError(void) { return dwNativeFileDialogError; }
+#endif
+
+#ifndef _WIN32
+BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return GetOpenFileNameA(lpof); }
+BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
+DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
+#endif
+
+int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {
+#ifdef _WIN32
+    WCHAR *pwsz;
+    BOOL fDefault = FALSE;
+    int cch, cb;
+    if (cchMax <= 0) return -1;
+    psz[0] = 0;
+    cch = GetWindowTextLengthW(hwnd);
+    pwsz = calloc((size_t)cch + 1, sizeof(*pwsz));
+    if (!pwsz) return -1;
+    GetWindowTextW(hwnd, pwsz, cch + 1);
+    cb = WideCharToMultiByte(1252, WC_NO_BEST_FIT_CHARS, pwsz, -1, psz, cchMax, NULL, &fDefault);
+    free(pwsz);
+    if (cb == 0 || fDefault) { psz[0] = 0; return -1; }
+    return cb - 1;
+#else
+    if (StarsCompatTextInputRejected(hwnd)) {
+        if (cchMax > 0) psz[0] = 0;
+        return -1;
+    }
+    return GetWindowTextA(hwnd, psz, cchMax);
+#endif
+}
+
+BOOL FSetLegacyWindowText(HWND hwnd, const char *psz) {
+#ifdef _WIN32
+    WCHAR *pwsz = LpwszDialogText(psz, 1252, -1);
+    BOOL fResult;
+    if (!pwsz) return FALSE;
+    fResult = SetWindowTextW(hwnd, pwsz); free(pwsz); return fResult;
+#else
+    return SetWindowTextA(hwnd, psz);
+#endif
+}
+
+BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {
+#ifdef _WIN32
+    WCHAR *pwsz = LpwszDialogText(psz, CP_UTF8, -1);
+    BOOL fResult;
+    if (!pwsz) return FALSE;
+    fResult = SetWindowTextW(hwnd, pwsz); free(pwsz); return fResult;
+#else
+    return StarsCompatSetWindowTitleUtf8(hwnd, psz);
+#endif
 }

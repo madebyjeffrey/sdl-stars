@@ -830,3 +830,15 @@ if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
     set_tests_properties(win32_client_race_wayland PROPERTIES
         ENVIRONMENT "STARS_CLIENT_RACE_CAPTURE=${CMAKE_BINARY_DIR}/test-client/habitat-wayland.bmp")
 endif()
+
+add_executable(stars-compat-utf8 tests/compat/win32_utf8.c)
+target_link_libraries(stars-compat-utf8 PRIVATE stars_win32 SDL3::SDL3)
+target_include_directories(stars-compat-utf8 PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_compile_options(stars-compat-utf8 PRIVATE -Wall -Wextra -Wpedantic -Werror)
+set_target_properties(stars-compat-utf8 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_dependencies(stars-compat-filedialog stars-compat-utf8)
+if(STARS_BUILD_TESTS)
+    add_test(NAME win32_utf8 COMMAND stars-compat-utf8)
+    set_tests_properties(win32_utf8 PROPERTIES LABELS "compat" TIMEOUT 30
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+endif()

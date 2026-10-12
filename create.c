@@ -1342,9 +1342,9 @@ void CreateTutorWorld() {
     Randomize(1234567890);
     for (i = 1; i <= 2; i++) {
         CchSprintf(szWork, PszGetCompressedString(idsSHD), szBase, i);
-        remove(szWork);
+        RemoveNativeFile(szWork);
         CchSprintf(szWork, PszGetCompressedString(idsSXD), szBase, i);
-        remove(szWork);
+        RemoveNativeFile(szWork);
     }
     GenerateWorld(FALSE);
     return;

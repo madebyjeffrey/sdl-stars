@@ -8,6 +8,20 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Native Windows paths and file selection use UTF-16 APIs behind UTF-8 application
+  boundaries. Open/save offsets remain byte offsets; Unicode paths work through
+  core reads/writes, existence checks, backups and cleanup. Fallback file-picker
+  fields now edit/draw UTF-8 with font fallback, preserving clipboard and filename
+  bytes. Native captions and hierarchy inspection retain their encoding.
+- `ParseCmdLine` converts native UTF-8 passwords to the existing CP1252 bytes and
+  rejects malformed, unrepresentable or overlong input. Password fields use
+  explicit conversion and SDL rejects unsupported password input/paste instead
+  of substituting `?`. Existing file layouts and password hashes are preserved.
+- `LSaltFromSz` explicitly performs the original 32-bit wrapping arithmetic,
+  removing signed-overflow undefined behavior exposed by long accented passwords.
+  Direct race loads retain complete UTF-8 cache boundaries and full UI suggestions;
+  filename abbreviations no longer lowercase or cut inside UTF-8 bytes.
+
 - Native Wayland windows leave desktop placement to the compositor instead of
   failing creation. Menus/tooltips retain parent-relative coordinates; pointer
   queries and captured input use surface coordinates. High-density windows keep

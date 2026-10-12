@@ -439,7 +439,8 @@ buffer in the 2.8 build). Nothing read them before they were set again, so
 results did not change; a hardened `strcpy` (macOS) stops the program.
 
 **2.9:** found running `stars-host -a` on macOS. `FWasRaceFile` keeps only
-the file name, cut to fit, as the race dialogs store it.
+the file name, cut to fit at a complete UTF-8 boundary, as the race dialogs
+store it. UI storage retains the full native suggestion after direct race loads.
 
 ### AR Starter Colonies — candidate
 

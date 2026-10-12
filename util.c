@@ -2484,7 +2484,7 @@ void ClearFile(int16_t dt) {
         strcat(szFile, ".");
     }
     strcat(szFile, mpdtsz[dt]);
-    remove(szFile);
+    RemoveNativeFile(szFile);
     return;
 }
 

@@ -48,4 +48,12 @@
 #include "utilui.h"
 #include "vcr.h"
 
+// File paths stay UTF-8; Windows labels are converted explicitly from CP1252.
+BOOL FNativeOpenFileName(OPENFILENAMEA *lpof);
+BOOL FNativeSaveFileName(OPENFILENAMEA *lpof);
+DWORD DwNativeFileDialogError(void);
+int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax);
+BOOL FSetLegacyWindowText(HWND hwnd, const char *psz);
+BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz);
+
 #endif

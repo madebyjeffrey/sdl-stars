@@ -165,7 +165,7 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
     return hwnd;
 }
 
-static BOOL FAnsiInput(const char **lppsz, BYTE *lpch) {
+static BOOL FAnsiInput(const char **lppsz, BYTE *lpch, BOOL fStrict) {
     const unsigned char *psz = (const unsigned char *)*lppsz;
     DWORD ch;
     int c, i;
@@ -186,6 +186,7 @@ static BOOL FAnsiInput(const char **lppsz, BYTE *lpch) {
         *lpch = '?';
         for (i = 0x80; i < 0xa0; i++)
             if (DwCompatAnsiChar((BYTE)i) == ch) { *lpch = (BYTE)i; break; }
+        if (fStrict && i == 0xa0) return FALSE;
     }
     return TRUE;
 }
@@ -193,13 +194,24 @@ static BOOL FAnsiInput(const char **lppsz, BYTE *lpch) {
 void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
     BYTE ch;
+    BOOL fStrict;
+    if (!IsWindow(hwnd)) return;
+    fStrict = !hwnd->fUtf8Text && (hwnd->dwStyle & ES_PASSWORD);
     // Validate the whole event before posting, so malformed UTF-8 adds no prefix.
     while (*psz)
-        if (!FAnsiInput(&psz, &ch)) { SDL_SetError("Malformed UTF-8 text input"); return; }
+        if (!FAnsiInput(&psz, &ch, fStrict)) {
+            if (fStrict) hwnd->fEditInputRejected = TRUE;
+            SDL_SetError("Text input is malformed or not representable in this password field"); return;
+        }
     psz = pszText;
     while (*psz) {
-        if (!FAnsiInput(&psz, &ch)) return;
-        CompatPostInput(hwnd, WM_CHAR, ch, 1);
+        if (hwnd->fUtf8Text) {
+            DWORD chUtf8 = SDL_StepUTF8(&psz, NULL);
+            CompatPostInput(hwnd, WM_CHAR, chUtf8, 1);
+        } else {
+            if (!FAnsiInput(&psz, &ch, FALSE)) return;
+            CompatPostInput(hwnd, WM_CHAR, ch, 1);
+        }
     }
 }
 

@@ -6,6 +6,8 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "encoding.h"
 
 /*
  * Win32 basics
@@ -92,8 +94,8 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
  *
  * The game reads and writes one file at a time through hf, a small handle
  * that Win16 OpenFile returned (file.c). These keep that interface on every
- * platform: Win32 keeps the original calls; POSIX has no share modes, so a
- * file another program has open is not refused there.
+ * platform: Windows converts UTF-8 paths to UTF-16 at the CRT boundary.
+ * POSIX has no share modes, so a file another program has open is not refused.
  */
 
 // HfOpenFile opens szFile with Win16 OpenFile flags (mdRead and the like)
@@ -109,6 +111,13 @@ void    CloseFile(int16_t hf);
 int16_t FFileExists(char *szFile);
 int16_t FFileReadOnly(char *szFile);
 void    MakeDir(char *szDir);
+int     RemoveNativeFile(const char *psz);
+int     RenameNativeFile(const char *pszOld, const char *pszNew);
+FILE   *PfOpenNativeFile(const char *psz, const char *pszMode);
+#ifdef _WIN32
+char   *PszNativeCommandLine(void);
+char  **RgpszNativeArguments(int *lpc);
+#endif
 
 // File names: the directory separator.
 #ifdef _WIN32

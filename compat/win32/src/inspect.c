@@ -140,6 +140,7 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         lpitem->iControl = lpwin->iControl; lpitem->fDialog = lpwin->fDialog;
         lpitem->fVisible = IsWindowVisible(lpwin); lpitem->fEnabled = IsWindowEnabled(lpwin);
         lpitem->fFocused = GetFocus() == lpwin; lpitem->fCaptured = GetCapture() == lpwin;
+        lpitem->fUtf8Text = lpwin->fUtf8Text || lpwin->fUtf8Title;
         lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass);
         lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & ES_PASSWORD) ?
                                     "[password]" : lpwin->pszTitle);
@@ -152,13 +153,19 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     return TRUE;
 }
 
-static BOOL FWriteString(FILE *lpfile, const char *psz) {
+static BOOL FWriteString(FILE *lpfile, const char *psz, BOOL fUtf8) {
     const BYTE *lpch = (const BYTE *)psz;
     char rgb[4], *lpEnd;
     DWORD ch;
+    size_t cb = strlen(psz);
+    int c;
     if (fputc('"', lpfile) == EOF) return FALSE;
     while (*lpch) {
-        ch = DwCompatAnsiChar(*lpch++);
+        if (fUtf8) {
+            c = CbUtf8Char((const char *)lpch, cb, &ch);
+            if (c == 0) { ch = 0xfffd; c = 1; }
+            lpch += c; cb -= c;
+        } else ch = DwCompatAnsiChar(*lpch++);
         if (ch == '"' || ch == '\\') {
             if (fputc('\\', lpfile) == EOF || fputc((int)ch, lpfile) == EOF) return FALSE;
         } else if (ch < 32) {
@@ -192,11 +199,11 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, FILE *lpfile) 
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
                     lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
                     lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom) < 0 ||
-            !FWriteString(lpfile, lp->pszClass) || fputs(",\"text\":", lpfile) == EOF ||
-            !FWriteString(lpfile, lp->pszText) || fputs(",\"styleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szStyle) || fputs(",\"exStyleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szExStyle) || fputs(",\"controlKindName\":", lpfile) == EOF ||
-            !FWriteString(lpfile, PszControlKind(lp->iControl)) || fputc('}', lpfile) == EOF) return FALSE;
+            !FWriteString(lpfile, lp->pszClass, FALSE) || fputs(",\"text\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->pszText, lp->fUtf8Text) || fputs(",\"styleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szStyle, FALSE) || fputs(",\"exStyleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szExStyle, FALSE) || fputs(",\"controlKindName\":", lpfile) == EOF ||
+            !FWriteString(lpfile, PszControlKind(lp->iControl), FALSE) || fputc('}', lpfile) == EOF) return FALSE;
     }
     return fputs("\n]}\n", lpfile) != EOF && !ferror(lpfile);
 }
@@ -228,6 +235,7 @@ static void InspectDetails(HWND hwnd) {
         (unsigned)lp->dwStyle, szStyle, (unsigned)lp->dwExStyle, szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
+    GetDlgItem(hwnd, 2)->fUtf8Text = lp->fUtf8Text;
     SetWindowTextA(GetDlgItem(hwnd, 2), psz);
     SDL_free(psz);
 }
@@ -235,13 +243,21 @@ static void InspectDetails(HWND hwnd) {
 static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
     size_t i;
     int iRow;
-    char sz[512], szText[180], *lpch;
+    char sz[512], szText[180], *lpch, *pszUtf;
+    size_t cb, cch;
     const STARSCOMPATWINDOW *lp;
     if (cDepth >= 64) return;
     for (i = 0; i < snapInspector.cWindow; i++) {
         lp = &snapInspector.rgWindow[i];
         if (lp->idParent != idParent) continue;
-        SDL_strlcpy(szText, lp->pszText, sizeof(szText));
+        cb = strlen(lp->pszText);
+        if (cb > (SIZE_MAX - 1) / 3) continue;
+        pszUtf = SDL_malloc(cb * 3 + 1);
+        if (!pszUtf) continue;
+        if (lp->fUtf8Text) memcpy(pszUtf, lp->pszText, cb + 1);
+        else CchLegacyToUtf8(pszUtf, cb * 3 + 1, lp->pszText, cb);
+        cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
+        memcpy(szText, pszUtf, cch); szText[cch] = 0; SDL_free(pszUtf);
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, (intptr_t)lp->idControl, szText, lp->fVisible ? "" : " (hidden)");
@@ -258,6 +274,7 @@ static BOOL RefreshInspector(HWND hwnd) {
     SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
     StarsCompatFreeHierarchy(&snapInspector);
     snapInspector = snap;
+    hwndList->fUtf8Text = TRUE;
     InspectRows(hwndList, 0, 0);
     SendMessageA(hwndList, LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);

@@ -560,8 +560,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                                race by path. Keep the file name, as the race
                                dialogs do. */
                             pch = strrchr(szFile, chDirSep);
-                            strncpy(szRaceFile, pch ? pch + 1 : szFile, sizeof(szRaceFile) - 1);
-                            szRaceFile[sizeof(szRaceFile) - 1] = 0;
+                            SetSzRaceFile(pch ? pch + 1 : szFile);
                             StreamClose();
                             fFileErrSilent = fSav;
                             penvMem = penvMemSav;
