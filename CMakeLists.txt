@@ -19,8 +19,8 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop compatibility targets" OFF)
-if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(FATAL_ERROR "The SDL compatibility targets currently require native Linux")
+if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
+    message(FATAL_ERROR "The SDL compatibility targets require native Linux or macOS")
 endif()
 
 option(STARS_ENABLE_SANITIZERS "Instrument native Linux code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)

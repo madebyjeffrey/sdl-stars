@@ -11,6 +11,7 @@ static HWND hwndCapture, rghwndClick[3];
 static unsigned int rgcClick[3];
 static BYTE rgbInput[256], rgbRead[256], rgbRecent[256], rgbAsync[256];
 static POINT ptCursor;
+static HWND hwndCursor;
 static BOOL fCursor, fInputKeys;
 
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
@@ -27,6 +28,7 @@ void CompatResetInput(void) {
     memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));
     memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));
     fCursor = fInputKeys = FALSE;
+    hwndCursor = NULL;
     memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
 }
 
@@ -72,13 +74,22 @@ static void InputMouse(HWND hwnd, int x, int y, WPARAM buttons) {
     SetKeyDown(VK_LBUTTON, buttons & MK_LBUTTON);
     SetKeyDown(VK_RBUTTON, buttons & MK_RBUTTON);
     SetKeyDown(VK_MBUTTON, buttons & MK_MBUTTON);
-    if (ClientToScreen(hwnd, &pt)) { ptCursor = pt; fCursor = TRUE; }
+    if (ClientToScreen(hwnd, &pt)) { ptCursor = pt; hwndCursor = hwnd; fCursor = TRUE; }
     CompatCursorPoint(hwnd, x, y);
+}
+
+HWND HwndCompatPointerRoot(void) {
+    SDL_Window *lpWindow = SDL_GetMouseFocus();
+    HWND hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : NULL;
+    return HwndCompatRoot(hwnd ? hwnd : LpCompatWindow(hwndCursor));
 }
 
 BOOL WINAPI GetCursorPos(LPPOINT lppt) {
     const char *pszDriver;
     float x, y;
+    HWND hwnd;
+    SDL_Window *lpWindow;
+    POINT pt;
     if (!SDL_IsMainThread() || !lppt || !(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -89,8 +100,24 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
         *lppt = ptCursor;
         return TRUE;
     }
-    // SDL's fallback is window-relative, so require a qualified global backend.
-    if (!pszDriver || strcmp(pszDriver, "x11") != 0) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+    if (pszDriver && strcmp(pszDriver, "wayland") == 0) {
+        lpWindow = SDL_GetMouseFocus();
+        hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : NULL;
+        if (hwnd) {
+            SDL_GetMouseState(&x, &y);
+            if (!FInputPoint(x, y, &pt.x, &pt.y)) return FALSE;
+            pt.y -= CyCompatMenuBar(hwnd);
+            if (!ClientToScreen(hwnd, &pt)) return FALSE;
+            *lppt = pt;
+            return TRUE;
+        }
+        // Retain the last delivered point during captured or queued input;
+        // no global position outside our surfaces exists on Wayland.
+        if (fCursor && IsWindow(hwndCursor)) { *lppt = ptCursor; return TRUE; }
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
+    if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0)) { SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
     SDL_GetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || (double)x < INT32_MIN || (double)x > INT32_MAX ||
         (double)y < INT32_MIN || (double)y > INT32_MAX) return FALSE;
@@ -261,7 +288,8 @@ SHORT WINAPI GetAsyncKeyState(int vk) {
     rgb[VK_SHIFT] |= rgb[VK_LSHIFT] | rgb[VK_RSHIFT];
     rgb[VK_CONTROL] |= rgb[VK_LCONTROL] | rgb[VK_RCONTROL];
     rgb[VK_MENU] |= rgb[VK_LMENU] | rgb[VK_RMENU];
-    buttons = SDL_GetGlobalMouseState(NULL, NULL);
+    buttons = SDL_GetCurrentVideoDriver() && !strcmp(SDL_GetCurrentVideoDriver(), "wayland") ?
+              SDL_GetMouseState(NULL, NULL) : SDL_GetGlobalMouseState(NULL, NULL);
     rgb[VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
     rgb[VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
     rgb[VK_MBUTTON] = (buttons & SDL_BUTTON_MMASK) ? 0x80 : 0;

@@ -11,7 +11,11 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#ifdef __APPLE__
+#include <pthread.h>
+#else
 #include <sys/syscall.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 
@@ -32,7 +36,12 @@ int WINAPI MulDiv(int nNumber, int nNumerator, int nDenominator) {
 }
 
 DWORD WINAPI GetCurrentThreadId(void) {
+#ifdef __APPLE__
+    uint64_t id;
+    return pthread_threadid_np(NULL, &id) == 0 ? (DWORD)id : 0;
+#else
     return (DWORD)syscall(SYS_gettid);
+#endif
 }
 
 LPSTR WINAPI lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }

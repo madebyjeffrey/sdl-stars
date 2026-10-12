@@ -192,8 +192,10 @@ Full 80-page execution and later checkpoint evidence remain pending.
 `ScrollWindow` now moves client pixels, pending damage and whole-client children;
 paint regions preserve holes and support partial validation. See
 [content scrolling](WIN32-SCROLL-WINDOW.md). Compatibility window
-targets currently require X11/Xwayland; native Wayland root/popup adaptation is
-still unqualified, as documented in the positioning report. See
+targets now open on native Wayland with owner-local geometry and native popup
+roles. Private Weston Debug tests cover integer scaling and software/OpenGL
+presentation; the SDL-only LSan report, real hardware/compositor acceptance and
+macOS execution remain unqualified. See [desktop qualification](DESKTOP-QUALIFICATION.md). See
 [Free API adoption and coverage](FREE-API-ADOPTION.md),
 [compatibility headers](../compat/win32/README.md) and
 [SDL3 development](SDL3-DEVELOPMENT.md) for dependencies, CLion setup and

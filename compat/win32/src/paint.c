@@ -289,12 +289,12 @@ static BOOL FCanvas(HWND hwnd) {
         return TRUE;
     if (!hwnd->hwndParent && !hwnd->lpRenderer) {
         pszMode = SDL_getenv("STARS_SDL_RENDERER");
-        if (pszMode && strcmp(pszMode, "auto") != 0 && strcmp(pszMode, "software") != 0) {
-            SDL_SetError("GDI STARS_SDL_RENDERER must be auto or software");
+        if (pszMode && strcmp(pszMode, "auto") != 0 && strcmp(pszMode, "software") != 0 && strcmp(pszMode, "opengl") != 0) {
+            SDL_SetError("GDI STARS_SDL_RENDERER must be auto, software or opengl");
             return FALSE;
         }
         hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow,
-                                             pszMode && strcmp(pszMode, "software") == 0 ? "software" : NULL);
+                                             pszMode && strcmp(pszMode, "auto") != 0 ? pszMode : NULL);
         if (!hwnd->lpRenderer && (!pszMode || strcmp(pszMode, "auto") == 0))
             hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow, "software");
         if (!hwnd->lpRenderer)

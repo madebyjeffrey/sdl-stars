@@ -102,14 +102,17 @@ remain subject to the window manager and SDL backend. Arbitrary desktop stacking
 without activation is not yet reproduced. These constraints do not affect the
 logical child compositor.
 
-The compatibility windows currently require X11 (or Xwayland), or SDL's dummy
-backend for tests. Unlike the direct SDL smoke test, root creation in this layer
-requests an explicit position and fails if that backend rejects it. Pinned SDL's
-Wayland implementation rejects positioning non-popup windows; native Wayland
-root/popup adaptation remains unqualified work. In a Wayland desktop session,
-use `SDL_VIDEODRIVER=x11` for these compatibility application targets when
-Xwayland is available. This limitation was established from the pinned backend
-source; Xvfb tests do not verify Wayland behavior.
+Native Wayland creation now leaves top-level placement to the compositor.
+`SetWindowPos` still applies size and logical child placement, but top-level
+movement is advisory. Each top-level has an owner-local origin `(0,0)` because
+Wayland supplies no global desktop coordinates. Native menu/combo/tooltip
+popups retain compositor roles and actual parent-relative positions. These
+coordinates support conversions within an owner hierarchy; they cannot locate
+other applications or reproduce physical stacking between independent roots.
+Private Weston tests cover two top-level windows, popup repositioning, child
+transforms, captured input and software/OpenGL rendering at 100% and 200% scale.
+Hardware GPU, output migration/hotplug, fractional scaling and compositor-specific
+focus/decorations still require desktop qualification. X11/Xwayland remain supported.
 
 Geometry still uses client-sized surfaces; Windows nonclient borders, caption
 sizes, menu exclusion and DPI virtualization are not reproduced. Most shared

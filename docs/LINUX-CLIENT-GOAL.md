@@ -5,7 +5,8 @@ fullscreen, including return-to-title and failed-load paths. Debug and fatal
 sanitizer startup/race-wizard tests pass on dummy and private X11 displays;
 the native file-workflow tests also pass. The main game layout is unchanged.
 
-Current priority: finish milestones 1 and 2 for the product. The broader goal
+Current priority: desktop/platform qualification and immediate Unicode path/password
+fixes, with a separate local commit for each batch. The broader goal
 is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.
 Previously selected scope: milestones 1, 2, 3, 4, 7, 8 and 9.
@@ -19,7 +20,7 @@ of the behavior and release requirements below.
 | 2 | Application-relevant control behavior | Complete for Stars' used styles | Shared SDK/native control contracts, application workflows, fatal sanitizers and regression checks pass; generic extensions outside the product scope remain documented |
 | 3 | Gameplay UI workflow testing | In progress | Broader dialogs and complete workflows through inspection/headless tests, real input translation and stable state assertions |
 | 4 | Native tutorial runner | In progress | Full tutorial driven in process through hierarchy and map inspection, without AutoHotkey; checkpoint/action evidence and failure artifacts |
-| 7 | Wayland and desktop qualification | Pending | Native Wayland positions/popups, focus/capture, scale/multi-monitor and GPU/software presentation; documented platform limits |
+| 7 | Wayland and desktop qualification | Native Wayland implementation and Debug tests added; qualification incomplete | Native Wayland positions/popups, focus/capture, scale/multi-monitor and GPU/software presentation; documented platform limits |
 | 8 | UI polish | Pending | Message-pane wheel navigation and resolution of issues found during qualification |
 | 9 | Flatpak and relocatable Linux packaging | Pending | Flatpak manifest plus CMake install rules, resources/fonts/libraries, launch outside repository and clean-install verification |
 
@@ -29,8 +30,10 @@ Milestone 1 delivers Linux native open/save selection and the existing Windows
 standard dialogs, preserving application filename, filter, cancellation and
 validation contracts. Linux portal placement and scaling belong to the desktop
 picker; Stars supplies its correct parent and retains owner visibility/input
-modality. The macOS adapter remains source-only until a macOS machine can
-qualify it. Native Wayland desktop qualification remains milestone 7.
+modality. The macOS adapter now has an x86_64 SDL product build preset; a Mac must
+qualify compilation and execution. Native Wayland Debug tests now pass on private
+Weston at integer scales; the unresolved SDL-only graphics-stack LSan report and
+real desktop/hardware acceptance remain milestone 7. See [desktop qualification](DESKTOP-QUALIFICATION.md).
 
 Milestone 2 covers the control styles used by Stars' resource templates and
 dynamic UI: single-line edits, automatically scrolling multiline message edits,

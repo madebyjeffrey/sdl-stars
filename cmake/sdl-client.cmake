@@ -19,6 +19,7 @@ add_custom_command(OUTPUT "${STARS_HELP_GENERATED}/complete.stamp" "${STARS_HELP
 add_custom_target(stars-help-guide ALL DEPENDS "${STARS_HELP_GENERATED}/complete.stamp")
 add_dependencies(stars_win32 stars-help-guide)
 target_include_directories(stars_win32 PRIVATE "${STARS_HELP_GENERATED}")
+if(NOT APPLE)
 add_executable(stars-compat-help tests/compat/win32_help.c)
 target_link_libraries(stars-compat-help PRIVATE stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-help PRIVATE "${STARS_HELP_GENERATED}")
@@ -26,12 +27,13 @@ target_compile_options(stars-compat-help PRIVATE -Wall -Wextra -Wpedantic -Werro
 target_link_options(stars-compat-help PRIVATE "LINKER:--wrap=SDL_GetBasePath" "LINKER:--wrap=SDL_OpenURL")
 add_dependencies(stars-compat-help stars-help-guide)
 set_target_properties(stars-compat-help PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 add_executable(stars-compat-help-viewer tests/compat/win32_help_viewer.c)
 target_link_libraries(stars-compat-help-viewer PRIVATE stars_win32 SDL3::SDL3)
 target_compile_options(stars-compat-help-viewer PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_dependencies(stars-compat-help-viewer stars-help-guide)
 set_target_properties(stars-compat-help-viewer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-if(STARS_BUILD_TESTS)
+if(STARS_BUILD_TESTS AND NOT APPLE)
     add_test(NAME win32_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}" "${PROJECT_SOURCE_DIR}/res/stars!.hlp")
     set_tests_properties(win32_help PROPERTIES LABELS "compat" TIMEOUT 30)
     add_test(NAME win32_help_archive COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/test_hlp.py")
@@ -49,6 +51,17 @@ add_executable(stars-sdl compat/win32/src/entry.c)
 target_link_libraries(stars-sdl PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-sdl PRIVATE -Wall -Wextra -Wpedantic -Werror)
 set_target_properties(stars-sdl PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+# The qualification harness below uses GNU ld wrapping, X11 and private DBus.
+# Build the product and help viewer on macOS without Linux-only harness targets.
+if(APPLE)
+    add_executable(stars-compat-abi tests/compat/win32_abi.c tests/compat/win32_include_order.c)
+    target_link_libraries(stars-compat-abi PRIVATE stars_options stars_win32_headers)
+    add_executable(stars-compat-smoke tests/compat/sdl_smoke.c)
+    target_link_libraries(stars-compat-smoke PRIVATE SDL3::SDL3)
+    set_target_properties(stars-compat-abi stars-compat-smoke PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    return()
+endif()
 add_executable(stars-compat-entry compat/win32/src/entry.c tests/compat/win32_entry.c)
 target_link_libraries(stars-compat-entry PRIVATE stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-compat-entry PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -786,4 +799,34 @@ if(STARS_NATIVE_FILE_DIALOGS AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND STARS_BU
             "${PROJECT_SOURCE_DIR}/tests/compat/run_fileportal.py" --client "$<TARGET_FILE:stars-compat-fileportal>" --driver x11)
         set_tests_properties(win32_fileportal_x11 PROPERTIES LABELS "compat" ENVIRONMENT "STARS_TEST_PRIVATE_BUS=1" TIMEOUT 45)
     endif()
+endif()
+
+# Weston runs privately with no visible desktop or user session dependency.
+find_program(STARS_WESTON_EXECUTABLE NAMES weston)
+if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
+    add_executable(stars-compat-wayland tests/compat/win32_wayland.c)
+    target_link_libraries(stars-compat-wayland PRIVATE stars_win32 SDL3::SDL3)
+    target_include_directories(stars-compat-wayland PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+    target_compile_options(stars-compat-wayland PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_dependencies(stars-compat-windows stars-compat-wayland)
+    set_target_properties(stars-compat-wayland PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    foreach(STARS_WAYLAND_SCALE 1 2)
+        foreach(STARS_WAYLAND_RENDERER software opengl)
+            add_test(NAME win32_desktop_wayland_${STARS_WAYLAND_SCALE}_${STARS_WAYLAND_RENDERER}
+                COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/run_wayland.py"
+                    --weston "${STARS_WESTON_EXECUTABLE}" --scale ${STARS_WAYLAND_SCALE}
+                    --renderer ${STARS_WAYLAND_RENDERER} "$<TARGET_FILE:stars-compat-wayland>")
+            set_tests_properties(win32_desktop_wayland_${STARS_WAYLAND_SCALE}_${STARS_WAYLAND_RENDERER}
+                PROPERTIES LABELS "compat;wayland" RUN_SERIAL TRUE TIMEOUT 60)
+        endforeach()
+    endforeach()
+    foreach(STARS_WAYLAND_CLIENT startup race)
+        add_test(NAME win32_client_${STARS_WAYLAND_CLIENT}_wayland
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/run_wayland.py"
+                --weston "${STARS_WESTON_EXECUTABLE}" "$<TARGET_FILE:stars-compat-client-startup>")
+        set_tests_properties(win32_client_${STARS_WAYLAND_CLIENT}_wayland PROPERTIES
+            LABELS "client;wayland" RUN_SERIAL TRUE TIMEOUT 60)
+    endforeach()
+    set_tests_properties(win32_client_race_wayland PROPERTIES
+        ENVIRONMENT "STARS_CLIENT_RACE_CAPTURE=${CMAKE_BINARY_DIR}/test-client/habitat-wayland.bmp")
 endif()

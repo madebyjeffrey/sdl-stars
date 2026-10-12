@@ -8,6 +8,14 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Native Wayland windows leave desktop placement to the compositor instead of
+  failing creation. Menus/tooltips retain parent-relative coordinates; pointer
+  queries and captured input use surface coordinates. High-density windows keep
+  logical control sizes while presenting at the display pixel density. Private
+  Weston checks exercise software and explicit OpenGL presentation at 100%/200%.
+- macOS SDL client presets enable the product and Cocoa picker without the
+  Linux/GNU-linker test harness. macOS execution remains unqualified.
+
 - The intro screen opens in a centered desktop window with a title bar, close
   and minimize buttons instead of covering the screen. Returning to the intro
   uses the same window layout; its artwork and version text use client coordinates.

@@ -90,6 +90,26 @@
       "cacheVariables": {
         "STARS_ENABLE_SANITIZERS": "ON"
       }
+    },
+    {
+      "name": "macos-sdl-debug",
+      "inherits": "sdl-debug",
+      "displayName": "macOS SDL3 compatibility Debug (qualification required)",
+      "binaryDir": "${sourceDir}/dist/macos-sdl-debug",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/usr/local",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "STARS_BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "macos-sdl-release",
+      "inherits": "macos-sdl-debug",
+      "displayName": "macOS SDL3 compatibility Release (qualification required)",
+      "binaryDir": "${sourceDir}/dist/macos-sdl-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -263,6 +283,14 @@
       "name": "sdl-sanitize",
       "inherits": "sdl-debug",
       "configurePreset": "sdl-sanitize"
+    },
+    {
+      "name": "macos-sdl-debug",
+      "configurePreset": "macos-sdl-debug"
+    },
+    {
+      "name": "macos-sdl-release",
+      "configurePreset": "macos-sdl-release"
     }
   ],
   "testPresets": [

@@ -58,11 +58,14 @@ remain outside this implementation.
 
 ## Pointer and wheel routing
 
-`GetCursorPos` queries real global coordinates on X11. The dummy backend returns
-the screen point recorded from the most recently routed pointer event, and fails
-before such an event. Other unqualified backends fail rather than return SDL's
-window-relative fallback as screen coordinates. Null pointers fail. Interactive
-compatibility windows currently require X11/Xwayland; see [positioning](WIN32-POSITIONING.md).
+`GetCursorPos` queries global coordinates on X11 and Cocoa. Native Wayland
+uses the SDL mouse-focus window and translates its surface-relative point into
+the owner-local coordinate system. During queued/captured input it can retain
+the last delivered point while its source window still exists. It cannot query
+the pointer over another application. The dummy backend likewise returns the
+most recently routed point and fails before an event. Null pointers fail.
+Wayland asynchronous mouse buttons use SDL's local mouse state rather than its
+global fallback; see [positioning](WIN32-POSITIONING.md) for coordinate limits.
 
 `WindowFromPoint` searches the application's logical root order and visible,
 enabled descendants, returning the deepest child at a screen point. It respects

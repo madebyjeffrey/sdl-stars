@@ -40,12 +40,21 @@ BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     return fResult;
 }
 
+static BOOL FNativePositionable(SDL_Window *lpWindow) {
+    const char *pszDriver = SDL_GetCurrentVideoDriver();
+    return !pszDriver || strcmp(pszDriver, "wayland") ||
+           (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP));
+}
+
 static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
     int x, y;
     int64_t xWide = 0, yWide = 0;
 
     do {
-        if (!SDL_GetWindowPosition(lpWindow, &x, &y)) return FALSE;
+        // Wayland has no desktop origin for toplevels. Use an owner-local
+        // origin; popup positions still come from the compositor.
+        x = y = 0;
+        if (FNativePositionable(lpWindow) && !SDL_GetWindowPosition(lpWindow, &x, &y)) return FALSE;
         xWide += x; yWide += y;
         if (!(SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP))) break;
         lpWindow = SDL_GetWindowParent(lpWindow);
@@ -297,7 +306,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     char *pszNative;
     int cxReuse, cyReuse;
     RECT rcOwner;
-    SDL_WindowFlags flags = SDL_WINDOW_HIDDEN;
+    SDL_WindowFlags flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
     CREATESTRUCTA cs;
     RECT rcClient, rcWindow;
     LRESULT lr;
@@ -409,7 +418,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             SDL_free(pszNative);
         }
         if (!lpwin->lpWindow || !fNativeTitle ||
-            (!fReuse && !fNativePopup && !SDL_SetWindowPosition(lpwin->lpWindow,
+            (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow) && !SDL_SetWindowPosition(lpwin->lpWindow,
                                   x == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : x,
                                   y == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : y)) ||
             !SDL_SyncWindow(lpwin->lpWindow) ||
@@ -418,7 +427,9 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             (FFullscreenPopup(dwStyle, dwExStyle, hMenu, x, y, dx, dy) &&
              !SDL_SetWindowFullscreen(lpwin->lpWindow, true)) ||
             (!fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow &&
-             (SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow) & SDL_WINDOW_FULLSCREEN) &&
+             ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow) & SDL_WINDOW_FULLSCREEN) ||
+              ((UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
+             // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
              strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
@@ -913,7 +924,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
             xNative = yNative = 0;
             if ((SDL_GetWindowFlags(lpwin->lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) &&
                 !FNativePosition(SDL_GetWindowParent(lpwin->lpWindow), &xNative, &yNative)) return FALSE;
-            if (!SDL_SetWindowPosition(lpwin->lpWindow, wp.x - xNative, wp.y - yNative)) return FALSE;
+            if (FNativePositionable(lpwin->lpWindow) &&
+                !SDL_SetWindowPosition(lpwin->lpWindow, wp.x - xNative, wp.y - yNative)) return FALSE;
         }
         if (!(wp.flags & SWP_NOSIZE)) {
             if (!SDL_SetWindowSize(lpwin->lpWindow, max(1, wp.cx), max(1, wp.cy))) return FALSE;
@@ -1179,11 +1191,17 @@ static HWND HwndCompatHit(HWND hwnd, int *lpx, int *lpy, BOOL fPoint) {
 HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy) { return HwndCompatHit(hwnd, lpx, lpy, FALSE); }
 
 HWND WINAPI WindowFromPoint(POINT pt) {
-    HWND hwnd;
+    HWND hwnd, hwndPointer = NULL;
+    const char *pszDriver;
     RECT rc;
     POINT ptClient;
     if (!SDL_IsMainThread()) return NULL;
+    pszDriver = SDL_GetCurrentVideoDriver();
+    if (pszDriver && !strcmp(pszDriver, "wayland")) hwndPointer = HwndCompatPointerRoot();
     for (hwnd = hwndFirstTop; hwnd; hwnd = hwnd->hwndZNext) {
+        // Owner-local coordinates cannot distinguish independent Wayland roots.
+        // Route pointer queries through the surface that supplied the event.
+        if (hwndPointer && hwnd != hwndPointer) continue;
         if (!IsWindowVisible(hwnd) || !IsWindowEnabled(hwnd) || !GetWindowRect(hwnd, &rc) ||
             !PtInRect(&rc, pt)) continue;
         ptClient = pt;

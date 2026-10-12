@@ -261,7 +261,7 @@ static BOOL FCheckToolbarPlacement(void) {
     MapWindowPoints(hwndTb, NULL, (POINT *)&rc, 2);
     for (i = 0; i < 2; i++) {
         pt = (POINT){rc.left + 2 + i * 10, rc.top + 2 + i * 10};
-        if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy")) {
+        if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy") || !strcmp(SDL_GetCurrentVideoDriver(), "wayland")) {
             if (!ScreenToClient(hwndRoot, &pt)) return FALSE;
             event.type = SDL_EVENT_MOUSE_MOTION;
             event.motion.windowID = hwndRoot->id;
@@ -1209,7 +1209,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (++cWait < 20) return;
             goto LDone;
         }
-        if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle)) goto LDone;
+        if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle) ||
+            (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
+             SDL_GetWindowParent(hwndWizard->lpWindow) != lpTitle->lpWindow)) goto LDone;
         UpdateWindow(hwndWizard);
         for (hwnd = GetWindow(hwndWizard, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) UpdateWindow(hwnd);
         if (!FCompatPresent(hwndWizard) || (pszWizardCapture &&

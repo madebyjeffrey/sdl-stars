@@ -117,9 +117,10 @@ SDL_VIDEODRIVER=x11 ./dist/sdl-debug/bin/stars-compat-smoke
 ```
 
 `gpu` fails rather than silently falling back. Wayland can be selected with `SDL_VIDEODRIVER=wayland` when the current desktop provides a Wayland connection. Window placement is left to the desktop compositor. This applies to the direct
-SDL smoke target. The compatibility window targets currently request explicit
-root positions and require `SDL_VIDEODRIVER=x11` (X11/Xwayland); their native
-Wayland adaptation remains unqualified. See [positioning](WIN32-POSITIONING.md).
+SDL smoke target and now to compatibility top-level windows as well. Native
+Wayland popups use parent-relative placement and controls use logical units.
+X11/Xwayland remain supported. See [desktop qualification](DESKTOP-QUALIFICATION.md)
+for private Wayland tests, macOS presets and remaining platform limits.
 
 `cmake --build --preset sdl-release` builds the smoke executable in `dist/sdl-release/bin` after `cmake --preset sdl-release`. The restricted build presets build the smoke, ABI, runtime and window tests,
 UI compile check and SDL dependency; they do not build the host or all unit tests. To build every native target, use `cmake --build dist/sdl-debug`.

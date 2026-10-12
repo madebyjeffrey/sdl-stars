@@ -216,6 +216,7 @@ BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt);
 void CompatReadInput(const BYTE *rgb);
 void CompatResetInput(void);
+HWND HwndCompatPointerRoot(void);
 void CompatTextInput(HWND hwnd, const char *psz);
 void CompatPurgeMessages(HWND hwnd);
 void CompatClearMessages(void);
