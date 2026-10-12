@@ -71,6 +71,14 @@ record sizes, game rules and native regression baselines are unchanged.
 
 ## Validation results and dependency leak
 
+The allocation owner is now identified and a local Mesa dependency patch fixes
+the cleanup; see [Mesa executable-heap repair](MESA-GRAPHICS-LEAK.md). All six
+Stars Wayland sanitizer cases pass with that explicit private dependency. The
+same build with only the patch reverted reproduces exactly 112 bytes in the
+SDL-only smoke. Installed system/Flatpak drivers are not changed by this repair,
+so their leak status must be reported separately. The original findings below
+record the system-driver failure rather than a failure of the patched build.
+
 All six new Wayland cases pass in Debug, including both scales and explicit
 OpenGL. The final 11 startup/race/file-workflow/Wayland checks pass, including
 transient-parent assertions on windowed dialog owners in private X11 and Wayland. The broad fatal sanitizer run passed the 102 existing non-tutorial
@@ -78,14 +86,15 @@ cases; all six new Wayland cases completed their assertions but failed LSan
 with the same 112-byte/two-allocation report in the OpenGL presentation stack.
 This report reproduces in `stars-compat-smoke --self-test`, which links SDL only
 and exercises no Win32 compatibility code. No suppression or disabled leak
-check is used. Explicit EGL thread release and Mesa softpipe did not resolve it;
-those exploratory changes are not part of the implementation. The exact
-allocation owner inside the unloaded graphics modules remains unresolved.
+check was used. Explicit EGL thread release and Mesa softpipe did not resolve it;
+those exploratory changes are not part of the implementation. Recording loaded
+module mappings subsequently identified Mesa's runtime-assembler heap as the
+allocation owner, and the local dependency patch repairs its last-free cleanup.
 
-The native Wayland ASan/UBSan/LSan gate is therefore **not fully qualified**.
-A passing UI test or the SDL-only reproduction does not prove the allocations
-are harmless. The leak remains a dependency investigation item alongside the
-real desktop/hardware and macOS checks above.
+The system-driver Wayland ASan/UBSan/LSan gate still fails until that driver is
+repaired. The explicit patched software-driver gate passes; it does not qualify
+the installed hardware driver or real compositor. Real desktop/hardware and
+macOS checks above remain outstanding.
 
 SDL documents the platform positioning and cursor restrictions in its
 [Wayland backend guide](https://wiki.libsdl.org/SDL3/README-wayland).

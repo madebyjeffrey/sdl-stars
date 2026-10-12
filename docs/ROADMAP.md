@@ -49,6 +49,12 @@ and cherry-pick to `2.8`.
 
 ## Linux desktop compatibility
 
+The Wayland graphics leak is traced to Mesa's runtime assembler retaining its
+empty executable heap across library unload. A private, pinned dependency patch
+releases the heap on its last free; lifetime/SDL/native Wayland sanitizer tests
+verify the repair. See [Mesa qualification](MESA-GRAPHICS-LEAK.md). System drivers
+remain unchanged; hardware and desktop acceptance still require qualification.
+
 The first SDL3 milestone is available through the `sdl-debug` and
 `sdl-release` presets: `stars-compat-smoke` exercises two independent
 windows, CPU surfaces, GPU presentation and a software fallback. It does

@@ -5,8 +5,10 @@ fullscreen, including return-to-title and failed-load paths. Debug and fatal
 sanitizer startup/race-wizard tests pass on dummy and private X11 displays;
 the native file-workflow tests also pass. The main game layout is unchanged.
 
-Current priority: desktop/platform qualification and immediate Unicode path/password
-fixes, with a separate local commit for each batch. The broader goal
+Current work order: graphics dependency leak repair, gameplay workflows (3),
+UI polish (8), then Flatpak/CMake packaging (9), with local commits for completed
+batches and no pushes. Desktop/platform and immediate Unicode path/password
+implementation batches are committed. The saved broader goal
 is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.
 Previously selected scope: milestones 1, 2, 3, 4, 7, 8 and 9.
@@ -16,6 +18,14 @@ sanitizer cases, 55 Windows tests, 15 host tests, 11 Release checks and both
 519-checkpoint regressions; see [encoding contracts](UNICODE-BOUNDARIES.md).
 Basic API coverage is 178/178 (100%); this measures API bodies, not completion
 of the behavior and release requirements below.
+The graphics leak is now traced to Mesa's empty runtime-assembler executable
+heap; a private dependency patch passes concurrent lifetime/unload tests,
+SDL-only reproduction and all six native Wayland sanitizer cases. The matching
+unpatched build still reproduces 112 bytes. System drivers remain unchanged;
+see [repair and explicit qualification prefix](MESA-GRAPHICS-LEAK.md).
+The completed graphics batch passes 115/115 fatal sanitizer cases (including
+seven Wayland cases), 55/55 Windows tests and all 519 native regression
+comparisons, with 87 existing warnings and no differences/errors or skips.
 
 | Order | Milestone | Status | Completion evidence needed |
 | --- | --- | --- | --- |

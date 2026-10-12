@@ -121,6 +121,9 @@ SDL smoke target and now to compatibility top-level windows as well. Native
 Wayland popups use parent-relative placement and controls use logical units.
 X11/Xwayland remain supported. See [desktop qualification](DESKTOP-QUALIFICATION.md)
 for private Wayland tests, macOS presets and remaining platform limits.
+The Mesa runtime-assembler leak now has a pinned private dependency repair and
+fatal sanitizer qualification; see [build and test instructions](MESA-GRAPHICS-LEAK.md).
+This opt-in software-driver build leaves the installed desktop driver unchanged.
 
 `cmake --build --preset sdl-release` builds the smoke executable in `dist/sdl-release/bin` after `cmake --preset sdl-release`. The restricted build presets build the smoke, ABI, runtime and window tests,
 UI compile check and SDL dependency; they do not build the host or all unit tests. To build every native target, use `cmake --build dist/sdl-debug`.

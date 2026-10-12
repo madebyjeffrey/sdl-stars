@@ -47,10 +47,11 @@ They also check actual SDK window text, Unicode filesystem operations and Window
 argument decoding under Wine. Real Windows desktop/common-dialog execution with
 different system code pages and macOS execution remain manual qualifications.
 
-The six Wayland graphics-stack LSan failures recorded in
-[desktop qualification](DESKTOP-QUALIFICATION.md) remain separate. They are not
-suppressed or presented as passing; the Unicode sanitizer gate excludes those
-known dependency cases and the paused tutorial tests.
+The six system-driver Wayland graphics-stack LSan failures recorded in
+[desktop qualification](DESKTOP-QUALIFICATION.md) are separate from this batch.
+The later [private Mesa patch](MESA-GRAPHICS-LEAK.md) repairs their executable-heap
+cleanup and qualifies those cases with an explicitly selected dependency. The
+original Unicode gate below excluded them and the paused tutorial tests.
 
 ## Deliberate limits and later work
 

@@ -803,6 +803,7 @@ endif()
 
 # Weston runs privately with no visible desktop or user session dependency.
 find_program(STARS_WESTON_EXECUTABLE NAMES weston)
+set(STARS_TEST_MESA_PREFIX "" CACHE PATH "Private patched Mesa prefix for Wayland qualification only")
 if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
     add_executable(stars-compat-wayland tests/compat/win32_wayland.c)
     target_link_libraries(stars-compat-wayland PRIVATE stars_win32 SDL3::SDL3)
@@ -829,6 +830,16 @@ if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
     endforeach()
     set_tests_properties(win32_client_race_wayland PROPERTIES
         ENVIRONMENT "STARS_CLIENT_RACE_CAPTURE=${CMAKE_BINARY_DIR}/test-client/habitat-wayland.bmp")
+    add_test(NAME sdl_smoke_wayland
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/run_wayland.py"
+            --weston "${STARS_WESTON_EXECUTABLE}" "$<TARGET_FILE:stars-compat-smoke>" --self-test)
+    set_tests_properties(sdl_smoke_wayland PROPERTIES LABELS "compat;wayland" RUN_SERIAL TRUE TIMEOUT 60)
+    if(STARS_TEST_MESA_PREFIX)
+        set_property(TEST sdl_smoke_wayland win32_client_startup_wayland win32_client_race_wayland
+            win32_desktop_wayland_1_software win32_desktop_wayland_1_opengl
+            win32_desktop_wayland_2_software win32_desktop_wayland_2_opengl
+            APPEND PROPERTY ENVIRONMENT "STARS_TEST_MESA_PREFIX=${STARS_TEST_MESA_PREFIX}")
+    endif()
 endif()
 
 add_executable(stars-compat-utf8 tests/compat/win32_utf8.c)

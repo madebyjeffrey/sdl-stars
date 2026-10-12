@@ -8,6 +8,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- A pinned, private Mesa dependency patch fixes the runtime assembler's empty
+  executable-heap leak on driver unload. A concurrent lifetime regression,
+  SDL-only Wayland check and optional CMake test prefix qualify the fix without
+  replacing system graphics libraries or suppressing sanitizer reports.
 - Native Windows paths and file selection use UTF-16 APIs behind UTF-8 application
   boundaries. Open/save offsets remain byte offsets; Unicode paths work through
   core reads/writes, existence checks, backups and cleanup. Fallback file-picker
