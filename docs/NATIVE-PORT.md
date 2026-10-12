@@ -5,7 +5,8 @@ as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bri
 `compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
 to avoid SDK import collisions. Native Unicode open/save lives in the separate
 `filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
-native I/O. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
+native I/O. The shared UI has no native-client fallback branches; captions and
+legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
 The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler

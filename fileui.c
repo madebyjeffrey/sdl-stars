@@ -50,10 +50,6 @@ void ShowTitleScreen() {
             SetRect(&rcWork, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
         }
         SetRect(&rc, 0, 0, 800, 600);
-// SDL window sizes describe the client area; Windows includes the frame.
-#ifndef STARS_UI_SDL
-        AdjustWindowRect(&rc, dwStyle, FALSE);
-#endif
         dx = min(rc.right - rc.left, rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME));
         dy = min(rc.bottom - rc.top, rcWork.bottom - rcWork.top -
                  GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME));

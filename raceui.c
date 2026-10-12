@@ -1,7 +1,5 @@
 #include "win.h"
-#ifdef STARS_UI_SDL
 #include <stars_compat.h>
-#endif
 
 int16_t RaceCreationWizard(HWND hwndParent, int16_t fReadOnly, int16_t fDontWrite) {
     WizardButton mdRet;
@@ -9,16 +7,12 @@ int16_t RaceCreationWizard(HWND hwndParent, int16_t fReadOnly, int16_t fDontWrit
     RECT         rgrcStack[17];
     int16_t      cpts;
     int16_t      fResult;
-#ifdef STARS_UI_SDL
     BOOL         fSequence;
-#endif
 
     vrgrcRCW = rgrcStack;
     fRCWReadOnly = fReadOnly;
     hwndRaceParent = hwndParent;
-#ifdef STARS_UI_SDL
     fSequence = StarsCompatBeginDialogSequence(hwndParent);
-#endif
 Step1:
     iPanelActive = rwPageRace;
     lpProc = MakeProcInstance(RaceWizardDlg1, hInst);
@@ -117,9 +111,7 @@ Finish:
 LCancel:
     fResult = FALSE;
 LDone:
-#ifdef STARS_UI_SDL
     if (fSequence) StarsCompatEndDialogSequence();
-#endif
     return fResult;
 }
 

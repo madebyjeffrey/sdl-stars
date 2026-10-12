@@ -1,8 +1,8 @@
 #ifndef STARS_DECOMPILED_WIN_H
 #define STARS_DECOMPILED_WIN_H
 
-// The Windows game's user interface: Win32, the game code (common.h) and
-// the UI's own headers. The game code includes only common.h.
+// The SDL desktop interface: wrapper API, game code (common.h) and UI headers.
+// The game code includes only common.h.
 
 #include <windows.h>
 #include <commctrl.h>

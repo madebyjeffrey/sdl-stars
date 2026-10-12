@@ -2,20 +2,14 @@
 #include "win.h"
 #include "scaninspect.h"
 #include <stdlib.h>
-#ifdef STARS_UI_SDL
 #include <stars_compat.h>
-#endif
 
 static HWND hwndScanInspector;
 static SCANSNAPSHOT snapScanInspector;
 static BOOL fScanInspectorClass;
 
 static BOOL FScannerReady(void) {
-#ifdef STARS_UI_SDL
     if (StarsCompatWindowId(hwndScanner) == 0) return FALSE;
-#else
-    if (!IsWindow(hwndScanner) || GetWindowThreadProcessId(hwndScanner, NULL) != GetCurrentThreadId()) return FALSE;
-#endif
     return IsWindow(hwndScanner) && IsWindowVisible(hwndScanner) && game.lid != 0 &&
            idPlayer >= 0 && idPlayer < game.cPlayer && rgptPlan && rgidPlan && rglpfl &&
            game.cPlanMax > 0 && cFleet >= 0 && cThing >= 0;
@@ -248,9 +242,7 @@ HWND ShowScannerInspector(void) {
     WNDCLASS wc = {0};
 
     if (!IsWindow(hwndFrame)) return NULL;
-#ifdef STARS_UI_SDL
     if (StarsCompatWindowId(hwndFrame) == 0) return NULL;
-#endif
     wc.lpszClassName = "StarsScannerInspector";
     if (!IsWindow(hwndScanInspector)) {
         if (!fScanInspectorClass) {

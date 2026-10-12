@@ -4,10 +4,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     MSG      msg;
     uint32_t lSeed;
     int16_t  fSeed;
-#if defined(_WIN32) && !defined(STARS_UI_SDL)
-    char *pszNativeCmdLine;
-    int16_t fCmdLine;
-#endif
 
     hInst = hInstance;
     szBase[0] = 0;
@@ -32,16 +28,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
         return 0;
     }
-#if defined(_WIN32) && !defined(STARS_UI_SDL)
-    (void)lpCmdLine;
-    pszNativeCmdLine = PszNativeCommandLine();
-    if (!pszNativeCmdLine) { FreeStuff(); return 2; }
-    fCmdLine = ParseCmdLine(pszNativeCmdLine, &fSeed, &lSeed);
-    free(pszNativeCmdLine);
-    if (!fCmdLine) { FreeStuff(); return 2; }
-#else
     if (!ParseCmdLine(lpCmdLine, &fSeed, &lSeed)) { FreeStuff(); return 2; }
-#endif
     /* The original seeded before FCreateStuff; nothing in between draws a
        random number, so seeding after the command line is the same. */
     Randomize2(fSeed ? lSeed : GetTickCount());

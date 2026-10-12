@@ -8,6 +8,11 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Removed the retired native UI command-line, Unicode-dialog and label adapters.
+  Desktop sources now directly use the SDL wrapper; Windows filesystem and
+  argument services remain available to the host and SDL entry point. The SDL
+  preprocessor output of the six affected UI files is unchanged.
+
 - The desktop client now builds only through SDL3 and the Win32 wrapper on
   Windows, Linux and macOS. The native Win32 product target is retired; SDK
   contract tests are opt-in. Presets, CI, game tests, regression commands and

@@ -1,7 +1,5 @@
 #include "win.h"
-#ifdef STARS_UI_SDL
 #include <stars_compat.h>
-#endif
 
 uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
 
@@ -215,9 +213,7 @@ int16_t InitInstance(int16_t nCmdShow) {
     RECT    rc;
 
 
-#ifdef STARS_UI_SDL
     StarsCompatSetObjectInspector(ShowScannerInspector);
-#endif
     ini.fWait = FALSE;
     ini.fStartupFile = FALSE;
     ini.grobjSel = 0;

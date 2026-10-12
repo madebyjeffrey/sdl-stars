@@ -10,7 +10,9 @@ and its builds count toward 2.9.1.
 The desktop product uses SDL3 through `compat/win32` on every platform. The native
 Win32 client build is retired; the host remains independent of SDL. Desktop
 presets, unit tests, regression entry points and release packaging use `stars-sdl`.
-Windows SDK comparison tests remain opt-in, with no second product UI.
+Windows SDK comparison tests remain opt-in, with no second product UI. Retired
+native-client branches are removed from the shared UI sources; OS-specific
+filesystem and argument services remain in the platform layer.
 Windows now uses Unicode native open/save dialogs through an isolated SDK bridge;
 Linux portal and macOS AppKit pickers retain their existing backends. Headless
 tests select the constructed picker with `STARS_FILE_DIALOG_BACKEND=compat`.
