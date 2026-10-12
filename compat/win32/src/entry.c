@@ -53,6 +53,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "stars-sdl: cannot initialize resource module: %s\n", SDL_GetError());
         return 1;
     }
+    if (!SDL_SetAppMetadata("Stars!", STARS_VERSION_STRING, "org.starsgame.Stars")) {
+        fprintf(stderr, "stars-sdl: cannot set application identity: %s\n", SDL_GetError());
+        StarsCompatProcessExit(); SDL_Quit();
+        return 1;
+    }
     nResult = WinMain(hInstance, NULL, szCmdLine, SW_SHOWNORMAL);
     StarsCompatProcessExit();
     SDL_Quit();

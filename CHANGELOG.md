@@ -8,6 +8,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- The SDL entry point now sets the `org.starsgame.Stars` application identity
+  and product version before creating windows, matching its installed launcher
+  instead of SDL's executable-name fallback. Entry/exit sanitizer tests pass.
+
 - Private X11 install verification now tolerates windows destroyed during
   startup discovery while retaining fatal checks for other protocol errors
   and cleanup of its owned application/window-manager processes.

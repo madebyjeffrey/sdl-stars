@@ -11,7 +11,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszComman
     WNDCLASS wc = {0};
     HWND hwnd;
     RECT rc;
-    if (!hInstance || hPrevInstance || nCmdShow != SW_SHOWNORMAL ||
+    if (!SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING) ||
+        strcmp(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING), "org.starsgame.Stars") ||
+        !hInstance || hPrevInstance || nCmdShow != SW_SHOWNORMAL ||
         !pszExpected || strcmp(pszCommand, pszExpected)) {
         fprintf(stderr, "Unexpected WinMain entry arguments\n");
         return 90;

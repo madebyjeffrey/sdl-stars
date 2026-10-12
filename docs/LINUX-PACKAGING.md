@@ -23,7 +23,9 @@ executables in `bin`, fetched SDL's shared library in `lib`, and the guide,
 archive and third-party notices in `share/stars`. Fonts, bitmaps, dialog
 templates and static game data are embedded in the client. The desktop entry,
 AppStream metadata and original 32-pixel icon with a scalable wrapper use
-`org.starsgame.Stars`.
+`org.starsgame.Stars`. The native entry supplies the same SDL application
+identity before window creation, so compositor/launcher association can use the
+installed desktop entry; the version metadata comes from Git.
 
 Linux executables find fetched SDL through an executable-relative RPATH.
 Help searches both the development layout and the executable-relative
