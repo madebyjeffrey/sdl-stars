@@ -209,7 +209,7 @@ def extract(root=ROOT):
     result = []
     cCasts = 0
     digest = hashlib.sha256()
-    for path in sorted(root.glob("*.c")):
+    for path in sorted((root / "src").rglob("*.c") if (root / "src").is_dir() else root.glob("*.c")):
         source = precision_reference.read_source(path.name) if root == ROOT else path.read_text()
         masked = mask_c(source)
         casts = list(re.finditer(r"\(long\s+double\)", masked))
@@ -465,7 +465,7 @@ def run_race(args, flags, work):
     source = race_precision.sources()
     for mode in ("ext", "dbl"):
         (work / f"{mode}.c").write_text(race_precision.variant(source, mode))
-    command = [args.cc, *flags, "-iquote", str(ROOT), "-iquote", str(args.generated_dir.resolve()),
+    command = [args.cc, *flags, "-iquote", str(ROOT / "src/core"), "-iquote", str(ROOT / "src/platform"), "-iquote", str(args.generated_dir.resolve()),
                str(work / "ext.c"), str(work / "dbl.c"), str(HERE / "precision_race.c"),
                "-lm", "-o", str(work / "race")]
     print("Whole race calculator: compiling extracted variants", flush=True)

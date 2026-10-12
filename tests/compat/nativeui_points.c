@@ -1,7 +1,7 @@
 /* The legacy point adapter must supply safe coordinates after API failure. */
 #include <stdint.h>
 #include <windows.h>
-#include "../../native.h"
+#include "../../src/platform/native.h"
 #include <stdio.h>
 
 static BOOL fCursor;
@@ -13,7 +13,7 @@ static BOOL FTestGetCursorPos(LPPOINT lppt) {
 }
 
 #define GetCursorPos FTestGetCursorPos
-#include "../../nativeui.h"
+#include "../../src/ui/nativeui.h"
 #undef GetCursorPos
 
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "Point adapter check failed at line %d\n", __LINE__); return 1; } } while (0)

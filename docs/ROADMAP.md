@@ -17,7 +17,9 @@ Windows now uses Unicode native open/save dialogs through an isolated SDK bridge
 Linux portal and macOS AppKit pickers retain their existing backends. Headless
 tests select the constructed picker with `STARS_FILE_DIALOG_BACKEND=compat`.
 
-Source/folder reorganization and refuse cleanup are separate follow-up changes.
+Source reorganization is complete: `src/core`, `src/ui`, `src/host` and
+`src/platform` retain the original filenames. CMake, generators and source-reading
+test tools follow these paths. Refuse cleanup is a separate follow-up change.
 Full SDL tutorial coverage and real-desktop/native-picker qualification remain
 outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.

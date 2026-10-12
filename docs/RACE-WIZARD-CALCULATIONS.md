@@ -32,16 +32,16 @@ changed to produce this specification.
 
 | Responsibility | Source |
 | --- | --- |
-| Page navigation and finish validation | [`RaceCreationWizard`](../raceui.c) |
-| Option controls and displayed balance | `RaceWizardDlg1` through `RaceWizardDlg6`, `FTrackRaceDlg2`, `FTrackRaceDlg3`, `DrawRaceAdvantagePoints` in [`raceui.c`](../raceui.c) |
-| Limits, fixed prices, full advantage calculation | `BoundsCheckPlayer`, `CAdvantagePoints`, arrays at the start of [`race.c`](../race.c) |
+| Page navigation and finish validation | [`RaceCreationWizard`](../src/ui/raceui.c) |
+| Option controls and displayed balance | `RaceWizardDlg1` through `RaceWizardDlg6`, `FTrackRaceDlg2`, `FTrackRaceDlg3`, `DrawRaceAdvantagePoints` in [`raceui.c`](../src/ui/raceui.c) |
+| Limits, fixed prices, full advantage calculation | `BoundsCheckPlayer`, `CAdvantagePoints`, arrays at the start of [`race.c`](../src/core/race.c) |
 | Integrated habitability used for pricing | `LInnateRaceHabitability` in `race.c` |
-| Habitability of a sampled planet | `PctPlanetDesirability` in [`planet.c`](../planet.c) |
-| Names of stat indices and trait bits | `RaceStat`, `RaceGrbit`, `RaceAttribute` in [`enums.h`](../enums.h) |
-| Race storage | `struct _player` in [`structs.h`](../structs.h) |
+| Habitability of a sampled planet | `PctPlanetDesirability` in [`planet.c`](../src/core/planet.c) |
+| Names of stat indices and trait bits | `RaceStat`, `RaceGrbit`, `RaceAttribute` in [`enums.h`](../src/core/enums.h) |
+| Race storage | `struct _player` in [`structs.h`](../src/core/structs.h) |
 | Presets | [`data/races/predefined.yaml`](../data/races/predefined.yaml), generated as `vrgplrDef` |
 | Random race generation | `CreateRandomRace` in `race.c` |
-| Starting bonuses from leftover points | `GenerateWorld` in [`create.c`](../create.c) |
+| Starting bonuses from leftover points | `GenerateWorld` in [`create.c`](../src/core/create.c) |
 | Dialog layout and text | [`res/stars.rc`](../res/stars.rc), [`text/strings.txt`](../text/strings.txt) |
 
 The visible page order differs from the dialog function numbering:

@@ -8,6 +8,12 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Moved game, desktop, host and platform sources and headers into their own
+  `src/` directories, preserving filenames and contents. Build paths, text ID
+  usage scanning, precision experiments and the tutorial parser follow the new
+  layout. Generated output stays under `dist/`; disk formats and baselines stay
+  unchanged.
+
 - Removed the retired native UI command-line, Unicode-dialog and label adapters.
   Desktop sources now directly use the SDL wrapper; Windows filesystem and
   argument services remain available to the host and SDL entry point. The SDL

@@ -301,7 +301,7 @@ def main():
         (work / "corpus.c").write_text(corpus_source())
         (work / "main.go").write_text(go_source(craig))
         flags = ["-O2", "-std=gnu11", "-fsigned-char", "-fno-fast-math", "-ffp-contract=off",
-                 "-iquote", str(ROOT), "-iquote", str(HERE), "-iquote", str(args.generated_dir.resolve())]
+                 "-iquote", str(ROOT / "src/core"), "-iquote", str(ROOT / "src/platform"), "-iquote", str(HERE), "-iquote", str(args.generated_dir.resolve())]
         objects = [str(work / "ext.c"), str(work / "dbl.c")]
         print("Compiling extracted C and Go calculators", flush=True)
         subprocess.run([args.cc, *flags, *objects, str(work / "corpus.c"), "-lm", "-o", str(work / "corpus")], check=True)

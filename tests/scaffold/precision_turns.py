@@ -28,18 +28,23 @@ def snapshot(destination, fDouble, core):
     destination.mkdir()
     hashes = {}
     cCasts = 0
-    for path in sorted(ROOT.iterdir()):
-        if path.is_file() and (path.suffix in (".c", ".h") or path.name == "CMakeLists.txt"):
-            if path.suffix == ".c":
-                source = precision_reference.read_source(path.name)
-                hashes[path.name] = hashlib.sha256(source.encode()).hexdigest()
-                if path.name in core:
-                    cCasts += source.count("long double")
-                    if fDouble:
-                        source = source.replace("long double", "double")
-                (destination / path.name).write_text(source)
-            else:
-                shutil.copyfile(path, destination / path.name)
+    shutil.copyfile(ROOT / "CMakeLists.txt", destination / "CMakeLists.txt")
+    for path in sorted((ROOT / "src").rglob("*")):
+        if not path.is_file() or path.suffix not in (".c", ".h"):
+            continue
+        relative = path.relative_to(ROOT)
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if path.suffix == ".c":
+            source = precision_reference.read_source(path.name)
+            hashes[str(relative)] = hashlib.sha256(source.encode()).hexdigest()
+            if relative.as_posix() in core:
+                cCasts += source.count("long double")
+                if fDouble:
+                    source = source.replace("long double", "double")
+            target.write_text(source)
+        else:
+            shutil.copyfile(path, target)
     for name in ("cmake", "data", "text", "res", "tests", "compat", "docs"):
         (destination / name).symlink_to(ROOT / name, target_is_directory=True)
     return hashes, cCasts
@@ -85,7 +90,7 @@ def main():
     for mode in ("ext", "dbl"):
         build = work / (mode + "-build")
         run(["cmake", "-S", work / (mode + "-source"), "-B", build, "-G", "Ninja",
-             "-DCMAKE_C_COMPILER=" + args.cc, "-DCMAKE_BUILD_TYPE=Release", "-DSTARS_BUILD_TESTS=OFF"],
+             "-DCMAKE_C_COMPILER=" + args.cc, "-DCMAKE_BUILD_TYPE=Release", "-DSTARS_BUILD_TESTS=OFF", "-DSTARS_BUILD_SDL_CLIENT=OFF"],
             work / (mode + "-configure.log"), env)
         run(["cmake", "--build", build, "--target", "stars-host", "--parallel", args.jobs],
             work / (mode + "-build.log"), env)

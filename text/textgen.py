@@ -254,10 +254,11 @@ def Generate(outdir):
 def ListUnreferenced():
     """Print rows whose names no C source uses and no @range covers."""
     sources = []
-    for name in sorted(os.listdir(ROOT)):
-        if name.endswith((".c", ".h")):
-            with open(os.path.join(ROOT, name), encoding="latin-1") as f:
-                sources.append(f.read())
+    for directory, _, names in os.walk(os.path.join(ROOT, "src")):
+        for name in sorted(names):
+            if name.endswith((".c", ".h")):
+                with open(os.path.join(directory, name), encoding="latin-1") as f:
+                    sources.append(f.read())
     used = set(re.findall(r"\bid[smt][A-Za-z0-9_]+", "\n".join(sources)))
     for file, tag, prefix, enum, fmtId, fArgs, output, include in TABLES:
         if not prefix:

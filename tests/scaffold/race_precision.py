@@ -213,7 +213,7 @@ def main():
             (work / f"{mode}.c").write_text(variant(source, mode))
         (work / "main.c").write_text(HARNESS)
         command = [args.cc, "-" + args.optimization, "-std=gnu11", "-fsigned-char",
-                   "-fno-fast-math", "-ffp-contract=off", "-iquote", str(ROOT),
+                   "-fno-fast-math", "-ffp-contract=off", "-iquote", str(ROOT / "src/core"), "-iquote", str(ROOT / "src/platform"),
                    "-iquote", str(args.generated_dir.resolve()), str(work / "ext.c"),
                    str(work / "dbl.c"), str(work / "main.c"), "-lm", "-o", str(work / "probe")]
         print("compiler command=" + " ".join(command), flush=True)

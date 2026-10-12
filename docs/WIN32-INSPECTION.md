@@ -95,7 +95,7 @@ Select/reveal changes the secondary scanner selection through the normal game
 UI path and pans if needed. It issues no orders and leaves the main selection
 and waypoint editing mode alone. This also works with the headless backend.
 
-[scaninspect.h](../scaninspect.h) exposes `FCaptureScanner`,
+[scaninspect.h](../src/ui/scaninspect.h) exposes `FCaptureScanner`,
 `FWriteScannerSnapshot`, `FSelectScannerObject` and `FreeScannerSnapshot`.
 Call them on the UI thread with a loaded player game. A snapshot contains game,
 turn, player and zoom, the scanner viewport, and each object's kind, ID, name,

@@ -71,6 +71,11 @@ When goals conflict, apply them in this order:
 
 ## Code layout
 
+- Sources and their headers live in `src/core`, `src/ui`, `src/host` and
+  `src/platform`; the SDL Win32 implementation stays in `compat/win32`.
+  Keep original filenames within these directories. `common.h`, `structs.h`
+  and the game-to-UI contract `ui.h` are in `src/core`; `win.h` is in `src/ui`.
+
 - The game code (`STARS_CORE_SOURCES` in `CMakeLists.txt`) includes only
   `common.h`, never `windows.h`, and builds without Windows headers. It
   reaches the player only through the functions in `ui.h`, which the

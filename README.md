@@ -30,6 +30,18 @@ The original 2.6jrc3 stars.exe included ~1MB of debug symbols with function name
 - [Changelog](CHANGELOG.md) and [versioning](docs/VERSIONING.md): what 2.8
   changes from 2.6j, and how versions and build numbers are assigned.
 
+## Source layout
+
+- `src/core/`: game rules, AI, turn generation, save layouts and the `ui.h` boundary.
+- `src/ui/`: shared SDL-backed desktop UI, including its original tutorial code.
+- `src/host/`: command-line entry point and host UI adapter.
+- `src/platform/`: native files, clock, formatting and shared encoding.
+- `compat/win32/`: SDL-backed Win32 API wrapper and isolated platform bridges.
+
+Original source filenames and debug-symbol names are preserved. `data/`, `text/`
+and `res/` contain authored inputs; generated sources, builds and runtime installs
+belong under `dist/`. Tests, build modules, packaging and tools remain separate.
+
 ## Build
 
 The desktop client uses SDL3 through the project's Win32 wrapper on Windows,

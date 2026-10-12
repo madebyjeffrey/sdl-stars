@@ -33,18 +33,18 @@ endif()
 # here only if the command-line host needs it; dialogs and drawing go
 # in STARS_UI_SOURCES and use the SDL wrapper.
 set(STARS_CORE_SOURCES
-    ai.c ai2.c ai3.c ai4.c aiutil.c battle.c build.c create.c file.c globals.c
-    log.c memory.c mine.c msg.c native.c parts.c planet.c produce.c race.c
-    report.c research.c save.c ship.c ship2.c strings.c
-    thing.c turn.c turn2.c turn3.c util.c utilgen.c
+    src/core/ai.c src/core/ai2.c src/core/ai3.c src/core/ai4.c src/core/aiutil.c src/core/battle.c src/core/build.c src/core/create.c src/core/file.c src/core/globals.c
+    src/core/log.c src/core/memory.c src/core/mine.c src/core/msg.c src/platform/native.c src/core/parts.c src/core/planet.c src/core/produce.c src/core/race.c
+    src/core/report.c src/core/research.c src/core/save.c src/core/ship.c src/core/ship2.c src/core/strings.c
+    src/core/thing.c src/core/turn.c src/core/turn2.c src/core/turn3.c src/core/util.c src/core/utilgen.c
 )
 
 # The shared desktop UI, implemented through the SDL Win32 wrapper.
 set(STARS_UI_SOURCES
-    battleui.c buildui.c createui.c fileui.c globalsui.c init.c logui.c mdi.c
-    mineui.c msgui.c nativeui.c planetui.c planetpaneui.c popup.c produceui.c raceui.c
-    reportui.c researchui.c scan.c scaninspect.c ship2ui.c shipui.c stars.c tb.c thingui.c
-    tutor.c tutor2.c utilgenui.c utilui.c vcr.c
+    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/mdi.c
+    src/ui/mineui.c src/ui/msgui.c src/ui/nativeui.c src/ui/planetui.c src/ui/planetpaneui.c src/ui/popup.c src/ui/produceui.c src/ui/raceui.c
+    src/ui/reportui.c src/ui/researchui.c src/ui/scan.c src/ui/scaninspect.c src/ui/ship2ui.c src/ui/shipui.c src/ui/stars.c src/ui/tb.c src/ui/thingui.c
+    src/ui/tutor.c src/ui/tutor2.c src/ui/utilgenui.c src/ui/utilui.c src/ui/vcr.c
 )
 
 # Settings every target that compiles game code shares.
@@ -52,8 +52,8 @@ add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
-add_library(stars_encoding STATIC encoding.c)
-target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}>")
+add_library(stars_encoding STATIC src/platform/encoding.c)
+target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
@@ -61,8 +61,8 @@ target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 add_library(stars_core OBJECT ${STARS_CORE_SOURCES})
 target_link_libraries(stars_core PUBLIC stars_options stars_encoding "$<$<PLATFORM_ID:Windows>:shell32>")
 
-# The command-line host: the game code and host.c, no windows.
-add_executable(stars-host host.c hostui.c)
+# The command-line host: the game code and src/host/host.c, no windows.
+add_executable(stars-host src/host/host.c src/host/hostui.c)
 target_link_libraries(stars-host PRIVATE stars_core)
 set_target_properties(stars-host PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -157,7 +157,7 @@ target_sources(stars_core PRIVATE
 # The game's headers are found for #include "..." only (-iquote): strings.h
 # is the game's string table, and glibc's <string.h> includes the system
 # <strings.h>. The resource compiler takes them as include directories.
-foreach(STARS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/res" "${STARS_GENERATED_DIR}")
+foreach(STARS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/core" "${CMAKE_CURRENT_SOURCE_DIR}/src/ui" "${CMAKE_CURRENT_SOURCE_DIR}/src/platform" "${CMAKE_CURRENT_SOURCE_DIR}/res" "${STARS_GENERATED_DIR}")
     target_compile_options(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${STARS_INCLUDE_DIR}>")
     target_include_directories(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:RC>:${STARS_INCLUDE_DIR}>")
 endforeach()
@@ -203,7 +203,7 @@ elseif(STARS_BUILD_TESTS)
     set(STARS_HOST_TEST_TARGETS)
     foreach(STARS_UNIT_TEST IN LISTS STARS_UNIT_TESTS)
         get_filename_component(STARS_TEST_NAME "${STARS_UNIT_TEST}" NAME_WE)
-        add_executable(${STARS_TEST_NAME} "${STARS_UNIT_TEST}" tests/unit/stars_test.c hostui.c)
+        add_executable(${STARS_TEST_NAME} "${STARS_UNIT_TEST}" tests/unit/stars_test.c src/host/hostui.c)
         target_link_libraries(${STARS_TEST_NAME} PRIVATE stars_core)
         target_include_directories(${STARS_TEST_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit")
         target_compile_definitions(${STARS_TEST_NAME} PRIVATE STARS_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/golden")
