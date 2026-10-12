@@ -47,6 +47,24 @@ def main():
     lib.XFetchName.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(C.c_void_p)]
     lib.XGetWindowAttributes.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(Attributes)]
     lib.XFree.argtypes = [C.c_void_p]
+    # SDL and the window manager can destroy a startup window between tree
+    # discovery and inspection. Xlib's default BadWindow handler exits the
+    # Python process, bypassing owned-process cleanup; treat only that race
+    # as an absent window and surface other protocol errors normally below.
+    errors = []
+    handler_type = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_void_p)
+    def handle_error(display_error, event):
+        class Error(C.Structure):
+            _fields_ = [('type', C.c_int), ('display', C.c_void_p), ('resource', C.c_ulong),
+                        ('serial', C.c_ulong), ('code', C.c_ubyte), ('request', C.c_ubyte),
+                        ('minor', C.c_ubyte)]
+        error = C.cast(event, C.POINTER(Error)).contents
+        if error.code != 3:
+            errors.append((error.code, error.request))
+        return 0
+    handler = handler_type(handle_error)
+    lib.XSetErrorHandler.argtypes = [handler_type]
+    lib.XSetErrorHandler(handler)
     lib.XInternAtom.argtypes = [C.c_void_p, C.c_char_p, C.c_int]; lib.XInternAtom.restype = C.c_ulong
     lib.XSendEvent.argtypes = [C.c_void_p, C.c_ulong, C.c_int, C.c_long, C.c_void_p]
     lib.XFlush.argtypes = [C.c_void_p]; lib.XCloseDisplay.argtypes = [C.c_void_p]
@@ -80,7 +98,11 @@ def main():
                                 break
                     if found:
                         break
+                    if errors:
+                        raise RuntimeError(f'X11 protocol errors: {errors}')
                     time.sleep(0.1)
+                if errors:
+                    raise RuntimeError(f'X11 protocol errors: {errors}')
                 if not found:
                     raise RuntimeError('Installed title did not appear: ' + log.read_text())
                 event = ClientMessage(33, 0, 1, display, found,

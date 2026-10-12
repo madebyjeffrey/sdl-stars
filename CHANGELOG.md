@@ -8,6 +8,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Private X11 install verification now tolerates windows destroyed during
+  startup discovery while retaining fatal checks for other protocol errors
+  and cleanup of its owned application/window-manager processes.
+
 - Linux product packaging now provides the `sdl-package` CLion/CMake preset,
   relocatable runtime install rules and a local Flatpak bundle on Platform
   26.08. Installed help finds its assets relative to the executable; tracked
