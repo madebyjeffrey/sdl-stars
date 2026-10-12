@@ -73,8 +73,26 @@ static int CmpFileEntry(const void *a, const void *b) {
     return SDL_strcasecmp(lpa->psz, lpb->psz);
 }
 static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
-    if (*pszName == '/') return SDL_strlcpy(pszOut, pszName, PATH_MAX) < PATH_MAX;
-    return snprintf(pszOut, PATH_MAX, "%s%s%s", pszDir, strcmp(pszDir, "/") == 0 ? "" : "/", pszName) < PATH_MAX;
+#ifdef _WIN32
+    char *pch;
+#endif
+    int cch;
+
+    if (*pszName == '/'
+#ifdef _WIN32
+        || *pszName == '\\' || (pszName[0] && pszName[1] == ':')
+#endif
+    ) {
+        if (SDL_strlcpy(pszOut, pszName, PATH_MAX) >= PATH_MAX) return FALSE;
+    } else {
+        cch = snprintf(pszOut, PATH_MAX, "%s%s%s", pszDir, strcmp(pszDir, "/") == 0 ? "" : "/", pszName);
+        if (cch < 0 || cch >= PATH_MAX) return FALSE;
+    }
+#ifdef _WIN32
+    // The browser splits paths with '/', including native suggestions and input.
+    for (pch = pszOut; *pch; pch++) if (*pch == '\\') *pch = '/';
+#endif
+    return TRUE;
 }
 static void FileError(HWND hwnd, LPCSTR psz) { MessageBoxA(hwnd, psz, "File selection", MB_OK | MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -314,6 +332,9 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
         return TRUE;
     case ID_FILE_HOME:
         pszHome = getenv("HOME");
+#ifdef _WIN32
+        pszHome = getenv("USERPROFILE");
+#endif
         if (pszHome && *pszHome) FChangeFileDirectory(hwnd, lp, pszHome, TRUE);
         else FileError(hwnd, "The home directory is not available.");
         return TRUE;
@@ -513,4 +534,9 @@ done:
     return fRet;
 }
 BOOL WINAPI GetOpenFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, FALSE); }
-BOOL WINAPI GetSaveFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, TRUE); }
+BOOL WINAPI GetSaveFileNameA(LPOPENFILENAMEA lpof) {
+    BOOL fResult = FFileDialog(lpof, TRUE);
+    if (!fResult && dwDialogError != 0)
+        SDL_Log("Save dialog failed (common-dialog error %lu)", (unsigned long)dwDialogError);
+    return fResult;
+}

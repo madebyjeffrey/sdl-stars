@@ -12,13 +12,19 @@ def main():
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:
             work = Path(directory)
+            if name != 'fresh-game' and name != 'advanced-game':
+                work = work / 'parties-étoiles-Ω'
+                work.mkdir()
             env = dict(os.environ, STARS_SETTINGS_DIR=str(work),
                        STARS_CLIENT_NEW_GAME=str(work / (name + '.xy')))
             env.pop('STARS_CLIENT_CONTINUE', None)
             env.pop('STARS_CLIENT_NEW_ADVANCED', None)
             if advanced:
                 env['STARS_CLIENT_NEW_ADVANCED'] = '1'
-            subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=45)
+            if os.name == 'nt':
+                env['STARS_CLIENT_NEW_GAME_REAL_DIALOG'] = '1'
+            cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
+            subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
             assert all((work / (name + ext)).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
     return 0
 

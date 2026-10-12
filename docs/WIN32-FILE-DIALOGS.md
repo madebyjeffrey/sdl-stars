@@ -1,5 +1,11 @@
 # Open/save file dialogs
 
+Windows SDL uses the compatibility picker. It normalizes native backslash input
+before splitting paths and changes UTF-8 directories through the wide CRT.
+The Windows New Game check now opens this picker rather than replacing it with
+a filename: Cancel preserves the title/game state, and Basic/Advanced Finish
+creates ASCII and Unicode games. See [Windows builds](WINDOWS-SDL3.md).
+
 `GetOpenFileNameA` and `GetSaveFileNameA` now provide real modal file pickers.
 Current API body coverage is **178/178 (100%)**, with six CRT helpers counted
 separately. This is basic API coverage, not full Win32 semantics or release

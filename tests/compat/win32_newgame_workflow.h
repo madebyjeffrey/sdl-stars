@@ -1,5 +1,5 @@
-/* Exercise Basic New Game and its cancellation boundary with a deterministic
- * native chooser result; the actual portal is qualified by fileworkflow. */
+/* Exercise Basic/Advanced New Game and cancellation. Windows drives the real
+ * compatibility picker; native portal results remain qualified by fileworkflow. */
 static const char *pszNewGame;
 static BOOL fCreatingGame;
 static int cNewGameChoices, iNewGameStep;
@@ -16,9 +16,15 @@ void __wrap_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
 BOOL __wrap_FNativeSaveFileName(OPENFILENAMEA *lpof) {
     const char *pszTitle, *pszExtension;
     size_t cb;
+    BOOL fResult;
 
     if (!pszNewGame) return __real_FNativeSaveFileName(lpof);
     cNewGameChoices++;
+    if (getenv("STARS_CLIENT_NEW_GAME_REAL_DIALOG")) {
+        fResult = __real_FNativeSaveFileName(lpof);
+        fprintf(stderr, "New Game chooser %d: result %d, error %lu\n", cNewGameChoices, fResult, (unsigned long)DwNativeFileDialogError());
+        return fResult;
+    }
     if (cNewGameChoices == 1) { SetLastError(0); return FALSE; }
     cb = strlen(pszNewGame) + 1;
     if (cNewGameChoices != 2 || cb > lpof->nMaxFile || !lpof->lpstrFile ||
@@ -38,6 +44,20 @@ static BOOL FCheckNewGameWorkflow(void) {
     DLGPROC lpfn;
     char szFile[512];
     int i;
+
+    if (fCreatingGame && getenv("STARS_CLIENT_NEW_GAME_REAL_DIALOG")) {
+        for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+            if (hwnd->fDialog && GetDlgItem(hwnd, 0x480)) { hwndDialog = hwnd; break; }
+        }
+        if (hwndDialog && IsWindowVisible(hwndDialog)) {
+            if (cNewGameChoices == 1) return FPushClick(GetDlgItem(hwndDialog, IDCANCEL));
+            if (cNewGameChoices == 2) {
+                if (!SetWindowTextA(GetDlgItem(hwndDialog, 0x480), pszNewGame)) return FALSE;
+                return FPushClick(GetDlgItem(hwndDialog, IDOK));
+            }
+            return FALSE;
+        }
+    }
 
     if (iNewGameStep == 0) {
         if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return FALSE;

@@ -8,6 +8,12 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- `FJoinFile` in the Windows SDL file browser now normalizes backslash paths before splitting
+  filenames and changes Unicode directories through the wide CRT. New Game
+  qualification now opens the actual save picker, tests Cancel, then creates
+  Basic/Advanced games with ASCII and Unicode filenames/directories. This
+  corrects the Windows adapter; host results and the baseline do not change.
+
 - Native Windows x64 SDL3 builds now use the same Win32 source wrapper as the
   Linux/macOS client. UCRT64 Debug/Release presets and a PowerShell packaging
   script produce a portable runtime without WSL or MSYS2 on the user's PC.
