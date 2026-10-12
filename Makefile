@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host scenario run-wine fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject clean
+.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run-wine fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject clean
 
 DIST_DIR    ?= dist
 CMAKE       ?= cmake
@@ -38,6 +38,9 @@ help:
 	@echo "  host                 Build stars-host with the native compiler (HOST_PRESET=$(HOST_PRESET))"
 	@echo "  test-unit            Build and run the unit tests in tests/unit under Wine"
 	@echo "  test-host            Build and run the unit tests that need no windows, natively"
+	@echo "  precision            Measure extended versus double intermediates (PRECISION_ARGS to tune)"
+	@echo "  precision-turns      Compare real turns from two temporary host builds (PRECISION_TURN_ARGS)"
+	@echo "  test-precision       Check the precision experiment's coverage, witnesses and reports"
 	@echo "  scenario             Build a test game into dist/scenarios/SCENARIO (no SCENARIO: list them)"
 	@echo "  fmt                  Format C sources and headers (FORMAT_FILES=ai.c to limit)"
 	@echo "  compile-check        Check C syntax (FILES=ai.c to limit) and resources"
@@ -69,6 +72,16 @@ test-unit: compile
 # without Wine.
 test-host: host
 	cd "$(DIST_DIR)/$(HOST_PRESET)" && ctest --output-on-failure --timeout 300 $(CTEST_ARGS)
+
+# Temporary source-extracted copies; production arithmetic and baselines stay put.
+precision: host
+	$(PYTHON) tests/scaffold/precision.py --generated-dir "$(DIST_DIR)/$(HOST_PRESET)/generated" $(PRECISION_ARGS)
+
+precision-turns: save-cli
+	$(PYTHON) tests/scaffold/precision_turns.py --cli "$(SAVE_CLI)" $(PRECISION_TURN_ARGS)
+
+test-precision: host
+	STARS_PRECISION_GENERATED_DIR="$(abspath $(DIST_DIR))/$(HOST_PRESET)/generated" $(PYTHON) -m unittest discover -s tests/scaffold -p test_precision.py
 
 # SCENARIO names one of the games in tests/scenarios/scenarios.c.
 SCENARIO_DIR = $(abspath $(DIST_DIR))/scenarios/$(SCENARIO)

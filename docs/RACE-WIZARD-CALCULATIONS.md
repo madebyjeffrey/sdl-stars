@@ -773,6 +773,13 @@ also outside this random corpus.
 
 ### Tests required before replacing precision
 
+The broader [precision suite](../tests/scaffold/PRECISION.md) now extracts all
+production extended expressions, reports exact differences and counterexamples,
+and runs whole race-calculator axis sweeps, random races, and optional Cartesian
+habitat shards. Run `make precision` for measurements and `make test-precision`
+for its oracle/coverage checks. Its stated operand grids and habitat sweeps do
+not exhaust the full migration requirements below.
+
 | Test family | Cases and evidence required |
 | --- | --- |
 | Golden integer witness | Pin the race above, its innate return, `/2000` result, points, and unchanged normalized `PLAYER`; compare against the production function as well as the extracted reference. |

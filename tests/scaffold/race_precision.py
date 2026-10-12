@@ -13,6 +13,8 @@ import re
 import subprocess
 import tempfile
 
+import precision_reference
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -167,8 +169,8 @@ int main(int argc, char **argv) {
 
 
 def sources():
-    race = (ROOT / "race.c").read_text().split("uint16_t IRaceChecksum(PLAYER *pplr) {")[0]
-    planet = (ROOT / "planet.c").read_text()
+    race = precision_reference.read_source("race.c").split("uint16_t IRaceChecksum(PLAYER *pplr) {")[0]
+    planet = precision_reference.read_source("planet.c")
     planet = "int16_t PctPlanetDesirability" + planet.split("int16_t PctPlanetDesirability", 1)[1]
     planet = planet.split("int32_t CalcPlanetMaxPop", 1)[0]
     if not race.endswith("\n\n") or "return LOWORD(pctPos);" not in planet:

@@ -10,6 +10,8 @@ against the checked-in native baseline, and the tutorial UI under Wine.
   Generate rejection, driven by AutoHotkey v2.0.28.
 - [Save CLI](../savecli/README.md): the standalone Go/Cobra save comparison and
   AI update commands.
+- [Precision experiments](PRECISION.md): source-extracted extended-versus-double
+  operand sweeps and whole race-calculator comparisons (`make precision`).
 
 ## Layout
 
