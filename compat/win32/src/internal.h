@@ -246,4 +246,7 @@ void CompatPurgeTimers(HWND hwnd);
 void CompatClearTimers(void);
 void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch);
 
+char *PszCompatFileUri(const char *pszPath);
+BOOL FCompatOpenDocument(const char *pszPath);
+
 #endif

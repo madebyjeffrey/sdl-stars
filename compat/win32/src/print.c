@@ -129,7 +129,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
         ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
         ofn.lpstrFilter = "PDF documents\0*.pdf\0"; ofn.nFilterIndex = 1; ofn.lpstrDefExt = "pdf";
         ofn.lpstrTitle = "Print to PDF"; ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-        if (!GetSaveFileNameA(&ofn)) return SP_APPABORT;
+        if (!GetSaveFileNameA(&ofn)) return CommDlgExtendedError() ? SP_ERROR : SP_APPABORT;
         strcpy(lp->szTarget, szFile);
     }
     lp->fKeep = FALSE;
@@ -254,6 +254,17 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     } else {
         if (rename(lp->szTemp, lp->szTarget) != 0) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
         lp->szTemp[0] = 0;
+        // The completed PDF remains valid even when no viewer accepts it.
+        if (!FCompatOpenDocument(lp->szTarget)) {
+            char szMessage[PATH_MAX + 160];
+            HWND hwndOwner = IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
+            char *pszAbsolute = realpath(lp->szTarget, NULL);
+            snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
+            SDL_Log("%s", szMessage);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
+                                     hwndOwner ? hwndOwner->lpWindow : NULL);
+            free(pszAbsolute);
+        }
     }
     return 1;
 }

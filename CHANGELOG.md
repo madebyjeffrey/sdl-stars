@@ -8,6 +8,12 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- `CommandHandler` now starts one Print Map document and checks page/document
+  completion instead of restarting each page and ignoring failures. The SDL
+  PDF backend opens only completed output in the platform viewer; viewer
+  rejection retains the PDF and reports its UTF-8 path. Actual Letter/tiled/A4
+  map tests verify all planet marks and unchanged game state.
+
 - The SDL entry point now sets the `org.starsgame.Stars` application identity
   and product version before creating windows, matching its installed launcher
   instead of SDL's executable-name fallback. Entry/exit sanitizer tests pass.

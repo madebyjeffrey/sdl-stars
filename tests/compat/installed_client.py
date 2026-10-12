@@ -6,6 +6,7 @@ No test hooks or application source paths are passed to the product.
 import argparse
 import ctypes as C
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -31,8 +32,12 @@ class ClientMessage(C.Structure):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--game', type=Path, help='Unprotected player file for installed Print Map acceptance')
+    parser.add_argument('--print-map', type=Path, help='Exercise File/Print Map and retain its PDF at this path')
     parser.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.print_map and not args.game:
+        parser.error('--print-map requires --game with an unprotected test file')
     if not args.command:
         parser.error('an installed command is required')
     if 'xvfb-run.' not in os.environ.get('XAUTHORITY', ''):
@@ -79,12 +84,25 @@ def main():
     with tempfile.TemporaryDirectory(prefix='stars-installed-') as directory:
         env = dict(os.environ, SDL_VIDEODRIVER='x11', SDL_AUDIODRIVER='dummy',
                    STARS_SDL_RENDERER='software', STARS_SETTINGS_DIR=directory)
+        command = list(args.command)
+        pdf = Path(directory) / 'installed-map.pdf'
+        if args.print_map:
+            game_file = args.game.resolve()
+            shutil.copyfile(game_file, Path(directory) / 'game.m1')
+            shutil.copyfile(game_file.with_suffix('.xy'), Path(directory) / 'game.xy')
+            env['STARS_SDL_PRINT_FILE'] = str(pdf)
+            env['STARS_SDL_PRINTER'] = 'pdf'
+            if command[:2] == ['flatpak', 'run']:
+                command[2:2] = ['--filesystem=' + directory, '--cwd=' + directory,
+                                 '--env=STARS_SETTINGS_DIR=' + directory, '--env=STARS_SDL_PRINT_FILE=' + str(pdf),
+                                 '--env=STARS_SDL_PRINTER=pdf']
+            command.append(str(Path(directory) / 'game.m1'))
         log = Path(directory) / 'client.log'
         manager = subprocess.Popen(['openbox'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         process = None
         try:
             with log.open('w') as output:
-                process = subprocess.Popen(args.command, cwd=directory, env=env, stdout=output, stderr=output)
+                process = subprocess.Popen(command, cwd=directory, env=env, stdout=output, stderr=output)
                 found = None
                 deadline = time.monotonic() + 45
                 while time.monotonic() < deadline and process.poll() is None:
@@ -105,6 +123,39 @@ def main():
                     raise RuntimeError(f'X11 protocol errors: {errors}')
                 if not found:
                     raise RuntimeError('Installed title did not appear: ' + log.read_text())
+                if args.print_map:
+                    keys = C.CDLL('libXtst.so.6')
+                    lib.XStringToKeysym.argtypes = [C.c_char_p]; lib.XStringToKeysym.restype = C.c_ulong
+                    lib.XKeysymToKeycode.argtypes = [C.c_void_p, C.c_ulong]; lib.XKeysymToKeycode.restype = C.c_uint
+                    lib.XSetInputFocus.argtypes = [C.c_void_p, C.c_ulong, C.c_int, C.c_ulong]
+                    keys.XTestFakeKeyEvent.argtypes = [C.c_void_p, C.c_uint, C.c_int, C.c_ulong]
+                    def key(name, pressed):
+                        code = lib.XKeysymToKeycode(display, lib.XStringToKeysym(name.encode()))
+                        assert code
+                        keys.XTestFakeKeyEvent(display, code, pressed, 0); lib.XFlush(display)
+                    lib.XSetInputFocus(display, found, 2, 0); lib.XFlush(display)
+                    time.sleep(.3)
+                    key('Alt_L', 1); key('f', 1); key('f', 0); key('Alt_L', 0)
+                    time.sleep(.2); key('p', 1); key('p', 0)
+                    deadline = time.monotonic() + 15
+                    dialog = None
+                    while time.monotonic() < deadline and not dialog:
+                        for window in windows(lib.XDefaultRootWindow(display)):
+                            name = C.c_void_p()
+                            if lib.XFetchName(display, window, C.byref(name)) and name.value:
+                                text = C.string_at(name).decode('utf-8', errors='replace'); lib.XFree(name)
+                                if text == 'Print Map': dialog = window; break
+                        time.sleep(.05)
+                    if not dialog: raise RuntimeError('Installed Print Map dialog did not appear: ' + log.read_text())
+                    lib.XSetInputFocus(display, dialog, 2, 0); lib.XFlush(display)
+                    key('Return', 1); key('Return', 0)
+                    deadline = time.monotonic() + 30
+                    while not pdf.exists() and time.monotonic() < deadline and process.poll() is None: time.sleep(.05)
+                    if not pdf.exists(): raise RuntimeError('Installed map PDF was not completed: ' + log.read_text())
+                    assert pdf.read_bytes().startswith(b'%PDF-')
+                    args.print_map.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(pdf, args.print_map)
+                    print('Installed Print Map completed: ' + str(args.print_map), flush=True)
                 event = ClientMessage(33, 0, 1, display, found,
                                       lib.XInternAtom(display, b'WM_PROTOCOLS', 0), 32)
                 event.data[0] = lib.XInternAtom(display, b'WM_DELETE_WINDOW', 0)

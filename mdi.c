@@ -894,6 +894,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
     PLANET  *lppl;
     int16_t  i;
     PRINTDLG pd;
+    int      iPrintResult;
     int16_t  cPageY;
     int16_t  xPage;
     int16_t  dxMax;
@@ -1067,12 +1068,13 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 rc.bottom = dSize;
                 rc.right = dSize;
                 dSize -= dMargin * 2;
+                cch = CchGetString(idsStarsUniverseMap, szWork);
+                iPrintResult = Escape(pd.hDC, STARTDOC, cch, szWork, NULL);
+                if (iPrintResult <= 0) goto LPrintMapCleanup;
                 for (xPage = 0; xPage < cPageX; xPage++) {
                     for (yPage = 0; yPage < cPageY; yPage++) {
                         xOff = -dxMax * xPage;
                         yOff = -dyMax * yPage;
-                        cch = CchGetString(idsStarsUniverseMap, szWork);
-                        Escape(pd.hDC, 10, cch, szWork, NULL);
                         Rectangle(pd.hDC, xOff, yOff, xOff + rc.right, yOff + rc.bottom);
                         if (hfontPrint) {
                             hfontSav = SelectObject(pd.hDC, hfontPrint);
@@ -1150,10 +1152,15 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                         if (hfontSav) {
                             SelectObject(pd.hDC, hfontSav);
                         }
-                        Escape(pd.hDC, 1, 0, NULL, NULL);
+                        iPrintResult = Escape(pd.hDC, NEWFRAME, 0, NULL, NULL);
+                        if (iPrintResult <= 0) {
+                            Escape(pd.hDC, ABORTDOC, 0, NULL, NULL);
+                            goto LPrintMapCleanup;
+                        }
                     }
                 }
-                Escape(pd.hDC, 11, 0, NULL, NULL);
+                iPrintResult = Escape(pd.hDC, ENDDOC, 0, NULL, NULL);
+LPrintMapCleanup:
                 if (hfontPrint) {
                     DeleteObject(hfontPrint);
                 }
@@ -1167,6 +1174,8 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 if (pd.hDevNames) {
                     GlobalFree(pd.hDevNames);
                 }
+                if (iPrintResult <= 0 && iPrintResult != SP_APPABORT)
+                    AlertSz(PszFormatIds(idsUnablePrintGameMapPrinterMayOff, NULL), MB_ICONHAND);
             } else {
                 AlertSz(PszFormatIds(idsUnablePrintGameMapPrinterMayOff, NULL), MB_ICONHAND);
             }

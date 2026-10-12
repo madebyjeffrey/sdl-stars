@@ -1,165 +1,91 @@
-# Default-printer DCs and PDF/CUPS output
+# Print Map to PDF
 
-`PrintDlgA` and `Escape` now implement the default-printer path used by Stars'
-map-printing code. Tested basic coverage rises from **175/178 (98.3%) to
-177/178 (99.4%)**. This percentage describes the inventory, not complete Win32
-semantics or a linked SDL game client.
+The SDL client now completes **Print Map -> PDF -> platform PDF viewer**.
+Choose the map's page grid, select a PDF destination in the native Save picker,
+then print from your usual viewer. The existing Windows build retains its
+standard default-printer path; Windows and Linux host builds do not acquire SDL,
+Cairo or browser dependencies. Basic API-body coverage remains 178/178 (100%).
 
-## Planned Linux user flow
+## Document lifecycle
 
-The agreed follow-up is **Print Map → PDF → platform PDF viewer**. Finish and
-verify the complete game-map PDF, then open it with the platform's default
-viewer after successful document completion. The user handles physical printing
-in that viewer. Cancellation must not launch a viewer; generation failures must
-not open incomplete output, and viewer-launch failures must preserve the completed
-PDF and tell the user where it is.
+`CommandHandler` previously called `STARTDOC` inside every map-page iteration
+and ignored all document/page errors. It now starts one document, checks each
+`NEWFRAME` and `ENDDOC`, stops on failure and releases the fonts, DC and printer
+metadata on every exit. Cancelling the map dialog or PDF destination is quiet
+and does not launch a viewer. Save-picker errors are distinguished from cancel.
 
-The PDF backend already exists; automatic viewer launch and full-map qualification
-remain to be implemented. Existing optional CUPS submission is not the planned
-user-facing workflow. Direct printer discovery, physical-printer qualification
-and an in-app printer settings dialog are not completion requirements for this
-flow. Basic inventory coverage is now 178/178 (100%).
+The Cairo backend stages output beside the destination. A completed document
+must successfully finish, flush, close and rename before its file URL is passed
+to `SDL_OpenURL`. Aborts and generation failures preserve an existing target.
+A viewer rejection preserves the completed PDF and shows its absolute UTF-8
+path in a native error message, also recording it in the application log.
+The launcher accepts a platform handoff; the user chooses the viewer's physical
+printing options. No actual printer submission is exercised by these tests.
 
-## Setup and configuration
-
-On Ubuntu/Pop!_OS, install the added build and verification dependencies with:
+## Configuration
 
 ```sh
-sudo apt install libcairo2-dev poppler-utils cups-client
+sudo apt install libcairo2-dev poppler-utils
 ```
 
-All three packages are already installed on this laptop. Cairo >= 1.16 with its
-PDF backend is linked only into the SDL compatibility runtime. Poppler's
-`pdfinfo` and `pdftoppm` verify actual generated documents when tests are enabled.
-The `lp` command from `cups-client` is needed only for system-printer submission;
-PDF output works without a physical printer or CUPS server. Windows and Linux
-host targets retain their existing dependencies.
+These dependencies are installed on this laptop. PDF output needs neither a
+physical printer nor CUPS. The default is a 300 DPI raster document with
+quarter-inch margins; printed text is not searchable.
 
-The printer snapshots these environment settings when `PrintDlg` creates its DC:
-
-| Variable | Values and behavior |
+| Variable | Meaning |
 | --- | --- |
-| `STARS_SDL_PRINTER` | Unset or `pdf`: the virtual PDF printer. `default`: CUPS default destination. Any other value: a CUPS queue name. |
-| `STARS_SDL_PRINT_FILE` | Optional PDF destination. Without it, `STARTDOC` opens the existing Save picker. A configured path is replaced only after successful document completion. |
+| `STARS_SDL_PRINT_FILE` | Optional destination; otherwise the native Save picker asks for it. Spaces, Unicode and URI punctuation are supported. |
 | `STARS_SDL_PRINT_PAPER` | `letter` (default) or `a4`. |
 | `STARS_SDL_PRINT_ORIENTATION` | `portrait` (default) or `landscape`. |
+| `STARS_SDL_PRINTER` | Unset or `pdf` selects this user flow. Existing opt-in `default`/queue-name CUPS behavior remains for compatibility, outside the product printing requirement. |
 
-These are process settings; no new save-file data is introduced. To list installed
-system printers, use `lpstat -p -d`. Queue submission follows the documented
-[CUPS command-line interface](https://www.cups.org/doc/options.html), including
-media, orientation, title and copies arguments.
+Map rendering retains the original planet positions, symbols, labels and
+legends. Dense clusters can have overlapping labels in the original centered
+layout; a larger tiled map improves readability. No turn-generation or file
+format behavior changes.
 
-## Printer and page contracts
+## Qualification
 
-`PrintDlg(PD_RETURNDEFAULT | PD_RETURNDC)` returns a live printer DC plus owned,
-movable `DEVMODEA` and `DEVNAMES` handles. The caller deletes the DC and frees both
-handles. `PD_RETURNDEFAULT` alone returns the metadata without allocating a DC.
-Existing input metadata is rejected for this default-printer call. Structure
-and initialization errors use `CommDlgExtendedError`.
+The actual Print Map dialog and command run against a copied year-2410 game:
+Letter, four-page tiled Letter and landscape A4 documents have their expected
+page sizes/counts. Poppler independently locates all 128 planet marks in every
+layout. The game state is unchanged; cancellation launches nothing. The map
+preview is rendered for visual review.
 
-The virtual device is a 32-bit color raster printer at 300 DPI, with a quarter-inch
-margin on each side. Letter printable resolution is 2400 by 3150 pixels; A4 and
-landscape settings adjust physical and printable dimensions. `GetDeviceCaps`,
-`GETPHYSPAGESIZE` and `GETPRINTINGOFFSET` report those printer dimensions. Pens,
-brushes, fonts, clipping, coordinates, text and bitmap drawing use the existing
-GDI raster paths. Printer canvases cannot be replaced by selecting a bitmap.
+Printer tests also cover default metadata ownership/SDK ABI, marked/blank page
+completion, page clearing, abort/DC deletion, atomic destination replacement,
+repeated-start rejection, reentrant DC deletion, save-picker cancellation,
+encoded UTF-8 file URLs and viewer rejection with a retained document. Viewer
+and error-dialog calls are intercepted during tests, so no desktop viewer opens.
 
-Supported escapes are `STARTDOC`, `NEWFRAME`, `ENDDOC`, `ABORTDOC`,
-`QUERYESCSUPPORT`, `GETPHYSPAGESIZE` and `GETPRINTINGOFFSET`. Other escape requests
-report unavailable rather than success. A repeated `STARTDOC` during an active
-document reports an error and preserves the existing job. This is necessary
-because Stars calls `STARTDOC` inside its map-page loop and ignores its result.
-
-`NEWFRAME` emits the current page and clears its pixels while retaining GDI
-selections/state. `ENDDOC` completes the document without adding an unwanted
-blank page after the final explicit `NEWFRAME`. It emits an initial blank page
-for an otherwise empty document, or a final marked page if the caller did not
-explicitly end that page. `ABORTDOC`, deleting an active DC and runtime shutdown
-remove incomplete staging files.
-
-The public structures are checked against the SDK ABI. Default-printer metadata
-follows Microsoft's [PRINTDLGA documentation](https://learn.microsoft.com/en-us/windows/win32/api/commdlg/ns-commdlg-printdlga).
-The legacy document/page behavior is an adapter for the older calls used by Stars;
-current Windows recommends newer printing calls, as described under
-[Escape](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-escape).
-
-## Output and failures
-
-PDF output uses a private staging file in the destination directory. Only a
-successful `ENDDOC`, including stream completion/close and rename, replaces the
-destination. Aborting or deleting the DC leaves an existing destination intact.
-Cairo owns its page-image pixels so later PDF finalization cannot access freed
-SDL conversion buffers. The output contains raster pages; text is not searchable.
-The PDF metadata retains the document title, converted from CP1252 when possible.
-
-System printing first completes a private PDF, then runs `lp` with separate
-arguments through SDL's process API. Queue names and filenames are not shell
-commands. Submission is synchronous, with a 30-second timeout, and pumps SDL
-events without dispatching caller callbacks during the process wait. A nonzero
-exit or missing backend reports failure and logs the retained PDF path for
-recovery. A zero exit proves spool-command acceptance, not delivery of physical
-pages. Tests never submit to a real printer.
-
-The PDF destination picker dispatches normal timers. Reentrant deletion or
-another escape on its busy printer DC is rejected with `ERROR_BUSY`, preventing
-a callback from freeing the context still used by `STARTDOC`. Runtime shutdown
-belongs after outstanding compatibility calls return.
-
-## Limits and remaining work
-
-This milestone implements `PD_RETURNDEFAULT`, optionally with `PD_RETURNDC`,
-which are the only flags in Stars' print call. Interactive printer selection,
-input `DEVMODE` editing, page-range/collation/setup hooks, arbitrary paper sizes,
-printer discovery/capability negotiation and printer information contexts remain
-unsupported. The virtual driver supplies its own fixed margins and DPI; these
-are not queried from hardware. Physical-printer and full game-map printing still
-need qualification. Timeout handling and uncommon driver failures have less
-coverage than PDF and ordinary process acceptance/rejection.
-
-`WinHelp` is the last inventoried API without an implementation. Full-client
-linking also needs the legacy `ExitWindowsEx` dependency and an entry point calling
-`WinMain`. The full `stars-sdl` client remains unlinked. Finishing the API count
-will not by itself complete client/runtime qualification.
-
-## CLion and verification
-
-Select `stars-compat-print` under `sdl-debug` or `sdl-release`. Its default
-output directory is the selected CMake build's `print-test-output`, so no program
-argument is needed in CLion. An optional argument selects another existing-parent
-output directory. CTest supplies its directory explicitly.
+The relocated CMake install and installed Flatpak also load an unprotected test
+game, open File/Print Map with ordinary keyboard input, complete a Letter PDF
+and close normally. A private OpenFile service receives exactly the saved PDF
+bytes, which Poppler renders for visual review. These checks run sequentially
+on private X11 displays; they never submit to a physical printer.
 
 ```sh
 cmake --preset sdl-debug
 cmake --build --preset sdl-debug
-ctest --test-dir dist/sdl-debug -R '^win32_print' --output-on-failure
+ctest --test-dir dist/sdl-debug -R '^win32_print' --output-on-failure -j 1
 ```
 
-The document-check fixture runs the C harness before Poppler verification,
-including when only `win32_print_pdf` is selected. It checks page counts,
-Letter/A4 sizes, staging cleanup, independently rendered red/blue rectangles,
-printed text, and page clearing. The process test uses an executable fake `lp`
-that accepts or rejects a real PDF and records argument boundaries. The harness
-also covers metadata ownership, abort/deletion, destination browsing, invalid
-calls, repeated `STARTDOC` and reentrant DC deletion.
+For installed-product acceptance, prepare a disposable unprotected game using
+an optional Linux host argument. The frozen regression race has a password, so
+the harness writes a separate predefined race with the existing serializer;
+the host creates a new game without modifying frozen fixtures:
 
-The Debug and Release compatibility/smoke suites passed **54/54** tests each. AddressSanitizer,
-UndefinedBehaviorSanitizer and leak detection passed the printer harness. The
-CLion target was also run with no program argument, using its configured output
-directory, and its final Release document fixture passed.
+```sh
+python3 tests/compat/check_print_map.py dist/sdl-debug/bin/stars-compat-printmap dist/sdl-debug/print-map-test --host dist/host-debug/bin/stars-host
+STARS_TEST_PRIVATE_BUS=1 dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/compat/run_document_portal.py --output /tmp/stars-accepted-map.pdf /usr/bin/python3 "$PWD/tests/compat/installed_client.py" --game "$PWD/dist/sdl-debug/print-map-test/installed-game/game.m1" --print-map /tmp/stars-saved-map.pdf "$PWD/dist/install/bin/stars-sdl"
+cmp /tmp/stars-accepted-map.pdf /tmp/stars-saved-map.pdf
+```
 
-- MinGW Debug built; Windows units passed **49/49**, including the extended
-  `DEVMODEA` SDK ABI checks.
-- Linux host built and its units passed **12/12**.
-- Native regression matched **519 checkpoints**, with 22 existing warnings and
-  zero differences/errors or skipped inputs.
-- The tutorial failed at year 2407, page 24, instruction 186, after 94 actions.
-  The observer's `SendMessage` timed out while clicking the Messages-pane filter.
-  The Wine log also contains `free(): invalid next size (fast)`.
-  Artifacts remain in `dist/scaffold/tutorial/20261011T020241.076676Z`. This is
-  an unresolved validation failure; no successful tutorial run is claimed for
-  this batch. The Windows tutorial executable does not link this SDL runtime.
+Select `stars-compat-print` or `stars-compat-printmap` in CLion. The CTest map
+case supplies copied files and output paths; the standalone map harness expects
+that same setup. The product `stars-sdl` target uses its normal Print Map command.
 
-A fresh relocatable client link probe confirms that printing references resolve;
-only `WinHelpA` and legacy `ExitWindowsEx` remain among the Win32 service
-references. Game sources, serialized layouts and regression baselines were not
-changed by this milestone.
+Generic Win32 printer setup hooks, arbitrary paper formats, printer discovery,
+physical-printer capability negotiation and direct hardware acceptance remain
+outside this flow. The existing optional CUPS path uses the documented
+[CUPS CLI](https://www.cups.org/doc/options.html); it is not the user-facing path.
