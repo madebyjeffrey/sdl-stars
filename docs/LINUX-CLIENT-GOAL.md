@@ -5,9 +5,9 @@ fullscreen, including return-to-title and failed-load paths. Debug and fatal
 sanitizer startup/race-wizard tests pass on dummy and private X11 displays;
 the native file-workflow tests also pass. The main game layout is unchanged.
 
-Current work order: graphics dependency leak repair, gameplay workflows (3),
-UI polish (8), then Flatpak/CMake packaging (9), with local commits for completed
-batches and no pushes. Desktop/platform and immediate Unicode path/password
+The current product batch completes the private Mesa leak repair, critical
+gameplay workflows (3), UI polish (8) and Flatpak/CMake packaging (9), with
+separate local commits and no pushes. Desktop/platform and immediate Unicode path/password
 implementation batches are committed. The saved broader goal
 is paused; tutorial expansion is paused. Existing tutorial work and artifacts
 are retained, but this product batch does not run or extend tutorial profiles.
@@ -27,6 +27,14 @@ The completed graphics batch passes 115/115 fatal sanitizer cases (including
 seven Wayland cases), 55/55 Windows tests and all 519 native regression
 comparisons, with 87 existing warnings and no differences/errors or skips.
 
+The UI polish batch covers all 122 selected non-tutorial sanitizer cases, with
+one stale executable relinked and successfully rerun; Windows units pass 55/55
+and native regression remains 519 matches. CMake relocation and a clean local
+Flatpak install both launch an 800x600 title and close normally on private X11.
+See [polish](UI-POLISH.md) and [packaging commands and limits](LINUX-PACKAGING.md).
+Real desktop/GPU and macOS acceptance, tutorial expansion, PDF printing and
+offline browser acceptance remain deferred.
+
 | Order | Milestone | Status | Completion evidence needed |
 | --- | --- | --- | --- |
 | 1 | Open/save dialog overhaul | Implementation complete; desktop/macOS qualification pending | Native selection, validation/retries/errors, Unicode game/race I/O and fullscreen ownership pass automated tests; saved compositor feedback and macOS execution remain unverified |
@@ -35,7 +43,7 @@ comparisons, with 87 existing warnings and no differences/errors or skips.
 | 4 | Native tutorial runner | In progress | Full tutorial driven in process through hierarchy and map inspection, without AutoHotkey; checkpoint/action evidence and failure artifacts |
 | 7 | Wayland and desktop qualification | Native Wayland implementation and Debug tests added; qualification incomplete | Native Wayland positions/popups, focus/capture, scale/multi-monitor and GPU/software presentation; documented platform limits |
 | 8 | UI polish | Current product polish implemented and qualified | Message wheel navigation and scrollable planet/fleet sections pass dummy/private X11 checks, fatal sanitizers, Windows units and unchanged native regression; desktop feedback remains queued |
-| 9 | Flatpak and relocatable Linux packaging | Pending | Flatpak manifest plus CMake install rules, resources/fonts/libraries, launch outside repository and clean-install verification |
+| 9 | Flatpak and relocatable Linux packaging | Implemented; local clean install qualified | Versioned, hashed source export, pinned SDL/build dependencies, runtime assets/notices and metadata; relocated CMake and installed Flatpak both open and close normally outside the checkout |
 
 ### Product completion scope for milestones 1 and 2
 

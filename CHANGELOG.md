@@ -8,6 +8,11 @@ produce different results from a 2.6j host for the same turn.
 
 ### Added
 
+- Linux product packaging now provides the `sdl-package` CLion/CMake preset,
+  relocatable runtime install rules and a local Flatpak bundle on Platform
+  26.08. Installed help finds its assets relative to the executable; tracked
+  source exports are reproducible, versioned and hashed for reliable caching.
+
 - The planet/fleet pane now scrolls expanded sections at small window sizes,
   with proportional thumbs, live dragging and accumulated wheel input. Its
   existing controls keep their content coordinates and remain reachable.

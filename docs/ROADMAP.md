@@ -224,7 +224,10 @@ see [UI polish](UI-POLISH.md) for qualification.
 The previously selected scope is milestones 1, 2, 3, 4, 7, 8 and 9. Track
 completion and evidence in [Linux client goal](LINUX-CLIENT-GOAL.md).
 PDF printing and offline help qualification are deferred outside this goal.
-Packaging is Flatpak plus the CMake install layout, selected by the user.
+Flatpak and the relocatable CMake runtime layout are now built and locally
+qualified: both launch and close normally outside the checkout on private X11.
+See [packaging](LINUX-PACKAGING.md) for commands, permissions and remaining
+desktop/help/GPU-driver qualification.
 
 
 - **Open/save dialog overhaul:** use native platform pickers (Linux libdbus

@@ -13,6 +13,7 @@ if(NOT SDL3_FOUND)
     set(SDL_STATIC OFF CACHE BOOL "Build static SDL3")
     set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library")
     set(SDL_TESTS OFF CACHE BOOL "Build SDL test programs")
+    set(SDL_INSTALL OFF CACHE BOOL "Stars installs only the SDL runtime")
     set(SDL_EXAMPLES OFF CACHE BOOL "Build SDL examples")
     FetchContent_Declare(SDL3
         URL https://www.libsdl.org/release/SDL3-3.4.18.tar.gz

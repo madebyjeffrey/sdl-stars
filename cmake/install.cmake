@@ -1,0 +1,44 @@
+# Product-only layout. Resources are located relative to the executable so a
+# staged installation can move without retaining paths into the source tree.
+include(GNUInstallDirs)
+install(TARGETS stars-host RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
+if(NOT STARS_BUILD_SDL_CLIENT)
+    return()
+endif()
+file(RELATIVE_PATH STARS_DATA_FROM_BIN "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/stars")
+target_compile_definitions(stars_win32 PRIVATE STARS_INSTALLED_DATA="${STARS_DATA_FROM_BIN}")
+file(RELATIVE_PATH STARS_LIB_FROM_BIN "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set_target_properties(stars-sdl stars-compat-help-viewer PROPERTIES
+        INSTALL_RPATH "$ORIGIN/${STARS_LIB_FROM_BIN}")
+endif()
+install(TARGETS stars-sdl stars-compat-help-viewer
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT StarsRuntime)
+get_target_property(STARS_SDL_IMPORTED SDL3::SDL3-shared IMPORTED)
+if(NOT STARS_SDL_IMPORTED)
+    install(TARGETS SDL3-shared LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT StarsRuntime)
+    install(FILES "${sdl3_SOURCE_DIR}/LICENSE.txt"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/licenses/SDL3" COMPONENT StarsRuntime)
+endif()
+install(DIRECTORY "${STARS_HELP_GENERATED}/" DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/help"
+    COMPONENT StarsRuntime PATTERN "*.h" EXCLUDE)
+install(FILES "${PROJECT_SOURCE_DIR}/res/stars!.hlp"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/stars" COMPONENT StarsRuntime)
+install(FILES "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE"
+    "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE.free-api"
+    "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE.zingl"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/licenses" COMPONENT StarsRuntime)
+install(FILES "${PROJECT_SOURCE_DIR}/res/fonts/LICENSE" "${PROJECT_SOURCE_DIR}/res/fonts/ORIGIN.json"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/licenses/fonts" COMPONENT StarsRuntime)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/org.starsgame.Stars.desktop"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications" COMPONENT StarsRuntime)
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/org.starsgame.Stars.metainfo.xml"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo" COMPONENT StarsRuntime)
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/org.starsgame.Stars.svg"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps" COMPONENT StarsRuntime)
+    install(FILES "${PROJECT_SOURCE_DIR}/packaging/org.starsgame.Stars.png"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/32x32/apps" COMPONENT StarsRuntime)
+endif()

@@ -110,6 +110,16 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "sdl-package",
+      "inherits": "sdl-release",
+      "displayName": "Linux SDL product install (Release)",
+      "binaryDir": "${sourceDir}/dist/sdl-package",
+      "cacheVariables": {
+        "STARS_BUILD_TESTS": "OFF",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/install"
+      }
     }
   ],
   "buildPresets": [
@@ -291,6 +301,15 @@
     {
       "name": "macos-sdl-release",
       "configurePreset": "macos-sdl-release"
+    },
+    {
+      "name": "sdl-package",
+      "configurePreset": "sdl-package",
+      "targets": [
+        "stars-sdl",
+        "stars-host",
+        "stars-compat-help-viewer"
+      ]
     }
   ],
   "testPresets": [

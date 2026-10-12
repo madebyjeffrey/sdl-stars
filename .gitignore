@@ -77,3 +77,6 @@ snippets/
 /AGENTS-private.md
 !tests/unit/golden/dumps.map
 __pycache__/
+
+# Local Flatpak builder caches
+.flatpak-builder/

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Stars!
+Comment=Explore, colonize and compete in a turn-based space strategy game
+Exec=stars-sdl
+Icon=org.starsgame.Stars
+Terminal=false
+Categories=Game;StrategyGame;

@@ -107,6 +107,23 @@ int main(int argc, char **argv) {
     CHECK(!WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0) && GetLastError() == ERROR_GEN_FAILURE && cOpen == cBefore + 1);
     fAccept = TRUE;
     CHECK(WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0));
+    // Move the complete package into the installed share layout. Neither
+    // the executable's old adjacent archive nor ../help remains available.
+    snprintf(szFile, sizeof(szFile), "%s/share", szRoot); CHECK(mkdir(szFile, 0700) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/share/stars", szRoot); CHECK(mkdir(szFile, 0700) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/share/stars/stars!.hlp", szRoot);
+    CHECK(rename(szArchive, szFile) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/help", szRoot);
+    snprintf(szOther, sizeof(szOther), "%s/share/stars/help", szRoot);
+    CHECK(rename(szFile, szOther) == 0);
+    CHECK(WinHelp(NULL, "stars!.hlp", HELP_INDEX, 0));
+    CHECK(strstr(szUri, "/share/stars/help/topic-0.html"));
+    CHECK(!WinHelp(NULL, szArchive, HELP_INDEX, 0) && GetLastError() == ERROR_FILE_NOT_FOUND);
+    CHECK(rename(szOther, szFile) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/share/stars/stars!.hlp", szRoot);
+    CHECK(rename(szFile, szArchive) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/share/stars", szRoot); CHECK(rmdir(szFile) == 0);
+    snprintf(szFile, sizeof(szFile), "%s/share", szRoot); CHECK(rmdir(szFile) == 0);
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
         snprintf(szFile, sizeof(szFile), "%s/help/%s", szRoot, rgHelpFile[i]); CHECK(unlink(szFile) == 0);
     }

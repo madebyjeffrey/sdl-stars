@@ -1,0 +1,41 @@
+{
+  "app-id": "org.starsgame.Stars",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "26.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "stars-sdl",
+  "finish-args": [
+    "--share=ipc", "--socket=wayland", "--socket=fallback-x11",
+    "--socket=pulseaudio", "--device=dri", "--filesystem=home"
+  ],
+  "cleanup": ["/include", "/lib/pkgconfig", "/lib/cmake", "/share/man", "*.la"],
+  "modules": [
+    {
+      "name": "SDL3",
+      "buildsystem": "cmake-ninja",
+      "config-opts": ["-DSDL_SHARED=ON", "-DSDL_STATIC=OFF", "-DSDL_TEST_LIBRARY=OFF", "-DSDL_TESTS=OFF", "-DSDL_EXAMPLES=OFF"],
+      "sources": [{"type": "archive", "url": "https://www.libsdl.org/release/SDL3-3.4.18.tar.gz", "sha256": "9c75cf16330322c217dedd2e0609f1124f1b54b8633e763467b4684d0f4334a3"}]
+    },
+    {
+      "name": "pyyaml-build",
+      "buildsystem": "simple",
+      "build-commands": ["mkdir -p /app/lib/stars-build-python", "cp -a lib/yaml /app/lib/stars-build-python/"],
+      "cleanup": ["*"],
+      "sources": [{"type": "archive", "url": "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz", "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"}]
+    },
+    {
+      "name": "libwmf-build",
+      "buildsystem": "autotools",
+      "config-opts": ["--without-x", "--disable-pixbuf", "--disable-static"],
+      "cleanup": ["*"],
+      "sources": [{"type": "archive", "url": "https://github.com/caolanm/libwmf/releases/download/v0.2.16/libwmf-0.2.16.tar.gz", "sha256": "e20a0bfc2550e779f5f2f13e1afd34cb3b3692954b7e2b73a25ac94c86cb484a"}]
+    },
+    {
+      "name": "stars",
+      "buildsystem": "cmake-ninja",
+      "build-options": {"env": {"PYTHONPATH": "/app/lib/stars-build-python"}},
+      "config-opts": ["-DCMAKE_BUILD_TYPE=Release", "-DSTARS_BUILD_SDL_CLIENT=ON", "-DSTARS_BUILD_TESTS=OFF", "-DSTARS_SDL_FETCH=OFF"],
+      "sources": [{"type": "archive", "path": "stars-source.tar.gz"}]
+    }
+  ]
+}

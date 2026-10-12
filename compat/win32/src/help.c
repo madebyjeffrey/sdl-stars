@@ -11,6 +11,10 @@
 #include <zlib.h>
 #include "help_contexts.h"
 
+#ifndef STARS_INSTALLED_DATA
+#define STARS_INSTALLED_DATA "../share/stars"
+#endif
+
 static BOOL FHelpArchive(const char *pszFile) {
     FILE *lpFile;
     unsigned char rgb[16384];
@@ -146,7 +150,15 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
             return FALSE;
         }
-        if (!FHelpArchive(szFile)) return FALSE;
+        if (!FHelpArchive(szFile)) {
+            if (GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
+            cch = snprintf(szFile, sizeof(szFile), "%s%s/stars!.hlp", pszBase, STARS_INSTALLED_DATA);
+            if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
+                SetLastError(ERROR_FILENAME_EXCED_RANGE);
+                return FALSE;
+            }
+            if (!FHelpArchive(szFile)) return FALSE;
+        }
     }
     cch = snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
     if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
@@ -155,8 +167,16 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     }
     pszDirectory = realpath(szDirectory, NULL);
     if (!pszDirectory) {
-        SetLastError(ERROR_PATH_NOT_FOUND);
-        return FALSE;
+        cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
+        if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
+            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+            return FALSE;
+        }
+        pszDirectory = realpath(szDirectory, NULL);
+        if (!pszDirectory) {
+            SetLastError(ERROR_PATH_NOT_FOUND);
+            return FALSE;
+        }
     }
     if (!FHelpAssets(pszDirectory)) {
         free(pszDirectory);

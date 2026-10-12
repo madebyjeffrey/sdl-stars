@@ -227,3 +227,6 @@ sudo apt install libdbus-1-dev xdg-desktop-portal xdg-desktop-portal-gtk
 
 The isolated protocol test also needs `dbus-run-session`, `python3-dbus` and
 `python3-gi`; these are installed here. See [native file dialogs](WIN32-FILE-DIALOGS.md#platform-native-file-selection).
+
+Product installs and the `sdl-package` CLion preset are described in
+[Linux packaging](LINUX-PACKAGING.md), including local Flatpak builds.
