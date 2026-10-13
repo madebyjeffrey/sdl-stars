@@ -67,7 +67,9 @@ checks finish pending tree paints before inspecting the presented image,
 matching batched presentation.
 
 Combo selection callbacks can return focus to the frame without cancelling
-the accepted row; a re-entry regression test covers that path.
+the accepted row; a re-entry regression test covers that path. Instruction
+updates no longer reactivate an already visible tutor, preserving focus in
+the player's current control.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.

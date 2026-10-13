@@ -120,7 +120,10 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void ShowTutor(int16_t fShow) {
     if (tutor.hwnd) {
-        ShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
+        // Instruction updates call this while the tutor is already visible;
+        // activating it again takes focus from the control the player is using.
+        if (!fShow || !IsWindowVisible(tutor.hwnd))
+            ShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
         tutor.fVisible = fShow;
     }
     return;

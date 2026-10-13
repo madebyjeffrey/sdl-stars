@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ShowTutor` reactivated the visible tutorial window on instruction updates,
+  taking keyboard focus from the player's controls. It now shows the tutor
+  only when hidden, preserving focus while instructions change. Turn
+  generation, file formats and regression baselines are unchanged.
+
 - `CloseCombo` allowed focus changes during selection callbacks to reenter
   cancellation, reverting the displayed row after the game accepted the new
   task. Closing now guards against re-entry, preserving the accepted selection.
