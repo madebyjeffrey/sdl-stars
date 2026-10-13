@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Removed the suspended Rust/Bevy startup experiment and its optional build
+  integration. `WinMain` uses the original SDL title-screen workflow for every
+  desktop build. Turn generation, file formats and regression baselines are
+  unchanged.
+
 - New-game checks waited for the title after cancelling the save picker,
   although cancellation now returns to the live wizard page. The checks
   verify the chosen size remains and no file was created, then cancel the
@@ -48,15 +53,6 @@ produce different results from a 2.6j host for the same turn.
   SDL configuration with a missing XCURSOR dependency. Unit, regression and
   tutorial workflows now install the documented desktop backend dependencies.
   Game behavior, file formats and regression baselines are unchanged.
-
-- Added an opt-in Rust/Bevy 0.20 starting-screen experiment, statically linked
-  into `stars-sdl`. SDL retains window/event ownership; its four buttons call
-  the existing New Game, Open Game, Continue Game and Exit handlers. Dialogs
-  open over the paused Bevy screen, with the old title hidden. Cancelled
-  dialogs return to Bevy; later returns to the title retain the SDL screen.
-  The experiment is suspended and retained for reference: rendering after
-  dialogs remains unresolved, including disappearing title/version text.
-  Turn generation, saved records and regression baselines are unchanged.
 
 - `DialogBoxParamA` restored only logical focus when closing dialogs such as
   the ship designer, leaving their macOS owner without native keyboard focus.
