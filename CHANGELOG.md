@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CloseCombo` allowed focus changes during selection callbacks to reenter
+  cancellation, reverting the displayed row after the game accepted the new
+  task. Closing now guards against re-entry, preserving the accepted selection.
+  A regression test moves focus during `CBN_SELCHANGE`. Turn generation,
+  file formats and regression baselines are unchanged.
+
 - Child-window composition and positioning checks read the presented image
   before pending window-tree paints completed. Their inspection helpers now
   finish pending paints before asserting pixels, matching the batched

@@ -66,6 +66,9 @@ headless client and tutorial workflows visible. Child composition and position
 checks finish pending tree paints before inspecting the presented image,
 matching batched presentation.
 
+Combo selection callbacks can return focus to the frame without cancelling
+the accepted row; a re-entry regression test covers that path.
+
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.
 

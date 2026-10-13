@@ -24,7 +24,7 @@ typedef struct COMPATCOMBO {
     HWND hwndPopup, hwndEdit, hwndCapture;
     WNDPROC lpfnEdit;
     int cyDrop, cyField, cxDrop, iSave, iHot;
-    BOOL fDropped, fOpening, fSync, fExtended, fSizing;
+    BOOL fDropped, fOpening, fClosing, fSync, fExtended, fSizing;
 } COMPATCOMBO;
 typedef struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; } COMPATSCROLL;
 typedef struct COMPATFONTDATA { const BYTE *rgb; size_t cb; } COMPATFONTDATA;

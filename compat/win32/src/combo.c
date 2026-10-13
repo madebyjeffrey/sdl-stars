@@ -48,7 +48,10 @@ static void SyncCombo(HWND hwnd) {
 static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
     COMPATCOMBO *lp = hwnd->lpcombo;
     HWND hwndPopup, hwndCapture;
-    if (!lp || !lp->fDropped) return;
+    if (!lp || !lp->fDropped || lp->fClosing) return;
+    // CBN_SELCHANGE can move focus to the frame. Its WM_KILLFOCUS must not
+    // reenter cancellation and restore the old row while accepting this one.
+    lp->fClosing = TRUE;
     if (fAccept && lp->iHot >= 0) {
         SelectCombo(hwnd, lp->iHot, TRUE);
         if (!FCombo(hwnd, lp) || !lp->fDropped) return;
@@ -62,6 +65,7 @@ static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
     if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup);
     if (!FCombo(hwnd, lp)) return;
     InvalidateRect(hwnd, NULL, TRUE);
+    lp->fClosing = FALSE;
     if (fNotify) {
         NotifyCombo(hwnd, fAccept ? CBN_SELENDOK : CBN_SELENDCANCEL);
         if (FCombo(hwnd, lp)) NotifyCombo(hwnd, CBN_CLOSEUP);
@@ -85,7 +89,7 @@ static void OpenCombo(HWND hwnd) {
     COMPATCOMBO *lp = hwnd->lpcombo;
     RECT rc;
     HWND hwndPopup;
-    if (!lp || lp->fDropped || lp->fOpening || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
+    if (!lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
     lp->fOpening = TRUE; NotifyCombo(hwnd, CBN_DROPDOWN);
     if (!FCombo(hwnd, lp)) return;
     lp->fOpening = FALSE;

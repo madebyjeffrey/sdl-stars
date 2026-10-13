@@ -10,13 +10,13 @@
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 static int cSel, cDrop, cClose, cDraw, cDelete, cErrors;
-static BOOL fDestroyDrop, fResetDraw, fDestroyDraw;
+static BOOL fDestroyDrop, fResetDraw, fDestroyDraw, fFocusOnSelect;
 static LRESULT CALLBACK ComboOwner(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     DRAWITEMSTRUCT *lpds;
     MEASUREITEMSTRUCT *lpms;
     char szItem[64];
     if (msg == WM_COMMAND && l) {
-        if (HIWORD(w) == CBN_SELCHANGE) cSel++;
+        if (HIWORD(w) == CBN_SELCHANGE) { cSel++; if (fFocusOnSelect) SetFocus(hwnd); }
         if (HIWORD(w) == CBN_CLOSEUP) cClose++;
         if (HIWORD(w) == CBN_DROPDOWN) { cDrop++; if (fDestroyDrop) DestroyWindow((HWND)l); }
     }
@@ -134,6 +134,14 @@ int main(void) {
     SendMessage(hcb, WM_KEYDOWN, VK_F4, 0); CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0));
     SendMessage(hcb, WM_KEYDOWN, VK_DOWN, 0); CHECK(SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0));
     SendMessage(hcb, WM_KEYDOWN, VK_ESCAPE, 0); CHECK(SendMessage(hcb, CB_SETEXTENDEDUI, FALSE, 0) == CB_OKAY);
+    // Stars' selection handler returns focus to the frame during CBN_SELCHANGE.
+    CHECK(SendMessage(hcb, CB_SETCURSEL, 0, 0) == 0);
+    SetFocus(hcb); SendMessage(hcb, CB_SHOWDROPDOWN, TRUE, 0);
+    SendMessage(hcb, WM_KEYDOWN, VK_DOWN, 0);
+    fFocusOnSelect = TRUE;
+    SendMessage(hcb, WM_KEYDOWN, VK_RETURN, 0);
+    fFocusOnSelect = FALSE;
+    CHECK(!SendMessage(hcb, CB_GETDROPPEDSTATE, 0, 0) && SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1);
     puts("Combo popup open/close contracts passed");
     for (i = 0; i < (int)(sizeof(rgUIManifest) / sizeof(rgUIManifest[0])); i++) {
         if ((UINT_PTR)rgUIManifest[i].pszType != 5) continue;
