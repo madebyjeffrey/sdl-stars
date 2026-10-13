@@ -70,7 +70,9 @@ paint pass for each simulated input tick before counting its presented frame.
 Combo selection callbacks can return focus to the frame without cancelling
 the accepted row; a re-entry regression test covers that path. Instruction
 updates no longer reactivate an already visible tutor, preserving focus in
-the player's current control.
+the player's current control. New-game cancellation checks cover the live wizard
+page returned by the save picker before verifying the restored title and
+game state after cancelling the wizard itself.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.

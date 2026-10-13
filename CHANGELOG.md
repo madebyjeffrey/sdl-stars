@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- New-game checks waited for the title after cancelling the save picker,
+  although cancellation now returns to the live wizard page. The checks
+  verify the chosen size remains and no file was created, then cancel the
+  wizard and verify the title and original game state before retrying Finish.
+  Production code and regression baselines are unchanged.
+
 - Scanner-drag checks counted presentations before the completed tree paint
   pass, reporting zero frames under batched presentation. Each simulated
   drag tick now finishes that pass and still requires one frame per update.

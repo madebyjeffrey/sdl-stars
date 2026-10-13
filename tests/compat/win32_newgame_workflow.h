@@ -89,6 +89,15 @@ static BOOL FCheckNewGameWorkflow(void) {
         iNewGameStep++;
         return FPushClick(GetDlgItem(hwndDialog, i));
     }
+    if (fCreatingGame && iNewGameStep == 3 && cNewGameChoices == 1) {
+        // Cancelling the save picker now returns to the live wizard page.
+        for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
+            if (hwnd->fDialog && hwnd->lpfnDlg == SimpleNewGameDlg) { hwndDialog = hwnd; break; }
+        if (!hwndDialog || !IsWindowEnabled(hwndDialog)) return TRUE;
+        if (IsDlgButtonChecked(hwndDialog, IDC_SIMPLE_NEW_GAME_TINY) != BST_CHECKED ||
+            FFileExists((char *)pszNewGame)) return FALSE;
+        return FPushClick(GetDlgItem(hwndDialog, IDCANCEL));
+    }
     if (fCreatingGame) return TRUE;
     if (iNewGameStep == 3) {
         if (cNewGameChoices != 1 || memcmp(&game, &gameNewSav, sizeof(GAME)) ||
