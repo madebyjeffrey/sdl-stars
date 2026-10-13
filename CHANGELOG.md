@@ -6,13 +6,6 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
-- Added `make mac-bundle` / the `macos-bundle` preset to package and sign an
-  Apple-silicon app with its icon, offline guide and relocatable runtime
-  libraries. Signing discovers an eligible keychain identity on each build,
-  signs nested code with Hardened Runtime, verifies the result and preserves
-  the previous app on failure. Ordinary platform builds, game behavior and
-  file formats are unchanged; notarization remains separate work.
-
 - `DialogBoxParamA` restored only logical focus when closing dialogs such as
   the ship designer, leaving their macOS owner without native keyboard focus.
   Modal dialogs, completed wizard sequences and active modeless owned windows
@@ -21,95 +14,12 @@ produce different results from a 2.6j host for the same turn.
   close-handler focus choices are preserved. Game behavior and baselines are
   unchanged.
 
-- macOS Retina windows now use backing canvases at the display's physical pixel
-  density and rasterize text at that density, instead of enlarging low-resolution
-  glyphs. Logical font metrics, advances, control geometry and mouse coordinates
-  stay unchanged. Menu text, child composition, scrolling and raster operations
-  use the same backing scale; existing game bitmaps retain nearest-neighbor
-  rendering. Windows, Linux and non-Retina displays retain scale-one rendering.
-  Turn generation, file formats and regression baselines are unchanged.
-
-- Window creation now explicitly hides new native windows after SDL setup.
-  Cocoa could expose owned popups despite the requested hidden flag, showing
-  black during renderer setup before the wrapper's first paint. macOS menu,
-  combobox and tooltip popup windows also start with a clear native backing
-  until their completed opaque canvas is submitted. A native test checks the
-  scanner-combobox tooltip is actually hidden before rendering and its first
-  frame has the opaque tooltip background. Turn generation and regression
-  baselines are unchanged.
-
-- Native SDL exposure now immediately resubmits the last completed window
-  texture, including exposure during menu/window dispatch and while a new paint
-  is pending. Cocoa can clear a newly exposed view to black after its prepared
-  frame was presented; previously ordinary exposure waited for the message
-  queue to reach painting. Refreshing the completed texture does not reenter
-  application drawing or upload unfinished panes. Turn generation and regression
-  baselines are unchanged.
-
-- New SDL windows now complete show-time layout and paint their visible controls
-  while the native window remains hidden, then submit the finished frame again
-  immediately after native show. This avoids waiting for queued exposure to
-  replace a black drawable. `Popup` also assigns its handle and font before
-  showing; starbase detail previously painted before `hwndPopup` was available,
-  producing different first and subsequent frames. Game rules, file formats
-  and regression baselines are unchanged.
-
-- Ordinary SDL windows now request focus when shown, including the modeless
-  technology browser, reports and tutorial. Disabled/minimized windows, child
-  controls and nonactivating detail cards remain excluded; `SWP_NOACTIVATE`
-  is respected. Game logic, file formats and regression baselines are unchanged.
-
-- The SDL window wrapper now requests native and logical focus when its first
-  ordinary window is shown. Terminal launches on macOS previously left the title
-  screen inactive. Minimized, disabled and nonactivating windows do not consume
-  this startup request. Turn generation and regression baselines are unchanged.
-
-- The SDL modal dialog wrapper now requests native input focus after showing
-  an initialized dialog. Previously it focused only the logical control,
-  leaving new-game dialogs inactive on macOS and consuming the first click
-  for activation. No-activate windows retain their policy; turn generation and
-  regression baselines are unchanged.
-
-- Mineral and other `starspopup` detail cards now use an owned, nonactivating
-  native tooltip window. They previously used an ordinary desktop window on
-  macOS; native close left `hwndPopup` stale and blocked subsequent mineral
-  popups. Destruction now clears the popup state on every close path.
-  Border-only popups no longer acquire a title bar, and nonactivating cards
-  retain mouse capture on behalf of their focused owner.
-  Turn generation and regression baselines are unchanged.
-- The SDL painting wrapper now presents completed pane paints together and
-  paints the first frame before showing a native window. Previously icon draws
-  and individual pane paints uploaded incomplete frames, exposing black areas
-  and slowing startup. A live-resize event watcher also lays out and paints at
-  the current size during native resize tracking instead of waiting for the
-  outer message loop. Game rules, file formats and regression baselines are unchanged.
-
-- The approved planet, spacecraft and sans-serif "2" artwork now identifies the
-  SDL desktop on macOS, Windows and Linux. Windows embeds it as the executable
-  icon, and Linux installs matching launcher artwork. The original small game
-  icons and turn generation remain unchanged; the macOS bundle uses the same artwork.
-
-- `InitInstance` previously showed and immediately hid the main frame before
-  opening the title screen, exposing a brief window and maximize animation on
-  macOS. It now keeps the frame hidden and defers its saved show command until
-  the game first displays it. Turn generation and regression baselines are unchanged.
-
-- New-game setup now keeps its current page open while choosing the game
-  filename and makes that page the save picker's owner. Previously the wizard
-  closed first and attached the picker to the hidden main frame. Canceling
-  filename selection returns to the same page. Turn generation and regression
-  baselines are unchanged.
-
-- `NewGameWizard` treated a modal dialog's `-1` result on application quit as
-  permission to advance, repeatedly opening pages against the pending quit
-  message. It and the nested race wizard now unwind like cancellation, and the
-  SDL modal wrapper rejects new dialogs while quit is pending. This fixes Cmd-Q during new-game setup;
-  turn generation and regression baselines are unchanged.
-
-- The Cocoa file picker previously failed before opening when SDL's framework
-  lacked CP1252 iconv support, including when choosing a new game's name.
-  It now converts picker titles and filters with the game's fixed CP1252
-  converter. UTF-8 paths, save formats and turn generation are unchanged.
+- Added `make mac-bundle` / the `macos-bundle` preset to package and sign an
+  Apple-silicon app with its icon, offline guide and relocatable runtime
+  libraries. Signing discovers an eligible keychain identity on each build,
+  signs nested code with Hardened Runtime, verifies the result and preserves
+  the previous app on failure. Ordinary platform builds, game behavior and
+  file formats are unchanged; notarization remains separate work.
 
 - Replaced GNU linker wrapping in active unit/desktop tests and the optional
   regression tracer with private C test adapters. macOS Debug now builds the
@@ -117,16 +27,17 @@ produce different results from a 2.6j host for the same turn.
   reuse test accommodates native alignment and forces free-list coalescing.
   Production symbols, game behavior, disk formats and baselines are unchanged.
 
-- The SDL wrapper headers now use standard C null and integer-limit definitions
-  and an explicit dialog callback signature for their remaining `FARPROC`
-  instances, avoiding Apple Clang prototype and macro-redefinition errors.
-  macOS SDL links use classic pointer fixups for the original packed UI tables.
-  Structure layouts, file formats and turn generation are unchanged.
-
-- The Makefile's platform selection now closes with Make's `endif` syntax;
-  the previous `endif()` prevented every Make target from parsing.
+- Ordinary SDL windows now request focus when shown, including the modeless
+  technology browser, reports and tutorial. Disabled/minimized windows, child
+  controls and nonactivating detail cards remain excluded; `SWP_NOACTIVATE`
+  is respected. Game logic, file formats and regression baselines are unchanged.
 
 ### Added
+
+- The approved planet, spacecraft and sans-serif "2" artwork now identifies the
+  SDL desktop on macOS, Windows and Linux. Windows embeds it as the executable
+  icon, and Linux installs matching launcher artwork. The original small game
+  icons and turn generation remain unchanged; the macOS bundle uses the same artwork.
 
 - `GetCursorPos` in the SDL wrapper previously rejected the Windows video driver,
   preventing native desktop cursor queries. It now reads SDL's desktop-relative
@@ -335,6 +246,95 @@ produce different results from a 2.6j host for the same turn.
   The text, data, turns and files are unchanged.
 
 ### Fixed
+
+- macOS Retina windows now use backing canvases at the display's physical pixel
+  density and rasterize text at that density, instead of enlarging low-resolution
+  glyphs. Logical font metrics, advances, control geometry and mouse coordinates
+  stay unchanged. Menu text, child composition, scrolling and raster operations
+  use the same backing scale; existing game bitmaps retain nearest-neighbor
+  rendering. Windows, Linux and non-Retina displays retain scale-one rendering.
+  Turn generation, file formats and regression baselines are unchanged.
+
+- Window creation now explicitly hides new native windows after SDL setup.
+  Cocoa could expose owned popups despite the requested hidden flag, showing
+  black during renderer setup before the wrapper's first paint. macOS menu,
+  combobox and tooltip popup windows also start with a clear native backing
+  until their completed opaque canvas is submitted. A native test checks the
+  scanner-combobox tooltip is actually hidden before rendering and its first
+  frame has the opaque tooltip background. Turn generation and regression
+  baselines are unchanged.
+
+- Native SDL exposure now immediately resubmits the last completed window
+  texture, including exposure during menu/window dispatch and while a new paint
+  is pending. Cocoa can clear a newly exposed view to black after its prepared
+  frame was presented; previously ordinary exposure waited for the message
+  queue to reach painting. Refreshing the completed texture does not reenter
+  application drawing or upload unfinished panes. Turn generation and regression
+  baselines are unchanged.
+
+- New SDL windows now complete show-time layout and paint their visible controls
+  while the native window remains hidden, then submit the finished frame again
+  immediately after native show. This avoids waiting for queued exposure to
+  replace a black drawable. `Popup` also assigns its handle and font before
+  showing; starbase detail previously painted before `hwndPopup` was available,
+  producing different first and subsequent frames. Game rules, file formats
+  and regression baselines are unchanged.
+
+- The SDL window wrapper now requests native and logical focus when its first
+  ordinary window is shown. Terminal launches on macOS previously left the title
+  screen inactive. Minimized, disabled and nonactivating windows do not consume
+  this startup request. Turn generation and regression baselines are unchanged.
+
+- Mineral and other `starspopup` detail cards now use an owned, nonactivating
+  native tooltip window. They previously used an ordinary desktop window on
+  macOS; native close left `hwndPopup` stale and blocked subsequent mineral
+  popups. Destruction now clears the popup state on every close path.
+  Border-only popups no longer acquire a title bar, and nonactivating cards
+  retain mouse capture on behalf of their focused owner.
+  Turn generation and regression baselines are unchanged.
+- The SDL painting wrapper now presents completed pane paints together and
+  paints the first frame before showing a native window. Previously icon draws
+  and individual pane paints uploaded incomplete frames, exposing black areas
+  and slowing startup. A live-resize event watcher also lays out and paints at
+  the current size during native resize tracking instead of waiting for the
+  outer message loop. Game rules, file formats and regression baselines are unchanged.
+
+- New-game setup now keeps its current page open while choosing the game
+  filename and makes that page the save picker's owner. Previously the wizard
+  closed first and attached the picker to the hidden main frame. Canceling
+  filename selection returns to the same page. Turn generation and regression
+  baselines are unchanged.
+
+- The SDL modal dialog wrapper now requests native input focus after showing
+  an initialized dialog. Previously it focused only the logical control,
+  leaving new-game dialogs inactive on macOS and consuming the first click
+  for activation. No-activate windows retain their policy; turn generation and
+  regression baselines are unchanged.
+
+- The Makefile's platform selection now closes with Make's `endif` syntax;
+  the previous `endif()` prevented every Make target from parsing.
+
+- `NewGameWizard` treated a modal dialog's `-1` result on application quit as
+  permission to advance, repeatedly opening pages against the pending quit
+  message. It and the nested race wizard now unwind like cancellation, and the
+  SDL modal wrapper rejects new dialogs while quit is pending. This fixes Cmd-Q during new-game setup;
+  turn generation and regression baselines are unchanged.
+
+- The Cocoa file picker previously failed before opening when SDL's framework
+  lacked CP1252 iconv support, including when choosing a new game's name.
+  It now converts picker titles and filters with the game's fixed CP1252
+  converter. UTF-8 paths, save formats and turn generation are unchanged.
+
+- `InitInstance` previously showed and immediately hid the main frame before
+  opening the title screen, exposing a brief window and maximize animation on
+  macOS. It now keeps the frame hidden and defers its saved show command until
+  the game first displays it. Turn generation and regression baselines are unchanged.
+
+- The SDL wrapper headers now use standard C null and integer-limit definitions
+  and an explicit dialog callback signature for their remaining `FARPROC`
+  instances, avoiding Apple Clang prototype and macro-redefinition errors.
+  macOS SDL links use classic pointer fixups for the original packed UI tables.
+  Structure layouts, file formats and turn generation are unchanged.
 
 - `FSaveRace` and race-only `FOpenGame` bound the remembered race basename to
   its existing 16-byte buffer. Native long filenames previously overwrote
