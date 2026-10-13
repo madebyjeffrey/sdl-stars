@@ -1,5 +1,12 @@
 # Roadmap
 
+An optional [Bevy starting-screen experiment](BEVY-STARTUP.md) links Rust/Bevy
+0.20 into the SDL executable. It covers the initial four-button screen and
+delegates actions to the existing UI. The experiment is suspended with an
+unresolved rendering defect after dialogs. The next intended direction is
+incremental Rust reconstruction using existing C functionality as libraries;
+other-platform qualification remains open.
+
 The `2.6jrc3` tag is the faithful reconstruction, original bugs included, and
 the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
