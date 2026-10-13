@@ -10,7 +10,6 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     int16_t c;
     char    szFile[256];
     AiRace  idAi;
-    int16_t fEasy;
     char    szFileLocal[208];
     int16_t j;
     RECT    rgrcStack[20];
@@ -19,7 +18,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     GAME    gameT;
 
     iStepMaxSoFar = 0;
-    fEasy = FALSE;
+    CchGetString(idsGameXy, szFile);
     vrgrcRCW = rgrcStack;
     iPanelActive = rwPageNone;
     fRCWReadOnly = fReadOnly;
@@ -39,7 +38,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
         vrgplrTypeNew[2] = 39;
         vrgplrTypeNew[3] = 139;
         lpProc = MakeProcInstance(SimpleNewGameDlg, hInst);
-        mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_SIMPLE_NEW_GAME), hwnd, lpProc);
+        mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SIMPLE_NEW_GAME), hwnd, lpProc, (LPARAM)szFile);
         FreeProcInstance(lpProc);
         game.rgvc[0] = 136;
         game.rgvc[1] = 142;
@@ -78,7 +77,6 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
             game.fVisScores = FALSE;
             CchGetString(idsShootingFishBarrel + 5 * lvlAi + game.mdSize, game.szName);
             if (mdRet == 1072) {
-                fEasy = TRUE;
                 goto Finish;
             }
         default:
@@ -100,7 +98,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     }
 Step1:
     lpProc = MakeProcInstance(NewGameDlg, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc);
+    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0) {
     Cancel:
@@ -115,7 +113,7 @@ Step1:
         goto Finish;
 Step2:
     lpProc = MakeProcInstance(NewGameDlg2, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc);
+    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -128,7 +126,7 @@ Step2:
     if (mdRet == 3)
         goto Finish;
     lpProc = MakeProcInstance(NewGameDlg3, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc);
+    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -142,12 +140,6 @@ Step2:
 Finish:
     if (fRCWReadOnly)
         goto Cancel;
-    CchGetString(idsGameXy, szFile);
-    if (!FGetNewGameName(szFile)) {
-        if (fEasy)
-            goto Cancel;
-        goto Step1;
-    }
     gameT = game;
     gameT.turn = 0;
     DestroyCurGame();
@@ -269,7 +261,7 @@ Finish:
     return;
 }
 
-int16_t FGetNewGameName(char *szFileSuggest) {
+int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
     char         szXY[3];
     uint16_t     i;
     char         szFileTitle[256];
@@ -293,7 +285,7 @@ int16_t FGetNewGameName(char *szFileSuggest) {
     szXY[1] = 'y';
     szXY[2] = 0;
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = hwndFrame;
+    ofn.hwndOwner = hwnd;
     ofn.lpstrFilter = szFilter;
     ofn.nFilterIndex = 1;
     ofn.lpstrFile = szFile;
@@ -316,6 +308,13 @@ int16_t FGetNewGameName(char *szFileSuggest) {
     return FALSE;
 }
 
+static int16_t FChooseNewGameName(HWND hwnd) {
+    char *pszFile = (char *)GetWindowLongPtr(hwnd, DWLP_USER);
+
+    // Keep the wizard page alive so the native save panel can belong to it.
+    return fRCWReadOnly || (pszFile && FGetNewGameName(hwnd, pszFile));
+}
+
 INT_PTR CALLBACK SimpleNewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     int16_t     i;
     RECT        rc;
@@ -329,6 +328,7 @@ INT_PTR CALLBACK SimpleNewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
     switch (message) {
     case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         CheckRadioButton(hwnd, IDC_SIMPLE_NEW_GAME_EASY, IDC_SIMPLE_NEW_GAME_EXPERT, IDC_SIMPLE_NEW_GAME_STANDARD);
         CheckRadioButton(hwnd, IDC_SIMPLE_NEW_GAME_TINY, IDC_SIMPLE_NEW_GAME_HUGE, IDC_SIMPLE_NEW_GAME_SMALL);
         hwndDD = GetDlgItem(hwnd, IDC_COMBOBOX);
@@ -428,6 +428,7 @@ INT_PTR CALLBACK SimpleNewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM
             }
             game.mdSize = i - 1000;
             game.turn = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
+            if (LOWORD(wParam) == IDC_FINISH && !FChooseNewGameName(hwnd)) return 1;
             StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
             EndDialog(hwnd, LOWORD(wParam));
             return 1;
@@ -477,6 +478,7 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
     switch (message) {
     case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 1);
         CheckRadioButton(hwnd, IDC_NEW_GAME_TINY, IDC_NEW_GAME_HUGE, game.mdSize + 1000);
         CheckRadioButton(hwnd, IDC_NEW_GAME_SPARSE, IDC_NEW_GAME_PACKED, game.mdDensity + 1005);
@@ -599,6 +601,7 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     strcpy(game.szName, szBase);
                 }
             }
+            if (iRet == 3 && !FChooseNewGameName(hwnd)) return 1;
             StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
             EndDialog(hwnd, iRet);
             return 1;
@@ -633,6 +636,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 2);
         dy = (dyArial8 + 4) * 16 + 8;
         GetWindowRect(GetDlgItem(hwnd, rgidRaceBtn[0]), &rc);
@@ -849,6 +853,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             if (i != 0 && vrgplrTypeNew[0] == 0 && !fRCWReadOnly) {
                 AlertSz(PszFormatIds(idsMustHaveLeastOnePlayerGame, NULL), MB_ICONHAND);
             } else {
+                if (i == 3 && !FChooseNewGameName(hwnd)) return 1;
                 StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
                 EndDialog(hwnd, i);
                 return 1;
@@ -949,6 +954,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 3);
         for (i = 0; i < 7; i++) {
             SendMessage(GetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, (i >= 2) + i), 0);
@@ -1001,6 +1007,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         for (i = 0; i < 4 && LOWORD(wParam) != rgidRaceBtn[i]; i++) {
         }
         if (i < 4) {
+            if (i == 3 && !FChooseNewGameName(hwnd)) return 1;
             StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
             EndDialog(hwnd, i);
             return 1;

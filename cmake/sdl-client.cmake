@@ -71,6 +71,23 @@ if(NOT STARS_BUILD_TESTS)
 endif()
 # The qualification harness below uses GNU ld wrapping, X11 and private DBus.
 # Build the product and help viewer on macOS without Linux-only harness targets.
+add_executable(stars-compat-client-quit tests/compat/win32_client_quit.c)
+if(APPLE)
+    enable_language(OBJC)
+    target_sources(stars-compat-client-quit PRIVATE tests/compat/win32_client_quit_cocoa.m)
+    set_source_files_properties(tests/compat/win32_client_quit_cocoa.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
+target_link_libraries(stars-compat-client-quit PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
+target_include_directories(stars-compat-client-quit PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_compile_options(stars-compat-client-quit PRIVATE -Wall -Wextra -Werror)
+foreach(STARS_QUIT_PAGE simple advanced race save-owner advanced-save-owner)
+    add_test(NAME win32_client_quit_${STARS_QUIT_PAGE} COMMAND stars-compat-client-quit ${STARS_QUIT_PAGE})
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}")
+    set_tests_properties(win32_client_quit_${STARS_QUIT_PAGE} PROPERTIES LABELS "client"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat"
+        TIMEOUT 20)
+endforeach()
 if(APPLE OR WIN32)
     if(APPLE)
         add_executable(stars-compat-filedialog-cocoa tests/compat/win32_filedialog_cocoa.c

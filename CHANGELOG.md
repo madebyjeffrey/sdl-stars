@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- New-game setup now keeps its current page open while choosing the game
+  filename and makes that page the save picker's owner. Previously the wizard
+  closed first and attached the picker to the hidden main frame. Canceling
+  filename selection returns to the same page. Turn generation and regression
+  baselines are unchanged.
+
 - `NewGameWizard` treated a modal dialog's `-1` result on application quit as
   permission to advance, repeatedly opening pages against the pending quit
   message. It and the nested race wizard now unwind like cancellation, and the
