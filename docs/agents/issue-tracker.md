@@ -6,7 +6,7 @@ Use the gh CLI from this repository.
 ## Operations
 
 - Publish a ticket or spec by creating a GitHub issue.
-- Read tickets with gh issue view, including body, labels, and comments.
+- Read tickets with gh issue view --comments, including body, labels, and comments.
 - List tickets with gh issue list and appropriate state/label filters.
 - Create, edit, and comment using --body-file for multiline content.
 - Apply the labels defined in docs/agents/triage-labels.md.
