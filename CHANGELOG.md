@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Windows SDL unit and release CI let CMake select the runner Python without
+  PyYAML instead of the installed MSYS2 interpreter. Debug and Release
+  configuration now explicitly use UCRT64 Python and its PyYAML package.
+  Game behavior, file formats and regression baselines are unchanged.
+
 - Linux SDL CI omitted desktop backend development packages and stopped at
   SDL configuration with a missing XCURSOR dependency. Unit, regression and
   tutorial workflows now install the documented desktop backend dependencies.

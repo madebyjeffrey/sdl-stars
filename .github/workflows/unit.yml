@@ -81,6 +81,7 @@ jobs:
       - name: Build and test the Windows SDL client
         shell: msys2 {0}
         run: |
-          cmake --preset windows-sdl-debug
+          # CMake otherwise prefers the runner Python, which lacks MSYS2 PyYAML.
+          cmake --preset windows-sdl-debug -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --build --preset windows-sdl-debug --parallel 2
           ctest --preset windows-sdl-headless

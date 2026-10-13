@@ -56,7 +56,9 @@ all 519 comparisons through turn 150.
 
 Linux SDL unit, regression and tutorial CI install the desktop backend
 development dependencies from the SDL development guide; the earlier package
-list stopped fetched SDL configuration at XCURSOR.
+list stopped fetched SDL configuration at XCURSOR. Windows SDL unit and release
+CI explicitly select UCRT64 Python so CMake uses the installed MSYS2 PyYAML
+package rather than the runner interpreter.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.
