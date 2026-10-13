@@ -72,6 +72,15 @@ endif()
 # The qualification harness below uses GNU ld wrapping, X11 and private DBus.
 # Build the product and help viewer on macOS without Linux-only harness targets.
 if(APPLE OR WIN32)
+    if(APPLE)
+        add_executable(stars-compat-filedialog-cocoa tests/compat/win32_filedialog_cocoa.c
+            compat/win32/src/filedialog_cocoa.c)
+        target_include_directories(stars-compat-filedialog-cocoa PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+        target_link_libraries(stars-compat-filedialog-cocoa PRIVATE stars_options stars_win32 SDL3::SDL3)
+        target_compile_options(stars-compat-filedialog-cocoa PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_filedialog_cocoa COMMAND stars-compat-filedialog-cocoa)
+        set_tests_properties(win32_filedialog_cocoa PROPERTIES LABELS "compat" TIMEOUT 30)
+    endif()
     add_executable(stars-compat-abi tests/compat/win32_abi.c tests/compat/win32_include_order.c)
     target_link_libraries(stars-compat-abi PRIVATE stars_options stars_win32_headers)
     add_executable(stars-compat-smoke tests/compat/sdl_smoke.c)

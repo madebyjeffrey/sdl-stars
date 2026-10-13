@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The Cocoa file picker previously failed before opening when SDL's framework
+  lacked CP1252 iconv support, including when choosing a new game's name.
+  It now converts picker titles and filters with the game's fixed CP1252
+  converter. UTF-8 paths, save formats and turn generation are unchanged.
+
 - Replaced GNU linker wrapping in active unit/desktop tests and the optional
   regression tracer with private C test adapters. macOS Debug now builds the
   unit suite; test directory cleanup supports the Windows CRT, and the heap

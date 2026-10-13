@@ -202,10 +202,18 @@ recovery and overwrite refusal without modifying the existing file.
 X11 supplies the SDL window XID as parent. Wayland currently supplies the allowed
 empty parent identifier; xdg-foreign export and real compositor stacking remain
 part of milestone 7. The native macOS adapter uses AppKit open/save panels with
-filter accessory controls, directory creation and sheet ownership. It is source
-implementation only here: a macOS compiler/runtime is unavailable, so its build
-and interaction are **unverified**. This is not a claim that the entire SDL game
-already supports macOS.
+filter accessory controls, directory creation and sheet ownership. Its labels
+use the shared CP1252 converter because SDL frameworks may omit CP1252 iconv
+support; filenames remain UTF-8. The Apple silicon product builds, and an adapter
+test covers labels, paths and cancellation. Full native-panel interaction
+qualification remains outstanding.
+
+New-game setup chooses a filename before ending its current wizard page. That
+page owns the save picker and stays disabled while selection runs; cancellation
+returns to the same page. The hidden main frame is not its owner.
+Simple/advanced ownership and cancellation pass the compatibility tests; an
+opt-in Mac desktop check also verifies the native sheet attaches to the simple
+new-game page and cancels back to it.
 
 The private D-Bus fixture checks actual request types/options, Unicode paths,
 case-expanded filters, filter results, default extensions, cancellation, small

@@ -2,6 +2,19 @@
 #include "filedialog_cocoa_bridge.h"
 #include <stdlib.h>
 #include <string.h>
+
+static char *PszCocoaLabelUtf8(LPCSTR psz) {
+    size_t cb = strlen(psz);
+    char *pszUtf;
+
+    // SDL frameworks can omit iconv's CP1252 support; labels use the game's fixed encoding.
+    if (cb > (SIZE_MAX - 1) / 3 || !(pszUtf = SDL_malloc(cb * 3 + 1))) return NULL;
+    if (CchLegacyToUtf8(pszUtf, cb * 3 + 1, psz, cb) < 0) {
+        SDL_free(pszUtf);
+        return NULL;
+    }
+    return pszUtf;
+}
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = lpv;
     MSG msg;
@@ -19,13 +32,13 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     char *pszTitleUtf;
     void *lpWindow = NULL;
     int i, iResult = -1;
-    pszTitleUtf = SDL_iconv_string("UTF-8", "WINDOWS-1252", pszTitle, strlen(pszTitle) + 1);
+    pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
     if (!pszTitleUtf) return -1;
     if (cFilter != 0) {
         rg = calloc((size_t)cFilter, sizeof(*rg)); if (!rg) goto done;
         for (i = 0; i < cFilter; i++) {
-            rg[i].pszName = SDL_iconv_string("UTF-8", "WINDOWS-1252", rgfilter[i].pszName, strlen(rgfilter[i].pszName) + 1);
-            rg[i].pszPattern = SDL_iconv_string("UTF-8", "WINDOWS-1252", rgfilter[i].pszPattern, strlen(rgfilter[i].pszPattern) + 1);
+            rg[i].pszName = PszCocoaLabelUtf8(rgfilter[i].pszName);
+            rg[i].pszPattern = PszCocoaLabelUtf8(rgfilter[i].pszPattern);
             if (!rg[i].pszName || !rg[i].pszPattern) goto done;
         }
     }
