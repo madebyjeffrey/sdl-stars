@@ -175,3 +175,20 @@ Review the diff against these rules. In particular, check for renamed
 debug-symbol names, file-format or record-size changes, behavior changes
 without a baseline update and `CHANGELOG.md` entry, and stale entries in
 `docs/WIN16-PARITY.md`, `docs/NATIVE-PORT.md` and `docs/ROADMAP.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Before issue or spec operations, read `docs/agents/issue-tracker.md`.
+Work is tracked in GitHub Issues for madebyjeffrey/sdl-stars.
+
+### Triage labels
+
+Before triage, read the default label mapping in
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Before codebase exploration, read `docs/agents/domain.md`.
+This repo uses a root glossary and docs/adr/ for domain decisions.
