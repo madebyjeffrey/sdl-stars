@@ -64,7 +64,8 @@ Deferred frame maximize/minimize commands now show normally on the SDL dummy
 driver, which cannot implement those native window operations. This keeps
 headless client and tutorial workflows visible. Child composition and position
 checks finish pending tree paints before inspecting the presented image,
-matching batched presentation.
+matching batched presentation. Scanner drag checks also complete the tree
+paint pass for each simulated input tick before counting its presented frame.
 
 Combo selection callbacks can return focus to the frame without cancelling
 the accepted row; a re-entry regression test covers that path. Instruction

@@ -57,10 +57,12 @@ static BOOL FCheckScannerDrag(void) {
     dxThumb = max(8, (int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)));
     xGrab = 17 + dxThumb / 2;
     SendMessage(hwndBar, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(xGrab, 8));
+    // Each simulated drag tick includes the completed window-tree paint pass.
+    if (!FCompatPaintTree(hwndFrame)) return FALSE;
     cPresentSav = cRenderPresent; nsStart = SDL_GetPerformanceCounter();
     for (i = 1; i <= 10; i++) {
         SendMessage(hwndBar, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(xGrab + i * 4, 8));
-        if (GetCapture() != hwndBar) return FALSE;
+        if (GetCapture() != hwndBar || !FCompatPaintTree(hwndFrame)) return FALSE;
     }
     printf("Scanner drag: %u presentations for 10 updates, %.2f ms\n", cRenderPresent - cPresentSav,
            (double)(SDL_GetPerformanceCounter() - nsStart) * 1000 / SDL_GetPerformanceFrequency());

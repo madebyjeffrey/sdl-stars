@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Scanner-drag checks counted presentations before the completed tree paint
+  pass, reporting zero frames under batched presentation. Each simulated
+  drag tick now finishes that pass and still requires one frame per update.
+  Production code and regression baselines are unchanged.
+
 - `ShowTutor` reactivated the visible tutorial window on instruction updates,
   taking keyboard focus from the player's controls. It now shows the tutor
   only when hidden, preserving focus while instructions change. Turn
