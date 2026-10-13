@@ -1,16 +1,9 @@
 #include "win.h"
 
-static void (*vlpfnStartupScreen)(void);
-
-void SetStartupScreen(void (*lpfnScreen)(void)) {
-    vlpfnStartupScreen = lpfnScreen;
-}
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     MSG      msg;
     uint32_t lSeed;
     int16_t  fSeed;
-    void   (*lpfnStartupScreen)(void);
 
     hInst = hInstance;
     szBase[0] = 0;
@@ -54,13 +47,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 (msg.message != WM_CHAR || !FHandleChar(msg.hwnd, msg.wParam, msg.lParam))) {
                 DispatchMessage(&msg);
             }
-        }
-        /* Run only after startup cleanup, before waiting for another message.
-           Later returns to the title screen keep the original SDL workflow. */
-        if (msg.message == WM_STARS_STARTUP && hwndTitle && vlpfnStartupScreen) {
-            lpfnStartupScreen = vlpfnStartupScreen;
-            vlpfnStartupScreen = NULL;
-            lpfnStartupScreen();
         }
     }
     CloseScannerInspector();

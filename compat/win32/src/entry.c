@@ -5,9 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "version.h"
-#ifdef STARS_BEVY_STARTUP
-#include "bevystart.h"
-#endif
 #ifdef _WIN32
 #include "native.h"
 #endif
@@ -64,10 +61,6 @@ static int ICompatMain(int argc, char **argv) {
         StarsCompatProcessExit(); SDL_Quit();
         return 1;
     }
-#ifdef STARS_BEVY_STARTUP
-    if (!fHeadless && strcmp(SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "", "dummy"))
-        SetStartupScreen(ShowBevyStartupScreen);
-#endif
     nResult = WinMain(hInstance, NULL, szCmdLine, SW_SHOWNORMAL);
     StarsCompatProcessExit();
     SDL_Quit();
