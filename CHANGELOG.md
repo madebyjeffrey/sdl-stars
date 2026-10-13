@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Child-window composition and positioning checks read the presented image
+  before pending window-tree paints completed. Their inspection helpers now
+  finish pending paints before asserting pixels, matching the batched
+  presentation contract. Production code and regression baselines are unchanged.
+
 - `ShowCompatWindow` repeatedly applied deferred maximization on SDL
   dummy displays, which cannot maximize native windows, leaving the frame
   hidden and breaking client/tutorial checks. Deferred maximize/minimize

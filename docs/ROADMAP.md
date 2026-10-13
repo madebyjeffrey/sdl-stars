@@ -62,7 +62,9 @@ package rather than the runner interpreter.
 
 Deferred frame maximize/minimize commands now show normally on the SDL dummy
 driver, which cannot implement those native window operations. This keeps
-headless client and tutorial workflows visible.
+headless client and tutorial workflows visible. Child composition and position
+checks finish pending tree paints before inspecting the presented image,
+matching batched presentation.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.

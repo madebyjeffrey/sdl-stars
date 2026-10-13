@@ -80,7 +80,10 @@ static int TestRect(HWND hwnd, HWND hwndParent, int x, int y, int dx, int dy) {
 
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static COLORREF CrComposite(HWND hwnd, int x, int y) {
-    BYTE *rgb = (BYTE *)hwnd->lpComposite->pixels + (size_t)y * hwnd->lpComposite->pitch + (size_t)x * 4;
+    BYTE *rgb;
+    // Window moves defer presentation until the whole visible tree finishes painting.
+    if (!FCompatPaintTree(hwnd)) return CLR_INVALID;
+    rgb = (BYTE *)hwnd->lpComposite->pixels + (size_t)y * hwnd->lpComposite->pitch + (size_t)x * 4;
     return RGB(rgb[0], rgb[1], rgb[2]);
 }
 static int FillWindow(HWND hwnd, COLORREF cr) {
