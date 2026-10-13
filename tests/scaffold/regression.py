@@ -47,8 +47,8 @@ def prepare(args):
         lines = (ROOT / f"tests/scaffold/fixtures/regression/{name}.def").read_text().splitlines()
         lines[1] = lines[1].rsplit(" ", 1)[0] + f" {args.seed}"
         manifest["fixtures"][name] = hashlib.sha256("\n".join(lines).encode("ascii")).hexdigest()
-        lines[4] = game_path(exe, dest, "human.r1")
-        lines[-1] = game_path(exe, dest, "game.xy")
+        lines[4] = "human.r1"
+        lines[-1] = "game.xy"
         (dest / "game.def").write_bytes(("\r\n".join(lines) + "\r\n").encode("ascii"))
         shutil.copyfile(ROOT / "tests/scaffold/fixtures/newgame/tiny/humanoid.r1", dest / "human.r1")
         manifest["scenarios"][name] = {p.name: digest(p) for p in dest.iterdir()}
@@ -80,13 +80,6 @@ def runs_in_wine(exe):
     """runs_in_wine tells a Windows executable (run under Wine) from a native
     stars-host built with the host presets."""
     return os.name != "nt" and Path(exe).suffix.lower() == ".exe"
-
-
-def game_path(exe, path, filename):
-    """game_path names a file in a game directory the way exe reads paths."""
-    if runs_in_wine(exe):
-        return windows_path(path) + "\\" + filename
-    return str(Path(path) / filename)
 
 
 def copy_files(source, destination, filenames):
@@ -149,7 +142,9 @@ def launch_command(exe, seed, directory, turn, previous):
     -s<seed> replaces the clock as the startup seed, so a launch repeats
     exactly; the seed resets on every launch.
     """
-    flags = ["-a", game_path(exe, directory, "game.def")] if turn == 0 else [f"-g{turn - previous}", game_path(exe, directory, "game.hst")]
+    # Launches use the scenario directory as cwd; absolute paths can exceed
+    # the original parser's 79-byte filename limit in CI checkouts.
+    flags = ["-a", "game.def"] if turn == 0 else [f"-g{turn - previous}", "game.hst"]
     launcher = ["wine"] if runs_in_wine(exe) else []
     return [*launcher, str(exe), f"-s{seed}", *flags], directory
 
