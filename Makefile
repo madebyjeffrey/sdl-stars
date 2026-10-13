@@ -32,7 +32,7 @@ else
 CLIENT_PRESET ?= sdl-debug
 CLIENT_RELEASE_PRESET ?= sdl-release
 EXE_SUFFIX :=
-endif()
+endif
 HOST_PRESET ?= host-release
 test-unit regression tutorial scenario: export SDL_VIDEODRIVER := dummy
 test-unit regression tutorial scenario: export SDL_AUDIODRIVER := dummy

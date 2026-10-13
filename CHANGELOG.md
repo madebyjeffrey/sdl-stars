@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The Makefile's platform selection now closes with Make's `endif` syntax;
+  the previous `endif()` prevented every Make target from parsing.
+
 ### Added
 
 - `GetCursorPos` in the SDL wrapper previously rejected the Windows video driver,
