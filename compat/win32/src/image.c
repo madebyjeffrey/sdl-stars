@@ -88,7 +88,11 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->hrsrc == hrsrc && lp->fCursor == fCursor) return (HICON)lp;
     rgb = LockResource(LoadResource(hInstance, hrsrc)); cb = SizeofResource(hInstance, hrsrc);
     h = HiconCompatResource(rgb, cb, fCursor);
-    if (h) { lp = LpCompatImage(h); lp->fShared = TRUE; lp->hrsrc = hrsrc; }
+    if (h) {
+        lp = LpCompatImage(h); lp->fShared = TRUE; lp->hrsrc = hrsrc;
+        lp->fAppIcon = !fCursor && (UINT_PTR)psz > UINT16_MAX &&
+            (!SDL_strcasecmp(psz, "StarsIco") || !SDL_strcasecmp(psz, "APPICON"));
+    }
     return h;
 }
 HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
@@ -262,8 +266,19 @@ void CompatShutdownImages(void) {
 void CompatSetWindowIcon(SDL_Window *lpWindow, HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     SDL_Surface *lpIcon;
+    SDL_IOStream *lpStream;
     int x, y;
     if (!lp || !lp->lpXor) return;
+    // The desktop uses the high-resolution artwork; DrawIcon keeps the original game pixels.
+    if (lp->fAppIcon) {
+        lpStream = SDL_IOFromConstMem(rgbCompatAppIcon, cbCompatAppIcon);
+        lpIcon = lpStream ? SDL_LoadPNG_IO(lpStream, true) : NULL;
+        if (lpIcon) {
+            SDL_SetWindowIcon(lpWindow, lpIcon);
+            SDL_DestroySurface(lpIcon);
+            return;
+        }
+    }
     lpIcon = SDL_DuplicateSurface(lp->lpXor);
     if (!lpIcon) return;
     for (y = 0; y < lpIcon->h; y++) for (x = 0; x < lpIcon->w; x++)

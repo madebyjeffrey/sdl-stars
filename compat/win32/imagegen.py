@@ -74,6 +74,11 @@ def generate(root, output):
         ordinal = identity if isinstance(identity, int) else 0
         source += [f'    {{{name}, {ordinal}, rgbImageResource{i}, sizeof(rgbImageResource{i}), {type_}}},']
     source += ['};', 'const size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']
+    app_icon = (root / 'res/icons/stars-app.png').read_bytes()
+    source += ['/* Desktop identity is separate from the original in-game icon resources. */',
+               'const BYTE rgbCompatAppIcon[] = {']
+    source += ['    ' + ','.join(f'0x{x:02x}' for x in app_icon[j:j+32]) + ',' for j in range(0, len(app_icon), 32)]
+    source += ['};', 'const size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
     for i, (_, _, _, data) in enumerate(images):
         manifest += [f'static const BYTE rgbImageExpected{i}[] = {{']
         manifest += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]

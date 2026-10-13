@@ -137,7 +137,7 @@ extern const size_t cCompatUIResources;
 extern const COMPATRESOURCE rgCompatImageResources[];
 extern const size_t cCompatImageResources;
 typedef struct COMPATIMAGE {
-    BOOL fAlive, fCursor, fShared, fMono, fInvert;
+    BOOL fAlive, fCursor, fShared, fMono, fInvert, fAppIcon;
     SDL_Surface *lpXor;
     BYTE *rgbAnd;
     UINT xHot, yHot, idSystem;
@@ -149,6 +149,8 @@ COMPATIMAGE *LpCompatImage(HICON hicon);
 HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor);
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono);
 void CompatSetWindowIcon(SDL_Window *lpWindow, HICON hicon);
+extern const BYTE rgbCompatAppIcon[];
+extern const size_t cbCompatAppIcon;
 void CompatShutdownImages(void);
 void CompatCursorPoint(HWND hwnd, int x, int y);
 void CompatCursorLeave(HWND hwnd);

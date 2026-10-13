@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The approved planet, spacecraft and sans-serif "2" artwork now identifies the
+  SDL desktop on macOS, Windows and Linux. Windows embeds it as the executable
+  icon, and Linux installs matching launcher artwork. The original small game
+  icons and turn generation remain unchanged; the macOS bundle uses the same artwork.
+
 - `InitInstance` previously showed and immediately hid the main frame before
   opening the title screen, exposing a brief window and maximize animation on
   macOS. It now keeps the frame hidden and defers its saved show command until

@@ -1,0 +1,2 @@
+/* Native executable identity; the SDL wrapper embeds its game resources separately. */
+APPICON ICON "icons/stars-app.ico"
