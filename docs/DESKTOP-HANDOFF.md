@@ -325,3 +325,10 @@ Paste this, adapting the platform name:
 
 No global package installs, graphics-driver patches, published releases or
 repository resets have been performed by this documentation handoff.
+
+## Signed Mac app
+
+Run `make mac-bundle` to produce `dist/macos-bundle/package/Stars!.app`.
+The signing identity is discovered from the keychain on each build; no stored
+fingerprint is required. See [macOS bundle instructions](MACOS-BUNDLE.md) for
+selection rules, local signing, deployment requirements and verification.

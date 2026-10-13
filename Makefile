@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject clean
+.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject mac-bundle clean
 
 DIST_DIR    ?= dist
 CMAKE       ?= cmake
@@ -62,7 +62,12 @@ help:
 	@echo "  regression-export    Replace the baseline with the last full regression run"
 	@echo "  tutorial             Run the available SDL tutorial checkpoints (partial coverage)"
 	@echo "  tutorial-reject      Verify early Generate is rejected"
+	@echo "  mac-bundle           Build and sign Stars!.app using an auto-discovered keychain identity"
 	@echo "  clean                Remove $(DIST_DIR)/"
+
+mac-bundle:
+	$(CMAKE) --preset macos-bundle
+	$(CMAKE) --build --preset macos-bundle
 
 all: compile
 

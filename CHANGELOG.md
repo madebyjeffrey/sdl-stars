@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Added `make mac-bundle` / the `macos-bundle` preset to package and sign an
+  Apple-silicon app with its icon, offline guide and relocatable runtime
+  libraries. Signing discovers an eligible keychain identity on each build,
+  signs nested code with Hardened Runtime, verifies the result and preserves
+  the previous app on failure. Ordinary platform builds, game behavior and
+  file formats are unchanged; notarization remains separate work.
+
 - `DialogBoxParamA` restored only logical focus when closing dialogs such as
   the ship designer, leaving their macOS owner without native keyboard focus.
   Modal dialogs, completed wizard sequences and active modeless owned windows

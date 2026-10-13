@@ -10,6 +10,10 @@ if(NOT STARS_BUILD_SDL_CLIENT)
 endif()
 file(RELATIVE_PATH STARS_DATA_FROM_BIN "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/stars")
+if(APPLE AND STARS_MACOS_BUNDLE)
+    # SDL_GetBasePath returns Contents/Resources for a Cocoa app bundle.
+    set(STARS_DATA_FROM_BIN ".")
+endif()
 target_compile_definitions(stars_win32 PRIVATE STARS_INSTALLED_DATA="${STARS_DATA_FROM_BIN}")
 file(RELATIVE_PATH STARS_LIB_FROM_BIN "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
@@ -52,4 +56,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps" COMPONENT StarsRuntime)
     install(FILES "${PROJECT_SOURCE_DIR}/packaging/org.starsgame.Stars.png"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/32x32/apps" COMPONENT StarsRuntime)
+    install(FILES "${PROJECT_SOURCE_DIR}/res/icons/stars-app.png"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps"
+        RENAME org.starsgame.Stars.png COMPONENT StarsRuntime)
 endif()

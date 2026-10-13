@@ -133,6 +133,13 @@
       }
     },
     {
+      "name": "macos-bundle",
+      "inherits": "macos-sdl-release",
+      "displayName": "Signed Apple-silicon macOS app bundle",
+      "binaryDir": "${sourceDir}/dist/macos-bundle",
+      "cacheVariables": { "STARS_MACOS_BUNDLE": "ON", "CMAKE_OSX_DEPLOYMENT_TARGET": "14.0" }
+    },
+    {
       "name": "sdl-package",
       "inherits": "sdl-release",
       "displayName": "Linux SDL product install (Release)",
@@ -144,6 +151,7 @@
     }
   ],
   "buildPresets": [
+    { "name": "macos-bundle", "configurePreset": "macos-bundle", "targets": ["stars-macos-bundle"] },
     { "name": "windows-sdl-debug", "configurePreset": "windows-sdl-debug" },
     { "name": "windows-sdl-release", "configurePreset": "windows-sdl-release" },
     {
