@@ -711,7 +711,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     return flags & TPM_RETURNCMD ? (BOOL)track.id : !track.fFailed;
 }
 
-BOOL WINAPI TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
+BOOL WINAPI STARS_TEST_IMPL(TrackPopupMenu)(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
     return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, NULL, -1, FALSE);
 }
 BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {

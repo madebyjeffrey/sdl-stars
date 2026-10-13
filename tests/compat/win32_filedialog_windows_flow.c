@@ -11,7 +11,7 @@ static HWND hwndOwner;
 static char szChosen[PATH_MAX];
 static int iAction, fSaveExpected, cCalls, fBad;
 
-int __wrap_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
+int StarsTest_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
                               const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                               int *lpiFilter, char *pszPath, size_t cbPath,
                               int (*pfnPump)(void *), void *lpv) {

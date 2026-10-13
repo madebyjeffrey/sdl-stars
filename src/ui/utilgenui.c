@@ -1273,7 +1273,7 @@ int16_t IdAlertBox(char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz,
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.
-int16_t PromptPassword() {
+int16_t STARS_TEST_IMPL(PromptPassword)() {
     FARPROC lpProc;
     int16_t fRet;
 

@@ -13,19 +13,19 @@ static SDL_Keymod modMock;
 static SDL_MouseButtonFlags buttonsMock;
 static float xMock, yMock;
 static const char *pszDriverMock;
-const char *__real_SDL_GetCurrentVideoDriver(void);
-const char *__wrap_SDL_GetCurrentVideoDriver(void) { return pszDriverMock ? pszDriverMock : __real_SDL_GetCurrentVideoDriver(); }
-const bool *__real_SDL_GetKeyboardState(int *c);
-SDL_Keymod __real_SDL_GetModState(void);
-SDL_MouseButtonFlags __real_SDL_GetGlobalMouseState(float *x, float *y);
-const bool *__wrap_SDL_GetKeyboardState(int *c) {
-    if (!fMock) return __real_SDL_GetKeyboardState(c);
+const char *SDL_GetCurrentVideoDriver(void);
+const char *SDLCALL StarsTest_SDL_GetCurrentVideoDriver(void) { return pszDriverMock ? pszDriverMock : SDL_GetCurrentVideoDriver(); }
+const bool *SDL_GetKeyboardState(int *c);
+SDL_Keymod SDL_GetModState(void);
+SDL_MouseButtonFlags SDL_GetGlobalMouseState(float *x, float *y);
+const bool *SDLCALL StarsTest_SDL_GetKeyboardState(int *c) {
+    if (!fMock) return SDL_GetKeyboardState(c);
     if (c) *c = SDL_SCANCODE_COUNT;
     return rgfKeys;
 }
-SDL_Keymod __wrap_SDL_GetModState(void) { return fMock ? modMock : __real_SDL_GetModState(); }
-SDL_MouseButtonFlags __wrap_SDL_GetGlobalMouseState(float *x, float *y) {
-    if (!fMock) return __real_SDL_GetGlobalMouseState(x, y);
+SDL_Keymod SDLCALL StarsTest_SDL_GetModState(void) { return fMock ? modMock : SDL_GetModState(); }
+SDL_MouseButtonFlags SDLCALL StarsTest_SDL_GetGlobalMouseState(float *x, float *y) {
+    if (!fMock) return SDL_GetGlobalMouseState(x, y);
     if (x) *x = xMock;
     if (y) *y = yMock;
     return buttonsMock;

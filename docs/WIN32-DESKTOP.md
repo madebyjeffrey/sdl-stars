@@ -73,7 +73,7 @@ No additional dependencies are needed. Select `stars-compat-desktop` in CLion's
 SDL Debug profile. Headless runs use
 `SDL_VIDEODRIVER=dummy;STARS_SDL_RENDERER=software`. The native test compares live
 SDL geometry, then injects two displays with a negative origin and display-query
-failures. Injection is confined to this executable through GNU linker wrapping.
+failures. Injection is confined to private test-library copies through C compile definitions.
 The shared SDK test is `test_win32_desktop_reference`.
 
 ```sh

@@ -30,6 +30,13 @@ verified. `GetCursorPos` now accepts the Windows SDL driver, repairing desktop
 cursor queries; driver/coordinate contracts have a regression test. Manual selection/overwrite/scaling and fresh Linux/macOS execution remain
 outstanding. Windows Merge cycle reaches year 2413/page 42, then fails at stage
 216/instruction 332 during the Mini-Miner engine drag; the default smoke passes.
+Active unit/desktop tests and optional regression tracing now use private C
+adapters instead of GNU linker wrapping. macOS Debug enables the unit suite.
+The C adapter contract is compiler-independent; full MSVC product qualification
+still requires replacing the existing MinGW-only build gate/flags and validating
+the dependencies. Full Apple-silicon desktop and host regressions both match
+all 519 comparisons through turn 150.
+
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.
 

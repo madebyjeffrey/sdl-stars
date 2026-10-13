@@ -125,7 +125,7 @@ The geometry test runs unchanged against actual Win32 under Wine as
 `test_win32_runtime_reference`. Cases include negative coordinates, exclusive
 edges, inverted and empty rectangles, shrinking, source/destination aliasing,
 and zeroing a disjoint or edge-touching intersection. The Linux-only clock
-translation unit uses GNU ld's `--wrap=SDL_GetTicks` to inject ticks across
+translation unit uses private C test adapters for `SDL_GetTicks` to inject ticks across
 32-bit rollover and check truncation without waiting 49 days. No game or
 regression baseline data is altered.
 

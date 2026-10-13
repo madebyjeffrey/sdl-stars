@@ -119,7 +119,7 @@
       "cacheVariables": {
         "CMAKE_PREFIX_PATH": "/opt/homebrew",
         "CMAKE_OSX_ARCHITECTURES": "arm64",
-        "STARS_BUILD_TESTS": "OFF"
+        "STARS_BUILD_TESTS": "ON"
       }
     },
     {
@@ -128,7 +128,8 @@
       "displayName": "macOS SDL3 compatibility Release (qualification required)",
       "binaryDir": "${sourceDir}/dist/macos-sdl-release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "STARS_BUILD_TESTS": "OFF"
       }
     },
     {

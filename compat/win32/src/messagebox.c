@@ -160,7 +160,7 @@ static BOOL FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const MSG *lpmsg) {
     }
     return FALSE;
 }
-int WINAPI MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {0};
     HWND hwnd = NULL, hwndRoot, hwndFocus, lpwin, hwndButton;
     HWND *rghwnd = NULL;

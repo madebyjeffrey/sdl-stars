@@ -6,16 +6,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-int16_t __real_InitInstance(int16_t);
+int16_t StarsTestReal_InitInstance(int16_t);
 static BOOL fRunning, fPassed, fCancel;
 static int cLaunch, cAlert;
 static UINT_PTR idDriver, idDialog;
 static int cPageX = 1, cPageY = 1;
 static const char *pszTarget;
 
-int16_t __wrap_PromptPassword(void) { return TRUE; }
-int16_t __wrap_AlertSz(char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
-bool __wrap_SDL_OpenURL(const char *pszUri) {
+int16_t StarsTest_PromptPassword(void) { return TRUE; }
+int16_t StarsTest_AlertSz(char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
+bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     FILE *lpFile;
     char rgb[5];
     (void)pszUri;
@@ -94,8 +94,8 @@ done:
     printf("Actual map printing: passed=%d launches=%d alerts=%d\n", fPassed, cLaunch, cAlert);
     PostQuitMessage(fPassed ? 0 : 92);
 }
-int16_t __wrap_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = __real_InitInstance(nCmdShow);
+int16_t StarsTest_InitInstance(int16_t nCmdShow) {
+    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
     if (fResult) idDriver = SetTimer(NULL, 0, 50, PrintGame);
     return fResult && idDriver ? fResult : FALSE;
 }

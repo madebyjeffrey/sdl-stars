@@ -313,7 +313,7 @@ char *PszCalcGravity(int16_t iGravity) {
     return szWork;
 }
 
-int16_t PctPlanetCapacity(PLANET *lppl) {
+int16_t STARS_TEST_IMPL(PctPlanetCapacity)(PLANET *lppl) {
     int32_t pctCap;
     int32_t lPopMax;
 

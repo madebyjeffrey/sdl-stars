@@ -13,10 +13,10 @@ static BOOL fMock = TRUE, fFail;
 static int cFlash;
 static SDL_Window *lpWindowLast;
 static SDL_FlashOperation operationLast;
-bool __real_SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation);
-bool __wrap_SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation) {
+bool SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation);
+bool SDLCALL StarsTest_SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation) {
     cFlash++; lpWindowLast = lpWindow; operationLast = operation;
-    if (!fMock) return __real_SDL_FlashWindow(lpWindow, operation);
+    if (!fMock) return SDL_FlashWindow(lpWindow, operation);
     return !fFail;
 }
 #endif

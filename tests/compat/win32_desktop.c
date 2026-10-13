@@ -8,25 +8,25 @@
 #include <SDL3/SDL.h>
 #include <unistd.h>
 static BOOL fFake, fFailDisplay;
-SDL_DisplayID *__real_SDL_GetDisplays(int *c);
-SDL_DisplayID __real_SDL_GetPrimaryDisplay(void);
-bool __real_SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc);
-bool __real_SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc);
-SDL_DisplayID *__wrap_SDL_GetDisplays(int *c) {
+SDL_DisplayID *SDL_GetDisplays(int *c);
+SDL_DisplayID SDL_GetPrimaryDisplay(void);
+bool SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc);
+bool SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc);
+SDL_DisplayID *SDLCALL StarsTest_SDL_GetDisplays(int *c) {
     SDL_DisplayID *rg;
-    if (!fFake) return __real_SDL_GetDisplays(c);
+    if (!fFake) return SDL_GetDisplays(c);
     rg = SDL_calloc(3, sizeof(*rg)); if (!rg) return NULL;
     rg[0] = 1; rg[1] = 2; *c = 2; return rg;
 }
-SDL_DisplayID __wrap_SDL_GetPrimaryDisplay(void) { return fFake ? 2 : __real_SDL_GetPrimaryDisplay(); }
-bool __wrap_SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc) {
-    if (!fFake) return __real_SDL_GetDisplayBounds(id, rc);
+SDL_DisplayID SDLCALL StarsTest_SDL_GetPrimaryDisplay(void) { return fFake ? 2 : SDL_GetPrimaryDisplay(); }
+bool SDLCALL StarsTest_SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc) {
+    if (!fFake) return SDL_GetDisplayBounds(id, rc);
     if (id == 1) { *rc = (SDL_Rect){-640, -80, 640, 480}; return true; }
     if (id == 2 && !fFailDisplay) { *rc = (SDL_Rect){0, 0, 800, 600}; return true; }
     return false;
 }
-bool __wrap_SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc) {
-    if (!fFake) return __real_SDL_GetDisplayUsableBounds(id, rc);
+bool SDLCALL StarsTest_SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc) {
+    if (!fFake) return SDL_GetDisplayUsableBounds(id, rc);
     if (id == 2 && !fFailDisplay) { *rc = (SDL_Rect){0, 20, 800, 560}; return true; }
     return false;
 }

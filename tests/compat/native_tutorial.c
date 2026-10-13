@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int16_t __real_InitInstance(int16_t nCmdShow);
+int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static UINT_PTR idTimer;
 static int iStage, cWait, cActions, cReadActions;
 static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle, fDesignCycle, fAutomationCycle, fReportCycle, fMergeCycle;
@@ -35,13 +35,13 @@ static const char *pszResearchSnapshot = "year-2413-research.json", *pszOrderSna
 static HWND HwndModal(void);
 static BOOL FSaveState(const char *pszName);
 
-BOOL __real_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
-BOOL __wrap_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
+BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
+BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     SDL_Event event = {0};
     HWND hwndRoot = HwndCompatRoot(hwnd);
     char szText[256];
     int i, j, iItem = -1, cSteps = 0;
-    if (!pszMenu) return __real_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!pszMenu) return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     /* PopupMenu sends commands to the frame even when a modal owns the input. */
     if (hwndRoot && !IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
     for (i = 0; i < GetMenuItemCount(hmenu); i++) {
@@ -68,18 +68,18 @@ BOOL __wrap_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, 
         event.type = SDL_EVENT_KEY_UP; event.key.down = false;
         if (!SDL_PushEvent(&event)) return FALSE;
     }
-    return __real_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-int WINAPI __real_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
-int WINAPI __wrap_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.
      */
     fExpectedRejection = iStage == 3 && pszText &&
         strstr(pszText, "You have not yet completed all of the tutorial tasks");
     fprintf(stderr, "Message box at stage %d: %s\n", iStage, pszText ? pszText : "");
-    return __real_MessageBoxA(hwnd, pszText, pszCaption, type);
+    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
 static void LogState(const char *pszEvent) {
@@ -2921,8 +2921,8 @@ LFail:
     PostQuitMessage(93);
 }
 
-int16_t __wrap_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = __real_InitInstance(nCmdShow);
+int16_t StarsTest_InitInstance(int16_t nCmdShow) {
+    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
     if (fResult) idTimer = SetTimer(NULL, 0, 50, RunTutorial);
     return fResult && idTimer ? fResult : FALSE;
 }

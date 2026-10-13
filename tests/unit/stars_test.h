@@ -24,8 +24,8 @@
 #endif
 
 // The game's message boxes are recorded here instead of shown, so nothing
-// waits for a click: through --wrap=AlertSz on Windows and SDL clients, and IdAlertBox in
-// the host tests.
+// waits for a click: compile-time AlertSz substitution in SDL clients and
+// IdAlertBox in host tests.
 extern int  cStarsTestAlert;
 extern char szStarsTestAlert[512];
 

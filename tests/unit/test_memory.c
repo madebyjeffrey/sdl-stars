@@ -28,18 +28,26 @@ static void TestMixedAllocations(void) {
 static void TestReuseAndGrowth(void) {
     uint8_t *lp1, *lp2, *lp3, *lpNew;
     HB *lphb;
-    uint16_t cbAllocSav;
+    uint16_t cbAllocSav, cbRequest;
     int i;
 
     cbAllocSav = mphtcbAlloc[htMisc];
-    mphtcbAlloc[htMisc] = 128;
+    // All three allocations must share one block even with 16-byte alignment.
+    mphtcbAlloc[htMisc] = 256;
     lp1 = LpAlloc(17, htMisc);
     lp2 = LpAlloc(17, htMisc);
     lp3 = LpAlloc(17, htMisc);
     lphb = rglphb[htMisc];
+    // Request more than one allocation can hold, whatever its native alignment.
+    cbRequest = RawLoad16(lp1 - 2) + 1;
+    // Consume the tail so the next allocation exercises coalescing, not slop.
+    while (lphb->cbSlop >= cbRequest) {
+        LpAlloc(17, htMisc);
+        TEST_ASSERT(rglphb[htMisc] == lphb);
+    }
     FreeLp(lp1, htMisc);
     FreeLp(lp2, htMisc);
-    lpNew = LpAlloc(49, htMisc);
+    lpNew = LpAlloc(cbRequest, htMisc);
     CheckAligned(lpNew);
     TEST_CHECK(lpNew == lp1);
     TEST_CHECK(rglphb[htMisc] == lphb);

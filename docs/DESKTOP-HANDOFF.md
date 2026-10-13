@@ -163,7 +163,7 @@ cmake --build --preset macos-sdl-debug --parallel 4
 ctest --test-dir dist/macos-sdl-debug --output-on-failure -j 1
 ```
 
-Linux-only GNU-linker wrapping, private DBus, X11 and Weston harnesses are
+Linux-only private DBus, X11 and Weston harnesses are
 excluded on Mac. Do not try to transplant `sdl-sanitize`: its sanitizer option
 currently requires Linux. The standalone help viewer is:
 

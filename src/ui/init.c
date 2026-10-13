@@ -208,7 +208,7 @@ int16_t FCreateFonts(HDC hdc) {
     return TRUE;
 }
 
-int16_t InitInstance(int16_t nCmdShow) {
+int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
     int16_t sw;
     RECT    rc;
 

@@ -190,6 +190,19 @@ if(STARS_BUILD_TESTS)
     enable_testing()
 endif()
 
+include(cmake/test-redirect.cmake)
+if(STARS_BUILD_TESTS)
+    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    if(CMAKE_GENERATOR_PLATFORM)
+        list(APPEND STARS_TEST_COMPILER_ARGS -A "${CMAKE_GENERATOR_PLATFORM}")
+    endif()
+    if(CMAKE_GENERATOR_TOOLSET)
+        list(APPEND STARS_TEST_COMPILER_ARGS -T "${CMAKE_GENERATOR_TOOLSET}")
+    endif()
+    add_test(NAME test_redirect_contract COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/cmake/test_redirect.py" ${STARS_TEST_COMPILER_ARGS})
+    set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
+endif()
 if(STARS_BUILD_SDL_CLIENT)
     include(cmake/sdl-client.cmake)
 elseif(STARS_BUILD_TESTS)
@@ -197,7 +210,7 @@ elseif(STARS_BUILD_TESTS)
     file(MAKE_DIRECTORY "${STARS_TEST_DIR}/data")
     configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1 "${STARS_TEST_DIR}/data/humanoid.r1" COPYONLY)
     file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
-    # These tests need the desktop UI and GNU linker file adapters.
+    # These tests need the desktop UI and its private file adapters.
     list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_fileui.c")
     set(STARS_HOST_TEST_TARGETS)

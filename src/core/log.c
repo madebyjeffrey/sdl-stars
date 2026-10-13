@@ -510,7 +510,7 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
     return;
 }
 
-void DirtyGame(int16_t fDirty) {
+void STARS_TEST_IMPL(DirtyGame)(int16_t fDirty) {
     if (fDirty != game.fDirty) {
         game.fDirty = fDirty;
         if (!fAi) {

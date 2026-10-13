@@ -14,8 +14,8 @@ static int mode, idChoose, idDefault, stage, cErrors, cSeen;
 static BOOL fTask, fDone;
 #ifndef _WIN32
 static int cAudioQueues;
-bool __real_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb);
-bool __wrap_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
+bool SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb);
+bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
     SDL_AudioSpec spec;
     const float *rg = lpv;
     int i;
@@ -28,7 +28,7 @@ bool __wrap_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb)
         if (fabsf(rg[i]) > 0.01f) fAudible = TRUE;
     }
     EXPECT(fAudible); cAudioQueues++;
-    return __real_SDL_PutAudioStreamData(lp, lpv, cb);
+    return SDL_PutAudioStreamData(lp, lpv, cb);
 }
 #endif
 static HWND HwndBox(void) {

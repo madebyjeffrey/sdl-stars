@@ -1,6 +1,6 @@
 #include "win.h"
 
-void NewGameWizard(HWND hwnd, int16_t fReadOnly) {
+void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     int16_t iStepMaxSoFar;
     int16_t mdRet;
     FARPROC lpProc;

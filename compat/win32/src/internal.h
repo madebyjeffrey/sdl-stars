@@ -1,5 +1,6 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
+#include "test_impl.h"
 #include <windows.h>
 #include "encoding.h"
 #include <SDL3/SDL.h>

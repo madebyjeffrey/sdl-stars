@@ -1,6 +1,10 @@
 #include "stars_test.h"
 
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <dirent.h>
+#endif
 
 int  cStarsTestAlert;
 char szStarsTestAlert[512];
@@ -14,7 +18,7 @@ static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
 }
 
 #ifdef STARS_UI_SDL
-int16_t __wrap_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+int16_t StarsTest_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
 int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
@@ -42,6 +46,21 @@ int16_t FStarsTestInit(void) {
 // DeleteGameFiles removes szDir's game.* files from an earlier run.
 static void DeleteGameFiles(const char *szDir) {
     char          szFile[MAX_PATH];
+#ifdef _WIN32
+    struct _finddata_t fd;
+    intptr_t hFind;
+
+    snprintf(szFile, sizeof(szFile), "%s%sgame.*", szDir, szDirSep);
+    hFind = _findfirst(szFile, &fd);
+    if (hFind == -1) return;
+    do {
+        if (!(fd.attrib & _A_SUBDIR)) {
+            snprintf(szFile, sizeof(szFile), "%s%s%s", szDir, szDirSep, fd.name);
+            remove(szFile);
+        }
+    } while (_findnext(hFind, &fd) == 0);
+    _findclose(hFind);
+#else
     DIR           *pdir;
     struct dirent *pde;
 
@@ -55,6 +74,7 @@ static void DeleteGameFiles(const char *szDir) {
         }
     }
     closedir(pdir);
+#endif
 }
 
 int16_t FStarsTestDir(const char *pszName, char *szDir, size_t cchDir) {

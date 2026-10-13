@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Replaced GNU linker wrapping in active unit/desktop tests and the optional
+  regression tracer with private C test adapters. macOS Debug now builds the
+  unit suite; test directory cleanup supports the Windows CRT, and the heap
+  reuse test accommodates native alignment and forces free-list coalescing.
+  Production symbols, game behavior, disk formats and baselines are unchanged.
+
 - The SDL wrapper headers now use standard C null and integer-limit definitions
   and an explicit dialog callback signature for their remaining `FARPROC`
   instances, avoiding Apple Clang prototype and macro-redefinition errors.

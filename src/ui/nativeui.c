@@ -115,7 +115,7 @@ int16_t CWheelLines(int16_t cPage) {
 
 
 BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return GetOpenFileNameA(lpof); }
-BOOL FNativeSaveFileName(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
+BOOL STARS_TEST_IMPL(FNativeSaveFileName)(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
 DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
 
 int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "filedialog_windows_bridge.h"
+#include "../../../src/platform/test_impl.h"
 
 typedef struct WINDOWSCHOOSER {
     int (*pfnPump)(void *);
@@ -39,7 +40,7 @@ static UINT_PTR CALLBACK ChooserHook(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return 0;
 }
 
-int IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
+int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
                        const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                        int *lpiFilter, char *pszPath, size_t cbPath,
                        int (*pfnPump)(void *), void *lpv) {

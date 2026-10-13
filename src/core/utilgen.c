@@ -54,7 +54,7 @@ void Randomize2(uint32_t dw) {
     return;
 }
 
-int16_t Random(int16_t c) {
+int16_t STARS_TEST_IMPL(Random)(int16_t c) {
     int32_t z;
     int32_t s1;
     int32_t k;
@@ -286,7 +286,7 @@ LStreamError:
     return;
 }
 
-int16_t AlertSz(char *sz, int16_t mbType) {
+int16_t STARS_TEST_IMPL(AlertSz)(char *sz, int16_t mbType) {
     char szT[256];
 
     if (ini.fValidate || (ini.fLogging && ini.fGen)) {

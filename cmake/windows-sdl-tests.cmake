@@ -1,4 +1,4 @@
-# The Linux desktop harness uses X11, D-Bus and GNU ELF wrapping. Windows
+# The Linux desktop harness uses X11 and D-Bus. Windows
 # exercises the same wrapper with portable tests and the shared game entry.
 if(STARS_NATIVE_FILE_DIALOGS)
     add_executable(stars-compat-filedialog-windows tests/compat/win32_filedialog_windows.c
@@ -18,7 +18,7 @@ if(STARS_NATIVE_FILE_DIALOGS)
     add_executable(stars-compat-filedialog-native-flow tests/compat/win32_filedialog_windows_flow.c)
     target_link_libraries(stars-compat-filedialog-native-flow PRIVATE stars_win32 SDL3::SDL3)
     target_include_directories(stars-compat-filedialog-native-flow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-    target_link_options(stars-compat-filedialog-native-flow PRIVATE "LINKER:--wrap=IChooseWindowsFile")
+    stars_test_redirect(stars-compat-filedialog-native-flow IChooseWindowsFile)
     target_compile_options(stars-compat-filedialog-native-flow PRIVATE -Wall -Wextra -Wpedantic -Werror)
     set_target_properties(stars-compat-filedialog-native-flow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-native-filedialog")
@@ -45,8 +45,7 @@ foreach(STARS_COMPAT_TEST windows bitmap dib memory timers controls edit regions
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
 endforeach()
 target_sources(stars-compat-dib PRIVATE tests/compat/win32_dib_invalid.c)
-target_link_options(stars-compat-input PRIVATE
-    "LINKER:--wrap=SDL_GetKeyboardState,--wrap=SDL_GetModState,--wrap=SDL_GetGlobalMouseState,--wrap=SDL_GetCurrentVideoDriver")
+stars_test_redirect(stars-compat-input SDL_GetKeyboardState SDL_GetModState SDL_GetGlobalMouseState SDL_GetCurrentVideoDriver)
 
 add_executable(stars-compat-windows-platform tests/compat/win32_windows_platform.c)
 add_library(stars-compat-platform-fixture OBJECT tests/compat/win32_platform_fixture.c)
@@ -70,12 +69,9 @@ add_executable(stars-compat-client-startup tests/compat/win32_client_startup.c)
 target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-compat-check
     stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1
-    __wrap_TrackPopupMenu=__wrap_StarsCompat_TrackPopupMenu
-    __real_TrackPopupMenu=__real_StarsCompat_TrackPopupMenu)
+target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-target_link_options(stars-compat-client-startup PRIVATE
-    "LINKER:--wrap=InitInstance,--wrap=AlertSz,--wrap=SDL_ShowWindow,--wrap=PromptPassword,--wrap=StarsCompat_TrackPopupMenu,--wrap=SDL_RenderPresent,--wrap=NewGameWizard,--wrap=FNativeSaveFileName")
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent NewGameWizard FNativeSaveFileName)
 set_target_properties(stars-compat-client-startup PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -101,14 +97,9 @@ add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
 target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-check
     stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-target_compile_definitions(stars-native-tutorial PRIVATE STARS_TEST_TUTORIAL=1
-    __wrap_TrackPopupMenu=__wrap_StarsCompat_TrackPopupMenu
-    __real_TrackPopupMenu=__real_StarsCompat_TrackPopupMenu
-    __wrap_MessageBoxA=__wrap_StarsCompat_MessageBoxA
-    __real_MessageBoxA=__real_StarsCompat_MessageBoxA)
+target_compile_definitions(stars-native-tutorial PRIVATE STARS_TEST_TUTORIAL=1)
 target_compile_options(stars-native-tutorial PRIVATE -Wall -Wextra -Werror)
-target_link_options(stars-native-tutorial PRIVATE
-    "LINKER:--wrap=InitInstance,--wrap=StarsCompat_MessageBoxA,--wrap=StarsCompat_TrackPopupMenu")
+stars_test_redirect(stars-native-tutorial InitInstance MessageBoxA TrackPopupMenu)
 set_target_properties(stars-native-tutorial PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_native_tutorial.py" "$<TARGET_FILE:stars-native-tutorial>"

@@ -51,13 +51,13 @@ static int FPrefix(const char *pszFile, const char *psz) {
     if (cb > sizeof(sz)) { fclose(lp); return 0; }
     cbRead = fread(sz, 1, cb, lp); fclose(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
 }
-bool __wrap_SDL_OpenURL(const char *pszUri) {
+bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cViewer++;
     if (!pszViewerExpected || !FPrefix(pszViewerExpected, "%PDF-") || strncmp(pszUri, "file:///", 8)) cErrors++;
     snprintf(szViewerUri, sizeof(szViewerUri), "%s", pszUri);
     return fViewerAccept;
 }
-bool __wrap_SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags flags, const char *pszTitle, const char *pszText, SDL_Window *lpParent) {
+bool SDLCALL StarsTest_SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags flags, const char *pszTitle, const char *pszText, SDL_Window *lpParent) {
     (void)lpParent;
     cNotice++;
     if (flags != SDL_MESSAGEBOX_ERROR || strcmp(pszTitle, "PDF saved") ||

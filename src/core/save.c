@@ -993,7 +993,7 @@ void SetSzWorkFromDt(DtFileType dt, int16_t iPlayer) {
     return;
 }
 
-int16_t FCreateFile(DtFileType dt, int16_t iPlayer, char *szForceName) {
+int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szForceName) {
     jmp_buf *penvMemSav;
     jmp_buf  env;
     char    *psz;
@@ -1148,7 +1148,7 @@ LBadFile:
     return fSuccess;
 }
 
-void WriteRt(RecordType rt, int16_t cb, void *rg) {
+void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
     HDR hdr;
 
     if (cb != 0)

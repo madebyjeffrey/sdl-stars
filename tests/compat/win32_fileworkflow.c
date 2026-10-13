@@ -6,13 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-int16_t __real_InitInstance(int16_t nCmdShow);
+int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
 static int cAlerts;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
-int16_t __wrap_PromptPassword(void) { return TRUE; }
-int16_t __wrap_AlertSz(char *sz, int16_t mbType) {
+int16_t StarsTest_PromptPassword(void) { return TRUE; }
+int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
     return IDOK;
 }
@@ -46,8 +46,8 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
 done:
     PostQuitMessage(fPassed ? 0 : 92);
 }
-int16_t __wrap_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = __real_InitInstance(nCmdShow);
+int16_t StarsTest_InitInstance(int16_t nCmdShow) {
+    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
     if (fResult) idTimer = SetTimer(NULL, 0, 50, FileWorkflow);
     return fResult && idTimer ? fResult : FALSE;
 }

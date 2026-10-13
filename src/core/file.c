@@ -1491,7 +1491,7 @@ int16_t FCheckFile(DtFileType dt, int16_t iPlayer, MdMark md) {
     return fReturn;
 }
 
-void ReadRt() {
+void STARS_TEST_IMPL(ReadRt)() {
     RgFromStream(&hdrCur, 2);
     if (hdrCur.cb != 0) {
         RgFromStream(rgbCur, hdrCur.cb);
@@ -1520,7 +1520,7 @@ int16_t FBadFileError(StringId ids) {
     }
 }
 
-void StreamOpen(char *szFile, MdOpenFlags mdOpen) {
+void STARS_TEST_IMPL(StreamOpen)(char *szFile, MdOpenFlags mdOpen) {
     uint32_t dwTick;
     int16_t  fMissing;
     int16_t  fNoErr;
@@ -1551,7 +1551,7 @@ Retry:
     }
 }
 
-void StreamClose() {
+void STARS_TEST_IMPL(StreamClose)() {
     if (hf != -1) {
         CloseFile(hf);
         hf = -1;

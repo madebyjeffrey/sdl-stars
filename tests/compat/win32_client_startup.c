@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int16_t __real_InitInstance(int16_t nCmdShow);
+int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
 static UINT_PTR idTimer;
@@ -26,10 +26,10 @@ static BOOL fToolbarMenu, fToolbarAnchor;
 static int xToolbarMenu, yToolbarMenu, cToolbarMenu;
 static unsigned cRenderPresent;
 
-bool __real_SDL_RenderPresent(SDL_Renderer *lprenderer);
-bool __wrap_SDL_RenderPresent(SDL_Renderer *lprenderer) {
+bool SDL_RenderPresent(SDL_Renderer *lprenderer);
+bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
     cRenderPresent++;
-    return __real_SDL_RenderPresent(lprenderer);
+    return SDL_RenderPresent(lprenderer);
 }
 
 static BOOL FCheckScannerDrag(void) {
@@ -74,8 +74,8 @@ static BOOL FCheckScannerDrag(void) {
 }
 
 static int iTransportPreset = -1, cTransportMenus;
-BOOL __real_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
-BOOL __wrap_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
+BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
+BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     if (iTransportPreset >= 0) {
         SDL_Event event = {0};
         HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -92,11 +92,11 @@ BOOL __wrap_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, 
             event.type = SDL_EVENT_KEY_UP; event.key.down = false;
             if (!SDL_PushEvent(&event)) return FALSE;
         }
-        fResult = __real_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+        fResult = StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
         iTransportPreset = -1;
         return fResult;
     }
-    if (!fToolbarMenu) return __real_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!fToolbarMenu) return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     cToolbarMenu++;
     fToolbarAnchor = x == xToolbarMenu && y == yToolbarMenu && !(flags & TPM_CENTERALIGN);
     return FALSE;
@@ -282,15 +282,15 @@ static BOOL FCheckToolbarPlacement(void) {
     return TRUE;
 }
 
-int16_t __real_PromptPassword(void);
-int16_t __wrap_PromptPassword(void) {
+int16_t StarsTestReal_PromptPassword(void);
+int16_t StarsTest_PromptPassword(void) {
     // The frozen regression race is password protected. This test qualifies
     // file loading and client creation; password validation is outside its scope.
-    return pszContinue ? TRUE : __real_PromptPassword();
+    return pszContinue ? TRUE : StarsTestReal_PromptPassword();
 }
 
-bool __real_SDL_ShowWindow(SDL_Window *lpWindow);
-bool __wrap_SDL_ShowWindow(SDL_Window *lpWindow) {
+bool SDL_ShowWindow(SDL_Window *lpWindow);
+bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     HWND hwnd;
     BYTE r, g, b, a;
     COLORREF cr;
@@ -317,7 +317,7 @@ bool __wrap_SDL_ShowWindow(SDL_Window *lpWindow) {
                 RGB(r, g, b) == cr;
         }
     }
-    return __real_SDL_ShowWindow(lpWindow);
+    return SDL_ShowWindow(lpWindow);
 }
 
 static BOOL FPushClick(HWND hwnd) {
@@ -1139,7 +1139,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     return TRUE;
 }
 
-int16_t __wrap_AlertSz(char *sz, int16_t mbType) {
+int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
@@ -1353,8 +1353,8 @@ LDone:
     }
 }
 
-int16_t __wrap_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = __real_InitInstance(nCmdShow);
+int16_t StarsTest_InitInstance(int16_t nCmdShow) {
+    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
     if (fResult) idTimer = SetTimer(NULL, 0, 250, CheckStartup);
     return fResult && idTimer ? fResult : FALSE;
 }

@@ -37,9 +37,9 @@ separate real-desktop check. X11 tests continue to use private Xvfb/Openbox.
 ## macOS build path
 
 The product target and existing Cocoa native-file-picker adapter are enabled on
-Darwin. The Linux-only GNU linker wrapping, X11 and DBus harness is excluded.
+Darwin. The Linux-only X11 and DBus harness is excluded; test adapters use ordinary C symbols.
 The ABI executable and direct SDL two-window smoke target are also available
-without GNU wrapping. The platform thread ID uses `pthread_threadid_np` instead of Linux's `gettid`.
+with portable C test adapters. The platform thread ID uses `pthread_threadid_np` instead of Linux's `gettid`.
 A Mac is required to establish successful compilation and native execution.
 
 ```sh

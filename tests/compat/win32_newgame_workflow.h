@@ -4,24 +4,24 @@ static const char *pszNewGame;
 static BOOL fCreatingGame;
 static int cNewGameChoices, iNewGameStep;
 static GAME gameNewSav;
-void __real_NewGameWizard(HWND hwnd, int16_t fReadOnly);
-BOOL __real_FNativeSaveFileName(OPENFILENAMEA *lpof);
+void StarsTestReal_NewGameWizard(HWND hwnd, int16_t fReadOnly);
+BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAMEA *lpof);
 
-void __wrap_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
+void StarsTest_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = pszNewGame != NULL;
-    __real_NewGameWizard(hwnd, fReadOnly);
+    StarsTestReal_NewGameWizard(hwnd, fReadOnly);
     fCreatingGame = FALSE;
 }
 
-BOOL __wrap_FNativeSaveFileName(OPENFILENAMEA *lpof) {
+BOOL StarsTest_FNativeSaveFileName(OPENFILENAMEA *lpof) {
     const char *pszTitle, *pszExtension;
     size_t cb;
     BOOL fResult;
 
-    if (!pszNewGame) return __real_FNativeSaveFileName(lpof);
+    if (!pszNewGame) return StarsTestReal_FNativeSaveFileName(lpof);
     cNewGameChoices++;
     if (getenv("STARS_CLIENT_NEW_GAME_REAL_DIALOG")) {
-        fResult = __real_FNativeSaveFileName(lpof);
+        fResult = StarsTestReal_FNativeSaveFileName(lpof);
         fprintf(stderr, "New Game chooser %d: result %d, error %lu\n", cNewGameChoices, fResult, (unsigned long)DwNativeFileDialogError());
         return fResult;
     }

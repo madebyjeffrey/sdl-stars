@@ -15,8 +15,8 @@ static char szBase[PATH_MAX], szUri[PATH_MAX * 3 + 8];
 static BOOL fBase = TRUE, fAccept = TRUE;
 static unsigned cOpen;
 
-const char *__wrap_SDL_GetBasePath(void) { return fBase ? szBase : NULL; }
-bool __wrap_SDL_OpenURL(const char *pszUri) {
+const char *SDLCALL StarsTest_SDL_GetBasePath(void) { return fBase ? szBase : NULL; }
+bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cOpen++;
     if (strlen(pszUri) >= sizeof(szUri)) return false;
     strcpy(szUri, pszUri);
