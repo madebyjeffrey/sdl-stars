@@ -6,6 +6,22 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Ordinary SDL windows now request focus when shown, including the modeless
+  technology browser, reports and tutorial. Disabled/minimized windows, child
+  controls and nonactivating detail cards remain excluded; `SWP_NOACTIVATE`
+  is respected. Game logic, file formats and regression baselines are unchanged.
+
+- The SDL window wrapper now requests native and logical focus when its first
+  ordinary window is shown. Terminal launches on macOS previously left the title
+  screen inactive. Minimized, disabled and nonactivating windows do not consume
+  this startup request. Turn generation and regression baselines are unchanged.
+
+- The SDL modal dialog wrapper now requests native input focus after showing
+  an initialized dialog. Previously it focused only the logical control,
+  leaving new-game dialogs inactive on macOS and consuming the first click
+  for activation. No-activate windows retain their policy; turn generation and
+  regression baselines are unchanged.
+
 - Mineral and other `starspopup` detail cards now use an owned, nonactivating
   native tooltip window. They previously used an ordinary desktop window on
   macOS; native close left `hwndPopup` stale and blocked subsequent mineral

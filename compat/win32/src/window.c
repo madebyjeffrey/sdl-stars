@@ -782,6 +782,14 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         InvalidateRect(hwnd, NULL, TRUE);
     if (fNotify && fVisible != fWasVisible)
         SendMessageA(hwnd, WM_SHOWWINDOW, (WPARAM)fVisible, 0);
+    if (lpwin->fAlive && fVisible && !lpwin->hwndParent && fNotify &&
+        swNew != SW_SHOWMINIMIZED && !(lpwin->dwStyle & WS_DISABLED) && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
+        // Showing a Cocoa window alone does not grant native keyboard focus.
+        // ShowWindow activates ordinary windows, including modeless dialogs.
+        if (SDL_RaiseWindow(lpwin->lpWindow)) {
+            if (HwndCompatRoot(GetFocus()) != hwnd) SetFocus(hwnd);
+        }
+    }
     if (fRedraw && lpwin->fAlive && lpwin->hwndParent)
         FCompatPresent(lpwin->hwndParent);
     return fWasVisible;
@@ -966,7 +974,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     if (fZorder) ReorderCompatWindow(lpwin, wp.hwndInsertAfter);
     if (fShow || fHide) ShowCompatWindow(hwnd, fHide ? SW_HIDE : SW_SHOW, FALSE, FALSE);
     if (!lpwin->fAlive) return TRUE;
-    if (!(wp.flags & SWP_NOACTIVATE) && !lpwin->hwndParent && lpwin->fVisible && IsWindowEnabled(hwnd)) {
+    if (!(wp.flags & SWP_NOACTIVATE) && !lpwin->hwndParent && lpwin->fVisible && IsWindowEnabled(hwnd) &&
+        lpwin->swState != SW_SHOWMINIMIZED && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
         SDL_RaiseWindow(lpwin->lpWindow);
         SetFocus(hwnd);
         if (!lpwin->fAlive) return TRUE;

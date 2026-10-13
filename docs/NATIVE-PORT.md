@@ -61,6 +61,17 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   with contraction and fast-math disabled. The migration's intentional turn
   changes and platform qualification limits are in
   [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md).
+  The SDL wrapper uses the C library's null and integer-limit definitions.
+  Its remaining `FARPROC` instances are dialog callbacks and use the explicit
+  `DLGPROC` signature. macOS SDL links disable chained fixups because the
+  original packed UI tables contain unaligned function pointers; their layouts
+  remain unchanged. Apple's linker still warns about those pointers.
+  Startup prepares the main frame's initial show command while it stays hidden,
+  so native window animations cannot expose it before the title screen.
+  New-game setup treats aborted modal dialogs as cancellation, and the wrapper
+  leaves a pending quit message for the outer loop without opening another page.
+  Modal dialogs request native input focus after painting and showing, then
+  assign logical control focus; no-activate windows are excluded.
 - **Toolchain parity (keep):** `qsort16` (`native.c`) reproduces the
   Win16 CRT's tie order. The remaining casts and operation boundaries are
   deliberate, so don't simplify them without checking turn results.

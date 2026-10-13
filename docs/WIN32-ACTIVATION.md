@@ -22,6 +22,15 @@ the current active window. Shutdown clears both focus and activation.
 other threads receive NULL under the existing thread-bound handle lookup.
 It does not query windows owned by other processes.
 
+`ShowWindow` requests native focus for each visible, enabled, nonminimized
+ordinary top-level window with `SDL_RaiseWindow`, preserving an already focused
+child or assigning logical focus to its root. This covers terminal startup,
+modeless technology/tutorial dialogs, reports and the scanner inspector as well
+as modal dialogs. Child windows and `WS_EX_NOACTIVATE` detail cards do not
+activate. `SetWindowPos` respects `SWP_NOACTIVATE` and the same exclusions.
+The real-client desktop checks verify native and logical launch, dialog and
+modeless technology-browser focus.
+
 ## Remaining work
 
 This implements the active-window query used by Stars' main loop to close the
