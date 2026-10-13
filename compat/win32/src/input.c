@@ -128,6 +128,15 @@ BOOL WINAPI GetCursorPos(LPPOINT lppt) {
 
 HWND WINAPI GetCapture(void) { return LpCompatWindow(hwndCapture); }
 
+static BOOL FCaptureForeground(HWND hwnd) {
+    HWND hwndRoot = HwndCompatRoot(hwnd);
+    HWND hwndFocusRoot = HwndCompatRoot(GetFocus());
+
+    // A nonactivating detail card captures on behalf of its focused owner.
+    return hwndRoot && hwndFocusRoot && (hwndRoot == hwndFocusRoot ||
+        ((hwndRoot->dwExStyle & WS_EX_NOACTIVATE) && hwndRoot->hwndOwner == hwndFocusRoot));
+}
+
 HWND WINAPI SetCapture(HWND hwnd) {
     HWND hwndOld, lpwin = LpCompatWindow(hwnd);
 
@@ -136,7 +145,7 @@ HWND WINAPI SetCapture(HWND hwnd) {
     hwndOld = GetCapture();
     hwndCapture = hwnd;
     // SDL capture is optional on headless backends; logical child routing still works.
-    SDL_CaptureMouse(hwnd && HwndCompatRoot(GetFocus()) == HwndCompatRoot(hwnd));
+    SDL_CaptureMouse(hwnd && FCaptureForeground(hwnd));
     if (hwndOld) SendMessageA(hwndOld, WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
     return hwndOld;
 }
@@ -155,7 +164,7 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
     *lpy -= CyCompatMenuBar(hwndRoot);
     x = *lpx; y = *lpy;
     if (!hwnd) return HwndCompatMouse(hwndRoot, lpx, lpy);
-    if (HwndCompatRoot(GetFocus()) != HwndCompatRoot(hwnd)) {
+    if (!FCaptureForeground(hwnd)) {
         hwndHit = HwndCompatMouse(hwndRoot, &x, &y);
         if (hwndHit != hwnd && !IsChild(hwnd, hwndHit))
             return HwndCompatMouse(hwndRoot, lpx, lpy);

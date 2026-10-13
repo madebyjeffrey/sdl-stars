@@ -8,6 +8,22 @@ unlinked.
 
 ## Implemented behavior
 
+The game's `starspopup` detail cards (minerals, fleets, parts and designs) use
+owned SDL tooltip windows, with `WS_EX_NOACTIVATE` so opening a card keeps the
+owner's focus. Border-only popup styles do not acquire a native title bar.
+Capture for a nonactivating card follows its focused owner, so a release routed
+from the owner still reaches the card. These are click-and-hold details, not menu windows. Mouse release
+dismisses the captured card; native close and direct destruction also clear
+`hwndPopup` and `GlobalPD.grPopup`, allowing another card to open. A shared-client
+test covers ownership, focus and repeated close/reopen, including Cocoa execution.
+`Popup` creates the card hidden, assigns `hwndPopup` and its font, then shows
+it through the shared window paint path. Starbase drawing reads that global
+handle; the first frame must therefore follow setup. The test also checks that
+the starbase's initial canvas matches a subsequent full repaint.
+On Cocoa, popup creation explicitly restores native hidden state after SDL
+setup, and the unpainted native backing is clear. This covers menu, combobox,
+toolbar-tip and game detail popup roles; their completed canvases remain opaque.
+
 Top-level `CreateWindow` accepts an explicit menu. `GetMenu` retrieves its live
 handle; changing or removing the menu retains the previous tree for the caller
 to destroy. Window destruction destroys its attached menu. Child creation keeps

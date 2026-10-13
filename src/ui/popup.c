@@ -11,6 +11,13 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
     switch (message) {
     case WM_CREATE:
         return 0;
+    case WM_DESTROY:
+        // Native close paths do not pass through the mouse-release handler.
+        if (hwndPopup == hwnd) {
+            hwndPopup = 0;
+            GlobalPD.grPopup = 0;
+        }
+        return 0;
     case WM_ERASEBKGND:
         switch (GlobalPD.grPopup) {
         case grPopupComponent:
@@ -357,7 +364,8 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     pt.y -= dy;
     pt.x = max(0, min(pt.x, GetSystemMetrics(SM_CXSCREEN) - dx));
     pt.y = max(0, min(pt.y, GetSystemMetrics(SM_CYSCREEN) - dy));
-    hwndPopup = CreateWindow(szPopup, NULL, WS_POPUP | WS_VISIBLE | WS_BORDER, pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);
+    hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_VISIBLE | WS_BORDER,
+                               pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);
     SendMessage(hwndPopup, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
     SetCapture(hwndPopup);
     return;

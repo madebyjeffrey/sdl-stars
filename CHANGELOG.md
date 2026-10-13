@@ -6,6 +6,20 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Mineral and other `starspopup` detail cards now use an owned, nonactivating
+  native tooltip window. They previously used an ordinary desktop window on
+  macOS; native close left `hwndPopup` stale and blocked subsequent mineral
+  popups. Destruction now clears the popup state on every close path.
+  Border-only popups no longer acquire a title bar, and nonactivating cards
+  retain mouse capture on behalf of their focused owner.
+  Turn generation and regression baselines are unchanged.
+- The SDL painting wrapper now presents completed pane paints together and
+  paints the first frame before showing a native window. Previously icon draws
+  and individual pane paints uploaded incomplete frames, exposing black areas
+  and slowing startup. A live-resize event watcher also lays out and paints at
+  the current size during native resize tracking instead of waiting for the
+  outer message loop. Game rules, file formats and regression baselines are unchanged.
+
 - The approved planet, spacecraft and sans-serif "2" artwork now identifies the
   SDL desktop on macOS, Windows and Linux. Windows embeds it as the executable
   icon, and Linux installs matching launcher artwork. The original small game

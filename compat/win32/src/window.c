@@ -360,7 +360,8 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (dy < 0) dy = 0;
     if (dwStyle & WS_THICKFRAME)
         flags |= SDL_WINDOW_RESIZABLE;
-    if ((dwStyle & WS_POPUP) && !(dwStyle & WS_CAPTION))
+    // WS_CAPTION combines WS_BORDER and WS_DLGFRAME; a border alone has no title bar.
+    if ((dwStyle & WS_POPUP) && (dwStyle & WS_CAPTION) != WS_CAPTION)
         flags |= SDL_WINDOW_BORDERLESS;
     lpwin = calloc(1, sizeof(*lpwin));
     if (!lpwin)
@@ -416,9 +417,11 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             // their placement remains relative to the owner without focus loss.
             fNativePopup = lpwin->hwndOwner && (UINT_PTR)pszClass > UINT16_MAX &&
                 (!strcmp(pszClass, "StarsCompatPopup") || !strcmp(pszClass, "StarsComboPopup") ||
-                 !strcmp(pszClass, "starstt") || !strcmp(pszClass, "StarsCompatToolbarTip")) &&
+                 !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
+                 !strcmp(pszClass, "StarsCompatToolbarTip")) &&
                 strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0;
-            if (fNativePopup) flags |= !strcmp(pszClass, "starstt") || !strcmp(pszClass, "StarsCompatToolbarTip") ?
+            if (fNativePopup) flags |= !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
+                !strcmp(pszClass, "StarsCompatToolbarTip") ?
                 SDL_WINDOW_TOOLTIP : SDL_WINDOW_POPUP_MENU;
             // Narrow window text remains CP1252; SDL's native titles require UTF-8.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
