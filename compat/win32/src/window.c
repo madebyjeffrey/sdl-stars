@@ -785,7 +785,13 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     fPrepare = !lpwin->hwndParent && fVisible && !fWasVisible;
     if (sw != SW_HIDE && sw != SW_SHOW && sw != SW_SHOWNORMAL && sw != SW_RESTORE &&
         sw != SW_SHOWMINIMIZED && sw != SW_SHOWMAXIMIZED) return FALSE;
-    if (sw == SW_SHOW && lpwin->swInitial != 0) sw = (int)lpwin->swInitial;
+    if (sw == SW_SHOW && lpwin->swInitial != 0) {
+        sw = (int)lpwin->swInitial;
+        // The headless driver cannot maximize/minimize a native window. Keep
+        // the deferred startup show visible so client workflows can run there.
+        if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy") &&
+            (sw == SW_SHOWMAXIMIZED || sw == SW_SHOWMINIMIZED)) sw = SW_SHOWNORMAL;
+    }
     swOld = lpwin->swState;
     swNew = sw == SW_RESTORE && swOld == SW_SHOWMINIMIZED && lpwin->fRestoreMax ? SW_SHOWMAXIMIZED :
             sw == SW_RESTORE || sw == SW_SHOWNORMAL ? SW_SHOWNORMAL :

@@ -167,6 +167,9 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     CHECK(ShowWindow(hwndDefault, SW_HIDE));
     CHECK(StarsCompatSetInitialShowCommand(hwndDefault, SW_SHOWNORMAL));
     CHECK(!ShowWindow(hwndDefault, SW_SHOW) && IsWindowVisible(hwndDefault) && !IsZoomed(hwndDefault));
+    CHECK(ShowWindow(hwndDefault, SW_HIDE));
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, SW_SHOWMAXIMIZED));
+    CHECK(!ShowWindow(hwndDefault, SW_SHOW) && IsWindowVisible(hwndDefault) && !IsZoomed(hwndDefault));
     CHECK(DestroyWindow(hwndDefault));
     memset(&winFailure, 0, sizeof(winFailure));
     CHECK(cLive == 2 && rgwin[0].cCreate == 1 && rgwin[1].cCreate == 1);

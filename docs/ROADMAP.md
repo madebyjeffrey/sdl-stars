@@ -60,6 +60,10 @@ list stopped fetched SDL configuration at XCURSOR. Windows SDL unit and release
 CI explicitly select UCRT64 Python so CMake uses the installed MSYS2 PyYAML
 package rather than the runner interpreter.
 
+Deferred frame maximize/minimize commands now show normally on the SDL dummy
+driver, which cannot implement those native window operations. This keeps
+headless client and tutorial workflows visible.
+
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
 not an additional maintained desktop backend.
 

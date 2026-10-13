@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ShowCompatWindow` repeatedly applied deferred maximization on SDL
+  dummy displays, which cannot maximize native windows, leaving the frame
+  hidden and breaking client/tutorial checks. Deferred maximize/minimize
+  requests now show normally on that headless driver. Desktop behavior,
+  turn generation, file formats and regression baselines are unchanged.
+
 - Windows SDL unit and release CI let CMake select the runner Python without
   PyYAML instead of the installed MSYS2 interpreter. Debug and Release
   configuration now explicitly use UCRT64 Python and its PyYAML package.
