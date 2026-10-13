@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Linux SDL CI omitted desktop backend development packages and stopped at
+  SDL configuration with a missing XCURSOR dependency. Unit, regression and
+  tutorial workflows now install the documented desktop backend dependencies.
+  Game behavior, file formats and regression baselines are unchanged.
+
 - Added an opt-in Rust/Bevy 0.20 starting-screen experiment, statically linked
   into `stars-sdl`. SDL retains window/event ownership; its four buttons call
   the existing New Game, Open Game, Continue Game and Exit handlers. Dialogs
