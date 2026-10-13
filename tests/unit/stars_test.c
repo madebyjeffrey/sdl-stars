@@ -1,6 +1,8 @@
 #include "stars_test.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <dirent.h>
 #endif
 
@@ -15,15 +17,15 @@ static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
     return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
 }
 
-#ifdef _WIN32
-int16_t __wrap_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+#ifdef STARS_UI_SDL
+int16_t StarsTest_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #else
 // The native tests link hostui.c for the rest of ui.h.
 int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #endif
 
 int16_t FStarsTestInit(void) {
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
     hInst = GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
@@ -33,7 +35,7 @@ int16_t FStarsTestInit(void) {
     Randomize2(12345);
     fFileErrSilent = TRUE;
     idPlayer = iplrNone;
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
     return FCreateStuff();
 #else
     InitGameStuff();
@@ -43,21 +45,21 @@ int16_t FStarsTestInit(void) {
 
 // DeleteGameFiles removes szDir's game.* files from an earlier run.
 static void DeleteGameFiles(const char *szDir) {
-    char szFile[MAX_PATH];
+    char          szFile[MAX_PATH];
 #ifdef _WIN32
-    WIN32_FIND_DATAA fd;
-    HANDLE           hfind;
-    char             szPattern[MAX_PATH];
+    struct _finddata_t fd;
+    intptr_t hFind;
 
-    snprintf(szPattern, sizeof(szPattern), "%s\\game.*", szDir);
-    hfind = FindFirstFileA(szPattern, &fd);
-    if (hfind != INVALID_HANDLE_VALUE) {
-        do {
-            snprintf(szFile, sizeof(szFile), "%s\\%s", szDir, fd.cFileName);
-            DeleteFileA(szFile);
-        } while (FindNextFileA(hfind, &fd));
-        FindClose(hfind);
-    }
+    snprintf(szFile, sizeof(szFile), "%s%sgame.*", szDir, szDirSep);
+    hFind = _findfirst(szFile, &fd);
+    if (hFind == -1) return;
+    do {
+        if (!(fd.attrib & _A_SUBDIR)) {
+            snprintf(szFile, sizeof(szFile), "%s%s%s", szDir, szDirSep, fd.name);
+            remove(szFile);
+        }
+    } while (_findnext(hFind, &fd) == 0);
+    _findclose(hFind);
 #else
     DIR           *pdir;
     struct dirent *pde;

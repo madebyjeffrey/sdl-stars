@@ -1,0 +1,92 @@
+{
+  "source": "https://github.com/liberationfonts/liberation-fonts",
+  "package": "1:2.1.5-3",
+  "license": "SIL-OFL-1.1",
+  "copied_from": "Debian/Ubuntu fonts-liberation package; unmodified TTF files",
+  "fonts": [
+    {
+      "file": "LiberationSans-Regular.ttf",
+      "family": "Sans",
+      "style": "Regular",
+      "sha256": "4659bc0c58c5028dd488ec928d41d9265db43d9b669fc14ca8b0832daca7b144",
+      "size": 410820
+    },
+    {
+      "file": "LiberationSans-Bold.ttf",
+      "family": "Sans",
+      "style": "Bold",
+      "sha256": "3973aa5054fb467dd5627245d3dc82e37bf16fe075756156a570455871351582",
+      "size": 414568
+    },
+    {
+      "file": "LiberationSans-Italic.ttf",
+      "family": "Sans",
+      "style": "Italic",
+      "sha256": "830c5fa600505fb4c1a271b4271c53c44bae43f492b2a240d0e98a3a7a380121",
+      "size": 415920
+    },
+    {
+      "file": "LiberationSans-BoldItalic.ttf",
+      "family": "Sans",
+      "style": "BoldItalic",
+      "sha256": "c80fa7f2ffa0e01d4d8dcd6a6d1e43eda665222d1b4db597dde1174c456006cf",
+      "size": 409108
+    },
+    {
+      "file": "LiberationSerif-Regular.ttf",
+      "family": "Serif",
+      "style": "Regular",
+      "sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+      "size": 393692
+    },
+    {
+      "file": "LiberationSerif-Bold.ttf",
+      "family": "Serif",
+      "style": "Bold",
+      "sha256": "9e66c25e20868756bf12eb24a520a4552727c9cd108f577f7ae33e3c0110e39c",
+      "size": 370196
+    },
+    {
+      "file": "LiberationSerif-Italic.ttf",
+      "family": "Serif",
+      "style": "Italic",
+      "sha256": "eaeaf7f2b12544ecde64290c1fa7ec403ff70fd58b313637b265400b20249242",
+      "size": 375760
+    },
+    {
+      "file": "LiberationSerif-BoldItalic.ttf",
+      "family": "Serif",
+      "style": "BoldItalic",
+      "sha256": "379010e87421a883f7bbfa7936d23dfe0257a54ce850819b74556e9f2c615a8a",
+      "size": 376892
+    },
+    {
+      "file": "LiberationMono-Regular.ttf",
+      "family": "Mono",
+      "style": "Regular",
+      "sha256": "395fa5ab8d40c8eba390ced528744ea75a7f69aabf3e68b6f925ca0e39a27370",
+      "size": 319624
+    },
+    {
+      "file": "LiberationMono-Bold.ttf",
+      "family": "Mono",
+      "style": "Bold",
+      "sha256": "626655e94dd82f3f42549daf995c921b0915fa8ab1f4b839559e8892ea41d240",
+      "size": 308068
+    },
+    {
+      "file": "LiberationMono-Italic.ttf",
+      "family": "Mono",
+      "style": "Italic",
+      "sha256": "a71b2c25c89da05cf0e7c4dbba8d473fdead0b181ae56165217747d2c1f39215",
+      "size": 281608
+    },
+    {
+      "file": "LiberationMono-BoldItalic.ttf",
+      "family": "Mono",
+      "style": "BoldItalic",
+      "sha256": "15eb161953e3ecc7fc05a3fec8a59e0f4e0a54a4e375736adf8e98d65981f813",
+      "size": 284184
+    }
+  ]
+}

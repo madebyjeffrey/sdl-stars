@@ -1486,3 +1486,10 @@
 0x0583 idsHooveron "Hooveron"
 0x0584 idsNee "Nee"
 0x0585 idsKurkonian "Kurkonian"
+
+# Native encoding boundaries; keep all original IDs unchanged.
+0x0586 idsNativeCommandPasswordTooLong "Command-line passwords may contain at most 15 characters."
+0x0587 idsNativeCommandPasswordEncoding "Command-line passwords must be valid UTF-8 and representable in Windows-1252."
+0x0588 idsNativePasswordCharacters "This password contains characters that Stars! cannot store. Use Windows-1252 characters."
+0x0589 idsNativeFilenameTooLong "The selected filename is too long for this application."
+0x058a idsNativeFileSelectionFailed "File selection could not be completed. The path may be too long or invalid. Please choose another file."

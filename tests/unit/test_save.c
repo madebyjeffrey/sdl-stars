@@ -214,7 +214,32 @@ static void test_FWriteDataFile_masks_other_players_things(void) {
     TEST_CHECK_(lpth->thw.grbitPlr == 1 && lpth->thw.grbitPlrTrav == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw.grbitPlr, lpth->thw.grbitPlrTrav);
 }
 
-TEST_LIST = {{"FWriteDataFile Claim Adjuster sees only habitat", test_FWriteDataFile_claim_adjuster_sees_only_habitat},
+static void test_SetVisPFInit_host(void) {
+    THING th;
+    SHDEF rgshdef[16], rgshdefSB[10];
+
+    TEST_ASSERT(FStarsTestInit());
+    memset(&th, 0, sizeof(th));
+    memset(rgshdef, 0, sizeof(rgshdef));
+    memset(rgshdefSB, 0, sizeof(rgshdefSB));
+    rglpshdef[0] = rgshdef;
+    rglpshdefSB[0] = rgshdefSB;
+    th.ith = ithMineralPacket;
+    th.iplr = 0;
+    lpThings = &th;
+    cThing = 1;
+    game.cPlayer = 1;
+    SetVisPFInit(iplrNone);
+    TEST_CHECK(rgplr[0].fInclude);
+    TEST_CHECK(rgplr[0].det == detAll);
+    TEST_CHECK(th.thp.fInclude);
+    lpThings = NULL;
+    cThing = 0;
+    rglpshdef[0] = rglpshdefSB[0] = NULL;
+}
+
+TEST_LIST = {{"SetVisPFInit host sentinel", test_SetVisPFInit_host},
+             {"FWriteDataFile Claim Adjuster sees only habitat", test_FWriteDataFile_claim_adjuster_sees_only_habitat},
              {"SetVisPFFleets sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase},
              {"SetVisPFFleets long-range scanner sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase_long_range},
              {"WriteBOF writes version 2.84", test_WriteBOF_writes_version_2_84},

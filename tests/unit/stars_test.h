@@ -5,7 +5,7 @@
 // in its own process, so each test starts from the game's initial globals
 // and calls FStarsTestInit first. Helpers return FALSE on failure.
 
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
 #include "win.h"
 #else
 #include "common.h"
@@ -24,14 +24,14 @@
 #endif
 
 // The game's message boxes are recorded here instead of shown, so nothing
-// waits for a click: through --wrap=AlertSz on Windows, and IdAlertBox in
-// the native tests.
+// waits for a click: compile-time AlertSz substitution in SDL clients and
+// IdAlertBox in host tests.
 extern int  cStarsTestAlert;
 extern char szStarsTestAlert[512];
 
 // FStarsTestInit prepares the game state WinMain sets up before it creates
-// windows: on Windows the instance, brushes and fonts (FCreateStuff), and
-// elsewhere the game's buffers (InitGameStuff); and a fixed RNG seed.
+// windows: on Windows and SDL the instance, brushes and fonts (FCreateStuff),
+// and in host tests the game's buffers (InitGameStuff); and a fixed RNG seed.
 int16_t FStarsTestInit(void);
 
 // FStarsTestDir creates, or empties, work\<pszName> under the test working

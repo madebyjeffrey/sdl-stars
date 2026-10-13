@@ -64,9 +64,20 @@ dkms.conf
 # CMake build trees
 /dist/
 /build/
+/cmake-build-*/
 /CMakeUserPresets.json
+
+# Local CLion state and manually generated game/test outputs
+/.idea/
+/Game.*
+/games/
+/test.r1
+/window-manager.log
 
 snippets/
 /AGENTS-private.md
 !tests/unit/golden/dumps.map
 __pycache__/
+
+# Local Flatpak builder caches
+.flatpak-builder/

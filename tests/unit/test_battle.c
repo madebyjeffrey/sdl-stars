@@ -2,8 +2,8 @@
 
 #include "stars_test.h"
 
-#ifdef _WIN32
-// The battle plans dialog, which needs Windows.
+#ifdef STARS_UI_SDL
+// The battle plans dialog needs the Windows or SDL client UI.
 // OpenBattlePlans loads player 1's turn file and opens the real Battle Plans
 // dialog on its first plan.
 static HWND OpenBattlePlans(const char *pszTest) {
@@ -106,7 +106,7 @@ static void test_CplrBattle_starbase_attacks_only_its_target(void) {
 }
 
 TEST_LIST = {{"CplrBattle starbase attacks only its target", test_CplrBattle_starbase_attacks_only_its_target},
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
              {"BattlePlansDlg stores drop-down choices", test_BattlePlansDlg_stores_choices},
 #endif
              {NULL, NULL}};

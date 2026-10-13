@@ -1,5 +1,13 @@
 # Native port
 
+The SDL client now has a native Windows x64 build using the same source wrapper
+as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bridge is isolated in
+`compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
+to avoid SDK import collisions. Native Unicode open/save lives in the separate
+`filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
+native I/O. The shared UI has no native-client fallback branches; captions and
+legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
+
 The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler
 (see Platforms below). This document covers what the port changes and what
@@ -36,8 +44,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
-  paths with `chDirSep`. On Win32 these are the original `OpenFile`,
-  `_lread` and related calls; on POSIX they use `open`, `read` and the like,
+  paths with `chDirSep`. Windows strictly converts UTF-8 paths to UTF-16 and
+  uses CRT descriptors through `_wsopen`, `_read`, `_write` and related calls;
+  backups/cleanup and native text-file opens use the same path boundary through
+  `RenameNativeFile`, `RemoveNativeFile` and `PfOpenNativeFile`. POSIX uses `open`, `read` and the like,
   which have no share modes, so a file another program has open is not
   refused. The game's heaps (`memory.c`) come from `calloc` and `realloc`.
 - **Formatting and rounding** (`native.c`): the game code formats with
@@ -47,14 +57,24 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   and rounds with `LMulDiv`, which matches Win32 `MulDiv`. Every format in
   the string table formats the same through both.
 - **Platforms:** the game code (`common.h`) builds without Windows headers;
-  `stars-host` links it alone. Its turns match `stars.exe`'s where
-  `long double` is x87 extended precision: x86-64 Linux and macOS (on
-  Apple silicon, built for x86_64 and run by Rosetta). ARM's `long double`
-  is 64 bits (macOS) or 128 bits (Linux), so the rounding casts round
-  differently; CMake warns about such builds.
+  `stars-host` links it alone. Both host and client use binary64 `double`,
+  with contraction and fast-math disabled. The migration's intentional turn
+  changes and platform qualification limits are in
+  [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md).
+  The SDL wrapper uses the C library's null and integer-limit definitions.
+  Its remaining `FARPROC` instances are dialog callbacks and use the explicit
+  `DLGPROC` signature. macOS SDL links disable chained fixups because the
+  original packed UI tables contain unaligned function pointers; their layouts
+  remain unchanged. Apple's linker still warns about those pointers.
+  Startup prepares the main frame's initial show command while it stays hidden,
+  so native window animations cannot expose it before the title screen.
+  New-game setup treats aborted modal dialogs as cancellation, and the wrapper
+  leaves a pending quit message for the outer loop without opening another page.
+  Modal dialogs request native input focus after painting and showing, then
+  assign logical control focus; no-activate windows are excluded.
 - **Toolchain parity (keep):** `qsort16` (`native.c`) reproduces the
-  Win16 CRT's tie order, and the x87 rounding casts to `double`/`float` are
-  deliberate, so don't simplify them.
+  Win16 CRT's tie order. The remaining casts and operation boundaries are
+  deliberate, so don't simplify them without checking turn results.
 - **Warnings kept** (`-Wall -Wextra -Wno-unused-parameter`, 118):
   - **Unused-but-set (79):** debug-info locals the original also stores to,
     probably for asserts or debug output that was compiled out.
@@ -71,3 +91,59 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 - **Original uninitialized reads left as is** (harmless): `ScoreXDlg` and
   `VCRDlg` call `EndDialog(hwnd, i)` with `i` unset, and `CreateChildWindows`
   creates the mine window with an unset `pt` as its size.
+
+## Race-bit masks and sanitizer qualification
+
+`ReadIniTileSettings` normalizes the C library's `isupper` mask before writing
+the one-bit panel expansion flag. Field widths and settings syntax remain
+unchanged. `FOpenGame` uses `chDirSep` and guards a missing separator; UI-loading
+tests exercise relative and absolute Linux filenames. Modeless Technology
+Browser teardown now uses `DestroyWindow` instead of `EndDialog`.
+
+Native file-workflow tests open games and save/reload races through a private
+FileChooser portal using UTF-8 directories and basenames. `FSaveRace` and
+race-only `FOpenGame` now bound copies into the existing `szRaceFile[16]`
+suggestion cache through `SetSzRaceFile`; a long native basename previously
+overwrote adjacent globals. Separate UI storage retains the full suggestion for
+repeat saving, and every native cache boundary preserves complete UTF-8 characters.
+Direct `FWasRaceFile` loads also use that UI/host setter.
+The selected file path is not truncated, and no saved record changes.
+
+`GetRaceGrbit` and `SetRaceGrbit` now construct masks from `UINT32_C(1)` so
+bit 31 has defined unsigned-shift semantics. The 32-bit field and on-disk
+representation remain unchanged. `test_RaceGrbit_high_bit` checks independent
+setting, reading and clearing of bits 0 and 31.
+
+Ordinary heap payloads now satisfy `max_align_t`; header padding and allocation
+strides preserve alignment through reuse, reset and growth. Battle heaps retain
+two-byte boundaries because their record traversal depends on them. Heap
+counters and persisted structures retain their original widths.
+The subsequent sanitizer passes exposed host-sentinel reads in `SetVisPFInit`
+and `FLookupPart`, unaligned scalar accesses in `WriteFleet` and the Cybertron
+workspace, an empty-record null copy and negative scanner shifts. Those paths
+now use checked sentinel handling, byte-safe storage and defined multiplication.
+Silent process exit also frees list/combo storage without game callbacks.
+The memory-safety batch passes all 91 fatal ASan/UBSan/LSan tests without
+suppressions, 50 Windows units and 13 Linux host units. Both full native and
+host regressions return 519 matches, 87 unused-storage warnings and no behavioral
+differences/errors/skipped inputs. The previous run had 22 unused-storage warnings;
+the comparator confines those differences to unused bytes, not interpreted records. Baselines remain
+unchanged. Subsequent UI/inspector qualification is recorded separately in
+[window inspection](WIN32-INSPECTION.md).
+
+
+Packed `BTN`/`BTNT` records keep their two-byte packing, so native `RECT`
+members can be misaligned within arrays. `DrawBtn`, `InitBtnTrack`, `FTrackBtn`
+and `FTrackXfer` use byte copies into aligned rectangle storage before drawing
+or hit testing. This fixes the fatal UBSan load exposed by the fleet Split
+workflow without changing record sizes, hit targets or game behavior.
+
+The repair passes 99 fatal sanitizer tests, 51 Windows unit/reference tests and
+both Release fleet profiles. Full native regression still returns 519 matches,
+87 existing unused-storage warnings, zero differences/errors and no skipped
+inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).
+
+See [encoding contracts](UNICODE-BOUNDARIES.md) for Unicode filenames, strict
+CLI/password conversion and UTF-8 path-field editing. The original password
+hash uses explicit unsigned wrapping with signed input bytes; stored hashes,
+record widths and native regression baselines remain unchanged.

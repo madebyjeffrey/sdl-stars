@@ -3,7 +3,7 @@ name: Stars native regression
 on:
   pull_request:
   push:
-    branches: [main, '2.8']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,10 @@ jobs:
         scenario: [noai, oneai1, oneai2, oneai3, oneai4, oneai5, oneai6, smallai4, smallai6]
     env:
       SCENARIO: ${{ matrix.scenario }}
-      WINEDEBUG: '-all'
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+      STARS_SDL_RENDERER: software
+      STARS_FILE_DIALOG_BACKEND: compat
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -39,30 +42,33 @@ jobs:
           go-version-file: tests/savecli/go.mod
           cache-dependency-path: tests/savecli/go.sum
 
-      - name: Install Wine, MinGW and virtual display
+      - name: Install SDL build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wine64 wine gcc-mingw-w64-x86-64 cmake ninja-build python3-yaml xvfb xauth
+          # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
+          sudo apt-get install -y cmake ninja-build pkg-config python3-yaml \
+            libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libvulkan-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            xvfb xauth openbox x11-utils poppler-utils cups-client
 
-      - name: Build stars.exe and save CLI
+      - name: Build SDL client and save CLI
         run: |
-          cmake --preset mingw-release -B dist/regression-build
-          cmake --build dist/regression-build --parallel 2
+          cmake --preset sdl-release -B dist/regression-build
+          cmake --build dist/regression-build --target stars-sdl --parallel 2
           make save-cli
 
       - name: Generate native checkpoints through turn 150
-        env:
-          WINEPREFIX: ${{ runner.temp }}/stars-regression
         run: |
-          mkdir -p "$WINEPREFIX" dist/scaffold/regression
-          xvfb-run -a -s '-screen 0 1600x1200x24' bash -e -o pipefail <<'EOF'
-          wineboot -u > dist/scaffold/regression/wineboot.log 2>&1
-          cp tests/scaffold/fixtures/regression/Stars.ini "$WINEPREFIX/drive_c/windows/Stars.ini"
+          mkdir -p dist/scaffold/regression
           python3 tests/scaffold/regression.py prepare --seed 12345 \
-            --exe dist/regression-build/bin/stars.exe --work dist/scaffold/regression/native
+            --exe dist/regression-build/bin/stars-sdl --work dist/scaffold/regression/native
           python3 tests/scaffold/regression.py run --work dist/scaffold/regression/native \
             --scenario "$SCENARIO" --through 150 --timeout 300
-          EOF
 
       - name: Compare against native baseline
         run: |

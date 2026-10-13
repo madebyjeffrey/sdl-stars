@@ -2,6 +2,39 @@
 
 #include "stars_test.h"
 
+static void test_LInnateRaceHabitability_double_rounding(void) {
+    PLAYER plr = {0};
+    int8_t rgAttr[16] = {10, 10, 10, 10, 10, 5, 10, 0, 1, 1, 1, 1, 1, 1, 9, 0};
+    int8_t rgLo[3] = {31, 61, 9};
+    int8_t rgHi[3] = {71, 97, 73};
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(plr.rgAttr, rgAttr, sizeof(rgAttr));
+    plr.pctIdealGrowth = 10;
+    for (i = 0; i < 3; i++) {
+        plr.rgEnvVarMin[i] = rgLo[i];
+        plr.rgEnvVarMax[i] = rgHi[i];
+        plr.rgEnvVar[i] = (rgLo[i] + rgHi[i]) / 2;
+    }
+    // Extended intermediates returned 1470286; binary64 crosses this boundary.
+    TEST_CHECK(LInnateRaceHabitability(&plr) == 1470287);
+    TEST_CHECK(CAdvantagePoints(&plr) == 541);
+}
+
+static void test_RaceGrbit_high_bit(void) {
+    PLAYER plr = {0};
+
+    SetRaceGrbit(&plr, 0, TRUE);
+    SetRaceGrbit(&plr, 31, TRUE);
+    TEST_CHECK(plr.grbitAttr == UINT32_C(0x80000001));
+    TEST_CHECK(GetRaceGrbit(&plr, 31));
+    SetRaceGrbit(&plr, 31, FALSE);
+    TEST_CHECK(plr.grbitAttr == 1);
+    TEST_CHECK(!GetRaceGrbit(&plr, 31));
+    TEST_CHECK(GetRaceGrbit(&plr, 0));
+}
+
 // Race file corruption: the race wizard reads a name into a buffer that still
 // holds a longer one, and IRaceChecksum included the stale bytes after the
 // terminator. They aren't saved, so the file failed its checksum on load.
@@ -86,7 +119,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
         TEST_CHECK(buf.rgchGuard[i] == 0x55);
 }
 
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
 // Random race: the Random template is only the random-race bit, which
 // GenerateWorld replaces with a random race. Choosing Custom on the first
 // wizard page keeps the race being edited, so a race that had been Random
@@ -109,11 +142,53 @@ static void test_RaceWizardDlg1_custom_clears_random(void) {
     DestroyWindow(hwnd);
     TEST_CHECK_(GetRaceGrbit(&vplr, ibitRaceAIPlayer) == 0, "the custom race is still random");
 }
+
+static void test_RaceWizardDlg2_paints_habitat(void) {
+    RECT rgrc[17];
+    HWND hwnd;
+    HDC hdc;
+    int16_t i;
+
+    TEST_ASSERT(FStarsTestInit());
+    hdc = GetDC(NULL);
+    TEST_ASSERT(hdc != NULL);
+    TEST_ASSERT(FCreateFonts(hdc));
+    ReleaseDC(NULL, hdc);
+    vplr = vrgplrDef[0];
+    vrgrcRCW = rgrc;
+    iPanelActive = rwPageHabitability;
+    fRCWReadOnly = FALSE;
+    hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), NULL, RaceWizardDlg2, 0);
+    TEST_ASSERT(hwnd != NULL);
+    TEST_CHECK(crcRCW == 17);
+    ShowWindow(hwnd, SW_SHOW);
+    TEST_CHECK(UpdateWindow(hwnd));
+    for (i = 0; i < 3; i++) {
+        CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_CHECKED);
+        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+                    (LPARAM)GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
+        TEST_CHECK(vplr.rgEnvVarMax[i] == envImmune);
+    }
+    DrawRace2(hwnd, NULL, -1);
+    for (i = 0; i < 3; i++) {
+        CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_UNCHECKED);
+        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+                    (LPARAM)GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
+        TEST_CHECK(vplr.rgEnvVarMin[i] == 20 && vplr.rgEnvVarMax[i] == 80);
+    }
+    InvalidateRect(hwnd, NULL, TRUE);
+    TEST_CHECK(UpdateWindow(hwnd));
+    DestroyWindow(hwnd);
+    vrgrcRCW = NULL;
+}
 #endif
 
-TEST_LIST = {{"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
+TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
+             {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
+             {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
-#ifdef _WIN32
+#ifdef STARS_UI_SDL
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
+             {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},
 #endif
              {NULL, NULL}};

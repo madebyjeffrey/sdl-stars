@@ -76,8 +76,9 @@ results depend on them.
   (implemented in `native.c`), rebuilt from the Win16 CRT, so
   elements with equal keys end up in the same order. Native libc qsort
   orders ties differently.
-- **x87 precision:** floating arithmetic keeps the original's extended
-  precision. Casts that round an x87 result to double or float are preserved.
+- **Floating precision:** the deliberate binary64 migration replaces the
+  original's extended intermediates. See [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md)
+  for the measured changes; the `2.6j` branch retains x87 arithmetic.
 
 ## Regression harness tolerances
 

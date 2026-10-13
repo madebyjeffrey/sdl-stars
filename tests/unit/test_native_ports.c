@@ -1,7 +1,7 @@
 // Native-port checks: player-message serialization and both readers,
 // legacy link bytes, recipient filtering, maximum text length, static-control
-// color dispatch, and the Win16 battle heap rollover boundary. CMake links
-// this test with --wrap for WriteRt, ReadRt, FCreateFile, StreamOpen,
+// color dispatch, and the Win16 battle heap rollover boundary. CMake builds
+// private test implementations of WriteRt, ReadRt, FCreateFile, StreamOpen,
 // StreamClose and DirtyGame.
 
 #include "acutest.h"
@@ -16,7 +16,7 @@ static int     cRecord;
 static int     iRead;
 static int     fLogRead;
 
-void __wrap_WriteRt(RecordType rt, int16_t cb, void *rg) {
+void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
     if (rt != rtPlrMsg)
         return;
     TEST_ASSERT(cRecord < 4 && cb >= 12 && cb <= 1023);
@@ -24,12 +24,12 @@ void __wrap_WriteRt(RecordType rt, int16_t cb, void *rg) {
     memcpy(rgRecord[cRecord++], rg, cb);
 }
 
-int16_t __wrap_FCreateFile(DtFileType dt, int16_t iPlayer, char *psz) { return TRUE; }
-void    __wrap_StreamClose(void) {}
-void    __wrap_StreamOpen(char *szFile, MdOpenFlags mdOpen) {}
-void    __wrap_DirtyGame(int16_t fDirty) {}
+int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iPlayer, char *psz) { return TRUE; }
+void    StarsTest_StreamClose(void) {}
+void    StarsTest_StreamOpen(char *szFile, MdOpenFlags mdOpen) {}
+void    StarsTest_DirtyGame(int16_t fDirty) {}
 
-void __wrap_ReadRt(void) {
+void StarsTest_ReadRt(void) {
     memset(rgbCur, 0, sizeof(rgbCur));
     if (fLogRead && iRead == -2) {
         hdrCur.rt = rtBOF;
@@ -127,7 +127,7 @@ static void TestMessages(void) {
     RawStore32(rgRecord[1], 0xffffffff);
     iRead = 0;
     fLogRead = FALSE;
-    __wrap_ReadRt();
+    StarsTest_ReadRt();
     vlpmsgplrIn = NULL;
     vcmsgplrIn = 0;
     cMsg = 0;

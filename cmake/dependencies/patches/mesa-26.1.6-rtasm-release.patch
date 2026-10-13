@@ -1,0 +1,23 @@
+--- a/src/gallium/auxiliary/rtasm/rtasm_execmem.c
++++ b/src/gallium/auxiliary/rtasm/rtasm_execmem.c
+@@ -118,8 +118,19 @@
+    if (exec_heap) {
+       struct mem_block *block = u_mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
+ 
+-      if (block)
++      if (block) {
+          u_mmFreeMem(block);
++         /* The last free coalesces the heap into one free block.  Release
++          * both the executable mapping and allocator nodes before dlclose
++          * can discard their owning globals. */
++         block = exec_heap->next;
++         if (block->free && block->next == exec_heap) {
++            u_mmDestroy(exec_heap);
++            exec_heap = NULL;
++            munmap(exec_mem, EXEC_HEAP_SIZE);
++            exec_mem = NULL;
++         }
++      }
+    }
+ 
+    simple_mtx_unlock(&exec_mutex);

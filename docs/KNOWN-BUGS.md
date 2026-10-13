@@ -17,7 +17,63 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Native heap alignment and byte-addressed storage — fixed on main
+
+`memory.c`: ordinary allocation payloads now satisfy `max_align_t`, including
+free-list reuse, reset and realloc growth. The battle heap keeps its original
+two-byte boundaries, which its record traversal requires. Allocation rounding
+checks capacity before narrowing to the heap's 16-bit counters.
+`WriteFleet`, `DoCyberPackets` and `FEnumPktAttack` now access unaligned record
+and AI-workspace scalars through the existing byte-safe helpers. Record widths
+and serialized layouts are unchanged.
+
+## Host sentinel reads and empty records — fixed on main
+
+`SetVisPFInit` and `FLookupPart` no longer index `rgplr` with the all-player
+sentinel (-1). Host part lookup has no player race or technology restrictions.
+`WriteRt` skips copying empty payloads, avoiding a null argument to `memmove`
+when writing an empty EOF record. `PtToScan` replaces negative signed shifts
+with multiplication, preserving scanner scaling and rounding.
+
+## Habitat-page stack corruption — fixed on main
+
+`raceui.c`: `DrawRace2` copied `idsCanExpect1DPlanetsWillHabitable`
+(a 67-character template) into `szT[32]` before formatting it. Painting a
+non-immune race’s habitat page overwrote the stack; Linux stack protection
+reliably aborts this path. The function now formats directly from the text
+table. `test_RaceWizardDlg2_paints_habitat` covers real dialog painting on
+Windows and SDL. No save layout or turn-generation behavior changes.
+
+## Technology Browser close lifecycle — fixed on main
+
+`researchui.c`: `BrowserDlg` called `EndDialog` for a window made by
+`CreateDialog`. The SDL wrapper rejected this modal-only operation, leaving
+the browser open after its globals had been cleared. The Close handler now
+uses `DestroyWindow`, as the browser's existing menu-toggle handler does.
+The client integration test opens, closes by button, reopens and closes through
+an SDL window-close event, checking handle destruction and owner availability.
+Turn generation and saved data are unchanged.
+
+## Continuing a game with native paths — fixed on main
+
+`mdi.c`: `FOpenGame` dereferenced `strrchr(szBase, 92)` without checking it.
+Linux paths and relative Windows filenames may contain no backslash, causing
+a crash before game loading. It now checks the platform separator before
+truncating the directory and uses that separator when restoring `szDirName`.
+The client Continue Game test loads copied frozen fixtures using relative and
+absolute Linux paths. File layouts and turn generation are unchanged.
+
+## Saved panel expansion flags — fixed on main
+
+`init.c`: `ReadIniTileSettings` stored `isupper` directly in the one-bit
+`TILE.fPopped` field. The Linux C library returns a mask whose low bit is zero,
+so saved uppercase (expanded) sections became collapsed. The parser now
+normalizes classification to a boolean, retaining field widths and the
+existing uppercase/lowercase settings format. Continue Game tests restore
+expanded planet/fleet settings and assert the resulting flags.
+
 ## Player-exploitable bugs / features
+
 
 ### Chaff — located
 
@@ -383,7 +439,8 @@ buffer in the 2.8 build). Nothing read them before they were set again, so
 results did not change; a hardened `strcpy` (macOS) stops the program.
 
 **2.9:** found running `stars-host -a` on macOS. `FWasRaceFile` keeps only
-the file name, cut to fit, as the race dialogs store it.
+the file name, cut to fit at a complete UTF-8 boundary, as the race dialogs
+store it. UI storage retains the full native suggestion after direct race loads.
 
 ### AR Starter Colonies — candidate
 
@@ -489,3 +546,12 @@ viewer-dependent RS armor/shields, SS cloaking and JOAT scanner displays.
 The complete set of misleading values and the exact viewer-context handoff
 have not been confirmed; this report does not imply combat itself uses the
 viewer race's traits for foreign ships.
+
+## Native SDL title encoding
+
+Native creation and `WM_SETTEXT` previously passed CP1252 strings directly to
+SDL's UTF-8 title API. The inspector's Euro-sign title exposed an X11 conversion
+failure and two leaked text-property allocations. The boundary now converts
+native titles to UTF-8 while stored/returned narrow text remains CP1252. Tests
+check creation and title changes, including retained narrow text; wizard reuse
+uses the same conversion helper.

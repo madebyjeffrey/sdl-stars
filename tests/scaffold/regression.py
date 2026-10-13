@@ -79,7 +79,7 @@ def windows_path(path):
 def runs_in_wine(exe):
     """runs_in_wine tells a Windows executable (run under Wine) from a native
     stars-host built with the host presets."""
-    return Path(exe).suffix.lower() == ".exe"
+    return os.name != "nt" and Path(exe).suffix.lower() == ".exe"
 
 
 def game_path(exe, path, filename):

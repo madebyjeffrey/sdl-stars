@@ -1,0 +1,256 @@
+dll,import,source_spellings,classification
+comdlg32.dll,GetOpenFileNameA,GetOpenFileName,application Windows API or CRT
+comdlg32.dll,GetSaveFileNameA,GetSaveFileName,application Windows API or CRT
+comdlg32.dll,PrintDlgA,PrintDlg,application Windows API or CRT
+GDI32.dll,BitBlt,BitBlt,application Windows API or CRT
+GDI32.dll,CreateCompatibleBitmap,CreateCompatibleBitmap,application Windows API or CRT
+GDI32.dll,CreateCompatibleDC,CreateCompatibleDC,application Windows API or CRT
+GDI32.dll,CreateFontIndirectA,CreateFontIndirect,application Windows API or CRT
+GDI32.dll,CreatePalette,CreatePalette,application Windows API or CRT
+GDI32.dll,CreatePatternBrush,CreatePatternBrush,application Windows API or CRT
+GDI32.dll,CreatePen,CreatePen,application Windows API or CRT
+GDI32.dll,CreateRectRgn,CreateRectRgn,application Windows API or CRT
+GDI32.dll,CreateSolidBrush,CreateSolidBrush,application Windows API or CRT
+GDI32.dll,DeleteDC,DeleteDC,application Windows API or CRT
+GDI32.dll,DeleteObject,DeleteObject,application Windows API or CRT
+GDI32.dll,Ellipse,Ellipse,application Windows API or CRT
+GDI32.dll,Escape,Escape,application Windows API or CRT
+GDI32.dll,ExcludeClipRect,ExcludeClipRect,application Windows API or CRT
+GDI32.dll,ExtTextOutA,ExtTextOut,application Windows API or CRT
+GDI32.dll,GetBkColor,GetBkColor,application Windows API or CRT
+GDI32.dll,GetDIBits,GetDIBits,application Windows API or CRT
+GDI32.dll,GetDeviceCaps,GetDeviceCaps,application Windows API or CRT
+GDI32.dll,GetObjectA,GetObject,application Windows API or CRT
+GDI32.dll,GetROP2,GetROP2,application Windows API or CRT
+GDI32.dll,GetStockObject,GetStockObject,application Windows API or CRT
+GDI32.dll,GetTextExtentPoint32A,GetTextExtentPoint32A,application Windows API or CRT
+GDI32.dll,GetTextMetricsA,GetTextMetrics,application Windows API or CRT
+GDI32.dll,IntersectClipRect,IntersectClipRect,application Windows API or CRT
+GDI32.dll,LineTo,LineTo,application Windows API or CRT
+GDI32.dll,MoveToEx,MoveToEx,application Windows API or CRT
+GDI32.dll,PatBlt,PatBlt,application Windows API or CRT
+GDI32.dll,RealizePalette,RealizePalette,application Windows API or CRT
+GDI32.dll,Rectangle,Rectangle,application Windows API or CRT
+GDI32.dll,SelectClipRgn,SelectClipRgn,application Windows API or CRT
+GDI32.dll,SelectObject,SelectObject,application Windows API or CRT
+GDI32.dll,SelectPalette,SelectPalette,application Windows API or CRT
+GDI32.dll,SetBkColor,SetBkColor,application Windows API or CRT
+GDI32.dll,SetBkMode,SetBkMode,application Windows API or CRT
+GDI32.dll,SetBrushOrgEx,SetBrushOrgEx,application Windows API or CRT
+GDI32.dll,SetPixel,SetPixel,application Windows API or CRT
+GDI32.dll,SetROP2,SetROP2,application Windows API or CRT
+GDI32.dll,SetTextColor,SetTextColor,application Windows API or CRT
+GDI32.dll,SetWindowOrgEx,SetWindowOrgEx,application Windows API or CRT
+GDI32.dll,StretchDIBits,StretchDIBits,application Windows API or CRT
+GDI32.dll,TextOutA,TextOut,application Windows API or CRT
+GDI32.dll,UnrealizeObject,UnrealizeObject,application Windows API or CRT
+KERNEL32.dll,DeleteCriticalSection,,runtime or compiler support
+KERNEL32.dll,EnterCriticalSection,,runtime or compiler support
+KERNEL32.dll,FindResourceA,FindResource,application Windows API or CRT
+KERNEL32.dll,FreeResource,FreeResource,application Windows API or CRT
+KERNEL32.dll,GetCurrentThreadId,GetCurrentThreadId,application Windows API or CRT
+KERNEL32.dll,GetFileSize,GetFileSize,application Windows API or CRT
+KERNEL32.dll,GetLastError,,runtime or compiler support
+KERNEL32.dll,GetPrivateProfileIntA,GetPrivateProfileInt,application Windows API or CRT
+KERNEL32.dll,GetPrivateProfileStringA,GetPrivateProfileString,application Windows API or CRT
+KERNEL32.dll,GetStartupInfoA,,runtime or compiler support
+KERNEL32.dll,GetTickCount,GetCurrentTime;GetTickCount,application Windows API or CRT
+KERNEL32.dll,GlobalAlloc,GlobalAlloc,application Windows API or CRT
+KERNEL32.dll,GlobalFree,GlobalFree,application Windows API or CRT
+KERNEL32.dll,GlobalLock,GlobalLock,application Windows API or CRT
+KERNEL32.dll,GlobalReAlloc,GlobalReAlloc,application Windows API or CRT
+KERNEL32.dll,GlobalUnlock,GlobalUnlock,application Windows API or CRT
+KERNEL32.dll,InitializeCriticalSection,,runtime or compiler support
+KERNEL32.dll,IsDBCSLeadByteEx,,runtime or compiler support
+KERNEL32.dll,LeaveCriticalSection,,runtime or compiler support
+KERNEL32.dll,LoadResource,LoadResource,application Windows API or CRT
+KERNEL32.dll,LocalAlloc,LocalAlloc,application Windows API or CRT
+KERNEL32.dll,LocalFree,LocalFree,application Windows API or CRT
+KERNEL32.dll,LockResource,LockResource,application Windows API or CRT
+KERNEL32.dll,MulDiv,MulDiv,application Windows API or CRT
+KERNEL32.dll,MultiByteToWideChar,,runtime or compiler support
+KERNEL32.dll,OpenFile,OpenFile,application Windows API or CRT
+KERNEL32.dll,SetUnhandledExceptionFilter,,runtime or compiler support
+KERNEL32.dll,SizeofResource,SizeofResource,application Windows API or CRT
+KERNEL32.dll,Sleep,,runtime or compiler support
+KERNEL32.dll,TlsGetValue,,runtime or compiler support
+KERNEL32.dll,VirtualProtect,,runtime or compiler support
+KERNEL32.dll,VirtualQuery,,runtime or compiler support
+KERNEL32.dll,WideCharToMultiByte,,runtime or compiler support
+KERNEL32.dll,WritePrivateProfileStringA,WritePrivateProfileString,application Windows API or CRT
+KERNEL32.dll,__C_specific_handler,,runtime or compiler support
+KERNEL32.dll,_lclose,_lclose,application Windows API or CRT
+KERNEL32.dll,_llseek,_llseek,application Windows API or CRT
+KERNEL32.dll,_lread,_lread,application Windows API or CRT
+KERNEL32.dll,_lwrite,_lwrite,application Windows API or CRT
+KERNEL32.dll,lstrcatA,lstrcat,application Windows API or CRT
+KERNEL32.dll,lstrcmpiA,lstrcmpiA,application Windows API or CRT
+KERNEL32.dll,lstrcpyA,lstrcpy,application Windows API or CRT
+KERNEL32.dll,lstrlenA,lstrlen,application Windows API or CRT
+msvcrt.dll,___lc_codepage_func,,runtime or compiler support
+msvcrt.dll,___mb_cur_max_func,,runtime or compiler support
+msvcrt.dll,__getmainargs,,runtime or compiler support
+msvcrt.dll,__initenv,,runtime or compiler support
+msvcrt.dll,__iob_func,,runtime or compiler support
+msvcrt.dll,__set_app_type,,runtime or compiler support
+msvcrt.dll,__setusermatherr,,runtime or compiler support
+msvcrt.dll,_access,_access,application Windows API or CRT
+msvcrt.dll,_acmdln,,runtime or compiler support
+msvcrt.dll,_amsg_exit,,runtime or compiler support
+msvcrt.dll,_cexit,,runtime or compiler support
+msvcrt.dll,_commode,,runtime or compiler support
+msvcrt.dll,_errno,,runtime or compiler support
+msvcrt.dll,_fmode,,runtime or compiler support
+msvcrt.dll,_hypot,,runtime or compiler support
+msvcrt.dll,_initterm,,runtime or compiler support
+msvcrt.dll,_ismbblead,,runtime or compiler support
+msvcrt.dll,_mkdir,_mkdir,application Windows API or CRT
+msvcrt.dll,_onexit,,runtime or compiler support
+msvcrt.dll,_setjmp,,runtime or compiler support
+msvcrt.dll,_strdate,_strdate,application Windows API or CRT
+msvcrt.dll,_stricmp,_stricmp,application Windows API or CRT
+msvcrt.dll,_strnicmp,_strnicmp,application Windows API or CRT
+msvcrt.dll,_strtime,_strtime,application Windows API or CRT
+msvcrt.dll,abort,,runtime or compiler support
+msvcrt.dll,atoi,,runtime or compiler support
+msvcrt.dll,bsearch,,runtime or compiler support
+msvcrt.dll,calloc,,runtime or compiler support
+msvcrt.dll,exit,,runtime or compiler support
+msvcrt.dll,fprintf,,runtime or compiler support
+msvcrt.dll,fputc,,runtime or compiler support
+msvcrt.dll,free,,runtime or compiler support
+msvcrt.dll,fwrite,,runtime or compiler support
+msvcrt.dll,isalpha,,runtime or compiler support
+msvcrt.dll,isupper,,runtime or compiler support
+msvcrt.dll,localeconv,,runtime or compiler support
+msvcrt.dll,longjmp,,runtime or compiler support
+msvcrt.dll,malloc,,runtime or compiler support
+msvcrt.dll,memcmp,,runtime or compiler support
+msvcrt.dll,memcpy,,runtime or compiler support
+msvcrt.dll,memmove,,runtime or compiler support
+msvcrt.dll,memset,,runtime or compiler support
+msvcrt.dll,realloc,,runtime or compiler support
+msvcrt.dll,remove,,runtime or compiler support
+msvcrt.dll,rename,,runtime or compiler support
+msvcrt.dll,signal,,runtime or compiler support
+msvcrt.dll,strcat,,runtime or compiler support
+msvcrt.dll,strchr,,runtime or compiler support
+msvcrt.dll,strcmp,,runtime or compiler support
+msvcrt.dll,strcpy,,runtime or compiler support
+msvcrt.dll,strerror,,runtime or compiler support
+msvcrt.dll,strlen,,runtime or compiler support
+msvcrt.dll,strncmp,,runtime or compiler support
+msvcrt.dll,strncpy,,runtime or compiler support
+msvcrt.dll,strrchr,,runtime or compiler support
+msvcrt.dll,vfprintf,,runtime or compiler support
+msvcrt.dll,wcslen,,runtime or compiler support
+msvcrt.dll,_strlwr,,runtime or compiler support
+msvcrt.dll,_strnicmp,_strnicmp,application Windows API or CRT
+msvcrt.dll,_strcmpi,,runtime or compiler support
+msvcrt.dll,_itoa,,runtime or compiler support
+USER32.dll,AppendMenuA,AppendMenu,application Windows API or CRT
+USER32.dll,BeginPaint,BeginPaint,application Windows API or CRT
+USER32.dll,CallWindowProcA,CallWindowProc,application Windows API or CRT
+USER32.dll,CheckDlgButton,CheckDlgButton,application Windows API or CRT
+USER32.dll,CheckMenuItem,CheckMenuItem,application Windows API or CRT
+USER32.dll,CheckRadioButton,CheckRadioButton,application Windows API or CRT
+USER32.dll,ClientToScreen,ClientToScreen,application Windows API or CRT
+USER32.dll,CopyRect,CopyRect,application Windows API or CRT
+USER32.dll,CreateDialogParamA,CreateDialog,application Windows API or CRT
+USER32.dll,CreatePopupMenu,CreatePopupMenu,application Windows API or CRT
+USER32.dll,CreateWindowExA,CreateWindow,application Windows API or CRT
+USER32.dll,DefWindowProcA,DefWindowProc,application Windows API or CRT
+USER32.dll,DeleteMenu,DeleteMenu,application Windows API or CRT
+USER32.dll,DestroyCursor,DestroyCursor,application Windows API or CRT
+USER32.dll,DestroyIcon,DestroyIcon,application Windows API or CRT
+USER32.dll,DestroyMenu,DestroyMenu,application Windows API or CRT
+USER32.dll,DestroyWindow,DestroyWindow,application Windows API or CRT
+USER32.dll,DialogBoxParamA,DialogBox,application Windows API or CRT
+USER32.dll,DispatchMessageA,DispatchMessage,application Windows API or CRT
+USER32.dll,DrawIcon,DrawIcon,application Windows API or CRT
+USER32.dll,DrawMenuBar,DrawMenuBar,application Windows API or CRT
+USER32.dll,DrawTextA,DrawText,application Windows API or CRT
+USER32.dll,EnableMenuItem,EnableMenuItem,application Windows API or CRT
+USER32.dll,EnableWindow,EnableWindow,application Windows API or CRT
+USER32.dll,EndDialog,EndDialog,application Windows API or CRT
+USER32.dll,EndPaint,EndPaint,application Windows API or CRT
+USER32.dll,EqualRect,EqualRect,application Windows API or CRT
+USER32.dll,ExitWindowsEx,ExitWindows,application Windows API or CRT
+USER32.dll,FillRect,FillRect,application Windows API or CRT
+USER32.dll,FlashWindow,FlashWindow,application Windows API or CRT
+USER32.dll,FrameRect,FrameRect,application Windows API or CRT
+USER32.dll,GetActiveWindow,GetActiveWindow,application Windows API or CRT
+USER32.dll,GetAsyncKeyState,GetAsyncKeyState,application Windows API or CRT
+USER32.dll,GetClassNameA,GetClassNameA,application Windows API or CRT
+USER32.dll,GetClientRect,GetClientRect,application Windows API or CRT
+USER32.dll,GetCursorPos,GetCursorPos,application Windows API or CRT
+USER32.dll,GetDC,GetDC,application Windows API or CRT
+USER32.dll,GetDlgItem,GetDlgItem,application Windows API or CRT
+USER32.dll,GetDlgItemTextA,GetDlgItemText,application Windows API or CRT
+USER32.dll,GetFocus,GetFocus,application Windows API or CRT
+USER32.dll,GetKeyState,GetKeyState,application Windows API or CRT
+USER32.dll,GetMenu,GetMenu,application Windows API or CRT
+USER32.dll,GetMenuItemCount,GetMenuItemCount,application Windows API or CRT
+USER32.dll,GetMessageA,GetMessage,application Windows API or CRT
+USER32.dll,GetParent,GetParent,application Windows API or CRT
+USER32.dll,GetScrollPos,GetScrollPos,application Windows API or CRT
+USER32.dll,GetSubMenu,GetSubMenu,application Windows API or CRT
+USER32.dll,GetSysColor,GetSysColor,application Windows API or CRT
+USER32.dll,GetSystemMetrics,GetSystemMetrics,application Windows API or CRT
+USER32.dll,GetUpdateRect,GetUpdateRect,application Windows API or CRT
+USER32.dll,GetWindow,GetWindow,application Windows API or CRT
+USER32.dll,GetWindowLongPtrA,GetWindowLongPtr,application Windows API or CRT
+USER32.dll,GetWindowPlacement,GetWindowPlacement,application Windows API or CRT
+USER32.dll,GetWindowRect,GetWindowRect,application Windows API or CRT
+USER32.dll,GetWindowTextA,GetWindowText,application Windows API or CRT
+USER32.dll,GetWindowThreadProcessId,GetWindowThreadProcessId,application Windows API or CRT
+USER32.dll,InflateRect,InflateRect,application Windows API or CRT
+USER32.dll,InsertMenuA,InsertMenu,application Windows API or CRT
+USER32.dll,IntersectRect,IntersectRect,application Windows API or CRT
+USER32.dll,InvalidateRect,InvalidateRect,application Windows API or CRT
+USER32.dll,IsDlgButtonChecked,IsDlgButtonChecked,application Windows API or CRT
+USER32.dll,IsIconic,IsIconic,application Windows API or CRT
+USER32.dll,IsWindowVisible,IsWindowVisible,application Windows API or CRT
+USER32.dll,IsZoomed,IsZoomed,application Windows API or CRT
+USER32.dll,KillTimer,KillTimer,application Windows API or CRT
+USER32.dll,LoadAcceleratorsA,LoadAccelerators,application Windows API or CRT
+USER32.dll,LoadBitmapA,LoadBitmap,application Windows API or CRT
+USER32.dll,LoadCursorA,LoadCursor,application Windows API or CRT
+USER32.dll,LoadIconA,LoadIcon,application Windows API or CRT
+USER32.dll,MapWindowPoints,MapWindowPoints,application Windows API or CRT
+USER32.dll,MessageBeep,MessageBeep,application Windows API or CRT
+USER32.dll,MessageBoxA,MessageBox,application Windows API or CRT
+USER32.dll,MoveWindow,MoveWindow,application Windows API or CRT
+USER32.dll,OffsetRect,OffsetRect,application Windows API or CRT
+USER32.dll,PeekMessageA,PeekMessage,application Windows API or CRT
+USER32.dll,PostMessageA,PostMessage,application Windows API or CRT
+USER32.dll,PostQuitMessage,PostQuitMessage,application Windows API or CRT
+USER32.dll,PtInRect,PtInRect,application Windows API or CRT
+USER32.dll,RegisterClassA,RegisterClass,application Windows API or CRT
+USER32.dll,ReleaseCapture,ReleaseCapture,application Windows API or CRT
+USER32.dll,ReleaseDC,ReleaseDC,application Windows API or CRT
+USER32.dll,ScreenToClient,ScreenToClient,application Windows API or CRT
+USER32.dll,ScrollWindow,ScrollWindow,application Windows API or CRT
+USER32.dll,SendDlgItemMessageA,SendDlgItemMessage,application Windows API or CRT
+USER32.dll,SendMessageA,SendMessage,application Windows API or CRT
+USER32.dll,SetCapture,SetCapture,application Windows API or CRT
+USER32.dll,SetCursor,SetCursor,application Windows API or CRT
+USER32.dll,SetDlgItemTextA,SetDlgItemText,application Windows API or CRT
+USER32.dll,SetFocus,SetFocus,application Windows API or CRT
+USER32.dll,SetRect,SetRect,application Windows API or CRT
+USER32.dll,SetScrollPos,SetScrollPos,application Windows API or CRT
+USER32.dll,SetScrollRange,SetScrollRange,application Windows API or CRT
+USER32.dll,SetTimer,SetTimer,application Windows API or CRT
+USER32.dll,SetWindowLongPtrA,SetWindowLongPtr,application Windows API or CRT
+USER32.dll,SetWindowPos,SetWindowPos,application Windows API or CRT
+USER32.dll,SetWindowTextA,SetWindowText,application Windows API or CRT
+USER32.dll,ShowWindow,ShowWindow,application Windows API or CRT
+USER32.dll,SystemParametersInfoA,SystemParametersInfo,application Windows API or CRT
+USER32.dll,TrackPopupMenu,TrackPopupMenu,application Windows API or CRT
+USER32.dll,TranslateAcceleratorA,TranslateAccelerator,application Windows API or CRT
+USER32.dll,TranslateMessage,TranslateMessage,application Windows API or CRT
+USER32.dll,UpdateWindow,UpdateWindow,application Windows API or CRT
+USER32.dll,ValidateRect,ValidateRect,application Windows API or CRT
+USER32.dll,WinHelpA,WinHelp,application Windows API or CRT
+USER32.dll,WindowFromPoint,WindowFromPoint,application Windows API or CRT
+USER32.dll,wsprintfA,wsprintf,application Windows API or CRT
