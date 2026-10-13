@@ -74,8 +74,10 @@ python3 tests/scaffold/regression.py prepare --seed 12345 \
 Choose a **fresh output directory** for each run; staging never overwrites
 prior results. Native SDL runs use ordinary filesystem paths. Keep work
 paths free of spaces because the Stars! parser cannot quote them. Staging
-writes CRLF definitions and absolute Windows paths for the race and output
-files, and records the executable's hash, the seed and the fixture hashes in
+writes CRLF definitions with relative race and output filenames, and launches
+the game from the scenario directory. Relative filenames stay within the
+original parser's 79-byte limit even in long CI checkout paths. Staging
+records the executable's hash, the seed and the fixture hashes in
 `run.json`.
 
 ## Run and capture checkpoints
