@@ -22,6 +22,8 @@ static const char *pszContinue;
 static HWND hwndBrowserPrevious;
 static BOOL fTitlePainted;
 static int cTitleShow;
+static BOOL fInitComplete;
+static int cEarlyFrameShow;
 static BOOL fToolbarMenu, fToolbarAnchor;
 static int xToolbarMenu, yToolbarMenu, cToolbarMenu;
 static unsigned cRenderPresent;
@@ -298,6 +300,7 @@ bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     size_t cb, i;
 
     hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
+    if (hwnd == hwndFrame && !fInitComplete) cEarlyFrameShow++;
     if (hwnd && hwnd->lpfnWndProc == TitleWndProc && cTitleShow++ == 0) {
         if (hwnd->lpCanvas && hwnd->lpComposite) {
             rgb = hwnd->lpCanvas->pixels;
@@ -1355,6 +1358,7 @@ LDone:
 
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
+    fInitComplete = TRUE;
     if (fResult) idTimer = SetTimer(NULL, 0, 250, CheckStartup);
     return fResult && idTimer ? fResult : FALSE;
 }
@@ -1373,5 +1377,5 @@ int main(void) {
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
-    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == 0 ? 0 : 1;
+    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == 0 && cEarlyFrameShow == 0 ? 0 : 1;
 }

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `InitInstance` previously showed and immediately hid the main frame before
+  opening the title screen, exposing a brief window and maximize animation on
+  macOS. It now keeps the frame hidden and defers its saved show command until
+  the game first displays it. Turn generation and regression baselines are unchanged.
+
 - New-game setup now keeps its current page open while choosing the game
   filename and makes that page the save picker's owner. Previously the wizard
   closed first and attached the picker to the hidden main frame. Canceling

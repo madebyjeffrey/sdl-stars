@@ -86,6 +86,7 @@ struct HWND__ {
     int ichComposition, cchComposition;
     UINT ichUndoPosition, cchUndoBefore, cchUndoAfter;
     UINT swState;
+    UINT swInitial;
     RECT rcNormal;
     BOOL fRestoreMax;
     BOOL fCaptionActive;

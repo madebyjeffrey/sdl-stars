@@ -158,6 +158,15 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
     hwndDefault = CreateWindow(MAKEINTRESOURCE(atom), "Default size", WS_OVERLAPPEDWINDOW,
                               CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, &winFailure);
     CHECK(hwndDefault && GetClientRect(hwndDefault, &rc) && rc.right == 640 && rc.bottom == 480);
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, SW_SHOWMAXIMIZED));
+    CHECK(!IsWindowVisible(hwndDefault) && !IsZoomed(hwndDefault));
+    CHECK(!ShowWindow(hwndDefault, SW_HIDE) && !IsWindowVisible(hwndDefault));
+    // The dummy driver cannot maximize; an explicit normal show overrides the deferred command.
+    CHECK(!ShowWindow(hwndDefault, SW_SHOWNORMAL) && IsWindowVisible(hwndDefault) && !IsZoomed(hwndDefault));
+    CHECK(!StarsCompatSetInitialShowCommand(hwndDefault, SW_SHOWNORMAL));
+    CHECK(ShowWindow(hwndDefault, SW_HIDE));
+    CHECK(StarsCompatSetInitialShowCommand(hwndDefault, SW_SHOWNORMAL));
+    CHECK(!ShowWindow(hwndDefault, SW_SHOW) && IsWindowVisible(hwndDefault) && !IsZoomed(hwndDefault));
     CHECK(DestroyWindow(hwndDefault));
     memset(&winFailure, 0, sizeof(winFailure));
     CHECK(cLive == 2 && rgwin[0].cCreate == 1 && rgwin[1].cCreate == 1);

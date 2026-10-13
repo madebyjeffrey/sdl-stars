@@ -242,8 +242,8 @@ int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
     } else {
         sw = ini.wnFrame.fMaximized != 0 || ini.wnFrame.fMinimized ? 3 : 1;
     }
-    ShowWindow(hwndFrame, sw);
-    ShowWindow(hwndFrame, SW_HIDE);
+    // Showing then hiding the frame exposes the native maximize animation before the title screen.
+    StarsCompatSetInitialShowCommand(hwndFrame, sw);
     return TRUE;
 }
 

@@ -694,6 +694,16 @@ BOOL WINAPI GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     return TRUE;
 }
 
+BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
+    HWND lpwin = LpCompatWindow(hwnd);
+
+    if (!lpwin || lpwin->hwndParent || lpwin->fVisible ||
+        (sw != SW_HIDE && sw != SW_SHOW && sw != SW_SHOWNORMAL && sw != SW_RESTORE &&
+         sw != SW_SHOWMINIMIZED && sw != SW_SHOWMAXIMIZED)) return FALSE;
+    lpwin->swInitial = (UINT)sw;
+    return TRUE;
+}
+
 static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     HWND lpwin = LpCompatWindow(hwnd);
     BOOL fWasVisible, fVisible, fOk;
@@ -706,6 +716,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     fVisible = sw != SW_HIDE;
     if (sw != SW_HIDE && sw != SW_SHOW && sw != SW_SHOWNORMAL && sw != SW_RESTORE &&
         sw != SW_SHOWMINIMIZED && sw != SW_SHOWMAXIMIZED) return FALSE;
+    if (sw == SW_SHOW && lpwin->swInitial != 0) sw = (int)lpwin->swInitial;
     swOld = lpwin->swState;
     swNew = sw == SW_RESTORE && swOld == SW_SHOWMINIMIZED && lpwin->fRestoreMax ? SW_SHOWMAXIMIZED :
             sw == SW_RESTORE || sw == SW_SHOWNORMAL ? SW_SHOWNORMAL :
@@ -734,6 +745,8 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     }
     if (!fOk)
         return FALSE;
+    }
+    if (fVisible) lpwin->swInitial = 0;
     CompatWindowState(hwnd, swNew, FALSE);
     if (swOld == SW_SHOWNORMAL) lpwin->rcNormal = rcSaved;
     if (lpwin->hwndParent && swNew != swOld) {
