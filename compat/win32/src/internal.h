@@ -38,6 +38,8 @@ BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
                         void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
+BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, BOOL fUtf8, int iScale,
+                          void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
 DWORD DwCompatAnsiChar(BYTE ch);
 
@@ -113,6 +115,7 @@ struct HWND__ {
     double dWheelX, dWheelY;
     BOOL fAlive, fDestroying, fVisible;
     SDL_Surface *lpCanvas, *lpComposite;
+    int iCanvasScale;
     SDL_Renderer *lpRenderer;
     SDL_Texture *lpTexture;
     RECT rcUpdate;
@@ -216,6 +219,8 @@ HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy);
 BOOL FCompatPresent(HWND hwnd);
 BOOL FCompatRefreshPresent(HWND hwnd);
 BOOL FCompatCanvas(HWND hwnd);
+int ICompatCanvasScale(HWND hwnd);
+BOOL FCompatSetDCScale(HDC hdc, int iScale);
 BOOL FCompatPaintTree(HWND hwnd);
 void CompatFlushPresent(void);
 BOOL FCompatPendingDialogSequence(HWND hwndOwner);

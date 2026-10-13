@@ -85,6 +85,13 @@ All APIs run on the UI thread. Coordinates use client logical pixels; the
 canvas scales to SDL's output size. The backing canvas retains unaffected
 pixels between paints and preserves overlapping pixels on resize.
 
+On Cocoa, backing canvases and textures instead match the display's integral
+pixel density. Window coordinates, update regions and layout remain logical;
+ordinary raster operations replicate logical pixels while text renders at the
+physical density. Child composition, menu-bar caching, cursor overlays, blits
+and scrolling preserve that density. Density changes invalidate the visible
+tree for repaint. Other backends keep density one. See [fonts/text](WIN32-FONTS.md).
+
 The original, now-uncompiled text glyph reference in `compat/win32/src/font8x8.h` is an explicitly marked
 ASCII-only adaptation of SDL 3.4.18's `src/render/SDL_render_debug_font.h`.
 Its original SDL license notice and public-domain VGA font attribution are

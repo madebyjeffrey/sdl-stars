@@ -22,6 +22,8 @@ struct COMPATFONT {
     FT_Face face;
     COMPATGLYPH rgglyph[256], *lpGlyphUtf8;
     UINT cGlyphUtf8;
+    struct COMPATFONT *lpScaled;
+    int iScale;
 };
 
 static FT_Library library;
@@ -144,6 +146,7 @@ void FreeCompatFont(COMPATFONT *lpfont) {
     int i;
     COMPATGLYPH *lp, *lpNext;
     if (!lpfont) return;
+    FreeCompatFont(lpfont->lpScaled);
     for (i = 0; i < 256; i++) free(lpfont->rgglyph[i].rgb);
     for (lp = lpfont->lpGlyphUtf8; lp; lp = lpNext) {
         lpNext = lp->lpNext; free(lp->rgb); free(lp);
@@ -152,7 +155,7 @@ void FreeCompatFont(COMPATFONT *lpfont) {
     free(lpfont);
 }
 
-COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf) {
+static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     COMPATFONT *lpfont;
     FcPattern *pattern, *match;
     FcResult result;
@@ -164,8 +167,8 @@ COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf) {
     COMPATGLYPH *lpglyph;
     FT_Matrix matrix = {65536, 0, 0, 65536};
 
-    if (!lplf || (int64_t)lplf->lfHeight < -512 || lplf->lfHeight > 512 ||
-        lplf->lfWidth < 0 || lplf->lfWidth > 512) return NULL;
+    if (!lplf || (int64_t)lplf->lfHeight < -cMax || lplf->lfHeight > cMax ||
+        lplf->lfWidth < 0 || lplf->lfWidth > cMax) return NULL;
     if (!library && FT_Init_FreeType(&library)) return NULL;
     lpfont = calloc(1, sizeof(*lpfont));
     if (!lpfont) return NULL;
@@ -243,6 +246,10 @@ LFail:
     return NULL;
 }
 
+COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf) {
+    return LpNewFontRaster(lplf, 512);
+}
+
 BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize) {
     int i;
     int64_t dx = 0;
@@ -310,6 +317,49 @@ BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
         for (y = 0; y < lp->cy; y++) for (x = 0; x < lp->cx; x++)
             if (lp->rgb[(size_t)y * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[(size_t)y * lp->cx + x]);
         dx += lp->dx; i += c;
+    }
+    return TRUE;
+}
+
+BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, BOOL fUtf8, int iScale,
+                          void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv) {
+    LOGFONTA lf;
+    SIZE size;
+    COMPATGLYPH *lp, *lpRaster;
+    int i = 0, c, x, y;
+    DWORD ch;
+    int64_t dx = 0;
+
+    if (iScale == 1)
+        return fUtf8 ? FCompatFontDrawUtf8(lpfont, psz, cch, pfn, lpv) :
+                       FCompatFontDraw(lpfont, psz, cch, rgdx, pfn, lpv);
+    if (iScale < 1 || iScale > 4 || (fUtf8 && rgdx) ||
+        !(fUtf8 ? FCompatFontSizeUtf8(lpfont, psz, cch, &size) : FCompatFontSize(lpfont, psz, cch, &size))) return FALSE;
+    if (cch == 0) return TRUE;
+    if (lpfont->iScale != iScale) {
+        lf = lpfont->lf;
+        lf.lfHeight = -(int)lpfont->face->size->metrics.y_ppem * iScale;
+        lf.lfWidth *= iScale;
+        FreeCompatFont(lpfont->lpScaled);
+        lpfont->lpScaled = LpNewFontRaster(&lf, 2048);
+        lpfont->iScale = lpfont->lpScaled ? iScale : 0;
+        if (!lpfont->lpScaled) return FALSE;
+    }
+    while (i < cch) {
+        c = fUtf8 ? CbUtf8Char(psz + i, (size_t)(cch - i), &ch) : 1;
+        if (!fUtf8) ch = DwCompatAnsiChar((BYTE)psz[i]);
+        else if (c == 0) { ch = 0xfffd; c = 1; }
+        lp = LpGlyphUtf8(lpfont, ch);
+        lpRaster = LpGlyphUtf8(lpfont->lpScaled, ch);
+        if (!lp || !lpRaster) return FALSE;
+        for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
+            if (lpRaster->rgb[(size_t)y * lpRaster->cx + x])
+                pfn(lpv, dx * iScale + lpRaster->x + x,
+                    lpfont->tm.tmAscent * iScale - lpfont->lpScaled->tm.tmAscent + lpRaster->y + y,
+                    lpRaster->rgb[(size_t)y * lpRaster->cx + x]);
+        // Keep logical advances and baselines: Retina rasterization must not reflow the UI.
+        dx += rgdx ? rgdx[i] : lp->dx;
+        i += c;
     }
     return TRUE;
 }

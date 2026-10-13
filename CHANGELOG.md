@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- macOS Retina windows now use backing canvases at the display's physical pixel
+  density and rasterize text at that density, instead of enlarging low-resolution
+  glyphs. Logical font metrics, advances, control geometry and mouse coordinates
+  stay unchanged. Menu text, child composition, scrolling and raster operations
+  use the same backing scale; existing game bitmaps retain nearest-neighbor
+  rendering. Windows, Linux and non-Retina displays retain scale-one rendering.
+  Turn generation, file formats and regression baselines are unchanged.
+
 - Window creation now explicitly hides new native windows after SDL setup.
   Cocoa could expose owned popups despite the requested hidden flag, showing
   black during renderer setup before the wrapper's first paint. macOS menu,

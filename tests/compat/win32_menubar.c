@@ -113,6 +113,7 @@ int main(int argc, char **argv) {
     hchild = CreateWindow("STATIC", "Child", WS_CHILD | WS_VISIBLE, 0, 0, 20, 20, hwnd, (HMENU)(UINT_PTR)3, NULL, NULL);
     CHECK(hchild && ClientToScreen(hchild, &ptChild) && ptChild.x == ptAfter.x && ptChild.y == ptAfter.y);
     CHECK(!GetMenuItemRect(hwnd, hmenu, 9, &rcEdit));
+    CHECK(UpdateWindow(hchild));
 #ifndef _WIN32
     hdc = GetDC(hwnd); CHECK(hdc);
     SetPixel(hdc, 30, 10, RGB(220, 30, 10)); CHECK(ReleaseDC(hwnd, hdc));

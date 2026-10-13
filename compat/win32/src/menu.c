@@ -241,19 +241,21 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
     HBITMAP hbmp;
     HBRUSH hbr;
     RECT rc;
-    int i, cy = CyCompatMenuBar(hwnd);
+    int i, cy = CyCompatMenuBar(hwnd), iScale = max(1, hwnd->iCanvasScale);
     BOOL fSelected, fDisabled;
     SDL_Surface *lpBar;
 
     if (cy == 0) return TRUE;
     if (!lp) return FALSE;
-    if (hwnd->fMenuDirty || !hwnd->hbmpMenu) {
+    lpBar = hwnd->hbmpMenu ? LpCompatBitmapSurface(hwnd->hbmpMenu) : NULL;
+    if (hwnd->fMenuDirty || !lpBar || lpBar->w != hwnd->cxMenu * iScale || lpBar->h != cy * iScale) {
         hdc = CreateCompatibleDC(NULL);
         hdcScreen = GetDC(NULL);
-        hbmp = CreateCompatibleBitmap(hdcScreen, hwnd->cxMenu, cy);
+        hbmp = CreateCompatibleBitmap(hdcScreen, hwnd->cxMenu * iScale, cy * iScale);
         if (hdcScreen) ReleaseDC(NULL, hdcScreen);
         if (!hdc || !hbmp) { if (hdc) DeleteDC(hdc); if (hbmp) DeleteObject(hbmp); return FALSE; }
         hOld = SelectObject(hdc, hbmp);
+        FCompatSetDCScale(hdc, iScale);
         hfont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
         SetBkMode(hdc, TRANSPARENT);
         SetRect(&rc, 0, 0, hwnd->cxMenu, cy);

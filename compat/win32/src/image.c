@@ -243,14 +243,17 @@ void CompatCursorLeave(HWND hwnd) {
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface) {
     COMPATIMAGE *lp = lpCursor;
     BYTE *src, *dst;
-    int x, y, dx, dy, i;
+    int x, y, i, ix, iy, iScale = max(1, hwnd->iCanvasScale);
+    int64_t dx, dy;
     if (!lp || !lp->fInvert || hwnd != hwndMouse) return;
     for (y = 0; y < lp->lpXor->h; y++) for (x = 0; x < lp->lpXor->w; x++) {
-        dx = ptMouse.x - (int)lp->xHot + x; dy = ptMouse.y - (int)lp->yHot + y;
-        if (dx < 0 || dy < 0 || dx >= lpSurface->w || dy >= lpSurface->h) continue;
+        dx = ((int64_t)ptMouse.x - lp->xHot + x) * iScale; dy = ((int64_t)ptMouse.y - lp->yHot + y) * iScale;
+        if (dx < 0 || dy < 0 || dx + iScale > lpSurface->w || dy + iScale > lpSurface->h) continue;
         src = (BYTE *)lp->lpXor->pixels + (size_t)y * lp->lpXor->pitch + x * 4;
-        dst = (BYTE *)lpSurface->pixels + (size_t)dy * lpSurface->pitch + dx * 4;
-        for (i = 0; i < 3; i++) dst[i] = (BYTE)((lp->rgbAnd[y * lp->lpXor->w + x] ? dst[i] : 0) ^ src[i]);
+        for (iy = 0; iy < iScale; iy++) for (ix = 0; ix < iScale; ix++) {
+            dst = (BYTE *)lpSurface->pixels + (size_t)(dy + iy) * lpSurface->pitch + (dx + ix) * 4;
+            for (i = 0; i < 3; i++) dst[i] = (BYTE)((lp->rgbAnd[y * lp->lpXor->w + x] ? dst[i] : 0) ^ src[i]);
+        }
     }
 }
 void CompatShutdownImages(void) {

@@ -55,6 +55,17 @@ SDL presentation. Escapement rotates glyph placement and opaque backgrounds;
 the game's 3150-tenths-degree labels are tested. Underline/strikeout use font
 metrics.
 
+On Cocoa Retina displays, window canvases use the integral physical/logical
+pixel ratio (up to four). A cached larger FreeType raster supplies physical
+glyph coverage, while the original logical advances and ascent position each
+character. Measurements, dialog units and control bounds therefore stay the
+same. Menu-bar bitmaps use an internal scaled DC so their text is also sharp.
+Clipping regions and origins remain logical; glyph blending uses physical pixels.
+Windows, Linux and ordinary-density Cocoa displays keep the original scale-one
+path. Font objects free their cached larger raster with the logical face.
+`win32_sdl_retina` checks glyph detail within logical pixel cells, unchanged
+metrics, custom advances, clipping and preservation through blits/inversion.
+
 `ExtTextOut` supports rectangle clipping, independent opaque fills and custom
 character advances. Empty text with `ETO_OPAQUE` still fills its rectangle.
 `DrawText` supports CR/LF lines, word wrapping, `DT_CALCRECT`, clipping,

@@ -22,7 +22,7 @@ static COLORREF CrComposite(HWND hwnd, int x, int y) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin || !lpwin->lpComposite ||
-        !SDL_ReadSurfacePixel(lpwin->lpComposite, x * 1, y * 1, &r, &g, &b, &a))
+        !SDL_ReadSurfacePixel(lpwin->lpComposite, x * lpwin->iCanvasScale, y * lpwin->iCanvasScale, &r, &g, &b, &a))
         return CLR_INVALID;
     return RGB(r, g, b);
 }
@@ -127,7 +127,7 @@ int main(void) {
     event.window.data1 = 1;
     CHECK(SDL_PushEvent(&event));
     // The live-resize watcher lays out and paints at native size before the main loop resumes.
-    CHECK(hwnd->lpComposite->w == 400 * 1 && hwnd->lpComposite->h == 200 * 1);
+    CHECK(hwnd->lpComposite->w == 400 * hwnd->iCanvasScale && hwnd->lpComposite->h == 200 * hwnd->iCanvasScale);
     CHECK(rghwndPane[1]->rcChild.left == 200 && CrComposite(hwnd, 199, 100) == rgcrPane[0] &&
           CrComposite(hwnd, 200, 100) == rgcrPane[1]);
     CHECK(DestroyWindow(hwnd));
@@ -141,7 +141,7 @@ int main(void) {
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
     CHECK(!hwnd->fPresentPending && !rghwndPane[0]->fUpdate);
     printf("First frame, show-time controls, pane batching and native live-resize layout passed (density %d)\n",
-           1);
+           hwnd->iCanvasScale);
     StarsCompatShutdown();
     return 0;
 }

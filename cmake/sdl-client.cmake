@@ -84,6 +84,13 @@ target_compile_options(stars-compat-paint-batch PRIVATE -Wall -Wextra -Wpedantic
 add_test(NAME win32_sdl_paint_batch COMMAND stars-compat-paint-batch)
 set_tests_properties(win32_sdl_paint_batch PROPERTIES LABELS "compat"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+add_executable(stars-compat-retina tests/compat/win32_retina.c)
+target_include_directories(stars-compat-retina PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-compat-retina PRIVATE stars_options stars_win32 SDL3::SDL3)
+target_compile_options(stars-compat-retina PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME win32_sdl_retina COMMAND stars-compat-retina)
+set_tests_properties(win32_sdl_retina PROPERTIES LABELS "compat"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 add_executable(stars-compat-client-quit tests/compat/win32_client_quit.c)
 if(APPLE)
     enable_language(OBJC)
