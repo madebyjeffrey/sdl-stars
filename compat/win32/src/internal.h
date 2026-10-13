@@ -59,7 +59,7 @@ struct HWND__ {
     uint64_t idInspect;
     WNDPROC lpfnWndProc;
     LONG_PTR lUserData, idChild;
-    HWND hwndParent, hwndOwner;
+    HWND hwndParent, hwndOwner, hwndRestoreFocus;
     HMENU hmenu;
     HBITMAP hbmpMenu;
     RECT *rgrcMenu;
@@ -224,6 +224,7 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale);
 BOOL FCompatPaintTree(HWND hwnd);
 void CompatFlushPresent(void);
 BOOL FCompatPendingDialogSequence(HWND hwndOwner);
+void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved);
 SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp);
 int CyCompatMenuBar(HWND hwnd);
 BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface);

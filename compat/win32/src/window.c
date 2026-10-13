@@ -76,6 +76,26 @@ static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
     return TRUE;
 }
 
+void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved) {
+    HWND hwnd, hwndRoot, hwndCurrent;
+    MSG msg;
+
+    if (fShutdown || PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE)) return;
+    hwnd = IsWindowVisible(hwndSaved) && IsWindowEnabled(hwndSaved) ? hwndSaved : hwndOwner;
+    hwndRoot = HwndCompatRoot(hwnd);
+    if (!hwndRoot || hwndRoot->fDestroying || !IsWindowVisible(hwndRoot) ||
+        !IsWindowEnabled(hwndRoot) || IsIconic(hwndRoot) || (hwndRoot->dwExStyle & WS_EX_NOACTIVATE)) return;
+    // Teardown/enable callbacks may have opened another window. Keep its focus.
+    hwndCurrent = GetActiveWindow();
+    if (hwndCurrent && hwndCurrent != hwndRoot) return;
+    hwndCurrent = GetFocus();
+    if (hwndCurrent != hwndRoot && HwndCompatRoot(hwndCurrent) == hwndRoot) hwnd = hwndCurrent;
+    // SetFocus updates wrapper state; Cocoa also needs native activation after
+    // the modal owner becomes focusable again.
+    SDL_RaiseWindow(hwndRoot->lpWindow);
+    if (IsWindow(hwnd) && IsWindowEnabled(hwnd)) SetFocus(hwnd);
+}
+
 BOOL StarsCompatBeginDialogSequence(HWND hwndOwner) {
     if (!SDL_IsMainThread() || fDialogSequence || (hwndOwner && !IsWindow(hwndOwner))) return FALSE;
     fDialogSequence = TRUE;
@@ -106,7 +126,7 @@ void StarsCompatEndDialogSequence(void) {
     // state before callbacks so they cannot borrow already-destroyed resources.
     if (!fShutdown) {
         if (fEnable && IsWindow(hwndOwner)) EnableWindow(hwndOwner, TRUE);
-        if (!fDialogSequence && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+        if (!fDialogSequence) CompatRestoreOwnerFocus(hwndOwner, hwndFocus);
     }
 }
 
@@ -270,6 +290,9 @@ static HWND HwndCompatLast(HWND hwndFirst) {
 static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) {
     HWND lpchild;
     HWND hwndParent = lpwin->hwndParent;
+    HWND hwndOwner = lpwin->hwndOwner, hwndSaved = lpwin->hwndRestoreFocus;
+    BOOL fRestore = fNotify && !hwndParent && lpwin->fVisible && !(lpwin->dwExStyle & WS_EX_NOACTIVATE) &&
+        (GetActiveWindow() == lpwin || (lpwin->lpWindow && SDL_GetKeyboardFocus() == lpwin->lpWindow));
 
     lpwin->fDestroying = TRUE;
     if (fNotify && (GetCapture() == lpwin || IsChild(lpwin, GetCapture()))) ReleaseCapture();
@@ -324,6 +347,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     lpwin->pszTitle = NULL;
     UnlinkCompatZ(lpwin);
     lpwin->fAlive = FALSE;
+    if (fRestore) CompatRestoreOwnerFocus(hwndOwner, hwndSaved);
     if (fNotify && IsWindowVisible(hwndParent) && !hwndParent->fDestroying)
         FCompatPresent(hwndParent);
     // Keep a small handle token until shutdown so stale HWNDs cannot alias a new window.
@@ -424,6 +448,8 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         SetRect(&lpwin->rcChild, x, y, x + dx, y + dy);
     } else {
         lpwin->hwndOwner = lpparent ? HwndCompatRoot(lpparent) : NULL;
+        if (lpwin->hwndOwner && HwndCompatRoot(GetFocus()) == lpwin->hwndOwner)
+            lpwin->hwndRestoreFocus = GetFocus();
         if (lpwin->hwndOwner && (lpwin->hwndOwner->dwExStyle & WS_EX_TOPMOST)) dwExStyle |= WS_EX_TOPMOST;
         if (dwExStyle & WS_EX_TOPMOST) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
         if ((dwExStyle & WS_EX_NOACTIVATE) || (dwStyle & WS_DISABLED)) flags |= SDL_WINDOW_NOT_FOCUSABLE;
@@ -855,6 +881,8 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     }
     if (lpwin->fAlive && fVisible && !lpwin->hwndParent && fNotify &&
         swNew != SW_SHOWMINIMIZED && !(lpwin->dwStyle & WS_DISABLED) && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
+        if (lpwin->hwndOwner && HwndCompatRoot(GetFocus()) == lpwin->hwndOwner)
+            lpwin->hwndRestoreFocus = GetFocus();
         // Showing a Cocoa window alone does not grant native keyboard focus.
         // ShowWindow activates ordinary windows, including modeless dialogs.
         if (SDL_RaiseWindow(lpwin->lpWindow)) {
@@ -1047,6 +1075,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     if (!lpwin->fAlive) return TRUE;
     if (!(wp.flags & SWP_NOACTIVATE) && !lpwin->hwndParent && lpwin->fVisible && IsWindowEnabled(hwnd) &&
         lpwin->swState != SW_SHOWMINIMIZED && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
+        if (lpwin->hwndOwner && HwndCompatRoot(GetFocus()) == lpwin->hwndOwner)
+            lpwin->hwndRestoreFocus = GetFocus();
         SDL_RaiseWindow(lpwin->lpWindow);
         SetFocus(hwnd);
         if (!lpwin->fAlive) return TRUE;

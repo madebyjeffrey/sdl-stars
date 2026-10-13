@@ -91,6 +91,28 @@ target_compile_options(stars-compat-retina PRIVATE -Wall -Wextra -Wpedantic -Wer
 add_test(NAME win32_sdl_retina COMMAND stars-compat-retina)
 set_tests_properties(win32_sdl_retina PROPERTIES LABELS "compat"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+add_executable(stars-compat-client-popup tests/compat/win32_client_popup.c)
+target_link_libraries(stars-compat-client-popup PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
+stars_test_redirect(stars-compat-client-popup PromptPassword)
+target_include_directories(stars-compat-client-popup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_compile_options(stars-compat-client-popup PRIVATE -Wall -Wextra -Werror)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/focus")
+foreach(STARS_FOCUS_FILE game.hst game.m1 game.xy)
+    configure_file("tests/scaffold/fixtures/regression/native/noai/checkpoints/000/${STARS_FOCUS_FILE}"
+        "${CMAKE_BINARY_DIR}/test-client/focus/${STARS_FOCUS_FILE}" COPYONLY)
+endforeach()
+target_compile_definitions(stars-compat-client-popup PRIVATE
+    STARS_TEST_FOCUS_GAME="${CMAKE_BINARY_DIR}/test-client/focus/game")
+add_test(NAME win32_client_popup COMMAND stars-compat-client-popup)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/popup")
+set_tests_properties(win32_client_popup PROPERTIES LABELS "client"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/popup"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+if(APPLE)
+    enable_language(OBJC)
+    target_sources(stars-compat-client-popup PRIVATE tests/compat/win32_client_popup_cocoa.m)
+    set_source_files_properties(tests/compat/win32_client_popup_cocoa.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
 add_executable(stars-compat-client-quit tests/compat/win32_client_quit.c)
 if(APPLE)
     enable_language(OBJC)

@@ -164,7 +164,9 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
             }
             hwnd->fDeferPresent = FALSE;
             if (!FCompatPresent(hwnd)) goto fail;
-            if (!hwnd->fEndDialog) ShowWindow(hwnd, SW_SHOW);
+            if (!hwnd->fEndDialog) {
+                ShowWindow(hwnd, SW_SHOW);
+            }
         }
         if (fFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
     }
@@ -243,6 +245,6 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     }
     if (FCompatPendingDialogSequence(hwndRoot)) return value;
     if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
-    if (IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+    CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
     return value;
 }

@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DialogBoxParamA` restored only logical focus when closing dialogs such as
+  the ship designer, leaving their macOS owner without native keyboard focus.
+  Modal dialogs, completed wizard sequences and active modeless owned windows
+  now reactivate a visible, enabled owner and restore its previous control.
+  Shutdown/quit, hidden or disabled owners, nonactivating cards and explicit
+  close-handler focus choices are preserved. Game behavior and baselines are
+  unchanged.
+
 - macOS Retina windows now use backing canvases at the display's physical pixel
   density and rasterize text at that density, instead of enlarging low-resolution
   glyphs. Logical font metrics, advances, control geometry and mouse coordinates

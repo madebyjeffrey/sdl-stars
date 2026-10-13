@@ -20,7 +20,9 @@ parameter and proposed focus control, and honors the callback's focus return.
 Modeless dialogs have independent lifetimes and use `DestroyWindow`.
 
 Modal dialogs disable their root owner, pump the existing message queue and
-restore owner/focus state on exit. `EndDialog` stores a result and defers
+restore owner/focus state on exit, including native activation once the owner
+is re-enabled. Hidden/disabled owners and pending application quit do not
+activate; a close callback selecting another window keeps its focus. `EndDialog` stores a result and defers
 destruction until the callback returns. Ending during initialization, posted
 completion and nested modal dialogs are tested. Pending `WM_QUIT` is reposted
 when a modal loop exits. Owner destruction and missing resources cannot leave
