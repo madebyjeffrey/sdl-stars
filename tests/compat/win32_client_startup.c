@@ -1148,6 +1148,7 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
+    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
     PostQuitMessage(91);
     return IDOK;
 }
@@ -1170,6 +1171,28 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
+        const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
+        HWND hwndList;
+        LRESULT iGame;
+        if (iStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) goto LDone;
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            iGame = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
+            if (iGame == LB_ERR) goto LDone;
+            SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
+            fChecked = TRUE;
+            iStage = 1;
+            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            return;
+        }
+        if (IsWindow(hwndTitle)) return;
+        if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
+        fPassed = TRUE;
+        puts("Managed game: visible in library and reopened after restart");
+        PostQuitMessage(0);
+        return;
+    }
     if (pszNewGame) {
         if (!FCheckNewGameWorkflow()) goto LDone;
         return;
@@ -1379,5 +1402,5 @@ int main(void) {
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
-    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == 0 && cEarlyFrameShow == 0 ? 0 : 1;
+    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }

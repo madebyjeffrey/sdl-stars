@@ -1,9 +1,20 @@
-"""Create fresh ASCII/UTF-8 games through the actual Basic New Game UI."""
+"""Create managed games, resolve collisions, and reopen in a fresh client."""
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+
+
+def run(executable, work, **choices):
+    env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
+               STARS_LIBRARY_DIR=str(work / 'library'))
+    for key in ('STARS_CLIENT_CONTINUE', 'STARS_CLIENT_NEW_GAME',
+                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN'):
+        env.pop(key, None)
+    env.update(choices)
+    cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
+    subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
 
 
 def main():
@@ -12,20 +23,34 @@ def main():
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:
             work = Path(directory)
-            if name != 'fresh-game' and name != 'advanced-game':
-                work = work / 'parties-étoiles-Ω'
-                work.mkdir()
-            env = dict(os.environ, STARS_SETTINGS_DIR=str(work),
-                       STARS_CLIENT_NEW_GAME=str(work / (name + '.xy')))
-            env.pop('STARS_CLIENT_CONTINUE', None)
-            env.pop('STARS_CLIENT_NEW_ADVANCED', None)
+            games = work / 'library' / 'Games'
+            path = games / name / name
+            choices = dict(STARS_CLIENT_NEW_GAME=str(path.with_suffix('.xy')),
+                           STARS_CLIENT_LIBRARY_NAME=name)
             if advanced:
-                env['STARS_CLIENT_NEW_ADVANCED'] = '1'
-            if os.name == 'nt':
-                env['STARS_CLIENT_NEW_GAME_REAL_DIALOG'] = '1'
-            cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
-            subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
-            assert all((work / (name + ext)).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
+                choices['STARS_CLIENT_NEW_ADVANCED'] = '1'
+            run(executable, work, **choices)
+            assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
+            assert (path.parent / '.library').is_file()
+            before = {p.name: p.read_bytes() for p in path.parent.iterdir() if p.suffix in ('.xy', '.hst', '.m1')}
+            run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
+            assert all((path.parent / filename).read_bytes() == content for filename, content in before.items())
+            # The wizard defaults to Game.xy; a differently cased folder is a collision.
+            (games / 'gAmE').mkdir()
+            choices['STARS_CLIENT_NEW_GAME'] = str(games / 'Game (2)' / 'Game (2).xy')
+            choices['STARS_CLIENT_LIBRARY_NAME'] = 'Game (2)'
+            choices['STARS_CLIENT_LIBRARY_SUGGESTED'] = 'Game (2)'
+            choices['STARS_CLIENT_LIBRARY_REJECT'] = '1'
+            run(executable, work, **choices)
+            assert not list((games / 'gAmE').iterdir())
+            assert (games / 'Game (2)' / '.library').is_file()
+            run(executable, work, STARS_CLIENT_LIBRARY_OPEN='Game (2)')
+            if not advanced and name == 'fresh-game':
+                for failure in ('universe', 'host'):
+                    run(executable, work, STARS_CLIENT_NEW_GAME=str(games / 'failed-game' / 'failed-game.xy'),
+                        STARS_CLIENT_LIBRARY_NAME='failed-game', STARS_CLIENT_LIBRARY_FAIL_WRITE=failure)
+                    assert not (games / 'failed-game').exists()
+                    run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
     return 0
 
 

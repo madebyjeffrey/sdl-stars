@@ -111,7 +111,11 @@ void    CloseFile(int16_t hf);
 int16_t FFileExists(char *szFile);
 int16_t FFileReadOnly(char *szFile);
 void    MakeDir(char *szDir);
+// Unlike MakeDir, reservation fails if the directory already exists.
+int     CreateNativeDir(const char *pszDir);
 int     RemoveNativeFile(const char *psz);
+int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
+int64_t LNativeTime(void);
 int     RenameNativeFile(const char *pszOld, const char *pszNew);
 FILE   *PfOpenNativeFile(const char *psz, const char *pszMode);
 #ifdef _WIN32
@@ -145,6 +149,8 @@ int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch);
  * bits on every platform. LMulDiv rounds like Win32 MulDiv.
  */
 int     CchSprintf(char *sz, const char *szFormat, ...);
+// Bounded native formatting uses standard C widths and reports truncation.
+int     CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...);
 int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator);
 
 #endif

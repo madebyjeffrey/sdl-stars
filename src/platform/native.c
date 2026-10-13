@@ -5,6 +5,7 @@
 #include "common.h"
 
 #include <stdarg.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -296,11 +297,30 @@ void MakeDir(char *szDir) {
     if (pwsz) { _wmkdir(pwsz); free(pwsz); }
 }
 
+int CreateNativeDir(const char *pszDir) {
+    wchar_t *pwsz = LpwszNativePath(pszDir);
+    int result;
+    if (!pwsz) return -1;
+    result = _wmkdir(pwsz);
+    free(pwsz); return result;
+}
+
 int RemoveNativeFile(const char *psz) {
     wchar_t *pwsz = LpwszNativePath(psz);
     int result;
     if (!pwsz) return -1;
     result = _wremove(pwsz); free(pwsz); return result;
+}
+
+// Metadata replacement must preserve the old file if installing the new one fails.
+int ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+    wchar_t *pwszOld = LpwszNativePath(pszOld), *pwszNew;
+    int result;
+    if (!pwszOld) return -1;
+    pwszNew = LpwszNativePath(pszNew);
+    if (!pwszNew) { free(pwszOld); return -1; }
+    result = MoveFileExW(pwszOld, pwszNew, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
+    free(pwszOld); free(pwszNew); return result;
 }
 
 int RenameNativeFile(const char *pszOld, const char *pszNew) {
@@ -385,8 +405,10 @@ int16_t FFileExists(char *szFile) { return access(szFile, F_OK) == 0; }
 int16_t FFileReadOnly(char *szFile) { return access(szFile, W_OK) != 0; }
 
 void MakeDir(char *szDir) { mkdir(szDir, 0777); }
+int CreateNativeDir(const char *pszDir) { return mkdir(pszDir, 0777); }
 
 int RemoveNativeFile(const char *psz) { return remove(psz); }
+int ReplaceNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
 int RenameNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
 FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return fopen(psz, pszMode); }
 
@@ -410,3 +432,14 @@ void GetDateTimeSz(char *szDate, char *szTime) {
 int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
+
+int64_t LNativeTime(void) { return (int64_t)time(NULL); }
+
+int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {
+    va_list args;
+    int cch;
+    va_start(args, pszFormat);
+    cch = vsnprintf(psz, cb, pszFormat, args);
+    va_end(args);
+    return cch;
+}

@@ -2694,6 +2694,8 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             xCur += dx + dxGap;
         }
+        InitLibraryGames(hwnd, &rc);
+        SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
         InvalidateRect(hwnd, NULL, TRUE);
@@ -2740,7 +2742,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0:
             NewGameWizard(hwnd, FALSE);
             if (!lpPlanets && game.lid == 0) {
-                SetFocus(hwnd);
+                ShowWindow(hwndFrame, SW_HIDE);
+                ShowWindow(hwndTitle, SW_SHOW);
+                SetFocus(hwndTitle);
                 break;
             }
             if (!fFreeingTitle) {
@@ -2750,7 +2754,11 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             ShowWindow(hwndFrame, SW_SHOW);
             break;
+        case IDC_LIBRARY_GAMES:
+            if (HIWORD(wParam) != LBN_DBLCLK) break;
+            /* fall through */
         case IDOK:
+            if (!FSelectLibraryGame(hwnd)) break;
         LOpenGame:
             if (FOpenGame(hwnd, FALSE) > 0) {
                 if (!fFreeingTitle) {
@@ -2761,6 +2769,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (idPlayer != iplrNone) {
                     ShowWindow(hwndFrame, SW_SHOW);
                 }
+                RememberLibraryGame();
                 InitializeMenu(NULL);
                 PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 if (game.fTutorial && idPlayer == 0) {

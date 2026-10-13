@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FGetNewGameName` now asks for a portable, unique library name. Desktop games
+  and all their generated companions live in per-user application data and can
+  be reopened from the startup Games list after restarting. Failed or cancelled
+  creation does not publish a library entry. Session metadata is stored outside
+  game records; host paths, game titles, formats and simulation baselines are
+  unchanged.
+
 - Removed the suspended Rust/Bevy startup experiment and its optional build
   integration. `WinMain` uses the original SDL title-screen workflow for every
   desktop build. Turn generation, file formats and regression baselines are
