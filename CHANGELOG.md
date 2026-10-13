@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `NewGameWizard` treated a modal dialog's `-1` result on application quit as
+  permission to advance, repeatedly opening pages against the pending quit
+  message. It and the nested race wizard now unwind like cancellation, and the
+  SDL modal wrapper rejects new dialogs while quit is pending. This fixes Cmd-Q during new-game setup;
+  turn generation and regression baselines are unchanged.
+
 - The Cocoa file picker previously failed before opening when SDL's framework
   lacked CP1252 iconv support, including when choosing a new game's name.
   It now converts picker titles and filters with the game's fixed CP1252

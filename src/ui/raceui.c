@@ -18,7 +18,7 @@ Step1:
     lpProc = MakeProcInstance(RaceWizardDlg1, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizFinish)
         goto Finish;
@@ -27,7 +27,7 @@ Step2:
     lpProc = MakeProcInstance(RaceWizardDlg4, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_4), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizBack)
         goto Step1;
@@ -38,7 +38,7 @@ Step3:
     lpProc = MakeProcInstance(RaceWizardDlg5, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_5), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizBack)
         goto Step2;
@@ -49,7 +49,7 @@ Step4:
     lpProc = MakeProcInstance(RaceWizardDlg2, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizBack)
         goto Step3;
@@ -60,7 +60,7 @@ Step5:
     lpProc = MakeProcInstance(RaceWizardDlg3, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_3), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizBack)
         goto Step4;
@@ -71,7 +71,7 @@ Step6:
     lpProc = MakeProcInstance(RaceWizardDlg6, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_6), hwndRaceParent, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == wizCancel)
+    if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
     if (mdRet == wizBack)
         goto Step5;

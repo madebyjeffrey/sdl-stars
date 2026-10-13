@@ -84,6 +84,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
         default:
             goto Step1;
         case 2:
+        case -1:
             goto Cancel;
         }
         return;
@@ -101,7 +102,7 @@ Step1:
     lpProc = MakeProcInstance(NewGameDlg, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == 0) {
+    if (mdRet <= 0) {
     Cancel:
         if (!fRCWReadOnly) {
             game = gameT;
@@ -116,7 +117,7 @@ Step2:
     lpProc = MakeProcInstance(NewGameDlg2, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == 0)
+    if (mdRet <= 0)
         goto Cancel;
     if (iStepMaxSoFar < 1) {
         iStepMaxSoFar = 1;
@@ -129,7 +130,7 @@ Step2:
     lpProc = MakeProcInstance(NewGameDlg3, hInst);
     mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc);
     FreeProcInstance(lpProc);
-    if (mdRet == 0)
+    if (mdRet <= 0)
         goto Cancel;
     if (iStepMaxSoFar < 2) {
         iStepMaxSoFar = 2;

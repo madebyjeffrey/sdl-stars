@@ -220,6 +220,8 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     int result;
     INT_PTR value = -1;
     if (!SDL_IsMainThread()) return -1;
+    // Nested wizard loops must unwind without exposing another page after application quit.
+    if (PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE)) return -1;
     if (hwndOwner && !IsWindow(hwndOwner)) return 0;
     hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
