@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The SDL wrapper headers now use standard C null and integer-limit definitions
+  and an explicit dialog callback signature for their remaining `FARPROC`
+  instances, avoiding Apple Clang prototype and macro-redefinition errors.
+  macOS SDL links use classic pointer fixups for the original packed UI tables.
+  Structure layouts, file formats and turn generation are unchanged.
+
 - The Makefile's platform selection now closes with Make's `endif` syntax;
   the previous `endif()` prevented every Make target from parsing.
 

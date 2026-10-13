@@ -50,11 +50,9 @@ cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
 cmake --build --preset macos-sdl-debug
 ```
 
-The SDL preset uses x86_64 for its existing dependency environment. Host presets
-now use the native architecture; both use binary64 arithmetic. On Apple silicon it requires Rosetta
-and x86_64 dependencies from Intel Homebrew under `/usr/local`; an ARM-only
-Homebrew installation under `/opt/homebrew` does not provide those libraries.
-The commands above target an Intel dependency environment. ARM-native turn
+The SDL presets target Apple silicon (`arm64`) with Homebrew dependencies under
+`/opt/homebrew`. Host presets use the native architecture; both use binary64
+arithmetic. The commands above run in a native Apple silicon shell. ARM-native turn
 parity remains separate work and is not claimed here. The generated offline help
 requires `wmf2svg`, supplied by libwmf. These commands are qualification instructions,
 not a claim that this Linux machine tested a macOS build.

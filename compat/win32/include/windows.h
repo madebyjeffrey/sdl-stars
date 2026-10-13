@@ -65,7 +65,8 @@ typedef HANDLE HGLOBAL, HLOCAL;
 
 typedef LRESULT (CALLBACK *WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 typedef INT_PTR (CALLBACK *DLGPROC)(HWND, UINT, WPARAM, LPARAM);
-typedef INT_PTR (WINAPI *FARPROC)();
+// The remaining Win16 procedure instances all hold dialog callbacks.
+typedef DLGPROC FARPROC;
 typedef void (CALLBACK *TIMERPROC)(HWND, UINT, UINT_PTR, DWORD);
 typedef UINT_PTR (CALLBACK *LPOFNHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 typedef UINT_PTR (CALLBACK *LPPRINTHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
@@ -107,7 +108,7 @@ typedef const RECT *LPCRECT;
 #define CreateDialogParam CreateDialogParamA
 #define DialogBoxParam DialogBoxParamA
 #define MakeProcInstance(f, i) (f)
-#define FreeProcInstance(f) (f)
+#define FreeProcInstance(f) ((void)(f))
 #define GetCurrentTime() GetTickCount()
 #define Yield() ((void)0)
 // The legacy game ignores logoff failure; keep its application exit usable.

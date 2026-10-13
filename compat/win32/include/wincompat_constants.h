@@ -4,6 +4,8 @@
 #ifndef STARS_WINCOMPAT_CONSTANTS_H
 #define STARS_WINCOMPAT_CONSTANTS_H
 
+#include <limits.h>
+
 #define ERROR 0
 #define NULLREGION 1
 #define SIMPLEREGION 2
@@ -49,7 +51,6 @@
 #define CB_RESETCONTENT 0x014B
 #define CB_SETCURSEL 0x014E
 #define CB_SETEXTENDEDUI 0x0155
-#define CHAR_BIT __CHAR_BIT__
 #define COLOR_BACKGROUND 1
 #define COLOR_BTNFACE 15
 #define COLOR_BTNHIGHLIGHT 20
@@ -110,7 +111,6 @@
 #ifndef IDYES
 #define IDYES 6
 #endif
-#define INT_MAX __INT_MAX__
 #define LBS_DISABLENOSCROLL INT32_C(0x1000)
 #define LBS_HASSTRINGS INT32_C(0x0040)
 #define LBS_MULTIPLESEL INT32_C(0x0008)
@@ -171,7 +171,6 @@
 #define MK_CONTROL 0x0008
 #define MK_LBUTTON 0x0001
 #define MK_SHIFT 0x0004
-#define NULL ((void *)0)
 #define NULL_PEN 8
 #define ODA_DRAWENTIRE 0x0001
 #define ODA_FOCUS 0x0004
@@ -269,7 +268,6 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 #define SEEK_SET 0
-#define SHRT_MAX __SHRT_MAX__
 #define SM_CXDLGFRAME 7
 #define SM_CXDRAG 68
 #define SM_CXFRAME 32
@@ -321,7 +319,6 @@
 #define TPM_LEFTBUTTON INT32_C(0x0000)
 #define TPM_RIGHTBUTTON INT32_C(0x0002)
 #define TRANSPARENT 1
-#define UINT_MAX (INT_MAX * 2U + 1U)
 #define VERTRES 10
 #define VFT2_UNKNOWN INT32_C(0x00000000)
 #define VFT_APP INT32_C(0x00000001)
@@ -424,9 +421,6 @@
 #define WS_THICKFRAME INT32_C(0x00040000)
 #define WS_VISIBLE INT32_C(0x10000000)
 #define WS_VSCROLL INT32_C(0x00200000)
-#define __CHAR_BIT__ 8
-#define __INT_MAX__ 0x7fffffff
-#define __SHRT_MAX__ 0x7fff
 
 #define WM_USER 0x0400
 #define CB_ERR (-1)
@@ -519,6 +513,9 @@
 #define RT_ACCELERATOR MAKEINTRESOURCE(9)
 #define FVIRTKEY 1
 #define FNOINVERT 2
+#ifdef FSHIFT
+#undef FSHIFT /* Some POSIX system headers use this name for a different flag. */
+#endif
 #define FSHIFT 4
 #define FCONTROL 8
 #define FALT 16

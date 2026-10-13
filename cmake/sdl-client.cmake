@@ -1,4 +1,8 @@
 include("${CMAKE_CURRENT_LIST_DIR}/dependencies/sdl3.cmake")
+if(APPLE)
+    # Chained fixups require aligned pointers; the original packed UI tables do not.
+    target_link_options(stars_options INTERFACE "LINKER:-no_fixup_chains")
+endif()
 add_subdirectory(compat/win32)
 find_program(STARS_WMF2SVG_EXECUTABLE NAMES wmf2svg REQUIRED)
 set(STARS_HELP_GENERATED "${CMAKE_BINARY_DIR}/help")

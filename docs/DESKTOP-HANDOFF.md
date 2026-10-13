@@ -35,7 +35,7 @@ only if it exists locally; do not transfer or publish private reference material
 
 | Desktop | Product target | Build path |
 | --- | --- | --- |
-| macOS | `stars-sdl`, native Cocoa picker, PDF/browser handoff | `macos-sdl-debug` / `macos-sdl-release`, x86_64 |
+| macOS | `stars-sdl`, native Cocoa picker, PDF/browser handoff | `macos-sdl-debug` / `macos-sdl-release`, arm64 |
 | Windows | `stars.exe`, native Win32 UI/dialogs/printer | `mingw-debug` / `mingw-release`, MinGW-w64 |
 | Linux | `stars-sdl`, portal picker, PDF/browser handoff | Existing SDL and Flatpak presets |
 
@@ -114,37 +114,24 @@ Install Xcode Command Line Tools if absent:
 xcode-select --install
 ```
 
-The SDL Mac presets still build **x86_64** for their Intel dependency environment.
-Host presets now use the native architecture and binary64 arithmetic; see
-[DOUBLE-PRECISION.md](DOUBLE-PRECISION.md). For the SDL client on Apple silicon,
-install Rosetta if absent:
+The SDL Mac presets build **arm64** for Apple silicon, using native Homebrew
+dependencies under `/opt/homebrew`. Host presets use the native architecture
+and binary64 arithmetic; see [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md).
+If Homebrew is absent, follow
+[Homebrew's installation instructions](https://docs.brew.sh/Installation)
+from a native Apple silicon shell.
 
 ```sh
-softwareupdate --install-rosetta
-arch -x86_64 /bin/zsh
-```
-
-Continue in that Intel shell. Intel Homebrew and target libraries must be under
-`/usr/local`, including on Apple silicon. An ARM Homebrew tree under
-`/opt/homebrew` cannot supply x86_64 libraries. If Intel Homebrew is absent,
-follow [Homebrew's installation instructions](https://docs.brew.sh/Installation)
-from the Intel shell. Intel Homebrew is currently a Tier 3 configuration; bottles
-may be unavailable and formulae may need source builds. Record dependency setup
-failures rather than claiming qualification for an untested dependency environment.
-
-In an Intel shell, or directly on an Intel Mac:
-
-```sh
-export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
-/usr/local/bin/brew install cmake ninja pkgconf freetype fontconfig cairo libwmf python
-export PKG_CONFIG_LIBDIR="/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig"
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+/opt/homebrew/bin/brew install cmake ninja pkgconf freetype fontconfig cairo libwmf python
+export PKG_CONFIG_LIBDIR="/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig"
 uname -m
-/usr/local/bin/brew --prefix
+/opt/homebrew/bin/brew --prefix
 pkg-config --modversion freetype2 fontconfig cairo cairo-pdf
 command -v wmf2svg
 ```
 
-Expected architecture/prefix: `x86_64` and `/usr/local`. Do not mix ARM and Intel
+Expected architecture/prefix: `arm64` and `/opt/homebrew`. Do not mix ARM and Intel
 library paths. [libwmf](https://formulae.brew.sh/formula/libwmf) supplies `wmf2svg`
 for the original guide's WMF diagrams. SDL can be fetched by CMake from the pinned,
 checksum-verified 3.4.18 archive; installing SDL separately is optional.
@@ -153,7 +140,7 @@ Use a repository-local Python environment under ignored `dist/`:
 
 ```sh
 mkdir -p dist
-/usr/local/bin/python3 -m venv dist/dev-venv
+/opt/homebrew/bin/python3 -m venv dist/dev-venv
 dist/dev-venv/bin/python -m pip install pyyaml
 cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/dist/dev-venv/bin/python"
 cmake --build --preset macos-sdl-debug --parallel 4
@@ -187,7 +174,7 @@ currently requires Linux. The standalone help viewer is:
 For host regression, install Go (the save CLI requires Go 1.25 or newer):
 
 ```sh
-/usr/local/bin/brew install go
+/opt/homebrew/bin/brew install go
 go version
 make regression-host HOST_PRESET=macos-host-release PYTHON="$PWD/dist/dev-venv/bin/python"
 ```
@@ -251,7 +238,7 @@ Do **not** use `make regression`, `make regression-host` or the Python regressio
 runner as native-Windows acceptance commands yet: the current runner treats
 all `.exe` files as Wine programs and constructs Wine `Z:` paths. Its native
 Windows launch/path adapter is separate work. Keep full regression qualification
-on Linux, and use the x86_64 host path above on Mac. Tutorial automation remains
+on Linux, and use the native host path above on Mac. Tutorial automation remains
 paused; do not install or run AutoHotkey as part of this handoff.
 
 ## 5. CLion on each desktop
@@ -260,10 +247,10 @@ Open the repository root and load CMake presets. Enable the imported profile
 under Settings/Preferences → Build, Execution, Deployment → CMake; disabled
 profiles do not appear in the run selector. See [CLion preset support](https://www.jetbrains.com/help/clion/cmake-presets.html).
 
-On Mac use the Xcode/Clang toolchain, `macos-sdl-debug`, the Intel library paths
+On Mac use the Xcode/Clang toolchain, `macos-sdl-debug`, the Apple silicon library paths
 above and `-DPython3_EXECUTABLE=<absolute checkout>/dist/dev-venv/bin/python`.
 Choose `stars-sdl`, with the checkout root as working directory. The preset
-requests x86_64; CLion's shell/tool environment must still find Intel dependencies.
+requests arm64; CLion's shell/tool environment must find dependencies under `/opt/homebrew`.
 On Windows use a MinGW toolchain rooted at `C:\msys64\mingw64`, the
 `mingw-debug` preset and the matching Python executable. Choose `stars` (the
 output is `stars.exe`). Verify the configure log selects MinGW before building.

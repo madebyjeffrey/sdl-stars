@@ -117,8 +117,8 @@
       "displayName": "macOS SDL3 compatibility Debug (qualification required)",
       "binaryDir": "${sourceDir}/dist/macos-sdl-debug",
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "/usr/local",
-        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
         "STARS_BUILD_TESTS": "OFF"
       }
     },

@@ -64,8 +64,9 @@ casts and stored float conversions remain intentional. Historical comparison
 tests additionally require an x87-compatible extended type and run on x86.
 
 macOS host presets now select the native architecture instead of requiring
-Rosetta for extended arithmetic. SDL macOS presets retain their Intel dependency
-environment. Linux x86-64 and MinGW x86-64 are tested here; native ARM and macOS
+Rosetta for extended arithmetic. SDL macOS presets select Apple silicon (`arm64`)
+with Homebrew dependencies under `/opt/homebrew`. Linux x86-64 and MinGW x86-64
+are tested here; native ARM and macOS
 execution are not qualified by these results. Library implementations of
 `pow`, `sqrt` and trigonometric functions may still vary across platforms.
 
