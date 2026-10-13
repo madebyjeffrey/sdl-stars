@@ -11,7 +11,7 @@ static COMPATCLASS *lpClasses;
 static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop;
 static unsigned int atomNext = 1;
 static uint64_t idInspectNext;
-static BOOL fVideoOwned, fShutdown;
+static BOOL fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
 static BOOL fDialogSequence;
 static HWND hwndSequenceOwner;
 static SDL_Window *lpSequenceWindow;
@@ -110,11 +110,45 @@ void StarsCompatEndDialogSequence(void) {
     }
 }
 
+static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) {
+    HWND lpwin;
+    RECT rc;
+
+    (void)lpv;
+    if (!SDL_IsMainThread() || fShutdown || fLiveResize ||
+        lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return true;
+    lpwin = LpCompatWindowFromId(lpevent->window.windowID);
+    if (!lpwin || !lpwin->fCreated || !lpwin->fVisible || !GetClientRect(lpwin, &rc)) return true;
+    if (lpevent->window.data1 != 1 || CCompatDispatch() != 0) {
+        FCompatRefreshPresent(lpwin);
+        return true;
+    }
+    // SDL permits application drawing from a watcher during native live resize.
+    fLiveResize = TRUE;
+    lpwin->cPresentDefer++;
+    SendMessageA(lpwin, WM_SIZE, IsZoomed(lpwin) ? SIZE_MAXIMIZED : SIZE_RESTORED,
+                 MAKELPARAM(rc.right, rc.bottom));
+    if (IsWindow(lpwin)) {
+        InvalidateRect(lpwin, NULL, TRUE);
+        FCompatPaintTree(lpwin);
+        if (IsWindow(lpwin)) {
+            lpwin->cPresentDefer--;
+            FCompatPresent(lpwin);
+        }
+    }
+    fLiveResize = FALSE;
+    return true;
+}
+
 BOOL FCompatVideo(void) {
     if (!SDL_IsMainThread() || fShutdown) return FALSE;
     if (!(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
         if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) return FALSE;
         fVideoOwned = TRUE;
+    }
+    if (!fResizeWatch) {
+        if (!SDL_AddEventWatch(FWatchLiveResize, NULL)) return FALSE;
+        fResizeWatch = TRUE;
     }
     return TRUE;
 }
@@ -423,6 +457,9 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             if (fNativePopup) flags |= !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
                 !strcmp(pszClass, "StarsCompatToolbarTip") ?
                 SDL_WINDOW_TOOLTIP : SDL_WINDOW_POPUP_MENU;
+            // Cocoa otherwise gives the unpainted popup view an opaque black
+            // backing before the renderer's first drawable reaches the screen.
+            if (fNativePopup && !strcmp(SDL_GetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
             // Narrow window text remains CP1252; SDL's native titles require UTF-8.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
@@ -437,6 +474,8 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
                                   x == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : x,
                                   y == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : y)) ||
             !SDL_SyncWindow(lpwin->lpWindow) ||
+            // Cocoa can expose an owned popup during creation despite SDL_WINDOW_HIDDEN.
+            (!fReuse && !SDL_HideWindow(lpwin->lpWindow)) ||
             // A screen-covering borderless popup must be native fullscreen so
             // desktop panels cannot cover its controls. Dialogs stay windowed.
             (FFullscreenPopup(dwStyle, dwExStyle, hMenu, x, y, dx, dy) &&
@@ -709,7 +748,7 @@ BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
 
 static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     HWND lpwin = LpCompatWindow(hwnd);
-    BOOL fWasVisible, fVisible, fOk;
+    BOOL fWasVisible, fVisible, fOk, fPrepare;
     UINT swNew, swOld;
     RECT rc, rcOld, rcSaved;
 
@@ -717,6 +756,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         return FALSE;
     fWasVisible = lpwin->fVisible;
     fVisible = sw != SW_HIDE;
+    fPrepare = !lpwin->hwndParent && fVisible && !fWasVisible;
     if (sw != SW_HIDE && sw != SW_SHOW && sw != SW_SHOWNORMAL && sw != SW_RESTORE &&
         sw != SW_SHOWMINIMIZED && sw != SW_SHOWMAXIMIZED) return FALSE;
     if (sw == SW_SHOW && lpwin->swInitial != 0) sw = (int)lpwin->swInitial;
@@ -729,6 +769,24 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     // Renderer setup can recreate SDL's native window. Do it while hidden so
     // an owner's first paint during a modal loop cannot steal native focus.
     if (!lpwin->hwndParent && fVisible && !lpwin->lpRenderer && !FCompatCanvas(hwnd)) return FALSE;
+    if (fPrepare) {
+        // Show-time layout must see logical visibility, while the native window
+        // stays hidden until its background and visible descendants are painted.
+        lpwin->cPresentDefer++;
+        lpwin->fVisible = TRUE;
+        lpwin->dwStyle |= WS_VISIBLE;
+        if (fNotify) SendMessageA(hwnd, WM_SHOWWINDOW, TRUE, 0);
+        if (!IsWindow(hwnd)) return FALSE;
+        InvalidateRect(hwnd, NULL, TRUE);
+        fOk = FCompatPaintTree(hwnd);
+        if (!IsWindow(hwnd)) return FALSE;
+        lpwin->cPresentDefer--;
+        if (!fOk || !FCompatPresent(hwnd)) {
+            lpwin->fVisible = FALSE;
+            lpwin->dwStyle &= ~WS_VISIBLE;
+            return FALSE;
+        }
+    }
     if (lpwin->hwndParent)
         fOk = TRUE;
     else if (sw == SW_HIDE)
@@ -746,7 +804,11 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         SDL_SetError("Unsupported ShowWindow command");
         return FALSE;
     }
-    if (!fOk)
+    if (!fOk) {
+        if (fPrepare) {
+            lpwin->fVisible = FALSE;
+            lpwin->dwStyle &= ~WS_VISIBLE;
+        }
         return FALSE;
     }
     if (fVisible) lpwin->swInitial = 0;
@@ -778,10 +840,19 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         lpwin->dwStyle |= WS_VISIBLE;
     else
         lpwin->dwStyle &= ~WS_VISIBLE;
-    if (fRedraw && fVisible && !fWasVisible)
+    if (fRedraw && fVisible && !fWasVisible && lpwin->hwndParent)
         InvalidateRect(hwnd, NULL, TRUE);
-    if (fNotify && fVisible != fWasVisible)
+    if (fNotify && !fPrepare && fVisible != fWasVisible)
         SendMessageA(hwnd, WM_SHOWWINDOW, (WPARAM)fVisible, 0);
+    // A native renderer can acquire a new drawable when the hidden window is
+    // shown. Submit the completed frame there without waiting for queued exposure.
+    if (fPrepare && lpwin->fAlive) {
+        lpwin->cPresentDefer++;
+        FCompatPaintTree(hwnd);
+        if (!IsWindow(hwnd)) return fWasVisible;
+        lpwin->cPresentDefer--;
+        FCompatPresent(hwnd);
+    }
     if (lpwin->fAlive && fVisible && !lpwin->hwndParent && fNotify &&
         swNew != SW_SHOWMINIMIZED && !(lpwin->dwStyle & WS_DISABLED) && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
         // Showing a Cocoa window alone does not grant native keyboard focus.
@@ -1285,6 +1356,8 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
         return;
     }
     fShutdown = TRUE;
+    if (fResizeWatch) SDL_RemoveEventWatch(FWatchLiveResize, NULL);
+    fResizeWatch = FALSE;
     StarsCompatEndDialogSequence();
     for (lpwin = lpWindows; lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) {

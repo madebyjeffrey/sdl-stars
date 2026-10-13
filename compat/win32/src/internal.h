@@ -94,6 +94,7 @@ struct HWND__ {
     UINT cNativeFileDialogs;
     BOOL fKeepNative, fDeferPresent;
     UINT cPresentDefer;
+    BOOL fPresentPending;
     DLGPROC lpfnDlg;
     INT_PTR lDlgResult, lDlgMsgResult;
     HFONT hfontDialog;
@@ -213,7 +214,10 @@ void CompatFocusWindow(HWND hwnd);
 HWND HwndCompatRoot(HWND hwnd);
 HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy);
 BOOL FCompatPresent(HWND hwnd);
+BOOL FCompatRefreshPresent(HWND hwnd);
 BOOL FCompatCanvas(HWND hwnd);
+BOOL FCompatPaintTree(HWND hwnd);
+void CompatFlushPresent(void);
 BOOL FCompatPendingDialogSequence(HWND hwndOwner);
 SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp);
 int CyCompatMenuBar(HWND hwnd);

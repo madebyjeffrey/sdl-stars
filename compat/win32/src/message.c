@@ -138,6 +138,8 @@ BOOL WINAPI PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT 
         while (SDL_PollEvent(&event)) CompatRouteEvent(&event);
     if (FQueuedMessage(lpOut, hwnd, msgMin, msgMax, flags, FALSE)) return TRUE;
     if (CompatPeekPaint(lpOut, hwnd, msgMin, msgMax)) return TRUE;
+    // A caller may validate after drawing with GetDC instead of entering WM_PAINT.
+    CompatFlushPresent();
     CompatGenerateTimer(hwnd, msgMin, msgMax);
     return FQueuedMessage(lpOut, hwnd, msgMin, msgMax, flags, TRUE);
 }

@@ -74,8 +74,16 @@ include("${CMAKE_CURRENT_LIST_DIR}/sdl-unit-tests.cmake")
 if(NOT STARS_BUILD_TESTS)
     return()
 endif()
-# The qualification harness below uses GNU ld wrapping, X11 and private DBus.
+# The qualification harness below uses X11 and private DBus.
 # Build the product and help viewer on macOS without Linux-only harness targets.
+add_executable(stars-compat-paint-batch tests/compat/win32_paint_batch.c)
+target_include_directories(stars-compat-paint-batch PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-compat-paint-batch PRIVATE stars_options stars_win32 SDL3::SDL3)
+stars_test_redirect(stars-compat-paint-batch SDL_RenderPresent)
+target_compile_options(stars-compat-paint-batch PRIVATE -Wall -Wextra -Wpedantic -Werror)
+add_test(NAME win32_sdl_paint_batch COMMAND stars-compat-paint-batch)
+set_tests_properties(win32_sdl_paint_batch PROPERTIES LABELS "compat"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 add_executable(stars-compat-client-quit tests/compat/win32_client_quit.c)
 if(APPLE)
     enable_language(OBJC)

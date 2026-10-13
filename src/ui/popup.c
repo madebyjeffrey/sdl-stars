@@ -364,9 +364,11 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     pt.y -= dy;
     pt.x = max(0, min(pt.x, GetSystemMetrics(SM_CXSCREEN) - dx));
     pt.y = max(0, min(pt.y, GetSystemMetrics(SM_CYSCREEN) - dy));
-    hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_VISIBLE | WS_BORDER,
+    // Popup drawing reads hwndPopup, so publish the handle before the first paint.
+    hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_BORDER,
                                pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);
     SendMessage(hwndPopup, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+    ShowWindow(hwndPopup, SW_SHOW);
     SetCapture(hwndPopup);
     return;
 }

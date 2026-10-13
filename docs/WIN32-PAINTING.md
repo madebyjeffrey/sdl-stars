@@ -6,7 +6,36 @@ APIs. Each top-level window owns an RGBA canvas, SDL renderer and streaming text
 root window for presentation.
 GDI drawing runs on the CPU; SDL uploads and presents the canvas through its
 selected renderer. This provides accelerated presentation when available,
-with a software fallback. It does not yet run the game UI.
+with a software fallback. The shared Stars! desktop uses this same path.
+
+Presentation waits for active paints and pending visible pane paints to finish,
+so icon/DC operations cannot expose intermediate frames. Deferred drawing that
+is validated without `WM_PAINT` flushes when the message queue reaches idle.
+New top-level windows receive their show notification with logical visibility
+set while the native window remains hidden. Their show-time layout and visible
+child tree are painted before native show; the completed frame is submitted
+again immediately afterward for renderers that acquire a new native drawable.
+The paint-batch check covers controls created by the show notification, and
+the real-client popup check compares the starbase card's first canvas with a
+subsequent full repaint.
+Creation explicitly hides each new native window after SDL setup (except a
+reused wizard window). The native Cocoa test found an owned tooltip visible
+before wrapper show despite requesting `SDL_WINDOW_HIDDEN`. macOS compositor
+popups now have a clear backing until their opaque CPU canvas arrives; renderer
+clears preserve that initial transparency. The real-client test checks native
+`NSWindow` visibility/background before rendering and the opaque yellow first
+frame of a `starstt` shown through `SetWindowPos`, matching the scanner combobox.
+Native exposure immediately resubmits the last completed texture, including
+inside window/menu dispatch or with pending invalidation. Cocoa's view can
+clear to black when exposed after an initial presentation. This refresh performs
+no application paint or texture upload; pending work still follows the normal
+paint path. A presentation guard prevents recursive native refresh. The macOS
+paint-batch check counts actual SDL presentations to verify that exposure inside
+a window procedure refreshes immediately without painting an invalidated child.
+SDL's live-resize expose events are handled by a main-thread event watcher:
+it sends the current client size, batches layout/painting and presents the new
+frame during the native tracking loop. Dispatch and resize guards prevent
+reentrant painting. The watcher is removed during runtime shutdown.
 
 ## Build and debug in CLion
 

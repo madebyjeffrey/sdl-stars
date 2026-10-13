@@ -6,6 +6,31 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Window creation now explicitly hides new native windows after SDL setup.
+  Cocoa could expose owned popups despite the requested hidden flag, showing
+  black during renderer setup before the wrapper's first paint. macOS menu,
+  combobox and tooltip popup windows also start with a clear native backing
+  until their completed opaque canvas is submitted. A native test checks the
+  scanner-combobox tooltip is actually hidden before rendering and its first
+  frame has the opaque tooltip background. Turn generation and regression
+  baselines are unchanged.
+
+- Native SDL exposure now immediately resubmits the last completed window
+  texture, including exposure during menu/window dispatch and while a new paint
+  is pending. Cocoa can clear a newly exposed view to black after its prepared
+  frame was presented; previously ordinary exposure waited for the message
+  queue to reach painting. Refreshing the completed texture does not reenter
+  application drawing or upload unfinished panes. Turn generation and regression
+  baselines are unchanged.
+
+- New SDL windows now complete show-time layout and paint their visible controls
+  while the native window remains hidden, then submit the finished frame again
+  immediately after native show. This avoids waiting for queued exposure to
+  replace a black drawable. `Popup` also assigns its handle and font before
+  showing; starbase detail previously painted before `hwndPopup` was available,
+  producing different first and subsequent frames. Game rules, file formats
+  and regression baselines are unchanged.
+
 - Ordinary SDL windows now request focus when shown, including the modeless
   technology browser, reports and tutorial. Disabled/minimized windows, child
   controls and nonactivating detail cards remain excluded; `SWP_NOACTIVATE`

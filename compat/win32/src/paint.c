@@ -376,15 +376,59 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
     return TRUE;
 }
 
+static BOOL FPendingPaintTree(HWND hwnd) {
+    HWND lp;
+
+    if (hwnd->hdcPaint || hwnd->fUpdate) return TRUE;
+    for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = GetWindow(lp, GW_HWNDNEXT))
+        if (lp->fVisible && FPendingPaintTree(lp)) return TRUE;
+    return FALSE;
+}
+
+BOOL FCompatPaintTree(HWND hwnd) {
+    HWND lp, lpNext;
+
+    if (!UpdateWindow(hwnd) || !IsWindow(hwnd)) return FALSE;
+    for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = lpNext) {
+        lpNext = GetWindow(lp, GW_HWNDNEXT);
+        if (lp->fVisible && !FCompatPaintTree(lp)) return FALSE;
+        if (!IsWindow(hwnd)) return FALSE;
+    }
+    return TRUE;
+}
+
+BOOL FCompatRefreshPresent(HWND hwnd) {
+    HWND lpwin = HwndCompatRoot(hwnd);
+    static BOOL fPresenting;
+    BOOL fOk;
+
+    if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer || !lpwin->lpTexture ||
+        !lpwin->lpComposite || fPresenting) return FALSE;
+    // Cocoa can clear its view during exposure after the initial show. Reuse
+    // the last completed texture even if a new paint is pending; never reenter
+    // application drawing from a native exposure callback.
+    fPresenting = TRUE;
+    fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer, 0, 0, 0,
+                                SDL_GetWindowFlags(lpwin->lpWindow) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
+          SDL_RenderClear(lpwin->lpRenderer) &&
+          SDL_RenderTexture(lpwin->lpRenderer, lpwin->lpTexture, NULL, NULL) &&
+          SDL_RenderPresent(lpwin->lpRenderer);
+    fPresenting = FALSE;
+    return fOk;
+}
+
 BOOL FCompatPresent(HWND hwnd) {
     HWND lpwin = HwndCompatRoot(hwnd);
     RECT rc;
     SDL_Surface *lpnew;
     SDL_Rect dst;
     int cyMenu;
+    BOOL fOk;
 
     if (!lpwin || lpwin->fDestroying) return FALSE;
-    if (lpwin->fDeferPresent || lpwin->cPresentDefer != 0) return TRUE;
+    lpwin->fPresentPending = TRUE;
+    // Present the completed window tree, not intermediate icon/DC or pane paints.
+    if (lpwin->fDeferPresent || lpwin->cPresentDefer != 0 || FPendingPaintTree(lpwin)) return TRUE;
     if (!FCanvas(lpwin)) return FALSE;
     cyMenu = CyCompatMenuBar(lpwin);
     if (!lpwin->lpComposite || lpwin->lpComposite->w != lpwin->lpCanvas->w ||
@@ -402,9 +446,19 @@ BOOL FCompatPresent(HWND hwnd) {
     if (!FComposeChildren(lpwin, lpwin->lpComposite, 0, cyMenu, &rc) ||
         !FCompatDrawMenuBar(lpwin, lpwin->lpComposite)) return FALSE;
     CompatDrawCursor(lpwin, lpwin->lpComposite);
-    return SDL_UpdateTexture(lpwin->lpTexture, NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
-           SDL_RenderClear(lpwin->lpRenderer) && SDL_RenderTexture(lpwin->lpRenderer, lpwin->lpTexture, NULL, NULL) &&
-           SDL_RenderPresent(lpwin->lpRenderer);
+    if (FPendingPaintTree(lpwin)) return TRUE;
+    fOk = SDL_UpdateTexture(lpwin->lpTexture, NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
+          FCompatRefreshPresent(lpwin);
+    if (fOk) lpwin->fPresentPending = FALSE;
+    return fOk;
+}
+
+void CompatFlushPresent(void) {
+    HWND lp;
+
+    for (lp = HwndCompatRegistry(); lp; lp = lp->lpNext)
+        if (lp->fAlive && !lp->hwndParent && lp->fVisible && lp->fPresentPending)
+            FCompatPresent(lp);
 }
 
 static HDC HdcNew(HWND hwnd, BOOL fPaint) {
@@ -717,9 +771,9 @@ BOOL WINAPI EndPaint(HWND hwnd, const PAINTSTRUCT *lpps) {
 
     if (!lpwin || !lpdc || !lpdc->fPaint || lpdc->hwnd != hwnd || lpwin->hdcPaint != lpps->hdc)
         return FALSE;
-    fOk = FCompatPresent(hwnd);
     lpwin->hdcPaint = NULL;
     CloseDC(lpdc);
+    fOk = FCompatPresent(hwnd);
     return fOk;
 }
 
