@@ -6,17 +6,19 @@ import sys
 import tempfile
 
 
-def run(executable, work, default_root=False, **choices):
+def run(executable, work, default_root=False, settings_root=False, **choices):
     (work / 'settings').mkdir(parents=True, exist_ok=True)
     (work / 'settings' / 'Stars.ini').unlink(missing_ok=True)
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'),
                STARS_DEBUG_LIBRARY_STARTUP='1')
-    if default_root:
+    if default_root or settings_root:
         env.pop('STARS_LIBRARY_DIR', None)
-        pref_path = work / 'pref' / 'Stars!'
-        pref_path.mkdir(parents=True, exist_ok=True)
-        env['STARS_TEST_PREF_PATH'] = str(pref_path) + os.sep
+        if default_root:
+            env.pop('STARS_SETTINGS_DIR', None)
+            pref_path = work / 'pref' / 'Stars!'
+            pref_path.mkdir(parents=True, exist_ok=True)
+            env['STARS_TEST_PREF_PATH'] = str(pref_path) + os.sep
         env.pop('STARS_CLIENT_CONTINUE', None)
         env.pop('STARS_CLIENT_NEW_GAME', None)
         env.pop('STARS_CLIENT_NEW_ADVANCED', None)
@@ -79,6 +81,18 @@ def main():
         assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
         assert (path.parent / '.library').is_file()
         run(executable, work, default_root=True, STARS_CLIENT_LIBRARY_OPEN=name)
+
+    with tempfile.TemporaryDirectory(prefix='stars-settings-library-root-') as directory:
+        work = Path(directory)
+        games = work / 'settings' / 'Games'
+        name = 'settings-root-game'
+        path = games / name / name
+        run(executable, work, settings_root=True,
+            STARS_CLIENT_NEW_GAME=str(path.with_suffix('.xy')),
+            STARS_CLIENT_LIBRARY_NAME=name)
+        assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
+        assert (path.parent / '.library').is_file()
+        run(executable, work, settings_root=True, STARS_CLIENT_LIBRARY_OPEN=name)
     return 0
 
 

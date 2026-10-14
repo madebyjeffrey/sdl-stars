@@ -10,14 +10,17 @@ static char szLibraryName[256];
 
 static int16_t FInitLibrary(void) {
     const char *pszOverride;
+    const char *pszSettings;
     char *pszRoot;
     int cch;
 
     pszOverride = getenv("STARS_LIBRARY_DIR");
-    pszRoot = pszOverride ? NULL : SDL_GetPrefPath("", "Stars!");
-    if (!pszOverride && !pszRoot) return FALSE;
-    cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames", pszOverride ? pszOverride : pszRoot,
-                   pszOverride ? szDirSep : "");
+    pszSettings = getenv("STARS_SETTINGS_DIR");
+    pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
+    if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
+    cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames",
+                      pszOverride ? pszOverride : pszSettings ? pszSettings : pszRoot,
+                      pszOverride || pszSettings ? szDirSep : "");
     SDL_free(pszRoot);
     return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
 }
@@ -258,6 +261,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     int y;
     Uint64 msStart = SDL_GetTicks();
     int16_t fLibrary;
+    int16_t fEnumerated;
 
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
@@ -271,7 +275,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
         fprintf(stderr, "[DEBUG-library-startup] library root ready=%d path=%s elapsed=%llu ms\n",
                 fLibrary, szLibraryRoot, (unsigned long long)(SDL_GetTicks() - msStart));
     if (fLibrary) {
-        int16_t fEnumerated = FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
+        fEnumerated = FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] enumeration done=%d games=%ld elapsed=%llu ms\n",
                     fEnumerated, (long)SendMessage(hwndList, LB_GETCOUNT, 0, 0),
