@@ -3,6 +3,7 @@
 #include "stars_test.h"
 
 #ifdef STARS_UI_SDL
+#include <stars_compat.h>
 #include <SDL3/SDL_clipboard.h>
 #endif
 
@@ -128,24 +129,80 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 static void test_NewPasswordDlg_utf8_limit(void) {
     HWND hwnd;
     HWND hwndEdit;
+    HWND hwndOrdinary;
     char szPass[20];
-    const char *pszPass = "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
-    int i;
+    const char *pszTooLong = "1234567890123456";
+    const char *pszUnicodeTooLong = "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
+    const char *pszExact = "1234567890123\xc3\xa9";
+    int16_t idPlayerSave;
+    int16_t fLogOffSave;
 
     TEST_ASSERT(FStarsTestInit());
+    idPlayerSave = idPlayer;
+    fLogOffSave = fLogOff;
+    idPlayer = 0;
+    fLogOff = TRUE;
     hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
     TEST_ASSERT(hwnd != NULL);
-    for (i = 0; i < 2; i++) {
-        hwndEdit = GetDlgItem(hwnd, i == 0 ? IDC_EDIT1 : IDC_PASSWORD_CONFIRM);
-        TEST_ASSERT(hwndEdit != NULL);
-        TEST_ASSERT(SDL_SetClipboardText(pszPass));
-        SendMessage(hwndEdit, WM_PASTE, 0, 0);
-        TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 12);
-        TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
-        TEST_ASSERT(SDL_SetClipboardText("abc"));
-        SendMessage(hwndEdit, WM_PASTE, 0, 0);
-        TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
-    }
+    hwndEdit = GetDlgItem(hwnd, IDC_EDIT1);
+    TEST_ASSERT(hwndEdit != NULL);
+    TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
+    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
+    TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
+    SendMessage(hwndEdit, WM_CHAR, '\b', 0);
+    SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
+    cStarsTestAlert = 0;
+    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_CHECK(cStarsTestAlert == 1);
+    TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
+    TEST_CHECK(IsWindow(hwnd));
+
+    TEST_ASSERT(SDL_SetClipboardText(pszExact));
+    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
+    TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
+    TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
+
+    hwndEdit = GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM);
+    TEST_ASSERT(hwndEdit != NULL);
+    TEST_ASSERT(SDL_SetClipboardText(pszUnicodeTooLong));
+    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
+    TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
+    SendMessage(hwndEdit, WM_CHAR, '\b', 0);
+    SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
+    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_CHECK(cStarsTestAlert == 2);
+    TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
+    TEST_CHECK(IsWindow(hwnd));
+
+    TEST_ASSERT(SDL_SetClipboardText(pszExact));
+    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
+    TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
+    TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
+
+    TEST_ASSERT(SetWindowText(hwndEdit, "different"));
+    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_CHECK(cStarsTestAlert == 3);
+    TEST_CHECK(strstr(szStarsTestAlert, "not the same") != NULL);
+    TEST_CHECK(IsWindow(hwnd));
+    TEST_ASSERT(SetWindowText(hwndEdit, pszExact));
+    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_CHECK(cStarsTestAlert == 3);
+    TEST_CHECK(IsWindow(hwnd));
+    hwndOrdinary = CreateWindowExA(0, "EDIT", "", WS_CHILD, 0, 0, 100, 24, hwnd, NULL, hInst, NULL);
+    TEST_ASSERT(hwndOrdinary != NULL);
+    SendMessage(hwndOrdinary, EM_LIMITTEXT, 15, 0);
+    TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
+    SendMessage(hwndOrdinary, WM_PASTE, 0, 0);
+    TEST_CHECK(GetWindowText(hwndOrdinary, szPass, sizeof(szPass)) == 15);
+    TEST_CHECK(!StarsCompatTextInputRejected(hwndOrdinary));
+    idPlayer = idPlayerSave;
+    fLogOff = fLogOffSave;
     DestroyWindow(hwnd);
 }
 

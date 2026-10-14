@@ -369,7 +369,8 @@ retain byte budgets. See [encoding contracts](UNICODE-BOUNDARIES.md) and
 bidirectional layout and grapheme editing remain separate work.
 
 Password creation and changes use the same 15-byte UTF-8 limit as login and
-the command line, including complete-code-point truncation at the edit limit.
+the command line. Oversized user input is rejected as a whole with a re-entry
+warning, while ordinary text fields retain their truncation behavior.
 Generated fleet names, clipped pane titles and bounded wrapper labels preserve
 complete code points as well; byte counts remain the public API convention.
 Message-format expansion is bounded by its existing 256-byte buffer; printf

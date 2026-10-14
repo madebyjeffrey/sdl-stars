@@ -1495,3 +1495,4 @@
 0x058a idsNativeFileSelectionFailed "File selection could not be completed. The path may be too long or invalid. Please choose another file."
 # 0x058b–0x058f reserved for managed-game strings in PR #22.
 0x0590 idsNativeFilenameEncoding "The filename cannot be represented losslessly in UTF-8."
+0x0591 idsNativePasswordReenter "Password input could not be accepted. Please enter it again using no more than 15 UTF-8 bytes."

@@ -1,4 +1,5 @@
 #include "win.h"
+#include <stars_compat.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char     szValue[33];
@@ -1017,7 +1018,7 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
@@ -1084,12 +1085,12 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
                 if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt2 = LSaltFromSz(szPass);

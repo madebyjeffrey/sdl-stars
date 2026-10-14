@@ -115,6 +115,12 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     }
     if (fUser && (hwnd->dwStyle & ES_READONLY)) return;
     fLimit = cch > (hwnd->cchLimit > cchBase ? hwnd->cchLimit - cchBase : 0);
+    if (fLimit && fUser && (hwnd->dwStyle & ES_PASSWORD)) {
+        hwnd->fEditInputRejected = TRUE;
+        hwnd->fModified = TRUE;
+        NotifyEdit(hwnd, EN_MAXTEXT);
+        return;
+    }
     if (fLimit) cch = hwnd->cchLimit > cchBase ? hwnd->cchLimit - cchBase : 0;
     cch = CchUtf8Prefix(psz, cch);
     if (fLimit && cch == 0 && ichFirst == ichLast) {
@@ -710,7 +716,6 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         else if (w == VK_DELETE) {
             if (lp->dwStyle & ES_READONLY) return 0;
-            lp->fEditInputRejected = FALSE;
             iUndoAction = lp->ichAnchor == lp->ichCaret ? editUndoDelete : editUndoSeparate;
             if (lp->ichAnchor == ich && ich < cch) {
                 lp->ichCaret = IchEditNext(hwnd, ich);
@@ -723,7 +728,6 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_CHAR:
         if (lp->dwStyle & ES_READONLY) return 0;
         if (w == '\b') {
-            lp->fEditInputRejected = FALSE;
             iUndoAction = lp->ichAnchor == lp->ichCaret ? editUndoBackspace : editUndoSeparate;
             if (lp->ichAnchor == lp->ichCaret && lp->ichCaret != 0) {
                 lp->ichAnchor = IchEditPrev(hwnd, lp->ichAnchor);

@@ -301,7 +301,7 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 GetDlgItemText(hwnd, IDC_RACE_PLURAL_NAME, vplr.szNames, 32);
                 GetRaceStat(&vplr, rsUseLeftover);
                 if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass, 16) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     return TRUE;
                 }
                 j = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));

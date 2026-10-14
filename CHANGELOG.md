@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `NewPasswordDlg` let the edit control silently keep a shortened prefix when
+  password input exceeded 15 UTF-8 bytes. Password fields now reject the whole
+  oversized edit or paste and ask the user to enter the password again; other
+  text fields retain truncation. The rejection remains until the field changes,
+  so no-op Backspace or Delete cannot clear it. Exact-limit Unicode passwords
+  remain valid. Native baselines and turn generation are unchanged.
 - `WriteBattlePlan` used a 36-byte buffer for raw names whose length marker,
   31-byte text and terminator require a 37-byte record. Its temporary buffer
   now covers that existing record size. Disk fields, native baselines and
