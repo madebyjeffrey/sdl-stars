@@ -494,6 +494,94 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
     return ick;
 }
 
+static int16_t FReadLegacyRaceString(const uint8_t *lpb, size_t cb, char *szRaw, size_t cchMax, size_t *pcbRead) {
+    const uint8_t *lpbEnd;
+    size_t cch;
+    int16_t cOut;
+
+    szRaw[0] = 0;
+    if (cb == 0 || cchMax != 32) return FALSE;
+    if (lpb[0] == 0) {
+        lpbEnd = memchr(lpb + 1, 0, cb - 1);
+        if (!lpbEnd) return FALSE;
+        cch = (size_t)(lpbEnd - lpb - 1);
+        if (cch >= cchMax) return FALSE;
+        memcpy(szRaw, lpb + 1, cch);
+        szRaw[cch] = 0;
+        if (pcbRead) *pcbRead = cch + 2;
+    } else {
+        if (lpb[0] > cb - 1) return FALSE;
+        cOut = (int16_t)cchMax - 1;
+        if (!FDecompressUserStringBytes((char *)lpb + 1, lpb[0], szRaw, &cOut)) return FALSE;
+        if (pcbRead) *pcbRead = (size_t)lpb[0] + 1;
+    }
+    return TRUE;
+}
+
+static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb, int16_t fPlural) {
+    int16_t iOff;
+    size_t cbRead;
+
+    memset(pplr, 0, sizeof(PLAYER));
+    if (cb < offsetof(PLAYER, idPlanetHome)) return FALSE;
+    if (((PLAYER *)lpb)->det == detAll) {
+        iOff = offsetof(PLAYER, rgmdRelation);
+        if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
+            lpb[iOff] > cb - (size_t)iOff - 1) return FALSE;
+        memmove(pplr, lpb, iOff);
+        memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
+        iOff += lpb[iOff] + 1;
+    } else {
+        iOff = offsetof(PLAYER, idPlanetHome);
+        memmove(pplr, lpb, iOff);
+    }
+    if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return FALSE;
+    iOff += (int16_t)cbRead;
+    if (fPlural) {
+        if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return FALSE;
+        iOff += (int16_t)cbRead;
+    }
+    if ((size_t)iOff != cb) return FALSE;
+    pplr->fLearned = FALSE;
+    return TRUE;
+}
+
+static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
+    char szName[96];
+    char szNames[96];
+    size_t cbName;
+    size_t cbNames;
+    size_t cbKeep;
+    int16_t fShortened;
+
+    if (CchCp1252ToUtf8(szName, sizeof(szName), (const unsigned char *)pplr->szName, strlen(pplr->szName)) < 0) return FALSE;
+    if (fPlural) {
+        if (CchCp1252ToUtf8(szNames, sizeof(szNames), (const unsigned char *)pplr->szNames, strlen(pplr->szNames)) < 0) return FALSE;
+    } else {
+        cbName = strlen(szName);
+        if (cbName + 1 >= sizeof(szNames)) return FALSE;
+        memcpy(szNames, szName, cbName);
+        szNames[cbName] = 's';
+        szNames[cbName + 1] = 0;
+    }
+    cbName = strlen(szName);
+    cbNames = strlen(szNames);
+    fShortened = cbName >= sizeof(pplr->szName) || cbNames >= sizeof(pplr->szNames);
+    if (fShortened) {
+        cbKeep = CchUtf8Prefix(szName, sizeof(pplr->szName) - 1);
+        memmove(pplr->szName, szName, cbKeep);
+        pplr->szName[cbKeep] = 0;
+        cbKeep = CchUtf8Prefix(szNames, sizeof(pplr->szNames) - 1);
+        memmove(pplr->szNames, szNames, cbKeep);
+        pplr->szNames[cbKeep] = 0;
+        if (!FConfirmLegacyRaceNames(pplr->szName, pplr->szNames)) return -1;
+    } else {
+        memcpy(pplr->szName, szName, cbName + 1);
+        memcpy(pplr->szNames, szNames, cbNames + 1);
+    }
+    return TRUE;
+}
+
 int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     int16_t  idsError;
     int32_t  lSaltSav;
@@ -502,6 +590,10 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     jmp_buf  env;
     int16_t  fRet;
     int16_t  fSav;
+    int16_t  fLegacy;
+    int16_t  fPlural;
+    int16_t  fConvert;
+    uint16_t icksum;
     char    *pch;
 
     idsError = -1;
@@ -527,28 +619,46 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     {
         StreamOpen(szFile, mdRead);
         ReadRt();
-        if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+        if (hdrCur.rt != rtBOF || hdrCur.cb != sizeof(RTBOF) || ((RTBOF *)rgbCur)->verMajor != 2 ||
+            ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor > 85) {
             idsError = idsFileDoesBelongVersionStars;
             fRet = -1;
             goto LBadFile;
         } else {
             wVersFile = ((RTBOF *)rgbCur)->wVersion;
+            fLegacy = ((RTBOF *)rgbCur)->verMinor < 85;
+            fPlural = ((RTBOF *)rgbCur)->verMinor >= 55;
             if (((RTBOF *)rgbCur)->dt == 5) {
                 ReadRt();
                 if (hdrCur.rt == rtPlr) {
                     idsError = idsGameFileAppearsCorruptUnableLoadFile;
-                    ReadRtPlr(&plr, rgbCur, hdrCur.cb);
+                    if (fLegacy) {
+                        if (!FReadLegacyRacePlayer(&plr, rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
+                    } else {
+                        ReadRtPlr(&plr, rgbCur, hdrCur.cb);
+                    }
                     ReadRt();
-                    if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == IRaceChecksum(&plr)) {
+                    icksum = IRaceChecksum(&plr);
+                    if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
+                        if (fLegacy && plr.lSalt != 0) {
+                            idsError = idsNativeLegacyRaceProtected;
+                            fRet = -1;
+                            goto LBadFile;
+                        }
+                        if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
+                            idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;
+                            fRet = -1;
+                            goto LBadFile;
+                        }
                         lSaltSav = lSaltCur;
                         lSaltCur = plr.lSalt;
-                        if (fChkPass && !FCheckPassword()) {
+                        if (!fLegacy && fChkPass && !FCheckPassword()) {
                             lSaltCur = lSaltSav;
                             fRet = -1;
                             goto LBadFile;
                         } else {
                             lSaltCur = lSaltSav;
-                            if (plr.lSalt != 0) {
+                            if (!fLegacy && plr.lSalt != 0) {
                                 strcpy(szRacePass, szPassLast);
                             } else {
                                 szRacePass[0] = 0;

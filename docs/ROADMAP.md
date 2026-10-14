@@ -362,9 +362,11 @@ These priorities remain subject to the completion evidence in the goal tracker. 
 
 UTF-8 text is implemented throughout the new client and host, including
 catalog/data generation, resources, controls, rendering, clipboard and settings.
-Format 2.85 explicitly identifies UTF-8 saves; older game and race files are
-unsupported. Native paths must round-trip losslessly, and fixed text fields
-retain byte budgets. See [encoding contracts](UNICODE-BOUNDARIES.md) and
+Format 2.85 explicitly identifies UTF-8 saves. Older game, turn, history and
+orders files remain unsupported; unprotected 2.49–2.84 race designs are the
+bounded import exception, with protected legacy races rejected. Native paths
+must round-trip losslessly, and fixed text fields retain byte budgets. See
+[encoding contracts](UNICODE-BOUNDARIES.md) and
 [ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
 bidirectional layout and grapheme editing remain separate work.
 

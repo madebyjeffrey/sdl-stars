@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FWasRaceFile` now imports unprotected race designs from formats 2.49–2.84.
+  A bounded legacy parser verifies record framing and the original CP1252
+  checksum before converting names; pre-2.55 singular-only records gain a
+  plural form. Names that exceed 31 UTF-8 bytes are shortened only after the
+  player confirms the proposed complete-code-point names. Protected legacy
+  races and legacy game, turn, history and orders files remain rejected. Imports
+  leave their source files unchanged, and saves use 2.85. Gameplay attributes,
+  native baselines and host results are unchanged.
 - `NewPasswordDlg` let the edit control silently keep a shortened prefix when
   password input exceeded 15 UTF-8 bytes. Password fields now reject the whole
   oversized edit or paste and ask the user to enter the password again; other

@@ -56,6 +56,42 @@ int CchCopyUtf8(char *pszOut, size_t cbOut, const char *psz, size_t cb) {
     return (int)cb;
 }
 
+int CchCp1252ToUtf8(char *pszOut, size_t cbOut, const unsigned char *rgb, size_t cb) {
+    static const uint16_t rgwCp1252[32] = {
+        0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
+        0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
+        0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+        0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178
+    };
+    size_t i, cOut = 0;
+    uint32_t ch;
+    int c;
+
+    if (cbOut == 0) return -3;
+    pszOut[0] = 0;
+    for (i = 0; i < cb; i++) {
+        ch = rgb[i];
+        if (ch == 0) goto malformed;
+        if (ch >= 0x80 && ch < 0xa0) ch = rgwCp1252[ch - 0x80];
+        c = ch < 0x80 ? 1 : ch < 0x800 ? 2 : 3;
+        if ((size_t)c >= cbOut - cOut) { pszOut[0] = 0; return -3; }
+        if (c == 1) pszOut[cOut++] = (char)ch;
+        else if (c == 2) {
+            pszOut[cOut++] = (char)(0xc0 | (ch >> 6));
+            pszOut[cOut++] = (char)(0x80 | (ch & 0x3f));
+        } else {
+            pszOut[cOut++] = (char)(0xe0 | (ch >> 12));
+            pszOut[cOut++] = (char)(0x80 | ((ch >> 6) & 0x3f));
+            pszOut[cOut++] = (char)(0x80 | (ch & 0x3f));
+        }
+    }
+    pszOut[cOut] = 0;
+    return (int)cOut;
+malformed:
+    pszOut[0] = 0;
+    return -1;
+}
+
 int CchUtf16leToUtf8(char *pszOut, size_t cbOut, const unsigned char *rgb, size_t cch) {
     size_t i, cb = 0;
     uint32_t ch, chLow;

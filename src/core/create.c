@@ -970,6 +970,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
     int16_t c;
     int16_t i;
     int16_t fSuccess;
+    int16_t fReadRace;
     char   *lpbStart;
     jmp_buf env;
     int16_t j;
@@ -1127,7 +1128,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
             rgplr[i].lvlAi = lvlAi;
         } else {
             strcpy(szWork, lpbStart);
-            if (!FWasRaceFile(szWork, FALSE)) {
+            fReadRace = FWasRaceFile(szWork, FALSE);
+            if (fReadRace != 1) {
             LCantGetRace:
                 CchSprintf(szWork, PszGetCompressedString(idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
                 AlertSz(szWork, MB_ICONHAND);

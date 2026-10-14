@@ -20,6 +20,7 @@ void    CreateChildWindows();
 void    PostOpenGame();
 void    ShowTitleScreen();
 void    SetSzRaceFile(const char *pszFile);
+int16_t FConfirmLegacyRaceNames(char *szName, char *szNames);
 void    AddMRUFile(char *pszFileName, char *pszExt);
 void    CloseGameWindows();
 int16_t FFinishPlrMsgEntry(int16_t dInc);

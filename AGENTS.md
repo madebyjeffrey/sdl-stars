@@ -19,11 +19,12 @@ The command-line host remains independent of SDL.
 
 When goals conflict, apply them in this order:
 
-1. **File contract:** main uses UTF-8 throughout and writes/reads only file
-   format 2.85. Existing 2.6j/2.7/2.8 game and race files are deliberately
-   unsupported; their branches retain legacy compatibility. Record layouts
-   and field sizes stay fixed. Text limits count UTF-8 bytes, and truncation
-   must preserve complete code points. See `docs/UNICODE-BOUNDARIES.md`.
+1. **File contract:** main uses UTF-8 throughout and writes file format 2.85.
+   It imports unprotected legacy race designs from 2.49–2.84; legacy games,
+   turns, history, orders and protected races remain unsupported. Record
+   layouts and field sizes stay fixed. Text limits count UTF-8 bytes, and
+   truncation must preserve complete code points. See
+   `docs/UNICODE-BOUNDARIES.md`.
 2. **Behavior:** game behavior changes only on purpose. Each intentional
    change is its own commit, moves the native regression baseline in that
    commit, and is recorded in `CHANGELOG.md`.

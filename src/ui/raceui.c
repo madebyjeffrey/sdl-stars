@@ -1380,6 +1380,13 @@ void SetSzRaceFile(const char *pszFile) {
     szRaceFile[cch] = 0;
 }
 
+int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
+    char szPrompt[256];
+
+    CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
+    return AlertSz(szPrompt, MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES;
+}
+
 int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
     uint16_t     icksum;
     char         szFileTitle[256];
