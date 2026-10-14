@@ -31,7 +31,7 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     SendMessage(hwndDlg, WM_COMMAND, fPickerReady ? IDOK : IDCANCEL, 0);
 }
 static int TestPicker(HWND hwnd) {
-    char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[256], szCanonical[PATH_MAX];
+    char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[PATH_MAX + 64], szCanonical[PATH_MAX];
     char szTitle[4];
     OPENFILENAMEA ofn;
     FILE *pf;
