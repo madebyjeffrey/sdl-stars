@@ -83,10 +83,12 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     }
     lp->cx = lp->cxPhysical - 150; lp->cy = lp->cyPhysical - 150;
     if (pszPrinter && *pszPrinter && SDL_strcasecmp(pszPrinter, "pdf") != 0) {
+        if (!FUtf8Valid(pszPrinter, strlen(pszPrinter))) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
         if (SDL_strlcpy(lp->szPrinter, pszPrinter, sizeof(lp->szPrinter)) >= sizeof(lp->szPrinter)) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
         lp->fSpool = TRUE;
     }
-    if (pszFile && *pszFile && SDL_strlcpy(lp->szTarget, pszFile, sizeof(lp->szTarget)) >= sizeof(lp->szTarget)) {
+    if (pszFile && *pszFile && (!FUtf8Valid(pszFile, strlen(pszFile)) ||
+        SDL_strlcpy(lp->szTarget, pszFile, sizeof(lp->szTarget)) >= sizeof(lp->szTarget))) {
         SetLastError(ERROR_INVALID_PARAMETER); goto fail;
     }
     hMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(*lpdm));

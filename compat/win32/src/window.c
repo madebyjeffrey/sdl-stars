@@ -214,6 +214,7 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
         (UINT_PTR)lpwc->lpszClassName <= UINT16_MAX ||
+        !FUtf8Valid(lpwc->lpszClassName, strlen(lpwc->lpszClassName)) ||
         lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
         return 0;
     if (LpFindClass(lpwc->lpszClassName, lpwc->hInstance)) {

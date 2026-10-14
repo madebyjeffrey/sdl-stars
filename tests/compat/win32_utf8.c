@@ -60,7 +60,7 @@ static int TestPicker(HWND hwnd) {
 
 int main(void) {
     WNDCLASS wc = {0};
-    HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword;
+    HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword, hwndList;
     HMENU hmenu;
     HDC hdc, hdcOrdinary;
     SIZE size, sizeOrdinary;
@@ -69,6 +69,7 @@ int main(void) {
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     FILE *pf;
     STARSCOMPATSNAPSHOT snap = {0};
+    OFSTRUCT ofs;
     size_t cb, i;
     BOOL fFound = FALSE;
     wc.lpszClassName = "StarsUtf8Probe\xce\xa9"; wc.lpfnWndProc = DefWindowProcA;
@@ -78,9 +79,18 @@ int main(void) {
     CHECK(hwnd && StarsCompatSetWindowTitleUtf8(hwnd, psz));
     CHECK(GetClassNameA(hwnd, szText, 16) == 14 && !strcmp(szText, "StarsUtf8Probe"));
     hmenu = CreatePopupMenu(); CHECK(hmenu && AppendMenuA(hmenu, MF_STRING, 1, psz));
+    CHECK(!AppendMenuA(hmenu, MF_STRING, 2, "\xff"));
+    CHECK(GetMenuItemCount(hmenu) == 1);
     CHECK(GetMenuStringA(hmenu, 1, szSmall, 2, MF_BYCOMMAND) == 0 && szSmall[0] == 0);
     CHECK(GetMenuStringA(hmenu, 1, szSmall, 4, MF_BYCOMMAND) == 2 && !strcmp(szSmall, "\xc3\xa9"));
     CHECK(DestroyMenu(hmenu));
+    hwndList = CreateWindow("LISTBOX", "", WS_CHILD | LBS_HASSTRINGS, 0, 0, 100, 20, hwnd,
+                            (HMENU)(INT_PTR)103, wc.hInstance, NULL);
+    CHECK(hwndList);
+    CHECK(SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)"\xff") == LB_ERR);
+    CHECK(SendMessage(hwndList, LB_GETCOUNT, 0, 0) == 0);
+    CHECK(OpenFile("/tmp/stars-\xff", &ofs, OF_READ) == HFILE_ERROR);
+    CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
     CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow), psz) == 0);
     hwndEdit = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);

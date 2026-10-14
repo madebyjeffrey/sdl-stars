@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Wrapper list/menu/class setters and `OpenFile` could retain malformed UTF-8,
+  and picker navigation could retain an unsupported resolved directory.
+  These inputs and print destinations are now validated; picker extension
+  abbreviations preserve complete code points. Native baselines are unchanged.
 - `GenNewGameFromFile` validated only its title and copied its final output
   path without a capacity check. It now validates the whole UTF-8 definition,
   accepts an optional BOM and bounds the output path. Native regression

@@ -85,6 +85,7 @@ BOOL WINAPI InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     else if (!LpItem(lp, pos, 0, &lp, &i)) return FALSE;
     if (flags & MF_SEPARATOR) flags = MF_SEPARATOR | MF_DISABLED | MF_GRAYED;
     else {
+        if (psz && !FUtf8Valid(psz, strlen(psz))) return FALSE;
         if (flags & MF_POPUP) {
             hsub = LpMenu((HMENU)id);
             if (!hsub || hsub->hparent || hsub->hwndOwner) return FALSE;

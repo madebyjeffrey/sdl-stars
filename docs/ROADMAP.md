@@ -375,6 +375,8 @@ complete code points as well; byte counts remain the public API convention.
 Name readers use the actual record extent, including orders; compressed bytes
 are never retried as raw text. Player-message readers validate decoded UTF-8
 and raw terminators before retaining a message.
+Wrapper text setters and file/print inputs reject malformed UTF-8, including
+resolved picker directories whose native bytes are unsupported.
 
 ## 2.8 (released)
 

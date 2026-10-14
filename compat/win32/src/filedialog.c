@@ -146,6 +146,9 @@ static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BO
     if (!FJoinFile(szPath, lp->szDir, psz) || !realpath(szPath, szReal) || stat(szReal, &st) != 0 || !S_ISDIR(st.st_mode)) {
         FileError(hwnd, "The directory does not exist."); return FALSE;
     }
+    if (!FUtf8Valid(szReal, strlen(szReal))) {
+        FileError(hwnd, "The directory cannot be represented losslessly in UTF-8."); return FALSE;
+    }
     if (strcmp(szReal, lp->szDir) == 0) {
         SetWindowTextA(GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir); return TRUE;
     }
@@ -185,7 +188,8 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     pszExt = strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
         cch = strlen(szPath);
-        if (snprintf(szPath + cch, sizeof(szPath) - cch, ".%.3s", pszDef) >= (int)(sizeof(szPath) - cch)) {
+        if (!FUtf8Valid(pszDef, strlen(pszDef))) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
+        if (snprintf(szPath + cch, sizeof(szPath) - cch, ".%.*s", (int)CchUtf8Prefix(pszDef, 3), pszDef) >= (int)(sizeof(szPath) - cch)) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
     }
@@ -406,6 +410,10 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
         dwDialogError = FNERR_INVALIDFILENAME; return FALSE;
     }
+    if (!FUtf8Valid(lpof->lpstrFile, strlen(lpof->lpstrFile)) ||
+        (lpof->lpstrInitialDir && !FUtf8Valid(lpof->lpstrInitialDir, strlen(lpof->lpstrInitialDir)))) {
+        dwDialogError = FNERR_INVALIDFILENAME; return FALSE;
+    }
     if ((lpof->Flags & ~grFlagsAllowed) || lpof->lpstrCustomFilter || lpof->lpfnHook || lpof->FlagsEx ||
         !SDL_IsMainThread() || !FCompatVideo()) { dwDialogError = CDERR_INITIALIZATION; SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
     if (lpof->hwndOwner && !IsWindow(lpof->hwndOwner)) { dwDialogError = CDERR_INITIALIZATION; SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE; }
@@ -420,6 +428,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     }
     dlg.iFilter = lpof->nFilterIndex > 0 && lpof->nFilterIndex <= (DWORD)dlg.cFilter ? (int)lpof->nFilterIndex - 1 : 0;
     if (!getcwd(szCwd, sizeof(szCwd))) { dlg.dwError = CDERR_INITIALIZATION; goto done; }
+    if (!FUtf8Valid(szCwd, strlen(szCwd))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
     strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
     if (lpof->lpstrInitialDir && *lpof->lpstrInitialDir) {
         struct stat st;
@@ -435,6 +444,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
             if (!realpath(szPath, dlg.szDir)) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
         }
     }
+    if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
     hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !getenv("STARS_FILE_DIALOG_BACKEND") || strcmp(getenv("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
