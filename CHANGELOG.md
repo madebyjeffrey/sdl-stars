@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `PszFormatString` copied expanded names and paths past its 256-byte buffer.
+  Its expansions are now bounded, and message/printf truncation preserves
+  complete UTF-8 code points. Normal messages, native regression baselines
+  and turn generation are unchanged.
 - `UnpackBattlePlan` could leave an existing plan partially changed on a
   rejected name. It now validates into temporary text and reports failure;
   `FRunLogRecord` increments the plan count only after success. Native

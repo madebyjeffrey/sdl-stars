@@ -74,6 +74,29 @@ static void TestInvalidDefinition(void) {
     TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
 }
 
-TEST_LIST = {{"invalid UTF-8 title cleans up the error handler", TestInvalidDefinition},
+static void TestFormattedTextBounds(void) {
+    char szFormat[1026];
+    char sz[1024];
+    char *psz;
+    int16_t rgParams[2] = {-123, 55};
+
+    TEST_ASSERT(FStarsTestInit());
+    strcpy(szWork, "World");
+    TEST_CHECK(!strcmp(PszFormatString("\x5cw \x5ci \x5cu", rgParams), "World -123 55"));
+    memset(szFormat, 'a', 252);
+    memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
+    psz = PszFormatString(szFormat, NULL);
+    TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
+    memset(szBase, 'a', sizeof(szBase) - 1); szBase[sizeof(szBase) - 1] = 0;
+    psz = PszFormatString("\x5ch", NULL);
+    TEST_CHECK(strlen(psz) < sizeof(szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
+    memset(szFormat, 'a', 1022);
+    memcpy(szFormat + 1022, "\xc3\xa9z", 4);
+    TEST_CHECK(CchSprintf(sz, "%s", szFormat) == 1022);
+    TEST_CHECK(strlen(sz) == 1022 && FUtf8Valid(sz, strlen(sz)));
+}
+
+TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+             {"invalid UTF-8 definition cleans up the error handler", TestInvalidDefinition},
              {"strict UTF-8 text and UTF-16 boundaries", TestEncoding},
              {"UTF-8 passwords and filename byte capacities", TestPasswords}, {NULL, NULL}};

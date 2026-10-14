@@ -147,7 +147,11 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
         sz[0] = 0;
         return 0;
     }
-    return cch < 1024 ? cch : 1023;
+    if (cch >= 1024) {
+        cch = (int)CchUtf8Prefix(sz, 1023);
+        sz[cch] = 0;
+    }
+    return cch;
 }
 
 // LMulDiv returns lNumber * lNumerator / lDenominator rounded half away from

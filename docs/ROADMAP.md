@@ -372,6 +372,8 @@ Password creation and changes use the same 15-byte UTF-8 limit as login and
 the command line, including complete-code-point truncation at the edit limit.
 Generated fleet names, clipped pane titles and bounded wrapper labels preserve
 complete code points as well; byte counts remain the public API convention.
+Message-format expansion is bounded by its existing 256-byte buffer; printf
+output truncated at its 1024-byte contract also ends at a code-point boundary.
 Name readers use the actual record extent, including orders; compressed bytes
 are never retried as raw text. Player-message readers validate decoded UTF-8
 and raw terminators before retaining a message.

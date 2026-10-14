@@ -1,5 +1,6 @@
 /* Narrow strings and arithmetic for UI callers; core native.c stays authoritative. */
 #include <windows.h>
+#include "encoding.h"
 #include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
@@ -96,7 +97,12 @@ int WINAPIV wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     va_start(args, pszFormat);
     cchResult = vsnprintf(pszDest, 1024, szFormat, args);
     va_end(args);
-    return cchResult < 0 ? 0 : cchResult > 1023 ? 1023 : cchResult;
+    if (cchResult < 0) { pszDest[0] = 0; return 0; }
+    if (cchResult > 1023) {
+        cchResult = (int)CchUtf8Prefix(pszDest, 1023);
+        pszDest[cchResult] = 0;
+    }
+    return cchResult;
 LInvalid:
     pszDest[0] = 0;
     SetLastError(ERROR_INVALID_PARAMETER);

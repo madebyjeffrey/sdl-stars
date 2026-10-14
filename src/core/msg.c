@@ -258,6 +258,16 @@ char *PszGetMessageN(int16_t iMsg) {
     return psz;
 }
 
+// Formatting may expand bounded names or paths beyond the message buffer.
+static char *PchAppendMessageText(char *pch, const char *psz) {
+    size_t cch;
+
+    cch = CchUtf8Prefix(psz, (size_t)(szMsgBuf + sizeof(szMsgBuf) - 1 - pch));
+    memmove(pch, psz, cch);
+    pch[cch] = 0;
+    return pch + cch;
+}
+
 char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
     int16_t  iMineral;
     int16_t  cOut;
@@ -275,46 +285,43 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
     iMineral = -1;
     pParams = pParamsReal;
     pch = szMsgBuf;
-    for (; *pszFormat != 0; pszFormat++) {
+    for (; *pszFormat != 0 && pch < szMsgBuf + sizeof(szMsgBuf) - 1; pszFormat++) {
         if (*pszFormat != '\\') {
             *pch++ = *pszFormat;
         } else {
             pszFormat++;
+            if (*pszFormat == 0) break;
             switch (*pszFormat) {
             case 'w':
-                strcpy(pch, szWork);
-                pch += strlen(szWork);
+                pch = PchAppendMessageText(pch, szWork);
                 break;
             case 'f':
             case 'h':
             case 'r':
             case 't':
             case 'y':
-                strcpy(pch, szBase);
-                pch += strlen(szBase);
+                pch = PchAppendMessageText(pch, szBase);
                 switch (*pszFormat) {
                 case 'f':
                     if (idPlayer != iplrNone) {
-                        c = CchSprintf(pch, ".x%d", idPlayer + 1);
+                        c = CchSprintf(szBuf, ".x%d", idPlayer + 1);
                         goto DoInt;
                     }
                     /* fallthrough */
                 case 't':
                     if (idPlayer != iplrNone) {
-                        c = CchSprintf(pch, ".m%d", idPlayer + 1);
+                        c = CchSprintf(szBuf, ".m%d", idPlayer + 1);
                         goto DoInt;
                     }
                     /* fallthrough */
                 case 'h':
-                    strcat(pch, ".hst");
-                    pch += 4;
+                    pch = PchAppendMessageText(pch, ".hst");
                     break;
                 case 'r':
-                    c = CchSprintf(pch, ".h%d", idPlayer + 1);
+                    c = CchSprintf(szBuf, ".h%d", idPlayer + 1);
                     goto DoInt;
                 case 'y':
-                    strcat(pch, ".xy");
-                    pch += 3;
+                    pch = PchAppendMessageText(pch, ".xy");
                 }
                 break;
             case 'e':
@@ -327,9 +334,9 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 pchT = PszGetCompressedString(idsDecreased + *pParams);
                 goto FinishString;
             case 'i':
-                c = CchSprintf(pch, PCTD, *pParams);
+                c = CchSprintf(szBuf, PCTD, *pParams);
             DoInt:
-                pch += c;
+                pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
             case 'L':
@@ -354,15 +361,13 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                     if (w & 1) {
                         if (cOut > 0) {
                             if (w & 0xfffe) {
-                                *pch++ = ',';
-                                *pch++ = ' ';
+                                pch = PchAppendMessageText(pch, ", ");
                             } else {
-                                pch += CchGetString(idsAnd, pch);
+                                pch = PchAppendMessageText(pch, PszGetCompressedString(idsAnd));
                             }
                         }
                         pchT = PszPlayerName(i, FALSE, TRUE, TRUE, 0, NULL);
-                        strcpy(pch, pchT);
-                        pch += strlen(pchT);
+                        pch = PchAppendMessageText(pch, pchT);
                         cOut++;
                     }
                     i++;
@@ -387,19 +392,18 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 goto FinishString;
             case 'P':
                 if ((double)(int16_t)(*pParams / 100) >= (double)10.0) {
-                    c = CchSprintf(pch, PCTDPCTPCT, *pParams / 100);
+                    c = CchSprintf(szBuf, PCTDPCTPCT, *pParams / 100);
                 } else {
-                    c = CchSprintf(pch, PCTDXPCTDPCTPCT, *pParams / 100, *pParams - *pParams / 100 * 100);
+                    c = CchSprintf(szBuf, PCTDXPCTDPCTPCT, *pParams / 100, *pParams - *pParams / 100 * 100);
                 }
-                pch += c;
+                pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
             case 'p':
             DoPlanet:
                 pchT = PszGetPlanetName(*pParams);
             FinishString:
-                strcpy(pch, pchT);
-                pch += strlen(pchT);
+                pch = PchAppendMessageText(pch, pchT);
             DoNothing:
                 pParams++;
                 break;
@@ -422,8 +426,7 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 part.hs.iItem = *pParams;
                 if (FLookupPart(&part) <= mdPartAvailInvalid) {
                 }
-                strcpy(pch, part.pcom->szName);
-                pch += strlen(part.pcom->szName);
+                pch = PchAppendMessageText(pch, part.pcom->szName);
                 pParams++;
                 break;
             case 'g':
@@ -432,8 +435,8 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 goto FinishString;
             case 'G':
                 w = *pParams;
-                c = CchGetString(idsMineField + w, pch);
-                pch += c;
+                c = CchGetString(idsMineField + w, szBuf);
+                pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
             case 'n':
@@ -457,8 +460,8 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 pchT = PszPlayerName(w, FALSE, FALSE, FALSE, 0, NULL);
                 goto FinishString;
             case 'u':
-                c = CchSprintf(pch, "%u", *pParams);
-                pch += c;
+                c = CchSprintf(szBuf, "%u", *pParams);
+                pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
             case 'U':
@@ -466,8 +469,8 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
             case 'v':
                 l = (int32_t)((uint32_t)pParams[1] << 0x10) | (uint32_t)*pParams;
                 pParams += 2;
-                c = CchSprintf(pch, PCTLD, l);
-                pch += c;
+                c = CchSprintf(szBuf, PCTLD, l);
+                pch = PchAppendMessageText(pch, szBuf);
                 if (*pszFormat == 'v')
                     break;
                 if (*pszFormat == 'V') {
@@ -477,8 +480,7 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 if (iMineral < 0 || iMineral >= 6)
                     break;
                 pchT = vrgszUnits[iMineral];
-                strcpy(pch, pchT);
-                pch += strlen(pchT);
+                pch = PchAppendMessageText(pch, pchT);
                 break;
             case 'z':
                 c = *pParams >> 5;
@@ -490,11 +492,11 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 }
                 if (c != idPlayer) {
                     pchT = PszPlayerName(c, FALSE, FALSE, TRUE, 0, NULL);
-                    CchSprintf(pch, "%s %s", pchT, lpshdef->hul.szClass);
+                    CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
-                    strcpy(pch, lpshdef->hul.szClass);
+                    strcpy(szBuf, lpshdef->hul.szClass);
                 }
-                pch += strlen(pch);
+                pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
             default:
@@ -504,6 +506,7 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
         }
     }
     *pch = 0;
+    szMsgBuf[CchUtf8Prefix(szMsgBuf, sizeof(szMsgBuf) - 1)] = 0;
     return szMsgBuf;
 }
 
