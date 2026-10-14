@@ -59,6 +59,7 @@ void StarsCompatProcessExit(void);
 
 BOOL StarsCompatTextInputRejected(HWND hwnd);
 BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz);
+BOOL StarsCompatSetWindowTextUtf8(HWND hwnd);
 
 /* Prepare a hidden top-level window's first ShowWindow(SW_SHOW) without
  * exposing it to the desktop while the application initializes.

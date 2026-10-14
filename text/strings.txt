@@ -1493,3 +1493,8 @@
 0x0588 idsNativePasswordCharacters "This password contains characters that Stars! cannot store. Use Windows-1252 characters."
 0x0589 idsNativeFilenameTooLong "The selected filename is too long for this application."
 0x058a idsNativeFileSelectionFailed "File selection could not be completed. The path may be too long or invalid. Please choose another file."
+0x058b idsLibraryGames "Games"
+0x058c idsLibraryOpenGame "Open Game"
+0x058d idsLibraryInvalidName "Choose a portable filename without slashes, reserved characters, or trailing spaces or dots. The complete game and backup paths must fit within 255 bytes."
+0x058e idsLibraryNameTaken "That name is already in use. An available name has been suggested; choose a unique name to continue."
+0x058f idsLibraryStorageFailed "The managed game could not be saved. Check the application data location and available disk space."

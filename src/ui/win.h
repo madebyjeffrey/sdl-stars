@@ -25,6 +25,7 @@
 #include "globalsui.h"
 #include "init.h"
 #include "logui.h"
+#include "libraryui.h"
 #include "mdi.h"
 #include "mineui.h"
 #include "msgui.h"

@@ -52,6 +52,13 @@ BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
     return fResult;
 }
 
+BOOL StarsCompatSetWindowTextUtf8(HWND hwnd) {
+    HWND lpwin = LpCompatWindow(hwnd);
+    if (!lpwin) return FALSE;
+    lpwin->fUtf8Text = TRUE;
+    return TRUE;
+}
+
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
     const char *pszDriver = SDL_GetCurrentVideoDriver();
     return !pszDriver || strcmp(pszDriver, "wayland") ||

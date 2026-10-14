@@ -8,6 +8,19 @@ to avoid SDK import collisions. Native Unicode open/save lives in the separate
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
+Desktop game creation uses a managed library under SDL's per-user preference
+root: `~/Library/Application Support/Stars!/Games` on macOS,
+`$XDG_DATA_HOME/Stars!/Games` (default `~/.local/share/Stars!/Games`) on Linux,
+and `%APPDATA%/Stars!/Games` on Windows. `STARS_LIBRARY_DIR` overrides the parent
+of `Games`; isolated workflow tests use this override. When only
+`STARS_SETTINGS_DIR` is set, library storage follows that isolated settings root.
+Each game folder contains its existing file family plus a `.library` metadata
+file with a schema version, exchange basename, remembered player and last-played
+Unix time. Generated files must have complete record framing before the entry
+is committed. Metadata is published by replacing a flushed temporary file through
+`ReplaceNativeFile`; Windows uses `MoveFileExW` so failed replacement preserves
+previous metadata. The command-line host never resolves or requires this library.
+
 The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler
 (see Platforms below). This document covers what the port changes and what

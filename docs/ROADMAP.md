@@ -64,7 +64,7 @@ Combo selection callbacks can return focus to the frame without cancelling
 the accepted row; a re-entry regression test covers that path. Instruction
 updates no longer reactivate an already visible tutor, preserving focus in
 the player's current control. New-game cancellation checks cover the live wizard
-page returned by the save picker before verifying the restored title and
+page returned by the library-name dialog before verifying the restored title and
 game state after cancelling the wizard itself.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
@@ -172,7 +172,17 @@ return-to-title paths share the same creation function. The SDL presets now link
 The race wizard retains one native window across page transitions. A
 default-width request now selects both frame dimensions, and native SDL menu
 popups retain their owner relationship. `FOpenGame` now accepts Linux paths;
-Continue Game is tested with relative and absolute fixture paths. The
+Continue Game is tested with relative and absolute fixture paths.
+Managed game creation and reopening (#5) now share `libraryui.c`: desktop
+creation chooses a unique portable name, all generated files stay within that
+managed folder, and the startup Games list reopens committed entries after
+restart. SDL supplies platform application-data roots (including XDG on Linux);
+metadata and test storage remain separate from legacy records. The suspended
+second startup implementation has been removed, so SDL is the sole entry point.
+Library alerts retain their message separately from the compressed-string
+caption buffer, so name rejection and storage failure checks also work under GCC.
+Import/export, player selection and race-library management remain separate
+slices of specification #3. The
 initial top-level size notification now initializes pane layout, and the
 modeless Technology Browser closes correctly by button and native close request.
 A separate `sdl-sanitize` preset now instruments project code; unsigned race-bit masks are

@@ -56,6 +56,9 @@ void ShowTitleScreen() {
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
         hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
+                    (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle));
         fFreeingTitle = FALSE;
         ShowWindow(hwndFrame, SW_HIDE);
     }

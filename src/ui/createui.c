@@ -253,7 +253,12 @@ Finish:
         hwndTitle = 0;
         ShowWindow(hwndFrame, SW_SHOW);
     }
-    GenerateWorld(FALSE);
+    if (!FFinishLibraryGame(hwnd, GenerateWorld(FALSE))) {
+        DestroyCurGame();
+        ShowTitleScreen();
+        gd.fNoIdleChecks = fIdleSav;
+        return;
+    }
     if (idPlayer == iplrNone) {
         BringUpHostDlg();
     }
@@ -262,56 +267,13 @@ Finish:
 }
 
 int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
-    char         szXY[3];
-    uint16_t     i;
-    char         szFileTitle[256];
-    char         szFile[256];
-    char         szFilter[256];
-    OPENFILENAME ofn;
-
-    if (szFileSuggest) {
-        strcpy(szFile, szFileSuggest);
-    } else {
-        szFile[0] = 0;
-    }
-    CchGetString(idsStarsGameFilesXy, szFilter);
-    for (i = 0; szFilter[i] != 0; i++) {
-        if (szFilter[i] == '|') {
-            szFilter[i] = 0;
-        }
-    }
-    memset(&ofn, 0, sizeof(OPENFILENAME));
-    szXY[0] = 'x';
-    szXY[1] = 'y';
-    szXY[2] = 0;
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = 0x100;
-    ofn.lpstrFileTitle = szFileTitle;
-    ofn.nMaxFileTitle = 0x100;
-    ofn.lpstrInitialDir = szDirName;
-    ofn.lpstrTitle = "Choose New Game Name";
-    ofn.lpstrDefExt = szXY;
-    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN;
-    if (FNativeSaveFileName(&ofn) != 0) {
-        if (ofn.nFileExtension != 0) {
-            strcpy(&szFile[ofn.nFileExtension], szXY);
-        } else {
-            strcat(szFile, szXY);
-        }
-        strcpy(szFileSuggest, szFile);
-        return TRUE;
-    }
-    return FALSE;
+    return FChooseLibraryGameName(hwnd, szFileSuggest);
 }
 
 static int16_t FChooseNewGameName(HWND hwnd) {
     char *pszFile = (char *)GetWindowLongPtr(hwnd, DWLP_USER);
 
-    // Keep the wizard page alive so the native save panel can belong to it.
+    // Keep the wizard page alive while naming, including after cancellation.
     return fRCWReadOnly || (pszFile && FGetNewGameName(hwnd, pszFile));
 }
 
