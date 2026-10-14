@@ -11,15 +11,10 @@ def run(executable, work, default_root=False, **choices):
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'))
     if default_root:
-        env.pop('STARS_SETTINGS_DIR', None)
         env.pop('STARS_LIBRARY_DIR', None)
         pref_path = work / 'pref' / 'Stars!'
         pref_path.mkdir(parents=True, exist_ok=True)
         env['STARS_TEST_PREF_PATH'] = str(pref_path) + os.sep
-        env['HOME'] = str(work / 'home')
-        env['XDG_CONFIG_HOME'] = str(work / 'config')
-        if sys.platform == 'win32':
-            env['LOCALAPPDATA'] = str(work / 'local')
         env.pop('STARS_CLIENT_CONTINUE', None)
         env.pop('STARS_CLIENT_NEW_GAME', None)
         env.pop('STARS_CLIENT_NEW_ADVANCED', None)

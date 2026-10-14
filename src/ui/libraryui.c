@@ -14,7 +14,6 @@ static int16_t FInitLibrary(void) {
     int cch;
 
     pszOverride = getenv("STARS_LIBRARY_DIR");
-    if (!pszOverride) pszOverride = getenv("STARS_SETTINGS_DIR");
     pszRoot = pszOverride ? NULL : SDL_GetPrefPath("", "Stars!");
     if (!pszOverride && !pszRoot) return FALSE;
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames", pszOverride ? pszOverride : pszRoot,

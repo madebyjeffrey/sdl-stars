@@ -8,9 +8,9 @@ checked when evaluating [issue #30](https://github.com/madebyjeffrey/sdl-stars/i
 PR #22 keeps desktop root resolution in the SDL-backed UI layer and routes
 directory creation, enumeration, removal, and file metadata checks through
 `src/platform/native.c`. Its real-client workflow exercises the default
-`SDL_GetPrefPath` path with an isolated test root, without `STARS_LIBRARY_DIR`
-or `STARS_SETTINGS_DIR`, then creates and reopens a managed game from that
-root. The workflow test supplies its temporary root through the
+`SDL_GetPrefPath` path with an isolated test root, without `STARS_LIBRARY_DIR`,
+then creates and reopens a managed game from that root. The workflow test keeps
+settings in its own temporary directory and supplies the library root through the
 `SDL_GetPrefPath` test hook so it cannot touch the user's real library. SDL
 supplies the native Application Support, XDG data, and Windows application-data
 conventions.
