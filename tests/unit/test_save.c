@@ -257,7 +257,60 @@ static void test_utf8_saved_names(void) {
     TEST_CHECK(strcmp(rgplr[0].szNames, "caf\xc3\xa9-\xce\xa9") == 0);
 }
 
-TEST_LIST = {{"UTF-8 saved names and byte capacities", test_utf8_saved_names},
+static void test_utf8_record_bounds(void) {
+    uint8_t rgb[64];
+    char sz[32];
+    size_t cbRead;
+    int16_t cOut;
+
+    memcpy(rgb, "\0\xc3\xa9\0", 4);
+    TEST_CHECK(!FReadUserString(rgb, 3, sz, sizeof(sz), NULL));
+    TEST_CHECK(sz[0] == 0);
+    TEST_CHECK(FReadUserString(rgb, 4, sz, sizeof(sz), &cbRead));
+    TEST_CHECK(cbRead == 4 && !strcmp(sz, "\xc3\xa9"));
+    rgb[1] = 0xff;
+    TEST_CHECK(!FReadUserString(rgb, 4, sz, sizeof(sz), NULL));
+    cOut = 63;
+    TEST_ASSERT(FCompressUserString("\xf0\x9f\x98\x80", (char *)rgb + 1, &cOut));
+    rgb[0] = cOut;
+    TEST_CHECK(!FReadUserString(rgb, cOut, sz, sizeof(sz), NULL));
+    TEST_CHECK(FReadUserString(rgb, cOut + 1, sz, sizeof(sz), &cbRead));
+    TEST_CHECK(cbRead == (size_t)cOut + 1 && !strcmp(sz, "\xf0\x9f\x98\x80"));
+    rgb[0] = 1; rgb[1] = 0x0b;
+    TEST_CHECK(!FReadUserString(rgb, 2, sz, sizeof(sz), NULL));
+    TEST_CHECK(sz[0] == 0);
+    rgb[1] = 0xff;
+    TEST_CHECK(!FReadUserString(rgb, 2, sz, sizeof(sz), NULL));
+}
+
+static void test_utf8_design_and_plan_bounds(void) {
+    uint8_t rgb[64];
+    SHDEF rgshdefT[16];
+    BTLPLAN btlplan;
+    RTSHDEF *lprt = (RTSHDEF *)rgb;
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = iplrNone;
+    memset(rgb, 0, sizeof(rgb));
+    memset(rgshdefT, 0, sizeof(rgshdefT));
+    lprt->det = detSome; lprt->ihuldef = ihuldefScout;
+    memcpy(rgb + offsetof(RTSHDEF, chs), "\0\xc3\xa9\0", 4);
+    TEST_CHECK(!FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 3));
+    TEST_CHECK(FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 4));
+    TEST_CHECK(!strcmp(rgshdefT[0].hul.szClass, "\xc3\xa9"));
+    memset(rgb, 0, sizeof(rgb));
+    memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
+    idsFileError = 0;
+    UnpackBattlePlan(rgb, &btlplan, 0, 7);
+    TEST_CHECK(idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+    idsFileError = 0;
+    UnpackBattlePlan(rgb, &btlplan, 0, 8);
+    TEST_CHECK(idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
+}
+
+TEST_LIST = {{"UTF-8 records require complete in-record text", test_utf8_record_bounds},
+             {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},
+             {"UTF-8 saved names and byte capacities", test_utf8_saved_names},
              {"SetVisPFInit host sentinel", test_SetVisPFInit_host},
              {"FWriteDataFile Claim Adjuster sees only habitat", test_FWriteDataFile_claim_adjuster_sees_only_habitat},
              {"SetVisPFFleets sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase},

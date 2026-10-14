@@ -537,9 +537,9 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                 ReadRt();
                 if (hdrCur.rt == rtPlr) {
                     idsError = idsGameFileAppearsCorruptUnableLoadFile;
-                    ReadRtPlr(&plr, rgbCur);
+                    ReadRtPlr(&plr, rgbCur, hdrCur.cb);
                     ReadRt();
-                    if (hdrCur.rt == rtEOF && RawLoad16(rgbCur) == IRaceChecksum(&plr)) {
+                    if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == IRaceChecksum(&plr)) {
                         lSaltSav = lSaltCur;
                         lSaltCur = plr.lSalt;
                         if (fChkPass && !FCheckPassword()) {

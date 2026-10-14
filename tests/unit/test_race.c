@@ -100,7 +100,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     ((VERS *)&wVersFile)->verMinor = 85;
 
     memset(&buf, 0x55, sizeof(buf));
-    ReadRtPlr(&buf.plr, rgb);
+    ReadRtPlr(&buf.plr, rgb, sizeof(rgb));
     for (i = 0; i < 16; i++)
         TEST_CHECK(buf.plr.rgmdRelation[i] == 1);
     TEST_CHECK(strcmp(buf.plr.szName, "Bob") == 0);
@@ -118,7 +118,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     TEST_ASSERT(FCompressUserString(szLong, (char *)&rgb[iOff + 1], &cOut));
     rgb[iOff] = (uint8_t)cOut;
     memset(&buf, 0x55, sizeof(buf));
-    ReadRtPlr(&buf.plr, rgb);
+    ReadRtPlr(&buf.plr, rgb, sizeof(rgb));
     TEST_CHECK(buf.plr.szNames[0] == 0);
     for (i = 0; i < (int)sizeof(buf.rgchGuard); i++)
         TEST_CHECK(buf.rgchGuard[i] == 0x55);

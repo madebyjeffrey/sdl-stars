@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ReadRtPlr`, `FReadShDef`, `FReadFleet` and `UnpackBattlePlan` could read
+  names past their record boundary; `FRunLogRecord` treated failed compressed
+  fleet names as raw bytes. Readers now require complete, bounded UTF-8 text,
+  and `FDecompressUserString` rejects incomplete escapes. Player messages are
+  validated before entering memory, and game/header/race-checksum records
+  require their fixed sizes. Valid files, native baselines and host results
+  are unchanged; malformed records are rejected or skipped as appropriate.
 - Generated fleet names and clipped mineral/message titles could split UTF-8
   characters, causing strict drawing to reject whole labels. These cuts and
   bounded menu, class, file-title and font/printer label copies now preserve

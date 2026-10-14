@@ -683,10 +683,23 @@ void WriteRtPlrMsg(MSGPLR *lpmp) {
 // record is too short for its header or text.
 MSGPLR *LpmsgplrFromRt() {
     MSGPLR *lpmp;
+    char szText[1001];
+    int16_t cOut;
+    int16_t cLen;
+    const char *pszEnd;
 
     /* NATIVE: skip records too short for their header or text; see WIN16-PARITY.md. */
     if (hdrCur.cb < sizeof(RTPLRMSG) || abs(((RTPLRMSG *)rgbCur)->cLen) + sizeof(RTPLRMSG) > hdrCur.cb)
         return NULL;
+    cLen = ((RTPLRMSG *)rgbCur)->cLen;
+    if (cLen >= 0) {
+        cOut = sizeof(szText) - 1;
+        if (!FDecompressUserString((char *)((RTPLRMSG *)rgbCur)->rgbMsg, cLen, szText, &cOut)) return NULL;
+    } else {
+        pszEnd = memchr(((RTPLRMSG *)rgbCur)->rgbMsg, 0, -cLen);
+        if (!pszEnd || pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg >= (int)sizeof(szText) ||
+            !FUtf8Valid((char *)((RTPLRMSG *)rgbCur)->rgbMsg, (size_t)(pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg))) return NULL;
+    }
     lpmp = LpAlloc(offsetof(MSGPLR, rgbMsg) + hdrCur.cb - sizeof(RTPLRMSG), htPlrMsg);
     lpmp->lpmsgplrNext = NULL;
     lpmp->iPlrFrom = ((RTPLRMSG *)rgbCur)->iPlrFrom;

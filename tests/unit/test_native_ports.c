@@ -64,7 +64,8 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
     mp->iInRe = 123;
     mp->cLen = len;
     for (i = 0; i < abs(len); i++)
-        mp->rgbMsg[i] = (uint8_t)(i * 17 + from);
+        mp->rgbMsg[i] = len < 0 ? 'A' + from : 0;
+    if (len < 0) mp->rgbMsg[-len - 1] = 0;
     return mp;
 }
 
@@ -157,6 +158,24 @@ static void TestMessages(void) {
     vlpmsgplrIn = vlpmsgplrOut = NULL;
 }
 
+static void TestMessageTextBounds(void) {
+    RTPLRMSG *lprt = (RTPLRMSG *)rgbCur;
+
+    TEST_ASSERT(FStarsTestInit());
+    memset(rgbCur, 0, sizeof(rgbCur));
+    hdrCur.cb = sizeof(RTPLRMSG) + 3;
+    lprt->cLen = -3;
+    memcpy(lprt->rgbMsg, "\xc3\xa9\0", 3);
+    TEST_CHECK(LpmsgplrFromRt() != NULL);
+    lprt->rgbMsg[2] = 'x';
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+    lprt->rgbMsg[2] = 0; lprt->rgbMsg[0] = 0xff;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+    lprt->cLen = 1; lprt->rgbMsg[0] = 0x0b;
+    hdrCur.cb = sizeof(RTPLRMSG) + 1;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+}
+
 static void TestStaticColor(void) {
     hbrButtonFace = (HBRUSH)(uintptr_t)0x1234;
     TEST_ASSERT(RandomSeedDlg(NULL, WM_CTLCOLORSTATIC, 0, 0x1234) == (INT_PTR)hbrButtonFace);
@@ -222,6 +241,7 @@ static void TestFleetMessageGoto(void) {
 }
 
 TEST_LIST = {{"player messages", TestMessages},
+             {"player-message text is bounded and strictly UTF-8", TestMessageTextBounds},
              {"fleet message goto", TestFleetMessageGoto},
              {"static control color", TestStaticColor},
              {"battle heap rollover", TestBattleRollover},
