@@ -1493,7 +1493,11 @@
 0x0588 idsNativePasswordCharacters "This password contains invalid UTF-8."
 0x0589 idsNativeFilenameTooLong "The selected filename is too long for this application."
 0x058a idsNativeFileSelectionFailed "File selection could not be completed. The path may be too long or invalid. Please choose another file."
-# 0x058b–0x058f reserved for managed-game strings in PR #22.
+0x058b idsLibraryGames "Games"
+0x058c idsLibraryOpenGame "Open Game"
+0x058d idsLibraryInvalidName "Choose a portable filename without slashes, reserved characters, or trailing spaces or dots. The complete game and backup paths must fit within 255 bytes."
+0x058e idsLibraryNameTaken "That name is already in use. An available name has been suggested; choose a unique name to continue."
+0x058f idsLibraryStorageFailed "The managed game could not be saved. Check the application data location and available disk space."
 0x0590 idsNativeFilenameEncoding "The filename cannot be represented losslessly in UTF-8."
 0x0591 idsNativePasswordReenter "Password input could not be accepted. Please enter it again using no more than 15 UTF-8 bytes."
 0x0593 idsNativeLegacyRaceNameShortened "The imported race names exceed the 31-byte UTF-8 limit. Use these shortened names?\nSingular: %s\nPlural: %s"

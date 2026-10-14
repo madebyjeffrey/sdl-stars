@@ -38,7 +38,7 @@ endif()
 # The client and compile check share the existing Windows UI sources.
 add_library(stars-ui-compat-check OBJECT EXCLUDE_FROM_ALL ${STARS_UI_SOURCES}
     "${STARS_GENERATED_DIR}/text_tutorial.c")
-target_link_libraries(stars-ui-compat-check PRIVATE stars_options stars_win32_headers)
+target_link_libraries(stars-ui-compat-check PRIVATE stars_options stars_win32_headers SDL3::SDL3)
 target_compile_options(stars-ui-compat-check PRIVATE
     -Werror=implicit-function-declaration -Werror=incompatible-pointer-types)
 add_dependencies(stars-ui-compat-check stars_version)
@@ -167,7 +167,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent NewGameWizard FNativeSaveFileName)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile)
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
 add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
 target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)

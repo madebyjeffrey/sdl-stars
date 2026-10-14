@@ -2,8 +2,15 @@
 #include "win.h"
 #include <stars_compat.h>
 #include "internal.h"
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
+    const char *pszPath = getenv("STARS_TEST_PREF_PATH");
+    if (pszPath) return SDL_strdup(pszPath);
+    return SDL_GetPrefPath(pszOrg, pszApp);
+}
 
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
@@ -296,6 +303,7 @@ int16_t StarsTest_PromptPassword(void) {
 bool SDL_ShowWindow(SDL_Window *lpWindow);
 bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     HWND hwnd;
+    bool fResult;
     BYTE r, g, b, a;
     COLORREF cr;
     BYTE *rgb;
@@ -322,7 +330,14 @@ bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
                 RGB(r, g, b) == cr;
         }
     }
-    return SDL_ShowWindow(lpWindow);
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+        fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title before visible=%d id=%u\n",
+                IsWindowVisible(hwnd), SDL_GetWindowID(lpWindow));
+    fResult = SDL_ShowWindow(lpWindow);
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+        fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title result=%d visible=%d\n",
+                fResult, IsWindowVisible(hwnd));
+    return fResult;
 }
 
 static BOOL FPushClick(HWND hwnd) {
@@ -1148,6 +1163,7 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
+    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
     PostQuitMessage(91);
     return IDOK;
 }
@@ -1170,6 +1186,28 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
+        const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
+        HWND hwndList;
+        LRESULT iGame;
+        if (iStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) goto LDone;
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            iGame = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
+            if (iGame == LB_ERR) goto LDone;
+            SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
+            fChecked = TRUE;
+            iStage = 1;
+            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            return;
+        }
+        if (IsWindow(hwndTitle)) return;
+        if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
+        fPassed = TRUE;
+        puts("Managed game: visible in library and reopened after restart");
+        PostQuitMessage(0);
+        return;
+    }
     if (pszNewGame) {
         if (!FCheckNewGameWorkflow()) goto LDone;
         return;
@@ -1352,7 +1390,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     return;
 LDone:
     if (!fPassed) {
-        fprintf(stderr, "Client startup/wizard check failed at stage %d: %s\n", iStage, SDL_GetError());
+        fprintf(stderr, "Client startup/wizard check failed at stage %d (new-game step %d, choices %d, creating %d): %s\n",
+                iStage, iNewGameStep, cNewGameChoices, fCreatingGame, SDL_GetError());
         KillTimer(NULL, id);
         PostQuitMessage(92);
     }
@@ -1379,5 +1418,5 @@ int main(void) {
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
-    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == 0 && cEarlyFrameShow == 0 ? 0 : 1;
+    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }
