@@ -310,7 +310,28 @@ static void test_utf8_design_and_plan_bounds(void) {
     TEST_CHECK(idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
 }
 
+static void test_utf8_raw_battle_plan(void) {
+    BTLPLAN btlplan = {0};
+    BTLPLAN btlplanRead;
+    HDR hdr;
+    uint8_t rgb[64];
+    char szPacked[32];
+    int16_t cOut = 31;
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    for (i = 0; i < 10; i++) memcpy(btlplan.szName + i * 3, "\xe6\x9d\xb1", 3);
+    btlplan.szName[30] = 'X'; btlplan.szName[31] = 0;
+    TEST_ASSERT(!FCompressUserString(btlplan.szName, szPacked, &cOut));
+    WriteBattlePlan(&btlplan, TRUE);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
+    TEST_ASSERT(UnpackBattlePlan(rgb, &btlplanRead, 0, hdr.cb));
+    TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
+}
+
 TEST_LIST = {{"UTF-8 records require complete in-record text", test_utf8_record_bounds},
+             {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},
              {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},
              {"UTF-8 saved names and byte capacities", test_utf8_saved_names},
              {"SetVisPFInit host sentinel", test_SetVisPFInit_host},

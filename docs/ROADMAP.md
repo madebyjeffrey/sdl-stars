@@ -380,6 +380,8 @@ and raw terminators before retaining a message.
 Editing a retained raw message compares its absolute byte count, preserving
 unchanged uncompressible UTF-8 messages without an out-of-bounds comparison.
 Rejected battle-plan text leaves the existing plan and plan count unchanged.
+The battle-plan writer reserves the extra raw-name marker byte, allowing
+31-byte uncompressible UTF-8 names to round trip without a stack overrun.
 Wrapper text setters and file/print inputs reject malformed UTF-8, including
 resolved picker directories whose native bytes are unsupported.
 Scanner JSON exports validate and preserve UTF-8 names directly; no legacy

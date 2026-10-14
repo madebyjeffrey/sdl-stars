@@ -911,7 +911,8 @@ void MarkFleet(FLEET *lpfl, DetType det) {
 }
 
 void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
-    uint8_t  rgb[36];
+    // A raw name adds a length marker before its fixed 32-byte field.
+    uint8_t  rgb[sizeof(BTLPLAN) + 1];
     uint8_t *pb;
     char     szPlanName[32];
     int16_t  cOut;

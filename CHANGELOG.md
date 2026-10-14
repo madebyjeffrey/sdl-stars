@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `WriteBattlePlan` used a 36-byte buffer for raw names whose length marker,
+  31-byte text and terminator require a 37-byte record. Its temporary buffer
+  now covers that existing record size. Disk fields, native baselines and
+  host results are unchanged.
 - `FFinishPlrMsgEntry` passed a negative raw-message length to `memcmp`,
   reading past unchanged uncompressed UTF-8 messages and marking them changed.
   It now compares the stored byte count. Native baselines and host results
