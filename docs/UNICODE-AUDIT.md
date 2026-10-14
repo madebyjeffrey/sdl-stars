@@ -1,5 +1,53 @@
 # Stars! Unicode portability audit
 
+## UTF-8 follow-up audit for PR #23
+
+The follow-up audit starts from the UTF-8 migration at `27a1107` and covers
+application text truncation and text-bearing file readers. Decoded application
+text remains UTF-8 throughout; native UTF-16 APIs are conversion boundaries,
+and compressed payloads, order prefixes and popup separator sentinels remain
+binary or ASCII protocols. No disk struct, record width, text ID or part number
+changes. Original regression fixtures remain frozen.
+
+| Area | Resolution and coverage |
+| --- | --- |
+| Passwords | `NewPasswordDlg` uses the same 15-byte edit limit as login, race creation and CLI input. A dialog test pastes four emoji and checks both fields stop at complete code points, with room for ASCII up to the limit. |
+| Names and pane titles | `PszGetFleetName` and `PszFleetNameFromWord` bound design names before appending `+`; mineral/message title clipping uses complete prefixes. A real generated-fleet test uses a 29-byte design ending in `é` across the old byte-28 cutoff. |
+| Bounded wrapper text | Menu/class getters, picker file titles, dialog font faces and printer labels end at code-point boundaries. Font constructors reject malformed or unterminated face names. Tests cover short menu/class/title destinations and invalid list/menu/file inputs. |
+| Formatting | `PszFormatString` bounds all name/path/list/numeric expansions to its existing 256-byte buffer. Literal truncation and the 1024-byte `CchSprintf`/`wsprintfA` output limit preserve UTF-8. Tests exercise supplementary characters across the cutoff, a full-length path and ordinary formatting. The printf APIs retain their existing caller-owned destination-capacity contract. |
+| Saved names | `FReadUserString` bounds raw terminators and compressed lengths to the containing record and destination byte budget. Player, design, fleet and battle-plan readers receive the actual record extent. Tests reject missing terminators, truncated compressed input and malformed UTF-8, while accepting supplementary characters. |
+| Orders | Failed fleet-name decompression is rejected before replacing the existing name; compressed bytes are never retried as raw text. Battle-plan decoding validates temporary text before changing a plan or its count. Tests verify a malformed fleet rename retains the original name and a rejected battle-plan name leaves the destination untouched. |
+| Player messages | Raw terminators and UTF-8 validity, compressed escape completeness and decoded output limits are checked before retaining messages. Malformed records continue to be skipped by the existing message-reader policy. Serialization tests now use valid text/codec payloads, while explicit malformed-message cases exercise rejection. |
+| File framing and definitions | BOF/game/race-checksum records require their fixed sizes; appended turns require 2.85. Universe definitions validate the entire text before parsing, accept an initial BOM, check the native file size before narrowing it, and bound output paths and copied race lines. Tests cover invalid title/later-line bytes, embedded NULs and a file beyond 64 KiB. |
+| Native paths and settings | Core native file APIs, command paths, profiles and host INI parsing retain strict UTF-8 validation. Wrapper `OpenFile`, print inputs and resolved picker directories now enforce the same contract. Optional picker titles and three-byte extension abbreviations preserve complete prefixes. |
+
+Remaining byte-oriented cuts were checked by purpose: ASCII numeric/status
+fields, delimiter-based path suffix removal, English suffix removal, whitespace
+trimming and binary separator construction do not split current UTF-8 text.
+`WrapTextOut`/`ChopLastWord` cut at ASCII spaces; existing edit selection and
+caret helpers round offsets to complete code points. Fixed byte lengths in
+layout samples refer to unchanged ASCII catalog text. Translation, Unicode
+normalization/case folding, grapheme editing and complex-script layout remain
+outside the accepted migration, as specified in ADR 0002.
+
+### Verification
+
+- Platform SDL Debug build, all 17 game unit programs and all 39 macOS desktop
+  checks pass, including the packaged-help and tutorial smoke checks.
+- All 16 host checks pass.
+- Full native and host regressions each match all 519 comparisons through turn
+  150: 21 existing unused-storage warnings, no differences/errors and no skipped
+  reference inputs. No scenario or checkpoint moves; native baselines remain
+  unchanged from the migration.
+- The Linux picker test's expected-path buffer now accommodates `PATH_MAX`
+  plus its Unicode basename, addressing the GCC truncation warning that blocked
+  the Linux unit/tutorial builds. Actual Linux/Windows CI results are separate
+  evidence; this local run qualifies macOS and does not qualify native desktop
+  interactions on other platforms. The full 80-page tutorial remains separate
+  unfinished coverage.
+
+## Historical pre-migration audit
+
 **Historical audit:** these findings describe the pre-migration snapshot.
 The UTF-8 migration supersedes its CP1252 storage/input recommendations; see
 [current encoding contracts](UNICODE-BOUNDARIES.md) and
