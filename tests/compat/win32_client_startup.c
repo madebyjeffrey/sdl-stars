@@ -32,6 +32,8 @@ static int iRaceLibraryTestStage;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
 static uint16_t icksRaceLibraryOriginal;
+static uint16_t icksRaceSaveStage;
+static uint16_t icksRaceImportStage;
 static GAME gameImportSav;
 static int16_t idPlayerImportSav;
 static char szBaseImportSav[256];
@@ -395,6 +397,18 @@ static BOOL FPushClick(HWND hwnd) {
     event.type = SDL_EVENT_MOUSE_BUTTON_UP;
     event.button.down = false;
     return SDL_PushEvent(&event);
+}
+
+static BOOL FSelectClientRaceName(HWND hwndTitle, const char *pszName) {
+    HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_RACES);
+    char szName[256];
+    LRESULT i, c;
+    c = SendMessage(hwndList, LB_GETCOUNT, 0, 0);
+    for (i = 0; i < c; i++) {
+        if (SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName) >= 0 && !strcmp(szName, pszName))
+            return SendMessage(hwndList, LB_SETCURSEL, i, 0) != LB_ERR;
+    }
+    return FALSE;
 }
 
 static BOOL FPushComboRow(HWND hwnd, int iRow) {
@@ -1229,7 +1243,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 1) {
             for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!SetWindowTextA(GetDlgItem(hwndRace, IDC_EDIT1), "Created.r1") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
+                if (!SetWindowTextA(GetDlgItem(hwndRace, IDC_EDIT1), "Managed.r1") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
                 iRaceLibraryTestStage = 2;
                 return;
             }
@@ -1250,10 +1264,13 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (iRaceLibraryTestStage == 3) {
             if (!IsWindowVisible(hwndTitle)) return;
+            if (!FLoadLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
+            if (!FSaveLibraryRace(hwndTitle, "Managed.r1.pending.r1", &vplr)) goto LDone;
+            icksRaceSaveStage = IRaceChecksum(&vplr);
+            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksRaceSaveStage) goto LDone;
             RefreshLibraryRaces(hwndTitle);
-            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 1 ||
-                !FSelectLibraryRace(hwndTitle, szRaceName)) goto LDone;
-            if (strcmp(szRaceName, "Created.r1") || !FLoadLibraryRace(hwndTitle, szRaceName)) goto LDone;
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 2 ||
+                !FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
             icksRaceLibraryOriginal = IRaceChecksum(&vplr);
             icksumRaceLibrary = icksRaceLibraryOriginal;
             iRaceLibraryWizardPage = 0;
@@ -1278,8 +1295,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (iRaceLibraryTestStage == 5) {
             if (!IsWindowEnabled(hwndTitle)) return;
-            if (!FLoadLibraryRace(hwndTitle, "Created.r1") || IRaceChecksum(&vplr) == icksRaceLibraryOriginal) goto LDone;
+            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) == icksRaceLibraryOriginal) goto LDone;
             icksumRaceLibrary = IRaceChecksum(&vplr);
+            RefreshLibraryRaces(hwndTitle);
+            if (!FSelectClientRaceName(hwndTitle, "Managed.r1")) goto LDone;
             iRaceLibraryWizardPage = 0;
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
             iRaceLibraryTestStage = 6;
@@ -1296,7 +1315,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (iRaceLibraryTestStage == 7) {
             if (!IsWindowEnabled(hwndTitle)) return;
-            if (!FLoadLibraryRace(hwndTitle, "Created.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
+            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
+            if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
+            icksRaceImportStage = IRaceChecksum(&vplr);
+            if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
             iRaceLibraryTestStage = 8;
             return;
@@ -1322,8 +1344,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 10) {
             if (!IsWindowEnabled(hwndTitle)) return;
             RefreshLibraryRaces(hwndTitle);
-            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 2 ||
-                !FLoadLibraryRace(hwndTitle, "Imported.r2") || !IRaceChecksum(&vplr)) goto LDone;
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 4 ||
+                !FSelectClientRaceName(hwndTitle, "Imported.r2") || !FSelectLibraryRace(hwndTitle, szRaceName) ||
+                strcmp(szRaceName, "Imported.r2") || !FLoadLibraryRace(hwndTitle, szRaceName) || !IRaceChecksum(&vplr) ||
+                !FLoadLibraryRace(hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&vplr) != icksRaceImportStage) goto LDone;
             fChecked = TRUE;
             fPassed = TRUE;
             puts("Managed race created, edited, cancelled, imported through the wizard, and reloaded");

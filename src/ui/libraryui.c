@@ -12,6 +12,7 @@ static char szRaceLibraryRoot[256];
 static char szRaceLibraryPath[512];
 static char szRaceLibraryName[256];
 static char szRaceLibraryTemp[512];
+static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static const char *pszRaceLibraryNameOverride;
 
@@ -94,6 +95,29 @@ static int16_t FInitRaceLibrary(void) {
                       pszOverride || pszSettings ? szDirSep : "");
     SDL_free(pszRoot);
     return cch > 0 && cch < (int)sizeof(szRaceLibraryRoot) && FEnsureNativeDir(szRaceLibraryRoot);
+}
+
+static int16_t FCreateRaceStagePath(char *pszDirectory, size_t cchDirectory,
+                                    char *pszFile, size_t cchFile) {
+    uint32_t dwTick = DwTickCount();
+    int i;
+    int cch;
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszDirectory, cchDirectory, "%s%s.stars-race-stage-%u-%u",
+                          szRaceLibraryRoot, szDirSep, dwTick, idRaceStage++);
+        if (cch <= 0 || (size_t)cch >= cchDirectory) return FALSE;
+        if (CreateNativeDir(pszDirectory) != 0) {
+            if (FNativeDirectoryExists(pszDirectory)) continue;
+            return FALSE;
+        }
+        cch = CchSnprintf(pszFile, cchFile, "%s%sdesign.r1", pszDirectory, szDirSep);
+        if (cch <= 0 || (size_t)cch >= cchFile) {
+            RemoveNativePath(pszDirectory);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void SuggestRaceFilename(char *pszName) {
@@ -371,13 +395,17 @@ static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
 
 int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
     char szPath[512];
+    char szTempDir[512];
     uint16_t icksum;
     int16_t fOkay;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-    CchSnprintf(szRaceLibraryTemp, sizeof(szRaceLibraryTemp), "%s.pending.r1", szPath);
-    RemoveNativeFile(szRaceLibraryTemp);
-    if (!FCreateFile(dtRace, iplrNone, szRaceLibraryTemp)) return FALSE;
+    if (!FCreateRaceStagePath(szTempDir, sizeof(szTempDir), szRaceLibraryTemp, sizeof(szRaceLibraryTemp))) return FALSE;
+    if (!FCreateFile(dtRace, iplrNone, szRaceLibraryTemp)) {
+        RemoveNativeFile(szRaceLibraryTemp);
+        RemoveNativePath(szTempDir);
+        return FALSE;
+    }
     WriteRtPlr(pplr, NULL);
     icksum = IRaceChecksum(pplr);
     WriteRt(rtEOF, 2, &icksum);
@@ -385,9 +413,11 @@ int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
     fOkay = ReplaceNativeFile(szRaceLibraryTemp, szPath) == 0;
     if (!fOkay) {
         RemoveNativeFile(szRaceLibraryTemp);
+        RemoveNativePath(szTempDir);
         if (IsWindow(hwnd)) AlertSz(PszFormatIds(idsStarsUnableSaveRaceDataFilePlease, NULL), MB_ICONHAND);
         return FALSE;
     }
+    RemoveNativePath(szTempDir);
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     SetSzRaceFile(pszName);
     return TRUE;
@@ -454,7 +484,7 @@ int16_t FEditLibraryRace(HWND hwnd, const char *pszName) {
 
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
-    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512];
+    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
     int16_t fValid;
@@ -493,12 +523,13 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         CchSnprintf(szRaceLibraryName, sizeof(szRaceLibraryName), "%s", pszRaceLibraryNameOverride);
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
     } else if (!FChooseLibraryRaceName(hwnd, szName, szPath, sizeof(szPath))) goto LRestore;
-    CchSnprintf(szStage, sizeof(szStage), "%s.pending.r1", szPath);
-    RemoveNativeFile(szStage);
+    if (!FCreateRaceStagePath(szStageDir, sizeof(szStageDir), szStage, sizeof(szStage))) goto LRestore;
     if (!FCopyNativeFile(szSource, szStage) || ReplaceNativeFile(szStage, szPath) != 0) {
         RemoveNativeFile(szStage);
+        RemoveNativePath(szStageDir);
         goto LRestore;
     }
+    RemoveNativePath(szStageDir);
     if (!FWasRaceFile(szPath, TRUE)) {
         RemoveNativeFile(szPath);
         goto LRestore;
