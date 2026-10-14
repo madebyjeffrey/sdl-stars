@@ -1053,8 +1053,8 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     switch (message) {
     case WM_INITDIALOG:
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x10, 0);
-        SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0x10, 0);
+        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
+        SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
         if (idPlayer == iplrNone) {
             SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNotePasswordEffectiveImmediately));
             SetWindowText(hwnd, PszGetCompressedString(idsChangeHostPassword));

@@ -368,6 +368,9 @@ retain byte budgets. See [encoding contracts](UNICODE-BOUNDARIES.md) and
 [ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
 bidirectional layout and grapheme editing remain separate work.
 
+Password creation and changes use the same 15-byte UTF-8 limit as login and
+the command line, including complete-code-point truncation at the edit limit.
+
 ## 2.8 (released)
 
 Work proceeded in this order:

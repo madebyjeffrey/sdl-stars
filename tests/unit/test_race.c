@@ -2,6 +2,10 @@
 
 #include "stars_test.h"
 
+#ifdef STARS_UI_SDL
+#include <SDL3/SDL_clipboard.h>
+#endif
+
 static void test_LInnateRaceHabitability_double_rounding(void) {
     PLAYER plr = {0};
     int8_t rgAttr[16] = {10, 10, 10, 10, 10, 5, 10, 0, 1, 1, 1, 1, 1, 1, 9, 0};
@@ -121,6 +125,30 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 }
 
 #ifdef STARS_UI_SDL
+static void test_NewPasswordDlg_utf8_limit(void) {
+    HWND hwnd;
+    HWND hwndEdit;
+    char szPass[20];
+    const char *pszPass = "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
+    TEST_ASSERT(hwnd != NULL);
+    for (i = 0; i < 2; i++) {
+        hwndEdit = GetDlgItem(hwnd, i == 0 ? IDC_EDIT1 : IDC_PASSWORD_CONFIRM);
+        TEST_ASSERT(hwndEdit != NULL);
+        TEST_ASSERT(SDL_SetClipboardText(pszPass));
+        SendMessage(hwndEdit, WM_PASTE, 0, 0);
+        TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 12);
+        TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
+        TEST_ASSERT(SDL_SetClipboardText("abc"));
+        SendMessage(hwndEdit, WM_PASTE, 0, 0);
+        TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
+    }
+    DestroyWindow(hwnd);
+}
+
 // Random race: the Random template is only the random-race bit, which
 // GenerateWorld replaces with a random race. Choosing Custom on the first
 // wizard page keeps the race being edited, so a race that had been Random
@@ -189,6 +217,7 @@ TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #ifdef STARS_UI_SDL
+             {"NewPasswordDlg keeps Unicode passwords within the login limit", test_NewPasswordDlg_utf8_limit},
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
              {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},
 #endif

@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `NewPasswordDlg` allowed 16-byte UTF-8 passwords, which the 15-byte login
+  field and command line could not accept. Both change-password fields now
+  use the login byte limit and preserve complete code points. Native regression
+  baselines and turn generation are unchanged.
 - Application text now uses UTF-8 on all platforms: generated catalogs/data,
   resources, controls, clipboard/composition, drawing, reports and passwords.
   `WriteBOF`, `FOpenFile`, `FWasRaceFile`, `FMarkFile` and `FLoadLogFile`
