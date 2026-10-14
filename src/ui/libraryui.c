@@ -22,6 +22,12 @@ typedef struct {
     char szPath[sizeof(szRaceLibraryPath)];
 } RACESTATE;
 
+typedef struct {
+    const char *pszDirectory;
+    const char *pszName;
+    int16_t fFound;
+} LIBRARYNAMECHECK;
+
 static void SaveRaceState(RACESTATE *prs) {
     prs->plr = vplr;
     memcpy(prs->szPass, szRacePass, sizeof(prs->szPass));
@@ -38,26 +44,26 @@ static void RestoreRaceState(const RACESTATE *prs, int16_t fRestoreRace, int16_t
     if (fRestorePath) memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
 }
 
-typedef struct {
-    const char *pszName;
-    int16_t fFound;
-} RACENAMECHECK;
-
-static int16_t FindRaceLibraryName(void *lpData, const char *pszFile) {
-    RACENAMECHECK *prnc = lpData;
-    if (!SDL_strcasecmp(prnc->pszName, pszFile)) {
-        prnc->fFound = TRUE;
+static int16_t FindLibraryName(void *lpData, const char *pszFile) {
+    LIBRARYNAMECHECK *plnc = lpData;
+    if (!SDL_strcasecmp(plnc->pszName, pszFile)) {
+        plnc->fFound = TRUE;
         return FALSE;
     }
     return TRUE;
 }
 
+static int16_t FLibraryNameAvailable(const char *pszDirectory, const char *pszName) {
+    LIBRARYNAMECHECK lnc;
+    lnc.pszDirectory = pszDirectory;
+    lnc.pszName = pszName;
+    lnc.fFound = FALSE;
+    if (!FNativeEnumerateDirectory(lnc.pszDirectory, FindLibraryName, &lnc)) return FALSE;
+    return !lnc.fFound;
+}
+
 static int16_t FRaceLibraryNameAvailable(const char *pszName) {
-    RACENAMECHECK rnc;
-    rnc.pszName = pszName;
-    rnc.fFound = FALSE;
-    if (!FNativeEnumerateDirectory(szRaceLibraryRoot, FindRaceLibraryName, &rnc)) return FALSE;
-    return !rnc.fFound;
+    return FLibraryNameAvailable(szRaceLibraryRoot, pszName);
 }
 
 static int16_t FPortableRaceFilename(const char *pszName) {
@@ -93,9 +99,12 @@ static int16_t FInitRaceLibrary(void) {
 static void SuggestRaceFilename(char *pszName) {
     char szStem[240];
     const char *pch = strrchr(pszName, '.');
+    size_t cchStem = pch ? (size_t)(pch - pszName) : strlen(pszName);
     int i;
-    if (pch) CchSnprintf(szStem, sizeof(szStem), "%.*s", (int)(pch - pszName), pszName);
-    else CchSnprintf(szStem, sizeof(szStem), "%s", pszName);
+    if (cchStem >= sizeof(szStem)) cchStem = sizeof(szStem) - 1;
+    cchStem = CchUtf8Prefix(pszName, cchStem);
+    memcpy(szStem, pszName, cchStem);
+    szStem[cchStem] = 0;
     for (i = 1; i < 1000; i++) {
         CchSnprintf(pszName, 256, "%s.r%d", szStem, i);
         if (FRaceLibraryNameAvailable(pszName)) return;
@@ -130,28 +139,6 @@ static int16_t FInitLibrary(void) {
     return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
 }
 
-typedef struct {
-    const char *pszName;
-    int16_t fFound;
-} LIBRARYNAMECHECK;
-
-static int16_t FindLibraryName(void *lpData, const char *pszFile) {
-    LIBRARYNAMECHECK *plnc = lpData;
-    if (!SDL_strcasecmp(plnc->pszName, pszFile)) {
-        plnc->fFound = TRUE;
-        return FALSE;
-    }
-    return TRUE;
-}
-
-static int16_t FLibraryNameAvailable(const char *pszName) {
-    LIBRARYNAMECHECK lnc;
-    lnc.pszName = pszName;
-    lnc.fFound = FALSE;
-    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryName, &lnc)) return FALSE;
-    return !lnc.fFound;
-}
-
 static int16_t FPortableLibraryName(const char *pszName) {
     const unsigned char *pch;
     char szDevice[256];
@@ -180,7 +167,7 @@ static void SuggestLibraryName(char *pszName) {
 
     strcpy(szOriginal, pszName);
     cchMax = ((int)sizeof(szBase) - (int)strlen(szLibraryRoot) - 19) / 2;
-    for (i = 2; i < 10000 && !FLibraryNameAvailable(pszName); i++) {
+    for (i = 2; i < 10000 && !FLibraryNameAvailable(szLibraryRoot, pszName); i++) {
         CchSnprintf(szSuffix, sizeof(szSuffix), " (%d)", i);
         cch = min((int)strlen(szOriginal), max(0, cchMax - (int)strlen(szSuffix)));
         /* A shortened suggestion must not split a UTF-8 character. */
@@ -217,7 +204,7 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 return TRUE;
             }
         } else if (!FPortableLibraryName(szName)) ids = idsLibraryInvalidName;
-        else if (!FLibraryNameAvailable(szName)) {
+        else if (!FLibraryNameAvailable(szLibraryRoot, szName)) {
             SuggestLibraryName(szName);
             SetDlgItemText(hwnd, IDC_EDIT1, szName);
             ids = idsLibraryNameTaken;
@@ -249,7 +236,7 @@ int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile) {
     if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     CchSnprintf(szLibraryPending, sizeof(szLibraryPending), "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
     /* Reserve only a newly created folder; never write into an existing copy. */
-    if (!FLibraryNameAvailable(szLibraryName) || CreateNativeDir(szLibraryPending) != 0) {
+    if (!FLibraryNameAvailable(szLibraryRoot, szLibraryName) || CreateNativeDir(szLibraryPending) != 0) {
         szLibraryPending[0] = 0;
         goto LFail;
     }
