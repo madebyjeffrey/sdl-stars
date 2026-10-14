@@ -37,6 +37,8 @@ pacman -S --needed \
 
 Use the UCRT64 packages and tools consistently. The `/usr/bin` compiler, if
 installed, targets the MSYS environment rather than a standalone Windows app.
+The GCC package supplies both the C11 compiler and the C++17 compiler used by
+the portable filesystem bridge.
 
 ## Build and package from PowerShell
 

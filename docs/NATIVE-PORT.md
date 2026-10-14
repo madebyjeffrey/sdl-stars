@@ -25,6 +25,18 @@ The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
+
+SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
+the C declarations in `filesystem.h`. The profile and picker test fixtures use
+this bridge for temporary directories, directory creation, canonical paths and
+non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
+conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions never cross
+the C ABI. Output buffers are caller-owned, must not overlap input paths, and
+remain empty on failure. Returned paths use forward slashes, matching the SDL
+wrapper's canonical path contract. Temporary directories are claimed with atomic directory
+creation rather than a temporary-file-name/delete sequence. The game and wrapper
+remain C11; host-only builds require no C++ compiler.
+
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 
@@ -156,7 +168,8 @@ both Release fleet profiles. Full native regression still returns 519 matches,
 87 existing unused-storage warnings, zero differences/errors and no skipped
 inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).
 
-See [encoding contracts](UNICODE-BOUNDARIES.md) for Unicode filenames, strict
-CLI/password conversion and UTF-8 path-field editing. The original password
-hash uses explicit unsigned wrapping with signed input bytes; stored hashes,
-record widths and native regression baselines remain unchanged.
+See [encoding contracts](UNICODE-BOUNDARIES.md) for the main client's UTF-8
+text, UTF-8 password bytes, fixed field budgets and format 2.85. Legacy file
+encoding and non-ASCII password compatibility are deliberately removed from
+main. Record widths remain unchanged; the native baseline moves only at BOF
+version fields, from checkpoint 0 in every scenario.

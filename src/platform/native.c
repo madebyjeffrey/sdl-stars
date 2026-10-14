@@ -149,7 +149,11 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
         sz[0] = 0;
         return 0;
     }
-    return cch < 1024 ? cch : 1023;
+    if (cch >= 1024) {
+        cch = (int)CchUtf8Prefix(sz, 1023);
+        sz[cch] = 0;
+    }
+    return cch;
 }
 
 // LMulDiv returns lNumber * lNumerator / lDenominator rounded half away from
@@ -393,6 +397,7 @@ int16_t FEnsureNativeDir(const char *pszDir) {
     return TRUE;
 }
 
+
 int RemoveNativeFile(const char *psz) {
     wchar_t *pwsz = LpwszNativePath(psz);
     int result;
@@ -450,10 +455,18 @@ int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return _strnicmp(sz
 
 #else
 
+static int FNativePath(const char *psz) {
+    if (FUtf8Valid(psz, strlen(psz))) return TRUE;
+    errno = EILSEQ;
+    return FALSE;
+}
+
 int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
     int fd;
     int grf;
 
+    *pfMissing = FALSE;
+    if (!FNativePath(szFile)) return -1;
     // OF_READ, OF_WRITE, OF_READWRITE; OF_CREATE truncates. Share modes
     // (0x0070) have no POSIX counterpart.
     switch (mdOpen & 3) {
@@ -496,18 +509,21 @@ int32_t CbFileSize(int16_t hf) {
 
 void CloseFile(int16_t hf) { close(hf); }
 
-int16_t FFileExists(char *szFile) { return access(szFile, F_OK) == 0; }
+int16_t FFileExists(char *szFile) { return FNativePath(szFile) && access(szFile, F_OK) == 0; }
 
-int16_t FFileReadOnly(char *szFile) { return access(szFile, W_OK) != 0; }
+int16_t FFileReadOnly(char *szFile) { return !FNativePath(szFile) || access(szFile, W_OK) != 0; }
 
-void MakeDir(char *szDir) { mkdir(szDir, 0777); }
-int CreateNativeDir(const char *pszDir) { return mkdir(pszDir, 0777); }
+void MakeDir(char *szDir) { if (FNativePath(szDir)) mkdir(szDir, 0777); }
+
+int CreateNativeDir(const char *pszDir) {
+    return FNativePath(pszDir) ? mkdir(pszDir, 0777) : -1;
+}
 
 int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     DIR *pdir;
     struct dirent *pentry;
     int16_t fResult;
-    if (!pfnEntry || !(pdir = opendir(pszDir))) return FALSE;
+    if (!pfnEntry || !FNativePath(pszDir) || !(pdir = opendir(pszDir))) return FALSE;
     fResult = TRUE;
     for (;;) {
         errno = 0;
@@ -517,6 +533,11 @@ int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc 
             break;
         }
         if (!strcmp(pentry->d_name, ".") || !strcmp(pentry->d_name, "..")) continue;
+        if (!FUtf8Valid(pentry->d_name, strlen(pentry->d_name))) {
+            errno = EILSEQ;
+            fResult = FALSE;
+            break;
+        }
         if (!pfnEntry(lpData, pentry->d_name)) break;
     }
     closedir(pdir);
@@ -525,20 +546,20 @@ int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc 
 
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
     struct stat st;
-    if (stat(pszFile, &st) != 0 || !S_ISREG(st.st_mode)) return FALSE;
+    if (!pcbFile || !FNativePath(pszFile) || stat(pszFile, &st) != 0 || !S_ISREG(st.st_mode)) return FALSE;
     *pcbFile = st.st_size;
     return TRUE;
 }
 
 int16_t FNativeDirectoryExists(const char *pszDir) {
     struct stat st;
-    return stat(pszDir, &st) == 0 && S_ISDIR(st.st_mode);
+    return FNativePath(pszDir) && stat(pszDir, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
 int16_t FEnsureNativeDir(const char *pszDir) {
-    char *pszPath = strdup(pszDir), *pch;
+    char *pszPath, *pch;
     char ch;
-    if (!pszPath) return FALSE;
+    if (!FNativePath(pszDir) || !(pszPath = strdup(pszDir))) return FALSE;
     for (pch = pszPath[0] == '/' ? pszPath + 1 : pszPath; *pch; pch++) {
         if (*pch != '/') continue;
         ch = *pch; *pch = 0;
@@ -552,11 +573,15 @@ int16_t FEnsureNativeDir(const char *pszDir) {
     return TRUE;
 }
 
-int RemoveNativeFile(const char *psz) { return remove(psz); }
-int RemoveNativePath(const char *psz) { return remove(psz); }
-int ReplaceNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
-int RenameNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
-FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return fopen(psz, pszMode); }
+int RemoveNativeFile(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
+int RemoveNativePath(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
+int ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+    return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
+}
+int RenameNativeFile(const char *pszOld, const char *pszNew) {
+    return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
+}
+FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return FNativePath(psz) ? fopen(psz, pszMode) : NULL; }
 
 uint32_t DwTickCount() {
     struct timespec ts;
@@ -578,7 +603,6 @@ void GetDateTimeSz(char *szDate, char *szTime) {
 int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
-
 int64_t LNativeTime(void) { return (int64_t)time(NULL); }
 
 int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {

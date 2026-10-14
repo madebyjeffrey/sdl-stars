@@ -19,10 +19,12 @@ The command-line host remains independent of SDL.
 
 When goals conflict, apply them in this order:
 
-1. **Compatibility:** save, turn, history and race files from Stars!
-   2.6j/2.7 (file format version 2.83) stay readable. 2.8 writes version
-   2.84, which 2.6j/2.7 refuse, so 2.8 files are for 2.8 only. On-disk
-   formats and record sizes do not change.
+1. **File contract:** main uses UTF-8 throughout and writes file format 2.85.
+   It imports unprotected legacy race designs from 2.49–2.84; legacy games,
+   turns, history, orders and protected races remain unsupported. Record
+   layouts and field sizes stay fixed. Text limits count UTF-8 bytes, and
+   truncation must preserve complete code points. See
+   `docs/UNICODE-BOUNDARIES.md`.
 2. **Behavior:** game behavior changes only on purpose. Each intentional
    change is its own commit, moves the native regression baseline in that
    commit, and is recorded in `CHANGELOG.md`.
@@ -54,8 +56,7 @@ When goals conflict, apply them in this order:
   commit message, add a `CHANGELOG.md` entry, and update or remove its entry
   in `docs/KNOWN-BUGS.md`, `docs/WIN16-PARITY.md` or `docs/ROADMAP.md`.
 - A fix that changes turn generation changes host results; note it in
-  `CHANGELOG.md`. A 2.8 host can still pick up a game from 2.6j files, so
-  a fix must work on state written by 2.6j.
+  `CHANGELOG.md`. On the 2.8 branch, fixes must also work on 2.6j state.
 - Regenerate the native baseline in the same commit (see Verification) and
   state which scenarios moved and from which turn.
 
@@ -121,8 +122,8 @@ When goals conflict, apply them in this order:
 - The product version comes from git: release tags are `vMAJOR.MINOR.PATCH`
   (`v2.8.0`), and builds between tags are numbered from the last tag. CMake
   generates `version.h`; see `docs/VERSIONING.md`.
-- The file format version written to saves is separate: 2.84. 2.8 reads
-  2.49 through 2.84.
+- The file format version is separate: main writes and reads only 2.85
+  (UTF-8). The 2.8 branch writes 2.84 and reads 2.49 through 2.84.
 
 ## Reference material
 

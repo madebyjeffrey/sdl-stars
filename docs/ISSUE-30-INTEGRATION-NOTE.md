@@ -1,30 +1,43 @@
-# PR #22 review follow-up for issue #30
+# PR #22 and PR #23 integration for issue #30
 
-This note records the non-UTF-8 review follow-up for managed games so it can be
-checked when evaluating [issue #30](https://github.com/madebyjeffrey/sdl-stars/issues/30).
+PR #22 was merged into `develop` at `b6d6cf8` before the UTF-8 branch was
+reconciled. Merging the updated `develop` into `codex/utf8-application-text`
+exposed conflicts in `CHANGELOG.md`, `cmake/macos-client-tests.cmake`,
+`src/platform/native.c`, `tests/compat/win32_utf8.c`, and `text/strings.txt`.
+The combined macOS test configuration also included the same test file twice,
+which was not reported as a textual merge conflict.
 
-## Before the #23 integration
+## Resolutions
 
-PR #22 keeps desktop root resolution in the SDL-backed UI layer and routes
-directory creation, enumeration, removal, and file metadata checks through
-`src/platform/native.c`. Its real-client workflow exercises the default
-`SDL_GetPrefPath` path with an isolated test root, without `STARS_LIBRARY_DIR`,
-then creates and reopens a managed game from that root. The workflow test keeps
-settings in its own temporary directory and supplies the library root through the
-`SDL_GetPrefPath` test hook so it cannot touch the user's real library. SDL
-supplies the native Application Support, XDG data, and Windows application-data
-conventions.
+- Removed the per-control UTF-8 opt-in API and its call from the library-name
+dialog. The UTF-8 branch makes all wrapper controls UTF-8. The compatibility
+test now confirms an ordinary edit control round-trips a Unicode string without
+an opt-in.
+- Merged the managed-game resource IDs into `0x058b`–`0x058f`, retaining the
+UTF-8 messages at their existing IDs.
+- Kept both branches' changelog entries and combined their macOS startup test
+redirects. Removed the duplicate Apple test include and the obsolete save-picker
+redirect; the managed-game workflow now uses `SDL_GetPrefPath` and `FCreateFile`.
+- Restored the managed-game native filesystem helpers on both platforms. POSIX
+helpers now validate input paths and reject invalid UTF-8 directory entry names;
+the regression covers Unicode directories, entries, metadata replacement, and
+invalid paths.
 
-## Deferred to issue #30
+## Combined-branch verification
 
-Issue #30 owns reconciliation after PR #23 merges. It must resolve the obsolete
-UTF-8 control opt-in against the migration's uniformly UTF-8 controls, then
-validate Unicode names and paths through race import, managed-game creation,
-rename, restart/reopen, game export, and orders export. Verify protected-race
-password replacement and expanded-name confirmation through the combined
-New Game and library workflows. The independent green checks on PR #22 and PR
-#23 do not establish combined compatibility.
+On macOS:
 
-Keep platform desktop qualification, full regressions, unit tests, and tutorial
-checkpoints as issue #30 acceptance work. Real-desktop manual qualification is
-future work, as issue #30 specifies.
+- `macos-sdl-debug` configure and build passed.
+- All 39 registered Debug CTest tests passed, including Unicode managed-game
+  creation/reopening, startup/race workflows, UTF-8 controls, and tutorial smoke.
+- `make test-unit`: 17/17 passed. `make test-host`: 16/16 passed.
+- `make regression` and `make regression-host`: 519 matches each, 0 differences
+  or errors, 0 skipped inputs. The 21 native regression warnings remain.
+- `make tutorial`: 1/1 available tutorial smoke checkpoint passed. The full
+  80-page SDL tutorial remains unfinished.
+
+Windows/Linux execution and real-desktop manual qualification were not run.
+The existing tests cover Unicode library-name creation and reopening, and unit
+tests cover legacy race import, replacement passwords, and shortened-name
+confirmation. Managed-library rename and game/orders export were not exercised
+by this integration change and remain open for issue #30 qualification.

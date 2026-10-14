@@ -40,3 +40,22 @@ add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
     "${CMAKE_BINARY_DIR}/test-client/tutorial-dummy")
 set_tests_properties(win32_native_tutorial_smoke_dummy PROPERTIES LABELS "client;tutorial-smoke" TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+foreach(STARS_UTF8_TEST utf8 font edit profile)
+    add_executable(stars-compat-${STARS_UTF8_TEST} tests/compat/win32_${STARS_UTF8_TEST}.c)
+    target_include_directories(stars-compat-${STARS_UTF8_TEST} PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+    target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_options stars_win32 SDL3::SDL3)
+    target_compile_options(stars-compat-${STARS_UTF8_TEST} PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME win32_utf8_${STARS_UTF8_TEST} COMMAND stars-compat-${STARS_UTF8_TEST})
+    set_tests_properties(win32_utf8_${STARS_UTF8_TEST} PROPERTIES LABELS compat TIMEOUT 60
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+endforeach()
+
+add_executable(stars-compat-help tests/compat/win32_help.c)
+target_include_directories(stars-compat-help PRIVATE "${STARS_HELP_GENERATED}")
+target_link_libraries(stars-compat-help PRIVATE stars_options stars_win32 SDL3::SDL3)
+target_compile_options(stars-compat-help PRIVATE -Wall -Wextra -Werror)
+stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_GetPrefPath SDL_OpenURL)
+add_dependencies(stars-compat-help stars-help-guide)
+add_test(NAME win32_utf8_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}")
+set_tests_properties(win32_utf8_help PROPERTIES LABELS compat TIMEOUT 120)

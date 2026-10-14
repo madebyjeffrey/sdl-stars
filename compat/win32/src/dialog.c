@@ -83,7 +83,8 @@ static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
     BOOL fOk;
     lf.lfHeight = lpdlg->cPoints ? -MulDiv(lpdlg->cPoints, 96, 72) : -11;
     lf.lfWeight = FW_NORMAL;
-    SDL_strlcpy(lf.lfFaceName, lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif", sizeof(lf.lfFaceName));
+    CchCopyUtf8(lf.lfFaceName, sizeof(lf.lfFaceName), lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif",
+                CchUtf8Prefix(lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif", sizeof(lf.lfFaceName) - 1));
     lpc->hfont = CreateFontIndirectA(&lf);
     if (!lpc->hfont || !(hdc = CreateCompatibleDC(NULL))) return FALSE;
     hold = SelectObject(hdc, lpc->hfont);

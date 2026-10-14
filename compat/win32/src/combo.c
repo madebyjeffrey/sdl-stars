@@ -330,7 +330,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (lp->hwndEdit) return SendMessageA(lp->hwndEdit, msg, w, l);
         psz = PszComboItem(hwnd, (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0));
         result = psz ? (LRESULT)SDL_strlen(psz) : 0;
-        if (msg == WM_GETTEXT) { result = w && l ? (LRESULT)min((UINT_PTR)result, (UINT_PTR)w - 1) : 0; if (w && l) { if (result) memcpy((char *)l, psz, (size_t)result); ((char *)l)[result] = 0; } }
+        if (msg == WM_GETTEXT) { result = w && l && psz ? (LRESULT)CchUtf8Prefix(psz, (size_t)w - 1) : 0; if (w && l) { if (result) memcpy((char *)l, psz, (size_t)result); ((char *)l)[result] = 0; } }
         SDL_free(psz); return result;
     case WM_SETTEXT:
         if (!lp->hwndEdit) return FALSE;

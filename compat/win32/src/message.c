@@ -307,7 +307,8 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         DestroyWindow(hwnd);
         return 0;
     case WM_SETTEXT:
-        if (!lParam || !(pszNew = SDL_strdup((const char *)lParam))) return FALSE;
+        if (!lParam || !FUtf8Valid((const char *)lParam, strlen((const char *)lParam)) ||
+            !(pszNew = SDL_strdup((const char *)lParam))) return FALSE;
         if (lpwin->lpWindow && !FCompatNativeTitle(lpwin->lpWindow, pszNew)) {
             SDL_free(pszNew);
             return FALSE;
@@ -319,13 +320,9 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (!lParam || wParam == 0)
             return 0;
         psz = lpwin->pszTitle;
-        if (lpwin->fUtf8Text || lpwin->fUtf8Title) {
-            cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
-            memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
-            return (LRESULT)cch;
-        }
-        cch = SDL_strlcpy((char *)lParam, psz, (size_t)wParam);
-        return (LRESULT)(cch < wParam ? cch : wParam - 1);
+        cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
+        memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
+        return (LRESULT)cch;
     case WM_GETTEXTLENGTH:
         return (LRESULT)SDL_strlen(lpwin->pszTitle);
     default:

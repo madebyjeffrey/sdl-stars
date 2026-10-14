@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     CHECK(TestStyles() == 0);
     wc.lpfnWndProc = WndProc; wc.lpszClassName = "InspectTest";
     CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Frame \"quote\" \\ \200\r\n", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    hwnd = CreateWindow(wc.lpszClassName, "Frame \"quote\" \\ \342\202\254\r\n", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         10, 20, 320, 240, NULL, NULL, NULL, NULL);
     hwndChild = CreateWindow("Button", "Action", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                              4, 5, 90, 30, hwnd, (HMENU)(INT_PTR)7, NULL, NULL);
@@ -154,9 +154,9 @@ int main(int argc, char **argv) {
     SendMessage(hwndViewer, WM_COMMAND, MAKEWPARAM(1, LBN_SELCHANGE), (LPARAM)GetDlgItem(hwndViewer, 1));
     CHECK(GetWindowText(GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nAction"));
     CHECK(strstr(sz, "WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON") && strstr(sz, "Control kind: 1 (button)"));
-    CHECK(SetWindowText(hwnd, "Caf\351"));
+    CHECK(SetWindowText(hwnd, "Caf\303\251"));
     CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow), "Caf\303\251"));
-    CHECK(GetWindowText(hwnd, sz, sizeof(sz)) == 4 && !strcmp(sz, "Caf\351"));
+    CHECK(GetWindowText(hwnd, sz, sizeof(sz)) == 5 && !strcmp(sz, "Caf\303\251"));
     SetWindowText(hwndChild, "Updated");
     SendMessage(GetDlgItem(hwndViewer, 3), BM_CLICK, 0, 0);
     SendMessage(GetDlgItem(hwndViewer, 1), LB_SETCURSEL, 1, 0);

@@ -575,7 +575,6 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     int8_t    ch;
     int32_t   l;
     char      szT[33];
-    int16_t   cOut;
     THING    *lpth;
     int16_t   id;
     int16_t   iColDrop;
@@ -637,22 +636,14 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         }
         break;
     case rtLogFleetName:
-        cOut = 32;
-        if ((lpfl = LpflFromId(((RTCHGNAME *)lpb)->id)) == 0) {
-            return FALSE;
-        }
-        if (lpfl->lpszName) {
-            FreeLp(lpfl->lpszName, htString);
-        }
-        i = ((RTCHGNAME *)lpb)->rgb[0];
-        if (i != 0 && FDecompressUserString(&((RTCHGNAME *)lpb)->rgb[1], i, szT, &cOut)) {
+        if (cb < (int16_t)offsetof(RTCHGNAME, rgb) ||
+            !FReadUserString(((RTCHGNAME *)lpb)->rgb, cb - offsetof(RTCHGNAME, rgb), szT, 32, NULL)) return FALSE;
+        if ((lpfl = LpflFromId(((RTCHGNAME *)lpb)->id)) == 0) return FALSE;
+        if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
+        lpfl->lpszName = NULL;
+        if (*szT) {
             lpfl->lpszName = LpAlloc(strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
-        } else if (((RTCHGNAME *)lpb)->rgb[1] == 0) {
-            lpfl->lpszName = NULL;
-        } else {
-            lpfl->lpszName = LpAlloc(strlen(&((RTCHGNAME *)lpb)->rgb[1]) + 1, htString);
-            strcpy(lpfl->lpszName, &((RTCHGNAME *)lpb)->rgb[1]);
         }
         break;
     case rtThing:
@@ -663,6 +654,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         lpth->thm.fDetonate = ((RTLOGTHING *)lpb)->fDetonate;
         break;
     case rtLogShDef:
+        if (cb < (int16_t)offsetof(RTCHGSHDEF, rtshdef)) return FALSE;
         i = ((RTCHGSHDEF *)lpb)->ishdef;
         iLook = ((RTCHGSHDEF *)lpb)->iPlr;
         if (iLook >= game.cPlayer || iLook != idPlayer) {
@@ -715,12 +707,12 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 }
             }
             if (i >= 16) {
-                if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdefSB[iLook], idPlayer))
+                if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdefSB[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
                     break;
                 rgplr[iLook].cshdefSB += 15;
                 return FALSE;
             }
-            if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdef[iLook], idPlayer))
+            if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdef[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
                 break;
             rgplr[iLook].cShDef--;
             return FALSE;
@@ -1006,6 +998,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         lpfl->lpplord->rgord[iLook].fNoAutoTrack = FALSE;
         break;
     case rtBtlPlan:
+        if (cb < 2) return FALSE;
         i = ((BTLPLAN *)lpb)->iplan;
         if (((BTLPLAN *)lpb)->iplr != idPlayer || i < 0 || i > rgcbtlplan[idPlayer]) {
             if (((BTLPLAN *)lpb)->fDelete != 0)
@@ -1016,14 +1009,15 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             FDeleteBattlePlan(i, FALSE);
             break;
         }
+        if (cb < 4) return FALSE;
         if (((BTLPLAN *)lpb)->mdTactic > 6 || ((BTLPLAN *)lpb)->mdTarget1 > 8 || ((BTLPLAN *)lpb)->mdTarget2 > 8)
             goto BombOut;
         if (i == rgcbtlplan[idPlayer]) {
             if (i >= 16)
                 goto BombOut;
-            rgcbtlplan[idPlayer]++;
         }
-        UnpackBattlePlan(lpb, rglpbtlplan[idPlayer] + i, i);
+        if (!UnpackBattlePlan(lpb, rglpbtlplan[idPlayer] + i, i, cb)) return FALSE;
+        if (i == rgcbtlplan[idPlayer]) rgcbtlplan[idPlayer]++;
         break;
     case rtLogFleetPlan:
         if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0)
@@ -1119,6 +1113,10 @@ int16_t FLoadLogFile(char *pszLog) {
     }
 
     ReadRt();
+    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+        FileError(idsFileDoesBelongVersionStars);
+        goto FailSuccess;
+    }
     if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
     FailSuccess:
         if (vlpMemStream) {

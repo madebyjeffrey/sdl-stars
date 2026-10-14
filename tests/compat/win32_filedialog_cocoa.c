@@ -21,17 +21,17 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
 }
 
 int main(void) {
-    COMPATFILEFILTER filter = {"Games \x96 Stars!", "*.xy"};
+    COMPATFILEFILTER filter = {"Games \xe2\x80\x93 Stars!", "*.xy"};
     char szPath[256];
     int iFilter = 0;
 
-    if (ICompatChooseFile(NULL, TRUE, "Choose \x93New Game\x94", "/tmp/\xe6\x98\x9f",
+    if (ICompatChooseFile(NULL, TRUE, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
                          "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 1 ||
         cChoose != 1 || strcmp(szPath, "/tmp/\xe6\x98\x9f/game.xy")) return 1;
     iResult = 0;
-    if (ICompatChooseFile(NULL, TRUE, "Choose \x93New Game\x94", "/tmp/\xe6\x98\x9f",
+    if (ICompatChooseFile(NULL, TRUE, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d", "/tmp/\xe6\x98\x9f",
                          "\xe6\x98\x9f.xy", &filter, 1, &iFilter, szPath, sizeof(szPath)) != 0 ||
         cChoose != 2) return 1;
-    puts("Cocoa picker: CP1252 labels, UTF-8 paths and cancellation passed");
+    puts("Cocoa picker: UTF-8 labels, UTF-8 paths and cancellation passed");
     return 0;
 }

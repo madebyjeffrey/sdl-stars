@@ -204,11 +204,27 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
 endif()
 if(STARS_BUILD_SDL_CLIENT)
+    # The filesystem bridge has a C ABI; game and wrapper sources remain C11.
+    enable_language(CXX)
+    add_library(stars_filesystem STATIC src/platform/filesystem.cpp)
+    set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+    target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
+    target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
+    target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    if(STARS_BUILD_TESTS)
+        add_executable(stars-test-filesystem tests/compat/filesystem.c)
+        target_link_libraries(stars-test-filesystem PRIVATE stars_filesystem)
+        target_compile_options(stars-test-filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_utf8_filesystem COMMAND stars-test-filesystem)
+        set_tests_properties(win32_utf8_filesystem PROPERTIES LABELS compat TIMEOUT 30)
+    endif()
     include(cmake/sdl-client.cmake)
 elseif(STARS_BUILD_TESTS)
     set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests")
     file(MAKE_DIRECTORY "${STARS_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1 "${STARS_TEST_DIR}/data/humanoid.r1" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
+        "${STARS_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
     file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
     # These tests need the desktop UI and its private file adapters.
     list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"

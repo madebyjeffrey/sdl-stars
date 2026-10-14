@@ -53,7 +53,7 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
     int i, cb, iResult = -1;
     BOOL fSelected;
 
-    pwszTitle = LpwszChooserText(pszTitle, 1252);
+    pwszTitle = LpwszChooserText(pszTitle, CP_UTF8);
     pwszFolder = LpwszChooserText(pszFolder, CP_UTF8);
     pwszName = LpwszChooserText(pszName, CP_UTF8);
     pwszFile = calloc(32768, sizeof(*pwszFile));
@@ -63,8 +63,8 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
         !GetCurrentDirectoryW(cchCwd, pwszCwd) || wcslen(pwszName) >= 32768) goto done;
     wcscpy(pwszFile, pwszName);
     for (i = 0; i < cFilter; i++) {
-        pwszLabel = LpwszChooserText(rgfilter[i].pszName, 1252);
-        pwszPattern = LpwszChooserText(rgfilter[i].pszPattern, 1252);
+        pwszLabel = LpwszChooserText(rgfilter[i].pszName, CP_UTF8);
+        pwszPattern = LpwszChooserText(rgfilter[i].pszPattern, CP_UTF8);
         if (!pwszLabel || !pwszPattern) { free(pwszLabel); free(pwszPattern); goto done; }
         cchLabel = wcslen(pwszLabel) + 1; cchPattern = wcslen(pwszPattern) + 1;
         {

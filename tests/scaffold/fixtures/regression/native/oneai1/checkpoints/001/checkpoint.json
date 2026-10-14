@@ -3,11 +3,11 @@
   "year": 2401,
   "exit_code": 1,
   "files": {
-    "game.h2": "6fe5eb254295278775a7b285f51a0a591f4ea12eac68b8c35739e93c2199574c",
-    "game.m1": "b76b70a79db3b20c136bb457a32611a48168d05f3500d08c0f6c985cb9842d9b",
-    "game.xy": "02df454c82f590f85ed1f66c4dcc6c880d53242997edd9f36831d6d1fd6abce3",
-    "game.hst": "0305b2cb26a338fa2600d823f5bb817278c38bac1a70bbebd1403dde2e8c3da6",
-    "game.m2": "07fa68df7eb41c2dbe09a422ae8fa3ebb5cebd1e378dcbe53831bc713f20eae9",
-    "game.h1": "e691dd4e944986dac1d13f4691b5bd12c740ec1188767b787e25a6f15fd87072"
+    "game.h2": "39aab710f2b9ec5b3c21218fb1fd080ca374e0529ca3b3b98501ace9d47cd09c",
+    "game.m1": "92ffbd06b8a31bcc3acc3c9d62670735375d09db3fcfd09d419edf6031e7d8d0",
+    "game.xy": "67b607c7f88af013197b2a7989d04312dca185654361ec26edbacbe9732049bc",
+    "game.hst": "ae2daf6737bcc581d1d13a10cdec53c10a21b310b515e7ca05affe92bcd4b85f",
+    "game.m2": "210d9e67055020eb0360565e9f994ed978c0041921acc450605bf4065d3d3090",
+    "game.h1": "da6e3bd8f560a6164833e41d33f95d6cd4ce8e10c6ab5525d2e3aad9515fc4ee"
   }
 }

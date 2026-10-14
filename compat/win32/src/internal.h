@@ -38,10 +38,9 @@ BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
                         void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
-BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, BOOL fUtf8, int iScale,
+BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
                           void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
-DWORD DwCompatAnsiChar(BYTE ch);
 
 typedef struct COMPATCLASS {
     WNDCLASSA wc;
@@ -83,7 +82,7 @@ struct HWND__ {
     UINT ichTypingEnd;
     UINT iEditUndoAction;
     UINT_PTR idEditCaretTimer;
-    BOOL fModified, fUtf8Text, fUtf8Title, fEditInputRejected;
+    BOOL fModified, fEditInputRejected;
     char *pszEditUndo, *pszEditComposition;
     int ichComposition, cchComposition;
     UINT ichUndoPosition, cchUndoBefore, cchUndoAfter;

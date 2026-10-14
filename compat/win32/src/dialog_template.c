@@ -24,8 +24,7 @@ static BOOL FDlgRect(const BYTE *rgb, size_t cb, size_t *lpib, int16_t *lpx, int
 }
 static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char **lppsz) {
     WORD w;
-    size_t ibStart = *lpib, cch = 0, i;
-    UINT ch;
+    size_t ibStart = *lpib, cch = 0;
     char *psz;
     if (!FDlgWord(rgb, cb, lpib, &w)) return FALSE;
     if (w == 65535) return FDlgWord(rgb, cb, lpib, lpid);
@@ -33,15 +32,10 @@ static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char
         cch++;
         if (!FDlgWord(rgb, cb, lpib, &w)) return FALSE;
     }
-    psz = malloc(cch + 1);
+    psz = malloc(cch * 3 + 1);
     if (!psz) return FALSE;
-    for (i = 0; i < cch; i++) {
-        w = (WORD)(rgb[ibStart + i * 2] | (rgb[ibStart + i * 2 + 1] << 8));
-        for (ch = 1; ch < 256 && DwCompatAnsiChar((BYTE)ch) != w; ch++) {}
-        if (ch == 256) { free(psz); return FALSE; }
-        psz[i] = (char)ch;
-    }
-    psz[cch] = 0; *lppsz = psz;
+    if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return FALSE; }
+    *lppsz = psz;
     return TRUE;
 }
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {

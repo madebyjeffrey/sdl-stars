@@ -15,7 +15,7 @@ import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'compat/win32'))
+sys.path.insert(0, str(ROOT / 'tests/reference/winhelp'))
 import hlp as HLP
 import hlp_format as FORMAT
 import hlp_font as FONT
@@ -59,7 +59,7 @@ class GuideHTML(HTMLParser):
 class HelpTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = (ROOT / 'res/stars!.hlp').read_bytes()
+        cls.data = (ROOT / 'tests/reference/winhelp/stars!.hlp').read_bytes()
         cls.archive = HLP.HelpArchive(cls.data)
 
     def test_original_metadata(self):

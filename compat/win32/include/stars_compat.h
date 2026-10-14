@@ -14,7 +14,7 @@ void StarsCompatEndDialogSequence(void);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are CP1252 unless fUtf8Text marks native path/caption text.
+ * Snapshot strings are UTF-8; fUtf8Text is always true.
  * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
@@ -59,7 +59,6 @@ void StarsCompatProcessExit(void);
 
 BOOL StarsCompatTextInputRejected(HWND hwnd);
 BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz);
-BOOL StarsCompatSetWindowTextUtf8(HWND hwnd);
 
 /* Prepare a hidden top-level window's first ShowWindow(SW_SHOW) without
  * exposing it to the desktop while the application initializes.

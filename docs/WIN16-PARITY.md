@@ -57,8 +57,10 @@ storage harmlessly. They don't change game behavior and should stay.
   record shorter than its 12-byte header plus abs(cLen) text bytes is
   skipped. The original copied `cb` bytes and later wrote abs(cLen)+12 from
   the heap, over-reading harmlessly; native would compute a negative copy
-  length (cb < 4) or overflow the 1024-byte write buffer. Valid records (text is limited to 968 characters) are
-  unaffected. **Revert to:** nothing; keep the guard.
+  length (cb < 4) or overflow the 1024-byte write buffer. Main also skips
+  malformed UTF-8, incomplete compressed escapes and raw text without an
+  in-record terminator. Valid records (entry is limited to 968 UTF-8 bytes)
+  are unaffected. **Revert to:** nothing; keep the guard.
 - **Battle heap capacity** (`file.c` FLoadGame and `battle.c` FDoCoolBattle,
   marked `NATIVE`): original LOWORD(pointer) was an offset within a Win16
   heap segment, whose HB header occupied 16 bytes. Native finds the owning

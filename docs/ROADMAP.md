@@ -92,7 +92,7 @@ To keep in mind:
 - Each build shows its platform in its version name (done; see
   [VERSIONING.md](VERSIONING.md)).
 
-- The file format stays at 2.84 unless a record changes.
+- The file format is 2.85 for UTF-8 text; record widths remain fixed.
 
 Verified: `stars-host` matches the native baseline under Wine and on x86-64
 macOS (`make regression-host`), and its `-v` check file matches
@@ -197,7 +197,7 @@ the race wizard to the habitat page. Real-desktop qualification remains; see
 Positioning, sibling ordering, no-redraw behavior and minimum/maximum
 size callbacks now work; see [positioning](WIN32-POSITIONING.md). Mouse capture
 now routes child and cross-root input; see [capture](WIN32-CAPTURE.md). Queue-based
-keyboard state, asynchronous queries, point hit testing, CP1252 input, wheel
+keyboard state, asynchronous queries, point hit testing, UTF-8 input, wheel
 delivery and double-click messages now work; see [input](WIN32-INPUT.md). Push/check/radio
 buttons, group boxes, text labels and dialog-item helpers now work. Stars now
 uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
@@ -370,16 +370,38 @@ These priorities remain subject to the completion evidence in the goal tracker. 
 
 ## Unicode portability
 
-The native clients still use byte-oriented game text; the SDL UI interprets it
-as CP1252. The [Unicode audit](UNICODE-AUDIT.md) records the current encoding
-boundaries, 18 findings, runtime probes and proposed acceptance tests. First
-address Unicode filesystem access on Windows, native-path editing in the SDL
-fallback browser, UI/host password encoding, and multibyte filename caches.
-Unicode display, resources and editing also require text layout and capacity
-work. Persisted Unicode names/messages need an explicit compatibility design;
-do not reinterpret existing saved bytes or widen disk fields. The macOS host
-and Cocoa chooser source exist, but this checkout still enables the SDL client
-only on Linux. These items are open; the audit does not implement fixes.
+UTF-8 text is implemented throughout the new client and host, including
+catalog/data generation, resources, controls, rendering, clipboard and settings.
+Format 2.85 explicitly identifies UTF-8 saves. Older game, turn, history and
+orders files remain unsupported; 2.49–2.84 race designs are the bounded import
+exception. Protected legacy races require a replacement password before save
+or direct New Game use. Native paths must round-trip losslessly, and fixed text
+fields retain byte budgets. See
+[encoding contracts](UNICODE-BOUNDARIES.md) and
+[ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
+bidirectional layout and grapheme editing remain separate work.
+
+Password creation and changes use the same 15-byte UTF-8 limit as login and
+the command line. Oversized user input is rejected as a whole with a re-entry
+warning, while ordinary text fields retain their truncation behavior.
+Generated fleet names, clipped pane titles and bounded wrapper labels preserve
+complete code points as well; byte counts remain the public API convention.
+Message-format expansion is bounded by its existing 256-byte buffer; printf
+output truncated at its 1024-byte contract also ends at a code-point boundary.
+Name readers use the actual record extent, including orders; compressed bytes
+are never retried as raw text. Player-message readers validate decoded UTF-8
+and raw terminators before retaining a message.
+Editing a retained raw message compares its absolute byte count, preserving
+unchanged uncompressible UTF-8 messages without an out-of-bounds comparison.
+Rejected battle-plan text leaves the existing plan and plan count unchanged.
+The battle-plan writer reserves the extra raw-name marker byte, allowing
+31-byte uncompressible UTF-8 names to round trip without a stack overrun.
+Wrapper text setters and file/print inputs reject malformed UTF-8, including
+resolved picker directories whose native bytes are unsupported.
+Scanner JSON exports validate and preserve UTF-8 names directly; no legacy
+byte-to-Unicode mapping remains in their encoder.
+Universe definitions validate their whole text and native file size before
+parsing, retain the 16000-byte limit and accept an optional UTF-8 BOM.
 
 ## 2.8 (released)
 
@@ -510,12 +532,11 @@ no pending popup damage. Qualification passes 103 fatal sanitizer tests,
 four Release tutorial profiles; see the [goal report](LINUX-CLIENT-GOAL.md).
 No game baseline changes.
 
-Native Unicode filename and password boundaries are now implemented; see
-[encoding contracts](UNICODE-BOUNDARIES.md). Windows filesystem/common-dialog
-conversion, fallback UTF-8 path fields, complete filename cache boundaries and
-strict native CLI password conversion preserve legacy records and hash values.
-General Unicode saved text, shaping, historical settings migration and real
-Windows/macOS qualification remain separate work.
+The initial Unicode filename/password boundary work is superseded on main by
+UTF-8 throughout and format 2.85. See [encoding contracts](UNICODE-BOUNDARIES.md).
+Legacy settings migration is deliberately omitted; fresh UTF-8 settings are
+used. Shaping and Windows/Linux/macOS platform qualification remain separate
+from the encoding contract.
 
 The SDL wrapper now also builds natively on Windows x64 through MSYS2 UCRT64,
 with separate SDK and wrapper symbols, Unicode filesystem services and portable

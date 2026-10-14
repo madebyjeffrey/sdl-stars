@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s [--contents|context-id]\n", argv[0]);
         return 2;
     }
-    if (!WinHelpA(NULL, "stars!.hlp", uCommand, idh)) {
+    if (!WinHelpA(NULL, "stars-help.html", uCommand, idh)) {
         fprintf(stderr, "Help launch failed: error %lu\n", (unsigned long)GetLastError());
         SDL_Quit();
         return 1;

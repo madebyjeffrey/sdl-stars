@@ -34,6 +34,7 @@ int16_t CommaFormatLong(char *psz, int32_t l);
 void    BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt);
 int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut);
 int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut);
+int16_t FDecompressUserStringBytes(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut);
 int16_t NybbleFromCh(uint8_t ch);
 char    ChFromNybble(int16_t nyb);
 int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2, int16_t dMax, int16_t *pdStart, int16_t *pdEnd);

@@ -15,7 +15,8 @@ for the scope of the checks.
 
 Run the commands below from the repository root. All builds need a C11 compiler,
 CMake 3.23 or newer, Ninja, and Python 3 with PyYAML. Desktop builds also need
-SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help.
+SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help,
+plus a C++17 compiler for the C-compatible filesystem bridge.
 The SDL presets use an installed SDL3 3.4 or newer, or download the pinned SDL
 source on the first configure. Host-only builds do not need SDL or desktop
 libraries.

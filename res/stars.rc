@@ -1,5 +1,5 @@
 /* Resources of stars.exe, generated from its NE resource table. */
-#pragma code_page(1252)
+#pragma code_page(65001)
 
 #include <windows.h>
 #include "resource.h"
@@ -204,7 +204,7 @@ BEGIN
     CONTROL "Stars! for Microsoft Windows", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 36, 8, 156, 8
     CONTROL "The Advanced Interstellar Strategy Game", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 36, 18, 156, 17
     CONTROL "Demo Version", IDC_ABOUT_DEMO_TEXT, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 32, 184, 8
-    CONTROL "Copyright \251 1995-2000  Jeff Johnson && Jeff McBride", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 48, 184, 8
+    CONTROL "Copyright © 1995-2000  Jeff Johnson && Jeff McBride", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 48, 184, 8
     CONTROL "Published by empire Interactive", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 60, 184, 66
     CONTROL "", IDC_ABOUT_CREDITS_TEXT, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 70, 184, 66
     CONTROL "http://www.webmap.com/stars!", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 140, 184, 8
@@ -770,7 +770,7 @@ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4"
+        BLOCK "0409FDE9"
         BEGIN
             VALUE "FileDescription", "Stars!"
             VALUE "FileVersion", STARS_VERSION_STRING
@@ -782,7 +782,7 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x409, 1252
+        VALUE "Translation", 0x409, 65001
     END
 END
 

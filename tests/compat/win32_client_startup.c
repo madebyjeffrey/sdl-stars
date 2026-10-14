@@ -149,7 +149,7 @@ static BOOL FCheckMapInspection(void) {
         !FSelectScannerObject(&snap, grobjPlanet, 0, TRUE) || sel.scan.grobj != grobjPlanet || sel.scan.idpl != 0) goto LDone;
     if (!FCaptureScanner(&fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
-    strcpy(fresh.rgobj[0].szName, "Quoted \"\xe9\x80\"\r\n");
+    strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
     lpfile = tmpfile();
     if (!lpfile) goto LDone;
     if (!FWriteScannerSnapshot(&fresh, lpfile)) { fclose(lpfile); goto LDone; }
@@ -1409,9 +1409,9 @@ int main(void) {
     int nResult;
     pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
-    if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "Stars.ini")) return 1;
-    if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "Stars.ini") ||
-        !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "Stars.ini"))) return 1;
+    if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
+    if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
+        !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle)) fPassed = FALSE;

@@ -10,7 +10,7 @@ designated initializer: its keys are the struct's field names and its
 values are C values.
 
     - name: iengineFuelMizer        # its enum value in dataids.h
-      szName: "Fuel Mizer"          # sz keys are strings (Windows-1252)
+      szName: "Fuel Mizer"          # sz keys are strings (UTF-8)
       rgwtOreCost: [8]              # lists become {8}
       grfAbilities: engineFuelMizer # other strings are C expressions
       hul: {...}                    # maps become nested initializers
@@ -127,10 +127,9 @@ class DataError(Exception):
 
 
 def CString(s, where):
-    try:
-        raw = s.encode("cp1252")
-    except UnicodeEncodeError:
-        raise DataError("{}: {!r} is not Windows-1252".format(where, s))
+    raw = s.encode("utf-8")
+    if b"\0" in raw:
+        raise DataError("{}: strings cannot contain NUL".format(where))
     out = []
     for b in raw:
         if b in (0x22, 0x5C):

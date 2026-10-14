@@ -6,6 +6,105 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
+  warning-as-error build and omitting Unicode profile coverage. The call now
+  uses the same platform guard as the definition; the fixture uses a portable
+  temporary directory and a Unicode filename instead of a hard-coded `/tmp`
+  path. Game behavior, save layouts and baselines are unchanged.
+
+- `TestPicker` used native Win32 filesystem APIs through SDL wrapper headers,
+  preventing Windows SDL test builds. A small C++17 filesystem bridge with a C
+  ABI now supplies strict UTF-8 fixture paths and portable directory operations.
+  Picker coverage includes Unicode directories, and hierarchy capture avoids
+  the Windows CRT's narrow temporary-file path. Game behavior, save layouts and
+  baselines are unchanged.
+
+- `FOpenFile` checked for format 2.85 before classifying unsupported versions,
+  making its older/newer version messages unreachable. It now reports valid
+  older and newer BOF versions accurately and treats malformed BOF records as
+  corrupt, preserving that diagnostic across read-error recovery. Reader tests
+  cover older, newer, malformed and current-format host files; save layouts
+  and simulation results are unchanged.
+- `FWasRaceFile` now imports protected legacy races only after validating the
+  original records and checksum, confirming any shortened names and accepting
+  a replacement UTF-8 password. The old password is not authenticated, and
+  its hash is replaced before the race can be saved or used directly in New
+  Game creation. Cancellation stops both paths; race writes remain format
+  2.85. Race/player state, native regression baselines and turn generation
+  contain no copied legacy hash and are otherwise unchanged.
+- `FWasRaceFile` now imports unprotected race designs from formats 2.49–2.84.
+  A bounded legacy parser verifies record framing and the original CP1252
+  checksum before converting names; pre-2.55 singular-only records gain a
+  plural form. Names that exceed 31 UTF-8 bytes are shortened only after the
+  player confirms the proposed complete-code-point names. Protected legacy
+  races follow the replacement-password workflow in the next entry; legacy
+  game, turn, history and orders files remain rejected. Imports leave their
+  source files unchanged, and saves use 2.85. Gameplay attributes, native
+  baselines and host results are unchanged.
+- `NewPasswordDlg` let the edit control silently keep a shortened prefix when
+  password input exceeded 15 UTF-8 bytes. Password fields now reject the whole
+  oversized edit or paste and ask the user to enter the password again; other
+  text fields retain truncation. The rejection remains until the field changes,
+  so no-op Backspace or Delete cannot clear it. Exact-limit Unicode passwords
+  remain valid. Native baselines and turn generation are unchanged.
+- `WriteBattlePlan` used a 36-byte buffer for raw names whose length marker,
+  31-byte text and terminator require a 37-byte record. Its temporary buffer
+  now covers that existing record size. Disk fields, native baselines and
+  host results are unchanged.
+- `FFinishPlrMsgEntry` passed a negative raw-message length to `memcmp`,
+  reading past unchanged uncompressed UTF-8 messages and marking them changed.
+  It now compares the stored byte count. Native baselines and host results
+  are unchanged.
+- `FWriteScanString` still interpreted scanner snapshot names as CP1252,
+  double-encoding UTF-8 in exported JSON. It now validates and preserves UTF-8
+  bytes while escaping JSON quotes and controls. Unterminated snapshot names
+  are rejected. Native baselines and turn generation are unchanged.
+- `GenNewGameFromFile` checked the 16-bit truncated file size, allowing a
+  large definition to wrap into a small readable prefix. It now checks the
+  actual native file size before allocation. Native baselines and valid
+  definitions are unchanged.
+- `PszFormatString` copied expanded names and paths past its 256-byte buffer.
+  Its expansions are now bounded, and message/printf truncation preserves
+  complete UTF-8 code points. Normal messages, native regression baselines
+  and turn generation are unchanged.
+- `UnpackBattlePlan` could leave an existing plan partially changed on a
+  rejected name. It now validates into temporary text and reports failure;
+  `FRunLogRecord` increments the plan count only after success. Native
+  regression baselines and valid host results are unchanged.
+- Wrapper list/menu/class setters and `OpenFile` could retain malformed UTF-8,
+  and picker navigation could retain an unsupported resolved directory.
+  These inputs and print destinations are now validated; picker extension
+  abbreviations preserve complete code points. Native baselines are unchanged.
+- `GenNewGameFromFile` validated only its title and copied its final output
+  path without a capacity check. It now validates the whole UTF-8 definition,
+  accepts an optional BOM and bounds the output path. Native regression
+  baselines and results for valid definitions are unchanged.
+- `ReadRtPlr`, `FReadShDef`, `FReadFleet` and `UnpackBattlePlan` could read
+  names past their record boundary; `FRunLogRecord` treated failed compressed
+  fleet names as raw bytes. Readers now require complete, bounded UTF-8 text,
+  and `FDecompressUserString` rejects incomplete escapes. Player messages are
+  validated before entering memory, and game/header/race-checksum records
+  require their fixed sizes. Valid files, native baselines and host results
+  are unchanged; malformed records are rejected or skipped as appropriate.
+- Generated fleet names and clipped mineral/message titles could split UTF-8
+  characters, causing strict drawing to reject whole labels. These cuts and
+  bounded menu, class, file-title and font/printer label copies now preserve
+  complete code points. Native regression baselines and gameplay are unchanged.
+- `NewPasswordDlg` allowed 16-byte UTF-8 passwords, which the 15-byte login
+  field and command line could not accept. Both change-password fields now
+  use the login byte limit and preserve complete code points. Native regression
+  baselines and turn generation are unchanged.
+- Application text now uses UTF-8 on all platforms: generated catalogs/data,
+  resources, controls, clipboard/composition, drawing, reports and passwords.
+  `WriteBOF`, `FOpenFile`, `FWasRaceFile`, `FMarkFile` and `FLoadLogFile`
+  write/require format 2.85 instead of accepting legacy encoded text. Record
+  sizes stay fixed; text and password limits count UTF-8 bytes. Existing game,
+  race and non-ASCII password compatibility is deliberately dropped. Settings
+  start fresh in `StarsUtf8.ini` with a UTF-8 BOM. Unsupported native paths
+  report conversion errors. The help build uses a UTF-8 bundle, and tutorial
+  assets use 2.85 with their old battle event headers converted in place.
+  **Serialized host results:** all nine native scenarios move from checkpoint
+  0 solely because BOF version 2.84 becomes 2.85; no simulation fields change.
 - `LibraryNameDlg`, `FChooseLibraryGameName` and `FFinishLibraryGame` passed
   two compressed strings from the same shared buffer to `MessageBox`, making
   the body and caption identical according to compiler argument order. Library
