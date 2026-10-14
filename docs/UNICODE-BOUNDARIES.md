@@ -27,6 +27,10 @@ and controls. No legacy code-page heuristic, substitution or importer remains
 in the product. Popup separator sentinels and compressed/hash bytes are binary
 protocol representations, not decoded text.
 
+Universe definitions are validated as complete UTF-8 text, including their
+path lines, before parsing. An initial UTF-8 BOM is accepted. Embedded NULs,
+malformed text and output paths beyond their existing byte capacity fail.
+
 ## Verification
 
 The native and host regressions each compare all 519 checkpoints with the updated

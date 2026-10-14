@@ -1006,7 +1006,12 @@ int16_t GenNewGameFromFile(char *pszFile) {
     RgFromStream(lpbDef, cb);
     StreamClose();
     lpbDef[cb] = 0;
+    if (!FUtf8Valid(lpbDef, cb)) {
+        FileError(idsUniverseCreationFileAppearsInvalid);
+        goto LError;
+    }
     lpb = lpbDef;
+    if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
     lpbStart = PszGetLine(&lpb);
     if (*lpbStart == 0 || strlen(lpbStart) > 31) {
         AlertSz(PszFormatIds(idsIllegalGameTitle, NULL), MB_ICONHAND);
@@ -1092,6 +1097,10 @@ int16_t GenNewGameFromFile(char *pszFile) {
         lpbStart = PszGetLine(&lpb);
         if (lpb >= lpbDefMac)
             goto LUniDefShort;
+        if (strlen(lpbStart) >= sizeof(szWork)) {
+            FileError(idsUniverseCreationFileAppearsInvalid);
+            goto LError;
+        }
         if (i > 0 && *lpbStart == '#') {
             cNum = CParseNumbers(lpbStart + 1, rgl, 2);
             idAi = LOWORD(rgl[0]);
@@ -1241,7 +1250,10 @@ int16_t GenNewGameFromFile(char *pszFile) {
     if (lpb - lpbStart >= 3 && *lpb == 'y' && lpb[-1] == 'x' && lpb[-2] == '.') {
         lpb[-2] = 0;
     }
-    strcpy(szBase, lpbStart);
+    if (CchCopyUtf8(szBase, sizeof(szBase), lpbStart, strlen(lpbStart)) < 0) {
+        FileError(idsUniverseCreationFileAppearsInvalid);
+        goto LError;
+    }
     if (lpb + 4 < lpbDefMac) {
         lpbDefUni = lpb;
     }

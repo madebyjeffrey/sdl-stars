@@ -62,6 +62,16 @@ static void TestInvalidDefinition(void) {
     fputs("\xe9\r\n", pf); fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
+    fputs("Title\r\n\xff\r\n", pf); fclose(pf);
+    TEST_CHECK(!GenNewGameFromFile(szFile));
+    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
+    TEST_CHECK(fwrite("Title\0hidden\r\n", 1, 14, pf) == 14); fclose(pf);
+    TEST_CHECK(!GenNewGameFromFile(szFile));
+    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
 }
 
 TEST_LIST = {{"invalid UTF-8 title cleans up the error handler", TestInvalidDefinition},

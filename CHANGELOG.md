@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `GenNewGameFromFile` validated only its title and copied its final output
+  path without a capacity check. It now validates the whole UTF-8 definition,
+  accepts an optional BOM and bounds the output path. Native regression
+  baselines and results for valid definitions are unchanged.
 - `ReadRtPlr`, `FReadShDef`, `FReadFleet` and `UnpackBattlePlan` could read
   names past their record boundary; `FRunLogRecord` treated failed compressed
   fleet names as raw bytes. Readers now require complete, bounded UTF-8 text,
