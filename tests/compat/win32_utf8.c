@@ -75,7 +75,7 @@ int main(void) {
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);
     hwndLegacy = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE, 8, 48, 500, 30,
                               hwnd, (HMENU)(INT_PTR)101, wc.hInstance, NULL);
-    CHECK(hwndEdit && hwndLegacy); hwndEdit->fUtf8Text = TRUE;
+    CHECK(hwndEdit && hwndLegacy && StarsCompatSetWindowTextUtf8(hwndEdit));
     SetFocus(hwndEdit); CompatTextInput(hwndEdit, psz); Drain();
     CHECK(GetWindowText(hwndEdit, szText, sizeof(szText)) == (int)strlen(psz) && strcmp(szText, psz) == 0);
     SendMessage(hwndEdit, EM_SETSEL, 0, -1); SendMessage(hwndEdit, WM_COPY, 0, 0);

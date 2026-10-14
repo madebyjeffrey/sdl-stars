@@ -1,4 +1,5 @@
 #include "win.h"
+#include <stars_compat.h>
 #include <SDL3/SDL.h>
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
@@ -77,6 +78,7 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     switch (message) {
     case WM_INITDIALOG:
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        StarsCompatSetWindowTextUtf8(GetDlgItem(hwnd, IDC_EDIT1));
         SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 255, 0);
         SetDlgItemText(hwnd, IDC_EDIT1, (char *)lParam);
         return TRUE;
