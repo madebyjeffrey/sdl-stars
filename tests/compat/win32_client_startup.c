@@ -2,8 +2,15 @@
 #include "win.h"
 #include <stars_compat.h>
 #include "internal.h"
+#include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
+    const char *pszPath = getenv("STARS_TEST_PREF_PATH");
+    if (pszPath) return SDL_strdup(pszPath);
+    return SDL_GetPrefPath(pszOrg, pszApp);
+}
 
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;

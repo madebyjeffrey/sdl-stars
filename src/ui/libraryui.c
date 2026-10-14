@@ -20,17 +20,29 @@ static int16_t FInitLibrary(void) {
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames", pszOverride ? pszOverride : pszRoot,
                    pszOverride ? szDirSep : "");
     SDL_free(pszRoot);
-    return cch > 0 && cch < (int)sizeof(szLibraryRoot) && SDL_CreateDirectory(szLibraryRoot);
+    return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
 }
 
-static SDL_EnumerationResult SDLCALL FindLibraryName(void *lpName, const char *pszDir, const char *pszFile) {
-    (void)pszDir;
-    if (!SDL_strcasecmp(lpName, pszFile)) return SDL_ENUM_FAILURE;
-    return SDL_ENUM_CONTINUE;
+typedef struct {
+    const char *pszName;
+    int16_t fFound;
+} LIBRARYNAMECHECK;
+
+static int16_t FindLibraryName(void *lpData, const char *pszFile) {
+    LIBRARYNAMECHECK *plnc = lpData;
+    if (!SDL_strcasecmp(plnc->pszName, pszFile)) {
+        plnc->fFound = TRUE;
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static int16_t FLibraryNameAvailable(const char *pszName) {
-    return SDL_EnumerateDirectory(szLibraryRoot, FindLibraryName, (void *)pszName);
+    LIBRARYNAMECHECK lnc;
+    lnc.pszName = pszName;
+    lnc.fFound = FALSE;
+    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryName, &lnc)) return FALSE;
+    return !lnc.fFound;
 }
 
 static int16_t FPortableLibraryName(const char *pszName) {
@@ -144,13 +156,13 @@ static int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, in
     return ReplaceNativeFile(szTemp, szFile) == 0;
 }
 
-static SDL_EnumerationResult SDLCALL RemovePendingFile(void *lpUnused, const char *pszDir, const char *pszFile) {
+static int16_t RemovePendingFile(void *lpUnused, const char *pszFile) {
     char szFile[256];
     (void)lpUnused;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s", pszDir, pszFile);
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s", szLibraryPending, szDirSep, pszFile);
     /* Failed generation can leave an empty directory at a file destination. */
-    SDL_RemovePath(szFile);
-    return SDL_ENUM_CONTINUE;
+    RemoveNativePath(szFile);
+    return TRUE;
 }
 
 /* GenerateWorld's original companion-write loop ignores writer return values.
@@ -202,40 +214,40 @@ int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
     }
     if (fGenerated) fGenerated = FWriteLibraryMetadata(szLibraryPending, szLibraryName, idPlayer);
     if (!fGenerated) {
-        SDL_EnumerateDirectory(szLibraryPending, RemovePendingFile, NULL);
-        SDL_RemovePath(szLibraryPending);
+        FNativeEnumerateDirectory(szLibraryPending, RemovePendingFile, NULL);
+        RemoveNativePath(szLibraryPending);
         MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, PszGetCompressedString(idsLibraryStorageFailed), PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
     }
     szLibraryPending[0] = 0;
     return fGenerated;
 }
 
-static SDL_EnumerationResult SDLCALL ListLibraryGame(void *lpList, const char *pszDir, const char *pszName) {
+static int16_t ListLibraryGame(void *lpList, const char *pszName) {
     char szFile[256], szName[256];
     FILE *pf;
     int iVersion, iplr, fRead;
+    int64_t cbFile;
     long long lPlayed;
-    SDL_PathInfo info;
     LRESULT i;
 
-    if (!FPortableLibraryName(pszName)) return SDL_ENUM_CONTINUE;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s.library", pszDir, pszName, szDirSep);
+    if (!FPortableLibraryName(pszName)) return TRUE;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
     pf = PfOpenNativeFile(szFile, "rb");
-    if (!pf) return SDL_ENUM_CONTINUE;
+    if (!pf) return TRUE;
     iVersion = 0; iplr = -1;
     fRead = fscanf(pf, "%d\n", &iVersion) == 1 && fgets(szName, sizeof(szName), pf) &&
             fscanf(pf, "%d\n%lld", &iplr, &lPlayed) == 2;
     fclose(pf);
-    if (!fRead || iVersion != 1 || iplr < -1 || iplr >= 16) return SDL_ENUM_CONTINUE;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.%s", pszDir, pszName, szDirSep, pszName, "xy");
-    if (!SDL_GetPathInfo(szFile, &info) || info.size == 0) return SDL_ENUM_CONTINUE;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.hst", pszDir, pszName, szDirSep, pszName);
-    if (iplr >= 0) CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.m%d", pszDir, pszName, szDirSep, pszName, iplr + 1);
-    if (SDL_GetPathInfo(szFile, &info) && info.size > 0) {
+    if (!fRead || iVersion != 1 || iplr < -1 || iplr >= 16) return TRUE;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
+    if (!FNativeFileSize(szFile, &cbFile) || cbFile == 0) return TRUE;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
+    if (iplr >= 0) CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
+    if (FNativeFileSize(szFile, &cbFile) && cbFile > 0) {
         i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
         if (i != LB_ERR && i != LB_ERRSPACE) SendMessage(lpList, LB_SETITEMDATA, i, iplr);
     }
-    return SDL_ENUM_CONTINUE;
+    return TRUE;
 }
 
 void InitLibraryGames(HWND hwnd, const RECT *lprc) {
@@ -247,7 +259,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
                  hwnd, NULL, hInst, NULL);
     hwndList = CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                             24, y, lprc->right - 48, 120, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
-    if (FInitLibrary()) SDL_EnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
+    if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     EnableWindow(rghwndBtnSplash[1], SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
 }

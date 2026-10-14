@@ -18,6 +18,7 @@
 #else
 #include <errno.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -305,11 +306,106 @@ int CreateNativeDir(const char *pszDir) {
     free(pwsz); return result;
 }
 
+int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+    wchar_t *pwsz = LpwszNativePath(pszDir), *pwszSearch;
+    WIN32_FIND_DATAW findData;
+    HANDLE hFind;
+    size_t cch;
+    char szEntry[1024];
+    int16_t fResult;
+
+    if (!pwsz || !pfnEntry) { free(pwsz); return FALSE; }
+    cch = wcslen(pwsz);
+    pwszSearch = malloc((cch + 3) * sizeof(*pwszSearch));
+    if (!pwszSearch) { free(pwsz); return FALSE; }
+    memcpy(pwszSearch, pwsz, cch * sizeof(*pwszSearch));
+    if (cch != 0 && pwszSearch[cch - 1] != L'/' && pwszSearch[cch - 1] != L'\\') pwszSearch[cch++] = L'\\';
+    pwszSearch[cch++] = L'*'; pwszSearch[cch] = 0;
+    hFind = FindFirstFileW(pwszSearch, &findData);
+    free(pwsz); free(pwszSearch);
+    if (hFind == INVALID_HANDLE_VALUE) return GetLastError() == ERROR_FILE_NOT_FOUND;
+    fResult = TRUE;
+    for (;;) {
+        if (wcscmp(findData.cFileName, L".") && wcscmp(findData.cFileName, L"..")) {
+            if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, findData.cFileName, -1,
+                                    szEntry, sizeof(szEntry), NULL, NULL) == 0) { fResult = FALSE; break; }
+            if (!pfnEntry(lpData, szEntry)) break;
+        }
+        if (!FindNextFileW(hFind, &findData)) {
+            if (GetLastError() != ERROR_NO_MORE_FILES) fResult = FALSE;
+            break;
+        }
+    }
+    FindClose(hFind);
+    return fResult;
+}
+
+int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
+    wchar_t *pwsz = LpwszNativePath(pszFile);
+    struct _stat64 st;
+    int16_t fResult;
+    if (!pwsz) return FALSE;
+    fResult = _wstat64(pwsz, &st) == 0 && (st.st_mode & _S_IFMT) == _S_IFREG;
+    free(pwsz);
+    if (fResult) *pcbFile = st.st_size;
+    return fResult;
+}
+
+int16_t FNativeDirectoryExists(const char *pszDir) {
+    wchar_t *pwsz = LpwszNativePath(pszDir);
+    DWORD dwAttributes;
+    if (!pwsz) return FALSE;
+    dwAttributes = GetFileAttributesW(pwsz);
+    free(pwsz);
+    return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+static int16_t FCreateDirectoryW(wchar_t *pwszDir) {
+    DWORD dwAttributes;
+    if (CreateDirectoryW(pwszDir, NULL)) return TRUE;
+    if (GetLastError() != ERROR_ALREADY_EXISTS) return FALSE;
+    dwAttributes = GetFileAttributesW(pwszDir);
+    return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+int16_t FEnsureNativeDir(const char *pszDir) {
+    wchar_t *pwsz = LpwszNativePath(pszDir), *pch, *pStart;
+    wchar_t ch;
+    if (!pwsz) return FALSE;
+    pStart = pwsz;
+    if (pwsz[0] == L'\\' && pwsz[1] == L'\\') {
+        pch = wcschr(pwsz + 2, L'\\');
+        if (pch) pch = wcschr(pch + 1, L'\\');
+        pStart = pch ? pch + 1 : pwsz + wcslen(pwsz);
+    } else if (pwsz[0] && pwsz[1] == L':' && (pwsz[2] == L'\\' || pwsz[2] == L'/')) {
+        pStart = pwsz + 3;
+    } else if (pwsz[0] == L'\\' || pwsz[0] == L'/') {
+        pStart = pwsz + 1;
+    }
+    for (pch = pStart; *pch; pch++) {
+        if (*pch != L'\\' && *pch != L'/') continue;
+        ch = *pch; *pch = 0;
+        if (*pwsz && !FCreateDirectoryW(pwsz)) { *pch = ch; free(pwsz); return FALSE; }
+        *pch = ch;
+    }
+    if (!FCreateDirectoryW(pwsz)) { free(pwsz); return FALSE; }
+    free(pwsz);
+    return TRUE;
+}
+
 int RemoveNativeFile(const char *psz) {
     wchar_t *pwsz = LpwszNativePath(psz);
     int result;
     if (!pwsz) return -1;
     result = _wremove(pwsz); free(pwsz); return result;
+}
+
+int RemoveNativePath(const char *psz) {
+    wchar_t *pwsz = LpwszNativePath(psz);
+    int result;
+    if (!pwsz) return -1;
+    result = DeleteFileW(pwsz) ? 0 : RemoveDirectoryW(pwsz) ? 0 : -1;
+    free(pwsz); return result;
 }
 
 // Metadata replacement must preserve the old file if installing the new one fails.
@@ -407,7 +503,57 @@ int16_t FFileReadOnly(char *szFile) { return access(szFile, W_OK) != 0; }
 void MakeDir(char *szDir) { mkdir(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return mkdir(pszDir, 0777); }
 
+int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+    DIR *pdir;
+    struct dirent *pentry;
+    int16_t fResult;
+    if (!pfnEntry || !(pdir = opendir(pszDir))) return FALSE;
+    fResult = TRUE;
+    for (;;) {
+        errno = 0;
+        pentry = readdir(pdir);
+        if (!pentry) {
+            if (errno != 0) fResult = FALSE;
+            break;
+        }
+        if (!strcmp(pentry->d_name, ".") || !strcmp(pentry->d_name, "..")) continue;
+        if (!pfnEntry(lpData, pentry->d_name)) break;
+    }
+    closedir(pdir);
+    return fResult;
+}
+
+int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
+    struct stat st;
+    if (stat(pszFile, &st) != 0 || !S_ISREG(st.st_mode)) return FALSE;
+    *pcbFile = st.st_size;
+    return TRUE;
+}
+
+int16_t FNativeDirectoryExists(const char *pszDir) {
+    struct stat st;
+    return stat(pszDir, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+int16_t FEnsureNativeDir(const char *pszDir) {
+    char *pszPath = strdup(pszDir), *pch;
+    char ch;
+    if (!pszPath) return FALSE;
+    for (pch = pszPath[0] == '/' ? pszPath + 1 : pszPath; *pch; pch++) {
+        if (*pch != '/') continue;
+        ch = *pch; *pch = 0;
+        if (*pszPath && mkdir(pszPath, 0777) != 0 && !FNativeDirectoryExists(pszPath)) {
+            free(pszPath); return FALSE;
+        }
+        *pch = ch;
+    }
+    if (mkdir(pszPath, 0777) != 0 && !FNativeDirectoryExists(pszPath)) { free(pszPath); return FALSE; }
+    free(pszPath);
+    return TRUE;
+}
+
 int RemoveNativeFile(const char *psz) { return remove(psz); }
+int RemoveNativePath(const char *psz) { return remove(psz); }
 int ReplaceNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
 int RenameNativeFile(const char *pszOld, const char *pszNew) { return rename(pszOld, pszNew); }
 FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return fopen(psz, pszMode); }

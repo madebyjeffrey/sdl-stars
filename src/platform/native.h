@@ -113,7 +113,13 @@ int16_t FFileReadOnly(char *szFile);
 void    MakeDir(char *szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(const char *pszDir);
+typedef int16_t (*FNativeDirectoryEntryProc)(void *lpData, const char *pszEntry);
+int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
+int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile);
+int16_t FNativeDirectoryExists(const char *pszDir);
+int16_t FEnsureNativeDir(const char *pszDir);
 int     RemoveNativeFile(const char *psz);
+int     RemoveNativePath(const char *psz);
 int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int64_t LNativeTime(void);
 int     RenameNativeFile(const char *pszOld, const char *pszNew);

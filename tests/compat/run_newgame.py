@@ -6,9 +6,28 @@ import sys
 import tempfile
 
 
-def run(executable, work, **choices):
+def run(executable, work, default_root=False, **choices):
+    (work / 'settings').mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'))
+    if default_root:
+        env.pop('STARS_SETTINGS_DIR', None)
+        env.pop('STARS_LIBRARY_DIR', None)
+        pref_path = work / 'pref' / 'Stars!'
+        pref_path.mkdir(parents=True, exist_ok=True)
+        env['STARS_TEST_PREF_PATH'] = str(pref_path) + os.sep
+        env['HOME'] = str(work / 'home')
+        env['XDG_CONFIG_HOME'] = str(work / 'config')
+        if sys.platform == 'win32':
+            env['LOCALAPPDATA'] = str(work / 'local')
+        env.pop('STARS_CLIENT_CONTINUE', None)
+        env.pop('STARS_CLIENT_NEW_GAME', None)
+        env.pop('STARS_CLIENT_NEW_ADVANCED', None)
+        env.pop('STARS_CLIENT_LIBRARY_OPEN', None)
+        env.update(choices)
+        cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
+        subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
+        return
     for key in ('STARS_CLIENT_CONTINUE', 'STARS_CLIENT_NEW_GAME',
                 'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN'):
         env.pop(key, None)
@@ -51,6 +70,18 @@ def main():
                         STARS_CLIENT_LIBRARY_NAME='failed-game', STARS_CLIENT_LIBRARY_FAIL_WRITE=failure)
                     assert not (games / 'failed-game').exists()
                     run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
+
+    with tempfile.TemporaryDirectory(prefix='stars-native-library-root-') as directory:
+        work = Path(directory)
+        games = work / 'pref' / 'Stars!' / 'Games'
+        name = 'platform-root-game'
+        path = games / name / name
+        run(executable, work, default_root=True,
+            STARS_CLIENT_NEW_GAME=str(path.with_suffix('.xy')),
+            STARS_CLIENT_LIBRARY_NAME=name)
+        assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
+        assert (path.parent / '.library').is_file()
+        run(executable, work, default_root=True, STARS_CLIENT_LIBRARY_OPEN=name)
     return 0
 
 
