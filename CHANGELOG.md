@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The desktop Games library can import a game family from a selected file or
+  folder. It validates format, record framing, game identity and player slots
+  before copying the universe, available turns, companions and backups into a
+  uniquely named managed folder. Imported source files stay untouched, and
+  player rows show their own turn years. Simulation behavior and disk record
+  layouts are unchanged.
+
 - `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
   warning-as-error build and omitting Unicode profile coverage. The call now
   uses the same platform guard as the definition; the fixture uses a portable

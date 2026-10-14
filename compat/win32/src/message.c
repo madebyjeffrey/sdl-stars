@@ -40,6 +40,27 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return TRUE;
 }
 
+BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    COMPATASYNCPOST *lpPost;
+    SDL_Event event = {0};
+
+    if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
+    lpPost = malloc(sizeof(*lpPost));
+    if (!lpPost) return FALSE;
+    lpPost->hwnd = hwnd;
+    lpPost->msg = msg;
+    lpPost->wParam = wParam;
+    lpPost->lParam = lParam;
+    event.type = SDL_EVENT_USER;
+    event.user.code = COMPAT_ASYNC_POST_CODE;
+    event.user.data1 = lpPost;
+    if (!SDL_PushEvent(&event)) {
+        free(lpPost);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     /* Keep the newest consecutive motion, without merging across button/key
        changes or application-posted messages. Old pointer positions otherwise

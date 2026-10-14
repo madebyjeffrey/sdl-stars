@@ -5,6 +5,7 @@
 #include "internal.h"
 #include <stars_compat.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 static HWND hwndCapture, rghwndClick[3];
@@ -383,6 +384,14 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
 
     if (lpevent->type == SDL_EVENT_QUIT) {
         PostQuitMessage(0);
+        return;
+    }
+    if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
+        COMPATASYNCPOST *lpPost = lpevent->user.data1;
+        if (lpPost) {
+            PostMessageA(lpPost->hwnd, lpPost->msg, lpPost->wParam, lpPost->lParam);
+            free(lpPost);
+        }
         return;
     }
     // Window/input SDL event unions all use windowID; never fall back to another HWND.
