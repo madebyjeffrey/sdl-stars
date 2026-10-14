@@ -1,6 +1,7 @@
 """Create managed games, resolve collisions, and reopen in a fresh client."""
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -93,6 +94,49 @@ def main():
         assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
         assert (path.parent / '.library').is_file()
         run(executable, work, settings_root=True, STARS_CLIENT_LIBRARY_OPEN=name)
+
+    with tempfile.TemporaryDirectory(prefix='stars-import-game-') as directory:
+        work = Path(directory)
+        source = work / 'exchange'
+        source.mkdir()
+        fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+        for ext in ('.xy', '.hst', '.m1', '.m2'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        backup = source / 'backup.000'
+        backup.mkdir()
+        shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
+        original = {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()}
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        imported = work / 'library' / 'Games' / 'managed-copy'
+        assert (imported / '.library').is_file()
+        assert all((imported / ('managed-copy' + ext)).is_file() for ext in ('.xy', '.hst', '.m1', '.m2'))
+        assert (imported / 'backup.000' / 'managed-copy.m1').read_bytes() == (source / 'backup.000' / 'exchange.m1').read_bytes()
+        assert {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()} == original
+        metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
+        assert metadata[0] == '2' and metadata[4] == 'exchange'
+
+        bad_source = work / 'bad-exchange'
+        shutil.copytree(source, bad_source)
+        turn = bad_source / 'exchange.m2'
+        data = bytearray(turn.read_bytes())
+        data[6] ^= 1
+        turn.write_bytes(data)
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_source),
+            STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (work / 'library' / 'Games' / 'invalid-copy').exists()
+
+    with tempfile.TemporaryDirectory(prefix='stars-import-file-') as directory:
+        work = Path(directory)
+        source = work / 'exchange'
+        source.mkdir()
+        fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+        for ext in ('.xy', '.hst', '.m1', '.m2'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_NAME='managed-file')
+        imported = work / 'library' / 'Games' / 'managed-file'
+        assert (imported / 'managed-file.m1').is_file()
+        assert (imported / 'managed-file.m2').is_file()
     return 0
 
 

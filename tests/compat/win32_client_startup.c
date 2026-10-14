@@ -26,6 +26,11 @@ static BOOL fRaceBack;
 static BOOL fHabPainted;
 static int cHabShow;
 static const char *pszContinue;
+static const char *pszImportSource;
+static int iImportStage;
+static GAME gameImportSav;
+static int16_t idPlayerImportSav;
+static char szBaseImportSav[256];
 static HWND hwndBrowserPrevious;
 static BOOL fTitlePainted;
 static int cTitleShow;
@@ -1164,6 +1169,12 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
+    if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
+        fChecked = TRUE;
+        fPassed = TRUE;
+        PostQuitMessage(0);
+        return IDOK;
+    }
     PostQuitMessage(91);
     return IDOK;
 }
@@ -1186,6 +1197,46 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (pszImportSource) {
+        if (iImportStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) return;
+            iImportStage = 1;
+            gameImportSav = game;
+            idPlayerImportSav = idPlayer;
+            strcpy(szBaseImportSav, szBase);
+            if (!FImportLibraryGame(hwndTitle, pszImportSource)) goto LDone;
+            if (memcmp(&gameImportSav, &game, sizeof(game)) || idPlayerImportSav != idPlayer || strcmp(szBaseImportSav, szBase)) goto LDone;
+            iImportStage = 2;
+            RefreshLibraryGames(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 2) goto LDone;
+            {
+                HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+                char szPlayer[320];
+                int iPlayer;
+                BOOL fPlayers[2] = {FALSE, FALSE};
+                for (iPlayer = 0; iPlayer < 2; iPlayer++) {
+                    SendMessage(hwndList, LB_GETTEXT, iPlayer, (LPARAM)szPlayer);
+                    if (strstr(szPlayer, "Player 1 (2400)")) fPlayers[0] = TRUE;
+                    if (strstr(szPlayer, "Player 2 (2400)")) fPlayers[1] = TRUE;
+                }
+                if (!fPlayers[0] || !fPlayers[1]) goto LDone;
+            }
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Game family imported into the managed library");
+            PostQuitMessage(0);
+            return;
+        }
+        if (iImportStage == 1) {
+            for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+                if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwnd, IDC_EDIT1), getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
+                FPushClick(GetDlgItem(hwnd, IDOK));
+                return;
+            }
+        }
+        return;
+    }
     if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
         const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
         HWND hwndList;
@@ -1193,7 +1244,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) goto LDone;
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-            iGame = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
+            iGame = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)pszName);
             if (iGame == LB_ERR) goto LDone;
             SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
             fChecked = TRUE;
@@ -1409,12 +1460,13 @@ int main(void) {
     int nResult;
     pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
+    pszImportSource = getenv("STARS_CLIENT_IMPORT_SOURCE");
     if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
     if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle)) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
