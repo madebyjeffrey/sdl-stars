@@ -106,7 +106,34 @@ static void TestFormattedTextBounds(void) {
     TEST_CHECK(strlen(sz) == 1022 && FUtf8Valid(sz, strlen(sz)));
 }
 
+#ifdef STARS_UI_SDL
+static void TestScannerSnapshotUtf8(void) {
+    SCANOBJECT obj = {0};
+    SCANSNAPSHOT snap = {0};
+    char sz[2048];
+    size_t cb;
+    FILE *pf;
+    const char *psz = "\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80";
+
+    snprintf(obj.szName, sizeof(obj.szName), "Quoted \"%s\"\r\n", psz);
+    snap.rgobj = &obj; snap.cObject = 1;
+    pf = tmpfile(); TEST_ASSERT(pf);
+    TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
+    rewind(pf); cb = fread(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
+    TEST_CHECK(FUtf8Valid(sz, cb));
+    TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
+    strcpy(obj.szName, "\xff");
+    TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
+    memset(obj.szName, 'a', sizeof(obj.szName));
+    TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
+    fclose(pf);
+}
+#endif
+
 TEST_LIST = {{"formatted text stays bounded and preserves UTF-8", TestFormattedTextBounds},
+#ifdef STARS_UI_SDL
+             {"scanner snapshots preserve UTF-8 and reject malformed names", TestScannerSnapshotUtf8},
+#endif
              {"invalid UTF-8 definition cleans up the error handler", TestInvalidDefinition},
              {"strict UTF-8 text and UTF-16 boundaries", TestEncoding},
              {"UTF-8 passwords and filename byte capacities", TestPasswords}, {NULL, NULL}};

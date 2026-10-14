@@ -380,6 +380,8 @@ and raw terminators before retaining a message.
 Rejected battle-plan text leaves the existing plan and plan count unchanged.
 Wrapper text setters and file/print inputs reject malformed UTF-8, including
 resolved picker directories whose native bytes are unsupported.
+Scanner JSON exports validate and preserve UTF-8 names directly; no legacy
+byte-to-Unicode mapping remains in their encoder.
 Universe definitions validate their whole text and native file size before
 parsing, retain the 16000-byte limit and accept an optional UTF-8 BOM.
 

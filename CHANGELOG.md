@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FWriteScanString` still interpreted scanner snapshot names as CP1252,
+  double-encoding UTF-8 in exported JSON. It now validates and preserves UTF-8
+  bytes while escaping JSON quotes and controls. Unterminated snapshot names
+  are rejected. Native baselines and turn generation are unchanged.
 - `GenNewGameFromFile` checked the 16-bit truncated file size, allowing a
   large definition to wrap into a small readable prefix. It now checks the
   actual native file size before allocation. Native baselines and valid

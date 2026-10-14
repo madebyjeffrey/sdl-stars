@@ -142,7 +142,7 @@ static BOOL FCheckMapInspection(void) {
         !FSelectScannerObject(&snap, grobjPlanet, 0, TRUE) || sel.scan.grobj != grobjPlanet || sel.scan.idpl != 0) goto LDone;
     if (!FCaptureScanner(&fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
-    strcpy(fresh.rgobj[0].szName, "Quoted \"\xe9\x80\"\r\n");
+    strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
     lpfile = tmpfile();
     if (!lpfile) goto LDone;
     if (!FWriteScannerSnapshot(&fresh, lpfile)) { fclose(lpfile); goto LDone; }

@@ -551,7 +551,8 @@ viewer race's traits for foreign ships.
 
 Native creation and `WM_SETTEXT` previously passed CP1252 strings directly to
 SDL's UTF-8 title API. The inspector's Euro-sign title exposed an X11 conversion
-failure and two leaked text-property allocations. The boundary now converts
-native titles to UTF-8 while stored/returned narrow text remains CP1252. Tests
-check creation and title changes, including retained narrow text; wizard reuse
-uses the same conversion helper.
+failure and two leaked text-property allocations. Main now uses UTF-8 for both
+stored/returned text and SDL native titles, validating creation and title
+changes. Scanner JSON export also validates and preserves the same bytes,
+without the old CP1252 mapping. Tests cover title changes, Unicode snapshot
+names, JSON escaping and malformed text rejection.

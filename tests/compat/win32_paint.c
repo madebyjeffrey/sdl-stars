@@ -219,7 +219,8 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(SetBkMode(hdc, TRANSPARENT) == OPAQUE);
     CHECK(TextOut(hdc, 70, 50, "!", 1));
     CHECK(GetPixel(hdc, 70 + size.cx + 2, 50) == RGB(12, 34, 56));
-    CHECK(TextOut(hdc, 140, 50, "\xff", 1));
+    CHECK(!TextOut(hdc, 140, 50, "\xff", 1));
+    CHECK(TextOut(hdc, 140, 50, "\xc3\xbf", 2));
     CHECK(TextOut(hdc, INT_MAX, INT_MAX, "!", 1));
     cText = 0;
     for (y = 50; y < 50 + tm.tmHeight; y++)
