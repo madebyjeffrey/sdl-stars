@@ -28,6 +28,7 @@
 // IdAlertBox in host tests.
 extern int  cStarsTestAlert;
 extern char szStarsTestAlert[512];
+extern int16_t iStarsTestAlertResponse;
 
 // FStarsTestInit prepares the game state WinMain sets up before it creates
 // windows: on Windows and SDL the instance, brushes and fonts (FCreateStuff),

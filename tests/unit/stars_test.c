@@ -8,12 +8,15 @@
 
 int  cStarsTestAlert;
 char szStarsTestAlert[512];
+int16_t iStarsTestAlertResponse;
 
 // FStarsTestAlert records a message box and gives the answer that lets the
 // game carry on.
 static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
     cStarsTestAlert++;
     snprintf(szStarsTestAlert, sizeof(szStarsTestAlert), "%s", sz);
+    if (((mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)
+        return iStarsTestAlertResponse;
     return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
 }
 
@@ -25,6 +28,7 @@ int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType
 #endif
 
 int16_t FStarsTestInit(void) {
+    iStarsTestAlertResponse = 0;
 #ifdef STARS_UI_SDL
     hInst = GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));

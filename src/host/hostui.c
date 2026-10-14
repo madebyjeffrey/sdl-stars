@@ -64,3 +64,9 @@ void SetSzRaceFile(const char *pszFile) {
     size_t cch = CchUtf8Prefix(pszFile, sizeof(szRaceFile) - 1);
     memcpy(szRaceFile, pszFile, cch); szRaceFile[cch] = 0;
 }
+
+int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
+    char szPrompt[512];
+    CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
+    return IdAlertBox(szPrompt, MB_YESNO | MB_ICONQUESTION) == IDYES;
+}

@@ -7,6 +7,215 @@
 #include <SDL3/SDL_clipboard.h>
 #endif
 
+static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const char *szName, const char *szNames,
+                                       int16_t fPlural, int16_t fCompressed, int32_t lSalt) {
+    RTBOF rtbof = {0};
+    PLAYER plr;
+    uint8_t rgb[sizeof(PLAYER) + 80];
+    uint8_t *pb;
+    int16_t cOut;
+    int16_t i;
+    uint16_t icksum;
+
+    plr = vplr;
+    plr.det = detAll;
+    plr.lSalt = lSalt;
+    memset(plr.szName, 0, sizeof(plr.szName));
+    memset(plr.szNames, 0, sizeof(plr.szNames));
+    strcpy(plr.szName, szName);
+    if (fPlural) strcpy(plr.szNames, szNames);
+    icksum = IRaceChecksum(&plr);
+
+    memmove(rgb, &plr, offsetof(PLAYER, rgmdRelation));
+    pb = rgb + offsetof(PLAYER, rgmdRelation);
+    for (i = 15; i >= 0 && plr.rgmdRelation[i] == 0; i--) {
+    }
+    *pb++ = (uint8_t)(i + 1);
+    memmove(pb, plr.rgmdRelation, i + 1);
+    pb += i + 1;
+    cOut = 31;
+    if (fCompressed && FCompressUserString((char *)szName, (char *)pb + 1, &cOut)) {
+        *pb = (uint8_t)cOut;
+        pb += cOut + 1;
+    } else {
+        *pb++ = 0;
+        strcpy((char *)pb, szName);
+        pb += strlen(szName) + 1;
+    }
+    if (fPlural) {
+        cOut = 31;
+        if (fCompressed && FCompressUserString((char *)szNames, (char *)pb + 1, &cOut)) {
+            *pb = (uint8_t)cOut;
+            pb += cOut + 1;
+        } else {
+            *pb++ = 0;
+            strcpy((char *)pb, szNames);
+            pb += strlen(szNames) + 1;
+        }
+    }
+
+    strncpy(rtbof.rgid, "J3J3", sizeof(rtbof.rgid));
+    rtbof.verMajor = 2;
+    rtbof.verMinor = verMinor;
+    rtbof.dt = dtRace;
+    StreamOpen(szFile, mdCreate);
+    WriteRt(rtBOF, sizeof(rtbof), &rtbof);
+    WriteRt(rtPlr, (int16_t)(pb - rgb), rgb);
+    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    StreamClose();
+    return TRUE;
+}
+
+static size_t CbReadFixture(const char *szFile, uint8_t *rgb, size_t cbMax) {
+    FILE *pf;
+    size_t cb;
+    pf = fopen(szFile, "rb");
+    if (!pf) return 0;
+    cb = fread(rgb, 1, cbMax, pf);
+    if (!feof(pf)) cb = 0;
+    fclose(pf);
+    return cb;
+}
+
+static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH], szNewGameRace[MAX_PATH], szDef[MAX_PATH];
+    uint8_t rgbBefore[512], rgbAfter[512];
+    size_t cbBefore;
+    PLAYER plrExpected;
+    FILE *pf;
+    uint16_t icksum;
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("legacy_race_import", szDir, sizeof(szDir)));
+    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    plrExpected = vplr;
+    snprintf(szFile, sizeof(szFile), "%s%srace249.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 49, "R\xe9", "", FALSE, FALSE, 0));
+    cbBefore = CbReadFixture(szFile, rgbBefore, sizeof(rgbBefore));
+    TEST_ASSERT(cbBefore > 0);
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0);
+    TEST_CHECK(strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
+    TEST_CHECK(memcmp(vplr.rgAttr, plrExpected.rgAttr, sizeof(vplr.rgAttr)) == 0);
+    TEST_CHECK(vplr.grbitAttr == plrExpected.grbitAttr && vplr.pctIdealGrowth == plrExpected.pctIdealGrowth);
+    TEST_CHECK(CbReadFixture(szFile, rgbAfter, sizeof(rgbAfter)) == cbBefore && memcmp(rgbBefore, rgbAfter, cbBefore) == 0);
+
+    snprintf(szFile, sizeof(szFile), "%s%srace254.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 54, "R\xe9", "", FALSE, TRUE, 0));
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
+
+    snprintf(szFile, sizeof(szFile), "%s%srace255.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 55, "R\xe9", "R\xe9s", TRUE, TRUE, 0));
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
+
+    snprintf(szFile, sizeof(szFile), "%s%srace284.r1", szDir, szDirSep);
+    strcpy(szNewGameRace, szFile);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "R\xe9", "R\xe9s", TRUE, FALSE, 0));
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
+
+    snprintf(szSaved, sizeof(szSaved), "%s%ssaved.r1", szDir, szDirSep);
+    TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
+    WriteRtPlr(&vplr, NULL);
+    icksum = IRaceChecksum(&vplr);
+    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    StreamClose();
+    TEST_CHECK(FWasRaceFile(szSaved, FALSE) == 1);
+    TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
+
+    snprintf(szDef, sizeof(szDef), "%s%slegacy.def", szDir, szDirSep);
+    pf = fopen(szDef, "wb"); TEST_ASSERT(pf);
+    fprintf(pf, "Legacy Race\r\n0 0 1 12345\r\n0 0 0 0 0 0 0\r\n1\r\n%s\r\n1 60\r\n1 26 4\r\n", szNewGameRace);
+    for (i = 0; i < 8; i++) fprintf(pf, "0\r\n");
+    fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
+    fclose(pf);
+    TEST_CHECK(GenNewGameFromFile(szDef));
+    TEST_CHECK(strcmp(rgplr[0].szName, "R\xc3\xa9") == 0);
+    TEST_CHECK(strcmp(rgplr[0].szNames, "R\xc3\xa9s") == 0);
+
+    snprintf(szFile, sizeof(szFile), "%s%sexpand.r1", szDir, szDirSep);
+    {
+        char szLongName[21];
+        memset(szLongName, (char)0xe9, 20);
+        szLongName[20] = 0;
+        TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szLongName, "Expanded", TRUE, FALSE, 0));
+    }
+    pf = fopen(szDef, "wb"); TEST_ASSERT(pf);
+    fprintf(pf, "Legacy Race\r\n0 0 1 12345\r\n0 0 0 0 0 0 0\r\n1\r\n%s\r\n1 60\r\n1 26 4\r\n", szFile);
+    for (i = 0; i < 8; i++) fprintf(pf, "0\r\n");
+    fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
+    fclose(pf);
+    iStarsTestAlertResponse = IDNO;
+    TEST_CHECK(!GenNewGameFromFile(szDef));
+
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
+    pf = fopen(szDef, "wb"); TEST_ASSERT(pf);
+    fprintf(pf, "Legacy Race\r\n0 0 1 12345\r\n0 0 0 0 0 0 0\r\n1\r\n%s\r\n1 60\r\n1 26 4\r\n", szFile);
+    for (i = 0; i < 8; i++) fprintf(pf, "0\r\n");
+    fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
+    fclose(pf);
+    iStarsTestAlertResponse = 0;
+    TEST_CHECK(!GenNewGameFromFile(szDef));
+}
+
+static void test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szName[32], szNames[32];
+    FILE *pf;
+    int ch;
+    HDR hdr;
+    int i;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("legacy_race_decisions", szDir, sizeof(szDir)));
+    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    fFileErrSilent = FALSE;
+    snprintf(szFile, sizeof(szFile), "%s%sprotected.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+    TEST_CHECK(strstr(szStarsTestAlert, "password") != NULL);
+
+    snprintf(szFile, sizeof(szFile), "%s%sbadsum.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "BadSum", "BadSums", TRUE, FALSE, 0));
+    pf = fopen(szFile, "r+b"); TEST_ASSERT(pf);
+    TEST_ASSERT(fseek(pf, -1, SEEK_END) == 0);
+    ch = fgetc(pf); TEST_ASSERT(ch != EOF);
+    TEST_ASSERT(fseek(pf, -1, SEEK_END) == 0);
+    TEST_ASSERT(fputc(ch ^ 1, pf) != EOF);
+    fclose(pf);
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 0);
+
+    snprintf(szFile, sizeof(szFile), "%s%struncated.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Truncated", "Truncateds", TRUE, TRUE, 0));
+    pf = fopen(szFile, "r+b"); TEST_ASSERT(pf);
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.cb = 3;
+    hdr.rt = rtEOF;
+    TEST_ASSERT(fseek(pf, -4, SEEK_END) == 0);
+    TEST_ASSERT(fwrite(&hdr, sizeof(hdr), 1, pf) == 1);
+    fclose(pf);
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 0);
+
+    for (i = 0; i < 20; i++) szName[i] = (char)0xe9;
+    szName[20] = 0;
+    for (i = 0; i < 21; i++) szNames[i] = (char)0xe9;
+    szNames[21] = 0;
+    snprintf(szFile, sizeof(szFile), "%s%sexpand.r1", szDir, szDirSep);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 0));
+    iStarsTestAlertResponse = IDYES;
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(strlen(vplr.szName) <= 31 && strlen(vplr.szNames) <= 31);
+    TEST_CHECK(FUtf8Valid(vplr.szName, strlen(vplr.szName)) && FUtf8Valid(vplr.szNames, strlen(vplr.szNames)));
+    TEST_CHECK(strlen(vplr.szName) == 30 && strlen(vplr.szNames) == 30);
+    TEST_CHECK(strstr(szStarsTestAlert, "Singular:") != NULL);
+
+    iStarsTestAlertResponse = IDNO;
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+}
+
 static void test_LInnateRaceHabitability_double_rounding(void) {
     PLAYER plr = {0};
     int8_t rgAttr[16] = {10, 10, 10, 10, 10, 5, 10, 0, 1, 1, 1, 1, 1, 1, 9, 0};
@@ -271,6 +480,8 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
 
 TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
+             {"FWasRaceFile imports unprotected legacy race designs", test_FWasRaceFile_imports_unprotected_legacy_designs},
+             {"FWasRaceFile rejects protected legacy races and confirms name shortening", test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening},
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #ifdef STARS_UI_SDL
