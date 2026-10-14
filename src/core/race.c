@@ -593,6 +593,8 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     int16_t  fLegacy;
     int16_t  fPlural;
     int16_t  fConvert;
+    int16_t  fProtected;
+    char     szPassword[16];
     uint16_t icksum;
     char    *pch;
 
@@ -640,15 +642,20 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                     ReadRt();
                     icksum = IRaceChecksum(&plr);
                     if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
-                        if (fLegacy && plr.lSalt != 0) {
-                            idsError = idsNativeLegacyRaceProtected;
-                            fRet = -1;
-                            goto LBadFile;
-                        }
+                        fProtected = fLegacy && plr.lSalt != 0;
                         if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
                             idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;
                             fRet = -1;
                             goto LBadFile;
+                        }
+                        if (fProtected) {
+                            if (!FPromptLegacyRacePassword(szPassword)) {
+                                idsError = -1;
+                                fRet = -1;
+                                goto LBadFile;
+                            }
+                            plr.lSalt = LSaltFromSz(szPassword);
+                            strcpy(szRacePass, szPassword);
                         }
                         lSaltSav = lSaltCur;
                         lSaltCur = plr.lSalt;
@@ -658,10 +665,12 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                             goto LBadFile;
                         } else {
                             lSaltCur = lSaltSav;
-                            if (!fLegacy && plr.lSalt != 0) {
-                                strcpy(szRacePass, szPassLast);
-                            } else {
-                                szRacePass[0] = 0;
+                            if (!fProtected) {
+                                if (!fLegacy && plr.lSalt != 0) {
+                                    strcpy(szRacePass, szPassLast);
+                                } else {
+                                    szRacePass[0] = 0;
+                                }
                             }
                             vplr = plr;
                             /* The original copied the whole path into the

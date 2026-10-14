@@ -78,7 +78,8 @@ function(stars_test_apply_redirect target)
         stars_filedialog_windows stars_compat_platform)
     set(implementation_hooks AlertSz Random PctPlanetCapacity WriteRt FCreateFile
         ReadRt StreamOpen StreamClose DirtyGame InitInstance PromptPassword
-        NewGameWizard FNativeSaveFileName TrackPopupMenu MessageBoxA IChooseWindowsFile)
+        NewGameWizard FNativeSaveFileName TrackPopupMenu MessageBoxA IChooseWindowsFile
+        FPromptLegacyRacePassword)
     get_target_property(hooks "${target}" STARS_TEST_HOOKS)
     set(STARS_TEST_CALL_DEFINITIONS)
     foreach(hook IN LISTS hooks)
