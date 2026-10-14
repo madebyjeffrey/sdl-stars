@@ -65,7 +65,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
     CHECK(FWasRaceFile(szManagedRace, FALSE) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
-    strcpy(szPassLast, "managed-test-password");
+    strcpy(szPassLast, "managed-pass");
     lSaltLast = LSaltFromSz(szPassLast);
     lSaltCur = lSaltLast;
     plrManaged = plrSav;
