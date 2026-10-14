@@ -1316,6 +1316,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 7) {
             if (!IsWindowEnabled(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
+            if (FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
+                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
+                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
+                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1")) goto LDone;
             if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
             icksRaceImportStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;

@@ -18,6 +18,9 @@ produce different results from a 2.6j host for the same turn.
   preserving existing designs with names that resemble the former staging
   suffix.
 
+- Managed race filenames now reject Windows reserved device stems, including
+  `CON`, `COM1` through `COM9`, `LPT1` through `LPT9`, and `CLOCK$`.
+
 - The desktop Games library can import a game family from a selected file or
   folder. It validates format, record framing, game identity and player slots
   before copying the universe, available turns, companions and backups into a

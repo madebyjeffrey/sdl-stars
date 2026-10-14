@@ -69,12 +69,22 @@ static int16_t FRaceLibraryNameAvailable(const char *pszName) {
 
 static int16_t FPortableRaceFilename(const char *pszName) {
     const unsigned char *pch;
+    char szDevice[256];
     size_t cch = strlen(pszName);
+    size_t i;
     const char *pchExt = strrchr(pszName, '.');
     const char *pchDigit;
     if (!pchExt || pchExt == pszName || SDL_tolower(pchExt[1]) != 'r' || !pchExt[2] ||
         pchExt[2] == '0' || pchExt[2] < '1' || pchExt[2] > '9' || cch >= 240 || pszName[0] == ' ' || pszName[0] == '.' ||
         pszName[cch - 1] == ' ' || pszName[cch - 1] == '.') return FALSE;
+    /* Windows reserves these stems even when followed by an extension. */
+    for (i = 0; i < cch && pszName[i] != '.'; i++) szDevice[i] = pszName[i];
+    szDevice[i] = 0;
+    if (!SDL_strcasecmp(szDevice, "CON") || !SDL_strcasecmp(szDevice, "PRN") ||
+        !SDL_strcasecmp(szDevice, "AUX") || !SDL_strcasecmp(szDevice, "NUL") ||
+        !SDL_strcasecmp(szDevice, "CLOCK$") ||
+        (i == 4 && (!SDL_strncasecmp(szDevice, "COM", 3) || !SDL_strncasecmp(szDevice, "LPT", 3)) &&
+         szDevice[3] >= '1' && szDevice[3] <= '9')) return FALSE;
     for (pchDigit = pchExt + 3; *pchDigit; pchDigit++)
         if (*pchDigit < '0' || *pchDigit > '9') return FALSE;
     if (strlen(pchExt + 2) > 3) return FALSE;
