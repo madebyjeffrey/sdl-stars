@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
+  warning-as-error build and omitting Unicode profile coverage. The call now
+  uses the same platform guard as the definition; the fixture uses a portable
+  temporary directory and a Unicode filename instead of a hard-coded `/tmp`
+  path. Game behavior, save layouts and baselines are unchanged.
+
 - `TestPicker` used native Win32 filesystem APIs through SDL wrapper headers,
   preventing Windows SDL test builds. A small C++17 filesystem bridge with a C
   ABI now supplies strict UTF-8 fixture paths and portable directory operations.

@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+#include "filesystem.h"
+#include "platform.h"
+#endif
 #ifndef _WIN32
 #include <stars_compat.h>
 #include <sys/stat.h>
@@ -51,10 +55,10 @@ static int TestProfilePaths(void) {
 
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestUtf8Profile(void) {
-    char szPath[] = "/tmp/stars-profile-utf8-XXXXXX", sz[32];
+    char szTemp[4096], szPath[8192], sz[32];
     FILE *fp;
-    int fd = mkstemp(szPath);
-    CHECK(fd >= 0 && close(fd) == 0);
+    CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
+    CHECK(snprintf(szPath, sizeof(szPath), "%s/profile-\xce\xa9\xc3\xa9\xf0\x9f\x98\x80.ini", szTemp) < (int)sizeof(szPath));
     CHECK(WritePrivateProfileStringA("Text", "Name", "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80", szPath));
     CHECK(GetPrivateProfileStringA("Text", "Name", "", sz, sizeof(sz), szPath) == 8);
     CHECK(!strcmp(sz, "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80"));
@@ -69,7 +73,8 @@ static int TestUtf8Profile(void) {
     CHECK(!strcmp(sz, "A") && sz[1] == 0 && sz[2] == 0);
     fp = fopen(szPath, "rb"); CHECK(fp);
     CHECK(fread(sz, 1, 3, fp) == 3 && !memcmp(sz, "\xef\xbb\xbf", 3));
-    CHECK(fclose(fp) == 0 && unlink(szPath) == 0);
+    CHECK(fclose(fp) == 0 && FFilesystemRemove(szPath));
+    CHECK(FFilesystemRemove(szTemp));
     return 0;
 }
 #endif
@@ -156,6 +161,8 @@ int main(void) {
     CHECK(GetPrivateProfileStringA("misc", "key", "fallback", sz, sizeof(sz), szPath) == 8 && !strcmp(sz, "fallback"));
 #ifndef _WIN32
     CHECK(TestProfilePaths() == 0);
+#endif
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestUtf8Profile() == 0);
 #endif
     puts("Profiles: PASS (defaults, integers, quotes, enumeration, limits, update/delete, paths)");
