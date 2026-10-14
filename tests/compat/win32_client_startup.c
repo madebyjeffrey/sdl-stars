@@ -303,6 +303,7 @@ int16_t StarsTest_PromptPassword(void) {
 bool SDL_ShowWindow(SDL_Window *lpWindow);
 bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     HWND hwnd;
+    bool fResult;
     BYTE r, g, b, a;
     COLORREF cr;
     BYTE *rgb;
@@ -329,7 +330,14 @@ bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
                 RGB(r, g, b) == cr;
         }
     }
-    return SDL_ShowWindow(lpWindow);
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+        fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title before visible=%d id=%u\n",
+                IsWindowVisible(hwnd), SDL_GetWindowID(lpWindow));
+    fResult = SDL_ShowWindow(lpWindow);
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+        fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title result=%d visible=%d\n",
+                fResult, IsWindowVisible(hwnd));
+    return fResult;
 }
 
 static BOOL FPushClick(HWND hwnd) {

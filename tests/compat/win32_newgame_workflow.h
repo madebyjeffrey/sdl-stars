@@ -76,7 +76,12 @@ static BOOL FCheckNewGameWorkflow(void) {
     }
 
     if (iNewGameStep == 0) {
-        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return ++cWait < 20;
+        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) {
+            if (++cWait < 20) return TRUE;
+            fprintf(stderr, "[DEBUG-library-startup] new-game start timed out title=%p valid=%d visible=%d enabled=%d\n",
+                    (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle), IsWindowEnabled(hwndTitle));
+            return FALSE;
+        }
         cWait = 0;
         gameNewSav = game; fChecked = TRUE; iNewGameStep++;
         return FPushClick(rghwndBtnSplash[0]);

@@ -252,15 +252,32 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
 void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     HWND hwndList;
     int y;
+    Uint64 msStart = SDL_GetTicks();
+    int16_t fLibrary;
 
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+        fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
     y = max(100, lprc->bottom - 240);
     CreateWindow("STATIC", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE, 24, y - 20, 200, 20,
                  hwnd, NULL, hInst, NULL);
     hwndList = CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                             24, y, lprc->right - 48, 120, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
-    if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
+    fLibrary = FInitLibrary();
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+        fprintf(stderr, "[DEBUG-library-startup] library root ready=%d path=%s elapsed=%llu ms\n",
+                fLibrary, szLibraryRoot, (unsigned long long)(SDL_GetTicks() - msStart));
+    if (fLibrary) {
+        int16_t fEnumerated = FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] enumeration done=%d games=%ld elapsed=%llu ms\n",
+                    fEnumerated, (long)SendMessage(hwndList, LB_GETCOUNT, 0, 0),
+                    (unsigned long long)(SDL_GetTicks() - msStart));
+    }
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     EnableWindow(rghwndBtnSplash[1], SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+        fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames end elapsed=%llu ms\n",
+                (unsigned long long)(SDL_GetTicks() - msStart));
 }
 
 int16_t FSelectLibraryGame(HWND hwnd) {

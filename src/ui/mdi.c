@@ -2668,6 +2668,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg) {
     case WM_CREATE:
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
+                    (void *)hwnd, IsWindowVisible(hwnd));
         if (vcScreenColors >= 8) {
             vhdibTitle = HdibLoadBigResource(IDDIB_SPLASH);
             if (!vhpalSplash && vhdibTitle) {
@@ -2695,6 +2698,8 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             xCur += dx + dxGap;
         }
         InitLibraryGames(hwnd, &rc);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
         SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
