@@ -15,6 +15,7 @@ static int16_t rgcbRecord[4];
 static int     cRecord;
 static int     iRead;
 static int     fLogRead;
+static int     cDirty;
 
 void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
     if (rt != rtPlrMsg)
@@ -27,7 +28,7 @@ void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iPlayer, char *psz) { return TRUE; }
 void    StarsTest_StreamClose(void) {}
 void    StarsTest_StreamOpen(char *szFile, MdOpenFlags mdOpen) {}
-void    StarsTest_DirtyGame(int16_t fDirty) {}
+void    StarsTest_DirtyGame(int16_t fDirty) { if (fDirty) cDirty++; }
 
 void StarsTest_ReadRt(void) {
     memset(rgbCur, 0, sizeof(rgbCur));
@@ -176,6 +177,32 @@ static void TestMessageTextBounds(void) {
     TEST_CHECK(LpmsgplrFromRt() == NULL);
 }
 
+static void TestRawMessageEdit(void) {
+    HWND hwnd;
+    const char *psz = "\xe6\x9d\xb1\xe4\xba\xac";
+
+    TEST_ASSERT(FStarsTestInit());
+    hwnd = CreateWindow("STATIC", "", WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, NULL, NULL, hInst, NULL);
+    TEST_ASSERT(hwnd != NULL);
+    hwndMsgEdit = CreateWindow("EDIT", "", WS_CHILD | ES_MULTILINE, 0, 0, 100, 30, hwnd, NULL, hInst, NULL);
+    hwndMsgDrop = CreateWindow("COMBOBOX", "", WS_CHILD | CBS_DROPDOWNLIST, 0, 40, 100, 30, hwnd, NULL, hInst, NULL);
+    TEST_ASSERT(hwndMsgEdit != NULL && hwndMsgDrop != NULL);
+    SendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)"Everyone");
+    SendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+    vlpmsgplrOut = NULL; vcmsgplrOut = 0; iMsgSendCur = 0;
+    TEST_ASSERT(SetWindowText(hwndMsgEdit, psz));
+    TEST_ASSERT(FFinishPlrMsgEntry(0));
+    TEST_ASSERT(vlpmsgplrOut != NULL && vlpmsgplrOut->cLen == -7);
+    cDirty = 0;
+    TEST_ASSERT(FFinishPlrMsgEntry(0));
+    TEST_CHECK(cDirty == 0 && vcmsgplrOut == 1);
+    TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg, psz));
+    TEST_ASSERT(SetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
+    TEST_ASSERT(FFinishPlrMsgEntry(0));
+    TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg, "\xe4\xba\xac\xe6\x9d\xb1"));
+    DestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
+}
+
 static void TestStaticColor(void) {
     hbrButtonFace = (HBRUSH)(uintptr_t)0x1234;
     TEST_ASSERT(RandomSeedDlg(NULL, WM_CTLCOLORSTATIC, 0, 0x1234) == (INT_PTR)hbrButtonFace);
@@ -241,6 +268,7 @@ static void TestFleetMessageGoto(void) {
 }
 
 TEST_LIST = {{"player messages", TestMessages},
+             {"unchanged raw UTF-8 messages compare only their stored bytes", TestRawMessageEdit},
              {"player-message text is bounded and strictly UTF-8", TestMessageTextBounds},
              {"fleet message goto", TestFleetMessageGoto},
              {"static control color", TestStaticColor},

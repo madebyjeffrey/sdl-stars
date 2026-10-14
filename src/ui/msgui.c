@@ -571,7 +571,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
     cbNew = abs(cb) + 12;
     iPlrTo = LOWORD(SendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
-        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg, lpbMsg, cb) != 0) {
+        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg, lpbMsg, abs(cb)) != 0) {
             DirtyGame(TRUE);
         }
         lpmpCur = LpReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);

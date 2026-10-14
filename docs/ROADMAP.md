@@ -377,6 +377,8 @@ output truncated at its 1024-byte contract also ends at a code-point boundary.
 Name readers use the actual record extent, including orders; compressed bytes
 are never retried as raw text. Player-message readers validate decoded UTF-8
 and raw terminators before retaining a message.
+Editing a retained raw message compares its absolute byte count, preserving
+unchanged uncompressible UTF-8 messages without an out-of-bounds comparison.
 Rejected battle-plan text leaves the existing plan and plan count unchanged.
 Wrapper text setters and file/print inputs reject malformed UTF-8, including
 resolved picker directories whose native bytes are unsupported.

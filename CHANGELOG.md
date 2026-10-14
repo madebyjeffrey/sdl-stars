@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FFinishPlrMsgEntry` passed a negative raw-message length to `memcmp`,
+  reading past unchanged uncompressed UTF-8 messages and marking them changed.
+  It now compares the stored byte count. Native baselines and host results
+  are unchanged.
 - `FWriteScanString` still interpreted scanner snapshot names as CP1252,
   double-encoding UTF-8 in exported JSON. It now validates and preserves UTF-8
   bytes while escaping JSON quotes and controls. Unterminated snapshot names
