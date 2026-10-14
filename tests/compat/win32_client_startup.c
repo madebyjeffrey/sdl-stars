@@ -1390,7 +1390,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     return;
 LDone:
     if (!fPassed) {
-        fprintf(stderr, "Client startup/wizard check failed at stage %d: %s\n", iStage, SDL_GetError());
+        fprintf(stderr, "Client startup/wizard check failed at stage %d (new-game step %d, choices %d, creating %d): %s\n",
+                iStage, iNewGameStep, cNewGameChoices, fCreatingGame, SDL_GetError());
         KillTimer(NULL, id);
         PostQuitMessage(92);
     }
