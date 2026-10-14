@@ -158,15 +158,25 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
     fclose(pf);
     iStarsTestAlertResponse = 0;
+    fStarsTestAcceptLegacyRacePassword = TRUE;
+    strcpy(szStarsTestLegacyRacePassword, "New-race-pass");
+    TEST_CHECK(GenNewGameFromFile(szDef));
+    TEST_CHECK(rgplr[0].lSalt == LSaltFromSz("New-race-pass"));
+    TEST_CHECK(rgplr[0].lSalt != 1234);
+    fStarsTestAcceptLegacyRacePassword = FALSE;
     TEST_CHECK(!GenNewGameFromFile(szDef));
+    TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 2);
 }
 
-static void test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH];
     char szName[32], szNames[32];
+    uint8_t rgbBefore[512], rgbAfter[512];
+    size_t cbBefore;
     FILE *pf;
     int ch;
     HDR hdr;
+    uint16_t icksum;
     int i;
 
     TEST_ASSERT(FStarsTestInit());
@@ -175,18 +185,40 @@ static void test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening(v
     fFileErrSilent = FALSE;
     snprintf(szFile, sizeof(szFile), "%s%sprotected.r1", szDir, szDirSep);
     TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
+    cbBefore = CbReadFixture(szFile, rgbBefore, sizeof(rgbBefore));
+    TEST_ASSERT(cbBefore > 0);
+    fFileErrSilent = TRUE;
     TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
-    TEST_CHECK(strstr(szStarsTestAlert, "password") != NULL);
+    TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 1);
+    fStarsTestAcceptLegacyRacePassword = TRUE;
+    strcpy(szStarsTestLegacyRacePassword, "Replacement");
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(vplr.lSalt == LSaltFromSz("Replacement") && vplr.lSalt != 1234);
+    TEST_CHECK(strcmp(szRacePass, "Replacement") == 0);
+    TEST_CHECK(CbReadFixture(szFile, rgbAfter, sizeof(rgbAfter)) == cbBefore);
+    TEST_CHECK(memcmp(rgbBefore, rgbAfter, cbBefore) == 0);
+    snprintf(szSaved, sizeof(szSaved), "%s%sreplaced.r1", szDir, szDirSep);
+    TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
+    WriteRtPlr(&vplr, NULL);
+    icksum = IRaceChecksum(&vplr);
+    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    StreamClose();
+    strcpy(vszDefPass, "Replacement");
+    TEST_CHECK(FWasRaceFile(szSaved, TRUE) == 1);
+    TEST_CHECK(vplr.lSalt == LSaltFromSz("Replacement"));
+    vszDefPass[0] = 0;
 
     snprintf(szFile, sizeof(szFile), "%s%sbadsum.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "BadSum", "BadSums", TRUE, FALSE, 0));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "BadSum", "BadSums", TRUE, FALSE, 1234));
     pf = fopen(szFile, "r+b"); TEST_ASSERT(pf);
     TEST_ASSERT(fseek(pf, -1, SEEK_END) == 0);
     ch = fgetc(pf); TEST_ASSERT(ch != EOF);
     TEST_ASSERT(fseek(pf, -1, SEEK_END) == 0);
     TEST_ASSERT(fputc(ch ^ 1, pf) != EOF);
     fclose(pf);
+    cStarsTestLegacyRacePasswordPrompt = 0;
     TEST_CHECK(FWasRaceFile(szFile, FALSE) == 0);
+    TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 0);
 
     snprintf(szFile, sizeof(szFile), "%s%struncated.r1", szDir, szDirSep);
     TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Truncated", "Truncateds", TRUE, TRUE, 0));
@@ -212,7 +244,26 @@ static void test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening(v
     TEST_CHECK(strlen(vplr.szName) == 30 && strlen(vplr.szNames) == 30);
     TEST_CHECK(strstr(szStarsTestAlert, "Singular:") != NULL);
 
+    // When both decisions are needed, accept the shortened names before
+    // accepting the password; cancelling the names stops before that prompt.
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 1234));
+    iStarsTestAlertResponse = IDYES;
+    fStarsTestAcceptLegacyRacePassword = TRUE;
+    strcpy(szStarsTestLegacyRacePassword, "Shortened-race");
+    cStarsTestLegacyRacePasswordPrompt = 0;
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 1);
+    TEST_CHECK(vplr.lSalt == LSaltFromSz("Shortened-race"));
+
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 1234));
     iStarsTestAlertResponse = IDNO;
+    cStarsTestLegacyRacePasswordPrompt = 0;
+    fStarsTestAcceptLegacyRacePassword = FALSE;
+    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+    TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 0);
+
+    iStarsTestAlertResponse = IDNO;
+    fStarsTestAcceptLegacyRacePassword = FALSE;
     TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
 }
 
@@ -340,6 +391,7 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     HWND hwndEdit;
     HWND hwndOrdinary;
     char szPass[20];
+    char szReplacement[16] = "";
     const char *pszTooLong = "1234567890123456";
     const char *pszUnicodeTooLong = "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80";
     const char *pszExact = "1234567890123\xc3\xa9";
@@ -410,6 +462,24 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     SendMessage(hwndOrdinary, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndOrdinary, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(!StarsCompatTextInputRejected(hwndOrdinary));
+    hwndEdit = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+                                  (LPARAM)szReplacement);
+    TEST_ASSERT(hwndEdit != NULL);
+    TEST_ASSERT(SetWindowText(GetDlgItem(hwndEdit, IDC_EDIT1), pszExact));
+    TEST_ASSERT(SetWindowText(GetDlgItem(hwndEdit, IDC_PASSWORD_CONFIRM), pszExact));
+    SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
+    TEST_CHECK(strcmp(szReplacement, pszExact) == 0);
+    DestroyWindow(hwndEdit);
+    szReplacement[0] = 0;
+    hwndEdit = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+                                  (LPARAM)szReplacement);
+    TEST_ASSERT(hwndEdit != NULL);
+    cStarsTestAlert = 0;
+    SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
+    TEST_CHECK(cStarsTestAlert == 1);
+    TEST_CHECK(strstr(szStarsTestAlert, "replacement password is required") != NULL);
+    TEST_CHECK(IsWindow(hwndEdit));
+    DestroyWindow(hwndEdit);
     idPlayer = idPlayerSave;
     fLogOff = fLogOffSave;
     DestroyWindow(hwnd);
@@ -481,7 +551,7 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
 TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"FWasRaceFile imports unprotected legacy race designs", test_FWasRaceFile_imports_unprotected_legacy_designs},
-             {"FWasRaceFile rejects protected legacy races and confirms name shortening", test_FWasRaceFile_legacy_rejects_protected_and_confirms_shortening},
+             {"FWasRaceFile replaces protected legacy passwords and confirms name shortening", test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening},
              {"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #ifdef STARS_UI_SDL

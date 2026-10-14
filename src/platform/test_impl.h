@@ -36,6 +36,9 @@
 #ifndef STARS_TEST_IMPL_PromptPassword
 #define STARS_TEST_IMPL_PromptPassword PromptPassword
 #endif
+#ifndef STARS_TEST_IMPL_FPromptLegacyRacePassword
+#define STARS_TEST_IMPL_FPromptLegacyRacePassword FPromptLegacyRacePassword
+#endif
 #ifndef STARS_TEST_IMPL_NewGameWizard
 #define STARS_TEST_IMPL_NewGameWizard NewGameWizard
 #endif

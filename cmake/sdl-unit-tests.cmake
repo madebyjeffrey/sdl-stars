@@ -16,6 +16,9 @@ if(STARS_BUILD_TESTS)
         target_compile_definitions(${STARS_CLIENT_TEST_TARGET} PRIVATE
             STARS_TEST_GOLDEN_DIR="${PROJECT_SOURCE_DIR}/tests/unit/golden")
         stars_test_redirect(${STARS_CLIENT_TEST_TARGET} AlertSz)
+        if(STARS_CLIENT_TEST_NAME STREQUAL "test_race")
+            stars_test_redirect(${STARS_CLIENT_TEST_TARGET} FPromptLegacyRacePassword)
+        endif()
         set_target_properties(${STARS_CLIENT_TEST_TARGET} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${STARS_CLIENT_TEST_DIR}")
         list(APPEND STARS_CLIENT_TEST_TARGETS ${STARS_CLIENT_TEST_TARGET})
