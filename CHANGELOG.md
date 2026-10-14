@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TestPicker` used native Win32 filesystem APIs through SDL wrapper headers,
+  preventing Windows SDL test builds. A small C++17 filesystem bridge with a C
+  ABI now supplies strict UTF-8 fixture paths and portable directory operations.
+  Picker coverage includes Unicode directories, and hierarchy capture avoids
+  the Windows CRT's narrow temporary-file path. Game behavior, save layouts and
+  baselines are unchanged.
+
 - `FOpenFile` checked for format 2.85 before classifying unsupported versions,
   making its older/newer version messages unreachable. It now reports valid
   older and newer BOF versions accurately and treats malformed BOF records as

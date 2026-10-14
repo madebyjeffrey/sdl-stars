@@ -35,7 +35,7 @@ set_tests_properties(sdl_smoke_software PROPERTIES LABELS compat TIMEOUT 30
 foreach(STARS_UTF8_TEST utf8 profile)
     add_executable(stars-compat-${STARS_UTF8_TEST} "${PROJECT_SOURCE_DIR}/tests/compat/win32_${STARS_UTF8_TEST}.c")
     target_include_directories(stars-compat-${STARS_UTF8_TEST} PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-    target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_options stars_win32 SDL3::SDL3)
+    target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_options stars_win32 stars_filesystem SDL3::SDL3)
     target_compile_options(stars-compat-${STARS_UTF8_TEST} PRIVATE -Wall -Wextra -Werror)
     set_target_properties(stars-compat-${STARS_UTF8_TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     add_test(NAME win32_utf8_${STARS_UTF8_TEST} COMMAND stars-compat-${STARS_UTF8_TEST})

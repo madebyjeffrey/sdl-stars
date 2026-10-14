@@ -1,5 +1,6 @@
 /* UTF-8 path controls keep byte identity while editing whole code points. */
 #include "internal.h"
+#include "filesystem.h"
 #include <stars_compat.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,33 +34,19 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     SendMessage(hwndDlg, WM_COMMAND, fPickerReady ? IDOK : IDCANCEL, 0);
 }
 static int TestPicker(HWND hwnd) {
-#ifdef _WIN32
-    char szDir[MAX_PATH], szTemp[MAX_PATH], szExpected[MAX_PATH + 64], szCanonical[MAX_PATH];
-#else
-    char szDir[] = "/tmp/stars-utf8-XXXXXX", szExpected[PATH_MAX + 64], szCanonical[PATH_MAX];
-#endif
-    char szFile[256];
+    char szTemp[4096], szDir[4096], szExpected[8192], szCanonical[4096];
+    char szFile[8192];
     char szTitle[4];
     OPENFILENAMEA ofn;
     FILE *pf;
     hwndPickerOwner = hwnd;
-#ifdef _WIN32
-    CHECK(GetTempPathA(sizeof(szDir), szDir) > 0);
-    CHECK(GetTempFileNameA(szDir, "st", 0, szTemp));
-    CHECK(DeleteFileA(szTemp) && CreateDirectoryA(szTemp, NULL));
-    strcpy(szDir, szTemp);
-    CHECK(GetFullPathNameA(szDir, sizeof(szCanonical), szCanonical, NULL) > 0);
-#else
-    CHECK(mkdtemp(szDir));
-    CHECK(realpath(szDir, szCanonical));
-#endif
+    CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
+    CHECK(snprintf(szDir, sizeof(szDir), "%s/caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80", szTemp) < (int)sizeof(szDir));
+    CHECK(FFilesystemCreateDirectory(szDir));
+    CHECK(FFilesystemCanonicalPath(szDir, szCanonical, sizeof(szCanonical)));
     for (iPicker = 0; iPicker < 2; iPicker++) {
         pszPickerName = iPicker == 0 ? "caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80.m1" : "\xe6\x9d\xb1\xe4\xba\xac-\xce\xa9.m1";
-#ifdef _WIN32
-        snprintf(szExpected, sizeof(szExpected), "%s\\%s", szCanonical, pszPickerName);
-#else
         snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical, pszPickerName);
-#endif
         if (iPicker == 0) { pf = fopen(szExpected, "wb"); CHECK(pf); fclose(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
@@ -72,18 +59,11 @@ static int TestPicker(HWND hwnd) {
         CHECK(FUtf8Valid(szTitle, strlen(szTitle)));
         CHECK(strcmp(szTitle, iPicker == 0 ? "caf" : "\xe6\x9d\xb1") == 0);
         if (iPicker == 0) {
-#ifdef _WIN32
-            CHECK(DeleteFileA(szExpected));
-#else
-            CHECK(unlink(szExpected) == 0);
-#endif
+            CHECK(FFilesystemRemove(szExpected));
         }
     }
-#ifdef _WIN32
-    CHECK(RemoveDirectoryA(szDir));
-#else
-    CHECK(rmdir(szDir) == 0);
-#endif
+    CHECK(FFilesystemRemove(szDir));
+    CHECK(FFilesystemRemove(szTemp));
     return 0;
 }
 
@@ -95,6 +75,7 @@ int main(void) {
     SIZE size, sizeOrdinary;
     RECT rc = {0, 0, 500, 30};
     char szText[256], szSmall[5], szJson[16384], *pszClipboard;
+    char szSnapshotDir[4096], szSnapshotPath[8192];
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     FILE *pf;
     STARSCOMPATSNAPSHOT snap = {0};
@@ -159,9 +140,13 @@ int main(void) {
     for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndEdit)) {
         CHECK(snap.rgWindow[i].fUtf8Text && strcmp(snap.rgWindow[i].pszText, psz) == 0); fFound = TRUE;
     }
-    CHECK(fFound && (pf = tmpfile()) && StarsCompatWriteHierarchy(&snap, pf));
+    CHECK(fFound && FFilesystemTempDir(szSnapshotDir, sizeof(szSnapshotDir)));
+    CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir) < (int)sizeof(szSnapshotPath));
+    CHECK((pf = fopen(szSnapshotPath, "w+b")) && StarsCompatWriteHierarchy(&snap, pf));
     rewind(pf); cb = fread(szJson, 1, sizeof(szJson) - 1, pf); szJson[cb] = 0;
-    CHECK(strstr(szJson, psz)); fclose(pf); StarsCompatFreeHierarchy(&snap);
+    CHECK(strstr(szJson, psz));
+    CHECK(fclose(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(szSnapshotDir));
+    StarsCompatFreeHierarchy(&snap);
     hwndPassword = CreateWindow("EDIT", "old", WS_CHILD | ES_PASSWORD, 0, 0, 100, 24,
                                 hwnd, (HMENU)(INT_PTR)102, wc.hInstance, NULL);
     CHECK(hwndPassword);

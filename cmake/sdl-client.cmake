@@ -445,7 +445,8 @@ target_compile_options(stars-compat-file PRIVATE -Wall -Wextra -Wpedantic -Werro
 set_target_properties(stars-compat-file PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 add_executable(stars-compat-profile tests/compat/win32_profile.c)
-target_link_libraries(stars-compat-profile PRIVATE stars_win32)
+target_link_libraries(stars-compat-profile PRIVATE stars_win32 stars_filesystem)
+target_include_directories(stars-compat-profile PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_options(stars-compat-profile PRIVATE -Wall -Wextra -Wpedantic -Werror)
 set_target_properties(stars-compat-profile PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -972,7 +973,7 @@ if(STARS_WESTON_EXECUTABLE AND STARS_BUILD_TESTS)
 endif()
 
 add_executable(stars-compat-utf8 tests/compat/win32_utf8.c)
-target_link_libraries(stars-compat-utf8 PRIVATE stars_win32 SDL3::SDL3)
+target_link_libraries(stars-compat-utf8 PRIVATE stars_win32 stars_filesystem SDL3::SDL3)
 target_include_directories(stars-compat-utf8 PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_options(stars-compat-utf8 PRIVATE -Wall -Wextra -Wpedantic -Werror)
 set_target_properties(stars-compat-utf8 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

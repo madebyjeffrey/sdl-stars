@@ -27,7 +27,10 @@ The 2.8 branch retains its historical compatibility contract.
 
 `encoding.c` owns strict UTF-8 validation, bounded copying, resource UTF-16
 conversion and the race importer's CP1252-to-UTF-8 conversion. `native.c` owns
-filesystem operations. The SDL wrapper owns rendering and controls. No general
+game filesystem operations. The C-compatible C++17 `filesystem.h` bridge supplies
+strict UTF-8 filesystem operations for portable test fixtures, without SDK types
+or C++ exceptions crossing its interface. The SDL wrapper owns rendering and
+controls. No general
 legacy code-page heuristic or substitution is used. Popup separator sentinels
 and compressed/hash bytes are binary protocol representations, not decoded text.
 

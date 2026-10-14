@@ -25,6 +25,18 @@ The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
+
+SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
+the C declarations in `filesystem.h`. The profile and picker test fixtures use
+this bridge for temporary directories, directory creation, canonical paths and
+non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
+conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions never cross
+the C ABI. Output buffers are caller-owned, must not overlap input paths, and
+remain empty on failure. Returned paths use forward slashes, matching the SDL
+wrapper's canonical path contract. Temporary directories are claimed with atomic directory
+creation rather than a temporary-file-name/delete sequence. The game and wrapper
+remain C11; host-only builds require no C++ compiler.
+
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 

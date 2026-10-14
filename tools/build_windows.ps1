@@ -13,7 +13,7 @@ $pszBuild = Join-Path $pszRoot "dist\$szPreset"
 $pszInstall = Join-Path $pszRoot "dist\$szPreset-portable"
 $szPath = $env:PATH
 
-if (!(Test-Path (Join-Path $pszBin 'gcc.exe')) -or !(Test-Path (Join-Path $pszBin 'cmake.exe'))) {
+if (!(Test-Path (Join-Path $pszBin 'gcc.exe')) -or !(Test-Path (Join-Path $pszBin 'g++.exe')) -or !(Test-Path (Join-Path $pszBin 'cmake.exe'))) {
     throw 'Install the MSYS2 UCRT64 dependencies listed in docs/WINDOWS-SDL3.md first.'
 }
 
