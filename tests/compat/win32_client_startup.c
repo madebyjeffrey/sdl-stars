@@ -30,7 +30,6 @@ static const char *pszImportSource;
 static int iImportStage;
 static int iRaceLibraryTestStage;
 static int iRaceLibraryWizardPage;
-static const char *pszRaceLibraryImport;
 static uint16_t icksumRaceLibrary;
 static uint16_t icksRaceLibraryOriginal;
 static GAME gameImportSav;
@@ -308,6 +307,17 @@ int16_t StarsTest_PromptPassword(void) {
     // The frozen regression race is password protected. This test qualifies
     // file loading and client creation; password validation is outside its scope.
     return pszContinue ? TRUE : StarsTestReal_PromptPassword();
+}
+
+BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
+BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
+    const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
+    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && pszSource) {
+        if (strlen(pszSource) >= lpof->nMaxFile) return FALSE;
+        strcpy(lpof->lpstrFile, pszSource);
+        return TRUE;
+    }
+    return StarsTestReal_FNativeOpenFileName(lpof);
 }
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
@@ -1287,12 +1297,36 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 7) {
             if (!IsWindowEnabled(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Created.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
-            pszRaceLibraryImport = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
-            if (!pszRaceLibraryImport || !FImportLibraryRaceAs(hwndTitle, pszRaceLibraryImport, "Imported.r2")) { fprintf(stderr, "race import failed from %s\n", pszRaceLibraryImport ? pszRaceLibraryImport : "(unset)"); goto LDone; }
-            if (!FLoadLibraryRace(hwndTitle, "Imported.r2") || !IRaceChecksum(&vplr)) goto LDone;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT))) goto LDone;
+            iRaceLibraryTestStage = 8;
+            return;
+        }
+        if (iRaceLibraryTestStage == 8) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog || !GetDlgItem(hwndRace, IDC_EDIT1)) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndRace, IDC_EDIT1), "Imported.r2") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
+                iRaceLibraryTestStage = 9;
+                return;
+            }
+            return;
+        }
+        if (iRaceLibraryTestStage == 9) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog) continue;
+                if (!FPushClick(GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                iRaceLibraryTestStage = 10;
+                return;
+            }
+            return;
+        }
+        if (iRaceLibraryTestStage == 10) {
+            if (!IsWindowEnabled(hwndTitle)) return;
+            RefreshLibraryRaces(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 2 ||
+                !FLoadLibraryRace(hwndTitle, "Imported.r2") || !IRaceChecksum(&vplr)) goto LDone;
             fChecked = TRUE;
             fPassed = TRUE;
-            puts("Managed race created, edited, cancelled, imported, and reloaded");
+            puts("Managed race created, edited, cancelled, imported through the wizard, and reloaded");
             PostQuitMessage(0);
             return;
         }

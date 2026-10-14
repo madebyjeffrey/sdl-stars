@@ -8,10 +8,11 @@ produce different results from a 2.6j host for the same turn.
 
 - The desktop title screen now manages race designs in a separate Race Designs
   folder. New and Edit use the race wizard and save directly to the selected
-  design; imports preserve the original bytes and receive a unique `.rN`
-  filename. Cancelled edits restore the loaded race, and saves retain the
-  existing checksum and password behavior. Game behavior and record layouts
-  are unchanged.
+  design; Import opens the copied design in the wizard, and cancelling keeps
+  the imported file. Imports preserve the original bytes and receive a unique
+  `.rN` filename. Cancelled edits restore the loaded race, and saves retain
+  the existing checksum and password behavior. Game behavior and record
+  layouts are unchanged.
 
 - The desktop Games library can import a game family from a selected file or
   folder. It validates format, record framing, game identity and player slots

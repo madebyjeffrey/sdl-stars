@@ -20,6 +20,7 @@ void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszName);
+int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource);
 int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr);
 int16_t FSaveCurrentLibraryRace(HWND hwnd, PLAYER *pplr);
 int16_t FHasCurrentLibraryRace(void);

@@ -2786,7 +2786,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (FSelectLibraryRace(hwnd, szRaceName) && FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
             break;
         case IDC_LIBRARY_RACE_IMPORT:
-            if (FImportLibraryRace(hwnd, NULL)) RefreshLibraryRaces(hwnd);
+            if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
             break;
         case IDOK:
             if (!FSelectLibraryGame(hwnd)) break;

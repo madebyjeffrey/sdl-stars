@@ -487,7 +487,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         pszSource = szSource;
     }
     if (strlen(pszSource) >= sizeof(szSource)) return FALSE;
-    strcpy(szSource, pszSource);
+    if (pszSource != szSource) strcpy(szSource, pszSource);
     plrSav = vplr;
     memcpy(szPassSav, szRacePass, sizeof(szPassSav));
     memcpy(szFileSav, szRaceFile, sizeof(szFileSav));
@@ -524,7 +524,6 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     }
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
-    szRaceLibraryPath[0] = 0;
     return TRUE;
 LRestore:
     vplr = plrSav;
@@ -539,6 +538,17 @@ int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszNa
     fResult = FImportLibraryRace(hwnd, pszSource);
     pszRaceLibraryNameOverride = NULL;
     return fResult;
+}
+
+int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource) {
+    const char *pszName;
+    if (!FImportLibraryRace(hwnd, pszSource)) return FALSE;
+    pszName = strrchr(szRaceLibraryPath, chDirSep);
+    if (pszName) pszName++;
+    else pszName = szRaceLibraryPath;
+    /* Import remains successful when the user cancels customization. */
+    FEditLibraryRace(hwnd, pszName);
+    return TRUE;
 }
 
 /* Inspect record framing and BOF metadata without calling FOpenFile, which

@@ -45,6 +45,9 @@
 #ifndef STARS_TEST_IMPL_FNativeSaveFileName
 #define STARS_TEST_IMPL_FNativeSaveFileName FNativeSaveFileName
 #endif
+#ifndef STARS_TEST_IMPL_FNativeOpenFileName
+#define STARS_TEST_IMPL_FNativeOpenFileName FNativeOpenFileName
+#endif
 #ifndef STARS_TEST_IMPL_TrackPopupMenu
 #define STARS_TEST_IMPL_TrackPopupMenu TrackPopupMenu
 #endif
