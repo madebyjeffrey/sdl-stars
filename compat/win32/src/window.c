@@ -1104,8 +1104,9 @@ int WINAPI GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = SDL_strlcpy(psz, lpwin->lpclass->pszClass, (size_t)cchMax);
-    return cch < (size_t)cchMax ? (int)cch : cchMax - 1;
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass, (size_t)cchMax - 1);
+    memcpy(psz, lpwin->lpclass->pszClass, cch); psz[cch] = 0;
+    return (int)cch;
 }
 
 HWND HwndCompatRoot(HWND hwnd) {

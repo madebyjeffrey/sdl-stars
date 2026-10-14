@@ -162,7 +162,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         crBack = SetBkColor(hdc, crButtonFace);
         cch = strlen(szMsgTitle);
         dxMax = rcMsgTitle.right - rcMsgTitle.left - 48;
-        for (; cch > 0 && (int16_t)LOWORD(GetTextExtent(hdc, szMsgTitle, cch)) > dxMax; cch--) {
+        while (cch > 0 && (int16_t)LOWORD(GetTextExtent(hdc, szMsgTitle, cch)) > dxMax) {
+            cch = (int16_t)CchUtf8Prefix(szMsgTitle, cch - 1);
         }
         RcCtrTextOut(hdc, &rcMsgTitle, szMsgTitle, cch);
         DecorateMsgTitleBar(hdc, &rcMsgTitle);

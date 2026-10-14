@@ -517,7 +517,8 @@ selected:
         strcpy(lpof->lpstrFile, dlg.szResult);
         pch = strrchr(dlg.szResult, '/') + 1;
         lpof->nFileOffset = (WORD)(pch - dlg.szResult);
-        if (lpof->lpstrFileTitle && lpof->nMaxFileTitle) SDL_strlcpy(lpof->lpstrFileTitle, pch, lpof->nMaxFileTitle);
+        if (lpof->lpstrFileTitle && lpof->nMaxFileTitle)
+            CchCopyUtf8(lpof->lpstrFileTitle, lpof->nMaxFileTitle, pch, CchUtf8Prefix(pch, lpof->nMaxFileTitle - 1));
         pch = strrchr(pch, '.'); lpof->nFileExtension = pch ? (WORD)(pch - dlg.szResult + 1) : 0;
         lpof->nFilterIndex = dlg.cFilter ? (DWORD)dlg.iFilter + 1 : 0;
         lpof->Flags &= ~OFN_EXTENSIONDIFFERENT;

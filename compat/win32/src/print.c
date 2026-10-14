@@ -93,7 +93,8 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     hNames = HglobPrintNames(lp);
     if (!hMode || !hNames) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
     lpdm = GlobalLock(hMode); if (!lpdm) goto fail;
-    SDL_strlcpy(lpdm->dmDeviceName, lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName));
+    CchCopyUtf8(lpdm->dmDeviceName, sizeof(lpdm->dmDeviceName), lp->fSpool ? lp->szPrinter : "Stars PDF",
+                CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
     lpdm->dmFields = DM_ORIENTATION | DM_PAPERSIZE | DM_COPIES | DM_PRINTQUALITY | DM_YRESOLUTION;
     lpdm->dmOrientation = lp->cxPhysical > lp->cyPhysical ? DMORIENT_LANDSCAPE : DMORIENT_PORTRAIT;

@@ -370,6 +370,8 @@ bidirectional layout and grapheme editing remain separate work.
 
 Password creation and changes use the same 15-byte UTF-8 limit as login and
 the command line, including complete-code-point truncation at the edit limit.
+Generated fleet names, clipped pane titles and bounded wrapper labels preserve
+complete code points as well; byte counts remain the public API convention.
 
 ## 2.8 (released)
 

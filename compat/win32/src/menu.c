@@ -180,7 +180,7 @@ int WINAPI GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
     c = strlen(lpitem->psz);
     if (!psz || cch <= 0) return (int)min(c, (size_t)INT_MAX);
-    c = min(c, (size_t)cch - 1);
+    c = CchUtf8Prefix(lpitem->psz, (size_t)cch - 1);
     memcpy(psz, lpitem->psz, c); psz[c] = 0;
     return (int)c;
 }

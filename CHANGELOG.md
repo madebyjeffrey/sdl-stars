@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Generated fleet names and clipped mineral/message titles could split UTF-8
+  characters, causing strict drawing to reject whole labels. These cuts and
+  bounded menu, class, file-title and font/printer label copies now preserve
+  complete code points. Native regression baselines and gameplay are unchanged.
 - `NewPasswordDlg` allowed 16-byte UTF-8 passwords, which the 15-byte login
   field and command line could not accept. Both change-password fields now
   use the login byte limit and preserve complete code points. Native regression

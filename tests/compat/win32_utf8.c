@@ -32,6 +32,7 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
 }
 static int TestPicker(HWND hwnd) {
     char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[256], szCanonical[PATH_MAX];
+    char szTitle[4];
     OPENFILENAMEA ofn;
     FILE *pf;
     hwndPickerOwner = hwnd;
@@ -43,11 +44,14 @@ static int TestPicker(HWND hwnd) {
         if (iPicker == 0) { pf = fopen(szExpected, "wb"); CHECK(pf); fclose(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
+        ofn.lpstrFileTitle = szTitle; ofn.nMaxFileTitle = sizeof(szTitle);
         ofn.lpstrInitialDir = szDir; ofn.lpstrFilter = "Stars\0*.m1\0All\0*.*\0";
         ofn.Flags = OFN_NOCHANGEDIR | (iPicker == 0 ? OFN_FILEMUSTEXIST : 0);
         fPickerReady = FALSE; CHECK(SetTimer(hwnd, 99, 10, PickerTimer));
         CHECK(iPicker == 0 ? GetOpenFileNameA(&ofn) : GetSaveFileNameA(&ofn));
         CHECK(fPickerReady && strcmp(szFile, szExpected) == 0 && IsWindowEnabled(hwnd));
+        CHECK(FUtf8Valid(szTitle, strlen(szTitle)));
+        CHECK(strcmp(szTitle, iPicker == 0 ? "caf" : "\xe6\x9d\xb1") == 0);
         if (iPicker == 0) CHECK(unlink(szExpected) == 0);
     }
     CHECK(rmdir(szDir) == 0);
@@ -57,6 +61,7 @@ static int TestPicker(HWND hwnd) {
 int main(void) {
     WNDCLASS wc = {0};
     HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword;
+    HMENU hmenu;
     HDC hdc, hdcOrdinary;
     SIZE size, sizeOrdinary;
     RECT rc = {0, 0, 500, 30};
@@ -66,11 +71,16 @@ int main(void) {
     STARSCOMPATSNAPSHOT snap = {0};
     size_t cb, i;
     BOOL fFound = FALSE;
-    wc.lpszClassName = "StarsUtf8Probe"; wc.lpfnWndProc = DefWindowProcA;
+    wc.lpszClassName = "StarsUtf8Probe\xce\xa9"; wc.lpfnWndProc = DefWindowProcA;
     wc.hInstance = GetModuleHandle(NULL); CHECK(RegisterClass(&wc));
     hwnd = CreateWindow(wc.lpszClassName, "Path fields", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         0, 0, 520, 160, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd && StarsCompatSetWindowTitleUtf8(hwnd, psz));
+    CHECK(GetClassNameA(hwnd, szText, 16) == 14 && !strcmp(szText, "StarsUtf8Probe"));
+    hmenu = CreatePopupMenu(); CHECK(hmenu && AppendMenuA(hmenu, MF_STRING, 1, psz));
+    CHECK(GetMenuStringA(hmenu, 1, szSmall, 2, MF_BYCOMMAND) == 0 && szSmall[0] == 0);
+    CHECK(GetMenuStringA(hmenu, 1, szSmall, 4, MF_BYCOMMAND) == 2 && !strcmp(szSmall, "\xc3\xa9"));
+    CHECK(DestroyMenu(hmenu));
     CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow), psz) == 0);
     hwndEdit = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);

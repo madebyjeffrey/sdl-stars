@@ -157,7 +157,9 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     FT_Matrix matrix = {65536, 0, 0, 65536};
 
     if (!lplf || (int64_t)lplf->lfHeight < -cMax || lplf->lfHeight > cMax ||
-        lplf->lfWidth < 0 || lplf->lfWidth > cMax) return NULL;
+        lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
+        !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
+        !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
     if (!library && FT_Init_FreeType(&library)) return NULL;
     lpfont = calloc(1, sizeof(*lpfont));
     if (!lpfont) return NULL;

@@ -801,7 +801,7 @@ char *PszGetFleetName(int16_t id) {
                 strcpy(szShdef, rglpshdef[iplr][ishdef].hul.szClass);
                 cch = strlen(szShdef);
                 if (cch > 28) {
-                    cch = 28;
+                    cch = (int16_t)CchUtf8Prefix(szShdef, 28);
                 }
                 if (cshdef > 1) {
                     szShdef[cch] = '+';
@@ -843,7 +843,7 @@ char *PszFleetNameFromWord(uint16_t w) {
         strcpy(szShdef, rglpshdef[idPlayer][ishdef].hul.szClass);
         cch = strlen(szShdef);
         if (cch > 28) {
-            cch = 28;
+            cch = (int16_t)CchUtf8Prefix(szShdef, 28);
         }
         if (w & 0x2000) {
             szShdef[cch] = '+';
