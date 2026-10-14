@@ -16,6 +16,29 @@ static int16_t fRaceLibraryNameDialog;
 static const char *pszRaceLibraryNameOverride;
 
 typedef struct {
+    PLAYER plr;
+    char szPass[sizeof(szRacePass)];
+    char szFile[sizeof(szRaceFile)];
+    char szPath[sizeof(szRaceLibraryPath)];
+} RACESTATE;
+
+static void SaveRaceState(RACESTATE *prs) {
+    prs->plr = vplr;
+    memcpy(prs->szPass, szRacePass, sizeof(prs->szPass));
+    memcpy(prs->szFile, szRaceFile, sizeof(prs->szFile));
+    memcpy(prs->szPath, szRaceLibraryPath, sizeof(prs->szPath));
+}
+
+static void RestoreRaceState(const RACESTATE *prs, int16_t fRestoreRace, int16_t fRestorePath) {
+    if (fRestoreRace) {
+        vplr = prs->plr;
+        memcpy(szRacePass, prs->szPass, sizeof(prs->szPass));
+        memcpy(szRaceFile, prs->szFile, sizeof(prs->szFile));
+    }
+    if (fRestorePath) memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
+}
+
+typedef struct {
     const char *pszName;
     int16_t fFound;
 } RACENAMECHECK;
@@ -396,20 +419,14 @@ int16_t FHasCurrentLibraryRace(void) {
 
 int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     char szPath[512];
-    PLAYER plrSav;
-    char szPassSav[sizeof(szRacePass)];
-    char szFileSav[sizeof(szRaceFile)];
+    RACESTATE rsSav;
     int16_t fResult;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-    plrSav = vplr;
-    memcpy(szPassSav, szRacePass, sizeof(szPassSav));
-    memcpy(szFileSav, szRaceFile, sizeof(szFileSav));
+    SaveRaceState(&rsSav);
     fResult = FWasRaceFile(szPath, TRUE);
     if (!fResult) {
-        vplr = plrSav;
-        memcpy(szRacePass, szPassSav, sizeof(szPassSav));
-        memcpy(szRaceFile, szFileSav, sizeof(szFileSav));
+        RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The selected race design could not be opened.", MB_ICONEXCLAMATION);
         return FALSE;
     }
@@ -420,14 +437,9 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
 
 int16_t FBeginLibraryRace(HWND hwnd) {
     char szPath[512];
-    PLAYER plrSav = vplr;
-    char szPassSav[sizeof(szRacePass)];
-    char szFileSav[sizeof(szRaceFile)];
-    char szPathSav[sizeof(szRaceLibraryPath)];
+    RACESTATE rsSav;
     int16_t fResult;
-    memcpy(szPassSav, szRacePass, sizeof(szPassSav));
-    memcpy(szFileSav, szRaceFile, sizeof(szFileSav));
-    memcpy(szPathSav, szRaceLibraryPath, sizeof(szPathSav));
+    SaveRaceState(&rsSav);
     if (!FChooseLibraryRaceName(hwnd, "Custom Race.r1", szPath, sizeof(szPath))) return FALSE;
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     vplr = vrgplrDef[0];
@@ -437,31 +449,19 @@ int16_t FBeginLibraryRace(HWND hwnd) {
     SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
     if (!fResult) {
-        vplr = plrSav;
-        memcpy(szRacePass, szPassSav, sizeof(szPassSav));
-        memcpy(szRaceFile, szFileSav, sizeof(szFileSav));
+        RestoreRaceState(&rsSav, TRUE, TRUE);
     }
-    memcpy(szRaceLibraryPath, szPathSav, sizeof(szPathSav));
+    else RestoreRaceState(&rsSav, FALSE, TRUE);
     return fResult;
 }
 
 int16_t FEditLibraryRace(HWND hwnd, const char *pszName) {
-    PLAYER plrSav = vplr;
-    char szPassSav[sizeof(szRacePass)];
-    char szFileSav[sizeof(szRaceFile)];
-    char szPathSav[sizeof(szRaceLibraryPath)];
+    RACESTATE rsSav;
     int16_t fResult;
-    memcpy(szPassSav, szRacePass, sizeof(szPassSav));
-    memcpy(szFileSav, szRaceFile, sizeof(szFileSav));
-    memcpy(szPathSav, szRaceLibraryPath, sizeof(szPathSav));
+    SaveRaceState(&rsSav);
     if (!FLoadLibraryRace(hwnd, pszName)) return FALSE;
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
-    if (!fResult) {
-        vplr = plrSav;
-        memcpy(szRacePass, szPassSav, sizeof(szPassSav));
-        memcpy(szRaceFile, szFileSav, sizeof(szFileSav));
-    }
-    memcpy(szRaceLibraryPath, szPathSav, sizeof(szPathSav));
+    RestoreRaceState(&rsSav, !fResult, TRUE);
     return fResult;
 }
 
@@ -469,9 +469,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szSource[512], szName[256], szStem[256], szPath[512], szStage[512];
     char *pch, *pchSlash, *pchExt;
-    PLAYER plrSav;
-    char szPassSav[sizeof(szRacePass)];
-    char szFileSav[sizeof(szRaceFile)];
+    RACESTATE rsSav;
     int16_t fValid;
     if (!pszSource) {
         memset(&ofn, 0, sizeof(ofn));
@@ -488,14 +486,10 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     }
     if (strlen(pszSource) >= sizeof(szSource)) return FALSE;
     if (pszSource != szSource) strcpy(szSource, pszSource);
-    plrSav = vplr;
-    memcpy(szPassSav, szRacePass, sizeof(szPassSav));
-    memcpy(szFileSav, szRaceFile, sizeof(szFileSav));
+    SaveRaceState(&rsSav);
     fValid = FWasRaceFile(szSource, TRUE);
     if (!fValid) {
-        vplr = plrSav;
-        memcpy(szRacePass, szPassSav, sizeof(szPassSav));
-        memcpy(szRaceFile, szFileSav, sizeof(szFileSav));
+        RestoreRaceState(&rsSav, TRUE, TRUE);
         return FALSE;
     }
     pchSlash = strrchr(szSource, '/');
@@ -526,9 +520,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
     return TRUE;
 LRestore:
-    vplr = plrSav;
-    memcpy(szRacePass, szPassSav, sizeof(szPassSav));
-    memcpy(szRaceFile, szFileSav, sizeof(szFileSav));
+    RestoreRaceState(&rsSav, TRUE, TRUE);
     return FALSE;
 }
 
