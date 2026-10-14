@@ -24,7 +24,7 @@ bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
 }
 
 char *SDLCALL StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
-    char sz[PATH_MAX];
+    char sz[PATH_MAX + sizeof("../export/")];
     (void)pszOrg; (void)pszApp;
     snprintf(sz, sizeof(sz), "%s../export/", szBase);
     mkdir(sz, 0700);

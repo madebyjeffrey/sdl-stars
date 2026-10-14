@@ -41,7 +41,9 @@ outside the accepted migration, as specified in ADR 0002.
   unchanged from the migration.
 - The Linux picker test's expected-path buffer now accommodates `PATH_MAX`
   plus its Unicode basename, addressing the GCC truncation warning that blocked
-  the Linux unit/tutorial builds. Actual Linux/Windows CI results are separate
+  the Linux unit/tutorial builds. The help test's preference-path stub also
+  reserves room for its appended export suffix; GCC exposed that warning after
+  the picker blocker was removed. Actual Linux/Windows CI results are separate
   evidence; this local run qualifies macOS and does not qualify native desktop
   interactions on other platforms. The full 80-page tutorial remains separate
   unfinished coverage.
