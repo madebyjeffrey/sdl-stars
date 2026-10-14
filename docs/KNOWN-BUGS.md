@@ -17,6 +17,16 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Unsupported game-version diagnostics — fixed on main
+
+`file.c`: `FOpenFile` tested for exact version 2.85 before attempting its
+older/newer version classification, so the two version messages were
+unreachable. It now classifies valid BOF version numbers first and accepts
+only 2.85; malformed BOF framing and non-BOF headers remain corrupt-file
+errors, including after read-error recovery. `test_save.c` checks older, newer,
+malformed and current-format host files. File records and simulation behavior
+are unchanged.
+
 ## Native heap alignment and byte-addressed storage — fixed on main
 
 `memory.c`: ordinary allocation payloads now satisfy `max_align_t`, including

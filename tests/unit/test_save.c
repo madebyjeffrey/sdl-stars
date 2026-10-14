@@ -140,6 +140,42 @@ static void test_WriteBOF_writes_version_2_85(void) {
     TEST_CHECK_(!FStarsTestLoadHost(), "a 2.86 host file loaded");
 }
 
+static void test_FOpenFile_reports_unsupported_versions_and_corruption(void) {
+    char  szDir[MAX_PATH];
+    char  szFile[MAX_PATH];
+    FILE *fp;
+    HDR   hdr;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("FOpenFile_versions", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    idsFileError = 0;
+    TEST_CHECK_(FStarsTestLoadHost(), "current-format host file was rejected");
+    TEST_CHECK(idsFileError == 0);
+
+    TEST_ASSERT(FSetHostVersion(83));
+    idsFileError = 0;
+    TEST_CHECK(!FStarsTestLoadHost());
+    TEST_CHECK(idsFileError == idsSorryFileCreatedOlderVersionStarsIncompatible);
+
+    TEST_ASSERT(FSetHostVersion(86));
+    idsFileError = 0;
+    TEST_CHECK(!FStarsTestLoadHost());
+    TEST_CHECK(idsFileError == idsFileCreatedNewerVersionStarsMustUpgrade);
+
+    TEST_ASSERT(FSetHostVersion(85));
+    snprintf(szFile, sizeof(szFile), "%s.hst", szBase);
+    fp = fopen(szFile, "r+b");
+    TEST_ASSERT(fp != NULL);
+    hdr.rt = rtBOF;
+    hdr.cb = 1;
+    TEST_CHECK(fwrite(&hdr, sizeof(hdr), 1, fp) == 1);
+    fclose(fp);
+    idsFileError = 0;
+    TEST_CHECK(!FStarsTestLoadHost());
+    TEST_CHECK(idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
+}
+
 // LpthFind returns the loaded game's thing of type ith whose owner
 // is iplr, or NULL.
 static THING *LpthFind(ThingType ith, int16_t iplr) {
@@ -339,5 +375,6 @@ TEST_LIST = {{"UTF-8 records require complete in-record text", test_utf8_record_
              {"SetVisPFFleets sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase},
              {"SetVisPFFleets long-range scanner sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase_long_range},
              {"WriteBOF writes version 2.85", test_WriteBOF_writes_version_2_85},
+             {"FOpenFile reports unsupported versions and corrupt headers", test_FOpenFile_reports_unsupported_versions_and_corruption},
              {"FWriteDataFile masks other players' things", test_FWriteDataFile_masks_other_players_things},
              {NULL, NULL}};

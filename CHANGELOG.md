@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FOpenFile` checked for format 2.85 before classifying unsupported versions,
+  making its older/newer version messages unreachable. It now reports valid
+  older and newer BOF versions accurately and treats malformed BOF records as
+  corrupt, preserving that diagnostic across read-error recovery. Reader tests
+  cover older, newer, malformed and current-format host files; save layouts
+  and simulation results are unchanged.
 - `FWasRaceFile` now imports protected legacy races only after validating the
   original records and checksum, confirming any shortened names and accepting
   a replacement UTF-8 password. The old password is not authenticated, and

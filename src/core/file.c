@@ -1307,7 +1307,7 @@ void GetFileStatus(int16_t dt, int16_t iPlayer) {
 
 int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     RTBOF    rtbof;
-    StringId ids;
+    volatile StringId ids;
     int16_t  fCheckMulti;
     int16_t  fRewind;
     int16_t  fSilentSav;
@@ -1335,18 +1335,17 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     fFileErrSilent = fSilentSav;
     ids = idsGameFileAppearsCorruptUnableLoadFile;
     ReadRt();
-    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
-        if (hdrCur.rt == rtBOF && ((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor == 85) {
-            FileError(((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)
-                          ? idsFileCreatedNewerVersionStarsMustUpgrade
-                          : idsSorryFileCreatedOlderVersionStarsIncompatible);
-        } else {
-            FileError(idsFileDoesBelongVersionStars);
-        }
-    LBadFile:
-        StreamClose();
-        penvMem = penvMemSav;
-        return FALSE;
+    if (hdrCur.rt != rtBOF) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        goto LBadFile;
+    }
+    if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
+        FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
+        goto LBadFile;
+    }
+    if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
+        FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
+        goto LBadFile;
     }
     rtbof = *((RTBOF *)rgbCur);
     if (rtbof.iPlayer != iPlayer) {
@@ -1401,6 +1400,10 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     wVersFile = rtbof.wVersion;
     gd.fFileCrippled = rtbof.fCrippled;
     return TRUE;
+LBadFile:
+    StreamClose();
+    penvMem = penvMemSav;
+    return FALSE;
 }
 
 int16_t FNewTurnAvail(int16_t idPlayer) {
