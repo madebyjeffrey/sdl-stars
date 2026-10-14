@@ -76,7 +76,8 @@ static BOOL FCheckNewGameWorkflow(void) {
     }
 
     if (iNewGameStep == 0) {
-        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return FALSE;
+        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return ++cWait < 20;
+        cWait = 0;
         gameNewSav = game; fChecked = TRUE; iNewGameStep++;
         return FPushClick(rghwndBtnSplash[0]);
     }
