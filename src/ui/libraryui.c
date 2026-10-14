@@ -959,8 +959,12 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
 
 static int16_t ListLibraryRace(void *lpList, const char *pszName) {
     size_t cch = strlen(pszName);
+    char szPath[512];
+    int64_t cbFile;
     LRESULT i;
     if (cch < 4 || !FPortableRaceFilename(pszName)) return TRUE;
+    CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return TRUE;
     i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }

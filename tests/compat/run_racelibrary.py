@@ -13,6 +13,8 @@ def main():
         settings = work / "settings"
         settings.mkdir()
         library = settings / "Race Designs"
+        library.mkdir()
+        (library / "Archive.r1").mkdir()
         source = library / "Managed.r1"
         env = dict(os.environ, STARS_SETTINGS_DIR=str(settings),
                    STARS_CLIENT_RACE_LIBRARY_TEST="1", STARS_CLIENT_RACE_IMPORT_SOURCE=str(source),
