@@ -976,6 +976,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
     char   *lpb;
     char   *lpbDef;
     int16_t cb;
+    int32_t cbFile;
     char   *pchT;
     AiRace  idAi;
     int16_t lvlAi;
@@ -996,11 +997,12 @@ int16_t GenNewGameFromFile(char *pszFile) {
     }
     memset(&game, 0, sizeof(GAME));
     StreamOpen(pszFile, mdRead);
-    cb = LOWORD(CbFileSize(hf));
-    if (cb >= 16000) {
+    cbFile = CbFileSize(hf);
+    if (cbFile < 0 || cbFile >= 16000) {
         FileError(idsUniverseCreationFileAppearsInvalid);
         goto LError;
     }
+    cb = (int16_t)cbFile;
     lpbDef = LpAlloc(cb + 1, htPerm);
     lpbDefMac = lpbDef + cb;
     RgFromStream(lpbDef, cb);

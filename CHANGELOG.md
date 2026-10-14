@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `GenNewGameFromFile` checked the 16-bit truncated file size, allowing a
+  large definition to wrap into a small readable prefix. It now checks the
+  actual native file size before allocation. Native baselines and valid
+  definitions are unchanged.
 - `PszFormatString` copied expanded names and paths past its 256-byte buffer.
   Its expansions are now bounded, and message/printf truncation preserves
   complete UTF-8 code points. Normal messages, native regression baselines

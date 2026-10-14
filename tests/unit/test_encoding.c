@@ -54,7 +54,9 @@ static void TestPasswords(void) {
 
 static void TestInvalidDefinition(void) {
     char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szPadding[1024];
     FILE *pf;
+    int i;
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("utf8_invalid_definition", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%sbad.def", szDir, szDirSep);
@@ -64,6 +66,14 @@ static void TestInvalidDefinition(void) {
     TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
     pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
     fputs("Title\r\n\xff\r\n", pf); fclose(pf);
+    TEST_CHECK(!GenNewGameFromFile(szFile));
+    TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
+    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
+    fputs("Title\r\n", pf);
+    memset(szPadding, 'a', sizeof(szPadding));
+    for (i = 0; i < 64; i++) TEST_CHECK(fwrite(szPadding, 1, sizeof(szPadding), pf) == sizeof(szPadding));
+    fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
     TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
