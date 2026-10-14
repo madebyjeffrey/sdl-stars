@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "UTF-8 line %d: %s (%s)\n", __LINE__, #f, SDL_GetError()); return 1; } } while (0)
 static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg); }
 static HWND hwndPickerOwner;
@@ -31,16 +33,33 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     SendMessage(hwndDlg, WM_COMMAND, fPickerReady ? IDOK : IDCANCEL, 0);
 }
 static int TestPicker(HWND hwnd) {
-    char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[PATH_MAX + 64], szCanonical[PATH_MAX];
+#ifdef _WIN32
+    char szDir[MAX_PATH], szTemp[MAX_PATH], szExpected[MAX_PATH + 64], szCanonical[MAX_PATH];
+#else
+    char szDir[] = "/tmp/stars-utf8-XXXXXX", szExpected[PATH_MAX + 64], szCanonical[PATH_MAX];
+#endif
+    char szFile[256];
     char szTitle[4];
     OPENFILENAMEA ofn;
     FILE *pf;
     hwndPickerOwner = hwnd;
+#ifdef _WIN32
+    CHECK(GetTempPathA(sizeof(szDir), szDir) > 0);
+    CHECK(GetTempFileNameA(szDir, "st", 0, szTemp));
+    CHECK(DeleteFileA(szTemp) && CreateDirectoryA(szTemp, NULL));
+    strcpy(szDir, szTemp);
+    CHECK(GetFullPathNameA(szDir, sizeof(szCanonical), szCanonical, NULL) > 0);
+#else
     CHECK(mkdtemp(szDir));
     CHECK(realpath(szDir, szCanonical));
+#endif
     for (iPicker = 0; iPicker < 2; iPicker++) {
         pszPickerName = iPicker == 0 ? "caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80.m1" : "\xe6\x9d\xb1\xe4\xba\xac-\xce\xa9.m1";
+#ifdef _WIN32
+        snprintf(szExpected, sizeof(szExpected), "%s\\%s", szCanonical, pszPickerName);
+#else
         snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical, pszPickerName);
+#endif
         if (iPicker == 0) { pf = fopen(szExpected, "wb"); CHECK(pf); fclose(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
@@ -52,9 +71,19 @@ static int TestPicker(HWND hwnd) {
         CHECK(fPickerReady && strcmp(szFile, szExpected) == 0 && IsWindowEnabled(hwnd));
         CHECK(FUtf8Valid(szTitle, strlen(szTitle)));
         CHECK(strcmp(szTitle, iPicker == 0 ? "caf" : "\xe6\x9d\xb1") == 0);
-        if (iPicker == 0) CHECK(unlink(szExpected) == 0);
+        if (iPicker == 0) {
+#ifdef _WIN32
+            CHECK(DeleteFileA(szExpected));
+#else
+            CHECK(unlink(szExpected) == 0);
+#endif
+        }
     }
+#ifdef _WIN32
+    CHECK(RemoveDirectoryA(szDir));
+#else
     CHECK(rmdir(szDir) == 0);
+#endif
     return 0;
 }
 

@@ -981,4 +981,5 @@ if(STARS_BUILD_TESTS)
     add_test(NAME win32_utf8 COMMAND stars-compat-utf8)
     set_tests_properties(win32_utf8 PROPERTIES LABELS "compat" TIMEOUT 30
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
 endif()

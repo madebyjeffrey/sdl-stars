@@ -52,5 +52,18 @@ passes through page 50 (merge cycle); this remains partial coverage of 80 pages.
 
 Translation, grapheme editing, bidirectional text, shaping and comprehensive IME
 layout remain outside this encoding migration. Glyph coverage depends on fonts.
-Local execution qualifies macOS; real Windows/Linux runtime qualification must
-be run on those platforms, including their native dialogs.
+
+## Future manual desktop qualification
+
+Automated UTF-8 and profile checks run through CTest on Linux, macOS and Windows.
+Manual desktop qualification is future work and does not block merge. On real
+Windows desktops, open and save files with accented, CJK and supplementary
+Unicode names through the native picker; check selection, cancellation,
+overwrite confirmation and unchanged process directory. Type and paste the same
+characters into text fields and verify the displayed and saved text.
+
+On Linux desktops, repeat Unicode typing, paste and file selection on both X11
+and Wayland. Check that native/portal picker results preserve the complete UTF-8
+filename, and that editing, clipboard round trips and saved settings preserve
+the same text. Record desktop environment, SDL video driver and picker backend
+for each run.
