@@ -118,7 +118,7 @@ BOOL FNativeOpenFileName(OPENFILENAMEA *lpof) { return GetOpenFileNameA(lpof); }
 BOOL STARS_TEST_IMPL(FNativeSaveFileName)(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
 DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
 
-int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {
+int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
     if (StarsCompatTextInputRejected(hwnd)) {
         if (cchMax > 0) psz[0] = 0;
         return -1;
@@ -126,7 +126,7 @@ int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax) {
     return GetWindowTextA(hwnd, psz, cchMax);
 }
 
-BOOL FSetLegacyWindowText(HWND hwnd, const char *psz) {
+BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {
     return SetWindowTextA(hwnd, psz);
 }
 

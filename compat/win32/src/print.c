@@ -119,9 +119,9 @@ static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb)
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {0};
     char szFile[PATH_MAX] = "Stars map.pdf";
-    char *pszUTF;
     int fd;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
+    if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (cb) memcpy(lp->szTitle, pszTitle, cb);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
@@ -143,8 +143,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     if (!lp->lpfile) { close(fd); AbortPrint(lp); SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
     lp->lpPDF = cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300);
     if (cairo_surface_status(lp->lpPDF) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
-    pszUTF = SDL_iconv_string("UTF-8", "WINDOWS-1252", lp->szTitle, strlen(lp->szTitle) + 1);
-    if (pszUTF) { cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_TITLE, pszUTF); SDL_free(pszUTF); }
+    cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_TITLE, lp->szTitle);
     cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_CREATOR, "Stars SDL3 compatibility printer");
     lp->cPages = 0; lp->fActive = TRUE;
     if (idPrintNext == INT_MAX) idPrintNext = 1;

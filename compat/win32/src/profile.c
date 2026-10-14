@@ -1,4 +1,4 @@
-/* File-backed ANSI profiles. Preserve unrelated lines when updating settings. */
+/* File-backed UTF-8 profiles. Preserve unrelated lines when updating settings. */
 #include <windows.h>
 #include <ctype.h>
 #include <errno.h>
@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "platform.h"
+#include "encoding.h"
 
 typedef struct COMPATPROFILE {
     char *szRaw, *szParsed, *pszSection, *pszKey, *pszValue;
@@ -77,9 +78,11 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     }
     while ((cbLine = getline(&sz, &cb, fp)) >= 0) {
         cbTotal += (size_t)cbLine;
-        if (cbTotal > 8 * 1024 * 1024 || memchr(sz, 0, (size_t)cbLine)) {
+        if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
             SetLastError(ERROR_BAD_FORMAT); goto LReturn;
         }
+        if (cbTotal == (size_t)cbLine && cbLine >= 3 && !memcmp(sz, "\xef\xbb\xbf", 3))
+            memmove(sz, sz + 3, (size_t)cbLine - 2);
         *lplpNext = LpProfileLine(sz);
         if (!*lplpNext) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
@@ -159,6 +162,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
 #endif
 LReturn:
     if (!sz) SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    else if (!FUtf8Valid(sz, strlen(sz))) { free(sz); sz = NULL; SetLastError(ERROR_INVALID_PARAMETER); }
     return sz;
 }
 
@@ -209,11 +213,12 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             if (!psz || !*psz) continue;
             cch = strlen(psz);
             if (cchMax < 2) break;
-            cchCopy = cch < cchMax - 1 - cchOut ? cch : cchMax - 1 - cchOut;
+            if (cchOut > cchMax - 2) { cchOut = cchMax - 2; break; }
+            cchCopy = CchUtf8Prefix(psz, cch < cchMax - 2 - cchOut ? cch : cchMax - 2 - cchOut);
             memcpy(szResult + cchOut, psz, cchCopy);
             cchOut += cchCopy;
             if (cchCopy < cch || cchOut + 1 >= cchMax) {
-                szResult[cchMax - 2] = szResult[cchMax - 1] = 0;
+                memset(szResult + cchOut, 0, cchMax - cchOut);
                 cchOut = cchMax - 2; break;
             }
             szResult[cchOut++] = 0;
@@ -229,7 +234,7 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             cch = strlen(psz);
             while (cch != 0 && psz[cch - 1] == ' ') cch--;
         }
-        cchOut = cch < cchMax - 1 ? cch : cchMax - 1;
+        cchOut = CchUtf8Prefix(psz, cch < cchMax - 1 ? cch : cchMax - 1);
         memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
     }
     FreeProfile(lpAll); free(szPath);
@@ -279,6 +284,7 @@ static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
 #endif
     fp = fdopen(fd, "wb");
     if (!fp) { SetLastError(DwProfileError()); close(fd); goto LReturn; }
+    if (fwrite("\xef\xbb\xbf", 1, 3, fp) != 3) { fclose(fp); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
         if (fputs(lp->szRaw, fp) == EOF) break;
         if (lp->lpNext && *lp->szRaw && lp->szRaw[strlen(lp->szRaw) - 1] != '\n')
@@ -303,7 +309,9 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     size_t cb;
 
     if (!pszSection && !pszKey && !pszValue) return FALSE; // No cache to flush.
-    if (!pszSection || !*pszSection || strchr(pszSection, '\n') || strchr(pszSection, '\r') ||
+    if (!pszSection || !FUtf8Valid(pszSection, strlen(pszSection)) ||
+        (pszKey && !FUtf8Valid(pszKey, strlen(pszKey))) ||
+        (pszValue && !FUtf8Valid(pszValue, strlen(pszValue))) || !*pszSection || strchr(pszSection, '\n') || strchr(pszSection, '\r') ||
         strchr(pszSection, ']') || (pszKey && (strchr(pszKey, '=') || strchr(pszKey, '\n') || strchr(pszKey, '\r'))) ||
         (pszValue && (strchr(pszValue, '\n') || strchr(pszValue, '\r')))) {
         SetLastError(ERROR_INVALID_PARAMETER); return FALSE;

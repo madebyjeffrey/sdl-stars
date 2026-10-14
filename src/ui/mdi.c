@@ -131,14 +131,14 @@ void CreateChildWindows() {
         memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         wsprintf(&szGame[strlen(szGame)], ".m%d", idPlayer + 1);
-        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
         psz = PszPlayerName(idPlayer, FALSE, TRUE, FALSE, 0, NULL);
-        CchLegacyToUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
+        CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
         snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         CchGetString(idsStarsSHostMode, szWork);
         wsprintf(szData, szWork, game.szName);
-        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
         strcpy(szData, szNameUtf8);
     }
     FSetNativeWindowTitle(hwndFrame, szData);

@@ -34,8 +34,9 @@ static void TestNativeFiles(void) {
     TEST_ASSERT(hfFile != -1);
     TEST_CHECK(CbWriteFile(hfFile, "Z", 1) == 1); CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && RemoveNativeFile(szFile) == 0);
-#ifdef _WIN32
     TEST_CHECK(HfOpenFile("\xff", mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);
+    TEST_CHECK(RemoveNativeFile("\xff") == -1 && errno == EILSEQ);
+#ifdef _WIN32
     {
 #ifdef STARS_UI_SDL
         char *pszWide = SDL_iconv_string("UTF-16LE", "UTF-8", szDir, strlen(szDir) + 1);

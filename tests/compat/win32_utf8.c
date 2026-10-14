@@ -20,7 +20,7 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     if (!hwndDlg) return;
     KillTimer(hwnd, id);
     hwndEdit = GetDlgItem(hwndDlg, 0x480);
-    fPickerReady = hwndEdit->fUtf8Text && GetDlgItem(hwndDlg, 0x440)->fUtf8Text && GetDlgItem(hwndDlg, 0x460)->fUtf8Text;
+    fPickerReady = hwndEdit && GetDlgItem(hwndDlg, 0x440) && GetDlgItem(hwndDlg, 0x460);
     SetWindowText(hwndEdit, "");
     if (iPicker == 0) { SDL_SetClipboardText(pszPickerName); SendMessage(hwndEdit, WM_PASTE, 0, 0); }
     else { CompatTextInput(hwndEdit, pszPickerName); Drain(); }
@@ -31,14 +31,15 @@ static void CALLBACK PickerTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
     SendMessage(hwndDlg, WM_COMMAND, fPickerReady ? IDOK : IDCANCEL, 0);
 }
 static int TestPicker(HWND hwnd) {
-    char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[256];
+    char szDir[] = "/tmp/stars-utf8-XXXXXX", szFile[256], szExpected[256], szCanonical[PATH_MAX];
     OPENFILENAMEA ofn;
     FILE *pf;
     hwndPickerOwner = hwnd;
     CHECK(mkdtemp(szDir));
+    CHECK(realpath(szDir, szCanonical));
     for (iPicker = 0; iPicker < 2; iPicker++) {
         pszPickerName = iPicker == 0 ? "caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80.m1" : "\xe6\x9d\xb1\xe4\xba\xac-\xce\xa9.m1";
-        snprintf(szExpected, sizeof(szExpected), "%s/%s", szDir, pszPickerName);
+        snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical, pszPickerName);
         if (iPicker == 0) { pf = fopen(szExpected, "wb"); CHECK(pf); fclose(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
@@ -55,9 +56,9 @@ static int TestPicker(HWND hwnd) {
 
 int main(void) {
     WNDCLASS wc = {0};
-    HWND hwnd, hwndEdit, hwndLegacy, hwndPassword;
-    HDC hdc, hdcLegacy;
-    SIZE size, sizeLegacy;
+    HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword;
+    HDC hdc, hdcOrdinary;
+    SIZE size, sizeOrdinary;
     RECT rc = {0, 0, 500, 30};
     char szText[256], szSmall[5], szJson[16384], *pszClipboard;
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
@@ -73,9 +74,9 @@ int main(void) {
     CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow), psz) == 0);
     hwndEdit = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);
-    hwndLegacy = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE, 8, 48, 500, 30,
+    hwndOrdinary = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE, 8, 48, 500, 30,
                               hwnd, (HMENU)(INT_PTR)101, wc.hInstance, NULL);
-    CHECK(hwndEdit && hwndLegacy); hwndEdit->fUtf8Text = TRUE;
+    CHECK(hwndEdit && hwndOrdinary);
     SetFocus(hwndEdit); CompatTextInput(hwndEdit, psz); Drain();
     CHECK(GetWindowText(hwndEdit, szText, sizeof(szText)) == (int)strlen(psz) && strcmp(szText, psz) == 0);
     SendMessage(hwndEdit, EM_SETSEL, 0, -1); SendMessage(hwndEdit, WM_COPY, 0, 0);
@@ -97,12 +98,12 @@ int main(void) {
     CHECK(GetWindowText(hwndEdit, szText, sizeof(szText)) == 14 && strcmp(szText, psz) == 0);
     CHECK(GetWindowText(hwndEdit, szSmall, 2) == 0 && szSmall[0] == 0);
     CHECK(GetWindowText(hwndEdit, szSmall, 3) == 2 && strcmp(szSmall, "\xc3\xa9") == 0);
-    hdc = GetDC(hwndEdit); hdcLegacy = GetDC(hwndLegacy); CHECK(hdc && hdcLegacy);
-    CHECK(GetTextExtentPoint32A(hdc, "\xc3\xa9", 2, &size) && GetTextExtentPoint32A(hdcLegacy, "\xe9", 1, &sizeLegacy));
-    CHECK(size.cx == sizeLegacy.cx && size.cy == sizeLegacy.cy);
+    hdc = GetDC(hwndEdit); hdcOrdinary = GetDC(hwndOrdinary); CHECK(hdc && hdcOrdinary);
+    CHECK(GetTextExtentPoint32A(hdc, "\xc3\xa9", 2, &size) && GetTextExtentPoint32A(hdcOrdinary, "\xc3\xa9", 2, &sizeOrdinary));
+    CHECK(size.cx == sizeOrdinary.cx && size.cy == sizeOrdinary.cy);
     CHECK(GetTextExtentPoint32A(hdc, psz, 14, &size) && size.cx > 0);
     CHECK(DrawTextA(hdc, psz, 14, &rc, DT_SINGLELINE | DT_NOPREFIX | DT_CALCRECT) > 0 && rc.right == size.cx);
-    CHECK(TextOutA(hdc, 0, 0, psz, 14) && ReleaseDC(hwndEdit, hdc) && ReleaseDC(hwndLegacy, hdcLegacy));
+    CHECK(TextOutA(hdc, 0, 0, psz, 14) && ReleaseDC(hwndEdit, hdc) && ReleaseDC(hwndOrdinary, hdcOrdinary));
     CHECK(StarsCompatCaptureHierarchy(&snap));
     for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndEdit)) {
         CHECK(snap.rgWindow[i].fUtf8Text && strcmp(snap.rgWindow[i].pszText, psz) == 0); fFound = TRUE;
@@ -114,11 +115,11 @@ int main(void) {
                                 hwnd, (HMENU)(INT_PTR)102, wc.hInstance, NULL);
     CHECK(hwndPassword);
     CompatTextInput(hwndPassword, "\xce\xa9"); Drain();
-    CHECK(GetWindowText(hwndPassword, szText, sizeof(szText)) == 3 && !strcmp(szText, "old") && StarsCompatTextInputRejected(hwndPassword));
+    CHECK(GetWindowText(hwndPassword, szText, sizeof(szText)) == 5 && !strcmp(szText, "\xce\xa9old") && !StarsCompatTextInputRejected(hwndPassword));
     CompatTextInput(hwndPassword, "\xc3\xa9"); Drain();
     CHECK(!StarsCompatTextInputRejected(hwndPassword));
     CHECK(SDL_SetClipboardText("\xe6\x9d\xb1\xe4\xba\xac")); SendMessage(hwndPassword, WM_PASTE, 0, 0);
-    CHECK(StarsCompatTextInputRejected(hwndPassword) && GetWindowText(hwndPassword, szText, sizeof(szText)) == 4 && (BYTE)szText[0] == 0xe9);
+    CHECK(!StarsCompatTextInputRejected(hwndPassword) && GetWindowText(hwndPassword, szText, sizeof(szText)) == 13 && FUtf8Valid(szText, strlen(szText)));
     SendMessage(hwndPassword, WM_CHAR, '\b', 0); CHECK(!StarsCompatTextInputRejected(hwndPassword));
     CHECK(TestPicker(hwnd) == 0);
     CHECK(DestroyWindow(hwnd)); StarsCompatProcessExit(); SDL_Quit();

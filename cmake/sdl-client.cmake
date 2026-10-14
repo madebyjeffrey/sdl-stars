@@ -5,22 +5,12 @@ if(APPLE)
     target_link_options(stars_options INTERFACE "LINKER:-no_fixup_chains")
 endif()
 add_subdirectory(compat/win32)
-find_program(STARS_WMF2SVG_EXECUTABLE NAMES wmf2svg REQUIRED)
 set(STARS_HELP_GENERATED "${CMAKE_BINARY_DIR}/help")
 add_custom_command(OUTPUT "${STARS_HELP_GENERATED}/complete.stamp" "${STARS_HELP_GENERATED}/help_contexts.h"
-    BYPRODUCTS "${CMAKE_BINARY_DIR}/bin/stars!.hlp"
-    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/compat/win32/hlp_render.py"
-        "${PROJECT_SOURCE_DIR}/res/stars!.hlp" "${STARS_HELP_GENERATED}"
-        --wmf2svg "${STARS_WMF2SVG_EXECUTABLE}"
-        --header "${STARS_HELP_GENERATED}/help_contexts.h"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/bin"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${PROJECT_SOURCE_DIR}/res/stars!.hlp" "${CMAKE_BINARY_DIR}/bin/stars!.hlp"
-    DEPENDS res/stars!.hlp compat/win32/hlp.py compat/win32/hlp_format.py
-        compat/win32/hlp_font.py compat/win32/hlp_image.py compat/win32/hlp_render.py
-        compat/win32/help.css compat/win32/help.js compat/win32/help_bundle.js res/fonts/LICENSE
-        res/fonts/LiberationSans-Regular.ttf res/fonts/LiberationSans-Bold.ttf
-        res/fonts/LiberationSans-Italic.ttf res/fonts/LiberationSans-BoldItalic.ttf
-    COMMENT "Generating the original Stars! help guide" VERBATIM)
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/compat/win32/helpgen.py"
+        "${PROJECT_SOURCE_DIR}/res/help-utf8.zip" "${STARS_HELP_GENERATED}"
+    DEPENDS res/help-utf8.zip compat/win32/helpgen.py
+    COMMENT "Staging the UTF-8 Stars! help guide" VERBATIM)
 add_custom_target(stars-help-guide ALL DEPENDS "${STARS_HELP_GENERATED}/complete.stamp")
 add_dependencies(stars_win32 stars-help-guide)
 target_include_directories(stars_win32 PRIVATE "${STARS_HELP_GENERATED}")
@@ -29,7 +19,7 @@ add_executable(stars-compat-help tests/compat/win32_help.c)
 target_link_libraries(stars-compat-help PRIVATE stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-help PRIVATE "${STARS_HELP_GENERATED}")
 target_compile_options(stars-compat-help PRIVATE -Wall -Wextra -Wpedantic -Werror)
-stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_OpenURL)
+stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_GetPrefPath SDL_OpenURL)
 add_dependencies(stars-compat-help stars-help-guide)
 set_target_properties(stars-compat-help PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
@@ -39,7 +29,7 @@ target_compile_options(stars-compat-help-viewer PRIVATE -Wall -Wextra -Wpedantic
 add_dependencies(stars-compat-help-viewer stars-help-guide)
 set_target_properties(stars-compat-help-viewer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 if(STARS_BUILD_TESTS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_test(NAME win32_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}" "${PROJECT_SOURCE_DIR}/res/stars!.hlp")
+    add_test(NAME win32_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}")
     set_tests_properties(win32_help PROPERTIES LABELS "compat" TIMEOUT 90)
     add_test(NAME win32_help_archive COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/test_hlp.py")
     set_tests_properties(win32_help_archive PROPERTIES LABELS "compat" TIMEOUT 30)
@@ -86,8 +76,9 @@ target_include_directories(stars-compat-client-popup PRIVATE "${PROJECT_SOURCE_D
 target_compile_options(stars-compat-client-popup PRIVATE -Wall -Wextra -Werror)
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/focus")
 foreach(STARS_FOCUS_FILE game.hst game.m1 game.xy)
-    configure_file("tests/scaffold/fixtures/regression/native/noai/checkpoints/000/${STARS_FOCUS_FILE}"
-        "${CMAKE_BINARY_DIR}/test-client/focus/${STARS_FOCUS_FILE}" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/regression/native/noai/checkpoints/000/${STARS_FOCUS_FILE}"
+        "${CMAKE_BINARY_DIR}/test-client/focus/${STARS_FOCUS_FILE}" COMMAND_ERROR_IS_FATAL ANY)
 endforeach()
 target_compile_definitions(stars-compat-client-popup PRIVATE
     STARS_TEST_FOCUS_GAME="${CMAKE_BINARY_DIR}/test-client/focus/game")
@@ -126,7 +117,7 @@ foreach(STARS_QUIT_PAGE simple advanced race save-owner advanced-save-owner)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}")
     set_tests_properties(win32_client_quit_${STARS_QUIT_PAGE} PROPERTIES LABELS "client"
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}"
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat;STARS_SETTINGS_DIR=${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}"
         TIMEOUT 20)
 endforeach()
 if(APPLE OR WIN32)
@@ -153,6 +144,9 @@ if(APPLE OR WIN32)
         set_target_properties(stars-compat-runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
         add_test(NAME win32_runtime COMMAND stars-compat-runtime)
         set_tests_properties(win32_runtime PROPERTIES LABELS "compat" TIMEOUT 30)
+    endif()
+    if(APPLE)
+        include("${CMAKE_CURRENT_LIST_DIR}/macos-client-tests.cmake")
     endif()
     if(WIN32)
         include("${CMAKE_CURRENT_LIST_DIR}/windows-sdl-tests.cmake")

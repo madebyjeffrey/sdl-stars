@@ -20,36 +20,17 @@ static BOOL fSequenceOwnerEnabled;
 static HWND hwndSequenceFocus;
 
 static char *PszNativeTitle(LPCSTR pszTitle) {
-    size_t cch = strlen(pszTitle), i;
-    char *psz, *lpch;
-    if (cch > (SIZE_MAX - 1) / 4 || !(psz = SDL_malloc(cch * 4 + 1))) return NULL;
-    for (i = 0, lpch = psz; i < cch; i++) lpch = SDL_UCS4ToUTF8(DwCompatAnsiChar((BYTE)pszTitle[i]), lpch);
-    *lpch = 0;
-    return psz;
+    return FUtf8Valid(pszTitle, strlen(pszTitle)) ? SDL_strdup(pszTitle) : NULL;
 }
 
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
-    char *psz;
-    BOOL fResult;
-    HWND hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
-    if (hwnd && hwnd->fUtf8Title) return SDL_SetWindowTitle(lpWindow, pszTitle);
-    // SDL menu/tooltip roles have no native caption; keep their logical text.
+    if (!FUtf8Valid(pszTitle, strlen(pszTitle))) return FALSE;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return TRUE;
-    psz = PszNativeTitle(pszTitle);
-    if (!psz) return FALSE;
-    fResult = SDL_SetWindowTitle(lpWindow, psz);
-    SDL_free(psz);
-    return fResult;
+    return SDL_SetWindowTitle(lpWindow, pszTitle);
 }
 
 BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
-    HWND lpwin = LpCompatWindow(hwnd);
-    BOOL fOld, fResult;
-    if (!lpwin || !psz) return FALSE;
-    fOld = lpwin->fUtf8Title; lpwin->fUtf8Title = TRUE;
-    fResult = SetWindowTextA(hwnd, psz);
-    if (!fResult && IsWindow(hwnd)) lpwin->fUtf8Title = fOld;
-    return fResult;
+    return SetWindowTextA(hwnd, psz);
 }
 
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
@@ -381,6 +362,10 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     RECT rcClient, rcWindow;
     LRESULT lr;
 
+    if (pszTitle && !FUtf8Valid(pszTitle, strlen(pszTitle))) {
+        SDL_SetError("Window text is invalid UTF-8");
+        return NULL;
+    }
     if (!SDL_IsMainThread() || fShutdown || idInspectNext == UINT64_MAX)
         return NULL;
     lpparent = LpCompatWindow(hwndParent);
@@ -486,7 +471,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             // Cocoa otherwise gives the unpainted popup view an opaque black
             // backing before the renderer's first drawable reaches the screen.
             if (fNativePopup && !strcmp(SDL_GetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
-            // Narrow window text remains CP1252; SDL's native titles require UTF-8.
+            // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
                 lpwin->lpWindow = SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow,

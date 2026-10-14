@@ -265,7 +265,7 @@ static int TestSnapshots(HWND hwnd) {
     event.text.windowID = hwnd->id;
     event.text.text = "A\xc3\xa9\xe2\x82\xac\xe2\x80\x94\xf0\x9f\x98\x80";
     CHECK(SDL_PushEvent(&event));
-    { const BYTE rgch[] = {'A', 0xe9, 0x80, 0x97, '?'};
+    { const DWORD rgch[] = {'A', 0xe9, 0x20ac, 0x2014, 0x1f600};
       for (i = 0; i < 5; i++) {
           CHECK(PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE));
           CHECK(msg.wParam == rgch[i]);

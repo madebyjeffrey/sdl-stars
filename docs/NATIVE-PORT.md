@@ -143,7 +143,8 @@ both Release fleet profiles. Full native regression still returns 519 matches,
 87 existing unused-storage warnings, zero differences/errors and no skipped
 inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).
 
-See [encoding contracts](UNICODE-BOUNDARIES.md) for Unicode filenames, strict
-CLI/password conversion and UTF-8 path-field editing. The original password
-hash uses explicit unsigned wrapping with signed input bytes; stored hashes,
-record widths and native regression baselines remain unchanged.
+See [encoding contracts](UNICODE-BOUNDARIES.md) for the main client's UTF-8
+text, UTF-8 password bytes, fixed field budgets and format 2.85. Legacy file
+encoding and non-ASCII password compatibility are deliberately removed from
+main. Record widths remain unchanged; the native baseline moves only at BOF
+version fields, from checkpoint 0 in every scenario.

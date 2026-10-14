@@ -1,12 +1,10 @@
 # Stars! Unicode portability audit
 
-**Implementation update:** native filesystem/dialog boundaries, UTF-8 fallback
-path controls, race/caption truncation and native CLI password conversion are now
-implemented; see [current encoding contracts](UNICODE-BOUNDARIES.md). The original
-findings below describe the audited snapshot and remain as evidence, not a claim
-that those repaired paths are still current defects. General Unicode saved text,
-ordinary UI/resource conversion, settings migration, shaping and platform
-qualification remain separate work.
+**Historical audit:** these findings describe the pre-migration snapshot.
+The UTF-8 migration supersedes its CP1252 storage/input recommendations; see
+[current encoding contracts](UNICODE-BOUNDARIES.md) and
+[ADR 0002](adr/0002-utf8-application-text.md). Original filenames/links below
+are retained as historical evidence, not current implementation claims.
 
 The native migration preserves the original byte-oriented text model. It does
 not yet provide general Unicode support. Linux's native file picker already

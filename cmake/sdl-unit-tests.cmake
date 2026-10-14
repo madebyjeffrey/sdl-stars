@@ -1,8 +1,9 @@
 if(STARS_BUILD_TESTS)
     set(STARS_CLIENT_TEST_DIR "${CMAKE_BINARY_DIR}/tests-client")
     file(MAKE_DIRECTORY "${STARS_CLIENT_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1
-        "${STARS_CLIENT_TEST_DIR}/data/humanoid.r1" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
+        "${STARS_CLIENT_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
     file(GLOB STARS_CLIENT_UNIT_SOURCES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/tests/unit/test_*.c")
     set(STARS_CLIENT_TEST_TARGETS)
     foreach(STARS_CLIENT_UNIT_SOURCE ${STARS_CLIENT_UNIT_SOURCES})

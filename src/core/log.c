@@ -1119,6 +1119,10 @@ int16_t FLoadLogFile(char *pszLog) {
     }
 
     ReadRt();
+    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+        FileError(idsFileDoesBelongVersionStars);
+        goto FailSuccess;
+    }
     if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
     FailSuccess:
         if (vlpMemStream) {

@@ -35,6 +35,7 @@ void StarsTest_ReadRt(void) {
         hdrCur.rt = rtBOF;
         hdrCur.cb = 16;
         RawStore32(rgbCur + 4, game.lid);
+        RawStore16(rgbCur + 8, (2 << 12) | (85 << 5));
         RawStore16(rgbCur + 10, game.turn);
         RawStore16(rgbCur + 14, game.wGen << 13);
     } else if (fLogRead && iRead == -1) {

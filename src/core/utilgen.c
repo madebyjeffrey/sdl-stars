@@ -503,6 +503,7 @@ int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcO
         }
     }
     *pchOut = 0;
+    if (!FUtf8Valid(szWork, (size_t)(pchOut - szWork))) return FALSE;
     strcpy(szOut, szWork);
     return TRUE;
 }

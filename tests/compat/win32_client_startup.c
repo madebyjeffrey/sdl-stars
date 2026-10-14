@@ -1370,9 +1370,9 @@ int main(void) {
     int nResult;
     pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
-    if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "Stars.ini")) return 1;
-    if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "Stars.ini") ||
-        !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "Stars.ini"))) return 1;
+    if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
+    if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
+        !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle)) fPassed = FALSE;

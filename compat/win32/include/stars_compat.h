@@ -14,7 +14,7 @@ void StarsCompatEndDialogSequence(void);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are CP1252 unless fUtf8Text marks native path/caption text.
+ * Snapshot strings are UTF-8; fUtf8Text is always true.
  * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */

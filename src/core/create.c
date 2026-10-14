@@ -1012,7 +1012,10 @@ int16_t GenNewGameFromFile(char *pszFile) {
         AlertSz(PszFormatIds(idsIllegalGameTitle, NULL), MB_ICONHAND);
         goto LError;
     }
-    strcpy(game.szName, lpbStart);
+    if (CchCopyUtf8(game.szName, sizeof(game.szName), lpbStart, strlen(lpbStart)) < 0) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        goto LError;
+    }
     if (lpb >= lpbDefMac) {
     LUniDefShort:
         AlertSz(PszFormatIds(idsUniverseDefinitionFileAppearsTooShort, NULL), MB_ICONHAND);

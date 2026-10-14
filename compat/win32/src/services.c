@@ -116,7 +116,7 @@ int strcmpi(const char *psz1, const char *psz2) { return _stricmp(psz1, psz2); }
 int strnicmp(const char *psz1, const char *psz2, size_t cb) { return _strnicmp(psz1, psz2, cb); }
 char *_strlwr(char *sz) {
     char *psz;
-    for (psz = sz; *psz; psz++) *psz = (char)tolower((unsigned char)*psz);
+    for (psz = sz; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
     return sz;
 }
 char *strlwr(char *sz) { return _strlwr(sz); }

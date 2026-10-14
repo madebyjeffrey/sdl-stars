@@ -92,7 +92,7 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
     // The browser splits paths with '/', including native suggestions and input.
     for (pch = pszOut; *pch; pch++) if (*pch == '\\') *pch = '/';
 #endif
-    return TRUE;
+    return FUtf8Valid(pszOut, strlen(pszOut));
 }
 static void FileError(HWND hwnd, LPCSTR psz) { MessageBoxA(hwnd, psz, "File selection", MB_OK | MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -110,6 +110,10 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     for (;;) {
         errno = 0; lpentry = readdir(lpdir);
         if (!lpentry) { if (errno != 0) lp->dwError = CDERR_INITIALIZATION; break; }
+        if (!FUtf8Valid(lpentry->d_name, strlen(lpentry->d_name))) {
+            FileError(hwnd, "A filename in this directory cannot be represented losslessly in UTF-8.");
+            continue;
+        }
         if (strcmp(lpentry->d_name, ".") == 0 || strcmp(lpentry->d_name, "..") == 0) continue;
         if (!lp->fHidden && lpentry->d_name[0] == '.') continue;
         if (!FJoinFile(szPath, lp->szDir, lpentry->d_name) || stat(szPath, &st) != 0) continue;
@@ -365,7 +369,6 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id) {
     HWND hwndControl = CreateWindowExA(0, pszClass, pszText, WS_CHILD | WS_VISIBLE | style, x, y, cx, cy, hwnd, (HMENU)(INT_PTR)id, GetModuleHandleA(NULL), NULL);
     if (hwndControl) {
-        if (id == ID_FILE_NAME || id == ID_FILE_PATH || id == ID_FILE_LIST) hwndControl->fUtf8Text = TRUE;
         SendMessageA(hwndControl, WM_SETFONT, (WPARAM)hwnd->hfontDialog, FALSE);
     }
     return hwndControl;

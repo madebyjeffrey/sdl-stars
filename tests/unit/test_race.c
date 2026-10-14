@@ -93,7 +93,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     memset(&rgb[iOff + 1], 'N', 60);
     wVersFile = 0;
     ((VERS *)&wVersFile)->verMajor = 2;
-    ((VERS *)&wVersFile)->verMinor = 83;
+    ((VERS *)&wVersFile)->verMinor = 85;
 
     memset(&buf, 0x55, sizeof(buf));
     ReadRtPlr(&buf.plr, rgb);
@@ -102,7 +102,8 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     TEST_CHECK(strcmp(buf.plr.szName, "Bob") == 0);
     for (i = 4; i < (int)sizeof(buf.plr.szName); i++)
         TEST_CHECK(buf.plr.szName[i] == 0);
-    TEST_CHECK(strlen(buf.plr.szNames) == sizeof(buf.plr.szNames) - 1);
+    TEST_CHECK(buf.plr.szNames[0] == 0);
+    TEST_CHECK(idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     for (i = 0; i < (int)sizeof(buf.rgchGuard); i++)
         TEST_CHECK(buf.rgchGuard[i] == 0x55);
 

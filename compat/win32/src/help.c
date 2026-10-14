@@ -16,34 +16,6 @@
 #define STARS_INSTALLED_DATA "../share/stars"
 #endif
 
-static BOOL FHelpArchive(const char *pszFile) {
-    FILE *lpFile;
-    unsigned char rgb[16384];
-    size_t cb, cbRead;
-    uint32_t cbLeft = STARS_HELP_ARCHIVE_SIZE, dwCrc = 0;
-    BOOL fRead;
-
-    lpFile = fopen(pszFile, "rb");
-    if (!lpFile) {
-        SetLastError(errno == EACCES ? ERROR_ACCESS_DENIED : ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-    while (cbLeft != 0) {
-        cb = cbLeft < sizeof(rgb) ? cbLeft : sizeof(rgb);
-        cbRead = fread(rgb, 1, cb, lpFile);
-        if (cbRead != cb) break;
-        dwCrc = (uint32_t)crc32(dwCrc, rgb, (uInt)cbRead);
-        cbLeft -= (uint32_t)cbRead;
-    }
-    fRead = !ferror(lpFile);
-    fclose(lpFile);
-    if (!fRead || cbLeft != 0 || dwCrc != STARS_HELP_ARCHIVE_CRC) {
-        SetLastError(ERROR_BAD_FORMAT);
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static BOOL FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
     struct stat st;
@@ -134,7 +106,7 @@ done:
 
 BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = NULL;
-    char szFile[PATH_MAX], szDirectory[PATH_MAX];
+    char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;
     size_t i;
     int cch;
@@ -145,13 +117,13 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
-    if (!pszHelp || !*pszHelp || strlen(pszHelp) >= sizeof(szFile)) {
+    if (!pszHelp || !*pszHelp || strlen(pszHelp) >= PATH_MAX) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
     pszName = strrchr(pszHelp, '/');
     pszName = pszName ? pszName + 1 : pszHelp;
-    if (strcasecmp(pszName, "stars!.hlp") || strchr(pszHelp, '\\')) {
+    if (strcasecmp(pszName, "stars-help.html") || strchr(pszHelp, '\\') || strchr(pszHelp, '/')) {
         SetLastError(ERROR_NOT_SUPPORTED);
         return FALSE;
     }
@@ -174,25 +146,7 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
     }
-    // Explicit paths must exist. The game's basename also searches beside
-    // the executable, so help works when launched from another directory.
-    if (!FHelpArchive(pszHelp)) {
-        if (strchr(pszHelp, '/') || GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
-        cch = snprintf(szFile, sizeof(szFile), "%sstars!.hlp", pszBase);
-        if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
-            SetLastError(ERROR_FILENAME_EXCED_RANGE);
-            return FALSE;
-        }
-        if (!FHelpArchive(szFile)) {
-            if (GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
-            cch = snprintf(szFile, sizeof(szFile), "%s%s/stars!.hlp", pszBase, STARS_INSTALLED_DATA);
-            if (cch < 0 || (size_t)cch >= sizeof(szFile)) {
-                SetLastError(ERROR_FILENAME_EXCED_RANGE);
-                return FALSE;
-            }
-            if (!FHelpArchive(szFile)) return FALSE;
-        }
-    }
+    // The packaged UTF-8 guide is authoritative; the HLP archive is not loaded.
     cch = snprintf(szDirectory, sizeof(szDirectory), "%s../help", pszBase);
     if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
         SetLastError(ERROR_FILENAME_EXCED_RANGE);

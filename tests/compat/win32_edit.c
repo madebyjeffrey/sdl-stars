@@ -303,12 +303,12 @@ int main(void) {
     CHECK(SendMessage(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, ""));
     CHECK(SendMessage(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, "abc"));
     {
-        HWND hwndCase = CreateWindow("Edit", "\xe9\xff", WS_CHILD | ES_UPPERCASE, 0, 0, 100, 25, hwnd, NULL, NULL, NULL);
-        CHECK(hwndCase && FText(hwndCase, "\xc9\x9f"));
-        CHECK(SetWindowText(hwndCase, "a\xe9\xff") && FText(hwndCase, "A\xc9\x9f"));
+        HWND hwndCase = CreateWindow("Edit", "\xc3\xa9\xc3\xbf", WS_CHILD | ES_UPPERCASE, 0, 0, 100, 25, hwnd, NULL, NULL, NULL);
+        CHECK(hwndCase && FText(hwndCase, "\xc3\xa9\xc3\xbf"));
+        CHECK(SetWindowText(hwndCase, "a\xc3\xa9\xc3\xbf") && FText(hwndCase, "A\xc3\xa9\xc3\xbf"));
         CHECK(SetWindowText(hwndCase, ""));
         SendMessage(hwndCase, WM_CHAR, 0xe9, 1); SendMessage(hwndCase, WM_CHAR, 0xff, 1);
-        CHECK(FText(hwndCase, "\xc9\x9f")); CHECK(DestroyWindow(hwndCase));
+        CHECK(FText(hwndCase, "\xc3\xa9\xc3\xbf")); CHECK(DestroyWindow(hwndCase));
     }
     SetFocus(hwndEdit); CHECK(hwndEdit->fEditCaret && hwndEdit->idEditCaretTimer);
     {
@@ -316,7 +316,7 @@ int main(void) {
         event.type = SDL_EVENT_TEXT_EDITING; event.edit.windowID = HwndCompatRoot(hwndEdit)->id;
         event.edit.text = "\xc3\xa9"; event.edit.start = 0; event.edit.length = 1;
         c = cChange; CompatRouteEvent(&event);
-        CHECK(FText(hwndEdit, "abc") && cChange == c && !strcmp(hwndEdit->pszEditComposition, "\xe9"));
+        CHECK(FText(hwndEdit, "abc") && cChange == c && !strcmp(hwndEdit->pszEditComposition, "\xc3\xa9"));
         CHECK(UpdateWindow(hwndEdit));
         event.edit.text = ""; CompatRouteEvent(&event);
         CHECK(FText(hwndEdit, "abc") && cChange == c && !*hwndEdit->pszEditComposition);
@@ -383,7 +383,7 @@ int main(void) {
         event.type = SDL_EVENT_TEXT_INPUT; event.text.windowID = HwndCompatRoot(hwndEdit)->id;
         event.text.text = "A\xe2\x82\xac"; CompatRouteEvent(&event);
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
-        CHECK(FText(hwndEdit, "A\x80"));
+        CHECK(FText(hwndEdit, "A\xe2\x82\xac"));
     }
 #endif
     hwndKill = CreateWindow("Edit", "", WS_CHILD | ES_AUTOHSCROLL, 0, 0, 100, 25, hwnd, (HMENU)(UINT_PTR)103, NULL, NULL);

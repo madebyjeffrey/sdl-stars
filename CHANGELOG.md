@@ -6,6 +6,17 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Application text now uses UTF-8 on all platforms: generated catalogs/data,
+  resources, controls, clipboard/composition, drawing, reports and passwords.
+  `WriteBOF`, `FOpenFile`, `FWasRaceFile`, `FMarkFile` and `FLoadLogFile`
+  write/require format 2.85 instead of accepting legacy encoded text. Record
+  sizes stay fixed; text and password limits count UTF-8 bytes. Existing game,
+  race and non-ASCII password compatibility is deliberately dropped. Settings
+  start fresh in `StarsUtf8.ini` with a UTF-8 BOM. Unsupported native paths
+  report conversion errors. The help build uses a UTF-8 bundle, and tutorial
+  assets use 2.85 with their old battle event headers converted in place.
+  **Serialized host results:** all nine native scenarios move from checkpoint
+  0 solely because BOF version 2.84 becomes 2.85; no simulation fields change.
 - Removed the suspended Rust/Bevy startup experiment and its optional build
   integration. `WinMain` uses the original SDL title-screen workflow for every
   desktop build. Turn generation, file formats and regression baselines are

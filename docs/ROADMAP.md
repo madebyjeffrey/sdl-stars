@@ -92,7 +92,7 @@ To keep in mind:
 - Each build shows its platform in its version name (done; see
   [VERSIONING.md](VERSIONING.md)).
 
-- The file format stays at 2.84 unless a record changes.
+- The file format is 2.85 for UTF-8 text; record widths remain fixed.
 
 Verified: `stars-host` matches the native baseline under Wine and on x86-64
 macOS (`make regression-host`), and its `-v` check file matches
@@ -187,7 +187,7 @@ the race wizard to the habitat page. Real-desktop qualification remains; see
 Positioning, sibling ordering, no-redraw behavior and minimum/maximum
 size callbacks now work; see [positioning](WIN32-POSITIONING.md). Mouse capture
 now routes child and cross-root input; see [capture](WIN32-CAPTURE.md). Queue-based
-keyboard state, asynchronous queries, point hit testing, CP1252 input, wheel
+keyboard state, asynchronous queries, point hit testing, UTF-8 input, wheel
 delivery and double-click messages now work; see [input](WIN32-INPUT.md). Push/check/radio
 buttons, group boxes, text labels and dialog-item helpers now work. Stars now
 uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
@@ -360,16 +360,13 @@ These priorities remain subject to the completion evidence in the goal tracker. 
 
 ## Unicode portability
 
-The native clients still use byte-oriented game text; the SDL UI interprets it
-as CP1252. The [Unicode audit](UNICODE-AUDIT.md) records the current encoding
-boundaries, 18 findings, runtime probes and proposed acceptance tests. First
-address Unicode filesystem access on Windows, native-path editing in the SDL
-fallback browser, UI/host password encoding, and multibyte filename caches.
-Unicode display, resources and editing also require text layout and capacity
-work. Persisted Unicode names/messages need an explicit compatibility design;
-do not reinterpret existing saved bytes or widen disk fields. The macOS host
-and Cocoa chooser source exist, but this checkout still enables the SDL client
-only on Linux. These items are open; the audit does not implement fixes.
+UTF-8 text is implemented throughout the new client and host, including
+catalog/data generation, resources, controls, rendering, clipboard and settings.
+Format 2.85 explicitly identifies UTF-8 saves; older game and race files are
+unsupported. Native paths must round-trip losslessly, and fixed text fields
+retain byte budgets. See [encoding contracts](UNICODE-BOUNDARIES.md) and
+[ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
+bidirectional layout and grapheme editing remain separate work.
 
 ## 2.8 (released)
 
@@ -500,12 +497,11 @@ no pending popup damage. Qualification passes 103 fatal sanitizer tests,
 four Release tutorial profiles; see the [goal report](LINUX-CLIENT-GOAL.md).
 No game baseline changes.
 
-Native Unicode filename and password boundaries are now implemented; see
-[encoding contracts](UNICODE-BOUNDARIES.md). Windows filesystem/common-dialog
-conversion, fallback UTF-8 path fields, complete filename cache boundaries and
-strict native CLI password conversion preserve legacy records and hash values.
-General Unicode saved text, shaping, historical settings migration and real
-Windows/macOS qualification remain separate work.
+The initial Unicode filename/password boundary work is superseded on main by
+UTF-8 throughout and format 2.85. See [encoding contracts](UNICODE-BOUNDARIES.md).
+Legacy settings migration is deliberately omitted; fresh UTF-8 settings are
+used. Shaping and Windows/Linux/macOS platform qualification remain separate
+from the encoding contract.
 
 The SDL wrapper now also builds natively on Windows x64 through MSYS2 UCRT64,
 with separate SDK and wrapper symbols, Unicode filesystem services and portable

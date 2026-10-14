@@ -49,6 +49,31 @@ static int TestProfilePaths(void) {
 }
 #endif
 
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+static int TestUtf8Profile(void) {
+    char szPath[] = "/tmp/stars-profile-utf8-XXXXXX", sz[32];
+    FILE *fp;
+    int fd = mkstemp(szPath);
+    CHECK(fd >= 0 && close(fd) == 0);
+    CHECK(WritePrivateProfileStringA("Text", "Name", "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80", szPath));
+    CHECK(GetPrivateProfileStringA("Text", "Name", "", sz, sizeof(sz), szPath) == 8);
+    CHECK(!strcmp(sz, "\xce\xa9\xc3\xa9\xf0\x9f\x98\x80"));
+    CHECK(GetPrivateProfileStringA("Text", "Name", "", sz, 4, szPath) == 2 && !strcmp(sz, "\xce\xa9"));
+    CHECK(!WritePrivateProfileStringA("Text", "Name", "\xe9", szPath));
+    CHECK(WritePrivateProfileStringA("Names", "\xce\xa9\xc3\xa9", "value", szPath));
+    CHECK(GetPrivateProfileStringA("Names", NULL, "", sz, 5, szPath) == 3);
+    CHECK(!strcmp(sz, "\xce\xa9") && sz[2] == 0 && sz[3] == 0 && sz[4] == 0);
+    CHECK(WritePrivateProfileStringA("Letters", "A", "value", szPath));
+    CHECK(WritePrivateProfileStringA("Letters", "B", "value", szPath));
+    CHECK(GetPrivateProfileStringA("Letters", NULL, "", sz, 3, szPath) == 1);
+    CHECK(!strcmp(sz, "A") && sz[1] == 0 && sz[2] == 0);
+    fp = fopen(szPath, "rb"); CHECK(fp);
+    CHECK(fread(sz, 1, 3, fp) == 3 && !memcmp(sz, "\xef\xbb\xbf", 3));
+    CHECK(fclose(fp) == 0 && unlink(szPath) == 0);
+    return 0;
+}
+#endif
+
 int main(void) {
     char szDir[1024], szPath[1200], sz[256], szRead[2048];
     const char *psz;
@@ -131,6 +156,7 @@ int main(void) {
     CHECK(GetPrivateProfileStringA("misc", "key", "fallback", sz, sizeof(sz), szPath) == 8 && !strcmp(sz, "fallback"));
 #ifndef _WIN32
     CHECK(TestProfilePaths() == 0);
+    CHECK(TestUtf8Profile() == 0);
 #endif
     puts("Profiles: PASS (defaults, integers, quotes, enumeration, limits, update/delete, paths)");
     return 0;

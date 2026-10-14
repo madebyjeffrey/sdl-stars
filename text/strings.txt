@@ -156,7 +156,7 @@
 0x008e idsGermaniumMineralPacket "Germanium Mineral Packet"
 0x008f idsMixedMineralPacket "Mixed Mineral Packet"
 0x0090 idsWindows "Windows"
-0x0091 idsStarsIni "Stars.ini"
+0x0091 idsStarsIni "StarsUtf8.ini"
 0x0092 idsMisc "Misc"
 0x0093 idsZiporders "ZipOrders"
 0x0094 idsMain "Main"
@@ -1488,8 +1488,10 @@
 0x0585 idsKurkonian "Kurkonian"
 
 # Native encoding boundaries; keep all original IDs unchanged.
-0x0586 idsNativeCommandPasswordTooLong "Command-line passwords may contain at most 15 characters."
-0x0587 idsNativeCommandPasswordEncoding "Command-line passwords must be valid UTF-8 and representable in Windows-1252."
-0x0588 idsNativePasswordCharacters "This password contains characters that Stars! cannot store. Use Windows-1252 characters."
+0x0586 idsNativeCommandPasswordTooLong "Command-line passwords may contain at most 15 UTF-8 bytes."
+0x0587 idsNativeCommandPasswordEncoding "Command-line passwords must be valid UTF-8."
+0x0588 idsNativePasswordCharacters "This password contains invalid UTF-8."
 0x0589 idsNativeFilenameTooLong "The selected filename is too long for this application."
 0x058a idsNativeFileSelectionFailed "File selection could not be completed. The path may be too long or invalid. Please choose another file."
+# 0x058b–0x058f reserved for managed-game strings in PR #22.
+0x0590 idsNativeFilenameEncoding "The filename cannot be represented losslessly in UTF-8."

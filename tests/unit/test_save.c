@@ -99,8 +99,7 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
     TEST_CHECK(rgplr[1].pctResearch == 0 && rgplr[1].lResLastYear == 0 && rgplr[1].pctIdealGrowth == 0);
 }
 
-// File format version: 2.8 writes 2.84, which 2.6j and 2.7 refuse, and still
-// reads their 2.83 files. Later versions are refused.
+// Format 2.85 is UTF-8; older and newer formats are refused.
 static int16_t FSetHostVersion(int16_t verMinor) {
     char  szFile[MAX_PATH];
     VERS  vers;
@@ -118,7 +117,7 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     }
     if (verMinor < 0) {
         fclose(fp);
-        return vers.verMajor == 2 && vers.verMinor == 84 && vers.verInc == 0;
+        return vers.verMajor == 2 && vers.verMinor == 85 && vers.verInc == 0;
     }
     vers.verMinor = verMinor;
     fseek(fp, 2 + offsetof(RTBOF, wVersion), SEEK_SET);
@@ -127,18 +126,18 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     return TRUE;
 }
 
-static void test_WriteBOF_writes_version_2_84(void) {
+static void test_WriteBOF_writes_version_2_85(void) {
     char szDir[MAX_PATH];
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("WriteBOF_version", szDir, sizeof(szDir)));
     TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
-    TEST_CHECK_(FSetHostVersion(-1), "host file isn't 2.84");
+    TEST_CHECK_(FSetHostVersion(-1), "host file isn't 2.85");
 
     TEST_ASSERT(FSetHostVersion(83));
-    TEST_CHECK_(FStarsTestLoadHost(), "a 2.83 host file didn't load");
-    TEST_ASSERT(FSetHostVersion(85));
-    TEST_CHECK_(!FStarsTestLoadHost(), "a 2.85 host file loaded");
+    TEST_CHECK_(!FStarsTestLoadHost(), "a 2.83 host file loaded");
+    TEST_ASSERT(FSetHostVersion(86));
+    TEST_CHECK_(!FStarsTestLoadHost(), "a 2.86 host file loaded");
 }
 
 // LpthFind returns the loaded game's thing of type ith whose owner
@@ -238,10 +237,31 @@ static void test_SetVisPFInit_host(void) {
     rglpshdef[0] = rglpshdefSB[0] = NULL;
 }
 
-TEST_LIST = {{"SetVisPFInit host sentinel", test_SetVisPFInit_host},
+static void test_utf8_saved_names(void) {
+    char szDir[MAX_PATH], szExpected[32], szPacked[64], szRound[32];
+    int16_t cPacked = sizeof(szPacked), cRound = 31;
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("utf8_saved_names", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    memset(szExpected, 'a', 27);
+    memcpy(szExpected + 27, "\xf0\x9f\x98\x80", 5);
+    strcpy(rgplr[0].szName, szExpected);
+    strcpy(rgplr[0].szNames, "caf\xc3\xa9-\xce\xa9");
+    TEST_ASSERT(FCompressUserString(szExpected, szPacked, &cPacked));
+    TEST_ASSERT(FDecompressUserString(szPacked, cPacked, szRound, &cRound));
+    TEST_CHECK(strcmp(szRound, szExpected) == 0);
+    TEST_ASSERT(FStarsTestSaveHost());
+    TEST_ASSERT(FStarsTestLoadHost());
+    TEST_CHECK(strcmp(rgplr[0].szName, szExpected) == 0);
+    TEST_CHECK(strcmp(rgplr[0].szNames, "caf\xc3\xa9-\xce\xa9") == 0);
+}
+
+TEST_LIST = {{"UTF-8 saved names and byte capacities", test_utf8_saved_names},
+             {"SetVisPFInit host sentinel", test_SetVisPFInit_host},
              {"FWriteDataFile Claim Adjuster sees only habitat", test_FWriteDataFile_claim_adjuster_sees_only_habitat},
              {"SetVisPFFleets sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase},
              {"SetVisPFFleets long-range scanner sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase_long_range},
-             {"WriteBOF writes version 2.84", test_WriteBOF_writes_version_2_84},
+             {"WriteBOF writes version 2.85", test_WriteBOF_writes_version_2_85},
              {"FWriteDataFile masks other players' things", test_FWriteDataFile_masks_other_players_things},
              {NULL, NULL}};

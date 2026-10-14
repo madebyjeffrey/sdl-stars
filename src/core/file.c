@@ -41,14 +41,15 @@ int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad) {
     cch = *lpb;
     lpb++;
     if (cch == 0) {
-        strcpy(shdef.hul.szClass, lpb);
+        if (CchCopyUtf8(shdef.hul.szClass, sizeof(shdef.hul.szClass), (char *)lpb,
+                        strnlen((char *)lpb, sizeof(shdef.hul.szClass))) < 0) return FALSE;
     } else {
-        cOut = 32;
+        cOut = 31;
         if (cch > 32) {
             return FALSE;
         }
         memmove(szTemp, lpb, cch);
-        FDecompressUserString(szTemp, cch, shdef.hul.szClass, &cOut);
+        if (!FDecompressUserString(szTemp, cch, shdef.hul.szClass, &cOut)) return FALSE;
     }
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
@@ -96,7 +97,6 @@ void ReadRtPlr(PLAYER *pplr, uint8_t *pbIn) {
     int16_t iOff;
     PLAYER *pplrRaw;
     int16_t cOut;
-    char   *psz;
 
     pplrRaw = (PLAYER *)pbIn;
     memset(pplr, 0, sizeof(PLAYER));
@@ -113,24 +113,26 @@ void ReadRtPlr(PLAYER *pplr, uint8_t *pbIn) {
         memmove(pplr, pbIn, iOff);
     }
     if (pbIn[iOff] == 0) {
-        strncpy(pplr->szName, (char *)(pbIn + (iOff + 1)), sizeof(pplr->szName) - 1);
+        if (CchCopyUtf8(pplr->szName, sizeof(pplr->szName), (char *)(pbIn + iOff + 1),
+                        strnlen((char *)(pbIn + iOff + 1), sizeof(pplr->szName))) < 0) goto invalid;
         iOff += strlen((char *)(pbIn + (iOff + 1))) + 2;
     } else {
         cOut = sizeof(pplr->szName) - 1;
-        FDecompressUserString((char *)(pbIn + (iOff + 1)), pbIn[iOff], pplr->szName, &cOut);
+        if (!FDecompressUserString((char *)(pbIn + (iOff + 1)), pbIn[iOff], pplr->szName, &cOut)) goto invalid;
         iOff += pbIn[iOff] + 1;
     }
-    if (((VERS *)&wVersFile)->verMinor < 55) {
-        psz = PszPlayerName(0, isupper(pplr->szName[0]), TRUE, FALSE, 0, pplr);
-        strcpy(pplr->szNames, psz);
-    } else if (pbIn[iOff] == 0) {
-        strncpy(pplr->szNames, (char *)(pbIn + (iOff + 1)), sizeof(pplr->szNames) - 1);
+    if (pbIn[iOff] == 0) {
+        if (CchCopyUtf8(pplr->szNames, sizeof(pplr->szNames), (char *)(pbIn + iOff + 1),
+                        strnlen((char *)(pbIn + iOff + 1), sizeof(pplr->szNames))) < 0) goto invalid;
     } else {
         cOut = sizeof(pplr->szNames) - 1;
-        FDecompressUserString((char *)(pbIn + (iOff + 1)), pbIn[iOff], pplr->szNames, &cOut);
+        if (!FDecompressUserString((char *)(pbIn + (iOff + 1)), pbIn[iOff], pplr->szNames, &cOut)) goto invalid;
     }
     pplr->fLearned = FALSE;
     return;
+invalid:
+    FileError(idsGameFileAppearsCorruptUnableLoadFile);
+    if (penvMem) StarsLongJump(penvMem, -1);
 }
 
 int16_t FLoadGame(char *pszFileName, char *pszExt) {
@@ -200,6 +202,8 @@ int16_t FLoadGame(char *pszFileName, char *pszExt) {
         goto LError;
     }
     game = *(GAME *)rgbCur;
+    if (strnlen(game.szName, sizeof(game.szName)) == sizeof(game.szName) ||
+        !FUtf8Valid(game.szName, strlen(game.szName))) goto XYCorrupt;
     game.fDirty = FALSE;
     dGal = 400 * game.mdSize + 400;
     dGalInv = dGal + 2000;
@@ -1139,11 +1143,12 @@ int16_t FReadFleet(FLEET *lpfl) {
     if (hdrCur.rt == rtString) {
         cch = rgbCur[0];
         if (cch == 0) {
+            if (strnlen(&rgbCur[1], 32) == 32 || !FUtf8Valid(&rgbCur[1], strlen(&rgbCur[1]))) goto Corrupt;
             lpfl->lpszName = LpAlloc(strlen(&rgbCur[1]) + 1, htString);
             strcpy(lpfl->lpszName, &rgbCur[1]);
         } else {
-            cOut = 32;
-            FDecompressUserString(&rgbCur[1], cch, szT, &cOut);
+            cOut = 31;
+            if (!FDecompressUserString(&rgbCur[1], cch, szT, &cOut)) goto Corrupt;
             lpfl->lpszName = LpAlloc(strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
         }
@@ -1165,15 +1170,20 @@ void UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan) {
     cch = *lpb;
     lpb++;
     if (cch == 0) {
-        strcpy(lpbtlplan->szName, lpb);
+        if (CchCopyUtf8(lpbtlplan->szName, sizeof(lpbtlplan->szName), (char *)lpb,
+                        strnlen((char *)lpb, sizeof(lpbtlplan->szName))) < 0) goto invalid;
     } else {
-        cOut = 32;
-        memmove(szTemp, lpb, cOut);
-        FDecompressUserString(szTemp, cch, szName, &cOut);
-        memmove(lpbtlplan->szName, szName, cOut);
+        cOut = 31;
+        if (cch > (int16_t)sizeof(szTemp)) goto invalid;
+        memmove(szTemp, lpb, cch);
+        if (!FDecompressUserString(szTemp, cch, szName, &cOut)) goto invalid;
+        strcpy(lpbtlplan->szName, szName);
     }
     lpbtlplan->iplan = iplan;
     return;
+invalid:
+    FileError(idsGameFileAppearsCorruptUnableLoadFile);
+    if (penvMem) StarsLongJump(penvMem, -1);
 }
 
 void UpdateBattleRecords() {
@@ -1345,10 +1355,9 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     fFileErrSilent = fSilentSav;
     ids = idsGameFileAppearsCorruptUnableLoadFile;
     ReadRt();
-    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor >= 85) {
+    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
         if (hdrCur.rt == rtBOF) {
-            /* The original refused 2.84 but reported it as an older version. */
-            FileError(((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor >= 85)
+            FileError(((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)
                           ? idsFileCreatedNewerVersionStarsMustUpgrade
                           : idsSorryFileCreatedOlderVersionStarsIncompatible);
         } else {

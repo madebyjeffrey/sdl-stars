@@ -714,7 +714,7 @@ int16_t FStringFitsScreen(char *lpsz, int16_t dxMax) {
     hfontSav = SelectObject(hdc, rghfontArial8[0]);
     while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > (uint16_t)dxMax) {
         fFit = FALSE;
-        c--;
+        c = (int16_t)CchUtf8Prefix(lpsz, c - 1);
         lpsz[c] = 0;
     }
     SelectObject(hdc, hfontSav);
@@ -1016,7 +1016,7 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
                     AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
                     break;
                 }
@@ -1083,12 +1083,12 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
                     AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18) < 0) {
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18) < 0) {
                     AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
                     break;
                 }
