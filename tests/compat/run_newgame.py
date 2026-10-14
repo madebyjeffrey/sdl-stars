@@ -8,6 +8,7 @@ import tempfile
 
 def run(executable, work, default_root=False, **choices):
     (work / 'settings').mkdir(parents=True, exist_ok=True)
+    (work / 'settings' / 'Stars.ini').unlink(missing_ok=True)
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'))
     if default_root:
