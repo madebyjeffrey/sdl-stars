@@ -125,6 +125,16 @@ def main():
             STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
         assert not (work / 'library' / 'Games' / 'invalid-copy').exists()
 
+        bad_type_source = work / 'bad-file-type'
+        shutil.copytree(source, bad_type_source)
+        turn = bad_type_source / 'exchange.m2'
+        data = bytearray(turn.read_bytes())
+        data[16] = 0  # .m2 must have a turn BOF, not a universe BOF.
+        turn.write_bytes(data)
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_type_source),
+            STARS_CLIENT_IMPORT_NAME='invalid-type', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (work / 'library' / 'Games' / 'invalid-type').exists()
+
     with tempfile.TemporaryDirectory(prefix='stars-import-file-') as directory:
         work = Path(directory)
         source = work / 'exchange'
@@ -137,6 +147,24 @@ def main():
         imported = work / 'library' / 'Games' / 'managed-file'
         assert (imported / 'managed-file.m1').is_file()
         assert (imported / 'managed-file.m2').is_file()
+
+    with tempfile.TemporaryDirectory(prefix='stars-import-open-') as directory:
+        work = Path(directory)
+        generated_work = work / 'generated'
+        generated_work.mkdir()
+        game = generated_work / 'library' / 'Games' / 'exchange' / 'exchange.xy'
+        run(executable, generated_work, STARS_CLIENT_NEW_GAME=str(game), STARS_CLIENT_LIBRARY_NAME='exchange')
+        source = work / 'exchange-source'
+        source.mkdir()
+        for ext in ('.xy', '.hst', '.m1'):
+            shutil.copyfile(game.parent / ('exchange' + ext), source / ('exchange' + ext))
+        client_work = work / 'client'
+        client_work.mkdir()
+        run(executable, client_work, STARS_CLIENT_IMPORT_SOURCE=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_NAME='managed-playable', STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='1')
+        imported = client_work / 'library' / 'Games' / 'managed-playable'
+        assert all((imported / ('managed-playable' + ext)).is_file() for ext in ('.xy', '.hst', '.m1'))
+        run(executable, client_work, STARS_CLIENT_LIBRARY_OPEN='managed-playable')
     return 0
 
 

@@ -1208,18 +1208,30 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (memcmp(&gameImportSav, &game, sizeof(game)) || idPlayerImportSav != idPlayer || strcmp(szBaseImportSav, szBase)) goto LDone;
             iImportStage = 2;
             RefreshLibraryGames(hwndTitle);
-            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 2) goto LDone;
+            {
+                int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
+                    atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
+                if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != cExpected) goto LDone;
+            }
             {
                 HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
                 char szPlayer[320];
                 int iPlayer;
-                BOOL fPlayers[2] = {FALSE, FALSE};
-                for (iPlayer = 0; iPlayer < 2; iPlayer++) {
+                BOOL fPlayers[16] = {FALSE};
+                int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
+                    atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
+                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) {
                     SendMessage(hwndList, LB_GETTEXT, iPlayer, (LPARAM)szPlayer);
-                    if (strstr(szPlayer, "Player 1 (2400)")) fPlayers[0] = TRUE;
-                    if (strstr(szPlayer, "Player 2 (2400)")) fPlayers[1] = TRUE;
+                    if (strstr(szPlayer, "Player ") && strstr(szPlayer, "(2400)")) {
+                        int iFound;
+                        for (iFound = 0; iFound < cExpected; iFound++) {
+                            char szExpected[32];
+                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iFound + 1);
+                            if (strstr(szPlayer, szExpected)) fPlayers[iFound] = TRUE;
+                        }
+                    }
                 }
-                if (!fPlayers[0] || !fPlayers[1]) goto LDone;
+                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) if (!fPlayers[iPlayer]) goto LDone;
             }
             fChecked = TRUE;
             fPassed = TRUE;
@@ -1246,6 +1258,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             iGame = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)pszName);
             if (iGame == LB_ERR) goto LDone;
+            if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+                fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
             SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
             fChecked = TRUE;
             iStage = 1;
@@ -1470,5 +1484,7 @@ int main(void) {
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
-    return nResult == 0 && fChecked && fPassed && fTitlePainted && cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
+    return nResult == 0 && fChecked && fPassed && fTitlePainted &&
+           cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+                       getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }

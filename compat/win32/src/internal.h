@@ -6,6 +6,13 @@
 #include <SDL3/SDL.h>
 #include "platform.h"
 typedef struct COMPATPRINT COMPATPRINT;
+typedef struct COMPATASYNCPOST {
+    HWND hwnd;
+    UINT msg;
+    WPARAM wParam;
+    LPARAM lParam;
+} COMPATASYNCPOST;
+#define COMPAT_ASYNC_POST_CODE 0x53544152
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);

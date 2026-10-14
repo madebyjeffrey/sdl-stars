@@ -1,4 +1,5 @@
 #include "win.h"
+#include <SDL3/SDL.h>
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
 
@@ -2767,6 +2768,11 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (FImportLibraryGame(hwnd, NULL)) RefreshLibraryGames(hwnd);
                 break;
             }
+        case IDC_LIBRARY_IMPORT_FOLDER:
+            if (LOWORD(wParam) == IDC_LIBRARY_IMPORT_FOLDER) {
+                ShowLibraryImportFolderPicker(hwnd);
+                break;
+            }
         case IDOK:
             if (!FSelectLibraryGame(hwnd)) break;
         LOpenGame:
@@ -2800,6 +2806,12 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 WriteIniSettings();
                 PostQuitMessage(vretExitValue);
             }
+        }
+        break;
+    case WM_STARS_IMPORT_FOLDER:
+        if ((char *)wParam) {
+            if (FImportLibraryGame(hwnd, (char *)wParam)) RefreshLibraryGames(hwnd);
+            SDL_free((char *)wParam);
         }
         break;
     case WM_PAINT:

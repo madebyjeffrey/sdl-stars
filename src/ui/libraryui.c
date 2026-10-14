@@ -9,6 +9,16 @@ static char szLibraryPending[256];
 static char szLibraryName[256];
 static char szLibraryExchangeName[256];
 
+static void FormatLibraryFamilyPath(char *pszPath, size_t cchPath, const char *pszDirectory,
+                                    const char *pszName, DtFileType dt, int iplr) {
+    const char *pszExtension;
+    if (dt == dtXY) pszExtension = "xy";
+    else if (dt == dtHost) pszExtension = "hst";
+    else pszExtension = dt == dtTurn ? "m" : dt == dtHist ? "h" : "x";
+    if (dt == dtXY || dt == dtHost) CchSnprintf(pszPath, cchPath, "%s%s%s.%s", pszDirectory, szDirSep, pszName, pszExtension);
+    else CchSnprintf(pszPath, cchPath, "%s%s%s.%s%d", pszDirectory, szDirSep, pszName, pszExtension, iplr + 1);
+}
+
 static int16_t FInitLibrary(void) {
     const char *pszOverride;
     const char *pszSettings;
@@ -337,10 +347,7 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
         return TRUE;
     }
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", pli->pszSource, szDirSep, pszName);
-    if (dt == dtXY) CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.xy", pli->pszTarget, szDirSep, pli->pszName);
-    else if (dt == dtHost) CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.hst", pli->pszTarget, szDirSep, pli->pszName);
-    else CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%c%d", pli->pszTarget, szDirSep, pli->pszName,
-                     dt == dtTurn ? 'm' : dt == dtHist ? 'h' : 'x', iplr + 1);
+    FormatLibraryFamilyPath(szTarget, sizeof(szTarget), pli->pszTarget, pli->pszName, dt, iplr);
     if (pli->fCopy) {
         if (!FCopyNativeFile(szSource, szTarget)) { pli->fBad = TRUE; return FALSE; }
         return TRUE;
@@ -383,13 +390,11 @@ static int16_t CopyBackupEntry(void *lpData, const char *pszName) {
     LIBRARYBACKUP *plb = lpData;
     int iplr;
     DtFileType dt;
-    char szSource[512], szTarget[512];
+    char szSource[512], szTarget[512], szDirectory[512];
     if (!FImportFamilyMember(pszName, plb->pszStem, &iplr, &dt)) return TRUE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s%s%s", plb->pszSource, szDirSep, plb->pszBackup, szDirSep, pszName);
-    if (dt == dtXY) CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.xy", plb->pszTarget, szDirSep, plb->pszBackup, szDirSep, plb->pszName);
-    else if (dt == dtHost) CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.hst", plb->pszTarget, szDirSep, plb->pszBackup, szDirSep, plb->pszName);
-    else CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.%c%d", plb->pszTarget, szDirSep, plb->pszBackup, szDirSep,
-                     plb->pszName, dt == dtTurn ? 'm' : dt == dtHist ? 'h' : 'x', iplr + 1);
+    CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", plb->pszTarget, szDirSep, plb->pszBackup);
+    FormatLibraryFamilyPath(szTarget, sizeof(szTarget), szDirectory, plb->pszName, dt, iplr);
     if (!FCopyNativeFile(szSource, szTarget)) { plb->fBad = TRUE; return FALSE; }
     return TRUE;
 }
@@ -445,6 +450,19 @@ static int16_t FindImportUniverse(void *lpData, const char *pszName) {
     return TRUE;
 }
 
+static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
+    HWND hwnd = lpData;
+    char *pszPath;
+    (void)iFilter;
+    if (!rgpszPath || !rgpszPath[0]) return;
+    pszPath = SDL_strdup(rgpszPath[0]);
+    if (!pszPath || !StarsCompatPostMessageAsync(hwnd, WM_STARS_IMPORT_FOLDER, (WPARAM)pszPath, 0)) SDL_free(pszPath);
+}
+
+void ShowLibraryImportFolderPicker(HWND hwnd) {
+    SDL_ShowOpenFolderDialog(LibraryImportFolderSelected, hwnd, NULL, NULL, FALSE);
+}
+
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szChosen[512], szTitle[256], szFilter[128];
@@ -456,6 +474,11 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         memset(&ofn, 0, sizeof(ofn));
         memset(szChosen, 0, sizeof(szChosen));
         CchGetString(idsStarsGameFilesMHstRStars, szFilter);
+        pch = strstr(szFilter, "*.M*;");
+        if (pch) {
+            memmove(pch + 5, pch, strlen(pch) + 1);
+            memcpy(pch, "*.XY;", 5);
+        }
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -607,6 +630,9 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", "Import Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, hInst, NULL);
+    CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 240, y - 22, 104, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 120, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
     RefreshLibraryGames(hwnd);
