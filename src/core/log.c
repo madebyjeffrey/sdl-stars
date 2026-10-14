@@ -1015,9 +1015,9 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (i == rgcbtlplan[idPlayer]) {
             if (i >= 16)
                 goto BombOut;
-            rgcbtlplan[idPlayer]++;
         }
-        UnpackBattlePlan(lpb, rglpbtlplan[idPlayer] + i, i, cb);
+        if (!UnpackBattlePlan(lpb, rglpbtlplan[idPlayer] + i, i, cb)) return FALSE;
+        if (i == rgcbtlplan[idPlayer]) rgcbtlplan[idPlayer]++;
         break;
     case rtLogFleetPlan:
         if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0)

@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `UnpackBattlePlan` could leave an existing plan partially changed on a
+  rejected name. It now validates into temporary text and reports failure;
+  `FRunLogRecord` increments the plan count only after success. Native
+  regression baselines and valid host results are unchanged.
 - Wrapper list/menu/class setters and `OpenFile` could retain malformed UTF-8,
   and picker navigation could retain an unsupported resolved directory.
   These inputs and print destinations are now validated; picker extension

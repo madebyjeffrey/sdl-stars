@@ -721,7 +721,7 @@ LNextTurn:
         if (!rglpbtlplan[iP]) {
             rglpbtlplan[iP] = LpAlloc(16 * sizeof(BTLPLAN), htShips);
         }
-        UnpackBattlePlan(rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb);
+        if (!UnpackBattlePlan(rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb)) goto Corrupt;
         rgcbtlplan[iP]++;
         ReadRt();
     }
@@ -1151,15 +1151,19 @@ int16_t FReadFleet(FLEET *lpfl) {
     return TRUE;
 }
 
-void UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb) {
+int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb) {
+    char szName[32];
+
     if (cb < 4) goto invalid;
+    if (!FReadUserString(lpb + 4, cb - 4, szName, sizeof(szName), NULL)) goto invalid;
     memmove(lpbtlplan, lpb, 4);
-    if (!FReadUserString(lpb + 4, cb - 4, lpbtlplan->szName, sizeof(lpbtlplan->szName), NULL)) goto invalid;
+    strcpy(lpbtlplan->szName, szName);
     lpbtlplan->iplan = iplan;
-    return;
+    return TRUE;
 invalid:
     FileError(idsGameFileAppearsCorruptUnableLoadFile);
     if (penvMem) StarsLongJump(penvMem, -1);
+    return FALSE;
 }
 
 void UpdateBattleRecords() {

@@ -301,10 +301,12 @@ static void test_utf8_design_and_plan_bounds(void) {
     memset(rgb, 0, sizeof(rgb));
     memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
     idsFileError = 0;
-    UnpackBattlePlan(rgb, &btlplan, 0, 7);
+    memset(&btlplan, 0x55, sizeof(btlplan));
+    TEST_CHECK(!UnpackBattlePlan(rgb, &btlplan, 0, 7));
+    TEST_CHECK(btlplan.szName[0] == 0x55);
     TEST_CHECK(idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     idsFileError = 0;
-    UnpackBattlePlan(rgb, &btlplan, 0, 8);
+    TEST_CHECK(UnpackBattlePlan(rgb, &btlplan, 0, 8));
     TEST_CHECK(idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
 }
 
