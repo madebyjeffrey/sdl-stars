@@ -167,7 +167,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
 add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
 target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
@@ -196,6 +196,9 @@ if(STARS_BUILD_TESTS)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/continue-dummy")
     set_tests_properties(win32_client_continue_dummy PROPERTIES LABELS "client"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_CLIENT_GAME_CAPTURE=${CMAKE_BINARY_DIR}/test-client/continue-dummy/game.bmp" TIMEOUT 200)
+    add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_racelibrary.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_race_library_dummy PROPERTIES LABELS "client" TIMEOUT 75)
     find_program(STARS_XVFB_RUN_EXECUTABLE NAMES xvfb-run REQUIRED)
     find_program(STARS_OPENBOX_EXECUTABLE NAMES openbox REQUIRED)
     find_program(STARS_XPROP_EXECUTABLE NAMES xprop REQUIRED)

@@ -5,7 +5,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
 set_target_properties(stars-compat-client-startup PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -16,6 +16,10 @@ add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS client TIMEOUT 200
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_racelibrary.py" "$<TARGET_FILE:stars-compat-client-startup>")
+set_tests_properties(win32_client_race_library_dummy PROPERTIES LABELS client TIMEOUT 75)
 
 foreach(STARS_CLIENT_SCENARIO startup race)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/${STARS_CLIENT_SCENARIO}")
@@ -45,6 +49,9 @@ foreach(STARS_UTF8_TEST utf8 font edit profile)
     add_executable(stars-compat-${STARS_UTF8_TEST} tests/compat/win32_${STARS_UTF8_TEST}.c)
     target_include_directories(stars-compat-${STARS_UTF8_TEST} PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
     target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_options stars_win32 SDL3::SDL3)
+    if(STARS_UTF8_TEST STREQUAL "utf8" OR STARS_UTF8_TEST STREQUAL "profile")
+        target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_filesystem)
+    endif()
     target_compile_options(stars-compat-${STARS_UTF8_TEST} PRIVATE -Wall -Wextra -Werror)
     add_test(NAME win32_utf8_${STARS_UTF8_TEST} COMMAND stars-compat-${STARS_UTF8_TEST})
     set_tests_properties(win32_utf8_${STARS_UTF8_TEST} PROPERTIES LABELS compat TIMEOUT 60

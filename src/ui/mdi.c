@@ -2659,6 +2659,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     int16_t     dx;
     int16_t     xCur;
     char       *psz;
+    char        szRaceName[256];
     PAINTSTRUCT ps;
     RECT        rcWnd;
     HBRUSH      hbrSav;
@@ -2699,6 +2700,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             xCur += dx + dxGap;
         }
         InitLibraryGames(hwnd, &rc);
+        InitLibraryRaces(hwnd, &rc);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
         SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
@@ -2773,6 +2775,19 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 ShowLibraryImportFolderPicker(hwnd);
                 break;
             }
+        case IDC_LIBRARY_RACES:
+            if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;
+            if (FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_NEW:
+            if (FBeginLibraryRace(hwnd)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_EDIT:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_IMPORT:
+            if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
+            break;
         case IDOK:
             if (!FSelectLibraryGame(hwnd)) break;
         LOpenGame:

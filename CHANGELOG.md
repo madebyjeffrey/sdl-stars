@@ -6,6 +6,26 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The desktop title screen now manages race designs in a separate Race Designs
+  folder. New and Edit use the race wizard and save directly to the selected
+  design; Import opens the copied design in the wizard, and cancelling keeps
+  the imported file. Imports preserve the original bytes and receive a unique
+  `.rN` filename. Cancelled edits restore the loaded race, and saves retain
+  the existing checksum and password behavior. Game behavior and record
+  layouts are unchanged.
+
+- Managed race saves and imports now publish from private staging directories,
+  preserving existing designs with names that resemble the former staging
+  suffix.
+
+- Managed race filenames now reject Windows reserved device stems, including
+  `CON`, `COM1` through `COM9`, `LPT1` through `LPT9`, and `CLOCK$`.
+
+- Race Designs now lists only nonempty race files, not matching directory names.
+
+- macOS UTF-8 and profile compatibility tests now link the C++ filesystem bridge
+  that provides their C-callable path helpers.
+
 - The desktop Games library can import a game family from a selected file or
   folder. It validates format, record framing, game identity and player slots
   before copying the universe, available turns, companions and backups into a

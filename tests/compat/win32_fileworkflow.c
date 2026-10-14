@@ -11,6 +11,22 @@ static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
 static int cAlerts;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
+static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
+    FILE *pfLeft = fopen(pszLeft, "rb"), *pfRight = fopen(pszRight, "rb");
+    unsigned char rgbLeft[4096], rgbRight[4096];
+    size_t cbLeft, cbRight;
+    BOOL fEqual = pfLeft && pfRight;
+    if (!fEqual) goto LDone;
+    do {
+        cbLeft = fread(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
+        cbRight = fread(rgbRight, 1, sizeof(rgbRight), pfRight);
+        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = FALSE; break; }
+    } while (cbLeft != 0);
+LDone:
+    if (pfLeft) fclose(pfLeft);
+    if (pfRight) fclose(pfRight);
+    return fEqual;
+}
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
@@ -19,7 +35,11 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
 static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND hwndParentSav;
     PLAYER plrSav;
+    PLAYER plrManaged;
     char szRaceSav[sizeof(szRaceFile)];
+    char szManagedRace[512];
+    char szRaceLibrary[256];
+    int64_t cbRaceLibrary;
     const char *pszRace = getenv("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = getenv("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
@@ -40,6 +60,28 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(FOpenGame(hwndTitle, TRUE) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
     CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, FALSE) > 0);
     CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrSav));
+    CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrSav));
+    CHECK(CchSnprintf(szRaceLibrary, sizeof(szRaceLibrary), "%s%sRace Designs", getenv("STARS_SETTINGS_DIR"), szDirSep) > 0);
+    CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
+    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0);
+    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
+    strcpy(szPassLast, "managed-pass");
+    lSaltLast = LSaltFromSz(szPassLast);
+    lSaltCur = lSaltLast;
+    plrManaged = plrSav;
+    plrManaged.lSalt = lSaltLast;
+    CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrManaged));
+    CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
+    CHECK(vplr.lSalt == lSaltLast && IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
+    CHECK(!FSaveLibraryRace(hwndTitle, "bad/name.r1", &plrManaged));
+    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0 && vplr.lSalt == lSaltLast);
+    CHECK(FImportLibraryRaceAs(hwndTitle, pszRace, "Imported.r2"));
+    CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
+    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0 && FEqualFiles(pszRace, szManagedRace));
+    CHECK(!FImportLibraryRaceAs(hwndTitle, pszRace, "imported.R2"));
+    CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
+    CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
+    CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
     CHECK(game.lid == lid && memcmp(&plrSav, &rgplr[idPlayer], sizeof(plrSav)) == 0);
     hwndRaceParent = hwndParentSav;
     fPassed = cAlerts == 0;
