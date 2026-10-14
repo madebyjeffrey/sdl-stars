@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `LibraryNameDlg`, `FChooseLibraryGameName` and `FFinishLibraryGame` passed
+  two compressed strings from the same shared buffer to `MessageBox`, making
+  the body and caption identical according to compiler argument order. Library
+  alerts now preserve the error message separately from the Games caption,
+  fixing GCC new-game workflow checks. Turn generation, file formats and
+  regression baselines are unchanged.
+
 - `FGetNewGameName` now asks for a portable, unique library name. Desktop games
   and all their generated companions live in per-user application data and can
   be reopened from the startup Games list after restarting. Failed or cancelled

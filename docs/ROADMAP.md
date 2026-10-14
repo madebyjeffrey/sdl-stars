@@ -179,6 +179,8 @@ managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
+Library alerts retain their message separately from the compressed-string
+caption buffer, so name rejection and storage failure checks also work under GCC.
 Import/export, player selection and race-library management remain separate
 slices of specification #3. The
 initial top-level size notification now initializes pane layout, and the

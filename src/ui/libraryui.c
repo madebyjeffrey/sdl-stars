@@ -83,7 +83,7 @@ static void SuggestLibraryName(char *pszName) {
 
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char *pszName;
-    char szName[256];
+    char szName[256], szMessage[256];
     StringId ids;
 
     switch (message) {
@@ -108,7 +108,9 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             EndDialog(hwnd, TRUE);
             return TRUE;
         }
-        MessageBox(hwnd, PszGetCompressedString(ids), PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONEXCLAMATION);
+        /* Each lookup reuses szLastStrGet; retain the body before fetching the caption. */
+        strcpy(szMessage, PszGetCompressedString(ids));
+        MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONEXCLAMATION);
         return TRUE;
     }
     return FALSE;
@@ -116,6 +118,7 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile) {
     char *pch;
+    char szMessage[256];
 
     if (!FInitLibrary() || strlen(szLibraryRoot) + 20 >= sizeof(szBase)) goto LFail;
     pch = strrchr(pszFile, chDirSep);
@@ -134,7 +137,8 @@ int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile) {
     CchSnprintf(pszFile, 256, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
     return TRUE;
 LFail:
-    MessageBox(hwnd, PszGetCompressedString(idsLibraryStorageFailed), PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
+    strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+    MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
     return FALSE;
 }
 
@@ -201,7 +205,7 @@ LDone:
 }
 
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
-    char szFile[256];
+    char szFile[256], szMessage[256];
     int i;
 
     if (!szLibraryPending[0]) return FALSE;
@@ -215,7 +219,8 @@ int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
     if (!fGenerated) {
         FNativeEnumerateDirectory(szLibraryPending, RemovePendingFile, NULL);
         RemoveNativePath(szLibraryPending);
-        MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, PszGetCompressedString(idsLibraryStorageFailed), PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
+        strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+        MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
     }
     szLibraryPending[0] = 0;
     return fGenerated;
