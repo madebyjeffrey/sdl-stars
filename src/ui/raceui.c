@@ -104,8 +104,15 @@ Finish:
     lSaltLast = -5;
     if (!FCheckPassword())
         goto Step1;
-    if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr))
-        goto Step1;
+    if (!fDontWrite) {
+        if (FHasCurrentLibraryRace()) {
+            if (!FSaveCurrentLibraryRace(hwndRaceParent, &vplr)) goto Step1;
+        } else if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr)) goto Step1;
+    }
+    if (fDontWrite) {
+        fResult = TRUE;
+        goto LDone;
+    }
     fResult = TRUE;
     goto LDone;
 LCancel:

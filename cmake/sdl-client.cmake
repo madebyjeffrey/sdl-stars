@@ -196,6 +196,9 @@ if(STARS_BUILD_TESTS)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/continue-dummy")
     set_tests_properties(win32_client_continue_dummy PROPERTIES LABELS "client"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_CLIENT_GAME_CAPTURE=${CMAKE_BINARY_DIR}/test-client/continue-dummy/game.bmp" TIMEOUT 200)
+    add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_racelibrary.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_race_library_dummy PROPERTIES LABELS "client" TIMEOUT 75)
     find_program(STARS_XVFB_RUN_EXECUTABLE NAMES xvfb-run REQUIRED)
     find_program(STARS_OPENBOX_EXECUTABLE NAMES openbox REQUIRED)
     find_program(STARS_XPROP_EXECUTABLE NAMES xprop REQUIRED)

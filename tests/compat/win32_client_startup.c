@@ -28,6 +28,11 @@ static int cHabShow;
 static const char *pszContinue;
 static const char *pszImportSource;
 static int iImportStage;
+static int iRaceLibraryTestStage;
+static int iRaceLibraryWizardPage;
+static const char *pszRaceLibraryImport;
+static uint16_t icksumRaceLibrary;
+static uint16_t icksRaceLibraryOriginal;
 static GAME gameImportSav;
 static int16_t idPlayerImportSav;
 static char szBaseImportSav[256];
@@ -1183,6 +1188,7 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
+    char szRaceName[256];
     const char *pszCapture = getenv("STARS_CLIENT_CAPTURE");
     const char *pszWizardCapture = getenv("STARS_CLIENT_WIZARD_CAPTURE");
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
@@ -1197,6 +1203,101 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
+        HWND hwndRace;
+        static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
+        if (iRaceLibraryTestStage == 0) {
+            if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RACES) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_IMPORT)) {
+                goto LDone;
+            }
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            iRaceLibraryTestStage = 1;
+            return;
+        }
+        if (iRaceLibraryTestStage == 1) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndRace, IDC_EDIT1), "Created.r1") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
+                iRaceLibraryTestStage = 2;
+                return;
+            }
+            return;
+        }
+        if (iRaceLibraryTestStage == 2) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog) continue;
+                if (!IsWindowVisible(hwndRace)) return;
+                i = (size_t)iRaceLibraryWizardPage;
+                if (i >= sizeof(rglpfnRaceLibrary) / sizeof(rglpfnRaceLibrary[0])) goto LDone;
+                if (!FPushClick(GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                iRaceLibraryWizardPage++;
+                return;
+            }
+            if (iRaceLibraryWizardPage == 6 && IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 3;
+            return;
+        }
+        if (iRaceLibraryTestStage == 3) {
+            if (!IsWindowVisible(hwndTitle)) return;
+            RefreshLibraryRaces(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_GETCOUNT, 0, 0) != 1 ||
+                !FSelectLibraryRace(hwndTitle, szRaceName)) goto LDone;
+            if (strcmp(szRaceName, "Created.r1") || !FLoadLibraryRace(hwndTitle, szRaceName)) goto LDone;
+            icksRaceLibraryOriginal = IRaceChecksum(&vplr);
+            icksumRaceLibrary = icksRaceLibraryOriginal;
+            iRaceLibraryWizardPage = 0;
+            iRaceLibraryTestStage = 4;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            return;
+        }
+        if (iRaceLibraryTestStage == 4) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog) continue;
+                if (iRaceLibraryWizardPage < 6) {
+                    i = (size_t)iRaceLibraryWizardPage;
+                    if (i == 0 && !FPushClick(GetDlgItem(hwndRace, IDC_RACE_HUMANOID + 1))) goto LDone;
+                    if (!FPushClick(GetDlgItem(hwndRace, i == 5 ? IDC_FINISH : IDC_NEXT))) goto LDone;
+                    iRaceLibraryWizardPage++;
+                    return;
+                }
+                goto LDone;
+            }
+            if (iRaceLibraryWizardPage == 6 && IsWindowEnabled(hwndTitle)) iRaceLibraryTestStage = 5;
+            return;
+        }
+        if (iRaceLibraryTestStage == 5) {
+            if (!IsWindowEnabled(hwndTitle)) return;
+            if (!FLoadLibraryRace(hwndTitle, "Created.r1") || IRaceChecksum(&vplr) == icksRaceLibraryOriginal) goto LDone;
+            icksumRaceLibrary = IRaceChecksum(&vplr);
+            iRaceLibraryWizardPage = 0;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT))) goto LDone;
+            iRaceLibraryTestStage = 6;
+            return;
+        }
+        if (iRaceLibraryTestStage == 6) {
+            for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
+                if (!hwndRace->fDialog) continue;
+                if (!FPushClick(GetDlgItem(hwndRace, IDCANCEL))) goto LDone;
+                iRaceLibraryTestStage = 7;
+                return;
+            }
+            return;
+        }
+        if (iRaceLibraryTestStage == 7) {
+            if (!IsWindowEnabled(hwndTitle)) return;
+            if (!FLoadLibraryRace(hwndTitle, "Created.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
+            pszRaceLibraryImport = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
+            if (!pszRaceLibraryImport || !FImportLibraryRaceAs(hwndTitle, pszRaceLibraryImport, "Imported.r2")) { fprintf(stderr, "race import failed from %s\n", pszRaceLibraryImport ? pszRaceLibraryImport : "(unset)"); goto LDone; }
+            if (!FLoadLibraryRace(hwndTitle, "Imported.r2") || !IRaceChecksum(&vplr)) goto LDone;
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Managed race created, edited, cancelled, imported, and reloaded");
+            PostQuitMessage(0);
+            return;
+        }
+        return;
+    }
     if (pszImportSource) {
         if (iImportStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
@@ -1480,7 +1581,7 @@ int main(void) {
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();

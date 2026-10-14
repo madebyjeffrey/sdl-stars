@@ -181,8 +181,12 @@ metadata and test storage remain separate from legacy records. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
-Import/export, player selection and race-library management remain separate
-slices of specification #3. The
+The title screen now provides the separate Race Designs library: New and Edit
+save through the race wizard, and Import preserves valid race files in a
+uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
+cancelled edit and import; the native file-workflow harness covers protected
+save/reload, checksum preservation and duplicate-name rejection. Import/export
+and player selection remain separate slices of specification #3. The
 initial top-level size notification now initializes pane layout, and the
 modeless Technology Browser closes correctly by button and native close request.
 A separate `sdl-sanitize` preset now instruments project code; unsigned race-bit masks are
