@@ -23,6 +23,9 @@ produce different results from a 2.6j host for the same turn.
 
 - Race Designs now lists only nonempty race files, not matching directory names.
 
+- macOS UTF-8 and profile compatibility tests now link the C++ filesystem bridge
+  that provides their C-callable path helpers.
+
 - The desktop Games library can import a game family from a selected file or
   folder. It validates format, record framing, game identity and player slots
   before copying the universe, available turns, companions and backups into a
