@@ -2785,6 +2785,15 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_LIBRARY_RACE_EDIT:
             if (FSelectLibraryRace(hwnd, szRaceName) && FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
             break;
+        case IDC_LIBRARY_RACE_DUPLICATE:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FDuplicateLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_EXPORT:
+            if (FSelectLibraryRace(hwnd, szRaceName)) FExportLibraryRace(hwnd, szRaceName, NULL);
+            break;
+        case IDC_LIBRARY_RACE_DELETE:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FDeleteLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
         case IDC_LIBRARY_RACE_IMPORT:
             if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
             break;

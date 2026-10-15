@@ -15,6 +15,7 @@ static char szRaceLibraryTemp[512];
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static const char *pszRaceLibraryNameOverride;
+static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
 
 typedef struct {
     PLAYER plr;
@@ -490,6 +491,98 @@ int16_t FEditLibraryRace(HWND hwnd, const char *pszName) {
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
     RestoreRaceState(&rsSav, !fResult, TRUE);
     return fResult;
+}
+
+int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName) {
+    char szSource[512], szName[256], szPath[512] = "";
+    const char *pch;
+    RACESTATE rsSav;
+    if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
+    CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    SaveRaceState(&rsSav);
+    if (!FWasRaceFile(szSource, TRUE)) {
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        return FALSE;
+    }
+    CchSnprintf(szName, sizeof(szName), "%s", pszName);
+    pch = strrchr(szName, '.');
+    if (pch) szName[pch - szName] = 0;
+    SuggestRaceFilename(szName);
+    if (!szName[0] || CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    if (!FCopyNativeFile(szSource, szPath)) {
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    if (!FWasRaceFile(szPath, TRUE)) {
+        RemoveNativeFile(szPath);
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    RestoreRaceState(&rsSav, TRUE, TRUE);
+    return TRUE;
+}
+
+int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget) {
+    OPENFILENAME ofn;
+    char szSource[512], szTarget[512], szValidate[512];
+    RACESTATE rsSav;
+    if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
+    CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    if (!pszTarget) {
+        memset(&ofn, 0, sizeof(ofn));
+        memset(szTarget, 0, sizeof(szTarget));
+        CchSnprintf(szTarget, sizeof(szTarget), "%s", pszName);
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hwnd;
+        ofn.lpstrFilter = "Race designs (*.r1;*.r2;*.r3)\0*.r1;*.r2;*.r3\0All files (*.*)\0*.*\0\0";
+        ofn.lpstrFile = szTarget;
+        ofn.nMaxFile = sizeof(szTarget);
+        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+        if (!FNativeSaveFileName(&ofn)) return FALSE;
+        pszTarget = szTarget;
+    }
+    SaveRaceState(&rsSav);
+    if (!FWasRaceFile(szSource, TRUE) || SDL_strcasecmp(szSource, pszTarget) == 0) {
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    if (!FCopyNativeFile(szSource, pszTarget)) {
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    CchSnprintf(szValidate, sizeof(szValidate), "%s", pszTarget);
+    if (!FWasRaceFile(szValidate, TRUE)) {
+        RemoveNativeFile(pszTarget);
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    RestoreRaceState(&rsSav, TRUE, TRUE);
+    return TRUE;
+}
+
+int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName) {
+    char szPath[512], szMessage[320];
+    int64_t cbFile;
+    if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
+    CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return FALSE;
+    CchSnprintf(szMessage, sizeof(szMessage), "Delete the managed race design %s?", pszName);
+    if (MessageBox(hwnd, szMessage, "Stars!", MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
+    if (RemoveNativeFile(szPath) != 0) {
+        AlertSz("The selected race design could not be deleted.", MB_ICONHAND);
+        return FALSE;
+    }
+    if (!strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
+    return TRUE;
 }
 
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
@@ -974,11 +1067,17 @@ void InitLibraryRaces(HWND hwnd, const RECT *lprc) {
     CreateWindow("STATIC", "Race Designs", WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, NULL, hInst, NULL);
     CreateWindow("BUTTON", "New", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-                 lprc->right - 260, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, hInst, NULL);
+                 lprc->right - 436, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, hInst, NULL);
     CreateWindow("BUTTON", "Edit", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-                 lprc->right - 198, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, hInst, NULL);
+                 lprc->right - 384, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, hInst, NULL);
+    CreateWindow("BUTTON", "Duplicate", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 332, y - 20, 62, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DUPLICATE, hInst, NULL);
+    CreateWindow("BUTTON", "Export", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 266, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EXPORT, hInst, NULL);
+    CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 214, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DELETE, hInst, NULL);
     CreateWindow("BUTTON", "Import...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-                 lprc->right - 136, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, hInst, NULL);
+                 lprc->right - 152, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 80, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACES, hInst, NULL);
     RefreshLibraryRaces(hwnd);
@@ -991,6 +1090,9 @@ void RefreshLibraryRaces(HWND hwnd) {
     if (FInitRaceLibrary()) FNativeEnumerateDirectory(szRaceLibraryRoot, ListLibraryRace, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EDIT), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DUPLICATE), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EXPORT), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DELETE), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
 }
 
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
