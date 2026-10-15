@@ -62,8 +62,30 @@ static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     return fEqual;
 }
 
+static BOOL FTestLibraryTimestamp(long long *plPlayed) {
+    char szDir[512], szFile[512], szMetadataName[256];
+    char *pch;
+    FILE *pf;
+    int iVersion, iPlayer;
+    strcpy(szDir, szBase);
+    pch = strrchr(szDir, chDirSep);
+    if (!pch) return FALSE;
+    *pch = 0;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s.library", szDir, szDirSep);
+    pf = fopen(szFile, "rb");
+    if (!pf) return FALSE;
+    if (fscanf(pf, "%d\n", &iVersion) != 1 || !fgets(szMetadataName, sizeof(szMetadataName), pf) ||
+        fscanf(pf, "%d\n%lld", &iPlayer, plPlayed) != 2) {
+        fclose(pf);
+        return FALSE;
+    }
+    fclose(pf);
+    return iVersion == 2 && iPlayer == idPlayer;
+}
+
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
+static BOOL fSwitchCancelSent;
 static int cAlerts;
 static UINT_PTR idTimer;
 static int iStage, cWait;
@@ -363,7 +385,17 @@ int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
     // The frozen regression race is password protected. This test qualifies
     // file loading and client creation; password validation is outside its scope.
-    return pszContinue ? TRUE : StarsTestReal_PromptPassword();
+    return pszContinue || getenv("STARS_CLIENT_EXPECT_PLAYER") ? TRUE : StarsTestReal_PromptPassword();
+}
+
+INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST") && message == WM_INITDIALOG) {
+        fSwitchCancelSent = TRUE;
+        EndDialog(hwnd, -2);
+        return 1;
+    }
+    return StarsTestReal_AskSaveDialog(hwnd, message, wParam, lParam);
 }
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
@@ -1541,10 +1573,24 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         HWND hwndList;
         LRESULT iGame;
         if (iStage == 0) {
+            const char *pszPlayer = getenv("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
+            int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
+            int iRow;
+            char szRow[320];
             if (!IsWindowVisible(hwndTitle)) goto LDone;
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             iGame = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)pszName);
             if (iGame == LB_ERR) goto LDone;
+            if (iWanted >= 0) {
+                for (iRow = (int)iGame; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
+                    if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
+                        strncmp(szRow, pszName, strlen(pszName)) || szRow[strlen(pszName)] != ' ' ||
+                        SendMessage(hwndList, LB_GETITEMDATA, iRow, 0) != iWanted) continue;
+                    iGame = iRow;
+                    break;
+                }
+                if (iRow >= SendMessage(hwndList, LB_GETCOUNT, 0, 0)) goto LDone;
+            }
             if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
                 fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
             SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
@@ -1555,6 +1601,23 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (IsWindow(hwndTitle)) return;
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
+        if (getenv("STARS_CLIENT_EXPECT_PLAYER") &&
+            idPlayer != atoi(getenv("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
+        if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST")) {
+            int16_t idPlayerBefore = idPlayer;
+            uint16_t turnBefore = game.turn;
+            long long lPlayedBefore, lPlayedAfter;
+            if (!FTestLibraryTimestamp(&lPlayedBefore)) goto LDone;
+            game.fDirty = TRUE;
+            SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            if (!fSwitchCancelSent || IsWindow(hwndTitle) || !lpPlanets || idPlayer != idPlayerBefore ||
+                game.turn != turnBefore || !game.fDirty || !FTestLibraryTimestamp(&lPlayedAfter) ||
+                lPlayedAfter != lPlayedBefore) goto LDone;
+            fPassed = TRUE;
+            puts("Canceling a player switch keeps the active player turn loaded");
+            PostQuitMessage(0);
+            return;
+        }
         fPassed = TRUE;
         puts("Managed game: visible in library and reopened after restart");
         PostQuitMessage(0);
@@ -1737,6 +1800,31 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         (pszCapture && !SDL_SaveBMP(lpTitle->lpComposite, pszCapture))) goto LDone;
     printf("Stars title %dx%d, renderer %s; independent frame and title windows\n",
            lpTitle->lpCanvas->w, lpTitle->lpCanvas->h, SDL_GetRendererName(lpTitle->lpRenderer));
+    if (pszContinue && getenv("STARS_CLIENT_EXPECT_PLAYER")) {
+        char szContinue[320];
+        GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
+        if (!strstr(szContinue, "Continue: managed-copy") || !strstr(szContinue, "Player 2")) goto LDone;
+    }
+    if (pszContinue && getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
+        if (IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
+        fPassed = TRUE;
+        puts("Continue is disabled when the managed game has no available player turns");
+        PostQuitMessage(0);
+        return;
+    }
+    if (pszContinue && getenv("STARS_CLIENT_EXPECT_SELECTOR")) {
+        char szLabel[256];
+        HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
+        GetWindowTextA(rghwndBtnSplash[2], szLabel, sizeof(szLabel));
+        if (!strstr(szLabel, "Choose Player") || !FPushClick(rghwndBtnSplash[2])) goto LDone;
+        if (!hwndList || SendMessage(hwndList, LB_GETITEMDATA,
+            SendMessage(hwndList, LB_GETCURSEL, 0, 0), 0) != 0 || !IsWindow(hwndTitle)) goto LDone;
+        fPassed = TRUE;
+        puts("Continue selects the managed game when its remembered player is unavailable");
+        PostQuitMessage(0);
+        return;
+    }
     if (!FPushClick(rghwndBtnSplash[pszContinue ? 2 : 0])) goto LDone;
     iStage = pszContinue ? 5 : 1;
     return;
@@ -1767,7 +1855,8 @@ int main(void) {
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
+        !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();

@@ -16,6 +16,17 @@ static char szRaceLibraryTemp[512];
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static const char *pszRaceLibraryNameOverride;
+
+typedef struct LibraryContinue {
+    char szName[256];
+    int iPlayer;
+    int iYear;
+    long long lPlayed;
+    int16_t fFound;
+    int16_t fTurnAvailable;
+} LIBRARYCONTINUE;
+
+static LIBRARYCONTINUE continueLibrary;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
 
 typedef struct {
@@ -1077,6 +1088,59 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
     return TRUE;
 }
 
+static int16_t FindContinueLibraryGame(void *lpData, const char *pszName) {
+    LIBRARYCONTINUE *plc = (LIBRARYCONTINUE *)lpData;
+    char szFile[512], szMetadataName[256];
+    FILE *pf;
+    int iVersion, iPlayer;
+    long long lPlayed;
+    int32_t lidGame;
+    uint16_t turn;
+    int16_t fMulti;
+    int iYear;
+    int16_t fTurnAvailable;
+
+    if (!FPortableLibraryName(pszName)) return TRUE;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
+    pf = PfOpenNativeFile(szFile, "rb");
+    if (!pf) return TRUE;
+    iVersion = 0;
+    iPlayer = -1;
+    lPlayed = 0;
+    if (fscanf(pf, "%d\n", &iVersion) != 1 || !fgets(szMetadataName, sizeof(szMetadataName), pf) ||
+        fscanf(pf, "%d\n%lld", &iPlayer, &lPlayed) != 2) {
+        fclose(pf);
+        return TRUE;
+    }
+    fclose(pf);
+    szMetadataName[strcspn(szMetadataName, "\r\n")] = 0;
+    if ((iVersion != 1 && iVersion != 2) || _stricmp(szMetadataName, pszName) ||
+        iPlayer < 0 || iPlayer >= 16 || (plc->fFound && lPlayed <= plc->lPlayed)) return TRUE;
+
+    fTurnAvailable = FALSE;
+    iYear = 0;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep,
+                pszName, iPlayer + 1);
+    if (FInspectImportFile(szFile, dtTurn, iPlayer, &lidGame, &turn, &fMulti)) {
+        iYear = turn + 2400;
+        fTurnAvailable = TRUE;
+    }
+    strcpy(plc->szName, pszName);
+    plc->iPlayer = iPlayer;
+    plc->iYear = iYear;
+    plc->lPlayed = lPlayed;
+    plc->fFound = TRUE;
+    plc->fTurnAvailable = fTurnAvailable;
+    return TRUE;
+}
+
+static int16_t FFindContinueLibraryGame(void) {
+    memset(&continueLibrary, 0, sizeof(continueLibrary));
+    continueLibrary.iPlayer = -1;
+    return FInitLibrary() && FNativeEnumerateDirectory(szLibraryRoot, FindContinueLibraryGame, &continueLibrary) &&
+           continueLibrary.fFound;
+}
+
 void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     int y;
     Uint64 msStart = SDL_GetTicks();
@@ -1155,8 +1219,11 @@ int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
 
 void RefreshLibraryGames(HWND hwnd) {
     HWND hwndList;
+    char szLabel[320];
     int16_t fLibrary;
     int16_t fEnumerated;
+    int16_t fContinue;
+    LRESULT iContinue;
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (!hwndList) return;
     SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
@@ -1167,6 +1234,49 @@ void RefreshLibraryGames(HWND hwnd) {
     }
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     EnableWindow(rghwndBtnSplash[1], SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    fContinue = FFindContinueLibraryGame() && continueLibrary.iPlayer >= 0;
+    if (fContinue && !continueLibrary.fTurnAvailable) {
+        CchSnprintf(szLabel, sizeof(szLabel), "%s - Player ", continueLibrary.szName);
+        iContinue = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szLabel);
+        fContinue = iContinue != LB_ERR;
+    }
+    if (fContinue) {
+        CchSnprintf(szLabel, sizeof(szLabel), continueLibrary.fTurnAvailable ?
+                    "Continue: %s — Player %d (%d)" : "Continue: %s — Choose Player",
+                    continueLibrary.szName, continueLibrary.iPlayer + 1, continueLibrary.iYear);
+        SetWindowText(rghwndBtnSplash[2], szLabel);
+        EnableWindow(rghwndBtnSplash[2], TRUE);
+    } else {
+        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsNewGame + 2));
+        EnableWindow(rghwndBtnSplash[2], FALSE);
+    }
+}
+
+int16_t FContinueLibraryGame(HWND hwnd) {
+    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    char szFile[512], szSearch[320];
+    LRESULT i;
+    int32_t lidGame;
+    uint16_t turn;
+    int16_t fMulti;
+
+    if (!FFindContinueLibraryGame()) return FALSE;
+    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep,
+                continueLibrary.szName, szDirSep, continueLibrary.szName, continueLibrary.iPlayer + 1);
+    if (FInspectImportFile(szFile, dtTurn, continueLibrary.iPlayer, &lidGame, &turn, &fMulti)) {
+        strcpy(szBase, szFile);
+        ini.fStartupFile = TRUE;
+        return TRUE;
+    }
+
+    // The remembered turn may have been removed after a newer game import.
+    // Select this game's available player rows so the user chooses explicitly.
+    CchSnprintf(szSearch, sizeof(szSearch), "%s - Player ", continueLibrary.szName);
+    i = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szSearch);
+    if (i == LB_ERR) return FALSE;
+    SendMessage(hwndList, LB_SETCURSEL, i, 0);
+    SetFocus(hwndList);
+    return FALSE;
 }
 
 int16_t FSelectLibraryGame(HWND hwnd) {
