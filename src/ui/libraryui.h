@@ -19,6 +19,7 @@ int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
 void InitLibraryGames(HWND hwnd, const RECT *lprc);
 void RefreshLibraryGames(HWND hwnd);
 int16_t FSelectLibraryGame(HWND hwnd);
+int16_t FContinueLibraryGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);

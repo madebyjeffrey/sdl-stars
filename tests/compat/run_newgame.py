@@ -29,7 +29,10 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
         subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
         return
     for key in ('STARS_CLIENT_CONTINUE', 'STARS_CLIENT_NEW_GAME',
-                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN'):
+                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN',
+                'STARS_CLIENT_LIBRARY_OPEN_PLAYER', 'STARS_CLIENT_EXPECT_PLAYER',
+                'STARS_CLIENT_EXPECT_SELECTOR', 'STARS_CLIENT_EXPECT_CONTINUE_DISABLED',
+                'STARS_CLIENT_SWITCH_CANCEL_TEST'):
         env.pop(key, None)
     env.update(choices)
     cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
@@ -114,6 +117,24 @@ def main():
         assert {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()} == original
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2')
+        metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
+        assert metadata[2] == '1'
+        turn_before = (imported / 'managed-copy.m2').read_bytes()
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2',
+            STARS_CLIENT_SWITCH_CANCEL_TEST='1')
+        assert (imported / '.library').read_text(encoding='utf-8').splitlines()[2] == '1'
+        assert (imported / 'managed-copy.m2').read_bytes() == turn_before
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_PLAYER='2')
+        (imported / 'managed-copy.m2').unlink()
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_SELECTOR='1')
+        (imported / 'managed-copy.m1').unlink()
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_CONTINUE_DISABLED='1')
 
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)

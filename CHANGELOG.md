@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Continue now identifies and resumes the most recently played managed game
+  and its remembered player. If that turn is unavailable, it selects the same
+  game's player list so the user can choose another available turn. Returning
+  to the title screen keeps the existing Save / Don't Save / Save & Submit
+  choices; canceling the prompt leaves the active player loaded. Game-file
+  formats and simulation behavior are unchanged.
+
 - Race designs can now be duplicated to the next free `.rN` filename, exported
   as ordinary race files, and deleted after a confirmation naming the selected
   design. Export validates the copied file and retains its existing checksum
