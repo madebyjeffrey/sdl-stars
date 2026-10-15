@@ -1320,6 +1320,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     BYTE *rgb;
     size_t cb, i;
     int iButton;
+    int16_t fImported;
+    int iTarget, c;
+    HWND hwndList, hwndListTarget;
+    char szFind[320], szName[256];
+    const char *pszExpected, *pszTarget, *pszYear;
     SDL_Event event = {0};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
@@ -1546,26 +1551,29 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
     if (getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
-        const char *pszExpected = getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
+        pszExpected = getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
         if (iImportUpdateStage == 0) {
-            int16_t fImported;
             if (!IsWindowVisible(hwndTitle)) return;
             iImportUpdateStage = 1;
             cAlerts = 0;
             fImported = FImportLibraryGame(hwndTitle, getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
             fPassed = pszExpected && ((!strcmp(pszExpected, "fail") && !fImported && cAlerts > 0) ||
-                ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later")) && fImported && cAlerts == 0));
-            if (fPassed && !strcmp(pszExpected, "later")) {
-                char szFind[320];
-                HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-                const char *pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later") ||
+                  !strcmp(pszExpected, "adjacent")) && fImported && cAlerts == 0) ||
+                (!strcmp(pszExpected, "cancel") && !fImported && cAlerts == 0));
+            if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
+                pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";
+                hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 RefreshLibraryGames(hwndTitle);
-                CchSnprintf(szFind, sizeof(szFind), "%s - Player 1 (2425)", pszTarget);
+                CchSnprintf(szFind, sizeof(szFind), "%s - Player 1 (%s)", pszTarget, pszYear);
                 fPassed = pszTarget && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
                 CchSnprintf(szFind, sizeof(szFind), "%s - Player 2 (2400)", pszTarget);
                 fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
-                fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1,
-                    (LPARAM)"managed-copy - Player 1 (2400)") != LB_ERR;
+                if (!strcmp(pszExpected, "later")) {
+                    fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1,
+                        (LPARAM)"managed-copy - Player 1 (2408)") != LB_ERR;
+                }
             }
             fChecked = TRUE;
             PostQuitMessage(fPassed ? 0 : 93);
@@ -1574,20 +1582,17 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iImportUpdateStage == 1) {
             for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
-                {
-                    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
-                    const char *pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
-                    char szName[256];
-                    int i, c = (int)SendMessage(hwndList, LB_GETCOUNT, 0, 0);
-                    for (i = 0; i < c; i++) {
-                        SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
-                        if (pszTarget && !strcmp(pszTarget, szName)) break;
-                    }
-                    if (i == c) { FPushClick(GetDlgItem(hwnd, IDCANCEL)); return; }
-                    SendMessage(hwndList, LB_SETCURSEL, i, 0);
-                    FPushClick(GetDlgItem(hwnd, IDOK));
-                    return;
+                hwndListTarget = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                c = (int)SendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
+                for (iTarget = 0; iTarget < c; iTarget++) {
+                    SendMessage(hwndListTarget, LB_GETTEXT, iTarget, (LPARAM)szName);
+                    if (pszTarget && !strcmp(pszTarget, szName)) break;
                 }
+                if (iTarget == c) { FPushClick(GetDlgItem(hwnd, IDCANCEL)); return; }
+                SendMessage(hwndListTarget, LB_SETCURSEL, iTarget, 0);
+                FPushClick(GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
+                return;
             }
         }
         return;
