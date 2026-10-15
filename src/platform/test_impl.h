@@ -54,6 +54,12 @@
 #ifndef STARS_TEST_IMPL_MessageBoxA
 #define STARS_TEST_IMPL_MessageBoxA MessageBoxA
 #endif
+#ifndef STARS_TEST_IMPL_RemoveNativeFile
+#define STARS_TEST_IMPL_RemoveNativeFile RemoveNativeFile
+#endif
+#ifndef STARS_TEST_IMPL_ReplaceNativeFile
+#define STARS_TEST_IMPL_ReplaceNativeFile ReplaceNativeFile
+#endif
 #ifndef STARS_TEST_IMPL_IChooseWindowsFile
 #define STARS_TEST_IMPL_IChooseWindowsFile IChooseWindowsFile
 #endif

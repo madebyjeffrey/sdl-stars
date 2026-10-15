@@ -398,7 +398,7 @@ int16_t FEnsureNativeDir(const char *pszDir) {
 }
 
 
-int RemoveNativeFile(const char *psz) {
+int STARS_TEST_IMPL(RemoveNativeFile)(const char *psz) {
     wchar_t *pwsz = LpwszNativePath(psz);
     int result;
     if (!pwsz) return -1;
@@ -414,7 +414,7 @@ int RemoveNativePath(const char *psz) {
 }
 
 // Metadata replacement must preserve the old file if installing the new one fails.
-int ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+int STARS_TEST_IMPL(ReplaceNativeFile)(const char *pszOld, const char *pszNew) {
     wchar_t *pwszOld = LpwszNativePath(pszOld), *pwszNew;
     int result;
     if (!pwszOld) return -1;
@@ -573,9 +573,9 @@ int16_t FEnsureNativeDir(const char *pszDir) {
     return TRUE;
 }
 
-int RemoveNativeFile(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
+int STARS_TEST_IMPL(RemoveNativeFile)(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
 int RemoveNativePath(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
-int ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+int STARS_TEST_IMPL(ReplaceNativeFile)(const char *pszOld, const char *pszNew) {
     return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
 }
 int RenameNativeFile(const char *pszOld, const char *pszNew) {

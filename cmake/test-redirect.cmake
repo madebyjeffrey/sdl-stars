@@ -76,7 +76,7 @@ endfunction()
 function(stars_test_apply_redirect target)
     set(STARS_TEST_REDIRECT_LIBRARIES stars_core stars-ui-compat-check stars_win32
         stars_filedialog_windows stars_compat_platform)
-    set(implementation_hooks AlertSz Random PctPlanetCapacity WriteRt FCreateFile
+    set(implementation_hooks AlertSz Random PctPlanetCapacity WriteRt FCreateFile RemoveNativeFile ReplaceNativeFile
         ReadRt StreamOpen StreamClose DirtyGame InitInstance PromptPassword
         NewGameWizard FNativeSaveFileName TrackPopupMenu MessageBoxA IChooseWindowsFile
         FPromptLegacyRacePassword FNativeOpenFileName)

@@ -12,6 +12,56 @@ char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
     return SDL_GetPrefPath(pszOrg, pszApp);
 }
 
+static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource, *pfTarget;
+    unsigned char rgb[4096];
+    size_t cb;
+    BOOL fOkay;
+    pfSource = fopen(pszSource, "rb");
+    if (!pfSource) return FALSE;
+    pfTarget = fopen(pszTarget, "wb");
+    if (!pfTarget) { fclose(pfSource); return FALSE; }
+    fOkay = TRUE;
+    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0)
+        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
+    if (ferror(pfSource)) fOkay = FALSE;
+    if (fclose(pfSource) != 0) fOkay = FALSE;
+    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    return fOkay;
+}
+
+static BOOL FTestWriteFile(const char *pszFile, const char *pszText) {
+    FILE *pf;
+    size_t cbText = strlen(pszText);
+    BOOL fOkay;
+    pf = fopen(pszFile, "wb");
+    if (!pf) return FALSE;
+    fOkay = fwrite(pszText, 1, cbText, pf) == cbText;
+    if (fclose(pf) != 0) fOkay = FALSE;
+    return fOkay;
+}
+
+static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
+    FILE *pfFile1, *pfFile2;
+    unsigned char rgb1[4096], rgb2[4096];
+    size_t cb1, cb2;
+    BOOL fEqual;
+    pfFile1 = fopen(pszFile1, "rb");
+    if (!pfFile1) return FALSE;
+    pfFile2 = fopen(pszFile2, "rb");
+    if (!pfFile2) { fclose(pfFile1); return FALSE; }
+    fEqual = TRUE;
+    do {
+        cb1 = fread(rgb1, 1, sizeof(rgb1), pfFile1);
+        cb2 = fread(rgb2, 1, sizeof(rgb2), pfFile2);
+        if (cb1 != cb2 || memcmp(rgb1, rgb2, cb1) != 0) { fEqual = FALSE; break; }
+    } while (cb1 != 0);
+    if (ferror(pfFile1) || ferror(pfFile2)) fEqual = FALSE;
+    if (fclose(pfFile1) != 0) fEqual = FALSE;
+    if (fclose(pfFile2) != 0) fEqual = FALSE;
+    return fEqual;
+}
+
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
@@ -34,6 +84,11 @@ static uint16_t icksumRaceLibrary;
 static uint16_t icksRaceLibraryOriginal;
 static uint16_t icksRaceSaveStage;
 static uint16_t icksRaceImportStage;
+static int cRaceDeleteR2;
+static BOOL fFailRaceDelete;
+static BOOL fFailRaceExportReplace;
+static BOOL fExpectRaceExportFailureAlert;
+static char szRaceExportFailTarget[512];
 static GAME gameImportSav;
 static int16_t idPlayerImportSav;
 static char szBaseImportSav[256];
@@ -1195,6 +1250,8 @@ static BOOL FCheckGameplayWorkflows(void) {
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
+    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
+    if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
@@ -1208,11 +1265,44 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     return IDOK;
 }
 
+int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+    (void)hwnd; (void)pszCaption;
+    if (pszText && strstr(pszText, "Delete the managed race design Managed.r2?") && (type & MB_YESNO))
+        return cRaceDeleteR2++ == 0 ? IDNO : IDYES;
+    if (pszText && strstr(pszText, "Delete the managed race design Managed.r3?") && (type & MB_YESNO)) {
+        fFailRaceDelete = TRUE;
+        return IDYES;
+    }
+    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
+}
+
+int StarsTestReal_RemoveNativeFile(const char *pszFile);
+int StarsTest_RemoveNativeFile(const char *pszFile) {
+    if (fFailRaceDelete) {
+        fFailRaceDelete = FALSE;
+        return -1;
+    }
+    return StarsTestReal_RemoveNativeFile(pszFile);
+}
+
+int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
+int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+    if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
+        fFailRaceExportReplace = FALSE;
+        return -1;
+    }
+    return StarsTestReal_ReplaceNativeFile(pszOld, pszNew);
+}
+
 #include "win32_newgame_workflow.h"
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
-    char szRaceName[256];
+    char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];
+    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *pszRaceSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
+    const char *pszRaceSnapshot = getenv("STARS_CLIENT_RACE_IMPORT_SNAPSHOT");
     const char *pszCapture = getenv("STARS_CLIENT_CAPTURE");
     const char *pszWizardCapture = getenv("STARS_CLIENT_WIZARD_CAPTURE");
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
@@ -1265,6 +1355,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 3) {
             if (!IsWindowVisible(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
+            CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
+            if (!FTestCopyFile(szManaged, pszRaceSource) || !FTestCopyFile(pszRaceSource, pszRaceSnapshot)) goto LDone;
             if (!FSaveLibraryRace(hwndTitle, "Managed.r1.pending.r1", &vplr)) goto LDone;
             icksRaceSaveStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksRaceSaveStage) goto LDone;
@@ -1319,7 +1411,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
                 FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
                 FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
-                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1")) goto LDone;
+                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1") ||
+                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "managed.R1")) goto LDone;
             if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
             icksRaceImportStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
@@ -1352,9 +1445,40 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 !FSelectClientRaceName(hwndTitle, "Imported.r2") || !FSelectLibraryRace(hwndTitle, szRaceName) ||
                 strcmp(szRaceName, "Imported.r2") || !FLoadLibraryRace(hwndTitle, szRaceName) || !IRaceChecksum(&vplr) ||
                 !FLoadLibraryRace(hwndTitle, "Imported.r2.pending.r1") || IRaceChecksum(&vplr) != icksRaceImportStage) goto LDone;
+            if (!FDuplicateLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
+            if (!FDuplicateLibraryRace(hwndTitle, "Managed.r2")) goto LDone;
+            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export.r1", pszSettings, szDirSep, szDirSep);
+            if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
+            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
+            if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
+            if (!FExportLibraryRace(hwndTitle, "Managed.r1", szExport) ||
+                !FLoadLibraryRace(hwndTitle, "Managed.r1") || !FLoadLibraryRace(hwndTitle, "managed-export.r1")) goto LDone;
+            if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
+            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(szExportSnapshot, sizeof(szExportSnapshot), "%s%sRace Designs%smanaged-export-failure.snapshot", pszSettings, szDirSep, szDirSep);
+            if (!FTestWriteFile(szExport, "preserve prior export") || !FTestCopyFile(szExport, szExportSnapshot)) goto LDone;
+            CchSnprintf(szRaceExportFailTarget, sizeof(szRaceExportFailTarget), "%s", szExport);
+            fFailRaceExportReplace = TRUE;
+            fExpectRaceExportFailureAlert = TRUE;
+            if (FExportLibraryRace(hwndTitle, "Managed.r1", szExport)) {
+                fExpectRaceExportFailureAlert = FALSE;
+                goto LDone;
+            }
+            fExpectRaceExportFailureAlert = FALSE;
+            if (fFailRaceExportReplace || !FTestFilesEqual(szExport, szExportSnapshot)) goto LDone;
+            CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
+            if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &(int64_t){0}) ||
+                !FNativeFileSize(szExport, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
+            if (FDeleteLibraryRace(hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &(int64_t){0}) ||
+                !FNativeFileSize(szDuplicate, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
+            if (!FDeleteLibraryRace(hwndTitle, "Managed.r2") || FNativeFileSize(szDuplicate, &(int64_t){0}) ||
+                !FNativeFileSize(szExport, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
             fChecked = TRUE;
             fPassed = TRUE;
-            puts("Managed race created, edited, cancelled, imported through the wizard, and reloaded");
+            puts("Managed race created, edited, cancelled, imported, duplicated, exported, and reloaded");
             PostQuitMessage(0);
             return;
         }
