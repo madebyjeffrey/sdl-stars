@@ -115,6 +115,64 @@ def main():
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
 
+        # An identical turn is a no-op; a later standalone turn updates only
+        # its player and retires that player's saved orders.
+        orders = imported / 'managed-copy.x1'
+        orders.write_bytes(b'old player orders')
+        later_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '025' / 'game.m1'
+        later_turn_original = later_turn.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+        assert orders.read_bytes() == b'old player orders'
+
+        duplicate = work / 'library' / 'Games' / 'managed-copy-duplicate'
+        shutil.copytree(imported, duplicate)
+        for path in list(duplicate.rglob('*')):
+            if path.is_file() and path.name.startswith('managed-copy'):
+                path.rename(path.with_name(path.name.replace('managed-copy', 'managed-copy-duplicate', 1)))
+        metadata_path = duplicate / '.library'
+        metadata = metadata_path.read_text(encoding='utf-8').splitlines()
+        metadata[1] = 'managed-copy-duplicate'
+        metadata_path.write_text('\n'.join(metadata) + '\n', encoding='utf-8')
+        duplicate_orders = duplicate / 'managed-copy-duplicate.x1'
+        duplicate_orders.write_bytes(b'old duplicate orders')
+        history = duplicate / 'managed-copy-duplicate.h1'
+        history.write_bytes(b'preserve player history')
+        backup = duplicate / 'backup.000' / 'managed-copy-duplicate.m1'
+        backup_before = backup.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='later', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == later_turn.read_bytes()
+        assert not duplicate_orders.exists()
+        assert history.read_bytes() == b'preserve player history'
+        assert backup.read_bytes() == backup_before
+        assert (duplicate / 'managed-copy-duplicate.m2').read_bytes() == (source / 'exchange.m2').read_bytes()
+        assert (imported / 'managed-copy.m1').read_bytes() == (source / 'exchange.m1').read_bytes()
+        assert orders.read_bytes() == b'old player orders'
+
+        failed_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '050' / 'game.m1'
+        duplicate_orders.write_bytes(b'orders survive staged install failure')
+        before_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+
+        same_year_turn = work / 'changed-same-year.m1'
+        changed_same_year = bytearray(later_turn_original)
+        changed_same_year[25] ^= 1
+        same_year_turn.write_bytes(changed_same_year)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(same_year_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        older_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000' / 'game.m1'
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(older_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert (source / 'exchange.m1').read_bytes() == original[source.joinpath('exchange.m1').relative_to(source)]
+        assert later_turn.read_bytes() == later_turn_original
+
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)
         turn = bad_source / 'exchange.m2'
