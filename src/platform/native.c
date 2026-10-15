@@ -398,7 +398,7 @@ int16_t FEnsureNativeDir(const char *pszDir) {
 }
 
 
-int RemoveNativeFile(const char *psz) {
+int STARS_TEST_IMPL(RemoveNativeFile)(const char *psz) {
     wchar_t *pwsz = LpwszNativePath(psz);
     int result;
     if (!pwsz) return -1;
@@ -573,7 +573,7 @@ int16_t FEnsureNativeDir(const char *pszDir) {
     return TRUE;
 }
 
-int RemoveNativeFile(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
+int STARS_TEST_IMPL(RemoveNativeFile)(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
 int RemoveNativePath(const char *psz) { return FNativePath(psz) ? remove(psz) : -1; }
 int ReplaceNativeFile(const char *pszOld, const char *pszNew) {
     return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
