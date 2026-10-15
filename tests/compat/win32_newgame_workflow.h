@@ -18,11 +18,17 @@ int16_t StarsTestReal_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase);
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
     const char *pszFailure = getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
+    int16_t fCreated;
     if (fCreatingGame && dt == dtFailure && pszFailure) {
         SetSzWorkFromDt(dt, iplr);
         if (!SDL_CreateDirectory(szWork)) return FALSE;
     }
-    return StarsTestReal_FCreateFile(dt, iplr, pszBase);
+    fCreated = StarsTestReal_FCreateFile(dt, iplr, pszBase);
+    if (getenv("STARS_CLIENT_SWITCH_CHOICE") && fCreated) {
+        if (dt == dtLog) cSwitchLogWrites++;
+        if (dt == dtHist) cSwitchHistoryWrites++;
+    }
+    return fCreated;
 }
 
 static BOOL FCheckNewGameWorkflow(void) {

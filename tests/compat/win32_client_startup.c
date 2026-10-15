@@ -86,6 +86,7 @@ static BOOL FTestLibraryTimestamp(long long *plPlayed) {
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static BOOL fSwitchCancelSent;
+static int cSwitchLogWrites, cSwitchHistoryWrites;
 static int cAlerts;
 static UINT_PTR idTimer;
 static int iStage, cWait;
@@ -390,6 +391,15 @@ int16_t StarsTest_PromptPassword(void) {
 
 INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
+    if (pszChoice && message == WM_INITDIALOG) {
+        if (!strcmp(pszChoice, "save")) EndDialog(hwnd, 1);
+        else if (!strcmp(pszChoice, "discard")) EndDialog(hwnd, 2);
+        else if (!strcmp(pszChoice, "submit")) EndDialog(hwnd, -1);
+        else if (!strcmp(pszChoice, "cancel")) EndDialog(hwnd, -2);
+        else return 0;
+        return 1;
+    }
     if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST") && message == WM_INITDIALOG) {
         fSwitchCancelSent = TRUE;
         EndDialog(hwnd, -2);
@@ -1599,10 +1609,29 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
+        if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
+            HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
+            int iRow;
+            char szRow[320];
+            for (iRow = 0; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
+                if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
+                    strncmp(szRow, pszName, strlen(pszName)) || szRow[strlen(pszName)] != ' ' ||
+                    SendMessage(hwndList, LB_GETITEMDATA, iRow, 0) != 0) continue;
+                SendMessage(hwndList, LB_SETCURSEL, iRow, 0);
+                iStage = 21;
+                if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+                return;
+            }
+            goto LDone;
+        }
         if (IsWindow(hwndTitle)) return;
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
-        if (getenv("STARS_CLIENT_EXPECT_PLAYER") &&
-            idPlayer != atoi(getenv("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
+        if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
+            const char *pszExpected = getenv("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");
+            if (pszExpected && idPlayer != atoi(pszExpected) - 1) goto LDone;
+        } else if (getenv("STARS_CLIENT_EXPECT_PLAYER") &&
+                   idPlayer != atoi(getenv("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
         if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST")) {
             int16_t idPlayerBefore = idPlayer;
             uint16_t turnBefore = game.turn;
@@ -1615,6 +1644,29 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 lPlayedAfter != lPlayedBefore) goto LDone;
             fPassed = TRUE;
             puts("Canceling a player switch keeps the active player turn loaded");
+            PostQuitMessage(0);
+            return;
+        }
+        if (getenv("STARS_CLIENT_SWITCH_CHOICE")) {
+            const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
+            int fSave = !strcmp(pszChoice, "save") || !strcmp(pszChoice, "submit");
+            int fSubmit = !strcmp(pszChoice, "submit");
+            if (iStage != 21) {
+                cSwitchLogWrites = 0;
+                cSwitchHistoryWrites = 0;
+                game.fDirty = TRUE;
+                gd.fSubmit = FALSE;
+                SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                if (!IsWindow(hwndTitle) || idPlayer != iplrNone || game.fDirty ||
+                    cSwitchLogWrites != fSave || cSwitchHistoryWrites != fSave || gd.fSubmit != fSubmit)
+                    goto LDone;
+                iStage = 20;
+                return;
+            }
+            if (!lpPlanets || idPlayer != 0) goto LDone;
+            fPassed = TRUE;
+            printf("Switch prompt %s %s log and history; switched to Player 1\n", pszChoice,
+                   fSave ? "saved" : "discarded");
             PostQuitMessage(0);
             return;
         }
@@ -1802,8 +1854,19 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
            lpTitle->lpCanvas->w, lpTitle->lpCanvas->h, SDL_GetRendererName(lpTitle->lpRenderer));
     if (pszContinue && getenv("STARS_CLIENT_EXPECT_PLAYER")) {
         char szContinue[320];
+        const char *pszGame = getenv("STARS_CLIENT_EXPECT_CONTINUE_GAME");
+        const char *pszYear = getenv("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
+        char szPlayer[32];
         GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
-        if (!strstr(szContinue, "Continue: managed-copy") || !strstr(szContinue, "Player 2")) goto LDone;
+        if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
+        CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
+                    getenv("STARS_CLIENT_EXPECT_PLAYER") ? getenv("STARS_CLIENT_EXPECT_PLAYER") : "2");
+        if (!strstr(szContinue, szPlayer)) goto LDone;
+        if (pszYear) {
+            char szYear[32];
+            CchSnprintf(szYear, sizeof(szYear), "(%s)", pszYear);
+            if (!strstr(szContinue, szYear)) goto LDone;
+        }
     }
     if (pszContinue && getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
         if (IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
@@ -1856,7 +1919,8 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) fPassed = FALSE;
+        !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
+        !getenv("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
