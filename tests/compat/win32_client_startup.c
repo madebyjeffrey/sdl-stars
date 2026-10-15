@@ -12,6 +12,45 @@ char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
     return SDL_GetPrefPath(pszOrg, pszApp);
 }
 
+static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource, *pfTarget;
+    unsigned char rgb[4096];
+    size_t cb;
+    BOOL fOkay;
+    pfSource = fopen(pszSource, "rb");
+    if (!pfSource) return FALSE;
+    pfTarget = fopen(pszTarget, "wb");
+    if (!pfTarget) { fclose(pfSource); return FALSE; }
+    fOkay = TRUE;
+    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0)
+        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
+    if (ferror(pfSource)) fOkay = FALSE;
+    if (fclose(pfSource) != 0) fOkay = FALSE;
+    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    return fOkay;
+}
+
+static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
+    FILE *pfFile1, *pfFile2;
+    unsigned char rgb1[4096], rgb2[4096];
+    size_t cb1, cb2;
+    BOOL fEqual;
+    pfFile1 = fopen(pszFile1, "rb");
+    if (!pfFile1) return FALSE;
+    pfFile2 = fopen(pszFile2, "rb");
+    if (!pfFile2) { fclose(pfFile1); return FALSE; }
+    fEqual = TRUE;
+    do {
+        cb1 = fread(rgb1, 1, sizeof(rgb1), pfFile1);
+        cb2 = fread(rgb2, 1, sizeof(rgb2), pfFile2);
+        if (cb1 != cb2 || memcmp(rgb1, rgb2, cb1) != 0) { fEqual = FALSE; break; }
+    } while (cb1 != 0);
+    if (ferror(pfFile1) || ferror(pfFile2)) fEqual = FALSE;
+    if (fclose(pfFile1) != 0) fEqual = FALSE;
+    if (fclose(pfFile2) != 0) fEqual = FALSE;
+    return fEqual;
+}
+
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
@@ -1240,9 +1279,6 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszSettings = getenv("STARS_SETTINGS_DIR");
     const char *pszRaceSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszRaceSnapshot = getenv("STARS_CLIENT_RACE_IMPORT_SNAPSHOT");
-    FILE *pfManaged, *pfDuplicate, *pfExport, *pfSource, *pfRaceSnapshot;
-    int chManaged, chDuplicate, chExport;
-    int ch;
     const char *pszCapture = getenv("STARS_CLIENT_CAPTURE");
     const char *pszWizardCapture = getenv("STARS_CLIENT_WIZARD_CAPTURE");
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
@@ -1296,14 +1332,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!IsWindowVisible(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1")) goto LDone;
             CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
-            pfSource = fopen(pszRaceSource, "wb"); pfManaged = fopen(szManaged, "rb");
-            if (!pfSource || !pfManaged) goto LDone;
-            while ((ch = fgetc(pfManaged)) != EOF) if (fputc(ch, pfSource) == EOF) goto LDone;
-            fclose(pfManaged); fclose(pfSource);
-            pfSource = fopen(pszRaceSource, "rb"); pfRaceSnapshot = fopen(pszRaceSnapshot, "wb");
-            if (!pfSource || !pfRaceSnapshot) goto LDone;
-            while ((ch = fgetc(pfSource)) != EOF) if (fputc(ch, pfRaceSnapshot) == EOF) goto LDone;
-            fclose(pfSource); fclose(pfRaceSnapshot);
+            if (!FTestCopyFile(szManaged, pszRaceSource) || !FTestCopyFile(pszRaceSource, pszRaceSnapshot)) goto LDone;
             if (!FSaveLibraryRace(hwndTitle, "Managed.r1.pending.r1", &vplr)) goto LDone;
             icksRaceSaveStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksRaceSaveStage) goto LDone;
@@ -1397,21 +1426,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%sManaged.r1", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export.r1", pszSettings, szDirSep, szDirSep);
-            pfManaged = fopen(szManaged, "rb"); pfDuplicate = fopen(szDuplicate, "rb");
-            if (!pfManaged || !pfDuplicate) goto LDone;
-            do { chManaged = fgetc(pfManaged); chDuplicate = fgetc(pfDuplicate); if (chManaged != chDuplicate) goto LDone; } while (chManaged != EOF);
-            fclose(pfManaged); fclose(pfDuplicate);
+            if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
-            pfManaged = fopen(szManaged, "rb"); pfDuplicate = fopen(szDuplicate, "rb");
-            if (!pfManaged || !pfDuplicate) goto LDone;
-            do { chManaged = fgetc(pfManaged); chDuplicate = fgetc(pfDuplicate); if (chManaged != chDuplicate) goto LDone; } while (chManaged != EOF);
-            fclose(pfManaged); fclose(pfDuplicate);
+            if (!FTestFilesEqual(szManaged, szDuplicate)) goto LDone;
             if (!FExportLibraryRace(hwndTitle, "Managed.r1", szExport) ||
                 !FLoadLibraryRace(hwndTitle, "Managed.r1") || !FLoadLibraryRace(hwndTitle, "managed-export.r1")) goto LDone;
-            pfManaged = fopen(szManaged, "rb"); pfExport = fopen(szExport, "rb");
-            if (!pfManaged || !pfExport) goto LDone;
-            do { chManaged = fgetc(pfManaged); chExport = fgetc(pfExport); if (chManaged != chExport) goto LDone; } while (chManaged != EOF);
-            fclose(pfManaged); fclose(pfExport);
+            if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &(int64_t){0}) ||
