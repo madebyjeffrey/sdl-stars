@@ -9,7 +9,8 @@ produce different results from a 2.6j host for the same turn.
 - Race designs can now be duplicated to the next free `.rN` filename, exported
   as ordinary race files, and deleted after a confirmation naming the selected
   design. Export validates the copied file and retains its existing checksum
-  and password data; cancelling deletion leaves the managed design in place.
+  and password data; failed exports preserve any existing destination, and
+  cancelling deletion leaves the managed design in place.
   Game behavior and record layouts are unchanged.
 
 - The desktop title screen now manages race designs in a separate Race Designs

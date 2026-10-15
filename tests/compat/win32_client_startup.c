@@ -30,6 +30,17 @@ static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
     return fOkay;
 }
 
+static BOOL FTestWriteFile(const char *pszFile, const char *pszText) {
+    FILE *pf;
+    size_t cbText = strlen(pszText);
+    BOOL fOkay;
+    pf = fopen(pszFile, "wb");
+    if (!pf) return FALSE;
+    fOkay = fwrite(pszText, 1, cbText, pf) == cbText;
+    if (fclose(pf) != 0) fOkay = FALSE;
+    return fOkay;
+}
+
 static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     FILE *pfFile1, *pfFile2;
     unsigned char rgb1[4096], rgb2[4096];
@@ -75,6 +86,9 @@ static uint16_t icksRaceSaveStage;
 static uint16_t icksRaceImportStage;
 static int cRaceDeleteR2;
 static BOOL fFailRaceDelete;
+static BOOL fFailRaceExportReplace;
+static BOOL fExpectRaceExportFailureAlert;
+static char szRaceExportFailTarget[512];
 static GAME gameImportSav;
 static int16_t idPlayerImportSav;
 static char szBaseImportSav[256];
@@ -1237,6 +1251,7 @@ static BOOL FCheckGameplayWorkflows(void) {
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
+    if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
@@ -1271,11 +1286,20 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
     return StarsTestReal_RemoveNativeFile(pszFile);
 }
 
+int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
+int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+    if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
+        fFailRaceExportReplace = FALSE;
+        return -1;
+    }
+    return StarsTestReal_ReplaceNativeFile(pszOld, pszNew);
+}
+
 #include "win32_newgame_workflow.h"
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
-    char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512];
+    char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];
     const char *pszSettings = getenv("STARS_SETTINGS_DIR");
     const char *pszRaceSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszRaceSnapshot = getenv("STARS_CLIENT_RACE_IMPORT_SNAPSHOT");
@@ -1432,6 +1456,18 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FExportLibraryRace(hwndTitle, "Managed.r1", szExport) ||
                 !FLoadLibraryRace(hwndTitle, "Managed.r1") || !FLoadLibraryRace(hwndTitle, "managed-export.r1")) goto LDone;
             if (!FTestFilesEqual(szManaged, szExport)) goto LDone;
+            CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%smanaged-export-failure.r1", pszSettings, szDirSep, szDirSep);
+            CchSnprintf(szExportSnapshot, sizeof(szExportSnapshot), "%s%sRace Designs%smanaged-export-failure.snapshot", pszSettings, szDirSep, szDirSep);
+            if (!FTestWriteFile(szExport, "preserve prior export") || !FTestCopyFile(szExport, szExportSnapshot)) goto LDone;
+            CchSnprintf(szRaceExportFailTarget, sizeof(szRaceExportFailTarget), "%s", szExport);
+            fFailRaceExportReplace = TRUE;
+            fExpectRaceExportFailureAlert = TRUE;
+            if (FExportLibraryRace(hwndTitle, "Managed.r1", szExport)) {
+                fExpectRaceExportFailureAlert = FALSE;
+                goto LDone;
+            }
+            fExpectRaceExportFailureAlert = FALSE;
+            if (fFailRaceExportReplace || !FTestFilesEqual(szExport, szExportSnapshot)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
             if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &(int64_t){0}) ||

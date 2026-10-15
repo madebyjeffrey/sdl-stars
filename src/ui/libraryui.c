@@ -1,6 +1,7 @@
 #include "win.h"
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
+#include <errno.h>
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
  * is listed only after its complete generated family and metadata are saved. */
@@ -384,24 +385,73 @@ typedef struct {
     int16_t fCopy;
 } LIBRARYIMPORT;
 
-static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
-    FILE *pfSource, *pfTarget;
+static int16_t FCopyNativeFileContents(FILE *pfSource, FILE *pfTarget) {
     char rgb[8192];
     size_t cb;
+    int fOkay;
+
+    fOkay = TRUE;
+    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0) {
+        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
+    }
+    if (ferror(pfSource)) fOkay = FALSE;
+    if (fclose(pfSource) != 0) fOkay = FALSE;
+    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    return fOkay;
+}
+
+static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource, *pfTarget;
     int fOkay;
 
     pfSource = PfOpenNativeFile(pszSource, "rb");
     if (!pfSource) return FALSE;
     pfTarget = PfOpenNativeFile(pszTarget, "wb");
     if (!pfTarget) { fclose(pfSource); return FALSE; }
-    fOkay = TRUE;
-    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
-    }
-    if (ferror(pfSource) || fclose(pfSource) != 0) fOkay = FALSE;
-    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    fOkay = FCopyNativeFileContents(pfSource, pfTarget);
     if (!fOkay) RemoveNativeFile(pszTarget);
     return fOkay;
+}
+
+static int16_t FCopyNativeFileExclusive(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource, *pfTarget;
+    int iErrno;
+    int fOkay;
+
+    pfSource = PfOpenNativeFile(pszSource, "rb");
+    if (!pfSource) return FALSE;
+    pfTarget = PfOpenNativeFile(pszTarget, "wbx");
+    if (!pfTarget) {
+        iErrno = errno;
+        fclose(pfSource);
+        errno = iErrno;
+        return FALSE;
+    }
+    fOkay = FCopyNativeFileContents(pfSource, pfTarget);
+    if (!fOkay) RemoveNativeFile(pszTarget);
+    return fOkay;
+}
+
+static int16_t FCopyRaceExport(const char *pszSource, const char *pszTarget,
+                               char *pszTemp, size_t cchTemp) {
+    const char *pchSlash;
+    size_t cchDirectory;
+    uint32_t dwTick;
+    int i, cch;
+
+    pchSlash = strrchr(pszTarget, chDirSep);
+    cchDirectory = pchSlash ? (size_t)(pchSlash - pszTarget) + 1 : 0;
+    if (cchDirectory > INT_MAX) return FALSE;
+    dwTick = DwTickCount();
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszTemp, cchTemp, "%.*s.stars-race-export-%u-%u.tmp",
+                          (int)cchDirectory, pszTarget, dwTick, idRaceStage++);
+        if (cch <= 0 || (size_t)cch >= cchTemp) return FALSE;
+        errno = 0;
+        if (FCopyNativeFileExclusive(pszSource, pszTemp)) return TRUE;
+        if (errno != EEXIST) return FALSE;
+    }
+    return FALSE;
 }
 
 int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
@@ -530,7 +580,7 @@ int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName) {
 
 int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget) {
     OPENFILENAME ofn;
-    char szSource[512], szTarget[512], szValidate[512];
+    char szSource[512], szTarget[512], szTemp[512], szValidate[512];
     RACESTATE rsSav;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
@@ -553,14 +603,14 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
         if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (!FCopyNativeFile(szSource, pszTarget)) {
+    if (!FCopyRaceExport(szSource, pszTarget, szTemp, sizeof(szTemp))) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
         return FALSE;
     }
-    CchSnprintf(szValidate, sizeof(szValidate), "%s", pszTarget);
-    if (!FWasRaceFile(szValidate, TRUE)) {
-        RemoveNativeFile(pszTarget);
+    CchSnprintf(szValidate, sizeof(szValidate), "%s", szTemp);
+    if (!FWasRaceFile(szValidate, TRUE) || ReplaceNativeFile(szTemp, pszTarget) != 0) {
+        RemoveNativeFile(szTemp);
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
         return FALSE;
