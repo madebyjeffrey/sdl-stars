@@ -30,6 +30,8 @@ def main():
         imported = library / "Imported.r2"
         original = source.read_bytes()
         assert imported.read_bytes() == original
+        assert (library / "Managed.r2").read_bytes() == (library / "Managed.r1").read_bytes()
+        assert (library / "managed-export.r1").read_bytes() == (library / "Managed.r1").read_bytes()
         assert (library / "Managed.r1.pending.r1").is_file()
         assert (library / "Imported.r2.pending.r1").is_file()
 
