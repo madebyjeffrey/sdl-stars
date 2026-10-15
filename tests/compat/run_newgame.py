@@ -125,6 +125,20 @@ def main():
             STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
         assert orders.read_bytes() == b'old player orders'
 
+        # Exercise adjacent annual turns using real turn data with only the
+        # clear BOF turn number adjusted to the 2407 -> 2408 pair.
+        adjacent_turn_data = bytearray((fixture / 'game.m1').read_bytes())
+        adjacent_turn_data[12:14] = (7).to_bytes(2, 'little')
+        (imported / 'managed-copy.m1').write_bytes(adjacent_turn_data)
+        adjacent_source = work / 'adjacent-2408.m1'
+        adjacent_turn_data[12:14] = (8).to_bytes(2, 'little')
+        adjacent_source.write_bytes(adjacent_turn_data)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(adjacent_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='adjacent', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert not orders.exists()
+        orders.write_bytes(b'old player orders')
+
         duplicate = work / 'library' / 'Games' / 'managed-copy-duplicate'
         shutil.copytree(imported, duplicate)
         for path in list(duplicate.rglob('*')):
@@ -140,6 +154,12 @@ def main():
         history.write_bytes(b'preserve player history')
         backup = duplicate / 'backup.000' / 'managed-copy-duplicate.m1'
         backup_before = backup.read_bytes()
+        before_cancel = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='cancel', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_cancel
+        assert duplicate_orders.read_bytes() == b'old duplicate orders'
+
         run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
             STARS_CLIENT_IMPORT_UPDATE_EXPECTED='later', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
         assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == later_turn.read_bytes()
@@ -147,7 +167,7 @@ def main():
         assert history.read_bytes() == b'preserve player history'
         assert backup.read_bytes() == backup_before
         assert (duplicate / 'managed-copy-duplicate.m2').read_bytes() == (source / 'exchange.m2').read_bytes()
-        assert (imported / 'managed-copy.m1').read_bytes() == (source / 'exchange.m1').read_bytes()
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
         assert orders.read_bytes() == b'old player orders'
 
         failed_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '050' / 'game.m1'
