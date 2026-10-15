@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Existing managed games now accept a valid later standalone player turn,
+  including skipped years. The importer matches by game identity, asks which
+  managed copy to update when several match, treats identical turns as no-ops,
+  and retires only that player's old orders after the staged turn is installed.
+  History, backups, other players and imported source files are preserved.
+  Game simulation and disk record layouts are unchanged.
+
 - Race designs can now be duplicated to the next free `.rN` filename, exported
   as ordinary race files, and deleted after a confirmation naming the selected
   design. Export validates the copied file and retains its existing checksum

@@ -909,6 +909,179 @@ static int16_t FindImportUniverse(void *lpData, const char *pszName) {
     return TRUE;
 }
 
+typedef struct {
+    int32_t lidGame;
+    int cMatches;
+    char rgszName[64][256];
+    char szSelected[256];
+} LIBRARYTURNMATCH;
+
+static int16_t FindLibraryTurnMatch(void *lpData, const char *pszName) {
+    LIBRARYTURNMATCH *plm = lpData;
+    char szUniverse[512], szMetadata[512];
+    FILE *pf;
+    int32_t lidGame;
+    uint16_t turn;
+    int16_t fMulti;
+    if (!FPortableLibraryName(pszName)) return TRUE;
+    CchSnprintf(szMetadata, sizeof(szMetadata), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
+    pf = PfOpenNativeFile(szMetadata, "rb");
+    if (!pf) return TRUE;
+    fclose(pf);
+    CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
+    if (!FInspectImportFile(szUniverse, dtXY, iplrNone, &lidGame, &turn, &fMulti) || lidGame != plm->lidGame) return TRUE;
+    if (plm->cMatches < (int)(sizeof(plm->rgszName) / sizeof(plm->rgszName[0])))
+        CchSnprintf(plm->rgszName[plm->cMatches], sizeof(plm->rgszName[0]), "%s", pszName);
+    plm->cMatches++;
+    return TRUE;
+}
+
+INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    LIBRARYTURNMATCH *plm;
+    HWND hwndList;
+    int i;
+    switch (message) {
+    case WM_INITDIALOG:
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        plm = (LIBRARYTURNMATCH *)lParam;
+        hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+        for (i = 0; i < plm->cMatches; i++) SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)plm->rgszName[i]);
+        SendMessage(hwndList, LB_SETCURSEL, 0, 0);
+        return TRUE;
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDCANCEL) { EndDialog(hwnd, FALSE); return TRUE; }
+        if (LOWORD(wParam) == IDOK) {
+            plm = (LIBRARYTURNMATCH *)GetWindowLongPtr(hwnd, DWLP_USER);
+            hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+            i = (int)SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+            if (i == LB_ERR) return TRUE;
+            SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)plm->szSelected);
+            EndDialog(hwnd, TRUE);
+            return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+
+static int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
+    FILE *pfLeft, *pfRight;
+    char rgbLeft[4096], rgbRight[4096];
+    size_t cbLeft, cbRight;
+    int16_t fEqual = TRUE;
+    pfLeft = PfOpenNativeFile(pszLeft, "rb");
+    pfRight = PfOpenNativeFile(pszRight, "rb");
+    if (!pfLeft || !pfRight) { fEqual = FALSE; goto LDone; }
+    do {
+        cbLeft = fread(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
+        cbRight = fread(rgbRight, 1, sizeof(rgbRight), pfRight);
+        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = FALSE; break; }
+    } while (cbLeft != 0);
+    if (ferror(pfLeft) || ferror(pfRight)) fEqual = FALSE;
+LDone:
+    if (pfLeft) fclose(pfLeft);
+    if (pfRight) fclose(pfRight);
+    return fEqual;
+}
+
+static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
+    char szTarget[512], szOrders[512], szStage[512], szPrevious[512], szOrdersPrevious[512];
+    const char *pszFile, *pszExt, *pchSlash;
+    LIBRARYTURNMATCH lm;
+    int32_t lidGame, lidCurrent;
+    uint16_t turn, turnCurrent;
+    int16_t fMulti, fMultiCurrent;
+    int iplr;
+    int64_t cbFile;
+    int16_t fHasOrders;
+    int cch;
+    uint32_t dwTick;
+
+    pszFile = strrchr(pszSource, '/');
+    pchSlash = strrchr(pszSource, '\\');
+    if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
+    pszFile = pszFile ? pszFile + 1 : pszSource;
+    pszExt = strrchr(pszFile, '.');
+    if (!pszExt || (SDL_tolower(pszExt[1]) != 'm' && SDL_tolower(pszExt[1]) != 'M') ||
+        pszExt[2] < '1' || pszExt[2] > '9' || (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) ||
+        (pszExt[3] && pszExt[4])) return FALSE;
+    iplr = pszExt[2] - '1';
+    if (pszExt[3]) iplr = iplr * 10 + pszExt[3] - '0';
+    if (iplr < 0 || iplr >= 16) return FALSE;
+    if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, &fMulti)) {
+        AlertSz("The selected player turn is invalid or unsupported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    memset(&lm, 0, sizeof(lm));
+    lm.lidGame = lidGame;
+    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryTurnMatch, &lm)) return FALSE;
+    if (lm.cMatches == 0) return -1;
+    if (lm.cMatches > 1) {
+        if (lm.cMatches > (int)(sizeof(lm.rgszName) / sizeof(lm.rgszName[0])) ||
+            DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_TARGET), hwnd,
+                           LibraryTurnTargetDlg, (LPARAM)&lm) != TRUE) return FALSE;
+    } else CchSnprintf(lm.szSelected, sizeof(lm.szSelected), "%s", lm.rgszName[0]);
+    if (!lm.szSelected[0]) {
+        AlertSz("Choose a managed game before updating this turn.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return FALSE;
+    if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, &fMultiCurrent) || lidCurrent != lidGame) {
+        AlertSz("The managed game does not contain a valid turn for this player.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    if (FFilesEqual(pszSource, szTarget)) return TRUE;
+    if (turn <= turnCurrent) {
+        AlertSz("This turn is not later than the managed player's current turn.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    cch = CchSnprintf(szOrders, sizeof(szOrders), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szOrders)) return FALSE;
+    dwTick = DwTickCount();
+    cch = CchSnprintf(szStage, sizeof(szStage), "%s.importing.%u", szTarget, dwTick);
+    if (cch <= 0 || (size_t)cch >= sizeof(szStage)) return FALSE;
+    cch = CchSnprintf(szPrevious, sizeof(szPrevious), "%s.previous.%u", szTarget, dwTick);
+    if (cch <= 0 || (size_t)cch >= sizeof(szPrevious)) return FALSE;
+    cch = CchSnprintf(szOrdersPrevious, sizeof(szOrdersPrevious), "%s.previous.%u", szOrders, dwTick);
+    if (cch <= 0 || (size_t)cch >= sizeof(szOrdersPrevious)) return FALSE;
+    if (!FCopyNativeFileExclusive(pszSource, szStage) ||
+        !FInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, &fMultiCurrent) ||
+        lidCurrent != lidGame || turnCurrent != turn) {
+        RemoveNativeFile(szStage);
+        AlertSz("The new player turn could not be staged safely.", MB_ICONHAND);
+        return FALSE;
+    }
+    fHasOrders = FNativeFileSize(szOrders, &cbFile);
+    if (fHasOrders && RenameNativeFile(szOrders, szOrdersPrevious) != 0) {
+        RemoveNativeFile(szStage);
+        AlertSz("The existing orders could not be preserved before the update.", MB_ICONHAND);
+        return FALSE;
+    }
+    if (RenameNativeFile(szTarget, szPrevious) != 0) {
+        if (fHasOrders) RenameNativeFile(szOrdersPrevious, szOrders);
+        RemoveNativeFile(szStage);
+        AlertSz("The managed turn could not be preserved before the update.", MB_ICONHAND);
+        return FALSE;
+    }
+    if (ReplaceNativeFile(szStage, szTarget) != 0) {
+        RenameNativeFile(szPrevious, szTarget);
+        if (fHasOrders) RenameNativeFile(szOrdersPrevious, szOrders);
+        RemoveNativeFile(szStage);
+        AlertSz("The new player turn could not be installed.", MB_ICONHAND);
+        return FALSE;
+    }
+    if (fHasOrders && RemoveNativeFile(szOrdersPrevious) != 0) {
+        ReplaceNativeFile(szPrevious, szTarget);
+        RenameNativeFile(szOrdersPrevious, szOrders);
+        AlertSz("The old orders could not be retired; the previous turn was restored.", MB_ICONHAND);
+        return FALSE;
+    }
+    RemoveNativeFile(szPrevious);
+    (void)hwnd;
+    return TRUE;
+}
+
 static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
     HWND hwnd = lpData;
     char *pszPath;
@@ -928,6 +1101,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash;
     LIBRARYIMPORT li;
     int cchDir;
+    int16_t fImported;
 
     if (!pszSource) {
         memset(&ofn, 0, sizeof(ofn));
@@ -954,6 +1128,11 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     }
     if (strlen(pszSource) >= sizeof(szSource)) return FALSE;
     strcpy(szSource, pszSource);
+    if (strrchr(pszSource, '.') && SDL_tolower(strrchr(pszSource, '.')[1]) == 'm') {
+        if (!FInitLibrary()) return FALSE;
+        fImported = FImportSubsequentTurn(hwnd, pszSource);
+        if (fImported >= 0) return fImported;
+    }
     if (FNativeDirectoryExists(szSource)) {
         strcpy(szDir, szSource);
         szStem[0] = 0;
