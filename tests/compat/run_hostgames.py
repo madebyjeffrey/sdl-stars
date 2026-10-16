@@ -27,6 +27,8 @@ def main():
                    STARS_CLIENT_HOST_LIBRARY_TEST="1", STARS_CLIENT_HOST_IMPORT_SOURCE=str(source),
                    STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE=str(player_source),
                    STARS_CLIENT_HOST_ORDER_BASE=str(order_dir / "submitted"),
+                   STARS_CLIENT_HOST_ORDER_PICKER_BASE=str(order_dir / "next"),
+                   STARS_CLIENT_HOST_ORDER_PICKER=str(order_dir / "next.x1"),
                    SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy",
                    STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="compat")
         subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=75)
@@ -36,7 +38,7 @@ def main():
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.xy").is_file()
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.hst").is_file()
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.m1").is_file()
-        assert not (settings / "Games" / "Hosted" / "Hosted.x1").exists()
+        assert (settings / "Games" / "Hosted" / "Hosted.x1").is_file()
 
 
 if __name__ == "__main__":

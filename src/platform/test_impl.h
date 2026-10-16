@@ -33,6 +33,9 @@
 #ifndef STARS_TEST_IMPL_InitInstance
 #define STARS_TEST_IMPL_InitInstance InitInstance
 #endif
+#ifndef STARS_TEST_IMPL_AskSaveDialog
+#define STARS_TEST_IMPL_AskSaveDialog AskSaveDialog
+#endif
 #ifndef STARS_TEST_IMPL_PromptPassword
 #define STARS_TEST_IMPL_PromptPassword PromptPassword
 #endif
