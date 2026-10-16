@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Desktop Open and recent-file actions now distinguish races from games by
+  file contents. Race selections import into Race Designs and open the copied
+  design for editing; cancelling customization retains the import and leaves
+  the source unchanged. Simulation and file formats are unchanged.
+
 - Desktop startup now imports its supplied external game path without asking
   the user to select it again. Managed game paths reopen their existing copy.
   Command-line host behavior, simulation results and file formats are unchanged.

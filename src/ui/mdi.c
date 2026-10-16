@@ -983,7 +983,10 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             psz = strrchr(szT, 46);
             if (psz) {
                 if (!FIsManagedLibraryGameFile(szT)) {
-                    if (FImportLibraryGame(hwnd, szT) && hwndTitle) RefreshLibraryGames(hwndTitle);
+                    if (FImportDesktopFile(hwnd, szT) && hwndTitle) {
+                        RefreshLibraryGames(hwndTitle);
+                        RefreshLibraryRaces(hwndTitle);
+                    }
                     break;
                 }
                 if (!FFileExists(szT)) goto LShowMissingRecent;
@@ -1496,9 +1499,12 @@ LPrintMapCleanup:
                 if (uTimerId == 0) PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
             }
-            fRet = FImportLibraryGame(hwnd, ini.fStartupFile ? szBase : NULL);
+            fRet = FImportDesktopFile(hwnd, ini.fStartupFile ? szBase : NULL);
             ini.fStartupFile = FALSE;
-            if (fRet && hwndTitle) RefreshLibraryGames(hwndTitle);
+            if (fRet && hwndTitle) {
+                RefreshLibraryGames(hwndTitle);
+                RefreshLibraryRaces(hwndTitle);
+            }
             break;
         case IDM_TITLE_NEW_GAME:
         case IDM_TITLE_OPEN_GAME:

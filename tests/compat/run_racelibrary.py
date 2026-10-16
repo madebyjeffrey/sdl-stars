@@ -44,6 +44,11 @@ def main():
         assert not (library / "Managed.r2").exists()
         assert (library / "Managed.r3").is_file()
         assert source.read_bytes() == imported.read_bytes()
+        env.pop("STARS_CLIENT_RACE_LIBRARY_TEST")
+        env.update(STARS_CLIENT_EXTERNAL_OPEN_RACE=str(source), STARS_CLIENT_IMPORT_NAME="From-menu.r1")
+        subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=15)
+        assert (library / "From-menu.r1").read_bytes() == original
+        assert source.read_bytes() == snapshot.read_bytes()
         assert (library / "Managed.r1.pending.r1").is_file()
         assert (library / "Imported.r2.pending.r1").is_file()
 

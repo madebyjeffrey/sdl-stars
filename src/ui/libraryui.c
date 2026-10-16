@@ -964,34 +964,63 @@ void ShowLibraryImportFolderPicker(HWND hwnd) {
     SDL_ShowOpenFolderDialog(LibraryImportFolderSelected, hwnd, NULL, NULL, FALSE);
 }
 
-int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
+static int16_t FChooseLibraryImportFile(HWND hwnd, char *pszChosen, size_t cchChosen) {
     OPENFILENAME ofn;
-    char szChosen[512], szTitle[256], szFilter[128];
+    char szTitle[256], szFilter[128], *pch;
+
+    memset(&ofn, 0, sizeof(ofn));
+    memset(pszChosen, 0, cchChosen);
+    CchGetString(idsStarsGameFilesMHstRStars, szFilter);
+    pch = strstr(szFilter, "*.M*;");
+    if (pch) {
+        memmove(pch + 5, pch, strlen(pch) + 1);
+        memcpy(pch, "*.XY;", 5);
+    }
+    for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = szFilter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFile = pszChosen;
+    ofn.nMaxFile = cchChosen;
+    szTitle[0] = 0;
+    ofn.lpstrFileTitle = szTitle;
+    ofn.nMaxFileTitle = sizeof(szTitle);
+    ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    return FNativeOpenFileName(&ofn);
+}
+
+/* Choose the workflow from the BOF type, leaving complete validation and
+ * source-preserving publication to the corresponding importer. */
+int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
+    char szChosen[512];
+    FILE *pf;
+    HDR hdr;
+    RTBOF rtbof;
+    int16_t fRace;
+
+    if (!pszSource) {
+        if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
+        pszSource = szChosen;
+    }
+    fRace = FALSE;
+    pf = PfOpenNativeFile(pszSource, "rb");
+    if (pf) {
+        fRace = fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(rtbof) &&
+                fread(&rtbof, sizeof(rtbof), 1, pf) == 1 && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
+        fclose(pf);
+    }
+    return fRace ? FImportLibraryRaceAndEdit(hwnd, pszSource) : FImportLibraryGame(hwnd, pszSource);
+}
+
+int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
+    char szChosen[512];
     char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash;
     LIBRARYIMPORT li;
     int cchDir;
 
     if (!pszSource) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szChosen, 0, sizeof(szChosen));
-        CchGetString(idsStarsGameFilesMHstRStars, szFilter);
-        pch = strstr(szFilter, "*.M*;");
-        if (pch) {
-            memmove(pch + 5, pch, strlen(pch) + 1);
-            memcpy(pch, "*.XY;", 5);
-        }
-        for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = hwnd;
-        ofn.lpstrFilter = szFilter;
-        ofn.nFilterIndex = 1;
-        ofn.lpstrFile = szChosen;
-        ofn.nMaxFile = sizeof(szChosen);
-        szTitle[0] = 0;
-        ofn.lpstrFileTitle = szTitle;
-        ofn.nMaxFileTitle = sizeof(szTitle);
-        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-        if (!FNativeOpenFileName(&ofn)) return FALSE;
+        if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
         pszSource = szChosen;
     }
     if (strlen(pszSource) >= sizeof(szSource)) return FALSE;

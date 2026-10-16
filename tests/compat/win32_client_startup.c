@@ -379,6 +379,7 @@ BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
+    if (!pszExternalGame) pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE");
     if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
         fPassed = FALSE;
         fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
@@ -1405,7 +1406,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         return;
     }
-    if (getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME")) {
+    if (getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") || getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
         HWND hwndDialog;
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
@@ -1426,6 +1427,24 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 iStage = 2;
                 return;
             }
+            return;
+        }
+        if (getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
+            if (iStage == 2) {
+                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !IsWindowVisible(hwndDialog)) continue;
+                    iStage = 3;
+                    if (!FPushClick(GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
+                    return;
+                }
+                return;
+            }
+            if (!IsWindowEnabled(hwndTitle)) return;
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_FINDSTRING, (WPARAM)-1,
+                            (LPARAM)getenv("STARS_CLIENT_IMPORT_NAME")) == LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
+            fPassed = TRUE;
+            puts("Desktop Open Game imports an external race and opens its managed edit wizard");
+            PostQuitMessage(0);
             return;
         }
         if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1,
@@ -1890,7 +1909,8 @@ int main(void) {
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
-        !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE")) fPassed = FALSE;
+        !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
+        !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
