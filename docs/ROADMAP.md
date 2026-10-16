@@ -185,6 +185,9 @@ previous turn and orders if staged installation fails. Identical turns are
 no-ops; successful updates retire only that player's old orders.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
+Complete game-folder export preserves player files, host state and backups.
+Destinations must fit the loader's full game and backup paths; overlong paths
+are rejected before copying rather than publishing a truncated game family.
 The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,

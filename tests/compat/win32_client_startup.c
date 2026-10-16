@@ -1267,6 +1267,10 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType;
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
     if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
+    if (getenv("STARS_CLIENT_EXPORT_EXPECTED") && strstr(sz, "game could not be exported")) {
+        cAlerts++;
+        return IDOK;
+    }
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
@@ -1365,6 +1369,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
             !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
         fExported = FExportLibraryGame(hwndTitle, pszExportGame, pszExportParent);
+        if (getenv("STARS_CLIENT_EXPORT_EXPECTED")) {
+            if (fExported || cAlerts != 1) goto LDone;
+            fChecked = TRUE;
+            fPassed = TRUE;
+            KillTimer(NULL, id);
+            PostQuitMessage(0);
+            return;
+        }
         if (!fExported) goto LDone;
         if (getenv("STARS_CLIENT_EXPORT_COLLISION")) {
             CchSnprintf(szExportSentinel, sizeof(szExportSentinel), "%s%s%s%skeep.txt",
@@ -1887,6 +1899,7 @@ int main(void) {
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
            cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+                       getenv("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
                        !strcmp(getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;

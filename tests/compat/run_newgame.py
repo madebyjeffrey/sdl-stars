@@ -143,6 +143,22 @@ def main():
             path: content for path, content in source_before_export.items() if path.name != '.library'
         }
 
+        # A destination directory may fit while individual staged filenames do
+        # not. Reject it without publishing a partial game or leaving a stage.
+        long_name = 'managed-game-' + 'a' * 38
+        long_work = work / 'long-case'
+        run(executable, long_work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME=long_name)
+        long_source = long_work / 'library' / 'Games' / long_name
+        long_before = {p.relative_to(long_source): p.read_bytes() for p in long_source.rglob('*') if p.is_file()}
+        long_parent = work / 'long-export'
+        while len(os.fsencode(long_parent)) < 440:
+            long_parent /= 'p' * max(1, min(90, 439 - len(os.fsencode(long_parent))))
+        long_parent.mkdir(parents=True)
+        run(executable, long_work, STARS_CLIENT_EXPORT_GAME=long_name, STARS_CLIENT_EXPORT_PARENT=str(long_parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert not list(long_parent.iterdir())
+        assert {p.relative_to(long_source): p.read_bytes() for p in long_source.rglob('*') if p.is_file()} == long_before
+
         # Two-digit player extensions use the full one-based player number.
         player16 = bytearray((fixture / 'game.m1').read_bytes())
         player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')

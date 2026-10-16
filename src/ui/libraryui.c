@@ -979,7 +979,11 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
          pszTarget[strlen(szSource)] == '\\')) goto LFail;
     cch = CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszTarget, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
+    /* The loader and backup writer keep complete paths in szBase. Check the
+     * longest companion before copying, rather than truncating child paths. */
+    if (strlen(szDestination) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szBase)) goto LFail;
     if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
+    if (strlen(szStage) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
 
     memset(&le, 0, sizeof(le));
     le.pszSource = szSource;

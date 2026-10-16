@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryGame` rejects destinations whose full game or backup paths
+  exceed the loader's capacity, instead of silently truncating filenames and
+  reporting an incomplete export as successful. Host results and native
+  regression baselines are unchanged.
+
 - The desktop Games library can export a complete game family to a folder named
   for its library entry. Exports include all player files, host state, and
   backups, retain the managed original, and leave existing destinations intact.
