@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryOrders` no longer formats a selected destination or fallback
+  library name over the same buffer, fixing Linux exports that silently failed
+  after choosing a filename. Game simulation and native baselines are unchanged.
+
 - The desktop can export the active player's saved orders as an ordinary `.xN`
   file. Export saves current orders first, suggests the remembered exchange
   basename, keeps the active player's extension when the destination name is

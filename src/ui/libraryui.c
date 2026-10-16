@@ -621,7 +621,7 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
 
 int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     OPENFILENAME ofn;
-    char szBaseSav[sizeof(szBase)], szBaseStem[sizeof(szBase)], szSuggested[256], szTarget[512], szFilter[64];
+    char szBaseSav[sizeof(szBase)], szBaseStem[sizeof(szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
     char szStageBase[sizeof(szBase)], szStage[sizeof(szBase)], szStageHist[sizeof(szBase)];
     char szSource[sizeof(szBase)], szSourceHist[sizeof(szBase)], szPreviousHist[sizeof(szBase)];
     char szTemp[512];
@@ -643,12 +643,11 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     if (!pszLibraryName[0]) {
         pch = strrchr(szBase, chDirSep);
         if (!pch) return FALSE;
-        szSuggested[0] = 0;
         pchSlash = pch;
         while (pchSlash > szBase && pchSlash[-1] != chDirSep) pchSlash--;
-        cch = CchSnprintf(szSuggested, sizeof(szSuggested), "%.*s", (int)(pch - pchSlash), pchSlash);
-        if (cch <= 0 || (size_t)cch >= sizeof(szSuggested)) return FALSE;
-        pszLibraryName = szSuggested;
+        cch = CchSnprintf(szName, sizeof(szName), "%.*s", (int)(pch - pchSlash), pchSlash);
+        if (cch <= 0 || (size_t)cch >= sizeof(szName)) return FALSE;
+        pszLibraryName = szName;
     }
     cch = CchSnprintf(szSuggested, sizeof(szSuggested), "%s.x%d", pszLibraryName, idPlayer + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szSuggested)) return FALSE;
@@ -674,7 +673,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     }
 
     if (strlen(pszTarget) >= sizeof(szTarget)) return FALSE;
-    CchSnprintf(szTarget, sizeof(szTarget), "%s", pszTarget);
+    if (pszTarget != szTarget) CchSnprintf(szTarget, sizeof(szTarget), "%s", pszTarget);
     pchSlash = strrchr(szTarget, '/');
     pch = strrchr(szTarget, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;

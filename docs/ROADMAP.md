@@ -183,6 +183,8 @@ Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
 no-ops; successful updates retire only that player's old orders.
+Orders export keeps chooser paths and fallback library names separate from
+formatting destinations, avoiding overlapping-buffer failures on Linux.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
 The title screen now provides the separate Race Designs library: New and Edit
