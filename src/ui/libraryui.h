@@ -20,14 +20,22 @@
 #define IDC_LIBRARY_GAME_EXPORT 2416
 #define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
 #define WM_STARS_EXPORT_FOLDER (WM_APP + 4)
+#define IDC_LIBRARY_HOST_GAMES 2417
+#define IDC_LIBRARY_GAMES_VIEW 2418
+#define IDC_LIBRARY_HOST_VIEW 2419
+#define IDC_LIBRARY_IMPORT_ORDERS 2420
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
 void InitLibraryGames(HWND hwnd, const RECT *lprc);
 void RefreshLibraryGames(HWND hwnd);
+void RefreshLibraryHostGames(HWND hwnd);
+void SelectLibraryView(HWND hwnd, int16_t fHost);
 int16_t FSelectLibraryGame(HWND hwnd);
+int16_t FSelectLibraryHostGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
+int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource);
 int16_t FImportDesktopFile(HWND hwnd, const char *pszSource);
 int16_t FIsManagedLibraryGameFile(const char *pszFile);
 int16_t FIsManagedLibraryRaceFile(const char *pszFile);

@@ -23,6 +23,7 @@ static int cLibraryGameListMax;
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static uint32_t idLibraryExportStage;
+static int16_t fHostLibraryView;
 static const char *pszRaceLibraryNameOverride;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
 static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName);
@@ -442,6 +443,7 @@ typedef struct {
     int16_t rgturn[16];
     int16_t fValid;
     int16_t fSawXY;
+    int16_t fSawHost;
     int16_t fBad;
     int16_t fCopied;
     int16_t fBackup;
@@ -960,7 +962,7 @@ int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource) {
 /* Inspect record framing and BOF metadata without calling FOpenFile, which
  * binds validation to the active game globals. */
 static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
-                                 int32_t *plidGame, uint16_t *pturn, int16_t *pfMulti) {
+                                 int32_t *plidGame, uint16_t *pturn, uint16_t *pwGen, int16_t *pfMulti) {
     FILE *pf;
     HDR hdr;
     RTBOF rtbof;
@@ -983,7 +985,8 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
             fseek(pf, -4, SEEK_END) != 0 || fread(&hdr, 2, 1, pf) != 1 || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
         fComplete = TRUE;
         *plidGame = rtbof.lidGame;
-        *pturn = rtbof.turn;
+        if (pturn) *pturn = rtbof.turn;
+        if (pwGen) *pwGen = rtbof.wGen;
         *pfMulti = rtbof.fMulti;
         goto LDone;
     }
@@ -1002,12 +1005,13 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     }
     if (fComplete) {
         *plidGame = rtbof.lidGame;
-        *pturn = rtbof.turn;
+        if (pturn) *pturn = rtbof.turn;
+        if (pwGen) *pwGen = rtbof.wGen;
         *pfMulti = rtbof.fMulti;
         if (rtbof.fMulti) {
             uint16_t turnFinal;
             if (cbFile < 4 || fseek(pf, -2, SEEK_END) != 0 || fread(&turnFinal, 2, 1, pf) != 1) fComplete = FALSE;
-            else *pturn = turnFinal;
+            else if (pturn) *pturn = turnFinal;
         }
     }
 LDone:
@@ -1143,6 +1147,7 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
     int32_t lidGame;
     uint16_t turn;
     int16_t fMulti;
+    uint16_t wGen;
 
     if (!FImportFamilyMember(pszName, pli->pszStem, &iplr, &dt)) {
         size_t cch = strlen(pli->pszStem);
@@ -1160,7 +1165,7 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
         if (!FCopyNativeFile(szSource, szTarget)) { pli->fBad = TRUE; return FALSE; }
         return TRUE;
     }
-    if (!FInspectImportFile(szSource, dt, iplr < 0 ? iplrNone : iplr, &lidGame, &turn, &fMulti)) {
+    if (!FInspectImportFile(szSource, dt, iplr < 0 ? iplrNone : iplr, &lidGame, &turn, &wGen, &fMulti)) {
         pli->fBad = TRUE;
         return TRUE;
     }
@@ -1178,6 +1183,7 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
     } else if (dt == dtHost || dt == dtHist || dt == dtLog) {
         if (pli->lidGame && lidGame != pli->lidGame) { pli->fBad = TRUE; return TRUE; }
         if (!pli->lidGame) pli->lidGame = lidGame;
+        if (dt == dtHost) pli->fSawHost = TRUE;
     }
     /* The first pass validates every recognized file; copying happens only
      * after the entire family has passed validation. */
@@ -1423,7 +1429,7 @@ static int16_t FindLibraryTurnMatch(void *lpData, const char *pszName) {
     if (!pf) return TRUE;
     fclose(pf);
     CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
-    if (!FInspectImportFile(szUniverse, dtXY, iplrNone, &lidGame, &turn, &fMulti) || lidGame != plm->lidGame) return TRUE;
+    if (!FInspectImportFile(szUniverse, dtXY, iplrNone, &lidGame, &turn, NULL, &fMulti) || lidGame != plm->lidGame) return TRUE;
     if (plm->cMatches < (int)(sizeof(plm->rgszName) / sizeof(plm->rgszName[0])))
         CchSnprintf(plm->rgszName[plm->cMatches], sizeof(plm->rgszName[0]), "%s", pszName);
     plm->cMatches++;
@@ -1508,7 +1514,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     if (pszExt[3]) iplr = iplr * 10 + pszExt[3] - '0';
     iplr--;
     if (iplr < 0 || iplr >= 16) return FALSE;
-    if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, &fMulti)) {
+    if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) {
         AlertSz("The selected player turn is invalid or unsupported.", MB_ICONEXCLAMATION);
         return FALSE;
     }
@@ -1527,7 +1533,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return FALSE;
-    if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, &fMultiCurrent) || lidCurrent != lidGame) {
+    if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) || lidCurrent != lidGame) {
         AlertSz("The managed game does not contain a valid turn for this player.", MB_ICONEXCLAMATION);
         return FALSE;
     }
@@ -1539,14 +1545,15 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     cch = CchSnprintf(szOrders, sizeof(szOrders), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szOrders)) return FALSE;
     dwTick = DwTickCount();
+    szStage[0] = 0;
     cch = CchSnprintf(szStage, sizeof(szStage), "%s.importing.%u", szTarget, dwTick);
     if (cch <= 0 || (size_t)cch >= sizeof(szStage)) return FALSE;
     cch = CchSnprintf(szPrevious, sizeof(szPrevious), "%s.previous.%u", szTarget, dwTick);
     if (cch <= 0 || (size_t)cch >= sizeof(szPrevious)) return FALSE;
     if (!FCopyNativeFileExclusive(pszSource, szStage) ||
-        !FInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, &fMultiCurrent) ||
+        !FInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
-        RemoveNativeFile(szStage);
+        if (szStage[0]) RemoveNativeFile(szStage);
         AlertSz("The new player turn could not be staged safely.", MB_ICONHAND);
         return FALSE;
     }
@@ -1697,8 +1704,9 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     li.pszStem = szStem;
     li.pszSource = szDir;
     li.fValid = FALSE;
-    if (!FNativeEnumerateDirectory(szDir, CopyImportEntry, &li) || li.fBad || !li.fSawXY || !li.fValid || li.grfPlayers == 0) {
-        AlertSz("This folder does not contain a complete supported player game.", MB_ICONEXCLAMATION);
+    if (!FNativeEnumerateDirectory(szDir, CopyImportEntry, &li) || li.fBad || !li.fSawXY || !li.fValid ||
+        (li.grfPlayers == 0 && !li.fSawHost)) {
+        AlertSz("This folder does not contain a complete supported game.", MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (!FChooseLibraryGameName(hwnd, szSource)) return FALSE;
@@ -1714,7 +1722,8 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     li.fCopy = TRUE;
     if (!FNativeEnumerateDirectory(szDir, CopyImportEntry, &li) || li.fBad ||
         !FNativeEnumerateDirectory(szDir, CopyBackupDirectory, &li) || li.fBad ||
-        !FWriteLibraryMetadata(szStage, szLibraryName, (int16_t)__builtin_ctz(li.grfPlayers)) ||
+        !FWriteLibraryMetadata(szStage, szLibraryName,
+                               li.grfPlayers ? (int16_t)__builtin_ctz(li.grfPlayers) : iplrNone) ||
         RemoveNativePath(szLibraryPending) != 0 || RenameNativeFile(szStage, szLibraryPending) != 0) {
         FNativeEnumerateDirectory(szStage, RemoveImportFile, szStage);
         RemoveNativePath(szStage);
@@ -1881,6 +1890,126 @@ LDone:
     return fResult;
 }
 
+static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
+    FILE *pf;
+    HDR hdr;
+    RTBOF rtbof;
+    GAME gameImport;
+    int32_t lSeed1, lSeed2;
+    int16_t fRead;
+
+    pf = PfOpenNativeFile(pszUniverse, "rb");
+    if (!pf) return FALSE;
+    fRead = fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(RTBOF) &&
+            fread(&rtbof, sizeof(rtbof), 1, pf) == 1 &&
+            fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
+            fread(&gameImport, sizeof(gameImport), 1, pf) == 1;
+    fclose(pf);
+    if (!fRead) return FALSE;
+    /* Inspect the selected universe without disturbing an open game's stream. */
+    GetFileSeeds(&lSeed1, &lSeed2);
+    SetFileXorStream(rtbof.lidGame, rtbof.lSaltTime, rtbof.turn, rtbof.iPlayer, rtbof.fCrippled);
+    XorFileBuf((char *)&gameImport, sizeof(gameImport));
+    SetFileSeeds(lSeed1, lSeed2);
+    return gameImport.lid == rtbof.lidGame && gameImport.cPlayer > 0 && gameImport.cPlayer <= 16 &&
+           iplr >= 0 && iplr < gameImport.cPlayer;
+}
+
+int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
+    OPENFILENAME ofn;
+    char szChosen[512], szFilter[128], szName[256];
+    char szHost[512], szUniverse[512], szTarget[512], szStage[512], szMessage[512];
+    const char *pszFile, *pszExt, *pchSlash;
+    char *pch;
+    int32_t lidHost, lidUniverse, lidOrders;
+    uint16_t turnHost, turnOrders, wGenHost, wGenOrders;
+    int16_t fMulti;
+    int iplr, cch;
+    int64_t cbFile;
+    uint32_t dwTick;
+    HWND hwndList;
+    LRESULT i;
+
+    if (!pszSource) {
+        memset(&ofn, 0, sizeof(ofn));
+        memset(szChosen, 0, sizeof(szChosen));
+        strcpy(szFilter, "Stars! Orders (*.x1 - *.x16)|*.X*||");
+        for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hwnd;
+        ofn.lpstrFilter = szFilter;
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFile = szChosen;
+        ofn.nMaxFile = sizeof(szChosen);
+        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        if (!FNativeOpenFileName(&ofn)) return FALSE;
+        pszSource = szChosen;
+    }
+    if (!FInitLibrary() || !IsWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES))) return FALSE;
+    hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
+    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    if (i == LB_ERR) {
+        AlertSz("Select a hosted game before importing orders.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
+    pszFile = strrchr(pszSource, '/');
+    pchSlash = strrchr(pszSource, '\\');
+    if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
+    pszFile = pszFile ? pszFile + 1 : pszSource;
+    pszExt = strrchr(pszFile, '.');
+    if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
+        (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) || (pszExt[3] && pszExt[4])) {
+        AlertSz("Choose an ordinary player orders file (.x1 through .x16).", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    iplr = pszExt[2] - '1';
+    if (pszExt[3]) iplr = (pszExt[2] - '0') * 10 + pszExt[3] - '1';
+    if (iplr < 0 || iplr >= 16 || !FInspectImportFile(pszSource, dtLog, iplr, &lidOrders,
+            &turnOrders, &wGenOrders, &fMulti)) {
+        AlertSz("The selected orders file is invalid or unsupported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    cch = CchSnprintf(szHost, sizeof(szHost), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szHost)) return FALSE;
+    cch = CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, szName, szDirSep, szName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szUniverse)) return FALSE;
+    if (!FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, &wGenHost, &fMulti) ||
+        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
+        lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
+        !FInspectImportPlayer(szUniverse, iplr)) {
+        AlertSz("These orders do not match the selected hosted game's current turn and generation.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep,
+                      szName, szDirSep, szName, iplr + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return FALSE;
+    if (FNativeFileSize(szTarget, &cbFile)) {
+        if (FFilesEqual(pszSource, szTarget)) return TRUE;
+        cch = CchSnprintf(szMessage, sizeof(szMessage),
+                          "Different saved orders already exist for player %d in %s. Replace them?", iplr + 1, szName);
+        if (cch <= 0 || (size_t)cch >= sizeof(szMessage)) return FALSE;
+        if (AlertSz(szMessage, MB_YESNO | MB_ICONQUESTION) != IDYES) return FALSE;
+    }
+    dwTick = DwTickCount();
+    cch = CchSnprintf(szStage, sizeof(szStage), "%s.importing.%u", szTarget, dwTick);
+    if (cch <= 0 || (size_t)cch >= sizeof(szStage)) return FALSE;
+    if (!FCopyNativeFileExclusive(pszSource, szStage) ||
+        !FInspectImportFile(szStage, dtLog, iplr, &lidOrders, &turnOrders, &wGenOrders, &fMulti) ||
+        lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
+        RemoveNativeFile(szStage);
+        AlertSz("The incoming orders could not be staged safely.", MB_ICONHAND);
+        return FALSE;
+    }
+    if (ReplaceNativeFile(szStage, szTarget) != 0) {
+        RemoveNativeFile(szStage);
+        AlertSz("The incoming orders could not be installed.", MB_ICONHAND);
+        return FALSE;
+    }
+    (void)hwnd;
+    return TRUE;
+}
+
 
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
     char szFile[256], szMessage[256];
@@ -1934,7 +2063,7 @@ static void ClearLibraryGameList(void) {
 
 static int16_t ListLibraryGame(void *lpList, const char *pszName) {
     char szFile[256], szDirectory[256], szMetadataName[256], szExchangeName[256], szDisplay[320];
-    int iplr, cPlayers, cch;
+    int iplr, cch;
     int64_t cbFile;
     long long lPlayed;
     int32_t lidGame;
@@ -1948,38 +2077,63 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
                               szExchangeName, sizeof(szExchangeName))) return TRUE;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
     if (!FNativeFileSize(szFile, &cbFile) || cbFile == 0) return TRUE;
-    cPlayers = 0;
     for (iplr = 0; iplr < 16; iplr++) {
         CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
         if (!FNativeFileSize(szFile, &cbFile) || cbFile <= 0 ||
-            !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, &fMulti)) continue;
+            !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) continue;
         CchSnprintf(szDisplay, sizeof(szDisplay), "%s - Player %d (%u)", pszName, iplr + 1, turn + 2400);
         if (!FAddLibraryGameListItem(lpList, pszName, iplr, szDisplay)) return FALSE;
-        cPlayers++;
-    }
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
-    if (cPlayers == 0 && FNativeFileSize(szFile, &cbFile) && cbFile > 0) {
-        CchSnprintf(szDisplay, sizeof(szDisplay), "%s - Host game", pszName);
-        if (!FAddLibraryGameListItem(lpList, pszName, iplrNone, szDisplay)) return FALSE;
     }
     return TRUE;
+}
+
+static int16_t ListLibraryHostGame(void *lpList, const char *pszName) {
+    char szHost[512], szUniverse[512], szMetadata[512];
+    FILE *pf;
+    int64_t cbFile;
+    int32_t lidHost, lidUniverse;
+    uint16_t turnHost;
+    int16_t fMulti;
+    LRESULT i;
+
+    if (!FPortableLibraryName(pszName)) return TRUE;
+    CchSnprintf(szMetadata, sizeof(szMetadata), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
+    pf = PfOpenNativeFile(szMetadata, "rb");
+    if (!pf) return TRUE;
+    fclose(pf);
+    CchSnprintf(szHost, sizeof(szHost), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
+    CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
+    if (!FNativeFileSize(szHost, &cbFile) || cbFile <= 0 ||
+        !FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, NULL, &fMulti) ||
+        !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
+        lidHost != lidUniverse) return TRUE;
+    i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    return i != LB_ERR && i != LB_ERRSPACE;
 }
 
 void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     int y;
     Uint64 msStart = SDL_GetTicks();
 
+    fHostLibraryView = FALSE;
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
     y = max(80, lprc->bottom - 330);
-    CreateWindow("STATIC", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE, 24, y - 20, 200, 20,
-                 hwnd, NULL, hInst, NULL);
+    CreateWindow("BUTTON", "Games", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 24, y - 22, 58, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, hInst, NULL);
+    CreateWindow("BUTTON", "Host Games", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 86, y - 22, 82, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, hInst, NULL);
     CreateWindow("BUTTON", "Import Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, hInst, NULL);
     CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
+    CreateWindow("BUTTON", "Import Orders...", WS_CHILD | WS_TABSTOP,
+                 lprc->right - 128, y - 22, 104, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_ORDERS, hInst, NULL);
     CreateWindow("BUTTON", "Export Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, hInst, NULL);
@@ -1991,7 +2145,12 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
                  (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
+    CreateWindow("LISTBOX", "", WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
+                 24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_HOST_GAMES, hInst, NULL);
+    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), SW_HIDE);
+    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), SW_HIDE);
     RefreshLibraryGames(hwnd);
+    RefreshLibraryHostGames(hwnd);
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames end elapsed=%llu ms\n",
                 (unsigned long long)(SDL_GetTicks() - msStart));
@@ -2064,17 +2223,51 @@ void RefreshLibraryGames(HWND hwnd) {
         fEnumerated = FNativeEnumerateDirectory(szLibraryRoot, ListLibraryGame, hwndList);
         (void)fEnumerated;
     }
+    hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    if (hwndList) SendMessage(hwndList, LB_SETCURSEL, 0, 0);
+    fHasGames = hwndList && SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
+    if (!fHostLibraryView) {
+        EnableWindow(rghwndBtnSplash[1], fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    }
+}
+
+void RefreshLibraryHostGames(HWND hwnd) {
+    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
+    int16_t fHasGames;
+    if (!hwndList) return;
+    SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+    if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryHostGame, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
-    EnableWindow(rghwndBtnSplash[1], fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    if (fHostLibraryView) {
+        EnableWindow(rghwndBtnSplash[1], fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    }
+}
+
+void SelectLibraryView(HWND hwnd, int16_t fHost) {
+    HWND hwndGames = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    HWND hwndHost = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
+    fHostLibraryView = fHost;
+    ShowWindow(hwndGames, fHost ? SW_HIDE : SW_SHOW);
+    ShowWindow(hwndHost, fHost ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT), fHost ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_FOLDER), fHost ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), fHost ? SW_SHOW : SW_HIDE);
+    if (fHost) RefreshLibraryHostGames(hwnd);
+    else RefreshLibraryGames(hwnd);
 }
 
 int16_t FSelectLibraryGame(HWND hwnd) {
     HWND hwndList;
     LRESULT i, iItem;
+
+    if (fHostLibraryView) return FSelectLibraryHostGame(hwnd);
 
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
@@ -2091,12 +2284,31 @@ int16_t FSelectLibraryGame(HWND hwnd) {
     return TRUE;
 }
 
+int16_t FSelectLibraryHostGame(HWND hwnd) {
+    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
+    LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    char szName[256];
+    int cch;
+    if (i == LB_ERR) return FALSE;
+    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
+    cch = CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
+                      szName, szDirSep, szName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szBase)) return FALSE;
+    ini.fStartupFile = TRUE;
+    return TRUE;
+}
+
 static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName) {
-    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    HWND hwndList = GetDlgItem(hwnd, fHostLibraryView ? IDC_LIBRARY_HOST_GAMES : IDC_LIBRARY_GAMES);
     LRESULT i, iItem;
     int cch;
     i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) return FALSE;
+    if (fHostLibraryView) {
+        cch = (int)SendMessage(hwndList, LB_GETTEXTLEN, i, 0);
+        if (cch <= 0 || (size_t)cch >= cchName) return FALSE;
+        return SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName) == cch;
+    }
     iItem = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return FALSE;
     cch = CchSnprintf(pszName, cchName, "%s", rgLibraryGameList[iItem].szName);

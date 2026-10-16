@@ -6,6 +6,27 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
+  Its previous position covered both buttons and intercepted their clicks.
+
+- `FImportLibraryOrders` now rejects player slots absent from the selected
+  hosted game; previously a consistently numbered file for any slot up to 16
+  could be installed even though host generation would ignore it.
+
+- `FSelectedLibraryGameName` now resolves Export Game, Duplicate and Rename
+  from the visible library view instead of the hidden Games selection. Host-only
+  libraries enable these actions, and both lists refresh after duplicate/rename.
+
+- `ShipCommandProc` now opens the fleet rename dialog without copying the shared
+  fleet-name buffer onto itself. This preserves existing rename behavior and
+  avoids a checked-CRT trap on macOS.
+
+- The desktop library now has a separate Host Games view for managed games
+  containing both the universe and host files, including host-only imports.
+  Import Orders validates the incoming player's game, turn and generation,
+  ignores identical orders, and asks before replacing different saved orders.
+  Host generation continues through the existing turn engine and managed file
+  paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export

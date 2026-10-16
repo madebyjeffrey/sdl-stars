@@ -179,6 +179,14 @@ managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
+Host Games now has a separate library view, accepts host-only universe/host
+imports, and imports ordinary player orders after matching game identity, turn
+and generation, including checking that the submitted player exists in the
+selected universe. The existing desktop host generates directly from the managed
+orders files, with the command-line host and simulation behavior unchanged.
+Export, duplicate and rename use the visible Games or Host Games selection,
+including host-only libraries, and refresh both lists after changing a game.
+The Games action row keeps each button clear of neighboring pointer targets.
 Managed-game duplicate and rename preserve all backup naming variants and nested
 sidecar folders while renaming the matching binary file family throughout the
 copied tree. Real-client coverage checks their contents after both operations.
