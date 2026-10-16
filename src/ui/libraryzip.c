@@ -4,66 +4,117 @@
 #include <zlib.h>
 
 typedef struct { char **rgpsz; int c, cMax; const char *pszRoot; int16_t fBad; } ZIPFILES;
-typedef struct { char *pszName; uint32_t crc, cb, off; } ZIPENTRY;
+typedef struct { char *pszName; uint32_t dwCrc, cbSize, dwOffset; } ZIPENTRY;
+typedef struct {
+    uint16_t wFlags, wMethod, wNameLength, wExtraLength, wCommentLength;
+    uint32_t dwCrc, cbCompressed, cbUncompressed, dwExternalAttributes, dwLocalOffset;
+} ZIPCENTRAL;
+enum {
+    ZIP_EOCD_SIGNATURE = 0x06054b50,
+    ZIP_CENTRAL_SIGNATURE = 0x02014b50,
+    ZIP_LOCAL_SIGNATURE = 0x04034b50,
+    ZIP_EOCD_DISK_NUMBER_OFFSET = 0,
+    ZIP_EOCD_CENTRAL_DISK_OFFSET = 2,
+    ZIP_EOCD_ENTRIES_ON_DISK_OFFSET = 4,
+    ZIP_EOCD_ENTRY_COUNT_OFFSET = 6,
+    ZIP_EOCD_CENTRAL_SIZE_OFFSET = 8,
+    ZIP_EOCD_CENTRAL_OFFSET_OFFSET = 12,
+    ZIP_EOCD_COMMENT_LENGTH_OFFSET = 16,
+    ZIP_EOCD_SIZE = 22,
+    ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE = 18,
+    ZIP_LOCAL_HEADER_SIZE = 30,
+    ZIP_CENTRAL_HEADER_SIZE = 46,
+    ZIP_CENTRAL_FLAGS_OFFSET = 8,
+    ZIP_CENTRAL_METHOD_OFFSET = 10,
+    ZIP_CENTRAL_CRC_OFFSET = 16,
+    ZIP_CENTRAL_COMPRESSED_SIZE_OFFSET = 20,
+    ZIP_CENTRAL_UNCOMPRESSED_SIZE_OFFSET = 24,
+    ZIP_CENTRAL_NAME_LENGTH_OFFSET = 28,
+    ZIP_CENTRAL_EXTRA_LENGTH_OFFSET = 30,
+    ZIP_CENTRAL_COMMENT_LENGTH_OFFSET = 32,
+    ZIP_CENTRAL_DISK_START_OFFSET = 34,
+    ZIP_CENTRAL_EXTERNAL_ATTRIBUTES_OFFSET = 38,
+    ZIP_CENTRAL_LOCAL_OFFSET_OFFSET = 42,
+    ZIP_LOCAL_FLAGS_OFFSET = 6,
+    ZIP_LOCAL_METHOD_OFFSET = 8,
+    ZIP_LOCAL_NAME_LENGTH_OFFSET = 26,
+    ZIP_LOCAL_EXTRA_LENGTH_OFFSET = 28
+};
 static uint32_t idZipTemp;
 
 static uint16_t WZip16(const uint8_t *p) { return (uint16_t)(p[0] | ((uint16_t)p[1] << 8)); }
 static uint32_t DwZip32(const uint8_t *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
+static ZIPCENTRAL ZipCentralHeader(const uint8_t *rgbHeader) {
+    ZIPCENTRAL zc;
+    zc.wFlags = WZip16(rgbHeader + ZIP_CENTRAL_FLAGS_OFFSET);
+    zc.wMethod = WZip16(rgbHeader + ZIP_CENTRAL_METHOD_OFFSET);
+    zc.dwCrc = DwZip32(rgbHeader + ZIP_CENTRAL_CRC_OFFSET);
+    zc.cbCompressed = DwZip32(rgbHeader + ZIP_CENTRAL_COMPRESSED_SIZE_OFFSET);
+    zc.cbUncompressed = DwZip32(rgbHeader + ZIP_CENTRAL_UNCOMPRESSED_SIZE_OFFSET);
+    zc.wNameLength = WZip16(rgbHeader + ZIP_CENTRAL_NAME_LENGTH_OFFSET);
+    zc.wExtraLength = WZip16(rgbHeader + ZIP_CENTRAL_EXTRA_LENGTH_OFFSET);
+    zc.wCommentLength = WZip16(rgbHeader + ZIP_CENTRAL_COMMENT_LENGTH_OFFSET);
+    zc.dwExternalAttributes = DwZip32(rgbHeader + ZIP_CENTRAL_EXTERNAL_ATTRIBUTES_OFFSET);
+    zc.dwLocalOffset = DwZip32(rgbHeader + ZIP_CENTRAL_LOCAL_OFFSET_OFFSET);
+    return zc;
+}
 static void PutZip16(FILE *pf, uint16_t w) { fputc(w & 255, pf); fputc(w >> 8, pf); }
 static void PutZip32(FILE *pf, uint32_t dw) { PutZip16(pf, (uint16_t)dw); PutZip16(pf, (uint16_t)(dw >> 16)); }
 
 static int16_t FZipSafeName(const char *psz) {
-    const char *p = psz, *part = psz;
+    const char *pszCurrent = psz, *pszPart = psz;
     if (!*psz || *psz == '/' || *psz == '\\') return FALSE;
-    for (; *p; p++) {
-        if ((unsigned char)*p < 32 || *p == '\\' || *p == ':') return FALSE;
-        if (*p == '/') {
-            if (p == part || (p - part == 1 && part[0] == '.') ||
-                (p - part == 2 && part[0] == '.' && part[1] == '.')) return FALSE;
-            part = p + 1;
+    for (; *pszCurrent; pszCurrent++) {
+        if ((unsigned char)*pszCurrent < 32 || *pszCurrent == '\\' || *pszCurrent == ':') return FALSE;
+        if (*pszCurrent == '/') {
+            if (pszCurrent == pszPart || (pszCurrent - pszPart == 1 && pszPart[0] == '.') ||
+                (pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.')) return FALSE;
+            pszPart = pszCurrent + 1;
         }
     }
-    return p != part && !(p - part == 1 && part[0] == '.') &&
-           !(p - part == 2 && part[0] == '.' && part[1] == '.');
+    return pszCurrent != pszPart && !(pszCurrent - pszPart == 1 && pszPart[0] == '.') &&
+           !(pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.');
 }
 
 static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
     ZIPFILES *pz = lpData;
-    char path[512];
+    char szPath[512], *pszRelative;
     int16_t fDir, fLink;
-    char **rg;
+    char **rgpszFiles;
+    ZIPFILES zfChild = {0};
+    int i, cCapacity;
+    size_t cbName;
     if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return TRUE;
-    if (CchSnprintf(path, sizeof(path), "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
-        !FNativePathInfo(path, &fDir, &fLink) || fLink) { pz->fBad = TRUE; return FALSE; }
+    if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
+        !FNativePathInfo(szPath, &fDir, &fLink) || fLink) { pz->fBad = TRUE; return FALSE; }
     if (fDir) {
         /* Game export stages contain only regular files and backup directories. */
-        ZIPFILES child = {0};
-        child.pszRoot = path;
-        if (!FNativeEnumerateDirectory(path, FCollectZipFiles, &child) || child.fBad) pz->fBad = TRUE;
-        for (int i = 0; i < child.c; i++) {
-            size_t n = strlen(pszName) + strlen(child.rgpsz[i]) + 2;
-            char *relative = SDL_malloc(n);
-            if (!relative) { pz->fBad = TRUE; break; }
-            CchSnprintf(relative, n, "%s/%s", pszName, child.rgpsz[i]);
+        zfChild.pszRoot = szPath;
+        if (!FNativeEnumerateDirectory(szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = TRUE;
+        for (i = 0; i < zfChild.c; i++) {
+            cbName = strlen(pszName) + strlen(zfChild.rgpsz[i]) + 2;
+            pszRelative = SDL_malloc(cbName);
+            if (!pszRelative) { pz->fBad = TRUE; break; }
+            CchSnprintf(pszRelative, cbName, "%s/%s", pszName, zfChild.rgpsz[i]);
             if (pz->c == pz->cMax) {
-                int cap = pz->cMax ? pz->cMax * 2 : 16;
-                rg = SDL_realloc(pz->rgpsz, (size_t)cap * sizeof(*rg));
-                if (!rg) { SDL_free(relative); pz->fBad = TRUE; break; }
-                pz->rgpsz = rg; pz->cMax = cap;
+                cCapacity = pz->cMax ? pz->cMax * 2 : 16;
+                rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
+                if (!rgpszFiles) { SDL_free(pszRelative); pz->fBad = TRUE; break; }
+                pz->rgpsz = rgpszFiles; pz->cMax = cCapacity;
             }
-            pz->rgpsz[pz->c++] = relative;
+            pz->rgpsz[pz->c++] = pszRelative;
         }
-        for (int i = 0; i < child.c; i++) SDL_free(child.rgpsz[i]);
-        SDL_free(child.rgpsz);
+        for (i = 0; i < zfChild.c; i++) SDL_free(zfChild.rgpsz[i]);
+        SDL_free(zfChild.rgpsz);
         return !pz->fBad;
     }
     if (pz->c == pz->cMax) {
-        int cap = pz->cMax ? pz->cMax * 2 : 16;
-        rg = SDL_realloc(pz->rgpsz, (size_t)cap * sizeof(*rg));
-        if (!rg) { pz->fBad = TRUE; return FALSE; }
-        pz->rgpsz = rg; pz->cMax = cap;
+        cCapacity = pz->cMax ? pz->cMax * 2 : 16;
+        rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
+        if (!rgpszFiles) { pz->fBad = TRUE; return FALSE; }
+        pz->rgpsz = rgpszFiles; pz->cMax = cCapacity;
     }
     pz->rgpsz[pz->c] = SDL_strdup(pszName);
     if (!pz->rgpsz[pz->c]) { pz->fBad = TRUE; return FALSE; }
@@ -72,181 +123,197 @@ static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
 }
 
 static int16_t FWriteZipEntry(FILE *pfZip, const char *pszRoot, ZIPENTRY *pze) {
-    char path[512];
+    char szPath[512];
     int64_t cb;
-    uint8_t *data;
+    uint8_t *rgbData;
     FILE *pf;
-    size_t n = strlen(pze->pszName);
-    if (CchSnprintf(path, sizeof(path), "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
-        !FNativeFileSize(path, &cb) || cb < 0 || cb > UINT32_MAX || n > UINT16_MAX ||
+    size_t cbName = strlen(pze->pszName);
+    if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
+        !FNativeFileSize(szPath, &cb) || cb < 0 || cb > UINT32_MAX || cbName > UINT16_MAX ||
         (uint64_t)ftell(pfZip) > UINT32_MAX) return FALSE;
-    pf = PfOpenNativeFile(path, "rb");
+    pf = PfOpenNativeFile(szPath, "rb");
     if (!pf) return FALSE;
-    data = SDL_malloc(cb ? (size_t)cb : 1);
-    if (!data) { fclose(pf); return FALSE; }
-    if (fread(data, 1, (size_t)cb, pf) != (size_t)cb) { fclose(pf); SDL_free(data); return FALSE; }
-    if (fclose(pf) != 0) { SDL_free(data); return FALSE; }
-    pze->crc = (uint32_t)crc32(0, data, (uInt)cb);
-    pze->cb = (uint32_t)cb;
-    pze->off = (uint32_t)ftell(pfZip);
-    PutZip32(pfZip, 0x04034b50); PutZip16(pfZip, 20); PutZip16(pfZip, 0x800); PutZip16(pfZip, 0);
-    PutZip16(pfZip, 0); PutZip16(pfZip, 0); PutZip32(pfZip, pze->crc);
-    PutZip32(pfZip, pze->cb); PutZip32(pfZip, pze->cb);
-    PutZip16(pfZip, (uint16_t)n); PutZip16(pfZip, 0);
-    if (fwrite(pze->pszName, 1, n, pfZip) != n || fwrite(data, 1, (size_t)cb, pfZip) != (size_t)cb) {
-        SDL_free(data); return FALSE;
+    rgbData = SDL_malloc(cb ? (size_t)cb : 1);
+    if (!rgbData) { fclose(pf); return FALSE; }
+    if (fread(rgbData, 1, (size_t)cb, pf) != (size_t)cb) { fclose(pf); SDL_free(rgbData); return FALSE; }
+    if (fclose(pf) != 0) { SDL_free(rgbData); return FALSE; }
+    pze->dwCrc = (uint32_t)crc32(0, rgbData, (uInt)cb);
+    pze->cbSize = (uint32_t)cb;
+    pze->dwOffset = (uint32_t)ftell(pfZip);
+    PutZip32(pfZip, ZIP_LOCAL_SIGNATURE); PutZip16(pfZip, 20); PutZip16(pfZip, 0x800); PutZip16(pfZip, 0);
+    PutZip16(pfZip, 0); PutZip16(pfZip, 0); PutZip32(pfZip, pze->dwCrc);
+    PutZip32(pfZip, pze->cbSize); PutZip32(pfZip, pze->cbSize);
+    PutZip16(pfZip, (uint16_t)cbName); PutZip16(pfZip, 0);
+    if (fwrite(pze->pszName, 1, cbName, pfZip) != cbName || fwrite(rgbData, 1, (size_t)cb, pfZip) != (size_t)cb) {
+        SDL_free(rgbData); return FALSE;
     }
-    SDL_free(data);
+    SDL_free(rgbData);
     return !ferror(pfZip);
 }
 
 int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
     ZIPFILES zf = {0};
-    ZIPENTRY *entries = NULL;
-    char temp[512] = "";
+    ZIPENTRY *rgzentry = NULL;
+    char szTemp[512] = "";
     FILE *pf = NULL;
-    uint32_t start, length;
-    int16_t ok = FALSE;
-    int i, n;
+    uint32_t dwStart, dwLength;
+    int16_t fOk = FALSE;
+    int i, cchTemp;
+    size_t cbName;
     zf.pszRoot = pszDirectory;
     if (!FNativeEnumerateDirectory(pszDirectory, FCollectZipFiles, &zf) || zf.fBad || zf.c > UINT16_MAX) goto done;
     for (i = 0; i < 1000; i++) {
-        n = CchSnprintf(temp, sizeof(temp), "%s.tmp.%u", pszArchive, idZipTemp++);
-        if (n <= 0 || (size_t)n >= sizeof(temp)) goto done;
-        pf = PfOpenNativeFile(temp, "wbx");
+        cchTemp = CchSnprintf(szTemp, sizeof(szTemp), "%s.tmp.%u", pszArchive, idZipTemp++);
+        if (cchTemp <= 0 || (size_t)cchTemp >= sizeof(szTemp)) goto done;
+        pf = PfOpenNativeFile(szTemp, "wbx");
         if (pf) break;
-        if (!FNativeFileSize(temp, &(int64_t){0})) goto done;
+        if (!FNativeFileSize(szTemp, &(int64_t){0})) goto done;
     }
     if (!pf) goto done;
-    entries = SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*entries));
-    if (!entries) goto done;
+    rgzentry = SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*rgzentry));
+    if (!rgzentry) goto done;
     for (i = 0; i < zf.c; i++) {
-        entries[i].pszName = SDL_strdup(zf.rgpsz[i]);
-        if (!entries[i].pszName || !FWriteZipEntry(pf, pszDirectory, &entries[i])) goto done;
+        rgzentry[i].pszName = SDL_strdup(zf.rgpsz[i]);
+        if (!rgzentry[i].pszName || !FWriteZipEntry(pf, pszDirectory, &rgzentry[i])) goto done;
     }
-    start = (uint32_t)ftell(pf);
+    dwStart = (uint32_t)ftell(pf);
     for (i = 0; i < zf.c; i++) {
-        size_t nameLen = strlen(entries[i].pszName);
-        PutZip32(pf, 0x02014b50); PutZip16(pf, 20); PutZip16(pf, 20); PutZip16(pf, 0x800);
-        PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip32(pf, entries[i].crc);
-        PutZip32(pf, entries[i].cb); PutZip32(pf, entries[i].cb); PutZip16(pf, (uint16_t)nameLen);
+        cbName = strlen(rgzentry[i].pszName);
+        PutZip32(pf, ZIP_CENTRAL_SIGNATURE); PutZip16(pf, 20); PutZip16(pf, 20); PutZip16(pf, 0x800);
+        PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip32(pf, rgzentry[i].dwCrc);
+        PutZip32(pf, rgzentry[i].cbSize); PutZip32(pf, rgzentry[i].cbSize); PutZip16(pf, (uint16_t)cbName);
         PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0); PutZip16(pf, 0);
-        PutZip32(pf, 0); PutZip32(pf, entries[i].off);
-        if (fwrite(entries[i].pszName, 1, nameLen, pf) != nameLen) goto done;
+        PutZip32(pf, 0); PutZip32(pf, rgzentry[i].dwOffset);
+        if (fwrite(rgzentry[i].pszName, 1, cbName, pf) != cbName) goto done;
     }
-    length = (uint32_t)ftell(pf) - start;
-    PutZip32(pf, 0x06054b50); PutZip16(pf, 0); PutZip16(pf, 0);
+    dwLength = (uint32_t)ftell(pf) - dwStart;
+    PutZip32(pf, ZIP_EOCD_SIGNATURE); PutZip16(pf, 0); PutZip16(pf, 0);
     PutZip16(pf, (uint16_t)zf.c); PutZip16(pf, (uint16_t)zf.c);
-    PutZip32(pf, length); PutZip32(pf, start); PutZip16(pf, 0);
+    PutZip32(pf, dwLength); PutZip32(pf, dwStart); PutZip16(pf, 0);
     if (ferror(pf)) goto done;
     if (fclose(pf) != 0) { pf = NULL; goto done; }
     pf = NULL;
-    if (ReplaceNativeFile(temp, pszArchive) != 0) goto done;
-    ok = TRUE;
+    if (ReplaceNativeFile(szTemp, pszArchive) != 0) goto done;
+    fOk = TRUE;
 done:
     if (pf) fclose(pf);
-    if (!ok && temp[0]) RemoveNativePath(temp);
-    for (i = 0; i < zf.c; i++) { SDL_free(zf.rgpsz[i]); if (entries) SDL_free(entries[i].pszName); }
-    SDL_free(zf.rgpsz); SDL_free(entries);
-    return ok;
+    if (!fOk && szTemp[0]) RemoveNativePath(szTemp);
+    for (i = 0; i < zf.c; i++) { SDL_free(zf.rgpsz[i]); if (rgzentry) SDL_free(rgzentry[i].pszName); }
+    SDL_free(zf.rgpsz); SDL_free(rgzentry);
+    return fOk;
 }
 
-static int16_t FZipMakeParents(const char *root, const char *name, char *file, size_t fileSize) {
-    char path[512];
-    int n = CchSnprintf(file, fileSize, "%s%s%s", root, szDirSep, name);
-    size_t i, base = strlen(root) + strlen(szDirSep);
-    if (n <= 0 || (size_t)n >= fileSize || (size_t)n >= sizeof(path)) return FALSE;
-    strcpy(path, file);
-    for (i = base; i < (size_t)n; i++) if (path[i] == '/' || path[i] == '\\') {
-        char ch = path[i]; path[i] = 0;
-        if (!FNativeDirectoryExists(path) && CreateNativeDir(path) != 0) return FALSE;
-        path[i] = ch;
+static int16_t FZipMakeParents(const char *pszRoot, const char *pszName, char *szFile, size_t cbFile) {
+    char szPath[512], ch;
+    int cch;
+    size_t i, cchBase = strlen(pszRoot) + strlen(szDirSep);
+    cch = CchSnprintf(szFile, cbFile, "%s%s%s", pszRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= cbFile || (size_t)cch >= sizeof(szPath)) return FALSE;
+    strcpy(szPath, szFile);
+    for (i = cchBase; i < (size_t)cch; i++) if (szPath[i] == '/' || szPath[i] == '\\') {
+        ch = szPath[i]; szPath[i] = 0;
+        if (!FNativeDirectoryExists(szPath) && CreateNativeDir(szPath) != 0) return FALSE;
+        szPath[i] = ch;
     }
     return TRUE;
 }
 
 int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
-    uint8_t tail[65557], central[46], local[30], *compressed = NULL, *data = NULL;
+    uint8_t rgbTail[65557], rgbCentral[ZIP_CENTRAL_HEADER_SIZE], rgbLocal[ZIP_LOCAL_HEADER_SIZE];
+    uint8_t *rgbLocalName = NULL, *rgbCompressed = NULL, *rgbData = NULL;
     FILE *pf = PfOpenNativeFile(pszArchive, "rb");
+    FILE *pfOutput = NULL;
     int64_t archiveSize;
-    long tailOffset, eocd = -1, centralOffset, next;
-    uint16_t count, i;
+    long tailOffset, eocd = -1, centralOffset, lNext;
+    uint16_t cEntries, i, wLocalNameLength, wLocalExtraLength;
     uint64_t cbTotal = 0;
-    int16_t ok = FALSE;
-    if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < 22) goto done;
-    tailOffset = archiveSize > sizeof(tail) ? (long)(archiveSize - sizeof(tail)) : 0;
+    int16_t fOk = FALSE, fWrite;
+    size_t cbRead;
+    long lSearch;
+    char szName[512], szOutput[512], szDirectoryEntry[512];
+    ZIPCENTRAL zc;
+    z_stream zs;
+    int64_t cbExisting;
+    if (!pf || !FNativeFileSize(pszArchive, &archiveSize) || archiveSize < ZIP_EOCD_SIZE) goto done;
+    tailOffset = archiveSize > sizeof(rgbTail) ? (long)(archiveSize - sizeof(rgbTail)) : 0;
     if (fseek(pf, tailOffset, SEEK_SET) != 0) goto done;
-    { size_t got = fread(tail, 1, sizeof(tail), pf); long j = (long)(got >= 22 ? got - 22 : 0);
-      for (;;) { if (DwZip32(tail + j) == 0x06054b50) { eocd = tailOffset + j; break; } if (!j--) break; } }
-    if (eocd < 0 || fseek(pf, eocd + 4, SEEK_SET) != 0 || fread(tail, 1, 18, pf) != 18 ||
-        eocd + 22 + WZip16(tail + 16) != archiveSize) goto done;
-    if (WZip16(tail) || WZip16(tail + 2) || WZip16(tail + 4) != WZip16(tail + 6)) goto done;
-    count = WZip16(tail + 6); centralOffset = (long)DwZip32(tail + 12);
-    if (count > 4096 || (uint64_t)centralOffset + DwZip32(tail + 8) > (uint64_t)eocd ||
+    cbRead = fread(rgbTail, 1, sizeof(rgbTail), pf);
+    lSearch = (long)(cbRead >= ZIP_EOCD_SIZE ? cbRead - ZIP_EOCD_SIZE : 0);
+    for (;;) { if (DwZip32(rgbTail + lSearch) == ZIP_EOCD_SIGNATURE) { eocd = tailOffset + lSearch; break; } if (!lSearch--) break; }
+    if (eocd < 0 || fseek(pf, eocd + 4, SEEK_SET) != 0 ||
+        fread(rgbTail, 1, ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE, pf) != ZIP_EOCD_FIELDS_AFTER_SIGNATURE_SIZE ||
+        eocd + ZIP_EOCD_SIZE + WZip16(rgbTail + ZIP_EOCD_COMMENT_LENGTH_OFFSET) != archiveSize) goto done;
+    if (WZip16(rgbTail + ZIP_EOCD_DISK_NUMBER_OFFSET) || WZip16(rgbTail + ZIP_EOCD_CENTRAL_DISK_OFFSET) ||
+        WZip16(rgbTail + ZIP_EOCD_ENTRIES_ON_DISK_OFFSET) != WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET)) goto done;
+    cEntries = WZip16(rgbTail + ZIP_EOCD_ENTRY_COUNT_OFFSET);
+    centralOffset = (long)DwZip32(rgbTail + ZIP_EOCD_CENTRAL_OFFSET_OFFSET);
+    if (cEntries > 4096 || (uint64_t)centralOffset + DwZip32(rgbTail + ZIP_EOCD_CENTRAL_SIZE_OFFSET) > (uint64_t)eocd ||
         fseek(pf, centralOffset, SEEK_SET) != 0) goto done;
-    for (i = 0; i < count; i++) {
-        char name[512], output[512];
-        uint16_t nameLen, extraLen, commentLen, flags, method;
-        uint32_t compressedSize, dataSize, expectedCrc, localOffset;
-        if (fread(central, 1, sizeof(central), pf) != sizeof(central) || DwZip32(central) != 0x02014b50) goto done;
-        flags = WZip16(central + 8); method = WZip16(central + 10);
-        expectedCrc = DwZip32(central + 16); compressedSize = DwZip32(central + 20);
-        dataSize = DwZip32(central + 24); nameLen = WZip16(central + 28);
-        extraLen = WZip16(central + 30); commentLen = WZip16(central + 32);
-        localOffset = DwZip32(central + 42);
-        if (!nameLen || nameLen >= sizeof(name) || dataSize > 64U * 1024U * 1024U ||
-            (flags & 1) || (method != 0 && method != 8) || WZip16(central + 34) != 0 ||
-            ((DwZip32(central + 38) >> 16) & 0170000U) == 0120000U ||
-            (DwZip32(central + 38) & 0x400U) ||
-            fread(name, 1, nameLen, pf) != nameLen) goto done;
-        if (memchr(name, 0, nameLen)) goto done;
-        cbTotal += dataSize;
+    for (i = 0; i < cEntries; i++) {
+        if (fread(rgbCentral, 1, sizeof(rgbCentral), pf) != sizeof(rgbCentral) || DwZip32(rgbCentral) != ZIP_CENTRAL_SIGNATURE) goto done;
+        zc = ZipCentralHeader(rgbCentral);
+        if (!zc.wNameLength || zc.wNameLength >= sizeof(szName) || zc.cbUncompressed > 64U * 1024U * 1024U ||
+            (zc.wFlags & 1) || (zc.wMethod != 0 && zc.wMethod != 8) ||
+            WZip16(rgbCentral + ZIP_CENTRAL_DISK_START_OFFSET) != 0 ||
+            ((zc.dwExternalAttributes >> 16) & 0170000U) == 0120000U ||
+            (zc.dwExternalAttributes & 0x400U) ||
+            fread(szName, 1, zc.wNameLength, pf) != zc.wNameLength) goto done;
+        if (memchr(szName, 0, zc.wNameLength)) goto done;
+        cbTotal += zc.cbUncompressed;
         if (cbTotal > 512U * 1024U * 1024U) goto done;
-        name[nameLen] = 0;
-        next = ftell(pf) + extraLen + commentLen;
-        if (name[nameLen - 1] == '/') {
-            name[nameLen - 1] = 0;
-            if (!FZipSafeName(name)) goto done;
-            { char szDirFile[512];
-              if (CchSnprintf(szDirFile, sizeof(szDirFile), "%s/.zip-dir-entry", name) <= 0 ||
-                  !FZipMakeParents(pszDirectory, szDirFile, output, sizeof(output))) goto done; }
-            if (fseek(pf, next, SEEK_SET) != 0) goto done;
+        szName[zc.wNameLength] = 0;
+        lNext = ftell(pf) + zc.wExtraLength + zc.wCommentLength;
+        if (zc.dwLocalOffset >= (uint32_t)centralOffset ||
+            fseek(pf, zc.dwLocalOffset, SEEK_SET) != 0 || fread(rgbLocal, 1, sizeof(rgbLocal), pf) != sizeof(rgbLocal) ||
+            DwZip32(rgbLocal) != ZIP_LOCAL_SIGNATURE || WZip16(rgbLocal + ZIP_LOCAL_FLAGS_OFFSET) != zc.wFlags ||
+            WZip16(rgbLocal + ZIP_LOCAL_METHOD_OFFSET) != zc.wMethod) goto done;
+        wLocalNameLength = WZip16(rgbLocal + ZIP_LOCAL_NAME_LENGTH_OFFSET);
+        wLocalExtraLength = WZip16(rgbLocal + ZIP_LOCAL_EXTRA_LENGTH_OFFSET);
+        if (wLocalNameLength != zc.wNameLength) goto done;
+        rgbLocalName = SDL_malloc(wLocalNameLength ? wLocalNameLength : 1);
+        if (!rgbLocalName || fread(rgbLocalName, 1, wLocalNameLength, pf) != wLocalNameLength ||
+            memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
+            fseek(pf, wLocalExtraLength, SEEK_CUR) != 0 ||
+            (uint64_t)ftell(pf) + zc.cbCompressed > (uint64_t)centralOffset) goto done;
+        SDL_free(rgbLocalName); rgbLocalName = NULL;
+        if (szName[zc.wNameLength - 1] == '/') {
+            szName[zc.wNameLength - 1] = 0;
+            if (!FZipSafeName(szName) || CchSnprintf(szDirectoryEntry, sizeof(szDirectoryEntry), "%s/.zip-dir-entry", szName) <= 0 ||
+                !FZipMakeParents(pszDirectory, szDirectoryEntry, szOutput, sizeof(szOutput)) ||
+                fseek(pf, lNext, SEEK_SET) != 0) goto done;
             continue;
         }
-        if (!FZipSafeName(name)) goto done;
-        if (fseek(pf, localOffset, SEEK_SET) != 0 || fread(local, 1, sizeof(local), pf) != sizeof(local) ||
-            DwZip32(local) != 0x04034b50 ||
-            fseek(pf, WZip16(local + 26) + WZip16(local + 28), SEEK_CUR) != 0) goto done;
-        if (localOffset >= (uint32_t)centralOffset ||
-            (uint64_t)ftell(pf) + compressedSize > (uint64_t)centralOffset) goto done;
-        compressed = SDL_malloc(compressedSize ? compressedSize : 1);
-        data = SDL_malloc(dataSize ? dataSize : 1);
-        if (!compressed || !data || fread(compressed, 1, compressedSize, pf) != compressedSize) goto done;
-        if (method == 0) {
-            if (compressedSize != dataSize) goto done;
-            memcpy(data, compressed, dataSize);
+        if (!FZipSafeName(szName)) goto done;
+        rgbCompressed = SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1);
+        rgbData = SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1);
+        if (!rgbCompressed || !rgbData || fread(rgbCompressed, 1, zc.cbCompressed, pf) != zc.cbCompressed) goto done;
+        if (zc.wMethod == 0) {
+            if (zc.cbCompressed != zc.cbUncompressed) goto done;
+            memcpy(rgbData, rgbCompressed, zc.cbUncompressed);
         } else {
-            z_stream stream; memset(&stream, 0, sizeof(stream));
-            stream.next_in = compressed; stream.avail_in = compressedSize;
-            stream.next_out = data; stream.avail_out = dataSize;
-            if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) goto done;
-            if (inflate(&stream, Z_FINISH) != Z_STREAM_END || stream.total_in != compressedSize ||
-                stream.total_out != dataSize) { inflateEnd(&stream); goto done; }
-            inflateEnd(&stream);
+            memset(&zs, 0, sizeof(zs));
+            zs.next_in = rgbCompressed; zs.avail_in = zc.cbCompressed;
+            zs.next_out = rgbData; zs.avail_out = zc.cbUncompressed;
+            if (inflateInit2(&zs, -MAX_WBITS) != Z_OK) goto done;
+            if (inflate(&zs, Z_FINISH) != Z_STREAM_END || zs.total_in != zc.cbCompressed ||
+                zs.total_out != zc.cbUncompressed) { inflateEnd(&zs); goto done; }
+            inflateEnd(&zs);
         }
-        if ((uint32_t)crc32(0, data, dataSize) != expectedCrc ||
-            !FZipMakeParents(pszDirectory, name, output, sizeof(output)) ||
-            FNativeFileSize(output, &(int64_t){0})) goto done;
-        { FILE *out = PfOpenNativeFile(output, "wbx");
-          int16_t fWrite = out && fwrite(data, 1, dataSize, out) == dataSize;
-          if (out && fclose(out) != 0) fWrite = FALSE;
-          if (!fWrite) goto done; }
-        SDL_free(compressed); compressed = NULL; SDL_free(data); data = NULL;
-        if (fseek(pf, next, SEEK_SET) != 0) goto done;
+        if ((uint32_t)crc32(0, rgbData, zc.cbUncompressed) != zc.dwCrc ||
+            !FZipMakeParents(pszDirectory, szName, szOutput, sizeof(szOutput)) ||
+            FNativeFileSize(szOutput, &cbExisting)) goto done;
+        pfOutput = PfOpenNativeFile(szOutput, "wbx");
+        fWrite = pfOutput && fwrite(rgbData, 1, zc.cbUncompressed, pfOutput) == zc.cbUncompressed;
+        if (pfOutput && fclose(pfOutput) != 0) fWrite = FALSE;
+        pfOutput = NULL;
+        if (!fWrite) goto done;
+        SDL_free(rgbCompressed); rgbCompressed = NULL; SDL_free(rgbData); rgbData = NULL;
+        if (fseek(pf, lNext, SEEK_SET) != 0) goto done;
     }
-    ok = TRUE;
+    fOk = TRUE;
 done:
-    SDL_free(compressed); SDL_free(data);
+    SDL_free(rgbLocalName); SDL_free(rgbCompressed); SDL_free(rgbData);
+    if (pfOutput) fclose(pfOutput);
     if (pf) fclose(pf);
-    return ok;
+    return fOk;
 }

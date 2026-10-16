@@ -173,6 +173,10 @@ def main():
         run(executable, zip_reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(zip_path), STARS_CLIENT_IMPORT_NAME='managed-copy')
         zip_reimported = zip_reimport_work / 'library/Games/managed-copy'
         assert files(zip_reimported, metadata=False) == files(managed, metadata=False)
+        run(executable, zip_reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy',
+            STARS_CLIENT_EXPORT_PARENT=str(submitted_parent), STARS_CLIENT_EXPORT_ACTION='verify',
+            STARS_CLIENT_EXPORT_PLAYER='1', STARS_CLIENT_EXPORT_RESEARCH='5',
+            STARS_CLIENT_CONTINUE=str(zip_reimported / 'managed-copy.m2'))
 
         compressed_zip = work / 'compressed.zip'
         with zipfile.ZipFile(compressed_zip, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
@@ -196,6 +200,27 @@ def main():
             STARS_CLIENT_EXPORT_EXPECTED='fail')
         assert (zip_blocked / 'keep.txt').read_bytes() == b'preserve blocked destination'
         assert files(managed, metadata=False) == before
+
+        # Malformed local headers cannot replace or alter an existing managed
+        # game, and parsing must leave the selected source archive untouched.
+        managed_before = files(managed)
+        for label, field_offset, replacement in (
+                ('name', 30, ord('X')),
+                ('flags', 6, 0x01),
+                ('method', 8, 0x63)):
+            with zipfile.ZipFile(zip_path) as archive:
+                info = archive.getinfo('managed-copy.m1')
+                local_offset = info.header_offset
+            bad_archive = bytearray(zip_path.read_bytes())
+            bad_archive[local_offset + field_offset] = replacement
+            bad_source = work / f'bad-local-{label}.zip'
+            bad_source.write_bytes(bad_archive)
+            bad_source_before = bad_source.read_bytes()
+            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_source),
+                STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+            assert files(managed) == managed_before
+            assert bad_source.read_bytes() == bad_source_before
+            assert not (work / 'library/Games/invalid-copy').exists()
 
         # Invalid paths and truncated archives must not publish a partial game.
         unsafe_zip = work / 'unsafe.zip'
