@@ -22,8 +22,11 @@ static int cLibraryGameList;
 static int cLibraryGameListMax;
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
+static uint32_t idLibraryExportStage;
 static const char *pszRaceLibraryNameOverride;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
+static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName);
+static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter);
 static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
                                            long long lPlayed, const char *pszExchangeName);
 
@@ -921,7 +924,10 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         ib = ftell(pf);
         if (ib < 0 || ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
-            if (hdr.cb != 2 || ib + hdr.cb != cbFile) break;
+            /* Orders and history writers use an empty EOF; host and turn
+             * files carry the two-byte trailer. Both must end at EOF. */
+            if (hdr.cb != 2 && !(hdr.cb == 0 && (dt == dtLog || dt == dtHist))) break;
+            if (ib + hdr.cb != cbFile) break;
             fComplete = TRUE;
             break;
         }
@@ -1175,6 +1181,148 @@ static int16_t RemoveImportFile(void *lpData, const char *pszFile) {
         RemoveNativePath(szFile);
     } else RemoveNativePath(szFile);
     return TRUE;
+}
+
+typedef struct {
+    const char *pszSource;
+    const char *pszTarget;
+    const char *pszStem;
+    int16_t fBad;
+    int16_t fSawXY;
+    int16_t fSawPlayable;
+} LIBRARYEXPORT;
+
+static int16_t CopyGameExportEntry(void *lpData, const char *pszName) {
+    LIBRARYEXPORT *ple = lpData;
+    int iplr;
+    DtFileType dt;
+    char szSource[512], szTarget[512];
+    size_t cchStem = strlen(ple->pszStem);
+
+    if (!FImportFamilyMember(pszName, ple->pszStem, &iplr, &dt)) {
+        /* A malformed companion should not silently make an incomplete export. */
+        if (!SDL_strncasecmp(pszName, ple->pszStem, cchStem) && pszName[cchStem] == '.' &&
+            strchr("mMhHxX", pszName[cchStem + 1])) ple->fBad = TRUE;
+        return TRUE;
+    }
+    CchSnprintf(szSource, sizeof(szSource), "%s%s%s", ple->pszSource, szDirSep, pszName);
+    CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", ple->pszTarget, szDirSep, pszName);
+    if (!FCopyNativeFile(szSource, szTarget)) { ple->fBad = TRUE; return FALSE; }
+    if (dt == dtXY) ple->fSawXY = TRUE;
+    if (dt == dtTurn || dt == dtHost) ple->fSawPlayable = TRUE;
+    return TRUE;
+}
+
+static int16_t CreateLibraryExportStage(char *pszDirectory, size_t cchDirectory,
+                                        const char *pszParent) {
+    uint32_t dwTick = DwTickCount();
+    int i, cch;
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszDirectory, cchDirectory, "%s%s.stars-game-export-%u-%u",
+                          pszParent, szDirSep, dwTick, idLibraryExportStage++);
+        if (cch <= 0 || (size_t)cch >= cchDirectory) return FALSE;
+        if (CreateNativeDir(pszDirectory) == 0) return TRUE;
+        if (!FNativeDirectoryExists(pszDirectory)) return FALSE;
+    }
+    return FALSE;
+}
+
+typedef struct {
+    const char *pszSource;
+    const char *pszTarget;
+    int16_t fBad;
+} LIBRARYEXPORTMOVE;
+
+static int16_t MoveGameExportEntry(void *lpData, const char *pszName) {
+    LIBRARYEXPORTMOVE *plem = lpData;
+    char szSource[512], szTarget[512];
+    CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plem->pszSource, szDirSep, pszName);
+    CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plem->pszTarget, szDirSep, pszName);
+    if (RenameNativeFile(szSource, szTarget) != 0) { plem->fBad = TRUE; return FALSE; }
+    return TRUE;
+}
+
+int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget) {
+    LIBRARYIMPORT li;
+    LIBRARYEXPORT le;
+    LIBRARYEXPORTMOVE lem;
+    char szSource[512], szDestination[512], szStage[512];
+    int cch;
+
+    if (!pszTarget) {
+        SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
+        return TRUE;
+    }
+    if (!FInitLibrary() || !FPortableLibraryName(pszName)) return FALSE;
+    cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return FALSE;
+    if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
+        (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
+         pszTarget[strlen(szSource)] == '\\')) goto LFail;
+    cch = CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszTarget, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szDestination) || FNativeDirectoryExists(szDestination)) goto LFail;
+    /* The loader and backup writer keep complete paths in szBase. Check the
+     * longest companion before copying, rather than truncating child paths. */
+    if (strlen(szDestination) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szBase)) goto LFail;
+    if (!CreateLibraryExportStage(szStage, sizeof(szStage), pszTarget)) goto LFail;
+    if (strlen(szStage) + strlen(pszName) + sizeof("/backup.999/.m16") > sizeof(szStage)) goto LStageFail;
+
+    memset(&le, 0, sizeof(le));
+    le.pszSource = szSource;
+    le.pszTarget = szStage;
+    le.pszStem = pszName;
+    if (!FNativeEnumerateDirectory(szSource, CopyGameExportEntry, &le) || le.fBad ||
+        !le.fSawXY || !le.fSawPlayable) goto LStageFail;
+
+    memset(&li, 0, sizeof(li));
+    li.pszSource = szSource;
+    li.pszTarget = szStage;
+    li.pszStem = pszName;
+    li.pszName = pszName;
+    if (!FNativeEnumerateDirectory(szSource, CopyBackupDirectory, &li) || li.fBad ||
+        CreateNativeDir(szDestination) != 0) goto LStageFail;
+    lem.pszSource = szStage;
+    lem.pszTarget = szDestination;
+    lem.fBad = FALSE;
+    if (!FNativeEnumerateDirectory(szStage, MoveGameExportEntry, &lem) || lem.fBad) {
+        FNativeEnumerateDirectory(szDestination, RemoveImportFile, szDestination);
+        RemoveNativePath(szDestination);
+        goto LStageFail;
+    }
+    RemoveNativePath(szStage);
+    return TRUE;
+
+LStageFail:
+    FNativeEnumerateDirectory(szStage, RemoveImportFile, szStage);
+    RemoveNativePath(szStage);
+LFail:
+    if (IsWindow(hwnd)) AlertSz("The game could not be exported to that folder.", MB_ICONHAND);
+    return FALSE;
+}
+
+static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
+    HWND hwnd = lpData;
+    char *pszPath;
+    (void)iFilter;
+    if (!rgpszPath || !rgpszPath[0]) return;
+    pszPath = SDL_strdup(rgpszPath[0]);
+    if (!pszPath || !StarsCompatPostMessageAsync(hwnd, WM_STARS_EXPORT_FOLDER, (WPARAM)pszPath, 0)) SDL_free(pszPath);
+}
+
+int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
+    char szDir[512];
+    char szName[256];
+    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return FALSE;
+    if (!pszTarget) return FExportLibraryGame(hwnd, szName, NULL);
+    if (game.fDirty && lpPlanets && idPlayer != iplrNone) {
+        CchSnprintf(szDir, sizeof(szDir), "%s%s%s", szLibraryRoot, szDirSep, szName);
+        if (!strncmp(szBase, szDir, strlen(szDir)) && szBase[strlen(szDir)] == chDirSep) PromptSaveGame();
+    }
+    return FExportLibraryGame(hwnd, szName, pszTarget);
+}
+
+void ShowLibraryExportFolderPicker(HWND hwnd) {
+    SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
 }
 
 static int16_t FindImportUniverse(void *lpData, const char *pszName) {
@@ -1723,6 +1871,9 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
+    CreateWindow("BUTTON", "Export Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 464, y - 22, 96, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, hInst, NULL);
     CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, hInst, NULL);
@@ -1807,6 +1958,7 @@ void RefreshLibraryGames(HWND hwnd) {
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
     EnableWindow(rghwndBtnSplash[1], fHasGames);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
     EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
     EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
 }

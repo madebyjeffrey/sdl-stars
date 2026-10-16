@@ -167,7 +167,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog)
 if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -351,6 +351,10 @@ if(STARS_BUILD_TESTS)
         "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS "client"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 100)
+    add_test(NAME win32_client_game_export_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_game_export.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_game_export_dummy PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat" TIMEOUT 90)
     add_test(NAME win32_client_newgame_x11 COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_x11_wm.py"
         --xvfb "${STARS_XVFB_RUN_EXECUTABLE}" --wm "${STARS_OPENBOX_EXECUTABLE}"
