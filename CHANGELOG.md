@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `ShipCommandProc` now opens the fleet rename dialog without copying the shared
+  fleet-name buffer onto itself. This preserves existing rename behavior and
+  avoids a checked-CRT trap on macOS.
+
 - The desktop library now has a separate Host Games view for managed games
   containing both the universe and host files, including host-only imports.
   Import Orders validates the incoming player's game, turn and generation,
