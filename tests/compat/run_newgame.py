@@ -55,9 +55,14 @@ def main():
             run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
             assert all((path.parent / filename).read_bytes() == content for filename, content in before.items())
             if not advanced and name == 'fresh-game':
+                metadata_file = path.parent / '.library'
+                metadata = metadata_file.read_text(encoding='utf-8').splitlines()
+                metadata[0] = '1'
+                metadata_file.write_text('\n'.join(metadata[:4]) + '\n', encoding='utf-8')
                 names = sorted(p.name for p in games.iterdir())
                 run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name, STARS_CLIENT_LIBRARY_DOUBLECLICK='1')
                 assert sorted(p.name for p in games.iterdir()) == names
+                assert metadata_file.read_text(encoding='utf-8').splitlines()[4] == name
             # The wizard defaults to Game.xy; a differently cased folder is a collision.
             (games / 'gAmE').mkdir()
             choices['STARS_CLIENT_NEW_GAME'] = str(games / 'Game (2)' / 'Game (2).xy')

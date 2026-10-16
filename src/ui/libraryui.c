@@ -817,11 +817,6 @@ typedef struct {
     int16_t fBad;
 } LIBRARYGAMECOPY;
 
-typedef struct {
-    char *pszName;
-    int16_t fFound;
-} LIBRARYGAMECOLLISION;
-
 static int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, size_t cchName,
                                     int *piplr, long long *plPlayed,
                                     char *pszExchangeName, size_t cchExchange) {
@@ -853,22 +848,14 @@ static int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, siz
            *piplr >= -1 && *piplr < 16 && *plPlayed >= 0 && *pszExchangeName;
 }
 
-static int16_t FindLibraryGameCollision(void *lpData, const char *pszFile) {
-    LIBRARYGAMECOLLISION *plgc = lpData;
-    if (!SDL_strcasecmp(plgc->pszName, pszFile)) {
-        plgc->fFound = TRUE;
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static int16_t FLibraryNameAvailableExcept(const char *pszName, const char *pszExcept) {
-    LIBRARYGAMECOLLISION lgc;
-    lgc.pszName = (char *)pszName;
-    lgc.fFound = FALSE;
-    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryGameCollision, &lgc)) return FALSE;
-    if (lgc.fFound && pszExcept && !SDL_strcasecmp(pszName, pszExcept)) return TRUE;
-    return !lgc.fFound;
+    LIBRARYNAMECHECK lnc;
+    lnc.pszDirectory = szLibraryRoot;
+    lnc.pszName = pszName;
+    lnc.fFound = FALSE;
+    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryName, &lnc)) return FALSE;
+    if (lnc.fFound && pszExcept && !SDL_strcasecmp(pszName, pszExcept)) return TRUE;
+    return !lnc.fFound;
 }
 
 static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
@@ -1518,9 +1505,8 @@ static void ClearLibraryGameList(void) {
 }
 
 static int16_t ListLibraryGame(void *lpList, const char *pszName) {
-    char szFile[256], szMetadataName[256], szDisplay[320];
-    FILE *pf;
-    int iVersion, iplr, fRead, cPlayers;
+    char szFile[256], szDirectory[256], szMetadataName[256], szExchangeName[256], szDisplay[320];
+    int iplr, cPlayers, cch;
     int64_t cbFile;
     long long lPlayed;
     int32_t lidGame;
@@ -1528,14 +1514,10 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
     int16_t fMulti;
 
     if (!FPortableLibraryName(pszName)) return TRUE;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szLibraryRoot, szDirSep, pszName, szDirSep);
-    pf = PfOpenNativeFile(szFile, "rb");
-    if (!pf) return TRUE;
-    iVersion = 0; iplr = -1;
-    fRead = fscanf(pf, "%d\n", &iVersion) == 1 && fgets(szMetadataName, sizeof(szMetadataName), pf) &&
-            fscanf(pf, "%d\n%lld", &iplr, &lPlayed) == 2;
-    fclose(pf);
-    if (!fRead || (iVersion != 1 && iVersion != 2) || iplr < -1 || iplr >= 16) return TRUE;
+    cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szDirectory) ||
+        !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
+                              szExchangeName, sizeof(szExchangeName))) return TRUE;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.xy", szLibraryRoot, szDirSep, pszName, szDirSep, pszName);
     if (!FNativeFileSize(szFile, &cbFile) || cbFile == 0) return TRUE;
     cPlayers = 0;
