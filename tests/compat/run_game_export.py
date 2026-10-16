@@ -70,7 +70,8 @@ def main():
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent),
             STARS_CLIENT_EXPORT_EXPECTED='fail')
         assert files(exported) == destination_before and files(managed) == before
-        assert list(parent.iterdir()) == [exported]
+        entries = list(parent.iterdir())
+        assert entries == [exported], f'Unexpected export entries: {entries!r}; expected {exported!r}'
 
         # A second player's real saved/submitted orders survive export along
         # with the first player's orders, both histories, host state and backup.
