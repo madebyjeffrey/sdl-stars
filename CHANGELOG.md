@@ -6,10 +6,155 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
+  Its previous position covered both buttons and intercepted their clicks.
+
+- `FImportLibraryOrders` now rejects player slots absent from the selected
+  hosted game; previously a consistently numbered file for any slot up to 16
+  could be installed even though host generation would ignore it.
+
+- `FSelectedLibraryGameName` now resolves Export Game, Duplicate and Rename
+  from the visible library view instead of the hidden Games selection. Host-only
+  libraries enable these actions, and both lists refresh after duplicate/rename.
+
+- `ShipCommandProc` now opens the fleet rename dialog without copying the shared
+  fleet-name buffer onto itself. This preserves existing rename behavior and
+  avoids a checked-CRT trap on macOS.
+
+- The desktop library now has a separate Host Games view for managed games
+  containing both the universe and host files, including host-only imports.
+  Import Orders validates the incoming player's game, turn and generation,
+  ignores identical orders, and asks before replacing different saved orders.
+  Host generation continues through the existing turn engine and managed file
+  paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
+- `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
+  paths with forward slashes when the library root uses backslashes. Orders
+  retain their exchange filename, and library history and dirty-game export
+  use the same membership check. Simulation and save formats are unchanged.
+
+- `FInitLibrary` and `FInitRaceLibrary` read environment paths through SDL's
+  UTF-8 API on Windows. Libraries under accented or non-Latin settings and
+  override paths can now import races and export orders. Simulation results,
+  save formats and native regression baselines are unchanged.
+
+- The PDF map test now starts from a managed game, avoiding a wait at the
+  external-game Import dialog. Its full planet-position and PDF checks also
+  run on macOS. Product behavior and simulation baselines are unchanged.
+
+- The designer save/reload test now uses a managed game and changes its live
+  research choice before reopening saved orders, so a failed reload cannot
+  pass unnoticed. The workflow also runs on macOS. Product behavior and
+  simulation baselines are unchanged.
+
+- The portable file-workflow test handles both Windows path separators and
+  opens its Unicode fixtures through the native UTF-8 file boundary, avoiding
+  invalid chooser offsets and fixture I/O failures. Product behavior and
+  simulation baselines are unchanged.
+
+- Windows managed game and race paths now accept picker-style forward slashes
+  and native backslashes consistently. Startup reopens an existing managed
+  game instead of importing another copy, and managed race selection retains
+  its correct filename. Simulation and save formats are unchanged.
+
+- Recent-file migration now reports a missing selected player file by path
+  instead of silently importing its valid siblings. Other recent entries
+  continue to import, including relative filenames. Sources, simulation
+  results and file formats are unchanged.
+
+- The real file-workflow test keeps its timer active while accepting the race
+  import dialog, avoiding a deadlock. The same workflow now runs with portable
+  chooser substitutions on macOS, Windows and Linux in addition to the Linux
+  portal test. Product behavior and simulation baselines are unchanged.
+
+- Desktop Open and recent-file actions now distinguish races from games by
+  file contents. Race selections import into Race Designs and open the copied
+  design for editing; cancelling customization retains the import and leaves
+  the source unchanged. Simulation and file formats are unchanged.
+
+- Desktop startup now imports its supplied external game path without asking
+  the user to select it again. Managed game paths reopen their existing copy.
+  Command-line host behavior, simulation results and file formats are unchanged.
+
+- New Game race edits now save to the selected design, retaining full library
+  filenames per roster entry. Importing another race no longer redirects an
+  earlier design's edits, and customizing a predefined race creates a separate
+  managed design. Game simulation and file formats are unchanged.
+
+- Existing recent game files now receive a one-time import offer. Accepting
+  copies valid games into the managed library and explains invalid entries;
+  declining is remembered. Desktop Open Game, recent external games, and
+  external race selection now use managed import workflows. Imported sources
+  remain unchanged, and command-line host paths are unchanged.
+- `FInspectImportFile` accepts the empty end records written by the game's
+  orders and history writers. Complete game exports containing saved orders
+  can now be reimported; trailing bytes are still rejected. File formats,
+  host results and native regression baselines are unchanged.
+
+- `FExportSelectedLibraryGame` asks for a destination before resolving dirty
+  orders. Canceling the folder chooser no longer saves the loaded game, and
+  choosing Don't Save is requested only once per export. Host results and
+  native regression baselines are unchanged.
+
+- `FExportLibraryGame` rejects destinations whose full game or backup paths
+  exceed the loader's capacity, instead of silently truncating filenames and
+  reporting an incomplete export as successful. Host results and native
+  regression baselines are unchanged.
+
 - The desktop Games library can export a complete game family to a folder named
   for its library entry. Exports include all player files, host state, and
   backups, retain the managed original, and leave existing destinations intact.
   Game behavior and disk record layouts are unchanged.
+
+- `FCopyLibraryGameEntry` now rejects collisions between renamed binary family
+  members and unchanged sidecars, including case-only collisions and entries
+  inside backups. Staging previously overwrote either file and rename then
+  removed the originals. Failed duplicate and rename actions preserve both
+  source files and do not publish a partial game. Simulation baselines are
+  unchanged.
+
+- Managed-game duplication and rename reject linked files, linked folders and
+  Windows reparse points. `RemoveLibraryGameEntry` previously followed directory
+  links while removing the old renamed tree and could delete external files.
+  Cleanup now removes a link itself without traversing its target. Original
+  games and external targets remain intact when staging is rejected.
+  Simulation behavior and regression baselines are unchanged.
+
+- The Games library offers Duplicate and Rename actions. Copies have independent
+  files and session metadata; rename changes the managed folder and matching
+  binary file family, including backups. Both preserve the stored game title,
+  embedded identity and exchange basename, and failed publication restores the
+  original game. Simulation behavior and disk record layouts are unchanged.
+
+- Reopening a duplicated or renamed managed game now retains its original
+  exchange basename. `RememberLibraryGame` previously looked for metadata one
+  folder too deep and replaced that basename with the current library name.
+  Simulation behavior and regression baselines are unchanged.
+
+- Double-clicking a game in the library now opens the selected player turn.
+  The title-window command handler previously fell through into Duplicate and
+  opened a copy-name dialog. Simulation behavior and baselines are unchanged.
+
+- Managed-game duplication and rename now preserve the complete directory tree.
+  The copier previously skipped the default `backup` and numbered `backupN`
+  folders; rename then deleted those omitted backups with the original tree.
+  Sidecar folders and all supported backup names now survive both actions.
+  Simulation behavior and regression baselines are unchanged.
+
+- `FExportLibraryOrders` now confirms replacement of the final numbered orders
+  filename after correcting its extension. Previously, choosing a different
+  extension could silently overwrite an existing `.xN` file. Declining leaves
+  that file and pending managed work untouched. Native baselines are unchanged.
+
+- `FExportLibraryOrders` no longer formats a selected destination or fallback
+  library name over the same buffer, fixing Linux exports that silently failed
+  after choosing a filename. Game simulation and native baselines are unchanged.
+
+- The desktop can export the active player's saved orders as an ordinary `.xN`
+  file. Export saves current orders first, suggests the remembered exchange
+  basename, keeps the active player's extension when the destination name is
+  changed, retains the managed game, and preserves submission status. Failed
+  saves and exports leave the previous managed orders file intact. Game
+  simulation and disk record layouts are unchanged.
 
 - Existing managed games now accept a valid later standalone player turn,
   including skipped years. The importer matches by game identity, asks which
@@ -51,6 +196,10 @@ produce different results from a 2.6j host for the same turn.
   uniquely named managed folder. Imported source files stay untouched, and
   player rows show their own turn years. Simulation behavior and disk record
   layouts are unchanged.
+
+- Game library actions now resolve the selected row through its stored library
+  name instead of removing display-status text, preserving valid names that
+  contain those status phrases.
 
 - `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
   warning-as-error build and omitting Unicode profile coverage. The call now

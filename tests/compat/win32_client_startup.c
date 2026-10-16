@@ -62,6 +62,27 @@ static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     return fEqual;
 }
 
+static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *pszName,
+                                     size_t cchName, int *piplr, long long *plPlayed,
+                                     char *pszExchangeName, size_t cchExchangeName) {
+    FILE *pf;
+    int cchNameRead, cchExchangeRead;
+    BOOL fRead;
+    pf = fopen(pszFile, "rb");
+    if (!pf) return FALSE;
+    fRead = fscanf(pf, "%d\n", piVersion) == 1 && fgets(pszName, (int)cchName, pf) &&
+            fscanf(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
+            fgets(pszExchangeName, (int)cchExchangeName, pf) != NULL;
+    fclose(pf);
+    if (!fRead) return FALSE;
+    pszName[strcspn(pszName, "\r\n")] = 0;
+    pszExchangeName[strcspn(pszExchangeName, "\r\n")] = 0;
+    cchNameRead = (int)strlen(pszName);
+    cchExchangeRead = (int)strlen(pszExchangeName);
+    return cchNameRead > 0 && (size_t)cchNameRead < cchName &&
+           cchExchangeRead > 0 && (size_t)cchExchangeRead < cchExchangeName;
+}
+
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
@@ -80,6 +101,17 @@ static const char *pszImportSource;
 static int iImportStage;
 static int iImportUpdateStage;
 static int iRaceLibraryTestStage;
+static int iHostLibraryTestStage;
+static int cHostOrderConflictPrompts;
+static int cHostOrderPickerCalls;
+static BOOL fHostOrderPickerCancel;
+static BOOL fHostSavePromptSeen;
+static int16_t idHostOrderFleet;
+static int16_t idHostOrderConflictResponse = IDYES;
+static int iRosterMenu = -1;
+static const char *pszRosterSource;
+static int iRecentMigrationTicks;
+static int cRecentMigrationPrompts;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
 static uint16_t icksRaceLibraryOriginal;
@@ -89,6 +121,9 @@ static int cRaceDeleteR2;
 static BOOL fFailRaceDelete;
 static BOOL fFailRaceExportReplace;
 static BOOL fExpectRaceExportFailureAlert;
+static BOOL fFailGameRenamePublish;
+static BOOL fExpectGameRenameFailure;
+static char szGameRenameFailTarget[512];
 static char szRaceExportFailTarget[512];
 static GAME gameImportSav;
 static int16_t idPlayerImportSav;
@@ -154,6 +189,11 @@ static BOOL FCheckScannerDrag(void) {
 static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
+    if (iRosterMenu >= 0) {
+        iPopMenuSel = iRosterMenu;
+        iRosterMenu = -1;
+        return TRUE;
+    }
     if (iTransportPreset >= 0) {
         SDL_Event event = {0};
         HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -362,18 +402,50 @@ static BOOL FCheckToolbarPlacement(void) {
 
 int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
-    // The frozen regression race is password protected. This test qualifies
-    // file loading and client creation; password validation is outside its scope.
-    return pszContinue ? TRUE : StarsTestReal_PromptPassword();
+    // The frozen regression race is password protected. These tests qualify
+    // file loading and client creation; password validation is outside scope.
+    return pszContinue || getenv("STARS_CLIENT_HOST_LIBRARY_TEST") || getenv("STARS_CLIENT_STARTUP_MANAGED") ||
+           getenv("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
 }
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
+    const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
+    if (!pszExternalGame) pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE");
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+        fPassed = FALSE;
+        fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
+        PostQuitMessage(92);
+        return FALSE;
+    }
+    if (pszRosterSource) {
+        if (strlen(pszRosterSource) >= lpof->nMaxFile) return FALSE;
+        strcpy(lpof->lpstrFile, pszRosterSource);
+        return TRUE;
+    }
+    if (pszExternalGame) {
+        if (strlen(pszExternalGame) >= lpof->nMaxFile) return FALSE;
+        strcpy(lpof->lpstrFile, pszExternalGame);
+        return TRUE;
+    }
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && pszSource) {
         if (strlen(pszSource) >= lpof->nMaxFile) return FALSE;
         strcpy(lpof->lpstrFile, pszSource);
         return TRUE;
+    }
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+        const char *pszHostOrderPicker;
+        cHostOrderPickerCalls++;
+        if (fHostOrderPickerCancel) return FALSE;
+        pszHostOrderPicker = getenv("STARS_CLIENT_HOST_ORDER_PICKER");
+        if (pszHostOrderPicker) {
+            size_t cchHostOrderPicker = strlen(pszHostOrderPicker);
+            if (cchHostOrderPicker >= (size_t)lpof->nMaxFile) return FALSE;
+            memcpy(lpof->lpstrFile, pszHostOrderPicker, cchHostOrderPicker + 1);
+            return TRUE;
+        }
+        return StarsTestReal_FNativeOpenFileName(lpof);
     }
     return StarsTestReal_FNativeOpenFileName(lpof);
 }
@@ -1190,6 +1262,7 @@ LDone:
     return fPassed;
 }
 
+#include "win32_raceroster_workflow.h"
 #include "win32_designer_workflow.h"
 #include "win32_ui_polish.h"
 
@@ -1263,12 +1336,42 @@ static BOOL FCheckGameplayWorkflows(void) {
     return TRUE;
 }
 
+INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    INT_PTR fRet = StarsTestReal_AskSaveDialog(hwnd, message, wParam, lParam);
+    if (message == WM_INITDIALOG && getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+        HWND hwndSave = GetDlgItem(hwnd, IDC_SAVE);
+        HWND hwndSubmit = GetDlgItem(hwnd, IDC_SAVESUBMIT);
+        HWND hwndDontSave = GetDlgItem(hwnd, IDC_NO_DON_T_SAVE);
+        if (hwndSave && hwndDontSave && (game.fSinglePlr ? !hwndSubmit : hwndSubmit != NULL)) {
+            fHostSavePromptSeen = TRUE;
+            PostMessage(hwnd, WM_COMMAND, IDC_NO_DON_T_SAVE, (LPARAM)hwndDontSave);
+        }
+    }
+    return fRet;
+}
+
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
-    (void)mbType;
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && (mbType & MB_YESNO)) {
+        cHostOrderConflictPrompts++;
+        return idHostOrderConflictResponse;
+    }
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") &&
+        strstr(sz, "Auto Generate is disabled because all of the human players are dead or inactive")) return IDOK;
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
     if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
+    if (getenv("STARS_CLIENT_EXPORT_EXPECTED") && strstr(sz, "game could not be exported")) {
+        cAlerts++;
+        return IDOK;
+    }
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
+    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
+        if (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") && !strstr(sz, "exchange.m2") && !strstr(sz, "missing.m1"))
+            PostQuitMessage(92);
+        return IDOK;
+    }
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
     if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
@@ -1286,6 +1389,17 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
 int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     (void)hwnd; (void)pszCaption;
+    if (pszText && strstr(pszText, "Import games from your recent files")) {
+        cRecentMigrationPrompts++;
+        if (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT")) {
+            fPassed = FALSE;
+            PostQuitMessage(92);
+            return IDNO;
+        }
+        return getenv("STARS_CLIENT_RECENT_MIGRATION") &&
+               strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ? IDYES : IDNO;
+    }
+    if (fExpectGameRenameFailure) { fExpectGameRenameFailure = FALSE; return IDOK; }
     if (pszText && strstr(pszText, "Delete the managed race design Managed.r2?") && (type & MB_YESNO))
         return cRaceDeleteR2++ == 0 ? IDNO : IDYES;
     if (pszText && strstr(pszText, "Delete the managed race design Managed.r3?") && (type & MB_YESNO)) {
@@ -1326,7 +1440,41 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
     return StarsTestReal_ReplaceNativeFile(pszOld, pszNew);
 }
 
+int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
+int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
+    if (fFailGameRenamePublish && !SDL_strcasecmp(pszNew, szGameRenameFailTarget)) {
+        fFailGameRenamePublish = FALSE;
+        return -1;
+    }
+    return StarsTestReal_RenameNativeFile(pszOld, pszNew);
+}
+
 #include "win32_newgame_workflow.h"
+#include "win32_game_export_workflow.h"
+
+static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarget, long ibChange, BYTE bMask) {
+    FILE *pfSource, *pfTarget;
+    int ch;
+    long ib;
+    BOOL fChanged, fOkay;
+
+    pfSource = fopen(pszSource, "rb");
+    if (!pfSource) return FALSE;
+    pfTarget = fopen(pszTarget, "wb");
+    if (!pfTarget) { fclose(pfSource); return FALSE; }
+    fChanged = FALSE;
+    fOkay = TRUE;
+    ib = 0;
+    while ((ch = fgetc(pfSource)) != EOF) {
+        if (ib == ibChange) { ch ^= bMask; fChanged = TRUE; }
+        if (fputc(ch, pfTarget) == EOF) { fOkay = FALSE; break; }
+        ib++;
+    }
+    if (ferror(pfSource)) fOkay = FALSE;
+    if (fclose(pfSource) != 0) fOkay = FALSE;
+    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    return fOkay && fChanged;
+}
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
@@ -1339,8 +1487,6 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
     const char *pszGameCapture = getenv("STARS_CLIENT_GAME_CAPTURE");
     const char *pszExportGame = getenv("STARS_CLIENT_EXPORT_GAME");
-    const char *pszExportParent = getenv("STARS_CLIENT_EXPORT_PARENT");
-    const char *pszExportFail = getenv("STARS_CLIENT_EXPORT_FAIL");
     static const DLGPROC rglpfnRace[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     BYTE *rgb;
     size_t cb, i;
@@ -1350,43 +1496,453 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     HWND hwndList, hwndListTarget;
     char szFind[320], szName[256];
     const char *pszExpected, *pszTarget, *pszYear;
+    const char *pszHostSource, *pszHostPlayerSource, *pszHostOrderBase, *pszHostPickerBase;
     SDL_Event event = {0};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
     RECT rcScanner;
+    POINT ptLibraryButton;
+    static const int rgidLibraryButton[] = {
+        IDC_LIBRARY_IMPORT, IDC_LIBRARY_IMPORT_FOLDER, IDC_LIBRARY_GAME_EXPORT,
+        IDC_LIBRARY_DUPLICATE, IDC_LIBRARY_RENAME
+    };
+    char szHostSourceHost[512], szHostSourceUniverse[512], szHostManagedHost[512], szHostManagedUniverse[512];
+    char szHostManagedBase[512], szHostOrderFile[512], szHostManagedOrders[512];
+    char szHostOrderIdentity[512], szHostOrderPlayer[512], szHostOrderTurn[512], szHostOrderAbsentPlayer[512];
+    char szHostOrderGeneration[512], szHostOrderDifferent[512], szHostPickerOrder[512], szSavedBase[sizeof(szBase)];
+    char szFleetNameSav[64];
+    int cchHostOrder;
+    int64_t cbHostFile;
+    HWND hwndHostDialog;
+    char *pszHostFolder;
+    FLEET *lpflHostOrder;
+    int iFleetHostOrder;
+    BOOL fHadFleetName;
 
     (void)hwnd; (void)msg; (void)dwTime;
-    if (pszExportGame) {
-        int16_t fExported;
-        char szExportSentinel[512];
-        if (fPassed) return;
-        if (iStage != 0) return;
-        if (!IsWindowVisible(hwndTitle) || !pszExportParent ||
-            !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT) ||
-            !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
-            !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
-        fExported = FExportLibraryGame(pszExportFail ? NULL : hwndTitle, pszExportGame, pszExportParent);
-        if (pszExportFail) {
-            if (fExported) goto LDone;
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+        pszHostSource = getenv("STARS_CLIENT_HOST_IMPORT_SOURCE");
+        pszHostPlayerSource = getenv("STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE");
+        pszHostOrderBase = getenv("STARS_CLIENT_HOST_ORDER_BASE");
+        pszHostPickerBase = getenv("STARS_CLIENT_HOST_ORDER_PICKER_BASE");
+        cchHostOrder = CchSnprintf(szHostManagedBase, sizeof(szHostManagedBase),
+                                   "%s%sGames%sHosted%sHosted", pszSettings, szDirSep, szDirSep, szDirSep);
+        if (cchHostOrder <= 0 || (size_t)cchHostOrder >= sizeof(szHostManagedBase)) goto LDone;
+        if (!pszHostOrderBase || !pszHostPickerBase ||
+            CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", pszHostOrderBase) <= 0 ||
+            CchSnprintf(szHostOrderDifferent, sizeof(szHostOrderDifferent), "%s-different.x1", pszHostOrderBase) <= 0 ||
+            CchSnprintf(szHostPickerOrder, sizeof(szHostPickerOrder), "%s.x1", pszHostPickerBase) <= 0 ||
+            CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0) goto LDone;
+        if (iHostLibraryTestStage == 0) {
+            if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
+                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
+                !pszHostSource) goto LDone;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            iHostLibraryTestStage = 20;
+            return;
+        }
+        if (iHostLibraryTestStage == 20) {
+            pszHostFolder = SDL_strdup(pszHostSource);
+            if (!(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
+                !pszHostFolder || !StarsCompatPostMessageAsync(hwndTitle, WM_STARS_IMPORT_FOLDER, (WPARAM)pszHostFolder, 0)) {
+                SDL_free(pszHostFolder);
+                goto LDone;
+            }
+            iHostLibraryTestStage = 21;
+            return;
+        }
+        if (iHostLibraryTestStage == 21) {
+            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndHostDialog, IDC_EDIT1), "Hosted") ||
+                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage = 22;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 22) {
+            RefreshLibraryGames(hwndTitle);
+            RefreshLibraryHostGames(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 0 ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
+                CchSnprintf(szHostSourceUniverse, sizeof(szHostSourceUniverse), "%s%sgame.xy", pszHostSource, szDirSep) <= 0 ||
+                CchSnprintf(szHostManagedHost, sizeof(szHostManagedHost), "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(szHostManagedUniverse, sizeof(szHostManagedUniverse), "%s%sGames%sHosted%sHosted.xy", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                !FTestFilesEqual(szHostSourceHost, szHostManagedHost) ||
+                !FTestFilesEqual(szHostSourceUniverse, szHostManagedUniverse) ||
+                !pszHostPlayerSource) goto LDone;
+            if (!IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
+                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
+                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) {
+                fprintf(stderr, "Host-only game actions are disabled\n");
+                goto LDone;
+            }
+            pszHostFolder = SDL_strdup(pszHostPlayerSource);
+            if (!pszHostFolder || !StarsCompatPostMessageAsync(hwndTitle, WM_STARS_IMPORT_FOLDER,
+                                                                (WPARAM)pszHostFolder, 0)) {
+                SDL_free(pszHostFolder);
+                goto LDone;
+            }
+            iHostLibraryTestStage = 25;
+            return;
+        }
+        if (iHostLibraryTestStage == 25) {
+            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndHostDialog, IDC_EDIT1), "PlayerCopy") ||
+                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage = 26;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 26) {
+            RefreshLibraryGames(hwndTitle);
+            RefreshLibraryHostGames(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 2 ||
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR ||
+                !FExportSelectedLibraryGame(hwndTitle, pszSettings) ||
+                CchSnprintf(szExport, sizeof(szExport), "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
+                !FTestFilesEqual(szExport, szHostSourceHost)) {
+                fprintf(stderr, "Host export did not use the visible selection\n");
+                goto LDone;
+            }
+            iHostLibraryTestStage = 31;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 31 || iHostLibraryTestStage == 33) {
+            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndHostDialog, IDC_EDIT1),
+                                    iHostLibraryTestStage == 31 ? "HostCopy" : "HostRenamed") ||
+                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage++;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 32) {
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"HostCopy") == LB_ERR) goto LDone;
+            iHostLibraryTestStage = 33;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 34) {
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostCopy") != LB_ERR ||
+                SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostRenamed") == LB_ERR ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1) goto LDone;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
+            iHostLibraryTestStage = 23;
+            return;
+        }
+        if (iHostLibraryTestStage == 23) {
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+            if (!(GetWindowLongPtr(hwndList, GWL_STYLE) & WS_VISIBLE) ||
+                SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1,
+                            (LPARAM)"PlayerCopy - Player 1") == LB_ERR) goto LDone;
+            for (iButton = 0; iButton < (int)(sizeof(rgidLibraryButton) / sizeof(rgidLibraryButton[0])); iButton++) {
+                hwndListTarget = GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
+                if (!GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
+                ptLibraryButton = (POINT){(rcFrame.left + rcFrame.right) / 2, (rcFrame.top + rcFrame.bottom) / 2};
+                if (WindowFromPoint(ptLibraryButton) != hwndListTarget) {
+                    fprintf(stderr, "Library button %d is covered by another control\n", rgidLibraryButton[iButton]);
+                    goto LDone;
+                }
+            }
+            iHostLibraryTestStage = 27;
+            fFreeingTitle = FALSE;
+            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 27) {
+            if (IsWindow(hwndTitle)) return;
+            if (!lpPlanets || idPlayer == iplrNone) goto LDone;
+            if (!hwndReportDlg) {
+                SendMessage(hwndFrame, WM_COMMAND, IDM_REPORT_FLEET, 0);
+                return;
+            }
+            if (vprptCur != &vrptFleet || vprptCur->cRows == 0) goto LDone;
+            if (sel.grobj != grobjFleet) {
+                if (!StarsCompatPostMessageAsync(hwndReportDlg, WM_LBUTTONDOWN, MK_LBUTTON,
+                                                 MAKELPARAM(4, 20))) goto LDone;
+                return;
+            }
+            iHostLibraryTestStage = 28;
+            if (!StarsCompatPostMessageAsync(hwndFrame, WM_CHAR, 'r', 0)) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 28) {
+            for (hwndHostDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != RenameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndHostDialog, IDC_EDIT1), "Prompt save order") ||
+                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage = 29;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 29) {
+            if (hwndReportDlg) SendMessage(hwndReportDlg, WM_CLOSE, 0, 0);
+            iHostLibraryTestStage = 30;
+            SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+            return;
+        }
+        if (iHostLibraryTestStage == 30) {
+            if (!fHostSavePromptSeen || !IsWindowVisible(hwndTitle)) return;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW))) goto LDone;
+            iHostLibraryTestStage = 24;
+            return;
+        }
+        if (iHostLibraryTestStage == 24) {
+            if (!(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR) goto LDone;
+            iHostLibraryTestStage = 7;
+            fFreeingTitle = TRUE;
+            if (!StarsCompatPostMessageAsync(hwndTitle, WM_COMMAND,
+                                             MAKEWPARAM(IDC_LIBRARY_HOST_GAMES, LBN_DBLCLK),
+                                             (LPARAM)hwndList)) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 7 || iHostLibraryTestStage == 8 || iHostLibraryTestStage == 9 ||
+            iHostLibraryTestStage == 14) {
+            for (hwndHostDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != HostModeDialog) continue;
+                if (iHostLibraryTestStage == 7) {
+                    if (
+                        (cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", szBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(szSavedBase) ||
+                        (cchHostOrder = CchSnprintf(szBase, sizeof(szBase), "%s", pszHostOrderBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(szBase)) { fprintf(stderr, "Host order paths invalid\n"); goto LDone; }
+                    if (!FWriteLogFile(szBase, 0)) { fprintf(stderr, "Host FWriteLogFile failed: %s\n", SDL_GetError()); goto LDone; }
+                    strcpy(szBase, szSavedBase);
+                    if (CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostManagedOrders, sizeof(szHostManagedOrders), "%s.x1", szHostManagedBase) <= 0 ||
+                        CchSnprintf(szHostOrderIdentity, sizeof(szHostOrderIdentity), "%s.identity.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostOrderPlayer, sizeof(szHostOrderPlayer), "%s.player.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostOrderTurn, sizeof(szHostOrderTurn), "%s.turn.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostOrderAbsentPlayer, sizeof(szHostOrderAbsentPlayer), "%s.absent.x16", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostOrderGeneration, sizeof(szHostOrderGeneration), "%s.generation.x1", pszHostOrderBase) <= 0 ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderIdentity, 6, 1) ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderPlayer, 14, 1) ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderAbsentPlayer, 14, 15) ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderTurn, 12, 1) ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderGeneration, 17, 0x20)) { fprintf(stderr, "Host order variants failed: %s\n", SDL_GetError()); goto LDone; }
+                    for (iFleetHostOrder = 0; iFleetHostOrder < cFleet; iFleetHostOrder++) {
+                        lpflHostOrder = rglpfl[iFleetHostOrder];
+                        if (((uint16_t)lpflHostOrder->id >> 9 & 0xf) == 0) break;
+                    }
+                    if (iFleetHostOrder == cFleet) { fprintf(stderr, "Host order fixture has no player fleet\n"); goto LDone; }
+                    idHostOrderFleet = lpflHostOrder->id;
+                    fHadFleetName = lpflHostOrder->lpszName != NULL;
+                    if (fHadFleetName) CchSnprintf(szFleetNameSav, sizeof(szFleetNameSav), "%s", lpflHostOrder->lpszName);
+                    LogChangeName(grobjFleet, lpflHostOrder->id, "Replacement order");
+                    if (lpflHostOrder->lpszName) FreeLp(lpflHostOrder->lpszName, htString);
+                    lpflHostOrder->lpszName = NULL;
+                    if (fHadFleetName) {
+                        lpflHostOrder->lpszName = LpAlloc(strlen(szFleetNameSav) + 1, htString);
+                        if (!lpflHostOrder->lpszName) goto LDone;
+                        strcpy(lpflHostOrder->lpszName, szFleetNameSav);
+                    }
+                    if (CchSnprintf(szHostOrderDifferent, sizeof(szHostOrderDifferent), "%s-different.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szBase, sizeof(szBase), "%s-different", pszHostOrderBase) <= 0 ||
+                        !FWriteLogFile(szBase, 0)) { fprintf(stderr, "Host changed order write failed: %s\n", SDL_GetError()); goto LDone; }
+                    strcpy(szBase, szSavedBase);
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderIdentity)) { fprintf(stderr, "Host order identity mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderPlayer)) { fprintf(stderr, "Host order player mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderTurn)) { fprintf(stderr, "Host order turn mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderGeneration)) { fprintf(stderr, "Host order generation mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderAbsentPlayer)) { fprintf(stderr, "Host order for nonexistent player accepted\n"); goto LDone; }
+                    if (!FImportLibraryOrders(hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order valid file rejected\n"); goto LDone; }
+                    if (!FTestFilesEqual(szHostOrderFile, szHostManagedOrders)) {
+                        fprintf(stderr, "Host order target differs after import: target=%s\n", szHostManagedOrders);
+                        if (FNativeFileSize(szHostManagedOrders, &cbHostFile)) fprintf(stderr, "target size=%lld\n", (long long)cbHostFile);
+                        else fprintf(stderr, "target missing\n");
+                        goto LDone;
+                    }
+                    if (!FImportLibraryOrders(hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order identical file rejected\n"); goto LDone; }
+                    if (cHostOrderConflictPrompts != 0) { fprintf(stderr, "Host order no-op prompted\n"); goto LDone; }
+                    idHostOrderConflictResponse = IDNO;
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 1 ||
+                        !FTestFilesEqual(szHostOrderFile, szHostManagedOrders)) goto LDone;
+                    idHostOrderConflictResponse = IDYES;
+                    if (!FImportLibraryOrders(hwndTitle, szHostOrderDifferent) || cHostOrderConflictPrompts != 2 ||
+                        !FTestFilesEqual(szHostOrderDifferent, szHostManagedOrders)) goto LDone;
+                    iHostLibraryTestStage = 8;
+                    if (!FPushClick(GetDlgItem(hwndHostDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
+                    return;
+                }
+                if (iHostLibraryTestStage == 8) {
+                    CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.m1", szHostManagedBase);
+                    if (!FNativeFileSize(szHostOrderFile, &cbHostFile)) goto LDone;
+                    CchSnprintf(szHostOrderFile, sizeof(szHostOrderFile), "%s.x1", szHostManagedBase);
+                    lpflHostOrder = LpflFromId(idHostOrderFleet);
+                    if (FNativeFileSize(szHostOrderFile, &cbHostFile) || !lpflHostOrder ||
+                        !lpflHostOrder->lpszName || strcmp(lpflHostOrder->lpszName, "Replacement order")) goto LDone;
+                    if ((cchHostOrder = CchSnprintf(szSavedBase, sizeof(szSavedBase), "%s", szBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(szSavedBase) ||
+                        (cchHostOrder = CchSnprintf(szBase, sizeof(szBase), "%s", pszHostPickerBase)) <= 0 ||
+                        (size_t)cchHostOrder >= sizeof(szBase) || !FWriteLogFile(szBase, 0)) goto LDone;
+                    strcpy(szBase, szSavedBase);
+                    iHostLibraryTestStage = 9;
+                    gd.fClose = FALSE;
+                    if (!FPushClick(GetDlgItem(hwndHostDialog, IDCANCEL))) goto LDone;
+                    return;
+                }
+                return;
+            }
+            if (iHostLibraryTestStage == 9) iHostLibraryTestStage = 10;
+            else return;
+        }
+        if (iHostLibraryTestStage == 10) {
+            if (!IsWindowVisible(hwndTitle) ||
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            fHostOrderPickerCancel = TRUE;
+            SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
+                        (LPARAM)GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            if (cHostOrderPickerCalls != 1 || FNativeFileSize(szHostManagedOrders, &cbHostFile)) goto LDone;
+            fHostOrderPickerCancel = FALSE;
+            iHostLibraryTestStage = 11;
+            return;
+        }
+        if (iHostLibraryTestStage == 11) {
+            SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_IMPORT_ORDERS, BN_CLICKED),
+                        (LPARAM)GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS));
+            if (cHostOrderPickerCalls != 2 || !FTestFilesEqual(szHostPickerOrder, szHostManagedOrders)) goto LDone;
+            fFreeingTitle = FALSE;
             fChecked = TRUE;
             fPassed = TRUE;
-            puts("Complete managed game export failure preserved the destination");
-            KillTimer(NULL, id);
+            puts("Host Games visible selection, unsaved-work prompt, order picker, validation/conflicts and generation passed");
             PostQuitMessage(0);
             return;
         }
-        if (!fExported) goto LDone;
-        if (getenv("STARS_CLIENT_EXPORT_COLLISION")) {
-            CchSnprintf(szExportSentinel, sizeof(szExportSentinel), "%s%s%s%skeep.txt",
-                        pszExportParent, szDirSep, pszExportGame, szDirSep);
-            if (!FTestWriteFile(szExportSentinel, "preserve existing export")) goto LDone;
-            if (FExportLibraryGame(NULL, pszExportGame, pszExportParent)) goto LDone;
+    }
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+        HWND hwndDialog;
+        for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
+                if (!SetDlgItemText(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                return;
+            }
         }
-        fChecked = TRUE;
-        fPassed = TRUE;
-        puts("Complete managed game export copied through the client workflow");
-        KillTimer(NULL, id);
+        if (getenv("STARS_CLIENT_STARTUP_MANAGED")) {
+            if (game.lid == 0 || !lpPlanets || idPlayer == iplrNone || hwndTitle) {
+                fprintf(stderr, "Managed startup: game %ld planets %p player %d title %p base %s\n",
+                        (long)game.lid, (void *)lpPlanets, idPlayer, (void *)hwndTitle, szBase);
+                goto LDone;
+            }
+        } else {
+            if (!IsWindowVisible(hwndTitle)) return;
+            UpdateWindow(hwndTitle);
+            if (!FCompatPresent(hwndTitle) || game.lid != 0 || idPlayer != iplrNone ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == LB_ERR) goto LDone;
+        }
+        fChecked = fPassed = fTitlePainted = TRUE;
+        puts("Desktop startup uses the supplied game path without reopening the chooser");
         PostQuitMessage(0);
+        return;
+    }
+    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
+        if (!FCheckRaceRosterWorkflow()) goto LDone;
+        return;
+    }
+    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
+        HWND hwndDialog;
+        if (!IsWindowVisible(hwndTitle)) return;
+        UpdateWindow(hwndTitle);
+        if (!FCompatPresent(hwndTitle)) goto LDone;
+        fTitlePainted = TRUE;
+        fChecked = TRUE;
+        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
+            if (!SetWindowTextA(GetDlgItem(hwndDialog, IDC_EDIT1),
+                                getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "migrated-game") ||
+                !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+            return;
+        }
+        if (++iRecentMigrationTicks >= 16) {
+            fPassed = TRUE;
+            printf("Recent game migration prompt shown %d time(s)\n", cRecentMigrationPrompts);
+            PostQuitMessage(0);
+        }
+        return;
+    }
+    if (getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") || getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
+        HWND hwndDialog;
+        if (iStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) return;
+            UpdateWindow(hwndTitle);
+            if (!FCompatPresent(hwndTitle)) goto LDone;
+            fTitlePainted = TRUE;
+            fChecked = TRUE;
+            iStage = 1;
+            SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_OPEN_GAME, 0);
+            return;
+        }
+        if (iStage == 1) {
+            for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndDialog, IDC_EDIT1),
+                                    getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "external-open-game") ||
+                    !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                iStage = 2;
+                return;
+            }
+            return;
+        }
+        if (getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
+            if (iStage == 2) {
+                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !IsWindowVisible(hwndDialog)) continue;
+                    iStage = 3;
+                    if (!FPushClick(GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
+                    return;
+                }
+                return;
+            }
+            if (!IsWindowEnabled(hwndTitle)) return;
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_FINDSTRING, (WPARAM)-1,
+                            (LPARAM)getenv("STARS_CLIENT_IMPORT_NAME")) == LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
+            fPassed = TRUE;
+            puts("Desktop Open Game imports an external race and opens its managed edit wizard");
+            PostQuitMessage(0);
+            return;
+        }
+        if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1,
+                        (LPARAM)(getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "external-open-game")) == LB_ERR ||
+            game.lid != 0 || idPlayer != iplrNone) goto LDone;
+        fPassed = TRUE;
+        puts("Desktop Open Game imports the external file into the managed library");
+        PostQuitMessage(0);
+        return;
+    }
+    if (pszExportGame) {
+        if (!FCheckGameExportWorkflow(id)) goto LDone;
         return;
     }
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
@@ -1556,6 +2112,143 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         return;
     }
+    if (getenv("STARS_CLIENT_GAME_LIBRARY_TEST")) {
+        const char *pszMode = getenv("STARS_CLIENT_GAME_LIBRARY_TEST");
+        const char *pszRoot = getenv("STARS_LIBRARY_DIR");
+        const char *pszSource = getenv("STARS_CLIENT_GAME_SOURCE_NAME");
+        const char *pszCopy = getenv("STARS_CLIENT_GAME_COPY_NAME");
+        const char *pszRename = getenv("STARS_CLIENT_GAME_RENAME_NAME");
+        const char *pszCollision = getenv("STARS_CLIENT_GAME_COLLISION_NAME");
+        const char *pszBaseline = getenv("STARS_CLIENT_GAME_BASELINE_NAME");
+        char szSource[512], szCopy[512], szRenamed[512], szPath[512];
+        char szBaseline[512];
+        char szLongName[256];
+        BOOL fDuplicate = pszMode && strcmp(pszMode, "duplicate") == 0;
+        BOOL fRename = pszMode && strcmp(pszMode, "rename") == 0;
+        char szMetadataName[256], szExchangeName[256];
+        int iVersion, iplr;
+        long long lPlayed;
+        memset(szLongName, 'x', sizeof(szLongName) - 1);
+        szLongName[sizeof(szLongName) - 1] = 0;
+        if (!IsWindowVisible(hwndTitle) || !pszRoot || !pszSource || !pszCopy || !pszRename || !pszCollision || !pszBaseline ||
+            (!fDuplicate && !fRename) ||
+            !GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE) || !GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME) ||
+            CchSnprintf(szSource, sizeof(szSource), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszSource) <= 0 ||
+            CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
+            CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
+            CchSnprintf(szBaseline, sizeof(szBaseline), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
+        if (getenv("STARS_CLIENT_GAME_REJECT")) {
+            fExpectGameRenameFailure = TRUE;
+            fImported = fDuplicate ? FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) :
+                                     FRenameLibraryGame(hwndTitle, pszSource, pszRename);
+            fExpectGameRenameFailure = FALSE;
+            if (fImported) {
+                fprintf(stderr, "Unsafe managed-game action unexpectedly succeeded\n");
+                goto LDone;
+            }
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Unsafe managed-game action rejected");
+            PostQuitMessage(0);
+            return;
+        }
+        if (fDuplicate && !FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy)) goto LDone;
+        if (fDuplicate) {
+            CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
+            {
+                char szOther[512];
+                CchSnprintf(szOther, sizeof(szOther), "%s%s%s.xy", szCopy, szDirSep, pszCopy);
+                if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate XY mismatch\n"); goto LDone; }
+            }
+            CchSnprintf(szPath, sizeof(szPath), "%s%s%s.m1", szSource, szDirSep, pszSource);
+            {
+                char szOther[512];
+                CchSnprintf(szOther, sizeof(szOther), "%s%s%s.m1", szCopy, szDirSep, pszCopy);
+                if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate M1 mismatch\n"); goto LDone; }
+            }
+            {
+                char szOther[512];
+                CchSnprintf(szPath, sizeof(szPath), "%s%sbackup.000%s%s.m1", szSource, szDirSep, szDirSep, pszSource);
+                CchSnprintf(szOther, sizeof(szOther), "%s%sbackup.000%s%s.m1", szCopy, szDirSep, szDirSep, pszCopy);
+                if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "duplicate backup mismatch\n"); goto LDone; }
+            }
+            if (FDuplicateLibraryGame(hwndTitle, pszSource, "CON") ||
+                FDuplicateLibraryGame(hwndTitle, pszSource, pszCollision) ||
+                FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) ||
+                FDuplicateLibraryGame(hwndTitle, pszSource, szLongName)) { fprintf(stderr, "duplicate invalid/collision/path accepted\n"); goto LDone; }
+        }
+        if (fRename && FRenameLibraryGame(hwndTitle, pszSource, pszCollision)) {
+            fprintf(stderr, "case-insensitive rename collision accepted\n"); goto LDone;
+        }
+        if (fRename && FRenameLibraryGame(hwndTitle, pszSource, szLongName)) {
+            fprintf(stderr, "overlong rename path accepted\n"); goto LDone;
+        }
+        if (fDuplicate && FRenameLibraryGame(hwndTitle, pszCopy, pszSource)) {
+            fprintf(stderr, "rename over source accepted\n"); goto LDone;
+        }
+        CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szCopy, szDirSep);
+        if (fRename) CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szSource, szDirSep);
+        iVersion = 0; iplr = 0; lPlayed = -1;
+        if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
+                                      &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
+            fprintf(stderr, "duplicate metadata parse failed\n"); goto LDone;
+        }
+        if (iVersion != 2 || strcmp(szMetadataName, fDuplicate ? pszCopy : pszSource) ||
+            iplr != (fDuplicate ? -1 : 1) || lPlayed != (fDuplicate ? 0 : 123456) ||
+            strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "duplicate metadata mismatch v=%d name=%s player=%d played=%lld exchange=%s\n", iVersion, szMetadataName, iplr, lPlayed, szExchangeName); goto LDone; }
+        if (fDuplicate) {
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Managed game duplicated with independent metadata");
+            PostQuitMessage(0);
+            return;
+        }
+        CchSnprintf(szGameRenameFailTarget, sizeof(szGameRenameFailTarget), "%s", szRenamed);
+        fFailGameRenamePublish = TRUE;
+        fExpectGameRenameFailure = TRUE;
+        if (FRenameLibraryGame(hwndTitle, pszSource, pszRename) || fFailGameRenamePublish) {
+            fExpectGameRenameFailure = FALSE;
+            fprintf(stderr, "rename publication failure was not rolled back\n");
+            goto LDone;
+        }
+        fExpectGameRenameFailure = FALSE;
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
+        if (!FNativeFileSize(szPath, &(int64_t){0}) || FNativeDirectoryExists(szRenamed)) goto LDone;
+        if (!FRenameLibraryGame(hwndTitle, pszSource, pszRename)) { fprintf(stderr, "rename failed\n"); goto LDone; }
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szRenamed, szDirSep, pszRename);
+        {
+            char szOther[512];
+            CchSnprintf(szOther, sizeof(szOther), "%s%s%s.xy", szBaseline, szDirSep, pszBaseline);
+            if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed XY mismatch\n"); goto LDone; }
+        }
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s.m1", szRenamed, szDirSep, pszRename);
+        {
+            char szOther[512];
+            CchSnprintf(szOther, sizeof(szOther), "%s%s%s.m1", szBaseline, szDirSep, pszBaseline);
+            if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed M1 mismatch\n"); goto LDone; }
+        }
+        {
+            char szOther[512];
+            CchSnprintf(szPath, sizeof(szPath), "%s%sbackup.000%s%s.m1", szRenamed, szDirSep, szDirSep, pszRename);
+            CchSnprintf(szOther, sizeof(szOther), "%s%sbackup.000%s%s.m1", szBaseline, szDirSep, szDirSep, pszBaseline);
+            if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed backup mismatch\n"); goto LDone; }
+        }
+        CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szRenamed, szDirSep);
+        iVersion = 0; iplr = 0; lPlayed = -1;
+        if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
+                                      &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
+            fprintf(stderr, "renamed metadata parse failed\n"); goto LDone;
+        }
+        if (iVersion != 2 || strcmp(szMetadataName, pszRename) || iplr != 1 || lPlayed != 123456 ||
+            strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "renamed metadata mismatch %d %s\n", iVersion, szMetadataName); goto LDone; }
+        CchSnprintf(szPath, sizeof(szPath), "%s%sexchange.map", szRenamed, szDirSep);
+        if (!FNativeFileSize(szPath, &(int64_t){0})) { fprintf(stderr, "renamed sidecar missing %s\n", szPath); goto LDone; }
+        fChecked = TRUE;
+        fPassed = TRUE;
+        puts("Managed game renamed with session metadata and backup contents");
+        PostQuitMessage(0);
+        return;
+    }
     if (pszImportSource) {
         if (iImportStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
@@ -1575,22 +2268,22 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             {
                 HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
                 char szPlayer[320];
-                int iPlayer;
+                int iplrTest;
                 BOOL fPlayers[16] = {FALSE};
                 int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
                     atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
-                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) {
-                    SendMessage(hwndList, LB_GETTEXT, iPlayer, (LPARAM)szPlayer);
+                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) {
+                    SendMessage(hwndList, LB_GETTEXT, iplrTest, (LPARAM)szPlayer);
                     if (strstr(szPlayer, "Player ") && strstr(szPlayer, "(2400)")) {
-                        int iFound;
-                        for (iFound = 0; iFound < cExpected; iFound++) {
+                        int iplrFound;
+                        for (iplrFound = 0; iplrFound < cExpected; iplrFound++) {
                             char szExpected[32];
-                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iFound + 1);
-                            if (strstr(szPlayer, szExpected)) fPlayers[iFound] = TRUE;
+                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iplrFound + 1);
+                            if (strstr(szPlayer, szExpected)) fPlayers[iplrFound] = TRUE;
                         }
                     }
                 }
-                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) if (!fPlayers[iPlayer]) goto LDone;
+                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) if (!fPlayers[iplrTest]) goto LDone;
             }
             fChecked = TRUE;
             fPassed = TRUE;
@@ -1661,7 +2354,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     }
     if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
         const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
-        HWND hwndList;
+        HWND hwndList, hwndDialog;
         LRESULT iGame;
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) goto LDone;
@@ -1673,10 +2366,24 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
             fChecked = TRUE;
             iStage = 1;
-            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+                if (!PostMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_DBLCLK),
+                                  (LPARAM)hwndList)) goto LDone;
+            } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (IsWindow(hwndTitle)) return;
+        if (IsWindow(hwndTitle)) {
+            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
+                     hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog) continue;
+                    fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
+                    EndDialog(hwndDialog, FALSE);
+                    goto LDone;
+                }
+            }
+            return;
+        }
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
         fPassed = TRUE;
         puts("Managed game: visible in library and reopened after restart");
@@ -1865,6 +2572,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     return;
 LDone:
     if (!fPassed) {
+        if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST"))
+            fprintf(stderr, "Host library workflow failed at stage %d\n", iHostLibraryTestStage);
         fprintf(stderr, "Client startup/wizard check failed at stage %d (new-game step %d, choices %d, creating %d): %s\n",
                 iStage, iNewGameStep, cNewGameChoices, fCreatingGame, SDL_GetError());
         KillTimer(NULL, id);
@@ -1880,8 +2589,10 @@ int16_t StarsTest_InitInstance(int16_t nCmdShow) {
 }
 
 int main(void) {
-    char szCommand[] = "";
+    char szCommand[256] = "";
     int nResult;
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE"))
+        CchSnprintf(szCommand, sizeof(szCommand), "%s", getenv("STARS_CLIENT_STARTUP_SOURCE"));
     pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
     pszImportSource = getenv("STARS_CLIENT_IMPORT_SOURCE");
@@ -1890,13 +2601,23 @@ int main(void) {
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
-        !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
+        !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
+        !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
+        !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
+        !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
+        !getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
-           cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+           cAlerts == (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
+                       getenv("STARS_CLIENT_RECENT_MIGRATION") ?
+                       (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
+                        strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?
+                        (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") ? atoi(getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED")) : 1) : 0) :
+                       getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+                       getenv("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
                        !strcmp(getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;

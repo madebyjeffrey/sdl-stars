@@ -88,6 +88,7 @@ BEGIN
         MENUITEM "&Close", IDM_FILE_RETURN_TO_TITLE
         MENUITEM "&Save\tCtrl+S", IDM_TURN_END_A
         MENUITEM "Save &And Submit\tCtrl+A", IDM_TURN_END_B
+        MENUITEM "Export Orders...", IDM_LIBRARY_EXPORT_ORDERS
         MENUITEM SEPARATOR
         MENUITEM "&Print Map", IDM_FILE_PRINT_MAP
         MENUITEM SEPARATOR

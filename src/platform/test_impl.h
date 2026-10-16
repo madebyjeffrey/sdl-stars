@@ -33,6 +33,9 @@
 #ifndef STARS_TEST_IMPL_InitInstance
 #define STARS_TEST_IMPL_InitInstance InitInstance
 #endif
+#ifndef STARS_TEST_IMPL_AskSaveDialog
+#define STARS_TEST_IMPL_AskSaveDialog AskSaveDialog
+#endif
 #ifndef STARS_TEST_IMPL_PromptPassword
 #define STARS_TEST_IMPL_PromptPassword PromptPassword
 #endif
@@ -59,6 +62,9 @@
 #endif
 #ifndef STARS_TEST_IMPL_ReplaceNativeFile
 #define STARS_TEST_IMPL_ReplaceNativeFile ReplaceNativeFile
+#endif
+#ifndef STARS_TEST_IMPL_RenameNativeFile
+#define STARS_TEST_IMPL_RenameNativeFile RenameNativeFile
 #endif
 #ifndef STARS_TEST_IMPL_IChooseWindowsFile
 #define STARS_TEST_IMPL_IChooseWindowsFile IChooseWindowsFile
