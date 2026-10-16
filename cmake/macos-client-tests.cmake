@@ -5,11 +5,24 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog)
 set_target_properties(stars-compat-client-startup PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_continue_dummy PROPERTIES LABELS client TIMEOUT 200
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
+target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check
+    stars_options stars_win32 SDL3::SDL3)
+target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1 STARS_TEST_FILE_WORKFLOW_COMPAT_CHOOSER=1)
+target_compile_options(stars-compat-fileworkflow PRIVATE -Wall -Wextra -Werror)
+stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword MessageBoxA FNativeOpenFileName FNativeSaveFileName)
+set_target_properties(stars-compat-fileworkflow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_test(NAME win32_client_fileworkflow_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_fileworkflow_compat.py" --client "$<TARGET_FILE:stars-compat-fileworkflow>")
+set_tests_properties(win32_client_fileworkflow_dummy PROPERTIES LABELS client TIMEOUT 90
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
 add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
@@ -20,6 +33,11 @@ set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS client TIMEOUT
 add_test(NAME win32_client_game_export_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_game_export.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_game_export_dummy PROPERTIES LABELS client TIMEOUT 90
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
+set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
 add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"

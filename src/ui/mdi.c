@@ -1481,6 +1481,9 @@ LPrintMapCleanup:
             FWriteLogFile(szBase, idPlayer);
             FWriteHistFile(idPlayer);
             break;
+        case IDM_LIBRARY_EXPORT_ORDERS:
+            FExportLibraryOrders(hwnd, NULL);
+            break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
             if ((gd.fTutorial && !FAskKillTutor()) || FOpenGame(hwnd, FALSE) <= 0)
@@ -2762,9 +2765,6 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             ShowWindow(hwndFrame, SW_SHOW);
             break;
-        case IDC_LIBRARY_GAMES:
-            if (HIWORD(wParam) != LBN_DBLCLK) break;
-            /* fall through */
         case IDC_LIBRARY_IMPORT:
             if (LOWORD(wParam) == IDC_LIBRARY_IMPORT) {
                 if (FImportLibraryGame(hwnd, NULL)) RefreshLibraryGames(hwnd);
@@ -2777,6 +2777,10 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         case IDC_LIBRARY_GAME_EXPORT:
             FExportSelectedLibraryGame(hwnd, NULL);
+            break;
+        case IDC_LIBRARY_DUPLICATE:
+        case IDC_LIBRARY_RENAME:
+            if (FActOnSelectedLibraryGame(hwnd, LOWORD(wParam) == IDC_LIBRARY_RENAME)) RefreshLibraryGames(hwnd);
             break;
         case IDC_LIBRARY_RACES:
             if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;
@@ -2800,6 +2804,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_LIBRARY_RACE_IMPORT:
             if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
             break;
+        case IDC_LIBRARY_GAMES:
+            if (HIWORD(wParam) != LBN_DBLCLK) break;
+            /* fall through */
         case IDOK:
             if (!FSelectLibraryGame(hwnd)) break;
         LOpenGame:
