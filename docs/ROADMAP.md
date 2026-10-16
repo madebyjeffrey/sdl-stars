@@ -179,6 +179,10 @@ managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
+Host Games now has a separate library view, accepts host-only universe/host
+imports, and imports ordinary player orders after matching game identity, turn
+and generation. The existing desktop host generates directly from the managed
+orders files, with the command-line host and simulation behavior unchanged.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
