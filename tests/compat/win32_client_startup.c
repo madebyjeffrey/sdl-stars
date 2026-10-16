@@ -1521,10 +1521,13 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     char szFind[320], szName[256];
     const char *pszExpected, *pszTarget, *pszYear;
     const char *pszHostSource, *pszHostPlayerSource, *pszHostOrderBase, *pszHostPickerBase;
+    const char *pszDeleteMode;
     SDL_Event event = {0};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
     RECT rcScanner;
+    HWND hwndDeleteList;
+    LRESULT iDeleteSelected, iDeleteOther;
     POINT ptLibraryButton;
     static const int rgidLibraryButton[] = {
         IDC_LIBRARY_IMPORT, IDC_LIBRARY_IMPORT_FOLDER, IDC_LIBRARY_GAME_EXPORT,
@@ -2137,26 +2140,26 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
     if (getenv("STARS_CLIENT_GAME_DELETE_MODE")) {
-        const char *pszMode = getenv("STARS_CLIENT_GAME_DELETE_MODE");
-        HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        LRESULT iSelected = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
-        LRESULT iOther = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
-        if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iOther == LB_ERR) goto LDone;
+        pszDeleteMode = getenv("STARS_CLIENT_GAME_DELETE_MODE");
+        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == LB_ERR) goto LDone;
         if (iStage == 0) {
-            if (iSelected == LB_ERR) goto LDone;
-            SendMessage(hwndList, LB_SETCURSEL, iSelected, 0);
+            if (iDeleteSelected == LB_ERR) goto LDone;
+            SendMessage(hwndDeleteList, LB_SETCURSEL, iDeleteSelected, 0);
             iStage = 1;
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
             return;
         }
         if (!fLibraryGameDeletePrompt) goto LDone;
         RefreshLibraryGames(hwndTitle);
-        hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        iSelected = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
-        iOther = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
-        fPassed = pszMode && strcmp(pszMode, "confirm") == 0 ? iSelected == LB_ERR && iOther != LB_ERR :
-                  iSelected != LB_ERR && iOther != LB_ERR &&
-                  (strcmp(pszMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
+        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == LB_ERR && iDeleteOther != LB_ERR :
+                  iDeleteSelected != LB_ERR && iDeleteOther != LB_ERR &&
+                  (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
         if (!fPassed) goto LDone;
         fChecked = TRUE;
         puts("Managed game deletion confirmed, cancelled, or failed through the Games view");
