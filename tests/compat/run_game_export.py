@@ -71,7 +71,11 @@ def main():
             STARS_CLIENT_EXPORT_EXPECTED='fail')
         assert files(exported) == destination_before and files(managed) == before
         entries = list(parent.iterdir())
-        assert entries == [exported], f'Unexpected export entries: {entries!r}; expected {exported!r}'
+        # MSYS2's directory iterator can return backslashes for a path built
+        # with forward slashes. Compare directory identity, keeping the count
+        # check so leftover staging folders still fail this assertion.
+        assert len(entries) == 1 and entries[0].samefile(exported), \
+            f'Unexpected export entries: {entries!r}; expected {exported!r}'
 
         # A second player's real saved/submitted orders survive export along
         # with the first player's orders, both histories, host state and backup.
