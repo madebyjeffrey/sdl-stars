@@ -12,18 +12,11 @@ add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
 set_tests_properties(win32_client_continue_dummy PROPERTIES LABELS client TIMEOUT 200
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
-add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
-target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check
-    stars_options stars_win32 SDL3::SDL3)
-target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1 STARS_TEST_FILE_WORKFLOW_COMPAT_CHOOSER=1)
-target_compile_options(stars-compat-fileworkflow PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword MessageBoxA FNativeOpenFileName FNativeSaveFileName)
-set_target_properties(stars-compat-fileworkflow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-add_test(NAME win32_client_fileworkflow_dummy COMMAND "${Python3_EXECUTABLE}"
-    "${PROJECT_SOURCE_DIR}/tests/compat/run_fileworkflow_compat.py" --client "$<TARGET_FILE:stars-compat-fileworkflow>")
-set_tests_properties(win32_client_fileworkflow_dummy PROPERTIES LABELS client TIMEOUT 90
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+add_test(NAME win32_client_designer_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
+set_tests_properties(win32_client_designer_dummy PROPERTIES LABELS client TIMEOUT 200
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat;STARS_CLIENT_WORKFLOW=designer")
 
 add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -89,3 +82,7 @@ stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_GetPrefPath SDL_OpenUR
 add_dependencies(stars-compat-help stars-help-guide)
 add_test(NAME win32_utf8_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}")
 set_tests_properties(win32_utf8_help PROPERTIES LABELS compat TIMEOUT 120)
+
+include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")
+
+include("${CMAKE_CURRENT_LIST_DIR}/print-map-tests.cmake")

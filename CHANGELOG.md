@@ -6,6 +6,64 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
+  paths with forward slashes when the library root uses backslashes. Orders
+  retain their exchange filename, and library history and dirty-game export
+  use the same membership check. Simulation and save formats are unchanged.
+
+- `FInitLibrary` and `FInitRaceLibrary` read environment paths through SDL's
+  UTF-8 API on Windows. Libraries under accented or non-Latin settings and
+  override paths can now import races and export orders. Simulation results,
+  save formats and native regression baselines are unchanged.
+
+- The PDF map test now starts from a managed game, avoiding a wait at the
+  external-game Import dialog. Its full planet-position and PDF checks also
+  run on macOS. Product behavior and simulation baselines are unchanged.
+
+- The designer save/reload test now uses a managed game and changes its live
+  research choice before reopening saved orders, so a failed reload cannot
+  pass unnoticed. The workflow also runs on macOS. Product behavior and
+  simulation baselines are unchanged.
+
+- The portable file-workflow test handles both Windows path separators and
+  opens its Unicode fixtures through the native UTF-8 file boundary, avoiding
+  invalid chooser offsets and fixture I/O failures. Product behavior and
+  simulation baselines are unchanged.
+
+- Windows managed game and race paths now accept picker-style forward slashes
+  and native backslashes consistently. Startup reopens an existing managed
+  game instead of importing another copy, and managed race selection retains
+  its correct filename. Simulation and save formats are unchanged.
+
+- Recent-file migration now reports a missing selected player file by path
+  instead of silently importing its valid siblings. Other recent entries
+  continue to import, including relative filenames. Sources, simulation
+  results and file formats are unchanged.
+
+- The real file-workflow test keeps its timer active while accepting the race
+  import dialog, avoiding a deadlock. The same workflow now runs with portable
+  chooser substitutions on macOS, Windows and Linux in addition to the Linux
+  portal test. Product behavior and simulation baselines are unchanged.
+
+- Desktop Open and recent-file actions now distinguish races from games by
+  file contents. Race selections import into Race Designs and open the copied
+  design for editing; cancelling customization retains the import and leaves
+  the source unchanged. Simulation and file formats are unchanged.
+
+- Desktop startup now imports its supplied external game path without asking
+  the user to select it again. Managed game paths reopen their existing copy.
+  Command-line host behavior, simulation results and file formats are unchanged.
+
+- New Game race edits now save to the selected design, retaining full library
+  filenames per roster entry. Importing another race no longer redirects an
+  earlier design's edits, and customizing a predefined race creates a separate
+  managed design. Game simulation and file formats are unchanged.
+
+- Existing recent game files now receive a one-time import offer. Accepting
+  copies valid games into the managed library and explains invalid entries;
+  declining is remembered. Desktop Open Game, recent external games, and
+  external race selection now use managed import workflows. Imported sources
+  remain unchanged, and command-line host paths are unchanged.
 - `FInspectImportFile` accepts the empty end records written by the game's
   orders and history writers. Complete game exports containing saved orders
   can now be reimported; trailing bytes are still rejected. File formats,

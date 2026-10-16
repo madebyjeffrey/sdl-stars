@@ -1,4 +1,4 @@
-/* Real game/race I/O through the native portal on a private test bus. */
+/* Real game/race I/O through the native portal or a portable chooser adapter. */
 #include "win.h"
 #include "internal.h"
 #include <stars_compat.h>
@@ -10,37 +10,46 @@ int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
-#ifdef STARS_TEST_FILE_WORKFLOW_COMPAT_CHOOSER
-static int cOpenChoices, cSaveChoices;
-BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
-    const char *pszPath;
-    cOpenChoices++;
-    if (cOpenChoices == 1) return FALSE;
-    pszPath = getenv(cOpenChoices == 3 ? "STARS_TEST_RACE_PATH" : "STARS_TEST_GAME_PATH");
-    if (!pszPath || strlen(pszPath) >= lpof->nMaxFile) return FALSE;
-    strcpy(lpof->lpstrFile, pszPath);
-    lpof->nFileOffset = (WORD)(strrchr(pszPath, '/') ? strrchr(pszPath, '/') - pszPath + 1 : 0);
-    lpof->nFileExtension = (WORD)(strrchr(pszPath, '.') ? strrchr(pszPath, '.') - pszPath + 1 : 0);
-    return TRUE;
-}
-BOOL StarsTest_FNativeSaveFileName(OPENFILENAMEA *lpof) {
-    const char *pszPath;
-    if (++cSaveChoices == 1 || cSaveChoices == 4) return FALSE;
-    pszPath = getenv(cSaveChoices == 2 ? "STARS_TEST_RACE_PATH" :
-                     cSaveChoices == 3 ? "STARS_TEST_RACE_REPEAT_PATH" : "STARS_TEST_EXPORT_CHOICE");
-    if (cSaveChoices >= 4 && strcmp(lpof->lpstrFile, "café-Ω.x1") != 0) {
-        fprintf(stderr, "orders chooser suggested unexpected name: %s\n", lpof->lpstrFile);
-        return FALSE;
-    }
-    if (!pszPath || strlen(pszPath) >= lpof->nMaxFile) return FALSE;
-    strcpy(lpof->lpstrFile, pszPath);
-    lpof->nFileOffset = (WORD)(strrchr(pszPath, '/') ? strrchr(pszPath, '/') - pszPath + 1 : 0);
-    return TRUE;
-}
-#endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
+static int cFileChoices;
+BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
+BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
+
+static const char *PszWorkflowFilename(const char *pszFile) {
+    const char *pch = pszFile + strlen(pszFile);
+    while (pch > pszFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
+    return pch;
+}
+
+static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
+    const char *pszFile, *pchExtension;
+    cFileChoices++;
+    if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
+                  cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
+        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return FALSE;
+    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return FALSE;
+    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return FALSE;
+    pszFile = getenv(cFileChoices == 2 ? "STARS_TEST_GAME_PATH" :
+                     cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" :
+                     cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
+    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return FALSE;
+    strcpy(lpof->lpstrFile, pszFile);
+    lpof->nFileOffset = (WORD)(PszWorkflowFilename(pszFile) - pszFile);
+    pchExtension = strrchr(PszWorkflowFilename(pszFile), '.');
+    lpof->nFileExtension = pchExtension ? (WORD)(pchExtension - pszFile + 1) : 0;
+    return TRUE;
+}
+
+BOOL StarsTest_FNativeOpenFileName(OPENFILENAME *lpof) {
+    return getenv("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, FALSE) : StarsTestReal_FNativeOpenFileName(lpof);
+}
+
+BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
+    return getenv("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, TRUE) : StarsTestReal_FNativeSaveFileName(lpof);
+}
+
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
-    FILE *pfLeft = fopen(pszLeft, "rb"), *pfRight = fopen(pszRight, "rb");
+    FILE *pfLeft = PfOpenNativeFile(pszLeft, "rb"), *pfRight = PfOpenNativeFile(pszRight, "rb");
     unsigned char rgbLeft[4096], rgbRight[4096];
     size_t cbLeft, cbRight;
     BOOL fEqual = pfLeft && pfRight;
@@ -54,6 +63,21 @@ LDone:
     if (pfLeft) fclose(pfLeft);
     if (pfRight) fclose(pfRight);
     return fEqual;
+}
+static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource = PfOpenNativeFile(pszSource, "rb"), *pfTarget = PfOpenNativeFile(pszTarget, "wb");
+    unsigned char rgb[4096];
+    size_t cb;
+    BOOL fCopied = pfSource && pfTarget;
+    if (!fCopied) goto LDone;
+    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0) {
+        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
+    }
+    if (ferror(pfSource)) fCopied = FALSE;
+LDone:
+    if (pfSource) fclose(pfSource);
+    if (pfTarget && fclose(pfTarget) != 0) fCopied = FALSE;
+    return fCopied;
 }
 int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
@@ -70,11 +94,14 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     return IDOK;
 }
 static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+    HWND hwndDialog;
     HWND hwndParentSav;
     PLAYER plrSav;
     PLAYER plrManaged;
     char szRaceSav[sizeof(szRaceFile)];
     char szManagedRace[512];
+    char szImportedRace[512];
+    char szRaceOriginal[512];
     char szRaceLibrary[256];
     const char *pszExport = getenv("STARS_TEST_EXPORT_EXPECTED");
     const char *pszPreviousExport = getenv("STARS_TEST_EXPORT_PREVIOUS");
@@ -88,8 +115,16 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszRaceRepeat = getenv("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
     (void)hwnd; (void)msg; (void)dwTime;
-    if (fRunning) return;
-    fRunning = TRUE; KillTimer(NULL, id);
+    if (fRunning) {
+        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
+                SendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+                return;
+            }
+        }
+        return;
+    }
+    fRunning = TRUE;
     CHECK(pszRace && pszRaceRepeat && IsWindow(hwndTitle));
     CHECK(FOpenGame(hwndTitle, FALSE) == 0 && IsWindowVisible(hwndTitle) && IsWindowEnabled(hwndTitle));
     CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
@@ -99,9 +134,15 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(!FSaveRace(NULL, &plrSav) && memcmp(szRaceSav, szRaceFile, sizeof(szRaceSav)) == 0);
     CHECK(FSaveRace(NULL, &plrSav));
     CHECK(szRaceFile[sizeof(szRaceFile) - 1] == 0 &&
-          strncmp(szRaceFile, strrchr(pszRace, '/') + 1, strlen(szRaceFile)) == 0);
+          strncmp(szRaceFile, PszWorkflowFilename(pszRace), strlen(szRaceFile)) == 0);
     CHECK(FWasRaceFile((char *)pszRace, FALSE) > 0);
+    CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
+          FCopyFile(pszRace, szRaceOriginal));
     CHECK(FOpenGame(hwndTitle, TRUE) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
+    CHECK(CchSnprintf(szImportedRace, sizeof(szImportedRace), "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
+                      getenv("STARS_SETTINGS_DIR"), szDirSep, szDirSep) > 0);
+    CHECK(FWasRaceFile(szImportedRace, FALSE) > 0 && FEqualFiles(pszRace, szImportedRace) &&
+          FEqualFiles(pszRace, szRaceOriginal));
     CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, FALSE) > 0);
     CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrSav));
     CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrSav));
@@ -146,8 +187,9 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
           FNativeFileSize((char *)pszManagedOrders, &cbExport) && cbExport > 0);
     CHECK(game.lid == lid && memcmp(&plrSav, &rgplr[idPlayer], sizeof(plrSav)) == 0);
     hwndRaceParent = hwndParentSav;
-    fPassed = cAlerts == 1;
+    fPassed = cAlerts == 1 && (!getenv("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);
 done:
+    KillTimer(NULL, id);
     PostQuitMessage(fPassed ? 0 : 92);
 }
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {

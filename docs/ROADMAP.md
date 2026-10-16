@@ -200,6 +200,20 @@ It confirms replacement of the final numbered destination after extension
 correction; rejecting replacement preserves existing exports and pending work.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
+Windows library roots use SDL UTF-8 environment paths even when the CRT code
+page cannot represent the settings folder.
+Windows library membership and managed race selection accept both native
+separators and the wrapper picker's forward-slash paths. Orders export,
+library metadata updates and loaded-game export use the same membership rule.
+Recent-file migration validates the selected source before enumerating its
+family, reports missing filenames, and handles relative entries independently.
+Mixed desktop Open and recent-file actions dispatch by the BOF file type to
+the game or race importer; race customization edits only the managed copy.
+Desktop startup passes its explicit game path to import and reopens managed
+game paths directly, without a second file selection.
+New Game keeps full library filenames per custom race and scopes each race
+edit to its own destination; predefined customizations receive a new managed
+filename instead of overwriting the last imported design.
 Complete game-folder export preserves player files, host state and backups.
 Destinations must fit the loader's full game and backup paths; overlong paths
 are rejected before copying rather than publishing a truncated game family.
@@ -215,7 +229,9 @@ The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
 cancelled edit, import, duplicate and export/reload; the
-native file-workflow harness covers protected save/reload, checksum preservation
+native file-workflow harness keeps its timer active through race-import naming
+and runs with a portable chooser on each SDL platform as well as the Linux
+portal. It covers protected save/reload, checksum preservation
 and duplicate-name rejection. Duplicate, ordinary export and confirmed deletion
 are now available from the selected design. The
 initial top-level size notification now initializes pane layout, and the

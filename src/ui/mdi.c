@@ -981,7 +981,15 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             iplrOld = idPlayer;
             strcpy(szT, vrgszMRU + 256 * (LOWORD(wParam) - 4300));
             psz = strrchr(szT, 46);
-            if (psz && FFileExists(szT)) {
+            if (psz) {
+                if (!FIsManagedLibraryGameFile(szT)) {
+                    if (FImportDesktopFile(hwnd, szT) && hwndTitle) {
+                        RefreshLibraryGames(hwndTitle);
+                        RefreshLibraryRaces(hwndTitle);
+                    }
+                    break;
+                }
+                if (!FFileExists(szT)) goto LShowMissingRecent;
                 ini.fStartupFile = TRUE;
                 DestroyCurGame();
                 strcpy(szBase, szT);
@@ -997,6 +1005,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 StartTutor(FALSE);
                 break;
             }
+        LShowMissingRecent:
             strcpy(szWork, szT);
             AlertSz(PszFormatIds(idsCantOpenFile, NULL), MB_ICONHAND);
             break;
@@ -1486,15 +1495,19 @@ LPrintMapCleanup:
             break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
-            if ((gd.fTutorial && !FAskKillTutor()) || FOpenGame(hwnd, FALSE) <= 0)
+            if (gd.fTutorial && !FAskKillTutor()) break;
+            if (ini.fStartupFile && FIsManagedLibraryGameFile(szBase)) {
+                if (FOpenGame(hwnd, FALSE) <= 0) break;
+                InitializeMenu(NULL);
+                if (uTimerId == 0) PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
-            InitializeMenu(NULL);
-            if (uTimerId == 0) {
-                PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             }
-            if (!game.fTutorial || idPlayer != 0)
-                break;
-            StartTutor(FALSE);
+            fRet = FImportDesktopFile(hwnd, ini.fStartupFile ? szBase : NULL);
+            ini.fStartupFile = FALSE;
+            if (fRet && hwndTitle) {
+                RefreshLibraryGames(hwndTitle);
+                RefreshLibraryRaces(hwndTitle);
+            }
             break;
         case IDM_TITLE_NEW_GAME:
         case IDM_TITLE_OPEN_GAME:
@@ -1752,7 +1765,10 @@ LGotFileName:
     fRet = FWasRaceFile(&szFile[ofn.nFileOffset], fRaceOnly == 0);
     if (fRaceOnly) {
         if (fRet > 0) {
-            SetSzRaceFile(&szFile[ofn.nFileOffset]);
+            if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(hwnd, szFile);
+            pch = szFile + strlen(szFile);
+            while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
+            return FLoadLibraryRace(hwnd, pch);
         }
         return fRet;
     }
@@ -2704,6 +2720,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         InitLibraryGames(hwnd, &rc);
         InitLibraryRaces(hwnd, &rc);
+        PostMessage(hwnd, WM_STARS_RECENT_IMPORT, 0, 0);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
         SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
@@ -2714,6 +2731,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 4; i++) {
             UpdateWindow(rghwndBtnSplash[i]);
         }
+        break;
+    case WM_STARS_RECENT_IMPORT:
+        OfferRecentGameImport(hwnd);
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:

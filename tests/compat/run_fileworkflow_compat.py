@@ -28,7 +28,8 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
     shutil.copyfile(previous_export, exported)
     assert not export_choice.exists()
     managed_orders = managed / 'Renamed copy.x1'
-    env = dict(os.environ, STARS_SETTINGS_DIR=str(root),
+    env = dict(os.environ, STARS_SETTINGS_DIR=str(root), STARS_PROFILE_DIR=str(root),
+               STARS_TEST_FILE_WORKFLOW_COMPAT="1",
                STARS_TEST_GAME_PATH=str(managed / 'Renamed copy.m1'),
                STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
                STARS_TEST_EXPORT_EXPECTED=str(exported), STARS_TEST_EXPORT_PREVIOUS=str(previous_export),
@@ -37,9 +38,12 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-compat-') as direct
                STARS_TEST_EXPORT_FAILURE_TARGET=str(root / 'missing-directory' / 'cannot-write.x1'),
                STARS_TEST_EXPORT_CHOICE=str(export_choice), STARS_FILE_DIALOG_BACKEND='compat',
                SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', STARS_SDL_RENDERER='software')
+    env.pop("STARS_LIBRARY_DIR", None)
     subprocess.run([str(Path(args.client).resolve())], cwd=root, env=env, check=True, timeout=75)
     assert exported.is_file() and managed_orders.is_file()
     assert exported.read_bytes() != previous_export.read_bytes()
     assert (managed / 'Renamed copy.m1').is_file()
-    assert race.is_file() and race_repeat.is_file()
+    imported = root / "Race Designs" / race.name
+    assert imported.read_bytes() == race.read_bytes() == Path(str(race) + ".before-import").read_bytes()
+    assert race_repeat.is_file()
 print('Native chooser game/race and managed orders export workflow passed on UTF-8 paths')

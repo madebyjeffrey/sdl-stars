@@ -108,9 +108,10 @@ static int16_t FPortableRaceFilename(const char *pszName) {
     return TRUE;
 }
 
+/* The Windows CRT environment uses its code page; SDL supplies UTF-8 paths. */
 static int16_t FInitRaceLibrary(void) {
-    const char *pszOverride = getenv("STARS_LIBRARY_DIR");
-    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
+    const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     char *pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
     int cch;
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
@@ -179,8 +180,8 @@ static int16_t FInitLibrary(void) {
     char *pszRoot;
     int cch;
 
-    pszOverride = getenv("STARS_LIBRARY_DIR");
-    pszSettings = getenv("STARS_SETTINGS_DIR");
+    pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
+    pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames",
@@ -188,6 +189,45 @@ static int16_t FInitLibrary(void) {
                       pszOverride || pszSettings ? szDirSep : "");
     SDL_free(pszRoot);
     return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
+}
+
+static int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
+    size_t cchRoot, cchFile;
+#ifdef _WIN32
+    size_t ich;
+#endif
+    if (!pszRoot || !pszFile) return FALSE;
+    cchRoot = strlen(pszRoot);
+    cchFile = strlen(pszFile);
+    if (cchRoot == 0 || cchFile <= cchRoot) return FALSE;
+#ifdef _WIN32
+    /* Pickers return '/', while library joins and Windows arguments may use '\\'. */
+    for (ich = 0; ich < cchRoot; ich++) {
+        if ((pszRoot[ich] == '/' || pszRoot[ich] == '\\') &&
+            (pszFile[ich] == '/' || pszFile[ich] == '\\')) continue;
+        if (SDL_tolower((unsigned char)pszRoot[ich]) != SDL_tolower((unsigned char)pszFile[ich])) return FALSE;
+    }
+    return pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\';
+#else
+    return memcmp(pszRoot, pszFile, cchRoot) == 0 && pszFile[cchRoot] == '/';
+#endif
+}
+
+static char *PchLibrarySeparator(char *pszPath) {
+    char *pch = strrchr(pszPath, chDirSep);
+#ifdef _WIN32
+    char *pchSlash = strrchr(pszPath, '/');
+    if (pchSlash && (!pch || pchSlash > pch)) pch = pchSlash;
+#endif
+    return pch;
+}
+
+int16_t FIsManagedLibraryGameFile(const char *pszFile) {
+    return FInitLibrary() && FPathUnderLibrary(szLibraryRoot, pszFile);
+}
+
+int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
+    return FInitRaceLibrary() && FPathUnderLibrary(szRaceLibraryRoot, pszFile);
 }
 
 static int16_t FPortableLibraryName(const char *pszName) {
@@ -536,6 +576,31 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     return TRUE;
 }
 
+const char *PszCurrentLibraryRaceName(void) {
+    const char *pch = strrchr(szRaceLibraryPath, chDirSep);
+    return pch ? pch + 1 : szRaceLibraryPath;
+}
+
+/* The new-game roster owns a filename for each design. Bind only this edit
+ * to that destination; a previously imported design is not its save target. */
+int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName) {
+    RACESTATE rsSav;
+    char szPath[512];
+    int16_t fResult;
+
+    SaveRaceState(&rsSav);
+    if (pszName[0]) {
+        if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    } else if (!FChooseLibraryRaceName(hwnd, "Custom Race.r1", szPath, sizeof(szPath))) return FALSE;
+    CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
+    SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
+    fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
+    if (fResult) CchSnprintf(pszName, 256, "%s", PszCurrentLibraryRaceName());
+    RestoreRaceState(&rsSav, !fResult, TRUE);
+    return fResult;
+}
+
 int16_t FBeginLibraryRace(HWND hwnd) {
     char szPath[512];
     RACESTATE rsSav;
@@ -654,21 +719,23 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     FILE *pf;
     uint32_t dwTick;
     int64_t cbTarget;
-    size_t cchRoot;
     int cch;
     int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
 
     if (!FInitLibrary() || !lpPlanets || game.lid == 0 || idPlayer == iplrNone || idPlayer < 0 || idPlayer >= 16) return FALSE;
-    cchRoot = strlen(szLibraryRoot);
-    if (strncmp(szBase, szLibraryRoot, cchRoot) != 0 || szBase[cchRoot] != chDirSep) return FALSE;
+    if (!FPathUnderLibrary(szLibraryRoot, szBase)) return FALSE;
     RememberLibraryGame();
 
     pszLibraryName = szLibraryExchangeName;
     if (!pszLibraryName[0]) {
-        pch = strrchr(szBase, chDirSep);
+        pch = PchLibrarySeparator(szBase);
         if (!pch) return FALSE;
         pchSlash = pch;
-        while (pchSlash > szBase && pchSlash[-1] != chDirSep) pchSlash--;
+        while (pchSlash > szBase && pchSlash[-1] != chDirSep
+#ifdef _WIN32
+               && pchSlash[-1] != '/'
+#endif
+        ) pchSlash--;
         cch = CchSnprintf(szName, sizeof(szName), "%.*s", (int)(pch - pchSlash), pchSlash);
         if (cch <= 0 || (size_t)cch >= sizeof(szName)) return FALSE;
         pszLibraryName = szName;
@@ -725,7 +792,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     fHistoryBackup = FALSE;
     dwTick = DwTickCount();
     pch = strrchr(szBaseStem, '.');
-    pchSlash = strrchr(szBaseStem, chDirSep);
+    pchSlash = PchLibrarySeparator(szBaseStem);
     if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
     cch = CchSnprintf(szStageBase, sizeof(szStageBase), "%s_exportstage_%u.m%d", szBaseStem, dwTick, idPlayer + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szStageBase)) return FALSE;
@@ -1316,7 +1383,7 @@ int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
     if (!pszTarget) return FExportLibraryGame(hwnd, szName, NULL);
     if (game.fDirty && lpPlanets && idPlayer != iplrNone) {
         CchSnprintf(szDir, sizeof(szDir), "%s%s%s", szLibraryRoot, szDirSep, szName);
-        if (!strncmp(szBase, szDir, strlen(szDir)) && szBase[strlen(szDir)] == chDirSep) PromptSaveGame();
+        if (FPathUnderLibrary(szDir, szBase)) PromptSaveGame();
     }
     return FExportLibraryGame(hwnd, szName, pszTarget);
 }
@@ -1525,39 +1592,72 @@ void ShowLibraryImportFolderPicker(HWND hwnd) {
     SDL_ShowOpenFolderDialog(LibraryImportFolderSelected, hwnd, NULL, NULL, FALSE);
 }
 
-int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
+static int16_t FChooseLibraryImportFile(HWND hwnd, char *pszChosen, size_t cchChosen) {
     OPENFILENAME ofn;
-    char szChosen[512], szTitle[256], szFilter[128];
-    char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash;
+    char szTitle[256], szFilter[128], *pch;
+
+    memset(&ofn, 0, sizeof(ofn));
+    memset(pszChosen, 0, cchChosen);
+    CchGetString(idsStarsGameFilesMHstRStars, szFilter);
+    pch = strstr(szFilter, "*.M*;");
+    if (pch) {
+        memmove(pch + 5, pch, strlen(pch) + 1);
+        memcpy(pch, "*.XY;", 5);
+    }
+    for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = szFilter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFile = pszChosen;
+    ofn.nMaxFile = cchChosen;
+    szTitle[0] = 0;
+    ofn.lpstrFileTitle = szTitle;
+    ofn.nMaxFileTitle = sizeof(szTitle);
+    ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    return FNativeOpenFileName(&ofn);
+}
+
+/* Choose the workflow from the BOF type, leaving complete validation and
+ * source-preserving publication to the corresponding importer. */
+int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
+    char szChosen[512];
+    FILE *pf;
+    HDR hdr;
+    RTBOF rtbof;
+    int16_t fRace;
+
+    if (!pszSource) {
+        if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
+        pszSource = szChosen;
+    }
+    fRace = FALSE;
+    pf = PfOpenNativeFile(pszSource, "rb");
+    if (pf) {
+        fRace = fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(rtbof) &&
+                fread(&rtbof, sizeof(rtbof), 1, pf) == 1 && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
+        fclose(pf);
+    }
+    return fRace ? FImportLibraryRaceAndEdit(hwnd, pszSource) : FImportLibraryGame(hwnd, pszSource);
+}
+
+int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
+    char szChosen[512];
+    char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash, *pchName;
     LIBRARYIMPORT li;
     int cchDir;
+    int64_t cbSource;
     int16_t fImported;
 
     if (!pszSource) {
-        memset(&ofn, 0, sizeof(ofn));
-        memset(szChosen, 0, sizeof(szChosen));
-        CchGetString(idsStarsGameFilesMHstRStars, szFilter);
-        pch = strstr(szFilter, "*.M*;");
-        if (pch) {
-            memmove(pch + 5, pch, strlen(pch) + 1);
-            memcpy(pch, "*.XY;", 5);
-        }
-        for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = hwnd;
-        ofn.lpstrFilter = szFilter;
-        ofn.nFilterIndex = 1;
-        ofn.lpstrFile = szChosen;
-        ofn.nMaxFile = sizeof(szChosen);
-        szTitle[0] = 0;
-        ofn.lpstrFileTitle = szTitle;
-        ofn.nMaxFileTitle = sizeof(szTitle);
-        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-        if (!FNativeOpenFileName(&ofn)) return FALSE;
+        if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
         pszSource = szChosen;
     }
     if (strlen(pszSource) >= sizeof(szSource)) return FALSE;
     strcpy(szSource, pszSource);
+    /* Validate the selected path before either standalone-turn or family import. */
+    if (!FNativeDirectoryExists(szSource) &&
+        (!FNativeFileSize(szSource, &cbSource) || cbSource <= 0)) goto LInvalidSource;
     if (strrchr(pszSource, '.') && SDL_tolower(strrchr(pszSource, '.')[1]) == 'm') {
         if (!FInitLibrary()) return FALSE;
         fImported = FImportSubsequentTurn(hwnd, pszSource);
@@ -1574,18 +1674,23 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         CchSnprintf(szSource, sizeof(szSource), "%s%s%s.xy", szDir, szDirSep, szStem);
         pchSlash = strrchr(szSource, chDirSep);
     } else {
-    pchSlash = strrchr(szSource, '/');
-    pch = strrchr(szSource, '\\');
-    if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
-    if (!pchSlash) return FALSE;
-    cchDir = (int)(pchSlash - szSource);
-    if (cchDir == 0) cchDir = 1;
-    memcpy(szDir, szSource, cchDir);
-    szDir[cchDir] = 0;
-    pch = strrchr(pchSlash + 1, '.');
-    if (!pch || pch == pchSlash + 1 || (size_t)(pch - (pchSlash + 1)) >= sizeof(szStem)) return FALSE;
-    memcpy(szStem, pchSlash + 1, pch - (pchSlash + 1));
-    szStem[pch - (pchSlash + 1)] = 0;
+        pchSlash = strrchr(szSource, '/');
+        pch = strrchr(szSource, '\\');
+        if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
+        if (pchSlash) {
+            cchDir = (int)(pchSlash - szSource);
+            if (cchDir == 0) cchDir = 1;
+            memcpy(szDir, szSource, cchDir);
+            szDir[cchDir] = 0;
+            pchName = pchSlash + 1;
+        } else {
+            strcpy(szDir, ".");
+            pchName = szSource;
+        }
+        pch = strrchr(pchName, '.');
+        if (!pch || pch == pchName || (size_t)(pch - pchName) >= sizeof(szStem)) goto LInvalidSource;
+        memcpy(szStem, pchName, pch - pchName);
+        szStem[pch - pchName] = 0;
     }
     if (!FInitLibrary()) return FALSE;
     memset(&li, 0, sizeof(li));
@@ -1620,6 +1725,10 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     }
     szLibraryPending[0] = 0;
     return TRUE;
+LInvalidSource:
+    CchSnprintf(szWork, sizeof(szWork), "%s", szSource);
+    AlertSz(PszFormatIds(idsCantOpenFile, NULL), MB_ICONHAND);
+    return FALSE;
 }
 
 static int16_t RemoveLibraryGameEntry(void *lpData, const char *pszName) {
@@ -2019,12 +2128,12 @@ void RememberLibraryGame(void) {
     int iplr;
     long long lPlayed;
 
-    if (!FInitLibrary() || strncmp(szBase, szLibraryRoot, strlen(szLibraryRoot)) || szBase[strlen(szLibraryRoot)] != chDirSep) return;
+    if (!FInitLibrary() || !FPathUnderLibrary(szLibraryRoot, szBase)) return;
     strcpy(szDir, szBase);
-    pch = strrchr(szDir, chDirSep);
+    pch = PchLibrarySeparator(szDir);
     if (!pch) return;
     *pch = 0;
-    pch = strrchr(szDir, chDirSep);
+    pch = PchLibrarySeparator(szDir);
     if (!pch) return;
     szLibraryExchangeName[0] = 0;
     /* szDir already names the game folder; retain its exchange basename before

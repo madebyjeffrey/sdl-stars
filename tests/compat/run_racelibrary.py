@@ -8,6 +8,11 @@ import tempfile
 
 def main():
     executable = Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix="stars-race-roster-") as directory:
+        env = dict(os.environ, STARS_SETTINGS_DIR=directory, STARS_PROFILE_DIR=directory,
+                   STARS_CLIENT_RACE_ROSTER_TEST="1", SDL_VIDEODRIVER="dummy",
+                   SDL_AUDIODRIVER="dummy", STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="compat")
+        subprocess.run([str(executable)], cwd=directory, env=env, check=True, timeout=25)
     with tempfile.TemporaryDirectory(prefix="stars-race-library-") as directory:
         work = Path(directory)
         settings = work / "settings"
@@ -39,6 +44,11 @@ def main():
         assert not (library / "Managed.r2").exists()
         assert (library / "Managed.r3").is_file()
         assert source.read_bytes() == imported.read_bytes()
+        env.pop("STARS_CLIENT_RACE_LIBRARY_TEST")
+        env.update(STARS_CLIENT_EXTERNAL_OPEN_RACE=str(source), STARS_CLIENT_IMPORT_NAME="From-menu.r1")
+        subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=15)
+        assert (library / "From-menu.r1").read_bytes() == original
+        assert source.read_bytes() == snapshot.read_bytes()
         assert (library / "Managed.r1.pending.r1").is_file()
         assert (library / "Imported.r2.pending.r1").is_file()
 
