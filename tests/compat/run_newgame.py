@@ -152,6 +152,7 @@ def main():
         assert {p.relative_to(playable): p.read_bytes() for p in playable.rglob('*') if p.is_file()} != {
             p.relative_to(duplicate): p.read_bytes() for p in duplicate.rglob('*') if p.is_file()}
         run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-playable duplicate')
+        assert (duplicate / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
 
         duplicate_metadata[2:4] = ['1', '123456']
         (duplicate / '.library').write_text('\n'.join(duplicate_metadata) + '\n', encoding='utf-8')
@@ -172,6 +173,9 @@ def main():
         assert (renamed / 'renamed-copy.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
         assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
         run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
 
         # Two-digit player extensions use the full one-based player number.
         player16 = bytearray((fixture / 'game.m1').read_bytes())

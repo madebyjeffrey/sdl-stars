@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Reopening a duplicated or renamed managed game now retains its original
+  exchange basename. `RememberLibraryGame` previously looked for metadata one
+  folder too deep and replaced that basename with the current library name.
+  Simulation behavior and regression baselines are unchanged.
+
 - Double-clicking a game in the library now opens the selected player turn.
   The title-window command handler previously fell through into Duplicate and
   opened a copy-name dialog. Simulation behavior and baselines are unchanged.

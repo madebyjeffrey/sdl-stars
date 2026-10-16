@@ -1709,11 +1709,8 @@ int16_t FActOnSelectedLibraryGame(HWND hwnd, int16_t fRename) {
 }
 
 void RememberLibraryGame(void) {
-    char szDir[256];
-    char szFile[512], szLine[256];
+    char szDir[256], szMetadataName[256];
     char *pch;
-    FILE *pf;
-    int iVersion;
     int iplr;
     long long lPlayed;
 
@@ -1725,16 +1722,9 @@ void RememberLibraryGame(void) {
     pch = strrchr(szDir, chDirSep);
     if (!pch) return;
     szLibraryExchangeName[0] = 0;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szDir, szDirSep, pch + 1, szDirSep);
-    pf = PfOpenNativeFile(szFile, "rb");
-    if (pf) {
-        if (fscanf(pf, "%d\n", &iVersion) == 1 && fgets(szLine, sizeof(szLine), pf) &&
-            fscanf(pf, "%d\n%lld\n", &iplr, &lPlayed) == 2) {
-            if (iVersion >= 2 && fgets(szLibraryExchangeName, sizeof(szLibraryExchangeName), pf)) {
-                szLibraryExchangeName[strcspn(szLibraryExchangeName, "\r\n")] = 0;
-            } else szLibraryExchangeName[0] = 0;
-        }
-        fclose(pf);
-    }
+    /* szDir already names the game folder; retain its exchange basename before
+     * publishing the newly opened player and last-played time. */
+    if (!FReadLibraryMetadata(szDir, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
+                              szLibraryExchangeName, sizeof(szLibraryExchangeName))) szLibraryExchangeName[0] = 0;
     FWriteLibraryMetadata(szDir, pch + 1, idPlayer);
 }
