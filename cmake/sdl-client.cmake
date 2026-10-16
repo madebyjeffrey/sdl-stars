@@ -167,7 +167,13 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
+if(STARS_BUILD_TESTS)
+    add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+endif()
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
 include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")
 

@@ -9,7 +9,7 @@
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
-static int cAlerts;
+static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
@@ -18,11 +18,14 @@ BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
 static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
     const char *pszFile;
     cFileChoices++;
-    if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6) ||
+    if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
+                  cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
         (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return FALSE;
-    if (cFileChoices == 1 || cFileChoices == 3) return FALSE;
+    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return FALSE;
+    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return FALSE;
     pszFile = getenv(cFileChoices == 2 ? "STARS_TEST_GAME_PATH" :
-                     cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" : "STARS_TEST_RACE_PATH");
+                     cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" :
+                     cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
     if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return FALSE;
     strcpy(lpof->lpstrFile, pszFile);
     lpof->nFileOffset = (WORD)(strrchr(pszFile, chDirSep) - pszFile + 1);
@@ -69,6 +72,15 @@ LDone:
     if (pfTarget && fclose(pfTarget) != 0) fCopied = FALSE;
     return fCopied;
 }
+int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+    const char *pszExport = getenv("STARS_TEST_EXPORT_EXPECTED");
+    if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
+        if (!(type & MB_DEFBUTTON2)) return IDNO;
+        return ++cReplaceChoices == 1 ? IDNO : IDYES;
+    }
+    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
+}
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
@@ -84,7 +96,14 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     char szImportedRace[512];
     char szRaceOriginal[512];
     char szRaceLibrary[256];
+    const char *pszExport = getenv("STARS_TEST_EXPORT_EXPECTED");
+    const char *pszPreviousExport = getenv("STARS_TEST_EXPORT_PREVIOUS");
+    const char *pszManagedOrders = getenv("STARS_TEST_MANAGED_ORDERS");
+    const char *pszManagedTurn = getenv("STARS_TEST_MANAGED_TURN");
+    const char *pszExportFailure = getenv("STARS_TEST_EXPORT_FAILURE_TARGET");
     int64_t cbRaceLibrary;
+    int64_t cbExport;
+    int16_t fSubmitSav;
     const char *pszRace = getenv("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = getenv("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
@@ -141,9 +160,27 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
     CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
     CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
+    fSubmitSav = gd.fSubmit;
+    CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(hwndTitle, NULL));
+    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid);
+    CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport) && FNativeFileSize((char *)pszManagedTurn, &cbExport));
+    DirtyGame(TRUE);
+    CHECK(pszPreviousExport && !FExportLibraryOrders(hwndTitle, NULL));
+    CHECK(cReplaceChoices == 1 && game.fDirty && gd.fSubmit == fSubmitSav && game.lid == lid);
+    CHECK(FEqualFiles(pszExport, pszPreviousExport));
+    CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport));
+    CHECK(FExportLibraryOrders(hwndTitle, NULL));
+    CHECK(cReplaceChoices == 2 && !game.fDirty);
+    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid);
+    CHECK(FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0);
+    CHECK(FEqualFiles(pszExport, pszManagedOrders));
+    CHECK(!FExportLibraryOrders(hwndTitle, pszExportFailure));
+    CHECK(gd.fSubmit == fSubmitSav && game.lid == lid &&
+          FNativeFileSize((char *)pszExport, &cbExport) && cbExport > 0 &&
+          FNativeFileSize((char *)pszManagedOrders, &cbExport) && cbExport > 0);
     CHECK(game.lid == lid && memcmp(&plrSav, &rgplr[idPlayer], sizeof(plrSav)) == 0);
     hwndRaceParent = hwndParentSav;
-    fPassed = cAlerts == 0 && (!getenv("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 6);
+    fPassed = cAlerts == 1 && (!getenv("STARS_TEST_FILE_WORKFLOW_COMPAT") || cFileChoices == 9);
 done:
     KillTimer(NULL, id);
     PostQuitMessage(fPassed ? 0 : 92);

@@ -56,6 +56,15 @@ def main():
             before = {p.name: p.read_bytes() for p in path.parent.iterdir() if p.suffix in ('.xy', '.hst', '.m1')}
             run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
             assert all((path.parent / filename).read_bytes() == content for filename, content in before.items())
+            if not advanced and name == 'fresh-game':
+                metadata_file = path.parent / '.library'
+                metadata = metadata_file.read_text(encoding='utf-8').splitlines()
+                metadata[0] = '1'
+                metadata_file.write_text('\n'.join(metadata[:4]) + '\n', encoding='utf-8')
+                names = sorted(p.name for p in games.iterdir())
+                run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name, STARS_CLIENT_LIBRARY_DOUBLECLICK='1')
+                assert sorted(p.name for p in games.iterdir()) == names
+                assert metadata_file.read_text(encoding='utf-8').splitlines()[4] == name
             # The wizard defaults to Game.xy; a differently cased folder is a collision.
             (games / 'gAmE').mkdir()
             choices['STARS_CLIENT_NEW_GAME'] = str(games / 'Game (2)' / 'Game (2).xy')
@@ -99,6 +108,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='stars-import-game-') as directory:
         work = Path(directory)
+        games = work / 'library' / 'Games'
         source = work / 'exchange'
         source.mkdir()
         fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
@@ -107,15 +117,174 @@ def main():
         backup = source / 'backup.000'
         backup.mkdir()
         shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
+        backup_turn = (backup / 'exchange.m1').read_bytes()
         original = {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()}
         run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='managed-copy')
         imported = work / 'library' / 'Games' / 'managed-copy'
         assert (imported / '.library').is_file()
         assert all((imported / ('managed-copy' + ext)).is_file() for ext in ('.xy', '.hst', '.m1', '.m2'))
         assert (imported / 'backup.000' / 'managed-copy.m1').read_bytes() == (source / 'backup.000' / 'exchange.m1').read_bytes()
+        assert (imported / 'backup.000' / 'managed-copy.m1').read_bytes() == backup_turn
+        (imported / 'exchange.map').write_text('external universe definition', encoding='utf-8')
         assert {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()} == original
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
+        playable = games / 'managed-playable'
+        playable_path = playable / 'managed-playable'
+        run(executable, work, STARS_CLIENT_NEW_GAME=str(playable_path.with_suffix('.xy')),
+            STARS_CLIENT_LIBRARY_NAME='managed-playable')
+        backup_names = ('backup', 'backup0', 'backup98', 'backup.000', 'backup.998', 'sidecars/nested')
+        for name in backup_names:
+            playable_backup = playable / name
+            playable_backup.mkdir(parents=True)
+            shutil.copyfile(playable / 'managed-playable.m1', playable_backup / 'managed-playable.m1')
+        (playable / 'exchange.map').write_text('external universe definition', encoding='utf-8')
+        playable_metadata = (playable / '.library').read_text(encoding='utf-8').splitlines()
+        playable_metadata[2:4] = ['0', '42']
+        (playable / '.library').write_text('\n'.join(playable_metadata) + '\n', encoding='utf-8')
+        playable_turn = (playable_backup / 'managed-playable.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_GAME_LIBRARY_TEST='duplicate',
+            STARS_CLIENT_GAME_SOURCE_NAME='managed-playable',
+            STARS_CLIENT_GAME_COPY_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_RENAME_NAME='renamed-copy',
+            STARS_CLIENT_GAME_COLLISION_NAME='MANAGED-COPY',
+            STARS_CLIENT_GAME_BASELINE_NAME='managed-playable')
+        duplicate = games / 'managed-playable duplicate'
+        duplicate_metadata = (duplicate / '.library').read_text(encoding='utf-8').splitlines()
+        assert duplicate_metadata[1:5] == ['managed-playable duplicate', '-1', '0', 'managed-playable']
+        assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
+        assert (duplicate / 'managed-playable duplicate.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
+        for name in backup_names:
+            assert (duplicate / name / 'managed-playable duplicate.m1').read_bytes() == playable_turn
+        assert {p.relative_to(playable): p.read_bytes() for p in playable.rglob('*') if p.is_file()} != {
+            p.relative_to(duplicate): p.read_bytes() for p in duplicate.rglob('*') if p.is_file()}
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-playable duplicate')
+        assert (duplicate / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
+
+        duplicate_metadata[2:4] = ['1', '123456']
+        (duplicate / '.library').write_text('\n'.join(duplicate_metadata) + '\n', encoding='utf-8')
+        run(executable, work, STARS_CLIENT_GAME_LIBRARY_TEST='rename',
+            STARS_CLIENT_GAME_SOURCE_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_COPY_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_RENAME_NAME='renamed-copy',
+            STARS_CLIENT_GAME_COLLISION_NAME='MANAGED-COPY',
+            STARS_CLIENT_GAME_BASELINE_NAME='managed-playable')
+        renamed = games / 'renamed-copy'
+        assert not (games / 'managed-playable duplicate').exists()
+        assert (renamed / 'exchange.map').read_text(encoding='utf-8') == 'external universe definition'
+        assert (renamed / 'backup.000' / 'renamed-copy.m1').is_file()
+        metadata = (renamed / '.library').read_text(encoding='utf-8').splitlines()
+        assert metadata[1] == 'renamed-copy' and metadata[2:4] == ['1', '123456'] and metadata[4] == 'managed-playable'
+        for name in backup_names:
+            assert (renamed / name / 'renamed-copy.m1').read_bytes() == playable_turn
+        assert (renamed / 'renamed-copy.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
+        assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
+
+        # Two-digit player extensions use the full one-based player number.
+        player16 = bytearray((fixture / 'game.m1').read_bytes())
+        player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')
+        (imported / 'managed-copy.m16').write_bytes(player16)
+        player16_later = bytearray(player16)
+        player16_later[12:14] = (1).to_bytes(2, 'little')
+        player16_source = work / 'player-16.m16'
+        player16_source.write_bytes(player16_later)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(player16_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='player16', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m16').read_bytes() == player16_later
+
+        # An identical turn is a no-op; a later standalone turn updates only
+        # its player and retires that player's saved orders.
+        orders = imported / 'managed-copy.x1'
+        orders.write_bytes(b'old player orders')
+        later_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '025' / 'game.m1'
+        later_turn_original = later_turn.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+        assert orders.read_bytes() == b'old player orders'
+
+        # Exercise adjacent annual turns using real turn data with only the
+        # clear BOF turn number adjusted to the 2407 -> 2408 pair.
+        adjacent_turn_data = bytearray((fixture / 'game.m1').read_bytes())
+        adjacent_turn_data[12:14] = (7).to_bytes(2, 'little')
+        (imported / 'managed-copy.m1').write_bytes(adjacent_turn_data)
+        adjacent_source = work / 'adjacent-2408.m1'
+        adjacent_turn_data[12:14] = (8).to_bytes(2, 'little')
+        adjacent_source.write_bytes(adjacent_turn_data)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(adjacent_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='adjacent', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert not orders.exists()
+        orders.write_bytes(b'old player orders')
+
+        duplicate = work / 'library' / 'Games' / 'managed-copy-duplicate'
+        shutil.copytree(imported, duplicate)
+        for path in list(duplicate.rglob('*')):
+            if path.is_file() and path.name.startswith('managed-copy'):
+                path.rename(path.with_name(path.name.replace('managed-copy', 'managed-copy-duplicate', 1)))
+        metadata_path = duplicate / '.library'
+        metadata = metadata_path.read_text(encoding='utf-8').splitlines()
+        metadata[1] = 'managed-copy-duplicate'
+        metadata_path.write_text('\n'.join(metadata) + '\n', encoding='utf-8')
+        duplicate_orders = duplicate / 'managed-copy-duplicate.x1'
+        duplicate_orders.write_bytes(b'old duplicate orders')
+        history = duplicate / 'managed-copy-duplicate.h1'
+        history.write_bytes(b'preserve player history')
+        backup = duplicate / 'backup.000' / 'managed-copy-duplicate.m1'
+        backup_before = backup.read_bytes()
+        before_cancel = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='cancel', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_cancel
+        assert duplicate_orders.read_bytes() == b'old duplicate orders'
+
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='later', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == later_turn.read_bytes()
+        assert not duplicate_orders.exists()
+        assert history.read_bytes() == b'preserve player history'
+        assert backup.read_bytes() == backup_before
+        assert (duplicate / 'managed-copy-duplicate.m2').read_bytes() == (source / 'exchange.m2').read_bytes()
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert orders.read_bytes() == b'old player orders'
+
+        failed_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '050' / 'game.m1'
+        duplicate_orders.write_bytes(b'orders survive staged install failure')
+        before_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+
+        same_year_turn = work / 'changed-same-year.m1'
+        changed_same_year = bytearray(later_turn_original)
+        changed_same_year[25] ^= 1
+        same_year_turn.write_bytes(changed_same_year)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(same_year_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        older_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000' / 'game.m1'
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(older_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert (source / 'exchange.m1').read_bytes() == original[source.joinpath('exchange.m1').relative_to(source)]
+        assert later_turn.read_bytes() == later_turn_original
+
+        # If rollback itself fails, the original turn remains recoverable in
+        # its retained previous file instead of being silently discarded.
+        before_rollback_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE='1',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == failed_turn.read_bytes()
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert any(path.read_bytes() == before_rollback_failure
+                   for path in duplicate.glob('managed-copy-duplicate.m1.previous.*'))
 
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)
