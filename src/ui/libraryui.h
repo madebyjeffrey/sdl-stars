@@ -14,6 +14,8 @@
 #define IDC_LIBRARY_RACE_DELETE 2410
 #define IDC_LIBRARY_DUPLICATE 2411
 #define IDC_LIBRARY_RENAME 2412
+#define IDD_LIBRARY_TURN_TARGET 2413
+#define IDC_LIBRARY_TURN_TARGET_LIST 2414
 #define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
@@ -43,5 +45,6 @@ void RefreshLibraryRaces(HWND hwnd);
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
 void ShowLibraryImportFolderPicker(HWND hwnd);
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 #endif

@@ -165,6 +165,108 @@ def main():
         assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
         run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
 
+        # Two-digit player extensions use the full one-based player number.
+        player16 = bytearray((fixture / 'game.m1').read_bytes())
+        player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')
+        (imported / 'managed-copy.m16').write_bytes(player16)
+        player16_later = bytearray(player16)
+        player16_later[12:14] = (1).to_bytes(2, 'little')
+        player16_source = work / 'player-16.m16'
+        player16_source.write_bytes(player16_later)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(player16_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='player16', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m16').read_bytes() == player16_later
+
+        # An identical turn is a no-op; a later standalone turn updates only
+        # its player and retires that player's saved orders.
+        orders = imported / 'managed-copy.x1'
+        orders.write_bytes(b'old player orders')
+        later_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '025' / 'game.m1'
+        later_turn_original = later_turn.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+        assert orders.read_bytes() == b'old player orders'
+
+        # Exercise adjacent annual turns using real turn data with only the
+        # clear BOF turn number adjusted to the 2407 -> 2408 pair.
+        adjacent_turn_data = bytearray((fixture / 'game.m1').read_bytes())
+        adjacent_turn_data[12:14] = (7).to_bytes(2, 'little')
+        (imported / 'managed-copy.m1').write_bytes(adjacent_turn_data)
+        adjacent_source = work / 'adjacent-2408.m1'
+        adjacent_turn_data[12:14] = (8).to_bytes(2, 'little')
+        adjacent_source.write_bytes(adjacent_turn_data)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(adjacent_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='adjacent', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert not orders.exists()
+        orders.write_bytes(b'old player orders')
+
+        duplicate = work / 'library' / 'Games' / 'managed-copy-duplicate'
+        shutil.copytree(imported, duplicate)
+        for path in list(duplicate.rglob('*')):
+            if path.is_file() and path.name.startswith('managed-copy'):
+                path.rename(path.with_name(path.name.replace('managed-copy', 'managed-copy-duplicate', 1)))
+        metadata_path = duplicate / '.library'
+        metadata = metadata_path.read_text(encoding='utf-8').splitlines()
+        metadata[1] = 'managed-copy-duplicate'
+        metadata_path.write_text('\n'.join(metadata) + '\n', encoding='utf-8')
+        duplicate_orders = duplicate / 'managed-copy-duplicate.x1'
+        duplicate_orders.write_bytes(b'old duplicate orders')
+        history = duplicate / 'managed-copy-duplicate.h1'
+        history.write_bytes(b'preserve player history')
+        backup = duplicate / 'backup.000' / 'managed-copy-duplicate.m1'
+        backup_before = backup.read_bytes()
+        before_cancel = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='cancel', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_cancel
+        assert duplicate_orders.read_bytes() == b'old duplicate orders'
+
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(later_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='later', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == later_turn.read_bytes()
+        assert not duplicate_orders.exists()
+        assert history.read_bytes() == b'preserve player history'
+        assert backup.read_bytes() == backup_before
+        assert (duplicate / 'managed-copy-duplicate.m2').read_bytes() == (source / 'exchange.m2').read_bytes()
+        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert orders.read_bytes() == b'old player orders'
+
+        failed_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '050' / 'game.m1'
+        duplicate_orders.write_bytes(b'orders survive staged install failure')
+        before_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+
+        same_year_turn = work / 'changed-same-year.m1'
+        changed_same_year = bytearray(later_turn_original)
+        changed_same_year[25] ^= 1
+        same_year_turn.write_bytes(changed_same_year)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(same_year_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        older_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000' / 'game.m1'
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(older_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert (source / 'exchange.m1').read_bytes() == original[source.joinpath('exchange.m1').relative_to(source)]
+        assert later_turn.read_bytes() == later_turn_original
+
+        # If rollback itself fails, the original turn remains recoverable in
+        # its retained previous file instead of being silently discarded.
+        before_rollback_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE='1',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == failed_turn.read_bytes()
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert any(path.read_bytes() == before_rollback_failure
+                   for path in duplicate.glob('managed-copy-duplicate.m1.previous.*'))
+
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)
         turn = bad_source / 'exchange.m2'
