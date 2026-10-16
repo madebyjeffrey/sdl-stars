@@ -183,6 +183,8 @@ Host Games now has a separate library view, accepts host-only universe/host
 imports, and imports ordinary player orders after matching game identity, turn
 and generation. The existing desktop host generates directly from the managed
 orders files, with the command-line host and simulation behavior unchanged.
+Export, duplicate and rename use the visible Games or Host Games selection,
+including host-only libraries, and refresh both lists after changing a game.
 Managed-game duplicate and rename preserve all backup naming variants and nested
 sidecar folders while renaming the matching binary file family throughout the
 copied tree. Real-client coverage checks their contents after both operations.

@@ -2216,7 +2216,12 @@ void RefreshLibraryHostGames(HWND hwnd) {
     if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryHostGame, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
-    if (fHostLibraryView) EnableWindow(rghwndBtnSplash[1], fHasGames);
+    if (fHostLibraryView) {
+        EnableWindow(rghwndBtnSplash[1], fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    }
 }
 
 void SelectLibraryView(HWND hwnd, int16_t fHost) {
@@ -2268,11 +2273,16 @@ int16_t FSelectLibraryHostGame(HWND hwnd) {
 }
 
 static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName) {
-    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    HWND hwndList = GetDlgItem(hwnd, fHostLibraryView ? IDC_LIBRARY_HOST_GAMES : IDC_LIBRARY_GAMES);
     LRESULT i, iItem;
     int cch;
     i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) return FALSE;
+    if (fHostLibraryView) {
+        cch = (int)SendMessage(hwndList, LB_GETTEXTLEN, i, 0);
+        if (cch <= 0 || (size_t)cch >= cchName) return FALSE;
+        return SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName) == cch;
+    }
     iItem = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return FALSE;
     cch = CchSnprintf(pszName, cchName, "%s", rgLibraryGameList[iItem].szName);

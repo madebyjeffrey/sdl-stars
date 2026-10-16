@@ -2808,7 +2808,10 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         case IDC_LIBRARY_DUPLICATE:
         case IDC_LIBRARY_RENAME:
-            if (FActOnSelectedLibraryGame(hwnd, LOWORD(wParam) == IDC_LIBRARY_RENAME)) RefreshLibraryGames(hwnd);
+            if (FActOnSelectedLibraryGame(hwnd, LOWORD(wParam) == IDC_LIBRARY_RENAME)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
             break;
         case IDC_LIBRARY_RACES:
             if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;

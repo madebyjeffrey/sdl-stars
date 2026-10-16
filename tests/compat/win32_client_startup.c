@@ -1577,6 +1577,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 !FTestFilesEqual(szHostSourceHost, szHostManagedHost) ||
                 !FTestFilesEqual(szHostSourceUniverse, szHostManagedUniverse) ||
                 !pszHostPlayerSource) goto LDone;
+            if (!IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
+                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE)) ||
+                !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) {
+                fprintf(stderr, "Host-only game actions are disabled\n");
+                goto LDone;
+            }
             pszHostFolder = SDL_strdup(pszHostPlayerSource);
             if (!pszHostFolder || !StarsCompatPostMessageAsync(hwndTitle, WM_STARS_IMPORT_FOLDER,
                                                                 (WPARAM)pszHostFolder, 0)) {
@@ -1603,6 +1609,45 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
                 SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 2 ||
                 !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE)) goto LDone;
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"Hosted") == LB_ERR ||
+                !FExportSelectedLibraryGame(hwndTitle, pszSettings) ||
+                CchSnprintf(szExport, sizeof(szExport), "%s%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(szHostSourceHost, sizeof(szHostSourceHost), "%s%sgame.hst", pszHostSource, szDirSep) <= 0 ||
+                !FTestFilesEqual(szExport, szHostSourceHost)) {
+                fprintf(stderr, "Host export did not use the visible selection\n");
+                goto LDone;
+            }
+            iHostLibraryTestStage = 31;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_DUPLICATE))) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 31 || iHostLibraryTestStage == 33) {
+            for (hwndHostDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndHostDialog;
+                 hwndHostDialog = GetWindow(hwndHostDialog, GW_HWNDNEXT)) {
+                if (!hwndHostDialog->fDialog || hwndHostDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndHostDialog, IDC_EDIT1),
+                                    iHostLibraryTestStage == 31 ? "HostCopy" : "HostRenamed") ||
+                    !FPushClick(GetDlgItem(hwndHostDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage++;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 32) {
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1, (LPARAM)"HostCopy") == LB_ERR) goto LDone;
+            iHostLibraryTestStage = 33;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RENAME))) goto LDone;
+            return;
+        }
+        if (iHostLibraryTestStage == 34) {
+            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES);
+            if (SendMessage(hwndList, LB_GETCOUNT, 0, 0) != 3 ||
+                SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostCopy") != LB_ERR ||
+                SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"HostRenamed") == LB_ERR ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 1) goto LDone;
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW))) goto LDone;
             iHostLibraryTestStage = 23;
             return;

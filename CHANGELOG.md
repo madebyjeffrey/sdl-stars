@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FSelectedLibraryGameName` now resolves Export Game, Duplicate and Rename
+  from the visible library view instead of the hidden Games selection. Host-only
+  libraries enable these actions, and both lists refresh after duplicate/rename.
+
 - `ShipCommandProc` now opens the fleet rename dialog without copying the shared
   fleet-name buffer onto itself. This preserves existing rename behavior and
   avoids a checked-CRT trap on macOS.
