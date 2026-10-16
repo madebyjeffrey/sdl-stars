@@ -13,6 +13,11 @@ set_tests_properties(win32_client_continue_dummy PROPERTIES LABELS client TIMEOU
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
 
+add_test(NAME win32_client_designer_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
+set_tests_properties(win32_client_designer_dummy PROPERTIES LABELS client TIMEOUT 200
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat;STARS_CLIENT_WORKFLOW=designer")
+
 add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS client TIMEOUT 200
