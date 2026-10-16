@@ -131,6 +131,27 @@ def main():
         assert unavailable.read_bytes() == b'preserve destination file'
         assert files(managed) == before
 
+        # Reimport the complete exported game into independent storage and
+        # replay both players' saved orders with the existing loader again.
+        reimport_work = work / 'reimport'
+        run(executable, reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(submitted), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        reimported = reimport_work / 'library/Games/managed-copy'
+        assert files(reimported, metadata=False) == files(submitted)
+        for player, research in ((0, 4), (1, 5)):
+            run(executable, reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
+                STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_PLAYER=str(player),
+                STARS_CLIENT_EXPORT_RESEARCH=str(research), STARS_CLIENT_CONTINUE=str(reimported / f'managed-copy.m{player + 1}'))
+
+        # Accepting the writers' empty EOF must still reject trailing bytes.
+        malformed = work / 'malformed'
+        shutil.copytree(submitted, malformed)
+        orders = malformed / 'managed-copy.x1'
+        orders.write_bytes(orders.read_bytes() + b'\0')
+        invalid_work = work / 'invalid-import'
+        run(executable, invalid_work, STARS_CLIENT_IMPORT_SOURCE=str(malformed), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (invalid_work / 'library/Games/managed-copy').exists()
+
         # The parent and staging directory can fit while child filenames do
         # not. The UI must reject the destination without publishing a game.
         long_name = 'managed-game-' + 'a' * 38
@@ -139,8 +160,10 @@ def main():
         long_source = long_work / 'library/Games' / long_name
         before = files(long_source)
         long_parent = work / 'long-export'
+        # Multibyte components exceed the UTF-8 buffers without requiring
+        # Windows to create a parent beyond its native wide-path limit.
         while len(os.fsencode(long_parent)) < 440:
-            long_parent /= 'p' * max(1, min(90, 439 - len(os.fsencode(long_parent))))
+            long_parent /= '星' * max(1, min(30, (439 - len(os.fsencode(long_parent))) // 3))
         long_parent.mkdir(parents=True)
         run(executable, long_work, STARS_CLIENT_EXPORT_GAME=long_name, STARS_CLIENT_EXPORT_PARENT=str(long_parent),
             STARS_CLIENT_EXPORT_EXPECTED='fail')

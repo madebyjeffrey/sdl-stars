@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FInspectImportFile` accepts the empty end records written by the game's
+  orders and history writers. Complete game exports containing saved orders
+  can now be reimported; trailing bytes are still rejected. File formats,
+  host results and native regression baselines are unchanged.
+
 - `FExportSelectedLibraryGame` asks for a destination before resolving dirty
   orders. Canceling the folder chooser no longer saves the loaded game, and
   choosing Don't Save is requested only once per export. Host results and

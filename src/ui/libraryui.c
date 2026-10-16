@@ -751,7 +751,10 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         ib = ftell(pf);
         if (ib < 0 || ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
-            if (hdr.cb != 2 || ib + hdr.cb != cbFile) break;
+            /* Orders and history writers use an empty EOF; host and turn
+             * files carry the two-byte trailer. Both must end at EOF. */
+            if (hdr.cb != 2 && !(hdr.cb == 0 && (dt == dtLog || dt == dtHist))) break;
+            if (ib + hdr.cb != cbFile) break;
             fComplete = TRUE;
             break;
         }
