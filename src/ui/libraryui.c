@@ -946,10 +946,15 @@ INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LP
         plm = (LIBRARYTURNMATCH *)lParam;
         hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
         for (i = 0; i < plm->cMatches; i++) SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)plm->rgszName[i]);
-        SendMessage(hwndList, LB_SETCURSEL, 0, 0);
+        EnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
         return TRUE;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) { EndDialog(hwnd, FALSE); return TRUE; }
+        if (LOWORD(wParam) == IDC_LIBRARY_TURN_TARGET_LIST && HIWORD(wParam) == LBN_SELCHANGE) {
+            hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+            EnableWindow(GetDlgItem(hwnd, IDOK), SendMessage(hwndList, LB_GETCURSEL, 0, 0) != LB_ERR);
+            return TRUE;
+        }
         if (LOWORD(wParam) == IDOK) {
             plm = (LIBRARYTURNMATCH *)GetWindowLongPtr(hwnd, DWLP_USER);
             hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
@@ -985,7 +990,7 @@ LDone:
 }
 
 static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
-    char szTarget[512], szOrders[512], szStage[512], szPrevious[512], szOrdersPrevious[512];
+    char szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];
     const char *pszFile, *pszExt, *pchSlash;
     LIBRARYTURNMATCH lm;
     int32_t lidGame, lidCurrent;
@@ -1005,8 +1010,9 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     if (!pszExt || (SDL_tolower(pszExt[1]) != 'm' && SDL_tolower(pszExt[1]) != 'M') ||
         pszExt[2] < '1' || pszExt[2] > '9' || (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) ||
         (pszExt[3] && pszExt[4])) return FALSE;
-    iplr = pszExt[2] - '1';
+    iplr = pszExt[2] - '0';
     if (pszExt[3]) iplr = iplr * 10 + pszExt[3] - '0';
+    iplr--;
     if (iplr < 0 || iplr >= 16) return FALSE;
     if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, &fMulti)) {
         AlertSz("The selected player turn is invalid or unsupported.", MB_ICONEXCLAMATION);
@@ -1043,8 +1049,6 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     if (cch <= 0 || (size_t)cch >= sizeof(szStage)) return FALSE;
     cch = CchSnprintf(szPrevious, sizeof(szPrevious), "%s.previous.%u", szTarget, dwTick);
     if (cch <= 0 || (size_t)cch >= sizeof(szPrevious)) return FALSE;
-    cch = CchSnprintf(szOrdersPrevious, sizeof(szOrdersPrevious), "%s.previous.%u", szOrders, dwTick);
-    if (cch <= 0 || (size_t)cch >= sizeof(szOrdersPrevious)) return FALSE;
     if (!FCopyNativeFileExclusive(pszSource, szStage) ||
         !FInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
@@ -1053,27 +1057,26 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
         return FALSE;
     }
     fHasOrders = FNativeFileSize(szOrders, &cbFile);
-    if (fHasOrders && RenameNativeFile(szOrders, szOrdersPrevious) != 0) {
+    if (!FCopyNativeFileExclusive(szTarget, szPrevious)) {
         RemoveNativeFile(szStage);
-        AlertSz("The existing orders could not be preserved before the update.", MB_ICONHAND);
-        return FALSE;
-    }
-    if (RenameNativeFile(szTarget, szPrevious) != 0) {
-        if (fHasOrders) RenameNativeFile(szOrdersPrevious, szOrders);
-        RemoveNativeFile(szStage);
-        AlertSz("The managed turn could not be preserved before the update.", MB_ICONHAND);
+        AlertSz("The existing turn could not be preserved before the update.", MB_ICONHAND);
         return FALSE;
     }
     if (ReplaceNativeFile(szStage, szTarget) != 0) {
-        RenameNativeFile(szPrevious, szTarget);
-        if (fHasOrders) RenameNativeFile(szOrdersPrevious, szOrders);
         RemoveNativeFile(szStage);
+        RemoveNativeFile(szPrevious);
         AlertSz("The new player turn could not be installed.", MB_ICONHAND);
         return FALSE;
     }
-    if (fHasOrders && RemoveNativeFile(szOrdersPrevious) != 0) {
-        ReplaceNativeFile(szPrevious, szTarget);
-        RenameNativeFile(szOrdersPrevious, szOrders);
+    if (fHasOrders && RemoveNativeFile(szOrders) != 0) {
+        if (ReplaceNativeFile(szPrevious, szTarget) != 0) {
+            CchSnprintf(szMessage, sizeof(szMessage),
+                        "The old orders could not be retired and the previous turn could not be restored. Recover the previous turn from %s.",
+                        szPrevious);
+            AlertSz(szMessage, MB_ICONHAND);
+            return FALSE;
+        }
+        RemoveNativeFile(szPrevious);
         AlertSz("The old orders could not be retired; the previous turn was restored.", MB_ICONHAND);
         return FALSE;
     }

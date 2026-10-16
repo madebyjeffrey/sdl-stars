@@ -1283,8 +1283,14 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
 
 int StarsTestReal_RemoveNativeFile(const char *pszFile);
 int StarsTest_RemoveNativeFile(const char *pszFile) {
+    static int fFailImportOrdersRemove;
     if (fFailRaceDelete) {
         fFailRaceDelete = FALSE;
+        return -1;
+    }
+    if (!fFailImportOrdersRemove && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE") &&
+        strstr(pszFile, ".x1")) {
+        fFailImportOrdersRemove = TRUE;
         return -1;
     }
     return StarsTestReal_RemoveNativeFile(pszFile);
@@ -1297,6 +1303,8 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
         fFailImportReplace = TRUE;
         return -1;
     }
+    if (getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
+        strstr(pszNew, ".m1")) return -1;
     if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
         fFailRaceExportReplace = FALSE;
         return -1;
@@ -1559,6 +1567,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             fImported = FImportLibraryGame(hwndTitle, getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
             fPassed = pszExpected && ((!strcmp(pszExpected, "fail") && !fImported && cAlerts > 0) ||
                 ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later") ||
+                  !strcmp(pszExpected, "player16") ||
                   !strcmp(pszExpected, "adjacent")) && fImported && cAlerts == 0) ||
                 (!strcmp(pszExpected, "cancel") && !fImported && cAlerts == 0));
             if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
@@ -1583,6 +1592,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
                 hwndListTarget = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+                if (IsWindowEnabled(GetDlgItem(hwnd, IDOK))) goto LDone;
                 pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 c = (int)SendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
                 for (iTarget = 0; iTarget < c; iTarget++) {
@@ -1591,6 +1601,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 }
                 if (iTarget == c) { FPushClick(GetDlgItem(hwnd, IDCANCEL)); return; }
                 SendMessage(hwndListTarget, LB_SETCURSEL, iTarget, 0);
+                SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_TURN_TARGET_LIST, LBN_SELCHANGE),
+                            (LPARAM)hwndListTarget);
                 FPushClick(GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
                 return;
             }

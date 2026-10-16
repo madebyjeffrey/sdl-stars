@@ -115,6 +115,18 @@ def main():
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
 
+        # Two-digit player extensions use the full one-based player number.
+        player16 = bytearray((fixture / 'game.m1').read_bytes())
+        player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')
+        (imported / 'managed-copy.m16').write_bytes(player16)
+        player16_later = bytearray(player16)
+        player16_later[12:14] = (1).to_bytes(2, 'little')
+        player16_source = work / 'player-16.m16'
+        player16_source.write_bytes(player16_later)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(player16_source),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='player16', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert (imported / 'managed-copy.m16').read_bytes() == player16_later
+
         # An identical turn is a no-op; a later standalone turn updates only
         # its player and retires that player's saved orders.
         orders = imported / 'managed-copy.x1'
@@ -192,6 +204,18 @@ def main():
         assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
         assert (source / 'exchange.m1').read_bytes() == original[source.joinpath('exchange.m1').relative_to(source)]
         assert later_turn.read_bytes() == later_turn_original
+
+        # If rollback itself fails, the original turn remains recoverable in
+        # its retained previous file instead of being silently discarded.
+        before_rollback_failure = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(failed_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE='1',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == failed_turn.read_bytes()
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert any(path.read_bytes() == before_rollback_failure
+                   for path in duplicate.glob('managed-copy-duplicate.m1.previous.*'))
 
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)
