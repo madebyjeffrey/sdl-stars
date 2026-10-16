@@ -261,15 +261,56 @@ def main():
         assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
 
         same_year_turn = work / 'changed-same-year.m1'
+        # Change only the BOF salt-time bits, leaving the game and player intact.
         changed_same_year = bytearray(later_turn_original)
-        changed_same_year[25] ^= 1
+        changed_same_year[15] ^= 0x80
         same_year_turn.write_bytes(changed_same_year)
         run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(same_year_turn),
-            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
-        older_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000' / 'game.m1'
-        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(older_turn),
-            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='cancel-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
         assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(same_year_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='replace-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == changed_same_year
+        assert (duplicate / 'backup.001' / 'managed-copy-duplicate.m1').read_bytes() == before_failure
+        assert (duplicate / 'backup.001' / 'managed-copy-duplicate.x1').read_bytes() == b'orders survive staged install failure'
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert history.read_bytes() == b'preserve player history'
+        older_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000' / 'game.m1'
+        before_older_replace = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(older_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='replace-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == older_turn.read_bytes()
+        assert (duplicate / 'backup.002' / 'managed-copy-duplicate.m1').read_bytes() == before_older_replace
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert history.read_bytes() == b'preserve player history'
+
+        separate_turn = work / 'separate-corrected-turn.m1'
+        separate_data = bytearray(older_turn.read_bytes())
+        separate_data[15] ^= 0x80
+        separate_turn.write_bytes(separate_data)
+        before_failed_conflict = (duplicate / 'managed-copy-duplicate.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(separate_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failed_conflict
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert history.read_bytes() == b'preserve player history'
+        assert not list((work / 'library' / 'Games').glob('.stars-game-old-*'))
+
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(separate_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='separate-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_COPY_NAME='corrected-copy')
+        separate = work / 'library' / 'Games' / 'corrected-copy'
+        assert (separate / 'corrected-copy.xy').read_bytes() == (duplicate / 'managed-copy-duplicate.xy').read_bytes()
+        assert (separate / 'corrected-copy.hst').read_bytes() == (duplicate / 'managed-copy-duplicate.hst').read_bytes()
+        assert (separate / 'corrected-copy.m1').read_bytes() == separate_data
+        assert (separate / 'corrected-copy.m2').read_bytes() == (duplicate / 'managed-copy-duplicate.m2').read_bytes()
+        assert (separate / 'corrected-copy.x1').read_bytes() == duplicate_orders.read_bytes()
+        assert (separate / 'corrected-copy.h1').read_bytes() == history.read_bytes()
+        assert (separate / 'backup.000' / 'corrected-copy.m1').read_bytes() == backup_before
+        assert (separate / '.library').read_text(encoding='utf-8').splitlines()[4] == 'exchange'
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == older_turn.read_bytes()
         assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
         assert (source / 'exchange.m1').read_bytes() == original[source.joinpath('exchange.m1').relative_to(source)]
         assert later_turn.read_bytes() == later_turn_original

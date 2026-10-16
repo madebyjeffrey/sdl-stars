@@ -27,6 +27,12 @@ produce different results from a 2.6j host for the same turn.
   ignores identical orders, and asks before replacing different saved orders.
   Host generation continues through the existing turn engine and managed file
   paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
+- `FImportSubsequentTurn` now offers Cancel, Replace, or Import as Separate Copy
+  for changed same-year and older turns. Replace stages the managed game and
+  backs up that player's previous turn, orders, and history before publication;
+  Separate Copy duplicates the selected game and changes only the incoming
+  player's turn. Orders and history remain available, later-turn updates keep
+  their no-warning path, and game formats and simulation results are unchanged.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export
