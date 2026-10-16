@@ -12,6 +12,8 @@
 #define IDC_LIBRARY_RACE_DUPLICATE 2408
 #define IDC_LIBRARY_RACE_EXPORT 2409
 #define IDC_LIBRARY_RACE_DELETE 2410
+#define IDC_LIBRARY_DUPLICATE 2411
+#define IDC_LIBRARY_RENAME 2412
 #define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
@@ -21,6 +23,9 @@ void RefreshLibraryGames(HWND hwnd);
 int16_t FSelectLibraryGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
+int16_t FDuplicateLibraryGame(HWND hwnd, const char *pszName, const char *pszCopyName);
+int16_t FRenameLibraryGame(HWND hwnd, const char *pszName, const char *pszNewName);
+int16_t FActOnSelectedLibraryGame(HWND hwnd, int16_t fRename);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszName);
 int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource);

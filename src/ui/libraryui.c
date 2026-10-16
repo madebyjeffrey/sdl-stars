@@ -17,6 +17,8 @@ static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static const char *pszRaceLibraryNameOverride;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
+static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
+                                           long long lPlayed, const char *pszExchangeName);
 
 typedef struct {
     PLAYER plr;
@@ -148,14 +150,17 @@ static void SuggestRaceFilename(char *pszName) {
     pszName[0] = 0;
 }
 
-static void FormatLibraryFamilyPath(char *pszPath, size_t cchPath, const char *pszDirectory,
-                                    const char *pszName, DtFileType dt, int iplr) {
+static int16_t FFormatLibraryFamilyPath(char *pszPath, size_t cchPath, const char *pszDirectory,
+                                        const char *pszName, DtFileType dt, int iplr) {
     const char *pszExtension;
+    int cch;
     if (dt == dtXY) pszExtension = "xy";
     else if (dt == dtHost) pszExtension = "hst";
     else pszExtension = dt == dtTurn ? "m" : dt == dtHist ? "h" : "x";
-    if (dt == dtXY || dt == dtHost) CchSnprintf(pszPath, cchPath, "%s%s%s.%s", pszDirectory, szDirSep, pszName, pszExtension);
-    else CchSnprintf(pszPath, cchPath, "%s%s%s.%s%d", pszDirectory, szDirSep, pszName, pszExtension, iplr + 1);
+    if (dt == dtXY || dt == dtHost)
+        cch = CchSnprintf(pszPath, cchPath, "%s%s%s.%s", pszDirectory, szDirSep, pszName, pszExtension);
+    else cch = CchSnprintf(pszPath, cchPath, "%s%s%s.%s%d", pszDirectory, szDirSep, pszName, pszExtension, iplr + 1);
+    return cch > 0 && (size_t)cch < cchPath;
 }
 
 static int16_t FInitLibrary(void) {
@@ -307,20 +312,28 @@ static int16_t FChooseLibraryRaceName(HWND hwnd, const char *pszSuggested, char 
 }
 
 static int16_t FWriteLibraryMetadata(const char *pszDir, const char *pszName, int iplr) {
+    return FWriteLibraryMetadataValues(pszDir, pszName, iplr, (long long)LNativeTime(),
+                                       szLibraryExchangeName[0] ? szLibraryExchangeName : pszName);
+}
+
+static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
+                                           long long lPlayed, const char *pszExchangeName) {
     char szFile[256], szTemp[256];
     FILE *pf;
-    int fWritten, fClosed;
+    int fWritten, fClosed, cch;
 
-    CchSnprintf(szFile, sizeof(szFile), "%s%s.library.tmp", pszDir, szDirSep);
+    cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library.tmp", pszDir, szDirSep);
+    if (cch <= 0 || (size_t)cch >= sizeof(szFile)) return FALSE;
     pf = PfOpenNativeFile(szFile, "wb");
     if (!pf) return FALSE;
-    fWritten = fprintf(pf, "2\n%s\n%d\n%lld\n%s\n", pszName, iplr, (long long)LNativeTime(),
-                        szLibraryExchangeName[0] ? szLibraryExchangeName : pszName) > 0;
+    fWritten = fprintf(pf, "2\n%s\n%d\n%lld\n%s\n", pszName, iplr, lPlayed, pszExchangeName) > 0;
     fClosed = fclose(pf) == 0;
     if (!fWritten || !fClosed) { RemoveNativeFile(szFile); return FALSE; }
-    CchSnprintf(szFile, sizeof(szFile), "%s%s.library", pszDir, szDirSep);
+    cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library", pszDir, szDirSep);
+    if (cch <= 0 || (size_t)cch >= sizeof(szFile)) return FALSE;
     /* Publish complete metadata, preserving the previous session on failure. */
-    CchSnprintf(szTemp, sizeof(szTemp), "%s%s.library.tmp", pszDir, szDirSep);
+    cch = CchSnprintf(szTemp, sizeof(szTemp), "%s%s.library.tmp", pszDir, szDirSep);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTemp)) return FALSE;
     return ReplaceNativeFile(szTemp, szFile) == 0;
 }
 
@@ -789,6 +802,117 @@ static int16_t FImportFamilyMember(const char *pszName, const char *pszStem, int
     return FALSE;
 }
 
+typedef struct {
+    const char *pszSource;
+    const char *pszTarget;
+    const char *pszSourceName;
+    const char *pszTargetName;
+    int16_t fBad;
+} LIBRARYGAMECOPY;
+
+typedef struct {
+    char *pszName;
+    int16_t fFound;
+} LIBRARYGAMECOLLISION;
+
+static int16_t FReadLibraryMetadata(const char *pszDirectory, char *pszName, size_t cchName,
+                                    int *piPlayer, long long *plPlayed,
+                                    char *pszExchangeName, size_t cchExchange) {
+    char szFile[512], szLine[256];
+    FILE *pf;
+    int iVersion, cchText;
+    int16_t fRead;
+    {
+        int cch = CchSnprintf(szFile, sizeof(szFile), "%s%s.library", pszDirectory, szDirSep);
+        if (cch <= 0 || (size_t)cch >= sizeof(szFile)) return FALSE;
+    }
+    pf = PfOpenNativeFile(szFile, "rb");
+    if (!pf) return FALSE;
+    fRead = fscanf(pf, "%d\n", &iVersion) == 1 && fgets(szLine, sizeof(szLine), pf);
+    if (fRead) {
+        szLine[strcspn(szLine, "\r\n")] = 0;
+        cchText = CchSnprintf(pszName, cchName, "%s", szLine);
+        fRead = cchText > 0 && (size_t)cchText < cchName &&
+                fscanf(pf, "%d\n%lld\n", piPlayer, plPlayed) == 2;
+    }
+    if (fRead && iVersion == 2 && fgets(szLine, sizeof(szLine), pf)) {
+        szLine[strcspn(szLine, "\r\n")] = 0;
+        cchText = CchSnprintf(pszExchangeName, cchExchange, "%s", szLine);
+        fRead = cchText > 0 && (size_t)cchText < cchExchange;
+    } else if (fRead && iVersion == 1) {
+        cchText = CchSnprintf(pszExchangeName, cchExchange, "%s", pszName);
+        fRead = cchText > 0 && (size_t)cchText < cchExchange;
+    } else fRead = FALSE;
+    fclose(pf);
+    return fRead && (iVersion == 1 || iVersion == 2) && *pszName &&
+           *piPlayer >= -1 && *piPlayer < 16 && *plPlayed >= 0 && *pszExchangeName;
+}
+
+static int16_t FindLibraryGameCollision(void *lpData, const char *pszFile) {
+    LIBRARYGAMECOLLISION *plgc = lpData;
+    if (!SDL_strcasecmp(plgc->pszName, pszFile)) {
+        plgc->fFound = TRUE;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static int16_t FLibraryNameAvailableExcept(const char *pszName, const char *pszExcept) {
+    LIBRARYGAMECOLLISION lgc;
+    lgc.pszName = (char *)pszName;
+    lgc.fFound = FALSE;
+    if (!FNativeEnumerateDirectory(szLibraryRoot, FindLibraryGameCollision, &lgc)) return FALSE;
+    if (lgc.fFound && pszExcept && !SDL_strcasecmp(pszName, pszExcept)) return TRUE;
+    return !lgc.fFound;
+}
+
+static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
+    LIBRARYGAMECOPY *plgc = lpData;
+    char szSource[512], szTarget[512];
+    int iplr;
+    int cch;
+    DtFileType dt;
+    if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return TRUE;
+    cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plgc->pszSource, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSource)) { plgc->fBad = TRUE; return FALSE; }
+    if (FNativeDirectoryExists(szSource)) {
+        size_t cch = strlen(pszName);
+        char szBackup[32];
+        int i;
+        if (cch != 10 || strncmp(pszName, "backup.", 7)) return TRUE;
+        for (i = 7; i < 10; i++) if (pszName[i] < '0' || pszName[i] > '9') return TRUE;
+        cch = CchSnprintf(szBackup, sizeof(szBackup), "%s", pszName);
+        if (cch <= 0 || (size_t)cch >= sizeof(szBackup)) { plgc->fBad = TRUE; return FALSE; }
+        cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, szBackup);
+        if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) { plgc->fBad = TRUE; return FALSE; }
+        if (CreateNativeDir(szTarget) != 0) { plgc->fBad = TRUE; return FALSE; }
+        /* Backup files use the original basename family, with unrelated sidecars retained verbatim. */
+        {
+            LIBRARYGAMECOPY lgb;
+            lgb.pszSource = szSource;
+            lgb.pszTarget = szTarget;
+            lgb.pszSourceName = plgc->pszSourceName;
+            lgb.pszTargetName = plgc->pszTargetName;
+            lgb.fBad = FALSE;
+            if (!FNativeEnumerateDirectory(szSource, FCopyLibraryGameEntry, &lgb) || lgb.fBad) {
+                plgc->fBad = TRUE;
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+    if (FImportFamilyMember(pszName, plgc->pszSourceName, &iplr, &dt)) {
+        if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), plgc->pszTarget,
+                                      plgc->pszTargetName, dt, iplr)) { plgc->fBad = TRUE; return FALSE; }
+    } else if (SDL_strcasecmp(pszName, ".library") && SDL_strcasecmp(pszName, ".library.tmp")) {
+        /* Optional external universe definitions and other sidecars keep their own names. */
+        cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
+        if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) { plgc->fBad = TRUE; return FALSE; }
+    } else return TRUE;
+    if (!FCopyNativeFile(szSource, szTarget)) { plgc->fBad = TRUE; return FALSE; }
+    return TRUE;
+}
+
 static int16_t CopyImportEntry(void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = lpData;
     char szSource[512], szTarget[512];
@@ -806,7 +930,10 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
         return TRUE;
     }
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", pli->pszSource, szDirSep, pszName);
-    FormatLibraryFamilyPath(szTarget, sizeof(szTarget), pli->pszTarget, pli->pszName, dt, iplr);
+    if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), pli->pszTarget, pli->pszName, dt, iplr)) {
+        pli->fBad = TRUE;
+        return FALSE;
+    }
     if (pli->fCopy) {
         if (!FCopyNativeFile(szSource, szTarget)) { pli->fBad = TRUE; return FALSE; }
         return TRUE;
@@ -853,7 +980,10 @@ static int16_t CopyBackupEntry(void *lpData, const char *pszName) {
     if (!FImportFamilyMember(pszName, plb->pszStem, &iplr, &dt)) return TRUE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s%s%s", plb->pszSource, szDirSep, plb->pszBackup, szDirSep, pszName);
     CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", plb->pszTarget, szDirSep, plb->pszBackup);
-    FormatLibraryFamilyPath(szTarget, sizeof(szTarget), szDirectory, plb->pszName, dt, iplr);
+    if (!FFormatLibraryFamilyPath(szTarget, sizeof(szTarget), szDirectory, plb->pszName, dt, iplr)) {
+        plb->fBad = TRUE;
+        return FALSE;
+    }
     if (!FCopyNativeFile(szSource, szTarget)) { plb->fBad = TRUE; return FALSE; }
     return TRUE;
 }
@@ -1013,6 +1143,147 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     return TRUE;
 }
 
+static int16_t RemoveLibraryGameEntry(void *lpData, const char *pszName) {
+    char szPath[512];
+    int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", (const char *)lpData, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szPath)) return FALSE;
+    if (FNativeDirectoryExists(szPath)) {
+        if (!FNativeEnumerateDirectory(szPath, RemoveLibraryGameEntry, szPath)) return FALSE;
+    }
+    return RemoveNativePath(szPath) == 0;
+}
+
+static int16_t RemoveLibraryGameTree(const char *pszDirectory) {
+    int16_t fRemoved = FNativeEnumerateDirectory(pszDirectory, RemoveLibraryGameEntry, (void *)pszDirectory);
+    return fRemoved && RemoveNativePath(pszDirectory) == 0;
+}
+
+static int16_t FCreateLibraryGameStage(const char *pszSource, const char *pszSourceName,
+                                       const char *pszTargetName, const char *pszStage,
+                                       int iPlayer, long long lPlayed, const char *pszExchangeName) {
+    LIBRARYGAMECOPY lgc;
+    char szSourceUniverse[512];
+    int64_t cbFile;
+    int cch;
+    lgc.pszSource = pszSource;
+    lgc.pszTarget = pszStage;
+    lgc.pszSourceName = pszSourceName;
+    lgc.pszTargetName = pszTargetName;
+    lgc.fBad = FALSE;
+    cch = CchSnprintf(szSourceUniverse, sizeof(szSourceUniverse), "%s%s%s.xy", pszSource, szDirSep, pszSourceName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSourceUniverse)) return FALSE;
+    if (!FNativeFileSize(szSourceUniverse, &cbFile) || cbFile <= 0 ||
+        !FNativeEnumerateDirectory(pszSource, FCopyLibraryGameEntry, &lgc) || lgc.fBad ||
+        !FWriteLibraryMetadataValues(pszStage, pszTargetName, iPlayer, lPlayed, pszExchangeName)) return FALSE;
+    return TRUE;
+}
+
+static int16_t FCreateLibraryGameStagePath(char *pszStage, size_t cchStage) {
+    uint32_t dwTick = DwTickCount();
+    int i, cch;
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszStage, cchStage, "%s%s.stars-game-stage-%u-%u",
+                          szLibraryRoot, szDirSep, dwTick, i);
+        if (cch <= 0 || (size_t)cch >= cchStage) return FALSE;
+        if (CreateNativeDir(pszStage) == 0) return TRUE;
+        if (!FNativeDirectoryExists(pszStage)) return FALSE;
+    }
+    return FALSE;
+}
+
+static int16_t FCreateLibraryGameHoldPath(char *pszHold, size_t cchHold) {
+    uint32_t dwTick = DwTickCount();
+    int i, cch;
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszHold, cchHold, "%s%s.stars-game-old-%u-%u",
+                          szLibraryRoot, szDirSep, dwTick, i);
+        if (cch <= 0 || (size_t)cch >= cchHold) return FALSE;
+        if (!FNativeDirectoryExists(pszHold) && !FNativeFileSize(pszHold, &(int64_t){0})) return TRUE;
+    }
+    return FALSE;
+}
+
+static int16_t FValidManagedLibraryGame(const char *pszName, char *pszDirectory,
+                                        int *piPlayer, long long *plPlayed,
+                                        char *pszExchangeName, size_t cchExchange) {
+    char szMetadataName[256];
+    int cchDirectory;
+    if (!pszName || !FInitLibrary() || !FPortableLibraryName(pszName) ||
+        (cchDirectory = CchSnprintf(pszDirectory, 512, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
+        (size_t)cchDirectory >= 512 ||
+        !FNativeDirectoryExists(pszDirectory) ||
+        !FReadLibraryMetadata(pszDirectory, szMetadataName, sizeof(szMetadataName), piPlayer,
+                              plPlayed, pszExchangeName, cchExchange)) return FALSE;
+    return !SDL_strcasecmp(szMetadataName, pszName);
+}
+
+int16_t FDuplicateLibraryGame(HWND hwnd, const char *pszName, const char *pszCopyName) {
+    char szSource[512], szStage[512], szTarget[512], szExchangeName[256], szMessage[256];
+    int iPlayer;
+    int cchTarget;
+    long long lPlayed;
+    int16_t fResult = FALSE;
+    (void)hwnd;
+    if (!pszCopyName || !FValidManagedLibraryGame(pszName, szSource, &iPlayer, &lPlayed,
+                                                  szExchangeName, sizeof(szExchangeName)) ||
+        !FPortableLibraryName(pszCopyName) || !FLibraryNameAvailableExcept(pszCopyName, NULL) ||
+        (cchTarget = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, pszCopyName)) <= 0 ||
+        (size_t)cchTarget >= sizeof(szTarget) || strlen(szLibraryRoot) + 2 * strlen(pszCopyName) + 18 >= sizeof(szBase) ||
+        !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return FALSE;
+    if (FCreateLibraryGameStage(szSource, pszName, pszCopyName, szStage, -1, 0, szExchangeName) &&
+        RenameNativeFile(szStage, szTarget) == 0) fResult = TRUE;
+    if (!fResult) {
+        RemoveLibraryGameTree(szStage);
+        strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+        MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
+    }
+    return fResult;
+}
+
+int16_t FRenameLibraryGame(HWND hwnd, const char *pszName, const char *pszNewName) {
+    char szSource[512], szStage[512], szTarget[512], szHold[512], szExchangeName[256], szMessage[768];
+    int iPlayer;
+    long long lPlayed;
+    int16_t fResult = FALSE, fHeld = FALSE, fRestoreFailed = FALSE, fHoldCleanupFailed = FALSE;
+    int cchTarget;
+    (void)hwnd;
+    if (!pszNewName || !FValidManagedLibraryGame(pszName, szSource, &iPlayer, &lPlayed,
+                                                 szExchangeName, sizeof(szExchangeName)) ||
+        !FPortableLibraryName(pszNewName) || !FLibraryNameAvailableExcept(pszNewName, pszName) ||
+        (cchTarget = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, pszNewName)) <= 0 ||
+        (size_t)cchTarget >= sizeof(szTarget) || strlen(szLibraryRoot) + 2 * strlen(pszNewName) + 18 >= sizeof(szBase) ||
+        !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return FALSE;
+    if (!FCreateLibraryGameStage(szSource, pszName, pszNewName, szStage, iPlayer, lPlayed, szExchangeName) ||
+        !FCreateLibraryGameHoldPath(szHold, sizeof(szHold)) || RenameNativeFile(szSource, szHold) != 0) goto LDone;
+    fHeld = TRUE;
+    if (RenameNativeFile(szStage, szTarget) != 0) {
+        if (RenameNativeFile(szHold, szSource) == 0) fHeld = FALSE;
+        else fRestoreFailed = TRUE;
+        goto LDone;
+    }
+    fHeld = FALSE;
+    fResult = TRUE;
+    if (!RemoveLibraryGameTree(szHold)) fHoldCleanupFailed = TRUE;
+LDone:
+    if (!fResult && FNativeDirectoryExists(szStage)) RemoveLibraryGameTree(szStage);
+    if (fHeld) {
+        if (RenameNativeFile(szHold, szSource) == 0) { fHeld = FALSE; fRestoreFailed = FALSE; }
+        else fRestoreFailed = TRUE;
+    }
+    if (!fResult) {
+        if (fRestoreFailed) {
+            cchTarget = CchSnprintf(szMessage, sizeof(szMessage), "The rename failed and the original game remains at %s.", szHold);
+            if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+        } else strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+        MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
+    } else if (fHoldCleanupFailed) {
+        cchTarget = CchSnprintf(szMessage, sizeof(szMessage), "The game was renamed, but old files remain at %s.", szHold);
+        if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
+        MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONEXCLAMATION);
+    }
+    return fResult;
+}
+
 
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
     char szFile[256], szMessage[256];
@@ -1092,6 +1363,12 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
+    CreateWindow("BUTTON", "Duplicate", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 304, y - 22, 60, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, hInst, NULL);
+    CreateWindow("BUTTON", "Rename", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 360, y - 22, 52, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
     RefreshLibraryGames(hwnd);
@@ -1157,6 +1434,7 @@ void RefreshLibraryGames(HWND hwnd) {
     HWND hwndList;
     int16_t fLibrary;
     int16_t fEnumerated;
+    int16_t fHasGames;
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (!hwndList) return;
     SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
@@ -1166,7 +1444,10 @@ void RefreshLibraryGames(HWND hwnd) {
         (void)fEnumerated;
     }
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
-    EnableWindow(rghwndBtnSplash[1], SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
+    EnableWindow(rghwndBtnSplash[1], fHasGames);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
 }
 
 int16_t FSelectLibraryGame(HWND hwnd) {
@@ -1187,6 +1468,39 @@ int16_t FSelectLibraryGame(HWND hwnd) {
     else CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
     ini.fStartupFile = TRUE;
     return TRUE;
+}
+
+static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName) {
+    HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
+    char szDisplay[320], *pch, *pchLast;
+    int cch;
+    LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    if (i == LB_ERR || SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szDisplay) == LB_ERR) return FALSE;
+    pchLast = NULL;
+    for (pch = strstr(szDisplay, " - Player "); pch; pch = strstr(pch + 1, " - Player ")) pchLast = pch;
+    if (!pchLast) for (pch = strstr(szDisplay, " - Host game"); pch; pch = strstr(pch + 1, " - Host game")) pchLast = pch;
+    if (pchLast) *pchLast = 0;
+    cch = CchSnprintf(pszName, cchName, "%s", szDisplay);
+    return cch > 0 && (size_t)cch < cchName;
+}
+
+static int16_t FChooseLibraryGameActionName(HWND hwnd, const char *pszCurrentName, char *pszNewName) {
+    int cch;
+    cch = CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszCurrentName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szLibraryName)) return FALSE;
+    SuggestLibraryName(szLibraryName);
+    if (!szLibraryName[0] || DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
+                                           LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+    cch = CchSnprintf(pszNewName, 256, "%s", szLibraryName);
+    return cch > 0 && cch < 256;
+}
+
+int16_t FActOnSelectedLibraryGame(HWND hwnd, int16_t fRename) {
+    char szName[256], szNewName[256];
+    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName)) ||
+        !FChooseLibraryGameActionName(hwnd, szName, szNewName)) return FALSE;
+    return fRename ? FRenameLibraryGame(hwnd, szName, szNewName) :
+                     FDuplicateLibraryGame(hwnd, szName, szNewName);
 }
 
 void RememberLibraryGame(void) {

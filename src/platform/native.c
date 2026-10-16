@@ -424,7 +424,7 @@ int STARS_TEST_IMPL(ReplaceNativeFile)(const char *pszOld, const char *pszNew) {
     free(pwszOld); free(pwszNew); return result;
 }
 
-int RenameNativeFile(const char *pszOld, const char *pszNew) {
+int STARS_TEST_IMPL(RenameNativeFile)(const char *pszOld, const char *pszNew) {
     wchar_t *pwszOld = LpwszNativePath(pszOld), *pwszNew;
     int result;
     if (!pwszOld) return -1;
@@ -578,7 +578,7 @@ int RemoveNativePath(const char *psz) { return FNativePath(psz) ? remove(psz) : 
 int STARS_TEST_IMPL(ReplaceNativeFile)(const char *pszOld, const char *pszNew) {
     return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
 }
-int RenameNativeFile(const char *pszOld, const char *pszNew) {
+int STARS_TEST_IMPL(RenameNativeFile)(const char *pszOld, const char *pszNew) {
     return FNativePath(pszOld) && FNativePath(pszNew) ? rename(pszOld, pszNew) : -1;
 }
 FILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return FNativePath(psz) ? fopen(psz, pszMode) : NULL; }

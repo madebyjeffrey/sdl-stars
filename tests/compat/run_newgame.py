@@ -97,6 +97,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='stars-import-game-') as directory:
         work = Path(directory)
+        games = work / 'library' / 'Games'
         source = work / 'exchange'
         source.mkdir()
         fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
@@ -105,15 +106,64 @@ def main():
         backup = source / 'backup.000'
         backup.mkdir()
         shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
+        backup_turn = (backup / 'exchange.m1').read_bytes()
         original = {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()}
         run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='managed-copy')
         imported = work / 'library' / 'Games' / 'managed-copy'
         assert (imported / '.library').is_file()
         assert all((imported / ('managed-copy' + ext)).is_file() for ext in ('.xy', '.hst', '.m1', '.m2'))
         assert (imported / 'backup.000' / 'managed-copy.m1').read_bytes() == (source / 'backup.000' / 'exchange.m1').read_bytes()
+        assert (imported / 'backup.000' / 'managed-copy.m1').read_bytes() == backup_turn
+        (imported / 'exchange.map').write_text('external universe definition', encoding='utf-8')
         assert {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()} == original
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
+        playable = games / 'managed-playable'
+        playable_path = playable / 'managed-playable'
+        run(executable, work, STARS_CLIENT_NEW_GAME=str(playable_path.with_suffix('.xy')),
+            STARS_CLIENT_LIBRARY_NAME='managed-playable')
+        playable_backup = playable / 'backup.000'
+        playable_backup.mkdir()
+        shutil.copyfile(playable / 'managed-playable.m1', playable_backup / 'managed-playable.m1')
+        (playable / 'exchange.map').write_text('external universe definition', encoding='utf-8')
+        playable_metadata = (playable / '.library').read_text(encoding='utf-8').splitlines()
+        playable_metadata[2:4] = ['0', '42']
+        (playable / '.library').write_text('\n'.join(playable_metadata) + '\n', encoding='utf-8')
+        playable_turn = (playable_backup / 'managed-playable.m1').read_bytes()
+        run(executable, work, STARS_CLIENT_GAME_LIBRARY_TEST='duplicate',
+            STARS_CLIENT_GAME_SOURCE_NAME='managed-playable',
+            STARS_CLIENT_GAME_COPY_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_RENAME_NAME='renamed-copy',
+            STARS_CLIENT_GAME_COLLISION_NAME='MANAGED-COPY',
+            STARS_CLIENT_GAME_BASELINE_NAME='managed-playable')
+        duplicate = games / 'managed-playable duplicate'
+        duplicate_metadata = (duplicate / '.library').read_text(encoding='utf-8').splitlines()
+        assert duplicate_metadata[1:5] == ['managed-playable duplicate', '-1', '0', 'managed-playable']
+        assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
+        assert (duplicate / 'managed-playable duplicate.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
+        assert (duplicate / 'backup.000' / 'managed-playable duplicate.m1').read_bytes() == playable_turn
+        assert {p.relative_to(playable): p.read_bytes() for p in playable.rglob('*') if p.is_file()} != {
+            p.relative_to(duplicate): p.read_bytes() for p in duplicate.rglob('*') if p.is_file()}
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-playable duplicate')
+
+        duplicate_metadata[2:4] = ['1', '123456']
+        (duplicate / '.library').write_text('\n'.join(duplicate_metadata) + '\n', encoding='utf-8')
+        run(executable, work, STARS_CLIENT_GAME_LIBRARY_TEST='rename',
+            STARS_CLIENT_GAME_SOURCE_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_COPY_NAME='managed-playable duplicate',
+            STARS_CLIENT_GAME_RENAME_NAME='renamed-copy',
+            STARS_CLIENT_GAME_COLLISION_NAME='MANAGED-COPY',
+            STARS_CLIENT_GAME_BASELINE_NAME='managed-playable')
+        renamed = games / 'renamed-copy'
+        assert not (games / 'managed-playable duplicate').exists()
+        assert (renamed / 'exchange.map').read_text(encoding='utf-8') == 'external universe definition'
+        assert (renamed / 'backup.000' / 'renamed-copy.m1').is_file()
+        metadata = (renamed / '.library').read_text(encoding='utf-8').splitlines()
+        assert metadata[1] == 'renamed-copy' and metadata[2:4] == ['1', '123456'] and metadata[4] == 'managed-playable'
+        assert (renamed / 'backup.000' / 'renamed-copy.m1').read_bytes() == playable_turn
+        assert (renamed / 'renamed-copy.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
+        assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
 
         bad_source = work / 'bad-exchange'
         shutil.copytree(source, bad_source)
