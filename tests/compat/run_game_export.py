@@ -136,6 +136,21 @@ def main():
         assert unavailable.read_bytes() == b'preserve destination file'
         assert files(managed) == before
 
+        # A file at the chosen game's output name fails after staging has
+        # copied the source family, without replacing the blocker or source.
+        blocked_parent = work / 'blocked-destination'
+        blocked_parent.mkdir()
+        blocked_destination = blocked_parent / 'managed-copy'
+        blocked_destination.write_bytes(b'preserve blocked destination')
+        before = files(managed)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(blocked_parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert blocked_destination.read_bytes() == b'preserve blocked destination'
+        assert files(managed) == before
+        entries = list(blocked_parent.iterdir())
+        assert len(entries) == 1 and entries[0].samefile(blocked_destination), \
+            f'Unexpected export entries: {entries!r}; expected {blocked_destination!r}'
+
         # Reimport the complete exported game into independent storage and
         # replay both players' saved orders with the existing loader again.
         reimport_work = work / 'reimport'
