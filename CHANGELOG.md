@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Recent-file migration now reports a missing selected player file by path
+  instead of silently importing its valid siblings. Other recent entries
+  continue to import, including relative filenames. Sources, simulation
+  results and file formats are unchanged.
+
 - The real file-workflow test keeps its timer active while accepting the race
   import dialog, avoiding a deadlock. The same workflow now runs with portable
   chooser substitutions on macOS, Windows and Linux in addition to the Linux

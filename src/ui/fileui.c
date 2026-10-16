@@ -135,7 +135,10 @@ void OfferRecentGameImport(HWND hwnd) {
     for (i = 0; i < 9; i++) {
         pszFile = vrgszMRU + 256 * i;
         if (!pszFile[0] || FIsManagedLibraryGameFile(pszFile)) continue;
-        if (FImportLibraryGame(hwnd, pszFile)) RefreshLibraryGames(hwnd);
+        if (FImportDesktopFile(hwnd, pszFile)) {
+            RefreshLibraryGames(hwnd);
+            RefreshLibraryRaces(hwnd);
+        }
     }
 }
 

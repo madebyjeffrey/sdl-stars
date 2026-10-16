@@ -1015,9 +1015,10 @@ int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
 
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     char szChosen[512];
-    char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash;
+    char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash, *pchName;
     LIBRARYIMPORT li;
     int cchDir;
+    int64_t cbSource;
 
     if (!pszSource) {
         if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
@@ -1036,18 +1037,25 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         CchSnprintf(szSource, sizeof(szSource), "%s%s%s.xy", szDir, szDirSep, szStem);
         pchSlash = strrchr(szSource, chDirSep);
     } else {
-    pchSlash = strrchr(szSource, '/');
-    pch = strrchr(szSource, '\\');
-    if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
-    if (!pchSlash) return FALSE;
-    cchDir = (int)(pchSlash - szSource);
-    if (cchDir == 0) cchDir = 1;
-    memcpy(szDir, szSource, cchDir);
-    szDir[cchDir] = 0;
-    pch = strrchr(pchSlash + 1, '.');
-    if (!pch || pch == pchSlash + 1 || (size_t)(pch - (pchSlash + 1)) >= sizeof(szStem)) return FALSE;
-    memcpy(szStem, pchSlash + 1, pch - (pchSlash + 1));
-    szStem[pch - (pchSlash + 1)] = 0;
+        /* A missing selected player file must not import a sibling's game. */
+        if (!FNativeFileSize(szSource, &cbSource) || cbSource <= 0) goto LInvalidSource;
+        pchSlash = strrchr(szSource, '/');
+        pch = strrchr(szSource, '\\');
+        if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
+        if (pchSlash) {
+            cchDir = (int)(pchSlash - szSource);
+            if (cchDir == 0) cchDir = 1;
+            memcpy(szDir, szSource, cchDir);
+            szDir[cchDir] = 0;
+            pchName = pchSlash + 1;
+        } else {
+            strcpy(szDir, ".");
+            pchName = szSource;
+        }
+        pch = strrchr(pchName, '.');
+        if (!pch || pch == pchName || (size_t)(pch - pchName) >= sizeof(szStem)) goto LInvalidSource;
+        memcpy(szStem, pchName, pch - pchName);
+        szStem[pch - pchName] = 0;
     }
     if (!FInitLibrary()) return FALSE;
     memset(&li, 0, sizeof(li));
@@ -1082,6 +1090,10 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     }
     szLibraryPending[0] = 0;
     return TRUE;
+LInvalidSource:
+    CchSnprintf(szWork, sizeof(szWork), "%s", szSource);
+    AlertSz(PszFormatIds(idsCantOpenFile, NULL), MB_ICONHAND);
+    return FALSE;
 }
 
 

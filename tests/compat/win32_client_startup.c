@@ -1282,7 +1282,11 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
-    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) return IDOK;
+    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
+        if (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") && !strstr(sz, "exchange.m2") && !strstr(sz, "missing.m1"))
+            PostQuitMessage(92);
+        return IDOK;
+    }
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
     if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
@@ -1917,7 +1921,8 @@ int main(void) {
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
            cAlerts == (getenv("STARS_CLIENT_RECENT_MIGRATION") ?
                        (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
-                        strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ? 1 : 0) :
+                        strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?
+                        (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") ? atoi(getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED")) : 1) : 0) :
                        getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
                        getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }
