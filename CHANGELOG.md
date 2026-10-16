@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
+  Its previous position covered both buttons and intercepted their clicks.
+
 - `FImportLibraryOrders` now rejects player slots absent from the selected
   hosted game; previously a consistently numbered file for any slot up to 16
   could be installed even though host generation would ignore it.

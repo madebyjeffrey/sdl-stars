@@ -1501,6 +1501,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     BOOL fDifferent = FALSE;
     RECT rcFrame;
     RECT rcScanner;
+    POINT ptLibraryButton;
+    static const int rgidLibraryButton[] = {
+        IDC_LIBRARY_IMPORT, IDC_LIBRARY_IMPORT_FOLDER, IDC_LIBRARY_GAME_EXPORT,
+        IDC_LIBRARY_DUPLICATE, IDC_LIBRARY_RENAME
+    };
     char szHostSourceHost[512], szHostSourceUniverse[512], szHostManagedHost[512], szHostManagedUniverse[512];
     char szHostManagedBase[512], szHostOrderFile[512], szHostManagedOrders[512];
     char szHostOrderIdentity[512], szHostOrderPlayer[512], szHostOrderTurn[512], szHostOrderAbsentPlayer[512];
@@ -1657,6 +1662,15 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!(GetWindowLongPtr(hwndList, GWL_STYLE) & WS_VISIBLE) ||
                 SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1,
                             (LPARAM)"PlayerCopy - Player 1") == LB_ERR) goto LDone;
+            for (iButton = 0; iButton < (int)(sizeof(rgidLibraryButton) / sizeof(rgidLibraryButton[0])); iButton++) {
+                hwndListTarget = GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
+                if (!GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
+                ptLibraryButton = (POINT){(rcFrame.left + rcFrame.right) / 2, (rcFrame.top + rcFrame.bottom) / 2};
+                if (WindowFromPoint(ptLibraryButton) != hwndListTarget) {
+                    fprintf(stderr, "Library button %d is covered by another control\n", rgidLibraryButton[iButton]);
+                    goto LDone;
+                }
+            }
             iHostLibraryTestStage = 27;
             fFreeingTitle = FALSE;
             if (!FPushClick(rghwndBtnSplash[1])) goto LDone;

@@ -2126,7 +2126,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
                  86, y - 22, 82, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, hInst, NULL);
     CreateWindow("BUTTON", "Import Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-                 lprc->right - 352, y - 22, 104, 18, hwnd,
+                 lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, hInst, NULL);
     CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
