@@ -78,13 +78,24 @@ static int16_t FZipSafeName(const char *psz) {
            !(pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.');
 }
 
+static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
+    char **rgpszFiles;
+    int cCapacity;
+    if (pz->c < pz->cMax) return TRUE;
+    cCapacity = pz->cMax ? pz->cMax * 2 : 16;
+    rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
+    if (!rgpszFiles) { pz->fBad = TRUE; return FALSE; }
+    pz->rgpsz = rgpszFiles;
+    pz->cMax = cCapacity;
+    return TRUE;
+}
+
 static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
     ZIPFILES *pz = lpData;
     char szPath[512], *pszRelative;
     int16_t fDir, fLink;
-    char **rgpszFiles;
     ZIPFILES zfChild = {0};
-    int i, cCapacity;
+    int i;
     size_t cbName;
     if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return TRUE;
     if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
@@ -98,24 +109,14 @@ static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
             pszRelative = SDL_malloc(cbName);
             if (!pszRelative) { pz->fBad = TRUE; break; }
             CchSnprintf(pszRelative, cbName, "%s/%s", pszName, zfChild.rgpsz[i]);
-            if (pz->c == pz->cMax) {
-                cCapacity = pz->cMax ? pz->cMax * 2 : 16;
-                rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
-                if (!rgpszFiles) { SDL_free(pszRelative); pz->fBad = TRUE; break; }
-                pz->rgpsz = rgpszFiles; pz->cMax = cCapacity;
-            }
+            if (!FZipEnsureCapacity(pz)) { SDL_free(pszRelative); break; }
             pz->rgpsz[pz->c++] = pszRelative;
         }
         for (i = 0; i < zfChild.c; i++) SDL_free(zfChild.rgpsz[i]);
         SDL_free(zfChild.rgpsz);
         return !pz->fBad;
     }
-    if (pz->c == pz->cMax) {
-        cCapacity = pz->cMax ? pz->cMax * 2 : 16;
-        rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
-        if (!rgpszFiles) { pz->fBad = TRUE; return FALSE; }
-        pz->rgpsz = rgpszFiles; pz->cMax = cCapacity;
-    }
+    if (!FZipEnsureCapacity(pz)) return FALSE;
     pz->rgpsz[pz->c] = SDL_strdup(pszName);
     if (!pz->rgpsz[pz->c]) { pz->fBad = TRUE; return FALSE; }
     pz->c++;

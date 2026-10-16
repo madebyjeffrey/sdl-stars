@@ -1351,13 +1351,14 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
     LIBRARYEXPORTMOVE lem;
     OPENFILENAME ofn;
     char szSource[512], szDestination[512], szStage[512];
-    char szZipName[512];
-    int cch;
+    char szZipName[512], szZipStage[512], szZipGame[512];
+    int cch, iChoice;
+    int16_t fZipStage;
 
     if (!pszTarget) {
         if (!getenv("STARS_CLIENT_EXPORT_GAME")) {
-            int iChoice = MessageBox(hwnd, "Export as a ZIP archive? Choose No to export a folder.",
-                                     "Export Game", MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
+            iChoice = MessageBox(hwnd, "Export as a ZIP archive? Choose No to export a folder.",
+                                 "Export Game", MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
             if (iChoice == IDCANCEL) return FALSE;
             if (iChoice == IDYES) {
                 memset(&ofn, 0, sizeof(ofn));
@@ -1381,8 +1382,6 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return FALSE;
     if (FPathIsZip(pszTarget)) {
-        char szZipStage[512], szZipGame[512];
-        int16_t fZipStage;
         if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
             (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
              pszTarget[strlen(szSource)] == '\\')) goto LFail;
@@ -1722,6 +1721,7 @@ int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     char szChosen[512];
     char szSource[512], szDir[512], szStem[256], szStage[256], *pch, *pchSlash, *pchName;
+    char szZipStage[512];
     LIBRARYIMPORT li;
     int cchDir;
     int64_t cbSource;
@@ -1737,7 +1737,6 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     if (!FNativeDirectoryExists(szSource) &&
         (!FNativeFileSize(szSource, &cbSource) || cbSource <= 0)) goto LInvalidSource;
     if (FPathIsZip(szSource)) {
-        char szZipStage[512];
         if (!FInitLibrary()) return FALSE;
         if (!FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-importing")) return FALSE;
         if (!FUnzipLibraryArchive(szSource, szZipStage)) {

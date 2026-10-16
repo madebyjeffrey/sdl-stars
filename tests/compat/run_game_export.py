@@ -222,6 +222,19 @@ def main():
             assert bad_source.read_bytes() == bad_source_before
             assert not (work / 'library/Games/invalid-copy').exists()
 
+        # A valid ZIP can still contain an incomplete game family. Reject it
+        # through the shared importer without disturbing the existing game.
+        incomplete_source = work / 'incomplete-family.zip'
+        with zipfile.ZipFile(incomplete_source, 'w', compression=zipfile.ZIP_STORED) as archive:
+            archive.write(fixture / 'game.xy', 'game.xy')
+        incomplete_before = incomplete_source.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(incomplete_source),
+            STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert files(managed) == managed_before
+        assert incomplete_source.read_bytes() == incomplete_before
+        assert not (work / 'library/Games/invalid-copy').exists()
+        assert not list((work / 'library/Games').glob('.zip-importing.*'))
+
         # Invalid paths and truncated archives must not publish a partial game.
         unsafe_zip = work / 'unsafe.zip'
         with zipfile.ZipFile(unsafe_zip, 'w') as archive:
