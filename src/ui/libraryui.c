@@ -2200,10 +2200,12 @@ void RefreshLibraryGames(HWND hwnd) {
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (hwndList) SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     fHasGames = hwndList && SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
-    EnableWindow(rghwndBtnSplash[1], fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    if (!fHostLibraryView) {
+        EnableWindow(rghwndBtnSplash[1], fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+    }
 }
 
 void RefreshLibraryHostGames(HWND hwnd) {
@@ -2214,7 +2216,7 @@ void RefreshLibraryHostGames(HWND hwnd) {
     if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryHostGame, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
-    EnableWindow(rghwndBtnSplash[1], fHasGames);
+    if (fHostLibraryView) EnableWindow(rghwndBtnSplash[1], fHasGames);
 }
 
 void SelectLibraryView(HWND hwnd, int16_t fHost) {
