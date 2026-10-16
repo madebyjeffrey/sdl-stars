@@ -143,6 +143,18 @@ def main():
             path: content for path, content in source_before_export.items() if path.name != '.library'
         }
 
+        # A destination write failure after staging must leave the managed
+        # game and the pre-existing destination file untouched.
+        failed_export_parent = work / 'export-failure'
+        failed_export_parent.mkdir()
+        blocked_destination = failed_export_parent / 'managed-copy'
+        blocked_destination.write_text('keep failed export destination', encoding='utf-8')
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy',
+            STARS_CLIENT_EXPORT_PARENT=str(failed_export_parent), STARS_CLIENT_EXPORT_FAIL='1')
+        assert blocked_destination.read_text(encoding='utf-8') == 'keep failed export destination'
+        assert {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()} == source_before_export
+        assert not list(failed_export_parent.glob('.stars-game-export-*'))
+
         # Two-digit player extensions use the full one-based player number.
         player16 = bytearray((fixture / 'game.m1').read_bytes())
         player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')

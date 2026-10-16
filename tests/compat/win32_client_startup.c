@@ -1340,6 +1340,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszGameCapture = getenv("STARS_CLIENT_GAME_CAPTURE");
     const char *pszExportGame = getenv("STARS_CLIENT_EXPORT_GAME");
     const char *pszExportParent = getenv("STARS_CLIENT_EXPORT_PARENT");
+    const char *pszExportFail = getenv("STARS_CLIENT_EXPORT_FAIL");
     static const DLGPROC rglpfnRace[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     BYTE *rgb;
     size_t cb, i;
@@ -1364,7 +1365,16 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT) ||
             !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
             !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
-        fExported = FExportLibraryGame(hwndTitle, pszExportGame, pszExportParent);
+        fExported = FExportLibraryGame(pszExportFail ? NULL : hwndTitle, pszExportGame, pszExportParent);
+        if (pszExportFail) {
+            if (fExported) goto LDone;
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Complete managed game export failure preserved the destination");
+            KillTimer(NULL, id);
+            PostQuitMessage(0);
+            return;
+        }
         if (!fExported) goto LDone;
         if (getenv("STARS_CLIENT_EXPORT_COLLISION")) {
             CchSnprintf(szExportSentinel, sizeof(szExportSentinel), "%s%s%s%skeep.txt",
