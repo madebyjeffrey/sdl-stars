@@ -47,6 +47,10 @@ produce different results from a 2.6j host for the same turn.
   player rows show their own turn years. Simulation behavior and disk record
   layouts are unchanged.
 
+- Game library actions now resolve the selected row through its stored library
+  name instead of removing display-status text, preserving valid names that
+  contain those status phrases.
+
 - `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
   warning-as-error build and omitting Unicode profile coverage. The call now
   uses the same platform guard as the definition; the fixture uses a portable

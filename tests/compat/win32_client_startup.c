@@ -62,6 +62,27 @@ static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
     return fEqual;
 }
 
+static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *pszName,
+                                     size_t cchName, int *piplr, long long *plPlayed,
+                                     char *pszExchangeName, size_t cchExchangeName) {
+    FILE *pf;
+    int cchNameRead, cchExchangeRead;
+    BOOL fRead;
+    pf = fopen(pszFile, "rb");
+    if (!pf) return FALSE;
+    fRead = fscanf(pf, "%d\n", piVersion) == 1 && fgets(pszName, (int)cchName, pf) &&
+            fscanf(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
+            fgets(pszExchangeName, (int)cchExchangeName, pf) != NULL;
+    fclose(pf);
+    if (!fRead) return FALSE;
+    pszName[strcspn(pszName, "\r\n")] = 0;
+    pszExchangeName[strcspn(pszExchangeName, "\r\n")] = 0;
+    cchNameRead = (int)strlen(pszName);
+    cchExchangeRead = (int)strlen(pszExchangeName);
+    return cchNameRead > 0 && (size_t)cchNameRead < cchName &&
+           cchExchangeRead > 0 && (size_t)cchExchangeRead < cchExchangeName;
+}
+
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
@@ -1532,9 +1553,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         char szLongName[256];
         BOOL fDuplicate = pszMode && strcmp(pszMode, "duplicate") == 0;
         BOOL fRename = pszMode && strcmp(pszMode, "rename") == 0;
-        FILE *pf;
         char szMetadataName[256], szExchangeName[256];
-        int iVersion, iPlayer;
+        int iVersion, iplr;
         long long lPlayed;
         memset(szLongName, 'x', sizeof(szLongName) - 1);
         szLongName[sizeof(szLongName) - 1] = 0;
@@ -1581,19 +1601,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szCopy, szDirSep);
         if (fRename) CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szSource, szDirSep);
-        pf = fopen(szPath, "rb");
-        if (!pf) goto LDone;
-        iVersion = 0; iPlayer = 0; lPlayed = -1;
-        if (fscanf(pf, "%d\n", &iVersion) != 1 || !fgets(szMetadataName, sizeof(szMetadataName), pf) ||
-            fscanf(pf, "%d\n%lld\n", &iPlayer, &lPlayed) != 2 || !fgets(szExchangeName, sizeof(szExchangeName), pf)) {
-            fclose(pf); fprintf(stderr, "duplicate metadata parse failed\n"); goto LDone;
+        iVersion = 0; iplr = 0; lPlayed = -1;
+        if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
+                                      &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
+            fprintf(stderr, "duplicate metadata parse failed\n"); goto LDone;
         }
-        fclose(pf);
-        szMetadataName[strcspn(szMetadataName, "\r\n")] = 0;
-        szExchangeName[strcspn(szExchangeName, "\r\n")] = 0;
         if (iVersion != 2 || strcmp(szMetadataName, fDuplicate ? pszCopy : pszSource) ||
-            iPlayer != (fDuplicate ? -1 : 1) || lPlayed != (fDuplicate ? 0 : 123456) ||
-            strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "duplicate metadata mismatch v=%d name=%s player=%d played=%lld exchange=%s\n", iVersion, szMetadataName, iPlayer, lPlayed, szExchangeName); goto LDone; }
+            iplr != (fDuplicate ? -1 : 1) || lPlayed != (fDuplicate ? 0 : 123456) ||
+            strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "duplicate metadata mismatch v=%d name=%s player=%d played=%lld exchange=%s\n", iVersion, szMetadataName, iplr, lPlayed, szExchangeName); goto LDone; }
         if (fDuplicate) {
             fChecked = TRUE;
             fPassed = TRUE;
@@ -1632,18 +1647,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FTestFilesEqual(szPath, szOther)) { fprintf(stderr, "renamed backup mismatch\n"); goto LDone; }
         }
         CchSnprintf(szPath, sizeof(szPath), "%s%s.library", szRenamed, szDirSep);
-        pf = fopen(szPath, "rb");
-        if (!pf) { fprintf(stderr, "renamed metadata missing\n"); goto LDone; }
-        iVersion = 0;
-        iPlayer = 0; lPlayed = -1;
-        if (fscanf(pf, "%d\n", &iVersion) != 1 || !fgets(szMetadataName, sizeof(szMetadataName), pf) ||
-            fscanf(pf, "%d\n%lld\n", &iPlayer, &lPlayed) != 2 || !fgets(szExchangeName, sizeof(szExchangeName), pf)) {
-            fclose(pf); fprintf(stderr, "renamed metadata parse failed\n"); goto LDone;
+        iVersion = 0; iplr = 0; lPlayed = -1;
+        if (!FTestReadLibraryMetadata(szPath, &iVersion, szMetadataName, sizeof(szMetadataName),
+                                      &iplr, &lPlayed, szExchangeName, sizeof(szExchangeName))) {
+            fprintf(stderr, "renamed metadata parse failed\n"); goto LDone;
         }
-        fclose(pf);
-        szMetadataName[strcspn(szMetadataName, "\r\n")] = 0;
-        szExchangeName[strcspn(szExchangeName, "\r\n")] = 0;
-        if (iVersion != 2 || strcmp(szMetadataName, pszRename) || iPlayer != 1 || lPlayed != 123456 ||
+        if (iVersion != 2 || strcmp(szMetadataName, pszRename) || iplr != 1 || lPlayed != 123456 ||
             strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "renamed metadata mismatch %d %s\n", iVersion, szMetadataName); goto LDone; }
         CchSnprintf(szPath, sizeof(szPath), "%s%sexchange.map", szRenamed, szDirSep);
         if (!FNativeFileSize(szPath, &(int64_t){0})) { fprintf(stderr, "renamed sidecar missing %s\n", szPath); goto LDone; }
@@ -1672,22 +1681,22 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             {
                 HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
                 char szPlayer[320];
-                int iPlayer;
+                int iplrTest;
                 BOOL fPlayers[16] = {FALSE};
                 int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
                     atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
-                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) {
-                    SendMessage(hwndList, LB_GETTEXT, iPlayer, (LPARAM)szPlayer);
+                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) {
+                    SendMessage(hwndList, LB_GETTEXT, iplrTest, (LPARAM)szPlayer);
                     if (strstr(szPlayer, "Player ") && strstr(szPlayer, "(2400)")) {
-                        int iFound;
-                        for (iFound = 0; iFound < cExpected; iFound++) {
+                        int iplrFound;
+                        for (iplrFound = 0; iplrFound < cExpected; iplrFound++) {
                             char szExpected[32];
-                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iFound + 1);
-                            if (strstr(szPlayer, szExpected)) fPlayers[iFound] = TRUE;
+                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iplrFound + 1);
+                            if (strstr(szPlayer, szExpected)) fPlayers[iplrFound] = TRUE;
                         }
                     }
                 }
-                for (iPlayer = 0; iPlayer < cExpected; iPlayer++) if (!fPlayers[iPlayer]) goto LDone;
+                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) if (!fPlayers[iplrTest]) goto LDone;
             }
             fChecked = TRUE;
             fPassed = TRUE;
