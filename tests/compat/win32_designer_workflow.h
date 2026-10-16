@@ -164,6 +164,7 @@ static BOOL FCheckSaveReloadWorkflow(void) {
     if (!FFileExists(szLog) || game.fDirty) return FALSE;
     // Reload through the actual MRU command: FLoadGame resets the world before
     // replaying the saved orders, so the new research choice must persist.
+    rgplr[idPlayer].iTechNow = (iResearch + 1) % 6;
     SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_MRU1, 0);
     if (game.lid != lidSav || idPlayer != iPlayerSav || !IsWindow(hwndScanner) ||
         !IsWindowEnabled(hwndFrame) || rgplr[idPlayer].iTechNow != iResearch) return FALSE;

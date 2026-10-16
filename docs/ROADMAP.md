@@ -183,17 +183,59 @@ Host Games now has a separate library view, accepts host-only universe/host
 imports, and imports ordinary player orders after matching game identity, turn
 and generation. The existing desktop host generates directly from the managed
 orders files, with the command-line host and simulation behavior unchanged.
+Managed-game duplicate and rename preserve all backup naming variants and nested
+sidecar folders while renaming the matching binary file family throughout the
+copied tree. Real-client coverage checks their contents after both operations.
+Duplicate and rename reject linked paths and Windows reparse points; cleanup
+never descends through a directory link into files outside the managed tree.
+Staging rejects case-insensitive collisions between renamed family members and
+sidecars, including backup contents, before either action can publish a game.
+The Games-list double-click shares the Open action rather than falling through
+to another library command; the real-client workflow verifies that dispatch.
+Reopening a duplicated or renamed game reads metadata from its game folder and
+retains the exchange basename while updating the remembered player and time.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
 no-ops; successful updates retire only that player's old orders.
+Orders export keeps chooser paths and fallback library names separate from
+formatting destinations, avoiding overlapping-buffer failures on Linux.
+It confirms replacement of the final numbered destination after extension
+correction; rejecting replacement preserves existing exports and pending work.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
+Windows library roots use SDL UTF-8 environment paths even when the CRT code
+page cannot represent the settings folder.
+Windows library membership and managed race selection accept both native
+separators and the wrapper picker's forward-slash paths. Orders export,
+library metadata updates and loaded-game export use the same membership rule.
+Recent-file migration validates the selected source before enumerating its
+family, reports missing filenames, and handles relative entries independently.
+Mixed desktop Open and recent-file actions dispatch by the BOF file type to
+the game or race importer; race customization edits only the managed copy.
+Desktop startup passes its explicit game path to import and reopens managed
+game paths directly, without a second file selection.
+New Game keeps full library filenames per custom race and scopes each race
+edit to its own destination; predefined customizations receive a new managed
+filename instead of overwriting the last imported design.
+Complete game-folder export preserves player files, host state and backups.
+Destinations must fit the loader's full game and backup paths; overlong paths
+are rejected before copying rather than publishing a truncated game family.
+Canceling the export folder chooser preserves unsaved orders; save resolution
+happens only after a destination has been chosen.
+The real-client export workflow covers both players' saved orders and history,
+submitted status, backup contents, export/load and reimport/load round trips,
+collisions, cancellation with dirty orders and filesystem failures, using
+isolated library storage. Import framing accepts both the empty end records
+written for orders/history and the two-byte trailers, while rejecting trailing
+bytes.
 The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
 cancelled edit, import, duplicate and export/reload; the
-native file-workflow harness covers protected save/reload, checksum preservation
+native file-workflow harness keeps its timer active through race-import naming
+and runs with a portable chooser on each SDL platform as well as the Linux
+portal. It covers protected save/reload, checksum preservation
 and duplicate-name rejection. Duplicate, ordinary export and confirmed deletion
 are now available from the selected design. The
 initial top-level size notification now initializes pane layout, and the

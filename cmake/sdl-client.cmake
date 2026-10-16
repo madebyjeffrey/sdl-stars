@@ -167,15 +167,16 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword AskSaveDialog TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName)
+stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword AskSaveDialog TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog)
+if(STARS_BUILD_TESTS)
+    add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+endif()
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
-add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
-target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
-target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
-target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1)
-target_compile_options(stars-compat-fileworkflow PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword)
-set_target_properties(stars-compat-fileworkflow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")
+
 target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-native-tutorial PRIVATE STARS_TEST_TUTORIAL=1)
@@ -348,6 +349,10 @@ if(STARS_BUILD_TESTS)
         "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS "client"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 100)
+    add_test(NAME win32_client_game_export_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_game_export.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_game_export_dummy PROPERTIES LABELS "client"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat" TIMEOUT 90)
     add_test(NAME win32_client_newgame_x11 COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_x11_wm.py"
         --xvfb "${STARS_XVFB_RUN_EXECUTABLE}" --wm "${STARS_OPENBOX_EXECUTABLE}"
@@ -841,15 +846,8 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(win32_filedialog_x11 PROPERTIES LABELS "compat" ENVIRONMENT "STARS_FILE_DIALOG_BACKEND=compat;SDL_VIDEODRIVER=x11;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 endif()
 
-add_executable(stars-compat-printmap tests/compat/win32_printmap.c)
-target_link_libraries(stars-compat-printmap PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
-target_compile_options(stars-compat-printmap PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-printmap InitInstance PromptPassword AlertSz SDL_OpenURL)
-set_target_properties(stars-compat-printmap PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+include("${CMAKE_CURRENT_LIST_DIR}/print-map-tests.cmake")
 if(STARS_BUILD_TESTS)
-    add_test(NAME win32_print_map COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_print_map.py"
-        "$<TARGET_FILE:stars-compat-printmap>" "${CMAKE_BINARY_DIR}/print-map-test")
-    set_tests_properties(win32_print_map PROPERTIES LABELS "client;compat" TIMEOUT 150 RUN_SERIAL TRUE)
     find_program(STARS_GECKODRIVER_EXECUTABLE geckodriver)
     if(STARS_GECKODRIVER_EXECUTABLE)
         add_test(NAME win32_help_browser COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_help_browser.py"

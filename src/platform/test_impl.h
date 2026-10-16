@@ -63,6 +63,9 @@
 #ifndef STARS_TEST_IMPL_ReplaceNativeFile
 #define STARS_TEST_IMPL_ReplaceNativeFile ReplaceNativeFile
 #endif
+#ifndef STARS_TEST_IMPL_RenameNativeFile
+#define STARS_TEST_IMPL_RenameNativeFile RenameNativeFile
+#endif
 #ifndef STARS_TEST_IMPL_IChooseWindowsFile
 #define STARS_TEST_IMPL_IChooseWindowsFile IChooseWindowsFile
 #endif
