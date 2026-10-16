@@ -14,7 +14,9 @@
 #define IDC_LIBRARY_RACE_DELETE 2410
 #define IDD_LIBRARY_TURN_TARGET 2411
 #define IDC_LIBRARY_TURN_TARGET_LIST 2412
+#define IDC_LIBRARY_GAME_EXPORT 2413
 #define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
+#define WM_STARS_EXPORT_FOLDER (WM_APP + 4)
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
@@ -23,6 +25,9 @@ void RefreshLibraryGames(HWND hwnd);
 int16_t FSelectLibraryGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
+int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget);
+int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget);
+void ShowLibraryExportFolderPicker(HWND hwnd);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszName);
 int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource);

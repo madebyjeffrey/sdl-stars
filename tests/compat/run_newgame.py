@@ -115,6 +115,31 @@ def main():
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
 
+        # Folder export carries every managed player file and its backup,
+        # while keeping private library metadata and the managed copy intact.
+        export_parent = work / 'export'
+        export_parent.mkdir()
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(export_parent))
+        exported = export_parent / 'managed-copy'
+        source_before_export = {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()}
+        assert {p.relative_to(exported): p.read_bytes() for p in exported.rglob('*') if p.is_file()} == {
+            path: content for path, content in source_before_export.items() if path.name != '.library'
+        }
+        assert {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()} == source_before_export
+
+        # Saved orders and history are included with their contents intact.
+        (imported / 'managed-copy.x1').write_bytes(b'saved player one orders')
+        (imported / 'managed-copy.h2').write_bytes(b'player two history')
+        (imported / 'managed-copy.x2').write_bytes(b'saved player two orders')
+        source_before_export = {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()}
+        orders_export_parent = work / 'export-with-orders'
+        orders_export_parent.mkdir()
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(orders_export_parent))
+        orders_export = orders_export_parent / 'managed-copy'
+        assert {p.relative_to(orders_export): p.read_bytes() for p in orders_export.rglob('*') if p.is_file()} == {
+            path: content for path, content in source_before_export.items() if path.name != '.library'
+        }
+
         # Two-digit player extensions use the full one-based player number.
         player16 = bytearray((fixture / 'game.m1').read_bytes())
         player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')

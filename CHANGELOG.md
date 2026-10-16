@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The desktop Games library can export a complete game family to a folder named
+  for its library entry. Exports include all player files, host state, and
+  backups, retain the managed original, and leave existing destinations intact.
+  Game behavior and disk record layouts are unchanged.
+
 - Existing managed games now accept a valid later standalone player turn,
   including skipped years. The importer matches by game identity, asks which
   managed copy to update when several match, treats identical turns as no-ops,

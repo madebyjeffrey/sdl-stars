@@ -467,6 +467,20 @@ static BOOL FSelectClientRaceName(HWND hwndTitle, const char *pszName) {
     return FALSE;
 }
 
+static BOOL FSelectClientGameName(HWND hwndTitle, const char *pszName) {
+    HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+    char szRow[320];
+    size_t cchName = strlen(pszName);
+    LRESULT i, c;
+    c = SendMessage(hwndList, LB_GETCOUNT, 0, 0);
+    for (i = 0; i < c; i++) {
+        if (SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szRow) >= 0 &&
+            !strncmp(szRow, pszName, cchName) && !strncmp(szRow + cchName, " - Player ", 10))
+            return SendMessage(hwndList, LB_SETCURSEL, i, 0) != LB_ERR;
+    }
+    return FALSE;
+}
+
 static BOOL FPushComboRow(HWND hwnd, int iRow) {
     HWND hwndPopup = hwnd->lpcombo ? hwnd->lpcombo->hwndPopup : NULL;
     HWND hwndRoot = HwndCompatRoot(hwndPopup);
@@ -1324,6 +1338,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszWizardCapture = getenv("STARS_CLIENT_WIZARD_CAPTURE");
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
     const char *pszGameCapture = getenv("STARS_CLIENT_GAME_CAPTURE");
+    const char *pszExportGame = getenv("STARS_CLIENT_EXPORT_GAME");
+    const char *pszExportParent = getenv("STARS_CLIENT_EXPORT_PARENT");
     static const DLGPROC rglpfnRace[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     BYTE *rgb;
     size_t cb, i;
@@ -1339,6 +1355,23 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (pszExportGame) {
+        int16_t fExported;
+        if (fPassed) return;
+        if (iStage != 0) return;
+        if (!IsWindowVisible(hwndTitle) || !pszExportParent ||
+            !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT) ||
+            !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
+            !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
+        fExported = FExportLibraryGame(hwndTitle, pszExportGame, pszExportParent);
+        if (!fExported) goto LDone;
+        fChecked = TRUE;
+        fPassed = TRUE;
+        puts("Complete managed game export copied through the client workflow");
+        KillTimer(NULL, id);
+        PostQuitMessage(0);
+        return;
+    }
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndRace;
         static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
@@ -1840,7 +1873,7 @@ int main(void) {
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") &&
+    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
         !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
