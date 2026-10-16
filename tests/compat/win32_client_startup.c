@@ -372,13 +372,19 @@ int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
     // The frozen regression race is password protected. This test qualifies
     // file loading and client creation; password validation is outside its scope.
-    return pszContinue ? TRUE : StarsTestReal_PromptPassword();
+    return pszContinue || getenv("STARS_CLIENT_STARTUP_MANAGED") ? TRUE : StarsTestReal_PromptPassword();
 }
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+        fPassed = FALSE;
+        fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
+        PostQuitMessage(92);
+        return FALSE;
+    }
     if (pszRosterSource) {
         if (strlen(pszRosterSource) >= lpof->nMaxFile) return FALSE;
         strcpy(lpof->lpstrFile, pszRosterSource);
@@ -1349,6 +1355,31 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+        HWND hwndDialog;
+        for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
+                if (!SetDlgItemText(hwndDialog, IDC_EDIT1, "startup-import") || !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                return;
+            }
+        }
+        if (getenv("STARS_CLIENT_STARTUP_MANAGED")) {
+            if (game.lid == 0 || !lpPlanets || idPlayer == iplrNone || hwndTitle) {
+                fprintf(stderr, "Managed startup: game %ld planets %p player %d title %p base %s\n",
+                        (long)game.lid, (void *)lpPlanets, idPlayer, (void *)hwndTitle, szBase);
+                goto LDone;
+            }
+        } else {
+            if (!IsWindowVisible(hwndTitle)) return;
+            UpdateWindow(hwndTitle);
+            if (!FCompatPresent(hwndTitle) || game.lid != 0 || idPlayer != iplrNone ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1, (LPARAM)"startup-import") == LB_ERR) goto LDone;
+        }
+        fChecked = fPassed = fTitlePainted = TRUE;
+        puts("Desktop startup uses the supplied game path without reopening the chooser");
+        PostQuitMessage(0);
+        return;
+    }
     if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
         if (!FCheckRaceRosterWorkflow()) goto LDone;
         return;
@@ -1845,8 +1876,10 @@ int16_t StarsTest_InitInstance(int16_t nCmdShow) {
 }
 
 int main(void) {
-    char szCommand[] = "";
+    char szCommand[256] = "";
     int nResult;
+    if (getenv("STARS_CLIENT_STARTUP_SOURCE"))
+        CchSnprintf(szCommand, sizeof(szCommand), "%s", getenv("STARS_CLIENT_STARTUP_SOURCE"));
     pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
     pszContinue = getenv("STARS_CLIENT_CONTINUE");
     pszImportSource = getenv("STARS_CLIENT_IMPORT_SOURCE");
@@ -1857,7 +1890,7 @@ int main(void) {
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
-        !getenv("STARS_CLIENT_RACE_ROSTER_TEST")) fPassed = FALSE;
+        !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();

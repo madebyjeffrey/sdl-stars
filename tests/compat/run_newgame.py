@@ -216,6 +216,21 @@ def main():
         assert (imported / 'external-open-game.m1').is_file()
         assert {p.name: p.read_bytes() for p in source.iterdir()} == original
 
+    with tempfile.TemporaryDirectory(prefix='stars-startup-import-') as directory:
+        work = Path(directory)
+        source = work / 'external'
+        source.mkdir()
+        fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+        for ext in ('.xy', '.m1'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        original = {p.name: p.read_bytes() for p in source.iterdir()}
+        run(executable, work, STARS_CLIENT_STARTUP_SOURCE=str(source / 'exchange.m1'))
+        managed = work / 'library' / 'Games' / 'startup-import' / 'startup-import.m1'
+        assert managed.is_file()
+        assert {p.name: p.read_bytes() for p in source.iterdir()} == original
+        run(executable, work, STARS_CLIENT_STARTUP_SOURCE=str(managed), STARS_CLIENT_STARTUP_MANAGED='1')
+        assert len(list((work / 'library' / 'Games').iterdir())) == 1
+
     return 0
 
 

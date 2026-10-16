@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Desktop startup now imports its supplied external game path without asking
+  the user to select it again. Managed game paths reopen their existing copy.
+  Command-line host behavior, simulation results and file formats are unchanged.
+
 - New Game race edits now save to the selected design, retaining full library
   filenames per roster entry. Importing another race no longer redirects an
   earlier design's edits, and customizing a predefined race creates a separate

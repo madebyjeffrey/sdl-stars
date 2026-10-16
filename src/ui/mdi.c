@@ -1489,9 +1489,16 @@ LPrintMapCleanup:
             break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
-            if ((gd.fTutorial && !FAskKillTutor()) || !FImportLibraryGame(hwnd, NULL))
+            if (gd.fTutorial && !FAskKillTutor()) break;
+            if (ini.fStartupFile && FIsManagedLibraryGameFile(szBase)) {
+                if (FOpenGame(hwnd, FALSE) <= 0) break;
+                InitializeMenu(NULL);
+                if (uTimerId == 0) PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
-            if (hwndTitle) RefreshLibraryGames(hwndTitle);
+            }
+            fRet = FImportLibraryGame(hwnd, ini.fStartupFile ? szBase : NULL);
+            ini.fStartupFile = FALSE;
+            if (fRet && hwndTitle) RefreshLibraryGames(hwndTitle);
             break;
         case IDM_TITLE_NEW_GAME:
         case IDM_TITLE_OPEN_GAME:
