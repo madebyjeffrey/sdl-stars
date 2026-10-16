@@ -18,7 +18,7 @@ static int16_t fRaceLibraryNameDialog;
 static uint32_t idLibraryExportStage;
 static const char *pszRaceLibraryNameOverride;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
-static int16_t FSelectLibraryGameName(HWND hwnd, char *pszName);
+static int16_t FGetSelectedLibraryGame(HWND hwnd, char *pszName, LRESULT *piplr);
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter);
 
 typedef struct {
@@ -1014,7 +1014,7 @@ LFail:
     return FALSE;
 }
 
-static int16_t FSelectLibraryGameName(HWND hwnd, char *pszName) {
+static int16_t FGetSelectedLibraryGame(HWND hwnd, char *pszName, LRESULT *piplr) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
     char szDisplay[320], *pch, *pchLast;
@@ -1025,6 +1025,7 @@ static int16_t FSelectLibraryGameName(HWND hwnd, char *pszName) {
     if (!pchLast) for (pch = strstr(szDisplay, " - Host game"); pch; pch = strstr(pch + 1, " - Host game")) pchLast = pch;
     if (pchLast) *pchLast = 0;
     CchSnprintf(pszName, 256, "%s", szDisplay);
+    if (piplr) *piplr = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
     return pszName[0] != 0;
 }
 
@@ -1039,7 +1040,7 @@ static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const
 
 int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
     char szName[256];
-    if (!FSelectLibraryGameName(hwnd, szName)) return FALSE;
+    if (!FGetSelectedLibraryGame(hwnd, szName, NULL)) return FALSE;
     return FExportLibraryGame(hwnd, szName, pszTarget);
 }
 
@@ -1505,19 +1506,9 @@ void RefreshLibraryGames(HWND hwnd) {
 }
 
 int16_t FSelectLibraryGame(HWND hwnd) {
-    HWND hwndList;
-    LRESULT i, iplr;
-    char szName[256], *pch, *pchLast;
-
-    hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
-    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-    if (i == LB_ERR) return FALSE;
-    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
-    iplr = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
-    pchLast = NULL;
-    for (pch = strstr(szName, " - Player "); pch; pch = strstr(pch + 1, " - Player ")) pchLast = pch;
-    if (!pchLast) for (pch = strstr(szName, " - Host game"); pch; pch = strstr(pch + 1, " - Host game")) pchLast = pch;
-    if (pchLast) *pchLast = 0;
+    LRESULT iplr;
+    char szName[256];
+    if (!FGetSelectedLibraryGame(hwnd, szName, &iplr)) return FALSE;
     if (iplr >= 0) CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, szName, szDirSep, szName, (int)iplr + 1);
     else CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
     ini.fStartupFile = TRUE;

@@ -119,13 +119,16 @@ def main():
         # while keeping private library metadata and the managed copy intact.
         export_parent = work / 'export'
         export_parent.mkdir()
-        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(export_parent))
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(export_parent),
+            STARS_CLIENT_EXPORT_COLLISION='1')
         exported = export_parent / 'managed-copy'
         source_before_export = {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()}
-        assert {p.relative_to(exported): p.read_bytes() for p in exported.rglob('*') if p.is_file()} == {
-            path: content for path, content in source_before_export.items() if path.name != '.library'
-        }
+        expected_export = {path: content for path, content in source_before_export.items() if path.name != '.library'}
+        expected_export[Path('keep.txt')] = b'preserve existing export'
+        assert {p.relative_to(exported): p.read_bytes() for p in exported.rglob('*') if p.is_file()} == expected_export
+        assert (exported / 'keep.txt').read_text(encoding='utf-8') == 'preserve existing export'
         assert {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()} == source_before_export
+        run(executable, work, STARS_CLIENT_CONTINUE=str(exported / 'managed-copy.m1'))
 
         # Saved orders and history are included with their contents intact.
         (imported / 'managed-copy.x1').write_bytes(b'saved player one orders')

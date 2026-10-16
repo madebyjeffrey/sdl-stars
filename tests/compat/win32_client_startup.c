@@ -1357,6 +1357,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     (void)hwnd; (void)msg; (void)dwTime;
     if (pszExportGame) {
         int16_t fExported;
+        char szExportSentinel[512];
         if (fPassed) return;
         if (iStage != 0) return;
         if (!IsWindowVisible(hwndTitle) || !pszExportParent ||
@@ -1365,6 +1366,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
         fExported = FExportLibraryGame(hwndTitle, pszExportGame, pszExportParent);
         if (!fExported) goto LDone;
+        if (getenv("STARS_CLIENT_EXPORT_COLLISION")) {
+            CchSnprintf(szExportSentinel, sizeof(szExportSentinel), "%s%s%s%skeep.txt",
+                        pszExportParent, szDirSep, pszExportGame, szDirSep);
+            if (!FTestWriteFile(szExportSentinel, "preserve existing export")) goto LDone;
+            if (FExportLibraryGame(NULL, pszExportGame, pszExportParent)) goto LDone;
+        }
         fChecked = TRUE;
         fPassed = TRUE;
         puts("Complete managed game export copied through the client workflow");
