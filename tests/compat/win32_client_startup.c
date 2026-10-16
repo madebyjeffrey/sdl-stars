@@ -80,6 +80,7 @@ static const char *pszImportSource;
 static int iImportStage;
 static int iImportUpdateStage;
 static int iRaceLibraryTestStage;
+static int iHostLibraryTestStage;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
 static uint16_t icksRaceLibraryOriginal;
@@ -1250,7 +1251,7 @@ static BOOL FCheckGameplayWorkflows(void) {
 }
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
-    (void)mbType;
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && (mbType & MB_YESNO)) return IDYES;
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
     if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
     fprintf(stderr, "Startup alert: %s\n", sz);
@@ -1339,6 +1340,81 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+        const char *pszSource = getenv("STARS_CLIENT_HOST_IMPORT_SOURCE");
+        char szSourceHost[512], szSourceUniverse[512], szManagedHost[512], szManagedUniverse[512];
+        HWND hwndDialog;
+        if (iHostLibraryTestStage == 0) {
+            if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES_VIEW) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_VIEW) ||
+                !GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS) ||
+                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
+                (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
+                !pszSource) goto LDone;
+            iHostLibraryTestStage = 1;
+            if (!FImportLibraryGame(hwndTitle, pszSource)) goto LDone;
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 0 ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 0) goto LDone;
+            iHostLibraryTestStage = 3;
+        }
+        if (iHostLibraryTestStage == 1) {
+            for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
+                 hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
+                if (!SetWindowTextA(GetDlgItem(hwndDialog, IDC_EDIT1), "Hosted") ||
+                    !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
+                iHostLibraryTestStage = 2;
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 2 || iHostLibraryTestStage == 9) return;
+        if (iHostLibraryTestStage == 3) {
+            RefreshLibraryGames(hwndTitle);
+            RefreshLibraryHostGames(hwndTitle);
+            if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != 0 ||
+                SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), LB_GETCOUNT, 0, 0) != 1 ||
+                CchSnprintf(szSourceHost, sizeof(szSourceHost), "%s%sgame.hst", pszSource, szDirSep) <= 0 ||
+                CchSnprintf(szSourceUniverse, sizeof(szSourceUniverse), "%s%sgame.xy", pszSource, szDirSep) <= 0 ||
+                CchSnprintf(szManagedHost, sizeof(szManagedHost), "%s%sGames%sHosted%sHosted.hst", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                CchSnprintf(szManagedUniverse, sizeof(szManagedUniverse), "%s%sGames%sHosted%sHosted.xy", pszSettings, szDirSep, szDirSep, szDirSep) <= 0 ||
+                !FTestFilesEqual(szSourceHost, szManagedHost) || !FTestFilesEqual(szSourceUniverse, szManagedUniverse)) goto LDone;
+            iHostLibraryTestStage = 7;
+            if (!FSelectLibraryHostGame(hwndTitle) || FOpenGame(hwndTitle, FALSE) != 0) goto LDone;
+            iHostLibraryTestStage = 10;
+        }
+        if (iHostLibraryTestStage == 7 || iHostLibraryTestStage == 8 || iHostLibraryTestStage == 9) {
+            for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog;
+                 hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != HostModeDialog) continue;
+                if (iHostLibraryTestStage == 7) {
+                    iHostLibraryTestStage = 8;
+                    if (!FPushClick(GetDlgItem(hwndDialog, IDC_HOST_GENERATE_NOW))) goto LDone;
+                    return;
+                }
+                if (iHostLibraryTestStage == 8) {
+                    CchSnprintf(szManagedHost, sizeof(szManagedHost), "%s%sGames%sHosted%sHosted.m1", pszSettings, szDirSep, szDirSep, szDirSep);
+                    if (!FNativeFileSize(szManagedHost, &(int64_t){0})) goto LDone;
+                    iHostLibraryTestStage = 9;
+                    if (!FPushClick(GetDlgItem(hwndDialog, IDCANCEL))) goto LDone;
+                    return;
+                }
+                return;
+            }
+            return;
+        }
+        if (iHostLibraryTestStage == 10) {
+            CchSnprintf(szManagedHost, sizeof(szManagedHost), "%s%sGames%sHosted%sHosted.m1", pszSettings, szDirSep, szDirSep, szDirSep);
+            if (!FNativeFileSize(szManagedHost, &(int64_t){0})) goto LDone;
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Host-only import, Host Games view and managed turn generation passed");
+            PostQuitMessage(0);
+            return;
+        }
+    }
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndRace;
         static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
@@ -1841,6 +1917,7 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") &&
+        !getenv("STARS_CLIENT_HOST_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();

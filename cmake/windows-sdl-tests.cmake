@@ -97,6 +97,9 @@ set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS client TIMEOUT
 add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_racelibrary.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_race_library_dummy PROPERTIES LABELS client TIMEOUT 75)
+add_test(NAME win32_client_host_library_dummy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compat/run_hostgames.py" "$<TARGET_FILE:stars-compat-client-startup>")
+set_tests_properties(win32_client_host_library_dummy PROPERTIES LABELS client TIMEOUT 75)
 
 foreach(STARS_CLIENT_SCENARIO startup race)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/${STARS_CLIENT_SCENARIO}")

@@ -199,6 +199,9 @@ if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_racelibrary.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_race_library_dummy PROPERTIES LABELS "client" TIMEOUT 75)
+    add_test(NAME win32_client_host_library_dummy COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/run_hostgames.py" "$<TARGET_FILE:stars-compat-client-startup>")
+    set_tests_properties(win32_client_host_library_dummy PROPERTIES LABELS "client" TIMEOUT 75)
     find_program(STARS_XVFB_RUN_EXECUTABLE NAMES xvfb-run REQUIRED)
     find_program(STARS_OPENBOX_EXECUTABLE NAMES openbox REQUIRED)
     find_program(STARS_XPROP_EXECUTABLE NAMES xprop REQUIRED)

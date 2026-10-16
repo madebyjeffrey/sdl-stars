@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The desktop library now has a separate Host Games view for managed games
+  containing both the universe and host files, including host-only imports.
+  Import Orders validates the incoming player's game, turn and generation,
+  ignores identical orders, and asks before replacing different saved orders.
+  Host generation continues through the existing turn engine and managed file
+  paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
+
 - Existing managed games now accept a valid later standalone player turn,
   including skipped years. The importer matches by game identity, asks which
   managed copy to update when several match, treats identical turns as no-ops,

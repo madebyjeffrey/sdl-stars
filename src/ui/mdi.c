@@ -2765,9 +2765,19 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_LIBRARY_GAMES:
             if (HIWORD(wParam) != LBN_DBLCLK) break;
             /* fall through */
+        case IDC_LIBRARY_HOST_GAMES:
+            if (LOWORD(wParam) == IDC_LIBRARY_HOST_GAMES && HIWORD(wParam) != LBN_DBLCLK) break;
+            if (LOWORD(wParam) == IDC_LIBRARY_HOST_GAMES) {
+                if (!FSelectLibraryHostGame(hwnd)) break;
+                goto LOpenGame;
+            }
+            /* fall through */
         case IDC_LIBRARY_IMPORT:
             if (LOWORD(wParam) == IDC_LIBRARY_IMPORT) {
-                if (FImportLibraryGame(hwnd, NULL)) RefreshLibraryGames(hwnd);
+                if (FImportLibraryGame(hwnd, NULL)) {
+                    RefreshLibraryGames(hwnd);
+                    RefreshLibraryHostGames(hwnd);
+                }
                 break;
             }
         case IDC_LIBRARY_IMPORT_FOLDER:
@@ -2775,6 +2785,15 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 ShowLibraryImportFolderPicker(hwnd);
                 break;
             }
+        case IDC_LIBRARY_GAMES_VIEW:
+            SelectLibraryView(hwnd, FALSE);
+            break;
+        case IDC_LIBRARY_HOST_VIEW:
+            SelectLibraryView(hwnd, TRUE);
+            break;
+        case IDC_LIBRARY_IMPORT_ORDERS:
+            if (FImportLibraryOrders(hwnd, NULL)) RefreshLibraryHostGames(hwnd);
+            break;
         case IDC_LIBRARY_RACES:
             if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;
             if (FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
@@ -2815,7 +2834,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (game.fTutorial && idPlayer == 0) {
                     StartTutor(FALSE);
                 }
-            } else {
+            } else if (IsWindow(hwndTitle)) {
                 SetFocus(hwnd);
             }
             ini.fStartupFile = FALSE;
@@ -2834,7 +2853,10 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_STARS_IMPORT_FOLDER:
         if ((char *)wParam) {
-            if (FImportLibraryGame(hwnd, (char *)wParam)) RefreshLibraryGames(hwnd);
+            if (FImportLibraryGame(hwnd, (char *)wParam)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
             SDL_free((char *)wParam);
         }
         break;
