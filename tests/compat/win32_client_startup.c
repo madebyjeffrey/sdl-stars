@@ -78,6 +78,7 @@ static int cHabShow;
 static const char *pszContinue;
 static const char *pszImportSource;
 static int iImportStage;
+static int iImportUpdateStage;
 static int iRaceLibraryTestStage;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
@@ -1261,6 +1262,9 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
         PostQuitMessage(0);
         return IDOK;
     }
+    if (getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
+        return IDOK;
+    }
     PostQuitMessage(91);
     return IDOK;
 }
@@ -1279,8 +1283,14 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
 
 int StarsTestReal_RemoveNativeFile(const char *pszFile);
 int StarsTest_RemoveNativeFile(const char *pszFile) {
+    static int fFailImportOrdersRemove;
     if (fFailRaceDelete) {
         fFailRaceDelete = FALSE;
+        return -1;
+    }
+    if (!fFailImportOrdersRemove && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE") &&
+        strstr(pszFile, ".x1")) {
+        fFailImportOrdersRemove = TRUE;
         return -1;
     }
     return StarsTestReal_RemoveNativeFile(pszFile);
@@ -1288,6 +1298,13 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
 
 int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
+    static int fFailImportReplace;
+    if (!fFailImportReplace && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
+        fFailImportReplace = TRUE;
+        return -1;
+    }
+    if (getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
+        strstr(pszNew, ".m1")) return -1;
     if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
         fFailRaceExportReplace = FALSE;
         return -1;
@@ -1311,6 +1328,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     BYTE *rgb;
     size_t cb, i;
     int iButton;
+    int16_t fImported;
+    int iTarget, c;
+    HWND hwndList, hwndListTarget;
+    char szFind[320], szName[256];
+    const char *pszExpected, *pszTarget, *pszYear;
     SDL_Event event = {0};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
@@ -1531,6 +1553,57 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
                 if (!SetWindowTextA(GetDlgItem(hwnd, IDC_EDIT1), getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
                 FPushClick(GetDlgItem(hwnd, IDOK));
+                return;
+            }
+        }
+        return;
+    }
+    if (getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
+        pszExpected = getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
+        if (iImportUpdateStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) return;
+            iImportUpdateStage = 1;
+            cAlerts = 0;
+            fImported = FImportLibraryGame(hwndTitle, getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
+            fPassed = pszExpected && ((!strcmp(pszExpected, "fail") && !fImported && cAlerts > 0) ||
+                ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later") ||
+                  !strcmp(pszExpected, "player16") ||
+                  !strcmp(pszExpected, "adjacent")) && fImported && cAlerts == 0) ||
+                (!strcmp(pszExpected, "cancel") && !fImported && cAlerts == 0));
+            if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
+                pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";
+                hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                RefreshLibraryGames(hwndTitle);
+                CchSnprintf(szFind, sizeof(szFind), "%s - Player 1 (%s)", pszTarget, pszYear);
+                fPassed = pszTarget && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
+                CchSnprintf(szFind, sizeof(szFind), "%s - Player 2 (2400)", pszTarget);
+                fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
+                if (!strcmp(pszExpected, "later")) {
+                    fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1,
+                        (LPARAM)"managed-copy - Player 1 (2408)") != LB_ERR;
+                }
+            }
+            fChecked = TRUE;
+            PostQuitMessage(fPassed ? 0 : 93);
+            return;
+        }
+        if (iImportUpdateStage == 1) {
+            for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+                if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
+                hwndListTarget = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
+                if (IsWindowEnabled(GetDlgItem(hwnd, IDOK))) goto LDone;
+                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                c = (int)SendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
+                for (iTarget = 0; iTarget < c; iTarget++) {
+                    SendMessage(hwndListTarget, LB_GETTEXT, iTarget, (LPARAM)szName);
+                    if (pszTarget && !strcmp(pszTarget, szName)) break;
+                }
+                if (iTarget == c) { FPushClick(GetDlgItem(hwnd, IDCANCEL)); return; }
+                SendMessage(hwndListTarget, LB_SETCURSEL, iTarget, 0);
+                SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_TURN_TARGET_LIST, LBN_SELCHANGE),
+                            (LPARAM)hwndListTarget);
+                FPushClick(GetDlgItem(hwnd, !strcmp(pszExpected, "cancel") ? IDCANCEL : IDOK));
                 return;
             }
         }
@@ -1767,11 +1840,14 @@ int main(void) {
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") &&
+        !getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
            cAlerts == (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
-                       getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
+                       getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
+                       getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
+                       !strcmp(getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail") ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }
