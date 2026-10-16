@@ -15,8 +15,14 @@ static int cFileChoices;
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
 BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
 
+static const char *PszWorkflowFilename(const char *pszFile) {
+    const char *pch = pszFile + strlen(pszFile);
+    while (pch > pszFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
+    return pch;
+}
+
 static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
-    const char *pszFile;
+    const char *pszFile, *pchExtension;
     cFileChoices++;
     if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
                   cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
@@ -28,8 +34,9 @@ static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
                      cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
     if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return FALSE;
     strcpy(lpof->lpstrFile, pszFile);
-    lpof->nFileOffset = (WORD)(strrchr(pszFile, chDirSep) - pszFile + 1);
-    lpof->nFileExtension = (WORD)(strrchr(pszFile, '.') - pszFile + 1);
+    lpof->nFileOffset = (WORD)(PszWorkflowFilename(pszFile) - pszFile);
+    pchExtension = strrchr(PszWorkflowFilename(pszFile), '.');
+    lpof->nFileExtension = pchExtension ? (WORD)(pchExtension - pszFile + 1) : 0;
     return TRUE;
 }
 
@@ -42,7 +49,7 @@ BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
-    FILE *pfLeft = fopen(pszLeft, "rb"), *pfRight = fopen(pszRight, "rb");
+    FILE *pfLeft = PfOpenNativeFile(pszLeft, "rb"), *pfRight = PfOpenNativeFile(pszRight, "rb");
     unsigned char rgbLeft[4096], rgbRight[4096];
     size_t cbLeft, cbRight;
     BOOL fEqual = pfLeft && pfRight;
@@ -58,7 +65,7 @@ LDone:
     return fEqual;
 }
 static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
-    FILE *pfSource = fopen(pszSource, "rb"), *pfTarget = fopen(pszTarget, "wb");
+    FILE *pfSource = PfOpenNativeFile(pszSource, "rb"), *pfTarget = PfOpenNativeFile(pszTarget, "wb");
     unsigned char rgb[4096];
     size_t cb;
     BOOL fCopied = pfSource && pfTarget;
@@ -127,7 +134,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(!FSaveRace(NULL, &plrSav) && memcmp(szRaceSav, szRaceFile, sizeof(szRaceSav)) == 0);
     CHECK(FSaveRace(NULL, &plrSav));
     CHECK(szRaceFile[sizeof(szRaceFile) - 1] == 0 &&
-          strncmp(szRaceFile, strrchr(pszRace, chDirSep) + 1, strlen(szRaceFile)) == 0);
+          strncmp(szRaceFile, PszWorkflowFilename(pszRace), strlen(szRaceFile)) == 0);
     CHECK(FWasRaceFile((char *)pszRace, FALSE) > 0);
     CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
           FCopyFile(pszRace, szRaceOriginal));

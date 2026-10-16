@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The portable file-workflow test handles both Windows path separators and
+  opens its Unicode fixtures through the native UTF-8 file boundary, avoiding
+  invalid chooser offsets and fixture I/O failures. Product behavior and
+  simulation baselines are unchanged.
+
 - Windows managed game and race paths now accept picker-style forward slashes
   and native backslashes consistently. Startup reopens an existing managed
   game instead of importing another copy, and managed race selection retains
