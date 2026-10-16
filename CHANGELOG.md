@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Managed-game duplication and rename reject linked files, linked folders and
+  Windows reparse points. `RemoveLibraryGameEntry` previously followed directory
+  links while removing the old renamed tree and could delete external files.
+  Cleanup now removes a link itself without traversing its target. Original
+  games and external targets remain intact when staging is rejected.
+  Simulation behavior and regression baselines are unchanged.
+
 - The Games library offers Duplicate and Rename actions. Copies have independent
   files and session metadata; rename changes the managed folder and matching
   binary file family, including backups. Both preserve the stored game title,

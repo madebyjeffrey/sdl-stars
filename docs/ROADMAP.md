@@ -182,6 +182,8 @@ second startup implementation has been removed, so SDL is the sole entry point.
 Managed-game duplicate and rename preserve all backup naming variants and nested
 sidecar folders while renaming the matching binary file family throughout the
 copied tree. Real-client coverage checks their contents after both operations.
+Duplicate and rename reject linked paths and Windows reparse points; cleanup
+never descends through a directory link into files outside the managed tree.
 The Games-list double-click shares the Open action rather than falling through
 to another library command; the real-client workflow verifies that dispatch.
 Reopening a duplicated or renamed game reads metadata from its game folder and

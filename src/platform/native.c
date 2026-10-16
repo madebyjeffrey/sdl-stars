@@ -364,6 +364,18 @@ int16_t FNativeDirectoryExists(const char *pszDir) {
     return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
+int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink) {
+    wchar_t *pwsz = LpwszNativePath(psz);
+    DWORD dwAttributes;
+    if (!pwsz) return FALSE;
+    dwAttributes = GetFileAttributesW(pwsz);
+    free(pwsz);
+    if (dwAttributes == INVALID_FILE_ATTRIBUTES) return FALSE;
+    *pfDirectory = (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    *pfLink = (dwAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+    return TRUE;
+}
+
 static int16_t FCreateDirectoryW(wchar_t *pwszDir) {
     DWORD dwAttributes;
     if (CreateDirectoryW(pwszDir, NULL)) return TRUE;
@@ -554,6 +566,14 @@ int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
 int16_t FNativeDirectoryExists(const char *pszDir) {
     struct stat st;
     return FNativePath(pszDir) && stat(pszDir, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink) {
+    struct stat st;
+    if (!FNativePath(psz) || lstat(psz, &st) != 0) return FALSE;
+    *pfDirectory = S_ISDIR(st.st_mode);
+    *pfLink = S_ISLNK(st.st_mode);
+    return TRUE;
 }
 
 int16_t FEnsureNativeDir(const char *pszDir) {

@@ -1017,11 +1017,16 @@ static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
     LIBRARYGAMECOPY lgb;
     int iplr;
     int cch;
+    int16_t fDirectory, fLink;
     DtFileType dt;
     if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return TRUE;
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plgc->pszSource, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szSource)) { plgc->fBad = TRUE; return FALSE; }
-    if (FNativeDirectoryExists(szSource)) {
+    if (!FNativePathInfo(szSource, &fDirectory, &fLink) || fLink) {
+        plgc->fBad = TRUE;
+        return FALSE;
+    }
+    if (fDirectory) {
         /* Rename removes the original tree after publication, so every directory
          * must survive staging, including backup, backupN and sidecar folders. */
         cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
@@ -1465,17 +1470,23 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
 
 static int16_t RemoveLibraryGameEntry(void *lpData, const char *pszName) {
     char szPath[512];
+    int16_t fDirectory, fLink;
     int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", (const char *)lpData, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szPath)) return FALSE;
-    if (FNativeDirectoryExists(szPath)) {
+    if (!FNativePathInfo(szPath, &fDirectory, &fLink)) return FALSE;
+    /* A link belongs to this tree; its target does not. */
+    if (fDirectory && !fLink) {
         if (!FNativeEnumerateDirectory(szPath, RemoveLibraryGameEntry, szPath)) return FALSE;
     }
     return RemoveNativePath(szPath) == 0;
 }
 
 static int16_t RemoveLibraryGameTree(const char *pszDirectory) {
-    int16_t fRemoved = FNativeEnumerateDirectory(pszDirectory, RemoveLibraryGameEntry, (void *)pszDirectory);
-    return fRemoved && RemoveNativePath(pszDirectory) == 0;
+    int16_t fDirectory, fLink;
+    if (!FNativePathInfo(pszDirectory, &fDirectory, &fLink)) return FALSE;
+    if (fDirectory && !fLink &&
+        !FNativeEnumerateDirectory(pszDirectory, RemoveLibraryGameEntry, (void *)pszDirectory)) return FALSE;
+    return RemoveNativePath(pszDirectory) == 0;
 }
 
 static int16_t FCreateLibraryGameStage(const char *pszSource, const char *pszSourceName,
@@ -1528,10 +1539,11 @@ static int16_t FValidManagedLibraryGame(const char *pszName, char *pszDirectory,
                                         char *pszExchangeName, size_t cchExchange) {
     char szMetadataName[256];
     int cchDirectory;
+    int16_t fDirectory, fLink;
     if (!pszName || !FInitLibrary() || !FPortableLibraryName(pszName) ||
         (cchDirectory = CchSnprintf(pszDirectory, 512, "%s%s%s", szLibraryRoot, szDirSep, pszName)) <= 0 ||
         (size_t)cchDirectory >= 512 ||
-        !FNativeDirectoryExists(pszDirectory) ||
+        !FNativePathInfo(pszDirectory, &fDirectory, &fLink) || !fDirectory || fLink ||
         !FReadLibraryMetadata(pszDirectory, szMetadataName, sizeof(szMetadataName), piplr,
                               plPlayed, pszExchangeName, cchExchange)) return FALSE;
     return !SDL_strcasecmp(szMetadataName, pszName);

@@ -1565,6 +1565,21 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
             CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
             CchSnprintf(szBaseline, sizeof(szBaseline), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
+        if (getenv("STARS_CLIENT_GAME_REJECT")) {
+            fExpectGameRenameFailure = TRUE;
+            fImported = fDuplicate ? FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) :
+                                     FRenameLibraryGame(hwndTitle, pszSource, pszRename);
+            fExpectGameRenameFailure = FALSE;
+            if (fImported) {
+                fprintf(stderr, "Unsafe managed-game action unexpectedly succeeded\n");
+                goto LDone;
+            }
+            fChecked = TRUE;
+            fPassed = TRUE;
+            puts("Unsafe managed-game action rejected");
+            PostQuitMessage(0);
+            return;
+        }
         if (fDuplicate && !FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy)) goto LDone;
         if (fDuplicate) {
             CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);

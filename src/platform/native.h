@@ -117,6 +117,8 @@ typedef int16_t (*FNativeDirectoryEntryProc)(void *lpData, const char *pszEntry)
 int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile);
 int16_t FNativeDirectoryExists(const char *pszDir);
+// Inspect the final component without following links or Windows reparse points.
+int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink);
 int16_t FEnsureNativeDir(const char *pszDir);
 int     RemoveNativeFile(const char *psz);
 int     RemoveNativePath(const char *psz);
