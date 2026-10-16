@@ -364,7 +364,7 @@ int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
     // The frozen regression race is password protected. This test qualifies
     // file loading and client creation; password validation is outside its scope.
-    return pszContinue ? TRUE : StarsTestReal_PromptPassword();
+    return pszContinue || getenv("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
 }
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
@@ -1331,6 +1331,7 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
 }
 
 #include "win32_newgame_workflow.h"
+#include "win32_game_export_workflow.h"
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
@@ -1343,7 +1344,6 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
     const char *pszGameCapture = getenv("STARS_CLIENT_GAME_CAPTURE");
     const char *pszExportGame = getenv("STARS_CLIENT_EXPORT_GAME");
-    const char *pszExportParent = getenv("STARS_CLIENT_EXPORT_PARENT");
     static const DLGPROC rglpfnRace[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     BYTE *rgb;
     size_t cb, i;
@@ -1360,35 +1360,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
 
     (void)hwnd; (void)msg; (void)dwTime;
     if (pszExportGame) {
-        int16_t fExported;
-        char szExportSentinel[512];
-        if (fPassed) return;
-        if (iStage != 0) return;
-        if (!IsWindowVisible(hwndTitle) || !pszExportParent ||
-            !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT) ||
-            !IsWindowEnabled(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_EXPORT)) ||
-            !FSelectClientGameName(hwndTitle, pszExportGame)) goto LDone;
-        fExported = FExportLibraryGame(hwndTitle, pszExportGame, pszExportParent);
-        if (getenv("STARS_CLIENT_EXPORT_EXPECTED")) {
-            if (fExported || cAlerts != 1) goto LDone;
-            fChecked = TRUE;
-            fPassed = TRUE;
-            KillTimer(NULL, id);
-            PostQuitMessage(0);
-            return;
-        }
-        if (!fExported) goto LDone;
-        if (getenv("STARS_CLIENT_EXPORT_COLLISION")) {
-            CchSnprintf(szExportSentinel, sizeof(szExportSentinel), "%s%s%s%skeep.txt",
-                        pszExportParent, szDirSep, pszExportGame, szDirSep);
-            if (!FTestWriteFile(szExportSentinel, "preserve existing export")) goto LDone;
-            if (FExportLibraryGame(NULL, pszExportGame, pszExportParent)) goto LDone;
-        }
-        fChecked = TRUE;
-        fPassed = TRUE;
-        puts("Complete managed game export copied through the client workflow");
-        KillTimer(NULL, id);
-        PostQuitMessage(0);
+        if (!FCheckGameExportWorkflow(id)) goto LDone;
         return;
     }
     if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {

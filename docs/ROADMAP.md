@@ -188,6 +188,11 @@ caption buffer, so name rejection and storage failure checks also work under GCC
 Complete game-folder export preserves player files, host state and backups.
 Destinations must fit the loader's full game and backup paths; overlong paths
 are rejected before copying rather than publishing a truncated game family.
+Canceling the export folder chooser preserves unsaved orders; save resolution
+happens only after a destination has been chosen.
+The real-client export workflow covers both players' saved orders and history,
+submitted status, backup contents, loader round trips, collisions, cancellation
+with dirty orders and filesystem failures, using isolated library storage.
 The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,

@@ -1046,6 +1046,7 @@ int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
     char szDir[512];
     char szName[256];
     if (!FGetSelectedLibraryGame(hwnd, szName, NULL)) return FALSE;
+    if (!pszTarget) return FExportLibraryGame(hwnd, szName, NULL);
     if (game.fDirty && lpPlanets && idPlayer != iplrNone) {
         CchSnprintf(szDir, sizeof(szDir), "%s%s%s", szLibraryRoot, szDirSep, szName);
         if (!strncmp(szBase, szDir, strlen(szDir)) && szBase[strlen(szDir)] == chDirSep) PromptSaveGame();

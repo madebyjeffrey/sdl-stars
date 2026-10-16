@@ -115,50 +115,6 @@ def main():
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
 
-        # Folder export carries every managed player file and its backup,
-        # while keeping private library metadata and the managed copy intact.
-        export_parent = work / 'export'
-        export_parent.mkdir()
-        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(export_parent),
-            STARS_CLIENT_EXPORT_COLLISION='1')
-        exported = export_parent / 'managed-copy'
-        source_before_export = {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()}
-        expected_export = {path: content for path, content in source_before_export.items() if path.name != '.library'}
-        expected_export[Path('keep.txt')] = b'preserve existing export'
-        assert {p.relative_to(exported): p.read_bytes() for p in exported.rglob('*') if p.is_file()} == expected_export
-        assert (exported / 'keep.txt').read_text(encoding='utf-8') == 'preserve existing export'
-        assert {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()} == source_before_export
-        run(executable, work, STARS_CLIENT_CONTINUE=str(exported / 'managed-copy.m1'))
-
-        # Saved orders and history are included with their contents intact.
-        (imported / 'managed-copy.x1').write_bytes(b'saved player one orders')
-        (imported / 'managed-copy.h2').write_bytes(b'player two history')
-        (imported / 'managed-copy.x2').write_bytes(b'saved player two orders')
-        source_before_export = {p.relative_to(imported): p.read_bytes() for p in imported.rglob('*') if p.is_file()}
-        orders_export_parent = work / 'export-with-orders'
-        orders_export_parent.mkdir()
-        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(orders_export_parent))
-        orders_export = orders_export_parent / 'managed-copy'
-        assert {p.relative_to(orders_export): p.read_bytes() for p in orders_export.rglob('*') if p.is_file()} == {
-            path: content for path, content in source_before_export.items() if path.name != '.library'
-        }
-
-        # A destination directory may fit while individual staged filenames do
-        # not. Reject it without publishing a partial game or leaving a stage.
-        long_name = 'managed-game-' + 'a' * 38
-        long_work = work / 'long-case'
-        run(executable, long_work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME=long_name)
-        long_source = long_work / 'library' / 'Games' / long_name
-        long_before = {p.relative_to(long_source): p.read_bytes() for p in long_source.rglob('*') if p.is_file()}
-        long_parent = work / 'long-export'
-        while len(os.fsencode(long_parent)) < 440:
-            long_parent /= 'p' * max(1, min(90, 439 - len(os.fsencode(long_parent))))
-        long_parent.mkdir(parents=True)
-        run(executable, long_work, STARS_CLIENT_EXPORT_GAME=long_name, STARS_CLIENT_EXPORT_PARENT=str(long_parent),
-            STARS_CLIENT_EXPORT_EXPECTED='fail')
-        assert not list(long_parent.iterdir())
-        assert {p.relative_to(long_source): p.read_bytes() for p in long_source.rglob('*') if p.is_file()} == long_before
-
         # Two-digit player extensions use the full one-based player number.
         player16 = bytearray((fixture / 'game.m1').read_bytes())
         player16[14:16] = ((int.from_bytes(player16[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')

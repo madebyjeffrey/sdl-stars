@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportSelectedLibraryGame` asks for a destination before resolving dirty
+  orders. Canceling the folder chooser no longer saves the loaded game, and
+  choosing Don't Save is requested only once per export. Host results and
+  native regression baselines are unchanged.
+
 - `FExportLibraryGame` rejects destinations whose full game or backup paths
   exceed the loader's capacity, instead of silently truncating filenames and
   reporting an incomplete export as successful. Host results and native
