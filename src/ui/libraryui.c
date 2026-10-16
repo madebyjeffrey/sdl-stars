@@ -108,9 +108,10 @@ static int16_t FPortableRaceFilename(const char *pszName) {
     return TRUE;
 }
 
+/* The Windows CRT environment uses its code page; SDL supplies UTF-8 paths. */
 static int16_t FInitRaceLibrary(void) {
-    const char *pszOverride = getenv("STARS_LIBRARY_DIR");
-    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
+    const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     char *pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
     int cch;
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
@@ -179,8 +180,8 @@ static int16_t FInitLibrary(void) {
     char *pszRoot;
     int cch;
 
-    pszOverride = getenv("STARS_LIBRARY_DIR");
-    pszSettings = getenv("STARS_SETTINGS_DIR");
+    pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
+    pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames",

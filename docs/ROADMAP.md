@@ -200,6 +200,8 @@ It confirms replacement of the final numbered destination after extension
 correction; rejecting replacement preserves existing exports and pending work.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
+Windows library roots use SDL UTF-8 environment paths even when the CRT code
+page cannot represent the settings folder.
 Windows library membership and managed race selection accept both native
 separators and the wrapper picker's forward-slash paths.
 Recent-file migration validates the selected source before enumerating its

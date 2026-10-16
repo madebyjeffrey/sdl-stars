@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FInitLibrary` and `FInitRaceLibrary` read environment paths through SDL's
+  UTF-8 API on Windows. Libraries under accented or non-Latin settings and
+  override paths can now import races and export orders. Simulation results,
+  save formats and native regression baselines are unchanged.
+
 - The PDF map test now starts from a managed game, avoiding a wait at the
   external-game Import dialog. Its full planet-position and PDF checks also
   run on macOS. Product behavior and simulation baselines are unchanged.
