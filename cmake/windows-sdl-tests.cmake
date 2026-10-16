@@ -121,3 +121,5 @@ add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
     "${CMAKE_BINARY_DIR}/test-client/tutorial-dummy")
 set_tests_properties(win32_native_tutorial_smoke_dummy PROPERTIES LABELS "client;tutorial-smoke" TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+
+include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")

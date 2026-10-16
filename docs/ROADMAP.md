@@ -192,7 +192,9 @@ The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
 cancelled edit, import, duplicate and export/reload; the
-native file-workflow harness covers protected save/reload, checksum preservation
+native file-workflow harness keeps its timer active through race-import naming
+and runs with a portable chooser on each SDL platform as well as the Linux
+portal. It covers protected save/reload, checksum preservation
 and duplicate-name rejection. Duplicate, ordinary export and confirmed deletion
 are now available from the selected design. The
 initial top-level size notification now initializes pane layout, and the

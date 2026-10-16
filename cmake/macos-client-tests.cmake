@@ -66,3 +66,5 @@ stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_GetPrefPath SDL_OpenUR
 add_dependencies(stars-compat-help stars-help-guide)
 add_test(NAME win32_utf8_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}")
 set_tests_properties(win32_utf8_help PROPERTIES LABELS compat TIMEOUT 120)
+
+include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")

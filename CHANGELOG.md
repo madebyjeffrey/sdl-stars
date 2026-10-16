@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The real file-workflow test keeps its timer active while accepting the race
+  import dialog, avoiding a deadlock. The same workflow now runs with portable
+  chooser substitutions on macOS, Windows and Linux in addition to the Linux
+  portal test. Product behavior and simulation baselines are unchanged.
+
 - Desktop Open and recent-file actions now distinguish races from games by
   file contents. Race selections import into Race Designs and open the copied
   design for editing; cancelling customization retains the import and leaves
