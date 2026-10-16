@@ -874,22 +874,17 @@ static int16_t FLibraryNameAvailableExcept(const char *pszName, const char *pszE
 static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
     LIBRARYGAMECOPY *plgc = lpData;
     char szSource[512], szTarget[512];
-    char szBackup[32];
     LIBRARYGAMECOPY lgb;
     int iplr;
-    int cch, i;
-    size_t cchName;
+    int cch;
     DtFileType dt;
     if (!strcmp(pszName, ".") || !strcmp(pszName, "..")) return TRUE;
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plgc->pszSource, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szSource)) { plgc->fBad = TRUE; return FALSE; }
     if (FNativeDirectoryExists(szSource)) {
-        cchName = strlen(pszName);
-        if (cchName != 10 || strncmp(pszName, "backup.", 7)) return TRUE;
-        for (i = 7; i < 10; i++) if (pszName[i] < '0' || pszName[i] > '9') return TRUE;
-        cch = CchSnprintf(szBackup, sizeof(szBackup), "%s", pszName);
-        if (cch <= 0 || (size_t)cch >= sizeof(szBackup)) { plgc->fBad = TRUE; return FALSE; }
-        cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, szBackup);
+        /* Rename removes the original tree after publication, so every directory
+         * must survive staging, including backup, backupN and sidecar folders. */
+        cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
         if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) { plgc->fBad = TRUE; return FALSE; }
         if (CreateNativeDir(szTarget) != 0) { plgc->fBad = TRUE; return FALSE; }
         /* Backup files use the original basename family, with unrelated sidecars retained verbatim. */

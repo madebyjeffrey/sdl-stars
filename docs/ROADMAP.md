@@ -179,6 +179,9 @@ managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
+Managed-game duplicate and rename preserve all backup naming variants and nested
+sidecar folders while renaming the matching binary file family throughout the
+copied tree. Real-client coverage checks their contents after both operations.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are

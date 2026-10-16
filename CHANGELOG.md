@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Managed-game duplication and rename now preserve the complete directory tree.
+  The copier previously skipped the default `backup` and numbered `backupN`
+  folders; rename then deleted those omitted backups with the original tree.
+  Sidecar folders and all supported backup names now survive both actions.
+  Simulation behavior and regression baselines are unchanged.
+
 - Existing managed games now accept a valid later standalone player turn,
   including skipped years. The importer matches by game identity, asks which
   managed copy to update when several match, treats identical turns as no-ops,

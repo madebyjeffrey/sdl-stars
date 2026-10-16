@@ -122,9 +122,11 @@ def main():
         playable_path = playable / 'managed-playable'
         run(executable, work, STARS_CLIENT_NEW_GAME=str(playable_path.with_suffix('.xy')),
             STARS_CLIENT_LIBRARY_NAME='managed-playable')
-        playable_backup = playable / 'backup.000'
-        playable_backup.mkdir()
-        shutil.copyfile(playable / 'managed-playable.m1', playable_backup / 'managed-playable.m1')
+        backup_names = ('backup', 'backup0', 'backup98', 'backup.000', 'backup.998', 'sidecars/nested')
+        for name in backup_names:
+            playable_backup = playable / name
+            playable_backup.mkdir(parents=True)
+            shutil.copyfile(playable / 'managed-playable.m1', playable_backup / 'managed-playable.m1')
         (playable / 'exchange.map').write_text('external universe definition', encoding='utf-8')
         playable_metadata = (playable / '.library').read_text(encoding='utf-8').splitlines()
         playable_metadata[2:4] = ['0', '42']
@@ -141,7 +143,8 @@ def main():
         assert duplicate_metadata[1:5] == ['managed-playable duplicate', '-1', '0', 'managed-playable']
         assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
         assert (duplicate / 'managed-playable duplicate.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
-        assert (duplicate / 'backup.000' / 'managed-playable duplicate.m1').read_bytes() == playable_turn
+        for name in backup_names:
+            assert (duplicate / name / 'managed-playable duplicate.m1').read_bytes() == playable_turn
         assert {p.relative_to(playable): p.read_bytes() for p in playable.rglob('*') if p.is_file()} != {
             p.relative_to(duplicate): p.read_bytes() for p in duplicate.rglob('*') if p.is_file()}
         run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-playable duplicate')
@@ -160,7 +163,8 @@ def main():
         assert (renamed / 'backup.000' / 'renamed-copy.m1').is_file()
         metadata = (renamed / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[1] == 'renamed-copy' and metadata[2:4] == ['1', '123456'] and metadata[4] == 'managed-playable'
-        assert (renamed / 'backup.000' / 'renamed-copy.m1').read_bytes() == playable_turn
+        for name in backup_names:
+            assert (renamed / name / 'renamed-copy.m1').read_bytes() == playable_turn
         assert (renamed / 'renamed-copy.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
         assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
         run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
