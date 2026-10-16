@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryOrders` now confirms replacement of the final numbered orders
+  filename after correcting its extension. Previously, choosing a different
+  extension could silently overwrite an existing `.xN` file. Declining leaves
+  that file and pending managed work untouched. Native baselines are unchanged.
+
 - `FExportLibraryOrders` no longer formats a selected destination or fallback
   library name over the same buffer, fixing Linux exports that silently failed
   after choosing a filename. Game simulation and native baselines are unchanged.

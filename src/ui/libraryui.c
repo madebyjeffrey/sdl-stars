@@ -624,12 +624,13 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     char szBaseSav[sizeof(szBase)], szBaseStem[sizeof(szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
     char szStageBase[sizeof(szBase)], szStage[sizeof(szBase)], szStageHist[sizeof(szBase)];
     char szSource[sizeof(szBase)], szSourceHist[sizeof(szBase)], szPreviousHist[sizeof(szBase)];
-    char szTemp[512];
+    char szTemp[512], szMessage[640], szExt[4];
     char *pch, *pchSlash;
     const char *pszLibraryName;
     char *pszSaveError;
     FILE *pf;
     uint32_t dwTick;
+    int64_t cbTarget;
     size_t cchRoot;
     int cch;
     int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
@@ -666,8 +667,9 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
         ofn.nFilterIndex = 1;
         ofn.lpstrFile = szTarget;
         ofn.nMaxFile = sizeof(szTarget);
-        ofn.lpstrDefExt = "x";
-        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+        CchSnprintf(szExt, sizeof(szExt), "x%d", idPlayer + 1);
+        ofn.lpstrDefExt = szExt;
+        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
         if (!FNativeSaveFileName(&ofn)) return FALSE;
         pszTarget = szTarget;
     }
@@ -682,6 +684,12 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     if (!szTarget[0]) return FALSE;
     cch = CchSnprintf(szTarget + strlen(szTarget), sizeof(szTarget) - strlen(szTarget), ".x%d", idPlayer + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szTarget) - strlen(szTarget)) return FALSE;
+
+    /* Confirm the actual orders path after correcting the chooser's extension. */
+    if (FNativeFileSize(szTarget, &cbTarget)) {
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryReplaceOrders), szTarget);
+        if (MessageBox(hwnd, szMessage, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return FALSE;
+    }
 
     SetSzWorkFromDt(dtLog, idPlayer);
     CchSnprintf(szSource, sizeof(szSource), "%s", szWork);

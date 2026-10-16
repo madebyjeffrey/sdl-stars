@@ -32,16 +32,16 @@ class Chooser(dbus.service.Object):
         assert options['modal'] and options['filters']
         assert parent == '' or str(parent).startswith(('x11:', 'wayland:'))
         calls.append(save)
-        assert calls == [False, False, True, True, False, True, True, True][:len(calls)]
+        assert calls == [False, False, True, True, False, True, True, True, True][:len(calls)]
         if len(calls) == 6:
             assert options['current_name'] == race.name
-        if len(calls) == 8:
+        if len(calls) in (8, 9):
             assert options['current_name'] == 'café-Ω.x1'
         path = '/org/freedesktop/portal/desktop/request/' + str(sender)[1:].replace('.', '_') + '/' + str(options['handle_token'])
         request = Request(bus, path)
         requests.append(request)
         cancel = len(calls) in (1, 3, 7)
-        uri = export_choice.as_uri() if len(calls) == 8 else race_repeat.as_uri() if len(calls) == 6 else race.as_uri() if save or len(calls) == 5 else game.as_uri()
+        uri = export_choice.as_uri() if len(calls) in (8, 9) else race_repeat.as_uri() if len(calls) == 6 else race.as_uri() if save or len(calls) == 5 else game.as_uri()
         def respond():
             request.Response(dbus.UInt32(1 if cancel else 0), dbus.Dictionary(
                 {} if cancel else {'uris': dbus.Array([uri], signature='s')}, signature='sv'))
@@ -69,12 +69,17 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-') as directory:
     game = managed / 'Renamed copy.m1'
     export_choice = root / 'user-orders.changed-extension'
     exported = root / 'user-orders.x1'
+    previous_export = root / 'previous-orders.x1'
+    previous_export.write_bytes(b'previous exported orders')
+    shutil.copyfile(previous_export, exported)
+    assert not export_choice.exists()
     managed_orders = managed / 'Renamed copy.x1'
     managed_turn = managed / 'Renamed copy.m1'
     export_failure = root / 'missing-directory' / 'cannot-write.x1'
     chooser = Chooser(bus, '/org/freedesktop/portal/desktop')
     env = dict(os.environ, STARS_SETTINGS_DIR=str(root), STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
-               STARS_TEST_EXPORT_EXPECTED=str(exported), STARS_TEST_MANAGED_ORDERS=str(managed_orders),
+               STARS_TEST_EXPORT_EXPECTED=str(exported), STARS_TEST_EXPORT_PREVIOUS=str(previous_export),
+               STARS_TEST_MANAGED_ORDERS=str(managed_orders),
                STARS_TEST_MANAGED_TURN=str(managed_turn), STARS_TEST_EXPORT_FAILURE_TARGET=str(export_failure),
                STARS_FILE_DIALOG_BACKEND='portal', SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', STARS_SDL_RENDERER='software')
     client = subprocess.Popen([str(Path(args.client).resolve())], cwd=root, env=env)
@@ -88,10 +93,11 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-') as directory:
     GLib.timeout_add_seconds(45, timeout)
     loop.run()
     assert client.wait() == 0
-    assert calls == [False, False, True, True, False, True, True, True]
+    assert calls == [False, False, True, True, False, True, True, True, True]
     # The client compares the files immediately after export. The later failed
     # export saves again, including a fresh BOF salt in the managed copy.
     assert exported.is_file() and managed_orders.is_file()
+    assert exported.read_bytes() != previous_export.read_bytes()
     assert (managed / 'Renamed copy.m1').is_file()
     assert race.is_file() and race.stat().st_size > 0
     assert race_repeat.is_file() and race_repeat.stat().st_size > 0

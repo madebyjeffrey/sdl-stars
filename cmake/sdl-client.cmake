@@ -174,7 +174,7 @@ target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-comp
 target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1)
 target_compile_options(stars-compat-fileworkflow PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword)
+stars_test_redirect(stars-compat-fileworkflow InitInstance AlertSz PromptPassword MessageBoxA)
 set_target_properties(stars-compat-fileworkflow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
