@@ -12,6 +12,21 @@ def snapshot(directory):
             for p in directory.rglob('*') if p.is_file()}
 
 
+def session_settings(directory):
+    lines = (directory / 'StarsUtf8.ini').read_text(encoding='utf-8').splitlines()
+    in_files = False
+    files = []
+    for line in lines:
+        line = line.removeprefix('\ufeff')
+        if line.startswith('['):
+            if in_files:
+                break
+            in_files = line.lower() == '[files]'
+        if in_files:
+            files.append(line)
+    return tuple(files)
+
+
 def run(executable, mode):
     with tempfile.TemporaryDirectory(prefix='stars-game-delete-') as directory:
         work = Path(directory)
@@ -40,6 +55,8 @@ def run(executable, mode):
         settings.joinpath('StarsUtf8.ini').write_text(
             f'[Files]\nFile1={selected / "selected-game.m1"}\nFile2={other / "other-game.m1"}\n',
             encoding='utf-8')
+        catalog_before = snapshot(games)
+        session_settings_before = session_settings(settings)
         env = dict(os.environ, STARS_SETTINGS_DIR=str(settings), STARS_PROFILE_DIR=str(settings),
                    STARS_LIBRARY_DIR=str(work / 'library'), STARS_CLIENT_GAME_DELETE_MODE=mode,
                    STARS_FILE_DIALOG_BACKEND='compat')
@@ -52,6 +69,10 @@ def run(executable, mode):
             ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
             assert 'File1=' in ini and f'File1={other / "other-game.m1"}' not in ini
             assert f'File2={other / "other-game.m1"}' in ini
+        elif mode == 'cancel':
+            assert snapshot(selected) == selected_before
+            assert snapshot(games) == catalog_before
+            assert session_settings(settings) == session_settings_before
         else:
             assert selected.is_dir()
             assert (selected / 'selected-game.m1').read_bytes() == selected_before[Path('selected-game.m1')]

@@ -1915,12 +1915,13 @@ LDone:
 static int16_t FDeleteLibraryGameRecentPaths(const char *pszDirectory) {
     char szIniFile[32], szSection[16], szEntry[16], szPath[512];
     char rgpszRecent[9][256];
+    const char *pszRecent;
     int i, j, cch;
     int16_t fContinueRemoved = FALSE;
 
     if (!vrgszMRU) return TRUE;
     for (i = 0; i < 9; i++) {
-        const char *pszRecent = vrgszMRU + 256 * i;
+        pszRecent = vrgszMRU + 256 * i;
         cch = CchSnprintf(szPath, sizeof(szPath), "%s", pszRecent);
         if (cch < 0 || (size_t)cch >= sizeof(szPath)) return FALSE;
         if (FPathUnderLibrary(pszDirectory, szPath)) {
@@ -1965,18 +1966,16 @@ int16_t FDeleteLibraryGame(HWND hwnd, const char *pszName) {
     if (cch <= 0 || (size_t)cch >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
                               szExchangeName, sizeof(szExchangeName)) || strcmp(szMetadataName, pszName)) return FALSE;
-    cch = CchSnprintf(szMessage, sizeof(szMessage),
-        "Delete managed game %s? This removes all player files, host state, history, and backups. Export the complete game first if you want to keep a copy.",
-        pszName);
+    cch = CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryDeleteGamePrompt), pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szMessage)) return FALSE;
     if (MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryGames),
                    MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
     if (!RemoveLibraryGameTree(szDirectory)) {
-        AlertSz("The selected managed game could not be completely deleted.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryDeleteGameFailed), MB_ICONHAND);
         return FALSE;
     }
     if (!FDeleteLibraryGameRecentPaths(szDirectory))
-        AlertSz("The game was deleted, but its recent-game entry could not be cleared.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryDeleteGameRecentFailed), MB_ICONEXCLAMATION);
     return TRUE;
 }
 
@@ -2239,7 +2238,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", PszGetCompressedString(idsRename), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
-    CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 524, y - 22, 56, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAME_DELETE, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
