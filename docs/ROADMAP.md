@@ -211,6 +211,17 @@ game paths directly, without a second file selection.
 New Game keeps full library filenames per custom race and scopes each race
 edit to its own destination; predefined customizations receive a new managed
 filename instead of overwriting the last imported design.
+Complete game-folder export preserves player files, host state and backups.
+Destinations must fit the loader's full game and backup paths; overlong paths
+are rejected before copying rather than publishing a truncated game family.
+Canceling the export folder chooser preserves unsaved orders; save resolution
+happens only after a destination has been chosen.
+The real-client export workflow covers both players' saved orders and history,
+submitted status, backup contents, export/load and reimport/load round trips,
+collisions, cancellation with dirty orders and filesystem failures, using
+isolated library storage. Import framing accepts both the empty end records
+written for orders/history and the two-byte trailers, while rejecting trailing
+bytes.
 The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,

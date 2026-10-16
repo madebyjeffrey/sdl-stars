@@ -2795,6 +2795,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 ShowLibraryImportFolderPicker(hwnd);
                 break;
             }
+        case IDC_LIBRARY_GAME_EXPORT:
+            FExportSelectedLibraryGame(hwnd, NULL);
+            break;
         case IDC_LIBRARY_DUPLICATE:
         case IDC_LIBRARY_RENAME:
             if (FActOnSelectedLibraryGame(hwnd, LOWORD(wParam) == IDC_LIBRARY_RENAME)) RefreshLibraryGames(hwnd);
@@ -2862,6 +2865,12 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_STARS_IMPORT_FOLDER:
         if ((char *)wParam) {
             if (FImportLibraryGame(hwnd, (char *)wParam)) RefreshLibraryGames(hwnd);
+            SDL_free((char *)wParam);
+        }
+        break;
+    case WM_STARS_EXPORT_FOLDER:
+        if ((char *)wParam) {
+            FExportSelectedLibraryGame(hwnd, (char *)wParam);
             SDL_free((char *)wParam);
         }
         break;

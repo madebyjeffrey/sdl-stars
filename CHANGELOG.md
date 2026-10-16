@@ -54,6 +54,25 @@ produce different results from a 2.6j host for the same turn.
   declining is remembered. Desktop Open Game, recent external games, and
   external race selection now use managed import workflows. Imported sources
   remain unchanged, and command-line host paths are unchanged.
+- `FInspectImportFile` accepts the empty end records written by the game's
+  orders and history writers. Complete game exports containing saved orders
+  can now be reimported; trailing bytes are still rejected. File formats,
+  host results and native regression baselines are unchanged.
+
+- `FExportSelectedLibraryGame` asks for a destination before resolving dirty
+  orders. Canceling the folder chooser no longer saves the loaded game, and
+  choosing Don't Save is requested only once per export. Host results and
+  native regression baselines are unchanged.
+
+- `FExportLibraryGame` rejects destinations whose full game or backup paths
+  exceed the loader's capacity, instead of silently truncating filenames and
+  reporting an incomplete export as successful. Host results and native
+  regression baselines are unchanged.
+
+- The desktop Games library can export a complete game family to a folder named
+  for its library entry. Exports include all player files, host state, and
+  backups, retain the managed original, and leave existing destinations intact.
+  Game behavior and disk record layouts are unchanged.
 
 - `FCopyLibraryGameEntry` now rejects collisions between renamed binary family
   members and unchanged sidecars, including case-only collisions and entries
