@@ -39,6 +39,7 @@ def main():
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.hst").is_file()
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.m1").is_file()
         assert (settings / "Games" / "Hosted" / "Hosted.x1").is_file()
+        assert not (settings / "Games" / "Hosted" / "Hosted.x16").exists()
         assert (settings / "Hosted" / "Hosted.hst").read_bytes() == (source / "game.hst").read_bytes()
         assert (settings / "Games" / "HostRenamed" / "HostRenamed.hst").read_bytes() == (source / "game.hst").read_bytes()
         assert not (settings / "Games" / "HostRenamed" / "HostRenamed.m1").exists()

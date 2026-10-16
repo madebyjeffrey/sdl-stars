@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FImportLibraryOrders` now rejects player slots absent from the selected
+  hosted game; previously a consistently numbered file for any slot up to 16
+  could be installed even though host generation would ignore it.
+
 - `FSelectedLibraryGameName` now resolves Export Game, Duplicate and Rename
   from the visible library view instead of the hidden Games selection. Host-only
   libraries enable these actions, and both lists refresh after duplicate/rename.

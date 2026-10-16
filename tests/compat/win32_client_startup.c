@@ -1503,7 +1503,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
     char szHostSourceHost[512], szHostSourceUniverse[512], szHostManagedHost[512], szHostManagedUniverse[512];
     char szHostManagedBase[512], szHostOrderFile[512], szHostManagedOrders[512];
-    char szHostOrderIdentity[512], szHostOrderPlayer[512], szHostOrderTurn[512];
+    char szHostOrderIdentity[512], szHostOrderPlayer[512], szHostOrderTurn[512], szHostOrderAbsentPlayer[512];
     char szHostOrderGeneration[512], szHostOrderDifferent[512], szHostPickerOrder[512], szSavedBase[sizeof(szBase)];
     char szFleetNameSav[64];
     int cchHostOrder;
@@ -1732,9 +1732,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                         CchSnprintf(szHostOrderIdentity, sizeof(szHostOrderIdentity), "%s.identity.x1", pszHostOrderBase) <= 0 ||
                         CchSnprintf(szHostOrderPlayer, sizeof(szHostOrderPlayer), "%s.player.x1", pszHostOrderBase) <= 0 ||
                         CchSnprintf(szHostOrderTurn, sizeof(szHostOrderTurn), "%s.turn.x1", pszHostOrderBase) <= 0 ||
+                        CchSnprintf(szHostOrderAbsentPlayer, sizeof(szHostOrderAbsentPlayer), "%s.absent.x16", pszHostOrderBase) <= 0 ||
                         CchSnprintf(szHostOrderGeneration, sizeof(szHostOrderGeneration), "%s.generation.x1", pszHostOrderBase) <= 0 ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderIdentity, 6, 1) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderPlayer, 14, 1) ||
+                        !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderAbsentPlayer, 14, 15) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderTurn, 12, 1) ||
                         !FCopyOrderWithByteChange(szHostOrderFile, szHostOrderGeneration, 17, 0x20)) { fprintf(stderr, "Host order variants failed: %s\n", SDL_GetError()); goto LDone; }
                     for (iFleetHostOrder = 0; iFleetHostOrder < cFleet; iFleetHostOrder++) {
@@ -1761,6 +1763,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     if (FImportLibraryOrders(hwndTitle, szHostOrderPlayer)) { fprintf(stderr, "Host order player mismatch accepted\n"); goto LDone; }
                     if (FImportLibraryOrders(hwndTitle, szHostOrderTurn)) { fprintf(stderr, "Host order turn mismatch accepted\n"); goto LDone; }
                     if (FImportLibraryOrders(hwndTitle, szHostOrderGeneration)) { fprintf(stderr, "Host order generation mismatch accepted\n"); goto LDone; }
+                    if (FImportLibraryOrders(hwndTitle, szHostOrderAbsentPlayer)) { fprintf(stderr, "Host order for nonexistent player accepted\n"); goto LDone; }
                     if (!FImportLibraryOrders(hwndTitle, szHostOrderFile)) { fprintf(stderr, "Host order valid file rejected\n"); goto LDone; }
                     if (!FTestFilesEqual(szHostOrderFile, szHostManagedOrders)) {
                         fprintf(stderr, "Host order target differs after import: target=%s\n", szHostManagedOrders);
@@ -2594,7 +2597,7 @@ int main(void) {
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
-           cAlerts == (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 4 :
+           cAlerts == (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
                        getenv("STARS_CLIENT_RECENT_MIGRATION") ?
                        (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
                         strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?

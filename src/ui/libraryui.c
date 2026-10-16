@@ -1890,6 +1890,31 @@ LDone:
     return fResult;
 }
 
+static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
+    FILE *pf;
+    HDR hdr;
+    RTBOF rtbof;
+    GAME gameImport;
+    int32_t lSeed1, lSeed2;
+    int16_t fRead;
+
+    pf = PfOpenNativeFile(pszUniverse, "rb");
+    if (!pf) return FALSE;
+    fRead = fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(RTBOF) &&
+            fread(&rtbof, sizeof(rtbof), 1, pf) == 1 &&
+            fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
+            fread(&gameImport, sizeof(gameImport), 1, pf) == 1;
+    fclose(pf);
+    if (!fRead) return FALSE;
+    /* Inspect the selected universe without disturbing an open game's stream. */
+    GetFileSeeds(&lSeed1, &lSeed2);
+    SetFileXorStream(rtbof.lidGame, rtbof.lSaltTime, rtbof.turn, rtbof.iPlayer, rtbof.fCrippled);
+    XorFileBuf((char *)&gameImport, sizeof(gameImport));
+    SetFileSeeds(lSeed1, lSeed2);
+    return gameImport.lid == rtbof.lidGame && gameImport.cPlayer > 0 && gameImport.cPlayer <= 16 &&
+           iplr >= 0 && iplr < gameImport.cPlayer;
+}
+
 int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szChosen[512], szFilter[128], szName[256];
@@ -1951,7 +1976,8 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     if (cch <= 0 || (size_t)cch >= sizeof(szUniverse)) return FALSE;
     if (!FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, &wGenHost, &fMulti) ||
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
-        lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
+        lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
+        !FInspectImportPlayer(szUniverse, iplr)) {
         AlertSz("These orders do not match the selected hosted game's current turn and generation.", MB_ICONEXCLAMATION);
         return FALSE;
     }
