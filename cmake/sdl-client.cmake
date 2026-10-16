@@ -839,15 +839,8 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(win32_filedialog_x11 PROPERTIES LABELS "compat" ENVIRONMENT "STARS_FILE_DIALOG_BACKEND=compat;SDL_VIDEODRIVER=x11;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 endif()
 
-add_executable(stars-compat-printmap tests/compat/win32_printmap.c)
-target_link_libraries(stars-compat-printmap PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
-target_compile_options(stars-compat-printmap PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-printmap InitInstance PromptPassword AlertSz SDL_OpenURL)
-set_target_properties(stars-compat-printmap PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+include("${CMAKE_CURRENT_LIST_DIR}/print-map-tests.cmake")
 if(STARS_BUILD_TESTS)
-    add_test(NAME win32_print_map COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_print_map.py"
-        "$<TARGET_FILE:stars-compat-printmap>" "${CMAKE_BINARY_DIR}/print-map-test")
-    set_tests_properties(win32_print_map PROPERTIES LABELS "client;compat" TIMEOUT 150 RUN_SERIAL TRUE)
     find_program(STARS_GECKODRIVER_EXECUTABLE geckodriver)
     if(STARS_GECKODRIVER_EXECUTABLE)
         add_test(NAME win32_help_browser COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/compat/check_help_browser.py"

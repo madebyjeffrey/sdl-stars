@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The PDF map test now starts from a managed game, avoiding a wait at the
+  external-game Import dialog. Its full planet-position and PDF checks also
+  run on macOS. Product behavior and simulation baselines are unchanged.
+
 - The designer save/reload test now uses a managed game and changes its live
   research choice before reopening saved orders, so a failed reload cannot
   pass unnoticed. The workflow also runs on macOS. Product behavior and

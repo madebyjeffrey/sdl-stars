@@ -79,3 +79,5 @@ add_test(NAME win32_utf8_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}
 set_tests_properties(win32_utf8_help PROPERTIES LABELS compat TIMEOUT 120)
 
 include("${CMAKE_CURRENT_LIST_DIR}/fileworkflow-tests.cmake")
+
+include("${CMAKE_CURRENT_LIST_DIR}/print-map-tests.cmake")
