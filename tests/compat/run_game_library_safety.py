@@ -2,6 +2,7 @@
 import argparse
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 
@@ -35,7 +36,27 @@ def check(executable, case, action):
         external = work / 'external'
         external.mkdir()
         (external / 'important.txt').write_bytes(b'keep external files')
-        if case == 'root-link':
+        link = None
+        if case.startswith('collision-'):
+            target = 'renamed' if action == 'rename' else 'duplicate'
+            parent = source
+            extension = 'x1' if case == 'collision-orders' else 'm1'
+            if case == 'collision-backup':
+                parent = source / 'backup.000'
+                parent.mkdir()
+                shutil.copyfile(source / 'original.m1', parent / 'original.m1')
+            if case == 'collision-orders':
+                (source / 'original.x1').write_bytes(b'current saved orders')
+            name = f'{target}.{extension}'
+            if case == 'collision-case':
+                name = name.upper()
+            if case == 'collision-directory':
+                (parent / name).mkdir()
+                (parent / name / 'sidecar.txt').write_bytes(b'keep sidecar directory')
+            else:
+                (parent / name).write_bytes(b'keep conflicting sidecar')
+            before = snapshot(source)
+        elif case == 'root-link':
             source.rename(external / 'original')
             directory_link(source, external / 'original')
             link = source
@@ -64,10 +85,11 @@ def check(executable, case, action):
             assert snapshot(external / 'original') == before
         else:
             # Remove only the link before walking the original game tree.
-            if os.name == 'nt' and not link.is_symlink():
-                link.rmdir()
-            else:
-                link.unlink()
+            if link is not None:
+                if os.name == 'nt' and not link.is_symlink():
+                    link.rmdir()
+                else:
+                    link.unlink()
             assert snapshot(source) == before, (case, action, 'original files changed')
         print(f'{case}: {action} rejected with originals preserved')
 
@@ -75,7 +97,8 @@ def check(executable, case, action):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('client', type=Path)
-    cases = ('directory-link', 'backup-link', 'nested-link', 'root-link', 'file-link', 'dangling-link')
+    cases = ('directory-link', 'backup-link', 'nested-link', 'root-link', 'file-link', 'dangling-link',
+             'collision-root', 'collision-case', 'collision-backup', 'collision-directory', 'collision-orders')
     parser.add_argument('--case', choices=cases)
     args = parser.parse_args()
     for case in (args.case,) if args.case else cases:

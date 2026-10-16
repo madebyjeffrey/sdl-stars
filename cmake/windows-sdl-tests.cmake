@@ -96,7 +96,7 @@ set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS client TIMEOUT
 
 add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
-set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 90
+set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
 add_test(NAME win32_client_race_library_dummy COMMAND "${Python3_EXECUTABLE}"

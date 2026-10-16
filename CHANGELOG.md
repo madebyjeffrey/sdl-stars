@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FCopyLibraryGameEntry` now rejects collisions between renamed binary family
+  members and unchanged sidecars, including case-only collisions and entries
+  inside backups. Staging previously overwrote either file and rename then
+  removed the originals. Failed duplicate and rename actions preserve both
+  source files and do not publish a partial game. Simulation baselines are
+  unchanged.
+
 - Managed-game duplication and rename reject linked files, linked folders and
   Windows reparse points. `RemoveLibraryGameEntry` previously followed directory
   links while removing the old renamed tree and could delete external files.

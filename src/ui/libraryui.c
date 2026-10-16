@@ -1014,6 +1014,7 @@ static int16_t FLibraryNameAvailableExcept(const char *pszName, const char *pszE
 static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
     LIBRARYGAMECOPY *plgc = lpData;
     char szSource[512], szTarget[512];
+    const char *pszTargetFile;
     LIBRARYGAMECOPY lgb;
     int iplr;
     int cch;
@@ -1031,7 +1032,8 @@ static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
          * must survive staging, including backup, backupN and sidecar folders. */
         cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
         if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) { plgc->fBad = TRUE; return FALSE; }
-        if (CreateNativeDir(szTarget) != 0) { plgc->fBad = TRUE; return FALSE; }
+        if (!FLibraryNameAvailable(plgc->pszTarget, pszName) ||
+            CreateNativeDir(szTarget) != 0) { plgc->fBad = TRUE; return FALSE; }
         /* Backup files use the original basename family, with unrelated sidecars retained verbatim. */
         lgb.pszSource = szSource;
         lgb.pszTarget = szTarget;
@@ -1052,7 +1054,11 @@ static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
         cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plgc->pszTarget, szDirSep, pszName);
         if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) { plgc->fBad = TRUE; return FALSE; }
     } else return TRUE;
-    if (!FCopyNativeFile(szSource, szTarget)) { plgc->fBad = TRUE; return FALSE; }
+    /* Renamed family members and unchanged sidecars can map to the same name.
+     * Reject portable case collisions and never truncate an earlier staged file. */
+    pszTargetFile = strrchr(szTarget, chDirSep);
+    if (!pszTargetFile || !FLibraryNameAvailable(plgc->pszTarget, pszTargetFile + 1) ||
+        !FCopyNativeFileExclusive(szSource, szTarget)) { plgc->fBad = TRUE; return FALSE; }
     return TRUE;
 }
 

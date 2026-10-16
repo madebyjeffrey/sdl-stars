@@ -171,7 +171,7 @@ stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWin
 if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_game_library_safety_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_game_library_safety.py" "$<TARGET_FILE:stars-compat-client-startup>")
-    set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 90
+    set_tests_properties(win32_client_game_library_safety_dummy PROPERTIES LABELS client TIMEOUT 180
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 endif()
 add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
