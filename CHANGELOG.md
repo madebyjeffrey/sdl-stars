@@ -6,6 +6,41 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FCopyLibraryGameEntry` now rejects collisions between renamed binary family
+  members and unchanged sidecars, including case-only collisions and entries
+  inside backups. Staging previously overwrote either file and rename then
+  removed the originals. Failed duplicate and rename actions preserve both
+  source files and do not publish a partial game. Simulation baselines are
+  unchanged.
+
+- Managed-game duplication and rename reject linked files, linked folders and
+  Windows reparse points. `RemoveLibraryGameEntry` previously followed directory
+  links while removing the old renamed tree and could delete external files.
+  Cleanup now removes a link itself without traversing its target. Original
+  games and external targets remain intact when staging is rejected.
+  Simulation behavior and regression baselines are unchanged.
+
+- The Games library offers Duplicate and Rename actions. Copies have independent
+  files and session metadata; rename changes the managed folder and matching
+  binary file family, including backups. Both preserve the stored game title,
+  embedded identity and exchange basename, and failed publication restores the
+  original game. Simulation behavior and disk record layouts are unchanged.
+
+- Reopening a duplicated or renamed managed game now retains its original
+  exchange basename. `RememberLibraryGame` previously looked for metadata one
+  folder too deep and replaced that basename with the current library name.
+  Simulation behavior and regression baselines are unchanged.
+
+- Double-clicking a game in the library now opens the selected player turn.
+  The title-window command handler previously fell through into Duplicate and
+  opened a copy-name dialog. Simulation behavior and baselines are unchanged.
+
+- Managed-game duplication and rename now preserve the complete directory tree.
+  The copier previously skipped the default `backup` and numbered `backupN`
+  folders; rename then deleted those omitted backups with the original tree.
+  Sidecar folders and all supported backup names now survive both actions.
+  Simulation behavior and regression baselines are unchanged.
+
 - `FExportLibraryOrders` now confirms replacement of the final numbered orders
   filename after correcting its extension. Previously, choosing a different
   extension could silently overwrite an existing `.xN` file. Declining leaves
@@ -62,6 +97,10 @@ produce different results from a 2.6j host for the same turn.
   uniquely named managed folder. Imported source files stay untouched, and
   player rows show their own turn years. Simulation behavior and disk record
   layouts are unchanged.
+
+- Game library actions now resolve the selected row through its stored library
+  name instead of removing display-status text, preserving valid names that
+  contain those status phrases.
 
 - `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
   warning-as-error build and omitting Unicode profile coverage. The call now
