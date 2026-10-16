@@ -751,7 +751,7 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         ib = ftell(pf);
         if (ib < 0 || ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
-            if (hdr.cb != 2 || ib + hdr.cb != cbFile) break;
+            if (hdr.cb != (dt == dtLog ? 0 : 2) || ib + hdr.cb != cbFile) break;
             fComplete = TRUE;
             break;
         }
@@ -1208,7 +1208,7 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
     char szChosen[512], szFilter[128], szName[256];
     char szHost[512], szUniverse[512], szTarget[512], szStage[512], szMessage[512];
-    const char *pszFile, *pszExt;
+    const char *pszFile, *pszExt, *pchSlash;
     char *pch;
     int32_t lidHost, lidUniverse, lidOrders;
     uint16_t turnHost, turnOrders, wGenHost, wGenOrders;
@@ -1216,6 +1216,8 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     int iplr, cch;
     int64_t cbFile;
     uint32_t dwTick;
+    HWND hwndList;
+    LRESULT i;
 
     if (!pszSource) {
         memset(&ofn, 0, sizeof(ofn));
@@ -1233,20 +1235,16 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
         pszSource = szChosen;
     }
     if (!FInitLibrary() || !IsWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES))) return FALSE;
-    {
-        HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
-        LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-        if (i == LB_ERR) {
-            AlertSz("Select a hosted game before importing orders.", MB_ICONEXCLAMATION);
-            return FALSE;
-        }
-        SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
+    hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
+    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    if (i == LB_ERR) {
+        AlertSz("Select a hosted game before importing orders.", MB_ICONEXCLAMATION);
+        return FALSE;
     }
+    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
     pszFile = strrchr(pszSource, '/');
-    {
-        const char *pchSlash = strrchr(pszSource, '\\');
-        if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
-    }
+    pchSlash = strrchr(pszSource, '\\');
+    if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
     pszFile = pszFile ? pszFile + 1 : pszSource;
     pszExt = strrchr(pszFile, '.');
     if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
@@ -1534,13 +1532,12 @@ int16_t FSelectLibraryHostGame(HWND hwnd) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
     char szName[256];
+    int cch;
     if (i == LB_ERR) return FALSE;
     SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
-    {
-        int cch = CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
-                              szName, szDirSep, szName);
-        if (cch <= 0 || (size_t)cch >= sizeof(szBase)) return FALSE;
-    }
+    cch = CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
+                      szName, szDirSep, szName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szBase)) return FALSE;
     ini.fStartupFile = TRUE;
     return TRUE;
 }
