@@ -619,6 +619,159 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
     return TRUE;
 }
 
+int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
+    OPENFILENAME ofn;
+    char szBaseSav[sizeof(szBase)], szBaseStem[sizeof(szBase)], szName[256], szSuggested[256], szTarget[512], szFilter[64];
+    char szStageBase[sizeof(szBase)], szStage[sizeof(szBase)], szStageHist[sizeof(szBase)];
+    char szSource[sizeof(szBase)], szSourceHist[sizeof(szBase)], szPreviousHist[sizeof(szBase)];
+    char szTemp[512], szMessage[640], szExt[4];
+    char *pch, *pchSlash;
+    const char *pszLibraryName;
+    char *pszSaveError;
+    FILE *pf;
+    uint32_t dwTick;
+    int64_t cbTarget;
+    size_t cchRoot;
+    int cch;
+    int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
+
+    if (!FInitLibrary() || !lpPlanets || game.lid == 0 || idPlayer == iplrNone || idPlayer < 0 || idPlayer >= 16) return FALSE;
+    cchRoot = strlen(szLibraryRoot);
+    if (strncmp(szBase, szLibraryRoot, cchRoot) != 0 || szBase[cchRoot] != chDirSep) return FALSE;
+    RememberLibraryGame();
+
+    pszLibraryName = szLibraryExchangeName;
+    if (!pszLibraryName[0]) {
+        pch = strrchr(szBase, chDirSep);
+        if (!pch) return FALSE;
+        pchSlash = pch;
+        while (pchSlash > szBase && pchSlash[-1] != chDirSep) pchSlash--;
+        cch = CchSnprintf(szName, sizeof(szName), "%.*s", (int)(pch - pchSlash), pchSlash);
+        if (cch <= 0 || (size_t)cch >= sizeof(szName)) return FALSE;
+        pszLibraryName = szName;
+    }
+    cch = CchSnprintf(szSuggested, sizeof(szSuggested), "%s.x%d", pszLibraryName, idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSuggested)) return FALSE;
+    if (!pszTarget) {
+        memset(&ofn, 0, sizeof(ofn));
+        memset(szTarget, 0, sizeof(szTarget));
+        CchSnprintf(szTarget, sizeof(szTarget), "%s", szSuggested);
+        cch = CchSnprintf(szFilter, sizeof(szFilter), "Orders files (*.x%d)|*.x%d|All files (*.*)|*.*",
+                          idPlayer + 1, idPlayer + 1);
+        if (cch <= 0 || (size_t)cch + 2 >= sizeof(szFilter)) return FALSE;
+        for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+        szFilter[cch + 1] = 0;
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hwnd;
+        ofn.lpstrFilter = szFilter;
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFile = szTarget;
+        ofn.nMaxFile = sizeof(szTarget);
+        CchSnprintf(szExt, sizeof(szExt), "x%d", idPlayer + 1);
+        ofn.lpstrDefExt = szExt;
+        ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+        if (!FNativeSaveFileName(&ofn)) return FALSE;
+        pszTarget = szTarget;
+    }
+
+    if (strlen(pszTarget) >= sizeof(szTarget)) return FALSE;
+    if (pszTarget != szTarget) CchSnprintf(szTarget, sizeof(szTarget), "%s", pszTarget);
+    pchSlash = strrchr(szTarget, '/');
+    pch = strrchr(szTarget, '\\');
+    if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
+    pch = strrchr(szTarget, '.');
+    if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
+    if (!szTarget[0]) return FALSE;
+    cch = CchSnprintf(szTarget + strlen(szTarget), sizeof(szTarget) - strlen(szTarget), ".x%d", idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget) - strlen(szTarget)) return FALSE;
+
+    /* Confirm the actual orders path after correcting the chooser's extension. */
+    if (FNativeFileSize(szTarget, &cbTarget)) {
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryReplaceOrders), szTarget);
+        if (MessageBox(hwnd, szMessage, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return FALSE;
+    }
+
+    SetSzWorkFromDt(dtLog, idPlayer);
+    CchSnprintf(szSource, sizeof(szSource), "%s", szWork);
+    if (SDL_strcasecmp(szSource, szTarget) == 0) return FALSE;
+    CchSnprintf(szBaseSav, sizeof(szBaseSav), "%s", szBase);
+    CchSnprintf(szBaseStem, sizeof(szBaseStem), "%s", szBaseSav);
+    fSubmitSav = gd.fSubmit;
+    fDirtySav = game.fDirty;
+    fHistoryReplaced = FALSE;
+    fHistoryBackup = FALSE;
+    dwTick = DwTickCount();
+    pch = strrchr(szBaseStem, '.');
+    pchSlash = strrchr(szBaseStem, chDirSep);
+    if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
+    cch = CchSnprintf(szStageBase, sizeof(szStageBase), "%s_exportstage_%u.m%d", szBaseStem, dwTick, idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szStageBase)) return FALSE;
+    /* FWriteLogFile creates its destination directly, so save to a sibling first. */
+    fSaved = FWriteLogFile(szStageBase, idPlayer);
+    CchSnprintf(szBase, sizeof(szBase), "%s", szBaseSav);
+    cch = CchSnprintf(szStage, sizeof(szStage), "%s_exportstage_%u.x%d", szBaseStem, dwTick, idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szStage)) fSaved = FALSE;
+    cch = CchSnprintf(szStageHist, sizeof(szStageHist), "%s_exportstage_%u.h%d", szBaseStem, dwTick, idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szStageHist)) fSaved = FALSE;
+    if (fSaved) {
+        CchSnprintf(szBase, sizeof(szBase), "%s", szStageBase);
+        fSaved = FWriteHistFile(idPlayer);
+        CchSnprintf(szBase, sizeof(szBase), "%s", szBaseSav);
+    }
+    SetSzWorkFromDt(dtHist, idPlayer);
+    CchSnprintf(szSourceHist, sizeof(szSourceHist), "%s", szWork);
+    pf = PfOpenNativeFile(szSourceHist, "rb");
+    fHistoryExists = pf != NULL;
+    if (pf) fclose(pf);
+    else if (errno != ENOENT) fSaved = FALSE;
+    cch = CchSnprintf(szPreviousHist, sizeof(szPreviousHist), "%s_exportprevious_%u.h%d",
+                      szBaseStem, dwTick, idPlayer + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szPreviousHist)) fSaved = FALSE;
+    if (!fSaved) {
+        pszSaveError = "The current orders could not be saved for export.";
+        goto LSaveFailed;
+    }
+    if (fHistoryExists && !FCopyNativeFileExclusive(szSourceHist, szPreviousHist)) {
+        pszSaveError = "The existing history file could not be preserved before saving orders.";
+        goto LSaveFailed;
+    }
+    fHistoryBackup = fHistoryExists;
+    fHistoryReplaced = ReplaceNativeFile(szStageHist, szSourceHist) == 0;
+    if (!fHistoryReplaced || ReplaceNativeFile(szStage, szSource) != 0) {
+        pszSaveError = "The current orders could not be saved for export.";
+        goto LSaveFailed;
+    }
+    fHistoryReplaced = FALSE;
+    if (fHistoryBackup) RemoveNativeFile(szPreviousHist);
+    CchSnprintf(szBase, sizeof(szBase), "%s", szBaseSav);
+    /* Writing the orders BOF must not change the turn's submission state. */
+    gd.fSubmit = fSubmitSav;
+
+    CchSnprintf(szTemp, sizeof(szTemp), "%s.stars-export-%u", szTarget, dwTick);
+    if (!FCopyNativeFileExclusive(szSource, szTemp) || ReplaceNativeFile(szTemp, szTarget) != 0) {
+        RemoveNativeFile(szTemp);
+        AlertSz("The orders file could not be exported.", MB_ICONEXCLAMATION);
+        return FALSE;
+    }
+    return TRUE;
+LSaveFailed:
+    if (fHistoryReplaced) {
+        if (fHistoryExists && ReplaceNativeFile(szPreviousHist, szSourceHist) != 0) {
+            AlertSz("The previous history file could not be restored. Recover it from the managed game folder.", MB_ICONHAND);
+            fHistoryBackup = FALSE;
+        } else if (!fHistoryExists) RemoveNativeFile(szSourceHist);
+        else fHistoryBackup = FALSE;
+    }
+    RemoveNativeFile(szStage);
+    RemoveNativeFile(szStageHist);
+    if (fHistoryBackup) RemoveNativeFile(szPreviousHist);
+    CchSnprintf(szBase, sizeof(szBase), "%s", szBaseSav);
+    gd.fSubmit = fSubmitSav;
+    game.fDirty = fDirtySav;
+    AlertSz(pszSaveError, MB_ICONHAND);
+    return FALSE;
+}
+
 int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName) {
     char szPath[512], szMessage[320];
     int64_t cbFile;
@@ -1388,7 +1541,7 @@ void RememberLibraryGame(void) {
     pch = strrchr(szDir, chDirSep);
     if (!pch) return;
     szLibraryExchangeName[0] = 0;
-    CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s.library", szDir, szDirSep, pch + 1, szDirSep);
+    CchSnprintf(szFile, sizeof(szFile), "%s%s.library", szDir, szDirSep);
     pf = PfOpenNativeFile(szFile, "rb");
     if (pf) {
         if (fscanf(pf, "%d\n", &iVersion) == 1 && fgets(szLine, sizeof(szLine), pf) &&

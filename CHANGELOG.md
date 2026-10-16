@@ -6,6 +6,22 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryOrders` now confirms replacement of the final numbered orders
+  filename after correcting its extension. Previously, choosing a different
+  extension could silently overwrite an existing `.xN` file. Declining leaves
+  that file and pending managed work untouched. Native baselines are unchanged.
+
+- `FExportLibraryOrders` no longer formats a selected destination or fallback
+  library name over the same buffer, fixing Linux exports that silently failed
+  after choosing a filename. Game simulation and native baselines are unchanged.
+
+- The desktop can export the active player's saved orders as an ordinary `.xN`
+  file. Export saves current orders first, suggests the remembered exchange
+  basename, keeps the active player's extension when the destination name is
+  changed, retains the managed game, and preserves submission status. Failed
+  saves and exports leave the previous managed orders file intact. Game
+  simulation and disk record layouts are unchanged.
+
 - Existing managed games now accept a valid later standalone player turn,
   including skipped years. The importer matches by game identity, asks which
   managed copy to update when several match, treats identical turns as no-ops,
