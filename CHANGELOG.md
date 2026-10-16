@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Double-clicking a game in the library now opens the selected player turn.
+  The title-window command handler previously fell through into Duplicate and
+  opened a copy-name dialog. Simulation behavior and baselines are unchanged.
+
 - Managed-game duplication and rename now preserve the complete directory tree.
   The copier previously skipped the default `backup` and numbered `backupN`
   folders; rename then deleted those omitted backups with the original tree.

@@ -182,6 +182,8 @@ second startup implementation has been removed, so SDL is the sole entry point.
 Managed-game duplicate and rename preserve all backup naming variants and nested
 sidecar folders while renaming the matching binary file family throughout the
 copied tree. Real-client coverage checks their contents after both operations.
+The Games-list double-click shares the Open action rather than falling through
+to another library command; the real-client workflow verifies that dispatch.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are

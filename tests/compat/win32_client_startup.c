@@ -1767,7 +1767,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     }
     if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
         const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
-        HWND hwndList;
+        HWND hwndList, hwndDialog;
         LRESULT iGame;
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) goto LDone;
@@ -1779,10 +1779,24 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
             fChecked = TRUE;
             iStage = 1;
-            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+                if (!PostMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_DBLCLK),
+                                  (LPARAM)hwndList)) goto LDone;
+            } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (IsWindow(hwndTitle)) return;
+        if (IsWindow(hwndTitle)) {
+            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
+                     hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog) continue;
+                    fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
+                    EndDialog(hwndDialog, FALSE);
+                    goto LDone;
+                }
+            }
+            return;
+        }
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
         fPassed = TRUE;
         puts("Managed game: visible in library and reopened after restart");
