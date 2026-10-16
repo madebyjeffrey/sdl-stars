@@ -147,7 +147,9 @@ def main():
             STARS_CLIENT_EXPORT_EXPECTED='fail')
         assert blocked_destination.read_bytes() == b'preserve blocked destination'
         assert files(managed) == before
-        assert list(blocked_parent.iterdir()) == [blocked_destination]
+        entries = list(blocked_parent.iterdir())
+        assert len(entries) == 1 and entries[0].samefile(blocked_destination), \
+            f'Unexpected export entries: {entries!r}; expected {blocked_destination!r}'
 
         # Reimport the complete exported game into independent storage and
         # replay both players' saved orders with the existing loader again.
