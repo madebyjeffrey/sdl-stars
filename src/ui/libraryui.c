@@ -1457,12 +1457,14 @@ LDone:
     }
     if (!fResult) {
         if (fRestoreFailed) {
-            cchTarget = CchSnprintf(szMessage, sizeof(szMessage), "The rename failed and the original game remains at %s.", szHold);
+            cchTarget = CchSnprintf(szMessage, sizeof(szMessage),
+                                    PszGetCompressedString(idsLibraryRenameFailedOriginalAt), szHold);
             if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
         } else strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
         MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONHAND);
     } else if (fHoldCleanupFailed) {
-        cchTarget = CchSnprintf(szMessage, sizeof(szMessage), "The game was renamed, but old files remain at %s.", szHold);
+        cchTarget = CchSnprintf(szMessage, sizeof(szMessage),
+                                PszGetCompressedString(idsLibraryRenameSucceededCleanupPath), szHold);
         if (cchTarget <= 0 || (size_t)cchTarget >= sizeof(szMessage)) strcpy(szMessage, PszGetCompressedString(idsLibraryStorageFailed));
         MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONEXCLAMATION);
     }
@@ -1573,10 +1575,10 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
-    CreateWindow("BUTTON", "Duplicate", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, hInst, NULL);
-    CreateWindow("BUTTON", "Rename", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsRename), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
