@@ -189,11 +189,24 @@ static int16_t FInitLibrary(void) {
 
 static int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
     size_t cchRoot, cchFile;
+#ifdef _WIN32
+    size_t ich;
+#endif
     if (!pszRoot || !pszFile) return FALSE;
     cchRoot = strlen(pszRoot);
     cchFile = strlen(pszFile);
-    return cchRoot != 0 && cchFile > cchRoot && memcmp(pszRoot, pszFile, cchRoot) == 0 &&
-           (pszFile[cchRoot] == chDirSep || pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\');
+    if (cchRoot == 0 || cchFile <= cchRoot) return FALSE;
+#ifdef _WIN32
+    /* Pickers return '/', while library joins and Windows arguments may use '\\'. */
+    for (ich = 0; ich < cchRoot; ich++) {
+        if ((pszRoot[ich] == '/' || pszRoot[ich] == '\\') &&
+            (pszFile[ich] == '/' || pszFile[ich] == '\\')) continue;
+        if (SDL_tolower((unsigned char)pszRoot[ich]) != SDL_tolower((unsigned char)pszFile[ich])) return FALSE;
+    }
+    return pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\';
+#else
+    return memcmp(pszRoot, pszFile, cchRoot) == 0 && pszFile[cchRoot] == '/';
+#endif
 }
 
 int16_t FIsManagedLibraryGameFile(const char *pszFile) {

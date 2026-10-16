@@ -200,6 +200,8 @@ It confirms replacement of the final numbered destination after extension
 correction; rejecting replacement preserves existing exports and pending work.
 Library alerts retain their message separately from the compressed-string
 caption buffer, so name rejection and storage failure checks also work under GCC.
+Windows library membership and managed race selection accept both native
+separators and the wrapper picker's forward-slash paths.
 Recent-file migration validates the selected source before enumerating its
 family, reports missing filenames, and handles relative entries independently.
 Mixed desktop Open and recent-file actions dispatch by the BOF file type to

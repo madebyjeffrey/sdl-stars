@@ -1766,7 +1766,9 @@ LGotFileName:
     if (fRaceOnly) {
         if (fRet > 0) {
             if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(hwnd, szFile);
-            return FLoadLibraryRace(hwnd, strrchr(szFile, chDirSep) ? strrchr(szFile, chDirSep) + 1 : szFile);
+            pch = szFile + strlen(szFile);
+            while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
+            return FLoadLibraryRace(hwnd, pch);
         }
         return fRet;
     }

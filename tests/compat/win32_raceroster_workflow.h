@@ -22,6 +22,7 @@ static BOOL FCheckRaceRosterWorkflow(void) {
     static const DLGPROC rglpfn[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     static const char *rgszName[] = {"Roster-shared-prefix-A.r1", "Roster-shared-prefix-B.r1"};
     HWND hwnd;
+    size_t ich;
     char szSource[512], szManaged[512], szOther[512], szSnapshot[512];
     const char *pszRoot = getenv("STARS_SETTINGS_DIR");
     static char szChosen[512];
@@ -93,8 +94,12 @@ static BOOL FCheckRaceRosterWorkflow(void) {
             if (FWasRaceFile(szManaged, FALSE) <= 0 || IRaceChecksum(&vplr) == icksA) return FALSE;
             CchSnprintf(szSource, sizeof(szSource), "%s%sA.snapshot", pszRoot, szDirSep);
             if (!FTestCopyFile(szManaged, szSource)) return FALSE;
+            /* Reopen the managed design using the picker's forward slashes. */
+            CchSnprintf(szChosen, sizeof(szChosen), "%s", szManaged);
+            for (ich = 0; szChosen[ich]; ich++) if (szChosen[ich] == '\\') szChosen[ich] = '/';
+            pszRosterSource = szChosen;
             iStep++;
-            return FChooseRosterAction(hwnd, 0, 16);
+            return FChooseRosterAction(hwnd, 0, 1);
         }
         CchSnprintf(szSource, sizeof(szSource), "%s%sA.snapshot", pszRoot, szDirSep);
         if (!FTestFilesEqual(szManaged, szSource)) return FALSE;
@@ -104,6 +109,13 @@ static BOOL FCheckRaceRosterWorkflow(void) {
         return TRUE;
     }
     if (iStep == 9) {
+        hwnd = HwndRosterDialog(NewGameDlg2);
+        if (!hwnd) return TRUE;
+        if (strcmp(PszCurrentLibraryRaceName(), rgszName[0]) || (vrgplrTypeNew[0] & 3) != 2) return FALSE;
+        iStep++;
+        return FChooseRosterAction(hwnd, 0, 16);
+    }
+    if (iStep == 10) {
         hwnd = HwndRosterDialog(NewGameDlg2);
         if (!hwnd) return TRUE;
         iStep = 11;

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Windows managed game and race paths now accept picker-style forward slashes
+  and native backslashes consistently. Startup reopens an existing managed
+  game instead of importing another copy, and managed race selection retains
+  its correct filename. Simulation and save formats are unchanged.
+
 - Recent-file migration now reports a missing selected player file by path
   instead of silently importing its valid siblings. Other recent entries
   continue to import, including relative filenames. Sources, simulation
