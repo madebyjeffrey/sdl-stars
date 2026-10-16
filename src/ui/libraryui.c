@@ -2,6 +2,7 @@
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <errno.h>
+#include "libraryzip.h"
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
  * is listed only after its complete generated family and metadata are saved. */
@@ -23,6 +24,7 @@ static int cLibraryGameListMax;
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
 static uint32_t idLibraryExportStage;
+static uint32_t idLibraryZipStage;
 static int16_t fHostLibraryView;
 static const char *pszRaceLibraryNameOverride;
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
@@ -1256,6 +1258,34 @@ static int16_t RemoveImportFile(void *lpData, const char *pszFile) {
     return TRUE;
 }
 
+static int16_t RemoveImportTreeEntry(void *lpData, const char *pszFile) {
+    char szPath[512];
+    int16_t fDirectory, fLink;
+    if (CchSnprintf(szPath, sizeof(szPath), "%s%s%s", (const char *)lpData, szDirSep, pszFile) <= 0 ||
+        !FNativePathInfo(szPath, &fDirectory, &fLink)) return FALSE;
+    if (fDirectory && !fLink) {
+        if (!FNativeEnumerateDirectory(szPath, RemoveImportTreeEntry, szPath)) return FALSE;
+    }
+    return RemoveNativePath(szPath) == 0;
+}
+
+static int16_t FPathIsZip(const char *pszPath) {
+    const char *pch = strrchr(pszPath, '.');
+    return pch && !SDL_strcasecmp(pch, ".zip");
+}
+
+static int16_t FCreateLibraryZipStage(char *pszStage, size_t cchStage, const char *pszPurpose) {
+    int i, cch;
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszStage, cchStage, "%s%s.%s.%u-%u", szLibraryRoot, szDirSep,
+                          pszPurpose, DwTickCount(), idLibraryZipStage++);
+        if (cch <= 0 || (size_t)cch >= cchStage) return FALSE;
+        if (CreateNativeDir(pszStage) == 0) return TRUE;
+        if (!FNativeDirectoryExists(pszStage)) return FALSE;
+    }
+    return FALSE;
+}
+
 typedef struct {
     const char *pszSource;
     const char *pszTarget;
@@ -1319,16 +1349,57 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
     LIBRARYIMPORT li;
     LIBRARYEXPORT le;
     LIBRARYEXPORTMOVE lem;
+    OPENFILENAME ofn;
     char szSource[512], szDestination[512], szStage[512];
+    char szZipName[512];
     int cch;
 
     if (!pszTarget) {
+        if (!getenv("STARS_CLIENT_EXPORT_GAME")) {
+            int iChoice = MessageBox(hwnd, "Export as a ZIP archive? Choose No to export a folder.",
+                                     "Export Game", MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
+            if (iChoice == IDCANCEL) return FALSE;
+            if (iChoice == IDYES) {
+                memset(&ofn, 0, sizeof(ofn));
+                memset(szZipName, 0, sizeof(szZipName));
+                CchSnprintf(szZipName, sizeof(szZipName), "%s.zip", pszName);
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = hwnd;
+                ofn.lpstrFilter = "ZIP archives (*.zip)\0*.zip\0All files (*.*)\0*.*\0\0";
+                ofn.lpstrFile = szZipName;
+                ofn.lpstrDefExt = "zip";
+                ofn.nMaxFile = sizeof(szZipName);
+                ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+                if (!FNativeSaveFileName(&ofn)) return FALSE;
+                return FExportLibraryGame(hwnd, pszName, szZipName);
+            }
+        }
         SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
         return TRUE;
     }
     if (!FInitLibrary() || !FPortableLibraryName(pszName)) return FALSE;
     cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szLibraryRoot, szDirSep, pszName);
     if (cch <= 0 || (size_t)cch >= sizeof(szSource) || !FNativeDirectoryExists(szSource)) return FALSE;
+    if (FPathIsZip(pszTarget)) {
+        char szZipStage[512], szZipGame[512];
+        int16_t fZipStage;
+        if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
+            (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
+             pszTarget[strlen(szSource)] == '\\')) goto LFail;
+        fZipStage = FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-exporting");
+        if (!fZipStage) goto LFail;
+        if (!FExportLibraryGame(hwnd, pszName, szZipStage)) goto LZipFail;
+        cch = CchSnprintf(szZipGame, sizeof(szZipGame), "%s%s%s", szZipStage, szDirSep, pszName);
+        if (cch <= 0 || (size_t)cch >= sizeof(szZipGame) || !FZipLibraryDirectory(szZipGame, pszTarget)) goto LZipFail;
+        FNativeEnumerateDirectory(szZipGame, RemoveImportTreeEntry, szZipGame);
+        RemoveNativePath(szZipGame);
+        RemoveNativePath(szZipStage);
+        return TRUE;
+LZipFail:
+        FNativeEnumerateDirectory(szZipStage, RemoveImportTreeEntry, szZipStage);
+        RemoveNativePath(szZipStage);
+        goto LFail;
+    }
     if (SDL_strncasecmp(pszTarget, szSource, strlen(szSource)) == 0 &&
         (pszTarget[strlen(szSource)] == 0 || pszTarget[strlen(szSource)] == '/' ||
          pszTarget[strlen(szSource)] == '\\')) goto LFail;
@@ -1608,8 +1679,8 @@ static int16_t FChooseLibraryImportFile(HWND hwnd, char *pszChosen, size_t cchCh
     CchGetString(idsStarsGameFilesMHstRStars, szFilter);
     pch = strstr(szFilter, "*.M*;");
     if (pch) {
-        memmove(pch + 5, pch, strlen(pch) + 1);
-        memcpy(pch, "*.XY;", 5);
+        memmove(pch + 11, pch, strlen(pch) + 1);
+        memcpy(pch, "*.ZIP;*.XY;", 11);
     }
     for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
     ofn.lStructSize = sizeof(ofn);
@@ -1665,6 +1736,21 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     /* Validate the selected path before either standalone-turn or family import. */
     if (!FNativeDirectoryExists(szSource) &&
         (!FNativeFileSize(szSource, &cbSource) || cbSource <= 0)) goto LInvalidSource;
+    if (FPathIsZip(szSource)) {
+        char szZipStage[512];
+        if (!FInitLibrary()) return FALSE;
+        if (!FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-importing")) return FALSE;
+        if (!FUnzipLibraryArchive(szSource, szZipStage)) {
+            FNativeEnumerateDirectory(szZipStage, RemoveImportTreeEntry, szZipStage);
+            RemoveNativePath(szZipStage);
+            AlertSz("This ZIP does not contain a safe, supported game archive.", MB_ICONEXCLAMATION);
+            return FALSE;
+        }
+        fImported = FImportLibraryGame(hwnd, szZipStage);
+        FNativeEnumerateDirectory(szZipStage, RemoveImportTreeEntry, szZipStage);
+        RemoveNativePath(szZipStage);
+        return fImported;
+    }
     if (strrchr(pszSource, '.') && SDL_tolower(strrchr(pszSource, '.')[1]) == 'm') {
         if (!FInitLibrary()) return FALSE;
         fImported = FImportSubsequentTurn(hwnd, pszSource);
