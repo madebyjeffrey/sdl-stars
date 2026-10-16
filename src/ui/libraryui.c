@@ -213,6 +213,15 @@ static int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
 #endif
 }
 
+static char *PchLibrarySeparator(char *pszPath) {
+    char *pch = strrchr(pszPath, chDirSep);
+#ifdef _WIN32
+    char *pchSlash = strrchr(pszPath, '/');
+    if (pchSlash && (!pch || pchSlash > pch)) pch = pchSlash;
+#endif
+    return pch;
+}
+
 int16_t FIsManagedLibraryGameFile(const char *pszFile) {
     return FInitLibrary() && FPathUnderLibrary(szLibraryRoot, pszFile);
 }
@@ -710,21 +719,23 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     FILE *pf;
     uint32_t dwTick;
     int64_t cbTarget;
-    size_t cchRoot;
     int cch;
     int16_t fSubmitSav, fSaved, fDirtySav, fHistoryExists, fHistoryReplaced, fHistoryBackup;
 
     if (!FInitLibrary() || !lpPlanets || game.lid == 0 || idPlayer == iplrNone || idPlayer < 0 || idPlayer >= 16) return FALSE;
-    cchRoot = strlen(szLibraryRoot);
-    if (strncmp(szBase, szLibraryRoot, cchRoot) != 0 || szBase[cchRoot] != chDirSep) return FALSE;
+    if (!FPathUnderLibrary(szLibraryRoot, szBase)) return FALSE;
     RememberLibraryGame();
 
     pszLibraryName = szLibraryExchangeName;
     if (!pszLibraryName[0]) {
-        pch = strrchr(szBase, chDirSep);
+        pch = PchLibrarySeparator(szBase);
         if (!pch) return FALSE;
         pchSlash = pch;
-        while (pchSlash > szBase && pchSlash[-1] != chDirSep) pchSlash--;
+        while (pchSlash > szBase && pchSlash[-1] != chDirSep
+#ifdef _WIN32
+               && pchSlash[-1] != '/'
+#endif
+        ) pchSlash--;
         cch = CchSnprintf(szName, sizeof(szName), "%.*s", (int)(pch - pchSlash), pchSlash);
         if (cch <= 0 || (size_t)cch >= sizeof(szName)) return FALSE;
         pszLibraryName = szName;
@@ -781,7 +792,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     fHistoryBackup = FALSE;
     dwTick = DwTickCount();
     pch = strrchr(szBaseStem, '.');
-    pchSlash = strrchr(szBaseStem, chDirSep);
+    pchSlash = PchLibrarySeparator(szBaseStem);
     if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
     cch = CchSnprintf(szStageBase, sizeof(szStageBase), "%s_exportstage_%u.m%d", szBaseStem, dwTick, idPlayer + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szStageBase)) return FALSE;
@@ -1372,7 +1383,7 @@ int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
     if (!pszTarget) return FExportLibraryGame(hwnd, szName, NULL);
     if (game.fDirty && lpPlanets && idPlayer != iplrNone) {
         CchSnprintf(szDir, sizeof(szDir), "%s%s%s", szLibraryRoot, szDirSep, szName);
-        if (!strncmp(szBase, szDir, strlen(szDir)) && szBase[strlen(szDir)] == chDirSep) PromptSaveGame();
+        if (FPathUnderLibrary(szDir, szBase)) PromptSaveGame();
     }
     return FExportLibraryGame(hwnd, szName, pszTarget);
 }
@@ -2117,12 +2128,12 @@ void RememberLibraryGame(void) {
     int iplr;
     long long lPlayed;
 
-    if (!FInitLibrary() || strncmp(szBase, szLibraryRoot, strlen(szLibraryRoot)) || szBase[strlen(szLibraryRoot)] != chDirSep) return;
+    if (!FInitLibrary() || !FPathUnderLibrary(szLibraryRoot, szBase)) return;
     strcpy(szDir, szBase);
-    pch = strrchr(szDir, chDirSep);
+    pch = PchLibrarySeparator(szDir);
     if (!pch) return;
     *pch = 0;
-    pch = strrchr(szDir, chDirSep);
+    pch = PchLibrarySeparator(szDir);
     if (!pch) return;
     szLibraryExchangeName[0] = 0;
     /* szDir already names the game folder; retain its exchange basename before

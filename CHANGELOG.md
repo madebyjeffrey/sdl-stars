@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
+  paths with forward slashes when the library root uses backslashes. Orders
+  retain their exchange filename, and library history and dirty-game export
+  use the same membership check. Simulation and save formats are unchanged.
+
 - `FInitLibrary` and `FInitRaceLibrary` read environment paths through SDL's
   UTF-8 API on Windows. Libraries under accented or non-Latin settings and
   override paths can now import races and export orders. Simulation results,
