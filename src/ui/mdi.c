@@ -1481,6 +1481,9 @@ LPrintMapCleanup:
             FWriteLogFile(szBase, idPlayer);
             FWriteHistFile(idPlayer);
             break;
+        case IDM_LIBRARY_EXPORT_ORDERS:
+            FExportLibraryOrders(hwnd, NULL);
+            break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
             if ((gd.fTutorial && !FAskKillTutor()) || FOpenGame(hwnd, FALSE) <= 0)

@@ -12,10 +12,11 @@
 #define IDC_LIBRARY_RACE_DUPLICATE 2408
 #define IDC_LIBRARY_RACE_EXPORT 2409
 #define IDC_LIBRARY_RACE_DELETE 2410
-#define IDC_LIBRARY_DUPLICATE 2411
-#define IDC_LIBRARY_RENAME 2412
-#define IDD_LIBRARY_TURN_TARGET 2413
-#define IDC_LIBRARY_TURN_TARGET_LIST 2414
+#define IDD_LIBRARY_TURN_TARGET 2411
+#define IDC_LIBRARY_TURN_TARGET_LIST 2412
+#define IDM_LIBRARY_EXPORT_ORDERS 2413
+#define IDC_LIBRARY_DUPLICATE 2414
+#define IDC_LIBRARY_RENAME 2415
 #define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
@@ -39,6 +40,7 @@ int16_t FBeginLibraryRace(HWND hwnd);
 int16_t FEditLibraryRace(HWND hwnd, const char *pszName);
 int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName);
 int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget);
+int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget);
 int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName);
 void InitLibraryRaces(HWND hwnd, const RECT *lprc);
 void RefreshLibraryRaces(HWND hwnd);
