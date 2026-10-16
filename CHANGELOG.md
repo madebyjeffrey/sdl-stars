@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The Games library offers Duplicate and Rename actions. Copies have independent
+  files and session metadata; rename changes the managed folder and matching
+  binary file family, including backups. Both preserve the stored game title,
+  embedded identity and exchange basename, and failed publication restores the
+  original game. Simulation behavior and disk record layouts are unchanged.
+
 - Reopening a duplicated or renamed managed game now retains its original
   exchange basename. `RememberLibraryGame` previously looked for metadata one
   folder too deep and replaced that basename with the current library name.
