@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FDeleteLibraryGame` confirms deletion by library name, names the player
+  files, host state, history and backups it removes, and reminds users to
+  export first. It removes the selected managed folder only and clears its
+  recent-file entries without replacing a deleted Continue target with another
+  player or game.
+
 - `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
   Its previous position covered both buttons and intercepted their clicks.
 

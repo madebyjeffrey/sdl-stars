@@ -2813,6 +2813,12 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 RefreshLibraryHostGames(hwnd);
             }
             break;
+        case IDC_LIBRARY_GAME_DELETE:
+            if (FDeleteSelectedLibraryGame(hwnd)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
+            break;
         case IDC_LIBRARY_RACES:
             if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;
             if (FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);

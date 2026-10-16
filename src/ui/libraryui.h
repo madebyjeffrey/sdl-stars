@@ -24,6 +24,7 @@
 #define IDC_LIBRARY_GAMES_VIEW 2418
 #define IDC_LIBRARY_HOST_VIEW 2419
 #define IDC_LIBRARY_IMPORT_ORDERS 2420
+#define IDC_LIBRARY_GAME_DELETE 2421
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
@@ -45,6 +46,8 @@ void ShowLibraryExportFolderPicker(HWND hwnd);
 int16_t FDuplicateLibraryGame(HWND hwnd, const char *pszName, const char *pszCopyName);
 int16_t FRenameLibraryGame(HWND hwnd, const char *pszName, const char *pszNewName);
 int16_t FActOnSelectedLibraryGame(HWND hwnd, int16_t fRename);
+int16_t FDeleteLibraryGame(HWND hwnd, const char *pszName);
+int16_t FDeleteSelectedLibraryGame(HWND hwnd);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszName);
 int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource);
