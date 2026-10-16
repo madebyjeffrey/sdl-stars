@@ -11,7 +11,9 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
     (work / 'settings').mkdir(parents=True, exist_ok=True)
     (work / 'settings' / 'Stars.ini').unlink(missing_ok=True)
     env = dict(os.environ, STARS_SETTINGS_DIR=str(work / 'settings'),
+               STARS_PROFILE_DIR=str(work / 'settings'),
                STARS_LIBRARY_DIR=str(work / 'library'),
+               STARS_FILE_DIALOG_BACKEND='compat',
                STARS_DEBUG_LIBRARY_STARTUP='1')
     if default_root or settings_root:
         env.pop('STARS_LIBRARY_DIR', None)
@@ -165,6 +167,55 @@ def main():
         imported = client_work / 'library' / 'Games' / 'managed-playable'
         assert all((imported / ('managed-playable' + ext)).is_file() for ext in ('.xy', '.hst', '.m1'))
         run(executable, client_work, STARS_CLIENT_LIBRARY_OPEN='managed-playable')
+
+    for choice in ('accept', 'decline'):
+        with tempfile.TemporaryDirectory(prefix='stars-recent-migration-') as directory:
+            work = Path(directory)
+            settings = work / 'settings'
+            settings.mkdir()
+            source = work / 'external'
+            source.mkdir()
+            fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+            for ext in ('.xy', '.m1'):
+                shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+            original = {p.name: p.read_bytes() for p in source.iterdir()}
+            missing = source / 'missing.m1'
+            (settings / 'StarsUtf8.ini').write_text(
+                f'[Files]\nFile1={source / "exchange.m1"}\nFile2={missing}\n', encoding='utf-8')
+            run(executable, work, STARS_CLIENT_RECENT_MIGRATION=choice,
+                STARS_CLIENT_IMPORT_NAME='migrated-game')
+            migrated = work / 'library' / 'Games' / 'migrated-game'
+            if choice == 'accept':
+                assert (migrated / 'migrated-game.xy').is_file()
+                assert (migrated / 'migrated-game.m1').is_file()
+                metadata = (migrated / '.library').read_text(encoding='utf-8').splitlines()
+                assert metadata[4] == 'exchange'
+                assert {p.name: p.read_bytes() for p in source.iterdir()} == original
+            else:
+                assert not migrated.exists()
+            ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
+            assert 'RecentImportChoice=' + ('1' if choice == 'accept' else '2') in ini
+            run(executable, work, STARS_CLIENT_RECENT_MIGRATION='accept',
+                STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT='1')
+            if choice == 'accept':
+                assert (migrated / 'migrated-game.m1').is_file()
+            else:
+                assert not migrated.exists()
+
+    with tempfile.TemporaryDirectory(prefix='stars-external-open-') as directory:
+        work = Path(directory)
+        source = work / 'external'
+        source.mkdir()
+        fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+        for ext in ('.xy', '.m1'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        original = {p.name: p.read_bytes() for p in source.iterdir()}
+        run(executable, work, STARS_CLIENT_EXTERNAL_OPEN_GAME=str(source / 'exchange.m1'),
+            STARS_CLIENT_IMPORT_NAME='external-open-game')
+        imported = work / 'library' / 'Games' / 'external-open-game'
+        assert (imported / 'external-open-game.m1').is_file()
+        assert {p.name: p.read_bytes() for p in source.iterdir()} == original
+
     return 0
 
 

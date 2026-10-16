@@ -27,24 +27,50 @@ LDone:
     if (pfRight) fclose(pfRight);
     return fEqual;
 }
+static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
+    FILE *pfSource = fopen(pszSource, "rb"), *pfTarget = fopen(pszTarget, "wb");
+    unsigned char rgb[4096];
+    size_t cb;
+    BOOL fCopied = pfSource && pfTarget;
+    if (!fCopied) goto LDone;
+    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0) {
+        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
+    }
+    if (ferror(pfSource)) fCopied = FALSE;
+LDone:
+    if (pfSource) fclose(pfSource);
+    if (pfTarget && fclose(pfTarget) != 0) fCopied = FALSE;
+    return fCopied;
+}
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
     return IDOK;
 }
 static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+    HWND hwndDialog;
     HWND hwndParentSav;
     PLAYER plrSav;
     PLAYER plrManaged;
     char szRaceSav[sizeof(szRaceFile)];
     char szManagedRace[512];
+    char szImportedRace[512];
+    char szRaceOriginal[512];
     char szRaceLibrary[256];
     int64_t cbRaceLibrary;
     const char *pszRace = getenv("STARS_TEST_RACE_PATH");
     const char *pszRaceRepeat = getenv("STARS_TEST_RACE_REPEAT_PATH");
     int32_t lid;
     (void)hwnd; (void)msg; (void)dwTime;
-    if (fRunning) return;
+    if (fRunning) {
+        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+            if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
+                SendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+                return;
+            }
+        }
+        return;
+    }
     fRunning = TRUE; KillTimer(NULL, id);
     CHECK(pszRace && pszRaceRepeat && IsWindow(hwndTitle));
     CHECK(FOpenGame(hwndTitle, FALSE) == 0 && IsWindowVisible(hwndTitle) && IsWindowEnabled(hwndTitle));
@@ -57,7 +83,13 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(szRaceFile[sizeof(szRaceFile) - 1] == 0 &&
           strncmp(szRaceFile, strrchr(pszRace, '/') + 1, strlen(szRaceFile)) == 0);
     CHECK(FWasRaceFile((char *)pszRace, FALSE) > 0);
+    CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
+          FCopyFile(pszRace, szRaceOriginal));
     CHECK(FOpenGame(hwndTitle, TRUE) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
+    CHECK(CchSnprintf(szImportedRace, sizeof(szImportedRace), "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
+                      getenv("STARS_SETTINGS_DIR"), szDirSep, szDirSep) > 0);
+    CHECK(FWasRaceFile(szImportedRace, FALSE) > 0 && FEqualFiles(pszRace, szImportedRace) &&
+          FEqualFiles(pszRace, szRaceOriginal));
     CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, FALSE) > 0);
     CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrSav));
     CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrSav));

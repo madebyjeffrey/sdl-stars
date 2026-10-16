@@ -175,6 +175,23 @@ static int16_t FInitLibrary(void) {
     return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
 }
 
+static int16_t FPathUnderLibrary(const char *pszRoot, const char *pszFile) {
+    size_t cchRoot, cchFile;
+    if (!pszRoot || !pszFile) return FALSE;
+    cchRoot = strlen(pszRoot);
+    cchFile = strlen(pszFile);
+    return cchRoot != 0 && cchFile > cchRoot && memcmp(pszRoot, pszFile, cchRoot) == 0 &&
+           (pszFile[cchRoot] == chDirSep || pszFile[cchRoot] == '/' || pszFile[cchRoot] == '\\');
+}
+
+int16_t FIsManagedLibraryGameFile(const char *pszFile) {
+    return FInitLibrary() && FPathUnderLibrary(szLibraryRoot, pszFile);
+}
+
+int16_t FIsManagedLibraryRaceFile(const char *pszFile) {
+    return FInitRaceLibrary() && FPathUnderLibrary(szRaceLibraryRoot, pszFile);
+}
+
 static int16_t FPortableLibraryName(const char *pszName) {
     const unsigned char *pch;
     char szDevice[256];

@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Existing recent game files now receive a one-time import offer. Accepting
+  copies valid games into the managed library and explains invalid entries;
+  declining is remembered. Desktop Open Game, recent external games, and
+  external race selection now use managed import workflows. Imported sources
+  remain unchanged, and command-line host paths are unchanged.
+
 - Race designs can now be duplicated to the next free `.rN` filename, exported
   as ordinary race files, and deleted after a confirmation naming the selected
   design. Export validates the copied file and retains its existing checksum

@@ -21,6 +21,8 @@ void RefreshLibraryGames(HWND hwnd);
 int16_t FSelectLibraryGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
+int16_t FIsManagedLibraryGameFile(const char *pszFile);
+int16_t FIsManagedLibraryRaceFile(const char *pszFile);
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryRaceAs(HWND hwnd, const char *pszSource, const char *pszName);
 int16_t FImportLibraryRaceAndEdit(HWND hwnd, const char *pszSource);

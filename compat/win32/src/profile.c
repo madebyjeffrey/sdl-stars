@@ -130,7 +130,8 @@ static char *SzProfilePath(LPCSTR pszFile) {
         || strchr(pszFile, '\\') || strchr(pszFile, ':')
 #endif
     ) { sz = strdup(pszFile); goto LReturn; }
-    pszDir = getenv("STARS_SETTINGS_DIR");
+    pszDir = getenv("STARS_PROFILE_DIR");
+    if (!pszDir || !*pszDir) pszDir = getenv("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 2;
         sz = malloc(cb);
