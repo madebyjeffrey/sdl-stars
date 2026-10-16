@@ -8,6 +8,11 @@ import tempfile
 
 def main():
     executable = Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix="stars-race-roster-") as directory:
+        env = dict(os.environ, STARS_SETTINGS_DIR=directory, STARS_PROFILE_DIR=directory,
+                   STARS_CLIENT_RACE_ROSTER_TEST="1", SDL_VIDEODRIVER="dummy",
+                   SDL_AUDIODRIVER="dummy", STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="compat")
+        subprocess.run([str(executable)], cwd=directory, env=env, check=True, timeout=25)
     with tempfile.TemporaryDirectory(prefix="stars-race-library-") as directory:
         work = Path(directory)
         settings = work / "settings"

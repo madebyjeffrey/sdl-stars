@@ -79,6 +79,8 @@ static const char *pszContinue;
 static const char *pszImportSource;
 static int iImportStage;
 static int iRaceLibraryTestStage;
+static int iRosterMenu = -1;
+static const char *pszRosterSource;
 static int iRecentMigrationTicks;
 static int cRecentMigrationPrompts;
 static int iRaceLibraryWizardPage;
@@ -155,6 +157,11 @@ static BOOL FCheckScannerDrag(void) {
 static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
+    if (iRosterMenu >= 0) {
+        iPopMenuSel = iRosterMenu;
+        iRosterMenu = -1;
+        return TRUE;
+    }
     if (iTransportPreset >= 0) {
         SDL_Event event = {0};
         HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -372,6 +379,11 @@ BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
+    if (pszRosterSource) {
+        if (strlen(pszRosterSource) >= lpof->nMaxFile) return FALSE;
+        strcpy(lpof->lpstrFile, pszRosterSource);
+        return TRUE;
+    }
     if (pszExternalGame) {
         if (strlen(pszExternalGame) >= lpof->nMaxFile) return FALSE;
         strcpy(lpof->lpstrFile, pszExternalGame);
@@ -1183,6 +1195,7 @@ LDone:
     return fPassed;
 }
 
+#include "win32_raceroster_workflow.h"
 #include "win32_designer_workflow.h"
 #include "win32_ui_polish.h"
 
@@ -1336,6 +1349,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     RECT rcScanner;
 
     (void)hwnd; (void)msg; (void)dwTime;
+    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
+        if (!FCheckRaceRosterWorkflow()) goto LDone;
+        return;
+    }
     if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
         HWND hwndDialog;
         if (!IsWindowVisible(hwndTitle)) return;
@@ -1839,7 +1856,8 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME")) fPassed = FALSE;
+        !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
+        !getenv("STARS_CLIENT_RACE_ROSTER_TEST")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();

@@ -530,6 +530,31 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     return TRUE;
 }
 
+const char *PszCurrentLibraryRaceName(void) {
+    const char *pch = strrchr(szRaceLibraryPath, chDirSep);
+    return pch ? pch + 1 : szRaceLibraryPath;
+}
+
+/* The new-game roster owns a filename for each design. Bind only this edit
+ * to that destination; a previously imported design is not its save target. */
+int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName) {
+    RACESTATE rsSav;
+    char szPath[512];
+    int16_t fResult;
+
+    SaveRaceState(&rsSav);
+    if (pszName[0]) {
+        if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    } else if (!FChooseLibraryRaceName(hwnd, "Custom Race.r1", szPath, sizeof(szPath))) return FALSE;
+    CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
+    SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
+    fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
+    if (fResult) CchSnprintf(pszName, 256, "%s", PszCurrentLibraryRaceName());
+    RestoreRaceState(&rsSav, !fResult, TRUE);
+    return fResult;
+}
+
 int16_t FBeginLibraryRace(HWND hwnd) {
     char szPath[512];
     RACESTATE rsSav;

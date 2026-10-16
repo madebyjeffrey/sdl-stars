@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- New Game race edits now save to the selected design, retaining full library
+  filenames per roster entry. Importing another race no longer redirects an
+  earlier design's edits, and customizing a predefined race creates a separate
+  managed design. Game simulation and file formats are unchanged.
+
 - Existing recent game files now receive a one-time import offer. Accepting
   copies valid games into the managed library and explains invalid entries;
   declining is remembered. Desktop Open Game, recent external games, and

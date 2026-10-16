@@ -30,6 +30,8 @@ int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr);
 int16_t FSaveCurrentLibraryRace(HWND hwnd, PLAYER *pplr);
 int16_t FHasCurrentLibraryRace(void);
 int16_t FLoadLibraryRace(HWND hwnd, const char *pszName);
+const char *PszCurrentLibraryRaceName(void);
+int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName);
 int16_t FBeginLibraryRace(HWND hwnd);
 int16_t FEditLibraryRace(HWND hwnd, const char *pszName);
 int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName);

@@ -1750,7 +1750,7 @@ LGotFileName:
     if (fRaceOnly) {
         if (fRet > 0) {
             if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(hwnd, szFile);
-            SetSzRaceFile(&szFile[ofn.nFileOffset]);
+            return FLoadLibraryRace(hwnd, strrchr(szFile, chDirSep) ? strrchr(szFile, chDirSep) + 1 : szFile);
         }
         return fRet;
     }
