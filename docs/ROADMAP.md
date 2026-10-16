@@ -202,6 +202,10 @@ Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
 no-ops; successful updates retire only that player's old orders.
+Managed-game deletion confirms its library name and full file scope, removes
+only that game's folder, and clears its recent entries without silently
+promoting another game into Continue. The real-client workflow covers cancel,
+failure, and confirmed removal with isolated managed and source files.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.
 It confirms replacement of the final numbered destination after extension
