@@ -1861,24 +1861,46 @@ LInvalidSource:
     return FALSE;
 }
 
+typedef struct {
+    const char *pszDirectory;
+    int16_t fFailed;
+} LIBRARYGAMEREMOVE;
+
+static int16_t RemoveLibraryGameTree(const char *pszDirectory);
+
 static int16_t RemoveLibraryGameEntry(void *lpData, const char *pszName) {
+    LIBRARYGAMEREMOVE *plgr = lpData;
     char szPath[512];
     int16_t fDirectory, fLink;
-    int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", (const char *)lpData, szDirSep, pszName);
-    if (cch <= 0 || (size_t)cch >= sizeof(szPath)) return FALSE;
-    if (!FNativePathInfo(szPath, &fDirectory, &fLink)) return FALSE;
+    int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", plgr->pszDirectory, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szPath) || !FNativePathInfo(szPath, &fDirectory, &fLink)) {
+        plgr->fFailed = TRUE;
+        return FALSE;
+    }
     /* A link belongs to this tree; its target does not. */
     if (fDirectory && !fLink) {
-        if (!FNativeEnumerateDirectory(szPath, RemoveLibraryGameEntry, szPath)) return FALSE;
+        if (!RemoveLibraryGameTree(szPath)) {
+            plgr->fFailed = TRUE;
+            return FALSE;
+        }
+        return TRUE;
     }
-    return RemoveNativePath(szPath) == 0;
+    if ((fDirectory || fLink ? RemoveNativePath(szPath) : RemoveNativeFile(szPath)) != 0) {
+        plgr->fFailed = TRUE;
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static int16_t RemoveLibraryGameTree(const char *pszDirectory) {
+    LIBRARYGAMEREMOVE lgr;
     int16_t fDirectory, fLink;
     if (!FNativePathInfo(pszDirectory, &fDirectory, &fLink)) return FALSE;
-    if (fDirectory && !fLink &&
-        !FNativeEnumerateDirectory(pszDirectory, RemoveLibraryGameEntry, (void *)pszDirectory)) return FALSE;
+    if (fDirectory && !fLink) {
+        lgr.pszDirectory = pszDirectory;
+        lgr.fFailed = FALSE;
+        if (!FNativeEnumerateDirectory(pszDirectory, RemoveLibraryGameEntry, &lgr) || lgr.fFailed) return FALSE;
+    }
     return RemoveNativePath(pszDirectory) == 0;
 }
 
@@ -2009,6 +2031,79 @@ LDone:
         MessageBox(IsWindow(hwnd) ? hwnd : hwndFrame, szMessage, PszGetCompressedString(idsLibraryGames), MB_OK | MB_ICONEXCLAMATION);
     }
     return fResult;
+}
+
+static int16_t FDeleteLibraryGameRecentPaths(const char *pszDirectory) {
+    char szIniFile[32], szSection[16], szEntry[16], szPath[512];
+    char rgpszRecent[9][256];
+    const char *pszRecent;
+    int i, j, cch;
+    int16_t fContinueRemoved = FALSE;
+
+    if (!vrgszMRU) return TRUE;
+    for (i = 0; i < 9; i++) {
+        pszRecent = vrgszMRU + 256 * i;
+        cch = CchSnprintf(szPath, sizeof(szPath), "%s", pszRecent);
+        if (cch < 0 || (size_t)cch >= sizeof(szPath)) return FALSE;
+        if (FPathUnderLibrary(pszDirectory, szPath)) {
+            rgpszRecent[i][0] = 0;
+            if (i == 0) fContinueRemoved = TRUE;
+        } else {
+            CchSnprintf(rgpszRecent[i], sizeof(rgpszRecent[i]), "%s", pszRecent);
+        }
+    }
+    /* Do not promote a different recent game into Continue when File1 was deleted. */
+    if (!fContinueRemoved) {
+        for (i = 0, j = 0; i < 9; i++) {
+            if (!rgpszRecent[i][0]) continue;
+            if (i != j) strcpy(rgpszRecent[j], rgpszRecent[i]);
+            j++;
+        }
+        while (j < 9) rgpszRecent[j++][0] = 0;
+    }
+    CchGetString(idsStarsIni, szIniFile);
+    CchGetString(idsFiles, szSection);
+    CchGetString(idsFile1, szEntry);
+    for (i = 0; i < 9; i++) {
+        szEntry[strlen(szEntry) - 1] = (char)('1' + i);
+        strcpy(vrgszMRU + 256 * i, rgpszRecent[i]);
+        if (!WritePrivateProfileString(szSection, szEntry, rgpszRecent[i], szIniFile)) return FALSE;
+    }
+    if (fContinueRemoved && !WritePrivateProfileString(szSection, "File1", "", szIniFile)) return FALSE;
+    return TRUE;
+}
+
+int16_t FDeleteLibraryGame(HWND hwnd, const char *pszName) {
+    char szDirectory[512], szMetadata[512], szMessage[512], szMetadataName[256];
+    char szExchangeName[256];
+    int iplr;
+    long long lPlayed;
+    int cch;
+
+    if (!FInitLibrary() || !FPortableLibraryName(pszName)) return FALSE;
+    cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szDirectory)) return FALSE;
+    cch = CchSnprintf(szMetadata, sizeof(szMetadata), "%s%s.library", szDirectory, szDirSep);
+    if (cch <= 0 || (size_t)cch >= sizeof(szMetadata) ||
+        !FReadLibraryMetadata(szDirectory, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
+                              szExchangeName, sizeof(szExchangeName)) || strcmp(szMetadataName, pszName)) return FALSE;
+    cch = CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryDeleteGamePrompt), pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szMessage)) return FALSE;
+    if (MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryGames),
+                   MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
+    if (!RemoveLibraryGameTree(szDirectory)) {
+        AlertSz(PszGetCompressedString(idsLibraryDeleteGameFailed), MB_ICONHAND);
+        return FALSE;
+    }
+    if (!FDeleteLibraryGameRecentPaths(szDirectory))
+        AlertSz(PszGetCompressedString(idsLibraryDeleteGameRecentFailed), MB_ICONEXCLAMATION);
+    return TRUE;
+}
+
+int16_t FDeleteSelectedLibraryGame(HWND hwnd) {
+    char szName[256];
+    if (!FSelectedLibraryGameName(hwnd, szName, sizeof(szName))) return FALSE;
+    return FDeleteLibraryGame(hwnd, szName);
 }
 
 static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
@@ -2469,6 +2564,9 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("BUTTON", PszGetCompressedString(idsRename), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
+    CreateWindow("BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+                 lprc->right - 524, y - 22, 56, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_GAME_DELETE, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
@@ -2560,6 +2658,7 @@ void RefreshLibraryGames(HWND hwnd) {
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
     }
     fContinue = FFindContinueLibraryGame() && continueLibrary.iPlayer >= 0;
     if (fContinue && !continueLibrary.fTurnAvailable) {
@@ -2592,6 +2691,7 @@ void RefreshLibraryHostGames(HWND hwnd) {
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
         EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
     }
 }
 

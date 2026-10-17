@@ -143,6 +143,9 @@ static uint16_t icksRaceSaveStage;
 static uint16_t icksRaceImportStage;
 static int cRaceDeleteR2;
 static BOOL fFailRaceDelete;
+static BOOL fLibraryGameDeletePrompt;
+static BOOL fLibraryGameDeleteFailureAlert;
+static BOOL fFailLibraryGameDelete;
 static BOOL fFailRaceExportReplace;
 static BOOL fExpectRaceExportFailureAlert;
 static BOOL fFailGameRenamePublish;
@@ -1390,6 +1393,13 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 }
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
+    if (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
+        strstr(sz, "The selected managed game could not be completely deleted.")) {
+        fLibraryGameDeleteFailureAlert = TRUE;
+        fprintf(stderr, "Startup alert: %s\n", sz);
+        cAlerts++;
+        return IDOK;
+    }
     if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && (mbType & MB_YESNO)) {
         cHostOrderConflictPrompts++;
         return idHostOrderConflictResponse;
@@ -1446,12 +1456,26 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
         fFailRaceDelete = TRUE;
         return IDYES;
     }
+    if (pszText && strstr(pszText, "Delete managed game selected-game?") && (type & MB_YESNO)) {
+        fLibraryGameDeletePrompt = strstr(pszText, "all player files") && strstr(pszText, "host state") &&
+                                   strstr(pszText, "history") && strstr(pszText, "backups") &&
+                                   strstr(pszText, "Export the complete game first");
+        return getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
+               strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "cancel") == 0 ? IDNO : IDYES;
+    }
+    if (pszText && strstr(pszText, "The selected managed game could not be completely deleted."))
+        fLibraryGameDeleteFailureAlert = TRUE;
     return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
 int StarsTestReal_RemoveNativeFile(const char *pszFile);
 int StarsTest_RemoveNativeFile(const char *pszFile) {
     static int fFailImportOrdersRemove;
+    if (!fFailLibraryGameDelete && getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
+        strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && strstr(pszFile, "selected-game")) {
+        fFailLibraryGameDelete = TRUE;
+        return -1;
+    }
     if (fFailRaceDelete) {
         fFailRaceDelete = FALSE;
         return -1;
@@ -1548,10 +1572,13 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     char szFind[320], szName[256];
     const char *pszExpected, *pszTarget, *pszYear, *pszCopyName;
     const char *pszHostSource, *pszHostPlayerSource, *pszHostOrderBase, *pszHostPickerBase;
+    const char *pszDeleteMode;
     SDL_Event event = {0};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
     RECT rcScanner;
+    HWND hwndDeleteList;
+    LRESULT iDeleteSelected, iDeleteOther;
     POINT ptLibraryButton;
     static const int rgidLibraryButton[] = {
         IDC_LIBRARY_IMPORT, IDC_LIBRARY_IMPORT_FOLDER, IDC_LIBRARY_GAME_EXPORT,
@@ -2161,6 +2188,33 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             PostQuitMessage(0);
             return;
         }
+        return;
+    }
+    if (getenv("STARS_CLIENT_GAME_DELETE_MODE")) {
+        pszDeleteMode = getenv("STARS_CLIENT_GAME_DELETE_MODE");
+        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == LB_ERR) goto LDone;
+        if (iStage == 0) {
+            if (iDeleteSelected == LB_ERR) goto LDone;
+            SendMessage(hwndDeleteList, LB_SETCURSEL, iDeleteSelected, 0);
+            iStage = 1;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE))) goto LDone;
+            return;
+        }
+        if (!fLibraryGameDeletePrompt) goto LDone;
+        RefreshLibraryGames(hwndTitle);
+        hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == LB_ERR && iDeleteOther != LB_ERR :
+                  iDeleteSelected != LB_ERR && iDeleteOther != LB_ERR &&
+                  (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
+        if (!fPassed) goto LDone;
+        fChecked = TRUE;
+        puts("Managed game deletion confirmed, cancelled, or failed through the Games view");
+        PostQuitMessage(0);
         return;
     }
     if (getenv("STARS_CLIENT_GAME_LIBRARY_TEST")) {
@@ -2792,6 +2846,7 @@ int main(void) {
         !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
         !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
+        !getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
         !getenv("STARS_CLIENT_HOST_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
         !getenv("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
@@ -2799,7 +2854,9 @@ int main(void) {
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
-           cAlerts == (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
+           cAlerts == (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
+                       !strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "failure") ? 1 :
+                       getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
                        getenv("STARS_CLIENT_RECENT_MIGRATION") ?
                        (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
                         strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?

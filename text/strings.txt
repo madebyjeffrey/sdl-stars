@@ -1509,3 +1509,6 @@
 0x0599 idsLibraryRenameSucceededCleanupPath "The game was renamed, but old files remain at %s."
 0x059A idsLibraryRecentImportPrompt "Import games from your recent files into the managed library? Original files will remain unchanged."
 0x059B idsLibraryRecentImportChoiceFailed "The recent-file import choice could not be saved."
+0x059C idsLibraryDeleteGamePrompt "Delete managed game %s? This removes all player files, host state, history, and backups. Export the complete game first if you want to keep a copy."
+0x059D idsLibraryDeleteGameFailed "The selected managed game could not be completely deleted."
+0x059E idsLibraryDeleteGameRecentFailed "The game was deleted, but its recent-game entry could not be cleared."
