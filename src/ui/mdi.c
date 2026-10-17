@@ -1520,6 +1520,8 @@ LPrintMapCleanup:
         case IDM_FILE_RETURN_TO_TITLE:
             if (gd.fTutorial && !FAskKillTutor())
                 break;
+            if (!FCanLeaveCurrentGame())
+                break;
             WriteIniSettings();
             DestroyCurGame();
             strcpy(szBase, szWork);
@@ -2867,7 +2869,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ini.fStartupFile = FALSE;
             break;
         case IDCANCEL:
-            ini.fStartupFile = TRUE;
+            if (!FContinueLibraryGame(hwnd)) break;
             goto LOpenGame;
         case 3:
             if (gd.fExitWindows) {

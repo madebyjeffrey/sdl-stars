@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 def run(executable, work, default_root=False, settings_root=False, **choices):
@@ -31,7 +32,12 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
         subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
         return
     for key in ('STARS_CLIENT_CONTINUE', 'STARS_CLIENT_NEW_GAME',
-                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN'):
+                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN',
+                'STARS_CLIENT_LIBRARY_OPEN_PLAYER', 'STARS_CLIENT_EXPECT_PLAYER',
+                'STARS_CLIENT_EXPECT_SELECTOR', 'STARS_CLIENT_EXPECT_CONTINUE_DISABLED',
+                'STARS_CLIENT_SWITCH_CANCEL_TEST', 'STARS_CLIENT_EXPECT_CONTINUE_GAME',
+                'STARS_CLIENT_EXPECT_CONTINUE_YEAR', 'STARS_CLIENT_SWITCH_CHOICE',
+                'STARS_CLIENT_EXPECT_SWITCHED_PLAYER'):
         env.pop(key, None)
     env.update(choices)
     cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
@@ -129,6 +135,39 @@ def main():
         assert {p.relative_to(source): p.read_bytes() for p in source.rglob('*') if p.is_file()} == original
         metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
         assert metadata[0] == '2' and metadata[4] == 'exchange'
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2')
+        metadata = (imported / '.library').read_text(encoding='utf-8').splitlines()
+        assert metadata[2] == '1'
+        turn_before = (imported / 'managed-copy.m2').read_bytes()
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='managed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2',
+            STARS_CLIENT_SWITCH_CANCEL_TEST='1')
+        assert (imported / '.library').read_text(encoding='utf-8').splitlines()[2] == '1'
+        assert (imported / 'managed-copy.m2').read_bytes() == turn_before
+        for choice in ('save', 'discard', 'submit'):
+            with tempfile.TemporaryDirectory(prefix='stars-switch-choice-') as choice_directory:
+                choice_work = Path(choice_directory)
+                choice_source = choice_work / 'exchange'
+                choice_source.mkdir()
+                for ext in ('.xy', '.hst', '.m1', '.m2'):
+                    shutil.copyfile(fixture / ('game' + ext), choice_source / ('exchange' + ext))
+                run(executable, choice_work, STARS_CLIENT_IMPORT_SOURCE=str(choice_source),
+                    STARS_CLIENT_IMPORT_NAME='switch-choice')
+                run(executable, choice_work, STARS_CLIENT_LIBRARY_OPEN='switch-choice',
+                    STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2',
+                    STARS_CLIENT_EXPECT_SWITCHED_PLAYER='1', STARS_CLIENT_SWITCH_CHOICE=choice)
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_PLAYER='2', STARS_CLIENT_EXPECT_CONTINUE_GAME='managed-copy',
+            STARS_CLIENT_EXPECT_CONTINUE_YEAR='2400')
+        (imported / 'managed-copy.m2').unlink()
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_SELECTOR='1')
+        (imported / 'managed-copy.m1').unlink()
+        run(executable, work, STARS_CLIENT_CONTINUE=str(imported / 'managed-copy.m1'),
+            STARS_CLIENT_EXPECT_CONTINUE_DISABLED='1')
+        for ext in ('.m1', '.m2'):
+            shutil.copyfile(source / ('exchange' + ext), imported / ('managed-copy' + ext))
         playable = games / 'managed-playable'
         playable_path = playable / 'managed-playable'
         run(executable, work, STARS_CLIENT_NEW_GAME=str(playable_path.with_suffix('.xy')),
@@ -357,6 +396,36 @@ def main():
         run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_type_source),
             STARS_CLIENT_IMPORT_NAME='invalid-type', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
         assert not (work / 'library' / 'Games' / 'invalid-type').exists()
+
+    with tempfile.TemporaryDirectory(prefix='stars-import-continue-latest-') as directory:
+        work = Path(directory)
+        fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+        for name in ('older-session', 'latest-session'):
+            with tempfile.TemporaryDirectory(prefix='stars-import-continue-seed-') as seed_directory:
+                seed = Path(seed_directory)
+                source = seed / 'exchange'
+                source.mkdir()
+                for ext in ('.xy', '.hst', '.m1', '.m2'):
+                    shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+                run(executable, seed, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME=name)
+                seeded_game = seed / 'library' / 'Games' / name
+                (work / 'library' / 'Games').mkdir(parents=True, exist_ok=True)
+                shutil.copytree(seeded_game, work / 'library' / 'Games' / name)
+        older = work / 'library' / 'Games' / 'older-session'
+        latest = work / 'library' / 'Games' / 'latest-session'
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='older-session',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2')
+        # Metadata stores whole seconds; ensure the second game's open is newer.
+        time.sleep(1.1)
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='latest-session',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='1', STARS_CLIENT_EXPECT_PLAYER='1')
+        older_metadata = (older / '.library').read_text(encoding='utf-8').splitlines()
+        latest_metadata = (latest / '.library').read_text(encoding='utf-8').splitlines()
+        assert older_metadata[2] == '1' and latest_metadata[2] == '0'
+        assert int(latest_metadata[3]) > int(older_metadata[3])
+        run(executable, work, STARS_CLIENT_CONTINUE=str(older / 'older-session.m1'),
+            STARS_CLIENT_EXPECT_PLAYER='1', STARS_CLIENT_EXPECT_CONTINUE_GAME='latest-session',
+            STARS_CLIENT_EXPECT_CONTINUE_YEAR='2400')
 
     with tempfile.TemporaryDirectory(prefix='stars-import-file-') as directory:
         work = Path(directory)

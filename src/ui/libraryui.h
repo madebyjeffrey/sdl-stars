@@ -36,6 +36,7 @@ void RefreshLibraryHostGames(HWND hwnd);
 void SelectLibraryView(HWND hwnd, int16_t fHost);
 int16_t FSelectLibraryGame(HWND hwnd);
 int16_t FSelectLibraryHostGame(HWND hwnd);
+int16_t FContinueLibraryGame(HWND hwnd);
 void RememberLibraryGame(void);
 int16_t FImportLibraryGame(HWND hwnd, const char *pszSource);
 int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource);

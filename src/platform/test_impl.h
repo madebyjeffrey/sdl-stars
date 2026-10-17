@@ -69,4 +69,7 @@
 #ifndef STARS_TEST_IMPL_IChooseWindowsFile
 #define STARS_TEST_IMPL_IChooseWindowsFile IChooseWindowsFile
 #endif
+#ifndef STARS_TEST_IMPL_AskSaveDialog
+#define STARS_TEST_IMPL_AskSaveDialog AskSaveDialog
+#endif
 #endif
