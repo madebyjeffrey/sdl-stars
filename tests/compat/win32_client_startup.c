@@ -2490,16 +2490,16 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             const char *pszPlayer = getenv("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
             int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
             int iRow;
-            char szRow[320];
+            char szRow[320], szPlayerPrefix[320];
             if (!IsWindowVisible(hwndTitle)) goto LDone;
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             iGame = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)pszName);
             if (iGame == LB_ERR) goto LDone;
             if (iWanted >= 0) {
+                CchSnprintf(szPlayerPrefix, sizeof(szPlayerPrefix), "%s - Player %d (", pszName, iWanted + 1);
                 for (iRow = (int)iGame; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
                     if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
-                        strncmp(szRow, pszName, strlen(pszName)) || szRow[strlen(pszName)] != ' ' ||
-                        SendMessage(hwndList, LB_GETITEMDATA, iRow, 0) != iWanted) continue;
+                        strncmp(szRow, szPlayerPrefix, strlen(szPlayerPrefix))) continue;
                     iGame = iRow;
                     break;
                 }
@@ -2520,11 +2520,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
             int iRow;
-            char szRow[320];
+            char szRow[320], szPlayerPrefix[320];
+            CchSnprintf(szPlayerPrefix, sizeof(szPlayerPrefix), "%s - Player 1 (", pszName);
             for (iRow = 0; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
                 if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
-                    strncmp(szRow, pszName, strlen(pszName)) || szRow[strlen(pszName)] != ' ' ||
-                    SendMessage(hwndList, LB_GETITEMDATA, iRow, 0) != 0) continue;
+                    strncmp(szRow, szPlayerPrefix, strlen(szPlayerPrefix))) continue;
                 SendMessage(hwndList, LB_SETCURSEL, iRow, 0);
                 iStage = 21;
                 if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
@@ -2799,8 +2799,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
         GetWindowTextA(rghwndBtnSplash[2], szLabel, sizeof(szLabel));
         if (!strstr(szLabel, "Choose Player") || !FPushClick(rghwndBtnSplash[2])) goto LDone;
-        if (!hwndList || SendMessage(hwndList, LB_GETITEMDATA,
-            SendMessage(hwndList, LB_GETCURSEL, 0, 0), 0) != 0 || !IsWindow(hwndTitle)) goto LDone;
+        if (!hwndList || SendMessage(hwndList, LB_GETTEXT,
+            SendMessage(hwndList, LB_GETCURSEL, 0, 0), (LPARAM)szLabel) == LB_ERR ||
+            !strstr(szLabel, "managed-copy - Player 1 (") || !IsWindow(hwndTitle)) goto LDone;
         fPassed = TRUE;
         puts("Continue selects the managed game when its remembered player is unavailable");
         PostQuitMessage(0);
