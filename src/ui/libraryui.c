@@ -38,6 +38,7 @@ typedef struct LibraryContinue {
 } LIBRARYCONTINUE;
 
 static LIBRARYCONTINUE continueLibrary;
+static int16_t FFindContinueLibraryGame(void);
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
 static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName);
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter);
@@ -2079,6 +2080,7 @@ int16_t FDeleteLibraryGame(HWND hwnd, const char *pszName) {
     int iplr;
     long long lPlayed;
     int cch;
+    int16_t fContinueTarget;
 
     if (!FInitLibrary() || !FPortableLibraryName(pszName)) return FALSE;
     cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
@@ -2091,10 +2093,14 @@ int16_t FDeleteLibraryGame(HWND hwnd, const char *pszName) {
     if (cch <= 0 || (size_t)cch >= sizeof(szMessage)) return FALSE;
     if (MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryGames),
                    MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
+    fContinueTarget = FFindContinueLibraryGame() && !strcmp(continueLibrary.szName, pszName);
     if (!RemoveLibraryGameTree(szDirectory)) {
         AlertSz(PszGetCompressedString(idsLibraryDeleteGameFailed), MB_ICONHAND);
         return FALSE;
     }
+    /* Keep deletion from silently promoting another game on the next startup. */
+    if (fContinueTarget)
+        WritePrivateProfileString("Library", "ContinueDeleted", "1", PszGetCompressedString(idsStarsIni));
     if (!FDeleteLibraryGameRecentPaths(szDirectory))
         AlertSz(PszGetCompressedString(idsLibraryDeleteGameRecentFailed), MB_ICONEXCLAMATION);
     return TRUE;
@@ -2526,6 +2532,7 @@ static int16_t FindContinueLibraryGame(void *lpData, const char *pszName) {
 }
 
 static int16_t FFindContinueLibraryGame(void) {
+    if (GetPrivateProfileInt("Library", "ContinueDeleted", 0, PszGetCompressedString(idsStarsIni))) return FALSE;
     memset(&continueLibrary, 0, sizeof(continueLibrary));
     continueLibrary.iPlayer = -1;
     return FInitLibrary() && FNativeEnumerateDirectory(szLibraryRoot, FindContinueLibraryGame, &continueLibrary) &&
@@ -2824,5 +2831,6 @@ void RememberLibraryGame(void) {
      * publishing the newly opened player and last-played time. */
     if (!FReadLibraryMetadata(szDir, szMetadataName, sizeof(szMetadataName), &iplr, &lPlayed,
                               szLibraryExchangeName, sizeof(szLibraryExchangeName))) szLibraryExchangeName[0] = 0;
-    FWriteLibraryMetadata(szDir, pch + 1, idPlayer);
+    if (FWriteLibraryMetadata(szDir, pch + 1, idPlayer))
+        WritePrivateProfileString("Library", "ContinueDeleted", NULL, PszGetCompressedString(idsStarsIni));
 }

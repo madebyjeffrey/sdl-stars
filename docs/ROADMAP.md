@@ -212,7 +212,7 @@ The expanded Linux create/import workflow shares the other desktop platforms'
 200-second test budget, with extra time for X11 window-manager cleanup.
 Managed-game deletion confirms its library name and full file scope, removes
 only that game's folder, and clears its recent entries without silently
-promoting another game into Continue. The real-client workflow covers cancel,
+promoting another game into Continue, including after restart. The real-client workflow covers cancel,
 failure, and confirmed removal with isolated managed and source files.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.

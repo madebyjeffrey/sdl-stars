@@ -2211,7 +2211,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == LB_ERR && iDeleteOther != LB_ERR :
                   iDeleteSelected != LB_ERR && iDeleteOther != LB_ERR &&
                   (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
-        if (!fPassed) goto LDone;
+        if (!fPassed || (!strcmp(pszDeleteMode, "confirm") && IsWindowEnabled(rghwndBtnSplash[2]))) goto LDone;
         fChecked = TRUE;
         puts("Managed game deletion confirmed, cancelled, or failed through the Games view");
         PostQuitMessage(0);

@@ -41,7 +41,7 @@ def run(executable, mode):
             root.mkdir(parents=True)
             for extension in ('.xy', '.hst', '.m1'):
                 shutil.copyfile(fixture / ('game' + extension), root / (stem + extension))
-            (root / '.library').write_text(f'2\n{stem}\n0\n0\n{stem}\n', encoding='utf-8')
+            (root / '.library').write_text(f'2\n{stem}\n0\n{2 if root == selected else 1}\n{stem}\n', encoding='utf-8')
         for root, stem in ((selected, 'selected-game'), (other, 'other-game')):
             (root / (stem + '.x1')).write_bytes(b'saved orders')
             (root / (stem + '.h1')).write_bytes(b'history')
@@ -69,6 +69,10 @@ def run(executable, mode):
             ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
             assert 'File1=' in ini and f'File1={other / "other-game.m1"}' not in ini
             assert f'File2={other / "other-game.m1"}' in ini
+            restart_env = dict(env, STARS_CLIENT_CONTINUE=str(other / 'other-game.m1'),
+                               STARS_CLIENT_EXPECT_CONTINUE_DISABLED='1')
+            restart_env.pop('STARS_CLIENT_GAME_DELETE_MODE')
+            subprocess.run([str(executable)], cwd=work, env=restart_env, check=True, timeout=45)
         elif mode == 'cancel':
             assert snapshot(selected) == selected_before
             assert snapshot(games) == catalog_before
