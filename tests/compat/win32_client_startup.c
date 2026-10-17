@@ -86,6 +86,7 @@ static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *
 int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static int cAlerts;
+static BOOL fConflictRestoreAlert;
 static UINT_PTR idTimer;
 static int iStage, cWait;
 static HWND hwndWizard;
@@ -1380,6 +1381,8 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
         return IDOK;
     }
     if (getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
+        if (getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
+            strstr(sz, "the managed game and its orders were preserved")) fConflictRestoreAlert = TRUE;
         return IDOK;
     }
     PostQuitMessage(91);
@@ -1442,10 +1445,15 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
 
 int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
-    static int fFailConflictPublish;
+    static int fFailConflictPublish, fFailConflictRestore;
     if (!fFailConflictPublish && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
         strstr(pszOld, ".stars-game-stage-") && strstr(pszNew, "managed-copy-duplicate")) {
         fFailConflictPublish = TRUE;
+        return -1;
+    }
+    if (!fFailConflictRestore && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
+        strstr(pszOld, ".stars-game-old-") && strstr(pszNew, "managed-copy-duplicate")) {
+        fFailConflictRestore = TRUE;
         return -1;
     }
     if (fFailGameRenamePublish && !SDL_strcasecmp(pszNew, szGameRenameFailTarget)) {
@@ -2319,7 +2327,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                   !strcmp(pszExpected, "player16") ||
                   !strcmp(pszExpected, "adjacent") || !strcmp(pszExpected, "replace-conflict") ||
                   !strcmp(pszExpected, "separate-conflict")) && fImported && cAlerts == 0) ||
-                (!strcmp(pszExpected, "fail-conflict") && !fImported && cAlerts > 0) ||
+                (!strcmp(pszExpected, "fail-conflict") && !fImported && cAlerts > 0 &&
+                 (!getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") || fConflictRestoreAlert)) ||
                 ((!strcmp(pszExpected, "cancel") || !strcmp(pszExpected, "cancel-conflict")) && !fImported && cAlerts == 0));
             if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
                 pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";

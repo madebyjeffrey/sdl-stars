@@ -298,6 +298,17 @@ def main():
         assert history.read_bytes() == b'preserve player history'
         assert not list((work / 'library' / 'Games').glob('.stars-game-old-*'))
 
+        # A transient restore failure succeeds on retry and must not direct the
+        # user to a recovery folder that the successful restore has removed.
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(separate_turn),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH='1',
+            STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE='1')
+        assert (duplicate / 'managed-copy-duplicate.m1').read_bytes() == before_failed_conflict
+        assert duplicate_orders.read_bytes() == b'orders survive staged install failure'
+        assert history.read_bytes() == b'preserve player history'
+        assert not list((work / 'library' / 'Games').glob('.stars-game-old-*'))
+
         run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(separate_turn),
             STARS_CLIENT_IMPORT_UPDATE_EXPECTED='separate-conflict', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy-duplicate',
             STARS_CLIENT_IMPORT_COPY_NAME='corrected-copy')

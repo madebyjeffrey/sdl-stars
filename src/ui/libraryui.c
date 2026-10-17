@@ -2146,7 +2146,7 @@ static int16_t FReplaceConflictingLibraryTurn(HWND hwnd, const char *pszName,
 LDone:
     if (FNativeDirectoryExists(szStage)) RemoveLibraryGameTree(szStage);
     if (fHeld) {
-        if (RenameNativeFile(szHold, szDirectory) == 0) fHeld = FALSE;
+        if (RenameNativeFile(szHold, szDirectory) == 0) { fHeld = FALSE; fRestoreFailed = FALSE; }
         else fRestoreFailed = TRUE;
     }
     if (fRestoreFailed) {

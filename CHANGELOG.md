@@ -33,6 +33,11 @@ produce different results from a 2.6j host for the same turn.
   Separate Copy duplicates the selected game and changes only the incoming
   player's turn. Orders and history remain available, later-turn updates keep
   their no-warning path, and game formats and simulation results are unchanged.
+- `FReplaceConflictingLibraryTurn` clears the failure status when restoring the
+  previous game succeeds on retry. A failed conflicting import then correctly
+  reports that the managed game and orders were preserved, rather than directing
+  recovery from a folder that has already been restored. Simulation results and
+  save formats are unchanged.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export
