@@ -1598,8 +1598,10 @@ static int16_t FImportConflictingTurnAsCopy(HWND hwnd, const char *pszName,
                                             const char *pszSource, int iplr,
                                             int32_t lidGame, uint16_t turn);
 
+static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr);
+
 static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
-    char szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];
+    char szUniverse[512], szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];
     const char *pszFile, *pszExt, *pchSlash;
     LIBRARYTURNMATCH lm;
     int32_t lidGame, lidCurrent;
@@ -1608,7 +1610,8 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     INT_PTR iChoice;
     int iplr;
     int64_t cbFile;
-    int16_t fHasOrders;
+    int16_t fHasOrders, fHasTurn, fDirectory, fLink;
+    FILE *pf;
     int cch;
     uint32_t dwTick;
 
@@ -1643,12 +1646,31 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return FALSE;
-    if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) || lidCurrent != lidGame) {
-        AlertSz("The managed game does not contain a valid turn for this player.", MB_ICONEXCLAMATION);
+    pf = PfOpenNativeFile(szTarget, "rb");
+    fHasTurn = pf != NULL;
+    if (pf) fclose(pf);
+    else if (errno != ENOENT) {
+        AlertSz("The managed player's turn could not be inspected.", MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (FFilesEqual(pszSource, szTarget)) return TRUE;
-    if (turn <= turnCurrent) {
+    if (fHasTurn) {
+        if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) || lidCurrent != lidGame) {
+            AlertSz("The managed game does not contain a valid turn for this player.", MB_ICONEXCLAMATION);
+            return FALSE;
+        }
+        if (FFilesEqual(pszSource, szTarget)) return TRUE;
+    } else {
+        /* A first turn uses the stored universe, but must name an existing
+         * player and must not replace a dangling link or unreadable entry. */
+        cch = CchSnprintf(szUniverse, sizeof(szUniverse), "%s%s%s%s%s.xy",
+                          szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected);
+        if (cch <= 0 || (size_t)cch >= sizeof(szUniverse)) return FALSE;
+        if (FNativePathInfo(szTarget, &fDirectory, &fLink) || !FInspectImportPlayer(szUniverse, iplr)) {
+            AlertSz("The new player turn does not match an available player in this universe.", MB_ICONEXCLAMATION);
+            return FALSE;
+        }
+    }
+    if (fHasTurn && turn <= turnCurrent) {
         iChoice = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_CONFLICT), hwnd,
                                  LibraryTurnConflictDlg, 0);
         if (iChoice == 1) return FReplaceConflictingLibraryTurn(hwnd, lm.szSelected, pszSource,
@@ -1671,6 +1693,15 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
         if (szStage[0]) RemoveNativeFile(szStage);
         AlertSz("The new player turn could not be staged safely.", MB_ICONHAND);
         return FALSE;
+    }
+    if (!fHasTurn) {
+        if (ReplaceNativeFile(szStage, szTarget) != 0) {
+            RemoveNativeFile(szStage);
+            AlertSz("The new player turn could not be installed.", MB_ICONHAND);
+            return FALSE;
+        }
+        /* No previous turn was advanced, so retain any host orders/history. */
+        return TRUE;
     }
     fHasOrders = FNativeFileSize(szOrders, &cbFile);
     if (!FCopyNativeFileExclusive(szTarget, szPrevious)) {

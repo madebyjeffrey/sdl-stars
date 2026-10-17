@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FImportSubsequentTurn` now installs a player’s first standalone turn using
+  the matching managed universe, including host-only games. Previously it
+  required an existing turn for that player. It validates the player slot,
+  stages publication and retains companion orders/history. No simulation results
+  or native regression baseline scenarios change.
+
 - `FImportLibraryRace` now saves converted legacy designs as format 2.85,
   including their UTF-8 names and accepted replacement password. Previously it
   copied the original bytes and discarded those conversions. Imported originals,

@@ -44,8 +44,55 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
     subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
 
 
+def check_first_player_turn(executable):
+    fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
+    for extensions, player in ((('.xy', '.m1'), 2), (('.xy', '.hst'), 1)):
+        with tempfile.TemporaryDirectory(prefix='stars-first-player-turn-') as directory:
+            work = Path(directory)
+            source = work / 'exchange'
+            source.mkdir()
+            for extension in extensions:
+                shutil.copyfile(fixture / ('game' + extension), source / ('exchange' + extension))
+            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source),
+                STARS_CLIENT_IMPORT_NAME='first-turn',
+                STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='1' if player == 2 else '0')
+            managed = work / 'library' / 'Games' / 'first-turn'
+            incoming = work / ('incoming.m' + str(player))
+            shutil.copyfile(fixture / ('game.m' + str(player)), incoming)
+            target = managed / ('first-turn.m' + str(player))
+            for extension in ('.x1', '.x2', '.h1', '.h2'):
+                (managed / ('first-turn' + extension)).write_bytes(b'preserve companion')
+            before = {p.name: p.read_bytes() for p in managed.iterdir() if p.is_file()}
+            original = {p.name: p.read_bytes() for p in source.iterdir()}
+            target.mkdir()
+            run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+                STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
+            target.rmdir()
+            if player == 1:
+                run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+                    STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail', STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE='1')
+                assert not target.exists()
+                assert not list(managed.glob('*.importing.*'))
+            invalid = bytearray(incoming.read_bytes())
+            invalid[14:16] = ((int.from_bytes(invalid[14:16], 'little') & ~0x1f) | 15).to_bytes(2, 'little')
+            absent_player = work / 'absent.m16'
+            absent_player.write_bytes(invalid)
+            run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(absent_player),
+                STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
+            assert not (managed / 'first-turn.m16').exists()
+            run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+                STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+            assert target.read_bytes() == incoming.read_bytes()
+            assert all((managed / name).read_bytes() == data for name, data in before.items())
+            assert {p.name: p.read_bytes() for p in source.iterdir()} == original
+            assert not list(managed.glob('*.importing.*'))
+            run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+                STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
+    check_first_player_turn(executable)
     for advanced, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:
