@@ -348,7 +348,7 @@ if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_newgame_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_newgame_dummy PROPERTIES LABELS "client"
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 100)
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 200)
     add_test(NAME win32_client_game_export_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_game_export.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_game_export_dummy PROPERTIES LABELS "client"
@@ -356,10 +356,10 @@ if(STARS_BUILD_TESTS)
     add_test(NAME win32_client_newgame_x11 COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_x11_wm.py"
         --xvfb "${STARS_XVFB_RUN_EXECUTABLE}" --wm "${STARS_OPENBOX_EXECUTABLE}"
-        --xprop "${STARS_XPROP_EXECUTABLE}" --timeout 100 "${Python3_EXECUTABLE}"
+        --xprop "${STARS_XPROP_EXECUTABLE}" --timeout 200 "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_newgame_x11 PROPERTIES LABELS "client"
-        ENVIRONMENT "SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 110)
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 210)
     add_test(NAME win32_client_polish_dummy COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
     set_tests_properties(win32_client_polish_dummy PROPERTIES LABELS "client"

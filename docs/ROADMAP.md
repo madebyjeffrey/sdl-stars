@@ -208,6 +208,8 @@ publication; Separate Copy retains the selected game's complete file family
 under a unique name. Cancellation and failed publication preserve existing data;
 a successful restore retry reports that preserved state.
 Resource-template and combo contracts include the conflicting-turn dialog.
+The expanded Linux create/import workflow shares the other desktop platforms'
+200-second test budget, with extra time for X11 window-manager cleanup.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.
 It confirms replacement of the final numbered destination after extension

@@ -40,6 +40,8 @@ produce different results from a 2.6j host for the same turn.
   save formats are unchanged.
 - Dialog-resource and combo contract tests now include the conflicting-turn
   dialog instead of rejecting the expanded resource inventory.
+- The expanded Linux game-creation/import workflow uses the same 200-second
+  test budget as macOS and Windows, avoiding its previous 100-second cutoff.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export
