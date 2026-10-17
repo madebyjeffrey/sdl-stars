@@ -14,6 +14,9 @@
 #define IDC_LIBRARY_RACE_DELETE 2410
 #define IDD_LIBRARY_TURN_TARGET 2411
 #define IDC_LIBRARY_TURN_TARGET_LIST 2412
+#define IDD_LIBRARY_TURN_CONFLICT 2420
+#define IDC_LIBRARY_TURN_REPLACE 2421
+#define IDC_LIBRARY_TURN_SEPARATE 2422
 #define IDM_LIBRARY_EXPORT_ORDERS 2413
 #define IDC_LIBRARY_DUPLICATE 2414
 #define IDC_LIBRARY_RENAME 2415
@@ -66,5 +69,6 @@ int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
 void ShowLibraryImportFolderPicker(HWND hwnd);
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 #endif

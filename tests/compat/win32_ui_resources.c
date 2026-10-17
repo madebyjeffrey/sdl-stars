@@ -94,7 +94,7 @@ int main(void) {
     }
     CHECK(cTutorial == 3);
 #ifndef _WIN32
-    CHECK(cDialogs == 36 && cControls == 343);
+    CHECK(cDialogs == 37 && cControls == 347);
     CHECK(!FCompatDialogTemplate(rgbExtended, sizeof(rgbExtended), &dlg));
 #endif
     CHECK(!LoadMenu(hinst, "missing"));

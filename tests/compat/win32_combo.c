@@ -149,7 +149,7 @@ int main(void) {
         hdlg = CreateDialogParam(NULL, rgUIManifest[i].pszName, hwnd, NULL, 0);
         CHECK(hdlg); cDialogs++; CHECK(DestroyWindow(hdlg));
     }
-    CHECK(cDialogs == 36);
+    CHECK(cDialogs == 37);
     hdlg = CreateDialogParam(NULL, MAKEINTRESOURCE(IDD_PASSWORD), hwnd, NULL, 0); CHECK(hdlg);
     hchild = CreateWindow("ComboBox", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWN,
                           10, 70, 100, 80, hdlg, (HMENU)999, hinst, NULL); CHECK(hchild);

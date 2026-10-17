@@ -1469,6 +1469,18 @@ INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LP
     return FALSE;
 }
 
+INT_PTR CALLBACK LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    (void)lParam;
+    switch (message) {
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDCANCEL) { EndDialog(hwnd, 0); return TRUE; }
+        if (LOWORD(wParam) == IDC_LIBRARY_TURN_REPLACE) { EndDialog(hwnd, 1); return TRUE; }
+        if (LOWORD(wParam) == IDC_LIBRARY_TURN_SEPARATE) { EndDialog(hwnd, 2); return TRUE; }
+        break;
+    }
+    return FALSE;
+}
+
 static int16_t FFilesEqual(const char *pszLeft, const char *pszRight) {
     FILE *pfLeft, *pfRight;
     char rgbLeft[4096], rgbRight[4096];
@@ -1489,6 +1501,13 @@ LDone:
     return fEqual;
 }
 
+static int16_t FReplaceConflictingLibraryTurn(HWND hwnd, const char *pszName,
+                                             const char *pszSource, const char *pszTarget,
+                                             int iplr, int32_t lidGame, uint16_t turn);
+static int16_t FImportConflictingTurnAsCopy(HWND hwnd, const char *pszName,
+                                            const char *pszSource, int iplr,
+                                            int32_t lidGame, uint16_t turn);
+
 static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     char szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];
     const char *pszFile, *pszExt, *pchSlash;
@@ -1496,6 +1515,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     int32_t lidGame, lidCurrent;
     uint16_t turn, turnCurrent;
     int16_t fMulti, fMultiCurrent;
+    INT_PTR iChoice;
     int iplr;
     int64_t cbFile;
     int16_t fHasOrders;
@@ -1539,7 +1559,12 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     }
     if (FFilesEqual(pszSource, szTarget)) return TRUE;
     if (turn <= turnCurrent) {
-        AlertSz("This turn is not later than the managed player's current turn.", MB_ICONEXCLAMATION);
+        iChoice = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_CONFLICT), hwnd,
+                                 LibraryTurnConflictDlg, 0);
+        if (iChoice == 1) return FReplaceConflictingLibraryTurn(hwnd, lm.szSelected, pszSource,
+                                                               szTarget, iplr, lidGame, turn);
+        if (iChoice == 2) return FImportConflictingTurnAsCopy(hwnd, lm.szSelected, pszSource,
+                                                             iplr, lidGame, turn);
         return FALSE;
     }
     cch = CchSnprintf(szOrders, sizeof(szOrders), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
@@ -2010,6 +2035,158 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     return TRUE;
 }
 
+
+static int16_t FCopyOptionalConflictFile(const char *pszSource, const char *pszTarget) {
+    int64_t cbFile;
+    if (FNativeFileSize(pszSource, &cbFile)) return FCopyNativeFileExclusive(pszSource, pszTarget);
+    return errno == ENOENT;
+}
+
+static int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName,
+                                             int iplr, char *pszBackup, size_t cchBackup) {
+    char szSource[512], szTarget[512], szExt[8];
+    int i, cch;
+    int16_t fDirectory, fLink;
+
+    for (i = 0; i < 1000; i++) {
+        cch = CchSnprintf(pszBackup, cchBackup, "%s%sbackup.%03d", pszDirectory, szDirSep, i);
+        if (cch <= 0 || (size_t)cch >= cchBackup) return FALSE;
+        if (FNativePathInfo(pszBackup, &fDirectory, &fLink)) continue;
+        if (CreateNativeDir(pszBackup) == 0) break;
+        if (!FNativeDirectoryExists(pszBackup)) return FALSE;
+    }
+    if (i == 1000) return FALSE;
+
+    CchSnprintf(szExt, sizeof(szExt), "m%d", iplr + 1);
+    cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSource)) return FALSE;
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return FALSE;
+
+    CchSnprintf(szExt, sizeof(szExt), "x%d", iplr + 1);
+    cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSource)) return FALSE;
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget) || !FCopyOptionalConflictFile(szSource, szTarget)) return FALSE;
+
+    CchSnprintf(szExt, sizeof(szExt), "h%d", iplr + 1);
+    cch = CchSnprintf(szSource, sizeof(szSource), "%s%s%s.%s", pszDirectory, szDirSep, pszName, szExt);
+    if (cch <= 0 || (size_t)cch >= sizeof(szSource)) return FALSE;
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.%s", pszBackup, szDirSep, pszName, szExt);
+    return cch > 0 && (size_t)cch < sizeof(szTarget) && FCopyOptionalConflictFile(szSource, szTarget);
+}
+
+static int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
+                                     const char *pszSource, int iplr,
+                                     int32_t lidGame, uint16_t turn) {
+    char szTarget[512], szIncoming[512];
+    int32_t lidStaged;
+    uint16_t turnStaged, wGenStaged;
+    int16_t fMultiStaged;
+    int cch;
+
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s.m%d", pszStage, szDirSep, pszName, iplr + 1);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget)) return FALSE;
+    cch = CchSnprintf(szIncoming, sizeof(szIncoming), "%s.incoming.%u", szTarget, DwTickCount());
+    if (cch <= 0 || (size_t)cch >= sizeof(szIncoming)) return FALSE;
+    if (!FCopyNativeFileExclusive(pszSource, szIncoming) ||
+        !FInspectImportFile(szIncoming, dtTurn, iplr, &lidStaged, &turnStaged, &wGenStaged, &fMultiStaged) ||
+        lidStaged != lidGame || turnStaged != turn || ReplaceNativeFile(szIncoming, szTarget) != 0) {
+        RemoveNativeFile(szIncoming);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static int16_t FChooseSeparateCopyName(HWND hwnd, const char *pszName) {
+    if (!FInitLibrary()) return FALSE;
+    CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszName);
+    SuggestLibraryName(szLibraryName);
+    if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
+                       LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+    return FPortableLibraryName(szLibraryName) && FLibraryNameAvailable(szLibraryRoot, szLibraryName);
+}
+
+static int16_t FReplaceConflictingLibraryTurn(HWND hwnd, const char *pszName,
+                                             const char *pszSource, const char *pszTarget,
+                                             int iplr, int32_t lidGame, uint16_t turn) {
+    char szDirectory[512], szStage[512], szHold[512], szBackup[512], szExchangeName[256];
+    char szMessage[768];
+    int iRemembered;
+    long long lPlayed;
+    int16_t fHeld = FALSE, fRestoreFailed = FALSE, fCleanupFailed = FALSE;
+    int cch;
+
+    cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szDirectory) ||
+        !FValidManagedLibraryGame(pszName, szDirectory, &iRemembered, &lPlayed,
+                                  szExchangeName, sizeof(szExchangeName)) ||
+        !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return FALSE;
+    if (!FCreateLibraryGameStage(szDirectory, pszName, pszName, szStage, iRemembered,
+                                 lPlayed, szExchangeName) ||
+        !FBackupConflictingPlayerFiles(szStage, pszName, iplr, szBackup, sizeof(szBackup)) ||
+        !FStageConflictingTurn(szStage, pszName, pszSource, iplr, lidGame, turn) ||
+        !FCreateLibraryGameHoldPath(szHold, sizeof(szHold))) goto LDone;
+    if (RenameNativeFile(szDirectory, szHold) != 0) goto LDone;
+    fHeld = TRUE;
+    if (RenameNativeFile(szStage, szDirectory) != 0) {
+        if (RenameNativeFile(szHold, szDirectory) == 0) fHeld = FALSE;
+        else fRestoreFailed = TRUE;
+        goto LDone;
+    }
+    fHeld = FALSE;
+    if (!RemoveLibraryGameTree(szHold)) fCleanupFailed = TRUE;
+    if (fCleanupFailed) {
+        CchSnprintf(szMessage, sizeof(szMessage), "The replacement succeeded, but the previous game copy remains at %s.", szHold);
+        AlertSz(szMessage, MB_ICONEXCLAMATION);
+    }
+    (void)hwnd;
+    (void)pszTarget;
+    return TRUE;
+LDone:
+    if (FNativeDirectoryExists(szStage)) RemoveLibraryGameTree(szStage);
+    if (fHeld) {
+        if (RenameNativeFile(szHold, szDirectory) == 0) { fHeld = FALSE; fRestoreFailed = FALSE; }
+        else fRestoreFailed = TRUE;
+    }
+    if (fRestoreFailed) {
+        CchSnprintf(szMessage, sizeof(szMessage), "The previous game could not be restored. Recover it from %s.", szHold);
+        AlertSz(szMessage, MB_ICONHAND);
+    } else AlertSz("The conflicting turn could not be replaced; the managed game and its orders were preserved.", MB_ICONHAND);
+    (void)hwnd;
+    (void)pszTarget;
+    return FALSE;
+}
+
+static int16_t FImportConflictingTurnAsCopy(HWND hwnd, const char *pszName,
+                                            const char *pszSource, int iplr,
+                                            int32_t lidGame, uint16_t turn) {
+    char szDirectory[512], szStage[512], szTarget[512], szExchangeName[256];
+    int iRemembered, cch;
+    long long lPlayed;
+
+    cch = CchSnprintf(szDirectory, sizeof(szDirectory), "%s%s%s", szLibraryRoot, szDirSep, pszName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szDirectory) ||
+        !FValidManagedLibraryGame(pszName, szDirectory, &iRemembered, &lPlayed,
+                                  szExchangeName, sizeof(szExchangeName)) ||
+        !FChooseSeparateCopyName(hwnd, pszName)) return FALSE;
+    cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
+    if (cch <= 0 || (size_t)cch >= sizeof(szTarget) ||
+        !FLibraryNameAvailable(szLibraryRoot, szLibraryName) ||
+        strlen(szLibraryRoot) + 2 * strlen(szLibraryName) + 18 >= sizeof(szBase) ||
+        !FCreateLibraryGameStagePath(szStage, sizeof(szStage))) return FALSE;
+    if (!FCreateLibraryGameStage(szDirectory, pszName, szLibraryName, szStage,
+                                 iplr, 0, szExchangeName) ||
+        !FStageConflictingTurn(szStage, szLibraryName, pszSource, iplr, lidGame, turn) ||
+        RenameNativeFile(szStage, szTarget) != 0) {
+        if (FNativeDirectoryExists(szStage)) RemoveLibraryGameTree(szStage);
+        AlertSz("The separate game copy could not be created; the existing game and its orders were preserved.", MB_ICONHAND);
+        return FALSE;
+    }
+    (void)iRemembered;
+    (void)lPlayed;
+    return TRUE;
+}
 
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated) {
     char szFile[256], szMessage[256];

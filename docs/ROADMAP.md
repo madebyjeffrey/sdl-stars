@@ -201,7 +201,15 @@ retains the exchange basename while updating the remembered player and time.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
-no-ops; successful updates retire only that player's old orders.
+no-ops; successful later-turn updates retire only that player's old orders.
+Changed same-year and older turns offer Cancel, Replace, and Import as Separate
+Copy. Replace backs up the affected player's turn, orders and history before
+publication; Separate Copy retains the selected game's complete file family
+under a unique name. Cancellation and failed publication preserve existing data;
+a successful restore retry reports that preserved state.
+Resource-template and combo contracts include the conflicting-turn dialog.
+The expanded Linux create/import workflow shares the other desktop platforms'
+200-second test budget, with extra time for X11 window-manager cleanup.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.
 It confirms replacement of the final numbered destination after extension

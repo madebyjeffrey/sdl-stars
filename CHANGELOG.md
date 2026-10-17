@@ -27,6 +27,21 @@ produce different results from a 2.6j host for the same turn.
   ignores identical orders, and asks before replacing different saved orders.
   Host generation continues through the existing turn engine and managed file
   paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
+- `FImportSubsequentTurn` now offers Cancel, Replace, or Import as Separate Copy
+  for changed same-year and older turns. Replace stages the managed game and
+  backs up that player's previous turn, orders, and history before publication;
+  Separate Copy duplicates the selected game and changes only the incoming
+  player's turn. Orders and history remain available, later-turn updates keep
+  their no-warning path, and game formats and simulation results are unchanged.
+- `FReplaceConflictingLibraryTurn` clears the failure status when restoring the
+  previous game succeeds on retry. A failed conflicting import then correctly
+  reports that the managed game and orders were preserved, rather than directing
+  recovery from a folder that has already been restored. Simulation results and
+  save formats are unchanged.
+- Dialog-resource and combo contract tests now include the conflicting-turn
+  dialog instead of rejecting the expanded resource inventory.
+- The expanded Linux game-creation/import workflow uses the same 200-second
+  test budget as macOS and Windows, avoiding its previous 100-second cutoff.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export
