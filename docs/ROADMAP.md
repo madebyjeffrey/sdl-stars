@@ -201,7 +201,11 @@ retains the exchange basename while updating the remembered player and time.
 Existing managed games accept later standalone player turns by game identity,
 prompt for a destination when duplicate managed copies match, and preserve the
 previous turn and orders if staged installation fails. Identical turns are
-no-ops; successful updates retire only that player's old orders.
+no-ops; successful later-turn updates retire only that player's old orders.
+Changed same-year and older turns offer Cancel, Replace, and Import as Separate
+Copy. Replace backs up the affected player's turn, orders and history before
+publication; Separate Copy retains the selected game's complete file family
+under a unique name. Cancellation and failed publication preserve existing data.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.
 It confirms replacement of the final numbered destination after extension
