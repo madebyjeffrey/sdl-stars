@@ -262,6 +262,19 @@ def main():
             STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
         assert not (invalid_work / 'library/Games/managed-copy').exists()
 
+        # ZIP selection uses the same save-before-export path as folders.
+        dirty_zip = work / 'dirty-saved.zip'
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(dirty_zip),
+            STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='1')
+        with zipfile.ZipFile(dirty_zip) as archive:
+            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        dirty_work = work / 'dirty-zip-reimport'
+        run(executable, dirty_work, STARS_CLIENT_IMPORT_SOURCE=str(dirty_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        dirty_game = dirty_work / 'library/Games/managed-copy/managed-copy.m1'
+        run(executable, dirty_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent),
+            STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='1',
+            STARS_CLIENT_CONTINUE=str(dirty_game))
+
         # The parent and staging directory can fit while child filenames do
         # not. The UI must reject the destination without publishing a game.
         long_name = 'managed-game-' + 'a' * 38

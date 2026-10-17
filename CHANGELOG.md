@@ -11,6 +11,10 @@ produce different results from a 2.6j host for the same turn.
   deletion with metadata-based session selection; simulation and file formats
   are unchanged.
 
+- `FExportLibraryGame` routes a native ZIP destination through the selected-game
+  save prompt, preserving the current orders before creating the archive just
+  as folder export does. Simulation and save formats are unchanged.
+
 - Desktop Import Game now accepts ZIP archives, validates and safely stages
   their contents through the managed-game importer, and Export Game offers a
   ZIP destination containing the full game family and numbered backups.

@@ -172,12 +172,18 @@ return-to-title paths share the same creation function. The SDL presets now link
 The race wizard retains one native window across page transitions. A
 default-width request now selects both frame dimensions, and native SDL menu
 popups retain their owner relationship. `FOpenGame` now accepts Linux paths;
-Continue Game is tested with relative and absolute fixture paths.
+Continue Game resumes the latest managed session, identifies its player and
+year, and selects that same game when its remembered player is unavailable.
+Tests use managed fixtures with relative and absolute recent-file paths, and
+exercise player switching with Save, Don’t Save, Save & Submit and cancellation.
 Managed game creation and reopening (#5) now share `libraryui.c`: desktop
 creation chooses a unique portable name, all generated files stay within that
 managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
-metadata and test storage remain separate from legacy records. The suspended
+metadata and test storage remain separate from legacy records.
+Game ZIP transfers stage complete families through the shared importer and
+exporter, reject malformed or escaping archives, and preserve saved orders and
+backups. ZIP export resolves pending orders through the same prompt as folders. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
 Host Games now has a separate library view, accepts host-only universe/host
 imports, and imports ordinary player orders after matching game identity, turn

@@ -1384,7 +1384,7 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
                 ofn.nMaxFile = sizeof(szZipName);
                 ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
                 if (!FNativeSaveFileName(&ofn)) return FALSE;
-                return FExportLibraryGame(hwnd, pszName, szZipName);
+                return FExportSelectedLibraryGame(hwnd, szZipName);
             }
         }
         SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
