@@ -23,14 +23,13 @@ def main():
             if stem != "game":
                 work = work / "parties-étoiles-Ω"
                 work.mkdir()
-            game_directory = work / "Games" / stem if designer else work
+            game_directory = work / "Games" / stem
             game_directory.mkdir(parents=True, exist_ok=True)
-            if designer:
-                (game_directory / ".library").write_text(f"2\n{stem}\n0\n0\n{stem}\n", encoding="utf-8")
+            (game_directory / ".library").write_text(f"2\n{stem}\n0\n1\n{stem}\n", encoding="utf-8")
             for name in ("game.m1", "game.xy", "game.hst"):
                 shutil.copyfile(fixture / name, game_directory / (stem + Path(name).suffix))
             env = dict(os.environ, STARS_SETTINGS_DIR=str(work), STARS_PROFILE_DIR=str(work),
-                       STARS_CLIENT_CONTINUE=str(game_directory / (stem + ".m1")) if absolute else stem + ".m1",
+                       STARS_CLIENT_CONTINUE=str(game_directory / (stem + ".m1")) if absolute else str(Path("Games") / stem / (stem + ".m1")),
                        STARS_MAP_CAPTURE=str(work / "map.json"))
             env.pop("STARS_LIBRARY_DIR", None)
             subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=45)

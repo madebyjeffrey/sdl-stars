@@ -2516,18 +2516,6 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (IsWindow(hwndTitle)) {
-            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
-                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
-                     hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-                    if (!hwndDialog->fDialog) continue;
-                    fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
-                    EndDialog(hwndDialog, FALSE);
-                    goto LDone;
-                }
-            }
-            return;
-        }
         if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
             HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
@@ -2544,7 +2532,18 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             }
             goto LDone;
         }
-        if (IsWindow(hwndTitle)) return;
+        if (IsWindow(hwndTitle)) {
+            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+                for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
+                     hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
+                    if (!hwndDialog->fDialog) continue;
+                    fprintf(stderr, "Game double-click unexpectedly opened a dialog\n");
+                    EndDialog(hwndDialog, FALSE);
+                    goto LDone;
+                }
+            }
+            return;
+        }
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
         if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
             const char *pszExpected = getenv("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");

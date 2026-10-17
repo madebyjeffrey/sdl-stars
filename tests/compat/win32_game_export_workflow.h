@@ -51,7 +51,18 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         if (!IsWindowVisible(hwndTitle) || (!pszParent && !pszZip)) goto LFail;
         if (fVerify) {
             iStage = 1;
-            if (!FPushClick(rghwndBtnSplash[2])) goto LFail;
+            /* Verify this exported file through the real loader; Continue now
+             * deliberately resumes the managed session instead of an MRU path. */
+            CchSnprintf(szBase, sizeof(szBase), "%s", getenv("STARS_CLIENT_CONTINUE"));
+            ini.fStartupFile = TRUE;
+            if (FOpenGame(hwndTitle, FALSE) <= 0) goto LFail;
+            fFreeingTitle = TRUE;
+            DestroyWindow(hwndTitle);
+            hwndTitle = 0;
+            ini.fStartupFile = FALSE;
+            ShowWindow(hwndFrame, SW_SHOW);
+            InitializeMenu(NULL);
+            PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         } else if (!FSelectClientGameName(hwndTitle, pszGame)) goto LFail;
         else if (pszAction) {
             /* Choose the requested player through the same Open Game action. */
