@@ -900,6 +900,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
     int16_t fValid;
+    int16_t fLegacy;
     if (!pszSource) {
         memset(&ofn, 0, sizeof(ofn));
         memset(szSource, 0, sizeof(szSource));
@@ -921,6 +922,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         return FALSE;
     }
+    fLegacy = ((VERS *)&wVersFile)->verMinor < 85;
     pchSlash = strrchr(szSource, '/');
     pch = strrchr(szSource, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
@@ -935,6 +937,12 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         CchSnprintf(szRaceLibraryName, sizeof(szRaceLibraryName), "%s", pszRaceLibraryNameOverride);
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
     } else if (!FChooseLibraryRaceName(hwnd, szName, szPath, sizeof(szPath))) goto LRestore;
+    /* Legacy reads convert names and credentials in memory; retain that state,
+     * never the original CP1252 bytes or password hash. */
+    if (fLegacy) {
+        if (!FSaveLibraryRace(hwnd, szRaceLibraryName, &vplr)) goto LRestore;
+        return TRUE;
+    }
     if (!FCreateRaceStagePath(szStageDir, sizeof(szStageDir), szStage, sizeof(szStage))) goto LRestore;
     if (!FCopyNativeFile(szSource, szStage) || ReplaceNativeFile(szStage, szPath) != 0) {
         RemoveNativeFile(szStage);

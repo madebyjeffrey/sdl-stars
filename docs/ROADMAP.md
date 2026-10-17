@@ -452,7 +452,9 @@ catalog/data generation, resources, controls, rendering, clipboard and settings.
 Format 2.85 explicitly identifies UTF-8 saves. Older game, turn, history and
 orders files remain unsupported; 2.49–2.84 race designs are the bounded import
 exception. Protected legacy races require a replacement password before save
-or direct New Game use. Native paths must round-trip losslessly, and fixed text
+or direct New Game use. Managed import persists the converted UTF-8 names and
+replacement password in format 2.85 even when optional customization is cancelled;
+it retains the original source file unchanged. Native paths must round-trip losslessly, and fixed text
 fields retain byte budgets. See
 [encoding contracts](UNICODE-BOUNDARIES.md) and
 [ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,

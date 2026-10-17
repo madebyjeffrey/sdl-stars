@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FImportLibraryRace` now saves converted legacy designs as format 2.85,
+  including their UTF-8 names and accepted replacement password. Previously it
+  copied the original bytes and discarded those conversions. Imported originals,
+  simulation results and native regression baselines are unchanged.
+
 - `FLoadLibraryRace` and the race import, duplicate and export callers now
   reject negative `FWasRaceFile` results. Cancelling a password prompt previously
   continued with the prior design and could bind it to another race’s save path.

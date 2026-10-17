@@ -428,6 +428,8 @@ static BOOL FCheckToolbarPlacement(void) {
 }
 
 static BOOL fRejectRacePassword;
+static BOOL fTestLegacyRaceImport, fAcceptLegacyRacePassword;
+static int cLegacyRacePasswords;
 
 int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
@@ -436,6 +438,15 @@ int16_t StarsTest_PromptPassword(void) {
     // file loading and client creation; password validation is outside scope.
     return pszContinue || getenv("STARS_CLIENT_EXPECT_PLAYER") || getenv("STARS_CLIENT_HOST_LIBRARY_TEST") || getenv("STARS_CLIENT_STARTUP_MANAGED") ||
            getenv("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
+}
+
+int16_t StarsTestReal_FPromptLegacyRacePassword(char *szPassword);
+int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
+    if (!fTestLegacyRaceImport) return StarsTestReal_FPromptLegacyRacePassword(szPassword);
+    cLegacyRacePasswords++;
+    if (!fAcceptLegacyRacePassword) return FALSE;
+    strcpy(szPassword, "new-\xc3\xa9");
+    return TRUE;
 }
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
@@ -1593,6 +1604,61 @@ static BOOL FTestRaceCancellation(void) {
     return fOkay;
 }
 
+/* Inspect the managed bytes without completing the optional race wizard. */
+static BOOL FTestLegacyRaceImport(void) {
+    RTBOF rtbof = {0};
+    PLAYER plr, plrSav;
+    char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
+    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *rgszName[] = {"Legacy.r1", "Legacy-protected.r1"};
+    uint16_t icksum;
+    int i;
+    BOOL fOkay = FALSE;
+
+    if (!FLoadLibraryRace(0, "Managed.r1")) return FALSE;
+    plrSav = vplr;
+    CchSnprintf(szSource, sizeof(szSource), "%s%slegacy-source.r1", pszSettings, szDirSep);
+    CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szSource);
+    CchSnprintf(szCancelled, sizeof(szCancelled), "%s%sRace Designs%sLegacy-cancelled.r1", pszSettings, szDirSep, szDirSep);
+    fTestLegacyRaceImport = TRUE;
+    fAcceptLegacyRacePassword = TRUE;
+    for (i = 0; i < 2; i++) {
+        plr = plrSav;
+        strcpy(plr.szName, "R\xe9");
+        strcpy(plr.szNames, "R\xe9s");
+        plr.lSalt = i == 0 ? 0 : LSaltFromSz("old-password");
+        memcpy(rtbof.rgid, "J3J3", 4);
+        rtbof.verMajor = 2;
+        rtbof.verMinor = 84;
+        rtbof.dt = dtRace;
+        StreamOpen(szSource, mdCreate);
+        WriteRt(rtBOF, sizeof(rtbof), &rtbof);
+        WriteRtPlr(&plr, NULL);
+        icksum = IRaceChecksum(&plr);
+        WriteRt(rtEOF, sizeof(icksum), &icksum);
+        StreamClose();
+        if (!FTestCopyFile(szSource, szSnapshot)) goto LDone;
+        cLegacyRacePasswords = 0;
+        if (!FImportLibraryRaceAs(0, szSource, rgszName[i]) || cLegacyRacePasswords != i ||
+            !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
+        CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
+        if (FWasRaceFile(szImported, FALSE) != 1 || ((VERS *)&wVersFile)->verMinor != 85 ||
+            strcmp(vplr.szName, "R\xc3\xa9") || strcmp(vplr.szNames, "R\xc3\xa9s") ||
+            vplr.lSalt != (i == 0 ? 0 : LSaltFromSz("new-\xc3\xa9")) || cLegacyRacePasswords != i) goto LDone;
+    }
+    fAcceptLegacyRacePassword = FALSE;
+    plrSav = vplr;
+    if (FImportLibraryRaceAs(0, szSource, "Legacy-cancelled.r1") ||
+        FFileExists(szCancelled) || memcmp(&vplr, &plrSav, sizeof(vplr)) ||
+        !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
+    fOkay = TRUE;
+LDone:
+    fTestLegacyRaceImport = FALSE;
+    RemoveNativeFile(szSource);
+    RemoveNativeFile(szSnapshot);
+    return fOkay;
+}
+
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
     char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];
@@ -2228,6 +2294,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             fPassed = TRUE;
             if (!FTestRaceCancellation()) {
                 fprintf(stderr, "Cancelled race operation changed the active design or its destination\n");
+                fPassed = FALSE;
+                goto LDone;
+            }
+            if (!FTestLegacyRaceImport()) {
+                fprintf(stderr, "Legacy race import did not retain its converted names and password\n");
+                fPassed = FALSE;
                 goto LDone;
             }
             puts("Managed race created, edited, cancelled, imported, duplicated, exported, and reloaded");
