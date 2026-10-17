@@ -38,6 +38,8 @@ produce different results from a 2.6j host for the same turn.
   reports that the managed game and orders were preserved, rather than directing
   recovery from a folder that has already been restored. Simulation results and
   save formats are unchanged.
+- Dialog-resource and combo contract tests now include the conflicting-turn
+  dialog instead of rejecting the expanded resource inventory.
 - `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
   paths with forward slashes when the library root uses backslashes. Orders
   retain their exchange filename, and library history and dirty-game export

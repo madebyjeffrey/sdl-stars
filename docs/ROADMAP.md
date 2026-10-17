@@ -207,6 +207,7 @@ Copy. Replace backs up the affected player's turn, orders and history before
 publication; Separate Copy retains the selected game's complete file family
 under a unique name. Cancellation and failed publication preserve existing data;
 a successful restore retry reports that preserved state.
+Resource-template and combo contracts include the conflicting-turn dialog.
 Orders export keeps chooser paths and fallback library names separate from
 formatting destinations, avoiding overlapping-buffer failures on Linux.
 It confirms replacement of the final numbered destination after extension
