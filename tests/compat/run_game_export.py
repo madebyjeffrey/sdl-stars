@@ -1,0 +1,298 @@
+"""Export through the desktop, preserving real game files and saved orders."""
+import os
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+import zipfile
+
+from run_newgame import run
+
+
+def files(directory, metadata=True):
+    return {p.relative_to(directory): p.read_bytes() for p in directory.rglob('*')
+            if p.is_file() and (metadata or p.name != '.library')}
+
+
+def main():
+    executable = Path(sys.argv[1]).resolve()
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    with tempfile.TemporaryDirectory(prefix='stars-export-') as directory:
+        work = Path(directory)
+        source = work / 'exchange'
+        source.mkdir()
+        for ext in ('.xy', '.hst', '.m1', '.m2'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        backup = source / 'backup.000'
+        backup.mkdir()
+        shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        managed = work / 'library/Games/managed-copy'
+
+        # Click Export Game and deliver the chosen folder through its SDL
+        # callback; the real window message performs the copy.
+        parent = work / 'export'
+        parent.mkdir()
+        before = files(managed)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent))
+        exported = parent / 'managed-copy'
+        assert files(exported) == {p: data for p, data in before.items() if p.name != '.library'}
+        assert files(managed) == before
+
+        # Canceling the chooser must not save a dirty loaded game or publish
+        # files. Opening the game may update its private last-played metadata.
+        canceled = work / 'canceled'
+        canceled.mkdir()
+        before = files(managed, metadata=False)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(canceled),
+            STARS_CLIENT_EXPORT_ACTION='cancel')
+        assert not list(canceled.iterdir())
+        assert files(managed, metadata=False) == before
+
+        # Save a research choice through the existing Save Turn dialog. Load
+        # the exported turn in a fresh process to prove its .x1 was replayed.
+        saved_parent = work / 'saved'
+        saved_parent.mkdir()
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(saved_parent),
+            STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='4')
+        saved = saved_parent / 'managed-copy'
+        assert (managed / 'managed-copy.x1').is_file() and (managed / 'managed-copy.h1').is_file()
+        assert files(saved) == files(managed, metadata=False)
+        assert not ((saved / 'managed-copy.x1').read_bytes()[17] & 1)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(saved_parent),
+            STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='4',
+            STARS_CLIENT_CONTINUE=str(saved / 'managed-copy.m1'))
+
+        # Preserve every file in an existing destination, including files that
+        # do not belong to the game. A collision must leave no staging folder.
+        (exported / 'keep.txt').write_bytes(b'preserve existing export')
+        destination_before = files(exported)
+        before = files(managed)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert files(exported) == destination_before and files(managed) == before
+        entries = list(parent.iterdir())
+        # MSYS2's directory iterator can return backslashes for a path built
+        # with forward slashes. Compare directory identity, keeping the count
+        # check so leftover staging folders still fail this assertion.
+        assert len(entries) == 1 and entries[0].samefile(exported), \
+            f'Unexpected export entries: {entries!r}; expected {exported!r}'
+
+        # A second player's real saved/submitted orders survive export along
+        # with the first player's orders, both histories, host state and backup.
+        submitted_parent = work / 'submitted'
+        submitted_parent.mkdir()
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
+            STARS_CLIENT_EXPORT_ACTION='submit', STARS_CLIENT_EXPORT_PLAYER='1', STARS_CLIENT_EXPORT_RESEARCH='5')
+        submitted = submitted_parent / 'managed-copy'
+        assert all((submitted / ('managed-copy' + ext)).is_file()
+                   for ext in ('.xy', '.hst', '.m1', '.m2', '.x1', '.x2', '.h1', '.h2'))
+        assert (submitted / 'backup.000/managed-copy.m1').read_bytes() == (backup / 'exchange.m1').read_bytes()
+        assert files(submitted) == files(managed, metadata=False)
+        # RTBOF's submitted flag is bit 8 at offset 0x0e after its record header.
+        assert (submitted / 'managed-copy.x2').read_bytes()[17] & 1
+        for player, research in ((0, 4), (1, 5)):
+            run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
+                STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_PLAYER=str(player),
+                STARS_CLIENT_EXPORT_RESEARCH=str(research), STARS_CLIENT_CONTINUE=str(submitted / f'managed-copy.m{player + 1}'))
+
+        # Don't Save exports the previously saved orders once, and leaves the
+        # current unsaved research change in memory.
+        discarded_parent = work / 'discarded'
+        discarded_parent.mkdir()
+        before = files(managed, metadata=False)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(discarded_parent),
+            STARS_CLIENT_EXPORT_ACTION='discard', STARS_CLIENT_EXPORT_RESEARCH='2')
+        assert files(discarded_parent / 'managed-copy') == before
+        assert files(managed, metadata=False) == before
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(discarded_parent),
+            STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='4',
+            STARS_CLIENT_CONTINUE=str(discarded_parent / 'managed-copy/managed-copy.m1'))
+
+        # A real filesystem read failure after staging the top-level files must
+        # remove the partial copy and leave every original file/directory alone.
+        backup_file = managed / 'backup.000/managed-copy.m1'
+        backup_bytes = backup_file.read_bytes()
+        backup_file.unlink()
+        backup_file.mkdir()
+        failed_parent = work / 'copy-failure'
+        failed_parent.mkdir()
+        before = files(managed)
+        directories_before = {p.relative_to(managed) for p in managed.rglob('*') if p.is_dir()}
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(failed_parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert not list(failed_parent.iterdir())
+        assert files(managed) == before
+        assert {p.relative_to(managed) for p in managed.rglob('*') if p.is_dir()} == directories_before
+        backup_file.rmdir()
+        backup_file.write_bytes(backup_bytes)
+
+        # A destination that became a file cannot accept a staging directory.
+        # The write failure must preserve both it and the managed original.
+        unavailable = work / 'unavailable'
+        unavailable.write_bytes(b'preserve destination file')
+        before = files(managed)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(unavailable),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert unavailable.read_bytes() == b'preserve destination file'
+        assert files(managed) == before
+
+        # A file at the chosen game's output name fails after staging has
+        # copied the source family, without replacing the blocker or source.
+        blocked_parent = work / 'blocked-destination'
+        blocked_parent.mkdir()
+        blocked_destination = blocked_parent / 'managed-copy'
+        blocked_destination.write_bytes(b'preserve blocked destination')
+        before = files(managed)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(blocked_parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert blocked_destination.read_bytes() == b'preserve blocked destination'
+        assert files(managed) == before
+        entries = list(blocked_parent.iterdir())
+        assert len(entries) == 1 and entries[0].samefile(blocked_destination), \
+            f'Unexpected export entries: {entries!r}; expected {blocked_destination!r}'
+
+        # Reimport the complete exported game into independent storage and
+        # replay both players' saved orders with the existing loader again.
+        reimport_work = work / 'reimport'
+        run(executable, reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(submitted), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        reimported = reimport_work / 'library/Games/managed-copy'
+        assert files(reimported, metadata=False) == files(submitted)
+        for player, research in ((0, 4), (1, 5)):
+            run(executable, reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
+                STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_PLAYER=str(player),
+                STARS_CLIENT_EXPORT_RESEARCH=str(research), STARS_CLIENT_CONTINUE=str(reimported / f'managed-copy.m{player + 1}'))
+
+        # ZIP export includes the complete game family and numbered backups;
+        # importing it uses the same validation and managed-game workflow.
+        zip_path = work / 'managed-copy.zip'
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_path))
+        with zipfile.ZipFile(zip_path) as archive:
+            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        zip_reimport_work = work / 'zip-reimport'
+        run(executable, zip_reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(zip_path), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        zip_reimported = zip_reimport_work / 'library/Games/managed-copy'
+        assert files(zip_reimported, metadata=False) == files(managed, metadata=False)
+        run(executable, zip_reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy',
+            STARS_CLIENT_EXPORT_PARENT=str(submitted_parent), STARS_CLIENT_EXPORT_ACTION='verify',
+            STARS_CLIENT_EXPORT_PLAYER='1', STARS_CLIENT_EXPORT_RESEARCH='5',
+            STARS_CLIENT_CONTINUE=str(zip_reimported / 'managed-copy.m2'))
+
+        compressed_zip = work / 'compressed.zip'
+        with zipfile.ZipFile(compressed_zip, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            for relative, data in files(managed, metadata=False).items():
+                archive.writestr(relative.as_posix(), data)
+        compressed_work = work / 'compressed-reimport'
+        run(executable, compressed_work, STARS_CLIENT_IMPORT_SOURCE=str(compressed_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        assert files(compressed_work / 'library/Games/managed-copy', metadata=False) == files(managed, metadata=False)
+
+        # A canceled ZIP destination and a pre-existing destination preserve
+        # the managed game and leave the selected output untouched.
+        zip_cancel = work / 'zip-cancel.zip'
+        before = files(managed, metadata=False)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_cancel),
+            STARS_CLIENT_EXPORT_ZIP_CANCEL='1')
+        assert not zip_cancel.exists() and files(managed, metadata=False) == before
+        zip_blocked = work / 'zip-blocked.zip'
+        zip_blocked.mkdir()
+        (zip_blocked / 'keep.txt').write_bytes(b'preserve blocked destination')
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_blocked),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert (zip_blocked / 'keep.txt').read_bytes() == b'preserve blocked destination'
+        assert files(managed, metadata=False) == before
+
+        # Malformed local headers cannot replace or alter an existing managed
+        # game, and parsing must leave the selected source archive untouched.
+        managed_before = files(managed)
+        for label, field_offset, replacement in (
+                ('name', 30, ord('X')),
+                ('flags', 6, 0x01),
+                ('method', 8, 0x63)):
+            with zipfile.ZipFile(zip_path) as archive:
+                info = archive.getinfo('managed-copy.m1')
+                local_offset = info.header_offset
+            bad_archive = bytearray(zip_path.read_bytes())
+            bad_archive[local_offset + field_offset] = replacement
+            bad_source = work / f'bad-local-{label}.zip'
+            bad_source.write_bytes(bad_archive)
+            bad_source_before = bad_source.read_bytes()
+            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_source),
+                STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+            assert files(managed) == managed_before
+            assert bad_source.read_bytes() == bad_source_before
+            assert not (work / 'library/Games/invalid-copy').exists()
+
+        # A valid ZIP can still contain an incomplete game family. Reject it
+        # through the shared importer without disturbing the existing game.
+        incomplete_source = work / 'incomplete-family.zip'
+        with zipfile.ZipFile(incomplete_source, 'w', compression=zipfile.ZIP_STORED) as archive:
+            archive.write(fixture / 'game.xy', 'game.xy')
+        incomplete_before = incomplete_source.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(incomplete_source),
+            STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert files(managed) == managed_before
+        assert incomplete_source.read_bytes() == incomplete_before
+        assert not (work / 'library/Games/invalid-copy').exists()
+        assert not list((work / 'library/Games').glob('.zip-importing.*'))
+
+        # Invalid paths and truncated archives must not publish a partial game.
+        unsafe_zip = work / 'unsafe.zip'
+        with zipfile.ZipFile(unsafe_zip, 'w') as archive:
+            archive.writestr('../escape.xy', b'unsafe')
+        unsafe_work = work / 'unsafe-import'
+        run(executable, unsafe_work, STARS_CLIENT_IMPORT_SOURCE=str(unsafe_zip), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (unsafe_work / 'library/Games/managed-copy').exists()
+        assert not list((unsafe_work / 'library/Games').glob('.zip-importing.*'))
+        malformed_zip = work / 'malformed.zip'
+        malformed_zip.write_bytes(zip_path.read_bytes()[:-17])
+        malformed_work = work / 'malformed-zip-import'
+        run(executable, malformed_work, STARS_CLIENT_IMPORT_SOURCE=str(malformed_zip), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (malformed_work / 'library/Games/managed-copy').exists()
+
+
+        # Accepting the writers' empty EOF must still reject trailing bytes.
+        malformed = work / 'malformed'
+        shutil.copytree(submitted, malformed)
+        orders = malformed / 'managed-copy.x1'
+        orders.write_bytes(orders.read_bytes() + b'\0')
+        invalid_work = work / 'invalid-import'
+        run(executable, invalid_work, STARS_CLIENT_IMPORT_SOURCE=str(malformed), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (invalid_work / 'library/Games/managed-copy').exists()
+
+        # ZIP selection uses the same save-before-export path as folders.
+        dirty_zip = work / 'dirty-saved.zip'
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(dirty_zip),
+            STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='1')
+        with zipfile.ZipFile(dirty_zip) as archive:
+            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        dirty_work = work / 'dirty-zip-reimport'
+        run(executable, dirty_work, STARS_CLIENT_IMPORT_SOURCE=str(dirty_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        dirty_game = dirty_work / 'library/Games/managed-copy/managed-copy.m1'
+        run(executable, dirty_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent),
+            STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='1',
+            STARS_CLIENT_CONTINUE=str(dirty_game))
+
+        # The parent and staging directory can fit while child filenames do
+        # not. The UI must reject the destination without publishing a game.
+        long_name = 'managed-game-' + 'a' * 38
+        long_work = work / 'long-case'
+        run(executable, long_work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME=long_name)
+        long_source = long_work / 'library/Games' / long_name
+        before = files(long_source)
+        long_parent = work / 'long-export'
+        # Multibyte components exceed the UTF-8 buffers without requiring
+        # Windows to create a parent beyond its native wide-path limit.
+        while len(os.fsencode(long_parent)) < 440:
+            long_parent /= '星' * max(1, min(30, (439 - len(os.fsencode(long_parent))) // 3))
+        long_parent.mkdir(parents=True)
+        run(executable, long_work, STARS_CLIENT_EXPORT_GAME=long_name, STARS_CLIENT_EXPORT_PARENT=str(long_parent),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert not list(long_parent.iterdir()) and files(long_source) == before
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

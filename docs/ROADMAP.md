@@ -64,7 +64,7 @@ Combo selection callbacks can return focus to the frame without cancelling
 the accepted row; a re-entry regression test covers that path. Instruction
 updates no longer reactivate an already visible tutor, preserving focus in
 the player's current control. New-game cancellation checks cover the live wizard
-page returned by the save picker before verifying the restored title and
+page returned by the library-name dialog before verifying the restored title and
 game state after cancelling the wizard itself.
 
 Full SDL tutorial coverage remains outstanding. Historical Win32 milestones below describe the wrapper's API work,
@@ -92,7 +92,7 @@ To keep in mind:
 - Each build shows its platform in its version name (done; see
   [VERSIONING.md](VERSIONING.md)).
 
-- The file format stays at 2.84 unless a record changes.
+- The file format is 2.85 for UTF-8 text; record widths remain fixed.
 
 Verified: `stars-host` matches the native baseline under Wine and on x86-64
 macOS (`make regression-host`), and its `-v` check file matches
@@ -172,7 +172,97 @@ return-to-title paths share the same creation function. The SDL presets now link
 The race wizard retains one native window across page transitions. A
 default-width request now selects both frame dimensions, and native SDL menu
 popups retain their owner relationship. `FOpenGame` now accepts Linux paths;
-Continue Game is tested with relative and absolute fixture paths. The
+Continue Game resumes the latest managed session, identifies its player and
+year, and selects that same game when its remembered player is unavailable.
+Tests use managed fixtures with relative and absolute recent-file paths, and
+exercise player switching with Save, Don’t Save, Save & Submit and cancellation.
+Managed game creation and reopening (#5) now share `libraryui.c`: desktop
+creation chooses a unique portable name, all generated files stay within that
+managed folder, and the startup Games list reopens committed entries after
+restart. SDL supplies platform application-data roots (including XDG on Linux);
+metadata and test storage remain separate from legacy records.
+Game ZIP transfers stage complete families through the shared importer and
+exporter, reject malformed or escaping archives, and preserve saved orders and
+backups. ZIP export resolves pending orders through the same prompt as folders. The suspended
+second startup implementation has been removed, so SDL is the sole entry point.
+Host Games now has a separate library view, accepts host-only universe/host
+imports, and imports ordinary player orders after matching game identity, turn
+and generation, including checking that the submitted player exists in the
+selected universe. The existing desktop host generates directly from the managed
+orders files, with the command-line host and simulation behavior unchanged.
+Export, duplicate and rename use the visible Games or Host Games selection,
+including host-only libraries, and refresh both lists after changing a game.
+The Games action row keeps each button clear of neighboring pointer targets.
+Managed-game duplicate and rename preserve all backup naming variants and nested
+sidecar folders while renaming the matching binary file family throughout the
+copied tree. Real-client coverage checks their contents after both operations.
+Duplicate and rename reject linked paths and Windows reparse points; cleanup
+never descends through a directory link into files outside the managed tree.
+Staging rejects case-insensitive collisions between renamed family members and
+sidecars, including backup contents, before either action can publish a game.
+The Games-list double-click shares the Open action rather than falling through
+to another library command; the real-client workflow verifies that dispatch.
+Reopening a duplicated or renamed game reads metadata from its game folder and
+retains the exchange basename while updating the remembered player and time.
+Existing managed games accept a first standalone turn for any player present
+in their stored universe, including host-only games, without replacing companion
+orders or history. Invalid player slots and failed publication leave the game intact.
+Existing managed games accept later standalone player turns by game identity,
+prompt for a destination when duplicate managed copies match, and preserve the
+previous turn and orders if staged installation fails. Identical turns are
+no-ops; successful later-turn updates retire only that player's old orders.
+Changed same-year and older turns offer Cancel, Replace, and Import as Separate
+Copy. Replace backs up the affected player's turn, orders and history before
+publication; Separate Copy retains the selected game's complete file family
+under a unique name. Cancellation and failed publication preserve existing data;
+a successful restore retry reports that preserved state.
+Resource-template and combo contracts include the conflicting-turn dialog.
+The expanded Linux create/import workflow shares the other desktop platforms'
+200-second test budget, with extra time for X11 window-manager cleanup.
+Managed-game deletion confirms its library name and full file scope, removes
+only that game's folder, and clears its recent entries without silently
+promoting another game into Continue, including after restart. The real-client workflow covers cancel,
+failure, and confirmed removal with isolated managed and source files.
+Orders export keeps chooser paths and fallback library names separate from
+formatting destinations, avoiding overlapping-buffer failures on Linux.
+It confirms replacement of the final numbered destination after extension
+correction; rejecting replacement preserves existing exports and pending work.
+Library alerts retain their message separately from the compressed-string
+caption buffer, so name rejection and storage failure checks also work under GCC.
+Windows library roots use SDL UTF-8 environment paths even when the CRT code
+page cannot represent the settings folder.
+Windows library membership and managed race selection accept both native
+separators and the wrapper picker's forward-slash paths. Orders export,
+library metadata updates and loaded-game export use the same membership rule.
+Recent-file migration validates the selected source before enumerating its
+family, reports missing filenames, and handles relative entries independently.
+Mixed desktop Open and recent-file actions dispatch by the BOF file type to
+the game or race importer; race customization edits only the managed copy.
+Desktop startup passes its explicit game path to import and reopens managed
+game paths directly, without a second file selection.
+New Game keeps full library filenames per custom race and scopes each race
+edit to its own destination; predefined customizations receive a new managed
+filename instead of overwriting the last imported design.
+Complete game-folder export preserves player files, host state and backups.
+Destinations must fit the loader's full game and backup paths; overlong paths
+are rejected before copying rather than publishing a truncated game family.
+Canceling the export folder chooser preserves unsaved orders; save resolution
+happens only after a destination has been chosen.
+The real-client export workflow covers both players' saved orders and history,
+submitted status, backup contents, export/load and reimport/load round trips,
+collisions, cancellation with dirty orders and filesystem failures, using
+isolated library storage. Import framing accepts both the empty end records
+written for orders/history and the two-byte trailers, while rejecting trailing
+bytes.
+The title screen now provides the separate Race Designs library: New and Edit
+save through the race wizard, and Import preserves valid race files in a
+uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
+cancelled edit, import, duplicate and export/reload; the
+native file-workflow harness keeps its timer active through race-import naming
+and runs with a portable chooser on each SDL platform as well as the Linux
+portal. It covers protected save/reload, checksum preservation
+and duplicate-name rejection. Duplicate, ordinary export and confirmed deletion
+are now available from the selected design. The
 initial top-level size notification now initializes pane layout, and the
 modeless Technology Browser closes correctly by button and native close request.
 A separate `sdl-sanitize` preset now instruments project code; unsigned race-bit masks are
@@ -187,7 +277,7 @@ the race wizard to the habitat page. Real-desktop qualification remains; see
 Positioning, sibling ordering, no-redraw behavior and minimum/maximum
 size callbacks now work; see [positioning](WIN32-POSITIONING.md). Mouse capture
 now routes child and cross-root input; see [capture](WIN32-CAPTURE.md). Queue-based
-keyboard state, asynchronous queries, point hit testing, CP1252 input, wheel
+keyboard state, asynchronous queries, point hit testing, UTF-8 input, wheel
 delivery and double-click messages now work; see [input](WIN32-INPUT.md). Push/check/radio
 buttons, group boxes, text labels and dialog-item helpers now work. Stars now
 uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
@@ -360,16 +450,43 @@ These priorities remain subject to the completion evidence in the goal tracker. 
 
 ## Unicode portability
 
-The native clients still use byte-oriented game text; the SDL UI interprets it
-as CP1252. The [Unicode audit](UNICODE-AUDIT.md) records the current encoding
-boundaries, 18 findings, runtime probes and proposed acceptance tests. First
-address Unicode filesystem access on Windows, native-path editing in the SDL
-fallback browser, UI/host password encoding, and multibyte filename caches.
-Unicode display, resources and editing also require text layout and capacity
-work. Persisted Unicode names/messages need an explicit compatibility design;
-do not reinterpret existing saved bytes or widen disk fields. The macOS host
-and Cocoa chooser source exist, but this checkout still enables the SDL client
-only on Linux. These items are open; the audit does not implement fixes.
+UTF-8 text is implemented throughout the new client and host, including
+catalog/data generation, resources, controls, rendering, clipboard and settings.
+Format 2.85 explicitly identifies UTF-8 saves. Older game, turn, history and
+orders files remain unsupported; 2.49–2.84 race designs are the bounded import
+exception. Protected legacy races require a replacement password before save
+or direct New Game use. Managed import persists the converted UTF-8 names and
+replacement password in format 2.85 even when optional customization is cancelled;
+it retains the original source file unchanged. Native paths must round-trip losslessly, and fixed text
+fields retain byte budgets. See
+[encoding contracts](UNICODE-BOUNDARIES.md) and
+[ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
+bidirectional layout and grapheme editing remain separate work.
+
+Race-library load, edit, import, duplicate and export stop on cancelled or
+rejected race reads, preserving the current design, destination and source files.
+
+Password creation and changes use the same 15-byte UTF-8 limit as login and
+the command line. Oversized user input is rejected as a whole with a re-entry
+warning, while ordinary text fields retain their truncation behavior.
+Generated fleet names, clipped pane titles and bounded wrapper labels preserve
+complete code points as well; byte counts remain the public API convention.
+Message-format expansion is bounded by its existing 256-byte buffer; printf
+output truncated at its 1024-byte contract also ends at a code-point boundary.
+Name readers use the actual record extent, including orders; compressed bytes
+are never retried as raw text. Player-message readers validate decoded UTF-8
+and raw terminators before retaining a message.
+Editing a retained raw message compares its absolute byte count, preserving
+unchanged uncompressible UTF-8 messages without an out-of-bounds comparison.
+Rejected battle-plan text leaves the existing plan and plan count unchanged.
+The battle-plan writer reserves the extra raw-name marker byte, allowing
+31-byte uncompressible UTF-8 names to round trip without a stack overrun.
+Wrapper text setters and file/print inputs reject malformed UTF-8, including
+resolved picker directories whose native bytes are unsupported.
+Scanner JSON exports validate and preserve UTF-8 names directly; no legacy
+byte-to-Unicode mapping remains in their encoder.
+Universe definitions validate their whole text and native file size before
+parsing, retain the 16000-byte limit and accept an optional UTF-8 BOM.
 
 ## 2.8 (released)
 
@@ -500,12 +617,11 @@ no pending popup damage. Qualification passes 103 fatal sanitizer tests,
 four Release tutorial profiles; see the [goal report](LINUX-CLIENT-GOAL.md).
 No game baseline changes.
 
-Native Unicode filename and password boundaries are now implemented; see
-[encoding contracts](UNICODE-BOUNDARIES.md). Windows filesystem/common-dialog
-conversion, fallback UTF-8 path fields, complete filename cache boundaries and
-strict native CLI password conversion preserve legacy records and hash values.
-General Unicode saved text, shaping, historical settings migration and real
-Windows/macOS qualification remain separate work.
+The initial Unicode filename/password boundary work is superseded on main by
+UTF-8 throughout and format 2.85. See [encoding contracts](UNICODE-BOUNDARIES.md).
+Legacy settings migration is deliberately omitted; fresh UTF-8 settings are
+used. Shaping and Windows/Linux/macOS platform qualification remain separate
+from the encoding contract.
 
 The SDL wrapper now also builds natively on Windows x64 through MSYS2 UCRT64,
 with separate SDK and wrapper symbols, Unicode filesystem services and portable

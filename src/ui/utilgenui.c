@@ -1,4 +1,5 @@
 #include "win.h"
+#include <stars_compat.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char     szValue[33];
@@ -714,7 +715,7 @@ int16_t FStringFitsScreen(char *lpsz, int16_t dxMax) {
     hfontSav = SelectObject(hdc, rghfontArial8[0]);
     while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > (uint16_t)dxMax) {
         fFit = FALSE;
-        c--;
+        c = (int16_t)CchUtf8Prefix(lpsz, c - 1);
         lpsz[c] = 0;
     }
     SelectObject(hdc, hfontSav);
@@ -1016,8 +1017,8 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
@@ -1047,15 +1048,20 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
 INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char    szPass[20];
+    char    szPassConfirm[20];
     RECT    rc;
     int32_t lSalt2;
     int32_t lSalt;
 
     switch (message) {
     case WM_INITDIALOG:
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x10, 0);
-        SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0x10, 0);
-        if (idPlayer == iplrNone) {
+        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
+        SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
+        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+        if (lParam != 0) {
+            SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNativeLegacyRacePassword));
+            SetWindowText(hwnd, PszGetCompressedString(idsNativeLegacyRacePassword));
+        } else if (idPlayer == iplrNone) {
             SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNotePasswordEffectiveImmediately));
             SetWindowText(hwnd, PszGetCompressedString(idsChangeHostPassword));
         } else {
@@ -1083,23 +1089,29 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPass, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
-                lSalt2 = LSaltFromSz(szPass);
+                lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
                     AlertSz(PszFormatIds(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);
                     SetFocus(GetDlgItem(hwnd, IDC_EDIT1));
                     SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     break;
                 }
-                if (idPlayer != iplrNone) {
+                if (GetWindowLongPtr(hwnd, DWLP_USER) != 0) {
+                    if (szPass[0] == 0) {
+                        AlertSz(PszGetCompressedString(idsNativeLegacyRacePasswordRequired), MB_ICONHAND);
+                        break;
+                    }
+                    strcpy((char *)GetWindowLongPtr(hwnd, DWLP_USER), szPass);
+                } else if (idPlayer != iplrNone) {
                     WriteMemRt(rtChgPassword, 4, &lSalt);
                 } else {
                     lSaltCur = lSalt;
@@ -1119,6 +1131,16 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
     }
     return 0;
+}
+
+int16_t STARS_TEST_IMPL(FPromptLegacyRacePassword)(char *szPassword) {
+    FARPROC lpProc;
+    int16_t fRet;
+
+    lpProc = MakeProcInstance(NewPasswordDlg, hInst);
+    fRet = (int16_t)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
+    FreeProcInstance(lpProc);
+    return fRet > 0;
 }
 
 void ShowProgressGauge() {

@@ -2,15 +2,17 @@
 #define STARS_DECOMPILED_FILE_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 extern char mpishdefishTutor[6];
 
-int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad);
-void    ReadRtPlr(PLAYER *pplr, uint8_t *pbIn);
+int16_t FReadUserString(const uint8_t *lpb, size_t cb, char *psz, size_t cchMax, size_t *pcbRead);
+int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb);
+void    ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb);
 int16_t FLoadGame(char *pszFileName, char *pszExt);
 int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPreInited);
 int16_t FReadFleet(FLEET *lpfl);
-void    UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan);
+int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb);
 void    UpdateBattleRecords();
 void    DestroyCurGame();
 void    FileError(StringId ids);

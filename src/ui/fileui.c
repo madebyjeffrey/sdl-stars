@@ -1,6 +1,6 @@
 #include "win.h"
 
-INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR CALLBACK STARS_TEST_IMPL(AskSaveDialog)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_INITDIALOG:
         return 1;
@@ -9,7 +9,10 @@ INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         case IDC_SAVE:
         case IDC_NO_DON_T_SAVE:
         case IDC_SAVESUBMIT:
-            EndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 0 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
+            EndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 2 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
+            return 1;
+        case IDCANCEL:
+            EndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
@@ -29,12 +32,31 @@ void PromptSaveGame() {
     lpProc = MakeProcInstance(AskSaveDialog, hInst);
     fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc);
     FreeProcInstance(lpProc);
-    if (fRet) {
+    if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
         FWriteLogFile(szBase, idPlayer);
         FWriteHistFile(idPlayer);
     }
     return;
+}
+
+int16_t FCanLeaveCurrentGame(void) {
+    FARPROC lpProc;
+    int16_t fRet;
+
+    if (idPlayer == iplrNone || !game.fDirty) return TRUE;
+    lpProc = MakeProcInstance(AskSaveDialog, hInst);
+    fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+                     hwndFrame, lpProc);
+    FreeProcInstance(lpProc);
+    if (fRet == 0 || fRet == -2) return FALSE;
+    if (fRet == 1 || fRet == -1) {
+        gd.fSubmit = fRet == -1;
+        FWriteLogFile(szBase, idPlayer);
+        FWriteHistFile(idPlayer);
+    }
+    game.fDirty = FALSE;
+    return TRUE;
 }
 
 // ShowTitleScreen brings back the title screen when FLoadGame fails.
@@ -56,6 +78,9 @@ void ShowTitleScreen() {
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
         hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
+                    (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle));
         fFreeingTitle = FALSE;
         ShowWindow(hwndFrame, SW_HIDE);
     }
@@ -96,6 +121,47 @@ void AddMRUFile(char *pszFileName, char *pszExt) {
         }
     }
     return;
+}
+
+void OfferRecentGameImport(HWND hwnd) {
+    char szIniFile[32];
+    char szChoice[2];
+    char szPrompt[256];
+    char szMessage[128];
+    const char *pszFile;
+    int16_t i;
+    int16_t fHaveRecent;
+    int16_t fImport;
+
+    CchGetString(idsStarsIni, szIniFile);
+    if (GetPrivateProfileInt("Library", "RecentImportChoice", 0, szIniFile) != 0 || !vrgszMRU) return;
+    fHaveRecent = FALSE;
+    for (i = 0; i < 9; i++) {
+        if (vrgszMRU[256 * i]) {
+            fHaveRecent = TRUE;
+            break;
+        }
+    }
+    if (!fHaveRecent) return;
+    CchGetString(idsLibraryRecentImportPrompt, szPrompt);
+    fImport = MessageBox(hwnd, szPrompt, PszGetCompressedString(idsLibraryGames),
+                         MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES;
+    szChoice[0] = fImport ? '1' : '2';
+    szChoice[1] = 0;
+    if (!WritePrivateProfileString("Library", "RecentImportChoice", szChoice, szIniFile)) {
+        CchGetString(idsLibraryRecentImportChoiceFailed, szMessage);
+        AlertSz(szMessage, MB_ICONHAND);
+        return;
+    }
+    if (!fImport) return;
+    for (i = 0; i < 9; i++) {
+        pszFile = vrgszMRU + 256 * i;
+        if (!pszFile[0] || FIsManagedLibraryGameFile(pszFile)) continue;
+        if (FImportDesktopFile(hwnd, pszFile)) {
+            RefreshLibraryGames(hwnd);
+            RefreshLibraryRaces(hwnd);
+        }
+    }
 }
 
 // CloseGameWindows closes the windows that show the game DestroyCurGame

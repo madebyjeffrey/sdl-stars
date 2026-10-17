@@ -1638,11 +1638,8 @@ typedef struct COMPATTEXTDRAW {
     double cs, sn;
 } COMPATTEXTDRAW;
 
-static BOOL FTextUtf8(HDC lpdc) { return lpdc->hwnd && lpdc->hwnd->fUtf8Text; }
-
 static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
-    return FTextUtf8(lpdc) ? FCompatFontSizeUtf8(lpdc->lpfont->lpFont, psz, cch, lpsize) :
-                           FCompatFontSize(lpdc->lpfont->lpFont, psz, cch, lpsize);
+    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont, psz, cch, lpsize);
 }
 
 BOOL WINAPI GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
@@ -1747,7 +1744,7 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     if (rgdx) { dx = 0; for (i = 0; i < cch; i++) dx += rgdx[i]; }
     FCompatFontMetrics(lpdc->lpfont->lpFont, &tm);
     if (lpdc->iBkMode == OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);
-    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont, psz, cch, rgdx, FTextUtf8(lpdc), IDCScale(lpdc),
+    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont, psz, cch, rgdx, IDCScale(lpdc),
                                DrawFontPixel, &draw)) return FALSE;
     if (tm.tmUnderlined) DrawFontRect(&draw, dx, tm.tmAscent + 1, tm.tmAscent + 2, lpdc->crText);
     if (tm.tmStruckOut) DrawFontRect(&draw, dx, tm.tmAscent * 2 / 3, tm.tmAscent * 2 / 3 + 1, lpdc->crText);
@@ -1813,8 +1810,8 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     while (i < c) {
         iStart = i; iBreak = -1; dxBreak = 0; dx = 0;
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
-            cStep = FTextUtf8(lpdc) ? CbUtf8Char(sz + i, (size_t)(c - i), &ch) : 1;
-            if (cStep == 0) cStep = 1;
+            cStep = CbUtf8Char(sz + i, (size_t)(c - i), &ch);
+            if (cStep == 0) goto LReturn;
             if (!GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = (int)dx; }
             dx += size.cx;
@@ -1861,7 +1858,9 @@ LNextLine:
             if (!rgUnderline[rgline[i].i + j]) continue;
             GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
             dx = x + size.cx;
-            GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, 1, &size);
+            cStep = CbUtf8Char(sz + rgline[i].i + j, (size_t)(rgline[i].cch - j), &ch);
+            if (cStep == 0) continue;
+            GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
             if (dx >= INT_MIN && dx + size.cx <= INT_MAX && y + tm.tmAscent + 2 <= INT_MAX) {

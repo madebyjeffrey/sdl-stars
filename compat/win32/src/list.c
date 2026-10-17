@@ -100,7 +100,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
-    if (!psz || lp->cItem == INT_MAX) return LB_ERR;
+    if (!psz || !FUtf8Valid(psz, strlen(psz)) || lp->cItem == INT_MAX) return LB_ERR;
     pszNew = SDL_strdup(psz);
     if (!pszNew) return LB_ERRSPACE;
     if (lp->cItem == lp->cAlloc) {

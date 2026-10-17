@@ -35,7 +35,9 @@ The active scenarios are `noai`, `oneai1`–`oneai6`, `smallai4`, and `smallai6`
 Their definitions live in `tests/scaffold/fixtures/regression/`; the names and
 checkpoint boundaries are defined in `regression.py`.
 
-The human slot uses the existing `fixtures/newgame/tiny/humanoid.r1`. The first
+The human slot uses a generated format-2.85 copy of the curated ASCII
+`fixtures/newgame/tiny/humanoid.r1`; `utf8_fixtures.py` retags its BOF without
+altering the frozen source or encrypted payload. The first
 slot must be a race file: the original definition parser accepts `#` AI entries
 only in subsequent slots. After creation, the runner updates the human's `.m1`
 player record to Maid AI (ID 7), so that slot takes basic actions during forced

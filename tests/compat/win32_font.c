@@ -79,7 +79,7 @@ int main(void) {
     CHECK(GetPixel(hmem, 89, 59) == RGB(10, 20, 30));
     CHECK(ExtTextOut(hmem, 0, 0, ETO_OPAQUE, &(RECT){100, 100, 110, 110}, NULL, 0, NULL));
     CHECK(GetPixel(hmem, 105, 105) == RGB(10, 20, 30));
-    CHECK(TextOut(hmem, 10, 70, "Caf\xe9 \x80\x97", 7));
+    CHECK(TextOut(hmem, 10, 70, "Caf\xc3\xa9 \xe2\x82\xac\xe2\x80\x94", 12));
     CHECK(GetTextExtentPoint32(hmem, "A B", 3, &sizeWord));
     rc = (RECT){10, 120, 11 + sizeWord.cx, 200}; rcBefore = rc;
     height = DrawText(hmem, "A B C", -1, &rc, DT_WORDBREAK | DT_NOPREFIX | DT_CALCRECT);
@@ -124,6 +124,6 @@ int main(void) {
 #ifndef _WIN32
     StarsCompatShutdown();
 #endif
-    puts("Fonts: PASS (selection, metrics, styles, ANSI, clipping, spacing, wrapping, rotation)");
+    puts("Fonts: PASS (selection, metrics, styles, UTF-8, clipping, spacing, wrapping, rotation)");
     return 0;
 }

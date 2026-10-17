@@ -104,8 +104,15 @@ Finish:
     lSaltLast = -5;
     if (!FCheckPassword())
         goto Step1;
-    if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr))
-        goto Step1;
+    if (!fDontWrite) {
+        if (FHasCurrentLibraryRace()) {
+            if (!FSaveCurrentLibraryRace(hwndRaceParent, &vplr)) goto Step1;
+        } else if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr)) goto Step1;
+    }
+    if (fDontWrite) {
+        fResult = TRUE;
+        goto LDone;
+    }
     fResult = TRUE;
     goto LDone;
 LCancel:
@@ -161,7 +168,7 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         CheckRadioButton(hwnd, IDC_RACE_HUMANOID, IDC_RACE_CUSTOM, i + 271);
         SendDlgItemMessage(hwnd, IDC_RACE_NAME, EM_LIMITTEXT, 0xf, 0);
         SendDlgItemMessage(hwnd, IDC_RACE_PLURAL_NAME, EM_LIMITTEXT, 0xf, 0);
-        SendDlgItemMessage(hwnd, IDC_RACE_PASSWORD, EM_LIMITTEXT, 0x10, 0);
+        SendDlgItemMessage(hwnd, IDC_RACE_PASSWORD, EM_LIMITTEXT, 0xf, 0);
         hwndCB = GetDlgItem(hwnd, IDC_COMBOBOX);
         for (i = idsSurfaceMinerals; i <= idsDefenses3; i++) {
             psz = PszGetCompressedString(i);
@@ -170,7 +177,7 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         i = GetRaceStat(&vplr, rsUseLeftover);
         SendMessage(hwndCB, CB_SETCURSEL, i, 0);
         if (vplr.lSalt != 0) {
-            FSetLegacyWindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass);
+            FSetUtf8WindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass);
         }
         if (fRCWReadOnly) {
             for (i = 268; i <= 269; i++) {
@@ -300,8 +307,8 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 GetDlgItemText(hwnd, IDC_RACE_NAME, vplr.szName, 32);
                 GetDlgItemText(hwnd, IDC_RACE_PLURAL_NAME, vplr.szNames, 32);
                 GetRaceStat(&vplr, rsUseLeftover);
-                if (CchGetLegacyWindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass, 16) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordCharacters), MB_ICONHAND);
+                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_RACE_PASSWORD), szRacePass, 16) < 0) {
+                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
                     return TRUE;
                 }
                 j = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
@@ -1378,6 +1385,13 @@ void SetSzRaceFile(const char *pszFile) {
     szRaceFileSuggest[cchSuggest] = 0;
     memcpy(szRaceFile, pszFile, cch);
     szRaceFile[cch] = 0;
+}
+
+int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
+    char szPrompt[256];
+
+    CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
+    return AlertSz(szPrompt, MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES;
 }
 
 int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {

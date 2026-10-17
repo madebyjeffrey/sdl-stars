@@ -593,6 +593,11 @@ LError:
 }
 
 static int16_t FCopyCmdPath(const char *psz, size_t cb) {
+    if (!FUtf8Valid(psz, cb)) {
+        AlertSz(PszGetCompressedString(idsNativeFilenameEncoding), MB_ICONHAND);
+        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
+        return FALSE;
+    }
     if (cb >= sizeof(szBase)) {
         AlertSz(PszGetCompressedString(idsNativeFilenameTooLong), MB_ICONHAND);
         szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
@@ -724,7 +729,7 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
                     cbPass = (size_t)(lpT - pch);
-                    cchPass = CchUtf8ToLegacy(szPassLast, sizeof(szPassLast), pch, cbPass);
+                    cchPass = CchCopyUtf8(szPassLast, sizeof(szPassLast), pch, cbPass);
                     if (cchPass < 0) {
                         AlertSz(PszGetCompressedString(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), MB_ICONHAND);
                         szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;

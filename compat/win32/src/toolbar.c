@@ -85,7 +85,7 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
     if (!rgNew) return FALSE;
     for (i = 0; i < c; i++) {
         rgNew[iInsert + i].btn = rgbtn[i];
-        // This subset accepts direct ANSI text, not string pool/callback indices.
+        // This subset accepts direct UTF-8 text, not string pool/callback indices.
         if (rgbtn[i].iString > 65535) {
             rgNew[iInsert + i].psz = SDL_strdup((const char *)rgbtn[i].iString);
             if (!rgNew[iInsert + i].psz) break;

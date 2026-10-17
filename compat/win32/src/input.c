@@ -5,6 +5,7 @@
 #include "internal.h"
 #include <stars_compat.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 static HWND hwndCapture, rghwndClick[3];
@@ -175,53 +176,18 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
     return hwnd;
 }
 
-static BOOL FAnsiInput(const char **lppsz, BYTE *lpch, BOOL fStrict) {
-    const unsigned char *psz = (const unsigned char *)*lppsz;
-    DWORD ch;
-    int c, i;
-    if (*psz < 0x80) { *lpch = *psz; *lppsz += 1; return TRUE; }
-    if (*psz >= 0xc2 && *psz <= 0xdf) { c = 2; ch = *psz & 0x1f; }
-    else if (*psz >= 0xe0 && *psz <= 0xef) { c = 3; ch = *psz & 0x0f; }
-    else if (*psz >= 0xf0 && *psz <= 0xf4) { c = 4; ch = *psz & 7; }
-    else return FALSE;
-    for (i = 1; i < c; i++) {
-        if ((psz[i] & 0xc0) != 0x80) return FALSE;
-        ch = (ch << 6) | (psz[i] & 0x3f);
-    }
-    if ((c == 3 && ch < 0x800) || (c == 4 && ch < 0x10000) || ch > 0x10ffff ||
-        (ch >= 0xd800 && ch <= 0xdfff)) return FALSE;
-    *lppsz += c;
-    if (ch >= 0xa0 && ch <= 0xff) *lpch = (BYTE)ch;
-    else {
-        *lpch = '?';
-        for (i = 0x80; i < 0xa0; i++)
-            if (DwCompatAnsiChar((BYTE)i) == ch) { *lpch = (BYTE)i; break; }
-        if (fStrict && i == 0xa0) return FALSE;
-    }
-    return TRUE;
-}
-
 void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
-    BYTE ch;
-    BOOL fStrict;
+    DWORD ch;
     if (!IsWindow(hwnd)) return;
-    fStrict = !hwnd->fUtf8Text && (hwnd->dwStyle & ES_PASSWORD);
-    // Validate the whole event before posting, so malformed UTF-8 adds no prefix.
-    while (*psz)
-        if (!FAnsiInput(&psz, &ch, fStrict)) {
-            if (fStrict) hwnd->fEditInputRejected = TRUE;
-            SDL_SetError("Text input is malformed or not representable in this password field"); return;
-        }
-    psz = pszText;
+    if (!FUtf8Valid(pszText, strlen(pszText))) {
+        hwnd->fEditInputRejected = TRUE;
+        SDL_SetError("Text input is malformed UTF-8");
+        return;
+    }
     while (*psz) {
-        if (hwnd->fUtf8Text) {
-            DWORD chUtf8 = SDL_StepUTF8(&psz, NULL);
-            CompatPostInput(hwnd, WM_CHAR, chUtf8, 1);
-        } else {
-            if (!FAnsiInput(&psz, &ch, FALSE)) return;
-            CompatPostInput(hwnd, WM_CHAR, ch, 1);
-        }
+        ch = SDL_StepUTF8(&psz, NULL);
+        CompatPostInput(hwnd, WM_CHAR, ch, 1);
     }
 }
 
@@ -418,6 +384,14 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
 
     if (lpevent->type == SDL_EVENT_QUIT) {
         PostQuitMessage(0);
+        return;
+    }
+    if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
+        COMPATASYNCPOST *lpPost = lpevent->user.data1;
+        if (lpPost) {
+            PostMessageA(lpPost->hwnd, lpPost->msg, lpPost->wParam, lpPost->lParam);
+            free(lpPost);
+        }
         return;
     }
     // Window/input SDL event unions all use windowID; never fall back to another HWND.

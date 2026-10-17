@@ -8,23 +8,44 @@
 
 int  cStarsTestAlert;
 char szStarsTestAlert[512];
+int16_t iStarsTestAlertResponse;
+int16_t fStarsTestAcceptLegacyRacePassword;
+int16_t cStarsTestLegacyRacePasswordPrompt;
+char szStarsTestLegacyRacePassword[16];
+
+int16_t FStarsTestPromptLegacyRacePassword(char *szPassword) {
+    cStarsTestLegacyRacePasswordPrompt++;
+    if (!fStarsTestAcceptLegacyRacePassword)
+        return FALSE;
+    strcpy(szPassword, szStarsTestLegacyRacePassword);
+    return TRUE;
+}
 
 // FStarsTestAlert records a message box and gives the answer that lets the
 // game carry on.
 static int16_t FStarsTestAlert(char *sz, int16_t mbType) {
     cStarsTestAlert++;
     snprintf(szStarsTestAlert, sizeof(szStarsTestAlert), "%s", sz);
+    if (((mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)
+        return iStarsTestAlertResponse;
     return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
 }
 
 #ifdef STARS_UI_SDL
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
+int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
+    return FStarsTestPromptLegacyRacePassword(szPassword);
+}
 #else
 // The native tests link hostui.c for the rest of ui.h.
 int16_t IdAlertBox(char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
 #endif
 
 int16_t FStarsTestInit(void) {
+    iStarsTestAlertResponse = 0;
+    fStarsTestAcceptLegacyRacePassword = FALSE;
+    cStarsTestLegacyRacePasswordPrompt = 0;
+    szStarsTestLegacyRacePassword[0] = 0;
 #ifdef STARS_UI_SDL
     hInst = GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));

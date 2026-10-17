@@ -220,7 +220,7 @@
       "name": "windows-sdl-headless",
       "displayName": "Native Windows SDL UI checks (sequential)",
       "configurePreset": "windows-sdl-debug",
-      "filter": { "include": { "name": "^(win32_sdl_|sdl_smoke_|win32_client_|win32_native_tutorial_|sdl_test_)" } },
+      "filter": { "include": { "name": "^(win32_sdl_|sdl_smoke_|win32_client_|win32_native_tutorial_|sdl_test_|win32_utf8)" } },
       "environment": {
         "SDL_VIDEODRIVER": "dummy",
         "SDL_AUDIODRIVER": "dummy",

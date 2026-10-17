@@ -18,11 +18,15 @@ def main():
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=True)
     fixture = Path(__file__).resolve().parents[1] / 'scaffold/fixtures/regression/native/oneai1/checkpoints/010'
+    managed = root / 'Games' / 'game'
+    managed.mkdir(parents=True, exist_ok=True)
+    (managed / '.library').write_text('2\ngame\n0\n0\ngame\n', encoding='utf-8')
     for suffix in ('.m1', '.xy', '.hst'):
-        shutil.copyfile(fixture / ('game' + suffix), root / ('game' + suffix))
-    env = dict(os.environ, STARS_PRINTMAP_OUTPUT=str(root), STARS_SETTINGS_DIR=str(root),
+        shutil.copyfile(fixture / ('game' + suffix), managed / ('game' + suffix))
+    env = dict(os.environ, STARS_PRINTMAP_OUTPUT=str(root), STARS_SETTINGS_DIR=str(root), STARS_PROFILE_DIR=str(root),
                SDL_VIDEODRIVER=args.driver, SDL_AUDIODRIVER='dummy', STARS_SDL_RENDERER='software', STARS_SDL_PRINTER='pdf')
-    subprocess.run([str(args.client.resolve()), 'game.m1'], cwd=root, env=env, timeout=120, check=True)
+    env.pop('STARS_LIBRARY_DIR', None)
+    subprocess.run([str(args.client.resolve()), str(managed / 'game.m1')], cwd=root, env=env, timeout=120, check=True)
     assert (root / 'installed.r1').stat().st_size > 0
     if args.host:
         installed = root / 'installed-game'

@@ -1,5 +1,5 @@
 /* Resources of stars.exe, generated from its NE resource table. */
-#pragma code_page(1252)
+#pragma code_page(65001)
 
 #include <windows.h>
 #include "resource.h"
@@ -88,6 +88,7 @@ BEGIN
         MENUITEM "&Close", IDM_FILE_RETURN_TO_TITLE
         MENUITEM "&Save\tCtrl+S", IDM_TURN_END_A
         MENUITEM "Save &And Submit\tCtrl+A", IDM_TURN_END_B
+        MENUITEM "Export Orders...", IDM_LIBRARY_EXPORT_ORDERS
         MENUITEM SEPARATOR
         MENUITEM "&Print Map", IDM_FILE_PRINT_MAP
         MENUITEM SEPARATOR
@@ -204,7 +205,7 @@ BEGIN
     CONTROL "Stars! for Microsoft Windows", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 36, 8, 156, 8
     CONTROL "The Advanced Interstellar Strategy Game", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 36, 18, 156, 17
     CONTROL "Demo Version", IDC_ABOUT_DEMO_TEXT, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 32, 184, 8
-    CONTROL "Copyright \251 1995-2000  Jeff Johnson && Jeff McBride", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 48, 184, 8
+    CONTROL "Copyright © 1995-2000  Jeff Johnson && Jeff McBride", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 48, 184, 8
     CONTROL "Published by empire Interactive", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 60, 184, 66
     CONTROL "", IDC_ABOUT_CREDITS_TEXT, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 70, 184, 66
     CONTROL "http://www.webmap.com/stars!", -1, "Static", WS_CHILD | WS_VISIBLE | WS_GROUP | SS_CENTER, 4, 140, 184, 8
@@ -770,7 +771,7 @@ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904E4"
+        BLOCK "0409FDE9"
         BEGIN
             VALUE "FileDescription", "Stars!"
             VALUE "FileVersion", STARS_VERSION_STRING
@@ -782,6 +783,39 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x409, 1252
+        VALUE "Translation", 0x409, 65001
     END
+END
+
+IDD_LIBRARY_NAME DIALOG 0, 0, 240, 65
+STYLE WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | DS_SETFONT | DS_MODALFRAME
+CAPTION "New Game Library Name"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL "Library name:", -1, "Static", WS_CHILD | WS_VISIBLE | SS_LEFT, 6, 8, 60, 12
+    CONTROL "", IDC_EDIT1, "Edit", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, 66, 6, 166, 14
+    CONTROL "Create", IDOK, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 126, 40, 50, 14
+    CONTROL "Cancel", IDCANCEL, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 182, 40, 50, 14
+END
+
+IDD_LIBRARY_TURN_TARGET DIALOG 0, 0, 220, 126
+STYLE WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | DS_SETFONT | DS_MODALFRAME
+CAPTION "Choose Game to Update"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL "More than one managed copy matches this turn. Choose its destination:", -1, "Static", WS_CHILD | WS_VISIBLE | SS_LEFT, 6, 6, 208, 20
+    CONTROL "", IDC_LIBRARY_TURN_TARGET_LIST, "ListBox", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | LBS_NOTIFY | WS_VSCROLL, 6, 28, 208, 70
+    CONTROL "Update", IDOK, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 108, 104, 50, 14
+    CONTROL "Cancel", IDCANCEL, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 164, 104, 50, 14
+END
+
+IDD_LIBRARY_TURN_CONFLICT DIALOG 0, 0, 260, 75
+STYLE WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | DS_SETFONT | DS_MODALFRAME
+CAPTION "Conflicting Player Turn"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL "This turn differs from the managed turn for the same or an earlier year.", -1, "Static", WS_CHILD | WS_VISIBLE | SS_LEFT, 8, 8, 244, 20
+    CONTROL "Cancel", IDCANCEL, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 8, 42, 48, 18
+    CONTROL "Replace", IDC_LIBRARY_TURN_REPLACE, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 64, 42, 56, 18
+    CONTROL "Import as Separate Copy", IDC_LIBRARY_TURN_SEPARATE, "Button", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 128, 42, 124, 18
 END

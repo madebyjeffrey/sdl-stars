@@ -14,7 +14,7 @@ void StarsCompatEndDialogSequence(void);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are CP1252 unless fUtf8Text marks native path/caption text.
+ * Snapshot strings are UTF-8; fUtf8Text is always true.
  * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
@@ -50,6 +50,8 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void));
  * All handles and class atoms must be discarded before using the runtime again.
  */
 void StarsCompatShutdown(void);
+/* Post an application message from an SDL dialog callback, which may run off-thread. */
+BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 /* Final process cleanup after WinMain has released application state.
  * Unlike normal shutdown, no window procedure is called. All handles become

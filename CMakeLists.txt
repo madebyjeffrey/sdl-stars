@@ -41,7 +41,7 @@ set(STARS_CORE_SOURCES
 
 # The shared desktop UI, implemented through the SDL Win32 wrapper.
 set(STARS_UI_SOURCES
-    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/mdi.c
+    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/libraryui.c src/ui/libraryzip.c src/ui/mdi.c
     src/ui/mineui.c src/ui/msgui.c src/ui/nativeui.c src/ui/planetui.c src/ui/planetpaneui.c src/ui/popup.c src/ui/produceui.c src/ui/raceui.c
     src/ui/reportui.c src/ui/researchui.c src/ui/scan.c src/ui/scaninspect.c src/ui/ship2ui.c src/ui/shipui.c src/ui/stars.c src/ui/tb.c src/ui/thingui.c
     src/ui/tutor.c src/ui/tutor2.c src/ui/utilgenui.c src/ui/utilui.c src/ui/vcr.c
@@ -204,11 +204,27 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
 endif()
 if(STARS_BUILD_SDL_CLIENT)
+    # The filesystem bridge has a C ABI; game and wrapper sources remain C11.
+    enable_language(CXX)
+    add_library(stars_filesystem STATIC src/platform/filesystem.cpp)
+    set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+    target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
+    target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
+    target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    if(STARS_BUILD_TESTS)
+        add_executable(stars-test-filesystem tests/compat/filesystem.c)
+        target_link_libraries(stars-test-filesystem PRIVATE stars_filesystem)
+        target_compile_options(stars-test-filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_utf8_filesystem COMMAND stars-test-filesystem)
+        set_tests_properties(win32_utf8_filesystem PROPERTIES LABELS compat TIMEOUT 30)
+    endif()
     include(cmake/sdl-client.cmake)
 elseif(STARS_BUILD_TESTS)
     set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests")
     file(MAKE_DIRECTORY "${STARS_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1 "${STARS_TEST_DIR}/data/humanoid.r1" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
+        "${STARS_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
     file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
     # These tests need the desktop UI and its private file adapters.
     list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"

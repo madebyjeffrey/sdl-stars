@@ -1,5 +1,8 @@
 #include "win.h"
 
+/* UI-only names retain full UTF-8 library filenames beside the Win16 cache. */
+static char rgszLibraryRaceNew[16][256];
+
 void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     int16_t iStepMaxSoFar;
     int16_t mdRet;
@@ -27,6 +30,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     vrgplrNew = rgplrLocal;
     vrgszFileNew = szFileLocal;
     vcplrNew = 0;
+    memset(rgszLibraryRaceNew, 0, sizeof(rgszLibraryRaceNew));
     memset(vrgplrTypeNew, 0, 16);
     if (!fReadOnly) {
         gameT = game;
@@ -253,7 +257,12 @@ Finish:
         hwndTitle = 0;
         ShowWindow(hwndFrame, SW_SHOW);
     }
-    GenerateWorld(FALSE);
+    if (!FFinishLibraryGame(hwnd, GenerateWorld(FALSE))) {
+        DestroyCurGame();
+        ShowTitleScreen();
+        gd.fNoIdleChecks = fIdleSav;
+        return;
+    }
     if (idPlayer == iplrNone) {
         BringUpHostDlg();
     }
@@ -262,56 +271,13 @@ Finish:
 }
 
 int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
-    char         szXY[3];
-    uint16_t     i;
-    char         szFileTitle[256];
-    char         szFile[256];
-    char         szFilter[256];
-    OPENFILENAME ofn;
-
-    if (szFileSuggest) {
-        strcpy(szFile, szFileSuggest);
-    } else {
-        szFile[0] = 0;
-    }
-    CchGetString(idsStarsGameFilesXy, szFilter);
-    for (i = 0; szFilter[i] != 0; i++) {
-        if (szFilter[i] == '|') {
-            szFilter[i] = 0;
-        }
-    }
-    memset(&ofn, 0, sizeof(OPENFILENAME));
-    szXY[0] = 'x';
-    szXY[1] = 'y';
-    szXY[2] = 0;
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = 0x100;
-    ofn.lpstrFileTitle = szFileTitle;
-    ofn.nMaxFileTitle = 0x100;
-    ofn.lpstrInitialDir = szDirName;
-    ofn.lpstrTitle = "Choose New Game Name";
-    ofn.lpstrDefExt = szXY;
-    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN;
-    if (FNativeSaveFileName(&ofn) != 0) {
-        if (ofn.nFileExtension != 0) {
-            strcpy(&szFile[ofn.nFileExtension], szXY);
-        } else {
-            strcat(szFile, szXY);
-        }
-        strcpy(szFileSuggest, szFile);
-        return TRUE;
-    }
-    return FALSE;
+    return FChooseLibraryGameName(hwnd, szFileSuggest);
 }
 
 static int16_t FChooseNewGameName(HWND hwnd) {
     char *pszFile = (char *)GetWindowLongPtr(hwnd, DWLP_USER);
 
-    // Keep the wizard page alive so the native save panel can belong to it.
+    // Keep the wizard page alive while naming, including after cancellation.
     return fRCWReadOnly || (pszFile && FGetNewGameName(hwnd, pszFile));
 }
 
@@ -633,6 +599,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     RECT       *prcSav;
     HDC         hdc;
     PAINTSTRUCT ps;
+    char        szLibraryRace[256];
 
     switch (message) {
     case WM_INITDIALOG:
@@ -758,8 +725,10 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 vplr = vrgplrDef[0];
                 CchGetString(idsHumanoid, vplr.szName);
                 wsprintf(vplr.szNames, "%ss", vplr.szName);
+                szLibraryRace[0] = 0;
+                szRacePass[0] = 0;
                 prcSav = vrgrcRCW;
-                if (RaceCreationWizard(hwnd, FALSE, FALSE) != 0) {
+                if (FCustomizeLibraryRace(hwnd, szLibraryRace)) {
                     vrgrcRCW = prcSav;
                     goto PlaceNew;
                 }
@@ -767,6 +736,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             }
             if (iPopMenuSel == 1) {
                 if (FOpenGame(hwnd, TRUE) > 0) {
+                    CchSnprintf(szLibraryRace, sizeof(szLibraryRace), "%s", PszCurrentLibraryRaceName());
                 PlaceNew:
                     if (vcplrNew < 16) {
                         iNewVal = vcplrNew++;
@@ -779,7 +749,8 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                         }
                     }
                     vrgplrNew[iNewVal] = vplr;
-                    strcpy(vrgszFileNew + iNewVal * 13, szRaceFile);
+                    CchCopyUtf8(vrgszFileNew + iNewVal * 13, 13, szRaceFile, strlen(szRaceFile));
+                    strcpy(rgszLibraryRaceNew[iNewVal], szLibraryRace);
                     iNewVal = iNewVal << 2 | 2;
                 }
             } else if (iPopMenuSel == 2) {
@@ -800,13 +771,16 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 } else {
                     szRacePass[0] = 0;
                 }
+                CchSnprintf(szLibraryRace, sizeof(szLibraryRace), "%s",
+                              (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : "");
                 prcSav = vrgrcRCW;
-                if (RaceCreationWizard(hwnd, FALSE, FALSE) != 0) {
+                if (FCustomizeLibraryRace(hwnd, szLibraryRace)) {
                     vrgrcRCW = prcSav;
-                    if ((iCurVal & 3) == 1 || strcmp(szRaceFile, vrgszFileNew + (iCurVal >> 2) * 13) != 0)
+                    if ((iCurVal & 3) == 1 || strcmp(szLibraryRace, rgszLibraryRaceNew[iCurVal >> 2]) != 0)
                         goto PlaceNew;
                     vrgplrNew[iCurVal >> 2] = vplr;
-                    strcpy(vrgszFileNew + (iCurVal >> 2) * 13, szRaceFile);
+                    CchCopyUtf8(vrgszFileNew + (iCurVal >> 2) * 13, 13, szRaceFile, strlen(szRaceFile));
+                    strcpy(rgszLibraryRaceNew[iCurVal >> 2], szLibraryRace);
                     iNewVal = iCurVal;
                     iCurVal = -1;
                 }
