@@ -582,7 +582,7 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     SaveRaceState(&rsSav);
     fResult = FWasRaceFile(szPath, TRUE);
-    if (!fResult) {
+    if (fResult <= 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The selected race design could not be opened.", MB_ICONEXCLAMATION);
         return FALSE;
@@ -654,7 +654,7 @@ int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName) {
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     SaveRaceState(&rsSav);
-    if (!FWasRaceFile(szSource, TRUE)) {
+    if (FWasRaceFile(szSource, TRUE) <= 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         return FALSE;
     }
@@ -672,7 +672,7 @@ int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName) {
         if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (!FWasRaceFile(szPath, TRUE)) {
+    if (FWasRaceFile(szPath, TRUE) <= 0) {
         RemoveNativeFile(szPath);
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
@@ -702,7 +702,7 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
         pszTarget = szTarget;
     }
     SaveRaceState(&rsSav);
-    if (!FWasRaceFile(szSource, TRUE) || SDL_strcasecmp(szSource, pszTarget) == 0) {
+    if (FWasRaceFile(szSource, TRUE) <= 0 || SDL_strcasecmp(szSource, pszTarget) == 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
         return FALSE;
@@ -713,7 +713,7 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
         return FALSE;
     }
     CchSnprintf(szValidate, sizeof(szValidate), "%s", szTemp);
-    if (!FWasRaceFile(szValidate, TRUE) || ReplaceNativeFile(szTemp, pszTarget) != 0) {
+    if (FWasRaceFile(szValidate, TRUE) <= 0 || ReplaceNativeFile(szTemp, pszTarget) != 0) {
         RemoveNativeFile(szTemp);
         RestoreRaceState(&rsSav, TRUE, TRUE);
         if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
@@ -917,7 +917,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     if (pszSource != szSource) strcpy(szSource, pszSource);
     SaveRaceState(&rsSav);
     fValid = FWasRaceFile(szSource, TRUE);
-    if (!fValid) {
+    if (fValid <= 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         return FALSE;
     }
@@ -942,7 +942,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         goto LRestore;
     }
     RemoveNativePath(szStageDir);
-    if (!FWasRaceFile(szPath, TRUE)) {
+    if (FWasRaceFile(szPath, TRUE) <= 0) {
         RemoveNativeFile(szPath);
         goto LRestore;
     }

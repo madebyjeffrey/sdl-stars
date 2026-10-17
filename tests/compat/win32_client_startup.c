@@ -427,8 +427,11 @@ static BOOL FCheckToolbarPlacement(void) {
     return TRUE;
 }
 
+static BOOL fRejectRacePassword;
+
 int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
+    if (fRejectRacePassword) return FALSE;
     // The frozen regression race is password protected. These tests qualify
     // file loading and client creation; password validation is outside scope.
     return pszContinue || getenv("STARS_CLIENT_EXPECT_PLAYER") || getenv("STARS_CLIENT_HOST_LIBRARY_TEST") || getenv("STARS_CLIENT_STARTUP_MANAGED") ||
@@ -1393,6 +1396,7 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 }
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
+    if (fRejectRacePassword) return IDOK;
     if (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
         strstr(sz, "The selected managed game could not be completely deleted.")) {
         fLibraryGameDeleteFailureAlert = TRUE;
@@ -1549,6 +1553,44 @@ static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarge
     if (fclose(pfSource) != 0) fOkay = FALSE;
     if (fclose(pfTarget) != 0) fOkay = FALSE;
     return fOkay && fChanged;
+}
+
+/* Cancellation must never bind the previous race to a different save path. */
+static BOOL FTestRaceCancellation(void) {
+    PLAYER plrSav;
+    char szProtected[512], szSnapshot[512], szExport[512], szImport[512], szDuplicate[512];
+    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    int16_t fOkay;
+
+    if (!FLoadLibraryRace(0, "Managed.r1")) return FALSE;
+    vplr.lSalt = LSaltFromSz("cancel-test");
+    if (!FSaveLibraryRace(0, "Protected.r1", &vplr) || !FLoadLibraryRace(0, "Managed.r1")) return FALSE;
+    plrSav = vplr;
+    CchSnprintf(szProtected, sizeof(szProtected), "%s%sRace Designs%sProtected.r1", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(szSnapshot, sizeof(szSnapshot), "%s.snapshot", szProtected);
+    CchSnprintf(szExport, sizeof(szExport), "%s.export.r1", szProtected);
+    CchSnprintf(szImport, sizeof(szImport), "%s%sRace Designs%sCancelled.r1", pszSettings, szDirSep, szDirSep);
+    CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sProtected.r2", pszSettings, szDirSep, szDirSep);
+    if (!FTestCopyFile(szProtected, szSnapshot)) return FALSE;
+    fRejectRacePassword = TRUE;
+    lSaltLast = -5;
+    fOkay = !FLoadLibraryRace(0, "Protected.r1") && !memcmp(&vplr, &plrSav, sizeof(vplr)) &&
+            !strcmp(PszCurrentLibraryRaceName(), "Managed.r1");
+    lSaltLast = -5;
+    fOkay = fOkay && !FEditLibraryRace(0, "Protected.r1");
+    lSaltLast = -5;
+    fOkay = fOkay && !FDuplicateLibraryRace(0, "Protected.r1");
+    lSaltLast = -5;
+    fOkay = fOkay && !FExportLibraryRace(0, "Protected.r1", szExport);
+    lSaltLast = -5;
+    fOkay = fOkay && !FImportLibraryRaceAs(0, szProtected, "Cancelled.r1");
+    fRejectRacePassword = FALSE;
+    fOkay = fOkay && !memcmp(&vplr, &plrSav, sizeof(vplr)) &&
+            !strcmp(PszCurrentLibraryRaceName(), "Managed.r1") && FTestFilesEqual(szProtected, szSnapshot) &&
+            !FFileExists(szExport) && !FFileExists(szImport) && !FFileExists(szDuplicate);
+    RemoveNativeFile(szProtected);
+    RemoveNativeFile(szSnapshot);
+    return fOkay;
 }
 
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
@@ -2184,6 +2226,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 !FNativeFileSize(szExport, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
             fChecked = TRUE;
             fPassed = TRUE;
+            if (!FTestRaceCancellation()) {
+                fprintf(stderr, "Cancelled race operation changed the active design or its destination\n");
+                goto LDone;
+            }
             puts("Managed race created, edited, cancelled, imported, duplicated, exported, and reloaded");
             PostQuitMessage(0);
             return;

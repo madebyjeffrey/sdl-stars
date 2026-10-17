@@ -458,6 +458,9 @@ fields retain byte budgets. See
 [ADR 0002](adr/0002-utf8-application-text.md). Translation, shaping,
 bidirectional layout and grapheme editing remain separate work.
 
+Race-library load, edit, import, duplicate and export stop on cancelled or
+rejected race reads, preserving the current design, destination and source files.
+
 Password creation and changes use the same 15-byte UTF-8 limit as login and
 the command line. Oversized user input is rejected as a whole with a re-entry
 warning, while ordinary text fields retain their truncation behavior.

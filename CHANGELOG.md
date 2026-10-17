@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FLoadLibraryRace` and the race import, duplicate and export callers now
+  reject negative `FWasRaceFile` results. Cancelling a password prompt previously
+  continued with the prior design and could bind it to another race’s save path.
+  Simulation results and native regression baselines are unchanged.
+
 - `FDeleteLibraryGame` now suppresses Continue across restarts after deleting
   its remembered game until another game is explicitly opened. This reconciles
   deletion with metadata-based session selection; simulation and file formats
