@@ -15,13 +15,15 @@ void SDLCALL StarsTest_SDL_ShowOpenFolderDialog(SDL_DialogFileCallback pfnCallba
         return;
     }
     cGameExportPickers++;
-    if (!pszAction || strcmp(pszAction, "cancel")) rgpszPath[0] = getenv("STARS_CLIENT_EXPORT_PARENT");
+    if ((!pszAction || strcmp(pszAction, "cancel")) && !getenv("STARS_CLIENT_EXPORT_ZIP_CANCEL"))
+        rgpszPath[0] = getenv("STARS_CLIENT_EXPORT_ZIP") ? getenv("STARS_CLIENT_EXPORT_ZIP") : getenv("STARS_CLIENT_EXPORT_PARENT");
     pfnCallback(lpData, rgpszPath, 0);
 }
 
 static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     const char *pszGame = getenv("STARS_CLIENT_EXPORT_GAME");
     const char *pszParent = getenv("STARS_CLIENT_EXPORT_PARENT");
+    const char *pszZip = getenv("STARS_CLIENT_EXPORT_ZIP");
     const char *pszAction = getenv("STARS_CLIENT_EXPORT_ACTION");
     const char *pszPlayer = getenv("STARS_CLIENT_EXPORT_PLAYER");
     const char *pszResearch = getenv("STARS_CLIENT_EXPORT_RESEARCH");
@@ -30,7 +32,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     HWND hwndSave = HwndWorkflowDialog(), hwndList;
     LRESULT i, c;
     char szDestination[512], szRow[320], szPrefix[280];
-    int16_t fCancel = pszAction && !strcmp(pszAction, "cancel");
+    int16_t fCancel = (pszAction && !strcmp(pszAction, "cancel")) || getenv("STARS_CLIENT_EXPORT_ZIP_CANCEL") != NULL;
     int16_t fDiscard = pszAction && !strcmp(pszAction, "discard");
     int16_t fVerify = pszAction && !strcmp(pszAction, "verify");
     int16_t fFail = getenv("STARS_CLIENT_EXPORT_EXPECTED") != NULL;
@@ -46,7 +48,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     fGameExportBusy = TRUE;
     if (++cGameExportWait > 40) goto LFail;
     if (iStage == 0) {
-        if (!IsWindowVisible(hwndTitle) || !pszParent) goto LFail;
+        if (!IsWindowVisible(hwndTitle) || (!pszParent && !pszZip)) goto LFail;
         if (fVerify) {
             iStage = 1;
             if (!FPushClick(rghwndBtnSplash[2])) goto LFail;
@@ -94,11 +96,12 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     } else if (iStage == 3) {
         if (cGameExportPickers == 0) goto LWait;
         if (cGameExportPickers != 1) goto LFail;
-        CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszParent, szDirSep, pszGame);
+        if (pszZip) CchSnprintf(szDestination, sizeof(szDestination), "%s", pszZip);
+        else CchSnprintf(szDestination, sizeof(szDestination), "%s%s%s", pszParent, szDirSep, pszGame);
         if (fFail) {
             if (cAlerts == 0) goto LWait;
             if (cAlerts != 1) goto LFail;
-        } else if (!fCancel && !FNativeDirectoryExists(szDestination)) goto LWait;
+        } else if (!fCancel && (pszZip ? !FNativeFileSize(szDestination, &(int64_t){0}) : !FNativeDirectoryExists(szDestination))) goto LWait;
         if (fCancel && FNativeDirectoryExists(szDestination)) goto LFail;
         cSaves = pszAction && (!strcmp(pszAction, "save") || fDiscard) ? 1 : 0;
         if (cGameExportSaves != cSaves || gd.fSubmit != fGameExportSubmitSav) goto LFail;
@@ -111,7 +114,7 @@ LWait:
 LDone:
     fChecked = fPassed = TRUE;
     fGameExportBusy = FALSE;
-    puts("Managed game export: button, folder callback, save choice and real files checked");
+    puts("Managed game export: button, destination callback, save choice and real files checked");
     KillTimer(NULL, idTimer);
     PostQuitMessage(0);
     return TRUE;

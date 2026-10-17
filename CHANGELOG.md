@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Desktop Import Game now accepts ZIP archives, validates and safely stages
+  their contents through the managed-game importer, and Export Game offers a
+  ZIP destination containing the full game family and numbered backups.
+  Import and export leave the managed source intact.
+
 - `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
   Its previous position covered both buttons and intercepted their clicks.
 

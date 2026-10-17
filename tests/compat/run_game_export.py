@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
+import zipfile
 
 from run_newgame import run
 
@@ -161,6 +162,95 @@ def main():
             run(executable, reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
                 STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_PLAYER=str(player),
                 STARS_CLIENT_EXPORT_RESEARCH=str(research), STARS_CLIENT_CONTINUE=str(reimported / f'managed-copy.m{player + 1}'))
+
+        # ZIP export includes the complete game family and numbered backups;
+        # importing it uses the same validation and managed-game workflow.
+        zip_path = work / 'managed-copy.zip'
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_path))
+        with zipfile.ZipFile(zip_path) as archive:
+            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        zip_reimport_work = work / 'zip-reimport'
+        run(executable, zip_reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(zip_path), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        zip_reimported = zip_reimport_work / 'library/Games/managed-copy'
+        assert files(zip_reimported, metadata=False) == files(managed, metadata=False)
+        run(executable, zip_reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy',
+            STARS_CLIENT_EXPORT_PARENT=str(submitted_parent), STARS_CLIENT_EXPORT_ACTION='verify',
+            STARS_CLIENT_EXPORT_PLAYER='1', STARS_CLIENT_EXPORT_RESEARCH='5',
+            STARS_CLIENT_CONTINUE=str(zip_reimported / 'managed-copy.m2'))
+
+        compressed_zip = work / 'compressed.zip'
+        with zipfile.ZipFile(compressed_zip, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            for relative, data in files(managed, metadata=False).items():
+                archive.writestr(relative.as_posix(), data)
+        compressed_work = work / 'compressed-reimport'
+        run(executable, compressed_work, STARS_CLIENT_IMPORT_SOURCE=str(compressed_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
+        assert files(compressed_work / 'library/Games/managed-copy', metadata=False) == files(managed, metadata=False)
+
+        # A canceled ZIP destination and a pre-existing destination preserve
+        # the managed game and leave the selected output untouched.
+        zip_cancel = work / 'zip-cancel.zip'
+        before = files(managed, metadata=False)
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_cancel),
+            STARS_CLIENT_EXPORT_ZIP_CANCEL='1')
+        assert not zip_cancel.exists() and files(managed, metadata=False) == before
+        zip_blocked = work / 'zip-blocked.zip'
+        zip_blocked.mkdir()
+        (zip_blocked / 'keep.txt').write_bytes(b'preserve blocked destination')
+        run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_blocked),
+            STARS_CLIENT_EXPORT_EXPECTED='fail')
+        assert (zip_blocked / 'keep.txt').read_bytes() == b'preserve blocked destination'
+        assert files(managed, metadata=False) == before
+
+        # Malformed local headers cannot replace or alter an existing managed
+        # game, and parsing must leave the selected source archive untouched.
+        managed_before = files(managed)
+        for label, field_offset, replacement in (
+                ('name', 30, ord('X')),
+                ('flags', 6, 0x01),
+                ('method', 8, 0x63)):
+            with zipfile.ZipFile(zip_path) as archive:
+                info = archive.getinfo('managed-copy.m1')
+                local_offset = info.header_offset
+            bad_archive = bytearray(zip_path.read_bytes())
+            bad_archive[local_offset + field_offset] = replacement
+            bad_source = work / f'bad-local-{label}.zip'
+            bad_source.write_bytes(bad_archive)
+            bad_source_before = bad_source.read_bytes()
+            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(bad_source),
+                STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+            assert files(managed) == managed_before
+            assert bad_source.read_bytes() == bad_source_before
+            assert not (work / 'library/Games/invalid-copy').exists()
+
+        # A valid ZIP can still contain an incomplete game family. Reject it
+        # through the shared importer without disturbing the existing game.
+        incomplete_source = work / 'incomplete-family.zip'
+        with zipfile.ZipFile(incomplete_source, 'w', compression=zipfile.ZIP_STORED) as archive:
+            archive.write(fixture / 'game.xy', 'game.xy')
+        incomplete_before = incomplete_source.read_bytes()
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(incomplete_source),
+            STARS_CLIENT_IMPORT_NAME='invalid-copy', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert files(managed) == managed_before
+        assert incomplete_source.read_bytes() == incomplete_before
+        assert not (work / 'library/Games/invalid-copy').exists()
+        assert not list((work / 'library/Games').glob('.zip-importing.*'))
+
+        # Invalid paths and truncated archives must not publish a partial game.
+        unsafe_zip = work / 'unsafe.zip'
+        with zipfile.ZipFile(unsafe_zip, 'w') as archive:
+            archive.writestr('../escape.xy', b'unsafe')
+        unsafe_work = work / 'unsafe-import'
+        run(executable, unsafe_work, STARS_CLIENT_IMPORT_SOURCE=str(unsafe_zip), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (unsafe_work / 'library/Games/managed-copy').exists()
+        assert not list((unsafe_work / 'library/Games').glob('.zip-importing.*'))
+        malformed_zip = work / 'malformed.zip'
+        malformed_zip.write_bytes(zip_path.read_bytes()[:-17])
+        malformed_work = work / 'malformed-zip-import'
+        run(executable, malformed_work, STARS_CLIENT_IMPORT_SOURCE=str(malformed_zip), STARS_CLIENT_IMPORT_NAME='managed-copy',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (malformed_work / 'library/Games/managed-copy').exists()
+
 
         # Accepting the writers' empty EOF must still reject trailing bytes.
         malformed = work / 'malformed'
