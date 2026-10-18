@@ -134,7 +134,6 @@ static int16_t idHostOrderFleet;
 static int16_t idHostOrderConflictResponse = IDYES;
 static int iRosterMenu = -1;
 static const char *pszRosterSource;
-static int iRecentMigrationTicks;
 static int cRecentMigrationPrompts;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
@@ -1430,11 +1429,6 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
     if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
-    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
-        if (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") && !strstr(sz, "exchange.m2") && !strstr(sz, "missing.m1"))
-            PostQuitMessage(92);
-        return IDOK;
-    }
     if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
     if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
@@ -1456,13 +1450,9 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     (void)hwnd; (void)pszCaption;
     if (pszText && strstr(pszText, "Import games from your recent files")) {
         cRecentMigrationPrompts++;
-        if (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT")) {
-            fPassed = FALSE;
-            PostQuitMessage(92);
-            return IDNO;
-        }
-        return getenv("STARS_CLIENT_RECENT_MIGRATION") &&
-               strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ? IDYES : IDNO;
+        fPassed = FALSE;
+        PostQuitMessage(92);
+        return IDNO;
     }
     if (fExpectGameRenameFailure) { fExpectGameRenameFailure = FALSE; return IDOK; }
     if (pszText && strstr(pszText, "Delete the managed race design Managed.r2?") && (type & MB_YESNO))
@@ -2057,25 +2047,23 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!FCheckRaceRosterWorkflow()) goto LDone;
         return;
     }
-    if (getenv("STARS_CLIENT_RECENT_MIGRATION")) {
-        HWND hwndDialog;
+    if (getenv("STARS_CLIENT_RECENT_STARTUP")) {
+        HWND hwndTop;
+        int cVisible = 0;
         if (!IsWindowVisible(hwndTitle)) return;
+        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
+            if (!hwndTop->lpWindow || (SDL_GetWindowFlags(hwndTop->lpWindow) & SDL_WINDOW_HIDDEN)) continue;
+            if (hwndTop != hwndTitle) goto LDone;
+            cVisible++;
+        }
+        if (cVisible != 1 || IsWindowVisible(hwndFrame) || cRecentMigrationPrompts != 0 ||
+            game.lid != 0 || idPlayer != iplrNone || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES) ||
+            !GetDlgItem(hwndTitle, IDC_LIBRARY_RACES)) goto LDone;
         UpdateWindow(hwndTitle);
         if (!FCompatPresent(hwndTitle)) goto LDone;
-        fTitlePainted = TRUE;
-        fChecked = TRUE;
-        for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
-            if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
-            if (!SetWindowTextA(GetDlgItem(hwndDialog, IDC_EDIT1),
-                                getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "migrated-game") ||
-                !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
-            return;
-        }
-        if (++iRecentMigrationTicks >= 16) {
-            fPassed = TRUE;
-            printf("Recent game migration prompt shown %d time(s)\n", cRecentMigrationPrompts);
-            PostQuitMessage(0);
-        }
+        fTitlePainted = fChecked = fPassed = TRUE;
+        puts("Startup with recent files shows only the library, without an import prompt");
+        PostQuitMessage(0);
         return;
     }
     if (getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") || getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
@@ -2979,7 +2967,7 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_RECENT_MIGRATION") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
+        !getenv("STARS_CLIENT_RECENT_STARTUP") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
         !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
         !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
@@ -2994,10 +2982,6 @@ int main(void) {
            cAlerts == (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
                        !strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "failure") ? 1 :
                        getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
-                       getenv("STARS_CLIENT_RECENT_MIGRATION") ?
-                       (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
-                        strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?
-                        (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") ? atoi(getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED")) : 1) : 0) :
                        getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE") ? 2 :
                        getenv("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :

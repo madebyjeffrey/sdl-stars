@@ -17,7 +17,6 @@
 #define WM_STARS_HOST     0x0465
 #define WM_STARS_CONTINUE 0x0466
 #define WM_STARS_SCAN_RESIZE (WM_APP + 2)
-#define WM_STARS_RECENT_IMPORT (WM_APP + 5)
 
 #include "battleui.h"
 #include "buildui.h"

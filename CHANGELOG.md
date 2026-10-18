@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TitleWndProc` now opens the library directly without the automatic recent-file
+  import offer. Import remains an explicit library action or the result of opening
+  an external file. Startup tests require a single visible library window, retain
+  recent-file settings and leave source files untouched. Simulation results and
+  native regression baselines are unchanged.
+
 - Managed-library labels, prompts, errors and file-filter text now come from
   `text/strings.txt` instead of literals in `libraryui.c`. Wording, existing
   text IDs, file formats and native regression baselines remain unchanged.

@@ -141,11 +141,40 @@ def check_uppercase_imports(executable):
             assert archive.read_bytes() == archive_before
 
 
+def check_recent_startup(executable):
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    for choice in (None, '1', '2'):
+        for relative in (False, True):
+            with tempfile.TemporaryDirectory(prefix='stars-recent-startup-') as directory:
+                work = Path(directory)
+                settings = work / 'settings'
+                settings.mkdir()
+                source = work / 'external'
+                source.mkdir()
+                for extension in ('.xy', '.m1'):
+                    shutil.copyfile(fixture / ('game' + extension), source / ('exchange' + extension))
+                before = {p.name: p.read_bytes() for p in source.iterdir()}
+                recent = Path('external/exchange.m1') if relative else source / 'exchange.m1'
+                ini = settings / 'StarsUtf8.ini'
+                ini.write_text(f'[Files]\nFile1={recent}\nFile2=missing.m1\n' +
+                               (f'[Library]\nRecentImportChoice={choice}\n' if choice else ''), encoding='utf-8')
+                for _ in range(2):
+                    run(executable, work, STARS_CLIENT_RECENT_STARTUP='1')
+                    assert not list((work / 'library/Games').iterdir())
+                    assert {p.name: p.read_bytes() for p in source.iterdir()} == before
+                    text = ini.read_text(encoding='utf-8-sig')
+                    if choice is None:
+                        assert 'RecentImportChoice=' not in text
+                    else:
+                        assert 'RecentImportChoice=' + choice in text
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
     check_first_player_turn(executable)
     check_failed_switch_save(executable)
     check_uppercase_imports(executable)
+    check_recent_startup(executable)
     for advanced, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:
@@ -557,42 +586,6 @@ def main():
         imported = client_work / 'library' / 'Games' / 'managed-playable'
         assert all((imported / ('managed-playable' + ext)).is_file() for ext in ('.xy', '.hst', '.m1'))
         run(executable, client_work, STARS_CLIENT_LIBRARY_OPEN='managed-playable')
-
-    for choice, relative in (('accept', False), ('decline', False), ('accept', True)):
-        with tempfile.TemporaryDirectory(prefix='stars-recent-migration-') as directory:
-            work = Path(directory)
-            settings = work / 'settings'
-            settings.mkdir()
-            source = work if relative else work / 'external'
-            source.mkdir(exist_ok=True)
-            fixture = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '000'
-            for ext in ('.xy', '.m1'):
-                shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
-            original = {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()}
-            missing = Path('missing.m1') if relative else source / 'missing.m1'
-            recent = Path('exchange.m1') if relative else source / 'exchange.m1'
-            missing_player = recent.with_suffix('.m2')
-            (settings / 'StarsUtf8.ini').write_text(
-                f'[Files]\nFile1={missing_player}\nFile2={recent}\nFile3={missing}\n', encoding='utf-8')
-            run(executable, work, STARS_CLIENT_RECENT_MIGRATION=choice,
-                STARS_CLIENT_IMPORT_NAME='migrated-game', STARS_CLIENT_RECENT_MISSING_EXPECTED='2')
-            migrated = work / 'library' / 'Games' / 'migrated-game'
-            if choice == 'accept':
-                assert (migrated / 'migrated-game.xy').is_file()
-                assert (migrated / 'migrated-game.m1').is_file()
-                metadata = (migrated / '.library').read_text(encoding='utf-8').splitlines()
-                assert metadata[4] == 'exchange'
-                assert {p.name: p.read_bytes() for p in source.iterdir() if p.is_file()} == original
-            else:
-                assert not migrated.exists()
-            ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
-            assert 'RecentImportChoice=' + ('1' if choice == 'accept' else '2') in ini
-            run(executable, work, STARS_CLIENT_RECENT_MIGRATION='accept',
-                STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT='1')
-            if choice == 'accept':
-                assert (migrated / 'migrated-game.m1').is_file()
-            else:
-                assert not migrated.exists()
 
     with tempfile.TemporaryDirectory(prefix='stars-external-open-') as directory:
         work = Path(directory)

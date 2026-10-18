@@ -26,7 +26,7 @@ A race design's library filename may differ from its in-game race names. Race fi
 
 The full race filename determines uniqueness: Humans.r1 and Humans.r2 are separate designs. Suggest the next available numbered race extension when importing or duplicating a design; the number does not assign a game player slot.
 
-On first launch with existing recent-file entries, offer a one-time import choice rather than silently migrating files. Subsequent external game or race opening goes through Import. Imported originals remain untouched.
+Startup opens the library directly, without offering to import recent-file entries or migrating files automatically. Users import through the explicit library actions; opening an external game or race also goes through Import. Imported originals remain untouched. This replaces the original one-time migration offer at the user's request.
 
 Host Games offers Import Orders for the selected game, validating game, player, and turn and warning before replacing different existing orders. Export resolves unsaved work through the existing save behavior and includes saved orders; exporting does not automatically mark a turn submitted.
 

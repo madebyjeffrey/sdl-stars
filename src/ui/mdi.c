@@ -2722,7 +2722,6 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         InitLibraryGames(hwnd, &rc);
         InitLibraryRaces(hwnd, &rc);
-        PostMessage(hwnd, WM_STARS_RECENT_IMPORT, 0, 0);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
         SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
@@ -2733,9 +2732,6 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 4; i++) {
             UpdateWindow(rghwndBtnSplash[i]);
         }
-        break;
-    case WM_STARS_RECENT_IMPORT:
-        OfferRecentGameImport(hwnd);
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:

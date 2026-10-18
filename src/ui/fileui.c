@@ -129,47 +129,6 @@ void AddMRUFile(char *pszFileName, char *pszExt) {
     return;
 }
 
-void OfferRecentGameImport(HWND hwnd) {
-    char szIniFile[32];
-    char szChoice[2];
-    char szPrompt[256];
-    char szMessage[128];
-    const char *pszFile;
-    int16_t i;
-    int16_t fHaveRecent;
-    int16_t fImport;
-
-    CchGetString(idsStarsIni, szIniFile);
-    if (GetPrivateProfileInt("Library", "RecentImportChoice", 0, szIniFile) != 0 || !vrgszMRU) return;
-    fHaveRecent = FALSE;
-    for (i = 0; i < 9; i++) {
-        if (vrgszMRU[256 * i]) {
-            fHaveRecent = TRUE;
-            break;
-        }
-    }
-    if (!fHaveRecent) return;
-    CchGetString(idsLibraryRecentImportPrompt, szPrompt);
-    fImport = MessageBox(hwnd, szPrompt, PszGetCompressedString(idsLibraryGames),
-                         MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES;
-    szChoice[0] = fImport ? '1' : '2';
-    szChoice[1] = 0;
-    if (!WritePrivateProfileString("Library", "RecentImportChoice", szChoice, szIniFile)) {
-        CchGetString(idsLibraryRecentImportChoiceFailed, szMessage);
-        AlertSz(szMessage, MB_ICONHAND);
-        return;
-    }
-    if (!fImport) return;
-    for (i = 0; i < 9; i++) {
-        pszFile = vrgszMRU + 256 * i;
-        if (!pszFile[0] || FIsManagedLibraryGameFile(pszFile)) continue;
-        if (FImportDesktopFile(hwnd, pszFile)) {
-            RefreshLibraryGames(hwnd);
-            RefreshLibraryRaces(hwnd);
-        }
-    }
-}
-
 // CloseGameWindows closes the windows that show the game DestroyCurGame
 // is unloading and resets the tile layout.
 void CloseGameWindows() {

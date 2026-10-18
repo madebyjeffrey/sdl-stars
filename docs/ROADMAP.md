@@ -184,6 +184,11 @@ creation chooses a unique portable name, all generated files stay within that
 managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records.
+Startup shows the library directly, without prompting to import recent files or
+copying them automatically. Existing migration-choice settings are ignored;
+explicit Import and external-file opening retain their managed-copy workflows.
+Startup tests cover fresh, accepted and declined legacy migration preferences
+and require one visible library window with the gameplay frame hidden.
 Managed-library labels, prompts, errors and chooser filters use the generated
 text catalog, including shared Games, Duplicate and Delete labels. Lookup
 callers retain dialog bodies before decoding captions into the shared buffer.
@@ -246,7 +251,7 @@ page cannot represent the settings folder.
 Windows library membership and managed race selection accept both native
 separators and the wrapper picker's forward-slash paths. Orders export,
 library metadata updates and loaded-game export use the same membership rule.
-Recent-file migration validates the selected source before enumerating its
+Explicit recent-file imports validate the selected source before enumerating its
 family, reports missing filenames, and handles relative entries independently.
 Mixed desktop Open and recent-file actions dispatch by the BOF file type to
 the game or race importer; race customization edits only the managed copy.
