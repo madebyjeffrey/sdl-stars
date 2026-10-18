@@ -67,8 +67,10 @@ cmake --build --preset sdl-debug
 xvfb-run -a ctest --test-dir dist/sdl-debug -R win32_dialog --output-on-failure
 ```
 
-The managed-race client test also checks filename-dialog centering after moving
-the library, plus native window visibility after filename/wizard cancellation.
+The managed-race client test checks direct wizard entry, automatic race names,
+identical saves, Update/New Version/Cancel, failed publication and Unicode version
+families. Native visibility checks require one library window after wizard
+cancellation.
 To run just these checks on a macOS desktop:
 
 ```sh

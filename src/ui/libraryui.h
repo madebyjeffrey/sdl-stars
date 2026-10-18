@@ -1,6 +1,10 @@
 #ifndef STARS_LIBRARYUI_H
 #define STARS_LIBRARYUI_H
 
+#define IDD_LIBRARY_RACE_SAVE 2430
+#define IDC_LIBRARY_RACE_UPDATE 2431
+#define IDC_LIBRARY_RACE_VERSION 2432
+#define IDC_LIBRARY_RACE_SAVE_TEXT 2433
 #define IDD_LIBRARY_NAME 2400
 #define IDC_LIBRARY_GAMES 2401
 #define IDC_LIBRARY_IMPORT 2402
@@ -71,6 +75,7 @@ void InitLibraryRaces(HWND hwnd, const RECT *lprc);
 void RefreshLibraryRaces(HWND hwnd);
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
 void ShowLibraryImportFolderPicker(HWND hwnd);
+INT_PTR CALLBACK LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

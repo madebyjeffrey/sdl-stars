@@ -65,10 +65,9 @@ static BOOL FCheckRaceRosterWorkflow(void) {
         iStep++;
         return FChooseRosterAction(hwnd, iStep == 4 ? 0 : 1, 1);
     }
-    if (iStep == 4 || iStep == 6 || iStep == 11) {
+    if (iStep == 4 || iStep == 6) {
         hwnd = HwndRosterDialog(LibraryNameDlg);
         if (!hwnd) return TRUE;
-        if (iStep == 11 && !SetDlgItemText(hwnd, IDC_EDIT1, "Predefined.r1")) return FALSE;
         iStep++;
         return FPushClick(GetDlgItem(hwnd, IDOK));
     }
@@ -118,7 +117,7 @@ static BOOL FCheckRaceRosterWorkflow(void) {
     if (iStep == 10) {
         hwnd = HwndRosterDialog(NewGameDlg2);
         if (!hwnd) return TRUE;
-        iStep = 11;
+        iStep = 12;
         iPage = 0;
         return FChooseRosterAction(hwnd, 0, 2);
     }

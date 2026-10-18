@@ -20,11 +20,13 @@ Users may duplicate games or import a separate copy under a different unique nam
 
 For changed same-year or older turns, offer Cancel, Replace, and Import as Separate Copy. Replacement preserves a backup before changing existing files.
 
-Race Designs offers New, Edit, Duplicate, Import, Export, and Delete. Finishing an edit in the existing race wizard saves to the managed destination; duplicating creates an independent design. Race export produces an ordinary race file, preserving existing password behavior.
+Race Designs offers New, Edit, Duplicate, Import, Export, and Delete. New opens the race creation wizard directly, including when customizing a predefined race from the New Game roster. Finishing uses the wizard's singular race name for a portable library filename; characters that cannot occur in cross-platform filenames are adjusted without changing the in-game name. No separate filename prompt precedes creation.
 
-A race design's library filename may differ from its in-game race names. Race filenames are unique case-insensitively, while multiple designs may share the same in-game names. Numbered race extensions such as .r1, .r2, and .r3 may distinguish designs.
+An unchanged design reuses its existing matching version. For a changed design with an existing name, offer Update Existing, Save New Version, and Cancel. Updating replaces the selected version (or the latest matching version for New); saving a new version preserves earlier designs and uses a number above existing versions of that race and any occupied filenames for the derived stem. Versions are matched using the stored race name, so older or imported entries with unrelated filenames are included. The save choice identifies the existing entry it would update. Cancelling or failing to save leaves previous versions intact. Updating a protected entry requires its existing credentials.
 
-The full race filename determines uniqueness: Humans.r1 and Humans.r2 are separate designs. Suggest the next available numbered race extension when importing or duplicating a design; the number does not assign a game player slot.
+Numbered race extensions such as .r1, .r2, and .r3 identify saved versions, independently of game player slots. Name matching and filename uniqueness are case-insensitive. Different race names that reduce to the same portable stem must not become update targets for one another. Identical means the complete stored design, including names and credentials, rather than a checksum alone.
+
+Existing and imported designs retain their filenames, which may differ from in-game names. Editing an existing entry can update its selected destination even when its race name changes; saving a new version uses the completed wizard name. Explicit duplication remains an independent copy, and imports retain the existing unique-name workflow. Race export produces an ordinary race file, preserving password behavior.
 
 Startup opens the library directly, without offering to import recent-file entries or migrating files automatically. Users import through the explicit library actions; opening an external game or race also goes through Import. Imported originals remain untouched. This replaces the original one-time migration offer at the user's request.
 

@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FBeginLibraryRace` and New Game race customization now open the wizard
+  directly and save under its race name instead of asking for a filename first.
+  `FSaveCurrentLibraryRace` reuses unchanged designs and offers Update Existing,
+  Save New Version or Cancel for changed designs. New versions preserve earlier
+  entries; cancelling or failing a save preserves existing files. Names remain
+  UTF-8 and are adjusted only for portable filenames. Simulation results and all
+  native regression baseline scenarios are unchanged.
+
 - `LibraryNameDlg` now centers the filename/name prompt over its visible owner,
   within the desktop work area, instead of opening at the template's top-left
   origin. This includes New Race and other library naming actions. Tests move

@@ -146,6 +146,7 @@ static BOOL fLibraryGameDeletePrompt;
 static BOOL fLibraryGameDeleteFailureAlert;
 static BOOL fFailLibraryGameDelete;
 static BOOL fFailRaceExportReplace;
+static BOOL fFailRaceVersionSave, fRaceVersionSaveFailed;
 static BOOL fExpectRaceExportFailureAlert;
 static BOOL fFailGameRenamePublish;
 static BOOL fExpectGameRenameFailure;
@@ -1407,6 +1408,10 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     if (fRejectRacePassword) return IDOK;
+    if (getenv("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
+        fRaceVersionSaveFailed = TRUE;
+        return IDOK;
+    }
     if (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
         strstr(sz, "The selected managed game could not be completely deleted.")) {
         fLibraryGameDeleteFailureAlert = TRUE;
@@ -1496,6 +1501,10 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
 int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
     static int fFailImportReplace;
+    if (fFailRaceVersionSave && strstr(pszOld, ".stars-race-stage-")) {
+        fFailRaceVersionSave = FALSE;
+        return -1;
+    }
     if (!fFailImportReplace && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
         fFailImportReplace = TRUE;
         return -1;
@@ -1529,6 +1538,7 @@ int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
     return StarsTestReal_RenameNativeFile(pszOld, pszNew);
 }
 
+#include "win32_raceversion_workflow.h"
 #include "win32_newgame_workflow.h"
 #include "win32_game_export_workflow.h"
 
@@ -2043,13 +2053,23 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         PostQuitMessage(0);
         return;
     }
+    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST") || getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
+        HWND hwndSave = HwndRosterDialog(LibraryRaceSaveDlg);
+        if (hwndSave) {
+            if (!FPushClick(GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
+            return;
+        }
+    }
+    if (getenv("STARS_CLIENT_RACE_VERSION_TEST")) {
+        if (!FCheckRaceVersionWorkflow()) goto LDone;
+        return;
+    }
     if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
         if (!FCheckRaceRosterWorkflow()) goto LDone;
         return;
     }
     if (getenv("STARS_CLIENT_RACE_NAME_CANCEL")) {
         HWND hwndTop;
-        RECT rcOwner, rcDialog;
         BOOL fWizard = !strcmp(getenv("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
@@ -2059,21 +2079,16 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             return;
         }
-        if (iStage == 1 || (fWizard && (iStage == 2 || iStage == 3))) {
+        if (iStage == 1 || (fWizard && iStage == 2)) {
             for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
                 if (!hwndTop->fDialog || !IsWindowVisible(hwndTop) ||
-                    hwndTop->lpfnDlg != (iStage == 1 ? LibraryNameDlg : iStage == 2 ? RaceWizardDlg1 : RaceWizardDlg4)) continue;
-                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
-                if (iStage == 1) {
-                    if (!GetWindowRect(hwndTitle, &rcOwner) || !GetWindowRect(hwndTop, &rcDialog)) goto LDone;
-                    if (abs((rcDialog.left + rcDialog.right) - (rcOwner.left + rcOwner.right)) > 2 ||
-                        abs((rcDialog.top + rcDialog.bottom) - (rcOwner.top + rcOwner.bottom)) > 2) {
-                        fprintf(stderr, "Race filename dialog is not centered over its library owner\n");
-                        goto LDone;
-                    }
+                    hwndTop->lpfnDlg != (iStage == 1 ? RaceWizardDlg1 : RaceWizardDlg4)) {
+                    if (hwndTop->fDialog && hwndTop->lpfnDlg == LibraryNameDlg) goto LDone;
+                    continue;
                 }
-                if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDOK : iStage == 2 ? IDC_NEXT : IDCANCEL))) goto LDone;
-                iStage = fWizard && iStage < 3 ? iStage + 1 : 4;
+                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
+                iStage = fWizard && iStage == 1 ? 2 : 4;
                 return;
             }
             return;
@@ -2185,7 +2200,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 1) {
             for (hwndRace = GetWindow(hwndTitle, GW_HWNDFIRST); hwndRace; hwndRace = GetWindow(hwndRace, GW_HWNDNEXT)) {
                 if (!hwndRace->fDialog) continue;
-                if (!SetWindowTextA(GetDlgItem(hwndRace, IDC_EDIT1), "Managed.r1") || !FPushClick(GetDlgItem(hwndRace, IDOK))) goto LDone;
+                if (hwndRace->lpfnDlg != RaceWizardDlg1 ||
+                    !SetDlgItemText(hwndRace, IDC_RACE_NAME, "Managed") ||
+                    !SetDlgItemText(hwndRace, IDC_RACE_PLURAL_NAME, "Manageds")) goto LDone;
                 iRaceLibraryTestStage = 2;
                 return;
             }
@@ -3018,6 +3035,7 @@ int main(void) {
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_RECENT_STARTUP") && !getenv("STARS_CLIENT_RACE_NAME_CANCEL") &&
+        !getenv("STARS_CLIENT_RACE_VERSION_TEST") &&
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
         !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&

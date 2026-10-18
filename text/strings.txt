@@ -1513,7 +1513,6 @@
 
 # Managed library prompts and labels.
 0x059f idsLibraryDefaultGameName "Game"
-0x05a0 idsLibraryCustomRaceFilename "Custom Race.r1"
 0x05a1 idsLibraryHumanoids "Humanoids"
 0x05a2 idsLibraryRaceOpenFailed "The selected race design could not be opened."
 0x05a3 idsLibraryRaceDuplicateFailed "The selected race design could not be duplicated."
@@ -1571,3 +1570,10 @@
 0x05d7 idsLibraryRaceFilesFilter "Race designs (*.r1;*.r2;*.r3)|*.r1;*.r2;*.r3|All files (*.*)|*.*|"
 0x05d8 idsLibraryZipFilesFilter "ZIP archives (*.zip)|*.zip|All files (*.*)|*.*|"
 0x05d9 idsLibraryTitle "Stars!"
+
+0x05da idsLibraryDefaultRaceName "Race"
+0x05db idsLibraryRaceSaveTitle "Save Race Design"
+0x05dc idsLibraryRaceSavePrompt "Update the saved design \"%s\", or keep it and save a new version?"
+0x05dd idsLibraryRaceUpdate "Update Existing"
+0x05de idsLibraryRaceNewVersion "Save New Version"
+0x05df idsLibraryRaceSaveFailed "The race design could not be saved. The existing designs have been kept."

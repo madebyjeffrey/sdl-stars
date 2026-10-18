@@ -7,7 +7,7 @@ import tempfile
 
 
 def check_cancelled_dialogs(executable):
-    for mode in ("filename", "wizard"):
+    for mode in ("first", "wizard"):
         with tempfile.TemporaryDirectory(prefix="stars-race-cancel-") as directory:
             env = dict(os.environ, STARS_SETTINGS_DIR=directory, STARS_PROFILE_DIR=directory,
                        STARS_CLIENT_RACE_NAME_CANCEL=mode,
@@ -20,6 +20,12 @@ def check_cancelled_dialogs(executable):
 
 def main():
     executable = Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix="stars-race-versions-") as directory:
+        env = dict(os.environ, STARS_SETTINGS_DIR=directory, STARS_PROFILE_DIR=directory,
+                   STARS_CLIENT_RACE_VERSION_TEST="1",
+                   SDL_VIDEODRIVER=os.environ.get("SDL_VIDEODRIVER", "dummy"),
+                   SDL_AUDIODRIVER="dummy", STARS_SDL_RENDERER="software", STARS_FILE_DIALOG_BACKEND="compat")
+        subprocess.run([str(executable)], cwd=directory, env=env, check=True, timeout=45)
     check_cancelled_dialogs(executable)
     if "--dialogs-only" in sys.argv[2:]:
         return

@@ -23,6 +23,7 @@ static int cLibraryGameList;
 static int cLibraryGameListMax;
 static uint32_t idRaceStage;
 static int16_t fRaceLibraryNameDialog;
+static int16_t fNewLibraryRace;
 static uint32_t idLibraryExportStage;
 static uint32_t idLibraryZipStage;
 static int16_t fHostLibraryView;
@@ -50,6 +51,7 @@ typedef struct {
     char szPass[sizeof(szRacePass)];
     char szFile[sizeof(szRaceFile)];
     char szPath[sizeof(szRaceLibraryPath)];
+    int16_t fNew;
 } RACESTATE;
 
 typedef struct {
@@ -60,6 +62,7 @@ typedef struct {
 
 static void SaveRaceState(RACESTATE *prs) {
     prs->plr = vplr;
+    prs->fNew = fNewLibraryRace;
     memcpy(prs->szPass, szRacePass, sizeof(prs->szPass));
     memcpy(prs->szFile, szRaceFile, sizeof(prs->szFile));
     memcpy(prs->szPath, szRaceLibraryPath, sizeof(prs->szPath));
@@ -71,7 +74,10 @@ static void RestoreRaceState(const RACESTATE *prs, int16_t fRestoreRace, int16_t
         memcpy(szRacePass, prs->szPass, sizeof(prs->szPass));
         memcpy(szRaceFile, prs->szFile, sizeof(prs->szFile));
     }
-    if (fRestorePath) memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
+    if (fRestorePath) {
+        memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
+        fNewLibraryRace = prs->fNew;
+    }
 }
 
 static int16_t FindLibraryName(void *lpData, const char *pszFile) {
@@ -571,18 +577,174 @@ int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
     RemoveNativePath(szTempDir);
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     SetSzRaceFile(pszName);
+    fNewLibraryRace = FALSE;
     return TRUE;
 }
 
+/* Compare the complete persisted design, including credentials, rather than
+ * its collision-prone checksum or unused bytes after name terminators. */
+static int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrRight) {
+    PLAYER plrLeft = *pplrLeft, plrRight = *pplrRight;
+    plrLeft.fLearned = plrRight.fLearned = FALSE;
+    return !memcmp(&plrLeft, &plrRight, offsetof(PLAYER, szName)) &&
+           !strcmp(plrLeft.szName, plrRight.szName) && !strcmp(plrLeft.szNames, plrRight.szNames);
+}
+
+static int16_t FReadManagedRace(char *pszPath, PLAYER *pplr) {
+    FILE *pf;
+    HDR hdr;
+    RTBOF bof;
+    RACESTATE rsSav;
+    uint16_t wVersSav = wVersFile;
+    int16_t fSilentSav = fFileErrSilent, fOkay, fDirectory, fLink;
+
+    if (!FNativePathInfo(pszPath, &fDirectory, &fLink) || fDirectory || fLink) return FALSE;
+    pf = PfOpenNativeFile(pszPath, "rb");
+    if (!pf) return FALSE;
+    // Browsing versions must never trigger legacy conversion/password dialogs.
+    fOkay = fread(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(bof) &&
+            fread(&bof, sizeof(bof), 1, pf) == 1 && !memcmp(bof.rgid, "J3J3", 4) &&
+            bof.verMajor == 2 && bof.verMinor == 85 && bof.dt == dtRace;
+    fclose(pf);
+    if (!fOkay) return FALSE;
+    SaveRaceState(&rsSav);
+    fFileErrSilent = TRUE;
+    fOkay = FWasRaceFile(pszPath, FALSE) > 0;
+    if (fOkay) *pplr = vplr;
+    RestoreRaceState(&rsSav, TRUE, TRUE);
+    fFileErrSilent = fSilentSav;
+    wVersFile = wVersSav;
+    return fOkay;
+}
+
+typedef struct {
+    char szStem[240];
+    char szLatest[256];
+    char szSame[256];
+    const PLAYER *pplr;
+    int iMax, iLatest, iSame;
+} RACEVERSIONS;
+
+static void GetRaceLibraryStem(const char *pszName, char *pszStem) {
+    size_t i, cch;
+    char szTest[256];
+
+    CchSnprintf(pszStem, 240, "%s", pszName);
+    for (i = 0; pszStem[i]; i++)
+        if ((unsigned char)pszStem[i] < 32 || pszStem[i] == 127 || strchr("<>:\"/\\|?*", pszStem[i])) pszStem[i] = '_';
+    cch = strlen(pszStem);
+    while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
+    while (pszStem[0] == ' ' || pszStem[0] == '.') memmove(pszStem, pszStem + 1, strlen(pszStem));
+    if (!pszStem[0]) CchSnprintf(pszStem, 240, "%s", PszGetCompressedString(idsLibraryDefaultRaceName));
+    CchSnprintf(szTest, sizeof(szTest), "%s.r1", pszStem);
+    if (!FPortableRaceFilename(szTest)) {
+        // Prefix reserved device names without altering the in-game race name.
+        memmove(pszStem + 1, pszStem, strlen(pszStem) + 1);
+        pszStem[0] = '_';
+    }
+}
+
+static int16_t FindRaceVersion(void *lpData, const char *pszName) {
+    RACEVERSIONS *prv = lpData;
+    const char *pch = strrchr(pszName, '.');
+    char szPath[512];
+    PLAYER plr;
+    int iVersion;
+    size_t cch = strlen(prv->szStem);
+
+    if (!pch || !FPortableRaceFilename(pszName)) return TRUE;
+    iVersion = atoi(pch + 2);
+    if ((size_t)(pch - pszName) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
+        prv->iMax = max(prv->iMax, iVersion);
+    CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    if (!FReadManagedRace(szPath, &plr)) return TRUE;
+    // Versions follow the stored race name, including older/imported filenames.
+    // Distinct names can sanitize to the same stem without sharing a design.
+    if (SDL_strcasecmp(plr.szName, prv->pplr->szName)) return TRUE;
+    prv->iMax = max(prv->iMax, iVersion);
+    if (iVersion > prv->iLatest || (iVersion == prv->iLatest && SDL_strcasecmp(pszName, prv->szLatest) < 0)) {
+        prv->iLatest = iVersion;
+        strcpy(prv->szLatest, pszName);
+    }
+    if (iVersion > prv->iSame && FSameLibraryRace(prv->pplr, &plr)) {
+        prv->iSame = iVersion;
+        strcpy(prv->szSame, pszName);
+    }
+    return TRUE;
+}
+
+INT_PTR CALLBACK LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    char szMessage[512];
+    POINT16 pt = {-1, -1};
+    switch (message) {
+    case WM_INITDIALOG:
+        SetWindowText(hwnd, PszGetCompressedString(idsLibraryRaceSaveTitle));
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryRaceSavePrompt), (const char *)lParam);
+        SetDlgItemText(hwnd, IDC_LIBRARY_RACE_SAVE_TEXT, szMessage);
+        SetDlgItemText(hwnd, IDC_LIBRARY_RACE_UPDATE, PszGetCompressedString(idsLibraryRaceUpdate));
+        SetDlgItemText(hwnd, IDC_LIBRARY_RACE_VERSION, PszGetCompressedString(idsLibraryRaceNewVersion));
+        SetDlgItemText(hwnd, IDCANCEL, PszGetCompressedString(idsCancel));
+        StickyDlgPos(hwnd, &pt, TRUE);
+        return TRUE;
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDCANCEL) { EndDialog(hwnd, 0); return TRUE; }
+        if (LOWORD(wParam) == IDC_LIBRARY_RACE_UPDATE) { EndDialog(hwnd, 1); return TRUE; }
+        if (LOWORD(wParam) == IDC_LIBRARY_RACE_VERSION) { EndDialog(hwnd, 2); return TRUE; }
+        break;
+    }
+    return FALSE;
+}
+
 int16_t FSaveCurrentLibraryRace(HWND hwnd, PLAYER *pplr) {
-    const char *pszName;
-    if (!szRaceLibraryPath[0]) return FALSE;
-    pszName = strrchr(szRaceLibraryPath, chDirSep);
-    return FSaveLibraryRace(hwnd, pszName ? pszName + 1 : szRaceLibraryPath, pplr);
+    RACEVERSIONS rv = {0};
+    RACESTATE rsSav;
+    PLAYER plr;
+    char szName[256], szPath[512];
+    const char *pszExisting;
+    int iChoice;
+
+    if (!FHasCurrentLibraryRace() || !FInitRaceLibrary()) return FALSE;
+    rv.pplr = pplr;
+    GetRaceLibraryStem(pplr->szName, rv.szStem);
+    if (!FNativeEnumerateDirectory(szRaceLibraryRoot, FindRaceVersion, &rv)) return FALSE;
+    pszExisting = !fNewLibraryRace && szRaceLibraryPath[0] ? PszCurrentLibraryRaceName() : rv.szLatest;
+    if (pszExisting[0]) {
+        CchSnprintf(szName, sizeof(szName), "%s", pszExisting);
+        CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+        if (!FReadManagedRace(szPath, &plr)) goto LFail;
+        if (FSameLibraryRace(pplr, &plr)) goto LReuse;
+    }
+    if (rv.szSame[0]) {
+        strcpy(szName, rv.szSame);
+        goto LReuse;
+    }
+    iChoice = pszExisting[0] ? (int)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
+                                                 LibraryRaceSaveDlg, (LPARAM)szName) : 2;
+    if (iChoice != 1 && iChoice != 2) return FALSE;
+    if (iChoice == 2) {
+        if (rv.iMax >= 999) goto LFail;
+        CchSnprintf(szName, sizeof(szName), "%s.r%d", rv.szStem, rv.iMax + 1);
+        if (!FPortableRaceFilename(szName) || !FRaceLibraryNameAvailable(szName)) goto LFail;
+    } else if (fNewLibraryRace && plr.lSalt != 0) {
+        // Updating a protected entry also requires its existing credentials.
+        SaveRaceState(&rsSav);
+        iChoice = FLoadLibraryRace(hwnd, szName);
+        RestoreRaceState(&rsSav, TRUE, TRUE);
+        if (!iChoice) return FALSE;
+    }
+    return FSaveLibraryRace(hwnd, szName, pplr);
+LReuse:
+    CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    SetSzRaceFile(szName);
+    fNewLibraryRace = FALSE;
+    return TRUE;
+LFail:
+    if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceSaveFailed), MB_ICONHAND);
+    return FALSE;
 }
 
 int16_t FHasCurrentLibraryRace(void) {
-    return szRaceLibraryPath[0] != 0;
+    return fNewLibraryRace || szRaceLibraryPath[0] != 0;
 }
 
 int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
@@ -600,6 +762,7 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     }
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     SetSzRaceFile(pszName);
+    fNewLibraryRace = FALSE;
     return TRUE;
 }
 
@@ -619,9 +782,14 @@ int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName) {
     if (pszName[0]) {
         if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-    } else if (!FChooseLibraryRaceName(hwnd, PszGetCompressedString(idsLibraryCustomRaceFilename), szPath, sizeof(szPath))) return FALSE;
-    CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
-    SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
+        CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
+        SetSzRaceFile(pszName);
+        fNewLibraryRace = FALSE;
+    } else {
+        if (!FInitRaceLibrary()) return FALSE;
+        szRaceLibraryPath[0] = 0;
+        fNewLibraryRace = TRUE;
+    }
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
     if (fResult) CchSnprintf(pszName, 256, "%s", PszCurrentLibraryRaceName());
     RestoreRaceState(&rsSav, !fResult, TRUE);
@@ -629,17 +797,17 @@ int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName) {
 }
 
 int16_t FBeginLibraryRace(HWND hwnd) {
-    char szPath[512];
     RACESTATE rsSav;
     int16_t fResult;
     SaveRaceState(&rsSav);
-    if (!FChooseLibraryRaceName(hwnd, PszGetCompressedString(idsLibraryCustomRaceFilename), szPath, sizeof(szPath))) return FALSE;
-    CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
+    if (!FInitRaceLibrary()) return FALSE;
+    szRaceLibraryPath[0] = 0;
+    fNewLibraryRace = TRUE;
     vplr = vrgplrDef[0];
     strcpy(vplr.szName, PszGetCompressedString(idsHumanoid));
     strcpy(vplr.szNames, PszGetCompressedString(idsLibraryHumanoids));
     szRacePass[0] = 0;
-    SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
+    SetSzRaceFile("");
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
     if (!fResult) {
         RestoreRaceState(&rsSav, TRUE, TRUE);

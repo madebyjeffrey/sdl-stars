@@ -13,6 +13,9 @@ A game kept in its own library folder under a unique name valid as a filename ac
 **Race design**:
 A reusable race definition used when creating a game, distinct from a player's turn in an existing game.
 
+**Race version**:
+A saved revision of a race design. Saving a new version retains earlier revisions; updating replaces the selected revision.
+
 **Race library**:
 The collection of race designs managed by Stars! for the current user, separate from the game library.
 
