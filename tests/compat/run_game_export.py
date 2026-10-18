@@ -23,11 +23,16 @@ def main():
         source.mkdir()
         for ext in ('.xy', '.hst', '.m1', '.m2'):
             shutil.copyfile(fixture / ('game' + ext), source / ('exchange' + ext))
+        backup_names = ('backup', 'backup0', 'backup9', 'backup10', 'backup98', 'backup.000', 'backup.998')
+        for name in backup_names:
+            backup = source / name
+            backup.mkdir()
+            shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
         backup = source / 'backup.000'
-        backup.mkdir()
-        shutil.copyfile(source / 'exchange.m1', backup / 'exchange.m1')
         run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='managed-copy')
         managed = work / 'library/Games/managed-copy'
+        for name in backup_names:
+            assert (managed / name / 'managed-copy.m1').read_bytes() == (source / name / 'exchange.m1').read_bytes()
 
         # Click Export Game and deliver the chosen folder through its SDL
         # callback; the real window message performs the copy.

@@ -1161,6 +1161,19 @@ static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
     return TRUE;
 }
 
+static int16_t FBackupDirectoryName(const char *pszName) {
+    size_t cch = strlen(pszName);
+    size_t i;
+
+    if (strncmp(pszName, "backup", 6)) return FALSE;
+    if (cch == 6) return TRUE;
+    if (cch == 7 || cch == 8) i = 6;
+    else if (cch == 10 && pszName[6] == '.') i = 7;
+    else return FALSE;
+    for (; i < cch; i++) if (pszName[i] < '0' || pszName[i] > '9') return FALSE;
+    return TRUE;
+}
+
 static int16_t CopyImportEntry(void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = lpData;
     char szSource[512], szTarget[512];
@@ -1175,7 +1188,7 @@ static int16_t CopyImportEntry(void *lpData, const char *pszName) {
         size_t cch = strlen(pli->pszStem);
         if (!SDL_strncasecmp(pszName, pli->pszStem, cch) && pszName[cch] == '.' &&
             (SDL_tolower(pszName[cch + 1]) == 'm' || SDL_tolower(pszName[cch + 1]) == 'h' || SDL_tolower(pszName[cch + 1]) == 'x')) pli->fBad = TRUE;
-        if (!strncmp(pszName, "backup.", 7) && strlen(pszName) == 10) pli->fBackup = TRUE;
+        if (FBackupDirectoryName(pszName)) pli->fBackup = TRUE;
         return TRUE;
     }
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", pli->pszSource, szDirSep, pszName);
@@ -1242,10 +1255,7 @@ static int16_t CopyBackupDirectory(void *lpData, const char *pszName) {
     LIBRARYIMPORT *pli = lpData;
     LIBRARYBACKUP lb;
     char szSource[512], szTarget[512];
-    size_t cch = strlen(pszName);
-    if (strncmp(pszName, "backup.", 7) || cch != 10 ||
-        pszName[7] < '0' || pszName[7] > '9' || pszName[8] < '0' || pszName[8] > '9' ||
-        pszName[9] < '0' || pszName[9] > '9') return TRUE;
+    if (!FBackupDirectoryName(pszName)) return TRUE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", pli->pszSource, szDirSep, pszName);
     if (!FNativeDirectoryExists(szSource)) return TRUE;
     CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", pli->pszTarget, szDirSep, pszName);

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CopyBackupDirectory` now preserves `backup` and `backup0`–`backup98` as well
+  as `backup.NNN` during folder and ZIP imports and exports. Previously transfers
+  silently omitted the engine's default and short-numbered backup folders.
+  Simulation results and all native regression baseline scenarios are unchanged.
+
 - `FCanLeaveCurrentGame` now retains the active player, pending edits and prior
   submission state when saving orders or history fails. Previously Return to
   Library unloaded the game after a failed Save or Save & Submit. Simulation

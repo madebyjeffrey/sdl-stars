@@ -188,6 +188,9 @@ Game ZIP transfers stage complete families through the shared importer and
 exporter, reject malformed or escaping archives, and preserve saved orders and
 backups. ZIP export resolves pending orders through the same prompt as folders. The suspended
 second startup implementation has been removed, so SDL is the sole entry point.
+Folder and ZIP transfers preserve all backup names produced by `CreateBackupDir`:
+`backup`, short-numbered `backupN` and three-digit `backup.NNN`. Round-trip
+coverage checks each naming variant through import and both export destinations.
 Host Games now has a separate library view, accepts host-only universe/host
 imports, and imports ordinary player orders after matching game identity, turn
 and generation, including checking that the submitted player exists in the
