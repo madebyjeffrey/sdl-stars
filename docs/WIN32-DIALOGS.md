@@ -19,6 +19,10 @@ parameter and proposed focus control, and honors the callback's focus return.
 `DWLP_USER`, `DWLP_DLGPROC` and `DWLP_MSGRESULT` use native pointer widths.
 Modeless dialogs have independent lifetimes and use `DestroyWindow`.
 
+Ordinary native owned windows detach before destruction: Cocoa otherwise can
+expose an unrelated hidden gameplay frame when a library dialog closes. Native
+popup/tooltip windows retain their required parent through destruction.
+
 Modal dialogs disable their root owner, pump the existing message queue and
 restore owner/focus state on exit, including native activation once the owner
 is re-enabled. Hidden/disabled owners and pending application quit do not

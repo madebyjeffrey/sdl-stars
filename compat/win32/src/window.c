@@ -19,6 +19,15 @@ static SDL_Renderer *lpSequenceRenderer;
 static BOOL fSequenceOwnerEnabled;
 static HWND hwndSequenceFocus;
 
+static void DestroyNativeWindow(SDL_Window *lpWindow) {
+    // Cocoa can expose hidden application windows when an attached dialog is
+    // destroyed. HWND teardown already handles owned windows and focus.
+    if (lpWindow && SDL_GetWindowParent(lpWindow) &&
+        !(SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)))
+        SDL_SetWindowParent(lpWindow, NULL);
+    SDL_DestroyWindow(lpWindow);
+}
+
 static char *PszNativeTitle(LPCSTR pszTitle) {
     return FUtf8Valid(pszTitle, strlen(pszTitle)) ? SDL_strdup(pszTitle) : NULL;
 }
@@ -96,7 +105,7 @@ void StarsCompatEndDialogSequence(void) {
 
     if (!SDL_IsMainThread()) return;
     SDL_DestroyRenderer(lpSequenceRenderer);
-    SDL_DestroyWindow(lpSequenceWindow);
+    DestroyNativeWindow(lpSequenceWindow);
     lpSequenceRenderer = NULL;
     lpSequenceWindow = NULL;
     hwndSequenceOwner = NULL;
@@ -320,7 +329,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     lpwin->pszEditUndo = NULL;
     if (lpwin->lpWindow) {
         SDL_StopTextInput(lpwin->lpWindow);
-        SDL_DestroyWindow(lpwin->lpWindow);
+        DestroyNativeWindow(lpwin->lpWindow);
     }
     lpwin->lpWindow = NULL;
     free(lpwin->rgbExtra);
@@ -455,7 +464,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             if (lpSequenceWindow && lpwin->hwndOwner == hwndSequenceOwner &&
                 (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770")) {
                 SDL_DestroyRenderer(lpSequenceRenderer);
-                SDL_DestroyWindow(lpSequenceWindow);
+                DestroyNativeWindow(lpSequenceWindow);
                 lpSequenceRenderer = NULL;
                 lpSequenceWindow = NULL;
             }
@@ -501,7 +510,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
              !SDL_SetWindowParent(lpwin->lpWindow, lpwin->hwndOwner->lpWindow))) {
             SDL_DestroyRenderer(lpwin->lpRenderer);
-            SDL_DestroyWindow(lpwin->lpWindow);
+            DestroyNativeWindow(lpwin->lpWindow);
             SDL_free(lpwin->pszTitle);
             free(lpwin->rgbExtra);
             free(lpwin);

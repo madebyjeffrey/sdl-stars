@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DestroyNativeWindow` now detaches ordinary native owned windows before
+  destroying them. On macOS, cancelling the library race filename dialog could
+  expose the hidden, empty gameplay frame despite its HWND remaining hidden.
+  Native cancellation checks cover both the filename dialog and race wizard.
+  Simulation results and all native regression baselines are unchanged.
+
 - `TitleWndProc` now opens the library directly without the automatic recent-file
   import offer. Import remains an explicit library action or the result of opening
   an external file. Startup tests require a single visible library window, retain

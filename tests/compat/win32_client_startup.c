@@ -2047,6 +2047,46 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!FCheckRaceRosterWorkflow()) goto LDone;
         return;
     }
+    if (getenv("STARS_CLIENT_RACE_NAME_CANCEL")) {
+        HWND hwndTop;
+        BOOL fWizard = !strcmp(getenv("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
+        if (iStage == 0) {
+            if (!IsWindowVisible(hwndTitle)) return;
+            fTitlePainted = fChecked = TRUE;
+            iStage = 1;
+            if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
+            return;
+        }
+        if (iStage == 1 || (fWizard && (iStage == 2 || iStage == 3))) {
+            for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
+                if (!hwndTop->fDialog || !IsWindowVisible(hwndTop) ||
+                    hwndTop->lpfnDlg != (iStage == 1 ? LibraryNameDlg : iStage == 2 ? RaceWizardDlg1 : RaceWizardDlg4)) continue;
+                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDOK : iStage == 2 ? IDC_NEXT : IDCANCEL))) goto LDone;
+                iStage = fWizard && iStage < 3 ? iStage + 1 : 4;
+                return;
+            }
+            return;
+        }
+        if (!IsWindowEnabled(hwndTitle)) return;
+        // Let queued native activation/show events settle after the modal closes.
+        if (iStage++ < 6) return;
+        for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
+            if (!hwndTop->lpWindow || (SDL_GetWindowFlags(hwndTop->lpWindow) & SDL_WINDOW_HIDDEN)) continue;
+            if (hwndTop != hwndTitle) {
+                fprintf(stderr, "Cancelling the race dialog exposed another native window (frame %d, visible %d)\n",
+                        hwndTop == hwndFrame, IsWindowVisible(hwndTop));
+                goto LDone;
+            }
+        }
+        if (IsWindowVisible(hwndFrame) || !IsWindowVisible(hwndTitle) ||
+            (SDL_GetWindowFlags(hwndTitle->lpWindow) & SDL_WINDOW_HIDDEN) ||
+            game.lid != 0 || idPlayer != iplrNone) goto LDone;
+        fPassed = TRUE;
+        puts("Race dialog cancels back to the single library window");
+        PostQuitMessage(0);
+        return;
+    }
     if (getenv("STARS_CLIENT_RECENT_STARTUP")) {
         HWND hwndTop;
         int cVisible = 0;
@@ -2967,7 +3007,8 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_RECENT_STARTUP") && !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
+        !getenv("STARS_CLIENT_RECENT_STARTUP") && !getenv("STARS_CLIENT_RACE_NAME_CANCEL") &&
+        !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
         !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
         !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
