@@ -16,6 +16,11 @@ produce different results from a 2.6j host for the same turn.
   This removes compiler warnings while retaining the compiled tutorial table
   bytes, game behavior and native regression baselines.
 
+- UI-only `TILE` records now align their callback pointers and array strides
+  natively. Previously their byte packing caused macOS linker warnings and
+  required disabling chained fixups. That workaround is removed; saved record
+  layouts, game behavior and native regression baselines are unchanged.
+
 - `FBeginLibraryRace` and New Game race customization now open the wizard
   directly and save under its race name instead of asking for a filename first.
   `FSaveCurrentLibraryRace` reuses unchanged designs and offers Update Existing,

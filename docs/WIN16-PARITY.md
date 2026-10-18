@@ -50,6 +50,14 @@ storage harmlessly. They don't change game behavior and should stay.
   DS:0. Native tests the pointer, which also always stores the count.
   **Revert to:** nothing; a NULL dereference crashes natively.
 
+## Native UI alignment (keep)
+
+- **Tile callbacks** (`structs.h` `_tile`, marked `NATIVE`): Win16 placed
+  drawing callbacks at byte offset 6 in byte-packed tiles. Native `TILE`
+  records use native callback-pointer alignment and array strides; they are
+  UI-only and never serialized. `globalsui.c` checks their alignment at compile
+  time. macOS can use chained fixups without unaligned-pointer warnings.
+
 ## Native record and message boundaries (keep)
 
 - **Malformed player-message records** (`msg.c` LpmsgplrFromRt, used by

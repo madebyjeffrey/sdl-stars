@@ -49,7 +49,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   PART, PLANET, FLEET, BTN, BTNT, DRAWCIR, RPT, SBAR, SEL, TILE, WN, INI,
   XFER, TUTOR). FLEET and PLANET records pack their fields explicitly, partial
   copies stop before the pointers, and other records keep their Win16 sizes.
-  Native pointer or handle sizes never reach a save file.
+  Native pointer or handle sizes never reach a save file. UI-only `TILE` records
+  use native callback alignment and array strides; no record I/O uses this type.
 - **Storage widths:** see
   [RECONSTRUCTION.md](RECONSTRUCTION.md#storage-widths-and-boolean-conventions).
   Don't widen `int16_t` to `BOOL`/`int` where storage, addresses or file I/O
@@ -88,9 +89,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md).
   The SDL wrapper uses the C library's null and integer-limit definitions.
   Its remaining `FARPROC` instances are dialog callbacks and use the explicit
-  `DLGPROC` signature. macOS SDL links disable chained fixups because the
-  original packed UI tables contain unaligned function pointers; their layouts
-  remain unchanged. Apple's linker still warns about those pointers.
+  `DLGPROC` signature. UI-only `TILE` tables now use native callback-pointer
+  alignment instead of the surrounding byte packing. A compile-time check guards pointer placement and
+  alignment; macOS uses normal chained fixups without a linker workaround or
+  pointer-alignment warnings. Persisted structures keep their layouts.
   Startup prepares the main frame's initial show command while it stays hidden,
   so native window animations cannot expose it before the title screen.
   New-game setup treats aborted modal dialogs as cancellation, and the wrapper
