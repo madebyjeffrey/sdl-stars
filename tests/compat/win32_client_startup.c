@@ -2049,10 +2049,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     }
     if (getenv("STARS_CLIENT_RACE_NAME_CANCEL")) {
         HWND hwndTop;
+        RECT rcOwner, rcDialog;
         BOOL fWizard = !strcmp(getenv("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
             fTitlePainted = fChecked = TRUE;
+            if (!SetWindowPos(hwndTitle, NULL, 55, 95, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)) goto LDone;
             iStage = 1;
             if (!FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW))) goto LDone;
             return;
@@ -2062,6 +2064,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 if (!hwndTop->fDialog || !IsWindowVisible(hwndTop) ||
                     hwndTop->lpfnDlg != (iStage == 1 ? LibraryNameDlg : iStage == 2 ? RaceWizardDlg1 : RaceWizardDlg4)) continue;
                 if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (iStage == 1) {
+                    if (!GetWindowRect(hwndTitle, &rcOwner) || !GetWindowRect(hwndTop, &rcDialog)) goto LDone;
+                    if (abs((rcDialog.left + rcDialog.right) - (rcOwner.left + rcOwner.right)) > 2 ||
+                        abs((rcDialog.top + rcDialog.bottom) - (rcOwner.top + rcOwner.bottom)) > 2) {
+                        fprintf(stderr, "Race filename dialog is not centered over its library owner\n");
+                        goto LDone;
+                    }
+                }
                 if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDOK : iStage == 2 ? IDC_NEXT : IDCANCEL))) goto LDone;
                 iStage = fWizard && iStage < 3 ? iStage + 1 : 4;
                 return;

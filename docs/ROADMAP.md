@@ -275,7 +275,9 @@ The title screen now provides the separate Race Designs library: New and Edit
 save through the race wizard, and Import preserves valid race files in a
 uniquely named `.rN` entry. Startup integration covers create, reload, edit-save,
 cancelled edit, import, duplicate and export/reload. Filename and wizard
-cancellation also check actual native visibility after modal teardown; native
+cancellation also check actual native visibility after modal teardown. Library
+name prompts center over their visible owner and stay inside the work area;
+placement checks move the library before opening New Race. Native
 owned windows detach before destruction so Cocoa leaves the hidden game frame
 hidden. The native file-workflow harness keeps its timer active through race-import naming
 and runs with a portable chooser on each SDL platform as well as the Linux

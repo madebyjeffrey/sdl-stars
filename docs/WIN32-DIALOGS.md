@@ -67,6 +67,15 @@ cmake --build --preset sdl-debug
 xvfb-run -a ctest --test-dir dist/sdl-debug -R win32_dialog --output-on-failure
 ```
 
+The managed-race client test also checks filename-dialog centering after moving
+the library, plus native window visibility after filename/wizard cancellation.
+To run just these checks on a macOS desktop:
+
+```sh
+SDL_VIDEODRIVER=cocoa python3 tests/compat/run_racelibrary.py \
+  dist/macos-sdl-debug/bin/stars-compat-client-startup --dialogs-only
+```
+
 Shared SDK/native tests cover independent modeless state, font-based geometry,
 initialization focus, tab routing, destruction notification order, immediate
 and posted modal completion, nesting and owner restoration. Native tests also

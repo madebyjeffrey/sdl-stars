@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `LibraryNameDlg` now centers the filename/name prompt over its visible owner,
+  within the desktop work area, instead of opening at the template's top-left
+  origin. This includes New Race and other library naming actions. Tests move
+  the library before opening New Race to check owner-relative placement.
+  Simulation results and all native regression baselines are unchanged.
+
 - `DestroyNativeWindow` now detaches ordinary native owned windows before
   destroying them. On macOS, cancelling the library race filename dialog could
   expose the hidden, empty gameplay frame despite its HWND remaining hidden.

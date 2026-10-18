@@ -286,9 +286,20 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     char *pszName;
     char szName[256], szMessage[256];
     StringId ids;
+    RECT rc, rcOwner, rcWork;
+    int x, y;
 
     switch (message) {
     case WM_INITDIALOG:
+        if (!SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0))
+            SetRect(&rcWork, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+        if (!IsWindowVisible(GetParent(hwnd)) || !GetWindowRect(GetParent(hwnd), &rcOwner)) rcOwner = rcWork;
+        GetWindowRect(hwnd, &rc);
+        x = rcOwner.left + ((rcOwner.right - rcOwner.left) - (rc.right - rc.left)) / 2;
+        y = rcOwner.top + ((rcOwner.bottom - rcOwner.top) - (rc.bottom - rc.top)) / 2;
+        x = max(rcWork.left, min(x, rcWork.right - (rc.right - rc.left)));
+        y = max(rcWork.top, min(y, rcWork.bottom - (rc.bottom - rc.top)));
+        SetWindowPos(hwnd, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 255, 0);
         SetDlgItemText(hwnd, IDC_EDIT1, (char *)lParam);
