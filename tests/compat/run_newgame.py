@@ -90,9 +90,31 @@ def check_first_player_turn(executable):
                 STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
 
 
+def check_failed_switch_save(executable):
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    for choice in ('save', 'submit'):
+        for failure in ('orders', 'history'):
+            with tempfile.TemporaryDirectory(prefix='stars-failed-switch-save-') as directory:
+                work = Path(directory)
+                source = work / 'exchange'
+                source.mkdir()
+                for extension in ('.xy', '.hst', '.m1', '.m2'):
+                    shutil.copyfile(fixture / ('game' + extension), source / ('exchange' + extension))
+                run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source),
+                    STARS_CLIENT_IMPORT_NAME='save-failure')
+                run(executable, work, STARS_CLIENT_LIBRARY_OPEN='save-failure',
+                    STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2',
+                    STARS_CLIENT_EXPECT_SWITCHED_PLAYER='1', STARS_CLIENT_SWITCH_CHOICE=choice,
+                    STARS_CLIENT_SWITCH_FAIL_SAVE=failure)
+                managed = work / 'library/Games/save-failure'
+                assert (managed / 'save-failure.x2').is_file()
+                assert (managed / 'save-failure.h2').is_file()
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
     check_first_player_turn(executable)
+    check_failed_switch_save(executable)
     for advanced, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:

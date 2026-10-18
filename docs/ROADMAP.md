@@ -176,6 +176,9 @@ Continue Game resumes the latest managed session, identifies its player and
 year, and selects that same game when its remembered player is unavailable.
 Tests use managed fixtures with relative and absolute recent-file paths, and
 exercise player switching with Save, Don’t Save, Save & Submit and cancellation.
+Failed orders or history saves now keep the dirty player session loaded and
+retain its prior submission state; the real-client workflow retries both Save
+and Save & Submit after removing each filesystem obstacle.
 Managed game creation and reopening (#5) now share `libraryui.c`: desktop
 creation chooses a unique portable name, all generated files stay within that
 managed folder, and the startup Games list reopens committed entries after

@@ -1435,7 +1435,7 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
             PostQuitMessage(92);
         return IDOK;
     }
-    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
+    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
     if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
         fPassed = TRUE;
@@ -2685,9 +2685,28 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (getenv("STARS_CLIENT_SWITCH_CHOICE")) {
             const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
+            const char *pszFailure = getenv("STARS_CLIENT_SWITCH_FAIL_SAVE");
             int fSave = !strcmp(pszChoice, "save") || !strcmp(pszChoice, "submit");
             int fSubmit = !strcmp(pszChoice, "submit");
             if (iStage != 21) {
+                char szBlocked[256];
+                int16_t idPlayerBefore = idPlayer;
+                int16_t iResearch = (rgplr[idPlayer].iTechNow + 1) % 6;
+                PLANET *lpPlanetsBefore = lpPlanets;
+                if (pszFailure) {
+                    if (!FRunWorkflow(1, iResearch)) goto LDone;
+                    SetSzWorkFromDt(!strcmp(pszFailure, "orders") ? dtLog : dtHist, idPlayer);
+                    strcpy(szBlocked, szWork);
+                    if (!SDL_CreateDirectory(szBlocked)) goto LDone;
+                    game.fDirty = TRUE;
+                    gd.fSubmit = FALSE;
+                    SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
+                    if (IsWindow(hwndTitle) || lpPlanets != lpPlanetsBefore || idPlayer != idPlayerBefore ||
+                        !game.fDirty || gd.fSubmit || rgplr[idPlayer].iTechNow != iResearch || cAlerts != 2)
+                        goto LDone;
+                    if (RemoveNativePath(szBlocked) != 0) goto LDone;
+                    puts("Failed save preserves the active player and pending research; retrying the save");
+                }
                 cSwitchLogWrites = 0;
                 cSwitchHistoryWrites = 0;
                 game.fDirty = TRUE;
@@ -2979,7 +2998,7 @@ int main(void) {
                        (getenv("STARS_CLIENT_RECENT_MIGRATION_EXPECT_NO_PROMPT") ? 0 :
                         strcmp(getenv("STARS_CLIENT_RECENT_MIGRATION"), "accept") == 0 ?
                         (getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED") ? atoi(getenv("STARS_CLIENT_RECENT_MISSING_EXPECTED")) : 1) : 0) :
-                       getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+                       getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE") ? 2 :
                        getenv("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
                        getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&

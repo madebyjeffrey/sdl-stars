@@ -43,6 +43,7 @@ void PromptSaveGame() {
 int16_t FCanLeaveCurrentGame(void) {
     FARPROC lpProc;
     int16_t fRet;
+    int16_t fSubmitSav;
 
     if (idPlayer == iplrNone || !game.fDirty) return TRUE;
     lpProc = MakeProcInstance(AskSaveDialog, hInst);
@@ -51,9 +52,14 @@ int16_t FCanLeaveCurrentGame(void) {
     FreeProcInstance(lpProc);
     if (fRet == 0 || fRet == -2) return FALSE;
     if (fRet == 1 || fRet == -1) {
+        fSubmitSav = gd.fSubmit;
         gd.fSubmit = fRet == -1;
-        FWriteLogFile(szBase, idPlayer);
-        FWriteHistFile(idPlayer);
+        if (!FWriteLogFile(szBase, idPlayer) || !FWriteHistFile(idPlayer)) {
+            gd.fSubmit = fSubmitSav;
+            /* The orders writer clears dirty before the history save. */
+            DirtyGame(TRUE);
+            return FALSE;
+        }
     }
     game.fDirty = FALSE;
     return TRUE;

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FCanLeaveCurrentGame` now retains the active player, pending edits and prior
+  submission state when saving orders or history fails. Previously Return to
+  Library unloaded the game after a failed Save or Save & Submit. Simulation
+  results and all native regression baseline scenarios remain unchanged.
+
 - `FImportSubsequentTurn` now installs a player’s first standalone turn using
   the matching managed universe, including host-only games. Previously it
   required an existing turn for that player. It validates the player slot,
