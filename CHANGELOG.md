@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Managed-library labels, prompts, errors and file-filter text now come from
+  `text/strings.txt` instead of literals in `libraryui.c`. Wording, existing
+  text IDs, file formats and native regression baselines remain unchanged.
+
 - `FindImportUniverse` now accepts uppercase and mixed-case `.XY` extensions
   during folder and ZIP imports. Previously these complete game families were
   rejected even though selecting their player turn file worked. Source files,

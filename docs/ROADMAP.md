@@ -184,6 +184,9 @@ creation chooses a unique portable name, all generated files stay within that
 managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records.
+Managed-library labels, prompts, errors and chooser filters use the generated
+text catalog, including shared Games, Duplicate and Delete labels. Lookup
+callers retain dialog bodies before decoding captions into the shared buffer.
 Game ZIP transfers stage complete families through the shared importer and
 exporter, reject malformed or escaping archives, and preserve saved orders and
 backups. ZIP export resolves pending orders through the same prompt as folders. The suspended

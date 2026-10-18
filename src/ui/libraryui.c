@@ -337,7 +337,7 @@ int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile) {
     CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pch ? pch + 1 : pszFile);
     pch = strrchr(szLibraryName, '.');
     if (pch) *pch = 0;
-    if (!FPortableLibraryName(szLibraryName)) strcpy(szLibraryName, "Game");
+    if (!FPortableLibraryName(szLibraryName)) strcpy(szLibraryName, PszGetCompressedString(idsLibraryDefaultGameName));
     SuggestLibraryName(szLibraryName);
     if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     CchSnprintf(szLibraryPending, sizeof(szLibraryPending), "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
@@ -584,7 +584,7 @@ int16_t FLoadLibraryRace(HWND hwnd, const char *pszName) {
     fResult = FWasRaceFile(szPath, TRUE);
     if (fResult <= 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The selected race design could not be opened.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceOpenFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
@@ -608,7 +608,7 @@ int16_t FCustomizeLibraryRace(HWND hwnd, char *pszName) {
     if (pszName[0]) {
         if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-    } else if (!FChooseLibraryRaceName(hwnd, "Custom Race.r1", szPath, sizeof(szPath))) return FALSE;
+    } else if (!FChooseLibraryRaceName(hwnd, PszGetCompressedString(idsLibraryCustomRaceFilename), szPath, sizeof(szPath))) return FALSE;
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
@@ -622,11 +622,11 @@ int16_t FBeginLibraryRace(HWND hwnd) {
     RACESTATE rsSav;
     int16_t fResult;
     SaveRaceState(&rsSav);
-    if (!FChooseLibraryRaceName(hwnd, "Custom Race.r1", szPath, sizeof(szPath))) return FALSE;
+    if (!FChooseLibraryRaceName(hwnd, PszGetCompressedString(idsLibraryCustomRaceFilename), szPath, sizeof(szPath))) return FALSE;
     CchSnprintf(szRaceLibraryPath, sizeof(szRaceLibraryPath), "%s", szPath);
     vplr = vrgplrDef[0];
-    strcpy(vplr.szName, "Humanoid");
-    strcpy(vplr.szNames, "Humanoids");
+    strcpy(vplr.szName, PszGetCompressedString(idsHumanoid));
+    strcpy(vplr.szNames, PszGetCompressedString(idsLibraryHumanoids));
     szRacePass[0] = 0;
     SetSzRaceFile(strrchr(szPath, chDirSep) + 1);
     fResult = RaceCreationWizard(hwnd, FALSE, FALSE);
@@ -664,27 +664,34 @@ int16_t FDuplicateLibraryRace(HWND hwnd, const char *pszName) {
     SuggestRaceFilename(szName);
     if (!szName[0] || CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceDuplicateFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (!FCopyNativeFile(szSource, szPath)) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceDuplicateFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (FWasRaceFile(szPath, TRUE) <= 0) {
         RemoveNativeFile(szPath);
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The selected race design could not be duplicated.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceDuplicateFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     RestoreRaceState(&rsSav, TRUE, TRUE);
     return TRUE;
 }
 
+static void GetLibraryFileFilter(StringId ids, char *pszFilter) {
+    char *pch;
+
+    CchGetString(ids, pszFilter);
+    for (pch = pszFilter; *pch; pch++) if (*pch == '|') *pch = 0;
+}
+
 int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget) {
     OPENFILENAME ofn;
-    char szSource[512], szTarget[512], szTemp[512], szValidate[512];
+    char szSource[512], szTarget[512], szTemp[512], szValidate[512], szFilter[128];
     RACESTATE rsSav;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
@@ -694,7 +701,8 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
         CchSnprintf(szTarget, sizeof(szTarget), "%s", pszName);
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
-        ofn.lpstrFilter = "Race designs (*.r1;*.r2;*.r3)\0*.r1;*.r2;*.r3\0All files (*.*)\0*.*\0\0";
+        GetLibraryFileFilter(idsLibraryRaceFilesFilter, szFilter);
+        ofn.lpstrFilter = szFilter;
         ofn.lpstrFile = szTarget;
         ofn.nMaxFile = sizeof(szTarget);
         ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
@@ -704,19 +712,19 @@ int16_t FExportLibraryRace(HWND hwnd, const char *pszName, const char *pszTarget
     SaveRaceState(&rsSav);
     if (FWasRaceFile(szSource, TRUE) <= 0 || SDL_strcasecmp(szSource, pszTarget) == 0) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceExportFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (!FCopyRaceExport(szSource, pszTarget, szTemp, sizeof(szTemp))) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceExportFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     CchSnprintf(szValidate, sizeof(szValidate), "%s", szTemp);
     if (FWasRaceFile(szValidate, TRUE) <= 0 || ReplaceNativeFile(szTemp, pszTarget) != 0) {
         RemoveNativeFile(szTemp);
         RestoreRaceState(&rsSav, TRUE, TRUE);
-        if (IsWindow(hwnd)) AlertSz("The race design could not be exported.", MB_ICONEXCLAMATION);
+        if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryRaceExportFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     RestoreRaceState(&rsSav, TRUE, TRUE);
@@ -731,7 +739,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     char szTemp[512], szMessage[640], szExt[4];
     char *pch, *pchSlash;
     const char *pszLibraryName;
-    char *pszSaveError;
+    StringId idsSaveError;
     FILE *pf;
     uint32_t dwTick;
     int64_t cbTarget;
@@ -762,7 +770,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
         memset(&ofn, 0, sizeof(ofn));
         memset(szTarget, 0, sizeof(szTarget));
         CchSnprintf(szTarget, sizeof(szTarget), "%s", szSuggested);
-        cch = CchSnprintf(szFilter, sizeof(szFilter), "Orders files (*.x%d)|*.x%d|All files (*.*)|*.*",
+        cch = CchSnprintf(szFilter, sizeof(szFilter), PszGetCompressedString(idsLibraryOrdersExportFilter),
                           idPlayer + 1, idPlayer + 1);
         if (cch <= 0 || (size_t)cch + 2 >= sizeof(szFilter)) return FALSE;
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
@@ -794,7 +802,7 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     /* Confirm the actual orders path after correcting the chooser's extension. */
     if (FNativeFileSize(szTarget, &cbTarget)) {
         CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryReplaceOrders), szTarget);
-        if (MessageBox(hwnd, szMessage, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return FALSE;
+        if (MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryTitle), MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return FALSE;
     }
 
     SetSzWorkFromDt(dtLog, idPlayer);
@@ -834,17 +842,17 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
                       szBaseStem, dwTick, idPlayer + 1);
     if (cch <= 0 || (size_t)cch >= sizeof(szPreviousHist)) fSaved = FALSE;
     if (!fSaved) {
-        pszSaveError = "The current orders could not be saved for export.";
+        idsSaveError = idsLibraryOrdersSaveFailed;
         goto LSaveFailed;
     }
     if (fHistoryExists && !FCopyNativeFileExclusive(szSourceHist, szPreviousHist)) {
-        pszSaveError = "The existing history file could not be preserved before saving orders.";
+        idsSaveError = idsLibraryHistoryPreserveFailed;
         goto LSaveFailed;
     }
     fHistoryBackup = fHistoryExists;
     fHistoryReplaced = ReplaceNativeFile(szStageHist, szSourceHist) == 0;
     if (!fHistoryReplaced || ReplaceNativeFile(szStage, szSource) != 0) {
-        pszSaveError = "The current orders could not be saved for export.";
+        idsSaveError = idsLibraryOrdersSaveFailed;
         goto LSaveFailed;
     }
     fHistoryReplaced = FALSE;
@@ -856,14 +864,14 @@ int16_t FExportLibraryOrders(HWND hwnd, const char *pszTarget) {
     CchSnprintf(szTemp, sizeof(szTemp), "%s.stars-export-%u", szTarget, dwTick);
     if (!FCopyNativeFileExclusive(szSource, szTemp) || ReplaceNativeFile(szTemp, szTarget) != 0) {
         RemoveNativeFile(szTemp);
-        AlertSz("The orders file could not be exported.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersExportFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     return TRUE;
 LSaveFailed:
     if (fHistoryReplaced) {
         if (fHistoryExists && ReplaceNativeFile(szPreviousHist, szSourceHist) != 0) {
-            AlertSz("The previous history file could not be restored. Recover it from the managed game folder.", MB_ICONHAND);
+            AlertSz(PszGetCompressedString(idsLibraryHistoryRestoreFailed), MB_ICONHAND);
             fHistoryBackup = FALSE;
         } else if (!fHistoryExists) RemoveNativeFile(szSourceHist);
         else fHistoryBackup = FALSE;
@@ -874,7 +882,7 @@ LSaveFailed:
     CchSnprintf(szBase, sizeof(szBase), "%s", szBaseSav);
     gd.fSubmit = fSubmitSav;
     game.fDirty = fDirtySav;
-    AlertSz(pszSaveError, MB_ICONHAND);
+    AlertSz(PszGetCompressedString(idsSaveError), MB_ICONHAND);
     return FALSE;
 }
 
@@ -884,10 +892,10 @@ int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName) {
     if (!FInitRaceLibrary() || !FPortableRaceFilename(pszName)) return FALSE;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return FALSE;
-    CchSnprintf(szMessage, sizeof(szMessage), "Delete the managed race design %s?", pszName);
-    if (MessageBox(hwnd, szMessage, "Stars!", MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
+    CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryRaceDeletePrompt), pszName);
+    if (MessageBox(hwnd, szMessage, PszGetCompressedString(idsLibraryTitle), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) return FALSE;
     if (RemoveNativeFile(szPath) != 0) {
-        AlertSz("The selected race design could not be deleted.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryRaceDeleteFailed), MB_ICONHAND);
         return FALSE;
     }
     if (!strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
@@ -896,7 +904,7 @@ int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName) {
 
 int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
     OPENFILENAME ofn;
-    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512];
+    char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512], szFilter[128];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
     int16_t fValid;
@@ -906,7 +914,8 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         memset(szSource, 0, sizeof(szSource));
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
-        ofn.lpstrFilter = "Race designs (*.r1;*.r2;*.r3)\0*.r1;*.r2;*.r3\0All files (*.*)\0*.*\0\0";
+        GetLibraryFileFilter(idsLibraryRaceFilesFilter, szFilter);
+        ofn.lpstrFilter = szFilter;
         ofn.nFilterIndex = 1;
         ofn.lpstrFile = szSource;
         ofn.nMaxFile = sizeof(szSource);
@@ -1381,14 +1390,15 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
     LIBRARYEXPORTMOVE lem;
     OPENFILENAME ofn;
     char szSource[512], szDestination[512], szStage[512];
-    char szZipName[512], szZipStage[512], szZipGame[512];
+    char szZipName[512], szZipStage[512], szZipGame[512], szFilter[128], szMessage[256];
     int cch, iChoice;
     int16_t fZipStage;
 
     if (!pszTarget) {
         if (!getenv("STARS_CLIENT_EXPORT_GAME")) {
-            iChoice = MessageBox(hwnd, "Export as a ZIP archive? Choose No to export a folder.",
-                                 "Export Game", MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
+            CchGetString(idsLibraryExportZipPrompt, szMessage);
+            iChoice = MessageBox(hwnd, szMessage,
+                                 PszGetCompressedString(idsLibraryExportGameTitle), MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
             if (iChoice == IDCANCEL) return FALSE;
             if (iChoice == IDYES) {
                 memset(&ofn, 0, sizeof(ofn));
@@ -1396,7 +1406,8 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
                 CchSnprintf(szZipName, sizeof(szZipName), "%s.zip", pszName);
                 ofn.lStructSize = sizeof(ofn);
                 ofn.hwndOwner = hwnd;
-                ofn.lpstrFilter = "ZIP archives (*.zip)\0*.zip\0All files (*.*)\0*.*\0\0";
+                GetLibraryFileFilter(idsLibraryZipFilesFilter, szFilter);
+                ofn.lpstrFilter = szFilter;
                 ofn.lpstrFile = szZipName;
                 ofn.lpstrDefExt = "zip";
                 ofn.nMaxFile = sizeof(szZipName);
@@ -1469,7 +1480,7 @@ LStageFail:
     FNativeEnumerateDirectory(szStage, RemoveImportFile, szStage);
     RemoveNativePath(szStage);
 LFail:
-    if (IsWindow(hwnd)) AlertSz("The game could not be exported to that folder.", MB_ICONHAND);
+    if (IsWindow(hwnd)) AlertSz(PszGetCompressedString(idsLibraryGameExportFailed), MB_ICONHAND);
     return FALSE;
 }
 
@@ -1638,7 +1649,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     iplr--;
     if (iplr < 0 || iplr >= 16) return FALSE;
     if (!FInspectImportFile(pszSource, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) {
-        AlertSz("The selected player turn is invalid or unsupported.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryTurnInvalid), MB_ICONEXCLAMATION);
         return FALSE;
     }
     memset(&lm, 0, sizeof(lm));
@@ -1651,7 +1662,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
                            LibraryTurnTargetDlg, (LPARAM)&lm) != TRUE) return FALSE;
     } else CchSnprintf(lm.szSelected, sizeof(lm.szSelected), "%s", lm.rgszName[0]);
     if (!lm.szSelected[0]) {
-        AlertSz("Choose a managed game before updating this turn.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryTurnChooseGame), MB_ICONEXCLAMATION);
         return FALSE;
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected, iplr + 1);
@@ -1660,12 +1671,12 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     fHasTurn = pf != NULL;
     if (pf) fclose(pf);
     else if (errno != ENOENT) {
-        AlertSz("The managed player's turn could not be inspected.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryTurnInspectFailed), MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (fHasTurn) {
         if (!FInspectImportFile(szTarget, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) || lidCurrent != lidGame) {
-            AlertSz("The managed game does not contain a valid turn for this player.", MB_ICONEXCLAMATION);
+            AlertSz(PszGetCompressedString(idsLibraryTurnCurrentInvalid), MB_ICONEXCLAMATION);
             return FALSE;
         }
         if (FFilesEqual(pszSource, szTarget)) return TRUE;
@@ -1676,7 +1687,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
                           szLibraryRoot, szDirSep, lm.szSelected, szDirSep, lm.szSelected);
         if (cch <= 0 || (size_t)cch >= sizeof(szUniverse)) return FALSE;
         if (FNativePathInfo(szTarget, &fDirectory, &fLink) || !FInspectImportPlayer(szUniverse, iplr)) {
-            AlertSz("The new player turn does not match an available player in this universe.", MB_ICONEXCLAMATION);
+            AlertSz(PszGetCompressedString(idsLibraryTurnPlayerInvalid), MB_ICONEXCLAMATION);
             return FALSE;
         }
     }
@@ -1701,13 +1712,13 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
         !FInspectImportFile(szStage, dtTurn, iplr, &lidCurrent, &turnCurrent, NULL, &fMultiCurrent) ||
         lidCurrent != lidGame || turnCurrent != turn) {
         if (szStage[0]) RemoveNativeFile(szStage);
-        AlertSz("The new player turn could not be staged safely.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryTurnStageFailed), MB_ICONHAND);
         return FALSE;
     }
     if (!fHasTurn) {
         if (ReplaceNativeFile(szStage, szTarget) != 0) {
             RemoveNativeFile(szStage);
-            AlertSz("The new player turn could not be installed.", MB_ICONHAND);
+            AlertSz(PszGetCompressedString(idsLibraryTurnInstallFailed), MB_ICONHAND);
             return FALSE;
         }
         /* No previous turn was advanced, so retain any host orders/history. */
@@ -1716,25 +1727,25 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     fHasOrders = FNativeFileSize(szOrders, &cbFile);
     if (!FCopyNativeFileExclusive(szTarget, szPrevious)) {
         RemoveNativeFile(szStage);
-        AlertSz("The existing turn could not be preserved before the update.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryTurnPreserveFailed), MB_ICONHAND);
         return FALSE;
     }
     if (ReplaceNativeFile(szStage, szTarget) != 0) {
         RemoveNativeFile(szStage);
         RemoveNativeFile(szPrevious);
-        AlertSz("The new player turn could not be installed.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryTurnInstallFailed), MB_ICONHAND);
         return FALSE;
     }
     if (fHasOrders && RemoveNativeFile(szOrders) != 0) {
         if (ReplaceNativeFile(szPrevious, szTarget) != 0) {
             CchSnprintf(szMessage, sizeof(szMessage),
-                        "The old orders could not be retired and the previous turn could not be restored. Recover the previous turn from %s.",
+                        PszGetCompressedString(idsLibraryTurnRestoreFailed),
                         szPrevious);
             AlertSz(szMessage, MB_ICONHAND);
             return FALSE;
         }
         RemoveNativeFile(szPrevious);
-        AlertSz("The old orders could not be retired; the previous turn was restored.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryTurnOrdersRetireFailed), MB_ICONHAND);
         return FALSE;
     }
     RemoveNativeFile(szPrevious);
@@ -1828,7 +1839,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         if (!FUnzipLibraryArchive(szSource, szZipStage)) {
             FNativeEnumerateDirectory(szZipStage, RemoveImportTreeEntry, szZipStage);
             RemoveNativePath(szZipStage);
-            AlertSz("This ZIP does not contain a safe, supported game archive.", MB_ICONEXCLAMATION);
+            AlertSz(PszGetCompressedString(idsLibraryZipInvalid), MB_ICONEXCLAMATION);
             return FALSE;
         }
         fImported = FImportLibraryGame(hwnd, szZipStage);
@@ -1846,7 +1857,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         szStem[0] = 0;
         FNativeEnumerateDirectory(szDir, FindImportUniverse, szStem);
         if (!szStem[0] || szStem[0] == '!') {
-            AlertSz("Choose a folder containing exactly one game universe file (.xy).", MB_ICONEXCLAMATION);
+            AlertSz(PszGetCompressedString(idsLibraryUniverseRequired), MB_ICONEXCLAMATION);
             return FALSE;
         }
         CchSnprintf(szSource, sizeof(szSource), "%s%s%s.xy", szDir, szDirSep, szStem);
@@ -1877,7 +1888,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     li.fValid = FALSE;
     if (!FNativeEnumerateDirectory(szDir, CopyImportEntry, &li) || li.fBad || !li.fSawXY || !li.fValid ||
         (li.grfPlayers == 0 && !li.fSawHost)) {
-        AlertSz("This folder does not contain a complete supported game.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryGameIncomplete), MB_ICONEXCLAMATION);
         return FALSE;
     }
     if (!FChooseLibraryGameName(hwnd, szSource)) return FALSE;
@@ -1900,7 +1911,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         RemoveNativePath(szStage);
         RemoveNativePath(szLibraryPending);
         szLibraryPending[0] = 0;
-        AlertSz("The game could not be copied into the library.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryGameImportFailed), MB_ICONHAND);
         return FALSE;
     }
     szLibraryPending[0] = 0;
@@ -2204,7 +2215,7 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     if (!pszSource) {
         memset(&ofn, 0, sizeof(ofn));
         memset(szChosen, 0, sizeof(szChosen));
-        strcpy(szFilter, "Stars! Orders (*.x1 - *.x16)|*.X*||");
+        strcpy(szFilter, PszGetCompressedString(idsLibraryOrdersImportFilter));
         for (pch = szFilter; *pch; pch++) if (*pch == '|') *pch = 0;
         ofn.lStructSize = sizeof(ofn);
         ofn.hwndOwner = hwnd;
@@ -2220,7 +2231,7 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) {
-        AlertSz("Select a hosted game before importing orders.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersChooseHost), MB_ICONEXCLAMATION);
         return FALSE;
     }
     SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
@@ -2231,14 +2242,14 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     pszExt = strrchr(pszFile, '.');
     if (!pszExt || SDL_tolower(pszExt[1]) != 'x' || pszExt[2] < '1' || pszExt[2] > '9' ||
         (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) || (pszExt[3] && pszExt[4])) {
-        AlertSz("Choose an ordinary player orders file (.x1 through .x16).", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersChooseFile), MB_ICONEXCLAMATION);
         return FALSE;
     }
     iplr = pszExt[2] - '1';
     if (pszExt[3]) iplr = (pszExt[2] - '0') * 10 + pszExt[3] - '1';
     if (iplr < 0 || iplr >= 16 || !FInspectImportFile(pszSource, dtLog, iplr, &lidOrders,
             &turnOrders, &wGenOrders, &fMulti)) {
-        AlertSz("The selected orders file is invalid or unsupported.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersInvalid), MB_ICONEXCLAMATION);
         return FALSE;
     }
     cch = CchSnprintf(szHost, sizeof(szHost), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep, szName, szDirSep, szName);
@@ -2249,7 +2260,7 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
         lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
         !FInspectImportPlayer(szUniverse, iplr)) {
-        AlertSz("These orders do not match the selected hosted game's current turn and generation.", MB_ICONEXCLAMATION);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersMismatch), MB_ICONEXCLAMATION);
         return FALSE;
     }
     cch = CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s%s%s.x%d", szLibraryRoot, szDirSep,
@@ -2258,7 +2269,7 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     if (FNativeFileSize(szTarget, &cbFile)) {
         if (FFilesEqual(pszSource, szTarget)) return TRUE;
         cch = CchSnprintf(szMessage, sizeof(szMessage),
-                          "Different saved orders already exist for player %d in %s. Replace them?", iplr + 1, szName);
+                          PszGetCompressedString(idsLibraryOrdersReplacePrompt), iplr + 1, szName);
         if (cch <= 0 || (size_t)cch >= sizeof(szMessage)) return FALSE;
         if (AlertSz(szMessage, MB_YESNO | MB_ICONQUESTION) != IDYES) return FALSE;
     }
@@ -2269,12 +2280,12 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
         !FInspectImportFile(szStage, dtLog, iplr, &lidOrders, &turnOrders, &wGenOrders, &fMulti) ||
         lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost) {
         RemoveNativeFile(szStage);
-        AlertSz("The incoming orders could not be staged safely.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersStageFailed), MB_ICONHAND);
         return FALSE;
     }
     if (ReplaceNativeFile(szStage, szTarget) != 0) {
         RemoveNativeFile(szStage);
-        AlertSz("The incoming orders could not be installed.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibraryOrdersInstallFailed), MB_ICONHAND);
         return FALSE;
     }
     (void)hwnd;
@@ -2383,7 +2394,7 @@ static int16_t FReplaceConflictingLibraryTurn(HWND hwnd, const char *pszName,
     fHeld = FALSE;
     if (!RemoveLibraryGameTree(szHold)) fCleanupFailed = TRUE;
     if (fCleanupFailed) {
-        CchSnprintf(szMessage, sizeof(szMessage), "The replacement succeeded, but the previous game copy remains at %s.", szHold);
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryTurnCleanupFailed), szHold);
         AlertSz(szMessage, MB_ICONEXCLAMATION);
     }
     (void)hwnd;
@@ -2396,9 +2407,9 @@ LDone:
         else fRestoreFailed = TRUE;
     }
     if (fRestoreFailed) {
-        CchSnprintf(szMessage, sizeof(szMessage), "The previous game could not be restored. Recover it from %s.", szHold);
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryGameRestoreFailed), szHold);
         AlertSz(szMessage, MB_ICONHAND);
-    } else AlertSz("The conflicting turn could not be replaced; the managed game and its orders were preserved.", MB_ICONHAND);
+    } else AlertSz(PszGetCompressedString(idsLibraryTurnReplaceFailed), MB_ICONHAND);
     (void)hwnd;
     (void)pszTarget;
     return FALSE;
@@ -2426,7 +2437,7 @@ static int16_t FImportConflictingTurnAsCopy(HWND hwnd, const char *pszName,
         !FStageConflictingTurn(szStage, szLibraryName, pszSource, iplr, lidGame, turn) ||
         RenameNativeFile(szStage, szTarget) != 0) {
         if (FNativeDirectoryExists(szStage)) RemoveLibraryGameTree(szStage);
-        AlertSz("The separate game copy could not be created; the existing game and its orders were preserved.", MB_ICONHAND);
+        AlertSz(PszGetCompressedString(idsLibrarySeparateCopyFailed), MB_ICONHAND);
         return FALSE;
     }
     (void)iRemembered;
@@ -2504,7 +2515,7 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
         CchSnprintf(szFile, sizeof(szFile), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep, pszName, szDirSep, pszName, iplr + 1);
         if (!FNativeFileSize(szFile, &cbFile) || cbFile <= 0 ||
             !FInspectImportFile(szFile, dtTurn, iplr, &lidGame, &turn, NULL, &fMulti)) continue;
-        CchSnprintf(szDisplay, sizeof(szDisplay), "%s - Player %d (%u)", pszName, iplr + 1, turn + 2400);
+        CchSnprintf(szDisplay, sizeof(szDisplay), PszGetCompressedString(idsLibraryPlayerLabel), pszName, iplr + 1, turn + 2400);
         if (!FAddLibraryGameListItem(lpList, pszName, iplr, szDisplay)) return FALSE;
     }
     return TRUE;
@@ -2596,22 +2607,22 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
     y = max(80, lprc->bottom - 330);
-    CreateWindow("BUTTON", "Games", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, hInst, NULL);
-    CreateWindow("BUTTON", "Host Games", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryHostGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  86, y - 22, 82, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, hInst, NULL);
-    CreateWindow("BUTTON", "Import Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, hInst, NULL);
-    CreateWindow("BUTTON", "Import Folder...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportFolder), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
-    CreateWindow("BUTTON", "Import Orders...", WS_CHILD | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportOrders), WS_CHILD | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_ORDERS, hInst, NULL);
-    CreateWindow("BUTTON", "Export Game...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryExportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, hInst, NULL);
     CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
@@ -2650,19 +2661,19 @@ static int16_t ListLibraryRace(void *lpList, const char *pszName) {
 
 void InitLibraryRaces(HWND hwnd, const RECT *lprc) {
     int y = max(160, lprc->bottom - 200);
-    CreateWindow("STATIC", "Race Designs", WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
+    CreateWindow("STATIC", PszGetCompressedString(idsLibraryRaceDesigns), WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, NULL, hInst, NULL);
-    CreateWindow("BUTTON", "New", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryNew), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 436, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, hInst, NULL);
-    CreateWindow("BUTTON", "Edit", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryEdit), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 384, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, hInst, NULL);
-    CreateWindow("BUTTON", "Duplicate", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 332, y - 20, 62, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DUPLICATE, hInst, NULL);
-    CreateWindow("BUTTON", "Export", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryExport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 266, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EXPORT, hInst, NULL);
-    CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 214, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DELETE, hInst, NULL);
-    CreateWindow("BUTTON", "Import...", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 152, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, hInst, NULL);
     CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 80, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACES, hInst, NULL);
@@ -2718,13 +2729,13 @@ void RefreshLibraryGames(HWND hwnd) {
     }
     fContinue = FFindContinueLibraryGame() && continueLibrary.iPlayer >= 0;
     if (fContinue && !continueLibrary.fTurnAvailable) {
-        CchSnprintf(szLabel, sizeof(szLabel), "%s - Player ", continueLibrary.szName);
+        CchSnprintf(szLabel, sizeof(szLabel), PszGetCompressedString(idsLibraryPlayerPrefix), continueLibrary.szName);
         iContinue = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szLabel);
         fContinue = iContinue != LB_ERR;
     }
     if (fContinue) {
         CchSnprintf(szLabel, sizeof(szLabel), continueLibrary.fTurnAvailable ?
-                    "Continue: %s — Player %d (%d)" : "Continue: %s — Choose Player",
+                    PszGetCompressedString(idsLibraryContinuePlayer) : PszGetCompressedString(idsLibraryContinueChoosePlayer),
                     continueLibrary.szName, continueLibrary.iPlayer + 1, continueLibrary.iYear);
         SetWindowText(rghwndBtnSplash[2], szLabel);
         EnableWindow(rghwndBtnSplash[2], TRUE);
@@ -2783,7 +2794,7 @@ int16_t FContinueLibraryGame(HWND hwnd) {
 
     // The remembered turn may have been removed after a newer game import.
     // Select this game's available player rows so the user chooses explicitly.
-    CchSnprintf(szSearch, sizeof(szSearch), "%s - Player ", continueLibrary.szName);
+    CchSnprintf(szSearch, sizeof(szSearch), PszGetCompressedString(idsLibraryPlayerPrefix), continueLibrary.szName);
     i = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szSearch);
     if (i == LB_ERR) return FALSE;
     SendMessage(hwndList, LB_SETCURSEL, i, 0);
