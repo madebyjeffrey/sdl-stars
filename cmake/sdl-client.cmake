@@ -5,13 +5,12 @@ if(APPLE)
     target_link_options(stars_options INTERFACE "LINKER:-no_fixup_chains")
 endif()
 add_subdirectory(compat/win32)
-set(STARS_HELP_GENERATED "${CMAKE_BINARY_DIR}/help")
-add_custom_command(OUTPUT "${STARS_HELP_GENERATED}/complete.stamp" "${STARS_HELP_GENERATED}/help_contexts.h"
-    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/compat/win32/helpgen.py"
-        "${PROJECT_SOURCE_DIR}/res/help-utf8.zip" "${STARS_HELP_GENERATED}"
-    DEPENDS res/help-utf8.zip compat/win32/helpgen.py
-    COMMENT "Staging the UTF-8 Stars! help guide" VERBATIM)
-add_custom_target(stars-help-guide ALL DEPENDS "${STARS_HELP_GENERATED}/complete.stamp")
+include("${CMAKE_CURRENT_LIST_DIR}/help-guide.cmake")
+if(STARS_BUILD_TESTS AND CMAKE_GENERATOR MATCHES "^Ninja")
+    add_test(NAME test_help_clean COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/cmake/test_help_clean.py" "${CMAKE_COMMAND}" "${CMAKE_MAKE_PROGRAM}")
+    set_tests_properties(test_help_clean PROPERTIES LABELS "build" TIMEOUT 60)
+endif()
 add_dependencies(stars_win32 stars-help-guide)
 target_include_directories(stars_win32 PRIVATE "${STARS_HELP_GENERATED}")
 if(STARS_BUILD_TESTS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `stars-help-guide` now registers its generated asset tree for cleanup.
+  Previously Ninja's built-in `help` target collided with the nonempty help
+  directory and made Clean fail. Build/clean/rebuild checks cover stale assets
+  and repeated cleans. Game behavior and native regression baselines are unchanged.
+
 - `FBeginLibraryRace` and New Game race customization now open the wizard
   directly and save under its race name instead of asking for a filename first.
   `FSaveCurrentLibraryRace` reuses unchanged designs and offers Update Existing,

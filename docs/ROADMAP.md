@@ -160,7 +160,9 @@ see [palettes](WIN32-PALETTES.md). Interactive modal message boxes and asynchron
 SDL audio alerts now work; see [message boxes](WIN32-MESSAGE-BOXES.md). Modal open/save
 pickers now preserve Stars wildcard filters and filename contracts; see
 [file dialogs](WIN32-FILE-DIALOGS.md). Default-printer DCs and legacy document/page
-escapes now emit PDFs and can submit them through CUPS; see [printing](WIN32-PRINTING.md). The original help archive now has a checked native reader and a CMake-generated HTML guide with 414 topics, formatted text/tables and all 133 images; all 413 numeric contexts, 1,498 text links and 28 image hotspots resolve. The `WinHelp` adapter now has tests for all 413 contexts; the user confirmed offline browser launch, with offline content checks still remaining; see [help](WIN32-HELP.md). Win32 subset coverage is **178/178 (100%)**, with six CRT helpers counted
+escapes now emit PDFs and can submit them through CUPS; see [printing](WIN32-PRINTING.md). The original help archive now has a checked native reader and a CMake-generated HTML guide with 414 topics, formatted text/tables and all 133 images; all 413 numeric contexts, 1,498 text links and 28 image hotspots resolve. The generated guide is registered for recursive cleanup so Ninja's built-in
+`help` target cannot collide with a nonempty asset directory; a build/clean/rebuild
+contract covers stale assets and repeated cleans. The `WinHelp` adapter now has tests for all 413 contexts; the user confirmed offline browser launch, with offline content checks still remaining; see [help](WIN32-HELP.md). Win32 subset coverage is **178/178 (100%)**, with six CRT helpers counted
 separately. This is basic inventory coverage, not complete Win32 conformance.
 The native `stars-sdl` preview now links the shared client; title-screen painting,
 New Game/wizard cancellation and process cleanup have integration tests.
