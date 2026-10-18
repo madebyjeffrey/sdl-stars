@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import zipfile
 
 
 def run(executable, work, default_root=False, settings_root=False, **choices):
@@ -111,10 +112,40 @@ def check_failed_switch_save(executable):
                 assert (managed / 'save-failure.h2').is_file()
 
 
+def check_uppercase_imports(executable):
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    for universe_extension in ('.XY', '.xY'):
+        with tempfile.TemporaryDirectory(prefix='stars-uppercase-import-') as directory:
+            work = Path(directory)
+            source = work / 'exchange'
+            source.mkdir()
+            for extension in ('.xy', '.hst', '.m1', '.m2'):
+                target_extension = universe_extension if extension == '.xy' else extension.upper()
+                shutil.copyfile(fixture / ('game' + extension), source / ('exchange' + target_extension))
+            before = {p.name: p.read_bytes() for p in source.iterdir()}
+            archive = work / 'exchange.zip'
+            with zipfile.ZipFile(archive, 'w') as output:
+                for path in source.iterdir():
+                    output.write(path, path.name)
+            archive_before = archive.read_bytes()
+            for kind, incoming in (('folder', source), ('zip', archive)):
+                client_work = work / kind
+                run(executable, client_work, STARS_CLIENT_IMPORT_SOURCE=str(incoming),
+                    STARS_CLIENT_IMPORT_NAME='uppercase')
+                managed = client_work / 'library/Games/uppercase'
+                for extension in ('.xy', '.hst', '.m1', '.m2'):
+                    assert (managed / ('uppercase' + extension)).read_bytes() == (fixture / ('game' + extension)).read_bytes()
+                run(executable, client_work, STARS_CLIENT_LIBRARY_OPEN='uppercase',
+                    STARS_CLIENT_LIBRARY_OPEN_PLAYER='2', STARS_CLIENT_EXPECT_PLAYER='2')
+            assert {p.name: p.read_bytes() for p in source.iterdir()} == before
+            assert archive.read_bytes() == archive_before
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
     check_first_player_turn(executable)
     check_failed_switch_save(executable)
+    check_uppercase_imports(executable)
     for advanced, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
                            (True, 'advanced-game'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:

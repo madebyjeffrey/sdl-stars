@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FindImportUniverse` now accepts uppercase and mixed-case `.XY` extensions
+  during folder and ZIP imports. Previously these complete game families were
+  rejected even though selecting their player turn file worked. Source files,
+  simulation results and all native regression baseline scenarios are unchanged.
+
 - `CopyBackupDirectory` now preserves `backup` and `backup0`–`backup98` as well
   as `backup.NNN` during folder and ZIP imports and exports. Previously transfers
   silently omitted the engine's default and short-numbered backup folders.

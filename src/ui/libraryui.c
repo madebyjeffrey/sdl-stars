@@ -1501,7 +1501,7 @@ void ShowLibraryExportFolderPicker(HWND hwnd) {
 static int16_t FindImportUniverse(void *lpData, const char *pszName) {
     char *pszStem = lpData;
     const char *pch = strrchr(pszName, '.');
-    if (!pch || strcmp(pch, ".xy")) return TRUE;
+    if (!pch || SDL_strcasecmp(pch, ".xy")) return TRUE;
     if (pszStem[0]) { pszStem[0] = '!'; return TRUE; }
     if ((size_t)(pch - pszName) >= 256) { pszStem[0] = '!'; return TRUE; }
     memcpy(pszStem, pszName, pch - pszName);

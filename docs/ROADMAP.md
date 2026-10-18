@@ -191,6 +191,9 @@ second startup implementation has been removed, so SDL is the sole entry point.
 Folder and ZIP transfers preserve all backup names produced by `CreateBackupDir`:
 `backup`, short-numbered `backupN` and three-digit `backup.NNN`. Round-trip
 coverage checks each naming variant through import and both export destinations.
+Universe discovery accepts `.xy` without regard to extension capitalization,
+matching selected-file imports. Real-client tests import and reopen uppercase
+and mixed-case families from folders and ZIPs while preserving the sources.
 Host Games now has a separate library view, accepts host-only universe/host
 imports, and imports ordinary player orders after matching game identity, turn
 and generation, including checking that the submitted player exists in the
