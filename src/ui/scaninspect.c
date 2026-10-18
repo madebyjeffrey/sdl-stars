@@ -11,7 +11,7 @@ static BOOL fScanInspectorClass;
 static BOOL FScannerReady(void) {
     if (StarsCompatWindowId(hwndScanner) == 0) return FALSE;
     return IsWindow(hwndScanner) && IsWindowVisible(hwndScanner) && game.lid != 0 &&
-           idPlayer >= 0 && idPlayer < game.cPlayer && rgptPlan && rgidPlan && rglpfl &&
+           idPlayer >= 0 && idPlayer < game.cPlayer && rglpfl &&
            game.cPlanMax > 0 && cFleet >= 0 && cThing >= 0;
 }
 

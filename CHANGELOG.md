@@ -11,6 +11,11 @@ produce different results from a 2.6j host for the same turn.
   directory and made Clean fail. Build/clean/rebuild checks cover stale assets
   and repeated cleans. Game behavior and native regression baselines are unchanged.
 
+- `FScannerReady` no longer tests fixed-array addresses for null, and `rgzpqTut`
+  initializes its production-queue bitfields without overlapping union members.
+  This removes compiler warnings while retaining the compiled tutorial table
+  bytes, game behavior and native regression baselines.
+
 - `FBeginLibraryRace` and New Game race customization now open the wizard
   directly and save under its race name instead of asking for a filename first.
   `FSaveCurrentLibraryRace` reuses unchanged designs and offers Update Existing,
