@@ -198,8 +198,20 @@ static void PaintControl(HWND hwnd) {
     if (!fButton && type == SS_ICON) DrawIcon(hdc, 0, 0, LoadIconA(lp->lpclass->wc.hInstance, lp->pszTitle));
     else DrawTextA(hdc, lp->pszTitle, -1, &rcText, format);
     if (fButton && GetFocus() == hwnd && type != BS_GROUPBOX) {
-        InflateRect(&rcText, -1, -1);
-        FrameRect(hdc, &rcText, (HBRUSH)GetStockObject(GRAY_BRUSH));
+        rcBox = rcText;
+        if (fCheck && lp->pszTitle[0]) {
+            /* An inset of the label area can cross glyphs; surround the
+               measured text instead, leaving room for glyph overhang. */
+            DrawTextA(hdc, lp->pszTitle, -1, &rcBox, format | DT_CALCRECT);
+            if (format & DT_SINGLELINE) OffsetRect(&rcBox, 0, (rcText.bottom - rcBox.bottom) / 2);
+            InflateRect(&rcBox, 2, 2);
+            /* Compact controls cannot fit the full vertical padding. */
+            rcBox.top = max(rc.top, rcBox.top);
+            rcBox.bottom = min(rc.bottom, rcBox.bottom);
+        } else {
+            InflateRect(&rcBox, -1, -1);
+        }
+        FrameRect(hdc, &rcBox, (HBRUSH)GetStockObject(GRAY_BRUSH));
     }
     if (hfontOld) SelectObject(hdc, hfontOld);
     if (hbrOwn) DeleteObject(hbrOwn);

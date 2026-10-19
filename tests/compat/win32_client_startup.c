@@ -2087,6 +2087,35 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     continue;
                 }
                 if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (iStage == 2) {
+                    HWND hwndRadio;
+                    HDC hdcRadio;
+                    RECT rcRadio;
+                    int idRadio, y;
+                    BOOL fFrameTop, fFrameBottom;
+
+                    // Both horizontal focus edges must remain visible inside each radio.
+                    for (idRadio = IDC_RACE_HYPER_EXPANSION; idRadio <= IDC_RACE_JACK_OF_ALL_TRADES; idRadio++) {
+                        hwndRadio = GetDlgItem(hwndTop, idRadio);
+                        SetFocus(hwndRadio);
+                        if (!UpdateWindow(hwndRadio) || !GetClientRect(hwndRadio, &rcRadio)) goto LDone;
+                        hdcRadio = GetDC(hwndRadio);
+                        if (!hdcRadio) goto LDone;
+                        fFrameTop = fFrameBottom = FALSE;
+                        for (y = 0; y < rcRadio.bottom; y++) {
+                            if (GetPixel(hdcRadio, 20, y) != GetSysColor(COLOR_GRAYTEXT)) continue;
+                            if (y < rcRadio.bottom / 2) fFrameTop = TRUE;
+                            else fFrameBottom = TRUE;
+                        }
+                        ReleaseDC(hwndRadio, hdcRadio);
+                        if (!fFrameTop || !fFrameBottom) {
+                            fprintf(stderr, "PRT radio %d clips its focus frame\n", idRadio);
+                            goto LDone;
+                        }
+                    }
+                    if (pszWizardCapture && (!FCompatPaintTree(hwndTop) || !FCompatPresent(hwndTop) ||
+                        !SDL_SaveBMP(hwndTop->lpComposite, pszWizardCapture))) goto LDone;
+                }
                 if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
                 iStage = fWizard && iStage == 1 ? 2 : 4;
                 return;

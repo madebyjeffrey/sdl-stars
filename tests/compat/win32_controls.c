@@ -38,6 +38,81 @@ static HWND Button(HWND hwnd, HINSTANCE hInstance, int id, DWORD style, int y) {
                         20, y, 150, 24, hwnd, (HMENU)(INT_PTR)id, hInstance, NULL);
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
+/* Focusing a check/radio control must preserve every painted label pixel,
+   including mnemonics, wrapped labels and text clipped by a narrow control. */
+static int TestFocusLabels(HWND hwnd, HINSTANCE hInstance) {
+    static const DWORD rgdwStyle[] = {BS_AUTOCHECKBOX, BS_AUTORADIOBUTTON, BS_AUTO3STATE};
+    static const struct {
+        DWORD dwStyle;
+        int dy;
+    } rgfmt[] = {
+        {0, 15}, {BS_LEFTTEXT, 15}, {0, 21}, {BS_LEFTTEXT, 21},
+        {BS_MULTILINE, 38}, {BS_MULTILINE | BS_LEFTTEXT, 38}
+    };
+    static const char *rgpszLabel[] = {"&Humanoid", "&Caf\xc3\xa9 and a long label"};
+    LOGFONT lf = {0};
+    COLORREF rgcrBefore[100 * 38];
+    COLORREF cr;
+    HWND hwndButton;
+    HDC hdc;
+    HFONT hfont;
+    int i, k, x, y, dy, xLeft, xRight, cChanged;
+    size_t j;
+
+    lf.lfHeight = -13;
+    strcpy(lf.lfFaceName, "Arial");
+    hfont = CreateFontIndirect(&lf);
+    CHECK(hfont);
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < sizeof(rgfmt) / sizeof(rgfmt[0]); j++) {
+            for (k = 0; k < 2; k++) {
+                dy = rgfmt[j].dy;
+                hwndButton = CreateWindow("Button", rgpszLabel[k], WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                                          rgdwStyle[i] | rgfmt[j].dwStyle,
+                                          200, 40, 100, dy, hwnd, (HMENU)(INT_PTR)500, hInstance, NULL);
+                CHECK(hwndButton);
+                SendMessage(hwndButton, WM_SETFONT, (WPARAM)hfont, TRUE);
+                SetFocus(hwnd);
+                CHECK(UpdateWindow(hwndButton));
+                hdc = GetDC(hwndButton);
+                CHECK(hdc);
+                for (y = 0; y < dy; y++) {
+                    for (x = 0; x < 100; x++) rgcrBefore[y * 100 + x] = GetPixel(hdc, x, y);
+                }
+                CHECK(ReleaseDC(hwndButton, hdc));
+                SetFocus(hwndButton);
+                CHECK(UpdateWindow(hwndButton));
+                hdc = GetDC(hwndButton);
+                CHECK(hdc);
+                xLeft = rgfmt[j].dwStyle & BS_LEFTTEXT ? 0 : 17;
+                xRight = rgfmt[j].dwStyle & BS_LEFTTEXT ? 83 : 100;
+                cChanged = 0;
+                for (y = 0; y < dy; y++) {
+                    for (x = 0; x < 100; x++) {
+                        cr = GetPixel(hdc, x, y);
+                        if (cr != rgcrBefore[y * 100 + x]) cChanged++;
+                        if (x >= xLeft && x < xRight && rgcrBefore[y * 100 + x] != RGB(9, 70, 90) &&
+                            cr != rgcrBefore[y * 100 + x]) {
+                            fprintf(stderr, "Focus overwrites label: style %lu text style %lu label %d at %d,%d\n",
+                                    (unsigned long)rgdwStyle[i], (unsigned long)rgfmt[j].dwStyle, k, x, y);
+                            return 1;
+                        }
+                    }
+                }
+                CHECK(cChanged != 0);
+                if (dy == 15) {
+                    CHECK(GetPixel(hdc, xLeft + 3, 0) == GetSysColor(COLOR_GRAYTEXT));
+                    CHECK(GetPixel(hdc, xLeft + 3, dy - 1) == GetSysColor(COLOR_GRAYTEXT));
+                }
+                CHECK(ReleaseDC(hwndButton, hdc));
+                CHECK(DestroyWindow(hwndButton));
+            }
+        }
+    }
+    CHECK(DeleteObject(hfont));
+    return 0;
+}
+
 static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic) {
     HDC hdc;
     BYTE *rgb;
@@ -162,6 +237,7 @@ int main(void) {
     CHECK(ClientToScreen(hwndStatic, &pt));
     CHECK(WindowFromPoint(pt) == hwnd);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
+    CHECK(TestFocusLabels(hwnd, hInstance) == 0);
     CHECK(TestPaint(hwnd, hwndCheck, hwndRadio1, hwndStatic) == 0);
     CHECK(!CreateWindow("Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
 #endif

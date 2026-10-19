@@ -11,6 +11,18 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- `PaintControl` now bounds the vertical padding of checkbox and radio focus
+  frames by the control height. Previously the top and bottom edges could be
+  clipped on short controls such as the PRT page. Checks cover all ten PRT
+  radios, compact control borders and unchanged label pixels. Game behavior and
+  native regression baselines are unchanged.
+
+- `PaintControl` now places checkbox and radio-button focus frames outside the
+  measured label instead of insetting its drawing area and overwriting letters.
+  Rendering checks cover mnemonics, UTF-8, wrapped and clipped labels, and
+  right-aligned check marks. Game behavior and native regression baselines are
+  unchanged.
+
 - `stars-help-guide` now registers its generated asset tree for cleanup.
   Previously Ninja's built-in `help` target collided with the nonempty help
   directory and made Clean fail. Build/clean/rebuild checks cover stale assets
