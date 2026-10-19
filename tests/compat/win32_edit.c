@@ -244,6 +244,44 @@ static int TestEditing(HWND hwndEdit, HWND hwndMulti) {
     CHECK(SendMessage(hwndMulti, EM_GETSEL, 0, 0) == MAKELONG(2, 2));
     return 0;
 }
+static int TestSelectionArrows(HWND hwnd, LPCSTR psz) {
+    static const struct {
+        UINT ichAnchor, ichCaret, vk;
+        BOOL fShift;
+        DWORD dwSel;
+    } rgtest[] = {
+        {1, 4, VK_LEFT, FALSE, MAKELONG(1, 1)},
+        {1, 4, VK_RIGHT, FALSE, MAKELONG(4, 4)},
+        {4, 1, VK_LEFT, FALSE, MAKELONG(1, 1)},
+        {4, 1, VK_RIGHT, FALSE, MAKELONG(4, 4)},
+        {1, 4, VK_LEFT, TRUE, MAKELONG(1, 3)},
+        {1, 4, VK_RIGHT, TRUE, MAKELONG(1, 5)},
+        {4, 1, VK_LEFT, TRUE, MAKELONG(0, 4)},
+        {4, 1, VK_RIGHT, TRUE, MAKELONG(3, 4)},
+        {3, 3, VK_LEFT, FALSE, MAKELONG(1, 1)},
+        {3, 3, VK_RIGHT, FALSE, MAKELONG(4, 4)},
+        {0, 5, VK_LEFT, FALSE, MAKELONG(0, 0)},
+        {0, 5, VK_RIGHT, FALSE, MAKELONG(5, 5)}
+    };
+    BYTE rgbSav[256], rgb[256] = {0};
+    int iKey;
+    size_t i;
+
+    for (iKey = 0; iKey < 256; iKey++)
+        rgbSav[iKey] = ((GetKeyState(iKey) & 0x8000) ? 0x80 : 0) | (GetKeyState(iKey) & 1);
+    CHECK(SetWindowText(hwnd, psz));
+    for (i = 0; i < sizeof(rgtest) / sizeof(rgtest[0]); i++) {
+        rgb[VK_SHIFT] = rgtest[i].fShift ? 0x80 : 0;
+        CHECK(SetKeyboardState(rgb));
+        SendMessage(hwnd, EM_SETSEL, rgtest[i].ichAnchor, rgtest[i].ichCaret);
+        SendMessage(hwnd, WM_KEYDOWN, rgtest[i].vk, 1);
+        CHECK(SendMessage(hwnd, EM_GETSEL, 0, 0) == rgtest[i].dwSel);
+    }
+    CHECK(SetKeyboardState(rgbSav));
+    CHECK(FText(hwnd, psz) && !SendMessage(hwnd, EM_GETMODIFY, 0, 0));
+    return 0;
+}
+
 static int TestWrapping(HWND hwndParent) {
     HWND hwnd = CreateWindow("Edit", "one two three four five six seven eight nine ten eleven twelve",
                              WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL,
@@ -297,6 +335,10 @@ int main(void) {
                             210, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)102, NULL, NULL);
     CHECK(hwndEdit && hwndMulti && hwndRead);
     CHECK(TestEditing(hwndEdit, hwndMulti) == 0);
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    CHECK(TestSelectionArrows(hwndEdit, "A\xc3\xa9" "BC") == 0);
+#endif
+    CHECK(TestSelectionArrows(hwndMulti, "a\r\nbc") == 0);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(SetWindowText(hwndEdit, ""));
     SendMessage(hwndEdit, WM_CHAR, 'a', 1); SendMessage(hwndEdit, WM_CHAR, 'b', 1); SendMessage(hwndEdit, WM_CHAR, 'c', 1);
@@ -366,7 +408,7 @@ int main(void) {
     SendMessage(hwndMulti, WM_CHAR, '\b', 1); CHECK(FText(hwndMulti, "ab"));
     SendMessage(hwndEdit, EM_LIMITTEXT, 30, 0); CHECK(SetWindowText(hwndEdit, "abcd"));
     SendMessage(hwndEdit, EM_SETSEL, 1, 3); SendMessage(hwndEdit, WM_KEYDOWN, VK_LEFT, 1);
-    CHECK(SendMessage(hwndEdit, EM_GETSEL, 0, 0) == MAKELONG(2, 2));
+    CHECK(SendMessage(hwndEdit, EM_GETSEL, 0, 0) == MAKELONG(1, 1));
     SetFocus(hwndEdit); CHECK(UpdateWindow(hwndEdit) && UpdateWindow(hwndMulti) && UpdateWindow(hwndRead));
     CHECK(cChange != 0 && cUpdate != 0);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)

@@ -32,6 +32,12 @@ The class supports:
 - Single-line automatic horizontal scrolling and explicit-CRLF multiline
   display with automatic vertical scrolling to the caret.
 
+With selected text, unmodified Left/Right collapses the selection to its left
+or right edge without moving an extra character, regardless of the active end.
+Shift+Left/Right continues from the active end and keeps the anchor. Checks
+cover both selection directions, select-all, existing carets, UTF-8 character
+boundaries and multiline CRLF pairs.
+
 The shared SDK test checks selection, limits, CRLF navigation, read-only fields,
 modified state, notification behavior and destruction during `EN_UPDATE`.
 Native tests also check that equal-length passwords render identically and that

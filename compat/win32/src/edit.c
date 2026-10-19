@@ -697,9 +697,11 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fCtrl && w == 'Z') { UndoEdit(hwnd); return 0; }
         if (w == VK_LEFT) {
             if (fCtrl) ich = IchEditWord(hwnd, ich, FALSE);
+            else if (!fShift && lp->ichAnchor != ich) ich = min(lp->ichAnchor, ich);
             else if (ich != 0) { ich = IchEditPrev(hwnd, ich); if (ich != 0 && lp->pszTitle[ich] == '\n' && lp->pszTitle[ich - 1] == '\r') ich--; }
         } else if (w == VK_RIGHT) {
             if (fCtrl) ich = IchEditWord(hwnd, ich, TRUE);
+            else if (!fShift && lp->ichAnchor != ich) ich = max(lp->ichAnchor, ich);
             else if (ich < cch) { if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') ich++; ich = IchEditNext(hwnd, ich); }
         }
         else if (w == VK_HOME) ich = !fCtrl && (lp->dwStyle & ES_MULTILINE) ? IchLineStart(hwnd, ich) : 0;

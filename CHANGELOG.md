@@ -17,6 +17,12 @@ produce different results from a 2.6j host for the same turn.
   bundle's ICNS use the same inset. Game behavior and regression baselines are
   unchanged.
 
+- `CompatEditProc` now collapses a text selection to its left edge on Left and
+  right edge on Right. Previously it moved one character from the active end,
+  making the result depend on selection direction. Checks cover both selection
+  directions, Shift extension, UTF-8 and multiline CRLF boundaries. Game behavior
+  and native regression baselines are unchanged.
+
 - `PaintControl` now bounds the vertical padding of checkbox and radio focus
   frames by the control height. Previously the top and bottom edges could be
   clipped on short controls such as the PRT page. Checks cover all ten PRT
