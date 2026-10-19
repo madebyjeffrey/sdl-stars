@@ -99,6 +99,7 @@ struct HWND__ {
     BOOL fRestoreMax;
     BOOL fCaptionActive;
     BOOL fDialog, fModal, fEndDialog;
+    BOOL fSilentAlerts;
     UINT cNativeFileDialogs;
     BOOL fKeepNative, fDeferPresent;
     UINT cPresentDefer;

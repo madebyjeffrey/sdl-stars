@@ -102,7 +102,8 @@ static int IdRun(UINT type, int id, int idDef, int md, BOOL task) {
     mode = md; idChoose = id; idDefault = idDef; stage = 0; fDone = FALSE; fTask = task;
     hwndExpectedOwner = task ? NULL : hwndOwner;
     if (!SetTimer(hwndOwner, 91, 20, NULL)) return -1;
-    result = MessageBox(task ? NULL : hwndOwner, "First line\nSecond line with &literal ampersand.", "Stars Message Contract", type);
+    result = MessageBox(task ? NULL : md == 11 ? GetDlgItem(hwndOwner, 20) : hwndOwner,
+                        "First line\nSecond line with &literal ampersand.", "Stars Message Contract", type);
     KillTimer(hwndOwner, 91);
     printf("Message type 0x%x mode %d result %d\n", type, md, result);
     if (!IsWindowEnabled(hwndOwner) || !IsWindowEnabled(hwndOther) || IsWindowEnabled(hwndDisabled)) cErrors++;
@@ -145,6 +146,18 @@ int main(int argc, char **argv) {
     hwndEdit = CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, 4, 4, 100, 22, hwndOwner, (HMENU)20, NULL, NULL); CHECK(hwndEdit);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
     SetFocus(hwndEdit);
+#ifndef _WIN32
+    CHECK(StarsCompatSetWindowAlertSounds(hwndOwner, FALSE));
+    CHECK(IdRun(MB_YESNO | MB_ICONQUESTION, IDYES, IDYES, 11, FALSE) == IDYES);
+    CHECK(IdRun(MB_YESNO | MB_ICONQUESTION, IDYES, IDYES, 6, FALSE) == IDYES);
+    CHECK(cAudioQueues == 0 && !(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));
+    CHECK(StarsCompatSetWindowAlertSounds(hwndOther, FALSE));
+    CHECK(StarsCompatSetWindowAlertSounds(hwndOwner, TRUE));
+    CHECK(IdRun(MB_OK | MB_ICONASTERISK, IDOK, IDOK, 0, FALSE) == IDOK);
+    CHECK(cAudioQueues == 1);
+    CHECK(StarsCompatSetWindowAlertSounds(hwndOther, TRUE));
+    cSeen = 0;
+#endif
     CHECK(IdRun(MB_OK | MB_ICONASTERISK, IDOK, IDOK, 0, FALSE) == IDOK);
 #ifndef _WIN32
     CHECK(GetFocus() == hwndEdit);

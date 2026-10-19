@@ -70,6 +70,25 @@ add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
 set_tests_properties(win32_native_tutorial_smoke_dummy PROPERTIES LABELS "client;tutorial-smoke" TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
+add_executable(stars-compat-controls tests/compat/win32_controls.c)
+target_include_directories(stars-compat-controls PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-compat-controls PRIVATE stars_options stars_win32 SDL3::SDL3)
+target_compile_options(stars-compat-controls PRIVATE -Wall -Wextra -Werror)
+set_target_properties(stars-compat-controls PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_test(NAME win32_controls COMMAND stars-compat-controls)
+set_tests_properties(win32_controls PROPERTIES LABELS compat TIMEOUT 60
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
+
+add_executable(stars-compat-messagebox tests/compat/win32_messagebox.c)
+target_include_directories(stars-compat-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-compat-messagebox PRIVATE stars_options stars_win32 SDL3::SDL3)
+stars_test_redirect(stars-compat-messagebox SDL_PutAudioStreamData)
+target_compile_options(stars-compat-messagebox PRIVATE -Wall -Wextra -Wpedantic -Werror)
+set_target_properties(stars-compat-messagebox PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_test(NAME win32_messagebox COMMAND stars-compat-messagebox)
+set_tests_properties(win32_messagebox PROPERTIES LABELS compat TIMEOUT 30
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
+
 foreach(STARS_UTF8_TEST utf8 font edit profile)
     add_executable(stars-compat-${STARS_UTF8_TEST} tests/compat/win32_${STARS_UTF8_TEST}.c)
     target_include_directories(stars-compat-${STARS_UTF8_TEST} PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")

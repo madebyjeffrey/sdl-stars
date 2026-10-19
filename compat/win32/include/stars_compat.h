@@ -12,6 +12,11 @@
 BOOL StarsCompatBeginDialogSequence(HWND hwndOwner);
 void StarsCompatEndDialogSequence(void);
 
+/* Message boxes owned by this window, its children or its owned windows can
+ * be silent. Other windows and explicit MessageBeep calls keep their sounds.
+ */
+BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
+
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
  * Snapshot strings are UTF-8; fUtf8Text is always true.

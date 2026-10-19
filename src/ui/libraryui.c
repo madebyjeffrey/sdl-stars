@@ -2782,6 +2782,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     int y;
     Uint64 msStart = SDL_GetTicks();
 
+    StarsCompatSetWindowAlertSounds(hwnd, FALSE);
     fHostLibraryView = FALSE;
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);

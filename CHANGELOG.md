@@ -18,6 +18,11 @@ produce different results from a 2.6j host for the same turn.
   of retaining its I-beam. Game behavior and native regression baselines are
   unchanged.
 
+- Library management prompts are now silent, including delete confirmations,
+  errors and prompts from owned dialogs and wizards. `InitLibraryGames` disables
+  message-box sounds for the library window's ownership tree; unrelated game
+  alerts retain their sounds. Game behavior and regression baselines are unchanged.
+
 - The race-save confirmation now displays ordinary quotation marks around the
   design name. Its text-table entry previously used C-style escapes, which this
   literal text format displayed as extra backslashes. Game behavior and native
