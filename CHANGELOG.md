@@ -11,6 +11,11 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- The in-game File menu now labels its existing Close action "Return to Main
+  Screen", making the route back to Games, Host Games and Race Designs explicit.
+  It keeps the existing save/discard/cancel flow and macOS Command+W shortcut.
+  Game behavior and regression baselines are unchanged.
+
 - `FGetNewGameName` now derives a new game's library entry from its game title,
   without a separate naming dialog. Filename-invalid characters are adjusted
   without changing the stored title. A duplicate offers Add Revision (for

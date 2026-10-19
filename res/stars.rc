@@ -85,7 +85,7 @@ BEGIN
         MENUITEM "&New...\tCtrl+N", IDM_TOOL_NEW_GAME
         MENUITEM "Custom &Race Wizard...", IDM_RACE_CREATE
         MENUITEM "&Open...\tCtrl+O", IDM_TOOL_OPEN_GAME
-        MENUITEM "&Close", IDM_FILE_RETURN_TO_TITLE
+        MENUITEM "Return to &Main Screen", IDM_FILE_RETURN_TO_TITLE
         MENUITEM "&Save\tCtrl+S", IDM_TURN_END_A
         MENUITEM "Save &And Submit\tCtrl+A", IDM_TURN_END_B
         MENUITEM "Export Orders...", IDM_LIBRARY_EXPORT_ORDERS
