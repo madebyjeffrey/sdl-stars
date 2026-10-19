@@ -11,6 +11,10 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- The Continue button keeps the short "Continue Game" label. Its remembered
+  game, player and year appear on a separate line below the player selector,
+  avoiding clipped button text. Continue behavior and baselines are unchanged.
+
 - The Games view now lists each managed game once and uses a separate Player
   dropdown for its available turns, including each player's year. Selecting a
   game defaults to its remembered player when available; refreshing preserves

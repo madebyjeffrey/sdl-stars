@@ -2887,6 +2887,9 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("COMBOBOX", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
                  94, y + 96, min(280, lprc->right - 118), 160, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_PLAYERS, hInst, NULL);
+    CreateWindow("STATIC", "", WS_CHILD | WS_VISIBLE,
+                 24, y + 122, lprc->right - 48, 18, hwnd,
+                 (HMENU)(uintptr_t)IDC_LIBRARY_CONTINUE_DETAILS, hInst, NULL);
     ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), SW_HIDE);
     ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), SW_HIDE);
     RefreshLibraryGames(hwnd);
@@ -3044,9 +3047,11 @@ void RefreshLibraryGames(HWND hwnd) {
         CchSnprintf(szLabel, sizeof(szLabel), continueLibrary.fTurnAvailable ?
                     PszGetCompressedString(idsLibraryContinuePlayer) : PszGetCompressedString(idsLibraryContinueChoosePlayer),
                     continueLibrary.szName, continueLibrary.iPlayer + 1, continueLibrary.iYear);
-        SetWindowText(rghwndBtnSplash[2], szLabel);
+        SetDlgItemText(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, szLabel);
+        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsContinueGame));
         EnableWindow(rghwndBtnSplash[2], TRUE);
     } else {
+        SetDlgItemText(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, "");
         SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsNewGame + 2));
         EnableWindow(rghwndBtnSplash[2], FALSE);
     }

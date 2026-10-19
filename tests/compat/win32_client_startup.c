@@ -3088,6 +3088,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         const char *pszYear = getenv("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
         char szPlayer[32];
         GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
+        if (strcmp(szContinue, PszGetCompressedString(idsContinueGame))) goto LDone;
+        GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
         CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
                     getenv("STARS_CLIENT_EXPECT_PLAYER") ? getenv("STARS_CLIENT_EXPECT_PLAYER") : "2");
@@ -3109,7 +3111,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         char szLabel[256];
         HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
         if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
-        GetWindowTextA(rghwndBtnSplash[2], szLabel, sizeof(szLabel));
+        GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szLabel, sizeof(szLabel));
         if (!strstr(szLabel, "Choose Player")) goto LDone;
         if (iStage != 30) {
             iStage = 30;
