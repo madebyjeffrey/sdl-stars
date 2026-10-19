@@ -17,6 +17,23 @@ produce different results from a 2.6j host for the same turn.
   bundle's ICNS use the same inset. Game behavior and regression baselines are
   unchanged.
 
+- macOS now uses Command letter shortcuts for New, Open, Save, Find, Close and
+  Quit, with matching menu hints. `InitInstance` assigns Command+Shift+S to Save
+  and Submit and Command+R to library Continue, avoiding Select All/Copy conflicts.
+  Text fields accept Command+A/C/X/V/Z. Command does not set Control's input
+  state or trigger the debug function-key shortcuts. Queued-input checks use the
+  actual application tables and verify menu hints and editing behavior. Close
+  retains its save prompt; Quit uses the existing exit handler.
+  Game behavior, file layouts and native regression baselines are unchanged.
+
+- `CompatEditProc` now accepts Option+Left/Right for word navigation on macOS,
+  with Shift extending the selection. These keys previously arrived as Alt menu
+  messages and did not move the caret. `CompatRouteEvent` routes Option editing
+  keys without activating menus. Control word navigation on Windows and Linux
+  uses the same existing word boundaries. Queued-input checks cover both modifier
+  keys, selections and UTF-8 words. Game behavior and native regression baselines
+  are unchanged.
+
 - `CompatEditProc` now collapses a text selection to its left edge on Left and
   right edge on Right. Previously it moved one character from the active end,
   making the result depend on selection direction. Checks cover both selection
@@ -27,6 +44,12 @@ produce different results from a 2.6j host for the same turn.
   frames by the control height. Previously the top and bottom edges could be
   clipped on short controls such as the PRT page. Checks cover all ten PRT
   radios, compact control borders and unchanged label pixels. Game behavior and
+  native regression baselines are unchanged.
+
+- On macOS, `CompatEditProc` now treats Command+Left/Right as Home/End in text
+  fields, with Shift extending the selection. Multiline fields use the current
+  visual line's boundaries. Both Command keys retain their queued modifier state;
+  ordinary arrows and Control word navigation are unchanged. Game behavior and
   native regression baselines are unchanged.
 
 - `PaintControl` now places checkbox and radio-button focus frames outside the

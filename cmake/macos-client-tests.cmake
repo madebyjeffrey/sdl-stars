@@ -44,13 +44,15 @@ add_test(NAME win32_client_host_library_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_hostgames.py" "$<TARGET_FILE:stars-compat-client-startup>")
 set_tests_properties(win32_client_host_library_dummy PROPERTIES LABELS client TIMEOUT 75)
 
-foreach(STARS_CLIENT_SCENARIO startup race)
+foreach(STARS_CLIENT_SCENARIO startup race mac_shortcuts)
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/${STARS_CLIENT_SCENARIO}")
     add_test(NAME win32_client_${STARS_CLIENT_SCENARIO}_dummy COMMAND stars-compat-client-startup)
     set_tests_properties(win32_client_${STARS_CLIENT_SCENARIO}_dummy PROPERTIES LABELS client TIMEOUT 60
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/${STARS_CLIENT_SCENARIO}"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat;STARS_SETTINGS_DIR=${CMAKE_BINARY_DIR}/test-client/${STARS_CLIENT_SCENARIO}")
 endforeach()
+set_property(TEST win32_client_mac_shortcuts_dummy APPEND PROPERTY ENVIRONMENT
+    "STARS_CLIENT_MAC_SHORTCUTS_TEST=1")
 set_property(TEST win32_client_race_dummy APPEND PROPERTY ENVIRONMENT
     "STARS_CLIENT_RACE_CAPTURE=${CMAKE_BINARY_DIR}/test-client/race/habitat.bmp")
 

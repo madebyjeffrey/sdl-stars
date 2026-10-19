@@ -38,6 +38,22 @@ Shift+Left/Right continues from the active end and keeps the anchor. Checks
 cover both selection directions, select-all, existing carets, UTF-8 character
 boundaries and multiline CRLF pairs.
 
+Control+Left/Right moves by word on Windows and Linux. On macOS, Option+Left/Right
+uses the same word boundaries. Adding Shift extends from the existing selection
+anchor, including when a selection is already active. Native queued-input checks
+cover both modifier keys, both field types, both directions and UTF-8 words.
+
+On macOS, Command+Left/Right uses the same navigation as Home/End: the start or
+end of a single-line field, or the current visual line in a multiline field.
+Shift extends the selection from its existing anchor. Both Command keys work.
+The native edit check routes SDL key events through the input queue and verifies
+UTF-8 boundaries, both field types, selection anchors and modifier release.
+
+macOS text fields also accept Command+A/C/X/V/Z for Select All, Copy, Cut,
+Paste and Undo. These shortcuts reuse the existing selection, clipboard,
+password/read-only and undo handling. Application tables reserve Command+A/C
+for editing instead of Save and Submit or Continue.
+
 The shared SDK test checks selection, limits, CRLF navigation, read-only fields,
 modified state, notification behavior and destruction during `EN_UPDATE`.
 Native tests also check that equal-length passwords render identically and that

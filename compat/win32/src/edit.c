@@ -535,7 +535,7 @@ static void EditContextMenu(HWND hwnd, LPARAM l) {
 LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND lp = LpCompatWindow(hwnd);
     UINT cch, ich, ichStart, ichEnd, iLine, cchColumn, cLine, iUndoAction;
-    BOOL fShift, fCtrl;
+    BOOL fShift, fCtrl, fWord, fShortcut;
     LRESULT result;
     WORD cchMax;
     RECT rc;
@@ -688,19 +688,30 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_KEYDOWN:
         fShift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
         fCtrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+        fWord = fCtrl;
+        fShortcut = fCtrl;
+#ifdef __APPLE__
+        fWord = fWord || (GetKeyState(VK_MENU) & 0x8000);
+        fShortcut = fShortcut || ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000);
+        /* Command arrows use the same line boundaries and Shift anchor as Home/End. */
+        if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000) {
+            if (w == VK_LEFT) w = VK_HOME;
+            else if (w == VK_RIGHT) w = VK_END;
+        }
+#endif
         ich = lp->ichCaret;
         if (w == VK_APPS || (w == VK_F10 && fShift)) { EditContextMenu(hwnd, -1); return 0; }
-        if (fCtrl && w == 'A') { SelectEdit(hwnd, 0, cch); return 0; }
-        if (fCtrl && w == 'C') { CopyEdit(hwnd); return 0; }
-        if (fCtrl && w == 'X') return CompatEditProc(hwnd, WM_CUT, 0, 0);
-        if (fCtrl && w == 'V') { PasteEdit(hwnd); return 0; }
-        if (fCtrl && w == 'Z') { UndoEdit(hwnd); return 0; }
+        if (fShortcut && w == 'A') { SelectEdit(hwnd, 0, cch); return 0; }
+        if (fShortcut && w == 'C') { CopyEdit(hwnd); return 0; }
+        if (fShortcut && w == 'X') return CompatEditProc(hwnd, WM_CUT, 0, 0);
+        if (fShortcut && w == 'V') { PasteEdit(hwnd); return 0; }
+        if (fShortcut && w == 'Z') { UndoEdit(hwnd); return 0; }
         if (w == VK_LEFT) {
-            if (fCtrl) ich = IchEditWord(hwnd, ich, FALSE);
+            if (fWord) ich = IchEditWord(hwnd, ich, FALSE);
             else if (!fShift && lp->ichAnchor != ich) ich = min(lp->ichAnchor, ich);
             else if (ich != 0) { ich = IchEditPrev(hwnd, ich); if (ich != 0 && lp->pszTitle[ich] == '\n' && lp->pszTitle[ich - 1] == '\r') ich--; }
         } else if (w == VK_RIGHT) {
-            if (fCtrl) ich = IchEditWord(hwnd, ich, TRUE);
+            if (fWord) ich = IchEditWord(hwnd, ich, TRUE);
             else if (!fShift && lp->ichAnchor != ich) ich = max(lp->ichAnchor, ich);
             else if (ich < cch) { if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') ich++; ich = IchEditNext(hwnd, ich); }
         }

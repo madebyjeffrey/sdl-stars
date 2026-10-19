@@ -49,6 +49,9 @@ static void InputModifiers(SDL_Keymod mod) {
     SetKeyDown(VK_LSHIFT, mod & SDL_KMOD_LSHIFT); SetKeyDown(VK_RSHIFT, mod & SDL_KMOD_RSHIFT);
     SetKeyDown(VK_LCONTROL, mod & SDL_KMOD_LCTRL); SetKeyDown(VK_RCONTROL, mod & SDL_KMOD_RCTRL);
     SetKeyDown(VK_LMENU, mod & SDL_KMOD_LALT); SetKeyDown(VK_RMENU, mod & SDL_KMOD_RALT);
+#ifdef __APPLE__
+    SetKeyDown(VK_LWIN, mod & SDL_KMOD_LGUI); SetKeyDown(VK_RWIN, mod & SDL_KMOD_RGUI);
+#endif
     SetKeyDown(VK_SHIFT, mod & SDL_KMOD_SHIFT); SetKeyDown(VK_CONTROL, mod & SDL_KMOD_CTRL);
     SetKeyDown(VK_MENU, mod & SDL_KMOD_ALT);
     rgbInput[VK_CAPITAL] = (BYTE)((rgbInput[VK_CAPITAL] & 0x80) | !!(mod & SDL_KMOD_CAPS));
@@ -232,6 +235,10 @@ static UINT VkFromScancode(SDL_Scancode sc) {
     case SDL_SCANCODE_LSHIFT: case SDL_SCANCODE_RSHIFT: return VK_SHIFT;
     case SDL_SCANCODE_LCTRL: case SDL_SCANCODE_RCTRL: return VK_CONTROL;
     case SDL_SCANCODE_LALT: case SDL_SCANCODE_RALT: return VK_MENU;
+#ifdef __APPLE__
+    case SDL_SCANCODE_LGUI: return VK_LWIN;
+    case SDL_SCANCODE_RGUI: return VK_RWIN;
+#endif
     default: return 0;
     }
 }
@@ -356,6 +363,10 @@ static DWORD DwKeyScan(SDL_Scancode sc) {
         case SDL_SCANCODE_RCTRL: scan = 0x1d; fExtended = 1; break;
         case SDL_SCANCODE_LALT: scan = 0x38; break;
         case SDL_SCANCODE_RALT: scan = 0x38; fExtended = 1; break;
+#ifdef __APPLE__
+        case SDL_SCANCODE_LGUI: scan = 0x5b; fExtended = 1; break;
+        case SDL_SCANCODE_RGUI: scan = 0x5c; fExtended = 1; break;
+#endif
         case SDL_SCANCODE_LEFT: scan = 0x4b; fExtended = 1; break;
         case SDL_SCANCODE_RIGHT: scan = 0x4d; fExtended = 1; break;
         case SDL_SCANCODE_UP: scan = 0x48; fExtended = 1; break;
@@ -490,6 +501,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         dwKey = 1 | DwKeyScan(lpevent->key.scancode);
         if ((lpevent->key.mod & SDL_KMOD_ALT) || vk == VK_F10 || vk == VK_MENU)
             msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_SYSKEYDOWN : WM_SYSKEYUP;
+#ifdef __APPLE__
+        /* Option arrows edit words; the Option key must not activate Alt menus. */
+        if (hwnd->iControl == 3 && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_MENU))
+            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_KEYDOWN : WM_KEYUP;
+#endif
         if (fAlt)
             dwKey |= UINT32_C(1) << 29;
         if (lpevent->key.repeat || lpevent->type == SDL_EVENT_KEY_UP)

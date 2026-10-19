@@ -208,6 +208,79 @@ int16_t FCreateFonts(HDC hdc) {
     return TRUE;
 }
 
+#ifdef __APPLE__
+static int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
+    char szItem[128], szLabel[160];
+    char *pszTab;
+    int i, cch;
+    UINT mf;
+
+    for (i = 0; i < GetMenuItemCount(hmenu); i++) {
+        if (GetMenuItemID(hmenu, i) != id) continue;
+        if (GetMenuString(hmenu, i, NULL, 0, MF_BYPOSITION) >= (int)sizeof(szItem)) return FALSE;
+        if (GetMenuString(hmenu, i, szItem, sizeof(szItem), MF_BYPOSITION) == 0) return FALSE;
+        pszTab = strchr(szItem, '\t');
+        if (pszTab) *pszTab = 0;
+        cch = CchSnprintf(szLabel, sizeof(szLabel), "%s\tCmd+%s%c", szItem,
+                         lpaccel->fVirt & FSHIFT ? "Shift+" : "", lpaccel->key);
+        if (cch <= 0 || (size_t)cch >= sizeof(szLabel)) return FALSE;
+        mf = GetMenuState(hmenu, i, MF_BYPOSITION) & (MF_CHECKED | MF_DISABLED | MF_GRAYED);
+        if (!InsertMenu(hmenu, i, MF_BYPOSITION | mf, id, szLabel)) return FALSE;
+        return RemoveMenu(hmenu, i + 1, MF_BYPOSITION);
+    }
+    return FALSE;
+}
+
+static int16_t FInitMacShortcuts(HWND hwnd) {
+    static const struct {
+        UINT idMenu;
+        ACCEL accel;
+    } rgkey[] = {
+        {IDM_TOOL_NEW_GAME, {FVIRTKEY | FCONTROL, 'N', IDM_FILE_NEW_GAME}},
+        {IDM_TOOL_OPEN_GAME, {FVIRTKEY | FCONTROL, 'O', IDM_FILE_OPEN_GAME}},
+        {IDM_TURN_END_A, {FVIRTKEY | FCONTROL, 'S', IDM_FILE_SAVE}},
+        {IDM_TURN_END_B, {FVIRTKEY | FCONTROL | FSHIFT, 'S', IDM_TURN_SAVE_SUBMIT}},
+        {IDM_VIEW_FIND, {FVIRTKEY | FCONTROL, 'F', IDM_VIEW_FIND2}},
+        {IDM_FILE_RETURN_TO_TITLE, {FVIRTKEY | FCONTROL, 'W', IDM_FILE_RETURN_TO_TITLE}},
+        {IDM_FILE_EXIT, {FVIRTKEY | FCONTROL, 'Q', IDM_FILE_EXIT}}
+    };
+    ACCEL rgaccel[32];
+    ACCEL rgtitle[] = {
+        {FVIRTKEY | FCONTROL, 'N', IDM_TITLE_NEW_GAME},
+        {FVIRTKEY | FCONTROL, 'O', IDM_TITLE_OPEN_GAME},
+        {FVIRTKEY | FCONTROL, 'R', IDM_TITLE_CONTINUE},
+        {FVIRTKEY | FCONTROL, 'Q', IDM_TITLE_EXIT}
+    };
+    HACCEL hmain, htitle;
+    HMENU hmenu, hsub;
+    int c, i, j;
+    size_t ikey;
+
+    c = CopyAcceleratorTable(hAccel, NULL, 0);
+    if (c <= 0 || (size_t)c + sizeof(rgkey) / sizeof(rgkey[0]) > sizeof(rgaccel) / sizeof(rgaccel[0]) ||
+        CopyAcceleratorTable(hAccel, rgaccel, c) != c) return FALSE;
+    hmenu = GetMenu(hwnd);
+    if (!hmenu || GetMenuItemCount(hmenu) <= 0) return FALSE;
+    for (ikey = 0; ikey < sizeof(rgkey) / sizeof(rgkey[0]); ikey++) {
+        for (i = 0; i < c && rgaccel[i].cmd != rgkey[ikey].accel.cmd; i++) {}
+        rgaccel[i] = rgkey[ikey].accel;
+        if (i == c) c++;
+        for (j = 0; j < GetMenuItemCount(hmenu); j++) {
+            hsub = GetSubMenu(hmenu, j);
+            if (hsub && GetMenuState(hsub, rgkey[ikey].idMenu, MF_BYCOMMAND) != UINT_MAX) break;
+        }
+        if (j == GetMenuItemCount(hmenu) || !FSetMacMenuShortcut(hsub, rgkey[ikey].idMenu, &rgkey[ikey].accel)) return FALSE;
+    }
+    hmain = CreateAcceleratorTable(rgaccel, c);
+    if (!hmain) return FALSE;
+    htitle = CreateAcceleratorTable(rgtitle, sizeof(rgtitle) / sizeof(rgtitle[0]));
+    if (!htitle) { DestroyAcceleratorTable(hmain); return FALSE; }
+    hAccel = hmain;
+    hAccelTitle = htitle;
+    return TRUE;
+}
+#endif
+
 int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
     int16_t sw;
     RECT    rc;
@@ -237,6 +310,9 @@ int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
     if (!hAccelTitle) {
         return FALSE;
     }
+#ifdef __APPLE__
+    if (!FInitMacShortcuts(hwndFrame)) return FALSE;
+#endif
     if (nCmdShow != 1) {
         sw = nCmdShow;
     } else {

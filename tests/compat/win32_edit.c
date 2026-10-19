@@ -311,6 +311,134 @@ static int TestWrapping(HWND hwndParent) {
     CHECK(SendMessage(hwnd, EM_GETLINECOUNT, 0, 0) < cLine);
     CHECK(DestroyWindow(hwnd)); return 0;
 }
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+static int TestWordNavigation(HWND hwndEdit, HWND hwndMulti) {
+    static const struct {
+        SDL_Scancode sc;
+        BOOL fShift;
+        UINT ichAnchor, ichCaret;
+        DWORD dwSel;
+    } rgkey[] = {
+        {SDL_SCANCODE_LEFT, FALSE, 6, 6, MAKELONG(4, 4)},
+        {SDL_SCANCODE_RIGHT, FALSE, 6, 6, MAKELONG(8, 8)},
+        {SDL_SCANCODE_LEFT, TRUE, 6, 6, MAKELONG(4, 6)},
+        {SDL_SCANCODE_RIGHT, TRUE, 6, 6, MAKELONG(6, 8)},
+        {SDL_SCANCODE_LEFT, TRUE, 6, 8, MAKELONG(4, 6)},
+        {SDL_SCANCODE_RIGHT, TRUE, 6, 4, MAKELONG(6, 8)},
+        {SDL_SCANCODE_LEFT, TRUE, 3, 3, MAKELONG(0, 3)},
+        {SDL_SCANCODE_RIGHT, TRUE, 0, 0, MAKELONG(0, 4)},
+        {SDL_SCANCODE_LEFT, FALSE, 0, 0, MAKELONG(0, 0)},
+        {SDL_SCANCODE_RIGHT, FALSE, 13, 13, MAKELONG(13, 13)}
+    };
+    static const struct {
+        SDL_Keymod mod;
+        SDL_Scancode sc;
+    } rgmod[] = {
+#ifdef __APPLE__
+        {SDL_KMOD_LALT, SDL_SCANCODE_LALT}, {SDL_KMOD_RALT, SDL_SCANCODE_RALT},
+#endif
+        {SDL_KMOD_LCTRL, SDL_SCANCODE_LCTRL}, {SDL_KMOD_RCTRL, SDL_SCANCODE_RCTRL}
+    };
+    HWND rghwnd[] = {hwndEdit, hwndMulti};
+    SDL_Event event = {0};
+    MSG msg;
+    size_t i, j, k;
+
+    for (i = 0; i < 2; i++) {
+        SetFocus(rghwnd[i]);
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+        SendMessage(rghwnd[i], EM_LIMITTEXT, 100, 0);
+        CHECK(SetWindowText(rghwnd[i], "o\xc3\xa9 two three"));
+        for (k = 0; k < sizeof(rgmod) / sizeof(rgmod[0]); k++) {
+            for (j = 0; j < sizeof(rgkey) / sizeof(rgkey[0]); j++) {
+                SendMessage(rghwnd[i], EM_SETSEL, rgkey[j].ichAnchor, rgkey[j].ichCaret);
+                event.type = SDL_EVENT_KEY_DOWN;
+                event.key.windowID = HwndCompatRoot(rghwnd[i])->id;
+                event.key.scancode = rgmod[k].sc;
+                event.key.mod = rgmod[k].mod | (rgkey[j].fShift ? SDL_KMOD_LSHIFT : 0);
+                CHECK(SDL_PushEvent(&event));
+                event.key.scancode = rgkey[j].sc;
+                CHECK(SDL_PushEvent(&event));
+                event.type = SDL_EVENT_KEY_UP;
+                CHECK(SDL_PushEvent(&event));
+                event.key.scancode = rgmod[k].sc;
+                event.key.mod = SDL_KMOD_NONE;
+                CHECK(SDL_PushEvent(&event));
+                while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                    TranslateMessage(&msg); DispatchMessage(&msg);
+                }
+                CHECK(SendMessage(rghwnd[i], EM_GETSEL, 0, 0) == rgkey[j].dwSel);
+            }
+        }
+        CHECK(FText(rghwnd[i], "o\xc3\xa9 two three") && !SendMessage(rghwnd[i], EM_GETMODIFY, 0, 0));
+    }
+    return 0;
+}
+#endif
+
+#ifdef __APPLE__
+static int TestMacNavigation(HWND hwndEdit, HWND hwndMulti) {
+    static const struct {
+        SDL_Scancode sc;
+        SDL_Keymod mod;
+        DWORD rgdwSel[2];
+    } rgkey[] = {
+        {SDL_SCANCODE_LEFT, SDL_KMOD_LGUI, {MAKELONG(0, 0), MAKELONG(7, 7)}},
+        {SDL_SCANCODE_RIGHT, SDL_KMOD_RGUI, {MAKELONG(5, 5), MAKELONG(12, 12)}},
+        {SDL_SCANCODE_LEFT, SDL_KMOD_LGUI | SDL_KMOD_LSHIFT, {MAKELONG(0, 3), MAKELONG(7, 10)}},
+        {SDL_SCANCODE_RIGHT, SDL_KMOD_RGUI | SDL_KMOD_RSHIFT, {MAKELONG(3, 5), MAKELONG(10, 12)}},
+        {SDL_SCANCODE_LEFT, SDL_KMOD_NONE, {MAKELONG(1, 1), MAKELONG(8, 8)}},
+        {SDL_SCANCODE_RIGHT, SDL_KMOD_NONE, {MAKELONG(4, 4), MAKELONG(11, 11)}},
+        {SDL_SCANCODE_LEFT, SDL_KMOD_LCTRL, {MAKELONG(0, 0), MAKELONG(7, 7)}},
+        {SDL_SCANCODE_RIGHT, SDL_KMOD_RCTRL, {MAKELONG(5, 5), MAKELONG(14, 14)}}
+    };
+    HWND rghwnd[] = {hwndEdit, hwndMulti};
+    const char *rgpsz[] = {"A\xc3\xa9" "BC", "first\r\nA\xc3\xa9" "BC\r\nlast"};
+    SDL_Event event = {0};
+    MSG msg;
+    UINT ichBase;
+    size_t i, j;
+
+    for (i = 0; i < 2; i++) {
+        SetFocus(rghwnd[i]);
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+        SendMessage(rghwnd[i], EM_LIMITTEXT, 100, 0);
+        CHECK(SetWindowText(rghwnd[i], rgpsz[i]));
+        ichBase = i == 0 ? 0 : 7;
+        for (j = 0; j < sizeof(rgkey) / sizeof(rgkey[0]); j++) {
+            // Continue the preceding Shift selection to check its anchor survives.
+            if (j != 3) SendMessage(rghwnd[i], EM_SETSEL, ichBase + 3, ichBase + 3);
+            event.type = SDL_EVENT_KEY_DOWN;
+            event.key.windowID = HwndCompatRoot(rghwnd[i])->id;
+            event.key.scancode = rgkey[j].sc;
+            event.key.mod = rgkey[j].mod;
+            CHECK(SDL_PushEvent(&event));
+            event.type = SDL_EVENT_KEY_UP;
+            event.key.mod = rgkey[j].mod & SDL_KMOD_GUI ? rgkey[j].mod : SDL_KMOD_NONE;
+            CHECK(SDL_PushEvent(&event));
+            // Release Command before dispatch, exercising the queued key snapshot.
+            if (rgkey[j].mod & SDL_KMOD_GUI) {
+                event.key.scancode = rgkey[j].mod & SDL_KMOD_LGUI ? SDL_SCANCODE_LGUI : SDL_SCANCODE_RGUI;
+                event.key.mod = SDL_KMOD_NONE;
+                CHECK(SDL_PushEvent(&event));
+            }
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&msg); DispatchMessage(&msg);
+            }
+            if (SendMessage(rghwnd[i], EM_GETSEL, 0, 0) != rgkey[j].rgdwSel[i]) {
+                fprintf(stderr, "Mac navigation: field %zu key %zu, selection %lu expected %lu\n", i, j,
+                        (unsigned long)SendMessage(rghwnd[i], EM_GETSEL, 0, 0),
+                        (unsigned long)rgkey[j].rgdwSel[i]);
+                return 1;
+            }
+            CHECK(FText(rghwnd[i], rgpsz[i]));
+            CHECK(!(GetKeyState(VK_LWIN) & 0x8000) && !(GetKeyState(VK_RWIN) & 0x8000));
+        }
+    }
+    return 0;
+}
+#endif
+
 int main(void) {
     WNDCLASS wc = {0};
     HWND hwnd, hwndEdit, hwndMulti, hwndRead, hwndKill;
@@ -339,6 +467,12 @@ int main(void) {
     CHECK(TestSelectionArrows(hwndEdit, "A\xc3\xa9" "BC") == 0);
 #endif
     CHECK(TestSelectionArrows(hwndMulti, "a\r\nbc") == 0);
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    CHECK(TestWordNavigation(hwndEdit, hwndMulti) == 0);
+#endif
+#ifdef __APPLE__
+    CHECK(TestMacNavigation(hwndEdit, hwndMulti) == 0);
+#endif
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(SetWindowText(hwndEdit, ""));
     SendMessage(hwndEdit, WM_CHAR, 'a', 1); SendMessage(hwndEdit, WM_CHAR, 'b', 1); SendMessage(hwndEdit, WM_CHAR, 'c', 1);

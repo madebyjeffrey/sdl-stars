@@ -1541,6 +1541,9 @@ int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
 #include "win32_raceversion_workflow.h"
 #include "win32_newgame_workflow.h"
 #include "win32_game_export_workflow.h"
+#ifdef __APPLE__
+#include "win32_macos_shortcuts.h"
+#endif
 
 static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarget, long ibChange, BYTE bMask) {
     FILE *pfSource, *pfTarget;
@@ -1706,6 +1709,16 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     BOOL fHadFleetName;
 
     (void)hwnd; (void)msg; (void)dwTime;
+#ifdef __APPLE__
+    if (getenv("STARS_CLIENT_MAC_SHORTCUTS_TEST")) {
+        KillTimer(NULL, id);
+        if (!FCheckMacShortcuts()) goto LDone;
+        fTitlePainted = fChecked = fPassed = TRUE;
+        puts("Mac Command shortcuts, menu hints and text editing passed");
+        PostQuitMessage(0);
+        return;
+    }
+#endif
     if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
         pszHostSource = getenv("STARS_CLIENT_HOST_IMPORT_SOURCE");
         pszHostPlayerSource = getenv("STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE");
@@ -3070,7 +3083,7 @@ int main(void) {
         !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
         !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
         !getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
-        !getenv("STARS_CLIENT_HOST_LIBRARY_TEST") &&
+        !getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && !getenv("STARS_CLIENT_MAC_SHORTCUTS_TEST") &&
         !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
         !getenv("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);

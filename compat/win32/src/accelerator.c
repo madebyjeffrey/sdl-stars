@@ -82,6 +82,14 @@ int WINAPI TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
     fVirtual = lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_SYSKEYDOWN;
     fChar = lpmsg->message == WM_CHAR || lpmsg->message == WM_SYSCHAR;
     if (!fVirtual && !fChar) return 0;
+#ifdef __APPLE__
+    /* Command aliases Control for letter commands, without changing the
+       keyboard snapshot used by text navigation and game input. */
+    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000) {
+        if (!fVirtual || lpmsg->wParam < 'A' || lpmsg->wParam > 'Z' || (GetKeyState(VK_CONTROL) & 0x8000)) return 0;
+        mod |= FCONTROL;
+    }
+#endif
     if (GetKeyState(VK_SHIFT) & 0x8000) mod |= FSHIFT;
     if (GetKeyState(VK_CONTROL) & 0x8000) mod |= FCONTROL;
     if (GetKeyState(VK_MENU) & 0x8000) mod |= FALT;

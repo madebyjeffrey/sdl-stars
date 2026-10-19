@@ -78,6 +78,28 @@ modifier/code-page behavior. The game uses virtual bindings only. This is
 basic application coverage, not a complete Win32 accelerator implementation.
 See Microsoft's [TranslateAccelerator contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-translateacceleratora).
 
+## macOS command shortcuts
+
+The canonical resource bytes and Windows/Linux tables stay unchanged. On macOS,
+`InitInstance` copies the loaded main table, moves Save and Submit from A to
+Shift+S, adds Close on W and Quit on Q, and installs library bindings N/O/R/Q.
+The mutable main menu shows `Cmd+` hints for New, Open, Save, Save and Submit,
+Find, Close and Quit. The existing command IDs and handlers still perform each
+action; Close uses its save prompt, while Quit uses the existing exit handler.
+
+On macOS, `TranslateAcceleratorA` treats Command as the command modifier for
+virtual letter accelerators encoded with `FCONTROL`, preserving physical Control
+state and ordinary function-key bindings. Extra Shift/Option modifiers must
+still match. Command plus function keys does not invoke debug generation.
+Command+A/C/X/V/Z is handled by text controls; A and C no longer conflict with
+Save and Submit or library Continue. Legacy Alt menu-letter access remains
+separate from Command actions.
+
+`win32_client_mac_shortcuts_dummy` checks the application's configured tables,
+menu hints, both Command keys, modifier mismatches, function keys and editing
+through queued SDL input. It intercepts Save/Submit/Quit commands in a separate
+window so these checks never operate on actual game files.
+
 ## Build and verification
 
 The CLion target is `stars-compat-ui-resources` in `sdl-debug` and `sdl-release`:
