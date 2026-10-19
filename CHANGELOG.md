@@ -18,6 +18,13 @@ produce different results from a 2.6j host for the same turn.
   of retaining its I-beam. Game behavior and native regression baselines are
   unchanged.
 
+- The race creation wizard now uses a wider, taller layout on all six pages,
+  with wider name fields and trait columns, taller radio controls, more space
+  between habitat/economy rows and a lower navigation row. Previously its compact
+  layout crowded labels and inputs. The name fields also clear the advantage
+  points panel. Name limits, game behavior and native regression baselines are
+  unchanged.
+
 - The macOS application icon now scales the approved artwork to 87.5% within its
   transparent canvas. Previously it filled nearly the entire icon and hid the
   application switcher's selection highlight. SDL's runtime icon and the app

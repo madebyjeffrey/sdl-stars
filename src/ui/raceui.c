@@ -394,9 +394,9 @@ INT_PTR CALLBACK RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         SetRect(vrgrcRCW + 4, dxLabel + dxMiddle - 3 * dy, yTop + dy + 4, dxLabel + dxMiddle, dy * 2 + yTop + 4);
         for (i = 0; i < 5; i++) {
             vrgrcRCW[i + 5] = vrgrcRCW[i];
-            OffsetRect((RECT *)&vrgrcRCW[i + 5].left, 0, 3 * dy);
+            OffsetRect((RECT *)&vrgrcRCW[i + 5].left, 0, 3 * dy + dyArial8 / 2);
             vrgrcRCW[i + 10] = vrgrcRCW[i];
-            OffsetRect((RECT *)&vrgrcRCW[i + 0xa].left, 0, 6 * dy);
+            OffsetRect((RECT *)&vrgrcRCW[i + 0xa].left, 0, 6 * dy + dyArial8);
         }
         for (i = 0; i < 3; i++) {
             SetWindowPos(GetDlgItem(hwnd, i + 291), NULL, 3 * dy + dxLabel + 6, vrgrcRCW[5 * i + 3].top, dxMiddle - 6 * dy - 12, dy, SWP_NOZORDER);
@@ -404,7 +404,7 @@ INT_PTR CALLBACK RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
         cch = CchGetString(idsMaximumColonistGrowthRatePerYear, szWork);
         vrgrcRCW[15].left = dxLabel + LOWORD(GetTextExtent(hdc, szWork, cch)) + LOWORD(GetTextExtent(hdc, "15%", 3)) + 4;
-        vrgrcRCW[15].top = 9 * dy + yTop - 3;
+        vrgrcRCW[15].top = 9 * dy + yTop - 3 + 3 * (dyArial8 / 2);
         vrgrcRCW[15].right = vrgrcRCW[15].left + 15;
         vrgrcRCW[15].bottom = (dyArial8 >> 1) + vrgrcRCW[15].top + 3;
         vrgrcRCW[16] = vrgrcRCW[15];
@@ -945,7 +945,7 @@ void DrawRace3(HWND hwnd, HDC hdc, int16_t iDraw) {
         }
         ids++;
         irc += 2;
-        yTop += (int16_t)(rgRW3Spacing[i] * dyArial8) / 2;
+        yTop += (int16_t)((rgRW3Spacing[i] + 1) * dyArial8) / 2;
     }
     if (fMacintosh) {
         crcRCW = 2;
