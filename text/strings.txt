@@ -1586,3 +1586,5 @@
 0x05e6 idsLibraryGameAddRevision "Add Revision"
 0x05e7 idsLibraryGameBackToWizard "Back to Wizard"
 0x05e8 idsLibraryGameRevisionSuffix " (Revision %d)"
+0x05e9 idsLibraryPlayerSelect "Player:"
+0x05ea idsLibraryPlayerTurn "Player %d (%d)"

@@ -11,6 +11,13 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- The Games view now lists each managed game once and uses a separate Player
+  dropdown for its available turns, including each player's year. Selecting a
+  game defaults to its remembered player when available; refreshing preserves
+  the current game/player choice. Continue asks for an explicit dropdown choice
+  if the remembered turn is missing. Host Games keeps its separate view. File
+  layouts, turn generation and native regression baselines are unchanged.
+
 - The in-game File menu now labels its existing Close action "Return to Main
   Screen", making the route back to Games, Host Games and Race Designs explicit.
   It keeps the existing save/discard/cancel flow and macOS Command+W shortcut.

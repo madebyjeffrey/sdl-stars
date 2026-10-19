@@ -670,14 +670,32 @@ static BOOL FSelectClientRaceName(HWND hwndTitle, const char *pszName) {
 
 static BOOL FSelectClientGameName(HWND hwndTitle, const char *pszName) {
     HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-    char szRow[320];
-    size_t cchName = strlen(pszName);
-    LRESULT i, c;
-    c = SendMessage(hwndList, LB_GETCOUNT, 0, 0);
+    LRESULT i = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszName);
+    if (i == LB_ERR || SendMessage(hwndList, LB_SETCURSEL, i, 0) == LB_ERR) return FALSE;
+    SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_SELCHANGE), (LPARAM)hwndList);
+    return TRUE;
+}
+
+static BOOL FSelectClientLibraryPlayer(HWND hwndTitle, int iplr) {
+    HWND hwndPlayers = GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
+    LRESULT i, c = SendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
     for (i = 0; i < c; i++) {
-        if (SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szRow) >= 0 &&
-            !strncmp(szRow, pszName, cchName) && !strncmp(szRow + cchName, " - Player ", 10))
-            return SendMessage(hwndList, LB_SETCURSEL, i, 0) != LB_ERR;
+        if (SendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) != iplr) continue;
+        if (SendMessage(hwndPlayers, CB_SETCURSEL, i, 0) == CB_ERR) return FALSE;
+        SendMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_PLAYERS, CBN_SELCHANGE), (LPARAM)hwndPlayers);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL FClientLibraryPlayerYear(HWND hwndTitle, int iplr, int year) {
+    HWND hwndPlayers = GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS);
+    LRESULT i, c = SendMessage(hwndPlayers, CB_GETCOUNT, 0, 0);
+    char szPlayer[64], szExpected[64];
+    CchSnprintf(szExpected, sizeof(szExpected), "Player %d (%d)", iplr + 1, year);
+    for (i = 0; i < c; i++) {
+        if (SendMessage(hwndPlayers, CB_GETITEMDATA, i, 0) == iplr &&
+            SendMessage(hwndPlayers, CB_GETLBTEXT, i, (LPARAM)szPlayer) != CB_ERR && !strcmp(szPlayer, szExpected)) return TRUE;
     }
     return FALSE;
 }
@@ -1768,7 +1786,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     int16_t fImported;
     int iTarget, c;
     HWND hwndList, hwndListTarget;
-    char szFind[320], szName[256];
+    char szName[256];
     const char *pszExpected, *pszTarget, *pszYear, *pszCopyName;
     const char *pszHostSource, *pszHostPlayerSource, *pszHostOrderBase, *pszHostPickerBase;
     const char *pszDeleteMode;
@@ -1948,7 +1966,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             if (!(GetWindowLongPtr(hwndList, GWL_STYLE) & WS_VISIBLE) ||
                 SendMessage(hwndList, LB_SELECTSTRING, (WPARAM)-1,
-                            (LPARAM)"PlayerCopy - Player 1") == LB_ERR) goto LDone;
+                            (LPARAM)"PlayerCopy") == LB_ERR) goto LDone;
             for (iButton = 0; iButton < (int)(sizeof(rgidLibraryButton) / sizeof(rgidLibraryButton[0])); iButton++) {
                 hwndListTarget = GetDlgItem(hwndTitle, rgidLibraryButton[iButton]);
                 if (!GetWindowRect(hwndListTarget, &rcFrame)) goto LDone;
@@ -2496,8 +2514,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     if (getenv("STARS_CLIENT_GAME_DELETE_MODE")) {
         pszDeleteMode = getenv("STARS_CLIENT_GAME_DELETE_MODE");
         hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
-        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
         if (!IsWindowVisible(hwndTitle) || !GetDlgItem(hwndTitle, IDC_LIBRARY_GAME_DELETE) || iDeleteOther == LB_ERR) goto LDone;
         if (iStage == 0) {
             if (iDeleteSelected == LB_ERR) goto LDone;
@@ -2509,8 +2527,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!fLibraryGameDeletePrompt) goto LDone;
         RefreshLibraryGames(hwndTitle);
         hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game - Player 1 (2400)");
-        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game - Player 1 (2400)");
+        iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
+        iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
         fPassed = pszDeleteMode && strcmp(pszDeleteMode, "confirm") == 0 ? iDeleteSelected == LB_ERR && iDeleteOther != LB_ERR :
                   iDeleteSelected != LB_ERR && iDeleteOther != LB_ERR &&
                   (strcmp(pszDeleteMode, "cancel") == 0 || fLibraryGameDeleteFailureAlert);
@@ -2671,27 +2689,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             {
                 int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
                     atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
-                if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_GETCOUNT, 0, 0) != cExpected) goto LDone;
-            }
-            {
-                HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-                char szPlayer[320];
                 int iplrTest;
-                BOOL fPlayers[16] = {FALSE};
-                int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
-                    atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
-                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) {
-                    SendMessage(hwndList, LB_GETTEXT, iplrTest, (LPARAM)szPlayer);
-                    if (strstr(szPlayer, "Player ") && strstr(szPlayer, "(2400)")) {
-                        int iplrFound;
-                        for (iplrFound = 0; iplrFound < cExpected; iplrFound++) {
-                            char szExpected[32];
-                            CchSnprintf(szExpected, sizeof(szExpected), "Player %d (2400)", iplrFound + 1);
-                            if (strstr(szPlayer, szExpected)) fPlayers[iplrFound] = TRUE;
-                        }
-                    }
-                }
-                for (iplrTest = 0; iplrTest < cExpected; iplrTest++) if (!fPlayers[iplrTest]) goto LDone;
+                if (SendDlgItemMessage(hwndTitle, IDC_LIBRARY_GAMES, LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
+                    SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
+                for (iplrTest = 0; iplrTest < cExpected; iplrTest++)
+                    if (!FClientLibraryPlayerYear(hwndTitle, iplrTest, 2400)) goto LDone;
             }
             fChecked = TRUE;
             fPassed = TRUE;
@@ -2729,14 +2731,19 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
                 pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 RefreshLibraryGames(hwndTitle);
-                CchSnprintf(szFind, sizeof(szFind), "%s - Player 1 (%s)", pszTarget, pszYear);
-                fPassed = pszTarget && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
-                CchSnprintf(szFind, sizeof(szFind), "%s - Player 2 (2400)", pszTarget);
-                fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)szFind) != LB_ERR;
+                fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
+                    FClientLibraryPlayerYear(hwndTitle, 0, atoi(pszYear)) && FClientLibraryPlayerYear(hwndTitle, 1, 2400);
                 if (!strcmp(pszExpected, "later")) {
-                    fPassed = fPassed && SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1,
-                        (LPARAM)"managed-copy - Player 1 (2408)") != LB_ERR;
+                    fPassed = fPassed && FSelectClientGameName(hwndTitle, "managed-copy") &&
+                        FClientLibraryPlayerYear(hwndTitle, 0, 2408);
                 }
+            }
+            if (fPassed && !strcmp(pszExpected, "player16")) {
+                RefreshLibraryGames(hwndTitle);
+                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
+                    SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) == 3 &&
+                    FClientLibraryPlayerYear(hwndTitle, 15, 2401);
             }
             fChecked = TRUE;
             PostQuitMessage(fPassed ? 0 : 93);
@@ -2792,25 +2799,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iStage == 0) {
             const char *pszPlayer = getenv("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
             int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
-            int iRow;
-            char szRow[320], szPlayerPrefix[320];
-            if (!IsWindowVisible(hwndTitle)) goto LDone;
+            if (!IsWindowVisible(hwndTitle) || !FSelectClientGameName(hwndTitle, pszName)) goto LDone;
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-            iGame = SendMessage(hwndList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)pszName);
-            if (iGame == LB_ERR) goto LDone;
-            if (iWanted >= 0) {
-                CchSnprintf(szPlayerPrefix, sizeof(szPlayerPrefix), "%s - Player %d (", pszName, iWanted + 1);
-                for (iRow = (int)iGame; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
-                    if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
-                        strncmp(szRow, szPlayerPrefix, strlen(szPlayerPrefix))) continue;
-                    iGame = iRow;
-                    break;
-                }
-                if (iRow >= SendMessage(hwndList, LB_GETCOUNT, 0, 0)) goto LDone;
-            }
+            iGame = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+            if (iWanted >= 0 && !FSelectClientLibraryPlayer(hwndTitle, iWanted)) goto LDone;
             if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
                 fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
-            SendMessage(hwndList, LB_SETCURSEL, iGame, 0);
             fChecked = TRUE;
             iStage = 1;
             if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
@@ -2820,20 +2814,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
-            HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
-            int iRow;
-            char szRow[320], szPlayerPrefix[320];
-            CchSnprintf(szPlayerPrefix, sizeof(szPlayerPrefix), "%s - Player 1 (", pszName);
-            for (iRow = 0; iRow < SendMessage(hwndList, LB_GETCOUNT, 0, 0); iRow++) {
-                if (SendMessage(hwndList, LB_GETTEXT, iRow, (LPARAM)szRow) == LB_ERR ||
-                    strncmp(szRow, szPlayerPrefix, strlen(szPlayerPrefix))) continue;
-                SendMessage(hwndList, LB_SETCURSEL, iRow, 0);
-                iStage = 21;
-                if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
-                return;
-            }
-            goto LDone;
+            if (!FSelectClientGameName(hwndTitle, pszName) || !FSelectClientLibraryPlayer(hwndTitle, 0)) goto LDone;
+            iStage = 21;
+            if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
+            return;
         }
         if (IsWindow(hwndTitle)) {
             if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
@@ -3125,10 +3110,18 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
         if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
         GetWindowTextA(rghwndBtnSplash[2], szLabel, sizeof(szLabel));
-        if (!strstr(szLabel, "Choose Player") || !FPushClick(rghwndBtnSplash[2])) goto LDone;
+        if (!strstr(szLabel, "Choose Player")) goto LDone;
+        if (iStage != 30) {
+            iStage = 30;
+            if (!FPushClick(rghwndBtnSplash[2])) goto LDone;
+            return;
+        }
         if (!hwndList || SendMessage(hwndList, LB_GETTEXT,
             SendMessage(hwndList, LB_GETCURSEL, 0, 0), (LPARAM)szLabel) == LB_ERR ||
-            !strstr(szLabel, "managed-copy - Player 1 (") || !IsWindow(hwndTitle)) goto LDone;
+            strcmp(szLabel, "managed-copy") || !IsWindow(hwndTitle) ||
+            GetFocus() != GetDlgItem(hwndTitle, IDC_LIBRARY_PLAYERS) ||
+            SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR ||
+            IsWindowEnabled(rghwndBtnSplash[1])) goto LDone;
         fPassed = TRUE;
         puts("Continue selects the managed game when its remembered player is unavailable");
         PostQuitMessage(0);

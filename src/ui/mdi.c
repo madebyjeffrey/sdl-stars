@@ -2849,9 +2849,14 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
             break;
         case IDC_LIBRARY_GAMES:
+            if (HIWORD(wParam) == LBN_SELCHANGE) { RefreshLibraryPlayers(hwnd); break; }
             if (HIWORD(wParam) != LBN_DBLCLK) break;
             if (!FSelectLibraryGame(hwnd)) break;
             goto LOpenGame;
+        case IDC_LIBRARY_PLAYERS:
+            if (HIWORD(wParam) == CBN_SELCHANGE)
+                EnableWindow(rghwndBtnSplash[1], SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
+            break;
         case IDC_LIBRARY_HOST_GAMES:
             if (HIWORD(wParam) != LBN_DBLCLK) break;
             if (!FSelectLibraryHostGame(hwnd)) break;

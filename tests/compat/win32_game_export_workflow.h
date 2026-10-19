@@ -29,9 +29,8 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     const char *pszResearch = getenv("STARS_CLIENT_EXPORT_RESEARCH");
     int iPlayer = pszPlayer ? atoi(pszPlayer) : 0;
     int iResearch = pszResearch ? atoi(pszResearch) : 4;
-    HWND hwndSave = HwndWorkflowDialog(), hwndList;
-    LRESULT i, c;
-    char szDestination[512], szRow[320], szPrefix[280];
+    HWND hwndSave = HwndWorkflowDialog();
+    char szDestination[512];
     int16_t fCancel = (pszAction && !strcmp(pszAction, "cancel")) || getenv("STARS_CLIENT_EXPORT_ZIP_CANCEL") != NULL;
     int16_t fDiscard = pszAction && !strcmp(pszAction, "discard");
     int16_t fVerify = pszAction && !strcmp(pszAction, "verify");
@@ -66,15 +65,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         } else if (!FSelectClientGameName(hwndTitle, pszGame)) goto LFail;
         else if (pszAction) {
             /* Choose the requested player through the same Open Game action. */
-            hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-            c = SendMessage(hwndList, LB_GETCOUNT, 0, 0);
-            CchSnprintf(szPrefix, sizeof(szPrefix), "%s - Player %d (", pszGame, iPlayer + 1);
-            for (i = 0; i < c; i++) {
-                SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szRow);
-                if (!strncmp(szRow, szPrefix, strlen(szPrefix))) break;
-            }
-            if (i == c) goto LFail;
-            SendMessage(hwndList, LB_SETCURSEL, i, 0);
+            if (!FSelectClientLibraryPlayer(hwndTitle, iPlayer)) goto LFail;
             iStage = 1;
             if (!FPushClick(rghwndBtnSplash[1])) goto LFail;
         } else {

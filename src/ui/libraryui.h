@@ -8,6 +8,8 @@
 #define IDD_LIBRARY_NAME 2400
 #define IDD_LIBRARY_GAME_REVISION 2440
 #define IDC_LIBRARY_GAME_REVISION_TEXT 2441
+#define IDC_LIBRARY_PLAYERS 2442
+#define IDC_LIBRARY_PLAYER_LABEL 2443
 #define IDC_LIBRARY_GAMES 2401
 #define IDC_LIBRARY_IMPORT 2402
 #define IDC_LIBRARY_IMPORT_FOLDER 2403
@@ -42,6 +44,7 @@ INT_PTR CALLBACK LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, 
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
 void InitLibraryGames(HWND hwnd, const RECT *lprc);
 void RefreshLibraryGames(HWND hwnd);
+void RefreshLibraryPlayers(HWND hwnd);
 void RefreshLibraryHostGames(HWND hwnd);
 void SelectLibraryView(HWND hwnd, int16_t fHost);
 int16_t FSelectLibraryGame(HWND hwnd);

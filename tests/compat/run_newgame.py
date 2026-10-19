@@ -365,9 +365,11 @@ def main():
             assert (renamed / name / 'renamed-copy.m1').read_bytes() == playable_turn
         assert (renamed / 'renamed-copy.xy').read_bytes() == (playable / 'managed-playable.xy').read_bytes()
         assert (playable / '.library').read_text(encoding='utf-8').splitlines()[2:4] == ['0', '42']
-        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='1')
         assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
-        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy')
+        run(executable, work, STARS_CLIENT_LIBRARY_OPEN='renamed-copy',
+            STARS_CLIENT_LIBRARY_OPEN_PLAYER='1')
         assert (renamed / '.library').read_text(encoding='utf-8').splitlines()[4] == 'managed-playable'
 
         # Two-digit player extensions use the full one-based player number.
