@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-/* Keep one native window across an application's same-sized modal wizard pages.
- * Logical HWNDs and controls still have independent lifetimes. End the sequence
- * on every exit path; nested sequences are rejected without changing state.
+/* Keep one native window and its completed frame across same-sized modal
+ * wizard pages. Logical HWNDs and controls still have independent lifetimes.
+ * End the sequence on every exit path; nested sequences are rejected without changing state.
  */
 BOOL StarsCompatBeginDialogSequence(HWND hwndOwner);
 void StarsCompatEndDialogSequence(void);

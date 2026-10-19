@@ -163,10 +163,59 @@ static int cEarlyFrameShow;
 static BOOL fToolbarMenu, fToolbarAnchor;
 static int xToolbarMenu, yToolbarMenu, cToolbarMenu;
 static unsigned cRenderPresent;
+static SDL_WindowID idRacePresentation;
+static BOOL fRacePresentation = TRUE;
+
+bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const char *pszTitle) {
+    HWND hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
+    SDL_Event event = {0};
+    unsigned cPresentBefore = cRenderPresent;
+    bool fResult = SDL_SetWindowTitle(lpWindow, pszTitle);
+
+    if (hwnd && hwnd->fDeferPresent && hwnd->lpTexture &&
+        SDL_GetBooleanProperty(SDL_GetTextureProperties(hwnd->lpTexture), "stars.test.race_frame", false)) {
+        // Cocoa can expose the reused window while the next page initializes.
+        event.type = SDL_EVENT_WINDOW_EXPOSED;
+        event.window.windowID = hwnd->id;
+        SDL_PushEvent(&event);
+        if (cRenderPresent == cPresentBefore) {
+            fprintf(stderr, "Race wizard exposure did not restore the previous frame during page initialization\n");
+            fRacePresentation = FALSE;
+        }
+    }
+    return fResult;
+}
 
 bool SDL_RenderPresent(SDL_Renderer *lprenderer);
 bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
+    HWND hwnd;
+    static unsigned cRaceFrame;
+    RECT rc;
+    BYTE r, g, b, a;
+    int x, y;
+    BOOL fButton;
+
     cRenderPresent++;
+    for (hwnd = HwndCompatRegistry(); hwnd; hwnd = hwnd->lpNext) {
+        if (!hwnd->fAlive || hwnd->lpRenderer != lprenderer || !hwnd->lpfnDlg ||
+            (hwnd->lpfnDlg != RaceWizardDlg1 && hwnd->lpfnDlg != RaceWizardDlg2 &&
+             hwnd->lpfnDlg != RaceWizardDlg3 && hwnd->lpfnDlg != RaceWizardDlg4 &&
+             hwnd->lpfnDlg != RaceWizardDlg5 && hwnd->lpfnDlg != RaceWizardDlg6) ||
+            !hwnd->lpComposite || hwnd->cxDlgUnit == 0) continue;
+        rc = (RECT){66, 218, 110, 232};
+        MapDialogRect(hwnd, &rc);
+        fButton = FALSE;
+        for (y = rc.top * hwnd->iCanvasScale; y < rc.bottom * hwnd->iCanvasScale; y++)
+            for (x = rc.left * hwnd->iCanvasScale; x < rc.right * hwnd->iCanvasScale; x++)
+                if (SDL_ReadSurfacePixel(hwnd->lpComposite, x, y, &r, &g, &b, &a) &&
+                    (r != 192 || g != 192 || b != 192)) fButton = TRUE;
+        if (!fButton) {
+            fprintf(stderr, "Race frame %u has no Cancel button (visible %d, destroying %d, deferred %d)\n",
+                    cRaceFrame, hwnd->fVisible, hwnd->fDestroying, hwnd->fDeferPresent);
+            fRacePresentation = FALSE;
+        }
+        cRaceFrame++;
+    }
     return SDL_RenderPresent(lprenderer);
 }
 
@@ -501,6 +550,17 @@ bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     size_t cb, i;
 
     hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
+    if (hwnd && (hwnd->lpfnDlg == RaceWizardDlg1 || hwnd->lpfnDlg == RaceWizardDlg2 ||
+                 hwnd->lpfnDlg == RaceWizardDlg3 || hwnd->lpfnDlg == RaceWizardDlg4 ||
+                 hwnd->lpfnDlg == RaceWizardDlg5 || hwnd->lpfnDlg == RaceWizardDlg6)) {
+        SDL_PropertiesID idProperties = hwnd->lpTexture ? SDL_GetTextureProperties(hwnd->lpTexture) : 0;
+        if (idRacePresentation == hwnd->id && !SDL_GetBooleanProperty(idProperties, "stars.test.race_frame", false)) {
+            fprintf(stderr, "Race wizard discarded its displayed frame between pages\n");
+            fRacePresentation = FALSE;
+        }
+        idRacePresentation = hwnd->id;
+        SDL_SetBooleanProperty(idProperties, "stars.test.race_frame", true);
+    }
     if (hwnd == hwndFrame && !fInitComplete) cEarlyFrameShow++;
     if (hwnd && hwnd->lpfnWndProc == TitleWndProc && cTitleShow++ == 0) {
         if (hwnd->lpCanvas && hwnd->lpComposite) {
@@ -2942,7 +3002,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         UpdateWindow(hwndRace);
         for (hwnd = GetWindow(hwndRace, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) UpdateWindow(hwnd);
-        if (!IsWindowVisible(hwndRace) || IsWindowEnabled(hwndWizard) || !FCompatPresent(hwndRace)) goto LDone;
+        if (!IsWindowVisible(hwndRace) || IsWindowEnabled(hwndWizard) || !fRacePresentation || !FCompatPresent(hwndRace)) goto LDone;
         if (iRacePage == 0) idRaceWindow = hwndRace->id;
         else if (hwndRace->id != idRaceWindow || hwndRace == hwndRacePrevious || IsWindow(hwndRacePrevious)) goto LDone;
         hwndRacePrevious = hwndRace;

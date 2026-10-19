@@ -11,6 +11,21 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- `FWatchLiveResize` now restores the retained race-wizard frame when macOS
+  exposes the window while the next page is still initializing. Previously
+  logical visibility suppressed that redraw, allowing the native background
+  to flash despite retaining the window and texture. `CreateWindowExA` registers
+  the replacement page before updating its native caption and avoids redundant
+  native setup during the handoff. Game behavior and regression baselines are
+  unchanged.
+
+- `CreateWindowExA` now preserves the race wizard's completed frame and native
+  owner attachment across Back/Next transitions. Previously the reused window
+  discarded its drawing resources and reattached to its owner for every page,
+  allowing a visible flash. All six pages keep the same window and replace its
+  contents after painting completes. Game behavior and regression baselines
+  are unchanged.
+
 - `CompatEditProc` now shows the standard I-beam mouse cursor over text fields.
   Previously they retained the surrounding window's cursor.
   `FCompatControlClass` gives the other standard controls and dialog backgrounds
