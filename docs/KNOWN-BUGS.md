@@ -64,6 +64,16 @@ The client integration test opens, closes by button, reopens and closes through
 an SDL window-close event, checking handle destruction and owner availability.
 Turn generation and saved data are unchanged.
 
+## Technology Browser availability filter selection — fixed on main
+
+`researchui.c`: `BrowserDlg` did not handle the availability checkbox command,
+so enabling Show Only Available Technology left an unavailable component on
+screen until navigation. It now resets an excluded selection through the
+existing category-selection path and repaints the details. Available selections
+and disabling the filter retain the current item. `win32_client_popup` covers
+the All and Armor views with a loaded game. Turn generation and saved data are
+unchanged.
+
 ## Continuing a game with native paths — fixed on main
 
 `mdi.c`: `FOpenGame` dereferenced `strrchr(szBase, 92)` without checking it.

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `BrowserDlg` now resets the Technology Browser to an available item in the
+  selected category when Show Only Available Technology excludes the current
+  item. Already available selections stay in place. Turn generation, file
+  layouts and native regression baselines are unchanged.
+
 - `stars-help-guide` now registers its generated asset tree for cleanup.
   Previously Ninja's built-in `help` target collided with the nonempty help
   directory and made Clean fail. Build/clean/rebuild checks cover stale assets
