@@ -19,7 +19,9 @@ tests select the constructed picker with `STARS_FILE_DIALOG_BACKEND=compat`.
 
 Desktop identity uses the approved `res/icons/stars-app.png` artwork through SDL,
 the Windows executable's `stars-app.ico`, and Linux launcher icons. Original
-small game icons remain separate. `make mac-bundle` now builds a signed arm64
+small game icons remain separate. macOS uses an inset version of the approved
+artwork in SDL and the ICNS so the application-switcher highlight stays visible.
+`make mac-bundle` now builds a signed arm64
 `Stars!.app` with the approved ICNS, offline help and relocatable runtime
 libraries. Signing discovers a usable keychain identity on every build and
 verifies nested signatures; see [macOS bundling](MACOS-BUNDLE.md). Finder and
@@ -114,7 +116,7 @@ and cherry-pick to `2.8`.
 
 ## Linux desktop compatibility
 
-The native product workflow matrix now covers Basic/Advanced game creation,
+The native product workflow matrix now covers direct three-page game creation,
 ship/starbase hulls and component drag/remove/reinsert, design accept/cancel/delete,
 and actual Save/MRU reload alongside the existing fleet, research, production,
 reports and map checks. See [gameplay qualification](GAMEPLAY-QUALIFICATION.md).
@@ -157,7 +159,8 @@ Logical child windows, nested composition, coordinate conversion, IDs, focus
 and enable state now work; see [child windows](WIN32-CHILDREN.md). Menu data, mutation and submenu ownership now work; see [menus](WIN32-MENUS.md). Window menu attachment and interactive popup menus now work; see [popup menus](WIN32-POPUPS.md). Menu resource loading and accelerator dispatch now work; see [UI resources](WIN32-UI-RESOURCES.md). Visible menu bars and dropdown routing now work; see [menu bars](WIN32-MENU-BARS.md). Icons/cursors now load and draw with preserved AND/XOR masks and hotspots; see [icons and cursors](WIN32-ICONS-CURSORS.md).
 Logical palettes and palette-indexed drawing now work on the true-color backend;
 see [palettes](WIN32-PALETTES.md). Interactive modal message boxes and asynchronous
-SDL audio alerts now work; see [message boxes](WIN32-MESSAGE-BOXES.md). Modal open/save
+SDL audio alerts now work; library management opts out of message-box sounds for
+its window and owned dialogs. See [message boxes](WIN32-MESSAGE-BOXES.md). Modal open/save
 pickers now preserve Stars wildcard filters and filename contracts; see
 [file dialogs](WIN32-FILE-DIALOGS.md). Default-printer DCs and legacy document/page
 escapes now emit PDFs and can submit them through CUPS; see [printing](WIN32-PRINTING.md). The original help archive now has a checked native reader and a CMake-generated HTML guide with 414 topics, formatted text/tables and all 133 images; all 413 numeric contexts, 1,498 text links and 28 image hotspots resolve. The generated guide is registered for recursive cleanup so Ninja's built-in
@@ -171,8 +174,20 @@ an integration check at that boundary.
 The intro now opens as a centered, decorated desktop window with an 800x600
 client area, bounded by the desktop work area. Its startup, failed-load and
 return-to-title paths share the same creation function. The SDL presets now link all 14 game unit-test programs against the client UI.
-The race wizard retains one native window across page transitions. A
-default-width request now selects both frame dimensions, and native SDL menu
+The in-game File menu exposes the return path as "Return to Main Screen",
+preserving save/discard/cancel handling and the macOS Command+W shortcut.
+The Games list has one row per managed game. A separate Player dropdown lists
+that game's available turns and their individual years, defaults to the
+remembered player when possible, and follows game selection and refreshes.
+Continue focuses the dropdown without selecting a replacement if its remembered
+player is unavailable. The player controls are hidden in Host Games.
+Continue uses a short button caption with its game/player details below the selector.
+The race wizard retains one native window, completed frame and owner attachment
+across page transitions, replacing the frame after the next page is painted.
+All six pages use a wider, taller layout with more room between controls and navigation. The
+first page's wider name fields clear the advantage points panel without changing
+name limits. Trait columns and the custom habitat/economy rows also have more
+space. A default-width request now selects both frame dimensions, and native SDL menu
 popups retain their owner relationship. `FOpenGame` now accepts Linux paths;
 Continue Game resumes the latest managed session, identifies its player and
 year, and selects that same game when its remembered player is unavailable.
@@ -262,6 +277,10 @@ game paths directly, without a second file selection.
 New Game keeps full library filenames per custom race and scopes each race
 edit to its own destination; predefined customizations receive a new managed
 filename instead of overwriting the last imported design.
+New games derive their library names from the wizard's game title. A unique
+name saves directly; a collision offers a numbered revision or a return to
+the wizard to rename it. Filename adjustments preserve the stored title and
+complete UTF-8 characters, and the existing game/backup path limits still apply.
 Complete game-folder export preserves player files, host state and backups.
 Destinations must fit the loader's full game and backup paths; overlong paths
 are rejected before copying rather than publishing a truncated game family.
@@ -279,8 +298,16 @@ uniquely named `.rN` entry. New Race and predefined-race customization start
 in the wizard without a filename prompt. Finishing derives a portable name from
 the wizard and reuses identical designs; changed designs offer Update Existing,
 Save New Version or Cancel. Prior versions survive new-version creation,
-cancellation and failed publication. Integration covers these paths, Unicode
+cancellation and failed publication. The save confirmation uses literal quotes
+around the design name, following the text table's verbatim format. Integration
+covers these paths, Unicode
 names, case-insensitive version families, reload, import, duplicate and export.
+New Game opens the three-page setup directly without the old basic dialog or
+Advanced label. Start Tutorial is a separate starting-screen button. The player
+roster offers predefined races, Race Library designs and computer players;
+external race files enter through the library's Import action. Roster menu checks
+cover full UTF-8 filenames, literal ampersands, replacing all sixteen cached
+designs, predefined customization and isolated updates to saved versions.
 Native cancellation checks require a single library window after the wizard
 closes; native owned windows detach before destruction so Cocoa leaves the hidden
 game frame hidden. Other library name prompts center over their visible owner.
@@ -291,6 +318,8 @@ and duplicate-name rejection. Duplicate, ordinary export and confirmed deletion
 are now available from the selected design. The
 initial top-level size notification now initializes pane layout, and the
 modeless Technology Browser closes correctly by button and native close request.
+Its availability filter now resets excluded selections and preserves available
+ones in the current category.
 A separate `sdl-sanitize` preset now instruments project code; unsigned race-bit masks are
 repaired. Ordinary heap alignment, host-sentinel access, unaligned scalar stores,
 empty-record copying and negative scanner shifts are repaired. The memory batch
