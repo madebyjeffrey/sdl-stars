@@ -1573,7 +1573,7 @@
 
 0x05da idsLibraryDefaultRaceName "Race"
 0x05db idsLibraryRaceSaveTitle "Save Race Design"
-0x05dc idsLibraryRaceSavePrompt "Update the saved design \"%s\", or keep it and save a new version?"
+0x05dc idsLibraryRaceSavePrompt "Update the saved design "%s", or keep it and save a new version?"
 0x05dd idsLibraryRaceUpdate "Update Existing"
 0x05de idsLibraryRaceNewVersion "Save New Version"
 0x05df idsLibraryRaceSaveFailed "The race design could not be saved. The existing designs have been kept."

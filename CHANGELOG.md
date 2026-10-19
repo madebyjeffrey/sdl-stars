@@ -18,6 +18,11 @@ produce different results from a 2.6j host for the same turn.
   of retaining its I-beam. Game behavior and native regression baselines are
   unchanged.
 
+- The race-save confirmation now displays ordinary quotation marks around the
+  design name. Its text-table entry previously used C-style escapes, which this
+  literal text format displayed as extra backslashes. Game behavior and native
+  regression baselines are unchanged.
+
 - The race creation wizard now uses a wider, taller layout on all six pages,
   with wider name fields and trait columns, taller radio controls, more space
   between habitat/economy rows and a lower navigation row. Previously its compact
