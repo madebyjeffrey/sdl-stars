@@ -462,6 +462,35 @@ int main(void) {
     hwndRead = CreateWindow("Edit", "read", WS_CHILD | WS_VISIBLE | ES_READONLY | ES_PASSWORD,
                             210, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)102, NULL, NULL);
     CHECK(hwndEdit && hwndMulti && hwndRead);
+    {
+        HWND rghwnd[] = {hwndEdit, hwndMulti, hwndRead};
+        HCURSOR hcurArrow = LoadCursor(NULL, MAKEINTRESOURCE(32512));
+        HCURSOR hcurText = LoadCursor(NULL, MAKEINTRESOURCE(32513));
+        UINT i;
+        CHECK(hcurArrow && hcurText);
+        for (i = 0; i < sizeof(rghwnd) / sizeof(rghwnd[0]); i++) {
+            SetCursor(hcurArrow);
+            SendMessage(rghwnd[i], WM_SETCURSOR, (WPARAM)rghwnd[i], MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+            CHECK(GetCursor() == hcurText);
+            SendMessage(rghwnd[i], WM_SETCURSOR, (WPARAM)rghwnd[i], MAKELPARAM(HTBORDER, WM_MOUSEMOVE));
+            CHECK(GetCursor() == hcurArrow);
+        }
+        {
+            const char *rgpszClass[] = {"Button", "Button", "ComboBox"};
+            DWORD rgstyle[] = {BS_AUTOCHECKBOX, BS_AUTORADIOBUTTON, CBS_DROPDOWNLIST};
+            HWND hwndControl;
+            for (i = 0; i < sizeof(rgstyle) / sizeof(rgstyle[0]); i++) {
+                hwndControl = CreateWindow(rgpszClass[i], "", WS_CHILD | WS_VISIBLE | rgstyle[i],
+                                           0, 200, 100, 25, hwnd, NULL, NULL, NULL);
+                CHECK(hwndControl);
+                SendMessage(hwndEdit, WM_SETCURSOR, (WPARAM)hwndEdit, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+                CHECK(GetCursor() == hcurText);
+                SendMessage(hwndControl, WM_SETCURSOR, (WPARAM)hwndControl, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+                CHECK(GetCursor() == hcurArrow);
+                CHECK(DestroyWindow(hwndControl));
+            }
+        }
+    }
     CHECK(TestEditing(hwndEdit, hwndMulti) == 0);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestSelectionArrows(hwndEdit, "A\xc3\xa9" "BC") == 0);

@@ -544,6 +544,10 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (!lp) return 0;
     cch = CchEdit(hwnd);
     switch (msg) {
+    case WM_SETCURSOR:
+        if (LOWORD(l) != HTCLIENT) return DefWindowProcA(hwnd, msg, w, l);
+        SetCursor(LoadCursorA(NULL, MAKEINTRESOURCE(32513)));
+        return TRUE;
     case WM_NCCREATE:
         lp->iControl = 3; lp->cchLimit = 30000;
         NormalizeEditCase(hwnd);

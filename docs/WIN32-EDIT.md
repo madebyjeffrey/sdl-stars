@@ -26,6 +26,10 @@ The class supports:
   extension of selections. CRLF pairs are crossed/deleted together.
 - Mouse positioning and captured drag selection; read-only fields reject
   user edits, while programmatic text replacement remains available.
+- The standard I-beam cursor over the client area of single-line, multiline,
+  password and read-only fields; borders retain the normal arrow cursor.
+  Moving to buttons, checkboxes, radio buttons or dropdown lists restores the
+  arrow cursor through the standard control class.
 - `ES_NUMBER` filtering for typed characters, ASCII upper/lower conversion
   during insertion, password masking, left/center/right alignment, selection
   highlighting and parent color/brush callbacks.

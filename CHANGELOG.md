@@ -11,6 +11,13 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- `CompatEditProc` now shows the standard I-beam mouse cursor over text fields.
+  Previously they retained the surrounding window's cursor.
+  `FCompatControlClass` gives the other standard controls and dialog backgrounds
+  an arrow cursor so they reset the pointer after leaving a text field, instead
+  of retaining its I-beam. Game behavior and native regression baselines are
+  unchanged.
+
 - The macOS application icon now scales the approved artwork to 87.5% within its
   transparent canvas. Previously it filled nearly the entire icon and hid the
   application switcher's selection highlight. SDL's runtime icon and the app

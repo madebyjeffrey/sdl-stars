@@ -352,5 +352,6 @@ BOOL FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
     else if (SDL_strcasecmp(psz, "#32770") == 0) { wc.lpszClassName = "#32770"; wc.lpfnWndProc = CompatDialogProc; wc.cbWndExtra = 3 * sizeof(LONG_PTR); }
     else return FALSE;
     wc.hInstance = hInstance;
+    wc.hCursor = LoadCursorA(NULL, MAKEINTRESOURCE(32512));
     return RegisterClassA(&wc) != 0;
 }
