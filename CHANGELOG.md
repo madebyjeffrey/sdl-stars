@@ -33,6 +33,14 @@ produce different results from a 2.6j host for the same turn.
   of retaining its I-beam. Game behavior and native regression baselines are
   unchanged.
 
+- New Game now opens the three-page setup directly, titled "New Game". The
+  retired basic setup is removed, and Start Tutorial is available on the starting
+  screen. Player selection offers predefined races, saved Race Library designs
+  and computer players, with no race-file picker. New/Edit Race still saves
+  through the library. Full UTF-8 filenames remain attached to roster selections,
+  including when replacing a design in a full roster. Turn generation, file
+  layouts and native regression baselines are unchanged.
+
 - Library management prompts are now silent, including delete confirmations,
   errors and prompts from owned dialogs and wizards. `InitLibraryGames` disables
   message-box sounds for the library window's ownership tree; unrelated game

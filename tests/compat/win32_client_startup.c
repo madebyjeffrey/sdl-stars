@@ -133,7 +133,7 @@ static BOOL fHostSavePromptSeen;
 static int16_t idHostOrderFleet;
 static int16_t idHostOrderConflictResponse = IDYES;
 static int iRosterMenu = -1;
-static const char *pszRosterSource;
+static const char *pszRosterRace;
 static int cRecentMigrationPrompts;
 static int iRaceLibraryWizardPage;
 static uint16_t icksumRaceLibrary;
@@ -266,7 +266,35 @@ static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     if (iRosterMenu >= 0) {
+        HMENU hmenuLibrary = GetSubMenu(hmenu, 1);
+        char szLabel[512];
+        int i, cch;
+        const char *pch;
+        char *pchLabel;
+
+        if (!GetSubMenu(hmenu, 0) || !hmenuLibrary || !GetSubMenu(hmenu, 2) ||
+            GetMenuString(hmenuLibrary, 15001, szLabel, sizeof(szLabel), MF_BYCOMMAND) != 0) {
+            PostQuitMessage(93);
+            return FALSE;
+        }
         iPopMenuSel = iRosterMenu;
+        if (pszRosterRace) {
+            pchLabel = szLabel;
+            for (pch = pszRosterRace; *pch; pch++) {
+                *pchLabel++ = *pch;
+                if (*pch == '&') *pchLabel++ = '&';
+            }
+            *pchLabel = 0;
+            for (i = 0; i < GetMenuItemCount(hmenuLibrary); i++) {
+                char szItem[512];
+
+                cch = GetMenuString(hmenuLibrary, i, szItem, sizeof(szItem), MF_BYPOSITION);
+                if (cch != 0 && !strcmp(szItem, szLabel)) break;
+            }
+            if (i == GetMenuItemCount(hmenuLibrary)) { PostQuitMessage(93); return FALSE; }
+            iPopMenuSel = GetMenuItemID(hmenuLibrary, i) - 15000;
+            pszRosterRace = NULL;
+        }
         iRosterMenu = -1;
         return TRUE;
     }
@@ -509,10 +537,10 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
         PostQuitMessage(92);
         return FALSE;
     }
-    if (pszRosterSource) {
-        if (strlen(pszRosterSource) >= lpof->nMaxFile) return FALSE;
-        strcpy(lpof->lpstrFile, pszRosterSource);
-        return TRUE;
+    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
+        fprintf(stderr, "New-game roster opened a file picker\n");
+        PostQuitMessage(93);
+        return FALSE;
     }
     if (pszExternalGame) {
         if (strlen(pszExternalGame) >= lpof->nMaxFile) return FALSE;
@@ -2973,7 +3001,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!FCompatPresent(hwndWizard) || (pszWizardCapture &&
             !SDL_SaveBMP(hwndWizard->lpComposite, pszWizardCapture))) goto LDone;
         if (pszRaceCapture) {
-            if (!FPushClick(GetDlgItem(hwndWizard, IDC_SIMPLE_NEW_GAME_CUSTOMIZE_RACE))) goto LDone;
+            if (hwndWizard->lpfnDlg == NewGameDlg) {
+                if (!FPushClick(GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
+                return;
+            }
+            if (hwndWizard->lpfnDlg != NewGameDlg2 || !FChooseRosterAction(hwndWizard, 0, 2)) goto LDone;
             iStage = 3;
             cWait = 0;
             return;
@@ -3050,6 +3082,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         goto LDone;
     }
     fChecked = TRUE;
+    if (!IsWindowVisible(GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LDone;
     UpdateWindow(hwndTitle);
     for (iButton = 0; iButton < 4; iButton++) {
         if (!IsWindow(rghwndBtnSplash[iButton]) || !IsWindowVisible(rghwndBtnSplash[iButton])) goto LDone;

@@ -2827,14 +2827,30 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
                 (unsigned long long)(SDL_GetTicks() - msStart));
 }
 
-static int16_t ListLibraryRace(void *lpList, const char *pszName) {
-    size_t cch = strlen(pszName);
+typedef struct {
+    FNativeDirectoryEntryProc pfnEntry;
+    void *lpData;
+} LIBRARYRACEENUM;
+
+static int16_t EnumLibraryRace(void *lpData, const char *pszName) {
+    LIBRARYRACEENUM *plre = lpData;
     char szPath[512];
     int64_t cbFile;
-    LRESULT i;
-    if (cch < 4 || !FPortableRaceFilename(pszName)) return TRUE;
+    if (!FPortableRaceFilename(pszName)) return TRUE;
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FNativeFileSize(szPath, &cbFile) || cbFile <= 0) return TRUE;
+    return plre->pfnEntry(plre->lpData, pszName);
+}
+
+int16_t FEnumerateLibraryRaces(FNativeDirectoryEntryProc pfnEntry, void *lpData) {
+    LIBRARYRACEENUM lre = {pfnEntry, lpData};
+
+    return FInitRaceLibrary() && FNativeEnumerateDirectory(szRaceLibraryRoot, EnumLibraryRace, &lre);
+}
+
+static int16_t ListLibraryRace(void *lpList, const char *pszName) {
+    LRESULT i;
+
     i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }
@@ -2864,7 +2880,7 @@ void RefreshLibraryRaces(HWND hwnd) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_RACES);
     if (!hwndList) return;
     SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
-    if (FInitRaceLibrary()) FNativeEnumerateDirectory(szRaceLibraryRoot, ListLibraryRace, hwndList);
+    FEnumerateLibraryRaces(ListLibraryRace, hwndList);
     SendMessage(hwndList, LB_SETCURSEL, 0, 0);
     EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EDIT), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
     EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DUPLICATE), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);

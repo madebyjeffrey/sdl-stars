@@ -6,7 +6,6 @@
 
 void             NewGameWizard(HWND hwnd, int16_t fReadOnly);
 int16_t          FGetNewGameName(HWND hwnd, char *szFileSuggest);
-INT_PTR CALLBACK SimpleNewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw);

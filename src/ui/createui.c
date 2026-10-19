@@ -3,6 +3,32 @@
 /* UI-only names retain full UTF-8 library filenames beside the Win16 cache. */
 static char rgszLibraryRaceNew[16][256];
 
+typedef struct {
+    HMENU hmenu;
+    int cRace;
+    const char *pszSelected;
+} NEWGAMERACEMENU;
+
+static int16_t AddNewGameLibraryRace(void *lpData, const char *pszName) {
+    NEWGAMERACEMENU *pnrm = lpData;
+    char szLabel[512];
+    const char *pch;
+    char *pchLabel = szLabel;
+    UINT grf;
+
+    if (pnrm->cRace >= INT16_MAX - 1000) return FALSE;
+    // Menu mnemonics must not consume literal ampersands in library filenames.
+    for (pch = pszName; *pch; pch++) {
+        *pchLabel++ = *pch;
+        if (*pch == '&') *pchLabel++ = '&';
+    }
+    *pchLabel = 0;
+    grf = pnrm->pszSelected && !strcmp(pszName, pnrm->pszSelected) ? MF_CHECKED : 0;
+    if (!AppendMenu(pnrm->hmenu, grf, 16000 + pnrm->cRace, szLabel)) return FALSE;
+    pnrm->cRace++;
+    return TRUE;
+}
+
 void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     int16_t iStepMaxSoFar;
     int16_t mdRet;
@@ -37,13 +63,11 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
         memset(&game, 0, sizeof(GAME));
         game.cPlanMax = gameT.cPlanMax;
         game.cPlayer = gameT.cPlayer;
+        lvlAi = lvlAiStandard;
+        game.mdSize = sizeSmall;
+        game.mdDensity = densityNormal;
+        game.mdStartDist = startDistModerate;
         vrgplrTypeNew[0] = 1;
-        vrgplrTypeNew[1] = 35;
-        vrgplrTypeNew[2] = 39;
-        vrgplrTypeNew[3] = 139;
-        lpProc = MakeProcInstance(SimpleNewGameDlg, hInst);
-        mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SIMPLE_NEW_GAME), hwnd, lpProc, (LPARAM)szFile);
-        FreeProcInstance(lpProc);
         game.rgvc[0] = 136;
         game.rgvc[1] = 142;
         game.rgvc[2] = 130;
@@ -53,44 +77,10 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
         game.rgvc[6] = 9;
         game.rgvc[7] = 7;
         game.rgvc[8] = 1;
-        switch (mdRet) {
-        case 212:
-            game = gameT;
-            StartTutor(FALSE);
-            gd.fNoIdleChecks = fIdleSav;
-            break;
-        case 1072:
-        case 211:
-            memset(vrgplrTypeNew, 0, 16);
-            if (game.turn < 7) {
-                vrgplrTypeNew[0] = game.turn << 2 | 1;
-            } else {
-                vrgplrTypeNew[0] = 2;
-                *vrgszFileNew = 0;
-                vcplrNew = 1;
-            }
-            lvlAi = game.mdDensity;
-            InitNewGamePlr(iStepMaxSoFar, lvlAi);
-            game.mdDensity = densityNormal;
-            game.mdStartDist = lvlAi < 2 ? startDistModerate : startDistFarther;
-            game.fExtraFuel = FALSE;
-            game.fSlowTech = FALSE;
-            game.fBBSPlay = FALSE;
-            game.fNoRandom = FALSE;
-            game.fAisBand = lvlAi == 3;
-            game.fVisScores = FALSE;
-            CchGetString(idsShootingFishBarrel + 5 * lvlAi + game.mdSize, game.szName);
-            if (mdRet == 1072) {
-                goto Finish;
-            }
-        default:
-            goto Step1;
-        case 2:
-        case -1:
-            goto Cancel;
-        }
-        return;
+        CchGetString(idsShootingFishBarrel + 5 * lvlAi + game.mdSize, game.szName);
+        goto Step1;
     }
+    lvlAi = lvlAiStandard;
     for (i = 0; i < game.cPlayer; i++) {
         if (rgplr[i].fInclude) {
             vrgplrTypeNew[i] = i << 2 | 2;
@@ -277,160 +267,8 @@ int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
 static int16_t FChooseNewGameName(HWND hwnd) {
     char *pszFile = (char *)GetWindowLongPtr(hwnd, DWLP_USER);
 
-    // Keep the wizard page alive while naming, including after cancellation.
+    // Reserve the library entry before closing the wizard so failures keep it open.
     return fRCWReadOnly || (pszFile && FGetNewGameName(hwnd, pszFile));
-}
-
-INT_PTR CALLBACK SimpleNewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    int16_t     i;
-    RECT        rc;
-    HWND        hwndDD;
-    HDC         hdc;
-    RECT        rcGBox;
-    int16_t     dy;
-    int16_t     c;
-    PAINTSTRUCT ps;
-    RECT       *prcSav;
-
-    switch (message) {
-    case WM_INITDIALOG:
-        SetWindowLongPtr(hwnd, DWLP_USER, lParam);
-        CheckRadioButton(hwnd, IDC_SIMPLE_NEW_GAME_EASY, IDC_SIMPLE_NEW_GAME_EXPERT, IDC_SIMPLE_NEW_GAME_STANDARD);
-        CheckRadioButton(hwnd, IDC_SIMPLE_NEW_GAME_TINY, IDC_SIMPLE_NEW_GAME_HUGE, IDC_SIMPLE_NEW_GAME_SMALL);
-        hwndDD = GetDlgItem(hwnd, IDC_COMBOBOX);
-        SendMessage(hwndDD, CB_RESETCONTENT, 0, 0);
-        for (i = 0; i < 7; i++) {
-            SendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsHumanoid + i));
-        }
-        SendMessage(hwndDD, CB_SETCURSEL, 0, 0);
-        StickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
-        return 1;
-    case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
-        return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        for (i = 200; i <= 203; i++) {
-            if ((HWND)lParam == GetDlgItem(hwnd, i)) {
-                i = -1;
-                break;
-            }
-        }
-        if (i != -1) {
-            for (i = 1000; i <= 1004; i++) {
-                if ((HWND)lParam == GetDlgItem(hwnd, i)) {
-                    i = -1;
-                    break;
-                }
-            }
-        }
-        if (i == -1 || message == WM_CTLCOLORSTATIC) {
-            SetBkColor((HDC)wParam, crButtonFace);
-            return (INT_PTR)hbrButtonFace;
-        }
-        break;
-    case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
-        GetWindowRect(GetDlgItem(hwnd, IDC_SIMPLE_NEW_GAME_EASY), &rcGBox);
-        ScreenToClient(hwnd, (POINT *)&rcGBox);
-        GetWindowRect(GetDlgItem(hwnd, IDC_SIMPLE_NEW_GAME_EXPERT), &rc);
-        ScreenToClient(hwnd, (POINT *)&rc.right);
-        rcGBox.right = rc.right;
-        rcGBox.bottom = rc.bottom;
-        ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-        _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        SetBkColor(hdc, crButtonFace);
-        c = CchGetString(idsDifficultyLevel, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        GetWindowRect(GetDlgItem(hwnd, IDC_SIMPLE_NEW_GAME_TINY), &rcGBox);
-        ScreenToClient(hwnd, (POINT *)&rcGBox);
-        GetWindowRect(GetDlgItem(hwnd, IDC_SIMPLE_NEW_GAME_HUGE), &rc);
-        ScreenToClient(hwnd, (POINT *)&rc.right);
-        rcGBox.right = rc.right;
-        rcGBox.bottom = rc.bottom;
-        ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-        _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        c = CchGetString(idsUniverseSize, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        rcGBox.top = rcGBox.bottom + 8;
-        GetWindowRect(GetDlgItem(hwnd, IDC_COMBOBOX), &rcGBox);
-        MapWindowPoints(NULL, hwnd, (POINT *)&rcGBox, 2);
-        ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-        rcGBox.bottom += dyArial8 * 2;
-        _Draw3dFrame(hdc, &rcGBox, -1);
-        SelectObject(hdc, rghfontArial8[1]);
-        c = CchGetString(idsPlayerRace, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        rcGBox.top = 3 * dyArial8 + rcGBox.bottom;
-        rcGBox.bottom = 1000;
-        ExpandRc(&rcGBox, -dyArial8, 0);
-        c = CchGetString(idsButtonAllowsConfigureMultiPlayerGamesCustom, szWork);
-        dy = DrawText(hdc, szWork, c, &rcGBox, DT_WORDBREAK | DT_NOPREFIX);
-        SetWindowPos(GetDlgItem(hwnd, IDC_SIMPLE_NEW_GAME_ADVANCED), NULL, rcGBox.left, rcGBox.top + dy + dyArial8 / 2, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        rcGBox.bottom = rcGBox.top + dy + dyArial8 * 2;
-        ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
-        _Draw3dFrame(hdc, &rcGBox, -2);
-        c = CchGetString(idsAdvancedGame, szWork);
-        TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, c);
-        EndPaint(hwnd, &ps);
-        return 1;
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
-        case IDC_FINISH:
-        case IDCANCEL:
-        case IDC_SIMPLE_NEW_GAME_ADVANCED:
-            for (i = 200; i <= 203 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
-            }
-            game.mdDensity = i - 200;
-            for (i = 1000; i <= 1004 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
-            }
-            game.mdSize = i - 1000;
-            game.turn = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
-            if (LOWORD(wParam) == IDC_FINISH && !FChooseNewGameName(hwnd)) return 1;
-            StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
-            EndDialog(hwnd, LOWORD(wParam));
-            return 1;
-        case IDC_SIMPLE_NEW_GAME_TUTORIAL:
-            StickyDlgPos(hwnd, &ptStickyNewDlg, FALSE);
-            EndDialog(hwnd, LOWORD(wParam));
-            return 1;
-        case IDC_SIMPLE_NEW_GAME_CUSTOMIZE_RACE:
-            hwndDD = GetDlgItem(hwnd, IDC_COMBOBOX);
-            game.turn = LOWORD(SendMessage(hwndDD, CB_GETCURSEL, 0, 0));
-            if (game.turn < 7) {
-                vplr = vrgplrDef[game.turn];
-                CchGetString(idsHumanoid + game.turn, vplr.szName);
-                wsprintf(vplr.szNames, "%ss", vplr.szName);
-            } else {
-                vplr = *vrgplrNew;
-            }
-            prcSav = vrgrcRCW;
-            if (RaceCreationWizard(hwnd, FALSE, TRUE) != 0) {
-                if (SendMessage(hwndDD, CB_GETCOUNT, 0, 0) > 7) {
-                    SendMessage(hwndDD, CB_DELETESTRING, 7, 0);
-                }
-                SendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)vplr.szName);
-                SendMessage(hwndDD, CB_SETCURSEL, 7, 0);
-                *vrgplrNew = vplr;
-            }
-            vrgrcRCW = prcSav;
-            SetFocus(hwnd);
-            break;
-        case IDC_HELP:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhNewGameSetupBasic);
-            return 1;
-        }
-        break;
-    }
-    return 0;
 }
 
 INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -600,6 +438,9 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     HDC         hdc;
     PAINTSTRUCT ps;
     char        szLibraryRace[256];
+    char        szLibraryLabel[512];
+    char       *pch, *pchName;
+    NEWGAMERACEMENU nrm;
 
     switch (message) {
     case WM_INITDIALOG:
@@ -675,24 +516,23 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             psz = PszGetCompressedString(idsHumanoid + i);
             AppendMenu(rghmenuSubPopup[0], iChecked, i + 15016, psz);
         }
-        AppendMenu(rghmenuSubPopup[0], iChecked, i + 15016, PszGetCompressedString(idsRandom));
-        AppendMenu(rghmenuSubPopup[0], iChecked, i + 15017, PszGetCompressedString(idsExpansionPlayer));
+        AppendMenu(rghmenuSubPopup[0], iCurVal == 25 ? MF_CHECKED : 0, 15022, PszGetCompressedString(idsRandom));
+        AppendMenu(rghmenuSubPopup[0], iCurVal == 29 ? MF_CHECKED : 0, 15023, PszGetCompressedString(idsExpansionPlayer));
         rghmenuSubPopup[1] = CreatePopupMenu();
-        AppendMenu(rghmenuSubPopup[1], MF_BYCOMMAND, 0x3a98, PszGetCompressedString(idsNew));
-        AppendMenu(rghmenuSubPopup[1], MF_BYCOMMAND, 0x3a99, PszGetCompressedString(idsOpen));
-        for (i = 0; i < vcplrNew; i++) {
-            iChecked = iCurVal == i * 4 + 2 ? 8 : 0;
-            psz = PszPlayerName(0, TRUE, TRUE, TRUE, 0, vrgplrNew + i);
-            AppendMenu(rghmenuSubPopup[1], iChecked, i + 15032, psz);
-        }
+        nrm.hmenu = rghmenuSubPopup[1];
+        nrm.cRace = 0;
+        nrm.pszSelected = (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : NULL;
+        FEnumerateLibraryRaces(AddNewGameLibraryRace, &nrm);
+        if (nrm.cRace == 0)
+            AppendMenu(nrm.hmenu, MF_GRAYED, 0, PszGetCompressedString(idsLibraryNoRaces));
         rghmenuSubPopup[2] = CreatePopupMenu();
         for (i = 0; i <= 6; i++) {
             rghmenuSubPopup[i + 5] = CreatePopupMenu();
             for (j = 0; j < 5; j++) {
-                iChecked = iCurVal == j * 32 + i * 4 + 5 ? 8 : 0;
+                iChecked = iCurVal == j * 32 + i * 4 + 3 ? 8 : 0;
                 AppendMenu(rghmenuSubPopup[i + 5], iChecked, i + 15048 + j * 8, vrgszComputerLevel[j]);
             }
-            iChecked = (iCurVal & 0x1f) == i * 4 + 5 ? 8 : 0;
+            iChecked = (iCurVal & 0x1f) == i * 4 + 3 ? 8 : 0;
             AppendMenu(rghmenuSubPopup[2], 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[i + 5], vrgszComputerPlayers[i]);
         }
         hmenuPopup = CreatePopupMenu();
@@ -700,25 +540,30 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         iChecked = (iCurVal & 3) == 1 ? 8 : 0;
         AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[0], PszGetCompressedString(idsPredefinedRace));
         iChecked = (iCurVal & 3) == 2 ? 8 : 0;
-        AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[1], PszGetCompressedString(idsCustomRace));
-        if ((iCurVal & 3) == 1 || (iCurVal & 3) == 2) {
-            AppendMenu(hmenuPopup, MF_BYCOMMAND, 0x3a9a, PszGetCompressedString(idsEditRace));
-        }
-        AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
+        AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[1], PszGetCompressedString(idsLibraryRaceMenu));
         iChecked = (iCurVal & 3) == 3 ? 8 : 0;
         AppendMenu(hmenuPopup, 0x10 | iChecked, (UINT_PTR)rghmenuSubPopup[2], PszGetCompressedString(idsComputerPlayer));
         AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
+        AppendMenu(hmenuPopup, MF_BYCOMMAND, 15000, PszGetCompressedString(idsLibraryNewRace));
+        if (((iCurVal & 3) == 1 && (iCurVal >> 2) < 7) || (iCurVal & 3) == 2)
+            AppendMenu(hmenuPopup, MF_BYCOMMAND, 15002, PszGetCompressedString(idsEditRace));
         iChecked = !(iCurVal & 3) ? 8 : 0;
         AppendMenu(hmenuPopup, iChecked, 0x3a9b, PszGetCompressedString(idsPlayer));
         tpm = message == WM_LBUTTONDOWN ? TPM_LEFTBUTTON : TPM_RIGHTBUTTON;
         TrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
-        DestroyMenu(hmenuPopup);
-        for (i = 0; i < 6; i++) {
-            DestroyMenu(rghmenuSubPopup[i]);
-        }
-        if (PeekMessage(&msg, hwnd, 273, 273, 2) != 0 && msg.wParam >= 15000 && msg.wParam < 15100) {
+        if (PeekMessage(&msg, hwnd, 273, 273, 2) != 0 && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
             iPopMenuSel = msg.wParam - 15000;
         }
+        szLibraryRace[0] = 0;
+        if (iPopMenuSel >= 1000 && iPopMenuSel < 1000 + nrm.cRace) {
+            GetMenuString(nrm.hmenu, 15000 + iPopMenuSel, szLibraryLabel, sizeof(szLibraryLabel), MF_BYCOMMAND);
+            for (pch = szLibraryLabel, pchName = szLibraryRace; *pch; pch++) {
+                *pchName++ = *pch;
+                if (*pch == '&' && pch[1] == '&') pch++;
+            }
+            *pchName = 0;
+        }
+        DestroyMenu(hmenuPopup);
         iNewVal = -1;
         if (iPopMenuSel != -1) {
             if (iPopMenuSel == 0) {
@@ -734,20 +579,20 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 }
                 vrgrcRCW = prcSav;
             }
-            if (iPopMenuSel == 1) {
-                if (FOpenGame(hwnd, TRUE) > 0) {
-                    CchSnprintf(szLibraryRace, sizeof(szLibraryRace), "%s", PszCurrentLibraryRaceName());
+            if (iPopMenuSel >= 1000 && iPopMenuSel < 1000 + nrm.cRace) {
+                if (FLoadLibraryRace(hwnd, szLibraryRace)) {
                 PlaceNew:
                     if (vcplrNew < 16) {
                         iNewVal = vcplrNew++;
                     } else {
                         for (iNewVal = 15; iNewVal >= 0; iNewVal--) {
-                            for (i = 0; i < 16 && ((vrgplrTypeNew[i] & 3) != 2 || (vrgplrTypeNew[i] >> 2 & 0xf) != iNewVal); i++) {
+                            for (i = 0; i < 16 && (i == iDiamond || (vrgplrTypeNew[i] & 3) != 2 || (vrgplrTypeNew[i] >> 2 & 0xf) != iNewVal); i++) {
                             }
                             if (i == 16)
                                 break;
                         }
                     }
+                    if (iNewVal < 0) goto FinishClick;
                     vrgplrNew[iNewVal] = vplr;
                     CchCopyUtf8(vrgszFileNew + iNewVal * 13, 13, szRaceFile, strlen(szRaceFile));
                     strcpy(rgszLibraryRaceNew[iNewVal], szLibraryRace);
@@ -789,9 +634,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 iNewVal = 0;
             } else if (iPopMenuSel >= 16 && iPopMenuSel < 32) {
                 iNewVal = (iPopMenuSel - 0x10) << 2 | 1;
-            } else if (iPopMenuSel >= 32 && iPopMenuSel < 48) {
-                iNewVal = (iPopMenuSel - 0x20) << 2 | 2;
-            } else if (iPopMenuSel >= 48) {
+            } else if (iPopMenuSel >= 48 && iPopMenuSel < 88) {
                 iNewVal = (iPopMenuSel - 0x30) << 2 | 3;
             }
         }
@@ -848,6 +691,7 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
     RECT     rc;
     StringId ids;
     char     szT[20];
+    const char *pszFile;
 
     fCreatedDC = FALSE;
     if (!hdc) {
@@ -893,12 +737,13 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
             wsprintf(szWork, szT, PszGetCompressedString(idsHumanoid + iPlr));
             break;
         case 2:
-            if (!fRCWReadOnly && gd.fNoHostNames && vrgszFileNew[iPlr * 13] != 0) {
-                wsprintf(szWork, " %s", vrgszFileNew + iPlr * 13);
+            pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : vrgszFileNew + iPlr * 13;
+            if (!fRCWReadOnly && gd.fNoHostNames && pszFile[0] != 0) {
+                wsprintf(szWork, " %s", pszFile);
                 break;
             }
-            if (vrgszFileNew[iPlr * 13] != 0) {
-                wsprintf(szWork, PszGetCompressedString(!fRCWReadOnly ? idsSS2 : idsS), vrgplrNew[iPlr].szNames, vrgszFileNew + iPlr * 13);
+            if (pszFile[0] != 0) {
+                wsprintf(szWork, PszGetCompressedString(!fRCWReadOnly ? idsSS2 : idsS), vrgplrNew[iPlr].szNames, pszFile);
                 break;
             }
             wsprintf(szWork, PszGetCompressedString(idsS), vrgplrNew[iPlr].szNames);

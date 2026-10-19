@@ -2688,6 +2688,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     LOGFONT    *plf;
     HFONT       hfont;
     HFONT       hfontSav;
+    HWND        hwndButton;
+    int16_t     idButton;
+    int16_t     fIdleSav;
 
     switch (msg) {
     case WM_CREATE:
@@ -2701,22 +2704,21 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         }
         GetClientRect(hwnd, &rc);
-        dx = 120 <= rc.right >> 3 ? rc.right >> 3 : 120;
-        if (rc.bottom < 650) {
-            dx += dx / 6;
-        }
-        dxGap = (rc.right - (dx << 2)) >> 2;
-        xCur = dxGap >> 1;
+        dx = min(120, (rc.right - 48) / 5 - 12);
+        dxGap = (rc.right - 5 * dx) / 6;
+        xCur = dxGap;
         dy = rc.bottom <= 500 ? dyArial8 * 2 : (int16_t)(5 * dyArial8) / 2;
-        for (i = 0; i < 4; i++) {
-            psz = PszGetCompressedString(idsNewGame + i);
-            rghwndBtnSplash[i] = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
-                                              (HMENU)(uintptr_t)i, hInst, NULL);
+        for (i = 0; i < 5; i++) {
+            idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
+            psz = PszGetCompressedString(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton);
+            hwndButton = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
+                                      (HMENU)(uintptr_t)idButton, hInst, NULL);
+            if (i != 3) rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (szBase[0] == 0 || !FFileExists(szBase))) {
                 EnableWindow(rghwndBtnSplash[2], FALSE);
             }
             if (rc.bottom < 500) {
-                SendMessage(rghwndBtnSplash[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+                SendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             }
             xCur += dx + dxGap;
         }
@@ -2732,6 +2734,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 4; i++) {
             UpdateWindow(rghwndBtnSplash[i]);
         }
+        UpdateWindow(GetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:
@@ -2768,6 +2771,12 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         goto Default;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
+        case IDC_LIBRARY_TUTORIAL:
+            fIdleSav = gd.fNoIdleChecks;
+            gd.fNoIdleChecks = TRUE;
+            StartTutor(FALSE);
+            gd.fNoIdleChecks = fIdleSav;
+            break;
         case 0:
             NewGameWizard(hwnd, FALSE);
             if (!lpPlanets && game.lid == 0) {

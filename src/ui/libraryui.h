@@ -32,6 +32,7 @@
 #define IDC_LIBRARY_HOST_VIEW 2419
 #define IDC_LIBRARY_IMPORT_ORDERS 2420
 #define IDC_LIBRARY_GAME_DELETE 2421
+#define IDC_LIBRARY_TUTORIAL 2434
 
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
@@ -74,6 +75,7 @@ int16_t FDeleteLibraryRace(HWND hwnd, const char *pszName);
 void InitLibraryRaces(HWND hwnd, const RECT *lprc);
 void RefreshLibraryRaces(HWND hwnd);
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
+int16_t FEnumerateLibraryRaces(FNativeDirectoryEntryProc pfnEntry, void *lpData);
 void ShowLibraryImportFolderPicker(HWND hwnd);
 INT_PTR CALLBACK LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

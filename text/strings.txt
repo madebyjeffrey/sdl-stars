@@ -290,7 +290,7 @@
 0x010e idsCustomRaceWizardStepD6 "Custom Race Wizard - Step %d of 6"
 0x010f idsViewRacePageD6 "View Race - Page %d of 6"
 @range 2 new game wizard title, + fRCWReadOnly (createui.c)
-0x0110 idsAdvancedNewGameWizardStepD3 "Advanced New Game Wizard - Step %d of 3"
+0x0110 idsAdvancedNewGameWizardStepD3 "New Game - Step %d of 3"
 0x0111 idsViewGameParametersPageD3 "View Game Parameters - Page %d of 3"
 0x0112 idsPrimaryRacialTrait "Primary Racial Trait"
 0x0113 idsDescriptionTrait "Description of Trait"
@@ -1577,3 +1577,7 @@
 0x05dd idsLibraryRaceUpdate "Update Existing"
 0x05de idsLibraryRaceNewVersion "Save New Version"
 0x05df idsLibraryRaceSaveFailed "The race design could not be saved. The existing designs have been kept."
+0x05e0 idsLibraryStartTutorial "Start &Tutorial"
+0x05e1 idsLibraryRaceMenu "Race Library"
+0x05e2 idsLibraryNoRaces "No saved races"
+0x05e3 idsLibraryNewRace "New Race..."

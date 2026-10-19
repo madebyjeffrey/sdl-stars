@@ -16,12 +16,12 @@ exercise the same UI without visible windows.
 | Fleet workflows | Cargo transfer/reversal/cancel, repeat orders, transport presets, route append/delete, merge and split |
 | Reports/browser/map | Report and scanner scrollbar behavior, map objects/hit testing, toolbar dropdowns/tooltips, Technology Browser Close/X |
 | Save/reload | Save the changed research order through File Save, reload through the MRU command, assert persisted order and game identity |
-| New Game | Basic and Advanced creation in ASCII/UTF-8 paths, chooser cancellation restores title/game state, wizard Back/Next, Finish creates nonempty XY/HST/M1 files and opens the map |
+| New Game | Direct three-page setup in ASCII/UTF-8 paths, chooser cancellation restores title/game state, wizard Back/Next, Finish creates nonempty XY/HST/M1 files and opens the map |
 
 The designer and save/reload scenarios run four copied-game paths per backend.
-The New Game launcher runs Basic and Advanced variants with ASCII and UTF-8
-names. Its native chooser wrapper supplies a deterministic cancel/result; the
-real portal transport and selection contracts are tested separately by
+The New Game launcher runs direct Finish and Back/Next/Finish variants with ASCII
+and UTF-8 names. Naming and cancellation use the actual managed-library dialog;
+native file picker transport and selection contracts are tested separately by
 `win32_fileworkflow`. The tests drive buttons, combos, edits and dragging through
 translated SDL events. Menu commands enter the actual application handlers.
 
