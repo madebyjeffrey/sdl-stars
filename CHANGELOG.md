@@ -11,6 +11,12 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- The macOS application icon now scales the approved artwork to 87.5% within its
+  transparent canvas. Previously it filled nearly the entire icon and hid the
+  application switcher's selection highlight. SDL's runtime icon and the app
+  bundle's ICNS use the same inset. Game behavior and regression baselines are
+  unchanged.
+
 - `PaintControl` now bounds the vertical padding of checkbox and radio focus
   frames by the control height. Previously the top and bottom edges could be
   clipped on short controls such as the PRT page. Checks cover all ten PRT

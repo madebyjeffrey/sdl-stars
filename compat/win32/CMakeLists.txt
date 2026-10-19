@@ -55,7 +55,7 @@ add_custom_command(
     OUTPUT "${STARS_BITMAP_GENERATED}/image_resources.c" "${STARS_BITMAP_GENERATED}/image_manifest.h"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/imagegen.py" "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS imagegen.py "${PROJECT_SOURCE_DIR}/res/stars.rc" "${PROJECT_SOURCE_DIR}/res/resource.h"
-        "${PROJECT_SOURCE_DIR}/res/icons/stars-app.png" ${STARS_IMAGE_FILES}
+        "${PROJECT_SOURCE_DIR}/res/icons/stars-app.png" "${PROJECT_SOURCE_DIR}/res/icons/stars-app-macos.png" ${STARS_IMAGE_FILES}
     VERBATIM)
 
 find_package(Freetype REQUIRED)
