@@ -261,7 +261,7 @@ Finish:
 }
 
 int16_t FGetNewGameName(HWND hwnd, char *szFileSuggest) {
-    return FChooseLibraryGameName(hwnd, szFileSuggest);
+    return FChooseLibraryGameName(hwnd, szFileSuggest, game.szName);
 }
 
 static int16_t FChooseNewGameName(HWND hwnd) {

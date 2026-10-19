@@ -208,12 +208,16 @@ support; filenames remain UTF-8. The Apple silicon product builds, and an adapte
 test covers labels, paths and cancellation. Full native-panel interaction
 qualification remains outstanding.
 
-New-game setup chooses a filename before ending its current wizard page. That
-page owns the save picker and stays disabled while selection runs; cancellation
-returns to the same page. The hidden main frame is not its owner.
-Simple/advanced ownership and cancellation pass the compatibility tests; an
-opt-in Mac desktop check also verifies the native sheet attaches to the simple
-new-game page and cancels back to it.
+New-game setup derives its library name from the game title before ending the
+current wizard page. Unique names need no naming dialog. A collision opens an
+owned prompt offering Add Revision or Back to Wizard; returning keeps the setup
+and its current page intact so the title can be changed before finishing.
+Revisions use the next available "(Revision N)" suffix. Existing copies are never
+overwritten, and filename adjustments leave the in-game title unchanged.
+Derived stems also replace periods because the loader treats the last period
+as a file-extension boundary.
+The ownership check uses this duplicate prompt to verify that the live wizard,
+rather than the hidden main frame, owns nested dialogs and native sheets.
 
 The private D-Bus fixture checks actual request types/options, Unicode paths,
 case-expanded filters, filter results, default extensions, cancellation, small

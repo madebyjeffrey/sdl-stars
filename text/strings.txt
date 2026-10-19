@@ -1581,3 +1581,8 @@
 0x05e1 idsLibraryRaceMenu "Race Library"
 0x05e2 idsLibraryNoRaces "No saved races"
 0x05e3 idsLibraryNewRace "New Race..."
+0x05e4 idsLibraryGameDuplicateTitle "Duplicate Game Name"
+0x05e5 idsLibraryGameDuplicatePrompt "A game with this library name already exists. Save a separate copy as "%s", or go back to the wizard to rename the game?"
+0x05e6 idsLibraryGameAddRevision "Add Revision"
+0x05e7 idsLibraryGameBackToWizard "Back to Wizard"
+0x05e8 idsLibraryGameRevisionSuffix " (Revision %d)"

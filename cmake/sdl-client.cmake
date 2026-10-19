@@ -109,7 +109,7 @@ endif()
 target_link_libraries(stars-compat-client-quit PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-client-quit PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_options(stars-compat-client-quit PRIVATE -Wall -Wextra -Werror)
-foreach(STARS_QUIT_PAGE simple advanced race save-owner advanced-save-owner)
+foreach(STARS_QUIT_PAGE setup players race save-owner)
     add_test(NAME win32_client_quit_${STARS_QUIT_PAGE} COMMAND stars-compat-client-quit ${STARS_QUIT_PAGE})
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}")
     set_tests_properties(win32_client_quit_${STARS_QUIT_PAGE} PROPERTIES LABELS "client"

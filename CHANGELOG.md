@@ -11,6 +11,13 @@ produce different results from a 2.6j host for the same turn.
   item. Already available selections stay in place. Turn generation, file
   layouts and native regression baselines are unchanged.
 
+- `FGetNewGameName` now derives a new game's library entry from its game title,
+  without a separate naming dialog. Filename-invalid characters are adjusted
+  without changing the stored title. A duplicate offers Add Revision (for
+  example, "Orion (Revision 2)") or Back to Wizard to rename the game; existing
+  copies are kept. UTF-8 names and full game/backup path limits remain bounded.
+  Turn generation, file layouts and regression baselines are unchanged.
+
 - `FWatchLiveResize` now restores the retained race-wizard frame when macOS
   exposes the window while the next page is still initializing. Previously
   logical visibility suppressed that redraw, allowing the native background

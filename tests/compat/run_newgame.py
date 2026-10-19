@@ -26,14 +26,14 @@ def run(executable, work, default_root=False, settings_root=False, **choices):
             env['STARS_TEST_PREF_PATH'] = str(pref_path) + os.sep
         env.pop('STARS_CLIENT_CONTINUE', None)
         env.pop('STARS_CLIENT_NEW_GAME', None)
-        env.pop('STARS_CLIENT_NEW_ADVANCED', None)
+        env.pop('STARS_CLIENT_NEW_PAGES', None)
         env.pop('STARS_CLIENT_LIBRARY_OPEN', None)
         env.update(choices)
         cwd = executable.parent if env.get('STARS_CLIENT_NEW_GAME_EXE_DIR') else work
         subprocess.run([str(executable)], cwd=cwd, env=env, check=True, timeout=45)
         return
     for key in ('STARS_CLIENT_CONTINUE', 'STARS_CLIENT_NEW_GAME',
-                'STARS_CLIENT_NEW_ADVANCED', 'STARS_CLIENT_LIBRARY_OPEN',
+                'STARS_CLIENT_NEW_PAGES', 'STARS_CLIENT_LIBRARY_OPEN',
                 'STARS_CLIENT_LIBRARY_OPEN_PLAYER', 'STARS_CLIENT_EXPECT_PLAYER',
                 'STARS_CLIENT_EXPECT_SELECTOR', 'STARS_CLIENT_EXPECT_CONTINUE_DISABLED',
                 'STARS_CLIENT_SWITCH_CANCEL_TEST', 'STARS_CLIENT_EXPECT_CONTINUE_GAME',
@@ -175,23 +175,23 @@ def main():
     check_failed_switch_save(executable)
     check_uppercase_imports(executable)
     check_recent_startup(executable)
-    for advanced, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
-                           (True, 'advanced-game'), (True, 'avancée-Ω')):
+    for all_pages, name in ((False, 'fresh-game'), (False, 'nouvelle-partie-Ω'),
+                           (True, 'setup-all-pages'), (True, 'avancée-Ω')):
         with tempfile.TemporaryDirectory(prefix='stars-newgame-') as directory:
             work = Path(directory)
             games = work / 'library' / 'Games'
             path = games / name / name
             choices = dict(STARS_CLIENT_NEW_GAME=str(path.with_suffix('.xy')),
                            STARS_CLIENT_LIBRARY_NAME=name)
-            if advanced:
-                choices['STARS_CLIENT_NEW_ADVANCED'] = '1'
+            if all_pages:
+                choices['STARS_CLIENT_NEW_PAGES'] = '1'
             run(executable, work, **choices)
             assert all(Path(str(path) + ext).stat().st_size > 0 for ext in ('.xy', '.hst', '.m1'))
             assert (path.parent / '.library').is_file()
             before = {p.name: p.read_bytes() for p in path.parent.iterdir() if p.suffix in ('.xy', '.hst', '.m1')}
             run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
             assert all((path.parent / filename).read_bytes() == content for filename, content in before.items())
-            if not advanced and name == 'fresh-game':
+            if not all_pages and name == 'fresh-game':
                 metadata_file = path.parent / '.library'
                 metadata = metadata_file.read_text(encoding='utf-8').splitlines()
                 metadata[0] = '1'
@@ -200,17 +200,35 @@ def main():
                 run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name, STARS_CLIENT_LIBRARY_DOUBLECLICK='1')
                 assert sorted(p.name for p in games.iterdir()) == names
                 assert metadata_file.read_text(encoding='utf-8').splitlines()[4] == name
-            # The wizard defaults to Game.xy; a differently cased folder is a collision.
-            (games / 'gAmE').mkdir()
-            choices['STARS_CLIENT_NEW_GAME'] = str(games / 'Game (2)' / 'Game (2).xy')
-            choices['STARS_CLIENT_LIBRARY_NAME'] = 'Game (2)'
-            choices['STARS_CLIENT_LIBRARY_SUGGESTED'] = 'Game (2)'
-            choices['STARS_CLIENT_LIBRARY_REJECT'] = '1'
+            revision = name + ' (Revision 2)'
+            choices['STARS_CLIENT_GAME_TITLE'] = name
+            choices['STARS_CLIENT_NEW_GAME'] = str(games / revision / (revision + '.xy'))
+            choices['STARS_CLIENT_LIBRARY_NAME'] = revision
+            choices['STARS_CLIENT_LIBRARY_SUGGESTED'] = revision
             run(executable, work, **choices)
-            assert not list((games / 'gAmE').iterdir())
-            assert (games / 'Game (2)' / '.library').is_file()
-            run(executable, work, STARS_CLIENT_LIBRARY_OPEN='Game (2)')
-            if not advanced and name == 'fresh-game':
+            assert (games / revision / '.library').is_file()
+            assert all((path.parent / filename).read_bytes() == content for filename, content in before.items())
+            run(executable, work, STARS_CLIENT_LIBRARY_OPEN=revision)
+            if not all_pages and name == 'fresh-game':
+                # Returning to the wizard preserves setup and lets its title be changed.
+                renamed = 'renamed-in-wizard'
+                run(executable, work, STARS_CLIENT_NEW_GAME=str(games / renamed / (renamed + '.xy')),
+                    STARS_CLIENT_GAME_TITLE=name, STARS_CLIENT_LIBRARY_NAME=renamed,
+                    STARS_CLIENT_LIBRARY_SUGGESTED=name + ' (Revision 3)',
+                    STARS_CLIENT_LIBRARY_REVISION_BACK='1', STARS_CLIENT_LIBRARY_RENAME_TITLE=renamed)
+                assert (games / renamed / '.library').is_file()
+                assert not (games / (name + ' (Revision 3)')).exists()
+                # Case-insensitive collisions and filename normalization preserve the title.
+                for title, derived in (('GAME', 'GAME (Revision 2)'), ('CON', '_CON'),
+                                       ('  My: Game / Ω. ', 'My_ Game _ Ω'), ('Alpha.Beta', 'Alpha_Beta')):
+                    if title == 'GAME':
+                        (games / 'gAmE').mkdir()
+                    run(executable, work, STARS_CLIENT_NEW_GAME=str(games / derived / (derived + '.xy')),
+                        STARS_CLIENT_GAME_TITLE=title, STARS_CLIENT_LIBRARY_NAME=derived)
+                    assert (games / derived / '.library').is_file()
+                    if title == 'GAME':
+                        assert not list((games / 'gAmE').iterdir())
+            if not all_pages and name == 'fresh-game':
                 for failure in ('universe', 'host'):
                     run(executable, work, STARS_CLIENT_NEW_GAME=str(games / 'failed-game' / 'failed-game.xy'),
                         STARS_CLIENT_LIBRARY_NAME='failed-game', STARS_CLIENT_LIBRARY_FAIL_WRITE=failure)

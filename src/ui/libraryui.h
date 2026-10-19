@@ -6,6 +6,8 @@
 #define IDC_LIBRARY_RACE_VERSION 2432
 #define IDC_LIBRARY_RACE_SAVE_TEXT 2433
 #define IDD_LIBRARY_NAME 2400
+#define IDD_LIBRARY_GAME_REVISION 2440
+#define IDC_LIBRARY_GAME_REVISION_TEXT 2441
 #define IDC_LIBRARY_GAMES 2401
 #define IDC_LIBRARY_IMPORT 2402
 #define IDC_LIBRARY_IMPORT_FOLDER 2403
@@ -34,7 +36,9 @@
 #define IDC_LIBRARY_GAME_DELETE 2421
 #define IDC_LIBRARY_TUTORIAL 2434
 
-int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile);
+/* New games pass their title; imports pass NULL to choose a library name. */
+int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile, const char *pszName);
+INT_PTR CALLBACK LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
 void InitLibraryGames(HWND hwnd, const RECT *lprc);
 void RefreshLibraryGames(HWND hwnd);

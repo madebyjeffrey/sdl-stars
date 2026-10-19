@@ -71,6 +71,9 @@ The managed-race client test checks direct wizard entry, automatic race names,
 identical saves, Update/New Version/Cancel, failed publication and Unicode version
 families. Native visibility checks require one library window after wizard
 cancellation.
+The New Game workflow checks title-derived library names, UTF-8 and reserved
+filename handling, revision collisions, returning to rename in the live wizard,
+and preserving existing files. Unique names do not open a naming dialog.
 To run just these checks on a macOS desktop:
 
 ```sh

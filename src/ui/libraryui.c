@@ -272,20 +272,67 @@ static int16_t FPortableLibraryName(const char *pszName) {
     return strlen(szLibraryRoot) + 2 * cch + 18 < sizeof(szBase);
 }
 
-static void SuggestLibraryName(char *pszName) {
+static void SuggestLibraryName(char *pszName, int16_t fRevision) {
     char szOriginal[256];
-    char szSuffix[16];
+    char szSuffix[32];
     int i, cch, cchMax;
 
     strcpy(szOriginal, pszName);
     cchMax = ((int)sizeof(szBase) - (int)strlen(szLibraryRoot) - 19) / 2;
     for (i = 2; i < 10000 && !FLibraryNameAvailable(szLibraryRoot, pszName); i++) {
-        CchSnprintf(szSuffix, sizeof(szSuffix), " (%d)", i);
+        CchSnprintf(szSuffix, sizeof(szSuffix), fRevision ? PszGetCompressedString(idsLibraryGameRevisionSuffix) : " (%d)", i);
         cch = min((int)strlen(szOriginal), max(0, cchMax - (int)strlen(szSuffix)));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && ((unsigned char)szOriginal[cch] & 0xc0) == 0x80) cch--;
         CchSnprintf(pszName, 256, "%.*s%s", cch, szOriginal, szSuffix);
     }
+}
+
+static void GetGameLibraryName(const char *pszName, char *pszNameOut) {
+    size_t i, cch;
+    int cchMax = ((int)sizeof(szBase) - (int)strlen(szLibraryRoot) - 19) / 2;
+
+    CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
+    for (i = 0; pszNameOut[i]; i++)
+        if ((unsigned char)pszNameOut[i] < 32 || pszNameOut[i] == 127 || strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
+    cch = strlen(pszNameOut);
+    while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
+    while (pszNameOut[0] == ' ' || pszNameOut[0] == '.') memmove(pszNameOut, pszNameOut + 1, strlen(pszNameOut));
+    // The game loader treats the last period as a file extension.
+    for (i = 0; pszNameOut[i]; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
+    if (!pszNameOut[0]) {
+        pszName = PszGetCompressedString(idsLibraryDefaultGameName);
+        CchCopyUtf8(pszNameOut, 256, pszName, CchUtf8Prefix(pszName, cchMax));
+    }
+    if (!FPortableLibraryName(pszNameOut)) {
+        // Reserved device names need a prefix; leave the stored game title intact.
+        pszNameOut[CchUtf8Prefix(pszNameOut, max(0, cchMax - 1))] = 0;
+        memmove(pszNameOut + 1, pszNameOut, strlen(pszNameOut) + 1);
+        pszNameOut[0] = '_';
+    }
+}
+
+INT_PTR CALLBACK LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    char szMessage[512];
+    POINT16 pt = {-1, -1};
+
+    switch (message) {
+    case WM_INITDIALOG:
+        SetWindowText(hwnd, PszGetCompressedString(idsLibraryGameDuplicateTitle));
+        CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryGameDuplicatePrompt), (const char *)lParam);
+        SetDlgItemText(hwnd, IDC_LIBRARY_GAME_REVISION_TEXT, szMessage);
+        SetDlgItemText(hwnd, IDOK, PszGetCompressedString(idsLibraryGameAddRevision));
+        SetDlgItemText(hwnd, IDCANCEL, PszGetCompressedString(idsLibraryGameBackToWizard));
+        StickyDlgPos(hwnd, &pt, TRUE);
+        return TRUE;
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
+            EndDialog(hwnd, LOWORD(wParam) == IDOK);
+            return TRUE;
+        }
+        break;
+    }
+    return FALSE;
 }
 
 INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -328,7 +375,7 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             }
         } else if (!FPortableLibraryName(szName)) ids = idsLibraryInvalidName;
         else if (!FLibraryNameAvailable(szLibraryRoot, szName)) {
-            SuggestLibraryName(szName);
+            SuggestLibraryName(szName, FALSE);
             SetDlgItemText(hwnd, IDC_EDIT1, szName);
             ids = idsLibraryNameTaken;
         } else {
@@ -344,19 +391,31 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
-int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile) {
+int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile, const char *pszName) {
     char *pch;
     char szMessage[256];
 
     if (!FInitLibrary() || strlen(szLibraryRoot) + 20 >= sizeof(szBase)) goto LFail;
     szLibraryExchangeName[0] = 0;
-    pch = strrchr(pszFile, chDirSep);
-    CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pch ? pch + 1 : pszFile);
-    pch = strrchr(szLibraryName, '.');
-    if (pch) *pch = 0;
-    if (!FPortableLibraryName(szLibraryName)) strcpy(szLibraryName, PszGetCompressedString(idsLibraryDefaultGameName));
-    SuggestLibraryName(szLibraryName);
-    if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+    if (pszName) GetGameLibraryName(pszName, szLibraryName);
+    else {
+        pch = strrchr(pszFile, chDirSep);
+        CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pch ? pch + 1 : pszFile);
+        pch = strrchr(szLibraryName, '.');
+        if (pch) *pch = 0;
+        if (!FPortableLibraryName(szLibraryName)) strcpy(szLibraryName, PszGetCompressedString(idsLibraryDefaultGameName));
+    }
+    if (pszName) {
+        if (!FLibraryNameAvailable(szLibraryRoot, szLibraryName)) {
+            SuggestLibraryName(szLibraryName, TRUE);
+            if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_GAME_REVISION), hwnd,
+                               LibraryGameRevisionDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+        }
+    } else {
+        SuggestLibraryName(szLibraryName, FALSE);
+        if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+    }
+    if (!FPortableLibraryName(szLibraryName)) goto LFail;
     CchSnprintf(szLibraryPending, sizeof(szLibraryPending), "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
     /* Reserve only a newly created folder; never write into an existing copy. */
     if (!FLibraryNameAvailable(szLibraryRoot, szLibraryName) || CreateNativeDir(szLibraryPending) != 0) {
@@ -2070,7 +2129,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
         AlertSz(PszGetCompressedString(idsLibraryGameIncomplete), MB_ICONEXCLAMATION);
         return FALSE;
     }
-    if (!FChooseLibraryGameName(hwnd, szSource)) return FALSE;
+    if (!FChooseLibraryGameName(hwnd, szSource, NULL)) return FALSE;
     strcpy(szLibraryExchangeName, szStem);
     CchSnprintf(szStage, sizeof(szStage), "%s%s.importing.%lld", szLibraryRoot, szDirSep, (long long)LNativeTime());
     if (CreateNativeDir(szStage) != 0) {
@@ -2537,7 +2596,7 @@ static int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
 static int16_t FChooseSeparateCopyName(HWND hwnd, const char *pszName) {
     if (!FInitLibrary()) return FALSE;
     CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszName);
-    SuggestLibraryName(szLibraryName);
+    SuggestLibraryName(szLibraryName, FALSE);
     if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
                        LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     return FPortableLibraryName(szLibraryName) && FLibraryNameAvailable(szLibraryRoot, szLibraryName);
@@ -3054,7 +3113,7 @@ static int16_t FChooseLibraryGameActionName(HWND hwnd, const char *pszCurrentNam
     int cch;
     cch = CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszCurrentName);
     if (cch <= 0 || (size_t)cch >= sizeof(szLibraryName)) return FALSE;
-    SuggestLibraryName(szLibraryName);
+    SuggestLibraryName(szLibraryName, FALSE);
     if (!szLibraryName[0] || DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
                                            LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     cch = CchSnprintf(pszNewName, 256, "%s", szLibraryName);
