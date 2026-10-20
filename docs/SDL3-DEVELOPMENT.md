@@ -163,15 +163,19 @@ The self-test injects queued SDL key/close events; it is not a substitute for ph
 4. Run or debug the client. For smoke and compatibility checks, switch to the test-enabled `sdl-debug` profile and select the corresponding `stars-compat-*` target.
 
 On macOS, use `macos-sdl-ide` for normal CLion work and `macos-sdl-debug`
-when you need the test targets. On Windows, use `windows-sdl-ide` or
-`windows-sdl-debug` for the same split.
+when you need the test targets. On Windows, enable `windows-sdl-ide` for normal
+work and enable `windows-sdl-debug` only when working with tests. The IDE
+profiles configure the main `stars-sdl` and `stars-host` executables (plus the
+help viewer); the debug profiles add the test executables and their run
+configurations. Keep the debug profile disabled in CLion between test runs so
+its test run configurations stay out of the active run-configuration list.
 
-The fetched shared SDL library is located through CMake's development RPATH; no `LD_LIBRARY_PATH` setting should be needed. The presets do not use `toolchains/mingw-w64.cmake`. Local `.idea` changes need not be committed.
+The fetched shared SDL library is located through CMake's development RPATH; no `LD_LIBRARY_PATH` setting should be needed. The presets do not use `toolchains/mingw-w64.cmake`. Shared host-system conditions in `CMakePresets.json` hide presets for other operating systems, so CLion shows the configurations that apply to the current machine. To avoid duplicate entries, open **Settings → Advanced Settings → Automatically import CMake Presets** and enable configure presets while disabling build presets. This preference is stored in CLion, not the repository, so set it once on each machine. Existing imported entries are removed when CLion reloads presets.
 
 If **Load CMake Presets** does not list the SDL preset, check that the project
 root contains `CMakePresets.json`. In **Settings → Advanced Settings**, search
-for **Automatically import CMake Presets** and permit configure and build
-presets, then load the presets again. See [JetBrains' preset instructions](https://www.jetbrains.com/help/clion/cmake-presets.html).
+for **Automatically import CMake Presets** and permit configure presets,
+then load the presets again. See [JetBrains' preset instructions](https://www.jetbrains.com/help/clion/cmake-presets.html).
 
 As a fallback, add an enabled CMake profile named `sdl-ide`, select the
 native Linux toolchain, use Debug and Ninja, and set its CMake options to:
