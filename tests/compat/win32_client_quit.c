@@ -6,7 +6,7 @@
 #include <string.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
-static BOOL fAdvanced, fRace, fQuit, fCheckFocus, fFocusPassed, fSaveOwner, fOwnerPassed;
+static BOOL fPlayers, fRace, fQuit, fCheckFocus, fFocusPassed, fSaveOwner, fOwnerPassed;
 static BOOL fLaunchFocus, fLaunchFocusPassed;
 static HWND hwndNewGame;
 static int iStage, cFocusWait;
@@ -21,6 +21,8 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
     HWND hwnd;
     SDL_Event event = {0};
     size_t i;
+    const char *pszRoot;
+    char szCollision[512];
 
     (void)hwndTimer; (void)msg; (void)id; (void)time;
     if (iStage == 0 && IsWindowVisible(hwndTitle)) {
@@ -34,7 +36,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         if (fCheckIcon) fIconPassed = FTestCocoaAppIcon();
 #endif
         iStage = 1;
-        PostMessage(hwndTitle, WM_COMMAND, 0, 0);
+        PostMessage(hwndTitle, WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
         return;
     }
     if (iStage == 0 || fQuit || !StarsCompatCaptureHierarchy(&snap)) return;
@@ -53,14 +55,15 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         hwnd = LpCompatWindow(StarsCompatResolveWindow(snap.rgWindow[i].id));
         if (!hwnd || !hwnd->fVisible || !hwnd->fDialog) continue;
         if (fSaveOwner) {
-            if (iStage == 1 && fAdvanced && hwnd->lpfnDlg == SimpleNewGameDlg) {
-                iStage = 5;
-                PostMessage(hwnd, WM_COMMAND, IDC_SIMPLE_NEW_GAME_ADVANCED, 0);
-                break;
-            }
-            if ((iStage == 1 && !fAdvanced && hwnd->lpfnDlg == SimpleNewGameDlg) ||
-                (iStage == 5 && hwnd->lpfnDlg == NewGameDlg)) {
+            if (iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
                 hwndNewGame = hwnd;
+                pszRoot = getenv("STARS_LIBRARY_DIR");
+                if (!pszRoot) pszRoot = getenv("STARS_SETTINGS_DIR");
+                if (!pszRoot) { StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return; }
+                CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
+                if (!SDL_CreateDirectory(szCollision) || !SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
+                    StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return;
+                }
                 iStage = 2;
                 PostMessage(hwnd, WM_COMMAND, IDC_FINISH, 0);
                 break;
@@ -77,14 +80,14 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
             }
             continue;
         }
-        if (hwnd->lpfnDlg == SimpleNewGameDlg && (fAdvanced || fRace) && iStage == 1) {
+        if (fPlayers && iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
             iStage = 2;
-            PostMessage(hwnd, WM_COMMAND, fRace ? IDC_SIMPLE_NEW_GAME_CUSTOMIZE_RACE : IDC_SIMPLE_NEW_GAME_ADVANCED, 0);
+            PostMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
             break;
         }
-        if ((!fAdvanced && !fRace && hwnd->lpfnDlg == SimpleNewGameDlg) ||
-            (fAdvanced && iStage == 2 && hwnd->lpfnDlg == NewGameDlg) ||
-            (fRace && iStage == 2 && hwnd->lpfnDlg == RaceWizardDlg1)) {
+        if ((!fPlayers && !fRace && hwnd->lpfnDlg == NewGameDlg) ||
+            (fPlayers && iStage == 2 && hwnd->lpfnDlg == NewGameDlg2) ||
+            (fRace && hwnd->lpfnDlg == RaceWizardDlg1)) {
             // Optional real-desktop check; dummy video cannot grant native keyboard focus.
             if (fCheckFocus) {
                 fFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow && IsChild(hwnd, GetFocus());
@@ -103,11 +106,11 @@ int main(int argc, char **argv) {
     UINT_PTR idTimer;
     int nResult;
 
-    fAdvanced = argc == 2 && (!strcmp(argv[1], "advanced") || !strcmp(argv[1], "advanced-save-owner"));
+    fPlayers = argc == 2 && !strcmp(argv[1], "players");
     fRace = argc == 2 && !strcmp(argv[1], "race");
     fCheckFocus = argc == 2 && !strcmp(argv[1], "focus");
     fLaunchFocus = argc == 2 && !strcmp(argv[1], "launch-focus");
-    fSaveOwner = argc == 2 && (!strcmp(argv[1], "save-owner") || !strcmp(argv[1], "advanced-save-owner"));
+    fSaveOwner = argc == 2 && !strcmp(argv[1], "save-owner");
 #ifdef __APPLE__
     fNativeSaveOwner = argc == 2 && !strcmp(argv[1], "native-save-owner");
     if (fNativeSaveOwner) fSaveOwner = TRUE;

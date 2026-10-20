@@ -140,7 +140,7 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         lpitem->iControl = lpwin->iControl; lpitem->fDialog = lpwin->fDialog;
         lpitem->fVisible = IsWindowVisible(lpwin); lpitem->fEnabled = IsWindowEnabled(lpwin);
         lpitem->fFocused = GetFocus() == lpwin; lpitem->fCaptured = GetCapture() == lpwin;
-        lpitem->fUtf8Text = lpwin->fUtf8Text || lpwin->fUtf8Title;
+        lpitem->fUtf8Text = TRUE;
         lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass);
         lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & ES_PASSWORD) ?
                                     "[password]" : lpwin->pszTitle);
@@ -159,13 +159,12 @@ static BOOL FWriteString(FILE *lpfile, const char *psz, BOOL fUtf8) {
     DWORD ch;
     size_t cb = strlen(psz);
     int c;
+    (void)fUtf8;
     if (fputc('"', lpfile) == EOF) return FALSE;
     while (*lpch) {
-        if (fUtf8) {
-            c = CbUtf8Char((const char *)lpch, cb, &ch);
-            if (c == 0) { ch = 0xfffd; c = 1; }
-            lpch += c; cb -= c;
-        } else ch = DwCompatAnsiChar(*lpch++);
+        c = CbUtf8Char((const char *)lpch, cb, &ch);
+        if (c == 0) return FALSE;
+        lpch += c; cb -= c;
         if (ch == '"' || ch == '\\') {
             if (fputc('\\', lpfile) == EOF || fputc((int)ch, lpfile) == EOF) return FALSE;
         } else if (ch < 32) {
@@ -235,7 +234,6 @@ static void InspectDetails(HWND hwnd) {
         (unsigned)lp->dwStyle, szStyle, (unsigned)lp->dwExStyle, szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
-    GetDlgItem(hwnd, 2)->fUtf8Text = lp->fUtf8Text;
     SetWindowTextA(GetDlgItem(hwnd, 2), psz);
     SDL_free(psz);
 }
@@ -254,8 +252,7 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
         if (cb > (SIZE_MAX - 1) / 3) continue;
         pszUtf = SDL_malloc(cb * 3 + 1);
         if (!pszUtf) continue;
-        if (lp->fUtf8Text) memcpy(pszUtf, lp->pszText, cb + 1);
-        else CchLegacyToUtf8(pszUtf, cb * 3 + 1, lp->pszText, cb);
+        memcpy(pszUtf, lp->pszText, cb + 1);
         cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
         memcpy(szText, pszUtf, cch); szText[cch] = 0; SDL_free(pszUtf);
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
@@ -274,7 +271,6 @@ static BOOL RefreshInspector(HWND hwnd) {
     SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
     StarsCompatFreeHierarchy(&snapInspector);
     snapInspector = snap;
-    hwndList->fUtf8Text = TRUE;
     InspectRows(hwndList, 0, 0);
     SendMessageA(hwndList, LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);

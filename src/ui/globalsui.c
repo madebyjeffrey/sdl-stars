@@ -1,5 +1,8 @@
 #include "win.h"
 
+_Static_assert(_Alignof(TILE) >= _Alignof(TILEDRAWPROC) && offsetof(TILE, pfn) % _Alignof(TILEDRAWPROC) == 0,
+               "Tile callback pointers require native alignment");
+
 BTLDATA       *vlpbdVCR = 0;
 BTLDATA       *vlpbdVCRNext = 0;
 BTLPLAN        btlplan = {0};
@@ -339,7 +342,7 @@ char          *rgszPlanetAttrAbbr[3] = {"Grav", "Temp", "Rad"};
 char          *szButton = "BUTTON";
 char          *szCombobox = "COMBOBOX";
 char          *szEdit = "EDIT";
-char          *szHelpFile = "stars!.hlp";
+char          *szHelpFile = "stars-help.html";
 char          *szListbox = "LISTBOX";
 char          *vrgszComputerLevel[5] = {"Easy", "Standard", "Tough", "Expert", "Random"};
 char          *vrgszComputerPlayers[7] = {"Robotoids", "Turindrones", "Automitrons", "Rototills", "Cybertrons", "Macinti", "Random"};

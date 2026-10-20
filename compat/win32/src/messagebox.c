@@ -1,5 +1,6 @@
 /* Source-level message boxes use the same controls and modal queue as dialogs. */
 #include "internal.h"
+#include <stars_compat.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -160,6 +161,14 @@ static BOOL FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const MSG *lpmsg) {
     }
     return FALSE;
 }
+BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
+    HWND lpwin = LpCompatWindow(hwnd);
+
+    if (!lpwin) { SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE; }
+    lpwin->fSilentAlerts = !fEnable;
+    return TRUE;
+}
+
 int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {0};
     HWND hwnd = NULL, hwndRoot, hwndFocus, lpwin, hwndButton;
@@ -172,11 +181,15 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     MSG msg;
     int i, result, value = 0, cx, cy, cxButtons, xText, x, y, cyMax;
     DWORD ex;
+    BOOL fSound = TRUE;
     UINT allowed = 0x000f | 0x00f0 | 0x0300 | MB_TASKMODAL | MB_SYSTEMMODAL | MB_SETFOREGROUND | MB_TOPMOST | MB_RIGHT;
     if (!SDL_IsMainThread() || !FCompatVideo()) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
     if ((type & ~allowed) || (type & 0xf) > 6 || (type & 0xf0) > MB_ICONASTERISK ||
         (type & 0x3000) == 0x3000) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
     if (hwndOwner && !IsWindow(hwndOwner)) { SetLastError(ERROR_INVALID_WINDOW_HANDLE); return 0; }
+    for (lpwin = LpCompatWindow(hwndOwner); lpwin; lpwin = LpCompatWindow(lpwin->hwndParent ? lpwin->hwndParent : lpwin->hwndOwner)) {
+        if (lpwin->fSilentAlerts) { fSound = FALSE; break; }
+    }
     if (!pszText) pszText = "";
     if (SDL_strnlen(pszText, 65537) > 65536) { SetLastError(ERROR_INVALID_PARAMETER); return 0; }
     box.pszText = pszText; box.type = type; box.format = DT_WORDBREAK | DT_NOPREFIX | (type & MB_RIGHT ? DT_RIGHT : DT_LEFT);
@@ -253,7 +266,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     ShowWindow(hwnd, SW_SHOW);
     SDL_RaiseWindow(hwnd->lpWindow); SDL_SyncWindow(hwnd->lpWindow);
     SetFocus(GetDlgItem(hwnd, box.rgid[box.iDefault]));
-    MessageBeep(type & 0xf0);
+    if (fSound) MessageBeep(type & 0xf0);
     while (IsWindow(hwnd) && !hwnd->fEndDialog) {
         if (IsChild(hwnd, GetFocus())) box.hwndLastFocus = GetFocus();
         result = GetMessageA(&msg, NULL, 0, 0);

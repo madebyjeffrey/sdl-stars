@@ -78,7 +78,7 @@ def ParseTable(path, prefix, fArgs):
     rangeOpen = None
     names = {}
     fname = os.path.relpath(path, ROOT)
-    with open(path, encoding="ascii", newline="") as f:
+    with open(path, encoding="utf-8", newline="") as f:
         lines = f.read().split("\n")
     for iLine, line in enumerate(lines, 1):
         line = line.rstrip("\r")
@@ -104,8 +104,8 @@ def ParseTable(path, prefix, fArgs):
         if line[line.rfind('"') + 1 :].strip():
             raise TextError("{}: unexpected text after the closing quote".format(where))
         for ch in text:
-            if not " " <= ch <= "~":
-                raise TextError("{}: text may hold only printable ASCII, not {!r}".format(where, ch))
+            if ord(ch) < 32 or ord(ch) == 127:
+                raise TextError("{}: text may not contain control characters, including {!r}".format(where, ch))
         fields = line[:iQuote].split()
         if prefix is None:
             if fields:
@@ -155,12 +155,12 @@ def ParseTable(path, prefix, fArgs):
 def Encode(rows):
     """Return (compressed bytes, nibble lengths, chunk offsets, lookup table)."""
     cTable = rows[-1].id + 1 if rows else 0
-    rgsz = [""] * cTable
+    rgsz = [b""] * cTable
     for row in rows:
-        rgsz[row.id] = row.text
-    count = collections.Counter("".join(rgsz))
+        rgsz[row.id] = row.text.encode("utf-8")
+    count = collections.Counter(b"".join(rgsz))
     # Most frequent first; ties by character code so the output is stable.
-    lookup = sorted(count, key=lambda ch: (-count[ch], ord(ch)))
+    lookup = sorted(count, key=lambda ch: (-count[ch], ch))
     rank = {ch: i for i, ch in enumerate(lookup)}
     rgbOut = bytearray()
     rgcLen = []
@@ -186,7 +186,7 @@ def Encode(rows):
     rgbOut += bytes(nibbles[i] << 4 | nibbles[i + 1] for i in range(0, len(nibbles), 2))
     if rgbOut and rgiChunk[-1] > 0x7FFF:
         raise TextError("compressed text passes 32K, beyond the int16_t chunk offsets")
-    return bytes(rgbOut), rgcLen, rgiChunk, [ord(ch) for ch in lookup]
+    return bytes(rgbOut), rgcLen, rgiChunk, lookup
 
 
 def FormatArray(decl, values):
@@ -242,7 +242,7 @@ def Generate(outdir):
         body.append(FormatArray("uint8_t ac{}[{}]".format(tag, cTable), rgcLen))
         body.append(FormatArray("char a{}Cmpr[{}]".format(tag, len(rgb)), [Signed(b) for b in rgb]))
         body.append(FormatArray("int16_t ai{}ChunkOffset[{}]".format(tag, len(rgiChunk)), rgiChunk))
-        body.append(FormatArray("char rg{}LookupTable[{}]".format(tag, len(lookup)), lookup))
+        body.append(FormatArray("char rg{}LookupTable[{}]".format(tag, len(lookup)), [Signed(b) for b in lookup]))
         outputs[output] = "\n".join(body)
     header += ["#endif", ""]
     outputs["textids.h"] = "\n".join(header)

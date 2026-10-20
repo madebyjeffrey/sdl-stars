@@ -2,6 +2,26 @@
 
 #include "stars_test.h"
 
+static void test_FleetName_utf8_boundary(void) {
+    char szDir[MAX_PATH];
+    FLEET *lpfl;
+    const char *pszName = "AAAAAAAAAAAAAAAAAAAAAAAAAAA\xc3\xa9";
+    const char *psz;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("FleetName_utf8", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(0));
+    strcpy(rglpshdef[0][0].hul.szClass, pszName);
+    lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, 0, 1);
+    lpfl->rgcsh[1] = 1;
+    psz = PszFleetNameFromWord(0x2000);
+    TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+    TEST_CHECK(strncmp(psz, "AAAAAAAAAAAAAAAAAAAAAAAAAAA+", 28) == 0);
+    psz = PszGetFleetName(lpfl->id);
+    TEST_CHECK(FUtf8Valid(psz, strlen(psz)));
+}
+
 // SpaceDockWithArmor returns a Space Dock design with cArmor Superlatanium
 // (1500 dp each) in its shield/armor slot.
 static SHDEF SpaceDockWithArmor(int16_t cArmor) {
@@ -151,6 +171,7 @@ static void test_FLookupPart_host(void) {
 }
 
 TEST_LIST = {{"FLookupPart host sentinel", test_FLookupPart_host},
+             {"generated fleet names preserve complete UTF-8", test_FleetName_utf8_boundary},
              {"PtToScan negative coordinates", test_PtToScan_negative},
              {"ValidateWaypoints pursuers take the heaviest fleet", test_ValidateWaypoints_pursuers_take_heaviest},
              {"UpdateShdefCost armor", test_UpdateShdefCost_armor},

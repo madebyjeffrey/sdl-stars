@@ -12,12 +12,12 @@ ZIPPRODQ1  rgzpqTut[2] = {
     {
          .fNoResearch = TRUE,
          .cpq = 2,
-         .rgpq = {{.w = 193, .mdIdle = iobjFactory, .cQuan = 3}, {.w = 192, .cQuan = 3}},
+         .rgpq = {{.mdIdle = iobjFactory, .cQuan = 3}, {.cQuan = 3}},
     },
     {
          .fNoResearch = TRUE,
          .cpq = 3,
-         .rgpq = {{.w = 132, .mdIdle = iobjMinTerraform, .cQuan = 2}, {.w = 193, .mdIdle = iobjFactory, .cQuan = 3}, {.w = 192, .cQuan = 3}},
+         .rgpq = {{.mdIdle = iobjMinTerraform, .cQuan = 2}, {.mdIdle = iobjFactory, .cQuan = 3}, {.cQuan = 3}},
     }};
 
 INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

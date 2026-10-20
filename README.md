@@ -14,8 +14,11 @@ for the scope of the checks.
 ## Build and run
 
 Run the commands below from the repository root. All builds need a C11 compiler,
-CMake 3.23 or newer, Ninja, and Python 3 with PyYAML. Desktop builds also need
-SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help.
+CMake 3.23 or newer, Ninja, and Python 3.12 or newer with pip and venv support.
+CMake creates a build-local Python environment and installs the pinned Python
+dependencies on the first configure. Desktop builds also need
+SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help,
+plus a C++17 compiler for the C-compatible filesystem bridge.
 The SDL presets use an installed SDL3 3.4 or newer, or download the pinned SDL
 source on the first configure. Host-only builds do not need SDL or desktop
 libraries.
@@ -30,7 +33,7 @@ native Windows dependencies:
 pacman -S --needed \
   mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake \
   mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf \
-  mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-yaml \
+  mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip \
   mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype \
   mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo \
   mingw-w64-ucrt-x86_64-libwmf
@@ -40,7 +43,7 @@ cmake --build --preset windows-sdl-debug
 ```
 
 Adjust the Python path if MSYS2 is installed elsewhere. Use UCRT64 tools
-consistently; its Python includes the required PyYAML package. Development
+consistently; its Python must be 3.12 or newer and include pip. Development
 executables need the UCRT64 DLLs on `PATH`, which this terminal supplies.
 See [Windows build and packaging](docs/WINDOWS-SDL3.md) for PowerShell scripts
 and portable installs. `mingw-debug` / `mingw-release` are legacy SDL preset aliases.
@@ -49,10 +52,15 @@ and portable installs. `mingw-debug` / `mingw-release` are legacy SDL preset ali
 
 On Ubuntu 24.04 / Pop!_OS, install the build and test dependencies:
 
+Use Python 3.12 or newer with pip and venv support. Ubuntu 24.04's system
+Python meets the version requirement; install `python3-pip` and `python3-venv`
+along with the packages below. CMake creates the build venv and installs
+PyYAML automatically.
+
 ```sh
 sudo apt update
 sudo apt install -y build-essential cmake ninja-build git pkg-config \
-  python3 python3-yaml libfreetype-dev libfontconfig1-dev libcairo2-dev \
+  python3 python3-pip python3-venv libfreetype-dev libfontconfig1-dev libcairo2-dev \
   zlib1g-dev poppler-utils cups-client libwmf-bin \
   libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
   libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
@@ -77,14 +85,13 @@ The desktop presets target `arm64` and Homebrew under `/opt/homebrew`:
 
 ```sh
 brew install cmake ninja pkg-config sdl3 freetype fontconfig cairo libwmf python
-python3 -m venv .venv
-.venv/bin/pip install pyyaml
-cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --preset macos-sdl-debug
 cmake --build --preset macos-sdl-debug
 ./dist/macos-sdl-debug/bin/stars-sdl
 ```
 
-Select this Python explicitly when configuring other presets too. See
+Select a Python 3.12 or newer interpreter with pip explicitly when configuring
+if it is not the first `python3` on `PATH`. See
 [macOS build details](docs/DESKTOP-QUALIFICATION.md#macos-build-path) and
 [app bundle packaging](docs/MACOS-BUNDLE.md). Client, host and signed app
 regressions have passed on Apple silicon; older macOS execution and public
@@ -99,7 +106,7 @@ selects the platform's Debug preset automatically.
 `stars-host` creates universes, generates turns and writes dumps using the
 original `stars.exe` host command line (`-a game.def`, `-g[n] game.hst`,
 `-v game.hst`, `-b`, `-t`, `-s<seed>`, `-dm`/`-dp`/`-df game.mN`).
-For a host-only build, use the same compiler, CMake, Ninja and Python/PyYAML:
+For a host-only build, use the same compiler, CMake, Ninja and Python 3.12 or newer:
 
 ```sh
 cmake --preset host-release

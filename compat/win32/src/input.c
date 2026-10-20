@@ -5,6 +5,7 @@
 #include "internal.h"
 #include <stars_compat.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 static HWND hwndCapture, rghwndClick[3];
@@ -48,6 +49,9 @@ static void InputModifiers(SDL_Keymod mod) {
     SetKeyDown(VK_LSHIFT, mod & SDL_KMOD_LSHIFT); SetKeyDown(VK_RSHIFT, mod & SDL_KMOD_RSHIFT);
     SetKeyDown(VK_LCONTROL, mod & SDL_KMOD_LCTRL); SetKeyDown(VK_RCONTROL, mod & SDL_KMOD_RCTRL);
     SetKeyDown(VK_LMENU, mod & SDL_KMOD_LALT); SetKeyDown(VK_RMENU, mod & SDL_KMOD_RALT);
+#ifdef __APPLE__
+    SetKeyDown(VK_LWIN, mod & SDL_KMOD_LGUI); SetKeyDown(VK_RWIN, mod & SDL_KMOD_RGUI);
+#endif
     SetKeyDown(VK_SHIFT, mod & SDL_KMOD_SHIFT); SetKeyDown(VK_CONTROL, mod & SDL_KMOD_CTRL);
     SetKeyDown(VK_MENU, mod & SDL_KMOD_ALT);
     rgbInput[VK_CAPITAL] = (BYTE)((rgbInput[VK_CAPITAL] & 0x80) | !!(mod & SDL_KMOD_CAPS));
@@ -175,53 +179,18 @@ static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
     return hwnd;
 }
 
-static BOOL FAnsiInput(const char **lppsz, BYTE *lpch, BOOL fStrict) {
-    const unsigned char *psz = (const unsigned char *)*lppsz;
-    DWORD ch;
-    int c, i;
-    if (*psz < 0x80) { *lpch = *psz; *lppsz += 1; return TRUE; }
-    if (*psz >= 0xc2 && *psz <= 0xdf) { c = 2; ch = *psz & 0x1f; }
-    else if (*psz >= 0xe0 && *psz <= 0xef) { c = 3; ch = *psz & 0x0f; }
-    else if (*psz >= 0xf0 && *psz <= 0xf4) { c = 4; ch = *psz & 7; }
-    else return FALSE;
-    for (i = 1; i < c; i++) {
-        if ((psz[i] & 0xc0) != 0x80) return FALSE;
-        ch = (ch << 6) | (psz[i] & 0x3f);
-    }
-    if ((c == 3 && ch < 0x800) || (c == 4 && ch < 0x10000) || ch > 0x10ffff ||
-        (ch >= 0xd800 && ch <= 0xdfff)) return FALSE;
-    *lppsz += c;
-    if (ch >= 0xa0 && ch <= 0xff) *lpch = (BYTE)ch;
-    else {
-        *lpch = '?';
-        for (i = 0x80; i < 0xa0; i++)
-            if (DwCompatAnsiChar((BYTE)i) == ch) { *lpch = (BYTE)i; break; }
-        if (fStrict && i == 0xa0) return FALSE;
-    }
-    return TRUE;
-}
-
 void CompatTextInput(HWND hwnd, const char *pszText) {
     const char *psz = pszText;
-    BYTE ch;
-    BOOL fStrict;
+    DWORD ch;
     if (!IsWindow(hwnd)) return;
-    fStrict = !hwnd->fUtf8Text && (hwnd->dwStyle & ES_PASSWORD);
-    // Validate the whole event before posting, so malformed UTF-8 adds no prefix.
-    while (*psz)
-        if (!FAnsiInput(&psz, &ch, fStrict)) {
-            if (fStrict) hwnd->fEditInputRejected = TRUE;
-            SDL_SetError("Text input is malformed or not representable in this password field"); return;
-        }
-    psz = pszText;
+    if (!FUtf8Valid(pszText, strlen(pszText))) {
+        hwnd->fEditInputRejected = TRUE;
+        SDL_SetError("Text input is malformed UTF-8");
+        return;
+    }
     while (*psz) {
-        if (hwnd->fUtf8Text) {
-            DWORD chUtf8 = SDL_StepUTF8(&psz, NULL);
-            CompatPostInput(hwnd, WM_CHAR, chUtf8, 1);
-        } else {
-            if (!FAnsiInput(&psz, &ch, FALSE)) return;
-            CompatPostInput(hwnd, WM_CHAR, ch, 1);
-        }
+        ch = SDL_StepUTF8(&psz, NULL);
+        CompatPostInput(hwnd, WM_CHAR, ch, 1);
     }
 }
 
@@ -266,6 +235,10 @@ static UINT VkFromScancode(SDL_Scancode sc) {
     case SDL_SCANCODE_LSHIFT: case SDL_SCANCODE_RSHIFT: return VK_SHIFT;
     case SDL_SCANCODE_LCTRL: case SDL_SCANCODE_RCTRL: return VK_CONTROL;
     case SDL_SCANCODE_LALT: case SDL_SCANCODE_RALT: return VK_MENU;
+#ifdef __APPLE__
+    case SDL_SCANCODE_LGUI: return VK_LWIN;
+    case SDL_SCANCODE_RGUI: return VK_RWIN;
+#endif
     default: return 0;
     }
 }
@@ -390,6 +363,10 @@ static DWORD DwKeyScan(SDL_Scancode sc) {
         case SDL_SCANCODE_RCTRL: scan = 0x1d; fExtended = 1; break;
         case SDL_SCANCODE_LALT: scan = 0x38; break;
         case SDL_SCANCODE_RALT: scan = 0x38; fExtended = 1; break;
+#ifdef __APPLE__
+        case SDL_SCANCODE_LGUI: scan = 0x5b; fExtended = 1; break;
+        case SDL_SCANCODE_RGUI: scan = 0x5c; fExtended = 1; break;
+#endif
         case SDL_SCANCODE_LEFT: scan = 0x4b; fExtended = 1; break;
         case SDL_SCANCODE_RIGHT: scan = 0x4d; fExtended = 1; break;
         case SDL_SCANCODE_UP: scan = 0x48; fExtended = 1; break;
@@ -418,6 +395,14 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
 
     if (lpevent->type == SDL_EVENT_QUIT) {
         PostQuitMessage(0);
+        return;
+    }
+    if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
+        COMPATASYNCPOST *lpPost = lpevent->user.data1;
+        if (lpPost) {
+            PostMessageA(lpPost->hwnd, lpPost->msg, lpPost->wParam, lpPost->lParam);
+            free(lpPost);
+        }
         return;
     }
     // Window/input SDL event unions all use windowID; never fall back to another HWND.
@@ -516,6 +501,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         dwKey = 1 | DwKeyScan(lpevent->key.scancode);
         if ((lpevent->key.mod & SDL_KMOD_ALT) || vk == VK_F10 || vk == VK_MENU)
             msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_SYSKEYDOWN : WM_SYSKEYUP;
+#ifdef __APPLE__
+        /* Option arrows edit words; the Option key must not activate Alt menus. */
+        if (hwnd->iControl == 3 && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_MENU))
+            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_KEYDOWN : WM_KEYUP;
+#endif
         if (fAlt)
             dwKey |= UINT32_C(1) << 29;
         if (lpevent->key.repeat || lpevent->type == SDL_EVENT_KEY_UP)

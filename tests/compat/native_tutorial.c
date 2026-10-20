@@ -509,12 +509,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     switch (iStage) {
     case 0:
         if (!IsWindowVisible(hwndTitle)) return;
-        if (!FClick(rghwndBtnSplash[0])) goto LInput;
+        if (!FClick(GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LInput;
         break;
     case 1:
-        if (!hwndModal) return;
-        if (!FClick(StarsCompatResolveWindow(StarsCompatFindControl(StarsCompatWindowId(hwndModal),
-                IDC_SIMPLE_NEW_GAME_TUTORIAL, "BUTTON")))) goto LInput;
+        if (!gd.fTutorial || !IsWindow(hwndScanner)) return;
         break;
     case 2:
         if (!gd.fTutorial || tutor.idtBold != 5 || !IsWindow(hwndScanner) || hwndModal) return;

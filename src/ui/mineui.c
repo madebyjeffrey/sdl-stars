@@ -61,7 +61,8 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         crBack = SetBkColor(hdc, crButtonFace);
         cch = strlen(szMineralTitle);
         dxMax = rc2.right - rc2.left - 24;
-        for (; cch > 0 && LOWORD(GetTextExtent(hdc, szMineralTitle, cch)) > dxMax; cch--) {
+        while (cch > 0 && LOWORD(GetTextExtent(hdc, szMineralTitle, cch)) > dxMax) {
+            cch = (int16_t)CchUtf8Prefix(szMineralTitle, cch - 1);
         }
         rc2.right -= 8;
         RcCtrTextOut(hdc, &rc2, szMineralTitle, cch);

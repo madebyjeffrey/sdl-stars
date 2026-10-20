@@ -25,6 +25,7 @@
 #include "globalsui.h"
 #include "init.h"
 #include "logui.h"
+#include "libraryui.h"
 #include "mdi.h"
 #include "mineui.h"
 #include "msgui.h"
@@ -48,12 +49,12 @@
 #include "utilui.h"
 #include "vcr.h"
 
-// File paths stay UTF-8; Windows labels are converted explicitly from CP1252.
+// All window text and file paths use UTF-8.
 BOOL FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL FNativeSaveFileName(OPENFILENAMEA *lpof);
 DWORD DwNativeFileDialogError(void);
-int CchGetLegacyWindowText(HWND hwnd, char *psz, int cchMax);
-BOOL FSetLegacyWindowText(HWND hwnd, const char *psz);
+int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax);
+BOOL FSetUtf8WindowText(HWND hwnd, const char *psz);
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz);
 
 #endif

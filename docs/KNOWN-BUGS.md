@@ -17,6 +17,16 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Unsupported game-version diagnostics — fixed on main
+
+`file.c`: `FOpenFile` tested for exact version 2.85 before attempting its
+older/newer version classification, so the two version messages were
+unreachable. It now classifies valid BOF version numbers first and accepts
+only 2.85; malformed BOF framing and non-BOF headers remain corrupt-file
+errors, including after read-error recovery. `test_save.c` checks older, newer,
+malformed and current-format host files. File records and simulation behavior
+are unchanged.
+
 ## Native heap alignment and byte-addressed storage — fixed on main
 
 `memory.c`: ordinary allocation payloads now satisfy `max_align_t`, including
@@ -53,6 +63,16 @@ uses `DestroyWindow`, as the browser's existing menu-toggle handler does.
 The client integration test opens, closes by button, reopens and closes through
 an SDL window-close event, checking handle destruction and owner availability.
 Turn generation and saved data are unchanged.
+
+## Technology Browser availability filter selection — fixed on main
+
+`researchui.c`: `BrowserDlg` did not handle the availability checkbox command,
+so enabling Show Only Available Technology left an unavailable component on
+screen until navigation. It now resets an excluded selection through the
+existing category-selection path and repaints the details. Available selections
+and disabling the filter retain the current item. `win32_client_popup` covers
+the All and Armor views with a loaded game. Turn generation and saved data are
+unchanged.
 
 ## Continuing a game with native paths — fixed on main
 
@@ -551,7 +571,8 @@ viewer race's traits for foreign ships.
 
 Native creation and `WM_SETTEXT` previously passed CP1252 strings directly to
 SDL's UTF-8 title API. The inspector's Euro-sign title exposed an X11 conversion
-failure and two leaked text-property allocations. The boundary now converts
-native titles to UTF-8 while stored/returned narrow text remains CP1252. Tests
-check creation and title changes, including retained narrow text; wizard reuse
-uses the same conversion helper.
+failure and two leaked text-property allocations. Main now uses UTF-8 for both
+stored/returned text and SDL native titles, validating creation and title
+changes. Scanner JSON export also validates and preserves the same bytes,
+without the old CP1252 mapping. Tests cover title changes, Unicode snapshot
+names, JSON escaping and malformed text rejection.

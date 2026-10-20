@@ -39,8 +39,6 @@ if(WIN32)
 endif()
 install(DIRECTORY "${STARS_HELP_GENERATED}/" DESTINATION "${CMAKE_INSTALL_DATADIR}/stars/help"
     COMPONENT StarsRuntime PATTERN "*.h" EXCLUDE)
-install(FILES "${PROJECT_SOURCE_DIR}/res/stars!.hlp"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/stars" COMPONENT StarsRuntime)
 install(FILES "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE"
     "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE.free-api"
     "${PROJECT_SOURCE_DIR}/compat/win32/LICENSE.zingl"

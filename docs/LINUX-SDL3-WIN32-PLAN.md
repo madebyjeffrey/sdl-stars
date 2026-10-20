@@ -36,7 +36,7 @@ The observed system is Pop!_OS 24.04 LTS, based on Ubuntu Noble, on x86-64. CMak
 sudo apt update
 sudo apt install -y \
   build-essential cmake ninja-build git pkg-config gdb \
-  python3 python3-yaml \
+  python3 python3-pip python3-venv python3-yaml \
   libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
   libxfixes-dev libxi-dev libxss-dev libxtst-dev \
   libxkbcommon-dev libwayland-dev wayland-protocols libdecor-0-dev \

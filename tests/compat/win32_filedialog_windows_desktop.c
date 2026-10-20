@@ -32,7 +32,7 @@ static int FPumpNativeCheck(void *lpv) {
 }
 
 int main(void) {
-    WINDOWSFILEFILTER rg[] = {{"Game \xe9", "*.m?;*.hst"}, {"All", "*.*"}};
+    WINDOWSFILEFILTER rg[] = {{"Game \xc3\xa9", "*.m?;*.hst"}, {"All", "*.*"}};
     NATIVEPICKERCHECK check = {0};
     wchar_t wszCwd[32768], wszAfter[32768];
     char szFolder[32768], szPath[32768];
@@ -45,7 +45,7 @@ int main(void) {
     CHECK(check.hwndOwner);
     for (fSave = 0; fSave <= 1; fSave++) {
         iFilter = 0; check.cDialogs = 0; check.cPumps = 0; strcpy(szPath, "untouched");
-        CHECK(IChooseWindowsFile(check.hwndOwner, fSave, "Stars native picker check \xe9", szFolder,
+        CHECK(IChooseWindowsFile(check.hwndOwner, fSave, "Stars native picker check \xc3\xa9", szFolder,
                                  "\xce\xa9.m1", rg, 2, &iFilter, szPath, sizeof(szPath), FPumpNativeCheck, &check) == 0);
         CHECK(check.cDialogs == 1 && check.cPumps > 0 && !check.fBad);
         CHECK(IsWindowEnabled(check.hwndOwner) && strcmp(szPath, "untouched") == 0 && iFilter == 0);

@@ -50,6 +50,14 @@ storage harmlessly. They don't change game behavior and should stay.
   DS:0. Native tests the pointer, which also always stores the count.
   **Revert to:** nothing; a NULL dereference crashes natively.
 
+## Native UI alignment (keep)
+
+- **Tile callbacks** (`structs.h` `_tile`, marked `NATIVE`): Win16 placed
+  drawing callbacks at byte offset 6 in byte-packed tiles. Native `TILE`
+  records use native callback-pointer alignment and array strides; they are
+  UI-only and never serialized. `globalsui.c` checks their alignment at compile
+  time. macOS can use chained fixups without unaligned-pointer warnings.
+
 ## Native record and message boundaries (keep)
 
 - **Malformed player-message records** (`msg.c` LpmsgplrFromRt, used by
@@ -57,8 +65,10 @@ storage harmlessly. They don't change game behavior and should stay.
   record shorter than its 12-byte header plus abs(cLen) text bytes is
   skipped. The original copied `cb` bytes and later wrote abs(cLen)+12 from
   the heap, over-reading harmlessly; native would compute a negative copy
-  length (cb < 4) or overflow the 1024-byte write buffer. Valid records (text is limited to 968 characters) are
-  unaffected. **Revert to:** nothing; keep the guard.
+  length (cb < 4) or overflow the 1024-byte write buffer. Main also skips
+  malformed UTF-8, incomplete compressed escapes and raw text without an
+  in-record terminator. Valid records (entry is limited to 968 UTF-8 bytes)
+  are unaffected. **Revert to:** nothing; keep the guard.
 - **Battle heap capacity** (`file.c` FLoadGame and `battle.c` FDoCoolBattle,
   marked `NATIVE`): original LOWORD(pointer) was an offset within a Win16
   heap segment, whose HB header occupied 16 bytes. Native finds the owning

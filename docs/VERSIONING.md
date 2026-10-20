@@ -56,11 +56,11 @@ branch) still publish releases named after the tag.
 
 ## File format version
 
-Saves, turn files and race files carry their own version in `RTBOF`
-(`verMajor`/`verMinor`/`verInc`). The original wrote 2.83 (`save.c`) and
-refused files from 2.84 or later (`file.c`, `mdi.c`, `save.c`). 2.8 writes
-2.84 and reads 2.49 through 2.84: it picks up games, turns and races from
-2.6j/2.7, while 2.6j/2.7 refuse files written by 2.8 instead of playing on
-with different rules. The records themselves are unchanged. It is not tied
-to the product version; change it only together with a real file-format
-change, and expect older versions to reject the files.
+Saves, turn files and race files carry a version in `RTBOF`
+(`verMajor`/`verMinor`/`verInc`), separate from the product version. Main writes
+and accepts only 2.85, which identifies UTF-8 text and UTF-8 password bytes.
+Record sizes and text field widths remain unchanged; text limits are byte
+budgets. Older files are rejected, without encoding detection or migration.
+
+The 2.8 branch writes 2.84 and reads 2.49 through 2.84. The original wrote 2.83
+and refused 2.84 or later. Preserve those historical contracts on their branches.

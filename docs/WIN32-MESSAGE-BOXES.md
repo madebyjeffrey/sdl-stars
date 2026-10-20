@@ -47,6 +47,12 @@ types, and replaces an earlier queued alert rather than accumulating stale sound
 The operating system controls the playback device and volume. Set
 `STARS_SDL_ALERTS=off` to intentionally mute alerts.
 
+`StarsCompatSetWindowAlertSounds(hwnd, FALSE)` silences message boxes whose owner
+chain reaches that window, including child controls and nested owned dialogs.
+The library window opts out during initialization, so management confirmations
+and error prompts are silent. Other windows and explicit `MessageBeep` calls
+retain their sounds; silence does not initialize an audio device.
+
 Audio initializes lazily and is released at compatibility-runtime shutdown.
 An SDL audio subsystem initialized by the embedding application remains owned
 by that application. Missing devices or queue failures return failure. The tests

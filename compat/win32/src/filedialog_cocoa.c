@@ -4,16 +4,7 @@
 #include <string.h>
 
 static char *PszCocoaLabelUtf8(LPCSTR psz) {
-    size_t cb = strlen(psz);
-    char *pszUtf;
-
-    // SDL frameworks can omit iconv's CP1252 support; labels use the game's fixed encoding.
-    if (cb > (SIZE_MAX - 1) / 3 || !(pszUtf = SDL_malloc(cb * 3 + 1))) return NULL;
-    if (CchLegacyToUtf8(pszUtf, cb * 3 + 1, psz, cb) < 0) {
-        SDL_free(pszUtf);
-        return NULL;
-    }
-    return pszUtf;
+    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : NULL;
 }
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = lpv;

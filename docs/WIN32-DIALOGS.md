@@ -19,6 +19,10 @@ parameter and proposed focus control, and honors the callback's focus return.
 `DWLP_USER`, `DWLP_DLGPROC` and `DWLP_MSGRESULT` use native pointer widths.
 Modeless dialogs have independent lifetimes and use `DestroyWindow`.
 
+Ordinary native owned windows detach before destruction: Cocoa otherwise can
+expose an unrelated hidden gameplay frame when a library dialog closes. Native
+popup/tooltip windows retain their required parent through destruction.
+
 Modal dialogs disable their root owner, pump the existing message queue and
 restore owner/focus state on exit, including native activation once the owner
 is re-enabled. Hidden/disabled owners and pending application quit do not
@@ -61,6 +65,20 @@ dispatch. No additional libraries are needed.
 cmake --preset sdl-debug
 cmake --build --preset sdl-debug
 xvfb-run -a ctest --test-dir dist/sdl-debug -R win32_dialog --output-on-failure
+```
+
+The managed-race client test checks direct wizard entry, automatic race names,
+identical saves, Update/New Version/Cancel, failed publication and Unicode version
+families. Native visibility checks require one library window after wizard
+cancellation.
+The New Game workflow checks title-derived library names, UTF-8 and reserved
+filename handling, revision collisions, returning to rename in the live wizard,
+and preserving existing files. Unique names do not open a naming dialog.
+To run just these checks on a macOS desktop:
+
+```sh
+SDL_VIDEODRIVER=cocoa python3 tests/compat/run_racelibrary.py \
+  dist/macos-sdl-debug/bin/stars-compat-client-startup --dialogs-only
 ```
 
 Shared SDK/native tests cover independent modeless state, font-based geometry,

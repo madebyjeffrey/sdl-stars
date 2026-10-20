@@ -6,6 +6,13 @@
 #include <SDL3/SDL.h>
 #include "platform.h"
 typedef struct COMPATPRINT COMPATPRINT;
+typedef struct COMPATASYNCPOST {
+    HWND hwnd;
+    UINT msg;
+    WPARAM wParam;
+    LPARAM lParam;
+} COMPATASYNCPOST;
+#define COMPAT_ASYNC_POST_CODE 0x53544152
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);
@@ -38,10 +45,9 @@ BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
                         void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
-BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, BOOL fUtf8, int iScale,
+BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
                           void (*pfn)(void *, int64_t, int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
-DWORD DwCompatAnsiChar(BYTE ch);
 
 typedef struct COMPATCLASS {
     WNDCLASSA wc;
@@ -83,7 +89,7 @@ struct HWND__ {
     UINT ichTypingEnd;
     UINT iEditUndoAction;
     UINT_PTR idEditCaretTimer;
-    BOOL fModified, fUtf8Text, fUtf8Title, fEditInputRejected;
+    BOOL fModified, fEditInputRejected;
     char *pszEditUndo, *pszEditComposition;
     int ichComposition, cchComposition;
     UINT ichUndoPosition, cchUndoBefore, cchUndoAfter;
@@ -93,6 +99,7 @@ struct HWND__ {
     BOOL fRestoreMax;
     BOOL fCaptionActive;
     BOOL fDialog, fModal, fEndDialog;
+    BOOL fSilentAlerts;
     UINT cNativeFileDialogs;
     BOOL fKeepNative, fDeferPresent;
     UINT cPresentDefer;

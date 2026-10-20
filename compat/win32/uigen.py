@@ -47,8 +47,7 @@ def compile_resources(root):
         return result
 
     def text(value):
-        # RC escapes encode CP1252 bytes, not Unicode code points.
-        value = ast.literal_eval(value).encode('latin1').decode('cp1252')
+        value = ast.literal_eval(value)
         return value.encode('utf-16le') + b'\0\0'
 
     def dialog(index, coordinates):
@@ -131,8 +130,6 @@ def compile_resources(root):
             data += struct.pack('<H', mf | (0x80 if i == len(items) - 1 else 0))
             if cmd is not None:
                 data += struct.pack('<H', cmd)
-            # The canonical RC uses code page 1252; ensure representability now.
-            text.encode('cp1252')
             data += text.encode('utf-16le') + b'\0\0' + children
         return bytes(data), index + 1
 

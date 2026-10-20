@@ -12,6 +12,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+from utf8_fixtures import copy_utf8_fixture
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENARIOS = ("noai", "oneai1", "oneai2", "oneai3", "oneai4", "oneai5", "oneai6", "smallai4", "smallai6")
@@ -50,7 +51,7 @@ def prepare(args):
         lines[4] = "human.r1"
         lines[-1] = "game.xy"
         (dest / "game.def").write_bytes(("\r\n".join(lines) + "\r\n").encode("ascii"))
-        shutil.copyfile(ROOT / "tests/scaffold/fixtures/newgame/tiny/humanoid.r1", dest / "human.r1")
+        copy_utf8_fixture(ROOT / "tests/scaffold/fixtures/newgame/tiny/humanoid.r1", dest / "human.r1")
         manifest["scenarios"][name] = {p.name: digest(p) for p in dest.iterdir()}
     (work / "run.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Prepared run: {work}")

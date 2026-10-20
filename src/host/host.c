@@ -55,6 +55,7 @@ static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, ch
             pchEnd = pch + strlen(pch);
         }
         cch = (size_t)(pchEnd - pch) < sizeof(szLine) - 1 ? (size_t)(pchEnd - pch) : sizeof(szLine) - 1;
+        cch = CchUtf8Prefix(pch, cch);
         memcpy(szLine, pch, cch);
         while (cch > 0 && (szLine[cch - 1] == '\r' || szLine[cch - 1] == ' ' || szLine[cch - 1] == '\t')) {
             cch--;
@@ -79,7 +80,8 @@ static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, ch
         if (FSzEqNoCase(szLine, szKey)) {
             for (pchEq++; *pchEq == ' ' || *pchEq == '\t'; pchEq++) {
             }
-            snprintf(szValue, cchValue, "%s", pchEq);
+            cch = CchUtf8Prefix(pchEq, cchValue - 1);
+            memcpy(szValue, pchEq, cch); szValue[cch] = 0;
             return TRUE;
         }
     }
@@ -121,6 +123,8 @@ static int16_t FReadHostIni(const char *szFile) {
     }
     fclose(pf);
     pszText[cb] = 0;
+    if (!FUtf8Valid(pszText, (size_t)cb)) { free(pszText); return FALSE; }
+    if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
     ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(pszText, idsMisc, idsDefaultpassword, vszDefPass, 16)) {
         vszDefPass[0] = 0;

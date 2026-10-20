@@ -1,4 +1,5 @@
 #include "win.h"
+#include <SDL3/SDL.h>
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
 
@@ -131,14 +132,14 @@ void CreateChildWindows() {
         memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         wsprintf(&szGame[strlen(szGame)], ".m%d", idPlayer + 1);
-        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
         psz = PszPlayerName(idPlayer, FALSE, TRUE, FALSE, 0, NULL);
-        CchLegacyToUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
+        CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
         snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         CchGetString(idsStarsSHostMode, szWork);
         wsprintf(szData, szWork, game.szName);
-        CchLegacyToUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
+        CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
         strcpy(szData, szNameUtf8);
     }
     FSetNativeWindowTitle(hwndFrame, szData);
@@ -980,7 +981,15 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             iplrOld = idPlayer;
             strcpy(szT, vrgszMRU + 256 * (LOWORD(wParam) - 4300));
             psz = strrchr(szT, 46);
-            if (psz && FFileExists(szT)) {
+            if (psz) {
+                if (!FIsManagedLibraryGameFile(szT)) {
+                    if (FImportDesktopFile(hwnd, szT) && hwndTitle) {
+                        RefreshLibraryGames(hwndTitle);
+                        RefreshLibraryRaces(hwndTitle);
+                    }
+                    break;
+                }
+                if (!FFileExists(szT)) goto LShowMissingRecent;
                 ini.fStartupFile = TRUE;
                 DestroyCurGame();
                 strcpy(szBase, szT);
@@ -996,6 +1005,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 StartTutor(FALSE);
                 break;
             }
+        LShowMissingRecent:
             strcpy(szWork, szT);
             AlertSz(PszFormatIds(idsCantOpenFile, NULL), MB_ICONHAND);
             break;
@@ -1480,17 +1490,24 @@ LPrintMapCleanup:
             FWriteLogFile(szBase, idPlayer);
             FWriteHistFile(idPlayer);
             break;
+        case IDM_LIBRARY_EXPORT_ORDERS:
+            FExportLibraryOrders(hwnd, NULL);
+            break;
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
-            if ((gd.fTutorial && !FAskKillTutor()) || FOpenGame(hwnd, FALSE) <= 0)
+            if (gd.fTutorial && !FAskKillTutor()) break;
+            if (ini.fStartupFile && FIsManagedLibraryGameFile(szBase)) {
+                if (FOpenGame(hwnd, FALSE) <= 0) break;
+                InitializeMenu(NULL);
+                if (uTimerId == 0) PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
-            InitializeMenu(NULL);
-            if (uTimerId == 0) {
-                PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             }
-            if (!game.fTutorial || idPlayer != 0)
-                break;
-            StartTutor(FALSE);
+            fRet = FImportDesktopFile(hwnd, ini.fStartupFile ? szBase : NULL);
+            ini.fStartupFile = FALSE;
+            if (fRet && hwndTitle) {
+                RefreshLibraryGames(hwndTitle);
+                RefreshLibraryRaces(hwndTitle);
+            }
             break;
         case IDM_TITLE_NEW_GAME:
         case IDM_TITLE_OPEN_GAME:
@@ -1502,6 +1519,8 @@ LPrintMapCleanup:
             break;
         case IDM_FILE_RETURN_TO_TITLE:
             if (gd.fTutorial && !FAskKillTutor())
+                break;
+            if (!FCanLeaveCurrentGame())
                 break;
             WriteIniSettings();
             DestroyCurGame();
@@ -1748,7 +1767,10 @@ LGotFileName:
     fRet = FWasRaceFile(&szFile[ofn.nFileOffset], fRaceOnly == 0);
     if (fRaceOnly) {
         if (fRet > 0) {
-            SetSzRaceFile(&szFile[ofn.nFileOffset]);
+            if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(hwnd, szFile);
+            pch = szFile + strlen(szFile);
+            while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
+            return FLoadLibraryRace(hwnd, pch);
         }
         return fRet;
     }
@@ -2658,6 +2680,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     int16_t     dx;
     int16_t     xCur;
     char       *psz;
+    char        szRaceName[256];
     PAINTSTRUCT ps;
     RECT        rcWnd;
     HBRUSH      hbrSav;
@@ -2665,9 +2688,15 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     LOGFONT    *plf;
     HFONT       hfont;
     HFONT       hfontSav;
+    HWND        hwndButton;
+    int16_t     idButton;
+    int16_t     fIdleSav;
 
     switch (msg) {
     case WM_CREATE:
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
+                    (void *)hwnd, IsWindowVisible(hwnd));
         if (vcScreenColors >= 8) {
             vhdibTitle = HdibLoadBigResource(IDDIB_SPLASH);
             if (!vhpalSplash && vhdibTitle) {
@@ -2675,25 +2704,29 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         }
         GetClientRect(hwnd, &rc);
-        dx = 120 <= rc.right >> 3 ? rc.right >> 3 : 120;
-        if (rc.bottom < 650) {
-            dx += dx / 6;
-        }
-        dxGap = (rc.right - (dx << 2)) >> 2;
-        xCur = dxGap >> 1;
+        dx = min(120, (rc.right - 48) / 5 - 12);
+        dxGap = (rc.right - 5 * dx) / 6;
+        xCur = dxGap;
         dy = rc.bottom <= 500 ? dyArial8 * 2 : (int16_t)(5 * dyArial8) / 2;
-        for (i = 0; i < 4; i++) {
-            psz = PszGetCompressedString(idsNewGame + i);
-            rghwndBtnSplash[i] = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
-                                              (HMENU)(uintptr_t)i, hInst, NULL);
+        for (i = 0; i < 5; i++) {
+            idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
+            psz = PszGetCompressedString(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton);
+            hwndButton = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
+                                      (HMENU)(uintptr_t)idButton, hInst, NULL);
+            if (i != 3) rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (szBase[0] == 0 || !FFileExists(szBase))) {
                 EnableWindow(rghwndBtnSplash[2], FALSE);
             }
             if (rc.bottom < 500) {
-                SendMessage(rghwndBtnSplash[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+                SendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             }
             xCur += dx + dxGap;
         }
+        InitLibraryGames(hwnd, &rc);
+        InitLibraryRaces(hwnd, &rc);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
+        SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
         InvalidateRect(hwnd, NULL, TRUE);
@@ -2701,6 +2734,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 4; i++) {
             UpdateWindow(rghwndBtnSplash[i]);
         }
+        UpdateWindow(GetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:
@@ -2737,10 +2771,18 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         goto Default;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
+        case IDC_LIBRARY_TUTORIAL:
+            fIdleSav = gd.fNoIdleChecks;
+            gd.fNoIdleChecks = TRUE;
+            StartTutor(FALSE);
+            gd.fNoIdleChecks = fIdleSav;
+            break;
         case 0:
             NewGameWizard(hwnd, FALSE);
             if (!lpPlanets && game.lid == 0) {
-                SetFocus(hwnd);
+                ShowWindow(hwndFrame, SW_HIDE);
+                ShowWindow(hwndTitle, SW_SHOW);
+                SetFocus(hwndTitle);
                 break;
             }
             if (!fFreeingTitle) {
@@ -2750,7 +2792,77 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             ShowWindow(hwndFrame, SW_SHOW);
             break;
+        case IDC_LIBRARY_IMPORT:
+            if (FImportLibraryGame(hwnd, NULL)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
+            break;
+        case IDC_LIBRARY_IMPORT_FOLDER:
+            ShowLibraryImportFolderPicker(hwnd);
+            break;
+        case IDC_LIBRARY_GAMES_VIEW:
+            SelectLibraryView(hwnd, FALSE);
+            break;
+        case IDC_LIBRARY_HOST_VIEW:
+            SelectLibraryView(hwnd, TRUE);
+            break;
+        case IDC_LIBRARY_IMPORT_ORDERS:
+            if (FImportLibraryOrders(hwnd, NULL)) RefreshLibraryHostGames(hwnd);
+            break;
+        case IDC_LIBRARY_GAME_EXPORT:
+            FExportSelectedLibraryGame(hwnd, NULL);
+            break;
+        case IDC_LIBRARY_DUPLICATE:
+        case IDC_LIBRARY_RENAME:
+            if (FActOnSelectedLibraryGame(hwnd, LOWORD(wParam) == IDC_LIBRARY_RENAME)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
+            break;
+        case IDC_LIBRARY_GAME_DELETE:
+            if (FDeleteSelectedLibraryGame(hwnd)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
+            break;
+        case IDC_LIBRARY_RACES:
+            if (HIWORD(wParam) != LBN_DBLCLK || !FSelectLibraryRace(hwnd, szRaceName)) break;
+            if (FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_NEW:
+            if (FBeginLibraryRace(hwnd)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_EDIT:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FEditLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_DUPLICATE:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FDuplicateLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_EXPORT:
+            if (FSelectLibraryRace(hwnd, szRaceName)) FExportLibraryRace(hwnd, szRaceName, NULL);
+            break;
+        case IDC_LIBRARY_RACE_DELETE:
+            if (FSelectLibraryRace(hwnd, szRaceName) && FDeleteLibraryRace(hwnd, szRaceName)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_RACE_IMPORT:
+            if (FImportLibraryRaceAndEdit(hwnd, NULL)) RefreshLibraryRaces(hwnd);
+            break;
+        case IDC_LIBRARY_GAMES:
+            if (HIWORD(wParam) == LBN_SELCHANGE) { RefreshLibraryPlayers(hwnd); break; }
+            if (HIWORD(wParam) != LBN_DBLCLK) break;
+            if (!FSelectLibraryGame(hwnd)) break;
+            goto LOpenGame;
+        case IDC_LIBRARY_PLAYERS:
+            if (HIWORD(wParam) == CBN_SELCHANGE)
+                EnableWindow(rghwndBtnSplash[1], SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
+            break;
+        case IDC_LIBRARY_HOST_GAMES:
+            if (HIWORD(wParam) != LBN_DBLCLK) break;
+            if (!FSelectLibraryHostGame(hwnd)) break;
+            goto LOpenGame;
         case IDOK:
+            if (!FSelectLibraryGame(hwnd)) break;
         LOpenGame:
             if (FOpenGame(hwnd, FALSE) > 0) {
                 if (!fFreeingTitle) {
@@ -2761,18 +2873,19 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (idPlayer != iplrNone) {
                     ShowWindow(hwndFrame, SW_SHOW);
                 }
+                RememberLibraryGame();
                 InitializeMenu(NULL);
                 PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 if (game.fTutorial && idPlayer == 0) {
                     StartTutor(FALSE);
                 }
-            } else {
+            } else if (IsWindow(hwndTitle)) {
                 SetFocus(hwnd);
             }
             ini.fStartupFile = FALSE;
             break;
         case IDCANCEL:
-            ini.fStartupFile = TRUE;
+            if (!FContinueLibraryGame(hwnd)) break;
             goto LOpenGame;
         case 3:
             if (gd.fExitWindows) {
@@ -2781,6 +2894,21 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 WriteIniSettings();
                 PostQuitMessage(vretExitValue);
             }
+        }
+        break;
+    case WM_STARS_IMPORT_FOLDER:
+        if ((char *)wParam) {
+            if (FImportLibraryGame(hwnd, (char *)wParam)) {
+                RefreshLibraryGames(hwnd);
+                RefreshLibraryHostGames(hwnd);
+            }
+            SDL_free((char *)wParam);
+        }
+        break;
+    case WM_STARS_EXPORT_FOLDER:
+        if ((char *)wParam) {
+            FExportSelectedLibraryGame(hwnd, (char *)wParam);
+            SDL_free((char *)wParam);
         }
         break;
     case WM_PAINT:

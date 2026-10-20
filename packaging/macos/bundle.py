@@ -149,7 +149,6 @@ def package(args):
         resources.mkdir()
         shutil.copy2(args.executable, executable)
         shutil.copy2(args.source / "res/icons/stars-app.icns", resources)
-        shutil.copy2(args.source / "res/stars!.hlp", resources)
         shutil.copytree(args.help_directory, resources / "help", ignore=shutil.ignore_patterns("*.h"))
         licenses = resources / "licenses"
         licenses.mkdir()

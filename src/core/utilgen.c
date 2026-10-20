@@ -457,7 +457,7 @@ int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut) {
     return TRUE;
 }
 
-int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+static int16_t FDecompressUserStringInternal(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -465,6 +465,7 @@ int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcO
 
     fHalf = FALSE;
     pchOut = szWork;
+    if (cIn < 0 || *pcOut < 0 || *pcOut >= (int16_t)sizeof(szWork)) goto invalid;
     while (cIn > 0) {
         if (fHalf) {
             iNyb = *szIn & 0xf;
@@ -477,6 +478,7 @@ int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcO
         }
         fHalf = fHalf == 0;
         if (iNyb >= 11) {
+            if (cIn == 0) goto invalid;
             if (fHalf) {
                 iNyb |= (*szIn & 0xf) << 4;
                 cIn--;
@@ -486,6 +488,7 @@ int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcO
             }
             fHalf = fHalf == 0;
             if ((iNyb & 0xf) == 0xf) {
+                if (cIn == 0) goto invalid;
                 if (fHalf) {
                     iNyb |= (*szIn & 0xf) << 8;
                     cIn--;
@@ -499,12 +502,25 @@ int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcO
         *pchOut = ChFromNybble(iNyb);
         pchOut++;
         if (pchOut - szWork > *pcOut) {
-            return FALSE;
+            goto invalid;
         }
     }
     *pchOut = 0;
+    if (memchr(szWork, 0, (size_t)(pchOut - szWork)) != NULL) goto invalid;
+    if (fUtf8 && !FUtf8Valid(szWork, (size_t)(pchOut - szWork))) goto invalid;
     strcpy(szOut, szWork);
     return TRUE;
+invalid:
+    szOut[0] = 0;
+    return FALSE;
+}
+
+int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, TRUE);
+}
+
+int16_t FDecompressUserStringBytes(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, FALSE);
 }
 
 int16_t NybbleFromCh(uint8_t ch) {

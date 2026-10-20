@@ -5,16 +5,21 @@
 #include <stdint.h>
 #include <stdio.h>
 
-/* Keep one native window across an application's same-sized modal wizard pages.
- * Logical HWNDs and controls still have independent lifetimes. End the sequence
- * on every exit path; nested sequences are rejected without changing state.
+/* Keep one native window and its completed frame across same-sized modal
+ * wizard pages. Logical HWNDs and controls still have independent lifetimes.
+ * End the sequence on every exit path; nested sequences are rejected without changing state.
  */
 BOOL StarsCompatBeginDialogSequence(HWND hwndOwner);
 void StarsCompatEndDialogSequence(void);
 
+/* Message boxes owned by this window, its children or its owned windows can
+ * be silent. Other windows and explicit MessageBeep calls keep their sounds.
+ */
+BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
+
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are CP1252 unless fUtf8Text marks native path/caption text.
+ * Snapshot strings are UTF-8; fUtf8Text is always true.
  * Strings are copied without calling application procedures.
  * Password text is redacted. Initialize snapshots to zero; free before reuse.
  */
@@ -50,6 +55,8 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void));
  * All handles and class atoms must be discarded before using the runtime again.
  */
 void StarsCompatShutdown(void);
+/* Post an application message from an SDL dialog callback, which may run off-thread. */
+BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 /* Final process cleanup after WinMain has released application state.
  * Unlike normal shutdown, no window procedure is called. All handles become

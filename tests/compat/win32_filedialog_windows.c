@@ -42,7 +42,7 @@ BOOL (WINAPI *__imp_GetSaveFileNameW)(OPENFILENAMEW *) = FakeSave;
 DWORD (WINAPI *__imp_CommDlgExtendedError)(void) = FakeError;
 
 int main(void) {
-    WINDOWSFILEFILTER rg[] = {{"Game \xe9", "*.m?;*.hst"}, {"All", "*.*"}};
+    WINDOWSFILEFILTER rg[] = {{"Game \xc3\xa9", "*.m?;*.hst"}, {"All", "*.*"}};
     wchar_t wszCwd[32768], wszAfter[32768];
     char szPath[128];
     int fSave, i, iFilter, iRet;
@@ -50,7 +50,7 @@ int main(void) {
     CHECK(GetCurrentDirectoryW(32768, wszCwd));
     for (fSave = 0; fSave <= 1; fSave++) for (i = 0; i < 3; i++) {
         fSaveExpected = fSave; iAction = i; iFilter = 1; strcpy(szPath, "untouched");
-        iRet = IChooseWindowsFile((void *)(UINT_PTR)123, fSave, "Open \xe9", "C:/\xce\xa9",
+        iRet = IChooseWindowsFile((void *)(UINT_PTR)123, fSave, "Open \xc3\xa9", "C:/\xce\xa9",
                                  "\xce\xa9.m1", rg, 2, &iFilter, szPath, sizeof(szPath), NULL, NULL);
         CHECK(iRet == (i == 0 ? 1 : i == 1 ? 0 : -1));
         CHECK(!fBad);
@@ -58,7 +58,7 @@ int main(void) {
         CHECK(i == 0 ? strcmp(szPath, "C:/games/\xce\xa9.m1") == 0 && iFilter == 0 : strcmp(szPath, "untouched") == 0 && iFilter == 1);
     }
     iAction = 0; fSaveExpected = 0; iFilter = 1; strcpy(szPath, "untouched");
-    CHECK(IChooseWindowsFile((void *)(UINT_PTR)123, 0, "Open \xe9", "C:/\xce\xa9", "\xce\xa9.m1",
+    CHECK(IChooseWindowsFile((void *)(UINT_PTR)123, 0, "Open \xc3\xa9", "C:/\xce\xa9", "\xce\xa9.m1",
                              rg, 2, &iFilter, szPath, 2, NULL, NULL) == -1);
     CHECK(strcmp(szPath, "untouched") == 0 && iFilter == 1);
     CHECK(cCalls == 7 && !fBad);

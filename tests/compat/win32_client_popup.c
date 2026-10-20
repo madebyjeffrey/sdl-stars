@@ -35,6 +35,37 @@ int16_t StarsTest_PromptPassword(void) { return TRUE; }
 static BOOL fDesignerSeen, fDesignerFocus;
 static int cDesignerWait;
 
+static int TestBrowserAvailableTechnology(void) {
+    HWND hwnd;
+    int iCategory, c;
+    HS hs;
+
+    hwnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
+    CHECK(hwnd && hwnd == hwndBrowser);
+    for (iCategory = 0; iCategory <= 1; iCategory++) {
+        CheckDlgButton(hwnd, IDC_BROWSER_AVAILABLE_ONLY, BST_UNCHECKED);
+        SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_SETCURSEL, iCategory, 0);
+        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BROWSER_COMPONENT_CATEGORY, CBN_SELCHANGE), 0);
+        for (c = 0; c < iarmorCount && vpartBrowser.hs.iItem != iarmorSuperlatanium; c++)
+            SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+        CHECK(vpartBrowser.hs.grhst == hstArmor && vpartBrowser.hs.iItem == iarmorSuperlatanium);
+        CHECK(FLookupPart(&vpartBrowser) != mdPartAvailAvailable);
+        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        CHECK(IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY));
+        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        CHECK(SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_GETCURSEL, 0, 0) == iCategory);
+        SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        hs = vpartBrowser.hs;
+        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);
+        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);
+    }
+    CHECK(DestroyWindow(hwnd) && !hwndBrowser);
+    return 0;
+}
+
 static void CALLBACK CloseDesigner(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
     (void)hwnd; (void)msg; (void)time;
     if (!IsWindowVisible(hwndSlotDlg)) return;
@@ -61,6 +92,7 @@ static int TestDesignerReturnFocus(HWND hwndOwnerFocus) {
     CHECK(fDesignerSeen && fDesignerFocus && !IsWindow(hwndSlotDlg));
     CHECK(IsWindowEnabled(hwndFrame) && FNativeFocus(hwndFrame));
     CHECK(GetFocus() == hwndOwnerFocus);
+    CHECK(TestBrowserAvailableTechnology() == 0);
     DestroyCurGame();
     return 0;
 }

@@ -136,13 +136,11 @@ library paths. [libwmf](https://formulae.brew.sh/formula/libwmf) supplies `wmf2s
 for the original guide's WMF diagrams. SDL can be fetched by CMake from the pinned,
 checksum-verified 3.4.18 archive; installing SDL separately is optional.
 
-Use a repository-local Python environment under ignored `dist/`:
+Use Python 3.12 or newer with pip and venv support. CMake creates the
+repository-local build environment and installs the pinned requirements:
 
 ```sh
-mkdir -p dist
-/opt/homebrew/bin/python3 -m venv dist/dev-venv
-dist/dev-venv/bin/python -m pip install pyyaml
-cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/dist/dev-venv/bin/python"
+cmake --preset macos-sdl-debug
 cmake --build --preset macos-sdl-debug --parallel 4
 ./dist/macos-sdl-debug/bin/stars-sdl
 ```
@@ -156,7 +154,7 @@ After a successful product build, optionally enable the Mac-supported host,
 ABI and direct SDL smoke tests:
 
 ```sh
-cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/dist/dev-venv/bin/python" -DSTARS_BUILD_TESTS=ON
+cmake --preset macos-sdl-debug -DSTARS_BUILD_TESTS=ON
 cmake --build --preset macos-sdl-debug --parallel 4
 ./dist/macos-sdl-debug/bin/stars-compat-abi
 ./dist/macos-sdl-debug/bin/stars-compat-smoke --self-test
@@ -176,7 +174,7 @@ For host regression, install Go (the save CLI requires Go 1.25 or newer):
 ```sh
 /opt/homebrew/bin/brew install go
 go version
-make regression-host HOST_PRESET=macos-host-release PYTHON="$PWD/dist/dev-venv/bin/python"
+make regression-host HOST_PRESET=macos-host-release
 ```
 
 Run this separately from manual UI testing. Compare the baseline; never export
@@ -197,23 +195,24 @@ If the update asks you to close the terminal, do so, reopen MINGW64 and rerun
 ```sh
 pacman -S --needed git mingw-w64-x86_64-gcc mingw-w64-x86_64-binutils \
   mingw-w64-x86_64-gdb mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja \
-  mingw-w64-x86_64-python mingw-w64-x86_64-python-yaml
+  mingw-w64-x86_64-python mingw-w64-x86_64-python-pip
 command -v x86_64-w64-mingw32-gcc
 command -v x86_64-w64-mingw32-windres
 command -v cmake
-python -c "import yaml; print(yaml.__version__)"
+python --version
+python -m pip --version
 ```
 
 Use the MinGW CMake/Ninja/Python tools from `/mingw64/bin`, not MSYS POSIX tools
-or an MSVC toolchain. This matches the repository's prefixed compiler names and
-GNU extensions. See [MSYS2 CMake guidance](https://www.msys2.org/docs/cmake/) and
-the [PyYAML package](https://packages.msys2.org/packages/mingw-w64-x86_64-python-yaml).
+or an MSVC toolchain. Use Python 3.12 or newer with pip. This matches the
+repository's prefixed compiler names and GNU extensions. See
+[MSYS2 CMake guidance](https://www.msys2.org/docs/cmake/).
 The Windows product needs neither SDL/Cairo nor Linux desktop services.
 
 From the checkout root in that shell:
 
 ```sh
-cmake --preset mingw-debug -DPython3_EXECUTABLE="$(cygpath -m /mingw64/bin/python.exe)"
+cmake --preset mingw-debug
 cmake --build --preset mingw-debug --parallel 4
 ./dist/mingw-debug/bin/stars.exe
 ```
@@ -230,7 +229,7 @@ Some reference tests create native windows, so run them when you are not
 interacting with another Stars instance. For Release:
 
 ```sh
-cmake --preset mingw-release -DPython3_EXECUTABLE="$(cygpath -m /mingw64/bin/python.exe)"
+cmake --preset mingw-release
 cmake --build --preset mingw-release --parallel 4
 ```
 
@@ -247,12 +246,13 @@ Open the repository root and load CMake presets. Enable the imported profile
 under Settings/Preferences → Build, Execution, Deployment → CMake; disabled
 profiles do not appear in the run selector. See [CLion preset support](https://www.jetbrains.com/help/clion/cmake-presets.html).
 
-On Mac use the Xcode/Clang toolchain, `macos-sdl-debug`, the Apple silicon library paths
-above and `-DPython3_EXECUTABLE=<absolute checkout>/dist/dev-venv/bin/python`.
+On Mac use the Xcode/Clang toolchain, `macos-sdl-debug`, and the Apple silicon
+library paths above. Select Python 3.12 or newer with pip if it is not first on
+`PATH`.
 Choose `stars-sdl`, with the checkout root as working directory. The preset
 requests arm64; CLion's shell/tool environment must find dependencies under `/opt/homebrew`.
 On Windows use a MinGW toolchain rooted at `C:\msys64\mingw64`, the
-`mingw-debug` preset and the matching Python executable. Choose `stars` (the
+`mingw-debug` preset and Python 3.12 or newer with pip. Choose `stars` (the
 output is `stars.exe`). Verify the configure log selects MinGW before building.
 Use GDB on Windows and the supported macOS debugger on Mac. If an imported
 profile is read-only and you need to edit its Python path or toolchain, duplicate

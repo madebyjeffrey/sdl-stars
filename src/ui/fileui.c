@@ -1,6 +1,6 @@
 #include "win.h"
 
-INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR CALLBACK STARS_TEST_IMPL(AskSaveDialog)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_INITDIALOG:
         return 1;
@@ -9,7 +9,10 @@ INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         case IDC_SAVE:
         case IDC_NO_DON_T_SAVE:
         case IDC_SAVESUBMIT:
-            EndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 0 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
+            EndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 2 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
+            return 1;
+        case IDCANCEL:
+            EndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
@@ -29,12 +32,37 @@ void PromptSaveGame() {
     lpProc = MakeProcInstance(AskSaveDialog, hInst);
     fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc);
     FreeProcInstance(lpProc);
-    if (fRet) {
+    if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
         FWriteLogFile(szBase, idPlayer);
         FWriteHistFile(idPlayer);
     }
     return;
+}
+
+int16_t FCanLeaveCurrentGame(void) {
+    FARPROC lpProc;
+    int16_t fRet;
+    int16_t fSubmitSav;
+
+    if (idPlayer == iplrNone || !game.fDirty) return TRUE;
+    lpProc = MakeProcInstance(AskSaveDialog, hInst);
+    fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+                     hwndFrame, lpProc);
+    FreeProcInstance(lpProc);
+    if (fRet == 0 || fRet == -2) return FALSE;
+    if (fRet == 1 || fRet == -1) {
+        fSubmitSav = gd.fSubmit;
+        gd.fSubmit = fRet == -1;
+        if (!FWriteLogFile(szBase, idPlayer) || !FWriteHistFile(idPlayer)) {
+            gd.fSubmit = fSubmitSav;
+            /* The orders writer clears dirty before the history save. */
+            DirtyGame(TRUE);
+            return FALSE;
+        }
+    }
+    game.fDirty = FALSE;
+    return TRUE;
 }
 
 // ShowTitleScreen brings back the title screen when FLoadGame fails.
@@ -56,6 +84,9 @@ void ShowTitleScreen() {
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
         hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
+                    (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle));
         fFreeingTitle = FALSE;
         ShowWindow(hwndFrame, SW_HIDE);
     }

@@ -1,8 +1,9 @@
 if(STARS_BUILD_TESTS)
     set(STARS_CLIENT_TEST_DIR "${CMAKE_BINARY_DIR}/tests-client")
     file(MAKE_DIRECTORY "${STARS_CLIENT_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1
-        "${STARS_CLIENT_TEST_DIR}/data/humanoid.r1" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
+        "${STARS_CLIENT_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
     file(GLOB STARS_CLIENT_UNIT_SOURCES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/tests/unit/test_*.c")
     set(STARS_CLIENT_TEST_TARGETS)
     foreach(STARS_CLIENT_UNIT_SOURCE ${STARS_CLIENT_UNIT_SOURCES})
@@ -15,6 +16,9 @@ if(STARS_BUILD_TESTS)
         target_compile_definitions(${STARS_CLIENT_TEST_TARGET} PRIVATE
             STARS_TEST_GOLDEN_DIR="${PROJECT_SOURCE_DIR}/tests/unit/golden")
         stars_test_redirect(${STARS_CLIENT_TEST_TARGET} AlertSz)
+        if(STARS_CLIENT_TEST_NAME STREQUAL "test_race")
+            stars_test_redirect(${STARS_CLIENT_TEST_TARGET} FPromptLegacyRacePassword)
+        endif()
         set_target_properties(${STARS_CLIENT_TEST_TARGET} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${STARS_CLIENT_TEST_DIR}")
         list(APPEND STARS_CLIENT_TEST_TARGETS ${STARS_CLIENT_TEST_TARGET})

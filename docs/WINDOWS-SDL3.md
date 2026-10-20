@@ -27,7 +27,7 @@ pacman -S --needed \
   mingw-w64-ucrt-x86_64-ninja \
   mingw-w64-ucrt-x86_64-pkgconf \
   mingw-w64-ucrt-x86_64-python \
-  mingw-w64-ucrt-x86_64-python-yaml \
+  mingw-w64-ucrt-x86_64-python-pip \
   mingw-w64-ucrt-x86_64-sdl3 \
   mingw-w64-ucrt-x86_64-freetype \
   mingw-w64-ucrt-x86_64-fontconfig \
@@ -37,6 +37,8 @@ pacman -S --needed \
 
 Use the UCRT64 packages and tools consistently. The `/usr/bin` compiler, if
 installed, targets the MSYS environment rather than a standalone Windows app.
+The GCC package supplies both the C11 compiler and the C++17 compiler used by
+the portable filesystem bridge.
 
 ## Build and package from PowerShell
 
@@ -54,8 +56,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows.ps1 -Configuratio
 ```
 
 For another MSYS2 installation, pass `-Msys2Root D:\msys64`. The script sets
-PATH for its own process, uses MSYS2 Python with PyYAML, builds the targets and
-installs the client, host, original help guide and dependent DLLs. Distribute
+PATH for its own process, uses MSYS2 Python 3.12 or newer with pip, builds the
+targets and installs the client, host, original help guide and dependent DLLs. Distribute
 the entire `dist/windows-sdl-release-portable` directory, preserving `bin` and
 `share`; copying just the executable loses its libraries and help files.
 

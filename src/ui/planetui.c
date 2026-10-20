@@ -1566,11 +1566,12 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
         hfntSav = SelectObject(hdc, rghfontArial8[3]);
     }
     pch = psz + ich;
-    cch = strlen(pch) + 1;
-    do {
-        cch--;
+    cch = strlen(pch);
+    dx = LOWORD(GetTextExtent(hdc, pch, cch));
+    while (cch > 0 && dx > rcIn.right - rcIn.left) {
+        cch = (int16_t)CchUtf8Prefix(pch, cch - 1);
         dx = LOWORD(GetTextExtent(hdc, pch, cch));
-    } while (dx > rcIn.right - rcIn.left);
+    }
     TextOut(hdc, rcIn.left, rcIn.top, pch, cch);
     if (fItalic) {
         SelectObject(hdc, hfntSav);

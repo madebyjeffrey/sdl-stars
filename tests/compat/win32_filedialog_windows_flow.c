@@ -17,7 +17,7 @@ int StarsTest_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle
                               int (*pfnPump)(void *), void *lpv) {
     (void)lpWindow; (void)pszFolder; (void)pszName;
     cCalls++;
-    if (fSave != fSaveExpected || strcmp(pszTitle, "Picker \xe9") != 0 || cFilter != 2 ||
+    if (fSave != fSaveExpected || strcmp(pszTitle, "Picker \xc3\xa9") != 0 || cFilter != 2 ||
         strcmp(rgfilter[0].pszPattern, "*.m?;*.hst") != 0 || *lpiFilter != 0 ||
         IsWindowEnabled(hwndOwner) || hwndOwner->cNativeFileDialogs != 1) fBad = 1;
     if (iAction == 1) return 0;
@@ -56,7 +56,7 @@ int main(void) {
     of.lStructSize = sizeof(of); of.hwndOwner = hwndOwner;
     of.lpstrFile = szFile; of.nMaxFile = sizeof(szFile);
     of.lpstrFileTitle = szTitle; of.nMaxFileTitle = sizeof(szTitle);
-    of.lpstrInitialDir = szCwd; of.lpstrTitle = "Picker \xe9";
+    of.lpstrInitialDir = szCwd; of.lpstrTitle = "Picker \xc3\xa9";
     of.lpstrFilter = "Game\0*.m?;*.hst\0All\0*.*\0";
     of.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST;
     for (i = 0; i < 2; i++) {

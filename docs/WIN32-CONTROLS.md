@@ -24,7 +24,16 @@ filters disabled windows.
 `WM_SETFONT` borrows a caller-owned font, and `WM_GETFONT` returns it. Painting
 uses the existing GDI/text renderer and parent `WM_CTLCOLORBTN` or
 `WM_CTLCOLORSTATIC` callbacks. Parent brushes are borrowed. Callback destruction
-during painting is tested. Non-notifying text labels and group boxes are
+during painting is tested. Checkbox and radio-button focus frames surround
+measured label bounds with padding, using the same mnemonic and wrapping layout
+as the text. They no longer inset the label area and overwrite its letters.
+Vertical padding is bounded by the control height so compact controls retain
+both horizontal edges. Checks focus all ten PRT radios in the real wizard;
+compact and taller control cases preserve label pixels as well as visible borders.
+Pixel comparisons check that focus preserves ordinary, UTF-8, wrapped and
+clipped labels, including `BS_LEFTTEXT` and three-state checkboxes; the shared
+controls checks now also run under the macOS SDL Debug preset.
+Non-notifying text labels and group boxes are
 transparent to pointer routing; `WindowFromPoint` skips text labels.
 
 Seven inventory entries now have local implementations:
