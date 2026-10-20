@@ -5,7 +5,9 @@ DIST_DIR    ?= dist
 CMAKE       ?= cmake
 CLANG_FORMAT ?= clang-format
 PYTHON      ?= python3
-ifeq ($(OS),Windows_NT)
+ifneq ($(MSYSTEM),)
+PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python.exe
+else ifeq ($(OS),Windows_NT)
 PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/Scripts/python.exe
 else
 PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python

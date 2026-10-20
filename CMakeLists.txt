@@ -116,25 +116,18 @@ add_dependencies(stars_core stars_version)
 # system site packages visible for the Linux D-Bus/GLib test drivers, which
 # use the OS-provided Python bindings.
 find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
-execute_process(
-    COMMAND "${Python3_EXECUTABLE}" -m pip --version
-    RESULT_VARIABLE STARS_PIP_MISSING
-    OUTPUT_QUIET
-    ERROR_QUIET
-)
-if(STARS_PIP_MISSING)
-    message(FATAL_ERROR "Python 3.12 or newer with pip is required to configure this build. Found: ${Python3_EXECUTABLE}")
-endif()
 
 set(STARS_PYTHON_VENV "${CMAKE_BINARY_DIR}/python-venv")
 if(WIN32)
-    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV}/Scripts/python.exe")
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/Scripts/python.exe")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python.exe")
 else()
-    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
 endif()
-if(NOT EXISTS "${STARS_PYTHON_VENV_EXECUTABLE}")
+if(NOT EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}" AND NOT EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
     execute_process(
-        COMMAND "${Python3_EXECUTABLE}" -m venv --system-site-packages "${STARS_PYTHON_VENV}"
+        COMMAND "${Python3_EXECUTABLE}" -m venv --system-site-packages --without-pip "${STARS_PYTHON_VENV}"
         RESULT_VARIABLE STARS_VENV_FAILED
         OUTPUT_VARIABLE STARS_VENV_OUTPUT
         ERROR_VARIABLE STARS_VENV_ERROR
@@ -142,6 +135,22 @@ if(NOT EXISTS "${STARS_PYTHON_VENV_EXECUTABLE}")
     if(STARS_VENV_FAILED)
         message(FATAL_ERROR "Could not create the Python build environment.\n${STARS_VENV_OUTPUT}${STARS_VENV_ERROR}")
     endif()
+endif()
+if(EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+elseif(EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "Python created ${STARS_PYTHON_VENV}, but its interpreter was not found in Scripts or bin.")
+endif()
+execute_process(
+    COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m ensurepip --upgrade
+    RESULT_VARIABLE STARS_ENSUREPIP_FAILED
+    OUTPUT_VARIABLE STARS_ENSUREPIP_OUTPUT
+    ERROR_VARIABLE STARS_ENSUREPIP_ERROR
+)
+if(STARS_ENSUREPIP_FAILED)
+    message(FATAL_ERROR "Could not bootstrap pip in ${STARS_PYTHON_VENV}. Check that Python includes venv and ensurepip support.\n${STARS_ENSUREPIP_OUTPUT}${STARS_ENSUREPIP_ERROR}")
 endif()
 execute_process(
     COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m pip install --disable-pip-version-check
