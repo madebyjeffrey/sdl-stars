@@ -14,8 +14,8 @@ static bool FPathValid(const char *pszPath) {
     return pszPath && *pszPath && FUtf8Valid(pszPath, std::strlen(pszPath));
 }
 
-static bool FCopyPath(const fs::path &path, char *pszOut, size_t cbOut) {
-    std::string sz = path.generic_u8string();
+static bool FCopyPath(const fs::path &pth, char *pszOut, size_t cbOut) {
+    std::string sz = pth.generic_u8string();
     if (sz.size() >= cbOut || !FUtf8Valid(sz.data(), sz.size()))
         return false;
     std::memcpy(pszOut, sz.c_str(), sz.size() + 1);
@@ -27,22 +27,22 @@ int FFilesystemTempDir(char *pszOut, size_t cbOut) {
         return 0;
     *pszOut = 0;
     try {
-        fs::path pathBase = fs::canonical(fs::temp_directory_path());
-        std::random_device random;
+        fs::path pthBase = fs::canonical(fs::temp_directory_path());
+        std::random_device randDevice;
         static const char rgchHex[] = "0123456789abcdef";
-        for (int i = 0; i < 64; i++) {
+        for (int iTry = 0; iTry < 64; iTry++) {
             std::string szName = "stars-";
-            std::error_code error;
-            for (int j = 0; j < 32; j++)
-                szName += rgchHex[random() & 15];
-            fs::path path = pathBase / szName;
+            std::error_code ec;
+            for (int iChar = 0; iChar < 32; iChar++)
+                szName += rgchHex[randDevice() & 15];
+            fs::path pthCandidate = pthBase / szName;
             // Check capacity before creating anything, so failure leaves no directory.
-            if (!FCopyPath(path, pszOut, cbOut))
+            if (!FCopyPath(pthCandidate, pszOut, cbOut))
                 return 0;
-            if (fs::create_directory(path, error))
+            if (fs::create_directory(pthCandidate, ec))
                 return 1;
             *pszOut = 0;
-            if (error && error != std::errc::file_exists)
+            if (ec && ec != std::errc::file_exists)
                 return 0;
         }
     } catch (...) {
@@ -56,8 +56,8 @@ int FFilesystemCreateDirectory(const char *pszPath) {
     if (!FPathValid(pszPath))
         return 0;
     try {
-        std::error_code error;
-        return fs::create_directory(fs::u8path(pszPath), error) && !error;
+        std::error_code ec;
+        return fs::create_directory(fs::u8path(pszPath), ec) && !ec;
     } catch (...) {
         return 0;
     }
@@ -80,8 +80,8 @@ int FFilesystemRemove(const char *pszPath) {
     if (!FPathValid(pszPath))
         return 0;
     try {
-        std::error_code error;
-        return fs::remove(fs::u8path(pszPath), error) && !error;
+        std::error_code ec;
+        return fs::remove(fs::u8path(pszPath), ec) && !ec;
     } catch (...) {
         return 0;
     }
