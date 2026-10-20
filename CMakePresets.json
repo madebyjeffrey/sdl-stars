@@ -19,6 +19,13 @@
       }
     },
     {
+      "name": "windows-sdl-ide",
+      "displayName": "Native Windows SDL3 (MSYS2 UCRT64, IDE targets)",
+      "inherits": "windows-sdl-debug",
+      "binaryDir": "${sourceDir}/dist/windows-sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "windows-sdl-release",
       "inherits": "windows-sdl-debug",
       "displayName": "Native Windows SDL3 (MSYS2 UCRT64 Release)",
@@ -94,6 +101,13 @@
       }
     },
     {
+      "name": "sdl-ide",
+      "displayName": "Linux SDL3 development (IDE targets)",
+      "inherits": "sdl-debug",
+      "binaryDir": "${sourceDir}/dist/sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "sdl-release",
       "inherits": "sdl-debug",
       "displayName": "Linux SDL3 compatibility Release",
@@ -121,6 +135,13 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "STARS_BUILD_TESTS": "ON"
       }
+    },
+    {
+      "name": "macos-sdl-ide",
+      "displayName": "macOS SDL3 development (IDE targets)",
+      "inherits": "macos-sdl-debug",
+      "binaryDir": "${sourceDir}/dist/macos-sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
     },
     {
       "name": "macos-sdl-release",
@@ -153,6 +174,7 @@
   "buildPresets": [
     { "name": "macos-bundle", "configurePreset": "macos-bundle", "targets": ["stars-macos-bundle"] },
     { "name": "windows-sdl-debug", "configurePreset": "windows-sdl-debug" },
+    { "name": "windows-sdl-ide", "configurePreset": "windows-sdl-ide" },
     { "name": "windows-sdl-release", "configurePreset": "windows-sdl-release" },
     {
       "name": "mingw-debug",
@@ -189,6 +211,10 @@
       "configurePreset": "sdl-debug"
     },
     {
+      "name": "sdl-ide",
+      "configurePreset": "sdl-ide"
+    },
+    {
       "name": "sdl-release",
       "configurePreset": "sdl-release"
     },
@@ -200,6 +226,10 @@
     {
       "name": "macos-sdl-debug",
       "configurePreset": "macos-sdl-debug"
+    },
+    {
+      "name": "macos-sdl-ide",
+      "configurePreset": "macos-sdl-ide"
     },
     {
       "name": "macos-sdl-release",

@@ -4,7 +4,7 @@ For native Windows x64 builds and portable runtime packaging, see
 [Windows SDL3](WINDOWS-SDL3.md). WSL is not required.
 
 The native `stars-sdl` client now links the shared game and UI. Select
-**stars-sdl** in CLion under `sdl-debug`, or run
+**stars-sdl** in CLion under `sdl-ide`, or run
 `./dist/sdl-debug/bin/stars-sdl`. See [client status and testing](WIN32-CLIENT.md).
 
 
@@ -158,10 +158,13 @@ The self-test injects queued SDL key/close events; it is not a substitute for ph
 ## CLion
 
 1. Open the repository as a CMake project and use the native Linux GCC/GDB toolchain.
-2. Press `Ctrl+Shift+A`, run **Load CMake Presets**, select `sdl-debug` and press Enter. Open **Settings → Build, Execution, Deployment → CMake**, select the imported SDL Debug profile and tick **Enable profile**. CLion imports new presets disabled by default; they do not appear in the build/run switcher until enabled. The configure preset's display name is **Linux SDL3 compatibility Debug**. Apply the settings and reload CMake. The initial dependency build may take longer than the application build.
-3. Select the `stars-compat-smoke` CMake Application target and `sdl-debug` profile. Use the repository root as the working directory.
-4. Run or debug. Useful breakpoints are `main`, `DispatchSmokeEvent`, `FDrawSmokeWindow` and `CloseSmokeWindow` in `tests/compat/sdl_smoke.c`.
-5. Add a second run configuration with `STARS_SDL_RENDERER=software`, and an automated configuration with program arguments `--self-test`. Environment variables belong in the run configuration, not CMake options.
+2. Press `Ctrl+Shift+A`, run **Load CMake Presets**, select `sdl-ide` and press Enter. Open **Settings → Build, Execution, Deployment → CMake**, select the imported SDL IDE profile and tick **Enable profile**. CLion imports new presets disabled by default; they do not appear in the build/run switcher until enabled. The configure preset's display name is **Linux SDL3 development (IDE targets)**. Apply the settings and reload CMake. This preset disables the standalone test targets to keep the IDE target list focused. Select `sdl-debug` when you need those targets and CTest registrations.
+3. Select the `stars-sdl` CMake Application target and `sdl-ide` profile. Use the repository root as the working directory.
+4. Run or debug the client. For smoke and compatibility checks, switch to the test-enabled `sdl-debug` profile and select the corresponding `stars-compat-*` target.
+
+On macOS, use `macos-sdl-ide` for normal CLion work and `macos-sdl-debug`
+when you need the test targets. On Windows, use `windows-sdl-ide` or
+`windows-sdl-debug` for the same split.
 
 The fetched shared SDL library is located through CMake's development RPATH; no `LD_LIBRARY_PATH` setting should be needed. The presets do not use `toolchains/mingw-w64.cmake`. Local `.idea` changes need not be committed.
 
@@ -170,16 +173,16 @@ root contains `CMakePresets.json`. In **Settings → Advanced Settings**, search
 for **Automatically import CMake Presets** and permit configure and build
 presets, then load the presets again. See [JetBrains' preset instructions](https://www.jetbrains.com/help/clion/cmake-presets.html).
 
-As a fallback, add an enabled CMake profile named `sdl-debug`, select the
+As a fallback, add an enabled CMake profile named `sdl-ide`, select the
 native Linux toolchain, use Debug and Ninja, and set its CMake options to:
 
 ```text
--DSTARS_BUILD_SDL_CLIENT=ON -DSTARS_SDL_FETCH=ON
+-DSTARS_BUILD_SDL_CLIENT=ON -DSTARS_SDL_FETCH=ON -DSTARS_BUILD_TESTS=OFF
 ```
 
-Use `dist/clion-sdl-debug` as that manual profile's build directory so it has
-its own CMake cache. Reload CMake, then select `stars-compat-runtime` or
-`stars-compat-smoke` as the application target.
+Use `dist/clion-sdl-ide` as that manual profile's build directory so it has
+its own CMake cache. Reload CMake, then select `stars-sdl` as the application
+target. Use a test-enabled profile to work with the compatibility executables.
 
 ## Next milestone
 
