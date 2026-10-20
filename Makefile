@@ -133,7 +133,7 @@ data-header:
 	@$(PYTHON_VENV) data/datagen.py "$(VERSION_DIR)"
 
 python-env:
-	$(CMAKE) --preset $(HOST_PRESET)
+	$(CMAKE) --preset $(HOST_PRESET) -B "$(DIST_DIR)/$(HOST_PRESET)"
 
 text-unreferenced:
 	@$(PYTHON) text/textgen.py --unreferenced

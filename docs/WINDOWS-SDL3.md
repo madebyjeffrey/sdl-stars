@@ -27,6 +27,7 @@ pacman -S --needed \
   mingw-w64-ucrt-x86_64-ninja \
   mingw-w64-ucrt-x86_64-pkgconf \
   mingw-w64-ucrt-x86_64-python \
+  mingw-w64-ucrt-x86_64-python-pip \
   mingw-w64-ucrt-x86_64-sdl3 \
   mingw-w64-ucrt-x86_64-freetype \
   mingw-w64-ucrt-x86_64-fontconfig \
@@ -55,8 +56,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows.ps1 -Configuratio
 ```
 
 For another MSYS2 installation, pass `-Msys2Root D:\msys64`. The script sets
-PATH for its own process, uses MSYS2 Python 3.14 or newer with pip, builds the targets and
-installs the client, host, original help guide and dependent DLLs. Distribute
+PATH for its own process, uses MSYS2 Python 3.12 or newer with pip, builds the
+targets and installs the client, host, original help guide and dependent DLLs. Distribute
 the entire `dist/windows-sdl-release-portable` directory, preserving `bin` and
 `share`; copying just the executable loses its libraries and help files.
 

@@ -25,7 +25,7 @@ jobs:
         run: |
           sudo apt-get update
           # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
-          sudo apt-get install -y cmake ninja-build pkg-config python3-yaml \
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
             libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
             libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
@@ -54,7 +54,8 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake ninja-build python3-yaml
+          sudo apt-get install -y --no-install-recommends cmake ninja-build \
+            python3-pip python3-venv python3-yaml
 
       - name: Build and run unit tests
         run: make test-host
@@ -74,14 +75,15 @@ jobs:
           install: >-
             mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf
-            mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-yaml
+            mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-python-pip
+            mingw-w64-ucrt-x86_64-python-yaml
             mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype
             mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo
             mingw-w64-ucrt-x86_64-libwmf
       - name: Build and test the Windows SDL client
         shell: msys2 {0}
         run: |
-          # CMake otherwise prefers the runner Python, which lacks MSYS2 PyYAML.
+          # Use MSYS2 Python so CMake can create the build-local environment.
           cmake --preset windows-sdl-debug -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --build --preset windows-sdl-debug --parallel 2
           ctest --preset windows-sdl-headless

@@ -115,7 +115,7 @@ add_dependencies(stars_core stars_version)
 # Python generators and test drivers share a build-local environment. Keep
 # system site packages visible for the Linux D-Bus/GLib test drivers, which
 # use the OS-provided Python bindings.
-find_package(Python3 3.14 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
 execute_process(
     COMMAND "${Python3_EXECUTABLE}" -m pip --version
     RESULT_VARIABLE STARS_PIP_MISSING
@@ -123,7 +123,7 @@ execute_process(
     ERROR_QUIET
 )
 if(STARS_PIP_MISSING)
-    message(FATAL_ERROR "Python 3.14 or newer with pip is required to configure this build. Found: ${Python3_EXECUTABLE}")
+    message(FATAL_ERROR "Python 3.12 or newer with pip is required to configure this build. Found: ${Python3_EXECUTABLE}")
 endif()
 
 set(STARS_PYTHON_VENV "${CMAKE_BINARY_DIR}/python-venv")

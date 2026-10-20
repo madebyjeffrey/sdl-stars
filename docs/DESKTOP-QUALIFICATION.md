@@ -48,7 +48,7 @@ cmake --preset macos-sdl-debug
 cmake --build --preset macos-sdl-debug
 ```
 
-Use Python 3.14 or newer with pip on `PATH`, or pass its path as
+Use Python 3.12 or newer with pip on `PATH`, or pass its path as
 `-DPython3_EXECUTABLE=...`. CMake creates the build-local environment and
 installs the pinned Python requirements.
 
