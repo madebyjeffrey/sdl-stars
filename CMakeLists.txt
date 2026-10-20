@@ -112,7 +112,57 @@ add_dependencies(stars_core stars_version)
 
 # The game's text: text/textgen.py builds the ID enums (textids.h) and the
 # compressed string tables from the rows in text/*.txt.
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+# Python generators and test drivers share a build-local environment. Keep
+# system site packages visible for the Linux D-Bus/GLib test drivers, which
+# use the OS-provided Python bindings.
+find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
+
+set(STARS_PYTHON_VENV "${CMAKE_BINARY_DIR}/python-venv")
+if(WIN32)
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/Scripts/python.exe")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python.exe")
+else()
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+endif()
+if(NOT EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}" AND NOT EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -m venv --system-site-packages --without-pip "${STARS_PYTHON_VENV}"
+        RESULT_VARIABLE STARS_VENV_FAILED
+        OUTPUT_VARIABLE STARS_VENV_OUTPUT
+        ERROR_VARIABLE STARS_VENV_ERROR
+    )
+    if(STARS_VENV_FAILED)
+        message(FATAL_ERROR "Could not create the Python build environment.\n${STARS_VENV_OUTPUT}${STARS_VENV_ERROR}")
+    endif()
+endif()
+if(EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+elseif(EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "Python created ${STARS_PYTHON_VENV}, but its interpreter was not found in Scripts or bin.")
+endif()
+execute_process(
+    COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m ensurepip --upgrade
+    RESULT_VARIABLE STARS_ENSUREPIP_FAILED
+    OUTPUT_VARIABLE STARS_ENSUREPIP_OUTPUT
+    ERROR_VARIABLE STARS_ENSUREPIP_ERROR
+)
+if(STARS_ENSUREPIP_FAILED)
+    message(FATAL_ERROR "Could not bootstrap pip in ${STARS_PYTHON_VENV}. Check that Python includes venv and ensurepip support.\n${STARS_ENSUREPIP_OUTPUT}${STARS_ENSUREPIP_ERROR}")
+endif()
+execute_process(
+    COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m pip install --disable-pip-version-check
+        --requirement "${CMAKE_CURRENT_SOURCE_DIR}/requirements-build.txt"
+    RESULT_VARIABLE STARS_PYTHON_PACKAGES_FAILED
+    OUTPUT_VARIABLE STARS_PYTHON_PACKAGES_OUTPUT
+    ERROR_VARIABLE STARS_PYTHON_PACKAGES_ERROR
+)
+if(STARS_PYTHON_PACKAGES_FAILED)
+    message(FATAL_ERROR "Could not install the Python build requirements into ${STARS_PYTHON_VENV}. Check network access and pip.\n${STARS_PYTHON_PACKAGES_OUTPUT}${STARS_PYTHON_PACKAGES_ERROR}")
+endif()
+set(Python3_EXECUTABLE "${STARS_PYTHON_VENV_EXECUTABLE}")
 set(STARS_TEXT_SOURCES text/strings.txt text/messages.txt text/tutorial.txt text/planets.txt)
 list(TRANSFORM STARS_TEXT_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 set(STARS_TEXT_OUTPUTS textids.h text_strings.c text_messages.c text_planets.c text_tutorial.c)
@@ -128,12 +178,7 @@ add_custom_target(stars_text DEPENDS ${STARS_TEXT_OUTPUTS})
 
 # The data tables: data/datagen.py builds dataids.h (the hull, part,
 # starting design and AI recipe enums) and data_tables.c (the parts, races,
-# default battle plans and AI recipes) from data/**/*.yaml. It needs PyYAML.
-execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import yaml" RESULT_VARIABLE STARS_PYYAML_MISSING OUTPUT_QUIET ERROR_QUIET)
-if(STARS_PYYAML_MISSING)
-    message(FATAL_ERROR "The build needs PyYAML for ${Python3_EXECUTABLE}. Install it (python3 -m pip install pyyaml), "
-                        "or configure with -DPython3_EXECUTABLE=<a python that has it>.")
-endif()
+# default battle plans and AI recipes) from data/**/*.yaml.
 file(GLOB_RECURSE STARS_DATA_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/*.yaml")
 set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.c")
 add_custom_command(

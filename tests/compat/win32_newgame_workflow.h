@@ -7,6 +7,18 @@ static BOOL fRevisionRenamed;
 static GAME gameNewSav;
 void StarsTestReal_NewGameWizard(HWND hwnd, int16_t fReadOnly);
 
+static BOOL FSamePath(const char *pszLeft, const char *pszRight) {
+    char chLeft, chRight;
+    while (*pszLeft && *pszRight) {
+        chLeft = *pszLeft++;
+        chRight = *pszRight++;
+        if (chLeft == '\\') chLeft = '/';
+        if (chRight == '\\') chRight = '/';
+        if (chLeft != chRight) return FALSE;
+    }
+    return *pszLeft == 0 && *pszRight == 0;
+}
+
 void StarsTest_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = pszNewGame != NULL;
     StarsTestReal_NewGameWizard(hwnd, fReadOnly);
@@ -142,7 +154,7 @@ static BOOL FCheckNewGameWorkflow(void) {
             return FALSE;
         }
         snprintf(szFile, sizeof(szFile), "%s.xy", szBase);
-        if (strcmp(szFile, pszNewGame)) {
+        if (!FSamePath(szFile, pszNewGame)) {
             fprintf(stderr, "Generated path [%s], expected [%s]\n", szFile, pszNewGame);
             return FALSE;
         }

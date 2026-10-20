@@ -16,7 +16,8 @@ def directory_link(link, target):
         if os.name != 'nt':
             raise
         # Directory junctions do not require Windows symlink privileges.
-        subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(target)],
+        subprocess.run(['cmd', '/c', 'mklink', '/J', str(link).replace('/', '\\'),
+                        str(target).replace('/', '\\')],
                        check=True, capture_output=True)
 
 

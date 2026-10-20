@@ -9,25 +9,41 @@
     {
       "name": "windows-sdl-debug",
       "displayName": "Native Windows SDL3 (MSYS2 UCRT64 Debug)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/dist/windows-sdl-debug",
+      "environment": {
+        "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
+      },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_PREFIX_PATH": "C:/msys64/ucrt64",
         "STARS_BUILD_SDL_CLIENT": "ON",
         "STARS_SDL_FETCH": "ON"
       }
     },
     {
+      "name": "windows-sdl-ide",
+      "displayName": "Native Windows SDL3 (MSYS2 UCRT64, IDE targets)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "inherits": "windows-sdl-debug",
+      "binaryDir": "${sourceDir}/dist/windows-sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "windows-sdl-release",
       "inherits": "windows-sdl-debug",
       "displayName": "Native Windows SDL3 (MSYS2 UCRT64 Release)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "binaryDir": "${sourceDir}/dist/windows-sdl-release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
       "name": "mingw-debug",
       "displayName": "Windows SDL3 (legacy Debug alias)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "inherits": "windows-sdl-debug",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/dist/mingw-debug",
@@ -39,6 +55,7 @@
       "name": "mingw-release",
       "inherits": "mingw-debug",
       "displayName": "Windows SDL3 (legacy Release alias)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "binaryDir": "${sourceDir}/dist/mingw-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -67,6 +84,7 @@
       "name": "macos-host-debug",
       "inherits": "host-debug",
       "displayName": "stars-host for native macOS (Debug)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "binaryDir": "${sourceDir}/dist/macos-host-debug",
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": ""
@@ -76,6 +94,7 @@
       "name": "macos-host-release",
       "inherits": "macos-host-debug",
       "displayName": "stars-host for native macOS (Release)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "binaryDir": "${sourceDir}/dist/macos-host-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -84,6 +103,7 @@
     {
       "name": "sdl-debug",
       "displayName": "Linux SDL3 compatibility Debug",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/dist/sdl-debug",
       "cacheVariables": {
@@ -94,9 +114,18 @@
       }
     },
     {
+      "name": "sdl-ide",
+      "displayName": "Linux SDL3 development (IDE targets)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "inherits": "sdl-debug",
+      "binaryDir": "${sourceDir}/dist/sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "sdl-release",
       "inherits": "sdl-debug",
       "displayName": "Linux SDL3 compatibility Release",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "binaryDir": "${sourceDir}/dist/sdl-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -106,6 +135,7 @@
       "name": "sdl-sanitize",
       "inherits": "sdl-debug",
       "displayName": "Linux SDL3 AddressSanitizer / UndefinedBehaviorSanitizer",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "binaryDir": "${sourceDir}/dist/sdl-sanitize",
       "cacheVariables": {
         "STARS_ENABLE_SANITIZERS": "ON"
@@ -115,6 +145,7 @@
       "name": "macos-sdl-debug",
       "inherits": "sdl-debug",
       "displayName": "macOS SDL3 compatibility Debug (qualification required)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "binaryDir": "${sourceDir}/dist/macos-sdl-debug",
       "cacheVariables": {
         "CMAKE_PREFIX_PATH": "/opt/homebrew",
@@ -123,9 +154,18 @@
       }
     },
     {
+      "name": "macos-sdl-ide",
+      "displayName": "macOS SDL3 development (IDE targets)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
+      "inherits": "macos-sdl-debug",
+      "binaryDir": "${sourceDir}/dist/macos-sdl-ide",
+      "cacheVariables": { "STARS_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "macos-sdl-release",
       "inherits": "macos-sdl-debug",
       "displayName": "macOS SDL3 compatibility Release (qualification required)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "binaryDir": "${sourceDir}/dist/macos-sdl-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -136,6 +176,7 @@
       "name": "macos-bundle",
       "inherits": "macos-sdl-release",
       "displayName": "Signed Apple-silicon macOS app bundle",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "binaryDir": "${sourceDir}/dist/macos-bundle",
       "cacheVariables": { "STARS_MACOS_BUNDLE": "ON", "CMAKE_OSX_DEPLOYMENT_TARGET": "14.0" }
     },
@@ -143,6 +184,7 @@
       "name": "sdl-package",
       "inherits": "sdl-release",
       "displayName": "Linux SDL product install (Release)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "binaryDir": "${sourceDir}/dist/sdl-package",
       "cacheVariables": {
         "STARS_BUILD_TESTS": "OFF",
@@ -151,17 +193,20 @@
     }
   ],
   "buildPresets": [
-    { "name": "macos-bundle", "configurePreset": "macos-bundle", "targets": ["stars-macos-bundle"] },
-    { "name": "windows-sdl-debug", "configurePreset": "windows-sdl-debug" },
-    { "name": "windows-sdl-release", "configurePreset": "windows-sdl-release" },
+    { "name": "macos-bundle", "configurePreset": "macos-bundle", "targets": ["stars-macos-bundle"], "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" } },
+    { "name": "windows-sdl-debug", "configurePreset": "windows-sdl-debug", "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" } },
+    { "name": "windows-sdl-ide", "configurePreset": "windows-sdl-ide", "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" } },
+    { "name": "windows-sdl-release", "configurePreset": "windows-sdl-release", "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" } },
     {
       "name": "mingw-debug",
       "displayName": "Build SDL client (legacy Windows Debug alias)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "configurePreset": "mingw-debug"
     },
     {
       "name": "mingw-release",
       "displayName": "Build SDL client (legacy Windows Release alias)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "configurePreset": "mingw-release"
     },
     {
@@ -177,36 +222,54 @@
     {
       "name": "macos-host-debug",
       "displayName": "Build stars-host (x86_64 macOS Debug)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "configurePreset": "macos-host-debug"
     },
     {
       "name": "macos-host-release",
       "displayName": "Build stars-host (x86_64 macOS Release)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "configurePreset": "macos-host-release"
     },
     {
       "name": "sdl-debug",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "configurePreset": "sdl-debug"
     },
     {
+      "name": "sdl-ide",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "configurePreset": "sdl-ide"
+    },
+    {
       "name": "sdl-release",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "configurePreset": "sdl-release"
     },
     {
       "name": "sdl-sanitize",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "inherits": "sdl-debug",
       "configurePreset": "sdl-sanitize"
     },
     {
       "name": "macos-sdl-debug",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "configurePreset": "macos-sdl-debug"
     },
     {
+      "name": "macos-sdl-ide",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
+      "configurePreset": "macos-sdl-ide"
+    },
+    {
       "name": "macos-sdl-release",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" },
       "configurePreset": "macos-sdl-release"
     },
     {
       "name": "sdl-package",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
       "configurePreset": "sdl-package",
       "targets": [
         "stars-sdl",

@@ -1,0 +1,2 @@
+# Used by data/datagen.py to load the static game data.
+PyYAML==6.0.3
