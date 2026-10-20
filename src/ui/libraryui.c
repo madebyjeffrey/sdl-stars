@@ -2062,7 +2062,7 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     LIBRARYIMPORT li;
     int cchDir;
     int64_t cbSource;
-    int16_t fImported;
+    int16_t fImported, iZipResult;
 
     if (!pszSource) {
         if (!FChooseLibraryImportFile(hwnd, szChosen, sizeof(szChosen))) return FALSE;
@@ -2076,9 +2076,14 @@ int16_t FImportLibraryGame(HWND hwnd, const char *pszSource) {
     if (FPathIsZip(szSource)) {
         if (!FInitLibrary()) return FALSE;
         if (!FCreateLibraryZipStage(szZipStage, sizeof(szZipStage), "zip-importing")) return FALSE;
-        if (!FUnzipLibraryArchive(szSource, szZipStage)) {
+        iZipResult = FUnzipLibraryArchive(szSource, szZipStage);
+        if (iZipResult != ZIP_IMPORT_OK) {
             FNativeEnumerateDirectory(szZipStage, RemoveImportTreeEntry, szZipStage);
             RemoveNativePath(szZipStage);
+            if (iZipResult == ZIP_IMPORT_UNSUPPORTED_NAME) {
+                AlertSz(PszGetCompressedString(idsLibraryZipNameEncoding), MB_ICONEXCLAMATION);
+                return FALSE;
+            }
             AlertSz(PszGetCompressedString(idsLibraryZipInvalid), MB_ICONEXCLAMATION);
             return FALSE;
         }

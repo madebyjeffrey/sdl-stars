@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- ZIP game imports now validate each entry name as UTF-8 and require the ZIP
+  UTF-8 filename flag for non-ASCII names. Unsupported names receive a specific
+  error instead of the generic invalid-archive message. Existing ASCII ZIPs
+  remain supported. Game behavior, file layouts and regression baselines are
+  unchanged.
+
 - `BrowserDlg` now resets the Technology Browser to an available item in the
   selected category when Show Only Available Technology excludes the current
   item. Already available selections stay in place. Turn generation, file

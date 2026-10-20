@@ -1588,3 +1588,4 @@
 0x05e8 idsLibraryGameRevisionSuffix " (Revision %d)"
 0x05e9 idsLibraryPlayerSelect "Player:"
 0x05ea idsLibraryPlayerTurn "Player %d (%d)"
+0x05eb idsLibraryZipNameEncoding "ZIP filenames must use valid UTF-8. Non-ASCII names must set the UTF-8 filename flag."

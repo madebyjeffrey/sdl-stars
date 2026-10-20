@@ -1,5 +1,6 @@
 #include "win.h"
 #include "libraryzip.h"
+#include "encoding.h"
 #include <SDL3/SDL.h>
 #include <zlib.h>
 
@@ -38,7 +39,8 @@ enum {
     ZIP_LOCAL_FLAGS_OFFSET = 6,
     ZIP_LOCAL_METHOD_OFFSET = 8,
     ZIP_LOCAL_NAME_LENGTH_OFFSET = 26,
-    ZIP_LOCAL_EXTRA_LENGTH_OFFSET = 28
+    ZIP_LOCAL_EXTRA_LENGTH_OFFSET = 28,
+    ZIP_UTF8_FILENAME_FLAG = 0x0800
 };
 static uint32_t idZipTemp;
 
@@ -76,6 +78,15 @@ static int16_t FZipSafeName(const char *psz) {
     }
     return pszCurrent != pszPart && !(pszCurrent - pszPart == 1 && pszPart[0] == '.') &&
            !(pszCurrent - pszPart == 2 && pszPart[0] == '.' && pszPart[1] == '.');
+}
+
+static int16_t FZipNameUtf8Supported(const char *pszName, size_t cbName, uint16_t wFlags) {
+    size_t iByte;
+    if (!FUtf8Valid(pszName, cbName)) return FALSE;
+    if (wFlags & ZIP_UTF8_FILENAME_FLAG) return TRUE;
+    for (iByte = 0; iByte < cbName; iByte++)
+        if ((unsigned char)pszName[iByte] >= 0x80) return FALSE;
+    return TRUE;
 }
 
 static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
@@ -228,7 +239,7 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
     long tailOffset, eocd = -1, centralOffset, lNext;
     uint16_t cEntries, i, wLocalNameLength, wLocalExtraLength;
     uint64_t cbTotal = 0;
-    int16_t fOk = FALSE, fWrite;
+    int16_t fOk = FALSE, fWrite, fUnsupportedName = FALSE;
     size_t cbRead;
     long lSearch;
     char szName[512], szOutput[512], szDirectoryEntry[512];
@@ -260,6 +271,10 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
             (zc.dwExternalAttributes & 0x400U) ||
             fread(szName, 1, zc.wNameLength, pf) != zc.wNameLength) goto done;
         if (memchr(szName, 0, zc.wNameLength)) goto done;
+        if (!FZipNameUtf8Supported(szName, zc.wNameLength, zc.wFlags)) {
+            fUnsupportedName = TRUE;
+            goto done;
+        }
         cbTotal += zc.cbUncompressed;
         if (cbTotal > 512U * 1024U * 1024U) goto done;
         szName[zc.wNameLength] = 0;
@@ -316,5 +331,6 @@ done:
     SDL_free(rgbLocalName); SDL_free(rgbCompressed); SDL_free(rgbData);
     if (pfOutput) fclose(pfOutput);
     if (pf) fclose(pf);
-    return fOk;
+    if (fUnsupportedName) return ZIP_IMPORT_UNSUPPORTED_NAME;
+    return fOk ? ZIP_IMPORT_OK : ZIP_IMPORT_INVALID;
 }
