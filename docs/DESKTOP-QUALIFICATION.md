@@ -44,11 +44,13 @@ A Mac is required to establish successful compilation and native execution.
 
 ```sh
 brew install cmake ninja pkg-config sdl3 freetype fontconfig cairo libwmf python
-python3 -m venv .venv
-.venv/bin/pip install pyyaml
-cmake --preset macos-sdl-debug -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
+cmake --preset macos-sdl-debug
 cmake --build --preset macos-sdl-debug
 ```
+
+Use Python 3.14 or newer with pip on `PATH`, or pass its path as
+`-DPython3_EXECUTABLE=...`. CMake creates the build-local environment and
+installs the pinned Python requirements.
 
 The SDL presets target Apple silicon (`arm64`) with Homebrew dependencies under
 `/opt/homebrew`. Host presets use the native architecture; both use binary64

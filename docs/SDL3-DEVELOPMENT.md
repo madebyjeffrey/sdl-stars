@@ -71,7 +71,7 @@ For Pop!_OS/Ubuntu 24.04, install the desktop build dependencies:
 ```bash
 sudo apt update
 sudo apt install -y build-essential cmake ninja-build git pkg-config \
-  python3 python3-yaml gdb libfreetype-dev libfontconfig1-dev libcairo2-dev zlib1g-dev poppler-utils cups-client libwmf-bin \
+  python3 gdb libfreetype-dev libfontconfig1-dev libcairo2-dev zlib1g-dev poppler-utils cups-client libwmf-bin \
   libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
   libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
   libwayland-dev wayland-protocols libdecor-0-dev \
@@ -79,6 +79,11 @@ sudo apt install -y build-essential cmake ninja-build git pkg-config \
   libvulkan-dev vulkan-tools libdbus-1-dev libibus-1.0-dev libudev-dev \
   libasound2-dev libpulse-dev libpipewire-0.3-dev xvfb xauth
 ```
+
+Configure with Python 3.14 or newer and pip on `PATH` (or pass its absolute
+path as `-DPython3_EXECUTABLE=...`). CMake creates `python-venv` in the build
+directory and installs the pinned pip requirements there. The venv can see
+system Python packages for the Linux D-Bus/GLib test drivers.
 
 For automated fullscreen and dialog-stacking tests, also install:
 
