@@ -11,6 +11,8 @@ explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
 proof strength, dependency boundaries and verification commands.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 Actors are the player finishing setup, a host operator using batch creation,
@@ -757,3 +759,60 @@ M03 generation evidence were checked at the revision in this document's header.
 
 No runtime code, save layout, regression baseline or gameplay rule is changed
 by this specification.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Desktop, batch and tutorial entries](#3-entry-points-and-workflow), [Failure and cancellation](#5-cancellation-errors-and-recovery) and the
+[canonical contracts](M05-universe-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Entry["M03 accepted setup / batch definition / tutorial setup"] --> Build["Coordinates and names → homes → starting assets → universe objects"]
+    Build -->|Home thresholds unsatisfied| Build
+    Build -->|Caught allocation failure| False["Destroy current game; return false"]
+    Build --> XY{"Universe file created?"}
+    XY -->|No| False
+    XY -->|Yes| Companions["Attempt host and player writes; individual results ignored"]
+    Companions --> Caller{"Entry path?"}
+    Caller -->|Batch / tutorial wrapper| Limited["Wrapper ignores generator result; publication not established"]
+    Caller -->|Desktop| Open["Open initial player or host context"]
+    Open -->|Single-player reload fails| False
+    Open --> Check{"M01 required outputs / metadata complete?"}
+    Check -->|Yes| Published["Managed game published"]
+    Check -->|No| Cleanup["M01 attempts cleanup; M03 returns to title"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Accepted input context" as Input
+    state "Constructing world" as Constructing
+    state "Output writes attempted" as Outputs
+    state "Generator failed" as Failed
+    state "Desktop completion check" as Checking
+    state "Managed publication established" as Published
+    [*] --> Input
+    Input --> Constructing: Enter GenerateWorld
+    Constructing --> Constructing: Home-placement retry / threshold relaxation
+    Constructing --> Failed: Caught allocation or universe-file failure
+    Constructing --> Outputs: Universe file created, companions attempted
+    Outputs --> Failed: Initial player reload fails
+    Outputs --> Checking: Desktop caller verifies completeness
+    Checking --> Published: Required outputs and metadata accepted
+    Checking --> Failed: Completion fails, attempt cleanup
+    note right of Constructing
+      No cancellable progress protocol or total home retry bound.
+      Setup Cancel is an M03 pre-entry path.
+    end note
+    note right of Outputs
+      Missing companions can coexist with a true return.
+      Batch/tutorial wrappers do not establish publication.
+    end note
+```
+
+The state projection names milestones, not a new generator API. Failure can consume RNG/clock input and lose the old session. Neither retries nor cleanup establish an all-or-nothing memory/file transaction.

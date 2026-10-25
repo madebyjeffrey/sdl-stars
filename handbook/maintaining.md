@@ -32,7 +32,8 @@ and link-resolution boundaries. All three accept `DOCS_PYTHON`.
 | Canonical definitions and proofs | The owning `spec/*.dfy` or `spec/dafny/*.dfy` file; run formal verification separately |
 | A module's title, entry document, or grouping | The first-level module map in `spec/README.md` |
 | A technical companion | Add its module-prefixed Markdown file under `spec/`; navigation discovers it automatically |
-| Orientation and diagrams | The appropriate `handbook/*.md` page, with links to its authoritative specification |
+| Module workflow and state diagrams | The owning `spec/*.md` entry, retaining links to its authoritative workflows and contracts |
+| System orientation diagrams | The appropriate `handbook/*.md` page, with links to its authoritative specification |
 | Theme or site URL | `zensical.toml` and `handbook/assets/` |
 
 The builder discovers module entries from the first-level map, companions by

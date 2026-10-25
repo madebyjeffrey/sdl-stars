@@ -7,6 +7,8 @@ Canonical entry: [S03-catalogs-specification.dfy](S03-catalogs-specification.dfy
 [rules and proofs](dafny/S03-catalogs.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Define the generated catalog boundary: source schemas, positional identities,
@@ -204,3 +206,54 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Catalog schemas and stable IDs](#tables-schemas-and-derived-fields), [Text generation and failure](#text-generation-and-runtime-consumption) and the
+[canonical contracts](S03-catalogs-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Inputs["Edit canonical YAML / text source"] --> Kind{"Catalog or text generator?"}
+    Kind -->|Catalog| Tables["Read typed tables, schemas, AI recipes and derived IDs"]
+    Kind -->|Text| Text["Read stable IDs / ranges; rank UTF-8 bytes; encode chunks"]
+    Tables --> Validate{"Generator checks pass?"}
+    Text --> Validate
+    Validate -->|No| Fail["Report malformed source, reference, ID, range or size failure"]
+    Fail --> Inputs
+    Validate -->|Yes| Outputs["Write changed generated outputs"]
+    Outputs -->|Build interrupted| Mixed["No complete matching artifact set established"]
+    Outputs --> Compile["Compile generated tables; consumers use stable IDs / widths"]
+    Mixed -->|Fix source / rerun build| Inputs
+    Policy["Review append-only part prefixes and preserved text IDs"] -. "Maintenance constraint; not automatic Git-history validation" .-> Inputs
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Canonical data / text inputs" as Source
+    state "Generator checks and encoding" as Checking
+    state "Generated output set being written" as Writing
+    state "Matching compiled artifacts" as Ready
+    state "Failed / interrupted build" as Failed
+    [*] --> Source
+    Source --> Checking: Build invokes generator
+    Checking --> Failed: Reported input / schema / range error
+    Checking --> Writing: Checks pass
+    Writing --> Ready: Matching generated set compiles
+    Writing --> Failed: Interruption can leave mixed outputs
+    Failed --> Source: Correct source and rerun build
+    Ready --> Source: Change canonical inputs
+    note right of Writing
+      Cancellation is a build interruption, not rollback.
+      Multi-output publication is not transactional.
+      Do not repair generated files by hand.
+    end note
+```
+
+The diagrams show generator/build milestones, not a proof of every schema, parser or runtime formatting rule. Source hashes establish provenance. Append-only IDs require review even when generation and compilation succeed.

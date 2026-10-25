@@ -12,5 +12,12 @@
 .md-typeset h2 { font-weight: 600; }
 .md-typeset .mermaid { overflow-x: auto; margin: 1.5rem 0; }
 .md-typeset .mermaid svg { display: block; margin: auto; }
+.handbook-diagram { min-width: 0; margin: 1.5rem 0; position: relative; background: var(--md-default-bg-color); }
+.handbook-diagram .mermaid { margin: .35rem 0; max-width: none; }
+.handbook-diagram-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .35rem; font-size: .65rem; }
+.handbook-diagram-controls button { padding: .25rem .5rem; border: 1px solid var(--md-default-fg-color--lighter); border-radius: .2rem; cursor: pointer; }
+.handbook-diagram-controls button[aria-pressed="true"] { border-color: var(--md-accent-fg-color); color: var(--md-accent-fg-color); }
+.handbook-diagram-controls span { color: var(--md-default-fg-color--light); }
+.handbook-diagram :focus-visible { outline: 2px solid var(--md-accent-fg-color); outline-offset: 2px; }
 .md-typeset table:not([class]) { font-size: .75rem; }
 .handbook-source { font-size: .68rem; opacity: .85; border-top: 1px solid var(--md-default-fg-color--lightest); padding-top: .7rem; margin-top: 2rem; }

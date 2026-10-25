@@ -13,6 +13,8 @@ Verification: [M08–M11 collection results](README.md#m08m11-verification) and
 [editor initialization/command results](README.md#production-editor-initialization-and-command-continuation), followed by
 [lifecycle verification](README.md#production-lifecycle-and-starbase-navigation-continuation).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Let a player plan colony construction, inspect cost and estimated completion,
@@ -490,3 +492,63 @@ Open decisions: M09/UI owns whether to change refused-Add availability and make
 navigation commits more visible; M09/M19 owns template capacity policy and
 failure-after-charge semantics. These observed behaviors must not be repaired
 by changing prose alone. Numerical and accessibility gaps have owners above.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Editor initialization](#311-initial-queue-and-source-catalogue), [Completion, recovery and navigation](#314-completion-recovery-and-navigation) and the
+[canonical contracts](dafny/M09-lifecycle.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Entry["Open copied queue / initialize source catalogue"] --> Sanitize["Run copied-queue sanitization"]
+    Sanitize -->|Defined-domain completion| Edit["Add, remove, reorder; edit research / presets"]
+    Sanitize -. "Overlapping native memcpy" .-> Undefined["Undefined behavior boundary; no safe continuation specified"]
+    Entry -->|Allocation escape| Recover["Free working allocation if owned; close dialog; alert; return false"]
+    Edit -->|Accept or nonzero narrowed modal result| Commit["Transfer working queue; write-back and reload; ignore lookup returns"]
+    Edit -->|Ordinary Cancel / zero narrowed result| Cancel["Restore saved research flag; free working queue"]
+    Edit -->|Next / Back| Navigate["Commit current colony first; select target; reinitialize"]
+    Navigate --> Edit
+    Navigate -->|Later allocation escape| Recover
+    Commit --> Tail["Common tail can advance tutorial, even on Cancel"]
+    Cancel --> Tail
+    Tail --> Return["Ordinary modal path returns true"]
+    Clear["Confirmed colony-pane Clear"] --> Direct["Bypass initializer / modal; use existing working global"]
+    Direct --> Commit
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Copied per-colony working queue" as Draft
+    state "Current queue transferred / write-back attempted" as Committed
+    state "Adjacent colony initialization" as Reinitializing
+    state "Allocation recovery" as Recovery
+    state "Common finish tail" as Tail
+    state "Queue initialization / sanitization" as Initializing
+    state "Undefined-copy boundary" as Undefined
+    [*] --> Initializing
+    Initializing --> Draft: Defined-domain initialization completes
+    Initializing --> Undefined: Overlapping native copy, no post-state asserted
+    Initializing --> Recovery: Allocation escape
+    Draft --> Committed: Accept / Next / Back
+    Committed --> Reinitializing: Navigation requests selection
+    Reinitializing --> Draft: Initialize current or adjacent colony
+    Draft --> Tail: Ordinary Cancel restores research and frees draft
+    Committed --> Tail: Finish without navigation
+    Draft --> Recovery: Allocation escape
+    Reinitializing --> Recovery: Allocation escape after prior commit
+    Committed --> Recovery: Escape after transfer does not free transferred queue
+    Tail --> [*]: Callback-dependent completion
+    Recovery --> [*]: Return false, prior effects are not reversed
+    note right of Committed
+      Later Cancel does not undo earlier colonies.
+      Ignored lookup returns do not prove persistence.
+    end note
+```
+
+These are caller/controller milestones. Sanitization can reach the documented undefined overlapping-copy boundary; no safe state is asserted beyond it. Direct Clear requires the correct working-global entry state. Tutorial and selection callbacks may mutate post-finish state.

@@ -10,6 +10,8 @@ Canonical definitions: [M07 entry point](M07-navigation-specification.dfy),
 the [restoration continuation](README.md#selection-restoration-and-message-navigation-continuation)
 and [lifecycle/adjacent verification](README.md#production-lifecycle-and-starbase-navigation-continuation).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 The principal actor is a player exploring an open player turn. A developer or
@@ -683,3 +685,59 @@ reopen those fixes or imply complete GUI test coverage.
 
 This batch adds specifications only. Runtime code, file formats, gameplay,
 changelog and regression baselines remain unchanged.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Selection and context menus](#32-scanner-selection-versus-main-selection), [Gesture and cancellation boundaries](#34-gesture-dispatch-and-editing-boundaries), [Search](#33-find) and the
+[canonical contracts](M07-navigation-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Input["Map gesture / Find / report navigation"] --> Kind{"Requested interaction?"}
+    Kind -->|Find| Search["Resolve name / numeric lookup in source precedence"]
+    Search -->|No match| Retry["Report failure; keep Find open"]
+    Retry -->|Retry| Search
+    Retry -->|Cancel| Prior["Close Find without selecting"]
+    Search -->|Match| Inspect["Update secondary scanner target"]
+    Kind -->|Context menu| Menu{"Choose object or Cancel?"}
+    Menu -->|Cancel| Prior
+    Menu -->|Choose| Inspect
+    Kind -->|Ordinary selection| Inspect
+    Inspect --> Promote{"Owned planet / fleet and promotion requested?"}
+    Promote -->|Yes| Main["Load main editor selection through M08 / M10"]
+    Promote -->|No| View["Remain inspection-only"]
+    Kind -->|Waypoint drag / target gesture| Edit["Delegate order mutation; decline deletion keeps order"]
+    Edit --> Limits["Active waypoint / filter side effects are not universally undone"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Independent main and scanner selections" as Selected
+    state "Find dialog" as Finding
+    state "Context menu" as Menu
+    state "Waypoint drag / target mode" as Gesture
+    state "Main editor promotion requested" as Promoting
+    [*] --> Selected
+    Selected --> Finding: Find
+    Finding --> Finding: No match, feedback / selected text
+    Finding --> Selected: Match updates scanner selection
+    Finding --> Selected: Cancel, no new selection
+    Selected --> Menu: Context click
+    Menu --> Selected: Cancel retains prior selection
+    Menu --> Promoting: Choose eligible owned planet / fleet
+    Promoting --> Selected: Owner resolves main selection
+    Selected --> Gesture: Start order-edit gesture
+    Gesture --> Selected: Retarget / delete / decline through owner
+    note right of Gesture
+      Cancellation can retain changed active waypoint.
+      Filter menus also have documented side effects.
+    end note
+```
+
+Context-menu and Find cancellation differ from drag/filter cancellation. Scanner inspection and main editable selection remain separate; lookup and UI lifetime failures stay at their documented adapter boundaries. A failed reveal attempt is not proof of failed loading.

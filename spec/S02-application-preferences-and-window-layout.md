@@ -10,6 +10,8 @@ every active key and specifies desktop/host grammar, UTF-8 buffers, validation,
 save control/serialization, widths/defaults/write conditions and tile/placement transitions. Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Read, normalize and persist application preferences and presentation state.
@@ -207,3 +209,54 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Profile location and load](#location-and-loading), [Save and caller cancellation](#saving-cancellation-and-recovery) and the
+[canonical contracts](S02-preferences-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Path["Resolve explicit / environment / platform profile location"] --> Load{"Load UTF-8 profile?"}
+    Load -->|Missing file| Defaults["Use defaults"]
+    Load -->|Read / text / size error| Error["Reader returns defaults with error retained; writer refuses failed load"]
+    Load -->|Valid text| Parse["Preserve raw unrelated lines; parse ordered keys"]
+    Parse --> Normalize["Apply native narrowing, then caller-specific normalization"]
+    Defaults --> Apply["Apply placement, tiles, recent state and presets through owners"]
+    Normalize --> Apply
+    Apply --> Edit["Presentation / preference changes in memory"]
+    Edit -->|Caller Apply / save / application save| Write{"Per-key write succeeds?"}
+    Write -->|Yes| Disk["Persist that update"]
+    Write -->|No| Partial["Keep failure and partial multi-key effects visible"]
+    Edit -->|Caller Cancel| Cancel["Apply that dialog's own contract; no whole-profile undo"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Persisted profile or defaults" as Stored
+    state "Loaded and normalized application preferences" as Loaded
+    state "Changed in-memory presentation / preferences" as Changed
+    state "One update persisted" as Written
+    state "Write / load error retained" as Error
+    [*] --> Stored
+    Stored --> Loaded: Valid profile / missing-file defaults
+    Stored --> Error: Invalid text, oversized input, or read failure
+    Loaded --> Changed: Caller changes settings
+    Changed --> Written: Successful update
+    Changed --> Error: Failed update, earlier keys may survive
+    Written --> Changed: Further changes / further keys
+    Changed --> Changed: Close / Cancel has caller-specific effects
+    Error --> Loaded: Reader fallback uses defaults with error retained
+    note right of Changed
+      No transaction spans all preference keys.
+      Closing the app does not undo earlier presentation edits.
+    end note
+```
+
+The state diagram tracks application preference versus persisted state, not a particular modal dialog. Restart uses actual persisted values/defaults. Multi-process writes, changed monitor layouts, and full recovery from partial key updates remain explicit boundaries.

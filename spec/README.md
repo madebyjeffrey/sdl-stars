@@ -261,6 +261,33 @@ were checked against `e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23.
 They distinguish observed behavior from proposed port interfaces. The map's
 original base revision above still describes its initial exploration.
 
+## Module workflow and state diagrams
+
+Recorded 2026-10-25. Each of the 26 first-level module entries now contains a
+workflow diagram and a state/recovery diagram: **52 module diagrams**, plus the
+five existing handbook overview/traceability diagrams. The
+[handbook diagram atlas](../handbook/diagrams.md) is generated from those canonical
+Markdown blocks; edit the owning module once to update the rendered page and index.
+
+The diagrams summarize existing source-derived prose and canonical Dafny contracts.
+They distinguish copied-draft cancellation, close-and-commit dialogs, partial
+publication, ignored write results, unsupported cancellation and undefined native
+access. State names are explanatory milestones rather than new saved enums.
+The module scope notes retain external obligations and Open decisions; diagram
+presence does not close algorithm, C/model-refinement or platform-qualification gaps.
+The [reading guide](../handbook/reading.md#logical-ownership-and-implementation)
+explains those distinctions. Existing story/criterion IDs and anchors are retained.
+
+Validation for this presentation milestone: Dafny 4.11.0 verified all 80 formal
+files and their include closure (**4019 verified, 0 errors; audit 0 findings**).
+The nine specification-checker tests and twelve handbook tests pass. Chromium
+renders all 57 diagrams and checks every module at desktop/mobile widths, including
+Fit to width / Actual size and horizontal scrolling, plus search/anchors/raw downloads.
+The SDL Debug build has no warnings; 17 unit tests and the available tutorial smoke
+checkpoint pass. Full native regression has **519 matches, 21 existing warnings,
+0 differences/errors and 0 skipped reference inputs**. No runtime code, formal
+definitions, file formats or regression baselines changed.
+
 ## Findings and constraints to carry into detailed specifications
 
 ### Library and session vocabulary

@@ -7,6 +7,8 @@ Canonical entry: [M14-battle-review-specification.dfy](M14-battle-review-specifi
 [rules and proofs](dafny/M14-battle-review.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Manage battle plans and inspect recorded outcomes. Planning and replay are
@@ -177,3 +179,61 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Plan editing and lifecycle](#plan-editing-and-plan-lifecycle), [Recorded battle loading and playback](#load-and-play-a-recorded-battle) and the
+[canonical contracts](M14-battle-review-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Entry{"Plan editor or battle review?"} -->|Plans| Plan["Edit working battle plan"]
+    Plan -->|Switch / OK / Cancel| Flush["Flush dirty plan and log; close is not undo"]
+    Plan -->|Copy| CopyFlush["Flush dirty plan before copying"]
+    CopyFlush --> Limit{"Fewer than 15 plans?"}
+    Limit -->|No| Plan
+    Limit -->|Yes| Append["Append copy, then ask for name"]
+    Append -->|Rename accepted or cancelled| Plan
+    Plan -->|Delete nonzero plan in use| Confirm{"Confirm reference cleanup?"}
+    Confirm -->|Decline| Plan
+    Confirm -->|Accept| Delete["Shift plans and update fleet indices"]
+    Entry -->|Review| Load{"Recorded battle and allocations available?"}
+    Load -->|No| Cleanup["Release owned temporary state; return to caller"]
+    Load -->|Yes| Replay["Play stored steps; combat is not re-resolved"]
+    Replay -->|Manual step / end| Stop["Stop timer; clamp playback step"]
+    Stop --> Replay
+    Replay -->|Close| Cleanup
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Plan working copy" as Plan
+    state "Plan committed / logged" as Committed
+    state "Recorded battle loading" as Loading
+    state "Playback stopped" as Stopped
+    state "Playback timer active" as Playing
+    state "Temporary review state released" as Released
+    [*] --> Plan: Plan-edit entry
+    Plan --> Committed: OK / IDCANCEL / switch flushes dirty work
+    Committed --> Plan: Select another plan
+    Committed --> [*]: Close plan editor
+    [*] --> Loading: Battle-review entry
+    Loading --> Released: Missing record / allocation failure
+    Loading --> Stopped: Board at step -1
+    Stopped --> Playing: Play
+    Playing --> Stopped: Manual transport or final step
+    Playing --> Released: Close kills timer and frees review arrays
+    Stopped --> Released: Close
+    note right of Plan
+      Rename Cancel does not remove an appended copy.
+      Declined deletion precedes reference cleanup.
+    end note
+```
+
+The state diagram has separate plan and review entry contexts. Plan close commits dirty work; replay close releases review resources and can have tutorial side effects. Missing/corrupt record validation and complete token bounds remain S01/E14-2 obligations.

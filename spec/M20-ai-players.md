@@ -7,6 +7,8 @@ Canonical entry: [M20-ai-specification.dfy](M20-ai-specification.dfy);
 [rules and proofs](dafny/M20-ai.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Load an AI player’s view, choose orders according to the selected strategy and
@@ -195,3 +197,57 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Entry, strategy and cleanup](#entry-strategy-and-cleanup), [RNG and recovery](#traversal-randomness-and-failure-recovery) and the
+[canonical contracts](M20-ai-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Eligibility["M17 checks unfinished AI and openable log"] -->|Log openable / not eligible| Skip["Skip AI dispatch; log completeness not established"]
+    Eligibility -->|Dispatch| Enter["Save caller identity; enter AI context; destroy prior game; load player view"]
+    Enter -->|Load fails| Return["Restore caller / AI context; no new AI output written"]
+    Enter -->|Loaded| Player{"Dead player?"}
+    Player -->|Yes| Cleanup["Attempt orders / history writes and owned-storage cleanup"]
+    Player -->|No| Allocate{"Allocate AI planet/history work?"}
+    Allocate -->|Failure| Cleanup
+    Allocate -->|Success| Plan["Prepare threat / design / traversal state; dispatch exact strategy mode"]
+    Plan --> Cleanup
+    Cleanup --> Restore["Restore caller / AI context; write returns are unchecked"]
+    Restore --> Inspect["Validate actual logs / history before retry or host use"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Caller context saved, AI player loading" as Loading
+    state "AI work allocation" as Allocating
+    state "Strategy preparation / decisions" as Planning
+    state "Output / cleanup attempted" as Cleanup
+    state "Caller identity and AI flags restored" as Returned
+    [*] --> Loading
+    Loading --> Returned: Load fails, no output-writing cleanup path
+    Loading --> Cleanup: Loaded player is dead
+    Loading --> Allocating: Loaded live player
+    Allocating --> Planning: Required allocation succeeds
+    Allocating --> Cleanup: Allocation fails after loading
+    Planning --> Cleanup: Strategy returns
+    Cleanup --> Returned: Attempt writes and cleanup, then restore context
+    note right of Planning
+      No interactive cancellation inside an AI turn.
+      Retry is not deterministic without full entry state.
+    end note
+    note right of Cleanup
+      Allocation failure can still reach output writes.
+      Guarded frees do not establish complete release.
+      Unchecked writes do not establish persisted orders.
+    end note
+```
+
+Load failure and later allocation failure deliberately have different output behavior. M17 can avoid dispatch, but an interrupted AI turn has no general rollback contract. The diagrams preserve E20 strategy, memory-release and persistence limits.
