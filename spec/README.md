@@ -261,6 +261,38 @@ were checked against `e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23.
 They distinguish observed behavior from proposed port interfaces. The map's
 original base revision above still describes its initial exploration.
 
+## Shared-state and file relationship diagrams
+
+Recorded 2026-10-25; selected relationships rechecked at
+`7abe8083788d2f991e54eb9fc108a5468f82d2a1`. Eight data-model/relationship diagrams
+live in the owning S06 entry and S01 entry/record/orders/external companions.
+They show full-host entities and scoped references, task/thing variants,
+observations/results/lifetimes, file companions, snapshot record groups, binary
+framing, orders and library metadata/exchange copies. The
+[data-model index](../handbook/data-models.md) discovers diagrams, titles and
+stable anchors from those canonical sections; the [module atlas](../handbook/diagrams.md)
+also links entry-level data diagrams. Edits to the specs regenerate navigation
+without keeping another diagram copy.
+
+These projections select existing contracts; they do not add logical rules,
+database tables, C classes or disk fields. Native widths/layouts, Proposed typed
+boundaries, partial-view knowledge, field-specific history merging, implicit
+record ownership/order, reader-validation gaps and non-atomic publication retain
+their existing scope. Full-host relationship closure is not imposed on filtered
+player views or mutation intermediates. Existing IDs, anchors, canonical formal
+definitions, runtime behavior and Open decisions remain unchanged.
+
+Presentation validation: **17 handbook tests** and **9 specification-checker
+tests** pass. The Zensical build has **130 pages** with zero source/rendered-link
+errors. Chromium renders all **72 diagrams**, including eight new data models,
+across **29 specification pages** and checks desktop/mobile layouts, both display
+modes, scrolling, generated indexes/anchors, search and raw model downloads.
+Prior specification anchors and all **559 requirement IDs** are retained. SDL
+Debug builds without warnings; all **17 unit tests** and the available tutorial
+smoke checkpoint pass. Full native regression through checkpoint 150 reports
+**519 matches, 21 existing warnings, 0 differences/errors and 0 skipped reference
+inputs**. No runtime source, formal definitions, file layouts or baselines changed.
+
 ## Cross-module sequence diagrams
 
 Recorded 2026-10-25; handoffs rechecked at

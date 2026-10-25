@@ -18,6 +18,8 @@ conditions. [S01 §1.2](S01-game-file-formats.md#12-what-the-formal-model-establ
 each area to its definitions and states the proof boundary. These tables retain
 the source evidence and distinguish writer output from observed reader behavior.
 
+[Data-model and relationship diagrams](#data-model-and-relationship-diagrams) provide a visual map.
+
 ## Story-linked requirements
 
 This companion enables [S01-US01](S01-game-file-formats.md#s01-us01)
@@ -617,3 +619,61 @@ The save comparator uses a companion `.mN` to select an AI schema; without it,
 it can report payload differences without assigning the correct logical type.
 The game's history loader does not bound the aggregate chunks as strictly as
 a new decoder should; see [validation gaps](S01-game-file-validation.md).
+
+## Data-model and relationship diagrams
+
+<a id="s01-data-record-envelope"></a>
+### Record framing, BOF provenance, and payload interpretation
+
+Source-derived projection rechecked at `7abe8083788d2f991e54eb9fc108a5468f82d2a1`
+on 2026-10-25. Trace: [S01-REC-AC01](#s01-rec-ac01),
+[framing](#1-framing-and-tag-inventory), [BOF](#2-bof),
+[stream/text](#3-stream-transform-and-text), [canonical contracts](S01-game-file-contracts.dfy)
+`Header`, `Frame`, `ReadRecord`, `Bof`; [record fields](dafny/S01-records.dfy)
+`Field`, `FLayout`. Evidence: [utilgen.c](../src/core/utilgen.c) `ReadRt`, `WriteRt`;
+[save.c](../src/core/save.c) `WriteBOF`; [structs.h](../src/core/structs.h) `HDR`.
+
+```mermaid
+classDiagram
+    direction LR
+    class FramedRecord {
+        bytes header_then_payload
+    }
+    class Header {
+        uint16 little_endian_word
+        bits_0_to_9 cb
+        bits_10_to_15 rt
+    }
+    class Payload {
+        bytes exactly_cb
+        grammar selected_by_tag_and_file_context
+    }
+    class BofPayload {
+        bytes16 fixed_length
+        signature J3J3
+        bits32 game_identity
+        packed version_turn_player_salt_flags_generation
+    }
+    class EofPayload {
+        context empty_or_uint16
+    }
+    class OtherPayload {
+        bytes xor_transformed
+        context file_stream_state
+    }
+    FramedRecord *-- Header : two plaintext bytes
+    FramedRecord *-- Payload : zero to 1023 bytes
+    Payload ..> BofPayload : tag 8 plaintext
+    Payload ..> EofPayload : tag 0 plaintext
+    Payload ..> OtherPayload : remaining framed payloads
+```
+
+The payload boxes are alternatives, not inheritance or an additional wire
+wrapper. EOF means a real tag-0 record, not physical end of file; its payload
+means player count, turn, race checksum or nothing according to file kind.
+The universe's raw four-byte STARPACK array is an explicit **unframed, non-XOR**
+exception. Headers are plaintext; BOF initializes the XOR stream, which is not
+the gameplay RNG. No universal record CRC exists. BOF flags, signed player
+packing and version bits remain the exact table above; diagram labels do not
+specify offsets or enlarge widths. UTF-8 limits count bytes, and no pointer,
+compiler padding or logical datatype ordinal becomes a disk field.

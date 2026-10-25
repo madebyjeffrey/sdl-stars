@@ -13,6 +13,46 @@ SPEC.loader.exec_module(handbook)
 
 
 class LinkTests(unittest.TestCase):
+    def test_data_index_tracks_companion_edits_frontmatter_and_removal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            path = root / "spec/S01-records.md"
+            text = ('# Records\n\n## Data-model and relationship diagrams\n\n'
+                    '<a id="s01-data-frame"></a>\n### Frame\n\n'
+                    '```mermaid\n---\nconfig: {class: {useMaxWidth: false}}\n---\n'
+                    'classDiagram\nRecord *-- Header\n```\n')
+            handbook.write(path, text)
+            with patch.object(handbook, "ROOT", root):
+                index = handbook.data_index([path])
+                self.assertIn("**1 data-model and relationship diagrams**", index)
+                self.assertIn("[Frame](../spec/S01-records.md#s01-data-frame)", index)
+                self.assertNotIn("Record *-- Header", index)
+                handbook.write(path, text.replace("### Frame", "### Record envelope"))
+                self.assertIn("[Record envelope]", handbook.data_index([path]))
+                er = text.replace("classDiagram\nRecord *-- Header", "erDiagram\nRecord ||--|| Header : has")
+                handbook.write(path, er)
+                self.assertEqual(len(handbook.data_entries([path])), 1)
+                handbook.write(path, "# Records\n")
+                self.assertIn("**0 data-model and relationship diagrams**", handbook.data_index([path]))
+
+    def test_data_diagrams_require_stable_anchors_and_keep_canonical_evidence(self):
+        entries = handbook.data_entries(handbook.sources())
+        self.assertGreaterEqual(len(entries), 8)
+        self.assertEqual(len({anchor for _, anchor, _ in entries}), len(entries))
+        self.assertEqual({path.name[:3] for path, _, _ in entries}, {"S01", "S06"})
+        self.assertIn("S01-game-file-records.md", {path.name for path, _, _ in entries})
+        for path, anchor, _ in entries:
+            section = path.read_text().split("## Data-model and relationship diagrams", 1)[1]
+            self.assertIn("Evidence:", section)
+            self.assertRegex(section, r"\[[^]]+\]\([^)]+\.dfy\)")
+            self.assertIn(f'id="{anchor}"', section)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            path = root / "spec/S06-state.md"
+            handbook.write(path, "# State\n\n## Data-model and relationship diagrams\n\n### Entities\n```mermaid\nerDiagram\nGame ||--o{ Player : contains\n```\n")
+            with patch.object(handbook, "ROOT", root), self.assertRaisesRegex(ValueError, "stable anchor"):
+                handbook.data_entries([path])
+
     def test_sequence_index_follows_source_titles_anchors_edits_and_removal(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -64,6 +104,11 @@ class LinkTests(unittest.TestCase):
         self.assertTrue(presented.endswith("stateDiagram-v2\n[*] --> Draft\n```\n"))
         configured = "```mermaid\n---\nconfig: {state: {useMaxWidth: true}}\n---\nstateDiagram-v2\n[*] --> Draft\n```\n"
         self.assertEqual(handbook.readable_diagrams(configured), configured)
+        for kind, body in (("class", "classDiagram\nRecord *-- Header"), ("er", "erDiagram\nGame ||--o{ Player : contains")):
+            source = f"```mermaid\n{body}\n```\n"
+            presented = handbook.readable_diagrams(source)
+            self.assertIn(f"  {kind}:\n    useMaxWidth: false", presented)
+            self.assertTrue(presented.endswith(f"{body}\n```\n"))
 
     def test_each_module_has_workflow_and_state_diagrams_with_source_evidence(self):
         for _, group in handbook.module_map():

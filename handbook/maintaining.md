@@ -34,6 +34,7 @@ and link-resolution boundaries. All three accept `DOCS_PYTHON`.
 | A technical companion | Add its module-prefixed Markdown file under `spec/`; navigation discovers it automatically |
 | Module workflow and state diagrams | The owning `spec/*.md` entry, retaining links to its authoritative workflows and contracts |
 | Cross-module sequence diagrams | The owning `spec/*.md` entry's `## Cross-module sequences` section; each sequence uses a stable explicit anchor immediately before its `###` title |
+| Data-model and relationship diagrams | The owning spec entry or companion's `## Data-model and relationship diagrams` section, with a stable explicit anchor before each `###` title |
 | System orientation diagrams | The appropriate `handbook/*.md` page, with links to its authoritative specification |
 | Theme or site URL | `zensical.toml` and `handbook/assets/` |
 
@@ -54,6 +55,13 @@ The sequence index discovers Mermaid `sequenceDiagram` blocks under each spec's
 the diagram and its evidence/scope note in that section; the guide and module atlas
 regenerate links and counts without a second diagram copy. Mermaid YAML frontmatter
 is supported and kept intact. Preserve old sequence anchors when refining titles.
+
+The data-model index uses the same discovery convention for `classDiagram` and
+`erDiagram` blocks in `## Data-model and relationship diagrams`. It includes
+technical companions as well as module entries. Keep each model's existing
+canonical rules, source evidence and scope note with its diagram. Preserve
+distinctions between observed storage, proposed logical validation, partial
+knowledge and full-host reference closure; a diagram does not introduce a schema.
 
 ## Links and publication boundaries
 

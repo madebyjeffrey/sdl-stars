@@ -70,24 +70,32 @@ def mermaid_blocks(text):
     return [re.sub(r"\A---\n.*?\n---\n", "", block, count=1, flags=re.S) for block in blocks]
 
 
-def sequence_entries(paths):
-    """Discover named sequence sections in canonical specs for navigation only."""
+def diagram_entries(paths, heading, kinds):
+    """Discover named diagram sections in canonical specs for navigation only."""
     entries = []
     for path in sorted(paths):
         if path.suffix != ".md" or path.parent != ROOT / "spec":
             continue
         text = path.read_text(encoding="utf-8")
-        section = text.partition("\n## Cross-module sequences\n")[2]
+        section = text.partition(f"\n## {heading}\n")[2]
         section = re.split(r"^## ", section, maxsplit=1, flags=re.M)[0]
         for part in re.split(r'(?=^<a id="[^"\n]+"></a>\s*\n### )', section, flags=re.M):
             blocks = mermaid_blocks(part)
-            if not any(block.startswith("sequenceDiagram") for block in blocks):
+            if not any(block.split(maxsplit=1)[0] in kinds for block in blocks if block.strip()):
                 continue
             match = re.match(r'<a id="([^"\n]+)"></a>\s*\n### ([^\n]+)', part)
             if not match:
-                raise ValueError(f"{path}: sequence needs a stable anchor and heading")
+                raise ValueError(f"{path}: diagram needs a stable anchor and heading")
             entries.append((path, match[1], match[2]))
     return entries
+
+
+def sequence_entries(paths):
+    return diagram_entries(paths, "Cross-module sequences", {"sequenceDiagram"})
+
+
+def data_entries(paths):
+    return diagram_entries(paths, "Data-model and relationship diagrams", {"classDiagram", "erDiagram"})
 
 
 def sequence_index(paths):
@@ -99,24 +107,35 @@ def sequence_index(paths):
     return f"**{len(entries)} cross-module sequences**, discovered from the current specs.\n\n" + "".join(rows)
 
 
+def data_index(paths):
+    entries = data_entries(paths)
+    rows = ["| Data model / relationship | Owning specification |\n| --- | --- |\n"]
+    for path, anchor, title in entries:
+        relative = path.relative_to(ROOT).as_posix()
+        rows.append(f"| [{title}](../{relative}#{anchor}) | [{path.stem}](../{relative}) |\n")
+    return f"**{len(entries)} data-model and relationship diagrams**, discovered from the current specs.\n\n" + "".join(rows)
+
+
 def diagram_index(groups):
     """Discover module diagrams in their canonical Markdown, without copying them."""
     rows = []
     count = 0
     for group_title, group in groups:
-        rows.append(f"## {group_title}\n\n| Module | Workflow | State and recovery | Sequences |\n| --- | --- | --- | --- |\n")
+        rows.append(f"## {group_title}\n\n| Module | Workflow | State and recovery | Sequences | Data models |\n| --- | --- | --- | --- | --- |\n")
         for identity, title, entry in group:
             text = (ROOT / entry).read_text(encoding="utf-8")
             blocks = mermaid_blocks(text)
             flow = sum(block.startswith("flowchart") for block in blocks)
             state = sum(block.startswith("stateDiagram-v2") for block in blocks)
             sequence = sum(block.startswith("sequenceDiagram") for block in blocks)
+            data = sum(block.startswith(("classDiagram", "erDiagram")) for block in blocks)
             count += len(blocks)
             path = "../" + entry.as_posix()
             workflow = f"[View ({flow})]({path}#workflow)" if flow else "Not yet diagrammed"
             states = f"[View ({state})]({path}#state-and-recovery)" if state else "Not yet diagrammed"
             sequences = f"[View ({sequence})]({path}#cross-module-sequences)" if sequence else "—"
-            rows.append(f"| [{identity} · {title}]({path}) | {workflow} | {states} | {sequences} |\n")
+            models = f"[View ({data})]({path}#data-model-and-relationship-diagrams)" if data else "—"
+            rows.append(f"| [{identity} · {title}]({path}) | {workflow} | {states} | {sequences} | {models} |\n")
         rows.append("\n")
     return f"**{count} module diagrams**, discovered from the current source files.\n\n" + "".join(rows)
 
@@ -179,8 +198,8 @@ def rewrite_links(text, source, destinations, revision):
 
 def readable_diagrams(text):
     """Keep diagram text at its natural size inside the theme's scroll container."""
-    config = "---\nconfig:\n  flowchart:\n    useMaxWidth: false\n  state:\n    useMaxWidth: false\n  sequence:\n    useMaxWidth: false\n---\n"
-    return re.sub(r"(^```mermaid[^\n]*\n)(?=(?:flowchart|stateDiagram-v2|sequenceDiagram)\b)",
+    config = "---\nconfig:\n" + "".join(f"  {kind}:\n    useMaxWidth: false\n" for kind in ("flowchart", "state", "sequence", "class", "er")) + "---\n"
+    return re.sub(r"(^```mermaid[^\n]*\n)(?=(?:flowchart|stateDiagram-v2|sequenceDiagram|classDiagram|erDiagram)\b)",
                   lambda match: match[1] + config, text, flags=re.M)
 
 
@@ -207,7 +226,7 @@ def prepare():
     project["site_url"] = os.environ.get("HANDBOOK_SITE_URL", project["site_url"]).rstrip("/") + "/"
     nav = [{"Start here": [{"Welcome": "index.md"}, {"Reading a specification": "reading.md"},
                             {"System overview": "overview.md"}, {"Cross-module sequences": "sequences.md"},
-                            {"Module diagrams": "diagrams.md"},
+                            {"Data models and files": "data-models.md"}, {"Module diagrams": "diagrams.md"},
                             {"Glossary": "GLOSSARY.md"}]}]
     entries = {entry[2] for _, group in groups for entry in group}
     for group_title, group in groups:
@@ -243,6 +262,8 @@ def prepare():
                 text += "\n" + diagram_index(groups)
             if path == ROOT / "handbook/sequences.md":
                 text += "\n" + sequence_index(paths)
+            if path == ROOT / "handbook/data-models.md":
+                text += "\n" + data_index(paths)
             for match in REQUIREMENT.finditer(CODE.sub("", text)):
                 requirements.append((match[1], match[2], path))
             write(target, readable_diagrams(rewrite_links(text, path, destinations, revision)) + provenance(path, revision, branch))
