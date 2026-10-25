@@ -9,6 +9,8 @@ explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
 proof strength, dependency boundaries and verification commands.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 Actors are the player arranging a game and, for batch input, the host operator.
@@ -730,3 +732,52 @@ Known implementation details requiring a deliberate decision in a new port:
   coarser rounding behavior; retain that as a separate import adapter.
 
 No binary layout, byte offsets, or serializer implementation is specified here.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Page navigation and Finish](#3-user-actions-and-workflow), [Cancellation and recovery](#5-cancellation-errors-and-recovery) and the
+[canonical contracts](M03-new-game-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Enter["Snapshot GAME / idle state; enter wizard"] --> Pages["Universe → Players → Victory; Back / Next"]
+    Pages -->|Invalid player-page navigation| Pages
+    Pages -->|Cancel before prior-session destruction| Cancel["Restore saved GAME / idle state; keep RNG draws and independent race saves"]
+    Pages -->|Finish in editable mode| Name{"Reserve valid managed destination?"}
+    Name -->|Cancel / naming failure| Pages
+    Name -->|Accepted| Replace["Destroy old session; normalize roster in source / RNG order"]
+    Replace --> Generate["M05 constructs and writes the world"]
+    Generate --> Complete{"M01 completeness and metadata succeed?"}
+    Complete -->|Yes| Open["Open player view or host dialog"]
+    Complete -->|No / generation failure| Fail["Attempt pending-file cleanup; destroy partial state; return to title"]
+    Pages -->|Read-only exit| View["Leave current GAME in place; do not generate"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Editable setup pages" as Draft
+    state "Destination reserved, old session destroyed" as CommittedSetup
+    state "Generation / publication in progress" as Generating
+    state "New player or host context" as Opened
+    state "Title with cleanup obligations" as Title
+    [*] --> Draft
+    Draft --> Draft: Back / Next subject to page guards
+    Draft --> Draft: Naming rejected or cancelled
+    Draft --> [*]: Cancel restores saved GAME before destruction
+    Draft --> CommittedSetup: Finish accepts destination
+    CommittedSetup --> Generating: Normalize and generate
+    Generating --> Opened: Required outputs and metadata pass checks
+    Generating --> Title: Generation or finalization fails
+    note right of Title
+      No restoration of the previous session here.
+      Filesystem cleanup may leave residue.
+    end note
+```
+
+The state projection follows editable setup; read-only viewing is a separate non-generation entry. Cancel before Finish does not rewind RNG or race-library saves. There is no inner generator cancellation protocol.

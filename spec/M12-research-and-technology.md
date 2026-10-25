@@ -7,6 +7,8 @@ Canonical entry: [M12-research-specification.dfy](M12-research-specification.dfy
 [rules and proofs](dafny/M12-research.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Choose research effort and field priorities, inspect future equipment and convert
@@ -188,3 +190,56 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Policy close commits](#policy-editing-and-closing), [Quote and preview limits](#costs-and-projection), [Host research](#applying-research) and the
+[canonical contracts](M12-research-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Open["Copy current research policy into dialog controls"] --> Edit["Choose allocation, current field and next-field policy"]
+    Edit --> Quote{"Inspect budget / equipment development cost?"}
+    Quote -->|Requirements above level 26| Unavailable["CostOfDevelopingItem returns -1"]
+    Quote -->|Supported quote| Preview["Compute ordered temporary estimate; restore temporary state"]
+    Unavailable --> Edit
+    Preview --> Edit
+    Edit --> Close["Close through IDCANCEL"]
+    Close --> Changed{"Policy changed?"}
+    Changed -->|No| Same["Leave live policy unchanged"]
+    Changed -->|Yes| Commit["Copy policy to player; log rtLogResearch"]
+    Commit --> Session["M06 saves / submits pending orders"]
+    Session --> Host["Host allocates pool, applies caps and breakthrough passes"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Live player policy" as Live
+    state "Working research controls" as Draft
+    state "Temporary quote / budget projection" as Preview
+    state "Pending logged policy" as Pending
+    state "Host research progress" as Resolved
+    [*] --> Live
+    Live --> Draft: Open research
+    Draft --> Preview: Request forecast / development quote
+    Preview --> Draft: Restore temporary state, return estimate or unavailable sentinel
+    Draft --> Live: IDCANCEL close without change
+    Draft --> Pending: IDCANCEL close with change commits and logs
+    Pending --> Resolved: M06 / S01 persistence and M18 host execution
+    note right of Draft
+      IDCANCEL is close-and-commit, not draft undo.
+      No separate rollback Cancel is promised.
+    end note
+    note right of Resolved
+      Caps and trait branches can prevent an advance.
+      Full pass ordering remains E12-3.
+    end note
+```
+
+Closing the research dialog is not cancellation of edited policy. A forecast restores its specified temporary state, but does not deliver a breakthrough. Save failures and interruption belong to M06/S01/M18; a successful policy edit is not evidence of those later outcomes.

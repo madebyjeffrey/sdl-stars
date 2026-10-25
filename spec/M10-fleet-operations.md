@@ -9,6 +9,8 @@ Canonical definitions: [entry point](M10-fleet-specification.dfy),
 Verification: [M08–M11 collection results](README.md#m08m11-verification) and
 [transport command continuation](README.md#transport-preset-and-quantity-control-continuation).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Let a player inspect fleets, transfer cargo and ships, compose waypoint tasks,
@@ -398,3 +400,60 @@ indirectly; it does not enumerate all task/trait/target combinations.
 Open decisions: M10/M19 owns task execution decomposition; M10/S06 owns the
 packed-damage and redirect interface; UI/S05 owns accessibility and performance
 targets. No behavior change or unified merge policy is approved by this spec.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Cargo transfer](#33-cargo-transfer), [Split and merge](#34-splits-and-merges), [Transport-preset cancellation](#312-editing-custom-transport-slots) and the
+[canonical contracts](M10-fleet-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Fleet["Choose owned fleet / waypoint; foreign fleets remain inspection"] --> Operation{"Operation?"}
+    Operation -->|Cargo transfer| Copies["Create endpoint copies; cap by source and destination capacity"]
+    Copies --> Transfer{"Accept or Cancel?"}
+    Transfer -->|Cancel| Discard["Discard transfer copies"]
+    Transfer -->|Accept| Write["Write endpoints and refresh affected displays"]
+    Operation -->|Split| Space{"Enough ships and unused fleet slots?"}
+    Space -->|No| Refuse["Do not start requested split"]
+    Space -->|Yes| New["Allocate temporary split and edit stacks"]
+    New -->|Cancel / new fleet empty| Remove["Delete temporary fleet; cancel split record"]
+    New -->|Accepted nonempty split| Balance["Rebalance; write fleets; delete / redirect emptied source"]
+    Operation -->|Merge| Merge["Select live owned co-located fleets; apply merge-specific overflow policy"]
+    Operation -->|Route / task orders| Pending["Log pending order; host prerequisites may later fail or partly apply"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Live fleet and pending orders" as Live
+    state "Transfer endpoint copies" as TransferDraft
+    state "Temporary split fleet" as SplitDraft
+    state "Custom transport preset snapshot" as Presets
+    state "Host task outcome" as HostOutcome
+    [*] --> Live
+    Live --> TransferDraft: Open cargo transfer
+    TransferDraft --> Live: Cancel discards copies
+    TransferDraft --> Live: Accept writes bounded endpoint changes
+    Live --> SplitDraft: Allowed split allocates temporary fleet
+    SplitDraft --> Live: Cancel / empty result removes new fleet and log record
+    SplitDraft --> Live: Accept rebalances and writes both fleets
+    Live --> Presets: Customize four transport slots
+    Presets --> Live: Zero narrowed modal result restores slot bytes
+    Presets --> Live: Nonzero result retains slot edits
+    Live --> HostOutcome: M18 executes task through M19
+    note right of Presets
+      Dirty flags are outside the slot snapshot.
+      Nested rename Cancel can still set dirty.
+    end note
+    note right of HostOutcome
+      Targets can disappear, cargo can be rejected.
+      No generic host-time Cancel or success guarantee.
+    end note
+```
+
+The copied transfer and temporary split paths have different cleanup rules. Preset snapshots do not roll back global dirty flags. Two-fleet and bulk-merge overflow policies remain distinct; command acceptance is not host task completion.

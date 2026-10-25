@@ -9,6 +9,8 @@ local S01/S06 specification drafts. Checked: 2026-10-24.
 below identifies shared definitions and explicit external boundaries. Proofs
 apply to those models, not to the C implementation.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 Actors are the player opening/editing a player turn and exchanging orders, with
@@ -467,3 +469,62 @@ is historical, not the inspected revision of this module.
 
 This batch changes only specifications and their index. Runtime code, file
 format, gameplay, changelog and regression baselines are unchanged.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Guarded save and departure](#34-save-submit-and-leave), [Export and incoming turns](#4-export-incoming-turns-and-waiting) and the
+[canonical contracts](M06-session-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Active["Loaded player session; gameplay edits append pending orders"] --> Leave{"Guarded departure needs prompt?"}
+    Leave -->|No| Depart["Allow caller to continue departure"]
+    Leave -->|Yes| Choice{"Cancel / Don't Save / Save / Save and Submit"}
+    Choice -->|Cancel| Keep["Keep active session; no writer called"]
+    Choice -->|Don't Save| Discard["Clear dirty; leave saved orders on disk"]
+    Discard --> Depart
+    Choice -->|Save / Save and Submit| Orders{"Orders writer succeeds?"}
+    Orders -->|No| Failed["Restore intent; force dirty; keep session"]
+    Orders -->|Yes| History{"History writer succeeds?"}
+    History -->|No| Failed
+    History -->|Yes| Depart
+    Depart --> Tail["Caller may finalize messages / run legacy prompt during destruction"]
+    Active -->|Export| Export["Choose destination, save locally, then copy externally"]
+    Export -->|Picker cancelled| Keep
+    Export -->|External copy fails after save| Saved["Local saving may remain successful; no host receipt"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Active player snapshot" as Active
+    state "Dirty pending work" as Dirty
+    state "Guarded save in progress" as Saving
+    state "Orders written, history pending" as OrdersWritten
+    state "Guard allows departure" as Allowed
+    [*] --> Active
+    Active --> Dirty: Gameplay / message edit
+    Dirty --> Dirty: Guard Cancel
+    Dirty --> Allowed: Don't Save
+    Dirty --> Saving: Choose Save / Submit intent
+    Saving --> Dirty: Orders failure, restore prior intent
+    Saving --> OrdersWritten: Orders write completes
+    OrdersWritten --> Dirty: History failure, completed orders can remain
+    OrdersWritten --> Allowed: History write completes
+    Active --> Allowed: Guard entry has no dirty player work
+    note right of Allowed
+      Later callbacks can create new work.
+      Direct Save / legacy close have weaker checks.
+    end note
+    note right of Active
+      Opening a replacement destroys the old session first.
+      Load / password / replay failure does not restore it.
+    end note
+```
+
+The diagrams scope the stronger return-to-library guard; they do not upgrade direct Save, legacy prompts, or every close path. Wait can write history before a later Cancel. Import publishes disk state without automatically replacing the live session.

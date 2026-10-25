@@ -44,6 +44,7 @@ def main():
             page.on("response", lambda response: errors.append(f"HTTP {response.status}: {response.url}")
                     if response.status >= 400 and response.url.startswith(base) else None)
             diagram_count = 0
+            module_pages = 0
             for path in sorted(SITE.rglob("*.html")):
                 count = len(re.findall(r'class="mermaid"', path.read_text(encoding="utf-8")))
                 if not count:
@@ -52,7 +53,13 @@ def main():
                 page.goto(base + relative)
                 print(f"Rendering {count} diagrams: {relative}", flush=True)
                 # Zensical renders SVG into closed shadow roots, replacing each pre.
-                page.wait_for_function("expected => document.querySelectorAll('div.mermaid').length === expected", arg=count)
+                try:
+                    page.wait_for_function("expected => document.querySelectorAll('div.mermaid').length === expected", arg=count)
+                    page.wait_for_function("expected => document.querySelectorAll('section.handbook-diagram').length === expected", arg=count)
+                except Exception:
+                    print(f"Diagram errors on {relative}: {errors}", flush=True)
+                    page.screenshot(path=str(screenshots / f"{path.parent.name}-failure.png"), full_page=True)
+                    raise
                 session = page.context.new_cdp_session(page)
                 document = session.send("DOM.getDocument", {"depth": -1, "pierce": True})
                 def diagrams(node):
@@ -64,7 +71,28 @@ def main():
                 rendered = diagrams(document["root"])
                 assert len(rendered) == count and all(d.get("aria-roledescription") != "error" for d in rendered), path
                 session.detach()
-                page.screenshot(path=str(screenshots / f"{path.parent.name}-desktop.png"), full_page=True)
+                if path.relative_to(SITE).parts[0] == "spec":
+                    module_pages += 1
+                    assert all(not d.get("width", "").endswith("%") for d in rendered), "Expected natural-size module SVGs"
+                    for index in range(count):
+                        page.locator("section.handbook-diagram").nth(index).screenshot(path=str(screenshots / f"{path.parent.name}-{index}-desktop.png"), style="header, nav.md-tabs, .md-top, .md-sidebar { visibility: hidden !important; }")
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function("document.documentElement.scrollWidth <= innerWidth + 1")
+                    for index in range(count):
+                        frame = page.locator("section.handbook-diagram").nth(index)
+                        frame.get_by_role("button", name="Actual size", exact=True).click()
+                        diagram = frame.locator("div.mermaid")
+                        assert diagram.evaluate("e => Number(e.style.zoom) === 1 && e.tabIndex === 0")
+                        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), path
+                        diagram.evaluate("e => { e.scrollLeft = e.scrollWidth; }")
+                        assert diagram.evaluate("e => e.scrollWidth <= e.clientWidth || e.scrollLeft > 0"), path
+                        diagram.evaluate("e => { e.scrollLeft = (e.scrollWidth - e.clientWidth) / 2; }")
+                        frame.screenshot(path=str(screenshots / f"{path.parent.name}-{index}-mobile.png"), style="header, nav.md-tabs, .md-top, .md-sidebar { visibility: hidden !important; }")
+                        frame.get_by_role("button", name="Fit to width", exact=True).click()
+                        assert frame.get_by_role("button", name="Fit to width", exact=True).get_attribute("aria-pressed") == "true"
+                    page.set_viewport_size({"width": 1440, "height": 1000})
+                else:
+                    page.screenshot(path=str(screenshots / f"{path.parent.name}-desktop.png"), full_page=True)
                 diagram_count += count
             page.goto(base)
             page.screenshot(path=str(screenshots / "home-desktop.png"), full_page=True)
@@ -92,9 +120,9 @@ def main():
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f"Horizontal page overflow: {route}"
                 page.screenshot(path=str(screenshots / f"{name}-mobile.png"), full_page=True)
             browser.close()
-            assert diagram_count >= 5, "Expected overview and traceability diagrams"
+            assert diagram_count >= 57 and module_pages >= 26, "Expected workflow and state diagrams in all module entries"
             assert not errors, "\n".join(errors)
-            print(f"Browser checks passed: {diagram_count} Mermaid diagrams, search, requirement anchor, raw model download, and three mobile layouts")
+            print(f"Browser checks passed: {diagram_count} Mermaid diagrams across {module_pages} module pages, module mobile layouts, search, requirement anchor, raw model download, and three guide mobile layouts")
     finally:
         server.shutdown()
         server.server_close()

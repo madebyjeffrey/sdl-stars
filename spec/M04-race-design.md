@@ -15,6 +15,8 @@ explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
 proof strength, dependency boundaries and verification commands.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 The primary actor is a player designing a reusable race, entered from the race
@@ -212,3 +214,57 @@ Verification for this integration is limited to source review, documentation
 links, formula/constant checks, Rust example compilation and whitespace checks. Earlier report test runs
 are historical evidence, not checks rerun for this integration. No runtime,
 baseline, file-format or gameplay changes are made.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Wizard order and Finish](#workflow-and-completion), [Failure and cancellation](#cancellation-errors-and-recovery) and the
+[canonical contracts](M04-race-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Pages["Identity → Primary trait → Lesser traits → Habitat → Economy → Research"] -->|Back / Next| Pages
+    Pages -->|Cancel / dialog failure| Exit["Return false; wrapper owns snapshot restoration"]
+    Pages -->|Finish in editable mode| Balance{"Recalculated balance nonnegative?"}
+    Balance -->|No| Warn["Alert; return to active page"]
+    Warn --> Pages
+    Balance -->|Yes| Credentials{"Credentials accepted?"}
+    Credentials -->|No| First["Return to page 1"]
+    First --> Pages
+    Credentials -->|Yes| Write{"fDontWrite?"}
+    Write -->|Yes| Return["Return completed design without writing"]
+    Write -->|No| Save["M02 library save / standalone path"]
+    Save -->|Cancelled / failed| First
+    Save -->|Succeeded| Return
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Shared mutable race / active page" as Working
+    state "Finish point gate" as Pricing
+    state "Credential gate" as Credential
+    state "Persistence requested" as Saving
+    state "Successful completion" as Complete
+    [*] --> Working
+    Working --> Pricing: Finish
+    Pricing --> Working: Negative balance, remain on active step
+    Pricing --> Credential: Nonnegative balance
+    Credential --> Working: Failure, active step becomes 1
+    Credential --> Complete: fDontWrite
+    Credential --> Saving: Writing enabled
+    Saving --> Working: Save fails / cancelled, step 1
+    Saving --> Complete: Save succeeds
+    Working --> [*]: Cancel / dialog failure returns false
+    note right of Working
+      Pricing/display can normalize shared vplr.
+      M04 Cancel alone does not prove byte restoration.
+      Read-only mode cannot finish a save.
+    end note
+```
+
+The six visible steps are not dialog-function-number order. M02/M03 wrappers own their documented snapshots; no general race-state rollback is added here. The pricing companion remains canonical for numeric and undefined-domain boundaries.

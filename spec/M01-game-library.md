@@ -8,6 +8,8 @@ Canonical definitions: [entry point](M01-library-specification.dfy),
 [M01Library](dafny/M01-library.dfy), [shared library names](dafny/S01-library-names.dfy).
 Verification: [collection run](README.md#m01-and-m02-verification).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Help players and desktop hosts find, open, copy, exchange and remove managed
@@ -391,3 +393,70 @@ Actual commands, counts and failures for this batch are in the
 | Unify list/Continue/action validation and failure interfaces only if deliberately approved. | M01/S01/M06; current validation levels and legacy save semantics differ. |
 | Define crash recovery, simultaneous host/client operations and cleanup discoverability. | S04/M01/M17; passing injected failures does not supply durability or locking. |
 | Agree timing/display/accessibility targets and complete the missing boundary cases in §4–5. | M01/S05; these remain Open or Proposed, not delivered guarantees. |
+
+## Workflow and state diagrams
+
+These reading projections summarize [Import and publication](#33-import-a-new-family), [Update and conflict handling](#34-update-conflict-or-separate-copy), [Rename and deletion](#35-duplicate-rename-and-delete) and the
+[canonical contracts](M01-library-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Browse["Browse managed games / choose an action"] --> Action{"Operation?"}
+    Action -->|Open or Continue| Player["Resolve player, then hand off to M06"]
+    Action -->|Import or update| Inspect["Inspect family / identity / destination"]
+    Inspect -->|Invalid family / archive, ambiguous universe, or too many matches| Error["Report failure; no completed publication"]
+    Inspect -->|Multiple selectable matching copies| Destination{"Choose matching copy?"}
+    Destination -->|Cancel| Browse
+    Destination -->|Selected| Classify{"Classify incoming turn / family"}
+    Inspect -->|Unambiguous valid destination| Classify
+    Classify -->|Identical turn| Same["Success without replacement"]
+    Classify -->|Changed same-year or older turn| Choice{"Cancel / Replace / Separate Copy"}
+    Choice -->|Cancel| Browse
+    Choice -->|Replace or copy| Stage["Stage files; preserve required backup / original"]
+    Classify -->|New family or first / later turn| Stage
+    Action -->|Duplicate or rename| Stage
+    Stage --> Publish{"Publish succeeds?"}
+    Publish -->|Yes| Done["Operation completes; owner refresh / cleanup can still warn"]
+    Publish -->|No| Recover["Attempt entry-specific restoration; report recovery path if it fails"]
+    Action -->|Delete| Confirm{"Confirm named game and backups?"}
+    Confirm -->|No| Browse
+    Confirm -->|Yes| Remove["Remove tree; partial failure is possible"]
+    Remove -->|All required removal succeeds| Done
+    Remove -->|Removal fails| Partial["Report deletion failure; earlier removals may remain"]
+    Action -->|Export| ExportTarget["Choose ZIP / folder destination"]
+    ExportTarget -->|Picker cancelled| Browse
+    ExportTarget -->|Destination accepted| Export["Legacy save prompt has no Cancel veto; then copy supported family"]
+    Export -->|Copy completes| Done
+    Export -->|Copy fails| ExportFailure["Local save may remain successful; external export failed"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Existing managed destination" as Existing
+    state "Operation-local stage" as Staged
+    state "Original held for rename / conflict swap" as Held
+    state "Published destination" as Published
+    state "Recovery location must be reported" as Recovery
+    [*] --> Existing
+    Existing --> Existing: Cancel before dependent publication
+    Existing --> Staged: Stage copy / import / rename
+    Staged --> Existing: Staging fails, attempt cleanup
+    Staged --> Held: Operation requires holding original
+    Staged --> Published: Publish without a held original
+    Held --> Published: Publish replacement
+    Held --> Existing: Publish fails, restoration succeeds
+    Held --> Recovery: Restoration fails
+    Published --> Published: Old-stage cleanup can warn
+    note right of Published
+      Disk publication does not reload a live session.
+      Confirmed deletion can leave a partially removed tree.
+    end note
+```
+
+The state diagram follows staged publication, not every library command. Delete has no restoration transaction; an asynchronous export picker returning true is not export completion. Picker cancellation precedes saving, while the legacy export save prompt has no Cancel veto. Open/load failure belongs to M06. Cleanup and restoration outcomes remain operation-specific.

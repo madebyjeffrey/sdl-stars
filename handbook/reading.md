@@ -47,6 +47,17 @@ Preserve those IDs when editing, including retired IDs with successor links.
 
 ## Logical ownership and implementation
 
+Every module entry has [workflow and state diagrams](diagrams.md) beside its
+canonical specification. Their nodes summarize the documented contract rather
+than add fields or implementation states. A terminal node ends the illustrated
+operation; it does not mean the application or game has ended.
+
+Read cancellation labels literally. Research and battle-plan close handlers
+commit edits, while production Next/Back commits before changing colony. A
+later Cancel cannot undo earlier accepted operations. Undefined-access nodes
+and external recovery boundaries identify limits, not implemented safe failures.
+Where no cancellation hook exists, the diagram says so instead of inventing one.
+
 Module boundaries describe coherent goals and responsibilities. They are not
 proof that the implementation already has isolated interfaces. The
 [system overview](overview.md) separates those logical responsibilities from

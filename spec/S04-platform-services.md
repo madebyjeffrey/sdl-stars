@@ -7,6 +7,8 @@ Canonical entry: [S04-platform-specification.dfy](S04-platform-specification.dfy
 [rules and proofs](dafny/S04-platform.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Provide the native service boundary without exposing operating-system APIs to
@@ -205,3 +207,54 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Native paths and file results](#files-and-paths), [Failure and cancellation ownership](#failure-and-cancellation) and the
+[canonical contracts](S04-platform-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Caller["Caller owns operation intent and buffers"] --> Begin{"Begin synchronous native operation?"}
+    Begin -->|Caller declines / picker cancelled| NoCall["No file open implied; S05 / caller owns Cancel"]
+    Begin -->|Yes| Domain{"Valid path / input and sufficient output capacity?"}
+    Domain -->|No| Reject["Return operation-specific failed result; no successful truncated path"]
+    Domain -->|Yes| Operation["Perform native I/O, conversion, formatting or temp-directory call"]
+    Operation --> Result{"Native result"}
+    Result -->|Success| Success["Return operation-specific result / owned resource"]
+    Result -->|Error / partial result| Error["Caller inspects actual state; cleans owned resources / retries by its policy"]
+    Operation -->|Temporary-directory name collision| Temp
+    Temp["Temporary-directory name collision"] --> Retry{"Fewer than 64 attempts?"}
+    Retry -->|Yes| Operation
+    Retry -->|No / other error| Error
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Caller request not begun" as Pending
+    state "Synchronous operation active" as Active
+    state "Successful operation result" as Success
+    state "Failed / partial result" as Failed
+    state "Caller-specific cleanup or retry" as Recovery
+    [*] --> Pending
+    Pending --> [*]: Caller cancels before operation
+    Pending --> Failed: Invalid input / insufficient capacity
+    Pending --> Active: Valid operation request
+    Active --> Success: Native operation succeeds
+    Active --> Failed: Native operation reports error / partial effect
+    Failed --> Recovery: Caller checks result and ownership
+    Recovery --> Pending: Retry only under caller's recovery contract
+    Success --> [*]: Caller consumes result / releases resource as required
+    note right of Active
+      No generic mid-operation Cancel or undo service.
+      Results and cleanup differ by native API.
+    end note
+```
+
+The input gate is a contract projection for the relevant API, not a claim that every native wrapper runs one shared validator. Empty picker results are not valid empty filenames. Sort/rounding/clock boundaries retain their own exact contracts; no new arithmetic or filesystem guarantee is introduced.

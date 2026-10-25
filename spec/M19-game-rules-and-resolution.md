@@ -7,6 +7,8 @@ Canonical entry: [M19-resolution-specification.dfy](M19-resolution-specification
 [rules and proofs](dafny/M19-resolution.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Own the shared resolution surface while retaining specialized rules in their
@@ -210,3 +212,54 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Resolution ownership](#complete-resolution-ownership-inventory), [Failure and cancellation](#failure-cancellation-and-observable-outcomes) and the
+[canonical contracts](M19-resolution-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Phase["M18 reaches an ordered resolution phase"] --> Owner["Select owning movement / economy / order / combat / event rule"]
+    Owner --> Inputs["Use current state, knowledge, relations, resources and actual RNG order"]
+    Inputs --> Resolve["Run that rule's source-defined eligibility and effects"]
+    Resolve --> Outcome{"Owner-specific outcome"}
+    Outcome -->|Applied| Applied["Retain resulting game changes / messages"]
+    Outcome -->|Skipped / prerequisite unmet| Skipped["Preserve that rule's specified skip / message behavior"]
+    Outcome -->|Partial effect / failure| Partial["Retain specified earlier effects; no universal rollback"]
+    Applied --> Continue["Continue under M18 schedule; S01 later publishes"]
+    Skipped --> Continue
+    Partial -. "Owner / host recovery boundary" .-> Recover["M17 / M18 / S01 diagnose actual state and outputs"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Rule context at current host phase" as Selected
+    state "Owner-specific rule executing" as Executing
+    state "Applied effects" as Applied
+    state "Skipped effect" as Skipped
+    state "Partial effects / failure boundary" as Partial
+    [*] --> Selected
+    Selected --> Executing: Invoke owning rule with current context
+    Executing --> Applied: Owner's successful branch
+    Executing --> Skipped: Owner's skip branch
+    Executing --> Partial: Owner's partial / failing branch
+    Applied --> Selected: M18 selects later work
+    Skipped --> Selected: M18 selects later work
+    note right of Executing
+      Generic player Cancel is unavailable during host execution.
+      Earlier effects and RNG consumption are not reset.
+    end note
+    note right of Partial
+      This is an outcome taxonomy, not a common C return type.
+      Each E19 family still owns its exact continuation / abort.
+    end note
+```
+
+Both diagrams are an ownership/outcome projection across heterogeneous rule families, not a newly proved common algorithm. Planning acceptance cannot guarantee host success. Bounded economy properties do not close movement, battle, depletion, event or visibility algorithms.

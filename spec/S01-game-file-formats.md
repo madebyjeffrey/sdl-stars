@@ -7,6 +7,8 @@ Inspected revision: `e2eae18cff0f990db20415c1c2262aed2022f95b` on
 the same revision on 2026-10-24. The local M03/M04 drafts were also
 consulted. This specification changes no runtime behavior or compatibility policy.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 Actors are the player preserving a turn/race, the host operator exchanging files,
@@ -609,3 +611,59 @@ Related modules: [M03](M03-new-game-wizard.md), [M04](M04-race-design.md),
 [S06 shared-state specification](S06-shared-game-state.md). These owners now
 supply the versioned catalogs and logical types; S01 retains their serialized
 mappings without inventing a second shared type system.
+
+## Workflow and state diagrams
+
+These reading projections summarize [File-set workflows](#4-workflows-and-file-set-consistency), [Cancellation and recovery boundaries](#6-cancellation-failure-and-recovery) and the
+[canonical contracts](S01-game-file-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Entry{"Read / replay or write / publish?"} -->|Read| Universe["Load universe; optional history; player snapshot and credentials"]
+    Universe -->|Load / password failure| Failed["Destroy attempted loaded state; prior session not restored"]
+    Universe -->|Snapshot accepted| Replay["Load eligible orders; replay in recorded order"]
+    Replay -->|Recognized corruption / aggregate replay failure| Failed
+    Replay -->|Missing / stale ignored, or replay succeeds| Loaded["Loaded player projection / pending state"]
+    Entry -->|Write| Caller{"Which caller contract?"}
+    Caller -->|Guarded player save| Save["Write orders, then history; history can fail after orders succeed"]
+    Caller -->|Managed staging path| Stage["Validate / stage; hold prior destination where required"]
+    Stage -->|Cancel before dependent publication| Cancel["Do not publish that dependent change"]
+    Stage -->|Publish attempt| Publish{"Replacement succeeds?"}
+    Publish -->|No| Restore["Attempt path-specific cleanup / restoration; report recovery location"]
+    Publish -->|Yes| Written["Published file / family within caller's checks"]
+    Caller -->|Direct writer / generation| Direct["Truncation / sequential writes can leave partial files or mixed years"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Prior destination / source family" as Prior
+    state "Staged candidate" as Candidate
+    state "Held prior destination" as Held
+    state "Replacement published" as Published
+    state "Explicit recovery obligation" as Recovery
+    [*] --> Prior
+    Prior --> Candidate: Caller chooses staged operation
+    Candidate --> Prior: Pre-publication Cancel, attempt stage cleanup
+    Candidate --> Held: Operation requires preserving original
+    Candidate --> Published: Replace without separate hold
+    Held --> Published: Install replacement
+    Held --> Prior: Installation fails, restoration succeeds
+    Held --> Recovery: Restoration fails
+    Published --> Published: Cleanup may warn after successful publication
+    note right of Candidate
+      This state projection covers staged callers only.
+      Direct writes, replay, and multi-file saves differ.
+    end note
+    note right of Published
+      Framing/completeness is not full semantic validation.
+      No universal crash journal or fsync guarantee.
+    end note
+```
+
+Read/load, direct write, and staged publication are separate contracts. S01 does not retrofit cancellation or transaction guarantees onto all of them. Recovery must validate a consistent identity/year/generation family rather than mix independently surviving files.

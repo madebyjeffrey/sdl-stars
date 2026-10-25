@@ -64,6 +64,26 @@ def module_map():
     return groups
 
 
+def diagram_index(groups):
+    """Discover module diagrams in their canonical Markdown, without copying them."""
+    rows = []
+    count = 0
+    for group_title, group in groups:
+        rows.append(f"## {group_title}\n\n| Module | Workflow | State and recovery |\n| --- | --- | --- |\n")
+        for identity, title, entry in group:
+            text = (ROOT / entry).read_text(encoding="utf-8")
+            blocks = re.findall(r"^```mermaid\s*\n(.*?)^```\s*$", text, re.M | re.S)
+            flow = sum(bool(re.match(r"(?:flowchart|sequenceDiagram)\b", block)) for block in blocks)
+            state = sum(block.startswith("stateDiagram-v2") for block in blocks)
+            count += len(blocks)
+            path = "../" + entry.as_posix()
+            workflow = f"[View ({flow})]({path}#workflow)" if flow else "Not yet diagrammed"
+            states = f"[View ({state})]({path}#state-and-recovery)" if state else "Not yet diagrammed"
+            rows.append(f"| [{identity} · {title}]({path}) | {workflow} | {states} |\n")
+        rows.append("\n")
+    return f"**{count} module diagrams**, discovered from the current source files.\n\n" + "".join(rows)
+
+
 def sources():
     # Explicit publication boundary: never sweep the repository or agent guidance.
     paths = [ROOT / "spec/README.md", ROOT / "GLOSSARY.md"]
@@ -120,6 +140,13 @@ def rewrite_links(text, source, destinations, revision):
     return "".join(pieces)
 
 
+def readable_diagrams(text):
+    """Keep diagram text at its natural size inside the theme's scroll container."""
+    config = "---\nconfig:\n  flowchart:\n    useMaxWidth: false\n  state:\n    useMaxWidth: false\n  sequence:\n    useMaxWidth: false\n---\n"
+    return re.sub(r"(^```mermaid[^\n]*\n)(?=(?:flowchart|stateDiagram-v2|sequenceDiagram)\b)",
+                  lambda match: match[1] + config, text, flags=re.M)
+
+
 def provenance(source, revision, branch):
     path = quote(source.relative_to(ROOT).as_posix())
     return (f'\n\n<p class="handbook-source">Built from '
@@ -142,7 +169,8 @@ def prepare():
     project["docs_dir"], project["site_dir"] = "source", "site"
     project["site_url"] = os.environ.get("HANDBOOK_SITE_URL", project["site_url"]).rstrip("/") + "/"
     nav = [{"Start here": [{"Welcome": "index.md"}, {"Reading a specification": "reading.md"},
-                            {"System overview": "overview.md"}, {"Glossary": "GLOSSARY.md"}]}]
+                            {"System overview": "overview.md"}, {"Module diagrams": "diagrams.md"},
+                            {"Glossary": "GLOSSARY.md"}]}]
     entries = {entry[2] for _, group in groups for entry in group}
     for group_title, group in groups:
         items = []
@@ -173,9 +201,11 @@ def prepare():
         target = stage / destinations[path]
         if path.suffix == ".md":
             text = path.read_text(encoding="utf-8")
+            if path == ROOT / "handbook/diagrams.md":
+                text += "\n" + diagram_index(groups)
             for match in REQUIREMENT.finditer(CODE.sub("", text)):
                 requirements.append((match[1], match[2], path))
-            write(target, rewrite_links(text, path, destinations, revision) + provenance(path, revision, branch))
+            write(target, readable_diagrams(rewrite_links(text, path, destinations, revision)) + provenance(path, revision, branch))
         elif path.suffix == ".dfy":
             text = path.read_text(encoding="utf-8")
             raw = target.with_suffix(".dfy")
