@@ -261,6 +261,52 @@ were checked against `e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23.
 They distinguish observed behavior from proposed port interfaces. The map's
 original base revision above still describes its initial exploration.
 
+## Traceability views
+
+Recorded 2026-10-25. The [handbook traceability views](../handbook/traceability.md)
+are generated from the collection's existing anchors, parent-story references,
+acceptance rows/paragraphs, named rules, model includes and evidence resources.
+They connect **116 stories** to **278 acceptance criteria** through **309 authored
+parent references**, including companion criteria, across all 26 modules.
+Per-module views preserve acceptance/rule/evidence/limit text and support story
+and text filters, shared criterion links and reading without JavaScript. Model
+and test/resource backlinks provide the reverse reading path; downloadable JSON
+records the same navigation and build revision.
+
+Model links distinguish authored criterion-file links from exact declaration-name
+matches in document-linked models and their include closure. All **80 formal
+files** have readable views/raw downloads; a lexical declaration index supplies
+stable anchors and source-line links. Ambiguous names remain unresolved. Test
+navigation resolves authored links or explicit/unique filenames under `tests/`;
+broader document context stays separate from criterion-level associations.
+
+These views introduce no acceptance rule, proof obligation, test result or
+coverage score. Existing behavior statuses, source inspection revisions, dated
+runs, external obligations and gaps remain authoritative in the owning specs.
+Finding a declaration or test file does not establish C refinement, successful
+test execution or full coverage. Missing file navigation does not imply absent
+tests. Interaction/quality requirements remain in the requirement index.
+Update mappings and evidence in their owning specs; generated copies are never
+the source of truth. Runtime/formal definitions and existing IDs are unchanged.
+
+Validation: **25 handbook tests** and **9 specification-checker tests** pass,
+including parent/companion ownership, escaped table content, ambiguous names,
+tracked-test discovery, regeneration/removal and moved-fragment links. Zensical
+builds **159 pages** with zero source/rendered-link errors. Browser checks cover
+all 26 trace views and parent edges, story/text filters, empty results, keyboard
+reset, deep-link recovery, declaration/source-line and reverse links, mobile and
+JavaScript-disabled reading; all **72 existing diagrams** and handbook
+search/anchors/raw downloads still pass. The JSON export and build manifest share
+revision, source fingerprint and working-tree status. Existing spec anchors and
+all **559 requirement IDs** are retained.
+
+`python3 tests/spec/verify.py --time-limit 120` with Dafny **4.11.0** verifies all
+80 formal files and include closure: **4019 verified, 0 errors; audit 0 findings**.
+SDL Debug builds without warnings; **17 unit tests** and the available tutorial
+smoke checkpoint pass. Full native regression through checkpoint 150 reports
+**519 matches, 21 existing warnings, 0 differences/errors and 0 skipped reference
+inputs**. No runtime source, formal definitions, file formats or baselines changed.
+
 ## Shared-state and file relationship diagrams
 
 Recorded 2026-10-25; selected relationships rechecked at

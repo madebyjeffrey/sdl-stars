@@ -8,6 +8,8 @@ is the authoritative inventory of those gaps.
 | Follow this question | Destination |
 | --- | --- |
 | Which goal or criterion am I looking for? | [Generated requirement index](requirements.md) |
+| How does a story connect to criteria, models and evidence? | [Traceability views](traceability.md) |
+| Which criteria reference a model or evidence resource? | [Model backlinks](trace-models.md) and [evidence-resource backlinks](trace-evidence.md) |
 | Which model contains the definition? | [Generated Dafny reference](models.md) |
 | What work remains in each module? | [Module completion inventory](../spec/README.md#module-by-module-completion-inventory) |
 | How do I reproduce formal checks? | [Verification commands](../spec/README.md#reproducing-the-checks) |

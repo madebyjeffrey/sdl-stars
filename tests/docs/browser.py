@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import re
 import threading
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 from playwright.sync_api import sync_playwright
 
@@ -27,6 +27,79 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
+def check_traces(page, base, screenshots):
+    response = page.request.get(base + "traceability.json")
+    assert response.ok
+    graph = response.json()
+    manifest = page.request.get(base + "build.json").json()
+    assert graph["revision"] == manifest["revision"]
+    assert graph["source_sha256"] == manifest["source_sha256"]
+    assert graph["working_tree_changes"] == manifest["working_tree_changes"]
+    assert len(graph["stories"]) >= 116 and len(graph["criteria"]) >= 278 and len(graph["models"]) >= 80
+    modules = sorted({story["id"][:3].upper() for story in graph["stories"]})
+    for identity in modules:
+        page.goto(base + f"trace/{identity}/")
+        page.locator("[data-trace-ready]").wait_for()
+        expected = [c for c in graph["criteria"] if c["id"][:3] == identity.lower()]
+        assert page.locator(".trace-criterion").count() == len(expected), identity
+        for criterion in expected:
+            card = page.locator("#trace-" + criterion["id"])
+            assert set(card.get_attribute("data-stories").split()) == set(criterion["stories"])
+            assert card.get_by_role("link", name="Source criterion", exact=True).get_attribute("href").endswith("#" + criterion["id"])
+    page.goto(base + "traceability/")
+    assert page.locator('.md-content__inner a[href*="trace/"]').count() == len(modules)
+    page.screenshot(path=str(screenshots / "trace-overview-desktop.png"))
+    page.goto(base + "trace/M06/")
+    story = page.get_by_label("Story", exact=True)
+    story.select_option("m06-us02")
+    assert page.locator(".trace-criterion:visible").count() == 2
+    assert page.locator("[data-trace-count]").inner_text() == "Showing 2 of 8 acceptance criteria."
+    query = page.get_by_label("Search this trace", exact=True)
+    query.fill("SaveNeedsBoth")
+    assert page.locator(".trace-criterion:visible").count() == 1
+    assert page.locator("#trace-m06-ac04").is_visible()
+    query.fill("no-such-trace-evidence-12345")
+    assert page.locator(".trace-criterion:visible").count() == 0
+    page.get_by_role("button", name="Reset", exact=True).focus()
+    page.keyboard.press("Enter")
+    assert page.locator(".trace-criterion:visible").count() == 8
+    # A deep criterion link must reveal its target even with incompatible filters.
+    page.goto(base + "trace/M06/?story=m06-us01#trace-m06-ac04")
+    page.wait_for_function("!document.getElementById('trace-m06-ac04').hidden")
+    assert page.get_by_label("Story", exact=True).input_value() == ""
+    page.locator("#trace-m06-ac03").screenshot(path=str(screenshots / "trace-criterion-desktop.png"), animations="disabled", style="header, nav.md-tabs, .md-top, .md-sidebar { visibility: hidden !important; }")
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.get_by_label("Story", exact=True).select_option("m06-us02")
+    page.wait_for_function("document.documentElement.scrollWidth <= innerWidth + 1")
+    page.screenshot(path=str(screenshots / "trace-mobile.png"), animations="disabled")
+    page.locator("#trace-m06-ac03").screenshot(path=str(screenshots / "trace-criterion-mobile.png"), animations="disabled", style="header, nav.md-tabs, .md-top, .md-sidebar { visibility: hidden !important; }")
+    model = page.locator("#trace-m06-ac03").get_by_role("link", name="M06Session.GuardedLeave", exact=True).get_attribute("href")
+    page.goto(urljoin(page.url, model))
+    page.locator("#def-m06session-guardedleave").wait_for(state="attached")
+    definition = next(s for m in graph["models"] if m["path"] == "spec/dafny/M06-session.dfy"
+                      for s in m["declarations"] if s["qualified"] == "M06Session.GuardedLeave")
+    source = page.locator(f'main a[href$="/spec/dafny/M06-session.dfy#L{definition["line"]}"]').get_attribute("href")
+    assert "/" + graph["revision"] + "/" in source
+    page.set_viewport_size({"width": 1440, "height": 1000})
+    backlink = page.get_by_role("link", name="Trace references", exact=True).get_attribute("href")
+    assert "trace-models" in backlink
+    page.goto(urljoin(page.url, backlink))
+    references = page.locator("main details").filter(has=page.get_by_role("link", name="M06-AC03", exact=True, include_hidden=True)).first
+    references.locator("summary").click()
+    assert references.get_by_role("link", name="M06-AC03", exact=True).is_visible()
+    page.goto(base + "trace-evidence/")
+    assert page.locator('main a[href*="/tests/spec/check_s02_source.py"]').count() >= 1
+    page.screenshot(path=str(screenshots / "trace-evidence-desktop.png"))
+    no_js = page.context.browser.new_context(java_script_enabled=False, viewport={"width": 390, "height": 844})
+    static = no_js.new_page()
+    static.goto(base + "trace/M06/")
+    assert static.locator(".trace-criterion:visible").count() == 8
+    assert static.locator("[data-trace-controls]").is_hidden()
+    assert static.locator('main a[href*="def-m06session-guardedleave"]').count() == 1
+    no_js.close()
+    print(f"Trace browser checks passed: {len(modules)} module views, all story/criterion edges, filters/reset, deep links, declaration/source lines, reverse links, mobile and no-JavaScript reading", flush=True)
+
+
 def main():
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, directory=str(SITE)))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -43,6 +116,7 @@ def main():
             page.on("requestfailed", lambda request: print(f"Request failed: {request.url}: {request.failure}", flush=True))
             page.on("response", lambda response: errors.append(f"HTTP {response.status}: {response.url}")
                     if response.status >= 400 and response.url.startswith(base) else None)
+            check_traces(page, base, screenshots)
             diagram_count = 0
             module_pages = 0
             sequence_count = 0
