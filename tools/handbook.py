@@ -2,6 +2,7 @@
 """Assemble the specification handbook without modifying its source documents."""
 import argparse
 import hashlib
+import importlib.util
 from html import escape
 from html.parser import HTMLParser
 import json
@@ -27,6 +28,9 @@ REQUIREMENT = re.compile(r'<a\s+id=["\']([ms]\d{2}-(?:[a-z]+-)?(us|ac|ir|qr)\d+)
 CODE = re.compile(r"^(`{3,}|~{3,})[^\n]*\n.*?^\1[^\n]*$", re.M | re.S)
 INLINE_CODE = re.compile(r"`+[^`\n]*`+")
 LINK = re.compile(r"(!?\[[^\[\]]*\]\()([^\s)]+)(\))")
+TRACE_SPEC = importlib.util.spec_from_file_location("handbook_traceability", Path(__file__).with_name("traceability.py"))
+traceability = importlib.util.module_from_spec(TRACE_SPEC)
+TRACE_SPEC.loader.exec_module(traceability)
 
 
 def git(*args):
@@ -160,16 +164,16 @@ def destination(path):
     return relative
 
 
-def resolve_link(target, source, destinations, revision):
+def resolve_link(target, source, destinations, revision, output=None):
     parts = urlsplit(target)
-    if parts.scheme or parts.netloc or not parts.path:
+    if parts.scheme or parts.netloc or (not parts.path and output is None):
         return target
     if parts.path.startswith("/"):
         raise ValueError(f"{source}: root-relative link bypasses the project URL: {target}")
-    path = (source.parent / unquote(parts.path)).resolve()
+    path = (source.parent / unquote(parts.path)).resolve() if parts.path else source
     suffix = ("?" + parts.query if parts.query else "") + ("#" + parts.fragment if parts.fragment else "")
     if path in destinations:
-        local = os.path.relpath(destinations[path], destinations[source].parent)
+        local = os.path.relpath(destinations[path], (output or destinations[source]).parent)
         return quote(Path(local).as_posix(), safe="/.-") + suffix
     if not path.is_relative_to(ROOT) or not path.exists():
         raise ValueError(f"{source.relative_to(ROOT)}: missing or unpublished local target {target}")
@@ -177,16 +181,16 @@ def resolve_link(target, source, destinations, revision):
     return f"{REPO}/{kind}/{revision}/{quote(path.relative_to(ROOT).as_posix())}{suffix}"
 
 
-def rewrite_links(text, source, destinations, revision):
+def rewrite_links(text, source, destinations, revision, output=None):
     def rewrite(block):
         spans = [(m.start(), m.end()) for m in INLINE_CODE.finditer(block)]
         def replace(match):
             if any(start <= match.start() < end for start, end in spans):
                 return match[0]
-            return match[1] + resolve_link(match[2], source, destinations, revision) + match[3]
+            return match[1] + resolve_link(match[2], source, destinations, revision, output) + match[3]
         block = LINK.sub(replace, block)
         return re.sub(r'^(\[[^]\n]+\]:\s*)(\S+)',
-                      lambda m: m[1] + resolve_link(m[2], source, destinations, revision), block, flags=re.M)
+                      lambda m: m[1] + resolve_link(m[2], source, destinations, revision, output), block, flags=re.M)
     pieces = []
     end = 0
     for match in CODE.finditer(text):
@@ -217,9 +221,14 @@ def prepare():
     branch = os.environ.get("GITHUB_HEAD_REF") or git("branch", "--show-current") or "develop"
     paths = sources()
     virtual = {ROOT / "handbook" / f"{name}.md": Path(f"{name}.md")
-               for name in ("requirements", "models", "build")}
-    destinations = {path: destination(path) for path in paths} | virtual
+               for name in ("requirements", "models", "build", "trace-models", "trace-evidence")}
+    virtual[ROOT / "handbook/traceability.json"] = Path("traceability.json")
     groups = module_map()
+    virtual |= {ROOT / "handbook/trace" / f"{identity}.md": Path(f"trace/{identity}.md")
+                for _, group in groups for identity, _, _ in group}
+    destinations = {path: destination(path) for path in paths} | virtual
+    test_paths = [ROOT / name for name in git("ls-files", "-z", "--", "tests").split("\0") if name]
+    traces = traceability.Catalog(ROOT, paths, test_paths)
     config = tomllib.loads((ROOT / "zensical.toml").read_text(encoding="utf-8"))
     project = config["project"]
     project["docs_dir"], project["site_dir"] = "source", "site"
@@ -236,13 +245,15 @@ def prepare():
                 raise ValueError(f"Module map entry has no specification: {entry}")
             companions = [p for p in paths if p.suffix == ".md" and p.name.startswith(identity + "-")
                           and p.relative_to(ROOT) not in entries]
-            children = [{"Overview": entry.as_posix()}]
+            children = [{"Overview": entry.as_posix()}, {"Traceability": f"trace/{identity}.md"}]
             for path in companions:
                 heading = re.search(r"^# (.+)$", path.read_text(encoding="utf-8"), re.M)
                 children.append({heading[1] if heading else path.stem: destination(path).as_posix()})
-            items.append({f"{identity} · {title}": children} if companions else {f"{identity} · {title}": entry.as_posix()})
+            items.append({f"{identity} · {title}": children})
         nav.append({group_title: items})
-    nav.append({"Evidence": [{"Coverage guide": "evidence.md"}, {"Requirement index": "requirements.md"},
+    nav.append({"Evidence": [{"Traceability views": "traceability.md"}, {"Model backlinks": "trace-models.md"},
+                             {"Test and evidence backlinks": "trace-evidence.md"},
+                             {"Coverage guide": "evidence.md"}, {"Requirement index": "requirements.md"},
                              {"Dafny reference": "models.md"}, {"Source module map and verification": "spec/README.md"},
                              {"Build provenance": "build.md"}, {"Maintaining the handbook": "maintaining.md"},
                              {"Decisions": [{p.stem: p.relative_to(ROOT).as_posix()} for p in paths if p.parent == ROOT / "docs/adr"]}]})
@@ -264,6 +275,8 @@ def prepare():
                 text += "\n" + sequence_index(paths)
             if path == ROOT / "handbook/data-models.md":
                 text += "\n" + data_index(paths)
+            if path == ROOT / "handbook/traceability.md":
+                text += "\n" + traceability.overview(traces, groups)
             for match in REQUIREMENT.finditer(CODE.sub("", text)):
                 requirements.append((match[1], match[2], path))
             write(target, readable_diagrams(rewrite_links(text, path, destinations, revision)) + provenance(path, revision, branch))
@@ -275,9 +288,15 @@ def prepare():
             links = [f"[{name}]({resolve_link(name, path, destinations, revision)})" for name in includes]
             body = f"# {path.name}\n\nGenerated from the canonical Dafny source. "
             body += f"[Download this file]({quote(raw.name)}).\n\n"
+            backlink = Path(os.path.relpath(Path("trace-models.md"), destinations[path].parent)).as_posix()
+            body += f'[Trace references]({backlink}#{traceability.ref_anchor("models", path.relative_to(ROOT))}).\n\n'
             if links:
                 body += "Includes: " + ", ".join(links) + ".\n\n"
             body += "Definitions and proofs apply within their stated assumptions. Rendering this page does not verify the model or the C implementation.\n\n"
+            body += "## Definitions\n\nDeclaration navigation is generated lexically from the canonical file; source-line links open the exact build revision.\n\n"
+            for symbol in traces.models[path]:
+                body += f'<a id="{symbol["anchor"]}"></a>\n\n- {symbol["kind"]} **`{symbol["qualified"]}`** · [source line {symbol["line"]}]({REPO}/blob/{revision}/{path.relative_to(ROOT).as_posix()}#L{symbol["line"]})\n\n'
+            body += "## Canonical source\n\n"
             fence = "`" * max(3, max((len(m[0]) + 1 for m in re.finditer(r"`+", text)), default=3))
             body += f"{fence}dafny\n{text}\n{fence}\n" + provenance(path, revision, branch)
             write(target, body)
@@ -285,16 +304,17 @@ def prepare():
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, target)
-    req_page = "# Requirement index\n\nGenerated from explicit anchors in the current specifications. Counts describe trace structure, not semantic completeness or verification.\n\n"
+    req_page = "# Requirement index\n\nGenerated from explicit anchors in the current specifications. Counts describe trace structure, not semantic completeness or verification. Use the Trace column or [traceability overview](traceability.md) to follow stories, criteria, models and evidence.\n\n"
     req_page += f"**{len(entries)} modules · {len(requirements)} requirements · {len(models)} formal files.**\n\n"
     kinds = {"us": "Story", "ac": "Acceptance", "ir": "Interaction", "qr": "Quality"}
     for _, group in groups:
         for identity, title, _ in group:
-            req_page += f"## {identity} · {title}\n\n| ID | Kind | Source |\n| --- | --- | --- |\n"
+            req_page += f"## {identity} · {title}\n\n| ID | Kind | Source | Trace |\n| --- | --- | --- | --- |\n"
             for anchor, kind, path in requirements:
                 if anchor[:3] == identity.lower():
                     url = path.relative_to(ROOT).as_posix() + "#" + anchor
-                    req_page += f"| [{anchor.upper()}]({url}) | {kinds[kind]} | {path.stem} |\n"
+                    trace_link = f"[Follow](trace/{identity}.md#trace-{anchor})" if kind in {"us", "ac"} else "—"
+                    req_page += f"| [{anchor.upper()}]({url}) | {kinds[kind]} | {path.stem} | {trace_link} |\n"
             req_page += "\n"
     write(stage / "requirements.md", req_page)
     model_page = "# Dafny reference\n\nReadable views and unchanged raw downloads are generated from the canonical files. [Download all formal files](models.zip), retaining relative include paths. Run verification separately; see the [coverage guide](evidence.md).\n\n"
@@ -306,6 +326,24 @@ def prepare():
                     model_page += f"- [{path.relative_to(ROOT / 'spec')}]({destination(path).as_posix()})\n"
             model_page += "\n"
     write(stage / "models.md", model_page)
+    def trace_link(path, output, anchor=""):
+        suffix = "#" + anchor if anchor else ""
+        if path in destinations:
+            return quote(Path(os.path.relpath(destinations[path], output.parent)).as_posix(), safe="/.-") + suffix
+        if not path.is_relative_to(ROOT) or not path.exists():
+            raise ValueError(f"Missing trace resource: {path}")
+        kind = "tree" if path.is_dir() else "blob"
+        return f"{REPO}/{kind}/{revision}/{quote(path.relative_to(ROOT).as_posix())}{suffix}"
+    for _, group in groups:
+        for identity, title, _ in group:
+            output = Path(f"trace/{identity}.md")
+            body = traceability.module_page(traces, identity, title,
+                lambda p, a="": trace_link(p, output, a),
+                lambda text, source: rewrite_links(traceability.source_block(text), source, destinations, revision, output))
+            write(stage / output, body)
+    for kind in ("models", "evidence"):
+        output = Path(f"trace-{kind}.md")
+        write(stage / output, traceability.reverse_page(traces, kind, lambda p, a="": trace_link(p, output, a)))
     with zipfile.ZipFile(stage / "models.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for path in models:
             archive.write(path, path.relative_to(ROOT / "spec"))
@@ -315,7 +353,10 @@ def prepare():
         digest.update(path.read_bytes())
     dirty = bool(git("status", "--porcelain", "--untracked-files=all"))
     manifest = {"revision": revision, "working_tree_changes": dirty, "source_sha256": digest.hexdigest(),
-                "modules": len(entries), "requirements": len(requirements), "formal_files": len(models)}
+                "modules": len(entries), "requirements": len(requirements), "formal_files": len(models),
+                "traceability": traces.counts()}
+    trace_data = traces.export(revision) | {"working_tree_changes": dirty, "source_sha256": digest.hexdigest()}
+    write(stage / "traceability.json", json.dumps(trace_data, ensure_ascii=False, indent=2) + "\n")
     write(stage / "build.json", json.dumps(manifest, indent=2) + "\n")
     build = f"# Build provenance\n\n- Repository revision: [`{revision}`]({REPO}/commit/{revision}).\n"
     build += f"- Source fingerprint: `{digest.hexdigest()}`.\n- Modules: {len(entries)}; requirement IDs: {len(requirements)}; formal files: {len(models)}.\n"

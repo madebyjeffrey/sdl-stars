@@ -22,6 +22,7 @@ with the workflows, rules, file contracts, and evidence behind it.
 | Run a host or understand simulation | [Hosting and simulation](../spec/README.md#hosting-and-simulation) |
 | Implement persistence or platform services | [Shared support](../spec/README.md#shared-support) |
 | Find a particular story or acceptance criterion | [Requirement index](requirements.md) |
+| Follow a story through acceptance, models and evidence | [Traceability views](traceability.md) |
 
 ## Read with the right expectations
 

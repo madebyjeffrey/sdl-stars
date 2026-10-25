@@ -22,6 +22,12 @@ historical run remains evidence for its recorded revision and environment.
 
 ## Follow the trace
 
+Use the [generated traceability views](traceability.md) to follow actual story/
+criterion references, open named Dafny declarations, and read the authored test
+evidence and gaps. Model/test backlinks distinguish criterion references from
+source-document context. A resolved file or declaration is navigation, not a
+coverage or execution claim.
+
 ```mermaid
 flowchart TD
     Story["Actor goal · US"] --> Workflow["Workflow and alternatives"]
