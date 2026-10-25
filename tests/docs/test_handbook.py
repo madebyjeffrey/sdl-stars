@@ -150,6 +150,16 @@ class LinkTests(unittest.TestCase):
         link = handbook.resolve_link("../src/core/ui.h", source, mapping, "abc123")
         self.assertEqual(link, handbook.REPO + "/blob/abc123/src/core/ui.h")
 
+    def test_moved_trace_quotes_rebase_source_fragments_and_model_links(self):
+        source = handbook.ROOT / "spec/M06-player-session-and-turn-orders.md"
+        model = handbook.ROOT / "spec/dafny/M06-session.dfy"
+        mapping = {source: Path("spec/M06-player-session-and-turn-orders.md"), model: Path("models/dafny/M06-session.md")}
+        quote = "[Save](#34-save-submit-and-leave) [Rule](dafny/M06-session.dfy#def-m06session-guardedleave) `x [example](missing)`"
+        result = handbook.rewrite_links(quote, source, mapping, "revision", Path("trace/M06.md"))
+        self.assertIn("../spec/M06-player-session-and-turn-orders.md#34-save-submit-and-leave", result)
+        self.assertIn("../models/dafny/M06-session.md#def-m06session-guardedleave", result)
+        self.assertIn("`x [example](missing)`", result)
+
     def test_multiline_and_code_labels_are_links_but_examples_are_not(self):
         source = handbook.ROOT / "spec/M01-game-library.md"
         mapping = {source: Path("spec/M01-game-library.md")}
@@ -216,6 +226,10 @@ class RegenerationTests(unittest.TestCase):
                 self.assertNotIn("M01-US01", (staged / "requirements.md").read_text())
                 self.assertFalse((staged / "spec/M01-detail.md").exists())
                 self.assertNotIn("Companion", (work / "zensical.toml").read_text())
+                trace = (staged / "traceability.json").read_text()
+                self.assertIn("m01-us02", trace)
+                self.assertNotIn("m01-us01", trace)
+                self.assertNotIn("M01-library.md", (staged / "trace/M01.md").read_text())
 
 
 class RenderedTests(unittest.TestCase):

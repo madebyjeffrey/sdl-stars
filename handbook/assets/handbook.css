@@ -21,3 +21,13 @@
 .handbook-diagram :focus-visible { outline: 2px solid var(--md-accent-fg-color); outline-offset: 2px; }
 .md-typeset table:not([class]) { font-size: .75rem; }
 .handbook-source { font-size: .68rem; opacity: .85; border-top: 1px solid var(--md-default-fg-color--lightest); padding-top: .7rem; margin-top: 2rem; }
+.trace-controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; padding: .8rem; background: var(--md-code-bg-color); border-radius: .3rem; margin: 1.25rem 0; }
+.trace-controls[hidden], .trace-criterion[hidden], .trace-story[hidden] { display: none; }
+.trace-controls .trace-field { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.trace-controls label { font-size: .7rem; }
+.trace-controls input, .trace-controls select { color: var(--md-default-fg-color); background: var(--md-default-bg-color); border: 1px solid var(--md-default-fg-color--lighter); padding: .35rem; border-radius: .2rem; max-width: 100%; }
+.trace-controls button { padding: .35rem .7rem; border: 1px solid var(--md-default-fg-color--lighter); border-radius: .2rem; cursor: pointer; }
+.trace-controls p { width: 100%; margin: .2rem 0 0; font-size: .7rem; }
+.trace-criterion, .trace-story { min-width: 0; padding: .2rem 1rem; margin: 1.2rem 0; border-left: 2px solid var(--md-accent-fg-color); overflow-wrap: anywhere; scroll-margin-top: 4rem; }
+.trace-criterion code { white-space: normal; overflow-wrap: anywhere; }
+.trace-controls :focus-visible { outline: 2px solid var(--md-accent-fg-color); outline-offset: 2px; }

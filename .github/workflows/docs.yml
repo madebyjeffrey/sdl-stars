@@ -6,6 +6,7 @@ on:
       - 'spec/**'
       - 'handbook/**'
       - 'tools/handbook.py'
+      - 'tools/traceability.py'
       - 'tests/docs/**'
       - 'tests/spec/verify.py'
       - 'docs/adr/**'

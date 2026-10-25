@@ -63,6 +63,37 @@ canonical rules, source evidence and scope note with its diagram. Preserve
 distinctions between observed storage, proposed logical validation, partial
 knowledge and full-host reference closure; a diagram does not introduce a schema.
 
+## Maintain traceability
+
+Edit stories and acceptance criteria in their owning `spec/*.md` documents.
+The builder discovers existing explicit US/AC anchors and the parent-story
+references in each acceptance row's first cell. Companion criteria use the
+module's story IDs. Standalone criteria retain the first paragraph and its
+explicit parent-story reference. Keep these mappings beside the rule/evidence
+text; generated pages and `traceability.json` are build outputs.
+
+The supported acceptance tables have an identity/story/status column, acceptance
+statement, and either a combined rule/evidence/limits cell or separate rule and
+evidence cells. Unsupported layouts or missing/unknown parents fail the trace
+build. Code examples do not define requirements. Preserve stable IDs when
+changing wording; references, titles, deletions and include changes regenerate.
+
+Criterion model navigation uses file links in its row/paragraph plus exact
+code-formatted declaration names resolved uniquely in the source document's
+linked models and include closure. Ambiguous names are displayed unresolved.
+For a precise association, add a direct model link beside the named rule.
+Model pages generate declaration anchors and links to original source lines;
+this lexical index is not a Dafny frontend or verifier.
+
+Test navigation uses authored links to `tests/` resources and code-formatted
+paths/unique filenames. Basename discovery uses tracked test files; staged new
+tests participate too. Add an explicit test/resource link to a criterion when
+that scope is established; name run revisions, dates, commands, assumptions and
+remaining gaps in the spec. The view keeps original evidence prose and labels
+broader document context separately. Finding a file never sets a passing or
+coverage status. Existing source/evidence validation and formal/runtime checks
+still apply when changing the underlying contracts.
+
 ## Links and publication boundaries
 
 Specification links to included pages become local site links. Links to Dafny
