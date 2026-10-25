@@ -9,7 +9,8 @@ explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
 proof strength, dependency boundaries and verification commands.
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## User stories and requirements
 
@@ -781,3 +782,61 @@ stateDiagram-v2
 ```
 
 The state projection follows editable setup; read-only viewing is a separate non-generation entry. Cancel before Finish does not rewind RNG or race-library saves. There is no inner generator cancellation protocol.
+
+## Cross-module sequences
+
+This source-derived reading projection uses logical module lifelines, not new
+services. Rechecked at `c3259e255f37af9c1fad0b7c749d36db157ee60e` on 2026-10-25.
+
+<a id="m03-seq-new-game"></a>
+### Finish setup, create a universe, and open the game
+
+Trace: [Finish ordering](#33-finish-and-normalization-order),
+[failure and cancellation](#5-cancellation-errors-and-recovery),
+[M01 publication](M01-game-library.md#32-names-and-new-game-publication),
+[M05 generation](M05-universe-creation.md), [canonical setup contracts](M03-new-game-specification.dfy).
+Evidence: [createui.c](../src/ui/createui.c) `NewGameWizard`,
+[libraryui.c](../src/ui/libraryui.c) `FChooseLibraryGameName`, `FFinishLibraryGame`,
+[create.c](../src/core/create.c) `GenerateWorld`. M03-US01–US03 remain the owning goals.
+
+```mermaid
+sequenceDiagram
+    actor Player
+    participant Setup as New Game setup (M03)
+    participant Library as Managed games (M01)
+    participant World as Universe creation (M05)
+    participant Files as Persistence/platform (S01/S04)
+    participant Session as Player/host entry (M06/M17)
+    Player->>Setup: Configure settings, races, and victory
+    Note over Player,Setup: Race customization uses M02/M04 and can save independently
+    alt Cancel before accepted Finish
+        Setup->>Setup: Restore saved GAME and idle context in editable mode
+        Setup-->>Player: Exit without creating this game
+        Note over Setup,Files: RNG and earlier race-library saves are not rolled back
+    else Finish
+        Setup->>Library: Choose/reserve portable unique destination
+        alt Naming cancelled or reservation failed
+            Library-->>Setup: Keep setup available for correction
+        else Destination accepted
+            Setup->>Setup: Destroy former session, install setup, normalize roster in order
+            Setup->>World: GenerateWorld with resolved setup
+            World->>Files: Create initial universe, host, and player artifacts
+            World-->>Setup: Generation result
+            Setup->>Library: FFinishLibraryGame(result)
+            Library->>Files: Validate every generated artifact, then write metadata
+            alt Generation/finalization failed
+                Library->>Files: Attempt pending-file/directory cleanup
+                Library-->>Setup: Report storage failure and clear pending path
+                Setup->>Setup: Destroy partial game, return to title
+                Note over Setup,Files: Prior playing session is not restored, cleanup can leave residue
+            else Finalization succeeded
+                Library-->>Setup: Managed game available
+                Setup->>Session: Open selected player view or host dialog
+            end
+        end
+    end
+```
+
+The phase hides no independent request object: the current implementation shares
+globals. M05 owns placement, starting assets and generation rules; S01 owns bytes.
+This sequence does not strengthen the existing cleanup or C/model-refinement guarantees.

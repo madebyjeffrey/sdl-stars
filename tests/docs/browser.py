@@ -45,6 +45,7 @@ def main():
                     if response.status >= 400 and response.url.startswith(base) else None)
             diagram_count = 0
             module_pages = 0
+            sequence_count = 0
             for path in sorted(SITE.rglob("*.html")):
                 count = len(re.findall(r'class="mermaid"', path.read_text(encoding="utf-8")))
                 if not count:
@@ -70,6 +71,7 @@ def main():
                     return found
                 rendered = diagrams(document["root"])
                 assert len(rendered) == count and all(d.get("aria-roledescription") != "error" for d in rendered), path
+                sequence_count += sum(d.get("aria-roledescription") == "sequence" for d in rendered)
                 session.detach()
                 if path.relative_to(SITE).parts[0] == "spec":
                     module_pages += 1
@@ -102,6 +104,15 @@ def main():
             page.locator('dialog[open] a[href*="M09-production-management"]').first.wait_for()
             page.screenshot(path=str(screenshots / "search-desktop.png"))
             page.keyboard.press("Escape")
+            page.goto(base + "sequences/")
+            sequence_links = page.locator('main a[href*="#"][href*="-seq-"]')
+            assert sequence_links.count() >= 7, "Expected discovered player/host sequence links"
+            targets = [link.get_attribute("href") for link in sequence_links.all()]
+            page.screenshot(path=str(screenshots / "sequence-index-desktop.png"), full_page=True)
+            for target in targets:
+                page.goto(base + "sequences/" + target)
+                anchor = target.split("#", 1)[1]
+                page.locator(f'#{anchor}').wait_for(state="attached")
             page.goto(base + "spec/M09-production-management/#m09-ac01")
             page.locator("#m09-ac01").wait_for(state="attached")
             page.goto(base + "models/M18-generation-specification/")
@@ -112,7 +123,7 @@ def main():
             page.goto(base)
             page.locator('label[title="Switch to light mode"]').click()
             page.screenshot(path=str(screenshots / "home-light.png"), full_page=True)
-            for route, name in (("", "home"), ("overview/", "overview"), ("spec/M09-production-management/", "module")):
+            for route, name in (("", "home"), ("overview/", "overview"), ("sequences/", "sequences"), ("spec/M09-production-management/", "module")):
                 page.set_viewport_size({"width": 390, "height": 844})
                 page.goto(base + route)
                 if route == "overview/":
@@ -120,9 +131,9 @@ def main():
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f"Horizontal page overflow: {route}"
                 page.screenshot(path=str(screenshots / f"{name}-mobile.png"), full_page=True)
             browser.close()
-            assert diagram_count >= 57 and module_pages >= 26, "Expected workflow and state diagrams in all module entries"
+            assert diagram_count >= 64 and module_pages >= 26 and sequence_count >= 7, "Expected module diagrams plus player/host sequences"
             assert not errors, "\n".join(errors)
-            print(f"Browser checks passed: {diagram_count} Mermaid diagrams across {module_pages} module pages, module mobile layouts, search, requirement anchor, raw model download, and three guide mobile layouts")
+            print(f"Browser checks passed: {diagram_count} Mermaid diagrams ({sequence_count} sequences) across {module_pages} module pages, module mobile layouts, sequence index/anchors, search, requirement anchor, raw model download, and four guide mobile layouts")
     finally:
         server.shutdown()
         server.server_close()

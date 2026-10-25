@@ -1,5 +1,9 @@
 # Module workflow and state diagrams
 
+For exchanges across module boundaries, start with the
+[player and host sequence index](sequences.md). Its diagrams also live in the
+owning specs; the table below lists the available sequences beside local workflows.
+
 Start with a module's workflow to follow its main decisions, failure paths and
 caller handoffs. Its state diagram shows the illustrated draft, live, pending,
 published or recovery milestones. Both diagrams live in the owning specification

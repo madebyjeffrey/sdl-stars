@@ -7,7 +7,8 @@ Canonical entry: [M18-generation-specification.dfy](M18-generation-specification
 [rules and proofs](dafny/M18-generation.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## 1. Purpose, actors and scope
 
@@ -250,3 +251,77 @@ stateDiagram-v2
 ```
 
 Schedule and Orders remain canonical for exact ordering and RNG use. The diagrams do not add a transactional phase API, cancellation hook, arbitrary mid-year resume, or automatic file-validation step to the engine.
+
+## Cross-module sequences
+
+This source-derived reading projection groups synchronous calls by logical owner.
+Rechecked at `c3259e255f37af9c1fad0b7c749d36db157ee60e` on 2026-10-25.
+
+<a id="m18-seq-resolve-publish"></a>
+### Replay orders, resolve the year, and publish player views
+
+Trace: [entry/replay](#entry-replay-and-prerequisites),
+[ordered schedule](#ordered-successful-year), [publication/failure](#publication-failure-and-cancellation),
+[M19 effects](M19-game-rules-and-resolution.md), [S06 lifetimes/RNG](S06-shared-game-state.md),
+[S01 publication](S01-game-file-formats.md),
+[canonical Schedule and Orders contracts](M18-generation-specification.dfy).
+Evidence: [turn.c](../src/core/turn.c) `FGenerateTurn`, `DoOrders`,
+[turn2.c](../src/core/turn2.c) `Produce`, `UpdateResearchStatus`,
+[turn3.c](../src/core/turn3.c) order effects. Covers [M18-US01–US04](#user-stories).
+
+```mermaid
+sequenceDiagram
+    participant Host as Desktop/CLI caller (M17)
+    participant Engine as Turn coordinator (M18)
+    participant Files as Persistence/platform (S01/S04)
+    participant State as Shared state/RNG (S06)
+    participant Rules as Gameplay resolution (M08-M14/M19)
+    participant Reports as Scores/knowledge (M15/M19)
+    Host->>Engine: FGenerateTurn after caller policy and AI completion
+    Engine->>State: Destroy prior loaded state, tutorial seed when applicable
+    Engine->>Files: Load .hst
+    alt Host load failed
+        Engine-->>Host: Log failure and return FALSE
+    else Host loaded
+        Engine->>State: Allocate phase buffers, set generation context, shuffle players
+        alt Allocation failed
+            Engine->>State: Cleanup allocated phase state and clear generation flags
+            Engine-->>Host: Failure before replay or schedule
+        else Buffers allocated
+            Engine->>Files: Load/replay player logs in shuffled order
+            alt Accepted-log replay failed
+                Engine->>State: Cleanup phase state, partial replay is not undone
+                Engine-->>Host: Failure, no completed schedule
+            else Replay completed
+            Engine->>Rules: Normalize engines, waypoints, follow chains
+            Engine->>Rules: DoOrders(FALSE), pre-move transfers/order passes
+            Engine->>Rules: Normalize races/research/growth, unmark mines
+            Engine->>Rules: MoveThings(FALSE), MoveFleets, decay/transit breeding
+            Engine->>Rules: Produce, including colony/research/queue effects
+            Engine->>Rules: MoveThings(TRUE), fuel fleets
+            Engine->>Rules: DoOrders(TRUE), battle before post-move order stages
+            Engine->>Rules: Sweep/heal/terraform, validate waypoints, update guesses
+            Engine->>Files: Mark host unused, create backup directory
+            Engine->>State: Increment year
+            Engine->>Reports: UpdatePlayerScores
+            Engine->>Rules: Refresh design caches
+            Engine->>Files: Rotate old orders/player/host files
+            Engine->>State: Draw and set generation byte
+            loop Each player, then host
+                Engine->>Files: FWriteDataFile with player-view/host state
+                Files-->>Engine: Write result (not checked by top-level loop)
+            end
+            Engine->>State: Set success, cleanup phase buffers and generation flags
+            Engine-->>Host: TRUE can accompany failed output writes
+            end
+        end
+    end
+    Note over Host,Files: Inspect consistent output year/family before distribution, no atomic whole-year rollback
+```
+
+The arrows preserve phase order but group internal work: `Schedule` and `Orders`
+remain authoritative, including the two order passes, post-move battle ordering,
+binary64 boundaries and RNG draw counts. Missing or ignored logs differ from a
+failed replay; the detailed S01/M06 reader conditions still apply. There is no
+generic phase-level cancellation. Recovery and interrupted/partial publication
+remain E18-1/E18-2 external obligations rather than verified transactions.
