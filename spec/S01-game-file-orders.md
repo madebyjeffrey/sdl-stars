@@ -11,6 +11,8 @@ conditions. [S01 §1.2](S01-game-file-formats.md#12-what-the-formal-model-establ
 each area to its definitions and states the proof boundary. These tables retain
 the source evidence and distinguish writer output from observed reader behavior.
 
+[Data-model and relationship diagrams](#data-model-and-relationship-diagrams) provide a visual map.
+
 ## Story-linked requirements
 
 This companion supports [S01-US02](S01-game-file-formats.md#s01-us02)
@@ -206,3 +208,67 @@ must test the following separately:
 Concrete vectors and coverage are in [Validation and acceptance](S01-game-file-validation.md).
 No change to log semantics, malformed-input policy or baseline accompanies this
 specification.
+
+## Data-model and relationship diagrams
+
+<a id="s01-data-orders"></a>
+### Orders envelope, counted commands, and replay targets
+
+Source-derived projection rechecked at `7abe8083788d2f991e54eb9fc108a5468f82d2a1`
+on 2026-10-25. Trace: [story-linked requirements](#story-linked-requirements),
+[envelope](#1-envelope-and-editing-state), [command inventory](#2-complete-current-command-inventory),
+[replay boundaries](#4-identity-replay-and-failure),
+[canonical specification](S01-game-file-specification.dfy): `FOrdersFor`,
+`OrdersData`, `FOrdersFile`; [shared target keys](S06-shared-game-state.md#21-identity-domains-and-adapters).
+Evidence: [log.c](../src/core/log.c) `FWriteLogFile`, `FLoadLogFile`,
+`FRunLogFile`, `FRunLogRecord`, `WriteMemRt`.
+
+```mermaid
+classDiagram
+    direction TB
+    class OrdersFile {
+        BOF game_player_turn_generation_and_submit
+        LOG_HEADER signed_cbLog_and_reserved_bytes
+        EOF empty_payload
+    }
+    class CountedCommandStream {
+        ordered framed_commands
+        cbLog sum_of_headers_and_payloads
+    }
+    class Command {
+        tag operation_discriminator
+        bytes operation_specific_payload
+    }
+    class OutgoingPlayerMessage {
+        sender recipient_selector reply_index
+        bytes UTF8_text
+    }
+    class ReplayContext {
+        snapshot game_player_turn_generation
+        state partially_mutable
+    }
+    class TargetKeys {
+        FleetId fleet_operations
+        PlanetId queue_or_routing
+        DesignId design_change
+        ThingId mine_detonation
+        player research_relations_and_other_edits
+    }
+    OrdersFile *-- CountedCommandStream : one counted region
+    CountedCommandStream *-- Command : ordered sequence
+    OrdersFile o-- OutgoingPlayerMessage : after counted commands
+    Command ..> TargetKeys : according to operation tag
+    ReplayContext ..> CountedCommandStream : ordered application
+    ReplayContext ..> TargetKeys : resolves at replay time
+```
+
+`cbLog` includes each command's two-byte header but excludes BOF, LOG_HEADER,
+outgoing messages and EOF. Commands are not a commutative set; adjacent edits
+may coalesce before saving. Targets and payloads vary by tag, and replay can
+allocate/remap/delete entities, so keys do not promise permanent live references.
+`FOrdersFor` is a stronger matching contract than checks in every actual log
+reader. A submitted flag does not establish host receipt or successful execution.
+Replay tries remaining commands after a false command result and can leave
+partial changes; it is not a transaction or generally idempotent. The 32000-byte
+warning is not a hard length guard. Unknown/fallthrough tags and strict proposed
+validation retain the separate behavior described in §2 and §4.

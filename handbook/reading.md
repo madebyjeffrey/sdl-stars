@@ -47,6 +47,10 @@ Preserve those IDs when editing, including retired IDs with successor links.
 
 ## Logical ownership and implementation
 
+The [shared-state and file diagrams](data-models.md) map logical entities,
+observations, record groups and companion files. Their scope notes separate
+logical relationships from wire layouts and full-host state from partial views.
+
 Follow the [cross-module sequences](sequences.md) for the main player and host
 handoffs, including cancellation and partial-failure boundaries. Each sequence
 is authored once in its owning spec and links to the participating modules.

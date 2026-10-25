@@ -1,5 +1,9 @@
 # Module workflow and state diagrams
 
+For shared entities and their saved representations, use the
+[data-model and relationship index](data-models.md), including S01 record/orders/
+metadata companions. The table below includes data diagrams in module entries.
+
 For exchanges across module boundaries, start with the
 [player and host sequence index](sequences.md). Its diagrams also live in the
 owning specs; the table below lists the available sequences beside local workflows.

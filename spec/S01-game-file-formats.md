@@ -8,6 +8,7 @@ the same revision on 2026-10-24. The local M03/M04 drafts were also
 consulted. This specification changes no runtime behavior or compatibility policy.
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Data-model and relationship diagrams](#data-model-and-relationship-diagrams) map the shared values and references.
 
 ## User stories and requirements
 
@@ -667,3 +668,144 @@ stateDiagram-v2
 ```
 
 Read/load, direct write, and staged publication are separate contracts. S01 does not retrofit cancellation or transaction guarantees onto all of them. Recovery must validate a consistent identity/year/generation family rather than mix independently surviving files.
+
+## Data-model and relationship diagrams
+
+These source-derived reading projections link the existing file contracts to
+their logical roles. Rechecked at `7abe8083788d2f991e54eb9fc108a5468f82d2a1` on
+2026-10-25. They do not introduce a file version or strengthen current readers.
+
+<a id="s01-data-file-family"></a>
+### File companions and their identity scopes
+
+Trace: [S01-US01](#s01-us01), [US02](#s01-us02),
+[family inventory](#21-file-family-inventory), [companion conditions](#23-companion-conditions-in-dafny),
+[canonical contracts](S01-game-file-contracts.dfy): `Bof`, `FSameGame`,
+`FOrdersFor`, `FHistoryFor`; [file rules](dafny/S01-files.dfy) `FLibraryFamily`.
+Evidence: [save.c](../src/core/save.c) `SetSzWorkFromDt`, `WriteBOF`;
+[file.c](../src/core/file.c) `FLoadGame`, `FOpenFile`;
+[log.c](../src/core/log.c) `FLoadLogFile`, `FWriteHistFile`.
+
+```mermaid
+classDiagram
+    direction LR
+    class UniverseFile {
+        suffix xy
+        kind dtXY_0
+        identity game
+        immutable positions_and_name_keys
+    }
+    class HostFile {
+        suffix hst
+        kind dtHost_2
+        scope game_turn_generation
+        state authoritative
+    }
+    class PlayerTurnFile {
+        suffix mN
+        kind dtTurn_3
+        scope game_player_turn_generation
+        view recipient_filtered
+    }
+    class OrdersFile {
+        suffix xN
+        kind dtLog_1
+        scope game_player_turn_generation
+        flag submitted
+    }
+    class HistoryFile {
+        suffix hN
+        kind dtHist_4
+        scope game_player
+        observations own_timestamps
+    }
+    class RaceFile {
+        suffix rN
+        kind dtRace_5
+        standalone race_snapshot_and_checksum
+    }
+    HostFile --> UniverseFile : requires same-basename universe
+    PlayerTurnFile --> UniverseFile : requires same-basename universe
+    OrdersFile ..> HostFile : matching host turn and generation
+    OrdersFile ..> PlayerTurnFile : matching player turn and generation
+    HistoryFile ..> PlayerTurnFile : optional memory overlay
+```
+
+Arrows are companion/matching obligations, not containment or a promise that
+every raw reader validates every field. Orders and history are optional player
+load inputs. History may have a different turn; orders matching includes turn
+and generation plus the intended player. Roster membership is a caller check.
+The universe's creation turn is not required to equal the mutable snapshot turn.
+`.mN/.xN/.hN` use player ID+1 (1–16); `.rN` uses independent race versions.
+Filenames locate candidates; BOF kind/provenance identify content. Race files
+are standalone reusable designs, not members of a game's player family. Current
+game-related files use 2.85; legacy race policy and the protected-race conflict
+remain [separately documented](#51-format-version).
+
+<a id="s01-data-snapshot-records"></a>
+### Snapshot record groups and logical-state mappings
+
+Trace: [S01-US01](#s01-us01), [state mapping](#22-state-and-lifetime),
+[snapshot grammar](#32-host-and-player-snapshot-segments),
+[appended turns](#33-appended-player-turns), [history](#34-history-hn),
+[canonical specification](S01-game-file-specification.dfy): `Snapshot`,
+`FDesignGroups`, `FSnapshot`, `FAppendedTurns`; [S06](S06-shared-game-state.md).
+Evidence: [save.c](../src/core/save.c) `FWriteDataFile`, `WritePlanet`,
+`WriteRtShDef`, `WriteFleet`; [file.c](../src/core/file.c) `FReadPlanet`,
+`FReadShDef`, `FReadFleet`; [log.c](../src/core/log.c) `FWriteHistFile`.
+
+```mermaid
+classDiagram
+    direction TB
+    class SnapshotSegment {
+        BOF provenance
+        EOF current_turn
+        kind host_or_player
+    }
+    class PlayerRecords {
+        ordered included_players
+        counts planets_fleets_designs
+    }
+    class DesignRecords {
+        implicit owner_from_groups
+        explicit slot_and_detail
+    }
+    class PlanetRecords {
+        explicit planet_id
+        variant full_or_observed
+    }
+    class ProductionQueueRecord {
+        ordered PROD_entries
+        no heap_header
+    }
+    class FleetRecords {
+        composite fleet_id
+        variant full_or_observed
+    }
+    class FollowingFleetRecords {
+        ordered waypoints_then_optional_name
+    }
+    class PlayerResults {
+        ordered battles_messages_scores
+    }
+    SnapshotSegment *-- PlayerRecords
+    SnapshotSegment *-- PlanetRecords
+    SnapshotSegment *-- FleetRecords
+    SnapshotSegment *-- DesignRecords
+    SnapshotSegment o-- PlayerResults : player output only
+    PlayerRecords ..> DesignRecords : counts delimit each owner group
+    PlanetRecords o-- ProductionQueueRecord : immediately follows full planet
+    FleetRecords o-- FollowingFleetRecords : full fleet only
+```
+
+This is a relationship map, not the byte-order grammar: §3.2 also specifies
+things, battle plans, host credentials and exact group order. Design owner is
+not stored in `rtShDef`; player counts and ordered groups establish it. Full
+fleets consume following orders/name records; partial fleets do not supply
+those fields. Planet positions/name keys come from `.xy`. Player results are
+recipient-scoped; host snapshots omit battle/message/score blobs. A full-format
+PLAYER can still hide fields in a filtered view. History is a separate memory
+grammar, not another full snapshot. Appended `.mN` files contain complete BOF/EOF
+segments; core support does not remove the library inspector's single-segment
+restriction. Heap pointers, allocation capacities and gameplay RNG seeds are
+not serialized by these relationships.
