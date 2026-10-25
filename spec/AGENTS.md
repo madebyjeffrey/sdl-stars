@@ -40,6 +40,66 @@ when a module needs a detailed breakdown, then link it from its existing map row
 Keep its stable module ID when refining its name; record splits or mergers so
 older references remain understandable.
 
+## Stories, requirements and traceability
+
+Use [the module outline](README.md#outline-for-each-detailed-module-specification)
+and its ID/status conventions for entry documents and technical companions.
+
+1. Identify actors, goals, prerequisites and the requested module boundary.
+   Write stable story IDs for user goals; for support modules name the consuming
+   developer/operator and the player/host outcome enabled. A source-derived
+   story explains intent; it is not evidence of user research.
+2. Connect each story to a main workflow and relevant alternatives, cancellation,
+   failures and recovery. State the resulting observable state and handoffs.
+   Preserve known limitations when describing current behavior.
+3. Give each story testable acceptance criteria with stable IDs. Trace each
+   criterion to its authoritative rule/model or a specific external obligation,
+   source evidence, and test/proof evidence or an explicit coverage gap.
+   Keep behavior status separate from whether an implementation or test exists.
+4. Record interaction and quality requirements using the outline's fields.
+   Include keyboard, focus, feedback, accessibility, text, performance and
+   supported-display concerns where applicable. For technical companions,
+   explain the caller interface and link the consuming UI instead of inventing
+   a screen. Mark unagreed targets and unmeasured properties Open.
+5. Keep stories at their owning module entry. Companions link those story IDs
+   and add focused criteria/traceability for their own rules. Preserve existing
+   IDs and anchors; retain retired IDs with a successor link. Historical
+   references point to current owners and keep their historical status.
+6. Before completion, account for every story, criterion and applicable quality
+   concern. Validate links/IDs and the formal closure. Record actual checks,
+   unresolved decisions and test gaps; a structural documentation pass does
+   not make proposed behavior implemented or an untested workflow verified.
+
+## Formal specification workflow
+
+Use Dafny as the canonical notation for specified data, constraints, calculations,
+state transitions and acceptance conditions. Apply this when creating a spec,
+extending an existing one, or changing a rule. Keep Markdown for purpose,
+explanation, source evidence, ownership, verification results and open decisions.
+
+1. Inventory every rule in the requested scope. Reuse existing shared models;
+   give each rule a named Dafny definition or a specific documented boundary
+   explaining why it cannot yet be represented faithfully.
+2. Prefix module files with the uppercase module ID (`M05-`, `S01-`, etc.).
+   Link Markdown explanations to the authoritative definitions. Mark proposed
+   validation separately from observed runtime behavior and undefined inputs.
+3. Preserve units, integer widths, signed division, floating rounding boundaries,
+   RNG consumption and operation order. Model external results explicitly with
+   checked conditions; mathematical reals alone do not reproduce binary64.
+4. Add useful positive/negative witnesses and general properties for the rules
+   migrated. Give functions checked bodies and prove claimed postconditions;
+   do not replace a missing proof with assumptions, axioms, disabled verification
+   or an unrelated weaker property.
+5. Verify the full include closure with `dafny verify --verify-included-files`,
+   audit every relevant file with `dafny audit`, and check links/includes with
+   exact filename casing. Run `python3 tests/spec/verify.py` from the repository
+   root for the collection-wide checks; use its time-limit option if needed.
+   Record commands, version, counts and actual failures.
+6. Finish only when the coverage inventory accounts for every in-scope rule,
+   proofs and checks pass, and Markdown distinguishes definitions, proved
+   properties, external obligations and remaining limits. A verified model is
+   not evidence that the C implementation refines it.
+
 Before finishing, check every relative link, review the diff for unsupported
 behavior claims, and ensure each new detail is either sourced, proposed, or
 explicitly unresolved. Report verification actually performed. Follow the root

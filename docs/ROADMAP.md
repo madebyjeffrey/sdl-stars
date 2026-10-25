@@ -630,6 +630,7 @@ other the serial-unlocked shareware), which can point at causes.
 
 | Bug | Starting point (see KNOWN-BUGS.md) | Status |
 | --- | --- | --- |
+| Production editor queue sanitization | `InitProduction` overlapping `memcpy` and diverging logical/physical row cursors; [mechanism and evidence](KNOWN-BUGS.md#production-editor-queue-sanitization--located-on-main) | current source fixtures confirm the defined cursor case and flag overlap before executing it; full UI trigger, original comparison and repair open |
 | East/West speed bump immunity | `FTravelThroughMineFields`, `FIntersectCircleLine` horizontal case | not reproduced (`test_turn.c`) |
 | Cheap starbase (UltraStation variant) | `PROD.pct` against edited designs | fixed (`test_log.c`): a design change or deletion clears queued progress |
 | [freepop] hack | `COLDROP` replay in `FRunLogRecord` | open |

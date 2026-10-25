@@ -6,19 +6,28 @@ opens in the desktop browser. Offline popup, font and diagram behavior has not
 yet been confirmed manually; HTTP browser checks cover those renderer paths.
 This percentage does not mean complete Win32 semantics or a qualified full client.
 
-The adapter supports the application's `HELP_INDEX` and `HELP_CONTEXT`
-requests, following the [WinHelp contract](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-winhelpa).
-It validates the original archive size and CRC, selects a generated context
-page, checks all packaged assets and the generation stamp, then sends an
-escaped `file://` URL to SDL's desktop launcher. Context 13002 is absent and
-returns an error. Unsupported commands, corrupt or missing files, and launch
-failures also return errors. Desktop acceptance does not prove page rendering.
+The current adapter supports `HELP_INDEX` and `HELP_CONTEXT` for the bare,
+case-insensitive name `stars-help.html`. It resolves a generated context page,
+checks the packaged HTML assets and generation stamp, then validates
+`offline.html` against its generated size/CRC and a unique context marker.
+It exports a context-specific document through a temporary file, flush/fsync and
+rename, then passes that file to `FCompatOpenDocument`. The context is embedded
+in the file so a file-descriptor portal does not need a URL fragment.
 
-The build places `stars!.hlp` beside the executable and the HTML guide in
-`../help`. Explicit HLP paths are checked directly; a plain filename can use
-the executable-adjacent copy. Zlib supplies CRC checking (`zlib1g-dev`).
-The automated tests capture launches, covering all 413 numeric mappings,
-contents, Unicode paths, corrupt archives, missing assets and launch failures.
+The runtime does not load `stars!.hlp` or accept explicit HLP/HTML paths through
+`WinHelpA`. The original HLP is a build/extraction reference for the guide and
+historical format analysis below. The packaged guide is found relative to the
+executable or installed data directory. Context 13002 is absent and returns an
+error; unsupported commands/names, missing or invalid assets, failed export and
+launcher failures also return errors. Desktop launch acceptance does not prove
+page rendering.
+
+Current [adapter tests](../tests/compat/win32_help.c) capture launches and cover
+the generated numeric mappings, contents, Unicode paths, rejected filenames,
+missing assets, corrupt stamp/HTML bundle and launch failures. See
+[M16](../spec/M16-tutorial-and-help.md) for the source-backed workflow, model
+boundaries and qualification gaps. The archive counts below describe the source
+material, not a runtime dependency.
 
 To launch the guide manually, build the SDL preset and run:
 
