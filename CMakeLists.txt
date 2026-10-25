@@ -41,7 +41,7 @@ set(STARS_CORE_SOURCES
 
 # The shared desktop UI, implemented through the SDL Win32 wrapper.
 set(STARS_UI_SOURCES
-    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/mdi.c
+    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/libraryui.c src/ui/libraryzip.c src/ui/mdi.c
     src/ui/mineui.c src/ui/msgui.c src/ui/nativeui.c src/ui/planetui.c src/ui/planetpaneui.c src/ui/popup.c src/ui/produceui.c src/ui/raceui.c
     src/ui/reportui.c src/ui/researchui.c src/ui/scan.c src/ui/scaninspect.c src/ui/ship2ui.c src/ui/shipui.c src/ui/stars.c src/ui/tb.c src/ui/thingui.c
     src/ui/tutor.c src/ui/tutor2.c src/ui/utilgenui.c src/ui/utilui.c src/ui/vcr.c
@@ -112,7 +112,57 @@ add_dependencies(stars_core stars_version)
 
 # The game's text: text/textgen.py builds the ID enums (textids.h) and the
 # compressed string tables from the rows in text/*.txt.
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+# Python generators and test drivers share a build-local environment. Keep
+# system site packages visible for the Linux D-Bus/GLib test drivers, which
+# use the OS-provided Python bindings.
+find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
+
+set(STARS_PYTHON_VENV "${CMAKE_BINARY_DIR}/python-venv")
+if(WIN32)
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/Scripts/python.exe")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python.exe")
+else()
+    set(STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+    set(STARS_PYTHON_VENV_BIN_EXECUTABLE "${STARS_PYTHON_VENV}/bin/python")
+endif()
+if(NOT EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}" AND NOT EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -m venv --system-site-packages --without-pip "${STARS_PYTHON_VENV}"
+        RESULT_VARIABLE STARS_VENV_FAILED
+        OUTPUT_VARIABLE STARS_VENV_OUTPUT
+        ERROR_VARIABLE STARS_VENV_ERROR
+    )
+    if(STARS_VENV_FAILED)
+        message(FATAL_ERROR "Could not create the Python build environment.\n${STARS_VENV_OUTPUT}${STARS_VENV_ERROR}")
+    endif()
+endif()
+if(EXISTS "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_SCRIPTS_EXECUTABLE}")
+elseif(EXISTS "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+    set(STARS_PYTHON_VENV_EXECUTABLE "${STARS_PYTHON_VENV_BIN_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "Python created ${STARS_PYTHON_VENV}, but its interpreter was not found in Scripts or bin.")
+endif()
+execute_process(
+    COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m ensurepip --upgrade
+    RESULT_VARIABLE STARS_ENSUREPIP_FAILED
+    OUTPUT_VARIABLE STARS_ENSUREPIP_OUTPUT
+    ERROR_VARIABLE STARS_ENSUREPIP_ERROR
+)
+if(STARS_ENSUREPIP_FAILED)
+    message(FATAL_ERROR "Could not bootstrap pip in ${STARS_PYTHON_VENV}. Check that Python includes venv and ensurepip support.\n${STARS_ENSUREPIP_OUTPUT}${STARS_ENSUREPIP_ERROR}")
+endif()
+execute_process(
+    COMMAND "${STARS_PYTHON_VENV_EXECUTABLE}" -m pip install --disable-pip-version-check
+        --requirement "${CMAKE_CURRENT_SOURCE_DIR}/requirements-build.txt"
+    RESULT_VARIABLE STARS_PYTHON_PACKAGES_FAILED
+    OUTPUT_VARIABLE STARS_PYTHON_PACKAGES_OUTPUT
+    ERROR_VARIABLE STARS_PYTHON_PACKAGES_ERROR
+)
+if(STARS_PYTHON_PACKAGES_FAILED)
+    message(FATAL_ERROR "Could not install the Python build requirements into ${STARS_PYTHON_VENV}. Check network access and pip.\n${STARS_PYTHON_PACKAGES_OUTPUT}${STARS_PYTHON_PACKAGES_ERROR}")
+endif()
+set(Python3_EXECUTABLE "${STARS_PYTHON_VENV_EXECUTABLE}")
 set(STARS_TEXT_SOURCES text/strings.txt text/messages.txt text/tutorial.txt text/planets.txt)
 list(TRANSFORM STARS_TEXT_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 set(STARS_TEXT_OUTPUTS textids.h text_strings.c text_messages.c text_planets.c text_tutorial.c)
@@ -128,12 +178,7 @@ add_custom_target(stars_text DEPENDS ${STARS_TEXT_OUTPUTS})
 
 # The data tables: data/datagen.py builds dataids.h (the hull, part,
 # starting design and AI recipe enums) and data_tables.c (the parts, races,
-# default battle plans and AI recipes) from data/**/*.yaml. It needs PyYAML.
-execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import yaml" RESULT_VARIABLE STARS_PYYAML_MISSING OUTPUT_QUIET ERROR_QUIET)
-if(STARS_PYYAML_MISSING)
-    message(FATAL_ERROR "The build needs PyYAML for ${Python3_EXECUTABLE}. Install it (python3 -m pip install pyyaml), "
-                        "or configure with -DPython3_EXECUTABLE=<a python that has it>.")
-endif()
+# default battle plans and AI recipes) from data/**/*.yaml.
 file(GLOB_RECURSE STARS_DATA_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/*.yaml")
 set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.c")
 add_custom_command(
@@ -204,11 +249,27 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
 endif()
 if(STARS_BUILD_SDL_CLIENT)
+    # The filesystem bridge has a C ABI; game and wrapper sources remain C11.
+    enable_language(CXX)
+    add_library(stars_filesystem STATIC src/platform/filesystem.cpp)
+    set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+    target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
+    target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
+    target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    if(STARS_BUILD_TESTS)
+        add_executable(stars-test-filesystem tests/compat/filesystem.c)
+        target_link_libraries(stars-test-filesystem PRIVATE stars_filesystem)
+        target_compile_options(stars-test-filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        add_test(NAME win32_utf8_filesystem COMMAND stars-test-filesystem)
+        set_tests_properties(win32_utf8_filesystem PROPERTIES LABELS compat TIMEOUT 30)
+    endif()
     include(cmake/sdl-client.cmake)
 elseif(STARS_BUILD_TESTS)
     set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests")
     file(MAKE_DIRECTORY "${STARS_TEST_DIR}/data")
-    configure_file(tests/scaffold/fixtures/newgame/tiny/humanoid.r1 "${STARS_TEST_DIR}/data/humanoid.r1" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
+        "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
+        "${STARS_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
     file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
     # These tests need the desktop UI and its private file adapters.
     list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"

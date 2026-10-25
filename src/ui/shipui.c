@@ -741,6 +741,7 @@ void ShipCommandProc(HWND hwnd, WPARAM wParam, LPARAM lParam) {
     int32_t lSel;
     XFER    xf;
     char    szT[34];
+    char    szFleetName[80];
     int32_t lMin;
     int16_t ishdef;
     int16_t grbit;
@@ -763,7 +764,8 @@ void ShipCommandProc(HWND hwnd, WPARAM wParam, LPARAM lParam) {
     } else if ((HWND)lParam == rghwndBtn[5] && HIWORD(wParam) == 0) {
         SelectAdjFleet(1, 0);
     } else if ((HWND)lParam == rghwndBtn[6] && HIWORD(wParam) == 0) {
-        strcpy(szWork, PszGetFleetName(sel.fl.id));
+        CchSprintf(szFleetName, "%s", PszGetFleetName(sel.fl.id));
+        strcpy(szWork, szFleetName);
         StickyDlgPos(hwnd, &ptStickyRenameDlg, FALSE);
         lpProc = MakeProcInstance(RenameDlg, hInst);
         if (DialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc) != 0) {

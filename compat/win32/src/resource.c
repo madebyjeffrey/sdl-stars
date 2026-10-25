@@ -95,8 +95,7 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
     HMENU hmenu, hsub;
     WORD flags, id, wch;
     char *psz;
-    size_t cch, ibText, i;
-    UINT ch;
+    size_t cch, ibText;
     BOOL fEnd;
 
     if (depth >= 64) return NULL;
@@ -116,15 +115,9 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
             if (!FMenuWord(rgb, cb, lpib, &wch)) goto fail;
             if (wch) cch++;
         } while (wch);
-        psz = malloc(cch + 1);
+        psz = malloc(cch * 3 + 1);
         if (!psz) goto fail;
-        for (i = 0; i < cch; i++) {
-            wch = (WORD)(rgb[ibText + i * 2] | (rgb[ibText + i * 2 + 1] << 8));
-            for (ch = 1; ch < 256 && DwCompatAnsiChar((BYTE)ch) != wch; ch++) {}
-            if (ch == 256) { free(psz); goto fail; }
-            psz[i] = (char)ch;
-        }
-        psz[cch] = 0;
+        if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibText, cch) < 0) { free(psz); goto fail; }
         if (!(flags & MF_POPUP) && id == 0 && cch == 0) flags |= MF_SEPARATOR;
         if (flags & MF_POPUP) hsub = HmenuTemplateItems(rgb, cb, lpib, depth + 1);
         if (((flags & MF_POPUP) && !hsub) ||

@@ -1352,6 +1352,9 @@ struct _sel {
     THING      th;        /* +0x00D0 (18) */
 }; /* size=0xe2 */
 
+/* NATIVE: tiles are UI-only, never serialized. Callback pointers and array
+ * strides need native alignment instead of the surrounding Win16 packing. */
+#pragma pack(push, 8)
 struct _tile {
     int16_t      yTop;         /* +0x0000 (2) */
     int16_t      dyFull;       /* +0x0002 (2) */
@@ -1367,7 +1370,8 @@ struct _tile {
         fMinDraw : 1;          /* @bit12 */
     uint16_t      fUnused : 4; /* +0x000C (2) @bit0 */
     HelpContextId idh;         /* +0x000E (2) */
-}; /* size=0x10 */
+}; /* Win16 size=0x10; native alignment and pointer width determine size. */
+#pragma pack(pop)
 
 struct _timer {
     int16_t mdForce;        /* +0x0000 (2) */

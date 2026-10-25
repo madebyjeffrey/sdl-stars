@@ -646,9 +646,14 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 AdvanceTutor();
             }
             return 1;
+        case IDC_BROWSER_AVAILABLE_ONLY:
+            if (!IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY) || FLookupPart(&vpartBrowser) == mdPartAvailAvailable)
+                break;
+            goto ResetCategory;
         case IDC_BROWSER_COMPONENT_CATEGORY:
             if (HIWORD(wParam) != 1)
                 break;
+        ResetCategory:
             fShowAll = IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY) == 0;
             lSel = SendMessage(GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY), CB_GETCURSEL, 0, 0);
             if (lSel < 0)

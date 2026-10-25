@@ -8,10 +8,35 @@ to avoid SDK import collisions. Native Unicode open/save lives in the separate
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
+Desktop game creation uses a managed library under SDL's per-user preference
+root: `~/Library/Application Support/Stars!/Games` on macOS,
+`$XDG_DATA_HOME/Stars!/Games` (default `~/.local/share/Stars!/Games`) on Linux,
+and `%APPDATA%/Stars!/Games` on Windows. `STARS_LIBRARY_DIR` overrides the parent
+of `Games`; isolated workflow tests use this override. When only
+`STARS_SETTINGS_DIR` is set, library storage follows that isolated settings root.
+Each game folder contains its existing file family plus a `.library` metadata
+file with a schema version, exchange basename, remembered player and last-played
+Unix time. Generated files must have complete record framing before the entry
+is committed. Metadata is published by replacing a flushed temporary file through
+`ReplaceNativeFile`; Windows uses `MoveFileExW` so failed replacement preserves
+previous metadata. The command-line host never resolves or requires this library.
+
 The reconstructed sources build as a native Win32/Win64 executable with
 MinGW, and the game code alone builds as `stars-host` with any C11 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
+
+SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
+the C declarations in `filesystem.h`. The profile and picker test fixtures use
+this bridge for temporary directories, directory creation, canonical paths and
+non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
+conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions never cross
+the C ABI. Output buffers are caller-owned, must not overlap input paths, and
+remain empty on failure. Returned paths use forward slashes, matching the SDL
+wrapper's canonical path contract. Temporary directories are claimed with atomic directory
+creation rather than a temporary-file-name/delete sequence. The game and wrapper
+remain C11; host-only builds require no C++ compiler.
+
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 
@@ -24,7 +49,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   PART, PLANET, FLEET, BTN, BTNT, DRAWCIR, RPT, SBAR, SEL, TILE, WN, INI,
   XFER, TUTOR). FLEET and PLANET records pack their fields explicitly, partial
   copies stop before the pointers, and other records keep their Win16 sizes.
-  Native pointer or handle sizes never reach a save file.
+  Native pointer or handle sizes never reach a save file. UI-only `TILE` records
+  use native callback alignment and array strides; no record I/O uses this type.
 - **Storage widths:** see
   [RECONSTRUCTION.md](RECONSTRUCTION.md#storage-widths-and-boolean-conventions).
   Don't widen `int16_t` to `BOOL`/`int` where storage, addresses or file I/O
@@ -63,9 +89,10 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md).
   The SDL wrapper uses the C library's null and integer-limit definitions.
   Its remaining `FARPROC` instances are dialog callbacks and use the explicit
-  `DLGPROC` signature. macOS SDL links disable chained fixups because the
-  original packed UI tables contain unaligned function pointers; their layouts
-  remain unchanged. Apple's linker still warns about those pointers.
+  `DLGPROC` signature. UI-only `TILE` tables now use native callback-pointer
+  alignment instead of the surrounding byte packing. A compile-time check guards pointer placement and
+  alignment; macOS uses normal chained fixups without a linker workaround or
+  pointer-alignment warnings. Persisted structures keep their layouts.
   Startup prepares the main frame's initial show command while it stays hidden,
   so native window animations cannot expose it before the title screen.
   New-game setup treats aborted modal dialogs as cancellation, and the wrapper
@@ -143,7 +170,8 @@ both Release fleet profiles. Full native regression still returns 519 matches,
 87 existing unused-storage warnings, zero differences/errors and no skipped
 inputs; the baseline is unchanged. See [goal evidence](LINUX-CLIENT-GOAL.md).
 
-See [encoding contracts](UNICODE-BOUNDARIES.md) for Unicode filenames, strict
-CLI/password conversion and UTF-8 path-field editing. The original password
-hash uses explicit unsigned wrapping with signed input bytes; stored hashes,
-record widths and native regression baselines remain unchanged.
+See [encoding contracts](UNICODE-BOUNDARIES.md) for the main client's UTF-8
+text, UTF-8 password bytes, fixed field budgets and format 2.85. Legacy file
+encoding and non-ASCII password compatibility are deliberately removed from
+main. Record widths remain unchanged; the native baseline moves only at BOF
+version fields, from checkpoint 0 in every scenario.

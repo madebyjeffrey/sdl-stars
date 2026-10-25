@@ -1,10 +1,18 @@
 .DEFAULT_GOAL := help
-.PHONY: help all version-header text-header data-header text-unreferenced save-cli compile host test-unit test-host test-precision precision precision-turns scenario run fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject mac-bundle clean
+.PHONY: help all version-header text-header data-header text-unreferenced python-env save-cli compile host test-unit test-host test-precision precision precision-turns scenario run fmt compile-check res resources regression regression-quick regression-host regression-export tutorial tutorial-reject mac-bundle docs docs-serve docs-check test-docs clean
 
 DIST_DIR    ?= dist
 CMAKE       ?= cmake
 CLANG_FORMAT ?= clang-format
 PYTHON      ?= python3
+DOCS_PYTHON ?= $(PYTHON)
+ifneq ($(MSYSTEM),)
+PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python.exe
+else ifeq ($(OS),Windows_NT)
+PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/Scripts/python.exe
+else
+PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python
+endif
 GO          ?= go
 SAVE_CLI    := $(abspath $(DIST_DIR))/stars-save$(if $(filter Windows_NT,$(OS)),.exe,)
 FORMAT_FILES ?= $(wildcard src/core/*.c src/core/*.h src/ui/*.c src/ui/*.h src/host/*.c src/platform/*.c src/platform/*.h res/*.h tests/scaffold/*.c tests/scaffold/*.h)
@@ -53,6 +61,8 @@ help:
 	@echo "  scenario             Build a test game into dist/scenarios/SCENARIO (no SCENARIO: list them)"
 	@echo "  fmt                  Format C sources and headers (FORMAT_FILES=src/core/ai.c to limit)"
 	@echo "  compile-check        Compile the SDL client and generated resources"
+	@echo "  python-env           Configure the host preset and set up its Python venv"
+	@echo "  text-header/data-header Generate text and game-data tables"
 	@echo "  text-unreferenced    List text rows that no code names and no @range covers"
 	@echo "  res / resources      Build the generated SDL resources"
 	@echo "  regression           Run the native regression and compare it with the baseline"
@@ -63,6 +73,9 @@ help:
 	@echo "  tutorial             Run the available SDL tutorial checkpoints (partial coverage)"
 	@echo "  tutorial-reject      Verify early Generate is rejected"
 	@echo "  mac-bundle           Build and sign Stars!.app using an auto-discovered keychain identity"
+	@echo "  docs / docs-serve    Build or preview the specification handbook (DOCS_PYTHON with requirements-docs.txt)"
+	@echo "  docs-check           Check rendered handbook links and assets"
+	@echo "  test-docs            Check handbook publication and link boundaries"
 	@echo "  clean                Remove $(DIST_DIR)/"
 
 mac-bundle:
@@ -70,6 +83,18 @@ mac-bundle:
 	$(CMAKE) --build --preset macos-bundle
 
 all: compile
+
+docs:
+	$(DOCS_PYTHON) tools/handbook.py build
+
+docs-serve:
+	$(DOCS_PYTHON) tools/handbook.py serve
+
+docs-check:
+	$(DOCS_PYTHON) tools/handbook.py check
+
+test-docs:
+	$(DOCS_PYTHON) -m unittest discover -s tests/docs -p 'test_*.py'
 
 save-cli:
 	@mkdir -p "$(DIST_DIR)"
@@ -118,10 +143,15 @@ fmt:
 # CMake builds normally make.
 VERSION_DIR := $(abspath $(DIST_DIR))/generated
 text-header:
-	@$(PYTHON) text/textgen.py "$(VERSION_DIR)"
+	$(MAKE) python-env
+	@$(PYTHON_VENV) text/textgen.py "$(VERSION_DIR)"
 
 data-header:
-	@$(PYTHON) data/datagen.py "$(VERSION_DIR)"
+	$(MAKE) python-env
+	@$(PYTHON_VENV) data/datagen.py "$(VERSION_DIR)"
+
+python-env:
+	$(CMAKE) --preset $(HOST_PRESET) -B "$(DIST_DIR)/$(HOST_PRESET)"
 
 text-unreferenced:
 	@$(PYTHON) text/textgen.py --unreferenced

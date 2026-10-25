@@ -57,7 +57,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
 
     if (!lpof) { SetLastError(ERROR_INVALID_PARAMETER); return HFILE_ERROR; }
     if (flags & OF_REOPEN) pszFile = lpof->szPathName;
-    if (!pszFile || !*pszFile || (flags & 3) == 3 ||
+    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile, strlen(pszFile)) || (flags & 3) == 3 ||
         (share != OF_SHARE_COMPAT && share != OF_SHARE_EXCLUSIVE && share != OF_SHARE_DENY_WRITE &&
          share != OF_SHARE_DENY_READ && share != OF_SHARE_DENY_NONE)) {
         dwError = ERROR_INVALID_PARAMETER; goto LReturn;
@@ -78,6 +78,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
             dwError = ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
+    if (!FUtf8Valid(szPath, strlen(szPath))) { dwError = ERROR_INVALID_PARAMETER; goto LReturn; }
     if (strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
     memset(lpof, 0, sizeof(*lpof));
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = TRUE;

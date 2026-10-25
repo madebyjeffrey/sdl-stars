@@ -2,6 +2,33 @@
 
 #include "stars_test.h"
 
+static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
+    char szDir[MAX_PATH];
+    RTCHGNAME rt;
+    FLEET *lpfl;
+    int16_t cOut;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("LogFleetName_utf8", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(0));
+    lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, 0, 1);
+    LogChangeName(grobjFleet, lpfl->id, "Original");
+    memset(&rt, 0, sizeof(rt));
+    rt.id = lpfl->id;
+    cOut = 31;
+    TEST_ASSERT(FCompressUserString("\xc3", (char *)rt.rgb + 1, &cOut));
+    rt.rgb[0] = cOut;
+    TEST_CHECK(!FRunLogRecord(rtLogFleetName, offsetof(RTCHGNAME, rgb) + cOut + 1, (uint8_t *)&rt));
+    TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);
+    rt.rgb[0] = 0;
+    memcpy(rt.rgb + 1, "\xc3\xa9", 3);
+    TEST_CHECK(!FRunLogRecord(rtLogFleetName, offsetof(RTCHGNAME, rgb) + 3, (uint8_t *)&rt));
+    TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);
+    TEST_CHECK(FRunLogRecord(rtLogFleetName, offsetof(RTCHGNAME, rgb) + 4, (uint8_t *)&rt));
+    TEST_CHECK(strcmp(lpfl->lpszName, "\xc3\xa9") == 0);
+}
+
 // Mineral upload: minerals sent from a planet to another player's fleet
 // were taken from the planet, but only what fit in the fleet's hold was
 // delivered and the rest was destroyed.
@@ -108,5 +135,6 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
 }
 
 TEST_LIST = {{"FRunLogRecord refunds undelivered cargo", test_FRunLogRecord_refunds_undelivered_cargo},
+             {"fleet-name orders reject malformed UTF-8 without changing the name", test_FRunLogRecord_rejects_invalid_utf8_name},
              {"FRunLogRecord design change clears queued progress", test_FRunLogRecord_design_change_clears_progress},
              {NULL, NULL}};

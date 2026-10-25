@@ -11,7 +11,7 @@ static BOOL fScanInspectorClass;
 static BOOL FScannerReady(void) {
     if (StarsCompatWindowId(hwndScanner) == 0) return FALSE;
     return IsWindow(hwndScanner) && IsWindowVisible(hwndScanner) && game.lid != 0 &&
-           idPlayer >= 0 && idPlayer < game.cPlayer && rgptPlan && rgidPlan && rglpfl &&
+           idPlayer >= 0 && idPlayer < game.cPlayer && rglpfl &&
            game.cPlanMax > 0 && cFleet >= 0 && cThing >= 0;
 }
 
@@ -124,21 +124,14 @@ BOOL FSelectScannerObject(const SCANSNAPSHOT *lpsnap, uint16_t grType, uint16_t 
 }
 
 static BOOL FWriteScanString(FILE *lpfile, const char *psz) {
-    static const uint16_t rgch[32] = {0x20ac,0x81,0x201a,0x192,0x201e,0x2026,0x2020,0x2021,0x2c6,0x2030,0x160,0x2039,0x152,0x8d,0x17d,0x8f,
-        0x90,0x2018,0x2019,0x201c,0x201d,0x2022,0x2013,0x2014,0x2dc,0x2122,0x161,0x203a,0x153,0x9d,0x17e,0x178};
     unsigned ch;
-    if (fputc('"', lpfile) == EOF) return FALSE;
+
+    if (!FUtf8Valid(psz, strlen(psz)) || fputc('"', lpfile) == EOF) return FALSE;
     while (*psz) {
         ch = (unsigned char)*psz++;
         if (ch == '"' || ch == '\\') { if (fputc('\\', lpfile) == EOF || fputc((int)ch, lpfile) == EOF) return FALSE; }
         else if (ch < 32) { if (fprintf(lpfile, "\\u%04x", ch) < 0) return FALSE; }
-        else if (ch < 128) { if (fputc((int)ch, lpfile) == EOF) return FALSE; }
-        else {
-            if (ch < 160) ch = rgch[ch - 128];
-            if (ch >= 0x800 && fputc((int)(0xe0 | (ch >> 12)), lpfile) == EOF) return FALSE;
-            if (fputc((int)((ch < 0x800 ? 0xc0 | (ch >> 6) : 0x80 | ((ch >> 6) & 63))), lpfile) == EOF ||
-                fputc((int)(0x80 | (ch & 63)), lpfile) == EOF) return FALSE;
-        }
+        else if (fputc((int)ch, lpfile) == EOF) return FALSE;
     }
     return fputc('"', lpfile) != EOF;
 }
@@ -152,6 +145,7 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, FILE *lpfile) {
         (long)lpsnap->rcViewport.left,(long)lpsnap->rcViewport.top,(long)lpsnap->rcViewport.right,(long)lpsnap->rcViewport.bottom) < 0) return FALSE;
     for (i = 0; i < lpsnap->cObject; i++) {
         lp = &lpsnap->rgobj[i];
+        if (!memchr(lp->szName, 0, sizeof(lp->szName))) return FALSE;
         if (fprintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
             "\"onScreen\":%s,\"filtered\":%s,\"scanSelected\":%s,\"mainSelected\":%s,\"name\":", i ? ",\n" : "", lp->grType,lp->id,lp->iPlayer,lp->det,lp->ith,
             (long)lp->ptUniverse.x,(long)lp->ptUniverse.y,(long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,

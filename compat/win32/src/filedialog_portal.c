@@ -48,7 +48,7 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
            dbus_message_iter_close_container(lpOptions, &entry);
 }
 static char *PszPortalLabel(LPCSTR psz) {
-    return SDL_iconv_string("UTF-8", "WINDOWS-1252", psz, strlen(psz) + 1);
+    return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : NULL;
 }
 static BOOL FFilter(DBusMessageIter *lpIter, const COMPATFILEFILTER *lpFilter) {
     DBusMessageIter filter, patterns, item;

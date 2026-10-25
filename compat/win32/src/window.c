@@ -16,40 +16,46 @@ static BOOL fDialogSequence;
 static HWND hwndSequenceOwner;
 static SDL_Window *lpSequenceWindow;
 static SDL_Renderer *lpSequenceRenderer;
+static SDL_Texture *lpSequenceTexture;
+static SDL_Surface *lpSequenceCanvas, *lpSequenceComposite;
+static int iSequenceScale;
 static BOOL fSequenceOwnerEnabled;
 static HWND hwndSequenceFocus;
 
+static void DestroyNativeWindow(SDL_Window *lpWindow) {
+    // Cocoa can expose hidden application windows when an attached dialog is
+    // destroyed. HWND teardown already handles owned windows and focus.
+    if (lpWindow && SDL_GetWindowParent(lpWindow) &&
+        !(SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)))
+        SDL_SetWindowParent(lpWindow, NULL);
+    SDL_DestroyWindow(lpWindow);
+}
+
+static void DestroySequenceWindow(void) {
+    SDL_DestroyTexture(lpSequenceTexture);
+    SDL_DestroySurface(lpSequenceCanvas);
+    SDL_DestroySurface(lpSequenceComposite);
+    SDL_DestroyRenderer(lpSequenceRenderer);
+    DestroyNativeWindow(lpSequenceWindow);
+    lpSequenceTexture = NULL;
+    lpSequenceCanvas = lpSequenceComposite = NULL;
+    lpSequenceRenderer = NULL;
+    lpSequenceWindow = NULL;
+    iSequenceScale = 0;
+}
+
 static char *PszNativeTitle(LPCSTR pszTitle) {
-    size_t cch = strlen(pszTitle), i;
-    char *psz, *lpch;
-    if (cch > (SIZE_MAX - 1) / 4 || !(psz = SDL_malloc(cch * 4 + 1))) return NULL;
-    for (i = 0, lpch = psz; i < cch; i++) lpch = SDL_UCS4ToUTF8(DwCompatAnsiChar((BYTE)pszTitle[i]), lpch);
-    *lpch = 0;
-    return psz;
+    return FUtf8Valid(pszTitle, strlen(pszTitle)) ? SDL_strdup(pszTitle) : NULL;
 }
 
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
-    char *psz;
-    BOOL fResult;
-    HWND hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
-    if (hwnd && hwnd->fUtf8Title) return SDL_SetWindowTitle(lpWindow, pszTitle);
-    // SDL menu/tooltip roles have no native caption; keep their logical text.
+    if (!FUtf8Valid(pszTitle, strlen(pszTitle))) return FALSE;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return TRUE;
-    psz = PszNativeTitle(pszTitle);
-    if (!psz) return FALSE;
-    fResult = SDL_SetWindowTitle(lpWindow, psz);
-    SDL_free(psz);
-    return fResult;
+    return SDL_SetWindowTitle(lpWindow, pszTitle);
 }
 
 BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
-    HWND lpwin = LpCompatWindow(hwnd);
-    BOOL fOld, fResult;
-    if (!lpwin || !psz) return FALSE;
-    fOld = lpwin->fUtf8Title; lpwin->fUtf8Title = TRUE;
-    fResult = SetWindowTextA(hwnd, psz);
-    if (!fResult && IsWindow(hwnd)) lpwin->fUtf8Title = fOld;
-    return fResult;
+    return SetWindowTextA(hwnd, psz);
 }
 
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
@@ -114,10 +120,7 @@ void StarsCompatEndDialogSequence(void) {
     BOOL fEnable = fSequenceOwnerEnabled;
 
     if (!SDL_IsMainThread()) return;
-    SDL_DestroyRenderer(lpSequenceRenderer);
-    SDL_DestroyWindow(lpSequenceWindow);
-    lpSequenceRenderer = NULL;
-    lpSequenceWindow = NULL;
+    DestroySequenceWindow();
     hwndSequenceOwner = NULL;
     fDialogSequence = FALSE;
     fSequenceOwnerEnabled = FALSE;
@@ -138,7 +141,14 @@ static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) {
     if (!SDL_IsMainThread() || fShutdown || fLiveResize ||
         lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return true;
     lpwin = LpCompatWindowFromId(lpevent->window.windowID);
-    if (!lpwin || !lpwin->fCreated || !lpwin->fVisible || !GetClientRect(lpwin, &rc)) return true;
+    if (!lpwin || !lpwin->fCreated || !GetClientRect(lpwin, &rc)) return true;
+    if (!lpwin->fVisible) {
+        // A reused wizard window stays native-visible while its next logical
+        // page initializes. Exposure must restore the retained completed frame.
+        if (lpwin->fDeferPresent && !(SDL_GetWindowFlags(lpwin->lpWindow) & SDL_WINDOW_HIDDEN))
+            FCompatRefreshPresent(lpwin);
+        return true;
+    }
     if (lpevent->window.data1 != 1 || CCompatDispatch() != 0) {
         FCompatRefreshPresent(lpwin);
         return true;
@@ -233,6 +243,7 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
 
     if (!SDL_IsMainThread() || fShutdown || !lpwc || !lpwc->lpfnWndProc ||
         (UINT_PTR)lpwc->lpszClassName <= UINT16_MAX ||
+        !FUtf8Valid(lpwc->lpszClassName, strlen(lpwc->lpszClassName)) ||
         lpwc->cbWndExtra < 0 || lpwc->cbClsExtra < 0 || atomNext > UINT16_MAX)
         return 0;
     if (LpFindClass(lpwc->lpszClassName, lpwc->hInstance)) {
@@ -322,8 +333,15 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
         SDL_StopTextInput(lpwin->lpWindow);
         lpSequenceWindow = lpwin->lpWindow;
         lpSequenceRenderer = lpwin->lpRenderer;
+        // Keep the completed frame available while the next page is built.
+        lpSequenceTexture = lpwin->lpTexture;
+        lpSequenceCanvas = lpwin->lpCanvas;
+        lpSequenceComposite = lpwin->lpComposite;
+        iSequenceScale = lpwin->iCanvasScale;
         lpwin->lpWindow = NULL;
         lpwin->lpRenderer = NULL;
+        lpwin->lpTexture = NULL;
+        lpwin->lpCanvas = lpwin->lpComposite = NULL;
     }
     CompatDestroyPaint(lpwin);
     CompatDestroyDialog(lpwin);
@@ -338,7 +356,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     lpwin->pszEditUndo = NULL;
     if (lpwin->lpWindow) {
         SDL_StopTextInput(lpwin->lpWindow);
-        SDL_DestroyWindow(lpwin->lpWindow);
+        DestroyNativeWindow(lpwin->lpWindow);
     }
     lpwin->lpWindow = NULL;
     free(lpwin->rgbExtra);
@@ -372,7 +390,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     int cDepth = 0;
     BOOL fChild = (dwStyle & WS_CHILD) != 0;
     BOOL fReuse = FALSE;
-    BOOL fNativePopup = FALSE, fNativeTitle = TRUE;
+    BOOL fNativePopup = FALSE;
     char *pszNative;
     int cxReuse, cyReuse;
     RECT rcOwner;
@@ -381,6 +399,10 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     RECT rcClient, rcWindow;
     LRESULT lr;
 
+    if (pszTitle && !FUtf8Valid(pszTitle, strlen(pszTitle))) {
+        SDL_SetError("Window text is invalid UTF-8");
+        return NULL;
+    }
     if (!SDL_IsMainThread() || fShutdown || idInspectNext == UINT64_MAX)
         return NULL;
     lpparent = LpCompatWindow(hwndParent);
@@ -461,17 +483,20 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             (flags & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE))) {
             lpwin->lpWindow = lpSequenceWindow;
             lpwin->lpRenderer = lpSequenceRenderer;
+            lpwin->lpTexture = lpSequenceTexture;
+            lpwin->lpCanvas = lpSequenceCanvas;
+            lpwin->lpComposite = lpSequenceComposite;
+            lpwin->iCanvasScale = iSequenceScale;
             lpSequenceWindow = NULL;
             lpSequenceRenderer = NULL;
+            lpSequenceTexture = NULL;
+            lpSequenceCanvas = lpSequenceComposite = NULL;
+            iSequenceScale = 0;
             lpwin->fDeferPresent = fReuse = TRUE;
-            fNativeTitle = FCompatNativeTitle(lpwin->lpWindow, lpwin->pszTitle);
         } else {
             if (lpSequenceWindow && lpwin->hwndOwner == hwndSequenceOwner &&
                 (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770")) {
-                SDL_DestroyRenderer(lpSequenceRenderer);
-                SDL_DestroyWindow(lpSequenceWindow);
-                lpSequenceRenderer = NULL;
-                lpSequenceWindow = NULL;
+                DestroySequenceWindow();
             }
             // Menus, combo lists and tooltips need compositor popup roles so
             // their placement remains relative to the owner without focus loss.
@@ -486,7 +511,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             // Cocoa otherwise gives the unpainted popup view an opaque black
             // backing before the renderer's first drawable reaches the screen.
             if (fNativePopup && !strcmp(SDL_GetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
-            // Narrow window text remains CP1252; SDL's native titles require UTF-8.
+            // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
                 lpwin->lpWindow = SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow,
@@ -495,18 +520,18 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
                 lpwin->lpWindow = SDL_CreateWindow(pszNative, max(1, dx), max(1, dy), flags);
             SDL_free(pszNative);
         }
-        if (!lpwin->lpWindow || !fNativeTitle ||
+        if (!lpwin->lpWindow ||
             (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow) && !SDL_SetWindowPosition(lpwin->lpWindow,
                                   x == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : x,
                                   y == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : y)) ||
-            !SDL_SyncWindow(lpwin->lpWindow) ||
+            (!fReuse && !SDL_SyncWindow(lpwin->lpWindow)) ||
             // Cocoa can expose an owned popup during creation despite SDL_WINDOW_HIDDEN.
             (!fReuse && !SDL_HideWindow(lpwin->lpWindow)) ||
             // A screen-covering borderless popup must be native fullscreen so
             // desktop panels cannot cover its controls. Dialogs stay windowed.
             (FFullscreenPopup(dwStyle, dwExStyle, hMenu, x, y, dx, dy) &&
              !SDL_SetWindowFullscreen(lpwin->lpWindow, true)) ||
-            (!fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow &&
+            (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow &&
              ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow) & SDL_WINDOW_FULLSCREEN) ||
               ((UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
@@ -514,14 +539,14 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              // still applies there, but SDL_SetWindowParent is unsupported.
              strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
              !SDL_SetWindowParent(lpwin->lpWindow, lpwin->hwndOwner->lpWindow))) {
-            SDL_DestroyRenderer(lpwin->lpRenderer);
-            SDL_DestroyWindow(lpwin->lpWindow);
+            CompatDestroyPaint(lpwin);
+            DestroyNativeWindow(lpwin->lpWindow);
             SDL_free(lpwin->pszTitle);
             free(lpwin->rgbExtra);
             free(lpwin);
             return NULL;
         }
-        CompatSetWindowIcon(lpwin->lpWindow, lpclass->wc.hIcon);
+        if (!fReuse) CompatSetWindowIcon(lpwin->lpWindow, lpclass->wc.hIcon);
         lpwin->id = SDL_GetWindowID(lpwin->lpWindow);
         lpwin->fZeroX = dx == 0; lpwin->fZeroY = dy == 0;
     }
@@ -580,6 +605,11 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         return NULL;
     }
     lpwin->fCreated = TRUE;
+    // Register the new page before a native caption update can expose it.
+    if (fReuse && !FCompatNativeTitle(lpwin->lpWindow, lpwin->pszTitle)) {
+        DestroyWindow(lpwin);
+        return NULL;
+    }
     CompatLayoutScrollbars(lpwin);
     if (!lpwin->fAlive) return NULL;
     if (lpwin->hwndParent) {
@@ -1119,8 +1149,9 @@ int WINAPI GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = SDL_strlcpy(psz, lpwin->lpclass->pszClass, (size_t)cchMax);
-    return cch < (size_t)cchMax ? (int)cch : cchMax - 1;
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass, (size_t)cchMax - 1);
+    memcpy(psz, lpwin->lpclass->pszClass, cch); psz[cch] = 0;
+    return (int)cch;
 }
 
 HWND HwndCompatRoot(HWND hwnd) {

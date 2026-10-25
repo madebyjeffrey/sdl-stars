@@ -1,0 +1,2 @@
+# Python 3.12 or newer. Keep separate from the game build dependencies.
+zensical==0.0.72

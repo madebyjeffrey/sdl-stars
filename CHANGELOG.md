@@ -6,6 +6,558 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- ZIP game imports now validate each entry name as UTF-8 and require the ZIP
+  UTF-8 filename flag for non-ASCII names. Unsupported names receive a specific
+  error instead of the generic invalid-archive message. Existing ASCII ZIPs
+  remain supported. Game behavior, file layouts and regression baselines are
+  unchanged.
+
+- `BrowserDlg` now resets the Technology Browser to an available item in the
+  selected category when Show Only Available Technology excludes the current
+  item. Already available selections stay in place. Turn generation, file
+  layouts and native regression baselines are unchanged.
+
+- The Continue button keeps the short "Continue Game" label. Its remembered
+  game, player and year appear on a separate line below the player selector,
+  avoiding clipped button text. Continue behavior and baselines are unchanged.
+
+- The Games view now lists each managed game once and uses a separate Player
+  dropdown for its available turns, including each player's year. Selecting a
+  game defaults to its remembered player when available; refreshing preserves
+  the current game/player choice. Continue asks for an explicit dropdown choice
+  if the remembered turn is missing. Host Games keeps its separate view. File
+  layouts, turn generation and native regression baselines are unchanged.
+
+- The in-game File menu now labels its existing Close action "Return to Main
+  Screen", making the route back to Games, Host Games and Race Designs explicit.
+  It keeps the existing save/discard/cancel flow and macOS Command+W shortcut.
+  Game behavior and regression baselines are unchanged.
+
+- `FGetNewGameName` now derives a new game's library entry from its game title,
+  without a separate naming dialog. Filename-invalid characters are adjusted
+  without changing the stored title. A duplicate offers Add Revision (for
+  example, "Orion (Revision 2)") or Back to Wizard to rename the game; existing
+  copies are kept. UTF-8 names and full game/backup path limits remain bounded.
+  Turn generation, file layouts and regression baselines are unchanged.
+
+- `FWatchLiveResize` now restores the retained race-wizard frame when macOS
+  exposes the window while the next page is still initializing. Previously
+  logical visibility suppressed that redraw, allowing the native background
+  to flash despite retaining the window and texture. `CreateWindowExA` registers
+  the replacement page before updating its native caption and avoids redundant
+  native setup during the handoff. Game behavior and regression baselines are
+  unchanged.
+
+- `CreateWindowExA` now preserves the race wizard's completed frame and native
+  owner attachment across Back/Next transitions. Previously the reused window
+  discarded its drawing resources and reattached to its owner for every page,
+  allowing a visible flash. All six pages keep the same window and replace its
+  contents after painting completes. Game behavior and regression baselines
+  are unchanged.
+
+- `CompatEditProc` now shows the standard I-beam mouse cursor over text fields.
+  Previously they retained the surrounding window's cursor.
+  `FCompatControlClass` gives the other standard controls and dialog backgrounds
+  an arrow cursor so they reset the pointer after leaving a text field, instead
+  of retaining its I-beam. Game behavior and native regression baselines are
+  unchanged.
+
+- New Game now opens the three-page setup directly, titled "New Game". The
+  retired basic setup is removed, and Start Tutorial is available on the starting
+  screen. Player selection offers predefined races, saved Race Library designs
+  and computer players, with no race-file picker. New/Edit Race still saves
+  through the library. Full UTF-8 filenames remain attached to roster selections,
+  including when replacing a design in a full roster. Turn generation, file
+  layouts and native regression baselines are unchanged.
+
+- Library management prompts are now silent, including delete confirmations,
+  errors and prompts from owned dialogs and wizards. `InitLibraryGames` disables
+  message-box sounds for the library window's ownership tree; unrelated game
+  alerts retain their sounds. Game behavior and regression baselines are unchanged.
+
+- The race-save confirmation now displays ordinary quotation marks around the
+  design name. Its text-table entry previously used C-style escapes, which this
+  literal text format displayed as extra backslashes. Game behavior and native
+  regression baselines are unchanged.
+
+- The race creation wizard now uses a wider, taller layout on all six pages,
+  with wider name fields and trait columns, taller radio controls, more space
+  between habitat/economy rows and a lower navigation row. Previously its compact
+  layout crowded labels and inputs. The name fields also clear the advantage
+  points panel. Name limits, game behavior and native regression baselines are
+  unchanged.
+
+- The macOS application icon now scales the approved artwork to 87.5% within its
+  transparent canvas. Previously it filled nearly the entire icon and hid the
+  application switcher's selection highlight. SDL's runtime icon and the app
+  bundle's ICNS use the same inset. Game behavior and regression baselines are
+  unchanged.
+
+- macOS now uses Command letter shortcuts for New, Open, Save, Find, Close and
+  Quit, with matching menu hints. `InitInstance` assigns Command+Shift+S to Save
+  and Submit and Command+R to library Continue, avoiding Select All/Copy conflicts.
+  Text fields accept Command+A/C/X/V/Z. Command does not set Control's input
+  state or trigger the debug function-key shortcuts. Queued-input checks use the
+  actual application tables and verify menu hints and editing behavior. Close
+  retains its save prompt; Quit uses the existing exit handler.
+  Game behavior, file layouts and native regression baselines are unchanged.
+
+- `CompatEditProc` now accepts Option+Left/Right for word navigation on macOS,
+  with Shift extending the selection. These keys previously arrived as Alt menu
+  messages and did not move the caret. `CompatRouteEvent` routes Option editing
+  keys without activating menus. Control word navigation on Windows and Linux
+  uses the same existing word boundaries. Queued-input checks cover both modifier
+  keys, selections and UTF-8 words. Game behavior and native regression baselines
+  are unchanged.
+
+- `CompatEditProc` now collapses a text selection to its left edge on Left and
+  right edge on Right. Previously it moved one character from the active end,
+  making the result depend on selection direction. Checks cover both selection
+  directions, Shift extension, UTF-8 and multiline CRLF boundaries. Game behavior
+  and native regression baselines are unchanged.
+
+- `PaintControl` now bounds the vertical padding of checkbox and radio focus
+  frames by the control height. Previously the top and bottom edges could be
+  clipped on short controls such as the PRT page. Checks cover all ten PRT
+  radios, compact control borders and unchanged label pixels. Game behavior and
+  native regression baselines are unchanged.
+
+- On macOS, `CompatEditProc` now treats Command+Left/Right as Home/End in text
+  fields, with Shift extending the selection. Multiline fields use the current
+  visual line's boundaries. Both Command keys retain their queued modifier state;
+  ordinary arrows and Control word navigation are unchanged. Game behavior and
+  native regression baselines are unchanged.
+
+- `PaintControl` now places checkbox and radio-button focus frames outside the
+  measured label instead of insetting its drawing area and overwriting letters.
+  Rendering checks cover mnemonics, UTF-8, wrapped and clipped labels, and
+  right-aligned check marks. Game behavior and native regression baselines are
+  unchanged.
+
+- `stars-help-guide` now registers its generated asset tree for cleanup.
+  Previously Ninja's built-in `help` target collided with the nonempty help
+  directory and made Clean fail. Build/clean/rebuild checks cover stale assets
+  and repeated cleans. Game behavior and native regression baselines are unchanged.
+
+- `FScannerReady` no longer tests fixed-array addresses for null, and `rgzpqTut`
+  initializes its production-queue bitfields without overlapping union members.
+  This removes compiler warnings while retaining the compiled tutorial table
+  bytes, game behavior and native regression baselines.
+
+- UI-only `TILE` records now align their callback pointers and array strides
+  natively. Previously their byte packing caused macOS linker warnings and
+  required disabling chained fixups. That workaround is removed; saved record
+  layouts, game behavior and native regression baselines are unchanged.
+
+- `FBeginLibraryRace` and New Game race customization now open the wizard
+  directly and save under its race name instead of asking for a filename first.
+  `FSaveCurrentLibraryRace` reuses unchanged designs and offers Update Existing,
+  Save New Version or Cancel for changed designs. New versions preserve earlier
+  entries; cancelling or failing a save preserves existing files. Names remain
+  UTF-8 and are adjusted only for portable filenames. Simulation results and all
+  native regression baseline scenarios are unchanged.
+
+- `LibraryNameDlg` now centers the filename/name prompt over its visible owner,
+  within the desktop work area, instead of opening at the template's top-left
+  origin. This includes New Race and other library naming actions. Tests move
+  the library before opening New Race to check owner-relative placement.
+  Simulation results and all native regression baselines are unchanged.
+
+- `DestroyNativeWindow` now detaches ordinary native owned windows before
+  destroying them. On macOS, cancelling the library race filename dialog could
+  expose the hidden, empty gameplay frame despite its HWND remaining hidden.
+  Native cancellation checks cover both the filename dialog and race wizard.
+  Simulation results and all native regression baselines are unchanged.
+
+- `TitleWndProc` now opens the library directly without the automatic recent-file
+  import offer. Import remains an explicit library action or the result of opening
+  an external file. Startup tests require a single visible library window, retain
+  recent-file settings and leave source files untouched. Simulation results and
+  native regression baselines are unchanged.
+
+- Managed-library labels, prompts, errors and file-filter text now come from
+  `text/strings.txt` instead of literals in `libraryui.c`. Wording, existing
+  text IDs, file formats and native regression baselines remain unchanged.
+
+- `FindImportUniverse` now accepts uppercase and mixed-case `.XY` extensions
+  during folder and ZIP imports. Previously these complete game families were
+  rejected even though selecting their player turn file worked. Source files,
+  simulation results and all native regression baseline scenarios are unchanged.
+
+- `CopyBackupDirectory` now preserves `backup` and `backup0`–`backup98` as well
+  as `backup.NNN` during folder and ZIP imports and exports. Previously transfers
+  silently omitted the engine's default and short-numbered backup folders.
+  Simulation results and all native regression baseline scenarios are unchanged.
+
+- `FCanLeaveCurrentGame` now retains the active player, pending edits and prior
+  submission state when saving orders or history fails. Previously Return to
+  Library unloaded the game after a failed Save or Save & Submit. Simulation
+  results and all native regression baseline scenarios remain unchanged.
+
+- `FImportSubsequentTurn` now installs a player’s first standalone turn using
+  the matching managed universe, including host-only games. Previously it
+  required an existing turn for that player. It validates the player slot,
+  stages publication and retains companion orders/history. No simulation results
+  or native regression baseline scenarios change.
+
+- `FImportLibraryRace` now saves converted legacy designs as format 2.85,
+  including their UTF-8 names and accepted replacement password. Previously it
+  copied the original bytes and discarded those conversions. Imported originals,
+  simulation results and native regression baselines are unchanged.
+
+- `FLoadLibraryRace` and the race import, duplicate and export callers now
+  reject negative `FWasRaceFile` results. Cancelling a password prompt previously
+  continued with the prior design and could bind it to another race’s save path.
+  Simulation results and native regression baselines are unchanged.
+
+- `FDeleteLibraryGame` now suppresses Continue across restarts after deleting
+  its remembered game until another game is explicitly opened. This reconciles
+  deletion with metadata-based session selection; simulation and file formats
+  are unchanged.
+
+- `FExportLibraryGame` routes a native ZIP destination through the selected-game
+  save prompt, preserving the current orders before creating the archive just
+  as folder export does. Simulation and save formats are unchanged.
+
+- Desktop Import Game now accepts ZIP archives, validates and safely stages
+  their contents through the managed-game importer, and Export Game offers a
+  ZIP destination containing the full game family and numbered backups.
+  Import and export leave the managed source intact.
+- `FDeleteLibraryGame` confirms deletion by library name, names the player
+  files, host state, history and backups it removes, and reminds users to
+  export first. It removes the selected managed folder only and clears its
+  recent-file entries without replacing a deleted Continue target with another
+  player or game.
+
+- `InitLibraryGames` now keeps Import Game clear of Rename and Duplicate.
+  Its previous position covered both buttons and intercepted their clicks.
+
+- `FImportLibraryOrders` now rejects player slots absent from the selected
+  hosted game; previously a consistently numbered file for any slot up to 16
+  could be installed even though host generation would ignore it.
+
+- `FSelectedLibraryGameName` now resolves Export Game, Duplicate and Rename
+  from the visible library view instead of the hidden Games selection. Host-only
+  libraries enable these actions, and both lists refresh after duplicate/rename.
+
+- `ShipCommandProc` now opens the fleet rename dialog without copying the shared
+  fleet-name buffer onto itself. This preserves existing rename behavior and
+  avoids a checked-CRT trap on macOS.
+
+- The desktop library now has a separate Host Games view for managed games
+  containing both the universe and host files, including host-only imports.
+  Import Orders validates the incoming player's game, turn and generation,
+  ignores identical orders, and asks before replacing different saved orders.
+  Host generation continues through the existing turn engine and managed file
+  paths; simulation behavior, CLI behavior and disk record layouts are unchanged.
+- `FImportSubsequentTurn` now offers Cancel, Replace, or Import as Separate Copy
+  for changed same-year and older turns. Replace stages the managed game and
+  backs up that player's previous turn, orders, and history before publication;
+  Separate Copy duplicates the selected game and changes only the incoming
+  player's turn. Orders and history remain available, later-turn updates keep
+  their no-warning path, and game formats and simulation results are unchanged.
+- `FReplaceConflictingLibraryTurn` clears the failure status when restoring the
+  previous game succeeds on retry. A failed conflicting import then correctly
+  reports that the managed game and orders were preserved, rather than directing
+  recovery from a folder that has already been restored. Simulation results and
+  save formats are unchanged.
+- Dialog-resource and combo contract tests now include the conflicting-turn
+  dialog instead of rejecting the expanded resource inventory.
+- The expanded Linux game-creation/import workflow uses the same 200-second
+  test budget as macOS and Windows, avoiding its previous 100-second cutoff.
+- `FExportLibraryOrders` and `RememberLibraryGame` recognize Windows picker
+  paths with forward slashes when the library root uses backslashes. Orders
+  retain their exchange filename, and library history and dirty-game export
+  use the same membership check. Simulation and save formats are unchanged.
+
+- `FInitLibrary` and `FInitRaceLibrary` read environment paths through SDL's
+  UTF-8 API on Windows. Libraries under accented or non-Latin settings and
+  override paths can now import races and export orders. Simulation results,
+  save formats and native regression baselines are unchanged.
+
+- The PDF map test now starts from a managed game, avoiding a wait at the
+  external-game Import dialog. Its full planet-position and PDF checks also
+  run on macOS. Product behavior and simulation baselines are unchanged.
+
+- The designer save/reload test now uses a managed game and changes its live
+  research choice before reopening saved orders, so a failed reload cannot
+  pass unnoticed. The workflow also runs on macOS. Product behavior and
+  simulation baselines are unchanged.
+
+- The portable file-workflow test handles both Windows path separators and
+  opens its Unicode fixtures through the native UTF-8 file boundary, avoiding
+  invalid chooser offsets and fixture I/O failures. Product behavior and
+  simulation baselines are unchanged.
+
+- Windows managed game and race paths now accept picker-style forward slashes
+  and native backslashes consistently. Startup reopens an existing managed
+  game instead of importing another copy, and managed race selection retains
+  its correct filename. Simulation and save formats are unchanged.
+
+- Recent-file migration now reports a missing selected player file by path
+  instead of silently importing its valid siblings. Other recent entries
+  continue to import, including relative filenames. Sources, simulation
+  results and file formats are unchanged.
+
+- The real file-workflow test keeps its timer active while accepting the race
+  import dialog, avoiding a deadlock. The same workflow now runs with portable
+  chooser substitutions on macOS, Windows and Linux in addition to the Linux
+  portal test. Product behavior and simulation baselines are unchanged.
+
+- Desktop Open and recent-file actions now distinguish races from games by
+  file contents. Race selections import into Race Designs and open the copied
+  design for editing; cancelling customization retains the import and leaves
+  the source unchanged. Simulation and file formats are unchanged.
+
+- Desktop startup now imports its supplied external game path without asking
+  the user to select it again. Managed game paths reopen their existing copy.
+  Command-line host behavior, simulation results and file formats are unchanged.
+
+- New Game race edits now save to the selected design, retaining full library
+  filenames per roster entry. Importing another race no longer redirects an
+  earlier design's edits, and customizing a predefined race creates a separate
+  managed design. Game simulation and file formats are unchanged.
+
+- Existing recent game files now receive a one-time import offer. Accepting
+  copies valid games into the managed library and explains invalid entries;
+  declining is remembered. Desktop Open Game, recent external games, and
+  external race selection now use managed import workflows. Imported sources
+  remain unchanged, and command-line host paths are unchanged.
+- `FInspectImportFile` accepts the empty end records written by the game's
+  orders and history writers. Complete game exports containing saved orders
+  can now be reimported; trailing bytes are still rejected. File formats,
+  host results and native regression baselines are unchanged.
+
+- `FExportSelectedLibraryGame` asks for a destination before resolving dirty
+  orders. Canceling the folder chooser no longer saves the loaded game, and
+  choosing Don't Save is requested only once per export. Host results and
+  native regression baselines are unchanged.
+
+- `FExportLibraryGame` rejects destinations whose full game or backup paths
+  exceed the loader's capacity, instead of silently truncating filenames and
+  reporting an incomplete export as successful. Host results and native
+  regression baselines are unchanged.
+
+- The desktop Games library can export a complete game family to a folder named
+  for its library entry. Exports include all player files, host state, and
+  backups, retain the managed original, and leave existing destinations intact.
+  Game behavior and disk record layouts are unchanged.
+
+- `FCopyLibraryGameEntry` now rejects collisions between renamed binary family
+  members and unchanged sidecars, including case-only collisions and entries
+  inside backups. Staging previously overwrote either file and rename then
+  removed the originals. Failed duplicate and rename actions preserve both
+  source files and do not publish a partial game. Simulation baselines are
+  unchanged.
+
+- Managed-game duplication and rename reject linked files, linked folders and
+  Windows reparse points. `RemoveLibraryGameEntry` previously followed directory
+  links while removing the old renamed tree and could delete external files.
+  Cleanup now removes a link itself without traversing its target. Original
+  games and external targets remain intact when staging is rejected.
+  Simulation behavior and regression baselines are unchanged.
+
+- The Games library offers Duplicate and Rename actions. Copies have independent
+  files and session metadata; rename changes the managed folder and matching
+  binary file family, including backups. Both preserve the stored game title,
+  embedded identity and exchange basename, and failed publication restores the
+  original game. Simulation behavior and disk record layouts are unchanged.
+
+- Reopening a duplicated or renamed managed game now retains its original
+  exchange basename. `RememberLibraryGame` previously looked for metadata one
+  folder too deep and replaced that basename with the current library name.
+  Simulation behavior and regression baselines are unchanged.
+
+- Double-clicking a game in the library now opens the selected player turn.
+  The title-window command handler previously fell through into Duplicate and
+  opened a copy-name dialog. Simulation behavior and baselines are unchanged.
+
+- Managed-game duplication and rename now preserve the complete directory tree.
+  The copier previously skipped the default `backup` and numbered `backupN`
+  folders; rename then deleted those omitted backups with the original tree.
+  Sidecar folders and all supported backup names now survive both actions.
+  Simulation behavior and regression baselines are unchanged.
+
+- `FExportLibraryOrders` now confirms replacement of the final numbered orders
+  filename after correcting its extension. Previously, choosing a different
+  extension could silently overwrite an existing `.xN` file. Declining leaves
+  that file and pending managed work untouched. Native baselines are unchanged.
+
+- `FExportLibraryOrders` no longer formats a selected destination or fallback
+  library name over the same buffer, fixing Linux exports that silently failed
+  after choosing a filename. Game simulation and native baselines are unchanged.
+
+- The desktop can export the active player's saved orders as an ordinary `.xN`
+  file. Export saves current orders first, suggests the remembered exchange
+  basename, keeps the active player's extension when the destination name is
+  changed, retains the managed game, and preserves submission status. Failed
+  saves and exports leave the previous managed orders file intact. Game
+  simulation and disk record layouts are unchanged.
+
+- Existing managed games now accept a valid later standalone player turn,
+  including skipped years. The importer matches by game identity, asks which
+  managed copy to update when several match, treats identical turns as no-ops,
+  and retires only that player's old orders after the staged turn is installed.
+  History, backups, other players and imported source files are preserved.
+  Game simulation and disk record layouts are unchanged.
+- Continue now identifies and resumes the most recently played managed game
+  and its remembered player. If that turn is unavailable, it selects the same
+  game's player list so the user can choose another available turn. Returning
+  to the title screen keeps the existing Save / Don't Save / Save & Submit
+  choices; canceling the prompt leaves the active player loaded. Game-file
+  formats and simulation behavior are unchanged.
+
+- Race designs can now be duplicated to the next free `.rN` filename, exported
+  as ordinary race files, and deleted after a confirmation naming the selected
+  design. Export validates the copied file and retains its existing checksum
+  and password data; failed exports preserve any existing destination, and
+  cancelling deletion leaves the managed design in place.
+  Game behavior and record layouts are unchanged.
+
+- The desktop title screen now manages race designs in a separate Race Designs
+  folder. New and Edit use the race wizard and save directly to the selected
+  design; Import opens the copied design in the wizard, and cancelling keeps
+  the imported file. Imports preserve the original bytes and receive a unique
+  `.rN` filename. Cancelled edits restore the loaded race, and saves retain
+  the existing checksum and password behavior. Game behavior and record
+  layouts are unchanged.
+
+- Managed race saves and imports now publish from private staging directories,
+  preserving existing designs with names that resemble the former staging
+  suffix.
+
+- Managed race filenames now reject Windows reserved device stems, including
+  `CON`, `COM1` through `COM9`, `LPT1` through `LPT9`, and `CLOCK$`.
+
+- Race Designs now lists only nonempty race files, not matching directory names.
+
+- macOS UTF-8 and profile compatibility tests now link the C++ filesystem bridge
+  that provides their C-callable path helpers.
+
+- The desktop Games library can import a game family from a selected file or
+  folder. It validates format, record framing, game identity and player slots
+  before copying the universe, available turns, companions and backups into a
+  uniquely named managed folder. Imported source files stay untouched, and
+  player rows show their own turn years. Simulation behavior and disk record
+  layouts are unchanged.
+
+- Game library actions now resolve the selected row through its stored library
+  name instead of removing display-status text, preserving valid names that
+  contain those status phrases.
+
+- `TestUtf8Profile` was compiled but never called on Windows SDL, failing its
+  warning-as-error build and omitting Unicode profile coverage. The call now
+  uses the same platform guard as the definition; the fixture uses a portable
+  temporary directory and a Unicode filename instead of a hard-coded `/tmp`
+  path. Game behavior, save layouts and baselines are unchanged.
+
+- `TestPicker` used native Win32 filesystem APIs through SDL wrapper headers,
+  preventing Windows SDL test builds. A small C++17 filesystem bridge with a C
+  ABI now supplies strict UTF-8 fixture paths and portable directory operations.
+  Picker coverage includes Unicode directories, and hierarchy capture avoids
+  the Windows CRT's narrow temporary-file path. Game behavior, save layouts and
+  baselines are unchanged.
+
+- `FOpenFile` checked for format 2.85 before classifying unsupported versions,
+  making its older/newer version messages unreachable. It now reports valid
+  older and newer BOF versions accurately and treats malformed BOF records as
+  corrupt, preserving that diagnostic across read-error recovery. Reader tests
+  cover older, newer, malformed and current-format host files; save layouts
+  and simulation results are unchanged.
+- `FWasRaceFile` now imports protected legacy races only after validating the
+  original records and checksum, confirming any shortened names and accepting
+  a replacement UTF-8 password. The old password is not authenticated, and
+  its hash is replaced before the race can be saved or used directly in New
+  Game creation. Cancellation stops both paths; race writes remain format
+  2.85. Race/player state, native regression baselines and turn generation
+  contain no copied legacy hash and are otherwise unchanged.
+- `FWasRaceFile` now imports unprotected race designs from formats 2.49–2.84.
+  A bounded legacy parser verifies record framing and the original CP1252
+  checksum before converting names; pre-2.55 singular-only records gain a
+  plural form. Names that exceed 31 UTF-8 bytes are shortened only after the
+  player confirms the proposed complete-code-point names. Protected legacy
+  races follow the replacement-password workflow in the next entry; legacy
+  game, turn, history and orders files remain rejected. Imports leave their
+  source files unchanged, and saves use 2.85. Gameplay attributes, native
+  baselines and host results are unchanged.
+- `NewPasswordDlg` let the edit control silently keep a shortened prefix when
+  password input exceeded 15 UTF-8 bytes. Password fields now reject the whole
+  oversized edit or paste and ask the user to enter the password again; other
+  text fields retain truncation. The rejection remains until the field changes,
+  so no-op Backspace or Delete cannot clear it. Exact-limit Unicode passwords
+  remain valid. Native baselines and turn generation are unchanged.
+- `WriteBattlePlan` used a 36-byte buffer for raw names whose length marker,
+  31-byte text and terminator require a 37-byte record. Its temporary buffer
+  now covers that existing record size. Disk fields, native baselines and
+  host results are unchanged.
+- `FFinishPlrMsgEntry` passed a negative raw-message length to `memcmp`,
+  reading past unchanged uncompressed UTF-8 messages and marking them changed.
+  It now compares the stored byte count. Native baselines and host results
+  are unchanged.
+- `FWriteScanString` still interpreted scanner snapshot names as CP1252,
+  double-encoding UTF-8 in exported JSON. It now validates and preserves UTF-8
+  bytes while escaping JSON quotes and controls. Unterminated snapshot names
+  are rejected. Native baselines and turn generation are unchanged.
+- `GenNewGameFromFile` checked the 16-bit truncated file size, allowing a
+  large definition to wrap into a small readable prefix. It now checks the
+  actual native file size before allocation. Native baselines and valid
+  definitions are unchanged.
+- `PszFormatString` copied expanded names and paths past its 256-byte buffer.
+  Its expansions are now bounded, and message/printf truncation preserves
+  complete UTF-8 code points. Normal messages, native regression baselines
+  and turn generation are unchanged.
+- `UnpackBattlePlan` could leave an existing plan partially changed on a
+  rejected name. It now validates into temporary text and reports failure;
+  `FRunLogRecord` increments the plan count only after success. Native
+  regression baselines and valid host results are unchanged.
+- Wrapper list/menu/class setters and `OpenFile` could retain malformed UTF-8,
+  and picker navigation could retain an unsupported resolved directory.
+  These inputs and print destinations are now validated; picker extension
+  abbreviations preserve complete code points. Native baselines are unchanged.
+- `GenNewGameFromFile` validated only its title and copied its final output
+  path without a capacity check. It now validates the whole UTF-8 definition,
+  accepts an optional BOM and bounds the output path. Native regression
+  baselines and results for valid definitions are unchanged.
+- `ReadRtPlr`, `FReadShDef`, `FReadFleet` and `UnpackBattlePlan` could read
+  names past their record boundary; `FRunLogRecord` treated failed compressed
+  fleet names as raw bytes. Readers now require complete, bounded UTF-8 text,
+  and `FDecompressUserString` rejects incomplete escapes. Player messages are
+  validated before entering memory, and game/header/race-checksum records
+  require their fixed sizes. Valid files, native baselines and host results
+  are unchanged; malformed records are rejected or skipped as appropriate.
+- Generated fleet names and clipped mineral/message titles could split UTF-8
+  characters, causing strict drawing to reject whole labels. These cuts and
+  bounded menu, class, file-title and font/printer label copies now preserve
+  complete code points. Native regression baselines and gameplay are unchanged.
+- `NewPasswordDlg` allowed 16-byte UTF-8 passwords, which the 15-byte login
+  field and command line could not accept. Both change-password fields now
+  use the login byte limit and preserve complete code points. Native regression
+  baselines and turn generation are unchanged.
+- Application text now uses UTF-8 on all platforms: generated catalogs/data,
+  resources, controls, clipboard/composition, drawing, reports and passwords.
+  `WriteBOF`, `FOpenFile`, `FWasRaceFile`, `FMarkFile` and `FLoadLogFile`
+  write/require format 2.85 instead of accepting legacy encoded text. Record
+  sizes stay fixed; text and password limits count UTF-8 bytes. Existing game,
+  race and non-ASCII password compatibility is deliberately dropped. Settings
+  start fresh in `StarsUtf8.ini` with a UTF-8 BOM. Unsupported native paths
+  report conversion errors. The help build uses a UTF-8 bundle, and tutorial
+  assets use 2.85 with their old battle event headers converted in place.
+  **Serialized host results:** all nine native scenarios move from checkpoint
+  0 solely because BOF version 2.84 becomes 2.85; no simulation fields change.
+- `LibraryNameDlg`, `FChooseLibraryGameName` and `FFinishLibraryGame` passed
+  two compressed strings from the same shared buffer to `MessageBox`, making
+  the body and caption identical according to compiler argument order. Library
+  alerts now preserve the error message separately from the Games caption,
+  fixing GCC new-game workflow checks. Turn generation, file formats and
+  regression baselines are unchanged.
+
+- `FGetNewGameName` now asks for a portable, unique library name. Desktop games
+  and all their generated companions live in per-user application data and can
+  be reopened from the startup Games list after restarting. Failed or cancelled
+  creation does not publish a library entry. Session metadata is stored outside
+  game records; host paths, game titles, formats and simulation baselines are
+  unchanged.
+
 - Removed the suspended Rust/Bevy startup experiment and its optional build
   integration. `WinMain` uses the original SDL title-screen workflow for every
   desktop build. Turn generation, file formats and regression baselines are

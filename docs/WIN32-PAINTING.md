@@ -30,7 +30,9 @@ inside window/menu dispatch or with pending invalidation. Cocoa's view can
 clear to black when exposed after an initial presentation. This refresh performs
 no application paint or texture upload; pending work still follows the normal
 paint path. A presentation guard prevents recursive native refresh. The macOS
-paint-batch check counts actual SDL presentations to verify that exposure inside
+wizard handoff also refreshes while the next logical page is hidden, provided
+its reused native window is visible and the previous completed frame is retained.
+The macOS paint-batch check counts actual SDL presentations to verify that exposure inside
 a window procedure refreshes immediately without painting an invalidated child.
 SDL's live-resize expose events are handled by a main-thread event watcher:
 it sends the current client size, batches layout/painting and presents the new

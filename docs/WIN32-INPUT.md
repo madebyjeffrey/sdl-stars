@@ -20,7 +20,12 @@ Left/right Shift, Ctrl and Alt have distinct state entries and aggregate virtual
 keys. Releasing one side preserves the aggregate if the other is down. Caps,
 Num and Scroll Lock expose SDL's toggle state in the low bit. Focus-loss input
 clears held-key state, and the queued focus messages carry that cleared snapshot.
-Shutdown clears the compatibility arrays.
+Shutdown clears the compatibility arrays. On macOS, the two Command keys use
+`VK_LWIN`/`VK_RWIN`, including their queued modifier snapshots and PC/AT scan
+fields. Text controls use these snapshots for Command+Left/Right navigation;
+Command is not remapped to Control. In focused macOS text fields, Option and
+Left/Right use regular editing-key messages. This enables Option word navigation
+and prevents its modifier press/release from activating Alt menus.
 
 `GetAsyncKeyState` pumps SDL events without dispatching application procedures,
 then reads the latest SDL keyboard/modifier state and mouse button state. Its

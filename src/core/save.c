@@ -870,6 +870,11 @@ void WriteRtString(char *lpsz) {
     int16_t cOut;
 
     if (lpsz && *lpsz != 0) {
+        if (strlen(lpsz) > 31 || !FUtf8Valid(lpsz, strlen(lpsz))) {
+            FileError(idsGameFileAppearsCorruptUnableLoadFile);
+            if (penvMem) StarsLongJump(penvMem, -1);
+            return;
+        }
         cOut = 31;
         if (FCompressUserString(lpsz, &rgb[1], &cOut)) {
             rgb[0] = cOut;
@@ -906,7 +911,8 @@ void MarkFleet(FLEET *lpfl, DetType det) {
 }
 
 void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
-    uint8_t  rgb[36];
+    // A raw name adds a length marker before its fixed 32-byte field.
+    uint8_t  rgb[sizeof(BTLPLAN) + 1];
     uint8_t *pb;
     char     szPlanName[32];
     int16_t  cOut;
@@ -1024,9 +1030,8 @@ void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
     rtbof.lidGame = game.lid;
     rtbof.wGen = game.wGen;
     rtbof.verInc = 0;
-    /* The original wrote 2.83. 2.84 marks files written by 2.8; 2.6j and 2.7
-       refuse files from 2.84 or later. */
-    rtbof.verMinor = 84;
+    // 2.85 identifies UTF-8 text; older files have ambiguous byte encodings.
+    rtbof.verMinor = 85;
     rtbof.verMajor = 2;
     rtbof.turn = game.turn;
     rtbof.fCrippled = FALSE;
@@ -1075,11 +1080,11 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
         FileError(idsFileDoesBelongVersionStars);
         goto LBadFile;
     }
-    if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 49)) {
+    if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
         FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
         goto LBadFile;
     }
-    if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor >= 85)) {
+    if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
         FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
         goto LBadFile;
     }

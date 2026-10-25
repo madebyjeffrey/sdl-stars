@@ -970,12 +970,14 @@ int16_t GenNewGameFromFile(char *pszFile) {
     int16_t c;
     int16_t i;
     int16_t fSuccess;
+    int16_t fReadRace;
     char   *lpbStart;
     jmp_buf env;
     int16_t j;
     char   *lpb;
     char   *lpbDef;
     int16_t cb;
+    int32_t cbFile;
     char   *pchT;
     AiRace  idAi;
     int16_t lvlAi;
@@ -996,23 +998,32 @@ int16_t GenNewGameFromFile(char *pszFile) {
     }
     memset(&game, 0, sizeof(GAME));
     StreamOpen(pszFile, mdRead);
-    cb = LOWORD(CbFileSize(hf));
-    if (cb >= 16000) {
+    cbFile = CbFileSize(hf);
+    if (cbFile < 0 || cbFile >= 16000) {
         FileError(idsUniverseCreationFileAppearsInvalid);
         goto LError;
     }
+    cb = (int16_t)cbFile;
     lpbDef = LpAlloc(cb + 1, htPerm);
     lpbDefMac = lpbDef + cb;
     RgFromStream(lpbDef, cb);
     StreamClose();
     lpbDef[cb] = 0;
+    if (!FUtf8Valid(lpbDef, cb)) {
+        FileError(idsUniverseCreationFileAppearsInvalid);
+        goto LError;
+    }
     lpb = lpbDef;
+    if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
     lpbStart = PszGetLine(&lpb);
     if (*lpbStart == 0 || strlen(lpbStart) > 31) {
         AlertSz(PszFormatIds(idsIllegalGameTitle, NULL), MB_ICONHAND);
         goto LError;
     }
-    strcpy(game.szName, lpbStart);
+    if (CchCopyUtf8(game.szName, sizeof(game.szName), lpbStart, strlen(lpbStart)) < 0) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        goto LError;
+    }
     if (lpb >= lpbDefMac) {
     LUniDefShort:
         AlertSz(PszFormatIds(idsUniverseDefinitionFileAppearsTooShort, NULL), MB_ICONHAND);
@@ -1089,6 +1100,10 @@ int16_t GenNewGameFromFile(char *pszFile) {
         lpbStart = PszGetLine(&lpb);
         if (lpb >= lpbDefMac)
             goto LUniDefShort;
+        if (strlen(lpbStart) >= sizeof(szWork)) {
+            FileError(idsUniverseCreationFileAppearsInvalid);
+            goto LError;
+        }
         if (i > 0 && *lpbStart == '#') {
             cNum = CParseNumbers(lpbStart + 1, rgl, 2);
             idAi = LOWORD(rgl[0]);
@@ -1113,7 +1128,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
             rgplr[i].lvlAi = lvlAi;
         } else {
             strcpy(szWork, lpbStart);
-            if (!FWasRaceFile(szWork, FALSE)) {
+            fReadRace = FWasRaceFile(szWork, FALSE);
+            if (fReadRace != 1) {
             LCantGetRace:
                 CchSprintf(szWork, PszGetCompressedString(idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
                 AlertSz(szWork, MB_ICONHAND);
@@ -1238,7 +1254,10 @@ int16_t GenNewGameFromFile(char *pszFile) {
     if (lpb - lpbStart >= 3 && *lpb == 'y' && lpb[-1] == 'x' && lpb[-2] == '.') {
         lpb[-2] = 0;
     }
-    strcpy(szBase, lpbStart);
+    if (CchCopyUtf8(szBase, sizeof(szBase), lpbStart, strlen(lpbStart)) < 0) {
+        FileError(idsUniverseCreationFileAppearsInvalid);
+        goto LError;
+    }
     if (lpb + 4 < lpbDefMac) {
         lpbDefUni = lpb;
     }

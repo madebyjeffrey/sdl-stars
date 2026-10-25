@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo apt-get update
           # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
-          sudo apt-get install -y cmake ninja-build pkg-config python3-yaml \
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
             libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
             libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \

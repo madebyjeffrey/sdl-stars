@@ -1,5 +1,11 @@
 # Race creation wizard calculations and numerical compatibility
 
+Current module specifications: [M04 Race Design Wizard](../spec/M04-race-design.md),
+[logical race data and Rust/SQL models](../spec/M04-race-data-model.md), and
+[current binary64 advantage calculation](../spec/M04-race-advantage-points.md).
+These supersede the historical arithmetic and unused-`fDontWrite` description
+below; this document remains the historical numerical/UI research record.
+
 **Historical arithmetic specification:** the calculations below describe the
 pre-migration extended intermediates. Production now uses binary64 `double`;
 see [DOUBLE-PRECISION.md](DOUBLE-PRECISION.md) for measured impacts. The diagnostic
@@ -27,6 +33,17 @@ The specification describes `race.c`, `raceui.c`, and `planet.c` at commit
 The diagnostic below extracts the pinned historical source rather than maintaining a
 separate handwritten implementation. No production arithmetic or baseline was
 changed to produce this specification.
+
+## Relationship to user stories
+
+Use [M04 stories and requirements](../spec/M04-race-design.md#user-stories-and-requirements)
+for player goals, workflow acceptance, interaction/accessibility and quality
+requirements. The [race data](../spec/M04-race-data-model.md#story-linked-requirements)
+and [pricing](../spec/M04-race-advantage-points.md#story-linked-requirements)
+companions own the focused criteria and formal traceability for implementers.
+This reference supports M04-US01–US04; it does not define a second set of stories,
+a new UI contract or additional acceptance guarantees. Existing revision and
+historical arithmetic caveats in this document remain in effect.
 
 ## Source and execution flow
 

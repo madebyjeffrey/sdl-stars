@@ -162,19 +162,43 @@ both nested wizards. Captures are under `test-client/race-{dummy,x11}`. The
 the client UI; these are separate from the host tests. The user confirmed that
 the habitat page works and page transitions retain one desktop window.
 
+## Game and player selection
+
+The main library lists each managed game once. Its separate Player dropdown
+uses player IDs as item data and displays each available turn's year. Selecting
+a game rebuilds that dropdown, using the remembered player where available;
+refreshes preserve a still-valid game/player selection. Open Game and game
+double-click use the dropdown's player. If Continue's remembered turn is missing,
+it selects the game, clears the dropdown selection and focuses it for an explicit
+choice. Host Games hides both the dropdown and its label.
+The Continue Game button has a fixed short caption; its remembered game, player
+and year (or Choose Player prompt) appear on a separate line below the selector.
+
 ## Continuous race-wizard pages
 
 `RaceCreationWizard` now brackets its modal pages with an SDL dialog sequence.
 Back and Next retire each logical HWND and its controls while retaining the
-native SDL window and renderer for the next same-sized page. The owner stays
-disabled across transitions; new drawing is presented only after initialization
+native SDL window, renderer and completed frame for the next same-sized page.
+The existing native owner attachment stays in place instead of reattaching
+the visible window on every transition. The owner stays disabled across
+transitions; new drawing is presented only after initialization
 and painting finish. Cancel/Finish or a failed creation release retained
-presentation and restore the original owner/focus. Ordinary dialogs and the
-Windows build retain their existing behavior.
+presentation and restore the original owner/focus. Ordinary dialogs retain
+their existing behavior.
+
+Native exposure during initialization also resubmits the retained frame: the
+next page is logically hidden while the reused native window remains visible.
+Caption updates happen after the replacement page is registered so exposure
+events can resolve it. The creation path skips native synchronization and icon
+setup that the retained window has already completed.
 
 The SDL input test checks that all six pages, including Back and then Next,
-share one SDL window ID while the previous HWND becomes invalid. Cancellation
-checks that the SDL window disappears and the New Game owner is enabled again.
+share one SDL window ID and retain the display texture while the previous HWND
+becomes invalid. Cancellation checks that the SDL window disappears and the
+New Game owner is enabled again.
+An injected exposure during caption changes checks that the previous frame is
+redrawn before the next page is shown. Every submitted wizard frame is also
+checked for its navigation controls, catching background-only presentations.
 Focused dialog tests check nested-sequence rejection, pending-window cleanup
 and resource-creation failure. The process-exit test also checks silent cleanup
 of a pending native wizard window after application state is released. The user

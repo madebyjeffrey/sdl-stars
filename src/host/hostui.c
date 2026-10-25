@@ -7,6 +7,17 @@
 // PromptPassword refuses: a host takes a file's password with -p.
 int16_t PromptPassword() { return FALSE; }
 
+// The host has no interactive UI for replacing a legacy race password.
+int16_t FPromptLegacyRacePassword(char *szPassword) {
+#ifdef STARS_TEST_GOLDEN_DIR
+    extern int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
+    return FStarsTestPromptLegacyRacePassword(szPassword);
+#else
+    (void)szPassword;
+    return FALSE;
+#endif
+}
+
 // PromptSaveGame leaves a player's unsaved orders unsaved.
 void PromptSaveGame() { return; }
 
@@ -63,4 +74,10 @@ void SetHdcTextColor(HDC hdc, uint32_t cr) { return; }
 void SetSzRaceFile(const char *pszFile) {
     size_t cch = CchUtf8Prefix(pszFile, sizeof(szRaceFile) - 1);
     memcpy(szRaceFile, pszFile, cch); szRaceFile[cch] = 0;
+}
+
+int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
+    char szPrompt[512];
+    CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
+    return IdAlertBox(szPrompt, MB_YESNO | MB_ICONQUESTION) == IDYES;
 }

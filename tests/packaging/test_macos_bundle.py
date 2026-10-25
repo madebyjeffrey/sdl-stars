@@ -69,7 +69,7 @@ class BundleAssembly(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
         source = self.root / "source"
-        for name in ("res/icons/stars-app.icns", "res/stars!.hlp", "res/fonts/LICENSE",
+        for name in ("res/icons/stars-app.icns", "res/fonts/LICENSE",
                      "res/fonts/ORIGIN.json", "compat/win32/LICENSE", "compat/win32/LICENSE.free-api",
                      "compat/win32/LICENSE.zingl"):
             path = source / name

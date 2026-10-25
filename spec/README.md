@@ -1,0 +1,1442 @@
+# SDL-Stars module overview
+
+Status: source-derived detailed module collection; logical ownership remains proposed.
+Recorded: 2026-10-23.
+Base: `develop` at `4ba1ce856b17f499a0238c968c7d0329bbde1ddf`.
+
+## Purpose and scope
+
+Identify the high-level logical modules of SDL-Stars and progressively specify
+their actors, goals, workflows, requirements, rules and acceptance evidence.
+All 26 module-map entries now have detailed specifications, including stable user
+stories, acceptance criteria, interaction/quality requirements, source evidence,
+canonical Dafny definitions and explicitly owned coverage limits. Eight technical
+companions specialize shared contracts and versioned data.
+
+The [completeness review and completion backlog](#completeness-review-and-completion-backlog)
+separates documented modules from remaining rule/model work, runtime qualification
+and policy decisions. The completion goal is active; the collection is not yet
+a complete executable behavioral specification.
+
+Module documents and Dafny files begin with their uppercase module ID, such as
+`M05-universe-creation.md` or `S01-game-file-formats.md`. `README.md` and
+`AGENTS.md` cover the whole specification collection.
+
+A **module** has an interface and an implementation. Its interface includes the
+inputs, outputs, state assumptions, ordering constraints, and failure behavior a
+caller needs to understand. For this map, modules group coherent player or host
+decisions and outcomes; their implementations may span core and UI files.
+
+The module ownership below is proposed. The source pointers are starting points
+for investigation, not proof that each module already has a clean interface.
+The original map records the first exploration; detailed entries now provide
+source-backed coverage with explicit proof and test boundaries. This is not
+approval to refactor the game or a claim of exhaustive C/UI verification.
+
+## Existing technical organization
+
+[CMakeLists.txt](../CMakeLists.txt) defines the core and desktop source groups and
+the command-line host. The [roadmap](../docs/ROADMAP.md) describes their separation.
+
+| Existing layer | Role |
+| --- | --- |
+| `src/core` | Shared game rules, turn generation, AI, and game-file handling. |
+| `src/ui` | Desktop workflows, dialogs, drawing, and window state. |
+| `src/host` | Command-line host and implementations of the game-to-UI interface for unattended operation. |
+| `src/platform` | Native filesystem, timing, formatting, and encoding support. |
+| `compat/win32` | SDL-backed implementation of the Win32 interface used by the desktop UI. |
+| `data` and `text` | Generated static game data and text catalogs. |
+
+The core reaches the player through [ui.h](../src/core/ui.h). The desktop uses
+SDL3 through the Win32 wrapper; the command-line host remains independent of SDL.
+These technical layers and the functional modules below answer different
+questions: where code runs, and which behavior it owns.
+
+## Proposed first-level module map
+
+### Before entering a game
+
+| ID | Module | Responsibility | Initial source pointers |
+| --- | --- | --- | --- |
+| M01 | [Game Library](M01-game-library.md) | Find, organize, import, export, duplicate, rename, and delete managed games; choose a player turn or resume a session. | [libraryui.c](../src/ui/libraryui.c), [libraryzip.c](../src/ui/libraryzip.c), [library ADR](../docs/adr/0001-desktop-managed-libraries.md) |
+| M02 | [Race Library](M02-race-library.md) | Manage reusable race designs, saved versions, imports, exports, and protected designs. | [libraryui.c](../src/ui/libraryui.c), [raceui.c](../src/ui/raceui.c), [library ADR](../docs/adr/0001-desktop-managed-libraries.md) |
+| M03 | [New Game Wizard](M03-new-game-wizard.md) | Assemble game settings, player roster, race selections, and victory conditions into a valid game-creation request. | [createui.c](../src/ui/createui.c): `NewGameWizard`; [create.h](../src/core/create.h) |
+| M04 | [Race Design Wizard](M04-race-design.md) | Build a valid race through identity, traits, habitability, economy, research choices, and advantage-point accounting. | [raceui.c](../src/ui/raceui.c): `RaceCreationWizard`; [race.c](../src/core/race.c), [calculation notes](../docs/RACE-WIZARD-CALCULATIONS.md) |
+| M05 | [Universe Creation](M05-universe-creation.md) | Turn completed setup into planets, homeworlds, players, starting fleets, and initial game files. | [create.c](../src/core/create.c): `GenerateWorld`, `GenNewGameFromFile`, `CreateTutorWorld` |
+
+The proposed distinction between M03 and M05 is setup versus generation. The
+wizard owns editing and validating the setup; universe creation owns what the
+accepted settings produce. This is a desired logical division, not a claim that
+the current wizard returns a standalone request object.
+
+M04 produces a reusable race design; M02 owns its library lifecycle. The effects
+of racial traits during play belong with the gameplay rules that apply them.
+Customizing a race from the New Game roster connects these workflows without
+making them a single module.
+
+### Inside a player turn
+
+| ID | Module | Responsibility | Initial source pointers |
+| --- | --- | --- | --- |
+| M06 | [Player Session and Turn Orders](M06-player-session-and-turn-orders.md) | Open a player turn, track pending changes, save or submit orders, switch players, and handle an incoming turn. | [file.c](../src/core/file.c), [save.c](../src/core/save.c), [log.c](../src/core/log.c), [fileui.c](../src/ui/fileui.c), [libraryui.c](../src/ui/libraryui.c), [mdi.c](../src/ui/mdi.c) |
+| M07 | [Galaxy Map and Navigation](M07-galaxy-map-and-navigation.md) | Explore the map, select objects, search, zoom, filter, and navigate to detailed views. | [scan.c](../src/ui/scan.c), [scaninspect.c](../src/ui/scaninspect.c), [tb.c](../src/ui/tb.c) |
+| M08 | [Planet and Colony Management](M08-planet-and-colony-management.md) | Inspect planets and manage population, habitability, minerals, installations, defenses, and terraforming. | [planet.c](../src/core/planet.c), [planetui.c](../src/ui/planetui.c), [planetpaneui.c](../src/ui/planetpaneui.c) |
+| M09 | [Production Management](M09-production-management.md) | Edit production queues and presets; explain costs, constraints, and expected completion; connect planned production with its resolution. | [produce.c](../src/core/produce.c), [produceui.c](../src/ui/produceui.c), [turn2.c](../src/core/turn2.c): `Produce`, `CBuildProdItem` |
+| M10 | [Fleet Operations](M10-fleet-operations.md) | Manage composition, cargo, fuel, routes, waypoints, tasks, splitting, merging, and transfers. | [ship.c](../src/core/ship.c), [ship2.c](../src/core/ship2.c), [shipui.c](../src/ui/shipui.c), [ship2ui.c](../src/ui/ship2ui.c), [turn.c](../src/core/turn.c), [turn3.c](../src/core/turn3.c) |
+| M11 | [Ship and Starbase Design](M11-ship-and-starbase-design.md) | Assemble and validate designs from hulls and parts, calculate their properties, and manage the design roster. | [build.c](../src/core/build.c), [buildui.c](../src/ui/buildui.c), [parts.c](../src/core/parts.c) |
+| M12 | [Research and Technology](M12-research-and-technology.md) | Set priorities and allocations; inspect progress, requirements, and available equipment. | [research.c](../src/core/research.c), [researchui.c](../src/ui/researchui.c), [parts.c](../src/core/parts.c), [turn2.c](../src/core/turn2.c): `UpdateResearchStatus` |
+| M13 | [Player Relations](M13-player-relations.md) | Set relationships with other players and explain their consequences for cooperation and conflict. | [battleui.c](../src/ui/battleui.c): `RelationsDlg`; rules spread across core gameplay code |
+| M14 | [Battle Planning and Review](M14-battle-planning-and-review.md) | Configure battle plans, inspect results, and replay recorded battles. Planning and review are likely separate submodules later. | [battleui.c](../src/ui/battleui.c): `BattlePlansDlg`; [vcr.c](../src/ui/vcr.c), [battle.c](../src/core/battle.c) |
+| M15 | [Messages and Reports](M15-messages-and-reports.md) | Review turn events, player messages, planet/fleet summaries, scores, and exported reports; navigate to relevant objects. | [msg.c](../src/core/msg.c), [msgui.c](../src/ui/msgui.c), [report.c](../src/core/report.c), [reportui.c](../src/ui/reportui.c) |
+| M16 | [Tutorial and Help](M16-tutorial-and-help.md) | Guide the player through tasks and provide contextual explanations and reference material. | [tutor.c](../src/ui/tutor.c), [tutor2.c](../src/ui/tutor2.c), [tutorial text](../text/tutorial.txt), [help implementation notes](../docs/WIN32-HELP.md) |
+
+The map and reports present information supplied by other modules. They should
+not become independent owners of colony, fleet, research, or combat rules merely
+because they display those rules' results.
+
+### Hosting and simulation
+
+| ID | Module | Responsibility | Initial source pointers |
+| --- | --- | --- | --- |
+| M17 | [Host Game Management](M17-host-game-management.md) | Collect and validate orders, show readiness, configure generation, and manage generated turns and backups. | [libraryui.c](../src/ui/libraryui.c), [host.c](../src/host/host.c), [turn.c](../src/core/turn.c): `VerifyTurns`, `CFindTurnsOutstanding`, `FRunCmdLine`; [hosting notes](../docs/TOTALHOST.md) |
+| M18 | [Turn Generation](M18-turn-generation.md) | Advance the game by one year and coordinate the ordered phases and their interactions. | [turn.c](../src/core/turn.c): `FGenerateTurn`; [turn2.c](../src/core/turn2.c), [turn3.c](../src/core/turn3.c) |
+| M19 | [Game Rules and Resolution](M19-game-rules-and-resolution.md) | Resolve movement, production, growth, mining, research, combat, colonization, minefields, packets, and universe events. This is a provisional group to decompose. | [turn.c](../src/core/turn.c), [turn2.c](../src/core/turn2.c), [turn3.c](../src/core/turn3.c), [battle.c](../src/core/battle.c), [mine.c](../src/core/mine.c), [thing.c](../src/core/thing.c) |
+| M20 | [AI Players](M20-ai-players.md) | Evaluate their situation and choose designs, research, production, fleet orders, and other actions. | [ai.c](../src/core/ai.c), [ai2.c](../src/core/ai2.c), [ai3.c](../src/core/ai3.c), [ai4.c](../src/core/ai4.c), [aiutil.c](../src/core/aiutil.c) |
+
+M18 owns sequencing. Individual gameplay modules should own their rules. M19
+keeps simulation responsibilities visible during this first pass; it is not a
+proposal for a second copy of every rule. For example, production queue editing
+and production resolution are related parts of M09, exercised at different times.
+Desktop hosting and the command-line host are different entry points into the
+shared simulation; their interaction requirements need separate treatment.
+
+### Shared support
+
+| ID | Module | Responsibility | Initial source pointers |
+| --- | --- | --- | --- |
+| S01 | [Game-file Formats, Persistence and Validation](S01-game-file-formats.md) | Specify file families and binary records, map them to shared logical state, and define read/write validation and compatibility. | [file.c](../src/core/file.c), [save.c](../src/core/save.c), [log.c](../src/core/log.c), [structs.h](../src/core/structs.h), [encoding contracts](../docs/UNICODE-BOUNDARIES.md) |
+| S02 | [Application Preferences and Window Layout](S02-application-preferences-and-window-layout.md) | Maintain application preferences, window arrangement, and session presentation. | [init.c](../src/ui/init.c), [mdi.c](../src/ui/mdi.c), [nativeui.c](../src/ui/nativeui.c) |
+| S03 | [Static Game Data and Text](S03-static-game-data-and-text.md) | Specify the catalogs, schemas, values, units and stable identifiers required by generation and gameplay. | [data generator](../data/datagen.py), [text generator](../text/textgen.py), [strings.c](../src/core/strings.c) |
+| S04 | [Platform Services](S04-platform-services.md) | Provide filesystem, timing, formatting, and encoding behavior across operating systems. | [native.c](../src/platform/native.c), [filesystem.cpp](../src/platform/filesystem.cpp), [encoding.c](../src/platform/encoding.c) |
+| S05 | [SDL Desktop Implementation](S05-sdl-desktop-implementation.md) | Implement windows, controls, input, rendering, dialogs, and other desktop facilities used by the UI. | [compat/win32](../compat/win32), [SDL development guide](../docs/SDL3-DEVELOPMENT.md) |
+| S06 | [Shared Game State and In-memory Data Model](S06-shared-game-state.md) | Define logical entities, identities, relationships, typed values, invariants and state lifetimes shared by the functional modules. | [structs.h](../src/core/structs.h), [enums.h](../src/core/enums.h), [globals.h](../src/core/globals.h), [race model](M04-race-data-model.md) |
+
+S01 and S03 retain their original IDs with expanded scope; S06 is new. These
+are specification boundaries, not a requirement to reorganize the C sources.
+S01 now has a [detailed persistence specification](S01-game-file-formats.md).
+S06 now has a [detailed shared-state specification](S06-shared-game-state.md) and
+[Dafny contracts](dafny/S06-shared-state.dfy), checked against
+`e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-24. S03 now specifies catalog schemas, stable identities, text generation and
+[a complete versioned input inventory](S03-catalog-inventory.md). The local M03/M04 definitions remain canonical for setup and races.
+
+## Shared data contracts
+
+The existing M03 and M04 specifications describe setup and race data but explicitly
+exclude binary layouts. S01 now specifies serialized records and workflows;
+S03 supplies schemas and precise versioned catalog values. S06 defines the
+shared logical model between those boundaries and the gameplay modules.
+
+Keep three representations separate: **serialized files** (S01), **logical
+in-memory state** (S06), and **static reference data** (S03). A file record need
+not correspond to one logical struct. For example, current `PLAYER` combines race
+attributes with runtime player state, while `WriteRtPlr` and `ReadRtPlr` encode
+and decode its stored representation. A modern model may separate these concerns
+without changing the existing file contract.
+
+### S01: Game-file Formats, Persistence and Validation
+
+The complete source-derived entry point is [Game-file Formats, Persistence and
+Validation](S01-game-file-formats.md), checked against
+`e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23. It separates
+canonical writer output, observed reader behavior and proposed stricter validation.
+
+| Reference | Coverage |
+| --- | --- |
+| [Dafny specification](S01-game-file-specification.dfy) | Foundation plus codecs, packed records, orders, file groups, external formats and recovery conditions; explicit proof/dependency scope in S01. |
+| [S01 entry](S01-game-file-formats.md) | File families, exact sequencing, companion requirements, state mappings, history/appended turns, compatibility and recovery. |
+| [Binary records](S01-game-file-records.md) | Complete current tag inventory, widths/bitfields, packed entity variants, UTF-8/nibble codec, XOR stream, race checksum, battle/message/AI data. |
+| [Orders and replay](S01-game-file-orders.md) | All current commands, byte encodings, state effects, generation-only changes, ordering and failure semantics. |
+| [External formats](S01-game-file-external.md) | Batch definition lines, report columns, metadata schemas, library publication and ZIP subset. |
+| [Validation and acceptance](S01-game-file-validation.md) | Checks by entry point, concrete vectors, actual test evidence and explicit implementation/policy gaps. |
+
+The specification records the protected-legacy-race policy conflict, incomplete
+bounded validation, nontransactional saves/replay, and the mismatch between core
+multi-year turn support and library import. It does not fix these or change
+runtime/file-format behavior. S06 owns the logical types and S03 owns the stable
+catalog IDs referenced by these byte mappings.
+
+### S06: Shared Game State and In-memory Data Model
+
+The [shared-state specification](S06-shared-game-state.md) covers the six model areas
+below. It distinguishes current C behavior, storage domains and proposed
+validated boundaries. Its [Dafny model](dafny/S06-shared-state.dfy) specifies selected
+conditions and proves selected consequences; it does not verify the C runtime
+or propose a source reorganization.
+
+| Model area | Detailed coverage |
+| --- | --- |
+| Identity, time and units | Scoped IDs, indices, optional/sentinel adapters, gift-recipient encoding, calendar time, coordinates, cargo, resources, fuel and arithmetic boundaries (§2). |
+| Setup and players | Canonical M03/M04 links; mutable progress, relations, plans, templates, counts and design state (§3). |
+| Universe entities | Planets/colonies, designs, fleets, cargo, production and waypoint state; references, cardinality, defaults and transitional exceptions (§§3–4). |
+| Variant entities and commands | All declared object classes, ten task codes, ten transport actions and four THING cases; salvage and unknown discriminators distinguished (§§4–5). |
+| Knowledge and results | Partial/stale/estimated information, ownership, messages, scores, recorded battles and AI memory (§6). |
+| Execution and session state | Creation-facing conditions, RNG streams/stack, pending commands, phase-local state, caches, editor copies and destruction (§§7–8). |
+
+[Dafny verification and acceptance](S06-shared-game-state.md#9-formal-verification-and-acceptance)
+records the command, proof obligations, positive/negative witnesses and limits.
+Logical types are not serialization layouts: S01 owns the adapters and S03 the
+catalogs. M03/M04 remain the existing setup/race definitions; gameplay modules
+own legal mutations and resolution. Stronger validated-boundary conditions do
+not silently change the C loader or the regression baseline.
+
+### S03: Static Game Data and Text
+
+The [S03 entry](S03-static-game-data-and-text.md) specifies generator/schema
+boundaries, stable positional IDs, derived fields, AI packing and compressed
+text. Its [versioned inventory](S03-catalog-inventory.md) enumerates all 21 ordinary
+tables, six recipe tables, preferences/research inputs and text catalogs, with
+exact source hashes and generator/schema/embedded-rule references. Source hashes
+establish identity, not semantic correctness; native parser/compiler, runtime
+formatting and rendering gaps remain explicit. Gameplay consumers own formulas
+and effects, S01 saved references, S06 mutable instances.
+
+### Shared contracts needed by M05 Universe Creation
+
+M05 uses the following minimum dependency set. Its detailed specification now
+links the shared contracts and pins catalog/helper inputs. The complete S03
+inventory now supplements M05’s bounded creation-facing references.
+
+| Dependency | Contract M05 should reference |
+| --- | --- |
+| M03 / M04 | Accepted setup, roster and race snapshots; defaults and validation; victory settings and leftover-point choices. |
+| S06 | Generated game/player/planet/design/fleet/space-object state, identities and references, initial values, units, and ownership before/after creation. |
+| S03 / M11 | Race presets, starting hulls/parts/templates, default plans, planet names, required lookup tables, and design calculations. |
+| S06 / S04 | RNG algorithm and full entry state, draw order, clock-derived identity and tutorial/batch differences. A seed alone is not the complete reproducibility contract. |
+| S01 / M01 | Initial `.xy`, `.hst` and `.mN` outputs, completeness checks, and what survives a failed write or library finalization. |
+
+The generation rules now live in [M05 Universe Creation](M05-universe-creation.md),
+with a bounded, versioned catalog/helper contract. M03 §4.7 retains a handoff
+link; S03 remains owner of the full catalog specification. M05 acceptance
+examples should check both logical initial state and the corresponding decoded file outputs; deterministic tests
+must control clock and RNG inputs as well as catalog versions.
+
+## Detailed specifications
+
+| Module | Entry point | Supporting specifications | Coverage |
+| --- | --- | --- | --- |
+| M01 | [Game Library](M01-game-library.md) | [Dafny contracts](M01-library-specification.dfy), shared names, S01 persistence and M06 session handoffs | Listing/Continue, new-game publication, imports/conflicts, copy/rename/delete, export and host orders; partial-failure boundaries explicit. |
+| M02 | [Race Library](M02-race-library.md) | [Dafny contracts](M02-library-specification.dfy), shared names, M04 design and S01 bytes | Destination binding, stored-name version scans, reuse/update/new-version decisions, import/duplicate/export/delete and legacy policy conflict. |
+| M03 | [New Game Wizard](M03-new-game-wizard.md) | Setup model, roster/defaults, victory controls, scoring and M05 handoff | Source-derived workflow and calculations, dependency boundaries, port guidance and acceptance vectors. |
+| M04 | [Race Design Wizard](M04-race-design.md) | [Race data model and storage mapping](M04-race-data-model.md); [Advantage-point calculation](M04-race-advantage-points.md) | Logical inputs and current binary64 pricing specified; full workflow/recovery audit remains open. |
+| M05 | [Universe Creation](M05-universe-creation.md) | M03/M04 inputs, S06 state, S01 files and versioned S03/M11 dependencies | Source-derived placement, starting assets, RNG/order, tutorial/batch paths, publication/failure behavior and acceptance matrix. |
+| M06 | [Player Session and Turn Orders](M06-player-session-and-turn-orders.md) | Player selection, pending orders, saving, export and incoming turns | Source-derived workflows, partial-failure boundaries and modeled session transitions. |
+| M07 | [Galaxy Map and Navigation](M07-galaxy-map-and-navigation.md) | Selection, search, zoom/pan, filters, gesture handoffs and semantic inspection | Source-derived navigation rules, formal properties and selected scanner workflow evidence. |
+| M08 | [Planet and Colony Management](M08-planet-and-colony-management.md) | [Dafny contracts](M08-colony-specification.dfy), shared state, arithmetic and persistence | Colony selection, capacity/output, terraforming, orbital facilities and pane behavior; growth/mining and platform boundaries explicit. |
+| M09 | [Production Management](M09-production-management.md) | [Dafny contracts](M09-production-specification.dfy), shared state, arithmetic and persistence | Queue editing/templates, commit scope, costs/estimates and host payment/status rules; complete execution loop remains bounded. |
+| M10 | [Fleet Operations](M10-fleet-operations.md) | [Dafny contracts](M10-fleet-specification.dfy), shared state, arithmetic and persistence | Fleet orders, cargo, split/merge, overflow, fuel and task-resolution handoffs; host simulation and packed-damage gaps explicit. |
+| M11 | [Ship and Starbase Design](M11-ship-and-starbase-design.md) | [Dafny contracts](M11-design-specification.dfy), shared state, arithmetic and persistence | Roster/copy/edit/delete, availability, slots and cost/armor projections; catalog and cascading deletion boundaries explicit. |
+| M12 | [Research and Technology](M12-research-and-technology.md) | [Dafny contracts](M12-research-specification.dfy) | Research policy/quotes, technology browser and host allocation/breakthrough handoffs; shared costs retained. |
+| M13 | [Player Relations](M13-player-relations.md) | [Dafny contracts](M13-relations-specification.dfy) | Directed relations, immediate edits, close/log semantics and attack/access consumers. |
+| M14 | [Battle Planning and Review](M14-battle-planning-and-review.md) | [Dafny contracts](M14-battle-review-specification.dfy) | Plan editing/copy/delete, fleet-reference remapping and bounded recorded-battle playback. |
+| M15 | [Messages and Reports](M15-messages-and-reports.md) | [Dafny contracts](M15-reports-specification.dfy) | Event filtering, outgoing drafts, report eligibility/caches, exports and viewpoint limits. |
+| M16 | [Tutorial and Help](M16-tutorial-and-help.md) | [Dafny contracts](M16-tutorial-specification.dfy) | Tutorial page/task progression, exit/restoration and packaged HTML help; full tutorial qualification remains open. |
+| M17 | [Host Game Management](M17-host-game-management.md) | [Dafny contracts](M17-host-specification.dfy) | Readiness precedence, wait/try dispatch, AI completion, backups and partial-output recovery. |
+| M18 | [Turn Generation](M18-turn-generation.md) | [Dafny contracts](M18-generation-specification.dfy) | Ordered annual phases, replay/RNG prerequisites, publication and failure cleanup boundaries. |
+| M19 | [Game Rules and Resolution](M19-game-rules-and-resolution.md) | [Dafny contracts](M19-resolution-specification.dfy) | Complete resolution-family ownership inventory, growth/mining projections and native combat/task/object obligations. |
+| M20 | [AI Players](M20-ai-players.md) | [Dafny contracts](M20-ai-specification.dfy) | AI entry/failure paths, exact strategy IDs, traversal/RNG, policy inventory and persistence limits. |
+| S01 | [Game-file Formats, Persistence and Validation](S01-game-file-formats.md) | [Dafny specification](S01-game-file-specification.dfy), [records/codecs](S01-game-file-records.md), [orders](S01-game-file-orders.md), [external formats](S01-game-file-external.md), [validation](S01-game-file-validation.md) | Complete current emitted-format and persistence-workflow specification; observed validation/recovery limits and policy conflicts explicit. |
+| S02 | [Application Preferences and Window Layout](S02-application-preferences-and-window-layout.md) | [Dafny contracts](S02-preferences-specification.dfy), [preference contracts](S02-preference-contracts.md) | Active key/default/width/write inventory, desktop profile grammar/list edits, exact tile and placement parsing, normalization and native boundaries. |
+| S03 | [Static Game Data and Text](S03-static-game-data-and-text.md) | [Dafny contracts](S03-catalogs-specification.dfy), [versioned inventory](S03-catalog-inventory.md) | Catalog schemas/identities, AI packing, compressed text and 67 exact source/generator/schema references. |
+| S04 | [Platform Services](S04-platform-services.md) | [Dafny contracts](S04-platform-specification.dfy) | Filesystem/buffer results, UTF-8, formatting/sort/arithmetic, temp directories and clock boundaries. |
+| S05 | [SDL Desktop Implementation](S05-sdl-desktop-implementation.md) | [Dafny contracts](S05-desktop-specification.dfy) | Desktop queue/filter/timer projections, focus/capture/lifetimes and full compatibility-facility qualification inventory. |
+| S06 | [Shared Game State and In-memory Data Model](S06-shared-game-state.md) | [Dafny contracts](dafny/S06-shared-state.dfy), identity/unit maps, entity/variant schemas, knowledge and lifetimes | Six model areas specified; selected structural conditions and proofs; C/refinement and gameplay proof limits explicit. |
+
+The M03 specification was checked against `e2eae18cff0f990db20415c1c2262aed2022f95b`
+on 2026-10-23. Its generation contract moved to [M05](M05-universe-creation.md),
+rechecked at the same revision on 2026-10-24 with tutorial, catalog and failure
+contracts added; race pricing remains linked to M04.
+
+The M04 documents integrate the earlier race reports into this module map and
+were checked against `e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23.
+They distinguish observed behavior from proposed port interfaces. The map's
+original base revision above still describes its initial exploration.
+
+## Findings and constraints to carry into detailed specifications
+
+### Library and session vocabulary
+
+Use the [root glossary](../GLOSSARY.md): a race design differs from a player turn;
+a managed game can contain turns for several players; a library name differs
+from the stored game title and exchange basename. These distinctions affect
+imports, exports, rename operations, and session selection.
+
+[ADR 0001](../docs/adr/0001-desktop-managed-libraries.md) records managed game and
+race libraries, explicit imports, race versions, player selection, and separate
+host management. Its rules are existing decisions to consult during breakdown.
+
+### Wizard evidence
+
+[Gameplay qualification](../docs/GAMEPLAY-QUALIFICATION.md) describes exercised
+three-page New Game workflows, Back/Next/Finish, cancellation, and creation of
+universe, host, and player files. It also records workflow coverage for designs,
+fleets, research, production, reports, relations, and saving. This is documented
+evidence from earlier qualification, not a test run performed for this overview.
+
+The [race calculation notes](../docs/RACE-WIZARD-CALCULATIONS.md) describe six
+visible steps: identity; primary trait; lesser traits; habitat and growth;
+economy; and research. They distinguish wizard pricing from the later gameplay
+effects of racial traits. The notes are explicitly historical: their arithmetic
+analysis concerns pre-migration extended intermediates. Current production uses
+binary64 as documented in [DOUBLE-PRECISION.md](../docs/DOUBLE-PRECISION.md).
+The [M04 advantage specification](M04-race-advantage-points.md) now records the
+formulas checked against current source; the [data model](M04-race-data-model.md)
+contains Dafny logical fields and proposed Rust/SQL mapping guidance. The
+[module entry](M04-race-design.md) records the verified top-level workflow and its
+remaining control-transition/recovery audit. Current `RaceCreationWizard`
+honors `fDontWrite`, superseding the historical notes on that parameter.
+
+### Information and order ownership
+
+Distinguish authoritative universe state, information known to a player,
+historical observations, and estimates. Map, reports, and detailed views need
+consistent visibility and stale-information rules. Whether this needs a distinct
+Intelligence and Visibility module remains open.
+
+Distinguish editing an order, saving it, submitting it, exporting it, and having
+the host execute it. Cancellation and failure need explicit outcomes for each
+stage. Library operations, the active player session, and persistence all
+participate; their final ownership must be established during detailed work.
+
+[M06](M06-player-session-and-turn-orders.md) now specifies the player workflow,
+with [Dafny contracts](M06-session-specification.dfy) checked against
+`e2eae18cff0f990db20415c1c2262aed2022f95b`. It distinguishes guarded departure
+from legacy direct-save/destruction paths, in-memory submission intent from
+saved orders, staged export from delivery, and library import from live reload.
+S01/S06 retain their shared definitions; GUI callbacks, concurrent-host races
+and failed filesystem restoration remain explicit boundaries.
+
+### Compatibility and determinism
+
+Carry the root [repository rules](../AGENTS.md) into every detailed spec. Saved
+record widths remain fixed, text uses UTF-8 byte budgets, and current game writes
+use format 2.85. Sorting, RNG use, floating operation boundaries, and phase order
+can affect generated turns. Documenting current behavior is separate from
+proposing an intentional behavior change and its regression-baseline update.
+
+There is an existing documentation conflict to resolve before specifying legacy
+protected-race import: root AGENTS.md says protected legacy races are unsupported,
+while [ADR 0002](../docs/adr/0002-utf8-application-text.md) describes importing them
+with a confirmed replacement password. This overview does not choose a new
+policy or revise either document. The detailed race-import work must reconcile
+the instructions, accepted decision, and current implementation explicitly.
+
+## Open decomposition questions
+
+- Should Intelligence and Visibility become its own module shared by map,
+  reports, AI, and turn generation?
+- Where should colony management end and production management begin,
+  particularly for terraforming, defenses, and mineral accounting?
+- Should Research Planning and the Technology Browser become separate modules?
+- Should battle plans, combat resolution, and battle replay be three explicit
+  modules, with a shared recorded-battle contract?
+- Should messages, reports, scoring, and victory evaluation be split? Scores are
+  displayed through reports but calculated during generation; victory conditions
+  are configured during game creation.
+- How should minefields, packets, wormholes, salvage, and random events be grouped
+  when M19 is decomposed?
+- Should the guarded departure in M06 cover every direct-open, close and reload
+  path, including message edits finalized during destruction? Its current
+  library/persistence handoffs are documented; a uniform transition is not implemented.
+- Which AI decisions reuse the same validation rules as human orders, and where
+  does the implementation currently differ?
+
+These questions mark future investigation; they do not block this first-level map.
+
+## Outline for each detailed module specification
+
+Organize a module from **intent → workflow → observable acceptance → rules and
+state → evidence**. Existing numbered rule sections and anchors remain stable;
+a story/requirements section may precede them and link to the detailed material.
+A companion specializes the owning entry's stories rather than copying them.
+
+1. **Purpose and scope:** actor goals, included responsibilities, explicit
+   exclusions, neighboring owners and whether the document is an entry or a
+   technical companion. State the inspected revision and coverage limits.
+2. **Actors, context and stories:** stable story IDs, actor, desired capability,
+   benefit, trigger and prerequisites. Use “As a …, I want …, so that …” when
+   it communicates the need. Support modules can name a developer or host
+   operator and the player-facing outcome they enable.
+3. **Workflows:** normal steps from entry to completion, alternatives and their
+   triggers, cancellation, invalid input, partial failure, recovery and the
+   observable end state. Link shared steps to their owner.
+4. **Acceptance criteria:** stable IDs, Given/When/Then or equivalent explicit
+   precondition/action/outcome; include relevant negative and boundary cases.
+   Separate current behavior from a proposed stronger contract.
+5. **Interaction requirements:** input methods, keyboard/focus, selection,
+   feedback, discoverability and accessibility. Record known platform/viewport
+   assumptions. A headless module explains its caller/error interface and
+   links the UI owner; interaction can be inapplicable with that reason.
+6. **Quality requirements:** relevant responsiveness, determinism, text/encoding,
+   data integrity, resource limits and supported-display behavior. Record the
+   scenario, measurement/check method, target, status, evidence and owner.
+   Where no target was agreed or measurement performed, say so explicitly.
+7. **Inputs, outputs and owned state:** persistent, working and derived state,
+   knowledge/provenance, units, identity and lifetime. Reference S06 logical
+   types, S03 catalogs and S01 serialization independently.
+8. **Rules and calculations:** canonical Dafny definitions, constraints, operation
+   order, rounding/RNG boundaries, checked conditions and external obligations.
+   Reuse definitions; a story must not introduce a second algorithm in prose.
+9. **Dependencies and handoffs:** responsibility and data exchanged with each
+   owner, including planning versus execution, UI versus core, persistence and
+   recovery. A proposed module split is not an approved refactor.
+10. **Traceability:** story → criterion → rule/model → implementation evidence →
+    test/proof or gap. A table can combine acceptance and traceability columns.
+    Link to dated verification rather than implying that a named test ran.
+11. **Evidence and verification:** source revision, named functions, actual
+    commands/results, property proof scope, existing test scope and missing
+    coverage. A checked model is not proof of C refinement or full UI behavior.
+12. **Open decisions:** unanswered policy, usability, performance and ownership
+    questions, the owner who must resolve each, and what depends on the answer.
+
+### Requirement IDs and status
+
+Use stable module-scoped IDs: `M07-US01` (story), `M07-AC01` (acceptance),
+`M07-IR01` (interaction), `M07-QR01` (quality). Technical companions add a short
+scope, for example `S01-REC-AC01`. Keep existing IDs such as `S01-A01`; link them
+instead of renumbering. Give referenced IDs explicit lowercase HTML anchors so
+renaming a heading does not break a reference. Keep IDs unique across the collection.
+
+**Behavior status** has three values:
+
+| Status | Meaning |
+| --- | --- |
+| Observed | Describes current source behavior at the cited revision, including its limitations. |
+| Proposed | Desired interface/behavior or acceptance target; not automatically implemented or approved for a runtime change. |
+| Open | A policy, target or behavior is unresolved; name the decision owner and the consequence. |
+
+**Evidence** is a separate dimension: source reviewed; named model definition;
+proved lemma and assumptions; existing test and its scope; dated passing/failing
+run; or missing coverage. A story can describe observed behavior while its
+end-to-end acceptance test remains missing. Historical runs remain dated evidence.
+Stories inferred from source express a plausible goal, not measured user demand.
+
+### Interaction and quality review
+
+Each entry and companion accounts for these concerns in its own context. Reuse
+an owner's requirement by link when it supplies the whole contract; explain an
+inapplicable concern. Avoid inventing performance budgets, platform guarantees,
+accessibility conformance or transaction guarantees from an implementation detail.
+
+| Concern | Required specification detail |
+| --- | --- |
+| Input and focus | Supported mouse/keyboard/caller paths, navigation and cancellation, focus after validation/failure; identify incomplete audits. |
+| Feedback and discovery | How users identify the current object, action, units, completion and failure; link control/help/message owners. |
+| Accessibility and display | Keyboard alternatives, non-color cues, readable labels and relevant viewport/platform cases; distinguish proposals from demonstrated support. |
+| Text | UTF-8 byte budgets, safe truncation and exact comparison behavior; link existing S01/M04/native contracts rather than assuming Unicode case folding. |
+| Responsiveness and resources | Workload and environment, timing/memory metric, measurement method and agreed threshold or Open target. Retry loops and allocation failures need explicit limits. |
+| Integrity and reproducibility | What is preserved on success/failure, scoped identities, ordering, RNG/clock dependencies and comparison oracle. State partial-write and rollback limitations. |
+
+New representable acceptance rules require checked Dafny definitions under
+[spec/AGENTS.md](AGENTS.md). Reworded criteria point to existing definitions.
+UI accessibility, rendering, filesystem durability and timing criteria identify
+specific platform/test obligations where the formal collection has no model;
+labeling something a quality requirement does not establish a proof.
+
+### Story coverage inventory
+
+The 26 detailed entry specifications own stories; their seven companions own
+focused criteria and link back. Every first-level module now has an entry;
+remaining work is the explicitly named native/formal/interaction coverage, not
+unwritten overview rows. Older research documents remain dated evidence.
+
+| Owner | Entry stories | Companion responsibilities |
+| --- | --- | --- |
+| M01 | [Game library](M01-game-library.md#user-stories-and-requirements) | S01 owns bytes/publication; M06 owns active-session saves and Orders Export. |
+| M02 | [Race library](M02-race-library.md#user-stories-and-requirements) | M04 owns design/pricing; S01 owns race records and conversion; shared name predicates have one definition. |
+| M03 | [Game setup and roster](M03-new-game-wizard.md#user-stories-and-requirements) | Batch and creation handoffs link S01/M05. |
+| M04 | [Race design](M04-race-design.md#user-stories-and-requirements) | [Data](M04-race-data-model.md#story-linked-requirements) and [pricing](M04-race-advantage-points.md#story-linked-requirements). |
+| M05 | [Universe creation](M05-universe-creation.md#user-stories-and-requirements) | Catalogs, persistence and initial-state contracts remain shared owners. |
+| M06 | [Player sessions](M06-player-session-and-turn-orders.md#user-stories-and-requirements) | S01 retains bytes/replay/publication. |
+| M07 | [Map navigation](M07-galaxy-map-and-navigation.md#user-stories-and-requirements) | M08/M10 retain gameplay edits; S05 retains platform input/rendering. |
+| M08 | [Planet and Colony Management](M08-planet-and-colony-management.md#user-stories-and-requirements) | Colony selection, capacity/output, terraforming, orbital facilities and pane behavior; growth/mining and platform boundaries explicit. |
+| M09 | [Production Management](M09-production-management.md#user-stories-and-requirements) | Queue editing/templates, commit scope, costs/estimates and host payment/status rules; complete execution loop remains bounded. |
+| M10 | [Fleet Operations](M10-fleet-operations.md#user-stories-and-requirements) | Fleet orders, cargo, split/merge, overflow, fuel and task-resolution handoffs; host simulation and packed-damage gaps explicit. |
+| M11 | [Ship and Starbase Design](M11-ship-and-starbase-design.md#user-stories-and-requirements) | Roster/copy/edit/delete, availability, slots and cost/armor projections; catalog and cascading deletion boundaries explicit. |
+| M12 | [Research and Technology](M12-research-and-technology.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M13 | [Player Relations](M13-player-relations.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M14 | [Battle Planning and Review](M14-battle-planning-and-review.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M15 | [Messages and Reports](M15-messages-and-reports.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M16 | [Tutorial and Help](M16-tutorial-and-help.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M17 | [Host Game Management](M17-host-game-management.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M18 | [Turn Generation](M18-turn-generation.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M19 | [Game Rules and Resolution](M19-game-rules-and-resolution.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| M20 | [AI Players](M20-ai-players.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| S01 | [Persistence](S01-game-file-formats.md#user-stories-and-requirements) | [Records](S01-game-file-records.md#story-linked-requirements), [orders](S01-game-file-orders.md#story-linked-requirements), [external formats](S01-game-file-external.md#story-linked-requirements), [validation](S01-game-file-validation.md#story-linked-requirements). |
+| S02 | [Application Preferences and Window Layout](S02-application-preferences-and-window-layout.md#user-stories) | [Preference contracts](S02-preference-contracts.md#acceptance-and-evidence) add focused criteria for profile parsing, mutation, layout and storage widths. |
+| S03 | [Static Game Data and Text](S03-static-game-data-and-text.md#user-stories) | [Catalog inventory](S03-catalog-inventory.md) pins complete source inputs; §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| S04 | [Platform Services](S04-platform-services.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| S05 | [SDL Desktop Implementation](S05-sdl-desktop-implementation.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
+| S06 | [Shared state](S06-shared-game-state.md#user-stories-and-requirements) | Shared typed values and lifetimes consumed by the functional modules. |
+
+## Suggested next steps
+
+All first-level entries are documented. Follow the named coverage inventories to
+prioritize further work: M04’s detailed workflow/recovery audit; M08–M13 and M19
+complete host-effect refinement; M20 strategy-specific decision/visibility
+fixtures; S03 parser/consumer equivalence; and S05 real-backend accessibility,
+IME, rendering and display qualification. M16’s full 80-page tutorial remains
+unfinished. None of these gaps is closed by a passing symbolic witness or dummy
+backend test. Future behavior changes remain separate runtime tasks with the
+repository’s baseline and changelog discipline. Retain this document as the index.
+
+## Dafny coverage and verification
+
+Migration inventory, 2026-10-24, based on the detailed specifications at
+`e2eae18cff0f990db20415c1c2262aed2022f95b`. Dafny is the canonical notation for
+modeled values and rules; Markdown retains explanations, provenance, module
+ownership, worked examples and unresolved decisions. This is a specification
+migration, not generated game code or a proof that the C implementation refines
+the model. Earlier verification tables in module documents describe their
+original batches; this section records the collection-wide migration.
+
+M01/M02 and M08–M11 were added after the original migration; their coverage
+and dated verification are recorded below. The overview-only M12–M20 and S02/S03/S05
+entries identify responsibilities,
+not complete algorithms to translate. Existing concrete rules embedded in M03
+(such as scoring and research) are included below without changing ownership.
+
+| Existing specification area | Canonical definitions and coverage |
+| --- | --- |
+| M03 §2, §3.1–3.2: settings, selectors, cache, roster edits, navigation and initialization | [M03 setup](dafny/M03-setup.dfy): `Setup`, `Slot`, `Selector`, `DecodeSelector`, `FPrefix`, `FSetup`, `EditSlot`, `CacheAllocation`, `Wizard`, `LeavePage`, `FCanLeave`, `FInitialize`. Requested selectors remain distinct from resolved controllers. |
+| M03 §3.3: normalization | [M03 normalization](dafny/M03-normalization.dfy): `Substitute`, `InitialPass`, `MissingNames`, `FNameProbe`, `FDuplicateName`, `Portraits`, `DropPortrait`, `FFillPortrait`. Substitution retains pricing normalization on non-AI races; supplied points come from M04 `FPrice`. Substitution and missing names interleave per player, before duplicate-name and portrait passes. `ResolveAI` draws random level before kind; `ResolveExpansion` is separate. |
+| M03 §4.1 / S06 §8.1: arithmetic and RNG | [S04 arithmetic](dafny/S04-arithmetic.dfy): `LMulDiv`, `Trunc`, `Take`, `SeedTable`, `Seed`, `FDraws`; reuse S01 signed narrowing/division and S06 normalized recurrence/context stack. Literal seed table retains 279. |
+| M03 §4.2: default roster | `CountBranches`, `ChooseCount`, `DefaultCount`, `DefaultSelector`, `ShuffleLater`, `DefaultRoster`; thresholds, conditional fresh draws and strictly-later shuffle are represented. |
+| M03 §4.3 / §4.8: victory controls and batch conversions | `VCMax`, `VCBase`, `VCStep`, `DefaultVC`, `EnabledCount`, `VCValue`, `Toggle`, `SetVC`, `ClickVC`, `BatchRaw`, `FBatchValue`; [S01 external](dafny/S01-external.dfy) retains the batch grammar. Batch starts from zero raw state rather than desktop defaults. |
+| M03 §4.4: victory | [M03 scoring](dafny/M03-scoring.dfy): `Rank`, `FLeader`, `FSecond`, `Conditions`, `FConditionMatrix`, `Met`, `FDead`, `Victory`. Tied ranks, highest-index leader, zero-score lead ties, minimum-year/count gates, elimination and the single-participant exception stay distinct. |
+| M03 §4.5: score, resources, ship power and speed | `ScoredPopulation`, `PlanetPoints`, `TechPoints`, `ShipPoints`, `Score`, `Pack`, `Decode`, `Capacity`, `EffectivePopulation`, `Factories`, `OrdinaryResources`, `ARExpr`, `FARResources`, `Beam`, `Torpedo`, `Bomb`, `Capacitors`, `Power`, `Class`, `HighestWarp`, `Speed`. Catalog statistics are explicit inputs; normal game arithmetic domains apply. |
+| M03 §4.6: research and visibility | `TechCosts`, `ResearchCost`, `ResearchRemainder`, `FScoreVisible`. Current total technology and spent progress are inputs for each projected level; AI alliances remain an ownership note, not an invented multiplier. |
+| M03 §4.7 / §4.9 / §5 | Generation is M05 below; UI formulas are `RowTop`, `FRowHit`, `RosterHeight`, `DigitCounts`, `Spinner`, `CheckboxIndex`; recovery is `CancelWizard`, `BeginFinish`, `Complete`. Saved races and consumed RNG are retained on cancel. |
+| M04 identity, habitat, attributes, traits and credentials | [M04 race model](dafny/M04-race-model.dfy): `Axis`, `Race`, `FShape`, `FIdentity`, `FAxis`, `FPricing`, `FRace`, `MinAttr`, `MaxAttr`, `Trait`, `Primary`, `Temperature`, `GravityHundredths`, `Credential`, `FCredentialInput`. Names use S01 UTF-8 byte contracts. |
+| M04 Rust/SQL sketches and caches | Former duplicate struct/column examples now reference `RaceVersion`, `FVersion`, `HabitatRow`, `FHabitatRows`, `FSamePriceInputs`, `FRepriceRequired`; metadata independence is proved by `MetadataIndependent`. Database storage/index/cascade mechanisms remain implementation guidance. |
+| M04 correction and workflow | `NormalizeAxis`, `Bounds`, `NormalizeInnateAxis`, `Custom`, `DialogOrder`, `Navigate`, `Finish`, `Cancel`. Ordinary zero width is representable as observed normalization output but excluded from safe pricing. `AxisNormalization` proves normalization validity/idempotence; `HackerSticky` preserves prior detection. |
+| M04 desirability and innate integration | [M04 pricing](dafny/M04-race-pricing.dfy): `AxisTotal`, `Habitat`, `FDesire`, `Terraform`, `AxisSamples`, `Sample`, `Residual`, `SamplePoint`, `Term`, `RadiationSum`, `Radiation`, `TemperatureSum`, `GravitySum`, `StageExpr`, `InnateExpr`, `FInnate`. Axes, signed residuals, sample duplicates and integer/float boundaries retain their specified order. |
+| M04 complete advantage formula and handoff | `GrowthCredit`, `GrowthScale`, `Factory`, `Mines`, `TraitPrices`, `TraitSum`, `TraitCount`, `Research`, `PointsInternal`, `Balance`, `FPrice`. `PricingVectors` proves the golden integer subtotal 1623 and signed balance 541 **given innate 1470287**; it does not prove that full floating integration returns that innate value. The native race unit test checks the end-to-end golden calculation. |
+| M05 §2–3: context, stages, desktop/batch/tutorial | [M05 creation](dafny/M05-creation.dfy): `Context`, `FContext`, `GenerationOrder`, `StagePlan`, `FCompletedStages`, `FStageOrder`, `AssignmentEvents`, `FleetEvents`, `TutorialSetup`. Epoch, clock, independent file seeds and catalog/text version are explicit inputs; detailed tutorial names/race templates remain pinned catalog data. |
+| M05 §4.1: geometry | [M05 geometry](dafny/M05-geometry.dfy): `Diameter`, `Target`, `Candidates`, `Coordinate`, `Compare`, `StartSort`, `SortStep`, `FSortTrace`, `PrunePair`, `RandomRemoval`, `FRemovalTrace`, `FCompact`, `FNearestPoint`, `ClumpAxis`, `FClumpStep`. Sort models the current first-pivot partition actions and equal-key behavior; it is not replaced by an arbitrary sorted permutation. |
+| M05 §4.2: names and unowned worlds | `FNameDraw`; [M05 initial state](dafny/M05-initial-state.dfy): `Artifact`, `Environment`, `TutorialEnvironment`, `Concentration`, `OneOverride`, `Overrides`, `Minerals`, `UnownedPlanet`, `Stock`, `Stocks`, `ClearPlanetZero`. Live planet-0 inputs are supplied anew to each home, not frozen at first initialization. |
+| M05 §4.3: home placement | `HomeSpacing`, `HomeSquare`, `SquareDistance`, `FHome`, `FFirstStep`, `LaterDraw`, `LaterScan`, `Relax`, `FRestartSpacing`; `HomeSwap` and `AssignmentEvents` preserve interleaving with random-race calls. Search relations represent source steps; no total retry bound or termination theorem is claimed. |
+| M05 §4.4–4.5: technology, homes and bonuses | `Technology`, `StartingTech`, `SurfaceLowest`, `FirstLowest`, `SurfaceBonus`, `ConcentrationBonus`, `HomeResources`, `HomeAxis`, `HomeEnvironment`, `Bases`. `SurfaceConservation` proves the total mineral bonus for nonnegative points, including tie allocation. |
+| M05 §4.6: designs and fleets | `ShipTemplates`, `FSecondEligible`, `UpgradeCandidates`, `FirstAvailable`, `Fuel`, `StartupFleet`; `FleetEvents` records fuel before upgrades. A repeated selected template denotes shared design with separate one-ship fleets. S06 checks published design/reference closure. |
+| M05 §4.7: second world | `FSecondWorld`, `Reservoir`, `FNearestUnowned`, `PopulationSplit`, `RerollFallback`, `RerollEnvironment`, `FSecondRerolls`, `SecondWorld`, `SecondStocks`; same M04 desirability relation. The hundredth reroll falls back even when it succeeds. |
+| M05 §4.8: wormholes | `PairCount`, `ObstacleMask`, `Masks`, `WormholeScore`, `BetterPosition`, `WormTrial`; S06 `WormholePairs` checks reciprocal partner IDs. Obstacles exclude the current endpoint; only an already-linked partner is classified as partner. |
+| M05 §4.9 / §5: completion and failures | `SingleScan`, `Relation`, `PlanAttack`, `TamperingRecipients`, `GameIdentity`, `Salt`, `GeneratorReturn`, `BatchReturn`, `FPublished`. Companion-write outcomes are deliberately absent from `GeneratorReturn`, reflecting their ignored return values; publication requires every complete output. `PublicationNeedsEveryPlayer` proves that requirement. |
+| S01 all five detailed documents | Existing [S01 entry point](S01-game-file-specification.dfy), contracts, codecs, records, files, orders, external formats and witnesses remain canonical. This migration reuses them; their documented unsupported/raw-reader/transaction boundaries are unchanged. `CryptConsumption` has additional arithmetic proof steps and `CodecVectors` isolates assertions, with the same contracts. |
+| M06 player session and turn orders | [M06 workflow model](dafny/M06-session.dfy): selection, credentials, pending log/dirty state, guarded and direct save, submission intent, export flags, import classification, new-turn detection and wait choices. The [coverage inventory](M06-player-session-and-turn-orders.md#6-coverage-inventory-and-module-interfaces) identifies reused S01/S06 rules and external obligations. |
+| M07 galaxy map and navigation | [M07 navigation model](dafny/M07-navigation.dfy): signed zoom conversions, viewport/reveal, wheel/pan, ordered hit testing, selection/search precedence, gesture dispatch, filters, scalar displays and snapshot identity. The [coverage inventory](M07-galaxy-map-and-navigation.md#7-coverage-inventory-and-external-obligations) distinguishes source adapters, renderer/platform obligations and M08/M10 edits. |
+| S06 §2–5, §7–8.1 | Existing [shared-state model](dafny/S06-shared-state.dfy): identities, sentinels, cargo, research, relations, hull slots, plans, production, waypoints, planets, fleets, topology, things, creation homes, order envelopes and RNG stack. |
+| S06 §3 / §4 / §6 / §8.2 remaining groups | [S06 extensions](dafny/S06-state-extensions.dfy): `Configuration`, `Player`, `Status`, `Counts`, `PlanMetadata`, `DerivedDesign`, `FProductionTemplate`, `DesignView`, `Lifecycle`, `PowerState`, `FleetView`, `Damage`, `MotionState`, `PlanetExtras`, `ScoreKey`, `Score`, `CatalogEvent`, `FEvent`, `EncodedResult`, `SessionState`, `Lifetime`, `Held`, `CacheState`. Raw result payloads reuse S01 instead of duplicating its layouts. Cache invalidation/session destruction are explicitly proposed logical boundaries, not complete models of every C global. |
+| Acceptance sections across M03/M04/M05/S01/S06 | Definitions cover the specified cases; named `*Vectors` lemmas exercise selected positive/negative cases and boundary values. General lemmas cover selected invariants. The full prose conformance matrices remain broader than the witnesses; they are not advertised as exhaustive implementation tests. |
+
+### Exact floating expressions and remaining boundaries
+
+`S04Arithmetic.Expr` preserves each binary64 operation. `Evaluation` supplies
+its result bits and child results; `FEvaluate` checks exact rational midpoint
+conditions, ties-to-even and square-root rounding at every node. This avoids
+pretending mathematical reals reproduce a sequence of binary64 roundings.
+The represented domain is finite values below maximum finite magnitude; NaN,
+infinity, overflow and signed-zero identity are excluded. Game formulas lie
+inside this domain. The model checks a supplied trace; it does not implement a
+fast binary64 evaluator or prove that every expression has a trace. Golden
+integration, all trait-mask/research combinations and C-to-model equivalence
+remain conformance/proof work, not silently satisfied by a definition.
+
+The following are specific boundaries, not missing replacement rules:
+
+- M04 zero-width habitat division is undefined in C. `FAxis(...,false)` retains
+  observed normalization; safe pricing requires `FAxis(...,true)` and does not
+  manufacture a compatible quotient. Corrupt RNG states and arithmetic outside
+  the documented normal game domains likewise have no new compatibility policy.
+- Random-race construction, full part legality/statistics, catalog/text expansion,
+  visibility projection and complete M11/M14/M18/M20 algorithms were only bounded
+  dependencies in the existing specs. Calls, required data and ordering are
+  represented; their still-unspecified internals are not invented. M05 §2.3 pins
+  the exact source/data dependencies, and `Context` records their identity.
+- Home placement has no source retry ceiling. Small-step definitions are available
+  without asserting total termination. Composition of every generation step into
+  a full state-invariant proof remains open; stage order alone is not that proof.
+- Filesystem availability, clocks, library reservation/finalization and UI event
+  delivery are external observations. Their success/failure predicates are modeled;
+  no logical predicate makes I/O atomic or certifies the actual filesystem.
+- S06 raw/typed serialization refinement, field-level history merging, battle
+  legality and arbitrary mid-turn resume require their owners' additional
+  specifications. Knowledge variants retain absence rather than guessing values.
+- Protected legacy race admission conflicts with root guidance and ADR 0002;
+  unsigned/signed observation-turn extension remains an open policy. Neither is
+  resolved by this migration. Source provenance, ownership and open questions
+  remain prose because they are evidence/decisions, not executable game rules.
+
+### Reproducing the checks
+
+Use [tests/spec/verify.py](../tests/spec/verify.py) with Dafny 4.11.0:
+
+```sh
+python3 tests/spec/verify.py
+```
+
+It checks local Markdown links and anchors, exact path casing, module filename
+prefixes, trailing whitespace and every Dafny include, then verifies every Dafny
+file with `--verify-included-files` and audits every file. `--links-only` performs
+the structural checks without Dafny. No runtime source, file layout, gameplay
+baseline or generated game dependency is changed.
+
+### Migration verification results
+
+| Check, 2026-10-24 | Result |
+| --- | --- |
+| `python3 tests/spec/verify.py`, Dafny 4.11.0, all 23 Dafny files and include closure | **765 verified, 0 errors; auditor 0 findings.** |
+| Local links/includes, anchors, casing and module prefixes | **582 checked, 0 errors.** |
+| `cmake --build dist/m05-macos-sdl-debug -j 8` | Passed; no compiler warnings. Existing build uses the `macos-sdl-debug` preset. |
+| CTest with the repository's dummy SDL environment, `^sdl_test_\|win32_native_tutorial_.*dummy$` | **18/18 passed**: 17 unit suites and the available tutorial smoke checkpoint. This remains partial tutorial coverage. |
+| Full `make regression`, `REGRESSION_BUILD=dist/m05-regression-build`, work/report prefix `dist/scaffold/regression/dafny-migration` | All nine scenarios through turn 150: **519 matches**, including 21 unused-storage warning matches; **0 differences/errors, 0 reference inputs skipped**. Baseline unchanged. |
+| Diff/runner checks | `git diff --check`, spec whitespace checks and Python syntax compilation passed. No C source, on-disk layout or baseline changes. Host-only checks were not required. |
+
+Initial collection-wide proof runs timed out in the existing `CryptConsumption`
+and `CodecVectors` lemmas. Explicit quotient arithmetic and isolated assertions
+resolved those timeouts without changing the contracts or admitting assumptions.
+The final command above passes. The prior M05 New Game workflow timeout remains
+recorded in that document; this migration does not claim that additional test
+passed or that the entire acceptance matrix was executed.
+
+Native checks reused the already-configured separate build directories because
+the default caches retain the repository's old path. Regression used the writable
+`dist/go-cache`. These are verification environment choices, not game changes.
+
+M07's later [verification results](M07-galaxy-map-and-navigation.md#8-acceptance-criteria-and-verification)
+record the expanded 27-file collection (931 verified, zero errors/audit findings),
+19 passing runtime suites/checkpoints and the unchanged full native regression.
+The migration table above remains the historical result of its original batch.
+
+## Story expansion verification
+
+On 2026-10-24, the seven existing entry specifications and six technical
+companions gained the structure above: **28 stories, 66 acceptance criteria,
+20 interaction requirements and 34 quality requirements**. Every entry story
+has acceptance criteria; requirement IDs are unique across the collection.
+The root/spec agent rules and two race reference documents now point to the
+same ownership and traceability conventions. Overview-only modules retain their
+earlier scope.
+
+This pass adds intent, workflow and evidence links around existing rules. All
+27 Dafny files remain unchanged. Proposed interfaces/accessibility outcomes and
+Open budgets remain separate work; these checks do not establish new UI coverage,
+performance guarantees or C/model equivalence. Source provenance remains
+`e2eae18cff0f990db20415c1c2262aed2022f95b`.
+
+| Check | Result |
+| --- | --- |
+| `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0 | Full include closure: **931 verified, 0 errors; auditor 0 findings**. |
+| Final `python3 tests/spec/verify.py --links-only` | **830 local links/includes checked, 0 errors**, including anchors, casing, module prefixes and whitespace. New root/reference links also resolve. |
+| Requirement review | All 28 stories mapped to criteria; all 148 new requirement/story IDs unique. Entries and companions account for interaction, quality, dependencies and explicit gaps. |
+| `cmake --preset macos-sdl-debug -B dist/m05-macos-sdl-debug` and `cmake --build dist/m05-macos-sdl-debug` | Passed; no compiler warnings. |
+| Dummy-SDL CTest unit suites, GUI workflow and tutorial smoke | **19/19 passed**: 17 unit suites, `win32_client_newgame_dummy` (102.99 seconds), and `win32_native_tutorial_smoke_dummy`. Tutorial coverage remains partial. |
+| Full `make regression` | All nine scenarios through turn 150: **519 matches**, including 21 unused-storage warning matches; **0 differences/errors, 0 reference inputs skipped**. |
+| Diff review / `git diff --check` | Passed; this expansion changes documentation only. Runtime source, formal definitions and regression baselines are unchanged. Host-only checks were not required. |
+
+CTest ran in `dist/m05-macos-sdl-debug` with `--output-on-failure --timeout 300`
+and filter `^sdl_test_|win32_native_tutorial_.*dummy$|^win32_client_newgame_dummy$`.
+Its environment was `SDL_VIDEODRIVER=dummy`, `SDL_AUDIODRIVER=dummy`,
+`STARS_SDL_RENDERER=software`, `STARS_FILE_DIALOG_BACKEND=compat`. These are the
+unit/tutorial filters used by the Make targets plus the GUI workflow.
+Regression used `GOCACHE=$PWD/dist/go-cache`,
+`REGRESSION_BUILD=dist/m05-regression-build`,
+`REGRESSION_WORK=dist/scaffold/regression/stories-native` and
+`REGRESSION_REPORT=dist/scaffold/regression/stories-comparison.json`.
+Run logs use the `dist/stories-` prefix. Earlier verification tables in this
+collection remain the historical results of their original batches.
+
+## M01 and M02 verification
+
+M01 Game Library and M02 Race Library were added on 2026-10-24 against
+`e2eae18cff0f990db20415c1c2262aed2022f95b`. They use the updated outline and add
+15 stories, 29 acceptance criteria, eight interaction requirements and ten quality
+requirements. Their model entry points include the existing session, race and
+persistence definitions; shared library-name predicates live once under S01.
+The earlier migration and story-expansion tables remain historical results.
+
+| Coverage | Canonical definitions / boundaries |
+| --- | --- |
+| Game library | [M01 model](dafny/M01-library.dfy): listing gates, Continue ranking, import-target count, M06 turn classification, host-order matching, metadata preservation, copy collisions, rename/delete/export outcomes. Native I/O and UI behavior remain external obligations in the module's coverage inventory. |
+| Race library | [M02 model](dafny/M02-library.dfy): complete-design comparison projection, version scan, reuse/update/new-version choice, destination binding, wrapper restoration and import/edit result. Native record extraction, Unicode comparison, credentials and filesystem results remain explicit inputs. |
+| Shared names | [S01 library names](dafny/S01-library-names.dfy): portable components/reserved stems, game/race path budgets, digit domains, sanitization core, safe UTF-8 cuts and availability. Non-ASCII comparison keys require the native adapter; no normalization policy is invented. |
+
+| Check, 2026-10-24 | Result |
+| --- | --- |
+| `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0 | All **32 Dafny files** and include closure: **1145 verified, 0 errors; auditor 0 findings**. |
+| Final `python3 tests/spec/verify.py --links-only` | **903 local links/includes checked, 0 errors**, including anchors, casing, prefixes and whitespace. |
+| New models alone: `dafny verify spec/dafny/M01-library.dfy spec/dafny/M02-library.dfy spec/dafny/S01-library-names.dfy --cores 4 --verification-time-limit 20` | **214 verified, 0 errors**; the full run above also verifies their existing dependencies. |
+| Requirement inventory | All **15 new stories** have acceptance criteria; **62 new IDs** are unique across the collection. Each entry covers interaction/quality, ownership, evidence and open decisions. |
+| `cmake --preset macos-sdl-debug -B dist/m05-macos-sdl-debug` and `cmake --build dist/m05-macos-sdl-debug` | Passed; no compiler warnings. |
+| Dummy-SDL CTest unit, library, GUI workflow and tutorial selection | **26/26 passed**: 17 unit suites, Continue, New Game, Game Export, Game Library Safety, Game Library Delete, Race Library, Host Library, File Workflow and tutorial smoke. Total 237.83 seconds; tutorial remains partial. |
+| Full `make regression` | All nine scenarios through turn 150: **519 matches**, including 21 unused-storage warning matches; **0 differences/errors, 0 reference inputs skipped**. |
+| Diff review / `git diff --check` | Passed. Runtime source, record layouts and regression baselines unchanged; no host-only checks required. |
+
+CTest used `--test-dir dist/m05-macos-sdl-debug --output-on-failure --timeout 300`
+and filter
+`^sdl_test_|win32_native_tutorial_.*dummy$|^win32_client_(newgame|continue|game_export|game_library_safety|game_library_delete|race_library|host_library|fileworkflow)_dummy$`.
+The environment was `SDL_VIDEODRIVER=dummy`, `SDL_AUDIODRIVER=dummy`,
+`STARS_SDL_RENDERER=software`, `STARS_FILE_DIALOG_BACKEND=compat`. This includes
+the unit/tutorial filters used by the Make targets plus relevant library workflows.
+Regression used `GOCACHE=$PWD/dist/go-cache`,
+`REGRESSION_BUILD=dist/m05-regression-build`,
+`REGRESSION_WORK=dist/scaffold/regression/m01-m02-native` and
+`REGRESSION_REPORT=dist/scaffold/regression/m01-m02-comparison.json`.
+Final logs are `dist/m01-m02-spec-final.log`, `dist/m01-m02-model-final.log`,
+`dist/m01-m02-runtime-checks.log`, `dist/m01-m02-regression.log` and the
+`dist/m01-m02-configure.log` / `dist/m01-m02-build.log` pair.
+
+Initial model drafts had a reserved-identifier parse error and unproved recursive/
+quantifier witnesses. Renaming the parameter, explicit unfolding/membership
+steps and isolating witness assertions resolved them without weakening contracts.
+An intermediate collection run also timed out in the unchanged
+`SharedGameState.AcceptanceVectors` at 120 seconds; the final complete run above
+passed with the same limit and no changes to that existing model. No assumptions,
+axioms or disabled verification were introduced.
+
+The protected-legacy-race policy conflict remains Open; documenting current
+conversion does not override root instructions. Native comparison, I/O,
+accessibility and timing boundaries remain explicit; passed tests/proofs do not
+establish every acceptance criterion or a C/model refinement theorem.
+
+## M08–M11 verification
+
+M08 Planet and Colony Management, M09 Production Management, M10 Fleet Operations
+and M11 Ship and Starbase Design were added on 2026-10-24 against
+`e2eae18cff0f990db20415c1c2262aed2022f95b`. Each uses the updated requirements
+outline, stable story/acceptance/interaction/quality IDs, source-backed workflows,
+canonical Dafny rules, a coverage inventory and named owners for open decisions.
+There are 22 new stories, 38 acceptance criteria, 12 interaction requirements and
+16 quality requirements (88 unique new IDs). Existing user work is retained.
+
+| Coverage | Canonical definitions / external obligations |
+| --- | --- |
+| M08 colony | [Model](dafny/M08-colony.dfy): capacity display, installation/defense limits, terraform endpoints, selection/base predicates, driver aggregation and scroll offsets. Reuses M04 habitat and M03 resource/capacity models; growth/mining/catalog/pane adapters remain explicitly inventoried. |
+| M09 production | [Model](dafny/M09-production.dfy): editing limits, swap/removal/finish, research reservation, paid-cost differences, progress percentages, base credits and result statuses. Catalog cost iteration, templates, forecasts and full host effects remain external obligations. |
+| M10 fleet | [Model](dafny/M10-fleet.dfy): split capacity, constrained cargo transfer, two-fleet stack overflow, no-heal, waypoint removal/recycle and integer fuel/range projections. S06 owns task payloads; packed damage, float branches and full task execution remain inventoried. |
+| M11 design | [Model](dafny/M11-design.dfy): tech status/buildability, roster/slot limits, edit outcome, scalar cost discounts and armor/aggregate/narrowing calculations. S03 catalog extraction, native controls and deletion cascades remain explicit. |
+
+| Check, 2026-10-24 | Result |
+| --- | --- |
+| `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0 | **40 Dafny files** and complete include closure: **1445 verified, 0 errors; auditor 0 findings**. |
+| Focused new-model verification, four M08–M11 files, `--cores 4 --verification-time-limit 60` | **300 verified, 0 errors**. |
+| `python3 tests/spec/verify.py --links-only` | **1018 local links/includes, 0 errors**; exact casing, anchors, include paths, prefixes and whitespace checked. |
+| Requirement inventory | **88 unique new IDs**, all **22 stories** mapped to acceptance criteria; all existing explicit anchors remain unique. |
+| `cmake --preset macos-sdl-debug -B dist/m05-macos-sdl-debug`, then `cmake --build dist/m05-macos-sdl-debug` | Passed; no compiler warnings. |
+| Dummy-SDL CTest unit / Continue / designer / tutorial selection | **20/20 passed** in 28.50 seconds: 17 unit suites and three client workflows. Tutorial coverage remains partial. |
+| Explicit fleet branch of `run_client_continue.py` | Passed cargo accept/cancel/reverse, waypoint task/reselection, map append/drag/delete, repeat, merge and split/cancel workflows. |
+| Full native `make regression` | Nine scenarios through turn 150: **519 matches**, including 21 unused-storage warning matches; **0 differences/errors**, 0 reference inputs skipped. |
+| Diff / source review | No runtime, catalog, record-layout or baseline changes; `git diff --check` passed. Existing unrelated specification work retained. Host-only checks not required for this documentation batch. |
+
+CTest used `--test-dir dist/m05-macos-sdl-debug --output-on-failure --timeout 300`
+and filter `^sdl_test_|win32_native_tutorial_.*dummy$|^win32_client_(continue|designer)_dummy$`.
+The explicit fleet run used `STARS_CLIENT_WORKFLOW=fleet python3
+tests/compat/run_client_continue.py` with the absolute path to
+`dist/m05-macos-sdl-debug/bin/stars-compat-client-startup`.
+Both used `SDL_VIDEODRIVER=dummy`, `SDL_AUDIODRIVER=dummy`,
+`STARS_SDL_RENDERER=software`, `STARS_FILE_DIALOG_BACKEND=compat`.
+Regression used `GOCACHE=$PWD/dist/go-cache`,
+`REGRESSION_BUILD=dist/m05-regression-build`,
+`REGRESSION_WORK=dist/scaffold/regression/m08-m11-native` and
+`REGRESSION_REPORT=dist/scaffold/regression/m08-m11-comparison.json`.
+Logs: `dist/m08-m11-spec-final.log`, `dist/m08-m11-model-third.log`,
+`dist/m08-m11-runtime-checks.log`, `dist/m08-m11-fleet-workflow.log`,
+`dist/m08-m11-regression.log`, `dist/m08-m11-configure.log` and
+`dist/m08-m11-build.log`.
+
+Initial drafts failed on a reserved parameter name, explicit membership/witness
+proofs and range-division facts; some witness obligations timed out. Renaming,
+explicit proof steps and the final 60-second focused limit resolved them.
+A failed strict terraforming-bound claim exposed a real source distinction:
+clamping at 1/99 can produce a present endpoint equal to the current environment.
+The corrected non-strict property and Markdown now preserve that behavior.
+No assumptions, axioms, disabled verification or runtime fixes were introduced.
+
+Model verification establishes properties of these definitions, not C refinement
+or complete UI coverage. The per-module inventories retain the full-host,
+catalog, numerical-adapter and accessibility gaps. M11 also records the observed
+uninitialized `cExcess` path as an unresolved source ambiguity rather than
+assigning deterministic behavior to it.
+
+## Remaining specifications verification
+
+The 2026-10-24 completion batch adds M12–M20 and S02–S05: thirteen detailed
+entries, thirteen canonical model files and thirteen include entry points, plus
+the S03 versioned catalog companion. It preserves existing stories/anchors and
+canonical shared definitions. The collection now covers all 26 first-level IDs.
+M08–M11 detailed rows have been moved from the shared-support map to the detailed
+index; their player-turn map entries remain in place.
+
+Formal coverage is deliberately bounded. Research allocation, relation policy,
+battle-plan/replay transitions, message selection, tutorial page steps, host
+readiness, phase sequencing, mining/growth arithmetic, AI dispatch/traversal,
+preferences, catalog identity/text mappings and platform/desktop projections have
+named definitions and witnesses. Full simulation/AI algorithms, external I/O,
+control callbacks, native rendering and accessibility remain explicitly owned
+source/test/refinement boundaries in the entries. Document coverage is not a
+claim that every native branch has a complete executable formal counterpart.
+
+| Check | Actual result |
+| --- | --- |
+| `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0 | **66 Dafny files**, complete include closure: **1848 verified, 0 errors; audit 0 findings**. |
+| `python3 tests/spec/verify.py --links-only` | **1582 local links/includes, 0 errors** after integration; exact casing, anchors, include paths and whitespace checked. |
+| Requirement / module inventory | **51 new stories, 90 acceptance criteria, 26 interaction requirements and 39 quality requirements** (206 unique IDs, including two catalog-companion criteria). Every story maps to acceptance; no duplicate explicit anchors. All 26 module IDs appear exactly once in the detailed index. |
+| Catalog identity | All **67** listed SHA-256 source/generator/schema references match current files. This establishes identity, not semantic correctness. |
+| `cmake --preset macos-sdl-debug -B dist/m05-macos-sdl-debug`, then `cmake --build dist/m05-macos-sdl-debug -j 8` | Passed; no compiler warnings. |
+| Dummy-SDL CTest unit / compatibility / host-library / tutorial selection | **31/31 passed** in 19.83 seconds, including all 17 unit suites and the available tutorial smoke checkpoint. Real display/accessibility and full 80-page tutorial coverage remain open. |
+| Full native `make regression` | Nine scenarios through turn 150: **519 matches**, including 21 unused-storage warning matches; **0 differences/errors**, 0 reference inputs skipped. Baseline unchanged. |
+| Source / diff review | Only specification files changed in this batch. Runtime code, catalogs, record layouts and regression baselines unchanged; existing unrelated work preserved. `git diff --check` passed. Host-only runtime checks were not required. |
+
+CTest used `--test-dir dist/m05-macos-sdl-debug --output-on-failure --timeout 300`
+and filter `^sdl_test_|win32_native_tutorial_.*dummy$|^win32_(utf8_.*|runtime|controls|messagebox|client_host_library_dummy)$|^test_redirect_contract$|^test_help_clean$|^macos_bundle_unit$`,
+with `SDL_VIDEODRIVER=dummy`, `SDL_AUDIODRIVER=dummy`,
+`STARS_SDL_RENDERER=software`, `STARS_FILE_DIALOG_BACKEND=compat`.
+These directly run the unit/tutorial suites selected by `make test-unit` and
+`make tutorial` against the existing validated preset build directory, with
+additional relevant compatibility/host-library tests.
+
+Regression used `GOCACHE=$PWD/dist/go-cache`,
+`REGRESSION_BUILD=dist/m05-regression-build`,
+`REGRESSION_WORK=dist/scaffold/regression/remaining-native` and
+`REGRESSION_REPORT=dist/scaffold/regression/remaining-comparison.json`.
+Logs: `dist/remaining-spec-final-reviewed.log`, `dist/remaining-links-final.log`,
+`dist/remaining-configure.log`, `dist/remaining-build.log`,
+`dist/remaining-runtime-checks.log` and `dist/remaining-regression.log`.
+
+Initial model drafts failed on a reserved identifier, a generic equality
+constraint, a recursive termination measure and witness proofs/timeouts. Explicit
+constraints, decreasing measures, sequence witnesses and arithmetic proof steps
+resolved them; no assumptions, axioms or disabled verification were introduced.
+Final source review also corrected the M16 help boundary to packaged HTML export
+and launch: the older runtime HLP description in the historical help notes is
+not current behavior. The models preserve the source's partial-write, close/commit
+and cleanup limitations rather than asserting stronger recovery guarantees.
+
+## Completeness review and completion backlog
+
+Reviewed 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b` and the
+current working specification collection. **Document presence is complete;
+rule-level formalization and implementation qualification are not.** The active
+completion goal follows this register. The previous “remaining specifications”
+batch completed the first-level entries, not every rule or external obligation.
+
+The review covers all 26 entry documents, seven companions, their ownership and
+requirement inventories, canonical model boundaries, and dated verification.
+Source checks targeted error-prone transitions, storage widths, shared rules and
+contradictory claims. It is not an exhaustive line-by-line C audit or a new claim
+of C/Dafny refinement. The full verifier checks every formal file; the source
+checks do not establish every source/model correspondence.
+
+### Findings and immediate corrections
+
+| ID / priority | Finding and evidence | Disposition |
+| --- | --- | --- |
+| <a id="gap-01"></a>GAP-01 / High | M04’s numbered acceptance summary said normalization preserves positive odd widths, contradicting `BoundsCheckPlayer`, `NormalizeAxis` and the pricing companion’s zero-width warning. | **Corrected.** [M04-AC07](M04-race-design.md#m04-ac07) and `NormalizationWidthVectors` distinguish observed zero/even widths from the proposed safe-pricing rejection. No runtime normalization changed. |
+| <a id="gap-02"></a>GAP-02 / High | S02 modeled clamping parsed INI integers before their source storage narrowing. `WindowLayout` is uint16_t but compared as int16_t; pane sizes and `vcBackupDirs` are int16_t. Raw 65636 gives pane 100, and retention 65538 gives 2. The old scalar clamps gave different results. | **Corrected.** `ProfileI16`, `PaneSize`, `Layout`, `ConfiguredBackups` and M17 forwarding now preserve the narrowing. [S02](S02-application-preferences-and-window-layout.md) and [M17](M17-host-game-management.md) distinguish parsed integers from the normalized range test. |
+| <a id="gap-03"></a>GAP-03 / Medium | M12–M20/S02–S05 interaction requirements mixed source observations, normative feedback expectations and Open accessibility work under absent or mixed status labels. This could make desired behavior look delivered. | **Corrected labeling.** IR01/IR02 are explicitly Proposed; §3 remains the source behavior, and Open qualification stays explicit. IDs are preserved. No accessibility support is newly asserted. |
+| <a id="gap-04"></a>GAP-04 / Medium | `tests/spec/verify.py` checked links and proofs but did not enforce unique requirement IDs, story references or acceptance coverage. The prior inventory was a one-off check. | **Corrected.** The verifier now checks module ownership, duplicate IDs, undefined stories, criteria without stories and stories without criteria; nine positive/negative checker tests cover these failures. This checks trace structure, not semantic completeness. |
+| <a id="gap-05"></a>GAP-05 / Medium | M16 correctly described packaged HTML, while its linked help notes still described loading the HLP archive and directly launching a URL at runtime. | **Corrected.** [Help notes](../docs/WIN32-HELP.md) now match `WinHelpA`/`PszHelpDocument`; original archive analysis remains historical build/reference evidence. |
+| <a id="gap-06"></a>GAP-06 / High | Many E-boundaries contain ordinary representable algorithms, not intrinsically external effects. Examples: research passes, mine depletion, order resolution, all AI heuristics and tutorial task predicates. Names and source hashes do not replace these contracts. | **Open specification work.** Close the module work below with checked state/algorithm definitions, or a precise justified external boundary. Do not mark a whole family complete because one scalar witness passes. |
+| <a id="gap-07"></a>GAP-07 / High | Most source-to-model adapters are supplied booleans, arrays, projections or floating traces. Proofs establish consequences of those supplied values, not that the C code supplies the right values. | **Open adapter/evidence work.** Name each extraction function, native width/domain, pre/post state and failure mapping. Add focused differential/integration cases where representable; keep actual OS effects separately qualified. |
+| <a id="gap-08"></a>GAP-08 / High | Root instructions reject protected legacy races; accepted ADR 0002 and observed code describe replacement-password conversion. The disagreement spans M02/M04/S01/S06. | **Open policy alignment.** Root instructions govern this work; do not advertise the observed conversion as the supported root contract. The repository owner must authorize any policy/code/ADR alignment. This review makes no import behavior change. |
+| <a id="gap-09"></a>GAP-09 / High | Publication, submission, host receipt and recovery remain different outcomes. Direct saves/generation/AI writes ignore some results; staged library operations do not make the whole application crash-atomic. | **Open state/evidence work; stronger guarantees are policy work.** M01/M02/M05/M06/M17/M18/S01 must share an outcome matrix with exact surviving files, flags and retry assumptions. Model current partial effects before proposing transactions. |
+| <a id="gap-10"></a>GAP-10 / Medium | Performance, supported displays, keyboard equivalence, accessibility and native backend coverage have no complete acceptance matrix or agreed numeric targets. Dummy-SDL tests and “API present” counts cannot establish them. | **Open qualification/target work.** S05 plus each UI owner must identify workload/platform/input cases, measurement method and evidence. Product choices stay Open until agreed; do not invent budgets or conformance claims. |
+| <a id="gap-11"></a>GAP-11 / Medium | Canonical gameplay functions remain in `M03-scoring.dfy` because they began as wizard consumers. Moving/copying them into later modules risks divergent definitions. | **Open trace integration, not a requested refactor.** Retain existing definitions and document the consumer/owner map. If moved later, update all includes/links atomically and preserve IDs; do not create a second formula. |
+| <a id="gap-12"></a>GAP-12 / Medium | Older test counts and failures remain embedded in module documents; a later passing full run does not prove every missing acceptance case or erase earlier failed evidence. | **Ongoing evidence discipline.** Keep dated records and link the latest collection run. Separate model proof, native fixture, GUI smoke and manual/native qualification in each new acceptance row. |
+| <a id="gap-13"></a>GAP-13 / Medium | M09 said a new Add inserted before the selected queue row; `ProdCommandHandler` tests that row and its successor, then inserts after it. | **Corrected.** `Destination`, `Locate`, `Add` and M09-AC19 cover selected/header/absent selection with source fixtures. |
+| <a id="gap-14"></a>GAP-14 / High | M09's generic sanitization description hid overlapping memcpy and a diverging physical cursor in `InitProduction`; a faithful model cannot promise a safely filtered/clamped queue. | **Specification corrected; native repair remains open.** `Sanitize`, M09-AC18 and guarded source fixtures preserve the defined case and stop before undefined overlap. Known-bug/roadmap entries track UI reproduction, original comparison and a separately scoped repair. |
+
+### Module-by-module completion inventory
+
+Classes: **D** missing specification/model detail; **A** source/model adapter;
+**V** runtime or platform validation; **P** product/policy decision. A row can
+have more than one class. A V or P item does not authorize a runtime change.
+Each row names the primary logical owner; slash-separated modules are handoff
+owners, not unnamed blockers. Companion coverage is included with its entry.
+
+| Owner / priority | Remaining work and existing boundary | Evidence required to close the specification work |
+| --- | --- | --- |
+| [M01](M01-game-library.md) / High | A/V: enumeration/validation levels, native path/name comparison, source mutation and copy/rename/delete/publication failures. P: complete export versus supported-family export and missing last-played display. | One action/outcome matrix with surviving files/metadata and exact validation inputs; alias/conflict/failure cases; separate ADR/product decisions. Preserve M06 pending-state handoffs. |
+| [M02](M02-race-library.md) / High | A/V: complete stored-design equality projection, Unicode/version/path collisions, protected update and write/close cleanup. P: GAP-08, dotted-stem duplication and corrupt-entry display. | Source-to-model field mapping and version/credential/failure cases, including version 999 and filename/name disagreement. Explicit effective policy plus observed deviation. |
+| [M03](M03-new-game-wizard.md) / Medium | A/V: full widget-to-normalized setup mapping, batch/wizard distinctions, RNG/catalog inputs and failure matrix. P: deliberate changes to substitution, overflow, tie or retry behavior. | Trace each setup control/normalization input to its definition and source domain; vectors for boundary lattice values and controlled RNG/clock handoff to M05. Existing scoring/victory definitions remain canonical. |
+| [M04](M04-race-design.md) and both companions / High | D/A: six-page control transitions, preset replacement, AR resets, normalization timing and cancellation snapshots. V: pricing differential coverage; P: proposed Rust/SQL interface and GAP-08. | Complete page/event/guard/effect/return table with checked transitions and M02/M03 snapshot handoffs. Zero/even-width inconsistency is fixed; full wizard behavior is still open. SQL implementation is not required merely to document its proposal. |
+| [M05](M05-universe-creation.md) / High | D/A: random-race/starting-design helper closure and exact tutorial context; V: controlled creation/output/failure matrix. P: bounded placement cancellation and stronger publication. | Account for each helper/catalog/RNG call with pre/post state and draw order; validate initial decoded file sets and failure remnants. Preserve the observed absence of a total retry bound. |
+| [M06](M06-player-session-and-turn-orders.md) / High | A/V: direct-open/close/reload versus guarded departure, late editor flush, ignored saves, waiting/mark/reload races and session invalidation. Post-open marker/fallback decisions now have an explicit M06 contract, with M07 restoration dispatch. P: durable submission/host handshake. | Cross-entry outcome matrix separating memory intent, successful orders/history, export and receipt; precise failure traces. No file flag described as a lock. |
+| [M07](M07-galaxy-map-and-navigation.md) / Medium | D/A/V: full SelectAdj*/ChangeMainObjSel editor/cache effects, title/tutorial callbacks and reentrancy; native hit/capture/paint interleavings, trig/hypot/raster paths, 12-entry menu capacity, all views/disclosure and preference teardown. Restoration dispatch, fallback ordering, the post-open wrapper and construction-capable starbase target selection are now modeled. | Bind coordinate/selection projections to source inputs and test boundary/capture cases; keep exact pixels as rendering obligations with platform/display fixtures. |
+| [M08](M08-planet-and-colony-management.md) / High | D/A: E08-2 best-axis/optimum-viewpoint/forecast state, E08-3 catalog and visibility extraction. V: pane lifecycle/focus/layout. | Reuse M19 growth/mining, specify best-axis choice and copy/restore; test foreign/unknown/owned views and base abilities. Do not duplicate resource/capacity formulas. |
+| [M09](M09-production-management.md) / High | D/A: E09-1 getter/catalog/pointer refinement and full lookup/selection/tutorial/modal callback effects (lifecycle call order, accept/cancel/direct Clear, Next/Back, recovery, initial selection, catalogue assembly, sanitization boundaries, commands and presets now modeled), E09-2 full cost vectors, E09-3 99-year forecast, E09-4 production/alchemy loop and charge-before-failure. | Checked queue/economy state transitions, progress/cost conservation where the source guarantees it, and invalidation/partial-construction cases. Distinguish simulation from forecast assumptions. |
+| [M10](M10-fleet-operations.md) / High | D/A: complete waypoint/task defaults, target selection and native modal/lifetime behavior; packed damage, merge/split allocation effects, fuel/gate/movement and host task execution (E10-1–4). Preset application/customization and a bounded quantity/action refresh adapter now have checked contracts. | Task-by-mode prerequisites/outcomes with exact RNG/rounding, reference/cargo changes and partial effects; typed packed-damage adapter and focused movement/task vectors. |
+| [M11](M11-ship-and-starbase-design.md) / High | D/A: E11-1 complete trait/hidden/availability extraction; E11-2 deletion cascade; E11-4 full derived stats/caches and pricing order. V: native slot gestures. | Catalog-to-design mappings and all-stat/cost vectors, copy restrictions and populated deletion/decline outcomes. Reuse S03 IDs and existing M03 numerical functions. |
+| [M12](M12-research-and-technology.md) / High | D: E12-1 sequential quotes/projection, E12-3 complete spending/advancement/reallocation/grant passes. A: browser/category/trader adapters E12-2. | Resource/state transition with level caps, slow/general research, leftovers, ordered quotes and recursion; first-minimum property and projection purity tests. Scalar pool formulas alone are insufficient. |
+| [M13](M13-player-relations.md) / Medium | A/D: E13-1 live dialog/log state; E13-2 exact directed gate/mine/terraform/transfer prerequisites beyond attack intent. | Per-consumer relation direction table plus checked eligibility predicates and asymmetric witnesses. Selection/mutation may be live even when closing through IDCANCEL. |
+| [M14](M14-battle-planning-and-review.md) / High | D/A: E14-1 full copy/rename/delete/reference state; E14-2 packed record traversal, reconstruction, corrupt indices and replay lifetime. | Plan-state transitions including copy-then-cancel and used-plan delete/decline; bounded record-to-token adapter and replay cleanup cases. M19 remains combat owner. |
+| [M15](M15-messages-and-reports.md) / Medium | D/A: E15-1 packed-message/ID/filter mapping, goto/title, suppression and draft lifecycle; both traversal directions and eligible-neighbor properties are now modeled; E15-2 every report column/comparator/cache/knowledge projection. | Retain proved traversal properties and source fixtures; close packed-buffer/native-domain mapping, per-column value/sort rules, draft failure cases and viewpoint-specific exports; qsort16 ties remain S04-owned. |
+| [M16](M16-tutorial-and-help.md) / High | D: E16-1 all 80 task predicates/hints/auto-actions and turn gates; A: HTML export/context/asset pipeline E16-2; V: full tutorial/native browser. | Page/task dependency inventory with checked predicates and outcomes; an explicit 80-page checkpoint plan. Passing `Advance` with a supplied boolean does not specify when a task is true. |
+| [M17](M17-host-game-management.md) / High | D/A: E17-1 complete CLI/INI grammar, return codes and log classification; E17-2 backup/host UI failure sequencing. P: concurrency/cancellation. | Entry/option/error matrix, raw parsing versus narrowing contract, host-readiness/file identity adapter and recovery traces. S02 narrowing correction is integrated; full parsing is still open. |
+| [M18](M18-turn-generation.md) / High | D/A: E18-1 replay/normalization/follow flags, exact phase effects/RNG and cleanup; E18-2 publication outcomes. | A year state machine with failure edges and phase-local state contracts, not only the successful schedule cursor. Use gameplay-owned effects and S01 output outcomes. |
+| [M19](M19-game-rules-and-resolution.md) / High | D: E19-1–6 full depletion/economy; movement/gates/mines; orders/invasion; combat; objects/events; knowledge/score integration. | Decompose these families into focused companions with complete state/input/RNG/width contracts and positive/negative witnesses. Reuse M08–M13/M03 rules. Hashes/function names and scalar projections are not algorithm completion. |
+| [M20](M20-ai-players.md) / High | D: E20-1 strategy thresholds, role/target/design/queue/research choices and branch RNG; A/V: E20-2 history/order/persistence/cleanup. P: fairness/strength/visibility expectations. | Per-strategy decision tables and checked transitions, complete view/history input contract and deterministic decision fixtures. Mode dispatch is not a specification of the seven strategies. |
+| [S01](S01-game-file-formats.md) and four companions / High | A/V: decoder/writer/replay refinement, malformed record/count/reference boundaries and partial writes (S01-D02–06). P: D01 legacy policy, stronger decoding/publication; D07 unsupported tags. | Per-entry/per-record accepted/rejected/error-effect matrix and byte/state differential fixtures. Keep proposed strict predicates separate from actual reader behavior; no undocumented semantics for unsupported tags. |
+| [S02](S02-application-preferences-and-window-layout.md) / Medium | D/A: E02-1 outer loader/writer/error/path and source-adapter refinement; E02-2 selection/identity formatting, full live selection/editor/title/tutorial callback effects, full M09/M10 editor integration beyond checked preset/quantity commands and conditional tile round trip. M07 now models restoration dispatch and callback returns; M15 models bidirectional traversal. The [contracts companion](S02-preference-contracts.md) now covers active keys, desktop/host grammar, buffer/save control, tile/placement parsing, saved selection/GameID decoding, MRU partial updates and preset codecs. V/P: multi-process/display policy. | Retain the checked decode/codec contracts and native fixtures; close outer-call effects, byte/locale/path mapping and full live callback effects with M06/M07/M15/M16, M09/M10 editor integration beyond their checked preset/quantity commands, and the conditional tile round trip. Preserve entry-specific desktop/host parsing and signed-overflow boundaries. |
+| [S03](S03-static-game-data-and-text.md) and inventory / Medium | D/A: E03-1 specialized generator references/schema checks, E03-2 text/rank/chunk/range/placeholder checks; V: compiled consumer equivalence. | Generator input/output/error contracts and negative fixtures; field units/ranges linked to actual consumers. Exact values are pinned by 67 hashes; that is provenance, not semantic validation. |
+| [S04](S04-platform-services.md) / High | D/A: E04-1 filesystem modes/result mapping, E04-2 full conversion/format/prefix behavior, E04-3 qsort16 and native-width/clock adapters. V: actual OS effects. | Exact caller input domains, error/output/ownership semantics and checked pure algorithms; platform fixtures for filesystem, clock and float effects. Avoid extrapolating mathematical ints to every native input. |
+| [S05](S05-sdl-desktop-implementation.md) / High | D/A: E05-1 control/modal/event state, E05-2 lifetime/reentrancy/teardown; V/P: E05-3 rendering/native APIs/accessibility/display matrix. | Bounded control/window/timer state contracts with failure edges; supported API/flag behavior and targeted lifecycle fixtures; separately recorded native/visual/assistive-technology qualification. |
+| [S06](S06-shared-game-state.md) / Medium | A/D: full field/projection/cache extraction, knowledge merging, packed/transient state and phase lifetimes. Native planet/fleet lookup control now has checked S06 contracts; array invariants, pointer lifetime and complete field mapping remain open. P: strict closure, duration overflow, mid-turn restart and legacy policy. | Logical↔C↔S01 field/identity/unit matrix with missing adapters named; field-level knowledge provenance and native lifecycle cases. Proposed full-host invariants must not become silently enforced runtime checks. |
+
+### Execution order and definition of done
+
+1. **Source accuracy and trace discipline:** preserve the completed accuracy
+   corrections (GAP-01–05 and GAP-13–14) and validate the entire inventory. Preserve all existing IDs/anchors and dated
+   evidence. Add explicit boundary domains wherever a source narrowing or
+   lookup is currently hidden in a mathematical argument.
+2. **Shared inputs and workflow contracts:** S01/S02/S03/S04/S06 adapters,
+   M04/M01/M02/M06 workflows, and M17/M18 failure/result state. This supplies
+   trustworthy inputs and ownership for the later rule models.
+3. **Gameplay rule closure:** M08–M15 with M19 companions, beginning with economy,
+   research and orders, then movement/hazards, combat and objects/knowledge.
+   Every representable rule needs its checked definition and boundary witnesses.
+4. **AI and tutorial closure:** M20’s seven strategies and M16’s 80 task checks,
+   reusing the completed gameplay contracts and recording exact RNG/phase inputs.
+5. **Qualification and decisions:** complete achievable fixture/adapter checks;
+   present concrete unresolved policy/target choices and native/assistive-tech
+   qualification work to their owners. Neither elapsed time nor a model proof
+   supplies a decision or a manual/native test result.
+
+A D/A item closes only when its declared rule/adapter inventory has no unnamed
+holes, its normal/alternative/cancel/failure outcomes are source-backed, its
+representable definitions and useful witnesses verify, and its acceptance rows
+identify both implementation evidence and the actual test/proof or explicit
+remaining V/P obligation. A blanket “native adapter” label is not closure for an
+ordinary unmodeled algorithm. Existing safe-domain restrictions must identify
+which native values are outside the domain and what remains unknown there.
+
+The goal remains **active** while actionable specification/model items above
+remain. V/P work is reported separately; product decisions and runtime changes
+are not silently approved by this documentation task. Completion must state
+exactly which obligations are finished and which externally owned qualification
+or decision boundaries remain. Passing all model obligations is necessary but
+insufficient to call the full behavior specification complete.
+
+### Review verification
+
+Recorded 2026-10-24 for this review batch:
+
+- `python3 tests/spec/verify.py --time-limit 120`: Dafny 4.11.0, all 66
+  formal files with included-file verification, **1885 verified, 0 errors**;
+  audit **0 findings**. The same run checked **1616 local links/includes** and
+  **507 requirement IDs** (116 stories, 226 acceptance, 66 interaction and 99
+  quality requirements), with zero errors. Log: `dist/spec-review-full.log`.
+- `python3 -m unittest discover -s tests/spec -p 'test_*.py'`: **9 passed**.
+  Every module appears exactly once in the completion inventory; comparison
+  with the pre-review snapshot found no removed explicit requirement anchors.
+- The focused M04/S02/M17 run finished with **99 verified, 0 errors**.
+  Earlier attempts timed out or failed on concrete unfolding obligations;
+  explicit intermediate arithmetic facts and a checked shared lemma resolved
+  them without assumptions or weakened contracts. Log:
+  `dist/spec-review-model-fourth.log`.
+- A temporary C11 witness compiled the actual layout type and layout/pane
+  normalization expressions extracted from `enums.h`/`init.c`. It confirmed
+  the signed-width cases, including 32768 → layout 0 and 65636 → pane 100.
+  This is expression evidence, not a complete INI/parser/GUI integration test.
+- `cmake --preset macos-sdl-debug -B dist/m05-macos-sdl-debug` and
+  `cmake --build dist/m05-macos-sdl-debug -j 8`: passed, with no new warnings.
+  The selected dummy-SDL unit, compatibility and tutorial-smoke suite passed
+  **31/31**. Logs: `dist/spec-review-configure.log`,
+  `dist/spec-review-build.log`, `dist/spec-review-runtime.log`.
+- Full native `make regression`, using `dist/m05-regression-build` and the
+  `spec-review-native` work directory: **519 matches, 21 unused-storage
+  warnings, 0 differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-review-comparison.json`. No baseline changed.
+- `git diff --check`: passed. No game/runtime source changed; host-specific
+  game-code checks were not required for this documentation/model batch.
+
+These results establish the checked collection's internal consistency and the
+recorded runtime regression outcomes. They do not close GAP-06–12 or the
+module-specific missing algorithms, adapters, policy decisions and native
+qualification listed above.
+
+
+## S02 shared-contract continuation
+
+Recorded 2026-10-24 at the same inspected source revision. The previous goal
+turn made concrete progress by correcting inconsistencies and creating the
+completion register. This continuation closes further D/A portions of S02;
+it does not close the whole module or the collection goal.
+
+The [new companion](S02-preference-contracts.md) inventories every active
+preference key, source default, storage width, normalization and write condition,
+including library and headless consumers. A source-selection check accounted for
+all 46 statically selected reader/writer key names; dynamic placement, fonts,
+MRU and preset families were separately checked. Eight technical companions now
+support the 26 entry documents. All prior explicit requirement anchors remain.
+
+New checked definitions cover desktop line parsing, first-section/first-key
+lookup, quoting/defaults, uint32 integer parsing, ordered key/section mutations,
+tile swapping and trailing-column updates, placement parsing, writer tile
+encoding, and additional scalar width rules. Six new criteria trace these to
+the existing S02 stories. `PrefixPreserved` proves consumed tiles cannot be
+changed by subsequent parsing; it is not a full round-trip theorem.
+
+Source checks corrected or clarified four misleading generalizations: malformed
+profile reads return defaults while retaining the load error; tile case means
+expansion and omitted tiles can reorder through swaps; bit assignments differ
+from nonzero tests; four-bit graph storage precedes its clamp. The Wait writer’s
+retained numeric suffix is also recorded as observed behavior, without changing
+runtime behavior. The companion explicitly lists the still-missing representable
+contracts and native qualification; GAP-06/07 remain open across the collection.
+
+Verification:
+
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0, all **68 formal
+  files** and their includes: **2027 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-s02-full.log`. Early focused attempts exposed one incorrect
+  negative placement witness and insufficient unfolding; the valid embedded-minus
+  outcome was corrected and explicit checked intermediate facts resolved the
+  proofs. Final focused run: **142 verified, 0 errors**, with no assumptions.
+- Requirements: **513 IDs**, comprising 116 stories, 232 acceptance, 66
+  interaction and 99 quality requirements, with zero trace errors. Nine verifier
+  unit tests pass. Final link/anchor check passes; the full-run log's link count
+  precedes the final README/companion cross-links.
+- `python3 tests/spec/check_s02_source.py`: **21 C witnesses pass**, compiled with
+  C11 and warnings as errors. The harness extracts current functions and stubs
+  profile input/storage, exercising actual tile/placement/integer code against
+  the model's concrete cases. It does not claim full GUI/OS refinement.
+- SDL Debug configure/build passed without new warnings. The selected runtime
+  suite initially passed **30/31**, with `win32_client_host_library_dummy` timing
+  out after a startup alert. Its isolated retry passed in **5.69 seconds**; no
+  source or fixture was changed for the retry. Keep the initial timeout visible:
+  `dist/spec-s02-runtime.log` and `dist/spec-s02-host-library-retry.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-s02-comparison.json`. Baselines unchanged.
+- `git diff --check` passes. No runtime/game source changed, so no behavior
+  changelog or host-specific game-code regression was required.
+
+The goal stays active. Next shared-input work should close the companion's
+remaining profile buffer/save and entry-specific parsing contracts before
+claiming S02 complete, then continue the cross-module order above.
+
+## S02 profile I/O and host grammar continuation
+
+Recorded 2026-10-24 at `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+The preceding goal turn made concrete progress on S02's inventory and basic
+contracts. This continuation closes additional representable rules from its
+backlog, without changing the collection goal or declaring native refinement.
+
+The [profile I/O contracts](S02-preference-contracts.md#profile-buffers-validation-and-save-outcomes)
+now define scalar and enumeration buffer mutation/counts, accepted write
+arguments, raw-row serialization, and ordered save failure/cleanup outcomes.
+The [host grammar](S02-preference-contracts.md#headless-profile-grammar) has
+separate checked line/traversal rules and a native-long conversion domain.
+Shared byte-level UTF-8 prefix definitions belong to S04 and are reused by S02;
+M17 consumes S02's headless grammar. Five new criteria retain story ownership at
+S02. Existing requirement IDs and anchors remain intact.
+
+The source makes distinctions now captured explicitly: a truncated multibyte
+list may report capacity-2 despite writing only NULs; a BOM-write failure does
+not explicitly set the last-error value; cleanup can fail; and the host's
+malformed section header preserves its previous section state. Model-defined
+`OutsideLongDomain` denotes an undefined conversion input, not a runtime error
+or promised fallback. No stronger durability or import policy is introduced.
+
+Verification:
+
+- Focused verification of all four touched model files: **810 verified, 0
+  errors** (`dist/spec-s02-io-focused14.log`). Earlier attempts failed or timed
+  out while unfolding UTF-8/parser recursion and proving sequence identities.
+  Checked prefix/search lemmas, explicit slice/concatenation facts and
+  line/traversal composition resolved them. All algorithm bodies remain checked;
+  opacity controls proof expansion, not verification or trust.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **71
+  formal files** and their include closure, **2764 verified, 0 errors; audit
+  0 findings**. Log: `dist/spec-s02-io-full.log`. The final documentation check
+  covers **1663 local links/includes** with zero errors; its count includes
+  cross-links added after the full run began.
+- The requirement checker accounts for **518 IDs**: 116 stories, 237 acceptance,
+  66 interaction and 99 quality requirements. Nine checker unit tests pass;
+  links/anchors and `git diff --check` pass.
+- Source-extracted C witnesses: **21 existing layout/integer cases**, **25 new
+  buffer/host/UTF-8 cases**, and **46 new save-control cases**, all passed with
+  C11 and warnings as errors. Commands: `python3 tests/spec/check_s02_source.py`,
+  `python3 tests/spec/check_s02_io_source.py`, and
+  `python3 tests/spec/check_s02_save_source.py`. The latter injects POSIX save
+  failures into the actual source body with syscall doubles; it does not claim
+  real OS-failure or crash qualification.
+- SDL Debug configure/build passed without new warnings. All **31/31** selected
+  unit/compatibility/tutorial tests passed, including the host-library test that
+  timed out in the previous batch. Logs: `dist/spec-s02-io-configure.log`,
+  `dist/spec-s02-io-build.log`, `dist/spec-s02-io-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped inputs**. Report:
+  `dist/scaffold/regression/spec-s02-io-comparison.json`. Baselines unchanged.
+  No game/runtime source changed; host-specific game-code checks were not needed.
+
+S02 remains open for selection/GameID/MRU/template state models, the conditional
+tile round-trip theorem, outer loader/writer/error/path effects and complete
+source-adapter mapping. Real filesystem faults, concurrency, displays and
+accessibility retain their V/P ownership. The goal stays active across these and
+the other modules' gap-register items.
+
+### S02 saved-state and preset continuation
+
+Recorded 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+The [S02 companion](S02-preference-contracts.md#selection-identity-and-recent-file-state)
+now specifies saved selection and GameID parsing, original-File1 startup versus
+MRU compaction, insertion, deletion and partial per-key failures. The
+[preset contracts](S02-preference-contracts.md#transport-and-production-preset-codecs)
+add transport and production codecs, packed-row normalization, forced P1 defaults
+and conditional round-trip proofs. Six added criteria retain S02 story ownership.
+M01/M07/M09/M10 link to these canonical rules instead of duplicating them.
+
+The review distinguishes five persisted production slots from the four offered
+and snapshotted by the M09 UI. It also preserves disabled-selection field
+retention, uppercase GameID behavior and signed-overflow limits, ignored MRU-add
+write errors, partial MRU-deletion memory changes, and rejection of the two-byte
+empty production preset. No runtime behavior or baseline was changed.
+
+Verification:
+
+- Focused verification of the two new models passed **153 obligations, 0
+  errors** (`dist/spec-s02-state-focused8.log`). Earlier attempts exposed
+  missing sequence/folding proof facts and one incorrectly chosen rejection
+  witness; the checked proofs and witness were corrected. The final full run
+  additionally includes the separate startup File1 input and its postconditions.
+- Final `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  all **73 formal files** with included-file verification, **2921 verified,
+  0 errors; audit 0 findings** (`dist/spec-s02-state-full.log`). The prior full
+  run passed 2917 before the separate startup-read correction; it is retained
+  as `dist/spec-s02-state-before-startup-full.log`. The final run verifies the
+  corrected inputs and postconditions; no assumptions or disabled proofs were
+  introduced.
+- **1680 local links/includes** and **524 requirement IDs** (116 stories, 243
+  acceptance, 66 interaction and 99 quality) pass. All prior explicit requirement
+  anchors are retained; all nine requirement-checker unit tests pass.
+- The existing three source scripts pass **21 layout/integer**, **25 I/O/host**
+  and **46 save-control** checks. New `check_s02_state_source.py` passes **42**
+  assertions, including distinct results for the two File1 reads and every
+  deletion-write failure stage. `check_s02_presets_source.py` passes **131086**
+  assertions, including reader/writer checks over all **65536** packed production
+  words. Both new scripts compile source-extracted C11 with warnings as errors
+  and undefined-behavior instrumentation; out-of-domain signed arithmetic is
+  deliberately not executed. Operation doubles do not qualify actual OS faults.
+- SDL Debug configure/build passed without warnings in the build log; the
+  selected dummy-SDL unit/compatibility/tutorial suite passed **31/31**. Logs:
+  `dist/spec-s02-state-configure.log`, `dist/spec-s02-state-build.log`, and
+  `dist/spec-s02-state-runtime.log`.
+- Full native regression passed: **519 matches, 21 unused-storage warnings,
+  0 differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-s02-state-comparison.json`. Baselines unchanged.
+- `git diff --check` passes. No game/runtime source changed; host-specific
+  game-code checks were not required.
+
+Remaining S02 work is explicit: selection/identity formatting, the live
+RestoreSelection/message/tutorial callbacks, M09/M10 preset application/edit/cancel,
+conditional tile round trip, outer loader/writer/error/path behavior and complete
+source-adapter mapping. Real filesystem faults, concurrency, displays and
+accessibility retain V/P ownership. The all-module completion goal remains active.
+
+### Selection restoration and message navigation continuation
+
+Recorded 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+[M07 restoration](M07-galaxy-map-and-navigation.md#61-restoring-selection-after-opening-a-turn)
+now has a checked controller with explicit post-callback state, home/planet/fleet
+fallback precedence, null-fleet termination and scanner-window command wrapper.
+M06 specifies the caller's saved-marker decision and possible additional fallback.
+[M15](M15-messages-and-reports.md#message-creation-filtering-and-navigation)
+adds reverse traversal, end/sentinel handling, nearest-eligible proofs and both
+neighbor round trips. [S06](S06-shared-game-state.md#native-lookup-adapters)
+owns native planet/fleet binary lookup, packed-ID masking and count-prefix bounds.
+Seven new criteria retain their module/story ownership. S02 and M16 link the
+storage/tutorial handoffs to these contracts.
+
+The review preserves distinctions that a generic restore-success boolean would
+hide: a found fleet pointer need not become the main selection; the original
+unmasked fleet ID is passed to the selection callback; a cleared saved marker is
+not an acknowledgment of UI success; callback state can affect later fallback;
+and FOpenGame may select again when the original marker was zero. Native null
+probes, message-ID decoding failure and the final int16 end-cursor increment are
+explicit domain limits, not invented fallback results. No runtime behavior changed.
+
+Verification:
+
+- Focused verification of all four changed model modules passed **268 verified,
+  0 errors** (`dist/spec-restore-focused6.log`). Earlier verification exposed
+  a missing result-bound precondition in the inverse-navigation theorem;
+  checked postconditions on the canonical traversal functions resolved it.
+  No assumptions, axioms or disabled verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **75
+  formal files** and their include closure, **3159 verified, 0 errors; audit
+  0 findings**. Log: `dist/spec-restore-full.log`.
+- **1711 local links/includes** and **531 requirement IDs** pass: 116 stories,
+  250 acceptance, 66 interaction and 99 quality requirements. All prior explicit
+  requirement anchors are retained, and all **9** checker unit tests pass.
+- `python3 tests/spec/check_restoration_source.py`: **6512 assertions passed**.
+  The harness extracts actual C bodies for message navigation, lookup, fallback,
+  restoration, post-open dispatch and the FOpenGame tail, using projected native
+  structs and logged UI doubles. It compiles with C11, warnings as errors and
+  fatal undefined-behavior instrumentation. It includes exhaustive small-view
+  filter/cursor cases and explicit callback mutations; it does not establish
+  actual callback effects, corrupt-pointer safety or whole-program refinement.
+- SDL Debug configure/build passed with no warnings in the build log. Selected
+  dummy-SDL unit/compatibility/tutorial tests passed **31/31**. Logs:
+  `dist/spec-restore-configure.log`, `dist/spec-restore-build.log`,
+  `dist/spec-restore-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped inputs**. Report:
+  `dist/scaffold/regression/spec-restore-comparison.json`. Baselines unchanged.
+- `git diff --check` and new-file whitespace checks pass. No game/runtime source
+  changed; host-specific game-code checks were not required.
+
+Remaining work: full selection/editor/cache callback effects, message title/goto
+and packed-buffer adapters, tutorial predicates/auto-actions, pointer lifetimes,
+reentrancy and native rendering/focus qualification. The module completion rows
+retain those obligations alongside the wider gameplay and platform backlog.
+The all-module goal remains active.
+
+### Production preset command continuation
+
+Recorded 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+[M09 production presets](M09-production-management.md#32-templates-and-automatic-policies)
+now have a checked command model reusing the S01 order fields and S02 packed
+codec. It covers availability release with native ten-bit wrap/unlimited state,
+ordered replacement and trait filtering, full allocation versus eight-bit
+headers, command Clear, payload copy/rename/delete, nested and outer cancellation,
+label projection and allocation-escape cleanup. Six added acceptance criteria
+preserve story ownership; S02 links the command/storage boundary.
+
+Source review records behavior a generic successful import or transactional
+Cancel would hide: import returns availability without reserving retained/new
+rows again; it bypasses Add's row limit; 256 rows narrow the active header to
+zero; cancelled customization leaves dirty state; rename cancellation also
+marks dirty; and allocation cleanup does not restore research. These are source
+observations, not approved gameplay changes. Missing matches at a full physical
+catalog are undefined access boundaries, not invented error returns.
+
+Verification:
+
+- Focused M09 verification passed **242 verified, 0 errors** in
+  `dist/spec-production-focused6.log`. Earlier failures exposed an inferred
+  packed-word bound, a sequence-membership witness and insufficient recursive
+  unfolding. A checked packing function, explicit witness and bounded proof
+  unfolding resolved them; no assumptions, axioms or disabled verification.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **76 formal
+  files** with include closure, **3401 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-production-full.log`.
+- **1721 local links/includes**, **537 requirement IDs** (116 stories, 256
+  acceptance, 66 interaction and 99 quality) and all **9** checker unit tests
+  pass. Comparison with the pre-batch snapshot found no removed explicit anchors.
+- `python3 tests/spec/check_production_presets_source.py`: **13,139 assertions
+  passed**, including all **3,328** native count/preset-count pairs. Extracted
+  source and structs compile as C11 with warnings as errors and fatal
+  undefined-behavior instrumentation. GUI/localization and allocation doubles
+  provide controlled outcomes; this is not full C/model refinement or native
+  rendering/heap-failure qualification.
+- SDL Debug configure/build passed without build warnings. Selected SDL unit,
+  compatibility and tutorial-smoke tests passed **31/31**. Logs:
+  `dist/spec-production-configure.log`, `dist/spec-production-build.log`,
+  `dist/spec-production-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-production-comparison.json`. Baselines unchanged.
+- `git diff --check` and changed/new-file whitespace checks pass. No game/runtime
+  source changed; host-specific game-code checks were not required.
+
+Remaining work includes complete initialization/sanitization/Add/Remove/Next
+and modal lifecycle, production costs/forecast/host execution, M10 transport
+presets and all other open module rows. The all-module goal remains active.
+
+### Transport preset and quantity control continuation
+
+Recorded 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+[M10 transport commands](M10-fleet-operations.md#311-applying-transport-presets)
+now specify built-in versus custom payload changes, menu indexing/bounds,
+copy/rename/delete, nested and outer cancellation, cargo/action selection,
+int16 amount parsing/clamping, and the bounded single-line notification path.
+Seven added criteria trace these contracts to player route/task stories. S02
+retains storage ownership and S06 retains typed action meaning; M10 preserves
+raw nibble/quantity state separately from proposed validated task inputs.
+
+The initial preset write and post-refresh state are different observations:
+built-ins can preserve quantities, then the selected control synchronously
+normalizes one of them, including disabled quantity controls. Write-back return
+values do not establish file publication. Invalid supplied popup ranks can scan
+past the four slots; the model marks undefined access, not a native error result.
+Source review also corrected the M09/M10 outer modal result adapter: both callers
+store DialogBox's return in int16_t before deciding rollback. Shared helpers and
+both native fixture wrappers now retain that width; normal 0/1 results are
+unchanged. No runtime/game behavior changed.
+
+Verification:
+
+- Focused M09/M10 models: **496 verified, 0 errors** in
+  `dist/spec-transport-focused4.log`. Early attempts exposed lambda index domains,
+  nested sequence predicate unfolding and missing explicit power-of-two facts;
+  indexed constraints and checked intermediate facts resolved them. No assumptions,
+  axioms or disabled verification were added.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **77 formal
+  files** with include closure, **3655 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-transport-full.log`.
+- Final link/trace pass: **1737 local links/includes**, **544 requirement IDs**
+  (116 stories, 263 acceptance, 66 interaction and 99 quality), zero errors.
+  All **9** checker unit tests pass; all prior explicit anchors are retained.
+  Log: `dist/spec-transport-links.log`. The formal run's earlier link pass counted
+  1736 before the final Markdown link to the shared M09 correction was added.
+- `python3 tests/spec/check_transport_presets_source.py`: **131,593 assertions
+  passed**. The harness extracts native structures and actual command/refresh/
+  label code, with an entry-count wrapper around the refresh function. It checks
+  all 65,536 int16 patterns under both limits, all valid-slot and active-cargo
+  masks, unchanged ORDER header bytes, callback write snapshots and cancellation.
+  Doubles supply GUI/localization/write-back outcomes; actual window lifetime,
+  arbitrary callbacks and native rendering remain separate qualification.
+- `python3 tests/spec/check_production_presets_source.py`: **13,140 assertions
+  passed** after correcting its wrapper's modal result to native int16 storage
+  and adding raw 65536 rollback. Both harnesses compile with C11, warnings as
+  errors and fatal undefined-behavior instrumentation. Early harness failures
+  exposed a const-qualification mismatch in a double and an incorrect expected
+  seven-byte parse remainder; they were corrected without changing game code.
+- SDL Debug configure/build passed without build warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-transport-configure.log`, `dist/spec-transport-build.log`,
+  `dist/spec-transport-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-transport-comparison.json`. Baselines unchanged.
+- `git diff --check` and changed/new-file whitespace checks pass. No game/runtime
+  source changed; host-specific game-code checks were not required.
+
+Remaining work includes full waypoint/task-default and target-selection control
+state, arbitrary UI reentrancy/lifetime, every host transport mode and the broader
+movement/damage/economy/AI/tutorial backlog. The all-module goal remains active.
+
+### Production editor initialization and command continuation
+
+Recorded 2026-10-24 against `e2eae18cff0f990db20415c1c2262aed2022f95b`.
+[M09 editor initialization and commands](M09-production-management.md#311-initial-queue-and-source-catalogue)
+now have checked catalogue assembly/width rules, copied-queue sanitation,
+Add/Remove selection and availability effects, realloc escape and complete-row
+reorder. Eight criteria retain player-story ownership and identify native helper,
+allocation and UI boundaries. Existing shared row, identity, modifier and preset
+contracts remain canonical.
+
+The review corrected an incorrect insertion description: Add checks the selected
+row and its successor, then inserts after the selection, with separate header
+and absent-selection behavior. Sanitization is not a safe generic filter: the
+source has an overlapping memcpy boundary and a defined one-following-row case
+where the moved row escapes its intended clamp. The known-bug/roadmap records
+now distinguish this source evidence from a real UI trigger, original-binary
+comparison or an approved runtime repair. Model fault markers do not invent
+native error handling. No game/runtime source changed.
+
+Verification:
+
+- Focused editor model: **276 verified, 0 errors** in
+  `dist/spec-editor-focused2.log`; the initial draft also verified before the
+  additional boundary witnesses were added. No assumptions, axioms or disabled
+  verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **78 formal
+  files** and include closure, **3931 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-editor-full.log`.
+- Final links/trace pass: **1749 local links/includes**, **552 requirement IDs**
+  (116 stories, 271 acceptance, 66 interaction and 99 quality), zero errors.
+  All **9** checker unit tests pass. Prior explicit anchors are retained;
+  the new known-bug/roadmap cross-links and changed/new-file whitespace were
+  checked. Log: `dist/spec-editor-links.log`. The full run's earlier Markdown
+  pass counted 1747 links before two canonical-model navigation links were added.
+- `python3 tests/spec/check_production_editor_source.py`: **19,415 assertions
+  passed**. It extracts current initializer/command/allocation bodies and native
+  queue/catalog record layouts, with explicit planet/design/helper and GUI
+  projections. Cases cover every source count 1–1023 and modifier combination
+  for Add, every row count 0–1023 and modifier combination for Remove, catalogue
+  order/traits/widths, insertion/merge/refusal, allocation escape and preservation
+  of progress/unused bits. Address/undefined-behavior instrumentation and compiler
+  warnings are fatal. A guarded memcpy detects overlapping ranges and escapes
+  before libc; it verifies the reached boundary, not undefined post-copy results.
+  The defined cursor example uses an unavailable ship-design row followed by a
+  factory row, without requiring an invalid object-kind encoding.
+- SDL Debug configure/build passed without build warnings. Selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-editor-configure.log`, `dist/spec-editor-build.log`,
+  `dist/spec-editor-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-editor-comparison.json`. Baselines unchanged.
+- `git diff --check` passes. No game/runtime sources or baseline files changed;
+  host-specific game-code checks were not required.
+
+Remaining M09 work includes native getter/catalog refinement, Next/Back and
+global/modal lifecycle, full costs/forecast/production execution and their wider
+module dependencies. Native sanitization repair remains a separate open task;
+no safe postcondition is asserted past undefined overlap. The all-module goal
+remains active.
+
+
+### Production lifecycle and starbase navigation continuation
+
+Continued on the existing reviewed revision and working collection. The
+[M09 lifecycle controller](dafny/M09-lifecycle.dfy) now specifies native
+completion, modal return narrowing, direct Clear, close commands, Next/Back,
+allocation recovery and initial queue selection. [M07 adjacent selection](dafny/M07-adjacent.dfy)
+owns construction-capable starbase target choice in actual planet-array order.
+The module entries preserve IDs and add M09-AC25–30 and M07-AC12.
+
+Callbacks are explicit boundaries: ignored lookup returns do not establish a
+successful write; reload uses post-write identity, AI refresh uses post-reload
+state, and tutorial can mutate state after final cleanup. Direct Clear consumes
+the existing working global and depends on normal entry ownership. Recovery
+after transfer or navigation does not undo earlier effects. No runtime behavior
+or baseline was changed.
+
+Verification and limits for this continuation:
+
+- Focused verification: **88 verified, 0 errors** in
+  `dist/spec-lifecycle-focused3.log`. The draft had one type-resolution error,
+  then three unproved witness assertions; correcting the row argument and
+  supplying explicit recursive/width unfolding resolved them. The final run
+  also verifies the stronger last-nonautomatic-row postconditions. No assumptions,
+  axioms or disabled verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **80 formal
+  files** and include closure, **4019 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-lifecycle-full.log`.
+- Final links/trace: **1765 local links/includes**, **559 requirement IDs**
+  (116 stories, 278 acceptance, 66 interaction and 99 quality), zero errors.
+  All **9** checker unit tests pass. Prior explicit anchors are retained.
+  Log: `dist/spec-lifecycle-links.log`. The full run counted 1762 links before
+  the final source/test/verification navigation links were added.
+- [Native lifecycle fixtures](../tests/spec/check_production_lifecycle_source.py):
+  **16,243 assertions passed**, including 15,360 starbase selector cases,
+  all 511 automatic/manual queue patterns through eight rows, a fleet-row case,
+  accept/cancel/null/empty/nonempty/AI/tutorial/player combinations, separate
+  write/read result combinations, modal narrowing, direct Clear entry states,
+  multi-colony cancellation, five injected escape stages and callback mutation.
+  Actual C function/command bodies and native queue headers are extracted;
+  initialization, allocator, lookup, selection, modal and GUI effects are bounded
+  doubles. Freed-allocation identity is checked by the allocator double. The
+  title formatter is a bounded double; the first harness compile rejected its
+  deprecated `sprintf` mapping, which was replaced without changing runtime code.
+  C11 warnings and address/undefined-behavior instrumentation are fatal.
+  Log: `dist/spec-lifecycle-native.log`.
+- SDL Debug configure/build passed without warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-lifecycle-configure.log`, `dist/spec-lifecycle-build.log`,
+  `dist/spec-lifecycle-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-lifecycle-comparison.json`; baseline unchanged.
+- Changed-file whitespace, preserved explicit anchors and `git diff --check`
+  passed. No game/runtime sources or baseline files changed; host-specific
+  game-code checks were not required.
+
+Remaining work includes real `FLookupPlanet`/`FDupPlanet` ownership and failure
+refinement, full selection/tutorial/modal reentrancy, getter/catalog adapters,
+localized title-buffer behavior and full cost/forecast/host production rules.
+The source-extracted fixtures use explicit callback doubles and do not establish
+whole-application persistence or platform qualification. The all-module goal
+remains active.

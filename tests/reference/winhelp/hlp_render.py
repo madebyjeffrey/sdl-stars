@@ -14,8 +14,8 @@ from hlp_format import decode_topics
 from hlp_font import css_style, decode_fonts, style_topics
 from hlp_image import decode_images, png_bytes, svg_bytes
 
-DIRECTORY = Path(__file__).resolve().parent
-ROOT = DIRECTORY.parents[1]
+ROOT = Path(__file__).resolve().parents[3]
+DIRECTORY = ROOT / "compat/win32"
 
 
 def page_name(offset):

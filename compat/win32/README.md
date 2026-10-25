@@ -133,7 +133,7 @@ explicit POSIX paths are retained. The new CLion targets are
 
 ## Fonts and text
 
-Embedded Liberation faces, FreeType rasterization, CP1252 text, rotation and
+Embedded Liberation faces, FreeType rasterization, UTF-8 text, rotation and
 wrapped/clipped layout now pass native/Windows contract tests. Select
 `stars-compat-font` in CLion. The SDL presets require FreeType and Fontconfig
 development packages; Windows/host builds do not. See the
@@ -191,7 +191,7 @@ or SDL focus loss. The capture batch reached **120/178 (67.4%)**. See
 
 Input-state support adds `GetKeyState`, `GetAsyncKeyState`, `GetCursorPos` and
 `WindowFromPoint`, reaching **124/178 (69.7%)**. Input queue snapshots preserve
-modifier state, text events convert to CP1252, and control characters, wheels,
+modifier state, text events deliver Unicode scalar values, and control characters, wheels,
 input-message screen points and double-clicks are delivered. See
 [input tests, CLion targets and backend limits](../../docs/WIN32-INPUT.md).
 
@@ -410,7 +410,11 @@ bitmap/text storage, check groups, split/whole dropdown notifications and anchor
 tooltips. Windows uses its native `comctl32` control. See
 [toolbar contracts, reference tests and remaining scope](../../docs/WIN32-TOOLBARS.md).
 
-Native filesystem path controls and captions have explicit UTF-8 modes; game
-text and general controls remain CP1252. See [encoding contracts](../../docs/UNICODE-BOUNDARIES.md).
-Hierarchy snapshots mark UTF-8 text with `fUtf8Text`; JSON always emits UTF-8.
-This is an application path boundary, not a general Win32 wide-character ABI.
+All decoded application text is UTF-8, including controls, captions, clipboard,
+resources and inspection. Hierarchy snapshots always mark `fUtf8Text` true for
+API compatibility. Native Windows text/chooser boundaries convert strictly to
+UTF-16. See [encoding contracts](../../docs/UNICODE-BOUNDARIES.md).
+
+The canonical guide is `res/help-utf8.zip`, staged without legacy decoding by
+`helpgen.py`. Original HLP decoding tools live in `tests/reference/winhelp` for
+historical inspection and are excluded from the product build.

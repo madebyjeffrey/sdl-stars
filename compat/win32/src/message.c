@@ -40,6 +40,27 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return TRUE;
 }
 
+BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    COMPATASYNCPOST *lpPost;
+    SDL_Event event = {0};
+
+    if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
+    lpPost = malloc(sizeof(*lpPost));
+    if (!lpPost) return FALSE;
+    lpPost->hwnd = hwnd;
+    lpPost->msg = msg;
+    lpPost->wParam = wParam;
+    lpPost->lParam = lParam;
+    event.type = SDL_EVENT_USER;
+    event.user.code = COMPAT_ASYNC_POST_CODE;
+    event.user.data1 = lpPost;
+    if (!SDL_PushEvent(&event)) {
+        free(lpPost);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     /* Keep the newest consecutive motion, without merging across button/key
        changes or application-posted messages. Old pointer positions otherwise
@@ -307,7 +328,8 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         DestroyWindow(hwnd);
         return 0;
     case WM_SETTEXT:
-        if (!lParam || !(pszNew = SDL_strdup((const char *)lParam))) return FALSE;
+        if (!lParam || !FUtf8Valid((const char *)lParam, strlen((const char *)lParam)) ||
+            !(pszNew = SDL_strdup((const char *)lParam))) return FALSE;
         if (lpwin->lpWindow && !FCompatNativeTitle(lpwin->lpWindow, pszNew)) {
             SDL_free(pszNew);
             return FALSE;
@@ -319,13 +341,9 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (!lParam || wParam == 0)
             return 0;
         psz = lpwin->pszTitle;
-        if (lpwin->fUtf8Text || lpwin->fUtf8Title) {
-            cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
-            memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
-            return (LRESULT)cch;
-        }
-        cch = SDL_strlcpy((char *)lParam, psz, (size_t)wParam);
-        return (LRESULT)(cch < wParam ? cch : wParam - 1);
+        cch = CchUtf8Prefix(psz, (size_t)wParam - 1);
+        memcpy((char *)lParam, psz, cch); ((char *)lParam)[cch] = 0;
+        return (LRESULT)cch;
     case WM_GETTEXTLENGTH:
         return (LRESULT)SDL_strlen(lpwin->pszTitle);
     default:
