@@ -1,0 +1,38 @@
+[project]
+site_name = "SDL-Stars · Specification handbook"
+site_description = "Player workflows, host simulation, shared contracts, and the evidence behind SDL-Stars."
+site_url = "https://madebyjeffrey.github.io/sdl-stars/"
+repo_url = "https://github.com/madebyjeffrey/sdl-stars"
+repo_name = "madebyjeffrey/sdl-stars"
+docs_dir = "dist/handbook/source"
+site_dir = "dist/handbook/site"
+extra_css = ["assets/handbook.css"]
+
+[project.theme]
+language = "en"
+logo = "assets/stars.svg"
+favicon = "assets/stars.svg"
+features = ["navigation.tabs", "navigation.sections", "navigation.path", "navigation.top", "navigation.footer", "search.highlight", "content.code.copy", "toc.follow"]
+font = false
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "indigo"
+accent = "cyan"
+toggle = { icon = "material/brightness-7", name = "Switch to light mode" }
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "indigo"
+accent = "teal"
+toggle = { icon = "material/brightness-4", name = "Switch to dark mode" }
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+tables = {}
+toc = { permalink = true }
+"pymdownx.highlight" = {}
+"pymdownx.details" = {}
+"pymdownx.superfences" = { custom_fences = [{ name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }] }

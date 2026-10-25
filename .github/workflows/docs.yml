@@ -1,0 +1,89 @@
+name: Specification handbook
+
+on:
+  pull_request:
+    paths: &docs-paths
+      - 'spec/**'
+      - 'handbook/**'
+      - 'tools/handbook.py'
+      - 'tests/docs/**'
+      - 'tests/spec/verify.py'
+      - 'docs/adr/**'
+      - 'GLOSSARY.md'
+      - 'README.md'
+      - 'Makefile'
+      - 'zensical.toml'
+      - 'requirements-docs*.txt'
+      - '.github/workflows/docs.yml'
+  push:
+    branches: [develop, main]
+    paths: *docs-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: handbook-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install documentation dependencies
+        run: python -m pip install -r requirements-docs.txt -r requirements-docs-browser.txt
+      - name: Configure GitHub Pages
+        id: pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Check publication boundaries and build handbook
+        env:
+          HANDBOOK_SITE_URL: ${{ steps.pages.outputs.base_url || 'https://madebyjeffrey.github.io/sdl-stars/' }}
+        run: |
+          make test-docs DOCS_PYTHON=python
+          make docs DOCS_PYTHON=python
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
+      - name: Render diagrams and check browser behavior
+        env:
+          HANDBOOK_SITE_URL: ${{ steps.pages.outputs.base_url || 'https://madebyjeffrey.github.io/sdl-stars/' }}
+        run: python tests/docs/browser.py
+      - name: Upload handbook preview and screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: specification-handbook
+          path: |
+            dist/handbook/site
+            dist/handbook/screenshots
+          if-no-files-found: error
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/handbook/site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy handbook
+        id: deployment
+        uses: actions/deploy-pages@v4
