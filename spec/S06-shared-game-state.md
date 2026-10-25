@@ -12,6 +12,7 @@ explain those definitions and retain their source evidence. See the
 proof strength, dependency boundaries and verification commands.
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Data-model and relationship diagrams](#data-model-and-relationship-diagrams) map the shared values and references.
 
 ## User stories and requirements
 
@@ -788,3 +789,227 @@ stateDiagram-v2
 ```
 
 The lifecycle diagram is a logical ownership map, not a saved enum or a universal commit/rollback controller. A found lookup position does not establish array invariants or pointer lifetime. Draft cancellation and load/destruction failure use the named owner contracts; the diagrams do not enforce proposed validation in C.
+
+## Data-model and relationship diagrams
+
+These reading projections select existing logical field groups and relationships;
+they are not new C classes, database tables or disk layouts. Rechecked at
+`7abe8083788d2f991e54eb9fc108a5468f82d2a1` on 2026-10-25. Proposed typed and
+validated boundaries remain Proposed; observed packing and lookup behavior keep
+their existing evidence/status. Native adapters need the checks in §§2 and 10.
+
+<a id="s06-data-entities"></a>
+### Entities and owner-scoped references in a full host snapshot
+
+Trace: [S06-US01/AC01](#s06-us01), [US03/AC04](#s06-us03),
+[identity domains](#21-identity-domains-and-adapters), [players/designs](#3-game-players-and-designs),
+[planets/fleets](#4-planets-fleets-production-and-waypoints),
+[canonical contracts](S06-state-specification.dfy): `FleetId`, `DesignId`,
+`PlanetFits`, `FleetFits`, `HostTopology`; extension `FPlayer`.
+Evidence: [structs.h](../src/core/structs.h) `GAME`, `PLAYER`, `PLANET`, `FLEET`,
+`SHDEF`, `BTLPLAN`; [util.c](../src/core/util.c) `LpflNew`, `LpplFromId`, `LpflFromId`;
+[create.c](../src/core/create.c) `GenerateWorld`.
+
+```mermaid
+erDiagram
+    GameSnapshot ||--|{ Player : contains_active_slots
+    GameSnapshot ||--o{ Planet : identifies_in_universe
+    Player ||--o{ Fleet : owns
+    Player o|--o{ Planet : currently_owns
+    Player ||--o{ Design : owns_roster_entries
+    Player ||--o{ BattlePlan : owns_ordered_roster
+    Planet o|--o{ Fleet : orbited_by
+    BattlePlan ||--o{ Fleet : selected_by
+    Fleet ||--o{ FleetDesignEntry : has_occupied_slots
+    Design ||--o{ FleetDesignEntry : supplies_ship_definition
+    Design o|--o{ Planet : supplies_optional_starbase
+    GameSnapshot {
+        bits32 lid
+        turn current_turn
+        ordered players
+    }
+    Player {
+        scoped id_0_to_15
+        snapshot race_and_controller
+        directed relations
+    }
+    Planet {
+        scoped id
+        optional owner
+        ordered production_queue
+    }
+    Fleet {
+        composite owner_and_slot
+        point position
+        ordered waypoints
+    }
+    Design {
+        composite owner_kind_slot
+        catalog hull
+        ordered parts
+    }
+    BattlePlan {
+        composite owner_and_index
+    }
+    FleetDesignEntry {
+        slot ship_design_0_to_15
+        count ships
+    }
+```
+
+Cardinality describes selected stable **full-host** relationships, not all
+validation: there are 1–16 active player slots, 16 ship and 10 base slots per
+owner, and at most 16 battle plans. `FleetDesignEntry` is a reading of nonzero
+entries in the fleet's fixed 16-count array, not another saved entity. Ship
+composition references ship designs; planetary bases reference base designs of
+the current owner. Dead players retain slots. A colony is owned planetary state.
+Partial views, newly allocated empty fleets and mutation intermediates must not
+be checked as this complete graph. Native fleet lookup masks/prefix behavior
+does not itself enforce these typed relationships. IDs can be reused, and a
+library copy is not uniquely identified by the internal game ID alone.
+
+<a id="s06-data-variants"></a>
+### Waypoint targets, tasks, and space-object variants
+
+Trace: [S06-US03](#s06-us03), [waypoints](#44-object-references-and-waypoint-variants),
+[things](#5-space-objects-and-other-variants), [sentinels](#22-sentinel-decoding-is-field-specific),
+[canonical contracts](S06-state-specification.dfy): `ObjectRef`, `Task`,
+`WaypointFits`, `ThingPayload`, `ThingFits`, `WormholePairs`.
+Evidence: [structs.h](../src/core/structs.h) `ORDER`, `THING`, task/thing unions;
+[ship.c](../src/core/ship.c) `DeleteWpFar`; [thing.c](../src/core/thing.c) `LpthNew`;
+[turn3.c](../src/core/turn3.c) `SatisfyOrders`.
+
+```mermaid
+classDiagram
+    direction LR
+    class Waypoint {
+        Point pt
+        ObjectRef target
+        int warp
+        Task task
+    }
+    class ObjectRef {
+        NoObject
+        PlanetRef
+        FleetRef
+        PositionOnly
+        ThingRef
+    }
+    class Task {
+        NoTask
+        Transport
+        Colonize
+        RemoteMine
+        Merge
+        Scrap
+        LayMines
+        Patrol
+        AutoRoute
+        Give
+    }
+    class Transport {
+        ordered five_cargo_actions
+    }
+    class Thing {
+        ThingId type_owner_slot
+        Point pt
+        Turn observation_turn
+    }
+    class ThingPayload {
+        MineData
+        PacketData
+        WormData
+        TraderData
+    }
+    class WormData {
+        ThingId partner
+        masks known_and_traversed
+    }
+    Waypoint *-- ObjectRef : one tagged target
+    Waypoint *-- Task : one tagged task
+    Task ..> Transport : transport alternative only
+    ObjectRef ..> Thing : ThingRef key may be stale
+    Thing *-- ThingPayload : tag selects one payload
+    ThingPayload ..> WormData : wormhole alternative only
+    WormData ..> Thing : partner key
+```
+
+Members of `ObjectRef`, `Task` and `ThingPayload` are **alternatives**, not
+simultaneously populated fields or class inheritance. Waypoints always retain
+coordinates even when they hold a target key. Targets can disappear; a typed key
+does not guarantee a live pointer. Task payloads retain their field-specific
+domains, units and sentinels from §4.4. Salvage is warp-zero packet data, not a
+fifth thing kind. Owner bits in a natural object's namespace do not imply player
+ownership. Reciprocal wormhole closure applies to a full host graph, not a
+filtered player view. Inactive union bytes add no semantic fields here.
+
+<a id="s06-data-observations"></a>
+### Player knowledge, recorded results, and session-held state
+
+Trace: [S06-US02](#s06-us02), [US04](#s06-us04),
+[knowledge/results](#6-knowledge-messages-scores-and-battles),
+[lifetimes](#82-lifetime-inventory), [canonical contracts](S06-state-specification.dfy):
+`Knowledge`, `PopulationView`, `BattleEventIndicesFit`; extensions `DesignView`,
+`FleetView`, `Score`, `Held`, `FLiveReference`, `DestroySession`.
+Evidence: [file.c](../src/core/file.c) `FReadPlanet`, `FReadFleet`, `FReadShDef`;
+[save.c](../src/core/save.c) `SetVisiblePlanFleet`, `FWriteDataFile`;
+[file.c](../src/core/file.c) `DestroyCurGame`.
+
+```mermaid
+classDiagram
+    direction TB
+    class PlayerSession {
+        scope game_player_turn
+        flags dirty_and_submission_intent
+    }
+    class Observation {
+        key entity
+        PlayerId recipient
+        Turn observed_turn
+        variant detail
+    }
+    class Knowledge {
+        NoData
+        Known_value_and_turn
+    }
+    class PopulationView {
+        UnknownPopulation
+        ExactPopulation
+        EstimatedPopulation
+    }
+    class RecordedBattle {
+        local battle_id
+        ordered tokens
+        ordered events
+    }
+    class BattleToken {
+        local token_index
+        snapshot original_object_and_design
+    }
+    class BattleEvent {
+        local token_references
+        ordered effects
+    }
+    class HeldReference {
+        Lifetime owner
+        generation epoch
+    }
+    PlayerSession o-- Observation : loaded view and history
+    Observation ..> Knowledge : absent or known fields
+    Observation ..> PopulationView : population detail variant
+    PlayerSession o-- RecordedBattle : recipient result set
+    RecordedBattle *-- BattleToken : ordered local roster
+    RecordedBattle *-- BattleEvent : ordered replay
+    BattleEvent ..> BattleToken : local indices
+    PlayerSession ..> HeldReference : session-scoped use
+```
+
+The session/observation boxes group existing field-level contracts, not new
+canonical datatypes. Unknown ownership differs from known-unowned; exact,
+estimated and stale data stay distinct. Full-format records do not automatically
+establish full knowledge. Battle tokens preserve snapshots even if the original
+fleet/design no longer exists; their indices are local to that battle, not
+fleet IDs. History merging is field-specific in S01. Destroying a session
+invalidates its held references/caches; application metadata can outlive it.
+Gameplay RNG, AI scratch, file XOR state and derived caches have their separate
+lifetimes in §8; no arbitrary mid-generation resume is implied.

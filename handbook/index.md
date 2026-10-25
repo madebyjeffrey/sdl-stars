@@ -15,6 +15,7 @@ with the workflows, rules, file contracts, and evidence behind it.
 | --- | --- |
 | Understand how the game fits together | [Game lifecycle and implementation layers](overview.md) |
 | Follow the main player and host handoffs | [Cross-module sequence diagrams](sequences.md) |
+| Understand entities, keys, observations and saved files | [Shared state and file relationships](data-models.md) |
 | Follow a module's decisions, state, failure and cancellation paths | [Module diagram atlas](diagrams.md) |
 | Create a race or start a game | [Before entering a game](../spec/README.md#before-entering-a-game) |
 | Play and exchange a turn | [Inside a player turn](../spec/README.md#inside-a-player-turn) |

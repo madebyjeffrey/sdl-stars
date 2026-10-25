@@ -9,6 +9,8 @@ conditions. [S01 §1.2](S01-game-file-formats.md#12-what-the-formal-model-establ
 each area to its definitions and states the proof boundary. These tables retain
 the source evidence and distinguish writer output from observed reader behavior.
 
+[Data-model and relationship diagrams](#data-model-and-relationship-diagrams) provide a visual map.
+
 ## Story-linked requirements
 
 This companion enables [S01-US03](S01-game-file-formats.md#s01-us03)
@@ -329,3 +331,72 @@ metadata, archive timestamps and compression choices are separate envelopes.
 fixture/test coverage and the remaining malformed-input, transactional and
 policy decisions. No atomic multi-file transaction, authenticated save format,
 or unrestricted ZIP compatibility is implied by these workflows.
+
+## Data-model and relationship diagrams
+
+<a id="s01-data-managed-storage"></a>
+### Managed storage, metadata, backups, and exchange copies
+
+Source-derived projection rechecked at `7abe8083788d2f991e54eb9fc108a5468f82d2a1`
+on 2026-10-25. Trace: [story-linked requirements](#story-linked-requirements),
+[metadata/names](#3-library-metadata-and-names),
+[publication boundaries](#4-importexport-publication-boundaries),
+[ZIP](#5-zip-envelope), [canonical specification](S01-game-file-specification.dfy):
+`Metadata`, `MetadataBytes`, publication predicates in
+[S01External](dafny/S01-external.dfy); [M01 ownership](M01-game-library.md),
+[M02 race versions](M02-race-library.md), [library glossary](../GLOSSARY.md).
+Evidence: [libraryui.c](../src/ui/libraryui.c) `FWriteLibraryMetadataValues`,
+`FReadLibraryMetadata`, `FImportLibraryGame`, `FExportLibraryGame`;
+[libraryzip.c](../src/ui/libraryzip.c) archive transport.
+
+```mermaid
+classDiagram
+    direction TB
+    class ManagedGame {
+        portable unique_library_name
+        folder matching_basename_family
+    }
+    class LibraryMetadata {
+        version one_or_two
+        name library_name
+        optional remembered_player
+        seconds last_played
+        name exchange_basename
+    }
+    class BinaryFamily {
+        required universe
+        optional host
+        per_player turns_orders_history
+        identity internal_game_id
+    }
+    class BackupDirectory {
+        recognized backup_name
+        files retained_family_members
+    }
+    class ExchangeCopy {
+        transport folder_or_ZIP
+        files supported_family_and_backups
+    }
+    class RaceVersion {
+        filename independent_rN_suffix
+        persisted design_and_credentials
+    }
+    ManagedGame *-- LibraryMetadata : library bookkeeping
+    ManagedGame *-- BinaryFamily : game files
+    ManagedGame o-- BackupDirectory : retained copies
+    ExchangeCopy ..> BinaryFamily : copied game content
+    ExchangeCopy ..> BackupDirectory : recognized backup content
+    RaceVersion ..> BinaryFamily : design copied into a new player at creation
+```
+
+This groups storage roles, not additional binary record kinds. A valid family
+import needs a universe plus at least one player turn or host file. Several managed
+copies can share one internal game ID. Library name, stored game title and
+exchange basename are different values; metadata's remembered player can be
+absent, and version 1 derives exchange basename from library name. The race
+library is separate: `.rN` is a race version, not game player N. Creation copies
+the design into a player snapshot, not a live link to future library edits.
+Game export copies the supported family/recognized backups; it does not promise
+all arbitrary sidecars or `.library` metadata. Import copies remain independent
+of their sources. Staging, rename and replacement failure/recovery stay with
+M01/M02/S01; the associations imply neither crash durability nor all-file atomicity.
