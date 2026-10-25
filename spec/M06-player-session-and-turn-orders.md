@@ -9,7 +9,8 @@ local S01/S06 specification drafts. Checked: 2026-10-24.
 below identifies shared definitions and explicit external boundaries. Proofs
 apply to those models, not to the C implementation.
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## User stories and requirements
 
@@ -528,3 +529,88 @@ stateDiagram-v2
 ```
 
 The diagrams scope the stronger return-to-library guard; they do not upgrade direct Save, legacy prompts, or every close path. Wait can write history before a later Cancel. Import publishes disk state without automatically replacing the live session.
+
+## Cross-module sequences
+
+This source-derived reading projection uses logical module lifelines and grouped
+calls. Rechecked at `c3259e255f37af9c1fad0b7c749d36db157ee60e` on 2026-10-25.
+
+<a id="m06-seq-player-turn"></a>
+### Open a player turn, plan orders, and export to the host
+
+Trace: [open](#31-select-and-open-a-player-turn), [edit](#33-edit-pending-orders),
+[save/submit](#34-save-submit-and-leave), [export](#41-export-orders),
+[M07 navigation](M07-galaxy-map-and-navigation.md),
+[S01 orders](S01-game-file-orders.md), [canonical session contracts](M06-session-specification.dfy).
+Evidence: [mdi.c](../src/ui/mdi.c) `FOpenGame`, [file.c](../src/core/file.c)
+`FLoadGame`, [log.c](../src/core/log.c) `WriteMemRt`,
+[fileui.c](../src/ui/fileui.c) `FCanLeaveCurrentGame`,
+[libraryui.c](../src/ui/libraryui.c) `FExportLibraryOrders`.
+Goals: [M06-US01](#m06-us01), [US02](#m06-us02), [US03](#m06-us03).
+
+```mermaid
+sequenceDiagram
+    actor Player
+    participant Library as Game selection/export (M01/M06)
+    participant Session as Player session (M06)
+    participant Editors as Map and gameplay editors (M07-M15)
+    participant Files as Persistence/platform (S01/S04)
+    Player->>Library: Choose managed game and player, or Continue
+    Note over Player,Library: Unavailable remembered player requires explicit selection
+    Library->>Session: FOpenGame with selected player turn
+    Session->>Session: Destroy previous session before loading
+    Session->>Files: Load universe, optional history, snapshot/password, orders
+    alt Fatal load/password/replay failure
+        Session->>Session: Release attempted state, show title
+        Session-->>Player: Open failed, prior session not recovered
+    else Load completed
+        Session->>Editors: Restore presentation/selection, with documented fallback
+        Session->>Library: Remember player/time metadata
+        Player->>Editors: Edit colony, production, fleets, research, messages
+        Editors->>Session: Apply working changes and ordered log commands
+        Note over Editors,Session: Editor-specific commit/cancel rules still apply
+        opt Guarded departure requested with dirty work
+            Session-->>Player: Save / Save and Submit / Don't Save / Cancel
+            alt Cancel
+                Session-->>Player: Stay without calling either writer
+            else Don't Save
+                Session->>Session: Clear dirty, permit departure without deleting saved orders
+            else Save or Save and Submit
+                Session->>Files: Write orders with chosen submission intent
+                opt Orders write succeeded
+                    Session->>Files: Write history
+                end
+                alt Both writes succeeded
+                    Session-->>Player: Guard permits departure
+                else Either write failed
+                    Session->>Session: Restore prior intent, force dirty, stay
+                    Note over Session,Files: Completed orders can already contain new submission flag
+                end
+            end
+        end
+        opt Active managed session requests Export Orders
+            Player->>Library: Choose destination and confirm replacement if needed
+            alt Cancel or reject destination
+                Library-->>Player: No export save performed
+            else Destination accepted
+                Library->>Files: Stage orders/history, preserve old history, install history then orders
+                alt Save/install failed
+                    Library->>Files: Attempt history restoration and staging cleanup
+                    Library->>Session: Restore dirty/intent, report failure and recovery if needed
+                else Local save succeeded
+                    Library->>Session: Restore original submission intent, keep saved state
+                    Library->>Files: Copy orders via external temporary file and replace destination
+                    Files-->>Player: Export completed or external copy failed
+                    Note over Session,Files: Copy failure can leave successful local saving intact
+                end
+            end
+        end
+    end
+    Note over Player,Files: Export is local file exchange, not host receipt or automatic submission
+```
+
+The two optional blocks represent separate choices while the corresponding
+session remains active, not export after departure. The guarded-save properties
+apply to the preflight entry state: later message/editor callbacks can create
+new dirty work. Direct menu Save, legacy close and Wait use weaker result checking;
+their distinct contracts in §§3–4 are not replaced by the guarded branch above.

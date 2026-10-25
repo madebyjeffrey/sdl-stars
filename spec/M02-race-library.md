@@ -7,7 +7,8 @@ Canonical definitions: [entry point](M02-library-specification.dfy),
 [M02Library](dafny/M02-library.dfy), [shared library names](dafny/S01-library-names.dfy).
 Verification: [collection run](README.md#m01-and-m02-verification).
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## 1. Purpose, scope and ownership
 
@@ -442,3 +443,74 @@ stateDiagram-v2
 ```
 
 This is the wizard save/reuse path. Duplicate and Export have their own copy/revalidation cleanup rules. The protected-legacy-import policy conflict remains Open in §3.5; these diagrams do not resolve it or strengthen write/close guarantees.
+
+## Cross-module sequences
+
+These source-derived reading projections use logical module lifelines, not new
+services or asynchronous APIs. Rechecked at `c3259e255f37af9c1fad0b7c749d36db157ee60e`
+on 2026-10-25. Existing canonical rules, statuses and coverage limits still apply.
+
+<a id="m02-seq-race-save"></a>
+### Design a race and save a library version
+
+Trace: [M02 save target](#33-find-versions-and-choose-a-save-target),
+[staging and cancellation](#34-staged-save-cancellation-and-failure),
+[M04 editor](M04-race-design.md), [M03 customization](M03-new-game-wizard.md#32-roster-editing),
+[canonical library contracts](M02-library-specification.dfy) and
+[S01 race bytes](S01-game-file-validation.md). Evidence: [libraryui.c](../src/ui/libraryui.c)
+`FBeginLibraryRace`, `FEditLibraryRace`, `FCustomizeLibraryRace`,
+`FSaveCurrentLibraryRace`, `FSaveLibraryRace`; [raceui.c](../src/ui/raceui.c)
+`RaceCreationWizard`. Covers existing M02 stories; no new persistence policy.
+
+```mermaid
+sequenceDiagram
+    actor Player
+    participant Caller as Library or roster (M02/M03)
+    participant Editor as Race design (M04)
+    participant Library as Race versions (M02)
+    participant Files as Persistence/platform (S01/S04)
+    Player->>Caller: New, Edit, or Customize
+    Caller->>Caller: Save outer race binding/context
+    opt Edit an existing protected design
+        Caller->>Files: Load and authenticate selected race
+        Files-->>Caller: Design or load/credential failure
+    end
+    Note over Caller,Editor: Enter editor only after required loading succeeds
+    Caller->>Editor: Bind new design or selected roster/version
+    Player->>Editor: Edit traits, names, and points
+    alt Cancel editor before successful save
+        Editor-->>Caller: Unsuccessful wizard exit
+        Caller->>Caller: Restore wrapper-owned context/design
+    else Finish and request library save
+        Editor->>Library: Completed design and current binding
+        Library->>Files: Inspect versions and occupied filenames
+        alt Identical readable target/family version
+            Library-->>Editor: Reuse matching version without writing
+        else Changed design with a usable destination
+            Library-->>Player: Update Existing / New Version / Cancel when needed
+            alt Cancel choice or fail target/credential checks
+                Library-->>Editor: Save not completed, return to editing
+            else Accepted target
+                Library->>Files: Write staged design.r1, close, replace target
+                Files-->>Library: Replacement success or failure
+                alt Replacement succeeded
+                    Library-->>Editor: Bind saved filename and clear new flag
+                else Creation/replacement failed
+                    Library->>Files: Attempt temporary cleanup
+                    Library-->>Editor: Report save failure
+                end
+            end
+        end
+        opt Wizard completes successfully
+            Editor-->>Caller: Completed design and saved/reused filename
+            Caller->>Caller: Restore outer binding, retain completed design
+        end
+    end
+    Note over Caller,Files: Later New Game cancellation does not delete an independently saved race
+```
+
+The existing-target read failure precedes identical-family reuse. New Version
+uses maximum-plus-one; the detailed algorithm stays in M02. Replacement success
+does not prove flush durability or every record writer succeeded. Protected legacy
+conversion is outside this current-format editing sequence; its conflicting
+policy remains [Open](#7-evidence-verification-and-open-decisions).

@@ -8,7 +8,8 @@ Canonical definitions: [entry point](M01-library-specification.dfy),
 [M01Library](dafny/M01-library.dfy), [shared library names](dafny/S01-library-names.dfy).
 Verification: [collection run](README.md#m01-and-m02-verification).
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## 1. Purpose, scope and ownership
 
@@ -460,3 +461,75 @@ stateDiagram-v2
 ```
 
 The state diagram follows staged publication, not every library command. Delete has no restoration transaction; an asynchronous export picker returning true is not export completion. Picker cancellation precedes saving, while the legacy export save prompt has no Cancel veto. Open/load failure belongs to M06. Cleanup and restoration outcomes remain operation-specific.
+
+## Cross-module sequences
+
+This source-derived reading projection uses logical module lifelines. Rechecked
+at `c3259e255f37af9c1fad0b7c749d36db157ee60e` on 2026-10-25.
+
+<a id="m01-seq-incoming-turn"></a>
+### Import the next player turn and reopen it
+
+Trace: [target/conflict classification](#34-update-conflict-or-separate-copy),
+[M06 incoming turns](M06-player-session-and-turn-orders.md#42-import-an-incoming-player-turn),
+[M06 loading](M06-player-session-and-turn-orders.md#31-select-and-open-a-player-turn),
+[canonical library contracts](M01-library-specification.dfy),
+[S01 external publication](S01-game-file-external.md).
+Evidence: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+`FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
+`FSelectLibraryGame`; [mdi.c](../src/ui/mdi.c) `FOpenGame`.
+The main branch illustrates a strictly later existing player's turn; import and
+opening are separate user operations. M01 owns the disk operation, M06 the live session.
+
+```mermaid
+sequenceDiagram
+    actor Player
+    participant Library as Managed import (M01)
+    participant Files as Validation/publication (S01/S04)
+    participant Session as Player session (M06)
+    participant Map as Presentation (M07/S02)
+    Player->>Library: Import incoming .mN
+    Library->>Files: Inspect current-format file and match internal game identity
+    alt Invalid input, no target choice, or Cancel
+        Library-->>Player: Stop without publishing incoming turn
+    else Destination resolved
+        Note over Player,Library: No match uses new-family import, multiple copies need explicit choice
+        Library->>Files: Compare incoming player/year/bytes with stored turn
+        alt Identical
+            Library-->>Player: Success without replacement or orders retirement
+        else First turn for this player
+            Library->>Files: Check stored universe membership, stage and install
+            Note over Library,Files: Keep existing history and pre-existing orders
+        else Strictly later existing turn
+            Library->>Files: Stage/revalidate, preserve previous turn, install incoming
+            Library->>Files: Retire only this player's old .xN
+            alt Publication/retirement failed
+                Library->>Files: Attempt restoration of prior turn
+                Library-->>Player: Report failure and prior-copy recovery path if restoration fails
+            else Published successfully
+                Library-->>Player: Updated player year, histories and other players retained
+            end
+        else Changed same-year or older
+            Library-->>Player: Cancel / Replace with backup / Import as Separate Copy
+            Note over Library,Files: Separate conflict contract retains copied orders/history
+        end
+        Note over Library,Session: Successful disk import does not reload active memory
+        opt Later explicit Open of an available player turn
+            Player->>Library: Select game and player, Open
+            Library->>Session: Open managed .mN after applicable departure handling
+            Session->>Files: Destroy old session, load snapshot/history and applicable orders
+            alt Open failed
+                Session-->>Player: Title/error, no restoration of old playing session
+            else Open succeeded
+                Session->>Map: Restore selection/presentation
+                Session->>Library: Remember opened player/time
+            end
+        end
+    end
+```
+
+First/later-turn stages and conflict publication can fail independently. The
+classification details and filesystem recovery states stay authoritative in
+M01/S01; no all-file transaction or concurrent-host lock is implied. Timer-based
+[Wait for New Turn](M06-player-session-and-turn-orders.md#43-detect-and-load-a-new-turn)
+is a separate strictly-newer path with different save/cancel effects.

@@ -64,22 +64,59 @@ def module_map():
     return groups
 
 
+def mermaid_blocks(text):
+    """Return diagram bodies, ignoring optional Mermaid YAML frontmatter."""
+    blocks = re.findall(r"^```mermaid\s*\n(.*?)^```\s*$", text, re.M | re.S)
+    return [re.sub(r"\A---\n.*?\n---\n", "", block, count=1, flags=re.S) for block in blocks]
+
+
+def sequence_entries(paths):
+    """Discover named sequence sections in canonical specs for navigation only."""
+    entries = []
+    for path in sorted(paths):
+        if path.suffix != ".md" or path.parent != ROOT / "spec":
+            continue
+        text = path.read_text(encoding="utf-8")
+        section = text.partition("\n## Cross-module sequences\n")[2]
+        section = re.split(r"^## ", section, maxsplit=1, flags=re.M)[0]
+        for part in re.split(r'(?=^<a id="[^"\n]+"></a>\s*\n### )', section, flags=re.M):
+            blocks = mermaid_blocks(part)
+            if not any(block.startswith("sequenceDiagram") for block in blocks):
+                continue
+            match = re.match(r'<a id="([^"\n]+)"></a>\s*\n### ([^\n]+)', part)
+            if not match:
+                raise ValueError(f"{path}: sequence needs a stable anchor and heading")
+            entries.append((path, match[1], match[2]))
+    return entries
+
+
+def sequence_index(paths):
+    entries = sequence_entries(paths)
+    rows = ["| Workflow | Owning specification |\n| --- | --- |\n"]
+    for path, anchor, title in entries:
+        relative = path.relative_to(ROOT).as_posix()
+        rows.append(f"| [{title}](../{relative}#{anchor}) | [{path.name[:3]}](../{relative}) |\n")
+    return f"**{len(entries)} cross-module sequences**, discovered from the current specs.\n\n" + "".join(rows)
+
+
 def diagram_index(groups):
     """Discover module diagrams in their canonical Markdown, without copying them."""
     rows = []
     count = 0
     for group_title, group in groups:
-        rows.append(f"## {group_title}\n\n| Module | Workflow | State and recovery |\n| --- | --- | --- |\n")
+        rows.append(f"## {group_title}\n\n| Module | Workflow | State and recovery | Sequences |\n| --- | --- | --- | --- |\n")
         for identity, title, entry in group:
             text = (ROOT / entry).read_text(encoding="utf-8")
-            blocks = re.findall(r"^```mermaid\s*\n(.*?)^```\s*$", text, re.M | re.S)
-            flow = sum(bool(re.match(r"(?:flowchart|sequenceDiagram)\b", block)) for block in blocks)
+            blocks = mermaid_blocks(text)
+            flow = sum(block.startswith("flowchart") for block in blocks)
             state = sum(block.startswith("stateDiagram-v2") for block in blocks)
+            sequence = sum(block.startswith("sequenceDiagram") for block in blocks)
             count += len(blocks)
             path = "../" + entry.as_posix()
             workflow = f"[View ({flow})]({path}#workflow)" if flow else "Not yet diagrammed"
             states = f"[View ({state})]({path}#state-and-recovery)" if state else "Not yet diagrammed"
-            rows.append(f"| [{identity} · {title}]({path}) | {workflow} | {states} |\n")
+            sequences = f"[View ({sequence})]({path}#cross-module-sequences)" if sequence else "—"
+            rows.append(f"| [{identity} · {title}]({path}) | {workflow} | {states} | {sequences} |\n")
         rows.append("\n")
     return f"**{count} module diagrams**, discovered from the current source files.\n\n" + "".join(rows)
 
@@ -169,7 +206,8 @@ def prepare():
     project["docs_dir"], project["site_dir"] = "source", "site"
     project["site_url"] = os.environ.get("HANDBOOK_SITE_URL", project["site_url"]).rstrip("/") + "/"
     nav = [{"Start here": [{"Welcome": "index.md"}, {"Reading a specification": "reading.md"},
-                            {"System overview": "overview.md"}, {"Module diagrams": "diagrams.md"},
+                            {"System overview": "overview.md"}, {"Cross-module sequences": "sequences.md"},
+                            {"Module diagrams": "diagrams.md"},
                             {"Glossary": "GLOSSARY.md"}]}]
     entries = {entry[2] for _, group in groups for entry in group}
     for group_title, group in groups:
@@ -203,6 +241,8 @@ def prepare():
             text = path.read_text(encoding="utf-8")
             if path == ROOT / "handbook/diagrams.md":
                 text += "\n" + diagram_index(groups)
+            if path == ROOT / "handbook/sequences.md":
+                text += "\n" + sequence_index(paths)
             for match in REQUIREMENT.finditer(CODE.sub("", text)):
                 requirements.append((match[1], match[2], path))
             write(target, readable_diagrams(rewrite_links(text, path, destinations, revision)) + provenance(path, revision, branch))

@@ -33,6 +33,7 @@ and link-resolution boundaries. All three accept `DOCS_PYTHON`.
 | A module's title, entry document, or grouping | The first-level module map in `spec/README.md` |
 | A technical companion | Add its module-prefixed Markdown file under `spec/`; navigation discovers it automatically |
 | Module workflow and state diagrams | The owning `spec/*.md` entry, retaining links to its authoritative workflows and contracts |
+| Cross-module sequence diagrams | The owning `spec/*.md` entry's `## Cross-module sequences` section; each sequence uses a stable explicit anchor immediately before its `###` title |
 | System orientation diagrams | The appropriate `handbook/*.md` page, with links to its authoritative specification |
 | Theme or site URL | `zensical.toml` and `handbook/assets/` |
 
@@ -46,6 +47,13 @@ files, so renamed or removed documents do not linger. Preview updates replace
 changed files individually without emptying the live source directory.
 Do not edit generated files.
 Preserve stable requirement IDs and existing links when updating the specs.
+
+The sequence index discovers Mermaid `sequenceDiagram` blocks under each spec's
+`## Cross-module sequences` section, with an explicit anchor such as
+`<a id="m06-seq-player-turn"></a>` followed by a `###` workflow title. Add or update
+the diagram and its evidence/scope note in that section; the guide and module atlas
+regenerate links and counts without a second diagram copy. Mermaid YAML frontmatter
+is supported and kept intact. Preserve old sequence anchors when refining titles.
 
 ## Links and publication boundaries
 
