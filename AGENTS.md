@@ -184,6 +184,13 @@ without a baseline update and `CHANGELOG.md` entry, and stale entries in
 Before issue or spec operations, read `docs/agents/issue-tracker.md`.
 Work is tracked in GitHub Issues for madebyjeffrey/sdl-stars.
 
+### Specifications
+
+Before creating or changing specifications, user stories or acceptance criteria,
+read `spec/AGENTS.md` and follow the outline in `spec/README.md`. Trace actor
+goals through workflows, criteria, canonical Dafny rules and evidence; distinguish
+observed behavior, proposals and open decisions.
+
 ### Triage labels
 
 Before triage, read the default label mapping in

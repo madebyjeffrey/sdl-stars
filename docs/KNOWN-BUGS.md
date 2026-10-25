@@ -17,6 +17,23 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Production editor queue sanitization — located on main
+
+`produce.c`: `InitProduction` removes an unavailable copied queue row with
+`memcpy(lpprod, lpprod + 1, followingRows * sizeof(PROD))`. Two or more following
+rows make those ranges overlap, so the C result is undefined. With exactly one
+following row the copy is defined, but the loop decrements `ipl` and still
+advances `lpprod`: it processes the old physical row, leaving the moved active
+row's count potentially unclamped. A count-10 factory row immediately following a removed
+entry can remain 10 while availability 1 is charged against its old copy.
+
+The [M09 specification](../spec/M09-production-management.md#312-sanitization-and-its-undefined-boundary)
+and [source-extracted fixtures](../tests/spec/check_production_editor_source.py)
+record the defined case and detect overlapping ranges before executing the copy.
+This establishes the current source mechanism, not a full player-facing trigger
+or original-binary parity. Real UI reproduction, historical comparison and any
+behavior/baseline change remain open; no runtime repair was made by the review.
+
 ## Unsupported game-version diagnostics — fixed on main
 
 `file.c`: `FOpenFile` tested for exact version 2.85 before attempting its

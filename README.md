@@ -11,6 +11,11 @@ unfinished. See [desktop qualification](docs/DESKTOP-QUALIFICATION.md) and
 [macOS qualification results](docs/MACOS-BUNDLE.md#deployment-and-verification)
 for the scope of the checks.
 
+The [specification handbook sources](handbook/index.md) connect player and host
+workflows with the [module specifications](spec/README.md), formal models, and
+coverage gaps. See [previewing and updating the handbook](handbook/maintaining.md)
+for the Zensical build and GitHub Pages publishing workflow.
+
 ## Build and run
 
 Run the commands below from the repository root. All builds need a C11 compiler,
