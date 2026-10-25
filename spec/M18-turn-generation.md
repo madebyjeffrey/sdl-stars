@@ -7,6 +7,8 @@ Canonical entry: [M18-generation-specification.dfy](M18-generation-specification
 [rules and proofs](dafny/M18-generation.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Coordinate one year’s ordered simulation, keeping prerequisites and phase-local
@@ -190,3 +192,61 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Entry and replay](#entry-replay-and-prerequisites), [Canonical schedule](#ordered-successful-year), [Publication and cleanup](#publication-failure-and-cancellation) and the
+[canonical contracts](M18-generation-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Dispatch["M17 dispatches generation"] --> Load["Destroy prior loaded state; load host; allocate buffers"]
+    Load -->|Load / allocation fails| Cleanup["Failure cleanup; no completed-year claim"]
+    Load --> Shuffle["Shuffle player order and replay logs"]
+    Shuffle -->|Replay fails| Cleanup
+    Shuffle --> Normalize["Repair / normalize inputs and follow chains"]
+    Normalize --> Phases["Run canonical ordered Schedule; owners resolve each effect"]
+    Phases --> Year["Backup preparation → increment year → score / design updates"]
+    Year --> Write["Rotate prior files; draw generation byte; attempt player and host writes"]
+    Write --> Finish["Cleanup and returned success flag"]
+    Finish --> Validate["S01 / operator validates actual outputs before distribution"]
+    Validate -->|Coherent family| Next["Next year available"]
+    Validate -->|Partial / failed writes| Recovery["Inspect backups and recovery paths"]
+    Cleanup --> Recovery
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Preparation / player-log replay" as Preparing
+    state "Ordered phase execution" as Resolving
+    state "Year incremented, publication pending" as Incremented
+    state "Output writes attempted" as Written
+    state "Generation cleanup" as Cleanup
+    state "Failed attempt, cleanup does not complete a year" as Failed
+    state "Externally validated output family" as Validated
+    [*] --> Preparing
+    Preparing --> Failed: Load / allocation / replay failure and cleanup
+    Failed --> [*]: Return failure
+    Preparing --> Resolving: Preparation completes
+    Resolving --> Incremented: Reach canonical year increment
+    Incremented --> Written: Rotate and attempt output writes
+    Written --> Cleanup: Top-level loop does not check every write result
+    Cleanup --> Validated: Separate S01 / operator checks succeed
+    note right of Resolving
+      These are milestones, not a saved phase enum.
+      No general mid-phase Cancel / whole-year undo.
+      Phase-specific failures remain with their owners.
+    end note
+    note right of Cleanup
+      Failure cleanup is not completed simulation.
+      Returned success alone is not verified publication.
+    end note
+```
+
+Schedule and Orders remain canonical for exact ordering and RNG use. The diagrams do not add a transactional phase API, cancellation hook, arbitrary mid-year resume, or automatic file-validation step to the engine.

@@ -7,6 +7,8 @@ Canonical entry: [M15-reports-specification.dfy](M15-reports-specification.dfy);
 [rules and proofs](dafny/M15-reports.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Present information already supplied by gameplay rules, retain outgoing
@@ -219,3 +221,61 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Message drafts](#player-message-drafts), [Message navigation](#message-creation-filtering-and-navigation), [Reports and exports](#reports-caches-and-exports) and the
+[canonical contracts](M15-reports-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Entry{"Messages or reports?"} -->|Navigate messages| Cursor["Find next / previous eligible event or inbound message"]
+    Cursor -->|No eligible neighbor| End["Return -1 in the specified native domain"]
+    Cursor -->|Found| Show["Display message; goto delegates to object owner"]
+    Entry -->|Player draft| Draft["Edit bounded text and recipient"]
+    Draft --> Finish{"Navigation / finish reads text"}
+    Finish -->|Empty / delete sentinel| Remove["Remove draft; adjust cursor"]
+    Finish -->|Nonempty text| Store["Attempt compression / draft storage"]
+    Store -->|Allocation boundary| Gap["E15-1: failure / abandoned-text recovery not fully specified"]
+    Store -->|Successful changed draft| Pending["Retain draft; mark dirty"]
+    Pending --> Save["M06 / S01 save orders; host later distributes messages"]
+    Entry -->|Report| Cache["Build viewpoint-appropriate cache and sort with qsort16"]
+    Cache -->|Row click| Owner["Open owning object / battle workflow"]
+    Cache -->|Export| Export["Write viewpoint-appropriate columns through S01 / S04"]
+    Export -. "Write / close failure boundary" .-> Output["S01 / S04 own actual partial-output and recovery behavior"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Message cursor / selected draft" as Current
+    state "Draft text in control" as Editing
+    state "Draft retained in pending messages" as Pending
+    state "Draft removed" as Removed
+    state "Report cache valid" as Cached
+    state "Report cache invalidated" as Invalid
+    [*] --> Current
+    Current --> Editing: Compose / edit player message
+    Editing --> Pending: Finish changed nonempty text
+    Editing --> Removed: Empty text / explicit delete sentinel
+    Pending --> Editing: Continue editing or navigate drafts
+    Current --> Current: No eligible neighbor returns sentinel
+    [*] --> Cached: Build report for current viewpoint
+    Cached --> Invalid: Source changes / shared cache replaced
+    Invalid --> Cached: Rebuild before use
+    note right of Editing
+      No generic modal Cancel / abandoned-text undo is promised.
+      Allocation recovery remains E15-1.
+    end note
+    note right of Pending
+      Draft retention is not delivery.
+      Save/export failures remain with their caller owners.
+    end note
+```
+
+The diagrams separate drafts, navigation, and report-cache lifetimes. They do not assign defined fallback behavior to corrupt message IDs or overflowing cursors. An unavailable goto target does not manufacture an object; export is limited to the player/host viewpoint.

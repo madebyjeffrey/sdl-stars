@@ -7,6 +7,8 @@ Canonical entry: [S05-desktop-specification.dfy](S05-desktop-specification.dfy);
 [rules and proofs](dafny/S05-desktop.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Implement the desktop facilities actually consumed by SDL-Stars on supported
@@ -212,3 +214,56 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Message dispatch](#message-delivery-and-filtering), [Lifetime and timers](#timers-capture-focus-and-destruction), [Failure and cancellation](#failure-cancellation-and-qualification) and the
+[canonical contracts](S05-desktop-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Event["SDL input / posted message / paint / timer"] --> Route["Route through main-thread, target-lifetime and filter rules"]
+    Route -->|Invalid PostMessage target / thread| Reject["Reject post; modeled queue unchanged"]
+    Route -->|Eligible| Queue["Queue / coalesce eligible input; WM_QUIT bypasses filters"]
+    Queue --> Get{"GetMessage outcome"}
+    Get -->|Message| Dispatch["Dispatch to live window / control owner"]
+    Get -->|Quit| Exit["Return false; application shutdown flow"]
+    Get -->|Invalid input / event failure| Error["Return -1; caller handles error"]
+    Dispatch -->|Picker cancelled| Picker["Return no selected path; caller must not claim save/import"]
+    Dispatch -->|Dialog Cancel / close| Owner["Use owning module's commit / discard semantics"]
+    Dispatch -->|Window destruction| Teardown["Release owned state, notify / destroy children, invalidate handle"]
+    Create["Window / resource creation fails"] --> Cleanup["Propagate failure; clean already-owned resources"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Live main-thread caller window" as Live
+    state "Captured window" as Captured
+    state "Caller in modal / control interaction" as Interacting
+    state "Window teardown" as Destroying
+    state "Invalidated handle" as Dead
+    [*] --> Live: Creation succeeds
+    Live --> Captured: Valid capture request
+    Captured --> Live: Release or capture replacement notification
+    Live --> Interacting: Enter owner-specific dialog / control flow
+    Interacting --> Live: Accept / Cancel / close under owner's contract
+    Live --> Destroying: Destroy window
+    Captured --> Destroying: Destruction releases capture
+    Destroying --> Dead: Child / owned state teardown
+    note right of Dead
+      Later callbacks require lifetime checks.
+      Killing a timer does not recall every queued timer message.
+    end note
+    note right of Interacting
+      IDCANCEL is not a generic rollback instruction.
+      Native picker Cancel supplies no path.
+    end note
+```
+
+These are bounded dispatch/lifetime projections, not qualification of every backend, control, focus or reentrancy path. Creation failure is propagated to its caller. Headless logic tests do not establish native rendering, IME, accessibility, printing or compositor behavior.

@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import tempfile
+import re
 import unittest
 from unittest.mock import patch
 import zipfile
@@ -12,6 +13,45 @@ SPEC.loader.exec_module(handbook)
 
 
 class LinkTests(unittest.TestCase):
+    def test_diagram_presentation_preserves_body_and_explicit_author_config(self):
+        source = "```mermaid\nstateDiagram-v2\n[*] --> Draft\n```\n"
+        presented = handbook.readable_diagrams(source)
+        self.assertIn("useMaxWidth: false", presented)
+        self.assertTrue(presented.endswith("stateDiagram-v2\n[*] --> Draft\n```\n"))
+        configured = "```mermaid\n---\nconfig: {state: {useMaxWidth: true}}\n---\nstateDiagram-v2\n[*] --> Draft\n```\n"
+        self.assertEqual(handbook.readable_diagrams(configured), configured)
+
+    def test_each_module_has_workflow_and_state_diagrams_with_source_evidence(self):
+        for _, group in handbook.module_map():
+            for identity, _, entry in group:
+                with self.subTest(module=identity):
+                    text = (handbook.ROOT / entry).read_text()
+                    self.assertIn("## Workflow and state diagrams", text)
+                    section = text.split("## Workflow and state diagrams", 1)[1]
+                    blocks = re.findall(r"^```mermaid\s*\n(.*?)^```\s*$", section, re.M | re.S)
+                    self.assertTrue(any(block.startswith("flowchart") for block in blocks))
+                    self.assertTrue(any(block.startswith("stateDiagram-v2") for block in blocks))
+                    self.assertRegex(section, r"\[canonical contracts\]\([^)]+\.dfy\)")
+                    self.assertRegex(section, r"\[[^]]+\]\(#[^)]+\)")
+                    self.assertRegex(section.lower(), r"cancel")
+
+    def test_diagram_atlas_counts_source_blocks_and_links_to_owning_specs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            entry = Path("spec/M01-library.md")
+            text = "# Library\n\n```mermaid\nflowchart TD\nA --> B\n```\n\n```mermaid\nstateDiagram-v2\n[*] --> A\n```\n"
+            handbook.write(root / entry, text)
+            groups = [("Setup", [("M01", "Library", entry)])]
+            with patch.object(handbook, "ROOT", root):
+                atlas = handbook.diagram_index(groups)
+                self.assertIn("**2 module diagrams**", atlas)
+                self.assertIn("../spec/M01-library.md#state-and-recovery", atlas)
+                self.assertIn("../spec/M01-library.md#workflow", atlas)
+                handbook.write(root / entry, text.split("```mermaid\nstateDiagram-v2")[0])
+                atlas = handbook.diagram_index(groups)
+                self.assertIn("**1 module diagrams**", atlas)
+                self.assertIn("Not yet diagrammed", atlas)
+
     def test_repository_links_and_formal_views_preserve_fragments(self):
         source = handbook.ROOT / "spec/M01-game-library.md"
         model = handbook.ROOT / "spec/M01-library-specification.dfy"

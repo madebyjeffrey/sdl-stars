@@ -7,6 +7,8 @@ Canonical definitions: [entry point](M02-library-specification.dfy),
 [M02Library](dafny/M02-library.dfy), [shared library names](dafny/S01-library-names.dfy).
 Verification: [collection run](README.md#m01-and-m02-verification).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Manage reusable race designs independently of player turns: discover designs,
@@ -381,3 +383,62 @@ every acceptance row is exercised.
 | Define native non-ASCII comparison, alias and concurrent-update expectations across platforms. | S04/M02; ASCII model and selected UTF-8 tests are not full equivalence coverage. |
 | Decide whether the list should validate/show corrupt/legacy entries rather than merely failing at load. | M02/S05/S01; changing enumeration is a separate UX/behavior decision. |
 | Agree performance/display/accessibility targets and complete protected-update, version-exhaustion and focused failure tests. | M02/S05/M04; §4–5 explicitly retain their gaps. |
+
+## Workflow and state diagrams
+
+These reading projections summarize [Save target selection](#33-find-versions-and-choose-a-save-target), [Staged save and cancellation](#34-staged-save-cancellation-and-failure), [Import and edit](#35-import-and-legacy-conversion) and the
+[canonical contracts](M02-library-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Open["New design or load / authenticate selected race"] -->|Load fails| Restore["Restore wrapper snapshot; report failure"]
+    Open -->|Working design available| Wizard["Edit in M04"]
+    Wizard -->|Wizard Cancel / failure| Restore
+    Wizard -->|Finish requests persistence| Target["Inspect selected target, then matching versions"]
+    Target -->|Unreadable selected target| Retry["Fail save; M04 returns to page 1"]
+    Target -->|Identical design found| Reuse["Reuse existing version; no write"]
+    Target -->|Changed target| Choice{"Update / New Version / Cancel"}
+    Target -->|No target| Version["Choose maximum-plus-one version"]
+    Choice -->|Cancel| Retry
+    Choice -->|New Version| Version
+    Choice -->|Update| Auth["Authenticate protected update where required"]
+    Version -->|Exhausted / invalid / occupied| Retry
+    Auth -->|Failed or cancelled| Retry
+    Auth -->|Accepted| Stage["Stage race, close, replace destination"]
+    Version -->|Available| Stage
+    Stage -->|Failure| Retry
+    Stage -->|Successful replacement| Bound["Update binding; restore outer wrapper context on exit"]
+    Reuse --> Bound
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Prior wrapper context" as Outer
+    state "Wizard-bound working design" as Editing
+    state "Save target chosen" as Target
+    state "Staged race file" as Staged
+    state "Saved or reused version" as Saved
+    [*] --> Outer
+    Outer --> Editing: Successful load / New
+    Editing --> Outer: Wizard failure restores owned snapshot
+    Editing --> Target: Finish needs save
+    Target --> Editing: Save choice Cancel / validation failure
+    Target --> Saved: Identical version reused
+    Target --> Staged: Update or new-version write
+    Staged --> Editing: Save fails, attempt stage cleanup
+    Staged --> Saved: Replacement succeeds
+    Saved --> Outer: Restore outer binding, retain completed design
+    note right of Saved
+      Cancelling Edit after a successful Import
+      does not delete that imported race.
+      Save is not proof of crash durability.
+    end note
+```
+
+This is the wizard save/reuse path. Duplicate and Export have their own copy/revalidation cleanup rules. The protected-legacy-import policy conflict remains Open in §3.5; these diagrams do not resolve it or strengthen write/close guarantees.

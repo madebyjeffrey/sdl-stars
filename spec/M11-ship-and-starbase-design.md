@@ -8,6 +8,8 @@ Canonical definitions: [entry point](M11-design-specification.dfy),
 [M11Design](dafny/M11-design.dfy).
 Verification: [M08–M11 collection results](README.md#m08m11-verification).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Let a player inspect hulls/components, assemble ship and starbase designs, see
@@ -258,3 +260,56 @@ Open decisions: S03 now supplies the [versioned catalog inventory](S03-catalog-i
 M11/M09/M10 owns safe deletion and buildability boundaries; UI/S05 owns
 accessibility, minimum viewport and responsiveness targets. Do not change saved
 IDs or observed destructive behavior while filling those documentation gaps.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Working copies and allocation](#32-allocate-and-copy), [Slot editing](#33-slot-editing), [Accept, cancel and delete](#34-accept-cancel-and-delete) and the
+[canonical contracts](M11-design-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Select["Browse hulls / own / enemy / gifted designs"] --> Eligible{"Edit or copy permitted?"}
+    Eligible -->|No| Refuse["Respect availability, protected-base and usage gates"]
+    Eligible -->|Yes| Usage{"Queued / existing use requires cleanup confirmation?"}
+    Usage -->|Declined| Keep["Retain references before destructive cleanup"]
+    Usage -->|Not required / confirmed| Copy["Allocate or copy roster entry; edit working copy"]
+    Copy --> Drop{"Component drop valid?"}
+    Drop -->|No| Beep["Reject / beep; no installation from rejected drop"]
+    Beep --> Copy
+    Drop -->|Yes| Edit["Clamp slot count; recalculate properties"]
+    Edit -->|Cancel| Cancel["Existing copy stays; new allocated design is removed"]
+    Edit -->|Accept| Engine{"Ship engine slot populated, or starbase?"}
+    Engine -->|No| Copy
+    Engine -->|Yes| Install["Install design and log change"]
+    Select -->|Confirmed delete| Delete["Clean dependent references; free roster slot; log deletion"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Roster entry selected" as Selected
+    state "Working design copy" as Draft
+    state "New roster slot allocated" as NewSlot
+    state "Installed / logged design" as Installed
+    [*] --> Selected
+    Selected --> Draft: Edit eligible existing design
+    Selected --> NewSlot: Allocate allowed new copy
+    NewSlot --> Draft: Enter slot editor
+    Draft --> Draft: Rejected drop / missing required engines
+    Draft --> Installed: Accept valid local edit
+    Draft --> Selected: Cancel existing working copy
+    Draft --> Selected: Cancel new design removes slot and logs removal
+    Installed --> Selected: Return to outer designer
+    note right of Draft
+      Confirmed cascading cleanup may precede editing.
+      Later Cancel does not restore those consequences.
+      Leaving the outer designer keeps earlier accepts.
+    end note
+```
+
+The local edit-copy outcome does not restore earlier confirmed fleet/queue cleanup. Full-roster dispatch integrity and malformed slot/native lifetime cases remain external obligations; disabled controls alone are not host-side validation.

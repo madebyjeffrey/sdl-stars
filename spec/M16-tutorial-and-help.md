@@ -7,6 +7,8 @@ Canonical entry: [M16-tutorial-specification.dfy](M16-tutorial-specification.dfy
 [rules and proofs](dafny/M16-tutorial.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Guide real game operations and present the bundled offline guide. Tutorial
@@ -201,3 +203,60 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Task checks](#starting-and-checking-tasks), [Completion and exit](#completion-exit-and-recovery), [Offline help](#offline-help) and the
+[canonical contracts](M16-tutorial-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Start["StartTutor saves selected presentation context and establishes tutorial game"] --> Task{"Current page task actually complete?"}
+    Task -->|No| Hint["Keep page; refresh bold guidance"]
+    Hint --> Task
+    Task -->|Yes, ordinary page| Advance["Advance eight fragments; recheck already-completed pages"]
+    Advance --> Task
+    Task -->|Turn boundary| Turn["Change help context; preserve Generate gates"]
+    Task -->|Offset 640 / done flag| Complete["Completion feedback; EndTutor FALSE keeps tutorial game"]
+    Exit["Explicit tutorial exit request"] --> Ask{"FAskKillTutor allows exit?"}
+    Ask -->|Decline confirmation| Hint
+    Ask -->|Allowed| End["EndTutor TRUE restores saved presentation / template context"]
+    Help["HELP_INDEX / HELP_CONTEXT"] --> Validate{"Supported name/context and valid packaged assets?"}
+    Validate -->|No| Failure["Return failure; no invented topic fallback"]
+    Validate -->|Yes| Export["Export validated context document; launch through platform"]
+    Export -->|Export / launch fails| Failure
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Tutorial task page active" as Active
+    state "Turn-boundary help context" as Boundary
+    state "Exit confirmation where required" as Asking
+    state "Tutorial completed" as Complete
+    state "Explicit exit / presentation restored" as Exited
+    [*] --> Active: Start / reload tutorial context
+    Active --> Active: Task false, remain and update hint
+    Active --> Active: Task true, advance ordinary page
+    Active --> Boundary: Task complete at turn boundary
+    Boundary --> Active: Continue under tutorial page / turn rules
+    Active --> Asking: Explicit exit
+    Asking --> Active: Decline required confirmation
+    Asking --> Exited: Exit permitted
+    Active --> Complete: Finished offset / done flag
+    note right of Exited
+      Prior non-tutorial game is not reloaded.
+      Restoration covers selected presentation/template fields.
+    end note
+    note right of Active
+      Task predicates and all 80 pages are not fully qualified.
+      Help failure does not complete a task.
+    end note
+```
+
+The page-state projection does not replace FTutorTaskDone predicates with a generic boolean guarantee. Exit/Cancel before turn 30 is subject to confirmation; later exit can bypass it. Help launch acceptance is separate from browser rendering and tutorial success.

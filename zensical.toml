@@ -7,6 +7,7 @@ repo_name = "madebyjeffrey/sdl-stars"
 docs_dir = "dist/handbook/source"
 site_dir = "dist/handbook/site"
 extra_css = ["assets/handbook.css"]
+extra_javascript = ["assets/diagrams.js"]
 
 [project.theme]
 language = "en"

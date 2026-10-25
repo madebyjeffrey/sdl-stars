@@ -8,6 +8,8 @@ Canonical definitions: [entry point](M08-colony-specification.dfy),
 [M08Colony](dafny/M08-colony.dfy).
 Verification: [M08–M11 collection results](README.md#m08m11-verification).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, scope and ownership
 
 Help a player inspect a planet and understand its population, environment,
@@ -231,3 +233,56 @@ remaining numerical companion; M08/M19 own the foreign-viewpoint acceptance
 matrix; UI/S05 owns accessibility, supported-display and performance targets.
 A change to an observed quirk needs a separate behavior decision and regression
 baseline change, not an edit that silently describes preferred behavior.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Selection and capability](#31-selection-and-capability), [Terraforming and forecast boundaries](#33-terraforming-and-forecast-boundaries) and the
+[canonical contracts](M08-colony-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Select["Select planet through map / report / previous-next"] --> Detail{"Detail and ownership?"}
+    Detail -->|Partial / unavailable| Scan["Scanner inspection; no editable colony inferred"]
+    Detail -->|Full foreign detail| Foreign["Inspect without own-colony editing"]
+    Detail -->|Owned full detail| Lookup{"Main-selection lookup succeeds?"}
+    Lookup -->|No| Fail["Return before establishing new main selection"]
+    Lookup -->|Yes| Pane["Load selected copy; reset waypoint / target modes"]
+    Pane --> Inspect["Inspect stocks, capacity, installations and forecasts"]
+    Inspect -->|Production / cargo| Owners["M09 production / M10 transfer owns edit outcome"]
+    Inspect -->|Permitted packet / route target| Target["Enter target gesture through M07"]
+    Target -->|Cancel| Pane
+    Target -->|Accepted target| Write["Write selected object ID through owning command"]
+    Inspect -->|Terraform planning| Forecast["Evaluate reachable change; queue in M09 for host execution"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Inspection target" as Inspecting
+    state "Owned colony selected" as Colony
+    state "Temporary forecast state" as Forecast
+    state "Packet / route targeting" as Targeting
+    state "Downstream editor" as Editing
+    [*] --> Inspecting
+    Inspecting --> Colony: Owned full-detail selection resolves
+    Inspecting --> Inspecting: Partial / foreign detail, no editable promotion
+    Colony --> Colony: Failed new lookup establishes no new selection
+    Colony --> Forecast: Request environment / output estimate
+    Forecast --> Colony: Restore temporary forecast state
+    Colony --> Targeting: Capability permits target mode
+    Targeting --> Colony: Cancel destination gesture
+    Targeting --> Colony: Accept destination through owning command
+    Colony --> Editing: Open production or cargo editor
+    Editing --> Colony: Owner-specific accept / cancel / failure
+    note right of Editing
+      M08 does not supply a universal editor rollback.
+      Actual writes and callbacks retain owner contracts.
+    end note
+```
+
+Inspection and forecasts do not execute a host turn. Capability gates, lookup effects, forecast domains, and downstream cancellation remain those specified above; no foreign or unknown state is promoted into an editable colony.

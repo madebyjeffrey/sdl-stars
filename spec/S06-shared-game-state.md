@@ -11,6 +11,8 @@ explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
 proof strength, dependency boundaries and verification commands.
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## User stories and requirements
 
 S06 is a support module. Its direct actors are developers implementing core/UI/
@@ -728,3 +730,61 @@ limits for implementation/consumer specifications, rather than invented rules:
 - Root legacy protected-race instructions conflict with accepted ADR 0002;
   M04/S01 already record that conflict. S06 does not resolve it or alter race
   admission policy.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Native lookup adapters](#native-lookup-adapters), [Session and lifetime ownership](#82-lifetime-inventory) and the
+[canonical contracts](dafny/S06-shared-state.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Request["Caller supplies typed identity / native lookup word and live storage"] --> Kind{"Lookup kind"}
+    Kind -->|Planet| Planet["Range check; full-array direct index or exact binary search"]
+    Kind -->|Fleet| Fleet["Decode owner / 13-bit ID; search using native prefix and total-count bounds"]
+    Planet --> Found{"Located record?"}
+    Fleet --> Found
+    Fleet -. "Null pointer at probed midpoint" .-> Undefined["NullAccess: undefined native dereference boundary, not safe error return"]
+    Found -->|No| Missing["Caller handles missing identity; do not invent object"]
+    Found -->|Yes| Copy["Caller obtains view / editor copy with explicit lifetime"]
+    Copy -->|Accept edit| Owner["Owning gameplay / session module writes model and log"]
+    Copy -->|Cancel edit| Cancel["Owning editor's draft / snapshot contract applies"]
+    Owner --> Invalidate["Invalidate dependent caches; retain persistent IDs rather than pointers"]
+    Destroy["DestroyCurGame"] --> Reset["Complete message / save-prompt path; release game heaps and reset scoped state"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Loaded game / player-view state" as Loaded
+    state "Editor copy with owned buffers" as Draft
+    state "Pending model / order changes" as Pending
+    state "M18 phase-local state" as Phase
+    state "Game-scoped storage invalidated" as Destroyed
+    state "Owner-specific failure / recovery boundary" as Recovery
+    [*] --> Loaded: S01 / M05 establishes loaded state
+    Loaded --> Draft: Owner creates editor copy
+    Draft --> Pending: Owner-specific accept / write-back
+    Draft --> Loaded: Owner-specific Cancel / discard of appropriate draft
+    Pending --> Loaded: M06 / S01 saves or reloads under its own rules
+    Loaded --> Phase: Host generation enters phase context
+    Phase --> Loaded: Successful phase completion
+    Phase --> Recovery: Failure / interruption requires owner-specific inspection
+    Loaded --> Destroyed: DestroyCurGame
+    Pending --> Destroyed: Destruction may finalize / prompt before release
+    Draft --> Destroyed: Game replacement invalidates game-scoped storage
+    note right of Destroyed
+      Retained application settings are not live pointers.
+      Destruction does not zero every global or undo disk writes.
+    end note
+    note right of Phase
+      No arbitrary saved mid-phase resume or generic Cancel.
+      Identity and RNG lifetimes remain separately scoped.
+    end note
+```
+
+The lifecycle diagram is a logical ownership map, not a saved enum or a universal commit/rollback controller. A found lookup position does not establish array invariants or pointer lifetime. Draft cancellation and load/destruction failure use the named owner contracts; the diagrams do not enforce proposed validation in C.

@@ -7,6 +7,8 @@ Canonical entry: [M13-relations-specification.dfy](M13-relations-specification.d
 [rules and proofs](dafny/M13-relations.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
+[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+
 ## 1. Purpose, actors and scope
 
 Maintain directed neutral/friend/enemy stances and explain which rules consume
@@ -170,3 +172,50 @@ named model properties and witnesses, with their preconditions; they do not prov
 that C refines the models or that every UI/platform workflow has been tested.
 The boundary inventory and Open interaction/quality requirements remain visible
 after a successful formal/build/regression run.
+
+## Workflow and state diagrams
+
+These reading projections summarize [Live editing and close](#edit-select-and-close), [Persistence and reversal](#persistence-and-recovery) and the
+[canonical contracts](M13-relations-specification.dfy) at the inspection revision recorded above.
+States are explanatory milestones, not new persisted fields or a claim of
+complete C/model refinement. Terminal nodes end the illustrated operation.
+
+### Workflow
+
+```mermaid
+flowchart TD
+    Enter["Enter with another player available and a valid selection"] --> Choose["Map list row to player ID, skipping self"]
+    Choose --> Radio["Choose neutral / friend / enemy"]
+    Radio --> Mutate["Update only own directed relation; mark dirty"]
+    Mutate -->|Choose another stance| Radio
+    Mutate --> Close["IDCANCEL closes; WM_DESTROY logs relations and invalidates scanner"]
+    Close --> Pending["Live edit remains pending; closing is not undo"]
+    Pending --> Save["M06 / S01 own save, failure and host replay"]
+    Pending --> Reverse["Choose former stance again or use broader session reload / discard"]
+    Enter -. "Missing selection / one-player invocation" .-> Boundary["E13-1 native guard boundary; no invented safe error return"]
+```
+
+### State and recovery
+
+```mermaid
+stateDiagram-v2
+    state "Current directed relation array" as Current
+    state "Relations dialog / selected other player" as Dialog
+    state "Live relation edited" as Dirty
+    state "Dialog closed, live edits retained" as Closed
+    [*] --> Current
+    Current --> Dialog: Valid multiplayer dialog entry
+    Dialog --> Dirty: Radio change mutates live array
+    Dirty --> Dirty: Change stance or selected other player
+    Dialog --> Closed: Close without editing
+    Dirty --> Closed: IDCANCEL retains edits, destroy logs dirty relations
+    Closed --> Dialog: Reopen edited state
+    Dirty --> Dialog: Select previous stance to reverse that edit
+    note right of Closed
+      No automatic reciprocal friendship update.
+      Closing neither sends orders nor generates a turn.
+      Failed saving is an M06 / S01 outcome.
+    end note
+```
+
+The diagrams require the documented valid selected-player domain. Missing-selection and one-player behavior remain E13-1, not a new rejection path. A relation is directed; an edited stance is not a treaty or a guarantee of host interaction success.
