@@ -7,7 +7,8 @@ Canonical entry: [M17-host-specification.dfy](M17-host-specification.dfy);
 [rules and proofs](dafny/M17-host.dfy). Behavior statuses and evidence follow
 [the collection conventions](README.md#requirement-ids-and-status).
 
-[Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
+[Workflow and state diagrams](#workflow-and-state-diagrams) and
+[cross-module sequences](#cross-module-sequences) provide visual reading paths.
 
 ## 1. Purpose, actors and scope
 
@@ -246,3 +247,137 @@ stateDiagram-v2
 ```
 
 The CLI has no interactive modal Cancel; its parse/dispatch results remain entry-specific. The post-generation validation step is an operator obligation, not a new automatic engine gate. An openable AI log is not proof of complete or fresh orders.
+
+## Cross-module sequences
+
+These source-derived reading projections use logical module lifelines, not new
+services or locking protocols. Rechecked at `c3259e255f37af9c1fad0b7c749d36db157ee60e`
+on 2026-10-25. [Canonical host contracts](M17-host-specification.dfy) retain their
+classified-file/external-effect boundaries. Neither entry establishes atomic publication.
+
+<a id="m17-seq-desktop-host"></a>
+### Import orders and generate from desktop Host Games
+
+Trace: [readiness](#validate-and-display-readiness), [AI/recovery](#ai-completion-backup-and-failure),
+[M01 host orders](M01-game-library.md#36-export-and-host-orders),
+[M20 AI lifecycle](M20-ai-players.md#entry-strategy-and-cleanup),
+[M18 generation](M18-turn-generation.md#cross-module-sequences).
+Evidence: [libraryui.c](../src/ui/libraryui.c) `FImportLibraryOrders`,
+`FSelectLibraryHostGame`; [mdi.c](../src/ui/mdi.c) `BringUpHostDlg`,
+`HostModeDialog`; [turn.c](../src/core/turn.c) `CFindTurnsOutstanding`, `EnsureAis`.
+Goals: [M17-US01](#m17-us01), [US03](#m17-us03), [US04](#m17-us04).
+
+```mermaid
+sequenceDiagram
+    actor Host
+    participant Library as Host Games/import (M01)
+    participant Manager as Desktop host (M17/S05)
+    participant AI as AI players (M20)
+    participant Engine as Generation (M18)
+    participant Files as Persistence/platform (S01/S04)
+    Host->>Library: Select managed host game, Import Orders
+    Library->>Files: Inspect .xN against .xy/.hst identity, player, year, generation
+    alt Invalid input or replacement declined
+        Library-->>Host: Leave existing orders, report/cancel
+    else Identical existing orders
+        Library-->>Host: Unchanged success
+    else Accepted new or different orders
+        Library->>Files: Copy exclusively to stage, reinspect, replace
+        Files-->>Library: Import success or failure
+    end
+    Host->>Library: Open Host Games entry
+    Library->>Manager: Successfully load selected .hst and enter host dialog
+    Note over Library,Manager: Prior departure handling applies, failed load stops before host dialog
+    Manager->>Files: Inspect order readiness for displayed host year
+    Manager-->>Host: Ready, missing, partial, or invalid status per player
+    Note over Manager,Files: Readiness display is a snapshot, not a filesystem lock
+    Host->>Manager: Generate Now
+    alt Outstanding orders and host declines force confirmation
+        Manager-->>Host: Remain in host dialog without dispatch
+    else Accepted request
+        Manager->>AI: EnsureAis eligibility cycle
+        AI->>Files: Use existing openable AI log or attempt AI turn writes
+        AI-->>Manager: Restore host context after AI work
+        Note over AI,Files: Openable log and unchecked writes do not prove complete valid AI orders
+        Manager->>Engine: FGenerateTurn
+        Engine->>Files: Replay, resolve, rotate backups and attempt outputs
+        Engine-->>Manager: Return from attempt
+        Manager-->>Host: Redisplay host dialog
+        Note over Manager,Files: Dialog redisplay does not certify every output, inspect diagnostics/files
+    end
+    opt Close host dialog outside generation
+        Host->>Manager: Cancel
+        Manager->>Files: Attempt clearing host in-use marker when writable
+        Manager->>Manager: Destroy loaded host state, return to title
+    end
+```
+
+This is manual Generate Now for one attempt. Multi-year modifier confirmations
+and automatic timers are separate native branches, not implied polling in this
+diagram. Cancelling the dialog before dispatch does not run generation; once
+dispatched, no general mid-phase cancellation/rollback is provided. Failed import
+does not authorize force generation; the host makes that separate explicit choice.
+
+<a id="m17-seq-cli-host"></a>
+### Validate or generate with the command-line host
+
+Trace: [CLI policy](#cli-entry-policy-and-dispatch),
+[S02 host profile](S02-preference-contracts.md#headless-profile-grammar),
+[M18 sequence](M18-turn-generation.md#cross-module-sequences),
+[M20 AI persistence](M20-ai-players.md#entry-strategy-and-cleanup).
+Evidence: [host.c](../src/host/host.c) `main`, `FReadHostIni`,
+[turn.c](../src/core/turn.c) `FRunCmdLine`, `CTurnsOutSafe`, `VerifyTurns`,
+`EnsureAis`; [hostui.c](../src/host/hostui.c). Goal: [M17-US02](#m17-us02).
+
+```mermaid
+sequenceDiagram
+    actor Operator
+    participant CLI as stars-host entry (M17)
+    participant Dispatch as Core host dispatch (M17)
+    participant AI as AI players (M20)
+    participant Engine as Generation (M18)
+    participant Files as Persistence/profile (S01/S02/S04)
+    Operator->>CLI: Explicit path, validation or generation flags, optional INI/seed
+    CLI->>Files: Read requested host INI and bounded native values
+    CLI->>CLI: Parse core command line, initialize RNG
+    alt Invalid options, unreadable INI, parse failure, or no action
+        CLI-->>Operator: Diagnostic and exit 2
+    else Validation request
+        CLI->>Dispatch: FRunCmdLine validation
+        Dispatch->>Files: Attempt host load
+        opt Host load succeeded
+            Dispatch->>Files: VerifyTurns for expected orders
+            Dispatch->>AI: EnsureAis, restoring host state after work
+            Dispatch-->>CLI: Emit year/player status report
+        end
+        Note over Dispatch,Files: Validation can produce missing AI orders, and dispatch TRUE can follow load failure
+        CLI-->>Operator: Return process status with diagnostics
+    else Generation request
+        CLI->>Dispatch: FRunCmdLine generation
+        opt Wait/try gate requested
+            Dispatch->>Files: CTurnsOutSafe readiness inspection
+        end
+        alt Outstanding orders with try policy
+            Dispatch-->>CLI: Handled without generating this game
+        else Outstanding orders with wait policy
+            Dispatch-->>CLI: Not handled, headless host has no wait timer
+            CLI-->>Operator: Diagnostic and exit 2
+        else Unconditional generation or zero outstanding
+            Dispatch->>AI: EnsureAis
+            AI->>Files: Reuse openable logs or attempt AI orders/history
+            Dispatch->>Engine: FGenerateTurn
+            Engine->>Files: Load/replay, resolve, backup, attempt publication
+            Engine-->>Dispatch: Generation result (not checked by this dispatcher)
+            Dispatch-->>CLI: Request handled
+        end
+        CLI-->>Operator: Process status and diagnostics
+    end
+    Note over Operator,Files: Validate actual output family before distribution or recovery/retry
+```
+
+The sequence covers a single validation/generation dispatch, omitting batch,
+repeat, version and dump branches. The unsupported wait branch requires outstanding
+orders; it is not a new general rejection before core dispatch. Validation is not
+read-only because `EnsureAis` can write. Request handled, process status, engine
+result and complete output publication are distinct. There is no interactive
+Cancel in the headless engine; interruption requires inspecting files/backups.

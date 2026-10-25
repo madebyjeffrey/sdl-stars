@@ -13,6 +13,50 @@ SPEC.loader.exec_module(handbook)
 
 
 class LinkTests(unittest.TestCase):
+    def test_sequence_index_follows_source_titles_anchors_edits_and_removal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            path = root / "spec/M06-session.md"
+            text = ('# Session\n\n## Cross-module sequences\n\n'
+                    '<a id="m06-seq-save"></a>\n### Save orders\n\n'
+                    '```mermaid\n---\nconfig: {sequence: {useMaxWidth: false}}\n---\n'
+                    'sequenceDiagram\nA->>B: Save\n```\n')
+            handbook.write(path, text)
+            with patch.object(handbook, "ROOT", root):
+                index = handbook.sequence_index([path])
+                self.assertIn("**1 cross-module sequences**", index)
+                self.assertIn("[Save orders](../spec/M06-session.md#m06-seq-save)", index)
+                self.assertNotIn("A->>B", index)
+                handbook.write(path, text.replace("### Save orders", "### Save and submit"))
+                self.assertIn("[Save and submit]", handbook.sequence_index([path]))
+                groups = [("Play", [("M06", "Session", path.relative_to(root))])]
+                atlas = handbook.diagram_index(groups)
+                self.assertIn("#cross-module-sequences", atlas)
+                self.assertIn("**1 module diagrams**", atlas)
+                self.assertNotIn("#workflow)", atlas)
+                handbook.write(path, "# Session\n")
+                self.assertIn("**0 cross-module sequences**", handbook.sequence_index([path]))
+
+    def test_sequence_without_stable_anchor_fails_instead_of_disappearing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            path = root / "spec/M06-session.md"
+            handbook.write(path, "# Session\n\n## Cross-module sequences\n\n### Save\n```mermaid\nsequenceDiagram\nA->>B: Save\n```\n")
+            with patch.object(handbook, "ROOT", root), self.assertRaisesRegex(ValueError, "stable anchor"):
+                handbook.sequence_entries([path])
+
+    def test_player_and_host_sequences_have_evidence_and_canonical_scope(self):
+        entries = handbook.sequence_entries(handbook.sources())
+        self.assertGreaterEqual(len(entries), 7)
+        self.assertEqual(len({anchor for _, anchor, _ in entries}), len(entries))
+        self.assertTrue({"M01", "M02", "M03", "M06", "M17", "M18"}.issubset({p.name[:3] for p, _, _ in entries}))
+        for path, anchor, _ in entries:
+            section = path.read_text().split("## Cross-module sequences", 1)[1]
+            self.assertIn("Evidence:", section)
+            self.assertRegex(section, r"\[[^]]+\]\([^)]+\.dfy\)")
+            self.assertIn(f'id="{anchor}"', section)
+            self.assertRegex(section.lower(), r"cancel")
+
     def test_diagram_presentation_preserves_body_and_explicit_author_config(self):
         source = "```mermaid\nstateDiagram-v2\n[*] --> Draft\n```\n"
         presented = handbook.readable_diagrams(source)

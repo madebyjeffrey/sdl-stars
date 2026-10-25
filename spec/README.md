@@ -261,6 +261,35 @@ were checked against `e2eae18cff0f990db20415c1c2262aed2022f95b` on 2026-10-23.
 They distinguish observed behavior from proposed port interfaces. The map's
 original base revision above still describes its initial exploration.
 
+## Cross-module sequence diagrams
+
+Recorded 2026-10-25; handoffs rechecked at
+`c3259e255f37af9c1fad0b7c749d36db157ee60e`. Seven cross-module sequences now live
+in the owning M01, M02, M03, M06, M17 and M18 entries. They cover race-version
+saving, new-game creation, opening/planning/exporting a player turn, importing
+its successor, desktop hosting, CLI validation/generation and shared year
+resolution/publication. The [sequence index](../handbook/sequences.md) and
+[module atlas](../handbook/diagrams.md) discover titles, stable anchors and counts
+from the canonical specs on every build; no diagram copies are maintained.
+
+These are source-derived reading projections of the existing rules and external
+obligations. They preserve entry-specific cancellation, guarded versus legacy
+save behavior, partial publication, AI writes during CLI validation and ignored
+generation-output results. Logical lifelines do not introduce services, new
+runtime APIs, persistence rules or stronger C/model-refinement claims. Existing
+requirement IDs, anchors, formal definitions and Open decisions remain unchanged.
+
+Presentation validation: all **15 handbook tests** and **9 specification-checker
+tests** pass. The Zensical build has **129 pages** and zero source/rendered-link
+errors. Chromium renders all **64 diagrams**, including the seven new sequences,
+and checks their generated index/anchors, desktop/mobile layouts, Fit/Actual size,
+horizontal scrolling, search and raw downloads. Existing specification anchors
+and all **559 requirement IDs** are retained. SDL Debug builds without warnings;
+all **17 unit tests** and the available tutorial smoke checkpoint pass. Full
+native regression through checkpoint 150 reports **519 matches, 21 existing
+warnings, 0 differences/errors and 0 skipped reference inputs**. No game source,
+file formats, formal definitions or regression baselines changed.
+
 ## Module workflow and state diagrams
 
 Recorded 2026-10-25. Each of the 26 first-level module entries now contains a

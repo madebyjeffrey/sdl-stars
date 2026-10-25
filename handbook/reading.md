@@ -47,6 +47,10 @@ Preserve those IDs when editing, including retired IDs with successor links.
 
 ## Logical ownership and implementation
 
+Follow the [cross-module sequences](sequences.md) for the main player and host
+handoffs, including cancellation and partial-failure boundaries. Each sequence
+is authored once in its owning spec and links to the participating modules.
+
 Every module entry has [workflow and state diagrams](diagrams.md) beside its
 canonical specification. Their nodes summarize the documented contract rather
 than add fields or implementation states. A terminal node ends the illustrated
