@@ -241,6 +241,10 @@ def source_block(text):
 def module_page(catalog, identity, title, link, rewrite):
     stories = [v for k, v in catalog.stories.items() if k.startswith(identity.lower() + "-")]
     criteria = [v for k, v in catalog.criteria.items() if k.startswith(identity.lower() + "-")]
+    def requirement_trace(requirement):
+        owner = requirement[:3].upper()
+        page = "" if owner == identity.upper() else owner + ".md"
+        return page + "#trace-" + requirement
     body = f"# {identity} · {title} · Traceability\n\n"
     body += "[All modules](../traceability.md) · [Model backlinks](../trace-models.md) · [Test/evidence backlinks](../trace-evidence.md)\n\n"
     body += "Generated from the current specs. Evidence text below is quoted from its owning criterion. Exact declaration matches provide navigation; they do not prove implementation refinement. Source documents retain behavior status, inspected revisions, dated runs and coverage limits.\n\n"
@@ -254,13 +258,13 @@ def module_page(catalog, identity, title, link, rewrite):
         content = re.sub(r"^\*\*[^*]+\*\*\s*", "", story["block"])
         body += rewrite(content, story["source"]) + "\n\n"
         body += f'[Source story]({link(story["source"], story["id"])}) · Criteria: '
-        body += ", ".join(f'[{c.upper()}](#trace-{c})' for c in story["criteria"]) or "No criterion reference recorded"
+        body += ", ".join(f'[{c.upper()}]({requirement_trace(c)})' for c in story["criteria"]) or "No criterion reference recorded"
         body += "\n\n</section>\n\n"
     body += "## Acceptance criteria\n\n"
     for c in criteria:
         body += f'<article class="trace-criterion" id="trace-{c["id"]}" data-stories="{" ".join(c["stories"])}" markdown="1">\n\n'
         body += f'### {c["id"].upper()}\n\n[Source criterion]({link(c["source"], c["id"])}) · Stories: '
-        body += ", ".join(f'[{s.upper()}](#trace-{s})' for s in c["stories"]) + "\n\n"
+        body += ", ".join(f'[{s.upper()}]({requirement_trace(s)})' for s in c["stories"]) + "\n\n"
         if c["cells"]:
             body += "**Source label / status:** " + rewrite(c["cells"][0], c["source"]) + "\n\n"
             labels = ["Acceptance statement", "Rule / source evidence"] if len(c["cells"]) == 4 else ["Acceptance statement", "Rule, evidence and limits (combined in source)"]
