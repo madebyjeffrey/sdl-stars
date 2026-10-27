@@ -91,6 +91,7 @@ module M08NativeHabitat {
       E.WordPreserves(C.DivC(distance*100,d));
       E.WordPreserves(distance*2-d);
       var q:=100-C.DivC(distance*100,d);E.WordPreserves(q);
+      assert P.AxisTotal(a,x,P.HabitatTotal(t.positive,t.negative,t.modifier)).positive==t.positive+q*q;
       PositiveBounds(t.positive,q);
       Signed32Preserves(t.positive+q*q);
       var penalty:=distance*2-d;

@@ -8,6 +8,7 @@ filesystem I/O, recursive helper algorithms, admission, UI or crash durability.
 from pathlib import Path
 import json
 import os
+import re
 import shlex
 import subprocess
 import tempfile
@@ -63,8 +64,8 @@ DECLARATIONS = r'''
 #define iplrNone (-1)
 typedef intptr_t HWND;
 typedef struct { const char *pszTarget,*pszName; int16_t fCopy,fBad; uint32_t grfPlayers; } LIBRARYIMPORT;
-static char szLibraryRoot[512]="root",szLibraryName[256]="Copy",szLibraryPending[512]="pending";
-char szBase[512];
+static char szLibraryRoot[256]="root",szLibraryName[256]="Copy",szLibraryPending[256]="pending";
+char szBase[256];
 static const char *szDirSep="/";
 // Zero is absent; files are 1..3; directories are bit sets plus 100.
 static int objects[8],count,profile,variant,cleared;
@@ -106,9 +107,10 @@ static int FCopyNativeFileExclusive(const char *source,const char *target) {
     event("copy",s,t,ok,residue);return ok;
 }
 static int FInspectImportFile(const char *path,int type,int player,int32_t *id,uint16_t *turn,void *gen,int16_t *multi) {
-    (void)type;(void)player;(void)gen;int p=role(path),ok=decision() && objects[p]>0 && objects[p]<100;
+    (void)type;(void)player;assert(!gen);int p=role(path),inspected=decision() && objects[p]>0 && objects[p]<100;
     // Probe 2 includes inspection and the two subsequent source comparisons.
-    *id=123;*turn=11;*multi=0;event("probe",2,p,ok,0);return ok;
+    *id=variant==22?999:123;*turn=variant==23?12:11;*multi=variant==24;
+    event("probe",2,p,inspected && variant!=22 && variant!=23,0);return inspected;
 }
 static int FNativeFileSize(const char *path,int64_t *size) {int p=role(path),ok=decision() && objects[p]>0 && objects[p]<100;*size=1;event("probe",1,p,ok,0);return ok;}
 static int move(const char *source,const char *target) {int s=role(source),t=role(target),ok=decision() && objects[s];if(ok){objects[t]=objects[s];objects[s]=0;}event("replace",s,t,ok,0);return ok?0:-1;}
@@ -145,14 +147,20 @@ static size_t NativeStrlen(const char *s){if(s==szLibraryRoot){int ok=decision()
 // source enumeration plus final RemoveNativePath, including possible remnants.
 static int CopyImportEntry,CopyBackupDirectory,RemoveImportFile;
 static int FNativeEnumerateDirectory(const char *path,void *callback,void *context){
-    (void)path;(void)context;
-    if(callback==&CopyImportEntry)return build(5);
-    if(callback==&CopyBackupDirectory)return build(6);
+    (void)path;
+    if(callback==&CopyImportEntry || callback==&CopyBackupDirectory){
+        int ok=build(callback==&CopyImportEntry?5:6);
+        if(variant==4 && !ok){((LIBRARYIMPORT *)context)->fBad=1;return 1;}
+        return ok;
+    }
     assert(callback==&RemoveImportFile);
     // Removal itself is performed by the immediately following source call.
     return 1;
 }
-static int FWriteLibraryMetadata(const char *path,const char *name,int16_t player){assert(role(path)==3 && !strcmp(name,"Copy") && player==0);return build(7);}
+static int FWriteLibraryMetadata(const char *path,const char *name,int16_t player){
+    int expected=variant>=5 && variant<=20?variant-5:variant==21?-1:0;
+    assert(role(path)==3 && !strcmp(name,"Copy") && player==expected);return build(7);
+}
 static int CreateNativeDir(const char *path){int p=role(path),ok=decision() && !objects[p];if(ok)objects[p]=100;event("allocate",2,p,ok,0);return ok?0:-1;}
 #define CopyImportEntry (&CopyImportEntry)
 #define CopyBackupDirectory (&CopyBackupDirectory)
@@ -168,7 +176,7 @@ def family():
     return r'''
 static int16_t NativeFamily(void) {
     char szStage[256],szDir[512]="source";
-    LIBRARYIMPORT li={0};li.grfPlayers=1;
+    LIBRARYIMPORT li={0};li.grfPlayers=variant>=5 && variant<=20?1u<<(variant-5):variant==21?0:1;
 ''' + source[start:end] + '\n}'
 
 
@@ -311,6 +319,8 @@ static size_t copyWrite(const void *data,size_t size,size_t count,FILE *f){
 }
 static int copyClose(FILE *f){
     int forced=(f==copySource && (faults&4)) || (f==copyTarget && (faults&8));
+    if(f==copySource)copySource=NULL;
+    if(f==copyTarget)copyTarget=NULL;
     int status=fclose(f);if(forced){errno=EIO;return EOF;}return status;
 }
 static int copyRemove(const char *path){if(faults&16){errno=EACCES;return -1;}return remove(path);}
@@ -373,10 +383,17 @@ int main(void){
 
 
 def main():
+    source=(ROOT/'src/ui/libraryui.c').read_text()
+    for name in ('szLibraryRoot','szLibraryPending','szLibraryName'):
+        assert f'static char {name}[256];' in source
+    assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/globals.c').read_text())
+    assert 'char szUniverse[512], szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];' in extract('FImportSubsequentTurn')
     # Enumerate every reached Boolean reply combination, including repeated
     # restore/cleanup calls, plus partial residue and stage/previous collisions.
     profiles = [(p,v,bits) for p,bits in ((0,11),(1,7),(2,14),(3,12),(4,12)) for v in (0,1)]
     profiles += [(p,v,11 if p==0 else 7) for p in (0,1) for v in (2,3)]
+    profiles += [(4,4,12)]+[(4,v,0) for v in range(5,22)]
+    profiles += [(p,v,0) for p in (0,1) for v in (22,23,24)]
     inputs = ''.join(f'{p} {m} {v}\n' for p,v,bits in profiles for m in range(1<<bits))
     with tempfile.TemporaryDirectory(prefix='stars-library-publication-') as tmp:
         tmp = Path(tmp); c = tmp/'controller.c'; binary = tmp/'controller'; output = tmp/'cases.jsonl'
@@ -400,6 +417,9 @@ def main():
         q=witnesses[2,(1<<8)|(1<<9),0];assert q['result']==0 and q['store'][5]==115 and ['notice',6] in q['events']
         q=witnesses[2,1<<9,1];assert q['result']==1 and q['store'][6]==101 and ['notice',7] in q['events']
         q=witnesses[4,1<<3,1];assert q['result']==0 and ['clear'] in q['events']
+        for p in (0,1):
+            for v in (22,23):assert witnesses[p,0,v]['result']==0
+            assert witnesses[p,0,24]['result']==1
         print(f'{count} extracted-controller cases; distinct traces by later/first/replace/separate/family: '+','.join(str(len(s)) for s in unique))
         print('Scripted helper receipts only; recursive copy/validation, native filesystem semantics, admission, UI and crash qualification remain open.')
         check_exclusive_copy(tmp,compiler)

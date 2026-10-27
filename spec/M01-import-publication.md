@@ -53,6 +53,21 @@ artifact on either return; this is a stage-only helper boundary, not a model of
 each recursive copy or metadata write. `Replace` moves an existing source only
 on reported success. No OS crash-atomicity or durable-flush guarantee follows.
 
+The tag-to-source interface is explicit; a FALSE probe does not generally mean
+that its path is absent:
+
+| Operation | Source guard or helper |
+| --- | --- |
+| `Format(1..3)` | Checked orders, tick-stage and previous-path formatting. |
+| `Format(4..5)` | Checked managed-directory and separate-copy target formatting. |
+| `Probe(1)` | Orders `FNativeFileSize` result. |
+| `Probe(2)` | Stage inspection AND matching admitted game ID and turn; generation output is NULL. |
+| `Probe(3..5)` | Stage-directory existence, hold-path selection, managed-directory validation. |
+| `Probe(6..8)` | Separate-copy name choice, availability and byte-budget guard. |
+| `Build(1..4)` | Conflict clone, player-file backup, staged incoming turn, separate-copy clone. |
+| `Build(5..7)` | Family enumeration AND no bad flag, backup enumeration AND no bad flag, metadata write. |
+| `Allocate(1..2)` | Unique stage-path allocation; time-derived family-stage mkdir. |
+
 `Pending` means evidence ended before the next helper reply; `InvalidEvidence`
 means a receipt violates its modeled contract. Neither is a native error return.
 `Returned(0)` and `Returned(1)` are ordinary FALSE/TRUE controller returns.
@@ -172,10 +187,13 @@ Partial copy/cleanup and stage/previous collision profiles are included.
 Validation, recursive copy/backup/cleanup and native I/O are scripted providers;
 these cases establish controller behavior under their stated receipts, not full
 filesystem integration or C refinement of the complete helper family. Separately,
-15 real-stdio cases execute extracted `FCopyNativeFileContents` and
+48 additional cases execute extracted `FCopyNativeFileContents` and
 `FCopyNativeFileExclusive` over empty, one-byte and 8192-byte chunk boundaries,
-existing-target preservation with EEXIST, and missing sources. Injected
-read/write/close errors and other native platforms remain qualification gaps.
+existing-target preservation with EEXIST, and missing sources. The first 15
+use ordinary stdio. Another 33 inject read/error/write/close/removal results into
+the actual copy loop, checking retained byte prefixes, full-copy remnants,
+source preservation and errno restoration. These are scripted I/O failures;
+actual OS fault delivery and other native platforms remain qualification gaps.
 
 Remaining owners: M01/S01 family enumeration and exact validation fields; S04
 native path aliases, copy/write/close/delete/rename failures and concurrent/crash

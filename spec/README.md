@@ -2748,7 +2748,56 @@ extracted current C controllers with warnings as errors and compares their
 operation/store/notice/return traces with an independent interpreter. Native I/O,
 admission, recursive helper algorithms and UI/crash qualification remain open.
 
-Verification for this continuation is being collected; do not substitute the
-previous batch's successful counts for this batch's evidence. GAP-09 remains open
-across M02/M05/M06/M17/M18/S01; M01 still owns full enumeration, native helper/path
-and UI qualification, export scope and last-played display decisions.
+Verification for this continuation:
+
+- Focused `dafny verify spec/dafny/M01-import-publication.dfy --cores 4
+  --verification-time-limit 60 --progress Symbol`: **120 verified, zero errors**
+  (`dist/spec-library-publication-focused7.log`). New long-path witnesses initially
+  failed to discharge, and raising unfolding fuel produced three 60-second
+  timeouts. The final model names the shared publication checkpoint and proves
+  recovery outcomes from the corresponding source checkpoints; the complete
+  controller reply traces remain separately checked. No assumptions, axioms,
+  disabled verification, altered C behavior or raised final time limit are used.
+- `python3 tests/spec/check_library_publication_source.py`: **61975**
+  extracted-controller cases with **32/12/38/20/39** distinct traces for later,
+  first-player, conflict replacement, separate copy and family publication.
+  Includes successful-enumeration/bad-flag failures and metadata-player arguments
+  for all sixteen slots and host-only -1, plus stage ID/year mismatch and
+  multiyear-flag cases with a NULL generation output. Native global path-array
+  capacities are bound to current declarations. A separate extracted-copy executable
+  passes **48** cases: fifteen ordinary-stdio chunk/collision/missing-source cases,
+  plus 33 injected read/write/close/cleanup result cases. These do not qualify
+  actual OS fault delivery, helper recursion, path aliases or crash durability.
+  Log: `dist/spec-library-publication-source8.log`.
+- SDL Debug configure/build pass using `macos-sdl-debug` and
+  `dist/m05-macos-sdl-debug`. The selected unit/runtime/tutorial/packaging suite
+  passes **31/31**; logs: `dist/spec-library-publication-configure.log`,
+  `dist/spec-library-publication-build.log`,
+  `dist/spec-library-publication-runtime.log`.
+- Full native regression passes: **519 matches**, **21 existing unused-storage
+  warnings**, **zero differences/errors**, **zero skipped reference inputs**.
+  Log: `dist/spec-library-publication-regression.log`; report:
+  `dist/scaffold/regression/spec-library-publication-comparison.json`.
+  Runtime code is unchanged; no additional host-only checks are required here.
+- Specification-checker tests pass **9/9**; handbook tests pass **26/26**.
+  Logs: `dist/spec-library-publication-checker-tests.log`,
+  `dist/spec-library-publication-handbook-tests.log`.
+- Publication validation is tracked in [PR #55](https://github.com/madebyjeffrey/sdl-stars/pull/55),
+  which records the published snapshot, collection-wide proof/audit results and
+  handbook/browser checks. The publication run uses
+  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`. Its initial
+  attempt hit a 120-second timeout in `M08NativeHabitat.AxisRefines`; an explicit
+  intermediate equality between the canonical positive total and `prior + q*q`
+  passes the focused lemma's **92 checks, zero errors**, at 60 seconds. Model
+  definitions and postconditions are unchanged; collection verification and audit
+  remain required before merge. The handbook renders **207 pages**, **700 stable
+  requirement IDs** and **111 formal files**, with **38,585** local rendered
+  links/assets checked and all **72** Mermaid diagrams rendered in browser checks.
+  All **190** pre-batch files and their **732** explicit anchors remain present.
+  Runtime, catalog, text and native/frozen baseline paths have no changes.
+
+GAP-09 remains open across M02/M05/M06/M17/M18/S01; M01 still owns full
+enumeration, native helper/path and UI qualification, export scope and
+last-played display decisions. The goal remains active. The next workflow
+contract batch is M02 stored-design equality/version/save-publication outcomes,
+retaining the explicit GAP-08 policy conflict rather than silently resolving it.
