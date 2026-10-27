@@ -518,13 +518,28 @@ sequenceDiagram
             Library->>Files: Check stored universe membership, stage and install
             Note over Library,Files: Keep existing history and pre-existing orders
         else Strictly later existing turn
-            Library->>Files: Stage/revalidate, preserve previous turn, install incoming
-            Library->>Files: Retire only this player's old .xN
-            alt Publication/retirement failed
-                Library->>Files: Attempt restoration of prior turn
-                Library-->>Player: Report failure and prior-copy recovery path if restoration fails
-            else Published successfully
-                Library-->>Player: Updated player year, histories and other players retained
+            Library->>Files: Stage and revalidate incoming
+            alt Stage failed
+                Library->>Files: Attempt stage cleanup
+                Library-->>Player: Stage failure
+            else Stage prepared
+                Library->>Files: Query this player's orders presence
+                Library->>Files: Preserve previous turn, install incoming
+                alt Preparation or install failed
+                    Library-->>Player: Failure with branch-specific cleanup remnants
+                else Installed and orders query reported TRUE
+                    Library->>Files: Remove only this player's old .xN
+                    alt Orders removal failed
+                        Library->>Files: Attempt restoration of prior turn
+                        Library-->>Player: Failure, recovery path if restoration failed
+                    else Orders removed
+                        Library->>Files: Attempt previous-file cleanup
+                        Library-->>Player: Success, histories and other players retained
+                    end
+                else Installed and orders query reported FALSE
+                    Library->>Files: Attempt previous-file cleanup
+                    Library-->>Player: Success, old orders may remain
+                end
             end
         else Changed same-year or older
             Library-->>Player: Cancel / Replace with backup / Import as Separate Copy

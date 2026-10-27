@@ -2791,7 +2791,7 @@ Verification for this continuation:
   passes the focused lemma's **92 checks, zero errors**, at 60 seconds. Model
   definitions and postconditions are unchanged; collection verification and audit
   remain required before merge. The handbook renders **207 pages**, **700 stable
-  requirement IDs** and **111 formal files**, with **38,585** local rendered
+  requirement IDs** and **111 formal files**, with **38,590** local rendered
   links/assets checked and all **72** Mermaid diagrams rendered in browser checks.
   All **190** pre-batch files and their **732** explicit anchors remain present.
   Runtime, catalog, text and native/frozen baseline paths have no changes.

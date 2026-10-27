@@ -30,7 +30,9 @@ alone does not reload memory or establish host receipt.
 
 `Later` begins after destination selection, incoming inspection, existing-file
 comparison, and conflict routing. It covers the orders/stage/previous path
-format guards onward, for first-player and strictly later existing turns.
+format guards onward, for first-player and strictly later existing turns. The earlier no-match -1 return
+and fallback to family discovery are outside this tail; they do not become a
+new return from `Later`.
 `ConflictReplace` and `SeparateCopy` cover their complete controller functions,
 with called validation, cloning, backup and incoming-file helpers supplied as
 external results. `FamilyPublish` begins after successful family admission,
@@ -183,7 +185,9 @@ extracts current C bodies (publication tails for later/family; whole conflict
 controllers) and compiles them with warnings as errors. An independent
 interpreter checks operation order, every projected post-operation store, return,
 notice and pending-clear events over exhaustive bounded Boolean reply masks.
-Partial copy/cleanup and stage/previous collision profiles are included.
+Partial copy/cleanup and stage/previous collision profiles are included. Some
+receipt combinations are conservative abstractions that a particular native
+backend may not produce.
 Validation, recursive copy/backup/cleanup and native I/O are scripted providers;
 these cases establish controller behavior under their stated receipts, not full
 filesystem integration or C refinement of the complete helper family. Separately,
