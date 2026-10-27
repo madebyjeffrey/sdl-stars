@@ -62,7 +62,7 @@ require conflict handling rather than the strictly-newer polling path.
 | <a id="m06-ac03"></a>M06-AC03 / US02 / Observed | Given dirty work at the guarded departure entry, when Cancel is chosen, then keep the session and call neither writer; when orders fail, do not attempt history and keep dirty state. | [Save/leave](#34-save-submit-and-leave); `GuardedLeave`, `CancelPreservesSession`, `GuardedFailureStays`. | Formal properties and injected startup workflow failures; excludes later editor callbacks. |
 | <a id="m06-ac04"></a>M06-AC04 / US02 / Observed | Given orders succeed but history fails during guarded Submit, then remain in the session with restored intent and dirty work, while the completed orders file may already be marked submitted. | Same save section; `SaveNeedsBoth`, `SessionVectors`. | Model/source and failure harness; no two-file transaction claim. |
 | <a id="m06-ac05"></a>M06-AC05 / US03 / Observed | Given accepted export destination and successful local saving, when the external copy fails, then local saving can remain successful; export preserves submission intent. | [Export](#41-export-orders); `ExportFlags`, `ExportPreservesIntent`, S01 publication relation. | Formal flags plus library failure cases; actual restoration/copy outcomes external. |
-| <a id="m06-ac06"></a>M06-AC06 / US04 / Observed | Given a strictly later turn for Player 2, when successful import publishes it, then retire only Player 2's old orders and retain other players/history; changed same-year input is a conflict. | [Import](#42-import-an-incoming-player-turn); `ClassifyImport`, S01 `PublishLaterTurn`. | Source/model and startup import/conflict cases; disk import does not reload the active session itself. |
+| <a id="m06-ac06"></a>M06-AC06 / US04 / Observed | Given a strictly later turn for Player 2 with orders presence reported TRUE, when import returns TRUE, remove only Player 2's old orders and retain other players/history; a FALSE native orders query may skip retirement despite import success. Changed same-year input is a conflict. | [Import](#42-import-an-incoming-player-turn); `ClassifyImport`, S01 `PublishLaterTurn`. | Source/model and startup import/conflict cases; disk import does not reload the active session itself. |
 | <a id="m06-ac07"></a>M06-AC07 / US04 / Observed | Given a newer turn and dirty active state, when Wait offers discard and the player cancels, then remain active even though history saving has already been attempted. | [Waiting](#43-detect-and-load-a-new-turn); `WaitAction`, `FHistoryBeforeReloadPrompt`. | Source/model; broader timer/host race coverage missing. |
 | <a id="m06-ac08"></a>M06-AC08 / US01 / Observed | Given an original nonzero saved kind that restoration clears, return successful open without another fallback. An original zero kind can cause fallback again when planets exist; host mode returns 0 after its dialog. | `FinishOpenPresentation`, `OpenPresentationVectors`; FOpenGame tail and M07 post-open contract. | Extracted tail cases include absent scanner and duplicate fallback; successful open is not proof of main-object promotion. |
 
@@ -309,9 +309,12 @@ copies require destination selection. `ClassifyImport` assumes those checks:
 | --- | --- |
 | Identical bytes to existing player turn | Success without replacement or orders retirement. |
 | First turn for that player | Validate player membership using the stored universe, stage and install; keep existing history and even pre-existing host orders. |
-| Strictly later existing turn | Stage and revalidate, preserve prior turn, install, then retire only that player's `.xN`. Skipped years are allowed. Keep histories, existing backups and other players' turns/orders. |
+| Strictly later existing turn | Stage and revalidate, preserve prior turn, install, then retire only that player's `.xN` if the orders query reported presence. A FALSE query may leave orders despite TRUE import. Skipped years are allowed. Keep histories, existing backups and other players' turns/orders. |
 | Changed same-year or older turn | Offer Cancel, Replace or Separate Copy. Replacement creates a backup; a separate copy leaves the selected game unchanged. |
 
+The [M01 publication companion](M01-import-publication.md) defines exact native
+query/cleanup/restore outcomes; S01 `PublishLaterTurn` describes the completed
+logical retirement effect, rather than every native TRUE return.
 Retirement failure attempts to restore the prior turn. A restoration failure
 leaves an explicit recovery obligation and preserves the reported prior copy.
 This is not an all-or-nothing filesystem transaction. `FImport` reuses S01's
@@ -414,7 +417,7 @@ where a reliable future interface would need richer errors or stronger policy.
 | Log total exactly 32000 / 32001 | Warning only above 32000; disabled logging leaves state untouched (`LoggingDisabledPreserves`). |
 | Replay contains false result followed by another command | Later command still attempted; overall failure, no rollback. |
 | Export cancelled / staging failed / external copy failed | Respect the distinct outcomes in §4.1; `ExportPreservesIntent`. |
-| Later Player 2 turn skips a year | Only Player 2 advances and loses old orders; history/backups/Player 1 preserved by S01 `PublishLaterTurn` contracts. |
+| Later Player 2 turn skips a year | With orders observed and successfully retired, only Player 2 advances and loses old orders; history/backups/Player 1 are preserved by S01 `PublishLaterTurn`. M01-AC16 covers the native query-failure exception. |
 | Identical / first / changed same-year import | No-op / install without retiring orders / conflict choice respectively (`ClassifyImport`). |
 | New turn detected while dirty; Cancel | Keep active turn; history write has already been attempted. |
 | Wait after failed save | May still minimize and poll; do not report it as confirmed submission or receipt. |

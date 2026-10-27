@@ -10,8 +10,7 @@ Identify the high-level logical modules of SDL-Stars and progressively specify
 their actors, goals, workflows, requirements, rules and acceptance evidence.
 All 26 module-map entries now have detailed specifications, including stable user
 stories, acceptance criteria, interaction/quality requirements, source evidence,
-canonical Dafny definitions and explicitly owned coverage limits. Eight technical
-companions specialize shared contracts and versioned data.
+canonical Dafny definitions and explicitly owned coverage limits. Technical companions specialize shared contracts, gameplay algorithms and versioned data.
 
 The [completeness review and completion backlog](#completeness-review-and-completion-backlog)
 separates documented modules from remaining rule/model work, runtime qualification
@@ -224,32 +223,32 @@ must control clock and RNG inputs as well as catalog versions.
 
 | Module | Entry point | Supporting specifications | Coverage |
 | --- | --- | --- | --- |
-| M01 | [Game Library](M01-game-library.md) | [Dafny contracts](M01-library-specification.dfy), shared names, S01 persistence and M06 session handoffs | Listing/Continue, new-game publication, imports/conflicts, copy/rename/delete, export and host orders; partial-failure boundaries explicit. |
+| M01 | [Game Library](M01-game-library.md) | [Dafny contracts](M01-library-specification.dfy), [import publication/recovery](M01-import-publication.md), shared names, S01 persistence and M06 session handoffs | Listing/Continue, new-game publication, imports/conflicts, copy/rename/delete, export and host orders; partial-failure boundaries explicit. |
 | M02 | [Race Library](M02-race-library.md) | [Dafny contracts](M02-library-specification.dfy), shared names, M04 design and S01 bytes | Destination binding, stored-name version scans, reuse/update/new-version decisions, import/duplicate/export/delete and legacy policy conflict. |
 | M03 | [New Game Wizard](M03-new-game-wizard.md) | Setup model, roster/defaults, victory controls, scoring and M05 handoff | Source-derived workflow and calculations, dependency boundaries, port guidance and acceptance vectors. |
 | M04 | [Race Design Wizard](M04-race-design.md) | [Race data model and storage mapping](M04-race-data-model.md); [Advantage-point calculation](M04-race-advantage-points.md) | Logical inputs and current binary64 pricing specified; full workflow/recovery audit remains open. |
 | M05 | [Universe Creation](M05-universe-creation.md) | M03/M04 inputs, S06 state, S01 files and versioned S03/M11 dependencies | Source-derived placement, starting assets, RNG/order, tutorial/batch paths, publication/failure behavior and acceptance matrix. |
 | M06 | [Player Session and Turn Orders](M06-player-session-and-turn-orders.md) | Player selection, pending orders, saving, export and incoming turns | Source-derived workflows, partial-failure boundaries and modeled session transitions. |
 | M07 | [Galaxy Map and Navigation](M07-galaxy-map-and-navigation.md) | Selection, search, zoom/pan, filters, gesture handoffs and semantic inspection | Source-derived navigation rules, formal properties and selected scanner workflow evidence. |
-| M08 | [Planet and Colony Management](M08-planet-and-colony-management.md) | [Dafny contracts](M08-colony-specification.dfy), shared state, arithmetic and persistence | Colony selection, capacity/output, terraforming, orbital facilities and pane behavior; growth/mining and platform boundaries explicit. |
-| M09 | [Production Management](M09-production-management.md) | [Dafny contracts](M09-production-specification.dfy), shared state, arithmetic and persistence | Queue editing/templates, commit scope, costs/estimates and host payment/status rules; complete execution loop remains bounded. |
+| M08 | [Planet and Colony Management](M08-planet-and-colony-management.md) | [Dafny contracts](M08-colony-specification.dfy), [native economy](M08-colony-economy.md), [mass-driver capability](M08-mass-driver-capability.md), [terraforming selection](M08-terraform-selection.md), [capability producers](M08-colony-capabilities.md), shared state, arithmetic and persistence | Colony selection, native capacity/output/installations, growth/budget handoffs, terraforming, orbital facilities and pane behavior; mining/refinement and platform boundaries explicit. |
+| M09 | [Production Management](M09-production-management.md) | [Dafny contracts](M09-production-specification.dfy), [native cost vectors](M09-production-costs.md), [forecast controller](M09-production-forecast.md), [builder](M09-production-builder.md), [host handoffs](M09-production-execution.md), shared state, arithmetic and persistence | Queue editing/templates, commit scope, cost/forecast controllers and native builder steps; outer host application and refinement remain open. |
 | M10 | [Fleet Operations](M10-fleet-operations.md) | [Dafny contracts](M10-fleet-specification.dfy), shared state, arithmetic and persistence | Fleet orders, cargo, split/merge, overflow, fuel and task-resolution handoffs; host simulation and packed-damage gaps explicit. |
 | M11 | [Ship and Starbase Design](M11-ship-and-starbase-design.md) | [Dafny contracts](M11-design-specification.dfy), shared state, arithmetic and persistence | Roster/copy/edit/delete, availability, slots and cost/armor projections; catalog and cascading deletion boundaries explicit. |
-| M12 | [Research and Technology](M12-research-and-technology.md) | [Dafny contracts](M12-research-specification.dfy) | Research policy/quotes, technology browser and host allocation/breakthrough handoffs; shared costs retained. |
+| M12 | [Research and Technology](M12-research-and-technology.md) | [Dafny contracts](M12-research-specification.dfy), [native development/budget quotes](M12-development-and-budget-quotes.md), [host research](M12-host-research-resolution.md) | Research policy, ordered development quote/native cost, budget preview, technology browser and host allocation/breakthrough handoffs; shared costs retained. |
 | M13 | [Player Relations](M13-player-relations.md) | [Dafny contracts](M13-relations-specification.dfy) | Directed relations, immediate edits, close/log semantics and attack/access consumers. |
 | M14 | [Battle Planning and Review](M14-battle-planning-and-review.md) | [Dafny contracts](M14-battle-review-specification.dfy) | Plan editing/copy/delete, fleet-reference remapping and bounded recorded-battle playback. |
 | M15 | [Messages and Reports](M15-messages-and-reports.md) | [Dafny contracts](M15-reports-specification.dfy) | Event filtering, outgoing drafts, report eligibility/caches, exports and viewpoint limits. |
 | M16 | [Tutorial and Help](M16-tutorial-and-help.md) | [Dafny contracts](M16-tutorial-specification.dfy) | Tutorial page/task progression, exit/restoration and packaged HTML help; full tutorial qualification remains open. |
 | M17 | [Host Game Management](M17-host-game-management.md) | [Dafny contracts](M17-host-specification.dfy) | Readiness precedence, wait/try dispatch, AI completion, backups and partial-output recovery. |
 | M18 | [Turn Generation](M18-turn-generation.md) | [Dafny contracts](M18-generation-specification.dfy) | Ordered annual phases, replay/RNG prerequisites, publication and failure cleanup boundaries. |
-| M19 | [Game Rules and Resolution](M19-game-rules-and-resolution.md) | [Dafny contracts](M19-resolution-specification.dfy) | Complete resolution-family ownership inventory, growth/mining projections and native combat/task/object obligations. |
+| M19 | [Game Rules and Resolution](M19-game-rules-and-resolution.md) | [Dafny contracts](M19-resolution-specification.dfy), [construction effects](M19-construction-effects.md), [mining/depletion](M19-mining-and-depletion.md) | Complete resolution-family ownership inventory, native colony economy/mining/depletion contracts and explicit combat/task/object obligations. |
 | M20 | [AI Players](M20-ai-players.md) | [Dafny contracts](M20-ai-specification.dfy) | AI entry/failure paths, exact strategy IDs, traversal/RNG, policy inventory and persistence limits. |
 | S01 | [Game-file Formats, Persistence and Validation](S01-game-file-formats.md) | [Dafny specification](S01-game-file-specification.dfy), [records/codecs](S01-game-file-records.md), [orders](S01-game-file-orders.md), [external formats](S01-game-file-external.md), [validation](S01-game-file-validation.md) | Complete current emitted-format and persistence-workflow specification; observed validation/recovery limits and policy conflicts explicit. |
 | S02 | [Application Preferences and Window Layout](S02-application-preferences-and-window-layout.md) | [Dafny contracts](S02-preferences-specification.dfy), [preference contracts](S02-preference-contracts.md) | Active key/default/width/write inventory, desktop profile grammar/list edits, exact tile and placement parsing, normalization and native boundaries. |
 | S03 | [Static Game Data and Text](S03-static-game-data-and-text.md) | [Dafny contracts](S03-catalogs-specification.dfy), [versioned inventory](S03-catalog-inventory.md) | Catalog schemas/identities, AI packing, compressed text and 67 exact source/generator/schema references. |
 | S04 | [Platform Services](S04-platform-services.md) | [Dafny contracts](S04-platform-specification.dfy) | Filesystem/buffer results, UTF-8, formatting/sort/arithmetic, temp directories and clock boundaries. |
 | S05 | [SDL Desktop Implementation](S05-sdl-desktop-implementation.md) | [Dafny contracts](S05-desktop-specification.dfy) | Desktop queue/filter/timer projections, focus/capture/lifetimes and full compatibility-facility qualification inventory. |
-| S06 | [Shared Game State and In-memory Data Model](S06-shared-game-state.md) | [Dafny contracts](dafny/S06-shared-state.dfy), identity/unit maps, entity/variant schemas, knowledge and lifetimes | Six model areas specified; selected structural conditions and proofs; C/refinement and gameplay proof limits explicit. |
+| S06 | [Shared Game State and In-memory Data Model](S06-shared-game-state.md) | [Dafny contracts](dafny/S06-shared-state.dfy), [planet editor contracts](S06-planet-editor-contracts.md), identity/unit maps, entity/variant schemas, knowledge and lifetimes | Six model areas specified; selected structural conditions and proofs; C/refinement and gameplay proof limits explicit. |
 
 The M03 specification was checked against `e2eae18cff0f990db20415c1c2262aed2022f95b`
 on 2026-10-23. Its generation contract moved to [M05](M05-universe-creation.md),
@@ -593,7 +592,7 @@ unwritten overview rows. Older research documents remain dated evidence.
 | M06 | [Player sessions](M06-player-session-and-turn-orders.md#user-stories-and-requirements) | S01 retains bytes/replay/publication. |
 | M07 | [Map navigation](M07-galaxy-map-and-navigation.md#user-stories-and-requirements) | M08/M10 retain gameplay edits; S05 retains platform input/rendering. |
 | M08 | [Planet and Colony Management](M08-planet-and-colony-management.md#user-stories-and-requirements) | Colony selection, capacity/output, terraforming, orbital facilities and pane behavior; growth/mining and platform boundaries explicit. |
-| M09 | [Production Management](M09-production-management.md#user-stories-and-requirements) | Queue editing/templates, commit scope, costs/estimates and host payment/status rules; complete execution loop remains bounded. |
+| M09 | [Production Management](M09-production-management.md#user-stories-and-requirements) | Queue editing/templates, commit scope, cost/forecast controllers and native builder steps; outer host application and refinement remain open. |
 | M10 | [Fleet Operations](M10-fleet-operations.md#user-stories-and-requirements) | Fleet orders, cargo, split/merge, overflow, fuel and task-resolution handoffs; host simulation and packed-damage gaps explicit. |
 | M11 | [Ship and Starbase Design](M11-ship-and-starbase-design.md#user-stories-and-requirements) | Roster/copy/edit/delete, availability, slots and cost/armor projections; catalog and cascading deletion boundaries explicit. |
 | M12 | [Research and Technology](M12-research-and-technology.md#user-stories) | §§3–6 trace workflows, criteria, definitions, dependencies and owned coverage gaps. |
@@ -981,12 +980,18 @@ checks do not establish every source/model correspondence.
 | <a id="gap-06"></a>GAP-06 / High | Many E-boundaries contain ordinary representable algorithms, not intrinsically external effects. Examples: research passes, mine depletion, order resolution, all AI heuristics and tutorial task predicates. Names and source hashes do not replace these contracts. | **Open specification work.** Close the module work below with checked state/algorithm definitions, or a precise justified external boundary. Do not mark a whole family complete because one scalar witness passes. |
 | <a id="gap-07"></a>GAP-07 / High | Most source-to-model adapters are supplied booleans, arrays, projections or floating traces. Proofs establish consequences of those supplied values, not that the C code supplies the right values. | **Open adapter/evidence work.** Name each extraction function, native width/domain, pre/post state and failure mapping. Add focused differential/integration cases where representable; keep actual OS effects separately qualified. |
 | <a id="gap-08"></a>GAP-08 / High | Root instructions reject protected legacy races; accepted ADR 0002 and observed code describe replacement-password conversion. The disagreement spans M02/M04/S01/S06. | **Open policy alignment.** Root instructions govern this work; do not advertise the observed conversion as the supported root contract. The repository owner must authorize any policy/code/ADR alignment. This review makes no import behavior change. |
-| <a id="gap-09"></a>GAP-09 / High | Publication, submission, host receipt and recovery remain different outcomes. Direct saves/generation/AI writes ignore some results; staged library operations do not make the whole application crash-atomic. | **Open state/evidence work; stronger guarantees are policy work.** M01/M02/M05/M06/M17/M18/S01 must share an outcome matrix with exact surviving files, flags and retry assumptions. Model current partial effects before proposing transactions. |
+| <a id="gap-09"></a>GAP-09 / High | Publication, submission, host receipt and recovery remain different outcomes. Direct saves/generation/AI writes ignore some results; staged library operations do not make the whole application crash-atomic. | **Open state/evidence work; stronger guarantees are policy work.** [M01 publication/recovery](M01-import-publication.md) now specifies first/later turns, conflict replacement, separate copy and admitted-family publication, including query-failure exceptions, partial cleanup, restore retries and pending clearing. M02/M05/M06/M17/M18/S01 still require the shared wider outcome matrix with exact surviving files, flags and retry assumptions. Stronger transactions remain policy work. |
 | <a id="gap-10"></a>GAP-10 / Medium | Performance, supported displays, keyboard equivalence, accessibility and native backend coverage have no complete acceptance matrix or agreed numeric targets. Dummy-SDL tests and “API present” counts cannot establish them. | **Open qualification/target work.** S05 plus each UI owner must identify workload/platform/input cases, measurement method and evidence. Product choices stay Open until agreed; do not invent budgets or conformance claims. |
 | <a id="gap-11"></a>GAP-11 / Medium | Canonical gameplay functions remain in `M03-scoring.dfy` because they began as wizard consumers. Moving/copying them into later modules risks divergent definitions. | **Open trace integration, not a requested refactor.** Retain existing definitions and document the consumer/owner map. If moved later, update all includes/links atomically and preserve IDs; do not create a second formula. |
 | <a id="gap-12"></a>GAP-12 / Medium | Older test counts and failures remain embedded in module documents; a later passing full run does not prove every missing acceptance case or erase earlier failed evidence. | **Ongoing evidence discipline.** Keep dated records and link the latest collection run. Separate model proof, native fixture, GUI smoke and manual/native qualification in each new acceptance row. |
 | <a id="gap-13"></a>GAP-13 / Medium | M09 said a new Add inserted before the selected queue row; `ProdCommandHandler` tests that row and its successor, then inserts after it. | **Corrected.** `Destination`, `Locate`, `Add` and M09-AC19 cover selected/header/absent selection with source fixtures. |
 | <a id="gap-14"></a>GAP-14 / High | M09's generic sanitization description hid overlapping memcpy and a diverging physical cursor in `InitProduction`; a faithful model cannot promise a safely filtered/clamped queue. | **Specification corrected; native repair remains open.** `Sanitize`, M09-AC18 and guarded source fixtures preserve the defined case and stop before undefined overlap. Known-bug/roadmap entries track UI reproduction, original comparison and a separately scoped repair. |
+| <a id="gap-15"></a>GAP-15 / High | Native queue-growth capacity is an eight-bit header: write-back of 254/255 rows requests 256/257 physical rows but records maximum 0/1; a fresh selected read can allocate from that narrowed header before copying all active rows. | **Specification/native boundary recorded; runtime repair open.** S06-AC12, `Transfer` and guarded source write/read fixtures preserve partial state and allocator spare extent; exact-size heap fixtures stop before out-of-allocation copying. Native alignment is checked; host partial-prepend fixtures also confirm 255-row active/maximum header wrapping and missing-spare boundaries. Free-block reuse and UI/real-helper reachability remain open. [Known-bug evidence](../docs/KNOWN-BUGS.md#planet-queue-capacity-wrap--located-on-main) tracks UI reachability, original comparison and a separate repair. |
+| <a id="gap-16"></a>GAP-16 / High | Forecast copying was being conflated with global purity: M19 said forecasts omit random increments, but the estimator inherits generation and RNG state; AR apply=true mining marks live remote fleets, and actual builder alchemy can emit messages. | **Specification corrected; native effects recorded.** M09-AC47/M19-AC08, checked controller/effect predicates and actual estimator/mining/builder/RNG fixtures preserve current behavior. [Known-bug evidence](../docs/KNOWN-BUGS.md#forecast-helper-side-effects--located-on-main) tracks full UI/AI qualification, historical comparison and any separately scoped behavior decision. |
+| <a id="gap-17"></a>GAP-17 / High | Direct Genesis application zeroes planet mineral fields, but ordinary Produce later publishes its separate working mineral stocks over them. The resource-pointer parameter is not used by FBuildObject to clear that working stock. | **Observed outcome recorded; intended behavior open.** M19-AC13/M09-AC63, `Rebirth`/`FinalStock` and actual Produce/builder/application/RNG fixtures preserve this distinction. [Known-bug evidence](../docs/KNOWN-BUGS.md#genesis-stock-write-back--located-on-main) leaves full game/original comparison and any intentional behavior decision separate; no runtime change. |
+| <a id="gap-18"></a>GAP-18 / Medium | M12 described switching to lowest after level 26 without distinguishing local `iTechNext=7` from packed player policy. Source lowest redirection writes current field but leaves packed next unchanged; explicit redirection writes packed next six. | **Clarified.** M12-AC20, checked `Redirect` and all-256-policy native fixtures preserve the local/persisted distinction. No runtime policy or UI behavior change; full caller/liveness qualification remains open. |
+| <a id="gap-19"></a>GAP-19 / Medium | M11 summarized category/item validation as the first lookup step and omitted prior-pointer effects and nonuniform headless restrictions. Native FLookupPart reads primary first in player context; a valid denied row still assigns its pointer, and shield/armor/beam primary gates also run headless. | **Clarified.** M11-AC12–15 and the [native availability companion](M11-part-availability.md) preserve call order, pointer prefixes and headless distinctions, with checked decisions and exact actual-source/frame fixtures. No runtime behavior or validation policy changed; full caller/native memory refinement remains open. |
+| <a id="gap-20"></a>GAP-20 / Medium | A TRUE availability check does not establish the base notification's later hull-read domain: FCanBuildShdef narrows its item to a byte, while LphuldefFromId indexes with the full signed hull. Raw 288 can pass the former and reach base index 256 in the latter. | **Boundary specified.** M19-AC32, Gate/HullMetadata/DecodedHullSafe and the [eligibility companion](M19-construction-buildability.md) distinguish the accesses. Current FReadShDef rejects hulls above 36; normal-file reachability is not claimed. S01/M11/M19/S06 retain complete writer/admission/lifetime qualification. No runtime validation or behavior change is made. |
 
 ### Module-by-module completion inventory
 
@@ -998,37 +1003,37 @@ owners, not unnamed blockers. Companion coverage is included with its entry.
 
 | Owner / priority | Remaining work and existing boundary | Evidence required to close the specification work |
 | --- | --- | --- |
-| [M01](M01-game-library.md) / High | A/V: enumeration/validation levels, native path/name comparison, source mutation and copy/rename/delete/publication failures. P: complete export versus supported-family export and missing last-played display. | One action/outcome matrix with surviving files/metadata and exact validation inputs; alias/conflict/failure cases; separate ADR/product decisions. Preserve M06 pending-state handoffs. |
+| [M01](M01-game-library.md) / High | A/V: enumeration/validation levels, native path/name comparison, source mutation and recursive copy/rename/delete helper refinement. [Import publication](M01-import-publication.md) now supplies controller programs and source-fixture outcomes; full native I/O/alias/crash qualification remains open. P: complete export versus supported-family export and missing last-played display. | One action/outcome matrix with surviving files/metadata and exact validation inputs; alias/conflict/failure cases; separate ADR/product decisions. Preserve M06 pending-state handoffs. |
 | [M02](M02-race-library.md) / High | A/V: complete stored-design equality projection, Unicode/version/path collisions, protected update and write/close cleanup. P: GAP-08, dotted-stem duplication and corrupt-entry display. | Source-to-model field mapping and version/credential/failure cases, including version 999 and filename/name disagreement. Explicit effective policy plus observed deviation. |
 | [M03](M03-new-game-wizard.md) / Medium | A/V: full widget-to-normalized setup mapping, batch/wizard distinctions, RNG/catalog inputs and failure matrix. P: deliberate changes to substitution, overflow, tie or retry behavior. | Trace each setup control/normalization input to its definition and source domain; vectors for boundary lattice values and controlled RNG/clock handoff to M05. Existing scoring/victory definitions remain canonical. |
 | [M04](M04-race-design.md) and both companions / High | D/A: six-page control transitions, preset replacement, AR resets, normalization timing and cancellation snapshots. V: pricing differential coverage; P: proposed Rust/SQL interface and GAP-08. | Complete page/event/guard/effect/return table with checked transitions and M02/M03 snapshot handoffs. Zero/even-width inconsistency is fixed; full wizard behavior is still open. SQL implementation is not required merely to document its proposal. |
 | [M05](M05-universe-creation.md) / High | D/A: random-race/starting-design helper closure and exact tutorial context; V: controlled creation/output/failure matrix. P: bounded placement cancellation and stronger publication. | Account for each helper/catalog/RNG call with pre/post state and draw order; validate initial decoded file sets and failure remnants. Preserve the observed absence of a total retry bound. |
 | [M06](M06-player-session-and-turn-orders.md) / High | A/V: direct-open/close/reload versus guarded departure, late editor flush, ignored saves, waiting/mark/reload races and session invalidation. Post-open marker/fallback decisions now have an explicit M06 contract, with M07 restoration dispatch. P: durable submission/host handshake. | Cross-entry outcome matrix separating memory intent, successful orders/history, export and receipt; precise failure traces. No file flag described as a lock. |
 | [M07](M07-galaxy-map-and-navigation.md) / Medium | D/A/V: full SelectAdj*/ChangeMainObjSel editor/cache effects, title/tutorial callbacks and reentrancy; native hit/capture/paint interleavings, trig/hypot/raster paths, 12-entry menu capacity, all views/disclosure and preference teardown. Restoration dispatch, fallback ordering, the post-open wrapper and construction-capable starbase target selection are now modeled. | Bind coordinate/selection projections to source inputs and test boundary/capture cases; keep exact pixels as rendering obligations with platform/display fixtures. |
-| [M08](M08-planet-and-colony-management.md) / High | D/A: E08-2 best-axis/optimum-viewpoint/forecast state, E08-3 catalog and visibility extraction. V: pane lifecycle/focus/layout. | Reuse M19 growth/mining, specify best-axis choice and copy/restore; test foreign/unknown/owned views and base abilities. Do not duplicate resource/capacity formulas. |
-| [M09](M09-production-management.md) / High | D/A: E09-1 getter/catalog/pointer refinement and full lookup/selection/tutorial/modal callback effects (lifecycle call order, accept/cancel/direct Clear, Next/Back, recovery, initial selection, catalogue assembly, sanitization boundaries, commands and presets now modeled), E09-2 full cost vectors, E09-3 99-year forecast, E09-4 production/alchemy loop and charge-before-failure. | Checked queue/economy state transitions, progress/cost conservation where the source guarantees it, and invalidation/partial-construction cases. Distinguish simulation from forecast assumptions. |
-| [M10](M10-fleet-operations.md) / High | D/A: complete waypoint/task defaults, target selection and native modal/lifetime behavior; packed damage, merge/split allocation effects, fuel/gate/movement and host task execution (E10-1–4). Preset application/customization and a bounded quantity/action refresh adapter now have checked contracts. | Task-by-mode prerequisites/outcomes with exact RNG/rounding, reference/cargo changes and partial effects; typed packed-damage adapter and focused movement/task vectors. |
-| [M11](M11-ship-and-starbase-design.md) / High | D/A: E11-1 complete trait/hidden/availability extraction; E11-2 deletion cascade; E11-4 full derived stats/caches and pricing order. V: native slot gestures. | Catalog-to-design mappings and all-stat/cost vectors, copy restrictions and populated deletion/decline outcomes. Reuse S03 IDs and existing M03 numerical functions. |
-| [M12](M12-research-and-technology.md) / High | D: E12-1 sequential quotes/projection, E12-3 complete spending/advancement/reallocation/grant passes. A: browser/category/trader adapters E12-2. | Resource/state transition with level caps, slow/general research, leftovers, ordered quotes and recursion; first-minimum property and projection purity tests. Scalar pool formulas alone are insufficient. |
+| [M08](M08-planet-and-colony-management.md) / High | D/A: E08-2 full caller/forecast/phase and floating-trace refinement (catalog/bounds/habitat/best-axis/optimum/remote/application controllers now specified with actual source fixtures), E08-3 destination/upstream permission/disclosure and full caller qualification (stargate/scanner producers and signed terraforming totals now specified with actual lookup and production/application handoffs). The complete native mass-driver visibility/slot/output controller now has checked contracts, scalar refinement and actual construction/packet/Produce fixtures. Native capacity/resources/installations, growth/carry/writeback and numeric handoffs now have checked contracts and source fixtures; full lookup/habitat/helper frames and floating trace production remain open. V: pane lifecycle/focus/layout. The complete numeric mining/depletion/AR remote loop is now specified under M19, with M10 mining capacity. | Reuse M19 growth/mining and native terraforming controllers; qualify full caller copy/restore, field/alias/float adapters, foreign/unknown/owned views and base abilities. Do not duplicate resource/capacity formulas. |
+| [M09](M09-production-management.md) / High | D/A: E09-1 getter/catalog/pointer refinement and full log/heap/selection/tutorial/modal callback effects (S06 now specifies native read/write queue-copy effects; lifecycle call order, accept/cancel/direct Clear, Next/Back, recovery, initial selection, catalogue assembly, sanitization boundaries, commands and presets now modeled), E09-2 M11/S03 quote and native caller extraction (full cost vectors, slot/native-width/trait/quantity caller arithmetic now modeled), E09-3 helper/pointer/caller-context refinement (full forecast controller, copy, native budget/query, partial/row/status/output/cleanup rules and M08 native economy handoffs now modeled; GAP-16 global effects recorded), E09-4 retrying-alchemy termination and full helper/pointer/callback/object/annual-state refinement for Produce/FBuildObject; applied construction families and queue invalidation now have M19/M10/M09 contracts; builder output handoffs, host budgets/validation and queue removal/prepend/application routing are now modeled; M19 now composes the real M11 build-check outcome through construction eligibility/metadata, with actual application and post-charge Produce integration cases. | Checked queue/economy state transitions, progress/cost conservation where the source guarantees it, and invalidation/partial-construction cases. Distinguish simulation from forecast assumptions. |
+| [M10](M10-fleet-operations.md) / High | D/A: complete waypoint/task defaults, target selection and native modal/lifetime behavior; packed damage beyond the now specified construction-stack algorithm, merge/split allocation effects, fuel/gate/movement and host task execution (E10-1–4). Fleet mining capacity and M19 numeric mining/depletion effects are now specified; complete remote-task phase/target/cancellation behavior remains open. Preset application/customization and a bounded quantity/action refresh adapter now have checked contracts. | Task-by-mode prerequisites/outcomes with exact RNG/rounding, reference/cargo changes and partial effects; typed packed-damage adapter and focused movement/task vectors. |
+| [M11](M11-ship-and-starbase-design.md) / High | D/A: E11-1 full native memory/alias/lifetime/caller-context extraction and browser/knowledge/annual integration (the complete native availability table, FCanBuildShdef controller/ordinary restoration and lookup-derived M12 scan now have checked contracts and actual helper/catalog composition fixtures; M19 now binds the outcome into construction guard/roster/metadata contracts with actual FBuildObject/Produce integration cases); E11-2 deletion cascade; E11-4 full derived stats/caches and pricing order. V: native slot gestures. | Catalog-to-design mappings and all-stat/cost vectors, copy restrictions and populated deletion/decline outcomes. Reuse S03 IDs and existing M03 numerical functions. |
+| [M12](M12-research-and-technology.md) / High | D/A: E12-1 native quote/preview memory/alias/array/helper/caller-state refinement and real browser/trader qualification. E12-3 now has complete host/equipment operational transitions: player/redo/native spending/policy, breakthroughs, lookup/notice ordering, shared grants and recursion. D: catalog-bounded scan completion and normal-level host rank descent now have checked contracts; prove successful Done completion from native-derived arithmetic/policy/storage/returning-service frames. A/V: actual host row/context extraction for the now specified M11 availability table/M12 complete-scan adapter, plus full native message/global/heap/phase/caller-state refinement and saved-game/UI/platform qualification. Browser/category/trader adapters remain E12-2. | Native-domain successful Done theorem and actual helper/catalog/state extraction; complete phase/trader/browser integration and qualification. Model termination at Pending/Escaped/Undefined and native converging cases do not prove universal successful C completion. |
 | [M13](M13-player-relations.md) / Medium | A/D: E13-1 live dialog/log state; E13-2 exact directed gate/mine/terraform/transfer prerequisites beyond attack intent. | Per-consumer relation direction table plus checked eligibility predicates and asymmetric witnesses. Selection/mutation may be live even when closing through IDCANCEL. |
 | [M14](M14-battle-planning-and-review.md) / High | D/A: E14-1 full copy/rename/delete/reference state; E14-2 packed record traversal, reconstruction, corrupt indices and replay lifetime. | Plan-state transitions including copy-then-cancel and used-plan delete/decline; bounded record-to-token adapter and replay cleanup cases. M19 remains combat owner. |
 | [M15](M15-messages-and-reports.md) / Medium | D/A: E15-1 packed-message/ID/filter mapping, goto/title, suppression and draft lifecycle; both traversal directions and eligible-neighbor properties are now modeled; E15-2 every report column/comparator/cache/knowledge projection. | Retain proved traversal properties and source fixtures; close packed-buffer/native-domain mapping, per-column value/sort rules, draft failure cases and viewpoint-specific exports; qsort16 ties remain S04-owned. |
 | [M16](M16-tutorial-and-help.md) / High | D: E16-1 all 80 task predicates/hints/auto-actions and turn gates; A: HTML export/context/asset pipeline E16-2; V: full tutorial/native browser. | Page/task dependency inventory with checked predicates and outcomes; an explicit 80-page checkpoint plan. Passing `Advance` with a supplied boolean does not specify when a task is true. |
 | [M17](M17-host-game-management.md) / High | D/A: E17-1 complete CLI/INI grammar, return codes and log classification; E17-2 backup/host UI failure sequencing. P: concurrency/cancellation. | Entry/option/error matrix, raw parsing versus narrowing contract, host-readiness/file identity adapter and recovery traces. S02 narrowing correction is integrated; full parsing is still open. |
 | [M18](M18-turn-generation.md) / High | D/A: E18-1 replay/normalization/follow flags, exact phase effects/RNG and cleanup; E18-2 publication outcomes. | A year state machine with failure edges and phase-local state contracts, not only the successful schedule cursor. Use gameplay-owned effects and S01 output outcomes. |
-| [M19](M19-game-rules-and-resolution.md) / High | D: E19-1–6 full depletion/economy; movement/gates/mines; orders/invasion; combat; objects/events; knowledge/score integration. | Decompose these families into focused companions with complete state/input/RNG/width contracts and positive/negative witnesses. Reuse M08–M13/M03 rules. Hashes/function names and scalar projections are not algorithm completion. |
+| [M19](M19-game-rules-and-resolution.md) / High | D: E19-1–6 full economy-phase/caller-state integration; movement/gates/mines; orders/invasion; combat; objects/events; knowledge/score integration. Native colony growth/carry/writeback, capacity/resources/installations and complete numeric mining/depletion/ordered AR remote effects now have checked contracts; caller/helper/state refinement remains open. | Decompose these families into focused companions with complete state/input/RNG/width contracts and positive/negative witnesses. Reuse M08–M13/M03 rules. Hashes/function names and scalar projections are not algorithm completion. |
 | [M20](M20-ai-players.md) / High | D: E20-1 strategy thresholds, role/target/design/queue/research choices and branch RNG; A/V: E20-2 history/order/persistence/cleanup. P: fairness/strength/visibility expectations. | Per-strategy decision tables and checked transitions, complete view/history input contract and deterministic decision fixtures. Mode dispatch is not a specification of the seven strategies. |
 | [S01](S01-game-file-formats.md) and four companions / High | A/V: decoder/writer/replay refinement, malformed record/count/reference boundaries and partial writes (S01-D02–06). P: D01 legacy policy, stronger decoding/publication; D07 unsupported tags. | Per-entry/per-record accepted/rejected/error-effect matrix and byte/state differential fixtures. Keep proposed strict predicates separate from actual reader behavior; no undocumented semantics for unsupported tags. |
 | [S02](S02-application-preferences-and-window-layout.md) / Medium | D/A: E02-1 outer loader/writer/error/path and source-adapter refinement; E02-2 selection/identity formatting, full live selection/editor/title/tutorial callback effects, full M09/M10 editor integration beyond checked preset/quantity commands and conditional tile round trip. M07 now models restoration dispatch and callback returns; M15 models bidirectional traversal. The [contracts companion](S02-preference-contracts.md) now covers active keys, desktop/host grammar, buffer/save control, tile/placement parsing, saved selection/GameID decoding, MRU partial updates and preset codecs. V/P: multi-process/display policy. | Retain the checked decode/codec contracts and native fixtures; close outer-call effects, byte/locale/path mapping and full live callback effects with M06/M07/M15/M16, M09/M10 editor integration beyond their checked preset/quantity commands, and the conditional tile round trip. Preserve entry-specific desktop/host parsing and signed-overflow boundaries. |
 | [S03](S03-static-game-data-and-text.md) and inventory / Medium | D/A: E03-1 specialized generator references/schema checks, E03-2 text/rank/chunk/range/placeholder checks; V: compiled consumer equivalence. | Generator input/output/error contracts and negative fixtures; field units/ranges linked to actual consumers. Exact values are pinned by 67 hashes; that is provenance, not semantic validation. |
 | [S04](S04-platform-services.md) / High | D/A: E04-1 filesystem modes/result mapping, E04-2 full conversion/format/prefix behavior, E04-3 qsort16 and native-width/clock adapters. V: actual OS effects. | Exact caller input domains, error/output/ownership semantics and checked pure algorithms; platform fixtures for filesystem, clock and float effects. Avoid extrapolating mathematical ints to every native input. |
 | [S05](S05-sdl-desktop-implementation.md) / High | D/A: E05-1 control/modal/event state, E05-2 lifetime/reentrancy/teardown; V/P: E05-3 rendering/native APIs/accessibility/display matrix. | Bounded control/window/timer state contracts with failure edges; supported API/flag behavior and targeted lifecycle fixtures; separately recorded native/visual/assistive-technology qualification. |
-| [S06](S06-shared-game-state.md) / Medium | A/D: full field/projection/cache extraction, knowledge merging, packed/transient state and phase lifetimes. Native planet/fleet lookup control now has checked S06 contracts; array invariants, pointer lifetime and complete field mapping remain open. P: strict closure, duration overflow, mid-turn restart and legacy policy. | Logical↔C↔S01 field/identity/unit matrix with missing adapters named; field-level knowledge provenance and native lifecycle cases. Proposed full-host invariants must not become silently enforced runtime checks. |
+| [S06](S06-shared-game-state.md) / Medium | A/D: full field/projection/cache extraction, knowledge merging, packed/transient state and phase lifetimes. Native planet/fleet lookup control and planet read/write prefix/queue copying now have checked S06 contracts and native struct fixtures; full array invariants, allocator/log/tutorial effects, pointer lifetime and complete semantic field mapping remain open. P: strict closure, duration overflow, mid-turn restart and legacy policy. | Logical↔C↔S01 field/identity/unit matrix with missing adapters named; field-level knowledge provenance and native lifecycle cases. Proposed full-host invariants must not become silently enforced runtime checks. |
 
 ### Execution order and definition of done
 
 1. **Source accuracy and trace discipline:** preserve the completed accuracy
-   corrections (GAP-01–05 and GAP-13–14) and validate the entire inventory. Preserve all existing IDs/anchors and dated
+   corrections/boundaries (GAP-01–05 and GAP-13–20) and validate the entire inventory. Preserve all existing IDs/anchors and dated
    evidence. Add explicit boundary domains wherever a source narrowing or
    lookup is currently hidden in a mathematical argument.
 2. **Shared inputs and workflow contracts:** S01/S02/S03/S04/S06 adapters,
@@ -1574,3 +1579,1176 @@ localized title-buffer behavior and full cost/forecast/host production rules.
 The source-extracted fixtures use explicit callback doubles and do not establish
 whole-application persistence or platform qualification. The all-module goal
 remains active.
+
+
+### Planet editor copy and write-back continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, preserving the
+committed handbook and traceability work. The [S06 planet editor companion](S06-planet-editor-contracts.md)
+and [canonical copy model](dafny/S06-planet-editor.dfy) now distinguish selected
+queue copies, borrowed reads, 52-byte prefix writes, different read/write
+allocation sizes, eight-bit capacity wrap, partial allocation escapes and native
+entry dispatch. S06-AC09–14 trace these behaviors to existing support stories;
+M09 links the shared owner instead of duplicating its queue-copy contract.
+
+The [native source fixtures](../tests/spec/check_planet_editor_source.py) execute
+actual lookup, duplication, list-allocation and M09 finish bodies with actual
+packed structs. Report/log/heap/tutorial effects remain controlled doubles.
+Actual write-back followed by a fresh selected read confirms the capacity-wrap
+mechanism (GAP-15), now tracked in the known-bug list and roadmap; UI
+reachability, original comparison and a separate repair remain open.
+Overlap and out-of-allocation guards stop before undefined native operations;
+those markers are specification boundaries, not runtime error returns.
+
+Verification for this continuation:
+
+- Focused final model: **197 verified, 0 errors** in
+  `dist/spec-planet-copy-focused6.log`. The first draft used a reserved parameter
+  name; after that fix, one byte-subset arithmetic obligation required explicit
+  integer operands. The initial 152-obligation model passed, then native heap
+  review strengthened it to retain spare/unshrunk usable storage; a checked
+  abort transition prevents continuation into tutorial after queue failure. No assumptions,
+  axioms or disabled verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **81 formal
+  files** and include closure, **4216 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-planet-copy-full-final2.log`. Earlier complete passes of 4171
+  and 4215 obligations are retained in `dist/spec-planet-copy-full.log` and
+  `dist/spec-planet-copy-full-final.log` as superseded evidence before the spare
+  extent and checked abort refinements respectively.
+- [Source fixture](../tests/spec/check_planet_editor_source.py): **17,432,153
+  assertions passed**. The principal matrix has **131,072** source-count /
+  destination-capacity / read-write combinations and checks every active word,
+  source preservation, inactive tails, exact prefixes and request/header results.
+  Additional cases cover borrowed and null/empty queues, entry dispatch,
+  allocation/report/log/tutorial escapes, self/alias guards, capacity wrap and
+  the actual M09 finish → lookup → duplication chain. Packed structs, native enum
+  constants, list wrappers and heap-alignment helpers are extracted from source.
+  On this platform `max_align_t` alignment is 8; fresh 0/1-row requests yield
+  payloads of 6/14 bytes. Free-block selection and actual heap growth remain
+  explicit S04 adapters. C11 warnings, ASan and UBSan are fatal. Log:
+  `dist/spec-planet-copy-native.log`.
+- Final link/trace check: **2084 local links/includes**, **565 requirement IDs**
+  (116 stories, 284 acceptance, 66 interaction, 99 quality), zero errors. All
+  **9** specification-checker unit tests pass. Log: `dist/spec-planet-copy-links.log`.
+  The full formal run counted 2081 links before the final loader/forecast
+  cross-references were added.
+- **25 handbook tests passed**. The final handbook build contains **161
+  rendered pages**, 26 modules, 565 requirement IDs and 81 formal files, with
+  zero rendered-link/asset errors. Logs: `dist/spec-planet-copy-handbook-tests.log`
+  and `dist/spec-planet-copy-handbook-build.log`. No diagram bodies changed.
+- SDL Debug configure/build passed without warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-planet-copy-configure.log`, `dist/spec-planet-copy-build.log`,
+  `dist/spec-planet-copy-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-planet-copy-comparison.json`. Baselines unchanged.
+- Changed-file whitespace, prior explicit anchors and `git diff --check` pass.
+  No game/runtime source or baseline changes; host-specific game-code checks
+  were not required.
+
+Remaining work includes full log generation/publication and allocator internals,
+full native heap extent/free-block selection, caller identity/array/lifetime invariants, arbitrary callback reentrancy and the
+wider gameplay, AI, tutorial, platform and policy backlog. Passing these copy
+contracts does not close the full S06 or M09 module. The goal remains active.
+
+
+### Production cost vector continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, retaining
+all earlier work. The [M09 cost companion](M09-production-costs.md) and
+[canonical native vector model](dafny/M09-costs.dfy) specify the full numeric
+`GetProductionCosts` caller: stored ship/base totals, different/same-hull upgrade,
+ordered occupied-slot credits, signed and unsigned narrowing, trait/tutorial
+branches, explicit colony/pricing contexts, scanner mapping, quantity and the
+unhandled-item incoming-buffer path. M09-AC31–38 retain story ownership and link
+source/model evidence; M11 keeps quote derivation and its undefined pricing path.
+
+Verification and limits for this continuation:
+
+- Focused final model: **277 verified, 0 errors** in
+  `dist/spec-cost-focused7.log`. Draft fixes resolved a reserved identifier,
+  nested sequence/slot membership facts, one unsigned-subset multiplication,
+  vector extensionality and a draft extra parenthesis. General checked credit
+  equivalence, nonincreasing ordered-slot credits, quantity identity/zero and
+  native-width witnesses remain intact. No assumptions, axioms or disabled
+  verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **82 formal
+  files** and include closure, **4493 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-cost-full.log`.
+- [Native source fixtures](../tests/spec/check_production_cost_source.py):
+  **1,495,512 fixture assertions passed**. They compare four output words against an explicit
+  arithmetic oracle, check lookup item/category, quote order/pricing player and
+  distinct player rosters, and use actual cost/race/stored-hull bodies plus packed
+  cost-bearing structs. Part lookup/pricing and hull-catalog access are bounded
+  quote providers. The bare-hull request's unused item field is not read by the
+  fixture. Planetary indexes derive from source YAML order; the fixture does
+  not require an existing generated build header. The sole body annotation is
+  a void-use of the stored-hull getter's unused player argument. C11 warnings,
+  ASan/UBSan findings and mismatches are fatal. Log: `dist/spec-cost-native.log`.
+- Final link/trace check: **2117 local links/includes**, **573 requirement IDs**
+  (116 stories, 292 acceptance, 66 interaction and 99 quality), zero errors.
+  All **9** specification-checker unit tests pass; prior explicit anchors are
+  preserved. Log: `dist/spec-cost-links.log`. The full run counted 2115 links
+  before the final source/evidence links were added.
+- **25 handbook tests passed**; build has **163 rendered pages**, 26 modules,
+  573 requirement IDs and 82 formal files, with zero rendered-link/asset errors.
+  Logs: `dist/spec-cost-handbook-tests.log`, `dist/spec-cost-handbook-build.log`.
+  Diagram bodies were unchanged.
+- SDL Debug configure/build passed without warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-cost-configure.log`, `dist/spec-cost-build.log`,
+  `dist/spec-cost-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-cost-comparison.json`; baselines unchanged.
+- `git diff --check` passed. No game/runtime code or baseline changed;
+  host-specific game-code checks were not required.
+
+Remaining work includes actual M11/S03 quote/pointer/helper extraction, the
+99-year forecast and complete host production/alchemy/construction transitions,
+alongside the wider all-module backlog. Passing the vector caller contracts does
+not establish full pricing-helper refinement or forecast/execution correctness.
+The completion goal remains active.
+
+
+### Production forecast controller continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, preserving
+the existing work. The [forecast companion](M09-production-forecast.md) and
+[canonical controller](dafny/M09-forecast.dfy) specify copy selection/preparation,
+native signed budget/query arithmetic, partial/row order and alchemy, selected
+first/last outcomes, post-builder installation changes, signed status stopping,
+99-pass horizon, aliased outputs and ordinary cleanup. Shared M09 status/message
+adapters and M19 mining draw/remote-mark predicates retain canonical ownership.
+M09-AC39–47 and M19-AC08 trace these rules to existing stories and native evidence.
+
+Source review corrects the blanket no-random-forecast claim and item-3 wording:
+automatic alchemy is not manual item 11. GAP-16 records generation-active native
+RNG/message effects and AR live-fleet marking. The estimator's copied input can
+remain unchanged while global state changes. M08 resource **return width** and
+M12 temporary-percentage restoration now link the exact caller/effect boundary.
+No runtime behavior or regression baseline changed.
+
+Verification and limits for this continuation:
+
+- Focused forecast/shared-production/mining models: **614 verified, 0 errors**
+  in `dist/spec-forecast-focused10.log`. Draft corrections added explicit row-fit
+  facts, native active-year preconditions and output-alias updates. A timeout in
+  the old mining witness was resolved by keeping new mining vectors separate;
+  an indentation warning was fixed with explicit expression grouping. No
+  assumptions, axioms or disabled verification were introduced.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **83 formal
+  files** and include closure, **4973 verified, 0 errors; audit 0 findings**.
+  Log: `dist/spec-forecast-full.log`.
+- [Native source fixtures](../tests/spec/check_production_forecast_source.py):
+  **272,841 fixture assertions passed**. They execute actual estimator/builder/
+  mining/RNG/race/list bodies with bounded pricing, capacity, resource, growth
+  and heap services, native packed planet/queue structs and projected fleet/order
+  fields. Scripted responses isolate all 65,536 status words and are not asserted
+  to be real builder outputs. Separate actual-body cases verify partial ordering,
+  progress 59/unused-bit preservation, RNG/fleet/message effects, ordinary cleanup
+  and escaping initialization. All negative request words, signed percentage
+  values, year/terminal combinations, 255 rows and output aliasing are covered.
+  The actual-mining eligibility matrix has 9,216 combinations. C11 warnings,
+  ASan/UBSan findings and invalid copied extents are fatal/guarded respectively.
+  Draft fixes supplied a missing sentinel/type, reset the per-call test clock and
+  corrected the expected partial percentage from 50 to 59. Log:
+  `dist/spec-forecast-native.log`. No native repair was made.
+- Final link/trace checks: **2157 local links/includes**, **583 requirement IDs**
+  (116 stories, 302 acceptance criteria, 66 interaction and 99 quality
+  requirements), zero errors. All **9** specification-checker unit tests pass;
+  prior explicit anchors are retained.
+- **25 handbook tests passed**; build has **165 rendered pages**, 26 modules,
+  583 requirement IDs and 83 formal files, with zero rendered-link/asset errors.
+  Logs: `dist/spec-forecast-handbook-tests.log`, `dist/spec-forecast-handbook-build.log`.
+  No diagram bodies changed.
+- SDL Debug configure/build passed without warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-forecast-configure.log`, `dist/spec-forecast-build.log`,
+  `dist/spec-forecast-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-forecast-comparison.json`; baselines unchanged.
+- `git diff --check` passed. No game/runtime sources or baseline changed;
+  host-specific game-code checks were not required.
+
+Remaining work includes the full CBuild numeric/alchemy/cap/partial algorithm,
+actual mining/depletion/resources/growth and remote-fleet/heap/pointer adapters,
+full UI/AI generation-context qualification and display behavior, plus the
+wider all-module backlog. Actual helper source fixtures do not replace missing
+formal helper definitions. The completion goal remains active.
+
+### Production builder continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, preserving
+existing work. The [builder companion](M09-production-builder.md) and
+[canonical step relation](dafny/M09-builder.dfy) close the formerly unspecified
+numeric/control phases of `CBuildProdItem`: automatic caps, initial paid amounts,
+affordability, ordered limiting progress and cumulative flags, payment, alchemy
+retries/partial creation, completion and caller/partial/status/message publication.
+M09-AC48–54 trace them to existing stories. Shared row, cost, rounding, status and
+message ownership is retained. Non-alchemy execution has a decreasing-rank
+termination proof. Retrying-alchemy termination, native helper/pointer/frame
+refinement and outer queue/object application remain named E09-4 work.
+
+Verification and limits for this continuation:
+
+- Focused builder verification: **1296 verified, 0 errors** in
+  `dist/spec-builder-focused4.log`. The draft first exposed missing phase-specific
+  index/deficit facts and constant-unfolding needs; a large verification condition
+  timed out. Explicit invariants, shared signed-conversion bounds and isolated
+  assertions resolved these issues. `NoAlchemyStepProgress` and
+  `FinishNoAlchemy` prove termination to ordinary or undefined-boundary outcomes
+  with alchemy disabled. Retrying alchemy has no new total-termination claim.
+  No assumptions, axioms or disabled verification were introduced.
+- [Native builder comparison](../tests/spec/check_production_builder_source.py):
+  **68,307 defined cases, 751,377 assertions passed** against the actual C body.
+  All 128 packed progress values, eight statuses, automatic cap/helper order,
+  distinct installation fields, short-circuit terraform queries, raw row/partial
+  bits, optional outputs, preview, large-deficit signed-16 conversion counter
+  wrapping and conversion messages are covered with
+  deterministic providers. Before C execution, **232** uninitialized-deficit
+  and **45** signed-overflow vectors are excluded as undefined. Those exclusions
+  are not successful native outcomes. There were no trace-budget exclusions.
+  C11 warnings, ASan and UBSan findings are fatal. Log:
+  `dist/spec-builder-native3.log`; providers and the finite interpreter are not
+  universal helper/source/model refinement proofs.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **84
+  formal files** and include closure, **6269 verified, 0 errors; audit 0
+  findings**. Log: `dist/spec-builder-full.log`. Its initial link pass preceded
+  the completed evidence text; the final link totals are recorded below.
+- All **9** specification-checker unit tests pass. Link/trace checks find
+  **2183 local links/includes**, **590 requirement IDs** (116 stories, 309
+  acceptance criteria, 66 interaction and 99 quality requirements), zero errors.
+  Prior explicit anchors are preserved.
+- **25 handbook tests passed**; build has **167 rendered pages**, 26 modules,
+  590 requirement IDs and 84 formal files, zero rendered-link/asset errors. Logs:
+  `dist/spec-builder-handbook-tests.log`, `dist/spec-builder-handbook-build.log`.
+- SDL Debug configure/build passed without new warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-builder-configure.log`, `dist/spec-builder-build.log`,
+  `dist/spec-builder-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-builder-comparison.json`; baselines unchanged.
+- `git diff --check` passed. No runtime/game sources changed; host-specific
+  game-code checks were not required.
+
+Next work includes retrying-alchemy termination, binding builder outputs to the
+forecast controller, native helper/pointer/frame and quote refinement, and outer
+`Produce`/`FBuildObject` queue/application/failure effects. The full module
+completion backlog and goal remain active. No runtime/game source or baseline
+changes are part of this batch.
+
+### Host production handoff continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, preserving
+existing work. The [execution companion](M09-production-execution.md) links
+canonical builder traces to forecast and host observations, and specifies native
+host entry/extra-resource/reservation, manual validation, carry/removal/prepend,
+post-application routing and completion-notice rules. M09-AC55–61 trace them to
+existing stories. S06 remains physical queue/list owner; M18/M19 retain year,
+economy and object-effect ownership. GAP-15 now includes host prepend wrapping.
+No runtime behavior or baseline changes are part of this batch.
+
+Verification and limits for this continuation:
+
+- Focused handoff/host verification: **187 verified, 0 errors** in
+  `dist/spec-host-production-focused5.log`. Draft repairs resolved a datatype
+  field-type collision, made signed-32 resource projection facts explicit,
+  expanded packed-word quotient/remainder proofs after a timeout, and grouped a
+  case expression to remove an indentation warning. All definitions have checked
+  bodies; no assumptions, axioms or disabled verification were introduced.
+- [Actual host source fixtures](../tests/spec/check_host_production_source.py):
+  **1,362,708 assertions passed**, C11 warnings and ASan/UBSan findings fatal.
+  Actual Produce/CBuildProdItem/list helpers execute with native packed
+  planet/row/list layouts and bounded economy/object/heap/phase providers.
+  Scripted status/partial/application combinations cover all 65,536 status words;
+  these do not certify builder reachability. Actual-builder cases verify retained
+  charges after controlled object rejection, manual count clearing versus
+  automatic retention, partial progress and resize escape after charging.
+  The corpus includes manual item/category/guard and extreme signed-cap matrices,
+  notices before reduction, every signed-16 gross with seven extras (four
+  zero-denominator inputs excluded before C), captured query mutations,
+  single/consecutive alchemy, all prepend sizes 1..255 and guarded missing-spare
+  copies. Final population/research/random/scoring spies check caller order,
+  not full helper implementations. Log: `dist/spec-host-production-native4.log`.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **86
+  formal files** and include closure, **6456 verified, 0 errors; audit 0
+  findings**. Log: `dist/spec-host-production-full.log`. Its initial link pass
+  preceded the completed evidence record; final link totals follow below.
+- All **9** specification-checker tests pass. Final link/trace checks find
+  **2219 local links/includes**, **597 requirement IDs** (116 stories, 316
+  acceptance criteria, 66 interaction and 99 quality requirements), zero errors.
+  Prior explicit anchors and stable requirement IDs are retained.
+- **25 handbook tests passed**; build has **170 rendered pages**, 26 modules,
+  597 requirement IDs and 86 formal files, zero rendered-link/asset errors. Logs:
+  `dist/spec-host-production-handbook-tests.log`,
+  `dist/spec-host-production-handbook-build.log`.
+- SDL Debug configure/build passed without new warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-host-production-configure.log`, `dist/spec-host-production-build.log`,
+  `dist/spec-host-production-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-host-production-comparison.json`; baselines
+  unchanged. No runtime/game source changed; host-specific game-code checks
+  were not required.
+- `git diff --check` and final explicit-anchor/whitespace checks passed.
+  Source/runtime and baseline paths have no changes.
+
+Remaining callback/row-pointer/helper/object/annual frames and retrying-alchemy
+termination remain explicit. Actual FBuildObject family/fleet-capacity and
+whole-host creation/failure fixtures remain open; the object-rejection provider
+is not proof of those outcomes. Passing a supplied result does not establish
+its real source production or universal host refinement. The wider module
+completion backlog and goal remain active.
+
+### Construction application continuation
+
+Recorded 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, preserving
+existing work. The [construction-effects companion](M19-construction-effects.md)
+and canonical M19/M10/M09 models specify FBuildObject family rules, construction
+stack/counter/damage behavior, physical queue invalidation and final working-stock
+publication. New M19-AC09–16, M10-AC18–20 and M09-AC62–64 trace these rules to
+existing stories. Actual application helpers replace supplied outcomes in focused
+source fixtures. GAP-17 records Genesis direct clearing versus host write-back.
+No runtime behavior or baseline change is made.
+
+Verification and limits for this continuation:
+
+- Focused construction, invalidation, damage and host-stock models: **422
+  verified, 0 errors**, `dist/spec-object-effects-focused7.log`. Draft corrections
+  renamed reserved identifiers, supplied explicit signed-word/sequence bounds,
+  added weight bounds, exposed updated-environment membership facts and split
+  a stock-publication witness into its component equalities. No assumptions,
+  axioms or disabled verification were introduced.
+- [Actual application source fixtures](../tests/spec/check_construction_effects_source.py):
+  **1,897,437 assertions passed**. They compile actual FBuildObject, CreateShip,
+  queue invalidators, LpthNew, CBuildProdItem, Produce, race accessors and RNG
+  against common.h and freshly generated data/text IDs. Economy, availability,
+  catalog, routing, messages, low-level heap and selection services remain
+  providers. The corpus covers all signed-16 installation maxima, all packed
+  damage words at a declared context, all signed-byte environments/valid axes,
+  negative terraform iteration, native RNG Genesis, all generic scanner bytes,
+  packet trait/warp/quantity/target and native ID exhaustion, base replacement,
+  actual host clipping, and the exact 512-fleet failure with a full owned roster.
+  Whole saved-game/helper/native-state refinement remains open. Defined numeric
+  traces only are executed; an axis guard stops before invalid indexing. GNU C11
+  uses the existing project unused-parameter/pointer-sign warning exclusions;
+  all other warnings and ASan/UBSan findings are fatal. A draft scanner fixture
+  checked the wrong message-parameter position; correcting that expectation
+  resolved the failure without a runtime change. Log:
+  `dist/spec-object-effects-native4.log`.
+- `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all **89
+  formal files** and include closure, **6700 verified, 0 errors; audit 0
+  findings**. Log: `dist/spec-object-effects-full.log`. Its initial link pass
+  preceded the final evidence text; current link totals are below.
+- All **9** specification-checker tests pass. Final link/trace checks find
+  **2277 local links/includes**, **611 requirement IDs** (116 stories, 330
+  acceptance criteria, 66 interaction and 99 quality requirements), zero errors.
+  Existing explicit anchors and stable requirement IDs are preserved.
+- **26 handbook tests passed**. Cross-module story/criterion edges exposed six
+  broken local trace anchors in the first rendered build. The trace renderer
+  now links to each requirement's owning module and a new bidirectional
+  cross-module regression test preserves local links as well. The resulting
+  handbook has **174 rendered pages**, 26 modules, 611 requirement IDs and 89
+  formal files, zero rendered-link/asset errors. Logs:
+  `dist/spec-object-effects-handbook-tests.log`,
+  `dist/spec-object-effects-handbook-build.log`. No diagram bodies changed.
+- SDL Debug configure/build passed without new warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-object-effects-configure.log`, `dist/spec-object-effects-build.log`,
+  `dist/spec-object-effects-runtime.log`.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 skipped reference inputs**. Report:
+  `dist/scaffold/regression/spec-object-effects-comparison.json`; baselines
+  unchanged. No runtime/game source changed; host-specific game-code checks
+  were not required.
+- `git diff --check` and explicit-anchor/whitespace checks passed. Source/runtime
+  and baseline paths have no changes; the changed tooling is the trace renderer
+  with its focused documentation regression test.
+
+Complete native-state/source refinement, helper/callback/allocator/selection
+frames, saved-game qualification, original comparison and intended behavior
+decisions remain explicit. Movement, combat, economic producers, retrying-alchemy
+termination and the wider module backlog remain open; the completion goal is active.
+
+
+### Native colony economy continuation
+
+Reviewed 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [M08 economy companion](M08-colony-economy.md) now specifies actual native
+capacity/installation/resource/display arithmetic, stored versus passed planet
+snapshots and owner versus query-player contexts. M19 owns native growth/carry
+and optional numeric writeback; M08 handoffs connect it to next-year installation
+queries and the existing M09 forecast/host budgets. Existing M03 expressions,
+M08 scalar installation rules, M19 normalized carry and S04 finite binary64
+evaluation remain canonical and are reused rather than copied.
+
+- Focused Dafny verification: **282 verified, 0 errors**, after adding explicit
+  carry/word proof steps to resolve the draft hostile-growth vector timeout.
+  No assumptions, axioms or disabled verification were introduced. Log:
+  `dist/spec-native-colony-focused7.log`.
+- Actual source differential: **239344 defined cases, 1331470 assertions**,
+  native records/fresh generated IDs and actual population table, ASan/UBSan,
+  source race/habitat/capacity/installation/resource/display/growth bodies. Declared snapshot and raw-helper
+  providers are distinguished from actual calculations. Growth-call counters
+  check conditional next-year evaluation; extreme signed habitat cases cover
+  negation/narrowing. Final AR floating bits are compared at declared contexts;
+  this is not universal binary64/platform
+  refinement. **3609** undefined-domain candidates were excluded before C
+  execution (arithmetic, division, root/conversion and table boundaries). Log:
+  `dist/spec-native-colony-source4.log`.
+- Added M08-AC09–16, M19-AC17–20 and M09-AC65; corrected research preview wording
+  to preserve local restoration without promising global helper purity.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **92 formal files**, complete include closure, **6982 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-native-colony-full.log`. Final link/trace
+  checks after the evidence edits pass **2337 local links/includes**,
+  **624 requirement IDs** (116 stories, 343 acceptance criteria, 66 interaction
+  and 99 quality requirements), zero errors. All **9** checker tests pass.
+- **26 handbook tests pass**. The handbook builds **178 rendered pages**,
+  26 modules, 624 requirements and 92 formal files with zero rendered-link/asset
+  errors, including the final evidence text (**30962 local links/assets**).
+  Logs: `dist/spec-native-colony-handbook-tests.log`,
+  `dist/spec-native-colony-handbook-final.log`. No diagram bodies changed.
+- SDL Debug configure/build passed without new warnings; SDL unit, compatibility
+  and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-native-colony-configure.log`, `dist/spec-native-colony-build.log`,
+  `dist/spec-native-colony-runtime.log`. These are the configured unit/tutorial
+  test families; full 80-page/native UI qualification is still open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-native-colony-comparison.json`. No game source
+  changed, so host-specific game-code checks were not required. Baselines
+  remain unchanged.
+- `git diff --check`, new-file whitespace and old explicit-anchor checks pass;
+  all 153 pre-batch tracked/snapshotted files remain present. Runtime/source
+  and baseline paths have no changes.
+
+Remaining work includes full lookup/copy/lifetime/habitat/catalog/helper frames,
+floating trace production, saved-game/UI qualification, mining/depletion and
+research/turn algorithms. Typed malformed inputs are evidence of native widths,
+not newly supported game settings or implemented error returns. No game source,
+on-disk layout or regression baseline changed. The completion goal stays active.
+
+
+### Mining and depletion continuation
+
+Reviewed 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [mining/depletion companion](M19-mining-and-depletion.md) adds the complete
+three-mineral numeric loop, byte concentration/level updates, source rounding
+and RNG order, stock publication, ordered AR remote quantities/marking and
+first-order/first-null short circuits. M10 now specifies all sixteen design
+counts and mining slot/part arithmetic through the native 4000 upper cap.
+M19 retains the existing concentration/yield/depletion-band definitions and
+valid-domain eligibility rules; checked refinements connect the native models.
+
+- Focused Dafny verification: **146 verified, 0 errors**. Proofs include byte
+  depletion monotonicity and a max(0,initial concentration-1) iteration bound,
+  non-applying ore/mark frames and non-generating draw-cursor preservation,
+  normal-domain yield/eligibility agreement and operating-mine composition.
+  Explicit power-of-two facts resolved a draft capacity-vector timeout.
+  Correcting a zero-left depletion expectation and adding an explicit signed
+  widening/indexed draw invariant resolved draft failures. No assumptions,
+  axioms or disabled verification were introduced. Log: `dist/spec-mining-focused5.log`.
+- Actual native differential: **221240 defined cases, 4686320 assertions**,
+  actual common.h records, fresh generated IDs and source mining, fleet capacity,
+  operating-mines, race and RNG bodies. Operating-limit and part-pointer/ability
+  providers remain explicit. All 65536 concentration/level byte pairs run at
+  three mine counts; signed productivity/counts, generation/application, all scripted
+  draw values and seeded native RNG, waypoint guards/holes, slot/capacity arithmetic
+  and reversed remote order are covered. **6574** invalid-domain candidates were
+  excluded before C execution; no runtime error return is inferred from that
+  filtering. ASan/UBSan findings and all compiler warnings are fatal. Draft harness
+  declarations and flexible-array order storage were corrected after compile/ASan
+  failures; no game source changed. Log: `dist/spec-mining-source5.log`.
+- Added M19-AC21–28, M10-AC21–22, M08-AC17 and M09-AC66 with owning stories,
+  source/model/evidence scope and remaining obligations.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **94 formal files**, complete include closure, **7128 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-mining-full.log`.
+- Final link/trace checks: **2393 local links/includes**, **636 requirement IDs**
+  (116 stories, 355 acceptance criteria, 66 interaction and 99 quality
+  requirements), zero errors. All **9** specification-checker tests pass.
+- **26 handbook tests pass**; the handbook builds **181 rendered pages**,
+  26 modules, 636 requirements and 94 formal files with zero errors across
+  **31764 rendered local links/assets**, including final evidence text.
+  Logs: `dist/spec-mining-handbook-tests.log`,
+  `dist/spec-mining-handbook-final.log`.
+  No diagram bodies changed.
+- SDL Debug configure/build passed without new warnings; SDL unit, compatibility
+  and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-mining-configure.log`, `dist/spec-mining-build.log`,
+  `dist/spec-mining-runtime.log`. Full 80-page/native UI qualification stays open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-mining-comparison.json`. No runtime/game source
+  changed; host-specific game-code checks were not required. Baselines unchanged.
+- Existing anchors/IDs and all **154** pre-batch snapshotted files are preserved;
+  new-file whitespace and `git diff --check` pass. Runtime/baseline paths have no
+  changes.
+
+
+Full native helper/catalog/pointer/alias frames, RNG extraction across actual
+callers, saved-game/UI/platform qualification, remote task prerequisites and
+phase/cancellation state, and whole annual economic/research integration remain
+open. No game source, record format or baseline changed; the completion goal
+remains active.
+
+
+### Research quote and preview continuation
+
+Reviewed 2026-10-25 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+Verification completed 2026-10-26. The [M12 native quote/preview companion](M12-development-and-budget-quotes.md)
+adds native single-level cost arithmetic and its checked refinement to the
+existing M03 cost/table, ordered six-field development quotes with unsigned
+stored spending and temporary-level restoration, and the full budget-preview
+controller over explicit returning/escaping helper states. Allocation narrowing,
+unconditional gross query, post-query queue selection, captured array bounds,
+signed-word budget bounds and current-player restoration are specified.
+
+- Focused Dafny verification: **173 verified, 0 errors**. A draft normal-domain
+  cast needed a proved nonnegative-total postcondition. A development-restoration
+  timeout exposed missing inner status postconditions; proving that inner loops
+  cannot produce Unreachable resolved it without weakening the outer guarantee.
+  Parentheses corrected a rejected indentation warning. No assumptions, axioms
+  or disabled verification were introduced. Log: `dist/spec-research-focused4.log`.
+- Native source fixtures: **120992 defined cases, 2654102 assertions**, actual
+  common.h records, fresh IDs, actual table/race/cost/development/preview bodies.
+  Preview resource/estimator post-state providers are explicit, including
+  controlled longjmp nonreturns; no result value is asserted after escape.
+  Traces check field/level/total/cost and callback order/context, final levels,
+  unchanged spending/choices, allocation/owner/queue/player/count effects. All
+  signed-byte cost choices, table indices at declared level contexts, ordered
+  quotes, raw spending, slow/negation/addition boundaries and maximum-count
+  signed-word preview cases are covered. **2827** invalid-domain candidates
+  were excluded before C, not recovered by the source. Native declarations
+  corrected a draft provider signature; existing source pointer-sign/unused-local
+  warnings have the project's exclusions, other C11/ASan/UBSan findings are fatal.
+  Log: `dist/spec-research-source4.log`.
+- Added M12-AC07–16 and M09-AC67, retaining the stable stories/IDs. M12-AC03 now
+  explicitly requires stable identity for original-player restoration and links
+  the broader observed current-player contract. E12-3's next work explicitly
+  inventories dead/alive handling, Generalized Research redo state, packed policy
+  and low-byte comparisons, repeated advances, equipment lookup/announcement,
+  shared totals and recursive nonpool state.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **96 formal files**, complete include closure, **7301 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-research-full.log`.
+- Link/trace checks pass **2439 local links/includes**, **647 requirement IDs**
+  (116 stories, 366 acceptance criteria, 66 interaction and 99 quality
+  requirements), zero errors. All **9** checker tests pass.
+- **26 handbook tests pass**. The handbook builds **184 rendered pages**,
+  26 modules, 647 requirements and 96 formal files, zero rendered-link/asset
+  errors, including final evidence text. Logs: `dist/spec-research-handbook-tests.log`,
+  `dist/spec-research-handbook-final.log`. No diagram bodies changed.
+- SDL Debug configure/build passed without new warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-research-configure.log`, `dist/spec-research-build.log`,
+  `dist/spec-research-runtime.log`. Full 80-page/native UI qualification stays open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-research-comparison.json`. No runtime/game
+  source changed; host-specific game-code checks were not required. Baselines
+  unchanged.
+- `git diff --check`, new-file whitespace and old explicit-anchor checks pass;
+  all **158** pre-batch snapshotted files remain present. Runtime/baseline paths
+  have no changes.
+
+Remaining work includes complete native memory/alias/array/helper/caller-state
+refinement, real browser/trader and UI/platform qualification, and E12-3's full
+host spending/advancement/equipment/shared-research/recursive algorithms. These
+quote/controller proofs do not close host advancement or global helper purity,
+approve a gameplay change or establish unagreed accessibility/performance targets.
+No game source, file layout or baseline changed; the completion goal stays active.
+
+
+### Host research resolution continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [host research companion](M12-host-research-resolution.md) adds the complete
+UpdateResearchStatus operational transition machine and equipment scan. It reuses
+M12 native costs and canonical scalar eligibility/pool/lowest rules through
+checked refinements, retaining native storage, signed intermediates, local versus
+packed policy, redo/distribution, all announcement branches, shared totals/alive
+divisor and recursive nonpool control. GAP-18 clarifies local next seven versus
+persisted policy. Added M12-AC17–26, M19-AC29 and M18-AC08.
+
+- Final focused Dafny verification: **1677 verified, 0 errors** after strengthening
+  local policy fields to native signed-16. Log:
+  `dist/spec-research-host-focused7.log`. Initial type/shape/precondition and
+  transition proof failures were resolved by explicit control/alive/field bounds,
+  indexed projections and separated proof obligations. Checked properties include
+  structural/control preservation, normal 0..26 level preservation over represented
+  prefixes, pool/lowest refinements and terminal stability. No assumptions, axioms
+  or disabled verification were introduced.
+- Actual native host differential: **11045 cases, 2772295 assertions**, complete
+  actual host body, native common.h records/fresh IDs, actual cost/race bodies and
+  actual two-argument message forwarding. Part availability/requirements and
+  message results are explicit returning providers; selected lookup longjmps
+  preserve nonreturn prefixes. All 256 packed policies, signed/unsigned/slow
+  boundaries, dead/crippled and zero/negative/1/2/4/16-player contexts, general
+  redo and shared recursion, status/notice/TT groups and byte/signed-16 item
+  wrapping are covered. Ordered event fingerprints/counters and all numeric
+  player state are checked; remaining PLAYER/GAME bytes are unchanged. Stateful
+  long-iterator providers are width fixtures, not real-catalog reachability.
+  **1693** undefined-domain candidates are excluded before C, not recovered by
+  the source. Existing pointer-sign/unused-local source exclusions apply; other
+  C11 warnings and ASan/UBSan findings are fatal. Log:
+  `dist/spec-research-host-source6.log`.
+- Actual catalog terminator probe: **991743 assertions pass** over the full
+  actual lookup/TechStatus/hidden-part bodies and fresh generated data tables.
+  All sixteen counts terminate before byte wrap; all headless byte IDs and all
+  invalid IDs across signed-byte primary traits are checked. A draft probe
+  incorrectly expected every valid headless entry to be Available; the corrected
+  terminator assertion preserves Restricted and other non-Invalid statuses.
+  This is native current-catalog evidence, not full availability or dynamic-trace
+  refinement. Log: `dist/spec-research-host-source6.log`.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0: all
+  **98 formal files** and include closure, **8978 verified, 0 errors; audit
+  0 findings**. Log: `dist/spec-research-host-full.log`.
+- Final link/trace checks pass **2497 local links/includes**, **659 requirement IDs**
+  (116 stories, 378 acceptance criteria, 66 interaction and 99 quality
+  requirements), zero errors. All **9** specification-checker tests pass.
+- **26 handbook tests pass**; the handbook builds **187 rendered pages**,
+  26 modules, 659 requirements and 98 formal files with zero errors across
+  **33354 rendered local links/assets**, including final evidence text.
+  Logs: `dist/spec-research-host-handbook-tests.log`,
+  `dist/spec-research-host-handbook-final.log`. No diagram bodies changed.
+- SDL Debug configure/build passed without new warnings; selected SDL unit,
+  compatibility and tutorial-smoke checks passed **31/31**. Logs:
+  `dist/spec-research-host-configure.log`, `dist/spec-research-host-build.log`,
+  `dist/spec-research-host-runtime.log`. Full 80-page/native UI qualification stays open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-research-host-comparison.json`. No game source
+  changed; host-specific game-code checks were not required. Baselines unchanged.
+- `git diff --check`, new-file whitespace and old explicit-anchor checks pass;
+  all **162** pre-batch snapshotted files remain present. Runtime/baseline paths
+  have no changes.
+
+Total native host termination over declared supported level/policy/catalog/service
+frames remains open. A finite Run ending Running/Pending is not success; the
+lookup trace consumer does not invent Invalid results. Actual helper/message/heap/
+pointer/catalog/global/caller frames, phase integration and saved-game/GUI/AI/
+platform qualification remain explicit. No game source, on-disk layout or native
+baseline changed; the completion goal stays active.
+
+
+### Research catalog and control termination continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [host research companion](M12-host-research-resolution.md#catalog-bound-and-host-control-progress)
+now links S03 catalog bounds, canonical equipment scan completion and host
+control rank/termination. Added M12-AC27–28 and S03-AC09, retaining owning stories.
+
+- [S03 research limits](dafny/S03-research-catalog.dfy) uses all sixteen native
+  extents and proves `Calls(Limits(),0)==255` (counts plus terminating calls).
+  [M12 scan proof](dafny/M12-catalog-termination.dfy) proves Done and exact cursor
+  consumption for `Complete` returning traces. It reuses canonical `AfterLookup`
+  message calculation, preserving iterator/notice behavior.
+- [Host control progress](dafny/M12-host-termination.dfy) proves strict natural
+  rank descent for shaped Running states with normal levels 0..26. Components
+  cover bounded advancement, original pool flag, main/shared stages, remaining
+  players, one-time distribution, redo credit and field/phase traversal.
+  `Finish` terminates without supplied fuel; `SufficientFuel` proves agreement
+  with prefix `Run`. The canonical Step summary proves an exact +1 level sum
+  only on completed Check-to-Announce transitions and otherwise preserves it.
+  `Shape` adds source control invariants; terminal shape checking preserves the
+  native general-state write before an undefined arithmetic boundary.
+- Focused host progress verification: **966 verified, 0 errors**, Dafny 4.11.0.
+  Log: `dist/spec-research-liveness-rank4.log`. The initial import errors and
+  recursive catalog-sum unfolding were fixed. The first combined run reached
+  **2295 verified, 0 errors, 1 timeout** at rank descent; per-phase assertions,
+  a separate arithmetic ordering lemma and an opaque recursive level sum resolved
+  it. No assumptions, axioms or disabled verification were introduced.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **101 formal files**, complete include closure, **10492 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-research-liveness-full.log`.
+- Actual native host differential still passes **11045 cases, 2772295
+  assertions**. The actual lookup/generated-table probe now also binds every
+  formal count to its fresh enum, passing **991759 assertions**. The existing
+  **1693** undefined-domain candidates remain excluded before C execution;
+  this is not source error recovery. ASan/UBSan and non-excluded warnings are
+  fatal. Log: `dist/spec-research-liveness-source2.log`.
+- SDL Debug configure/build passes without new warnings; selected SDL unit,
+  compatibility, host-library and tutorial-smoke checks pass **31/31**. Logs:
+  `dist/spec-research-liveness-configure.log`, `dist/spec-research-liveness-build.log`,
+  `dist/spec-research-liveness-runtime.log`. The full 80-page tutorial and real
+  platform/accessibility qualification stay open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-research-liveness-comparison.json`.
+  Runtime/game/catalog/layout and baseline files are unchanged; host-specific
+  checks for game-code changes were not required.
+- All **9** specification-checker and **26** handbook tests pass. Final
+  integrated link/trace checks cover **2525 links/includes**, **662 requirement
+  IDs** (116 stories, 381 criteria, 66 interaction, 99 quality), zero errors.
+  Handbook builds **190 pages**, **101 formal files** and 26 modules, with zero
+  errors across **33822 rendered local links/assets**. A rendered-HTML check
+  confirms all three new criteria anchors occur inside acceptance-table rows.
+  Logs: `dist/spec-research-liveness-handbook-tests.log`,
+  `dist/spec-research-liveness-handbook-final.log`.
+- Final diff/anchor review preserves all **166** pre-batch files and their
+  explicit anchors. `git diff --check` and new-file whitespace checks pass;
+  runtime and baseline paths have no changes.
+
+Remaining E12-3 work is successful Done completion under native-derived
+arithmetic/index/policy/storage/service frames and complete actual
+helper/message/heap/pointer/global/caller extraction and annual integration.
+The catalog theorem is conditional on Complete; the host rank may end at
+Pending/Escaped/Undefined. Neither is universal successful C completion.
+Saved-game, browser/trader/UI/AI/platform qualification and unapproved policy or
+quality targets retain their named owners. The full collection goal stays active.
+
+
+### Native part availability continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [M11 availability companion](M11-part-availability.md) covers the entire
+FLookupPart/TechStatus/FShouldPartBeHidden decision algorithms, all sixteen
+category policies, source short-circuit getter order, prior/row pointer effects,
+raw widths and headless differences. S03 owns 116 versioned named identities
+and shared masks/extents. M12 adds a catalog/context-to-reply adapter with
+proved complete 255-call announcement scans. Added M11-AC11–15, M12-AC29,
+S03-AC10 and the GAP-19 clarification, preserving existing stories/IDs.
+
+- Focused final verification, Dafny 4.11.0: **263 verified, 0 errors**.
+  Log: `dist/spec-availability-focused4.log`. Initial draft `reads` used a
+  reserved name; const semicolons and quantified indentation produced warnings.
+  Those were corrected rather than allowing warnings. The catalog adapter
+  derives Complete from LookupRow, preserves the reply prefix and invokes the
+  existing canonical Scan; it does not assume an arbitrary complete reply list.
+  No assumptions, axioms or disabled verification were introduced.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **104 formal files**, complete include closure, **10871 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-availability-full.log`.
+- Actual native differential: **2047760 cases, 32854889 assertions**, all **239**
+  current generated rows and **116** bound model identities, plus native
+  primary/trait/grant/mask protocols. Exact status and helper sequence, direct
+  expected array pointer, PART/HS/quantity/padding, all PLAYER/GAME bytes,
+  global identity and requirement-buffer frames are checked. Cases include
+  primary/trait combinations, every uint16 mask, byte items, all 65536 trader
+  words for all twelve special pairs, signed-byte status pairs, current/missing
+  combinations and seeded raw contexts. Initial harness indentation failed
+  warning-as-error compilation and was fixed. ASan/UBSan and other compiler
+  warnings are fatal; only existing native pointer-sign declarations are
+  excluded. Log: `dist/spec-availability-source3.log`.
+- SDL Debug configure/build passes without new warnings. Logs:
+  `dist/spec-availability-configure.log`, `dist/spec-availability-build.log`.
+  SDL unit/tutorial/compatibility/host-library checks pass **31/31**;
+  `dist/spec-availability-runtime.log`. Full 80-page tutorial, real display,
+  accessibility and all-backend qualification remain open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-availability-comparison.json`.
+  Runtime/game source, catalogs, saved layouts and baselines are unchanged;
+  host-specific checks for game-code changes were not required.
+
+- All **9** specification-checker and **26** handbook tests pass. Final
+  link/trace checks cover **2584 local links/includes** and **669 IDs**
+  (116 stories, 388 acceptance criteria, 66 interaction, 99 quality), zero errors.
+  The handbook builds **194 pages**, 26 modules and 104 formal files with zero
+  errors across **34736 rendered local links/assets**. Logs:
+  `dist/spec-availability-handbook-tests.log`,
+  `dist/spec-availability-handbook-final.log`.
+- Rendered HTML confirms all seven new criteria anchors are in acceptance-table
+  rows. All **169** pre-batch files and explicit anchors are preserved;
+  `git diff --check` and new-file whitespace checks pass. Runtime and baseline
+  paths have no changes.
+
+The complete decision models and native source fixtures reduce E11-1/E12-2/E12-3
+without claiming universal C memory/caller refinement. Native host context/row/
+message/heap/frame integration and arithmetic-safe successful Done completion
+remain open, together with build-check restoration, enemy knowledge, design
+cascades/stats, UI/platform qualification and unapproved quality/policy decisions.
+The full collection completion goal stays active.
+
+
+### Design buildability continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [M11 design-check companion](M11-design-buildability.md) specifies the entire
+FCanBuildShdef controller in util.c, composed with canonical native lookup,
+trait/hidden/technology/catalog rules. Signed hull classification precedes byte
+item assignment; hull first, skip empty slots, exact-status rejection, ordinary
+global restoration, raw count/target boundaries and the seventeen-lookup bound
+are explicit. Added M11-AC16–21. Construction, S06 and availability documents
+link the producer without claiming complete higher-caller integration.
+
+- Final focused verification, Dafny 4.11.0: **526 verified, 0 errors**.
+  Log: `dist/spec-buildability-focused4.log`. The controller proves ordinary
+  restoration, exact canonical CanBuild agreement for bounded calls, first hull
+  probe and maximum lookup count. HullOnly, RejectBeforeExtent and EmptyOverrun
+  distinguish availability from broader validation and late undefined reads.
+  Draft statement-expression syntax and missing sequence-membership/requirement
+  proof facts were corrected; no assumptions, axioms or disabled verification
+  were introduced.
+- Full `python3 tests/spec/verify.py --time-limit 120`, Dafny 4.11.0:
+  **105 formal files**, complete include closure, **11226 verified, 0 errors;
+  audit 0 findings**. Log: `dist/spec-buildability-full.log`.
+- Actual composed source: **299402 defined cases, 78741602 assertions**. This
+  executes the actual controller and actual availability/race/technology/hidden
+  bodies with fresh tables, comparing request/query order, ordinary restoration,
+  direct expected catalog pointers and SHDEF/PLAYER/GAME frames. It covers all
+  hull words, saved global words, occupancy masks, all current rows/terminators
+  at every slot, byte counts with early-rejection paths and seeded contexts.
+  **65519** invalid-target and **239** reached out-of-array candidates are
+  excluded before C; this is not a source error return or recovery. ASan/UBSan
+  and non-excluded warnings are fatal. Log: `dist/spec-buildability-source1.log`.
+- The native source builder is shared with the availability fixture. Its full
+  prior matrix still passes **2047760 cases, 32854889 assertions** after that
+  refactoring. Log: `dist/spec-buildability-availability.log`. The native hull
+  probe deliberately does not read its uninitialized quantity or prior pointer.
+
+- SDL Debug configure/build passes without new warnings. Logs:
+  `dist/spec-buildability-configure.log`, `dist/spec-buildability-build.log`.
+  Unit/tutorial/compatibility/host-library checks pass **31/31**;
+  `dist/spec-buildability-runtime.log`. The full 80-page tutorial and real
+  backend/accessibility/display qualification remain open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-buildability-comparison.json`. Runtime/game
+  source, catalogs, saved layouts and baselines are unchanged; host-specific
+  checks for game-code changes were not required.
+- All **9** specification-checker and **26** handbook tests pass. Integrated
+  link/trace checks cover **2632 local links/includes**, **675 IDs** (116 stories,
+  394 acceptance criteria, 66 interaction, 99 quality), zero errors. Final
+  handbook builds **196 pages**, 26 modules, 105 formal files, with zero errors
+  across **35371 rendered local links/assets**. All six new criterion anchors
+  render inside acceptance-table rows. Logs:
+  `dist/spec-buildability-handbook-tests.log`,
+  `dist/spec-buildability-handbook-final.log`. Final evidence text is included.
+- Review preserves all **174** pre-batch files and explicit anchors;
+  `git diff --check` and new-file whitespace checks pass. Runtime/baseline paths
+  have no changes.
+
+The remaining E11-1 work is full native memory/alias/lifetime and real
+construction/annual/UI/knowledge context integration. The higher construction
+fixture retains its availability provider; the new composed checker fixture
+supplies stronger service evidence without proving that whole caller. No game
+source, catalog/record layout or baseline changes are introduced; unapproved
+policy/quality targets retain their owners and the full goal stays active.
+
+
+### Construction eligibility integration continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+The [eligibility integration companion](M19-construction-buildability.md) binds
+canonical M11 Check into FBuildObject's no-base/owner/roster/index/free/check
+order and separate base notification metadata read. Ready remains distinct from
+successful object application. Added M19-AC30–33 and GAP-20; M09-AC10 and M11/S06
+handoffs gain actual composition evidence without new duplicate stories.
+
+- Final focused verification: **273 verified, 0 errors**, Dafny 4.11.0.
+  Log: `dist/spec-construction-buildability-focused4.log`. Exact checker outcome,
+  ordinary global frame, free/no-base short circuits, Route refinement, metadata
+  address and decoded-hull safety are proved. BaseNotice reuses the existing
+  variant and word helpers. Initial shared-destructor types and a missing signed
+  word/power witness were corrected. No assumptions, axioms or disabled
+  verification were introduced.
+- Full `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`, Dafny
+  4.11.0: **106 formal files**, complete include closure, **11499 verified,
+  0 errors; audit 0 findings**. Log: `dist/spec-construction-buildability-full.log`.
+- New actual eligibility integration: **179072 defined cases** plus a full
+  post-charge Produce/fleet-limit case; **43707827 assertions pass**. Actual
+  application/builder/checker/race/hidden/technology/catalog bodies and fresh
+  tables are composed. Exact helper requests, query order, context, metadata
+  pointers, notification payloads and expected full design/player/game/planet
+  frames are compared. **98380** design-index, **96** owner, **3806** roster,
+  **2686** metadata and **488** reached checker-slot candidates are excluded
+  before C. These are domain filters, not source recovery. An initial unsigned
+  expected cargo comparison was corrected to the actual signed-16 message
+  argument; 65535 becomes -1. Log: `dist/spec-construction-buildability-source2.log`.
+  Existing unused-resource-parameter/pointer-sign exclusions apply; all other
+  warnings and ASan/UBSan findings are fatal.
+- Original construction matrix still passes **1897437 assertions** after sharing
+  its native source builder. Full availability matrix still passes **2047760
+  cases, 32854889 assertions** after sharing its typed catalog selector. Logs:
+  `dist/spec-construction-buildability-legacy.log`,
+  `dist/spec-construction-buildability-availability.log`.
+- `tests/spec/verify.py` adds optional `--progress None|Symbol|Batch`; default
+  None retains quiet output. The full run uses Symbol for visible progress.
+  Included-file verification, proof limits and mandatory audit are unchanged.
+
+- SDL Debug configure/build passes without new warnings. Logs:
+  `dist/spec-construction-buildability-configure.log`,
+  `dist/spec-construction-buildability-build.log`. Unit/tutorial/compatibility/
+  host-library checks pass **31/31**; `dist/spec-construction-buildability-runtime.log`.
+  The full 80-page tutorial and actual backend/display/accessibility coverage stay open.
+- Full native regression: **519 matches, 21 unused-storage warnings, 0
+  differences/errors, 0 reference inputs skipped**. Report:
+  `dist/scaffold/regression/spec-construction-buildability-comparison.json`.
+  Runtime/game source and baselines are unchanged; host-only checks for game-code
+  edits were not required.
+- All **9** specification-checker and **26** handbook tests pass. Integrated
+  link/trace checks cover **2672 links/includes** and **679 IDs** (116 stories,
+  398 acceptance criteria, 66 interaction, 99 quality), zero errors. The handbook
+  builds **198 pages**, 26 modules and 106 formal files with zero errors across
+  **35974 rendered local links/assets**. Logs:
+  `dist/spec-construction-buildability-handbook-tests.log`,
+  `dist/spec-construction-buildability-handbook-final.log`. Final evidence text
+  is included; rendered HTML confirms all four new criteria are acceptance-table rows.
+- All **177** pre-batch files and explicit anchors are preserved;
+  `git diff --check` and new-file whitespace checks pass. Runtime/baseline paths
+  have no changes.
+
+Remaining work includes complete native pointer/alias/lifetime/caller and annual
+qualification, actual remaining economy/warp/message/allocator/fleet-registration/
+fuel/routing producers and other module algorithms. The source loader hull
+condition closes this one address bound, not all admission/writer reachability.
+No game source, catalog/layout or baseline changes; policy and quality targets
+retain their owners, and the full completion goal stays active.
+
+
+### Mass-driver capability continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30` with the
+working collection. The [M08 companion](M08-mass-driver-capability.md) replaces
+supplied driver results at this source boundary with a checked complete native
+controller. M08-AC07 is strengthened, M08-AC18–19 and M19-AC34 add focused
+acceptance coverage without renumbering prior IDs. `Scalar` reuses the existing
+aggregation; `DesignFling` composes actual old/optional-new capability with the
+existing construction fling rule. No runtime/catalog/layout/baseline change.
+
+- Focused model verification: **169 verified, 0 errors**, including maximum/
+  multiplicity and scalar-refinement properties. Log:
+  `dist/spec-mass-driver-focused5.log`. Full included-file collection verification
+  under Dafny 4.11.0: **11517 verified, 0 errors; mandatory audit 0 findings**, all
+  **107 formal files**. Command: `python3 tests/spec/verify.py --time-limit 120
+  --progress Symbol`; log: `dist/spec-mass-driver-full.log`. The progress option
+  changes reporting only; verification/audit limits and trust checks are unchanged.
+- Actual native `IWarpMAFromLppl` plus FBuildObject/Produce/packet integration:
+  **488905 defined standalone cases, 55494 integration cases, 4392987 assertions
+  passed**. All category words, owner/viewer words in declared contexts,
+  item/quantity/count bytes, physical positions, tie order, null outputs and
+  visibility are exercised. Native struct frames and global identity are compared.
+  Fresh enum assertions bind model identities. ASan/UBSan and warnings-as-errors
+  are enabled. Log: `dist/spec-mass-driver-source4.log`. Integration uses the actual
+  eligibility/lookup/technology/hidden-part/race/hull helpers and fresh generated
+  catalogs together with the actual driver helper. Controlled economy, messages,
+  allocation/registration and routing remain explicit providers.
+- Extracting the existing actual-eligibility harness into a reusable factory
+  preserves its **179072 defined cases plus the full post-charge Produce/fleet-limit
+  case, 43707827 assertions passed**. Log:
+  `dist/spec-mass-driver-eligibility-reuse.log`.
+- SDL Debug configure/build pass without new warnings. Unit/tutorial/compatibility/
+  host-library checks pass **31/31**; the full native regression has **519 matches,
+  21 unused-storage warnings, 0 differences/errors, 0 reference inputs skipped**.
+  Logs: `dist/spec-mass-driver-configure.log`, `dist/spec-mass-driver-build.log`,
+  `dist/spec-mass-driver-runtime.log`, `dist/spec-mass-driver-regression.log`.
+  No runtime/game source or baseline is changed; game-code-only host checks are
+  not required for this batch.
+- All **9** spec-checker and **26** handbook tests pass. Link/trace checks cover
+  **2703 local links/includes and 682 IDs** (116 stories, 401 acceptance, 66
+  interaction, 99 quality), zero errors. The handbook builds **200 pages, 26
+  modules and 107 formal files**, zero errors across **36546 rendered links/assets**.
+  Logs: `dist/spec-mass-driver-checker-tests.log`,
+  `dist/spec-mass-driver-handbook-tests.log`, `dist/spec-mass-driver-handbook-final.log`.
+  The final build includes the evidence text. The new companion and all three
+  new criteria render correctly; **180 pre-batch files and explicit anchors**
+  remain preserved, and tracked/new-file whitespace checks plus `git diff --check`
+  pass. Runtime/catalog/text/baseline paths have no changes.
+- Pre-C undefined-domain exclusions are explicit: 66668 roster-owner,
+  5946 missing-roster, 2235 physical base-slot and 3070 hull-slot reads. These
+  are fixture filters, not added C validation or ordinary error returns.
+- Output-pointer alias/lifetime, complete caller/helper preservation, admission,
+  actual annual/UI/AI reachability, stargate/scanner/destination and terraforming
+  choice remain named work. Other module algorithm gaps retain their existing
+  owners; this focused closure does not complete E08-3 or the collection goal.
+
+
+The M08 batch planned at that checkpoint was the complete terraforming selection
+pipeline, addressed by the following continuation:
+ordered all-axis/axis-specific catalog availability and costs in
+`FCanTerraformLppl`, native endpoint/immune/help/harm handling, desirability
+trial/restore and width-aware ranking in `IBestTerraform`, and
+`IBestRemoteTerra` player substitution/restoration. It must account for helper
+failure and reached invalid arithmetic/access prefixes, then connect the
+result to the existing construction application; testing a supplied axis alone
+will not close E08-2. Existing catalog/availability/habitat rules remain canonical.
+
+
+### Terraforming selection continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30` with the
+working collection. [Native terraforming selection](M08-terraform-selection.md)
+adds canonical ordered catalog/cost/bounds, native habitat, best-axis ranking,
+optimum viewpoint, remote substitution and repeated construction handoffs.
+M08-AC20–24 and M19-AC35–36 link their existing owning stories. No runtime,
+format, layout, catalog, data or baseline change is made.
+
+- Focused model verification: **452 verified, 0 errors** under Dafny 4.11.0,
+  including native/safe-axis and endpoint refinements, ordinary environment/
+  identity/remote restoration, first-tie selection and construction iteration
+  conservation. Log: `dist/spec-terraform-focused9.log`. Final included-file
+  collection verification under Dafny 4.11.0: **11817 verified, 0 errors;
+  mandatory audit 0 findings**, all **109 formal files**. Command:
+  `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`;
+  `dist/spec-terraform-full.log`. The final run includes the completed optimum
+  read-prefix distinction and all current native/canonical refinements.
+- Native pipeline: **1423925 defined cases, 303296026 assertions passed**;
+  `dist/spec-terraform-source6.log`. Every one of the 1048576 availability
+  subsets, every signed ability word, byte current/original pairs, all saved
+  identity words in declared contexts, all signed helper deltas in a ranking
+  context, raw habitat fields, asymmetric remote/optimum views and repeated
+  construction are exercised. The source fixture composes
+  actual lookup/technology/race/habitat with Can/Best/Remote/Optimum and construction,
+  with independent controller-provider modes. It preserves exact call traces,
+  partial outputs and complete native frame comparisons under ASan/UBSan.
+  Fresh generated enum/mask/sentinel/count assertions bind the model identities.
+  Pre-C exclusions: 65547 lookup-player reads, 2509 reached player reads and
+  129 divisions; these do not become new C error returns. Initial fixture
+  construction/optimum provider expectations incorrectly used the input help
+  flag; corrected to each caller's actual forced TRUE before the final pass.
+  Initial proof timeouts were repaired with checked arithmetic helper lemmas,
+  without removing refinement claims or increasing the final collection limit.
+- SDL Debug configure/build pass without new warnings; all **31** native unit/
+  tutorial/compatibility/host-library checks pass. Full native regression:
+  **519 matches, 21 unused-storage warnings, 0 differences/errors, 0 reference
+  inputs skipped**. Logs: `dist/spec-terraform-configure.log`,
+  `dist/spec-terraform-build.log`, `dist/spec-terraform-runtime.log`,
+  `dist/spec-terraform-regression.log`. No game-code-specific host checks are
+  required for this specification/test-only batch.
+- All **9** specification-checker and **26** handbook tests pass. Link/trace checks cover **2745 local links/includes and 689 IDs**
+  (116 stories, 408 acceptance, 66 interaction, 99 quality), zero errors. The
+  handbook builds **203 pages, 26 modules and 109 formal files**, zero errors
+  across **37345 rendered local links/assets**. Logs:
+  `dist/spec-terraform-links-final.log`, `dist/spec-terraform-checker-tests.log`,
+  `dist/spec-terraform-handbook-tests.log`, `dist/spec-terraform-handbook-final.log`.
+  Final evidence is included in the final build. Existing
+  IDs/anchors and all **183** pre-batch files are preserved; tracked/new-file
+  whitespace and `git diff --check` pass. All seven new criteria render in
+  exactly one acceptance row each. Runtime/catalog/text and frozen/native
+  baseline paths have no changes.
+
+The existing M04/M08/M11/S04 rules remain canonical; no proof of whole-application
+C refinement, file admission or all-platform floating behavior is asserted.
+
+Remaining work includes S04 complete native floating-trace production, S06
+pointer/alias/lifetime and whole-caller frames, admitted race-field mapping,
+full forecast/annual/remote-task integration, the native signed aggregation in
+`IpctCanTerraformLppl` feeding production limits, and other module algorithms.
+Unapproved policy and platform/quality targets keep their recorded owners.
+
+
+### Colony capability producers continuation
+
+Reviewed 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30` with the
+working collection. [Colony capability contracts](M08-colony-capabilities.md)
+add actual signed terraform-count, first-slot gate-range and descending scanner
+selection, connected to existing M09 validation and M19 scanner installation.
+M08-AC25–28/M09-AC68 and strengthened M19-AC15 preserve all earlier IDs.
+No runtime, format, catalog, text, layout or baseline change is made.
+
+- Focused verification: **387 verified, 0 errors**, including word/scalar sum
+  correspondence, gate pointer/metadata and scanner result/trace bounds, actual
+  validation query selection and planned scanner installation. Log:
+  `dist/spec-colony-capabilities-focused4.log`. Final included-file collection
+  verification under Dafny 4.11.0: **11878 verified, 0 errors; mandatory audit
+  0 findings**, all **110 formal files**; `dist/spec-colony-capabilities-full2.log`.
+  Command: `python3 tests/spec/verify.py --time-limit 120 --progress Symbol`.
+  The first full run
+  timed out on the pre-existing native habitat percentage bound (120 seconds).
+  That bound is factored into a separately checked Euclidean-division lemma;
+  no claim is dropped or final verification limit increased. The repair and
+  complete rerun are recorded before final closure. The first focused repair
+  verified the quotient bound but exposed a timeout on the accumulated square;
+  that bound is likewise factored into a checked algebra lemma. Both retain
+  the original native/safe-axis refinement and the 120-second limit. The repaired
+  focused run passes **666 verified, 0 errors** across native habitat, capability,
+  production and construction contracts;
+  `dist/spec-colony-capabilities-focused6.log`. The final full rerun above
+  includes both arithmetic lemmas and all capability/production/construction
+  contracts; no assumptions, disabled verification or larger limit are used.
+- Native capability integration: **1756689 cases plus four Produce cases,
+  497240245 assertions passed**. Per-operation counts: 1253964 terraform totals,
+  405480 gate, 15982 scanner and 81263 generic application. Log:
+  `dist/spec-colony-capabilities-source4.log`. All availability subsets from the
+  existing terraforming corpus, nine-item scanner subsets, all category words,
+  raw ranges/identities/counts, real lookup/race/technology and complete native
+  frame/message-time comparisons are included. Four Produce cases cover zero,
+  positive clipping/application and raw negative-limit removal under declared
+  returning economy/quote/message/heap providers. Branch-presence checks prevent
+  a pass that skips a producer family.
+- Pre-C native-domain exclusions: 65519 terraform lookup-player, 272 terraform
+  habitat-player, 65931 capability lookup-player, 66460 gate design, 541 gate
+  hull-slot, 476 gate roster-owner and 2269 gate roster-pointer reads. Separately,
+  709 generic-application cases exceed the message provider's declared owner
+  domain; these are not claimed native failure outcomes. No C recovery or new
+  validation is invented.
+- The test-only factory extraction preserves the existing terraform source
+  fixture: **1423925 cases, 303296026 assertions passed**;
+  `dist/spec-colony-capabilities-terraform-reuse.log`.
+- An initial count oracle used the input help flag instead of Ipct's forced
+  TRUE; corrected before the final pass. An initial fixture routed scanner
+  requests through gate mode; it supplies no scanner evidence. Explicit routing
+  and nonzero per-operation gates now cover all four families. The final run
+  also observes the real lookup context and pre-install scanner at notification.
+- SDL Debug configure/build pass without new warnings. Native unit/tutorial/
+  compatibility/host-library checks pass **31/31**. Full native regression:
+  **519 matches, 21 unused-storage warnings, 0 differences/errors, 0 reference
+  inputs skipped**. Logs: `dist/spec-colony-capabilities-configure.log`,
+  `dist/spec-colony-capabilities-build.log`,
+  `dist/spec-colony-capabilities-runtime.log`,
+  `dist/spec-colony-capabilities-regression.log`. No runtime game-code edits
+  require additional host-only checks for this batch.
+- All **9** specification-checker and **26** handbook tests pass. Link/trace
+  checks cover **2781 local links/includes and 694 IDs** (116 stories, 413
+  acceptance, 66 interaction, 99 quality), zero errors. The handbook builds
+  **205 pages, 26 modules and 110 formal files**, zero errors across **37981
+  rendered local links/assets**. Logs:
+  `dist/spec-colony-capabilities-checker-tests.log`,
+  `dist/spec-colony-capabilities-handbook-tests.log`,
+  `dist/spec-colony-capabilities-links-final.log`,
+  `dist/spec-colony-capabilities-handbook-final.log`.
+- All **187** pre-batch files/explicit anchors are preserved. Tracked/new-file
+  whitespace and `git diff --check` pass. All five new criteria render in exactly
+  one acceptance row each. Runtime, catalog, text and native/frozen baseline
+  paths have no changes. The final evidence build includes this record.
+
+
+Remaining work retains explicit owners: native alias/lifetime/admitted-field
+mapping, S04 float-trace production for other calculations, destination/travel/
+construction/disclosure permission, complete messages and whole production/
+annual integration, UI/platform qualification, and other module algorithms.
+A passing capability helper is not complete M08/M09/M19 or simulation coverage.
+
+
+Next shared-workflow batch: M01 import/update publication and recovery outcomes,
+starting with `FImportSubsequentTurn`, `FImportLibraryGame`,
+`FImportConflictingTurnAsCopy` and their staged-file helpers. Preserve the
+accepted library decision and separate actual partial effects from stronger
+publication guarantees (GAP-09). Source comparison found no changes in
+libraryui.c/libraryzip.c/mdi.c/fileui.c between M01's inspected e2eae18 revision
+and current e3222eb1; the open work is detailed rule/adapter/outcome closure,
+not an inferred change in supported import policy. M08 destination/UI/native
+qualification and all other module backlogs remain in scope.
+
+
+<a id="m01-import-publication-and-recovery"></a>
+## M01 import publication and recovery
+
+Continuation inspected 2026-10-26 at `e3222eb1fbdb01d68067231b5d5ef14a71759b30`
+with the working collection. The [M01 publication companion](M01-import-publication.md)
+connects M01-US03/04/05 to M01-AC16–21 and qualifies M01-AC08/M06-AC06:
+a native TRUE import can retain old orders when the orders-file query is FALSE.
+S01 completed logical retirement remains distinct from source-specific outcomes.
+
+`M01ImportPublication` supplies checked post-admission first/later-turn and family
+publication programs, complete conflict/separate-copy controllers under explicit
+helper receipts, projected frame and pending-clearing proofs, and failure/retry
+witnesses. Partial cleanup, existing-stage collision removal, previous-copy
+residue, restore failure/retry and success-with-cleanup-warning are explicit.
+The [source fixture](../tests/spec/check_library_publication_source.py) compiles
+extracted current C controllers with warnings as errors and compares their
+operation/store/notice/return traces with an independent interpreter. Native I/O,
+admission, recursive helper algorithms and UI/crash qualification remain open.
+
+Verification for this continuation is being collected; do not substitute the
+previous batch's successful counts for this batch's evidence. GAP-09 remains open
+across M02/M05/M06/M17/M18/S01; M01 still owns full enumeration, native helper/path
+and UI qualification, export scope and last-played display decisions.

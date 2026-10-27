@@ -9,7 +9,18 @@ The canonical formal definitions for shared entities, additional player/view/res
 [S06-state-specification.dfy](S06-state-specification.dfy). The prose and worked examples below
 explain those definitions and retain their source evidence. See the
 [coverage inventory](README.md#dafny-coverage-and-verification) for exact scope,
-proof strength, dependency boundaries and verification commands.
+proof strength, dependency boundaries and verification commands. The
+[planet editor companion](S06-planet-editor-contracts.md) specifies native prefix/queue
+ownership, allocation and read/write dispatch; its latest
+[verification record](README.md#planet-editor-copy-and-write-back-continuation) is dated 2026-10-25.
+The [native terraforming companion](M08-terraform-selection.md) now projects
+PLANET environment/owner, PLAYER habitat/availability and temporary remote
+substitution. Its ordinary restoration proofs and native complete-byte frame
+cases do not enforce the proposed full-host invariants on partial views or close
+general pointer/alias/lifetime and admitted-field mapping.
+The [colony capability companion](M08-colony-capabilities.md) now adds native
+roster/slot and PART pointer/quantity projections, signed totals and planned
+post-notification scanner writes. These do not validate proposed full-host state.
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
 [Data-model and relationship diagrams](#data-model-and-relationship-diagrams) map the shared values and references.
@@ -67,6 +78,12 @@ behavior is separately sourced and not certified by the logical model.
 | <a id="s06-ac06"></a>S06-AC06 / US04 / Observed arithmetic, proposed representation | Given a valid RNG context and nested seed, when push is followed by pop, then restore the prior stream/context. | [RNG](#81-rng-and-determinism); `Push`, `Pop`, `PushPopRestores`. | General model property; complete draw-order equivalence belongs to the calling algorithm. |
 | <a id="s06-ac07"></a>S06-AC07 / US04 / Proposed lifecycle | Given session-held references/caches, when the logical session is destroyed, then invalidate session lifetime as modeled while preserving longer-lived state. | [Lifetimes](#82-lifetime-inventory); `Lifetime`, `Held`, `DestroySession` in [extensions](dafny/S06-state-extensions.dfy). | Logical contracts only; native pointers, windows and callback order require C/UI validation. |
 | <a id="s06-ac08"></a>S06-AC08 / US01 / Observed adapter | Given full planet storage, lookup indexes directly; sparse storage uses binary search. Fleet lookup masks to 13 bits and starts after preceding players' counts, without an ownership check or owner-slice upper bound. | [Native lookup adapters](#native-lookup-adapters); `Planet`, `Fleet`, `Binary`, `BinaryWithoutHoles`. | Checked bodies/witnesses and extracted native cases; null probes and invalid native count/storage domains remain explicit. |
+| <a id="s06-ac09"></a>S06-AC09 / US03, US04 / Observed native copying | Given a selected read with separate valid queue allocations, copy the complete prefix and active queue words while preserving the destination allocation where capacity permits and retaining its inactive suffix. | [Planet editor contracts](S06-planet-editor-contracts.md); `DuplicatePlanet`, `CopiesKeepTail` in [native copy model](dafny/S06-planet-editor.dfy); `FDupPlanet`. | General source/active-prefix/tail/header properties and [native matrix](../tests/spec/check_planet_editor_source.py); logging/heap/callback internals remain explicit. |
+| <a id="s06-ac10"></a>S06-AC10 / US03, US04 / Observed native copying | Given a write-back with distinct planet storage, handle queues separately and copy exactly 52 prefix bytes; an ordinary nonselected read borrows the stored queue pointer without freeing an old destination queue. | [Ownership/read-write rules](S06-planet-editor-contracts.md#write-back-and-ordinary-reads); `WritePlanet`, `ReadPath`, `Shallow`, `EqualPointersSkipQueue`; `FLookupPlanet`. | Actual packed offset/size assertions, native prefix/pointer and borrowed-read fixtures. Caller lifetime and release of overwritten owned pointers remain obligations. |
+| <a id="s06-ac11"></a>S06-AC11 / US04 / Observed partial effects | Given an allocation escape, selected duplication has already replaced the prefix and retained its old queue pointer; write-back retains the old prefix after prior invalidation/log effects. Neither operation promises rollback. | `DuplicatePlanet`, `WritePlanet`, `WriteStep`, `QueueFailureAborts`; [failure ordering](S06-planet-editor-contracts.md#selected-read-preserve-ownership-and-copy-rows). | Checked contracts plus injected allocation/reallocation and invalidate/log/tutorial escapes in [native fixtures](../tests/spec/check_planet_editor_source.py); actual log publication remains S01/M06. |
+| <a id="s06-ac12"></a>S06-AC12 / US03, US04 / Observed widths and undefined boundary | Given active count 254/255 and insufficient stored capacity, write-growth requests 256/257 physical rows and narrows maximum to 0/1. Do not infer safe later duplication from physical capacity alone. | `Request`, `Resized`, `Transfer`; [header wrap](S06-planet-editor-contracts.md#header-wrap-and-defined-domain-boundaries). | Formal/native width cases; guarded insufficient-storage and overlapping-copy fixtures stop before undefined operations. Full caller reachability and runtime repair remain open. |
+| <a id="s06-ac13"></a>S06-AC13 / US01 / Observed entry dispatch | Given no planets, return FALSE before destination access; otherwise every negative request enters write mode via destination ID, with ID -1 using log-only dispatch. A found positive read with null destination returns TRUE. | `Enter`, `Resolve`, `ReadPath`; `FLookupPlanet`, `LpplFromId`; [entry rules](S06-planet-editor-contracts.md#write-back-and-ordinary-reads). | Formal branches and native no-planets/negative/log-only/null/found/absent cases. Positive count with negative request and null destination remains undefined. |
+| <a id="s06-ac14"></a>S06-AC14 / US04 / Observed consumer handoff | Given M09 commit and a tutorial callback that changes selected ID after write-back, reload that current ID and allow the common finish tail's second tutorial call. | [M09 handoff](S06-planet-editor-contracts.md#m09-handoff-and-evidence); [M09 controller](dafny/M09-lifecycle.dfy) `Step`; actual `FinishProduction`/lookup/duplication chain. | Integrated [native source fixture](../tests/spec/check_planet_editor_source.py), with explicit log/report/heap/tutorial doubles; full tutorial reentrancy/session destruction remains external. |
 
 ### Interaction and quality requirements
 
@@ -208,6 +225,13 @@ cover sparse/full planet paths, fleet masking and prefix limits using projected
 structs. Full native struct extraction, invalid storage and cross-callback
 pointer lifetime remain adapter obligations.
 
+The [planet editor companion](S06-planet-editor-contracts.md) extends this lookup
+boundary through `FLookupPlanet` and `FDupPlanet`, using actual packed structs in
+source fixtures. It distinguishes borrowed ordinary reads from copied selected
+reads, the 52-byte prefix from the native queue pointer, and partial allocation/
+callback effects. This narrows the earlier struct/copy evidence gap; full host
+array construction, pointer lifetime, logging and arbitrary callbacks remain open.
+
 ### 2.2 Sentinel decoding is field-specific
 
 | Source field | Logical interpretation |
@@ -313,6 +337,23 @@ metadata and a hull description; it is not a ship instance.
 | Label | `hul.szClass`, UTF-8 ≤31 bytes; unknown designs may expose hull class rather than private name. |
 | Derived values | `hul.rgTech[6]`, mass, costs, ore costs[3], cargo/fuel capacities, armor; `dScanRange/2`, `pctDetect`, `iSteal`, `lPower/lVisible` |
 | Lifecycle | `fFree`, `fGift`, design `turn`, u32 `cBuilt/cExist`, `grbitPlr` knowledge mask; `det/fInclude` describes representation/visibility. |
+
+[M11 native availability](M11-part-availability.md) now projects PART/HS lookup
+inputs, selected PLAYER traits/technology and S03 catalog row addresses. It
+specifies prior-pointer preservation on Invalid and assigned row pointers on
+valid denials, with actual native frame fixtures. Its exact single-category
+lookup contract is separate from a hull slot's allowed-category mask and general
+editable-design validity. PART pointers are transient native references, not
+serialized identifiers; full native alias/lifetime/caller extraction remains
+an M11/S03/S06 obligation.
+[M11 buildability](M11-design-buildability.md) also binds unsigned hull/slot-count
+and byte HS fields to its ordinary restoration and first-read boundary contracts.
+Its raw count domain does not weaken proposed bounded Design validation or add a
+native count guard; complete caller/storage lifetime qualification remains open.
+[M19 construction eligibility](M19-construction-buildability.md) adds the native
+signed-word planet owner, sixteen-entry nullable roster arrays, guard-order and
+separate hull-metadata address boundaries. It reuses the M11 design projection;
+this does not impose record admission or full-host invariants on the runtime.
 
 Derived fields can be recalculated but are not license to change rounding or
 recompute at a different point in the turn. `lPower/lVisible` is a phase-dependent
@@ -600,6 +641,11 @@ The exact recurrence and C wrap boundaries are in
 `0<s1<2147483563`, `0<s2<2147483399` and signed-i16 bounds. Under those
 preconditions it proves next-state validity and the return range. It makes no
 claim about arbitrary negative/corrupt seed states or C-level equivalence.
+
+[M09 forecasting](M09-production-forecast.md#local-copying-does-not-establish-global-purity)
+does not call `PushRandom`/`PopRandom` or suppress generation. Actual mining can
+consume the current stream and mark live AR remote-miner flags; the native
+fixtures distinguish local copy preservation from global RNG/fleet effects.
 
 `Randomize` selects two entries in the first 64 elements of `rgPrimes` from
 seed bits 0..5 and 6..11 (advance the second index on equality).

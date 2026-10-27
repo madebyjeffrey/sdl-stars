@@ -368,6 +368,15 @@ Order matters. `pct` is carried production progress; legal changes and refunds
 belong to M09 and [log replay](S01-game-file-orders.md). Neither a PLPROD pointer
 nor allocation capacity is saved.
 
+The in-memory adapter is separate: `FLoadGame` in [file.c](../src/core/file.c)
+allocates `payloadBytes/4 + 2` rows and stores the used count in an eight-bit
+header. The [S06 copy contract](S06-planet-editor-contracts.md#header-wrap-and-defined-domain-boundaries)
+records why 254/255 used rows can leave maximum header 0/1, affecting later
+capacity-based copies. The stored record itself has no such maximum field.
+Complete loader/native-heap reachability and malformed count/length validation
+remain S01 adapter obligations; the S06 write/read fixture does not verify the
+entire file-loading path or introduce a new accepted-record limit.
+
 ## 7. Ship and starbase designs
 
 Common prefix, six bytes:
@@ -677,3 +686,16 @@ the gameplay RNG. No universal record CRC exists. BOF flags, signed player
 packing and version bits remain the exact table above; diagram labels do not
 specify offsets or enlarge widths. UTF-8 limits count bytes, and no pointer,
 compiler padding or logical datatype ordinal becomes a disk field.
+
+
+## Native import publication boundary
+
+S01 completed `PublishLaterTurn`/`FImportEffect` effects do not identify every
+native TRUE return with successful orders retirement. The
+[M01 publication companion](M01-import-publication.md) owns source-specific
+query, copy, replacement, cleanup and restoration order. A FALSE orders-file
+query skips retirement; ignored cleanup failures can leave stage/previous/hold
+remnants; failed restoration can leave the incoming target and a recovery copy.
+M01-AC16–21 connect these outcomes to actor goals. S01 retains exact framing,
+metadata and admission mapping; S04 retains real path and filesystem semantics.
+These are observed boundaries, not changes to format or approved guarantees.
