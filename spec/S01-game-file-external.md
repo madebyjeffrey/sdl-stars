@@ -223,10 +223,16 @@ a ZIP's enclosing-directory convention cannot substitute for it.
 universes. Multiple matching copies require destination selection. Byte-identical
 incoming/current files are no-ops. A first file for a player checks that the
 player exists in decrypted GAME and installs the staged file while retaining
-orders/history. An actual later turn preserves the previous turn temporarily,
-replaces it, then removes that player's old orders; failure to remove orders
+orders/history. An actual later turn queries orders presence, preserves the
+previous turn temporarily, replaces it, then removes that player's old orders
+only if the query reported TRUE. A FALSE query can leave an existing orders
+file despite a successful import; failure to remove observed orders
 attempts restoration and reports a recoverable previous path if restoration
-also fails. History and other players remain.
+also fails. History and other players remain. The
+[M01 publication companion](M01-import-publication.md) owns exact source control
+flow, ignored cleanup results, restore retries and surviving-file outcomes. S01
+`PublishLaterTurn` describes completed logical retirement, not every native TRUE
+return.
 
 For changed same-year/older files, Replace stages the whole game and copies that
 player's `.mN/.xN/.hN` into a fresh `backup.000`–`backup.999` directory before

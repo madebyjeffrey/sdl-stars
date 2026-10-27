@@ -34,6 +34,87 @@ This establishes the current source mechanism, not a full player-facing trigger
 or original-binary parity. Real UI reproduction, historical comparison and any
 behavior/baseline change remain open; no runtime repair was made by the review.
 
+## Planet queue capacity wrap — located on main
+
+`util.c`: `FLookupPlanet` grows the stored queue with used count plus two;
+`memory.c` allocates that full request, but `LpplReAlloc` stores its maximum in
+an eight-bit header. Used counts 254/255 therefore request 256/257 physical rows
+with maximum header 0/1. A later `FDupPlanet` into a null/insufficient editor
+queue allocates from that maximum, then copies the larger used count. It can
+request too little storage for that copy even though the stored source has
+adequate backing. Actual safety then depends on usable bytes supplied by native
+heap alignment and free-block reuse.
+
+The [S06 contract](../spec/S06-planet-editor-contracts.md#header-wrap-and-defined-domain-boundaries)
+and [source-extracted fixtures](../tests/spec/check_planet_editor_source.py)
+exercise actual write-back followed by a fresh selected read for both counts;
+an exact-size heap-service double and bounds guard stop before the invalid row
+copy. The actual heap-alignment helpers also show that fresh 0/1-row requests
+have fewer than 254 usable rows on this platform; oversized free-block reuse can
+differ. The entry states, wrapped request and copy length are confirmed. Full
+UI reachability of 254/255 active rows, original binary comparison and a separately scoped repair remain open. This is not a
+newly enforced queue limit or a claim of original-binary parity; no runtime or
+baseline change was made by the specification review.
+
+Related callers remain in the audit inventory: `FLoadGame` constructs a queue
+using payload row count plus two, while `EstimateItemProdSched` allocates from
+capacity before copying used rows. The [S01 record adapter](../spec/S01-game-file-records.md#6-planet-and-production-queue)
+and [M09 forecast copy](../spec/M09-production-forecast.md#interface-input-domain-and-copied-storage)
+retain those source paths. The forecast now has a guarded source fixture; full
+loader/native-heap refinement remains open, and selected-read evidence alone
+does not qualify either caller automatically.
+
+The host `Produce` caller has a related active-count boundary: prepending a
+partial to 255 used rows requests 256 only when used equals maximum, then stores
+both headers through eight bits. The [host execution contract](../spec/M09-production-execution.md#physical-queue-operations-and-ordinary-exit)
+and [actual caller fixtures](../tests/spec/check_host_production_source.py) confirm
+used/maximum zero with 256 physical rows, and guard missing-spare copies when
+headers differ and no resize occurs. Those fixtures use controlled builder/object
+outcomes; full real-helper/host/UI reachability and any separate repair remain
+open. No queue limit or runtime validation is newly enforced.
+
+## Genesis stock write-back — located on main
+
+`turn2.c`: `FBuildObject` item 13 clears the planet's mineral fields and changes
+its environment/concentration, but does not use its `rgMinerals` parameter to
+clear the caller's separate working stock. `Produce` later writes that working
+stock back over the planet fields. Direct application therefore reports zero
+mineral stocks while the ordinary host path can finish with the previous stocks
+less construction charges.
+
+The [construction-effects contract](../spec/M19-construction-effects.md#terraforming-genesis-and-scanners),
+M19 `Rebirth`, M09 `FinalStock` and [actual source fixtures](../tests/spec/check_construction_effects_source.py)
+record both stages. The fixture executes actual Produce, builder, application
+and RNG bodies with explicit cost/economy/message/heap providers and native
+structs; stocks 10/20/30 survive the ordinary host publication in that case.
+This locates the current mechanism, not original-binary parity or an approved
+change to mineral-erasure semantics. Full saved-game/UI qualification, historical
+comparison and the intended preserve/erase behavior remain open. No runtime
+repair or baseline change was made by this specification work.
+
+## Forecast helper side effects — located on main
+
+`produce.c`: `EstimateItemProdSched` copies the planet/queue but neither clears
+`gd.fGeneratingTurn` nor pushes/restores simulation RNG state. Its apply=true
+`EstMineralsMined` call can draw from `Random(100)` during generation. For AR
+local mining, `mine.c` additionally traverses the live global fleet array and
+clears eligible remote miners' `fHereAllTurn` after recursive mining, even when
+generation is false. The copied planet does not isolate those fleets.
+
+The estimator also calls `CBuildProdItem` with calculation-only FALSE; when
+generation is true, completed alchemy can emit a player message. Returning a
+quote therefore does not establish global RNG/fleet/message purity.
+
+[Forecast contracts](../spec/M09-production-forecast.md#local-copying-does-not-establish-global-purity)
+and [source-extracted fixtures](../tests/spec/check_production_forecast_source.py)
+execute actual estimator, mining, builder and RNG bodies with controlled
+resource/capacity/pricing inputs and projected fleet/order storage. They confirm
+live fleet marking, native seed changes/draw calls and generation-time messages;
+a 9,216-case mining eligibility matrix checks the flag predicate and first-null
+stop. Full UI/AI caller-context qualification, original-binary comparison and
+any separately scoped behavior decision remain open. No runtime repair or
+regression-baseline change was made by the specification review.
+
 ## Unsupported game-version diagnostics — fixed on main
 
 `file.c`: `FOpenFile` tested for exact version 2.85 before attempting its

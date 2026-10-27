@@ -33,6 +33,9 @@ module M09Production {
   predicate CanComplete(cost: seq<nat>,available: seq<nat>,pct: nat) {
     |cost|==|available| && forall i | 0<=i<|cost| :: cost[i]-Paid(cost[i],pct)<=available[i]
   }
+  function AlchemyMessage(conversions: int,calcOnly: bool,generating: bool): bool {
+    conversions!=0 && !calcOnly && generating
+  }
   function AlchemyCost(fTrait: bool): nat { if fTrait then 25 else 100 }
   function TerraformCost(fTT: bool,fCA: bool): nat { (if fTT then 70 else 100)/(if fCA then 2 else 1) }
   function ChangedHullCost(newCost: nat,oldCost: nat): int { Max(newCost/2,newCost-oldCost/2) }
@@ -43,6 +46,15 @@ module M09Production {
   }
   function BaseCost(cost: nat,fDiscount: bool): nat { ((if fDiscount then cost-cost/5 else cost)+1)/2 }
   datatype Status = NoneAuto | SomeAuto | SkippedAuto | CompleteAuto | BlockedSame | BlockedDiff | Complete | Some
+  // Native mdProdStat adapter; datatype declaration order is not its encoding.
+  function StatusWord(status: Status): nat
+    ensures StatusWord(status)<=7
+  {
+    match status
+    case Complete => 0 case CompleteAuto => 1 case SkippedAuto => 2
+    case SomeAuto => 3 case NoneAuto => 4 case Some => 5
+    case BlockedDiff => 6 case BlockedSame => 7
+  }
   function Result(auto: nat,built: nat,left: nat,oldPct: nat,newPct: nat): Status {
     if auto==2 then (if built==0 then NoneAuto else SomeAuto)
     else if auto!=0 && left==0 then (if built==0 then SkippedAuto else CompleteAuto)

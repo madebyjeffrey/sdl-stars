@@ -6,7 +6,12 @@ are distinguished below. Inspected 2026-10-24 at
 collection. No runtime behavior changes are proposed by this document.
 Canonical definitions: [entry point](M11-design-specification.dfy),
 [M11Design](dafny/M11-design.dfy).
-Verification: [M08–M11 collection results](README.md#m08m11-verification).
+[Native part availability](M11-part-availability.md) and
+[design buildability](M11-design-buildability.md) add the complete lookup and
+FCanBuildShdef controller contracts, reviewed 2026-10-26 at
+`e3222eb1fbdb01d68067231b5d5ef14a71759b30`.
+Verification: [current design-check integration](README.md#design-buildability-continuation)
+and earlier [M08–M11 collection results](README.md#m08m11-verification).
 
 [Workflow and state diagrams](#workflow-and-state-diagrams) provide a visual reading path.
 
@@ -94,19 +99,23 @@ Evidence: [buildui.c](../src/ui/buildui.c), `ShipBuilder`, `SlotDlg`,
 [parts.c](../src/core/parts.c), `FLookupPart`, `TechStatus`.
 Models: `Limit`, `FirstFree`, `Missing`, `TechStatus`, `Lookup`, `CanBuild`.
 
-`FLookupPart` first checks category/item validity, applies trait/visibility
-restrictions and then technology status. Invalid and restricted are distinct
-from future technology. With all six requirements met, the part is available.
+`FLookupPart` queries primary first in player context, then checks category/item
+validity, assigns the catalog pointer and applies trait/visibility restrictions
+before technology status. Invalid and restricted are distinct
+from future technology. For an allowed row with all six requirements met, the part is available.
 One missing level in the current research field is NextTech; a larger deficit
 in that sole field returns its encoded later status. Other missing-field
 combinations are OtherTech. `Later` stores the source deficit-plus-one code;
-it is not an estimated number of years. The category/trait/hidden-part table is
-E11-1 and must come from the current catalog/source, not inferred from names.
+it is not an estimated number of years. The complete [native category/trait/hidden-part table](M11-part-availability.md)
+now has checked contracts, pointer/query effects and current catalog/source
+fixtures. Full caller/context/native memory refinement remains E11-1.
 
-`FCanBuildShdef` saves `idPlayer`, checks the hull and every occupied component
-for Available under the requested player, then restores the old context on
-success or failure. It is an availability test, not a general validator of
-arbitrary malformed slot layouts. Enemy detail and gifted designs have separate
+[FCanBuildShdef](M11-design-buildability.md) in [util.c](../src/core/util.c)
+saves `idPlayer`, performs the signed-hull/byte-item projection, checks hull then
+occupied components for exactly Available, and restores the old context on
+ordinary true/false returns. It has no up-front slot-count/target validator;
+first invalid native reads and nonreturning calls have no general restoration
+promise. It is an availability test rather than a complete design validator. Enemy detail and gifted designs have separate
 copy/display constraints.
 
 ### 3.2 Allocate and copy
@@ -197,6 +206,10 @@ Croby Sharmor/Langston Shell add 65 armor per component; Multi Cargo Pod adds
 for nonnegative totals. Power cache resets to -1 after recalculation.
 `GetTrueHullCost` reads these stored totals; M09 alone owns base upgrade credits
 and final base construction discount, so callers must not apply those twice.
+The [M09 native cost companion](M09-production-costs.md) now defines complete
+caller vector/slot arithmetic over these quote words. It preserves signed
+reinterpretation, native narrowing and trait contexts; M11 still owns quote
+derivation and its undefined pricing branches.
 
 The aggregate model consumes catalog/pricing projections; it does not generate
 all stats from YAML. Cargo, fuel, scanning, jamming, cloaking, mine, terraforming
@@ -212,7 +225,7 @@ promoted from Open to implemented.
 | ID / story | Given / When / Then | Rule / source | Evidence / gap |
 | --- | --- | --- | --- |
 | <a id="m11-ac01"></a>M11-AC01 / US01, US06 | Given one missing level in the current research field, when checking technology, then return NextTech; another missing field changes it to OtherTech. | `TechStatus`; `parts.c` | Vectors; full catalog/hidden-part matrix Open. |
-| <a id="m11-ac02"></a>M11-AC02 / US01, US06 | Given an available hull and one restricted occupied part, when checking buildability, then reject and restore the caller's player context. | `CanBuild`, E11-1; `FCanBuildShdef` | `BuildNeedsEveryPart`, vector; context restoration source-only. |
+| <a id="m11-ac02"></a>M11-AC02 / US01, US06 | Given an available hull and one restricted occupied part, when checking buildability, then reject and restore the caller's player context. | `CanBuild`, `Check`/`Traverse`; [FCanBuildShdef controller](M11-design-buildability.md). | Checked semantic refinement/ordinary restoration, `BuildNeedsEveryPart`, actual controller+lookup/race/technology composition and native frames. Full caller/lifetime qualification remains E11-1. |
 | <a id="m11-ac03"></a>M11-AC03 / US02 | Given a free slot, when copying an enemy/gift design, then reject unavailable hulls or strip unavailable parts before editing the new entry. | `FirstFree`, E11-1/2; `SlotDlg` | Source; adversarial full-roster/gift-copy matrix Open. |
 | <a id="m11-ac04"></a>M11-AC04 / US03 | Given a full or incompatible slot, when dropping a component, then refuse; compatible addition cannot exceed capacity. | `SlotAccepts`, `Filled`; `IDropPart` | `FillBound`; designer harness drag/remove/reinsert. |
 | <a id="m11-ac05"></a>M11-AC05 / US03, US04 | Given a ship with no engine in slot zero, when accepting, then remain editing and alert; a starbase is exempt. | `CanAccept`, `Finish`; `SlotDlg` | Vector/source; no-engine alert UI case Open. |
@@ -221,6 +234,17 @@ promoted from Open to implemented.
 | <a id="m11-ac08"></a>M11-AC08 / US06 | Given 24 armor components with 1500 points and RS, when calculating armor contribution, then obtain 18000 rather than a signed 16-bit overflow before halving. | `Armor`; `UpdateShdefCost` | Vector; `test_UpdateShdefCost_rs_armor_overflow`. |
 | <a id="m11-ac09"></a>M11-AC09 / US06 | Given cost 100 and one excess technology level without BET, when miniaturizing, then cost is 96; maximum discounts are 75% ordinary and 80% BET. | `Miniaturized`, `Discount`; `GetTruePartCost` | Vectors; complete trait-order/cost adapter Open. |
 | <a id="m11-ac10"></a>M11-AC10 / US04, US06 | Given accepted component edits, when recalculating, then aggregate cost/mass, retain field widths and invalidate cached power before later consumers use it. | `TotalCost`, `TotalMass`, `Stored`, E11-4; `UpdateShdefCost` | Vectors, `StoredWidth`, designer workflow and armor units; all-stat equivalence Open. |
+| <a id="m11-ac11"></a>**M11-AC11** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given six signed level/requirement bytes and any packed current field, preserve source status codes 1, 2, deficit+1 or 99; the range is 1..256 and never Invalid. | [Native status](dafny/M11-native-availability.dfy) `TechStatus`, `TechProjection`, `Code`, vectors. | Actual signed-byte/current/missing-field fixtures; raw deficit 98 can encode 99 without a semantic inverse. |
+| <a id="m11-ac12"></a>**M11-AC12** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given an unrecognized mask or out-of-range byte item, query primary first in player context, return Invalid and preserve the prior union pointer; headless skips the primary getter. | `Kind`, `Lookup`, `LookupRow`; [lookup workflow](M11-part-availability.md#lookup-workflow-and-pointer-effects). | All uint16 masks, byte extents, exact call order and native pointer/frame checks; valid native caller storage remains required. |
+| <a id="m11-ac13"></a>**M11-AC13** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given a valid item, assign its catalog pointer before ordered category/trait denials; return Restricted without a technology call on denial. Retain shield/armor/beam primary restrictions in headless context. | `Policy`, `Lookup`, `Address`, vectors; [all-category inventory](M11-part-availability.md#category-policy-inventory). | Actual primary/trait/headless cases and every catalog pointer, including denied items; full caller/lifetime qualification remains E11-1. |
+| <a id="m11-ac14"></a>**M11-AC14** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given a source trader-exclusive category/item pair, hide it in player context exactly when its own grant bit is absent; headless and unmatched masks/pairs remain unhidden. | `TraderFlag`, `Hidden`, `HiddenMask`; native `FShouldPartBeHidden`. | Every uint16 trader word at all twelve pairs and every uint16 mask; context/catalog lifetimes and real browser presentation remain separate. |
+| <a id="m11-ac15"></a>**M11-AC15** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given an allowed valid item, return 1 headless or query actual technology in player context; preserve short-circuit getter order and the helper's observed PLAYER/GAME/global/HS input frame. | `Policy`, `Lookup`/`LookupRow` result/call contract; [native evidence](M11-part-availability.md#evidence-and-remaining-qualification). | Exact source-call sequences, native full-byte player/game/part/requirement comparisons and identity checks. Mathematical result contracts and finite native frame evidence do not prove universal C memory/caller refinement. |
+| <a id="m11-ac16"></a>**M11-AC16** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given a hull word, classify by signed-16 comparison with 32 before eight-bit item assignment; raw 288 selects base item zero and raw 32768 selects ship item zero. | [Controller model](dafny/M11-design-buildability.dfy) `HullRequest`, `HullVectors`; util.c source. | All 65536 native hull words; raw aliases do not become approved design IDs. |
+| <a id="m11-ac17"></a>**M11-AC17** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given a returning check with valid native storage, select the requested player or -1 headless, and restore the exact saved signed-word global on ordinary true/false return. | `Selected`, `Finish`, `Check`/`Traverse` postconditions; [interface/domain](M11-design-buildability.md#interface-and-source-domain). | Actual helper composition, every saved global word, positive/headless targets and exact getter contexts; undefined/nonreturning paths have no ordinary restoration guarantee. |
+| <a id="m11-ac18"></a>**M11-AC18** / [M11-US03](#m11-us03), [M11-US06](#m11-us06) | Given an available hull and bounded slot storage, visit occupied slots in order, skip count-zero garbage, and query each positive quantity once. Complete with at most seventeen lookups. | `SlotRequest`, `Requirements`, `Traverse`, `Check`; canonical `CanBuild` refinement. | Every occupancy mask and each catalog row/terminator at every slot; native lookup/call order and byte quantities. |
+| <a id="m11-ac19"></a>**M11-AC19** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given hull or component status other than exactly 1, reject at that lookup without querying later parts; hull rejection can precede an oversized declared count. | `RejectBeforeExtent`, `Check`, `Traverse`; [ordered workflow](M11-design-buildability.md#ordered-workflow-rejection-and-restoration). | All byte counts with hull/component failure alternatives, native early-exit and restoration frames; positive future codes still reject. |
+| <a id="m11-ac20"></a>**M11-AC20** / [M11-US03](#m11-us03), [M11-US06](#m11-us06) | Given zero declared slots, let the hull alone determine this availability result; free/gift metadata, engine/capacity/compatibility and construction prerequisites are separate caller rules. | `HullOnly`, `Check`, canonical `CanBuild`; [handoffs](M11-design-buildability.md#caller-handoffs-and-remaining-integration). | Actual free/gift/count/unused-byte frames; a TRUE helper result is not complete design or production acceptance. |
+| <a id="m11-ac21"></a>**M11-AC21** / [M11-US01](#m11-us01), [M11-US06](#m11-us06) | Given an invalid target or a reached seventeenth slot read, retain the modeled selected-player/probe prefix and an undefined-domain marker, without inventing FALSE or restoration. | `ValidPlayer`, `Check`, `EmptyOverrun`; [undefined domains](M11-design-buildability.md#undefined-domains-and-failure-prefixes). | Native candidates are excluded before undefined C execution; earlier rejection may remain defined. Full memory/caller qualification stays E11-1/S06. |
 
 ## 5. Interaction and quality requirements
 
@@ -238,7 +262,7 @@ promoted from Open to implemented.
 
 | Boundary | Rules / reason not fully formalized | Owner / next evidence |
 | --- | --- | --- |
-| E11-1 | Category bounds, full trait/hidden-part availability table, enemy knowledge, tech vector extraction and temporary player restoration. `TechStatus`/`CanBuild` formalize the decision after faithful projection. | M11/S03/M12/M19; versioned catalog/trait fixtures. |
+| E11-1 | All category/trait/trader/technology decisions, query order and pointer effects now have [native lookup contracts](M11-part-availability.md), signed/natural refinement and actual generated-table/source fixtures. The [complete build-check controller](M11-design-buildability.md) now specifies hull/slot order, raw widths, ordinary context restoration, semantic CanBuild refinement and undefined-read prefixes, with actual helper composition fixtures. [M19 construction eligibility](M19-construction-buildability.md) now consumes that outcome through checked roster/free/guard/metadata contracts and actual FBuildObject/Produce integration cases. Remaining obligations are full native memory/alias/lifetime and caller/context extraction, enemy knowledge and UI/category workflows. M12 can now construct a proved complete scan from a shaped catalog/context; actual host state integration remains separate. | M11/S03/M12/M19/S06; native memory/lifetime/caller mapping and browser/knowledge/annual integration; ordinary FCanBuildShdef restoration now has checked contracts and composed source evidence. |
 | E11-2 | Free-slot UI dispatch, copy-name generation, AR protections across paths, roster counters/logs, queued-progress checks, confirmation and destruction/queue-removal cascades. `Finish` is local edit outcome only. | M11/M09/M10/S01; full-roster and populated deletion/decline scenarios. |
 | E11-3 | Native hit testing, category bit masks, drag capture, quantity modifiers, source-slot decrement, removal and preview side effects. Scalar acceptance/fill is checked, not every gesture. | M11/S05; keyboard/display/drop-state qualification. |
 | E11-4 | Excess-tech extraction, complete special-part/trait pricing order and flags, per-field accumulation/native widths, lazy caches and all other hull capabilities. Existing scoring/speed is canonical; a complete catalog-to-derived-design proof remains open. | M11/S03/S04 and consuming modules; arithmetic companion and catalog-driven tests. |
