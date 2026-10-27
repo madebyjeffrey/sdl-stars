@@ -60,7 +60,7 @@ an error. Current readers do not uniformly implement this proposed workflow;
 | <a id="s01-ac02"></a>S01-AC02 / US01 / Observed | Given text at a UTF-8 byte boundary, when written/read through bounded text adapters, then preserve complete code points and reject invalid encodings according to the adapter contract. | [Text records](S01-game-file-records.md#32-user-strings); `FUtf8`, `ReadText`, `ReadCompressed`; existing S01-A vectors. | Encoding tests and codec witnesses; not a claim about every legacy/raw reader. |
 | <a id="s01-ac03"></a>S01-AC03 / US02 / Observed | Given one replayed command fails and another follows, when `FRunLogFile` runs, then attempt the later command and aggregate failure without undoing prior effects. | [Orders](S01-game-file-orders.md#4-identity-replay-and-failure); S01Orders effects and M06 `ReplaySucceeded`. | Source/model projection; all command combinations/partial effects are not exhaustively tested. |
 | <a id="s01-ac04"></a>S01-AC04 / US02 / Observed | Given an orders envelope that differs in year/player/game, then validation depends on the actual entry point; the proposed typed match rejects it, while the raw loader's documented checks remain narrower. | [Validation by entry](S01-game-file-validation.md#1-validation-by-entry-point); S06 `Matches`, S01 file predicates. | Explicit source distinction; prevents treating a schema predicate as a universally enforced check. |
-| <a id="s01-ac05"></a>S01-AC05 / US03 / Observed | Given a successful later-player-turn publication, then retain unrelated player files/history and retire the affected old orders as specified; restoration failure remains a recoverable-state obligation. | [External publication](S01-game-file-external.md#4-importexport-publication-boundaries); `PublishLaterTurn`, `FTransition`, `FImportEffect`. | Existing S01-A24–A27 and library tests; no crash-atomic family guarantee. |
+| <a id="s01-ac05"></a>S01-AC05 / US03 / Observed | Given a successful later-player-turn publication with orders presence reported TRUE, retain unrelated player files/history and retire the affected old orders; a FALSE orders query can skip retirement despite native TRUE. Restoration failure remains a recovery obligation. | [External publication](S01-game-file-external.md#4-importexport-publication-boundaries); `PublishLaterTurn`, `FTransition`, `FImportEffect`. | Existing S01-A24–A27 and library tests; no crash-atomic family guarantee. |
 | <a id="s01-ac06"></a>S01-AC06 / US04 / Proposed | Given a truncated/malformed candidate or invalid references, when a strict adapter validates, then reject before publishing candidate state; compatibility repairs and unknown-tag policy must be explicit. | [Strict decoder](S01-game-file-validation.md#2-proposed-strict-decoder-contract); `ReadRecord`, `PublishDecoded` and kind-specific predicates. | Formal bounded predicates; end-to-end strict C adapter and several policies remain open. |
 
 ### Interaction and quality requirements
@@ -481,8 +481,9 @@ and validate every gameplay field before copying.
 A standalone later `.mN` can use the existing matching universe. Match by
 internal game identity; prompt for a destination if multiple managed copies
 match. An identical file is a no-op. For a later turn, stage and verify the new
-file, preserve the old one, replace it, then retire only that player's orders;
-if retirement fails, attempt restoration. First-time import for a player retains
+file, query orders presence, preserve the old one, replace it, then retire only
+that player's orders when the query reported TRUE. A FALSE query can leave old
+orders despite success; if retirement fails, attempt restoration. First-time import for a player retains
 any existing orders/history. Same-year or older changed turns use explicit
 Cancel/Replace/Separate Copy decisions and conflict backups. Details and failure
 boundaries are in [External formats](S01-game-file-external.md).
@@ -559,7 +560,10 @@ function PublishDecoded<T>(prior: T, candidate: Candidate<T>): T
 The caller must establish validity before supplying `Valid(value)`; this function
 specifies publication, not decoding. `PublishLaterTurn` separately uses a
 `requires FLaterTurn(...)` precondition and postconditions for target replacement,
-order retirement and preservation of the rest of the managed game.
+order retirement and preservation of the rest of the managed game. This is the
+completed logical effect; native TRUE alone does not establish the orders-query
+premise. The [M01 publication companion](M01-import-publication.md) specifies
+source-specific partial effects and return/cleanup/restore outcomes.
 
 This is proposed API separation. Preserving the wire format is required;
 changing malformed-input acceptance, replay side effects, atomicity, or gameplay
@@ -575,7 +579,7 @@ repairs is separate implementation work with its own tests and decisions.
 | Load/replay | Mutates globals during parse and command application; failure is not rollback. General session-load failure destroys loaded state. |
 | Managed race save | Writes a staged file, closes it, then `ReplaceNativeFile`; ordinary replace failure removes stage and preserves previous destination. This is not a promise of recovery from every long-jump or power loss. |
 | Metadata / ZIP export | Write temporary file, check write/close, replace final destination. Failure removes temporary output when reached through normal cleanup. |
-| Later-turn import | Stage, recheck, preserve previous turn, replace, retire orders; restoration attempted on failure, with recovery path reported if restoration fails. |
+| Later-turn import | Stage, recheck, query orders, preserve previous turn, replace, retire observed orders. FALSE query skips retirement despite success; failed retirement attempts restoration. [M01 outcomes](M01-import-publication.md#first-player-and-later-turn-publication) distinguish cleanup remnants and failed recovery. |
 | Conflict replacement / rename | Stage complete family, move existing folder to hold, publish replacement, restore hold on failure; cleanup failures can leave a recoverable held copy. |
 | User cancellation | No dependent publication should occur; race-name/password confirmation and library conflict choices return failure/cancel. Existing external import sources are copied, not edited. |
 

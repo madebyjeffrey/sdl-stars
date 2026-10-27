@@ -491,7 +491,11 @@ adds `trunc(K/5)`. For AR, `K=0` unless the planet is owned and has a starbase; 
 below. `CalcPlanetMaxPop` looks up the authoritative planet by ID, while resource calculation
 can use a population snapshot. Race inputs are in [M04-race-data-model.md](M04-race-data-model.md).
 Resource results pass through the source's 16-bit storage; normal game-domain values are assumed
-here.
+here. The [native economy companion](M08-colony-economy.md) supplies the full
+caller-width contracts, distinct stored/passed planet snapshots, signed-word
+publication and post-narrow zero replacement. It reuses these canonical
+capacity/effective-population/AR expression definitions; these scalar formulas
+alone do not establish all native input or helper-state correspondence.
 
 For a design's score classification, sum these contributions per occupied slot:
 
@@ -542,6 +546,10 @@ Slower Tech Advances is enabled, double the result **after** that race adjustmen
 `CostOfDevelopingItem` also doubles accumulated expenditure when subtracting progress in this
 mode and updates temporary tech levels while projecting successive levels. This is distinct from
 advantage-point pricing.
+The [M12 native quote/preview companion](M12-development-and-budget-quotes.md)
+specializes these canonical formulas with signed input widths, unsigned stored
+spending, ordered six-field quote/restoration and the research-budget controller.
+Its normal-domain refinement keeps this cost table/formula authoritative.
 
 Public Player Scores exposes opponents' score records when `turn >= 20` (year 2420). Own scores,
 dead-player scores, and scores after game over are written regardless of this switch. See

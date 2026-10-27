@@ -6,6 +6,7 @@ include "M13-relations.dfy"
 module M19Resolution {
   import opened S04Arithmetic
   import C = S01Codecs
+  import G = SharedGameState
   function WormholeMove(lastMove: nat,stable: int): int { Clamp(lastMove/5-2+stable,0,6) }
   function Concentration(raw: nat,home: bool,remote: bool,ar: bool): int {
     if raw<30 && home && (!remote || ar) then 30 else raw
@@ -14,6 +15,22 @@ module M19Resolution {
   opaque function Yield(scaled: nat,generating: bool,draw: nat): nat
     requires draw<100
   { scaled/100+(if scaled%100!=0 && generating && draw<scaled%100 then 1 else 0) }
+  function MiningDraws(scaled: nat,generating: bool): bool { generating && scaled%100!=0 }
+  datatype MiningFleet = MiningFleet(planet: int,player: int,dead: bool,orders: nat,firstTask: nat,mines: int)
+  datatype MiningSlot = Hole | Present(fleet: MiningFleet)
+  function RemoteEligible(f: MiningFleet,planet: int,player: int): bool {
+    f.planet==planet && f.player==player && !f.dead && f.orders<=1 && f.firstTask==G.TaskCode(G.RemoteMine) && f.mines>0
+  }
+  function MiningMarks(rows: seq<MiningSlot>,planet: int,player: int,ar: bool,remote: bool,apply: bool): seq<bool>
+    ensures |MiningMarks(rows,planet,player,ar,remote,apply)|==|rows|
+    decreases |rows|
+  {
+    if |rows|==0 || !ar || remote || rows[0].Hole? then seq(|rows|,i=>false)
+    else ([apply && RemoteEligible(rows[0].fleet,planet,player)]+MiningMarks(rows[1..],planet,player,ar,remote,apply))
+  }
+  lemma MiningHoleStops(tail: seq<MiningSlot>,planet: int,player: int,ar: bool,remote: bool,apply: bool)
+    ensures MiningMarks([Hole]+tail,planet,player,ar,remote,apply)==seq(1+|tail|,i=>false)
+  {}
   function DepletionBand(conc: nat): nat { if conc>100 then 100 else if conc<5 then 10 else if conc<25 then 25 else conc }
   function DepletionLeft(level: nat,conc: nat): nat { (if level==0 then 256 else level)*12500/256/DepletionBand(conc) }
   datatype Growth = Growth(change: int,remainder: int)
@@ -45,6 +62,13 @@ module M19Resolution {
   }
   lemma CarryBound(h: int,r: int) requires 0<=r<100 ensures 0<=Carry(h,r).remainder<100 {}
   lemma YieldBound(s: nat,g: bool,d: nat) requires d<100 ensures s/100<=Yield(s,g,d)<=s/100+1 { reveal Yield(); }
+  lemma {:isolate_assertions} MiningVectors() {
+    assert MiningDraws(50,true) && !MiningDraws(50,false) && !MiningDraws(100,true);
+    var miner:=Present(MiningFleet(5,0,false,1,3,2));
+    assert MiningMarks([miner],5,0,true,false,true)==[true];
+    assert MiningMarks([miner],5,0,true,false,false)==[false];
+    assert MiningMarks([Hole,miner],5,0,true,false,true)==[false,false];
+  }
   lemma {:isolate_assertions} AcceptanceVectors()
     ensures WormholeMove(100,0)==6 && WormholeMove(0,0)==0
     ensures Concentration(1,true,false,false)==30 && Concentration(1,true,true,false)==1

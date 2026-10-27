@@ -125,6 +125,18 @@ means no claim of a complete matching artifact set. Runtime lookup bounds,
 format placeholders and all font/render behavior remain explicit E03-2/E03-3
 obligations, especially arithmetic lookups not covered by a named range.
 
+The [native terraforming consumer](M08-terraform-selection.md) now maps each
+current TERRA row's six signed technology requirements, signed ability and
+unsigned resource cost into ordered capability selection. Its
+[actual-source fixture](../tests/spec/check_terraform_source.py) exports fresh
+rows and binds count/mask/sentinel identities, including signed cost assignment.
+This supplements S03-AC10 consumer evidence; it does not prove the whole generator,
+all catalog consumers or native alias/lifetime refinement.
+The [gate/scanner consumer](M08-colony-capabilities.md) likewise binds current
+SPECIALSB range and planetary requirement/ability rows. A valid assigned row
+pointer can accompany a denied availability result; consuming that metadata
+is separate from build/travel permission.
+
 ## 4. Acceptance and traceability
 
 All criteria below have **Observed** behavior status except where a rule is
@@ -143,6 +155,8 @@ not a proved runtime outcome. The dated collection run records actual checks.
 | <a id="s03-ac06"></a>**S03-AC06** / [S03-US03](#s03-us03) | Given ranked byte 30, when nibble-encoding it, then emit 15,15,0. | `Nibbles`, vectors; S01 decode |
 | <a id="s03-ac07"></a>**S03-AC07** / [S03-US03](#s03-us03) | Given encoded length 256 or a broken declared arithmetic range, when validating text, then reject the input. | `TextLength`, `Consecutive`; E03-2 parser |
 | <a id="s03-ac08"></a>**S03-AC08** / [S03-US04](#s03-us04) | Given a catalog-dependent behavior comparison, when identifying inputs, then include generator/schema and embedded-constant versions as well as YAML/text. | S03 inventory; E03-3 |
+| <a id="s03-ac09"></a>**S03-AC09** / [S03-US01](#s03-us01), [S03-US04](#s03-us04) | Given the current generated catalogs, preserve the sixteen research lookup extents in ascending slot-mask order, each below 256, and sum extents plus terminators to 255 calls. | [Research catalog limits](dafny/S03-research-catalog.dfy) `Limits`, `Calls`, `CurrentCalls`; [actual lookup/generated-enum fixture](../tests/spec/check_host_research_source.py). M12 owns [scan termination](M12-host-research-resolution.md#catalog-bound-and-host-control-progress); full dynamic availability/pointer refinement remains open. |
+| <a id="s03-ac10"></a>**S03-AC10** / [S03-US01](#s03-us01), [S03-US04](#s03-us04) | Given the current lookup and hidden-part rules, retain their 116 named catalog identities and sixteen ascending masks, binding them to fresh native enums while consumers select the actual requirement/ability row. | [Named identities](dafny/S03-lookup-identities.dfy), `Masks` and [native fixture](../tests/spec/check_part_availability_source.py); [M11 row/decision contract](M11-part-availability.md). C static assertions and full current-row export bind this snapshot; universal native alias/lifetime/caller refinement remains open. |
 
 ## 5. Interaction and quality requirements
 
