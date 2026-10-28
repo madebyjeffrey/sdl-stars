@@ -43,6 +43,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- The race wizard's habitability estimate no longer copies its 67-character
+  format string into a 32-byte stack buffer (`DrawRace2`). It formats the
+  decoded string directly. Turn generation and file formats are unchanged.
 - The scanner no longer leaves a band drawn out of place when it scrolls
   while a redraw is still pending (`ScrollScanner`), as after a wheel zoom
   followed at once by a trackpad scroll. The original drew the pending

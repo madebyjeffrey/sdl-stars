@@ -383,7 +383,48 @@ buffer in the 2.8 build). Nothing read them before they were set again, so
 results did not change; a hardened `strcpy` (macOS) stops the program.
 
 **2.9:** found running `stars-host -a` on macOS. `FWasRaceFile` keeps only
-the file name, cut to fit, as the race dialogs store it.
+the file name, cut to fit. The race dialogs' own copies are discussed below.
+
+### Race Wizard Habitability Message Overrun — fixed in 2.9
+
+`raceui.c`: `DrawRace2`. The habitability estimate copies
+`idsCanExpect1DPlanetsWillHabitable` (67 characters plus its terminator)
+into the original 32-byte `szT` stack buffer before formatting it.
+An AddressSanitizer harness running the function with 20–80 habitability
+bands reproduces the overwrite in `CchGetString`.
+
+**2.9:** `DrawRace2` formats the decoded string directly into `szWork`.
+The same harness completes with the expected estimate. Turn generation
+and file formats are unchanged; the host regression matches the native
+baseline through turn 150 in every scenario.
+
+### Race Dialog File Name Overruns — located
+
+`raceui.c`: `FSaveRace`; `mdi.c`: `FOpenGame` (race-only path).
+Both copy `&szFile[ofn.nFileOffset]` into the 16-byte global `szRaceFile`
+with `strcpy`. The file dialogs accept paths up to 255 characters and do
+not restrict the file name to 15 characters, so a longer race file name
+overwrites adjacent globals. These two copies remain unchecked; the
+`FWasRaceFile` repair above does not cover them. Located by source review;
+the Windows dialogs have not been exercised with a long file name.
+
+### Record Name Overruns — located
+
+`file.c`: `FReadShDef`, `UnpackBattlePlan`. Their uncompressed-name paths
+copy record text into the 32-byte `HUL.szClass` and `BTLPLAN.szName` fields
+with `strcpy`, without checking the length. A harness calling the actual
+`UnpackBattlePlan` function with a 64-character name overwrites 33 guard
+bytes after its `BTLPLAN`. This reproduces the reader's overwrite, not a
+complete file-load scenario. The ship-design path is located by source
+review.
+
+`utilgen.c`: `FDecompressUserString`; `file.c`: `FReadShDef`.
+The decoder accepts up to `*pcOut` decoded characters and then writes a
+terminator. `FReadShDef` passes 32 for its 32-byte `HUL.szClass`, allowing
+a one-byte overrun for exactly 32 decoded characters. A harness passing
+16 zero bytes (32 spaces) to the actual decoder with a 32-byte output
+buffer confirms that the terminator overwrites the following guard byte.
+These reader and decoder issues remain unfixed.
 
 ### AR Starter Colonies — candidate
 

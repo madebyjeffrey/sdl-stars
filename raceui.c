@@ -469,7 +469,7 @@ void DrawRace2(HWND hwnd, HDC hdc, int16_t iDraw) {
     int16_t iPit;
     int16_t bt;
     int16_t iMax;
-    char    szT[32];
+    char    szT[96];
     int16_t dy;
     int16_t iMin;
     int16_t bkMode;
@@ -605,8 +605,7 @@ void DrawRace2(HWND hwnd, HDC hdc, int16_t iDraw) {
             if (l2 == 1) {
                 cch = CchGetString(l == 1000000 ? idsPlanetsWillHabitableRace : idsVirtuallyPlanetsWillHabitableRace, szWork);
             } else {
-                CchGetString(idsCanExpect1DPlanetsWillHabitable, szT);
-                cch = wsprintf(szWork, szT, l2);
+                cch = CchSprintf(szWork, PszGetCompressedString(idsCanExpect1DPlanetsWillHabitable), l2);
             }
             rc.left = vrgrcRCW->left;
             rc.top = vrgrcRCW[15].top + dyArial8 + 8;
