@@ -37,8 +37,8 @@ void BattleVCR(int16_t iBattle) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         goto LCleanup;
     }
-    vrgtok = LpAlloc(vlpbdVCR->ctok * sizeof(TOK), htMisc);
-    vrgdpVCR = LpAlloc(vlpbdVCR->ctok * 4, htMisc);
+    vrgtok = (TOK *)LpAlloc(vlpbdVCR->ctok * sizeof(TOK), htMisc);
+    vrgdpVCR = (int32_t *)LpAlloc(vlpbdVCR->ctok * 4, htMisc);
     vcStepVCR = SetVCRBoard(30000) - 1;
     vcRound = viRound;
     SetVCRBoard(-1);
@@ -583,7 +583,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
     if (fCreatedDC) {
         hdc = GetDC(hwndVCRDlg);
     }
-    hbrSav = SelectObject(hdc, hbrButtonFace);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
     bkMode = SetBkMode(hdc, TRANSPARENT);
     memset(rgfSeen, 0, 0x100);
     GetClientRect(hwndVCRDlg, &rc);
@@ -841,7 +841,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                     y += 5 * dyArial8;
                 }
                 SetRect(&rc, x, y + 4, x + dyArial8 + 4, y + dyArial8 + 8);
-                DrawBtn(hdc, &rc, 8, FALSE, "?");
+                DrawBtn(hdc, &rc, 8, FALSE, (char *)"?");
             }
         }
         iStart = 0;
@@ -887,7 +887,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
         }
         if ((vbrcVCRFocus == (((y & 0xf) << 4 | (x & 0xf)) & 0xff) && viVCRFocus == -1) ||
             (viVCRFocus >= 0 && vrgtok[viVCRFocus].brc == (((y & 0xf) << 4 | (x & 0xf)) & 0xff) && vrgtok[viVCRFocus].csh > 0)) {
-            hbrSav = SelectObject(hdc, hbrBlue);
+            hbrSav = (HBRUSH)SelectObject(hdc, hbrBlue);
             PatBlt(hdc, (dxyVCRSquare + 3) * x + 10, (dxyVCRSquare + 3) * y + 10, dxyVCRSquare + 1, 2, PATCOPY);
             PatBlt(hdc, (dxyVCRSquare + 3) * x + 10, (dxyVCRSquare + 3) * y + 10, 2, dxyVCRSquare + 1, PATCOPY);
             PatBlt(hdc, (dxyVCRSquare + 3) * x + 10, (dxyVCRSquare + 3) * y + 10 + dxyVCRSquare, dxyVCRSquare + 1, 2, PATCOPY);
@@ -1075,7 +1075,7 @@ void AnimateAttack(HDC hdc) {
                         DeleteDC(hdcMem);
                         goto LFinishUp;
                     }
-                    hbmpSav = SelectObject(hdcMem, hbmpScreen);
+                    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScreen);
                     cFrame = max(abs(dx), abs(dy)) * (!(grfWeapon & bitFTorp) ? 4 : 8);
                     ptBase = ptTorp;
                     dxFrame = ptTorp.x - ptDest.x;

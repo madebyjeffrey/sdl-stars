@@ -212,7 +212,7 @@ int16_t CBuildProdItem(PLANET *lppl, PROD *lpprod, PROD *pprodPartial, int32_t *
     cAlchemy = 0;
     pctInitial = lpprod->pct;
     prod = *lpprod;
-    GetProductionCosts(lppl, lpprod, rgCost, lppl->iPlayer, TRUE);
+    GetProductionCosts(lppl, lpprod, (uint32_t *)rgCost, lppl->iPlayer, TRUE);
     cBuilt = 0;
     fAutoBuild = prod.grobj == grobjPlanet && prod.iItem < mdIdleFactory;
     if (fAutoBuild) {

@@ -40,7 +40,7 @@ BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap) {
     if (!lpsnap || lpsnap->rgobj || lpsnap->cObject != 0 || !FScannerReady()) return FALSE;
     c = (size_t)game.cPlanMax + (size_t)cFleet + (size_t)cThing;
     if (c > SIZE_MAX / sizeof(*lpobj)) return FALSE;
-    lpsnap->rgobj = calloc(c, sizeof(*lpobj));
+    lpsnap->rgobj = (SCANOBJECT *)calloc(c, sizeof(*lpobj));
     if (!lpsnap->rgobj) return FALSE;
     lpsnap->lidGame = game.lid; lpsnap->turn = game.turn;
     lpsnap->idPlayer = idPlayer; lpsnap->iZoom = iScanZoom;

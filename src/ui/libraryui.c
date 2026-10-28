@@ -83,7 +83,7 @@ static void RestoreRaceState(const RACESTATE *prs, int16_t fRestoreRace, int16_t
 }
 
 static int16_t FindLibraryName(void *lpData, const char *pszFile) {
-    LIBRARYNAMECHECK *plnc = lpData;
+    LIBRARYNAMECHECK *plnc = (LIBRARYNAMECHECK *)lpData;
     if (!SDL_strcasecmp(plnc->pszName, pszFile)) {
         plnc->fFound = TRUE;
         return FALSE;
@@ -706,7 +706,7 @@ static void GetRaceLibraryStem(const char *pszName, char *pszStem) {
 }
 
 static int16_t FindRaceVersion(void *lpData, const char *pszName) {
-    RACEVERSIONS *prv = lpData;
+    RACEVERSIONS *prv = (RACEVERSIONS *)lpData;
     const char *pch = strrchr(pszName, '.');
     char szPath[512];
     PLAYER plr;
@@ -1360,7 +1360,7 @@ static int16_t FLibraryNameAvailableExcept(const char *pszName, const char *pszE
 }
 
 static int16_t FCopyLibraryGameEntry(void *lpData, const char *pszName) {
-    LIBRARYGAMECOPY *plgc = lpData;
+    LIBRARYGAMECOPY *plgc = (LIBRARYGAMECOPY *)lpData;
     char szSource[512], szTarget[512];
     const char *pszTargetFile;
     LIBRARYGAMECOPY lgb;
@@ -1424,7 +1424,7 @@ static int16_t FBackupDirectoryName(const char *pszName) {
 }
 
 static int16_t CopyImportEntry(void *lpData, const char *pszName) {
-    LIBRARYIMPORT *pli = lpData;
+    LIBRARYIMPORT *pli = (LIBRARYIMPORT *)lpData;
     char szSource[512], szTarget[512];
     int iplr;
     DtFileType dt;
@@ -1485,7 +1485,7 @@ typedef struct {
 } LIBRARYBACKUP;
 
 static int16_t CopyBackupEntry(void *lpData, const char *pszName) {
-    LIBRARYBACKUP *plb = lpData;
+    LIBRARYBACKUP *plb = (LIBRARYBACKUP *)lpData;
     int iplr;
     DtFileType dt;
     char szSource[512], szTarget[512], szDirectory[512];
@@ -1501,7 +1501,7 @@ static int16_t CopyBackupEntry(void *lpData, const char *pszName) {
 }
 
 static int16_t CopyBackupDirectory(void *lpData, const char *pszName) {
-    LIBRARYIMPORT *pli = lpData;
+    LIBRARYIMPORT *pli = (LIBRARYIMPORT *)lpData;
     LIBRARYBACKUP lb;
     char szSource[512], szTarget[512];
     if (!FBackupDirectoryName(pszName)) return TRUE;
@@ -1528,7 +1528,7 @@ static int16_t RemoveImportChild(void *lpData, const char *pszFile) {
 
 static int16_t RemoveImportFile(void *lpData, const char *pszFile) {
     char szFile[512];
-    const char *pszRoot = lpData;
+    const char *pszRoot = (const char *)lpData;
     CchSnprintf(szFile, sizeof(szFile), "%s%s%s", pszRoot, szDirSep, pszFile);
     if (FNativeDirectoryExists(szFile)) {
         FNativeEnumerateDirectory(szFile, RemoveImportChild, szFile);
@@ -1575,7 +1575,7 @@ typedef struct {
 } LIBRARYEXPORT;
 
 static int16_t CopyGameExportEntry(void *lpData, const char *pszName) {
-    LIBRARYEXPORT *ple = lpData;
+    LIBRARYEXPORT *ple = (LIBRARYEXPORT *)lpData;
     int iplr;
     DtFileType dt;
     char szSource[512], szTarget[512];
@@ -1616,7 +1616,7 @@ typedef struct {
 } LIBRARYEXPORTMOVE;
 
 static int16_t MoveGameExportEntry(void *lpData, const char *pszName) {
-    LIBRARYEXPORTMOVE *plem = lpData;
+    LIBRARYEXPORTMOVE *plem = (LIBRARYEXPORTMOVE *)lpData;
     char szSource[512], szTarget[512];
     CchSnprintf(szSource, sizeof(szSource), "%s%s%s", plem->pszSource, szDirSep, pszName);
     CchSnprintf(szTarget, sizeof(szTarget), "%s%s%s", plem->pszTarget, szDirSep, pszName);
@@ -1725,7 +1725,7 @@ LFail:
 }
 
 static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
-    HWND hwnd = lpData;
+    HWND hwnd = (HWND)lpData;
     char *pszPath;
     (void)iFilter;
     if (!rgpszPath || !rgpszPath[0]) return;
@@ -1750,7 +1750,7 @@ void ShowLibraryExportFolderPicker(HWND hwnd) {
 }
 
 static int16_t FindImportUniverse(void *lpData, const char *pszName) {
-    char *pszStem = lpData;
+    char *pszStem = (char *)lpData;
     const char *pch = strrchr(pszName, '.');
     if (!pch || SDL_strcasecmp(pch, ".xy")) return TRUE;
     if (pszStem[0]) { pszStem[0] = '!'; return TRUE; }
@@ -1768,7 +1768,7 @@ typedef struct {
 } LIBRARYTURNMATCH;
 
 static int16_t FindLibraryTurnMatch(void *lpData, const char *pszName) {
-    LIBRARYTURNMATCH *plm = lpData;
+    LIBRARYTURNMATCH *plm = (LIBRARYTURNMATCH *)lpData;
     char szUniverse[512], szMetadata[512];
     FILE *pf;
     int32_t lidGame;
@@ -1994,7 +1994,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
 }
 
 static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
-    HWND hwnd = lpData;
+    HWND hwnd = (HWND)lpData;
     char *pszPath;
     (void)iFilter;
     if (!rgpszPath || !rgpszPath[0]) return;
@@ -2175,7 +2175,7 @@ typedef struct {
 static int16_t RemoveLibraryGameTree(const char *pszDirectory);
 
 static int16_t RemoveLibraryGameEntry(void *lpData, const char *pszName) {
-    LIBRARYGAMEREMOVE *plgr = lpData;
+    LIBRARYGAMEREMOVE *plgr = (LIBRARYGAMEREMOVE *)lpData;
     char szPath[512];
     int16_t fDirectory, fLink;
     int cch = CchSnprintf(szPath, sizeof(szPath), "%s%s%s", plgr->pszDirectory, szDirSep, pszName);
@@ -2244,13 +2244,14 @@ static int16_t FCreateLibraryGameStagePath(char *pszStage, size_t cchStage) {
 }
 
 static int16_t FCreateLibraryGameHoldPath(char *pszHold, size_t cchHold) {
+    int64_t cbExisting;
     uint32_t dwTick = DwTickCount();
     int i, cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszHold, cchHold, "%s%s.stars-game-old-%u-%u",
                           szLibraryRoot, szDirSep, dwTick, i);
         if (cch <= 0 || (size_t)cch >= cchHold) return FALSE;
-        if (!FNativeDirectoryExists(pszHold) && !FNativeFileSize(pszHold, &(int64_t){0})) return TRUE;
+        if (!FNativeDirectoryExists(pszHold) && !FNativeFileSize(pszHold, &cbExisting)) return TRUE;
     }
     return FALSE;
 }
@@ -2719,7 +2720,7 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
     LIBRARYGAMELISTITEM *rgNew;
     if (cLibraryGameList == cLibraryGameListMax) {
         cNew = cLibraryGameListMax ? cLibraryGameListMax * 2 : 32;
-        rgNew = SDL_realloc(rgLibraryGameList, (size_t)cNew * sizeof(*rgNew));
+        rgNew = (LIBRARYGAMELISTITEM *)SDL_realloc(rgLibraryGameList, (size_t)cNew * sizeof(*rgNew));
         if (!rgNew) return FALSE;
         rgLibraryGameList = rgNew;
         cLibraryGameListMax = cNew;
@@ -2766,7 +2767,7 @@ static int16_t ListLibraryGame(void *lpList, const char *pszName) {
         grfPlayers |= (uint16_t)(1u << iplr);
         rgturn[iplr] = turn;
     }
-    return !grfPlayers || FAddLibraryGameListItem(lpList, pszName, iplrSaved, grfPlayers, rgturn);
+    return !grfPlayers || FAddLibraryGameListItem((HWND)lpList, pszName, iplrSaved, grfPlayers, rgturn);
 }
 
 static int16_t ListLibraryHostGame(void *lpList, const char *pszName) {
@@ -2789,7 +2790,7 @@ static int16_t ListLibraryHostGame(void *lpList, const char *pszName) {
         !FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, NULL, &fMulti) ||
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
         lidHost != lidUniverse) return TRUE;
-    i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    i = SendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }
 
@@ -2910,7 +2911,7 @@ typedef struct {
 } LIBRARYRACEENUM;
 
 static int16_t EnumLibraryRace(void *lpData, const char *pszName) {
-    LIBRARYRACEENUM *plre = lpData;
+    LIBRARYRACEENUM *plre = (LIBRARYRACEENUM *)lpData;
     char szPath[512];
     int64_t cbFile;
     if (!FPortableRaceFilename(pszName)) return TRUE;
@@ -2928,7 +2929,7 @@ int16_t FEnumerateLibraryRaces(FNativeDirectoryEntryProc pfnEntry, void *lpData)
 static int16_t ListLibraryRace(void *lpList, const char *pszName) {
     LRESULT i;
 
-    i = SendMessage(lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    i = SendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }
 

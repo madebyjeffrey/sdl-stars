@@ -61,7 +61,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             pt = sel.scan.pt;
             LogicalToScan(&pt);
             iRopSav = SetROP2(hdc, R2_XORPEN);
-            hpenSav = SelectObject(hdc, hpenYellow);
+            hpenSav = (HPEN)SelectObject(hdc, hpenYellow);
             for (i = 0; i < 2; i++) {
                 MoveToEx(hdc, pt.x - 300, pt.y - 300, NULL);
                 LineTo(hdc, pt.x + 300, pt.y + 300);
@@ -190,7 +190,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             /* Room for every fleet and thing here, a planet and a separator.
                The original stopped at 100 entries, so objects past them
                couldn't be picked (target list overload). */
-            rgid = LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = (int32_t *)LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
             if (scan.grobjFull & grobjPlanet) {
                 rgid[0] = scan.idpl;
                 rgid[1] = -1;
@@ -523,7 +523,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         if (hbmpScreen) {
             hdcScreen = hdc;
             hdc = hdcMem;
-            hbmpXSav = SelectObject(hdc, hbmpScreen);
+            hbmpXSav = (HBITMAP)SelectObject(hdc, hbmpScreen);
             SetWindowOrgEx(hdc, prc->left & 0xfff8, prc->top & 0xfff8, NULL);
             pt.y = 0;
             pt.x = 0;
@@ -533,7 +533,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
             rcDraw = *prc;
         }
     }
-    FillRect(hdc, prc, GetStockObject(BLACK_BRUSH));
+    FillRect(hdc, prc, (HBRUSH)GetStockObject(BLACK_BRUSH));
     rcClip = *prc;
     dExpand = (iScanZoom >= zoom200 && mdScanBase == scanViewPopulation) ||
                       (iScanZoom >= zoom100 && (mdScanBase == scanViewSurfaceMinerals || mdScanBase == scanViewMineralConc))
@@ -559,7 +559,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         id *= 2;
     }
     hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = SelectObject(hdcMem, hbmpScanner);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScanner);
     if (sel.grobj != grobjNone) {
         ptSelMain = sel.pt;
     } else {
@@ -588,8 +588,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         dc.fCovered = FALSE;
         dc.fHollowOut = FALSE;
         IntersectClipRect(hdc, rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
-        hbrSav = SelectObject(hdc, hbrRadar);
-        hpenSav = SelectObject(hdc, hpenRadar);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrRadar);
+        hpenSav = (HPEN)SelectObject(hdc, hpenRadar);
         lppl = lpPlanets;
         lpplMac = lpPlanets + cPlanet;
         for (; lppl < lpplMac; lppl++) {
@@ -748,8 +748,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         }
         SetBrushOrgEx(hdc, ptOrigin.x, ptOrigin.y, NULL);
         IntersectClipRect(hdc, rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
-        hbrSav = SelectObject(hdc, rghbrPat[0]);
-        hpenSav = SelectObject(hdc, GetStockObject(NULL_PEN));
+        hbrSav = (HBRUSH)SelectObject(hdc, rghbrPat[0]);
+        hpenSav = (HPEN)SelectObject(hdc, GetStockObject(NULL_PEN));
         ropSav = GetROP2(hdc);
         SetBkColor(hdc, 0);
         for (j = 0; j < 3; j++) {
@@ -826,8 +826,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
     }
     if (cThing != 0 && mdScanBase != scanViewNoPlayerInfo) {
         IntersectClipRect(hdc, rcClip.left, rcClip.top, rcClip.right, rcClip.bottom);
-        hbrSav = SelectObject(hdc, hbrShip);
-        hpenSav = SelectObject(hdc, hpenDkPurple);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrShip);
+        hpenSav = (HPEN)SelectObject(hdc, hpenDkPurple);
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
@@ -851,7 +851,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                     BitBlt(hdc, pt.x - 4, pt.y - 4, 9, 9, hdcMem, 9, 92, SRCAND);
                     BitBlt(hdc, pt.x - 4, pt.y - 4, 9, 9, hdcMem, 0, 92, SRCPAINT);
                 } else if (lpth->ith == ithMysteryTrader) {
-                    hbmpTrSav = SelectObject(hdcMem, hbmpScanShip);
+                    hbmpTrSav = (HBITMAP)SelectObject(hdcMem, hbmpScanShip);
                     crFore = SetTextColor(hdc, 16776960);
                     crBack = SetBkColor(hdc, 0);
                     GetDxDyOrientation(lpth->tht.ptDest.x - lpth->pt.x, lpth->tht.ptDest.y - lpth->pt.y, &ptO, &ptD);
@@ -891,7 +891,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
     if ((grbitScan & grbitScanFleetPaths) && mdScanBase != scanViewNoPlayerInfo) {
         id = sel.grobj == grobjFleet ? sel.fl.id : idflNone;
         id2 = sel.scan.grobj == grobjFleet ? rglpfl[sel.scan.ifl]->id : idflNone;
-        hpenSav = SelectObject(hdc, hpenStarbase);
+        hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
         for (i = 0; i < cFleet; i++) {
             lpfl = rglpfl[i];
             if (!rglpfl[i])
@@ -1014,8 +1014,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                             fTerra = TRUE;
                         }
                     }
-                    hbrSav = SelectObject(hdc, pctDesire < 0 ? hbrRadar : fTerra ? hbrDkYellow : hbrGreen);
-                    hpenSav = SelectObject(hdc, pctDesire < 0 ? hpenRadar : fTerra ? hpenDkYellow : hpenDkGreen);
+                    hbrSav = (HBRUSH)SelectObject(hdc, pctDesire < 0 ? hbrRadar : fTerra ? hbrDkYellow : hbrGreen);
+                    hpenSav = (HPEN)SelectObject(hdc, pctDesire < 0 ? hpenRadar : fTerra ? hpenDkYellow : hpenDkGreen);
                     if (pctDesire >= 0) {
                         dRad = pctDesire / 11 + 2;
                     } else {
@@ -1040,7 +1040,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         rc.right = rc.left + 9;
                         rc.top = pt.y - 20;
                         rc.bottom = rc.top + 8;
-                        FillRect(hdc, &rc, GetStockObject(BLACK_BRUSH));
+                        FillRect(hdc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
                         if (lppl->iPlayer == idPlayer) {
                             hbr = hbrBBlue;
                         } else if (rgplr[idPlayer].rgmdRelation[lppl->iPlayer] == 1) {
@@ -1065,7 +1065,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         goto LNormalScannerMode;
                     xOut = pt.x - vrgScanPO[iOff][0];
                     yOut = pt.y - vrgScanPO[iOff][1];
-                    hbrSav = SelectObject(hdc, hbrButtonFace);
+                    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
                     PatBlt(hdc, xOut - 2, yOut, vrgScanPO[iOff][2], 1, PATCOPY);
                     PatBlt(hdc, xOut - 2, yOut - vrgScanPO[iOff][2] + 1, 1, vrgScanPO[iOff][2], PATCOPY);
                     for (j = 0; j < 3; j++) {
@@ -1110,8 +1110,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         } else {
                             iRel = 3;
                         }
-                        hbrSav = SelectObject(hdc, iRel == 0 ? hbrShip : iRel == 3 ? hbrEnemy : hbrYellow);
-                        hpenSav = SelectObject(hdc, iRel == 0 ? hpenDkGreen : iRel == 3 ? hpenEnemy : hpenDkYellow);
+                        hbrSav = (HBRUSH)SelectObject(hdc, iRel == 0 ? hbrShip : iRel == 3 ? hbrEnemy : hbrYellow);
+                        hpenSav = (HPEN)SelectObject(hdc, iRel == 0 ? hpenDkGreen : iRel == 3 ? hpenEnemy : hpenDkYellow);
                         if (iScanZoom < zoom200) {
                             dRad = (dRad + 1) >> 1;
                         }
@@ -1140,21 +1140,21 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         BitBlt(hdc, pt.x - 5, pt.y - 5, 11, 11, hdcMem, 0, 69, SRCAND);
                         BitBlt(hdc, pt.x - 5, pt.y - 5, 11, 11, hdcMem, 0, yBmp, SRCPAINT);
                         if (fStarbase) {
-                            hbrSav = SelectObject(hdc, fStarbase == 2 ? hbrBlue : hbrYellow);
+                            hbrSav = (HBRUSH)SelectObject(hdc, fStarbase == 2 ? hbrBlue : hbrYellow);
                             PatBlt(hdc, pt.x + 4, pt.y - 6, 5, 5, BLACKNESS);
                             PatBlt(hdc, pt.x + 5, pt.y - 6, 3, 5, PATCOPY);
                             PatBlt(hdc, pt.x + 4, pt.y - 5, 5, 3, PATCOPY);
                             SelectObject(hdc, hbrSav);
                         }
                         if (fStargate) {
-                            hbrSav = SelectObject(hdc, hbrGreen);
+                            hbrSav = (HBRUSH)SelectObject(hdc, hbrGreen);
                             PatBlt(hdc, pt.x - 7, pt.y - 6, 5, 5, BLACKNESS);
                             PatBlt(hdc, pt.x - 6, pt.y - 6, 3, 5, PATCOPY);
                             PatBlt(hdc, pt.x - 7, pt.y - 5, 5, 3, PATCOPY);
                             SelectObject(hdc, hbrSav);
                         }
                         if (fMA) {
-                            hbrSav = SelectObject(hdc, hbrPurple);
+                            hbrSav = (HBRUSH)SelectObject(hdc, hbrPurple);
                             PatBlt(hdc, pt.x - 2, pt.y - 9, 5, 5, BLACKNESS);
                             PatBlt(hdc, pt.x - 1, pt.y - 9, 3, 5, PATCOPY);
                             PatBlt(hdc, pt.x - 2, pt.y - 8, 5, 3, PATCOPY);
@@ -1170,19 +1170,19 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         }
                         BitBlt(hdc, pt.x - 2, pt.y - 2, 5, 5, hdcMem, 11, yBmp, SRCCOPY);
                         if (fStarbase) {
-                            hbrSav = SelectObject(hdc, fStarbase == 2 ? hbrBlue : hbrYellow);
+                            hbrSav = (HBRUSH)SelectObject(hdc, fStarbase == 2 ? hbrBlue : hbrYellow);
                             PatBlt(hdc, pt.x + 3, pt.y - 4, 3, 3, PATCOPY);
                             SelectObject(hdc, hbrSav);
                         }
                         if (fStargate) {
-                            hbrSav = SelectObject(hdc, hbrGreen);
+                            hbrSav = (HBRUSH)SelectObject(hdc, hbrGreen);
                             PatBlt(hdc, pt.x - 5, pt.y - 4, 3, 3, BLACKNESS);
                             PatBlt(hdc, pt.x - 4, pt.y - 4, 1, 3, PATCOPY);
                             PatBlt(hdc, pt.x - 5, pt.y - 3, 3, 1, PATCOPY);
                             SelectObject(hdc, hbrSav);
                         }
                         if (fMA) {
-                            hbrSav = SelectObject(hdc, hbrPurple);
+                            hbrSav = (HBRUSH)SelectObject(hdc, hbrPurple);
                             PatBlt(hdc, pt.x - 1, pt.y - 6, 3, 3, BLACKNESS);
                             PatBlt(hdc, pt.x, pt.y - 6, 1, 3, PATCOPY);
                             PatBlt(hdc, pt.x - 1, pt.y - 5, 3, 1, PATCOPY);
@@ -1197,7 +1197,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
     }
     if (cFleet != 0 && mdScanBase != scanViewNoPlayerInfo) {
         lpflT = *rglpfl;
-        hbrSav = SelectObject(hdc, hbrShip);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrShip);
         id = sel.grobj == grobjFleet ? sel.fl.id : idflNone;
         id2 = sel.scan.grobj == grobjFleet ? rglpfl[sel.scan.ifl]->id : idflNone;
         for (i = 0; i < cFleet; i++) {
@@ -1316,7 +1316,7 @@ void DrawScanFleetCount(FLEET *lpfl, int16_t x, int16_t y, HDC hdc, HDC hdcMem) 
     } else if (l <= 0) {
         return;
     }
-    hbmpSav = SelectObject(hdcMem, hbmpNumbers);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpNumbers);
     SetBkColor(hdc, 0);
     SetTextColor(hdc, 0xffffff);
     if (iPlr >= 0 && iPlr != idPlayer) {
@@ -1651,7 +1651,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
     LCommonLineCode:
         GetClientRect(hwndScanner, &rc);
         ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
-        hpenSav = SelectObject(hdc, hpenStarbase);
+        hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
         iRopSav = SetROP2(hdc, R2_XORPEN);
         if (dx == 0) {
             dx5 = 0;
@@ -1716,7 +1716,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
         if (sel.grobj == grobjPlanet) {
             fDoneRoute = FALSE;
             if (sel.pl.fStarbase && sel.pl.idFling != 0) {
-                hpenSav = SelectObject(hdc, hpenDkPurple);
+                hpenSav = (HPEN)SelectObject(hdc, hpenDkPurple);
                 id = sel.pl.idFling - 1;
             LDrawPath:
                 iRopSav = SetROP2(hdc, R2_XORPEN);
@@ -1735,7 +1735,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
                 goto LFinishUp;
             fDoneRoute = TRUE;
             id = sel.pl.idRoute - 1;
-            hpenSav = SelectObject(hdc, hpenDkGreen);
+            hpenSav = (HPEN)SelectObject(hdc, hpenDkGreen);
             goto LDrawPath;
         }
         if (sel.grobj == grobjFleet && sel.fl.cord > 1) {
@@ -1768,7 +1768,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             GetClientRect(hwndScanner, &rc);
             ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
             if (fShow && (grbitScan & grbitScanFleetPaths)) {
-                hpenSav = SelectObject(hdc, hpenStarbase);
+                hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
                 pt = sel.fl.lpplord->rgord[0].pt;
                 LogicalToScan(&pt);
                 MoveToEx(hdc, pt.x, pt.y, NULL);
@@ -1780,7 +1780,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
                 }
                 SelectObject(hdc, hpenSav);
             }
-            hpenSav = SelectObject(hdc, hpenShip);
+            hpenSav = (HPEN)SelectObject(hdc, hpenShip);
             iRopSav = SetROP2(hdc, R2_XORPEN);
             pt = sel.fl.lpplord->rgord[0].pt;
             dRad = pt.x == sel.pt.x && pt.y == sel.pt.y ? 5 : 5;
@@ -1849,7 +1849,7 @@ void DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
             fhdc = 1;
             hdc = GetDC(hwndScanner);
         }
-        hfontSav = SelectObject(hdc, rghfontArial8[1]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         if (psbar) {
             grobj = psbar->grbit;
         } else {
@@ -1858,7 +1858,7 @@ void DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
         iBkPrev = SetBkMode(hdc, TRANSPARENT);
         crBk = SetBkColor(hdc, crButtonFace);
         crText = SetTextColor(hdc, crButtonText);
-        hbrSav = SelectObject(hdc, hbrButtonFace);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
         if (fFullRedraw) {
             PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, dySBar, PATCOPY);
             SelectObject(hdc, hbrButtonHilite);
@@ -2542,7 +2542,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         if (fDup) {
             fDel = AlertSz(PszFormatIds(idsSureWantDeleteCurrentWaypoint, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES;
             if (grbitScan & grbitScanFleetPaths) {
-                hpenSav = SelectObject(hdc, hpenStarbase);
+                hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
                 MoveToEx(hdc, rgpt[2].x, rgpt[2].y, NULL);
                 LineTo(hdc, rgpt[0].x, rgpt[0].y);
                 if (cpt > 3) {
@@ -2554,7 +2554,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
             DrawScanXorLines(hdc, rgpt, cpt);
             rgpt[0] = rgpt[1];
             if (grbitScan & grbitScanFleetPaths) {
-                hpenSav = SelectObject(hdc, hpenStarbase);
+                hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
                 MoveToEx(hdc, rgpt[2].x, rgpt[2].y, NULL);
                 LineTo(hdc, rgpt[0].x, rgpt[0].y);
                 if (cpt > 3) {
@@ -2571,7 +2571,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         }
         if (grbitScan & grbitScanFleetPaths) {
             ExcludeClipRect(hdc, 0, rc.bottom - dySBar, rc.right, rc.bottom);
-            hpenSav = SelectObject(hdc, hpenStarbase);
+            hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
             MoveToEx(hdc, rgpt[2].x, rgpt[2].y, NULL);
             LineTo(hdc, rgpt[0].x, rgpt[0].y);
             if (cpt > 3) {
@@ -2583,7 +2583,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         rgpt[0] = rgpt[1];
         if (grbitScan & grbitScanFleetPaths) {
             ExcludeClipRect(hdc, 0, rc.bottom - dySBar, rc.right, rc.bottom);
-            hpenSav = SelectObject(hdc, hpenStarbase);
+            hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
             MoveToEx(hdc, rgpt[2].x, rgpt[2].y, NULL);
             LineTo(hdc, rgpt[0].x, rgpt[0].y);
             if (cpt > 3) {
@@ -2644,14 +2644,14 @@ void DrawScanXorLines(HDC hdc, POINT16 *rgpt, int16_t cpt) {
     ExcludeClipRect(hdc, 0, rc.bottom - dySBar, rc.right, rc.bottom);
     if (cpt == 4 && rgpt[2].x == rgpt[3].x && rgpt[2].y == rgpt[3].y) {
         cpt--;
-        hpenSav = GetStockObject(WHITE_PEN);
+        hpenSav = (HPEN)GetStockObject(WHITE_PEN);
     } else {
         hpenSav = hpenShip;
     }
     for (i = 1; i < cpt; i++) {
         ExcludeClipRect(hdc, rgpt[i].x - 5, rgpt[i].y - 5, rgpt[i].x + 6, rgpt[i].y + 6);
     }
-    hpenSav = SelectObject(hdc, hpenSav);
+    hpenSav = (HPEN)SelectObject(hdc, hpenSav);
     iRopSav = SetROP2(hdc, R2_XORPEN);
     MoveToEx(hdc, rgpt[2].x, rgpt[2].y, NULL);
     LineTo(hdc, rgpt->x, rgpt->y);
@@ -2914,7 +2914,7 @@ int16_t FHandleMeasuringTape(SCAN *pscan, POINT16 pt) {
     hdc = GetDC(hwndScanner);
     SetCapture(hwndScanner);
     sbar.pscan = pscan;
-    hpenSav = SelectObject(hdc, hpenShip);
+    hpenSav = (HPEN)SelectObject(hdc, hpenShip);
     iropSav = SetROP2(hdc, R2_XORPEN);
     ptNew = pt;
     LogicalToScan(&ptNew);

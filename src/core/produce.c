@@ -274,7 +274,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                 lphulT = &LphuldefFromId(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
                 part.phul = lphulT;
-                GetTruePartCost(iplr, &part, rgCostsPartCur);
+                GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
                 }
@@ -283,10 +283,10 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
                     if (lphulCur->rghs[i].cItem != 0 && lphulNew->rghs[i].cItem != 0) {
                         part.hs = lphulCur->rghs[i];
                         FLookupPart(&part);
-                        GetTruePartCost(iplr, &part, rgCostsPartCur);
+                        GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                         part.hs = lphulNew->rghs[i];
                         FLookupPart(&part);
-                        GetTruePartCost(iplr, &part, rgCostsPartNew);
+                        GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartNew);
                         if (lphulCur->rghs[i].grhst != lphulNew->rghs[i].grhst) {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;

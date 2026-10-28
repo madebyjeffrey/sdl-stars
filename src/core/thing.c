@@ -34,9 +34,9 @@ THING *LpthNew(int16_t iplr, ThingType ith) {
     if (cThing >= cThingAlloc) {
         cThingAlloc += 10;
         if (!lpThings) {
-            lpThings = LpAlloc(cThingAlloc * sizeof(THING), htThings);
+            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
         } else {
-            lpThings = LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
+            lpThings = (THING *)LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
         }
         lpth = lpThings + i;
     }
@@ -329,7 +329,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                             rgTech[iLowest]++;
                                             iplrSav = idPlayer;
                                             idPlayer = iplr;
-                                            wtNext = CostOfDevelopingItem(rgTech);
+                                            wtNext = CostOfDevelopingItem((char *)rgTech);
                                             idPlayer = iplrSav;
                                             lSpent = rgplr[iplr].rgResSpent[iLowest];
                                             lSpent = (int32_t)(lSpent * 2);
@@ -415,7 +415,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                         continue;
                                     }
                                 } else {
-                                    idm = IdmGiveTraderPart(grbitTrader, iplr, &iGoto);
+                                    idm = IdmGiveTraderPart(grbitTrader, iplr, (uint16_t *)&iGoto);
                                     FSendPlrMsg2(lpfl->iplr, idm, iGoto, WFromLpfl(lpfl), 0);
                                 }
                             }

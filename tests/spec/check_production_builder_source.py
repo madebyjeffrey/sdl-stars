@@ -13,7 +13,7 @@ import shlex
 import struct
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 
 
 class Boundary(Exception):
@@ -206,7 +206,7 @@ def cases():
 
 
 def main():
-    enums=(ROOT/'src/core/enums.h').read_text(); types=(ROOT/'src/core/structs.h').read_text()
+    enums=enum_source(); types=(ROOT/'src/core/structs.h').read_text()
     declarations=r'''
 #include <assert.h>
 #include <stdint.h>
@@ -231,7 +231,7 @@ def main():
 static struct {int cheap;} rgplr[1];
 static struct {int fGeneratingTurn;} gd;
 static int32_t quote[4],limits[7];static int calls,messages,messageArg,quoted;
-static void GetProductionCosts(PLANET *p,PROD *r,int32_t *out,int16_t player,int16_t one) {
+static void GetProductionCosts(PLANET *p,PROD *r,uint32_t *out,int16_t player,int16_t one) {
     (void)r;assert(p && player==0 && one && !quoted && calls==0);quoted=1;memcpy(out,quote,16);
 }
 static int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next) {(void)p;assert(quoted && !player && next);calls=calls*10+1;return (int16_t)limits[0];}

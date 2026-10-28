@@ -79,7 +79,7 @@ void DrawShipOrders(HDC hdc, TILE *ptile, OBJ obj) {
             psz = PszGetLocName(ord.grobj, ord.id, ord.pt.x, ord.pt.y);
             iScanActual = sel.iwpAct;
         } else if (sel.fl.cord <= 1) {
-            psz = "";
+            psz = (char *)"";
         } else {
             ord = sel.fl.lpplord->rgord[1];
             psz = PszGetLocName(ord.grobj, ord.id, ord.pt.x, ord.pt.y);
@@ -459,7 +459,7 @@ void DrawShipWayPtOrders(HDC hdc, TILE *ptile, OBJ obj) {
                         c = wsprintf(szWork, PCTLD, rgl[i]);
                         DxStreamTextOut(hdc, &dxRight, yTopMsg, szWork, c, TRUE);
                         SetTextColor(hdc, crButtonText);
-                        DxStreamTextOut(hdc, &dxRight, yTopMsg, "kT  ", 4, TRUE);
+                        DxStreamTextOut(hdc, &dxRight, yTopMsg, (char *)"kT  ", 4, TRUE);
                     }
                     goto DoneMine;
                 }
@@ -1142,7 +1142,7 @@ void DrawFleetBitmap(FLEET *lpfl, HDC hdc, int16_t x, int16_t y, int16_t fFrame,
     HBRUSH  hbrSav;
 
     if (fFrame) {
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         PatBlt(hdc, x, y, 68, 2, PATCOPY);
         PatBlt(hdc, x, y, 2, 68, PATCOPY);
         SelectObject(hdc, hbrButtonHilite);
@@ -2124,7 +2124,7 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
                and a separator. The original stopped at 100 entries, so
                objects past them couldn't be targeted (target list
                overload). */
-            rgid = LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = (int32_t *)LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
             if (scan.idpl != idplNone) {
                 rgid[0] = scan.idpl;
             } else {

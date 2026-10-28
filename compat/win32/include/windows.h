@@ -13,6 +13,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Match Win32 LLP64 on Linux LP64; never use native long for LONG/DWORD.
 #define _WINDEF_
 #define WINAPI
@@ -114,5 +118,9 @@ typedef const RECT *LPCRECT;
 // The legacy game ignores logoff failure; keep its application exit usable.
 BOOL StarsCompatExitWindows(int nExit);
 #define ExitWindows(r, c) StarsCompatExitWindows(r)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

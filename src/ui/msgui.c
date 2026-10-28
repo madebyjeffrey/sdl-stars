@@ -170,7 +170,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         rc = rcMsgText;
         dx = rc.right - rc.left;
         dy = rc.bottom - rc.top;
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
         PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
         SelectObject(hdc, hbrButtonHilite);
@@ -186,19 +186,19 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 }
                 if (CchGetString(idsSCC, szT) >= 32) {
                 }
-                cch = wsprintf(lpb2k, szT, PszPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
+                cch = wsprintf((LPSTR)lpb2k, szT, PszPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
                 if (CchGetString(idsSCC2, szT) >= 32) {
                 }
-                cch += wsprintf(lpb2k + cch, szT,
+                cch += wsprintf((LPSTR)lpb2k + cch, szT,
                                 lpmsgplr->iPlrTo == 0 ? PszGetCompressedString(idsEverybody) : PszPlayerName(lpmsgplr->iPlrTo - 1, TRUE, TRUE, TRUE, 0, NULL),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
-                    FDecompressUserString(lpmsgplr->rgbMsg, lpmsgplr->cLen, lpb2k + cch, &i);
+                    FDecompressUserString((char *)lpmsgplr->rgbMsg, lpmsgplr->cLen, (char *)lpb2k + cch, &i);
                 } else {
-                    strcpy(lpb2k + cch, lpmsgplr->rgbMsg);
+                    strcpy((char *)lpb2k + cch, (const char *)lpmsgplr->rgbMsg);
                 }
-                lpsz = lpb2k;
+                lpsz = (char *)lpb2k;
             } else {
                 idm = IdmGetMessageN(iMsgCur);
                 if (iMsgCur < 0 && cMsg > 0) {
@@ -434,7 +434,7 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     COLORREF  crTextSav;
 
     hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = SelectObject(hdcMem, hbmpMono);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMono);
     if (gd.fSendMsgMode)
         goto Cleanup;
     xyStart = (int16_t)(prc->bottom - prc->top - 11) / 2 + prc->top;
@@ -459,7 +459,7 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     crTextSav = SetTextColor(hdc, 0);
     crBkSav = SetBkColor(hdc, 0xffffff);
     BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrcMask, SRCAND);
-    hbmpSav = SelectObject(hdcMem, hbmpMsg);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMsg);
     BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, SRCPAINT);
 DoMinMax:
     for (i = 0; (uint16_t)i < 49 && (bitfMsgSent[i] & bitfMsgFiltered[i]) == 0; i++) {
@@ -476,7 +476,7 @@ DoMinMax:
         ySrcMask = 69;
     }
     xDst = prc->right - (prc->bottom - prc->top) - 1;
-    hbrSav = SelectObject(hdc, hbrButtonShadow);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
     PatBlt(hdc, xDst, prc->top, 1, prc->bottom - prc->top, PATCOPY);
     SelectObject(hdc, hbrButtonHilite);
     PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, PATCOPY);
@@ -541,7 +541,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         cb = 0;
         dInc = 0;
     } else {
-        cb = GetWindowText(hwndMsgEdit, lpb2k, 1000);
+        cb = GetWindowText(hwndMsgEdit, (LPSTR)lpb2k, 1000);
     }
     if (cb == 0) {
         if (lpmpCur) {
@@ -561,7 +561,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         return FALSE;
     }
     cbNew = cb;
-    if (FCompressUserString(lpb2k, lpb2k + 1024, &cbNew)) {
+    if (FCompressUserString((char *)lpb2k, (char *)lpb2k + 1024, &cbNew)) {
         cb = cbNew;
         lpbMsg = lpb2k + 1024;
     } else {
@@ -574,10 +574,10 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg, lpbMsg, abs(cb)) != 0) {
             DirtyGame(TRUE);
         }
-        lpmpCur = LpReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
+        lpmpCur = (MSGPLR *)LpReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
     } else {
         DirtyGame(TRUE);
-        lpmpCur = LpAlloc(cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
+        lpmpCur = (MSGPLR *)LpAlloc(cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
         lpmpCur->lpmsgplrNext = NULL;
         vcmsgplrOut++;
         lpmpCur->iInRe = iMsgCur;
@@ -639,12 +639,12 @@ void SetMsgTitle(HWND hwnd) {
             if (lpmp) {
                 SendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    SetWindowText(hwndMsgEdit, lpmp->rgbMsg);
+                    SetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg);
                     goto FinishUp;
                 } else {
                     i = 1000;
-                    FDecompressUserString(lpmp->rgbMsg, lpmp->cLen, lpb2k, &i);
-                    SetWindowText(hwndMsgEdit, lpb2k);
+                    FDecompressUserString((char *)lpmp->rgbMsg, lpmp->cLen, (char *)lpb2k, &i);
+                    SetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
                 }
                 goto FinishUp;
             } else {

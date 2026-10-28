@@ -287,7 +287,7 @@ void DumpUniverse() {
             CchSprintf(szWork, "%s.map", szBase);
             StreamOpen(szWork, mdCreate);
             fOpen = TRUE;
-            RgToStream("#\tX\tY\tName\r\n", 12);
+            RgToStream((void *)"#\tX\tY\tName\r\n", 12);
             for (i = 0; i < game.cPlanMax; i++) {
                 cch = CchSprintf(szWork, "%d\t%d\t%d\t%s\r\n", i + 1, rgptPlan[i].x, rgptPlan[i].y, PszGetCompressedPlanet(rgidPlan[i]));
                 RgToStream(szWork, cch);
@@ -509,7 +509,7 @@ void DumpPlanets() {
                             i = -1;
                         }
                         if (i == -1) {
-                            RgToStream("\t0\t0", 4);
+                            RgToStream((void *)"\t0\t0", 4);
                         }
                         if (lppl->fStarbase) {
                             i = lppl->pctDp;

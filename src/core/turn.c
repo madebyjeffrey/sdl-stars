@@ -13,10 +13,10 @@ void InitGameStuff() {
     gd.fNoIdleChecks = FALSE;
     gd.fAisDone = FALSE;
     vplr = vrgplrDef[0];
-    lpLog = LpAlloc(32000, htLog);
-    lpMsg = LpAlloc(0xffc8, htMsg);
-    vlprgidPlanet = LpAlloc(0x800, htPerm);
-    vlprgidFleet = LpAlloc(0x800, htPerm);
+    lpLog = (uint8_t *)LpAlloc(32000, htLog);
+    lpMsg = (int16_t *)LpAlloc(0xffc8, htMsg);
+    vlprgidPlanet = (uint16_t *)LpAlloc(0x800, htPerm);
+    vlprgidFleet = (uint16_t *)LpAlloc(0x800, htPerm);
     CchGetString(idsDefault, vrgZipProd[0].szName);
     vrgZipProd[0].fValid = TRUE;
     return;
@@ -60,7 +60,7 @@ int16_t FGenerateTurn() {
     fErrSav = fFileErrSilent;
     fFileErrSilent = TRUE;
     UpdateProgressGauge(360);
-    if (!FLoadGame(szBase, "hst")) {
+    if (!FLoadGame(szBase, (char *)"hst")) {
         fFileErrSilent = fErrSav;
         TurnLog(idsCantFindHostFile);
         return FALSE;
@@ -79,12 +79,12 @@ int16_t FGenerateTurn() {
     penvMemSav = penvMem;
     penvMem = &env;
     if (setjmp(env) == 0) {
-        lpcd = LpAlloc(1000 * sizeof(COLDROP), htMisc);
-        lpxf = LpAlloc(1000 * sizeof(XFERFULL), htMisc);
-        vrgPlanResExtra = LpAlloc(game.cPlanMax * 2, htMisc);
+        lpcd = (COLDROP *)LpAlloc(1000 * sizeof(COLDROP), htMisc);
+        lpxf = (XFERFULL *)LpAlloc(1000 * sizeof(XFERFULL), htMisc);
+        vrgPlanResExtra = (uint16_t *)LpAlloc(game.cPlanMax * 2, htMisc);
         memset(vrgPlanResExtra, 0, game.cPlanMax * 2);
-        vrgwtPopScore = LpAlloc(game.cPlanMax * sizeof(int32_t), htMisc);
-        vrgiplrPopScore = LpAlloc(game.cPlanMax * sizeof(int16_t), htMisc);
+        vrgwtPopScore = (int32_t *)LpAlloc(game.cPlanMax * sizeof(int32_t), htMisc);
+        vrgiplrPopScore = (int16_t *)LpAlloc(game.cPlanMax * sizeof(int16_t), htMisc);
         memset(vrgiplrPopScore, 0xff, game.cPlanMax * sizeof(int16_t));
         UpdateProgressGauge(370);
         cColDrop = 0;
@@ -382,7 +382,7 @@ void EnsureAis() {
         fHostSav = gd.fHostMode;
         if (!gd.fHostMode) {
             DestroyCurGame();
-            FLoadGame(szBase, "hst");
+            FLoadGame(szBase, (char *)"hst");
         }
         for (iPlayer = 0; iPlayer < game.cPlayer; iPlayer++) {
             *(uint16_t *)&rgmdplr[iPlayer] = rgplr[iPlayer].wMdPlr;
@@ -409,7 +409,7 @@ void EnsureAis() {
         gd.fSubmit = fSubmitSav;
         if (fWorkDone) {
             DestroyCurGame();
-            FLoadGame(szBase, "hst");
+            FLoadGame(szBase, (char *)"hst");
         }
         fFileErrSilent = fErrSav;
         gd.fAisDone = TRUE;
@@ -428,9 +428,9 @@ void VerifyTurns() {
     idCur = idPlayer;
     cOut = 0;
     cAi = 0;
-    lpcd = LpAlloc(1000 * sizeof(COLDROP), htMisc);
-    lpxf = LpAlloc(1000 * sizeof(XFERFULL), htMisc);
-    vrgPlanResExtra = LpAlloc(game.cPlanMax * 2, htMisc);
+    lpcd = (COLDROP *)LpAlloc(1000 * sizeof(COLDROP), htMisc);
+    lpxf = (XFERFULL *)LpAlloc(1000 * sizeof(XFERFULL), htMisc);
+    vrgPlanResExtra = (uint16_t *)LpAlloc(game.cPlanMax * 2, htMisc);
     memset(vrgPlanResExtra, 0, game.cPlanMax * 2);
     cColDrop = 0;
     cXferFull = 0;
@@ -571,7 +571,7 @@ int16_t FSetUpBatchProcessing() {
         goto LError;
     StreamOpen(szBase, mdRead);
     cb = LOWORD(CbFileSize(hf));
-    lpchBatch = LpAlloc(cb, htPerm);
+    lpchBatch = (char *)LpAlloc(cb, htPerm);
     RgFromStream(lpchBatch, cb);
     lpchBatchMac = lpchBatch + cb;
     pch = szBase;
@@ -765,7 +765,7 @@ int16_t FRunCmdLine() {
     if (ini.fValidate) {
         fFileErrSilent = TRUE;
         ClearFile(7);
-        if (FLoadGame(szBase, "hst")) {
+        if (FLoadGame(szBase, (char *)"hst")) {
             VerifyTurns();
             DestroyCurGame();
             EnsureAis();

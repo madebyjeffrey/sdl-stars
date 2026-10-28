@@ -566,7 +566,7 @@ void ShowTooltip(StringId ids, RECT *prc) {
         cch = CchGetString(vidsTooltip, szWork);
         vrcTooltip = *prc;
         hdc = GetDC(NULL);
-        hfontSav = SelectObject(hdc, rghfontArial8[0]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
         dxTip = LOWORD(GetTextExtent(hdc, szWork, cch));
         SelectObject(hdc, hfontSav);
         ReleaseDC(NULL, hdc);

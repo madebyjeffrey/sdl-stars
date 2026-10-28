@@ -94,7 +94,7 @@ static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
     int cCapacity;
     if (pz->c < pz->cMax) return TRUE;
     cCapacity = pz->cMax ? pz->cMax * 2 : 16;
-    rgpszFiles = SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
+    rgpszFiles = (char **)SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
     if (!rgpszFiles) { pz->fBad = TRUE; return FALSE; }
     pz->rgpsz = rgpszFiles;
     pz->cMax = cCapacity;
@@ -102,7 +102,7 @@ static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
 }
 
 static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
-    ZIPFILES *pz = lpData;
+    ZIPFILES *pz = (ZIPFILES *)lpData;
     char szPath[512], *pszRelative;
     int16_t fDir, fLink;
     ZIPFILES zfChild = {0};
@@ -117,7 +117,7 @@ static int16_t FCollectZipFiles(void *lpData, const char *pszName) {
         if (!FNativeEnumerateDirectory(szPath, FCollectZipFiles, &zfChild) || zfChild.fBad) pz->fBad = TRUE;
         for (i = 0; i < zfChild.c; i++) {
             cbName = strlen(pszName) + strlen(zfChild.rgpsz[i]) + 2;
-            pszRelative = SDL_malloc(cbName);
+            pszRelative = (char *)SDL_malloc(cbName);
             if (!pszRelative) { pz->fBad = TRUE; break; }
             CchSnprintf(pszRelative, cbName, "%s/%s", pszName, zfChild.rgpsz[i]);
             if (!FZipEnsureCapacity(pz)) { SDL_free(pszRelative); break; }
@@ -145,7 +145,7 @@ static int16_t FWriteZipEntry(FILE *pfZip, const char *pszRoot, ZIPENTRY *pze) {
         (uint64_t)ftell(pfZip) > UINT32_MAX) return FALSE;
     pf = PfOpenNativeFile(szPath, "rb");
     if (!pf) return FALSE;
-    rgbData = SDL_malloc(cb ? (size_t)cb : 1);
+    rgbData = (uint8_t *)SDL_malloc(cb ? (size_t)cb : 1);
     if (!rgbData) { fclose(pf); return FALSE; }
     if (fread(rgbData, 1, (size_t)cb, pf) != (size_t)cb) { fclose(pf); SDL_free(rgbData); return FALSE; }
     if (fclose(pf) != 0) { SDL_free(rgbData); return FALSE; }
@@ -169,6 +169,7 @@ int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
     char szTemp[512] = "";
     FILE *pf = NULL;
     uint32_t dwStart, dwLength;
+    int64_t cbExisting;
     int16_t fOk = FALSE;
     int i, cchTemp;
     size_t cbName;
@@ -179,10 +180,10 @@ int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
         if (cchTemp <= 0 || (size_t)cchTemp >= sizeof(szTemp)) goto done;
         pf = PfOpenNativeFile(szTemp, "wbx");
         if (pf) break;
-        if (!FNativeFileSize(szTemp, &(int64_t){0})) goto done;
+        if (!FNativeFileSize(szTemp, &cbExisting)) goto done;
     }
     if (!pf) goto done;
-    rgzentry = SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*rgzentry));
+    rgzentry = (ZIPENTRY *)SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*rgzentry));
     if (!rgzentry) goto done;
     for (i = 0; i < zf.c; i++) {
         rgzentry[i].pszName = SDL_strdup(zf.rgpsz[i]);
@@ -286,7 +287,7 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
         wLocalNameLength = WZip16(rgbLocal + ZIP_LOCAL_NAME_LENGTH_OFFSET);
         wLocalExtraLength = WZip16(rgbLocal + ZIP_LOCAL_EXTRA_LENGTH_OFFSET);
         if (wLocalNameLength != zc.wNameLength) goto done;
-        rgbLocalName = SDL_malloc(wLocalNameLength ? wLocalNameLength : 1);
+        rgbLocalName = (uint8_t *)SDL_malloc(wLocalNameLength ? wLocalNameLength : 1);
         if (!rgbLocalName || fread(rgbLocalName, 1, wLocalNameLength, pf) != wLocalNameLength ||
             memcmp(rgbLocalName, szName, zc.wNameLength) != 0 ||
             fseek(pf, wLocalExtraLength, SEEK_CUR) != 0 ||
@@ -300,8 +301,8 @@ int16_t FUnzipLibraryArchive(const char *pszArchive, const char *pszDirectory) {
             continue;
         }
         if (!FZipSafeName(szName)) goto done;
-        rgbCompressed = SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1);
-        rgbData = SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1);
+        rgbCompressed = (uint8_t *)SDL_malloc(zc.cbCompressed ? zc.cbCompressed : 1);
+        rgbData = (uint8_t *)SDL_malloc(zc.cbUncompressed ? zc.cbUncompressed : 1);
         if (!rgbCompressed || !rgbData || fread(rgbCompressed, 1, zc.cbCompressed, pf) != zc.cbCompressed) goto done;
         if (zc.wMethod == 0) {
             if (zc.cbCompressed != zc.cbUncompressed) goto done;

@@ -902,14 +902,14 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
         if (pProdGlob[i].grobj == grobjPlanet) {
             if (pProdGlob[i].iItem == mdIdleMine) {
                 iMaxMines = max(0, CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl) - iAddMines);
-                GetProductionCosts(lppl, pProdGlob + i, rgMineCost, idPlayer, TRUE);
+                GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgMineCost, idPlayer, TRUE);
             }
             if (pProdGlob[i].iItem == mdIdleFactory) {
                 iMaxFactories = max(0, CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl) - iAddFactories);
-                GetProductionCosts(lppl, pProdGlob + i, rgFactCost, idPlayer, TRUE);
+                GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgFactCost, idPlayer, TRUE);
             }
             if (pProdGlob[i].iItem == mdIdleAlchemy) {
-                GetProductionCosts(lppl, pProdGlob + i, rgAlchCost, idPlayer, TRUE);
+                GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgAlchCost, idPlayer, TRUE);
             }
             if (pProdGlob[i].iItem == mdIdleTerraform) {
                 iMaxTerra = pProdGlob[i].cItem;

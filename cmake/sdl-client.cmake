@@ -37,7 +37,7 @@ add_library(stars-ui-compat-check OBJECT EXCLUDE_FROM_ALL ${STARS_UI_SOURCES}
     "${STARS_GENERATED_DIR}/text_tutorial.c")
 target_link_libraries(stars-ui-compat-check PRIVATE stars_options stars_win32_headers SDL3::SDL3 ZLIB::ZLIB)
 target_compile_options(stars-ui-compat-check PRIVATE
-    -Werror=implicit-function-declaration -Werror=incompatible-pointer-types)
+    $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration> $<$<COMPILE_LANGUAGE:C>:-Werror=incompatible-pointer-types>)
 add_dependencies(stars-ui-compat-check stars_version)
 add_executable(stars-sdl compat/win32/src/entry.c)
 if(WIN32)

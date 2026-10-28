@@ -217,6 +217,7 @@ def Generate(outdir):
         "// The IDs of the game's text, included by enums.h.",
         "#ifndef STARS_TEXTIDS_H",
         "#define STARS_TEXTIDS_H",
+        '#include "enumconstants.h"',
         "",
     ]
     outputs = {}
@@ -227,7 +228,7 @@ def Generate(outdir):
         rgb, rgcLen, rgiChunk, lookup = Encode(rows)
         cTable = len(rgcLen)
         if enum:
-            header.append("enum {} {{".format(enum))
+            header.append("STARS_CONSTANTS({}) {{".format(enum))
             header += ["    {} = {},".format(row.name, fmtId.format(row.id)) for row in rows]
             header += ["};", ""]
         else:

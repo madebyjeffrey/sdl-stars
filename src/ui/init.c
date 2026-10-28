@@ -147,8 +147,8 @@ int16_t FCreateStuff() {
     lpfnBrowserDlgProc = MakeProcInstance(BrowserDlg, hInst);
     lpfnReportDlgProc = MakeProcInstance(ReportDlg, hInst);
     lpfnGaugeDlgProc = MakeProcInstance(ProgressGaugeDlg, hInst);
-    lpb2k = LpAlloc(0x800, htPerm);
-    vlprgidMisc = LpAlloc(0x800, htPerm);
+    lpb2k = (uint8_t *)LpAlloc(0x800, htPerm);
+    vlprgidMisc = (uint16_t *)LpAlloc(0x800, htPerm);
     InitGameStuff();
     if (fFailed || !hbmpScanner || !hbmpUnknownPlanet || !hbmpBackBld || !hdibRaces || !hdibRacesT || !hdibRacesX || !hbmpMono || !hbmpScanShip || !hbmpMsg ||
         !hiconHost || !hiconStars || !hiconWait) {
@@ -165,7 +165,7 @@ int16_t FCreateFonts(HDC hdc) {
     TEXTMETRIC tm;
     int32_t    l;
 
-    plf = LocalAlloc(64, sizeof(LOGFONT));
+    plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
     for (i = 0; i < 4; i++) {
         if (rgszArial[i][0] == 0) {
             CchGetString(idsArial2 + i, rgszArial[i]);
@@ -189,7 +189,7 @@ int16_t FCreateFonts(HDC hdc) {
     strcpy(plf->lfFaceName, rgszArial[1]);
     plf->lfEscapement = 3150;
     rghfontArial8[4] = CreateFontIndirect(plf);
-    hfontSav = SelectObject(hdc, rghfontArial8[0]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
     GetTextMetrics(hdc, &tm);
     dyArial8 = tm.tmHeight + tm.tmExternalLeading;
     l = GetTextExtent(hdc, "88888888kT", 10);
@@ -589,7 +589,7 @@ void ReadIniSettings() {
         ini.fStartupFile = FALSE;
     }
     if (!vrgszMRU) {
-        vrgszMRU = LpAlloc(2304, htPerm);
+        vrgszMRU = (char *)LpAlloc(2304, htPerm);
     }
     psz = &szEntry[strlen(szEntry) - 1];
     for (i = 0; i < 9; i++) {

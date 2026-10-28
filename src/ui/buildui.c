@@ -641,7 +641,7 @@ void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
         }
         DrawFleetBitmap(NULL, hdc, xLeft, yTop, TRUE, lpshdefBuild->hul.ibmp, 0, FALSE, -1, 0);
         hdcMem = CreateCompatibleDC(hdc);
-        hbmpSav = SelectObject(hdcMem, hbmpScanner);
+        hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScanner);
         iInventSel = 0;
         if (mdBuild != mdBuildEdit) {
             rgrcBuildSpin[1].top = -5;
@@ -668,13 +668,13 @@ void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
         if (lphuldef->hul.wtCargoMax != 0) {
             rc = rcCargo;
             if (fStarbaseMode && (lphuldef->hul.ihuldef == ihuldefSpaceDock || lphuldef->hul.ihuldef == ihuldefDeathStart)) {
-                hbrSav = SelectObject(hdc, hbrDock);
-                hpenSav = SelectObject(hdc, GetStockObject(BLACK_PEN));
+                hbrSav = (HBRUSH)SelectObject(hdc, hbrDock);
+                hpenSav = (HPEN)SelectObject(hdc, GetStockObject(BLACK_PEN));
                 Ellipse(hdc, rc.left - 12, rc.top - 12, rc.right + 12, rc.bottom + 12);
                 SelectObject(hdc, hpenSav);
                 SelectObject(hdc, hbrSav);
             } else {
-                FillRect(hdc, &rcCargo, GetStockObject(BLACK_BRUSH));
+                FillRect(hdc, &rcCargo, (HBRUSH)GetStockObject(BLACK_BRUSH));
                 rc.top++;
                 rc.bottom--;
                 rc.left++;
@@ -925,9 +925,9 @@ int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBo
     SelectPalette(hdcMemFull, vhpal, FALSE);
     RealizePalette(hdcMemFull);
     hbmpOld = CreateCompatibleBitmap(hdc, ptTileSize.x, ptTileSize.y);
-    hbmpSav = SelectObject(hdcMem, hbmpOld);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpOld);
     hbmpScreen = CreateCompatibleBitmap(hdc, 3 * ptTileSize.x, 3 * ptTileSize.y);
-    hbmpFullSav = SelectObject(hdcMemFull, hbmpScreen);
+    hbmpFullSav = (HBITMAP)SelectObject(hdcMemFull, hbmpScreen);
     SetCapture(hwnd);
     ptOld.y = -1;
     ptOld.x = -1;
@@ -1532,7 +1532,7 @@ void DrawDlgLBEntireItem(DRAWITEMSTRUCT *lpdis, int16_t inflate) {
     RECT     rc;
 
     CopyRect(&rc, &lpdis->rcItem);
-    FillRect(lpdis->hDC, &lpdis->rcItem, GetStockObject(!(lpdis->itemState & ODS_FOCUS) ? WHITE_BRUSH : BLACK_BRUSH));
+    FillRect(lpdis->hDC, &lpdis->rcItem, (HBRUSH)GetStockObject(!(lpdis->itemState & ODS_FOCUS) ? WHITE_BRUSH : BLACK_BRUSH));
     InflateRect(&rc, -2, -1);
     SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, (LPARAM)szWork);
     SelectPalette(lpdis->hDC, vhpal, FALSE);

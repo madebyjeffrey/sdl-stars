@@ -22,7 +22,7 @@ is committed. Metadata is published by replacing a flushed temporary file throug
 previous metadata. The command-line host never resolves or requires this library.
 
 The reconstructed sources build as a native Win32/Win64 executable with
-MinGW, and the game code alone builds as `stars-host` with any C11 compiler
+MinGW, and the game code alone builds as `stars-host` with a C++17 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
 
@@ -34,8 +34,19 @@ conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions nev
 the C ABI. Output buffers are caller-owned, must not overlap input paths, and
 remain empty on failure. Returned paths use forward slashes, matching the SDL
 wrapper's canonical path contract. Temporary directories are claimed with atomic directory
-creation rather than a temporary-file-name/delete sequence. The game and wrapper
-remain C11; host-only builds require no C++ compiler.
+creation rather than a temporary-file-name/delete sequence. The game, desktop UI and host compile as GNU C++17 under their original `.c`
+filenames. Generated tables, the SDL wrapper and C harnesses retain C11 and a
+C ABI. Host-only builds now require a C++17 compiler, but remain independent
+of SDL. CMake preserves signed `char`, binary64 arithmetic boundaries and
+contraction/fast-math settings for both languages.
+
+`STARS_CONSTANTS` keeps the original fixed-width aliases and constant names.
+C++ shares tag and typedef namespaces, so these constant containers are
+anonymous in C++ instead of replacing `uint16_t` aliases with enum objects.
+`test_record_layout` compares C and C++ sizes/alignment for the shared structs
+and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
+offset is zero in both languages; the C++ minimum class size is never used as
+a record length. The full native and host regressions check serialized results.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).

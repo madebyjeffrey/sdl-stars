@@ -116,7 +116,7 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
 
     // Dropping l only shortens the format, so a copy its size holds it.
     cbFmt = strlen(szFormat) + 1;
-    szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : malloc(cbFmt);
+    szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : (char *)malloc(cbFmt);
     if (!szFmt) {
         sz[0] = 0;
         return 0;
@@ -193,7 +193,7 @@ char *PszNativeCommandLine(void) {
     }
     while (*pwsz == L' ' || *pwsz == L'\t') pwsz++;
     cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, NULL, 0, NULL, NULL);
-    if (cb == 0 || !(psz = malloc(cb))) return NULL;
+    if (cb == 0 || !(psz = (char *)malloc(cb))) return NULL;
     if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, psz, cb, NULL, NULL)) {
         free(psz); return NULL;
     }
@@ -212,7 +212,7 @@ char **RgpszNativeArguments(int *lpc) {
         if (c == 0) { LocalFree(rgpwsz); return NULL; }
         cb += c;
     }
-    rgpsz = malloc(cb);
+    rgpsz = (char **)malloc(cb);
     if (!rgpsz) { LocalFree(rgpwsz); return NULL; }
     pch = (char *)(rgpsz + *lpc + 1);
     for (i = 0; i < *lpc; i++) {
@@ -231,7 +231,7 @@ static wchar_t *LpwszNativePath(const char *psz) {
     int cch;
     cch = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, psz, -1, NULL, 0);
     if (cch == 0) { errno = EILSEQ; return NULL; }
-    pwsz = malloc((size_t)cch * sizeof(*pwsz));
+    pwsz = (wchar_t *)malloc((size_t)cch * sizeof(*pwsz));
     if (!pwsz) { errno = ENOMEM; return NULL; }
     if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, psz, -1, pwsz, cch)) {
         free(pwsz); errno = EILSEQ; return NULL;
@@ -320,7 +320,7 @@ int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc 
 
     if (!pwsz || !pfnEntry) { free(pwsz); return FALSE; }
     cch = wcslen(pwsz);
-    pwszSearch = malloc((cch + 3) * sizeof(*pwszSearch));
+    pwszSearch = (wchar_t *)malloc((cch + 3) * sizeof(*pwszSearch));
     if (!pwszSearch) { free(pwsz); return FALSE; }
     memcpy(pwszSearch, pwsz, cch * sizeof(*pwszSearch));
     if (cch != 0 && pwszSearch[cch - 1] != L'/' && pwszSearch[cch - 1] != L'\\') pwszSearch[cch++] = L'\\';

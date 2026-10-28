@@ -115,7 +115,7 @@ static int16_t FReadHostIni(const char *szFile) {
     fseek(pf, 0, SEEK_END);
     cb = ftell(pf);
     fseek(pf, 0, SEEK_SET);
-    pszText = malloc((size_t)cb + 1);
+    pszText = (char *)malloc((size_t)cb + 1);
     if (!pszText || fread(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
         free(pszText);
         fclose(pf);

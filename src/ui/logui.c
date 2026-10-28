@@ -37,7 +37,7 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
         penvMem = penvMemSav;
         return 0;
     }
-    vlpMemStream = LockResource(hres);
+    vlpMemStream = (uint8_t *)LockResource(hres);
     if (!vlpMemStream)
         goto BailOut;
     if (cSkip >= *vlpMemStream) {
@@ -80,5 +80,5 @@ uint8_t *LpbLoadTutorLog() {
     if (!hres) {
         return NULL;
     }
-    return LockResource(hres);
+    return (uint8_t *)LockResource(hres);
 }

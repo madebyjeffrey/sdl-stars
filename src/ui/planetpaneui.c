@@ -85,7 +85,7 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
     switch (message) {
     case WM_CREATE:
-        lp = calloc(1, sizeof(*lp));
+        lp = (PLANETPANE *)calloc(1, sizeof(*lp));
         if (!lp) return -1;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
         lp->hwndContent = CreateWindow(szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);

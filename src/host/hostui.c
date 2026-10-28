@@ -4,13 +4,16 @@
 // native unit tests, which each supply IdAlertBox. Nothing is drawn, and
 // questions get the cautious answer.
 
+#ifdef STARS_TEST_GOLDEN_DIR
+extern "C" int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
+#endif
+
 // PromptPassword refuses: a host takes a file's password with -p.
 int16_t PromptPassword() { return FALSE; }
 
 // The host has no interactive UI for replacing a legacy race password.
 int16_t FPromptLegacyRacePassword(char *szPassword) {
 #ifdef STARS_TEST_GOLDEN_DIR
-    extern int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
     return FStarsTestPromptLegacyRacePassword(szPassword);
 #else
     (void)szPassword;

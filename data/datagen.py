@@ -323,6 +323,7 @@ def Generate(outdir):
         "// The part, hull, starting design and AI enums, included by enums.h.",
         "#ifndef STARS_DATAIDS_H",
         "#define STARS_DATAIDS_H",
+        '#include "enumconstants.h"',
         "",
     ]
     body = ["// " + GENERATED.format("*.yaml"), '#include "common.h"', ""]
@@ -336,7 +337,7 @@ def Generate(outdir):
         enum = table.get("enum")
         if enum:
             names = rgHulDef if enum == "HulDef" else [e["name"] for e in entries]
-            header.append("enum {} {{".format(enum))
+            header.append("STARS_CONSTANTS({}) {{".format(enum))
             header += ["    {} = {},".format(name, i) for i, name in enumerate(names)]
             if table["count"]:
                 header.append("    {} = {},".format(table["count"], len(names)))
@@ -380,7 +381,7 @@ def Generate(outdir):
             for i, entry in enumerate(tables[table["array"]]):
                 rgpart[entry["name"]] = (table["hst"], i)
     prefs = LoadPreferences(PREFERENCES, rgpart)
-    header.append("enum {} {{".format(PREFERENCES["enum"]))
+    header.append("STARS_CONSTANTS({}) {{".format(PREFERENCES["enum"]))
     header += ["    {} = {},".format(name, i) for i, (name, _) in enumerate(prefs)]
     header += ["    {} = {},".format(PREFERENCES["count"], len(prefs)), "};", ""]
     lines = []
@@ -391,7 +392,7 @@ def Generate(outdir):
     body.append("AIPART {}[{}] = {{\n{}\n}};\n".format(PREFERENCES["array"], max(len(lines), PREFERENCES["size"]), "\n".join(lines)))
     rgaip = {name for name, _ in prefs}
     orders = LoadResearch(RESEARCH)
-    header.append("enum {} {{".format(RESEARCH["enum"]))
+    header.append("STARS_CONSTANTS({}) {{".format(RESEARCH["enum"]))
     for array in RESEARCH["arrays"]:
         header.append("    c{} = {},".format(array[len("vrg"):], len(orders[array])))
         items = ", ".join("({} << 5) | {}".format(field, level) for field, level in orders[array])
@@ -399,7 +400,7 @@ def Generate(outdir):
     header += ["};", ""]
     for table in RECIPES:
         recipes = LoadRecipes(table, chs, rgaip)
-        header.append("enum {} {{".format(table["enum"]))
+        header.append("STARS_CONSTANTS({}) {{".format(table["enum"]))
         lines = []
         rgib = []
         ib = 0

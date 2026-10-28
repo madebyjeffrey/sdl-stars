@@ -76,13 +76,13 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
             lpfl->lpszName = NULL;
         } else {
             cOut = strlen(szName);
-            lpfl->lpszName = LpAlloc(strlen(szName) + 1, htString);
+            lpfl->lpszName = (char *)LpAlloc(strlen(szName) + 1, htString);
             strcpy(lpfl->lpszName, szName);
-            if (FCompressUserString(szName, &rtchgname.rgb[1], &cOut)) {
+            if (FCompressUserString(szName, (char *)&rtchgname.rgb[1], &cOut)) {
                 rtchgname.rgb[0] = cOut;
             } else {
                 rtchgname.rgb[0] = 0;
-                strcpy(&rtchgname.rgb[1], szName);
+                strcpy((char *)&rtchgname.rgb[1], szName);
                 cOut++;
             }
         }
@@ -188,7 +188,7 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
         goto NextTest;
     } else {
         cbWp = 22;
-        if (FGetPrevLogRt(&hdr, rgbCur) && hdr.rt == rtLogFleetOrderUpdate && ((RTWAYPT *)rgbCur)->id == pflNew->id && ((RTWAYPT *)rgbCur)->iWaypt == iordNew) {
+        if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogFleetOrderUpdate && ((RTWAYPT *)rgbCur)->id == pflNew->id && ((RTWAYPT *)rgbCur)->iWaypt == iordNew) {
             imemLogCur = imemLogPrev;
         }
         rtwp.id = pflNew->id;
@@ -207,7 +207,7 @@ NextTest:
 void LogChangeRelations() {
     HDR hdr;
 
-    if (FGetPrevLogRt(&hdr, rgbCur) && hdr.rt == rtLogRelations) {
+    if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogRelations) {
         imemLogCur = imemLogPrev;
     }
     WriteMemRt(rtLogRelations, game.cPlayer, rgplr[idPlayer].rgmdRelation);
@@ -271,7 +271,7 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
                 WriteMemRt(rtLogPlanetProdQ, 2, &lxNew);
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
                                             memcmp(ppl->lpplprod->rgprod, pplNew->lpplprod->rgprod, ppl->lpplprod->iprodMac * 4) != 0)) {
-                if (FGetPrevLogRt(&hdr, rgbCur) && hdr.rt == rtLogPlanetProdQ && ((RTCHGPRODQ *)rgbCur)->id == ppl->id) {
+                if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogPlanetProdQ && ((RTCHGPRODQ *)rgbCur)->id == ppl->id) {
                     imemLogCur = imemLogPrev;
                 }
                 ((RTCHGPRODQ *)rgbCur)->id = ppl->id;
@@ -642,7 +642,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
         lpfl->lpszName = NULL;
         if (*szT) {
-            lpfl->lpszName = LpAlloc(strlen(szT) + 1, htString);
+            lpfl->lpszName = (char *)LpAlloc(strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
         }
         break;

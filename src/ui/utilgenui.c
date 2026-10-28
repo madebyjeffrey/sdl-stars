@@ -231,7 +231,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
     if (dx >= 10 && dy >= 10) {
-        plf = LocalAlloc(64, sizeof(LOGFONT));
+        plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
         plf->lfWeight = 900;
         strcpy(plf->lfFaceName, rgszArial[1]);
         plf->lfHeight = -(dx <= dy ? dy : dx);
@@ -248,7 +248,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
         rotate = (double)((double)angle / 3.141592654 * 1800.0 + 0.5);
         plf->lfEscapement = LOWORD((int32_t)rotate);
         hfont = CreateFontIndirect(plf);
-        hfontSav = SelectObject(hdc, hfont);
+        hfontSav = (HFONT)SelectObject(hdc, hfont);
         l = GetTextExtent(hdc, psz, cLen);
         dxText = LOWORD(l);
         dyText = HIWORD(l);
@@ -388,7 +388,7 @@ void _Draw3dFrame(HDC hdc, RECT *prc, int16_t fErase) {
     rc = *prc;
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
-    hbrSav = SelectObject(hdc, hbrButtonHilite);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
     if (fErase == -1 || fErase == -2) {
         PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, PATCOPY);
         PatBlt(hdc, rc.right, rc.top, 1, dy, PATCOPY);
@@ -500,7 +500,7 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText) {
     prc = &rcButton;
     fDisabled = bt & 4;
     rc = *prc;
-    hbrSav = SelectObject(hdc, hbrWindowFrame);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbrWindowFrame);
     if (!(bt & 0x40)) {
         FrameRect(hdc, &rc, hbrWindowFrame);
         ExpandRc(&rc, -1, -1);
@@ -629,7 +629,7 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText) {
     }
     SelectObject(hdc, hbrSav);
     if (szText) {
-        hfontSav = SelectObject(hdc, rghfontArial8[1]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         bkMode = SetBkMode(hdc, TRANSPARENT);
         crSav = SetTextColor(hdc, !fDisabled ? crButtonText : crButtonHilite);
         rc = *prc;
@@ -690,7 +690,7 @@ void DrawFuzzyBorder(HDC hdc, RECT *prc) {
 
     crBack = SetBkColor(hdc, crButtonFace);
     crFore = SetTextColor(hdc, crWindowText);
-    hbrSav = SelectObject(hdc, hbr50Screen);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbr50Screen);
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
     PatBlt(hdc, prc->left, prc->top, dx, 2, PATINVERT);
@@ -712,7 +712,7 @@ int16_t FStringFitsScreen(char *lpsz, int16_t dxMax) {
     fFit = TRUE;
     hdc = GetDC(hwndFrame);
     c = strlen(lpsz);
-    hfontSav = SelectObject(hdc, rghfontArial8[0]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
     while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > (uint16_t)dxMax) {
         fFit = FALSE;
         c = (int16_t)CchUtf8Prefix(lpsz, c - 1);
@@ -775,8 +775,8 @@ uint16_t DibNumColors(void *pv) {
     BITMAPCOREHEADER *lpbc;
     BITMAPINFOHEADER *lpbi;
 
-    lpbi = pv;
-    lpbc = pv;
+    lpbi = (BITMAPINFOHEADER *)pv;
+    lpbc = (BITMAPCOREHEADER *)pv;
     if (lpbi->biSize != 12) {
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
@@ -806,7 +806,7 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
     BITMAPINFOHEADER *lpbi;
     LOGPALETTE       *ppal;
 
-    lpb = LockResource(hdib);
+    lpb = (char *)LockResource(hdib);
     if (!lpb) {
         return NULL;
     }
@@ -816,7 +816,7 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
         GlobalUnlock(hdib);
         return NULL;
     }
-    ppal = LocalAlloc(64, cColors * 4 + 8);
+    ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     memcpy(ppal->palPalEntry, lpb + 40, cColors * 4);
@@ -838,7 +838,7 @@ HPALETTE HpalBlackReserved() {
     LOGPALETTE *ppal;
 
     cColors = 256;
-    ppal = LocalAlloc(64, cColors * 4 + 8);
+    ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     for (i = 0; i < cColors; i++) {
@@ -856,7 +856,7 @@ uint16_t PaletteSize(void *pv) {
     uint16_t          NumColors;
     BITMAPINFOHEADER *lpbi;
 
-    lpbi = pv;
+    lpbi = (BITMAPINFOHEADER *)pv;
     NumColors = DibNumColors(lpbi);
     if (lpbi->biSize == 12) {
         return 3 * NumColors;
@@ -894,7 +894,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
         return NULL;
     }
     if (!hpal) {
-        hpal = GetStockObject(DEFAULT_PALETTE);
+        hpal = (HPALETTE)GetStockObject(DEFAULT_PALETTE);
     }
     GetObject(hbm, 14, &bm);
     if (biBits == 0) {
@@ -972,7 +972,7 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     if (!hres) {
         return NULL;
     }
-    lpstr = LockResource(hres);
+    lpstr = (char *)LockResource(hres);
     if (!lpstr) {
         return NULL;
     }
@@ -1274,13 +1274,13 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
     TEXTMETRIC tm;
     HFONT      hfontSav;
 
-    plf = LocalAlloc(64, sizeof(LOGFONT));
+    plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
     memset(plf, 0, sizeof(LOGFONT));
     plf->lfHeight = -MulDiv(iSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     strcpy(plf->lfFaceName, rgszArial[1]);
     hfontNew = CreateFontIndirect(plf);
     if (pdyFont && hfontNew) {
-        hfontSav = SelectObject(hdc, hfontNew);
+        hfontSav = (HFONT)SelectObject(hdc, hfontNew);
         GetTextMetrics(hdc, &tm);
         *pdyFont = tm.tmHeight + tm.tmExternalLeading;
         SelectObject(hdc, hfontSav);
