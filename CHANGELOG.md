@@ -43,6 +43,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `UnpackBattlePlan` no longer reads past its stack buffer when a record
+  claims a compressed name longer than the bytes the buffer holds. Valid
+  names, turn generation and file formats are unchanged.
 - `UnpackBattlePlan` now leaves an invalid compressed name empty instead
   of storing a 32-character name without a terminator. Valid names, turn
   generation and file formats are unchanged.

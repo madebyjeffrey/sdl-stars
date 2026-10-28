@@ -485,6 +485,21 @@ lengths 16 and 31, rejects decoded names of 32 and 64 characters, and checks
 the plan's fields and following guard bytes. Valid saves, turn generation
 and file formats are unchanged.
 
+### Encoded Battle Plan Name Read Overrun — fixed in 2.9
+
+`file.c`: `UnpackBattlePlan`. The reader copied 32 encoded bytes into
+`szTemp[33]`, but passed the record's full encoded count to the decoder.
+A count larger than the scratch buffer let the decoder read past it.
+`tests/unit/test_file.c` reproduces the stack read overrun under
+AddressSanitizer with a 31-character name encoded as 47 bytes.
+
+**2.9:** the reader bounds the encoded count before copying or decoding,
+copies only that count and pads the scratch input with a terminator. A
+name that exceeds the scratch limit stays empty. The regression retains
+a 32-byte encoded name and rejects 33- and 47-byte encoded names, while
+checking the plan's fields and following guard bytes. Valid saves, turn
+generation and file formats are unchanged.
+
 ### AR Starter Colonies — candidate
 
 `turn3.c`: `SatisfyOrders` (AR colonization/base setup); `turn2.c`: `Produce`,

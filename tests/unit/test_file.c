@@ -176,8 +176,49 @@ static void test_UnpackBattlePlan_bounds_compressed_name(void) {
     }
 }
 
+// The record's encoded count used to exceed the 32 bytes copied to szTemp.
+// Three-nibble slashes reach that boundary while the decoded name still fits.
+static void test_UnpackBattlePlan_bounds_encoded_name(void) {
+    struct {
+        BTLPLAN btlplan;
+        uint8_t rgbGuard[80];
+    } buf;
+    uint8_t rgb[128];
+    char szName[32];
+    int16_t rgcSlash[] = {16, 17, 31};
+    int16_t rgcb[] = {32, 33, 47};
+    int16_t cOut;
+    int16_t i;
+    int16_t j;
+
+    for (i = 0; i < 3; i++) {
+        memset(rgb, 0, sizeof(rgb));
+        ((BTLPLAN *)rgb)->mdTactic = 3;
+        memset(szName, 'a', sizeof(szName) - 1);
+        memset(szName, '/', rgcSlash[i]);
+        szName[sizeof(szName) - 1] = 0;
+        cOut = 64;
+        TEST_ASSERT(FCompressUserString(szName, (char *)rgb + 5, &cOut));
+        TEST_ASSERT(cOut == rgcb[i]);
+        rgb[4] = cOut;
+        memset(&buf, 0x55, sizeof(buf));
+
+        UnpackBattlePlan(rgb, &buf.btlplan, 6);
+        if (i == 0) {
+            TEST_CHECK(strcmp(buf.btlplan.szName, szName) == 0);
+        } else {
+            TEST_CHECK_(buf.btlplan.szName[0] == 0, "encoded name length %d", cOut);
+        }
+        TEST_CHECK(buf.btlplan.iplan == 6);
+        TEST_CHECK(buf.btlplan.mdTactic == 3);
+        for (j = 0; j < sizeof(buf.rgbGuard); j++)
+            TEST_CHECK(buf.rgbGuard[j] == 0x55);
+    }
+}
+
 TEST_LIST = {{"FReadShDef bounds uncompressed name", test_FReadShDef_bounds_uncompressed_name},
              {"UnpackBattlePlan bounds uncompressed name", test_UnpackBattlePlan_bounds_uncompressed_name},
              {"FReadShDef reserves compressed name terminator", test_FReadShDef_reserves_compressed_name_terminator},
              {"UnpackBattlePlan bounds compressed name", test_UnpackBattlePlan_bounds_compressed_name},
+             {"UnpackBattlePlan bounds encoded name", test_UnpackBattlePlan_bounds_encoded_name},
              {NULL, NULL}};

@@ -1177,8 +1177,12 @@ void UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan) {
         // The plan's 32-byte field includes its terminator.
         cOut = sizeof(lpbtlplan->szName) - 1;
         memset(szName, 0, sizeof(szName));
-        memmove(szTemp, lpb, sizeof(szTemp) - 1);
-        FDecompressUserString(szTemp, cch, szName, &cOut);
+        // The decoder must not read more encoded bytes than szTemp holds.
+        if (cch < sizeof(szTemp)) {
+            memmove(szTemp, lpb, cch);
+            szTemp[cch] = 0;
+            FDecompressUserString(szTemp, cch, szName, &cOut);
+        }
         memmove(lpbtlplan->szName, szName, sizeof(lpbtlplan->szName));
     }
     lpbtlplan->iplan = iplan;
