@@ -1174,10 +1174,12 @@ void UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan) {
         strncpy(lpbtlplan->szName, (char *)lpb, sizeof(lpbtlplan->szName) - 1);
         lpbtlplan->szName[sizeof(lpbtlplan->szName) - 1] = 0;
     } else {
-        cOut = 32;
-        memmove(szTemp, lpb, cOut);
+        // The plan's 32-byte field includes its terminator.
+        cOut = sizeof(lpbtlplan->szName) - 1;
+        memset(szName, 0, sizeof(szName));
+        memmove(szTemp, lpb, sizeof(szTemp) - 1);
         FDecompressUserString(szTemp, cch, szName, &cOut);
-        memmove(lpbtlplan->szName, szName, cOut);
+        memmove(lpbtlplan->szName, szName, sizeof(lpbtlplan->szName));
     }
     lpbtlplan->iplan = iplan;
     return;

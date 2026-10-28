@@ -471,6 +471,20 @@ name read back through `UnpackBattlePlan`. The bytes written and record
 sizes are unchanged; the original already wrote a 37-byte raw record
 after overrunning its buffer. Turn generation is unchanged.
 
+### Compressed Battle Plan Name Overrun — fixed in 2.9
+
+`file.c`: `UnpackBattlePlan`. The reader decoded up to 32 characters into
+`szName[33]`, then copied only 32 bytes into `BTLPLAN.szName`, dropping
+the terminator for a 32-character name. A later string operation could
+then run into the following plan.
+
+**2.9:** the reader reserves the plan's terminator byte and leaves failed
+decodes empty.
+`tests/unit/test_file.c` retains valid 31-character names at both encoded
+lengths 16 and 31, rejects decoded names of 32 and 64 characters, and checks
+the plan's fields and following guard bytes. Valid saves, turn generation
+and file formats are unchanged.
+
 ### AR Starter Colonies — candidate
 
 `turn3.c`: `SatisfyOrders` (AR colonization/base setup); `turn2.c`: `Produce`,

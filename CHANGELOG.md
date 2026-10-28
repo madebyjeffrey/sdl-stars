@@ -43,6 +43,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `UnpackBattlePlan` now leaves an invalid compressed name empty instead
+  of storing a 32-character name without a terminator. Valid names, turn
+  generation and file formats are unchanged.
 - `WriteBattlePlan` no longer overruns its stack buffer when saving a
   31-character name that cannot fit the compressed-name limit. The raw
   record already held 37 bytes; only its temporary buffer was too small.

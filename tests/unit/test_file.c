@@ -135,7 +135,49 @@ static void test_FReadShDef_reserves_compressed_name_terminator(void) {
     }
 }
 
+// A decoded name of 32 characters lost its terminator when copied into
+// BTLPLAN. Failed decodes must not copy uninitialized scratch bytes either.
+static void test_UnpackBattlePlan_bounds_compressed_name(void) {
+    struct {
+        BTLPLAN btlplan;
+        uint8_t rgbGuard[80];
+    } buf;
+    uint8_t rgb[128];
+    char szName[65];
+    int16_t rgcch[] = {31, 31, 32, 64};
+    char rgch[] = {'a', 'Z', 'a', 'a'};
+    int16_t cOut;
+    int16_t i;
+    int16_t j;
+
+    for (i = 0; i < 4; i++) {
+        memset(rgb, 0, sizeof(rgb));
+        ((BTLPLAN *)rgb)->iplr = 1;
+        ((BTLPLAN *)rgb)->mdTactic = 3;
+        memset(szName, rgch[i], rgcch[i]);
+        szName[rgcch[i]] = 0;
+        cOut = 64;
+        TEST_ASSERT(FCompressUserString(szName, (char *)rgb + 5, &cOut));
+        rgb[4] = cOut;
+        memset(&buf, 0x55, sizeof(buf));
+
+        UnpackBattlePlan(rgb, &buf.btlplan, 6);
+        if (i < 2) {
+            TEST_CHECK(strcmp(buf.btlplan.szName, szName) == 0);
+        } else {
+            TEST_CHECK_(buf.btlplan.szName[0] == 0, "decoded length %d, encoded length %d", rgcch[i], cOut);
+        }
+        TEST_CHECK(memchr(buf.btlplan.szName, 0, sizeof(buf.btlplan.szName)) != NULL);
+        TEST_CHECK(buf.btlplan.iplr == 1);
+        TEST_CHECK(buf.btlplan.iplan == 6);
+        TEST_CHECK(buf.btlplan.mdTactic == 3);
+        for (j = 0; j < sizeof(buf.rgbGuard); j++)
+            TEST_CHECK(buf.rgbGuard[j] == 0x55);
+    }
+}
+
 TEST_LIST = {{"FReadShDef bounds uncompressed name", test_FReadShDef_bounds_uncompressed_name},
              {"UnpackBattlePlan bounds uncompressed name", test_UnpackBattlePlan_bounds_uncompressed_name},
              {"FReadShDef reserves compressed name terminator", test_FReadShDef_reserves_compressed_name_terminator},
+             {"UnpackBattlePlan bounds compressed name", test_UnpackBattlePlan_bounds_compressed_name},
              {NULL, NULL}};
