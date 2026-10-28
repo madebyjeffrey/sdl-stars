@@ -43,6 +43,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `FReadShDef` no longer copies an overlong uncompressed design name into
+  the hull statistics after its 32-byte name field. Valid names, turn
+  generation and file formats are unchanged.
 - The race wizard's habitability estimate no longer copies its 67-character
   format string into a 32-byte stack buffer (`DrawRace2`). It formats the
   decoded string directly. Turn generation and file formats are unchanged.

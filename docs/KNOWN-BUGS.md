@@ -408,15 +408,26 @@ overwrites adjacent globals. These two copies remain unchecked; the
 `FWasRaceFile` repair above does not cover them. Located by source review;
 the Windows dialogs have not been exercised with a long file name.
 
-### Record Name Overruns — located
+### Uncompressed Ship Design Name Overrun — fixed in 2.9
 
-`file.c`: `FReadShDef`, `UnpackBattlePlan`. Their uncompressed-name paths
-copy record text into the 32-byte `HUL.szClass` and `BTLPLAN.szName` fields
-with `strcpy`, without checking the length. A harness calling the actual
-`UnpackBattlePlan` function with a 64-character name overwrites 33 guard
-bytes after its `BTLPLAN`. This reproduces the reader's overwrite, not a
-complete file-load scenario. The ship-design path is located by source
-review.
+`file.c`: `FReadShDef`. The uncompressed-name path copied record text into
+the 32-byte `HUL.szClass` field without checking the length, overwriting
+the hull statistics after it. `tests/unit/test_file.c` reproduces this
+with 32- and 64-character names in both full and partial design records.
+
+**2.9:** the reader keeps at most 31 characters and a terminator. Empty
+and 31-character names still load unchanged. Valid saves, turn generation
+and file formats are unchanged.
+
+### Uncompressed Battle Plan Name Overrun — located
+
+`file.c`: `UnpackBattlePlan`. The uncompressed-name path copies record text
+into the 32-byte `BTLPLAN.szName` field without checking the length. A
+harness calling the actual function with a 64-character name overwrites
+33 guard bytes after its `BTLPLAN`. This reproduces the reader's overwrite,
+not a complete file-load scenario. This copy remains unchecked.
+
+### Compressed Ship Design Name Overrun — located
 
 `utilgen.c`: `FDecompressUserString`; `file.c`: `FReadShDef`.
 The decoder accepts up to `*pcOut` decoded characters and then writes a
@@ -424,7 +435,7 @@ terminator. `FReadShDef` passes 32 for its 32-byte `HUL.szClass`, allowing
 a one-byte overrun for exactly 32 decoded characters. A harness passing
 16 zero bytes (32 spaces) to the actual decoder with a 32-byte output
 buffer confirms that the terminator overwrites the following guard byte.
-These reader and decoder issues remain unfixed.
+This caller still fails to reserve the terminator byte.
 
 ### AR Starter Colonies — candidate
 
