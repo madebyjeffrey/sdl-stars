@@ -1,3 +1,4 @@
+#include "common.h"
 #include "acutest.h"
 #include "stars_test.h"
 
