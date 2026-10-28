@@ -431,7 +431,7 @@ harness calling the actual function with a 64-character name overwrites
 the plan's order fields and guard bytes after the plan. Valid saves,
 turn generation and file formats are unchanged.
 
-### Compressed Ship Design Name Overrun — located
+### Compressed Ship Design Name Overrun — fixed in 2.9
 
 `utilgen.c`: `FDecompressUserString`; `file.c`: `FReadShDef`.
 The decoder accepts up to `*pcOut` decoded characters and then writes a
@@ -439,7 +439,14 @@ terminator. `FReadShDef` passes 32 for its 32-byte `HUL.szClass`, allowing
 a one-byte overrun for exactly 32 decoded characters. A harness passing
 16 zero bytes (32 spaces) to the actual decoder with a 32-byte output
 buffer confirms that the terminator overwrites the following guard byte.
-This caller still fails to reserve the terminator byte.
+
+**2.9:** `FReadShDef` gives the decoder a 31-character limit and returns
+failure if decoding fails, before replacing the saved design. The decoder's
+existing convention (maximum characters, excluding the terminator) is
+unchanged. `tests/unit/test_file.c` checks that 31-character compressed
+names load intact and that 32- and 64-character names are rejected without
+changing the destination, for both partial and full records. Valid saves,
+turn generation and file formats are unchanged.
 
 ### AR Starter Colonies — candidate
 

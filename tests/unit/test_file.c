@@ -83,6 +83,59 @@ static void test_UnpackBattlePlan_bounds_uncompressed_name(void) {
     }
 }
 
+// The decoder's limit counts characters, not the trailing NUL. FReadShDef
+// passed 32 for szClass[32] and ignored a failed decode of still longer names.
+static void test_FReadShDef_reserves_compressed_name_terminator(void) {
+    uint8_t rgb[sizeof(RTSHDEF) + 80];
+    RTSHDEF *lprt;
+    SHDEF rgshdef[16];
+    SHDEF shdefSav;
+    uint8_t *pb;
+    char szName[65];
+    int16_t rgcch[] = {31, 32, 64};
+    int16_t rgdet[] = {detSome, detAll};
+    int16_t cOut;
+    int16_t fRead;
+    int16_t i;
+    int16_t j;
+
+    idPlayer = iplrNone;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3; j++) {
+            memset(rgb, 0, sizeof(rgb));
+            memset(rgshdef, 0, sizeof(rgshdef));
+            rgshdef[0].fFree = TRUE;
+            shdefSav = rgshdef[0];
+            lprt = (RTSHDEF *)rgb;
+            lprt->det = rgdet[i];
+            lprt->ihuldef = ihuldefSmallFreighter;
+            lprt->ibmp = LphuldefFromId(lprt->ihuldef)->hul.ibmp;
+            lprt->wtEmpty = 1234;
+            pb = lprt->det == detAll ? (uint8_t *)lprt->rghs : &lprt->chs;
+            memset(szName, 'a', rgcch[j]);
+            szName[rgcch[j]] = 0;
+            cOut = 64;
+            TEST_ASSERT(FCompressUserString(szName, (char *)pb + 1, &cOut));
+            *pb = cOut;
+
+            fRead = FReadShDef(lprt, rgshdef, iplrNone);
+            if (rgcch[j] == 31) {
+                TEST_ASSERT(fRead);
+                TEST_CHECK(strcmp(rgshdef[0].hul.szClass, szName) == 0);
+                if (lprt->det == detAll) {
+                    TEST_CHECK(rgshdef[0].hul.dp == 1234);
+                } else {
+                    TEST_CHECK(rgshdef[0].hul.wtEmpty == 1234);
+                }
+            } else {
+                TEST_CHECK_(!fRead, "detail %d, compressed name length %d", rgdet[i], rgcch[j]);
+                TEST_CHECK(memcmp(&rgshdef[0], &shdefSav, sizeof(shdefSav)) == 0);
+            }
+        }
+    }
+}
+
 TEST_LIST = {{"FReadShDef bounds uncompressed name", test_FReadShDef_bounds_uncompressed_name},
              {"UnpackBattlePlan bounds uncompressed name", test_UnpackBattlePlan_bounds_uncompressed_name},
+             {"FReadShDef reserves compressed name terminator", test_FReadShDef_reserves_compressed_name_terminator},
              {NULL, NULL}};

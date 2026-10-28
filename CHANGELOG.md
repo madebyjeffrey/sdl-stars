@@ -43,6 +43,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `FReadShDef` now reserves the terminator byte when decoding a compressed
+  ship-design name and rejects names that do not fit. A 32-character name
+  previously wrote a NUL into the following hull statistic. Valid names,
+  turn generation and file formats are unchanged.
 - `UnpackBattlePlan` no longer writes an overlong uncompressed name past
   its 32-byte field into the following battle plan. Valid names, turn
   generation and file formats are unchanged.

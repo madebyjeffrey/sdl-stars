@@ -45,12 +45,15 @@ int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad) {
         strncpy(shdef.hul.szClass, (char *)lpb, sizeof(shdef.hul.szClass) - 1);
         shdef.hul.szClass[sizeof(shdef.hul.szClass) - 1] = 0;
     } else {
-        cOut = 32;
+        // FDecompressUserString's character limit excludes its terminator.
+        cOut = sizeof(shdef.hul.szClass) - 1;
         if (cch > 32) {
             return FALSE;
         }
         memmove(szTemp, lpb, cch);
-        FDecompressUserString(szTemp, cch, shdef.hul.szClass, &cOut);
+        if (!FDecompressUserString(szTemp, cch, shdef.hul.szClass, &cOut)) {
+            return FALSE;
+        }
     }
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
