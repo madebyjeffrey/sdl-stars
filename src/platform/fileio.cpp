@@ -732,7 +732,7 @@ int32_t CbNativeSizeLegacy(int16_t hf) {
     });
 }
 void CloseNativeLegacy(int16_t hf) {
-    FileCall(nullptr, -1, [&] { 
+    FileCall(nullptr, -1, [&] {
     std::lock_guard<std::mutex> guard(Files().lock);
     if (LegacyFile(hf)) Files().rg[static_cast<unsigned>(hf)].reset();
         return 0;
