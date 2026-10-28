@@ -21,7 +21,9 @@ extern "C" {
 #include <system_error>
 #include <vector>
 #ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include <bcrypt.h>
 #include <fcntl.h>
