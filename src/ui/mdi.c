@@ -206,6 +206,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     HCURSOR      hcs;
     POINT16      ptOld;
     PaneSplitter grSel;
+    int16_t      grSelRaw;
     POINT16      ptAct;
     POINT16      ptD;
     POINT16      ptStart;
@@ -550,9 +551,11 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONDOWN:
         pt.x = LOWORD(lParam);
         pt.y = HIWORD(lParam);
-        if (HcrsFromFrameWindowPt(pt, (int16_t *)&grSel) == 0) {
+        hcs = HcrsFromFrameWindowPt(pt, &grSelRaw);
+        if (!hcs) {
             return 0;
         }
+        grSel = static_cast<PaneSplitter>(grSelRaw);
         hdc = GetDC(hwnd);
         hbrSav = (HBRUSH)SelectObject(hdc, hbr50Screen);
         ptD.y = 0;

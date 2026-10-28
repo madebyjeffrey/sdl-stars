@@ -453,6 +453,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
     int16_t    cBuilt;
     PROD       prodPartial;
     mdProdStat mdStatus;
+    int16_t    mdStatusRaw;
     int16_t    i;
     int16_t    j;
     int16_t    iPass;
@@ -504,7 +505,8 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
                     }
                     lpprod->cItem = 1020;
                 }
-                cBuilt = CBuildProdItem(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, (int16_t *)&mdStatus, FALSE);
+                cBuilt = CBuildProdItem(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, FALSE);
+                mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
                     if (cBuilt > 0 && *piFirst == 0) {
                         *piFirst = iPass;

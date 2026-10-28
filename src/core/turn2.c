@@ -6,6 +6,7 @@ void Produce() {
     int32_t    rgResAvail[4];
     int16_t    iprodCur;
     mdProdStat mdStatus;
+    int16_t    mdStatusRaw;
     int16_t    cBuilt;
     int16_t    fNoResearch;
     PLANET    *lppl;
@@ -121,7 +122,8 @@ void Produce() {
                         continue;
                     }
                     prodPartial.cItem = 0;
-                    cBuilt = CBuildProdItem(lppl, lpprod, &prodPartial, rgResAvail, fPrevProdIsAlch, (int16_t *)&mdStatus, FALSE);
+                    cBuilt = CBuildProdItem(lppl, lpprod, &prodPartial, rgResAvail, fPrevProdIsAlch, &mdStatusRaw, FALSE);
+                    mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                     if (fAutoBuildDone && (mdStatus == mdProdStatSomeAuto || mdStatus == mdProdStatNoneAuto)) {
                         fAutoBuildDone = FALSE;
                     }
