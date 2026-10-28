@@ -123,36 +123,36 @@ BOOL FSelectScannerObject(const SCANSNAPSHOT *lpsnap, uint16_t grType, uint16_t 
     return TRUE;
 }
 
-static BOOL FWriteScanString(FILE *lpfile, const char *psz) {
+static BOOL FWriteScanString(NATIVEFILE *lpfile, const char *psz) {
     unsigned ch;
 
-    if (!FUtf8Valid(psz, strlen(psz)) || fputc('"', lpfile) == EOF) return FALSE;
+    if (!FUtf8Valid(psz, strlen(psz)) || ChPutNativeFile('"', lpfile) == EOF) return FALSE;
     while (*psz) {
         ch = (unsigned char)*psz++;
-        if (ch == '"' || ch == '\\') { if (fputc('\\', lpfile) == EOF || fputc((int)ch, lpfile) == EOF) return FALSE; }
-        else if (ch < 32) { if (fprintf(lpfile, "\\u%04x", ch) < 0) return FALSE; }
-        else if (fputc((int)ch, lpfile) == EOF) return FALSE;
+        if (ch == '"' || ch == '\\') { if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile((int)ch, lpfile) == EOF) return FALSE; }
+        else if (ch < 32) { if (CchNativePrintf(lpfile, "\\u%04x", ch) < 0) return FALSE; }
+        else if (ChPutNativeFile((int)ch, lpfile) == EOF) return FALSE;
     }
-    return fputc('"', lpfile) != EOF;
+    return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, FILE *lpfile) {
+BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
     size_t i;
     const SCANOBJECT *lp;
     if (!lpsnap || !lpfile || (lpsnap->cObject != 0 && !lpsnap->rgobj)) return FALSE;
-    if (fprintf(lpfile, "{\"schema\":1,\"game\":%ld,\"turn\":%u,\"player\":%d,\"zoom\":%d,\"viewport\":[%ld,%ld,%ld,%ld],\"objects\":[\n",
+    if (CchNativePrintf(lpfile, "{\"schema\":1,\"game\":%ld,\"turn\":%u,\"player\":%d,\"zoom\":%d,\"viewport\":[%ld,%ld,%ld,%ld],\"objects\":[\n",
         (long)lpsnap->lidGame, lpsnap->turn, lpsnap->idPlayer, lpsnap->iZoom,
         (long)lpsnap->rcViewport.left,(long)lpsnap->rcViewport.top,(long)lpsnap->rcViewport.right,(long)lpsnap->rcViewport.bottom) < 0) return FALSE;
     for (i = 0; i < lpsnap->cObject; i++) {
         lp = &lpsnap->rgobj[i];
         if (!memchr(lp->szName, 0, sizeof(lp->szName))) return FALSE;
-        if (fprintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
+        if (CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
             "\"onScreen\":%s,\"filtered\":%s,\"scanSelected\":%s,\"mainSelected\":%s,\"name\":", i ? ",\n" : "", lp->grType,lp->id,lp->iPlayer,lp->det,lp->ith,
             (long)lp->ptUniverse.x,(long)lp->ptUniverse.y,(long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,
             lp->fOnScreen ? "true":"false",lp->fFiltered ? "true":"false",lp->fScanSelected ? "true":"false",lp->fMainSelected ? "true":"false") < 0 ||
-            !FWriteScanString(lpfile,lp->szName) || fputc('}',lpfile) == EOF) return FALSE;
+            !FWriteScanString(lpfile,lp->szName) || ChPutNativeFile('}',lpfile) == EOF) return FALSE;
     }
-    return fputs("\n]}\n",lpfile) != EOF && !ferror(lpfile);
+    return IPutNativeString("\n]}\n",lpfile) != EOF && !FNativeStreamError(lpfile);
 }
 
 static void ScannerInspectDetails(HWND hwnd) {

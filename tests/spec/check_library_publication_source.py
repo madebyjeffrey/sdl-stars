@@ -377,7 +377,10 @@ int main(void){
 }
 '''
     c, binary = tmp/'copy.c', tmp/'copy'
-    c.write_text(prelude+'\n'+extract('FCopyNativeFileContents')+'\n'+extract('FCopyNativeFileExclusive')+'\n'+harness)
+    body=extract('FCopyNativeFileContents')+'\n'+extract('FCopyNativeFileExclusive')
+    for old,new in {'NATIVEFILE':'FILE','CReadNative':'fread','CWriteNative':'fwrite','FNativeStreamError':'ferror','ICloseNativeFile':'fclose'}.items():
+        body=body.replace(old,new)
+    c.write_text(prelude+'\n'+body+'\n'+harness)
     subprocess.run(compiler+['-std=c11','-Wall','-Wextra','-Werror',str(c),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],cwd=tmp,check=True)
 

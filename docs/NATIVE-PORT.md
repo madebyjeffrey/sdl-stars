@@ -1,8 +1,8 @@
 # Native port
 
 The SDL client now has a native Windows x64 build using the same source wrapper
-as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bridge is isolated in
-`compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
+as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
+`src/platform/fileio.cpp`, and its wrapper symbols are namespaced
 to avoid SDK import collisions. Native Unicode open/save lives in the separate
 `filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
@@ -26,7 +26,7 @@ MinGW, and the game code alone builds as `stars-host` with a C++17 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
 
-SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
+Host and SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
 the C declarations in `filesystem.h`. The profile and picker test fixtures use
 this bridge for temporary directories, directory creation, canonical paths and
 non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
@@ -101,12 +101,21 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
-  paths with `chDirSep`. Windows strictly converts UTF-8 paths to UTF-16 and
-  uses CRT descriptors through `_wsopen`, `_read`, `_write` and related calls;
-  backups/cleanup and native text-file opens use the same path boundary through
-  `RenameNativeFile`, `RemoveNativeFile` and `PfOpenNativeFile`. POSIX uses `open`, `read` and the like,
-  which have no share modes, so a file another program has open is not
-  refused. The game's heaps (`memory.c`) come from `calloc` and `realloc`.
+  paths with `chDirSep`. The adapters forward to `fileio.h`/`fileio.cpp`, shared
+  with profiles, help, PDF output, inspection and managed-library operations.
+  `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
+  directory enumeration and publication. C-compatible opaque streams contain
+  exceptions and expose errors through return values and `errno`. Small owned
+  tokens retain the game's `int16_t` handle storage.
+  C++17 cannot express exclusive creation, exact private modes, sharing,
+  descriptor identity, fsync or live-handle truncation; narrow native adapters
+  preserve those contracts inside the service. Windows converts UTF-8 paths
+  through `u8path` to UTF-16. POSIX retains its existing lack of share modes.
+  Temporary publication checks flush, sync and close before replacing a path.
+  Raw game writes flush before returning to preserve immediate error reporting
+  through the legacy void close interface. Process logging and third-party
+  libraries' internally owned files remain outside this service. The game's
+  heaps (`memory.c`) come from `calloc` and `realloc`.
 - **Formatting and rounding** (`native.c`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)

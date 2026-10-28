@@ -49,34 +49,34 @@ BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
-    FILE *pfLeft = PfOpenNativeFile(pszLeft, "rb"), *pfRight = PfOpenNativeFile(pszRight, "rb");
+    NATIVEFILE *pfLeft = PfOpenNativeFile(pszLeft, "rb"), *pfRight = PfOpenNativeFile(pszRight, "rb");
     unsigned char rgbLeft[4096], rgbRight[4096];
     size_t cbLeft, cbRight;
     BOOL fEqual = pfLeft && pfRight;
     if (!fEqual) goto LDone;
     do {
-        cbLeft = fread(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
-        cbRight = fread(rgbRight, 1, sizeof(rgbRight), pfRight);
+        cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
+        cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
         if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = FALSE; break; }
     } while (cbLeft != 0);
 LDone:
-    if (pfLeft) fclose(pfLeft);
-    if (pfRight) fclose(pfRight);
+    if (pfLeft) ICloseNativeFile(pfLeft);
+    if (pfRight) ICloseNativeFile(pfRight);
     return fEqual;
 }
 static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
-    FILE *pfSource = PfOpenNativeFile(pszSource, "rb"), *pfTarget = PfOpenNativeFile(pszTarget, "wb");
+    NATIVEFILE *pfSource = PfOpenNativeFile(pszSource, "rb"), *pfTarget = PfOpenNativeFile(pszTarget, "wb");
     unsigned char rgb[4096];
     size_t cb;
     BOOL fCopied = pfSource && pfTarget;
     if (!fCopied) goto LDone;
-    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
+    while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0) {
+        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
     }
-    if (ferror(pfSource)) fCopied = FALSE;
+    if (FNativeStreamError(pfSource)) fCopied = FALSE;
 LDone:
-    if (pfSource) fclose(pfSource);
-    if (pfTarget && fclose(pfTarget) != 0) fCopied = FALSE;
+    if (pfSource) ICloseNativeFile(pfSource);
+    if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
     return fCopied;
 }
 int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);

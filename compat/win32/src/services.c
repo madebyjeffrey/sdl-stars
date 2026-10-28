@@ -1,6 +1,7 @@
 /* Narrow strings and arithmetic for UI callers; core native.c stays authoritative. */
 #include <windows.h>
 #include "encoding.h"
+#include "fileio.h"
 #include <SDL3/SDL.h>
 #include <io.h>
 #include <direct.h>
@@ -110,11 +111,11 @@ LInvalid:
 }
 
 #ifndef _WIN32
-int _access(const char *pszPath, int mdAccess) { return access(pszPath, mdAccess); }
-int _mkdir(const char *pszPath) { return mkdir(pszPath, 0777); }
+int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPath, mdAccess); }
+int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
 char *_getcwd(char *pszPath, int cchPath) {
     if (cchPath <= 0) { errno = EINVAL; return NULL; }
-    return getcwd(pszPath, (size_t)cchPath);
+    return PszNativeCwd(pszPath, (size_t)cchPath);
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
 int _strnicmp(const char *psz1, const char *psz2, size_t cb) { return strncasecmp(psz1, psz2, cb); }

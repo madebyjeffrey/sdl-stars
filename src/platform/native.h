@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "encoding.h"
+#include "fileio.h"
 
 /*
  * Win32 basics
@@ -94,7 +95,7 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
  *
  * The game reads and writes one file at a time through hf, a small handle
  * that Win16 OpenFile returned (file.c). These keep that interface on every
- * platform: Windows converts UTF-8 paths to UTF-16 at the CRT boundary.
+ * platform through the C++ file service, with UTF-8 native paths.
  * POSIX has no share modes, so a file another program has open is not refused.
  */
 
@@ -125,7 +126,7 @@ int     RemoveNativePath(const char *psz);
 int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int64_t LNativeTime(void);
 int     RenameNativeFile(const char *pszOld, const char *pszNew);
-FILE   *PfOpenNativeFile(const char *psz, const char *pszMode);
+NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode);
 #ifdef _WIN32
 char   *PszNativeCommandLine(void);
 char  **RgpszNativeArguments(int *lpc);

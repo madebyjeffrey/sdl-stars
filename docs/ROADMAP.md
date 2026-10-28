@@ -21,9 +21,13 @@ scoped cleanup and contained callbacks. On Apple-silicon macOS, all 54 desktop
 checks and 18 host checks pass; full desktop/host regressions each match 519
 files, with 25 accepted unused-storage warnings and no differences/errors or
 skipped inputs. Four additional warnings are confined to unused storage in
-`oneai6` host/player files at turns 100 and 150. C++ file services remain the
-third, separately reviewed step. The first PR also passes its Linux/Windows CI;
-the second step needs its own CI qualification.
+`oneai6` host/player files at turns 100 and 150. The third step replaces application-owned file operations with a shared C++17
+stream/filesystem service and opaque C interfaces. Native adapters remain only
+for exclusive creation, sharing, exact modes, durable writes and live-handle
+identity/truncation. Both full regressions again match 519 files, with the same
+25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Host checks pass 19/19; final desktop and Linux/Windows CI qualification
+are recorded in the stacked PRs. No baseline or record layout changes.
 See [native-port constraints](NATIVE-PORT.md).
 
 ## SDL desktop consolidation

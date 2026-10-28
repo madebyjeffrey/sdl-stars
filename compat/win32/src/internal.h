@@ -4,6 +4,7 @@
 #include <windows.h>
 #include "encoding.h"
 #include "errors.h"
+#include "fileio.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
 typedef struct COMPATPRINT COMPATPRINT;

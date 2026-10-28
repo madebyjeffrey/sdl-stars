@@ -96,36 +96,36 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
 }
 static void FileError(HWND hwnd, LPCSTR psz) { MessageBoxA(hwnd, psz, "File selection", MB_OK | MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
-    DIR *lpdir;
-    struct dirent *lpentry;
-    struct stat st;
+    NATIVEDIR *lpdir;
+    const char *pszEntry;
+    NATIVEFILEINFO st;
     char szPath[PATH_MAX], szLabel[PATH_MAX + 4];
     COMPATFILEENTRY *rg;
     size_t i;
     LRESULT iEntry;
     HWND hwndList = GetDlgItem(hwnd, ID_FILE_LIST);
-    lpdir = opendir(lp->szDir);
+    lpdir = PdirNativeOpen(lp->szDir);
     if (!lpdir) { FileError(hwnd, "This directory cannot be read."); return FALSE; }
     FreeFileEntries(lp);
     for (;;) {
-        errno = 0; lpentry = readdir(lpdir);
-        if (!lpentry) { if (errno != 0) lp->dwError = CDERR_INITIALIZATION; break; }
-        if (!FUtf8Valid(lpentry->d_name, strlen(lpentry->d_name))) {
+        errno = 0; pszEntry = PszNativeReadDir(lpdir);
+        if (!pszEntry) { if (errno != 0) lp->dwError = CDERR_INITIALIZATION; break; }
+        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) {
             FileError(hwnd, "A filename in this directory cannot be represented losslessly in UTF-8.");
             continue;
         }
-        if (strcmp(lpentry->d_name, ".") == 0 || strcmp(lpentry->d_name, "..") == 0) continue;
-        if (!lp->fHidden && lpentry->d_name[0] == '.') continue;
-        if (!FJoinFile(szPath, lp->szDir, lpentry->d_name) || stat(szPath, &st) != 0) continue;
-        if (!S_ISDIR(st.st_mode) && (!S_ISREG(st.st_mode) || !FFileFilter(lp, lpentry->d_name))) continue;
+        if (strcmp(pszEntry, ".") == 0 || strcmp(pszEntry, "..") == 0) continue;
+        if (!lp->fHidden && pszEntry[0] == '.') continue;
+        if (!FJoinFile(szPath, lp->szDir, pszEntry) || IGetNativeFileInfo(szPath, &st, TRUE) != 0) continue;
+        if (!st.fDirectory && (!st.fRegular || !FFileFilter(lp, pszEntry))) continue;
         rg = realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg));
         if (!rg) { lp->dwError = CDERR_MEMALLOCFAILURE; break; }
         lp->rgentry = rg;
-        rg[lp->cEntry].psz = strdup(lpentry->d_name); rg[lp->cEntry].fDir = S_ISDIR(st.st_mode);
+        rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st.fDirectory;
         if (!rg[lp->cEntry].psz) { lp->dwError = CDERR_MEMALLOCFAILURE; break; }
         lp->cEntry++;
     }
-    closedir(lpdir);
+    ICloseNativeDir(lpdir);
     if (lp->dwError) { EndDialog(hwnd, 0); return FALSE; }
     if (lp->cEntry > 1) qsort(lp->rgentry, lp->cEntry, sizeof(*lp->rgentry), CmpFileEntry);
     SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
@@ -141,9 +141,9 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
 }
 static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
     char szPath[PATH_MAX], szReal[PATH_MAX], szOld[PATH_MAX];
-    struct stat st;
+    NATIVEFILEINFO st;
     char *pszPrevious = NULL;
-    if (!FJoinFile(szPath, lp->szDir, psz) || !realpath(szPath, szReal) || stat(szReal, &st) != 0 || !S_ISDIR(st.st_mode)) {
+    if (!FJoinFile(szPath, lp->szDir, psz) || !PszCanonicalNativePath(szPath, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &st, TRUE) != 0 || !st.fDirectory) {
         FileError(hwnd, "The directory does not exist."); return FALSE;
     }
     if (!FUtf8Valid(szReal, strlen(szReal))) {
@@ -177,13 +177,13 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     char szPath[PATH_MAX], szParent[PATH_MAX], szReal[PATH_MAX];
     char *pszBase, *pszExt;
     const char *pszDef = lp->lpof->lpstrDefExt;
-    struct stat st, stParent;
+    NATIVEFILEINFO st, stParent;
     size_t cch;
     BOOL fExists;
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     if (!*pszName) return 0;
     if (!FJoinFile(szPath, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
-    if (stat(szPath, &st) == 0 && S_ISDIR(st.st_mode)) return 2;
+    if (IGetNativeFileInfo(szPath, &st, TRUE) == 0 && st.fDirectory) return 2;
     pszBase = strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
     pszExt = strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
@@ -196,25 +196,25 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     strcpy(szParent, szPath); pszBase = strrchr(szParent, '/');
     if (!pszBase || !pszBase[1] || strpbrk(pszBase + 1, "*?")) { FileError(hwnd, "Enter a valid filename."); return 0; }
     if (pszBase == szParent) pszBase[1] = 0; else *pszBase = 0;
-    if (!realpath(szParent, szReal) || stat(szReal, &stParent) != 0 || !S_ISDIR(stParent.st_mode)) {
+    if (!PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) || IGetNativeFileInfo(szReal, &stParent, TRUE) != 0 || !stParent.fDirectory) {
         FileError(hwnd, "The destination directory does not exist."); return 0;
     }
     pszBase = strrchr(szPath, '/') + 1;
     if (!FJoinFile(szParent, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
-    fExists = stat(szParent, &st) == 0;
-    if (fExists && !S_ISREG(st.st_mode)) { FileError(hwnd, "Select a regular file."); return 0; }
+    fExists = IGetNativeFileInfo(szParent, &st, TRUE) == 0;
+    if (fExists && !st.fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
     if (!fExists && (lp->lpof->Flags & OFN_FILEMUSTEXIST)) { FileError(hwnd, "The selected file does not exist."); return 0; }
     if (lp->fSave && (lp->lpof->Flags & OFN_NOREADONLYRETURN)) {
-        if ((fExists && (!(st.st_mode & 0222) || access(szParent, W_OK) != 0)) ||
-            (!fExists && (!(stParent.st_mode & 0222) || access(szReal, W_OK) != 0))) {
+        if ((fExists && (!(st.grfMode & 0222) || IAccessNativePath(szParent, W_OK) != 0)) ||
+            (!fExists && (!(stParent.grfMode & 0222) || IAccessNativePath(szReal, W_OK) != 0))) {
             FileError(hwnd, "The selected destination is read-only."); return 0;
         }
     }
     // Probe read access without modifying a selected file or creating a new one.
     if (!lp->fSave && fExists) {
-        lpfile = fopen(szParent, "rb");
+        lpfile = PfNativeOpen(szParent, "rb");
         if (!lpfile) { FileError(hwnd, "The selected file cannot be read."); return 0; }
-        fclose(lpfile);
+        ICloseNativeFile(lpfile);
     }
     if (lp->fSave && fExists && (lp->lpof->Flags & OFN_OVERWRITEPROMPT) &&
         MessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return 0;
@@ -305,7 +305,7 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
     if (!fAccepted) return;
     if (!FJoinFile(szPath, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
-    if (mkdir(szPath, 0777) != 0) {
+    if (ICreateNativeDirectory(szPath, 0777) != 0) {
         FileError(hwnd, errno == EEXIST ? "A file or folder already has this name." : "The folder could not be created."); return;
     }
     FChangeFileDirectory(hwnd, lp, szName, TRUE);
@@ -380,10 +380,10 @@ static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD st
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
 static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *pszName) {
     char szParent[PATH_MAX], szReal[PATH_MAX], *pch;
-    struct stat st;
+    NATIVEFILEINFO st;
     /* A validation error or declined overwrite must not reset navigation. */
-    if (stat(pszPath, &st) == 0 && S_ISDIR(st.st_mode)) {
-        if (realpath(pszPath, szReal)) { strcpy(lp->szDir, szReal); pszName[0] = 0; }
+    if (IGetNativeFileInfo(pszPath, &st, TRUE) == 0 && st.fDirectory) {
+        if (PszCanonicalNativePath(pszPath, szReal, sizeof(szReal))) { strcpy(lp->szDir, szReal); pszName[0] = 0; }
         return;
     }
     SDL_strlcpy(szParent, pszPath, sizeof(szParent));
@@ -391,7 +391,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
     if (!pch) return;
     SDL_strlcpy(pszName, pch + 1, PATH_MAX);
     if (pch == szParent) pch[1] = 0; else *pch = 0;
-    if (realpath(szParent, szReal) && stat(szReal, &st) == 0 && S_ISDIR(st.st_mode)) strcpy(lp->szDir, szReal);
+    if (PszCanonicalNativePath(szParent, szReal, sizeof(szReal)) && IGetNativeFileInfo(szReal, &st, TRUE) == 0 && st.fDirectory) strcpy(lp->szDir, szReal);
 }
 #endif
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
@@ -427,13 +427,13 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         if (!dlg.rgfilter[dlg.cFilter - 1].pszName || !dlg.rgfilter[dlg.cFilter - 1].pszPattern) { dlg.dwError = CDERR_MEMALLOCFAILURE; goto done; }
     }
     dlg.iFilter = lpof->nFilterIndex > 0 && lpof->nFilterIndex <= (DWORD)dlg.cFilter ? (int)lpof->nFilterIndex - 1 : 0;
-    if (!getcwd(szCwd, sizeof(szCwd))) { dlg.dwError = CDERR_INITIALIZATION; goto done; }
+    if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dlg.dwError = CDERR_INITIALIZATION; goto done; }
     if (!FUtf8Valid(szCwd, strlen(szCwd))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
     strcpy(dlg.szDir, szCwd); szInitial[0] = 0;
     if (lpof->lpstrInitialDir && *lpof->lpstrInitialDir) {
-        struct stat st;
-        if (!FJoinFile(szPath, szCwd, lpof->lpstrInitialDir) || !realpath(szPath, dlg.szDir) ||
-            stat(dlg.szDir, &st) != 0 || !S_ISDIR(st.st_mode)) strcpy(dlg.szDir, szCwd);
+        NATIVEFILEINFO st;
+        if (!FJoinFile(szPath, szCwd, lpof->lpstrInitialDir) || !PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir)) ||
+            IGetNativeFileInfo(dlg.szDir, &st, TRUE) != 0 || !st.fDirectory) strcpy(dlg.szDir, szCwd);
     }
     if (*lpof->lpstrFile) {
         if (!FJoinFile(szPath, dlg.szDir, lpof->lpstrFile)) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
@@ -441,7 +441,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         if (pch) {
             SDL_strlcpy(szInitial, pch + 1, sizeof(szInitial));
             if (pch == szPath) pch[1] = 0; else *pch = 0;
-            if (!realpath(szPath, dlg.szDir)) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
+            if (!PszCanonicalNativePath(szPath, dlg.szDir, sizeof(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
         }
     }
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
@@ -523,7 +523,7 @@ selected:
     {
         strcpy(szPath, dlg.szResult); pch = strrchr(szPath, '/');
         if (pch == szPath) pch[1] = 0; else *pch = 0;
-        if (!(lpof->Flags & OFN_NOCHANGEDIR) && chdir(szPath) != 0) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
+        if (!(lpof->Flags & OFN_NOCHANGEDIR) && IChangeNativeCwd(szPath) != 0) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
         strcpy(lpof->lpstrFile, dlg.szResult);
         pch = strrchr(dlg.szResult, '/') + 1;
         lpof->nFileOffset = (WORD)(pch - dlg.szResult);

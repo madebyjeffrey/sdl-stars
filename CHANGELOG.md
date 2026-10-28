@@ -6,6 +6,14 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Application-owned files now use a shared C++17 stream/filesystem service for
+  game records, host settings, library metadata/import/export, profiles, help,
+  inspection and PDF output. Opaque streams and owned legacy tokens keep native
+  handles private. Exclusive creation, private temporary-file modes, sharing,
+  live-file identity, truncation and durable publication retain narrow native
+  adapters. UTF-8 paths, binary record sizes, turn results and baselines stay
+  unchanged.
+
 - Recoverable memory and file failures now use typed C++ exceptions instead of
   `setjmp`/`longjmp`. Scoped guards restore recovery state and flags and release
   owned handles. Window, dialog, timer and inspector callback failures are

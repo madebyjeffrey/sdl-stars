@@ -63,7 +63,7 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
 }
 
 static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
-    FILE *fp;
+    NATIVEFILE *fp;
     char *sz = NULL;
     size_t cb = 0, cbTotal = 0;
     ssize_t cbLine;
@@ -71,12 +71,12 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     BOOL fRet = FALSE;
 
     *lplp = NULL;
-    fp = fopen(pszPath, "rb");
+    fp = PfNativeOpen(pszPath, "rb");
     if (!fp) {
         SetLastError(DwProfileError());
         return errno == ENOENT;
     }
-    while ((cbLine = getline(&sz, &cb, fp)) >= 0) {
+    while ((cbLine = CbGetNativeLine(&sz, &cb, fp)) >= 0) {
         cbTotal += (size_t)cbLine;
         if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(sz, (size_t)cbLine)) {
             SetLastError(ERROR_BAD_FORMAT); goto LReturn;
@@ -87,10 +87,10 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         if (!*lplpNext) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
         lplpNext = &(*lplpNext)->lpNext;
     }
-    if (ferror(fp)) { SetLastError(ERROR_READ_FAULT); goto LReturn; }
+    if (FNativeStreamError(fp)) { SetLastError(ERROR_READ_FAULT); goto LReturn; }
     fRet = TRUE;
 LReturn:
-    free(sz); fclose(fp);
+    free(sz); ICloseNativeFile(fp);
     if (!fRet) { FreeProfile(*lplp); *lplp = NULL; }
     return fRet;
 }
@@ -183,7 +183,7 @@ static BOOL FMakeProfileDir(char *szPath) {
 #endif
         ch = *psz;
         *psz = 0;
-        err = mkdir(szPath, 0700);
+        err = ICreateNativeDirectory(szPath, 0700);
         *psz = ch;
         if (err != 0 && errno != EEXIST) { SetLastError(DwProfileError()); return FALSE; }
     }
@@ -266,38 +266,32 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
 
 static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
     char *szTemp;
-    FILE *fp;
-    int fd;
+    NATIVEFILE *fp;
     BOOL fRet = FALSE;
-#ifndef _WIN32
-    struct stat st;
-#endif
+    BOOL fTemporary = FALSE;
 
     szTemp = malloc(strlen(pszPath) + 12);
     if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
     sprintf(szTemp, "%s.XXXXXX", pszPath);
-    fd = mkstemp(szTemp);
-    if (fd < 0) { SetLastError(DwProfileError()); goto LReturn; }
-#ifndef _WIN32
-    if (stat(pszPath, &st) == 0 && fchmod(fd, st.st_mode & 0777) != 0) {
-        SetLastError(DwProfileError()); close(fd); goto LReturn;
+    fp = PfNativeCreateTemp(szTemp);
+    if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
+    fTemporary = TRUE;
+    if (ICopyNativePermissions(fp, pszPath) != 0) {
+        SetLastError(DwProfileError()); ICloseNativeFile(fp); goto LReturn;
     }
-#endif
-    fp = fdopen(fd, "wb");
-    if (!fp) { SetLastError(DwProfileError()); close(fd); goto LReturn; }
-    if (fwrite("\xef\xbb\xbf", 1, 3, fp) != 3) { fclose(fp); goto LReturn; }
+    if (CWriteNative("\xef\xbb\xbf", 1, 3, fp) != 3) { ICloseNativeFile(fp); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
-        if (fputs(lp->szRaw, fp) == EOF) break;
+        if (IPutNativeString(lp->szRaw, fp) == EOF) break;
         if (lp->lpNext && *lp->szRaw && lp->szRaw[strlen(lp->szRaw) - 1] != '\n')
-            if (fputc('\n', fp) == EOF) break;
+            if (ChPutNativeFile('\n', fp) == EOF) break;
     }
-    if (lp || fflush(fp) != 0 || fsync(fd) != 0) {
-        SetLastError(DwProfileError()); fclose(fp); goto LReturn;
+    if (lp || IFlushNativeFile(fp) != 0 || ISyncNativeFile(fp) != 0) {
+        SetLastError(DwProfileError()); ICloseNativeFile(fp); goto LReturn;
     }
-    if (fclose(fp) != 0 || rename(szTemp, pszPath) != 0) { SetLastError(DwProfileError()); goto LReturn; }
+    if (ICloseNativeFile(fp) != 0 || IRenameNativePath(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
     fRet = TRUE;
 LReturn:
-    if (!fRet) unlink(szTemp);
+    if (!fRet && fTemporary) IUnlinkNativePath(szTemp);
     free(szTemp);
     return fRet;
 }
