@@ -457,6 +457,20 @@ names load intact and that 32- and 64-character names are rejected without
 changing the destination, for both partial and full records. Valid saves,
 turn generation and file formats are unchanged.
 
+### Battle Plan Write Buffer Overrun — fixed in 2.9
+
+`save.c`: `WriteBattlePlan`. A raw name record contains four header bytes,
+an encoding byte and a terminated name. The writer allocated 36 bytes,
+but a valid 31-character name requires 37 if compression exceeds its
+31-byte limit. `tests/unit/test_save.c` reproduces the stack overwrite
+under AddressSanitizer with a name of 31 slashes (three nibbles each).
+
+**2.9:** the temporary buffer holds the complete raw record. The test
+checks 30- and 31-character names, the record size and content, and the
+name read back through `UnpackBattlePlan`. The bytes written and record
+sizes are unchanged; the original already wrote a 37-byte raw record
+after overrunning its buffer. Turn generation is unchanged.
+
 ### AR Starter Colonies — candidate
 
 `turn3.c`: `SatisfyOrders` (AR colonization/base setup); `turn2.c`: `Produce`,

@@ -43,6 +43,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `WriteBattlePlan` no longer overruns its stack buffer when saving a
+  31-character name that cannot fit the compressed-name limit. The raw
+  record already held 37 bytes; only its temporary buffer was too small.
+  Turn generation and file formats are unchanged.
 - Opening or saving a race with a long file name no longer overwrites
   nearby globals (`FOpenGame`, `FSaveRace`). The full chosen path is used
   for I/O; the remembered name is limited to its 16-byte buffer. Turn

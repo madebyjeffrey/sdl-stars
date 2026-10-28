@@ -214,9 +214,47 @@ static void test_FWriteDataFile_masks_other_players_things(void) {
     TEST_CHECK_(lpth->thw.grbitPlr == 1 && lpth->thw.grbitPlrTrav == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw.grbitPlr, lpth->thw.grbitPlrTrav);
 }
 
+// A 31-character name that needs three nibbles per character cannot fit
+// the compressed-name limit. Its raw record needs 37 bytes, not 36.
+static void test_WriteBattlePlan_fits_maximum_raw_name(void) {
+    char szDir[MAX_PATH];
+    char szFile[MAX_PATH];
+    BTLPLAN btlplan;
+    BTLPLAN btlRead;
+    int16_t cch;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("WriteBattlePlan_raw_name", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sgame.hst", szDir, szDirSep);
+    for (cch = 30; cch <= 31; cch++) {
+        memset(&btlplan, 0, sizeof(btlplan));
+        btlplan.iplan = 6;
+        btlplan.mdTactic = 3;
+        memset(btlplan.szName, '/', cch);
+        TEST_ASSERT(FCreateFile(dtHost, iplrNone, szFile));
+        WriteBattlePlan(&btlplan, FALSE);
+        WriteRt(rtEOF, 0, NULL);
+        StreamClose();
+
+        StreamOpen(szFile, mdRead);
+        ReadRt();
+        TEST_ASSERT(hdrCur.rt == rtBOF);
+        ReadRt();
+        TEST_ASSERT(hdrCur.rt == rtBtlPlan);
+        TEST_CHECK(hdrCur.cb == 4 + 1 + cch + 1);
+        TEST_CHECK(rgbCur[4] == 0);
+        TEST_CHECK(memcmp(rgbCur + 5, btlplan.szName, cch + 1) == 0);
+        UnpackBattlePlan(rgbCur, &btlRead, 6);
+        TEST_CHECK(strcmp(btlRead.szName, btlplan.szName) == 0);
+        TEST_CHECK(btlRead.mdTactic == btlplan.mdTactic);
+        StreamClose();
+    }
+}
+
 TEST_LIST = {{"FWriteDataFile Claim Adjuster sees only habitat", test_FWriteDataFile_claim_adjuster_sees_only_habitat},
              {"SetVisPFFleets sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase},
              {"SetVisPFFleets long-range scanner sees a cloaked starbase", test_SetVisPFFleets_cloaked_starbase_long_range},
              {"WriteBOF writes version 2.84", test_WriteBOF_writes_version_2_84},
              {"FWriteDataFile masks other players' things", test_FWriteDataFile_masks_other_players_things},
+             {"WriteBattlePlan fits maximum raw name", test_WriteBattlePlan_fits_maximum_raw_name},
              {NULL, NULL}};

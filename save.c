@@ -904,7 +904,8 @@ void MarkFleet(FLEET *lpfl, DetType det) {
 }
 
 void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
-    uint8_t  rgb[36];
+    // Four header bytes, the encoding byte and the complete raw name.
+    uint8_t  rgb[4 + 1 + sizeof(lpbtlplan->szName)];
     uint8_t *pb;
     char     szPlanName[32];
     int16_t  cOut;
