@@ -62,7 +62,8 @@ static jmp_buf *penvMem=&env;
 #define MB_ICONHAND 1
 static const char *PszFormatIds(int id,void *arg) {(void)id;(void)arg;return "memory";}
 static void AlertSz(const char *text,int flags) {(void)text;(void)flags;abort();}
-static void StarsLongJump(jmp_buf *target,int value) {longjmp(*target,value);}
+enum {starsErrorMemory};
+static void StarsThrowError(int kind,int id) {(void)kind;(void)id;longjmp(*penvMem,-1);}
 static void event(const char *s) {assert(strlen(trace)+strlen(s)<sizeof(trace));strcat(trace,s);}
 static int slot(const void *p) {for(int i=heaps-1;i>=0;i--)if(heap[i].p==p && heap[i].live)return i;abort();}
 static void *LpAlloc(uint16_t cb,HeapType ht) {

@@ -9,9 +9,10 @@ static int FPumpWindowsChooser(void *lpv) {
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return 0; }
         TranslateMessage(&msg); DispatchMessageA(&msg);
+        if (FStarsErrorPending()) return 0;
         if (hwndOwner && !IsWindow(hwndOwner)) return 0;
     }
-    return !hwndOwner || IsWindow(hwndOwner);
+    return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
 
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,

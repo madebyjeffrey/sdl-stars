@@ -29,12 +29,10 @@ int16_t FGenerateTurn() {
     int16_t  j;
     uint8_t  mpiplr2[16];
     uint8_t  rgfNoXFile[16];
-    jmp_buf *penvMemSav;
     int16_t  ifl;
     FLEET   *lpfl;
     char    *pchCur;
     int16_t  i;
-    jmp_buf  env;
     char     szT[256];
     int16_t  idCur;
     int16_t  fFollow;
@@ -76,9 +74,8 @@ int16_t FGenerateTurn() {
             }
         }
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) == 0) {
+    StarsRecoveryScope scopeRecovery;
+    try {
         lpcd = (COLDROP *)LpAlloc(1000 * sizeof(COLDROP), htMisc);
         lpxf = (XFERFULL *)LpAlloc(1000 * sizeof(XFERFULL), htMisc);
         vrgPlanResExtra = (uint16_t *)LpAlloc(game.cPlanMax * 2, htMisc);
@@ -344,6 +341,7 @@ int16_t FGenerateTurn() {
         UpdateProgressGauge(998);
         imemLogCur = 0;
         fSuccess = TRUE;
+    } catch (const StarsError &) {
     }
 FreeStuffUp:
     UpdateProgressGauge(1000);
@@ -561,30 +559,29 @@ int16_t CFindTurnsOutstanding() {
 
 int16_t FSetUpBatchProcessing() {
     char   *pch;
-    jmp_buf env;
     int16_t fSuccess;
     int16_t cb;
 
     fSuccess = FALSE;
-    penvMem = &env;
-    if (setjmp(env) != 0)
-        goto LError;
-    StreamOpen(szBase, mdRead);
-    cb = LOWORD(CbFileSize(hf));
-    lpchBatch = (char *)LpAlloc(cb, htPerm);
-    RgFromStream(lpchBatch, cb);
-    lpchBatchMac = lpchBatch + cb;
-    pch = szBase;
-    while (*lpchBatch != '\n' && lpchBatch != lpchBatchMac) {
-        *pch = *lpchBatch;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        StreamOpen(szBase, mdRead);
+        cb = LOWORD(CbFileSize(hf));
+        lpchBatch = (char *)LpAlloc(cb, htPerm);
+        RgFromStream(lpchBatch, cb);
+        lpchBatchMac = lpchBatch + cb;
+        pch = szBase;
+        while (*lpchBatch != '\n' && lpchBatch != lpchBatchMac) {
+            *pch = *lpchBatch;
+            lpchBatch++;
+            pch++;
+        }
         lpchBatch++;
-        pch++;
+        pch[-1] = 0;
+        fSuccess = TRUE;
+    } catch (const StarsError &) {
     }
-    lpchBatch++;
-    pch[-1] = 0;
-    fSuccess = TRUE;
 LError:
-    penvMem = 0;
     StreamClose();
     if (!fSuccess) {
         szBase[0] = 0;

@@ -67,12 +67,12 @@ static void TestInvalidDefinition(void) {
     pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
     fputs("\xe9\r\n", pf); fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
     pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
     fputs("Title\r\n\xff\r\n", pf); fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
     pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
     fputs("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
@@ -80,12 +80,12 @@ static void TestInvalidDefinition(void) {
     fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
     pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
     TEST_CHECK(fwrite("Title\0hidden\r\n", 1, 14, pf) == 14); fclose(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
 }
 
 static void TestFormattedTextBounds(void) {

@@ -258,11 +258,9 @@ LShowTask:
 void DumpUniverse() {
     StringId ids;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     int16_t  cch;
 
     fSilentSav = fFileErrSilent;
@@ -272,17 +270,8 @@ void DumpUniverse() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             CchSprintf(szWork, "%s.map", szBase);
             StreamOpen(szWork, mdCreate);
@@ -293,6 +282,13 @@ void DumpUniverse() {
                 RgToStream(szWork, cch);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -304,7 +300,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 
@@ -316,11 +311,9 @@ void DumpPlanets() {
     char     szForm[256];
     int16_t  j;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     char    *psz;
     int16_t  cch;
     int32_t  l;
@@ -335,17 +328,8 @@ void DumpPlanets() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.p%d", szBase, idPlayer + 1);
@@ -523,6 +507,13 @@ void DumpPlanets() {
                 RgToStream(szCRLF, 2);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -534,7 +525,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 
@@ -547,11 +537,9 @@ void DumpFleets() {
     FLEET   *lpfl;
     int16_t  j;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     char    *psz;
     int16_t  cch;
     int32_t  l;
@@ -564,17 +552,8 @@ void DumpFleets() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.f%d", szBase, idPlayer + 1);
@@ -714,6 +693,13 @@ void DumpFleets() {
                 RgToStream(szCRLF, 2);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -725,7 +711,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 

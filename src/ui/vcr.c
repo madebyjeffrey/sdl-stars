@@ -2,12 +2,9 @@
 
 void BattleVCR(int16_t iBattle) {
     FARPROC  lpProc;
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     HB      *lphb;
 
     lpProc = NULL;
-    penvMemSav = penvMem;
     viStepVCRCur = -1;
     gd.fVCRTimer = FALSE;
     if (gd.mdScreenSize >= 2) {
@@ -31,23 +28,22 @@ void BattleVCR(int16_t iBattle) {
         }
     }
     vlpbdVCRNext = (BTLDATA *)((uint8_t *)vlpbdVCR + vlpbdVCR->cbData);
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
-        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
-        goto LCleanup;
-    }
-    vrgtok = (TOK *)LpAlloc(vlpbdVCR->ctok * sizeof(TOK), htMisc);
-    vrgdpVCR = (int32_t *)LpAlloc(vlpbdVCR->ctok * 4, htMisc);
-    vcStepVCR = SetVCRBoard(30000) - 1;
-    vcRound = viRound;
-    SetVCRBoard(-1);
-    if (gd.fTutorial) {
-        AdvanceTutor();
-    }
-    lpProc = MakeProcInstance(VCRDlg, hInst);
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc);
+    StarsRecoveryScope scopeRecovery;
+    try {
+        vrgtok = (TOK *)LpAlloc(vlpbdVCR->ctok * sizeof(TOK), htMisc);
+        vrgdpVCR = (int32_t *)LpAlloc(vlpbdVCR->ctok * 4, htMisc);
+        vcStepVCR = SetVCRBoard(30000) - 1;
+        vcRound = viRound;
+        SetVCRBoard(-1);
+        if (gd.fTutorial) {
+            AdvanceTutor();
+        }
+        lpProc = MakeProcInstance(VCRDlg, hInst);
+        DialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc);
 
+    } catch (const StarsError &) {
+        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+    }
 LCleanup:
     if (lpProc) {
         FreeProcInstance(lpProc);

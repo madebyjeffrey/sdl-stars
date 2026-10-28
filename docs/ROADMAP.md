@@ -16,9 +16,14 @@ match all 519 files through turn 150, with 21 accepted unused-storage warnings,
 zero differences/errors and no skipped inputs. The available SDL tutorial smoke
 checkpoint passes; full tutorial coverage remains incomplete.
 
-Exception-based recovery and C++ file services are the next separately reviewed
-steps. This compile-only step retains the existing jump-based recovery and file
-implementations. Linux and Windows execution is left to their CI qualification.
+The second step replaces all 24 jump-recovery sites with typed exceptions,
+scoped cleanup and contained callbacks. On Apple-silicon macOS, all 54 desktop
+checks and 18 host checks pass; full desktop/host regressions each match 519
+files, with 25 accepted unused-storage warnings and no differences/errors or
+skipped inputs. Four additional warnings are confined to unused storage in
+`oneai6` host/player files at turns 100 and 150. C++ file services remain the
+third, separately reviewed step. The first PR also passes its Linux/Windows CI;
+the second step needs its own CI qualification.
 See [native-port constraints](NATIVE-PORT.md).
 
 ## SDL desktop consolidation

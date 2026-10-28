@@ -41,8 +41,9 @@ When goals conflict, apply them in this order:
   for existing prefixes before you invent one.
 - Build game, UI and host sources as C++17 (GNU extensions on); the SDL
   compatibility runtime and C test harnesses retain C11 and a C ABI. Preserve
-  fixed-width aliases and record layouts. Keep the surrounding style: locals at the
-  top of a function, `//` or `/* */` comments, no reformatting beyond the
+  fixed-width aliases and record layouts. Keep scalar locals at the top of a
+  function and construct RAII guards at their operation boundary. Keep the
+  surrounding style: `//` or `/* */` comments, no reformatting beyond the
   lines you change. Helpers are fine when they replace a Win16 shim or remove
   real duplication; keep them small and next to their callers.
 - Truth tests stay bare for flags (`f…`), `F…()` calls, pointers, handles and

@@ -48,6 +48,26 @@ and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
 offset is zero in both languages; the C++ minimum class size is never used as
 a record length. The full native and host regressions check serialized results.
 
+Memory and stream failures use `StarsError` and normal C++ stack unwinding.
+The 24 former jump-recovery sites now have operation-specific catches; the
+`penvMem` global and jump-buffer alias are removed. `StarsRecoveryScope` records
+only whether optional record validation is inside a recoverable operation, so
+standalone validators retain their existing status-return behavior. It holds
+no destination address. Nested scopes restore that state automatically.
+`StarsRestore` and `StarsFileGuard` provide non-throwing cleanup; resource
+release does not substitute for checked writes, publication or game-state
+rollback.
+
+The C SDL runtime calls application window/dialog/timer/inspector callbacks
+through C++ containment thunks. A thrown failure becomes pending state, an
+active modal dialog ends, and the C dispatcher finishes its counters, window
+and owner cleanup. Typed wrappers around callback-dispatching UI APIs deliver
+that pending failure only after the C call returns. Native file-picker pumps
+cancel on a pending failure too. Desktop and host entrypoints contain remaining
+failures; no C++ exception is allowed to escape through the C entrypoint.
+The callback fault test exercises nested dialogs, owner re-enabling, allocation
+exceptions, timers, synchronous delivery and automatic destruction.
+
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
 

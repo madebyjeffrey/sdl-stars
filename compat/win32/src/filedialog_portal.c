@@ -177,9 +177,10 @@ static BOOL FPumpChooser(HWND hwndOwner) {
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return FALSE; }
         TranslateMessage(&msg); DispatchMessageA(&msg);
+        if (FStarsErrorPending()) return 0;
         if (hwndOwner && !IsWindow(hwndOwner)) return FALSE;
     }
-    return !hwndOwner || IsWindow(hwndOwner);
+    return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,

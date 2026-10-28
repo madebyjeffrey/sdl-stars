@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Recoverable memory and file failures now use typed C++ exceptions instead of
+  `setjmp`/`longjmp`. Scoped guards restore recovery state and flags and release
+  owned handles. Window, dialog, timer and inspector callback failures are
+  contained inside C++ thunks; the C runtime completes its dispatch/modal cleanup
+  before the game receives the error. Existing operation-specific recovery and
+  format 2.85 remain intact. Turn results and regression baselines are unchanged.
+
 - The game, desktop UI and command-line host now compile as GNU C++17 while
   retaining their source filenames, C ABI, integer storage widths and binary
   record formats. The SDL wrapper and generated tables remain C11. This first

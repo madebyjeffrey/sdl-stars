@@ -63,6 +63,12 @@ include("${CMAKE_CURRENT_LIST_DIR}/sdl-unit-tests.cmake")
 if(NOT STARS_BUILD_TESTS)
     return()
 endif()
+add_executable(stars-compat-exceptions tests/compat/exception_callbacks.cpp)
+target_link_libraries(stars-compat-exceptions PRIVATE stars_win32 stars_errors SDL3::SDL3)
+target_compile_options(stars-compat-exceptions PRIVATE -Wall -Wextra -Werror)
+add_test(NAME win32_exception_callbacks COMMAND stars-compat-exceptions)
+set_tests_properties(win32_exception_callbacks PROPERTIES LABELS "compat;client" TIMEOUT 30
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
 # The qualification harness below uses X11 and private DBus.
 # Build the product and help viewer on macOS without Linux-only harness targets.
 add_executable(stars-compat-client-quit tests/compat/win32_client_quit.c)

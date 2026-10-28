@@ -19,7 +19,7 @@ static uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
 
     if (cbItem > UINT16_MAX - CbHbHeader(ht)) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
-        StarsLongJump(penvMem, -1);
+        StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
 }
@@ -37,7 +37,7 @@ HB *LphbAlloc(uint16_t cb, HeapType ht) {
     hmem = calloc(1, cb);
     if (!hmem) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
-        StarsLongJump(penvMem, -1);
+        StarsThrowError(starsErrorMemory, idsMemory);
     }
     lphb = (HB *)hmem;
     lphb->hmem = hmem;
@@ -74,7 +74,7 @@ HB *LphbReAlloc(HB *lphb) {
     if (!hmem) {
     LReAllocOOM:
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
-        StarsLongJump(penvMem, -1);
+        StarsThrowError(starsErrorMemory, idsMemory);
     }
     memset((uint8_t *)hmem + cbCur, 0, cbGrow);
     lphbNew = (HB *)hmem;

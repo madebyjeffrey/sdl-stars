@@ -586,8 +586,6 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     int16_t  idsError;
     int32_t  lSaltSav;
     PLAYER   plr;
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     int16_t  fRet;
     int16_t  fSav;
     int16_t  fLegacy;
@@ -602,95 +600,94 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     fRet = 0;
     fSav = fFileErrSilent;
     fFileErrSilent = TRUE;
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-    LBadFile:
-        StreamClose();
-        penvMem = penvMemSav;
-        fFileErrSilent = fSav;
-        if (!fFileErrSilent && idsError != -1) {
-            /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
-            if (szFile != szWork) {
-                strcpy(szWork, szFile);
-            }
-            AlertSz(PszFormatIds(idsError, NULL), MB_ICONHAND);
-        }
-        return fRet;
-    }
-    {
-        StreamOpen(szFile, mdRead);
-        ReadRt();
-        if (hdrCur.rt != rtBOF || hdrCur.cb != sizeof(RTBOF) || ((RTBOF *)rgbCur)->verMajor != 2 ||
-            ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor > 85) {
-            idsError = idsFileDoesBelongVersionStars;
-            fRet = -1;
-            goto LBadFile;
-        } else {
-            wVersFile = ((RTBOF *)rgbCur)->wVersion;
-            fLegacy = ((RTBOF *)rgbCur)->verMinor < 85;
-            fPlural = ((RTBOF *)rgbCur)->verMinor >= 55;
-            if (((RTBOF *)rgbCur)->dt == 5) {
-                ReadRt();
-                if (hdrCur.rt == rtPlr) {
-                    idsError = idsGameFileAppearsCorruptUnableLoadFile;
-                    if (fLegacy) {
-                        if (!FReadLegacyRacePlayer(&plr, (const uint8_t *)rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
-                    } else {
-                        ReadRtPlr(&plr, (uint8_t *)rgbCur, hdrCur.cb);
-                    }
+    StarsRecoveryScope scopeRecovery;
+    try {
+        {
+            StreamOpen(szFile, mdRead);
+            ReadRt();
+            if (hdrCur.rt != rtBOF || hdrCur.cb != sizeof(RTBOF) || ((RTBOF *)rgbCur)->verMajor != 2 ||
+                ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor > 85) {
+                idsError = idsFileDoesBelongVersionStars;
+                fRet = -1;
+                goto LBadFile;
+            } else {
+                wVersFile = ((RTBOF *)rgbCur)->wVersion;
+                fLegacy = ((RTBOF *)rgbCur)->verMinor < 85;
+                fPlural = ((RTBOF *)rgbCur)->verMinor >= 55;
+                if (((RTBOF *)rgbCur)->dt == 5) {
                     ReadRt();
-                    icksum = IRaceChecksum(&plr);
-                    if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
-                        fProtected = fLegacy && plr.lSalt != 0;
-                        if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
-                            idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;
-                            fRet = -1;
-                            goto LBadFile;
+                    if (hdrCur.rt == rtPlr) {
+                        idsError = idsGameFileAppearsCorruptUnableLoadFile;
+                        if (fLegacy) {
+                            if (!FReadLegacyRacePlayer(&plr, (const uint8_t *)rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
+                        } else {
+                            ReadRtPlr(&plr, (uint8_t *)rgbCur, hdrCur.cb);
                         }
-                        if (fProtected) {
-                            if (!FPromptLegacyRacePassword(szPassword)) {
-                                idsError = -1;
+                        ReadRt();
+                        icksum = IRaceChecksum(&plr);
+                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
+                            fProtected = fLegacy && plr.lSalt != 0;
+                            if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
+                                idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;
                                 fRet = -1;
                                 goto LBadFile;
                             }
-                            plr.lSalt = LSaltFromSz(szPassword);
-                            strcpy(szRacePass, szPassword);
-                        }
-                        lSaltSav = lSaltCur;
-                        lSaltCur = plr.lSalt;
-                        if (!fLegacy && fChkPass && !FCheckPassword()) {
-                            lSaltCur = lSaltSav;
-                            fRet = -1;
-                            goto LBadFile;
-                        } else {
-                            lSaltCur = lSaltSav;
-                            if (!fProtected) {
-                                if (!fLegacy && plr.lSalt != 0) {
-                                    strcpy(szRacePass, szPassLast);
-                                } else {
-                                    szRacePass[0] = 0;
+                            if (fProtected) {
+                                if (!FPromptLegacyRacePassword(szPassword)) {
+                                    idsError = -1;
+                                    fRet = -1;
+                                    goto LBadFile;
                                 }
+                                plr.lSalt = LSaltFromSz(szPassword);
+                                strcpy(szRacePass, szPassword);
                             }
-                            vplr = plr;
-                            /* The original copied the whole path into the
-                               16-byte szRaceFile, overrunning the globals
-                               after it when a universe definition names a
-                               race by path. Keep the file name, as the race
-                               dialogs do. */
-                            pch = strrchr(szFile, chDirSep);
-                            SetSzRaceFile(pch ? pch + 1 : szFile);
-                            StreamClose();
-                            fFileErrSilent = fSav;
-                            penvMem = penvMemSav;
-                            return 1;
+                            lSaltSav = lSaltCur;
+                            lSaltCur = plr.lSalt;
+                            if (!fLegacy && fChkPass && !FCheckPassword()) {
+                                lSaltCur = lSaltSav;
+                                fRet = -1;
+                                goto LBadFile;
+                            } else {
+                                lSaltCur = lSaltSav;
+                                if (!fProtected) {
+                                    if (!fLegacy && plr.lSalt != 0) {
+                                        strcpy(szRacePass, szPassLast);
+                                    } else {
+                                        szRacePass[0] = 0;
+                                    }
+                                }
+                                vplr = plr;
+                                /* The original copied the whole path into the
+                                   16-byte szRaceFile, overrunning the globals
+                                   after it when a universe definition names a
+                                   race by path. Keep the file name, as the race
+                                   dialogs do. */
+                                pch = strrchr(szFile, chDirSep);
+                                SetSzRaceFile(pch ? pch + 1 : szFile);
+                                StreamClose();
+                                fFileErrSilent = fSav;
+                                return 1;
+                            }
                         }
                     }
                 }
             }
         }
+        goto LBadFile;
+    } catch (const StarsError &) {
     }
-    goto LBadFile;
+LBadFile:
+    StreamClose();
+    fFileErrSilent = fSav;
+    if (!fFileErrSilent && idsError != -1) {
+        /* NATIVE: GenNewGameFromFile passes szWork itself; see FLoadGame. */
+        if (szFile != szWork) {
+            strcpy(szWork, szFile);
+        }
+        AlertSz(PszFormatIds(idsError, NULL), MB_ICONHAND);
+    }
+    return fRet;
+
 }
 
 void CreateRandomRace(PLAYER *pplr) {

@@ -207,7 +207,7 @@ LRESULT WINAPI CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam,
     if (!SDL_IsMainThread() || !lpfn)
         return 0;
     cDispatch++;
-    lr = lpfn(hwnd, msg, wParam, lParam);
+    lr = CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
     cDispatch--;
     return lr;
 }
@@ -227,7 +227,7 @@ LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
     if (lpmsg->message == WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         cDispatch++;
-        ((TIMERPROC)lpmsg->lParam)(lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
+        CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
         cDispatch--;
         return 0;
     }

@@ -134,7 +134,7 @@ void ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb) {
     return;
 invalid:
     FileError(idsGameFileAppearsCorruptUnableLoadFile);
-    if (penvMem) StarsLongJump(penvMem, -1);
+    if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
 }
 
 int16_t FLoadGame(char *pszFileName, char *pszExt) {
@@ -143,13 +143,11 @@ int16_t FLoadGame(char *pszFileName, char *pszExt) {
     STARPACK sp;
     int16_t  cPlanetAlloc;
     int16_t  fHaveHistoryData;
-    jmp_buf *penvMemSav;
     int16_t  fSilentSav;
     PLANET  *lppl;
     int16_t  i;
     THING   *lpth;
     FLEET   *lpfl;
-    jmp_buf  env;
     int16_t  cturn;
     THING   *lpthMac;
     int16_t  iPlayer;
@@ -183,161 +181,449 @@ int16_t FLoadGame(char *pszFileName, char *pszExt) {
         strcpy(szBase, pszFileName);
     }
     gd.fFleetLinkValid = FALSE;
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-    LError:
+    StarsRecoveryScope scopeRecovery;
+    try {
+        if (!FOpenFile(dtXY, iplrNone, 32))
+            goto LError;
+        ReadRt();
+        if (hdrCur.rt != rtGame || hdrCur.cb != sizeof(GAME)) {
+        XYCorrupt:
+            AlertSz(PszFormatIds(idsUniverseDefinitionFileSeemsMissingCorrupt, NULL), MB_ICONHAND);
+            goto LError;
+        }
+        game = *(GAME *)rgbCur;
+        if (strnlen(game.szName, sizeof(game.szName)) == sizeof(game.szName) ||
+            !FUtf8Valid(game.szName, strlen(game.szName))) goto XYCorrupt;
         game.fDirty = FALSE;
-        DestroyCurGame();
-        StreamClose();
-        if (!ini.fValidate && !ini.fLogging) {
-            ShowTitleScreen();
+        dGal = 400 * game.mdSize + 400;
+        dGalInv = dGal + 2000;
+        x = 1000;
+        for (i = 0; i < game.cPlanMax; i++) {
+            RgFromStream(&sp, 4);
+            x += sp.dx;
+            rgptPlan[i].x = x;
+            rgptPlan[i].y = sp.y;
+            rgidPlan[i] = sp.id;
+            if (x >= dGal + 1000 || rgptPlan[i].y >= dGal + 1000 || rgidPlan[i] > cPlanetName)
+                goto XYCorrupt;
         }
-        return FALSE;
-    }
-    if (!FOpenFile(dtXY, iplrNone, 32))
-        goto LError;
-    ReadRt();
-    if (hdrCur.rt != rtGame || hdrCur.cb != sizeof(GAME)) {
-    XYCorrupt:
-        AlertSz(PszFormatIds(idsUniverseDefinitionFileSeemsMissingCorrupt, NULL), MB_ICONHAND);
-        goto LError;
-    }
-    game = *(GAME *)rgbCur;
-    if (strnlen(game.szName, sizeof(game.szName)) == sizeof(game.szName) ||
-        !FUtf8Valid(game.szName, strlen(game.szName))) goto XYCorrupt;
-    game.fDirty = FALSE;
-    dGal = 400 * game.mdSize + 400;
-    dGalInv = dGal + 2000;
-    x = 1000;
-    for (i = 0; i < game.cPlanMax; i++) {
-        RgFromStream(&sp, 4);
-        x += sp.dx;
-        rgptPlan[i].x = x;
-        rgptPlan[i].y = sp.y;
-        rgidPlan[i] = sp.id;
-        if (x >= dGal + 1000 || rgptPlan[i].y >= dGal + 1000 || rgidPlan[i] > cPlanetName)
+        ReadRt();
+        if (hdrCur.rt != rtEOF)
             goto XYCorrupt;
-    }
-    ReadRt();
-    if (hdrCur.rt != rtEOF)
-        goto XYCorrupt;
-    StreamClose();
-    if ((*pszExt == 'h' || *pszExt == 'H') && (pszExt[1] == 's' || pszExt[1] == 'S')) {
-        dt = 2;
-        iPlayer = iplrNone;
-    } else {
-        dt = 3;
-        grf |= 0x3000;
-        iPlayer = atoi(pszExt + 1);
-        iPlayer--;
-    }
-    ResetMessages();
-    memset(rgplr, 0, game.cPlayer * 192);
-    ResetHb(htShips);
-    idPlayer = iPlayer;
-    fSilentSav = fFileErrSilent;
-    fFileErrSilent = TRUE;
-    if (iPlayer != iplrNone && FOpenFile(dtHist, iPlayer, 32)) {
-        ReadRt();
-        if (hdrCur.rt != rtHistHdr)
-            goto CorruptHist;
-        cPlanetHist = ((RTHISTHDR *)rgbCur)->cPlanet;
-        cPlanetAlloc = cPlanetHist + ((RTHISTHDR *)rgbCur)->cPlanetExtra;
-        if (cPlanetAlloc > 1000) {
-            cPlanetAlloc = 1000;
+        StreamClose();
+        if ((*pszExt == 'h' || *pszExt == 'H') && (pszExt[1] == 's' || pszExt[1] == 'S')) {
+            dt = 2;
+            iPlayer = iplrNone;
+        } else {
+            dt = 3;
+            grf |= 0x3000;
+            iPlayer = atoi(pszExt + 1);
+            iPlayer--;
         }
-        lpPlanets = (PLANET *)LpAlloc((1 <= cPlanetAlloc ? cPlanetAlloc : 1) * sizeof(PLANET), htPlanets);
-        ReadRt();
-        for (i = 0, lppl = lpPlanets; i < cPlanetHist; i++, lppl++) {
-            if (hdrCur.rt != rtPlanetB)
+        ResetMessages();
+        memset(rgplr, 0, game.cPlayer * 192);
+        ResetHb(htShips);
+        idPlayer = iPlayer;
+        fSilentSav = fFileErrSilent;
+        fFileErrSilent = TRUE;
+        if (iPlayer != iplrNone && FOpenFile(dtHist, iPlayer, 32)) {
+            ReadRt();
+            if (hdrCur.rt != rtHistHdr)
                 goto CorruptHist;
-            if (FReadPlanet(iPlayer, lppl, TRUE, FALSE)) {
-                if (lppl->iPlayer == iPlayer) {
-                    lppl->iPlayer = iplrNone;
-                    lppl->det = detSome;
-                }
-            } else {
-            CorruptHist:
-                StreamClose();
-                AlertSz(PszFormatIds(idsHistoryFileAppearsCorruptHistoricalDataWill, NULL), MB_ICONHAND);
-                goto LNoHistFile;
+            cPlanetHist = ((RTHISTHDR *)rgbCur)->cPlanet;
+            cPlanetAlloc = cPlanetHist + ((RTHISTHDR *)rgbCur)->cPlanetExtra;
+            if (cPlanetAlloc > 1000) {
+                cPlanetAlloc = 1000;
             }
+            lpPlanets = (PLANET *)LpAlloc((1 <= cPlanetAlloc ? cPlanetAlloc : 1) * sizeof(PLANET), htPlanets);
+            ReadRt();
+            for (i = 0, lppl = lpPlanets; i < cPlanetHist; i++, lppl++) {
+                if (hdrCur.rt != rtPlanetB)
+                    goto CorruptHist;
+                if (FReadPlanet(iPlayer, lppl, TRUE, FALSE)) {
+                    if (lppl->iPlayer == iPlayer) {
+                        lppl->iPlayer = iplrNone;
+                        lppl->det = detSome;
+                    }
+                } else {
+                CorruptHist:
+                    StreamClose();
+                    AlertSz(PszFormatIds(idsHistoryFileAppearsCorruptHistoricalDataWill, NULL), MB_ICONHAND);
+                    goto LNoHistFile;
+                }
+                ReadRt();
+            }
+            if (hdrCur.rt == rtMsgFilt) {
+                if (hdrCur.cb > (uint16_t)cbbitfMsg)
+                    goto CorruptHist;
+                memcpy(bitfMsgFiltered, rgbCur, hdrCur.cb);
+                ReadRt();
+            }
+            while (hdrCur.rt == rtPlr) {
+                i = ((PLAYER *)rgbCur)->iPlayer;
+                ReadRtPlr(&rgplr[i], (uint8_t *)rgbCur, hdrCur.cb);
+                rgplr[i].cPlanet = 0;
+                rgplr[i].cFleet = 0;
+                ReadRt();
+            }
+            i = 0;
+            while (hdrCur.rt == rtShDef) {
+                for (; rgplr[i].cShDef == 0 && i < game.cPlayer; i++) {
+                }
+                if (i == game.cPlayer)
+                    break;
+                if (!rglpshdef[i]) {
+                    rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+                    for (j = 0; j < 16; j++) {
+                        rglpshdef[i][j].fFree = TRUE;
+                        rglpshdef[i][j].grbitPlr = 0;
+                    }
+                }
+                iplrSav = idPlayer;
+                if (idPlayer == iplrNone) {
+                    idPlayer = i;
+                } else {
+                    idPlayer = iplrNone;
+                }
+                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
+                    goto CorruptHist;
+                idPlayer = iplrSav;
+                rgplr[i].cShDef--;
+                ReadRt();
+            }
+            i = 0;
+            while (hdrCur.rt == rtShDef) {
+                for (; rgplr[i].cshdefSB == 0 && i < game.cPlayer; i++) {
+                }
+                if (i == game.cPlayer)
+                    break;
+                if (!rglpshdefSB[i]) {
+                    rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+                    for (j = 0; j < 10; j++) {
+                        rglpshdefSB[i][j].fFree = TRUE;
+                        rglpshdefSB[i][j].grbitPlr = 0;
+                    }
+                }
+                iplrSav = idPlayer;
+                if (idPlayer == iplrNone) {
+                    idPlayer = i;
+                } else {
+                    idPlayer = iplrNone;
+                }
+                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
+                    goto CorruptHist;
+                idPlayer = iplrSav;
+                rgplr[i].cshdefSB += 15;
+                ReadRt();
+            }
+            while (hdrCur.rt == rtScore) {
+                iplr = ((SCOREX *)rgbCur)->iPlayer;
+                sx = *(SCOREX *)rgbCur;
+                if (!rgsxPlr[iplr]) {
+                    rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
+                    rgcsxPlr[iplr] = 0;
+                }
+                if (rgsxPlr[iplr]) {
+                    if (sx.fHistory) {
+                        turnCur = sx.turn;
+                    } else {
+                        turnCur = game.turn;
+                    }
+                    for (isx = 0; isx < rgcsxPlr[iplr] && turnCur > rgsxPlr[iplr][isx].turn; isx++) {
+                    }
+                    if ((isx >= rgcsxPlr[iplr] || turnCur == rgsxPlr[iplr][isx].turn) && isx < 101) {
+                        if (isx == rgcsxPlr[iplr]) {
+                            rgcsxPlr[iplr]++;
+                        }
+                    } else if (rgcsxPlr[iplr] < 101) {
+                        memmove(rgsxPlr[iplr] + (isx + 1), rgsxPlr[iplr] + isx, (rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
+                        rgcsxPlr[iplr]++;
+                    } else if (isx > 0) {
+                        if (isx > 1) {
+                            memmove(rgsxPlr[iplr], rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
+                        }
+                        isx--;
+                    }
+                    rgsxPlr[iplr][isx] = sx;
+                    rgsxPlr[iplr][isx].turn = turnCur;
+                    rgsxPlr[iplr][isx].fHistory = TRUE;
+                }
+                ReadRt();
+            }
+            if (hdrCur.rt == rtAiData) {
+                if (rgplr[idPlayer].fAi) {
+                    if (!vlpbAiData) {
+                        vlpbAiData = (uint8_t *)LpAlloc(8096, htMisc);
+                        if (!vlpbAiData)
+                            goto CorruptHist;
+                    }
+                    lpb = vlpbAiData;
+                    while (hdrCur.rt == rtAiData) {
+                        memmove(lpb, rgbCur, hdrCur.cb);
+                        lpb += hdrCur.cb;
+                        ReadRt();
+                    }
+                } else {
+                    while (hdrCur.rt == rtAiData) {
+                        ReadRt();
+                    }
+                }
+            }
+            if (hdrCur.rt == rtThing) {
+                cThing = RawLoad16(rgbCur);
+                cThingAlloc = cThing + 10;
+                if (cThingAlloc > 4050) {
+                    cThingAlloc = 4050;
+                }
+                lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+                if (!lpThings)
+                    goto CorruptHist;
+                memset(lpThings, 0, cThingAlloc * sizeof(THING));
+                ReadRt();
+                for (i = 0, lpth = lpThings; i < cThing; i++, lpth++) {
+                    if (hdrCur.rt != rtThing)
+                        goto CorruptHist;
+                    memcpy(lpth, rgbCur, hdrCur.cb);
+                    ReadRt();
+                }
+            }
+            StreamClose();
+        } else {
+        LNoHistFile:
+            cPlanetHist = 0;
+            FreeLp(lpPlanets, htPlanets);
+            lpPlanets = NULL;
+            cThing = 0;
+            FreeLp(lpThings, htThings);
+            lpThings = NULL;
+        }
+        fFileErrSilent = fSilentSav;
+        GetFileStatus(dt, iPlayer);
+        if (!FOpenFile(dt | grf, iPlayer, 32))
+            goto LError;
+        if (iPlayer == iplrNone) {
+            gd.fGameOverMan = ((RTBOF *)rgbCur)->fGameOverMan;
+        }
+LNextTurn:
+        cturn++;
+        cPlanet = 0;
+        cFleet = 0;
+        ReadRt();
+        while (hdrCur.rt == rtBtlData || hdrCur.rt == rtContinue) {
+            if (hdrCur.rt != rtContinue) {
+                if (!lpbBattleLog) {
+                    lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
+                    lpbBattleCur = lpbBattleLog;
+                }
+                /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
+                lphb = LphbFromLpHt(lpbBattleCur, htBattle);
+                if (0xffc8 - (uint32_t)(lpbBattleCur - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)((BTLDATA *)rgbCur)->cbData) {
+                    RawStore16(lpbBattleCur, 0xffff);
+                    lpbBattleCur = (uint8_t *)LpAlloc(0xffc8, htBattle);
+                }
+            }
+            memmove(lpbBattleCur, rgbCur, hdrCur.cb);
+            lpbBattleCur += hdrCur.cb;
             ReadRt();
         }
-        if (hdrCur.rt == rtMsgFilt) {
-            if (hdrCur.cb > (uint16_t)cbbitfMsg)
-                goto CorruptHist;
-            memcpy(bitfMsgFiltered, rgbCur, hdrCur.cb);
-            ReadRt();
+        if (lpbBattleCur) {
+            RawStore16(lpbBattleCur, 0xffff);
+            if (((VERS *)&wVersFile)->verMinor < 80) {
+                UpdateBattleRecords();
+            }
         }
         while (hdrCur.rt == rtPlr) {
             i = ((PLAYER *)rgbCur)->iPlayer;
             ReadRtPlr(&rgplr[i], (uint8_t *)rgbCur, hdrCur.cb);
+            cPlanet += rgplr[i].cPlanet;
             rgplr[i].cPlanet = 0;
+            cFleet += rgplr[i].cFleet;
             rgplr[i].cFleet = 0;
             ReadRt();
         }
-        i = 0;
-        while (hdrCur.rt == rtShDef) {
-            for (; rgplr[i].cShDef == 0 && i < game.cPlayer; i++) {
-            }
-            if (i == game.cPlayer)
-                break;
-            if (!rglpshdef[i]) {
-                rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
-                for (j = 0; j < 16; j++) {
-                    rglpshdef[i][j].fFree = TRUE;
-                    rglpshdef[i][j].grbitPlr = 0;
-                }
-            }
-            iplrSav = idPlayer;
-            if (idPlayer == iplrNone) {
-                idPlayer = i;
-            } else {
-                idPlayer = iplrNone;
-            }
-            if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
-                goto CorruptHist;
-            idPlayer = iplrSav;
-            rgplr[i].cShDef--;
+        if (dt != 2) {
+            lSaltCur = rgplr[iPlayer].lSalt;
+        } else if (hdrCur.rt == rtChgPassword) {
+            lSaltCur = RawLoad32(rgbCur);
             ReadRt();
+        } else {
+            lSaltCur = 0;
         }
-        i = 0;
-        while (hdrCur.rt == rtShDef) {
-            for (; rgplr[i].cshdefSB == 0 && i < game.cPlayer; i++) {
-            }
-            if (i == game.cPlayer)
-                break;
-            if (!rglpshdefSB[i]) {
-                rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
-                for (j = 0; j < 10; j++) {
-                    rglpshdefSB[i][j].fFree = TRUE;
-                    rglpshdefSB[i][j].grbitPlr = 0;
+        if (!FCheckPassword()) {
+            if (ini.fValidate || ini.fLogging)
+                AlertSz(PszFormatIds(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
+            goto LError;
+        }
+        ReadPlayerMessages();
+        ResetHb(htFleets);
+        ResetHb(htOrd);
+        FreeLp(rglpfl, htMisc);
+        rglpfl = NULL;
+        if (!lpPlanets) {
+            cPlanetAlloc = 1 <= cPlanet ? cPlanet : 1;
+            lpPlanets = (PLANET *)LpAlloc(cPlanetAlloc * sizeof(PLANET), htPlanets);
+        }
+        lppl = lpPlanets;
+        j = 0;
+        for (i = 0; i < cPlanet; i++) {
+            fHaveHistoryData = FALSE;
+            if (cPlanetHist != 0) {
+                while (j < cPlanetHist && ((RTPLANET *)rgbCur)->id > lppl->id) {
+                    j++;
+                    lppl++;
                 }
+                if (j < cPlanetHist) {
+                    if (((RTPLANET *)rgbCur)->id == lppl->id) {
+                        fHaveHistoryData = TRUE;
+                        goto LFoundPlanet;
+                    }
+                }
+                if (cPlanetAlloc == cPlanetHist) {
+                    cPlanetAlloc += 8;
+                    lpPlanets = (PLANET *)LpReAlloc(lpPlanets, cPlanetAlloc * sizeof(PLANET), htPlanets);
+                    lppl = lpPlanets + j;
+                }
+                if (j < cPlanetHist) {
+                    memmove(lppl + 1, lppl, (cPlanetHist - j) * sizeof(PLANET));
+                }
+                cPlanetHist++;
+            }
+        LFoundPlanet:
+            if (!FReadPlanet(iPlayer, lppl, FALSE, fHaveHistoryData))
+                goto Corrupt;
+            if (lppl->iPlayer != iplrNone) {
+                rgplr[lppl->iPlayer].cPlanet = rgplr[lppl->iPlayer].cPlanet + 1;
+            }
+            ReadRt();
+            if (hdrCur.rt == rtProdQ) {
+                if (lppl->lpplprod && lppl->lpplprod->iprodMax <= hdrCur.cb / 4) {
+                    FreePl((PL *)lppl->lpplprod);
+                    lppl->lpplprod = NULL;
+                }
+                if (!lppl->lpplprod) {
+                    lppl->lpplprod = (PLPROD *)LpplAlloc(4, hdrCur.cb / 4 + 2, htOrd);
+                }
+                memmove(lppl->lpplprod->rgprod, rgbCur, hdrCur.cb);
+                lppl->lpplprod->iprodMac = hdrCur.cb / 4;
+                ReadRt();
+            }
+            if (cPlanetHist == 0) {
+                lppl++;
+            }
+        }
+        if (cPlanetHist != 0) {
+            cPlanet = cPlanetHist;
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (i == iPlayer) {
+                rglpshdef[i] = rgshdef;
+                goto FreeShdef;
+            }
+            if (rgplr[i].fInclude) {
+                if (!rglpshdef[i]) {
+                    rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+                FreeShdef:
+                    for (j = 0; j < 16; j++) {
+                        rglpshdef[i][j].fFree = TRUE;
+                        rglpshdef[i][j].grbitPlr = 0;
+                    }
+                }
+            } else {
+                continue;
             }
             iplrSav = idPlayer;
             if (idPlayer == iplrNone) {
                 idPlayer = i;
-            } else {
+            } else if (i != idPlayer) {
                 idPlayer = iplrNone;
             }
-            if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
-                goto CorruptHist;
+            for (j = 0; j < rgplr[i].cShDef; j++) {
+                if (hdrCur.rt != rtShDef) {
+                    idPlayer = iplrSav;
+                    goto Corrupt;
+                }
+                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
+                    goto Corrupt;
+                ReadRt();
+            }
             idPlayer = iplrSav;
-            rgplr[i].cshdefSB += 15;
-            ReadRt();
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            rgplr[i].cShDef = 0;
+            if (rglpshdef[i]) {
+                for (j = 0; j < 16; j++) {
+                    if (!rglpshdef[i][j].fFree) {
+                        if (i != idPlayer && !gd.fGeneratingTurn && rgplr[i].fDead) {
+                            rglpshdef[i][j].fFree = TRUE;
+                        } else {
+                            rgplr[i].cShDef++;
+                        }
+                    }
+                }
+            }
+        }
+        rglpfl = (FLEET **)LpAlloc((1 <= cFleet ? cFleet : 1) * sizeof(FLEET *), htMisc);
+        for (i = 0; i < cFleet; i++) {
+            lpfl = rglpfl[i] = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
+            if (!FReadFleet(lpfl))
+                goto LError;
+            rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgplr[i].fInclude) {
+                if (!rglpshdefSB[i]) {
+                    rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+                    for (j = 0; j < 10; j++) {
+                        rglpshdefSB[i][j].fFree = TRUE;
+                        rglpshdefSB[i][j].grbitPlr = 0;
+                    }
+                }
+                iplrSav = idPlayer;
+                if (idPlayer == iplrNone) {
+                    idPlayer = i;
+                } else if (i != idPlayer) {
+                    idPlayer = iplrNone;
+                }
+                for (j = 0; j < (int16_t)rgplr[i].cshdefSB; j++) {
+                    if (hdrCur.rt != rtShDef) {
+                        idPlayer = iplrSav;
+                        goto Corrupt;
+                    }
+                    if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
+                        goto Corrupt;
+                    ReadRt();
+                }
+                idPlayer = iplrSav;
+            }
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            rgplr[i].cshdefSB = 0;
+            if (rglpshdefSB[i]) {
+                for (j = 0; j < 10; j++) {
+                    if (!rglpshdefSB[i][j].fFree) {
+                        if (i != idPlayer && !gd.fGeneratingTurn && rgplr[i].fDead) {
+                            rglpshdefSB[i][j].fFree = TRUE;
+                        } else {
+                            rgplr[i].cshdefSB++;
+                        }
+                    }
+                }
+            }
+        }
+        if (!vlprgScoreX) {
+            vlprgScoreX = (SCOREX *)LpAlloc(game.cPlayer * sizeof(SCOREX), htMisc);
+            memset(vlprgScoreX, 0, game.cPlayer * sizeof(SCOREX));
         }
         while (hdrCur.rt == rtScore) {
             iplr = ((SCOREX *)rgbCur)->iPlayer;
-            sx = *(SCOREX *)rgbCur;
+            vlprgScoreX[iplr] = *(SCOREX *)rgbCur;
             if (!rgsxPlr[iplr]) {
                 rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
                 rgcsxPlr[iplr] = 0;
             }
             if (rgsxPlr[iplr]) {
-                if (sx.fHistory) {
-                    turnCur = sx.turn;
+                if (vlprgScoreX[iplr].fHistory) {
+                    turnCur = vlprgScoreX[iplr].turn;
                 } else {
                     turnCur = game.turn;
                 }
@@ -356,496 +642,209 @@ int16_t FLoadGame(char *pszFileName, char *pszExt) {
                     }
                     isx--;
                 }
-                rgsxPlr[iplr][isx] = sx;
+                rgsxPlr[iplr][isx] = vlprgScoreX[iplr];
                 rgsxPlr[iplr][isx].turn = turnCur;
                 rgsxPlr[iplr][isx].fHistory = TRUE;
             }
             ReadRt();
         }
-        if (hdrCur.rt == rtAiData) {
-            if (rgplr[idPlayer].fAi) {
-                if (!vlpbAiData) {
-                    vlpbAiData = (uint8_t *)LpAlloc(8096, htMisc);
-                    if (!vlpbAiData)
-                        goto CorruptHist;
-                }
-                lpb = vlpbAiData;
-                while (hdrCur.rt == rtAiData) {
-                    memmove(lpb, rgbCur, hdrCur.cb);
-                    lpb += hdrCur.cb;
-                    ReadRt();
-                }
-            } else {
-                while (hdrCur.rt == rtAiData) {
-                    ReadRt();
-                }
-            }
+        if (lpThings) {
+            FreeLp(lpThings, htThings);
+            lpThings = NULL;
+            cThing = 0;
         }
         if (hdrCur.rt == rtThing) {
-            cThing = RawLoad16(rgbCur);
-            cThingAlloc = cThing + 10;
-            if (cThingAlloc > 4050) {
-                cThingAlloc = 4050;
+            fHist = cThing > 0;
+            cThingFile = RawLoad16(rgbCur);
+            cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
+            if (!lpThings) {
+                lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+                if (!lpThings)
+                    goto LError;
+                memset(lpThings, 0, cThingAlloc * sizeof(THING));
             }
-            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
-            if (!lpThings)
-                goto CorruptHist;
-            memset(lpThings, 0, cThingAlloc * sizeof(THING));
             ReadRt();
-            for (i = 0, lpth = lpThings; i < cThing; i++, lpth++) {
-                if (hdrCur.rt != rtThing)
-                    goto CorruptHist;
+            lpth = lpThings;
+            j = 0;
+            for (i = 0; i < cThingFile; i++) {
+                fHaveHistoryData = FALSE;
+                if (fHist) {
+                    for (; j < cThing && ((THING *)rgbCur)->idFull > lpth->idFull; lpth++) {
+                        j++;
+                    }
+                    if (j < cThing && ((THING *)rgbCur)->idFull == lpth->idFull) {
+                        fHaveHistoryData = TRUE;
+                        goto LFoundThing;
+                    }
+                    if (cThingAlloc == cThing) {
+                        cThingAlloc += 8;
+                        lpThings = (THING *)LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
+                        lpth = lpThings + j;
+                    }
+                    if (j < cThing) {
+                        memmove(lpth + 1, lpth, (cThing - j) * sizeof(THING));
+                        memset(lpth, 0, sizeof(THING));
+                    }
+                }
+                cThing++;
+            LFoundThing:
                 memcpy(lpth, rgbCur, hdrCur.cb);
+                lpth->turn = game.turn;
+                lpth++;
+                j++;
                 ReadRt();
             }
+        } else {
+            cThing = 0;
+            cThingAlloc = 10;
+            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
         }
-        StreamClose();
-    } else {
-    LNoHistFile:
-        cPlanetHist = 0;
-        FreeLp(lpPlanets, htPlanets);
-        lpPlanets = NULL;
-        cThing = 0;
-        FreeLp(lpThings, htThings);
-        lpThings = NULL;
-    }
-    fFileErrSilent = fSilentSav;
-    GetFileStatus(dt, iPlayer);
-    if (!FOpenFile(dt | grf, iPlayer, 32))
-        goto LError;
-    if (iPlayer == iplrNone) {
-        gd.fGameOverMan = ((RTBOF *)rgbCur)->fGameOverMan;
-    }
-LNextTurn:
-    cturn++;
-    cPlanet = 0;
-    cFleet = 0;
-    ReadRt();
-    while (hdrCur.rt == rtBtlData || hdrCur.rt == rtContinue) {
-        if (hdrCur.rt != rtContinue) {
-            if (!lpbBattleLog) {
-                lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
-                lpbBattleCur = lpbBattleLog;
-            }
-            /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
-            lphb = LphbFromLpHt(lpbBattleCur, htBattle);
-            if (0xffc8 - (uint32_t)(lpbBattleCur - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)((BTLDATA *)rgbCur)->cbData) {
-                RawStore16(lpbBattleCur, 0xffff);
-                lpbBattleCur = (uint8_t *)LpAlloc(0xffc8, htBattle);
-            }
-        }
-        memmove(lpbBattleCur, rgbCur, hdrCur.cb);
-        lpbBattleCur += hdrCur.cb;
-        ReadRt();
-    }
-    if (lpbBattleCur) {
-        RawStore16(lpbBattleCur, 0xffff);
-        if (((VERS *)&wVersFile)->verMinor < 80) {
-            UpdateBattleRecords();
-        }
-    }
-    while (hdrCur.rt == rtPlr) {
-        i = ((PLAYER *)rgbCur)->iPlayer;
-        ReadRtPlr(&rgplr[i], (uint8_t *)rgbCur, hdrCur.cb);
-        cPlanet += rgplr[i].cPlanet;
-        rgplr[i].cPlanet = 0;
-        cFleet += rgplr[i].cFleet;
-        rgplr[i].cFleet = 0;
-        ReadRt();
-    }
-    if (dt != 2) {
-        lSaltCur = rgplr[iPlayer].lSalt;
-    } else if (hdrCur.rt == rtChgPassword) {
-        lSaltCur = RawLoad32(rgbCur);
-        ReadRt();
-    } else {
-        lSaltCur = 0;
-    }
-    if (!FCheckPassword()) {
-        if (ini.fValidate || ini.fLogging)
-            AlertSz(PszFormatIds(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
-        goto LError;
-    }
-    ReadPlayerMessages();
-    ResetHb(htFleets);
-    ResetHb(htOrd);
-    FreeLp(rglpfl, htMisc);
-    rglpfl = NULL;
-    if (!lpPlanets) {
-        cPlanetAlloc = 1 <= cPlanet ? cPlanet : 1;
-        lpPlanets = (PLANET *)LpAlloc(cPlanetAlloc * sizeof(PLANET), htPlanets);
-    }
-    lppl = lpPlanets;
-    j = 0;
-    for (i = 0; i < cPlanet; i++) {
-        fHaveHistoryData = FALSE;
-        if (cPlanetHist != 0) {
-            while (j < cPlanetHist && ((RTPLANET *)rgbCur)->id > lppl->id) {
-                j++;
-                lppl++;
-            }
-            if (j < cPlanetHist) {
-                if (((RTPLANET *)rgbCur)->id == lppl->id) {
-                    fHaveHistoryData = TRUE;
-                    goto LFoundPlanet;
-                }
-            }
-            if (cPlanetAlloc == cPlanetHist) {
-                cPlanetAlloc += 8;
-                lpPlanets = (PLANET *)LpReAlloc(lpPlanets, cPlanetAlloc * sizeof(PLANET), htPlanets);
-                lppl = lpPlanets + j;
-            }
-            if (j < cPlanetHist) {
-                memmove(lppl + 1, lppl, (cPlanetHist - j) * sizeof(PLANET));
-            }
-            cPlanetHist++;
-        }
-    LFoundPlanet:
-        if (!FReadPlanet(iPlayer, lppl, FALSE, fHaveHistoryData))
-            goto Corrupt;
-        if (lppl->iPlayer != iplrNone) {
-            rgplr[lppl->iPlayer].cPlanet = rgplr[lppl->iPlayer].cPlanet + 1;
-        }
-        ReadRt();
-        if (hdrCur.rt == rtProdQ) {
-            if (lppl->lpplprod && lppl->lpplprod->iprodMax <= hdrCur.cb / 4) {
-                FreePl((PL *)lppl->lpplprod);
-                lppl->lpplprod = NULL;
-            }
-            if (!lppl->lpplprod) {
-                lppl->lpplprod = (PLPROD *)LpplAlloc(4, hdrCur.cb / 4 + 2, htOrd);
-            }
-            memmove(lppl->lpplprod->rgprod, rgbCur, hdrCur.cb);
-            lppl->lpplprod->iprodMac = hdrCur.cb / 4;
+        if (hdrCur.rt == rtSel) {
             ReadRt();
         }
-        if (cPlanetHist == 0) {
-            lppl++;
-        }
-    }
-    if (cPlanetHist != 0) {
-        cPlanet = cPlanetHist;
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (i == iPlayer) {
-            rglpshdef[i] = rgshdef;
-            goto FreeShdef;
-        }
-        if (rgplr[i].fInclude) {
-            if (!rglpshdef[i]) {
-                rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
-            FreeShdef:
-                for (j = 0; j < 16; j++) {
-                    rglpshdef[i][j].fFree = TRUE;
-                    rglpshdef[i][j].grbitPlr = 0;
-                }
-            }
-        } else {
-            continue;
-        }
         iplrSav = idPlayer;
-        if (idPlayer == iplrNone) {
-            idPlayer = i;
-        } else if (i != idPlayer) {
-            idPlayer = iplrNone;
-        }
-        for (j = 0; j < rgplr[i].cShDef; j++) {
-            if (hdrCur.rt != rtShDef) {
-                idPlayer = iplrSav;
-                goto Corrupt;
+        while (hdrCur.rt == rtBtlPlan) {
+            iP = ((BTLPLAN *)rgbCur)->iplr;
+            idPlayer = iP;
+            if (!rglpbtlplan[iP]) {
+                rglpbtlplan[iP] = (BTLPLAN *)LpAlloc(16 * sizeof(BTLPLAN), htShips);
             }
-            if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
-                goto Corrupt;
+            if (!UnpackBattlePlan((uint8_t *)rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb)) goto Corrupt;
+            rgcbtlplan[iP]++;
             ReadRt();
         }
         idPlayer = iplrSav;
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        rgplr[i].cShDef = 0;
-        if (rglpshdef[i]) {
-            for (j = 0; j < 16; j++) {
-                if (!rglpshdef[i][j].fFree) {
-                    if (i != idPlayer && !gd.fGeneratingTurn && rgplr[i].fDead) {
-                        rglpshdef[i][j].fFree = TRUE;
-                    } else {
-                        rgplr[i].cShDef++;
-                    }
-                }
-            }
-        }
-    }
-    rglpfl = (FLEET **)LpAlloc((1 <= cFleet ? cFleet : 1) * sizeof(FLEET *), htMisc);
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i] = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
-        if (!FReadFleet(lpfl))
+        if (hdrCur.rt != rtEOF) {
+        Corrupt:
+            AlertSz(PszFormatIds(idsGameFileAppearsCorruptUnableLoadFile, NULL), MB_ICONHAND);
             goto LError;
-        rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude) {
-            if (!rglpshdefSB[i]) {
-                rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
-                for (j = 0; j < 10; j++) {
-                    rglpshdefSB[i][j].fFree = TRUE;
-                    rglpshdefSB[i][j].grbitPlr = 0;
-                }
-            }
-            iplrSav = idPlayer;
-            if (idPlayer == iplrNone) {
-                idPlayer = i;
-            } else if (i != idPlayer) {
-                idPlayer = iplrNone;
-            }
-            for (j = 0; j < (int16_t)rgplr[i].cshdefSB; j++) {
-                if (hdrCur.rt != rtShDef) {
-                    idPlayer = iplrSav;
-                    goto Corrupt;
-                }
-                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
-                    goto Corrupt;
-                ReadRt();
-            }
-            idPlayer = iplrSav;
         }
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        rgplr[i].cshdefSB = 0;
-        if (rglpshdefSB[i]) {
-            for (j = 0; j < 10; j++) {
-                if (!rglpshdefSB[i][j].fFree) {
-                    if (i != idPlayer && !gd.fGeneratingTurn && rgplr[i].fDead) {
-                        rglpshdefSB[i][j].fFree = TRUE;
-                    } else {
-                        rgplr[i].cshdefSB++;
-                    }
-                }
-            }
-        }
-    }
-    if (!vlprgScoreX) {
-        vlprgScoreX = (SCOREX *)LpAlloc(game.cPlayer * sizeof(SCOREX), htMisc);
-        memset(vlprgScoreX, 0, game.cPlayer * sizeof(SCOREX));
-    }
-    while (hdrCur.rt == rtScore) {
-        iplr = ((SCOREX *)rgbCur)->iPlayer;
-        vlprgScoreX[iplr] = *(SCOREX *)rgbCur;
-        if (!rgsxPlr[iplr]) {
-            rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
-            rgcsxPlr[iplr] = 0;
-        }
-        if (rgsxPlr[iplr]) {
-            if (vlprgScoreX[iplr].fHistory) {
-                turnCur = vlprgScoreX[iplr].turn;
-            } else {
-                turnCur = game.turn;
-            }
-            for (isx = 0; isx < rgcsxPlr[iplr] && turnCur > rgsxPlr[iplr][isx].turn; isx++) {
-            }
-            if ((isx >= rgcsxPlr[iplr] || turnCur == rgsxPlr[iplr][isx].turn) && isx < 101) {
-                if (isx == rgcsxPlr[iplr]) {
-                    rgcsxPlr[iplr]++;
-                }
-            } else if (rgcsxPlr[iplr] < 101) {
-                memmove(rgsxPlr[iplr] + (isx + 1), rgsxPlr[iplr] + isx, (rgcsxPlr[iplr] - isx) * sizeof(SCOREX));
-                rgcsxPlr[iplr]++;
-            } else if (isx > 0) {
-                if (isx > 1) {
-                    memmove(rgsxPlr[iplr], rgsxPlr[iplr] + 1, (isx - 1) * sizeof(SCOREX));
-                }
-                isx--;
-            }
-            rgsxPlr[iplr][isx] = vlprgScoreX[iplr];
-            rgsxPlr[iplr][isx].turn = turnCur;
-            rgsxPlr[iplr][isx].fHistory = TRUE;
-        }
-        ReadRt();
-    }
-    if (lpThings) {
-        FreeLp(lpThings, htThings);
-        lpThings = NULL;
-        cThing = 0;
-    }
-    if (hdrCur.rt == rtThing) {
-        fHist = cThing > 0;
-        cThingFile = RawLoad16(rgbCur);
-        cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
-        if (!lpThings) {
-            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
-            if (!lpThings)
-                goto LError;
-            memset(lpThings, 0, cThingAlloc * sizeof(THING));
-        }
-        ReadRt();
-        lpth = lpThings;
-        j = 0;
-        for (i = 0; i < cThingFile; i++) {
-            fHaveHistoryData = FALSE;
-            if (fHist) {
-                for (; j < cThing && ((THING *)rgbCur)->idFull > lpth->idFull; lpth++) {
-                    j++;
-                }
-                if (j < cThing && ((THING *)rgbCur)->idFull == lpth->idFull) {
-                    fHaveHistoryData = TRUE;
-                    goto LFoundThing;
-                }
-                if (cThingAlloc == cThing) {
-                    cThingAlloc += 8;
-                    lpThings = (THING *)LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
-                    lpth = lpThings + j;
-                }
-                if (j < cThing) {
-                    memmove(lpth + 1, lpth, (cThing - j) * sizeof(THING));
-                    memset(lpth, 0, sizeof(THING));
-                }
-            }
-            cThing++;
-        LFoundThing:
-            memcpy(lpth, rgbCur, hdrCur.cb);
-            lpth->turn = game.turn;
-            lpth++;
-            j++;
+        if (CbFileSize(hf) != LSeekFile(hf, 0, 1)) {
             ReadRt();
-        }
-    } else {
-        cThing = 0;
-        cThingAlloc = 10;
-        lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
-    }
-    if (hdrCur.rt == rtSel) {
-        ReadRt();
-    }
-    iplrSav = idPlayer;
-    while (hdrCur.rt == rtBtlPlan) {
-        iP = ((BTLPLAN *)rgbCur)->iplr;
-        idPlayer = iP;
-        if (!rglpbtlplan[iP]) {
-            rglpbtlplan[iP] = (BTLPLAN *)LpAlloc(16 * sizeof(BTLPLAN), htShips);
-        }
-        if (!UnpackBattlePlan((uint8_t *)rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb)) goto Corrupt;
-        rgcbtlplan[iP]++;
-        ReadRt();
-    }
-    idPlayer = iplrSav;
-    if (hdrCur.rt != rtEOF) {
-    Corrupt:
-        AlertSz(PszFormatIds(idsGameFileAppearsCorruptUnableLoadFile, NULL), MB_ICONHAND);
-        goto LError;
-    }
-    if (CbFileSize(hf) != LSeekFile(hf, 0, 1)) {
-        ReadRt();
-        if (hdrCur.rt == rtBOF) {
-            game.turn = ((RTBOF *)rgbCur)->turn;
-            game.wGen = ((RTBOF *)rgbCur)->wGen;
-            for (i = 0; i < game.cPlayer; i++) {
-                rgplr[i].cShDef = 0;
-                rgplr[i].cFleet = 0;
-                rgplr[i].cPlanet = 0;
-                rgplr[i].cshdefSB = 0;
-                rgcbtlplan[i] = 0;
-            }
-            lppl = lpPlanets;
-            lpplMac = lpPlanets + cPlanet;
-            for (; lppl < lpplMac; lppl++) {
-                if (lppl->iPlayer == iPlayer) {
-                    lppl->iPlayer = iplrNone;
-                    lppl->det = detSome;
-                    if (lppl->lpplprod) {
-                        FreePl((PL *)lppl->lpplprod);
-                        lppl->lpplprod = NULL;
-                    }
+            if (hdrCur.rt == rtBOF) {
+                game.turn = ((RTBOF *)rgbCur)->turn;
+                game.wGen = ((RTBOF *)rgbCur)->wGen;
+                for (i = 0; i < game.cPlayer; i++) {
+                    rgplr[i].cShDef = 0;
+                    rgplr[i].cFleet = 0;
+                    rgplr[i].cPlanet = 0;
+                    rgplr[i].cshdefSB = 0;
+                    rgcbtlplan[i] = 0;
                 }
-            }
-            cPlanetHist = cPlanet;
-            goto LNextTurn;
-        }
-        AlertSz(PszFormatIds(idsWarningIgnoringUnexpectedDataAfterEof, NULL), MB_ICONHAND);
-    }
-    StreamClose();
-    if (cturn > 1 && !rgplr[iPlayer].fAi && !ini.fDumpPlanets && !ini.fDumpFleets && !ini.fDumpMap) {
-        CchSprintf(szWork, PszGetCompressedString(idsNoteDYearsDataRead), cturn);
-        AlertSz(szWork, MB_ICONASTERISK);
-    }
-    if (FSzPrefixNoCase(pszExt, (char *)"hst", 3))
-        goto DoneNow;
-    if (!rgplr[iPlayer].fAi) {
-        lpth = lpThings;
-        lpthMac = lpThings + cThing;
-        for (; lpth < lpthMac; lpth++) {
-            if (lpth->ith == ithMineralPacket && lpth->thp.iWarp != 0) {
-                lppl = LpplFromId(lpth->thp.idPlanet);
-                if (lppl && lppl->iPlayer == iPlayer) {
-                    iWarp = IWarpMAFromLppl(lppl, &fTwo);
-                    if (iWarp + fTwo < lpth->thp.iWarp + 4) {
-                        FSendPlrMsg2XGen(FALSE, idmMassPacketAppearsCollisionCourseWhichCurrently, gotoThing, lpth->idFull, lppl->id);
-                    }
-                }
-            }
-        }
-        if (!game.fTutorial) {
-            lppl = lpPlanets;
-            lpplMac = lpPlanets + cPlanet;
-            for (; lppl < lpplMac; lppl++) {
-                if (lppl->iPlayer == iPlayer && lppl->fStarbase && lppl->lpplprod && rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef != ihuldefOrbitalFort) {
-                    fWorking = FALSE;
-                    iprod = 0;
-                    lpprod = lppl->lpplprod->rgprod;
-                    while (iprod < lppl->lpplprod->iprodMac) {
-                        EstimateItemProdSched(lppl, NULL, iprod, &iFirst, &iLast);
-                        if (iLast > 1) {
-                            fWorking = FALSE;
-                            break;
+                lppl = lpPlanets;
+                lpplMac = lpPlanets + cPlanet;
+                for (; lppl < lpplMac; lppl++) {
+                    if (lppl->iPlayer == iPlayer) {
+                        lppl->iPlayer = iplrNone;
+                        lppl->det = detSome;
+                        if (lppl->lpplprod) {
+                            FreePl((PL *)lppl->lpplprod);
+                            lppl->lpplprod = NULL;
                         }
-                        if (iLast == 1 && (lpprod->grobj != grobjPlanet || lpprod->iItem >= mdIdleFactory)) {
-                            fWorking = TRUE;
-                        }
-                        iprod++;
-                        lpprod++;
                     }
-                    if (fWorking) {
-                        FSendPlrMsg2XGen(FALSE, idmStarbaseScheduledCompleteRemainingProductionItem, lppl->id, lppl->id, 0);
+                }
+                cPlanetHist = cPlanet;
+                goto LNextTurn;
+            }
+            AlertSz(PszFormatIds(idsWarningIgnoringUnexpectedDataAfterEof, NULL), MB_ICONHAND);
+        }
+        StreamClose();
+        if (cturn > 1 && !rgplr[iPlayer].fAi && !ini.fDumpPlanets && !ini.fDumpFleets && !ini.fDumpMap) {
+            CchSprintf(szWork, PszGetCompressedString(idsNoteDYearsDataRead), cturn);
+            AlertSz(szWork, MB_ICONASTERISK);
+        }
+        if (FSzPrefixNoCase(pszExt, (char *)"hst", 3))
+            goto DoneNow;
+        if (!rgplr[iPlayer].fAi) {
+            lpth = lpThings;
+            lpthMac = lpThings + cThing;
+            for (; lpth < lpthMac; lpth++) {
+                if (lpth->ith == ithMineralPacket && lpth->thp.iWarp != 0) {
+                    lppl = LpplFromId(lpth->thp.idPlanet);
+                    if (lppl && lppl->iPlayer == iPlayer) {
+                        iWarp = IWarpMAFromLppl(lppl, &fTwo);
+                        if (iWarp + fTwo < lpth->thp.iWarp + 4) {
+                            FSendPlrMsg2XGen(FALSE, idmMassPacketAppearsCollisionCourseWhichCurrently, gotoThing, lpth->idFull, lppl->id);
+                        }
                     }
                 }
             }
-            i = CBattles();
-            if (i > 0) {
-                FSendPlrMsg2XGen(TRUE, idmHaveReceivedOneBattleRecordingYear + (i > 1), gotoBattleReport, i, 0);
+            if (!game.fTutorial) {
+                lppl = lpPlanets;
+                lpplMac = lpPlanets + cPlanet;
+                for (; lppl < lpplMac; lppl++) {
+                    if (lppl->iPlayer == iPlayer && lppl->fStarbase && lppl->lpplprod && rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef != ihuldefOrbitalFort) {
+                        fWorking = FALSE;
+                        iprod = 0;
+                        lpprod = lppl->lpplprod->rgprod;
+                        while (iprod < lppl->lpplprod->iprodMac) {
+                            EstimateItemProdSched(lppl, NULL, iprod, &iFirst, &iLast);
+                            if (iLast > 1) {
+                                fWorking = FALSE;
+                                break;
+                            }
+                            if (iLast == 1 && (lpprod->grobj != grobjPlanet || lpprod->iItem >= mdIdleFactory)) {
+                                fWorking = TRUE;
+                            }
+                            iprod++;
+                            lpprod++;
+                        }
+                        if (fWorking) {
+                            FSendPlrMsg2XGen(FALSE, idmStarbaseScheduledCompleteRemainingProductionItem, lppl->id, lppl->id, 0);
+                        }
+                    }
+                }
+                i = CBattles();
+                if (i > 0) {
+                    FSendPlrMsg2XGen(TRUE, idmHaveReceivedOneBattleRecordingYear + (i > 1), gotoBattleReport, i, 0);
+                }
             }
         }
-    }
-    if (!gd.fDontDoLogFiles) {
-        CchSprintf(szWork, "%s.x%s", pszFileName, pszExt + 1);
-        if (!FLoadLogFile(szWork) || !FRunLogFile()) {
-            AlertSz(PszFormatIds(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), MB_ICONHAND);
-            goto LError;
+        if (!gd.fDontDoLogFiles) {
+            CchSprintf(szWork, "%s.x%s", pszFileName, pszExt + 1);
+            if (!FLoadLogFile(szWork) || !FRunLogFile()) {
+                AlertSz(PszFormatIds(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), MB_ICONHAND);
+                goto LError;
+            }
         }
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        rgplr[i].cFleet = 0;
-        rgplr[i].cPlanet = 0;
-    }
-    lppl = lpPlanets;
-    lpplMac = lpPlanets + cPlanet;
-    for (; lppl < lpplMac; lppl++) {
-        if (lppl->iPlayer != iplrNone) {
-            rgplr[lppl->iPlayer].cPlanet = rgplr[lppl->iPlayer].cPlanet + 1;
-        } else {
-            lppl->fStarbase = FALSE;
+        for (i = 0; i < game.cPlayer; i++) {
+            rgplr[i].cFleet = 0;
+            rgplr[i].cPlanet = 0;
         }
-    }
-    j = 0;
-    for (i = 0; i < cFleet; i++) {
-        lpfl = rglpfl[i];
-        if (!rglpfl[i])
-            break;
-        j = lpfl->iPlayer;
-        rgplr[j].cFleet++;
-    }
+        lppl = lpPlanets;
+        lpplMac = lpPlanets + cPlanet;
+        for (; lppl < lpplMac; lppl++) {
+            if (lppl->iPlayer != iplrNone) {
+                rgplr[lppl->iPlayer].cPlanet = rgplr[lppl->iPlayer].cPlanet + 1;
+            } else {
+                lppl->fStarbase = FALSE;
+            }
+        }
+        j = 0;
+        for (i = 0; i < cFleet; i++) {
+            lpfl = rglpfl[i];
+            if (!rglpfl[i])
+                break;
+            j = lpfl->iPlayer;
+            rgplr[j].cFleet++;
+        }
 DoneNow:
-    idPlayer = iPlayer;
-    if (idPlayer != iplrNone && !rgplr[idPlayer].fAi) {
-        AddMRUFile(pszFileName, pszExt);
+        idPlayer = iPlayer;
+        if (idPlayer != iplrNone && !rgplr[idPlayer].fAi) {
+            AddMRUFile(pszFileName, pszExt);
+        }
+        return TRUE;
+    } catch (const StarsError &) {
     }
-    return TRUE;
+LError:
+    game.fDirty = FALSE;
+    DestroyCurGame();
+    StreamClose();
+    if (!ini.fValidate && !ini.fLogging) {
+        ShowTitleScreen();
+    }
+    return FALSE;
+
 }
 
 int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPreInited) {
@@ -1162,7 +1161,7 @@ int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t
     return TRUE;
 invalid:
     FileError(idsGameFileAppearsCorruptUnableLoadFile);
-    if (penvMem) StarsLongJump(penvMem, -1);
+    if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
     return FALSE;
 }
 
@@ -1307,12 +1306,10 @@ void GetFileStatus(int16_t dt, int16_t iPlayer) {
 
 int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     RTBOF    rtbof;
-    volatile StringId ids;
+    StringId ids;
     int16_t  fCheckMulti;
     int16_t  fRewind;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
 
     fSilentSav = fFileErrSilent;
     ids = idsCantOpenFile;
@@ -1321,89 +1318,86 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     fRewind = dt & 0x1000;
     dt &= 0xff;
     SetSzWorkFromDt(dt, iPlayer);
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
+    StarsRecoveryScope scopeRecovery;
+    try {
+        fFileErrSilent = TRUE;
+        StreamOpen(szWork, md);
+        fFileErrSilent = fSilentSav;
+        ids = idsGameFileAppearsCorruptUnableLoadFile;
+        ReadRt();
+        if (hdrCur.rt != rtBOF) {
+            FileError(idsGameFileAppearsCorruptUnableLoadFile);
+            goto LBadFile;
+        }
+        if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
+            FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
+            goto LBadFile;
+        }
+        if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
+            FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
+            goto LBadFile;
+        }
+        rtbof = *((RTBOF *)rgbCur);
+        if (rtbof.iPlayer != iPlayer) {
+            FileError(idsGameFileAppearsCorruptUnableLoadFile);
+            goto LBadFile;
+        }
+        if (game.lid != 0) {
+            if (rtbof.lidGame != game.lid) {
+                FileError(idsFileGame);
+                goto LBadFile;
+            }
+            if (dt != dtHist) {
+                if (fCheckMulti && rtbof.fMulti) {
+                    LSeekFile(hf, -4, 2);
+                    ReadRt();
+                    if (hdrCur.rt != rtEOF && hdrCur.cb != 2)
+                        goto LBadFile;
+                    rtbof.turn = RawLoad16(rgbCur);
+                    game.wGen = rtbof.wGen;
+                }
+                if (game.turn == 0 && game.turn != rtbof.turn) {
+                    game.turn = rtbof.turn;
+                    game.wGen = rtbof.wGen;
+                } else {
+                    if (rtbof.turn != game.turn) {
+                        FileError(idsFileDate);
+                        goto LBadFile;
+                    }
+                    if (dt == dtHost && !gd.fHostMode && rtbof.fInUse) {
+                        if (AlertSz(PszFormatIds(idsHostFileMarkedUseAnotherInstanceStars, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES)
+                            goto LBadFile;
+                    } else {
+                        if (!rtbof.fDone && gd.fGeneratingTurn && !gd.fForceTurn) {
+                            gd.fPartialTurn = TRUE;
+                            goto LBadFile;
+                        }
+                        if (dt == dtLog && !game.fTutorial && rtbof.wGen != game.wGen) {
+                            FileError(idsFileGame);
+                            goto LBadFile;
+                        }
+                    }
+                }
+            } else if (rtbof.iPlayer != iPlayer) {
+                goto LBadFile;
+            }
+        }
+        if (fRewind) {
+            LSeekFile(hf, 0, 0);
+            ReadRt();
+        }
+        wVersFile = rtbof.wVersion;
+        gd.fFileCrippled = rtbof.fCrippled;
+        return TRUE;
+LBadFile:
+        StreamClose();
+        return FALSE;
+    } catch (const StarsError &) {
         fFileErrSilent = fSilentSav;
         FileError(ids);
         StreamClose();
-        penvMem = penvMemSav;
         return FALSE;
     }
-    fFileErrSilent = TRUE;
-    StreamOpen(szWork, md);
-    fFileErrSilent = fSilentSav;
-    ids = idsGameFileAppearsCorruptUnableLoadFile;
-    ReadRt();
-    if (hdrCur.rt != rtBOF) {
-        FileError(idsGameFileAppearsCorruptUnableLoadFile);
-        goto LBadFile;
-    }
-    if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
-        FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
-        goto LBadFile;
-    }
-    if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
-        FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
-        goto LBadFile;
-    }
-    rtbof = *((RTBOF *)rgbCur);
-    if (rtbof.iPlayer != iPlayer) {
-        FileError(idsGameFileAppearsCorruptUnableLoadFile);
-        goto LBadFile;
-    }
-    if (game.lid != 0) {
-        if (rtbof.lidGame != game.lid) {
-            FileError(idsFileGame);
-            goto LBadFile;
-        }
-        if (dt != dtHist) {
-            if (fCheckMulti && rtbof.fMulti) {
-                LSeekFile(hf, -4, 2);
-                ReadRt();
-                if (hdrCur.rt != rtEOF && hdrCur.cb != 2)
-                    goto LBadFile;
-                rtbof.turn = RawLoad16(rgbCur);
-                game.wGen = rtbof.wGen;
-            }
-            if (game.turn == 0 && game.turn != rtbof.turn) {
-                game.turn = rtbof.turn;
-                game.wGen = rtbof.wGen;
-            } else {
-                if (rtbof.turn != game.turn) {
-                    FileError(idsFileDate);
-                    goto LBadFile;
-                }
-                if (dt == dtHost && !gd.fHostMode && rtbof.fInUse) {
-                    if (AlertSz(PszFormatIds(idsHostFileMarkedUseAnotherInstanceStars, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES)
-                        goto LBadFile;
-                } else {
-                    if (!rtbof.fDone && gd.fGeneratingTurn && !gd.fForceTurn) {
-                        gd.fPartialTurn = TRUE;
-                        goto LBadFile;
-                    }
-                    if (dt == dtLog && !game.fTutorial && rtbof.wGen != game.wGen) {
-                        FileError(idsFileGame);
-                        goto LBadFile;
-                    }
-                }
-            }
-        } else if (rtbof.iPlayer != iPlayer) {
-            goto LBadFile;
-        }
-    }
-    if (fRewind) {
-        LSeekFile(hf, 0, 0);
-        ReadRt();
-    }
-    penvMem = penvMemSav;
-    wVersFile = rtbof.wVersion;
-    gd.fFileCrippled = rtbof.fCrippled;
-    return TRUE;
-LBadFile:
-    StreamClose();
-    penvMem = penvMemSav;
-    return FALSE;
 }
 
 int16_t FNewTurnAvail(int16_t idPlayer) {
@@ -1491,7 +1485,7 @@ void STARS_TEST_IMPL(ReadRt)() {
     if (hdrCur.rt == rtBOF) {
         if (hdrCur.cb != sizeof(RTBOF)) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
-            if (penvMem) StarsLongJump(penvMem, -1);
+            if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
             return;
         }
         SetFileXorStream(((RTBOF *)rgbCur)->lidGame, ((RTBOF *)rgbCur)->lSaltTime, ((RTBOF *)rgbCur)->turn, ((RTBOF *)rgbCur)->iPlayer,
@@ -1544,7 +1538,7 @@ Retry:
         if (!fNoErr) {
             FileError(idsCantOpenFile);
         }
-        StarsLongJump(penvMem, -1);
+        StarsThrowError(starsErrorFile, idsCantOpenFile);
     }
 }
 
@@ -1563,7 +1557,7 @@ void RgFromStream(void *rg, uint16_t cb) {
             vlpMemStream += cb;
         } else if (CbReadFile(hf, rg, cb) != cb) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
-            StarsLongJump(penvMem, -1);
+            StarsThrowError(starsErrorFile, idsFileError);
         }
     }
     return;
