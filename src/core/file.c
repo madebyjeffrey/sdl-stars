@@ -40,7 +40,7 @@ int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb) {
 
     memset(&shdef, 0, sizeof(SHDEF));
     if (cb <= offsetof(RTSHDEF, chs) || lprt->ihuldef > ihuldefDeathStart) return FALSE;
-    shdef.hul.ihuldef = lprt->ihuldef;
+    shdef.hul.ihuldef = static_cast<HulDef>(lprt->ihuldef);
     shdef.wFlags = lprt->wFlags;
     shdef.hul.chs = lprt->chs;
     shdef.hul.ibmp = lprt->ibmp;
@@ -399,7 +399,7 @@ int16_t FLoadGame(char *pszFileName, char *pszExt) {
         }
         fFileErrSilent = fSilentSav;
         GetFileStatus(dt, iPlayer);
-        if (!FOpenFile(dt | grf, iPlayer, 32))
+        if (!FOpenFile(static_cast<DtFileType>(dt | grf), iPlayer, 32))
             goto LError;
         if (iPlayer == iplrNone) {
             gd.fGameOverMan = ((RTBOF *)rgbCur)->fGameOverMan;
@@ -778,7 +778,7 @@ LNextTurn:
                         iprod = 0;
                         lpprod = lppl->lpplprod->rgprod;
                         while (iprod < lppl->lpplprod->iprodMac) {
-                            EstimateItemProdSched(lppl, NULL, iprod, &iFirst, &iLast);
+                            EstimateItemProdSched(lppl, NULL, static_cast<ProdItemType>(iprod), &iFirst, &iLast);
                             if (iLast > 1) {
                                 fWorking = FALSE;
                                 break;
@@ -790,13 +790,13 @@ LNextTurn:
                             lpprod++;
                         }
                         if (fWorking) {
-                            FSendPlrMsg2XGen(FALSE, idmStarbaseScheduledCompleteRemainingProductionItem, lppl->id, lppl->id, 0);
+                            FSendPlrMsg2XGen(FALSE, idmStarbaseScheduledCompleteRemainingProductionItem, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                         }
                     }
                 }
                 i = CBattles();
                 if (i > 0) {
-                    FSendPlrMsg2XGen(TRUE, idmHaveReceivedOneBattleRecordingYear + (i > 1), gotoBattleReport, i, 0);
+                    FSendPlrMsg2XGen(TRUE, static_cast<MessageId>(idmHaveReceivedOneBattleRecordingYear + (i > 1)), gotoBattleReport, i, 0);
                 }
             }
         }
@@ -989,12 +989,12 @@ LFinishBRecord:
         pb += 2;
     } else if (fFirstYear) {
         if (lppl->iPlayer != iplrNone) {
-            FSendPlrMsg2XGen(FALSE, idmHaveFoundPlanetOccupiedSomeoneElseCurrently, lppl->id, lppl->id, lppl->iPlayer | 0x30);
+            FSendPlrMsg2XGen(FALSE, idmHaveFoundPlanetOccupiedSomeoneElseCurrently, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->iPlayer | 0x30);
         } else if (lppl->det <= detMinimal) {
-            FSendPlrMsg2XGen(FALSE, idmHaveFoundNewPlanetDontKnowIf, lppl->id, lppl->id, 0);
+            FSendPlrMsg2XGen(FALSE, idmHaveFoundNewPlanetDontKnowIf, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
         } else if (GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
             pctOpt = PctPlanetOptValue(lppl, iPlayer);
-            FSendPlrMsg2XGen(FALSE, idmHaveInfoNewPlanetIfColonizeCan, lppl->id, lppl->id, pctOpt);
+            FSendPlrMsg2XGen(FALSE, idmHaveInfoNewPlanetIfColonizeCan, static_cast<MsgGoto>(lppl->id), lppl->id, pctOpt);
         } else {
             pct = PctPlanetDesirability(lppl, iPlayer);
             if (pct > 0) {
@@ -1010,7 +1010,7 @@ LFinishBRecord:
                     idm = idmHaveFoundNewPlanetWhichUnfortunatelyHabitable;
                 }
             }
-            FSendPlrMsg2XGen(FALSE, idm, lppl->id, abs(pct), lppl->id);
+            FSendPlrMsg2XGen(FALSE, idm, static_cast<MsgGoto>(lppl->id), abs(pct), lppl->id);
         }
     }
     return TRUE;
@@ -1299,7 +1299,7 @@ void FileError(StringId ids) {
 }
 
 void GetFileStatus(int16_t dt, int16_t iPlayer) {
-    SetSzWorkFromDt(dt, iPlayer);
+    SetSzWorkFromDt(static_cast<DtFileType>(dt), iPlayer);
     gd.fReadOnly = FFileReadOnly(szWork);
     return;
 }
@@ -1316,12 +1316,12 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
     gd.fPartialTurn = FALSE;
     fCheckMulti = dt & 0x2000;
     fRewind = dt & 0x1000;
-    dt &= 0xff;
+    dt = static_cast<DtFileType>(dt & 0xff);
     SetSzWorkFromDt(dt, iPlayer);
     StarsRecoveryScope scopeRecovery;
     try {
         fFileErrSilent = TRUE;
-        StreamOpen(szWork, md);
+        StreamOpen(szWork, static_cast<MdOpenFlags>(md));
         fFileErrSilent = fSilentSav;
         ids = idsGameFileAppearsCorruptUnableLoadFile;
         ReadRt();
@@ -1409,7 +1409,7 @@ int16_t FNewTurnAvail(int16_t idPlayer) {
     wGenOld = game.wGen;
     fFileErrSilent = TRUE;
     game.turn = 0;
-    fNew = FOpenFile(8195, idPlayer, 32);
+    fNew = FOpenFile(static_cast<DtFileType>(8195), idPlayer, 32);
     if (fNew) {
         StreamClose();
         fNew = game.turn > turnOld;
@@ -1519,7 +1519,7 @@ void STARS_TEST_IMPL(StreamOpen)(char *szFile, MdOpenFlags mdOpen) {
 
     dwTick = 0;
     fNoErr = (mdOpen & 0x4000) != 0;
-    mdOpen &= 0xbfff;
+    mdOpen = static_cast<MdOpenFlags>(mdOpen & 0xbfff);
 Retry:
     hf = HfOpenFile(szFile, mdOpen, &fMissing);
     if (hf == -1) {

@@ -10,12 +10,12 @@ import shlex
 import subprocess
 import tempfile
 
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, c_source
 
 
 def between(source, start, end):
     begin = source.index(start)
-    return source[begin:source.index(end, begin)]
+    return c_source(source[begin:source.index(end, begin)])
 
 
 def main():

@@ -16,7 +16,7 @@ int16_t RaceCreationWizard(HWND hwndParent, int16_t fReadOnly, int16_t fDontWrit
 Step1:
     iPanelActive = rwPageRace;
     lpProc = MakeProcInstance(RaceWizardDlg1, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -25,7 +25,7 @@ Step1:
 Step2:
     iPanelActive = rwPagePrimaryTrait;
     lpProc = MakeProcInstance(RaceWizardDlg4, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_4), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_4), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -36,7 +36,7 @@ Step2:
 Step3:
     iPanelActive = rwPageLesserTraits;
     lpProc = MakeProcInstance(RaceWizardDlg5, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_5), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_5), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -47,7 +47,7 @@ Step3:
 Step4:
     iPanelActive = rwPageHabitability;
     lpProc = MakeProcInstance(RaceWizardDlg2, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -58,7 +58,7 @@ Step4:
 Step5:
     iPanelActive = rwPageEconomy;
     lpProc = MakeProcInstance(RaceWizardDlg3, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_3), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_3), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -69,7 +69,7 @@ Step5:
 Step6:
     iPanelActive = rwPageResearch;
     lpProc = MakeProcInstance(RaceWizardDlg6, hInst);
-    mdRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_6), hwndRaceParent, lpProc);
+    mdRet = static_cast<WizardButton>(DialogBox(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_6), hwndRaceParent, lpProc));
     FreeProcInstance(lpProc);
     if (mdRet == wizCancel || mdRet == (WizardButton)-1)
         goto LCancel;
@@ -171,7 +171,7 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessage(hwnd, IDC_RACE_PASSWORD, EM_LIMITTEXT, 0xf, 0);
         hwndCB = GetDlgItem(hwnd, IDC_COMBOBOX);
         for (i = idsSurfaceMinerals; i <= idsDefenses3; i++) {
-            psz = PszGetCompressedString(i);
+            psz = PszGetCompressedString(static_cast<StringId>(i));
             SendMessage(hwndCB, CB_ADDSTRING, 0, (LPARAM)psz);
         }
         i = GetRaceStat(&vplr, rsUseLeftover);
@@ -326,11 +326,11 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             memset(vplr.szNames, 0, 32);
             GetDlgItemText(hwnd, IDC_RACE_PLURAL_NAME, vplr.szNames, 32);
             GetDlgItemText(hwnd, LOWORD(wParam), szBuf, 32);
-            for (i = 0; i < 7 && strcmp(vplr.szName, PszGetCompressedString(idsHumanoid + i)) != 0; i++) {
+            for (i = 0; i < 7 && strcmp(vplr.szName, PszGetCompressedString(static_cast<StringId>(idsHumanoid + i))) != 0; i++) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
                 memset(vplr.szName, 0, 32);
-                CchGetString(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID, vplr.szName);
+                CchGetString(static_cast<StringId>(idsHumanoid + LOWORD(wParam) - IDC_RACE_HUMANOID), vplr.szName);
                 SetDlgItemText(hwnd, IDC_RACE_NAME, vplr.szName);
                 memset(vplr.szNames, 0, 32);
                 psz = PszPlayerName(0, TRUE, TRUE, FALSE, 0, &vplr);
@@ -528,11 +528,11 @@ void DrawRace2(HWND hwnd, HDC hdc, int16_t iDraw) {
                 cch = CchGetString(idsN2, szT);
                 CtrTextOut(hdc, xRLabel, vrgrcRCW[5 * i + 2].top + 1 + dyArial8, szT, cch);
             } else {
-                psz = PszCalcEnvVar(i, vplr.rgEnvVarMin[i]);
+                psz = PszCalcEnvVar(static_cast<EnvType>(i), vplr.rgEnvVarMin[i]);
                 CtrTextOut(hdc, xRLabel, vrgrcRCW[5 * i + 2].top + 1, psz, 0);
                 cch = CchGetString(idsTo2, szT);
                 CtrTextOut(hdc, xRLabel, vrgrcRCW[5 * i + 2].top + 1 + dyArial8, szT, cch);
-                psz = PszCalcEnvVar(i, vplr.rgEnvVarMax[i]);
+                psz = PszCalcEnvVar(static_cast<EnvType>(i), vplr.rgEnvVarMax[i]);
                 CtrTextOut(hdc, xRLabel, vrgrcRCW[5 * i + 2].top + 1 + dyArial8 * 2, psz, 0);
             }
             if (iDraw == -1) {
@@ -904,14 +904,14 @@ void DrawRace3(HWND hwnd, HDC hdc, int16_t iDraw) {
         } else {
             idsT = ids;
         }
-        ids++;
+        ids = static_cast<StringId>(ids + 1);
         cch = CchGetString(idsT, szWork);
         if (iDraw == -1) {
             TextOut(hdc, 6, yTop, szWork, cch);
         }
         dx = LOWORD(GetTextExtent(hdc, szWork, cch)) + 6;
         dxItem = abs(rgRW3Width[i]) * dxDig;
-        wsprintf(szWork, PCTD, GetRaceStat(&vplr, rgRW3IStat[i]));
+        wsprintf(szWork, PCTD, GetRaceStat(&vplr, static_cast<RaceStat>(rgRW3IStat[i])));
         if (rgRW3Width[i] < 0 && (i > 0 || !fMacintosh)) {
             dxItem += dxkT;
             if (i == 0) {
@@ -943,7 +943,7 @@ void DrawRace3(HWND hwnd, HDC hdc, int16_t iDraw) {
             cch = CchGetString(idsT, szWork);
             TextOut(hdc, vrgrcRCW[irc].right + 4, yTop, szWork, cch);
         }
-        ids++;
+        ids = static_cast<StringId>(ids + 1);
         irc += 2;
         yTop += (int16_t)((rgRW3Spacing[i] + 1) * dyArial8) / 2;
     }
@@ -987,8 +987,8 @@ int16_t FTrackRaceDlg3(HWND hwnd, POINT16 pt, int16_t kbd) {
         dShift = 3 * dShift;
     }
     while (FTrackBtn(&btnt)) {
-        iStat = GetRaceStat(&vplr, rgRW3IStat[i]);
-        if (SetRaceStat(&vplr, rgRW3IStat[i], iStat + dShift) != iStat) {
+        iStat = GetRaceStat(&vplr, static_cast<RaceStat>(rgRW3IStat[i]));
+        if (SetRaceStat(&vplr, static_cast<RaceStat>(rgRW3IStat[i]), iStat + dShift) != iStat) {
             DrawRace3(hwnd, btnt.hdc, i);
         }
     }
@@ -1061,13 +1061,13 @@ INT_PTR CALLBACK RaceWizardDlg4(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         _Draw3dFrame(hdc, &rc, -1);
         cch = CchGetString(idsDescriptionTrait, szWork);
         TextOut(hdc, rc.left + 8, rc.top - (dyArial8 >> 1), szWork, cch);
-        ids = idsMustExpandSurviveGivenSmallCheapColony + GetRaceStat(&vplr, rsMajorAdv) * 3;
+        ids = static_cast<StringId>(idsMustExpandSurviveGivenSmallCheapColony + GetRaceStat(&vplr, rsMajorAdv) * 3);
         cch = 0;
         i = 0;
         while (i < 3) {
             cch += CchGetString(ids, &szT[cch]);
             i++;
-            ids++;
+            ids = static_cast<StringId>(ids + 1);
         }
         ExpandRc(&rc, -dyArial8 - 2, -(dyArial8 >> 1));
         rc.top += 4;
@@ -1121,8 +1121,8 @@ INT_PTR CALLBACK RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         cColDrop = 0;
         for (i = 0; i <= 13; i++) {
             hwndCtl = GetDlgItem(hwnd, i + 291);
-            SetWindowText(hwndCtl, PszGetCompressedString(idsImprovedFuelEfficiency + i));
-            SendMessage(hwndCtl, BM_SETCHECK, GetRaceGrbit(&vplr, i), 0);
+            SetWindowText(hwndCtl, PszGetCompressedString(static_cast<StringId>(idsImprovedFuelEfficiency + i)));
+            SendMessage(hwndCtl, BM_SETCHECK, GetRaceGrbit(&vplr, static_cast<RaceGrbit>(i)), 0);
             if (fRCWReadOnly) {
                 EnableWindow(hwndCtl, FALSE);
             }
@@ -1165,9 +1165,9 @@ INT_PTR CALLBACK RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         _Draw3dFrame(hdc, &rc, -1);
         rcCargo = rc;
         rcCargo.top -= dyArial8 >> 1;
-        cch = CchGetString(idsImprovedFuelEfficiency + cColDrop, szWork);
+        cch = CchGetString(static_cast<StringId>(idsImprovedFuelEfficiency + cColDrop), szWork);
         TextOut(hdc, rc.left + 8, rc.top - (dyArial8 >> 1), szWork, cch);
-        cch = CchGetString(idsGivesFuelMizerGalaxyScoopEnginesIncreases + cColDrop, szWork);
+        cch = CchGetString(static_cast<StringId>(idsGivesFuelMizerGalaxyScoopEnginesIncreases + cColDrop), szWork);
         ExpandRc(&rc, -dyArial8 - 2, -(dyArial8 >> 1));
         rc.top += 4;
         DrawText(hdc, szWork, cch, &rc, DT_WORDBREAK);
@@ -1188,7 +1188,7 @@ INT_PTR CALLBACK RaceWizardDlg5(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         if (LOWORD(wParam) >= IDC_RACE_IMPROVED_FUEL_EFFICIENCY && LOWORD(wParam) <= IDC_RACE_REGENERATING_SHIELDS) {
             i = LOWORD(SendMessage(GetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
             cColDrop = LOWORD(wParam) - 291;
-            SetRaceGrbit(&vplr, cColDrop, i);
+            SetRaceGrbit(&vplr, static_cast<RaceGrbit>(cColDrop), i);
             InvalidateAdvPtsRect(hwnd);
             InvalidateRect(hwnd, &rcCargo, FALSE);
         }
@@ -1208,7 +1208,7 @@ INT_PTR CALLBACK RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_INITDIALOG:
         SetRCWTitle(hwnd, iPanelActive);
         for (i = 0; i < 6; i++) {
-            CheckRadioButton(hwnd, 3 * i + 271, 3 * i + 273, 3 * i + 271 + GetRaceStat(&vplr, i + 8));
+            CheckRadioButton(hwnd, 3 * i + 271, 3 * i + 273, 3 * i + 271 + GetRaceStat(&vplr, static_cast<RaceStat>(i + 8)));
         }
         if (fRCWReadOnly) {
             for (i = 271; i <= 288; i++) {
@@ -1256,7 +1256,7 @@ INT_PTR CALLBACK RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             rcGBox.bottom = rc.bottom;
             ExpandRc(&rcGBox, dyArial8, dyArial8 >> 1);
             _Draw3dFrame(hdc, &rcGBox, -1);
-            cch = CchGetString(idsEnergy + i, szWork);
+            cch = CchGetString(static_cast<StringId>(idsEnergy + i), szWork);
             cch += CchGetString(idsResearch, &szWork[cch]);
             TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
         }
@@ -1276,7 +1276,7 @@ INT_PTR CALLBACK RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_RACE_ENERGY_COST_EXTRA && LOWORD(wParam) <= IDC_RACE_BIOTECH_COST_LESS) {
             i = LOWORD(wParam) - 271;
-            SetRaceStat(&vplr, i / 3 + 8, i % 3);
+            SetRaceStat(&vplr, static_cast<RaceStat>(i / 3 + 8), i % 3);
             InvalidateAdvPtsRect(hwnd);
         } else if (LOWORD(wParam) == IDC_RACE_START_HIGHER_TECH) {
             i = LOWORD(SendMessage(GetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
@@ -1448,7 +1448,7 @@ void SetRCWTitle(HWND hwnd, int16_t iStep) {
     char    szBuf[50];
     int16_t cch;
 
-    cch = CchGetString(idsCustomRaceWizardStepD6 + fRCWReadOnly, szBuf);
+    cch = CchGetString(static_cast<StringId>(idsCustomRaceWizardStepD6 + fRCWReadOnly), szBuf);
     cch = wsprintf(szWork, szBuf, iStep);
     SetWindowText(hwnd, szWork);
     return;

@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Stored constants now use C++ enums with explicit underlying types matching
+  the original widths and signedness. C11 callers and generated tables retain
+  compatible integer typedefs. Integer/record-field conversions and enum
+  arithmetic are explicit; a cross-language ABI test checks all 145 stored
+  types. Constant values, file format 2.85 and regression baselines are unchanged.
+
 - Application-owned files now use a shared C++17 stream/filesystem service for
   game records, host settings, library metadata/import/export, profiles, help,
   inspection and PDF output. Opaque streams and owned legacy tokens keep native

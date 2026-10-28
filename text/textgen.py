@@ -211,13 +211,18 @@ def WriteIfChanged(path, text):
         f.write(text)
 
 
+def EnumStart(name, underlying):
+    return ["#ifdef __cplusplus", "enum {} : {} {{".format(name, underlying),
+            "#else", "enum {} {{".format(name), "#endif"]
+
+
 def Generate(outdir):
     header = [
         "// " + GENERATED.format("*.txt"),
         "// The IDs of the game's text, included by enums.h.",
         "#ifndef STARS_TEXTIDS_H",
         "#define STARS_TEXTIDS_H",
-        '#include "enumconstants.h"',
+        '#include <stdint.h>',
         "",
     ]
     outputs = {}
@@ -228,7 +233,7 @@ def Generate(outdir):
         rgb, rgcLen, rgiChunk, lookup = Encode(rows)
         cTable = len(rgcLen)
         if enum:
-            header.append("STARS_CONSTANTS({}) {{".format(enum))
+            header += EnumStart(enum, "uint16_t")
             header += ["    {} = {},".format(row.name, fmtId.format(row.id)) for row in rows]
             header += ["};", ""]
         else:

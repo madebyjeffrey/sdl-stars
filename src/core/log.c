@@ -383,7 +383,7 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
                 }
             }
         }
-        CancelMemRt(hdrPrev.rt);
+        CancelMemRt(static_cast<RecordType>(hdrPrev.rt));
     }
     i = 0;
     grbit = 0;
@@ -434,7 +434,7 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
                 }
             }
         }
-        WriteMemRt(rt, cb, rgbuf);
+        WriteMemRt(static_cast<RecordType>(rt), cb, rgbuf);
     }
     return;
 }
@@ -549,7 +549,7 @@ int16_t FRunLogFile() {
     fLogOff = TRUE;
     for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
         lprts = (HDR *)(lpLog + iCur);
-        fRet &= FRunLogRecord(lprts->rt, lprts->cb, lpLog + (2 + iCur));
+        fRet &= FRunLogRecord(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
     }
     fLogOff = fLogOld;
     gd.fFleetLinkValid = FALSE;
@@ -584,6 +584,8 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
 
     lpxfCur = NULL;
     switch (rt) {
+    default:
+        break;
     case rtEOF:
         break;
     case rtLogPlanetProdQ:
@@ -721,11 +723,11 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        if (!FLookupObject(((RTXFER *)lpb)->grobj1, ((RTXFER *)lpb)->id1, &rgxf[0].fl)) {
+        if (!FLookupObject(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, &rgxf[0].fl)) {
             return FALSE;
         }
         rgxf[1].fl.id = idflNone;
-        if (((RTXFER *)lpb)->grobj2 != grobjOther && !FLookupObject(((RTXFER *)lpb)->grobj2, ((RTXFER *)lpb)->id2, &rgxf[1].fl)) {
+        if (((RTXFER *)lpb)->grobj2 != grobjOther && !FLookupObject(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj2), ((RTXFER *)lpb)->id2, &rgxf[1].fl)) {
             if (((RTXFER *)lpb)->grobj2 == grobjFleet && (((RTXFER *)lpb)->id2 >> 9 & 0xf) != idPlayer)
                 break;
             return FALSE;
@@ -750,11 +752,11 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 if (rgcXfer[i] != 0) {
                     cXfer = rgcXfer[i];
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        l = ChgCargo(((RTXFER *)lpb)->grobj1, ((RTXFER *)lpb)->id1, i, cXfer, &rgxf[0].fl);
+                        l = ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, static_cast<MineralType>(i), cXfer, &rgxf[0].fl);
                         if (l != cXfer) {
                             id = ((RTXFER *)lpb)->grobj1 == grobjFleet ? -32768 : 0;
                             id |= rgxf[0].fl.id;
-                            FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, id, id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
+                            FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
                             rgcXfer[i] = l;
                         }
                     }
@@ -819,7 +821,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                 goto DoNext;
                             }
                         StealCargo:
-                            l = ChgCargo(((RTXFER *)lpb)->grobj2, ((RTXFER *)lpb)->id2, i, -cXfer, &rgxf[1].fl);
+                            l = ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj2), ((RTXFER *)lpb)->id2, static_cast<MineralType>(i), -cXfer, &rgxf[1].fl);
                             if (l != -cXfer) {
                                 rgcXfer[i] = -l;
                                 /* Cargo the destination can't hold goes back to
@@ -828,18 +830,18 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                    another player's fleet beyond its free hold
                                    space were lost. */
                                 if (cXfer < 0) {
-                                    ChgCargo(((RTXFER *)lpb)->grobj1, ((RTXFER *)lpb)->id1, i, -cXfer - l, &rgxf[0].fl);
+                                    ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, static_cast<MineralType>(i), -cXfer - l, &rgxf[0].fl);
                                 }
                                 if (((RTXFER *)lpb)->grobj2 == grobjThing) {
                                     idm = idmDidntGetAttemptedTransferMineralPacketAnother;
                                     if (l == 0) {
-                                        idm++;
+                                        idm = static_cast<MessageId>(idm + 1);
                                     }
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idm, rgxf[0].fl.id | 0x8000, rgxf[0].fl.id, i, -LOWORD(l), i, 0, 0, 0);
+                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(rgxf[0].fl.id | 0x8000), rgxf[0].fl.id, i, -LOWORD(l), i, 0, 0, 0);
                                 } else {
                                     id = ((RTXFER *)lpb)->grobj1 == grobjFleet ? -32768 : 0;
                                     id |= rgxf[0].fl.id;
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, id, id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
+                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
                                                 0);
                                 }
                             }
@@ -1095,7 +1097,7 @@ int16_t FLoadLogFile(char *pszLog) {
             }
         } else {
         StrOpen:
-            StreamOpen(pszLog, 16416);
+            StreamOpen(pszLog, static_cast<MdOpenFlags>(16416));
         }
 
         ReadRt();
@@ -1241,10 +1243,10 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         rtlh.cbLog = imemLogCur;
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
         memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
-        WriteRt(9, 17, &rtlh);
+        WriteRt(static_cast<RecordType>(9), 17, &rtlh);
         for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
             lprts = (HDR *)(lpLog + iCur);
-            WriteRt(lprts->rt, lprts->cb, lpLog + (2 + iCur));
+            WriteRt(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
         }
         iCur = vcmsgplrOut;
         lpmp = vlpmsgplrOut;
@@ -1284,7 +1286,7 @@ int16_t FWriteHistFile(int16_t iPlayer) {
         i = 0;
         lppl = lpPlanets;
         while (i < cPlanet) {
-            WritePlanet(lppl, lppl->det < detSome ? 15 : rtPlanetB, TRUE);
+            WritePlanet(lppl, static_cast<RecordType>(lppl->det < detSome ? 15 : rtPlanetB), TRUE);
             i++;
             lppl++;
         }

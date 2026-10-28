@@ -29,6 +29,11 @@ identity/truncation. Both full regressions again match 519 files, with the same
 inputs. Checks pass 55/55 for desktop and 19/19 for host, including the layout
 contract and available tutorial checkpoint. Linux/Windows CI qualification is
 recorded in the stacked PRs. No baseline or record layout changes.
+The fourth step replaces `STARS_CONSTANTS` and the C++ integer aliases with
+explicit fixed-underlying enums, preserving signedness, widths and constant
+names. C11 declarations retain their integer aliases. A cross-language ABI test
+covers all 145 stored enum types in addition to the existing layout comparison;
+full verification is recorded in the fourth stacked PR.
 See [native-port constraints](NATIVE-PORT.md).
 
 ## SDL desktop consolidation

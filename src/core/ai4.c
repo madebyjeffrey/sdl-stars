@@ -657,7 +657,7 @@ void DoCyberPackets() {
                     } else {
                         lpciPlan->iLstPktDir = i;
                     }
-                    idPlanDst = IdGetBestScannerDest(lppl, lpciPlan->iLstPktDir);
+                    idPlanDst = IdGetBestScannerDest(lppl, static_cast<CompassDir>(lpciPlan->iLstPktDir));
                 }
                 if (lpciPlan->fNeedScanPkt || idPlanDst != idplNone) {
                     lpciPlanDst = (CYBERINFO *)(vlpbAiData + (idPlanDst * 2 + 2));
@@ -801,7 +801,7 @@ int16_t IdGetBestScannerDest(PLANET *lppl, CompassDir iDir) {
     }
     ptEdge.y += 1000;
     ptEdge.x += 1000;
-    if (FFindNearestObject(ptEdge, grobjPlanet | mdNoRecurse, &scan)) {
+    if (FFindNearestObject(ptEdge, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
         lpplDst = LpplFromId(scan.idpl);
         if ((lpplDst && lpplDst->iPlayer == idPlayer) || (int32_t)LDistance2(rgptPlan[scan.idpl], rgptPlan[lppl->id]) < (int16_t)(iDistance * iDistance)) {
             return idplNone;
@@ -999,7 +999,7 @@ void DoCyberFreighter(FLEET *lpfl, CYBERINFOTEMP *lpciPlanTemp) {
     fDropOff = FALSE;
     lpplCur = LpplFromId(lpfl->idPlanet);
     if (!lpplCur) {
-        if (FFindNearestObject(lpfl->pt, grobjPlanet | mdNoRecurse, &scan)) {
+        if (FFindNearestObject(lpfl->pt, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
             lpplDst = LpplFromId(scan.idpl);
         } else {
             lpplDst = NULL;

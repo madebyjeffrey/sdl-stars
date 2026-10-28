@@ -93,7 +93,7 @@ void ChangeMainObjSel(GrobjClass grobjNew, int16_t iObjSel) {
             }
             if (i != cFleet) {
                 FDupFleet(lpfl, &sel.fl);
-                sel.grobjFull = grobjPlanet | grobjFleet;
+                sel.grobjFull = static_cast<GrobjClass>(grobjPlanet | grobjFleet);
             } else {
                 sel.fl.id = idflNone;
                 sel.grobjFull = grobjPlanet;
@@ -110,7 +110,7 @@ void ChangeMainObjSel(GrobjClass grobjNew, int16_t iObjSel) {
             if (sel.fl.idPlanet == idPlanetDeepSpace || (sel.fl.idPlanet != sel.pl.id && !FLookupPlanet(sel.fl.idPlanet, &sel.pl))) {
                 sel.pl.id = idplNone;
             }
-            sel.grobjFull = (sel.pl.id != idplNone) | 2;
+            sel.grobjFull = static_cast<GrobjClass>((sel.pl.id != idplNone) | 2);
             sel.iwpAct = 0;
             if (!fAi) {
                 ShowFleetSel();
@@ -151,7 +151,7 @@ void SelectAdjPlanet(int16_t dInc, int16_t idPlanet) {
         }
         if (i == cPlanet || lpPl->det != detAll) {
             scan.pt = rgptPlan[idPlanet];
-            scan.grobj = grobjPlanet | mdExact;
+            scan.grobj = static_cast<GrobjClass>(grobjPlanet | mdExact);
             ChangeScanSel(&scan, 0);
             goto FinishUp;
         }
@@ -172,7 +172,7 @@ void SelectAdjPlanet(int16_t dInc, int16_t idPlanet) {
             return;
         }
         scan.pt = rgptPlan[idPlanet];
-        scan.grobj = grobjPlanet | mdExact;
+        scan.grobj = static_cast<GrobjClass>(grobjPlanet | mdExact);
         ChangeScanSel(&scan, 0);
         ShowScanSel(0);
         ChangeMainObjSel(grobjPlanet, idPlanet);
@@ -980,7 +980,7 @@ int16_t FProdItemLine(PLANET *lppl, PLPROD *lpplprod, int16_t iprod, int16_t fSh
 
     lpprod = &lpplprod->rgprod[iprod];
     psz = PszNameProdItem(lpprod);
-    EstimateItemProdSched(lppl, lpplprod, iprod, &etaFirst, &etaLast);
+    EstimateItemProdSched(lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);
     if ((etaFirst == 0 && etaLast == 0) || (etaFirst == -1 && etaLast == -1)) {
         if (!fShowNever)
             return FALSE;

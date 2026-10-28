@@ -14,7 +14,7 @@ int16_t IMsgNext(int16_t fFilteredOnly) {
     do {
         i++;
         if (i < cMsg) {
-            idm = IdmGetMessageN(i);
+            idm = static_cast<MessageId>(IdmGetMessageN(i));
         } else {
             if (i < cMsg + vcmsgplrIn) {
                 return i;
@@ -44,7 +44,7 @@ int16_t IMsgPrev(int16_t fFilteredOnly) {
         if (i < 0) {
             return imsgNone;
         }
-        idm = IdmGetMessageN(i);
+        idm = static_cast<MessageId>(IdmGetMessageN(i));
     } while ((((bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) == 0) ^ fFilteredOnly) == 0);
     return i;
 }
@@ -205,7 +205,7 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
 int16_t IdmGetMessageN(int16_t iMsg) {
     MSGBIG mb;
 
-    if (!FGetNMsgbig(iMsg, &mb)) {
+    if (!FGetNMsgbig(static_cast<MessageId>(iMsg), &mb)) {
         return -1;
     }
     return mb.iMsg;
@@ -240,8 +240,9 @@ int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
         }
-        if ((int16_t)iMsg-- <= idmColonistsDroppedMassacredGroundTroops)
+        if ((int16_t)iMsg <= idmColonistsDroppedMassacredGroundTroops)
             break;
+        iMsg = static_cast<MessageId>(iMsg - 1);
     }
     return TRUE;
 }
@@ -250,11 +251,11 @@ char *PszGetMessageN(int16_t iMsg) {
     MSGBIG mb;
     char  *psz;
 
-    if (!FGetNMsgbig(iMsg, &mb)) {
+    if (!FGetNMsgbig(static_cast<MessageId>(iMsg), &mb)) {
         szMsgBuf[0] = 0;
         return szMsgBuf;
     }
-    psz = PszFormatMessage(mb.iMsg, mb.rgParam);
+    psz = PszFormatMessage(static_cast<MessageId>(mb.iMsg), mb.rgParam);
     return psz;
 }
 
@@ -328,10 +329,10 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 pchT = rgszPlanetAttr[*pParams];
                 goto FinishString;
             case 'E':
-                pchT = PszCalcEnvVar((uint16_t)*pParams >> 8 & 0xff & 0xff, *pParams & 0xff);
+                pchT = PszCalcEnvVar(static_cast<EnvType>((uint16_t)*pParams >> 8 & 0xff & 0xff), *pParams & 0xff);
                 goto FinishString;
             case 'I':
-                pchT = PszGetCompressedString(idsDecreased + *pParams);
+                pchT = PszGetCompressedString(static_cast<StringId>(idsDecreased + *pParams));
                 goto FinishString;
             case 'i':
                 c = CchSprintf(szBuf, PCTD, *pParams);
@@ -418,10 +419,10 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 pchT = PszGetFleetName(w);
                 goto FinishString;
             case 'j':
-                pchT = PszGetCompressedString(idsEnergy + *pParams);
+                pchT = PszGetCompressedString(static_cast<StringId>(idsEnergy + *pParams));
                 goto FinishString;
             case 'k':
-                part.hs.grhst = *pParams;
+                part.hs.grhst = static_cast<HullSlotType>(*pParams);
                 pParams++;
                 part.hs.iItem = *pParams;
                 if (FLookupPart(&part) <= mdPartAvailInvalid) {
@@ -435,7 +436,7 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 goto FinishString;
             case 'G':
                 w = *pParams;
-                c = CchGetString(idsMineField + w, szBuf);
+                c = CchGetString(static_cast<StringId>(idsMineField + w), szBuf);
                 pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
@@ -829,17 +830,17 @@ void SetFilteringGroups(MessageId idm, int16_t fSet) {
     switch (idm) {
     case idmHaveBuiltFactory:
     case idmHaveBuiltFactories:
-        idmPair = idm ^ idmHaveBuiltFactory ^ idmHaveBuiltFactories;
+        idmPair = static_cast<MessageId>(idm ^ idmHaveBuiltFactory ^ idmHaveBuiltFactories);
         bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
         break;
     case idmHaveBuiltMine:
     case idmHaveBuiltMines:
-        idmPair = idm ^ idmHaveBuiltMine ^ idmHaveBuiltMines;
+        idmPair = static_cast<MessageId>(idm ^ idmHaveBuiltMine ^ idmHaveBuiltMines);
         bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
         break;
     case idmHaveBuiltDefenseOutpost:
     case idmHaveBuiltDefenseOutposts:
-        idmPair = idm ^ idmHaveBuiltDefenseOutpost ^ idmHaveBuiltDefenseOutposts;
+        idmPair = static_cast<MessageId>(idm ^ idmHaveBuiltDefenseOutpost ^ idmHaveBuiltDefenseOutposts);
         bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
         break;
     default:
@@ -851,37 +852,37 @@ void SetFilteringGroups(MessageId idm, int16_t fSet) {
             switch (idm) {
             case idmStarbaseHasBuiltNew:
             case idmStarbaseHasBuiltNewShips:
-                idmPair = idm ^ idmStarbaseHasBuiltNew ^ idmStarbaseHasBuiltNewShips;
+                idmPair = static_cast<MessageId>(idm ^ idmStarbaseHasBuiltNew ^ idmStarbaseHasBuiltNewShips);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmSuccessfullyTransferred:
             case idmSuccessfullyTransferred2:
-                idmPair = idm ^ idmSuccessfullyTransferred ^ idmSuccessfullyTransferred2;
+                idmPair = static_cast<MessageId>(idm ^ idmSuccessfullyTransferred ^ idmSuccessfullyTransferred2);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmSuccessfullyReceived:
             case idmSuccessfullyReceived2:
-                idmPair = idm ^ idmSuccessfullyReceived ^ idmSuccessfullyReceived2;
+                idmPair = static_cast<MessageId>(idm ^ idmSuccessfullyReceived ^ idmSuccessfullyReceived2);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmAttemptedTransferSuccessfullyReceived:
             case idmAttemptedTransferColonistsSuccessfullyReceivedRe:
-                idmPair = idm ^ idmAttemptedTransferSuccessfullyReceived ^ idmAttemptedTransferColonistsSuccessfullyReceivedRe;
+                idmPair = static_cast<MessageId>(idm ^ idmAttemptedTransferSuccessfullyReceived ^ idmAttemptedTransferColonistsSuccessfullyReceivedRe);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmReceivedHoweverSentRemainderLostSpace:
             case idmReceivedHoweverColonistsSentRemainsOtherColonist:
-                idmPair = idm ^ idmReceivedHoweverSentRemainderLostSpace ^ idmReceivedHoweverColonistsSentRemainsOtherColonist;
+                idmPair = static_cast<MessageId>(idm ^ idmReceivedHoweverSentRemainderLostSpace ^ idmReceivedHoweverColonistsSentRemainsOtherColonist);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmAttemptedTransferNoneSuccessfullyReceived:
             case idmAttemptedTransferNoneColonistsSuccessfullyReceiv:
-                idmPair = idm ^ idmAttemptedTransferNoneSuccessfullyReceived ^ idmAttemptedTransferNoneColonistsSuccessfullyReceiv;
+                idmPair = static_cast<MessageId>(idm ^ idmAttemptedTransferNoneSuccessfullyReceived ^ idmAttemptedTransferNoneColonistsSuccessfullyReceiv);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             case idmAttemptedReceiveHoweverLostDeepSpace:
             case idmAttemptedReceiveHoweverNoneColonistsSuccessfully:
-                idmPair = idm ^ idmAttemptedReceiveHoweverLostDeepSpace ^ idmAttemptedReceiveHoweverNoneColonistsSuccessfully;
+                idmPair = static_cast<MessageId>(idm ^ idmAttemptedReceiveHoweverLostDeepSpace ^ idmAttemptedReceiveHoweverNoneColonistsSuccessfully);
                 bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 break;
             default:
@@ -894,7 +895,7 @@ void SetFilteringGroups(MessageId idm, int16_t fSet) {
                         bitfMsgFiltered[i >> 3] = (bitfMsgFiltered[i >> 3] & ~(1 << (i & 7))) | (fSet == 0) << (i & 7);
                     }
                 } else if (idm == idmHasLoaded2 || idm == idmHasBeamed3) {
-                    idmPair = idm ^ idmHasLoaded2 ^ idmHasBeamed3;
+                    idmPair = static_cast<MessageId>(idm ^ idmHasLoaded2 ^ idmHasBeamed3);
                     bitfMsgFiltered[idmPair >> 3] = (bitfMsgFiltered[idmPair >> 3] & ~(1 << (idmPair & 7))) | (fSet == 0) << (idmPair & 7);
                 } else if ((int16_t)idm >= idmBattleTookPlaceDestroyedTakingDamage && (int16_t)idm <= idmBattleTookPlaceInvolvingRacesLostForces2) {
                     for (i = 145; i <= 168; i++) {

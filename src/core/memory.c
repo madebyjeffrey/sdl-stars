@@ -229,7 +229,7 @@ void FreeLp(void *lp, HeapType ht) {
 }
 
 PL *LpplReAlloc(PL *lppl, uint16_t cAlloc) {
-    lppl = (PL *)LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, lppl->ht);
+    lppl = (PL *)LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
     lppl->iMax = cAlloc;
     return lppl;
 }
@@ -248,7 +248,7 @@ PL *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
 
 void FreePl(PL *lppl) {
     if (lppl) {
-        FreeLp(lppl, lppl->ht);
+        FreeLp(lppl, static_cast<HeapType>(lppl->ht));
     }
     return;
 }

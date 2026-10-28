@@ -107,7 +107,7 @@ int32_t CBattleUnits(BTLDATA *lpbd, BattleUnitFlags grbitBU) {
         if (!(grbitBU & grBuIncludeSb) && lptok->ishdef >= 16)
             continue;
         if ((grbitBU & grBuClassAll) != 0xf8 && lptok->ishdef < 16) {
-            imd = LphuldefFromId(rglpshdef[lptok->iplr][lptok->ishdef].hul.ihuldef)->imdCategory;
+            imd = static_cast<HullCategory>(LphuldefFromId(rglpshdef[lptok->iplr][lptok->ishdef].hul.ihuldef)->imdCategory);
             if ((int16_t)imd <= hullCatFreighter || (int16_t)imd >= hullCatMiner) {
                 if (!(grbitBU & grBuClassUnarmed))
                     continue;
@@ -811,10 +811,10 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                         }
                         if (i == idsDisengage) {
                             CchGetString(idsTacticSDMoves, szT);
-                            c = wsprintf(szWork, szT, PszGetCompressedString(i), vrgtok[viVCRFocus].dzDis);
+                            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)), vrgtok[viVCRFocus].dzDis);
                         } else {
                             CchGetString(idsTacticS, szT);
-                            c = wsprintf(szWork, szT, PszGetCompressedString(i));
+                            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
                         }
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
@@ -822,12 +822,12 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                     if (i != idsDisengage2) {
                         CchGetString(idsPrimayTargetS, szT);
                         i = idsNoneDisengage + vrgtok[viVCRFocus].mdTarget1;
-                        c = wsprintf(szWork, szT, PszGetCompressedString(i));
+                        c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
                         CchGetString(idsSecondaryTargetS, szT);
                         i = idsNoneDisengage + vrgtok[viVCRFocus].mdTarget2;
-                        c = wsprintf(szWork, szT, PszGetCompressedString(i));
+                        c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
                     }
@@ -949,7 +949,7 @@ void AnimateAttack(HDC hdc) {
     HBITMAP   hbmpSav;
     HBITMAP   hbmpScreen;
 
-    grfWeapon = 0;
+    grfWeapon = static_cast<GrfWeapon>(0);
     fKill = FALSE;
     if (viStepVCRCur >= 0) {
         ptokSrc = vrgtok + vlpbrVCR->itok;
@@ -965,12 +965,12 @@ void AnimateAttack(HDC hdc) {
         ptRight.x = dxyVCRSquare / 3 + ptBottom.x;
         iHit = 0;
     LNextTarget:
-        grfWeapon = vlpbrVCR->rgkill[iHit].grfWeapon;
+        grfWeapon = static_cast<GrfWeapon>(vlpbrVCR->rgkill[iHit].grfWeapon);
         if (vlpbrVCR->rgkill[iHit].cshKill != 0) {
             fKill = TRUE;
         }
         for (iFrame = iHit + 1; iFrame < vlpbrVCR->ctok && vlpbrVCR->rgkill[iFrame].itok == vlpbrVCR->rgkill[iHit].itok; iFrame++) {
-            grfWeapon |= vlpbrVCR->rgkill[iFrame].grfWeapon;
+            grfWeapon = static_cast<GrfWeapon>(grfWeapon | vlpbrVCR->rgkill[iFrame].grfWeapon);
             if (vlpbrVCR->rgkill[iFrame].cshKill != 0) {
                 fKill = TRUE;
             }

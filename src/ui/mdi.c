@@ -732,7 +732,8 @@ POINT16 InvertPaneBorder(HDC hdc, PaneSplitter grSel, POINT16 dpt, POINT16 *pdpt
         dptPrev.y = dptT.y - dpt.y;
         dpt = dptT;
     }
-    switch (grSel) {
+    // Splitter values can combine the three boundary bits.
+    switch (static_cast<uint16_t>(grSel)) {
     default:
         dpt.y = 0;
         if (!pdptPrev || abs(dptPrev.x) >= 6) {
@@ -948,7 +949,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
         case IDM_VIEW_LAYOUT_2:
             if (idPlayer == iplrNone)
                 break;
-            iWindowLayout = LOWORD(wParam) - 130;
+            iWindowLayout = static_cast<WindowLayout>(LOWORD(wParam) - 130);
             InvalidateRect(hwndFrame, NULL, TRUE);
             EnsureTileSize(iWindowLayout == layoutSmall);
             RefitFrameChildren();
@@ -1105,7 +1106,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                         if ((grbitScan & grbitScanViewMask) != 5) {
                             y = ptLegendB.y + yOff;
                             for (i = 0; i < 5; i++) {
-                                cch = CchGetString(idsPlanet3 + i, szWork);
+                                cch = CchGetString(static_cast<StringId>(idsPlanet3 + i), szWork);
                                 TextOut(pd.hDC, ptLegendB.x + xOff, y, szWork, cch);
                                 y += dyPrint;
                             }
@@ -1192,7 +1193,7 @@ LPrintMapCleanup:
             break;
         case IDM_VIEW_PLAYER_COLORS:
             hmenu = GetASubMenu(hwnd, menuView);
-            grbitScan ^= grbitScanPlayerColors;
+            grbitScan = static_cast<GrbitScan>(grbitScan ^ grbitScanPlayerColors);
             CheckMenuItem(hmenu, IDM_VIEW_PLAYER_COLORS, !(grbitScan & grbitScanPlayerColors) ? MF_UNCHECKED : MF_CHECKED);
             gd.fChgScanner = TRUE;
             if (!(grbitScan & (grbitScanPlanetNames | grbitScanShipCounts)))
@@ -1256,11 +1257,11 @@ LPrintMapCleanup:
                     Randomize(1234567890);
                     FWriteHistFile(idCur);
                     if (!FWriteTutorialMFile(game.turn + 1)) {
-                        AlertSz(PszFormatIds(idsFileError, NULL), MB_ICONHAND);
+                        AlertSz(PszFormatIds(static_cast<StringId>(idsFileError), NULL), MB_ICONHAND);
                         break;
                     }
                     if (game.turn == 35 && !FWriteTutorialMFile(game.turn + 2)) {
-                        AlertSz(PszFormatIds(idsFileError, NULL), MB_ICONHAND);
+                        AlertSz(PszFormatIds(static_cast<StringId>(idsFileError), NULL), MB_ICONHAND);
                         break;
                     }
                     strcpy(szWork, szBase);
@@ -1270,7 +1271,7 @@ LPrintMapCleanup:
                     ShowProgressGauge();
                     dwTickBase = GetTickCount();
                     do {
-                        UpdateProgressGauge((LOWORD(dwTickCur) - LOWORD(dwTickBase)) * 2);
+                        UpdateProgressGauge(static_cast<ProgressStep>((LOWORD(dwTickCur) - LOWORD(dwTickBase)) * 2));
                         dwTickCur = GetTickCount();
                     } while (dwTickCur >= dwTickBase && dwTickCur < dwTickBase + 500);
                     goto LTutorialFinishUp;
@@ -1280,8 +1281,8 @@ LPrintMapCleanup:
                 goto LWaitForTurn;
             idsFileError = -1;
             if (FCheckFile(dtHost, iplrNone, mdMarkInUse)) {
-                if (FBadFileError(idsFileError)) {
-                    AlertSz(PszFormatIds(idsFileError, NULL), MB_ICONHAND);
+                if (FBadFileError(static_cast<StringId>(idsFileError))) {
+                    AlertSz(PszFormatIds(static_cast<StringId>(idsFileError), NULL), MB_ICONHAND);
                     break;
                 }
                 if (AlertSz(PszFormatIds(idsGameAlreadyHostedAnotherInstanceStarsWould, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES)
@@ -1544,7 +1545,7 @@ LPrintMapCleanup:
             if (sel.pl.lpplprod) {
                 FillPlanetProdLB(hwndPlanetProdLB, sel.pl.lpplprod, NULL);
             }
-            DrawPlanShip(NULL, tilePlanetStats | tileProductionOrOrbit);
+            DrawPlanShip(NULL, static_cast<TileBits>(tilePlanetStats | tileProductionOrOrbit));
             break;
         case IDM_GAME_BATTLE_PLANS1:
         case IDM_GAME_BATTLE_PLANS2:
@@ -1623,7 +1624,7 @@ LPrintMapCleanup:
             rc.bottom = ScanToPt(rc.bottom) >> 1;
             dx = xScanTop;
             dy = dGalInv - yScanTop;
-            iScanZoom = LOWORD(wParam) - 3905;
+            iScanZoom = static_cast<ScanZoom>(LOWORD(wParam) - 3905);
             CheckMenuItem(hmenu, iScanZoom + 4, MF_CHECKED | MF_BYPOSITION);
             DrawMenuBar(hwnd);
             SetScanScrollBars(hwndScanner);
@@ -1822,7 +1823,7 @@ LGotFileName:
     fOrdersVis = FALSE;
     CreateChildWindows();
     if (idPlayer != iplrNone) {
-        grobjIni = ini.grobjSel;
+        grobjIni = static_cast<GrobjClass>(ini.grobjSel);
         SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (grobjIni != grobjNone && ini.grobjSel == 0) {
             return 1;
@@ -1932,7 +1933,7 @@ void DrawHostDialog2(HWND hwnd, HDC hdcIn) {
         cch = wsprintf(szWork, PszGetCompressedString(idsD2), i + 1);
         RightTextOut(hdc, x, yCur, szWork, cch, 0);
         SetTextColor(hdc, rgOut[i] <= 0 ? 32512 : 127);
-        CchGetString(idsTurned + rgOut[i], szStat);
+        CchGetString(static_cast<StringId>(idsTurned + rgOut[i]), szStat);
         if (gd.fNoHostNames) {
             cch = wsprintf(szWork, " %s", szStat);
         } else {
@@ -2055,7 +2056,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         hmenuPopup = CreatePopupMenu();
         iPopMenuSel = -1;
         for (i = 0; i < 3; i++) {
-            CchGetString(idsHumanControlled + i, szWork);
+            CchGetString(static_cast<StringId>(idsHumanControlled + i), szWork);
             mf = i == 1                                                         ? rgplr[iDiamond].fAi != 0 && rgplr[iDiamond].idAi != idAiMaid ? 0 : 3
                  : rgplr[iDiamond].fAi == 0 || rgplr[iDiamond].idAi == idAiMaid ? 0
                                                                                 : 3;
@@ -2408,6 +2409,8 @@ void WriteIniSettings() {
     }
     CchGetString(idsSelection, szEntry);
     switch (sel.grobj) {
+    default:
+        break;
     case grobjNone:
         ch = 'N';
         break;
@@ -2710,7 +2713,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         dy = rc.bottom <= 500 ? dyArial8 * 2 : (int16_t)(5 * dyArial8) / 2;
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
-            psz = PszGetCompressedString(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton);
+            psz = PszGetCompressedString(static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
             hwndButton = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
                                       (HMENU)(uintptr_t)idButton, hInst, NULL);
             if (i != 3) rghwndBtnSplash[idButton] = hwndButton;

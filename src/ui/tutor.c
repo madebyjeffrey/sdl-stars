@@ -164,7 +164,7 @@ void DrawTutorText(HWND hwnd) {
     FillRect(hdc, &rc, hbrButtonFace);
     SetTextColor(hdc, crButtonText);
     for (didt = 0; didt < 8; didt++) {
-        cch = CchTutorString(rgch, tutor.idt + didt);
+        cch = CchTutorString(rgch, static_cast<TutorId>(tutor.idt + didt));
         if (cch == 1)
             break;
         fPara = isupper(rgch[0]);
@@ -209,7 +209,7 @@ void StartTutor(int16_t fRestart) {
             hwndTitle = 0;
             ShowWindow(hwndFrame, SW_SHOW);
         }
-        grbitScan = grbitScanCoverage | grbitScanMineFields | grbitScanFleetPaths | grbitScanPlanetNames;
+        grbitScan = static_cast<GrbitScan>(grbitScanCoverage | grbitScanMineFields | grbitScanFleetPaths | grbitScanPlanetNames);
         cx = GetSystemMetrics(SM_CXSCREEN);
         if (cx >= 1280) {
             iScanZoom = zoom200;
@@ -257,7 +257,7 @@ void StartTutor(int16_t fRestart) {
         tutor.idtBold = idtWelcomeStarsTutorialWillGuideThrough36;
         tutor.fProgress = FALSE;
         while (FTutorTaskDone() && !tutor.fTurnDone) {
-            tutor.idt += 8;
+            tutor.idt = static_cast<TutorId>(tutor.idt + 8);
         }
         if (tutor.fTutorDone) {
             EndTutor(FALSE);
@@ -268,7 +268,7 @@ void StartTutor(int16_t fRestart) {
         }
         if (tutor.idt != idtWelcomeStarsTutorialWillGuideThrough36) {
             if (!tutor.fTurnDone) {
-                tutor.idt -= 8;
+                tutor.idt = static_cast<TutorId>(tutor.idt - 8);
             }
             tutor.idtBold = tutor.idt;
             AdvanceTutor();
@@ -298,7 +298,7 @@ void AdvanceTutor() {
     }
     if (!tutor.fTurnDone) {
     SkipToNext:
-        tutor.idt += 8;
+        tutor.idt = static_cast<TutorId>(tutor.idt + 8);
         tutor.idtBold = tutor.idt;
         tutor.idsError = -1;
         tutor.fNoErrors = TRUE;
@@ -308,7 +308,7 @@ void AdvanceTutor() {
         fRedraw = TRUE;
         tutor.fNoErrors = FALSE;
     } else {
-        tutor.idh = 3510;
+        tutor.idh = static_cast<HelpContextId>(3510);
     }
     if ((int16_t)tutor.idt >= 640 || tutor.fTutorDone) {
         if (tutor.idsError != 522) {
@@ -384,7 +384,7 @@ void RestoreGameState() {
 
     if (tutor.fGameSaved) {
     }
-    grbitScan = tutor.grbitScan;
+    grbitScan = static_cast<GrbitScan>(tutor.grbitScan);
     iScanZoom = tutor.iScanZoom;
     vrgZipProd[4].zpq1 = vrgZipProd[0].zpq1;
     vrgZipProd[4].fValid = vrgZipProd[0].fValid;
@@ -421,7 +421,7 @@ int16_t FTutorTaskDone() {
         switch (tutor.idt) {
         case idtWelcomeStarsTutorialWillGuideThrough36:
             tutor.idtBold = idtReadMessages;
-            return FCheckMessages(9999, idmNone, FALSE);
+            return FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE);
         case idtExamineTilesCommandPaneUpperLeftPortion:
             tutor.idtBold = idtPressTilesGotoButtonCommandArmedProbe;
             if (!FCheckSelection(grobjFleet, 0)) {
@@ -526,7 +526,7 @@ int16_t FTutorTaskDone() {
             if (!FCheckFleetWP(1, 4, grobjPlanet, 7, grTaskNone, iWarpAny)) {
                 return FALSE;
             }
-            tutor.idtBold = !FCheckMessages(2, idmNone, FALSE) ? idtReadMessage : idtGotoStalwartDefender5;
+            tutor.idtBold = !FCheckMessages(2, static_cast<MessageId>(idmNone), FALSE) ? idtReadMessage : idtGotoStalwartDefender5;
             return FCheckSelection(grobjFleet, 4);
         case idtHoldShiftKeySelectShaggyDog:
             if (FCheckFleetWP(5, 1, grobjPlanet, 12, grTaskMine, iWarpAny)) {
@@ -552,7 +552,7 @@ int16_t FTutorTaskDone() {
             if (!FCheckFleetWP(4, 5, grobjPlanet, 22, grTaskNone, iWarpAny)) {
                 return FALSE;
             }
-            tutor.idtBold = !FCheckMessages(4, idmNone, FALSE) ? idtReadTwoMessages : idtPressGotoDisplayStatsPruneSummaryPane;
+            tutor.idtBold = !FCheckMessages(4, static_cast<MessageId>(idmNone), FALSE) ? idtReadTwoMessages : idtPressGotoDisplayStatsPruneSummaryPane;
             return FCheckSummary(grobjPlanet, 12);
         case idtTopGraphSummaryPaneShowsPruneHas:
             if (FCheckColonizeWP(2, 16, iWarpAny)) {
@@ -578,7 +578,7 @@ int16_t FTutorTaskDone() {
                 return TRUE;
             }
             if (FCheckSummary(grobjPlanet, 15)) {
-                if (FCheckMessages(9999, idmNone, FALSE)) {
+                if (FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                     tutor.idtBold = idtGotoPlanet90210;
                 } else {
                     tutor.idtBold = !tutor.fProgress ? idtClickVariousPlacesSummaryPaneGetPopup : idtReadMessage2;
@@ -623,7 +623,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             if (!FCheckQueue(13, 0, grobjPlanet, iobjFactory, 30, 0)) {
-                if (!FCheckMessages(1, idmNone, FALSE) || !FCheckSelection(grobjPlanet, 13)) {
+                if (!FCheckMessages(1, static_cast<MessageId>(idmNone), FALSE) || !FCheckSelection(grobjPlanet, 13)) {
                     tutor.idtBold = idtMoveMessageGotoStoveTop;
                 } else {
                     tutor.idtBold = !lpplProdGlob ? idtPressChangeButtonProductionTile2 : idtSelectFactoriesAutoBuildLeftHandListbox;
@@ -633,7 +633,7 @@ int16_t FTutorTaskDone() {
             return TRUE;
         case idtReadTwoMessagesGoto90210:
             if (!FCheckQueue(16, 0, grobjPlanet, mdIdleFactory, 3, 1) || !FCheckQueue(16, 1, grobjPlanet, mdIdleMine, 3, 1)) {
-                if (!FCheckMessages(3, idmNone, FALSE) || !FCheckSelection(grobjPlanet, 16)) {
+                if (!FCheckMessages(3, static_cast<MessageId>(idmNone), FALSE) || !FCheckSelection(grobjPlanet, 16)) {
                     tutor.idtBold = idtReadTwoMessagesGoto90210;
                 } else {
                     tutor.idtBold = !lpplProdGlob ? idtHitQKey : idtDoubleClickFactory3TimesMine3;
@@ -744,7 +744,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             if (LpflFromId(0)->cord == 5) {
-                if (FCheckMessages(9999, idmNone, FALSE)) {
+                if (FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                     tutor.idtBold = idtReadMessageDeleteArmedProbe1sWaypoint;
                 } else {
                     tutor.idtBold = !FCheckSelection(grobjPlanet, 16) ? idtSelect90210PressingGotoButtonTileLabeled : idtReadMessageDeleteArmedProbe1sWaypoint;
@@ -821,12 +821,12 @@ int16_t FTutorTaskDone() {
             return TRUE;
         case idtReadMessage3:
             if (!FCheckMessages(imsgAny, idmHaveBuiltMines, TRUE)) {
-                tutor.idtBold = !FCheckMessages(3, idmNone, FALSE) ? idtReadMessage3 : idtFilterThemClickingBlueCheckMarkMessages;
+                tutor.idtBold = !FCheckMessages(3, static_cast<MessageId>(idmNone), FALSE) ? idtReadMessage3 : idtFilterThemClickingBlueCheckMarkMessages;
                 return FALSE;
             }
             if (!FCheckQueue(16, 0, grobjPlanet, iobjFactory, 10, 1) || !FCheckQueue(16, 1, grobjPlanet, iobjMine, 10, 1)) {
                 if (!FCheckSelection(grobjPlanet, 16)) {
-                    tutor.idtBold = !FCheckMessages(4, idmNone, FALSE) ? idtGoMessage : idtGoto90210OpenProductionQueue;
+                    tutor.idtBold = !FCheckMessages(4, static_cast<MessageId>(idmNone), FALSE) ? idtGoMessage : idtGoto90210OpenProductionQueue;
                 } else {
                     tutor.idtBold = !lpplProdGlob ? idtGoto90210OpenProductionQueue : idtShiftDoubleClickFactoriesAutoBuildMines;
                 }
@@ -834,7 +834,7 @@ int16_t FTutorTaskDone() {
             }
             tutor.idtBold = idtReadRestMessages;
             tutor.fProgress = FALSE;
-            return FCheckMessages(9999, idmNone, FALSE);
+            return FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE);
         case idtClickRedTriangleBetweenSlimeVacancy:
             if (!tutor.fProgress && !tutor.fAutoComplete) {
                 if (FCheckSummary(grobjFleet, 512)) {
@@ -900,7 +900,7 @@ int16_t FTutorTaskDone() {
                 tutor.fNoErrors = FALSE;
                 return TRUE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadLastMessageGotoWallaby;
                 tutor.fProgress = FALSE;
                 return FALSE;
@@ -1092,7 +1092,7 @@ int16_t FTutorTaskDone() {
                 if (FCheckSelection(grobjFleet, 8)) {
                     return TRUE;
                 }
-                if (!tutor.fProgress || !FCheckMessages(11, idmNone, FALSE) || hwndBrowser) {
+                if (!tutor.fProgress || !FCheckMessages(11, static_cast<MessageId>(idmNone), FALSE) || hwndBrowser) {
                     if (!hwndBrowser) {
                         tutor.idtBold = idtReadMessageHitGotoOpenTechnologyBrowser;
                     } else {
@@ -1100,7 +1100,7 @@ int16_t FTutorTaskDone() {
                         tutor.fProgress = TRUE;
                     }
                 } else {
-                    if (!FCheckMessages(13, idmNone, FALSE)) {
+                    if (!FCheckMessages(13, static_cast<MessageId>(idmNone), FALSE)) {
                         tutor.idtBold = idtReadTwoMessagesLookingTechBrowserIf;
                     } else {
                         tutor.idtBold = idtReadMessageGotoArmedProbe;
@@ -1113,7 +1113,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = !vrgtok ? idtPressViewOpenBattleVcr : idtUseVcrControlsWatchPlaybackBattleHit;
                 return FALSE;
             }
-            tutor.idtBold = !FCheckMessages(9999, idmNone, FALSE) ? idtReadRestMessages2 : idtGenerateWhenReady6;
+            tutor.idtBold = !FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE) ? idtReadRestMessages2 : idtGenerateWhenReady6;
             tutor.fTurnDone = TRUE;
             return TRUE;
         }
@@ -1130,18 +1130,18 @@ int16_t FTutorTaskDone() {
             }
             if (FCheckSummary(grobjThing, idAny)) {
                 tutor.idtBold = idtSelectViewFindTypeTeamster4Hit;
-            } else if (FCheckMessages(1, idmNone, FALSE) && FCheckSelection(grobjFleet, 8)) {
+            } else if (FCheckMessages(1, static_cast<MessageId>(idmNone), FALSE) && FCheckSelection(grobjFleet, 8)) {
                 tutor.idtBold = idtRightClickArmedProbe9SelectSalvage;
             } else {
                 tutor.idtBold = idtReadMessageGotoArmedProbe9;
             }
             return FALSE;
         case idtIfCantFindWhereYellowSelectionArrow:
-            if (!FCheckMessages(5, idmNone, FALSE)) {
+            if (!FCheckMessages(5, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadMessage4;
                 return FALSE;
             }
-            if (!FCheckMessages(6, idmNone, FALSE)) {
+            if (!FCheckMessages(6, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtWatchSadBattleIfWantMoveMessage;
                 return FALSE;
             }
@@ -1177,7 +1177,7 @@ int16_t FTutorTaskDone() {
                 tutor.fProgress = FALSE;
                 return FALSE;
             }
-            if (!FCheckMessages(3, idmNone, FALSE)) {
+            if (!FCheckMessages(3, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadMessage5;
                 return FALSE;
             }
@@ -1255,7 +1255,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = idtClickEachItemsProductionTileMiniMiner;
                 return FALSE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadFinalMessage;
                 return FALSE;
             }
@@ -1374,7 +1374,7 @@ int16_t FTutorTaskDone() {
             return TRUE;
         }
         if (!FCheckFleetWP(0, 1, grobjPlanet, 13, grTaskAny, iWarpAny)) {
-            tutor.idtBold = !FCheckMessages(9999, idmNone, FALSE) ? idtReadMessages2 : idtSendTeamster1BackStoveTop;
+            tutor.idtBold = !FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE) ? idtReadMessages2 : idtSendTeamster1BackStoveTop;
             return FALSE;
         }
         tutor.idtBold = idtGenerateNewYear3;
@@ -1388,7 +1388,7 @@ int16_t FTutorTaskDone() {
             tutor.idtBold = idtReadFirstMessageAddTeamsterStoveTops;
             return FALSE;
         }
-        if (!FCheckMessages(5, idmNone, FALSE)) {
+        if (!FCheckMessages(5, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.fProgress = FALSE;
             tutor.idtBold = idtReadMessageGoto90210;
             return FALSE;
@@ -1533,7 +1533,7 @@ int16_t FTutorTaskDone() {
             }
             return TRUE;
         case idtReadRestMessages3:
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRestMessages3;
                 return FALSE;
             }
@@ -1576,7 +1576,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = idtRead4MessagesChangeFieldResearchPropulsion;
                 return FALSE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRemainingMessagesOpenShipDesigner;
                 return FALSE;
             }
@@ -1589,7 +1589,7 @@ int16_t FTutorTaskDone() {
                 hs1.cItem = 3;
                 if (!hwndSlotDlg) {
                     tutor.idtBold = idtReadRemainingMessagesOpenShipDesigner;
-                    tutor.idh = 1001;
+                    tutor.idh = static_cast<HelpContextId>(1001);
                     return FALSE;
                 }
                 if (rgplr[0].cShDef < 8 && !FCheckShipBuilder(4, iShipAny)) {
@@ -1636,12 +1636,12 @@ int16_t FTutorTaskDone() {
             if (FCheckCargo(LpflFromId(6), 0, 0, 0, 210)) {
                 return TRUE;
             }
-            if (!FCheckMessages(1, idmNone, FALSE) && !FCheckSelection(grobjFleet, 4)) {
+            if (!FCheckMessages(1, static_cast<MessageId>(idmNone), FALSE) && !FCheckSelection(grobjFleet, 4)) {
                 tutor.idtBold = idtReadFirstMessageGotoStalwartDefender5;
                 tutor.fProgress = FALSE;
                 return FALSE;
             }
-            if (!FCheckMessages(2, idmNone, FALSE) && !FCheckSelection(grobjFleet, 6)) {
+            if (!FCheckMessages(2, static_cast<MessageId>(idmNone), FALSE) && !FCheckSelection(grobjFleet, 6)) {
                 tutor.idtBold = idtReadMessageGotoTeamster7;
                 return FALSE;
             }
@@ -1679,7 +1679,7 @@ int16_t FTutorTaskDone() {
                 tutor.fProgress = FALSE;
                 return TRUE;
             }
-            if (!FCheckMessages(3, idmNone, FALSE)) {
+            if (!FCheckMessages(3, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadTwoMessagesGotoNewTeamster;
             } else if (!FCheckSelection(grobjFleet, 3)) {
                 tutor.idtBold = !FCheckSelection(grobjFleet, 2) ? idtReadTwoMessagesGotoNewTeamster : idtSelectTeamster4ListboxOtherFleetsHere;
@@ -1702,7 +1702,7 @@ int16_t FTutorTaskDone() {
                 tutor.fProgress = FALSE;
                 return FALSE;
             }
-            if (!FCheckMessages(14, idmNone, FALSE) || (!FCheckSelection(grobjFleet, 4) && !FCheckSelection(grobjFleet, 8)) ||
+            if (!FCheckMessages(14, static_cast<MessageId>(idmNone), FALSE) || (!FCheckSelection(grobjFleet, 4) && !FCheckSelection(grobjFleet, 8)) ||
                 (!tutor.fAutoComplete && !tutor.fProgress)) {
                 if (vrgtok) {
                     tutor.fProgress = TRUE;
@@ -1716,7 +1716,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             if (LpflFromId(8)->cord < 3) {
-                if (!FCheckMessages(9999, idmNone, FALSE) || !FCheckSelection(grobjFleet, 8)) {
+                if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE) || !FCheckSelection(grobjFleet, 8)) {
                     tutor.idtBold = idtReadLastMessageDoubleClickArmedProbe;
                 } else {
                     tutor.fNoErrors = TRUE;
@@ -1755,7 +1755,7 @@ int16_t FTutorTaskDone() {
             return FALSE;
         }
         tutor.fNoErrors = FALSE;
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadRemainingMessages;
             return FALSE;
         }
@@ -1767,7 +1767,7 @@ int16_t FTutorTaskDone() {
         default:
             return TRUE;
         case idtReadFirstTwoMessages:
-            if (!FCheckMessages(3, idmNone, FALSE)) {
+            if (!FCheckMessages(3, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadFirstTwoMessages;
                 return FALSE;
             }
@@ -1784,7 +1784,7 @@ int16_t FTutorTaskDone() {
                 }
                 if (!hwndSlotDlg) {
                     tutor.idtBold = idtHitF4OpenShipDesigner2;
-                    tutor.idh = 1001;
+                    tutor.idh = static_cast<HelpContextId>(1001);
                     return FALSE;
                 }
                 if (rgshdef[2].hul.rghs[0].iItem == iengineDaddyLongLegs7) {
@@ -1810,7 +1810,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = idtAdd3ImprovedSantaMariasStoveTops;
                 return FALSE;
             }
-            if (!FCheckMessages(4, idmNone, FALSE)) {
+            if (!FCheckMessages(4, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadMessageGotoSeaSquared;
                 return FALSE;
             }
@@ -1822,11 +1822,11 @@ int16_t FTutorTaskDone() {
                 }
                 return FALSE;
             }
-            if (!FCheckMessages(6, idmNone, FALSE) || !FCheckResearch(Propulsion, Construction, 30)) {
+            if (!FCheckMessages(6, static_cast<MessageId>(idmNone), FALSE) || !FCheckResearch(Propulsion, Construction, 30)) {
                 tutor.idtBold = idtRead2MessagesChangeFieldResearchConstruction;
                 return FALSE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRestMessages4;
                 return FALSE;
             }
@@ -1840,7 +1840,7 @@ int16_t FTutorTaskDone() {
         default:
             return TRUE;
         case idtReadFirstThreeMessages:
-            if (!FCheckMessages(4, idmNone, FALSE)) {
+            if (!FCheckMessages(4, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadFirstThreeMessages;
                 return FALSE;
             }
@@ -1866,7 +1866,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             tutor.fNoErrors = FALSE;
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRestMessages5;
                 return FALSE;
             }
@@ -1909,7 +1909,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             tutor.fNoErrors = FALSE;
-            if (!FCheckMessages(1, idmNone, FALSE)) {
+            if (!FCheckMessages(1, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadMessageGotoArmedProbe92;
                 return FALSE;
             }
@@ -1937,11 +1937,11 @@ int16_t FTutorTaskDone() {
                 }
                 return FALSE;
             }
-            if (!FCheckMessages(8, idmNone, FALSE)) {
+            if (!FCheckMessages(8, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadMessage6;
                 return FALSE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRestMessagesViewingBattleColonizerIf;
                 return FALSE;
             }
@@ -1985,7 +1985,7 @@ int16_t FTutorTaskDone() {
             }
             return FALSE;
         }
-        if (!FCheckMessages(6, idmNone, FALSE)) {
+        if (!FCheckMessages(6, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtRead4MessagesGotoNewDestroyerArmada;
             return FALSE;
         }
@@ -1997,7 +1997,7 @@ int16_t FTutorTaskDone() {
             }
             return FALSE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadRestMessages6;
             return FALSE;
         }
@@ -2021,7 +2021,7 @@ int16_t FTutorTaskDone() {
                 return FALSE;
             }
             tutor.fNoErrors = FALSE;
-            if (!FCheckMessages(6, idmNone, FALSE)) {
+            if (!FCheckMessages(6, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtRead4Messages;
                 return FALSE;
             }
@@ -2035,7 +2035,7 @@ int16_t FTutorTaskDone() {
             }
             return TRUE;
         case idtNoticeProductionTileNewShipsWillRouted:
-            if (!FCheckMessages(17, idmNone, FALSE)) {
+            if (!FCheckMessages(17, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtRead3Messages;
                 return FALSE;
             }
@@ -2043,7 +2043,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = idtOpenResearchDialogSetFieldResearchEnergy;
                 return FALSE;
             }
-            if (!FCheckMessages(9999, idmNone, FALSE)) {
+            if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
                 tutor.idtBold = idtReadRestMessages7;
                 return FALSE;
             }
@@ -2096,11 +2096,11 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtCongratulationsYouveDeclaredWinner) {
             return TRUE;
         }
-        if (!FCheckMessages(5, idmNone, FALSE)) {
+        if (!FCheckMessages(5, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadFirst3MessagesGotoNewB;
             return FALSE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             if (!FCheckSelection(grobjFleet, 14)) {
                 tutor.idtBold = idtReadFirst3MessagesGotoNewB;
             } else {
@@ -2116,7 +2116,7 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtReadFirst4MessagesGotoWallaby) {
             return TRUE;
         }
-        if (!FCheckMessages(6, idmNone, FALSE)) {
+        if (!FCheckMessages(6, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadFirst4MessagesGotoWallaby;
             return FALSE;
         }
@@ -2128,7 +2128,7 @@ int16_t FTutorTaskDone() {
             tutor.idtBold = idtAdd100MinesWallabysQueue;
             return FALSE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadRestMessages9;
             return FALSE;
         }
@@ -2140,7 +2140,7 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtReadFirst3MessagesGotoDestroyer13) {
             return TRUE;
         }
-        if (!FCheckMessages(2, idmNone, FALSE)) {
+        if (!FCheckMessages(2, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadFirst3MessagesGotoDestroyer13;
             return FALSE;
         }
@@ -2148,7 +2148,7 @@ int16_t FTutorTaskDone() {
             tutor.idtBold = idtClickDestroyerFleetCompositionTile;
             return FALSE;
         }
-        if (!FCheckMessages(18, idmNone, FALSE)) {
+        if (!FCheckMessages(18, static_cast<MessageId>(idmNone), FALSE)) {
             if (!FCheckSelection(grobjFleet, 12)) {
                 tutor.idtBold = idtReadFirst3MessagesGotoDestroyer13;
             } else {
@@ -2157,7 +2157,7 @@ int16_t FTutorTaskDone() {
             return FALSE;
         }
         tutor.idtBold = idtReadRestMessagesGenerate;
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             return FALSE;
         }
         tutor.fTurnDone = TRUE;
@@ -2167,7 +2167,7 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtReadFirst6MessagesGotoStoveTop) {
             return TRUE;
         }
-        if (!FCheckMessages(10, idmNone, FALSE)) {
+        if (!FCheckMessages(10, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadFirst6MessagesGotoStoveTop;
             return FALSE;
         }
@@ -2179,7 +2179,7 @@ int16_t FTutorTaskDone() {
             }
             return FALSE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadRestMessagesWatchBattles;
             return FALSE;
         }
@@ -2192,7 +2192,7 @@ int16_t FTutorTaskDone() {
             return TRUE;
         }
         tutor.idtBold = idtReadMessagesGenerateWhenReady;
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             return FALSE;
         }
         tutor.fTurnDone = TRUE;
@@ -2202,7 +2202,7 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtReadThroughMessages) {
             return TRUE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadThroughMessages;
             return FALSE;
         }
@@ -2214,7 +2214,7 @@ int16_t FTutorTaskDone() {
         if (tutor.idt != idtCongratulationsHaveReachedEndTutorial) {
             return TRUE;
         }
-        if (!FCheckMessages(9999, idmNone, FALSE)) {
+        if (!FCheckMessages(9999, static_cast<MessageId>(idmNone), FALSE)) {
             tutor.idtBold = idtReadMessages3;
             return FALSE;
         }
@@ -2270,7 +2270,7 @@ int16_t FCheckZip(int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
     }
     CchGetString(ids, szT);
     if (strcmpi(szT, vrgZip[iZip].szName) == 0) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
     }
     TutorError(idsTutorialHaventGivenZipOrderRightName);
@@ -2337,7 +2337,7 @@ int16_t FCheckScanner(int16_t md, int16_t iZoom) {
         tutor.idh = idhZooming;
         return FALSE;
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2353,18 +2353,18 @@ int16_t FCheckFleetName(int16_t id, StringId ids) {
         return TRUE;
     }
     if (!lpfl->lpszName) {
-        if (ids == idsNoString) {
-            tutor.idh = idhSav;
+        if (ids == static_cast<StringId>(idsNoString)) {
+            tutor.idh = static_cast<HelpContextId>(idhSav);
             return TRUE;
         }
-        if (ids == idsNoString) {
+        if (ids == static_cast<StringId>(idsNoString)) {
             return TRUE;
         }
         return FALSE;
     }
     CchGetString(ids, szT);
     if (_stricmp(szT, lpfl->lpszName) == 0) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
     }
     TutorError(idsTutorialHaveGivenFleetWrongNamePlease);
@@ -2379,6 +2379,8 @@ int16_t FCheckSummary(GrobjClass grobj, int16_t id) {
     }
     fRet = FALSE;
     switch (grobj) {
+    default:
+        break;
     case grobjFleet:
         if (sel.scan.grobj == grobjFleet && sel.scan.ifl != iflNone && rglpfl[sel.scan.ifl]->id == id) {
             fRet = TRUE;
@@ -2426,7 +2428,7 @@ int16_t FCheckSelection(GrobjClass grobj, int16_t id) {
         fRet = sel.grobj == grobjFleet && sel.fl.id == id;
     }
     if (fRet) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
     }
     return fRet;
 }
@@ -2445,10 +2447,10 @@ int16_t FCheckMessages(int16_t imsg, MessageId idm, int16_t fFilter) {
     if (imsg != 9999 && imsg != imsgAny && iMsgCur < imsg) {
         return FALSE;
     }
-    if (idm != idmNone) {
+    if (idm != static_cast<MessageId>(idmNone)) {
         if (fFilter && tutor.fAutoComplete && !(bitfMsgFiltered[idm >> 3] & 1 << (idm & 7))) {
             SetFilteringGroups(idm, TRUE);
-            tutor.idh = idhSav;
+            tutor.idh = static_cast<HelpContextId>(idhSav);
             return TRUE;
         }
         if (fFilter && !(bitfMsgFiltered[idm >> 3] & 1 << (idm & 7))) {
@@ -2458,7 +2460,7 @@ int16_t FCheckMessages(int16_t imsg, MessageId idm, int16_t fFilter) {
             return FALSE;
         }
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2506,10 +2508,10 @@ int16_t FCheckFleetWP(uint16_t ifl, int16_t iord, GrobjClass grobj, int16_t id, 
 LReturn:
     idh = tutor.idh;
     if (!fRet && FCheckSelection(grobjFleet, ifl)) {
-        tutor.idh = idh;
+        tutor.idh = static_cast<HelpContextId>(idh);
     }
     if (fRet) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
     }
     return fRet;
 }
@@ -2527,7 +2529,7 @@ int16_t FCheckPlanetRoute(int16_t idpl, int16_t idplRoute) {
     if (lppl->idRoute != idplRoute + 1) {
         return FALSE;
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2549,7 +2551,7 @@ int16_t FCheckLayingWP(uint16_t ifl, int16_t iord, int16_t id, int16_t iYears) {
     if (lpfl->lpplord->rgord[iord].tsell.iPlrX != iYears) {
         return FALSE;
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2573,7 +2575,7 @@ int16_t FCheckColonizeWP(uint16_t ifl, int16_t id, uint16_t iWarp) {
         return FALSE;
     }
     if (FCheckFleetWP(ifl, 1, grobjPlanet, id, grTaskColonize, iWarp)) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
     }
     return FALSE;
@@ -2598,7 +2600,7 @@ int16_t FCheckPatrolWP(uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, u
         tutor.idh = idhWaypointTaskTile;
         return FALSE;
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2648,10 +2650,10 @@ int16_t FCheckXferWP(uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, ITE
 LReturn:
     idh = tutor.idh;
     if (!fRet && FCheckSelection(grobjFleet, ifl)) {
-        tutor.idh = idh;
+        tutor.idh = static_cast<HelpContextId>(idh);
     }
     if (fRet) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
     }
     return fRet;
 }
@@ -2686,10 +2688,10 @@ int16_t FCheckQueue(int16_t ipl, int16_t iprod, GrobjClass grobj, uint16_t iItem
 LReturn:
     idh = tutor.idh;
     if (!fRet && FCheckSelection(grobjPlanet, ipl)) {
-        tutor.idh = idh;
+        tutor.idh = static_cast<HelpContextId>(idh);
     }
     if (fRet) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
     }
     return fRet;
 }
@@ -2705,7 +2707,7 @@ int16_t FCheckBtlPlan(int16_t ibp, uint16_t imdTarget, int16_t fSpread, int16_t 
         return FALSE;
     }
     lpbtlplan = rglpbtlplan[0] + ibp;
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2731,10 +2733,10 @@ int16_t FCheckCargo(FLEET *lpfl, int16_t wtMin1, int16_t wtMin2, int16_t wtMin3,
 LReturn:
     idh = tutor.idh;
     if (!fRet && FCheckSelection(grobjFleet, lpfl->id)) {
-        tutor.idh = idh;
+        tutor.idh = static_cast<HelpContextId>(idh);
     }
     if (fRet) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
     }
     return fRet;
 }
@@ -2773,7 +2775,7 @@ int16_t FCheckBuilderPart(int16_t iSlot, HS *phs, uint16_t cInit) {
         TutorError(idsTutorialHavePlacedWrongComponentSlotDrag);
         goto BadCntSilent;
     }
-    tutor.idh = idhSav;
+    tutor.idh = static_cast<HelpContextId>(idhSav);
     return TRUE;
 }
 
@@ -2791,7 +2793,7 @@ int16_t FCheckShipBuilder(int16_t iCategory, int16_t iShip) {
     }
     iSel = LOWORD(SendMessage(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
     if (iShip == iShipAny || iShip == iSel) {
-        tutor.idh = idhSav;
+        tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
     }
     return FALSE;

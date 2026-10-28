@@ -4,7 +4,7 @@ HULDEF *LphuldefSBFromId(isbhull id) { return &rghuldefSB[id]; }
 
 HULDEF *LphuldefFromId(int16_t id) {
     if (id >= ihuldefOrbitalFort) {
-        return LphuldefSBFromId(id - ihuldefOrbitalFort);
+        return LphuldefSBFromId(static_cast<isbhull>(id - ihuldefOrbitalFort));
     }
     return &rghuldef[id];
 }
@@ -20,7 +20,7 @@ SHDEF *LpshdefSBT() { return rgshdefSBT; }
 PLANETARY *LpplanetaryFromId(int16_t id) { return &rgplanetary[id]; }
 
 int16_t FLookupPartX(PART *ppart, uint16_t grhst, uint16_t iItem) {
-    ppart->hs.grhst = grhst;
+    ppart->hs.grhst = static_cast<HullSlotType>(grhst);
     ppart->hs.iItem = iItem;
     ppart->hs.cItem = 0;
     return FLookupPart(ppart);
@@ -30,7 +30,7 @@ int16_t FLookupPart(PART *ppart) {
     RaceAttribute raMajor;
     HS            hs;
 
-    raMajor = idPlayer == iplrNone ? raNone : GetRaceStat(&rgplr[idPlayer], rsMajorAdv);
+    raMajor = static_cast<RaceAttribute>(idPlayer == iplrNone ? raNone : GetRaceStat(&rgplr[idPlayer], rsMajorAdv));
     hs = ppart->hs;
     switch (hs.grhst) {
     default:

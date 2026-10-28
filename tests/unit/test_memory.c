@@ -74,7 +74,7 @@ static void TestSingleBlockGrowth(void) {
     HeapType ht;
     int i;
 
-    for (ht = htPlanets; ht <= htThings; ht += htThings - htPlanets) {
+    for (ht = htPlanets; ht <= htThings; ht = static_cast<HeapType>(ht + htThings - htPlanets)) {
         lp = (uint8_t *)LpAlloc(31, ht);
         memset(lp, 0x69, 31);
         lp = (uint8_t *)LpReAlloc(lp, 30000, ht);

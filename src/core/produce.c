@@ -211,7 +211,7 @@ char *PszNameProdItem(PROD *lpprod) {
     } else if (iItem == iobjPlanetaryScanner) {
         CchGetString(idsPlanetaryScanner, szWork);
     } else {
-        CchGetString(idsMines + LOWORD(iItem), szWork);
+        CchGetString(static_cast<StringId>(idsMines + LOWORD(iItem)), szWork);
     }
     return szWork;
 }
@@ -237,7 +237,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
     int16_t       rgCostsPartCur[4];
     int16_t       rgCostsPartNew[4];
 
-    raMajor = GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv);
+    raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv));
     fStarbase = FALSE;
     iItem = lpprod->iItem;
     cItem = lpprod->cItem;
@@ -538,7 +538,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
         }
         if ((int16_t)iItem < iobjMine) {
             *piFirst = LOWORD(rgRes[3]);
-            if (iItem == iprodEstimateResearchResources) {
+            if (iItem == static_cast<ProdItemType>(iprodEstimateResearchResources)) {
                 *piFirst += LOWORD(cResearch);
             }
             goto LCleanUp;

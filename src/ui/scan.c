@@ -80,12 +80,12 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             break;
         }
         if (wParam == '-') {
-            iScanNew = iScanZoom - 1;
+            iScanNew = static_cast<ScanZoom>(iScanZoom - 1);
             if (iScanNew < zoom25) {
                 iScanNew = zoom25;
             }
         } else {
-            iScanNew = iScanZoom + 1;
+            iScanNew = static_cast<ScanZoom>(iScanZoom + 1);
             if (iScanNew > zoom400) {
                 iScanNew = zoom400;
             }
@@ -153,7 +153,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                    !(sel.grobj == grobjFleet && ((grbitScan & grbitScanAddWaypoints) || FAltDown()));
         ptPan = pt;
         ScanToLogical(&pt);
-        FFindNearestObject(pt, gd.fSetMassMode != 0 || gd.fSetRouteMode ? grobjPlanet : grobjPlanet | grobjFleet | grobjOther | grobjThing, &scan);
+        FFindNearestObject(pt, static_cast<GrobjClass>(gd.fSetMassMode != 0 || gd.fSetRouteMode ? grobjPlanet : grobjPlanet | grobjFleet | grobjOther | grobjThing), &scan);
         if ((gd.fSetMassMode || (sel.grobj == grobjPlanet && (wParam & 4) && IWarpMAFromLppl(&sel.pl, NULL) > 0)) && msg == WM_LBUTTONDOWN) {
             DrawShipScanPath(NULL, FALSE);
             if (scan.idpl == sel.pl.id) {
@@ -164,7 +164,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             FLookupPlanet(idWriteBack, &sel.pl);
             gd.fSetMassMode = FALSE;
             DrawShipScanPath(NULL, TRUE);
-            DrawPlanShip(NULL, tileStarbaseOrWaypoint | tileMinimized);
+            DrawPlanShip(NULL, static_cast<TileBits>(tileStarbaseOrWaypoint | tileMinimized));
             break;
         }
         if ((gd.fSetRouteMode || (sel.grobj == grobjPlanet && (wParam & 8))) && msg == WM_LBUTTONDOWN) {
@@ -177,7 +177,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             FLookupPlanet(idWriteBack, &sel.pl);
             gd.fSetRouteMode = FALSE;
             DrawShipScanPath(NULL, TRUE);
-            DrawPlanShip(NULL, tileProductionOrOrbit | tileMinimized);
+            DrawPlanShip(NULL, static_cast<TileBits>(tileProductionOrOrbit | tileMinimized));
             break;
         }
         if (msg == WM_MBUTTONDOWN || (msg == WM_RBUTTONDOWN && (wParam & 4))) {
@@ -344,7 +344,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             c = CWheelNotches(&dWheelZoom, d);
             if (c == 0)
                 break;
-            iScanNew = iScanZoom + c;
+            iScanNew = static_cast<ScanZoom>(iScanZoom + c);
             if (iScanNew < zoom25) {
                 iScanNew = zoom25;
             } else if (iScanNew > zoom400) {
@@ -498,7 +498,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
     int32_t  lPop;
     COLORREF cr;
 
-    mdScanBase = grbitScan & grbitScanViewMask;
+    mdScanBase = static_cast<ScanView>(grbitScan & grbitScanViewMask);
     hdcScreen = 0;
     hbmpScreen = 0;
     if (!rglpfl || gd.fNoScannerDraw || gd.fGeneratingTurn) {
@@ -916,6 +916,8 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
     ExcludeClipRect(hdc, 0, rc.bottom - dySBar, rc.right, rc.bottom);
     memset(rgWhatsHere, 0, 999);
     switch (iScanZoom) {
+    default:
+        break;
     case zoom400:
         SelectObject(hdc, rghfontArial10[1]);
         break;
@@ -1851,7 +1853,7 @@ void DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
         }
         hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         if (psbar) {
-            grobj = psbar->grbit;
+            grobj = static_cast<GrobjClass>(psbar->grbit);
         } else {
             grobj = sel.scan.grobj;
         }
@@ -1980,7 +1982,7 @@ void DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
             strcpy(szBuf, PszGetDistance(pt.x, pt.y, pt2.x, pt2.y));
             for (psz = szBuf; *psz != ' '; psz++) {
             }
-            CchGetString(idsLy + (rc.right >= 350), psz + 1);
+            CchGetString(static_cast<StringId>(idsLy + (rc.right >= 350)), psz + 1);
             if (!psbar || !psbar->pscan) {
                 CchGetString(idsFrom, psz + strlen(psz));
                 strcat(psz + 8, PszGetLocName(sel.grobj, sel.id, pt2.x, pt2.y));
@@ -2169,8 +2171,8 @@ void RedrawScanSel(HDC hdc, int16_t fVis) {
         }
         if (!fVis) {
             sel.id = sel_id;
-            sel.grobj = sel_grobj;
-            sel.grobjFull = sel_grobjFull;
+            sel.grobj = static_cast<GrobjClass>(sel_grobj);
+            sel.grobjFull = static_cast<GrobjClass>(sel_grobjFull);
             sel.scan = sel_scan;
         }
         if (fhdc) {
@@ -2357,6 +2359,8 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     *lpord = *(lpord - 1);
     lpord->pt = pscan->pt;
     switch (pscan->grobj) {
+    default:
+        break;
     case grobjPlanet:
         id = pscan->idpl;
         break;
@@ -2375,7 +2379,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     sel.fl.lpplord->iordMac++;
     lpord->iWarp = FAltDown() ? IWarpFastestForWaypoint(&sel.fl, lpord) : IWarpBestForWaypoint(&sel.fl, lpord);
     pscan->grobj = grobjOther;
-    pscan->grobjFull |= grobjOther;
+    pscan->grobjFull = static_cast<GrobjClass>(pscan->grobjFull | grobjOther);
     pscan->iwp = sel.iwpAct + 1;
     RedrawScanSel(NULL, 0);
     FLookupFleet(idWriteBack, &sel.fl);
@@ -2407,7 +2411,7 @@ int16_t FNearAWayPoint(POINT16 pt, int16_t fLogical) {
     if (!fLogical) {
         ScanToLogical(&pt);
     }
-    if (!FFindNearestObject(pt, grobjPlanet | grobjFleet | grobjOther | grobjThing | mdScanRadius, &scan)) {
+    if (!FFindNearestObject(pt, static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjOther | grobjThing | mdScanRadius), &scan)) {
         return FALSE;
     }
     if (scan.grobjFull & grobjOther) {
@@ -2492,7 +2496,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
             ptLogical = ptNew;
             ScanToLogical(&ptLogical);
             grTypeIn = !(GetAsyncKeyState(VK_SHIFT) & 0xfffe) ? 79 : 143;
-            FFindNearestObject(ptLogical, grTypeIn, &scan);
+            FFindNearestObject(ptLogical, static_cast<GrobjClass>(grTypeIn), &scan);
             DrawScanXorLines(hdc, rgpt, cpt);
             if (scan.grobj == grobjNone) {
                 rgpt[0] = ptLogical;
@@ -2613,7 +2617,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         lpord->iWarp = FAltDown() ? IWarpFastestForWaypoint(&sel.fl, lpord) : IWarpBestForWaypoint(&sel.fl, lpord);
         FLookupFleet(idWriteBack, &sel.fl);
         scan.iwp = sel.iwpAct;
-        scan.grobjFull |= grobjOther;
+        scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grobjOther);
         sel.iwpAct = -2;
         ChangeScanSel(&scan, 1);
     }
@@ -2924,7 +2928,7 @@ int16_t FHandleMeasuringTape(SCAN *pscan, POINT16 pt) {
         ptLogical = ptNew;
         ScanToLogical(&ptLogical);
         grTypeIn = !(GetAsyncKeyState(VK_SHIFT) & 0xfffe) ? 79 : 143;
-        if (FFindNearestObject(ptLogical, grTypeIn, &scan)) {
+        if (FFindNearestObject(ptLogical, static_cast<GrobjClass>(grTypeIn), &scan)) {
             ptLogical = scan.pt;
         }
         if (ptLogLast.x != ptLogical.x || ptLogLast.y != ptLogical.y) {
@@ -3021,7 +3025,7 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
         FillOrdersLB();
         SetOrdersLbSel(pscan->iwp);
         UpdateOrdersDDs(0);
-        DrawPlanShip(NULL, 0x122);
+        DrawPlanShip(NULL, static_cast<TileBits>(0x122));
     }
     RedrawScanSel(NULL, 1);
     if (fChgWp) {
@@ -3063,7 +3067,7 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
         ReleaseDC(hwndScanner, hdc);
     }
     if (sel.pl.id != idplNone) {
-        DrawPlanShip(NULL, 0x4002);
+        DrawPlanShip(NULL, static_cast<TileBits>(0x4002));
     }
     if (gd.fTutorial && idPlayer == 0) {
         AdvanceTutor();

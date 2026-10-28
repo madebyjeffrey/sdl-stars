@@ -28,7 +28,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             SendMessage(rghwndOrderDD[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         for (i = idsTaskHere; i <= idsTransferFleet; i++) {
-            psz = PszGetCompressedString(i);
+            psz = PszGetCompressedString(static_cast<StringId>(i));
             SendMessage(rghwndOrderDD[0], CB_ADDSTRING, 0, (LPARAM)psz);
         }
         hwndOrderED = CreateWindow(szEdit, NULL, ES_RIGHT | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
@@ -55,7 +55,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                          100, 100, 200, 80, hwnd, NULL, hInst, NULL);
         SendMessage(hwndPlanetProdLB, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
         for (i = 0; i < 13; i++) {
-            psz = PszGetCompressedString(idsCargo2 + i);
+            psz = PszGetCompressedString(static_cast<StringId>(idsCargo2 + i));
             rghwndBtn[i] = CreateWindow(szButton, psz, WS_CHILD, 100, 100, 100, dyArial8 * 2, hwnd, NULL, hInst, NULL);
             SendMessage(rghwndBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
@@ -164,7 +164,7 @@ LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         if ((HWND)lParam == hwndShipDD) {
             if (HIWORD(wParam) == 1) {
-                DrawPlanShip(NULL, tileShipList | tileErase);
+                DrawPlanShip(NULL, static_cast<TileBits>(tileShipList | tileErase));
             }
         } else {
             if ((HWND)lParam == rghwndBtn[4] && HIWORD(wParam) == 0) {
@@ -775,7 +775,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             szWork[0] = 0;
         } else {
-            psz = PszProductionETA(ppl, NULL, iSel, NULL, NULL);
+            psz = PszProductionETA(ppl, NULL, static_cast<ProdItemType>(iSel), NULL, NULL);
             c = strlen(psz);
         }
         if (c != 0) {
@@ -1414,7 +1414,7 @@ void ReflowColumn(int16_t iCol, int16_t iTile, int16_t fRedraw) {
         yTop += (!ptile[iTile].fPopped ? dyArial8 + 3 : ptile[iTile].dyFull) + 4;
     }
     if (fRedraw) {
-        DrawPlanShip(hdc, grbit);
+        DrawPlanShip(hdc, static_cast<TileBits>(grbit));
         ReleaseDC(hwndPlanet, hdc);
     }
     return;
@@ -1824,11 +1824,11 @@ void ShowMainObjSel(int16_t fSameType, int16_t idSkip) {
     }
     FillShipDD(idSkip);
     if (fSameType) {
-        DrawPlanShip(NULL, 0x4fff);
+        DrawPlanShip(NULL, static_cast<TileBits>(0x4fff));
     } else {
         InvalidateRect(hwndPlanet, NULL, TRUE);
         if ((grbitScan & grbitScanAddWaypoints) && sel.grobj == grobjPlanet) {
-            grbitScan &= 0xffef;
+            grbitScan = static_cast<GrbitScan>(grbitScan & 0xffef);
             InvalidateRect(hwndTb, NULL, TRUE);
         }
     }

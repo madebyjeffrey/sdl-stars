@@ -154,6 +154,7 @@ def main():
     table=source[start:source.index(';',start)+1]
     declarations=r'''
 #include "common.h"
+#include <setjmp.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <inttypes.h>
