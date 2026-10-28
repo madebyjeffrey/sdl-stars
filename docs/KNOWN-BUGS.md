@@ -398,15 +398,24 @@ The same harness completes with the expected estimate. Turn generation
 and file formats are unchanged; the host regression matches the native
 baseline through turn 150 in every scenario.
 
-### Race Dialog File Name Overruns — located
+### Race Dialog File Name Overruns — fixed in 2.9
 
 `raceui.c`: `FSaveRace`; `mdi.c`: `FOpenGame` (race-only path).
 Both copy `&szFile[ofn.nFileOffset]` into the 16-byte global `szRaceFile`
 with `strcpy`. The file dialogs accept paths up to 255 characters and do
 not restrict the file name to 15 characters, so a longer race file name
-overwrites adjacent globals. These two copies remain unchecked; the
-`FWasRaceFile` repair above does not cover them. Located by source review;
-the Windows dialogs have not been exercised with a long file name.
+overwrites adjacent globals. The earlier `FWasRaceFile` repair did not
+cover these copies.
+
+**2.9:** `FSaveRace` bounds the remembered name to 15 characters and its
+terminator. `FOpenGame` uses the bounded name already set by `FWasRaceFile`.
+The full chosen path is still used for file I/O. The Windows tests in
+`tests/unit/test_race.c` supply picker results and exercise both entry
+points with short, 15-, 16- and longer-character names; the save test also
+checks that `szRacePass` survives and that the full file name was saved.
+The same tests fail before the fix and pass afterward in a native harness
+using the actual dialog functions with a stubbed file picker. Turn
+generation and file formats are unchanged.
 
 ### Uncompressed Ship Design Name Overrun — fixed in 2.9
 

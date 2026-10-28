@@ -43,6 +43,10 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- Opening or saving a race with a long file name no longer overwrites
+  nearby globals (`FOpenGame`, `FSaveRace`). The full chosen path is used
+  for I/O; the remembered name is limited to its 16-byte buffer. Turn
+  generation and file formats are unchanged.
 - `FReadShDef` now reserves the terminator byte when decoding a compressed
   ship-design name and rejects names that do not fit. A 32-character name
   previously wrote a NUL into the following hull statistic. Valid names,

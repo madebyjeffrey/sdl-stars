@@ -1394,7 +1394,9 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
         icksum = IRaceChecksum(pplr);
         WriteRt(rtEOF, 2, &icksum);
         StreamClose();
-        strcpy(szRaceFile, &szFile[ofn.nFileOffset]);
+        // The picker accepts longer names than this 16-byte remembered name.
+        strncpy(szRaceFile, &szFile[ofn.nFileOffset], sizeof(szRaceFile) - 1);
+        szRaceFile[sizeof(szRaceFile) - 1] = 0;
         return TRUE;
     }
     return FALSE;

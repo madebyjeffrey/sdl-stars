@@ -1728,9 +1728,7 @@ LGotFileName:
     szDirName[0] = 0;
     fRet = FWasRaceFile(&szFile[ofn.nFileOffset], fRaceOnly == 0);
     if (fRaceOnly) {
-        if (fRet > 0) {
-            strcpy(szRaceFile, &szFile[ofn.nFileOffset]);
-        }
+        // FWasRaceFile already remembered the file name, bounded to fit.
         return fRet;
     }
     if (fRet) {

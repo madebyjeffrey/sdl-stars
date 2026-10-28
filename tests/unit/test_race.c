@@ -87,6 +87,85 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 }
 
 #ifdef _WIN32
+static char szRaceDialogFile[MAX_PATH];
+
+// Supply a file-picker result without displaying a modal Windows dialog.
+static BOOL WINAPI FGetRaceDialogFile(LPOPENFILENAMEA pofn) {
+    char *pch;
+
+    TEST_ASSERT(strlen(szRaceDialogFile) < pofn->nMaxFile);
+    strcpy(pofn->lpstrFile, szRaceDialogFile);
+    pch = strrchr(szRaceDialogFile, chDirSep);
+    pofn->nFileOffset = pch ? pch + 1 - szRaceDialogFile : 0;
+    pch = strrchr(szRaceDialogFile, '.');
+    pofn->nFileExtension = pch ? pch + 1 - szRaceDialogFile : 0;
+    return TRUE;
+}
+
+// MinGW calls these imported functions through their import-table pointers.
+BOOL(WINAPI *__wrap___imp_GetSaveFileNameA)(LPOPENFILENAMEA) = FGetRaceDialogFile;
+BOOL(WINAPI *__wrap___imp_GetOpenFileNameA)(LPOPENFILENAMEA) = FGetRaceDialogFile;
+
+static void test_FSaveRace_bounds_file_name(void) {
+    char szDir[MAX_PATH];
+    // Keep the full path within OpenFile's legacy limit while testing names.
+    char *rgszFile[] = {"short.r1", "abcdefghijkl.r1", "abcdefghijklm.r1", "long-race-file-name.r1"};
+    PLAYER plr;
+    int16_t i;
+    size_t cch;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    plr = vplr;
+    TEST_ASSERT(FStarsTestDir("FSaveRace_file_name", szDir, sizeof(szDir)));
+    for (i = 0; i < 4; i++) {
+        snprintf(szRaceDialogFile, sizeof(szRaceDialogFile), "%s%s%s", szDir, szDirSep, rgszFile[i]);
+        strcpy(szRacePass, "saved-password");
+        TEST_ASSERT(FSaveRace(NULL, &plr));
+        cch = min(strlen(rgszFile[i]), sizeof(szRaceFile) - 1);
+        TEST_CHECK(strnlen(szRaceFile, sizeof(szRaceFile)) == cch);
+        TEST_CHECK(strncmp(szRaceFile, rgszFile[i], cch) == 0);
+        TEST_CHECK(szRaceFile[cch] == 0);
+        TEST_CHECK(strcmp(szRacePass, "saved-password") == 0);
+        // The chosen path, including its full file name, still gets saved.
+        TEST_CHECK(FWasRaceFile(szRaceDialogFile, FALSE));
+    }
+}
+
+static void test_FOpenGame_bounds_race_file_name(void) {
+    char szDir[MAX_PATH];
+    char szCwd[MAX_PATH];
+    char *rgszFile[] = {"short.r1", "abcdefghijkl.r1", "abcdefghijklm.r1", "long-race-file-name.r1"};
+    PLAYER plr;
+    uint16_t icksum;
+    int16_t i;
+    size_t cch;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    plr = vplr;
+    TEST_ASSERT(getcwd(szCwd, sizeof(szCwd)) != NULL);
+    TEST_ASSERT(FStarsTestDir("FOpenGame_race_file_name", szDir, sizeof(szDir)));
+    // FOpenGame reads a picker result's basename in the picker's directory.
+    TEST_ASSERT(SetCurrentDirectoryA(szDir));
+    for (i = 0; i < 4; i++) {
+        snprintf(szRaceDialogFile, sizeof(szRaceDialogFile), "%s%s%s", szDir, szDirSep, rgszFile[i]);
+        TEST_ASSERT(FCreateFile(dtRace, iplrNone, szRaceDialogFile));
+        WriteRtPlr(&plr, NULL);
+        icksum = IRaceChecksum(&plr);
+        WriteRt(rtEOF, 2, &icksum);
+        StreamClose();
+
+        TEST_ASSERT(FOpenGame(NULL, TRUE) > 0);
+        cch = min(strlen(rgszFile[i]), sizeof(szRaceFile) - 1);
+        TEST_CHECK(strnlen(szRaceFile, sizeof(szRaceFile)) == cch);
+        TEST_CHECK(strncmp(szRaceFile, rgszFile[i], cch) == 0);
+        TEST_CHECK(szRaceFile[cch] == 0);
+        TEST_CHECK(strcmp(vplr.szName, plr.szName) == 0);
+    }
+    TEST_ASSERT(SetCurrentDirectoryA(szCwd));
+}
+
 // Random race: the Random template is only the random-race bit, which
 // GenerateWorld replaces with a random race. Choosing Custom on the first
 // wizard page keeps the race being edited, so a race that had been Random
@@ -114,6 +193,8 @@ static void test_RaceWizardDlg1_custom_clears_random(void) {
 TEST_LIST = {{"IRaceChecksum ignores stale name bytes", test_IRaceChecksum_ignores_stale_name_bytes},
              {"ReadRtPlr bounds record lengths", test_ReadRtPlr_bounds_record_lengths},
 #ifdef _WIN32
+             {"FSaveRace bounds file name", test_FSaveRace_bounds_file_name},
+             {"FOpenGame bounds race file name", test_FOpenGame_bounds_race_file_name},
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
 #endif
              {NULL, NULL}};
