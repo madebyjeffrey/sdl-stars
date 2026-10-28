@@ -45,4 +45,44 @@ static void test_FReadShDef_bounds_uncompressed_name(void) {
     }
 }
 
-TEST_LIST = {{"FReadShDef bounds uncompressed name", test_FReadShDef_bounds_uncompressed_name}, {NULL, NULL}};
+// UnpackBattlePlan copied raw names past its 32-byte field and into the
+// following plan. Keep the order fields and the next object's bytes intact.
+static void test_UnpackBattlePlan_bounds_uncompressed_name(void) {
+    struct {
+        BTLPLAN btlplan;
+        uint8_t rgbGuard[80];
+    } buf;
+    uint8_t rgb[128];
+    int16_t rgcch[] = {0, 31, 32, 64};
+    int16_t i;
+    int16_t j;
+    int16_t cch;
+
+    for (i = 0; i < 4; i++) {
+        memset(rgb, 0, sizeof(rgb));
+        ((BTLPLAN *)rgb)->iplr = 1;
+        ((BTLPLAN *)rgb)->mdTactic = 3;
+        ((BTLPLAN *)rgb)->mdTarget1 = 2;
+        ((BTLPLAN *)rgb)->mdTarget2 = 4;
+        ((BTLPLAN *)rgb)->iplrAttack = 5;
+        memset(rgb + 5, 'N', rgcch[i]);
+        memset(&buf, 0x55, sizeof(buf));
+
+        UnpackBattlePlan(rgb, &buf.btlplan, 6);
+        cch = min(rgcch[i], sizeof(buf.btlplan.szName) - 1);
+        TEST_CHECK_(strnlen(buf.btlplan.szName, sizeof(buf.btlplan.szName)) == cch, "name length %d", rgcch[i]);
+        TEST_CHECK(buf.btlplan.szName[cch] == 0);
+        TEST_CHECK(buf.btlplan.iplr == 1);
+        TEST_CHECK(buf.btlplan.iplan == 6);
+        TEST_CHECK(buf.btlplan.mdTactic == 3);
+        TEST_CHECK(buf.btlplan.mdTarget1 == 2);
+        TEST_CHECK(buf.btlplan.mdTarget2 == 4);
+        TEST_CHECK(buf.btlplan.iplrAttack == 5);
+        for (j = 0; j < sizeof(buf.rgbGuard); j++)
+            TEST_CHECK_(buf.rgbGuard[j] == 0x55, "name length %d, guard byte %d", rgcch[i], j);
+    }
+}
+
+TEST_LIST = {{"FReadShDef bounds uncompressed name", test_FReadShDef_bounds_uncompressed_name},
+             {"UnpackBattlePlan bounds uncompressed name", test_UnpackBattlePlan_bounds_uncompressed_name},
+             {NULL, NULL}};

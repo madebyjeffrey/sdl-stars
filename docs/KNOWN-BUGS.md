@@ -419,13 +419,17 @@ with 32- and 64-character names in both full and partial design records.
 and 31-character names still load unchanged. Valid saves, turn generation
 and file formats are unchanged.
 
-### Uncompressed Battle Plan Name Overrun — located
+### Uncompressed Battle Plan Name Overrun — fixed in 2.9
 
 `file.c`: `UnpackBattlePlan`. The uncompressed-name path copies record text
 into the 32-byte `BTLPLAN.szName` field without checking the length. A
 harness calling the actual function with a 64-character name overwrites
-33 guard bytes after its `BTLPLAN`. This reproduces the reader's overwrite,
-not a complete file-load scenario. This copy remains unchecked.
+33 guard bytes after its `BTLPLAN`.
+
+**2.9:** the reader keeps at most 31 characters and a terminator.
+`tests/unit/test_file.c` checks empty, 31-, 32- and 64-character names,
+the plan's order fields and guard bytes after the plan. Valid saves,
+turn generation and file formats are unchanged.
 
 ### Compressed Ship Design Name Overrun — located
 

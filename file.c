@@ -1167,7 +1167,9 @@ void UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan) {
     cch = *lpb;
     lpb++;
     if (cch == 0) {
-        strcpy(lpbtlplan->szName, lpb);
+        // An uncompressed record name must not overwrite the next plan.
+        strncpy(lpbtlplan->szName, (char *)lpb, sizeof(lpbtlplan->szName) - 1);
+        lpbtlplan->szName[sizeof(lpbtlplan->szName) - 1] = 0;
     } else {
         cOut = 32;
         memmove(szTemp, lpb, cOut);

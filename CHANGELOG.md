@@ -43,6 +43,9 @@ produce different results from a 2.6j host for the same turn.
 
 ### Fixed
 
+- `UnpackBattlePlan` no longer writes an overlong uncompressed name past
+  its 32-byte field into the following battle plan. Valid names, turn
+  generation and file formats are unchanged.
 - `FReadShDef` no longer copies an overlong uncompressed design name into
   the hull statistics after its 32-byte name field. Valid names, turn
   generation and file formats are unchanged.
