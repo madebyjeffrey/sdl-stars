@@ -1,11 +1,12 @@
 /* Drive the export button and the real callback/message path. Only the native
  * folder chooser's response is supplied at the SDL boundary. */
+static int64_t cbGameExportFile;
 static int cGameExportPickers, cGameExportSaves, cGameExportWait;
 static BOOL fGameExportBusy;
 static uint64_t idGameExportSaveDialog;
 static int16_t fGameExportSubmitSav;
 
-void SDLCALL StarsTest_SDL_ShowOpenFolderDialog(SDL_DialogFileCallback pfnCallback, void *lpData,
+extern "C" void SDLCALL StarsTest_SDL_ShowOpenFolderDialog(SDL_DialogFileCallback pfnCallback, void *lpData,
                                                SDL_Window *lpWindow, const char *pszLocation, bool fMany) {
     const char *pszGame = getenv("STARS_CLIENT_EXPORT_GAME");
     const char *pszAction = getenv("STARS_CLIENT_EXPORT_ACTION");
@@ -103,7 +104,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         if (fFail) {
             if (cAlerts == 0) goto LWait;
             if (cAlerts != 1) goto LFail;
-        } else if (!fCancel && (pszZip ? !FNativeFileSize(szDestination, &(int64_t){0}) : !FNativeDirectoryExists(szDestination))) goto LWait;
+        } else if (!fCancel && (pszZip ? !FNativeFileSize(szDestination, &cbGameExportFile) : !FNativeDirectoryExists(szDestination))) goto LWait;
         if (fCancel && FNativeDirectoryExists(szDestination)) goto LFail;
         cSaves = pszAction && (!strcmp(pszAction, "save") || fDiscard) ? 1 : 0;
         if (cGameExportSaves != cSaves || gd.fSubmit != fGameExportSubmitSav) goto LFail;

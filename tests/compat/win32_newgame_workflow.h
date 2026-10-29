@@ -5,7 +5,7 @@ static BOOL fCreatingGame;
 static int cNewGameChoices, iNewGameStep;
 static BOOL fRevisionRenamed;
 static GAME gameNewSav;
-void StarsTestReal_NewGameWizard(HWND hwnd, int16_t fReadOnly);
+extern "C" void StarsTestReal_NewGameWizard(HWND hwnd, int16_t fReadOnly);
 
 static BOOL FSamePath(const char *pszLeft, const char *pszRight) {
     char chLeft, chRight;
@@ -25,7 +25,7 @@ void StarsTest_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = FALSE;
 }
 
-int16_t StarsTestReal_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase);
+extern "C" int16_t StarsTestReal_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase);
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
     const char *pszFailure = getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;

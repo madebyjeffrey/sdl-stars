@@ -156,7 +156,7 @@ static void test_PtToScan_negative(void) {
     TEST_CHECK(PtToScan(-341) == -427);
     iScanZoom = zoom150;
     TEST_CHECK(PtToScan(-341) == -512);
-    iScanZoom = iZoomSav;
+    iScanZoom = (ScanZoom)(iZoomSav);
 }
 
 static void test_FLookupPart_host(void) {

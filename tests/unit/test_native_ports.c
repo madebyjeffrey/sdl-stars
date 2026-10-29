@@ -57,7 +57,7 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
     MSGPLR *mp;
     int     i;
 
-    mp = malloc(sizeof(MSGPLR) + abs(len));
+    mp = (MSGPLR *)(malloc(sizeof(MSGPLR) + abs(len)));
     TEST_ASSERT(mp != NULL);
     mp->lpmsgplrNext = NULL;
     mp->iPlrFrom = from;
@@ -221,8 +221,8 @@ static void TestBattleRollover(void) {
     fl.idPlanet = -1;
     fl.lpflNext = &fl;
     vrgtok = rgtok;
-    lpbBattleLog = LpAlloc(0xffc8, htBattle);
-    lpbBattleT = LpAlloc(0xffc8, htBattle);
+    lpbBattleLog = (uint8_t *)(LpAlloc(0xffc8, htBattle));
+    lpbBattleT = (uint8_t *)(LpAlloc(0xffc8, htBattle));
     lpbStart = lpbBattleLog;
     lpbScratch = lpbBattleT;
 
@@ -254,7 +254,7 @@ static void TestFleetMessageGoto(void) {
     rgmt[0].msghdr.iMsg = idmHasCompletedAssignedOrders;
     rgmt[0].msghdr.wGoto = iObj;
     rgmt[1] = rgmt[0];
-    rgmt[1].msghdr.wGoto = 5;
+    rgmt[1].msghdr.wGoto = (MsgGoto)(5);
     lpMsg = (int16_t *)rgmt;
     imemMsgCur = sizeof(rgmt);
 

@@ -80,10 +80,11 @@ static void CALLBACK CloseDesigner(HWND hwnd, UINT msg, UINT_PTR id, DWORD time)
 static int TestDesignerReturnFocus(HWND hwndOwnerFocus) {
     UINT_PTR idTimer;
     POINT16 ptSize = {736, 500};
+    char szExtension[] = "m1";
 
     strcpy(szBase, STARS_TEST_FOCUS_GAME);
     idPlayer = 0;
-    CHECK(FLoadGame(szBase, "m1"));
+    CHECK(FLoadGame(szBase, szExtension));
     SetFocus(hwndOwnerFocus);
     idTimer = SetTimer(NULL, 0, 25, CloseDesigner);
     CHECK(idTimer);
@@ -106,7 +107,7 @@ static LRESULT CALLBACK ReturnFocusWndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 }
 
 static int TestWindowFocus(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndChild, hwndCard, hwndOwnerFocus, hwndOther;
 
     hwndOwnerFocus = CreateWindow("BUTTON", "Owner focus", WS_CHILD | WS_VISIBLE,
@@ -178,8 +179,8 @@ int main(void) {
     HWND hwnd, hwndFocus;
     MSG msg;
     SDL_WindowFlags flags;
-    SDL_Event event = {0};
-    SHDEF shdef = {0};
+    SDL_Event event = {};
+    SHDEF shdef = {};
     BYTE r, g, b, a;
     SDL_Surface *lpFirst;
     int i;

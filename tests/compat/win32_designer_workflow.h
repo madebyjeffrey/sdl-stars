@@ -7,7 +7,7 @@ static const char szHullName[] = "Compat Hull";
 static BOOL FPushHullDrag(HWND hwndList, HWND hwndDialog, BOOL fRemove) {
     HWND hwndRoot = HwndCompatRoot(hwndDialog);
     POINT ptStart = {32, 34}, ptEnd;
-    SDL_Event event = {0};
+    SDL_Event event = {};
 
     ptEnd = (POINT){(vrgrcSlot[iSlotHull].left + vrgrcSlot[iSlotHull].right) / 2,
                     (vrgrcSlot[iSlotHull].top + vrgrcSlot[iSlotHull].bottom) / 2};
@@ -35,7 +35,7 @@ static BOOL FCheckHullWorkflow(HWND hwndDialog) {
     HWND hwndControl;
     HULDEF *lphul;
     SHDEF *lpshdef;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     char sz[512];
     int i, j, cRow, iRow;
     uint16_t grhst;
@@ -72,7 +72,7 @@ static BOOL FCheckHullWorkflow(HWND hwndDialog) {
             for (j = 0; j < lphul->hul.chs; j++) {
                 if (!(lphul->hul.rghs[j].grhst & grhst) || (!fBaseHull && j != 0)) continue;
                 iPartHull = i; iSlotHull = j;
-                hsPartHull = (HS){0}; hsPartHull.grhst = grhst; hsPartHull.iItem = sz[1] - 'A';
+                hsPartHull = (HS){}; hsPartHull.grhst = (HullSlotType)(grhst); hsPartHull.iItem = sz[1] - 'A';
                 hsPartHull.cItem = (grhst & hstEngine) ? lphul->hul.rghs[j].cItem : 1;
                 SendMessage(hwndControl, LB_SETTOPINDEX, iPartHull, 0);
                 return TRUE;

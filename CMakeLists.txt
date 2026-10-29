@@ -55,6 +55,16 @@ set(STARS_UI_SOURCES
 set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
     src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
 
+# Ordinary application consumers use C++; independent C/SDK fixtures retain C.
+file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
+    "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
+list(REMOVE_ITEM STARS_CPP_HARNESSES
+    "${PROJECT_SOURCE_DIR}/tests/compat/enum_abi.c"
+    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c")
+set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
+    COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
+
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)
 target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")

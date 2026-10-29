@@ -16,7 +16,7 @@ typedef struct {
 } NATIVEENTRYCHECK;
 
 static int16_t FCheckNativeEntry(void *lpv, const char *pszEntry) {
-    NATIVEENTRYCHECK *lpnec = lpv;
+    NATIVEENTRYCHECK *lpnec = (NATIVEENTRYCHECK *)lpv;
     if (!strcmp(pszEntry, lpnec->pszExpected)) lpnec->fFound = TRUE;
     return TRUE;
 }
@@ -35,7 +35,7 @@ static void TestNativeFiles(void) {
     snprintf(szOther, sizeof(szOther), "%s%s\xf0\x9f\x98\x80.bin", szDir, szDirSep);
     hfFile = HfOpenFile(szFile, mdCreate, &fMissing);
     TEST_ASSERT(hfFile != -1 && !fMissing);
-    TEST_CHECK(CbWriteFile(hfFile, "abcdef", 6) == 6 && CbFileSize(hfFile) == 6);
+    TEST_CHECK(CbWriteFile(hfFile, (void *)("abcdef"), 6) == 6 && CbFileSize(hfFile) == 6);
     TEST_CHECK(LSeekFile(hfFile, 2, 0) == 2 && CbReadFile(hfFile, rgb, 4) == 4 && memcmp(rgb, "cdef", 4) == 0);
     CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
@@ -62,7 +62,7 @@ static void TestNativeFiles(void) {
     snprintf(szFile, sizeof(szFile), "%s%s%s", szDir, szDirSep, szLong);
     hfFile = HfOpenFile(szFile, mdCreate, &fMissing);
     TEST_ASSERT(hfFile != -1);
-    TEST_CHECK(CbWriteFile(hfFile, "Z", 1) == 1); CloseFile(hfFile);
+    TEST_CHECK(CbWriteFile(hfFile, (void *)("Z"), 1) == 1); CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && RemoveNativeFile(szFile) == 0);
     TEST_CHECK(HfOpenFile("\xff", mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);
     TEST_CHECK(RemoveNativeFile("\xff") == -1 && errno == EILSEQ);

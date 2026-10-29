@@ -2,7 +2,7 @@
 #include <SDL3/SDL.h>
 
 static Uint64 dwTicks;
-Uint64 SDLCALL StarsTest_SDL_GetTicks(void) { return dwTicks; }
+extern "C" Uint64 SDLCALL StarsTest_SDL_GetTicks(void) { return dwTicks; }
 
 int FTestTickCount(void) {
     dwTicks = 0;

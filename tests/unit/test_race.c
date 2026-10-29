@@ -290,14 +290,14 @@ static void test_LInnateRaceHabitability_double_rounding(void) {
 static void test_RaceGrbit_high_bit(void) {
     PLAYER plr = {0};
 
-    SetRaceGrbit(&plr, 0, TRUE);
-    SetRaceGrbit(&plr, 31, TRUE);
+    SetRaceGrbit(&plr, (RaceGrbit)(0), TRUE);
+    SetRaceGrbit(&plr, (RaceGrbit)(31), TRUE);
     TEST_CHECK(plr.grbitAttr == UINT32_C(0x80000001));
-    TEST_CHECK(GetRaceGrbit(&plr, 31));
-    SetRaceGrbit(&plr, 31, FALSE);
+    TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(31)));
+    SetRaceGrbit(&plr, (RaceGrbit)(31), FALSE);
     TEST_CHECK(plr.grbitAttr == 1);
-    TEST_CHECK(!GetRaceGrbit(&plr, 31));
-    TEST_CHECK(GetRaceGrbit(&plr, 0));
+    TEST_CHECK(!GetRaceGrbit(&plr, (RaceGrbit)(31)));
+    TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(0)));
 }
 
 // Race file corruption: the race wizard reads a name into a buffer that still

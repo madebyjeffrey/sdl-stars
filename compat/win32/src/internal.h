@@ -7,6 +7,9 @@
 #include "fileio.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct COMPATPRINT COMPATPRINT;
 typedef struct COMPATASYNCPOST {
     HWND hwnd;
@@ -273,9 +276,12 @@ void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch);
 char *PszCompatFileUri(const char *pszPath);
 BOOL FCompatOpenDocument(const char *pszPath);
 
-#endif
-
 // C++ callback thunks return errors through pending state, never through C.
 LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick);
 HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

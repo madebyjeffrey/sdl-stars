@@ -6,14 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
+extern "C" int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
-BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
-BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
+extern "C" BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
+extern "C" BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
 
 static const char *PszWorkflowFilename(const char *pszFile) {
     const char *pch = pszFile + strlen(pszFile);
@@ -79,7 +79,7 @@ LDone:
     if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
     return fCopied;
 }
-int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+extern "C" int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     const char *pszExport = getenv("STARS_TEST_EXPORT_EXPECTED");
     if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {

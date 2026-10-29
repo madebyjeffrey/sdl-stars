@@ -127,7 +127,7 @@ static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic)
     CHECK(ReleaseDC(hwndStatic, hdc));
     CHECK(CheckDlgButton(hwnd, 101, BST_UNCHECKED) && UpdateWindow(hwndCheck));
     cb = (size_t)hwndCheck->lpCanvas->pitch * hwndCheck->lpCanvas->h;
-    rgb = malloc(cb);
+    rgb = (BYTE *)(malloc(cb));
     CHECK(rgb);
     memcpy(rgb, hwndCheck->lpCanvas->pixels, cb);
     CHECK(CheckDlgButton(hwnd, 101, BST_CHECKED) && UpdateWindow(hwndCheck));

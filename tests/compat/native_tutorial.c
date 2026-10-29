@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
+extern "C" int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static UINT_PTR idTimer;
 static int iStage, cWait, cActions, cReadActions;
 static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle, fDesignCycle, fAutomationCycle, fReportCycle, fMergeCycle;
@@ -35,7 +35,7 @@ static const char *pszResearchSnapshot = "year-2413-research.json", *pszOrderSna
 static HWND HwndModal(void);
 static BOOL FSaveState(const char *pszName);
 
-BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
+extern "C" BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     SDL_Event event = {0};
     HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -71,7 +71,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+extern "C" int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.
@@ -608,7 +608,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 8:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ResearchDlg || tutor.idtBold != 38) { pszFailure = "unexpected research dialog"; goto LFail; }
-        if (!FClick(GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + Weapons))) goto LInput;
+        if (!FClick(GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + (int)Weapons))) goto LInput;
         break;
     case 9:
         if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg) { pszFailure = "research dialog vanished"; goto LFail; }
