@@ -1,6 +1,6 @@
 # Native C++ application migration
 
-Status: milestone A implemented in one PR; qualification in progress. Milestone B remains proposed.
+Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B remains proposed.
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
 Prerequisites: merged PRs [#57](https://github.com/madebyjeffrey/sdl-stars/pull/57),
@@ -113,7 +113,7 @@ A01–A13 are implemented as checkpoints in one PR, as requested on 2026-10-28.
 Focused commits separate compiler policy, generators, consumers, wrapper groups
 and final declaration cleanup. Milestone B remains outside this PR.
 
-| PR slot | Bounded scope | Additional completion evidence |
+| Checkpoint | Bounded scope | Additional completion evidence |
 | --- | --- | --- |
 | **A01 — compiler policy and consumer inventory** | Adopt a tested C++20 baseline for owned C++ targets, retaining extensions temporarily. Add a manifest of every owned C/Objective-C consumer, linkage declaration and foreign exception; add C++ compiler feature/float checks. | Linux, macOS and Windows compiler probes pass. Host still builds without SDL. Configure ordinary tests, SDK reference tests, both, and neither on supported platforms; preserve #61's registration fix. |
 | **A02 — C++ game catalogs and text** | Make `text/textgen.py` and `data/datagen.py` emit C++ translation units. Replace C array designators and produce correctly typed enum/flag initializers. | Compare every ID and canonical table field, compressed text bytes and required reserved zeros against the pre-change generator. Require static initialization (`constinit` or an equivalent checked guarantee); no cross-unit initialization-order dependency. |
@@ -123,7 +123,7 @@ and final declaration cleanup. Milestone B remains outside this PR.
 | **A06 — C++ platform implementation** | Compile encoding and remaining platform implementation as C++. Keep filesystem, clock, formatting and error behavior unchanged. | UTF-8, path, formatting, sort, memory/error and file-publication contracts pass. Remaining C wrapper callers use explicitly tracked temporary C declarations until A13. |
 | **A07 — C++ wrapper foundation** | Convert rectangle/time/system/string helpers, memory handles, files, profiles and document/audio helpers. Replace C atomics/thread-local syntax. | Preserve handle/token validation, sharing, private temporary modes, replacement, last-error behavior and lock coverage. No exception escapes into an unconverted C caller. |
 | **A08 — C++ drawing implementation** | Convert drawing, bitmap/image, font and print modules without changing ownership yet. | Drawing/selection/DIB/font tests, scale/retina checks, PDF publication and print-abort/error tests pass. Preserve borrowed versus owned GDI objects. |
-| **A09 — C++ controls** | Convert edit/list/combo/toolbar/scroll/menu/accelerator modules, in smaller control-family PRs if necessary. | Reentrant notification, mutation, focus, capture, popup and destruction tests pass; preserve message order and synchronous notifications. |
+| **A09 — C++ controls** | Convert edit/list/combo/toolbar/scroll/menu/accelerator modules. | Reentrant notification, mutation, focus, capture, popup and destruction tests pass; preserve message order and synchronous notifications. |
 | **A10 — C++ window/dispatch/dialog implementation** | Convert window, message, dialog/template, input, timer, inspector, session and help modules. | Nested modal cleanup, owner re-enabling, timer/window failures without a modal owner, deferred destruction and runtime restart remain correct. Keep the existing pending-failure protocol during this compilation step. |
 | **A11 — C++ wrapper assets and native adapters** | Convert resource-generator outputs and the application entry adapter. Convert paired Windows/portal bridge callers and implementations to C++; compile AppKit glue as Objective-C++. | Preserve resource IDs/bytes, command-line handling, cancellation, native chooser pumping and SDK/wrapper type isolation. Foreign callback/entry thunks contain all exceptions. SDK reference fixtures remain independent. |
 | **A12 — C++ header hygiene** | Make public headers self-contained; remove owned `min`/`max` macros and C spelling shims, using explicit typed operations and native C++ spellings. | Compile standard C++ headers both before and after each application-facing header. Preserve operand conversions and evaluation counts, including side-effecting calls; do not blindly replace a reevaluating macro with a once-evaluated function. |
@@ -212,7 +212,7 @@ All B slots are proposed and follow A13 in order. Their changes use the same
 external behavior and file contract. Splitting a family into more PRs preserves
 this order and the same acceptance gates.
 
-| PR slot | Bounded scope | Additional completion evidence |
+| Checkpoint | Bounded scope | Additional completion evidence |
 | --- | --- | --- |
 | **B01 — private desktop resource owners** | Add RAII for owned SDL/Cairo/FreeType resources, menu/image/font storage and cleanup scopes. | Borrowed selected objects and cached/shared resources are not double-freed. Destruction, print abort, allocation failure and shutdown/restart tests pass. |
 | **B02 — dispatch and callback lifetime guards** | Use C++ guards for locks, dispatch depth, modal owner state and deferred window/control destruction. Simplify internal exception delivery only where all frames are C++. | Fault tests prove cleanup order, nested/reentrant destruction, unowned callback delivery, no post-failure commands and no hung modal pumps. Foreign C callbacks still catch exceptions before returning. |
