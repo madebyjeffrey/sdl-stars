@@ -35,3 +35,11 @@ HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept {
     catch (...) { CaptureCallbackError(hwnd); }
     return nullptr;
 }
+
+void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept {
+    try { lpfn(lpv); }
+    catch (const std::bad_alloc &) {
+        try { StarsThrowError(starsErrorMemory, 0); }
+        catch (...) { CaptureCallbackError(hwnd); }
+    } catch (...) { CaptureCallbackError(hwnd); }
+}

@@ -253,7 +253,7 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
 // Abort the enclosing modal operation, allowing its C cleanup to run before
 // C++ rethrows at the game boundary. GetMessage stops modal and outer pumps
 // for unowned failures, including thread timers without an HWND.
-void CompatAbortCallback(HWND hwnd) {
+void CompatAbortCallback(HWND hwnd) noexcept {
     HWND lp;
     while ((lp = LpCompatWindow(hwnd)) != NULL) {
         if (lp->fDialog && lp->fModal) { EndDialog(hwnd, 0); return; }

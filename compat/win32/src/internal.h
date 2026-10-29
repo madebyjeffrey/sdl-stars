@@ -14,7 +14,7 @@ decltype(MessageBoxA) STARS_TEST_IMPL_MessageBoxA;
 #if defined(STARS_TEST_IMPL_TrackPopupMenu) && !defined(STARS_WIN_CALLS_H)
 decltype(TrackPopupMenu) STARS_TEST_IMPL_TrackPopupMenu;
 #endif
-void CompatAbortCallback(HWND hwnd);
+void CompatAbortCallback(HWND hwnd) noexcept;
 
 typedef struct COMPATPRINT COMPATPRINT;
 typedef struct COMPATASYNCPOST {
@@ -293,6 +293,7 @@ char *PszCompatFileUri(const char *pszPath);
 BOOL FCompatOpenDocument(const char *pszPath);
 
 // C++ callback thunks return errors through pending state, never through C.
+void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept;
 LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l) noexcept;
 void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) noexcept;
 HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept;

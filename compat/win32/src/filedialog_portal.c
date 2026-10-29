@@ -182,7 +182,7 @@ static BOOL FPumpChooser(HWND hwndOwner) {
     }
     return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
-int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
     DBusConnection *lpBus = NULL;

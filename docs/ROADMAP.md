@@ -11,7 +11,11 @@ scoped unlocking, nested dispatch and primary-failure cleanup tests pass.
 The pending-error service also preserves an exception already unwinding rather
 than storing a later callback failure from its cleanup. Core and real-window
 fault cases distinguish this from standalone cleanup failure delivery.
-Modal and reentrant control lifetime guards remain in progress.
+Native file selection and resource-backed modal dialogs now scope window,
+owner/focus and chooser-buffer cleanup. A chooser-adapter fault reproduces the
+old disabled-owner/stale-counter state and verifies restoration, cancellation
+and cleanup-failure delivery without opening a native picker.
+Remaining modal/menu and reentrant control lifetime guards are in progress.
 
 ## C++ migration
 

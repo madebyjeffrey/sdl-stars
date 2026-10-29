@@ -1,5 +1,6 @@
 /* Stars' wildcard filters need a browser independent of SDL's extension-only API. */
 #include "filedialog_backend.h"
+#include "cleanup.h"
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -397,14 +398,23 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     COMPATFILEDIALOG dlg = {};
     LPCSTR psz, pszPattern;
-    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus;
+    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL;
     char szInitial[PATH_MAX], szCwd[PATH_MAX], szPath[PATH_MAX], *pch;
     RECT rc, work;
     MSG msg;
     int i, iRet, cx, cy;
-    BOOL fEnable = FALSE, fRet = FALSE, fNative = FALSE;
+    BOOL fEnable = FALSE, fRet = FALSE, fNative = FALSE, fRestoreFocus = FALSE;
     DWORD grFlagsAllowed = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT |
                     OFN_NOREADONLYRETURN | OFN_NOCHANGEDIR | OFN_EXPLORER | OFN_EXTENSIONDIFFERENT;
+    COMPATCLEANUPSCOPE freeBuffers([&] {
+        FreeFileEntries(&dlg);
+        for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
+        for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
+    });
+    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus); });
+    COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
+    COMPATCLEANUPSCOPE restoreOwner([&] { if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE); });
+    COMPATCLEANUPSCOPE destroyPicker([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); });
     dwDialogError = 0;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = CDERR_STRUCTSIZE; return FALSE; }
     if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
@@ -445,7 +455,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         }
     }
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
-    hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL;
+    hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL; fRestoreFocus = TRUE;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
@@ -536,14 +546,12 @@ selected:
         fRet = TRUE;
     }
 restore:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
-    if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
-    if (fNative && IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--;
-    if (IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+    destroyPicker.Close();
+    restoreOwner.Close();
+    nativeCounter.Close();
+    restoreFocus.Close();
 done:
-    FreeFileEntries(&dlg);
-    for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
-    for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
+    freeBuffers.Close();
     dwDialogError = dlg.dwError;
     return fRet;
 }

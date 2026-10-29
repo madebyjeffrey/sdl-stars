@@ -15,7 +15,7 @@ static int FPumpWindowsChooser(void *lpv) {
     return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
 
-int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
     WINDOWSFILEFILTER *rg = NULL;

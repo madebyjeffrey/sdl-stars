@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FFileDialog` restores its owner, focus and native-dialog counter and frees
+  chooser buffers when a C++ adapter throws. Manual cleanup previously left the
+  owner disabled with a native dialog still counted after unwinding. Callback
+  failures during cleanup preserve the primary error.
+
 - `StarsCapturePendingError` keeps a C++ exception already unwinding as the
   primary failure. A callback failing during cleanup previously left a secondary
   error pending after the primary had been caught. Standalone cleanup failures
