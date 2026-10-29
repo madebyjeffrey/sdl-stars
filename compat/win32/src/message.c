@@ -3,6 +3,7 @@
  * Stars adaptation: real filters, synchronous sends and no fallback window routing.
  */
 #include "internal.h"
+#include <stars_compat.h>
 #include <stdlib.h>
 
 typedef struct COMPATMESSAGE {
@@ -22,7 +23,7 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd)))
         return FALSE;
-    lpmsg = calloc(1, sizeof(*lpmsg));
+    lpmsg = (COMPATMESSAGE *)(calloc(1, sizeof(*lpmsg)));
     if (!lpmsg) {
         SDL_SetError("Win32 message allocation failed");
         return FALSE;
@@ -42,10 +43,10 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     COMPATASYNCPOST *lpPost;
-    SDL_Event event = {0};
+    SDL_Event event = {};
 
     if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
-    lpPost = malloc(sizeof(*lpPost));
+    lpPost = (COMPATASYNCPOST *)(malloc(sizeof(*lpPost)));
     if (!lpPost) return FALSE;
     lpPost->hwnd = hwnd;
     lpPost->msg = msg;
@@ -294,7 +295,7 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     case WM_WINDOWPOSCHANGING: {
         WINDOWPOS *lpwp = (WINDOWPOS *)lParam;
-        MINMAXINFO mmi = {0};
+        MINMAXINFO mmi = {};
         const SDL_DisplayMode *lpMode;
         if (!lpwp || (lpwp->flags & SWP_NOSIZE) || lpwin->hwndParent ||
             ((lpwin->dwStyle & WS_POPUP) && !(lpwin->dwStyle & WS_THICKFRAME))) return 0;

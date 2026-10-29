@@ -1,6 +1,6 @@
 include("${CMAKE_CURRENT_LIST_DIR}/dependencies/sdl3.cmake")
 if(APPLE)
-    enable_language(OBJC OBJCXX)
+    enable_language(OBJCXX)
 endif()
 add_subdirectory(compat/win32)
 include("${CMAKE_CURRENT_LIST_DIR}/help-guide.cmake")
@@ -106,7 +106,7 @@ set_tests_properties(win32_sdl_retina PROPERTIES LABELS "compat"
 set_tests_properties(win32_sdl_paint_batch PROPERTIES LABELS "compat"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 if(APPLE)
-    enable_language(OBJC OBJCXX)
+    enable_language(OBJCXX)
     target_sources(stars-compat-client-popup PRIVATE tests/compat/win32_client_popup_cocoa.m)
     set_source_files_properties(tests/compat/win32_client_popup_cocoa.m PROPERTIES LANGUAGE OBJCXX COMPILE_OPTIONS "-fobjc-arc")
     target_sources(stars-compat-client-quit PRIVATE tests/compat/win32_client_quit_cocoa.m)

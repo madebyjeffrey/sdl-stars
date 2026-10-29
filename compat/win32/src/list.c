@@ -106,7 +106,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     if (lp->cItem == lp->cAlloc) {
         cAlloc = lp->cAlloc > (INT_MAX - 16) / 2 ? INT_MAX : lp->cAlloc * 2 + 16;
         if ((size_t)cAlloc > SIZE_MAX / sizeof(*rg)) { SDL_free(pszNew); return LB_ERRSPACE; }
-        rg = SDL_realloc(lp->rgitem, (size_t)cAlloc * sizeof(*rg));
+        rg = (COMPATLISTITEM *)(SDL_realloc(lp->rgitem, (size_t)cAlloc * sizeof(*rg)));
         if (!rg) { SDL_free(pszNew); return LB_ERRSPACE; }
         lp->rgitem = rg; lp->cAlloc = cAlloc;
     }
@@ -187,7 +187,7 @@ static void DragList(HWND hwnd, LPARAM l) {
 }
 static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, const RECT *lprcItem) {
     COMPATLIST *lp = hwnd->lplist;
-    DRAWITEMSTRUCT ds = {0};
+    DRAWITEMSTRUCT ds = {};
     RECT rc;
     BOOL fItem = i >= 0 && i < lp->cItem;
     ds.CtlType = ODT_LISTBOX; ds.CtlID = (UINT)hwnd->idChild;
@@ -311,7 +311,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (!lpwin) return 0;
     lp = lpwin->lplist;
     if (msg == WM_NCCREATE) {
-        lp = SDL_calloc(1, sizeof(*lp)); if (!lp) return FALSE;
+        lp = (COMPATLIST *)(SDL_calloc(1, sizeof(*lp))); if (!lp) return FALSE;
         lp->iSel = lp->iAnchor = -1; lp->cyItem = 16; lpwin->lplist = lp; lpwin->iControl = 4;
         lp->fScrollV = (lpwin->dwStyle & WS_VSCROLL) != 0; lp->fScrollH = (lpwin->dwStyle & WS_HSCROLL) != 0;
         return TRUE;
@@ -447,7 +447,7 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if ((int16_t)HIWORD(l) < 0) return 0;
         SDL_free(lp->rgSelectedDrag); lp->rgSelectedDrag = NULL; lp->cSelectedDrag = 0;
         if ((lpwin->dwStyle & LBS_EXTENDEDSEL) && (w & MK_CONTROL) && lp->cItem != 0) {
-            lp->rgSelectedDrag = SDL_malloc((size_t)lp->cItem);
+            lp->rgSelectedDrag = (BYTE *)(SDL_malloc((size_t)lp->cItem));
             if (lp->rgSelectedDrag) {
                 lp->cSelectedDrag = lp->cItem;
                 for (j = 0; j < lp->cItem; j++) lp->rgSelectedDrag[j] = (BYTE)lp->rgitem[j].fSelected;

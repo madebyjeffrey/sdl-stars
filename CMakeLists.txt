@@ -14,6 +14,9 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_OBJCXX_STANDARD 20)
+set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+set(CMAKE_OBJCXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop client and wrapper" ON)
@@ -72,6 +75,17 @@ set_source_files_properties(compat/win32/src/rect.c compat/win32/src/time.c
     compat/win32/src/audio.c PROPERTIES LANGUAGE CXX)
 
 set_source_files_properties(compat/win32/src/paint.c compat/win32/src/dib.c compat/win32/src/image.c compat/win32/src/font.c compat/win32/src/print.c compat/win32/src/resource.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/edit.c compat/win32/src/list.c compat/win32/src/combo.c compat/win32/src/control.c compat/win32/src/toolbar.c compat/win32/src/scroll.c compat/win32/src/menu.c compat/win32/src/accelerator.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/window.c compat/win32/src/message.c compat/win32/src/input.c compat/win32/src/timer.c compat/win32/src/dialog.c compat/win32/src/dialog_template.c compat/win32/src/inspect.c compat/win32/src/session.c compat/win32/src/help.c compat/win32/src/messagebox.c compat/win32/src/filedialog.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/entry.c compat/win32/src/filedialog_cocoa.c
+    compat/win32/src/filedialog_windows.c compat/win32/src/filedialog_windows_sdk.c
+    compat/win32/src/filedialog_portal.c PROPERTIES LANGUAGE CXX)
+if(APPLE)
+    set_source_files_properties(compat/win32/src/filedialog_cocoa.m PROPERTIES LANGUAGE OBJCXX)
+endif()
 
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)

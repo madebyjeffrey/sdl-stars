@@ -36,7 +36,7 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     }
     lp = LpTimer(hwnd, id);
     if (!lp) {
-        lp = calloc(1, sizeof(*lp));
+        lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));
         if (!lp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {

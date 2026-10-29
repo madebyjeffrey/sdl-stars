@@ -26,7 +26,7 @@ static void NotifyCombo(HWND hwnd, UINT code) {
 static char *PszComboItem(HWND hwnd, int i) {
     LRESULT cch = CompatListProc(hwnd, LB_GETTEXTLEN, i, 0);
     char *psz;
-    if (cch < 0 || (UINT_PTR)cch >= SIZE_MAX || !(psz = SDL_malloc((size_t)cch + 1))) return NULL;
+    if (cch < 0 || (UINT_PTR)cch >= SIZE_MAX || !(psz = (char *)(SDL_malloc((size_t)cch + 1)))) return NULL;
     if (CompatListProc(hwnd, LB_GETTEXT, i, (LPARAM)psz) < 0) { SDL_free(psz); return NULL; }
     return psz;
 }
@@ -152,7 +152,7 @@ static void ComboFont(HWND hwnd) {
 }
 static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSelection, BOOL fSelected) {
     COMPATCOMBO *lp = hwnd->lpcombo;
-    DRAWITEMSTRUCT ds = {0};
+    DRAWITEMSTRUCT ds = {};
     RECT rc = *lprc;
     char *psz;
     HBRUSH hbr;
@@ -266,13 +266,13 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     LONG_PTR fn;
     WNDPROC lpfn;
     char *psz;
-    MEASUREITEMSTRUCT ms = {0};
+    MEASUREITEMSTRUCT ms = {};
     HWND hwndEdit;
     if (!lpwin) return 0;
     lp = lpwin->lpcombo;
     if (msg == WM_NCCREATE) {
         if (!CompatListProc(hwnd, msg, w, l)) return FALSE;
-        lp = SDL_calloc(1, sizeof(*lp));
+        lp = (COMPATCOMBO *)(SDL_calloc(1, sizeof(*lp)));
         if (!lp) { CompatListProc(hwnd, WM_NCDESTROY, 0, 0); return FALSE; }
         lp->cyField = 16; lp->cyDrop = 100; lp->iSave = -1;
         lpwin->lpcombo = lp; lpwin->iControl = 6; return TRUE;

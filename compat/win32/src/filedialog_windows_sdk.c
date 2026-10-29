@@ -44,7 +44,7 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
                        const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                        int *lpiFilter, char *pszPath, size_t cbPath,
                        int (*pfnPump)(void *), void *lpv) {
-    OPENFILENAMEW of = {0};
+    OPENFILENAMEW of = {};
     WINDOWSCHOOSER chooser = {pfnPump, lpv, 0};
     wchar_t *pwszTitle = NULL, *pwszFolder = NULL, *pwszName = NULL, *pwszFilter = NULL;
     wchar_t *pwszFile = NULL, *pwszCwd = NULL, *pwszLabel, *pwszPattern;

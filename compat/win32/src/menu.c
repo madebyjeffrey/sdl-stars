@@ -55,7 +55,7 @@ static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
     return TRUE;
 }
 HMENU WINAPI CreatePopupMenu(void) {
-    HMENU lp = calloc(1, sizeof(*lp));
+    HMENU lp = (HMENU)(calloc(1, sizeof(*lp)));
     if (!lp) return NULL;
     lp->fAlive = TRUE; lp->hnext = hmenus; hmenus = lp;
     return lp;
@@ -76,7 +76,7 @@ UINT WINAPI GetMenuItemID(HMENU hmenu, int i) {
 }
 BOOL WINAPI InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = NULL, hp;
-    COMPATMENUITEM item = {0}, *rg;
+    COMPATMENUITEM item = {}, *rg;
     int i, cDepth = 0;
     if (!lp || (flags & ~(MF_BYPOSITION | MF_POPUP | MF_SEPARATOR | MF_CHECKED | MF_GRAYED | MF_DISABLED)))
         return FALSE;
@@ -99,7 +99,7 @@ BOOL WINAPI InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
     if (lp->citem == INT_MAX || (size_t)lp->citem + 1 > SIZE_MAX / sizeof(*rg)) {
         SDL_free(item.psz); return FALSE;
     }
-    rg = realloc(lp->rgitem, ((size_t)lp->citem + 1) * sizeof(*rg));
+    rg = (COMPATMENUITEM *)(realloc(lp->rgitem, ((size_t)lp->citem + 1) * sizeof(*rg)));
     if (!rg) { SDL_free(item.psz); return FALSE; }
     item.id = id; item.flags = flags & ~MF_BYPOSITION; item.hsub = hsub;
     lp->rgitem = rg;
@@ -208,13 +208,13 @@ int CyCompatMenuBar(HWND hwnd) {
     HDC hdc;
     HGDIOBJ hfont;
     RECT *rgrc, rc;
-    TEXTMETRICA tm = {0};
+    TEXTMETRICA tm = {};
     int cx, cy, x = 0, y = 0, dx, i;
 
     if (!hwnd || hwnd->hwndParent || !(lp = LpMenu(hwnd->hmenu)) || lp->citem == 0) return 0;
     if (!SDL_GetWindowSize(hwnd->lpWindow, &cx, &cy)) return 0;
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
-    rgrc = calloc((size_t)lp->citem, sizeof(*rgrc));
+    rgrc = (RECT *)(calloc((size_t)lp->citem, sizeof(*rgrc)));
     if (!rgrc) return 0;
     hdc = GetDC(NULL);
     if (!hdc) { free(rgrc); return 0; }
@@ -384,7 +384,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
         }
         SetTextColor(hdc, GetSysColor(fDisabled ? COLOR_GRAYTEXT : fSelected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT));
         hpen = CreatePen(PS_SOLID, 1, GetSysColor(fDisabled ? COLOR_GRAYTEXT : fSelected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT));
-        hpenOld = SelectObject(hdc, hpen);
+        hpenOld = (HPEN)(SelectObject(hdc, hpen));
         if (lp->rgitem[i].flags & MF_CHECKED) {
             MoveToEx(hdc, rc.left + 5, y, NULL); LineTo(hdc, rc.left + 8, y + 3); LineTo(hdc, rc.left + 14, y - 4);
         }
@@ -407,7 +407,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
 static LRESULT CALLBACK PopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     COMPATPOPUP *lppop = (COMPATPOPUP *)GetWindowLongPtrA(hwnd, 0);
     if (msg == WM_NCCREATE) {
-        lppop = ((CREATESTRUCTA *)l)->lpCreateParams;
+        lppop = (COMPATPOPUP *)(((CREATESTRUCTA *)l)->lpCreateParams);
         SetWindowLongPtrA(hwnd, 0, (LONG_PTR)lppop);
     }
     if (lppop && msg == WM_PAINT) { PopupPaint(lppop); return 0; }
@@ -430,13 +430,13 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     HDC hdc;
     HGDIOBJ hfont;
     SIZE size;
-    TEXTMETRICA tm = {0};
+    TEXTMETRICA tm = {};
     SDL_Rect bounds;
     SDL_Point point = {x, y};
     int i, cyRow, cx = 80, cy = 2, dy;
     RECT rcParent;
     int64_t xWide = x, yWide = y;
-    WNDCLASSA wc = {0};
+    WNDCLASSA wc = {};
     if (lpt->cLevel >= 64) return FALSE;
     if (!(lpt->flags & TPM_NONOTIFY))
         SendMessageA(lpt->hwndOwner, WM_INITMENUPOPUP, (WPARAM)hmenu, MAKELPARAM(iParent, FALSE));
@@ -445,7 +445,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     lppop = &lpt->rgpopup[lpt->cLevel];
     memset(lppop, 0, sizeof(*lppop));
     lppop->lptrack = lpt; lppop->hmenu = lp; lppop->iSel = -1; lppop->cItem = lp->citem;
-    lppop->rgrc = calloc((size_t)lp->citem, sizeof(RECT));
+    lppop->rgrc = (RECT *)(calloc((size_t)lp->citem, sizeof(RECT)));
     if (!lppop->rgrc) return FALSE;
     hdc = GetDC(NULL);
     if (!hdc) { free(lppop->rgrc); lppop->rgrc = NULL; return FALSE; }
@@ -673,7 +673,7 @@ static BOOL FMenuTracked(HMENU hmenu) {
     return FALSE;
 }
 static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc, HMENU hbar, int iBar, BOOL fKeyboard) {
-    COMPATTRACK track = {0};
+    COMPATTRACK track = {};
     HWND hwndCapture;
     MSG msg;
     int result;

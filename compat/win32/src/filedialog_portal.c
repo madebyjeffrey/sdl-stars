@@ -199,7 +199,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     char *pszTitleUtf = NULL, *pszRequest = NULL, *pszSender = NULL, *pszWaylandParent = NULL;
     Uint64 nsStart;
     int iResult = -1;
-    PORTALRESPONSES responses = {0};
+    PORTALRESPONSES responses = {};
     int i;
     BOOL fFilter = FALSE;
     Uint64 msOwnerCheck = 0;

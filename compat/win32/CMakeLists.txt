@@ -21,7 +21,7 @@ file(GLOB STARS_BITMAP_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/bitmap
 set(STARS_BITMAP_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(STARS_BITMAP_GENERATED "${STARS_BITMAP_GENERATED}" PARENT_SCOPE)
 add_custom_command(
-    OUTPUT "${STARS_BITMAP_GENERATED}/bitmap_resources.c" "${STARS_BITMAP_GENERATED}/bitmap_manifest.h"
+    OUTPUT "${STARS_BITMAP_GENERATED}/bitmap_resources.cpp" "${STARS_BITMAP_GENERATED}/bitmap_manifest.h"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/resourcegen.py"
         "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS resourcegen.py "${PROJECT_SOURCE_DIR}/res/stars.rc"
@@ -35,15 +35,15 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.zingl" "${CMAKE_BINARY_DIR}/
 configure_file("${PROJECT_SOURCE_DIR}/res/fonts/LICENSE" "${CMAKE_BINARY_DIR}/bin/LICENSE.fonts" COPYONLY)
 configure_file("${PROJECT_SOURCE_DIR}/res/fonts/ORIGIN.json" "${CMAKE_BINARY_DIR}/bin/FONTS-ORIGIN.json" COPYONLY)
 add_custom_command(
-    OUTPUT "${STARS_BITMAP_GENERATED}/font_resources.c"
+    OUTPUT "${STARS_BITMAP_GENERATED}/font_resources.cpp"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/fontgen.py"
-        "${PROJECT_SOURCE_DIR}/res/fonts" "${STARS_BITMAP_GENERATED}/font_resources.c"
+        "${PROJECT_SOURCE_DIR}/res/fonts" "${STARS_BITMAP_GENERATED}/font_resources.cpp"
     DEPENDS fontgen.py "${PROJECT_SOURCE_DIR}/res/fonts/ORIGIN.json" ${STARS_FONT_FILES}
     VERBATIM)
 
 file(GLOB STARS_CUSTOM_RESOURCE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/data/*.bin")
 add_custom_command(
-    OUTPUT "${STARS_BITMAP_GENERATED}/ui_resources.c" "${STARS_BITMAP_GENERATED}/ui_manifest.h"
+    OUTPUT "${STARS_BITMAP_GENERATED}/ui_resources.cpp" "${STARS_BITMAP_GENERATED}/ui_manifest.h"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/uigen.py"
         "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS uigen.py "${PROJECT_SOURCE_DIR}/res/stars.rc" "${PROJECT_SOURCE_DIR}/res/resource.h"
@@ -52,7 +52,7 @@ add_custom_command(
 
 file(GLOB STARS_IMAGE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/icons/*.ico" "${PROJECT_SOURCE_DIR}/res/cursors/*.cur")
 add_custom_command(
-    OUTPUT "${STARS_BITMAP_GENERATED}/image_resources.c" "${STARS_BITMAP_GENERATED}/image_manifest.h"
+    OUTPUT "${STARS_BITMAP_GENERATED}/image_resources.cpp" "${STARS_BITMAP_GENERATED}/image_manifest.h"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/imagegen.py" "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS imagegen.py "${PROJECT_SOURCE_DIR}/res/stars.rc" "${PROJECT_SOURCE_DIR}/res/resource.h"
         "${PROJECT_SOURCE_DIR}/res/icons/stars-app.png" "${PROJECT_SOURCE_DIR}/res/icons/stars-app-macos.png" ${STARS_IMAGE_FILES}
@@ -74,8 +74,15 @@ set_source_files_properties(src/rect.c src/time.c src/system.c src/services.c
 
 set_source_files_properties(src/paint.c src/dib.c src/image.c src/font.c src/print.c src/resource.c PROPERTIES LANGUAGE CXX)
 
+set_source_files_properties(src/edit.c src/list.c src/combo.c src/control.c src/toolbar.c src/scroll.c src/menu.c src/accelerator.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(src/window.c src/message.c src/input.c src/timer.c src/dialog.c src/dialog_template.c src/inspect.c src/session.c src/help.c src/messagebox.c src/filedialog.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(src/filedialog_cocoa.c src/filedialog_windows.c
+    src/filedialog_windows_sdk.c src/filedialog_portal.c PROPERTIES LANGUAGE CXX)
+
 # Only adapted implementations are built, never the upstream reference copy.
-add_library(stars_win32 STATIC src/callback.cpp src/toolbar.c src/inspect.c src/session.c src/help.c src/document.c src/print.c src/filedialog.c src/audio.c src/messagebox.c src/combo.c src/dialog.c src/dialog_template.c src/image.c src/accelerator.c src/menu.c src/rect.c src/time.c src/window.c src/message.c src/input.c src/control.c src/edit.c src/list.c src/paint.c src/dib.c src/resource.c src/memory.c src/timer.c src/services.c src/system.c src/scroll.c src/profile.c src/file.c src/font.c "${STARS_BITMAP_GENERATED}/font_resources.c" "${STARS_BITMAP_GENERATED}/bitmap_resources.c" "${STARS_BITMAP_GENERATED}/ui_resources.c" "${STARS_BITMAP_GENERATED}/image_resources.c")
+add_library(stars_win32 STATIC src/callback.cpp src/toolbar.c src/inspect.c src/session.c src/help.c src/document.c src/print.c src/filedialog.c src/audio.c src/messagebox.c src/combo.c src/dialog.c src/dialog_template.c src/image.c src/accelerator.c src/menu.c src/rect.c src/time.c src/window.c src/message.c src/input.c src/control.c src/edit.c src/list.c src/paint.c src/dib.c src/resource.c src/memory.c src/timer.c src/services.c src/system.c src/scroll.c src/profile.c src/file.c src/font.c "${STARS_BITMAP_GENERATED}/font_resources.cpp" "${STARS_BITMAP_GENERATED}/bitmap_resources.cpp" "${STARS_BITMAP_GENERATED}/ui_resources.cpp" "${STARS_BITMAP_GENERATED}/image_resources.cpp")
 target_link_libraries(stars_win32 PUBLIC stars_win32_headers stars_sanitizers stars_encoding stars_errors stars_filesystem ZLIB::ZLIB
     PRIVATE SDL3::SDL3 Freetype::Freetype PkgConfig::STARS_FONTCONFIG PkgConfig::STARS_CAIRO m)
 option(STARS_NATIVE_FILE_DIALOGS "Use platform-native file selection" ON)
@@ -85,9 +92,9 @@ if(STARS_NATIVE_FILE_DIALOGS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(stars_win32 PRIVATE PkgConfig::STARS_DBUS)
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_PORTAL=1)
 elseif(STARS_NATIVE_FILE_DIALOGS AND APPLE)
-    enable_language(OBJC)
+    enable_language(OBJCXX)
     target_sources(stars_win32 PRIVATE src/filedialog_cocoa.c src/filedialog_cocoa.m)
-    set_source_files_properties(src/filedialog_cocoa.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc;-fblocks")
+    set_source_files_properties(src/filedialog_cocoa.m PROPERTIES LANGUAGE OBJCXX COMPILE_OPTIONS "-fobjc-arc;-fblocks")
     target_link_libraries(stars_win32 PRIVATE "-framework AppKit")
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_COCOA=1)
 elseif(STARS_NATIVE_FILE_DIALOGS AND WIN32)

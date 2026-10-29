@@ -47,7 +47,7 @@ BOOL WINAPI CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
     int c = 0, i = 0, id;
     if (!LpCompatWindow(hwnd) || idFirst > idLast) return FALSE;
     for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = GetWindow(lp, GW_HWNDNEXT)) c++;
-    rghwnd = calloc(c ? (size_t)c : 1, sizeof(*rghwnd));
+    rghwnd = (HWND *)(calloc(c ? (size_t)c : 1, sizeof(*rghwnd)));
     if (!rghwnd) return FALSE;
     for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = GetWindow(lp, GW_HWNDNEXT)) rghwnd[i++] = lp;
     for (i = 0; i < c; i++) {
@@ -337,7 +337,7 @@ static LRESULT CALLBACK StaticProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 BOOL FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
-    WNDCLASSA wc = {0};
+    WNDCLASSA wc = {};
     if ((UINT_PTR)psz <= UINT16_MAX) return FALSE;
     if (SDL_strcasecmp(psz, "Button") == 0) { wc.lpszClassName = "Button"; wc.lpfnWndProc = ButtonProc; wc.style = CS_DBLCLKS; }
     else if (SDL_strcasecmp(psz, "Static") == 0) { wc.lpszClassName = "Static"; wc.lpfnWndProc = StaticProc; }

@@ -1,5 +1,6 @@
 /* UTF-8 edit controls retain byte offsets at the game-to-UI boundary. */
 #include "internal.h"
+#include <stars_compat.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -130,7 +131,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         return;
     }
     if (cchBase > INT_MAX || cch > INT_MAX - cchBase) return;
-    pszNew = SDL_malloc(cchBase + cch + 1);
+    pszNew = (char *)(SDL_malloc(cchBase + cch + 1));
     if (!pszNew) { NotifyEdit(hwnd, EN_ERRSPACE); return; }
     if (fUndo && !fGroup && !(pszUndo = SDL_strdup(hwnd->pszTitle))) {
         SDL_free(pszNew); NotifyEdit(hwnd, EN_ERRSPACE); return;
@@ -194,7 +195,7 @@ static BOOL CopyEdit(HWND hwnd) {
     BOOL fOk;
     size_t cch = ichLast - ichFirst;
     if (ichFirst == ichLast || (hwnd->dwStyle & ES_PASSWORD)) return FALSE;
-    psz = SDL_malloc(cch + 1);
+    psz = (char *)(SDL_malloc(cch + 1));
     if (!psz) return FALSE;
     memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
     fOk = SDL_SetClipboardText(psz);
@@ -293,7 +294,7 @@ static UINT IEditLine(HWND hwnd, UINT ich) {
 
 static int CyEdit(HWND hwnd) {
     HDC hdc = GetDC(hwnd);
-    TEXTMETRICA tm = {0};
+    TEXTMETRICA tm = {};
     if (hdc) {
         if (hwnd->hfontControl) SelectObject(hdc, hwnd->hfontControl);
         GetTextMetricsA(hdc, &tm); ReleaseDC(hwnd, hdc);

@@ -81,7 +81,7 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
     size_t i;
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return FALSE;
-    rgNew = calloc(c + (size_t)lp->c + 1, sizeof(*rgNew));
+    rgNew = (COMPATTOOLBUTTON *)(calloc(c + (size_t)lp->c + 1, sizeof(*rgNew)));
     if (!rgNew) return FALSE;
     for (i = 0; i < c; i++) {
         rgNew[iInsert + i].btn = rgbtn[i];
@@ -131,7 +131,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     DeleteDC(hsrc); DeleteDC(hdst);
     if (lpadd->hInst) DeleteObject(hbmp);
     if (!fCopy) { if (hcopy) DeleteObject(hcopy); return -1; }
-    rgbmp = realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp));
+    rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));
     if (!rgbmp) { DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = (COMPATTOOLBITMAP){hcopy, iFirst, c}; lp->cImage += c;
@@ -201,7 +201,7 @@ static void PaintToolbar(HWND hwnd) {
 
 static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
     COMPATTOOLBAR *lp = hwnd->lptoolbar;
-    NMTOOLBARA nm = {0};
+    NMTOOLBARA nm = {};
     TBBUTTON btn;
     HWND hwndParent = hwnd->hwndParent;
     int j;
@@ -291,7 +291,7 @@ LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     TBBUTTON *lpbtn;
     if (msg == WM_NCCREATE) {
-        lp = calloc(1, sizeof(*lp)); if (!lp) return FALSE;
+        lp = (COMPATTOOLBAR *)(calloc(1, sizeof(*lp))); if (!lp) return FALSE;
         hwnd->lptoolbar = lp; hwnd->iControl = 7;
         lp->cx = 23; lp->cy = 22; lp->cxBitmap = 16; lp->cyBitmap = 15;
         lp->iDown = lp->iHot = -1; lp->cTextRows = 1;

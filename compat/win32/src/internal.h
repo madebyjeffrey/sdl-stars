@@ -10,6 +10,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if defined(STARS_TEST_IMPL_MessageBoxA) && !defined(STARS_WIN_CALLS_H)
+decltype(MessageBoxA) STARS_TEST_IMPL_MessageBoxA;
+#endif
+#if defined(STARS_TEST_IMPL_TrackPopupMenu) && !defined(STARS_WIN_CALLS_H)
+decltype(TrackPopupMenu) STARS_TEST_IMPL_TrackPopupMenu;
+#endif
+void CompatAbortCallback(HWND hwnd);
+
 typedef struct COMPATPRINT COMPATPRINT;
 typedef struct COMPATASYNCPOST {
     HWND hwnd;

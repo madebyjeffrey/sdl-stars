@@ -250,7 +250,7 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
         SDL_SetError("Win32 class already registered");
         return 0;
     }
-    lpclass = calloc(1, sizeof(*lpclass));
+    lpclass = (COMPATCLASS *)(calloc(1, sizeof(*lpclass)));
     if (!lpclass)
         return 0;
     lpclass->wc = *lpwc;
@@ -258,7 +258,7 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
     if ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX)
         lpclass->pszMenu = SDL_strdup(lpwc->lpszMenuName);
     if (lpwc->cbClsExtra != 0)
-        lpclass->rgbExtra = calloc(1, (size_t)lpwc->cbClsExtra);
+        lpclass->rgbExtra = (BYTE *)(calloc(1, (size_t)lpwc->cbClsExtra));
     if (!lpclass->pszClass || ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
         SDL_free(lpclass->pszClass);
@@ -443,11 +443,11 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     // WS_CAPTION combines WS_BORDER and WS_DLGFRAME; a border alone has no title bar.
     if ((dwStyle & WS_POPUP) && (dwStyle & WS_CAPTION) != WS_CAPTION)
         flags |= SDL_WINDOW_BORDERLESS;
-    lpwin = calloc(1, sizeof(*lpwin));
+    lpwin = (HWND)(calloc(1, sizeof(*lpwin)));
     if (!lpwin)
         return NULL;
     if (lpclass->wc.cbWndExtra != 0)
-        lpwin->rgbExtra = calloc(1, (size_t)lpclass->wc.cbWndExtra);
+        lpwin->rgbExtra = (BYTE *)(calloc(1, (size_t)lpclass->wc.cbWndExtra));
     if (lpclass->wc.cbWndExtra != 0 && !lpwin->rgbExtra) {
         free(lpwin);
         return NULL;
@@ -757,7 +757,7 @@ BOOL WINAPI IsZoomed(HWND hwnd) {
 
 BOOL WINAPI GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     HWND lpwin = LpCompatWindow(hwnd);
-    WINDOWPLACEMENT wndpl = {0};
+    WINDOWPLACEMENT wndpl = {};
     SDL_Rect rcDisplay, rcWork;
     SDL_DisplayID idDisplay;
     int64_t dx, dy, xLeft, xRight, yTop, yBottom;

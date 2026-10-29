@@ -38,7 +38,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_services.c" "#includ
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_state.c" "#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_state.c\"\n")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_timers.c" "#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_timers.c\"\n")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_toolbar.c" "#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_toolbar.c\"\n")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.c" "#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_ui_resources.c\"\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.cpp" "#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_ui_resources.cpp\"\n")
 
 # Optional SDK contract tests; these do not build a native desktop client.
 find_program(WINE_EXECUTABLE NAMES wine)
@@ -64,7 +64,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
     set(STARS_BITMAP_REFERENCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/compat-resources")
     file(GLOB STARS_BITMAP_REFERENCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/res/bitmaps/*.bmp")
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/bitmap_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/bitmap_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/bitmap_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/resourcegen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
         DEPENDS compat/win32/resourcegen.py res/stars.rc res/resource.h ${STARS_BITMAP_REFERENCE_FILES}
@@ -127,14 +127,14 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
 
 
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/ui_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/ui_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/ui_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/uigen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
         DEPENDS compat/win32/uigen.py res/stars.rc res/resource.h compat/win32/include/wincompat_constants.h
             res/data/idr_tutorial_hst.bin res/data/idr_tutorial_m1.bin res/data/idr_tutorial_m2.bin
         VERBATIM)
     add_custom_target(stars_ui_reference_manifest DEPENDS "${STARS_BITMAP_REFERENCE_DIR}/ui_manifest.h")
-    add_executable(test_win32_ui_resources_reference "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.c" res/stars.rc)
+    add_executable(test_win32_ui_resources_reference "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.cpp" res/stars.rc)
     target_link_libraries(test_win32_ui_resources_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_ui_resources_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_ui_resources_reference stars_ui_reference_manifest stars_version)
@@ -156,7 +156,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
 
     file(GLOB STARS_IMAGE_REFERENCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/res/icons/*.ico" "${CMAKE_SOURCE_DIR}/res/cursors/*.cur")
     add_custom_command(OUTPUT "${STARS_BITMAP_REFERENCE_DIR}/image_manifest.h"
-        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/image_resources.c"
+        BYPRODUCTS "${STARS_BITMAP_REFERENCE_DIR}/image_resources.cpp"
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/compat/win32/imagegen.py"
             "${CMAKE_SOURCE_DIR}" "${STARS_BITMAP_REFERENCE_DIR}"
         DEPENDS compat/win32/imagegen.py res/stars.rc res/resource.h ${STARS_IMAGE_REFERENCE_FILES}

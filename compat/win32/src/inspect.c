@@ -123,7 +123,7 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         if (lpwin->fAlive && !lpwin->fDestroying) c++;
     if (c == 0) return TRUE;
     if (c > SIZE_MAX / sizeof(*lpitem)) return FALSE;
-    lpsnap->rgWindow = SDL_calloc(c, sizeof(*lpitem));
+    lpsnap->rgWindow = (STARSCOMPATWINDOW *)(SDL_calloc(c, sizeof(*lpitem)));
     if (!lpsnap->rgWindow) return FALSE;
     lpsnap->cWindow = c;
     i = c;
@@ -222,7 +222,7 @@ static void InspectDetails(HWND hwnd) {
     FormatStyles(lp, FALSE, szStyle, sizeof(szStyle));
     FormatStyles(lp, TRUE, szExStyle, sizeof(szExStyle));
     cb = strlen(lp->pszClass) + strlen(lp->pszText) + strlen(szStyle) + strlen(szExStyle);
-    if (cb > SIZE_MAX - 640 || !(psz = SDL_malloc(cb + 640))) return;
+    if (cb > SIZE_MAX - 640 || !(psz = (char *)(SDL_malloc(cb + 640)))) return;
     snprintf(psz, cb + 640,
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
@@ -250,7 +250,7 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
         if (lp->idParent != idParent) continue;
         cb = strlen(lp->pszText);
         if (cb > (SIZE_MAX - 1) / 3) continue;
-        pszUtf = SDL_malloc(cb * 3 + 1);
+        pszUtf = (char *)(SDL_malloc(cb * 3 + 1));
         if (!pszUtf) continue;
         memcpy(pszUtf, lp->pszText, cb + 1);
         cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
@@ -265,7 +265,7 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
 }
 
 static BOOL RefreshInspector(HWND hwnd) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     HWND hwndList = GetDlgItem(hwnd, 1);
     if (!StarsCompatCaptureHierarchy(&snap)) return FALSE;
     SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
@@ -316,7 +316,7 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 
 HWND StarsCompatShowInspector(void) {
     HWND hwnd;
-    WNDCLASSA wc = {0};
+    WNDCLASSA wc = {};
     if (!SDL_IsMainThread()) return NULL;
     hwnd = StarsCompatResolveWindow(idInspector);
     if (!hwnd) {

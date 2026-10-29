@@ -257,7 +257,7 @@ static UINT VkSideFromScancode(SDL_Scancode sc) {
 
 SHORT WINAPI GetAsyncKeyState(int vk) {
     const bool *rgf;
-    BYTE rgb[256] = {0};
+    BYTE rgb[256] = {};
     SDL_Keymod mod;
     SDL_MouseButtonFlags buttons;
     int cKeys, i;
@@ -398,7 +398,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     }
     if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
-        COMPATASYNCPOST *lpPost = lpevent->user.data1;
+        COMPATASYNCPOST *lpPost = (COMPATASYNCPOST *)(lpevent->user.data1);
         if (lpPost) {
             PostMessageA(lpPost->hwnd, lpPost->msg, lpPost->wParam, lpPost->lParam);
             free(lpPost);

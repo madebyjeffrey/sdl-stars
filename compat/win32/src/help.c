@@ -59,7 +59,7 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     cch = snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
     if (cch < 0 || (size_t)cch >= sizeof(szSource)) goto fail;
     lpSource = PfNativeOpen(szSource, "rb");
-    pszBody = malloc((size_t)STARS_HELP_BUNDLE_SIZE + 1);
+    pszBody = (char *)(malloc((size_t)STARS_HELP_BUNDLE_SIZE + 1));
     if (!lpSource || !pszBody) goto fail;
     cbRead = CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;

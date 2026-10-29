@@ -170,13 +170,13 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
 }
 
 int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
-    COMPATMSGBOX box = {0};
+    COMPATMSGBOX box = {};
     HWND hwnd = NULL, hwndRoot, hwndFocus, lpwin, hwndButton;
     HWND *rghwnd = NULL;
     size_t cDisabled = 0, iDisabled, cTop = 0;
     HDC hdc;
     HGDIOBJ hold;
-    LOGFONTA lf = {0};
+    LOGFONTA lf = {};
     RECT rcWork, rc, rcText;
     MSG msg;
     int i, result, value = 0, cx, cy, cxButtons, xText, x, y, cyMax;
@@ -203,7 +203,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
         for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT)) cTop++;
     } else if (hwndRoot) cTop = 1;
     if (cTop) {
-        rghwnd = SDL_calloc(cTop, sizeof(*rghwnd));
+        rghwnd = (HWND *)(SDL_calloc(cTop, sizeof(*rghwnd)));
         if (!rghwnd) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         if (hwndRoot) { if (IsWindowEnabled(hwndRoot)) rghwnd[cDisabled++] = hwndRoot; }
         else for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT))
