@@ -40,6 +40,36 @@ jobs:
           cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
 
+  resource-sanitizers:
+    name: Resource ownership (ASan/UBSan/LSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install SDL build and test dependencies
+        run: |
+          sudo apt-get update
+          # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
+            libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libvulkan-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            xvfb xauth openbox x11-utils poppler-utils cups-client
+      - name: Qualify native resource ownership with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: |
+          cmake --preset sdl-sanitize
+          cmake --build --preset sdl-sanitize --target stars-compat-images stars-compat-font stars-compat-print stars-resource-faults --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^win32_(images|font|print|print_pdf|sdl_resource_faults)$' --output-on-failure
+
   source-witnesses:
     name: Source witnesses (C++20)
     runs-on: ubuntu-24.04

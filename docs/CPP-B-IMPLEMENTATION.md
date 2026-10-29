@@ -56,3 +56,26 @@ Independent frozen C/SDK inputs and native regression fixtures remain unchanged.
 The baseline contract is 519 files through turn 150 for nine scenarios, with
 25 accepted unused-storage warnings recorded for milestone A. Report actual
 results, the first unexpected difference and skipped inputs for each B batch.
+
+## Native macOS leak verification
+
+The user requested `/usr/bin/leaks`. It runs with `--atExit` against native,
+uninstrumented image, font, print and allocation-failure harnesses. CTest
+registers all four checks on macOS, using separate print output and serial runs.
+The native tool enables allocation stack logging and returns failure on leaks;
+no allocation-content dumps or exclusions are used.
+
+Initial results: image, print and allocation-failure harnesses had zero leaked
+bytes. The font harness found three allocations totaling 416 bytes through
+`FcDefaultSubstitute` initializing a second Fontconfig configuration. On
+Fontconfig 2.17+, default substitution now uses the wrapper's existing owned
+configuration through `FcConfigSetDefaultSubstitute`; older versions retain
+their existing entry point. The [Fontconfig reference](https://fontconfig.pages.freedesktop.org/fontconfig/fontconfig-devel/)
+records this explicit-configuration interface and its version. Repeating the
+font harness reports zero leaked bytes, and all five functional ownership
+contracts pass.
+
+macOS ASan/UBSan pass the portable resource contracts. Its runtime explicitly
+rejects `detect_leaks=1`, so native `leaks` is a separate macOS gate. Linux CI
+retains ASan/UBSan with leak detection enabled. No global sanitizer or leak
+suppression is used to hide an application allocation.

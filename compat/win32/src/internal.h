@@ -158,13 +158,17 @@ extern const COMPATRESOURCE rgCompatUIResources[];
 extern const size_t cCompatUIResources;
 extern const COMPATRESOURCE rgCompatImageResources[];
 extern const size_t cCompatImageResources;
+// Keep resource member types identical when a test substitutes an SDL call.
+void FreeCompatSurface(SDL_Surface *lp) noexcept;
+void FreeCompatCursor(SDL_Cursor *lp) noexcept;
+
 typedef struct COMPATIMAGE {
     BOOL fAlive, fCursor, fShared, fMono, fInvert, fAppIcon;
     // Reverse member destruction releases the cursor before its image storage.
     NATIVEARRAYOWNER<BYTE, std::free> rgbAnd;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpXor;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpXor;
     UINT xHot, yHot, idSystem;
-    NATIVEOWNER<SDL_Cursor, SDL_DestroyCursor> lpCursor;
+    NATIVEOWNER<SDL_Cursor, FreeCompatCursor> lpCursor;
     HRSRC hrsrc;
     struct COMPATIMAGE *lpNext;
 } COMPATIMAGE;

@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void FreeCompatSurface(SDL_Surface *lp) noexcept { SDL_DestroySurface(lp); }
+void FreeCompatCursor(SDL_Cursor *lp) noexcept { SDL_DestroyCursor(lp); }
+
 static COMPATIMAGE *lpImages, *lpCursor;
 static HWND hwndMouse;
 static POINT ptMouse;

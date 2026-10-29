@@ -24,11 +24,11 @@ if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin|Wind
     message(FATAL_ERROR "The SDL compatibility targets require Linux, macOS or Windows")
 endif()
 
-option(STARS_ENABLE_SANITIZERS "Instrument native Linux code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(STARS_ENABLE_SANITIZERS "Instrument native Linux/macOS code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 add_library(stars_sanitizers INTERFACE)
 if(STARS_ENABLE_SANITIZERS)
-    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-        message(FATAL_ERROR "STARS_ENABLE_SANITIZERS requires a native Linux GCC or Clang compiler")
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$" OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "STARS_ENABLE_SANITIZERS requires a native Linux/macOS GCC or Clang compiler")
     endif()
     target_compile_options(stars_sanitizers INTERFACE
         -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
