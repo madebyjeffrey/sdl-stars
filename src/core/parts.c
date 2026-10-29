@@ -388,7 +388,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailRestricted;
         }
     }
-    return idPlayer == iplrNone ? mdPartAvailAvailable : TechStatus(ppart->pcom->rgTech);
+    return idPlayer == iplrNone ? mdPartAvailAvailable : TechStatus((char *)ppart->pcom->rgTech);
 }
 
 void LookupBestPlanetaryScanner(PART *ppart) {

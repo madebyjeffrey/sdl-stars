@@ -631,8 +631,8 @@ void DoBattles(int16_t fPostMovement) {
     uint16_t rggrfAttack[16];
 
     LinkFleets(fPostMovement);
-    vrgtok = LpAlloc(256 * sizeof(TOK), htMisc);
-    vlpwtCargo = LpAlloc(0x200, htMisc);
+    vrgtok = (TOK *)LpAlloc(256 * sizeof(TOK), htMisc);
+    vlpwtCargo = (uint16_t *)LpAlloc(0x200, htMisc);
     for (ifl = 0; ifl < cFleet; ifl++) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
@@ -2286,7 +2286,7 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
             penvMem = penvMemSav;
             return -1;
         }
-        lpbBattleLog = LpAlloc(0xffc8, htBattle);
+        lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
         lpbBattleCur = lpbBattleLog;
     }
     if (!lpbBattleT) {
@@ -2296,7 +2296,7 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
             penvMem = penvMemSav;
             return -1;
         }
-        lpbBattleT = LpAlloc(0xffc8, htBattle);
+        lpbBattleT = (uint8_t *)LpAlloc(0xffc8, htBattle);
     }
     lpbSav = lpbBattleCur;
     lpbBattleCur = lpbBattleT;

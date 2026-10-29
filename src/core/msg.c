@@ -699,11 +699,11 @@ MSGPLR *LpmsgplrFromRt() {
         cOut = sizeof(szText) - 1;
         if (!FDecompressUserString((char *)((RTPLRMSG *)rgbCur)->rgbMsg, cLen, szText, &cOut)) return NULL;
     } else {
-        pszEnd = memchr(((RTPLRMSG *)rgbCur)->rgbMsg, 0, -cLen);
+        pszEnd = (const char *)memchr(((RTPLRMSG *)rgbCur)->rgbMsg, 0, -cLen);
         if (!pszEnd || pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg >= (int)sizeof(szText) ||
             !FUtf8Valid((char *)((RTPLRMSG *)rgbCur)->rgbMsg, (size_t)(pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg))) return NULL;
     }
-    lpmp = LpAlloc(offsetof(MSGPLR, rgbMsg) + hdrCur.cb - sizeof(RTPLRMSG), htPlrMsg);
+    lpmp = (MSGPLR *)LpAlloc(offsetof(MSGPLR, rgbMsg) + hdrCur.cb - sizeof(RTPLRMSG), htPlrMsg);
     lpmp->lpmsgplrNext = NULL;
     lpmp->iPlrFrom = ((RTPLRMSG *)rgbCur)->iPlrFrom;
     lpmp->iPlrTo = ((RTPLRMSG *)rgbCur)->iPlrTo;
@@ -793,7 +793,7 @@ char *PszGetCompressedMessage(MessageId idm) {
     }
     iChunk = idm >> 6;
     iOffset = idm & 0x3f;
-    pch = &aMSGCmpr[aiMSGChunkOffset[iChunk]];
+    pch = (uint8_t *)&aMSGCmpr[aiMSGChunkOffset[iChunk]];
     pchLen = &acMSG[iChunk * 64];
     i = 0;
     while (i < iOffset) {

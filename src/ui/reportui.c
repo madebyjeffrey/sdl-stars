@@ -610,7 +610,7 @@ void DrawVCReport(HDC hdc) {
     ids = idsOwns;
     cCur = 0;
     hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = SelectObject(hdcMem, hbmpMono);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMono);
     SetTextColor(hdc, 0);
     SetBkColor(hdc, 0xffffff);
     xLeft = vdxScoreX + 4;
@@ -964,7 +964,7 @@ void DrawHistoryReport(HDC hdc) {
             if (rgsxPlr[i]) {
                 cDrawn = 0;
                 hpen = CreatePen(0, 1, i == idPlayer ? 0xffffff : rgcrPlrHistory[i]);
-                hpenSav = SelectObject(hdc, hpen);
+                hpenSav = (HPEN)SelectObject(hdc, hpen);
                 for (j = 0; j < rgcsxPlr[i]; j++) {
                     lpsx = rgsxPlr[i] + j;
                     if (lpsx->turn >= iYearBase && lpsx->turn <= (uint16_t)(LOWORD(cYears) + iYearBase)) {
@@ -1588,7 +1588,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 break;
             case colEnemyFleetWarp:
                 if (!lpfl->fdirValid || lpfl->iwarpFlt <= 0) {
-                    psz = "--";
+                    psz = (char *)"--";
                     cch = 2;
                 } else {
                     psz = szT;

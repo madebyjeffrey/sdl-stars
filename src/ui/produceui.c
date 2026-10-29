@@ -542,7 +542,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
                 lSel--;
                 prod = lpplProdGlob->rgprod[lSel];
             }
-            GetProductionCosts(&sel.pl, &prod, rgCost, idPlayer, FALSE);
+            GetProductionCosts(&sel.pl, &prod, (uint32_t *)rgCost, idPlayer, FALSE);
             rc.bottom = yTopFutureTech + 4;
             SelectObject(hdc, rghfontArial8[1]);
             c = CchGetString(idsRequiredMinerals, szWork);

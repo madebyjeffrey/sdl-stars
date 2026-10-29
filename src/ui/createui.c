@@ -10,7 +10,7 @@ typedef struct {
 } NEWGAMERACEMENU;
 
 static int16_t AddNewGameLibraryRace(void *lpData, const char *pszName) {
-    NEWGAMERACEMENU *pnrm = lpData;
+    NEWGAMERACEMENU *pnrm = (NEWGAMERACEMENU *)lpData;
     char szLabel[512];
     const char *pch;
     char *pchLabel = szLabel;

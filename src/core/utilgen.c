@@ -187,7 +187,7 @@ char *PszGetCompressedPlanet(int16_t id) {
     }
     iChunk = id >> 6;
     iOffset = id & 0x3f;
-    pch = &aPNCmpr[aiPNChunkOffset[iChunk]];
+    pch = (uint8_t *)&aPNCmpr[aiPNChunkOffset[iChunk]];
     pchLen = &acPN[iChunk * 64];
     i = 0;
     while (i < iOffset) {

@@ -1,10 +1,12 @@
 #ifndef STARS_DECOMPILED_ENUMS_H
 #define STARS_DECOMPILED_ENUMS_H
 
-enum HeapType { htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
+#include "enumconstants.h"
+
+STARS_CONSTANTS(HeapType) { htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
 typedef uint16_t HeapType;
 
-enum AiLevel {
+STARS_CONSTANTS(AiLevel) {
     lvlAiEasy = 0,
     lvlAiStandard = 1,
     lvlAiTough = 2,
@@ -13,7 +15,7 @@ enum AiLevel {
 };
 typedef uint16_t AiLevel;
 
-enum DetType {
+STARS_CONSTANTS(DetType) {
     detNone = 0,
     detMinimal = 1,
     detObscure = 2,
@@ -23,7 +25,7 @@ enum DetType {
 };
 typedef uint16_t DetType;
 
-enum MineralType {
+STARS_CONSTANTS(MineralType) {
     SupplyButtonsOnly = -2, // transfer dialog: redraw only the buttons
     SupplyAll = -1,         // transfer dialog: redraw every cargo row
     Ironium = 0,
@@ -35,14 +37,14 @@ enum MineralType {
 };
 typedef int16_t MineralType;
 
-enum EnvType {
+STARS_CONSTANTS(EnvType) {
     Gravity = 0,
     Temperature = 1,
     Radiation = 2,
 };
 typedef uint16_t EnvType;
 
-enum TechFieldType {
+STARS_CONSTANTS(TechFieldType) {
     Energy = 0,
     Weapons = 1,
     Propulsion = 2,
@@ -53,7 +55,7 @@ enum TechFieldType {
 };
 typedef uint16_t TechFieldType;
 
-enum BattleUnitFlags {
+STARS_CONSTANTS(BattleUnitFlags) {
     grBuOurUnits = 0x0001,
     grBuTheirUnits = 0x0002,
     grBuIncludeSb = 0x0004,
@@ -67,7 +69,7 @@ enum BattleUnitFlags {
 };
 typedef uint16_t BattleUnitFlags;
 
-enum AttackWho {
+STARS_CONSTANTS(AttackWho) {
     iplrAttackNobody = 0,
     iplrAttackEnemies = 1,
     iplrAttackNeutralsEnemies = 2,
@@ -76,7 +78,7 @@ enum AttackWho {
 };
 typedef uint16_t AttackWho;
 
-enum mdProdStat {
+STARS_CONSTANTS(mdProdStat) {
     mdProdStatComplete = 0,
     mdProdStatCompleteAuto = 1,
     mdProdStatSkippedAuto = 2,
@@ -88,7 +90,7 @@ enum mdProdStat {
 };
 typedef uint16_t mdProdStat;
 
-enum mdPartAvail {
+STARS_CONSTANTS(mdPartAvail) {
     mdPartAvailRestricted = -1,
     mdPartAvailInvalid = 0,
     mdPartAvailAvailable = 1,
@@ -97,7 +99,7 @@ enum mdPartAvail {
 };
 typedef int16_t mdPartAvail;
 
-enum GrPopupType {
+STARS_CONSTANTS(GrPopupType) {
     grPopupMineral = 1,
     grPopupPlayer = 2,
     grPopupFleet = 3,
@@ -116,7 +118,7 @@ enum GrPopupType {
 };
 typedef uint16_t GrPopupType;
 
-enum HtMineType {
+STARS_CONSTANTS(HtMineType) {
     htMineNone = 0,
     htMineMineralConc1 = 1,
     htMineMineralConc2 = 2,
@@ -135,7 +137,7 @@ enum HtMineType {
 };
 typedef uint16_t HtMineType;
 
-enum HtMsgType {
+STARS_CONSTANTS(HtMsgType) {
     htMsgNone = 0,
     htMsgCurrent = 1,
     htMsgZoom = 2,
@@ -143,7 +145,7 @@ enum HtMsgType {
 };
 typedef uint16_t HtMsgType;
 
-enum DtFileType {
+STARS_CONSTANTS(DtFileType) {
     dtXY = 0,
     dtLog = 1,
     dtHost = 2,
@@ -153,7 +155,7 @@ enum DtFileType {
 };
 typedef uint16_t DtFileType;
 
-enum RaceGrbit {
+STARS_CONSTANTS(RaceGrbit) {
     ibitRaceIFE = 0x00,
     ibitRaceTT = 0x01,
     ibitRaceARM = 0x02,
@@ -177,7 +179,7 @@ typedef uint16_t RaceGrbit;
 
 // RaceTraitBits is a race's grbitAttr: one bit per RaceGrbit index, the
 // lesser racial traits and the other per-race switches.
-enum RaceTraitBits {
+STARS_CONSTANTS(RaceTraitBits) {
     grbitRaceIFE = 0x00000001,
     grbitRaceTT = 0x00000002,
     grbitRaceARM = 0x00000004,
@@ -198,7 +200,7 @@ enum RaceTraitBits {
 };
 typedef uint32_t RaceTraitBits;
 
-enum RaceStat {
+STARS_CONSTANTS(RaceStat) {
     rsResGen = 0,
     rsFactProd = 1,
     rsFactBuild = 2,
@@ -217,7 +219,7 @@ enum RaceStat {
 };
 typedef uint16_t RaceStat;
 
-enum RaceAttribute {
+STARS_CONSTANTS(RaceAttribute) {
     raCheapCol = 0,
     raStealth = 1,
     raAttack = 2,
@@ -232,7 +234,7 @@ enum RaceAttribute {
 };
 typedef uint16_t RaceAttribute;
 
-enum GrobjClass {
+STARS_CONSTANTS(GrobjClass) {
     grobjNone = 0x0,
     grobjPlanet = 0x1,
     grobjFleet = 0x2,
@@ -245,7 +247,7 @@ enum GrobjClass {
 };
 typedef uint16_t GrobjClass;
 
-enum HullSlotType {
+STARS_CONSTANTS(HullSlotType) {
     hstNone = 0x0000,
     hstEngine = 0x0001,
     hstScanner = 0x0002,
@@ -289,7 +291,7 @@ typedef uint16_t StartingStarbase;
 typedef uint16_t StartingShip;
 
 
-enum ThingType {
+STARS_CONSTANTS(ThingType) {
     ithMinefield = 0,
     ithMineralPacket = 1,
     ithWormhole = 2,
@@ -297,7 +299,7 @@ enum ThingType {
 };
 typedef uint16_t ThingType;
 
-enum MdBuild {
+STARS_CONSTANTS(MdBuild) {
     mdBuildShdef = 0,
     mdBuildHuldef = 1,
     mdBuildEnemyShdef = 2,
@@ -306,14 +308,14 @@ enum MdBuild {
 };
 typedef uint16_t MdBuild;
 
-enum MdXfer {
+STARS_CONSTANTS(MdXfer) {
     mdXferNone = -1,
     mdXferCargo = 0,
     mdXferShips = 1,
 };
 typedef int16_t MdXfer;
 
-enum ProdItemType {
+STARS_CONSTANTS(ProdItemType) {
     iobjMine = 0,
     iobjFactory = 1,
     iobjDefense = 2,
@@ -349,67 +351,67 @@ enum ProdItemType {
 };
 typedef uint16_t ProdItemType;
 
-enum PlayerSentinel {
+STARS_CONSTANTS(PlayerSentinel) {
     iplrNone = -1,
 };
 typedef int16_t PlayerSentinel;
 
-enum FleetLocationSentinel {
+STARS_CONSTANTS(FleetLocationSentinel) {
     idPlanetDeepSpace = -1,
 };
 typedef int16_t FleetLocationSentinel;
 
-enum PlanetIdSentinel {
+STARS_CONSTANTS(PlanetIdSentinel) {
     idplNone = -1,
 };
 typedef int16_t PlanetIdSentinel;
 
-enum FleetIdSentinel {
+STARS_CONSTANTS(FleetIdSentinel) {
     idflNone = -1,
 };
 typedef int16_t FleetIdSentinel;
 
-enum ScanSelSentinel {
+STARS_CONSTANTS(ScanSelSentinel) {
     iflNone = -1,
     iwpNone = -1,
     ithNone = -1,
 };
 typedef int16_t ScanSelSentinel;
 
-enum LookupRequest {
+STARS_CONSTANTS(LookupRequest) {
     idWriteBack = -1,
 };
 typedef int16_t LookupRequest;
 
-enum ShipDesignSentinel {
+STARS_CONSTANTS(ShipDesignSentinel) {
     ishdefNone = -1,
     ishdefAll = -1,
 };
 typedef int16_t ShipDesignSentinel;
 
-enum MessageIndexSentinel {
+STARS_CONSTANTS(MessageIndexSentinel) {
     imsgNone = -1,
 };
 typedef int16_t MessageIndexSentinel;
 
-enum EnvironmentValueSentinel {
+STARS_CONSTANTS(EnvironmentValueSentinel) {
     envImmune = -1,
     envNone = -1,
 };
 typedef int16_t EnvironmentValueSentinel;
 
-enum ProdScheduleRequest {
+STARS_CONSTANTS(ProdScheduleRequest) {
     iprodEstimateResearchResources = 0xffff,
 };
 typedef uint16_t ProdScheduleRequest;
 
-enum TutorCheckSentinel {
+STARS_CONSTANTS(TutorCheckSentinel) {
     iWarpAny = 0xffff,
     iDistAny = 0xffff,
 };
 typedef uint16_t TutorCheckSentinel;
 
-enum TutorAnySentinel {
+STARS_CONSTANTS(TutorAnySentinel) {
     mdScanAny = -1,
     iZoomAny = -1,
     iCategoryAny = -1,
@@ -419,7 +421,7 @@ enum TutorAnySentinel {
 };
 typedef int16_t TutorAnySentinel;
 
-enum BattleRecordSentinel {
+STARS_CONSTANTS(BattleRecordSentinel) {
     idPlanetNone = 0xffff,
 };
 typedef uint16_t BattleRecordSentinel;
@@ -440,7 +442,7 @@ enum MessageIdSentinel {
 typedef uint16_t MessageId;
 typedef uint16_t TutorId;
 
-enum GrStat {
+STARS_CONSTANTS(GrStat) {
     grStatFuel = 1,
     grStatCargo = 2,
 
@@ -472,7 +474,7 @@ typedef uint16_t itorp;
 typedef uint16_t ibeam;
 typedef uint16_t ispecialSB;
 
-enum GrbitTrader {
+STARS_CONSTANTS(GrbitTrader) {
     grbitTraderNone = 0x0000,
     grbitTraderCargo = 0x0001,
     grbitTraderSpecial = 0x0002,
@@ -491,7 +493,7 @@ enum GrbitTrader {
 };
 typedef uint16_t GrbitTrader;
 
-enum LookupResult {
+STARS_CONSTANTS(LookupResult) {
     LookupInvalid = 0,     // “out of range” / not a valid part id in group
     LookupDisallowed = -1, // disallowed for race/trait/other rule
     LookupOk = 1,          // meets tech reqs (original CheckTechRequirements == 1)
@@ -500,7 +502,7 @@ enum LookupResult {
 };
 typedef int16_t LookupResult;
 
-enum RecordType {
+STARS_CONSTANTS(RecordType) {
     /*
      * NOTE: Stars! file records encode a 6-bit "record type" (rt) plus a 10-bit
      * byte count (cb) in a 16-bit header word.
@@ -558,7 +560,7 @@ enum RecordType {
 };
 typedef uint16_t RecordType;
 
-enum DialogId {
+STARS_CONSTANTS(DialogId) {
     /* ship / fleet */
     IDD_MERGE_FLEETS = 82, /* MergeFleetsDlg */
     IDD_TRANSFER = 91,     /* TransferDlg */
@@ -625,7 +627,7 @@ typedef uint16_t DialogId;
 #undef IDC_HELP
 
 // AboutControl names the controls of the About dialog.
-enum AboutControl {
+STARS_CONSTANTS(AboutControl) {
     IDC_ABOUT_ORDER_INFO = 118,
     IDC_ABOUT_DEMO_TEXT = 1025,
     IDC_ABOUT_CREDITS_TEXT = 1055,
@@ -633,14 +635,14 @@ enum AboutControl {
 typedef uint16_t AboutControl;
 
 // PrintMapControl names the controls of the Print Map dialog.
-enum PrintMapControl {
+STARS_CONSTANTS(PrintMapControl) {
     IDC_PRINT_MAP_PAGES_X = 268,
     IDC_PRINT_MAP_PAGES_Y = 269,
 };
 typedef uint16_t PrintMapControl;
 
 // SimpleNewGameControl names the controls of the simple New Game dialog.
-enum SimpleNewGameControl {
+STARS_CONSTANTS(SimpleNewGameControl) {
     IDC_SIMPLE_NEW_GAME_EASY = 200,
     IDC_SIMPLE_NEW_GAME_STANDARD = 201,
     IDC_SIMPLE_NEW_GAME_HARDER = 202,
@@ -657,7 +659,7 @@ enum SimpleNewGameControl {
 typedef uint16_t SimpleNewGameControl;
 
 // NewGame1Control names the controls of the first advanced New Game wizard page.
-enum NewGame1Control {
+STARS_CONSTANTS(NewGame1Control) {
     IDC_NEW_GAME_TINY = 1000,
     IDC_NEW_GAME_SMALL = 1001,
     IDC_NEW_GAME_MEDIUM = 1002,
@@ -683,7 +685,7 @@ enum NewGame1Control {
 typedef uint16_t NewGame1Control;
 
 // NewGame3Control names the controls of the victory conditions New Game wizard page; the tech level checkbox covers both tech conditions.
-enum NewGame3Control {
+STARS_CONSTANTS(NewGame3Control) {
     IDC_VC_OWNS_PLANETS = 291,
     IDC_VC_TECH_LEVEL = 292,
     IDC_VC_SCORE = 293,
@@ -695,7 +697,7 @@ enum NewGame3Control {
 typedef uint16_t NewGame3Control;
 
 // VcrControl names the controls of the battle VCR dialog.
-enum VcrControl {
+STARS_CONSTANTS(VcrControl) {
     IDC_VCR_REW_ALL = 161,
     IDC_VCR_REW = 162,
     IDC_VCR_PLAY_PAUSE = 163,
@@ -705,7 +707,7 @@ enum VcrControl {
 typedef uint16_t VcrControl;
 
 // HostModeControl names the controls of the host mode dialog.
-enum HostModeControl {
+STARS_CONSTANTS(HostModeControl) {
     IDC_HOST_GENERATE_NOW = 1031,
     IDC_HOST_AUTO_GENERATE = 1032,
     IDC_HOST_GAME_NAME_TEXT = 1033,
@@ -717,7 +719,7 @@ enum HostModeControl {
 typedef uint16_t HostModeControl;
 
 // HostOptionsControl names the controls of the auto generate options dialog; the second and third force generate options have no caption in the template.
-enum HostOptionsControl {
+STARS_CONSTANTS(HostOptionsControl) {
     IDC_AUTOGEN_WHEN_ALL_IN = 1027,
     IDC_FORCE_GEN_NEVER = 2066,
     IDC_FORCE_GEN_OPTION_2 = 2067,
@@ -726,7 +728,7 @@ enum HostOptionsControl {
 typedef uint16_t HostOptionsControl;
 
 // SlotControl names the controls of the ship designer dialog.
-enum SlotControl {
+STARS_CONSTANTS(SlotControl) {
     IDC_DESIGNER_COMPONENT_LIST = 2060,
     IDC_DESIGNER_SHIPS = 2064,
     IDC_DESIGNER_STARBASES = 2065,
@@ -738,7 +740,7 @@ enum SlotControl {
 typedef uint16_t SlotControl;
 
 // RaceWizard1Control names the controls of the race wizard name and race page.
-enum RaceWizard1Control {
+STARS_CONSTANTS(RaceWizard1Control) {
     IDC_RACE_NAME = 268,
     IDC_RACE_PASSWORD = 269,
     IDC_RACE_HUMANOID = 271,
@@ -754,7 +756,7 @@ enum RaceWizard1Control {
 typedef uint16_t RaceWizard1Control;
 
 // RaceWizard2Control names the controls of the race wizard habitability page.
-enum RaceWizard2Control {
+STARS_CONSTANTS(RaceWizard2Control) {
     IDC_IMMUNE_TO_GRAVITY = 291,
     IDC_IMMUNE_TO_TEMPERATURE = 292,
     IDC_IMMUNE_TO_RADIATION = 293,
@@ -762,13 +764,13 @@ enum RaceWizard2Control {
 typedef uint16_t RaceWizard2Control;
 
 // RaceWizard3Control names the controls of the race wizard economy page.
-enum RaceWizard3Control {
+STARS_CONSTANTS(RaceWizard3Control) {
     IDC_RACE_FACTORY_GERMANIUM_DISCOUNT = 291,
 };
 typedef uint16_t RaceWizard3Control;
 
 // RaceWizard4Control names the controls of the race wizard primary racial trait page.
-enum RaceWizard4Control {
+STARS_CONSTANTS(RaceWizard4Control) {
     IDC_RACE_HYPER_EXPANSION = 271,
     IDC_RACE_SUPER_STEALTH = 272,
     IDC_RACE_WAR_MONGER = 273,
@@ -783,7 +785,7 @@ enum RaceWizard4Control {
 typedef uint16_t RaceWizard4Control;
 
 // RaceWizard5Control names the controls of the race wizard lesser racial trait page, in RaceGrbit order.
-enum RaceWizard5Control {
+STARS_CONSTANTS(RaceWizard5Control) {
     IDC_RACE_IMPROVED_FUEL_EFFICIENCY = 291,
     IDC_RACE_TOTAL_TERRAFORMING = 292,
     IDC_RACE_ADVANCED_REMOTE_MINING = 293,
@@ -802,7 +804,7 @@ enum RaceWizard5Control {
 typedef uint16_t RaceWizard5Control;
 
 // RaceWizard6Control names the controls of the race wizard research cost page.
-enum RaceWizard6Control {
+STARS_CONSTANTS(RaceWizard6Control) {
     IDC_RACE_ENERGY_COST_EXTRA = 271,
     IDC_RACE_ENERGY_COST_STANDARD = 272,
     IDC_RACE_ENERGY_COST_LESS = 273,
@@ -826,7 +828,7 @@ enum RaceWizard6Control {
 typedef uint16_t RaceWizard6Control;
 
 // ProductionControl names the controls of the production queue dialog.
-enum ProductionControl {
+STARS_CONSTANTS(ProductionControl) {
     IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY = 139,
     IDC_PRODUCTION_AVAILABLE_ITEMS = 1046,
     IDC_PRODUCTION_QUEUE = 1047,
@@ -839,7 +841,7 @@ enum ProductionControl {
 typedef uint16_t ProductionControl;
 
 // MergeFleetsControl names the controls of the merge fleets dialog.
-enum MergeFleetsControl {
+STARS_CONSTANTS(MergeFleetsControl) {
     IDC_MERGE_FLEETS_LIST = 81,
     IDC_MERGE_FLEETS_SELECT_ALL = 2040,
     IDC_MERGE_FLEETS_UNSELECT_ALL = 2041,
@@ -847,7 +849,7 @@ enum MergeFleetsControl {
 typedef uint16_t MergeFleetsControl;
 
 // BattlePlansControl names the controls of the battle plans dialog.
-enum BattlePlansControl {
+STARS_CONSTANTS(BattlePlansControl) {
     IDC_BATTLE_PLAN_COPY = 1052,
     IDC_BATTLE_PLAN_DUMP_CARGO = 1053,
     IDC_BATTLE_PLAN_SELECT = 1054,
@@ -859,7 +861,7 @@ enum BattlePlansControl {
 typedef uint16_t BattlePlansControl;
 
 // RelationsControl names the controls of the player relations dialog.
-enum RelationsControl {
+STARS_CONSTANTS(RelationsControl) {
     IDC_RELATIONS_PLAYER_LIST = 2003,
     IDC_RELATIONS_NEUTRAL = 2004,
     IDC_RELATIONS_FRIEND = 2005,
@@ -868,7 +870,7 @@ enum RelationsControl {
 typedef uint16_t RelationsControl;
 
 // ResearchControl names the controls of the research dialog.
-enum ResearchControl {
+STARS_CONSTANTS(ResearchControl) {
     IDC_RESEARCH_ENERGY = 1073,
     IDC_RESEARCH_WEAPONS = 1074,
     IDC_RESEARCH_PROPULSION = 1075,
@@ -880,7 +882,7 @@ enum ResearchControl {
 typedef uint16_t ResearchControl;
 
 // ZipProdControl names the controls of the production template dialog.
-enum ZipProdControl {
+STARS_CONSTANTS(ZipProdControl) {
     IDC_ZIP_PROD_QUEUE = 1047,
     IDC_ZIP_PROD_PRESET_1 = 1073,
     IDC_ZIP_PROD_PRESET_2 = 1074,
@@ -890,45 +892,45 @@ enum ZipProdControl {
 typedef uint16_t ZipProdControl;
 
 // GaugeControl names the controls of the progress gauge dialog.
-enum GaugeControl {
+STARS_CONSTANTS(GaugeControl) {
     IDC_GAUGE_TEXT = 1071,
 };
 typedef uint16_t GaugeControl;
 
 // BrowserControl names the controls of the technology browser dialog.
-enum BrowserControl {
+STARS_CONSTANTS(BrowserControl) {
     IDC_BROWSER_AVAILABLE_ONLY = 266,
     IDC_BROWSER_COMPONENT_CATEGORY = 267,
 };
 typedef uint16_t BrowserControl;
 
 // TutorControl names the controls of the tutorial dialog.
-enum TutorControl {
+STARS_CONSTANTS(TutorControl) {
     IDC_TUTOR_HINT = 118,
     IDC_TUTOR_PANIC = 2503,
 };
 typedef uint16_t TutorControl;
 
 // PanicControl names the controls of the tutorial panic dialog.
-enum PanicControl {
+STARS_CONSTANTS(PanicControl) {
     IDC_PANIC_REDO_TURN = 2505,
     IDC_PANIC_COMPLETE_TURN = 2506,
 };
 typedef uint16_t PanicControl;
 
 // NewPasswordControl names the controls of the new password dialog.
-enum NewPasswordControl {
+STARS_CONSTANTS(NewPasswordControl) {
     IDC_PASSWORD_CONFIRM = 269,
 };
 typedef uint16_t NewPasswordControl;
 
 // ScoreControl names the controls of the score dialog.
-enum ScoreControl {
+STARS_CONSTANTS(ScoreControl) {
     IDC_SCORE_SWITCH = 198,
 };
 typedef uint16_t ScoreControl;
 
-enum ControlId {
+STARS_CONSTANTS(ControlId) {
     // Controls shared by several dialogs with the same meaning; a dialog's
     // own controls are in its dialog_controls enum.
     IDOK = 1,
@@ -1086,7 +1088,7 @@ typedef uint16_t ControlId;
 /* Numeric cursor resources, named after the hcur globals they load into;
  * the others are named (SCANNERCUR, ...). */
 #undef IDC_HAND
-enum CursorId {
+STARS_CONSTANTS(CursorId) {
     IDC_NO_WAY = 121,
     IDC_TRASH_CAN = 122,
     IDC_RESIZE_WE = 258,
@@ -1099,7 +1101,7 @@ typedef uint16_t CursorId;
 
 /* Numeric bitmap resources; the others are named (CARGOBMP, ...). IDB_ ones
  * are loaded with LoadBitmap, IDDIB_ ones as DIBs through FindResource. */
-enum BitmapId {
+STARS_CONSTANTS(BitmapId) {
     IDDIB_PLAYER_ICONS_TINY = 79,
     IDDIB_PLAYER_ICONS_SMALL = 80,
     IDDIB_THING_ICONS = 87,
@@ -1136,14 +1138,14 @@ enum BitmapId {
 };
 typedef uint16_t BitmapId;
 
-enum AcceleratorId {
+STARS_CONSTANTS(AcceleratorId) {
     IDA_MAIN = 116,
     IDA_TITLE = 1080,
 };
 typedef uint16_t AcceleratorId;
 
 /* Tutorial game files, each stored as its own custom resource type. */
-enum TutorialResourceId {
+STARS_CONSTANTS(TutorialResourceId) {
     RT_TUTORIAL_HST = 10000,
     IDR_TUTORIAL_HST = 10001,
     RT_TUTORIAL_M1 = 10002,
@@ -1153,7 +1155,7 @@ enum TutorialResourceId {
 };
 typedef uint16_t TutorialResourceId;
 
-enum VictoryCondition {
+STARS_CONSTANTS(VictoryCondition) {
     vcOwnsPercentPlanets = 0,     /* "Owns % of all planets." */
     vcAttainsTechLevel = 1,       /* "Attains Tech X in Y fields." (level) */
     vcAttainsTechFields = 2,      /* number of tech fields */
@@ -1167,7 +1169,7 @@ enum VictoryCondition {
 };
 typedef uint16_t VictoryCondition;
 
-enum MdOpenFlags {
+STARS_CONSTANTS(MdOpenFlags) {
     /* access + share combinations */
     mdRead = 0x0020,      /* OF_READ | OF_SHARE_DENY_WRITE */
     mdReadWrite = 0x0012, /* OF_READWRITE | OF_SHARE_EXCLUSIVE */
@@ -1180,7 +1182,7 @@ enum MdOpenFlags {
 };
 typedef uint16_t MdOpenFlags;
 
-enum TaskType {
+STARS_CONSTANTS(TaskType) {
     grTaskNone = 0,
     grTaskXfer = 1, /* transport / transfer cargo */
     grTaskColonize = 2,
@@ -1195,7 +1197,7 @@ enum TaskType {
 };
 typedef uint16_t TaskType;
 
-enum XferActionType {
+STARS_CONSTANTS(XferActionType) {
     iActionNone = 0, /* implicit / cleared */
 
     iActionLoadAll = 1,     /* "Load All Available"        */
@@ -1211,7 +1213,7 @@ enum XferActionType {
 };
 typedef uint16_t XferActionType;
 
-enum MdTarget {
+STARS_CONSTANTS(MdTarget) {
     mdTargetNone = 0,              /* "None/Disengage" */
     mdTargetAny = 1,               /* "Any" */
     mdTargetStarbase = 2,          /* "Starbase" */
@@ -1223,7 +1225,7 @@ enum MdTarget {
 };
 typedef uint16_t MdTarget;
 
-enum BattleTactic {
+STARS_CONSTANTS(BattleTactic) {
     mdTacticDisengage = 0,             /* "Disengage" */
     mdTacticDisengageIfChallenged = 1, /* "Disengage if challenged" */
     mdTacticMinDamageToSelf = 2,       /* "Minimize damage to self" */
@@ -1233,7 +1235,7 @@ enum BattleTactic {
 };
 typedef uint16_t BattleTactic;
 
-enum GrfWeapon {
+STARS_CONSTANTS(GrfWeapon) {
     bitFBeamLow = 0x0001,
     bitFBeamHigh = 0x0002,
     bitFTorp = 0x0004,
@@ -1276,14 +1278,14 @@ enum AiStarbaseRecipeSentinel {
 typedef int16_t AiStarbaseRecipe;
 
 // Squared packet attack distance thresholds for one or two mass drivers.
-enum AiPacketDistanceSquared {
+STARS_CONSTANTS(AiPacketDistanceSquared) {
     aiPacketDistanceSquaredSingleMassDriver = 7056,
     aiPacketDistanceSquaredTwoMassDrivers = 50625,
 };
 typedef uint16_t AiPacketDistanceSquared;
 
 // AiRace identifies a computer player's race and the AI routine that plays it.
-enum AiRace {
+STARS_CONSTANTS(AiRace) {
     idAiRobotoid = 0,
     idAiTurinDrone = 1,
     idAiAutomitron = 2,
@@ -1296,7 +1298,7 @@ enum AiRace {
 typedef uint16_t AiRace;
 
 // MineFieldType is a minefield's kind.
-enum MineFieldType {
+STARS_CONSTANTS(MineFieldType) {
     mineStandard = 0,
     mineHeavy = 1,
     mineSpeedBump = 2,
@@ -1306,7 +1308,7 @@ enum MineFieldType {
 typedef uint16_t MineFieldType;
 
 // ScanView is the scanner's view mode, the low nibble of grbitScan.
-enum ScanView {
+STARS_CONSTANTS(ScanView) {
     scanViewNormal = 0,
     scanViewSurfaceMinerals = 1,
     scanViewMineralConc = 2,
@@ -1318,7 +1320,7 @@ typedef uint16_t ScanView;
 
 // GrbitScan holds the scanner's overlay and filter toggles above the view mode
 // in grbitScan.
-enum GrbitScan {
+STARS_CONSTANTS(GrbitScan) {
     grbitScanViewMask = 0x000f, // ScanView
     grbitScanAddWaypoints = 0x0010,
     grbitScanCoverage = 0x0020,
@@ -1336,7 +1338,7 @@ typedef uint16_t GrbitScan;
 
 // ToolbarButton is a scanner toolbar button; the negative values are layout
 // entries of vrgTBBtn.
-enum ToolbarButton {
+STARS_CONSTANTS(ToolbarButton) {
     tbScannerRange = -3, // scanner range readout
     tbSpacer = -2,
     tbSeparator = -1,
@@ -1362,7 +1364,7 @@ enum ToolbarButton {
 typedef int16_t ToolbarButton;
 
 // UniverseSize is the galaxy size; its width is 400 * (size + 1) light years.
-enum UniverseSize {
+STARS_CONSTANTS(UniverseSize) {
     sizeTiny = 0,
     sizeSmall = 1,
     sizeMedium = 2,
@@ -1372,7 +1374,7 @@ enum UniverseSize {
 typedef uint16_t UniverseSize;
 
 // UniverseDensity is the galaxy's planet density.
-enum UniverseDensity {
+STARS_CONSTANTS(UniverseDensity) {
     densitySparse = 0,
     densityNormal = 1,
     densityDense = 2,
@@ -1381,7 +1383,7 @@ enum UniverseDensity {
 typedef uint16_t UniverseDensity;
 
 // StartDistance is the distance between players' homeworlds.
-enum StartDistance {
+STARS_CONSTANTS(StartDistance) {
     startDistClose = 0,
     startDistModerate = 1,
     startDistFarther = 2,
@@ -1392,7 +1394,7 @@ typedef uint16_t StartDistance;
 // MsgGoto is a message's goto target: a planet id (>= 0), a fleet id, a
 // battle id | 0x4000, a part as 0xc000 | (hst bit << 8) | iItem, or one of
 // these.
-enum MsgGoto {
+STARS_CONSTANTS(MsgGoto) {
     gotoBattleReport = -7,
     gotoThing = -6, // the thing id is the message's first parameter
     gotoScore = -4,
@@ -1405,7 +1407,7 @@ enum MsgGoto {
 typedef int16_t MsgGoto;
 
 // MdMsgObj is what the message window's goto button opens.
-enum MdMsgObj {
+STARS_CONSTANTS(MdMsgObj) {
     mdMsgObjNone = 0,
     mdMsgObjPlanet = 1,
     mdMsgObjFleet = 2,
@@ -1422,7 +1424,7 @@ typedef uint16_t MdMsgObj;
 
 // TileBits selects the planet or fleet detail tiles DrawPlanShip draws. A bit
 // shared by both tile sets is named for both.
-enum TileBits {
+STARS_CONSTANTS(TileBits) {
     tileMineralsOrCargo = 0x0001,
     tileShipList = 0x0004,
     tilePlanetStats = 0x0008,
@@ -1438,7 +1440,7 @@ enum TileBits {
 typedef uint16_t TileBits;
 
 // ReportType is a report dialog's report.
-enum ReportType {
+STARS_CONSTANTS(ReportType) {
     rptPlanets = 0,
     rptFleets = 1,
     rptEnemyFleets = 2,
@@ -1447,7 +1449,7 @@ enum ReportType {
 typedef uint16_t ReportType;
 
 // PlanetReportColumn is a column of the planet report.
-enum PlanetReportColumn {
+STARS_CONSTANTS(PlanetReportColumn) {
     colPlanetName = 0,
     colPlanetStarbase = 1,
     colPlanetPopulation = 2,
@@ -1468,7 +1470,7 @@ enum PlanetReportColumn {
 typedef uint16_t PlanetReportColumn;
 
 // FleetReportColumn is a column of the fleet report.
-enum FleetReportColumn {
+STARS_CONSTANTS(FleetReportColumn) {
     colFleetName = 0,
     colFleetId = 1,
     colFleetLocation = 2,
@@ -1486,7 +1488,7 @@ enum FleetReportColumn {
 typedef uint16_t FleetReportColumn;
 
 // EnemyFleetReportColumn is a column of the other players' fleet report.
-enum EnemyFleetReportColumn {
+STARS_CONSTANTS(EnemyFleetReportColumn) {
     colEnemyFleetName = 0,
     colEnemyFleetId = 1,
     colEnemyFleetLocation = 2,
@@ -1504,7 +1506,7 @@ enum EnemyFleetReportColumn {
 typedef uint16_t EnemyFleetReportColumn;
 
 // BattleReportColumn is a column of the battle report.
-enum BattleReportColumn {
+STARS_CONSTANTS(BattleReportColumn) {
     colBattleLocation = 0,
     colBattleStarbase = 1,
     colBattleSides = 2,
@@ -1525,7 +1527,7 @@ enum BattleReportColumn {
 typedef uint16_t BattleReportColumn;
 
 // WindowLayout is the main window layout, chosen by screen size.
-enum WindowLayout {
+STARS_CONSTANTS(WindowLayout) {
     layoutLarge = 0,
     layoutMedium = 1,
     layoutSmall = 2,
@@ -1533,7 +1535,7 @@ enum WindowLayout {
 typedef uint16_t WindowLayout;
 
 // ScanZoom is the scanner zoom level.
-enum ScanZoom {
+STARS_CONSTANTS(ScanZoom) {
     zoom25 = -4,
     zoom38 = -3,
     zoom50 = -2,
@@ -1547,7 +1549,7 @@ enum ScanZoom {
 typedef int16_t ScanZoom;
 
 // MdMark is the turn-file flag FMarkFile sets and FCheckFile tests.
-enum MdMark {
+STARS_CONSTANTS(MdMark) {
     mdMarkInUse = 1,
     mdMarkDone = 2,
     mdMarkMulti = 4,
@@ -1556,7 +1558,7 @@ enum MdMark {
 typedef uint16_t MdMark;
 
 // HostTimer is the job of the host-mode timer.
-enum HostTimer {
+STARS_CONSTANTS(HostTimer) {
     hostTimerAutoGen = 13,   // poll for turns to generate
     hostTimerWaitTurn = 14,  // wait for the next turn after submitting
     hostTimerTurnReady = 15, // flash the window when a new turn is ready
@@ -1565,14 +1567,14 @@ typedef uint16_t HostTimer;
 
 // ProgressStep is an UpdateProgressGauge argument that advances the gauge
 // instead of setting it.
-enum ProgressStep {
+STARS_CONSTANTS(ProgressStep) {
     progressStep1 = -927,
     progressStep4 = -926,
 };
 typedef int16_t ProgressStep;
 
 // AddItemMode is where AddItemToQueue puts an item in the production queue.
-enum AddItemMode {
+STARS_CONSTANTS(AddItemMode) {
     addItemFront = 0,
     addItemEnd = 1,
     addItemReplace = 2, // clear the queue first
@@ -1580,7 +1582,7 @@ enum AddItemMode {
 typedef uint16_t AddItemMode;
 
 // MainMenu is a top-level menu's position in the frame menu bar.
-enum MainMenu {
+STARS_CONSTANTS(MainMenu) {
     menuFile = 0,
     menuView = 1,
     menuTurn = 2,
@@ -1592,7 +1594,7 @@ typedef uint16_t MainMenu;
 
 // TutorShipBuilderAction is the ship designer button FTutorialEnabledShipBuilder
 // checks against the tutorial's current step.
-enum TutorShipBuilderAction {
+STARS_CONSTANTS(TutorShipBuilderAction) {
     tutsbDelete = 0,
     tutsbCopy = 1,
     tutsbEdit = 2,
@@ -1605,7 +1607,7 @@ typedef uint16_t TutorShipBuilderAction;
 // selects it: the [MAP] numbers of the help file's |CTXOMAP, named by topic
 // title. Many share their number with the dialog control they explain.
 // Generated by scripts/hlp-context-enum.py.
-enum HelpContextId {
+STARS_CONSTANTS(HelpContextId) {
     idhStarsPlayersGuideContents = 1,                         // Stars! Player's Guide - Contents
     idhIntroductionAndPlayerSupport = 2,                      // Introduction and Player Support
     idhTheStarsScreen = 3,                                    // The Stars! Screen
@@ -2025,7 +2027,7 @@ typedef uint16_t HelpContextId;
 // HullCategory is a hull's role, as the fleet and battle reports group
 // ships: unarmed hulls are colony ships, freighters, miners and fuel
 // transports.
-enum HullCategory {
+STARS_CONSTANTS(HullCategory) {
     hullCatColony = 0,
     hullCatFreighter = 1,
     hullCatScout = 2,   // scout, frigate, destroyer
@@ -2038,7 +2040,7 @@ enum HullCategory {
 typedef uint16_t HullCategory;
 
 // HullAttack is how a hull fights; battle code treats any nonzero value as armed.
-enum HullAttack {
+STARS_CONSTANTS(HullAttack) {
     hullAttackNone = 0,
     hullAttackLight = 1, // scout, frigate, destroyer, privateer
     hullAttackHeavy = 2, // cruisers and up, rogue, galleon, Nubian, morphs
@@ -2047,7 +2049,7 @@ enum HullAttack {
 typedef uint16_t HullAttack;
 
 // BeamAbility is a beam weapon's grfAbilities.
-enum BeamAbility {
+STARS_CONSTANTS(BeamAbility) {
     beamSapper = 0x0001,  // damages shields only
     beamGatling = 0x0002, // hits every target in range
 };
@@ -2055,7 +2057,7 @@ typedef uint16_t BeamAbility;
 
 // EngineAbility is a special engine's grfAbilities, which selects its
 // description and restrictions.
-enum EngineAbility {
+STARS_CONSTANTS(EngineAbility) {
     engineAbilityNone = 0,
     engineSettlersDelight = 1,   // mini-colonizer hulls only
     engineRadiatingRamScoop = 2, // radiation kills colonists
@@ -2067,7 +2069,7 @@ enum EngineAbility {
 typedef uint16_t EngineAbility;
 
 // ScannerAbility is a scanner's grfAbilities.
-enum ScannerAbility {
+STARS_CONSTANTS(ScannerAbility) {
     scannerAbilityNone = 0,
     scannerPenetrating50 = 1,
     scannerPenetrating100 = 2,
@@ -2077,7 +2079,7 @@ enum ScannerAbility {
 typedef uint16_t ScannerAbility;
 
 // PaneSplitter is the set of frame splitter bars a point is on.
-enum PaneSplitter {
+STARS_CONSTANTS(PaneSplitter) {
     splitVertical = 0x0001, // between the left panes and the scanner
     splitMessages = 0x0002, // below the messages pane
     splitLower = 0x0004,    // the second horizontal bar
@@ -2085,7 +2087,7 @@ enum PaneSplitter {
 typedef uint16_t PaneSplitter;
 
 // RaceWizardPage is the race wizard page shown, in wizard order.
-enum RaceWizardPage {
+STARS_CONSTANTS(RaceWizardPage) {
     rwPageNone = -1,
     rwPageRace = 1,         // IDD_RACE_WIZARD_1
     rwPagePrimaryTrait = 2, // IDD_RACE_WIZARD_4
@@ -2098,7 +2100,7 @@ typedef int16_t RaceWizardPage;
 
 // WizardButton is a wizard page's result: the index of the button pressed
 // in rgidRaceBtn.
-enum WizardButton {
+STARS_CONSTANTS(WizardButton) {
     wizCancel = 0,
     wizBack = 1,
     wizNext = 2,
@@ -2109,7 +2111,7 @@ typedef uint16_t WizardButton;
 
 // PacketDecay is how many warps a mineral packet was flung over its
 // driver's rating, and so how fast it decays.
-enum PacketDecay {
+STARS_CONSTANTS(PacketDecay) {
     decayNone = 0,
     decay10Pct = 1,
     decay25Pct = 2,
@@ -2119,7 +2121,7 @@ typedef uint16_t PacketDecay;
 
 // CompassDir is a direction on the map, counterclockwise from east; y
 // grows southward.
-enum CompassDir {
+STARS_CONSTANTS(CompassDir) {
     dirEast = 0,
     dirNorthEast = 1,
     dirNorth = 2,

@@ -180,7 +180,7 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
     RTXFER  *prtxfer;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        prtxfer = lprt;
+        prtxfer = (RTXFER *)lprt;
         if (prtxfer->grobj1 != grobjFleet || prtxfer->grobj2 != grobjOther) {
             return TRUE;
         }
@@ -196,7 +196,7 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
         }
         grbit = prtxfer->grbitItems;
         if (rt == rtLogCargoXfer16) {
-            prtxferx = lprt;
+            prtxferx = (RTXFERX *)lprt;
         }
         j = 0;
         i = 0;
@@ -241,7 +241,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
     case grobjPlanet:
     case grobjOther:
         if (pobj) {
-            ppl = pobj;
+            ppl = (PLANET *)pobj;
         } else if (grobj == grobjPlanet) {
             FLookupPlanet(id, &xfer.pl);
             ppl = &xfer.pl;
@@ -267,7 +267,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         break;
     case grobjThing:
         if (pobj) {
-            pth = pobj;
+            pth = (THING *)pobj;
         } else {
             FLookupThing(id, &xfer.th);
             pth = &xfer.th;
@@ -297,7 +297,7 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         break;
     default:
         if (pobj) {
-            pfl = pobj;
+            pfl = (FLEET *)pobj;
         } else {
             FLookupFleet(id, &xfer.fl);
             pfl = &xfer.fl;

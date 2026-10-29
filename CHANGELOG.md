@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The game, desktop UI and command-line host now compile as GNU C++17 while
+  retaining their source filenames, C ABI, integer storage widths and binary
+  record formats. The SDL wrapper and generated tables remain C11. This first
+  migration step retains existing error recovery and file handling; game
+  behavior and native regression baselines are unchanged.
+
 - ZIP game imports now validate each entry name as UTF-8 and require the ZIP
   UTF-8 filename flag for non-ASCII names. Unsupported names receive a specific
   error instead of the generic invalid-archive message. Existing ASCII ZIPs

@@ -11,11 +11,11 @@ import re
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 
 
 def main():
-    types=(ROOT/'src/core/structs.h').read_text(); enums=(ROOT/'src/core/enums.h').read_text()
+    types=(ROOT/'src/core/structs.h').read_text(); enums=enum_source()
     produce=function('src/core/turn2.c','void Produce(')
     builder=function('src/core/turn2.c','int16_t CBuildProdItem(')
     declarations=r'''
@@ -96,7 +96,7 @@ static int32_t ChgPopFromPlanet(PLANET *p,int16_t update){assert(p==&planet && !
 static int16_t PctPlanetDesirability(PLANET *p,int16_t player){assert(p==&planet && !player);return 100;}
 static int16_t IWarpMAFromLppl(PLANET *p,void *flag){assert(p==&planet && !flag);return warp;}
 static int16_t GetRaceGrbit(const void *p,int bit){assert(p==rgplr && bit==ibitRaceMineralAlchemy);return (int16_t)rgplr[0].cheap;}
-static void GetProductionCosts(PLANET *p,PROD *row,int32_t *out,int16_t player,int16_t one){
+static void GetProductionCosts(PLANET *p,PROD *row,uint32_t *out,int16_t player,int16_t one){
     (void)row;assert(p==&planet && !player && one);memcpy(out,quote,16);
 }
 static int16_t FBuildObject(PLANET *p,GrobjClass kind,int16_t item,int16_t count,int32_t *resources){

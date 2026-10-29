@@ -498,7 +498,7 @@ void AddMinesToBlockedQueues() {
                 if (etaFirst == -1) {
                     etaFirst = 600;
                 }
-                GetProductionCosts(lppl, &prod, rgCost, idPlayer, TRUE);
+                GetProductionCosts(lppl, &prod, (uint32_t *)rgCost, idPlayer, TRUE);
                 cRes = CResourcesAtPlanet(&sel.pl, idPlayer);
                 if (!sel.pl.fNoResearch) {
                     cRes -= (int32_t)(cRes * (int16_t)rgplr[idPlayer].pctResearch) / 100;
@@ -1569,7 +1569,7 @@ void GetProdQCost(PLANET *lppl, int32_t *rgCost) {
         i = 0;
         lpprod = lpplprod->rgprod;
         while (i < lpplprod->iprodMac) {
-            GetProductionCosts(lppl, lpprod, rgCostCur, idPlayer, FALSE);
+            GetProductionCosts(lppl, lpprod, (uint32_t *)rgCostCur, idPlayer, FALSE);
             for (j = 0; j < 4; j++) {
                 rgCost[j] += rgCostCur[j];
             }
@@ -2596,7 +2596,7 @@ int16_t FQueueAiTerraforming(PLANET *lppl, int32_t *rgResAvail, int32_t *rgResCo
             if (pProdGlob[i].grobj == grobjPlanet && pProdGlob[i].iItem == mdIdleTerraform && pProdGlob[i].cItem >= 1) {
                 AddItemToQueue(pProdGlob[i].iItem, 4 >= (int32_t)pProdGlob[i].cItem ? pProdGlob[i].cItem : 4, grobjPlanet, addItemEnd);
                 pProdGlob[i].cItem = 0;
-                GetProductionCosts(lppl, pProdGlob + i, rgItemCost, idPlayer, TRUE);
+                GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgItemCost, idPlayer, TRUE);
                 for (j = 0; j < 4; j++) {
                     rgResCost[j] += (uint32_t)(rgItemCost[j] * (4 >= (int32_t)pProdGlob[i].cItem ? (int16_t)pProdGlob[i].cItem : 4));
                 }
@@ -2627,7 +2627,7 @@ int16_t FQueueAiScanner(PLANET *lppl, int32_t *rgResAvail, int32_t *rgResCost) {
          i--) {
     }
     if (i >= 0) {
-        GetProductionCosts(lppl, pProdGlob + i, rgItemCost, idPlayer, TRUE);
+        GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgItemCost, idPlayer, TRUE);
         for (j = 0; j < 4 && (rgItemCost[j] <= 0 || rgItemCost[j] + rgResCost[j] <= rgResAvail[j]); j++) {
         }
         if (j == 4) {

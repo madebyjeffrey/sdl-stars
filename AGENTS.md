@@ -28,7 +28,7 @@ When goals conflict, apply them in this order:
 2. **Behavior:** game behavior changes only on purpose. Each intentional
    change is its own commit, moves the native regression baseline in that
    commit, and is recorded in `CHANGELOG.md`.
-3. **Readability:** clear native C. Prefer the existing structure and idiom;
+3. **Readability:** clear native C++. Prefer the existing structure and idiom;
    change it when that makes the code clearer or removes Win16 baggage.
 
 ## Code rules
@@ -39,7 +39,9 @@ When goals conflict, apply them in this order:
   `i` index, `f` flag, `lp` pointer, `rg` array, `h` handle, `psz`/`sz`
   strings, `id`/`ish`/`ipl` and the like. Check `structs.h` and nearby code
   for existing prefixes before you invent one.
-- Build as C11 (GNU extensions on). Keep the surrounding style: locals at the
+- Build game, UI and host sources as C++17 (GNU extensions on); the SDL
+  compatibility runtime and C test harnesses retain C11 and a C ABI. Preserve
+  fixed-width aliases and record layouts. Keep the surrounding style: locals at the
   top of a function, `//` or `/* */` comments, no reformatting beyond the
   lines you change. Helpers are fine when they replace a Win16 shim or remove
   real duplication; keep them small and next to their callers.

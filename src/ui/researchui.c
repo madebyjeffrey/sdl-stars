@@ -25,7 +25,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         iResTechNow = rgplr[idPlayer].iTechNow;
         CheckRadioButton(hwnd, IDC_RESEARCH_ENERGY, IDC_RESEARCH_BIOTECH, iResTechNow + 1073);
         hdc = GetDC(hwnd);
-        hfontSav = SelectObject(hdc, rghfontArial8[1]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         c = CchGetString(idsCurrent, szWork);
         dxCurrent = LOWORD(GetTextExtent(hdc, szWork, c));
         dxResRadio = 0;
@@ -212,7 +212,7 @@ void DrawResearchDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t grbitDraw) {
         fCreatedDC = TRUE;
         hdc = GetDC(hwnd);
     }
-    hfontSav = SelectObject(hdc, rghfontArial8[1]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
     crForeSav = SetTextColor(hdc, 0);
     crBackSav = SetBkColor(hdc, crButtonFace);
     if (!(grbitDraw & 0xff))
@@ -331,7 +331,7 @@ DrawRightSide:
     }
     if ((grbitDraw & 0x200) && !(grbitDraw & 0xf)) {
         rc.top += (int16_t)(3 * dyArial8) / 2 * 2 + dyArial8;
-        hbrSav = SelectObject(hdc, hbrButtonFace);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
         PatBlt(hdc, xCtr, rc.top, xNum - xCtr, dyArial8, PATCOPY);
         SelectObject(hdc, hbrSav);
         goto DrawYearComplete;
@@ -575,7 +575,7 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                      SWP_NOMOVE | SWP_NOZORDER);
         StickyDlgPos(hwnd, &ptStickyBrowserDlg, TRUE);
         hdc = GetDC(hwnd);
-        hfontSav = SelectObject(hdc, rghfontArial8[1]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         hwndDD = GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY);
         c = GetDlgItemText(hwnd, IDC_BACK, szWork, 80);
         dx = LOWORD(GetTextExtent(hdc, szWork, c)) + 14;
@@ -898,7 +898,7 @@ void DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
         if (FLookupPart(ppart) <= mdPartAvailInvalid) {
             l = -1;
         } else {
-            l = CostOfDevelopingItem(ppart->pcom->rgTech);
+            l = CostOfDevelopingItem((char *)ppart->pcom->rgTech);
         }
         if (l > 99999) {
             c = wsprintf(szWork, PszGetCompressedString(idsCostLdk), (int32_t)((l + 500) / 1000));
@@ -1027,7 +1027,7 @@ void DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
                     rgch[0] = '1';
                     rgch[1] = '0';
                     if (!fWarp10) {
-                        hbrSav = SelectObject(hdc, rghbrPat[0]);
+                        hbrSav = (HBRUSH)SelectObject(hdc, rghbrPat[0]);
                         SetTextColor(hdc, 0xffff);
                         crBack = SetBkColor(hdc, crButtonFace);
                         PatBlt(hdc, x - dxWarp + 1, rcData.top, dxWarp, yBase - rcData.top, PATCOPY);
@@ -1048,7 +1048,7 @@ void DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
                 x += dxWarp;
             }
             SetTextColor(hdc, crFore);
-            hpenSav = SelectObject(hdc, hpenDkBlue);
+            hpenSav = (HPEN)SelectObject(hdc, hpenDkBlue);
             x = rcData.left + dxStr + 6;
             for (i = 0; i <= 10; i++) {
                 y = yBase;
@@ -1876,7 +1876,7 @@ void DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
                     ch++;
                     x += dxQuan;
                 }
-                hpenSav = SelectObject(hdc, hpenDkBlue);
+                hpenSav = (HPEN)SelectObject(hdc, hpenDkBlue);
                 xBase = rcData.left + dxStr + 6;
                 yBase = rcData.bottom - dyArial8 - 4;
                 ldelta = (int16_t)(1000 - ppart->pplanetary->grAbility);

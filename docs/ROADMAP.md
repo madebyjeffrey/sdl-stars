@@ -5,6 +5,22 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+## C++ migration
+
+The first migration step compiles the game, UI and host as GNU C++17 under
+existing source filenames, keeping a C ABI for the C11 wrapper, generated tables
+and harnesses. Fixed-width integer aliases remain unchanged; C/C++ layout checks
+cover 259 type, alias and record-prefix measurements. On Apple-silicon macOS,
+52 desktop checks and 17 host checks pass. Full desktop and host regressions each
+match all 519 files through turn 150, with 21 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. The available SDL tutorial smoke
+checkpoint passes; full tutorial coverage remains incomplete.
+
+Exception-based recovery and C++ file services are the next separately reviewed
+steps. This compile-only step retains the existing jump-based recovery and file
+implementations. Linux and Windows execution is left to their CI qualification.
+See [native-port constraints](NATIVE-PORT.md).
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native

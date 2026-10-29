@@ -315,7 +315,7 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
             RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
             yTop += dyArial8;
         }
-        hbrSav = SelectObject(hdc, hbrButtonHilite);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
         PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
         SelectObject(hdc, hbrSav);
         SetRect(&rgrcRef[7], xLeft, yTop, xRight, dyArial8 * 2 + yTop);
@@ -429,7 +429,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         c = wsprintf(szWork, PszGetCompressedString(idsDD), cResAvail, cRes);
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
-        hbrSav = SelectObject(hdc, hbrButtonHilite);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
         PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
         SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
@@ -472,7 +472,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
         }
         RightTextOut(hdc, xRight, yTop, szWork, c, dxRight);
         yTop += dyArial8;
-        hbrSav = SelectObject(hdc, hbrButtonHilite);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
         PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
         SelectObject(hdc, hbrSav);
         if (!ptile->fMinDraw) {
@@ -631,7 +631,7 @@ void DrawPlanetStarbase(HDC hdc, TILE *ptile, OBJ obj) {
             if (w != 0) {
                 SetTextColor(hdc, crForeSav);
             }
-            hbrSav = SelectObject(hdc, hbrButtonHilite);
+            hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
             PatBlt(hdc, rc.left, yTop++, rc.right - rc.left, 1, PATCOPY);
             SelectObject(hdc, hbrSav);
             SelectObject(hdc, rghfontArial8[1]);
@@ -857,7 +857,7 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
             DrawFleetBitmap(&sel.fl, hdc, xLeft, yTop, TRUE, -1, 0, FALSE, -1, 0);
             goto DoBtns;
         }
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
         PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
         SelectObject(hdc, hbrButtonHilite);
@@ -1514,10 +1514,10 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
         case ' ':
         LDefCaseSel:
             if (crWindow == 0) {
-                hbr = GetStockObject(WHITE_BRUSH);
+                hbr = (HBRUSH)GetStockObject(WHITE_BRUSH);
                 break;
             }
-            hbr = GetStockObject(BLACK_BRUSH);
+            hbr = (HBRUSH)GetStockObject(BLACK_BRUSH);
             break;
         case 'P':
             fDoubleDraw = TRUE;
@@ -1563,7 +1563,7 @@ void DrawProductionItem(HDC hdc, RECT *prc, char *psz, int16_t inflate, int16_t 
     crForeSav = SetTextColor(hdc, cr);
     bkSav = SetBkMode(hdc, TRANSPARENT);
     if (fItalic) {
-        hfntSav = SelectObject(hdc, rghfontArial8[3]);
+        hfntSav = (HFONT)SelectObject(hdc, rghfontArial8[3]);
     }
     pch = psz + ich;
     cch = strlen(pch);
@@ -1657,7 +1657,7 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
             fDC = TRUE;
             hdc = GetDC(hwndPlanet);
         }
-        hfontSav = SelectObject(hdc, rghfontArial8[0]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
         crBack = SetBkColor(hdc, crButtonFace);
         crFore = SetTextColor(hdc, crButtonText);
         fErase = (grbit & tileErase) != 0;

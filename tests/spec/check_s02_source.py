@@ -7,11 +7,18 @@ witness inputs; the algorithms under test are extracted from current source.
 """
 from pathlib import Path
 import os
+import re
 import shlex
 import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def enum_source():
+    # Extract the C spelling of fixed-width constant containers for C fixtures.
+    text = (ROOT / "src/core/enums.h").read_text()
+    return re.sub(r"STARS_CONSTANTS\((\w+)\)", r"enum \1", text)
 
 
 def function(path, signature):

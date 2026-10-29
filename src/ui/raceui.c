@@ -107,7 +107,7 @@ Finish:
     if (!fDontWrite) {
         if (FHasCurrentLibraryRace()) {
             if (!FSaveCurrentLibraryRace(hwndRaceParent, &vplr)) goto Step1;
-        } else if (!FSaveRace(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile, &vplr)) goto Step1;
+        } else if (!FSaveRace((char *)(szRaceFile[0] == 0 ? "stars.r1" : szRaceFile), &vplr)) goto Step1;
     }
     if (fDontWrite) {
         fResult = TRUE;
@@ -380,7 +380,7 @@ INT_PTR CALLBACK RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         viStore = -1;
         hdc = GetDC(hwnd);
         GetClientRect(hwnd, &rc);
-        hfontSav = SelectObject(hdc, rghfontArial8[1]);
+        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
         cch = CchGetString(idsTemperature, szTemp);
         dxLabel = LOWORD(GetTextExtent(hdc, szTemp, cch)) + 10;
         dxMiddle = LOWORD(GetTextExtent(hdc, "200mR", 5)) + 10;
@@ -558,7 +558,7 @@ void DrawRace2(HWND hwnd, HDC hdc, int16_t iDraw) {
         default:
             if (!(iDraw & 0xfff0))
                 break;
-            DrawBtn(hdc, vrgrcRCW + i, 8 | bt | bt1, FALSE, iMod == 3 ? "<<     >>" : ">>     <<");
+            DrawBtn(hdc, vrgrcRCW + i, 8 | bt | bt1, FALSE, (char *)(iMod == 3 ? "<<     >>" : ">>     <<"));
             break;
         case 1:
             if (1 << iPit & iDraw) {
@@ -1297,12 +1297,12 @@ void InvalidateAdvPtsRect(HWND hwnd) {
     RECT       rc;
     HFONT      hfontSav;
 
-    plf = LocalAlloc(64, sizeof(LOGFONT));
+    plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
     hdc = GetDC(hwnd);
     plf->lfHeight = -24;
     strcpy(plf->lfFaceName, rgszArial[1]);
     hfont = CreateFontIndirect(plf);
-    hfontSav = SelectObject(hdc, hfont);
+    hfontSav = (HFONT)SelectObject(hdc, hfont);
     GetTextMetrics(hdc, &tm);
     dyBig = tm.tmHeight + tm.tmExternalLeading;
     dx = LOWORD(GetTextExtent(hdc, "-99999", 6)) + 8;
@@ -1333,11 +1333,11 @@ void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
     RECT       rc;
     HFONT      hfontSav;
 
-    plf = LocalAlloc(64, sizeof(LOGFONT));
+    plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
     plf->lfHeight = -24;
     CchGetString(idsArialBold, plf->lfFaceName);
     hfont = CreateFontIndirect(plf);
-    hfontSav = SelectObject(hdc, hfont);
+    hfontSav = (HFONT)SelectObject(hdc, hfont);
     GetTextMetrics(hdc, &tm);
     dyBig = tm.tmHeight + tm.tmExternalLeading;
     dx = LOWORD(GetTextExtent(hdc, "-99999", 6)) + 8;

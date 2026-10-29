@@ -528,7 +528,7 @@ void LinkFleets(int16_t fUnused) {
                         lpflTail = rglpfl[iflTail];
                         if (!lpflTail->fDead && !lpflTail->lpflNext) {
                             pt = lpflTail->pt;
-                            pSearch = bsearch(&pt, rglpflSrc, cSrc, sizeof(FLEET *), (QSORTCOMPARE)ICompFleetPoint2);
+                            pSearch = (FLEET **)bsearch(&pt, rglpflSrc, cSrc, sizeof(FLEET *), (QSORTCOMPARE)ICompFleetPoint2);
                             if (pSearch) {
                                 lpflHead = *pSearch;
                                 lpflTail->lpflNext = lpflHead->lpflNext;
@@ -680,12 +680,12 @@ int16_t FDupFleet(FLEET *lpfl, FLEET *pfl) {
 
 int16_t FLookupObject(GrobjClass grobj, int16_t id, void *pobj) {
     if (grobj == grobjFleet) {
-        return FLookupFleet(id, pobj);
+        return FLookupFleet(id, (FLEET *)pobj);
     }
     if (grobj == grobjPlanet) {
-        return FLookupPlanet(id, pobj);
+        return FLookupPlanet(id, (PLANET *)pobj);
     }
-    return FLookupThing(id, pobj);
+    return FLookupThing(id, (THING *)pobj);
 }
 
 int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t idSkip) {
@@ -998,11 +998,11 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
             iflPrev = lpfl->ifl;
         }
     }
-    rglpfl = LpReAlloc(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
+    rglpfl = (FLEET **)LpReAlloc(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
     if (cFleet != i) {
         memmove(rglpfl + (i + 1), rglpfl + i, (cFleet - i) * sizeof(FLEET *));
     }
-    rglpfl[i] = lpfl = LpAlloc(sizeof(FLEET), htFleets);
+    rglpfl[i] = lpfl = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
     cFleet++;
     rgplr[iPlr].cFleet++;
     memset(lpfl, 0, sizeof(FLEET));

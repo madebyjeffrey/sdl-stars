@@ -44,20 +44,20 @@ void WriteRtPlr(PLAYER *pplr, uint8_t *pbStore) {
         pb = pbStore + offsetof(PLAYER, idPlanetHome);
     }
     cOut = 31;
-    if (pplr->szName[0] != 0 && FCompressUserString(pplr->szName, pb + 1, &cOut)) {
+    if (pplr->szName[0] != 0 && FCompressUserString(pplr->szName, (char *)pb + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy(pb + 1, pplr->szName);
+        strcpy((char *)pb + 1, pplr->szName);
         *pb = 0;
         pb += 2 + strlen(pplr->szName);
     }
     cOut = 31;
-    if (pplr->szNames[0] != 0 && FCompressUserString(pplr->szNames, pb + 1, &cOut)) {
+    if (pplr->szNames[0] != 0 && FCompressUserString(pplr->szNames, (char *)pb + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy(pb + 1, pplr->szNames);
+        strcpy((char *)pb + 1, pplr->szNames);
         *pb = 0;
         pb += 2 + strlen(pplr->szNames);
     }
@@ -93,11 +93,11 @@ void WriteRtShDef(SHDEF *lpshdef, uint8_t **ppbStore) {
         strcpy(szHulName, LphuldefFromId(lpshdef->hul.ihuldef)->hul.szClass);
     }
     cOut = 31;
-    if (szHulName[0] != 0 && FCompressUserString(szHulName, pb + 1, &cOut)) {
+    if (szHulName[0] != 0 && FCompressUserString(szHulName, (char *)pb + 1, &cOut)) {
         *pb = cOut;
         pb += 1 + cOut;
     } else {
-        strcpy(pb + 1, szHulName);
+        strcpy((char *)pb + 1, szHulName);
         *pb = 0;
         pb += 2 + strlen(szHulName);
     }
@@ -876,10 +876,10 @@ void WriteRtString(char *lpsz) {
             return;
         }
         cOut = 31;
-        if (FCompressUserString(lpsz, &rgb[1], &cOut)) {
+        if (FCompressUserString(lpsz, (char *)&rgb[1], &cOut)) {
             rgb[0] = cOut;
         } else {
-            strcpy(&rgb[1], lpsz);
+            strcpy((char *)&rgb[1], lpsz);
             rgb[0] = 0;
             cOut = strlen(lpsz) + 1;
         }
@@ -924,11 +924,11 @@ void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
         pb = &rgb[4];
         strcpy(szPlanName, lpbtlplan->szName);
         cOut = 31;
-        if (szPlanName[0] != 0 && FCompressUserString(szPlanName, pb + 1, &cOut)) {
+        if (szPlanName[0] != 0 && FCompressUserString(szPlanName, (char *)pb + 1, &cOut)) {
             *pb = cOut;
             pb += 1 + cOut;
         } else {
-            strcpy(pb + 1, szPlanName);
+            strcpy((char *)pb + 1, szPlanName);
             *pb = 0;
             pb += 2 + strlen(szPlanName);
         }

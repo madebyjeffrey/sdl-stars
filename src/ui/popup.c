@@ -85,7 +85,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
     crBack = SetBkColor(hdc, 0xffffff);
     crFore = SetTextColor(hdc, 0);
     bkMode = SetBkMode(hdc, OPAQUE);
-    hfontSav = SelectObject(hdc, rghfontArial8[1]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
     GetClientRect(hwnd, &rc);
     switch (GlobalPD.grPopup) {
     case grPopupMineral:
@@ -133,7 +133,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
         SelectObject(hdc, rghfontArial8[1]);
         c = CchGetString(idsShipName, szWork);
         TextOut(hdc, 4, 4, szWork, c);
-        RightTextOut(hdc, rc.right - 4 - GlobalPD.dxDamage, 4, "#", 1, 0);
+        RightTextOut(hdc, rc.right - 4 - GlobalPD.dxDamage, 4, (char *)"#", 1, 0);
         if (GlobalPD.dxDamage != 0) {
             c = CchGetString(idsDamage2, szWork);
             RightTextOut(hdc, rc.right - 4, 4, szWork, c, 0);
@@ -256,7 +256,7 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     pt.y = y;
     ClientToScreen16(hwnd, &pt);
     hdc = GetDC(hwnd);
-    hfontSav = SelectObject(hdc, rghfontArial8[0]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
     switch (GlobalPD.grPopup) {
     case grPopupMineral:
         psz = PszGetCompressedString(idsMineralConcentration0000000kt);
@@ -399,7 +399,7 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                 AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
             } else {
                 if (rgids[i] & 0x10000000) {
-                    psz = "Deep Space";
+                    psz = (char *)"Deep Space";
                 } else if (rgids[i] & 0x40000000) {
                     psz = PszGetCompressedString(LOWORD(rgids[i]));
                 } else if (rgids[i] & 0x20000000) {
@@ -505,7 +505,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsUnknown2), 0, fPrint);
     }
     SelectObject(hdc, rghfontArial8[0]);
-    DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+    DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     if (x > xMax) {
         xMax = x;
     }
@@ -520,7 +520,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         y += dyArial8;
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsEffects), 0, fPrint);
         DxStreamTextOut(hdc, &x, y, rgszPlanetAttr[GlobalPD.iPlanetVar], 0, fPrint);
-        DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+        DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     } else {
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsColonistsPreferPlanetsWhere), 0, fPrint);
         if (x > xMax) {
@@ -537,7 +537,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         SelectObject(hdc, rghfontArial8[1]);
         DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlrMax), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
-        DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+        DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     }
     if (x > xMax) {
         xMax = x;
@@ -570,7 +570,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         SelectObject(hdc, rghfontArial8[1]);
         DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlanMax), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
-        DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+        DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
         if (x > xMax) {
             xMax = x;
         }
@@ -669,7 +669,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         }
         DxStreamTextOut(hdc, &x, y, szWork, 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
-        DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+        DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     } else if (pl.iPlayer != iplrNone) {
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsEnemyPopulation), 0, fPrint);
         SelectObject(hdc, rghfontArial8[1]);
@@ -687,7 +687,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         } else {
             DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsUnknown), 0, fPrint);
         }
-        DxStreamTextOut(hdc, &x, y, ".", 1, fPrint);
+        DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     } else {
         SelectObject(hdc, rghfontArial8[1]);
         DxStreamTextOut(hdc, &x, y, PszGetPlanetName(GlobalPD.idPlanet), 0, fPrint);
@@ -907,11 +907,11 @@ POINT16 PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint) {
     x = 4;
     y = 2;
     if (GlobalPD.grbit != 0) {
-        pszType = "Factory";
-        pszTypes = "Factories";
+        pszType = (char *)"Factory";
+        pszTypes = (char *)"Factories";
     } else {
-        pszType = "Mine";
-        pszTypes = "Mines";
+        pszType = (char *)"Mine";
+        pszTypes = (char *)"Mines";
     }
     SelectObject(hdc, rghfontArial8[1]);
     if (fPrint) {

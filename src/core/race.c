@@ -502,7 +502,7 @@ static int16_t FReadLegacyRaceString(const uint8_t *lpb, size_t cb, char *szRaw,
     szRaw[0] = 0;
     if (cb == 0 || cchMax != 32) return FALSE;
     if (lpb[0] == 0) {
-        lpbEnd = memchr(lpb + 1, 0, cb - 1);
+        lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, cb - 1);
         if (!lpbEnd) return FALSE;
         cch = (size_t)(lpbEnd - lpb - 1);
         if (cch >= cchMax) return FALSE;
@@ -635,9 +635,9 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                 if (hdrCur.rt == rtPlr) {
                     idsError = idsGameFileAppearsCorruptUnableLoadFile;
                     if (fLegacy) {
-                        if (!FReadLegacyRacePlayer(&plr, rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
+                        if (!FReadLegacyRacePlayer(&plr, (const uint8_t *)rgbCur, hdrCur.cb, fPlural)) goto LBadFile;
                     } else {
-                        ReadRtPlr(&plr, rgbCur, hdrCur.cb);
+                        ReadRtPlr(&plr, (uint8_t *)rgbCur, hdrCur.cb);
                     }
                     ReadRt();
                     icksum = IRaceChecksum(&plr);

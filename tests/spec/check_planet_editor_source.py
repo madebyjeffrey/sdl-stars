@@ -12,12 +12,12 @@ import re
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 
 
 def main():
     types = (ROOT/'src/core/structs.h').read_text()
-    enums = (ROOT/'src/core/enums.h').read_text()
+    enums = enum_source()
     declarations = r'''
 #include <stdint.h>
 #include <stddef.h>

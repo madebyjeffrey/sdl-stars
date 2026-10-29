@@ -68,7 +68,7 @@ int32_t CostOfDevelopingItem(char *rgTech) {
 
     fUnreachable = FALSE;
     lCost = 0;
-    pTech = rgplr[idPlayer].rgTech;
+    pTech = (char *)rgplr[idPlayer].rgTech;
     for (i = 0; i < 6 && rgTech[i] <= 26; i++) {
     }
     if (i < 6) {

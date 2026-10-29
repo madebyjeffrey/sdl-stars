@@ -16,10 +16,10 @@ void DoAiTurn(int16_t iPlayer, uint16_t wMdPlr) {
     }
     if (rgplr[idPlayer].fDead)
         goto Cleanup;
-    vlpbAiPlanet = LpAlloc(game.cPlanMax * 16, htMisc);
-    vrglpplAi = LpAlloc(game.cPlanMax * sizeof(PLANET *), htMisc);
+    vlpbAiPlanet = (uint8_t *)LpAlloc(game.cPlanMax * 16, htMisc);
+    vrglpplAi = (PLANET **)LpAlloc(game.cPlanMax * sizeof(PLANET *), htMisc);
     if (!vlpbAiData) {
-        vlpbAiData = LpAlloc(0x2000, htMisc);
+        vlpbAiData = (uint8_t *)LpAlloc(0x2000, htMisc);
         if (vlpbAiData) {
             ((AIHIST *)vlpbAiData)->cbAiHist = 2;
         }

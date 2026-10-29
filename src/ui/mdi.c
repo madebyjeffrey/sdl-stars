@@ -23,35 +23,35 @@ int16_t InitMDIApp() {
     wc.lpfnWndProc = MessageWndProc;
     wc.hIcon = 0;
     wc.lpszMenuName = NULL;
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szMessage;
     if (RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 523;
     wc.lpfnWndProc = ScannerWndProc;
-    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wc.lpszClassName = szScan;
     if (RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 523;
     wc.lpfnWndProc = MineWndProc;
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szMine;
     if (RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 520;
     wc.lpfnWndProc = TbWndProc;
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szTb;
     if (RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 0x200;
     wc.lpfnWndProc = PlanetWndProc;
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szPlanet;
     if (RegisterClass(&wc) == 0) {
@@ -62,7 +62,7 @@ int16_t InitMDIApp() {
     if (RegisterClass(&wc) == 0) return FALSE;
     wc.style = 2560;
     wc.lpfnWndProc = PopupWndProc;
-    wc.hbrBackground = GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szPopup;
     if (RegisterClass(&wc) == 0) {
@@ -70,7 +70,7 @@ int16_t InitMDIApp() {
     }
     wc.style = 2560;
     wc.lpfnWndProc = TooltipWndProc;
-    wc.hbrBackground = GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szTooltip;
     if (RegisterClass(&wc) == 0) {
@@ -78,7 +78,7 @@ int16_t InitMDIApp() {
     }
     wc.style = 0x200;
     wc.lpfnWndProc = BrowserWndProc;
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szBrowser;
     if (RegisterClass(&wc) == 0) {
@@ -91,7 +91,7 @@ int16_t InitMDIApp() {
     wc.hInstance = hInst;
     wc.hIcon = 0;
     wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-    wc.hbrBackground = GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = szTitle;
     if (RegisterClass(&wc) == 0) {
@@ -104,7 +104,7 @@ int16_t InitMDIApp() {
     wc.hInstance = hInst;
     wc.hIcon = 0;
     wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-    wc.hbrBackground = GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = szReport;
     if (RegisterClass(&wc) == 0) {
@@ -332,7 +332,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         fErrSav = fFileErrSilent;
         fFileErrSilent = TRUE;
         gd.fDontDoLogFiles = TRUE;
-        if (!FLoadGame(szBase, "m1")) {
+        if (!FLoadGame(szBase, (char *)"m1")) {
             fFileErrSilent = fErrSav;
             gd.fDontDoLogFiles = FALSE;
             return 0;
@@ -503,7 +503,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
         hdc = BeginPaint(hwnd, &ps);
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         switch (iWindowLayout) {
         case layoutLarge:
         default:
@@ -554,7 +554,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
         hdc = GetDC(hwnd);
-        hbrSav = SelectObject(hdc, hbr50Screen);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbr50Screen);
         ptD.y = 0;
         ptD.x = 0;
         InvertPaneBorder(hdc, grSel, ptD, NULL);
@@ -1087,7 +1087,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                         yOff = -dyMax * yPage;
                         Rectangle(pd.hDC, xOff, yOff, xOff + rc.right, yOff + rc.bottom);
                         if (hfontPrint) {
-                            hfontSav = SelectObject(pd.hDC, hfontPrint);
+                            hfontSav = (HFONT)SelectObject(pd.hDC, hfontPrint);
                         } else {
                             hfontSav = 0;
                         }
@@ -1113,9 +1113,9 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, "|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, "+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, "2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"|", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"+", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, (char *)"2", 1);
                             if (hfontPrint) {
                                 SelectObject(pd.hDC, hfontPrint);
                             }
@@ -1137,7 +1137,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                                 if (lppl->iPlayer == idPlayer) {
                                     if (lppl->fStarbase) {
                                         CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) + 4 - dyPrintTiny,
-                                                   rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+", 1);
+                                                   (char *)(rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort ? "|" : "+"), 1);
                                     }
                                     DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 1);
                                 } else if (lppl->iPlayer != iplrNone) {
@@ -2918,9 +2918,9 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             EndPaint(hwnd, &ps);
             break;
         }
-        plf = LocalAlloc(64, sizeof(LOGFONT));
+        plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
         hdc = BeginPaint(hwnd, &ps);
-        hbrSav = SelectObject(hdc, hbrButtonFace);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
         GetClientRect(hwnd, &rcWnd);
         if (vcScreenColors >= 8) {
             SetTextColor(hdc, 50298879);
@@ -2941,11 +2941,11 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             hfont = CreateFontIndirect(plf);
             SetTextColor(hdc, 10158235);
             if (hfont) {
-                hfontSav = SelectObject(hdc, hfont);
+                hfontSav = (HFONT)SelectObject(hdc, hfont);
                 SetBkMode(hdc, TRANSPARENT);
                 rcT = rcWnd;
                 rcT.bottom = (int16_t)(3 * rcT.bottom) / 4;
-                RcCtrTextOut(hdc, &rcT, "Stars!", 6);
+                RcCtrTextOut(hdc, &rcT, (char *)"Stars!", 6);
                 SelectObject(hdc, hfontSav);
                 DeleteObject(hfont);
             }

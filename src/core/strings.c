@@ -18,7 +18,7 @@ char *PszGetCompressedString(StringId ids) {
     }
     iChunk = ids >> 6;
     iOffset = ids & 0x3f;
-    pch = &aSTRCmpr[aiSTRChunkOffset[iChunk]];
+    pch = (uint8_t *)&aSTRCmpr[aiSTRChunkOffset[iChunk]];
     pchLen = &acSTR[iChunk * 64];
     i = 0;
     while (i < iOffset) {

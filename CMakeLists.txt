@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 # The version this line is building toward. Tags (vX.Y.Z) and build numbers
 # come from git; see cmake/version.cmake and docs/VERSIONING.md.
-project(stars VERSION 2.9.0 LANGUAGES C)
+project(stars VERSION 2.9.0 LANGUAGES C CXX)
 
 # SDL is the only desktop backend. Host-only builds do not require SDL.
 if(WIN32 AND NOT MINGW)
@@ -11,6 +11,9 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop client and wrapper" ON)
@@ -47,13 +50,18 @@ set(STARS_UI_SOURCES
     src/ui/tutor.c src/ui/tutor2.c src/ui/utilgenui.c src/ui/utilui.c src/ui/vcr.c
 )
 
+# Preserve the original filenames while compiling the game as C++. The SDL
+# compatibility runtime, generated tables and C harnesses retain their C ABI.
+set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
+    src/host/host.c src/host/hostui.c PROPERTIES LANGUAGE CXX)
+
 # Settings every target that compiles game code shares.
 add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
 add_library(stars_encoding STATIC src/platform/encoding.c)
-target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
+target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
@@ -203,7 +211,7 @@ target_sources(stars_core PRIVATE
 # is the game's string table, and glibc's <string.h> includes the system
 # <strings.h>. The resource compiler takes them as include directories.
 foreach(STARS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/core" "${CMAKE_CURRENT_SOURCE_DIR}/src/ui" "${CMAKE_CURRENT_SOURCE_DIR}/src/platform" "${CMAKE_CURRENT_SOURCE_DIR}/res" "${STARS_GENERATED_DIR}")
-    target_compile_options(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:C>:SHELL:-iquote ${STARS_INCLUDE_DIR}>")
+    target_compile_options(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${STARS_INCLUDE_DIR}>")
     target_include_directories(stars_options INTERFACE "$<$<COMPILE_LANGUAGE:RC>:${STARS_INCLUDE_DIR}>")
 endforeach()
 
@@ -211,9 +219,9 @@ endforeach()
 # in the original MSC build; the decompiler relies on it to drop char casts.
 target_compile_options(stars_options INTERFACE
     $<$<COMPILE_LANGUAGE:C>:-Wno-pointer-sign>
-    $<$<COMPILE_LANGUAGE:C>:-fsigned-char>
-    $<$<COMPILE_LANGUAGE:C>:-fno-fast-math>
-    $<$<COMPILE_LANGUAGE:C>:-ffp-contract=off>
+    $<$<COMPILE_LANGUAGE:C,CXX>:-fsigned-char>
+    $<$<COMPILE_LANGUAGE:C,CXX>:-fno-fast-math>
+    $<$<COMPILE_LANGUAGE:C,CXX>:-ffp-contract=off>
 )
 
 # Binary64 operation boundaries are intentional; see docs/DOUBLE-PRECISION.md.
@@ -233,6 +241,14 @@ option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
 if(STARS_BUILD_TESTS)
     enable_testing()
+    add_executable(stars-layout-c tests/compat/record_layout.c)
+    add_executable(stars-layout-cxx tests/compat/record_layout.cpp)
+    target_link_libraries(stars-layout-c PRIVATE stars_options)
+    target_link_libraries(stars-layout-cxx PRIVATE stars_options)
+    add_test(NAME test_record_layout COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/check_record_layout.py"
+        "$<TARGET_FILE:stars-layout-c>" "$<TARGET_FILE:stars-layout-cxx>")
+    set_tests_properties(test_record_layout PROPERTIES LABELS "build" TIMEOUT 30)
 endif()
 
 include(cmake/test-redirect.cmake)

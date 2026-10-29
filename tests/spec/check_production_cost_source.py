@@ -11,11 +11,11 @@ import re
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 
 
 def main():
-    enums=(ROOT/'src/core/enums.h').read_text()
+    enums=enum_source()
     types=(ROOT/'src/core/structs.h').read_text()
     planetary_names=re.findall(r'^- name:\s*(\w+)\s*$',(ROOT/'data/parts/planetary.yaml').read_text(),re.MULTILINE)
     declarations=r'''

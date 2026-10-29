@@ -11,11 +11,11 @@ import os
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 
 
 def main():
-    enums=(ROOT/'src/core/enums.h').read_text();types=(ROOT/'src/core/structs.h').read_text()
+    enums=enum_source();types=(ROOT/'src/core/structs.h').read_text()
     declarations=r'''
 #include <assert.h>
 #include <stdint.h>

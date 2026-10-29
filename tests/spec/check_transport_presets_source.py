@@ -11,7 +11,7 @@ import shlex
 import subprocess
 import tempfile
 
-from check_s02_source import ROOT, function
+from check_s02_source import ROOT, function, enum_source
 from check_s02_state_source import between
 
 
@@ -19,7 +19,7 @@ def main():
     ui = (ROOT / 'src/ui/shipui.c').read_text()
     custom = function('src/ui/ship2ui.c', 'INT_PTR CALLBACK ZipOrderDlg(')
     types = (ROOT / 'src/core/structs.h').read_text()
-    enums = (ROOT / 'src/core/enums.h').read_text()
+    enums = enum_source()
     declarations = r'''
 #include <stdint.h>
 #include <stdio.h>

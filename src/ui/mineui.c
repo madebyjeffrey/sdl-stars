@@ -102,7 +102,7 @@ void InvalidateMineralBars() {
 
     GetClientRect(hwndMine, &rc);
     hdc = GetDC(hwndMine);
-    hfontSav = SelectObject(hdc, rghfontArial8[0]);
+    hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
     rc.right -= LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsN999mr), 5)) + 6;
     SelectObject(hdc, rghfontArial8[1]);
     dxPop = LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsPopulation1000000), 21)) + 6;
@@ -221,11 +221,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             goto FinishUp;
         xLeft = prc->left + 6;
         yTop = prc->top + 6;
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
         PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
         PatBlt(hdc, xLeft + 16, yTop + 68, 2, 38, PATCOPY);
-        hbrSav = SelectObject(hdc, hbrButtonHilite);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
         PatBlt(hdc, xLeft + 2, yTop + 68, 15, 1, PATCOPY);
         PatBlt(hdc, xLeft + 1, yTop + 69, 15, 1, PATCOPY);
         PatBlt(hdc, xLeft + 52, yTop + 68, 18, 2, PATCOPY);
@@ -336,7 +336,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         iplrbmp = rgplr[lpth->iplr].iPlrBmp;
         xLeft = prc->left + 6;
         yTop = prc->top + 6;
-        hbrSav = SelectObject(hdc, hbrButtonShadow);
+        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
         PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
         PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
         switch (lpth->ith) {
@@ -515,7 +515,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             yCur = rc.top + 2;
             if (pl.fStarbase) {
                 hdcMem = CreateCompatibleDC(hdc);
-                hbmpSav = SelectObject(hdcMem, hbmpMono);
+                hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMono);
                 crTextSav = SetTextColor(hdc, 0);
                 crBkSav = SetBkColor(hdc, 0xffffff);
                 BitBlt(hdc, rc.right - 22, yCur + 2, 13, 16, hdcMem, 0, 12, SRCAND);
@@ -591,7 +591,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             SetTextColor(hdc, dNum > 5 ? 0xff : 0);
             TextOut(hdc, xL, yCur, szWork, c);
             yCur += dyArial8;
-            hbrSav = SelectObject(hdc, hbrButtonShadow);
+            hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
             PatBlt(hdc, xL, yCur, xR - xL, 1, PATCOPY);
             PatBlt(hdc, xL + 1, yCur + 1, xR - xL - 2, 3 * dyRow - 1, BLACKNESS);
             PatBlt(hdc, xL, yCur, 1, 3 * dyRow, PATCOPY);
@@ -700,7 +700,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 c = wsprintf(szWork, PCTD, i * dNum);
                 CtrTextOut(hdc, xBeg, dy, szWork, c);
             }
-            RightTextOut(hdc, xL - 4, dy, "kT", 2, 0);
+            RightTextOut(hdc, xL - 4, dy, (char *)"kT", 2, 0);
             if (pl.iPlayer == idPlayer) {
                 EstMineralsMined(&pl, rgl, -1, FALSE);
             } else {
@@ -770,7 +770,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         } else {
             if (sel.scan.idpl == idplNone)
                 goto FinishUp;
-            hbmpSav = SelectObject(hdcMem, hbmpUnknownPlanet);
+            hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpUnknownPlanet);
             SetTextColor(hdc, 0);
             BitBlt(hdc, ((prc->right - prc->left - 0x40) >> 1) + prc->left, ((prc->bottom - prc->top - 0x40) >> 1) + prc->top, 64, 64, hdcMem, 0, 0, SRCCOPY);
             SelectObject(hdcMem, hbmpSav);
@@ -1191,7 +1191,7 @@ void DrawSelectionArrow(HDC hdc, RECT *prc, int16_t fEnabled) {
     int16_t xCtr;
 
     hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = SelectObject(hdcMem, hbmpScanner);
+    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScanner);
     xCtr = (int16_t)(prc->right - prc->left) / 2 + prc->left;
     BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, 35, 57, SRCAND);
     BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, !fEnabled ? 0 : 24, !fEnabled ? 45 : 57, SRCPAINT);
@@ -1212,7 +1212,7 @@ void DrawDiamond(HDC hdc, RECT *prc, HBRUSH hbr) {
     yTop = prc->top + 1;
     yBot = prc->bottom - 2;
     xCur = xCtr - 1;
-    hbrSav = SelectObject(hdc, hbrButtonHilite);
+    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonHilite);
     while (yTop <= yBot) {
         PatBlt(hdc, xCur, yTop++, 2, 1, PATCOPY);
         PatBlt(hdc, xCur--, yBot--, 2, 1, PATCOPY);
