@@ -209,7 +209,7 @@ HWND HwndCompatFirstTop(void);
 HWND HwndCompatRegistry(void);
 void CompatShutdownInspector(void);
 LRESULT CALLBACK CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-void CompatShutdownAudio(void);
+void CompatShutdownAudio(void) noexcept;
 
 typedef struct COMPATDIB {
     int cx, cy, cBits, cColors;
