@@ -5,6 +5,7 @@
 #include "encoding.h"
 #include "errors.h"
 #include "fileio.h"
+#include "ownership.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
 #if defined(STARS_TEST_IMPL_MessageBoxA) && !defined(STARS_WIN_CALLS_H)
@@ -159,10 +160,11 @@ extern const COMPATRESOURCE rgCompatImageResources[];
 extern const size_t cCompatImageResources;
 typedef struct COMPATIMAGE {
     BOOL fAlive, fCursor, fShared, fMono, fInvert, fAppIcon;
-    SDL_Surface *lpXor;
-    BYTE *rgbAnd;
+    // Reverse member destruction releases the cursor before its image storage.
+    NATIVEARRAYOWNER<BYTE, std::free> rgbAnd;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpXor;
     UINT xHot, yHot, idSystem;
-    SDL_Cursor *lpCursor;
+    NATIVEOWNER<SDL_Cursor, SDL_DestroyCursor> lpCursor;
     HRSRC hrsrc;
     struct COMPATIMAGE *lpNext;
 } COMPATIMAGE;

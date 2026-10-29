@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "ownership.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -210,14 +211,15 @@ int CyCompatMenuBar(HWND hwnd) {
     RECT *rgrc, rc;
     TEXTMETRICA tm = {};
     int cx, cy, x = 0, y = 0, dx, i;
+    NATIVEOWNER<RECT, free> rgrcOwner;
 
     if (!hwnd || hwnd->hwndParent || !(lp = LpMenu(hwnd->hmenu)) || lp->citem == 0) return 0;
     if (!SDL_GetWindowSize(hwnd->lpWindow, &cx, &cy)) return 0;
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
-    rgrc = (RECT *)(calloc((size_t)lp->citem, sizeof(*rgrc)));
+    rgrcOwner.reset((RECT *)calloc((size_t)lp->citem, sizeof(*rgrc))); rgrc = rgrcOwner.get();
     if (!rgrc) return 0;
     hdc = GetDC(NULL);
-    if (!hdc) { free(rgrc); return 0; }
+    if (!hdc) return 0;
     hfont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
     GetTextMetricsA(hdc, &tm); cy = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
@@ -229,8 +231,8 @@ int CyCompatMenuBar(HWND hwnd) {
         SetRect(&rgrc[i], x, y, x + dx, y + cy); x += dx;
     }
     SelectObject(hdc, hfont); ReleaseDC(NULL, hdc);
-    if (i != lp->citem) { free(rgrc); return 0; }
-    free(hwnd->rgrcMenu); hwnd->rgrcMenu = rgrc;
+    if (i != lp->citem) return 0;
+    free(hwnd->rgrcMenu); hwnd->rgrcMenu = rgrcOwner.release();
     hwnd->cyMenu = y + cy; hwnd->cxMenu = cx; hwnd->cMenu = lp->citem;
     hwnd->fMenuLayoutDirty = FALSE; hwnd->fMenuDirty = TRUE;
     return hwnd->cyMenu;

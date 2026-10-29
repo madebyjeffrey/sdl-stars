@@ -112,7 +112,7 @@ int main(void) {
 #ifndef _WIN32
     hcur = LoadCursor(hinst, "ScannerCur"); lp = LpCompatImage((HICON)hcur); CHECK(lp);
     SetCursor(hcur); pszDriver = SDL_GetCurrentVideoDriver();
-    if (pszDriver && strcmp(pszDriver, "dummy") != 0) CHECK(lp->lpCursor && SDL_GetCursor() == lp->lpCursor);
+    if (pszDriver && strcmp(pszDriver, "dummy") != 0) CHECK(lp->lpCursor && SDL_GetCursor() == lp->lpCursor.get());
     // An inverted cursor is composed over the scene, never into client pixels.
     hcur = LoadCursor(hinst, rgImageManifest[19].psz);
     lp = LpCompatImage((HICON)hcur); CHECK(lp && lp->fInvert);

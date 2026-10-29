@@ -3,6 +3,7 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include "ownership.h"
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
@@ -1090,11 +1091,12 @@ HBRUSH WINAPI CreatePatternBrush(HBITMAP hbmp) {
     COMPATOBJECT *lpbm = LpObject((HGDIOBJ)hbmp), *lpobj;
     SDL_Surface *lpsurface;
     if (!lpbm || lpbm->iKind != objBitmap) return NULL;
-    lpsurface = SDL_DuplicateSurface(lpbm->lpSurface);
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner(SDL_DuplicateSurface(lpbm->lpSurface));
+    lpsurface = lpsurfaceOwner.get();
     if (!lpsurface) return NULL;
     lpobj = LpNewObject(objBrush, 0, FALSE);
-    if (!lpobj) { SDL_DestroySurface(lpsurface); return NULL; }
-    lpobj->lpSurface = lpsurface; lpobj->fMono = lpbm->fMono;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface = lpsurfaceOwner.release(); lpobj->fMono = lpbm->fMono;
     return (HBRUSH)lpobj;
 }
 
@@ -2084,11 +2086,13 @@ SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp) {
 
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
     COMPATOBJECT *lpobj;
-    SDL_Surface *lpCopy;
-    if (!lpSurface || !(lpCopy = SDL_DuplicateSurface(lpSurface))) return NULL;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    if (!lpSurface) return NULL;
+    lpsurfaceOwner.reset(SDL_DuplicateSurface(lpSurface));
+    if (!lpsurfaceOwner) return NULL;
     lpobj = LpNewObject(objBitmap, 0, FALSE);
-    if (!lpobj) { SDL_DestroySurface(lpCopy); return NULL; }
-    lpobj->lpSurface = lpCopy; lpobj->fMono = fMono;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface = lpsurfaceOwner.release(); lpobj->fMono = fMono;
     return (HBITMAP)lpobj;
 }
 BOOL WINAPI DrawIcon(HDC hdc, int x, int y, HICON hicon) {
@@ -2103,7 +2107,7 @@ BOOL WINAPI DrawIcon(HDC hdc, int x, int y, HICON hicon) {
         dx = (int64_t)x - lpdc->ptOrg.x + ix; dy = (int64_t)y - lpdc->ptOrg.y + iy;
         if (dx < rc.left || dy < rc.top || dx >= rc.right || dy >= rc.bottom || !FRegionPixel(lpdc, dx, dy)) continue;
         sx = ix * lp->lpXor->w / 32; sy = iy * lp->lpXor->h / 32;
-        crDst = CrDCPixel(lpdc, (int)dx, (int)dy); crSrc = CrSurfacePixel(lp->lpXor, sx, sy);
+        crDst = CrDCPixel(lpdc, (int)dx, (int)dy); crSrc = CrSurfacePixel(lp->lpXor.get(), sx, sy);
         Pixel(lpdc, &rc, dx, dy, (lp->rgbAnd[sy * lp->lpXor->w + sx] ? crDst : 0) ^ crSrc);
     }
     return lpdc->fMemory || lpdc->fScreen || FCompatPresent(lpdc->hwnd);

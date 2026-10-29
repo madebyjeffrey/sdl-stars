@@ -1,5 +1,6 @@
 /* Fontconfig chooses installed faces; FreeType measures/rasterizes UTF-8 text. */
 #include "internal.h"
+#include "ownership.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <fontconfig/fontconfig.h>
@@ -80,15 +81,18 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FT_Matrix matrix;
     FT_Vector delta;
     int index = 0;
+    NATIVEOWNER<FcCharSet, FcCharSetDestroy> lpcharsetOwner;
+    NATIVEOWNER<FcPattern, FcPatternDestroy> lppatternOwner, lpmatchOwner;
     if (!FFontConfig()) return NULL;
-    pattern = FcPatternCreate(); charset = FcCharSetCreate();
+    lppatternOwner.reset(FcPatternCreate()); pattern = lppatternOwner.get();
+    lpcharsetOwner.reset(FcCharSetCreate()); charset = lpcharsetOwner.get();
     if (!pattern || !charset) goto done;
     FcCharSetAddChar(charset, ch); FcPatternAddCharSet(pattern, FC_CHARSET, charset);
     FcPatternAddString(pattern, FC_FAMILY, (const FcChar8 *)lpfont->lf.lfFaceName);
     FcPatternAddInteger(pattern, FC_WEIGHT, lpfont->tm.tmWeight >= 700 ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
     FcPatternAddInteger(pattern, FC_SLANT, lpfont->tm.tmItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
     FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); FcDefaultSubstitute(pattern);
-    match = FcFontMatch(lpConfig, pattern, &result);
+    lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get();
     if (match) {
         if (FcPatternGetString(match, FC_FILE, 0, &pszFile) == FcResultMatch &&
             FcPatternGetInteger(match, FC_INDEX, 0, &index) == FcResultMatch &&
@@ -100,17 +104,16 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
                 FT_Set_Transform(face, &matrix, &delta);
             }
         }
-        FcPatternDestroy(match);
     }
 done:
-    if (pattern) FcPatternDestroy(pattern);
-    if (charset) FcCharSetDestroy(charset);
     return face;
 }
 
 static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
     COMPATGLYPH *lp, **lpp;
     FT_Face face;
+    NATIVEOWNER<COMPATGLYPH, free> lpglyphOwner;
+    NATIVEOWNER<FT_FaceRec_, FT_Done_Face> lpfaceOwner;
     if (ch < 256) return LpGlyph(lpfont, (BYTE)ch);
     for (lp = lpfont->lpGlyphUtf8; lp; lp = lp->lpNext) if (lp->ch == ch) return lp;
     // Bound the extra cache independently of cached code points and filename length.
@@ -118,17 +121,14 @@ static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
         for (lpp = &lpfont->lpGlyphUtf8; (*lpp)->lpNext; lpp = &(*lpp)->lpNext) {}
         free((*lpp)->rgb); free(*lpp); *lpp = NULL; lpfont->cGlyphUtf8--;
     }
-    lp = (COMPATGLYPH *)(calloc(1, sizeof(*lp)));
+    lpglyphOwner.reset((COMPATGLYPH *)calloc(1, sizeof(*lp))); lp = lpglyphOwner.get();
     if (!lp) return NULL;
-    face = FT_Get_Char_Index(lpfont->face, ch) ? NULL : FaceFallback(lpfont, ch);
-    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face, ch, lp)) {
-        if (face) FT_Done_Face(face);
-        free(lp); return NULL;
-    }
-    if (face) FT_Done_Face(face);
+    lpfaceOwner.reset(FT_Get_Char_Index(lpfont->face, ch) ? NULL : FaceFallback(lpfont, ch)); face = lpfaceOwner.get();
+    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face, ch, lp)) return NULL;
+    lpfaceOwner.reset();
     lp->ch = ch; lp->lpNext = lpfont->lpGlyphUtf8;
     lpfont->lpGlyphUtf8 = lp; lpfont->cGlyphUtf8++;
-    return lp;
+    return lpglyphOwner.release();
 }
 
 void FreeCompatFont(COMPATFONT *lpfont) {
@@ -155,13 +155,15 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     BOOL fBold, fItalic;
     COMPATGLYPH *lpglyph;
     FT_Matrix matrix = {65536, 0, 0, 65536};
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfontOwner;
+    NATIVEOWNER<FcPattern, FcPatternDestroy> lppatternOwner, lpmatchOwner;
 
     if (!lplf || (int64_t)lplf->lfHeight < -cMax || lplf->lfHeight > cMax ||
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
         !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
         !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
     if (!library && FT_Init_FreeType(&library)) return NULL;
-    lpfont = (COMPATFONT *)(calloc(1, sizeof(*lpfont)));
+    lpfontOwner.reset((COMPATFONT *)calloc(1, sizeof(*lpfont))); lpfont = lpfontOwner.get();
     if (!lpfont) return NULL;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);
@@ -181,20 +183,20 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         if (FT_New_Memory_Face(library, rgCompatFontData[i].rgb, (FT_Long)rgCompatFontData[i].cb, 0, &lpfont->face)) goto LFail;
     } else {
         if (!FFontConfig()) goto LFail;
-        pattern = FcPatternCreate();
+        lppatternOwner.reset(FcPatternCreate()); pattern = lppatternOwner.get();
         if (!pattern) goto LFail;
         FcPatternAddString(pattern, FC_FAMILY, (FcChar8 *)szFamily);
         FcPatternAddInteger(pattern, FC_WEIGHT, fBold ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
         FcPatternAddInteger(pattern, FC_SLANT, fItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
         FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); FcDefaultSubstitute(pattern);
-        match = FcFontMatch(lpConfig, pattern, &result); FcPatternDestroy(pattern);
+        lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get(); lppatternOwner.reset();
         if (!match) goto LFail;
         FcPatternGetInteger(match, FC_INDEX, 0, &index);
         if (FcPatternGetString(match, FC_FILE, 0, &pszFile) != FcResultMatch ||
             FT_New_Face(library, (const char *)pszFile, index, &lpfont->face)) {
-            FcPatternDestroy(match); goto LFail;
+            goto LFail;
         }
-        FcPatternDestroy(match);
+        lpmatchOwner.reset();
     }
     cHeight = lplf->lfHeight < 0 ? -lplf->lfHeight : lplf->lfHeight;
     if (cHeight == 0) cHeight = 16;
@@ -231,9 +233,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         if (lpglyph->dx > dxMax) dxMax = lpglyph->dx;
     }
     lpfont->tm.tmMaxCharWidth = dxMax;
-    return lpfont;
+    return lpfontOwner.release();
 LFail:
-    FreeCompatFont(lpfont);
     return NULL;
 }
 

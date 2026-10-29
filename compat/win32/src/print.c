@@ -1,5 +1,6 @@
 /* Legacy printer escapes spool the same GDI raster canvas to atomic PDF output. */
 #include "internal.h"
+#include "ownership.h"
 #include <cairo-pdf.h>
 #include <errno.h>
 #include <limits.h>
@@ -155,18 +156,22 @@ static BOOL FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {
     BOOL fOk;
     // Cairo may retain an image while finalizing later PDF pages. Its image
     // owns the pixels rather than borrowing a temporary SDL conversion buffer.
-    lpImage = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lpSource->w, lpSource->h);
-    if (cairo_surface_status(lpImage) != CAIRO_STATUS_SUCCESS ||
-        !SDL_ConvertPixels(lpSource->w, lpSource->h, lpSource->format, lpSource->pixels, lpSource->pitch,
-                           SDL_PIXELFORMAT_ARGB8888, cairo_image_surface_get_data(lpImage), cairo_image_surface_get_stride(lpImage))) {
-        cairo_surface_destroy(lpImage); return FALSE;
+    {
+        NATIVEOWNER<cairo_surface_t, cairo_surface_destroy> lpimageOwner(
+            cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lpSource->w, lpSource->h));
+        lpImage = lpimageOwner.get();
+        if (cairo_surface_status(lpImage) != CAIRO_STATUS_SUCCESS ||
+            !SDL_ConvertPixels(lpSource->w, lpSource->h, lpSource->format, lpSource->pixels, lpSource->pitch,
+                               SDL_PIXELFORMAT_ARGB8888, cairo_image_surface_get_data(lpImage), cairo_image_surface_get_stride(lpImage))) {
+            return FALSE;
+        }
+        cairo_surface_mark_dirty(lpImage);
+        NATIVEOWNER<cairo_t, cairo_destroy> lpcontextOwner(cairo_create(lp->lpPDF));
+        lpcr = lpcontextOwner.get();
+        cairo_translate(lpcr, 18, 18); cairo_scale(lpcr, 72.0 / 300, 72.0 / 300);
+        cairo_set_source_surface(lpcr, lpImage, 0, 0); cairo_paint(lpcr); cairo_show_page(lpcr);
+        fOk = cairo_status(lpcr) == CAIRO_STATUS_SUCCESS && cairo_surface_status(lp->lpPDF) == CAIRO_STATUS_SUCCESS;
     }
-    cairo_surface_mark_dirty(lpImage);
-    lpcr = cairo_create(lp->lpPDF);
-    cairo_translate(lpcr, 18, 18); cairo_scale(lpcr, 72.0 / 300, 72.0 / 300);
-    cairo_set_source_surface(lpcr, lpImage, 0, 0); cairo_paint(lpcr); cairo_show_page(lpcr);
-    fOk = cairo_status(lpcr) == CAIRO_STATUS_SUCCESS && cairo_surface_status(lp->lpPDF) == CAIRO_STATUS_SUCCESS;
-    cairo_destroy(lpcr); cairo_surface_destroy(lpImage);
     if (fOk) {
         lp->cPages++;
         SDL_FillSurfaceRect(lpSource, NULL, SDL_MapSurfaceRGB(lpSource, 255, 255, 255));
@@ -196,7 +201,8 @@ static BOOL FSubmitPrint(COMPATPRINT *lp) {
     rgArgs[cArgs++] = "-o"; rgArgs[cArgs++] = lp->idPaper == DMPAPER_A4 ? "media=A4" : "media=Letter";
     rgArgs[cArgs++] = "-o"; rgArgs[cArgs++] = lp->cxPhysical > lp->cyPhysical ? "orientation-requested=4" : "orientation-requested=3";
     rgArgs[cArgs++] = "--"; rgArgs[cArgs++] = lp->szTemp; rgArgs[cArgs] = NULL;
-    lpProcess = SDL_CreateProcess(rgArgs, false);
+    NATIVEOWNER<SDL_Process, SDL_DestroyProcess> lpprocessOwner(SDL_CreateProcess(rgArgs, false));
+    lpProcess = lpprocessOwner.get();
     if (!lpProcess) return FALSE;
     ticks = SDL_GetTicks();
     while (!SDL_WaitProcess(lpProcess, false, &code)) {
@@ -205,7 +211,6 @@ static BOOL FSubmitPrint(COMPATPRINT *lp) {
         // caller that could delete this printer DC while its job is submitting.
         SDL_PumpEvents(); SDL_Delay(5);
     }
-    SDL_DestroyProcess(lpProcess);
     return code == 0;
 }
 static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
