@@ -27,7 +27,7 @@ void StarsTest_NewGameWizard(HWND hwnd, int16_t fReadOnly) {
 
 int16_t StarsTestReal_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase);
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
-    const char *pszFailure = getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE");
+    const char *pszFailure = PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
     int16_t fCreated;
     if (fCreatingGame && dt == dtFailure && pszFailure) {
@@ -35,7 +35,7 @@ int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iplr, char *pszBase) {
         if (!SDL_CreateDirectory(szWork)) return FALSE;
     }
     fCreated = StarsTestReal_FCreateFile(dt, iplr, pszBase);
-    if (getenv("STARS_CLIENT_SWITCH_CHOICE") && fCreated) {
+    if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && fCreated) {
         if (dt == dtLog) cSwitchLogWrites++;
         if (dt == dtHist) cSwitchHistoryWrites++;
     }
@@ -50,7 +50,7 @@ static BOOL FCheckNewGameWorkflow(void) {
     SDL_Event event = {0};
 
     if (fCreatingGame) {
-        if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) {
+        if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE")) {
             for (hwnd = GetWindow(hwndTitle ? hwndTitle : hwndFrame, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                 char szCaption[256];
                 GetWindowText(hwnd, szCaption, sizeof(szCaption));
@@ -63,8 +63,8 @@ static BOOL FCheckNewGameWorkflow(void) {
             if (hwnd->fDialog && hwnd->lpfnDlg == LibraryGameRevisionDlg) hwndDialog = hwnd;
         }
         if (hwndDialog && IsWindowVisible(hwndDialog)) {
-            const char *pszSuggested = getenv("STARS_CLIENT_LIBRARY_SUGGESTED");
-            const char *pszCapture = getenv("STARS_CLIENT_LIBRARY_REVISION_CAPTURE");
+            const char *pszSuggested = PszCompatEnvironment("STARS_CLIENT_LIBRARY_SUGGESTED");
+            const char *pszCapture = PszCompatEnvironment("STARS_CLIENT_LIBRARY_REVISION_CAPTURE");
             char szPrompt[512];
             GetDlgItemText(hwndDialog, IDC_LIBRARY_GAME_REVISION_TEXT, szPrompt, sizeof(szPrompt));
             if (pszSuggested && !strstr(szPrompt, pszSuggested)) return FALSE;
@@ -72,15 +72,15 @@ static BOOL FCheckNewGameWorkflow(void) {
                                !SDL_SaveBMP(hwndDialog->lpComposite, pszCapture))) return FALSE;
             cNewGameChoices++;
             return FPushClick(GetDlgItem(hwndDialog,
-                getenv("STARS_CLIENT_LIBRARY_REVISION_BACK") && cNewGameChoices == 1 ? IDCANCEL : IDOK));
+                PszCompatEnvironment("STARS_CLIENT_LIBRARY_REVISION_BACK") && cNewGameChoices == 1 ? IDCANCEL : IDOK));
         }
-        if (getenv("STARS_CLIENT_LIBRARY_REVISION_BACK") && cNewGameChoices == 1 && !fRevisionRenamed) {
+        if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_REVISION_BACK") && cNewGameChoices == 1 && !fRevisionRenamed) {
             for (hwnd = GetWindow(hwndTitle ? hwndTitle : hwndFrame, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
                 if (hwnd->fDialog && hwnd->lpfnDlg == NewGameDlg && IsWindowEnabled(hwnd)) hwndDialog = hwnd;
             if (hwndDialog) {
                 if (IsDlgButtonChecked(hwndDialog, IDC_NEW_GAME_TINY) != BST_CHECKED ||
                     FFileExists((char *)pszNewGame) || !SetDlgItemText(hwndDialog, IDC_NEW_GAME_NAME,
-                        getenv("STARS_CLIENT_LIBRARY_RENAME_TITLE"))) return FALSE;
+                        PszCompatEnvironment("STARS_CLIENT_LIBRARY_RENAME_TITLE"))) return FALSE;
                 fRevisionRenamed = TRUE;
                 return FPushClick(GetDlgItem(hwndDialog, IDC_FINISH));
             }
@@ -103,8 +103,8 @@ static BOOL FCheckNewGameWorkflow(void) {
             if (hwnd->fDialog && hwnd->lpfnDlg == NewGameDlg) { hwndDialog = hwnd; break; }
         if (!hwndDialog) return fCreatingGame;
         {
-            const char *pszTitle = getenv("STARS_CLIENT_GAME_TITLE");
-            if (!pszTitle) pszTitle = getenv("STARS_CLIENT_LIBRARY_NAME");
+            const char *pszTitle = PszCompatEnvironment("STARS_CLIENT_GAME_TITLE");
+            if (!pszTitle) pszTitle = PszCompatEnvironment("STARS_CLIENT_LIBRARY_NAME");
             if (pszTitle && !SetDlgItemText(hwndDialog, IDC_NEW_GAME_NAME, pszTitle)) return FALSE;
         }
         iNewGameStep++;
@@ -116,9 +116,9 @@ static BOOL FCheckNewGameWorkflow(void) {
         if (!hwndDialog || IsDlgButtonChecked(hwndDialog, IDC_NEW_GAME_TINY) != BST_CHECKED) return FALSE;
         iNewGameStep++;
         return FPushClick(GetDlgItem(hwndDialog, iNewGameStep == 3 ? IDCANCEL :
-                                    iNewGameStep == 6 && getenv("STARS_CLIENT_NEW_PAGES") ? IDC_NEXT : IDC_FINISH));
+                                    iNewGameStep == 6 && PszCompatEnvironment("STARS_CLIENT_NEW_PAGES") ? IDC_NEXT : IDC_FINISH));
     }
-    if (getenv("STARS_CLIENT_NEW_PAGES") && iNewGameStep >= 6 && iNewGameStep <= 9) {
+    if (PszCompatEnvironment("STARS_CLIENT_NEW_PAGES") && iNewGameStep >= 6 && iNewGameStep <= 9) {
         lpfn = iNewGameStep == 6 || iNewGameStep == 8 ? NewGameDlg2 : NewGameDlg3;
         for (hwnd = GetWindow(hwndTitle ? hwndTitle : hwndFrame, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
             if (hwnd->fDialog && hwnd->lpfnDlg == lpfn) { hwndDialog = hwnd; break; }
@@ -134,7 +134,7 @@ static BOOL FCheckNewGameWorkflow(void) {
         iNewGameStep++;
         return FPushClick(rghwndBtnSplash[0]);
     }
-    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE")) {
+    if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE")) {
         // Showing the restored title can pump a timer before ShowWindow completes.
         if (!IsWindowVisible(hwndTitle)) return ++cWait < 20;
         if (cAlerts != 2 || game.lid != 0 || !IsWindowVisible(hwndTitle)) return FALSE;
@@ -144,11 +144,11 @@ static BOOL FCheckNewGameWorkflow(void) {
         event.window.windowID = hwndTitle->id;
         return SDL_PushEvent(&event);
     }
-    if (iNewGameStep != (getenv("STARS_CLIENT_NEW_PAGES") ? 10 : 6) || game.lid == 0 || game.turn != 0 ||
+    if (iNewGameStep != (PszCompatEnvironment("STARS_CLIENT_NEW_PAGES") ? 10 : 6) || game.lid == 0 || game.turn != 0 ||
         !game.fSinglePlr || idPlayer == iplrNone || !lpPlanets || game.cPlanMax == 0 ||
         IsWindow(hwndTitle) || !IsWindowVisible(hwndFrame) || !IsWindow(hwndScanner)) return FALSE;
     {
-        const char *pszTitle = fRevisionRenamed ? getenv("STARS_CLIENT_LIBRARY_RENAME_TITLE") : getenv("STARS_CLIENT_GAME_TITLE");
+        const char *pszTitle = fRevisionRenamed ? PszCompatEnvironment("STARS_CLIENT_LIBRARY_RENAME_TITLE") : PszCompatEnvironment("STARS_CLIENT_GAME_TITLE");
         if (pszTitle && strcmp(game.szName, pszTitle)) {
             fprintf(stderr, "Generated title [%s], expected [%s]\n", game.szName, pszTitle);
             return FALSE;

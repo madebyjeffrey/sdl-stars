@@ -57,8 +57,8 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         if (fSaveOwner) {
             if (iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
                 hwndNewGame = hwnd;
-                pszRoot = getenv("STARS_LIBRARY_DIR");
-                if (!pszRoot) pszRoot = getenv("STARS_SETTINGS_DIR");
+                pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
+                if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
                 if (!pszRoot) { StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return; }
                 CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
                 if (!SDL_CreateDirectory(szCollision) || !SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {

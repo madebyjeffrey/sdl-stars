@@ -22,7 +22,7 @@ static BOOL FCheckRaceRosterWorkflow(void) {
     static const char *rgszName[] = {"Roster-shared-prefix-A & \xce\xa9.r1", "Roster-shared-prefix-B.r1"};
     HWND hwnd;
     char szManaged[512], szOther[512], szSnapshot[512], szFirstSnapshot[512], szCaption[128];
-    const char *pszRoot = getenv("STARS_SETTINGS_DIR");
+    const char *pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
 
     CchSnprintf(szManaged, sizeof(szManaged), "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[0]);
     CchSnprintf(szOther, sizeof(szOther), "%s%sRace Designs%s%s", pszRoot, szDirSep, szDirSep, rgszName[1]);

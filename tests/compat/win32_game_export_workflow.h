@@ -8,34 +8,34 @@ static int16_t fGameExportSubmitSav;
 
 extern "C" void SDLCALL StarsTest_SDL_ShowOpenFolderDialog(SDL_DialogFileCallback pfnCallback, void *lpData,
                                                SDL_Window *lpWindow, const char *pszLocation, bool fMany) {
-    const char *pszGame = getenv("STARS_CLIENT_EXPORT_GAME");
-    const char *pszAction = getenv("STARS_CLIENT_EXPORT_ACTION");
+    const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME");
+    const char *pszAction = PszCompatEnvironment("STARS_CLIENT_EXPORT_ACTION");
     const char *rgpszPath[2] = {NULL, NULL};
     if (!pszGame) {
         SDL_ShowOpenFolderDialog(pfnCallback, lpData, lpWindow, pszLocation, fMany);
         return;
     }
     cGameExportPickers++;
-    if ((!pszAction || strcmp(pszAction, "cancel")) && !getenv("STARS_CLIENT_EXPORT_ZIP_CANCEL"))
-        rgpszPath[0] = getenv("STARS_CLIENT_EXPORT_ZIP") ? getenv("STARS_CLIENT_EXPORT_ZIP") : getenv("STARS_CLIENT_EXPORT_PARENT");
+    if ((!pszAction || strcmp(pszAction, "cancel")) && !PszCompatEnvironment("STARS_CLIENT_EXPORT_ZIP_CANCEL"))
+        rgpszPath[0] = PszCompatEnvironment("STARS_CLIENT_EXPORT_ZIP") ? PszCompatEnvironment("STARS_CLIENT_EXPORT_ZIP") : PszCompatEnvironment("STARS_CLIENT_EXPORT_PARENT");
     pfnCallback(lpData, rgpszPath, 0);
 }
 
 static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
-    const char *pszGame = getenv("STARS_CLIENT_EXPORT_GAME");
-    const char *pszParent = getenv("STARS_CLIENT_EXPORT_PARENT");
-    const char *pszZip = getenv("STARS_CLIENT_EXPORT_ZIP");
-    const char *pszAction = getenv("STARS_CLIENT_EXPORT_ACTION");
-    const char *pszPlayer = getenv("STARS_CLIENT_EXPORT_PLAYER");
-    const char *pszResearch = getenv("STARS_CLIENT_EXPORT_RESEARCH");
+    const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME");
+    const char *pszParent = PszCompatEnvironment("STARS_CLIENT_EXPORT_PARENT");
+    const char *pszZip = PszCompatEnvironment("STARS_CLIENT_EXPORT_ZIP");
+    const char *pszAction = PszCompatEnvironment("STARS_CLIENT_EXPORT_ACTION");
+    const char *pszPlayer = PszCompatEnvironment("STARS_CLIENT_EXPORT_PLAYER");
+    const char *pszResearch = PszCompatEnvironment("STARS_CLIENT_EXPORT_RESEARCH");
     int iPlayer = pszPlayer ? atoi(pszPlayer) : 0;
     int iResearch = pszResearch ? atoi(pszResearch) : 4;
     HWND hwndSave = HwndWorkflowDialog();
     char szDestination[512];
-    int16_t fCancel = (pszAction && !strcmp(pszAction, "cancel")) || getenv("STARS_CLIENT_EXPORT_ZIP_CANCEL") != NULL;
+    int16_t fCancel = (pszAction && !strcmp(pszAction, "cancel")) || PszCompatEnvironment("STARS_CLIENT_EXPORT_ZIP_CANCEL") != NULL;
     int16_t fDiscard = pszAction && !strcmp(pszAction, "discard");
     int16_t fVerify = pszAction && !strcmp(pszAction, "verify");
-    int16_t fFail = getenv("STARS_CLIENT_EXPORT_EXPECTED") != NULL;
+    int16_t fFail = PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") != NULL;
     int cSaves;
 
     if (hwndSave && hwndSave->lpfnDlg == AskSaveDialog) {
@@ -53,7 +53,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
             iStage = 1;
             /* Verify this exported file through the real loader; Continue now
              * deliberately resumes the managed session instead of an MRU path. */
-            CchSnprintf(szBase, sizeof(szBase), "%s", getenv("STARS_CLIENT_CONTINUE"));
+            CchSnprintf(szBase, sizeof(szBase), "%s", PszCompatEnvironment("STARS_CLIENT_CONTINUE"));
             ini.fStartupFile = TRUE;
             if (FOpenGame(hwndTitle, FALSE) <= 0) goto LFail;
             fFreeingTitle = TRUE;

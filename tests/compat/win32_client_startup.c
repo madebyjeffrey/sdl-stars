@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 extern "C" char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
-    const char *pszPath = getenv("STARS_TEST_PREF_PATH");
+    const char *pszPath = PszCompatEnvironment("STARS_TEST_PREF_PATH");
     if (pszPath) return SDL_strdup(pszPath);
     return SDL_GetPrefPath(pszOrg, pszApp);
 }
@@ -338,9 +338,9 @@ static BOOL FCheckMapInspection(void) {
     char szNameSav[sizeof(fresh.rgobj[0].szName)];
     char szExport[32768];
     size_t cb;
-    const char *pszViewerCapture = getenv("STARS_MAP_VIEWER_CAPTURE");
+    const char *pszViewerCapture = PszCompatEnvironment("STARS_MAP_VIEWER_CAPTURE");
     NATIVEFILE *lpfile;
-    const char *pszCapture = getenv("STARS_MAP_CAPTURE");
+    const char *pszCapture = PszCompatEnvironment("STARS_MAP_CAPTURE");
     int16_t fDirty = game.fDirty;
     if (!FCaptureScanner(&snap) || snap.cObject < (size_t)game.cPlanMax ||
         snap.lidGame != game.lid || snap.idPlayer != idPlayer || snap.turn != game.turn) goto LDone;
@@ -515,8 +515,8 @@ int16_t StarsTest_PromptPassword(void) {
     if (fRejectRacePassword) return FALSE;
     // The frozen regression race is password protected. These tests qualify
     // file loading and client creation; password validation is outside scope.
-    return pszContinue || getenv("STARS_CLIENT_EXPECT_PLAYER") || getenv("STARS_CLIENT_HOST_LIBRARY_TEST") || getenv("STARS_CLIENT_STARTUP_MANAGED") ||
-           getenv("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
+    return pszContinue || PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") || PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") || PszCompatEnvironment("STARS_CLIENT_STARTUP_MANAGED") ||
+           PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
 }
 
 int16_t StarsTestReal_FPromptLegacyRacePassword(char *szPassword);
@@ -530,16 +530,16 @@ int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
 
 BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
-    const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
-    const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
-    if (!pszExternalGame) pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE");
-    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+    const char *pszSource = PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE");
+    const char *pszExternalGame = PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME");
+    if (!pszExternalGame) pszExternalGame = PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE");
+    if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE")) {
         fPassed = FALSE;
         fprintf(stderr, "Startup unexpectedly reopened the file chooser\n");
         PostQuitMessage(92);
         return FALSE;
     }
-    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST")) {
         fprintf(stderr, "New-game roster opened a file picker\n");
         PostQuitMessage(93);
         return FALSE;
@@ -549,16 +549,16 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
         strcpy(lpof->lpstrFile, pszExternalGame);
         return TRUE;
     }
-    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && pszSource) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") && pszSource) {
         if (strlen(pszSource) >= lpof->nMaxFile) return FALSE;
         strcpy(lpof->lpstrFile, pszSource);
         return TRUE;
     }
-    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
         const char *pszHostOrderPicker;
         cHostOrderPickerCalls++;
         if (fHostOrderPickerCancel) return FALSE;
-        pszHostOrderPicker = getenv("STARS_CLIENT_HOST_ORDER_PICKER");
+        pszHostOrderPicker = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_PICKER");
         if (pszHostOrderPicker) {
             size_t cchHostOrderPicker = strlen(pszHostOrderPicker);
             if (cchHostOrderPicker >= (size_t)lpof->nMaxFile) return FALSE;
@@ -611,11 +611,11 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
                 RGB(r, g, b) == cr;
         }
     }
-    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+    if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
         fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title before visible=%d id=%u\n",
                 IsWindowVisible(hwnd), SDL_GetWindowID(lpWindow));
     fResult = SDL_ShowWindow(lpWindow);
-    if (getenv("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
+    if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP") && hwnd && hwnd->lpfnWndProc == TitleWndProc)
         fprintf(stderr, "[DEBUG-library-startup] SDL_ShowWindow title result=%d visible=%d\n",
                 fResult, IsWindowVisible(hwnd));
     return fResult;
@@ -1422,7 +1422,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     int iRelationSav = rgplr[idPlayer].rgmdRelation[idPlayer == 0];
     int iResearchSav = rgplr[idPlayer].iTechNow, cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
     int16_t fNoResearchSav, fSinglePlrSav;
-    const char *pszWorkflow = getenv("STARS_CLIENT_WORKFLOW");
+    const char *pszWorkflow = PszCompatEnvironment("STARS_CLIENT_WORKFLOW");
     if (pszWorkflow) {
         if (strcmp(pszWorkflow, "polish") == 0) return FCheckMessageWheel() && FCheckPlanetPane();
         if (strcmp(pszWorkflow, "designer") == 0) return FCheckDesignerWorkflows() && FCheckSaveReloadWorkflow();
@@ -1487,7 +1487,7 @@ static BOOL FCheckGameplayWorkflows(void) {
 
 INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
+    const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == WM_INITDIALOG) {
         if (!strcmp(pszChoice, "save")) EndDialog(hwnd, 1);
         else if (!strcmp(pszChoice, "discard")) EndDialog(hwnd, 2);
@@ -1496,13 +1496,13 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         else return 0;
         return 1;
     }
-    if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST") && message == WM_INITDIALOG) {
+    if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CANCEL_TEST") && message == WM_INITDIALOG) {
         fSwitchCancelSent = TRUE;
         EndDialog(hwnd, -2);
         return 1;
     }
     INT_PTR fRet = StarsTestReal_AskSaveDialog(hwnd, message, wParam, lParam);
-    if (message == WM_INITDIALOG && getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+    if (message == WM_INITDIALOG && PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
         HWND hwndSave = GetDlgItem(hwnd, IDC_SAVE);
         HWND hwndSubmit = GetDlgItem(hwnd, IDC_SAVESUBMIT);
         HWND hwndDontSave = GetDlgItem(hwnd, IDC_NO_DON_T_SAVE);
@@ -1516,41 +1516,41 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
 int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     if (fRejectRacePassword) return IDOK;
-    if (getenv("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
         fRaceVersionSaveFailed = TRUE;
         return IDOK;
     }
-    if (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
+    if (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
         strstr(sz, "The selected managed game could not be completely deleted.")) {
         fLibraryGameDeleteFailureAlert = TRUE;
         fprintf(stderr, "Startup alert: %s\n", sz);
         cAlerts++;
         return IDOK;
     }
-    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && (mbType & MB_YESNO)) {
+    if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") && (mbType & MB_YESNO)) {
         cHostOrderConflictPrompts++;
         return idHostOrderConflictResponse;
     }
-    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST") &&
+    if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") &&
         strstr(sz, "Auto Generate is disabled because all of the human players are dead or inactive")) return IDOK;
-    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") && strstr(sz, "race design could not be deleted")) return IDOK;
     if (fExpectRaceExportFailureAlert && strstr(sz, "race design could not be exported")) return IDOK;
-    if (getenv("STARS_CLIENT_EXPORT_EXPECTED") && strstr(sz, "game could not be exported")) {
+    if (PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") && strstr(sz, "game could not be exported")) {
         cAlerts++;
         return IDOK;
     }
     fprintf(stderr, "Startup alert: %s\n", sz);
     cAlerts++;
-    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
-    if (getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
-    if (getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
+    if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") || PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = TRUE;
         fPassed = TRUE;
         PostQuitMessage(0);
         return IDOK;
     }
-    if (getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
-        if (getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
+    if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED")) {
+        if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
             strstr(sz, "the managed game and its orders were preserved")) fConflictRestoreAlert = TRUE;
         return IDOK;
     }
@@ -1578,8 +1578,8 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
         fLibraryGameDeletePrompt = strstr(pszText, "all player files") && strstr(pszText, "host state") &&
                                    strstr(pszText, "history") && strstr(pszText, "backups") &&
                                    strstr(pszText, "Export the complete game first");
-        return getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
-               strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "cancel") == 0 ? IDNO : IDYES;
+        return PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
+               strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "cancel") == 0 ? IDNO : IDYES;
     }
     if (pszText && strstr(pszText, "The selected managed game could not be completely deleted."))
         fLibraryGameDeleteFailureAlert = TRUE;
@@ -1589,8 +1589,8 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
 int StarsTestReal_RemoveNativeFile(const char *pszFile);
 int StarsTest_RemoveNativeFile(const char *pszFile) {
     static int fFailImportOrdersRemove;
-    if (!fFailLibraryGameDelete && getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
-        strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && strstr(pszFile, "selected-game")) {
+    if (!fFailLibraryGameDelete && PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
+        strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && strstr(pszFile, "selected-game")) {
         fFailLibraryGameDelete = TRUE;
         return -1;
     }
@@ -1598,7 +1598,7 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
         fFailRaceDelete = FALSE;
         return -1;
     }
-    if (!fFailImportOrdersRemove && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE") &&
+    if (!fFailImportOrdersRemove && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ORDERS_REMOVE") &&
         strstr(pszFile, ".x1")) {
         fFailImportOrdersRemove = TRUE;
         return -1;
@@ -1613,11 +1613,11 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
         fFailRaceVersionSave = FALSE;
         return -1;
     }
-    if (!fFailImportReplace && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
+    if (!fFailImportReplace && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
         fFailImportReplace = TRUE;
         return -1;
     }
-    if (getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
+    if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
         strstr(pszNew, ".m1")) return -1;
     if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
         fFailRaceExportReplace = FALSE;
@@ -1629,12 +1629,12 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
 int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
     static int fFailConflictPublish, fFailConflictRestore;
-    if (!fFailConflictPublish && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
+    if (!fFailConflictPublish && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
         strstr(pszOld, ".stars-game-stage-") && strstr(pszNew, "managed-copy-duplicate")) {
         fFailConflictPublish = TRUE;
         return -1;
     }
-    if (!fFailConflictRestore && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
+    if (!fFailConflictRestore && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
         strstr(pszOld, ".stars-game-old-") && strstr(pszNew, "managed-copy-duplicate")) {
         fFailConflictRestore = TRUE;
         return -1;
@@ -1682,7 +1682,7 @@ static BOOL FTestRaceCancellation(void) {
     char szCancelPassword[] = "cancel-test";
     PLAYER plrSav;
     char szProtected[512], szSnapshot[512], szExport[512], szImport[512], szDuplicate[512];
-    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
     int16_t fOkay;
 
     if (!FLoadLibraryRace(0, "Managed.r1")) return FALSE;
@@ -1722,7 +1722,7 @@ static BOOL FTestLegacyRaceImport(void) {
     RTBOF rtbof = {0};
     PLAYER plr, plrSav;
     char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
-    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
+    const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
     const char *rgszName[] = {"Legacy.r1", "Legacy-protected.r1"};
     uint16_t icksum;
     int i;
@@ -1775,14 +1775,14 @@ LDone:
 static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND lpFrame, lpTitle;
     char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];
-    const char *pszSettings = getenv("STARS_SETTINGS_DIR");
-    const char *pszRaceSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
-    const char *pszRaceSnapshot = getenv("STARS_CLIENT_RACE_IMPORT_SNAPSHOT");
-    const char *pszCapture = getenv("STARS_CLIENT_CAPTURE");
-    const char *pszWizardCapture = getenv("STARS_CLIENT_WIZARD_CAPTURE");
-    const char *pszRaceCapture = getenv("STARS_CLIENT_RACE_CAPTURE");
-    const char *pszGameCapture = getenv("STARS_CLIENT_GAME_CAPTURE");
-    const char *pszExportGame = getenv("STARS_CLIENT_EXPORT_GAME");
+    const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
+    const char *pszRaceSource = PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE");
+    const char *pszRaceSnapshot = PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SNAPSHOT");
+    const char *pszCapture = PszCompatEnvironment("STARS_CLIENT_CAPTURE");
+    const char *pszWizardCapture = PszCompatEnvironment("STARS_CLIENT_WIZARD_CAPTURE");
+    const char *pszRaceCapture = PszCompatEnvironment("STARS_CLIENT_RACE_CAPTURE");
+    const char *pszGameCapture = PszCompatEnvironment("STARS_CLIENT_GAME_CAPTURE");
+    const char *pszExportGame = PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME");
     static const DLGPROC rglpfnRace[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     BYTE *rgb;
     size_t cb, i;
@@ -1820,7 +1820,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
 
     (void)hwnd; (void)msg; (void)dwTime;
 #ifdef __APPLE__
-    if (getenv("STARS_CLIENT_MAC_SHORTCUTS_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_MAC_SHORTCUTS_TEST")) {
         KillTimer(NULL, id);
         if (!FCheckMacShortcuts()) goto LDone;
         fTitlePainted = fChecked = fPassed = TRUE;
@@ -1829,11 +1829,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
 #endif
-    if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST")) {
-        pszHostSource = getenv("STARS_CLIENT_HOST_IMPORT_SOURCE");
-        pszHostPlayerSource = getenv("STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE");
-        pszHostOrderBase = getenv("STARS_CLIENT_HOST_ORDER_BASE");
-        pszHostPickerBase = getenv("STARS_CLIENT_HOST_ORDER_PICKER_BASE");
+    if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
+        pszHostSource = PszCompatEnvironment("STARS_CLIENT_HOST_IMPORT_SOURCE");
+        pszHostPlayerSource = PszCompatEnvironment("STARS_CLIENT_HOST_PLAYER_IMPORT_SOURCE");
+        pszHostOrderBase = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_BASE");
+        pszHostPickerBase = PszCompatEnvironment("STARS_CLIENT_HOST_ORDER_PICKER_BASE");
         cchHostOrder = CchSnprintf(szHostManagedBase, sizeof(szHostManagedBase),
                                    "%s%sGames%sHosted%sHosted", pszSettings, szDirSep, szDirSep, szDirSep);
         if (cchHostOrder <= 0 || (size_t)cchHostOrder >= sizeof(szHostManagedBase)) goto LDone;
@@ -2151,7 +2151,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
     }
-    if (getenv("STARS_CLIENT_STARTUP_SOURCE")) {
+    if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE")) {
         HWND hwndDialog;
         for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
             if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
@@ -2159,7 +2159,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 return;
             }
         }
-        if (getenv("STARS_CLIENT_STARTUP_MANAGED")) {
+        if (PszCompatEnvironment("STARS_CLIENT_STARTUP_MANAGED")) {
             if (game.lid == 0 || !lpPlanets || idPlayer == iplrNone || hwndTitle) {
                 fprintf(stderr, "Managed startup: game %ld planets %p player %d title %p base %s\n",
                         (long)game.lid, (void *)lpPlanets, idPlayer, (void *)hwndTitle, szBase);
@@ -2176,24 +2176,24 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         PostQuitMessage(0);
         return;
     }
-    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST") || getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST") || PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndSave = HwndRosterDialog(LibraryRaceSaveDlg);
         if (hwndSave) {
             if (!FPushClick(GetDlgItem(hwndSave, IDC_LIBRARY_RACE_UPDATE))) goto LDone;
             return;
         }
     }
-    if (getenv("STARS_CLIENT_RACE_VERSION_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST")) {
         if (!FCheckRaceVersionWorkflow()) goto LDone;
         return;
     }
-    if (getenv("STARS_CLIENT_RACE_ROSTER_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST")) {
         if (!FCheckRaceRosterWorkflow()) goto LDone;
         return;
     }
-    if (getenv("STARS_CLIENT_RACE_NAME_CANCEL")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL")) {
         HWND hwndTop;
-        BOOL fWizard = !strcmp(getenv("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
+        BOOL fWizard = !strcmp(PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL"), "wizard");
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
             fTitlePainted = fChecked = TRUE;
@@ -2264,7 +2264,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         PostQuitMessage(0);
         return;
     }
-    if (getenv("STARS_CLIENT_RECENT_STARTUP")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP")) {
         HWND hwndTop;
         int cVisible = 0;
         if (!IsWindowVisible(hwndTitle)) return;
@@ -2283,7 +2283,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         PostQuitMessage(0);
         return;
     }
-    if (getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") || getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
+    if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") || PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
         HWND hwndDialog;
         if (iStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
@@ -2299,14 +2299,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
                 if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != LibraryNameDlg) continue;
                 if (!SetWindowTextA(GetDlgItem(hwndDialog, IDC_EDIT1),
-                                    getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "external-open-game") ||
+                                    PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game") ||
                     !FPushClick(GetDlgItem(hwndDialog, IDOK))) goto LDone;
                 iStage = 2;
                 return;
             }
             return;
         }
-        if (getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
+        if (PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE")) {
             if (iStage == 2) {
                 for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
                     if (!hwndDialog->fDialog || hwndDialog->lpfnDlg != RaceWizardDlg1 || !IsWindowVisible(hwndDialog)) continue;
@@ -2318,14 +2318,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             }
             if (!IsWindowEnabled(hwndTitle)) return;
             if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_RACES), LB_FINDSTRING, (WPARAM)-1,
-                            (LPARAM)getenv("STARS_CLIENT_IMPORT_NAME")) == LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
+                            (LPARAM)PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME")) == LB_ERR || game.lid != 0 || idPlayer != iplrNone) goto LDone;
             fPassed = TRUE;
             puts("Desktop Open Game imports an external race and opens its managed edit wizard");
             PostQuitMessage(0);
             return;
         }
         if (SendMessage(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), LB_FINDSTRING, (WPARAM)-1,
-                        (LPARAM)(getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "external-open-game")) == LB_ERR ||
+                        (LPARAM)(PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "external-open-game")) == LB_ERR ||
             game.lid != 0 || idPlayer != iplrNone) goto LDone;
         fPassed = TRUE;
         puts("Desktop Open Game imports the external file into the managed library");
@@ -2336,7 +2336,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!FCheckGameExportWorkflow(id)) goto LDone;
         return;
     }
-    if (getenv("STARS_CLIENT_RACE_LIBRARY_TEST")) {
+    if (PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST")) {
         HWND hwndRace;
         static const DLGPROC rglpfnRaceLibrary[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
         if (iRaceLibraryTestStage == 0) {
@@ -2429,11 +2429,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRaceLibraryTestStage == 7) {
             if (!IsWindowEnabled(hwndTitle)) return;
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
-            if (FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
-                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
-                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
-                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1") ||
-                FImportLibraryRaceAs(hwndTitle, getenv("STARS_CLIENT_RACE_IMPORT_SOURCE"), "managed.R1")) goto LDone;
+            if (FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CON.r1") ||
+                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "COM1.r2") ||
+                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "LPT9.r3") ||
+                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "CLOCK$.r1") ||
+                FImportLibraryRaceAs(hwndTitle, PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE"), "managed.R1")) goto LDone;
             if (!FSaveLibraryRace(hwndTitle, "Imported.r2.pending.r1", &vplr)) goto LDone;
             icksRaceImportStage = IRaceChecksum(&vplr);
             if (!FLoadLibraryRace(hwndTitle, "Managed.r1") || IRaceChecksum(&vplr) != icksumRaceLibrary) goto LDone;
@@ -2515,8 +2515,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         return;
     }
-    if (getenv("STARS_CLIENT_GAME_DELETE_MODE")) {
-        pszDeleteMode = getenv("STARS_CLIENT_GAME_DELETE_MODE");
+    if (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE")) {
+        pszDeleteMode = PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE");
         hwndDeleteList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
         iDeleteSelected = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"selected-game");
         iDeleteOther = SendMessage(hwndDeleteList, LB_FINDSTRING, (WPARAM)-1, (LPARAM)"other-game");
@@ -2542,14 +2542,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         PostQuitMessage(0);
         return;
     }
-    if (getenv("STARS_CLIENT_GAME_LIBRARY_TEST")) {
-        const char *pszMode = getenv("STARS_CLIENT_GAME_LIBRARY_TEST");
-        const char *pszRoot = getenv("STARS_LIBRARY_DIR");
-        const char *pszSource = getenv("STARS_CLIENT_GAME_SOURCE_NAME");
-        const char *pszCopy = getenv("STARS_CLIENT_GAME_COPY_NAME");
-        const char *pszRename = getenv("STARS_CLIENT_GAME_RENAME_NAME");
-        const char *pszCollision = getenv("STARS_CLIENT_GAME_COLLISION_NAME");
-        const char *pszBaseline = getenv("STARS_CLIENT_GAME_BASELINE_NAME");
+    if (PszCompatEnvironment("STARS_CLIENT_GAME_LIBRARY_TEST")) {
+        const char *pszMode = PszCompatEnvironment("STARS_CLIENT_GAME_LIBRARY_TEST");
+        const char *pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
+        const char *pszSource = PszCompatEnvironment("STARS_CLIENT_GAME_SOURCE_NAME");
+        const char *pszCopy = PszCompatEnvironment("STARS_CLIENT_GAME_COPY_NAME");
+        const char *pszRename = PszCompatEnvironment("STARS_CLIENT_GAME_RENAME_NAME");
+        const char *pszCollision = PszCompatEnvironment("STARS_CLIENT_GAME_COLLISION_NAME");
+        const char *pszBaseline = PszCompatEnvironment("STARS_CLIENT_GAME_BASELINE_NAME");
         char szSource[512], szCopy[512], szRenamed[512], szPath[512];
         char szBaseline[512];
         char szLongName[256];
@@ -2567,7 +2567,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             CchSnprintf(szCopy, sizeof(szCopy), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszCopy) <= 0 ||
             CchSnprintf(szRenamed, sizeof(szRenamed), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszRename) <= 0 ||
             CchSnprintf(szBaseline, sizeof(szBaseline), "%s%sGames%s%s", pszRoot, szDirSep, szDirSep, pszBaseline) <= 0) goto LDone;
-        if (getenv("STARS_CLIENT_GAME_REJECT")) {
+        if (PszCompatEnvironment("STARS_CLIENT_GAME_REJECT")) {
             fExpectGameRenameFailure = TRUE;
             fImported = fDuplicate ? FDuplicateLibraryGame(hwndTitle, pszSource, pszCopy) :
                                      FRenameLibraryGame(hwndTitle, pszSource, pszRename);
@@ -2691,8 +2691,8 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             iImportStage = 2;
             RefreshLibraryGames(hwndTitle);
             {
-                int cExpected = getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
-                    atoi(getenv("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
+                int cExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS") ?
+                    atoi(PszCompatEnvironment("STARS_CLIENT_IMPORT_EXPECTED_PLAYERS")) : 2;
                 int iplrTest;
                 if (SendDlgItemMessage(hwndTitle, IDC_LIBRARY_GAMES, LB_GETCOUNT, 0, 0) != (cExpected != 0) ||
                     SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) != cExpected) goto LDone;
@@ -2708,32 +2708,32 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iImportStage == 1) {
             for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
-                if (!SetWindowTextA(GetDlgItem(hwnd, IDC_EDIT1), getenv("STARS_CLIENT_IMPORT_NAME") ? getenv("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
+                if (!SetWindowTextA(GetDlgItem(hwnd, IDC_EDIT1), PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") ? PszCompatEnvironment("STARS_CLIENT_IMPORT_NAME") : "imported-game")) goto LDone;
                 FPushClick(GetDlgItem(hwnd, IDOK));
                 return;
             }
         }
         return;
     }
-    if (getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
-        pszExpected = getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
+    if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE")) {
+        pszExpected = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED");
         if (iImportUpdateStage == 0) {
             if (!IsWindowVisible(hwndTitle)) return;
             iImportUpdateStage = 1;
             cAlerts = 0;
-            fImported = FImportLibraryGame(hwndTitle, getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
+            fImported = FImportLibraryGame(hwndTitle, PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE"));
             fPassed = pszExpected && ((!strcmp(pszExpected, "fail") && !fImported && cAlerts > 0) ||
                 ((!strcmp(pszExpected, "identical") || !strcmp(pszExpected, "later") ||
                   !strcmp(pszExpected, "player16") ||
                   !strcmp(pszExpected, "adjacent") || !strcmp(pszExpected, "replace-conflict") ||
                   !strcmp(pszExpected, "separate-conflict")) && fImported && cAlerts == 0) ||
                 (!strcmp(pszExpected, "fail-conflict") && !fImported && cAlerts > 0 &&
-                 (!getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") || fConflictRestoreAlert)) ||
+                 (!PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") || fConflictRestoreAlert)) ||
                 ((!strcmp(pszExpected, "cancel") || !strcmp(pszExpected, "cancel-conflict")) && !fImported && cAlerts == 0));
             if (fPassed && (!strcmp(pszExpected, "later") || !strcmp(pszExpected, "adjacent"))) {
                 pszYear = !strcmp(pszExpected, "adjacent") ? "2408" : "2425";
                 hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
-                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 RefreshLibraryGames(hwndTitle);
                 fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
                     FClientLibraryPlayerYear(hwndTitle, 0, atoi(pszYear)) && FClientLibraryPlayerYear(hwndTitle, 1, 2400);
@@ -2744,7 +2744,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             }
             if (fPassed && !strcmp(pszExpected, "player16")) {
                 RefreshLibraryGames(hwndTitle);
-                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 fPassed = pszTarget && FSelectClientGameName(hwndTitle, pszTarget) &&
                     SendDlgItemMessage(hwndTitle, IDC_LIBRARY_PLAYERS, CB_GETCOUNT, 0, 0) == 3 &&
                     FClientLibraryPlayerYear(hwndTitle, 15, 2401);
@@ -2758,7 +2758,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryTurnTargetDlg) continue;
                 hwndListTarget = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
                 if (IsWindowEnabled(GetDlgItem(hwnd, IDOK))) goto LDone;
-                pszTarget = getenv("STARS_CLIENT_IMPORT_UPDATE_TARGET");
+                pszTarget = PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_TARGET");
                 c = (int)SendMessage(hwndListTarget, LB_GETCOUNT, 0, 0);
                 for (iTarget = 0; iTarget < c; iTarget++) {
                     SendMessage(hwndListTarget, LB_GETTEXT, iTarget, (LPARAM)szName);
@@ -2787,7 +2787,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (pszExpected && !strcmp(pszExpected, "separate-conflict")) {
                 for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                     if (!hwnd->fDialog || hwnd->lpfnDlg != LibraryNameDlg) continue;
-                    pszCopyName = getenv("STARS_CLIENT_IMPORT_COPY_NAME");
+                    pszCopyName = PszCompatEnvironment("STARS_CLIENT_IMPORT_COPY_NAME");
                     if (pszCopyName) SetWindowTextA(GetDlgItem(hwnd, IDC_EDIT1), pszCopyName);
                     FPushClick(GetDlgItem(hwnd, IDOK));
                     return;
@@ -2796,36 +2796,36 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         return;
     }
-    if (getenv("STARS_CLIENT_LIBRARY_OPEN")) {
-        const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
+    if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN")) {
+        const char *pszName = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN");
         HWND hwndList, hwndDialog;
         LRESULT iGame;
         if (iStage == 0) {
-            const char *pszPlayer = getenv("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
+            const char *pszPlayer = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN_PLAYER");
             int iWanted = pszPlayer ? atoi(pszPlayer) - 1 : -1;
             if (!IsWindowVisible(hwndTitle) || !FSelectClientGameName(hwndTitle, pszName)) goto LDone;
             hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
             iGame = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
             if (iWanted >= 0 && !FSelectClientLibraryPlayer(hwndTitle, iWanted)) goto LDone;
-            if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
+            if (PszCompatEnvironment("STARS_DEBUG_LIBRARY_STARTUP"))
                 fprintf(stderr, "[DEBUG-library-startup] Opening library row %lld: %s\n", (long long)iGame, pszName);
             fChecked = TRUE;
             iStage = 1;
-            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+            if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
                 if (!PostMessage(hwndTitle, WM_COMMAND, MAKEWPARAM(IDC_LIBRARY_GAMES, LBN_DBLCLK),
                                   (LPARAM)hwndList)) goto LDone;
             } else if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
-        if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
-            const char *pszName = getenv("STARS_CLIENT_LIBRARY_OPEN");
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 20 && IsWindow(hwndTitle)) {
+            const char *pszName = PszCompatEnvironment("STARS_CLIENT_LIBRARY_OPEN");
             if (!FSelectClientGameName(hwndTitle, pszName) || !FSelectClientLibraryPlayer(hwndTitle, 0)) goto LDone;
             iStage = 21;
             if (!FPushClick(rghwndBtnSplash[1])) goto LDone;
             return;
         }
         if (IsWindow(hwndTitle)) {
-            if (getenv("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
+            if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_DOUBLECLICK")) {
                 for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog;
                      hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
                     if (!hwndDialog->fDialog) continue;
@@ -2837,12 +2837,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (!lpPlanets || game.lid == 0 || idPlayer == iplrNone || !IsWindowVisible(hwndFrame)) goto LDone;
-        if (getenv("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
-            const char *pszExpected = getenv("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && iStage == 21) {
+            const char *pszExpected = PszCompatEnvironment("STARS_CLIENT_EXPECT_SWITCHED_PLAYER");
             if (pszExpected && idPlayer != atoi(pszExpected) - 1) goto LDone;
-        } else if (getenv("STARS_CLIENT_EXPECT_PLAYER") &&
-                   idPlayer != atoi(getenv("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
-        if (getenv("STARS_CLIENT_SWITCH_CANCEL_TEST")) {
+        } else if (PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") &&
+                   idPlayer != atoi(PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER")) - 1) goto LDone;
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CANCEL_TEST")) {
             int16_t idPlayerBefore = idPlayer;
             uint16_t turnBefore = game.turn;
             long long lPlayedBefore, lPlayedAfter;
@@ -2857,9 +2857,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             PostQuitMessage(0);
             return;
         }
-        if (getenv("STARS_CLIENT_SWITCH_CHOICE")) {
-            const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
-            const char *pszFailure = getenv("STARS_CLIENT_SWITCH_FAIL_SAVE");
+        if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE")) {
+            const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
+            const char *pszFailure = PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE");
             int fSave = !strcmp(pszChoice, "save") || !strcmp(pszChoice, "submit");
             int fSubmit = !strcmp(pszChoice, "submit");
             if (iStage != 21) {
@@ -3086,17 +3086,17 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         (pszCapture && !SDL_SaveBMP(lpTitle->lpComposite, pszCapture))) goto LDone;
     printf("Stars title %dx%d, renderer %s; independent frame and title windows\n",
            lpTitle->lpCanvas->w, lpTitle->lpCanvas->h, SDL_GetRendererName(lpTitle->lpRenderer));
-    if (pszContinue && getenv("STARS_CLIENT_EXPECT_PLAYER")) {
+    if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER")) {
         char szContinue[320];
-        const char *pszGame = getenv("STARS_CLIENT_EXPECT_CONTINUE_GAME");
-        const char *pszYear = getenv("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
+        const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_GAME");
+        const char *pszYear = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_YEAR");
         char szPlayer[32];
         GetWindowTextA(rghwndBtnSplash[2], szContinue, sizeof(szContinue));
         if (strcmp(szContinue, PszGetCompressedString(idsContinueGame))) goto LDone;
         GetDlgItemText(hwndTitle, IDC_LIBRARY_CONTINUE_DETAILS, szContinue, sizeof(szContinue));
         if (pszGame ? !strstr(szContinue, pszGame) : !strstr(szContinue, "Continue: managed-copy")) goto LDone;
         CchSnprintf(szPlayer, sizeof(szPlayer), "Player %s",
-                    getenv("STARS_CLIENT_EXPECT_PLAYER") ? getenv("STARS_CLIENT_EXPECT_PLAYER") : "2");
+                    PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") ? PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") : "2");
         if (!strstr(szContinue, szPlayer)) goto LDone;
         if (pszYear) {
             char szYear[32];
@@ -3104,14 +3104,14 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (!strstr(szContinue, szYear)) goto LDone;
         }
     }
-    if (pszContinue && getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
+    if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_DISABLED")) {
         if (IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
         fPassed = TRUE;
         puts("Continue is disabled when the managed game has no available player turns");
         PostQuitMessage(0);
         return;
     }
-    if (pszContinue && getenv("STARS_CLIENT_EXPECT_SELECTOR")) {
+    if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_SELECTOR")) {
         char szLabel[256];
         HWND hwndList = GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES);
         if (!IsWindowEnabled(rghwndBtnSplash[2])) goto LDone;
@@ -3138,7 +3138,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     return;
 LDone:
     if (!fPassed) {
-        if (getenv("STARS_CLIENT_HOST_LIBRARY_TEST"))
+        if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST"))
             fprintf(stderr, "Host library workflow failed at stage %d\n", iHostLibraryTestStage);
         fprintf(stderr, "Client startup/wizard check failed at stage %d (new-game step %d, choices %d, creating %d): %s\n",
                 iStage, iNewGameStep, cNewGameChoices, fCreatingGame, SDL_GetError());
@@ -3157,38 +3157,38 @@ int16_t StarsTest_InitInstance(int16_t nCmdShow) {
 int main(void) {
     char szCommand[256] = "";
     int nResult;
-    if (getenv("STARS_CLIENT_STARTUP_SOURCE"))
-        CchSnprintf(szCommand, sizeof(szCommand), "%s", getenv("STARS_CLIENT_STARTUP_SOURCE"));
-    pszNewGame = getenv("STARS_CLIENT_NEW_GAME");
-    pszContinue = getenv("STARS_CLIENT_CONTINUE");
-    pszImportSource = getenv("STARS_CLIENT_IMPORT_SOURCE");
+    if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"))
+        CchSnprintf(szCommand, sizeof(szCommand), "%s", PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"));
+    pszNewGame = PszCompatEnvironment("STARS_CLIENT_NEW_GAME");
+    pszContinue = PszCompatEnvironment("STARS_CLIENT_CONTINUE");
+    pszImportSource = PszCompatEnvironment("STARS_CLIENT_IMPORT_SOURCE");
     if (pszContinue && !WritePrivateProfileString("Files", "File1", pszContinue, "StarsUtf8.ini")) return 1;
     if (pszContinue && (!WritePrivateProfileString("Windows", "PlanetTiles", "ABE*FGH", "StarsUtf8.ini") ||
         !WritePrivateProfileString("Windows", "ShipTiles", "AFDE*BJI", "StarsUtf8.ini"))) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (IsWindow(hwndTitle) && !pszImportSource && !getenv("STARS_CLIENT_RACE_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_RECENT_STARTUP") && !getenv("STARS_CLIENT_RACE_NAME_CANCEL") &&
-        !getenv("STARS_CLIENT_RACE_VERSION_TEST") &&
-        !getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
-        !getenv("STARS_CLIENT_RACE_ROSTER_TEST") && !getenv("STARS_CLIENT_STARTUP_SOURCE") &&
-        !getenv("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !getenv("STARS_CLIENT_EXPORT_GAME") &&
-        !getenv("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !getenv("STARS_CLIENT_GAME_LIBRARY_TEST") &&
-        !getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
-        !getenv("STARS_CLIENT_HOST_LIBRARY_TEST") && !getenv("STARS_CLIENT_MAC_SHORTCUTS_TEST") &&
-        !getenv("STARS_CLIENT_EXPECT_SELECTOR") && !getenv("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
-        !getenv("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
+    if (IsWindow(hwndTitle) && !pszImportSource && !PszCompatEnvironment("STARS_CLIENT_RACE_LIBRARY_TEST") &&
+        !PszCompatEnvironment("STARS_CLIENT_RECENT_STARTUP") && !PszCompatEnvironment("STARS_CLIENT_RACE_NAME_CANCEL") &&
+        !PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") &&
+        !PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME") &&
+        !PszCompatEnvironment("STARS_CLIENT_RACE_ROSTER_TEST") && !PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE") &&
+        !PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_RACE") && !PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") &&
+        !PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_SOURCE") && !PszCompatEnvironment("STARS_CLIENT_GAME_LIBRARY_TEST") &&
+        !PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
+        !PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") && !PszCompatEnvironment("STARS_CLIENT_MAC_SHORTCUTS_TEST") &&
+        !PszCompatEnvironment("STARS_CLIENT_EXPECT_SELECTOR") && !PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_DISABLED") &&
+        !PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE")) fPassed = FALSE;
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult == 0 && fChecked && fPassed && fTitlePainted &&
-           cAlerts == (getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
-                       !strcmp(getenv("STARS_CLIENT_GAME_DELETE_MODE"), "failure") ? 1 :
-                       getenv("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
-                       getenv("STARS_CLIENT_LIBRARY_FAIL_WRITE") || getenv("STARS_CLIENT_SWITCH_FAIL_SAVE") ? 2 :
-                       getenv("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
-                       getenv("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
-                       getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
-                       (!strcmp(getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail") ||
-                        !strcmp(getenv("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail-conflict")) ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
+           cAlerts == (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
+                       !strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") ? 1 :
+                       PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
+                       PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") || PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE") ? 2 :
+                       PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
+                       PszCompatEnvironment("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
+                       PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
+                       (!strcmp(PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail") ||
+                        !strcmp(PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED"), "fail-conflict")) ? 1 : 0) && cEarlyFrameShow == 0 ? 0 : 1;
 }

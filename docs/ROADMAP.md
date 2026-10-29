@@ -27,7 +27,9 @@ original entry point. See the [B implementation ledger](CPP-B-IMPLEMENTATION.md)
 The platform environment adapter now uses an explicit lookup helper instead of
 a `getenv` macro, preserving Windows SDL/POSIX CRT behavior without poisoning
 C++ standard-library declarations. Its private header joins the independent
-include-order compilation gate.
+include-order compilation gate. Workflow harnesses that formerly inherited the
+macro call the helper explicitly so their Windows Unicode path/name fixtures
+continue to exercise UTF-8 rather than the CRT code page.
 
 The prerequisite steps below record the earlier migration checkpoints.
 

@@ -9,6 +9,8 @@ produce different results from a 2.6j host for the same turn.
 - The SDL platform environment helper preserves UTF-8 Windows lookup without a
   `getenv` macro. That macro rewrote C++ standard-library declarations and
   broke Windows builds after ownership headers included `<cstdlib>`.
+  Workflow harnesses that inherited the macro now call the helper explicitly,
+  retaining Unicode paths and names when the Windows CRT code page differs.
 
 - `LpNewFontRaster` and fallback glyph matching use their owned Fontconfig
   configuration for default substitution on Fontconfig 2.17 and newer. The older
