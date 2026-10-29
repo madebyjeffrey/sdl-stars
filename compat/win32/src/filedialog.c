@@ -421,6 +421,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     COMPATCLEANUPSCOPE restoreOwner([&] { if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE); });
     COMPATCLEANUPSCOPE destroyPicker([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); });
     dwDialogError = 0;
+    if (FStarsErrorPending()) return FALSE;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = CDERR_STRUCTSIZE; return FALSE; }
     if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
         dwDialogError = FNERR_INVALIDFILENAME; return FALSE;
@@ -467,6 +468,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
 #endif
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
     if (fEnable) EnableWindow(hwndRoot, FALSE);
+    if (FStarsErrorPending()) goto restore;
     if (hwndRoot && !IsWindow(hwndRoot)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     /* Headless control tests opt into the compatibility browser explicitly. */

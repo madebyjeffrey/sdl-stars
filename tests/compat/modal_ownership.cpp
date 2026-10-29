@@ -7,7 +7,7 @@
 
 static HWND hwndRoot;
 static int mdFailure = 1;
-static bool fCleanupFailure;
+static bool fCleanupFailure, fDisableFailure;
 static int cCalls, cErrors, cCleanupFailures;
 int StarsTest_ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                                LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
@@ -21,6 +21,7 @@ int StarsTest_ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPC
     return 0;
 }
 static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 419);
     if (msg == WM_ENABLE && w && fCleanupFailure) {
         cCleanupFailures++; StarsThrowError(starsErrorMemory, 418);
     }
@@ -73,6 +74,15 @@ int main() {
     CHECK(!GetOpenFileNameA(&of) && cCalls == 5 && cErrors == 0);
     CHECK(!IsWindowEnabled(hwndRoot) && hwndRoot->cNativeFileDialogs == 0);
     EnableWindow(hwndRoot, TRUE);
+    SetFocus(hwndEdit); CHECK(GetFocus() == hwndEdit);
+    fDisableFailure = true; fCleanupFailure = true;
+    CHECK(!GetOpenFileNameA(&of) && cCalls == 5 && FStarsErrorPending());
+    CHECK(IsWindowEnabled(hwndRoot) && hwndRoot->cNativeFileDialogs == 0 && GetFocus() == hwndEdit);
+    CHECK(!GetOpenFileNameA(&of) && cCalls == 5 && FStarsErrorPending());
+    try { StarsRethrowPendingError(); CHECK(false); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 419); }
+    fDisableFailure = fCleanupFailure = false;
+    CHECK(!FStarsErrorPending() && !std::strcmp(szFile, "café-Ω.m1"));
     CHECK(DestroyWindow(hwndRoot));
     StarsCompatShutdown();
     CHECK(!FStarsErrorPending() && CCompatDispatch() == 0);

@@ -424,3 +424,13 @@ This and the following initialization fixes share a fully qualified batch:
 builds, and 519 native regression matches / 25 accepted unused-storage warnings /
 zero differences, errors or skipped inputs. Baselines and independent references
 remain unchanged.
+
+
+## B02 file chooser starts no work after owner failure
+
+The private native adapter counted an unwanted chooser call after owner-disable
+failure before the fix. `FFileDialog` now starts no chooser and accepts no new
+operation while an error is already pending. The permanent case verifies enabled
+owner, saved focus, zero native-dialog count, unchanged UTF-8 filename bytes and
+preservation of the disabling error even when owner restoration also fails.
+The 109-test / 26-leak / 28-sanitizer / 519-match batch above includes this case.
