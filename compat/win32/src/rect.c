@@ -31,10 +31,10 @@ BOOL WINAPI IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprc
 
     if (!lprcDst || !lprcSrc1 || !lprcSrc2)
         return FALSE;
-    rc.left = max(lprcSrc1->left, lprcSrc2->left);
-    rc.top = max(lprcSrc1->top, lprcSrc2->top);
-    rc.right = min(lprcSrc1->right, lprcSrc2->right);
-    rc.bottom = min(lprcSrc1->bottom, lprcSrc2->bottom);
+    rc.left = StarsMax(lprcSrc1->left, lprcSrc2->left);
+    rc.top = StarsMax(lprcSrc1->top, lprcSrc2->top);
+    rc.right = StarsMin(lprcSrc1->right, lprcSrc2->right);
+    rc.bottom = StarsMin(lprcSrc1->bottom, lprcSrc2->bottom);
     // Win32 clears empty intersections; upstream leaves inverted coordinates.
     if (rc.right <= rc.left || rc.bottom <= rc.top) {
         SetRect(lprcDst, 0, 0, 0, 0);

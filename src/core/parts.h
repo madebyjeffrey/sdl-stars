@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_PARTS_H
 #define STARS_DECOMPILED_PARTS_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern SHDEF     rgshdefSBT[];

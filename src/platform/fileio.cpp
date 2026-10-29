@@ -1,8 +1,7 @@
 #include "path_utf8.h"
 #include "fileio.h"
-extern "C" {
 #include "encoding.h"
-}
+
 #include <array>
 #include <cerrno>
 #include <cctype>

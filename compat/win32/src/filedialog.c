@@ -223,7 +223,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     cch = strlen(lp->szResult) + 1;
     if (cch > lp->lpof->nMaxFile) {
         lp->dwError = FNERR_BUFFERTOOSMALL;
-        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = (WORD)min(cch, UINT16_MAX); memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
+        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = (WORD)StarsMin(cch, UINT16_MAX); memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
         return -1;
     }
     return 1;
@@ -480,7 +480,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     }
 #endif
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
-    cx = min(640, work.right - work.left - 32); cy = min(440, work.bottom - work.top - 64);
+    cx = StarsMin(640, work.right - work.left - 32); cy = StarsMin(440, work.bottom - work.top - 64);
     if (cx < 420 || cy < 320) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     rc = (RECT){work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
     rc.right = rc.left + cx; rc.bottom = rc.top + cy;

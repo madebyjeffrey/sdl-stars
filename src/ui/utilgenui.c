@@ -271,7 +271,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
             } else {
                 dHtY = -1000;
             }
-            plf->lfHeight += max(2, max(dHtX, dHtY) - plf->lfHeight) + 1;
+            plf->lfHeight += (((2) > (StarsMax(dHtX, dHtY) - plf->lfHeight)) ? (2) : (StarsMax(dHtX, dHtY) - plf->lfHeight)) + 1;
             goto TryAgain;
         }
         xStart = (int16_t)(dx - dxFlat) / 2 + prc->left;

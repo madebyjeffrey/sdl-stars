@@ -1,7 +1,9 @@
 #ifndef STARS_WIN_CALLS_H
 #define STARS_WIN_CALLS_H
 
-// Callback exceptions are captured inside the C runtime. Deliver them only
+#include <windows.h>
+#include "errors.h"
+// Callback exceptions are captured inside runtime callbacks. Deliver them only
 // after that call completes its dispatch, modal and owner cleanup.
 template <auto fn> struct StarsCFunction;
 template <class R, class... Args, R (*fn)(Args...)> struct StarsCFunction<fn> {

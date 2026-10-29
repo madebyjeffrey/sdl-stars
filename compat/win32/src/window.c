@@ -515,9 +515,9 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
                 lpwin->lpWindow = SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow,
-                    x - rcOwner.left, y - rcOwner.top, max(1, dx), max(1, dy), flags);
+                    x - rcOwner.left, y - rcOwner.top, StarsMax(1, dx), StarsMax(1, dy), flags);
             else if (pszNative && !fNativePopup)
-                lpwin->lpWindow = SDL_CreateWindow(pszNative, max(1, dx), max(1, dy), flags);
+                lpwin->lpWindow = SDL_CreateWindow(pszNative, StarsMax(1, dx), StarsMax(1, dy), flags);
             SDL_free(pszNative);
         }
         if (!lpwin->lpWindow ||
@@ -659,7 +659,7 @@ LONG_PTR WINAPI GetWindowLongPtrA(HWND hwnd, int ib) {
     if (ib == GWLP_USERDATA)
         return lpwin->lUserData;
     if (ib == GWLP_WNDPROC) {
-        _Static_assert(sizeof(l) == sizeof(lpwin->lpfnWndProc), "native callback width");
+        static_assert(sizeof(l) == sizeof(lpwin->lpfnWndProc), "native callback width");
         memcpy(&l, &lpwin->lpfnWndProc, sizeof(l));
         return l;
     }
@@ -957,7 +957,7 @@ BOOL CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
         if (lpwin->fZeroY && dy == 1) dy = 0;
         else lpwin->fZeroY = FALSE;
     }
-    if (!lpwin->hwndParent) dy = max(0, dy - CyCompatMenuBar(lpwin));
+    if (!lpwin->hwndParent) dy = (((0) > (dy - CyCompatMenuBar(lpwin))) ? (0) : (dy - CyCompatMenuBar(lpwin)));
     return SetRect(lprc, 0, 0, dx, dy);
 }
 
@@ -1099,7 +1099,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
                 !SDL_SetWindowPosition(lpwin->lpWindow, wp.x - xNative, wp.y - yNative)) return FALSE;
         }
         if (!(wp.flags & SWP_NOSIZE)) {
-            if (!SDL_SetWindowSize(lpwin->lpWindow, max(1, wp.cx), max(1, wp.cy))) return FALSE;
+            if (!SDL_SetWindowSize(lpwin->lpWindow, StarsMax(1, wp.cx), StarsMax(1, wp.cy))) return FALSE;
             lpwin->fZeroX = wp.cx == 0; lpwin->fZeroY = wp.cy == 0;
         }
         if (!SDL_SyncWindow(lpwin->lpWindow)) return FALSE;
@@ -1207,8 +1207,8 @@ int WINAPI GetDlgCtrlID(HWND hwnd) {
 BOOL WINAPI GetClientRect(HWND hwnd, LPRECT lprc) {
     if (!CompatGetSurfaceRect(hwnd, lprc)) return FALSE;
     if (hwnd->lpcombo) return TRUE;
-    if (hwnd->dwStyle & WS_VSCROLL) lprc->right = max(0, lprc->right - GetSystemMetrics(SM_CXVSCROLL));
-    if (hwnd->dwStyle & WS_HSCROLL) lprc->bottom = max(0, lprc->bottom - GetSystemMetrics(SM_CYHSCROLL));
+    if (hwnd->dwStyle & WS_VSCROLL) lprc->right = (((0) > (lprc->right - GetSystemMetrics(SM_CXVSCROLL))) ? (0) : (lprc->right - GetSystemMetrics(SM_CXVSCROLL)));
+    if (hwnd->dwStyle & WS_HSCROLL) lprc->bottom = (((0) > (lprc->bottom - GetSystemMetrics(SM_CYHSCROLL))) ? (0) : (lprc->bottom - GetSystemMetrics(SM_CYHSCROLL)));
     return TRUE;
 }
 

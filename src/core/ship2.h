@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_SHIP2_H
 #define STARS_DECOMPILED_SHIP2_H
 
+#include "common.h"
 #include <stdint.h>
 
 int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDist);

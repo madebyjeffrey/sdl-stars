@@ -4,7 +4,7 @@ target_compile_definitions(stars_win32_headers INTERFACE STARS_UI_SDL=1)
 
 if(WIN32)
     # Keep the source API names, but isolate symbols from the real Win32
-    # imports used by SDL, Cairo and native.c. The wrapper uses the C ABI.
+    # imports used by SDL, Cairo and native.c. The wrapper keeps its own C++ symbols.
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_api.h" STARS_COMPAT_API)
     string(REGEX MATCHALL "(WINAPI|WINAPIV)[ \t\r\n]+[A-Za-z0-9_]+[ \t]*\\(" STARS_COMPAT_DECLARATIONS "${STARS_COMPAT_API}")
     set(STARS_COMPAT_NAMESPACE "/* Generated from wincompat_api.h; do not edit. */\n#define WinMain StarsCompat_WinMain\n")

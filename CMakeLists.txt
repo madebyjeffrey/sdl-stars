@@ -54,7 +54,7 @@ set(STARS_UI_SOURCES
 )
 
 # Preserve the original filenames while compiling the game as C++. The SDL
-# compatibility runtime, generated tables and C harnesses retain their C ABI.
+# compatibility runtime, generated tables and ordinary harnesses also use C++.
 set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
     src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
 
@@ -316,7 +316,6 @@ endif()
 if(STARS_BUILD_TESTS)
     add_executable(stars-catalog-dump tests/compat/catalog_dump.cpp)
     target_link_libraries(stars-catalog-dump PRIVATE stars_options)
-    target_include_directories(stars-catalog-dump PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/include")
     add_test(NAME test_catalog_bytes COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compat/check_catalog.py" "$<TARGET_FILE:stars-catalog-dump>")
     set_tests_properties(test_catalog_bytes PROPERTIES LABELS build TIMEOUT 30)
@@ -332,7 +331,7 @@ endif()
 
 include(cmake/test-redirect.cmake)
 if(STARS_BUILD_TESTS)
-    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
     if(CMAKE_GENERATOR_PLATFORM)
         list(APPEND STARS_TEST_COMPILER_ARGS -A "${CMAKE_GENERATOR_PLATFORM}")
     endif()
@@ -386,3 +385,5 @@ if(STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_language(RC)
     include(cmake/win32-reference-tests.cmake)
 endif()
+
+include(cmake/cpp-interface-checks.cmake)

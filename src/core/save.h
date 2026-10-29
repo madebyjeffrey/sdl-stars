@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_SAVE_H
 #define STARS_DECOMPILED_SAVE_H
 
+#include "common.h"
 #include <stdint.h>
 
 void    WriteOrders(FLEET *lpfl);
@@ -27,5 +28,8 @@ void    SetVisPFFleets(int16_t iPlr);
 void    SetVisPFPlanets(int16_t iPlr);
 void    SetVisPFThings(int16_t iPlr);
 void    SetVisPFFinish(int16_t iPlr);
+
+decltype(WriteRt) STARS_TEST_IMPL(WriteRt);
+decltype(FCreateFile) STARS_TEST_IMPL(FCreateFile);
 
 #endif

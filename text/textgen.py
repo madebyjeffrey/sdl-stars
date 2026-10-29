@@ -51,7 +51,7 @@ MAX_NIBBLES = 255  # acXXX holds lengths in a byte.
 TABLES = [
     ("strings.txt", "STR", "ids", "StringId", "0x{:04x}", False, "text_strings.cpp", "common.h"),
     ("messages.txt", "MSG", "idm", "MessageId", "0x{:04x}", True, "text_messages.cpp", "common.h"),
-    ("tutorial.txt", "TUT", "idt", "TutorId", "{}", False, "text_tutorial.cpp", "win.h"),
+    ("tutorial.txt", "TUT", "idt", "TutorId", "{}", False, "text_tutorial.cpp", "common.h"),
     ("planets.txt", "PN", None, None, None, False, "text_planets.cpp", "common.h"),
 ]
 
@@ -212,8 +212,7 @@ def WriteIfChanged(path, text):
 
 
 def EnumStart(name, underlying):
-    return ["#ifdef __cplusplus", "enum {} : {} {{".format(name, underlying),
-            "#else", "enum {} {{".format(name), "#endif"]
+    return ["enum {} : {} {{".format(name, underlying)]
 
 
 def Generate(outdir):

@@ -1066,7 +1066,7 @@ void DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart) {
                 } else if (iEff == 0) {
                     y--;
                 } else {
-                    y -= max(1, (int16_t)(iEff * 4 * dyPct) / 100);
+                    y -= (((1) > ((int16_t)(iEff * 4 * dyPct) / 100)) ? (1) : ((int16_t)(iEff * 4 * dyPct) / 100));
                 }
                 if (i == 0) {
                     MoveToEx(hdc, x, y, NULL);

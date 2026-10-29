@@ -1,4 +1,5 @@
 #include "stars_test.h"
+[[maybe_unused]] static char szTestLiteral1[] = "hst";
 
 #ifdef _WIN32
 #include <io.h>
@@ -165,7 +166,7 @@ int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi
 int16_t FStarsTestLoadHost(void) {
     DestroyCurGame();
     idPlayer = iplrNone;
-    return FLoadGame(szBase, "hst");
+    return FLoadGame(szBase, szTestLiteral1);
 }
 
 int16_t FStarsTestLoadPlayer(int16_t iPlr) {

@@ -635,10 +635,10 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             // Anchor to the hovered control, independently of the pointer's
             // position inside it; keep the complete tip within the frame.
             GetWindowRect(hwndFrame, &rc);
-            pt.x = max(rc.left, min(vrcTooltip.left, rc.right - dxTip - 6));
+            pt.x = (((rc.left) > (StarsMin(vrcTooltip.left, rc.right - dxTip - 6))) ? (rc.left) : (StarsMin(vrcTooltip.left, rc.right - dxTip - 6)));
             pt.y = vrcTooltip.bottom + 2;
             if (pt.y + dyArial8 + 6 > rc.bottom) {
-                pt.y = max(rc.top, vrcTooltip.top - dyArial8 - 8);
+                pt.y = StarsMax(rc.top, vrcTooltip.top - dyArial8 - 8);
             }
             SetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
             UpdateWindow(hwnd);

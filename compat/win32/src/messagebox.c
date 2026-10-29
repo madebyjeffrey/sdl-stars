@@ -31,7 +31,7 @@ static LPCSTR PszMessageButton(int id) {
     }
 }
 static void ScrollMessage(COMPATMSGBOX *lp, int y) {
-    lp->yScroll = min(max(0, lp->cyTotal - lp->cyText), max(0, y));
+    lp->yScroll = (((StarsMax(0, lp->cyTotal - lp->cyText)) < (StarsMax(0, y))) ? (StarsMax(0, lp->cyTotal - lp->cyText)) : (StarsMax(0, y)));
     if (IsWindow(lp->hwndScroll)) SetScrollPos(lp->hwndScroll, SB_CTL, lp->yScroll, TRUE);
     InvalidateRect(lp->hwndBody, NULL, TRUE);
 }
@@ -214,8 +214,8 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0)) goto done;
     xText = type & 0xf0 ? 64 : 16;
     cxButtons = box.cButtons * 88 + (box.cButtons - 1) * 8;
-    cx = min(max(320, cxButtons + 32), max(160, rcWork.right - rcWork.left - 32));
-    cx = min(max(cx, 480), max(160, rcWork.right - rcWork.left - 32));
+    cx = (((StarsMax(320, cxButtons + 32)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(320, cxButtons + 32)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
+    cx = (((StarsMax(cx, 480)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(cx, 480)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
     rc = (RECT){rcWork.left, rcWork.top, rcWork.left + cx, rcWork.top + 160};
     ex = (type & (MB_TOPMOST | MB_SYSTEMMODAL)) ? WS_EX_TOPMOST : 0;
     hwnd = HwndCompatDynamicDialog(pszCaption ? pszCaption : "Error", WS_POPUP | WS_CAPTION | WS_SYSMENU, ex, &rc, hwndRoot, MessageDialogProc);
@@ -223,24 +223,24 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     box.hfont = hwnd->hfontDialog;
     hdc = CreateCompatibleDC(NULL); if (!hdc) goto done;
     hold = SelectObject(hdc, box.hfont);
-    box.cxText = max(32, cx - xText - 16);
+    box.cxText = StarsMax(32, cx - xText - 16);
     rcText = (RECT){0, 0, box.cxText, 0};
     result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
-    cyMax = max(32, rcWork.bottom - rcWork.top - 128);
+    cyMax = StarsMax(32, rcWork.bottom - rcWork.top - 128);
     if (rcText.bottom > cyMax) {
         box.cxText -= 20; rcText = (RECT){0, 0, box.cxText, 0};
         result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
     }
     SelectObject(hdc, hold); DeleteDC(hdc);
     if (result == 0 && *pszText) goto done;
-    box.cyTotal = max(32, rcText.bottom);
-    box.cyText = min(box.cyTotal, cyMax);
+    box.cyTotal = StarsMax(32, rcText.bottom);
+    box.cyText = StarsMin(box.cyTotal, cyMax);
     cy = box.cyText + 80;
     x = rcWork.left + (rcWork.right - rcWork.left - cx) / 2;
     y = rcWork.top + (rcWork.bottom - rcWork.top - cy) / 2;
     if (hwndRoot && GetWindowRect(hwndRoot, &rc)) {
-        x = min(rcWork.right - cx, max(rcWork.left, rc.left + (rc.right - rc.left - cx) / 2));
-        y = min(rcWork.bottom - cy, max(rcWork.top, rc.top + (rc.bottom - rc.top - cy) / 2));
+        x = (((rcWork.right - cx) < ((((rcWork.left) > (rc.left + (rc.right - rc.left - cx) / 2)) ? (rcWork.left) : (rc.left + (rc.right - rc.left - cx) / 2)))) ? (rcWork.right - cx) : ((((rcWork.left) > (rc.left + (rc.right - rc.left - cx) / 2)) ? (rcWork.left) : (rc.left + (rc.right - rc.left - cx) / 2))));
+        y = (((rcWork.bottom - cy) < ((((rcWork.top) > (rc.top + (rc.bottom - rc.top - cy) / 2)) ? (rcWork.top) : (rc.top + (rc.bottom - rc.top - cy) / 2)))) ? (rcWork.bottom - cy) : ((((rcWork.top) > (rc.top + (rc.bottom - rc.top - cy) / 2)) ? (rcWork.top) : (rc.top + (rc.bottom - rc.top - cy) / 2))));
     }
     if (!MoveWindow(hwnd, x, y, cx, cy, FALSE)) goto done;
     box.hwndBody = CreateWindowExA(0, "StarsMessageText", "", WS_CHILD | WS_VISIBLE | (box.cyText < box.cyTotal ? WS_TABSTOP : 0),

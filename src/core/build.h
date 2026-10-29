@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_BUILD_H
 #define STARS_DECOMPILED_BUILD_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern HullSlotType rggrbitPartsSB[8];

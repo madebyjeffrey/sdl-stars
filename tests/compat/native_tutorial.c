@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern "C" int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
+int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static UINT_PTR idTimer;
 static int iStage, cWait, cActions, cReadActions;
 static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle, fDesignCycle, fAutomationCycle, fReportCycle, fMergeCycle;
@@ -35,7 +35,7 @@ static const char *pszResearchSnapshot = "year-2413-research.json", *pszOrderSna
 static HWND HwndModal(void);
 static BOOL FSaveState(const char *pszName);
 
-extern "C" BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
+BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     SDL_Event event = {0};
     HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -71,7 +71,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-extern "C" int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.

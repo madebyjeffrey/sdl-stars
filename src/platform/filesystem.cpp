@@ -1,8 +1,7 @@
 #include "path_utf8.h"
 #include "filesystem.h"
-extern "C" {
 #include "encoding.h"
-}
+
 #include <cstring>
 #include <filesystem>
 #include <random>
@@ -47,7 +46,7 @@ int FFilesystemTempDir(char *pszOut, size_t cbOut) {
                 return 0;
         }
     } catch (...) {
-        // Allocation, encoding and filesystem exceptions must not cross the C ABI.
+        // Allocation, encoding and filesystem exceptions must preserve the service failure contract.
     }
     *pszOut = 0;
     return 0;

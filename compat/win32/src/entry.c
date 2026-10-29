@@ -9,7 +9,7 @@
 #include "native.h"
 #endif
 
-extern "C" int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 
 static int ICompatMain(int argc, char **argv) {
     char szCmdLine[1024];

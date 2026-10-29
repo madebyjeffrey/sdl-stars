@@ -9,7 +9,7 @@ import os
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import function
+from check_s02_source import ROOT, function
 
 
 def main():
@@ -81,8 +81,8 @@ int main(void){
     with tempfile.TemporaryDirectory(prefix="s02-save-source-") as work:
         path=Path(work);source=path/"witness.cpp";binary=path/"witness"
         source.write_text(stubs+body+witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC","cc"))+
-                       ["-std=gnu++20", "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

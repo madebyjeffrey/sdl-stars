@@ -17,11 +17,6 @@
 #define WM_STARS_HOST     0x0465
 #define WM_STARS_CONTINUE 0x0466
 #define WM_STARS_SCAN_RESIZE (WM_APP + 2)
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "battleui.h"
 #include "buildui.h"
 #include "createui.h"
@@ -61,20 +56,11 @@ int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax);
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz);
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz);
 
-#ifdef __cplusplus
-// Private test implementations retain the same C ABI as their adapters.
-decltype(InitInstance) STARS_TEST_IMPL(InitInstance);
-decltype(AskSaveDialog) STARS_TEST_IMPL(AskSaveDialog);
 decltype(PromptPassword) STARS_TEST_IMPL(PromptPassword);
 decltype(FPromptLegacyRacePassword) STARS_TEST_IMPL(FPromptLegacyRacePassword);
-decltype(NewGameWizard) STARS_TEST_IMPL(NewGameWizard);
 decltype(FNativeSaveFileName) STARS_TEST_IMPL(FNativeSaveFileName);
 decltype(FNativeOpenFileName) STARS_TEST_IMPL(FNativeOpenFileName);
-}
-#endif
 
-#ifdef __cplusplus
 #include "win_calls.h"
-#endif
 
 #endif

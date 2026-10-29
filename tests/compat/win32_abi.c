@@ -6,8 +6,8 @@
 #include "common.h"
 #include "win32_constant_values.h"
 
-#define SIZE(type, cb) _Static_assert(sizeof(type) == (cb), #type " size")
-#define OFFSET(type, field, ib) _Static_assert(offsetof(type, field) == (ib), #type "." #field " offset")
+#define SIZE(type, cb) static_assert(sizeof(type) == (cb), #type " size")
+#define OFFSET(type, field, ib) static_assert(offsetof(type, field) == (ib), #type "." #field " offset")
 SIZE(BOOL, 4); SIZE(LONG, 4); SIZE(DWORD, 4); SIZE(WORD, 2); SIZE(WCHAR, 2);
 SIZE(WPARAM, sizeof(void *)); SIZE(LPARAM, sizeof(void *)); SIZE(LRESULT, sizeof(void *));
 SIZE(POINT, 8); SIZE(RECT, 16); SIZE(SIZE, 8); SIZE(POINT16, 4);
@@ -17,16 +17,16 @@ SIZE(PALETTEENTRY, 4); SIZE(LOGPALETTE, 8); SIZE(BITMAPINFO, 44); SIZE(BITMAPCOR
 SIZE(LOGFONTA, 60); OFFSET(LOGFONTA, lfFaceName, 28);
 SIZE(TEXTMETRICA, 56); OFFSET(TEXTMETRICA, tmFirstChar, 44);
 SIZE(SCROLLINFO, 28); OFFSET(SCROLLINFO, nTrackPos, 24);
-_Static_assert(SIF_ALL == 0x17 && SIF_DISABLENOSCROLL == 8 && SB_BOTH == 3, "scroll masks");
+static_assert(SIF_ALL == 0x17 && SIF_DISABLENOSCROLL == 8 && SB_BOTH == 3, "scroll masks");
 SIZE(ACCEL, 6); OFFSET(ACCEL, key, 2); OFFSET(ACCEL, cmd, 4);
 SIZE(WINDOWPLACEMENT, 44); SIZE(MINMAXINFO, 40); SIZE(OFSTRUCT, 136); SIZE(DEVNAMES, 8);
-_Static_assert(WM_USER == 0x400 && WM_COMMAND == 0x111, "message numbers");
-_Static_assert(WS_POPUP == UINT32_C(0x80000000), "unsigned style bit");
-_Static_assert(CB_ERR == -1 && LB_ERR == -1, "signed failure values");
-_Static_assert(RGB(0x12, 0x34, 0x56) == 0x563412, "COLORREF byte order");
-_Static_assert(_Generic((WNDPROC)0, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "WNDPROC signature");
-_Static_assert(_Generic((DLGPROC)0, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "DLGPROC signature");
-_Static_assert(_Generic(&GetWindowLongPtrA, LONG_PTR (WINAPI *)(HWND, int): 1, default: 0), "pointer accessor signature");
+static_assert(WM_USER == 0x400 && WM_COMMAND == 0x111, "message numbers");
+static_assert(WS_POPUP == UINT32_C(0x80000000), "unsigned style bit");
+static_assert(CB_ERR == -1 && LB_ERR == -1, "signed failure values");
+static_assert(RGB(0x12, 0x34, 0x56) == 0x563412, "COLORREF byte order");
+static_assert(_Generic((WNDPROC)0, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "WNDPROC signature");
+static_assert(_Generic((DLGPROC)0, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "DLGPROC signature");
+static_assert(_Generic(&GetWindowLongPtrA, LONG_PTR (WINAPI *)(HWND, int): 1, default: 0), "pointer accessor signature");
 
 #if UINTPTR_MAX == UINT64_MAX
 SIZE(ICONINFO, 32); OFFSET(ICONINFO, xHotspot, 4); OFFSET(ICONINFO, hbmMask, 16);

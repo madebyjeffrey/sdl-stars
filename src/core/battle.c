@@ -1357,7 +1357,7 @@ int32_t ScoreGuessBattleDamage(TOK *ptokSrc, uint8_t brc, int16_t fPrimary, uint
                 dMax = dzCur;
                 for (x = 0; x < 2; x++) {
                     for (y = 0; y < 2; y++) {
-                        brcEnemy = (min(9, max(0, rgy[y])) & 0xf) << 4 | (min(9, max(0, rgx[x])) & 0xf);
+                        brcEnemy = ((((9) < (StarsMax(0, rgy[y]))) ? (9) : (StarsMax(0, rgy[y]))) & 0xf) << 4 | ((((9) < (StarsMax(0, rgx[x]))) ? (9) : (StarsMax(0, rgx[x]))) & 0xf);
                         dzEnemy = DzFromBrcBrc(brc, brcEnemy);
                         if (dzEnemy > dMax) {
                             dMax = dzEnemy;

@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_BATTLE_H
 #define STARS_DECOMPILED_BATTLE_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern uint8_t rgbrcStart[136];

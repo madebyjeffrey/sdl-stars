@@ -5,7 +5,7 @@
 // questions get the cautious answer.
 
 #ifdef STARS_TEST_GOLDEN_DIR
-extern "C" int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
+int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
 #endif
 
 // PromptPassword refuses: a host takes a file's password with -p.

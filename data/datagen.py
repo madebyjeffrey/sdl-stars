@@ -4,10 +4,11 @@
 Usage:
     datagen.py OUTDIR       write dataids.h and data_tables.cpp into OUTDIR
 
-Each YAML file is a list of entries, one per element of a C array (a list
-of lists for a two-dimensional one). An entry is written out as a C
-designated initializer: its keys are the struct's field names and its
-values are C values.
+Each YAML file is a list of entries, one per element of a C++ array (a list
+of lists for a two-dimensional one). A constexpr builder starts each entry
+from zero and assigns its named fields. Keys are struct field names; values
+are scalar expressions, nested objects or arrays. constinit requires static
+initialization for every exported catalog.
 
     - name: iengineFuelMizer        # its enum value in dataids.h
       szName: "Fuel Mizer"          # sz keys are strings (UTF-8)
@@ -17,7 +18,7 @@ values are C values.
 
 Two more forms follow the Hungarian prefixes:
 
-      rgAttr: {rsResGen: 10}        # an rg map sets elements: {[rsResGen] = 10}
+      rgAttr: {rsResGen: 10}        # an rg map assigns only its named array elements
       grbitAttr: [grbitRaceIFE, grbitRaceTT]   # a grbit or grf list is ORed
 
 The compiler checks the field names, enum values and types, so this script
@@ -142,7 +143,7 @@ def CString(s, where):
 
 
 def CValue(key, value, where, asserts, path):
-    """Return the C initializer for one YAML value."""
+    """Format and validate one YAML value."""
     if isinstance(value, bool):
         if not key.startswith("f"):
             raise DataError("{}: {} is true/false; only f keys are flags (quote a name like 'no')".format(where, key))
@@ -346,8 +347,7 @@ def LoadRecipes(table, chs, rgaip):
 
 
 def EnumStart(name, underlying):
-    return ["#ifdef __cplusplus", "enum {} : {} {{".format(name, underlying),
-            "#else", "enum {} {{".format(name), "#endif"]
+    return ["enum {} : {} {{".format(name, underlying)]
 
 
 def Generate(outdir):

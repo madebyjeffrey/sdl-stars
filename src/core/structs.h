@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "enums.h"
+#include "native.h"
 
 typedef struct _aipart          AIPART;
 typedef struct _aistarbase      AISTARBASE;
@@ -1017,14 +1018,14 @@ struct _rtfleet {
 // rtLogFleetSplit holds the fleet split from; rtLogFleetMerge holds the fleet
 // merged into, then the fleets merged into it.
 // A zero-prefix record view: only offsetof(rgid), never sizeof, reaches disk.
-#if defined(__cplusplus) && defined(__clang__)
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wextern-c-compat"
 #endif
 struct _rtfleetids {
     int16_t rgid[0]; /* +0x0000 (0) */
 }; /* size=0x0 in C; C++ class size is not a record length. */
-#if defined(__cplusplus) && defined(__clang__)
+#if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
 

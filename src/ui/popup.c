@@ -366,8 +366,8 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     ReleaseDC(hwnd, hdc);
     pt.x -= dx;
     pt.y -= dy;
-    pt.x = max(0, min(pt.x, GetSystemMetrics(SM_CXSCREEN) - dx));
-    pt.y = max(0, min(pt.y, GetSystemMetrics(SM_CYSCREEN) - dy));
+    pt.x = (((0) > ((((pt.x) < (GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (GetSystemMetrics(SM_CXSCREEN) - dx)))) ? (0) : ((((pt.x) < (GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (GetSystemMetrics(SM_CXSCREEN) - dx))));
+    pt.y = (((0) > ((((pt.y) < (GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (GetSystemMetrics(SM_CYSCREEN) - dy)))) ? (0) : ((((pt.y) < (GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (GetSystemMetrics(SM_CYSCREEN) - dy))));
     // Popup drawing reads hwndPopup, so publish the handle before the first paint.
     hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_BORDER,
                                pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);

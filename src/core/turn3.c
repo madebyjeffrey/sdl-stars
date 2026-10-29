@@ -197,7 +197,7 @@ void SatisfyOrders(int16_t iPass) {
                                 } else {
                                     amount = LGetFleetStat(lpfl, 2);
                                 }
-                                amount = min(2000000, amount);
+                                amount = StarsMin(2000000, amount);
                                 if (amount < 65536) {
                                     amountEdit = (uint32_t)((uint32_t)(amount * ord.txp.rgia[j].cQuan) / 100);
                                 } else {
@@ -243,7 +243,7 @@ void SatisfyOrders(int16_t iPass) {
                                     if (iLoad != 0)
                                         continue;
                                     amount = -amount;
-                                    amount = min(amount, lpfl->rgwtMin[j]);
+                                    amount = StarsMin(amount, lpfl->rgwtMin[j]);
                                     goto Unload;
                                 }
                                 if (iLoad == 0)
@@ -298,7 +298,7 @@ void SatisfyOrders(int16_t iPass) {
                                 } else {
                                     l = GetCargoFree(lpfl);
                                 }
-                                amount = min(l, amount);
+                                amount = StarsMin(l, amount);
                                 if (!fHasPermission || ord.grobj == grobjOther) {
                                     if (j == 4 && fOptFuel) {
                                         amount = 0;
@@ -332,7 +332,7 @@ void SatisfyOrders(int16_t iPass) {
                                     continue;
                                 }
                                 if (amount != 0) {
-                                    l = min(amount, amountWP);
+                                    l = StarsMin(amount, amountWP);
                                     l2 = ChgCargo(static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), -l, NULL);
                                     if (l2 != 0) {
                                         l = ChgCargo(grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, NULL);
@@ -379,7 +379,7 @@ void SatisfyOrders(int16_t iPass) {
                                 continue;
                             case iActionUnloadAll:
                             case iActionUnloadExact:
-                                amount = min((uint32_t)lpfl->rgwtMin[j], (uint32_t)amountEdit);
+                                amount = ((((uint32_t)lpfl->rgwtMin[j]) < ((uint32_t)amountEdit)) ? ((uint32_t)lpfl->rgwtMin[j]) : ((uint32_t)amountEdit));
                             Unload:
                                 if (iLoad != 0)
                                     continue;

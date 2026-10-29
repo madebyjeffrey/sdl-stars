@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_CREATE_H
 #define STARS_DECOMPILED_CREATE_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern int16_t vrgvcMax[10];

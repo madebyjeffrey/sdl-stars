@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_MEMORY_H
 #define STARS_DECOMPILED_MEMORY_H
 
+#include "common.h"
 #include <stdint.h>
 
 HB   *LphbAlloc(uint16_t cb, HeapType ht);

@@ -1,9 +1,11 @@
 #ifndef STARS_NATIVE_H
 #define STARS_NATIVE_H
+#include "test_impl.h"
 
 // Helpers the Win32 build needs where Stars' Win16 types and behavior differ
 // from Win32. See docs/NATIVE-PORT.md.
 
+#include <stdint.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,10 +30,7 @@
 #define LOBYTE(w)      ((uint8_t)(((uintptr_t)(w)) & 0xff))
 #define MAKELONG(a, b) ((int32_t)(((uint16_t)(((uintptr_t)(a)) & 0xffff)) | ((uint32_t)((uint16_t)(((uintptr_t)(b)) & 0xffff))) << 16))
 #endif
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
+#include "value.h"
 
 // AlertSz's message box types and answers (IdAlertBox).
 #ifndef MB_OK
@@ -161,5 +160,9 @@ int     CchSprintf(char *sz, const char *szFormat, ...);
 // Bounded native formatting uses standard C widths and reports truncation.
 int     CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...);
 int32_t LMulDiv(int32_t lNumber, int32_t lNumerator, int32_t lDenominator);
+
+decltype(RemoveNativeFile) STARS_TEST_IMPL(RemoveNativeFile);
+decltype(ReplaceNativeFile) STARS_TEST_IMPL(ReplaceNativeFile);
+decltype(RenameNativeFile) STARS_TEST_IMPL(RenameNativeFile);
 
 #endif

@@ -180,7 +180,7 @@ int WINAPI GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
     c = strlen(lpitem->psz);
-    if (!psz || cch <= 0) return (int)min(c, (size_t)INT_MAX);
+    if (!psz || cch <= 0) return (int)(((c) < ((size_t)INT_MAX)) ? (c) : ((size_t)INT_MAX));
     c = CchUtf8Prefix(lpitem->psz, (size_t)cch - 1);
     memcpy(psz, lpitem->psz, c); psz[c] = 0;
     return (int)c;
@@ -219,11 +219,11 @@ int CyCompatMenuBar(HWND hwnd) {
     hdc = GetDC(NULL);
     if (!hdc) { free(rgrc); return 0; }
     hfont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
-    GetTextMetricsA(hdc, &tm); cy = max(20, tm.tmHeight + 8);
+    GetTextMetricsA(hdc, &tm); cy = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         SetRect(&rc, 0, 0, 0, 0);
         DrawTextA(hdc, lp->rgitem[i].psz ? lp->rgitem[i].psz : "", -1, &rc, DT_SINGLELINE | DT_CALCRECT);
-        dx = min(cx, max(18, rc.right + 18));
+        dx = (((cx) < (StarsMax(18, rc.right + 18))) ? (cx) : (StarsMax(18, rc.right + 18)));
         if (x && dx > cx - x) { x = 0; y += cy; }
         if (y > 32000 - cy) break;
         SetRect(&rgrc[i], x, y, x + dx, y + cy); x += dx;
@@ -242,7 +242,7 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
     HBITMAP hbmp;
     HBRUSH hbr;
     RECT rc;
-    int i, cy = CyCompatMenuBar(hwnd), iScale = max(1, hwnd->iCanvasScale);
+    int i, cy = CyCompatMenuBar(hwnd), iScale = StarsMax(1, hwnd->iCanvasScale);
     BOOL fSelected, fDisabled;
     SDL_Surface *lpBar;
 
@@ -262,7 +262,7 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
         SetRect(&rc, 0, 0, hwnd->cxMenu, cy);
         hbr = CreateSolidBrush(GetSysColor(COLOR_MENU));
         if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
-        for (i = 0; i < min(hwnd->cMenu, lp->citem); i++) {
+        for (i = 0; i < StarsMin(hwnd->cMenu, lp->citem); i++) {
             rc = hwnd->rgrcMenu[i];
             fSelected = hwnd->iMenuHot == i;
             fDisabled = (lp->rgitem[i].flags & (MF_DISABLED | MF_GRAYED | MF_SEPARATOR)) != 0;
@@ -367,7 +367,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
     SelectObject(hdc, GetStockObject(NULL_BRUSH));
     CompatDrawClassicEdge(hdc, &rc, FALSE, TRUE);
     lp = LpMenu(lppop->hmenu);
-    for (i = 0; lp && i < min(lppop->cItem, lp->citem); i++) {
+    for (i = 0; lp && i < StarsMin(lppop->cItem, lp->citem); i++) {
         rc = lppop->rgrc[i];
         y = (rc.top + rc.bottom) / 2;
         if (lp->rgitem[i].flags & MF_SEPARATOR) {
@@ -450,12 +450,12 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     hdc = GetDC(NULL);
     if (!hdc) { free(lppop->rgrc); lppop->rgrc = NULL; return FALSE; }
     hfont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
-    GetTextMetricsA(hdc, &tm); cyRow = max(20, tm.tmHeight + 8);
+    GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         size.cx = 0;
         if (lp->rgitem[i].psz && !GetTextExtentPoint32A(hdc, lp->rgitem[i].psz, (int)strlen(lp->rgitem[i].psz), &size)) break;
         if (size.cx > 8100 || cy > 32000 - cyRow) break;
-        cx = max(cx, size.cx + 72);
+        cx = StarsMax(cx, size.cx + 72);
         dy = lp->rgitem[i].flags & MF_SEPARATOR ? 8 : cyRow;
         SetRect(&lppop->rgrc[i], 2, cy, 0, cy + dy); cy += dy;
     }
@@ -472,8 +472,8 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     if (SDL_GetDisplayUsableBounds(SDL_GetDisplayForPoint(&point), &bounds)) {
         if (lpt->cLevel > 0 && xWide + cx > (int64_t)bounds.x + bounds.w &&
             GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = (int64_t)rcParent.left - cx + 2;
-        xWide = max((int64_t)bounds.x, min(xWide, (int64_t)bounds.x + max(0, bounds.w - cx)));
-        yWide = max((int64_t)bounds.y, min(yWide, (int64_t)bounds.y + max(0, bounds.h - cy)));
+        xWide = ((((int64_t)bounds.x) > ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))))) ? ((int64_t)bounds.x) : ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx)))));
+        yWide = ((((int64_t)bounds.y) > ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))))) ? ((int64_t)bounds.y) : ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy)))));
     }
     if (xWide < INT_MIN || xWide > INT_MAX || yWide < INT_MIN || yWide > INT_MAX) {
         free(lppop->rgrc); lppop->rgrc = NULL; return FALSE;

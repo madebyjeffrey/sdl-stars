@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_MINE_H
 #define STARS_DECOMPILED_MINE_H
 
+#include "common.h"
 #include <stdint.h>
 
 void    GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm);

@@ -1,4 +1,5 @@
 #include "acutest.h"
+[[maybe_unused]] static char szTestLiteral1[] = "\xff";
 #include "stars_test.h"
 #include <errno.h>
 #ifdef STARS_UI_SDL
@@ -64,7 +65,7 @@ static void TestNativeFiles(void) {
     TEST_ASSERT(hfFile != -1);
     TEST_CHECK(CbWriteFile(hfFile, (void *)("Z"), 1) == 1); CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && RemoveNativeFile(szFile) == 0);
-    TEST_CHECK(HfOpenFile("\xff", mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);
+    TEST_CHECK(HfOpenFile(szTestLiteral1, mdRead, &fMissing) == -1 && !fMissing && errno == EILSEQ);
     TEST_CHECK(RemoveNativeFile("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(CreateNativeDir("\xff") == -1 && errno == EILSEQ);
     TEST_CHECK(!FNativeDirectoryExists("\xff") && errno == EILSEQ);

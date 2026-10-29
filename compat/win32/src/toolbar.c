@@ -60,7 +60,7 @@ static void LayoutToolbar(HWND hwnd) {
     int i, x = lp->xIndent, cx;
     for (i = 0; i < lp->c; i++) {
         lpbtn = &lp->rgbtn[i];
-        cx = lpbtn->btn.fsStyle & BTNS_SEP ? max(1, lpbtn->btn.iBitmap) : lp->cx + (FArrow(lp, &lpbtn->btn) ? 11 : 0);
+        cx = lpbtn->btn.fsStyle & BTNS_SEP ? StarsMax(1, lpbtn->btn.iBitmap) : lp->cx + (FArrow(lp, &lpbtn->btn) ? 11 : 0);
         if (lpbtn->btn.fsState & TBSTATE_HIDDEN) cx = 0;
         SetRect(&lpbtn->rc, x, 2, x + cx, 2 + lp->cy);
         x += cx;
@@ -269,8 +269,8 @@ static void ShowToolbarTip(HWND hwnd) {
     if (IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
     hdc = GetDC(hwnd); GetTextExtentPoint32A(hdc, lpbtn->psz, (int)strlen(lpbtn->psz), &size); ReleaseDC(hwnd, hdc);
     hwndRoot = HwndCompatRoot(hwnd); GetWindowRect(hwndRoot, &rcRoot);
-    x = max(rcRoot.left, min(rc.left, rcRoot.right - size.cx - 6)); y = rc.bottom + 2;
-    if (y + size.cy + 6 > rcRoot.bottom) y = max(rcRoot.top, rc.top - size.cy - 8);
+    x = (((rcRoot.left) > (StarsMin(rc.left, rcRoot.right - size.cx - 6))) ? (rcRoot.left) : (StarsMin(rc.left, rcRoot.right - size.cx - 6))); y = rc.bottom + 2;
+    if (y + size.cy + 6 > rcRoot.bottom) y = StarsMax(rcRoot.top, rc.top - size.cy - 8);
     if (lp->hwndTip) {
         SetWindowTextA(lp->hwndTip, lpbtn->psz);
         SetWindowPos(lp->hwndTip, HWND_TOP, x, y, size.cx + 6, size.cy + 6, SWP_NOACTIVATE);
@@ -312,7 +312,7 @@ LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_ERASEBKGND: return 1;
     case TB_BUTTONSTRUCTSIZE: lp->cbButton = (UINT)w; return 0;
     case TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, (size_t)w, (const TBBUTTON *)l);
-    case TB_INSERTBUTTONA: return AddButtons(hwnd, min((int)w, lp->c), 1, (const TBBUTTON *)l);
+    case TB_INSERTBUTTONA: return AddButtons(hwnd, ((((int)w) < (lp->c)) ? ((int)w) : (lp->c)), 1, (const TBBUTTON *)l);
     case TB_DELETEBUTTON:
         i = (int)w; if (i < 0 || i >= lp->c) return FALSE;
         SDL_free(lp->rgbtn[i].psz); memmove(lp->rgbtn + i, lp->rgbtn + i + 1, (size_t)(lp->c - i - 1) * sizeof(*lp->rgbtn));

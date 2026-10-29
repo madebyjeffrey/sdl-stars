@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_RACE_H
 #define STARS_DECOMPILED_RACE_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern int16_t rgRacePrimaryTrait[10];

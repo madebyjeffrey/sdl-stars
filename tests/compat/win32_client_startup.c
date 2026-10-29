@@ -106,7 +106,7 @@ static BOOL FTestLibraryTimestamp(long long *plPlayed) {
     return iVersion == 2 && iPlayer == idPlayer;
 }
 
-extern "C" int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
+int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static BOOL fSwitchCancelSent;
 static int cSwitchLogWrites, cSwitchHistoryWrites;
@@ -241,7 +241,7 @@ static BOOL FCheckScannerDrag(void) {
     iPosSav = GetScrollPos(hwndScanner, SB_HORZ);
     SendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, si.nMin), 0);
     UpdateWindow(hwndScanner); UpdateWindow(hwndBar);
-    dxThumb = max(8, (int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)));
+    dxThumb = (((8) > ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)))) ? (8) : ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1))));
     xGrab = 17 + dxThumb / 2;
     SendMessage(hwndBar, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(xGrab, 8));
     // Each simulated drag tick includes the completed window-tree paint pass.
@@ -265,7 +265,7 @@ static BOOL FCheckScannerDrag(void) {
 }
 
 static int iTransportPreset = -1, cTransportMenus;
-extern "C" BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
+BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     if (iRosterMenu >= 0) {
         HMENU hmenuLibrary = GetSubMenu(hmenu, 1);
@@ -411,7 +411,7 @@ static BOOL FCheckReportScrollbars(void) {
     SetWindowPos(hwndReportDlg, NULL, 0, 0, 300, 220, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
     if (IsWindowVisible(vprptCur->hwndVScroll)) {
         fPassed = GetScrollInfo(vprptCur->hwndVScroll, SB_CTL, &si) &&
-            si.nPage == (UINT)max(1, vprptCur->cRowsVis) &&
+            si.nPage == (UINT)(((1) > (vprptCur->cRowsVis)) ? (1) : (vprptCur->cRowsVis)) &&
             si.nMax - (int)si.nPage + 1 == vprptCur->cRows - vprptCur->cRowsVis;
     }
     if (IsWindowVisible(vprptCur->hwndHScroll)) {
@@ -436,12 +436,12 @@ static BOOL FCheckToolbarPlacement(void) {
     int i, x, iRange;
 
     if (!GetClientRect(hwndScanner, &rcClient) || !GetScrollInfo(hwndScanner, SB_HORZ, &si)) return FALSE;
-    cPage = max(1, ScanToPt(rcClient.right));
-    iMax = (max(1000, dGalInv - 1000 - cPage) + 3) & ~3;
+    cPage = (((1) > (ScanToPt(rcClient.right))) ? (1) : (ScanToPt(rcClient.right)));
+    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
     if (!GetScrollInfo(hwndScanner, SB_VERT, &si)) return FALSE;
-    cPage = max(1, ScanToPt(rcClient.bottom - dySBar));
-    iMax = (max(1000, dGalInv - 1000 - cPage) + 3) & ~3;
+    cPage = (((1) > (ScanToPt(rcClient.bottom - dySBar))) ? (1) : (ScanToPt(rcClient.bottom - dySBar)));
+    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
     if (!GetWindowRect(hwndTBRadar, &rc)) return FALSE;
     if (!GetClientRect(hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
@@ -510,7 +510,7 @@ static BOOL fRejectRacePassword;
 static BOOL fTestLegacyRaceImport, fAcceptLegacyRacePassword;
 static int cLegacyRacePasswords;
 
-extern "C" int16_t StarsTestReal_PromptPassword(void);
+int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
     if (fRejectRacePassword) return FALSE;
     // The frozen regression race is password protected. These tests qualify
@@ -519,7 +519,7 @@ int16_t StarsTest_PromptPassword(void) {
            getenv("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
 }
 
-extern "C" int16_t StarsTestReal_FPromptLegacyRacePassword(char *szPassword);
+int16_t StarsTestReal_FPromptLegacyRacePassword(char *szPassword);
 int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
     if (!fTestLegacyRaceImport) return StarsTestReal_FPromptLegacyRacePassword(szPassword);
     cLegacyRacePasswords++;
@@ -528,7 +528,7 @@ int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
     return TRUE;
 }
 
-extern "C" BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
+BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = getenv("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = getenv("STARS_CLIENT_EXTERNAL_OPEN_GAME");
@@ -639,7 +639,7 @@ static BOOL FPushClick(HWND hwnd) {
             if ((i == 0 ? pt.y : pt.x) < 0) iPosition += i == 0 ? pt.y : pt.x;
             else if ((i == 0 ? ptEnd.y : ptEnd.x) > (i == 0 ? rcPane.bottom : rcPane.right))
                 iPosition += i == 0 ? ptEnd.y - rcPane.bottom : ptEnd.x - rcPane.right;
-            SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, max(0, iPosition)), 0);
+            SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (((0) > (iPosition)) ? (0) : (iPosition))), 0);
         }
         break;
     }
@@ -1485,7 +1485,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     return TRUE;
 }
 
-extern "C" INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     const char *pszChoice = getenv("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == WM_INITDIALOG) {
@@ -1558,7 +1558,7 @@ int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
     return IDOK;
 }
 
-extern "C" int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
+int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     (void)hwnd; (void)pszCaption;
     if (pszText && strstr(pszText, "Import games from your recent files")) {
@@ -1586,7 +1586,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
-extern "C" int StarsTestReal_RemoveNativeFile(const char *pszFile);
+int StarsTestReal_RemoveNativeFile(const char *pszFile);
 int StarsTest_RemoveNativeFile(const char *pszFile) {
     static int fFailImportOrdersRemove;
     if (!fFailLibraryGameDelete && getenv("STARS_CLIENT_GAME_DELETE_MODE") &&
@@ -1606,7 +1606,7 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
     return StarsTestReal_RemoveNativeFile(pszFile);
 }
 
-extern "C" int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
+int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
     static int fFailImportReplace;
     if (fFailRaceVersionSave && strstr(pszOld, ".stars-race-stage-")) {
@@ -1626,7 +1626,7 @@ int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
     return StarsTestReal_ReplaceNativeFile(pszOld, pszNew);
 }
 
-extern "C" int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
+int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
 int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
     static int fFailConflictPublish, fFailConflictRestore;
     if (!fFailConflictPublish && getenv("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&

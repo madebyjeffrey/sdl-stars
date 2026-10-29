@@ -250,8 +250,8 @@ int main(void) {
         source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC', 'cc')) +
-                       ['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
+                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

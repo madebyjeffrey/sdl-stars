@@ -4,6 +4,7 @@
 #ifndef STARS_WINCOMPAT_CONSTANTS_H
 #define STARS_WINCOMPAT_CONSTANTS_H
 
+#include "wincompat_types.h"
 #include <limits.h>
 
 #define ERROR 0

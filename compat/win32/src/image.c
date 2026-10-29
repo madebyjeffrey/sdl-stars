@@ -243,7 +243,7 @@ void CompatCursorLeave(HWND hwnd) {
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface) {
     COMPATIMAGE *lp = lpCursor;
     BYTE *src, *dst;
-    int x, y, i, ix, iy, iScale = max(1, hwnd->iCanvasScale);
+    int x, y, i, ix, iy, iScale = StarsMax(1, hwnd->iCanvasScale);
     int64_t dx, dy;
     if (!lp || !lp->fInvert || hwnd != hwndMouse) return;
     for (y = 0; y < lp->lpXor->h; y++) for (x = 0; x < lp->lpXor->w; x++) {

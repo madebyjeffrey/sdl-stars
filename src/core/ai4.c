@@ -901,11 +901,11 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
     for (i = cProdGlob - 1; i >= 0; i--) {
         if (pProdGlob[i].grobj == grobjPlanet) {
             if (pProdGlob[i].iItem == mdIdleMine) {
-                iMaxMines = max(0, CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl) - iAddMines);
+                iMaxMines = (((0) > (CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl) - iAddMines)) ? (0) : (CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl) - iAddMines));
                 GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgMineCost, idPlayer, TRUE);
             }
             if (pProdGlob[i].iItem == mdIdleFactory) {
-                iMaxFactories = max(0, CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl) - iAddFactories);
+                iMaxFactories = (((0) > (CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl) - iAddFactories)) ? (0) : (CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl) - iAddFactories));
                 GetProductionCosts(lppl, pProdGlob + i, (uint32_t *)rgFactCost, idPlayer, TRUE);
             }
             if (pProdGlob[i].iItem == mdIdleAlchemy) {
@@ -934,7 +934,7 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
             }
         }
         if (iMaxMines > 0) {
-            iAddMines = min(iMaxMines, (int16_t)(rgResLeft[3] / rgMineCost[3]));
+            iAddMines = (((iMaxMines) < ((int16_t)(rgResLeft[3] / rgMineCost[3]))) ? (iMaxMines) : ((int16_t)(rgResLeft[3] / rgMineCost[3])));
         } else {
             iAddMines = 0;
         }
@@ -947,20 +947,19 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
     iMaxFactBuildable = iMaxFactories;
     if (iMaxFactories > 0) {
         if (!gd.fTutorial) {
-            iMaxFactories = min(iMaxFactories, (int16_t)(rgResLeft[2] / rgFactCost[2]));
+            iMaxFactories = (((iMaxFactories) < ((int16_t)(rgResLeft[2] / rgFactCost[2]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[2] / rgFactCost[2])));
         } else {
-            iMaxFactories = min(min(min(iMaxFactories, (int16_t)(rgResLeft[0] / rgFactCost[0])), (int16_t)(rgResLeft[1] / rgFactCost[1])),
-                                (int16_t)(rgResLeft[2] / rgFactCost[2]));
+            iMaxFactories = (((((((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) < ((int16_t)(rgResLeft[1] / rgFactCost[1]))) ? ((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) : ((int16_t)(rgResLeft[1] / rgFactCost[1])))) < ((int16_t)(rgResLeft[2] / rgFactCost[2]))) ? (((((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) < ((int16_t)(rgResLeft[1] / rgFactCost[1]))) ? ((((iMaxFactories) < ((int16_t)(rgResLeft[0] / rgFactCost[0]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[0] / rgFactCost[0])))) : ((int16_t)(rgResLeft[1] / rgFactCost[1])))) : ((int16_t)(rgResLeft[2] / rgFactCost[2])));
         }
     }
     if (iMaxFactories > 0) {
-        iAddFactories = min(iMaxFactories, (int16_t)(rgResLeft[3] / rgFactCost[3]));
+        iAddFactories = (((iMaxFactories) < ((int16_t)(rgResLeft[3] / rgFactCost[3]))) ? (iMaxFactories) : ((int16_t)(rgResLeft[3] / rgFactCost[3])));
     } else {
         iAddFactories = 0;
     }
     rgResLeft[3] -= (uint32_t)(iAddFactories * rgFactCost[3]);
     if (iMaxMines > 0) {
-        iAddMines = min(iMaxMines, (int16_t)(rgResLeft[3] / rgMineCost[3]));
+        iAddMines = (((iMaxMines) < ((int16_t)(rgResLeft[3] / rgMineCost[3]))) ? (iMaxMines) : ((int16_t)(rgResLeft[3] / rgMineCost[3])));
     } else {
         iAddMines = 0;
     }
@@ -1355,8 +1354,8 @@ int16_t iAddAttackFleet(PLANET *lppl, int16_t iAttackStr, int16_t iBestDestroyer
 
     fRet = FALSE;
     iRand = Random(100);
-    iMaxMines = max(0, CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl));
-    iMaxFactories = max(0, CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl));
+    iMaxMines = (((0) > (CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl))) ? (0) : (CMaxOperableMines(lppl, idPlayer, FALSE) - CMinesOperating(lppl)));
+    iMaxFactories = (((0) > (CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl))) ? (0) : (CMaxOperableFactories(lppl, idPlayer, FALSE) - CFactoriesOperating(lppl)));
     if (Random(100) < (iMaxMines < 100 || iMaxFactories < 100 ? 90 : 60)) {
         return 0;
     }

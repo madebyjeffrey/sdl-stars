@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_FILE_H
 #define STARS_DECOMPILED_FILE_H
 
+#include "common.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -25,5 +26,9 @@ int16_t FBadFileError(StringId ids);
 void    StreamOpen(char *szFile, MdOpenFlags mdOpen);
 void    StreamClose();
 void    RgFromStream(void *rg, uint16_t cb);
+
+decltype(ReadRt) STARS_TEST_IMPL(ReadRt);
+decltype(StreamOpen) STARS_TEST_IMPL(StreamOpen);
+decltype(StreamClose) STARS_TEST_IMPL(StreamClose);
 
 #endif

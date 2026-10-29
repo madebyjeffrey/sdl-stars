@@ -3,36 +3,18 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
 enum HeapType : uint16_t {
-#else
-enum HeapType {
-#endif
     htOrd = 0, htString, htMsg, htPlanets, htLog, htFleets, htMisc, htShips, htPlrMsg, htPerm, htThings, htBattle, htCount };
-#ifndef __cplusplus
-typedef uint16_t HeapType;
-#endif
 
-#ifdef __cplusplus
 enum AiLevel : uint16_t {
-#else
-enum AiLevel {
-#endif
     lvlAiEasy = 0,
     lvlAiStandard = 1,
     lvlAiTough = 2,
     lvlAiExpert = 3,
     lvlAiRandom = 4,
 };
-#ifndef __cplusplus
-typedef uint16_t AiLevel;
-#endif
 
-#ifdef __cplusplus
 enum DetType : uint16_t {
-#else
-enum DetType {
-#endif
     detNone = 0,
     detMinimal = 1,
     detObscure = 2,
@@ -40,15 +22,8 @@ enum DetType {
     detMore = 4,
     detAll = 7,
 };
-#ifndef __cplusplus
-typedef uint16_t DetType;
-#endif
 
-#ifdef __cplusplus
 enum MineralType : int16_t {
-#else
-enum MineralType {
-#endif
     SupplyButtonsOnly = -2, // transfer dialog: redraw only the buttons
     SupplyAll = -1,         // transfer dialog: redraw every cargo row
     Ironium = 0,
@@ -58,28 +33,14 @@ enum MineralType {
     Resources = 3,
     Fuel = 4,
 };
-#ifndef __cplusplus
-typedef int16_t MineralType;
-#endif
 
-#ifdef __cplusplus
 enum EnvType : uint16_t {
-#else
-enum EnvType {
-#endif
     Gravity = 0,
     Temperature = 1,
     Radiation = 2,
 };
-#ifndef __cplusplus
-typedef uint16_t EnvType;
-#endif
 
-#ifdef __cplusplus
 enum TechFieldType : uint16_t {
-#else
-enum TechFieldType {
-#endif
     Energy = 0,
     Weapons = 1,
     Propulsion = 2,
@@ -88,15 +49,8 @@ enum TechFieldType {
     Biotechnology = 5,
     TechFieldCount = 6,
 };
-#ifndef __cplusplus
-typedef uint16_t TechFieldType;
-#endif
 
-#ifdef __cplusplus
 enum BattleUnitFlags : uint16_t {
-#else
-enum BattleUnitFlags {
-#endif
     grBuOurUnits = 0x0001,
     grBuTheirUnits = 0x0002,
     grBuIncludeSb = 0x0004,
@@ -108,30 +62,16 @@ enum BattleUnitFlags {
     grBuClassUtility = 0x0080,
     grBuClassAll = 0x00F8,
 };
-#ifndef __cplusplus
-typedef uint16_t BattleUnitFlags;
-#endif
 
-#ifdef __cplusplus
 enum AttackWho : uint16_t {
-#else
-enum AttackWho {
-#endif
     iplrAttackNobody = 0,
     iplrAttackEnemies = 1,
     iplrAttackNeutralsEnemies = 2,
     iplrAttackEveryone = 3,
     iplrAttackPlayer = 4,
 };
-#ifndef __cplusplus
-typedef uint16_t AttackWho;
-#endif
 
-#ifdef __cplusplus
 enum mdProdStat : uint16_t {
-#else
-enum mdProdStat {
-#endif
     mdProdStatComplete = 0,
     mdProdStatCompleteAuto = 1,
     mdProdStatSkippedAuto = 2,
@@ -141,30 +81,16 @@ enum mdProdStat {
     mdProdStatBlockedDiff = 6,
     mdProdStatBlockedSame = 7,
 };
-#ifndef __cplusplus
-typedef uint16_t mdProdStat;
-#endif
 
-#ifdef __cplusplus
 enum mdPartAvail : int16_t {
-#else
-enum mdPartAvail {
-#endif
     mdPartAvailRestricted = -1,
     mdPartAvailInvalid = 0,
     mdPartAvailAvailable = 1,
     mdPartAvailNextTech = 2,
     mdPartAvailOtherTech = 99,
 };
-#ifndef __cplusplus
-typedef int16_t mdPartAvail;
-#endif
 
-#ifdef __cplusplus
 enum GrPopupType : uint16_t {
-#else
-enum GrPopupType {
-#endif
     grPopupMineral = 1,
     grPopupPlayer = 2,
     grPopupFleet = 3,
@@ -181,15 +107,8 @@ enum GrPopupType {
     grPopupShdefSB = 14,
     grPopupShdefBuild = 15,
 };
-#ifndef __cplusplus
-typedef uint16_t GrPopupType;
-#endif
 
-#ifdef __cplusplus
 enum HtMineType : uint16_t {
-#else
-enum HtMineType {
-#endif
     htMineNone = 0,
     htMineMineralConc1 = 1,
     htMineMineralConc2 = 2,
@@ -206,29 +125,15 @@ enum HtMineType {
     htMineStarbase = 13,
     htMineMinefieldType = 14,
 };
-#ifndef __cplusplus
-typedef uint16_t HtMineType;
-#endif
 
-#ifdef __cplusplus
 enum HtMsgType : uint16_t {
-#else
-enum HtMsgType {
-#endif
     htMsgNone = 0,
     htMsgCurrent = 1,
     htMsgZoom = 2,
     htMsgMode = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t HtMsgType;
-#endif
 
-#ifdef __cplusplus
 enum DtFileType : uint16_t {
-#else
-enum DtFileType {
-#endif
     dtXY = 0,
     dtLog = 1,
     dtHost = 2,
@@ -236,15 +141,8 @@ enum DtFileType {
     dtHist = 4,
     dtRace = 5,
 };
-#ifndef __cplusplus
-typedef uint16_t DtFileType;
-#endif
 
-#ifdef __cplusplus
 enum RaceGrbit : uint16_t {
-#else
-enum RaceGrbit {
-#endif
     ibitRaceIFE = 0x00,
     ibitRaceTT = 0x01,
     ibitRaceARM = 0x02,
@@ -264,17 +162,10 @@ enum RaceGrbit {
     ibitRaceCheapFact = 0x1f,
     ibitRaceLast = 32,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceGrbit;
-#endif
 
 // RaceTraitBits is a race's grbitAttr: one bit per RaceGrbit index, the
 // lesser racial traits and the other per-race switches.
-#ifdef __cplusplus
 enum RaceTraitBits : uint32_t {
-#else
-enum RaceTraitBits {
-#endif
     grbitRaceIFE = 0x00000001,
     grbitRaceTT = 0x00000002,
     grbitRaceARM = 0x00000004,
@@ -293,15 +184,8 @@ enum RaceTraitBits {
     grbitRaceAIPlayer = 0x40000000,
     grbitRaceCheapFact = 0x80000000,
 };
-#ifndef __cplusplus
-typedef uint32_t RaceTraitBits;
-#endif
 
-#ifdef __cplusplus
 enum RaceStat : uint16_t {
-#else
-enum RaceStat {
-#endif
     rsResGen = 0,
     rsFactProd = 1,
     rsFactBuild = 2,
@@ -318,15 +202,8 @@ enum RaceStat {
     rsTechBonus6 = 13,
     rsMajorAdv = 14,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceStat;
-#endif
 
-#ifdef __cplusplus
 enum RaceAttribute : uint16_t {
-#else
-enum RaceAttribute {
-#endif
     raCheapCol = 0,
     raStealth = 1,
     raAttack = 2,
@@ -339,15 +216,8 @@ enum RaceAttribute {
     raNone = 9,
     raMax = 10,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceAttribute;
-#endif
 
-#ifdef __cplusplus
 enum GrobjClass : uint16_t {
-#else
-enum GrobjClass {
-#endif
     grobjNone = 0x0,
     grobjPlanet = 0x1,
     grobjFleet = 0x2,
@@ -358,15 +228,8 @@ enum GrobjClass {
     mdExact = 0x0080,
     mdRecurseMask = mdNoRecurse | mdExact,
 };
-#ifndef __cplusplus
-typedef uint16_t GrobjClass;
-#endif
 
-#ifdef __cplusplus
 enum HullSlotType : uint16_t {
-#else
-enum HullSlotType {
-#endif
     hstNone = 0x0000,
     hstEngine = 0x0001,
     hstScanner = 0x0002,
@@ -398,73 +261,36 @@ enum HullSlotType {
     hstSome = 0x193E,
 
 };
-#ifndef __cplusplus
-typedef uint16_t HullSlotType;
-#endif
 
 // HulDef, StartingStarbase, StartingShip, the part indexes (isbhull,
 // iengine ... ispecialSB) and the AI recipe offsets come from the YAML in
 // data/; see data/datagen.py.
 #include "dataids.h"
 
-#ifndef __cplusplus
-typedef uint16_t HulDef;
-#endif
-#ifndef __cplusplus
-typedef uint16_t StartingStarbase;
-#endif
-#ifndef __cplusplus
-typedef uint16_t StartingShip;
-#endif
 
 
-#ifdef __cplusplus
 enum ThingType : uint16_t {
-#else
-enum ThingType {
-#endif
     ithMinefield = 0,
     ithMineralPacket = 1,
     ithWormhole = 2,
     ithMysteryTrader = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t ThingType;
-#endif
 
-#ifdef __cplusplus
 enum MdBuild : uint16_t {
-#else
-enum MdBuild {
-#endif
     mdBuildShdef = 0,
     mdBuildHuldef = 1,
     mdBuildEnemyShdef = 2,
     mdBuildComp = 3,
     mdBuildEdit = 4,
 };
-#ifndef __cplusplus
-typedef uint16_t MdBuild;
-#endif
 
-#ifdef __cplusplus
 enum MdXfer : int16_t {
-#else
-enum MdXfer {
-#endif
     mdXferNone = -1,
     mdXferCargo = 0,
     mdXferShips = 1,
 };
-#ifndef __cplusplus
-typedef int16_t MdXfer;
-#endif
 
-#ifdef __cplusplus
 enum ProdItemType : uint16_t {
-#else
-enum ProdItemType {
-#endif
     iobjMine = 0,
     iobjFactory = 1,
     iobjDefense = 2,
@@ -498,141 +324,57 @@ enum ProdItemType {
     iobjPlanetaryScanner = 27,
     iobjUnknown = 31,
 };
-#ifndef __cplusplus
-typedef uint16_t ProdItemType;
-#endif
 
-#ifdef __cplusplus
 enum PlayerSentinel : int16_t {
-#else
-enum PlayerSentinel {
-#endif
     iplrNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t PlayerSentinel;
-#endif
 
-#ifdef __cplusplus
 enum FleetLocationSentinel : int16_t {
-#else
-enum FleetLocationSentinel {
-#endif
     idPlanetDeepSpace = -1,
 };
-#ifndef __cplusplus
-typedef int16_t FleetLocationSentinel;
-#endif
 
-#ifdef __cplusplus
 enum PlanetIdSentinel : int16_t {
-#else
-enum PlanetIdSentinel {
-#endif
     idplNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t PlanetIdSentinel;
-#endif
 
-#ifdef __cplusplus
 enum FleetIdSentinel : int16_t {
-#else
-enum FleetIdSentinel {
-#endif
     idflNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t FleetIdSentinel;
-#endif
 
-#ifdef __cplusplus
 enum ScanSelSentinel : int16_t {
-#else
-enum ScanSelSentinel {
-#endif
     iflNone = -1,
     iwpNone = -1,
     ithNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t ScanSelSentinel;
-#endif
 
-#ifdef __cplusplus
 enum LookupRequest : int16_t {
-#else
-enum LookupRequest {
-#endif
     idWriteBack = -1,
 };
-#ifndef __cplusplus
-typedef int16_t LookupRequest;
-#endif
 
-#ifdef __cplusplus
 enum ShipDesignSentinel : int16_t {
-#else
-enum ShipDesignSentinel {
-#endif
     ishdefNone = -1,
     ishdefAll = -1,
 };
-#ifndef __cplusplus
-typedef int16_t ShipDesignSentinel;
-#endif
 
-#ifdef __cplusplus
 enum MessageIndexSentinel : int16_t {
-#else
-enum MessageIndexSentinel {
-#endif
     imsgNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t MessageIndexSentinel;
-#endif
 
-#ifdef __cplusplus
 enum EnvironmentValueSentinel : int16_t {
-#else
-enum EnvironmentValueSentinel {
-#endif
     envImmune = -1,
     envNone = -1,
 };
-#ifndef __cplusplus
-typedef int16_t EnvironmentValueSentinel;
-#endif
 
-#ifdef __cplusplus
 enum ProdScheduleRequest : uint16_t {
-#else
-enum ProdScheduleRequest {
-#endif
     iprodEstimateResearchResources = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t ProdScheduleRequest;
-#endif
 
-#ifdef __cplusplus
 enum TutorCheckSentinel : uint16_t {
-#else
-enum TutorCheckSentinel {
-#endif
     iWarpAny = 0xffff,
     iDistAny = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t TutorCheckSentinel;
-#endif
 
-#ifdef __cplusplus
 enum TutorAnySentinel : int16_t {
-#else
-enum TutorAnySentinel {
-#endif
     mdScanAny = -1,
     iZoomAny = -1,
     iCategoryAny = -1,
@@ -640,20 +382,10 @@ enum TutorAnySentinel {
     idAny = -1,
     imsgAny = -1,
 };
-#ifndef __cplusplus
-typedef int16_t TutorAnySentinel;
-#endif
 
-#ifdef __cplusplus
 enum BattleRecordSentinel : uint16_t {
-#else
-enum BattleRecordSentinel {
-#endif
     idPlanetNone = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t BattleRecordSentinel;
-#endif
 
 // StringId, MessageId and TutorId come from the text tables in text/; see
 // text/textgen.py. TutorId is a tutorial text fragment, eight to a page;
@@ -664,92 +396,27 @@ typedef uint16_t BattleRecordSentinel;
 enum StringIdSentinel {
     idsNoString = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t StringId;
-#endif
 enum MessageIdSentinel {
     idmNone = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t MessageId;
-#endif
-#ifndef __cplusplus
-typedef uint16_t TutorId;
-#endif
 
-#ifdef __cplusplus
 enum GrStat : uint16_t {
-#else
-enum GrStat {
-#endif
     grStatFuel = 1,
     grStatCargo = 2,
 
 };
-#ifndef __cplusplus
-typedef uint16_t GrStat;
-#endif
 
 // isbhull is a starbase hull's index in rghuldefSB, its HulDef id less
 // ihuldefOrbitalFort.
 enum isbhullSentinel {
     isbhullAuto = -1, // FCreateAiStarbase: choose by design slot
 };
-#ifndef __cplusplus
-typedef int16_t isbhull;
-#endif
 
 enum iengineSentinel {
     iengineNone = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t iengine;
-#endif
-#ifndef __cplusplus
-typedef uint16_t iarmor;
-#endif
-#ifndef __cplusplus
-typedef uint16_t iscanner;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ishield;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ispecialE;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ispecialM;
-#endif
-#ifndef __cplusplus
-typedef uint16_t imines;
-#endif
-#ifndef __cplusplus
-typedef uint16_t imining;
-#endif
-#ifndef __cplusplus
-typedef uint16_t iplanetary;
-#endif
-#ifndef __cplusplus
-typedef uint16_t iterra;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ibomb;
-#endif
-#ifndef __cplusplus
-typedef uint16_t itorp;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ibeam;
-#endif
-#ifndef __cplusplus
-typedef uint16_t ispecialSB;
-#endif
 
-#ifdef __cplusplus
 enum GrbitTrader : uint16_t {
-#else
-enum GrbitTrader {
-#endif
     grbitTraderNone = 0x0000,
     grbitTraderCargo = 0x0001,
     grbitTraderSpecial = 0x0002,
@@ -766,30 +433,16 @@ enum GrbitTrader {
     grbitTraderLifeboat = 0x1000,
     grbitTraderAll = 0x1fff,
 };
-#ifndef __cplusplus
-typedef uint16_t GrbitTrader;
-#endif
 
-#ifdef __cplusplus
 enum LookupResult : int16_t {
-#else
-enum LookupResult {
-#endif
     LookupInvalid = 0,     // “out of range” / not a valid part id in group
     LookupDisallowed = -1, // disallowed for race/trait/other rule
     LookupOk = 1,          // meets tech reqs (original CheckTechRequirements == 1)
     LookupNear = 2,        // “one level away in current research field”
     LookupNeedMany = 99    // multiple tech deficits
 };
-#ifndef __cplusplus
-typedef int16_t LookupResult;
-#endif
 
-#ifdef __cplusplus
 enum RecordType : uint16_t {
-#else
-enum RecordType {
-#endif
     /*
      * NOTE: Stars! file records encode a 6-bit "record type" (rt) plus a 10-bit
      * byte count (cb) in a 16-bit header word.
@@ -845,15 +498,8 @@ enum RecordType {
     rtLogPlayerZpq1 = 46,     /* Host-only opaque blob (size capped at 0x1A bytes) copied into rgplr[idPlayer].zpq1. */
     rtMax = 47                /* one past highest observed (0x2d) */
 };
-#ifndef __cplusplus
-typedef uint16_t RecordType;
-#endif
 
-#ifdef __cplusplus
 enum DialogId : uint16_t {
-#else
-enum DialogId {
-#endif
     /* ship / fleet */
     IDD_MERGE_FLEETS = 82, /* MergeFleetsDlg */
     IDD_TRANSFER = 91,     /* TransferDlg */
@@ -912,9 +558,6 @@ enum DialogId {
     IDD_FIND = 4202,     /* FindDlg */
     IDD_PRINT_MAP = 214, /* PrintMapDlg */
 };
-#ifndef __cplusplus
-typedef uint16_t DialogId;
-#endif
 
 #undef IDOK
 #undef IDCANCEL
@@ -922,38 +565,20 @@ typedef uint16_t DialogId;
 #undef IDC_HELP
 
 // AboutControl names the controls of the About dialog.
-#ifdef __cplusplus
 enum AboutControl : uint16_t {
-#else
-enum AboutControl {
-#endif
     IDC_ABOUT_ORDER_INFO = 118,
     IDC_ABOUT_DEMO_TEXT = 1025,
     IDC_ABOUT_CREDITS_TEXT = 1055,
 };
-#ifndef __cplusplus
-typedef uint16_t AboutControl;
-#endif
 
 // PrintMapControl names the controls of the Print Map dialog.
-#ifdef __cplusplus
 enum PrintMapControl : uint16_t {
-#else
-enum PrintMapControl {
-#endif
     IDC_PRINT_MAP_PAGES_X = 268,
     IDC_PRINT_MAP_PAGES_Y = 269,
 };
-#ifndef __cplusplus
-typedef uint16_t PrintMapControl;
-#endif
 
 // SimpleNewGameControl names the controls of the simple New Game dialog.
-#ifdef __cplusplus
 enum SimpleNewGameControl : uint16_t {
-#else
-enum SimpleNewGameControl {
-#endif
     IDC_SIMPLE_NEW_GAME_EASY = 200,
     IDC_SIMPLE_NEW_GAME_STANDARD = 201,
     IDC_SIMPLE_NEW_GAME_HARDER = 202,
@@ -967,16 +592,9 @@ enum SimpleNewGameControl {
     IDC_SIMPLE_NEW_GAME_LARGE = 1003,
     IDC_SIMPLE_NEW_GAME_HUGE = 1004,
 };
-#ifndef __cplusplus
-typedef uint16_t SimpleNewGameControl;
-#endif
 
 // NewGame1Control names the controls of the first advanced New Game wizard page.
-#ifdef __cplusplus
 enum NewGame1Control : uint16_t {
-#else
-enum NewGame1Control {
-#endif
     IDC_NEW_GAME_TINY = 1000,
     IDC_NEW_GAME_SMALL = 1001,
     IDC_NEW_GAME_MEDIUM = 1002,
@@ -999,16 +617,9 @@ enum NewGame1Control {
     IDC_NEW_GAME_NAME = 1030,
     IDC_NEW_GAME_GALAXY_CLUMPING = 1050,
 };
-#ifndef __cplusplus
-typedef uint16_t NewGame1Control;
-#endif
 
 // NewGame3Control names the controls of the victory conditions New Game wizard page; the tech level checkbox covers both tech conditions.
-#ifdef __cplusplus
 enum NewGame3Control : uint16_t {
-#else
-enum NewGame3Control {
-#endif
     IDC_VC_OWNS_PLANETS = 291,
     IDC_VC_TECH_LEVEL = 292,
     IDC_VC_SCORE = 293,
@@ -1017,32 +628,18 @@ enum NewGame3Control {
     IDC_VC_CAPITAL_SHIPS = 296,
     IDC_VC_HIGHEST_SCORE = 297,
 };
-#ifndef __cplusplus
-typedef uint16_t NewGame3Control;
-#endif
 
 // VcrControl names the controls of the battle VCR dialog.
-#ifdef __cplusplus
 enum VcrControl : uint16_t {
-#else
-enum VcrControl {
-#endif
     IDC_VCR_REW_ALL = 161,
     IDC_VCR_REW = 162,
     IDC_VCR_PLAY_PAUSE = 163,
     IDC_VCR_FWD = 164,
     IDC_VCR_FWD_ALL = 165,
 };
-#ifndef __cplusplus
-typedef uint16_t VcrControl;
-#endif
 
 // HostModeControl names the controls of the host mode dialog.
-#ifdef __cplusplus
 enum HostModeControl : uint16_t {
-#else
-enum HostModeControl {
-#endif
     IDC_HOST_GENERATE_NOW = 1031,
     IDC_HOST_AUTO_GENERATE = 1032,
     IDC_HOST_GAME_NAME_TEXT = 1033,
@@ -1051,31 +648,17 @@ enum HostModeControl {
     IDC_HOST_NEXT_YEAR_TEXT = 2016,
     IDC_HOST_TIME_SINCE_TEXT = 2017,
 };
-#ifndef __cplusplus
-typedef uint16_t HostModeControl;
-#endif
 
 // HostOptionsControl names the controls of the auto generate options dialog; the second and third force generate options have no caption in the template.
-#ifdef __cplusplus
 enum HostOptionsControl : uint16_t {
-#else
-enum HostOptionsControl {
-#endif
     IDC_AUTOGEN_WHEN_ALL_IN = 1027,
     IDC_FORCE_GEN_NEVER = 2066,
     IDC_FORCE_GEN_OPTION_2 = 2067,
     IDC_FORCE_GEN_OPTION_3 = 2068,
 };
-#ifndef __cplusplus
-typedef uint16_t HostOptionsControl;
-#endif
 
 // SlotControl names the controls of the ship designer dialog.
-#ifdef __cplusplus
 enum SlotControl : uint16_t {
-#else
-enum SlotControl {
-#endif
     IDC_DESIGNER_COMPONENT_LIST = 2060,
     IDC_DESIGNER_SHIPS = 2064,
     IDC_DESIGNER_STARBASES = 2065,
@@ -1084,16 +667,9 @@ enum SlotControl {
     IDC_DESIGNER_ENEMY_HULLS = 2068,
     IDC_DESIGNER_COMPONENTS = 2069,
 };
-#ifndef __cplusplus
-typedef uint16_t SlotControl;
-#endif
 
 // RaceWizard1Control names the controls of the race wizard name and race page.
-#ifdef __cplusplus
 enum RaceWizard1Control : uint16_t {
-#else
-enum RaceWizard1Control {
-#endif
     IDC_RACE_NAME = 268,
     IDC_RACE_PASSWORD = 269,
     IDC_RACE_HUMANOID = 271,
@@ -1106,42 +682,21 @@ enum RaceWizard1Control {
     IDC_RACE_CUSTOM = 278,
     IDC_RACE_PLURAL_NAME = 2075,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard1Control;
-#endif
 
 // RaceWizard2Control names the controls of the race wizard habitability page.
-#ifdef __cplusplus
 enum RaceWizard2Control : uint16_t {
-#else
-enum RaceWizard2Control {
-#endif
     IDC_IMMUNE_TO_GRAVITY = 291,
     IDC_IMMUNE_TO_TEMPERATURE = 292,
     IDC_IMMUNE_TO_RADIATION = 293,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard2Control;
-#endif
 
 // RaceWizard3Control names the controls of the race wizard economy page.
-#ifdef __cplusplus
 enum RaceWizard3Control : uint16_t {
-#else
-enum RaceWizard3Control {
-#endif
     IDC_RACE_FACTORY_GERMANIUM_DISCOUNT = 291,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard3Control;
-#endif
 
 // RaceWizard4Control names the controls of the race wizard primary racial trait page.
-#ifdef __cplusplus
 enum RaceWizard4Control : uint16_t {
-#else
-enum RaceWizard4Control {
-#endif
     IDC_RACE_HYPER_EXPANSION = 271,
     IDC_RACE_SUPER_STEALTH = 272,
     IDC_RACE_WAR_MONGER = 273,
@@ -1153,16 +708,9 @@ enum RaceWizard4Control {
     IDC_RACE_ALTERNATE_REALITY = 279,
     IDC_RACE_JACK_OF_ALL_TRADES = 280,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard4Control;
-#endif
 
 // RaceWizard5Control names the controls of the race wizard lesser racial trait page, in RaceGrbit order.
-#ifdef __cplusplus
 enum RaceWizard5Control : uint16_t {
-#else
-enum RaceWizard5Control {
-#endif
     IDC_RACE_IMPROVED_FUEL_EFFICIENCY = 291,
     IDC_RACE_TOTAL_TERRAFORMING = 292,
     IDC_RACE_ADVANCED_REMOTE_MINING = 293,
@@ -1178,16 +726,9 @@ enum RaceWizard5Control {
     IDC_RACE_BLEEDING_EDGE_TECHNOLOGY = 303,
     IDC_RACE_REGENERATING_SHIELDS = 304,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard5Control;
-#endif
 
 // RaceWizard6Control names the controls of the race wizard research cost page.
-#ifdef __cplusplus
 enum RaceWizard6Control : uint16_t {
-#else
-enum RaceWizard6Control {
-#endif
     IDC_RACE_ENERGY_COST_EXTRA = 271,
     IDC_RACE_ENERGY_COST_STANDARD = 272,
     IDC_RACE_ENERGY_COST_LESS = 273,
@@ -1208,16 +749,9 @@ enum RaceWizard6Control {
     IDC_RACE_BIOTECH_COST_LESS = 288,
     IDC_RACE_START_HIGHER_TECH = 291,
 };
-#ifndef __cplusplus
-typedef uint16_t RaceWizard6Control;
-#endif
 
 // ProductionControl names the controls of the production queue dialog.
-#ifdef __cplusplus
 enum ProductionControl : uint16_t {
-#else
-enum ProductionControl {
-#endif
     IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY = 139,
     IDC_PRODUCTION_AVAILABLE_ITEMS = 1046,
     IDC_PRODUCTION_QUEUE = 1047,
@@ -1227,30 +761,16 @@ enum ProductionControl {
     IDC_PRODUCTION_ITEM_UP = 1081,
     IDC_PRODUCTION_ITEM_DOWN = 1082,
 };
-#ifndef __cplusplus
-typedef uint16_t ProductionControl;
-#endif
 
 // MergeFleetsControl names the controls of the merge fleets dialog.
-#ifdef __cplusplus
 enum MergeFleetsControl : uint16_t {
-#else
-enum MergeFleetsControl {
-#endif
     IDC_MERGE_FLEETS_LIST = 81,
     IDC_MERGE_FLEETS_SELECT_ALL = 2040,
     IDC_MERGE_FLEETS_UNSELECT_ALL = 2041,
 };
-#ifndef __cplusplus
-typedef uint16_t MergeFleetsControl;
-#endif
 
 // BattlePlansControl names the controls of the battle plans dialog.
-#ifdef __cplusplus
 enum BattlePlansControl : uint16_t {
-#else
-enum BattlePlansControl {
-#endif
     IDC_BATTLE_PLAN_COPY = 1052,
     IDC_BATTLE_PLAN_DUMP_CARGO = 1053,
     IDC_BATTLE_PLAN_SELECT = 1054,
@@ -1259,31 +779,17 @@ enum BattlePlansControl {
     IDC_BATTLE_PLAN_TACTIC = 1057,
     IDC_BATTLE_PLAN_ATTACK_WHO = 1058,
 };
-#ifndef __cplusplus
-typedef uint16_t BattlePlansControl;
-#endif
 
 // RelationsControl names the controls of the player relations dialog.
-#ifdef __cplusplus
 enum RelationsControl : uint16_t {
-#else
-enum RelationsControl {
-#endif
     IDC_RELATIONS_PLAYER_LIST = 2003,
     IDC_RELATIONS_NEUTRAL = 2004,
     IDC_RELATIONS_FRIEND = 2005,
     IDC_RELATIONS_ENEMY = 2006,
 };
-#ifndef __cplusplus
-typedef uint16_t RelationsControl;
-#endif
 
 // ResearchControl names the controls of the research dialog.
-#ifdef __cplusplus
 enum ResearchControl : uint16_t {
-#else
-enum ResearchControl {
-#endif
     IDC_RESEARCH_ENERGY = 1073,
     IDC_RESEARCH_WEAPONS = 1074,
     IDC_RESEARCH_PROPULSION = 1075,
@@ -1292,106 +798,50 @@ enum ResearchControl {
     IDC_RESEARCH_BIOTECH = 1078,
     IDC_RESEARCH_NEXT_FIELD = 1083,
 };
-#ifndef __cplusplus
-typedef uint16_t ResearchControl;
-#endif
 
 // ZipProdControl names the controls of the production template dialog.
-#ifdef __cplusplus
 enum ZipProdControl : uint16_t {
-#else
-enum ZipProdControl {
-#endif
     IDC_ZIP_PROD_QUEUE = 1047,
     IDC_ZIP_PROD_PRESET_1 = 1073,
     IDC_ZIP_PROD_PRESET_2 = 1074,
     IDC_ZIP_PROD_PRESET_3 = 1075,
     IDC_ZIP_PROD_PRESET_4 = 1076,
 };
-#ifndef __cplusplus
-typedef uint16_t ZipProdControl;
-#endif
 
 // GaugeControl names the controls of the progress gauge dialog.
-#ifdef __cplusplus
 enum GaugeControl : uint16_t {
-#else
-enum GaugeControl {
-#endif
     IDC_GAUGE_TEXT = 1071,
 };
-#ifndef __cplusplus
-typedef uint16_t GaugeControl;
-#endif
 
 // BrowserControl names the controls of the technology browser dialog.
-#ifdef __cplusplus
 enum BrowserControl : uint16_t {
-#else
-enum BrowserControl {
-#endif
     IDC_BROWSER_AVAILABLE_ONLY = 266,
     IDC_BROWSER_COMPONENT_CATEGORY = 267,
 };
-#ifndef __cplusplus
-typedef uint16_t BrowserControl;
-#endif
 
 // TutorControl names the controls of the tutorial dialog.
-#ifdef __cplusplus
 enum TutorControl : uint16_t {
-#else
-enum TutorControl {
-#endif
     IDC_TUTOR_HINT = 118,
     IDC_TUTOR_PANIC = 2503,
 };
-#ifndef __cplusplus
-typedef uint16_t TutorControl;
-#endif
 
 // PanicControl names the controls of the tutorial panic dialog.
-#ifdef __cplusplus
 enum PanicControl : uint16_t {
-#else
-enum PanicControl {
-#endif
     IDC_PANIC_REDO_TURN = 2505,
     IDC_PANIC_COMPLETE_TURN = 2506,
 };
-#ifndef __cplusplus
-typedef uint16_t PanicControl;
-#endif
 
 // NewPasswordControl names the controls of the new password dialog.
-#ifdef __cplusplus
 enum NewPasswordControl : uint16_t {
-#else
-enum NewPasswordControl {
-#endif
     IDC_PASSWORD_CONFIRM = 269,
 };
-#ifndef __cplusplus
-typedef uint16_t NewPasswordControl;
-#endif
 
 // ScoreControl names the controls of the score dialog.
-#ifdef __cplusplus
 enum ScoreControl : uint16_t {
-#else
-enum ScoreControl {
-#endif
     IDC_SCORE_SWITCH = 198,
 };
-#ifndef __cplusplus
-typedef uint16_t ScoreControl;
-#endif
 
-#ifdef __cplusplus
 enum ControlId : uint16_t {
-#else
-enum ControlId {
-#endif
     // Controls shared by several dialogs with the same meaning; a dialog's
     // own controls are in its dialog_controls enum.
     IDOK = 1,
@@ -1544,18 +994,11 @@ enum ControlId {
     IDM_FILE_SAVE = 0x006F,
 
 };
-#ifndef __cplusplus
-typedef uint16_t ControlId;
-#endif
 
 /* Numeric cursor resources, named after the hcur globals they load into;
  * the others are named (SCANNERCUR, ...). */
 #undef IDC_HAND
-#ifdef __cplusplus
 enum CursorId : uint16_t {
-#else
-enum CursorId {
-#endif
     IDC_NO_WAY = 121,
     IDC_TRASH_CAN = 122,
     IDC_RESIZE_WE = 258,
@@ -1564,17 +1007,10 @@ enum CursorId {
     IDC_ARROW_HELP = 264,
     IDC_HAND = 265,
 };
-#ifndef __cplusplus
-typedef uint16_t CursorId;
-#endif
 
 /* Numeric bitmap resources; the others are named (CARGOBMP, ...). IDB_ ones
  * are loaded with LoadBitmap, IDDIB_ ones as DIBs through FindResource. */
-#ifdef __cplusplus
 enum BitmapId : uint16_t {
-#else
-enum BitmapId {
-#endif
     IDDIB_PLAYER_ICONS_TINY = 79,
     IDDIB_PLAYER_ICONS_SMALL = 80,
     IDDIB_THING_ICONS = 87,
@@ -1609,28 +1045,14 @@ enum BitmapId {
     IDDIB_HULL_ICONS_SMALL_5 = 561,
     IDDIB_NUM_DESIGNS_PLATE = 1079,
 };
-#ifndef __cplusplus
-typedef uint16_t BitmapId;
-#endif
 
-#ifdef __cplusplus
 enum AcceleratorId : uint16_t {
-#else
-enum AcceleratorId {
-#endif
     IDA_MAIN = 116,
     IDA_TITLE = 1080,
 };
-#ifndef __cplusplus
-typedef uint16_t AcceleratorId;
-#endif
 
 /* Tutorial game files, each stored as its own custom resource type. */
-#ifdef __cplusplus
 enum TutorialResourceId : uint16_t {
-#else
-enum TutorialResourceId {
-#endif
     RT_TUTORIAL_HST = 10000,
     IDR_TUTORIAL_HST = 10001,
     RT_TUTORIAL_M1 = 10002,
@@ -1638,15 +1060,8 @@ enum TutorialResourceId {
     RT_TUTORIAL_M2 = 10004,
     IDR_TUTORIAL_M2 = 10005,
 };
-#ifndef __cplusplus
-typedef uint16_t TutorialResourceId;
-#endif
 
-#ifdef __cplusplus
 enum VictoryCondition : uint16_t {
-#else
-enum VictoryCondition {
-#endif
     vcOwnsPercentPlanets = 0,     /* "Owns % of all planets." */
     vcAttainsTechLevel = 1,       /* "Attains Tech X in Y fields." (level) */
     vcAttainsTechFields = 2,      /* number of tech fields */
@@ -1658,15 +1073,8 @@ enum VictoryCondition {
     vcMeetsNumCriteria = 8,       /* "Winner must meet X of the above selected criteria." */
     vcMinYearsBeforeWin = 9       /* "At least X years must pass before a winner is declared." */
 };
-#ifndef __cplusplus
-typedef uint16_t VictoryCondition;
-#endif
 
-#ifdef __cplusplus
 enum MdOpenFlags : uint16_t {
-#else
-enum MdOpenFlags {
-#endif
     /* access + share combinations */
     mdRead = 0x0020,      /* OF_READ | OF_SHARE_DENY_WRITE */
     mdReadWrite = 0x0012, /* OF_READWRITE | OF_SHARE_EXCLUSIVE */
@@ -1677,15 +1085,8 @@ enum MdOpenFlags {
     /* Stars!-specific modifier */
     mdNoOpenErr = 0x4000,
 };
-#ifndef __cplusplus
-typedef uint16_t MdOpenFlags;
-#endif
 
-#ifdef __cplusplus
 enum TaskType : uint16_t {
-#else
-enum TaskType {
-#endif
     grTaskNone = 0,
     grTaskXfer = 1, /* transport / transfer cargo */
     grTaskColonize = 2,
@@ -1698,15 +1099,8 @@ enum TaskType {
     grTaskGive = 9,
     grTaskAny = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t TaskType;
-#endif
 
-#ifdef __cplusplus
 enum XferActionType : uint16_t {
-#else
-enum XferActionType {
-#endif
     iActionNone = 0, /* implicit / cleared */
 
     iActionLoadAll = 1,     /* "Load All Available"        */
@@ -1720,15 +1114,8 @@ enum XferActionType {
     iActionSetWaypoint = 9, /* "Set Waypoint to..."        */
     /* iActionLoadOptimal is encoded via iActionLoadDunnage + fuel path */
 };
-#ifndef __cplusplus
-typedef uint16_t XferActionType;
-#endif
 
-#ifdef __cplusplus
 enum MdTarget : uint16_t {
-#else
-enum MdTarget {
-#endif
     mdTargetNone = 0,              /* "None/Disengage" */
     mdTargetAny = 1,               /* "Any" */
     mdTargetStarbase = 2,          /* "Starbase" */
@@ -1738,15 +1125,8 @@ enum MdTarget {
     mdTargetFuelTransports = 6,    /* "Fuel Transports" */
     mdTargetFreighters = 7,        /* "Freighters" */
 };
-#ifndef __cplusplus
-typedef uint16_t MdTarget;
-#endif
 
-#ifdef __cplusplus
 enum BattleTactic : uint16_t {
-#else
-enum BattleTactic {
-#endif
     mdTacticDisengage = 0,             /* "Disengage" */
     mdTacticDisengageIfChallenged = 1, /* "Disengage if challenged" */
     mdTacticMinDamageToSelf = 2,       /* "Minimize damage to self" */
@@ -1754,15 +1134,8 @@ enum BattleTactic {
     mdTacticMaxDamageRatio = 4,        /* "Maximize damage ratio" */
     mdTacticMaxDamage = 5,             /* "Maximize damage" */
 };
-#ifndef __cplusplus
-typedef uint16_t BattleTactic;
-#endif
 
-#ifdef __cplusplus
 enum GrfWeapon : uint16_t {
-#else
-enum GrfWeapon {
-#endif
     bitFBeamLow = 0x0001,
     bitFBeamHigh = 0x0002,
     bitFTorp = 0x0004,
@@ -1770,45 +1143,24 @@ enum GrfWeapon {
     bitFNoHit = 0x0040, /* torpedo damage fully absorbed: the VCR draws no hit */
     bitFDeflected = 0x0080,
 };
-#ifndef __cplusplus
-typedef uint16_t GrfWeapon;
-#endif
 
 // AI part IDs select ordered component preference groups in vrgAiParts;
 // generated from data/ai/parts.yaml (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t AiPartPreference;
-#endif
 
 // A recipe in vrgTDAip, valued by its byte offset there; vrgTDIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t TurinDroneRecipe;
-#endif
 
 // A recipe in vrgRobAip, valued by its byte offset there; vrgRobIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t RobotoidRecipe;
-#endif
 
 // A recipe in vrgISAip, valued by its byte offset there; vrgISIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t ISRecipe;
-#endif
 
 // A recipe in vrgMacAip, valued by its byte offset there; vrgMacIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t MacintiRecipe;
-#endif
 
 // A recipe in vrgCyberAip, valued by its byte offset there; vrgCyberIshAip lists
 // them in order. Generated from data/ai/ (dataids.h).
-#ifndef __cplusplus
-typedef uint16_t CybertronRecipe;
-#endif
 
 // A starbase recipe in vrgSBAip, valued by its byte offset there; generated
 // from data/ai/starbases.yaml (dataids.h). aiSbRecipeAuto asks
@@ -1816,29 +1168,15 @@ typedef uint16_t CybertronRecipe;
 enum AiStarbaseRecipeSentinel {
     aiSbRecipeAuto = -1,
 };
-#ifndef __cplusplus
-typedef int16_t AiStarbaseRecipe;
-#endif
 
 // Squared packet attack distance thresholds for one or two mass drivers.
-#ifdef __cplusplus
 enum AiPacketDistanceSquared : uint16_t {
-#else
-enum AiPacketDistanceSquared {
-#endif
     aiPacketDistanceSquaredSingleMassDriver = 7056,
     aiPacketDistanceSquaredTwoMassDrivers = 50625,
 };
-#ifndef __cplusplus
-typedef uint16_t AiPacketDistanceSquared;
-#endif
 
 // AiRace identifies a computer player's race and the AI routine that plays it.
-#ifdef __cplusplus
 enum AiRace : uint16_t {
-#else
-enum AiRace {
-#endif
     idAiRobotoid = 0,
     idAiTurinDrone = 1,
     idAiAutomitron = 2,
@@ -1848,32 +1186,18 @@ enum AiRace {
     idAiRandom = 6, // replaced with a random race when the game is created
     idAiMaid = 7,   // housekeeping AI that runs a human player's empire
 };
-#ifndef __cplusplus
-typedef uint16_t AiRace;
-#endif
 
 // MineFieldType is a minefield's kind.
-#ifdef __cplusplus
 enum MineFieldType : uint16_t {
-#else
-enum MineFieldType {
-#endif
     mineStandard = 0,
     mineHeavy = 1,
     mineSpeedBump = 2,
     mineAll = 0xffff,
     mineNone = 0xffff,
 };
-#ifndef __cplusplus
-typedef uint16_t MineFieldType;
-#endif
 
 // ScanView is the scanner's view mode, the low nibble of grbitScan.
-#ifdef __cplusplus
 enum ScanView : uint16_t {
-#else
-enum ScanView {
-#endif
     scanViewNormal = 0,
     scanViewSurfaceMinerals = 1,
     scanViewMineralConc = 2,
@@ -1881,17 +1205,10 @@ enum ScanView {
     scanViewPopulation = 4,
     scanViewNoPlayerInfo = 5,
 };
-#ifndef __cplusplus
-typedef uint16_t ScanView;
-#endif
 
 // GrbitScan holds the scanner's overlay and filter toggles above the view mode
 // in grbitScan.
-#ifdef __cplusplus
 enum GrbitScan : uint16_t {
-#else
-enum GrbitScan {
-#endif
     grbitScanViewMask = 0x000f, // ScanView
     grbitScanAddWaypoints = 0x0010,
     grbitScanCoverage = 0x0020,
@@ -1905,17 +1222,10 @@ enum GrbitScan {
     grbitScanPlayerColors = 0x2000,
     grbitScanToggleMask = 0x3ff0,
 };
-#ifndef __cplusplus
-typedef uint16_t GrbitScan;
-#endif
 
 // ToolbarButton is a scanner toolbar button; the negative values are layout
 // entries of vrgTBBtn.
-#ifdef __cplusplus
 enum ToolbarButton : int16_t {
-#else
-enum ToolbarButton {
-#endif
     tbScannerRange = -3, // scanner range readout
     tbSpacer = -2,
     tbSeparator = -1,
@@ -1938,64 +1248,36 @@ enum ToolbarButton {
     tbZoomMenu = 16,
     tbShipCounts = 17,
 };
-#ifndef __cplusplus
-typedef int16_t ToolbarButton;
-#endif
 
 // UniverseSize is the galaxy size; its width is 400 * (size + 1) light years.
-#ifdef __cplusplus
 enum UniverseSize : uint16_t {
-#else
-enum UniverseSize {
-#endif
     sizeTiny = 0,
     sizeSmall = 1,
     sizeMedium = 2,
     sizeLarge = 3,
     sizeHuge = 4,
 };
-#ifndef __cplusplus
-typedef uint16_t UniverseSize;
-#endif
 
 // UniverseDensity is the galaxy's planet density.
-#ifdef __cplusplus
 enum UniverseDensity : uint16_t {
-#else
-enum UniverseDensity {
-#endif
     densitySparse = 0,
     densityNormal = 1,
     densityDense = 2,
     densityPacked = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t UniverseDensity;
-#endif
 
 // StartDistance is the distance between players' homeworlds.
-#ifdef __cplusplus
 enum StartDistance : uint16_t {
-#else
-enum StartDistance {
-#endif
     startDistClose = 0,
     startDistModerate = 1,
     startDistFarther = 2,
     startDistDistant = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t StartDistance;
-#endif
 
 // MsgGoto is a message's goto target: a planet id (>= 0), a fleet id, a
 // battle id | 0x4000, a part as 0xc000 | (hst bit << 8) | iItem, or one of
 // these.
-#ifdef __cplusplus
 enum MsgGoto : int16_t {
-#else
-enum MsgGoto {
-#endif
     gotoBattleReport = -7,
     gotoThing = -6, // the thing id is the message's first parameter
     gotoScore = -4,
@@ -2005,16 +1287,9 @@ enum MsgGoto {
     gotoBattle = 0x4000,
     gotoRelations = 0x4800,
 };
-#ifndef __cplusplus
-typedef int16_t MsgGoto;
-#endif
 
 // MdMsgObj is what the message window's goto button opens.
-#ifdef __cplusplus
 enum MdMsgObj : uint16_t {
-#else
-enum MdMsgObj {
-#endif
     mdMsgObjNone = 0,
     mdMsgObjPlanet = 1,
     mdMsgObjFleet = 2,
@@ -2027,17 +1302,10 @@ enum MdMsgObj {
     mdMsgObjThing = 10,
     mdMsgObjBattleReport = 11,
 };
-#ifndef __cplusplus
-typedef uint16_t MdMsgObj;
-#endif
 
 // TileBits selects the planet or fleet detail tiles DrawPlanShip draws. A bit
 // shared by both tile sets is named for both.
-#ifdef __cplusplus
 enum TileBits : uint16_t {
-#else
-enum TileBits {
-#endif
     tileMineralsOrCargo = 0x0001,
     tileShipList = 0x0004,
     tilePlanetStats = 0x0008,
@@ -2050,31 +1318,17 @@ enum TileBits {
     tileMinimized = 0x4000,
     tileErase = 0x8000,
 };
-#ifndef __cplusplus
-typedef uint16_t TileBits;
-#endif
 
 // ReportType is a report dialog's report.
-#ifdef __cplusplus
 enum ReportType : uint16_t {
-#else
-enum ReportType {
-#endif
     rptPlanets = 0,
     rptFleets = 1,
     rptEnemyFleets = 2,
     rptBattles = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t ReportType;
-#endif
 
 // PlanetReportColumn is a column of the planet report.
-#ifdef __cplusplus
 enum PlanetReportColumn : uint16_t {
-#else
-enum PlanetReportColumn {
-#endif
     colPlanetName = 0,
     colPlanetStarbase = 1,
     colPlanetPopulation = 2,
@@ -2092,16 +1346,9 @@ enum PlanetReportColumn {
     colPlanetRoutingDest = 14,
     colPlanetCount = 15,
 };
-#ifndef __cplusplus
-typedef uint16_t PlanetReportColumn;
-#endif
 
 // FleetReportColumn is a column of the fleet report.
-#ifdef __cplusplus
 enum FleetReportColumn : uint16_t {
-#else
-enum FleetReportColumn {
-#endif
     colFleetName = 0,
     colFleetId = 1,
     colFleetLocation = 2,
@@ -2116,16 +1363,9 @@ enum FleetReportColumn {
     colFleetMass = 11,
     colFleetCount = 12,
 };
-#ifndef __cplusplus
-typedef uint16_t FleetReportColumn;
-#endif
 
 // EnemyFleetReportColumn is a column of the other players' fleet report.
-#ifdef __cplusplus
 enum EnemyFleetReportColumn : uint16_t {
-#else
-enum EnemyFleetReportColumn {
-#endif
     colEnemyFleetName = 0,
     colEnemyFleetId = 1,
     colEnemyFleetLocation = 2,
@@ -2140,16 +1380,9 @@ enum EnemyFleetReportColumn {
     colEnemyFleetUtility = 11,
     colEnemyFleetCount = 12,
 };
-#ifndef __cplusplus
-typedef uint16_t EnemyFleetReportColumn;
-#endif
 
 // BattleReportColumn is a column of the battle report.
-#ifdef __cplusplus
 enum BattleReportColumn : uint16_t {
-#else
-enum BattleReportColumn {
-#endif
     colBattleLocation = 0,
     colBattleStarbase = 1,
     colBattleSides = 2,
@@ -2167,30 +1400,16 @@ enum BattleReportColumn {
     colBattleTheirsLeft = 14,
     colBattleCount = 15,
 };
-#ifndef __cplusplus
-typedef uint16_t BattleReportColumn;
-#endif
 
 // WindowLayout is the main window layout, chosen by screen size.
-#ifdef __cplusplus
 enum WindowLayout : uint16_t {
-#else
-enum WindowLayout {
-#endif
     layoutLarge = 0,
     layoutMedium = 1,
     layoutSmall = 2,
 };
-#ifndef __cplusplus
-typedef uint16_t WindowLayout;
-#endif
 
 // ScanZoom is the scanner zoom level.
-#ifdef __cplusplus
 enum ScanZoom : int16_t {
-#else
-enum ScanZoom {
-#endif
     zoom25 = -4,
     zoom38 = -3,
     zoom50 = -2,
@@ -2201,73 +1420,38 @@ enum ScanZoom {
     zoom200 = 3,
     zoom400 = 4,
 };
-#ifndef __cplusplus
-typedef int16_t ScanZoom;
-#endif
 
 // MdMark is the turn-file flag FMarkFile sets and FCheckFile tests.
-#ifdef __cplusplus
 enum MdMark : uint16_t {
-#else
-enum MdMark {
-#endif
     mdMarkInUse = 1,
     mdMarkDone = 2,
     mdMarkMulti = 4,
     mdMarkAi = 8, // the player is run by the housekeeping AI
 };
-#ifndef __cplusplus
-typedef uint16_t MdMark;
-#endif
 
 // HostTimer is the job of the host-mode timer.
-#ifdef __cplusplus
 enum HostTimer : uint16_t {
-#else
-enum HostTimer {
-#endif
     hostTimerAutoGen = 13,   // poll for turns to generate
     hostTimerWaitTurn = 14,  // wait for the next turn after submitting
     hostTimerTurnReady = 15, // flash the window when a new turn is ready
 };
-#ifndef __cplusplus
-typedef uint16_t HostTimer;
-#endif
 
 // ProgressStep is an UpdateProgressGauge argument that advances the gauge
 // instead of setting it.
-#ifdef __cplusplus
 enum ProgressStep : int16_t {
-#else
-enum ProgressStep {
-#endif
     progressStep1 = -927,
     progressStep4 = -926,
 };
-#ifndef __cplusplus
-typedef int16_t ProgressStep;
-#endif
 
 // AddItemMode is where AddItemToQueue puts an item in the production queue.
-#ifdef __cplusplus
 enum AddItemMode : uint16_t {
-#else
-enum AddItemMode {
-#endif
     addItemFront = 0,
     addItemEnd = 1,
     addItemReplace = 2, // clear the queue first
 };
-#ifndef __cplusplus
-typedef uint16_t AddItemMode;
-#endif
 
 // MainMenu is a top-level menu's position in the frame menu bar.
-#ifdef __cplusplus
 enum MainMenu : uint16_t {
-#else
-enum MainMenu {
-#endif
     menuFile = 0,
     menuView = 1,
     menuTurn = 2,
@@ -2275,36 +1459,22 @@ enum MainMenu {
     menuReport = 4,
     menuHelp = 5,
 };
-#ifndef __cplusplus
-typedef uint16_t MainMenu;
-#endif
 
 // TutorShipBuilderAction is the ship designer button FTutorialEnabledShipBuilder
 // checks against the tutorial's current step.
-#ifdef __cplusplus
 enum TutorShipBuilderAction : uint16_t {
-#else
-enum TutorShipBuilderAction {
-#endif
     tutsbDelete = 0,
     tutsbCopy = 1,
     tutsbEdit = 2,
     tutsbAccept = 3,     // OK on an edited design
     tutsbCancelEdit = 4, // Cancel on an edited design
 };
-#ifndef __cplusplus
-typedef uint16_t TutorShipBuilderAction;
-#endif
 
 // HelpContextId is a topic of stars!.hlp, as WinHelp's HELP_CONTEXT data
 // selects it: the [MAP] numbers of the help file's |CTXOMAP, named by topic
 // title. Many share their number with the dialog control they explain.
 // Generated by scripts/hlp-context-enum.py.
-#ifdef __cplusplus
 enum HelpContextId : uint16_t {
-#else
-enum HelpContextId {
-#endif
     idhStarsPlayersGuideContents = 1,                         // Stars! Player's Guide - Contents
     idhIntroductionAndPlayerSupport = 2,                      // Introduction and Player Support
     idhTheStarsScreen = 3,                                    // The Stars! Screen
@@ -2719,18 +1889,11 @@ enum HelpContextId {
     idhDisplayingPlayerColors = 14041,                        // Displaying Player Colors
     idhTroubleshootingWhatToDoWhenTheShipHitsTheFan = 52224,  // Troubleshooting: What to Do when the Ship Hits the Fan
 };
-#ifndef __cplusplus
-typedef uint16_t HelpContextId;
-#endif
 
 // HullCategory is a hull's role, as the fleet and battle reports group
 // ships: unarmed hulls are colony ships, freighters, miners and fuel
 // transports.
-#ifdef __cplusplus
 enum HullCategory : uint16_t {
-#else
-enum HullCategory {
-#endif
     hullCatColony = 0,
     hullCatFreighter = 1,
     hullCatScout = 2,   // scout, frigate, destroyer
@@ -2740,45 +1903,24 @@ enum HullCategory {
     hullCatMiner = 6,
     hullCatFuelTransport = 7,
 };
-#ifndef __cplusplus
-typedef uint16_t HullCategory;
-#endif
 
 // HullAttack is how a hull fights; battle code treats any nonzero value as armed.
-#ifdef __cplusplus
 enum HullAttack : uint16_t {
-#else
-enum HullAttack {
-#endif
     hullAttackNone = 0,
     hullAttackLight = 1, // scout, frigate, destroyer, privateer
     hullAttackHeavy = 2, // cruisers and up, rogue, galleon, Nubian, morphs
     hullAttackBomber = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t HullAttack;
-#endif
 
 // BeamAbility is a beam weapon's grfAbilities.
-#ifdef __cplusplus
 enum BeamAbility : uint16_t {
-#else
-enum BeamAbility {
-#endif
     beamSapper = 0x0001,  // damages shields only
     beamGatling = 0x0002, // hits every target in range
 };
-#ifndef __cplusplus
-typedef uint16_t BeamAbility;
-#endif
 
 // EngineAbility is a special engine's grfAbilities, which selects its
 // description and restrictions.
-#ifdef __cplusplus
 enum EngineAbility : uint16_t {
-#else
-enum EngineAbility {
-#endif
     engineAbilityNone = 0,
     engineSettlersDelight = 1,   // mini-colonizer hulls only
     engineRadiatingRamScoop = 2, // radiation kills colonists
@@ -2787,46 +1929,25 @@ enum EngineAbility {
     engineInterspace10 = 5,      // unavailable with No Ram Scoop Engines
     engineEnigmaPulsar = 6,      // origin unknown
 };
-#ifndef __cplusplus
-typedef uint16_t EngineAbility;
-#endif
 
 // ScannerAbility is a scanner's grfAbilities.
-#ifdef __cplusplus
 enum ScannerAbility : uint16_t {
-#else
-enum ScannerAbility {
-#endif
     scannerAbilityNone = 0,
     scannerPenetrating50 = 1,
     scannerPenetrating100 = 2,
     scannerPenetrating200 = 3,
     scannerSteals = 4, // Super Stealth mineral thieves
 };
-#ifndef __cplusplus
-typedef uint16_t ScannerAbility;
-#endif
 
 // PaneSplitter is the set of frame splitter bars a point is on.
-#ifdef __cplusplus
 enum PaneSplitter : uint16_t {
-#else
-enum PaneSplitter {
-#endif
     splitVertical = 0x0001, // between the left panes and the scanner
     splitMessages = 0x0002, // below the messages pane
     splitLower = 0x0004,    // the second horizontal bar
 };
-#ifndef __cplusplus
-typedef uint16_t PaneSplitter;
-#endif
 
 // RaceWizardPage is the race wizard page shown, in wizard order.
-#ifdef __cplusplus
 enum RaceWizardPage : int16_t {
-#else
-enum RaceWizardPage {
-#endif
     rwPageNone = -1,
     rwPageRace = 1,         // IDD_RACE_WIZARD_1
     rwPagePrimaryTrait = 2, // IDD_RACE_WIZARD_4
@@ -2835,50 +1956,29 @@ enum RaceWizardPage {
     rwPageEconomy = 5,      // IDD_RACE_WIZARD_3
     rwPageResearch = 6,     // IDD_RACE_WIZARD_6
 };
-#ifndef __cplusplus
-typedef int16_t RaceWizardPage;
-#endif
 
 // WizardButton is a wizard page's result: the index of the button pressed
 // in rgidRaceBtn.
-#ifdef __cplusplus
 enum WizardButton : uint16_t {
-#else
-enum WizardButton {
-#endif
     wizCancel = 0,
     wizBack = 1,
     wizNext = 2,
     wizFinish = 3,
     wizHelp = 4,
 };
-#ifndef __cplusplus
-typedef uint16_t WizardButton;
-#endif
 
 // PacketDecay is how many warps a mineral packet was flung over its
 // driver's rating, and so how fast it decays.
-#ifdef __cplusplus
 enum PacketDecay : uint16_t {
-#else
-enum PacketDecay {
-#endif
     decayNone = 0,
     decay10Pct = 1,
     decay25Pct = 2,
     decay50Pct = 3,
 };
-#ifndef __cplusplus
-typedef uint16_t PacketDecay;
-#endif
 
 // CompassDir is a direction on the map, counterclockwise from east; y
 // grows southward.
-#ifdef __cplusplus
 enum CompassDir : uint16_t {
-#else
-enum CompassDir {
-#endif
     dirEast = 0,
     dirNorthEast = 1,
     dirNorth = 2,
@@ -2888,8 +1988,5 @@ enum CompassDir {
     dirSouth = 6,
     dirSouthEast = 7,
 };
-#ifndef __cplusplus
-typedef uint16_t CompassDir;
-#endif
 
 #endif

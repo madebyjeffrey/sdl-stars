@@ -1,6 +1,7 @@
-/* Compile only on macOS. The C adapter preserves the narrow Win32 boundary. */
+/* Compile only on macOS. The C++ adapter preserves the narrow Win32 boundary. */
 #import <AppKit/AppKit.h>
 #include "filedialog_cocoa_bridge.h"
+#include "../../../src/platform/errors.h"
 #include <string.h>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>
@@ -65,7 +66,12 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         else [panel beginWithCompletionHandler:completion];
         BOOL fCanceled = NO;
         while (!fDone) {
-            if (!fCanceled && !pfnPump(lpv)) { fCanceled = YES; [panel cancel:nil]; }
+            if (!fCanceled) {
+                int fPump = 0;
+                try { fPump = pfnPump(lpv); }
+                catch (...) { StarsCapturePendingError(); }
+                if (!fPump) { fCanceled = YES; [panel cancel:nil]; }
+            }
             NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]
                                                     inMode:NSDefaultRunLoopMode dequeue:YES];
             if (event) [NSApp sendEvent:event];

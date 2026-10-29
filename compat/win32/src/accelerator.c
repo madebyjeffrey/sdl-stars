@@ -36,7 +36,7 @@ int WINAPI CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     if (!lp) return 0;
     if (!rgaccel) return lp->c;
     if (c <= 0) return 0;
-    c = min(c, lp->c);
+    c = StarsMin(c, lp->c);
     for (i = 0; i < c; i++) { rgaccel[i] = lp->rg[i]; rgaccel[i].fVirt &= ~0x80; }
     return c;
 }

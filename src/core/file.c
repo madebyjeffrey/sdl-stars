@@ -12,7 +12,7 @@ int16_t FReadUserString(const uint8_t *lpb, size_t cb, char *psz, size_t cchMax,
     psz[0] = 0;
     if (cb == 0 || cchMax > 1024) return FALSE;
     if (*lpb == 0) {
-        lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, min(cb - 1, cchMax));
+        lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, StarsMin(cb - 1, cchMax));
         if (!lpbEnd) return FALSE;
         cch = (size_t)(lpbEnd - lpb - 1);
         if (CchCopyUtf8(psz, cchMax, (const char *)lpb + 1, cch) < 0) return FALSE;
@@ -121,7 +121,7 @@ void ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb) {
         if (cb <= (size_t)iOff || pbIn[iOff] > cb - iOff - 1) goto invalid;
         memmove(pplr, pbIn, iOff);
         // Keep a corrupt count from overrunning rgmdRelation; skip the rest.
-        memmove(pplr->rgmdRelation, pbIn + iOff + 1, min(pbIn[iOff], sizeof(pplr->rgmdRelation)));
+        memmove(pplr->rgmdRelation, pbIn + iOff + 1, (((pbIn[iOff]) < (sizeof(pplr->rgmdRelation))) ? (pbIn[iOff]) : (sizeof(pplr->rgmdRelation))));
         iOff += pbIn[iOff] + 1;
     } else {
         iOff = offsetof(PLAYER, idPlanetHome);

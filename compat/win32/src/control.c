@@ -144,7 +144,7 @@ static void PaintControl(HWND hwnd) {
         if (lp->fPressed) OffsetRect(&rcText, 1, 1);
         format = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
     } else if (fCheck) {
-        d = min(13, min(rc.right, rc.bottom));
+        d = (((13) < (StarsMin(rc.right, rc.bottom))) ? (13) : (StarsMin(rc.right, rc.bottom)));
         y = (rc.bottom - d) / 2;
         x = lp->dwStyle & BS_LEFTTEXT ? rc.right - d : 0;
         SetRect(&rcBox, x, y, x + d, y + d);
@@ -193,7 +193,7 @@ static void PaintControl(HWND hwnd) {
         format = (format & ~DT_SINGLELINE) | DT_WORDBREAK;
         rcBox = rcText;
         DrawTextA(hdc, lp->pszTitle, -1, &rcBox, format | DT_CALCRECT);
-        rcText.top += max(0, ((rcText.bottom - rcText.top) - (rcBox.bottom - rcBox.top)) / 2);
+        rcText.top += (((0) > (((rcText.bottom - rcText.top) - (rcBox.bottom - rcBox.top)) / 2)) ? (0) : (((rcText.bottom - rcText.top) - (rcBox.bottom - rcBox.top)) / 2));
     }
     if (!fButton && type == SS_ICON) DrawIcon(hdc, 0, 0, LoadIconA(lp->lpclass->wc.hInstance, lp->pszTitle));
     else DrawTextA(hdc, lp->pszTitle, -1, &rcText, format);
@@ -206,8 +206,8 @@ static void PaintControl(HWND hwnd) {
             if (format & DT_SINGLELINE) OffsetRect(&rcBox, 0, (rcText.bottom - rcBox.bottom) / 2);
             InflateRect(&rcBox, 2, 2);
             /* Compact controls cannot fit the full vertical padding. */
-            rcBox.top = max(rc.top, rcBox.top);
-            rcBox.bottom = min(rc.bottom, rcBox.bottom);
+            rcBox.top = StarsMax(rc.top, rcBox.top);
+            rcBox.bottom = StarsMin(rc.bottom, rcBox.bottom);
         } else {
             InflateRect(&rcBox, -1, -1);
         }
@@ -252,7 +252,7 @@ static LRESULT CALLBACK ButtonProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                              type == BS_RADIOBUTTON || type == BS_AUTORADIOBUTTON ? DLGC_RADIOBUTTON : 0);
     case BM_GETCHECK: return CheckMax(type) ? lp->bstCheck : 0;
     case BM_SETCHECK:
-        lp->bstCheck = min((UINT)w, CheckMax(type));
+        lp->bstCheck = ((((UINT)w) < (CheckMax(type))) ? ((UINT)w) : (CheckMax(type)));
         if (type == BS_RADIOBUTTON || type == BS_AUTORADIOBUTTON) {
             if (lp->bstCheck) lp->dwStyle |= WS_TABSTOP; else lp->dwStyle &= ~WS_TABSTOP;
         }

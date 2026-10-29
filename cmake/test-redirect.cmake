@@ -1,4 +1,4 @@
-# Compile-time test substitution, using ordinary C symbols on every linker.
+# Compile-time test substitution, using ordinary function names on every linker.
 # A test links private copies of the libraries whose calls it redirects. The
 # product libraries are never modified, and identical hook sets share copies.
 function(stars_test_clone_library output original key)
@@ -20,7 +20,7 @@ function(stars_test_clone_library output original key)
         endforeach()
         foreach(source IN LISTS absolute_sources)
             if(NOT source MATCHES "^\\$<")
-                foreach(property COMPILE_OPTIONS COMPILE_DEFINITIONS INCLUDE_DIRECTORIES)
+                foreach(property LANGUAGE COMPILE_OPTIONS COMPILE_DEFINITIONS INCLUDE_DIRECTORIES)
                     get_source_file_property(value "${source}" DIRECTORY "${directory}" "${property}")
                     if(value)
                         set_source_files_properties("${source}" PROPERTIES "${property}" "${value}")

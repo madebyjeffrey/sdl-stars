@@ -746,7 +746,7 @@ int16_t FTrackRaceDlg2(HWND hwnd, POINT16 pt, int16_t kbd) {
     while (FTrackBtn(&btnt)) {
         if (irc == 15 || irc == 16) {
             iMin = vplr.pctIdealGrowth + dShift;
-            iMin = min(20, max(1, iMin));
+            iMin = (((20) < (StarsMax(1, iMin))) ? (20) : (StarsMax(1, iMin)));
             if (iMin != vplr.pctIdealGrowth) {
                 vplr.pctIdealGrowth = iMin;
                 DrawRace2(hwnd, btnt.hdc, 8);

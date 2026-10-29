@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_BATTLEUI_H
 #define STARS_DECOMPILED_BATTLEUI_H
 
+#include "win.h"
 #include <stdint.h>
 #include <windows.h>
 

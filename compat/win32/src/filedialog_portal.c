@@ -17,7 +17,7 @@ typedef struct PORTALRESPONSES {
     BOOL fOverflow;
 } PORTALRESPONSES;
 static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *lpMessage, void *lpv) {
-    PORTALRESPONSES *lp = lpv;
+    PORTALRESPONSES *lp = (PORTALRESPONSES *)lpv;
     (void)lpBus;
     if (!dbus_message_is_signal(lpMessage, PORTAL_REQUEST, "Response")) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     if (lp->cMessage < 16) lp->rgMessage[lp->cMessage++] = dbus_message_ref(lpMessage);

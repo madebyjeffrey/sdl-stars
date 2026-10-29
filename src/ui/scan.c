@@ -2039,12 +2039,12 @@ void SetScanScrollBars(HWND hwnd) {
     yMax = ((1000 <= dGalInv - 1000 - dy ? dGalInv - 0x3e8 - dy : 0x3e8) + 3) & 0xfffc;
     /* The old maxima are the last scroll positions, not content extents.
        Include the visible span while retaining those exact pan limits. */
-    si.nPage = (UINT)max(1, dx);
+    si.nPage = (UINT)StarsMax(1, dx);
     si.nMax = xMax + (int)si.nPage - 1;
     si.nPos = xScanTop;
     SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
     if (fInScrollSet) {
-        si.nPage = (UINT)max(1, dy);
+        si.nPage = (UINT)StarsMax(1, dy);
         si.nMax = yMax + (int)si.nPage - 1;
         si.nPos = yScanTop;
         SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
@@ -2486,8 +2486,8 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
     SetCapture(hwndScanner);
     ptNew = pt;
     while (FGetMouseMove(&ptNew)) {
-        ptNew.x = max(0, min(rc.right, ptNew.x));
-        ptNew.y = max(0, min(rc.bottom, ptNew.y));
+        ptNew.x = (((0) > (StarsMin(rc.right, ptNew.x))) ? (0) : (StarsMin(rc.right, ptNew.x)));
+        ptNew.y = (((0) > (StarsMin(rc.bottom, ptNew.y))) ? (0) : (StarsMin(rc.bottom, ptNew.y)));
         if (pt.x != ptNew.x || pt.y != ptNew.y) {
             if (fFirst && FNearAWayPoint(ptNew, FALSE))
                 goto DoNext;
@@ -2923,8 +2923,8 @@ int16_t FHandleMeasuringTape(SCAN *pscan, POINT16 pt) {
     ptNew = pt;
     LogicalToScan(&ptNew);
     while (FGetRMouseMove(&ptNew)) {
-        ptNew.x = max(0, min(rc.right, ptNew.x));
-        ptNew.y = max(0, min(rc.bottom, ptNew.y));
+        ptNew.x = (((0) > (StarsMin(rc.right, ptNew.x))) ? (0) : (StarsMin(rc.right, ptNew.x)));
+        ptNew.y = (((0) > (StarsMin(rc.bottom, ptNew.y))) ? (0) : (StarsMin(rc.bottom, ptNew.y)));
         ptLogical = ptNew;
         ScanToLogical(&ptLogical);
         grTypeIn = !(GetAsyncKeyState(VK_SHIFT) & 0xfffe) ? 79 : 143;

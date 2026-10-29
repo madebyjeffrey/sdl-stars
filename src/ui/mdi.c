@@ -2595,7 +2595,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dxPlanWant;
             }
-            vfs.xTop = max(vfs.xTop, 198 + GetSystemMetrics(SM_CXVSCROLL));
+            vfs.xTop = (((vfs.xTop) > (198 + GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + GetSystemMetrics(SM_CXVSCROLL)));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dyMsgWant <= dyMsgMin ? dyMsgMin : vfs.dyMsgWant;
@@ -2638,7 +2638,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dx2PlanWant;
             }
-            vfs.xTop = max(vfs.xTop, 198 + GetSystemMetrics(SM_CXVSCROLL));
+            vfs.xTop = (((vfs.xTop) > (198 + GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + GetSystemMetrics(SM_CXVSCROLL)));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dy2MsgWant <= dyMsgMin ? dyMsgMin : vfs.dy2MsgWant;
@@ -2710,7 +2710,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         }
         GetClientRect(hwnd, &rc);
-        dx = min(120, (rc.right - 48) / 5 - 12);
+        dx = (((120) < ((rc.right - 48) / 5 - 12)) ? (120) : ((rc.right - 48) / 5 - 12));
         dxGap = (rc.right - 5 * dx) / 6;
         xCur = dxGap;
         dy = rc.bottom <= 500 ? dyArial8 * 2 : (int16_t)(5 * dyArial8) / 2;

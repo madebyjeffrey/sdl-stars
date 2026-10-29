@@ -268,7 +268,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
                 prodLast = lpplProdGlob->rgprod[iDst];
                 if ((uint32_t)prodLast.iItem == prod.iItem && (uint32_t)prodLast.grobj == prod.grobj) {
                 RingItUp:
-                    lpplProdGlob->rgprod[iDst].cItem = min(1020, lpplProdGlob->rgprod[iDst].cItem + prod.cItem);
+                    lpplProdGlob->rgprod[iDst].cItem = StarsMin(1020, lpplProdGlob->rgprod[iDst].cItem + prod.cItem);
                     if (lpplProdGlob->rgprod[iDst].cItem > 1 && lpplProdGlob->rgprod[iDst].iItem == iobjAlchemy &&
                         lpplProdGlob->rgprod[iDst].grobj == grobjPlanet) {
                         lpplProdGlob->rgprod[iDst].cItem = 1;

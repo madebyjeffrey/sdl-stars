@@ -1,4 +1,5 @@
 #include "acutest.h"
+[[maybe_unused]] static char szTestLiteral1[] = "\xf0\x9f\x98\x80";
 
 #include "stars_test.h"
 
@@ -307,7 +308,7 @@ static void test_utf8_record_bounds(void) {
     rgb[1] = 0xff;
     TEST_CHECK(!FReadUserString(rgb, 4, sz, sizeof(sz), NULL));
     cOut = 63;
-    TEST_ASSERT(FCompressUserString("\xf0\x9f\x98\x80", (char *)rgb + 1, &cOut));
+    TEST_ASSERT(FCompressUserString(szTestLiteral1, (char *)rgb + 1, &cOut));
     rgb[0] = cOut;
     TEST_CHECK(!FReadUserString(rgb, cOut, sz, sizeof(sz), NULL));
     TEST_CHECK(FReadUserString(rgb, cOut + 1, sz, sizeof(sz), &cbRead));

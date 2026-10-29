@@ -313,7 +313,7 @@ static void PostCompatWheel(HWND hwnd, UINT msg, float dWheel, double *lpdRem, W
     d = (int)*lpdRem;
     *lpdRem -= d;
     while (d != 0) {
-        delta = max(INT16_MIN, min(INT16_MAX, d));
+        delta = (((INT16_MIN) > (StarsMin(INT16_MAX, d))) ? (INT16_MIN) : (StarsMin(INT16_MAX, d)));
         CompatPostInput(hwnd, msg, MAKEWPARAM(WMouseModifiers(buttons), (WORD)delta),
                         MAKELPARAM(ptCursor.x, ptCursor.y));
         d -= delta;
@@ -453,9 +453,9 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
                     if (hwnd->fZeroY) y = rc.bottom;
                 }
             }
-            if (!hwnd->fZeroY) y = max(0, y - CyCompatMenuBar(hwnd));
-            if (!hwnd->fZeroX && (hwnd->dwStyle & WS_VSCROLL)) x = max(0, x - GetSystemMetrics(SM_CXVSCROLL));
-            if (!hwnd->fZeroY && (hwnd->dwStyle & WS_HSCROLL)) y = max(0, y - GetSystemMetrics(SM_CYHSCROLL));
+            if (!hwnd->fZeroY) y = (((0) > (y - CyCompatMenuBar(hwnd))) ? (0) : (y - CyCompatMenuBar(hwnd)));
+            if (!hwnd->fZeroX && (hwnd->dwStyle & WS_VSCROLL)) x = (((0) > (x - GetSystemMetrics(SM_CXVSCROLL))) ? (0) : (x - GetSystemMetrics(SM_CXVSCROLL)));
+            if (!hwnd->fZeroY && (hwnd->dwStyle & WS_HSCROLL)) y = (((0) > (y - GetSystemMetrics(SM_CYHSCROLL))) ? (0) : (y - GetSystemMetrics(SM_CYHSCROLL)));
             if (IsIconic(hwnd)) x = y = 0;
             PostMessageA(hwnd, WM_SIZE, IsIconic(hwnd) ? SIZE_MINIMIZED :
                          IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(x, y));

@@ -5,11 +5,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "fileio.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Keep one native window and its completed frame across same-sized modal
  * wizard pages. Logical HWNDs and controls still have independent lifetimes.
  * End the sequence on every exit path; nested sequences are rejected without changing state.
@@ -77,8 +72,6 @@ BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz);
  */
 BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw);
 
-#ifdef __cplusplus
-}
-#endif
+
 
 #endif

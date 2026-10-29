@@ -9,13 +9,13 @@
 #include "internal.h"
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
-_Static_assert(TB_ADDBUTTONSA == WM_USER + 20, "toolbar message ABI");
-_Static_assert(TBN_DROPDOWN == (UINT)-710, "toolbar notification ABI");
-_Static_assert(sizeof(INITCOMMONCONTROLSEX) == 8, "common-control ABI");
-_Static_assert(sizeof(TBBUTTON) == (sizeof(void *) == 8 ? 32 : 20), "button ABI");
-_Static_assert(offsetof(TBBUTTON, dwData) == (sizeof(void *) == 8 ? 16 : 12), "button data ABI");
-_Static_assert(sizeof(NMHDR) == (sizeof(void *) == 8 ? 24 : 12), "notification ABI");
-_Static_assert(sizeof(NMTOOLBARA) == (sizeof(void *) == 8 ? 96 : 60), "toolbar notification ABI");
+static_assert(TB_ADDBUTTONSA == WM_USER + 20, "toolbar message ABI");
+static_assert(TBN_DROPDOWN == (UINT)-710, "toolbar notification ABI");
+static_assert(sizeof(INITCOMMONCONTROLSEX) == 8, "common-control ABI");
+static_assert(sizeof(TBBUTTON) == (sizeof(void *) == 8 ? 32 : 20), "button ABI");
+static_assert(offsetof(TBBUTTON, dwData) == (sizeof(void *) == 8 ? 16 : 12), "button data ABI");
+static_assert(sizeof(NMHDR) == (sizeof(void *) == 8 ? 24 : 12), "notification ABI");
+static_assert(sizeof(NMTOOLBARA) == (sizeof(void *) == 8 ? 96 : 60), "toolbar notification ABI");
 static int cCommand, idCommand, cDrop, idDrop;
 static RECT rcDrop;
 static BOOL fDestroy;

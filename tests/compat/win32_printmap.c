@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern "C" int16_t StarsTestReal_InitInstance(int16_t);
+int16_t StarsTestReal_InitInstance(int16_t);
 static BOOL fRunning, fPassed, fCancel;
 static int cLaunch, cAlert;
 static UINT_PTR idDriver, idDialog;

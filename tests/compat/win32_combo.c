@@ -57,7 +57,7 @@ static BOOL FPopupTextPainted(HWND hwndPopup, int cyItem) {
     BOOL fText = FALSE;
     if (!hdc) return FALSE;
     GetClientRect(hwndPopup, &rc); cr = GetPixel(hdc, 3, 3);
-    for (y = 3; y < min(cyItem, rc.bottom - 2) && !fText; y++)
+    for (y = 3; y < (((cyItem) < (rc.bottom - 2)) ? (cyItem) : (rc.bottom - 2)) && !fText; y++)
         for (x = 3; x < rc.right - 3; x++)
             if (GetPixel(hdc, x, y) != cr) { fText = TRUE; break; }
     ReleaseDC(hwndPopup, hdc);

@@ -16,9 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def enum_source():
-    # Temporary declaration selection while the main header still serves C fixtures.
-    text = (ROOT / "src/core/enums.h").read_text()
-    return re.sub(r"#ifdef __cplusplus\n(enum \w+ : \w+ \{)\n#else\nenum \w+ \{\n#endif", r"\1", text)
+    return (ROOT / "src/core/enums.h").read_text()
 
 
 ENUM_STORAGE = dict(re.findall(r"enum (\w+) : (\w+) \{", enum_source()))
@@ -107,7 +105,7 @@ int main(void) {
         binary = path / "witness"
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
-                       ["-std=gnu++20", "-x", "c++", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 
 

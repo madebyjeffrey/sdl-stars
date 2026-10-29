@@ -306,10 +306,10 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         SendMessageA(hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&mmi);
         if (!LpCompatWindow(hwnd)) return 0;
-        if (mmi.ptMinTrackSize.x > 0) lpwp->cx = max(lpwp->cx, mmi.ptMinTrackSize.x);
-        if (mmi.ptMinTrackSize.y > 0) lpwp->cy = max(lpwp->cy, mmi.ptMinTrackSize.y);
-        if (mmi.ptMaxTrackSize.x > 0) lpwp->cx = min(lpwp->cx, mmi.ptMaxTrackSize.x);
-        if (mmi.ptMaxTrackSize.y > 0) lpwp->cy = min(lpwp->cy, mmi.ptMaxTrackSize.y);
+        if (mmi.ptMinTrackSize.x > 0) lpwp->cx = StarsMax(lpwp->cx, mmi.ptMinTrackSize.x);
+        if (mmi.ptMinTrackSize.y > 0) lpwp->cy = StarsMax(lpwp->cy, mmi.ptMinTrackSize.y);
+        if (mmi.ptMaxTrackSize.x > 0) lpwp->cx = StarsMin(lpwp->cx, mmi.ptMaxTrackSize.x);
+        if (mmi.ptMaxTrackSize.y > 0) lpwp->cy = StarsMin(lpwp->cy, mmi.ptMaxTrackSize.y);
         return 0;
     }
     case WM_WINDOWPOSCHANGED: {

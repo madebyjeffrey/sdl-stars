@@ -232,7 +232,7 @@ int main(void) {
         source=Path(work)/'witness.cpp';binary=Path(work)/'witness'
         source.write_text(declarations+bodies+witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX','c++'))+
-                       ['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-sanitize-recover=all',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

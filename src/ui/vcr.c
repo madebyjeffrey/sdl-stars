@@ -1072,7 +1072,7 @@ void AnimateAttack(HDC hdc) {
                         goto LFinishUp;
                     }
                     hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpScreen);
-                    cFrame = max(abs(dx), abs(dy)) * (!(grfWeapon & bitFTorp) ? 4 : 8);
+                    cFrame = (((abs(dx)) > (abs(dy))) ? (abs(dx)) : (abs(dy))) * (!(grfWeapon & bitFTorp) ? 4 : 8);
                     ptBase = ptTorp;
                     dxFrame = ptTorp.x - ptDest.x;
                     dyFrame = ptTorp.y - ptDest.y;

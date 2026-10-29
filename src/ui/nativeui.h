@@ -1,6 +1,8 @@
 #ifndef STARS_DECOMPILED_NATIVEUI_H
 #define STARS_DECOMPILED_NATIVEUI_H
 
+#include <windows.h>
+#include "../platform/native.h"
 // The Windows interface's native port helpers. See docs/NATIVE-PORT.md.
 
 #include <stdint.h>

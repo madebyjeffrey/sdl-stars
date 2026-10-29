@@ -1,9 +1,6 @@
 #ifndef STARS_COMPAT_COMMCTRL_H
 #define STARS_COMPAT_COMMCTRL_H
 #include <windows.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 #define TOOLBARCLASSNAMEA "ToolbarWindow32"
 #define TOOLBARCLASSNAME TOOLBARCLASSNAMEA
 #define ICC_BAR_CLASSES 0x00000004
@@ -104,7 +101,5 @@ typedef struct tagNMTOOLBARA {
 } NMTOOLBARA, *LPNMTOOLBARA;
 typedef NMTOOLBARA NMTOOLBAR;
 BOOL WINAPI InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
-#ifdef __cplusplus
-}
-#endif
+
 #endif

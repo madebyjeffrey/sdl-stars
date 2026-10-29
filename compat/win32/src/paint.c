@@ -215,7 +215,7 @@ UINT WINAPI GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALET
     if (!lpobj || lpobj->iKind != objPalette) return 0;
     if (!rgpe) return lpobj->cEntries;
     if (iStart >= lpobj->cEntries) return 0;
-    cEntries = min(cEntries, lpobj->cEntries - iStart);
+    cEntries = StarsMin(cEntries, lpobj->cEntries - iStart);
     memcpy(rgpe, lpobj->rgpe + iStart, (size_t)cEntries * sizeof(*rgpe));
     return cEntries;
 }
@@ -278,7 +278,7 @@ int ICompatCanvasScale(HWND hwnd) {
     const char *pszDriver = SDL_GetCurrentVideoDriver();
 
     if (!lpRoot || !pszDriver || strcmp(pszDriver, "cocoa")) return 1;
-    if (hwnd != lpRoot && lpRoot->lpCanvas) return max(1, lpRoot->iCanvasScale);
+    if (hwnd != lpRoot && lpRoot->lpCanvas) return StarsMax(1, lpRoot->iCanvasScale);
     if (!SDL_GetWindowSize(lpRoot->lpWindow, &cx, &cy) || cx <= 0 || cy <= 0 ||
         !SDL_GetWindowSizeInPixels(lpRoot->lpWindow, &cxPixel, &cyPixel)) return 1;
     iScale = cxPixel / cx;
@@ -286,7 +286,7 @@ int ICompatCanvasScale(HWND hwnd) {
 }
 
 static int IDCScale(HDC lpdc) {
-    return lpdc->fMemory ? max(1, lpdc->iScale) : lpdc->hwnd ? max(1, lpdc->hwnd->iCanvasScale) : 1;
+    return lpdc->fMemory ? StarsMax(1, lpdc->iScale) : lpdc->hwnd ? StarsMax(1, lpdc->hwnd->iCanvasScale) : 1;
 }
 
 static void InvalidateCompatCanvasTree(HWND hwnd) {
@@ -306,7 +306,7 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale) {
 static BOOL FCanvas(HWND hwnd) {
     SDL_Surface *lpnew;
     SDL_Texture *lptex;
-    int dx, dy, cyMenu, iScale, iOld = max(1, hwnd->iCanvasScale);
+    int dx, dy, cyMenu, iScale, iOld = StarsMax(1, hwnd->iCanvasScale);
     float cxTexture, cyTexture;
     RECT rc;
     const char *pszMode;
@@ -317,7 +317,7 @@ static BOOL FCanvas(HWND hwnd) {
     if (dx > INT_MAX / iScale || dy > INT_MAX / iScale) return FALSE;
     dx *= iScale; dy *= iScale;
     cyMenu = CyCompatMenuBar(hwnd) * iScale;
-    dx = max(1, dx); dy = max(1, dy);
+    dx = StarsMax(1, dx); dy = StarsMax(1, dy);
     if (hwnd->lpCanvas && hwnd->iCanvasScale == iScale && hwnd->lpCanvas->w == dx && hwnd->lpCanvas->h == dy &&
         (hwnd->hwndParent || (SDL_GetTextureSize(hwnd->lpTexture, &cxTexture, &cyTexture) &&
          cxTexture == dx && cyTexture == dy + cyMenu)))
@@ -346,8 +346,8 @@ static BOOL FCanvas(HWND hwnd) {
     SDL_FillSurfaceRect(lpnew, NULL, SDL_MapSurfaceRGB(lpnew, 0, 0, 0));
     if (hwnd->lpCanvas) {
         SDL_Rect src, dst;
-        src = (SDL_Rect){0, 0, min(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
-                              min(hwnd->lpCanvas->h / iOld, dy / iScale) * iOld};
+        src = (SDL_Rect){0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
+                              StarsMin(hwnd->lpCanvas->h / iOld, dy / iScale) * iOld};
         dst = (SDL_Rect){0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
         SDL_BlitSurfaceScaled(hwnd->lpCanvas, &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
     }
@@ -379,10 +379,10 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
     GetClientRect(hwnd, &client);
     if (!hwnd->lpcombo && (hwnd->dwStyle & (WS_HSCROLL | WS_VSCROLL)) == (WS_HSCROLL | WS_VSCROLL)) {
         CompatGetSurfaceRect(hwnd, &rc);
-        left = max((int64_t)lprcClip->left, x + client.right);
-        top = max((int64_t)lprcClip->top, y + client.bottom);
-        right = min((int64_t)lprcClip->right, x + rc.right);
-        bottom = min((int64_t)lprcClip->bottom, y + rc.bottom);
+        left = ((((int64_t)lprcClip->left) > (x + client.right)) ? ((int64_t)lprcClip->left) : (x + client.right));
+        top = ((((int64_t)lprcClip->top) > (y + client.bottom)) ? ((int64_t)lprcClip->top) : (y + client.bottom));
+        right = ((((int64_t)lprcClip->right) < (x + rc.right)) ? ((int64_t)lprcClip->right) : (x + rc.right));
+        bottom = ((((int64_t)lprcClip->bottom) < (y + rc.bottom)) ? ((int64_t)lprcClip->bottom) : (y + rc.bottom));
         if (right > left && bottom > top) {
             dst = (SDL_Rect){(int)left * iScale, (int)top * iScale,
                              (int)(right - left) * iScale, (int)(bottom - top) * iScale};
@@ -399,8 +399,8 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         if (!lp->fVisible || lp->fDestroying) continue;
         clip = *lprcClip;
         if (!lp->fNcScroll) {
-            clip.right = (LONG)min((int64_t)clip.right, x + client.right);
-            clip.bottom = (LONG)min((int64_t)clip.bottom, y + client.bottom);
+            clip.right = (LONG)((((int64_t)clip.right) < (x + client.right)) ? ((int64_t)clip.right) : (x + client.right));
+            clip.bottom = (LONG)((((int64_t)clip.bottom) < (y + client.bottom)) ? ((int64_t)clip.bottom) : (y + client.bottom));
         }
         left = x + lp->rcChild.left; top = y + lp->rcChild.top;
         right = x + lp->rcChild.right; bottom = y + lp->rcChild.bottom;
@@ -726,10 +726,10 @@ static void SetUpdate(HWND hwnd, RECT *rgrc, size_t crc) {
     for (i = 0; i < crc; i++) {
         if (i == 0) hwnd->rcUpdate = rgrc[i];
         else {
-            hwnd->rcUpdate.left = min(hwnd->rcUpdate.left, rgrc[i].left);
-            hwnd->rcUpdate.top = min(hwnd->rcUpdate.top, rgrc[i].top);
-            hwnd->rcUpdate.right = max(hwnd->rcUpdate.right, rgrc[i].right);
-            hwnd->rcUpdate.bottom = max(hwnd->rcUpdate.bottom, rgrc[i].bottom);
+            hwnd->rcUpdate.left = StarsMin(hwnd->rcUpdate.left, rgrc[i].left);
+            hwnd->rcUpdate.top = StarsMin(hwnd->rcUpdate.top, rgrc[i].top);
+            hwnd->rcUpdate.right = StarsMax(hwnd->rcUpdate.right, rgrc[i].right);
+            hwnd->rcUpdate.bottom = StarsMax(hwnd->rcUpdate.bottom, rgrc[i].bottom);
         }
     }
     if (crc == 0) hwnd->fErase = FALSE;
@@ -872,7 +872,7 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
  * subtraction, and clip rectangles before narrowing, so extreme origins cannot
  * overflow a signed Win32 coordinate or address a pixel outside its surface. */
 static LONG LCoord(int64_t l) {
-    return (LONG)max((int64_t)INT_MIN, min((int64_t)INT_MAX, l));
+    return (LONG)((((int64_t)INT_MIN) > (((((int64_t)INT_MAX) < (l)) ? ((int64_t)INT_MAX) : (l)))) ? ((int64_t)INT_MIN) : (((((int64_t)INT_MAX) < (l)) ? ((int64_t)INT_MAX) : (l))));
 }
 
 static RECT RcDevice(HDC lpdc, RECT rc) {
@@ -924,7 +924,7 @@ HRGN WINAPI CreateRectRgn(int left, int top, int right, int bottom) {
         return NULL;
     lpobj = LpNewObject(objRegion, 0, FALSE);
     if (!lpobj) return NULL;
-    lpobj->rcRegion = (RECT){min(left, right), min(top, bottom), max(left, right), max(top, bottom)};
+    lpobj->rcRegion = (RECT){StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
     return (HRGN)lpobj;
 }
 
@@ -955,9 +955,9 @@ static void MergeRegion(RECT *rgrc, size_t *lpcrc) {
         for (i = 0; i < *lpcrc && !fAgain; i++) for (j = i + 1; j < *lpcrc; j++) {
             a = &rgrc[i]; b = &rgrc[j];
             if (a->left == b->left && a->right == b->right && (a->bottom == b->top || b->bottom == a->top)) {
-                a->top = min(a->top, b->top); a->bottom = max(a->bottom, b->bottom);
+                a->top = StarsMin(a->top, b->top); a->bottom = StarsMax(a->bottom, b->bottom);
             } else if (a->top == b->top && a->bottom == b->bottom && (a->right == b->left || b->right == a->left)) {
-                a->left = min(a->left, b->left); a->right = max(a->right, b->right);
+                a->left = StarsMin(a->left, b->left); a->right = StarsMax(a->right, b->right);
             } else continue;
             rgrc[j] = rgrc[--*lpcrc]; fAgain = TRUE; break;
         }
@@ -966,7 +966,7 @@ static void MergeRegion(RECT *rgrc, size_t *lpcrc) {
 
 static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fExclude) {
     HDC lpdc = LpDC(hdc);
-    RECT rcCut = {min(left, right), min(top, bottom), max(left, right), max(top, bottom)};
+    RECT rcCut = {StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
     RECT rcBase, rc, rcHit, *rgrc, *rgsrc;
     size_t i, crc = 0, crcSrc;
 
@@ -1256,14 +1256,14 @@ BOOL WINAPI BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     px = (int64_t)x - lpdc->ptOrg.x; py = (int64_t)y - lpdc->ptOrg.y;
     if (fSource) { pxSrc = (int64_t)xSrc - lpdcSrc->ptOrg.x; pySrc = (int64_t)ySrc - lpdcSrc->ptOrg.y; }
     fMonoDst = lpdc->fMemory && lpdc->lpbitmap->fMono;
-    x0 = max((int64_t)0, (int64_t)rcClip.left - px);
-    y0 = max((int64_t)0, (int64_t)rcClip.top - py);
-    x1 = min((int64_t)cx, (int64_t)rcClip.right - px);
-    y1 = min((int64_t)cy, (int64_t)rcClip.bottom - py);
+    x0 = ((((int64_t)0) > ((int64_t)rcClip.left - px)) ? ((int64_t)0) : ((int64_t)rcClip.left - px));
+    y0 = ((((int64_t)0) > ((int64_t)rcClip.top - py)) ? ((int64_t)0) : ((int64_t)rcClip.top - py));
+    x1 = ((((int64_t)cx) < ((int64_t)rcClip.right - px)) ? ((int64_t)cx) : ((int64_t)rcClip.right - px));
+    y1 = ((((int64_t)cy) < ((int64_t)rcClip.bottom - py)) ? ((int64_t)cy) : ((int64_t)rcClip.bottom - py));
     if (fSource) {
-        x0 = max(x0, -pxSrc); y0 = max(y0, -pySrc);
-        x1 = min(x1, (int64_t)lpsrc->w / IDCScale(lpdcSrc) - pxSrc);
-        y1 = min(y1, (int64_t)lpsrc->h / IDCScale(lpdcSrc) - pySrc);
+        x0 = StarsMax(x0, -pxSrc); y0 = StarsMax(y0, -pySrc);
+        x1 = (((x1) < ((int64_t)lpsrc->w / IDCScale(lpdcSrc) - pxSrc)) ? (x1) : ((int64_t)lpsrc->w / IDCScale(lpdcSrc) - pxSrc));
+        y1 = (((y1) < ((int64_t)lpsrc->h / IDCScale(lpdcSrc) - pySrc)) ? (y1) : ((int64_t)lpsrc->h / IDCScale(lpdcSrc) - pySrc));
     }
     if (x0 >= x1 || y0 >= y1)
         return TRUE;
@@ -1441,7 +1441,7 @@ static void Line(HDC lpdc, RECT rc, POINT pt0, POINT pt1, BOOL fExcludeEnd, uint
     double dx = xEnd - xStart, dy = yEnd - yStart, t0 = 0, t1 = 1;
     int64_t x, y, x1, y1, cx, cy, sx, sy, err, e2;
     uint64_t iPixel, iPhase = lpiPhase ? *lpiPhase : 0;
-    if (lpiPhase) *lpiPhase += (uint64_t)max(fabs(dx), fabs(dy)) + !fExcludeEnd;
+    if (lpiPhase) *lpiPhase += (uint64_t)(((fabs(dx)) > (fabs(dy))) ? (fabs(dx)) : (fabs(dy))) + !fExcludeEnd;
 
     if (rc.left >= rc.right || rc.top >= rc.bottom || lpdc->lppen->fNull ||
         !FLineBound(-dx, xStart - rc.left, &t0, &t1) ||
@@ -1456,7 +1456,7 @@ static void Line(HDC lpdc, RECT rc, POINT pt0, POINT pt1, BOOL fExcludeEnd, uint
     cx = llabs(x1 - x); cy = -llabs(y1 - y);
     sx = x < x1 ? 1 : -1; sy = y < y1 ? 1 : -1;
     err = cx + cy;
-    iPixel = iPhase + (uint64_t)max(fabs((double)x - xStart), fabs((double)y - yStart));
+    iPixel = iPhase + (uint64_t)(((fabs((double)x - xStart)) > (fabs((double)y - yStart))) ? (fabs((double)x - xStart)) : (fabs((double)y - yStart)));
     for (;;) {
         if (!(fExcludeEnd && x == xEnd && y == yEnd))
             PenPixel(lpdc, &rc, x, y, iPixel);
@@ -1488,7 +1488,7 @@ BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
     HDC lpdc = LpDC(hdc);
     RECT rc, rcFill;
     uint64_t iPhase = 0;
-    int l = min(left, right), r = max(left, right), t = min(top, bottom), b = max(top, bottom);
+    int l = StarsMin(left, right), r = StarsMax(left, right), t = StarsMin(top, bottom), b = StarsMax(top, bottom);
 
     if (!lpdc)
         return FALSE;
@@ -1522,8 +1522,8 @@ static void EllipsePoint(COMPATELLIPSE *lp, int64_t x, int64_t y) {
     size_t iRow;
     if (y < lp->rc.top || y >= lp->rc.bottom) return;
     iRow = (size_t)(y - lp->rc.top);
-    lp->rglLeft[iRow] = min(lp->rglLeft[iRow], x);
-    lp->rglRight[iRow] = max(lp->rglRight[iRow], x);
+    lp->rglLeft[iRow] = StarsMin(lp->rglLeft[iRow], x);
+    lp->rglRight[iRow] = StarsMax(lp->rglRight[iRow], x);
     if (x >= lp->rc.left && x < lp->rc.right)
         lp->rgb[iRow * lp->cx + (size_t)(x - lp->rc.left)] = 1;
 }
@@ -1566,8 +1566,8 @@ BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     BOOL fBorder;
 
     if (!lpdc || !FClip(lpdc, &rcClip)) return FALSE;
-    l = (int64_t)min(left, right) - lpdc->ptOrg.x; r = (int64_t)max(left, right) - lpdc->ptOrg.x;
-    t = (int64_t)min(top, bottom) - lpdc->ptOrg.y; b = (int64_t)max(top, bottom) - lpdc->ptOrg.y;
+    l = (int64_t)StarsMin(left, right) - lpdc->ptOrg.x; r = (int64_t)StarsMax(left, right) - lpdc->ptOrg.x;
+    t = (int64_t)StarsMin(top, bottom) - lpdc->ptOrg.y; b = (int64_t)StarsMax(top, bottom) - lpdc->ptOrg.y;
     if (l == r || t == b || (r - l == 1 && b - t == 1) || r <= rcClip.left || l >= rcClip.right || b <= rcClip.top || t >= rcClip.bottom) return TRUE;
     // Cap iteration work independently of the clipped mask size.
     if (r - l > 1048576 || b - t > 1048576) return FALSE;
@@ -1576,8 +1576,8 @@ BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     }
     if (lpdc->lppen->fNull && (r - l <= 2 || b - t <= 2))
         return FFillDevice(lpdc, (RECT){LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, TRUE);
-    el.rc = (RECT){(LONG)max(l, rcClip.left), (LONG)max(t, rcClip.top),
-                   (LONG)min(r, rcClip.right), (LONG)min(b, rcClip.bottom)};
+    el.rc = (RECT){(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
+                   (LONG)StarsMin(r, rcClip.right), (LONG)StarsMin(b, rcClip.bottom)};
     el.cx = el.rc.right - el.rc.left;
     if ((size_t)el.cx > SIZE_MAX / (size_t)(el.rc.bottom - el.rc.top)) return FALSE;
     cb = (size_t)el.cx * (size_t)(el.rc.bottom - el.rc.top);
@@ -1951,7 +1951,7 @@ int WINAPI GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
         return lpsurface->h;
     if (iStart >= (UINT)lpsurface->h)
         return 0;
-    cCopy = min(cLines, (UINT)lpsurface->h - iStart);
+    cCopy = (((cLines) < ((UINT)lpsurface->h - iStart)) ? (cLines) : ((UINT)lpsurface->h - iStart));
     for (i = 0; i < cCopy; i++) {
         rgb = (BYTE *)lpBits + (size_t)i * cbRow;
         memset(rgb, 0, cbRow);
@@ -2017,10 +2017,10 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     if (!lpsrc)
         return 0;
     px = (int64_t)xDest - lpdc->ptOrg.x; py = (int64_t)yDest - lpdc->ptOrg.y;
-    x0 = max((int64_t)0, (int64_t)rcClip.left - px);
-    y0 = max((int64_t)0, (int64_t)rcClip.top - py);
-    x1 = min((int64_t)cxDest, (int64_t)rcClip.right - px);
-    y1 = min((int64_t)cyDest, (int64_t)rcClip.bottom - py);
+    x0 = ((((int64_t)0) > ((int64_t)rcClip.left - px)) ? ((int64_t)0) : ((int64_t)rcClip.left - px));
+    y0 = ((((int64_t)0) > ((int64_t)rcClip.top - py)) ? ((int64_t)0) : ((int64_t)rcClip.top - py));
+    x1 = ((((int64_t)cxDest) < ((int64_t)rcClip.right - px)) ? ((int64_t)cxDest) : ((int64_t)rcClip.right - px));
+    y1 = ((((int64_t)cyDest) < ((int64_t)rcClip.bottom - py)) ? ((int64_t)cyDest) : ((int64_t)rcClip.bottom - py));
     for (iy = y0; iy < y1; iy++) {
         sy = yTop + iy * cySrc / cyDest;
         for (ix = x0; ix < x1; ix++) {

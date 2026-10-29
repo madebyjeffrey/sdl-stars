@@ -8,8 +8,8 @@ static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL f
     SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 0, 0, 0, 0, 0};
 
     /* Legacy report ranges describe the last row/column position. */
-    si.nPage = (UINT)max(1, cPage);
-    si.nMax = max(0, iMax) + (int)si.nPage - 1;
+    si.nPage = (UINT)StarsMax(1, cPage);
+    si.nMax = StarsMax(0, iMax) + (int)si.nPage - 1;
     si.nPos = iPos;
     SetScrollInfo(hwnd, SB_CTL, &si, fRedraw);
 }

@@ -7,9 +7,6 @@
 #include "fileio.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 #if defined(STARS_TEST_IMPL_MessageBoxA) && !defined(STARS_WIN_CALLS_H)
 decltype(MessageBoxA) STARS_TEST_IMPL_MessageBoxA;
 #endif
@@ -289,7 +286,5 @@ LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPAR
 void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick);
 HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd);
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif

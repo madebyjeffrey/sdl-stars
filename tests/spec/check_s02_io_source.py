@@ -9,7 +9,7 @@ import os
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import function
+from check_s02_source import ROOT, function
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
-#include <stdatomic.h>
+#include <atomic>
 #define TRUE 1
 #define FALSE 0
 #define WINAPI
@@ -33,7 +33,7 @@ typedef struct COMPATPROFILE {
     char *szRaw,*szParsed,*pszSection,*pszKey,*pszValue;
     struct COMPATPROFILE *lpNext;
 } COMPATPROFILE;
-static atomic_flag fProfileLock=ATOMIC_FLAG_INIT;
+static std::atomic_flag fProfileLock=ATOMIC_FLAG_INIT;
 static const char *const *fixture;
 static int loadOK=1;
 static void CchGetString(StringId id,char *out) {strcpy(out,id==1?"A":"k");}
@@ -110,8 +110,8 @@ int main(void) {
         source=path/"witness.cpp"
         binary=path/"witness"
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC","cc"))+
-                       ["-std=gnu++20", "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

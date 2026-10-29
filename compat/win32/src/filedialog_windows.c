@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 static int FPumpWindowsChooser(void *lpv) {
-    HWND hwndOwner = lpv;
+    HWND hwndOwner = (HWND)lpv;
     MSG msg;
 
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -23,7 +23,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     int i, iResult;
 
     if (cFilter != 0) {
-        rg = calloc((size_t)cFilter, sizeof(*rg));
+        rg = (WINDOWSFILEFILTER *)calloc((size_t)cFilter, sizeof(*rg));
         if (!rg) return -1;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = rgfilter[i].pszName;

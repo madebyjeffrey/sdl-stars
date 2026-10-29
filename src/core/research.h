@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_RESEARCH_H
 #define STARS_DECOMPILED_RESEARCH_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern uint16_t rggrbitBrParts[17];

@@ -3,7 +3,7 @@
 static uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
        are walked and written using their original two-byte boundaries. */
-    return ht == htBattle ? 2 : _Alignof(max_align_t);
+    return ht == htBattle ? 2 : alignof(max_align_t);
 }
 
 static uint16_t CbHbHeader(HeapType ht) {

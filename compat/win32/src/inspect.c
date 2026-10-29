@@ -299,9 +299,9 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         DeleteObject(hbr);
         return fPainted;
     case WM_SIZE:
-        GetClientRect(hwnd, &rc); cxList = max(0, rc.right / 2 - 12);
-        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, cxList, max(0, rc.bottom - 48), TRUE);
-        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, max(0, rc.right / 2 - 8), max(0, rc.bottom - 48), TRUE);
+        GetClientRect(hwnd, &rc); cxList = StarsMax(0, rc.right / 2 - 12);
+        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, cxList, StarsMax(0, rc.bottom - 48), TRUE);
+        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshInspector(hwnd);

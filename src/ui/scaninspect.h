@@ -1,6 +1,7 @@
 #ifndef STARS_SCAN_INSPECT_H
 #define STARS_SCAN_INSPECT_H
 
+#include "win.h"
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
