@@ -28,7 +28,7 @@ HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);
 int ICompatPrinterCaps(COMPATPRINT *lpprint, int index);
-void CompatDeletePrinter(COMPATPRINT *lpprint);
+void CompatDeletePrinter(COMPATPRINT *lpprint) noexcept;
 BOOL FCompatPrinterBusy(COMPATPRINT *lpprint);
 void CompatSetDialogError(DWORD dw);
 

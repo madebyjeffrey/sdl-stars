@@ -9,7 +9,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining GDI/menu/print/window/audio ownership and library-context lifetime integration are still in scope. |
+| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining GDI/menu/window/audio ownership and library-context lifetime integration are still in scope. |
 | B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
@@ -108,3 +108,17 @@ native `leaks` and sanitizer qualification. Results: 69/69 full macOS CTest,
 6/6 ASan/UBSan resource contracts, 5/5 native leak checks, and full native
 regression 519 matches / 25 accepted unused-storage warnings / zero differences,
 errors or skipped inputs. No file layouts or baseline fixtures changed.
+
+## Persistent printer batch
+
+A printer job owns its PDF surface and native file stream. The job destructor
+runs the existing abort policy: release PDF callbacks before closing the file,
+then remove only temporary output that the existing policy does not retain.
+Transfer into a DC is explicit; closing a completed file still reports its
+error before publication. Failed CUPS output retains its original recovery
+receipt rather than acquiring rollback behavior.
+
+This batch passes 69/69 macOS desktop tests, all 11 focused ownership/native
+leak checks and 6/6 ASan/UBSan resource contracts. Full native regression again
+matches 519 files with 25 accepted unused-storage warnings, zero differences,
+errors or skipped inputs. The host sources and file layouts are unchanged.

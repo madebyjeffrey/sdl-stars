@@ -4,28 +4,30 @@
 #include <cairo-pdf.h>
 #include <errno.h>
 #include <limits.h>
+#include <new>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 struct COMPATPRINT {
+    ~COMPATPRINT() noexcept;
     HWND hwndOwner;
     int cx, cy, cxPhysical, cyPhysical, cPages, cCopies, idPaper;
     BOOL fSpool, fActive, fKeep, fEscaping;
     char szPrinter[256], szTarget[PATH_MAX], szTemp[PATH_MAX], szTitle[4097];
-    NATIVEFILE *lpfile;
-    cairo_surface_t *lpPDF;
+    NATIVEOWNER<NATIVEFILE, ICloseNativeFile> lpfile;
+    NATIVEOWNER<cairo_surface_t, cairo_surface_destroy> lpPDF;
 };
 static int idPrintNext = 1;
 
 static void AbortPrint(COMPATPRINT *lp) {
-    if (lp->lpPDF) { cairo_surface_destroy(lp->lpPDF); lp->lpPDF = NULL; }
-    if (lp->lpfile) { ICloseNativeFile(lp->lpfile); lp->lpfile = NULL; }
+    lp->lpPDF.reset(); lp->lpfile.reset();
     if (*lp->szTemp && !lp->fKeep) IUnlinkNativePath(lp->szTemp);
     lp->szTemp[0] = 0; lp->fActive = FALSE;
 }
-void CompatDeletePrinter(COMPATPRINT *lp) { if (lp) { AbortPrint(lp); free(lp); } }
+COMPATPRINT::~COMPATPRINT() noexcept { AbortPrint(this); }
+void CompatDeletePrinter(COMPATPRINT *lp) noexcept { delete lp; }
 BOOL FCompatPrinterBusy(COMPATPRINT *lp) { return lp->fEscaping; }
 int ICompatPrinterCaps(COMPATPRINT *lp, int index) {
     switch (index) {
@@ -66,12 +68,13 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     LPCSTR pszOrientation = SDL_getenv("STARS_SDL_PRINT_ORIENTATION"), pszFile = SDL_getenv("STARS_SDL_PRINT_FILE");
     DWORD dwError = CDERR_INITIALIZATION;
     int temp;
+    NATIVEOWNER<COMPATPRINT, CompatDeletePrinter> lpprintOwner;
     CompatSetDialogError(0);
     if (!lppd || lppd->lStructSize != sizeof(*lppd)) { CompatSetDialogError(CDERR_STRUCTSIZE); return FALSE; }
     if (lppd->hDevMode || lppd->hDevNames) { CompatSetDialogError(PDERR_RETDEFFAILURE); return FALSE; }
     if (!(lppd->Flags & PD_RETURNDEFAULT) || (lppd->Flags & ~(PD_RETURNDEFAULT | PD_RETURNDC)) ||
         !SDL_IsMainThread() || (lppd->hwndOwner && !IsWindow(lppd->hwndOwner))) { SetLastError(ERROR_NOT_SUPPORTED); goto fail; }
-    lp = (COMPATPRINT *)(calloc(1, sizeof(*lp))); if (!lp) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
+    lpprintOwner.reset(new (std::nothrow) COMPATPRINT{}); lp = lpprintOwner.get(); if (!lp) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
     lp->hwndOwner = lppd->hwndOwner ? HwndCompatRoot(lppd->hwndOwner) : GetActiveWindow();
     lp->cCopies = 1; lp->idPaper = DMPAPER_LETTER; lp->cxPhysical = 2550; lp->cyPhysical = 3300;
     if (pszPaper && *pszPaper && SDL_strcasecmp(pszPaper, "letter") != 0) {
@@ -107,18 +110,18 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     if (lppd->Flags & PD_RETURNDC) {
         hdc = HdcCompatPrinter(lp, lp->cx, lp->cy);
         if (!hdc) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
-        lp = NULL;
+        lpprintOwner.release(); lp = NULL;
     }
     lppd->hDevMode = hMode; lppd->hDevNames = hNames; lppd->nCopies = 1;
     if (lppd->Flags & PD_RETURNDC) lppd->hDC = hdc;
-    free(lp); return TRUE;
+    return TRUE;
 fail:
-    if (hdc) DeleteDC(hdc); else CompatDeletePrinter(lp);
+    if (hdc) DeleteDC(hdc);
     GlobalFree(hMode); GlobalFree(hNames); CompatSetDialogError(dwError); return FALSE;
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
     COMPATPRINT *lp = (COMPATPRINT *)(lpv);
-    return CWriteNative(rgb, 1, cb, lp->lpfile) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
+    return CWriteNative(rgb, 1, cb, lp->lpfile.get()) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
@@ -140,12 +143,12 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= (int)sizeof(lp->szTemp)) {
         lp->szTemp[0] = 0; SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR;
     }
-    lp->lpfile = PfNativeCreateTemp(lp->szTemp);
+    lp->lpfile.reset(PfNativeCreateTemp(lp->szTemp));
     if (!lp->lpfile) { lp->szTemp[0] = 0; SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
-    lp->lpPDF = cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300);
-    if (cairo_surface_status(lp->lpPDF) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
-    cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_TITLE, lp->szTitle);
-    cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_CREATOR, "Stars SDL3 compatibility printer");
+    lp->lpPDF.reset(cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300));
+    if (cairo_surface_status(lp->lpPDF.get()) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
+    cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_TITLE, lp->szTitle);
+    cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_CREATOR, "Stars SDL3 compatibility printer");
     lp->cPages = 0; lp->fActive = TRUE;
     if (idPrintNext == INT_MAX) idPrintNext = 1;
     return idPrintNext++;
@@ -166,11 +169,11 @@ static BOOL FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {
             return FALSE;
         }
         cairo_surface_mark_dirty(lpImage);
-        NATIVEOWNER<cairo_t, cairo_destroy> lpcontextOwner(cairo_create(lp->lpPDF));
+        NATIVEOWNER<cairo_t, cairo_destroy> lpcontextOwner(cairo_create(lp->lpPDF.get()));
         lpcr = lpcontextOwner.get();
         cairo_translate(lpcr, 18, 18); cairo_scale(lpcr, 72.0 / 300, 72.0 / 300);
         cairo_set_source_surface(lpcr, lpImage, 0, 0); cairo_paint(lpcr); cairo_show_page(lpcr);
-        fOk = cairo_status(lpcr) == CAIRO_STATUS_SUCCESS && cairo_surface_status(lp->lpPDF) == CAIRO_STATUS_SUCCESS;
+        fOk = cairo_status(lpcr) == CAIRO_STATUS_SUCCESS && cairo_surface_status(lp->lpPDF.get()) == CAIRO_STATUS_SUCCESS;
     }
     if (fOk) {
         lp->cPages++;
@@ -242,11 +245,11 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     if ((lp->cPages == 0 || FPrintMarked(lpSurface)) && !FPrintPage(lp, lpSurface)) {
         AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR;
     }
-    cairo_surface_finish(lp->lpPDF); fOk = cairo_surface_status(lp->lpPDF) == CAIRO_STATUS_SUCCESS;
-    cairo_surface_destroy(lp->lpPDF); lp->lpPDF = NULL;
-    if (IFlushNativeFile(lp->lpfile) != 0 || ISyncNativeFile(lp->lpfile) != 0) fOk = FALSE;
-    if (ICloseNativeFile(lp->lpfile) != 0) fOk = FALSE;
-    lp->lpfile = NULL; lp->fActive = FALSE;
+    cairo_surface_finish(lp->lpPDF.get()); fOk = cairo_surface_status(lp->lpPDF.get()) == CAIRO_STATUS_SUCCESS;
+    lp->lpPDF.reset();
+    if (IFlushNativeFile(lp->lpfile.get()) != 0 || ISyncNativeFile(lp->lpfile.get()) != 0) fOk = FALSE;
+    if (ICloseNativeFile(lp->lpfile.release()) != 0) fOk = FALSE;
+    lp->fActive = FALSE;
     if (!fOk) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
     if (lp->fSpool) {
         if (!FSubmitPrint(lp)) {
