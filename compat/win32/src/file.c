@@ -1,4 +1,4 @@
-#include <atomic>
+#include "locking.h"
 /* Legacy HFILE adapters use owned C++ file tokens, never arbitrary integer fds. */
 #include "internal.h"
 #include <errno.h>
@@ -19,12 +19,8 @@ typedef struct COMPATFILE {
 } COMPATFILE;
 
 static COMPATFILE *lpFiles;
-static std::atomic_flag fFileLock = ATOMIC_FLAG_INIT;
+static NATIVEFLAGLOCK fFileLock;
 
-static void LockFiles(void) {
-    while (std::atomic_flag_test_and_set_explicit(&fFileLock, std::memory_order_acquire)) {}
-}
-static void UnlockFiles(void) { std::atomic_flag_clear_explicit(&fFileLock, std::memory_order_release); }
 static COMPATFILE *LpFile(HFILE hf) {
     COMPATFILE *lp;
     for (lp = lpFiles; lp; lp = lp->lpNext) if (lp->hf == hf) return lp;
@@ -54,6 +50,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     HFILE hf = HFILE_ERROR;
     DWORD dwError = NO_ERROR;
     uint64_t dev, ino;
+    std::unique_lock lockFiles(fFileLock, std::defer_lock);
 
     if (!lpof) { SetLastError(ERROR_INVALID_PARAMETER); return HFILE_ERROR; }
     if (flags & OF_REOPEN) pszFile = lpof->szPathName;
@@ -86,7 +83,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (flags & OF_PARSE) return 0;
     grAccess = flags & OF_CREATE ? 3 : (flags & 3) == OF_READ ? 1 : (flags & 3) == OF_WRITE ? 2 : 3;
     grShare = share == OF_SHARE_EXCLUSIVE ? 0 : share == OF_SHARE_DENY_WRITE ? 1 : share == OF_SHARE_DENY_READ ? 2 : 3;
-    LockFiles();
+    lockFiles.lock();
     if (flags & OF_DELETE) {
         if (IGetNativeFileInfo(szPath, &st, TRUE) == 0) {
             if (!FNativeFileIdentity(NULL, szPath, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
@@ -119,7 +116,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
 LUnlock:
     if (pf) ICloseNativeFile(pf);
     free(lpNew);
-    UnlockFiles();
+    lockFiles.unlock();
 LReturn:
     lpof->nErrCode = (WORD)dwError;
     if (dwError != NO_ERROR) SetLastError(dwError);
@@ -131,7 +128,7 @@ HFILE WINAPI _lclose(HFILE hf) {
     HFILE ret = HFILE_ERROR;
     BOOL fFound = FALSE;
 
-    LockFiles();
+    std::unique_lock lockFiles(fFileLock);
     for (lplp = &lpFiles; *lplp; lplp = &(*lplp)->lpNext) {
         lp = *lplp;
         if (lp->hf != hf) continue;
@@ -142,7 +139,7 @@ HFILE WINAPI _lclose(HFILE hf) {
         free(lp); break;
     }
     if (!fFound) SetLastError(ERROR_INVALID_HANDLE);
-    UnlockFiles();
+    lockFiles.unlock();
     return ret;
 }
 
@@ -150,7 +147,7 @@ LONG WINAPI _llseek(HFILE hf, LONG offset, int origin) {
     COMPATFILE *lp;
     int64_t pos = -1;
 
-    LockFiles(); lp = LpFile(hf);
+    std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
         if (origin < 0 || origin > 2) SetLastError(ERROR_INVALID_PARAMETER);
         else {
@@ -158,7 +155,7 @@ LONG WINAPI _llseek(HFILE hf, LONG offset, int origin) {
             if (pos < 0) SetLastError(DwFileError());
         }
     }
-    UnlockFiles();
+    lockFiles.unlock();
     return (LONG)pos;
 }
 
@@ -166,7 +163,7 @@ UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbRead = -1;
 
-    LockFiles(); lp = LpFile(hf);
+    std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
         if (!(lp->grAccess & 1)) SetLastError(ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
@@ -175,7 +172,7 @@ UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
             if (cbRead < 0) SetLastError(DwFileError());
         }
     }
-    UnlockFiles();
+    lockFiles.unlock();
     return (UINT)cbRead;
 }
 
@@ -184,7 +181,7 @@ UINT WINAPI _lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     ssize_t cbWrite = -1;
     int64_t pos;
 
-    LockFiles(); lp = LpFile(hf);
+    std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
         if (!(lp->grAccess & 2)) SetLastError(ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
@@ -197,7 +194,7 @@ UINT WINAPI _lwrite(HFILE hf, LPCCH rgb, UINT cb) {
             if (cbWrite < 0) SetLastError(DwFileError());
         }
     }
-    UnlockFiles();
+    lockFiles.unlock();
     return (UINT)cbWrite;
 }
 
@@ -207,7 +204,7 @@ DWORD WINAPI GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     DWORD dw = INVALID_FILE_SIZE;
     INT_PTR id = (INT_PTR)h;
 
-    LockFiles();
+    std::unique_lock lockFiles(fFileLock);
     lp = id >= 0 && id <= INT_MAX ? LpFile((HFILE)id) : NULL;
     if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
         dw = (DWORD)(uint64_t)cb;
@@ -215,16 +212,16 @@ DWORD WINAPI GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
         SetLastError(NO_ERROR);
     } else if (lp) SetLastError(DwFileError());
     else SetLastError(ERROR_INVALID_HANDLE);
-    UnlockFiles();
+    lockFiles.unlock();
     return dw;
 }
 
 void CompatShutdownFiles(void) {
     COMPATFILE *lp;
-    LockFiles();
+    std::unique_lock lockFiles(fFileLock);
     while (lpFiles) {
         lp = lpFiles; lpFiles = lp->lpNext;
         ICloseNativeFile(lp->pf); free(lp);
     }
-    UnlockFiles();
+    lockFiles.unlock();
 }

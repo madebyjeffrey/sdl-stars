@@ -1,4 +1,4 @@
-#include <atomic>
+#include "locking.h"
 /* Fixed pointers and movable heap handles stay distinct from immutable resources. */
 #include "internal.h"
 #include <stdlib.h>
@@ -14,20 +14,12 @@ typedef struct COMPATMEMORY {
 } COMPATMEMORY;
 
 static COMPATMEMORY *lpMemory;
-static std::atomic_flag fMemoryLock = ATOMIC_FLAG_INIT;
+static NATIVEFLAGLOCK fMemoryLock;
 static UINT_PTR idMemory = 1;
 static thread_local DWORD dwError;
 
 DWORD WINAPI GetLastError(void) { return dwError; }
 void WINAPI SetLastError(DWORD dw) { dwError = dw; }
-
-static void LockMemory(void) {
-    while (std::atomic_flag_test_and_set_explicit(&fMemoryLock, std::memory_order_acquire)) {}
-}
-
-static void UnlockMemory(void) {
-    std::atomic_flag_clear_explicit(&fMemoryLock, std::memory_order_release);
-}
 
 static COMPATMEMORY *LpMemory(HANDLE h) {
     COMPATMEMORY *lp;
@@ -59,12 +51,12 @@ HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
             return NULL;
         }
     }
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     // Movable handles are tagged IDs, never pointers into an allocation header.
     lp->h = lp->fMoveable ? (HANDLE)(idMemory++ * 16 + 3) : (HANDLE)lp->rgb;
     lp->lpNext = lpMemory;
     lpMemory = lp;
-    UnlockMemory();
+    lockMemory.unlock();
     return lp->h;
 }
 
@@ -73,17 +65,17 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL h) {
 
     if (!h)
         return NULL;
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     for (lplp = &lpMemory; *lplp; lplp = &(*lplp)->lpNext) {
         lp = *lplp;
         if (lp->h == h) {
             *lplp = lp->lpNext;
             free(lp->rgb); free(lp);
-            UnlockMemory();
+            lockMemory.unlock();
             return NULL;
         }
     }
-    UnlockMemory(); SetLastError(ERROR_INVALID_HANDLE);
+    lockMemory.unlock(); SetLastError(ERROR_INVALID_HANDLE);
     return h;
 }
 
@@ -91,7 +83,7 @@ LPVOID WINAPI GlobalLock(HGLOBAL h) {
     COMPATMEMORY *lp;
     LPVOID lpv = NULL;
 
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     lp = LpMemory(h);
     if (lp && lp->rgb) {
         if (lp->fMoveable && lp->cLocks < GMEM_LOCKCOUNT)
@@ -100,7 +92,7 @@ LPVOID WINAPI GlobalLock(HGLOBAL h) {
     }
     if (lp && !lp->rgb)
         SetLastError(ERROR_DISCARDED);
-    UnlockMemory();
+    lockMemory.unlock();
     return lpv;
 }
 
@@ -108,7 +100,7 @@ BOOL WINAPI GlobalUnlock(HGLOBAL h) {
     COMPATMEMORY *lp;
     BOOL fRet = FALSE;
 
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     lp = LpMemory(h);
     if (lp) {
         if (!lp->fMoveable) {
@@ -122,7 +114,7 @@ BOOL WINAPI GlobalUnlock(HGLOBAL h) {
             SetLastError(ERROR_NOT_LOCKED);
         }
     }
-    UnlockMemory();
+    lockMemory.unlock();
     return fRet;
 }
 
@@ -130,9 +122,9 @@ SIZE_T WINAPI GlobalSize(HGLOBAL h) {
     COMPATMEMORY *lp;
     size_t cb = 0;
 
-    LockMemory(); lp = LpMemory(h);
+    std::unique_lock lockMemory(fMemoryLock); lp = LpMemory(h);
     if (lp) cb = lp->cb;
-    UnlockMemory();
+    lockMemory.unlock();
     return cb;
 }
 
@@ -140,9 +132,9 @@ UINT WINAPI GlobalFlags(HGLOBAL h) {
     COMPATMEMORY *lp;
     UINT flags = GMEM_INVALID_HANDLE;
 
-    LockMemory(); lp = LpMemory(h);
+    std::unique_lock lockMemory(fMemoryLock); lp = LpMemory(h);
     if (lp) flags = lp->cLocks | (lp->rgb ? 0 : GMEM_DISCARDED);
-    UnlockMemory();
+    lockMemory.unlock();
     return flags;
 }
 
@@ -150,10 +142,10 @@ HGLOBAL WINAPI GlobalHandle(LPCVOID lpv) {
     COMPATMEMORY *lp;
     HANDLE h = NULL;
 
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     for (lp = lpMemory; lp; lp = lp->lpNext)
         if ((lpv && lp->rgb == lpv) || lp->h == lpv) { h = lp->h; break; }
-    UnlockMemory();
+    lockMemory.unlock();
     if (!h) SetLastError(ERROR_INVALID_HANDLE);
     return h;
 }
@@ -163,7 +155,7 @@ HGLOBAL WINAPI GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     BYTE *rgb;
     HANDLE hRet = NULL;
 
-    LockMemory(); lp = LpMemory(h);
+    std::unique_lock lockMemory(fMemoryLock); lp = LpMemory(h);
     if (!lp) goto LReturn;
     if (flags & ~(GMEM_MODIFY | GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DISCARDABLE | GMEM_NOCOMPACT | GMEM_NODISCARD | GMEM_SHARE)) {
         SetLastError(ERROR_INVALID_PARAMETER); goto LReturn;
@@ -194,7 +186,7 @@ HGLOBAL WINAPI GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     if (!lp->fMoveable) lp->h = rgb;
     hRet = lp->h;
 LReturn:
-    UnlockMemory();
+    lockMemory.unlock();
     return hRet;
 }
 
@@ -210,10 +202,10 @@ HLOCAL WINAPI LocalHandle(LPCVOID lpv) { return GlobalHandle(lpv); }
 void CompatShutdownMemory(void) {
     COMPATMEMORY *lp;
 
-    LockMemory();
+    std::unique_lock lockMemory(fMemoryLock);
     while (lpMemory) {
         lp = lpMemory; lpMemory = lp->lpNext;
         free(lp->rgb); free(lp);
     }
-    UnlockMemory();
+    lockMemory.unlock();
 }

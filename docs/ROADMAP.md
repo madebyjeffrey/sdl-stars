@@ -5,6 +5,11 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+B02 now scopes file/memory registry locks with the existing acquire/release spin
+policy. A native-operation fault test reproduces the previous retry deadlock;
+scoped unlocking, nested dispatch and primary-failure cleanup tests pass.
+Modal and reentrant control lifetime guards remain in progress.
+
 ## C++ migration
 
 Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented

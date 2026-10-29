@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `_lread` and the other wrapper registry operations release their locks during
+  C++ exception unwinding. Manual release could leave the file registry locked
+  and deadlock a retry. Fault injection reproduces the old hang; the scoped-lock
+  implementation retries successfully. File bytes and gameplay are unchanged.
+
 - The SDL platform environment helper preserves UTF-8 Windows lookup without a
   `getenv` macro. That macro rewrote C++ standard-library declarations and
   broke Windows builds after ownership headers included `<cstdlib>`.
