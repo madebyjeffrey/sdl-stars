@@ -144,7 +144,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     pszDir = getenv("LOCALAPPDATA");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 8;
-        sz = malloc(cb);
+        sz = (char *)malloc(cb);
         if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else sz = strdup(pszFile);
     (void)pszHome;

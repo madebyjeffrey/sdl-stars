@@ -420,7 +420,7 @@ def Generate(outdir):
     lines = []
     for name, tries in prefs:
         for ibit, iItem, cItem, part in tries:
-            lines.append("    /* {} */ {{.ibit = {}, .iItem = {}, .cItem = {}}},".format(part, ibit, iItem, cItem))
+            lines.append("    /* {} */ {{.ibit = {}, .iItem = {}, .cItem = {}, .fRandom = 0}},".format(part, ibit, iItem, cItem))
     body.append("uint8_t {}[{}] = {{{}}};\n".format(PREFERENCES["counts"], len(prefs), ", ".join(str(len(t)) for _, t in prefs)))
     body.append("AIPART {}[{}] = {{\n{}\n}};\n".format(PREFERENCES["array"], max(len(lines), PREFERENCES["size"]), "\n".join(lines)))
     rgaip = {name for name, _ in prefs}

@@ -131,7 +131,8 @@ and final declaration cleanup. Milestone B remains outside this PR.
 
 ### Implementation evidence
 
-Ticket #63 tracks the single PR. All A01–A13 code changes are implemented.
+Ticket #63 tracks [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64),
+which is ready for review. All A01–A13 code changes are implemented.
 Local qualification includes C++20 SDL Debug/Release and SDL-free host builds,
 85 independently compiled public headers in both standard-library include orders,
 56 generated catalog arrays (112,780 bytes) matched to pre-conversion hashes,

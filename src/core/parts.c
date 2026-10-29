@@ -30,7 +30,7 @@ int16_t FLookupPart(PART *ppart) {
     RaceAttribute raMajor;
     HS            hs;
 
-    raMajor = static_cast<RaceAttribute>(idPlayer == iplrNone ? raNone : GetRaceStat(&rgplr[idPlayer], rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(idPlayer == iplrNone ? static_cast<int>(raNone) : GetRaceStat(&rgplr[idPlayer], rsMajorAdv));
     hs = ppart->hs;
     switch (hs.grhst) {
     default:
@@ -388,7 +388,7 @@ int16_t FLookupPart(PART *ppart) {
             return mdPartAvailRestricted;
         }
     }
-    return idPlayer == iplrNone ? mdPartAvailAvailable : TechStatus((char *)ppart->pcom->rgTech);
+    return idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : TechStatus((char *)ppart->pcom->rgTech);
 }
 
 void LookupBestPlanetaryScanner(PART *ppart) {

@@ -133,7 +133,7 @@ int main(void) {
     static_assert(offsetof(PLANET,lpplprod)==52,"native packed prefix");
     static_assert(sizeof(PLANET)==52+sizeof(void *),"pointer after prefix");
     static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(PL)==4,"queue widths");
-    CHECK(CbHeapAlign(htOrd)==_Alignof(max_align_t) && CbHeapAlign(htBattle)==2);
+    CHECK(CbHeapAlign(htOrd)==alignof(max_align_t) && CbHeapAlign(htBattle)==2);
     for(unsigned count=0;count<=1;count++) {
         unsigned payload=CbHeapItem(4+4*count,htOrd)-2;
         CHECK(payload>=4+4*count && (payload-4)/4<254);
@@ -223,7 +223,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='s06-planet-copy-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

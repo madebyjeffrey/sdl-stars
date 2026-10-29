@@ -8,7 +8,8 @@ and its builds count toward 2.9.1.
 ## C++ migration
 
 Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented
-as one PR against `develop` (ticket #63). Owned production, generated catalogs,
+in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64) against `develop`
+(ticket #63). Owned production, generated catalogs,
 wrapper/native adapters and ordinary harnesses use C++20/Objective-C++20.
 Application headers have native C++ linkage and compile independently with
 standard headers in either order. Independent C storage and SDK references remain

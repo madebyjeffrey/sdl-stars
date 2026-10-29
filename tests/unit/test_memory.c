@@ -4,7 +4,7 @@
 
 static void CheckAligned(void *lp) {
     TEST_ASSERT(lp != NULL);
-    TEST_CHECK((uintptr_t)lp % _Alignof(max_align_t) == 0);
+    TEST_CHECK((uintptr_t)lp % alignof(max_align_t) == 0);
 }
 
 static void TestMixedAllocations(void) {

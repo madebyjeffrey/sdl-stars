@@ -255,9 +255,9 @@ def main():
         # Existing reconstructed bodies have an unused resource parameter and
         # corresponding signed/unsigned cost-pointer convention; match project
         # warning exclusions while making other warnings and sanitizers fatal.
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all',
-            '-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-o',str(binary)],check=True)
+            '-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

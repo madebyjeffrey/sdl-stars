@@ -1,6 +1,6 @@
 # Milestone A compilation and linkage inventory
 
-Implementation ticket: #63. A01–A13 are checkpoints in one PR against `develop`.
+Implementation: [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64), ticket #63. A01–A13 are checkpoints in one PR against `develop`.
 Original source filenames are retained; CMake source languages determine compilation.
 
 | Consumer at the start of A | Migration checkpoint | Final classification |

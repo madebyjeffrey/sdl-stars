@@ -381,7 +381,7 @@ int main(void){
     for old,new in {'NATIVEFILE':'FILE','CReadNative':'fread','CWriteNative':'fwrite','FNativeStreamError':'ferror','ICloseNativeFile':'fclose'}.items():
         body=body.replace(old,new)
     c.write_text(prelude+'\n'+body+'\n'+harness)
-    subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror',str(c),'-o',str(binary)],check=True)
+    subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],cwd=tmp,check=True)
 
 
@@ -403,7 +403,7 @@ def main():
         bodies = later()+'\n'+extract('FReplaceConflictingLibraryTurn')+'\n'+extract('FImportConflictingTurnAsCopy')+'\n'+family()
         c.write_text(DECLARATIONS+'\n'+bodies+'\n'+HARNESS)
         compiler = shlex.split(os.environ.get('CXX','c++'))
-        subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-O0','-Wall','-Wextra','-Werror',str(c),'-o',str(binary)],check=True)
+        subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-O0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
         with output.open('w') as stream:
             subprocess.run([str(binary)],input=inputs,text=True,stdout=stream,check=True)
         count=0;unique=[set() for _ in range(5)];witnesses={}

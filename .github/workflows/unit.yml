@@ -37,7 +37,7 @@ jobs:
       - name: Build and run SDL unit and wrapper tests
         run: |
           cmake --preset sdl-debug
-          cmake --build --preset sdl-debug --parallel 2
+          cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
 
   source-witnesses:
@@ -54,9 +54,11 @@ jobs:
       - run: python -m pip install -r requirements-build.txt
       - name: Run independent simulation and workflow vectors
         run: |
+          result=0
           for witness in tests/spec/check_*_source.py; do
-            python "$witness"
+            python "$witness" || result=1
           done
+          exit "$result"
 
   # The unit tests that need no windows, built natively with gcc.
   host-linux:
@@ -105,5 +107,5 @@ jobs:
           # Both suites share contract targets; configure their combined registry.
           cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --build --preset windows-sdl-debug --parallel 2
+          cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
           ctest --preset windows-sdl-headless
