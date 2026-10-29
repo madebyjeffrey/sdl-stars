@@ -18,8 +18,9 @@ and cleanup-failure delivery without opening a native picker.
 Popup teardown failure now prevents a queued command or selected-ID return;
 actual failure/capture tests also retain ordinary successful command delivery.
 Message-box, popup-tracking, folder and dialog-factory cleanup scopes are
-implemented. Failure publication and reentrant control/presentation lifetimes
-remain in progress.
+implemented. Modeless initialization failure now destroys the partial window
+before checked C++ delivery instead of publishing an unreachable live handle.
+Reentrant control/presentation lifetimes remain in progress.
 
 ## C++ migration
 

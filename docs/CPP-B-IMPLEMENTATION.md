@@ -331,3 +331,24 @@ units), warning-free builds and 519 native regression matches / 25 accepted
 unused-storage warnings / zero differences, errors or skipped inputs. Baselines
 remain unchanged. B02 still requires failure-publication and deferred control/
 presentation lifetime work before its completion gate.
+
+
+## B02 modeless failure retains no live window
+
+`HwndCreateDialog` now stops modeless initialization at a pending callback failure
+and destroys the partial dialog before returning. The production reproduction
+previously reported `nonnull=1 alive=1 pending-error=1`; the same reproduction
+now reports `nonnull=0 alive=0 pending-error=1`. The checked C++ caller can
+therefore receive its exception without losing ownership of a live window.
+
+Permanent cases fail before the fix and pass afterwards for font assignment,
+initialization, allocation failure, raw pending-error delivery and the checked
+C++ wrapper. They also verify that later initialization does not run after an
+earlier failure and that successful modeless creation remains usable. Existing
+modal return-value and nested/timer failure cases remain unchanged.
+
+Results: 100/100 full macOS CTest (21 native leak checks), 23/23 ASan/UBSan
+cases, warning-free product builds and 519 native regression matches / 25
+accepted unused-storage warnings / zero differences, errors or skipped inputs.
+No baseline or independent reference changed. B02 presentation and deferred
+control lifetimes remain active.

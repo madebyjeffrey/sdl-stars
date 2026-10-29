@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `HwndCreateDialog` destroys a modeless dialog when its creation callbacks fail.
+  Previously it returned a live window while the checked C++ caller received an
+  exception and could not take ownership. Initialization stops at the first
+  pending failure; successful creation and modal return values are unchanged.
+
 - `TrackMenu` suppresses command delivery and selected-ID returns when popup
   teardown fails. Previously a failing `WM_UNINITMENUPOPUP` callback still queued
   `WM_COMMAND` after selection. Capture and popup cleanup finish before failure

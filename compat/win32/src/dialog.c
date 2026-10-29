@@ -125,6 +125,8 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     COMPATCLEANUPSCOPE freeTemplate([&] { CompatFreeDialogTemplate(&dlg); });
     COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) DeleteObject(dc.hfont); });
     COMPATCLEANUPSCOPE destroyDialog([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
+    // A checked caller cannot take ownership of a modeless window on failure.
+    if (!fModal && FStarsErrorPending()) return NULL;
     if (!SDL_IsMainThread() || (hwndOwner && !IsWindow(hwndOwner))) return NULL;
     if (!hinst) hinst = GetModuleHandleA(NULL);
     hrsrc = FindResourceA(hinst, psz, RT_DIALOG);
@@ -138,8 +140,10 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     // The dialog record owns the font after WM_NCCREATE, including failure cleanup.
     if (!hwnd) goto done;
     dc.hfont = NULL;
+    if (!fModal && FStarsErrorPending()) goto fail;
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
     if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!fModal && FStarsErrorPending()) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
         pszTitle = lpitem->pszTitle ? lpitem->pszTitle : MAKEINTRESOURCE(lpitem->idTitle);
@@ -149,13 +153,14 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         hwndChild = CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,
                                    hwnd, (HMENU)(INT_PTR)(int16_t)lpitem->id, hinst, NULL);
-        if (!hwndChild || !IsWindow(hwnd)) goto fail;
+        if (!hwndChild || !IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
         SendMessageA(hwndChild, WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
-        if (!IsWindow(hwnd)) goto fail;
+        if (!IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
     }
     hwndFocus = HwndDialogTab(hwnd, NULL, FALSE);
     fFocus = SendMessageA(hwnd, WM_INITDIALOG, (WPARAM)hwndFocus, param) != 0;
     if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!fModal && FStarsErrorPending()) goto fail;
     if (!hwnd->fEndDialog) {
         if (fModal || (dlg.dwStyle & WS_VISIBLE)) {
             // Prepare the initialized dialog before exposing its native window;
@@ -163,9 +168,11 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
             InvalidateRect(hwnd, NULL, TRUE);
             UpdateWindow(hwnd);
             if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+            if (!fModal && FStarsErrorPending()) goto fail;
             for (hwndChild = GetWindow(hwnd, GW_CHILD); hwndChild; hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
                 UpdateWindow(hwndChild);
                 if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+                if (!fModal && FStarsErrorPending()) goto fail;
             }
             hwnd->fDeferPresent = FALSE;
             if (!FCompatPresent(hwnd)) goto fail;
@@ -176,6 +183,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         if (fFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
     }
     if (!IsWindow(hwnd)) hwnd = NULL;
+    if (!fModal && FStarsErrorPending()) goto fail;
     goto done;
 fail:
     destroyDialog.Close();
