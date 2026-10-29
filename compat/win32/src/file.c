@@ -1,4 +1,4 @@
-/* Legacy HFILE adapters use owned CRT/POSIX descriptors, never arbitrary integer fds. */
+/* Legacy HFILE adapters use owned C++ file tokens, never arbitrary integer fds. */
 #include "internal.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -12,7 +12,7 @@
 
 typedef struct COMPATFILE {
     HFILE hf;
-    int fd;
+    NATIVEFILE *pf;
     UINT grAccess, grShare;
     uint64_t dev, ino;
     struct COMPATFILE *lpNext;
@@ -48,9 +48,9 @@ static DWORD DwFileError(void) {
 HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
     COMPATFILE *lp, *lpNew = NULL;
-    struct stat st;
+    NATIVEFILEINFO st;
     UINT grAccess, grShare, share = flags & 0x70;
-    int fd = -1, md;
+    NATIVEFILE *pf = NULL;
     HFILE hf = HFILE_ERROR;
     DWORD dwError = NO_ERROR;
     uint64_t dev, ino;
@@ -73,7 +73,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         if (strlen(pszFile) >= sizeof(szPath)) { dwError = ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
         strcpy(szPath, pszFile);
     } else {
-        if (!getcwd(szCwd, sizeof(szCwd))) { dwError = DwFileError(); goto LReturn; }
+        if (!PszNativeCwd(szCwd, sizeof(szCwd))) { dwError = DwFileError(); goto LReturn; }
         if (snprintf(szPath, sizeof(szPath), "%s/%s", szCwd, pszFile) >= (int)sizeof(szPath)) {
             dwError = ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
@@ -88,49 +88,36 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     grShare = share == OF_SHARE_EXCLUSIVE ? 0 : share == OF_SHARE_DENY_WRITE ? 1 : share == OF_SHARE_DENY_READ ? 2 : 3;
     LockFiles();
     if (flags & OF_DELETE) {
-        if (stat(szPath, &st) == 0) {
-#ifdef _WIN32
-            if (!FCompatFileIdentity(-1, szPath, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
-#else
-            dev = st.st_dev; ino = st.st_ino;
-#endif
+        if (IGetNativeFileInfo(szPath, &st, TRUE) == 0) {
+            if (!FNativeFileIdentity(NULL, szPath, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
             for (lp = lpFiles; lp; lp = lp->lpNext)
                 if (lp->dev == dev && lp->ino == ino) { dwError = ERROR_SHARING_VIOLATION; goto LUnlock; }
         }
-        if (unlink(szPath) != 0) dwError = DwFileError();
+        if (IUnlinkNativePath(szPath) != 0) dwError = DwFileError();
         else hf = 1;
         goto LUnlock;
     }
-    md = grAccess == 1 ? O_RDONLY : grAccess == 2 ? O_WRONLY : O_RDWR;
-#ifdef _WIN32
-    md |= O_BINARY;
-#endif
     // Check sharing before truncating an existing file.
-    fd = open(szPath, md | O_CLOEXEC | (flags & OF_CREATE ? O_CREAT : 0), 0666);
-    if (fd < 0 || fstat(fd, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
-    if (!S_ISREG(st.st_mode)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
-#ifdef _WIN32
-    // The Windows CRT reports zero inode numbers; use the volume/file identity.
-    if (!FCompatFileIdentity(fd, NULL, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
-#else
-    dev = st.st_dev; ino = st.st_ino;
-#endif
+    pf = PfNativeOpenFlags(szPath, grAccess, 0, (flags & OF_CREATE) != 0, FALSE, FALSE, TRUE);
+    if (!pf || IGetNativeOpenInfo(pf, &st) != 0) { dwError = DwFileError(); goto LUnlock; }
+    if (!st.fRegular) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
+    if (!FNativeFileIdentity(pf, NULL, &dev, &ino)) { dwError = ERROR_ACCESS_DENIED; goto LUnlock; }
     for (lp = lpFiles; lp; lp = lp->lpNext)
         if (lp->dev == dev && lp->ino == ino &&
             ((grAccess & ~lp->grShare) || (lp->grAccess & ~grShare))) {
             dwError = ERROR_SHARING_VIOLATION; goto LUnlock;
         }
-    if ((flags & OF_CREATE) && ftruncate(fd, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
+    if ((flags & OF_CREATE) && ITruncateNativeFile(pf, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (flags & OF_EXIST) { hf = 1; goto LUnlock; }
     lpNew = calloc(1, sizeof(*lpNew));
     if (!lpNew) { dwError = ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = HFILE_ERROR; dwError = ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }
-    lpNew->hf = hf; lpNew->fd = fd; lpNew->dev = dev; lpNew->ino = ino;
+    lpNew->hf = hf; lpNew->pf = pf; lpNew->dev = dev; lpNew->ino = ino;
     lpNew->grAccess = grAccess; lpNew->grShare = grShare;
-    lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = NULL; fd = -1;
+    lpNew->lpNext = lpFiles; lpFiles = lpNew; lpNew = NULL; pf = NULL;
 LUnlock:
-    if (fd >= 0) close(fd);
+    if (pf) ICloseNativeFile(pf);
     free(lpNew);
     UnlockFiles();
 LReturn:
@@ -150,7 +137,7 @@ HFILE WINAPI _lclose(HFILE hf) {
         if (lp->hf != hf) continue;
         fFound = TRUE;
         *lplp = lp->lpNext;
-        if (close(lp->fd) == 0) ret = 0;
+        if (ICloseNativeFile(lp->pf) == 0) ret = 0;
         else SetLastError(DwFileError());
         free(lp); break;
     }
@@ -161,13 +148,13 @@ HFILE WINAPI _lclose(HFILE hf) {
 
 LONG WINAPI _llseek(HFILE hf, LONG offset, int origin) {
     COMPATFILE *lp;
-    off_t pos = -1;
+    int64_t pos = -1;
 
     LockFiles(); lp = LpFile(hf);
     if (lp) {
         if (origin < 0 || origin > 2) SetLastError(ERROR_INVALID_PARAMETER);
         else {
-            pos = lseek(lp->fd, offset, origin);
+            pos = LSeekNativeFile(lp->pf, offset, origin);
             if (pos < 0) SetLastError(DwFileError());
         }
     }
@@ -184,7 +171,7 @@ UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
         if (!(lp->grAccess & 1)) SetLastError(ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
         else {
-            do { cbRead = read(lp->fd, rgb, cb); } while (cbRead < 0 && errno == EINTR);
+            do { cbRead = CbReadNativeFile(lp->pf, rgb, cb); } while (cbRead < 0 && errno == EINTR);
             if (cbRead < 0) SetLastError(DwFileError());
         }
     }
@@ -195,18 +182,18 @@ UINT WINAPI _lread(HFILE hf, LPVOID rgb, UINT cb) {
 UINT WINAPI _lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
-    off_t pos;
+    int64_t pos;
 
     LockFiles(); lp = LpFile(hf);
     if (lp) {
         if (!(lp->grAccess & 2)) SetLastError(ERROR_ACCESS_DENIED);
         else if (!rgb && cb != 0) SetLastError(ERROR_INVALID_PARAMETER);
         else if (cb == 0) {
-            pos = lseek(lp->fd, 0, SEEK_CUR);
-            if (pos >= 0 && ftruncate(lp->fd, pos) == 0) cbWrite = 0;
+            pos = LNativePosition(lp->pf);
+            if (pos >= 0 && ITruncateNativeFile(lp->pf, pos) == 0) cbWrite = 0;
             else SetLastError(DwFileError());
         } else {
-            do { cbWrite = write(lp->fd, rgb, cb); } while (cbWrite < 0 && errno == EINTR);
+            do { cbWrite = CbWriteNativeFile(lp->pf, rgb, cb); } while (cbWrite < 0 && errno == EINTR);
             if (cbWrite < 0) SetLastError(DwFileError());
         }
     }
@@ -216,15 +203,15 @@ UINT WINAPI _lwrite(HFILE hf, LPCCH rgb, UINT cb) {
 
 DWORD WINAPI GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
-    struct stat st;
+    int64_t cb;
     DWORD dw = INVALID_FILE_SIZE;
     INT_PTR id = (INT_PTR)h;
 
     LockFiles();
     lp = id >= 0 && id <= INT_MAX ? LpFile((HFILE)id) : NULL;
-    if (lp && fstat(lp->fd, &st) == 0) {
-        dw = (DWORD)(uint64_t)st.st_size;
-        if (lpdwHigh) *lpdwHigh = (DWORD)((uint64_t)st.st_size >> 32);
+    if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
+        dw = (DWORD)(uint64_t)cb;
+        if (lpdwHigh) *lpdwHigh = (DWORD)((uint64_t)cb >> 32);
         SetLastError(NO_ERROR);
     } else if (lp) SetLastError(DwFileError());
     else SetLastError(ERROR_INVALID_HANDLE);
@@ -237,7 +224,7 @@ void CompatShutdownFiles(void) {
     LockFiles();
     while (lpFiles) {
         lp = lpFiles; lpFiles = lp->lpNext;
-        close(lp->fd); free(lp);
+        ICloseNativeFile(lp->pf); free(lp);
     }
     UnlockFiles();
 }

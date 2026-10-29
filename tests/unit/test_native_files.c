@@ -49,9 +49,9 @@ static void TestNativeFiles(void) {
     snprintf(szMeta, sizeof(szMeta), "%s%s\xe6\x9d\xb1\xe4\xba\xac.meta", szDir, szDirSep);
     snprintf(szMetaTemp, sizeof(szMetaTemp), "%s%s\xce\xa9.tmp", szDir, szDirSep);
     {
-        FILE *pf = PfOpenNativeFile(szMetaTemp, "wb");
+        NATIVEFILE *pf = PfOpenNativeFile(szMetaTemp, "wb");
         TEST_ASSERT(pf);
-        TEST_CHECK(fwrite("metadata", 1, 8, pf) == 8 && fclose(pf) == 0);
+        TEST_CHECK(CWriteNative("metadata", 1, 8, pf) == 8 && ICloseNativeFile(pf) == 0);
     }
     TEST_CHECK(ReplaceNativeFile(szMetaTemp, szMeta) == 0 && FNativeFileSize(szMeta, &cbNativeFile) && cbNativeFile == 8);
     TEST_CHECK(RemoveNativeFile(szMeta) == 0);

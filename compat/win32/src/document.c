@@ -9,7 +9,7 @@ char *PszCompatFileUri(const char *pszPath) {
     const unsigned char *lpch;
     unsigned char ch;
 
-    pszAbsolute = realpath(pszPath, NULL);
+    pszAbsolute = PszCanonicalNativePath(pszPath, NULL, 0);
     if (!pszAbsolute) return NULL;
     pszUri = malloc(strlen(pszAbsolute) * 3 + 9);
     if (!pszUri) { free(pszAbsolute); return NULL; }

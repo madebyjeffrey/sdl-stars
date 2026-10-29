@@ -13,15 +13,15 @@ struct COMPATPRINT {
     int cx, cy, cxPhysical, cyPhysical, cPages, cCopies, idPaper;
     BOOL fSpool, fActive, fKeep, fEscaping;
     char szPrinter[256], szTarget[PATH_MAX], szTemp[PATH_MAX], szTitle[4097];
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     cairo_surface_t *lpPDF;
 };
 static int idPrintNext = 1;
 
 static void AbortPrint(COMPATPRINT *lp) {
     if (lp->lpPDF) { cairo_surface_destroy(lp->lpPDF); lp->lpPDF = NULL; }
-    if (lp->lpfile) { fclose(lp->lpfile); lp->lpfile = NULL; }
-    if (*lp->szTemp && !lp->fKeep) unlink(lp->szTemp);
+    if (lp->lpfile) { ICloseNativeFile(lp->lpfile); lp->lpfile = NULL; }
+    if (*lp->szTemp && !lp->fKeep) IUnlinkNativePath(lp->szTemp);
     lp->szTemp[0] = 0; lp->fActive = FALSE;
 }
 void CompatDeletePrinter(COMPATPRINT *lp) { if (lp) { AbortPrint(lp); free(lp); } }
@@ -117,12 +117,11 @@ fail:
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
     COMPATPRINT *lp = lpv;
-    return fwrite(rgb, 1, cb, lp->lpfile) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
+    return CWriteNative(rgb, 1, cb, lp->lpfile) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {0};
     char szFile[PATH_MAX] = "Stars map.pdf";
-    int fd;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (cb) memcpy(lp->szTitle, pszTitle, cb);
@@ -140,10 +139,8 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= (int)sizeof(lp->szTemp)) {
         lp->szTemp[0] = 0; SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR;
     }
-    fd = mkstemp(lp->szTemp);
-    if (fd < 0) { lp->szTemp[0] = 0; SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
-    lp->lpfile = fdopen(fd, "wb");
-    if (!lp->lpfile) { close(fd); AbortPrint(lp); SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
+    lp->lpfile = PfNativeCreateTemp(lp->szTemp);
+    if (!lp->lpfile) { lp->szTemp[0] = 0; SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
     lp->lpPDF = cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300);
     if (cairo_surface_status(lp->lpPDF) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
     cairo_pdf_surface_set_metadata(lp->lpPDF, CAIRO_PDF_METADATA_TITLE, lp->szTitle);
@@ -242,8 +239,8 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     }
     cairo_surface_finish(lp->lpPDF); fOk = cairo_surface_status(lp->lpPDF) == CAIRO_STATUS_SUCCESS;
     cairo_surface_destroy(lp->lpPDF); lp->lpPDF = NULL;
-    if (fflush(lp->lpfile) != 0 || fsync(fileno(lp->lpfile)) != 0) fOk = FALSE;
-    if (fclose(lp->lpfile) != 0) fOk = FALSE;
+    if (IFlushNativeFile(lp->lpfile) != 0 || ISyncNativeFile(lp->lpfile) != 0) fOk = FALSE;
+    if (ICloseNativeFile(lp->lpfile) != 0) fOk = FALSE;
     lp->lpfile = NULL; lp->fActive = FALSE;
     if (!fOk) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
     if (lp->fSpool) {
@@ -252,15 +249,15 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             SDL_Log("Printer submission failed; PDF retained at %s", lp->szTemp);
             return SP_ERROR;
         }
-        unlink(lp->szTemp); lp->szTemp[0] = 0;
+        IUnlinkNativePath(lp->szTemp); lp->szTemp[0] = 0;
     } else {
-        if (rename(lp->szTemp, lp->szTarget) != 0) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
+        if (IRenameNativePath(lp->szTemp, lp->szTarget, TRUE, TRUE) != 0) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
         lp->szTemp[0] = 0;
         // The completed PDF remains valid even when no viewer accepts it.
         if (!FCompatOpenDocument(lp->szTarget)) {
             char szMessage[PATH_MAX + 160];
             HWND hwndOwner = IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
-            char *pszAbsolute = realpath(lp->szTarget, NULL);
+            char *pszAbsolute = PszCanonicalNativePath(lp->szTarget, NULL, 0);
             snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
             SDL_Log("%s", szMessage);
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,

@@ -38,7 +38,7 @@ static int TestPicker(HWND hwnd) {
     char szFile[8192];
     char szTitle[4];
     OPENFILENAMEA ofn;
-    FILE *pf;
+    NATIVEFILE *pf;
     hwndPickerOwner = hwnd;
     CHECK(FFilesystemTempDir(szTemp, sizeof(szTemp)));
     CHECK(snprintf(szDir, sizeof(szDir), "%s/caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80", szTemp) < (int)sizeof(szDir));
@@ -47,7 +47,7 @@ static int TestPicker(HWND hwnd) {
     for (iPicker = 0; iPicker < 2; iPicker++) {
         pszPickerName = iPicker == 0 ? "caf\xc3\xa9-\xce\xa9\xf0\x9f\x98\x80.m1" : "\xe6\x9d\xb1\xe4\xba\xac-\xce\xa9.m1";
         snprintf(szExpected, sizeof(szExpected), "%s/%s", szCanonical, pszPickerName);
-        if (iPicker == 0) { pf = fopen(szExpected, "wb"); CHECK(pf); fclose(pf); }
+        if (iPicker == 0) { pf = PfNativeOpen(szExpected, "wb"); CHECK(pf); ICloseNativeFile(pf); }
         memset(&ofn, 0, sizeof(ofn)); szFile[0] = 0;
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = hwnd; ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
         ofn.lpstrFileTitle = szTitle; ofn.nMaxFileTitle = sizeof(szTitle);
@@ -77,7 +77,7 @@ int main(void) {
     char szText[256], szSmall[5], szJson[16384], *pszClipboard;
     char szSnapshotDir[4096], szSnapshotPath[8192];
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
-    FILE *pf;
+    NATIVEFILE *pf;
     STARSCOMPATSNAPSHOT snap = {0};
     OFSTRUCT ofs;
     size_t cb, i;
@@ -142,10 +142,10 @@ int main(void) {
     }
     CHECK(fFound && FFilesystemTempDir(szSnapshotDir, sizeof(szSnapshotDir)));
     CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir) < (int)sizeof(szSnapshotPath));
-    CHECK((pf = fopen(szSnapshotPath, "w+b")) && StarsCompatWriteHierarchy(&snap, pf));
-    rewind(pf); cb = fread(szJson, 1, sizeof(szJson) - 1, pf); szJson[cb] = 0;
+    CHECK((pf = PfNativeOpen(szSnapshotPath, "w+b")) && StarsCompatWriteHierarchy(&snap, pf));
+    ISeekNativeFile(pf, 0, 0); cb = CReadNative(szJson, 1, sizeof(szJson) - 1, pf); szJson[cb] = 0;
     CHECK(strstr(szJson, psz));
-    CHECK(fclose(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(szSnapshotDir));
+    CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(szSnapshotDir));
     StarsCompatFreeHierarchy(&snap);
     hwndPassword = CreateWindow("EDIT", "old", WS_CHILD | ES_PASSWORD, 0, 0, 100, 24,
                                 hwnd, (HMENU)(INT_PTR)102, wc.hInstance, NULL);

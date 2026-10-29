@@ -26,7 +26,7 @@ typedef struct SCANSNAPSHOT {
 } SCANSNAPSHOT;
 BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap);
 void FreeScannerSnapshot(SCANSNAPSHOT *lpsnap);
-BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, FILE *lpfile);
+BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile);
 /* Select the secondary scanner object through ChangeScanSel; optionally pan.
  * No orders are issued and the main object/waypoint editing mode is untouched.
  * Fail for a stale game/turn/player or absent object, including host data.

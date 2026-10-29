@@ -13,67 +13,67 @@ char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
 }
 
 static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
-    FILE *pfSource, *pfTarget;
+    NATIVEFILE *pfSource, *pfTarget;
     unsigned char rgb[4096];
     size_t cb;
     BOOL fOkay;
-    pfSource = fopen(pszSource, "rb");
+    pfSource = PfNativeOpen(pszSource, "rb");
     if (!pfSource) return FALSE;
-    pfTarget = fopen(pszTarget, "wb");
-    if (!pfTarget) { fclose(pfSource); return FALSE; }
+    pfTarget = PfNativeOpen(pszTarget, "wb");
+    if (!pfTarget) { ICloseNativeFile(pfSource); return FALSE; }
     fOkay = TRUE;
-    while ((cb = fread(rgb, 1, sizeof(rgb), pfSource)) != 0)
-        if (fwrite(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
-    if (ferror(pfSource)) fOkay = FALSE;
-    if (fclose(pfSource) != 0) fOkay = FALSE;
-    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0)
+        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fOkay = FALSE; break; }
+    if (FNativeStreamError(pfSource)) fOkay = FALSE;
+    if (ICloseNativeFile(pfSource) != 0) fOkay = FALSE;
+    if (ICloseNativeFile(pfTarget) != 0) fOkay = FALSE;
     return fOkay;
 }
 
 static BOOL FTestWriteFile(const char *pszFile, const char *pszText) {
-    FILE *pf;
+    NATIVEFILE *pf;
     size_t cbText = strlen(pszText);
     BOOL fOkay;
-    pf = fopen(pszFile, "wb");
+    pf = PfNativeOpen(pszFile, "wb");
     if (!pf) return FALSE;
-    fOkay = fwrite(pszText, 1, cbText, pf) == cbText;
-    if (fclose(pf) != 0) fOkay = FALSE;
+    fOkay = CWriteNative(pszText, 1, cbText, pf) == cbText;
+    if (ICloseNativeFile(pf) != 0) fOkay = FALSE;
     return fOkay;
 }
 
 static BOOL FTestFilesEqual(const char *pszFile1, const char *pszFile2) {
-    FILE *pfFile1, *pfFile2;
+    NATIVEFILE *pfFile1, *pfFile2;
     unsigned char rgb1[4096], rgb2[4096];
     size_t cb1, cb2;
     BOOL fEqual;
-    pfFile1 = fopen(pszFile1, "rb");
+    pfFile1 = PfNativeOpen(pszFile1, "rb");
     if (!pfFile1) return FALSE;
-    pfFile2 = fopen(pszFile2, "rb");
-    if (!pfFile2) { fclose(pfFile1); return FALSE; }
+    pfFile2 = PfNativeOpen(pszFile2, "rb");
+    if (!pfFile2) { ICloseNativeFile(pfFile1); return FALSE; }
     fEqual = TRUE;
     do {
-        cb1 = fread(rgb1, 1, sizeof(rgb1), pfFile1);
-        cb2 = fread(rgb2, 1, sizeof(rgb2), pfFile2);
+        cb1 = CReadNative(rgb1, 1, sizeof(rgb1), pfFile1);
+        cb2 = CReadNative(rgb2, 1, sizeof(rgb2), pfFile2);
         if (cb1 != cb2 || memcmp(rgb1, rgb2, cb1) != 0) { fEqual = FALSE; break; }
     } while (cb1 != 0);
-    if (ferror(pfFile1) || ferror(pfFile2)) fEqual = FALSE;
-    if (fclose(pfFile1) != 0) fEqual = FALSE;
-    if (fclose(pfFile2) != 0) fEqual = FALSE;
+    if (FNativeStreamError(pfFile1) || FNativeStreamError(pfFile2)) fEqual = FALSE;
+    if (ICloseNativeFile(pfFile1) != 0) fEqual = FALSE;
+    if (ICloseNativeFile(pfFile2) != 0) fEqual = FALSE;
     return fEqual;
 }
 
 static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *pszName,
                                      size_t cchName, int *piplr, long long *plPlayed,
                                      char *pszExchangeName, size_t cchExchangeName) {
-    FILE *pf;
+    NATIVEFILE *pf;
     int cchNameRead, cchExchangeRead;
     BOOL fRead;
-    pf = fopen(pszFile, "rb");
+    pf = PfNativeOpen(pszFile, "rb");
     if (!pf) return FALSE;
-    fRead = fscanf(pf, "%d\n", piVersion) == 1 && fgets(pszName, (int)cchName, pf) &&
-            fscanf(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
-            fgets(pszExchangeName, (int)cchExchangeName, pf) != NULL;
-    fclose(pf);
+    fRead = CNativeScan(pf, "%d\n", piVersion) == 1 && PszGetNativeLine(pszName, (int)cchName, pf) &&
+            CNativeScan(pf, "%d\n%lld\n", piplr, plPlayed) == 2 &&
+            PszGetNativeLine(pszExchangeName, (int)cchExchangeName, pf) != NULL;
+    ICloseNativeFile(pf);
     if (!fRead) return FALSE;
     pszName[strcspn(pszName, "\r\n")] = 0;
     pszExchangeName[strcspn(pszExchangeName, "\r\n")] = 0;
@@ -86,21 +86,21 @@ static BOOL FTestReadLibraryMetadata(const char *pszFile, int *piVersion, char *
 static BOOL FTestLibraryTimestamp(long long *plPlayed) {
     char szDir[512], szFile[512], szMetadataName[256];
     char *pch;
-    FILE *pf;
+    NATIVEFILE *pf;
     int iVersion, iPlayer;
     strcpy(szDir, szBase);
     pch = strrchr(szDir, chDirSep);
     if (!pch) return FALSE;
     *pch = 0;
     CchSnprintf(szFile, sizeof(szFile), "%s%s.library", szDir, szDirSep);
-    pf = fopen(szFile, "rb");
+    pf = PfNativeOpen(szFile, "rb");
     if (!pf) return FALSE;
-    if (fscanf(pf, "%d\n", &iVersion) != 1 || !fgets(szMetadataName, sizeof(szMetadataName), pf) ||
-        fscanf(pf, "%d\n%lld", &iPlayer, plPlayed) != 2) {
-        fclose(pf);
+    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !PszGetNativeLine(szMetadataName, sizeof(szMetadataName), pf) ||
+        CNativeScan(pf, "%d\n%lld", &iPlayer, plPlayed) != 2) {
+        ICloseNativeFile(pf);
         return FALSE;
     }
-    fclose(pf);
+    ICloseNativeFile(pf);
     return iVersion == 2 && iPlayer == idPlayer;
 }
 
@@ -337,7 +337,7 @@ static BOOL FCheckMapInspection(void) {
     char szExport[32768];
     size_t cb;
     const char *pszViewerCapture = getenv("STARS_MAP_VIEWER_CAPTURE");
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     const char *pszCapture = getenv("STARS_MAP_CAPTURE");
     int16_t fDirty = game.fDirty;
     if (!FCaptureScanner(&snap) || snap.cObject < (size_t)game.cPlanMax ||
@@ -361,17 +361,17 @@ static BOOL FCheckMapInspection(void) {
     if (!FCaptureScanner(&fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
     strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
-    lpfile = tmpfile();
+    lpfile = PfNativeTemporary();
     if (!lpfile) goto LDone;
-    if (!FWriteScannerSnapshot(&fresh, lpfile)) { fclose(lpfile); goto LDone; }
-    rewind(lpfile); cb = fread(szExport, 1, sizeof(szExport) - 1, lpfile); szExport[cb] = 0; fclose(lpfile);
+    if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
+    ISeekNativeFile(lpfile, 0, 0); cb = CReadNative(szExport, 1, sizeof(szExport) - 1, lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {
-        lpfile = fopen(pszCapture, "wb");
+        lpfile = PfNativeOpen(pszCapture, "wb");
         if (!lpfile) goto LDone;
-        if (!FWriteScannerSnapshot(&fresh, lpfile)) { fclose(lpfile); goto LDone; }
-        if (fclose(lpfile) != 0) goto LDone;
+        if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
+        if (ICloseNativeFile(lpfile) != 0) goto LDone;
     }
     hwndInspector = StarsCompatShowInspector();
     if (!hwndInspector || !GetDlgItem(hwndInspector,4)) goto LDone;
@@ -1652,26 +1652,26 @@ int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
 #endif
 
 static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarget, long ibChange, BYTE bMask) {
-    FILE *pfSource, *pfTarget;
+    NATIVEFILE *pfSource, *pfTarget;
     int ch;
     long ib;
     BOOL fChanged, fOkay;
 
-    pfSource = fopen(pszSource, "rb");
+    pfSource = PfNativeOpen(pszSource, "rb");
     if (!pfSource) return FALSE;
-    pfTarget = fopen(pszTarget, "wb");
-    if (!pfTarget) { fclose(pfSource); return FALSE; }
+    pfTarget = PfNativeOpen(pszTarget, "wb");
+    if (!pfTarget) { ICloseNativeFile(pfSource); return FALSE; }
     fChanged = FALSE;
     fOkay = TRUE;
     ib = 0;
-    while ((ch = fgetc(pfSource)) != EOF) {
+    while ((ch = ChGetNativeFile(pfSource)) != EOF) {
         if (ib == ibChange) { ch ^= bMask; fChanged = TRUE; }
-        if (fputc(ch, pfTarget) == EOF) { fOkay = FALSE; break; }
+        if (ChPutNativeFile(ch, pfTarget) == EOF) { fOkay = FALSE; break; }
         ib++;
     }
-    if (ferror(pfSource)) fOkay = FALSE;
-    if (fclose(pfSource) != 0) fOkay = FALSE;
-    if (fclose(pfTarget) != 0) fOkay = FALSE;
+    if (FNativeStreamError(pfSource)) fOkay = FALSE;
+    if (ICloseNativeFile(pfSource) != 0) fOkay = FALSE;
+    if (ICloseNativeFile(pfTarget) != 0) fOkay = FALSE;
     return fOkay && fChanged;
 }
 

@@ -99,7 +99,10 @@ When goals conflict, apply them in this order:
   enums (`dataids.h`) and `data_tables.c`. Saved ship designs store hull
   and part numbers, so the parts files are append-only: never reorder or
   remove an entry.
-- Files, the clock and formatting go through `native.c` (`HfOpenFile`,
+- Application-owned file streams and paths use the C-compatible C++17 service
+  in `src/platform/fileio.h`/`fileio.cpp`. Native descriptors stay private to that
+  service for exclusive creation, sharing, durable writes and live-handle operations.
+  Game files, the clock and formatting go through `native.c` (`HfOpenFile`,
   `DwTickCount`, `CchSprintf`, `LMulDiv`, `chDirSep`), never Win32 or
   `wsprintf` directly.
 

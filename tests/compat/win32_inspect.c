@@ -61,14 +61,14 @@ static int TestStyles(void) {
     STARSCOMPATWINDOW item = {0};
     STARSCOMPATSNAPSHOT snap = { &item, 1 };
     size_t i, cb;
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     char sz[8192];
     item.pszClass = "StyleTest"; item.pszText = "";
     item.dwExStyle = WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | UINT32_C(0x40000000);
     for (i = 0; i < SDL_arraysize(rg); i++) {
         item.iControl = rg[i].iControl; item.fDialog = rg[i].fDialog; item.dwStyle = rg[i].dw;
-        lpfile = tmpfile(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
-        rewind(lpfile); cb = fread(sz, 1, sizeof(sz) - 1, lpfile); sz[cb] = 0; fclose(lpfile);
+        lpfile = PfNativeTemporary(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
+        ISeekNativeFile(lpfile, 0, 0); cb = CReadNative(sz, 1, sizeof(sz) - 1, lpfile); sz[cb] = 0; ICloseNativeFile(lpfile);
         CHECK(strstr(sz, rg[i].psz) && !strstr(sz, rg[i].pszAbsent));
         CHECK(strstr(sz, "WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | 0x40000000"));
     }
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     uint64_t id, idChild, idNested, idViewer;
     STARSCOMPATSNAPSHOT snap = {0}, snapAfter = {0};
     const STARSCOMPATWINDOW *lp;
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     char sz[8192];
     size_t cb, i;
     int cBefore, iStatus;
@@ -139,11 +139,11 @@ int main(int argc, char **argv) {
     CHECK(cDialogs == 2 && cDialogErrors == 0 && rgidDialog[1] > rgidDialog[0]);
     CHECK(rgidNative[0] == rgidNative[1] && !StarsCompatResolveWindow(rgidDialog[1]));
     StarsCompatEndDialogSequence();
-    lpfile = tmpfile(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
-    rewind(lpfile); cb = fread(sz, 1, sizeof(sz) - 1, lpfile); sz[cb] = 0; fclose(lpfile);
+    lpfile = PfNativeTemporary(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
+    ISeekNativeFile(lpfile, 0, 0); cb = CReadNative(sz, 1, sizeof(sz) - 1, lpfile); sz[cb] = 0; ICloseNativeFile(lpfile);
     CHECK(strstr(sz, "\\\"quote\\\"") && strstr(sz, "\\\\") && strstr(sz, "\\u000d\\u000a"));
     CHECK(strstr(sz, "\342\202\254") && strstr(sz, "[password]") && !strstr(sz, "secret"));
-    if (argc == 2) { lpfile = fopen(argv[1], "wb"); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(fclose(lpfile) == 0); }
+    if (argc == 2) { lpfile = PfNativeOpen(argv[1], "wb"); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
     ReleaseCapture();
     hwndViewer = StarsCompatShowInspector(); CHECK(hwndViewer && IsWindowVisible(hwndViewer));
     idViewer = StarsCompatWindowId(hwndViewer);

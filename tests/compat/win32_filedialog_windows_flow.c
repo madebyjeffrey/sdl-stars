@@ -40,15 +40,15 @@ int main(void) {
     WNDCLASSA wc = {0};
     OPENFILENAMEA of = {0};
     char szCwd[PATH_MAX], szAfter[PATH_MAX], szFile[PATH_MAX], szTitle[128];
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     MSG msg;
     int i;
 
     CHECK(SDL_setenv_unsafe("STARS_FILE_DIALOG_BACKEND", "native", 1) == 0);
-    CHECK(getcwd(szCwd, sizeof(szCwd)));
+    CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));
     CHECK(SDL_strlcpy(szChosen, szCwd, sizeof(szChosen)) < sizeof(szChosen));
     CHECK(SDL_strlcat(szChosen, "/\xce\xa9.m1", sizeof(szChosen)) < sizeof(szChosen));
-    lpfile = fopen(szChosen, "wb"); CHECK(lpfile && fclose(lpfile) == 0);
+    lpfile = PfNativeOpen(szChosen, "wb"); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
     wc.lpfnWndProc = DefWindowProcA; wc.lpszClassName = "WindowsNativePickerFlow";
     CHECK(RegisterClassA(&wc));
     hwndOwner = CreateWindow(wc.lpszClassName, "Owner", WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);
@@ -75,8 +75,8 @@ int main(void) {
         if (iAction == 2) CHECK(PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 73);
     }
     CHECK(!IsWindow(hwndOwner) && !fBad && cCalls == 5);
-    CHECK(getcwd(szAfter, sizeof(szAfter)) && strcmp(szAfter, szCwd) == 0);
-    CHECK(unlink(szChosen) == 0);
+    CHECK(PszNativeCwd(szAfter, sizeof(szAfter)) && strcmp(szAfter, szCwd) == 0);
+    CHECK(IUnlinkNativePath(szChosen) == 0);
     StarsCompatShutdown();
     puts("Windows native wrapper file flow passed");
     return 0;
