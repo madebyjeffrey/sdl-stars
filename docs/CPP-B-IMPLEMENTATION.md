@@ -9,7 +9,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining GDI/menu/window/audio ownership and library-context lifetime integration are still in scope. |
+| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining menu/window/audio ownership and library-context lifetime integration are still in scope. |
 | B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
@@ -122,3 +122,24 @@ This batch passes 69/69 macOS desktop tests, all 11 focused ownership/native
 leak checks and 6/6 ASan/UBSan resource contracts. Full native regression again
 matches 519 files with 25 accepted unused-storage warnings, zero differences,
 errors or skipped inputs. The host sources and file layouts are unchanged.
+
+## GDI object batch and environment compatibility
+
+GDI objects now own their surfaces, font instances and custom palette entries;
+selected objects remain borrowed. The default palette derives its borrowed
+entries from the static table rather than entering an owning pointer. Typed
+object construction/destruction retains tombstones and selection checks. Stock
+font owners are emptied before the font library shuts down.
+
+The existing bitmap, drawing-state and palette contracts now run on macOS and
+Windows as well as Linux, with native macOS leak checks. Current local results:
+75/75 complete desktop CTest, 17/17 focused ownership checks (8 native leak
+harnesses reporting zero leaked bytes), 9/9 ASan/UBSan resource contracts and
+519 native regression matches / 25 accepted unused-storage warnings / zero
+differences, errors or skipped inputs.
+
+Windows CI found that the historical `getenv` macro poisoned standard-library
+declarations after `<cstdlib>` was introduced. `PszCompatEnvironment` keeps the
+same Windows SDL/POSIX CRT lookup through an explicit function instead. The
+private platform header and `<stdlib.h>` join both include-order checks. The
+updated Windows build is being qualified; this does not claim completion of B01.

@@ -3,7 +3,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -146,7 +146,7 @@ int main(void) {
     CHECK(SelectObject(hdc, hbmOld) == hbm && SelectObject(hsrc, hsrcOld) == hsrcbm);
     CHECK(DeleteObject(hbm) && DeleteObject(hsrcbm) && DeleteDC(hdc) && DeleteDC(hsrc));
     CHECK(ReleaseDC(NULL, hscreen));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 drawing-state contracts passed");

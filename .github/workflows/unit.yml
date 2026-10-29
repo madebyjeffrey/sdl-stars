@@ -67,8 +67,8 @@ jobs:
           UBSAN_OPTIONS: halt_on_error=1
         run: |
           cmake --preset sdl-sanitize
-          cmake --build --preset sdl-sanitize --target stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs --parallel 2 -- -k 0
-          ctest --test-dir dist/sdl-sanitize -R '^win32_(images|font|print|print_pdf|sdl_resource_(faults|glyphs))$' --output-on-failure
+          cmake --build --preset sdl-sanitize --target stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-compat-bitmap stars-compat-drawing-state stars-compat-palette --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^win32_(images|font|print|print_pdf|bitmap|drawing_state|palette|sdl_resource_(faults|glyphs))$' --output-on-failure
 
   source-witnesses:
     name: Source witnesses (C++20)

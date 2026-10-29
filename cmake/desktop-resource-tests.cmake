@@ -1,6 +1,6 @@
 # Linux already registers these portable contracts in sdl-client.cmake. Keep the
 # same image/font/printing cases on Apple and Windows during ownership changes.
-foreach(STARS_RESOURCE_KIND images font print)
+foreach(STARS_RESOURCE_KIND images font print bitmap drawing_state palette)
     set(STARS_RESOURCE_TARGET stars-resource-${STARS_RESOURCE_KIND})
     add_executable(${STARS_RESOURCE_TARGET} tests/compat/win32_${STARS_RESOURCE_KIND}.c)
     target_link_libraries(${STARS_RESOURCE_TARGET} PRIVATE stars_win32 SDL3::SDL3)
@@ -28,7 +28,7 @@ endif()
 if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
     # leaks inspects the native allocator; ASan uses a separate allocator/check.
     find_program(STARS_LEAKS_EXECUTABLE leaks REQUIRED)
-    foreach(STARS_LEAK_KIND images font print faults glyphs)
+    foreach(STARS_LEAK_KIND images font print faults glyphs bitmap drawing_state palette)
         set(STARS_LEAK_ARGS)
         if(STARS_LEAK_KIND STREQUAL "print")
             list(APPEND STARS_LEAK_ARGS "${CMAKE_BINARY_DIR}/resource-leaks-print-output")
