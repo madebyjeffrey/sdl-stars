@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DialogBoxParamA` stops before dialog initialization if disabling its owner
+  fails. Previously the dialog still received initialization callbacks despite
+  the pending exception. Owner restoration completes before error delivery.
+
 - `FWatchLiveResize` stops painting/presentation after a failed layout or paint
   callback. Previously it continued drawing after layout failure. Presentation
   counters and refresh/resize flags now restore during failure or window

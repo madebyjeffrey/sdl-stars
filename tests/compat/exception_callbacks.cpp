@@ -9,6 +9,7 @@
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 static int cDestroyed;
 static int cUnexpected, cModelessInit, mdModelessFailure;
+static bool fDisableFailure;
 static HWND hwndFailed;
 static HWND hwndQueueOwner;
 struct CallbackGuard { ~CallbackGuard() { ++cDestroyed; } };
@@ -19,6 +20,7 @@ static auto pfnRawDispatch = &DispatchMessageA;
 #include "../../src/ui/win_calls.h"
 
 static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 890);
     if (msg == WM_APP + 40) { CallbackGuard guard; StarsThrowError(starsErrorFile, 777); }
     return DefWindowProc(hwnd, msg, w, l);
 }
@@ -140,6 +142,15 @@ int main() {
     HWND hwndCreated = CreateDialogParamA(wc.hInstance, MAKEINTRESOURCE(IDD_PASSWORD), hwndOwner, FailedModeless, 0);
     CHECK(hwndCreated && IsWindow(hwndCreated) && !FStarsErrorPending() && cModelessInit == cInitSaved + 1);
     CHECK(DestroyWindow(hwndCreated));
+    fDisableFailure = true;
+    cInitSaved = cModelessInit;
+    CHECK(pfnRawDialog(wc.hInstance, MAKEINTRESOURCE(IDD_PASSWORD), hwndOwner, FailedModeless, 0) == -1);
+    CHECK(cModelessInit == cInitSaved && IsWindowEnabled(hwndOwner) && FStarsErrorPending());
+    CHECK(pfnRawDialog(wc.hInstance, MAKEINTRESOURCE(IDD_PASSWORD), hwndOwner, FailedModeless, 0) == -1);
+    CHECK(cModelessInit == cInitSaved && IsWindowEnabled(hwndOwner));
+    try { StarsRethrowPendingError(); CHECK(false); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 890); }
+    fDisableFailure = false;
     CHECK(DestroyWindow(hwndOwner));
     StarsCompatShutdown();
     std::puts("Callback exceptions: modal cleanup, nested ownership, timer and C++ destruction passed");

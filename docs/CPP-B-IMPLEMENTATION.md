@@ -409,3 +409,18 @@ units), warning-free builds and 519 native regression matches / 25 accepted
 unused-storage warnings / zero differences, errors or skipped inputs. No baseline
 or independent reference changed. Final B02 failure-publication checks remain
 active before declaring the checkpoint complete.
+
+
+## B02 resource dialog initialization stops at owner failure
+
+The new `DialogBoxParamA` vector fails before the fix: a failed owner-disable
+callback still increments the dialog initialization count. The implementation
+now restores its owner and returns before creating the dialog, preserving the
+first pending error. A call while that error is already pending starts no work.
+The existing modal failure return values remain intact.
+
+This and the following initialization fixes share a fully qualified batch:
+109/109 macOS CTest (26 native leak checks), 28/28 ASan/UBSan cases, warning-free
+builds, and 519 native regression matches / 25 accepted unused-storage warnings /
+zero differences, errors or skipped inputs. Baselines and independent references
+remain unchanged.
