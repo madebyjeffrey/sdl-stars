@@ -9,7 +9,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Implemented; platform qualification pending | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; final platform matrix remains required. |
+| B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
 | B02: dispatch and callback guards | Active | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
@@ -208,3 +208,34 @@ unused-storage warnings; zero differences/errors/skipped inputs). Independent
 references and all regression baselines remain unchanged. Windows/Linux CI is
 being requalified for the final resource commits. B02 and later checkpoints
 remain required for milestone completion; the PR remains a draft.
+
+
+## B02 registry and dispatch guard batch
+
+File and memory registries retain their original acquire/release spin policy and
+normal unlock boundaries, now through `std::unique_lock`. A fault inside the
+real `_lread` path is caught by its C++ caller, after which the same handle must
+remain usable. A separate scratch binary built with `ff617cb`'s `file.c` catches
+the identical injected error and deadlocks on retry (terminated after three
+seconds). The guarded implementation completes the retry and cleanup. No product
+library is replaced for this comparison.
+
+Dispatch depth and the printer's busy flag are scoped. The callback source now
+includes its shared declarations, with matching `noexcept` specifications. The
+fault harness verifies nested dispatch depth and that a second failure during
+window destruction does not replace an already pending first failure. It builds
+its Unicode filename suffix as UTF-8 rather than depending on Windows CRT argv.
+
+The original file-sharing, 64-bit size and heap-handle contracts now run on
+macOS/Windows as well as Linux. Windows SDL fixtures truncate through the native
+file service; the independent SDK fixture retains its SDK calls and expectations.
+Results: 95/95 full macOS CTest, 37/37 focused ownership checks including 18
+native leak checks, 19/19 ASan/UBSan contracts, no new warnings, and 519 native
+regression matches / 25 accepted unused-storage warnings / no differences,
+errors or skipped inputs. Baselines remain unchanged.
+
+All 16 Linux/Windows CI checks pass for the final B01 commit `ff617cb`, including
+Windows Unicode workflows, native/host regressions, host units, source witnesses,
+Linux ASan/UBSan/LSan and tutorial checks. B01 is complete. B02 remains active:
+modal scopes, deferred control lifetimes and in-flight failure handling remain
+required before its completion gate.

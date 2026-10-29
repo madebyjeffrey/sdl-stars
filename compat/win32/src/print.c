@@ -277,13 +277,11 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
 }
 int WINAPI Escape(HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
     COMPATPRINT *lp = LpCompatPrinter(hdc);
-    int ret;
     if (!lp) { SetLastError(ERROR_INVALID_HANDLE); return SP_ERROR; }
     if (lp->fEscaping) { SetLastError(ERROR_BUSY); return SP_ERROR; }
     // The PDF destination picker dispatches caller timers. Keep this DC alive
     // until its synchronous escape returns, even if a timer tries to delete it.
+    StarsRestore<BOOL> escaping(lp->fEscaping);
     lp->fEscaping = TRUE;
-    ret = IEscapePrinter(lp, hdc, idEscape, cb, pszIn, lpOut);
-    lp->fEscaping = FALSE;
-    return ret;
+    return IEscapePrinter(lp, hdc, idEscape, cb, pszIn, lpOut);
 }

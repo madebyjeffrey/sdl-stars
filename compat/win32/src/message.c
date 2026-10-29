@@ -16,6 +16,14 @@ typedef struct COMPATMESSAGE {
 static COMPATMESSAGE *lpFirst, *lpLast;
 static int cDispatch;
 
+class COMPATDISPATCHSCOPE {
+public:
+    COMPATDISPATCHSCOPE() noexcept { cDispatch++; }
+    ~COMPATDISPATCHSCOPE() noexcept { cDispatch--; }
+    COMPATDISPATCHSCOPE(const COMPATDISPATCHSCOPE &) = delete;
+    COMPATDISPATCHSCOPE &operator=(const COMPATDISPATCHSCOPE &) = delete;
+};
+
 int CCompatDispatch(void) { return cDispatch; }
 
 BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -210,14 +218,10 @@ VOID WINAPI PostQuitMessage(int code) {
 }
 
 LRESULT WINAPI CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    LRESULT lr;
-
     if (!SDL_IsMainThread() || !lpfn)
         return 0;
-    cDispatch++;
-    lr = CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
-    cDispatch--;
-    return lr;
+    COMPATDISPATCHSCOPE dispatch;
+    return CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
 }
 
 LRESULT WINAPI SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -234,9 +238,8 @@ LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
     if (!lpmsg || !SDL_IsMainThread() || lpmsg->message == WM_QUIT) return 0;
     if (lpmsg->message == WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
-        cDispatch++;
+        COMPATDISPATCHSCOPE dispatch;
         CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
-        cDispatch--;
         return 0;
     }
     if (!lpmsg->hwnd) return 0;

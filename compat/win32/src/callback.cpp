@@ -1,9 +1,6 @@
 // Contain exceptions before returning through foreign SDL/native callbacks.
-#include <windows.h>
-#include "errors.h"
+#include "internal.h"
 #include <new>
-
-void CompatAbortCallback(HWND hwnd);
 
 static void CaptureCallbackError(HWND hwnd) noexcept {
     StarsCapturePendingError();

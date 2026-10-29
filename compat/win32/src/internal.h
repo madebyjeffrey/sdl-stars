@@ -293,9 +293,9 @@ char *PszCompatFileUri(const char *pszPath);
 BOOL FCompatOpenDocument(const char *pszPath);
 
 // C++ callback thunks return errors through pending state, never through C.
-LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick);
-HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd);
+LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l) noexcept;
+void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) noexcept;
+HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept;
 
 
 #endif
