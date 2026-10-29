@@ -290,3 +290,20 @@ units), no new warnings, and 519 native regression matches / 25 accepted
 unused-storage warnings / no differences, errors or skipped inputs. Host runtime
 is unchanged from the preceding fully verified 22/22 host / 519-match batch.
 B02 remains active for other modal/menu scopes and deferred control lifetimes.
+
+
+## B02 popup failure stops command delivery
+
+A production reproduction selected command 73, then threw from
+`WM_UNINITMENUPOPUP`: the old result was `TrackPopupMenu=1 pending-error=1
+queued-command=1 command=73`. `TrackMenu` now finishes popup/capture/notification
+cleanup, then stops command/ID delivery if failure is pending. The identical
+reproduction reports `TrackPopupMenu=0 pending-error=1 queued-command=0`.
+
+The permanent fault harness fails before the fix and passes afterwards for both
+posted-command and return-ID modes. It checks restored child capture, dispatch
+depth and first-error delivery, then proves normal selection still posts command
+73. Results: 97/97 full macOS CTest (19 native leak checks), 21/21 ASan/UBSan
+cases, warning-free builds and 519 native regression matches / 25 accepted
+unused-storage warnings / no differences, errors or skipped inputs. Baselines
+and independent references remain unchanged. B02 remains active.

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <string>
 
-static bool fFailRead, fCleanupFailure;
+static bool fFailRead, fCleanupFailure, fMenuFailure;
 static int cNested, cDepthErrors;
 int64_t StarsTest_CbReadNativeFile(NATIVEFILE *pf, void *rgb, size_t cb) {
     if (fFailRead) { fFailRead = false; StarsThrowError(starsErrorFile, 417); }
@@ -22,6 +22,7 @@ static LRESULT CALLBACK GuardProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         cNested++;
     }
     if (msg == WM_DESTROY && fCleanupFailure) StarsThrowError(starsErrorMemory, 418);
+    if (msg == WM_UNINITMENUPOPUP && fMenuFailure) StarsThrowError(starsErrorFile, 417);
     return DefWindowProcA(hwnd, msg, w, l);
 }
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -31,7 +32,11 @@ int main(int argc, char **argv) {
     char rgb[8] = {};
     bool fCaught = false;
     WNDCLASSA wc = {};
-    HWND hwnd;
+    HWND hwnd, hwndChild;
+    HMENU hmenu;
+    MSG msg = {};
+    UINT rgflags[2] = {0, TPM_RETURNCMD};
+    int i;
     CHECK(argc == 2 && !FStarsErrorPending());
     // Build the Unicode suffix as UTF-8 here; Windows CRT argv may use an ACP.
     std::string szPath = std::string(argv[1]) + "-Ω.dat";
@@ -70,8 +75,30 @@ int main(int argc, char **argv) {
     } catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
     CHECK(fCaught && !IsWindow(hwnd) && !FStarsErrorPending() && CCompatDispatch() == 0);
     fCleanupFailure = false;
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Popup failure", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 240, 160, NULL, NULL, NULL, NULL);
+    CHECK(hwnd);
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "Saved capture", WS_CHILD | WS_VISIBLE, 0, 0, 80, 24, hwnd, (HMENU)(UINT_PTR)74, NULL, NULL);
+    hmenu = CreatePopupMenu(); CHECK(hwndChild && hmenu && AppendMenuA(hmenu, MF_STRING, 73, "Choose"));
+    SetCapture(hwndChild); CHECK(GetCapture() == hwndChild);
+    fMenuFailure = true;
+    for (i = 0; i < 2; i++) {
+        PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1); PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 1);
+        CHECK(!TrackPopupMenu(hmenu, rgflags[i], 0, 0, 0, hwnd, NULL));
+        CHECK(FStarsErrorPending() && CCompatDispatch() == 0 && GetCapture() == hwndChild);
+        CHECK(!PeekMessageA(&msg, hwnd, WM_COMMAND, WM_COMMAND, PM_REMOVE));
+        fCaught = false;
+        try { StarsRethrowPendingError(); }
+        catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+        CHECK(fCaught && !FStarsErrorPending());
+    }
+    fMenuFailure = false;
+    PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1); PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 1);
+    CHECK(TrackPopupMenu(hmenu, 0, 0, 0, 0, hwnd, NULL));
+    CHECK(PeekMessageA(&msg, hwnd, WM_COMMAND, WM_COMMAND, PM_REMOVE) && LOWORD(msg.wParam) == 73);
+    CHECK(GetCapture() == hwndChild && !FStarsErrorPending());
+    ReleaseCapture(); CHECK(DestroyMenu(hmenu) && DestroyWindow(hwnd));
     StarsCompatShutdown();
     CHECK(!FStarsErrorPending() && CCompatDispatch() == 0);
-    std::puts("Held-lock unwinding/retry, nested dispatch and primary failure through cleanup passed");
+    std::puts("Held-lock retries, scoped dispatch, primary failures and popup command suppression passed");
     return 0;
 }

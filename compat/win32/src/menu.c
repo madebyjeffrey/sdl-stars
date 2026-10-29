@@ -712,6 +712,8 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     }
     lptrack = track.lpPrevious;
     if (hbar && LpCompatWindow(hwnd)) { hwnd->iMenuHot = -1; hwnd->fMenuDirty = TRUE; FCompatPresent(hwnd); }
+    // Popup teardown can fail after selection; that operation must not issue a command.
+    if (FStarsErrorPending()) return FALSE;
     if (!track.fFailed && track.id != 0 && !(flags & (TPM_NONOTIFY | TPM_RETURNCMD)) && IsWindow(hwnd))
         PostMessageA(hwnd, WM_COMMAND, MAKEWPARAM(track.id, 0), 0);
     return flags & TPM_RETURNCMD ? (BOOL)track.id : !track.fFailed;

@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TrackMenu` suppresses command delivery and selected-ID returns when popup
+  teardown fails. Previously a failing `WM_UNINITMENUPOPUP` callback still queued
+  `WM_COMMAND` after selection. Capture and popup cleanup finish before failure
+  delivery; normal menu selection is unchanged.
+
 - `FFileDialog` restores its owner, focus and native-dialog counter and frees
   chooser buffers when a C++ adapter throws. Manual cleanup previously left the
   owner disabled with a native dialog still counted after unwinding. Callback

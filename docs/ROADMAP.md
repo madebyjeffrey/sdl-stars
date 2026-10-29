@@ -15,6 +15,8 @@ Native file selection and resource-backed modal dialogs now scope window,
 owner/focus and chooser-buffer cleanup. A chooser-adapter fault reproduces the
 old disabled-owner/stale-counter state and verifies restoration, cancellation
 and cleanup-failure delivery without opening a native picker.
+Popup teardown failure now prevents a queued command or selected-ID return;
+actual failure/capture tests also retain ordinary successful command delivery.
 Remaining modal/menu and reentrant control lifetime guards are in progress.
 
 ## C++ migration
