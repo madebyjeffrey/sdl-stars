@@ -34,8 +34,8 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
             if (!rg[i].pszName || !rg[i].pszPattern) goto done;
         }
     }
-    if (hwndOwner && hwndOwner->lpWindow)
-        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+    if (hwndOwner && hwndOwner->lpWindow.get())
+        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
     iResult = IChooseCocoaFile(lpWindow, fSave, pszTitleUtf, pszFolder, pszName, rg, cFilter,
                              lpiFilter, pszPath, cbPath, FPumpCocoaChooser, hwndOwner);
 done:

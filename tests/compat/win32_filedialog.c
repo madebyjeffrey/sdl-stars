@@ -142,7 +142,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                 HWND child;
                 for (child = GetWindow(dlg, GW_CHILD); child; child = GetWindow(child, GW_HWNDNEXT)) UpdateWindow(child);
                 EXPECT(UpdateWindow(dlg) && FCompatPresent(dlg));
-                EXPECT(SDL_SaveBMP(dlg->lpComposite, getenv("STARS_FILE_DIALOG_CAPTURE")));
+                EXPECT(SDL_SaveBMP(dlg->lpComposite.get(), getenv("STARS_FILE_DIALOG_CAPTURE")));
             }
             EXPECT(SetWindowText(GetDlgItem(dlg, 0x440), "sub"));
             SetFocus(GetDlgItem(dlg, 0x440));

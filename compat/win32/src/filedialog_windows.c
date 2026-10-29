@@ -30,8 +30,8 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
             rg[i].pszPattern = rgfilter[i].pszPattern;
         }
     }
-    if (hwndOwner && hwndOwner->lpWindow)
-        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+    if (hwndOwner && hwndOwner->lpWindow.get())
+        lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
     iResult = IChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
                                 lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
     free(rg);

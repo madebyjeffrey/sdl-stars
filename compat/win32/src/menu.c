@@ -1,18 +1,20 @@
 #include "internal.h"
 #include "ownership.h"
 #include <limits.h>
+#include <new>
+#include <utility>
 #include <stdlib.h>
 #include <string.h>
 
 typedef struct COMPATMENUITEM {
     UINT flags;
     UINT_PTR id;
-    char *psz;
+    NATIVEOWNER<char, SDL_free> psz;
     HMENU hsub;
 } COMPATMENUITEM;
 struct HMENU__ {
     BOOL fAlive;
-    COMPATMENUITEM *rgitem;
+    std::unique_ptr<COMPATMENUITEM[]> rgitem;
     int citem;
     HMENU hparent, hnext;
     HWND hwndOwner;
@@ -56,7 +58,7 @@ static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
     return TRUE;
 }
 HMENU WINAPI CreatePopupMenu(void) {
-    HMENU lp = (HMENU)(calloc(1, sizeof(*lp)));
+    HMENU lp = new (std::nothrow) HMENU__{};
     if (!lp) return NULL;
     lp->fAlive = TRUE; lp->hnext = hmenus; hmenus = lp;
     return lp;
@@ -77,8 +79,9 @@ UINT WINAPI GetMenuItemID(HMENU hmenu, int i) {
 }
 BOOL WINAPI InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = NULL, hp;
-    COMPATMENUITEM item = {}, *rg;
-    int i, cDepth = 0;
+    COMPATMENUITEM item = {};
+    std::unique_ptr<COMPATMENUITEM[]> rg;
+    int i, j, cDepth = 0;
     if (!lp || (flags & ~(MF_BYPOSITION | MF_POPUP | MF_SEPARATOR | MF_CHECKED | MF_GRAYED | MF_DISABLED)))
         return FALSE;
     if (pos == UINT_MAX) i = lp->citem;
@@ -94,18 +97,17 @@ BOOL WINAPI InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
                 if (hp == hsub || ++cDepth >= 64) return FALSE;
             if (!FMenuDepth(hsub, cDepth)) return FALSE;
         }
-        item.psz = SDL_strdup(psz ? psz : "");
+        item.psz.reset(SDL_strdup(psz ? psz : ""));
         if (!item.psz) return FALSE;
     }
-    if (lp->citem == INT_MAX || (size_t)lp->citem + 1 > SIZE_MAX / sizeof(*rg)) {
-        SDL_free(item.psz); return FALSE;
-    }
-    rg = (COMPATMENUITEM *)(realloc(lp->rgitem, ((size_t)lp->citem + 1) * sizeof(*rg)));
-    if (!rg) { SDL_free(item.psz); return FALSE; }
+    if (lp->citem == INT_MAX || (size_t)lp->citem + 1 > SIZE_MAX / sizeof(COMPATMENUITEM)) return FALSE;
+    rg.reset(new (std::nothrow) COMPATMENUITEM[(size_t)lp->citem + 1]{});
+    if (!rg) return FALSE;
     item.id = id; item.flags = flags & ~MF_BYPOSITION; item.hsub = hsub;
-    lp->rgitem = rg;
-    memmove(&rg[i + 1], &rg[i], (size_t)(lp->citem - i) * sizeof(*rg));
-    rg[i] = item; lp->citem++;
+    // Finish all allocations before moving installed labels or submenu links.
+    for (j = 0; j < lp->citem; j++) rg[j < i ? j : j + 1] = std::move(lp->rgitem[j]);
+    rg[i] = std::move(item); lp->citem++;
+    lp->rgitem = std::move(rg);
     if (hsub) hsub->hparent = lp;
     return TRUE;
 }
@@ -121,9 +123,8 @@ BOOL WINAPI DestroyMenu(HMENU hmenu) {
     lp->hwndOwner = NULL;
     for (i = 0; i < lp->citem; i++) {
         if (lp->rgitem[i].hsub) DestroyMenu(lp->rgitem[i].hsub);
-        SDL_free(lp->rgitem[i].psz);
     }
-    free(lp->rgitem); lp->rgitem = NULL; lp->citem = 0; lp->hparent = NULL;
+    lp->rgitem.reset(); lp->citem = 0; lp->hparent = NULL;
     return TRUE;
 }
 static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
@@ -136,9 +137,9 @@ static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
         if (fDestroy) DestroyMenu(lpitem->hsub);
         else if (LpMenu(lpitem->hsub)) lpitem->hsub->hparent = NULL;
     }
-    SDL_free(lpitem->psz);
-    memmove(&lp->rgitem[i], &lp->rgitem[i + 1], (size_t)(lp->citem - i - 1) * sizeof(*lpitem));
-    lp->citem--;
+    lpitem->psz.reset();
+    for (; i + 1 < lp->citem; i++) lp->rgitem[i] = std::move(lp->rgitem[i + 1]);
+    lp->rgitem[--lp->citem] = COMPATMENUITEM{};
     return TRUE;
 }
 BOOL WINAPI DeleteMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, TRUE); }
@@ -180,16 +181,16 @@ int WINAPI GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     int i;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
-    c = strlen(lpitem->psz);
+    c = strlen(lpitem->psz.get());
     if (!psz || cch <= 0) return (int)(((c) < ((size_t)INT_MAX)) ? (c) : ((size_t)INT_MAX));
-    c = CchUtf8Prefix(lpitem->psz, (size_t)cch - 1);
-    memcpy(psz, lpitem->psz, c); psz[c] = 0;
+    c = CchUtf8Prefix(lpitem->psz.get(), (size_t)cch - 1);
+    memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
     return (int)c;
 }
 void CompatShutdownMenus(void) {
     HMENU lp, next;
     for (lp = hmenus; lp; lp = lp->hnext) if (lp->fAlive) DestroyMenu(lp);
-    for (lp = hmenus; lp; lp = next) { next = lp->hnext; free(lp); }
+    for (lp = hmenus; lp; lp = next) { next = lp->hnext; delete lp; }
     hmenus = NULL;
 }
 
@@ -214,7 +215,7 @@ int CyCompatMenuBar(HWND hwnd) {
     NATIVEOWNER<RECT, free> rgrcOwner;
 
     if (!hwnd || hwnd->hwndParent || !(lp = LpMenu(hwnd->hmenu)) || lp->citem == 0) return 0;
-    if (!SDL_GetWindowSize(hwnd->lpWindow, &cx, &cy)) return 0;
+    if (!SDL_GetWindowSize(hwnd->lpWindow.get(), &cx, &cy)) return 0;
     if (!hwnd->fMenuLayoutDirty && hwnd->cxMenu == cx) return hwnd->cyMenu;
     rgrcOwner.reset((RECT *)calloc((size_t)lp->citem, sizeof(*rgrc))); rgrc = rgrcOwner.get();
     if (!rgrc) return 0;
@@ -224,7 +225,7 @@ int CyCompatMenuBar(HWND hwnd) {
     GetTextMetricsA(hdc, &tm); cy = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         SetRect(&rc, 0, 0, 0, 0);
-        DrawTextA(hdc, lp->rgitem[i].psz ? lp->rgitem[i].psz : "", -1, &rc, DT_SINGLELINE | DT_CALCRECT);
+        DrawTextA(hdc, lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : "", -1, &rc, DT_SINGLELINE | DT_CALCRECT);
         dx = (((cx) < (StarsMax(18, rc.right + 18))) ? (cx) : (StarsMax(18, rc.right + 18)));
         if (x && dx > cx - x) { x = 0; y += cy; }
         if (y > 32000 - cy) break;
@@ -273,7 +274,7 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
                 if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
             }
             SetTextColor(hdc, GetSysColor(fDisabled ? COLOR_GRAYTEXT : fSelected ? COLOR_HIGHLIGHTTEXT : COLOR_MENUTEXT));
-            DrawTextA(hdc, lp->rgitem[i].psz ? lp->rgitem[i].psz : "", -1, &rc, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+            DrawTextA(hdc, lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : "", -1, &rc, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
         }
         SelectObject(hdc, hfont); SelectObject(hdc, hOld); DeleteDC(hdc);
         if (hwnd->hbmpMenu) DeleteObject(hwnd->hbmpMenu);
@@ -333,7 +334,7 @@ typedef struct COMPATPOPUP {
     COMPATTRACK *lptrack;
     HMENU hmenu;
     HWND hwnd;
-    RECT *rgrc;
+    NATIVEARRAYOWNER<RECT, std::free> rgrc;
     int cItem, iSel, cx, cy;
 } COMPATPOPUP;
 struct COMPATTRACK {
@@ -394,14 +395,14 @@ static void PopupPaint(COMPATPOPUP *lppop) {
             MoveToEx(hdc, rc.right - 12, y - 4, NULL); LineTo(hdc, rc.right - 8, y); LineTo(hdc, rc.right - 12, y + 4);
         }
         SelectObject(hdc, hpenOld); DeleteObject(hpen);
-        psz = SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz : "");
+        NATIVEOWNER<char, SDL_free> pszOwner(SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : ""));
+        psz = pszOwner.get();
         if (!psz) continue;
         pszTab = strchr(psz, '\t');
         if (pszTab) *pszTab++ = 0;
         text = rc; text.left += 24; text.right -= 24;
         DrawTextA(hdc, psz, -1, &text, DT_SINGLELINE | DT_VCENTER);
         if (pszTab) DrawTextA(hdc, pszTab, -1, &text, DT_SINGLELINE | DT_VCENTER | DT_RIGHT | DT_NOPREFIX);
-        SDL_free(psz);
     }
     SelectObject(hdc, hfont);
     EndPaint(lppop->hwnd, &ps);
@@ -421,7 +422,7 @@ static void ClosePopups(COMPATTRACK *lpt, int cKeep) {
     while (lpt->cLevel > cKeep) {
         lp = &lpt->rgpopup[--lpt->cLevel];
         if (IsWindow(lp->hwnd)) DestroyWindow(lp->hwnd);
-        free(lp->rgrc); lp->rgrc = NULL; lp->hwnd = NULL;
+        lp->rgrc.reset(); lp->hwnd = NULL;
         if (!(lpt->flags & TPM_NONOTIFY) && IsWindow(lpt->hwndOwner))
             SendMessageA(lpt->hwndOwner, WM_UNINITMENUPOPUP, (WPARAM)lp->hmenu, 0);
     }
@@ -445,24 +446,24 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     lp = LpMenu(hmenu);
     if (!lp || !IsWindow(lpt->hwndOwner) || lpt->fDone || lp->citem == 0) return FALSE;
     lppop = &lpt->rgpopup[lpt->cLevel];
-    memset(lppop, 0, sizeof(*lppop));
+    *lppop = COMPATPOPUP{};
     lppop->lptrack = lpt; lppop->hmenu = lp; lppop->iSel = -1; lppop->cItem = lp->citem;
-    lppop->rgrc = (RECT *)(calloc((size_t)lp->citem, sizeof(RECT)));
+    lppop->rgrc.reset((RECT *)calloc((size_t)lp->citem, sizeof(RECT)));
     if (!lppop->rgrc) return FALSE;
     hdc = GetDC(NULL);
-    if (!hdc) { free(lppop->rgrc); lppop->rgrc = NULL; return FALSE; }
+    if (!hdc) { lppop->rgrc.reset(); return FALSE; }
     hfont = SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
     GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         size.cx = 0;
-        if (lp->rgitem[i].psz && !GetTextExtentPoint32A(hdc, lp->rgitem[i].psz, (int)strlen(lp->rgitem[i].psz), &size)) break;
+        if (lp->rgitem[i].psz && !GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), (int)strlen(lp->rgitem[i].psz.get()), &size)) break;
         if (size.cx > 8100 || cy > 32000 - cyRow) break;
         cx = StarsMax(cx, size.cx + 72);
         dy = lp->rgitem[i].flags & MF_SEPARATOR ? 8 : cyRow;
         SetRect(&lppop->rgrc[i], 2, cy, 0, cy + dy); cy += dy;
     }
     SelectObject(hdc, hfont); ReleaseDC(NULL, hdc);
-    if (i != lp->citem) { free(lppop->rgrc); lppop->rgrc = NULL; return FALSE; }
+    if (i != lp->citem) { lppop->rgrc.reset(); return FALSE; }
     cy += 2; lppop->cx = cx; lppop->cy = cy;
     for (i = 0; i < lp->citem; i++) lppop->rgrc[i].right = cx - 2;
     if (lpt->cLevel == 0) {
@@ -478,16 +479,16 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         yWide = ((((int64_t)bounds.y) > ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))))) ? ((int64_t)bounds.y) : ((((yWide) < ((int64_t)bounds.y + StarsMax(0, bounds.h - cy))) ? (yWide) : ((int64_t)bounds.y + StarsMax(0, bounds.h - cy)))));
     }
     if (xWide < INT_MIN || xWide > INT_MAX || yWide < INT_MIN || yWide > INT_MAX) {
-        free(lppop->rgrc); lppop->rgrc = NULL; return FALSE;
+        lppop->rgrc.reset(); return FALSE;
     }
     x = (int)xWide; y = (int)yWide;
     wc.lpfnWndProc = PopupProc; wc.cbWndExtra = sizeof(LONG_PTR); wc.lpszClassName = "StarsCompatPopup";
     RegisterClassA(&wc);
     lppop->hwnd = CreateWindowExA(WS_EX_TOPMOST | WS_EX_NOACTIVATE, wc.lpszClassName, "", WS_POPUP, x, y, cx, cy,
                                   lpt->hwndOwner, NULL, NULL, lppop);
-    if (!lppop->hwnd) { free(lppop->rgrc); lppop->rgrc = NULL; return FALSE; }
+    if (!lppop->hwnd) { lppop->rgrc.reset(); return FALSE; }
     lpt->cLevel++;
-    SDL_SetWindowFocusable(lppop->hwnd->lpWindow, false);
+    SDL_SetWindowFocusable(lppop->hwnd->lpWindow.get(), false);
     ShowWindow(lppop->hwnd, SW_SHOW);
     InvalidateRect(lppop->hwnd, NULL, FALSE); UpdateWindow(lppop->hwnd);
     return TRUE;
@@ -529,7 +530,7 @@ static void ActivatePopup(COMPATTRACK *lpt, int iLevel, BOOL fKeyboard) {
     }
 }
 static BOOL FMenuMnemonic(const COMPATMENUITEM *lpitem, WPARAM vk) {
-    const char *psz = lpitem->psz;
+    const char *psz = lpitem->psz.get();
     if (!psz || vk > 255) return FALSE;
     for (; *psz; psz++) if (*psz == '&' && psz[1]) {
         if (psz[1] == '&') { psz++; continue; }
@@ -787,7 +788,7 @@ BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain) {
                 if (!fGain && !lpFocus) { lpt->fDone = TRUE; CompatFocusWindow(NULL); }
                 return TRUE;
             }
-            if (!fGain && hwnd == HwndCompatRoot(lpt->hwndOwner) && hp->lpWindow == lpFocus) return TRUE;
+            if (!fGain && hwnd == HwndCompatRoot(lpt->hwndOwner) && hp->lpWindow.get() == lpFocus) return TRUE;
         }
     }
     return FALSE;

@@ -120,7 +120,7 @@ int main(void) {
     CHECK(GetClientRect(hwnd, &rc));
     hscreen = GetDC(hwnd); CHECK(hscreen && FillRect(hscreen, &rc, hbr)); CHECK(ReleaseDC(hwnd, hscreen)); CHECK(DeleteObject(hbr));
     SetCursor(hcur); CompatCursorPoint(hwnd, 50, 50); CHECK(FCompatPresent(hwnd));
-    lpComposite = hwnd->lpComposite; CHECK(lpComposite);
+    lpComposite = hwnd->lpComposite.get(); CHECK(lpComposite);
     for (y = 0; y < 32; y++) for (x = 0; x < 32; x++) {
         expected = CrExpected(rgImageManifest[19].rgb, TRUE, x, y, RGB(91, 47, 163));
         pixel = (BYTE *)lpComposite->pixels + (50 - lp->yHot + y) * lpComposite->pitch + (50 - lp->xHot + x) * 4;

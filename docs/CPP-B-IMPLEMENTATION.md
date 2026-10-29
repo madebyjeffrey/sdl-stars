@@ -9,7 +9,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining menu/window/audio ownership and library-context lifetime integration are still in scope. |
+| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Audio, menu and window owners are being qualified; library-context lifetime integration remains in scope. |
 | B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
@@ -143,3 +143,42 @@ declarations after `<cstdlib>` was introduced. `PszCompatEnvironment` keeps the
 same Windows SDL/POSIX CRT lookup through an explicit function instead. The
 private platform header and `<stdlib.h>` join both include-order checks. The
 updated Windows build is being qualified; this does not claim completion of B01.
+
+
+## Audio ownership and platform environment follow-up
+
+A typed audio state owns its alert stream and only the SDL audio subsystem it
+initialized. Cleanup closes the stream before releasing that subsystem; an
+externally initialized subsystem remains live. Dummy-device checks cover actual
+queued sample validity, repeated alerts, restart, muted alerts and unavailable
+audio. The audio batch passes 83/83 full macOS CTest, 13/13 ASan/UBSan ownership
+contracts, all 12 native leak checks and 519 native regression matches with
+25 accepted unused-storage warnings, no differences/errors or skipped inputs.
+
+Windows compiled after the environment macro removal, but three existing client
+workflows exposed narrow-CRT reads of UTF-8 environment paths in harnesses that
+previously inherited that macro. Those former users now explicitly call
+`PszCompatEnvironment`, including shared workflow headers. The original Unicode
+path/name assertions remain unchanged; Windows requalification is required.
+
+
+## Menu and native window batch
+
+Menu items own copied labels in a typed array; insertion completes allocations
+before moving the installed items. Failure retains the prior labels/order and
+does not attach the proposed submenu. Removal moves items without duplicating
+ownership. Submenu handle trees retain their existing attach/detach and tombstone
+rules. Popup frames own their rectangle storage through nested callbacks.
+
+Windows own their SDL window, renderer, texture and canvas/composite surfaces.
+A retained dialog sequence explicitly takes and returns those owners. Existing
+native detach work, logical destruction, text-input shutdown, release order and
+stale HWND tokens remain unchanged. Native deleter symbols keep member types
+identical across private SDL test substitutions.
+
+This batch passes 89/89 complete macOS CTest, 31/31 focused ownership contracts
+including 15 native leak checks, and 16/16 ASan/UBSan ownership contracts. All
+519 native regression files match (25 accepted unused-storage warnings, no
+differences/errors or skipped inputs). Builds introduce no warnings. B01 still
+requires library-context lifetime integration and the remaining cleanup scopes;
+these results do not complete the later B checkpoints.

@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
                               hwnd, (HMENU)(INT_PTR)9, NULL, NULL);
     hwndOwned = CreateWindow(wc.lpszClassName, "Owned", WS_POPUP | WS_VISIBLE, 20, 20, 60, 50, hwnd, NULL, NULL, NULL);
     CHECK(hwnd && hwndChild && hwndNested && hwndHidden && hwndOwned);
-    CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow), "Frame \"quote\" \\ \342\202\254\r\n"));
+    CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow.get()), "Frame \"quote\" \\ \342\202\254\r\n"));
     id = StarsCompatWindowId(hwnd); idChild = StarsCompatWindowId(hwndChild); idNested = StarsCompatWindowId(hwndNested);
     CHECK(id != 0 && idChild > id && idNested > idChild);
     SetFocus(hwndChild); SetCapture(hwndChild);
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     CHECK(GetWindowText(GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nAction"));
     CHECK(strstr(sz, "WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON") && strstr(sz, "Control kind: 1 (button)"));
     CHECK(SetWindowText(hwnd, "Caf\303\251"));
-    CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow), "Caf\303\251"));
+    CHECK(!strcmp(SDL_GetWindowTitle(LpCompatWindow(hwnd)->lpWindow.get()), "Caf\303\251"));
     CHECK(GetWindowText(hwnd, sz, sizeof(sz)) == 5 && !strcmp(sz, "Caf\303\251"));
     SetWindowText(hwndChild, "Updated");
     SendMessage(GetDlgItem(hwndViewer, 3), BM_CLICK, 0, 0);
@@ -164,8 +164,8 @@ int main(int argc, char **argv) {
     CHECK(GetWindowText(GetDlgItem(hwndViewer, 2), sz, sizeof(sz)) && strstr(sz, "Text:\r\nUpdated"));
     UpdateWindow(hwndViewer);
     for (hwndPaint = GetWindow(hwndViewer, GW_CHILD); hwndPaint; hwndPaint = GetWindow(hwndPaint, GW_HWNDNEXT)) UpdateWindow(hwndPaint);
-    CHECK(FCompatPresent(hwndViewer) && LpCompatWindow(hwndViewer)->lpComposite);
-    CHECK(SDL_ReadSurfacePixel(LpCompatWindow(hwndViewer)->lpComposite, 0, 0, &r, &g, &b, &a));
+    CHECK(FCompatPresent(hwndViewer) && LpCompatWindow(hwndViewer)->lpComposite.get());
+    CHECK(SDL_ReadSurfacePixel(LpCompatWindow(hwndViewer)->lpComposite.get(), 0, 0, &r, &g, &b, &a));
     CHECK(RGB(r, g, b) == GetSysColor(COLOR_BTNFACE));
     CHECK(DestroyWindow(hwndViewer) && !StarsCompatResolveWindow(idViewer));
     // The diagnostic chord must not forward the game's F12 turn-generation shortcut.

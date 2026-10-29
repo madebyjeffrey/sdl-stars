@@ -16,7 +16,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_TIMER) {
         cTicks++;
         if (IsWindowEnabled(hwnd)) { fputs("Portal owner was not modal\n", stderr); exit(2); }
-        if (SDL_GetWindowFlags(hwnd->lpWindow) & (SDL_WINDOW_NOT_FOCUSABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) {
+        if (SDL_GetWindowFlags(hwnd->lpWindow.get()) & (SDL_WINDOW_NOT_FOCUSABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) {
             fputs("Portal changed native owner visibility/focusability\n", stderr); exit(2);
         }
         if (iAction == 1) { iAction = 0; PostQuitMessage(73); }
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     CHECK(RegisterClassA(&wc));
     hwndOwner = CreateWindow(wc.lpszClassName, "Portal owner", WS_POPUP | WS_VISIBLE, 10, 10, 200, 150, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwndOwner && SetTimer(hwndOwner, 1, 10, NULL));
-    CHECK(SDL_SetWindowFullscreen(hwndOwner->lpWindow, true));
+    CHECK(SDL_SetWindowFullscreen(hwndOwner->lpWindow.get(), true));
     Init(&ofn, szFile, "Portal unicode", argv[1]);
     CHECK(GetOpenFileNameA(&ofn) && cTicks != 0 && IsWindowEnabled(hwndOwner));
     CHECK(strcmp(szFile + ofn.nFileOffset, "caf\xc3\xa9-\xce\xa9.m1") == 0 && strcmp(szFile + ofn.nFileExtension, "m1") == 0);
@@ -66,18 +66,18 @@ int main(int argc, char **argv) {
     CHECK(hwndOwner->cNativeFileDialogs == 0);
     /* Exercise SDL's exported-handle contract without requiring a compositor
        or using the user's portal bus. Include a handle longer than an XID. */
-    CHECK(SDL_SetStringProperty(SDL_GetWindowProperties(hwndOwner->lpWindow),
+    CHECK(SDL_SetStringProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()),
           SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING,
           "stars-export-abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz"));
     Init(&ofn, szFile, "Portal Wayland parent", argv[1]); CHECK(GetOpenFileNameA(&ofn));
-    CHECK(SDL_ClearProperty(SDL_GetWindowProperties(hwndOwner->lpWindow),
+    CHECK(SDL_ClearProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()),
           SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING));
     CHECK(hwndOwner->cNativeFileDialogs == 0);
     Init(&ofn, szFile, "Portal early", argv[1]); CHECK(GetOpenFileNameA(&ofn));
     Init(&ofn, szFile, "Portal cancel", argv[1]); strcpy(szFile, "unchanged");
     CHECK(!GetOpenFileNameA(&ofn) && CommDlgExtendedError() == 0 && strcmp(szFile, "unchanged") == 0 && cPrompts == 0);
     CHECK(hwndOwner->cNativeFileDialogs == 0 && IsWindowEnabled(hwndOwner) &&
-          (SDL_GetWindowFlags(hwndOwner->lpWindow) & SDL_WINDOW_FULLSCREEN));
+          (SDL_GetWindowFlags(hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN));
     Init(&ofn, szFile, "Portal save", argv[1]); ofn.Flags = OFN_NOCHANGEDIR; ofn.lpstrDefExt = "r1";
     CHECK(GetSaveFileNameA(&ofn) && strcmp(szFile + ofn.nFileOffset, "new race.r1") == 0 && access(szFile, F_OK) != 0);
     Init(&ofn, szFile, "Portal retry", argv[1]); iAction = 3; cPrompts = 0;

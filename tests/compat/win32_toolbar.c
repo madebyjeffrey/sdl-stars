@@ -192,8 +192,8 @@ int main(void) {
     rc = rcSplit; MapWindowPoints(htb, NULL, (POINT *)&rc, 2);
     CHECK(rcTip.left == rc.left && rcTip.top == rc.bottom + 2 && GetFocus() == hwndFocus);
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy")) {
-        CHECK(SDL_GetWindowFlags(hwndTip->lpWindow) & SDL_WINDOW_TOOLTIP);
-        CHECK(SDL_GetWindowParent(hwndTip->lpWindow) == hwnd->lpWindow);
+        CHECK(SDL_GetWindowFlags(hwndTip->lpWindow.get()) & SDL_WINDOW_TOOLTIP);
+        CHECK(SDL_GetWindowParent(hwndTip->lpWindow.get()) == hwnd->lpWindow.get());
     }
     SendMessage(htb, TB_SETHOTITEM, 3, 0);
     CHECK(SendMessage(htb, TB_GETHOTITEM, 0, 0) == 3);

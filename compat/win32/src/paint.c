@@ -285,9 +285,9 @@ int ICompatCanvasScale(HWND hwnd) {
     const char *pszDriver = SDL_GetCurrentVideoDriver();
 
     if (!lpRoot || !pszDriver || strcmp(pszDriver, "cocoa")) return 1;
-    if (hwnd != lpRoot && lpRoot->lpCanvas) return StarsMax(1, lpRoot->iCanvasScale);
-    if (!SDL_GetWindowSize(lpRoot->lpWindow, &cx, &cy) || cx <= 0 || cy <= 0 ||
-        !SDL_GetWindowSizeInPixels(lpRoot->lpWindow, &cxPixel, &cyPixel)) return 1;
+    if (hwnd != lpRoot && lpRoot->lpCanvas.get()) return StarsMax(1, lpRoot->iCanvasScale);
+    if (!SDL_GetWindowSize(lpRoot->lpWindow.get(), &cx, &cy) || cx <= 0 || cy <= 0 ||
+        !SDL_GetWindowSizeInPixels(lpRoot->lpWindow.get(), &cxPixel, &cyPixel)) return 1;
     iScale = cxPixel / cx;
     return iScale >= 1 && iScale <= 4 && cxPixel == cx * iScale && cyPixel == cy * iScale ? iScale : 1;
 }
@@ -325,50 +325,49 @@ static BOOL FCanvas(HWND hwnd) {
     dx *= iScale; dy *= iScale;
     cyMenu = CyCompatMenuBar(hwnd) * iScale;
     dx = StarsMax(1, dx); dy = StarsMax(1, dy);
-    if (hwnd->lpCanvas && hwnd->iCanvasScale == iScale && hwnd->lpCanvas->w == dx && hwnd->lpCanvas->h == dy &&
-        (hwnd->hwndParent || (SDL_GetTextureSize(hwnd->lpTexture, &cxTexture, &cyTexture) &&
+    if (hwnd->lpCanvas.get() && hwnd->iCanvasScale == iScale && hwnd->lpCanvas->w == dx && hwnd->lpCanvas->h == dy &&
+        (hwnd->hwndParent || (SDL_GetTextureSize(hwnd->lpTexture.get(), &cxTexture, &cyTexture) &&
          cxTexture == dx && cyTexture == dy + cyMenu)))
         return TRUE;
-    if (!hwnd->hwndParent && !hwnd->lpRenderer) {
+    if (!hwnd->hwndParent && !hwnd->lpRenderer.get()) {
         pszMode = SDL_getenv("STARS_SDL_RENDERER");
         if (pszMode && strcmp(pszMode, "auto") != 0 && strcmp(pszMode, "software") != 0 && strcmp(pszMode, "opengl") != 0) {
             SDL_SetError("GDI STARS_SDL_RENDERER must be auto, software or opengl");
             return FALSE;
         }
-        hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow,
-                                             pszMode && strcmp(pszMode, "auto") != 0 ? pszMode : NULL);
-        if (!hwnd->lpRenderer && (!pszMode || strcmp(pszMode, "auto") == 0))
-            hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow, "software");
-        if (!hwnd->lpRenderer)
+        hwnd->lpRenderer.reset(SDL_CreateRenderer(hwnd->lpWindow.get(),
+                                             pszMode && strcmp(pszMode, "auto") != 0 ? pszMode : NULL));
+        if (!hwnd->lpRenderer.get() && (!pszMode || strcmp(pszMode, "auto") == 0))
+            hwnd->lpRenderer.reset(SDL_CreateRenderer(hwnd->lpWindow.get(), "software"));
+        if (!hwnd->lpRenderer.get())
             return FALSE;
     }
     lpnew = SDL_CreateSurface(dx, dy, SDL_PIXELFORMAT_RGBA32);
     lptex = hwnd->hwndParent ? NULL :
-        SDL_CreateTexture(hwnd->lpRenderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu);
+        SDL_CreateTexture(hwnd->lpRenderer.get(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu);
     if (!lpnew || (!hwnd->hwndParent && !lptex)) {
         SDL_DestroySurface(lpnew);
         SDL_DestroyTexture(lptex);
         return FALSE;
     }
     SDL_FillSurfaceRect(lpnew, NULL, SDL_MapSurfaceRGB(lpnew, 0, 0, 0));
-    if (hwnd->lpCanvas) {
+    if (hwnd->lpCanvas.get()) {
         SDL_Rect src, dst;
         src = (SDL_Rect){0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
                               StarsMin(hwnd->lpCanvas->h / iOld, dy / iScale) * iOld};
         dst = (SDL_Rect){0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
-        SDL_BlitSurfaceScaled(hwnd->lpCanvas, &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
+        SDL_BlitSurfaceScaled(hwnd->lpCanvas.get(), &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
     }
     SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
     if (lptex) {
         SDL_SetTextureBlendMode(lptex, SDL_BLENDMODE_NONE);
         SDL_SetTextureScaleMode(lptex, SDL_SCALEMODE_NEAREST);
     }
-    SDL_DestroyTexture(hwnd->lpTexture);
-    SDL_DestroySurface(hwnd->lpCanvas);
-    SDL_DestroySurface(hwnd->lpComposite);
-    hwnd->lpComposite = NULL;
-    hwnd->lpTexture = lptex;
-    hwnd->lpCanvas = lpnew;
+    hwnd->lpTexture.reset();
+    hwnd->lpCanvas.reset();
+    hwnd->lpComposite.reset();
+    hwnd->lpTexture.reset(lptex);
+    hwnd->lpCanvas.reset(lpnew);
     hwnd->iCanvasScale = iScale;
     if (iOld != iScale) InvalidateCompatCanvasTree(hwnd);
     return TRUE;
@@ -420,7 +419,7 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         if (!FCanvas(lp)) return FALSE;
         dst = (SDL_Rect){rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
         src = (SDL_Rect){(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
-        if (!SDL_BlitSurface(lp->lpCanvas, &src, lpSurface, &dst) ||
+        if (!SDL_BlitSurface(lp->lpCanvas.get(), &src, lpSurface, &dst) ||
             !FComposeChildren(lp, lpSurface, left, top, &rc, iScale)) return FALSE;
     }
     return TRUE;
@@ -452,17 +451,17 @@ BOOL FCompatRefreshPresent(HWND hwnd) {
     static BOOL fPresenting;
     BOOL fOk;
 
-    if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer || !lpwin->lpTexture ||
-        !lpwin->lpComposite || fPresenting) return FALSE;
+    if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer.get() || !lpwin->lpTexture.get() ||
+        !lpwin->lpComposite.get() || fPresenting) return FALSE;
     // Cocoa can clear its view during exposure after the initial show. Reuse
     // the last completed texture even if a new paint is pending; never reenter
     // application drawing from a native exposure callback.
     fPresenting = TRUE;
-    fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer, 0, 0, 0,
-                                SDL_GetWindowFlags(lpwin->lpWindow) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
-          SDL_RenderClear(lpwin->lpRenderer) &&
-          SDL_RenderTexture(lpwin->lpRenderer, lpwin->lpTexture, NULL, NULL) &&
-          SDL_RenderPresent(lpwin->lpRenderer);
+    fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer.get(), 0, 0, 0,
+                                SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
+          SDL_RenderClear(lpwin->lpRenderer.get()) &&
+          SDL_RenderTexture(lpwin->lpRenderer.get(), lpwin->lpTexture.get(), NULL, NULL) &&
+          SDL_RenderPresent(lpwin->lpRenderer.get());
     fPresenting = FALSE;
     return fOk;
 }
@@ -482,23 +481,23 @@ BOOL FCompatPresent(HWND hwnd) {
     if (!FCanvas(lpwin)) return FALSE;
     iScale = lpwin->iCanvasScale;
     cyMenu = CyCompatMenuBar(lpwin);
-    if (!lpwin->lpComposite || lpwin->lpComposite->w != lpwin->lpCanvas->w ||
+    if (!lpwin->lpComposite.get() || lpwin->lpComposite->w != lpwin->lpCanvas->w ||
         lpwin->lpComposite->h != lpwin->lpCanvas->h + cyMenu * iScale) {
         lpnew = SDL_CreateSurface(lpwin->lpCanvas->w, lpwin->lpCanvas->h + cyMenu * iScale, SDL_PIXELFORMAT_RGBA32);
         if (!lpnew) return FALSE;
         SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
-        SDL_DestroySurface(lpwin->lpComposite);
-        lpwin->lpComposite = lpnew;
+        lpwin->lpComposite.reset();
+        lpwin->lpComposite.reset(lpnew);
     }
     dst = (SDL_Rect){0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
-    if (!SDL_BlitSurface(lpwin->lpCanvas, NULL, lpwin->lpComposite, &dst)) return FALSE;
+    if (!SDL_BlitSurface(lpwin->lpCanvas.get(), NULL, lpwin->lpComposite.get(), &dst)) return FALSE;
     CompatGetSurfaceRect(lpwin, &rc);
     OffsetRect(&rc, 0, cyMenu);
-    if (!FComposeChildren(lpwin, lpwin->lpComposite, 0, cyMenu, &rc, iScale) ||
-        !FCompatDrawMenuBar(lpwin, lpwin->lpComposite)) return FALSE;
-    CompatDrawCursor(lpwin, lpwin->lpComposite);
+    if (!FComposeChildren(lpwin, lpwin->lpComposite.get(), 0, cyMenu, &rc, iScale) ||
+        !FCompatDrawMenuBar(lpwin, lpwin->lpComposite.get())) return FALSE;
+    CompatDrawCursor(lpwin, lpwin->lpComposite.get());
     if (FPendingPaintTree(lpwin)) return TRUE;
-    fOk = SDL_UpdateTexture(lpwin->lpTexture, NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
+    fOk = SDL_UpdateTexture(lpwin->lpTexture.get(), NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
           FCompatRefreshPresent(lpwin);
     if (fOk) lpwin->fPresentPending = FALSE;
     return fOk;
@@ -850,7 +849,7 @@ static SDL_Surface *LpDCRasterSurface(HDC lpdc) {
     if (lpdc->fScreen) return NULL;
     if (lpdc->fMemory)
         return lpdc->lpbitmap->lpSurface.get();
-    return lpdc->hwnd->lpCanvas;
+    return lpdc->hwnd->lpCanvas.get();
 }
 
 static SDL_Surface *LpDCSurface(HDC lpdc) {
@@ -1354,7 +1353,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
     if (!FSubtractUpdate(&rgrc, &crc, rcArea, &rcDest)) goto Fail;
     if (fCopy) {
         if (!FCanvas(hwnd)) goto Fail;
-        lpsurface = lpwin->lpCanvas;
+        lpsurface = lpwin->lpCanvas.get();
         iScale = lpwin->iCanvasScale;
         cbRow = (size_t)(rcDest.right - rcDest.left) * iScale * 4;
         /* Window canvases are RGBA32. Copy overlapping rows in movement order,
@@ -1672,7 +1671,7 @@ int WINAPI GetDeviceCaps(HDC hdc, int index) {
     if (index == PLANES) return 1;
     if (index == BITSPIXEL) return 32;
     if (index != HORZRES && index != VERTRES) return 0;
-    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow) : SDL_GetPrimaryDisplay();
+    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow.get()) : SDL_GetPrimaryDisplay();
     lpMode = SDL_GetCurrentDisplayMode(id);
     return lpMode ? index == HORZRES ? lpMode->w : lpMode->h : 0;
 }
@@ -2047,14 +2046,10 @@ void CompatDestroyPaint(HWND hwnd) {
         if (lpdc->hwnd == hwnd)
             CloseDC(lpdc);
     }
-    SDL_DestroyTexture(hwnd->lpTexture);
-    SDL_DestroyRenderer(hwnd->lpRenderer);
-    SDL_DestroySurface(hwnd->lpCanvas);
-    SDL_DestroySurface(hwnd->lpComposite);
-    hwnd->lpComposite = NULL;
-    hwnd->lpTexture = NULL;
-    hwnd->lpRenderer = NULL;
-    hwnd->lpCanvas = NULL;
+    hwnd->lpTexture.reset();
+    hwnd->lpRenderer.reset();
+    hwnd->lpCanvas.reset();
+    hwnd->lpComposite.reset();
     hwnd->hdcPaint = NULL;
     SetUpdate(hwnd, NULL, 0);
 }

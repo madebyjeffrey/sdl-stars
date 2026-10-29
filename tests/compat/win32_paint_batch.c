@@ -21,8 +21,8 @@ static COLORREF CrComposite(HWND hwnd, int x, int y) {
     BYTE r, g, b, a;
     HWND lpwin = LpCompatWindow(hwnd);
 
-    if (!lpwin || !lpwin->lpComposite ||
-        !SDL_ReadSurfacePixel(lpwin->lpComposite, x * lpwin->iCanvasScale, y * lpwin->iCanvasScale, &r, &g, &b, &a))
+    if (!lpwin || !lpwin->lpComposite.get() ||
+        !SDL_ReadSurfacePixel(lpwin->lpComposite.get(), x * lpwin->iCanvasScale, y * lpwin->iCanvasScale, &r, &g, &b, &a))
         return CLR_INVALID;
     return RGB(r, g, b);
 }
@@ -36,7 +36,7 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 
     if (msg == WM_APP) {
         event.type = SDL_EVENT_WINDOW_EXPOSED;
-        event.window.windowID = SDL_GetWindowID(hwnd->lpWindow);
+        event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
         SDL_PushEvent(&event);
         return 0;
     }
@@ -121,9 +121,9 @@ int main(void) {
     PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE);
     rgcrPane[0] = RGB(50, 60, 200);
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
-    CHECK(SDL_SetWindowSize(hwnd->lpWindow, 400, 200) && SDL_SyncWindow(hwnd->lpWindow));
+    CHECK(SDL_SetWindowSize(hwnd->lpWindow.get(), 400, 200) && SDL_SyncWindow(hwnd->lpWindow.get()));
     event.type = SDL_EVENT_WINDOW_EXPOSED;
-    event.window.windowID = SDL_GetWindowID(hwnd->lpWindow);
+    event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
     event.window.data1 = 1;
     CHECK(SDL_PushEvent(&event));
     // The live-resize watcher lays out and paints at native size before the main loop resumes.

@@ -39,7 +39,7 @@ int main(void) {
                         150, 170, 400, 300, NULL, hmenu, wc.hInstance, NULL);
     hwndSecond = CreateWindow("StarsDesktopProbe", "Second surface", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               600, 200, 320, 240, NULL, NULL, wc.hInstance, NULL);
-    CHECK(hwnd && hwndSecond && hwnd->lpWindow != hwndSecond->lpWindow);
+    CHECK(hwnd && hwndSecond && hwnd->lpWindow.get() != hwndSecond->lpWindow.get());
     CHECK(GetWindowRect(hwnd, &rcOwner) && rcOwner.left == 0 && rcOwner.top == 0);
     // Toplevel movement is advisory on Wayland, while size and child placement work.
     CHECK(SetWindowPos(hwnd, NULL, 230, 270, 400, 300, SWP_NOZORDER | SWP_NOACTIVATE));
@@ -51,8 +51,8 @@ int main(void) {
     pt = (POINT){5, 6}; CHECK(MapWindowPoints(hwndChild, hwnd, &pt, 1) != 0 && pt.x == 35 && pt.y == 46);
     hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, "StarsCompatToolbarTip", "Tip", WS_POPUP | WS_VISIBLE,
                                60, 70, 80, 30, hwnd, NULL, wc.hInstance, NULL);
-    CHECK(hwndPopup && FCompatPresent(hwndPopup) && SDL_SyncWindow(hwndPopup->lpWindow));
-    CHECK(SDL_GetWindowParent(hwndPopup->lpWindow) == hwnd->lpWindow);
+    CHECK(hwndPopup && FCompatPresent(hwndPopup) && SDL_SyncWindow(hwndPopup->lpWindow.get()));
+    CHECK(SDL_GetWindowParent(hwndPopup->lpWindow.get()) == hwnd->lpWindow.get());
     CHECK(GetWindowRect(hwndPopup, &rc) && rc.left == 60 && rc.top == 70);
     CHECK(SetWindowPos(hwndPopup, NULL, 90, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE));
     CHECK(GetWindowRect(hwndPopup, &rc) && rc.left == 90 && rc.top == 100);
@@ -71,11 +71,11 @@ int main(void) {
     hdc = GetDC(hwnd); hbr = CreateSolidBrush(RGB(30, 90, 150));
     CHECK(hdc && hbr && FillRect(hdc, &rc, hbr) && ReleaseDC(hwnd, hdc) && DeleteObject(hbr));
     CHECK(FCompatPresent(hwnd) && FCompatPresent(hwndSecond));
-    CHECK(SDL_GetWindowSizeInPixels(hwnd->lpWindow, &cxPixels, &cyPixels));
+    CHECK(SDL_GetWindowSizeInPixels(hwnd->lpWindow.get(), &cxPixels, &cyPixels));
     CHECK(cxPixels >= 400 && cyPixels >= 300 && hwnd->lpComposite->w == 400 && hwnd->lpComposite->h == 300);
-    CHECK(!pszRenderer || strcmp(SDL_GetRendererName(hwnd->lpRenderer), pszRenderer) == 0);
+    CHECK(!pszRenderer || strcmp(SDL_GetRendererName(hwnd->lpRenderer.get()), pszRenderer) == 0);
     printf("Wayland logical 400x300, pixels %dx%d, scale %.2f, renderer %s\n", cxPixels, cyPixels,
-           SDL_GetWindowPixelDensity(hwnd->lpWindow), SDL_GetRendererName(hwnd->lpRenderer));
+           SDL_GetWindowPixelDensity(hwnd->lpWindow.get()), SDL_GetRendererName(hwnd->lpRenderer.get()));
     CHECK(DestroyWindow(hwndSecond) && DestroyWindow(hwnd) && !IsMenu(hmenu));
     StarsCompatProcessExit(); SDL_Quit();
     return 0;

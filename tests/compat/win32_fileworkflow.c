@@ -127,7 +127,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     fRunning = TRUE;
     CHECK(pszRace && pszRaceRepeat && IsWindow(hwndTitle));
     CHECK(FOpenGame(hwndTitle, FALSE) == 0 && IsWindowVisible(hwndTitle) && IsWindowEnabled(hwndTitle));
-    CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
+    CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
     CHECK(FOpenGame(hwndTitle, FALSE) > 0 && game.lid != 0 && lpPlanets && idPlayer != iplrNone);
     lid = game.lid; plrSav = rgplr[idPlayer]; memcpy(szRaceSav, szRaceFile, sizeof(szRaceSav));
     hwndParentSav = hwndRaceParent; hwndRaceParent = hwndTitle;

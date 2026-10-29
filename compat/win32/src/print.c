@@ -269,7 +269,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
             SDL_Log("%s", szMessage);
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
-                                     hwndOwner ? hwndOwner->lpWindow : NULL);
+                                     hwndOwner ? hwndOwner->lpWindow.get() : NULL);
             free(pszAbsolute);
         }
     }

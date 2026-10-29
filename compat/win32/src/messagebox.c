@@ -264,7 +264,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     SendMessageA(hwnd, WM_INITDIALOG, (WPARAM)GetDlgItem(hwnd, box.rgid[box.iDefault]), (LPARAM)&box);
     box.hwndLastFocus = GetDlgItem(hwnd, box.rgid[box.iDefault]);
     ShowWindow(hwnd, SW_SHOW);
-    SDL_RaiseWindow(hwnd->lpWindow); SDL_SyncWindow(hwnd->lpWindow);
+    SDL_RaiseWindow(hwnd->lpWindow.get()); SDL_SyncWindow(hwnd->lpWindow.get());
     SetFocus(GetDlgItem(hwnd, box.rgid[box.iDefault]));
     if (fSound) MessageBeep(type & 0xf0);
     while (IsWindow(hwnd) && !hwnd->fEndDialog) {

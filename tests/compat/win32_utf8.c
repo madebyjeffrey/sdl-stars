@@ -101,7 +101,7 @@ int main(void) {
     CHECK(SendMessage(hwndList, LB_GETCOUNT, 0, 0) == 0);
     CHECK(OpenFile("/tmp/stars-\xff", &ofs, OF_READ) == HFILE_ERROR);
     CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow), psz) == 0);
+    CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow.get()), psz) == 0);
     hwndEdit = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);
     hwndOrdinary = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE, 8, 48, 500, 30,

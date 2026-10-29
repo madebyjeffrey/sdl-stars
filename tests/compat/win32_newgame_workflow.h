@@ -69,7 +69,7 @@ static BOOL FCheckNewGameWorkflow(void) {
             GetDlgItemText(hwndDialog, IDC_LIBRARY_GAME_REVISION_TEXT, szPrompt, sizeof(szPrompt));
             if (pszSuggested && !strstr(szPrompt, pszSuggested)) return FALSE;
             if (pszCapture && (!FCompatPaintTree(hwndDialog) || !FCompatPresent(hwndDialog) ||
-                               !SDL_SaveBMP(hwndDialog->lpComposite, pszCapture))) return FALSE;
+                               !SDL_SaveBMP(hwndDialog->lpComposite.get(), pszCapture))) return FALSE;
             cNewGameChoices++;
             return FPushClick(GetDlgItem(hwndDialog,
                 PszCompatEnvironment("STARS_CLIENT_LIBRARY_REVISION_BACK") && cNewGameChoices == 1 ? IDCANCEL : IDOK));

@@ -47,21 +47,21 @@ static int TestX11Focus(HWND hwndPeer) {
     // The first paint can recreate SDL's X window for framebuffer acceleration.
     Drain();
     lpDisplay = XOpenDisplay(NULL); CHECK(lpDisplay);
-    windowPeer = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwndPeer->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    windowPeer = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwndPeer->lpWindow.get()), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
     CHECK(windowPeer);
     XSetInputFocus(lpDisplay, windowPeer, RevertToParent, CurrentTime); XSync(lpDisplay, False);
     ms = GetTickCount();
     do {
         Drain();
-        if (SDL_GetWindowFlags(hwndPeer->lpWindow) & SDL_WINDOW_INPUT_FOCUS) break;
+        if (SDL_GetWindowFlags(hwndPeer->lpWindow.get()) & SDL_WINDOW_INPUT_FOCUS) break;
         SDL_Delay(5);
     } while (GetTickCount() - ms < 2000);
     XGetInputFocus(lpDisplay, &windowFocus, &revert);
-    if (!(SDL_GetWindowFlags(hwndPeer->lpWindow) & SDL_WINDOW_INPUT_FOCUS))
+    if (!(SDL_GetWindowFlags(hwndPeer->lpWindow.get()) & SDL_WINDOW_INPUT_FOCUS))
         fprintf(stderr, "X11 target=%lu focus=%lu flags=%llu\n", (unsigned long)windowPeer,
-                (unsigned long)windowFocus, (unsigned long long)SDL_GetWindowFlags(hwndPeer->lpWindow));
+                (unsigned long)windowFocus, (unsigned long long)SDL_GetWindowFlags(hwndPeer->lpWindow.get()));
     XCloseDisplay(lpDisplay);
-    CHECK(SDL_GetWindowFlags(hwndPeer->lpWindow) & SDL_WINDOW_INPUT_FOCUS);
+    CHECK(SDL_GetWindowFlags(hwndPeer->lpWindow.get()) & SDL_WINDOW_INPUT_FOCUS);
     return 0;
 }
 
@@ -73,10 +73,10 @@ static int TestX11(HWND hwnd, HWND hwndPeer) {
     BOOL fUrgent;
     CHECK(strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0);
     lpDisplay = XOpenDisplay(NULL); CHECK(lpDisplay);
-    lpSDLDisplay = (Display*)(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL));
+    lpSDLDisplay = (Display*)(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL));
     CHECK(lpSDLDisplay);
-    window = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-    windowPeer = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwndPeer->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    window = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    windowPeer = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwndPeer->lpWindow.get()), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
     CHECK(window && windowPeer);
     XSetInputFocus(lpDisplay, windowPeer, RevertToParent, CurrentTime); XSync(lpDisplay, False);
     SDL_Delay(20); Drain(); SetFocus(hwndPeer);
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     CHECK(test.fCaption && test.cCaption == cCaption + 1);
     CHECK(GetActiveWindow() == hwndPeer && GetFocus() == hwndPeer);
 #ifndef _WIN32
-    CHECK(!fResult && operationLast == SDL_FLASH_BRIEFLY && lpWindowLast == hwnd->lpWindow);
+    CHECK(!fResult && operationLast == SDL_FLASH_BRIEFLY && lpWindowLast == hwnd->lpWindow.get());
 #else
     (void)fResult; // Wine 9 returns the new state; the documented prior-state return is checked natively.
 #endif

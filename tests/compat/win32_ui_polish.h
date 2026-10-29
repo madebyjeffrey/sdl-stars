@@ -33,9 +33,9 @@ static BOOL FCheckPlanetPane(void) {
     if (idFleet == idflNone) return FALSE;
     GetWindowRect(hwndFrame, &rcFrame);
     ShowWindow(hwndFrame, SW_RESTORE);
-    if (hwndFrame->lpWindow) SDL_SyncWindow(hwndFrame->lpWindow);
+    if (hwndFrame->lpWindow.get()) SDL_SyncWindow(hwndFrame->lpWindow.get());
     SetWindowPos(hwndFrame, NULL, 0, 0, 520, 380, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-    if (hwndFrame->lpWindow) SDL_SyncWindow(hwndFrame->lpWindow);
+    if (hwndFrame->lpWindow.get()) SDL_SyncWindow(hwndFrame->lpWindow.get());
     SelectAdjFleet(0, (int16_t)idFleet);
     UpdateWindow(hwndPlanet);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }

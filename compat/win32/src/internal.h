@@ -69,9 +69,15 @@ typedef struct COMPATCLASS {
     struct COMPATCLASS *lpNext;
 } COMPATCLASS;
 
+// These native deleters keep member types stable across private SDK test redirects.
+void FreeCompatSurface(SDL_Surface *lp) noexcept;
+void FreeCompatWindow(SDL_Window *lp) noexcept;
+void FreeCompatRenderer(SDL_Renderer *lp) noexcept;
+void FreeCompatTexture(SDL_Texture *lp) noexcept;
+
 struct HWND__ {
     COMPATCLASS *lpclass;
-    SDL_Window *lpWindow;
+    NATIVEOWNER<SDL_Window, FreeCompatWindow> lpWindow;
     SDL_WindowID id;
     uint64_t idInspect;
     WNDPROC lpfnWndProc;
@@ -132,10 +138,10 @@ struct HWND__ {
     WPARAM wMouseButtons;
     double dWheelX, dWheelY;
     BOOL fAlive, fDestroying, fVisible;
-    SDL_Surface *lpCanvas, *lpComposite;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpCanvas, lpComposite;
     int iCanvasScale;
-    SDL_Renderer *lpRenderer;
-    SDL_Texture *lpTexture;
+    NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpRenderer;
+    NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpTexture;
     RECT rcUpdate;
     RECT *rgrcUpdate;
     size_t crcUpdate;
@@ -159,7 +165,6 @@ extern const size_t cCompatUIResources;
 extern const COMPATRESOURCE rgCompatImageResources[];
 extern const size_t cCompatImageResources;
 // Keep resource member types identical when a test substitutes an SDL call.
-void FreeCompatSurface(SDL_Surface *lp) noexcept;
 void FreeCompatCursor(SDL_Cursor *lp) noexcept;
 
 typedef struct COMPATIMAGE {

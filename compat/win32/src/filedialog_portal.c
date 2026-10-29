@@ -214,8 +214,8 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     if (!fFilter) goto done;
     dbus_bus_add_match(lpBus, "type='signal',sender='org.freedesktop.portal.Desktop',interface='org.freedesktop.portal.Request',member='Response'", &error);
     if (dbus_error_is_set(&error)) goto done;
-    if (hwndOwner && hwndOwner->lpWindow) {
-        props = SDL_GetWindowProperties(hwndOwner->lpWindow);
+    if (hwndOwner && hwndOwner->lpWindow.get()) {
+        props = SDL_GetWindowProperties(hwndOwner->lpWindow.get());
         /* SDL exports xdg-foreign asynchronously. Copy the handle before the
            modal pump, which may destroy its window and property storage. */
         nsStart = SDL_GetTicks();

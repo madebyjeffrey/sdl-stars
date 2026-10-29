@@ -174,8 +174,8 @@ extern "C" bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const
     unsigned cPresentBefore = cRenderPresent;
     bool fResult = SDL_SetWindowTitle(lpWindow, pszTitle);
 
-    if (hwnd && hwnd->fDeferPresent && hwnd->lpTexture &&
-        SDL_GetBooleanProperty(SDL_GetTextureProperties(hwnd->lpTexture), "stars.test.race_frame", false)) {
+    if (hwnd && hwnd->fDeferPresent && hwnd->lpTexture.get() &&
+        SDL_GetBooleanProperty(SDL_GetTextureProperties(hwnd->lpTexture.get()), "stars.test.race_frame", false)) {
         // Cocoa can expose the reused window while the next page initializes.
         event.type = SDL_EVENT_WINDOW_EXPOSED;
         event.window.windowID = hwnd->id;
@@ -199,17 +199,17 @@ extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
 
     cRenderPresent++;
     for (hwnd = HwndCompatRegistry(); hwnd; hwnd = hwnd->lpNext) {
-        if (!hwnd->fAlive || hwnd->lpRenderer != lprenderer || !hwnd->lpfnDlg ||
+        if (!hwnd->fAlive || hwnd->lpRenderer.get() != lprenderer || !hwnd->lpfnDlg ||
             (hwnd->lpfnDlg != RaceWizardDlg1 && hwnd->lpfnDlg != RaceWizardDlg2 &&
              hwnd->lpfnDlg != RaceWizardDlg3 && hwnd->lpfnDlg != RaceWizardDlg4 &&
              hwnd->lpfnDlg != RaceWizardDlg5 && hwnd->lpfnDlg != RaceWizardDlg6) ||
-            !hwnd->lpComposite || hwnd->cxDlgUnit == 0) continue;
+            !hwnd->lpComposite.get() || hwnd->cxDlgUnit == 0) continue;
         rc = (RECT){66, 218, 110, 232};
         MapDialogRect(hwnd, &rc);
         fButton = FALSE;
         for (y = rc.top * hwnd->iCanvasScale; y < rc.bottom * hwnd->iCanvasScale; y++)
             for (x = rc.left * hwnd->iCanvasScale; x < rc.right * hwnd->iCanvasScale; x++)
-                if (SDL_ReadSurfacePixel(hwnd->lpComposite, x, y, &r, &g, &b, &a) &&
+                if (SDL_ReadSurfacePixel(hwnd->lpComposite.get(), x, y, &r, &g, &b, &a) &&
                     (r != 192 || g != 192 || b != 192)) fButton = TRUE;
         if (!fButton) {
             fprintf(stderr, "Race frame %u has no Cancel button (visible %d, destroying %d, deferred %d)\n",
@@ -386,7 +386,7 @@ static BOOL FCheckMapInspection(void) {
         for (hwndGrandchild = GetWindow(hwndChild, GW_CHILD); hwndGrandchild; hwndGrandchild = GetWindow(hwndGrandchild, GW_HWNDNEXT))
             UpdateWindow(hwndGrandchild);
     }
-    if (!FCompatPresent(hwndMap) || (pszViewerCapture && !SDL_SaveBMP(hwndMap->lpComposite, pszViewerCapture))) goto LDone;
+    if (!FCompatPresent(hwndMap) || (pszViewerCapture && !SDL_SaveBMP(hwndMap->lpComposite.get(), pszViewerCapture))) goto LDone;
     SendMessage(GetDlgItem(hwndMap, 1), LB_SETCURSEL, 1, 0);
     SendMessage(GetDlgItem(hwndMap, 4), BM_CLICK, 0, 0);
     if (sel.scan.grobj != grobjPlanet || sel.scan.idpl != 1 || game.fDirty != fDirty) goto LDone;
@@ -455,11 +455,11 @@ static BOOL FCheckToolbarPlacement(void) {
     if (!hwndTBRadar->lpcombo || !hwndTBRadar->lpcombo->hwndPopup ||
         !GetWindowRect(hwndTBRadar->lpcombo->hwndPopup, &rcDrop) ||
         rcDrop.left != rc.left || rcDrop.top != rc.bottom ||
-        !hwndTBRadar->lpcombo->hwndPopup->lpCanvas ||
+        !hwndTBRadar->lpcombo->hwndPopup->lpCanvas.get() ||
         SendMessage(hwndTBRadar, CB_GETCOUNT, 0, 0) < 2) return FALSE;
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-        (!(SDL_GetWindowFlags(hwndTBRadar->lpcombo->hwndPopup->lpWindow) & SDL_WINDOW_POPUP_MENU) ||
-         SDL_GetWindowParent(hwndTBRadar->lpcombo->hwndPopup->lpWindow) != hwndRoot->lpWindow)) return FALSE;
+        (!(SDL_GetWindowFlags(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU) ||
+         SDL_GetWindowParent(hwndTBRadar->lpcombo->hwndPopup->lpWindow.get()) != hwndRoot->lpWindow.get())) return FALSE;
     SendMessage(hwndTBRadar, WM_KEYDOWN, VK_DOWN, 0);
     SendMessage(hwndTBRadar, WM_KEYDOWN, VK_RETURN, 0);
     if (SendMessage(hwndTBRadar, CB_GETDROPPEDSTATE, 0, 0) || GetCapture() == hwndTBRadar) return FALSE;
@@ -499,8 +499,8 @@ static BOOL FCheckToolbarPlacement(void) {
         if (!IsWindowVisible(hwndTooltip) || !GetWindowRect(hwndTooltip, &rcTip) ||
             rcTip.left != rc.left || rcTip.top != rc.bottom + 2 || GetFocus() != hwndFocus) return FALSE;
         if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-            (!(SDL_GetWindowFlags(hwndTooltip->lpWindow) & SDL_WINDOW_TOOLTIP) ||
-             SDL_GetWindowParent(hwndTooltip->lpWindow) != hwndRoot->lpWindow)) return FALSE;
+            (!(SDL_GetWindowFlags(hwndTooltip->lpWindow.get()) & SDL_WINDOW_TOOLTIP) ||
+             SDL_GetWindowParent(hwndTooltip->lpWindow.get()) != hwndRoot->lpWindow.get())) return FALSE;
         ShowTooltip((StringId)(idsNoString), NULL);
     }
     return TRUE;
@@ -583,7 +583,7 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     if (hwnd && (hwnd->lpfnDlg == RaceWizardDlg1 || hwnd->lpfnDlg == RaceWizardDlg2 ||
                  hwnd->lpfnDlg == RaceWizardDlg3 || hwnd->lpfnDlg == RaceWizardDlg4 ||
                  hwnd->lpfnDlg == RaceWizardDlg5 || hwnd->lpfnDlg == RaceWizardDlg6)) {
-        SDL_PropertiesID idProperties = hwnd->lpTexture ? SDL_GetTextureProperties(hwnd->lpTexture) : 0;
+        SDL_PropertiesID idProperties = hwnd->lpTexture.get() ? SDL_GetTextureProperties(hwnd->lpTexture.get()) : 0;
         if (idRacePresentation == hwnd->id && !SDL_GetBooleanProperty(idProperties, "stars.test.race_frame", false)) {
             fprintf(stderr, "Race wizard discarded its displayed frame between pages\n");
             fRacePresentation = FALSE;
@@ -593,7 +593,7 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     }
     if (hwnd == hwndFrame && !fInitComplete) cEarlyFrameShow++;
     if (hwnd && hwnd->lpfnWndProc == TitleWndProc && cTitleShow++ == 0) {
-        if (hwnd->lpCanvas && hwnd->lpComposite) {
+        if (hwnd->lpCanvas.get() && hwnd->lpComposite.get()) {
             rgb = (BYTE *)(hwnd->lpCanvas->pixels);
             cb = (size_t)hwnd->lpCanvas->pitch * hwnd->lpCanvas->h;
             for (i = 4; i + 4 <= cb; i += 4) {
@@ -603,11 +603,11 @@ extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     }
 
     for (hwnd = GetWindow(hwndTitle, GW_HWNDFIRST); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
-        if (hwnd->lpWindow != lpWindow || hwnd->lpfnDlg != RaceWizardDlg2) continue;
+        if (hwnd->lpWindow.get() != lpWindow || hwnd->lpfnDlg != RaceWizardDlg2) continue;
         if (cHabShow++ == 0) {
             cr = GetSysColor(COLOR_BTNFACE);
-            fHabPainted = hwnd->lpCanvas && hwnd->lpComposite &&
-                SDL_ReadSurfacePixel(hwnd->lpCanvas, 0, 0, &r, &g, &b, &a) &&
+            fHabPainted = hwnd->lpCanvas.get() && hwnd->lpComposite.get() &&
+                SDL_ReadSurfacePixel(hwnd->lpCanvas.get(), 0, 0, &r, &g, &b, &a) &&
                 RGB(r, g, b) == cr;
         }
     }
@@ -2209,7 +2209,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     if (hwndTop->fDialog && hwndTop->lpfnDlg == LibraryNameDlg) goto LDone;
                     continue;
                 }
-                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow) & SDL_WINDOW_HIDDEN)) goto LDone;
+                if (!(SDL_GetWindowFlags(hwndFrame->lpWindow.get()) & SDL_WINDOW_HIDDEN)) goto LDone;
                 if (iStage == 2) {
                     HWND hwndRadio;
                     HDC hdcRadio;
@@ -2237,7 +2237,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                         }
                     }
                     if (pszWizardCapture && (!FCompatPaintTree(hwndTop) || !FCompatPresent(hwndTop) ||
-                        !SDL_SaveBMP(hwndTop->lpComposite, pszWizardCapture))) goto LDone;
+                        !SDL_SaveBMP(hwndTop->lpComposite.get(), pszWizardCapture))) goto LDone;
                 }
                 if (!FPushClick(GetDlgItem(hwndTop, iStage == 1 && fWizard ? IDC_NEXT : IDCANCEL))) goto LDone;
                 iStage = fWizard && iStage == 1 ? 2 : 4;
@@ -2249,7 +2249,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         // Let queued native activation/show events settle after the modal closes.
         if (iStage++ < 6) return;
         for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
-            if (!hwndTop->lpWindow || (SDL_GetWindowFlags(hwndTop->lpWindow) & SDL_WINDOW_HIDDEN)) continue;
+            if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
             if (hwndTop != hwndTitle) {
                 fprintf(stderr, "Cancelling the race dialog exposed another native window (frame %d, visible %d)\n",
                         hwndTop == hwndFrame, IsWindowVisible(hwndTop));
@@ -2257,7 +2257,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             }
         }
         if (IsWindowVisible(hwndFrame) || !IsWindowVisible(hwndTitle) ||
-            (SDL_GetWindowFlags(hwndTitle->lpWindow) & SDL_WINDOW_HIDDEN) ||
+            (SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & SDL_WINDOW_HIDDEN) ||
             game.lid != 0 || idPlayer != iplrNone) goto LDone;
         fPassed = TRUE;
         puts("Race dialog cancels back to the single library window");
@@ -2269,7 +2269,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         int cVisible = 0;
         if (!IsWindowVisible(hwndTitle)) return;
         for (hwndTop = HwndCompatFirstTop(); hwndTop; hwndTop = GetWindow(hwndTop, GW_HWNDNEXT)) {
-            if (!hwndTop->lpWindow || (SDL_GetWindowFlags(hwndTop->lpWindow) & SDL_WINDOW_HIDDEN)) continue;
+            if (!hwndTop->lpWindow.get() || (SDL_GetWindowFlags(hwndTop->lpWindow.get()) & SDL_WINDOW_HIDDEN)) continue;
             if (hwndTop != hwndTitle) goto LDone;
             cVisible++;
         }
@@ -2924,7 +2924,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         for (i = 0; i < 7; i++) if (!rgtileShip[i].fPopped) goto LDone;
         UpdateWindow(hwndFrame);
         for (hwnd = GetWindow(hwndFrame, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) UpdateWindow(hwnd);
-        if (!FCompatPresent(hwndFrame) || (pszGameCapture && !SDL_SaveBMP(lpFrame->lpComposite, pszGameCapture))) goto LDone;
+        if (!FCompatPresent(hwndFrame) || (pszGameCapture && !SDL_SaveBMP(lpFrame->lpComposite.get(), pszGameCapture))) goto LDone;
         SendMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE, 0);
         iStage = 6;
         return;
@@ -2968,9 +2968,9 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         return;
     }
     if (!lpFrame || !lpTitle || lpFrame == lpTitle || !IsWindowVisible(hwndTitle) ||
-        !lpFrame->lpWindow || !lpTitle->lpWindow || lpFrame->id == lpTitle->id ||
-        !lpTitle->lpRenderer || !lpTitle->lpCanvas ||
-        (SDL_GetWindowFlags(lpTitle->lpWindow) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) ||
+        !lpFrame->lpWindow.get() || !lpTitle->lpWindow.get() || lpFrame->id == lpTitle->id ||
+        !lpTitle->lpRenderer.get() || !lpTitle->lpCanvas.get() ||
+        (SDL_GetWindowFlags(lpTitle->lpWindow.get()) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) ||
         (GetWindowLongPtr(hwndTitle, GWL_STYLE) & WS_CAPTION) != WS_CAPTION ||
         !GetClientRect(hwndTitle, &rcScanner) || rcScanner.right < 600 || rcScanner.bottom < 400 ||
         rcScanner.right > 800 || rcScanner.bottom > 600) goto LDone;
@@ -2984,11 +2984,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         if (!IsWindowVisible(hwndWizard) || IsWindowEnabled(hwndTitle) ||
             (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-             SDL_GetWindowParent(hwndWizard->lpWindow) != lpTitle->lpWindow)) goto LDone;
+             SDL_GetWindowParent(hwndWizard->lpWindow.get()) != lpTitle->lpWindow.get())) goto LDone;
         UpdateWindow(hwndWizard);
         for (hwnd = GetWindow(hwndWizard, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) UpdateWindow(hwnd);
         if (!FCompatPresent(hwndWizard) || (pszWizardCapture &&
-            !SDL_SaveBMP(hwndWizard->lpComposite, pszWizardCapture))) goto LDone;
+            !SDL_SaveBMP(hwndWizard->lpComposite.get(), pszWizardCapture))) goto LDone;
         if (pszRaceCapture) {
             if (hwndWizard->lpfnDlg == NewGameDlg) {
                 if (!FPushClick(GetDlgItem(hwndWizard, IDC_NEXT))) goto LDone;
@@ -3027,7 +3027,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iRacePage == 0) idRaceWindow = hwndRace->id;
         else if (hwndRace->id != idRaceWindow || hwndRace == hwndRacePrevious || IsWindow(hwndRacePrevious)) goto LDone;
         hwndRacePrevious = hwndRace;
-        if (iRacePage == 3 && (!fHabPainted || !SDL_SaveBMP(hwndRace->lpComposite, pszRaceCapture))) goto LDone;
+        if (iRacePage == 3 && (!fHabPainted || !SDL_SaveBMP(hwndRace->lpComposite.get(), pszRaceCapture))) goto LDone;
         if (iRacePage == 5 && !fRaceBack) {
             if (!FPushClick(GetDlgItem(hwndRace, IDC_BACK))) goto LDone;
             fRaceBack = TRUE;
@@ -3082,10 +3082,10 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     for (i = 4; i + 4 <= cb; i += 4) {
         if (memcmp(rgb, rgb + i, 4)) { fDifferent = TRUE; break; }
     }
-    if (!fDifferent || !FCompatPresent(lpTitle) || !lpTitle->lpComposite ||
-        (pszCapture && !SDL_SaveBMP(lpTitle->lpComposite, pszCapture))) goto LDone;
+    if (!fDifferent || !FCompatPresent(lpTitle) || !lpTitle->lpComposite.get() ||
+        (pszCapture && !SDL_SaveBMP(lpTitle->lpComposite.get(), pszCapture))) goto LDone;
     printf("Stars title %dx%d, renderer %s; independent frame and title windows\n",
-           lpTitle->lpCanvas->w, lpTitle->lpCanvas->h, SDL_GetRendererName(lpTitle->lpRenderer));
+           lpTitle->lpCanvas->w, lpTitle->lpCanvas->h, SDL_GetRendererName(lpTitle->lpRenderer.get()));
     if (pszContinue && PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER")) {
         char szContinue[320];
         const char *pszGame = PszCompatEnvironment("STARS_CLIENT_EXPECT_CONTINUE_GAME");

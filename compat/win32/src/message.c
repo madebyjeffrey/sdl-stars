@@ -299,7 +299,7 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         const SDL_DisplayMode *lpMode;
         if (!lpwp || (lpwp->flags & SWP_NOSIZE) || lpwin->hwndParent ||
             ((lpwin->dwStyle & WS_POPUP) && !(lpwin->dwStyle & WS_THICKFRAME))) return 0;
-        lpMode = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(lpwin->lpWindow));
+        lpMode = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(lpwin->lpWindow.get()));
         if (lpMode) {
             mmi.ptMaxSize.x = mmi.ptMaxTrackSize.x = lpMode->w;
             mmi.ptMaxSize.y = mmi.ptMaxTrackSize.y = lpMode->h;
@@ -338,7 +338,7 @@ LRESULT WINAPI DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SETTEXT:
         if (!lParam || !FUtf8Valid((const char *)lParam, strlen((const char *)lParam)) ||
             !(pszNew = SDL_strdup((const char *)lParam))) return FALSE;
-        if (lpwin->lpWindow && !FCompatNativeTitle(lpwin->lpWindow, pszNew)) {
+        if (lpwin->lpWindow.get() && !FCompatNativeTitle(lpwin->lpWindow.get(), pszNew)) {
             SDL_free(pszNew);
             return FALSE;
         }

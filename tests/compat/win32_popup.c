@@ -59,7 +59,7 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD ms) {
         }
         KillTimer(hwnd, id);
         if (!hp) { PostMessage(hwndOwner, WM_KEYDOWN, VK_ESCAPE, 1); return; }
-        if (pszCapture && iMouse == 1) SDL_SaveBMP(hp->lpCanvas, pszCapture);
+        if (pszCapture && iMouse == 1) SDL_SaveBMP(hp->lpCanvas.get(), pszCapture);
         hdc = GetDC(hp); fPopupPixels = GetPixel(hdc, 3, 3) == GetSysColor(COLOR_MENU) &&
             GetPixel(hdc, 8, 0) == GetSysColor(COLOR_BTNHIGHLIGHT) &&
             GetPixel(hdc, 8, hp->lpCanvas->h - 1) == GetSysColor(COLOR_3DDKSHADOW); ReleaseDC(hp, hdc);
@@ -94,7 +94,7 @@ static void Drain(void) { MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOV
 static BOOL Track(UINT flags, const UINT *rg, UINT c) {
     BOOL result;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-    SDL_WarpMouseInWindow(hwndOwner->lpWindow, 2, 2);
+    SDL_WarpMouseInWindow(hwndOwner->lpWindow.get(), 2, 2);
 #else
     SetCursorPos(42, 42);
 #endif
