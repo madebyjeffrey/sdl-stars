@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `OpenCombo` stops on dropdown notification failure and closes a partial popup
+  when owner drawing fails. Previously failed initialization could leave the
+  combo dropped with capture held. Rollback restores capture and selection;
+  reentrant callbacks that replace the popup retain their replacement.
+
 - `MessageBoxA` stops modal setup when an owner-disable callback fails. It
   previously continued creating a prompt and queued its alert sound with the
   error pending. Owners restore before the first error reaches its caller.

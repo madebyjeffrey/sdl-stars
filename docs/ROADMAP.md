@@ -25,7 +25,10 @@ and live-resize flags restore during unwinding. The SDL watcher contains foreign
 callback failures and stops drawing after failed layout or paint. Lists, combos
 and toolbars now retire their window ownership immediately while active callback
 frames retain borrowed control storage; scoped flags restore before those leases
-end. Final B02 failure-publication checks remain in progress.
+end. Failed owner-disable callbacks now stop dialog/file-chooser/message-box
+initialization, and combo opening rolls back its own failed popup while retaining
+a reentrant replacement. The profile lock/cleanup inventory remains active before
+B02 completion.
 
 ## C++ migration
 

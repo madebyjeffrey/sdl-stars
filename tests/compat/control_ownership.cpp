@@ -9,8 +9,8 @@
 static std::weak_ptr<COMPATLIST> lplistWeak;
 static std::weak_ptr<COMPATCOMBO> lpcomboWeak;
 static std::weak_ptr<COMPATTOOLBAR> lptoolbarWeak;
-static int mdControl, cRetained;
-static BOOL fTrigger, fThrow;
+static int mdControl, cRetained, mdOpenFailure;
+static BOOL fTrigger, fThrow, fReplacePopup;
 
 static void DestroyFromCallback(HWND hwnd) {
     BOOL fRetained;
@@ -25,6 +25,15 @@ static void DestroyFromCallback(HWND hwnd) {
 }
 
 static LRESULT CALLBACK Owner(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if ((mdOpenFailure == 1 && msg == WM_COMMAND && HIWORD(w) == CBN_DROPDOWN) ||
+        (mdOpenFailure == 2 && msg == WM_DRAWITEM)) StarsThrowError(starsErrorFile, 835);
+    if (msg == WM_DRAWITEM && fReplacePopup) {
+        HWND hwndCombo = reinterpret_cast<DRAWITEMSTRUCT *>(l)->hwndItem;
+        fReplacePopup = FALSE;
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, FALSE, 0);
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, TRUE, 0);
+        return TRUE;
+    }
     if (msg == WM_MEASUREITEM) {
         reinterpret_cast<MEASUREITEMSTRUCT *>(l)->itemHeight = 18;
         return TRUE;
@@ -98,6 +107,37 @@ int main() {
     for (int i = 0; i < 3; i++) {
         CHECK(TestControl(hwnd, i, FALSE) == 0);
         CHECK(TestControl(hwnd, i, TRUE) == 0);
+    }
+    for (int i = 1; i < 3; i++) {
+        HWND hwndCombo = CreateWindow("ComboBox", "", WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS,
+                                      0, 0, 100, 100, hwnd, (HMENU)4, NULL, NULL);
+        if (i == 2) SetCapture(hwnd);
+        HWND hwndCapture = GetCapture();
+        CHECK(hwndCombo && SendMessageA(hwndCombo, CB_ADDSTRING, 0, (LPARAM)"row") == 0);
+        mdOpenFailure = i;
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, TRUE, 0);
+        CHECK(FStarsErrorPending() && !hwndCombo->lpcombo->fOpening && !hwndCombo->lpcombo->fDropped);
+        CHECK(!hwndCombo->lpcombo->hwndPopup && GetCapture() == hwndCapture);
+        try { StarsRethrowPendingError(); CHECK(FALSE); }
+        catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 835); }
+        mdOpenFailure = 0;
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, TRUE, 0);
+        CHECK(!FStarsErrorPending() && hwndCombo->lpcombo->fDropped && GetCapture() == hwndCombo);
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, FALSE, 0);
+        CHECK(!hwndCombo->lpcombo->fDropped && GetCapture() == hwndCapture);
+        CHECK(DestroyWindow(hwndCombo));
+        ReleaseCapture();
+    }
+    {
+        HWND hwndCombo = CreateWindow("ComboBox", "", WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS,
+                                      0, 0, 100, 100, hwnd, (HMENU)4, NULL, NULL);
+        CHECK(hwndCombo && SendMessageA(hwndCombo, CB_ADDSTRING, 0, (LPARAM)"row") == 0);
+        fReplacePopup = TRUE;
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, TRUE, 0);
+        CHECK(!fReplacePopup && !FStarsErrorPending() && hwndCombo->lpcombo->fDropped);
+        CHECK(IsWindow(hwndCombo->lpcombo->hwndPopup) && GetCapture() == hwndCombo);
+        SendMessageA(hwndCombo, CB_SHOWDROPDOWN, FALSE, 0);
+        CHECK(DestroyWindow(hwndCombo));
     }
     CHECK(DestroyWindow(hwnd));
     StarsCompatShutdown();

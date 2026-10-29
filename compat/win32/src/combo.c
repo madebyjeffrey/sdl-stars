@@ -1,5 +1,6 @@
 /* Editable and fixed-height string combos, with independent owned popup windows. */
 #include "internal.h"
+#include "cleanup.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,11 +97,11 @@ static void OpenCombo(HWND hwnd) {
     COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     HWND hwndPopup;
-    if (!lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
+    if (FStarsErrorPending() || !lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
     {
         StarsRestore<BOOL> restoreOpening(lp->fOpening);
         lp->fOpening = TRUE; NotifyCombo(hwnd, CBN_DROPDOWN);
-        if (!FCombo(hwnd, lp)) return;
+        if (!FCombo(hwnd, lp) || FStarsErrorPending()) return;
     }
     if (!FComboDropRect(hwnd, &rc)) return;
     lp->iSave = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
@@ -108,17 +109,21 @@ static void OpenCombo(HWND hwnd) {
     hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, "StarsComboPopup", "", WS_POPUP,
                                rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                                HwndCompatRoot(hwnd), NULL, hwnd->lpclass->wc.hInstance, hwnd);
-    if (!hwndPopup || !FCombo(hwnd, lp)) { if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup); return; }
+    if (!hwndPopup || !FCombo(hwnd, lp) || FStarsErrorPending()) { if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup); return; }
     lp->hwndPopup = hwndPopup; lp->fDropped = TRUE; lp->hwndCapture = GetCapture();
+    COMPATCLEANUPSCOPE closeFailedPopup([&] {
+        if (FCombo(hwnd, lp) && lp->hwndPopup == hwndPopup) CloseCombo(hwnd, FALSE, FALSE);
+    }, hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
     SetCapture(hwnd);
-    if (!FCombo(hwnd, lp) || !lp->fDropped) return;
+    if (!FCombo(hwnd, lp) || !lp->fDropped || FStarsErrorPending()) return;
     // Populate the hidden surface before the compositor maps the list. Owner
     // drawing can destroy or close the combo, so revalidate after painting.
     InvalidateRect(hwndPopup, NULL, TRUE); UpdateWindow(hwndPopup);
-    if (!FCombo(hwnd, lp) || !lp->fDropped || lp->hwndPopup != hwndPopup) return;
-    SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    if (!FCombo(hwnd, lp) || !lp->fDropped || lp->hwndPopup != hwndPopup || FStarsErrorPending()) return;
+    if (!SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW) || FStarsErrorPending()) return;
+    closeFailedPopup.Release();
 }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser) {
     auto lpcomboKeep = hwnd->lpcombo;

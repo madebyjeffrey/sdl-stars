@@ -443,3 +443,19 @@ its alert sound after its owner-disable callback fails. Setup now stops at that
 failure and restores the owners. A second call with the original error pending
 creates no work or sound. Independent SDK branches remain unchanged. This passes
 in the same 109-test / 26-leak / 28-sanitizer / 519-match qualification batch.
+
+
+## B02 combo popup publication and rollback
+
+Dropdown-notification and owner-drawing failure vectors previously left the combo
+dropped despite a pending error. Opening now stops on notification failure and
+scopes rollback of a partial popup before publication. It restores capture and
+selection, leaves no popup behind and permits an ordinary successful retry.
+Rollback checks the exact popup it created: another vector closes/reopens it
+inside owner drawing and proves the replacement stays open and usable. Existing
+combo behavioral, destruction, mutation and capture cases still pass.
+
+Results remain 109/109 full macOS CTest, 26 native leak checks, 28/28 ASan/UBSan,
+warning-free builds and 519 native regression matches / 25 accepted unused-storage
+warnings / zero differences, errors or skipped inputs. Baselines are unchanged.
+The remaining B02 lock inventory includes profile operations before completion.
