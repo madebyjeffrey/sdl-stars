@@ -40,9 +40,17 @@ C ABI. Host-only builds now require a C++17 compiler, but remain independent
 of SDL. CMake preserves signed `char`, binary64 arithmetic boundaries and
 contraction/fast-math settings for both languages.
 
-`STARS_CONSTANTS` keeps the original fixed-width aliases and constant names.
-C++ shares tag and typedef namespaces, so these constant containers are
-anonymous in C++ instead of replacing `uint16_t` aliases with enum objects.
+The stored enum types now use explicit C++ underlying types (`uint16_t`,
+`int16_t` or `uint32_t`) with their original constant and type names. C11
+consumers retain named enum tags and the original integer typedefs through
+conditional declarations. The text and YAML generators emit the same boundary;
+`STARS_CONSTANTS` is removed. Integer fields, indexes, masked identifiers and
+arithmetic cross into enum types through explicit casts. Partial switches retain
+explicit no-op defaults; splitter masks switch on their underlying integer.
+`test_enum_abi` requires real C++ enums with the captured underlying type and
+checks C/C++ argument/return values, callbacks and pointer writes for all 145
+stored types using six boundary inputs each. The fixed underlying type admits
+all of its storage bit patterns, including legacy sentinels and combined flags.
 `test_record_layout` compares C and C++ sizes/alignment for the shared structs
 and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
 offset is zero in both languages; the C++ minimum class size is never used as

@@ -728,7 +728,7 @@ void EnsureMacintiShdefs() {
         if (rgshdef[ish].fFree) {
             fAdvanced = rgplr[idPlayer].lvlAi >= lvlAiTough;
             if ((!fAdvanced || ish != 15 || rgplr[idPlayer].rgTech[3] >= 15) &&
-                !FCreateAiShdef(ish, ihuldefUltraMiner - (fAdvanced == 0), (uint8_t *)&vrgMacAip[vrgMacIshAip[imacRecipeMaxiMiner + fAdvanced]]) && ish == 14) {
+                !FCreateAiShdef(ish, static_cast<HulDef>(ihuldefUltraMiner - (fAdvanced == 0)), (uint8_t *)&vrgMacAip[vrgMacIshAip[imacRecipeMaxiMiner + fAdvanced]]) && ish == 14) {
                 if (fAdvanced) {
                     FCreateAiShdef(ish, ihuldefMiner, (uint8_t *)&vrgMacAip[macRecipeUltraMinerOrMiner]);
                 } else {
@@ -969,7 +969,7 @@ LFindPickup:
                 if (cColHaul > 0) {
                     ChangeMainObjSel(grobjFleet, lpfl->id);
                 }
-                XferAiSupply(grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, iM, LOWORD(cColHaul));
+                XferAiSupply(grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, static_cast<MineralType>(iM), LOWORD(cColHaul));
                 FLookupFleet(lpfl->id, &sel.fl);
                 goto LMoveToLpplBest;
             }

@@ -74,7 +74,7 @@ void SelectAdjFleet(int16_t dInc, int16_t idFleet) {
             }
             pt = lpfl->pt;
             scan.pt = lpfl->pt;
-            scan.grobj = grobjPlanet | grobjFleet | mdExact;
+            scan.grobj = static_cast<GrobjClass>(grobjPlanet | grobjFleet | mdExact);
             ChangeScanSel(&scan, 0);
             goto FinishUp;
         } else {
@@ -95,7 +95,7 @@ void SelectAdjFleet(int16_t dInc, int16_t idFleet) {
             idNew = lpflT->id;
             pt = lpflT->pt;
             scan.pt = lpflT->pt;
-            scan.grobj = grobjFleet | mdExact;
+            scan.grobj = static_cast<GrobjClass>(grobjFleet | mdExact);
             ChangeScanSel(&scan, 0);
             ShowScanSel(0);
             ChangeMainObjSel(grobjFleet, idNew);
@@ -579,7 +579,7 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
     }
     if (iWarp < 9) {
         iWarpOld = iWarp;
-        if (FFindNearestObject(lpord->pt, grobjPlanet | mdExact, &scan)) {
+        if (FFindNearestObject(lpord->pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
             lppl = LpplFromId(scan.idpl);
         } else {
             lppl = NULL;
@@ -950,7 +950,7 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
                 grbit = -31819;
                 FLookupFleet(sel.fl.id, &sel.fl);
                 FillFleetCompLB();
-                RedrawPlanShip(grbit);
+                RedrawPlanShip(static_cast<TileBits>(grbit));
                 InvalidateMine();
             }
         IncrementI:
@@ -1098,7 +1098,7 @@ void FleetOrdersChangeTarget(FLEET *lpflOld) {
                     if (!fChg) {
                         pt = lpflOld->pt;
                         lpflOld->pt.x++;
-                        if (FFindNearestObject(pt, grobjPlanet | grobjFleet | mdExact, &scan)) {
+                        if (FFindNearestObject(pt, static_cast<GrobjClass>(grobjPlanet | grobjFleet | mdExact), &scan)) {
                             if (scan.grobjFull & grobjFleet) {
                                 grobj = grobjFleet;
                                 id = rglpfl[scan.ifl]->id;

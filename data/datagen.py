@@ -317,13 +317,18 @@ def LoadRecipes(table, chs, rgaip):
     return recipes
 
 
+def EnumStart(name, underlying):
+    return ["#ifdef __cplusplus", "enum {} : {} {{".format(name, underlying),
+            "#else", "enum {} {{".format(name), "#endif"]
+
+
 def Generate(outdir):
     header = [
         "// " + GENERATED.format("*.yaml"),
         "// The part, hull, starting design and AI enums, included by enums.h.",
         "#ifndef STARS_DATAIDS_H",
         "#define STARS_DATAIDS_H",
-        '#include "enumconstants.h"',
+        '#include <stdint.h>',
         "",
     ]
     body = ["// " + GENERATED.format("*.yaml"), '#include "common.h"', ""]
@@ -337,7 +342,7 @@ def Generate(outdir):
         enum = table.get("enum")
         if enum:
             names = rgHulDef if enum == "HulDef" else [e["name"] for e in entries]
-            header.append("STARS_CONSTANTS({}) {{".format(enum))
+            header += EnumStart(enum, "int16_t" if enum == "isbhull" else "uint16_t")
             header += ["    {} = {},".format(name, i) for i, name in enumerate(names)]
             if table["count"]:
                 header.append("    {} = {},".format(table["count"], len(names)))
@@ -381,7 +386,7 @@ def Generate(outdir):
             for i, entry in enumerate(tables[table["array"]]):
                 rgpart[entry["name"]] = (table["hst"], i)
     prefs = LoadPreferences(PREFERENCES, rgpart)
-    header.append("STARS_CONSTANTS({}) {{".format(PREFERENCES["enum"]))
+    header += EnumStart(PREFERENCES["enum"], "uint16_t")
     header += ["    {} = {},".format(name, i) for i, (name, _) in enumerate(prefs)]
     header += ["    {} = {},".format(PREFERENCES["count"], len(prefs)), "};", ""]
     lines = []
@@ -392,7 +397,7 @@ def Generate(outdir):
     body.append("AIPART {}[{}] = {{\n{}\n}};\n".format(PREFERENCES["array"], max(len(lines), PREFERENCES["size"]), "\n".join(lines)))
     rgaip = {name for name, _ in prefs}
     orders = LoadResearch(RESEARCH)
-    header.append("STARS_CONSTANTS({}) {{".format(RESEARCH["enum"]))
+    header += EnumStart(RESEARCH["enum"], "int32_t")
     for array in RESEARCH["arrays"]:
         header.append("    c{} = {},".format(array[len("vrg"):], len(orders[array])))
         items = ", ".join("({} << 5) | {}".format(field, level) for field, level in orders[array])
@@ -400,7 +405,7 @@ def Generate(outdir):
     header += ["};", ""]
     for table in RECIPES:
         recipes = LoadRecipes(table, chs, rgaip)
-        header.append("STARS_CONSTANTS({}) {{".format(table["enum"]))
+        header += EnumStart(table["enum"], "int16_t" if table["enum"] == "AiStarbaseRecipe" else "uint16_t")
         lines = []
         rgib = []
         ib = 0

@@ -86,8 +86,8 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 SetTextColor(hdc, rgcrMinerals[i]);
                 RightTextOut(hdc, xCtr, rcGBox.top, rgszMinerals[i], 0, 0);
                 SetTextColor(hdc, 0);
-                iAction = vrgZip[iResTechNow].txp.rgia[i].iAction;
-                cch = CchGetString(idsAction + iAction, szWork);
+                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction);
+                cch = CchGetString(static_cast<StringId>(idsAction + iAction), szWork);
                 if (szWork[cch - 1] == '.') {
                     wsprintf(&szWork[cch - 3], " %dkT", vrgZip[iResTechNow].txp.rgia[i].cQuan);
                 }
@@ -102,7 +102,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         return 1;
     case WM_COMMAND:
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_ZIP_PROD_PRESET_1 && LOWORD(wParam) <= IDC_ZIP_PROD_PRESET_4) {
-            iResTechNow = LOWORD(wParam) - 1073;
+            iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
             EnableZipBtns(hwnd, iResTechNow);
             InvalidateRect(hwnd, NULL, TRUE);
         } else {

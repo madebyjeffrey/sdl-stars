@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return (int16_t)msg.wParam;
 } catch (const StarsError &error) {
     try {
-        AlertSz(PszFormatIds(error.ids ? error.ids : idsMemory, NULL), MB_ICONHAND);
+        AlertSz(PszFormatIds(static_cast<StringId>(error.ids ? error.ids : idsMemory), NULL), MB_ICONHAND);
         FreeStuff();
     } catch (...) {
     }
@@ -346,7 +346,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rc.bottom = rc.top + dyArial8;
         for (i = iAbout1st; i < iAbout1st + 10; i++) {
             if (i >= 0 && i < 77) {
-                RcCtrTextOut(hdc, &rc, PszGetCompressedString(idsDesignProgramming + i), -1);
+                RcCtrTextOut(hdc, &rc, PszGetCompressedString(static_cast<StringId>(idsDesignProgramming + i)), -1);
             } else if (i >= 77) {
                 break;
             }
@@ -477,7 +477,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
             if (iKey >= '1' && iKey <= '6') {
                 md = iKey - 49;
                 if (md != (grbitScan & grbitScanViewMask)) {
-                    ExecuteButton(iKey - 49, TRUE);
+                    ExecuteButton(static_cast<ToolbarButton>(iKey - 49), TRUE);
                     InvalidateRect(hwndTb, NULL, FALSE);
                 }
                 return TRUE;
@@ -535,7 +535,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
                 if (iWarp >= 0 && iWarp <= 11) {
                     SetScanPathWarp(iwp, iWarp);
                     FLookupFleet(idWriteBack, &sel.fl);
-                    DrawPlanShip(NULL, tileFleetOrders | tileFleetComp | tileMinimized);
+                    DrawPlanShip(NULL, static_cast<TileBits>(tileFleetOrders | tileFleetComp | tileMinimized));
                 }
             }
             return TRUE;

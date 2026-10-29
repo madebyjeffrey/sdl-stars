@@ -21,7 +21,7 @@ int16_t FCreateAiShdef(int16_t ishdef, HulDef ihul, uint8_t *rgaip) {
     shdef.hul = *lphul;
     shdef.hul.ihuldef = lphul->ihuldef;
     for (ihs = 0; ihs < lphul->chs; ihs++) {
-        if (!FGetAIPart(rgaip[ihs], &part)) {
+        if (!FGetAIPart(static_cast<AiPartPreference>(rgaip[ihs]), &part)) {
             return FALSE;
         }
         part.hs.cItem = lphul->rghs[ihs].cItem;
@@ -81,7 +81,7 @@ int16_t FGetAIPart(AiPartPreference aip, PART *ppart) {
     }
     cTry = vrgcAiParts[aip];
     while (cTry-- > 0) {
-        part.hs.grhst = 1 << vrgAiParts[iOffset].ibit;
+        part.hs.grhst = static_cast<HullSlotType>(1 << vrgAiParts[iOffset].ibit);
         part.hs.iItem = vrgAiParts[iOffset].iItem;
         part.hs.cItem = 0;
         cItem = vrgAiParts[iOffset].cItem;
@@ -123,7 +123,7 @@ void PickANameAndBmp(SHDEF *pshdef, StringId ids, int16_t cids, int16_t ibmpStar
     }
     pshdef->hul.ibmp = ibmpStart + i;
     for (i = 0; i < 20; i++) {
-        CchGetString(Random(cids) + ids, pshdef->hul.szClass);
+        CchGetString(static_cast<StringId>(Random(cids) + ids), pshdef->hul.szClass);
         if (pshdef->ishdef >= 16) {
             for (ishdef = 0; ishdef < 10 && (rglpshdefSB[idPlayer][ishdef].fFree || rglpshdefSB[idPlayer][ishdef].hul.ihuldef != pshdef->hul.ihuldef ||
                                              strcmp(pshdef->hul.szClass, rglpshdefSB[idPlayer][ishdef].hul.szClass) != 0);
@@ -140,7 +140,7 @@ void PickANameAndBmp(SHDEF *pshdef, StringId ids, int16_t cids, int16_t ibmpStar
             }
         }
     }
-    CchSprintf(pshdef->hul.szClass, "%s %d", PszGetCompressedString(Random(cids) + ids), Random(100));
+    CchSprintf(pshdef->hul.szClass, "%s %d", PszGetCompressedString(static_cast<StringId>(Random(cids) + ids)), Random(100));
     return;
 }
 
@@ -190,7 +190,7 @@ int16_t XferAiSupply(GrobjClass grobjSrc, int16_t idSrc, GrobjClass grobjDst, in
     if (cQuan < 0) {
         iT = grobjSrc;
         grobjSrc = grobjDst;
-        grobjDst = iT;
+        grobjDst = static_cast<GrobjClass>(iT);
         iT = idSrc;
         idSrc = idDst;
         idDst = iT;
@@ -1053,12 +1053,12 @@ int16_t FSalvageTargetFreighter2(FLEET *lpflFr, int16_t fNeedy, int16_t iWorst, 
             dy = pt.y - lpth->pt.y;
             if (dx == 0 && dy == 0) {
                 if (fNeedy && lpth->thp.rgwtMin[iWorst] != 0) {
-                    XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, iWorst, lpth->thp.rgwtMin[iWorst]);
+                    XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, static_cast<MineralType>(iWorst), lpth->thp.rgwtMin[iWorst]);
                 }
                 if (fNeedy != 2) {
                     for (i = 0; i < 3; i++) {
                         if (lpth->thp.rgwtMin[i] != 0) {
-                            XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, i, lpth->thp.rgwtMin[i]);
+                            XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, static_cast<MineralType>(i), lpth->thp.rgwtMin[i]);
                         }
                     }
                 }
@@ -1350,6 +1350,8 @@ int16_t FIsAiAttack(FLEET *lpfl) {
                 return TRUE;
             }
             switch (ihul) {
+            default:
+                break;
             case ihuldefFrigate:
                 if (rglpshdef[idPlayer][i].lPower > 0) {
                     return TRUE;
@@ -2108,7 +2110,7 @@ void MoveToNearestPlanetOrEnemy(FLEET *lpfl, int16_t dEnemyRange) {
     if (lpplBest && lBest <= (int32_t)(uint32_t)(dEnemyRange * dEnemyRange)) {
         id = lpplBest->id;
     } else {
-        if (!FFindNearestObject(lpfl->pt, grobjPlanet | mdNoRecurse, &scan)) {
+        if (!FFindNearestObject(lpfl->pt, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
             return;
         }
         id = scan.idpl;
@@ -2132,14 +2134,14 @@ void EnsureAiStarbaseDesigns() {
     int16_t  iSetLast;
 
     if (rglpshdefSB[idPlayer][2].fFree) {
-        FCreateAiStarbase(2, 2, aiSbRecipeAuto, isbhullAuto);
-        FCreateAiStarbase(4, 3, aiSbRecipeAuto, isbhullAuto);
+        FCreateAiStarbase(2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+        FCreateAiStarbase(4, 3, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
     }
     if (rglpshdefSB[idPlayer][1].fFree) {
-        FCreateAiStarbase(1, 1, aiSbRecipeAuto, isbhullAuto);
+        FCreateAiStarbase(1, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
     }
     if (rglpshdefSB[idPlayer][3].fFree) {
-        FCreateAiStarbase(3, 2, aiSbRecipeAuto, isbhullAuto);
+        FCreateAiStarbase(3, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
     }
     if (game.turn >= 50) {
         iSetLast = -1;
@@ -2159,9 +2161,9 @@ void EnsureAiStarbaseDesigns() {
                 if (!rglpshdefSB[idPlayer][i].fFree && rglpshdefSB[idPlayer][i].cExist > 0)
                     goto LOrbital;
             }
-            FCreateAiStarbase(iSetNew, 1, aiSbRecipeAuto, isbhullAuto);
-            FCreateAiStarbase(iSetNew + 2, 2, aiSbRecipeAuto, isbhullAuto);
-            FCreateAiStarbase(iSetNew + 4, 3, aiSbRecipeAuto, isbhullAuto);
+            FCreateAiStarbase(iSetNew, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+            FCreateAiStarbase(iSetNew + 2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+            FCreateAiStarbase(iSetNew + 4, 3, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
         }
     LOrbital:
         iSetLast = -1;
@@ -2179,8 +2181,8 @@ void EnsureAiStarbaseDesigns() {
             iSetNew = iSetLast <= 4 ? 6 : 1;
             if ((rglpshdefSB[idPlayer][iSetNew].fFree || rglpshdefSB[idPlayer][iSetNew].cExist <= 0) &&
                 (rglpshdefSB[idPlayer][iSetNew + 2].fFree || rglpshdefSB[idPlayer][iSetNew + 2].cExist <= 0)) {
-                FCreateAiStarbase(iSetNew, 1, aiSbRecipeAuto, isbhullAuto);
-                FCreateAiStarbase(iSetNew + 2, 2, aiSbRecipeAuto, isbhullAuto);
+                FCreateAiStarbase(iSetNew, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+                FCreateAiStarbase(iSetNew + 2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
             }
         }
     }
@@ -2198,7 +2200,7 @@ void EnsureMacintiStarbaseDesigns(uint8_t *rgSB) {
     *rgSB = 0;
     for (i = 1; i <= 3; i++) {
         if (rglpshdefSB[idPlayer][i].fFree || rglpshdefSB[idPlayer][i].cExist == 0) {
-            if (FCreateAiStarbase(i, i >= 3 ? 2 : 1, vrgSBMacAisb[i - 1], i)) {
+            if (FCreateAiStarbase(i, i >= 3 ? 2 : 1, static_cast<AiStarbaseRecipe>(vrgSBMacAisb[i - 1]), static_cast<isbhull>(i))) {
                 rgSB[i] = 0;
             } else {
                 rgSB[i] = 1;
@@ -2235,7 +2237,7 @@ void EnsureMacintiStarbaseDesigns(uint8_t *rgSB) {
         }
         if (j == 3) {
             for (j = 0; j < 3; j++) {
-                for (k = 5; k >= 3 && FCreateAiStarbase(3 * i + 4 + j, j + 1, vrgSBMacAisb[k], k - 1) == 0; k--) {
+                for (k = 5; k >= 3 && FCreateAiStarbase(3 * i + 4 + j, j + 1, static_cast<AiStarbaseRecipe>(vrgSBMacAisb[k]), static_cast<isbhull>(k - 1)) == 0; k--) {
                 }
             }
         }
@@ -2290,7 +2292,7 @@ int16_t FCreateAiStarbase(int16_t ishdef, int16_t iLevel, AiStarbaseRecipe aisb,
             isb = isbhullSpaceStation;
         }
     }
-    if (!FCreateAiShdef(ishdefNone, isb, (uint8_t *)&vrgSBAip[aisb])) {
+    if (!FCreateAiShdef(ishdefNone, static_cast<HulDef>(isb), (uint8_t *)&vrgSBAip[aisb])) {
         return FALSE;
     }
     shdef = shdefBuild;

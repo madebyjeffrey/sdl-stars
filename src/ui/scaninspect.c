@@ -112,8 +112,8 @@ BOOL FSelectScannerObject(const SCANSNAPSHOT *lpsnap, uint16_t grType, uint16_t 
     } else return FALSE;
     /* Find co-located categories, then override the object identity: multiple
        fleets at one planet must not all resolve to the nearest fleet. */
-    FFindNearestObject(pt, grobjPlanet | grobjFleet | grobjThing | mdExact, &scan);
-    scan.grobj = grType; scan.grobjFull |= grType; scan.pt = pt; scan.iwp = iwpNone;
+    FFindNearestObject(pt, static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjThing | mdExact), &scan);
+    scan.grobj = static_cast<GrobjClass>(grType); scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grType); scan.pt = pt; scan.iwp = iwpNone;
     if (grType == grobjPlanet) scan.idpl = (int16_t)id;
     else if (grType == grobjFleet) scan.ifl = i;
     else scan.ith = i;

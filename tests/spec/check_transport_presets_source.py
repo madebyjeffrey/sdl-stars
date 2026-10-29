@@ -149,7 +149,7 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,char **labels,int s
     bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.c', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'
     block = between(ui,'            fActive = TRUE;\n            switch (l) {','            psz = vrgszUnits[i];')
     bodies += 'static int quantityControl(int l,int i,int *unit) {int fActive;' + block + '*unit=i;return fActive;}\n'
-    block = between(custom,'                iAction = vrgZip[iResTechNow].txp.rgia[i].iAction;', '                TextOut(hdc, xCtr + 6,')
+    block = between(custom,'                iAction = (uint16_t)(vrgZip[iResTechNow].txp.rgia[i].iAction);', '                TextOut(hdc, xCtr + 6,')
     bodies += 'static void paintLabel(int i) {int cch;XferActionType iAction;' + block + '}\n'
     bodies += r'''
 static void reset(void) {

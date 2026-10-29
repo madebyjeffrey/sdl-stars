@@ -206,6 +206,7 @@ def main():
     research=(ROOT/'src/core/research.c').read_text();start=research.index('int32_t  rglTechCost[27]');table=research[start:research.index(';',start)+1]
     declarations=r'''
 #include "common.h"
+#include <setjmp.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -281,6 +282,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         # out-of-range ID for each signed primary trait before later availability.
         catalog_declarations=r'''
 #include "common.h"
+#include <setjmp.h>
 #include <assert.h>
 PLAYER rgplr[16];int16_t idPlayer;
 '''

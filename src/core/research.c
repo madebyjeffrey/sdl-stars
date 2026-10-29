@@ -14,7 +14,7 @@ int32_t GetTechLevelCost(TechFieldType iTech, int16_t iLevel, int16_t iplr) {
         cTech += rgplr[iplr].rgTech[i];
     }
     lCost = (int16_t)(10 * cTech) + rglTechCost[iLevel];
-    i = GetRaceStat(&rgplr[iplr], iTech + 8) - 1;
+    i = GetRaceStat(&rgplr[iplr], static_cast<RaceStat>(iTech + 8)) - 1;
     if (i != 0) {
         if (i < 0) {
             lCost += lCost - (int32_t)(lCost >> 2);
@@ -48,7 +48,7 @@ int32_t ProjectedResearchSpending(int32_t pct) {
             if (!lppl->lpplprod || lppl->lpplprod->iprodMac == 0) {
                 lSpend += lRes;
             } else {
-                EstimateItemProdSched(lppl, NULL, iprodEstimateResearchResources, &cRes, &cBogus);
+                EstimateItemProdSched(lppl, NULL, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
                 lSpend += cRes;
             }
         }
@@ -83,7 +83,7 @@ int32_t CostOfDevelopingItem(char *rgTech) {
             }
             lCur = -lSpent;
             while (rgTech[i] > pTech[i]) {
-                lCur += GetTechLevelCost(i, pTech[i] + 1, idPlayer);
+                lCur += GetTechLevelCost(static_cast<TechFieldType>(i), pTech[i] + 1, idPlayer);
                 pTech[i]++;
             }
             lCost += max(0, lCur);
@@ -105,6 +105,8 @@ int16_t FShouldPartBeHidden(PART *ppart) {
     grbitTrader = grbitTraderNone;
     iItem = ppart->hs.iItem;
     switch (ppart->hs.grhst) {
+    default:
+        break;
     case hstBeam:
         if (iItem != ibeamMultiContainedMunition)
             break;

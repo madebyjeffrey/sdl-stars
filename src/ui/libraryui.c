@@ -3058,7 +3058,7 @@ void RefreshLibraryGames(HWND hwnd) {
         EnableWindow(rghwndBtnSplash[2], TRUE);
     } else {
         SetDlgItemText(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, "");
-        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsNewGame + 2));
+        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(static_cast<StringId>(idsNewGame + 2)));
         EnableWindow(rghwndBtnSplash[2], FALSE);
     }
 }

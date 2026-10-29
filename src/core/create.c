@@ -409,7 +409,7 @@ RetryAll:
             if (GetRaceGrbit(&rgplr[i], ibitRaceTech3) != 0) {
                 iTechMin = (GetRaceStat(&rgplr[i], rsMajorAdv) == raNone) + 3;
                 for (j = 0; j < 6; j++) {
-                    if (rgplr[i].rgTech[j] < iTechMin && GetRaceStat(&rgplr[i], j + 8) == 0) {
+                    if (rgplr[i].rgTech[j] < iTechMin && GetRaceStat(&rgplr[i], static_cast<RaceStat>(j + 8)) == 0) {
                         rgplr[i].rgTech[j] = iTechMin;
                     }
                 }
@@ -421,7 +421,7 @@ RetryAll:
                 rgplr[i].rgTech[2]++;
             }
             for (j = 0; j < 4; j++) {
-                FSendPlrMsg(i, idmTipCanHideUnimportantMessagesClickingCheckmark + j, gotoNone, 0, 0, 0, 0, 0, 0, 0);
+                FSendPlrMsg(i, static_cast<MessageId>(idmTipCanHideUnimportantMessagesClickingCheckmark + j), gotoNone, 0, 0, 0, 0, 0, 0, 0);
             }
         }
         for (i = 0; i < game.cPlayer; i++) {
@@ -449,7 +449,7 @@ RetryAll:
                 }
             }
             lpPlanets[iMin].iScanner = 0;
-            FSendPlrMsg(i, idmHomePlanetPeopleReadyLeaveNestExplore, iMin, iMin, 0, 0, 0, 0, 0, 0);
+            FSendPlrMsg(i, idmHomePlanetPeopleReadyLeaveNestExplore, static_cast<MsgGoto>(iMin), iMin, 0, 0, 0, 0, 0, 0);
             if (50 < CAdvantagePoints(&rgplr[i])) {
                 iT = 50;
             } else {
@@ -610,7 +610,7 @@ RetryAll:
             }
             rglpshdef[i] = lpshdef;
             idHome = rgplr[i].idPlanetHome;
-            raMajor = GetRaceStat(&rgplr[i], rsMajorAdv);
+            raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[i], rsMajorAdv));
             switch (raMajor) {
             case raMassAccel:
                 CreateStartupShip(i, idHome, 4, TRUE);
@@ -744,6 +744,8 @@ RetryAll:
                     cTry = 0;
                     part.hs = *lphs;
                     switch (part.hs.grhst) {
+                    default:
+                        break;
                     case hstEngine:
                         if (part.hs.iItem != iengineQuickJump5)
                             break;
@@ -1037,13 +1039,13 @@ int16_t GenNewGameFromFile(char *pszFile) {
                 goto LUniDefError;
         }
         if (cNum >= 1) {
-            game.mdSize = LOWORD(rgl[0]);
+            game.mdSize = static_cast<UniverseSize>(LOWORD(rgl[0]));
         }
         if (cNum >= 2) {
-            game.mdDensity = LOWORD(rgl[1]);
+            game.mdDensity = static_cast<UniverseDensity>(LOWORD(rgl[1]));
         }
         if (cNum >= 3) {
-            game.mdStartDist = LOWORD(rgl[2]);
+            game.mdStartDist = static_cast<StartDistance>(LOWORD(rgl[2]));
         }
         if (cNum >= 4) {
             Randomize(rgl[3]);
@@ -1102,7 +1104,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
             }
             if (i > 0 && *lpbStart == '#') {
                 cNum = CParseNumbers(lpbStart + 1, rgl, 2);
-                idAi = LOWORD(rgl[0]);
+                idAi = static_cast<AiRace>(LOWORD(rgl[0]));
                 lvlAi = LOWORD(rgl[1]);
                 if (cNum < 2 || (int16_t)idAi < idAiRobotoid || (int16_t)idAi > idAiRandom || lvlAi < 0 || lvlAi > 4) {
                     strcpy(szWork, lpbStart);
@@ -1114,11 +1116,11 @@ int16_t GenNewGameFromFile(char *pszFile) {
                     lvlAi--;
                 }
                 if (idAi == idAiRobotoid) {
-                    idAi = Random(6);
+                    idAi = static_cast<AiRace>(Random(6));
                 } else {
-                    idAi--;
+                    idAi = static_cast<AiRace>(idAi - 1);
                 }
-                rgplr[i] = *LpplrComp(idAi, lvlAi);
+                rgplr[i] = *LpplrComp(idAi, static_cast<AiLevel>(lvlAi));
                 rgplr[i].fAi = TRUE;
                 rgplr[i].idAi = idAi;
                 rgplr[i].lvlAi = lvlAi;
@@ -1263,7 +1265,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
                 rgplr[i].fHacker = TRUE;
             }
             if (rgplr[i].szName[0] == 0) {
-                CchGetString(idsBerserker + Random(24), rgplr[i].szName);
+                CchGetString(static_cast<StringId>(idsBerserker + Random(24)), rgplr[i].szName);
                 CchSprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
             }
         }
@@ -1273,7 +1275,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
             if (j < i) {
                 c = Random(24);
                 while (1) {
-                    for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, PszGetCompressedString(idsBerserker + c)) != 0; j++) {
+                    for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, PszGetCompressedString(static_cast<StringId>(idsBerserker + c))) != 0; j++) {
                     }
                     if (j == game.cPlayer)
                         break;
@@ -1282,7 +1284,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
                         c = 0;
                     }
                 }
-                CchGetString(idsBerserker + c, rgplr[i].szName);
+                CchGetString(static_cast<StringId>(idsBerserker + c), rgplr[i].szName);
                 strcpy(rgplr[i].szNames, rgplr[i].szName);
                 strcat(rgplr[i].szNames, "s");
             }
@@ -1327,7 +1329,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
 LError:
     StreamClose();
     lpbDefUni = NULL;
-    TurnLog(idsFailed + fSuccess);
+    TurnLog(static_cast<StringId>(idsFailed + fSuccess));
     return fSuccess;
 }
 
@@ -1444,6 +1446,8 @@ void InitNewGamePlr(int16_t iStepMaxSoFar, AiLevel lvlAi) {
             }
             i = 1;
             switch (lvlAi) {
+            default:
+                break;
             case lvlAiEasy:
                 while (i < game.cPlayer) {
                     if (i < (int16_t)(game.cPlayer + 1) / 3 + 1) {

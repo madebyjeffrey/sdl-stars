@@ -289,12 +289,12 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             if (lpfl->cord == 1) {
                 c = wsprintf(szT, szWP, PszGetCompressedString(idsNone));
             } else {
-                c = wsprintf(szT, szWP, PszGetLocName(lpord->grobj, lpord->id, lpord->pt.x, lpord->pt.y));
+                c = wsprintf(szT, szWP, PszGetLocName(static_cast<GrobjClass>(lpord->grobj), lpord->id, lpord->pt.x, lpord->pt.y));
             }
             TextOut(hdc, prc->left + 86, yTop, szT, c);
             yTop += dyArial8 + 2;
             CchGetString(!gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, szT);
-            c = wsprintf(szWork, szT, PszGetCompressedString(idsTaskHere + lpord->grTask));
+            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(idsTaskHere + lpord->grTask)));
             TextOut(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             if (lpfl->cord > 1) {
@@ -426,7 +426,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             yTop += (int16_t)(3 * dyArial8) / 2;
             c = CchGetString(idsStability, szWork);
             RightTextOut(hdc, xLeft - 4, yTop, szWork, c, 0);
-            c = CchGetString(idsRockSolid + PctWormholeMoves(lpth), szWork);
+            c = CchGetString(static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             goto FinishUp;
         } else if (lpth->ith == ithMysteryTrader) {
@@ -528,7 +528,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 DeleteDC(hdcMem);
             }
             if (pl.det >= detSome) {
-                c = CchGetString(idsVal + (fShortLabels == 0), szWork);
+                c = CchGetString(static_cast<StringId>(idsVal + (fShortLabels == 0)), szWork);
                 dx = LOWORD(GetTextExtent(hdc, szWork, c));
                 SetTextColor(hdc, crButtonText);
                 TextOut(hdc, xL, yCur, szWork, c);
@@ -550,7 +550,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             SetTextColor(hdc, crButtonText);
             if (pl.iPlayer != iplrNone) {
-                strcpy(szT, PszGetCompressedString(idsPop + (fShortLabels == 0)));
+                strcpy(szT, PszGetCompressedString(static_cast<StringId>(idsPop + (fShortLabels == 0))));
             }
             if (pl.det == detAll) {
                 c = strlen(szT);
@@ -612,7 +612,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 iCur = pl.rgEnvVar[i];
                 RightTextOut(hdc, xL - 2, yCur + dy, !fShortLabels ? rgszPlanetAttr[i] : rgszPlanetAttrAbbr[i], 0, 0);
                 if (pl.det >= detSome) {
-                    psz = PszCalcEnvVar(i, iCur);
+                    psz = PszCalcEnvVar(static_cast<EnvType>(i), iCur);
                     c = strlen(psz);
                     SelectObject(hdc, rghfontArial8[0]);
                     TextOut(hdc, xR + 2, yCur + dy, psz, c);
@@ -848,11 +848,11 @@ HtMineType HtMineWindow(HWND hwnd, int16_t x, int16_t y) {
         return htMineNone;
     }
     if (y < 3 * dyRow + yCur) {
-        return (int16_t)(y - yCur) / dyRow + 6;
+        return static_cast<HtMineType>((int16_t)(y - yCur) / dyRow + 6);
     }
     yCur += 3 * dyRow + (dyArial8 >> 1) + 1;
     if (y < 3 * dyRow + yCur) {
-        return (int16_t)(y - yCur) / dyRow + 1;
+        return static_cast<HtMineType>((int16_t)(y - yCur) / dyRow + 1);
     }
     return htMineScale;
 }
@@ -887,6 +887,8 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
     ht = HtMineWindow(hwndMine, x, y);
     if ((msg != 516 || ht == htMineScanSel || ht == htMineShipOrFleet) && ht <= htMineMinefieldType) {
         switch (ht) {
+        default:
+            break;
         case htMineOwner:
             if (sel.scan.grobj == grobjPlanet) {
                 lppl = LpplFromId(sel.scan.idpl);

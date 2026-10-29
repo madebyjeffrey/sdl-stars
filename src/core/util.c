@@ -1318,7 +1318,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
                         if ((scan.grobjFull & grobjFleet) && (rglpfl[scan.ifl]->iPlayer == idPlayer || lpfl->iPlayer != idPlayer))
                             continue;
                         scan.ifl = i;
-                        scan.grobjFull |= grobjFleet;
+                        scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grobjFleet);
                         if (scan.grobj == grobjNone)
                             goto SelectShip;
                         continue;
@@ -1351,7 +1351,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
                         if (scan.grobjFull & grobjThing)
                             continue;
                         scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
-                        scan.grobjFull |= grobjThing;
+                        scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grobjThing);
                         if (scan.grobj == grobjNone)
                             goto SelectThing;
                         continue;
@@ -1384,7 +1384,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
                         if ((scan.grobjFull & grobjOther) && i != sel.scan.iwp)
                             continue;
                         scan.iwp = i;
-                        scan.grobjFull |= grobjOther;
+                        scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | grobjOther);
                         if (scan.grobj == grobjNone)
                             goto SelectSpace;
                         continue;
@@ -1406,7 +1406,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
         }
     }
     if (!(grobj & mdNoRecurse) && scan.grobj != grobjNone &&
-        FFindNearestObject(scan.pt, ((grobj & (grobjPlanet | grobjFleet | grobjOther | grobjThing)) ^ 0xf) | 0xa0, &scanT)) {
+        FFindNearestObject(scan.pt, static_cast<GrobjClass>(((grobj & (grobjPlanet | grobjFleet | grobjOther | grobjThing)) ^ 0xf) | 0xa0), &scanT)) {
         if (scanT.idpl != idplNone) {
             scan.idpl = scanT.idpl;
         }
@@ -1419,7 +1419,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
         if (scanT.ith != ithNone) {
             scan.ith = scanT.ith;
         }
-        scan.grobjFull |= scanT.grobjFull;
+        scan.grobjFull = static_cast<GrobjClass>(scan.grobjFull | scanT.grobjFull);
     }
     if (pscan) {
         *pscan = scan;
@@ -1435,6 +1435,8 @@ int16_t PtToScan(int16_t d) {
         return d;
     }
     switch (iScanZoom) {
+    default:
+        break;
     case zoom400:
         d *= 4;
         break;
@@ -1467,6 +1469,8 @@ int16_t ScanToPt(int16_t d) {
         return d;
     }
     switch (iScanZoom) {
+    default:
+        break;
     case zoom400:
         d >>= 2;
         break;
@@ -1754,6 +1758,8 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
     }
     if (fBuiltIn) {
         switch (lpshdef->hul.ihuldef) {
+        default:
+            break;
         case ihuldefScout:
         case ihuldefDestroyer:
         case ihuldefFrigate:
@@ -1781,7 +1787,7 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
             continue;
         if (lphs->grhst == hstScanner) {
             fHasScanner = TRUE;
-            iScanner = lphs->iItem;
+            iScanner = static_cast<iscanner>(lphs->iItem);
             lT = dRangeT = LpscannerFromId(lphs->iItem)->dRange;
             lT = (double)((double)lT * lT);
             lT = (double)((double)lT * lT);
@@ -2152,7 +2158,7 @@ void ValidateWaypoints() {
                         if (!lpth || (lpth->ith == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw.grbitPlr) &&
                                       (lpth->pt.x != lpord->pt.x || lpth->pt.y != lpord->pt.y))) {
                             if (lpth) {
-                                FSendPlrMsg(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, 0x8000 | lpfl->id, lpfl->id, 0, 0, 0, 0, 0, 0);
+                                FSendPlrMsg(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                             lpord->grobj = grobjOther;
                             lpord->id = iord;
@@ -2166,7 +2172,7 @@ void ValidateWaypoints() {
                             lpflTarget = NULL;
                             iplrHi = lpord->id & 0xfe00;
                             cFound = 0;
-                            mdTarget = rglpbtlplan[lpfl->iPlayer][lpfl->iplan].mdTarget1;
+                            mdTarget = static_cast<MdTarget>(rglpbtlplan[lpfl->iPlayer][lpfl->iplan].mdTarget1);
                             wtMatch = 0;
                             lpflMatch = NULL;
                             /* As in the jrc4 binary (0008:497a): one pass, taking the
@@ -2307,7 +2313,7 @@ int16_t FCanFleetUseStargates(FLEET *lpfl, POINT16 ptSrc, POINT16 ptDst) {
     SCAN    scan;
 
     fUncertain = FALSE;
-    if (!FFindNearestObject(ptDst, grobjPlanet | mdExact, &scan)) {
+    if (!FFindNearestObject(ptDst, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
         return 0;
     }
     lpplDst = LpplFromId(scan.idpl);
@@ -2325,7 +2331,7 @@ int16_t FCanFleetUseStargates(FLEET *lpfl, POINT16 ptSrc, POINT16 ptDst) {
 LSrcChk:
     lpplSrc = NULL;
     fSrcPlanet = FALSE;
-    if (FFindNearestObject(ptSrc, grobjPlanet | mdExact, &scan)) {
+    if (FFindNearestObject(ptSrc, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
         fSrcPlanet = TRUE;
         lpplSrc = LpplFromId(scan.idpl);
         if (!lpplSrc || lpfl->iPlayer != lpplSrc->iPlayer)

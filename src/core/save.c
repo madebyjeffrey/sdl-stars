@@ -155,7 +155,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                 } else {
                     lpord = lpfl->lpplord->rgord;
                     if (lpord->grobj == grobjFleet) {
-                        if (FFindNearestObject(lpord->pt, grobjPlanet | mdExact, &scan)) {
+                        if (FFindNearestObject(lpord->pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
                             lpord->grobj = grobjPlanet;
                             lpord->id = scan.idpl;
                         } else {
@@ -178,7 +178,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                             pt = lpfl->pt;
                         }
                         lpbtlplan = rglpbtlplan[lpfl->iPlayer] + lpfl->iplan;
-                        mdTarget = lpbtlplan->mdTarget1;
+                        mdTarget = static_cast<MdTarget>(lpbtlplan->mdTarget1);
                         for (iflT = 0; iflT < cFleet; iflT++) {
                             lpflTarget = rglpfl[iflT];
                             if (!rglpfl[iflT])
@@ -238,7 +238,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                             lpord[1].grobj = grobjFleet;
                             lpfl->cord++;
                             lpfl->lpplord->iordMac++;
-                            FSendPlrMsg(iPlayer, idmPatrollingHasTargetedIntercept, lpfl->id | 0x8000, lpfl->id, lpflBest->id, 0, 0, 0, 0, 0);
+                            FSendPlrMsg(iPlayer, idmPatrollingHasTargetedIntercept, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflBest->id, 0, 0, 0, 0, 0);
                         }
                     }
                     if (lpord->grTask != grTaskXfer && lpfl->cord > 1) {
@@ -249,11 +249,11 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                     (lpth->ith == ithMinefield && !(1 << iPlayer & lpth->thm.grbitPlrNow)) ||
                                     (lpth->ith == ithWormhole && !lpth->thw.fInclude)) {
                                     if (lpth && lpth->ith == ithWormhole) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, lpfl->id | 0x8000, lpfl->id, 0);
+                                        FSendPlrMsg2(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     } else if (lpth && lpth->ith == ithMysteryTrader) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmMysteryTraderHeadingHasVanishedOrdersHave, lpfl->id | 0x8000, lpfl->id, 0);
+                                        FSendPlrMsg2(lpfl->iPlayer, idmMysteryTraderHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     } else if (lpth && lpth->ith == ithMinefield) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmMineFieldHeadingHasVanishedOrdersHave, lpfl->id | 0x8000, lpfl->id, 0);
+                                        FSendPlrMsg2(lpfl->iPlayer, idmMineFieldHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     }
                                     lpord[iord].grobj = grobjOther;
                                     lpord[iord].id = iord;
@@ -265,12 +265,12 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                 }
                                 lpflT = LpflFromId(lpord[iord].id);
                                 if (!lpflT || lpflT->fDead) {
-                                    FSendPlrMsg(iPlayer, idmSWaypointAppearsHaveDestroyedHasDisappeared, lpfl->id | 0x8000, lpfl->id, lpord[iord].id, 0, 0, 0,
+                                    FSendPlrMsg(iPlayer, idmSWaypointAppearsHaveDestroyedHasDisappeared, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpord[iord].id, 0, 0, 0,
                                                 0, 0);
                                 FixupCoords:
                                     lpord[iord].grobj = grobjOther;
                                     lpord[iord].id = iord;
-                                    if (FFindNearestObject(lpord[iord].pt, grobjPlanet | mdExact, &scan)) {
+                                    if (FFindNearestObject(lpord[iord].pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
                                         lpord[iord].grobj = grobjPlanet;
                                         lpord[iord].id = scan.idpl;
                                     }
@@ -278,11 +278,11 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                     if (lpflT->fInclude)
                                         continue;
                                     if (lpflT->idPlanet != idPlanetDeepSpace && !fNoAutoTrack) {
-                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveDuckedBehindOrders, lpfl->id | 0x8000, lpfl->id, lpflT->idPlanet, 0, 0,
+                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveDuckedBehindOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflT->idPlanet, 0, 0,
                                                     0, 0, 0);
                                         goto FixupCoords;
                                     } else {
-                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveOutrunRangeScanners, lpfl->id | 0x8000, lpfl->id, 0, 0, 0, 0, 0, 0);
+                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveOutrunRangeScanners, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                                         goto FixupCoords;
                                     }
                                 }
@@ -477,7 +477,7 @@ FreeUp:
 }
 
 int16_t FAppendFile(int16_t iPlayer) {
-    if (!FMarkFile(8195, iPlayer, mdMarkMulti, TRUE)) {
+    if (!FMarkFile(static_cast<DtFileType>(8195), iPlayer, mdMarkMulti, TRUE)) {
         return FALSE;
     }
     WriteBOF(iPlayer, 3, TRUE);
@@ -1056,7 +1056,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
     fSilentSav = fFileErrSilent;
     fSuccess = FALSE;
     ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
-    SetSzWorkFromDt(dt & 0xff, iPlayer);
+    SetSzWorkFromDt(static_cast<DtFileType>(dt & 0xff), iPlayer);
     StarsRecoveryScope scopeRecovery;
     try {
         fFileErrSilent = TRUE;
@@ -1211,7 +1211,7 @@ void SetVisPFInit(int16_t iPlr) {
     int16_t       iSteal;
 
     // Host visibility has no player race; every packet is included below.
-    raMajor = iPlr == iplrNone ? raNone : GetRaceStat(&rgplr[iPlr], rsMajorAdv);
+    raMajor = static_cast<RaceAttribute>(iPlr == iplrNone ? raNone : GetRaceStat(&rgplr[iPlr], rsMajorAdv));
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
     for (i = 0; i < game.cPlayer; i++) {
         rgplr[i].cPlanet = 0;
@@ -1287,7 +1287,7 @@ void SetVisPFInit(int16_t iPlr) {
                 if (lpfl->fHereAllTurn && lppl->iPlayer == iplrNone && lpfl->lpplord->rgord[0].grTask == grTaskMine && CMineFromLpfl(lpfl) > 0) {
                     detNew = 4;
                 }
-                MarkPlanet(lppl, iPlr, detNew);
+                MarkPlanet(lppl, iPlr, static_cast<DetType>(detNew));
             }
         } else {
             lpfl->fInclude = FALSE;

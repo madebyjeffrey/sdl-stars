@@ -36,7 +36,7 @@ static void SyncToolbar(HWND hwnd) {
     int16_t itb;
 
     for (itb = tbNormalView; itb <= tbShipCounts; itb++) {
-        SendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(itb));
+        SendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(static_cast<ToolbarButton>(itb)));
     }
 }
 
@@ -106,7 +106,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (itb == tbScannerRange) iRadar = c;
             } else {
                 rgbtn[c].iBitmap = itb;
-                CchGetString(idsNormalView + itb, rgszTip[itb]);
+                CchGetString(static_cast<StringId>(idsNormalView + itb), rgszTip[itb]);
                 rgbtn[c].iString = (INT_PTR)rgszTip[itb];
                 rgbtn[c].fsStyle = itb <= tbNoPlayerInfoView ? BTNS_CHECKGROUP : BTNS_CHECK;
                 if (itb == tbShipDesignFilter || itb == tbEnemyClassFilter) rgbtn[c].fsStyle |= BTNS_DROPDOWN;
@@ -157,7 +157,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     case WM_COMMAND:
         if ((HWND)lParam == hwndButtons) {
-            itb = LOWORD(wParam) - IDC_STARS_TOOLBUTTON_FIRST;
+            itb = static_cast<ToolbarButton>(LOWORD(wParam) - IDC_STARS_TOOLBUTTON_FIRST);
             if (itb >= tbNormalView && itb <= tbShipCounts) {
                 ExecuteButton(itb, itb <= tbNoPlayerInfoView || !FIsButtonDown(itb));
                 SyncToolbar(hwnd);
@@ -169,7 +169,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_NOTIFY:
         lpnm = (NMTOOLBAR *)lParam;
         if (lpnm && lpnm->hdr.hwndFrom == hwndButtons && lpnm->hdr.code == TBN_DROPDOWN) {
-            itb = lpnm->iItem - IDC_STARS_TOOLBUTTON_FIRST;
+            itb = static_cast<ToolbarButton>(lpnm->iItem - IDC_STARS_TOOLBUTTON_FIRST);
             if (itb == tbShipDesignFilter) itb = tbShipDesignFilterMenu;
             else if (itb == tbEnemyClassFilter) itb = tbEnemyClassFilterMenu;
             ExecuteButton(itb, !FIsButtonDown(itb));
@@ -243,6 +243,8 @@ int16_t DxOfBtn(ToolbarButton itb) {
 
 int16_t FIsButtonDown(ToolbarButton itb) {
     switch (itb) {
+    default:
+        break;
     case tbNormalView:
     case tbSurfaceMineralView:
     case tbMineralConcView:
@@ -312,15 +314,15 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
     case tbNoPlayerInfoView:
         if (!fDown)
             return;
-        grbitScan = itb + (grbitScan & grbitScanToggleMask);
+        grbitScan = static_cast<GrbitScan>(itb + (grbitScan & grbitScanToggleMask));
         break;
     case tbAddWaypoints:
         grbitNew = 16;
     LBitDiddle:
         if (fDown) {
-            grbitScan |= grbitNew;
+            grbitScan = static_cast<GrbitScan>(grbitScan | grbitNew);
         } else {
-            grbitScan &= ~grbitNew;
+            grbitScan = static_cast<GrbitScan>(grbitScan & ~grbitNew);
         }
         break;
     case tbScannerCoverage:
@@ -356,7 +358,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
             } else {
                 rgid[c] = (uint32_t)(grbitScanMines == 0);
             }
-            CchGetString(i, &szWork[(i - idsMineFields) * 30 + 160]);
+            CchGetString(static_cast<StringId>(i), &szWork[(i - idsMineFields) * 30 + 160]);
             rgszScan[c++] = &szWork[(i - idsMineFields) * 30 + 160];
         }
         rgid[c] = 0;
@@ -365,7 +367,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
         rgszScan[c++] = &szWork[250];
         for (i = 0; i < 4; i++) {
             rgid[c] = (uint32_t)((1 << i & grbitScanMines) != 0);
-            CchGetString(idsMineFields3 + i, &szWork[i * 30]);
+            CchGetString(static_cast<StringId>(idsMineFields3 + i), &szWork[i * 30]);
             rgszScan[c++] = &szWork[i * 30];
         }
         pt = PtToolbarMenu(itb);
@@ -381,9 +383,9 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
             grbitScanMines = 0;
         }
         if (grbitScanMines != 0) {
-            grbitScan |= grbitScanMineFields;
+            grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanMineFields);
         } else {
-            grbitScan &= 0xffbf;
+            grbitScan = static_cast<GrbitScan>(grbitScan & 0xffbf);
         }
         InvalidateRect(hwndTb, NULL, TRUE);
         break;
@@ -391,7 +393,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
         c = 0;
         for (i = idsDesigns; i <= idsDesigns2; i++) {
             rgid[c] = 0;
-            CchGetString(i, &szWork[(i - idsDesigns) * 20]);
+            CchGetString(static_cast<StringId>(i), &szWork[(i - idsDesigns) * 20]);
             rgszScan[c++] = &szWork[(i - idsDesigns) * 20];
         }
         rgid[c] = 0;
@@ -434,7 +436,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
             grbitScanShip ^= 1 << ish;
             if (!(grbitScan & grbitScanDesignFilter) && (1 << ish & grbitScanShip)) {
             LInvalS:
-                grbitScan |= grbitScanDesignFilter;
+                grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanDesignFilter);
                 InvalidateRect(hwndTb, NULL, TRUE);
             }
         }
@@ -446,7 +448,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
         c = 0;
         for (i = idsDesigns; i <= idsDesigns2; i++) {
             rgid[c] = 0;
-            CchGetString(i, &szWork[(i - idsDesigns) * 25 + 200]);
+            CchGetString(static_cast<StringId>(i), &szWork[(i - idsDesigns) * 25 + 200]);
             rgszScan[c++] = &szWork[(i - idsDesigns) * 25 + 200];
         }
         rgid[c] = 0;
@@ -455,7 +457,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
         rgszScan[c++] = &szWork[300];
         for (i = 0; i < 8; i++) {
             rgid[c] = (uint32_t)((1 << i & grbitScanEShip) != 0);
-            CchGetString(idsColony + i, &szWork[i * 25]);
+            CchGetString(static_cast<StringId>(idsColony + i), &szWork[i * 25]);
             rgszScan[c++] = &szWork[i * 25];
         }
         pt = PtToolbarMenu(itb);
@@ -477,7 +479,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
             grbitScanEShip ^= 1 << iSel;
             if (!(grbitScan & grbitScanEnemyFilter) && (1 << iSel & grbitScanEShip)) {
             LInvalE:
-                grbitScan |= grbitScanEnemyFilter;
+                grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanEnemyFilter);
                 InvalidateRect(hwndTb, NULL, TRUE);
             }
         }
@@ -539,7 +541,7 @@ void TerminateToolbarFocus(int16_t fCancel) {
         if (!(grbitScan & grbitScanCoverage)) {
             InvalidateRect(hwndTb, NULL, TRUE);
         }
-        grbitScan |= grbitScanCoverage;
+        grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanCoverage);
         InvalidateRect(hwndScanner, NULL, TRUE);
     }
     SetFocus(hwndFrame);
@@ -563,7 +565,7 @@ void ShowTooltip(StringId ids, RECT *prc) {
         }
     } else if (ids != vidsTooltip || EqualRect(prc, &vrcTooltip) == 0) {
         vidsTooltip = ids;
-        cch = CchGetString(vidsTooltip, szWork);
+        cch = CchGetString(static_cast<StringId>(vidsTooltip), szWork);
         vrcTooltip = *prc;
         hdc = GetDC(NULL);
         hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
@@ -667,7 +669,7 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         GetClientRect(hwnd, &rc);
         FrameRect(hdc, &rc, hbrWindowFrame);
         SelectObject(hdc, rghfontArial8[0]);
-        cch = CchGetString(vidsTooltip, szWork);
+        cch = CchGetString(static_cast<StringId>(vidsTooltip), szWork);
         bkSav = SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, crWindowText);
         ExtTextOut(hdc, 3, 3, 0, NULL, szWork, cch, NULL);
@@ -682,7 +684,7 @@ LRESULT CALLBACK FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     switch (msg) {
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
-        ShowTooltip(idsNoString, NULL);
+        ShowTooltip(static_cast<StringId>(idsNoString), NULL);
         break;
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
@@ -694,7 +696,7 @@ LRESULT CALLBACK FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
-        ShowTooltip(idsNoString, NULL);
+        ShowTooltip(static_cast<StringId>(idsNoString), NULL);
         break;
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);

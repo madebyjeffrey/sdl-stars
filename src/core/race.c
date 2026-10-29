@@ -34,9 +34,9 @@ void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
 
     grMask = UINT32_C(1) << ibit;
     if (fSet) {
-        pplr->grbitAttr |= grMask;
+        pplr->grbitAttr = static_cast<RaceTraitBits>(pplr->grbitAttr | grMask);
     } else {
-        pplr->grbitAttr &= ~grMask;
+        pplr->grbitAttr = static_cast<RaceTraitBits>(pplr->grbitAttr & ~grMask);
     }
     return;
 }
@@ -108,7 +108,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     cPoints = 0;
     cPoints = 1650;
     BoundsCheckPlayer(pplr);
-    raMajor = GetRaceStat(pplr, rsMajorAdv);
+    raMajor = static_cast<RaceAttribute>(GetRaceStat(pplr, rsMajorAdv));
     lInnate = (int32_t)(LInnateRaceHabitability(pplr) / 2000);
     iSpread = 1 > (20 >= pplr->pctIdealGrowth ? pplr->pctIdealGrowth : 20) ? 1 : 20 < pplr->pctIdealGrowth ? 20 : pplr->pctIdealGrowth;
     if (iSpread != pplr->pctIdealGrowth) {
@@ -243,7 +243,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     cBad = 0;
     cGood = 0;
     for (i = 0; i <= 13; i++) {
-        if (GetRaceGrbit(pplr, i) != 0) {
+        if (GetRaceGrbit(pplr, static_cast<RaceGrbit>(i)) != 0) {
             if (rgRaceAdvDisPts[i] < 0) {
                 cBad++;
             } else {
@@ -263,6 +263,8 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     }
     if (GetRaceGrbit(pplr, ibitRaceNoAdvScanner) != 0) {
         switch (raMajor) {
+        default:
+            break;
         case raMassAccel:
             cPoints -= 280;
             break;
@@ -275,7 +277,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     }
     cCur = 0;
     for (i = 8; i <= 13; i++) {
-        cCur += GetRaceStat(pplr, i) - 1;
+        cCur += GetRaceStat(pplr, static_cast<RaceStat>(i)) - 1;
     }
     if (cCur > 0) {
         cPoints -= (int16_t)(cCur * cCur * 130);
@@ -684,7 +686,7 @@ LBadFile:
         if (szFile != szWork) {
             strcpy(szWork, szFile);
         }
-        AlertSz(PszFormatIds(idsError, NULL), MB_ICONHAND);
+        AlertSz(PszFormatIds(static_cast<StringId>(idsError), NULL), MB_ICONHAND);
     }
     return fRet;
 
@@ -761,12 +763,12 @@ void CreateRandomRace(PLAYER *pplr) {
     }
     iVal = Random(3);
     for (i = 8; i <= 13; i++) {
-        SetRaceStat(pplr, i, iVal != 0 ? Random(3) : 1);
+        SetRaceStat(pplr, static_cast<RaceStat>(i), iVal != 0 ? Random(3) : 1);
     }
     SetRaceStat(pplr, rsMajorAdv, Random(10));
     iVal = Random(4);
     for (i = 0; i <= 13; i++) {
-        SetRaceGrbit(pplr, i, iVal != 0 ? Random(2) : FALSE);
+        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? Random(2) : FALSE);
     }
     SetRaceGrbit(pplr, ibitRaceTech3, Random(2));
     SetRaceGrbit(pplr, ibitRaceCheapFact, Random(2));
@@ -782,7 +784,7 @@ void CreateRandomRace(PLAYER *pplr) {
         }
     }
     if (strcmp(pplr->szName, PszGetCompressedString(idsRandom2)) == 0) {
-        CchGetString(idsBerserker + Random(24), pplr->szName);
+        CchGetString(static_cast<StringId>(idsBerserker + Random(24)), pplr->szName);
     }
     cPts = CAdvantagePoints(pplr);
     if (cPts < 0 || cPts > 50) {
@@ -817,29 +819,29 @@ void CreateRandomRace(PLAYER *pplr) {
                 }
             } else if (iVal < 6) {
                 iVal = Random(14);
-                j = GetRaceGrbit(pplr, iVal);
+                j = GetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal));
                 for (i = 0; i < 2; i++) {
-                    SetRaceGrbit(pplr, iVal, i);
+                    SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), i);
                     cPts = CAdvantagePoints(pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         break;
                 }
                 if (i >= 2) {
-                    SetRaceGrbit(pplr, iVal, j);
+                    SetRaceGrbit(pplr, static_cast<RaceGrbit>(iVal), j);
                 }
             } else if (iVal < 9) {
                 iVal = Random(7);
-                j = GetRaceStat(pplr, iVal);
+                j = GetRaceStat(pplr, static_cast<RaceStat>(iVal));
                 for (i = -1; i <= 1; i += 2) {
-                    SetRaceStat(pplr, iVal, j + i);
+                    SetRaceStat(pplr, static_cast<RaceStat>(iVal), j + i);
                     cPts = CAdvantagePoints(pplr);
                     dAwayNew = -cPts <= cPts - 50 ? cPts - 50 : -cPts;
                     if (dAwayNew < dAwayCur)
                         break;
                 }
                 if (i > 1) {
-                    SetRaceStat(pplr, iVal, j);
+                    SetRaceStat(pplr, static_cast<RaceStat>(iVal), j);
                 }
             } else if (Random(2) != 0) {
                 j = pplr->pctIdealGrowth;
