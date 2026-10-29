@@ -262,3 +262,31 @@ exception unit executable), warning-free builds, and both complete desktop/host
 regressions at 519 matches / 25 accepted unused-storage warnings / zero
 differences, errors or skipped inputs. No baseline or independent reference
 changed. B02's modal and deferred control lifetime work remains active.
+
+
+## B02 native chooser and dialog cleanup scopes
+
+`COMPATCLEANUPSCOPE` contains notification-capable cleanup separately from the
+non-callback resource deleters. It closes once, restores the existing normal
+cleanup order, maps allocation failures at the callback boundary and preserves
+an earlier pending or unwinding failure. Resource-backed dialogs scope their
+window and owner/focus restoration, including retained wizard-window sequences.
+Native/compatibility file selection scopes its picker, owner, native-dialog
+counter, saved focus and chooser buffers.
+
+A private native-adapter hook tests the actual production chooser path. With
+`c300d5c`'s manual `filedialog.c` in a scratch binary, the injected error leaves
+`enabled=0 native-dialogs=1`. The guarded implementation passes the identical
+vectors: file error, bad allocation, secondary restoration failure while a
+primary unwinds, standalone restoration failure, ordinary cancellation and an
+already-disabled owner. Saved focus and UTF-8 filename bytes remain intact. The
+independent SDK/native bridge is unchanged; the test never opens a real picker.
+The implementation-hook identity mapping is checked by the full product build,
+not only the private test copy. The cleanup header joins both include-order gates.
+
+Results: 97/97 macOS full CTest, 39/39 ownership contracts including 19 native
+leak checks, 21/21 ASan/UBSan cases (20 ownership contracts plus core exception
+units), no new warnings, and 519 native regression matches / 25 accepted
+unused-storage warnings / no differences, errors or skipped inputs. Host runtime
+is unchanged from the preceding fully verified 22/22 host / 519-match batch.
+B02 remains active for other modal/menu scopes and deferred control lifetimes.

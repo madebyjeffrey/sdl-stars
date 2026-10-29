@@ -1,5 +1,5 @@
 /* Resource-backed dialogs share the existing window, control and message paths. */
-#include "internal.h"
+#include "cleanup.h"
 #include <stars_compat.h>
 #include <string.h>
 
@@ -217,7 +217,7 @@ BOOL WINAPI IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     return FALSE;
 }
 INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
-    HWND hwnd, hwndFocus = GetFocus(), hwndRoot;
+    HWND hwnd = NULL, hwndFocus = GetFocus(), hwndRoot;
     BOOL fEnable;
     MSG msg;
     int result;
@@ -228,6 +228,12 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     if (hwndOwner && !IsWindow(hwndOwner)) return 0;
     hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
+    COMPATCLEANUPSCOPE restoreOwner([&] {
+        if (FCompatPendingDialogSequence(hwndRoot)) return;
+        if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
+        CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
+    }, hwndRoot);
+    COMPATCLEANUPSCOPE destroyDialog([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndRoot);
     if (fEnable) EnableWindow(hwndRoot, FALSE);
     hwnd = HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, TRUE);
     if (hwnd) {
@@ -241,17 +247,15 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
             // A wizard's Back/Next results retain only native presentation;
             // callbacks, child HWNDs and page-local state still get destroyed.
             hwnd->fKeepNative = hwnd->fEndDialog && (value == 1 || value == 2);
-            DestroyWindow(hwnd);
         }
     }
-    if (FCompatPendingDialogSequence(hwndRoot)) return value;
-    if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
-    CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
+    destroyDialog.Close();
+    restoreOwner.Close();
     return value;
 }
 
-// Abort the enclosing modal operation, allowing its C cleanup to run before
-// C++ rethrows at the game boundary. GetMessage stops modal and outer pumps
+// Abort the enclosing modal operation, completing its cleanup before the
+// exception is delivered at the game boundary. GetMessage stops modal and outer pumps
 // for unowned failures, including thread timers without an HWND.
 void CompatAbortCallback(HWND hwnd) noexcept {
     HWND lp;
