@@ -216,6 +216,15 @@ this order and the same acceptance gates.
 | **B13 — application/session state owner** | Introduce one explicit owner for game, RNG, heaps, stream/session state and the corresponding UI lifetime. Move legacy globals incrementally, preserving original field/debug names and temporary accessors. | One source of truth; deterministic creation/reset/shutdown; callbacks/timers stop before referenced state is destroyed. Update the archived tutorial observer/parser with any affected globals/signatures/layouts. Multiple simultaneous games or new concurrency are separate features. |
 | **B14 — strict C++20 gate** | Disable extensions for owned production targets, enable strict diagnostics and remove migration-only compiler suppressions/shims. | Clean Linux/macOS/Windows production builds with `CXX_EXTENSIONS OFF` and strict diagnostics; standalone headers and the full functional/contract matrix pass, using `-Wpedantic -Werror` or compiler-equivalent enforcement. Any genuine platform ABI exception is named and isolated, not enabled project-wide. |
 
+Cleanup destructors must be non-throwing and preserve the primary failure.
+Callbacks reached during destruction still need containment; moving dispatch to
+C++ does not make a second exception during unwinding safe.
+
+On-wire views expose bytes and decode/copy typed values. Do not reinterpret an
+unaligned packet or an object whose lifetime has not started as `span<T>`.
+Construct aligned runtime objects deliberately, and use integer temporaries at
+legacy output-pointer seams instead of aliasing enum objects through integers.
+
 Do not put `std::string`, `std::vector`, ownership pointers or virtual functions
 inside a type still serialized by layout. A runtime type can change representation
 only after its codec and all direct accesses have moved. Preserve scalar domains
