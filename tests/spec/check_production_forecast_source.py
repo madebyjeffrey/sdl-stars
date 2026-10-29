@@ -6,6 +6,7 @@ cases execute actual CBuildProdItem and EstMineralsMined. Pricing, capacities,
 resource/growth and RNG services remain explicit projections/doubles. Guards
 stop before invalid queue copies; escaping helpers have no invented recovery.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
 import os
 import shlex
@@ -68,7 +69,7 @@ static void *LpAlloc(uint16_t cb,HeapType ht) {
 }
 static void FreeLp(void *p,HeapType ht) {
     assert(ht==htOrd);int i=slot(p);assert(seen && seen->lpplprod==p);lastPlanet=*seen;
-    assert(seen->lpplprod->iprodMac<=255);memcpy(savedRows,seen->lpplprod->rgprod,seen->lpplprod->iprodMac*4);
+    assert(seen->lpplprod->iprodMac<=255);memcpy(savedRows,seen->lpplprod->rgprod(),seen->lpplprod->iprodMac*4);
     heap[i].live=0;frees++;free(p);
 }
 static int32_t ChgPopFromPlanet(PLANET *p,int16_t update) {
@@ -119,7 +120,7 @@ static void *checkedCopy(void *dst,const void *src,size_t n) {
     wrapper=r'''
 static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int16_t alchemy,int16_t *status,int16_t calc) {
     seen=p;escape(4);assert(!calc && builds<400);int index=-1;
-    uintptr_t at=(uintptr_t)row,base=(uintptr_t)p->lpplprod->rgprod;
+    uintptr_t at=(uintptr_t)row,base=(uintptr_t)p->lpplprod->rgprod();
     if(at>=base && at<base+(heap[slot(p->lpplprod)].bytes-4))index=(int)((at-base)/4);
     assert((index==-1)==(partial==NULL));tracedIndex[builds]=index;tracedItem[builds]=row->iItem;
     tracedCount[builds]=row->cItem;tracedPct[builds]=row->pct;tracedUnused[builds]=row->unused;
@@ -139,8 +140,8 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int
     bodies+=wrapper+'\n#define memcpy checkedCopy\n'+function('src/core/produce.c','void EstimateItemProdSched(')+'\n#undef memcpy\n'
     witnesses=r'''
 static PLPROD *queue(unsigned capacity,unsigned count) {
-    PLPROD *q=(PLPROD *)LpplAlloc(4,capacity,htOrd);q->iprodMac=count;
-    for(unsigned i=0;i<capacity;i++)q->rgprod[i]=(PROD){};return q;
+    PLPROD *q=LpplAlloc<PLPROD>(4,capacity,htOrd);q->iprodMac=count;
+    for(unsigned i=0;i<capacity;i++)q->rgprod()[i]=(PROD){};return q;
 }
 static PROD row(unsigned count,unsigned item,unsigned kind) {PROD p={};p.cItem=count;p.iItem=item;p.grobj=kind;return p;}
 static void reset(void) {
@@ -162,25 +163,25 @@ int main(void) {
     reset();original.lpplprod=queue(0,0);PLANET before=original;begin();estimate(NULL,0,&first,&last);
     CHECK(first==100 && last==100 && year==99 && growths==99 && !builds && frees==1 && allocs==1);
     CHECK(memcmp(&before,&original,sizeof(before))==0);
-    reset();original.lpplprod=queue(255,255);for(int i=0;i<255;i++)original.lpplprod->rgprod[i]=row(1,0,2);script=1;begin();estimate(NULL,254,&first,&last);
+    reset();original.lpplprod=queue(255,255);for(int i=0;i<255;i++)original.lpplprod->rgprod()[i]=row(1,0,2);script=1;begin();estimate(NULL,254,&first,&last);
     CHECK(first==1 && last==1 && builds==255 && !growths);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,7,1);before=original;PROD prior=original.lpplprod->rgprod[0];begin();estimate(NULL,0,&first,&last);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,7,1);before=original;PROD prior=original.lpplprod->rgprod()[0];begin();estimate(NULL,0,&first,&last);
     CHECK(first==1 && last==1 && year==1 && builds==1 && growths==0 && lastPlanet.cFactories==0);
-    CHECK(memcmp(&before,&original,sizeof(before))==0 && memcmp(&prior,original.lpplprod->rgprod,4)==0);
+    CHECK(memcmp(&before,&original,sizeof(before))==0 && memcmp(&prior,original.lpplprod->rgprod(),4)==0);
     for(unsigned status=0;status<65536;status++) {
-        reset();original.lpplprod=queue(2,2);original.lpplprod->rgprod[0]=row(1,0,2);original.lpplprod->rgprod[1]=row(1,0,2);
+        reset();original.lpplprod=queue(2,2);original.lpplprod->rgprod()[0]=row(1,0,2);original.lpplprod->rgprod()[1]=row(1,0,2);
         script=2;wordStatus=status;begin();estimate(NULL,0,&first,&last);
         int early=status<=2,breaks=(int16_t)status>=mdProdStatSome;
         CHECK(first==1 && last==(status==2 ? 0:early ? 1:100));
         CHECK(year==(early ? 1:99) && growths==(early ? 0:99) && builds==(early ? 1:99*(breaks ? 1:2)) && frees==1);
     }
     for(int yearDone=1;yearDone<=99;yearDone++)for(int status=0;status<3;status++)for(int built=0;built<2;built++) {
-        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,0,2);script=1;terminalYear=yearDone;
+        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);script=1;terminalYear=yearDone;
         terminalStatus=status;forcedBuilt=built;begin();estimate(NULL,0,&first,&last);
         CHECK(year==yearDone && first==(built ? yearDone:0) && last==(status==2 ? (built ? yearDone-1:0):yearDone));
         CHECK(growths==yearDone-1 && frees==1);
     }
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,0,2);script=3;begin();estimate(NULL,0,&first,&last);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);script=3;begin();estimate(NULL,0,&first,&last);
     CHECK(first==1 && last==1 && year==2 && growths==1);
     for(unsigned request=32768;request<65536;request++)for(int suppress=0;suppress<2;suppress++) {
         reset();original.lpplprod=queue(0,0);original.fNoResearch=suppress;resource=(int16_t)request;rgplr[0].pctResearch=33;begin();estimate(NULL,request,&first,&last);
@@ -192,27 +193,27 @@ int main(void) {
         reset();original.lpplprod=queue(0,0);resource=-32768;rgplr[0].pctResearch=pct;begin();estimate(NULL,65534,&first,&last);
         CHECK(first==(int16_t)(resource-(int32_t)resource*pct/100) && last==0);
     }
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,0,2);script=1;terminalYear=100;firstYear=2;begin();estimate(NULL,0,&first,&last);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);script=1;terminalYear=100;firstYear=2;begin();estimate(NULL,0,&first,&last);
     CHECK(first==2 && last==100 && year==99 && growths==99);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,0,2);script=1;terminalYear=100;firstYear=2;begin();first=0;estimate(NULL,0,&first,&first);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);script=1;terminalYear=100;firstYear=2;begin();first=0;estimate(NULL,0,&first,&first);
     CHECK(first==100);
     reset();original.lpplprod=queue(0,0);resource=32767;rgplr[0].pctResearch=0;begin();estimate(NULL,65534,&first,&first);CHECK(first==32767);
-    reset();original.lpplprod=queue(3,3);original.lpplprod->rgprod[0]=row(1,3,1);original.lpplprod->rgprod[1]=row(0,7,1);original.lpplprod->rgprod[2]=row(1,0,2);script=1;begin();estimate(NULL,0,&first,&last);
+    reset();original.lpplprod=queue(3,3);original.lpplprod->rgprod()[0]=row(1,3,1);original.lpplprod->rgprod()[1]=row(0,7,1);original.lpplprod->rgprod()[2]=row(1,0,2);script=1;begin();estimate(NULL,0,&first,&last);
     CHECK(first==-1 && last==-1 && !builds && !growths && frees==1);
     begin();estimate(NULL,2,&first,&last);CHECK(first==1 && last==1 && builds==1 && tracedIndex[0]==2 && tracedAlchemy[0]);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,3,1);resource=resourceLater=0;begin();estimate(NULL,65534,&first,&last);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,3,1);resource=resourceLater=0;begin();estimate(NULL,65534,&first,&last);
     CHECK(first==0 && last==0 && tracedCount[0]==1020 && tracedItem[0]==3 && builds==1);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,1,1);original.lpplprod->rgprod[0].unused=31;
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,1,1);original.lpplprod->rgprod()[0].unused=31;
     resource=5;resourceLater=20;unitOre=1;original.rgwtMin[0]=original.rgwtMin[1]=original.rgwtMin[2]=100;begin();estimate(NULL,0,&first,&last);
     CHECK(first==2 && last==2 && builds==3 && growths==1 && lastPlanet.cFactories==1 && original.cFactories==0);
     CHECK(tracedIndex[0]==0 && tracedIndex[1]==-1 && tracedIndex[2]==0 && tracedItem[1]==7 && tracedPct[1]==59 && tracedUnused[1]==31);
     CHECK(tracedPartial[0] && !tracedPartial[1] && tracedPartial[2]);
-    reset();original.lpplprod=queue(2,2);original.lpplprod->rgprod[0]=row(1,1,1);original.lpplprod->rgprod[1]=row(0,0,2);
+    reset();original.lpplprod=queue(2,2);original.lpplprod->rgprod()[0]=row(1,1,1);original.lpplprod->rgprod()[1]=row(0,0,2);
     original.cMines=4095;script=4;begin();estimate(NULL,65534,&first,&last);CHECK(lastPlanet.cMines==2 && !lastPlanet.cFactories && !growths);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,11,1);resource=resourceLater=100;gd.fGeneratingTurn=1;begin();estimate(NULL,0,&first,&last);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,11,1);resource=resourceLater=100;gd.fGeneratingTurn=1;begin();estimate(NULL,0,&first,&last);
     CHECK(first==1 && last==1 && messages==1 && frees==1);
     for(int stage=1;stage<=5;stage++) {
-        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,7,1);failAt=stage;script=1;terminalYear=100;first=123;last=456;begin();
+        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,7,1);failAt=stage;script=1;terminalYear=100;first=123;last=456;begin();
         int jumped=setjmp(env);if(!jumped){estimate(NULL,0,&first,&last);CHECK(0);}
         CHECK(jumped==stage && frees==0 && live()==(stage==1 ? 1:2));
         CHECK(first==(stage==1 ? 123:0) && last==(stage==1 ? 456:0));
@@ -220,13 +221,13 @@ int main(void) {
     reset();original.lpplprod=queue(256,2);first=123;last=456;begin();int jumped=setjmp(env);
     if(!jumped){estimate(NULL,65534,&first,&last);CHECK(0);}CHECK(jumped==6 && guards==1 && !frees && first==123 && last==456);
     reset();original.lpplprod=queue(256,2);spare=2;begin();estimate(NULL,65534,&first,&last);CHECK(first==100 && last==0 && frees==1);
-    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,7,1);PLPROD *explicitQ=queue(0,0);begin();estimate(explicitQ,65534,&first,&last);
-    CHECK(!builds && first==100 && original.lpplprod->rgprod[0].cItem==1);
+    reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,7,1);PLPROD *explicitQ=queue(0,0);begin();estimate(explicitQ,65534,&first,&last);
+    CHECK(!builds && first==100 && original.lpplprod->rgprod()[0].cItem==1);
     reset();original.lpplprod=queue(0,0);rgplr[0].pctResearch=0;rgplr[1].pctResearch=50;resource=100;mutateResource=1;begin();estimate(NULL,65534,&first,&last);
     CHECK(queryOwner==0 && original.iPlayer==1 && first==50);
     reset();original.lpplprod=queue(0,0);rgplr[1].pctResearch=50;resource=100;mutateResource=2;begin();estimate(NULL,65534,&first,&last);CHECK(first==100);
     for(int generating=0;generating<2;generating++) {
-        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod[0]=row(1,0,2);original.cMines=1;actualMining=1;resource=100;gd.fGeneratingTurn=generating;
+        reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);original.cMines=1;actualMining=1;resource=100;gd.fGeneratingTurn=generating;
         rgplr[0].rgAttr[rsMajorAdv]=raMacintosh;fleet.idPlanet=original.id;fleet.iPlayer=0;fleet.fHereAllTurn=1;fleet.cord=1;fleet.mines=2;
         orders.rgord[0].grTask=grTaskMine;fleet.lpplord=&orders;rglpfl[0]=&fleet;cFleet=1;before=original;begin();estimate(NULL,65535,&first,&last);
         CHECK(!fleet.fHereAllTurn && draws==3*generating && ((lRandSeed1!=7 || lRandSeed2!=11)==generating));
@@ -250,7 +251,7 @@ int main(void) {
 '''
     with tempfile.TemporaryDirectory(prefix='m09-forecast-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
-        source.write_text(declarations+bodies+witnesses)
+        source.write_text(declarations + storage_declarations(allocate=True, resize=False, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=True, resize=False, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)

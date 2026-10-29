@@ -35,7 +35,7 @@ char *PszProductionETA(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, int16
     }
     EstimateItemProdSched(lppl, lpplprod, iItem, &iTurnBegin, &iTurnEnd);
     if (iTurnBegin == 100) {
-        if (lpplprod && lpplprod->iprodMac > (int16_t)iItem && lpplprod->rgprod[iItem].grobj == grobjPlanet && lpplprod->rgprod[iItem].iItem < mdIdleFactory) {
+        if (lpplprod && lpplprod->iprodMac > (int16_t)iItem && lpplprod->rgprod()[iItem].grobj == grobjPlanet && lpplprod->rgprod()[iItem].iItem < mdIdleFactory) {
             ids = idsUnknown2;
         } else {
             ids = idsNever;
@@ -890,7 +890,7 @@ void UninhabitPlanet(PLANET *lppl) {
     lppl->iPlayer = iplrNone;
     lppl->rgwtMin[3] = 0;
     if (lppl->lpplprod) {
-        FreePl((PL *)lpPlanets[lppl->id].lpplprod);
+        FreePl(lpPlanets[lppl->id].lpplprod);
         lpPlanets[lppl->id].lpplprod = NULL;
         lppl->lpplprod = NULL;
     }
@@ -978,7 +978,7 @@ int16_t FProdItemLine(PLANET *lppl, PLPROD *lpplprod, int16_t iprod, int16_t fSh
     int16_t etaLast;
     int16_t etaFirst;
 
-    lpprod = &lpplprod->rgprod[iprod];
+    lpprod = &lpplprod->rgprod()[iprod];
     psz = PszNameProdItem(lpprod);
     EstimateItemProdSched(lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);
     if ((etaFirst == 0 && etaLast == 0) || (etaFirst == -1 && etaLast == -1)) {

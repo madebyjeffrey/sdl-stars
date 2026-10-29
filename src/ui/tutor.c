@@ -2675,7 +2675,7 @@ int16_t FCheckQueue(int16_t ipl, int16_t iprod, GrobjClass grobj, uint16_t iItem
     lppl = LpplFromId(ipl);
     if (!lppl || !lppl->lpplprod || lppl->lpplprod->iprodMac <= iprod)
         goto LReturn;
-    prod = lppl->lpplprod->rgprod[iprod];
+    prod = lppl->lpplprod->rgprod()[iprod];
     if (prod.grobj != (uint32_t)grobj || prod.iItem != (uint32_t)iItem) {
         TutorError(idsTutorialProductionQueueDoesContainRequestedItem);
     } else if (prod.cItem != (uint32_t)cItem) {

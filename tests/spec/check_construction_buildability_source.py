@@ -196,7 +196,7 @@ int main(int argc,char **argv){
         fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord[0].pt=fleetBodies[i].pt;
     }
     cQueries=cGateLookups=mdCheckResult=fInCheck=0;memset(rgQueries,-1,sizeof(rgQueries));memset(rgGateRequests,-1,sizeof(rgGateRequests));
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,0,2,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(canCalls==1 && mdCheckResult==1 && !newFleets && !planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10);
     reset();printf("Construction actual eligibility integration: %lu cases plus post-charge Produce/fleet-limit case; %d assertions passed\n",cases,checks);return 0;
 }

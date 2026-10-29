@@ -361,7 +361,7 @@ static BOOL FSaveOrders(const char *pszPath) {
         lppl = &lpPlanets[i];
         if (lppl->iPlayer != idPlayer || !lppl->lpplprod) continue;
         for (j = 0; j < lppl->lpplprod->iprodMac; j++) {
-            prod = lppl->lpplprod->rgprod[j];
+            prod = lppl->lpplprod->rgprod()[j];
             CchNativePrintf(lpfile, "%s{\"planet\":%u,\"kind\":%u,\"item\":%u,\"quantity\":%u}",
                     cWritten++ ? "," : "", lppl->id, prod.grobj, prod.iItem, prod.cItem);
         }
@@ -675,19 +675,19 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, TRUE) || !FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         break;
     case 17:
-        if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod[0].cItem != 10) return;
+        if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 10) return;
         if (!FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         break;
     case 18:
-        if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod[0].cItem != 20) return;
-        if (lpplProdGlob->rgprod[0].grobj != grobjPlanet || lpplProdGlob->rgprod[0].iItem != mdIdleFactory) goto LInput;
+        if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 20) return;
+        if (lpplProdGlob->rgprod()[0].grobj != grobjPlanet || lpplProdGlob->rgprod()[0].iItem != mdIdleFactory) goto LInput;
         SDL_SetModState(SDL_KMOD_NONE);
         if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, FALSE) || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 19:
         if (hwndModal || tutor.idtBold != 47 || !tutor.fTurnDone) return;
         if (!LpplFromId(13)->lpplprod || LpplFromId(13)->lpplprod->iprodMac != 1 ||
-            LpplFromId(13)->lpplprod->rgprod[0].cItem != 20) goto LInput;
+            LpplFromId(13)->lpplprod->rgprod()[0].cItem != 20) goto LInput;
         if (!FSaveOrders("year-2401-orders.json") || !FSaveState("before-generate-2401")) goto LArtifact;
         LogState("generate-ready");
         if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
@@ -959,9 +959,9 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 47:
         if (!lpplProdGlob || lpplProdGlob->iprodMac <= rgProduction[iProdPass].iQueue) return;
         i = rgProduction[iProdPass].iQueue;
-        if (lpplProdGlob->rgprod[i].iItem != (unsigned)rgProduction[iProdPass].iItem ||
-            lpplProdGlob->rgprod[i].cItem != (unsigned)cProdAdded ||
-            lpplProdGlob->rgprod[i].grobj != (unsigned)rgProduction[iProdPass].grobj) return;
+        if (lpplProdGlob->rgprod()[i].iItem != (unsigned)rgProduction[iProdPass].iItem ||
+            lpplProdGlob->rgprod()[i].cItem != (unsigned)cProdAdded ||
+            lpplProdGlob->rgprod()[i].grobj != (unsigned)rgProduction[iProdPass].grobj) return;
         if (cProdAdded < rgProduction[iProdPass].cGoal) { iStage = 46; goto LQueued; }
         SDL_SetModState(SDL_KMOD_NONE);
         if (iProdPass == 1) { iProdPass = 2; cProdAdded = 0; iStage = 45; goto LQueued; }
@@ -2843,8 +2843,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             }
             iProdPass = 17; cProdAdded = 0; iProdReturn = 246;
             if (LpplFromId(13)->lpplprod && LpplFromId(13)->lpplprod->iprodMac > 0 &&
-                LpplFromId(13)->lpplprod->rgprod[0].grobj == grobjPlanet && LpplFromId(13)->lpplprod->rgprod[0].iItem == iobjFactory)
-                cProdAdded = LpplFromId(13)->lpplprod->rgprod[0].cItem;
+                LpplFromId(13)->lpplprod->rgprod()[0].grobj == grobjPlanet && LpplFromId(13)->lpplprod->rgprod()[0].iItem == iobjFactory)
+                cProdAdded = LpplFromId(13)->lpplprod->rgprod()[0].cItem;
             if (!FPushTextKey(SDL_SCANCODE_Q, "q")) goto LInput;
             iStage = 68; goto LQueued;
         }

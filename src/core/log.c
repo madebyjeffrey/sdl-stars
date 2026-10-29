@@ -232,6 +232,8 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
     int16_t fChg;
     HDR     hdr;
     LOGXFER lxNew;
+    RTCHGPRODQ rtcpq{};
+    std::byte rgbProdId[cbWireChgProdQ];
 
     fChg = FALSE;
     if (!gd.fGeneratingTurn) {
@@ -268,14 +270,17 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
         }
         if (ppl) {
             if (!pplNew->lpplprod && ppl->lpplprod) {
-                WriteMemRt(rtLogPlanetProdQ, 2, &lxNew);
+                NATIVEBYTEWRITER(rgbProdId).FWriteI16Le(lxNew.id);
+                WriteMemRt(rtLogPlanetProdQ, cbWireChgProdQ, rgbProdId);
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
-                                            memcmp(ppl->lpplprod->rgprod, pplNew->lpplprod->rgprod, ppl->lpplprod->iprodMac * 4) != 0)) {
-                if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogPlanetProdQ && ((RTCHGPRODQ *)rgbCur)->id == ppl->id) {
+                                            memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
+                if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogPlanetProdQ &&
+                    FDecodeRtChgProdQ(std::as_bytes(std::span(rgbCur)), rtcpq) && rtcpq.id == ppl->id) {
                     imemLogCur = imemLogPrev;
                 }
-                ((RTCHGPRODQ *)rgbCur)->id = ppl->id;
-                memmove(&rgbCur[2], pplNew->lpplprod->rgprod, pplNew->lpplprod->iprodMac * 4);
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgbCur))).FWriteI16Le(ppl->id);
+                FEncodeProdQueue(std::span(pplNew->lpplprod->rgprod(), pplNew->lpplprod->iprodMac),
+                                 std::as_writable_bytes(std::span(rgbCur)).subspan(cbWireChgProdQ));
                 WriteMemRt(rtLogPlanetProdQ, pplNew->lpplprod->iprodMac * 4 + 2, rgbCur);
             }
             if ((uint32_t)ppl->fNoResearch != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
@@ -581,6 +586,8 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     COLDROP  *lpcdT;
     XFERFULL *lpxfMax;
     MessageId idm;
+    RTCHGPRODQ rtcpq{};
+    PROD prod{};
 
     lpxfCur = NULL;
     switch (rt) {
@@ -591,31 +598,37 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     case rtLogPlanetProdQ:
         lppl = lpPlanets;
         lpplMac = lpPlanets + cPlanet;
-        for (; lppl < lpplMac && lppl->id != ((RTCHGPRODQ *)lpb)->id; lppl++) {
+        // Existing log replay consumes the ID prefix even for a short logical
+        // record. Keep that admission policy while reading its bytes explicitly.
+        if (lppl < lpplMac) FDecodeRtChgProdQ(std::as_bytes(std::span(lpb, cbWireChgProdQ)), rtcpq);
+        for (; lppl < lpplMac && lppl->id != rtcpq.id; lppl++) {
         }
         if (lppl != lpplMac && lppl->iPlayer == idPlayer) {
             i = (uint32_t)(cb - 2) / 4;
             if (i > 0) {
                 if (!lppl->lpplprod) {
-                    lppl->lpplprod = (PLPROD *)LpplAlloc(4, i + 2, htOrd);
+                    lppl->lpplprod = LpplAlloc<PLPROD>(4, i + 2, htOrd);
                 } else if (lppl->lpplprod->iprodMax < i) {
-                    lppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lppl->lpplprod, i + 2);
+                    lppl->lpplprod = LpplReAlloc(lppl->lpplprod, i + 2);
                 }
                 for (iPass = 0; iPass < i; iPass++) {
-                    if (((RTCHGPRODQ *)lpb)->rgprod[iPass].pct != 0) {
+                    FDecodeProd(std::as_bytes(std::span(lpb + cbWireChgProdQ + iPass * cbWireProd, cbWireProd)), prod);
+                    if (prod.pct != 0) {
                         for (iLook = 0; iLook < lppl->lpplprod->iprodMac; iLook++) {
-                            if (lppl->lpplprod->rgprod[iLook].pct != 0 && lppl->lpplprod->rgprod[iLook].iItem == ((RTCHGPRODQ *)lpb)->rgprod[iPass].iItem &&
-                                lppl->lpplprod->rgprod[iLook].grobj == ((RTCHGPRODQ *)lpb)->rgprod[iPass].grobj) {
-                                lppl->lpplprod->rgprod[iLook].pct = 0;
+                            if (lppl->lpplprod->rgprod()[iLook].pct != 0 && lppl->lpplprod->rgprod()[iLook].iItem == prod.iItem &&
+                                lppl->lpplprod->rgprod()[iLook].grobj == prod.grobj) {
+                                lppl->lpplprod->rgprod()[iLook].pct = 0;
                                 break;
                             }
                         }
                         if (iLook == lppl->lpplprod->iprodMac) {
-                            ((RTCHGPRODQ *)lpb)->rgprod[iPass].pct = 0;
+                            prod.pct = 0;
+                            FEncodeProd(prod, std::as_writable_bytes(std::span(lpb + cbWireChgProdQ + iPass * cbWireProd, cbWireProd)));
                         }
                     }
                 }
-                memmove(lppl->lpplprod->rgprod, ((RTCHGPRODQ *)lpb)->rgprod, i * 4);
+                FDecodeProdBytes(std::as_bytes(std::span(lpb + cbWireChgProdQ, i * cbWireProd)),
+                                 std::span(lppl->lpplprod->rgprod(), i));
                 lppl->lpplprod->iprodMac = i;
             } else if (!lppl->lpplprod) {
                 return TRUE;
@@ -682,8 +695,8 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         for (; lppl < lpplMac; lppl++) {
             if (lppl->iPlayer == idPlayer && lppl->lpplprod) {
                 for (iPass = 0; iPass < lppl->lpplprod->iprodMac; iPass++) {
-                    if (lppl->lpplprod->rgprod[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod[iPass].iItem == (uint32_t)i) {
-                        lppl->lpplprod->rgprod[iPass].pct = 0;
+                    if (lppl->lpplprod->rgprod()[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod()[iPass].iItem == (uint32_t)i) {
+                        lppl->lpplprod->rgprod()[iPass].pct = 0;
                     }
                 }
             }

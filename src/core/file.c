@@ -501,13 +501,14 @@ LNextTurn:
             ReadRt();
             if (hdrCur.rt == rtProdQ) {
                 if (lppl->lpplprod && lppl->lpplprod->iprodMax <= hdrCur.cb / 4) {
-                    FreePl((PL *)lppl->lpplprod);
+                    FreePl(lppl->lpplprod);
                     lppl->lpplprod = NULL;
                 }
                 if (!lppl->lpplprod) {
-                    lppl->lpplprod = (PLPROD *)LpplAlloc(4, hdrCur.cb / 4 + 2, htOrd);
+                    lppl->lpplprod = LpplAlloc<PLPROD>(4, hdrCur.cb / 4 + 2, htOrd);
                 }
-                memmove(lppl->lpplprod->rgprod, rgbCur, hdrCur.cb);
+                if (!FDecodeProdBytes(std::as_bytes(std::span(rgbCur).first(hdrCur.cb)),
+                                      std::span(lppl->lpplprod->rgprod(), hdrCur.cb / cbWireProd + (hdrCur.cb % cbWireProd != 0)))) goto Corrupt;
                 lppl->lpplprod->iprodMac = hdrCur.cb / 4;
                 ReadRt();
             }
@@ -742,7 +743,7 @@ LNextTurn:
                         lppl->iPlayer = iplrNone;
                         lppl->det = detSome;
                         if (lppl->lpplprod) {
-                            FreePl((PL *)lppl->lpplprod);
+                            FreePl(lppl->lpplprod);
                             lppl->lpplprod = NULL;
                         }
                     }
@@ -780,7 +781,7 @@ LNextTurn:
                     if (lppl->iPlayer == iPlayer && lppl->fStarbase && lppl->lpplprod && rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef != ihuldefOrbitalFort) {
                         fWorking = FALSE;
                         iprod = 0;
-                        lpprod = lppl->lpplprod->rgprod;
+                        lpprod = lppl->lpplprod->rgprod();
                         while (iprod < lppl->lpplprod->iprodMac) {
                             EstimateItemProdSched(lppl, NULL, static_cast<ProdItemType>(iprod), &iFirst, &iLast);
                             if (iLast > 1) {

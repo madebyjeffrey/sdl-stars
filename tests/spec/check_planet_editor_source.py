@@ -6,6 +6,7 @@ bodies. Heap allocation, change logging, report/UI and tutorial effects are
 controlled doubles. Guards stop before undefined overlap/out-of-allocation copy;
 they identify the reached boundary, not a recovered native result.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
 import os
 import re
@@ -123,10 +124,10 @@ static void reset(void) {
     cPlanet=game.cPlanMax=2;idPlayer=fAi=0;planets[0].id=0;planets[1].id=1;sel.pl.id=0;
 }
 static PLPROD *queue(unsigned capacity,unsigned count,uint32_t seed) {
-    PLPROD *p=(PLPROD *)LpplAlloc(4,capacity,htOrd);p->iprodMac=count;
-    for(unsigned i=0;i<capacity;i++){uint32_t w=seed+i;memcpy(&p->rgprod[i],&w,4);}return p;
+    PLPROD *p=LpplAlloc<PLPROD>(4,capacity,htOrd);p->iprodMac=count;
+    for(unsigned i=0;i<capacity;i++){uint32_t w=seed+i;memcpy(&p->rgprod()[i],&w,4);}return p;
 }
-static uint32_t word(PLPROD *p,unsigned i) {uint32_t w;assert(within(&p->rgprod[i],4));memcpy(&w,&p->rgprod[i],4);return w;}
+static uint32_t word(PLPROD *p,unsigned i) {uint32_t w;assert(within(&p->rgprod()[i],4));memcpy(&w,&p->rgprod()[i],4);return w;}
 static void begin(void) {trace[0]=0;allocations=reallocations=frees=0;requested=0;}
 static void prefix(PLANET *p,unsigned byte,int id) {memset(p,byte,52);p->id=id;}
 int main(void) {
@@ -196,7 +197,7 @@ int main(void) {
         reset();planets[0].lpplprod=queue(1,1,1);sel.pl.lpplprod=queue(n,n,77);begin();
         CHECK(FLookupPlanet(-1,&sel.pl)==1 && planets[0].lpplprod->iprodMac==n);
         CHECK(planets[0].lpplprod->iprodMax==(n+2)%256 && requested==4+4*(n+2));
-        FreePl((PL *)sel.pl.lpplprod);sel.pl.lpplprod=NULL;begin();
+        FreePl(sel.pl.lpplprod);sel.pl.lpplprod=NULL;begin();
         int trapped=setjmp(env);if(!trapped){FLookupPlanet(0,&sel.pl);CHECK(0);}
         CHECK(trapped==3 && requested==4+4*((n+2)%256) && guardBytes==4*n);
     }
@@ -222,7 +223,7 @@ int main(void) {
 '''
     with tempfile.TemporaryDirectory(prefix='s06-planet-copy-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
-        source.write_text(declarations+bodies+witnesses)
+        source.write_text(declarations + storage_declarations(allocate=True, resize=True, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=True, resize=True, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)

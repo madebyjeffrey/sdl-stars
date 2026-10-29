@@ -62,6 +62,7 @@ tails = {
     "PLORD": ("rgord", "B06", "4 + iordMax * sizeof(ORDER)", "runtime; wire orders use 18/8 bytes"),
     "BTLDATA": ("rgtok", "B09", "14 + ctok * 29 + battle events", "wire; cbData bounds complete data"),
 }
+migrated_tails = {"PLPROD", "RTCHGPRODQ"}
 report = {"schema": 1, "contract": "spec/S01-game-file-records.md", "records": [], "tails": [], "zero_storage": [], "sites": []}
 paths = sorted(p for d in ("src", "compat/win32/src", "compat/win32/include")
                for p in (root / d).rglob("*") if p.suffix in (".h", ".c", ".cpp", ".mm"))
@@ -124,15 +125,16 @@ for path in paths:
         for match in re.finditer(r"\b(rt\w+)\s*=\s*(\d+)", body):
             assert match[1] in record_phase, f"Uninventoried record type: {match[1]}"
             report["records"].append(dict(name=match[1], value=int(match[2]), checkpoint=record_phase[match[1]]))
-assert {row["type"] for row in report["tails"]} == set(tails), "Tail inventory changed: update the migration disposition"
+assert {row["type"] for row in report["tails"]} == set(tails) - migrated_tails, "Tail inventory changed: update the migration disposition"
 assert {row["name"] for row in report["records"]} == set(record_phase), "Record inventory changed"
 # Independent historical sizes/offsets remain part of the report. These are
 # expected C reference measurements, not new expectations derived from codecs.
 layout = root / "tests/compat/record_layout.inc"
 report["frozen_measurements"] = [" ".join(line.split()) for line in layout.read_text().splitlines() if "STARS_" in line or "printf(" in line]
+report["migrated_tails"] = [dict(type=name, member=tails[name][0], checkpoint=tails[name][1], length=tails[name][2], role=tails[name][3]) for name in sorted(migrated_tails)]
 report["counts"] = dict(sorted(Counter(row["kind"] for row in report["sites"]).items()))
 args.output.parent.mkdir(parents=True, exist_ok=True)
 args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-print(f"Wire inventory: {len(paths)} files; {len(report['records'])} record names; {len(tails)} tails; {len(report['frozen_measurements'])} frozen measurements")
+print(f"Wire inventory: {len(paths)} files; {len(report['records'])} record names; {len(tails) - len(migrated_tails)} active tails / {len(migrated_tails)} migrated; {len(report['frozen_measurements'])} frozen measurements")
 print("; ".join(f"{kind}: {count}" for kind, count in report["counts"].items()))
 print(f"Full source-located report: {args.output}")

@@ -139,6 +139,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
     int32_t  lBest;
     int32_t  l;
     PLANET   pl;
+    std::byte rgbProd[1024];
 
     fRet = TRUE;
     SetVisiblePlanFleet(iPlayer);
@@ -340,7 +341,8 @@ LAppend:
                 if (lpplT->det == detAll) {
                     WritePlanet(lpplT, rtPlanet, FALSE);
                     if (lpplT->lpplprod) {
-                        WriteRt(rtProdQ, lpplT->lpplprod->iprodMac * 4, lpplT->lpplprod->rgprod);
+                        if (!FEncodeProdQueue(std::span(lpplT->lpplprod->rgprod(), lpplT->lpplprod->iprodMac), rgbProd)) goto LFail;
+                        WriteRt(rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd);
                     }
                 } else if (lpplT->det == detObscure) {
                     pl = *lpplT;

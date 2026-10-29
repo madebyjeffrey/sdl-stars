@@ -887,7 +887,7 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
     rgFactCost[3] = 0;
     rgAlchCost[3] = 0;
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleMine) {
             iAddMines += lpprod->cItem;
@@ -928,7 +928,7 @@ int16_t FFillProdMinesAndFactories(PLANET *lppl) {
     }
     if (rgResLeft[0] <= 0 || rgResLeft[1] <= 0 || rgResLeft[2] <= 0) {
         if (lppl->lpplprod) {
-            prod = lppl->lpplprod->rgprod[0];
+            prod = lppl->lpplprod->rgprod()[0];
             if (prod.grobj == grobjPlanet && (prod.iItem == iobjAlchemy || prod.iItem == mdIdleAlchemy)) {
                 return FALSE;
             }

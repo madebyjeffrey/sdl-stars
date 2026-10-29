@@ -15,5 +15,10 @@ void  FreeLp(void *lp, HeapType ht);
 PL   *LpplReAlloc(PL *lppl, uint16_t cAlloc);
 PL   *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
 void  FreePl(PL *lppl);
+uint16_t CbPlSlot(const void *lp);
+template<class T> T *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+template<> PLPROD *LpplAlloc<PLPROD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
+PLPROD *LpplReAlloc(PLPROD *lppl, uint16_t cAlloc);
+void FreePl(PLPROD *lppl);
 
 #endif

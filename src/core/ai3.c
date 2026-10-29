@@ -259,7 +259,7 @@ void DoMacintiAiTurn(PROD *rgprod) {
                 InitProduction(rgprod);
                 fWrite = FALSE;
                 i = 0;
-                for (lpprod = lpplProdGlob->rgprod; i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem >= iobjPacketGerm); lpprod++) {
+                for (lpprod = lpplProdGlob->rgprod(); i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem >= iobjPacketGerm); lpprod++) {
                     i++;
                 }
                 if (i < lpplProdGlob->iprodMac) {
@@ -270,7 +270,7 @@ void DoMacintiAiTurn(PROD *rgprod) {
                         lpplBest = NULL;
                         lLeast = 100000;
                         i = 0;
-                        lpprod = lpplProdGlob->rgprod;
+                        lpprod = lpplProdGlob->rgprod();
                         while (i < lpplProdGlob->iprodMac) {
                             if (lpprod->grobj == grobjPlanet && lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed)
                                 goto LTryCargo;
@@ -409,7 +409,7 @@ void DoMacintiAiTurn(PROD *rgprod) {
                     }
                     if (cGenesis > 0 && lppl->rgwtMin[3] > 10000) {
                         i = 0;
-                        for (lpprod = lpplProdGlob->rgprod; i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjPlanet || lpprod->iItem != iobjGenesis);
+                        for (lpprod = lpplProdGlob->rgprod(); i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjPlanet || lpprod->iItem != iobjGenesis);
                              lpprod++) {
                             i++;
                         }

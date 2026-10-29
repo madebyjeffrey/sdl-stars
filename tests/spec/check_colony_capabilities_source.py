@@ -196,12 +196,12 @@ int main(int argc,char **argv){
         memset(capcfg,0,sizeof(capcfg));capcfg[3]=0;capcfg[4]=0;capcfg[44]=capcfg[45]=1;capcfg[46]=-1;capcfg[57]=1;
         for(int i=0;i<3;i++){capcfg[8+i]=capcfg[11+i]=50+(i==0?distance:0);capcfg[14+i]=50;capcfg[17+i]=25;capcfg[20+i]=75;}
         for(int i=0;i<6;i++)capcfg[32+i]=26;ready();
-        planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(3,mdIdleTerraform,grobjPlanet,0);
+        planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(3,mdIdleTerraform,grobjPlanet,0);
         Produce();CHECK(!planet.lpplprod && planet.rgEnvVar[0]==50 && rgplr[0].lResLastYear==100-distance*10);CHECK(terraformCalls==distance);
     }
     for(int i=0;i<4;i++)CHECK(modes[i]>0);
     capcfg[8]=capcfg[11]=-23;capcfg[14]=-50;capcfg[17]=-75;capcfg[20]=-25;ready();CHECK(IpctCanTerraformLppl(&planet)==-24);
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(3,mdIdleTerraform,grobjPlanet,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(3,mdIdleTerraform,grobjPlanet,0);
     Produce();CHECK(!planet.lpplprod && !terraformCalls && rgplr[0].lResLastYear==100);
     reset();printf("Colony capabilities: %lu cases (count %lu, gate %lu, scanner %lu, generic %lu) plus four Produce clipping/application cases; %d assertions passed\n",cases,modes[0],modes[1],modes[2],modes[3],checks);return 0;
 }

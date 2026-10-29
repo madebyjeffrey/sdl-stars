@@ -807,7 +807,10 @@ struct PLPROD {
         cAlloc : 4;      /* @bit12 */
     uint8_t iprodMax;    /* +0x0002 (1) */
     uint8_t iprodMac;    /* +0x0003 (1) */
-    PROD    rgprod[0];   /* +0x0004 (0) */
+    // The adjacent PROD array has a separate lifetime, started by the typed
+    // pooled allocator. Keep the four-byte header and original slot stride.
+    PROD *rgprod() noexcept { return reinterpret_cast<PROD *>(reinterpret_cast<uint8_t *>(this) + 4); }
+    const PROD *rgprod() const noexcept { return reinterpret_cast<const PROD *>(reinterpret_cast<const uint8_t *>(this) + 4); }
 }; /* size=0x4 */
 
 struct _prodq1 {
@@ -923,7 +926,7 @@ struct _rtChgPlanetLong {
 
 struct _rtChgProdQ {
     int16_t id;        /* +0x0000 (2) */
-    PROD    rgprod[0]; /* +0x0002 (0) */
+    // Queue items are decoded from the following bytes; they are not members.
 }; /* size=0x2 */
 
 struct _rthisthdr {

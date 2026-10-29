@@ -192,7 +192,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
             StateAppend("planetSettings.%d=%d|%u\n", planet->id, planet->iPlayer, planet->fNoResearch);
             if (planet->lpplprod != NULL) {
                 for (j = 0; j < planet->lpplprod->iprodMac; j++) {
-                    PROD *prod = &planet->lpplprod->rgprod[j];
+                    PROD *prod = &planet->lpplprod->rgprod()[j];
                     StateAppend("production.%d.%d=%u|%u|%u\n", planet->id, j, prod->grobj, prod->iItem, prod->cItem);
                 }
             }

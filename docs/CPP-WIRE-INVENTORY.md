@@ -1,6 +1,7 @@
 # C++ wire and storage inventory
 
 B04 introduces checked, little-endian byte operations and migrates `RTHISTHDR`.
+B05 migrates production queue storage and its file/log byte boundaries.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
@@ -24,7 +25,8 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve variable tails and their length/lifetime dispositions below;
+  all twelve historical variable-tail dispositions below (ten active zero-array
+  declarations and two migrated production families);
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
@@ -41,7 +43,7 @@ expressions that would become stale when unrelated lines move.
 | Family / source boundary | Responsibility | Checkpoint |
 | --- | --- | --- |
 | History header read in `file.c`, write in `log.c` | Explicit two-signed-16 codec; exact four bytes; complete scratch backing preserves existing short-declared-payload behavior | B04 migrated |
-| Production queues and queue log edits | PROD scalar bits, PLPROD runtime storage, RTCHGPRODQ byte prefix; allocation/capacity and forecast lifetimes | B05 |
+| Production queues and queue log edits | PROD scalar bits, PLPROD runtime storage, RTCHGPRODQ byte prefix; allocation/capacity and forecast lifetimes | B05 migrated |
 | Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 |
 | Hulls and designs | HS/HUL/HULDEF/SHDEF/RTSHDEF slots, catalog and design import/export | B07 |
 | Fleets and ID lists | FLEET/FLEETSOME/RTFLEET/FLEETID/RTFLEETIDS, optional cargo/damage fields, split/merge traversal | B08 |
@@ -73,7 +75,7 @@ are while the runtime representation changes.
 | BTLREC26.rgkill | Six-byte legacy prefix + ctok × eight-byte KILL | B09 |
 | MSGPLR.rgbMsg | Runtime offsetof(MSGPLR,rgbMsg) + abs(cLen); native next pointer stays runtime-only | B10 |
 | PL.rgb | Four-byte runtime prefix + iMax × cbItem; iMac live items; pooled/reset lifetime | B12 |
-| PLPROD.rgprod | Four-byte runtime prefix + iprodMax × four-byte PROD; iprodMac live items; rtProdQ wire prefix is zero | B05 |
+| PLPROD.rgprod | Four-byte runtime prefix + iprodMax × four-byte PROD; iprodMac live items; rtProdQ wire prefix is zero | B05 migrated |
 | RTCHGPRODQ.rgprod | Two-byte ID prefix + payload-derived four-byte PROD items | B05/B06 |
 | RTSHDEF.rghs | Seventeen-byte wire prefix + chs × four-byte HS | B07 |
 | RTFLEET.rgb | Fourteen-byte prefix followed by conditional counts, cargo and damage fields | B08 |
@@ -97,3 +99,12 @@ short declared record. Tightening admission would be a separate behavior change.
 Independent little-endian vectors, all 65,536 paired signed-16 values, unaligned
 slices, truncation, trailing bytes, sentinels, empty spans and input/output alias
 cases exercise the codec without deriving expected bytes from native layout.
+
+The B05 production migration retains the independent four-byte PLPROD and
+two-byte RTCHGPRODQ measurements: their sizes are unchanged, and native PLPROD
+pointer arithmetic still has its old stride. Their zero-array members are gone.
+The report keeps their historical dispositions under `migrated_tails` and rejects
+a reintroduced zero-array declaration. PROD's wire fields, reserved bits and
+incomplete-row behavior are covered by independent codec vectors and real log
+replay tests rather than a native struct dump. Runtime queue copies retain their
+existing four-byte element storage and pooled lifetimes.

@@ -976,11 +976,11 @@ void RemoveIshdefFromAllQueues(int16_t ishdef, int16_t fSpaceDocks) {
             (!fSpaceDocks || rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef == ihuldefSpaceDock)) {
             iDst = 0;
             iprod = 0;
-            lpprod = lppl->lpplprod->rgprod;
+            lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
                 if (lpprod->grobj != grobjFleet || lpprod->iItem != (uint32_t)ishdef) {
                     if (iDst != iprod) {
-                        lppl->lpplprod->rgprod[iDst] = *lpprod;
+                        lppl->lpplprod->rgprod()[iDst] = *lpprod;
                     }
                     iDst++;
                 }
@@ -988,7 +988,7 @@ void RemoveIshdefFromAllQueues(int16_t ishdef, int16_t fSpaceDocks) {
                 lpprod++;
             }
             if (iDst == 0) {
-                FreePl((PL *)lppl->lpplprod);
+                FreePl(lppl->lpplprod);
                 lppl->lpplprod = NULL;
             } else if (iDst != iprod) {
                 lppl->lpplprod->iprodMac = iDst;
@@ -1017,7 +1017,7 @@ int16_t CshQueued(int16_t ishdef, int16_t *pfProgress, int16_t fSpaceDocks) {
         if (lppl->lpplprod && lppl->lpplprod->iprodMac != 0 && lppl->iPlayer == idPlayer && lppl->fStarbase &&
             (!fSpaceDocks || rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef == ihuldefSpaceDock)) {
             iprod = 0;
-            lpprod = lppl->lpplprod->rgprod;
+            lpprod = lppl->lpplprod->rgprod();
             while (iprod < lppl->lpplprod->iprodMac) {
                 if (lpprod->grobj == grobjFleet && lpprod->iItem == (uint32_t)ishdef) {
                     csh += lpprod->cItem;

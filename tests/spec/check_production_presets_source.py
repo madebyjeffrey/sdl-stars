@@ -5,6 +5,7 @@ GUI, localization and allocation outcomes are controlled doubles. This checks
 queue/customization effects, not actual rendering, heap exhaustion or whole-GUI
 refinement. No out-of-allocation catalog access is executed.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
 import os
 import shlex
@@ -151,8 +152,8 @@ static void AlertSz(const char *s,int flags) { (void)s;(void)flags;alerts++; }
     bodies += 'static int recover(void) {' + block + '}\n'
     bodies += r'''
 static void reset(unsigned n) {
-    if(lpplProdGlob)FreePl((PL *)lpplProdGlob);
-    failAllocation=0;lpplProdGlob=(PLPROD *)LpplAlloc(4,n ? n:1,htOrd);lpplProdGlob->iprodMac=n;
+    if(lpplProdGlob)FreePl(lpplProdGlob);
+    failAllocation=0;lpplProdGlob=LpplAlloc<PLPROD>(4,n ? n:1,htOrd);lpplProdGlob->iprodMac=n;
     memset(pProdGlob,0,sizeof(pProdGlob));memset(vrgZipProd,0,sizeof(vrgZipProd));
     cProdGlob=0;primary=0;sel.pl.fNoResearch=0;gd.fChgZipProd=0;
     freed=ended=alerts=allocations=renameCalls=0;renameResult=1;renameText[0]=0;label[0]=0;
@@ -163,54 +164,54 @@ int main(void) {
     int i,n,k;PROD manual={.cItem=1,.iItem=7,.grobj=1,.pct=35,.unused=17};
     PROD automatic={.cItem=10,.iItem=0,.grobj=1,.pct=50,.unused=3};ZIPPRODQ snapshot[5];
     CHECK(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(ZIPPRODQ)==40);
-    reset(2);lpplProdGlob->rgprod[0]=automatic;lpplProdGlob->rgprod[1]=manual;
+    reset(2);lpplProdGlob->rgprod()[0]=automatic;lpplProdGlob->rgprod()[1]=manual;
     pProdGlob[0]=PROD{.cItem=20,.iItem=0,.grobj=1,.pct=0,.unused=0};pProdGlob[1]=manual;cProdGlob=2;
     vrgZipProd[0].cpq=1;vrgZipProd[0].rgpq[0].w=64;vrgZipProd[0].fNoResearch=1;
     apply(IDC_IMPORT,0);
     CHECK(lpplProdGlob->iprodMac==2 && lpplProdGlob->iprodMax==3 && lastBytes==16);
-    CHECK(memcmp(&lpplProdGlob->rgprod[0],&manual,4)==0 && lpplProdGlob->rgprod[1].cItem==1);
-    CHECK(lpplProdGlob->rgprod[1].pct==0 && lpplProdGlob->rgprod[1].unused==0 && lpplProdGlob->rgprod[2].cItem==0);
+    CHECK(memcmp(&lpplProdGlob->rgprod()[0],&manual,4)==0 && lpplProdGlob->rgprod()[1].cItem==1);
+    CHECK(lpplProdGlob->rgprod()[1].pct==0 && lpplProdGlob->rgprod()[1].unused==0 && lpplProdGlob->rgprod()[2].cItem==0);
     CHECK(pProdGlob[0].cItem==30 && pProdGlob[1].cItem==2 && sel.pl.fNoResearch==1 && freed==1);
     // Invalid flag is not a command guard; traits filter each packed row.
     for(primary=0;primary<9;primary++) {
         int selected=primary;reset(0);primary=selected;vrgZipProd[0].cpq=7;
         for(i=0;i<7;i++)vrgZipProd[0].rgpq[i].w=64+i;
         apply(IDC_IMPORT,0);CHECK(lpplProdGlob->iprodMac==(primary==8 ? 4 : primary==3 ? 5 : 7));
-        for(i=0;i<lpplProdGlob->iprodMac;i++)CHECK((primary!=8 || lpplProdGlob->rgprod[i].iItem>2) && (primary!=3 || (lpplProdGlob->rgprod[i].iItem!=4 && lpplProdGlob->rgprod[i].iItem!=5)));
+        for(i=0;i<lpplProdGlob->iprodMac;i++)CHECK((primary!=8 || lpplProdGlob->rgprod()[i].iItem>2) && (primary!=3 || (lpplProdGlob->rgprod()[i].iItem!=4 && lpplProdGlob->rgprod()[i].iItem!=5)));
     }
-    reset(2);lpplProdGlob->rgprod[0]=manual;lpplProdGlob->rgprod[1]=manual;
-    lpplProdGlob->rgprod[0].cItem=3;pProdGlob[0]=manual;pProdGlob[0].cItem=1020;cProdGlob=1;
+    reset(2);lpplProdGlob->rgprod()[0]=manual;lpplProdGlob->rgprod()[1]=manual;
+    lpplProdGlob->rgprod()[0].cItem=3;pProdGlob[0]=manual;pProdGlob[0].cItem=1020;cProdGlob=1;
     sel.pl.fNoResearch=1;apply(IDC_PRODUCTION_CLEAR,0);
     CHECK(pProdGlob[0].cItem==1023 && lpplProdGlob->iprodMac==0 && sel.pl.fNoResearch && allocations==0 && freed==0);
-    reset(1);lpplProdGlob->rgprod[0]=manual;lpplProdGlob->rgprod[0].cItem=4;
+    reset(1);lpplProdGlob->rgprod()[0]=manual;lpplProdGlob->rgprod()[0].cItem=4;
     pProdGlob[0]=manual;pProdGlob[0].cItem=1020;cProdGlob=1;apply(IDC_PRODUCTION_CLEAR,0);CHECK(pProdGlob[0].cItem==0);
-    reset(1);lpplProdGlob->rgprod[0]=manual;apply(IDC_PRODUCTION_CLEAR,0);CHECK(pProdGlob[0].cItem==1); // inactive, allocated slot
-    reset(40);for(i=0;i<40;i++)lpplProdGlob->rgprod[i]=manual;
+    reset(1);lpplProdGlob->rgprod()[0]=manual;apply(IDC_PRODUCTION_CLEAR,0);CHECK(pProdGlob[0].cItem==1); // inactive, allocated slot
+    reset(40);for(i=0;i<40;i++)lpplProdGlob->rgprod()[i]=manual;
     pProdGlob[0]=manual;pProdGlob[0].cItem=1023;cProdGlob=1;vrgZipProd[0].cpq=12;
     apply(IDC_IMPORT,0);CHECK(lpplProdGlob->iprodMac==52 && lpplProdGlob->iprodMax==52);
-    reset(255);for(i=0;i<255;i++)lpplProdGlob->rgprod[i]=manual;
+    reset(255);for(i=0;i<255;i++)lpplProdGlob->rgprod()[i]=manual;
     pProdGlob[0]=manual;pProdGlob[0].cItem=1023;cProdGlob=1;vrgZipProd[0].cpq=1;vrgZipProd[0].rgpq[0].w=64;
     apply(IDC_IMPORT,0);CHECK(lastBytes==1028 && lpplProdGlob->iprodMac==0 && lpplProdGlob->iprodMax==0);
-    CHECK(lpplProdGlob->rgprod[254].unused==17 && lpplProdGlob->rgprod[255].cItem==1);
+    CHECK(lpplProdGlob->rgprod()[254].unused==17 && lpplProdGlob->rgprod()[255].cItem==1);
     // Every accepted native count/preset-count pair, including 256..267 storage.
     for(n=0;n<=255;n++)for(k=0;k<=12;k++) {
         int capacity=n+k ? n+k:1;
-        reset(n);for(i=0;i<n;i++)lpplProdGlob->rgprod[i]=manual;
+        reset(n);for(i=0;i<n;i++)lpplProdGlob->rgprod()[i]=manual;
         pProdGlob[0]=manual;pProdGlob[0].cItem=1023;cProdGlob=1;vrgZipProd[0].cpq=k;
         for(i=0;i<k;i++)vrgZipProd[0].rgpq[i].w=67;
         apply(IDC_IMPORT,0);
         CHECK(lastBytes==(size_t)(4+4*capacity) && lpplProdGlob->iprodMax==(capacity&255));
         CHECK(lpplProdGlob->iprodMac==((n+k)&255));
-        if(n)CHECK(memcmp(&lpplProdGlob->rgprod[n-1],&manual,4)==0);
-        if(k)CHECK(lpplProdGlob->rgprod[n+k-1].iItem==3 && lpplProdGlob->rgprod[n+k-1].pct==0);
+        if(n)CHECK(memcmp(&lpplProdGlob->rgprod()[n-1],&manual,4)==0);
+        if(k)CHECK(lpplProdGlob->rgprod()[n+k-1].iItem==3 && lpplProdGlob->rgprod()[n+k-1].pct==0);
     }
-    reset(1);lpplProdGlob->rgprod[0]=manual;pProdGlob[0]=manual;cProdGlob=1;
+    reset(1);lpplProdGlob->rgprod()[0]=manual;pProdGlob[0]=manual;cProdGlob=1;
     sel.pl.fNoResearch=1;hwndProdDlg=1;fDlgUp=1;failAllocation=1;penvMem=&env;
     if(setjmp(env)==0){apply(IDC_IMPORT,0);CHECK(0);}
     CHECK(pProdGlob[0].cItem==2 && lpplProdGlob!=NULL && freed==0);
     CHECK(recover()==0 && lpplProdGlob==NULL && hwndProdDlg==0 && !fDlgUp);
     CHECK(freed==1 && ended==1 && alerts==1 && sel.pl.fNoResearch==1);
-    reset(14);lpplProdGlob->rgprod[0]=manual;for(i=1;i<14;i++)lpplProdGlob->rgprod[i]=automatic;
+    reset(14);lpplProdGlob->rgprod()[0]=manual;for(i=1;i<14;i++)lpplProdGlob->rgprod()[i]=automatic;
     strcpy(vrgZipProd[0].szName,"Default");iResTechNow=0;sel.pl.fNoResearch=1;renameResult=0;edit(IDC_IMPORT);
     CHECK(renameCalls==0 && vrgZipProd[0].cpq==12 && vrgZipProd[0].fValid && vrgZipProd[0].fNoResearch && gd.fChgZipProd);
     CHECK(strcmp(vrgZipProd[0].szName,"Default")==0 && vrgZipProd[0].rgpq[11].w==640);
@@ -235,13 +236,13 @@ int main(void) {
     FillZipProdLB(1,&vrgZipProd[0]);CHECK(labelCount==3 && strcmp(labels[0],"Item3")==0 && strcmp(labels[1],"Item0")==0 && strcmp(labels[2],"Item1 0")==0);
     memset(vrgZipProd,0,sizeof(vrgZipProd));vrgZipProd[1].fValid=vrgZipProd[3].fValid=1;
     CHECK(popupSlot(0)==1 && popupSlot(1)==3 && popupSlot(2)==4 && popupSlot(50)==4);
-    FreePl((PL *)lpplProdGlob);printf("M09 source-extracted preset witnesses: %d assertions passed\n",checks);return 0;
+    FreePl(lpplProdGlob);printf("M09 source-extracted preset witnesses: %d assertions passed\n",checks);return 0;
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-presets-') as work:
         source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
-        source.write_text(declarations + bodies + witnesses)
+        source.write_text(declarations + storage_declarations(allocate=True, resize=False, free=True) + bodies + storage_definitions('(void)lp;return lastBytes;', allocate=True, resize=False, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
                        ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
                         str(source), '-o', str(binary)], check=True)

@@ -23,17 +23,17 @@ int16_t FDupPlanet(PLANET *lppl, PLANET *ppl) {
     ppl->lpplprod = lpplprodT;
     if (!lppl->lpplprod) {
         if (ppl->lpplprod) {
-            FreePl((PL *)ppl->lpplprod);
+            FreePl(ppl->lpplprod);
             ppl->lpplprod = NULL;
         }
         return TRUE;
     }
     if (!ppl->lpplprod) {
-        ppl->lpplprod = (PLPROD *)LpplAlloc(4, lppl->lpplprod->iprodMax, htOrd);
+        ppl->lpplprod = LpplAlloc<PLPROD>(4, lppl->lpplprod->iprodMax, htOrd);
     } else if ((int16_t)ppl->lpplprod->iprodMax < lppl->lpplprod->iprodMac) {
-        ppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)ppl->lpplprod, lppl->lpplprod->iprodMax);
+        ppl->lpplprod = LpplReAlloc(ppl->lpplprod, lppl->lpplprod->iprodMax);
     }
-    memcpy(ppl->lpplprod->rgprod, lppl->lpplprod->rgprod, lppl->lpplprod->iprodMac * 4);
+    memcpy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
     ppl->lpplprod->iprodMac = lppl->lpplprod->iprodMac;
     return TRUE;
 }
@@ -142,17 +142,17 @@ int16_t FLookupPlanet(int16_t iPlanet, PLANET *ppl) {
             if (lpPl->lpplprod != ppl->lpplprod) {
                 if (!lpPl->lpplprod) {
                     if (ppl->lpplprod) {
-                        lpPl->lpplprod = (PLPROD *)LpplAlloc(4, ppl->lpplprod->iprodMac, htOrd);
+                        lpPl->lpplprod = LpplAlloc<PLPROD>(4, ppl->lpplprod->iprodMac, htOrd);
                     }
                 } else if (!ppl->lpplprod) {
-                    FreePl((PL *)lpPl->lpplprod);
+                    FreePl(lpPl->lpplprod);
                     lpPl->lpplprod = NULL;
                     goto FinishCopy;
                 }
                 if ((int16_t)lpPl->lpplprod->iprodMax < ppl->lpplprod->iprodMac) {
-                    lpPl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
+                    lpPl->lpplprod = LpplReAlloc(lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
                 }
-                memcpy(lpPl->lpplprod->rgprod, ppl->lpplprod->rgprod, ppl->lpplprod->iprodMac * 4);
+                memcpy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
                 lpPl->lpplprod->iprodMac = ppl->lpplprod->iprodMac;
             }
         FinishCopy:

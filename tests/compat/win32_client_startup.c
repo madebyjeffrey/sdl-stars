@@ -780,7 +780,7 @@ static HWND HwndWorkflowControl(HWND hwnd, int id, LPCSTR pszClass) {
 static int CProductionItems(void) {
     int i, c = 0;
     if (!lpplProdGlob) return -1;
-    for (i = 0; i < lpplProdGlob->iprodMac; i++) c += lpplProdGlob->rgprod[i].cItem;
+    for (i = 0; i < lpplProdGlob->iprodMac; i++) c += lpplProdGlob->rgprod()[i].cItem;
     return c;
 }
 
@@ -1440,14 +1440,14 @@ static BOOL FCheckGameplayWorkflows(void) {
     }
     cProdSav = sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0;
     if (cProdSav > (int)SDL_arraysize(rgprodSav)) { fprintf(stderr, "Production count %d\n", cProdSav); return FALSE; }
-    if (cProdSav != 0) memcpy(rgprodSav, sel.pl.lpplprod->rgprod, (size_t)cProdSav * sizeof(PROD));
+    if (cProdSav != 0) memcpy(rgprodSav, sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD));
     for (i = 0; i < cProdSav; i++) cProdItemsSav += rgprodSav[i].cItem;
     fNoResearchSav = sel.pl.fNoResearch;
     if (!FRunWorkflow(2, 0) || lpplProdGlob || hwndProdDlg || fDlgUp || sel.pl.fNoResearch != fNoResearchSav ||
         (sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0) != cProdSav ||
-        (cProdSav != 0 && memcmp(rgprodSav, sel.pl.lpplprod->rgprod, (size_t)cProdSav * sizeof(PROD)))) { fprintf(stderr, "Production cancel: passed %d glob %p dialog %p up %d research %d/%d count %d/%d\n", fWorkflowPassed, (void *)lpplProdGlob, (void *)hwndProdDlg, fDlgUp, sel.pl.fNoResearch, fNoResearchSav, sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0, cProdSav); return FALSE; }
+        (cProdSav != 0 && memcmp(rgprodSav, sel.pl.lpplprod->rgprod(), (size_t)cProdSav * sizeof(PROD)))) { fprintf(stderr, "Production cancel: passed %d glob %p dialog %p up %d research %d/%d count %d/%d\n", fWorkflowPassed, (void *)lpplProdGlob, (void *)hwndProdDlg, fDlgUp, sel.pl.fNoResearch, fNoResearchSav, sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0, cProdSav); return FALSE; }
     if (!FRunWorkflow(3, 0) || !sel.pl.lpplprod) return FALSE;
-    for (i = 0, cProdSav = 0; i < sel.pl.lpplprod->iprodMac; i++) cProdSav += sel.pl.lpplprod->rgprod[i].cItem;
+    for (i = 0, cProdSav = 0; i < sel.pl.lpplprod->iprodMac; i++) cProdSav += sel.pl.lpplprod->rgprod()[i].cItem;
     if (cProdSav != cProdItemsSav + 1 || !FRunWorkflow(4, cProdSav)) return FALSE;
     if (!FRunWorkflow(5, !btlplanSav.fDumpCargo) || rglpbtlplan[idPlayer][0].fDumpCargo != !btlplanSav.fDumpCargo ||
         !FRunWorkflow(5, btlplanSav.fDumpCargo) || memcmp(&btlplanSav, &rglpbtlplan[idPlayer][0], sizeof(btlplanSav))) return FALSE;

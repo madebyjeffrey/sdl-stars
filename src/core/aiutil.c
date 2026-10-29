@@ -488,7 +488,7 @@ void AddMinesToBlockedQueues() {
         if (!vrglpplAi[ipl])
             break;
         if (lppl->lpplprod) {
-            prod = lppl->lpplprod->rgprod[0];
+            prod = lppl->lpplprod->rgprod()[0];
             if (prod.grobj == grobjPlanet &&
                 (prod.iItem == mdIdleMine || prod.iItem == iobjAlchemy || prod.iItem == mdIdleAlchemy || prod.iItem == mdIdleTerraform))
                 continue;
@@ -522,8 +522,8 @@ void AddMinesToBlockedQueues() {
                         if (etaBetterMines == -1) {
                             etaBetterMines = 700;
                         }
-                        sel.pl.lpplprod->rgprod[0].cItem = 1;
-                        sel.pl.lpplprod->rgprod[0].iItem = iobjAlchemy;
+                        sel.pl.lpplprod->rgprod()[0].cItem = 1;
+                        sel.pl.lpplprod->rgprod()[0].iItem = iobjAlchemy;
                     } else {
                         etaBetterMines = 700;
                         AddItemToQueue(iobjAlchemy, 1, grobjPlanet, addItemFront);
@@ -534,12 +534,12 @@ void AddMinesToBlockedQueues() {
                         etaBetterAlchemy = 700;
                     }
                     if ((etaBetterAlchemy >= etaFirst || etaBetterAlchemy >= etaBetterMines) && cBuild >= 1) {
-                        sel.pl.lpplprod->rgprod[0].iItem = mdIdleMine;
+                        sel.pl.lpplprod->rgprod()[0].iItem = mdIdleMine;
                         if (etaFirst < etaBetterMines || cBuild <= 0) {
                             sel.pl.lpplprod->iprodMac--;
-                            memmove(sel.pl.lpplprod->rgprod, &sel.pl.lpplprod->rgprod[1], sel.pl.lpplprod->iprodMac * sizeof(PROD));
+                            memmove(sel.pl.lpplprod->rgprod(), &sel.pl.lpplprod->rgprod()[1], sel.pl.lpplprod->iprodMac * sizeof(PROD));
                         } else {
-                            sel.pl.lpplprod->rgprod[0].cItem = LOWORD(cBuild);
+                            sel.pl.lpplprod->rgprod()[0].cItem = LOWORD(cBuild);
                         }
                     }
                 }
@@ -897,7 +897,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
                     score = (int32_t)((int16_t)(20 * pctFull) / l);
                     goto LScore;
                 }
-                if (lppl->fStarbase || (lppl->lpplprod && lppl->lpplprod->rgprod[0].grobj == grobjFleet && lppl->lpplprod->rgprod[0].iItem >= iobjPacketGerm))
+                if (lppl->fStarbase || (lppl->lpplprod && lppl->lpplprod->rgprod()[0].grobj == grobjFleet && lppl->lpplprod->rgprod()[0].iItem >= iobjPacketGerm))
                     continue;
                 if (vlpbAiPlanet[lppl->id * 16 + 2] != 0 && !(vlpbAiPlanet[lppl->id * 16 + 2] & 0x80) && lpplHome->id == lpflFr->idPlanet) {
                     score = 25000;
@@ -1141,7 +1141,7 @@ void AddItemToQueue(uint16_t iItem, uint16_t cItem, GrobjClass grobj, AddItemMod
         }
         if (cItem > 0) {
             if (mdAddItem != addItemReplace && lpplProdGlob->iprodMac == lpplProdGlob->iprodMax) {
-                lpplProdGlob = (PLPROD *)LpplReAlloc((PL *)lpplProdGlob, lpplProdGlob->iprodMac + 3);
+                lpplProdGlob = LpplReAlloc(lpplProdGlob, lpplProdGlob->iprodMac + 3);
             }
             switch (mdAddItem) {
             case addItemReplace:
@@ -1152,14 +1152,14 @@ void AddItemToQueue(uint16_t iItem, uint16_t cItem, GrobjClass grobj, AddItemMod
                 break;
             case addItemFront:
                 iprod = 0;
-                memmove(&lpplProdGlob->rgprod[1], lpplProdGlob->rgprod, lpplProdGlob->iprodMac * sizeof(PROD));
-                memset(lpplProdGlob->rgprod, 0, 4);
+                memmove(&lpplProdGlob->rgprod()[1], lpplProdGlob->rgprod(), lpplProdGlob->iprodMac * sizeof(PROD));
+                memset(lpplProdGlob->rgprod(), 0, 4);
             }
-            lpplProdGlob->rgprod[iprod].cItem = cItem;
-            lpplProdGlob->rgprod[iprod].iItem = iItem;
-            lpplProdGlob->rgprod[iprod].grobj = grobj;
-            lpplProdGlob->rgprod[iprod].pct = 0;
-            lpplProdGlob->rgprod[iprod].unused = 0;
+            lpplProdGlob->rgprod()[iprod].cItem = cItem;
+            lpplProdGlob->rgprod()[iprod].iItem = iItem;
+            lpplProdGlob->rgprod()[iprod].grobj = grobj;
+            lpplProdGlob->rgprod()[iprod].pct = 0;
+            lpplProdGlob->rgprod()[iprod].unused = 0;
             lpplProdGlob->iprodMac++;
         }
         if (fSingle) {
@@ -1569,7 +1569,7 @@ void GetProdQCost(PLANET *lppl, int32_t *rgCost) {
     if (lppl->lpplprod) {
         lpplprod = lppl->lpplprod;
         i = 0;
-        lpprod = lpplprod->rgprod;
+        lpprod = lpplprod->rgprod();
         while (i < lpplprod->iprodMac) {
             GetProductionCosts(lppl, lpprod, (uint32_t *)rgCostCur, idPlayer, FALSE);
             for (j = 0; j < 4; j++) {
@@ -1976,7 +1976,7 @@ void QuickBuildDefenses(PLANET *lppl, PROD *rgprod) {
 
     if (lppl->lpplprod) {
         i = 0;
-        lpprod = lppl->lpplprod->rgprod;
+        lpprod = lppl->lpplprod->rgprod();
         while (i < lppl->lpplprod->iprodMac) {
             if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleDefense) {
                 return;
@@ -2335,7 +2335,7 @@ int16_t FAIFling(PLANET *lppl, int32_t *rgResAvail) {
         return FALSE;
     }
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj == grobjPlanet && lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed) {
             return FALSE;
@@ -2443,7 +2443,7 @@ void QueueAiStarbases(PROD *rgprod, int16_t ishdefSBLatest) {
             ChangeMainObjSel(grobjPlanet, lppl->id);
             InitProduction(rgprod);
             i = 0;
-            for (lpprod = lpplProdGlob->rgprod; i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem < iobjPacketGerm); lpprod++) {
+            for (lpprod = lpplProdGlob->rgprod(); i < lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem < iobjPacketGerm); lpprod++) {
                 i++;
             }
             if (i < lpplProdGlob->iprodMac) {
@@ -2471,7 +2471,7 @@ int16_t FUpgradeAiStarbase(PLANET *lppl, int16_t ishdefSBLatest) {
     }
     if (lppl->fStarbase) {
         i = 0;
-        lpprod = lpplProdGlob->rgprod;
+        lpprod = lpplProdGlob->rgprod();
         while (i < lpplProdGlob->iprodMac) {
             if (lpprod->grobj == grobjFleet && lpprod->iItem >= iobjPacketGerm) {
                 return FALSE;
@@ -2577,7 +2577,7 @@ int16_t FQueueAiTerraforming(PLANET *lppl, int32_t *rgResAvail, int32_t *rgResCo
         return FALSE;
     }
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleTerraform) {
             return FALSE;
@@ -2616,7 +2616,7 @@ int16_t FQueueAiScanner(PLANET *lppl, int32_t *rgResAvail, int32_t *rgResCost) {
     PROD   *lpprod;
 
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj == grobjPlanet && lpprod->iItem >= iobjPlanetaryScannerFirst && lpprod->iItem <= iobjPlanetaryScannerSnooper620X) {
             return FALSE;
@@ -2652,7 +2652,7 @@ int16_t FQueueAiDefenses(PLANET *lppl, int32_t *rgResAvail, int32_t *rgResCost) 
         return FALSE;
     }
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleDefense) {
             return FALSE;

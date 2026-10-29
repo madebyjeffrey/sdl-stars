@@ -1,4 +1,5 @@
 #include "common.h"
+#include "liststorage.h"
 
 static uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
@@ -251,4 +252,31 @@ void FreePl(PL *lppl) {
         FreeLp(lppl, static_cast<HeapType>(lppl->ht));
     }
     return;
+}
+
+// The same pool allocation and four-byte prefix are retained, but callers now
+// receive a PLPROD header and an actual PROD array instead of aliasing a PL.
+template<>
+PLPROD *LpplAlloc<PLPROD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
+    PL *lppl;
+
+    lppl = LpplAlloc(cbItem, cAlloc, ht);
+    return LpStartPl<PLPROD, PROD>(lppl, CbPlSlot(lppl));
+}
+
+PLPROD *LpplReAlloc(PLPROD *lppl, uint16_t cAlloc) {
+    void *lp;
+
+    lp = LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
+    lppl = LpStartPl<PLPROD, PROD>(lp, CbPlSlot(lp));
+    lppl->iprodMax = cAlloc;
+    return lppl;
+}
+
+void FreePl(PLPROD *lppl) {
+    if (lppl) FreeLp(lppl, static_cast<HeapType>(lppl->ht));
+}
+
+uint16_t CbPlSlot(const void *lp) {
+    return RawLoad16(static_cast<const uint8_t *>(lp) - 2);
 }

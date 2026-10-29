@@ -12,8 +12,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
 | B02: dispatch and callback guards | Complete | Locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. Full local matrix and all 16 Linux/Windows checks pass for d5de69e. |
 | B03: const-correct text and scoped views | Complete | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. All 16 Linux/Windows checks pass for b799348. |
-| B04: record codecs and complete storage inventory | Active: platform CI pending | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix; platform qualification remains. |
-| B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
+| B04: record codecs and complete storage inventory | Complete | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix and all 16 Linux/Windows checks for d6bd60f. |
+| B05: production payloads | Active: platform CI pending | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix. |
 | B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
 | B07: hull/design payloads | Pending | Preserve slot strides, catalog IDs and design import/export. |
 | B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
@@ -578,3 +578,56 @@ builds introduce no warnings. Complete desktop and host regressions each match
 519 files / 25 accepted unused-storage warnings / zero differences, errors or
 skipped inputs. Frozen references, enum/catalog contracts and baselines remain
 unchanged. B04 local qualification is complete; platform CI remains required.
+
+
+## B04 GCC test-construction follow-up
+
+Linux CI rejected one test initializer that Clang accepted: GCC interpreted the
+parenthesized span/first expression as a declaration. `d6bd60f` uses unambiguous
+brace construction. The isolated original B04 vectors pass locally after this
+test-only fix. All 16 Linux/Windows checks subsequently pass for `d6bd60f`, including
+Windows SDL/SDK and Linux ASan/UBSan/LSan. B04 is complete. This does not change codec or game behavior.
+
+## B05 production queue storage and codecs in qualification
+
+PLPROD retains its four-byte header, byte counters, reserved bits and slot stride;
+its original rgprod name now denotes a borrowed typed-array accessor. The pooled
+allocator starts actual header/item lifetimes over the same complete physical
+slot, including rounded spare capacity. Allocation, reallocation and release
+use typed operations without treating a PLPROD as a PL. Existing free-list,
+capacity truncation, preserved bytes and allocation-failure ordering remain.
+
+PROD fields and reserved bits are encoded explicitly, and queue logs use a
+two-byte ID prefix followed by four-byte items. File reads merge an incomplete
+last item through the codec, preserving the prior partial-byte overwrite. Replay
+retains its partial-production matching order, incoming progress mutation,
+trailing-byte treatment and short-declared-record behavior. No new validation
+policy or gameplay fix is included. The archived observer follows the new
+accessor spelling. Frozen layouts and baselines remain unchanged.
+
+Independent vectors cover all bit positions, 65,536 mixed production words,
+reserved bits and every partial-row byte count. Real pooled-storage and log
+tests cover stable/moved growth, byte-capacity wrapping, matched/unmatched
+progress, input-byte mutation and zero-declared-length replay. The bounded
+source witnesses use the actual typed lifetime functions with explicit physical
+heap extents; their vectors, exclusions and expected receipts remain unchanged.
+The first source run passed 26/27; the lifecycle adapter needed an earlier
+include for its manually allocated typed array and then passed all 16,243
+assertions. Full local and platform qualification remain required.
+
+
+B05 final local qualification: 114/114 full macOS desktop CTest, including
+55 ownership contracts and all 27 native leak checks; 25/25 SDL-free host tests;
+32/32 ASan/UBSan cases including the real production log/storage tests; and a
+fresh complete 27/27 source-witness run. All 92 public headers compile in both
+include orders. Debug/Release/host builds introduce no warnings. Native and host
+regressions each match all 519 files with 25 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. Frozen 259-layout, enum/storage
+and catalog contracts and all baselines are unchanged.
+
+The remaining header-based queue moves now use actual PROD array positions
+with identical byte addresses. Log replay also preserves the empty-roster
+no-read path, tested with a null input pointer, and reads packed scalar outputs
+through aligned temporaries. Linux sanitizer qualification now includes the
+real core log/storage unit program. B05 local qualification is complete; its
+platform gate remains required. B06–B14 remain in scope.

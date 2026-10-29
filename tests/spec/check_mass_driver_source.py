@@ -145,8 +145,8 @@ int main(int argc,char **argv){
         integrations++;
     }
     for(int pattern=0;pattern<6;pattern++){
-        reset();eligible();drivers(bases,pattern);planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);
-        planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,16,grobjFleet,0);
+        reset();eligible();drivers(bases,pattern);planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);
+        planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,16,grobjFleet,0);
         Produce();CHECK(planet.fStarbase && planet.isb==0 && !planet.lpplprod);
         CHECK(planet.iWarpFling==(warps[pattern]?warps[pattern]+twos[pattern]-4:0));
         CHECK(packetKills==!warps[pattern] && rgplr[0].lResLastYear==90);integrations++;

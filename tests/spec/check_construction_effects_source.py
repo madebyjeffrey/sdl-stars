@@ -6,6 +6,7 @@ Produce and RNG bodies. Catalog, economy, routing, message and low-level heap
 services remain explicit providers; generated IDs come from current generators.
 Undefined damage/axis inputs are guarded before native execution.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
 import os
 import shlex
@@ -207,13 +208,13 @@ int main(void){
     // Actual base invalidators reset surviving base progress in both the
     // copied prefix and old physical source slot.
     reset();planet.fStarbase=1;planet.isb=0;bases[0].hul.ihuldef=static_cast<HulDef>(10);bases[1].hul.ihuldef=static_cast<HulDef>(5);bases[0].cExist=1;
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,3,htOrd);planet.lpplprod->iprodMac=3;
-    planet.lpplprod->rgprod[0]=row(1,0,2,50);planet.lpplprod->rgprod[1]=row(1,16,2,59);planet.lpplprod->rgprod[2]=row(1,14,1,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,3,htOrd);planet.lpplprod->iprodMac=3;
+    planet.lpplprod->rgprod()[0]=row(1,0,2,50);planet.lpplprod->rgprod()[1]=row(1,16,2,59);planet.lpplprod->rgprod()[2]=row(1,14,1,0);
     sel.grobj=grobjPlanet;sel.pl.id=planet.id;warpValues[0]=warpValues[1]=0;
     CHECK(call(2,17,100) && shipKills==1 && packetKills==1 && lookups==2 && fills==2);
     CHECK(planet.isb==1 && bases[0].cExist==0 && bases[1].cExist==1 && bases[1].cBuilt==1 && !planet.idFling && !planet.iWarpFling);
-    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod[0].iItem==16 && !planet.lpplprod->rgprod[0].pct);
-    CHECK(!planet.lpplprod->rgprod[1].pct && warpBase[0]==0 && warpBase[1]==1);
+    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod()[0].iItem==16 && !planet.lpplprod->rgprod()[0].pct);
+    CHECK(!planet.lpplprod->rgprod()[1].pct && warpBase[0]==0 && warpBase[1]==1);
     reset();planet.fStarbase=1;planet.isb=0;bases[0].cExist=0;bases[0].cBuilt=UINT32_MAX;CHECK(call(2,16,0));CHECK(bases[0].cExist==0 && bases[0].cBuilt==0);
     for(unsigned prior=0;prior<10;prior++)for(unsigned next=0;next<10;next++)for(int has=0;has<2;has++)for(int oldWarp=0;oldWarp<2;oldWarp++)for(int newWarp=0;newWarp<2;newWarp++){
         reset();planet.fStarbase=has;planet.isb=prior;planet.iWarpFling=9;
@@ -231,18 +232,18 @@ int main(void){
     for(int i=0;i<512;i++){memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
         fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
         fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord[0].pt=fleetBodies[i].pt;}
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,0,2,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(!planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10 && !newFleets);
-    reset();cap=2;operableCap=5;planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(5,7,1,0);
+    reset();cap=2;operableCap=5;planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(5,7,1,0);
     Produce();CHECK(planet.cFactories==2 && rgplr[0].lResLastYear==50 && !planet.lpplprod);
     // Genesis clears native planet stock directly; the caller's working stock
     // is later written back. Keep this distinction visible in the specification.
-    reset();planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,13,1,0);
+    reset();planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,13,1,0);
     Produce();CHECK(randomCalls==12 && planet.rgwtMin[0]==10 && planet.rgwtMin[1]==20 && planet.rgwtMin[2]==30 && rgplr[0].lResLastYear==90);
     reset();printf("Construction effects actual-source fixtures: %d assertions passed\n",checks);return 0;
 }
 '''
-    return declarations,bodies,witnesses
+    return declarations + storage_declarations(), bodies + storage_definitions('return heap[slot(const_cast<void *>(lp))].bytes;'), witnesses
 
 
 def main():

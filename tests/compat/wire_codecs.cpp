@@ -84,6 +84,56 @@ int main() {
         NATIVEBYTEWRITER output(std::as_writable_bytes(std::span(&dw, 1)));
         CHECK(output.FWriteU32Le(dw) && std::memcmp(&dw, rgb.data(), 4) == 0);
     }
-    std::puts("History-header wire vectors, 65536 signed pairs and bounded byte primitives passed");
+    {
+        // Independent S01 bit weights; exercise every single bit, all ones,
+        // and a reproducible spread across all fields including reserved bits.
+        for (std::uint32_t i = 0; i < 65569; i++) {
+            std::uint32_t dw = i < 32 ? (std::uint32_t{1} << i) : i == 32 ? 0xffffffff : (i - 33) * 2654435761u;
+            const std::array<std::byte, 4> rgb = {static_cast<std::byte>(dw % 256), static_cast<std::byte>((dw / 256) % 256),
+                                                static_cast<std::byte>((dw / 65536) % 256), static_cast<std::byte>(dw / 16777216)};
+            PROD prod{};
+            std::array<std::byte, 4> output;
+            CHECK(FDecodeProd(rgb, prod));
+            CHECK(prod.cItem == dw % 1024 && prod.iItem == (dw / 1024) % 128 && prod.grobj == (dw / 131072) % 8 &&
+                  prod.pct == (dw / 1048576) % 128 && prod.unused == dw / 134217728);
+            CHECK(FEncodeProd(prod, output) && output == rgb);
+            for (std::size_t cb = 0; cb < 4; cb++) {
+                PROD before = prod;
+                output.fill(std::byte{0xa5});
+                CHECK(!FDecodeProd(std::span(rgb).first(cb), prod));
+                CHECK(prod.cItem == before.cItem && prod.iItem == before.iItem && prod.grobj == before.grobj &&
+                      prod.pct == before.pct && prod.unused == before.unused);
+                CHECK(!FEncodeProd(prod, std::span(output).first(cb)));
+                for (auto ch : output) CHECK(ch == std::byte{0xa5});
+            }
+        }
+        const std::array<std::byte, 8> before = {std::byte{0x11}, std::byte{0x22}, std::byte{0x33}, std::byte{0x44},
+                                               std::byte{0x55}, std::byte{0x66}, std::byte{0x77}, std::byte{0x88}};
+        const std::array<std::byte, 8> incoming = {std::byte{1}, std::byte{2}, std::byte{3}, std::byte{4},
+                                                 std::byte{0xee}, std::byte{0xdd}, std::byte{0xcc}, std::byte{0xbb}};
+        for (std::size_t cb = 0; cb <= incoming.size(); cb++) {
+            std::array<PROD, 2> rows{};
+            std::array<std::byte, 8> output, expected = before;
+            CHECK(FDecodeProdBytes(before, rows));
+            CHECK(FDecodeProdBytes(std::span(incoming).first(cb), rows));
+            std::memcpy(expected.data(), incoming.data(), cb);
+            CHECK(FEncodeProdQueue(rows, output) && output == expected);
+            if (cb != 0) {
+                const auto unchanged = output;
+                CHECK(!FDecodeProdBytes(incoming, std::span(rows).first(1)));
+                CHECK(!FDecodeProdBytes(std::span(incoming).first(5), std::span(rows).first(1)));
+                CHECK(FEncodeProdQueue(rows, output) && output == unchanged);
+                output.fill(std::byte{0xa5});
+                CHECK(!FEncodeProdQueue(rows, std::span(output).first(7)));
+                for (auto ch : output) CHECK(ch == std::byte{0xa5});
+            }
+        }
+        RTCHGPRODQ rtcpq{123};
+        const std::array<std::byte, 2> rgbId = {std::byte{0xfe}, std::byte{0xff}};
+        CHECK(!FDecodeRtChgProdQ(std::span(rgbId).first(1), rtcpq) && rtcpq.id == 123);
+        CHECK(FDecodeRtChgProdQ(rgbId, rtcpq) && rtcpq.id == -2);
+        CHECK(FDecodeProdBytes({}, {}) && FEncodeProdQueue({}, {}));
+    }
+    std::puts("History/production wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

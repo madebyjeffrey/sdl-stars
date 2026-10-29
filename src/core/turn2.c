@@ -59,7 +59,7 @@ void Produce() {
                 fPrevProdIsAlch = FALSE;
                 iprodCur = 0;
                 while (lppl->lpplprod && iprodCur < lppl->lpplprod->iprodMac) {
-                    lpprod = &lppl->lpplprod->rgprod[iprodCur];
+                    lpprod = &lppl->lpplprod->rgprod()[iprodCur];
                     if (lpprod->cItem <= 0)
                         goto RemoveFromQueue;
                     if (lpprod->grobj == grobjPlanet) {
@@ -136,12 +136,12 @@ void Produce() {
                     if (mdStatus == mdProdStatComplete) {
                     RemoveFromQueue:
                         if (lppl->lpplprod->iprodMac == fPrevProdIsAlch + 1) {
-                            FreePl((PL *)lppl->lpplprod);
+                            FreePl(lppl->lpplprod);
                             lppl->lpplprod = NULL;
                             break;
                         }
                         if (iprodCur < lppl->lpplprod->iprodMac - 1) {
-                            memmove(lppl->lpplprod + (1 + (iprodCur - fPrevProdIsAlch)), lppl->lpplprod + (1 + (iprodCur + 1)),
+                            memmove(lppl->lpplprod->rgprod() + (iprodCur - fPrevProdIsAlch), lppl->lpplprod->rgprod() + (iprodCur + 1),
                                     (lppl->lpplprod->iprodMac - iprodCur - 1) * 4);
                         }
                         lppl->lpplprod->iprodMac -= fPrevProdIsAlch + 1;
@@ -149,10 +149,10 @@ void Produce() {
                     } else if ((int16_t)mdStatus >= mdProdStatSome) {
                         if (prodPartial.cItem > 0) {
                             if (lppl->lpplprod->iprodMac == lppl->lpplprod->iprodMax) {
-                                lppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lppl->lpplprod, lppl->lpplprod->iprodMac + 1);
+                                lppl->lpplprod = LpplReAlloc(lppl->lpplprod, lppl->lpplprod->iprodMac + 1);
                             }
-                            memmove(&lppl->lpplprod->rgprod[1], lppl->lpplprod->rgprod, lppl->lpplprod->iprodMac * sizeof(PROD));
-                            lppl->lpplprod->rgprod[0] = prodPartial;
+                            memmove(&lppl->lpplprod->rgprod()[1], lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * sizeof(PROD));
+                            lppl->lpplprod->rgprod()[0] = prodPartial;
                             lppl->lpplprod->iprodMac++;
                         }
                         break;
@@ -924,7 +924,7 @@ void DropColonists() {
                         cpq = rgplr[iMax].zpq1.cpq;
                         pl.fNoResearch = rgplr[iMax].zpq1.fNoResearch;
                         if (cpq > 0) {
-                            pl.lpplprod = (PLPROD *)LpplAlloc(4, rgplr[iMax].zpq1.cpq, htOrd);
+                            pl.lpplprod = LpplAlloc<PLPROD>(4, rgplr[iMax].zpq1.cpq, htOrd);
                             memset(&prod, 0, sizeof(PROD));
                             prod.grobj = grobjPlanet;
                             iDst = 0;
@@ -934,7 +934,7 @@ void DropColonists() {
                                      (rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMinTerraform && rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMaxTerraform))) {
                                     prod.iItem = rgplr[iMax].zpq1.rgpq[ipq].mdIdle;
                                     prod.cItem = rgplr[iMax].zpq1.rgpq[ipq].cQuan;
-                                    pl.lpplprod->rgprod[iDst] = prod;
+                                    pl.lpplprod->rgprod()[iDst] = prod;
                                     iDst++;
                                 }
                             }
@@ -942,7 +942,7 @@ void DropColonists() {
                                 pl.lpplprod->iprodMac = iDst;
                                 LpplFromId(pl.id)->lpplprod = pl.lpplprod;
                             } else {
-                                FreePl((PL *)pl.lpplprod);
+                                FreePl(pl.lpplprod);
                                 pl.lpplprod = NULL;
                             }
                         }
@@ -1405,9 +1405,9 @@ void TossNonAutoBuildItems(PLANET *lppl) {
     if (lppl->lpplprod) {
         iDst = 0;
         for (iSrc = 0; iSrc < lppl->lpplprod->iprodMac; iSrc++) {
-            if (lppl->lpplprod->rgprod[iSrc].grobj == grobjPlanet && lppl->lpplprod->rgprod[iSrc].iItem < mdIdleFactory) {
+            if (lppl->lpplprod->rgprod()[iSrc].grobj == grobjPlanet && lppl->lpplprod->rgprod()[iSrc].iItem < mdIdleFactory) {
                 if (iSrc > iDst) {
-                    lppl->lpplprod->rgprod[iDst] = lppl->lpplprod->rgprod[iSrc];
+                    lppl->lpplprod->rgprod()[iDst] = lppl->lpplprod->rgprod()[iSrc];
                 }
                 iDst++;
             }
@@ -1415,7 +1415,7 @@ void TossNonAutoBuildItems(PLANET *lppl) {
         if (iDst > 0) {
             lppl->lpplprod->iprodMac = iDst;
         } else {
-            FreePl((PL *)lppl->lpplprod);
+            FreePl(lppl->lpplprod);
             lppl->lpplprod = NULL;
         }
     }
