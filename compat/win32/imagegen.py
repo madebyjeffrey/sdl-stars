@@ -82,7 +82,7 @@ def generate(root, output):
         source += ['};']
     source += ['#endif', 'constinit const size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
     for i, (_, _, _, data) in enumerate(images):
-        manifest += [f'static constinit const BYTE rgbImageExpected{i}[] = {{']
+        manifest += [f'static const BYTE rgbImageExpected{i}[] = {{']
         manifest += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]
         manifest += ['};']
     manifest += ['static const struct { BOOL fCursor; LPCSTR psz; DWORD cbGroup; const BYTE *rgb; DWORD cb; } rgImageManifest[] = {']

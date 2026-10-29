@@ -38,7 +38,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_services.c" "#includ
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_state.c" "#include <assert.h>\n#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_state.c\"\n")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_timers.c" "#include <assert.h>\n#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_timers.c\"\n")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_toolbar.c" "#include <assert.h>\n#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_toolbar.c\"\n")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.cpp" "#include <assert.h>\n#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_ui_resources.cpp\"\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.c" "#include <assert.h>\n#include \"${PROJECT_SOURCE_DIR}/tests/compat/win32_ui_resources.c\"\n")
 
 # Optional SDK contract tests; these do not build a native desktop client.
 find_program(WINE_EXECUTABLE NAMES wine)
@@ -134,7 +134,7 @@ set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests-reference")
             res/data/idr_tutorial_hst.bin res/data/idr_tutorial_m1.bin res/data/idr_tutorial_m2.bin
         VERBATIM)
     add_custom_target(stars_ui_reference_manifest DEPENDS "${STARS_BITMAP_REFERENCE_DIR}/ui_manifest.h")
-    add_executable(test_win32_ui_resources_reference "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.cpp" res/stars.rc)
+    add_executable(test_win32_ui_resources_reference "${CMAKE_CURRENT_BINARY_DIR}/sdk-reference/win32_ui_resources.c" res/stars.rc)
     target_link_libraries(test_win32_ui_resources_reference PRIVATE stars_options user32 gdi32)
     target_include_directories(test_win32_ui_resources_reference PRIVATE "${STARS_BITMAP_REFERENCE_DIR}")
     add_dependencies(test_win32_ui_resources_reference stars_ui_reference_manifest stars_version)
