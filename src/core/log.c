@@ -1272,6 +1272,7 @@ int16_t FWriteHistFile(int16_t iPlayer) {
     SHDEF    *lpshdef;
     int16_t   j;
     RTHISTHDR rthh;
+    std::byte rgbHistHdr[cbWireHistHdr];
     uint8_t  *lpb;
 
     if (!FCreateFile(dtHist, iPlayer, NULL)) {
@@ -1282,7 +1283,8 @@ int16_t FWriteHistFile(int16_t iPlayer) {
     try {
         rthh.cPlanet = cPlanet;
         rthh.cPlanetExtra = rgplr[iPlayer].cFleet;
-        WriteRt(rtHistHdr, 4, &rthh);
+        if (!FEncodeRtHistHdr(rthh, rgbHistHdr)) { StreamClose(); return FALSE; }
+        WriteRt(rtHistHdr, cbWireHistHdr, rgbHistHdr);
         i = 0;
         lppl = lpPlanets;
         while (i < cPlanet) {

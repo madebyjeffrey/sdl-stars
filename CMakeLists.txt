@@ -319,6 +319,15 @@ if(STARS_BUILD_TESTS)
     target_compile_options(stars-test-encoding-views PRIVATE -Wall -Wextra -Wpedantic -Werror)
     add_test(NAME test_encoding_views COMMAND stars-test-encoding-views)
     set_tests_properties(test_encoding_views PROPERTIES LABELS "build;encoding" TIMEOUT 30)
+    add_executable(stars-test-wire-codecs tests/compat/wire_codecs.cpp)
+    target_link_libraries(stars-test-wire-codecs PRIVATE stars_options)
+    target_compile_options(stars-test-wire-codecs PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME test_wire_codecs COMMAND stars-test-wire-codecs)
+    set_tests_properties(test_wire_codecs PROPERTIES LABELS "build;wire" TIMEOUT 30)
+    add_test(NAME test_wire_inventory COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/cmake/check_wire_inventory.py"
+        "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/wire-inventory.json")
+    set_tests_properties(test_wire_inventory PROPERTIES LABELS "build;wire" TIMEOUT 30)
     add_executable(stars-catalog-dump tests/compat/catalog_dump.cpp)
     target_link_libraries(stars-catalog-dump PRIVATE stars_options)
     add_test(NAME test_catalog_bytes COMMAND "${Python3_EXECUTABLE}"

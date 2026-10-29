@@ -54,6 +54,7 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "planet.h"
 #include "produce.h"
 #include "race.h"
+#include "recordcodec.h"
 #include "report.h"
 #include "research.h"
 #include "save.h"

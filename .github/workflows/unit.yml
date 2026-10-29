@@ -40,6 +40,15 @@ jobs:
           cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
 
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/sdl-debug/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30
+
   resource-sanitizers:
     name: Resource ownership (ASan/UBSan/LSan)
     runs-on: ubuntu-24.04
@@ -67,8 +76,8 @@ jobs:
           UBSAN_OPTIONS: halt_on_error=1
         run: |
           cmake --preset sdl-sanitize
-          cmake --build --preset sdl-sanitize --target stars-test-encoding-views stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-resource-list stars-resource-combo stars-resource-toolbar stars-resource-controls stars-resource-profile stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
-          ctest --test-dir dist/sdl-sanitize -R '^(test_encoding_views|win32_(images|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|modal|messagebox|list|combo|toolbar|controls|profile|audio_.*)))$' --output-on-failure
+          cmake --build --preset sdl-sanitize --target stars-test-wire-codecs stars-test-encoding-views stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-resource-list stars-resource-combo stars-resource-toolbar stars-resource-controls stars-resource-profile stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^(test_wire_codecs|test_encoding_views|win32_(images|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|modal|messagebox|list|combo|toolbar|controls|profile|audio_.*)))$' --output-on-failure
 
   source-witnesses:
     name: Source witnesses (C++20)
@@ -144,3 +153,11 @@ jobs:
           cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
           ctest --test-dir dist/windows-sdl-debug -R '^test_' --output-on-failure
           ctest --preset windows-sdl-headless
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/windows-sdl-debug/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30

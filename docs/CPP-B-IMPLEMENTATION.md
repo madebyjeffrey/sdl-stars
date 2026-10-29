@@ -11,8 +11,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | --- | --- | --- |
 | B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
 | B02: dispatch and callback guards | Complete | Locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. Full local matrix and all 16 Linux/Windows checks pass for d5de69e. |
-| B03: const-correct text and scoped views | Active: platform CI pending | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. |
-| B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
+| B03: const-correct text and scoped views | Complete | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. All 16 Linux/Windows checks pass for b799348. |
+| B04: record codecs and complete storage inventory | Active: platform CI pending | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix; platform qualification remains. |
 | B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
 | B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
 | B07: hull/design payloads | Pending | Preserve slot strides, catalog IDs and design import/export. |
@@ -541,4 +541,40 @@ toolbar timeout while macOS repeatedly slept; the power log records matching
 sleep intervals. All five cases passed unchanged on retry. Fresh complete runs
 with a temporary idle-sleep assertion passed 112/112 and 30/30 using the original
 test deadlines. No product change or timeout increase was used to mask a failure.
-B03 local qualification is complete; platform CI remains its final checkpoint.
+B03 local qualification and all 16 Linux/Windows checks pass for `b799348`, including Windows SDL/SDK and Linux ASan/UBSan/LSan. B03 is complete; B04 is active.
+
+
+## B04 wire inventory and first explicit codec
+
+The generated inventory indexes all 206 owned source/header files, 46 record
+names, twelve variable tails, all packing/bitfield/anonymous aggregate sites,
+pointer-cast and bit-operation candidates, direct record/log/stream/resource
+operations and raw copies/size expressions. Its family dispositions distinguish
+wire records from runtime-only pools and genuine foreign SDK/library layouts.
+The unused zero-storage `_ctype` symbol is assigned to B14. All 259 independent
+C layout/prefix measurements remain unchanged. Linux and Windows CI retain the
+full source-located JSON report for review; it is an index, not an alias proof.
+
+`NATIVEBYTEREADER` and `NATIVEBYTEWRITER` preflight explicit little-endian scalar
+and byte operations. Failed primitives preserve their cursor/output, and empty
+and overlapping byte spans are supported. An overlapping scalar-output test
+first reproduced a read that destroyed its own input; snapshotting before
+publication fixes it. Independent vectors and arithmetic expectations exercise
+all 65,536 paired signed-16 values, signed-32 minimum, unaligned/truncated
+slices, trailing bytes, guarded outputs, size-limit skips and empty spans.
+The primitive header also compiles independently with ISO C++20 pedantic errors.
+
+The history-header read/write pair now uses explicit two-signed-16 codecs. Its
+four defined bytes stay identical; encoding never dumps a native struct. The
+reader deliberately retains the old reusable-buffer prefix for logically short
+payloads. No stricter malformed-input admission, pointer serialization, record
+size or gameplay behavior is introduced. Other families remain assigned to
+B05–B11; their old layout consumers have not been declared migrated.
+
+Qualification: 114/114 full macOS desktop CTest (55 ownership cases including
+27 native leak checks), 25/25 SDL-free host tests, 31/31 ASan/UBSan cases, all
+27 source witnesses and 91 headers in both include orders. Debug/Release/host
+builds introduce no warnings. Complete desktop and host regressions each match
+519 files / 25 accepted unused-storage warnings / zero differences, errors or
+skipped inputs. Frozen references, enum/catalog contracts and baselines remain
+unchanged. B04 local qualification is complete; platform CI remains required.

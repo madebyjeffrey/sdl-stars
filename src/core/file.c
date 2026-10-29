@@ -171,6 +171,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
     PROD    *lpprod;
     int16_t  iWarp;
     int16_t  fTwo;
+    RTHISTHDR rthh;
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
 
     grf = 0;
@@ -230,8 +231,11 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
             ReadRt();
             if (hdrCur.rt != rtHistHdr)
                 goto CorruptHist;
-            cPlanetHist = ((RTHISTHDR *)rgbCur)->cPlanet;
-            cPlanetAlloc = cPlanetHist + ((RTHISTHDR *)rgbCur)->cPlanetExtra;
+            // Preserve the legacy reusable-buffer prefix even for a short
+            // declared payload; this migration does not tighten admission.
+            if (!FDecodeRtHistHdr(std::as_bytes(std::span(rgbCur)), rthh)) goto CorruptHist;
+            cPlanetHist = rthh.cPlanet;
+            cPlanetAlloc = cPlanetHist + rthh.cPlanetExtra;
             if (cPlanetAlloc > 1000) {
                 cPlanetAlloc = 1000;
             }
