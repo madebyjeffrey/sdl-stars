@@ -82,7 +82,7 @@ static size_t CbReadFixture(const char *szFile, uint8_t *rgb, size_t cbMax) {
 }
 
 static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH], szNewGameRace[MAX_PATH], szDef[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64], szNewGameRace[MAX_PATH + 64], szDef[MAX_PATH + 64];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
     PLAYER plrExpected;
@@ -173,7 +173,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
 }
 
 static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64];
     char szName[32], szNames[32];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
@@ -309,7 +309,7 @@ static void test_RaceGrbit_high_bit(void) {
 // terminator. They aren't saved, so the file failed its checksum on load.
 static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     char     szDir[MAX_PATH];
-    char     szFile[MAX_PATH];
+    char     szFile[MAX_PATH + 64];
     PLAYER   plr;
     uint16_t icksum;
 

@@ -24,7 +24,7 @@ static BOOL CALLBACK FCancelNativePicker(HWND hwnd, LPARAM l) {
 }
 
 static int FPumpNativeCheck(void *lpv) {
-    NATIVEPICKERCHECK *lp = lpv;
+    NATIVEPICKERCHECK *lp = (NATIVEPICKERCHECK *)lpv;
 
     lp->cPumps++;
     if (lp->cDialogs == 0) EnumThreadWindows(GetCurrentThreadId(), FCancelNativePicker, (LPARAM)lp);

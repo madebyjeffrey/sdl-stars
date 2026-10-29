@@ -15,7 +15,7 @@ bool SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc);
 extern "C" SDL_DisplayID *SDLCALL StarsTest_SDL_GetDisplays(int *c) {
     SDL_DisplayID *rg;
     if (!fFake) return SDL_GetDisplays(c);
-    rg = SDL_calloc(3, sizeof(*rg)); if (!rg) return NULL;
+    rg = (SDL_DisplayID*)(SDL_calloc(3, sizeof(*rg))); if (!rg) return NULL;
     rg[0] = 1; rg[1] = 2; *c = 2; return rg;
 }
 extern "C" SDL_DisplayID SDLCALL StarsTest_SDL_GetPrimaryDisplay(void) { return fFake ? 2 : SDL_GetPrimaryDisplay(); }

@@ -164,7 +164,7 @@ int main(void) {
     PROD automatic={.cItem=10,.iItem=0,.grobj=1,.pct=50,.unused=3};ZIPPRODQ snapshot[5];
     CHECK(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(ZIPPRODQ)==40);
     reset(2);lpplProdGlob->rgprod[0]=automatic;lpplProdGlob->rgprod[1]=manual;
-    pProdGlob[0]=(PROD){.cItem=20,.iItem=0,.grobj=1};pProdGlob[1]=manual;cProdGlob=2;
+    pProdGlob[0]=PROD{.cItem=20,.iItem=0,.grobj=1,.pct=0,.unused=0};pProdGlob[1]=manual;cProdGlob=2;
     vrgZipProd[0].cpq=1;vrgZipProd[0].rgpq[0].w=64;vrgZipProd[0].fNoResearch=1;
     apply(IDC_IMPORT,0);
     CHECK(lpplProdGlob->iprodMac==2 && lpplProdGlob->iprodMax==3 && lastBytes==16);

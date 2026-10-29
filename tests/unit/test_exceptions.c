@@ -3,7 +3,7 @@
 #include "stars_test.h"
 
 static void TestFileFailureUnwinds(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
     int16_t fSilentSav;
 
     TEST_ASSERT(FStarsTestInit());
@@ -26,7 +26,7 @@ static void TestFileFailureUnwinds(void) {
 }
 
 static void TestShortReadClosesStream(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
     char rgb[2] = {42, 0};
     int16_t hfWrite, fMissing;
 

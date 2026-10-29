@@ -64,9 +64,9 @@ int main(void) {
     for (i = 0; i < (int)(sizeof(rgImageManifest) / sizeof(rgImageManifest[0])); i++) {
         hgroup = FindResource(hinst, rgImageManifest[i].psz, rgImageManifest[i].fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
         CHECK(hgroup && SizeofResource(hinst, hgroup) == rgImageManifest[i].cbGroup);
-        rgb = LockResource(LoadResource(hinst, hgroup)); CHECK(rgb && WTest(rgb + 4) == 1);
+        rgb = (const BYTE*)(LockResource(LoadResource(hinst, hgroup))); CHECK(rgb && WTest(rgb + 4) == 1);
         hrsrc = FindResource(hinst, MAKEINTRESOURCE(WTest(rgb + 18)), rgImageManifest[i].fCursor ? RT_CURSOR : RT_ICON);
-        cb = SizeofResource(hinst, hrsrc); rgb = LockResource(LoadResource(hinst, hrsrc));
+        cb = SizeofResource(hinst, hrsrc); rgb = (const BYTE*)(LockResource(LoadResource(hinst, hrsrc)));
         CHECK(rgb && cb == rgImageManifest[i].cb && memcmp(rgb, rgImageManifest[i].rgb, cb) == 0);
         hicon = rgImageManifest[i].fCursor ? (HICON)LoadCursor(hinst, rgImageManifest[i].psz) : LoadIcon(hinst, rgImageManifest[i].psz);
         CHECK(hicon && GetIconInfo(hicon, &ii));

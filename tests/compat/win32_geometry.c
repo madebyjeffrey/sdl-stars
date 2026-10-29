@@ -31,9 +31,9 @@ int main(int argc, char **argv) {
     POINT pt;
 
     hs = GetDC(NULL); hdc = CreateCompatibleDC(hs); hbm = CreateCompatibleBitmap(hs, 40, 40);
-    CHECK(hs && hdc && hbm && (hbmOld = SelectObject(hdc, hbm)));
+    CHECK(hs && hdc && hbm && (hbmOld = (HBITMAP)(SelectObject(hdc, hbm))));
     hpen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0)); hbrush = CreateSolidBrush(RGB(0, 0, 255));
-    CHECK(hpen && hbrush && (hpenOld = SelectObject(hdc, hpen)) && (hbrushOld = SelectObject(hdc, hbrush)));
+    CHECK(hpen && hbrush && (hpenOld = (HPEN)(SelectObject(hdc, hpen))) && (hbrushOld = (HBRUSH)(SelectObject(hdc, hbrush))));
     if (argc == 5 && strcmp(argv[1], "--pixels") == 0) {
         cx = atoi(argv[2]); cy = atoi(argv[3]); i = atoi(argv[4]);
         CHECK(SelectObject(hdc, i == 1 ? GetStockObject(NULL_PEN) : hpen));

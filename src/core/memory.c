@@ -17,7 +17,7 @@ static uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
     uint32_t cbAlign = CbHeapAlign(ht);
     uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
-    if (cbItem > UINT16_MAX - CbHbHeader(ht)) {
+    if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }

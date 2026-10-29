@@ -126,12 +126,12 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int
     tracedPartial[builds]=partial!=NULL;tracedAlchemy[builds]=alchemy;tracedYear[builds]=year;builds++;
     int16_t built;
     if(script==0)built=NativeCBuildProdItem(p,row,partial,res,alchemy,status,calc);
-    else if(script==2){built=index==0 ? 1:0;*status=(int16_t)(index==0 ? wordStatus:mdProdStatBlockedSame);}
+    else if(script==2){built=index==0 ? 1:0;*status=(int16_t)(index==0 ? wordStatus:static_cast<uint16_t>(mdProdStatBlockedSame));}
     else if(script==3){built=year==1 ? 2:0;*status=year==1 ? mdProdStatSomeAuto:mdProdStatSkippedAuto;}
     else if(script==4){row->iItem=mdIdleMine;row->grobj=grobjPlanet;row->cItem=0;built=3;*status=mdProdStatComplete;}
     else {
         built=year==terminalYear ? forcedBuilt:(year==firstYear ? 1:0);
-        *status=year==terminalYear ? terminalStatus:(year==firstYear ? mdProdStatSomeAuto:mdProdStatBlockedSame);
+        *status=year==terminalYear ? terminalStatus:static_cast<int16_t>(year==firstYear ? mdProdStatSomeAuto:mdProdStatBlockedSame);
     }
     memcpy(lastResources,res,16);return built;
 }

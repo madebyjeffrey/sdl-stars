@@ -312,7 +312,7 @@ static void setup(void){
     for(int player=0;player<2;player++){
         int at=player ? 29:8;rgplr[player].rgAttr[rsMajorAdv]=(int8_t)cfg[at];rgplr[player].rgAttr[rsResGen]=(int8_t)cfg[at+1];
         rgplr[player].rgAttr[rsFactProd]=(int8_t)cfg[at+2];rgplr[player].rgAttr[rsFactOperate]=(int8_t)cfg[at+3];rgplr[player].rgAttr[rsMineOperate]=(int8_t)cfg[at+4];
-        rgplr[player].pctIdealGrowth=(int8_t)cfg[at+5];rgplr[player].rgTech[0]=(int8_t)cfg[at+6];rgplr[player].grbitAttr=static_cast<RaceTraitBits>(cfg[at+7] ? grbitRaceOBRM:0);
+        rgplr[player].pctIdealGrowth=(int8_t)cfg[at+5];rgplr[player].rgTech[0]=(int8_t)cfg[at+6];rgplr[player].grbitAttr=static_cast<RaceTraitBits>(cfg[at+7] ? static_cast<uint32_t>(grbitRaceOBRM):0);
         for(int axis=0;axis<3;axis++){rgplr[player].rgEnvVarMin[axis]=0;rgplr[player].rgEnvVar[axis]=50;rgplr[player].rgEnvVarMax[axis]=100;}
         rglpshdefSB[player]=bases[player];for(int i=0;i<10;i++)bases[player][i].hul.ihuldef=(HulDef)(ihuldefOrbitalFort+cfg[22]);
     }

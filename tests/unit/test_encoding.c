@@ -59,7 +59,7 @@ static void TestPasswords(void) {
 }
 
 static void TestInvalidDefinition(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
     char szPadding[1024];
     NATIVEFILE *pf;
     int i;

@@ -19,7 +19,7 @@ int main(void) {
     hdc = CreateCompatibleDC(hscreen); hcopy = CreateCompatibleDC(hscreen);
     hbm = CreateCompatibleBitmap(hscreen, 32, 32); hcopybm = CreateCompatibleBitmap(hscreen, 32, 32);
     CHECK(hdc && hcopy && hbm && hcopybm);
-    hbmOld = SelectObject(hdc, hbm); hcopyOld = SelectObject(hcopy, hcopybm);
+    hbmOld = (HBITMAP)(SelectObject(hdc, hbm)); hcopyOld = (HBITMAP)(SelectObject(hcopy, hcopybm));
     hred = CreateSolidBrush(RGB(255, 0, 0)); hblue = CreateSolidBrush(RGB(0, 0, 255));
     CHECK(hred && hblue && FillRect(hdc, &rc, hblue));
     hrgn = CreateRectRgn(2, 2, 30, 30); CHECK(hrgn);

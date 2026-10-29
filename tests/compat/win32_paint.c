@@ -2,6 +2,16 @@
  * native-event injection in the automated test.
  */
 #include <windows.h>
+static const RECT rcTest1 = {4, 4, 8, 8};
+static const RECT rcTest2 = {-10, -10, 10, 10};
+static const RECT rcTest3 = {10, 10, 20, 20};
+static const RECT rcTest4 = {15, 15, 30, 30};
+static const RECT rcTest5 = {10, 10, 30, 30};
+static const RECT rcTest6 = {15, 15, 20, 20};
+static const RECT rcTest7 = {0, 0, 100, 100};
+static const RECT rcTest8 = {0, 0, 0, 0};
+static const RECT rcTest9 = {0, 0, 100, 100};
+static const RECT rcTest10 = {0, 0, 0, 0};
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <limits.h>
@@ -66,7 +76,7 @@ static BOOL FDraw(HWND hwnd, HDC hdcDest, PAINTTEST *lpwin) {
     fOk &= TextOut(hdc, 24, 110, "Close one window; the other keeps painting.", 42);
     // Draw an indexed image from the game's real resource atlas in each window.
     hrsrc = FindResource(NULL, MAKEINTRESOURCE(87), RT_BITMAP);
-    lpbi = LockResource(LoadResource(NULL, hrsrc));
+    lpbi = (const BITMAPINFOHEADER*)(LockResource(LoadResource(NULL, hrsrc)));
     if (lpbi) {
         cColors = lpbi->biClrUsed ? lpbi->biClrUsed : 1u << lpbi->biBitCount;
         rgb = (const BYTE *)(lpbi + 1) + cColors * sizeof(RGBQUAD);
@@ -89,7 +99,7 @@ static LRESULT CALLBACK PaintWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     PAINTSTRUCT ps;
 
     if (msg == WM_NCCREATE) {
-        lpwin = ((CREATESTRUCT *)lParam)->lpCreateParams;
+        lpwin = (PAINTTEST*)(((CREATESTRUCT *)lParam)->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lpwin);
         return TRUE;
     }
@@ -113,7 +123,7 @@ static LRESULT CALLBACK PaintWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         lpwin->fOk &= FDraw(hwnd, ps.hdc, lpwin);
         if (lpwin->fInvalidateInPaint) {
             lpwin->fInvalidateInPaint = FALSE;
-            lpwin->fOk &= InvalidateRect(hwnd, &(RECT){4, 4, 8, 8}, FALSE);
+            lpwin->fOk &= InvalidateRect(hwnd, &rcTest1, FALSE);
         }
         lpwin->fOk &= EndPaint(hwnd, &ps);
         return 0;
@@ -184,7 +194,7 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     hbr = CreateSolidBrush(RGB(12, 34, 56));
     hpen = CreatePen(PS_SOLID, 1, RGB(220, 180, 40));
     CHECK(hbr && hpen && !CreatePen(99, 1, 0) && !CreatePen(PS_SOLID, 2, 0));
-    CHECK(FillRect(hdc, &(RECT){-10, -10, 10, 10}, hbr));
+    CHECK(FillRect(hdc, &rcTest2, hbr));
     CHECK(GetPixel(hdc, 0, 0) == RGB(12, 34, 56));
     CHECK(GetPixel(hdc, 9, 9) == RGB(12, 34, 56) && GetPixel(hdc, 10, 10) == rgwin[0].color);
     CHECK(GetPixel(hdcOther, 0, 0) == rgwin[1].color);
@@ -236,30 +246,30 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     CHECK(ReleaseDC(rghwnd[0], hdcNew));
 
     // Paint remains pending until BeginPaint validates; posted messages come first.
-    CHECK(InvalidateRect(rghwnd[0], &(RECT){10, 10, 20, 20}, FALSE));
-    CHECK(InvalidateRect(rghwnd[0], &(RECT){15, 15, 30, 30}, TRUE));
-    CHECK(GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &(RECT){10, 10, 30, 30}));
+    CHECK(InvalidateRect(rghwnd[0], &rcTest3, FALSE));
+    CHECK(InvalidateRect(rghwnd[0], &rcTest4, TRUE));
+    CHECK(GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &rcTest5));
     CHECK(PostMessage(rghwnd[1], WM_APP, 0, 0));
     CHECK(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_APP);
     CHECK(PeekMessage(&msg, rghwnd[0], WM_PAINT, WM_PAINT, PM_NOREMOVE));
     CHECK(!PeekMessage(&msg, rghwnd[1], WM_PAINT, WM_PAINT, PM_NOREMOVE));
-    CHECK(ValidateRect(rghwnd[0], &(RECT){15, 15, 20, 20}));
+    CHECK(ValidateRect(rghwnd[0], &rcTest6));
     hdc = BeginPaint(rghwnd[0], &ps);
     CHECK(hdc && ps.fErase && EqualRect(&ps.rcPaint, &rc));
     CHECK(!BeginPaint(rghwnd[0], &psOther) && !GetUpdateRect(rghwnd[0], NULL, FALSE));
     CHECK(!ReleaseDC(rghwnd[0], hdc) && !EndPaint(rghwnd[1], &ps));
-    CHECK(FillRect(hdc, &(RECT){0, 0, 100, 100}, (HBRUSH)GetStockObject(WHITE_BRUSH)));
+    CHECK(FillRect(hdc, &rcTest7, (HBRUSH)GetStockObject(WHITE_BRUSH)));
     CHECK(!PeekMessage(&msg, rghwnd[0], WM_PAINT, WM_PAINT, PM_REMOVE));
     CHECK(EndPaint(rghwnd[0], &ps) && !EndPaint(rghwnd[0], &ps));
     hdc = GetDC(rghwnd[0]);
     CHECK(GetPixel(hdc, 10, 10) == RGB(255, 255, 255));
     CHECK(GetPixel(hdc, 9, 9) == RGB(12, 34, 56) && GetPixel(hdc, 30, 30) == RGB(12, 34, 56));
     CHECK(ReleaseDC(rghwnd[0], hdc));
-    CHECK(BeginPaint(rghwnd[0], &ps) && !ps.fErase && EqualRect(&ps.rcPaint, &(RECT){0}));
-    CHECK(FillRect(ps.hdc, &(RECT){0, 0, 100, 100}, (HBRUSH)GetStockObject(BLACK_BRUSH)));
+    CHECK(BeginPaint(rghwnd[0], &ps) && !ps.fErase && EqualRect(&ps.rcPaint, &rcTest8));
+    CHECK(FillRect(ps.hdc, &rcTest9, (HBRUSH)GetStockObject(BLACK_BRUSH)));
     CHECK(EndPaint(rghwnd[0], &ps));
     CHECK(InvalidateRect(rghwnd[0], NULL, FALSE) && ValidateRect(rghwnd[0], NULL));
-    CHECK(!GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &(RECT){0}));
+    CHECK(!GetUpdateRect(rghwnd[0], &rc, FALSE) && EqualRect(&rc, &rcTest10));
     rgwin[0].fInvalidateInPaint = TRUE;
     cPaint = rgwin[0].cPaint;
     CHECK(InvalidateRect(rghwnd[0], NULL, FALSE) && UpdateWindow(rghwnd[0]));

@@ -65,6 +65,9 @@ static void test_SetVisPFFleets_cloaked_starbase_long_range(void) {
 // detail so a CA player gets their habitat, which also sent their tech,
 // research, traits, production template and relations.
 static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
+    const int8_t rgAttrZero[16] = {}, rgTechZero[6] = {};
+    const uint32_t rgResZero[6] = {};
+
     char        szDir[MAX_PATH];
     const char *rgszAi[] = {"#1 4"};
     PLANET     *lppl1;
@@ -94,9 +97,9 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
     TEST_CHECK(memcmp(rgplr[1].rgEnvVarMin, plrAi.rgEnvVarMin, 3) == 0);
     TEST_CHECK(memcmp(rgplr[1].rgEnvVarMax, plrAi.rgEnvVarMax, 3) == 0);
     TEST_CHECK_(rgplr[1].grbitAttr == 0, "traits %#lx", (unsigned long)rgplr[1].grbitAttr);
-    TEST_CHECK(memcmp(rgplr[1].rgAttr, (int8_t[16]){0}, 16) == 0);
-    TEST_CHECK(memcmp(rgplr[1].rgTech, (int8_t[6]){0}, 6) == 0);
-    TEST_CHECK(memcmp(rgplr[1].rgResSpent, (uint32_t[6]){0}, sizeof(plrAi.rgResSpent)) == 0);
+    TEST_CHECK(memcmp(rgplr[1].rgAttr, rgAttrZero, 16) == 0);
+    TEST_CHECK(memcmp(rgplr[1].rgTech, rgTechZero, 6) == 0);
+    TEST_CHECK(memcmp(rgplr[1].rgResSpent, rgResZero, sizeof(plrAi.rgResSpent)) == 0);
     TEST_CHECK(rgplr[1].pctResearch == 0 && rgplr[1].lResLastYear == 0 && rgplr[1].pctIdealGrowth == 0);
 }
 

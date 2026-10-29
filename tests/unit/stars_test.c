@@ -170,7 +170,7 @@ int16_t FStarsTestLoadHost(void) {
 }
 
 int16_t FStarsTestLoadPlayer(int16_t iPlr) {
-    char szExt[4];
+    char szExt[16];
 
     DestroyCurGame();
     idPlayer = iPlr;

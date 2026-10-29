@@ -3,7 +3,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
+#ifdef STARS_UI_SDL
+#include <type_traits>
 #include "common.h"
+#else
+#include "../reference/cpp-a/common.h"
+#endif
 #include "win32_constant_values.h"
 
 #define SIZE(type, cb) static_assert(sizeof(type) == (cb), #type " size")
@@ -24,9 +30,15 @@ static_assert(WM_USER == 0x400 && WM_COMMAND == 0x111, "message numbers");
 static_assert(WS_POPUP == UINT32_C(0x80000000), "unsigned style bit");
 static_assert(CB_ERR == -1 && LB_ERR == -1, "signed failure values");
 static_assert(RGB(0x12, 0x34, 0x56) == 0x563412, "COLORREF byte order");
+#ifdef STARS_UI_SDL
+static_assert(std::is_same_v<WNDPROC, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "WNDPROC signature");
+static_assert(std::is_same_v<DLGPROC, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "DLGPROC signature");
+static_assert(std::is_same_v<decltype(&GetWindowLongPtrA), LONG_PTR (WINAPI *)(HWND, int)>, "pointer accessor signature");
+#else
 static_assert(_Generic((WNDPROC)0, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "WNDPROC signature");
 static_assert(_Generic((DLGPROC)0, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "DLGPROC signature");
 static_assert(_Generic(&GetWindowLongPtrA, LONG_PTR (WINAPI *)(HWND, int): 1, default: 0), "pointer accessor signature");
+#endif
 
 #if UINTPTR_MAX == UINT64_MAX
 SIZE(ICONINFO, 32); OFFSET(ICONINFO, xHotspot, 4); OFFSET(ICONINFO, hbmMask, 16);
