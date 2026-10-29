@@ -48,7 +48,7 @@ typedef struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; BOOL fDisable; }
 typedef struct COMPATFONTDATA { const BYTE *rgb; size_t cb; } COMPATFONTDATA;
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
-void FreeCompatFont(COMPATFONT *lpfont);
+void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,

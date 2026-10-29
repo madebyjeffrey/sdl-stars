@@ -5,25 +5,32 @@
 #include FT_FREETYPE_H
 #include <fontconfig/fontconfig.h>
 #include <limits.h>
+#include <new>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
 typedef struct COMPATGLYPH {
-    BYTE *rgb;
+    NATIVEARRAYOWNER<BYTE, std::free> rgb;
     int cx, cy, x, y, dx;
     BOOL fLoaded;
     DWORD ch;
     struct COMPATGLYPH *lpNext;
 } COMPATGLYPH;
 
+static void FreeCompatGlyphs(COMPATGLYPH *lp) noexcept {
+    COMPATGLYPH *lpNext;
+    while (lp) { lpNext = lp->lpNext; delete lp; lp = lpNext; }
+}
+
 struct COMPATFONT {
     LOGFONTA lf;
     TEXTMETRICA tm;
-    FT_Face face;
-    COMPATGLYPH rgglyph[256], *lpGlyphUtf8;
+    NATIVEOWNER<FT_FaceRec_, FT_Done_Face> face;
+    NATIVEOWNER<COMPATGLYPH, FreeCompatGlyphs> lpGlyphUtf8;
+    COMPATGLYPH rgglyph[256];
     UINT cGlyphUtf8;
-    struct COMPATFONT *lpScaled;
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpScaled;
     int iScale;
 };
 
@@ -43,7 +50,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
     lp->y = lpfont->tm.tmAscent - face->glyph->bitmap_top;
     lp->dx = (int)((face->glyph->advance.x + 32) >> 6);
     if (lp->cx && lp->cy) {
-        lp->rgb = (BYTE *)(malloc((size_t)lp->cx * lp->cy));
+        lp->rgb.reset((BYTE *)malloc((size_t)lp->cx * lp->cy));
         if (!lp->rgb) return NULL;
         for (y = 0; y < lp->cy; y++) {
             rgbRow = lpbm->buffer + (lpbm->pitch >= 0 ? y : lp->cy - 1 - y) * abs(lpbm->pitch);
@@ -58,7 +65,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
 }
 
 static COMPATGLYPH *LpGlyph(COMPATFONT *lpfont, BYTE ch) {
-    return LpLoadGlyph(lpfont, lpfont->face, ch, &lpfont->rgglyph[ch]);
+    return LpLoadGlyph(lpfont, lpfont->face.get(), ch, &lpfont->rgglyph[ch]);
 }
 
 static BOOL FFontConfig(void) {
@@ -110,7 +117,7 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
             if (!FT_Get_Char_Index(face, ch) || FT_Set_Pixel_Sizes(face, 0, lpfont->face->size->metrics.y_ppem)) {
                 FT_Done_Face(face); face = NULL;
             } else {
-                FT_Get_Transform(lpfont->face, &matrix, &delta);
+                FT_Get_Transform(lpfont->face.get(), &matrix, &delta);
                 FT_Set_Transform(face, &matrix, &delta);
             }
         }
@@ -120,38 +127,32 @@ done:
 }
 
 static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
-    COMPATGLYPH *lp, **lpp;
+    COMPATGLYPH *lp, *lpPrev;
     FT_Face face;
-    NATIVEOWNER<COMPATGLYPH, free> lpglyphOwner;
+    std::unique_ptr<COMPATGLYPH> lpglyphOwner;
     NATIVEOWNER<FT_FaceRec_, FT_Done_Face> lpfaceOwner;
     if (ch < 256) return LpGlyph(lpfont, (BYTE)ch);
-    for (lp = lpfont->lpGlyphUtf8; lp; lp = lp->lpNext) if (lp->ch == ch) return lp;
+    for (lp = lpfont->lpGlyphUtf8.get(); lp; lp = lp->lpNext) if (lp->ch == ch) return lp;
     // Bound the extra cache independently of cached code points and filename length.
     if (lpfont->cGlyphUtf8 == 256) {
-        for (lpp = &lpfont->lpGlyphUtf8; (*lpp)->lpNext; lpp = &(*lpp)->lpNext) {}
-        free((*lpp)->rgb); free(*lpp); *lpp = NULL; lpfont->cGlyphUtf8--;
+        lpPrev = NULL;
+        for (lp = lpfont->lpGlyphUtf8.get(); lp->lpNext; lp = lp->lpNext) lpPrev = lp;
+        if (lpPrev) { lpPrev->lpNext = NULL; delete lp; }
+        else lpfont->lpGlyphUtf8.reset();
+        lpfont->cGlyphUtf8--;
     }
-    lpglyphOwner.reset((COMPATGLYPH *)calloc(1, sizeof(*lp))); lp = lpglyphOwner.get();
+    lpglyphOwner.reset(new (std::nothrow) COMPATGLYPH{}); lp = lpglyphOwner.get();
     if (!lp) return NULL;
-    lpfaceOwner.reset(FT_Get_Char_Index(lpfont->face, ch) ? NULL : FaceFallback(lpfont, ch)); face = lpfaceOwner.get();
-    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face, ch, lp)) return NULL;
+    lpfaceOwner.reset(FT_Get_Char_Index(lpfont->face.get(), ch) ? NULL : FaceFallback(lpfont, ch)); face = lpfaceOwner.get();
+    if (!LpLoadGlyph(lpfont, face ? face : lpfont->face.get(), ch, lp)) return NULL;
     lpfaceOwner.reset();
-    lp->ch = ch; lp->lpNext = lpfont->lpGlyphUtf8;
-    lpfont->lpGlyphUtf8 = lp; lpfont->cGlyphUtf8++;
+    lp->ch = ch; lp->lpNext = lpfont->lpGlyphUtf8.release();
+    lpfont->lpGlyphUtf8.reset(lp); lpfont->cGlyphUtf8++;
     return lpglyphOwner.release();
 }
 
-void FreeCompatFont(COMPATFONT *lpfont) {
-    int i;
-    COMPATGLYPH *lp, *lpNext;
-    if (!lpfont) return;
-    FreeCompatFont(lpfont->lpScaled);
-    for (i = 0; i < 256; i++) free(lpfont->rgglyph[i].rgb);
-    for (lp = lpfont->lpGlyphUtf8; lp; lp = lpNext) {
-        lpNext = lp->lpNext; free(lp->rgb); free(lp);
-    }
-    if (lpfont->face) FT_Done_Face(lpfont->face);
-    free(lpfont);
+void FreeCompatFont(COMPATFONT *lpfont) noexcept {
+    delete lpfont;
 }
 
 static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
@@ -161,7 +162,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     FcChar8 *pszFile;
     char szFamily[LF_FACESIZE];
     char *psz;
-    int index = 0, cHeight, i, cWidth = 0, dxMax = 0;
+    int index = 0, cHeight, i, cWidth = 0, dxMax = 0, iFaceError;
+    FT_Face face = NULL;
     BOOL fBold, fItalic;
     COMPATGLYPH *lpglyph;
     FT_Matrix matrix = {65536, 0, 0, 65536};
@@ -173,7 +175,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
         !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
     if (!library && FT_Init_FreeType(&library)) return NULL;
-    lpfontOwner.reset((COMPATFONT *)calloc(1, sizeof(*lpfont))); lpfont = lpfontOwner.get();
+    lpfontOwner.reset(new (std::nothrow) COMPATFONT{}); lpfont = lpfontOwner.get();
     if (!lpfont) return NULL;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);
@@ -190,7 +192,9 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     else if (!strcasecmp(szFamily, "Courier New") || !strcasecmp(szFamily, "Liberation Mono") || !strcasecmp(szFamily, "monospace")) i = 8;
     if (i >= 0) {
         i += (fBold ? 1 : 0) + (fItalic ? 2 : 0);
-        if (FT_New_Memory_Face(library, rgCompatFontData[i].rgb, (FT_Long)rgCompatFontData[i].cb, 0, &lpfont->face)) goto LFail;
+        iFaceError = FT_New_Memory_Face(library, rgCompatFontData[i].rgb, (FT_Long)rgCompatFontData[i].cb, 0, &face);
+        lpfont->face.reset(face);
+        if (iFaceError) goto LFail;
     } else {
         if (!FFontConfig()) goto LFail;
         lppatternOwner.reset(FcPatternCreate()); pattern = lppatternOwner.get();
@@ -202,10 +206,10 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get(); lppatternOwner.reset();
         if (!match) goto LFail;
         FcPatternGetInteger(match, FC_INDEX, 0, &index);
-        if (FcPatternGetString(match, FC_FILE, 0, &pszFile) != FcResultMatch ||
-            FT_New_Face(library, (const char *)pszFile, index, &lpfont->face)) {
-            goto LFail;
-        }
+        if (FcPatternGetString(match, FC_FILE, 0, &pszFile) != FcResultMatch) goto LFail;
+        iFaceError = FT_New_Face(library, (const char *)pszFile, index, &face);
+        lpfont->face.reset(face);
+        if (iFaceError) goto LFail;
         lpmatchOwner.reset();
     }
     cHeight = lplf->lfHeight < 0 ? -lplf->lfHeight : lplf->lfHeight;
@@ -213,7 +217,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     if (lplf->lfHeight > 0 && lpfont->face->ascender - lpfont->face->descender > 0)
         cHeight = (int)((int64_t)cHeight * lpfont->face->units_per_EM /
                        (lpfont->face->ascender - lpfont->face->descender));
-    if (FT_Set_Pixel_Sizes(lpfont->face, 0, cHeight > 0 ? (unsigned)cHeight : 1)) goto LFail;
+    if (FT_Set_Pixel_Sizes(lpfont->face.get(), 0, cHeight > 0 ? (unsigned)cHeight : 1)) goto LFail;
     lpfont->tm.tmAscent = (LONG)((lpfont->face->size->metrics.ascender + 63) >> 6);
     lpfont->tm.tmDescent = (LONG)((-lpfont->face->size->metrics.descender + 63) >> 6);
     lpfont->tm.tmHeight = lpfont->tm.tmAscent + lpfont->tm.tmDescent;
@@ -234,8 +238,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     lpfont->tm.tmAveCharWidth = (cWidth + 26) / 52;
     if (lplf->lfWidth && lpfont->tm.tmAveCharWidth) {
         matrix.xx = (FT_Fixed)((int64_t)lplf->lfWidth * 65536 / lpfont->tm.tmAveCharWidth);
-        FT_Set_Transform(lpfont->face, &matrix, NULL);
-        for (i = 0; i < 256; i++) { free(lpfont->rgglyph[i].rgb); memset(&lpfont->rgglyph[i], 0, sizeof(COMPATGLYPH)); }
+        FT_Set_Transform(lpfont->face.get(), &matrix, NULL);
+        for (i = 0; i < 256; i++) lpfont->rgglyph[i] = COMPATGLYPH{};
         lpfont->tm.tmAveCharWidth = lplf->lfWidth;
     }
     for (i = 32; i < 256; i++) {
@@ -318,8 +322,8 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         lf = lpfont->lf;
         lf.lfHeight = -(int)lpfont->face->size->metrics.y_ppem * iScale;
         lf.lfWidth *= iScale;
-        FreeCompatFont(lpfont->lpScaled);
-        lpfont->lpScaled = LpNewFontRaster(&lf, 2048);
+        lpfont->lpScaled.reset();
+        lpfont->lpScaled.reset(LpNewFontRaster(&lf, 2048));
         lpfont->iScale = lpfont->lpScaled ? iScale : 0;
         if (!lpfont->lpScaled) return FALSE;
     }
@@ -327,12 +331,12 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         c = CbUtf8Char(psz + i, (size_t)(cch - i), &ch);
         if (c == 0) return FALSE;
         lp = LpGlyphUtf8(lpfont, ch);
-        lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled, ch);
+        lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), ch);
         if (!lp || !lpRaster) return FALSE;
         for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
             if (lpRaster->rgb[(size_t)y * lpRaster->cx + x])
                 pfn(lpv, dx * iScale + lpRaster->x + x,
-                    lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled)->tm.tmAscent + lpRaster->y + y,
+                    lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled.get())->tm.tmAscent + lpRaster->y + y,
                     lpRaster->rgb[(size_t)y * lpRaster->cx + x]);
         // Keep logical advances and baselines: Retina rasterization must not reflow the UI.
         if (rgdx) for (j = 0; j < c; j++) dx += rgdx[i + j];

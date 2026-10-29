@@ -9,7 +9,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor ownership. Remaining persistent font/GDI/menu/print/window/audio ownership and fault/sanitizer qualification are still in scope. |
+| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Remaining GDI/menu/print/window/audio ownership and library-context lifetime integration are still in scope. |
 | B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
@@ -34,7 +34,7 @@ application callbacks.
 | Storage | Owner / transfer | Borrowing and invalidation |
 | --- | --- | --- |
 | Temporary Fontconfig patterns/character sets | Scoped owners in `FaceFallback` and `LpNewFontRaster` | Borrowed matched filename bytes are used before releasing the matching pattern. |
-| Font construction and uncached glyph raster | Scoped owners until the font/cache accepts them | Faces are released after rasterization; cached glyphs keep their own copied pixels. Persistent font storage remains to migrate. |
+| Font construction and uncached glyph raster | Scoped owners until the font/cache accepts them | Faces are released after rasterization; cached glyphs keep their own copied pixels. Typed font owners now retain faces, copied glyph pixels, bounded cache chains and scaled rasters. |
 | Icon/cursor XOR surface, AND bytes and native cursor | Typed `COMPATIMAGE` construction and member owners | Cached/shared handles remain module-owned. Explicit destruction clears resources but retains the handle tombstone; shutdown deletes tombstones after resetting the active cursor. |
 | Temporary image/cursor/mask surfaces | Scoped owners until copied or accepted by a persistent image/GDI object | `HbmpCompatSurface` copies input pixels. Selected GDI objects remain borrowed. |
 | Cairo page pixels and drawing context | Scoped owners, context released before image storage | Cairo can retain page pixels while finalizing a later PDF page. The Cairo image owns its copied pixels. |
@@ -91,3 +91,20 @@ also passes with `detect_leaks=1`. Both final local regressions again match
 519 files, 25 accepted unused-storage warnings, zero differences/errors and
 no skipped inputs. These results qualify this initial B01 batch, not B01's
 remaining persistent owners or later B checkpoints.
+
+## Persistent font batch
+
+`COMPATFONT` now owns its FreeType face, the cached UTF-8 glyph chain and its
+scaled font. Glyph nodes and fonts use typed construction; each glyph owns its
+copied raster bytes. Cache capacity/eviction order remain unchanged, and failed
+allocation retains the existing partial-effect policy (including a prior
+capacity eviction). Destruction frees scaled rasters and copied pixels before
+the face. Library-context shutdown still occurs after faces are released.
+
+The glyph ownership harness loads 512 distinct code points through the bounded
+cache, reloads an evicted glyph, draws its scaled raster and restarts the font
+library, checking retained metrics and actual nonempty pixels. It is included in
+native `leaks` and sanitizer qualification. Results: 69/69 full macOS CTest,
+6/6 ASan/UBSan resource contracts, 5/5 native leak checks, and full native
+regression 519 matches / 25 accepted unused-storage warnings / zero differences,
+errors or skipped inputs. No file layouts or baseline fixtures changed.

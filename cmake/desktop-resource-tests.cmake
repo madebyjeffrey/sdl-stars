@@ -28,7 +28,7 @@ endif()
 if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
     # leaks inspects the native allocator; ASan uses a separate allocator/check.
     find_program(STARS_LEAKS_EXECUTABLE leaks REQUIRED)
-    foreach(STARS_LEAK_KIND images font print faults)
+    foreach(STARS_LEAK_KIND images font print faults glyphs)
         set(STARS_LEAK_ARGS)
         if(STARS_LEAK_KIND STREQUAL "print")
             list(APPEND STARS_LEAK_ARGS "${CMAKE_BINARY_DIR}/resource-leaks-print-output")

@@ -6,3 +6,10 @@ stars_test_redirect(stars-resource-faults SDL_DestroySurface)
 add_test(NAME win32_sdl_resource_faults COMMAND stars-resource-faults)
 set_tests_properties(win32_sdl_resource_faults PROPERTIES LABELS "compat;ownership"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+add_executable(stars-resource-glyphs tests/compat/font_ownership.cpp)
+target_include_directories(stars-resource-glyphs PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-resource-glyphs PRIVATE stars_win32 SDL3::SDL3)
+target_compile_options(stars-resource-glyphs PRIVATE -Wall -Wextra -Werror)
+add_test(NAME win32_sdl_resource_glyphs COMMAND stars-resource-glyphs)
+set_tests_properties(win32_sdl_resource_glyphs PROPERTIES LABELS "compat;ownership"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 60)
