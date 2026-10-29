@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_AI_H
 #define STARS_DECOMPILED_AI_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern uint8_t        vrgAiRobotoidResOrder[];

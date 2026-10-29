@@ -283,7 +283,7 @@ static void SuggestLibraryName(char *pszName, int16_t fRevision) {
     cchMax = ((int)sizeof(szBase) - (int)strlen(szLibraryRoot) - 19) / 2;
     for (i = 2; i < 10000 && !FLibraryNameAvailable(szLibraryRoot, pszName); i++) {
         CchSnprintf(szSuffix, sizeof(szSuffix), fRevision ? PszGetCompressedString(idsLibraryGameRevisionSuffix) : " (%d)", i);
-        cch = min((int)strlen(szOriginal), max(0, cchMax - (int)strlen(szSuffix)));
+        cch = ((((int)strlen(szOriginal)) < ((((0) > (cchMax - (int)strlen(szSuffix))) ? (0) : (cchMax - (int)strlen(szSuffix))))) ? ((int)strlen(szOriginal)) : ((((0) > (cchMax - (int)strlen(szSuffix))) ? (0) : (cchMax - (int)strlen(szSuffix)))));
         /* A shortened suggestion must not split a UTF-8 character. */
         while (cch > 0 && ((unsigned char)szOriginal[cch] & 0xc0) == 0x80) cch--;
         CchSnprintf(pszName, 256, "%.*s%s", cch, szOriginal, szSuffix);
@@ -308,7 +308,7 @@ static void GetGameLibraryName(const char *pszName, char *pszNameOut) {
     }
     if (!FPortableLibraryName(pszNameOut)) {
         // Reserved device names need a prefix; leave the stored game title intact.
-        pszNameOut[CchUtf8Prefix(pszNameOut, max(0, cchMax - 1))] = 0;
+        pszNameOut[CchUtf8Prefix(pszNameOut, StarsMax(0, cchMax - 1))] = 0;
         memmove(pszNameOut + 1, pszNameOut, strlen(pszNameOut) + 1);
         pszNameOut[0] = '_';
     }
@@ -352,8 +352,8 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         GetWindowRect(hwnd, &rc);
         x = rcOwner.left + ((rcOwner.right - rcOwner.left) - (rc.right - rc.left)) / 2;
         y = rcOwner.top + ((rcOwner.bottom - rcOwner.top) - (rc.bottom - rc.top)) / 2;
-        x = max(rcWork.left, min(x, rcWork.right - (rc.right - rc.left)));
-        y = max(rcWork.top, min(y, rcWork.bottom - (rc.bottom - rc.top)));
+        x = (((rcWork.left) > ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left))))) ? (rcWork.left) : ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left)))));
+        y = (((rcWork.top) > ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top))))) ? (rcWork.top) : ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top)))));
         SetWindowPos(hwnd, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 255, 0);
@@ -716,13 +716,13 @@ static int16_t FindRaceVersion(void *lpData, const char *pszName) {
     if (!pch || !FPortableRaceFilename(pszName)) return TRUE;
     iVersion = atoi(pch + 2);
     if ((size_t)(pch - pszName) == cch && !SDL_strncasecmp(pszName, prv->szStem, cch))
-        prv->iMax = max(prv->iMax, iVersion);
+        prv->iMax = StarsMax(prv->iMax, iVersion);
     CchSnprintf(szPath, sizeof(szPath), "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
     if (!FReadManagedRace(szPath, &plr)) return TRUE;
     // Versions follow the stored race name, including older/imported filenames.
     // Distinct names can sanitize to the same stem without sharing a design.
     if (SDL_strcasecmp(plr.szName, prv->pplr->szName)) return TRUE;
-    prv->iMax = max(prv->iMax, iVersion);
+    prv->iMax = StarsMax(prv->iMax, iVersion);
     if (iVersion > prv->iLatest || (iVersion == prv->iLatest && SDL_strcasecmp(pszName, prv->szLatest) < 0)) {
         prv->iLatest = iVersion;
         strcpy(prv->szLatest, pszName);
@@ -2856,7 +2856,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     fHostLibraryView = FALSE;
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
-    y = max(50, lprc->bottom - 360);
+    y = StarsMax(50, lprc->bottom - 360);
     CreateWindow("BUTTON", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, hInst, NULL);
@@ -2891,7 +2891,7 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     CreateWindow("STATIC", PszGetCompressedString(idsLibraryPlayerSelect), WS_CHILD | WS_VISIBLE,
                  24, y + 100, 66, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_PLAYER_LABEL, hInst, NULL);
     CreateWindow("COMBOBOX", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
-                 94, y + 96, min(280, lprc->right - 118), 160, hwnd,
+                 94, y + 96, StarsMin(280, lprc->right - 118), 160, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_PLAYERS, hInst, NULL);
     CreateWindow("STATIC", "", WS_CHILD | WS_VISIBLE,
                  24, y + 122, lprc->right - 48, 18, hwnd,
@@ -2934,7 +2934,7 @@ static int16_t ListLibraryRace(void *lpList, const char *pszName) {
 }
 
 void InitLibraryRaces(HWND hwnd, const RECT *lprc) {
-    int y = max(160, lprc->bottom - 200);
+    int y = StarsMax(160, lprc->bottom - 200);
     CreateWindow("STATIC", PszGetCompressedString(idsLibraryRaceDesigns), WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, NULL, hInst, NULL);
     CreateWindow("BUTTON", PszGetCompressedString(idsLibraryNew), WS_CHILD | WS_VISIBLE | WS_TABSTOP,

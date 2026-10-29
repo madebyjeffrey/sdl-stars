@@ -15,15 +15,15 @@ static char szBase[PATH_MAX], szUri[PATH_MAX * 3 + 8];
 static BOOL fBase = TRUE, fAccept = TRUE;
 static unsigned cOpen;
 
-const char *SDLCALL StarsTest_SDL_GetBasePath(void) { return fBase ? szBase : NULL; }
-bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
+extern "C" const char *SDLCALL StarsTest_SDL_GetBasePath(void) { return fBase ? szBase : NULL; }
+extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cOpen++;
     if (strlen(pszUri) >= sizeof(szUri)) return false;
     strcpy(szUri, pszUri);
     return fAccept;
 }
 
-char *SDLCALL StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
+extern "C" char *SDLCALL StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
     char sz[PATH_MAX + sizeof("../export/")];
     (void)pszOrg; (void)pszApp;
     snprintf(sz, sizeof(sz), "%s../export/", szBase);

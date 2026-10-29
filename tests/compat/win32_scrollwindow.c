@@ -1,5 +1,15 @@
 /* Pixel movement, pending damage and child relocation share SDK contracts. */
 #include <windows.h>
+static const RECT rcTest1 = {36, 12, 40, 28};
+static const RECT rcTest2 = {8, 27, 48, 32};
+static const RECT rcTest3 = {20, 20, 22, 22};
+static const RECT rcTest4 = {0, 0, 3, 48};
+static const RECT rcTest5 = {20, 20, 22, 22};
+static const RECT rcTest6 = {0, 0, 3, 48};
+static const RECT rcTest7 = {30, 10, 40, 20};
+static const RECT rcTest8 = {33, 13, 37, 17};
+static const RECT rcTest9 = {45, 10, 48, 13};
+static const RECT rcTest10 = {0, 0, 0, 0};
 #include <limits.h>
 #include <stdio.h>
 #ifndef _WIN32
@@ -37,11 +47,11 @@ static int TestPixels(HWND hwnd) {
     CHECK(GetPixel(hdc, 15, 12) == RGB(15, 12, 123));
     CHECK(GetPixel(hdc, 40, 12) == RGB(40, 12, 123));
     CHECK(ReleaseDC(hwnd, hdc));
-    CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE) && EqualRect(&rcUpdate, &(RECT){36, 12, 40, 28}));
+    CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE) && EqualRect(&rcUpdate, &rcTest1));
     CHECK(ValidateRect(hwnd, NULL));
     CHECK(ScrollWindow(hwnd, 0, -5, &rc, &rc));
     CHECK(GetUpdateRect(hwnd, &rcUpdate, FALSE));
-    CHECK(EqualRect(&rcUpdate, &(RECT){8, 27, 48, 32}));
+    CHECK(EqualRect(&rcUpdate, &rcTest2));
     cErase = 0; CHECK(GetUpdateRect(hwnd, NULL, TRUE) && cErase == 1);
     CHECK(ValidateRect(hwnd, NULL));
     CHECK(ScrollWindow(hwnd, INT_MAX, INT_MIN, &rc, NULL));
@@ -84,22 +94,22 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     HDC hdc;
     HBRUSH hbr;
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(InvalidateRect(hwnd, &(RECT){20, 20, 22, 22}, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest3, FALSE));
     CHECK(ScrollWindow(hwnd, 3, 0, NULL, NULL));
     CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
     CHECK(pt.x == 13 && pt.y == 10);
-    CHECK(ValidateRect(hwnd, &(RECT){0, 0, 3, 48}));
+    CHECK(ValidateRect(hwnd, &rcTest4));
     CHECK(GetUpdateRect(hwnd, &rc, FALSE));
     CHECK((rc.left == 20 || rc.left == 23) && rc.top == 20 && rc.right == 25 && rc.bottom == 22);
 #ifndef _WIN32
     CHECK(rc.left == 23);
 #endif
     CHECK(ValidateRect(hwnd, NULL) && GetClientRect(hwnd, &rcClient));
-    CHECK(InvalidateRect(hwnd, &(RECT){20, 20, 22, 22}, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest5, FALSE));
     CHECK(ScrollWindow(hwnd, 3, 0, &rcClient, NULL));
     pt = (POINT){0, 0}; CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
     CHECK(pt.x == 13 && pt.y == 10);
-    CHECK(ValidateRect(hwnd, &(RECT){0, 0, 3, 48}));
+    CHECK(ValidateRect(hwnd, &rcTest6));
     CHECK(GetUpdateRect(hwnd, &rc, FALSE));
     CHECK(rc.left == 20 && rc.top == 20 && (rc.right == 22 || rc.right == 25) && rc.bottom == 22);
 #ifndef _WIN32
@@ -108,9 +118,9 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     CHECK(ValidateRect(hwnd, NULL));
     hdc = GetDC(hwnd); CHECK(hdc);
     CHECK(FillRect(hdc, &rcClient, (HBRUSH)GetStockObject(BLACK_BRUSH))); CHECK(ReleaseDC(hwnd, hdc));
-    CHECK(InvalidateRect(hwnd, &(RECT){30, 10, 40, 20}, FALSE));
-    CHECK(ValidateRect(hwnd, &(RECT){33, 13, 37, 17}));
-    CHECK(InvalidateRect(hwnd, &(RECT){45, 10, 48, 13}, FALSE));
+    CHECK(InvalidateRect(hwnd, &rcTest7, FALSE));
+    CHECK(ValidateRect(hwnd, &rcTest8));
+    CHECK(InvalidateRect(hwnd, &rcTest9, FALSE));
     hdc = BeginPaint(hwnd, &ps); CHECK(hdc);
     CHECK(SelectClipRgn(hdc, NULL) != ERROR);
     hbr = CreateSolidBrush(RGB(250, 10, 20)); CHECK(hbr);
@@ -122,7 +132,7 @@ static int TestDamage(HWND hwnd, HWND hwndChild) {
     CHECK(GetPixel(hdc, 42, 11) == RGB(0, 0, 0));
     CHECK(GetPixel(hdc, 46, 11) == RGB(250, 10, 20));
     CHECK(ReleaseDC(hwnd, hdc));
-    CHECK(ScrollWindow(hwnd, 2, 3, NULL, &(RECT){0}));
+    CHECK(ScrollWindow(hwnd, 2, 3, NULL, &rcTest10));
     pt = (POINT){0, 0}; CHECK(ClientToScreen(hwndChild, &pt) && ScreenToClient(hwnd, &pt));
     CHECK(pt.x == 15 && pt.y == 13 && !GetUpdateRect(hwnd, NULL, FALSE));
     return 0;

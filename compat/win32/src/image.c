@@ -15,7 +15,7 @@ COMPATIMAGE *LpCompatImage(HICON hicon) {
     return NULL;
 }
 static COMPATIMAGE *LpNewImage(SDL_Surface *lpXor, BYTE *rgbAnd, BOOL fCursor) {
-    COMPATIMAGE *lp = calloc(1, sizeof(*lp));
+    COMPATIMAGE *lp = (COMPATIMAGE *)(calloc(1, sizeof(*lp)));
     if (!lp) return NULL;
     lp->lpXor = lpXor; lp->rgbAnd = rgbAnd; lp->fCursor = fCursor; lp->fAlive = TRUE;
     lp->lpNext = lpImages; lpImages = lp;
@@ -56,7 +56,7 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
     lpAnd = rgb + cbInfo + dib.cbBits;
     lpSurface = LpCompatDibSurface(&dib);
     if (!lpSurface) return NULL;
-    rgAnd = malloc((size_t)dib.cx * dib.cy);
+    rgAnd = (BYTE *)(malloc((size_t)dib.cx * dib.cy));
     if (!rgAnd) { SDL_DestroySurface(lpSurface); return NULL; }
     for (y = 0; y < dib.cy; y++) for (x = 0; x < dib.cx; x++) {
         rgAnd[y * dib.cx + x] = (BYTE)((lpAnd[(size_t)(dib.cy - 1 - y) * cbMaskRow + x / 8] >> (7 - x % 8)) & 1);
@@ -77,7 +77,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     HICON h;
     if (!hInstance || !psz) return NULL;
     hgroup = FindResourceA(hInstance, psz, fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
-    rgb = LockResource(LoadResource(hInstance, hgroup)); cb = SizeofResource(hInstance, hgroup);
+    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hgroup))); cb = SizeofResource(hInstance, hgroup);
     if (!rgb || cb < 20 || WImage(rgb) || WImage(rgb + 2) != (fCursor ? 2 : 1)) return NULL;
     count = WImage(rgb + 4);
     if (count == 0 || (size_t)count * 14 > cb - 6) return NULL;
@@ -86,7 +86,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     hrsrc = FindResourceA(hInstance, MAKEINTRESOURCE(id), fCursor ? RT_CURSOR : RT_ICON);
     if (!hrsrc) return NULL;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->hrsrc == hrsrc && lp->fCursor == fCursor) return (HICON)lp;
-    rgb = LockResource(LoadResource(hInstance, hrsrc)); cb = SizeofResource(hInstance, hrsrc);
+    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hrsrc))); cb = SizeofResource(hInstance, hrsrc);
     h = HiconCompatResource(rgb, cb, fCursor);
     if (h) {
         lp = LpCompatImage(h); lp->fShared = TRUE; lp->hrsrc = hrsrc;
@@ -132,7 +132,7 @@ HICON WINAPI CopyIcon(HICON hicon) {
     size_t cb;
     if (!lp || !lp->lpXor) return NULL;
     cb = (size_t)lp->lpXor->w * lp->lpXor->h;
-    lpXor = SDL_DuplicateSurface(lp->lpXor); rgAnd = malloc(cb);
+    lpXor = SDL_DuplicateSurface(lp->lpXor); rgAnd = (BYTE *)(malloc(cb));
     if (!lpXor || !rgAnd) { SDL_DestroySurface(lpXor); free(rgAnd); return NULL; }
     memcpy(rgAnd, lp->rgbAnd, cb);
     lpNew = LpNewImage(lpXor, rgAnd, lp->fCursor);
@@ -154,7 +154,7 @@ BOOL WINAPI DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
 BOOL WINAPI DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
 BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
-    ICONINFO ii = {0};
+    ICONINFO ii = {};
     SDL_Surface *lpMask;
     BYTE *rgb, *src;
     int x, y, dy;
@@ -189,7 +189,7 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     if (lp->idSystem) lp->lpCursor = SDL_CreateSystemCursor(IdSystemCursor(lp->idSystem));
     else if (lp->fMono && lp->lpXor->w % 8 == 0) {
         cb = (size_t)(lp->lpXor->w / 8) * lp->lpXor->h;
-        rg = calloc(2, cb);
+        rg = (BYTE *)(calloc(2, cb));
         if (!rg) return FALSE;
         data = rg; mask = rg + cb;
         for (y = 0; y < lp->lpXor->h; y++) for (x = 0; x < lp->lpXor->w; x++) {
@@ -243,7 +243,7 @@ void CompatCursorLeave(HWND hwnd) {
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface) {
     COMPATIMAGE *lp = lpCursor;
     BYTE *src, *dst;
-    int x, y, i, ix, iy, iScale = max(1, hwnd->iCanvasScale);
+    int x, y, i, ix, iy, iScale = StarsMax(1, hwnd->iCanvasScale);
     int64_t dx, dy;
     if (!lp || !lp->fInvert || hwnd != hwndMouse) return;
     for (y = 0; y < lp->lpXor->h; y++) for (x = 0; x < lp->lpXor->w; x++) {

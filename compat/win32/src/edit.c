@@ -1,5 +1,6 @@
 /* UTF-8 edit controls retain byte offsets at the game-to-UI boundary. */
 #include "internal.h"
+#include <stars_compat.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +31,7 @@ static UINT IchEditBoundary(HWND hwnd, UINT ich) {
     UINT i = 0, next, cch = CchEdit(hwnd);
     uint32_t ch;
     int c;
-    ich = min(ich, cch);
+    ich = StarsMin(ich, cch);
     while (i < ich) {
         c = CbUtf8Char(hwnd->pszTitle + i, cch - i, &ch);
         next = i + (c == 0 ? 1 : (UINT)c);
@@ -55,8 +56,8 @@ static UINT IchEditPrev(HWND hwnd, UINT ich) {
 
 static void SelectEdit(HWND hwnd, UINT ichAnchor, UINT ichCaret) {
     UINT cch = CchEdit(hwnd);
-    hwnd->ichAnchor = IchEditBoundary(hwnd, min(ichAnchor, cch));
-    hwnd->ichCaret = IchEditBoundary(hwnd, min(ichCaret, cch));
+    hwnd->ichAnchor = IchEditBoundary(hwnd, StarsMin(ichAnchor, cch));
+    hwnd->ichCaret = IchEditBoundary(hwnd, StarsMin(ichCaret, cch));
     hwnd->fEditTyping = FALSE;
     hwnd->iEditUndoAction = editUndoSeparate;
     hwnd->fEditManualScroll = FALSE;
@@ -94,7 +95,7 @@ static void NormalizeEditCase(HWND hwnd) {
 }
 
 static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUndoAction) {
-    UINT ichFirst = min(hwnd->ichAnchor, hwnd->ichCaret), ichLast = max(hwnd->ichAnchor, hwnd->ichCaret);
+    UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     size_t cchOld = CchEdit(hwnd), cch = strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
     char *pszNew, *pszUndo = NULL;
     BOOL fLimit, fGroup;
@@ -130,7 +131,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         return;
     }
     if (cchBase > INT_MAX || cch > INT_MAX - cchBase) return;
-    pszNew = SDL_malloc(cchBase + cch + 1);
+    pszNew = (char *)(SDL_malloc(cchBase + cch + 1));
     if (!pszNew) { NotifyEdit(hwnd, EN_ERRSPACE); return; }
     if (fUndo && !fGroup && !(pszUndo = SDL_strdup(hwnd->pszTitle))) {
         SDL_free(pszNew); NotifyEdit(hwnd, EN_ERRSPACE); return;
@@ -189,12 +190,12 @@ static BOOL UndoEdit(HWND hwnd) {
 }
 
 static BOOL CopyEdit(HWND hwnd) {
-    UINT ichFirst = min(hwnd->ichAnchor, hwnd->ichCaret), ichLast = max(hwnd->ichAnchor, hwnd->ichCaret);
+    UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     char *psz;
     BOOL fOk;
     size_t cch = ichLast - ichFirst;
     if (ichFirst == ichLast || (hwnd->dwStyle & ES_PASSWORD)) return FALSE;
-    psz = SDL_malloc(cch + 1);
+    psz = (char *)(SDL_malloc(cch + 1));
     if (!psz) return FALSE;
     memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
     fOk = SDL_SetClipboardText(psz);
@@ -220,8 +221,8 @@ static void PasteEdit(HWND hwnd) {
 static void EditFormat(HWND hwnd, RECT *lprc) {
     if (hwnd->fEditFormat) *lprc = hwnd->rcEditFormat;
     else { GetClientRect(hwnd, lprc); InflateRect(lprc, -2, -2); }
-    lprc->right = max(lprc->left + 1, lprc->right);
-    lprc->bottom = max(lprc->top + 1, lprc->bottom);
+    lprc->right = StarsMax(lprc->left + 1, lprc->right);
+    lprc->bottom = StarsMax(lprc->top + 1, lprc->bottom);
 }
 
 static UINT IchLineEnd(HWND hwnd, UINT ich) {
@@ -262,7 +263,7 @@ static UINT IchNextLine(HWND hwnd, UINT ich) {
 
 static UINT IchLineStart(HWND hwnd, UINT ich) {
     UINT first = 0, next, cch = CchEdit(hwnd);
-    ich = min(ich, cch);
+    ich = StarsMin(ich, cch);
     while (first < cch) {
         next = IchNextLine(hwnd, first);
         if (next <= first || next > ich || (next == cch && (cch == 0 || hwnd->pszTitle[cch - 1] != '\n'))) break;
@@ -293,12 +294,12 @@ static UINT IEditLine(HWND hwnd, UINT ich) {
 
 static int CyEdit(HWND hwnd) {
     HDC hdc = GetDC(hwnd);
-    TEXTMETRICA tm = {0};
+    TEXTMETRICA tm = {};
     if (hdc) {
         if (hwnd->hfontControl) SelectObject(hdc, hwnd->hfontControl);
         GetTextMetricsA(hdc, &tm); ReleaseDC(hwnd, hdc);
     }
-    return max(1, tm.tmHeight);
+    return StarsMax(1, tm.tmHeight);
 }
 
 static void SyncEditScroll(HWND hwnd) {
@@ -312,7 +313,7 @@ static void SyncEditScroll(HWND hwnd) {
     hwnd->fEditScrollSync = TRUE;
     EditFormat(hwnd, &rc); cy = CyEdit(hwnd); cch = CchEdit(hwnd);
     if (hwnd->fEditV) {
-        si.nMax = (int)IEditLine(hwnd, cch); si.nPage = (UINT)max(1, (rc.bottom - rc.top) / cy);
+        si.nMax = (int)IEditLine(hwnd, cch); si.nPage = (UINT)(((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy));
         si.nPos = hwnd->yEditScroll / cy;
         hwnd->yEditScroll = SetScrollInfo(hwnd, SB_VERT, &si, TRUE) * cy;
         if (!IsWindow(hwnd)) return;
@@ -323,12 +324,12 @@ static void SyncEditScroll(HWND hwnd) {
             if (hwnd->hfontControl) SelectObject(hdc, hwnd->hfontControl);
             for (ich = 0; ich <= cch; ich = next) {
                 end = IchLineEnd(hwnd, ich);
-                if (GetTextExtentPoint32A(hdc, hwnd->pszTitle + ich, (int)(end - ich), &size)) cxMax = max(cxMax, size.cx);
+                if (GetTextExtentPoint32A(hdc, hwnd->pszTitle + ich, (int)(end - ich), &size)) cxMax = StarsMax(cxMax, size.cx);
                 next = IchNextLine(hwnd, ich); if (next <= ich || end == cch) break;
             }
             ReleaseDC(hwnd, hdc);
         }
-        si.nMax = max(0, cxMax - 1); si.nPage = (UINT)max(1, rc.right - rc.left); si.nPos = hwnd->xEditScroll;
+        si.nMax = StarsMax(0, cxMax - 1); si.nPage = (UINT)StarsMax(1, rc.right - rc.left); si.nPos = hwnd->xEditScroll;
         hwnd->xEditScroll = SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
         if (!IsWindow(hwnd)) return;
     }
@@ -339,9 +340,8 @@ static void ScrollEdit(HWND hwnd, int dx, int dy) {
     RECT rc;
     int cy = CyEdit(hwnd), cLine = (int)IEditLine(hwnd, CchEdit(hwnd)) + 1;
     EditFormat(hwnd, &rc);
-    hwnd->yEditScroll = (int)max((int64_t)0, min((int64_t)max(0, cLine - max(1, (rc.bottom - rc.top) / cy)) * cy,
-                                (int64_t)hwnd->yEditScroll + (int64_t)dy * cy));
-    hwnd->xEditScroll = (int)min((int64_t)INT_MAX, max((int64_t)0, (int64_t)hwnd->xEditScroll + (int64_t)dx * 8));
+    hwnd->yEditScroll = (int)((((int64_t)0) > (((((int64_t)(((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) * cy) < ((int64_t)hwnd->yEditScroll + (int64_t)dy * cy)) ? ((int64_t)(((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) * cy) : ((int64_t)hwnd->yEditScroll + (int64_t)dy * cy)))) ? ((int64_t)0) : (((((int64_t)(((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) * cy) < ((int64_t)hwnd->yEditScroll + (int64_t)dy * cy)) ? ((int64_t)(((0) > (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) ? (0) : (cLine - (((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)))) * cy) : ((int64_t)hwnd->yEditScroll + (int64_t)dy * cy))));
+    hwnd->xEditScroll = (int)((((int64_t)INT_MAX) < (((((int64_t)0) > ((int64_t)hwnd->xEditScroll + (int64_t)dx * 8)) ? ((int64_t)0) : ((int64_t)hwnd->xEditScroll + (int64_t)dx * 8)))) ? ((int64_t)INT_MAX) : (((((int64_t)0) > ((int64_t)hwnd->xEditScroll + (int64_t)dx * 8)) ? ((int64_t)0) : ((int64_t)hwnd->xEditScroll + (int64_t)dx * 8))));
     hwnd->fEditManualScroll = TRUE;
     SyncEditScroll(hwnd);
     if (!IsWindow(hwnd)) return;
@@ -405,21 +405,21 @@ static void PaintEdit(HWND hwnd) {
     EditFormat(hwnd, &format);
     IntersectClipRect(hdc, format.left, format.top, format.right, format.bottom);
     y = yCaret = format.top;
-    GetTextMetricsA(hdc, &tm); cy = max(1, tm.tmHeight);
+    GetTextMetricsA(hdc, &tm); cy = StarsMax(1, tm.tmHeight);
     cch = CchEdit(hwnd); pszDisplay = SDL_strdup(hwnd->pszTitle);
     if (!pszDisplay) goto done;
     if (fPassword) for (i = 0; i < cch; i++) if (pszDisplay[i] != '\r' && pszDisplay[i] != '\n') pszDisplay[i] = '*';
-    ichFirst = min(hwnd->ichAnchor, hwnd->ichCaret); ichLast = max(hwnd->ichAnchor, hwnd->ichCaret);
+    ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret); ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     crText = SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
     SetTextColor(hdc, crText); crBk = GetBkColor(hdc);
     cxCaret = CxEdit(hdc, pszDisplay + IchLineStart(hwnd, hwnd->ichCaret), hwnd->ichCaret - IchLineStart(hwnd, hwnd->ichCaret), FALSE);
-    if (!(hwnd->dwStyle & ES_MULTILINE) && (hwnd->dwStyle & ES_AUTOHSCROLL)) cxShift = max(0, cxCaret - max(0, rc.right - 6));
+    if (!(hwnd->dwStyle & ES_MULTILINE) && (hwnd->dwStyle & ES_AUTOHSCROLL)) cxShift = (((0) > (cxCaret - StarsMax(0, rc.right - 6))) ? (0) : (cxCaret - StarsMax(0, rc.right - 6)));
     if (hwnd->dwStyle & ES_MULTILINE) {
         cLine = (int)IEditLine(hwnd, hwnd->ichCaret);
         if ((hwnd->dwStyle & ES_AUTOVSCROLL) && !hwnd->fEditManualScroll) {
             if (cLine * cy < hwnd->yEditScroll) hwnd->yEditScroll = cLine * cy;
-            else if (cLine * cy + cy > hwnd->yEditScroll + max(0, format.bottom - format.top))
-                hwnd->yEditScroll = max(0, cLine * cy + cy - max(0, format.bottom - format.top));
+            else if (cLine * cy + cy > hwnd->yEditScroll + StarsMax(0, format.bottom - format.top))
+                hwnd->yEditScroll = (((0) > (cLine * cy + cy - StarsMax(0, format.bottom - format.top))) ? (0) : (cLine * cy + cy - StarsMax(0, format.bottom - format.top)));
         }
         y -= hwnd->yEditScroll;
     }
@@ -434,11 +434,11 @@ static void PaintEdit(HWND hwnd) {
         if (ichNext < cch && hwnd->pszTitle[ichNext] == '\n') ichNext++;
         cx = CxEdit(hdc, pszDisplay + ich, ichEnd - ich, FALSE);
         x = format.left - cxShift;
-        if (hwnd->dwStyle & ES_RIGHT) x += max(0, format.right - format.left - cx);
-        else if (hwnd->dwStyle & ES_CENTER) x += max(0, (format.right - format.left - cx) / 2);
+        if (hwnd->dwStyle & ES_RIGHT) x += StarsMax(0, format.right - format.left - cx);
+        else if (hwnd->dwStyle & ES_CENTER) x += (((0) > ((format.right - format.left - cx) / 2)) ? (0) : ((format.right - format.left - cx) / 2));
         TextOutA(hdc, x, y, pszDisplay + ich, (int)(ichEnd - ich));
         if ((fFocus || (hwnd->dwStyle & ES_NOHIDESEL)) && ichFirst < ichEnd && ichLast > ich) {
-            UINT ichLo = max(ichFirst, ich), ichHi = min(ichLast, ichEnd);
+            UINT ichLo = StarsMax(ichFirst, ich), ichHi = StarsMin(ichLast, ichEnd);
             SetRect(&rcSel, x + CxEdit(hdc, pszDisplay + ich, ichLo - ich, FALSE), y,
                     x + CxEdit(hdc, pszDisplay + ich, ichHi - ich, FALSE), y + cy);
             hbr = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT)); FillRect(hdc, &rcSel, hbr); DeleteObject(hbr);
@@ -487,17 +487,17 @@ static UINT IchEditPoint(HWND hwnd, LPARAM l) {
     if (hwnd->hfontControl) hfontOld = (HFONT)SelectObject(hdc, hwnd->hfontControl);
     GetTextMetricsA(hdc, &tm);
     EditFormat(hwnd, &rc); x -= rc.left; y -= rc.top;
-    if (hwnd->dwStyle & ES_MULTILINE) while (y >= max(1, tm.tmHeight) && ich < cch) {
+    if (hwnd->dwStyle & ES_MULTILINE) while (y >= StarsMax(1, tm.tmHeight) && ich < cch) {
         ich = IchLineEnd(hwnd, ich);
         if (ich < cch && hwnd->pszTitle[ich] == '\r') ich++;
         if (ich < cch && hwnd->pszTitle[ich] == '\n') ich++;
-        y -= max(1, tm.tmHeight);
+        y -= StarsMax(1, tm.tmHeight);
     }
     ichEnd = hwnd->dwStyle & ES_MULTILINE ? IchLineEnd(hwnd, ich) : cch;
     EditFormat(hwnd, &rc);
     cx = CxEdit(hdc, hwnd->pszTitle + ich, ichEnd - ich, (hwnd->dwStyle & ES_PASSWORD) != 0);
-    if (hwnd->dwStyle & ES_RIGHT) x -= max(0, rc.right - rc.left - cx);
-    else if (hwnd->dwStyle & ES_CENTER) x -= max(0, (rc.right - rc.left - cx) / 2);
+    if (hwnd->dwStyle & ES_RIGHT) x -= StarsMax(0, rc.right - rc.left - cx);
+    else if (hwnd->dwStyle & ES_CENTER) x -= (((0) > ((rc.right - rc.left - cx) / 2)) ? (0) : ((rc.right - rc.left - cx) / 2));
     for (; ich < ichEnd; ich = IchEditNext(hwnd, ich)) {
         cx = CxEdit(hdc, hwnd->pszTitle + ich, IchEditNext(hwnd, ich) - ich, (hwnd->dwStyle & ES_PASSWORD) != 0);
         if (x < cxPrev + cx / 2) break;
@@ -555,7 +555,7 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return TRUE;
     case WM_GETDLGCODE: return DLGC_WANTARROWS | DLGC_WANTCHARS | DLGC_HASSETSEL;
     case EM_GETSEL:
-        ichStart = min(lp->ichAnchor, lp->ichCaret); ichEnd = max(lp->ichAnchor, lp->ichCaret);
+        ichStart = StarsMin(lp->ichAnchor, lp->ichCaret); ichEnd = StarsMax(lp->ichAnchor, lp->ichCaret);
         if (w) *(DWORD *)w = ichStart;
         if (l) *(DWORD *)l = ichEnd;
         return ichStart > UINT16_MAX || ichEnd > UINT16_MAX ? -1 : (LRESULT)MAKELONG(ichStart, ichEnd);
@@ -563,7 +563,7 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if ((INT_PTR)w == -1) SelectEdit(hwnd, lp->ichCaret, lp->ichCaret);
         else SelectEdit(hwnd, (UINT)w, l == -1 ? cch : (UINT)l);
         return 0;
-    case EM_LIMITTEXT: lp->cchLimit = w ? min((UINT_PTR)INT_MAX, w) : INT_MAX; return 0;
+    case EM_LIMITTEXT: lp->cchLimit = w ? ((((UINT_PTR)INT_MAX) < (w)) ? ((UINT_PTR)INT_MAX) : (w)) : INT_MAX; return 0;
     case EM_GETLIMITTEXT: return lp->cchLimit;
     case EM_GETMODIFY: return lp->fModified;
     case EM_SETMODIFY: lp->fModified = w != 0; return 0;
@@ -598,7 +598,7 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (LOWORD(w) == SB_LINELEFT) ScrollEdit(hwnd, -1, 0);
         else if (LOWORD(w) == SB_LINERIGHT) ScrollEdit(hwnd, 1, 0);
         else if (LOWORD(w) == SB_PAGELEFT || LOWORD(w) == SB_PAGERIGHT) {
-            EditFormat(hwnd, &rc); ScrollEdit(hwnd, (LOWORD(w) == SB_PAGELEFT ? -1 : 1) * max(1, (rc.right - rc.left) / 8), 0);
+            EditFormat(hwnd, &rc); ScrollEdit(hwnd, (LOWORD(w) == SB_PAGELEFT ? -1 : 1) * (((1) > ((rc.right - rc.left) / 8)) ? (1) : ((rc.right - rc.left) / 8)), 0);
         } else if (LOWORD(w) == SB_THUMBTRACK || LOWORD(w) == SB_THUMBPOSITION) {
             lp->xEditScroll = IsWindow(lp->rghwndScroll[SB_HORZ]) && lp->rghwndScroll[SB_HORZ]->fTracking ?
                 lp->rghwndScroll[SB_HORZ]->iScrollTrack : HIWORD(w);
@@ -606,7 +606,7 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         return 0;
     case EM_SCROLL: case WM_VSCROLL:
-        EditFormat(hwnd, &rc); cLine = (UINT)max(1, (rc.bottom - rc.top) / CyEdit(hwnd));
+        EditFormat(hwnd, &rc); cLine = (UINT)(((1) > ((rc.bottom - rc.top) / CyEdit(hwnd))) ? (1) : ((rc.bottom - rc.top) / CyEdit(hwnd)));
         ichStart = (UINT)(lp->yEditScroll / CyEdit(hwnd));
         if (LOWORD(w) == SB_LINEUP) ScrollEdit(hwnd, 0, -1);
         else if (LOWORD(w) == SB_LINEDOWN) ScrollEdit(hwnd, 0, 1);
@@ -623,20 +623,20 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case EM_GETLINECOUNT:
         return lp->dwStyle & ES_MULTILINE ? IEditLine(hwnd, cch) + 1 : 1;
     case EM_LINEFROMCHAR:
-        ichEnd = (INT_PTR)w == -1 ? lp->ichCaret : min((UINT)w, cch);
+        ichEnd = (INT_PTR)w == -1 ? lp->ichCaret : ((((UINT)w) < (cch)) ? ((UINT)w) : (cch));
         return lp->dwStyle & ES_MULTILINE ? IEditLine(hwnd, ichEnd) : 0;
     case EM_LINEINDEX:
         if ((INT_PTR)w == -1) return IchLineStart(hwnd, lp->ichCaret);
         ich = IchEditLine(hwnd, (UINT)w); return ich == UINT_MAX ? -1 : (LRESULT)ich;
     case EM_LINELENGTH:
-        ich = (INT_PTR)w == -1 ? lp->ichCaret : min((UINT)w, cch);
+        ich = (INT_PTR)w == -1 ? lp->ichCaret : ((((UINT)w) < (cch)) ? ((UINT)w) : (cch));
         ichStart = IchLineStart(hwnd, ich);
         return IchLineEnd(hwnd, ichStart) - ichStart;
     case EM_GETLINE:
         ich = IchEditLine(hwnd, (UINT)w);
         if (!l || ich == UINT_MAX) return 0;
         memcpy(&cchMax, (void *)l, sizeof(cchMax));
-        cLine = (UINT)CchUtf8Prefix(lp->pszTitle + ich, min(cchMax, IchLineEnd(hwnd, ich) - ich));
+        cLine = (UINT)CchUtf8Prefix(lp->pszTitle + ich, (((cchMax) < (IchLineEnd(hwnd, ich) - ich)) ? (cchMax) : (IchLineEnd(hwnd, ich) - ich)));
         memcpy((void *)l, lp->pszTitle + ich, cLine); return cLine;
     case WM_SETTEXT:
         result = DefWindowProcA(hwnd, msg, w, l ? l : (LPARAM)"");
@@ -712,11 +712,11 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fShortcut && w == 'Z') { UndoEdit(hwnd); return 0; }
         if (w == VK_LEFT) {
             if (fWord) ich = IchEditWord(hwnd, ich, FALSE);
-            else if (!fShift && lp->ichAnchor != ich) ich = min(lp->ichAnchor, ich);
+            else if (!fShift && lp->ichAnchor != ich) ich = StarsMin(lp->ichAnchor, ich);
             else if (ich != 0) { ich = IchEditPrev(hwnd, ich); if (ich != 0 && lp->pszTitle[ich] == '\n' && lp->pszTitle[ich - 1] == '\r') ich--; }
         } else if (w == VK_RIGHT) {
             if (fWord) ich = IchEditWord(hwnd, ich, TRUE);
-            else if (!fShift && lp->ichAnchor != ich) ich = max(lp->ichAnchor, ich);
+            else if (!fShift && lp->ichAnchor != ich) ich = StarsMax(lp->ichAnchor, ich);
             else if (ich < cch) { if (lp->pszTitle[ich] == '\r' && lp->pszTitle[ich + 1] == '\n') ich++; ich = IchEditNext(hwnd, ich); }
         }
         else if (w == VK_HOME) ich = !fCtrl && (lp->dwStyle & ES_MULTILINE) ? IchLineStart(hwnd, ich) : 0;
@@ -725,11 +725,11 @@ LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             ichStart = IchLineStart(hwnd, ich); cchColumn = ich - ichStart;
             EditFormat(hwnd, &rc);
             iLine = IEditLine(hwnd, ich);
-            cLine = w == VK_PRIOR || w == VK_NEXT ? (UINT)max(1, (rc.bottom - rc.top) / CyEdit(hwnd)) : 1;
+            cLine = w == VK_PRIOR || w == VK_NEXT ? (UINT)(((1) > ((rc.bottom - rc.top) / CyEdit(hwnd))) ? (1) : ((rc.bottom - rc.top) / CyEdit(hwnd))) : 1;
             iLine = w == VK_UP || w == VK_PRIOR ? (iLine > cLine ? iLine - cLine : 0) :
-                    min(IEditLine(hwnd, cch), iLine + cLine);
+                    (((IEditLine(hwnd, cch)) < (iLine + cLine)) ? (IEditLine(hwnd, cch)) : (iLine + cLine));
             ichStart = IchEditLine(hwnd, iLine);
-            ich = min(ichStart + cchColumn, IchLineEnd(hwnd, ichStart));
+            ich = (((ichStart + cchColumn) < (IchLineEnd(hwnd, ichStart))) ? (ichStart + cchColumn) : (IchLineEnd(hwnd, ichStart)));
         }
         else if (w == VK_DELETE) {
             if (lp->dwStyle & ES_READONLY) return 0;

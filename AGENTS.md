@@ -39,11 +39,12 @@ When goals conflict, apply them in this order:
   `i` index, `f` flag, `lp` pointer, `rg` array, `h` handle, `psz`/`sz`
   strings, `id`/`ish`/`ipl` and the like. Check `structs.h` and nearby code
   for existing prefixes before you invent one.
-- Build game, UI and host sources as C++17 (GNU extensions on); the SDL
-  compatibility runtime and C test harnesses retain C11 and a C ABI. Preserve
-  explicit enum underlying widths/signedness, C integer aliases and record
-  layouts. Keep scalar locals at the top of a
-  function and construct RAII guards at their operation boundary. Keep the
+- Build owned production and ordinary test sources as C++20 (GNU extensions on),
+  and AppKit adapters as Objective-C++20. Independent C/SDK references and
+  third-party dependencies remain C. Application headers use native C++ linkage.
+  Preserve explicit enum underlying widths/signedness and record layouts.
+  Keep scalar locals at the top of a function and construct RAII guards at
+  their operation boundary. Keep the
   surrounding style: `//` or `/* */` comments, no reformatting beyond the
   lines you change. Helpers are fine when they replace a Win16 shim or remove
   real duplication; keep them small and next to their callers.
@@ -97,10 +98,10 @@ When goals conflict, apply them in this order:
 - Static game data (hulls, parts, starting designs, predefined and AI
   races, default battle plans, AI design recipes, part preferences and
   research orders) is in `data/**/*.yaml`; `data/datagen.py` builds its
-  enums (`dataids.h`) and `data_tables.c`. Saved ship designs store hull
+  enums (`dataids.h`) and `data_tables.cpp`. Saved ship designs store hull
   and part numbers, so the parts files are append-only: never reorder or
   remove an entry.
-- Application-owned file streams and paths use the C-compatible C++17 service
+- Application-owned file streams and paths use the C++20 service
   in `src/platform/fileio.h`/`fileio.cpp`. Native descriptors stay private to that
   service for exclusive creation, sharing, durable writes and live-handle operations.
   Game files, the clock and formatting go through `native.c` (`HfOpenFile`,

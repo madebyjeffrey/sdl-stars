@@ -1,4 +1,6 @@
 #include "acutest.h"
+[[maybe_unused]] static char szTestLiteral1[] = "\x5cw \x5ci \x5cu";
+[[maybe_unused]] static char szTestLiteral2[] = "\x5ch";
 #include "stars_test.h"
 
 static void TestEncoding(void) {
@@ -57,7 +59,7 @@ static void TestPasswords(void) {
 }
 
 static void TestInvalidDefinition(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
     char szPadding[1024];
     NATIVEFILE *pf;
     int i;
@@ -96,13 +98,13 @@ static void TestFormattedTextBounds(void) {
 
     TEST_ASSERT(FStarsTestInit());
     strcpy(szWork, "World");
-    TEST_CHECK(!strcmp(PszFormatString("\x5cw \x5ci \x5cu", rgParams), "World -123 55"));
+    TEST_CHECK(!strcmp(PszFormatString(szTestLiteral1, rgParams), "World -123 55"));
     memset(szFormat, 'a', 252);
     memcpy(szFormat + 252, "\xf0\x9f\x98\x80 suffix", 12);
     psz = PszFormatString(szFormat, NULL);
     TEST_CHECK(strlen(psz) == 252 && FUtf8Valid(psz, strlen(psz)));
     memset(szBase, 'a', sizeof(szBase) - 1); szBase[sizeof(szBase) - 1] = 0;
-    psz = PszFormatString("\x5ch", NULL);
+    psz = PszFormatString(szTestLiteral2, NULL);
     TEST_CHECK(strlen(psz) < sizeof(szMsgBuf) && FUtf8Valid(psz, strlen(psz)));
     memset(szFormat, 'a', 1022);
     memcpy(szFormat + 1022, "\xc3\xa9z", 4);

@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_SHIP_H
 #define STARS_DECOMPILED_SHIP_H
 
+#include "common.h"
 #include <stdint.h>
 
 int16_t FCanSplit(int32_t cBoat);

@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_PRODUCEUI_H
 #define STARS_DECOMPILED_PRODUCEUI_H
 
+#include "win.h"
 #include <stdint.h>
 #include <windows.h>
 

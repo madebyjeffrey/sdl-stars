@@ -22,6 +22,7 @@ def main():
     declarations = r'''
 #include <assert.h>
 #include <stdint.h>
+typedef uint16_t HeapType;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -178,7 +179,7 @@ static int referenceTarget(int current,int next) {
     for(int i=n-1;i>=0;i--)if(eligible[i]<current)return eligible[i];return eligible[n-1];
 }
 int main(void) {
-    _Static_assert(sizeof(PROD)==4,"PROD width");_Static_assert(sizeof(PLPROD)==4,"PLPROD header");
+    static_assert(sizeof(PROD)==4,"PROD width");static_assert(sizeof(PLPROD)==4,"PLPROD header");
     for(int accept=0;accept<2;accept++)for(int empty=0;empty<3;empty++)for(int ai=0;ai<2;ai++)for(int tutorial=0;tutorial<2;tutorial++)for(int player=0;player<2;player++) {
         reset();PLPROD *old=sel.pl.lpplprod,*work=empty==2 ? NULL:queue(empty==0 ? 2:0);
         lpplProdGlob=work;sel.pl.fNoResearch=1;gd.fNoResearchSav=0;gd.fTutorial=tutorial;idPlayer=player;fAi=ai;
@@ -258,7 +259,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='m09-lifecycle-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=c++17','-iquote',str(ROOT/'src/platform'),str(ROOT/'src/platform/errors.cpp'),'-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-iquote',str(ROOT/'src/platform'),str(ROOT/'src/platform/errors.cpp'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

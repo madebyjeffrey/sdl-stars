@@ -34,7 +34,7 @@ LRESULT CALLBACK CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HBRUSH hbr;
     if (!lp) return 0;
     if (msg == WM_NCCREATE) {
-        lpc = ((const CREATESTRUCTA *)l)->lpCreateParams;
+        lpc = (COMPATDLGCREATE *)(((const CREATESTRUCTA *)l)->lpCreateParams);
         if (!lpc) return FALSE;
         lp->fDialog = TRUE; lp->lpfnDlg = lpc->lpfn; lp->hfontDialog = lpc->hfont;
         lpc->hfont = NULL;
@@ -75,7 +75,7 @@ BOOL WINAPI MapDialogRect(HWND hwnd, LPRECT lprc) {
     return TRUE;
 }
 static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
-    LOGFONTA lf = {0};
+    LOGFONTA lf = {};
     HDC hdc;
     HGDIOBJ hold;
     SIZE size;
@@ -94,8 +94,8 @@ static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
 }
 HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, const RECT *lprc,
                              HWND hwndOwner, DLGPROC lpfn) {
-    COMPATDLGTEMPLATE dlg = {0};
-    COMPATDLGCREATE dc = {0};
+    COMPATDLGTEMPLATE dlg = {};
+    COMPATDLGCREATE dc = {};
     HWND hwnd;
     dlg.cPoints = 8;
     dc.lpfn = lpfn; dc.fModal = TRUE;
@@ -113,8 +113,8 @@ static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
 }
 static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param, BOOL fModal) {
     HRSRC hrsrc;
-    COMPATDLGTEMPLATE dlg = {0};
-    COMPATDLGCREATE dc = {0};
+    COMPATDLGTEMPLATE dlg = {};
+    COMPATDLGCREATE dc = {};
     COMPATDLGITEM *lpitem;
     HWND hwnd = NULL, hwndChild, hwndFocus;
     RECT rc;
@@ -124,7 +124,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!SDL_IsMainThread() || (hwndOwner && !IsWindow(hwndOwner))) return NULL;
     if (!hinst) hinst = GetModuleHandleA(NULL);
     hrsrc = FindResourceA(hinst, psz, RT_DIALOG);
-    if (!FCompatDialogTemplate(LockResource(LoadResource(hinst, hrsrc)), SizeofResource(hinst, hrsrc), &dlg)) return NULL;
+    if (!FCompatDialogTemplate((const BYTE *)(LockResource(LoadResource(hinst, hrsrc))), SizeofResource(hinst, hrsrc), &dlg)) return NULL;
     if (dlg.idClass || (dlg.pszClass && *dlg.pszClass) || dlg.idMenu || (dlg.pszMenu && *dlg.pszMenu)) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
     if (!FDialogUnits(&dlg, &dc)) goto done;

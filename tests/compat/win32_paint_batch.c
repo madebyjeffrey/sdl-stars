@@ -4,7 +4,7 @@
 #include <stdio.h>
 static unsigned cPresent;
 
-bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lpRenderer) {
+extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lpRenderer) {
     cPresent++;
     return SDL_RenderPresent(lpRenderer);
 }

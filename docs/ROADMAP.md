@@ -7,12 +7,20 @@ and its builds count toward 2.9.1.
 
 ## C++ migration
 
-The proposed [native C++ migration plan](CPP-MIGRATION.md) continues the merged
-prerequisites below. It sequences removal of application-owned C linkage first,
-then ownership, record storage and strict C++20 migration in reviewable PRs.
-Its implementation slots are proposed and have not been completed by the plan.
+Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented
+in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64) against `develop`
+(ticket #63). Owned production, generated catalogs,
+wrapper/native adapters and ordinary harnesses use C++20/Objective-C++20.
+Application headers have native C++ linkage and compile independently with
+standard headers in either order. Independent C storage and SDK references remain
+separate. The compilation audit reads sources and compiler manifests explicitly
+as UTF-8 so Windows locale settings do not affect qualification. Milestone B
+(ownership, wire codecs, state and ISO C++ storage) remains proposed; GNU storage
+extensions and manual heaps are retained for now.
 
-The first migration step compiles the game, UI and host as GNU C++17 under
+The prerequisite steps below record the earlier migration checkpoints.
+
+The first migration step compiled the game, UI and host as GNU C++17 under
 existing source filenames, keeping a C ABI for the C11 wrapper, generated tables
 and harnesses. Fixed-width integer aliases remain unchanged; C/C++ layout checks
 cover 259 type, alias and record-prefix measurements. On Apple-silicon macOS,
@@ -36,8 +44,8 @@ contract and available tutorial checkpoint. Linux/Windows CI qualification is
 recorded in the stacked PRs. No baseline or record layout changes.
 The fourth step replaces `STARS_CONSTANTS` and the C++ integer aliases with
 explicit fixed-underlying enums, preserving signedness, widths and constant
-names. C11 declarations retain their integer aliases. A cross-language ABI test
-covers all 145 stored enum types in addition to the existing layout comparison;
+names. At that checkpoint C11 declarations retained integer aliases, and a cross-language
+ABI test covered all 145 stored enum types in addition to the existing layout comparison;
 full verification is recorded in the fourth stacked PR.
 See [native-port constraints](NATIVE-PORT.md).
 

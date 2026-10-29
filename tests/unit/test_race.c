@@ -1,6 +1,10 @@
 #include "acutest.h"
+[[maybe_unused]] static char szTestLiteral2[] = "New-race-pass";
+[[maybe_unused]] static char szTestLiteral3[] = "Replacement";
+[[maybe_unused]] static char szTestLiteral4[] = "Shortened-race";
 
 #include "stars_test.h"
+[[maybe_unused]] static char szTestLiteral1[] = "data" szDirSep "humanoid.r1";
 
 #ifdef STARS_UI_SDL
 #include <stars_compat.h>
@@ -78,7 +82,7 @@ static size_t CbReadFixture(const char *szFile, uint8_t *rgb, size_t cbMax) {
 }
 
 static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH], szNewGameRace[MAX_PATH], szDef[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64], szNewGameRace[MAX_PATH + 64], szDef[MAX_PATH + 64];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
     PLAYER plrExpected;
@@ -88,7 +92,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("legacy_race_import", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
     plrExpected = vplr;
     snprintf(szFile, sizeof(szFile), "%s%srace249.r1", szDir, szDirSep);
     TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 49, "R\xe9", "", FALSE, FALSE, 0));
@@ -161,7 +165,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     fStarsTestAcceptLegacyRacePassword = TRUE;
     strcpy(szStarsTestLegacyRacePassword, "New-race-pass");
     TEST_CHECK(GenNewGameFromFile(szDef));
-    TEST_CHECK(rgplr[0].lSalt == LSaltFromSz("New-race-pass"));
+    TEST_CHECK(rgplr[0].lSalt == LSaltFromSz(szTestLiteral2));
     TEST_CHECK(rgplr[0].lSalt != 1234);
     fStarsTestAcceptLegacyRacePassword = FALSE;
     TEST_CHECK(!GenNewGameFromFile(szDef));
@@ -169,7 +173,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
 }
 
 static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH], szSaved[MAX_PATH];
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64];
     char szName[32], szNames[32];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
@@ -181,7 +185,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("legacy_race_decisions", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
     fFileErrSilent = FALSE;
     snprintf(szFile, sizeof(szFile), "%s%sprotected.r1", szDir, szDirSep);
     TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
@@ -193,7 +197,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     fStarsTestAcceptLegacyRacePassword = TRUE;
     strcpy(szStarsTestLegacyRacePassword, "Replacement");
     TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
-    TEST_CHECK(vplr.lSalt == LSaltFromSz("Replacement") && vplr.lSalt != 1234);
+    TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral3) && vplr.lSalt != 1234);
     TEST_CHECK(strcmp(szRacePass, "Replacement") == 0);
     TEST_CHECK(CbReadFixture(szFile, rgbAfter, sizeof(rgbAfter)) == cbBefore);
     TEST_CHECK(memcmp(rgbBefore, rgbAfter, cbBefore) == 0);
@@ -205,7 +209,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     StreamClose();
     strcpy(vszDefPass, "Replacement");
     TEST_CHECK(FWasRaceFile(szSaved, TRUE) == 1);
-    TEST_CHECK(vplr.lSalt == LSaltFromSz("Replacement"));
+    TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral3));
     vszDefPass[0] = 0;
 
     snprintf(szFile, sizeof(szFile), "%s%sbadsum.r1", szDir, szDirSep);
@@ -253,7 +257,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     cStarsTestLegacyRacePasswordPrompt = 0;
     TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 1);
-    TEST_CHECK(vplr.lSalt == LSaltFromSz("Shortened-race"));
+    TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral4));
 
     TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 1234));
     iStarsTestAlertResponse = IDNO;
@@ -290,14 +294,14 @@ static void test_LInnateRaceHabitability_double_rounding(void) {
 static void test_RaceGrbit_high_bit(void) {
     PLAYER plr = {0};
 
-    SetRaceGrbit(&plr, 0, TRUE);
-    SetRaceGrbit(&plr, 31, TRUE);
+    SetRaceGrbit(&plr, (RaceGrbit)(0), TRUE);
+    SetRaceGrbit(&plr, (RaceGrbit)(31), TRUE);
     TEST_CHECK(plr.grbitAttr == UINT32_C(0x80000001));
-    TEST_CHECK(GetRaceGrbit(&plr, 31));
-    SetRaceGrbit(&plr, 31, FALSE);
+    TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(31)));
+    SetRaceGrbit(&plr, (RaceGrbit)(31), FALSE);
     TEST_CHECK(plr.grbitAttr == 1);
-    TEST_CHECK(!GetRaceGrbit(&plr, 31));
-    TEST_CHECK(GetRaceGrbit(&plr, 0));
+    TEST_CHECK(!GetRaceGrbit(&plr, (RaceGrbit)(31)));
+    TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(0)));
 }
 
 // Race file corruption: the race wizard reads a name into a buffer that still
@@ -305,13 +309,13 @@ static void test_RaceGrbit_high_bit(void) {
 // terminator. They aren't saved, so the file failed its checksum on load.
 static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     char     szDir[MAX_PATH];
-    char     szFile[MAX_PATH];
+    char     szFile[MAX_PATH + 64];
     PLAYER   plr;
     uint16_t icksum;
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("IRaceChecksum_stale_name", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile("data" szDirSep "humanoid.r1", FALSE));
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
     plr = vplr;
     strcpy(plr.szName, "Longname");
     strcpy(plr.szNames, "Longnames");

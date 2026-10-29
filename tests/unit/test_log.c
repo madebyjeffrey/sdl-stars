@@ -1,4 +1,6 @@
 #include "acutest.h"
+[[maybe_unused]] static char szTestLiteral1[] = "Original";
+[[maybe_unused]] static char szTestLiteral2[] = "\xc3";
 
 #include "stars_test.h"
 
@@ -13,11 +15,11 @@ static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
     TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
     TEST_ASSERT(FStarsTestLoadPlayer(0));
     lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, 0, 1);
-    LogChangeName(grobjFleet, lpfl->id, "Original");
+    LogChangeName(grobjFleet, lpfl->id, szTestLiteral1);
     memset(&rt, 0, sizeof(rt));
     rt.id = lpfl->id;
     cOut = 31;
-    TEST_ASSERT(FCompressUserString("\xc3", (char *)rt.rgb + 1, &cOut));
+    TEST_ASSERT(FCompressUserString(szTestLiteral2, (char *)rt.rgb + 1, &cOut));
     rt.rgb[0] = cOut;
     TEST_CHECK(!FRunLogRecord(rtLogFleetName, offsetof(RTCHGNAME, rgb) + cOut + 1, (uint8_t *)&rt));
     TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);

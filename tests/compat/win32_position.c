@@ -24,7 +24,7 @@ static LRESULT CALLBACK PositionProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     CREATESTRUCT *lpcs;
     if (msg == WM_NCCREATE) {
         lpcs = (CREATESTRUCT *)l;
-        lp = lpcs->lpCreateParams;
+        lp = (POSITIONTEST*)(lpcs->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
     }
     if (!lp) return DefWindowProc(hwnd, msg, w, l);

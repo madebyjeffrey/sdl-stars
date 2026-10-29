@@ -86,7 +86,7 @@ int32_t CostOfDevelopingItem(char *rgTech) {
                 lCur += GetTechLevelCost(static_cast<TechFieldType>(i), pTech[i] + 1, idPlayer);
                 pTech[i]++;
             }
-            lCost += max(0, lCur);
+            lCost += StarsMax(0, lCur);
         }
     }
     for (i = 0; i < 6; i++) {

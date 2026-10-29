@@ -22,11 +22,6 @@
 #else
 #include <unistd.h>
 #endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // The game's message boxes are recorded here instead of shown, so nothing
 // waits for a click: compile-time AlertSz substitution in SDL clients and
 // IdAlertBox in host tests.
@@ -79,8 +74,6 @@ int16_t FStarsTestSaveGame(void);
 // files, as the -g command line does.
 int16_t FStarsTestGenerate(void);
 
-#ifdef __cplusplus
-}
-#endif
+
 
 #endif

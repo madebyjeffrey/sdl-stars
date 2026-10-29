@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "filedialog_windows_bridge.h"
+#include "../../../src/platform/errors.h"
 #include "../../../src/platform/test_impl.h"
 
 typedef struct WINDOWSCHOOSER {
@@ -18,7 +19,7 @@ static wchar_t *LpwszChooserText(const char *psz, UINT cp) {
 
     cch = MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, -1, NULL, 0);
     if (cch == 0) return NULL;
-    pwsz = malloc((size_t)cch * sizeof(*pwsz));
+    pwsz = (wchar_t *)malloc((size_t)cch * sizeof(*pwsz));
     if (pwsz) MultiByteToWideChar(cp, cp == CP_UTF8 ? MB_ERR_INVALID_CHARS : 0, psz, -1, pwsz, cch);
     return pwsz;
 }
@@ -26,6 +27,7 @@ static wchar_t *LpwszChooserText(const char *psz, UINT cp) {
 static UINT_PTR CALLBACK ChooserHook(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     WINDOWSCHOOSER *lp;
 
+    try {
     if (msg == WM_INITDIALOG) {
         lp = (WINDOWSCHOOSER *)((OPENFILENAMEW *)l)->lCustData;
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
@@ -37,6 +39,11 @@ static UINT_PTR CALLBACK ChooserHook(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             PostMessageW(GetParent(hwnd), WM_COMMAND, IDCANCEL, 0);
         }
     } else if (msg == WM_DESTROY) KillTimer(hwnd, 1);
+    } catch (...) {
+        // Retain failure delivery until the native modal window has cleaned up.
+        StarsCapturePendingError();
+        PostMessageW(GetParent(hwnd), WM_COMMAND, IDCANCEL, 0);
+    }
     return 0;
 }
 
@@ -44,7 +51,7 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
                        const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
                        int *lpiFilter, char *pszPath, size_t cbPath,
                        int (*pfnPump)(void *), void *lpv) {
-    OPENFILENAMEW of = {0};
+    OPENFILENAMEW of = {};
     WINDOWSCHOOSER chooser = {pfnPump, lpv, 0};
     wchar_t *pwszTitle = NULL, *pwszFolder = NULL, *pwszName = NULL, *pwszFilter = NULL;
     wchar_t *pwszFile = NULL, *pwszCwd = NULL, *pwszLabel, *pwszPattern;
@@ -56,9 +63,9 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
     pwszTitle = LpwszChooserText(pszTitle, CP_UTF8);
     pwszFolder = LpwszChooserText(pszFolder, CP_UTF8);
     pwszName = LpwszChooserText(pszName, CP_UTF8);
-    pwszFile = calloc(32768, sizeof(*pwszFile));
+    pwszFile = (wchar_t *)calloc(32768, sizeof(*pwszFile));
     cchCwd = GetCurrentDirectoryW(0, NULL);
-    pwszCwd = cchCwd != 0 ? malloc((size_t)cchCwd * sizeof(*pwszCwd)) : NULL;
+    pwszCwd = cchCwd != 0 ? (wchar_t *)malloc((size_t)cchCwd * sizeof(*pwszCwd)) : NULL;
     if (!pwszTitle || !pwszFolder || !pwszName || !pwszFile || !pwszCwd ||
         !GetCurrentDirectoryW(cchCwd, pwszCwd) || wcslen(pwszName) >= 32768) goto done;
     wcscpy(pwszFile, pwszName);
@@ -68,7 +75,7 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
         if (!pwszLabel || !pwszPattern) { free(pwszLabel); free(pwszPattern); goto done; }
         cchLabel = wcslen(pwszLabel) + 1; cchPattern = wcslen(pwszPattern) + 1;
         {
-            wchar_t *pwszNew = realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter));
+            wchar_t *pwszNew = (wchar_t *)realloc(pwszFilter, (cchFilter + cchLabel + cchPattern) * sizeof(*pwszFilter));
             if (!pwszNew) { free(pwszLabel); free(pwszPattern); goto done; }
             pwszFilter = pwszNew;
         }
@@ -78,7 +85,7 @@ int STARS_TEST_IMPL(IChooseWindowsFile)(void *lpWindow, int fSave, const char *p
         pwszFilter[cchFilter - 1] = 0;
         free(pwszLabel); free(pwszPattern);
     }
-    of.lStructSize = sizeof(of); of.hwndOwner = lpWindow;
+    of.lStructSize = sizeof(of); of.hwndOwner = (HWND)lpWindow;
     of.lpstrTitle = pwszTitle; of.lpstrInitialDir = pwszFolder;
     of.lpstrFilter = pwszFilter; of.nFilterIndex = (DWORD)*lpiFilter + 1;
     of.lpstrFile = pwszFile; of.nMaxFile = 32768;

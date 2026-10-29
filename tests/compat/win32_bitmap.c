@@ -1,5 +1,8 @@
 /* Shared Win32/Linux memory DC and bitmap contracts. */
 #include <windows.h>
+static const RECT rcTest1 = {0, 0, 16, 16};
+static const RECT rcTest2 = {0, 0, 1, 1};
+static const RECT rcTest3 = {4, 4, 8, 8};
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #endif
@@ -53,7 +56,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(!DeleteObject(hbmSrc) && !DeleteDC(hdc) && !ReleaseDC(hwnd, hsrc));
 #endif
     hbr = CreateSolidBrush(RGB(15, 35, 55));
-    CHECK(hbr && FillRect(hsrc, &(RECT){0, 0, 16, 16}, hbr));
+    CHECK(hbr && FillRect(hsrc, &rcTest1, hbr));
     CHECK(GetPixel(hsrc, 0, 0) == RGB(15, 35, 55));
     CHECK(PatBlt(hdst, 0, 0, 16, 16, WHITENESS));
     CHECK(BitBlt(hdst, 2, 3, 5, 6, hsrc, 0, 0, SRCCOPY));
@@ -97,7 +100,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(GetPixel(hsrc, 1, 1) == RGB(255, 255, 255) && GetPixel(hsrc, 1, 2) == 0);
     // Color-to-mono uses the source background; mono-to-color uses destination colors.
     CHECK(PatBlt(hsrc, 0, 0, 8, 8, BLACKNESS));
-    CHECK(FillRect(hsrc, &(RECT){0, 0, 1, 1}, (HBRUSH)GetStockObject(WHITE_BRUSH)));
+    CHECK(FillRect(hsrc, &rcTest2, (HBRUSH)GetStockObject(WHITE_BRUSH)));
     SetTextColor(hsrc, RGB(0, 0, 0));
     SetBkColor(hsrc, RGB(255, 255, 255));
     CHECK(BitBlt(hmono, 0, 0, 8, 8, hsrc, 0, 0, SRCCOPY));
@@ -110,7 +113,7 @@ static int TestBitmaps(HWND hwnd) {
     CHECK(BitBlt(hdst, 0, 0, 4, 4, hdc, 0, 0, SRCCOPY));
     CHECK(GetPixel(hdst, 0, 0) == RGB(255, 255, 255));
     CHECK(PatBlt(hdst, 0, 0, 16, 16, BLACKNESS));
-    CHECK(ValidateRect(hwnd, NULL) && InvalidateRect(hwnd, &(RECT){4, 4, 8, 8}, FALSE));
+    CHECK(ValidateRect(hwnd, NULL) && InvalidateRect(hwnd, &rcTest3, FALSE));
     CHECK(BeginPaint(hwnd, &ps));
     CHECK(BitBlt(ps.hdc, 0, 0, 16, 16, hdst, 0, 0, SRCCOPY));
     CHECK(EndPaint(hwnd, &ps));

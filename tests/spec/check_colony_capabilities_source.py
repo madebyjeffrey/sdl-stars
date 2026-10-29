@@ -120,7 +120,7 @@ def cases():
 def main():
     declarations,bodies,helpers=native_terraform_construction()
     declarations=declarations.replace('#include <setjmp.h>','#include <setjmp.h>\nstatic int32_t capcfg[110];static int extraCalls,extraPlayer,extraTrace[16][4],selectedScanner;static SPECIALSB fakeSpecial[16];')
-    declarations+='\n_Static_assert(hstSpecialSB==512 && hstPlanetary==32768 && iplanetaryViewer50==0 && iplanetarySnooper620X==8 && ispecialSBStargate100250==0 && ispecialSBStargateAnyAny==6 && ibitRaceNoAdvScanner==10,"colony capability identities");\n'
+    declarations+='\nstatic_assert(hstSpecialSB==512 && hstPlanetary==32768 && iplanetaryViewer50==0 && iplanetarySnooper620X==8 && ispecialSBStargate100250==0 && ispecialSBStargateAnyAny==6 && ibitRaceNoAdvScanner==10,"colony capability identities");\n'
     stub='int16_t IpctCanTerraformLppl(PLANET *p){assert(p==&planet);return 10;}'
     assert stub in declarations;declarations=declarations.replace(stub,function('src/core/planet.c','int16_t IpctCanTerraformLppl('))
     stub='void LookupBestPlanetaryScanner(PART *part){assert(idPlayer==planet.iPlayer);part->hs.iItem=(uint8_t)partIndex;}'
@@ -153,7 +153,7 @@ static void ready(void){
     for(int i=0;i<3;i++){planet.rgEnvVar[i]=(int8_t)cfg[8+i];planet.rgEnvVarOrig[i]=(int8_t)cfg[11+i];}
     for(int p=0;p<16;p++){
         int fields=p==1?23:14,levels=p==1?38:32;
-        rgplr[p].grbitAttr=((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0)|((capcfg[0]!=0 && cfg[52])?UINT32_C(1)<<ibitRaceNoAdvScanner:0);
+        rgplr[p].grbitAttr=static_cast<RaceTraitBits>(((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0)|((capcfg[0]!=0 && cfg[52])?UINT32_C(1)<<ibitRaceNoAdvScanner:0));
         rgplr[p].rgAttr[rsMajorAdv]=capcfg[0]==0?0:(int8_t)(p==1?cfg[51]:cfg[50]);rgplr[p].iTechNow=capcfg[0]==0?0:cfg[53];
         rgplr[p].wScore=100+p;rgplr[p].lSalt=10000+p;rgplr[p].idPlanetHome=p;
         for(int i=0;i<3;i++){rgplr[p].rgEnvVar[i]=(int8_t)cfg[fields+i];rgplr[p].rgEnvVarMin[i]=(int8_t)cfg[fields+3+i];rgplr[p].rgEnvVarMax[i]=(int8_t)cfg[fields+6+i];}
@@ -162,7 +162,7 @@ static void ready(void){
     if(cfg[4]>=0 && cfg[4]<16)rglpshdefSB[cfg[4]]=capcfg[57]?bases:NULL;
     int index=capcfg[54]?capcfg[56]:planet.isb;
     if(index>=0 && index<10){SHDEF *d=bases+index;d->hul.chs=capcfg[58];d->det=capcfg[59];d->fFree=capcfg[60];
-        for(int i=0;i<16;i++){d->hul.rghs[i].grhst=capcfg[62+3*i];d->hul.rghs[i].iItem=capcfg[63+3*i];d->hul.rghs[i].cItem=capcfg[64+3*i];}}
+        for(int i=0;i<16;i++){d->hul.rghs[i].grhst=static_cast<HullSlotType>(capcfg[62+3*i]);d->hul.rghs[i].iItem=capcfg[63+3*i];d->hul.rghs[i].cItem=capcfg[64+3*i];}}
 }
 int main(int argc,char **argv){
     assert(argc==3);FILE *file=argv[2][0]=='-'?stdin:fopen(argv[2],argv[1][0]=='e'?"wb":"rb");assert(file);
@@ -171,11 +171,11 @@ int main(int argc,char **argv){
         for(int kind=0;kind<2;kind++)for(int i=0;i<(kind?15:16);i++){int32_t r[7];COMPART *p=kind?(COMPART *)(rgplanetary+i):(COMPART *)(rgspecialSB+i);for(int f=0;f<6;f++)r[f]=p->rgTech[f];r[6]=kind?rgplanetary[i].grAbility:rgspecialSB[i].grAbility2;assert(fwrite(r,sizeof(r),1,file)==1);}
         fclose(file);return 0;
     }
-    int32_t data[388];unsigned long cases=0,modes[4]={0};
+    int32_t data[388];unsigned long cases=0,modes[4]={};
     while(fread(data,sizeof(data),1,file)==1){
         memcpy(capcfg,data,sizeof(capcfg));ready();PLAYER expectedPlayers[16];PLANET expectedPlanet=planet;GAME expectedGame=game;SHDEF expectedBases[10];
         memcpy(expectedPlayers,rgplr,sizeof(rgplr));memcpy(expectedBases,bases,sizeof(bases));
-        int result;PART part={0};part.hs.cItem=capcfg[61];part.pplanetary=rgplanetary+14;
+        int result;PART part={};part.hs.cItem=capcfg[61];part.pplanetary=rgplanetary+14;
         if(cfg[0]==0)result=IpctCanTerraformLppl(&planet);
         else if(cfg[0]==1)result=StargateRangeFromLppl(capcfg[54]?NULL:&planet,(int16_t)cfg[4],(int16_t)capcfg[56]);
         else if(cfg[0]==2){LookupBestPlanetaryScanner(&part);result=part.hs.iItem;CHECK(part.hs.grhst==hstPlanetary && part.hs.cItem==capcfg[61] && part.pplanetary==rgplanetary+part.hs.iItem);}
@@ -209,8 +209,8 @@ int main(int argc,char **argv){
     with tempfile.TemporaryDirectory(prefix='colony-capabilities-') as work:
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-pointer-sign','-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-lm','-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);raw=export.read_bytes();table=list(struct.iter_unpack('<8i',raw[:640]));special=list(struct.iter_unpack('<7i',raw[640:1088]));planetary=list(struct.iter_unpack('<7i',raw[1088:]));assert (len(table),len(special),len(planetary))==(20,16,15)
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)
         try:

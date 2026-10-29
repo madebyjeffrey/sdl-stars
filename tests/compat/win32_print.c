@@ -2,13 +2,13 @@
 #include <windows.h>
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
-#define setenv SDL_setenv_unsafe
-#define unsetenv SDL_unsetenv_unsafe
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#define setenv SDL_setenv_unsafe
+#define unsetenv SDL_unsetenv_unsafe
 #ifndef STARS_TEST_PRINT_OUTPUT
 #define STARS_TEST_PRINT_OUTPUT "/tmp/stars-print-test-output"
 #endif
@@ -51,13 +51,13 @@ static int FPrefix(const char *pszFile, const char *psz) {
     if (cb > sizeof(sz)) { fclose(lp); return 0; }
     cbRead = fread(sz, 1, cb, lp); fclose(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
 }
-bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
+extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cViewer++;
     if (!pszViewerExpected || !FPrefix(pszViewerExpected, "%PDF-") || strncmp(pszUri, "file:///", 8)) cErrors++;
     snprintf(szViewerUri, sizeof(szViewerUri), "%s", pszUri);
     return fViewerAccept;
 }
-bool SDLCALL StarsTest_SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags flags, const char *pszTitle, const char *pszText, SDL_Window *lpParent) {
+extern "C" bool SDLCALL StarsTest_SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags flags, const char *pszTitle, const char *pszText, SDL_Window *lpParent) {
     (void)lpParent;
     cNotice++;
     if (flags != SDL_MESSAGEBOX_ERROR || strcmp(pszTitle, "PDF saved") ||
@@ -95,9 +95,9 @@ int main(int argc, char **argv) {
     unsetenv("STARS_SDL_PRINTER"); unsetenv("STARS_SDL_PRINT_PAPER"); unsetenv("STARS_SDL_PRINT_ORIENTATION");
     CHECK(InitPrinter(&pd, szPages) && pd.hDC && pd.hDevMode && pd.hDevNames && pd.nCopies == 1);
     CHECK(CommDlgExtendedError() == 0);
-    lpdm = GlobalLock(pd.hDevMode); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->dmPaperSize == DMPAPER_LETTER);
+    lpdm = (DEVMODE*)(GlobalLock(pd.hDevMode)); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->dmPaperSize == DMPAPER_LETTER);
     CHECK(lpdm->dmOrientation == DMORIENT_PORTRAIT && lpdm->dmPrintQuality == 300); GlobalUnlock(pd.hDevMode);
-    lpn = GlobalLock(pd.hDevNames); CHECK(lpn && lpn->wDefault == 1);
+    lpn = (DEVNAMES*)(GlobalLock(pd.hDevNames)); CHECK(lpn && lpn->wDefault == 1);
     CHECK(strcmp((char *)lpn + lpn->wDeviceOffset, "Stars PDF") == 0); GlobalUnlock(pd.hDevNames);
     CHECK(GetDeviceCaps(pd.hDC, HORZRES) == 2400 && GetDeviceCaps(pd.hDC, VERTRES) == 3150);
     CHECK(GetDeviceCaps(pd.hDC, LOGPIXELSX) == 300 && GetDeviceCaps(pd.hDC, TECHNOLOGY) == DT_RASPRINTER);

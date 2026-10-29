@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_THING_H
 #define STARS_DECOMPILED_THING_H
 
+#include "common.h"
 #include <stdint.h>
 
 THING  *LpthNew(int16_t iplr, ThingType ith);

@@ -45,7 +45,7 @@ BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap) {
     lpsnap->lidGame = game.lid; lpsnap->turn = game.turn;
     lpsnap->idPlayer = idPlayer; lpsnap->iZoom = iScanZoom;
     GetClientRect(hwndScanner, &lpsnap->rcViewport);
-    lpsnap->rcViewport.bottom = max(0, lpsnap->rcViewport.bottom - dySBar);
+    lpsnap->rcViewport.bottom = StarsMax(0, lpsnap->rcViewport.bottom - dySBar);
     /* Name helpers use the game's scratch buffer; a read-only capture preserves it. */
     memcpy(szWorkSav, szWork, sizeof(szWork));
     for (i = 0; i < (size_t)game.cPlanMax; i++) {
@@ -206,8 +206,8 @@ static LRESULT CALLBACK ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPAR
         return 0;
     case WM_SIZE:
         GetClientRect(hwnd, &rc);
-        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, max(0, rc.right / 2 - 12), max(0, rc.bottom - 48), TRUE);
-        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, max(0, rc.right / 2 - 8), max(0, rc.bottom - 48), TRUE);
+        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, StarsMax(0, rc.right / 2 - 12), StarsMax(0, rc.bottom - 48), TRUE);
+        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshScannerInspector(hwnd);

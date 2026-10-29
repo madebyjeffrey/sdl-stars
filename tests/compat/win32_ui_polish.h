@@ -54,7 +54,7 @@ static BOOL FCheckPlanetPane(void) {
     // Address the actual lower fleet controls using their hierarchy rectangles.
     GetWindowRect(hwndRepCB, &rcControl);
     pt = (POINT){rcControl.left, rcControl.bottom}; ScreenToClient(hwndPane, &pt);
-    SendMessage(hwndPane, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, max(0, GetScrollPos(hwndPane, SB_VERT) + pt.y - rcPane.bottom)), 0);
+    SendMessage(hwndPane, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (((0) > (GetScrollPos(hwndPane, SB_VERT) + pt.y - rcPane.bottom)) ? (0) : (GetScrollPos(hwndPane, SB_VERT) + pt.y - rcPane.bottom))), 0);
     GetWindowRect(hwndRepCB, &rcControl);
     pt = (POINT){rcControl.left, rcControl.bottom}; ScreenToClient(hwndPane, &pt);
     if (!IsWindowVisible(hwndRepCB) || pt.y > rcPane.bottom || pt.y < 0) { fprintf(stderr, "Pane lower: visible %d bottom %d height %d scroll %d\n", IsWindowVisible(hwndRepCB), pt.y, rcPane.bottom, GetScrollPos(hwndPane, SB_VERT)); return FALSE; }

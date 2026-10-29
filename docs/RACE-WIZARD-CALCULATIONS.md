@@ -193,8 +193,9 @@ Sixteen bytes of storage do **not** imply IEEE binary128. The GCC
 [x86 options documentation](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html)
 distinguishes storage alignment from the 80-bit format.
 
-The production build uses GNU C11 and does not explicitly request fast math or
-a nondefault floating-point precision in `stars_options`. CMake checks
+At the time of these probes, the production build used GNU C11 and did not
+explicitly request fast math or a nondefault floating-point precision in
+`stars_options`. CMake checked
 `LDBL_MANT_DIG == 64` for native host builds and warns when it is different.
 That check alone does not establish the exponent format, the floating-point
 control word, the rounding mode, or every compiler optimization behavior.

@@ -35,7 +35,7 @@ typedef struct COMPATFILEDIALOG {
     BOOL fHidden;
     DWORD dwError;
 } COMPATFILEDIALOG;
-static _Thread_local DWORD dwDialogError;
+static thread_local DWORD dwDialogError;
 DWORD WINAPI CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
@@ -68,7 +68,7 @@ static void FreeFileEntries(COMPATFILEDIALOG *lp) {
     free(lp->rgentry); lp->rgentry = NULL; lp->cEntry = 0;
 }
 static int CmpFileEntry(const void *a, const void *b) {
-    const COMPATFILEENTRY *lpa = a, *lpb = b;
+    const COMPATFILEENTRY *lpa = (const COMPATFILEENTRY *)(a), *lpb = (const COMPATFILEENTRY *)(b);
     if (lpa->fDir != lpb->fDir) return lpa->fDir ? -1 : 1;
     return SDL_strcasecmp(lpa->psz, lpb->psz);
 }
@@ -118,7 +118,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
         if (!lp->fHidden && pszEntry[0] == '.') continue;
         if (!FJoinFile(szPath, lp->szDir, pszEntry) || IGetNativeFileInfo(szPath, &st, TRUE) != 0) continue;
         if (!st.fDirectory && (!st.fRegular || !FFileFilter(lp, pszEntry))) continue;
-        rg = realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg));
+        rg = (COMPATFILEENTRY *)(realloc(lp->rgentry, (lp->cEntry + 1) * sizeof(*rg)));
         if (!rg) { lp->dwError = CDERR_MEMALLOCFAILURE; break; }
         lp->rgentry = rg;
         rg[lp->cEntry].psz = strdup(pszEntry); rg[lp->cEntry].fDir = st.fDirectory;
@@ -223,7 +223,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     cch = strlen(lp->szResult) + 1;
     if (cch > lp->lpof->nMaxFile) {
         lp->dwError = FNERR_BUFFERTOOSMALL;
-        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = (WORD)min(cch, UINT16_MAX); memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
+        if (lp->lpof->nMaxFile >= sizeof(WORD)) { WORD required = (WORD)StarsMin(cch, UINT16_MAX); memcpy(lp->lpof->lpstrFile, &required, sizeof(required)); }
         return -1;
     }
     return 1;
@@ -395,7 +395,7 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
 }
 #endif
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
-    COMPATFILEDIALOG dlg = {0};
+    COMPATFILEDIALOG dlg = {};
     LPCSTR psz, pszPattern;
     HWND hwnd = NULL, hwndRoot = NULL, hwndFocus;
     char szInitial[PATH_MAX], szCwd[PATH_MAX], szPath[PATH_MAX], *pch;
@@ -480,7 +480,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     }
 #endif
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
-    cx = min(640, work.right - work.left - 32); cy = min(440, work.bottom - work.top - 64);
+    cx = StarsMin(640, work.right - work.left - 32); cy = StarsMin(440, work.bottom - work.top - 64);
     if (cx < 420 || cy < 320) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     rc = (RECT){work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
     rc.right = rc.left + cx; rc.bottom = rc.top + cy;

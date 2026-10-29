@@ -22,9 +22,9 @@ static HACCEL LpAccel(HACCEL haccel) {
 HACCEL WINAPI CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
     if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return NULL;
-    lp = calloc(1, sizeof(*lp));
+    lp = (HACCEL)(calloc(1, sizeof(*lp)));
     if (!lp) return NULL;
-    lp->rg = malloc((size_t)c * sizeof(ACCEL));
+    lp->rg = (ACCEL *)(malloc((size_t)c * sizeof(ACCEL)));
     if (!lp->rg) { free(lp); return NULL; }
     memcpy(lp->rg, rgaccel, (size_t)c * sizeof(ACCEL));
     lp->c = c; lp->fAlive = TRUE; lp->hnext = haccels; haccels = lp;
@@ -36,7 +36,7 @@ int WINAPI CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     if (!lp) return 0;
     if (!rgaccel) return lp->c;
     if (c <= 0) return 0;
-    c = min(c, lp->c);
+    c = StarsMin(c, lp->c);
     for (i = 0; i < c; i++) { rgaccel[i] = lp->rg[i]; rgaccel[i].fVirt &= ~0x80; }
     return c;
 }
@@ -49,7 +49,7 @@ BOOL WINAPI DestroyAcceleratorTable(HACCEL haccel) {
 }
 HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = FindResourceA(hInstance, pszName, RT_ACCELERATOR);
-    const BYTE *rgb = LockResource(LoadResource(hInstance, hrsrc));
+    const BYTE *rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hrsrc)));
     DWORD cb = SizeofResource(hInstance, hrsrc);
     ACCEL *rg;
     HACCEL lp;
@@ -58,7 +58,7 @@ HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     if (!rgb || cb == 0 || cb % 8 || cb / 8 > INT_MAX) return NULL;
     for (lp = haccels; lp; lp = lp->hnext) if (lp->hrsrc == hrsrc) return lp;
     c = (int)(cb / 8);
-    rg = calloc((size_t)c, sizeof(*rg));
+    rg = (ACCEL *)(calloc((size_t)c, sizeof(*rg)));
     if (!rg) return NULL;
     for (i = 0; i < c; i++) {
         flags = (WORD)(rgb[i * 8] | (rgb[i * 8 + 1] << 8));

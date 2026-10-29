@@ -32,12 +32,12 @@ int main(void) {
     hdc = CreateCompatibleDC(NULL);
     hbmp = CreateCompatibleBitmap(hdc, 400, 120);
     CHECK(hdc && hbmp);
-    hbmpOld = SelectObject(hdc, hbmp);
+    hbmpOld = (HBITMAP)(SelectObject(hdc, hbmp));
     lf.lfHeight = -14; strcpy(lf.lfFaceName, "Arial");
     hfont = CreateFontIndirect(&lf); CHECK(hfont);
-    hfontOld = SelectObject(hdc, hfont);
+    hfontOld = (HFONT)(SelectObject(hdc, hfont));
     CHECK(GetTextMetrics(hdc, &tmBefore) && GetTextExtentPoint32(hdc, "Retina 2", 8, &sizeBefore));
-    CHECK(FCompatSetDCScale(hdc, 2) && FillRect(hdc, &rc, GetStockObject(WHITE_BRUSH)));
+    CHECK(FCompatSetDCScale(hdc, 2) && FillRect(hdc, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH)));
     CHECK(TextOut(hdc, 5, 3, "Retina 2", 8));
     CHECK(GetTextMetrics(hdc, &tmAfter) && GetTextExtentPoint32(hdc, "Retina 2", 8, &sizeAfter));
     CHECK(!memcmp(&tmBefore, &tmAfter, sizeof(tmBefore)) && !memcmp(&sizeBefore, &sizeAfter, sizeof(sizeBefore)));

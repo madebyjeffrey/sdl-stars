@@ -33,10 +33,10 @@ int main(void) {
     hdc = CreateCompatibleDC(hscreen); hsrc = CreateCompatibleDC(hscreen);
     hbm = CreateCompatibleBitmap(hscreen, 40, 40); hsrcbm = CreateCompatibleBitmap(hscreen, 40, 40);
     CHECK(hdc && hsrc && hbm && hsrcbm);
-    hbmOld = SelectObject(hdc, hbm); hsrcOld = SelectObject(hsrc, hsrcbm);
+    hbmOld = (HBITMAP)(SelectObject(hdc, hbm)); hsrcOld = (HBITMAP)(SelectObject(hsrc, hsrcbm));
     hpen = CreatePen(PS_SOLID, 1, crPen); hbrush = CreateSolidBrush(crPen);
     CHECK(hpen && hbrush);
-    hpenOld = SelectObject(hdc, hpen); hbrushOld = SelectObject(hdc, hbrush);
+    hpenOld = (HPEN)(SelectObject(hdc, hpen)); hbrushOld = (HBRUSH)(SelectObject(hdc, hbrush));
     CHECK(GetROP2(hdc) == R2_COPYPEN && GetROP2(hsrc) == R2_COPYPEN);
     for (i = 1; i <= 16; i++) {
         CHECK(SetROP2(hdc, R2_COPYPEN));

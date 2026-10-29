@@ -22,6 +22,7 @@ def main():
     enums = enum_source()
     declarations = r'''
 #include <stdint.h>
+typedef uint16_t StringId;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,9 +64,8 @@ typedef int HWND;
 typedef intptr_t LPARAM;
 typedef struct { int16_t x,y; } POINT16;
 '''
-    start = enums.index('enum XferActionType {')
+    start = enums.index('enum XferActionType : uint16_t {')
     declarations += enums[start:enums.index('\n};', start)+3] + '\n'
-    declarations += 'typedef int XferActionType;\n'
     for tag, alias in [('_itemaction','ITEMACTION'), ('_taskxport','TASKXPORT'), ('_tasklaymines','TASKLAYMINES'),
                        ('_taskpatrol','TASKPATROL'), ('_tasksell','TASKSELL'), ('_order','ORDER'), ('_ziporder','ZIPORDER')]:
         start = types.index('struct ' + tag + ' {')
@@ -82,9 +82,18 @@ static int writes,draws,updates,alerts,hasCargo,notifications,depth,checks,enabl
 static int comboCount[3],comboSelection[3];
 static char comboLabels[3][20][80],szWork[256],editText[80],renameText[13],radioLabel[80];
 static ORDER snapshots[16];
-static char *rgszMinerals[5]={"Ironium","Boranium","Germanium","Colonists","Fuel"};
-static char *rgszZipOrder[4]={"Load","Unload","Wait","Clear"};
-static char *actionLabels[11]={"(no action)","Load All Available","Unload All","Load Exactly...","Unload Exactly...","Fill Up to %...","Wait for %...","Load Dunnage","Set Amount to...","Set Waypoint to...","Load Optimal"};
+static char rgszMineralsStorage[5][80]={"Ironium","Boranium","Germanium","Colonists","Fuel"};
+static char *rgszMinerals[5]={rgszMineralsStorage[0],rgszMineralsStorage[1],rgszMineralsStorage[2],rgszMineralsStorage[3],rgszMineralsStorage[4]};
+static char rgszZipOrderStorage[4][80]={"Load","Unload","Wait","Clear"};
+static char *rgszZipOrder[4]={rgszZipOrderStorage[0],rgszZipOrderStorage[1],rgszZipOrderStorage[2],rgszZipOrderStorage[3]};
+static char actionLabelsStorage[11][80]={"(no action)","Load All Available","Unload All","Load Exactly...","Unload Exactly...","Fill Up to %...","Wait for %...","Load Dunnage","Set Amount to...","Set Waypoint to...","Load Optimal"};
+static char *actionLabels[11]={actionLabelsStorage[0],actionLabelsStorage[1],actionLabelsStorage[2],actionLabelsStorage[3],actionLabelsStorage[4],actionLabelsStorage[5],actionLabelsStorage[6],actionLabelsStorage[7],actionLabelsStorage[8],actionLabelsStorage[9],actionLabelsStorage[10]};
+static char szLiteral0[] = "Player";
+static char szLiteral1[] = "Custom%d";
+static char szLiteral2[] = "Unused%d";
+static char szLiteral3[] = "%d LY";
+static char szLiteral4[] = "%d Year%c";
+static char szLiteral5[] = "Other";
 static void amount(void);
 void UpdateOrdersDDs(int16_t);
 static HWND GetDlgItem(HWND hwnd,int id) { (void)hwnd;return id; }
@@ -108,12 +117,12 @@ static int FLookupFleet(int id,void *p) {
 }
 static void DrawPlanShip(void *p,int tile) { (void)p;(void)tile;draws++; }
 static int LGetFleetStat(void *p,int stat) { (void)p;(void)stat;return hasCargo; }
-static char *PszPlayerName(int i,int a,int b,int c,int d,void *p) {(void)i;(void)a;(void)b;(void)c;(void)d;(void)p;return "Player";}
+static char *PszPlayerName(int i,int a,int b,int c,int d,void *p) {(void)i;(void)a;(void)b;(void)c;(void)d;(void)p;return szLiteral0;}
 static char *PszGetCompressedString(int id) {
     if(id>=idsAction && id<=idsLoadOptimal)return actionLabels[id-idsAction];
-    if(id==idsCustomD)return "Custom%d";if(id==idsUnusedD)return "Unused%d";
-    if(id==idsWithinDLY)return "%d LY";if(id==idsDYearC)return "%d Year%c";
-    return "Other";
+    if(id==idsCustomD)return szLiteral1;if(id==idsUnusedD)return szLiteral2;
+    if(id==idsWithinDLY)return szLiteral3;if(id==idsDYearC)return szLiteral4;
+    return szLiteral5;
 }
 static const char *PszFormatIds(int id,void *p) { (void)id;(void)p;return "amount"; }
 static int CchGetString(int id,char *out) { strcpy(out,PszGetCompressedString(id));return (int)strlen(out); }
@@ -149,7 +158,7 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,char **labels,int s
     bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.c', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'
     block = between(ui,'            fActive = TRUE;\n            switch (l) {','            psz = vrgszUnits[i];')
     bodies += 'static int quantityControl(int l,int i,int *unit) {int fActive;' + block + '*unit=i;return fActive;}\n'
-    block = between(custom,'                iAction = (uint16_t)(vrgZip[iResTechNow].txp.rgia[i].iAction);', '                TextOut(hdc, xCtr + 6,')
+    block = between(custom,'                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction);', '                TextOut(hdc, xCtr + 6,')
     bodies += 'static void paintLabel(int i) {int cch;XferActionType iAction;' + block + '}\n'
     bodies += r'''
 static void reset(void) {
@@ -238,11 +247,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m10-presets-') as work:
-        source = Path(work) / 'witness.c'
+        source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC', 'cc')) +
-                       ['-std=c11','-Wall','-Wextra','-Werror','-fsanitize=undefined','-fno-sanitize-recover=undefined',
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
+                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

@@ -1,7 +1,7 @@
+#include "path_utf8.h"
 #include "filesystem.h"
-extern "C" {
 #include "encoding.h"
-}
+
 #include <cstring>
 #include <filesystem>
 #include <random>
@@ -15,7 +15,7 @@ static bool FPathValid(const char *pszPath) {
 }
 
 static bool FCopyPath(const fs::path &pth, char *pszOut, size_t cbOut) {
-    std::string sz = pth.generic_u8string();
+    std::string sz = SzFromUtf8(pth.generic_u8string());
     if (sz.size() >= cbOut || !FUtf8Valid(sz.data(), sz.size()))
         return false;
     std::memcpy(pszOut, sz.c_str(), sz.size() + 1);
@@ -46,7 +46,7 @@ int FFilesystemTempDir(char *pszOut, size_t cbOut) {
                 return 0;
         }
     } catch (...) {
-        // Allocation, encoding and filesystem exceptions must not cross the C ABI.
+        // Allocation, encoding and filesystem exceptions must preserve the service failure contract.
     }
     *pszOut = 0;
     return 0;
@@ -57,7 +57,7 @@ int FFilesystemCreateDirectory(const char *pszPath) {
         return 0;
     try {
         std::error_code ec;
-        return fs::create_directory(fs::u8path(pszPath), ec) && !ec;
+        return fs::create_directory(PathFromUtf8(pszPath), ec) && !ec;
     } catch (...) {
         return 0;
     }
@@ -70,7 +70,7 @@ int FFilesystemCanonicalPath(const char *pszPath, char *pszOut, size_t cbOut) {
     if (!FPathValid(pszPath))
         return 0;
     try {
-        return FCopyPath(fs::canonical(fs::u8path(pszPath)), pszOut, cbOut);
+        return FCopyPath(fs::canonical(PathFromUtf8(pszPath)), pszOut, cbOut);
     } catch (...) {
         return 0;
     }
@@ -81,7 +81,7 @@ int FFilesystemRemove(const char *pszPath) {
         return 0;
     try {
         std::error_code ec;
-        return fs::remove(fs::u8path(pszPath), ec) && !ec;
+        return fs::remove(PathFromUtf8(pszPath), ec) && !ec;
     } catch (...) {
         return 0;
     }

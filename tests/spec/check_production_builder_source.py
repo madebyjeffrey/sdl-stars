@@ -14,6 +14,7 @@ import struct
 import subprocess
 import tempfile
 from check_s02_source import ROOT, function, enum_source
+from check_s02_source import ENUM_STORAGE
 
 
 class Boundary(Exception):
@@ -219,9 +220,9 @@ def main():
 #define idmScientistsHaveTransmutedCommonMaterialsKtEach 1
 #define ibitRaceMineralAlchemy 1
 '''
-    for name in ('ProdItemType','mdProdStat','GrobjClass'):
-        start=enums.index('enum '+name+' {')
-        declarations+=enums[start:enums.index('\n};',start)+3]+f'\ntypedef uint16_t {name};\n'
+    for name in ('ProdItemType','mdProdStat','GrobjClass','MsgGoto'):
+        start=enums.index('enum '+name+' : '+ENUM_STORAGE[name]+' {')
+        declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in (('_prod','PROD'),('PLPROD','PLPROD'),('_planet','PLANET')):
         start=types.index('struct '+tag+' {')
@@ -250,10 +251,10 @@ static void FSendPlrMsg2(int16_t player,int id,int a,int b,int c) {
     body=function('src/core/turn2.c','int16_t CBuildProdItem(')
     harness=r'''
 int main(int argc,char **argv) {
-    _Static_assert(sizeof(PROD)==4,"PROD wire width");assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);
+    static_assert(sizeof(PROD)==4,"PROD wire width");assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);
     int32_t input[23];int64_t expected[11];unsigned long cases=0,checks=0;
     while(fread(input,sizeof(input),1,f)==1) {
-        assert(fread(expected,sizeof(expected),1,f)==1);PLANET p={0};PROD row,partial;int32_t resources[4];
+        assert(fread(expected,sizeof(expected),1,f)==1);PLANET p={};PROD row,partial;int32_t resources[4];
         uint32_t raw=(uint32_t)input[0];memcpy(&row,&raw,4);raw=(uint32_t)input[1];memcpy(&partial,&raw,4);
         memcpy(quote,input+2,16);memcpy(resources,input+6,16);memcpy(limits,input+10,28);
         p.id=5;p.cMines=limits[1];p.cFactories=(limits[1]+17)%4096;p.cDefenses=(limits[1]+29)%4096;p.idFling=limits[6];
@@ -269,7 +270,7 @@ int main(int argc,char **argv) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-builder-') as work:
-        path=Path(work); source=path/'witness.c'; binary=path/'witness'; data=path/'vectors.bin'
+        path=Path(work); source=path/'witness.cpp'; binary=path/'witness'; data=path/'vectors.bin'
         excluded={}; count=0; statuses=set()
         with data.open('wb') as output:
             for row,partial,cost,resources,limits,flags in cases():
@@ -285,7 +286,7 @@ int main(int argc,char **argv) {
         assert excluded.get('signed overflow',0)>0 and excluded.get('uninitialized need',0)>0
         print(f'Prepared {count} defined vectors; excluded before C execution: {excluded}',flush=True)
         source.write_text(declarations+body+harness)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 

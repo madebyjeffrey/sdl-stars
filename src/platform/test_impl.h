@@ -1,4 +1,4 @@
-/* Test builds may retain real implementations under separate C names.
+/* Test builds may retain real implementations under separate implementation names.
  * Production builds expand every definition to its original symbol. */
 #ifndef STARS_TEST_IMPL_H
 #define STARS_TEST_IMPL_H

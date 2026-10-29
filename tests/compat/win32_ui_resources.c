@@ -63,7 +63,7 @@ int main(void) {
         hrsrc = FindResource(hinst, rgUIManifest[i].pszName, rgUIManifest[i].pszType);
         CHECK(hrsrc);
         cb = SizeofResource(hinst, hrsrc);
-        rgb = LockResource(LoadResource(hinst, hrsrc));
+        rgb = (const BYTE*)(LockResource(LoadResource(hinst, hrsrc)));
         if (cb != rgUIManifest[i].cb)
             fprintf(stderr, "resource %d size %lu / %lu\n", i, (unsigned long)cb, (unsigned long)rgUIManifest[i].cb);
         CHECK(rgb && cb == rgUIManifest[i].cb);

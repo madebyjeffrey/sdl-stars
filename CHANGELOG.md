@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The C++ compilation audit explicitly reads UTF-8 sources and compiler manifests,
+  fixing a decoding failure on Windows systems using the default CP1252 locale.
+  Game behavior and regression baselines are unchanged.
+
 - Windows SDK reference tests can be enabled alongside the ordinary tests.
   CMake registers their shared enum-ABI and file-service contract targets once;
   previously the combined configuration failed with duplicate-target errors.

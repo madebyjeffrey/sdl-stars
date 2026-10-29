@@ -10,12 +10,12 @@ import shlex
 import subprocess
 import tempfile
 
-from check_s02_source import ROOT, function, c_source
+from check_s02_source import ROOT, function
 
 
 def between(source, start, end):
     begin = source.index(start)
-    return c_source(source[begin:source.index(end, begin)])
+    return source[begin:source.index(end, begin)]
 
 
 def main():
@@ -98,12 +98,12 @@ int main(void) {
     CHECK(ini.fStartupFile && strcmp(szBase,"aaaa")==0 && strcmp(memory[0],"bbbb")==0);
     reset();inputs[0]="aaaa";inputs[2]="cc";inputs[8]="iiii";recent();
     CHECK(ini.fStartupFile && strcmp(szBase,"aaaa")==0 && strcmp(memory[1],"iiii")==0 && memory[8][0]==0);
-    reset();strcpy(memory[0],"a.m1");AddMRUFile("A","M1"); CHECK(attempts==0 && strcmp(memory[0],"a.m1")==0);
-    reset();strcpy(memory[2],"c.m1");AddMRUFile("c","m1");
+    reset();strcpy(memory[0],"a.m1");AddMRUFile(const_cast<char *>("A"),const_cast<char *>("M1")); CHECK(attempts==0 && strcmp(memory[0],"a.m1")==0);
+    reset();strcpy(memory[2],"c.m1");AddMRUFile(const_cast<char *>("c"),const_cast<char *>("m1"));
     CHECK(attempts==9 && strcmp(memory[0],"c.m1")==0 && strcmp(memory[2],"bbbb")==0 && strcmp(memory[8],"iiii")==0);
-    reset();failAt=2;AddMRUFile("j","m1");
+    reset();failAt=2;AddMRUFile(const_cast<char *>("j"),const_cast<char *>("m1"));
     CHECK(attempts==9 && strcmp(memory[0],"j.m1")==0 && strcmp(memory[8],"hhhh")==0 && strcmp(disk[1],"bbbb")==0 && strcmp(disk[2],"bbbb")==0);
-    reset();vrgszMRU=NULL;AddMRUFile("j","m1");CHECK(attempts==0);
+    reset();vrgszMRU=NULL;AddMRUFile(const_cast<char *>("j"),const_cast<char *>("m1"));CHECK(attempts==0);
     reset();under[0]=1; CHECK(FDeleteLibraryGameRecentPaths("unused"));
     CHECK(attempts==10 && memory[0][0]==0 && strcmp(memory[1],"bbbb")==0 && disk[0][0]==0);
     reset();under[2]=1; CHECK(FDeleteLibraryGameRecentPaths("unused"));
@@ -121,11 +121,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix="s02-state-") as work:
-        source = Path(work) / "witness.c"
+        source = Path(work) / "witness.cpp"
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC", "cc")) +
-                       ["-std=c11", "-Wall", "-Wextra", "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+        subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
                         str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

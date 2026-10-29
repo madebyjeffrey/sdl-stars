@@ -40,18 +40,18 @@ def generate(root, output):
     source = ['/* Generated from res/stars.rc and its BMP files. */', '#include "internal.h"']
     manifest = ['/* Generated bitmap identities for native and SDK reference tests. */']
     for i, (identity, data) in enumerate(resources):
-        source.append(f'_Alignas(4) static const BYTE rgbResource{i}[] = {{')
+        source.append(f'alignas(4) static constinit const BYTE rgbResource{i}[] = {{')
         source.extend('    ' + ','.join(f'0x{x:02x}' for x in data[j:j + 32]) + ',' for j in range(0, len(data), 32))
         source.append('};')
         identifier = f'MAKEINTRESOURCE({identity})' if isinstance(identity, int) else f'"{identity}"'
         manifest.append(f'{{{identifier}, {len(data)}}},')
-    source.append('const COMPATRESOURCE rgCompatResources[] = {')
+    source.append('constinit const COMPATRESOURCE rgCompatResources[] = {')
     for i, (identity, data) in enumerate(resources):
         name = 'NULL' if isinstance(identity, int) else f'"{identity}"'
         number = identity if isinstance(identity, int) else 0
         source.append(f'    {{{name}, {number}, rgbResource{i}, sizeof(rgbResource{i}), 2}},')
-    source += ['};', 'const size_t cCompatResources = sizeof(rgCompatResources) / sizeof(rgCompatResources[0]);']
-    (output / 'bitmap_resources.c').write_text('\n'.join(source) + '\n')
+    source += ['};', 'constinit const size_t cCompatResources = sizeof(rgCompatResources) / sizeof(rgCompatResources[0]);']
+    (output / 'bitmap_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'bitmap_manifest.h').write_text('\n'.join(manifest) + '\n')
 
 

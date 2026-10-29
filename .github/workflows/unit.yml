@@ -37,8 +37,28 @@ jobs:
       - name: Build and run SDL unit and wrapper tests
         run: |
           cmake --preset sdl-debug
-          cmake --build --preset sdl-debug --parallel 2
+          cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
+
+  source-witnesses:
+    name: Source witnesses (C++20)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-build.txt
+      - name: Run independent simulation and workflow vectors
+        run: |
+          result=0
+          for witness in tests/spec/check_*_source.py; do
+            python "$witness" || result=1
+          done
+          exit "$result"
 
   # The unit tests that need no windows, built natively with gcc.
   host-linux:
@@ -85,7 +105,12 @@ jobs:
         run: |
           # Use MSYS2 Python so CMake can create the build-local environment.
           # Both suites share contract targets; configure their combined registry.
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
-          cmake --build --preset windows-sdl-debug --parallel 2
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=ON -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          cmake --build --preset windows-sdl-debug --target stars-sdk-reference-build --parallel 2 -- -k 0
+          ctest --test-dir dist/windows-sdl-debug -R '^(test_win32_abi_reference|test_nativeui_points_reference)$' --output-on-failure
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=OFF -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=OFF -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=ON -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
+          ctest --test-dir dist/windows-sdl-debug -R '^test_' --output-on-failure
           ctest --preset windows-sdl-headless

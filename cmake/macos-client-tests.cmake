@@ -83,7 +83,7 @@ add_executable(stars-compat-messagebox tests/compat/win32_messagebox.c)
 target_include_directories(stars-compat-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-compat-messagebox PRIVATE stars_options stars_win32 SDL3::SDL3)
 stars_test_redirect(stars-compat-messagebox SDL_PutAudioStreamData)
-target_compile_options(stars-compat-messagebox PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(stars-compat-messagebox PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
 set_target_properties(stars-compat-messagebox PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_messagebox COMMAND stars-compat-messagebox)
 set_tests_properties(win32_messagebox PROPERTIES LABELS compat TIMEOUT 30

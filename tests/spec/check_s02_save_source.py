@@ -9,7 +9,7 @@ import os
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import function
+from check_s02_source import ROOT, function
 
 
 def main():
@@ -60,7 +60,7 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"stage %d witness %d failed: %s\n",failure,checks,#x);return 1;}}while(0)
 int main(void){
-    COMPATPROFILE second={"B\n",NULL},first={"A",&second};int ret;
+    COMPATPROFILE second={const_cast<char *>("B\n"),NULL},first={const_cast<char *>("A"),&second};int ret;
     for(failure=Ok;failure<=Rename;failure++){
         lastError=77;published=unlinked=opened=closed=syncCalled=renameCalled=0;used=0;cleanupOK=1;
         ret=FSaveProfile(&first,"unused");
@@ -79,10 +79,10 @@ int main(void){
 }
 '''
     with tempfile.TemporaryDirectory(prefix="s02-save-source-") as work:
-        path=Path(work);source=path/"witness.c";binary=path/"witness"
+        path=Path(work);source=path/"witness.cpp";binary=path/"witness"
         source.write_text(stubs+body+witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC","cc"))+
-                       ["-std=c11","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

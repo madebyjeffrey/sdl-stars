@@ -12,7 +12,7 @@ static HWND LpScrollWindow(HWND hwnd, int sb) {
 }
 
 static int IScrollMax(const COMPATSCROLL *lpscr) {
-    return (int)max((int64_t)lpscr->iMin, (int64_t)lpscr->iMax - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0));
+    return (int)((((int64_t)lpscr->iMin) > ((int64_t)lpscr->iMax - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0))) ? ((int64_t)lpscr->iMin) : ((int64_t)lpscr->iMax - (lpscr->cPage != 0 ? lpscr->cPage - 1 : 0)));
 }
 
 void CompatLayoutScrollbars(HWND hwnd) {
@@ -37,12 +37,12 @@ void CompatLayoutScrollbars(HWND hwnd) {
         if (!IsWindow(hbar)) continue;
         hbar->rgscr[0] = hwnd->rgscr[i];
         if (i == SB_VERT) {
-            d = max(0, rc.right - client.right);
+            d = StarsMax(0, rc.right - client.right);
             if (hbar->rcChild.left != client.right || hbar->rcChild.top != 0 ||
                 hbar->rcChild.right != rc.right || hbar->rcChild.bottom != client.bottom)
                 SetWindowPos(hbar, HWND_TOP, client.right, 0, d, client.bottom, SWP_NOACTIVATE);
         } else {
-            d = max(0, rc.bottom - client.bottom);
+            d = StarsMax(0, rc.bottom - client.bottom);
             if (hbar->rcChild.left != 0 || hbar->rcChild.top != client.bottom ||
                 hbar->rcChild.right != client.right || hbar->rcChild.bottom != rc.bottom)
                 SetWindowPos(hbar, HWND_TOP, 0, client.bottom, client.right, d, SWP_NOACTIVATE);
@@ -84,13 +84,13 @@ int WINAPI SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw) {
     styleOld = hwnd->dwStyle;
     lpscr = &hwnd->rgscr[sb == SB_CTL ? 0 : sb];
     if (lpsi->fMask & SIF_RANGE) {
-        lpscr->iMin = lpsi->nMin; lpscr->iMax = max(lpsi->nMin, lpsi->nMax);
+        lpscr->iMin = lpsi->nMin; lpscr->iMax = StarsMax(lpsi->nMin, lpsi->nMax);
     }
     cRange = (int64_t)lpscr->iMax - lpscr->iMin + 1;
-    if (lpsi->fMask & SIF_PAGE) lpscr->cPage = (UINT)min((uint64_t)lpsi->nPage, (uint64_t)cRange);
-    else lpscr->cPage = (UINT)min((uint64_t)lpscr->cPage, (uint64_t)cRange);
+    if (lpsi->fMask & SIF_PAGE) lpscr->cPage = (UINT)((((uint64_t)lpsi->nPage) < ((uint64_t)cRange)) ? ((uint64_t)lpsi->nPage) : ((uint64_t)cRange));
+    else lpscr->cPage = (UINT)((((uint64_t)lpscr->cPage) < ((uint64_t)cRange)) ? ((uint64_t)lpscr->cPage) : ((uint64_t)cRange));
     if (lpsi->fMask & SIF_POS) lpscr->iPos = lpsi->nPos;
-    lpscr->iPos = max(lpscr->iMin, min(lpscr->iPos, IScrollMax(lpscr)));
+    lpscr->iPos = (((lpscr->iMin) > ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr))))) ? (lpscr->iMin) : ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr)))));
     fShow = IScrollMax(lpscr) > lpscr->iMin;
     lpscr->fDisable = !fShow;
     if (sb != SB_CTL) {
@@ -125,7 +125,7 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi) {
 
 static int ISetScrollPos(HWND hwnd, COMPATSCROLL *lpscr, int iPos, BOOL fRedraw) {
     int iOld = lpscr->iPos;
-    lpscr->iPos = max(lpscr->iMin, min(iPos, IScrollMax(lpscr)));
+    lpscr->iPos = (((lpscr->iMin) > ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr))))) ? (lpscr->iMin) : ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr)))));
     if (fRedraw && iOld != lpscr->iPos) InvalidateRect(hwnd, NULL, FALSE);
     return iOld;
 }
@@ -134,9 +134,9 @@ static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, 
     if (iMin > iMax) iMin = iMax = 0;
     if ((int64_t)iMax - iMin > INT32_MAX) { SetLastError(ERROR_INVALID_PARAMETER); return FALSE; }
     lpscr->iMin = iMin; lpscr->iMax = iMax;
-    lpscr->cPage = (UINT)min((uint64_t)lpscr->cPage, (uint64_t)((int64_t)iMax - iMin + 1));
+    lpscr->cPage = (UINT)((((uint64_t)lpscr->cPage) < ((uint64_t)((int64_t)iMax - iMin + 1))) ? ((uint64_t)lpscr->cPage) : ((uint64_t)((int64_t)iMax - iMin + 1)));
     lpscr->fDisable = IScrollMax(lpscr) == iMin;
-    lpscr->iPos = max(iMin, min(lpscr->iPos, IScrollMax(lpscr)));
+    lpscr->iPos = (((iMin) > ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr))))) ? (iMin) : ((((lpscr->iPos) < (IScrollMax(lpscr))) ? (lpscr->iPos) : (IScrollMax(lpscr)))));
     if (fRedraw) InvalidateRect(hwnd, NULL, FALSE);
     return TRUE;
 }
@@ -217,13 +217,14 @@ static BOOL FScrollGeom(HWND hwnd, SCROLLGEOM *lpg) {
     lpg->fVert = !!(lpwin->dwStyle & SBS_VERT);
     lpg->cAxis = lpg->fVert ? lpg->rc.bottom : lpg->rc.right;
     lpg->cCross = lpg->fVert ? lpg->rc.right : lpg->rc.bottom;
-    lpg->dArrow = min(17, lpg->cAxis / 2);
+    lpg->dArrow = StarsMin(17, lpg->cAxis / 2);
     cRange = (int64_t)lpscr->iMax - lpscr->iMin + 1;
-    lpg->dThumb = min(lpg->cAxis - 2 * lpg->dArrow, lpscr->cPage != 0 ?
-        max(8, (int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / max(1, cRange))) : 17);
+    lpg->dThumb = (((lpg->cAxis - 2 * lpg->dArrow) < (lpscr->cPage != 0 ?
+        (((8) > ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) ? (8) : ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) : 17)) ? (lpg->cAxis - 2 * lpg->dArrow) : (lpscr->cPage != 0 ?
+        (((8) > ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) ? (8) : ((int)((int64_t)(lpg->cAxis - 2 * lpg->dArrow) * lpscr->cPage / StarsMax(1, cRange)))) : 17));
     lpg->dTravel = lpg->cAxis - 2 * lpg->dArrow - lpg->dThumb;
     iPos = lpwin->fTracking && lpwin->sbScrollTrack == SB_THUMBTRACK ? lpwin->iScrollTrack : lpscr->iPos;
-    iPos = max(lpscr->iMin, min(iPos, IScrollMax(lpscr)));
+    iPos = (((lpscr->iMin) > ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr))))) ? (lpscr->iMin) : ((((iPos) < (IScrollMax(lpscr))) ? (iPos) : (IScrollMax(lpscr)))));
     cRange = (int64_t)IScrollMax(lpscr) - lpscr->iMin;
     lpg->iThumb = lpg->dArrow + (cRange ? (int)(((int64_t)iPos - lpscr->iMin) * lpg->dTravel / cRange) : 0);
     return lpg->cAxis > 0 && lpg->cCross > 0;
@@ -397,7 +398,7 @@ LRESULT CALLBACK CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpwin->lScrollPoint = l;
         if (lpwin->sbScrollTrack == SB_THUMBTRACK) {
             iAxis = g.fVert ? (int16_t)HIWORD(l) : (int16_t)LOWORD(l);
-            iOffset = max(0, min(iAxis - lpwin->dScrollGrab - g.dArrow, g.dTravel));
+            iOffset = (((0) > (StarsMin(iAxis - lpwin->dScrollGrab - g.dArrow, g.dTravel))) ? (0) : (StarsMin(iAxis - lpwin->dScrollGrab - g.dArrow, g.dTravel)));
             cRange = (int64_t)IScrollMax(lpscr) - lpscr->iMin;
             lpwin->iScrollTrack = g.dTravel ? (int)(lpscr->iMin + (iOffset * cRange + g.dTravel / 2) / g.dTravel) : lpscr->iMin;
             InvalidateRect(hwnd, NULL, FALSE);

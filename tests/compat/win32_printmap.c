@@ -12,10 +12,11 @@ static int cLaunch, cAlert;
 static UINT_PTR idDriver, idDialog;
 static int cPageX = 1, cPageY = 1;
 static const char *pszTarget;
+static char szInstalledRace[] = "installed.r1";
 
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
-bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
+extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     FILE *lpFile;
     char rgb[5];
     (void)pszUri;
@@ -59,7 +60,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     fputs("]}\n", lpFile); fclose(lpFile);
     idDialog = SetTimer(NULL, 0, 30, ChoosePages);
     if (!idDialog) goto done;
-    grbitScan |= grbitScanPlanetNames;
+    grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanPlanetNames);
     snprintf(szTarget, sizeof(szTarget), "%s/single.pdf", pszOutput); pszTarget = szTarget;
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
     SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
@@ -83,7 +84,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
         // Use the normal race serializer to prepare an unprotected predefined
         // race for a separate installed-product game; frozen inputs stay intact.
         plr = vrgplrDef[0]; plr.lSalt = 0;
-        fPassed = FCreateFile(dtRace, iplrNone, "installed.r1");
+        fPassed = FCreateFile(dtRace, iplrNone, szInstalledRace);
         if (fPassed) {
             WriteRtPlr(&plr, NULL); icksum = IRaceChecksum(&plr);
             WriteRt(rtEOF, 2, &icksum); StreamClose();

@@ -608,7 +608,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 8:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ResearchDlg || tutor.idtBold != 38) { pszFailure = "unexpected research dialog"; goto LFail; }
-        if (!FClick(GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + Weapons))) goto LInput;
+        if (!FClick(GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + (int)Weapons))) goto LInput;
         break;
     case 9:
         if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg) { pszFailure = "research dialog vanished"; goto LFail; }

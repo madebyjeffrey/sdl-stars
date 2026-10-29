@@ -22,7 +22,7 @@ static LRESULT CALLBACK ChildProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     CREATESTRUCT *lpcs;
     if (msg == WM_NCCREATE) {
         lpcs = (CREATESTRUCT *)l;
-        lp = lpcs->lpCreateParams;
+        lp = (CHILDTEST*)(lpcs->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
         lp->fCreateData = lpcs->hwndParent == lp->hwndParent && (INT_PTR)lpcs->hMenu == lp->id;
     }

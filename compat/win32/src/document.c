@@ -11,7 +11,7 @@ char *PszCompatFileUri(const char *pszPath) {
 
     pszAbsolute = PszCanonicalNativePath(pszPath, NULL, 0);
     if (!pszAbsolute) return NULL;
-    pszUri = malloc(strlen(pszAbsolute) * 3 + 9);
+    pszUri = (char *)(malloc(strlen(pszAbsolute) * 3 + 9));
     if (!pszUri) { free(pszAbsolute); return NULL; }
     memcpy(pszUri, "file://", 7); lpchOut = pszUri + 7;
 #ifdef _WIN32

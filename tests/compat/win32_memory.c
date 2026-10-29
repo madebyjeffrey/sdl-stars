@@ -15,7 +15,7 @@ int main(void) {
 
     h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, 17);
     CHECK(h && GlobalSize(h) >= 17);
-    rgb = GlobalLock(h);
+    rgb = (BYTE*)(GlobalLock(h));
     CHECK(rgb && (HANDLE)rgb != h && GlobalHandle(rgb) == h);
     for (i = 0; i < 17; i++) CHECK(rgb[i] == 0);
     memcpy(rgb, "persistent bytes", 17);
@@ -26,12 +26,12 @@ int main(void) {
     CHECK(!GlobalUnlock(h) && GetLastError() == ERROR_NOT_LOCKED);
     hGrow = GlobalReAlloc(h, 257, GMEM_ZEROINIT);
     CHECK(hGrow == h && GlobalSize(h) >= 257);
-    rgb = GlobalLock(h);
+    rgb = (BYTE*)(GlobalLock(h));
     CHECK(rgb && !memcmp(rgb, "persistent bytes", 17));
     for (i = 17; i < 257; i++) CHECK(rgb[i] == 0);
     CHECK(!GlobalUnlock(h));
     CHECK(GlobalReAlloc(h, 8, 0) == h && GlobalSize(h) >= 8);
-    rgb = GlobalLock(h);
+    rgb = (BYTE*)(GlobalLock(h));
     CHECK(rgb && !memcmp(rgb, "persiste", 8));
     CHECK(!GlobalUnlock(h) && !GlobalFree(h));
 
@@ -39,7 +39,7 @@ int main(void) {
     CHECK(hZero && GlobalSize(hZero) == 0 && !GlobalLock(hZero));
     CHECK(GlobalFlags(hZero) & GMEM_DISCARDED);
     CHECK(GlobalReAlloc(hZero, 20, GMEM_ZEROINIT) == hZero);
-    rgb = GlobalLock(hZero);
+    rgb = (BYTE*)(GlobalLock(hZero));
     CHECK(rgb && rgb[0] == 0 && rgb[19] == 0 && !GlobalUnlock(hZero));
     CHECK(GlobalReAlloc(hZero, 0, GMEM_MOVEABLE) == hZero && !GlobalLock(hZero));
     CHECK(!GlobalFree(hZero));
@@ -52,7 +52,7 @@ int main(void) {
     CHECK(hLocal && LocalLock(hLocal) == hLocal && LocalSize(hLocal) >= 40);
     CHECK(((BYTE *)hLocal)[39] == 0 && !LocalFree(hLocal));
     hLocal = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, 12);
-    rgb = LocalLock(hLocal);
+    rgb = (BYTE*)(LocalLock(hLocal));
     CHECK(hLocal && rgb && LocalHandle(rgb) == hLocal && rgb[11] == 0);
     CHECK(!LocalUnlock(hLocal) && !LocalFree(hLocal));
     CHECK(!GlobalFree(NULL) && !LocalFree(NULL));

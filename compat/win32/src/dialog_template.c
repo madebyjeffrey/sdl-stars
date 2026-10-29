@@ -32,7 +32,7 @@ static BOOL FDlgField(const BYTE *rgb, size_t cb, size_t *lpib, WORD *lpid, char
         cch++;
         if (!FDlgWord(rgb, cb, lpib, &w)) return FALSE;
     }
-    psz = malloc(cch * 3 + 1);
+    psz = (char *)(malloc(cch * 3 + 1));
     if (!psz) return FALSE;
     if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibStart, cch) < 0) { free(psz); return FALSE; }
     *lppsz = psz;
@@ -49,7 +49,7 @@ void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
     memset(lpdlg, 0, sizeof(*lpdlg));
 }
 BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg) {
-    COMPATDLGTEMPLATE dlg = {0};
+    COMPATDLGTEMPLATE dlg = {};
     COMPATDLGITEM *lpitem;
     size_t ib = 0;
     WORD i, idFont = 0;
@@ -67,7 +67,7 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg)
     }
     // Even an ordinal class/title needs a complete fixed header and three fields.
     if (dlg.cItems > (cb - ib) / 24) goto fail;
-    if (dlg.cItems && !(dlg.rgItems = calloc(dlg.cItems, sizeof(*dlg.rgItems)))) goto fail;
+    if (dlg.cItems && !(dlg.rgItems = (COMPATDLGITEM *)(calloc(dlg.cItems, sizeof(*dlg.rgItems))))) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         ib += (4 - ib % 4) % 4;
         lpitem = &dlg.rgItems[i];

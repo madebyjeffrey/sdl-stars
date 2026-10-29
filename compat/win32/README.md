@@ -4,7 +4,7 @@ The same wrapper now builds on Linux, macOS and Windows x64. Native Windows
 setup and portable packaging are documented in [Windows SDL3](../../docs/WINDOWS-SDL3.md).
 
 Milestone 2 supplies declarations for the Win32 UI surface recorded in
-`docs/WIN32-APIS.md`. The subsequent Free API adaptation adds the local C11
+`docs/WIN32-APIS.md`. The subsequent Free API adaptation adds the local C++20
 `stars_win32` runtime with rectangle operations, tick counts and the initial
 SDL-backed window/message subset. See [window milestone](../../docs/WIN32-WINDOWS.md)
 for the `stars-compat-windows` interactive/self-test target and supported APIs.
@@ -95,7 +95,7 @@ with a real SDK/Wine test of the supported drawing contracts.
 ## Memory DCs and bitmaps
 
 Compatible memory DCs/bitmaps, bitmap selection and metadata, `BitBlt` and
-`PatBlt` now work through the local C11 runtime. `stars-compat-bitmap` shares
+`PatBlt` now work through the local C++20 runtime. `stars-compat-bitmap` shares
 ownership and pixel tests with Windows; `stars-compat-paint` now draws into
 memory bitmaps and blits to independent windows. See
 [scope, CLion use and verification](../../docs/WIN32-BITMAPS.md).

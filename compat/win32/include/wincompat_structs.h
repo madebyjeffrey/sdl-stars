@@ -4,6 +4,7 @@
 #ifndef STARS_WINCOMPAT_STRUCTS_H
 #define STARS_WINCOMPAT_STRUCTS_H
 
+#include "wincompat_types.h"
 #pragma pack(push, 8)
 typedef struct tagWINDOWPOS {
     HWND hwnd;

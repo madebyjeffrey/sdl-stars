@@ -1254,7 +1254,7 @@ void FuelFleets() {
             }
         }
         if (csh != 0 || cPods != 0) {
-            lpfl->rgwtMin[4] = min(LGetFleetStat(lpfl, 1), lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50));
+            lpfl->rgwtMin[4] = (((LGetFleetStat(lpfl, 1)) < (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50))) ? (LGetFleetStat(lpfl, 1)) : (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50)));
         }
     }
     return;

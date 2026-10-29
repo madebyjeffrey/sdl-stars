@@ -36,7 +36,7 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     }
     lp = LpTimer(hwnd, id);
     if (!lp) {
-        lp = calloc(1, sizeof(*lp));
+        lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));
         if (!lp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
@@ -45,7 +45,7 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
         lp->id = id;
         lp->lpNext = lpTimers; lpTimers = lp;
     }
-    lp->cMillis = max(USER_TIMER_MINIMUM, min(cMillis, USER_TIMER_MAXIMUM));
+    lp->cMillis = (((USER_TIMER_MINIMUM) > (StarsMin(cMillis, USER_TIMER_MAXIMUM))) ? (USER_TIMER_MINIMUM) : (StarsMin(cMillis, USER_TIMER_MAXIMUM)));
     lp->msDue = SDL_GetTicks() + lp->cMillis;
     lp->lpfn = lpfn;
     return lp->id ? lp->id : 1;

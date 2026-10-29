@@ -1,5 +1,6 @@
 #ifndef STARS_FILE_GUARD_H
 #define STARS_FILE_GUARD_H
+#include "native.h"
 
 // A borrowed handle slot can transfer ownership to the caller on success.
 // Destruction only releases resources; checked publication remains explicit.

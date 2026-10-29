@@ -3,7 +3,7 @@
 static uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
        are walked and written using their original two-byte boundaries. */
-    return ht == htBattle ? 2 : _Alignof(max_align_t);
+    return ht == htBattle ? 2 : alignof(max_align_t);
 }
 
 static uint16_t CbHbHeader(HeapType ht) {
@@ -17,7 +17,7 @@ static uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
     uint32_t cbAlign = CbHeapAlign(ht);
     uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
-    if (cbItem > UINT16_MAX - CbHbHeader(ht)) {
+    if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }

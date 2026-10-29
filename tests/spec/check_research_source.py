@@ -176,7 +176,7 @@ static void callback(int kind,int index,int argument){calls++;hashValue(kind);ha
     if(calls-1==cfg[33])longjmp(escaped,1);
 }
 int16_t CResourcesAtPlanet(PLANET *planet,int16_t player){int index=(int)(planet-storage);assert(index>=0 && index<cfg[32]);callback(1,index,player);return (int16_t)cfg[40+5*(index%4)];}
-void EstimateItemProdSched(PLANET *planet,PLPROD *row,ProdItemType item,int16_t *first,int16_t *last){int index=(int)(planet-storage);assert(!row && item==iprodEstimateResearchResources);callback(2,index,idPlayer);*first=(int16_t)cfg[41+5*(index%4)];*last=123;}
+void EstimateItemProdSched(PLANET *planet,PLPROD *row,ProdItemType item,int16_t *first,int16_t *last){int index=(int)(planet-storage);assert(!row && item==static_cast<ProdItemType>(iprodEstimateResearchResources));callback(2,index,idPlayer);*first=(int16_t)cfg[41+5*(index%4)];*last=123;}
 '''
     getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
     bodies=table+'\n'+getter+'\n'+function('src/core/research.c','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
@@ -186,12 +186,12 @@ static void setup(void){
     memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));memset(queues,0,sizeof(queues));calls=grossCalls=forecastCalls=mutated=0;traceHash=0;idPlayer=0;
     game.fSlowTech=cfg[1];for(int i=0;i<6;i++){rgplr[0].rgTech[i]=(int8_t)cfg[4+i];rgplr[0].rgAttr[8+i]=(int8_t)cfg[10+i];rgplr[0].rgResSpent[i]=(uint32_t)cfg[22+i];}
     if(cfg[0]==2){idPlayer=(int16_t)cfg[29];rgplr[0].pctResearch=(int8_t)cfg[30];rgplr[1].pctResearch=(int8_t)cfg[31];cPlanet=(int16_t)cfg[32];
-        int count=cfg[32]>4 ? cfg[32]:4;if(count>capacity){free(storage);storage=calloc((size_t)count,sizeof(*storage));assert(storage);capacity=count;}lpPlanets=storage;
+        int count=cfg[32]>4 ? cfg[32]:4;if(count>capacity){free(storage);storage=static_cast<PLANET *>(calloc((size_t)count,sizeof(*storage)));assert(storage);capacity=count;}lpPlanets=storage;
         memset(storage,0,(size_t)count*sizeof(*storage));for(int i=0;i<cfg[32];i++){storage[i].iPlayer=(int16_t)cfg[38+5*(i%4)];setQueue(i,cfg[39+5*(i%4)]);}
     }
 }
 int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");assert(file);unsigned long cases=0,checks=0;int64_t expected[22];
-    while(fread(cfg,sizeof(cfg),1,file)==1){assert(fread(expected,sizeof(expected),1,file)==1);setup();int64_t actual[22]={0};
+    while(fread(cfg,sizeof(cfg),1,file)==1){assert(fread(expected,sizeof(expected),1,file)==1);setup();int64_t actual[22]={};
         if(cfg[0]==0)actual[0]=GetTechLevelCost((TechFieldType)cfg[2],(int16_t)cfg[3],0);
         else if(cfg[0]==1){char target[6];for(int i=0;i<6;i++)target[i]=(char)cfg[16+i];actual[0]=CostOfDevelopingItem(target);}
         else {int complete=0;int32_t value=0;if(!setjmp(escaped)){value=ProjectedResearchSpending(cfg[28]);complete=1;}
@@ -217,9 +217,9 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         print(f'Prepared {count} defined research vectors; excluded before C: {excluded}',flush=True)
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        c_file=path/'witness.c';c_file.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(c_file),'-lm','-o',str(binary)],check=True)
+        c_file=path/'witness.cpp';c_file.write_text(declarations+bodies+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(c_file),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
 

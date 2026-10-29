@@ -20,6 +20,7 @@ def main():
     types = (ROOT / 'src/core/structs.h').read_text()
     declarations = r'''
 #include <stdint.h>
+typedef uint16_t StringId;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,7 +164,7 @@ int main(void) {
     PROD automatic={.cItem=10,.iItem=0,.grobj=1,.pct=50,.unused=3};ZIPPRODQ snapshot[5];
     CHECK(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(ZIPPRODQ)==40);
     reset(2);lpplProdGlob->rgprod[0]=automatic;lpplProdGlob->rgprod[1]=manual;
-    pProdGlob[0]=(PROD){.cItem=20,.iItem=0,.grobj=1};pProdGlob[1]=manual;cProdGlob=2;
+    pProdGlob[0]=PROD{.cItem=20,.iItem=0,.grobj=1,.pct=0,.unused=0};pProdGlob[1]=manual;cProdGlob=2;
     vrgZipProd[0].cpq=1;vrgZipProd[0].rgpq[0].w=64;vrgZipProd[0].fNoResearch=1;
     apply(IDC_IMPORT,0);
     CHECK(lpplProdGlob->iprodMac==2 && lpplProdGlob->iprodMax==3 && lastBytes==16);
@@ -238,11 +239,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-presets-') as work:
-        source = Path(work) / 'witness.c'
+        source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC', 'cc')) +
-                       ['-std=c11', '-Wall', '-Wextra', '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
+                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
                         str(source), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

@@ -100,8 +100,8 @@ int16_t FCanBuildShdef(SHDEF *design,int16_t player){
     assert stub in declarations
     declarations=declarations.replace(stub,'static HULDEF *NativeHullFromId(int16_t hull);\nHULDEF *LphuldefFromId(int16_t hull){catalogCalls++;return NativeHullFromId(hull);}')
     declarations=declarations.replace('assert(!player && id==planet.id);newFleets++;','assert(player==planet.iPlayer && id==planet.id);newFleets++;')
-    declarations+='\n'.join(f'_Static_assert({name}=={value},"model identity {name}");' for name,value in IDENTITIES.items())+'\n'
-    declarations+='_Static_assert(iplrNone==-1 && ihuldefDeathStart==ihuldefOrbitalFort+isbhullCount-1,"native owner/catalog bounds");\n'
+    declarations+='\n'.join(f'static_assert({name}=={value},"model identity {name}");' for name,value in IDENTITIES.items())+'\n'
+    declarations+='static_assert(iplrNone==-1 && ihuldefDeathStart==ihuldefOrbitalFort+(int)isbhullCount-1,"native owner/catalog bounds");\n'
     bodies=bodies.replace('int16_t GetRaceStat(','static int16_t NativeGetRaceStat(',1).replace('int16_t GetRaceGrbit(','static int16_t NativeGetRaceGrbit(',1)
     extra=r'''
 static void Query(int tag){if(fInCheck){assert(cQueries<128);rgQueries[cQueries++]=tag;}}
@@ -153,15 +153,15 @@ int main(int argc,char **argv){
         planet.fStarbase=data[1];planet.iPlayer=(int16_t)owner;planet.isb=data[21];
         if(owner>=0 && owner<16){
             rglpshdef[owner]=data[3]?ships:NULL;rglpshdefSB[owner]=data[4]?bases:NULL;
-            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=(uint32_t)data[13];rgplr[owner].grbitTrader=(uint16_t)data[14];rgplr[owner].iTechNow=data[16];
+            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=static_cast<RaceTraitBits>((uint32_t)data[13]);rgplr[owner].grbitTrader=static_cast<GrbitTrader>((uint16_t)data[14]);rgplr[owner].iTechNow=data[16];
             for(int f=0;f<6;f++)rgplr[owner].rgTech[f]=(int8_t)data[15];rgplr[owner].cFleet=data[18]?512:0;
         }
         for(int i=0;i<16;i++){ships[i].cBuilt=100+i;ships[i].cExist=50+i;}
         for(int i=0;i<10;i++){bases[i].cBuilt=200+i;bases[i].cExist=70+i;}
-        bases[data[21]].hul.ihuldef=(uint16_t)data[22];
+        bases[data[21]].hul.ihuldef=static_cast<HulDef>((uint16_t)data[22]);
         if(index>=0 && index<(base?10:16)){
-            SHDEF *d=(base?bases:ships)+index;d->fFree=data[5];d->hul.ihuldef=(uint16_t)data[6];d->hul.chs=(uint8_t)data[7];d->hul.wtCargoMax=(uint16_t)data[17];
-            for(int at=0;at<16;at++)if(data[11]==-1 || data[11]==at){d->hul.rghs[at].grhst=(uint16_t)data[8];d->hul.rghs[at].iItem=data[9];d->hul.rghs[at].cItem=data[10];}
+            SHDEF *d=(base?bases:ships)+index;d->fFree=data[5];d->hul.ihuldef=static_cast<HulDef>((uint16_t)data[6]);d->hul.chs=(uint8_t)data[7];d->hul.wtCargoMax=(uint16_t)data[17];
+            for(int at=0;at<16;at++)if(data[11]==-1 || data[11]==at){d->hul.rghs[at].grhst=static_cast<HullSlotType>((uint16_t)data[8]);d->hul.rghs[at].iItem=data[9];d->hul.rghs[at].cItem=data[10];}
         }
         idPlayer=(int16_t)data[19];cQueries=cGateLookups=mdCheckResult=fInCheck=0;memset(rgQueries,-1,sizeof(rgQueries));memset(rgGateRequests,-1,sizeof(rgGateRequests));
         SHDEF shipExpected[16],baseExpected[10];PLAYER playerExpected[16];GAME gameExpected;PLANET planetExpected;
@@ -187,8 +187,8 @@ int main(int argc,char **argv){
     }
     CHECK(feof(file));fclose(file);
     // Full Produce -> charged construction -> actual eligibility -> exact fleet limit failure.
-    reset();planet.id=0;rgptPlan[0]=(POINT16){10,20};game.cPlayer=1;game.cPlanMax=1;planet.fStarbase=1;bases[0].hul.ihuldef=32;
-    rgplr[0].rgAttr[rsMajorAdv]=raNone;rgplr[0].grbitTrader=UINT16_MAX;for(int f=0;f<6;f++)rgplr[0].rgTech[f]=26;
+    reset();planet.id=0;rgptPlan[0]=(POINT16){10,20};game.cPlayer=1;game.cPlanMax=1;planet.fStarbase=1;bases[0].hul.ihuldef=static_cast<HulDef>(32);
+    rgplr[0].rgAttr[rsMajorAdv]=raNone;rgplr[0].grbitTrader=static_cast<GrbitTrader>(UINT16_MAX);for(int f=0;f<6;f++)rgplr[0].rgTech[f]=26;
     rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){
         memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
@@ -205,9 +205,9 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-lm','-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={r[:2]:(r[2:8],r[8]) for r in struct.iter_unpack('<9i',export.read_bytes())};assert len(table)==sum(LIMITS)
         vectors=path/'vectors.bin';count=0;excluded={}

@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_UTILGEN_H
 #define STARS_DECOMPILED_UTILGEN_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern int16_t aiPNChunkOffset[];
@@ -44,5 +45,8 @@ int32_t LSaltFromSz(char *psz);
 int32_t LDistance2(POINT16 pt1, POINT16 pt2);
 char   *PszGetLine(char **ppszBeg);
 int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax);
+
+decltype(AlertSz) STARS_TEST_IMPL(AlertSz);
+decltype(Random) STARS_TEST_IMPL(Random);
 
 #endif

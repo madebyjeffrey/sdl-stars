@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_STRINGS_H
 #define STARS_DECOMPILED_STRINGS_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern char    aSTRCmpr[];

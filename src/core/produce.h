@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_PRODUCE_H
 #define STARS_DECOMPILED_PRODUCE_H
 
+#include "common.h"
 #include <stdint.h>
 
 void  InitProduction(PROD *rgprod);

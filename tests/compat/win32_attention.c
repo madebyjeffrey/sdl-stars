@@ -14,7 +14,7 @@ static int cFlash;
 static SDL_Window *lpWindowLast;
 static SDL_FlashOperation operationLast;
 bool SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation);
-bool SDLCALL StarsTest_SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation) {
+extern "C" bool SDLCALL StarsTest_SDL_FlashWindow(SDL_Window *lpWindow, SDL_FlashOperation operation) {
     cFlash++; lpWindowLast = lpWindow; operationLast = operation;
     if (!fMock) return SDL_FlashWindow(lpWindow, operation);
     return !fFail;
@@ -73,7 +73,7 @@ static int TestX11(HWND hwnd, HWND hwndPeer) {
     BOOL fUrgent;
     CHECK(strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0);
     lpDisplay = XOpenDisplay(NULL); CHECK(lpDisplay);
-    lpSDLDisplay = SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+    lpSDLDisplay = (Display*)(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL));
     CHECK(lpSDLDisplay);
     window = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
     windowPeer = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwndPeer->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);

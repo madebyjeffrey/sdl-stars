@@ -16,27 +16,17 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def enum_source():
-    # Source fixtures compile the C11 declarations of the shared enum header.
-    text = (ROOT / "src/core/enums.h").read_text()
-    return re.sub(r"#ifdef __cplusplus\nenum (\w+) : \w+ \{\n#else\nenum \1 \{\n#endif",
-                  r"enum \1 {", text)
+    return (ROOT / "src/core/enums.h").read_text()
 
 
-def c_source(text):
-    # The extracted algorithms still run as C11. Preserve each conversion's
-    # numeric storage contract; enum identity and C++ ABI have separate tests.
-    storage = {name: base for base, name in re.findall(
-        r"typedef\s+(u?int(?:16|32)_t)\s+(\w+)\s*;",
-        (ROOT / "src/core/enums.h").read_text())}
-    return re.sub(r"static_cast<(\w+)>\(",
-                  lambda match: "(" + storage.get(match[1], match[1]) + ")(", text)
+ENUM_STORAGE = dict(re.findall(r"enum (\w+) : (\w+) \{", enum_source()))
 
 
 def function(path, signature):
     text = (ROOT / path).read_text()
     start = text.index(signature)
     end = text.index("\n}", start) + 2
-    return c_source(text[start:end])
+    return text[start:end]
 
 
 def main():
@@ -82,25 +72,25 @@ int main(void) {
     static const char *strings[]={"","nonnumeric"," ","-0x10tail","077","0x","4294967296","+42x","-1"};
     static const uint32_t expected[]={7,0,0,4294967280u,77,0,0,42,4294967295u};
     memcpy(original,tiles,sizeof(tiles));
-    ReadIniTileSettings("C",tiles,3);
+    ReadIniTileSettings(const_cast<char *>("C"),tiles,3);
     CHECK(tiles[0].id==2 && tiles[1].id==1 && tiles[2].id==0);
     CHECK(tiles[0].fPopped && tiles[0].other==30 && tiles[2].other==10);
-    memcpy(tiles,original,sizeof(tiles)); ReadIniTileSettings("Cc",tiles,3);
+    memcpy(tiles,original,sizeof(tiles)); ReadIniTileSettings(const_cast<char *>("Cc"),tiles,3);
     CHECK(tiles[0].id==2 && tiles[0].fPopped && tiles[1].id==1 && tiles[2].id==0);
-    memcpy(tiles,original,sizeof(tiles)); ReadIniTileSettings("*?*b",tiles,3);
+    memcpy(tiles,original,sizeof(tiles)); ReadIniTileSettings(const_cast<char *>("*?*b"),tiles,3);
     CHECK(tiles[0].id==1 && tiles[1].id==0 && tiles[2].id==2);
     CHECK(tiles[0].iCol==1 && tiles[1].iCol==1 && tiles[2].iCol==1);
-    memcpy(tiles,original,sizeof(tiles)); tiles[2].iCol=3; ReadIniTileSettings("*",tiles,3);
+    memcpy(tiles,original,sizeof(tiles)); tiles[2].iCol=3; ReadIniTileSettings(const_cast<char *>("*"),tiles,3);
     CHECK(tiles[2].iCol==3);
-    input="X";GetIniWinRc("Windows","unused",idsMain,&wn);
+    input="X";GetIniWinRc(const_cast<char *>("Windows"),const_cast<char *>("unused"),idsMain,&wn);
     CHECK(wn.rc.left==-32768 && wn.rc.right==-32768 && wn.rc.top==0 && wn.rc.bottom==0);
     CHECK(wn.fMaximized && !wn.fMinimized && !wn.fInitalized);
-    input="R1-2-000000010002";GetIniWinRc("Windows","unused",0,&wn);
+    input="R1-2-000000010002";GetIniWinRc(const_cast<char *>("Windows"),const_cast<char *>("unused"),0,&wn);
     CHECK(wn.rc.left==-12 && wn.rc.top==0 && wn.rc.right==1 && wn.rc.bottom==2);
     CHECK(wn.fInitalized && !wn.fMaximized && !wn.fMinimized);
-    input="M0000000010000001";GetIniWinRc("Windows","unused",0,&wn);
+    input="M0000000010000001";GetIniWinRc(const_cast<char *>("Windows"),const_cast<char *>("unused"),0,&wn);
     CHECK(wn.fMaximized && wn.fInitalized);
-    input="R0000000010000001x";GetIniWinRc("Windows","unused",0,&wn);
+    input="R0000000010000001x";GetIniWinRc(const_cast<char *>("Windows"),const_cast<char *>("unused"),0,&wn);
     CHECK(!wn.fInitalized && !wn.fMaximized);
     for(i=0;i<sizeof(expected)/sizeof(expected[0]);i++) {
         input=strings[i]; CHECK(GetPrivateProfileIntA("a","b",7,"unused")==expected[i]);
@@ -111,11 +101,11 @@ int main(void) {
 '''
     with tempfile.TemporaryDirectory(prefix="s02-source-") as work:
         path = Path(work)
-        source = path / "witness.c"
+        source = path / "witness.cpp"
         binary = path / "witness"
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC", "cc")) +
-                       ["-std=c11", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
+        subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 
 

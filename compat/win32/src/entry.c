@@ -67,7 +67,7 @@ static int ICompatMain(int argc, char **argv) {
     return nResult;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) try {
 #ifdef _WIN32
     char **rgpsz = RgpszNativeArguments(&argc);
     int nResult;
@@ -80,4 +80,10 @@ int main(int argc, char **argv) {
 #else
     return ICompatMain(argc, argv);
 #endif
+} catch (...) {
+    // The process/SDL entry boundary must not propagate a C++ failure.
+    StarsCompatProcessExit();
+    SDL_Quit();
+    fputs("stars-sdl: unhandled application failure\n", stderr);
+    return 1;
 }

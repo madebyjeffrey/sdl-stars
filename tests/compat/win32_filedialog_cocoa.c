@@ -21,7 +21,8 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
 }
 
 int main(void) {
-    COMPATFILEFILTER filter = {"Games \xe2\x80\x93 Stars!", "*.xy"};
+    char szFilter[] = "Games \xe2\x80\x93 Stars!", szPattern[] = "*.xy";
+    COMPATFILEFILTER filter = {szFilter, szPattern};
     char szPath[256];
     int iFilter = 0;
 

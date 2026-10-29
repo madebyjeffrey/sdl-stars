@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_UTIL_H
 #define STARS_DECOMPILED_UTIL_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern uint32_t rgcrDrawStars2b[5];

@@ -322,7 +322,7 @@ int16_t CBuildProdItem(PLANET *lppl, PROD *lpprod, PROD *pprodPartial, int32_t *
                 pprodPartial->cItem = 1;
                 pctT = (int32_t)((int32_t)(rgRes[3] * 100) / lAlchCost);
                 pctTooBig = (int32_t)((int32_t)((rgRes[3] + 1) * 100) / lAlchCost);
-                pctT = max(pctT, pctTooBig - 1);
+                pctT = StarsMax(pctT, pctTooBig - 1);
                 pprodPartial->pct = LOWORD(pctT);
                 rgRes[3] -= (int32_t)(pctT * lAlchCost) / 100;
             }

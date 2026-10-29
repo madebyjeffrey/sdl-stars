@@ -25,8 +25,8 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     if (!rgid || c <= 0) { SDL_free(rgid); return FALSE; }
     for (i = 0; i < c; i++) {
         if (!SDL_GetDisplayBounds(rgid[i], &rc) || rc.w <= 0 || rc.h <= 0) { fOk = FALSE; break; }
-        xMin = min(xMin, rc.x); yMin = min(yMin, rc.y);
-        xMax = max(xMax, (int64_t)rc.x + rc.w); yMax = max(yMax, (int64_t)rc.y + rc.h);
+        xMin = StarsMin(xMin, rc.x); yMin = StarsMin(yMin, rc.y);
+        xMax = (((xMax) > ((int64_t)rc.x + rc.w)) ? (xMax) : ((int64_t)rc.x + rc.w)); yMax = (((yMax) > ((int64_t)rc.y + rc.h)) ? (yMax) : ((int64_t)rc.y + rc.h));
     }
     SDL_free(rgid);
     if (!fOk || xMax > INT_MAX || yMax > INT_MAX || xMax - xMin > INT_MAX || yMax - yMin > INT_MAX) return FALSE;

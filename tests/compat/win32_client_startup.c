@@ -6,12 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
+extern "C" char *StarsTest_SDL_GetPrefPath(const char *pszOrg, const char *pszApp) {
     const char *pszPath = getenv("STARS_TEST_PREF_PATH");
     if (pszPath) return SDL_strdup(pszPath);
     return SDL_GetPrefPath(pszOrg, pszApp);
 }
 
+static int64_t cbTestFile;
+static char szReplacementOrder[] = "Replacement order";
 static BOOL FTestCopyFile(const char *pszSource, const char *pszTarget) {
     NATIVEFILE *pfSource, *pfTarget;
     unsigned char rgb[4096];
@@ -166,7 +168,7 @@ static unsigned cRenderPresent;
 static SDL_WindowID idRacePresentation;
 static BOOL fRacePresentation = TRUE;
 
-bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const char *pszTitle) {
+extern "C" bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const char *pszTitle) {
     HWND hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
     SDL_Event event = {0};
     unsigned cPresentBefore = cRenderPresent;
@@ -187,7 +189,7 @@ bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const char *pszT
 }
 
 bool SDL_RenderPresent(SDL_Renderer *lprenderer);
-bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
+extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lprenderer) {
     HWND hwnd;
     static unsigned cRaceFrame;
     RECT rc;
@@ -239,7 +241,7 @@ static BOOL FCheckScannerDrag(void) {
     iPosSav = GetScrollPos(hwndScanner, SB_HORZ);
     SendMessage(hwndScanner, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, si.nMin), 0);
     UpdateWindow(hwndScanner); UpdateWindow(hwndBar);
-    dxThumb = max(8, (int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)));
+    dxThumb = (((8) > ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1)))) ? (8) : ((int)((int64_t)(rc.right - 34) * si.nPage / (si.nMax - si.nMin + 1))));
     xGrab = 17 + dxThumb / 2;
     SendMessage(hwndBar, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(xGrab, 8));
     // Each simulated drag tick includes the completed window-tree paint pass.
@@ -409,7 +411,7 @@ static BOOL FCheckReportScrollbars(void) {
     SetWindowPos(hwndReportDlg, NULL, 0, 0, 300, 220, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
     if (IsWindowVisible(vprptCur->hwndVScroll)) {
         fPassed = GetScrollInfo(vprptCur->hwndVScroll, SB_CTL, &si) &&
-            si.nPage == (UINT)max(1, vprptCur->cRowsVis) &&
+            si.nPage == (UINT)(((1) > (vprptCur->cRowsVis)) ? (1) : (vprptCur->cRowsVis)) &&
             si.nMax - (int)si.nPage + 1 == vprptCur->cRows - vprptCur->cRowsVis;
     }
     if (IsWindowVisible(vprptCur->hwndHScroll)) {
@@ -434,12 +436,12 @@ static BOOL FCheckToolbarPlacement(void) {
     int i, x, iRange;
 
     if (!GetClientRect(hwndScanner, &rcClient) || !GetScrollInfo(hwndScanner, SB_HORZ, &si)) return FALSE;
-    cPage = max(1, ScanToPt(rcClient.right));
-    iMax = (max(1000, dGalInv - 1000 - cPage) + 3) & ~3;
+    cPage = (((1) > (ScanToPt(rcClient.right))) ? (1) : (ScanToPt(rcClient.right)));
+    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
     if (!GetScrollInfo(hwndScanner, SB_VERT, &si)) return FALSE;
-    cPage = max(1, ScanToPt(rcClient.bottom - dySBar));
-    iMax = (max(1000, dGalInv - 1000 - cPage) + 3) & ~3;
+    cPage = (((1) > (ScanToPt(rcClient.bottom - dySBar))) ? (1) : (ScanToPt(rcClient.bottom - dySBar)));
+    iMax = ((((1000) > (dGalInv - 1000 - cPage)) ? (1000) : (dGalInv - 1000 - cPage)) + 3) & ~3;
     if (si.nPage != (UINT)cPage || si.nMax - (int)si.nPage + 1 != iMax) return FALSE;
     if (!GetWindowRect(hwndTBRadar, &rc)) return FALSE;
     if (!GetClientRect(hwndTBRadar, &rcClient) || rcClient.right != rc.right - rc.left ||
@@ -499,7 +501,7 @@ static BOOL FCheckToolbarPlacement(void) {
         if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
             (!(SDL_GetWindowFlags(hwndTooltip->lpWindow) & SDL_WINDOW_TOOLTIP) ||
              SDL_GetWindowParent(hwndTooltip->lpWindow) != hwndRoot->lpWindow)) return FALSE;
-        ShowTooltip(idsNoString, NULL);
+        ShowTooltip((StringId)(idsNoString), NULL);
     }
     return TRUE;
 }
@@ -569,7 +571,7 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
 }
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
-bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
+extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     HWND hwnd;
     bool fResult;
     BYTE r, g, b, a;
@@ -592,7 +594,7 @@ bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
     if (hwnd == hwndFrame && !fInitComplete) cEarlyFrameShow++;
     if (hwnd && hwnd->lpfnWndProc == TitleWndProc && cTitleShow++ == 0) {
         if (hwnd->lpCanvas && hwnd->lpComposite) {
-            rgb = hwnd->lpCanvas->pixels;
+            rgb = (BYTE *)(hwnd->lpCanvas->pixels);
             cb = (size_t)hwnd->lpCanvas->pitch * hwnd->lpCanvas->h;
             for (i = 4; i + 4 <= cb; i += 4) {
                 if (memcmp(rgb, rgb + i, 4)) { fTitlePainted = TRUE; break; }
@@ -637,7 +639,7 @@ static BOOL FPushClick(HWND hwnd) {
             if ((i == 0 ? pt.y : pt.x) < 0) iPosition += i == 0 ? pt.y : pt.x;
             else if ((i == 0 ? ptEnd.y : ptEnd.x) > (i == 0 ? rcPane.bottom : rcPane.right))
                 iPosition += i == 0 ? ptEnd.y - rcPane.bottom : ptEnd.x - rcPane.right;
-            SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, max(0, iPosition)), 0);
+            SendMessage(hwndPane, i == 0 ? WM_VSCROLL : WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (((0) > (iPosition)) ? (0) : (iPosition))), 0);
         }
         break;
     }
@@ -1369,7 +1371,7 @@ static BOOL FCheckFleetWorkflows(void) {
     BOOL fPassed = FALSE;
     cOwned = CFleetTotals(rgShipSav, rgCargoSav);
     if (cOwned < 2) return FALSE;
-    rgflSav = SDL_calloc((size_t)cFleet, sizeof(*rgflSav));
+    rgflSav = (FLEET *)(SDL_calloc((size_t)cFleet, sizeof(*rgflSav)));
     if (!rgflSav) return FALSE;
     for (i = 0; i < cFleet; i++) {
         lpfl = rglpfl[i];
@@ -1677,13 +1679,14 @@ static BOOL FCopyOrderWithByteChange(const char *pszSource, const char *pszTarge
 
 /* Cancellation must never bind the previous race to a different save path. */
 static BOOL FTestRaceCancellation(void) {
+    char szCancelPassword[] = "cancel-test";
     PLAYER plrSav;
     char szProtected[512], szSnapshot[512], szExport[512], szImport[512], szDuplicate[512];
     const char *pszSettings = getenv("STARS_SETTINGS_DIR");
     int16_t fOkay;
 
     if (!FLoadLibraryRace(0, "Managed.r1")) return FALSE;
-    vplr.lSalt = LSaltFromSz("cancel-test");
+    vplr.lSalt = LSaltFromSz(szCancelPassword);
     if (!FSaveLibraryRace(0, "Protected.r1", &vplr) || !FLoadLibraryRace(0, "Managed.r1")) return FALSE;
     plrSav = vplr;
     CchSnprintf(szProtected, sizeof(szProtected), "%s%sRace Designs%sProtected.r1", pszSettings, szDirSep, szDirSep);
@@ -1715,6 +1718,7 @@ static BOOL FTestRaceCancellation(void) {
 
 /* Inspect the managed bytes without completing the optional race wizard. */
 static BOOL FTestLegacyRaceImport(void) {
+    char szOldPassword[] = "old-password", szNewPassword[] = "new-\xc3\xa9";
     RTBOF rtbof = {0};
     PLAYER plr, plrSav;
     char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
@@ -1735,7 +1739,7 @@ static BOOL FTestLegacyRaceImport(void) {
         plr = plrSav;
         strcpy(plr.szName, "R\xe9");
         strcpy(plr.szNames, "R\xe9s");
-        plr.lSalt = i == 0 ? 0 : LSaltFromSz("old-password");
+        plr.lSalt = i == 0 ? 0 : LSaltFromSz(szOldPassword);
         memcpy(rtbof.rgid, "J3J3", 4);
         rtbof.verMajor = 2;
         rtbof.verMinor = 84;
@@ -1753,7 +1757,7 @@ static BOOL FTestLegacyRaceImport(void) {
         CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
         if (FWasRaceFile(szImported, FALSE) != 1 || ((VERS *)&wVersFile)->verMinor != 85 ||
             strcmp(vplr.szName, "R\xc3\xa9") || strcmp(vplr.szNames, "R\xc3\xa9s") ||
-            vplr.lSalt != (i == 0 ? 0 : LSaltFromSz("new-\xc3\xa9")) || cLegacyRacePasswords != i) goto LDone;
+            vplr.lSalt != (i == 0 ? 0 : LSaltFromSz(szNewPassword)) || cLegacyRacePasswords != i) goto LDone;
     }
     fAcceptLegacyRacePassword = FALSE;
     plrSav = vplr;
@@ -2066,11 +2070,11 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     idHostOrderFleet = lpflHostOrder->id;
                     fHadFleetName = lpflHostOrder->lpszName != NULL;
                     if (fHadFleetName) CchSnprintf(szFleetNameSav, sizeof(szFleetNameSav), "%s", lpflHostOrder->lpszName);
-                    LogChangeName(grobjFleet, lpflHostOrder->id, "Replacement order");
+                    LogChangeName(grobjFleet, lpflHostOrder->id, szReplacementOrder);
                     if (lpflHostOrder->lpszName) FreeLp(lpflHostOrder->lpszName, htString);
                     lpflHostOrder->lpszName = NULL;
                     if (fHadFleetName) {
-                        lpflHostOrder->lpszName = LpAlloc(strlen(szFleetNameSav) + 1, htString);
+                        lpflHostOrder->lpszName = (char *)(LpAlloc(strlen(szFleetNameSav) + 1, htString));
                         if (!lpflHostOrder->lpszName) goto LDone;
                         strcpy(lpflHostOrder->lpszName, szFleetNameSav);
                     }
@@ -2487,12 +2491,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (fFailRaceExportReplace || !FTestFilesEqual(szExport, szExportSnapshot)) goto LDone;
             CchSnprintf(szDuplicate, sizeof(szDuplicate), "%s%sRace Designs%sManaged.r2", pszSettings, szDirSep, szDirSep);
             CchSnprintf(szExport, sizeof(szExport), "%s%sRace Designs%sManaged.r3", pszSettings, szDirSep, szDirSep);
-            if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &(int64_t){0}) ||
-                !FNativeFileSize(szExport, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
-            if (FDeleteLibraryRace(hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &(int64_t){0}) ||
-                !FNativeFileSize(szDuplicate, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
-            if (!FDeleteLibraryRace(hwndTitle, "Managed.r2") || FNativeFileSize(szDuplicate, &(int64_t){0}) ||
-                !FNativeFileSize(szExport, &(int64_t){0}) || !FNativeFileSize(szManaged, &(int64_t){0})) goto LDone;
+            if (FDeleteLibraryRace(hwndTitle, "Managed.r2") || !FNativeFileSize(szDuplicate, &cbTestFile) ||
+                !FNativeFileSize(szExport, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
+            if (FDeleteLibraryRace(hwndTitle, "Managed.r3") || !FNativeFileSize(szExport, &cbTestFile) ||
+                !FNativeFileSize(szDuplicate, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
+            if (!FDeleteLibraryRace(hwndTitle, "Managed.r2") || FNativeFileSize(szDuplicate, &cbTestFile) ||
+                !FNativeFileSize(szExport, &cbTestFile) || !FNativeFileSize(szManaged, &cbTestFile)) goto LDone;
             fChecked = TRUE;
             fPassed = TRUE;
             if (!FTestRaceCancellation()) {
@@ -2639,7 +2643,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         }
         fExpectGameRenameFailure = FALSE;
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szSource, szDirSep, pszSource);
-        if (!FNativeFileSize(szPath, &(int64_t){0}) || FNativeDirectoryExists(szRenamed)) goto LDone;
+        if (!FNativeFileSize(szPath, &cbTestFile) || FNativeDirectoryExists(szRenamed)) goto LDone;
         if (!FRenameLibraryGame(hwndTitle, pszSource, pszRename)) { fprintf(stderr, "rename failed\n"); goto LDone; }
         CchSnprintf(szPath, sizeof(szPath), "%s%s%s.xy", szRenamed, szDirSep, pszRename);
         {
@@ -2668,7 +2672,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (iVersion != 2 || strcmp(szMetadataName, pszRename) || iplr != 1 || lPlayed != 123456 ||
             strcmp(szExchangeName, pszBaseline)) { fprintf(stderr, "renamed metadata mismatch %d %s\n", iVersion, szMetadataName); goto LDone; }
         CchSnprintf(szPath, sizeof(szPath), "%s%sexchange.map", szRenamed, szDirSep);
-        if (!FNativeFileSize(szPath, &(int64_t){0})) { fprintf(stderr, "renamed sidecar missing %s\n", szPath); goto LDone; }
+        if (!FNativeFileSize(szPath, &cbTestFile)) { fprintf(stderr, "renamed sidecar missing %s\n", szPath); goto LDone; }
         fChecked = TRUE;
         fPassed = TRUE;
         puts("Managed game renamed with session metadata and backup contents");
@@ -3073,7 +3077,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
         if (!IsWindow(rghwndBtnSplash[iButton]) || !IsWindowVisible(rghwndBtnSplash[iButton])) goto LDone;
         UpdateWindow(rghwndBtnSplash[iButton]);
     }
-    rgb = lpTitle->lpCanvas->pixels;
+    rgb = (BYTE *)lpTitle->lpCanvas->pixels;
     cb = (size_t)lpTitle->lpCanvas->pitch * lpTitle->lpCanvas->h;
     for (i = 4; i + 4 <= cb; i += 4) {
         if (memcmp(rgb, rgb + i, 4)) { fDifferent = TRUE; break; }

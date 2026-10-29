@@ -37,8 +37,8 @@ static void RefitPlanetPane(HWND hwnd) {
     cTile = sel.grobj == grobjFleet ? 7 : 6;
     if (sel.id != -1) {
         for (i = 0; i < cTile; i++) {
-            dx = max(dx, (rgtile[i].iCol + 1) * 198);
-            dy = max(dy, rgtile[i].yTop + (rgtile[i].fPopped ? rgtile[i].dyFull : dyArial8 + 3) + 4);
+            dx = (((dx) > ((rgtile[i].iCol + 1) * 198)) ? (dx) : ((rgtile[i].iCol + 1) * 198));
+            dy = (((dy) > (rgtile[i].yTop + (rgtile[i].fPopped ? rgtile[i].dyFull : dyArial8 + 3) + 4)) ? (dy) : (rgtile[i].yTop + (rgtile[i].fPopped ? rgtile[i].dyFull : dyArial8 + 3) + 4));
         }
     }
     GetWindowRect(hwnd, &rcOuter);
@@ -61,17 +61,17 @@ static void RefitPlanetPane(HWND hwnd) {
         lp->x = lp->y = 0; lp->dWheel = 0;
         lp->idSelection = sel.id; lp->grobjSelection = sel.grobj;
     }
-    lp->x = max(0, min(lp->x, dx - rc.right)); lp->y = max(0, min(lp->y, dy - rc.bottom));
-    si.nMax = max(0, dx - 1); si.nPage = max(1, rc.right); si.nPos = lp->x;
+    lp->x = (((0) > (StarsMin(lp->x, dx - rc.right))) ? (0) : (StarsMin(lp->x, dx - rc.right))); lp->y = (((0) > (StarsMin(lp->y, dy - rc.bottom))) ? (0) : (StarsMin(lp->y, dy - rc.bottom)));
+    si.nMax = StarsMax(0, dx - 1); si.nPage = StarsMax(1, rc.right); si.nPos = lp->x;
     SetPlanetPaneScroll(hwnd, SB_HORZ, &si);
-    si.nMax = max(0, dy - 1); si.nPage = max(1, rc.bottom); si.nPos = lp->y;
+    si.nMax = StarsMax(0, dy - 1); si.nPage = StarsMax(1, rc.bottom); si.nPos = lp->y;
     SetPlanetPaneScroll(hwnd, SB_VERT, &si);
     GetWindowRect(lp->hwndContent, &rcContent);
     pt = (POINT){rcContent.left, rcContent.top};
     ScreenToClient(hwnd, &pt);
-    if (rcContent.right - rcContent.left != max(dx, rc.right) || rcContent.bottom - rcContent.top != max(dy, rc.bottom)) {
+    if (rcContent.right - rcContent.left != StarsMax(dx, rc.right) || rcContent.bottom - rcContent.top != StarsMax(dy, rc.bottom)) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = TRUE;
-        MoveWindow(lp->hwndContent, -lp->x, -lp->y, max(dx, rc.right), max(dy, rc.bottom), TRUE);
+        MoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
     } else if (pt.x != -lp->x || pt.y != -lp->y) {
         SetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
@@ -100,8 +100,8 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         iAxis = message == WM_VSCROLL ? SB_VERT : SB_HORZ;
         iCode = LOWORD(wParam); iPosition = iAxis == SB_VERT ? lp->y : lp->x;
         GetClientRect(hwnd, &rc); d = iAxis == SB_VERT ? rc.bottom : rc.right;
-        if (iCode == SB_LINEUP) iPosition -= max(1, dyArial8 + 4);
-        else if (iCode == SB_LINEDOWN) iPosition += max(1, dyArial8 + 4);
+        if (iCode == SB_LINEUP) iPosition -= StarsMax(1, dyArial8 + 4);
+        else if (iCode == SB_LINEDOWN) iPosition += StarsMax(1, dyArial8 + 4);
         else if (iCode == SB_PAGEUP) iPosition -= d;
         else if (iCode == SB_PAGEDOWN) iPosition += d;
         else if (iCode == SB_TOP) iPosition = 0;
@@ -117,9 +117,9 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         c = CWheelNotches(&lp->dWheel, (int16_t)HIWORD(wParam));
         if (c == 0) return 0;
         GetClientRect(hwnd, &rc);
-        d = max(1, dyArial8 + 4);
+        d = StarsMax(1, dyArial8 + 4);
         iAxis = message == WM_MOUSEHWHEEL || (LOWORD(wParam) & MK_SHIFT) ? SB_HORZ : SB_VERT;
-        d = c * CWheelLines(max(1, (iAxis == SB_VERT ? rc.bottom : rc.right) / d)) * d;
+        d = c * CWheelLines((((1) > ((iAxis == SB_VERT ? rc.bottom : rc.right) / d)) ? (1) : ((iAxis == SB_VERT ? rc.bottom : rc.right) / d))) * d;
         if (message == WM_MOUSEHWHEEL) lp->x += d;
         else if (LOWORD(wParam) & MK_SHIFT) lp->x -= d;
         else lp->y -= d;

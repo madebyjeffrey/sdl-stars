@@ -2,6 +2,10 @@
  * Wine as well as the Linux runtime. Font glyphs and metrics deliberately vary.
  */
 #include <windows.h>
+static const RECT rcTest1 = {0, 0, 100, 100};
+static const RECT rcTest2 = {10, 10, 20, 20};
+static const RECT rcTest3 = {10, 10, 20, 20};
+static const RECT rcTest4 = {0, 0, 50, 50};
 #include <stdio.h>
 
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -34,7 +38,7 @@ int main(void) {
     hbr = CreateSolidBrush(RGB(15, 35, 55));
     hpen = CreatePen(PS_SOLID, 1, RGB(210, 170, 30));
     CHECK(hdc && hbr && hpen);
-    CHECK(FillRect(hdc, &(RECT){0, 0, 100, 100}, hbr));
+    CHECK(FillRect(hdc, &rcTest1, hbr));
     CHECK(GetPixel(hdc, 5, 5) == RGB(15, 35, 55));
     CHECK(GetPixel(hdc, 99, 99) == RGB(15, 35, 55));
     hOld = SelectObject(hdc, hpen);
@@ -58,8 +62,8 @@ int main(void) {
     CHECK(TextOut(hdc, 10, 60, "Stars", 5));
     CHECK(ReleaseDC(hwnd, hdc));
     CHECK(ValidateRect(hwnd, NULL));
-    CHECK(InvalidateRect(hwnd, &(RECT){10, 10, 20, 20}, TRUE));
-    CHECK(GetUpdateRect(hwnd, &rc, FALSE) && EqualRect(&rc, &(RECT){10, 10, 20, 20}));
+    CHECK(InvalidateRect(hwnd, &rcTest2, TRUE));
+    CHECK(GetUpdateRect(hwnd, &rc, FALSE) && EqualRect(&rc, &rcTest3));
     CHECK(GetUpdateRect(hwnd, NULL, TRUE));
     hdc = GetDC(hwnd);
     CHECK(GetPixel(hdc, 10, 10) == RGB(255, 255, 255));
@@ -67,7 +71,7 @@ int main(void) {
     CHECK(ReleaseDC(hwnd, hdc));
     CHECK(BeginPaint(hwnd, &ps) && !ps.fErase && EqualRect(&ps.rcPaint, &rc));
     CHECK(!GetUpdateRect(hwnd, &rc, FALSE));
-    CHECK(FillRect(ps.hdc, &(RECT){0, 0, 50, 50}, (HBRUSH)GetStockObject(BLACK_BRUSH)));
+    CHECK(FillRect(ps.hdc, &rcTest4, (HBRUSH)GetStockObject(BLACK_BRUSH)));
     CHECK(EndPaint(hwnd, &ps));
     hdc = GetDC(hwnd);
     CHECK(GetPixel(hdc, 10, 10) == RGB(0, 0, 0));

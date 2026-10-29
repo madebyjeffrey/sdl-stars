@@ -43,14 +43,14 @@ int main(void) {
     hwnd = CreateWindow(wc.lpszClassName, "Fonts", WS_OVERLAPPEDWINDOW, 0, 0, 320, 240, NULL, NULL, NULL, NULL);
     CHECK(hwnd && (hdc = GetDC(hwnd)));
     hmem = CreateCompatibleDC(hdc); hbm = CreateCompatibleBitmap(hdc, 320, 240);
-    CHECK(hmem && hbm && (hbmOld = SelectObject(hmem, hbm)));
+    CHECK(hmem && hbm && (hbmOld = (HBITMAP)(SelectObject(hmem, hbm))));
     CHECK(GetDeviceCaps(hdc, LOGPIXELSX) > 0 && GetDeviceCaps(hmem, LOGPIXELSY) > 0);
     CHECK(GetDeviceCaps(hmem, PLANES) == 1 && GetDeviceCaps(hmem, BITSPIXEL) >= 16);
     lf.lfHeight = -12; lf.lfWeight = FW_NORMAL; strcpy(lf.lfFaceName, "Arial");
     hfont = CreateFontIndirect(&lf); CHECK(hfont);
     CHECK(GetObject(hfont, sizeof(lfRead), &lfRead) == sizeof(lfRead));
     CHECK(lfRead.lfHeight == lf.lfHeight && !strcmp(lfRead.lfFaceName, "Arial"));
-    hfontOld = SelectObject(hmem, hfont); CHECK(hfontOld);
+    hfontOld = (HFONT)(SelectObject(hmem, hfont)); CHECK(hfontOld);
     CHECK(GetTextMetrics(hmem, &tm) && tm.tmHeight == tm.tmAscent + tm.tmDescent);
     CHECK(GetTextExtentPoint32(hmem, "iiii", 4, &sizeI) && GetTextExtentPoint32(hmem, "WWWW", 4, &sizeW));
     CHECK(sizeW.cx > sizeI.cx && sizeW.cy == tm.tmHeight && sizeI.cy == tm.tmHeight);
@@ -77,7 +77,8 @@ int main(void) {
     CHECK(ExtTextOut(hmem, 25, 20, ETO_CLIPPED | ETO_OPAQUE, &rc, "WWW", 3, rgdx));
     CHECK(GetPixel(hmem, 29, 20) == RGB(0, 0, 0) && GetPixel(hmem, 90, 20) == RGB(0, 0, 0));
     CHECK(GetPixel(hmem, 89, 59) == RGB(10, 20, 30));
-    CHECK(ExtTextOut(hmem, 0, 0, ETO_OPAQUE, &(RECT){100, 100, 110, 110}, NULL, 0, NULL));
+    rc = (RECT){100, 100, 110, 110};
+    CHECK(ExtTextOut(hmem, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL));
     CHECK(GetPixel(hmem, 105, 105) == RGB(10, 20, 30));
     CHECK(TextOut(hmem, 10, 70, "Caf\xc3\xa9 \xe2\x82\xac\xe2\x80\x94", 12));
     CHECK(GetTextExtentPoint32(hmem, "A B", 3, &sizeWord));
@@ -88,7 +89,8 @@ int main(void) {
     rc = (RECT){10, 160, 200, 200};
     CHECK(DrawText(hmem, "&Fleet && cargo", -1, &rc, DT_SINGLELINE | DT_CALCRECT) == tm.tmHeight);
     CHECK(GetTextExtentPoint32(hmem, "Fleet & cargo", 13, &sizeWord) && rc.right - rc.left == sizeWord.cx);
-    CHECK(DrawText(hmem, "&Fleet && cargo", -1, &(RECT){10, 160, 200, 200}, DT_SINGLELINE) == tm.tmHeight);
+    rc = (RECT){10, 160, 200, 200};
+    CHECK(DrawText(hmem, "&Fleet && cargo", -1, &rc, DT_SINGLELINE) == tm.tmHeight);
 #ifndef _WIN32
     CHECK(GetTextExtentPoint32(hmem, "F", 1, &size));
     for (x = 10; x < 10 + size.cx; x++) {
@@ -96,7 +98,8 @@ int main(void) {
         CHECK(GetPixel(hmem, x, 160 + tm.tmAscent + 1) == RGB(255, 255, 255));
     }
 #endif
-    CHECK(DrawText(hmem, "one\r\ntwo", -1, &(RECT){10, 0, 200, 200}, DT_CALCRECT | DT_NOPREFIX) == tm.tmHeight * 2);
+    rc = (RECT){10, 0, 200, 200};
+    CHECK(DrawText(hmem, "one\r\ntwo", -1, &rc, DT_CALCRECT | DT_NOPREFIX) == tm.tmHeight * 2);
     lf.lfUnderline = FALSE; strcpy(lf.lfFaceName, "Arial"); lf.lfEscapement = 3150;
     hfontRotate = CreateFontIndirect(&lf); CHECK(hfontRotate && SelectObject(hmem, hfontRotate) == hfont);
     CHECK(TextOut(hmem, 200, 40, "Stars", 5));

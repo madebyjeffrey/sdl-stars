@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_AI3_H
 #define STARS_DECOMPILED_AI3_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern MacintiRecipe vrgMacIshAip[];

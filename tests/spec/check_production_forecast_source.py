@@ -12,6 +12,7 @@ import shlex
 import subprocess
 import tempfile
 from check_s02_source import ROOT, function, enum_source
+from check_s02_source import ENUM_STORAGE
 
 
 def main():
@@ -30,10 +31,10 @@ def main():
 #define max(a,b) ((a)>(b)?(a):(b))
 #define idmScientistsHaveTransmutedCommonMaterialsKtEach 1
 '''
-    for name in ['ProdItemType','mdProdStat','GrobjClass','RaceStat','RaceAttribute','RaceGrbit','TaskType','PlayerSentinel']:
-        start=enums.index('enum '+name+' {')
-        declarations+=enums[start:enums.index('\n};',start)+3]+f'\ntypedef {"int16_t" if name=="PlayerSentinel" else "uint16_t"} {name};\n'
-    declarations+=enums[enums.index('enum HeapType {'):enums.index(';',enums.index('enum HeapType {'))+1]+'\ntypedef enum HeapType HeapType;\n'
+    for name in ['ProdItemType','mdProdStat','GrobjClass','RaceStat','RaceAttribute','RaceGrbit','TaskType','PlayerSentinel','MsgGoto']:
+        start=enums.index('enum '+name+' : '+ENUM_STORAGE[name]+' {')
+        declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
+    declarations+=enums[enums.index('enum HeapType : uint16_t {'):enums.index(';',enums.index('enum HeapType : uint16_t {'))+1]+'\ntypedef enum HeapType HeapType;\n'
     declarations+='#define iprodEstimateResearchResources 65535\n#pragma pack(push,1)\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
         start=types.index('struct '+tag+' {')
@@ -125,12 +126,12 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int
     tracedPartial[builds]=partial!=NULL;tracedAlchemy[builds]=alchemy;tracedYear[builds]=year;builds++;
     int16_t built;
     if(script==0)built=NativeCBuildProdItem(p,row,partial,res,alchemy,status,calc);
-    else if(script==2){built=index==0 ? 1:0;*status=(int16_t)(index==0 ? wordStatus:mdProdStatBlockedSame);}
+    else if(script==2){built=index==0 ? 1:0;*status=(int16_t)(index==0 ? wordStatus:static_cast<uint16_t>(mdProdStatBlockedSame));}
     else if(script==3){built=year==1 ? 2:0;*status=year==1 ? mdProdStatSomeAuto:mdProdStatSkippedAuto;}
     else if(script==4){row->iItem=mdIdleMine;row->grobj=grobjPlanet;row->cItem=0;built=3;*status=mdProdStatComplete;}
     else {
         built=year==terminalYear ? forcedBuilt:(year==firstYear ? 1:0);
-        *status=year==terminalYear ? terminalStatus:(year==firstYear ? mdProdStatSomeAuto:mdProdStatBlockedSame);
+        *status=year==terminalYear ? terminalStatus:static_cast<int16_t>(year==firstYear ? mdProdStatSomeAuto:mdProdStatBlockedSame);
     }
     memcpy(lastResources,res,16);return built;
 }
@@ -139,9 +140,9 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int
     witnesses=r'''
 static PLPROD *queue(unsigned capacity,unsigned count) {
     PLPROD *q=(PLPROD *)LpplAlloc(4,capacity,htOrd);q->iprodMac=count;
-    for(unsigned i=0;i<capacity;i++)q->rgprod[i]=(PROD){0};return q;
+    for(unsigned i=0;i<capacity;i++)q->rgprod[i]=(PROD){};return q;
 }
-static PROD row(unsigned count,unsigned item,unsigned kind) {PROD p={0};p.cItem=count;p.iItem=item;p.grobj=kind;return p;}
+static PROD row(unsigned count,unsigned item,unsigned kind) {PROD p={};p.cItem=count;p.iItem=item;p.grobj=kind;return p;}
 static void reset(void) {
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);
     heaps=allocs=frees=failAt=year=builds=growths=draws=messages=guards=actualMining=script=0;
@@ -154,9 +155,9 @@ static void reset(void) {
 }
 static void begin(void) {allocs=frees=year=builds=growths=0;seen=NULL;}
 static int live(void) {int n=0;for(int i=0;i<heaps;i++)n+=heap[i].live;return n;}
-static void estimate(PLPROD *q,uint16_t request,int16_t *first,int16_t *last) {EstimateItemProdSched(&original,q,request,first,last);}
+static void estimate(PLPROD *q,uint16_t request,int16_t *first,int16_t *last) {EstimateItemProdSched(&original,q,static_cast<ProdItemType>(request),first,last);}
 int main(void) {
-    _Static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && offsetof(PLANET,lpplprod)==52,"native forecast layout");
+    static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && offsetof(PLANET,lpplprod)==52,"native forecast layout");
     int16_t first,last;
     reset();original.lpplprod=queue(0,0);PLANET before=original;begin();estimate(NULL,0,&first,&last);
     CHECK(first==100 && last==100 && year==99 && growths==99 && !builds && frees==1 && allocs==1);
@@ -248,9 +249,9 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-forecast-') as work:
-        path=Path(work);source=path/'witness.c';binary=path/'witness'
+        path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

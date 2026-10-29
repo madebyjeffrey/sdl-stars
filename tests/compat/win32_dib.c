@@ -56,7 +56,7 @@ static int TestResources(HDC hdc) {
         hrsrc = FindResource(hModule, rgResources[i].psz, RT_BITMAP);
         CHECK(hrsrc && SizeofResource(hModule, hrsrc) == rgResources[i].cb);
         hres = LoadResource(hModule, hrsrc);
-        lpbi = LockResource(hres);
+        lpbi = (const BITMAPINFOHEADER*)(LockResource(hres));
         CHECK(lpbi && lpbi->biSize == sizeof(*lpbi) && lpbi->biCompression == BI_RGB);
         cColors = lpbi->biClrUsed ? lpbi->biClrUsed : 1u << lpbi->biBitCount;
         rgb = (const BYTE *)(lpbi + 1) + cColors * sizeof(RGBQUAD);
@@ -78,7 +78,7 @@ static int TestResources(HDC hdc) {
         memset(&out, 0, sizeof(out));
         out.bi.biSize = sizeof(out.bi); out.bi.biPlanes = 1; out.bi.biBitCount = 32;
         out.bi.biWidth = bm.bmWidth; out.bi.biHeight = -bm.bmHeight;
-        rgbOut = malloc((size_t)bm.bmWidth * bm.bmHeight * 4);
+        rgbOut = (BYTE*)(malloc((size_t)bm.bmWidth * bm.bmHeight * 4));
         CHECK(rgbOut && GetDIBits(hdc, hbm, 0, bm.bmHeight, rgbOut, (BITMAPINFO *)&out, DIB_RGB_COLORS) == bm.bmHeight);
         for (y = 0; y < bm.bmHeight; y++) for (x = 0; x < bm.bmWidth; x++)
             CHECK(CrDib(&out.bi, rgbOut, x, y) == CrDib(lpbi, rgb, x, y));

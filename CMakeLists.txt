@@ -11,9 +11,12 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_OBJCXX_STANDARD 20)
+set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+set(CMAKE_OBJCXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop client and wrapper" ON)
@@ -51,9 +54,37 @@ set(STARS_UI_SOURCES
 )
 
 # Preserve the original filenames while compiling the game as C++. The SDL
-# compatibility runtime, generated tables and C harnesses retain their C ABI.
+# compatibility runtime, generated tables and ordinary harnesses also use C++.
 set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
     src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
+
+# Ordinary application consumers use C++; independent C/SDK fixtures retain C.
+file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
+    "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
+list(REMOVE_ITEM STARS_CPP_HARNESSES
+    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c")
+set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
+    COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
+
+# Source language belongs in the parent scope so private test clones inherit it.
+set_source_files_properties(compat/win32/src/rect.c compat/win32/src/time.c
+    compat/win32/src/system.c compat/win32/src/services.c compat/win32/src/memory.c
+    compat/win32/src/file.c compat/win32/src/profile.c compat/win32/src/document.c
+    compat/win32/src/audio.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/paint.c compat/win32/src/dib.c compat/win32/src/image.c compat/win32/src/font.c compat/win32/src/print.c compat/win32/src/resource.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/edit.c compat/win32/src/list.c compat/win32/src/combo.c compat/win32/src/control.c compat/win32/src/toolbar.c compat/win32/src/scroll.c compat/win32/src/menu.c compat/win32/src/accelerator.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/window.c compat/win32/src/message.c compat/win32/src/input.c compat/win32/src/timer.c compat/win32/src/dialog.c compat/win32/src/dialog_template.c compat/win32/src/inspect.c compat/win32/src/session.c compat/win32/src/help.c compat/win32/src/messagebox.c compat/win32/src/filedialog.c PROPERTIES LANGUAGE CXX)
+
+set_source_files_properties(compat/win32/src/entry.c compat/win32/src/filedialog_cocoa.c
+    compat/win32/src/filedialog_windows.c compat/win32/src/filedialog_windows_sdk.c
+    compat/win32/src/filedialog_portal.c PROPERTIES LANGUAGE CXX)
+if(APPLE)
+    set_source_files_properties(compat/win32/src/filedialog_cocoa.m PROPERTIES LANGUAGE OBJCXX)
+endif()
 
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)
@@ -66,13 +97,14 @@ add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers stars_errors)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
+set_source_files_properties(src/platform/encoding.c PROPERTIES LANGUAGE CXX)
 add_library(stars_encoding STATIC src/platform/encoding.c)
 target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
 add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp)
-set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
 target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -186,7 +218,7 @@ endif()
 set(Python3_EXECUTABLE "${STARS_PYTHON_VENV_EXECUTABLE}")
 set(STARS_TEXT_SOURCES text/strings.txt text/messages.txt text/tutorial.txt text/planets.txt)
 list(TRANSFORM STARS_TEXT_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
-set(STARS_TEXT_OUTPUTS textids.h text_strings.c text_messages.c text_planets.c text_tutorial.c)
+set(STARS_TEXT_OUTPUTS textids.h text_strings.cpp text_messages.cpp text_planets.cpp text_tutorial.cpp)
 list(TRANSFORM STARS_TEXT_OUTPUTS PREPEND "${STARS_GENERATED_DIR}/")
 add_custom_command(
     OUTPUT ${STARS_TEXT_OUTPUTS}
@@ -198,10 +230,10 @@ add_custom_command(
 add_custom_target(stars_text DEPENDS ${STARS_TEXT_OUTPUTS})
 
 # The data tables: data/datagen.py builds dataids.h (the hull, part,
-# starting design and AI recipe enums) and data_tables.c (the parts, races,
+# starting design and AI recipe enums) and data_tables.cpp (the parts, races,
 # default battle plans and AI recipes) from data/**/*.yaml.
 file(GLOB_RECURSE STARS_DATA_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/*.yaml")
-set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.c")
+set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.cpp")
 add_custom_command(
     OUTPUT ${STARS_DATA_OUTPUTS}
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/data/datagen.py" "${STARS_GENERATED_DIR}"
@@ -214,10 +246,10 @@ add_custom_target(stars_data DEPENDS ${STARS_DATA_OUTPUTS})
 # Everything that includes enums.h needs textids.h and dataids.h first.
 add_dependencies(stars_options stars_text stars_data)
 target_sources(stars_core PRIVATE
-    "${STARS_GENERATED_DIR}/text_strings.c"
-    "${STARS_GENERATED_DIR}/text_messages.c"
-    "${STARS_GENERATED_DIR}/text_planets.c"
-    "${STARS_GENERATED_DIR}/data_tables.c"
+    "${STARS_GENERATED_DIR}/text_strings.cpp"
+    "${STARS_GENERATED_DIR}/text_messages.cpp"
+    "${STARS_GENERATED_DIR}/text_planets.cpp"
+    "${STARS_GENERATED_DIR}/data_tables.cpp"
 )
 
 # The game's headers are found for #include "..." only (-iquote): strings.h
@@ -238,15 +270,31 @@ target_compile_options(stars_options INTERFACE
 )
 
 # Binary64 operation boundaries are intentional; see docs/DOUBLE-PRECISION.md.
-include(CheckCSourceCompiles)
-check_c_source_compiles("
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("
     #include <float.h>
     #if DBL_MANT_DIG != 53 || DBL_MAX_EXP != 1024 || FLT_EVAL_METHOD != 0
     #error unsupported double evaluation
     #endif
-    int main(void) { return 0; }" STARS_BINARY64_DOUBLE)
-if(NOT STARS_BINARY64_DOUBLE)
+    int main(void) { return 0; }" STARS_BINARY64_DOUBLE_CXX20)
+if(NOT STARS_BINARY64_DOUBLE_CXX20)
     message(FATAL_ERROR "Stars requires binary64 double without excess evaluation precision")
+endif()
+
+# Probe the language/library facilities used by the native interfaces.
+check_cxx_source_compiles("
+    #include <span>
+    #include <bit>
+    #include <cstdint>
+    struct Probe { int i; };
+    constinit Probe probe{.i = 20};
+    int main() {
+        int values[1] = {probe.i};
+        std::span<int> view(values);
+        return std::bit_cast<std::uint32_t>(1.0f) == 0 || view.size() != 1;
+    }" STARS_CXX20_INTERFACES)
+if(NOT STARS_CXX20_INTERFACES)
+    message(FATAL_ERROR "Stars requires C++20 designated initializers, constinit, span and bit_cast")
 endif()
 
 target_link_libraries(stars_options INTERFACE m)
@@ -254,7 +302,7 @@ option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
-    add_executable(stars-test-enum-abi tests/compat/enum_abi.c tests/compat/enum_abi.cpp)
+    add_executable(stars-test-enum-abi tests/compat/enum_abi.cpp)
     target_link_libraries(stars-test-enum-abi PRIVATE stars_options)
     target_compile_options(stars-test-enum-abi PRIVATE -Wall -Wextra -Werror)
     add_test(NAME test_enum_abi COMMAND stars-test-enum-abi)
@@ -266,6 +314,11 @@ if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     set_tests_properties(test_fileio_contract PROPERTIES TIMEOUT 30)
 endif()
 if(STARS_BUILD_TESTS)
+    add_executable(stars-catalog-dump tests/compat/catalog_dump.cpp)
+    target_link_libraries(stars-catalog-dump PRIVATE stars_options)
+    add_test(NAME test_catalog_bytes COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/check_catalog.py" "$<TARGET_FILE:stars-catalog-dump>")
+    set_tests_properties(test_catalog_bytes PROPERTIES LABELS build TIMEOUT 30)
     add_executable(stars-layout-c tests/compat/record_layout.c)
     add_executable(stars-layout-cxx tests/compat/record_layout.cpp)
     target_link_libraries(stars-layout-c PRIVATE stars_options)
@@ -278,7 +331,7 @@ endif()
 
 include(cmake/test-redirect.cmake)
 if(STARS_BUILD_TESTS)
-    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
     if(CMAKE_GENERATOR_PLATFORM)
         list(APPEND STARS_TEST_COMPILER_ARGS -A "${CMAKE_GENERATOR_PLATFORM}")
     endif()
@@ -332,3 +385,5 @@ if(STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_language(RC)
     include(cmake/win32-reference-tests.cmake)
 endif()
+
+include(cmake/cpp-interface-checks.cmake)

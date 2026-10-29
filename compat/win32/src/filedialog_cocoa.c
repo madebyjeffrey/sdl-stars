@@ -7,7 +7,7 @@ static char *PszCocoaLabelUtf8(LPCSTR psz) {
     return FUtf8Valid(psz, strlen(psz)) ? SDL_strdup(psz) : NULL;
 }
 static int FPumpCocoaChooser(void *lpv) {
-    HWND hwndOwner = lpv;
+    HWND hwndOwner = (HWND)(lpv);
     MSG msg;
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return 0; }
@@ -27,7 +27,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     pszTitleUtf = PszCocoaLabelUtf8(pszTitle);
     if (!pszTitleUtf) return -1;
     if (cFilter != 0) {
-        rg = calloc((size_t)cFilter, sizeof(*rg)); if (!rg) goto done;
+        rg = (COCOAFILEFILTER *)(calloc((size_t)cFilter, sizeof(*rg))); if (!rg) goto done;
         for (i = 0; i < cFilter; i++) {
             rg[i].pszName = PszCocoaLabelUtf8(rgfilter[i].pszName);
             rg[i].pszPattern = PszCocoaLabelUtf8(rgfilter[i].pszPattern);

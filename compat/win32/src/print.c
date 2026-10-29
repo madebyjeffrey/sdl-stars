@@ -49,7 +49,7 @@ static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     DEVNAMES *lpn;
     char *psz;
     if (!h) return NULL;
-    lpn = GlobalLock(h); if (!lpn) { GlobalFree(h); return NULL; }
+    lpn = (DEVNAMES *)(GlobalLock(h)); if (!lpn) { GlobalFree(h); return NULL; }
     psz = (char *)lpn + sizeof(*lpn);
     lpn->wDriverOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDriver); psz += strlen(psz) + 1;
     lpn->wDeviceOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDevice); psz += strlen(psz) + 1;
@@ -70,7 +70,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     if (lppd->hDevMode || lppd->hDevNames) { CompatSetDialogError(PDERR_RETDEFFAILURE); return FALSE; }
     if (!(lppd->Flags & PD_RETURNDEFAULT) || (lppd->Flags & ~(PD_RETURNDEFAULT | PD_RETURNDC)) ||
         !SDL_IsMainThread() || (lppd->hwndOwner && !IsWindow(lppd->hwndOwner))) { SetLastError(ERROR_NOT_SUPPORTED); goto fail; }
-    lp = calloc(1, sizeof(*lp)); if (!lp) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
+    lp = (COMPATPRINT *)(calloc(1, sizeof(*lp))); if (!lp) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
     lp->hwndOwner = lppd->hwndOwner ? HwndCompatRoot(lppd->hwndOwner) : GetActiveWindow();
     lp->cCopies = 1; lp->idPaper = DMPAPER_LETTER; lp->cxPhysical = 2550; lp->cyPhysical = 3300;
     if (pszPaper && *pszPaper && SDL_strcasecmp(pszPaper, "letter") != 0) {
@@ -94,7 +94,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     hMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(*lpdm));
     hNames = HglobPrintNames(lp);
     if (!hMode || !hNames) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
-    lpdm = GlobalLock(hMode); if (!lpdm) goto fail;
+    lpdm = (DEVMODEA *)(GlobalLock(hMode)); if (!lpdm) goto fail;
     CchCopyUtf8(lpdm->dmDeviceName, sizeof(lpdm->dmDeviceName), lp->fSpool ? lp->szPrinter : "Stars PDF",
                 CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
@@ -116,11 +116,11 @@ fail:
     GlobalFree(hMode); GlobalFree(hNames); CompatSetDialogError(dwError); return FALSE;
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
-    COMPATPRINT *lp = lpv;
+    COMPATPRINT *lp = (COMPATPRINT *)(lpv);
     return CWriteNative(rgb, 1, cb, lp->lpfile) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
-    OPENFILENAMEA ofn = {0};
+    OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }

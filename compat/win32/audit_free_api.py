@@ -60,6 +60,8 @@ output = []
 local_functions = {}
 for path in sorted((ROOT / 'compat/win32/src').glob('*.c')):
     clean = strip(path.read_text())
+    # Test redirection retains the original API spelling inside this macro.
+    clean = re.sub(r'\bSTARS_TEST_IMPL\((\w+)\)', r'\1', clean)
     for match in re.finditer(r'\bWINAPIV?\s+(\w+)\s*\([^;{}]*\)\s*\{', clean):
         local_functions[match[1]] = f'{path.relative_to(ROOT)}:{clean.count(chr(10), 0, match.start()) + 1}'
     for symbol in counts:
@@ -87,9 +89,9 @@ for symbol in sorted(counts):
     if symbol == 'ExitWindows':
         decision = 'platform difference; rejects desktop logoff and exits Stars only'
     elif symbol in adapted:
-        decision = 'adapted in local C11 runtime'
+        decision = 'adapted in local C++20 runtime'
     elif local_found:
-        decision = 'implemented as local C11 extension'
+        decision = 'implemented as local C++20 extension'
     elif symbol in legacy:
         decision = 'local header macro; no separate implementation'
     elif found and (candidate in known_stubs or status == 'STUB'):

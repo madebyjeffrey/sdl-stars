@@ -127,10 +127,10 @@ int main(int argc,char **argv){
     while(fread(rgIn,sizeof(rgIn),1,file)==1){
         memset(rgplr,0x53,sizeof(rgplr));memset(&game,0x35,sizeof(game));memset(&design,0x5a,sizeof(design));
         int player=rgIn[1]==-1?0:rgIn[1];CHECK(player>=0 && player<16);
-        rgplr[player].rgAttr[rsMajorAdv]=(int8_t)rgIn[4];rgplr[player].grbitAttr=(uint32_t)rgIn[5];rgplr[player].grbitTrader=(uint16_t)rgIn[6];rgplr[player].iTechNow=rgIn[7];
+        rgplr[player].rgAttr[rsMajorAdv]=(int8_t)rgIn[4];rgplr[player].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[5]);rgplr[player].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[6]);rgplr[player].iTechNow=rgIn[7];
         for(int f=0;f<6;f++)rgplr[player].rgTech[f]=(int8_t)rgIn[10+f];
-        design.hul.ihuldef=(uint16_t)rgIn[2];design.hul.chs=(uint8_t)rgIn[3];design.fFree=rgIn[8];design.fGift=rgIn[9];
-        for(int at=0;at<16;at++){design.hul.rghs[at].grhst=(uint16_t)rgIn[16+3*at];design.hul.rghs[at].iItem=rgIn[17+3*at];design.hul.rghs[at].cItem=rgIn[18+3*at];}
+        design.hul.ihuldef=static_cast<HulDef>((uint16_t)rgIn[2]);design.hul.chs=(uint8_t)rgIn[3];design.fFree=rgIn[8];design.fGift=rgIn[9];
+        for(int at=0;at<16;at++){design.hul.rghs[at].grhst=static_cast<HullSlotType>((uint16_t)rgIn[16+3*at]);design.hul.rghs[at].iItem=rgIn[17+3*at];design.hul.rghs[at].cItem=rgIn[18+3*at];}
         idPlayer=(int16_t)rgIn[0];memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));memcpy(&designBefore,&design,sizeof(design));
         cCalls=cLookups=0;memset(rgCalls,-1,sizeof(rgCalls));memset(rgRequests,-1,sizeof(rgRequests));
         int result=FCanBuildShdef(&design,(int16_t)rgIn[1]);
@@ -148,9 +148,9 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-lm','-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={row[:2]:(row[2:8],row[8]) for row in struct.iter_unpack('<9i',export.read_bytes())}
         assert len(table)==sum(LIMITS) and all((k,i) in table for k,n in enumerate(LIMITS) for i in range(n))

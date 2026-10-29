@@ -2,12 +2,13 @@
 """Build the game's static data tables from the YAML files in data/.
 
 Usage:
-    datagen.py OUTDIR       write dataids.h and data_tables.c into OUTDIR
+    datagen.py OUTDIR       write dataids.h and data_tables.cpp into OUTDIR
 
-Each YAML file is a list of entries, one per element of a C array (a list
-of lists for a two-dimensional one). An entry is written out as a C
-designated initializer: its keys are the struct's field names and its
-values are C values.
+Each YAML file is a list of entries, one per element of a C++ array (a list
+of lists for a two-dimensional one). A constexpr builder starts each entry
+from zero and assigns its named fields. Keys are struct field names; values
+are scalar expressions, nested objects or arrays. constinit requires static
+initialization for every exported catalog.
 
     - name: iengineFuelMizer        # its enum value in dataids.h
       szName: "Fuel Mizer"          # sz keys are strings (UTF-8)
@@ -17,7 +18,7 @@ values are C values.
 
 Two more forms follow the Hungarian prefixes:
 
-      rgAttr: {rsResGen: 10}        # an rg map sets elements: {[rsResGen] = 10}
+      rgAttr: {rsResGen: 10}        # an rg map assigns only its named array elements
       grbitAttr: [grbitRaceIFE, grbitRaceTT]   # a grbit or grf list is ORed
 
 The compiler checks the field names, enum values and types, so this script
@@ -142,7 +143,7 @@ def CString(s, where):
 
 
 def CValue(key, value, where, asserts, path):
-    """Return the C initializer for one YAML value."""
+    """Format and validate one YAML value."""
     if isinstance(value, bool):
         if not key.startswith("f"):
             raise DataError("{}: {} is true/false; only f keys are flags (quote a name like 'no')".format(where, key))
@@ -152,7 +153,7 @@ def CValue(key, value, where, asserts, path):
     if isinstance(value, str):
         if key.startswith("sz"):
             lit = CString(value, where)
-            asserts.append('_Static_assert(sizeof({0}) <= sizeof({1}), "{1} is too long");'.format(lit, path))
+            asserts.append('static_assert(sizeof({0}) <= sizeof({1}), "{1} is too long");'.format(lit, path))
             return lit
         if not EXPR.match(value):
             raise DataError("{}: {}: {!r} is not a C value".format(where, key, value))
@@ -192,6 +193,34 @@ def CStruct(fields, where, asserts, path, indent=None):
     if indent is None:
         return "{" + ", ".join(items) + "}"
     return "{\n" + "".join("{}{},\n".format(indent, item) for item in items) + indent[:-4] + "}"
+
+
+def CppAssignments(value, path, key, where, indent="        "):
+    """Initialize aggregate members in a constexpr builder, including sparse arrays.
+
+    Zero initialization supplies omitted members and reserved array entries.
+    Assignments avoid depending on YAML key order or C array designators.
+    """
+    if isinstance(value, dict):
+        return "".join(CppAssignments(v, "{}[{}]".format(path, k) if key.startswith("rg")
+                                      else "{}.{}".format(path, k),
+                                      key if key.startswith("rg") else k, where, indent)
+                       for k, v in value.items())
+    if isinstance(value, list) and not key.startswith(("grbit", "grf")):
+        return "".join(CppAssignments(v, "{}[{}]".format(path, i), "" if isinstance(v, dict) else key, where, indent)
+                       for i, v in enumerate(value))
+    literal = CValue(key, value, where, [], path)
+    if isinstance(value, str) and key.startswith("sz"):
+        return (indent + "for (size_t i = 0; i < sizeof({0}); ++i) {1}[i] = {0}[i];\n").format(literal, path)
+    return indent + "{0} = static_cast<std::remove_reference_t<decltype({0})>>({1});\n".format(path, literal)
+
+
+def CppStruct(ctype, fields, where, asserts, path):
+    # Validate names/values and record the original string-size assertions.
+    CStruct(fields, where, asserts, path)
+    return ("[]() constexpr {\n        " + ctype + " value{};\n" +
+            CppAssignments(fields, "value", "", where) +
+            "        return value;\n    }()")
 
 
 def LoadTable(table):
@@ -318,8 +347,7 @@ def LoadRecipes(table, chs, rgaip):
 
 
 def EnumStart(name, underlying):
-    return ["#ifdef __cplusplus", "enum {} : {} {{".format(name, underlying),
-            "#else", "enum {} {{".format(name), "#endif"]
+    return ["enum {} : {} {{".format(name, underlying)]
 
 
 def Generate(outdir):
@@ -331,7 +359,7 @@ def Generate(outdir):
         '#include <stdint.h>',
         "",
     ]
-    body = ["// " + GENERATED.format("*.yaml"), '#include "common.h"', ""]
+    body = ["// " + GENERATED.format("*.yaml"), '#include <type_traits>', '#include "common.h"', ""]
     asserts = []
     tables = {table["array"]: LoadTable(table) for table in TABLES}
     rgHulDef = [e["name"] for e in tables["rghuldef"]] + [e["huldef"] for e in tables["rghuldefSB"]]
@@ -368,7 +396,7 @@ def Generate(outdir):
                 if "rghs" in hul:
                     hul["chs"] = len(hul["rghs"])
                 fields["hul"] = hul
-            rgsz.append("    /* {} */ {}".format(index, CStruct(fields, where, asserts, array + index, " " * 8)))
+            rgsz.append("    /* {} */ {}".format(index, CppStruct(table["ctype"], fields, where, asserts, array + index)))
         if len(shape) == 2:
             rows = [",\n".join(rgsz[r * shape[1] : (r + 1) * shape[1]]) for r in range(shape[0])]
             init = ",\n".join("{{\n{}\n}}".format(row) for row in rows)
@@ -392,7 +420,7 @@ def Generate(outdir):
     lines = []
     for name, tries in prefs:
         for ibit, iItem, cItem, part in tries:
-            lines.append("    /* {} */ {{.ibit = {}, .iItem = {}, .cItem = {}}},".format(part, ibit, iItem, cItem))
+            lines.append("    /* {} */ {{.ibit = {}, .iItem = {}, .cItem = {}, .fRandom = 0}},".format(part, ibit, iItem, cItem))
     body.append("uint8_t {}[{}] = {{{}}};\n".format(PREFERENCES["counts"], len(prefs), ", ".join(str(len(t)) for _, t in prefs)))
     body.append("AIPART {}[{}] = {{\n{}\n}};\n".format(PREFERENCES["array"], max(len(lines), PREFERENCES["size"]), "\n".join(lines)))
     rgaip = {name for name, _ in prefs}
@@ -426,9 +454,10 @@ def Generate(outdir):
                 raise DataError("data/{}: offsets pass 255, beyond {}'s uint8_t".format(table["file"], table["ish"]))
             body.append("{} {}[{}] = {{{}}};\n".format(table["ishType"], table["ish"], len(recipes), ", ".join(name for name, _ in recipes)))
     header += ["#endif", ""]
+    body = [re.sub(r"^(\w+ \w+\[)", r"constinit \1", row) for row in body]
     body += asserts + [""]
     os.makedirs(outdir, exist_ok=True)
-    for name, text in (("dataids.h", "\n".join(header)), ("data_tables.c", "\n".join(body))):
+    for name, text in (("dataids.h", "\n".join(header)), ("data_tables.cpp", "\n".join(body))):
         WriteIfChanged(os.path.join(outdir, name), text)
 
 

@@ -202,12 +202,12 @@ def generate(root, output):
     source = ['/* Generated from canonical res/stars.rc. */', '#include "internal.h"']
     manifest = ['/* Generated standard Win32 resource bytes for SDK comparison. */']
     for i, (_, _, data) in enumerate(resources):
-        body = [f'static const BYTE rgbUIResource{i}[] = {{']
+        body = [f'static constinit const BYTE rgbUIResource{i}[] = {{']
         body += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]
         body += ['};']
         source += body
-        manifest += body
-    source += ['const COMPATRESOURCE rgCompatUIResources[] = {']
+        manifest += [line.replace("constinit ", "") for line in body]
+    source += ['constinit const COMPATRESOURCE rgCompatUIResources[] = {']
     manifest += ['static const struct { LPCSTR pszName, pszType; const BYTE *rgb; DWORD cb; } rgUIManifest[] = {']
     for i, (t, n, _) in enumerate(resources):
         name = 'NULL' if isinstance(n, int) else f'"{n}"'
@@ -215,9 +215,9 @@ def generate(root, output):
         ident = f'MAKEINTRESOURCE({n})' if isinstance(n, int) else f'"{n}"'
         source += [f'    {{{name}, {number}, rgbUIResource{i}, sizeof(rgbUIResource{i}), {t}}},']
         manifest += [f'    {{{ident}, MAKEINTRESOURCE({t}), rgbUIResource{i}, sizeof(rgbUIResource{i})}},']
-    source += ['};', 'const size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
+    source += ['};', 'constinit const size_t cCompatUIResources = sizeof(rgCompatUIResources) / sizeof(rgCompatUIResources[0]);']
     manifest += ['};']
-    (output / 'ui_resources.c').write_text('\n'.join(source) + '\n')
+    (output / 'ui_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'ui_manifest.h').write_text('\n'.join(manifest) + '\n')
 
 

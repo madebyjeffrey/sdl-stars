@@ -12,6 +12,7 @@ import shlex
 import subprocess
 import tempfile
 from check_s02_source import ROOT, function, enum_source
+from check_s02_source import ENUM_STORAGE
 
 
 def main():
@@ -34,10 +35,10 @@ def main():
 '''
     ids=sorted(set(re.findall(r'\bidm[A-Za-z0-9_]+',produce+builder)))
     declarations+='enum {'+','.join(f'{name}={i+1}' for i,name in enumerate(ids))+'};\ntypedef int MessageId;\n'
-    for name in ['ProdItemType','mdProdStat','GrobjClass','PlayerSentinel']:
-        start=enums.index('enum '+name+' {')
-        declarations+=enums[start:enums.index('\n};',start)+3]+f'\ntypedef {"int16_t" if name=="PlayerSentinel" else "uint16_t"} {name};\n'
-    start=enums.index('enum HeapType {');declarations+=enums[start:enums.index(';',start)+1]+'\ntypedef enum HeapType HeapType;\n'
+    for name in ['ProdItemType','mdProdStat','GrobjClass','PlayerSentinel','MsgGoto']:
+        start=enums.index('enum '+name+' : '+ENUM_STORAGE[name]+' {')
+        declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
+    start=enums.index('enum HeapType : uint16_t {');declarations+=enums[start:enums.index(';',start)+1]+'\ntypedef enum HeapType HeapType;\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
         start=types.index('struct '+tag+' {')
@@ -119,9 +120,9 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *resourc
 #define memmove checkedMove
 '''+produce+'\n#undef memmove\n'
     witnesses=r'''
-static PROD row(unsigned count,unsigned item,unsigned kind){PROD r={0};r.cItem=count;r.iItem=item;r.grobj=kind;r.unused=7;return r;}
+static PROD row(unsigned count,unsigned item,unsigned kind){PROD r={};r.cItem=count;r.iItem=item;r.grobj=kind;r.unused=7;return r;}
 static PLPROD *queue(unsigned maximum,unsigned count,unsigned physical){
-    assert(heaps<8);size_t n=4+4*physical;PLPROD *p=malloc(n);assert(p);memset(p,0,n);
+    assert(heaps<8);size_t n=4+4*physical;PLPROD *p=static_cast<PLPROD *>(malloc(n));assert(p);memset(p,0,n);
     heap[heaps].p=p;heap[heaps].bytes=n;heap[heaps++].live=1;allocations++;
     p->cbItem=4;p->ht=htOrd;p->iprodMax=maximum;p->iprodMac=count;
     for(unsigned i=0;i<physical;i++)p->rgprod[i]=row(1,7,3);return p;
@@ -139,7 +140,7 @@ static void reset(void){
 static int has(int id){for(int i=0;i<messages;i++)if(notice[i]==id)return 1;return 0;}
 static int16_t narrow(int value){return (int16_t)(uint16_t)value;}
 int main(void){
-    _Static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && offsetof(PLANET,lpplprod)==52,"native queue/planet layout");
+    static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && offsetof(PLANET,lpplprod)==52,"native queue/planet layout");
     reset();Produce();CHECK(queries==1 && !builds && has(idmProductionQueueEmpty) && rgplr[0].lResLastYear==100);
     CHECK(!strcmp(phases,"MQPRE") && score[0]==1030 && owners[0]==0 && rgplr[1].lResLastYear==0);
     reset();planet.iPlayer=-1;game.fNoRandom=1;Produce();CHECK(!queries && !messages && !strcmp(phases,"MPR") && owners[0]==-1 && score[0]==1010);
@@ -248,9 +249,9 @@ int main(void){
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-host-production-') as work:
-        path=Path(work); source=path/'witness.c'; binary=path/'witness'
+        path=Path(work); source=path/'witness.cpp'; binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

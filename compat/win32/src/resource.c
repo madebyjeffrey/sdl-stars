@@ -115,7 +115,7 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
             if (!FMenuWord(rgb, cb, lpib, &wch)) goto fail;
             if (wch) cch++;
         } while (wch);
-        psz = malloc(cch * 3 + 1);
+        psz = (char *)(malloc(cch * 3 + 1));
         if (!psz) goto fail;
         if (CchUtf16leToUtf8(psz, cch * 3 + 1, rgb + ibText, cch) < 0) { free(psz); goto fail; }
         if (!(flags & MF_POPUP) && id == 0 && cch == 0) flags |= MF_SEPARATOR;
@@ -147,5 +147,5 @@ HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
 }
 HMENU WINAPI LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = FindResourceA(hInstance, pszName, RT_MENU);
-    return HmenuCompatTemplate(LockResource(LoadResource(hInstance, hrsrc)), SizeofResource(hInstance, hrsrc));
+    return HmenuCompatTemplate((const BYTE *)(LockResource(LoadResource(hInstance, hrsrc))), SizeofResource(hInstance, hrsrc));
 }

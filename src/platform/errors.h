@@ -1,17 +1,10 @@
 #ifndef STARS_ERRORS_H
 #define STARS_ERRORS_H
 #include <stdint.h>
-#ifdef __cplusplus
 #include <type_traits>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 int FStarsRecoveryActive(void);
 int FStarsErrorPending(void);
-#ifdef __cplusplus
-}
+
 
 enum StarsErrorKind { starsErrorMemory, starsErrorFile };
 struct StarsError {
@@ -42,5 +35,4 @@ public:
     StarsRestore(const StarsRestore &) = delete;
     StarsRestore &operator=(const StarsRestore &) = delete;
 };
-#endif
 #endif

@@ -15,9 +15,9 @@ static BOOL fTask, fDone;
 #ifndef _WIN32
 static int cAudioQueues;
 bool SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb);
-bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
+extern "C" bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
     SDL_AudioSpec spec;
-    const float *rg = lpv;
+    const float *rg = (const float *)lpv;
     int i;
     BOOL fAudible = FALSE;
     EXPECT(SDL_GetAudioStreamFormat(lp, &spec, NULL));

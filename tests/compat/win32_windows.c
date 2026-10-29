@@ -30,7 +30,7 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
     if (msg == WM_NCCREATE) {
         lpcs = (CREATESTRUCT *)lParam;
-        lpwin = lpcs->lpCreateParams;
+        lpwin = (WINDOWTEST*)(lpcs->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lpwin);
         lpwin->cNcCreate++;
         lpwin->fCreateData = lpcs->cx == 320 && lpcs->cy == 240;

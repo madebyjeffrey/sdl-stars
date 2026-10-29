@@ -48,7 +48,7 @@ xvfb-run -a env SDL_VIDEODRIVER=x11 \
 
 ## Implemented subset
 
-The library continues to use our ABI-checked headers and C11 adaptations of
+The library continues to use our ABI-checked headers and C++20 adaptations of
 Free API, with its MIT attribution retained. The unmodified upstream source
 reference and SHA-256 records are unchanged.
 

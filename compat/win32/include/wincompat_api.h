@@ -4,6 +4,8 @@
 #ifndef STARS_WINCOMPAT_API_H
 #define STARS_WINCOMPAT_API_H
 
+#include "wincompat_types.h"
+#include "wincompat_structs.h"
 WINBOOL WINAPI AppendMenuA(HMENU hMenu,UINT uFlags,UINT_PTR uIDNewItem,LPCSTR lpNewItem);
 HDC WINAPI BeginPaint(HWND hWnd,LPPAINTSTRUCT lpPaint);
 WINBOOL WINAPI BitBlt(HDC hdc,int x,int y,int cx,int cy,HDC hdcSrc,int x1,int y1,DWORD rop);

@@ -88,16 +88,16 @@ int16_t IWarpMAFromLppl(PLANET *p,int16_t *two){
     assert(p==&planet);int at=warpCalls<2?warpCalls:1;warpBase[at]=p->isb;warpCalls++;
     return NativeWarp(p,two);
 }
-_Static_assert(iplrNone==-1 && detAll==7 && hstSpecialSB==512 && ispecialSBMassDriver5==7 && ispecialSBUltraDriver13==15,"mass driver identities");
+static_assert(iplrNone==-1 && detAll==7 && hstSpecialSB==512 && ispecialSBMassDriver5==7 && ispecialSBUltraDriver13==15,"mass driver identities");
 ''')
     bodies+='\n'+function('src/core/planet.c','int16_t IWarpMAFromLppl(').replace('int16_t IWarpMAFromLppl(','static int16_t NativeWarp(',1)
     harness=r'''
 static void eligible(void){
-    fInCheck=cQueries=cGateLookups=mdCheckResult=0;rgplr[0].rgAttr[rsMajorAdv]=raMassAccel;rgplr[0].grbitTrader=UINT16_MAX;
+    fInCheck=cQueries=cGateLookups=mdCheckResult=0;rgplr[0].rgAttr[rsMajorAdv]=raMassAccel;rgplr[0].grbitTrader=static_cast<GrbitTrader>(UINT16_MAX);
     for(int i=0;i<6;i++)rgplr[0].rgTech[i]=26;
 }
 static void drivers(SHDEF *d,int pattern){
-    memset(&d->hul,0,sizeof(d->hul));d->det=detAll;d->hul.ihuldef=32;d->hul.chs=3;
+    memset(&d->hul,0,sizeof(d->hul));d->det=detAll;d->hul.ihuldef=static_cast<HulDef>(32);d->hul.chs=3;
     // none; one occupied slot containing two; two equal slots; lower ties
     // superseded by a higher slot; highest tied with a lower slot between.
     const int items[6][3]={{0,0,0},{7,0,0},{7,7,0},{7,7,15},{15,7,15},{15,0,0}};
@@ -110,7 +110,7 @@ int main(int argc,char **argv){
         planet.iPlayer=(int16_t)data[0];planet.fStarbase=data[1];planet.isb=data[2];idPlayer=(int16_t)data[3];
         if(data[0]>=0 && data[0]<16)rglpshdefSB[data[0]]=data[4]?bases:NULL;
         if(data[2]<10){SHDEF *d=bases+data[2];d->det=data[5];d->hul.chs=data[6];
-            for(int i=0;i<16;i++){d->hul.rghs[i].grhst=data[8+3*i];d->hul.rghs[i].iItem=data[9+3*i];d->hul.rghs[i].cItem=data[10+3*i];}}
+            for(int i=0;i<16;i++){d->hul.rghs[i].grhst=static_cast<HullSlotType>(data[8+3*i]);d->hul.rghs[i].iItem=data[9+3*i];d->hul.rghs[i].cItem=data[10+3*i];}}
         PLANET expectedPlanet=planet;SHDEF expectedBases[10];PLAYER expectedPlayers[16];GAME expectedGame=game;
         memcpy(expectedBases,bases,sizeof(bases));memcpy(expectedPlayers,rgplr,sizeof(rgplr));
         int16_t two=1234;int warp=NativeWarp(&planet,data[7]?&two:NULL);
@@ -158,9 +158,9 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-o',str(binary)],check=True)
         vectors=path/'vectors.bin';count=0;excluded={}
         with vectors.open('wb') as stream:
             for c in cases():

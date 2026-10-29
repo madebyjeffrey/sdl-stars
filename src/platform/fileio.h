@@ -2,11 +2,6 @@
 #define STARS_FILEIO_H
 #include <stddef.h>
 #include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct NATIVEFILE NATIVEFILE;
 typedef struct NATIVEDIR NATIVEDIR;
 typedef struct NATIVEFILEINFO {
@@ -15,7 +10,7 @@ typedef struct NATIVEFILEINFO {
     int fDirectory, fRegular, fLink;
 } NATIVEFILEINFO;
 
-// Strict UTF-8 paths; binary bytes are never decoded or translated. All C ABI
+// Strict UTF-8 paths; binary bytes are never decoded or translated. All service
 // functions contain exceptions and report failures through return values/errno.
 // OpenFlags access: 1 read, 2 write, 3 both. Share uses Win16 0x10/20/30/40.
 // Native access is required for live identity, exclusive creation and durable IO.
@@ -74,8 +69,7 @@ int32_t LNativeSeekLegacy(int16_t hf, int32_t ib, int16_t iOrigin);
 int32_t CbNativeSizeLegacy(int16_t hf);
 void CloseNativeLegacy(int16_t hf);
 
-#ifdef __cplusplus
-}
+
 
 class StarsNativeFileGuard {
     NATIVEFILE *pf;
@@ -94,5 +88,4 @@ public:
     StarsNativeDirGuard(const StarsNativeDirGuard &) = delete;
     StarsNativeDirGuard &operator=(const StarsNativeDirGuard &) = delete;
 };
-#endif
 #endif

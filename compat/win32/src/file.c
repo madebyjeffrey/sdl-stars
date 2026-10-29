@@ -1,9 +1,9 @@
+#include <atomic>
 /* Legacy HFILE adapters use owned C++ file tokens, never arbitrary integer fds. */
 #include "internal.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,12 +19,12 @@ typedef struct COMPATFILE {
 } COMPATFILE;
 
 static COMPATFILE *lpFiles;
-static atomic_flag fFileLock = ATOMIC_FLAG_INIT;
+static std::atomic_flag fFileLock = ATOMIC_FLAG_INIT;
 
 static void LockFiles(void) {
-    while (atomic_flag_test_and_set_explicit(&fFileLock, memory_order_acquire)) {}
+    while (std::atomic_flag_test_and_set_explicit(&fFileLock, std::memory_order_acquire)) {}
 }
-static void UnlockFiles(void) { atomic_flag_clear_explicit(&fFileLock, memory_order_release); }
+static void UnlockFiles(void) { std::atomic_flag_clear_explicit(&fFileLock, std::memory_order_release); }
 static COMPATFILE *LpFile(HFILE hf) {
     COMPATFILE *lp;
     for (lp = lpFiles; lp; lp = lp->lpNext) if (lp->hf == hf) return lp;
@@ -109,7 +109,7 @@ HFILE WINAPI OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
         }
     if ((flags & OF_CREATE) && ITruncateNativeFile(pf, 0) != 0) { dwError = DwFileError(); goto LUnlock; }
     if (flags & OF_EXIST) { hf = 1; goto LUnlock; }
-    lpNew = calloc(1, sizeof(*lpNew));
+    lpNew = (COMPATFILE *)(calloc(1, sizeof(*lpNew)));
     if (!lpNew) { dwError = ERROR_NOT_ENOUGH_MEMORY; goto LUnlock; }
     for (hf = 3; hf <= INT16_MAX && LpFile(hf); hf++) {}
     if (hf > INT16_MAX) { hf = HFILE_ERROR; dwError = ERROR_TOO_MANY_OPEN_FILES; goto LUnlock; }

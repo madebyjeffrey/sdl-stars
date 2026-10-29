@@ -31,7 +31,7 @@ BOOL WINAPI MessageBeep(UINT type) {
     for (i = 0; i < 3528; i++) {
         hz = type == MB_ICONHAND ? 220 : type == MB_ICONEXCLAMATION ? 440 : type == MB_ICONASTERISK ? 1047 : 880;
         if (type == MB_ICONQUESTION) hz = i < 1764 ? 660 : 880;
-        envelope = min(1.0, (double)i / 110) * min(1.0, (double)(3527 - i) / 220);
+        envelope = (((1.0) < ((double)i / 110)) ? (1.0) : ((double)i / 110)) * (((1.0) < ((double)(3527 - i) / 220)) ? (1.0) : ((double)(3527 - i) / 220));
         rgSamples[i] = (float)(0.15 * envelope * sin(i * hz * (6.283185307179586 / 22050)));
     }
     // A new alert replaces the previous one instead of accumulating stale sounds.

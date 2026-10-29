@@ -8,12 +8,12 @@
 static BOOL fFakeDisplay, fFailDisplay;
 bool SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc);
 bool SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc);
-bool SDLCALL StarsTest_SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc) {
+extern "C" bool SDLCALL StarsTest_SDL_GetDisplayBounds(SDL_DisplayID id, SDL_Rect *rc) {
     if (!fFakeDisplay) return SDL_GetDisplayBounds(id, rc);
     if (fFailDisplay) return false;
     *rc = (SDL_Rect){-640, -80, 640, 480}; return true;
 }
-bool SDLCALL StarsTest_SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc) {
+extern "C" bool SDLCALL StarsTest_SDL_GetDisplayUsableBounds(SDL_DisplayID id, SDL_Rect *rc) {
     if (!fFakeDisplay) return SDL_GetDisplayUsableBounds(id, rc);
     *rc = (SDL_Rect){-630, -50, 620, 440}; return true;
 }

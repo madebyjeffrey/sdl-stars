@@ -12,12 +12,6 @@
 #include <time.h>
 #include "errors.h"
 
-#ifdef __cplusplus
-#define _Static_assert static_assert
-#define _Alignof alignof
-extern "C" {
-#endif
-
 // Raw Win16 storage is byte-addressed and may be unaligned, so scalar
 // accesses through it copy bytes instead of dereferencing a cast pointer.
 static inline uint16_t RawLoad16(const void *p) {
@@ -74,25 +68,6 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "util.h"
 #include "utilgen.h"
 
-#ifdef __cplusplus
-// Private test implementations retain the same C ABI as their adapters.
-decltype(AlertSz) STARS_TEST_IMPL(AlertSz);
-decltype(Random) STARS_TEST_IMPL(Random);
-decltype(PctPlanetCapacity) STARS_TEST_IMPL(PctPlanetCapacity);
-decltype(WriteRt) STARS_TEST_IMPL(WriteRt);
-decltype(FCreateFile) STARS_TEST_IMPL(FCreateFile);
-decltype(ReadRt) STARS_TEST_IMPL(ReadRt);
-decltype(StreamOpen) STARS_TEST_IMPL(StreamOpen);
-decltype(StreamClose) STARS_TEST_IMPL(StreamClose);
-decltype(DirtyGame) STARS_TEST_IMPL(DirtyGame);
-decltype(RemoveNativeFile) STARS_TEST_IMPL(RemoveNativeFile);
-decltype(ReplaceNativeFile) STARS_TEST_IMPL(ReplaceNativeFile);
-decltype(RenameNativeFile) STARS_TEST_IMPL(RenameNativeFile);
-}
-#endif
-
-#ifdef __cplusplus
 #include "file_guard.h"
-#endif
 
 #endif

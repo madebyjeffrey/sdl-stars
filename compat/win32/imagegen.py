@@ -65,22 +65,22 @@ def generate(root, output):
     source = ['/* Generated canonical ICON/CURSOR resources. */', '#include "internal.h"']
     manifest = ['/* Resource identities and first raw image for SDK comparison. */']
     for i, (_, _, data) in enumerate(resources):
-        source += [f'static const BYTE rgbImageResource{i}[] = {{']
+        source += [f'static constinit const BYTE rgbImageResource{i}[] = {{']
         source += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]
         source += ['};']
-    source += ['const COMPATRESOURCE rgCompatImageResources[] = {']
+    source += ['constinit const COMPATRESOURCE rgCompatImageResources[] = {']
     for i, (type_, identity, _) in enumerate(resources):
         name = 'NULL' if isinstance(identity, int) else f'"{identity}"'
         ordinal = identity if isinstance(identity, int) else 0
         source += [f'    {{{name}, {ordinal}, rgbImageResource{i}, sizeof(rgbImageResource{i}), {type_}}},']
-    source += ['};', 'const size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']
+    source += ['};', 'constinit const size_t cCompatImageResources = sizeof(rgCompatImageResources) / sizeof(rgCompatImageResources[0]);']
     source += ['/* Desktop identity is separate from the original in-game icon resources. */']
     for condition, filename in (('#ifdef __APPLE__', 'stars-app-macos.png'), ('#else', 'stars-app.png')):
         app_icon = (root / 'res/icons' / filename).read_bytes()
-        source += [condition, 'const BYTE rgbCompatAppIcon[] = {']
+        source += [condition, 'constinit const BYTE rgbCompatAppIcon[] = {']
         source += ['    ' + ','.join(f'0x{x:02x}' for x in app_icon[j:j+32]) + ',' for j in range(0, len(app_icon), 32)]
         source += ['};']
-    source += ['#endif', 'const size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
+    source += ['#endif', 'constinit const size_t cbCompatAppIcon = sizeof(rgbCompatAppIcon);']
     for i, (_, _, _, data) in enumerate(images):
         manifest += [f'static const BYTE rgbImageExpected{i}[] = {{']
         manifest += ['    ' + ','.join(f'0x{x:02x}' for x in data[j:j+32]) + ',' for j in range(0, len(data), 32)]
@@ -90,7 +90,7 @@ def generate(root, output):
         name = f'MAKEINTRESOURCE({identity})' if isinstance(identity, int) else f'"{identity}"'
         manifest += [f'    {{{int(cursor)}, {name}, {group_size}, rgbImageExpected{i}, sizeof(rgbImageExpected{i})}},']
     manifest += ['};']
-    (output / 'image_resources.c').write_text('\n'.join(source) + '\n')
+    (output / 'image_resources.cpp').write_text('\n'.join(source) + '\n')
     (output / 'image_manifest.h').write_text('\n'.join(manifest) + '\n')
 
 

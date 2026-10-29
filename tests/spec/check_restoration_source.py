@@ -24,6 +24,7 @@ def main():
     declarations = r'''
 #include <assert.h>
 #include <stdint.h>
+typedef uint16_t GrobjClass;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,11 +166,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix="restore-source-") as work:
-        source = Path(work) / "witness.c"
+        source = Path(work) / "witness.cpp"
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC", "cc")) +
-                       ["-std=c11", "-Wall", "-Wextra", "-Werror", "-fsanitize=undefined",
+        subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined",
                         "-fno-sanitize-recover=undefined", str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

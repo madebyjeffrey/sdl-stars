@@ -78,9 +78,10 @@ void ShowTitleScreen() {
             SetRect(&rcWork, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
         }
         SetRect(&rc, 0, 0, 800, 600);
-        dx = min(rc.right - rc.left, rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME));
-        dy = min(rc.bottom - rc.top, rcWork.bottom - rcWork.top -
-                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME));
+        dx = (((rc.right - rc.left) < (rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME))) ? (rc.right - rc.left) : (rcWork.right - rcWork.left - 2 * GetSystemMetrics(SM_CXDLGFRAME)));
+        dy = (((rc.bottom - rc.top) < (rcWork.bottom - rcWork.top -
+                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME))) ? (rc.bottom - rc.top) : (rcWork.bottom - rcWork.top -
+                 GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
         hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);

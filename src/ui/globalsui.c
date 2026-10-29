@@ -1,6 +1,6 @@
 #include "win.h"
 
-_Static_assert(_Alignof(TILE) >= _Alignof(TILEDRAWPROC) && offsetof(TILE, pfn) % _Alignof(TILEDRAWPROC) == 0,
+static_assert(alignof(TILE) >= alignof(TILEDRAWPROC) && offsetof(TILE, pfn) % alignof(TILEDRAWPROC) == 0,
                "Tile callback pointers require native alignment");
 
 BTLDATA       *vlpbdVCR = 0;

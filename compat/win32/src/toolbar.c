@@ -60,7 +60,7 @@ static void LayoutToolbar(HWND hwnd) {
     int i, x = lp->xIndent, cx;
     for (i = 0; i < lp->c; i++) {
         lpbtn = &lp->rgbtn[i];
-        cx = lpbtn->btn.fsStyle & BTNS_SEP ? max(1, lpbtn->btn.iBitmap) : lp->cx + (FArrow(lp, &lpbtn->btn) ? 11 : 0);
+        cx = lpbtn->btn.fsStyle & BTNS_SEP ? StarsMax(1, lpbtn->btn.iBitmap) : lp->cx + (FArrow(lp, &lpbtn->btn) ? 11 : 0);
         if (lpbtn->btn.fsState & TBSTATE_HIDDEN) cx = 0;
         SetRect(&lpbtn->rc, x, 2, x + cx, 2 + lp->cy);
         x += cx;
@@ -81,7 +81,7 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
     size_t i;
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return FALSE;
-    rgNew = calloc(c + (size_t)lp->c + 1, sizeof(*rgNew));
+    rgNew = (COMPATTOOLBUTTON *)(calloc(c + (size_t)lp->c + 1, sizeof(*rgNew)));
     if (!rgNew) return FALSE;
     for (i = 0; i < c; i++) {
         rgNew[iInsert + i].btn = rgbtn[i];
@@ -131,7 +131,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     DeleteDC(hsrc); DeleteDC(hdst);
     if (lpadd->hInst) DeleteObject(hbmp);
     if (!fCopy) { if (hcopy) DeleteObject(hcopy); return -1; }
-    rgbmp = realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp));
+    rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));
     if (!rgbmp) { DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
     lp->rgbmp[lp->cbmp++] = (COMPATTOOLBITMAP){hcopy, iFirst, c}; lp->cImage += c;
@@ -201,7 +201,7 @@ static void PaintToolbar(HWND hwnd) {
 
 static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
     COMPATTOOLBAR *lp = hwnd->lptoolbar;
-    NMTOOLBARA nm = {0};
+    NMTOOLBARA nm = {};
     TBBUTTON btn;
     HWND hwndParent = hwnd->hwndParent;
     int j;
@@ -269,8 +269,8 @@ static void ShowToolbarTip(HWND hwnd) {
     if (IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
     hdc = GetDC(hwnd); GetTextExtentPoint32A(hdc, lpbtn->psz, (int)strlen(lpbtn->psz), &size); ReleaseDC(hwnd, hdc);
     hwndRoot = HwndCompatRoot(hwnd); GetWindowRect(hwndRoot, &rcRoot);
-    x = max(rcRoot.left, min(rc.left, rcRoot.right - size.cx - 6)); y = rc.bottom + 2;
-    if (y + size.cy + 6 > rcRoot.bottom) y = max(rcRoot.top, rc.top - size.cy - 8);
+    x = (((rcRoot.left) > (StarsMin(rc.left, rcRoot.right - size.cx - 6))) ? (rcRoot.left) : (StarsMin(rc.left, rcRoot.right - size.cx - 6))); y = rc.bottom + 2;
+    if (y + size.cy + 6 > rcRoot.bottom) y = StarsMax(rcRoot.top, rc.top - size.cy - 8);
     if (lp->hwndTip) {
         SetWindowTextA(lp->hwndTip, lpbtn->psz);
         SetWindowPos(lp->hwndTip, HWND_TOP, x, y, size.cx + 6, size.cy + 6, SWP_NOACTIVATE);
@@ -291,7 +291,7 @@ LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     TBBUTTON *lpbtn;
     if (msg == WM_NCCREATE) {
-        lp = calloc(1, sizeof(*lp)); if (!lp) return FALSE;
+        lp = (COMPATTOOLBAR *)(calloc(1, sizeof(*lp))); if (!lp) return FALSE;
         hwnd->lptoolbar = lp; hwnd->iControl = 7;
         lp->cx = 23; lp->cy = 22; lp->cxBitmap = 16; lp->cyBitmap = 15;
         lp->iDown = lp->iHot = -1; lp->cTextRows = 1;
@@ -312,7 +312,7 @@ LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_ERASEBKGND: return 1;
     case TB_BUTTONSTRUCTSIZE: lp->cbButton = (UINT)w; return 0;
     case TB_ADDBUTTONSA: return AddButtons(hwnd, lp->c, (size_t)w, (const TBBUTTON *)l);
-    case TB_INSERTBUTTONA: return AddButtons(hwnd, min((int)w, lp->c), 1, (const TBBUTTON *)l);
+    case TB_INSERTBUTTONA: return AddButtons(hwnd, ((((int)w) < (lp->c)) ? ((int)w) : (lp->c)), 1, (const TBBUTTON *)l);
     case TB_DELETEBUTTON:
         i = (int)w; if (i < 0 || i >= lp->c) return FALSE;
         SDL_free(lp->rgbtn[i].psz); memmove(lp->rgbtn + i, lp->rgbtn + i + 1, (size_t)(lp->c - i - 1) * sizeof(*lp->rgbtn));

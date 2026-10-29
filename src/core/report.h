@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_REPORT_H
 #define STARS_DECOMPILED_REPORT_H
 
+#include "common.h"
 #include <stdint.h>
 
 extern uint16_t mpicolgrbitBU[12];

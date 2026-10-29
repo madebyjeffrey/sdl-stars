@@ -9,7 +9,7 @@ import os
 import shlex
 import subprocess
 import tempfile
-from check_s02_source import function
+from check_s02_source import ROOT, function
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
-#include <stdatomic.h>
+#include <atomic>
 #define TRUE 1
 #define FALSE 0
 #define WINAPI
@@ -33,7 +33,7 @@ typedef struct COMPATPROFILE {
     char *szRaw,*szParsed,*pszSection,*pszKey,*pszValue;
     struct COMPATPROFILE *lpNext;
 } COMPATPROFILE;
-static atomic_flag fProfileLock=ATOMIC_FLAG_INIT;
+static std::atomic_flag fProfileLock=ATOMIC_FLAG_INIT;
 static const char *const *fixture;
 static int loadOK=1;
 static void CchGetString(StringId id,char *out) {strcpy(out,id==1?"A":"k");}
@@ -85,18 +85,18 @@ int main(void) {
     CHECK(GetPrivateProfileStringA("A","k","",out,3,"x")==2 && !strcmp(out," a"));
     fixture=duplicate;
     CHECK(GetPrivateProfileStringA("A","k","fallback",out,sizeof(out),"x")==8 && !strcmp(out,"fallback"));
-    CHECK(FIniValue("[A]\nx=first\n[A]\nk=second",1,2,out,sizeof(out)) && !strcmp(out,"second"));
-    CHECK(!FIniValue(" [A]\nk=1",1,2,out,sizeof(out)));
-    CHECK(!FIniValue("[ A ]\nk=1",1,2,out,sizeof(out)));
-    CHECK(!FIniValue("[A]\n k=1",1,2,out,sizeof(out)));
-    CHECK(FIniValue("[A]\n[broken\nk=1",1,2,out,sizeof(out)) && !strcmp(out,"1"));
-    CHECK(FIniValue("[A]\nk= '2'  ",1,2,out,sizeof(out)) && !strcmp(out,"'2'"));
-    CHECK(FIniValue("[A]\nk=abcd",1,2,out,3) && !strcmp(out,"ab"));
-    CHECK(LIniInt("[A]\nk=0x2",1,2,7)==0);
-    CHECK(LIniInt("[A]\nk='2'",1,2,7)==0);
-    CHECK(LIniInt("[A]\nk=",1,2,7)==0);
-    CHECK(LIniInt("[A]\nx=",1,2,7)==7);
-    CHECK(LIniInt("[A]\nk=-12suffix",1,2,7)==-12);
+    CHECK(FIniValue(const_cast<char *>("[A]\nx=first\n[A]\nk=second"),1,2,out,sizeof(out)) && !strcmp(out,"second"));
+    CHECK(!FIniValue(const_cast<char *>(" [A]\nk=1"),1,2,out,sizeof(out)));
+    CHECK(!FIniValue(const_cast<char *>("[ A ]\nk=1"),1,2,out,sizeof(out)));
+    CHECK(!FIniValue(const_cast<char *>("[A]\n k=1"),1,2,out,sizeof(out)));
+    CHECK(FIniValue(const_cast<char *>("[A]\n[broken\nk=1"),1,2,out,sizeof(out)) && !strcmp(out,"1"));
+    CHECK(FIniValue(const_cast<char *>("[A]\nk= '2'  "),1,2,out,sizeof(out)) && !strcmp(out,"'2'"));
+    CHECK(FIniValue(const_cast<char *>("[A]\nk=abcd"),1,2,out,3) && !strcmp(out,"ab"));
+    CHECK(LIniInt(const_cast<char *>("[A]\nk=0x2"),1,2,7)==0);
+    CHECK(LIniInt(const_cast<char *>("[A]\nk='2'"),1,2,7)==0);
+    CHECK(LIniInt(const_cast<char *>("[A]\nk="),1,2,7)==0);
+    CHECK(LIniInt(const_cast<char *>("[A]\nx="),1,2,7)==7);
+    CHECK(LIniInt(const_cast<char *>("[A]\nk=-12suffix"),1,2,7)==-12);
     strcpy(longline,"[A]\nk=");memset(longline+6,'a',270);strcpy(longline+276,"\nk=second");
     CHECK(FIniValue(longline,1,2,out,4) && !strcmp(out,"aaa"));
     loadOK=0;
@@ -107,11 +107,11 @@ int main(void) {
 '''
     with tempfile.TemporaryDirectory(prefix="s02-io-source-") as work:
         path=Path(work)
-        source=path/"witness.c"
+        source=path/"witness.cpp"
         binary=path/"witness"
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC","cc"))+
-                       ["-std=c11","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror",str(source),"-o",str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
+                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

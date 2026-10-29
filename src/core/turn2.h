@@ -1,6 +1,7 @@
 #ifndef STARS_DECOMPILED_TURN2_H
 #define STARS_DECOMPILED_TURN2_H
 
+#include "common.h"
 #include <stdint.h>
 
 void    Produce();

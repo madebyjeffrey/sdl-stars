@@ -175,7 +175,7 @@ def cases():
 
 def native_terraform_construction():
     declarations,bodies,helpers=native_buildable_construction()
-    declarations+='\n_Static_assert(hstTerra==8192 && envNone==-1 && envImmune==-1 && iterraCount==20 && ibitRaceTT==1,"terraform model identities");\n'
+    declarations+='\nstatic_assert(hstTerra==8192 && envNone==-1 && envImmune==-1 && iterraCount==20 && ibitRaceTT==1,"terraform model identities");\n'
     declarations=declarations.replace('#include <setjmp.h>','#include <setjmp.h>\nstatic int32_t cfg[54];static int currentDesire,terraCalls,desireCalls,terraItems[128],desireInputs[16][4],observedLow[3],observedHigh[3],observedCost[3];static TERRA scripted[20];')
     stub='int16_t PctPlanetDesirability(PLANET *p,int16_t player){assert(p==&planet && !player);return 100;}'
     assert stub in declarations
@@ -235,7 +235,7 @@ int main(int argc,char **argv){
         idPlayer=(int16_t)cfg[3];planet.iPlayer=(int16_t)cfg[4];
         for(int i=0;i<3;i++){planet.rgEnvVar[i]=(int8_t)cfg[8+i];planet.rgEnvVarOrig[i]=(int8_t)cfg[11+i];}
         for(int p=0;p<16;p++){
-            int fields=p==1?23:14,levels=p==1?38:32;rgplr[p].grbitAttr=(p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0;
+            int fields=p==1?23:14,levels=p==1?38:32;rgplr[p].grbitAttr=static_cast<RaceTraitBits>((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0);
             for(int i=0;i<3;i++){rgplr[p].rgEnvVar[i]=(int8_t)cfg[fields+i];rgplr[p].rgEnvVarMin[i]=(int8_t)cfg[fields+3+i];rgplr[p].rgEnvVarMax[i]=(int8_t)cfg[fields+6+i];}
             for(int f=0;f<6;f++)rgplr[p].rgTech[f]=(int8_t)cfg[levels+f];
         }
@@ -263,9 +263,9 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-lm','-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);table=list(struct.iter_unpack('<8i',export.read_bytes()));assert len(table)==20
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)
         try:
