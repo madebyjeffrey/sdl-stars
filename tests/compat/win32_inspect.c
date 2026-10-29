@@ -62,7 +62,7 @@ static int TestStyles(void) {
     STARSCOMPATSNAPSHOT snap = { &item, 1 };
     size_t i, cb;
     NATIVEFILE *lpfile;
-    char sz[8192];
+    char sz[8192], szClass[] = "StyleTest", szText[] = "";
     item.pszClass = szClass; item.pszText = szText;
     item.dwExStyle = WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | UINT32_C(0x40000000);
     for (i = 0; i < SDL_arraysize(rg); i++) {
