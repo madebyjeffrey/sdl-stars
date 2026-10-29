@@ -26,10 +26,10 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
     cshOrig = 0;
     memset(rgpct, 0, 32);
     flSrc = *lpfl;
-    if (flSrc.lpplord->rgord[1].grobj == grobjPlanet) {
-        id = flSrc.lpplord->rgord[1].id;
+    if (flSrc.lpplord->rgord()[1].grobj == grobjPlanet) {
+        id = flSrc.lpplord->rgord()[1].id;
     } else {
-        pt = flSrc.lpplord->rgord[1].pt;
+        pt = flSrc.lpplord->rgord()[1].pt;
         for (id = 0; id < game.cPlanMax && (pt.x != rgptPlan[id].x || pt.y != rgptPlan[id].y); id++) {
         }
     }
@@ -221,43 +221,43 @@ void KillUsedWaypoints() {
                     FSendPlrMsg(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 } else {
                     for (j = 1; j < lpfl->cord; j++) {
-                        if (lpfl->lpplord->rgord[j].grobj == grobjFleet) {
-                            lpfl->lpflNext = LpflFromId(lpfl->lpplord->rgord[j].id);
+                        if (lpfl->lpplord->rgord()[j].grobj == grobjFleet) {
+                            lpfl->lpflNext = LpflFromId(lpfl->lpplord->rgord()[j].id);
                             if (lpfl->lpflNext) {
-                                if (!lpfl->lpplord->rgord[j].fNoAutoTrack) {
-                                    lpfl->lpplord->rgord[j].pt = lpfl->lpflNext->pt;
+                                if (!lpfl->lpplord->rgord()[j].fNoAutoTrack) {
+                                    lpfl->lpplord->rgord()[j].pt = lpfl->lpflNext->pt;
                                 }
                                 lpfl->lpflNext = NULL;
                             } else {
-                                lpfl->lpplord->rgord[j].grobj = grobjOther;
-                                lpfl->lpplord->rgord[j].id = 0;
+                                lpfl->lpplord->rgord()[j].grobj = grobjOther;
+                                lpfl->lpplord->rgord()[j].id = 0;
                             }
                         }
                     }
-                    if (lpfl->pt.x == lpfl->lpplord->rgord[1].pt.x && lpfl->pt.y == lpfl->lpplord->rgord[1].pt.y) {
-                        lpfl->lpplord->rgord[0] = lpfl->lpplord->rgord[1];
-                        if (lpfl->lpplord->rgord[0].grobj != grobjFleet)
+                    if (lpfl->pt.x == lpfl->lpplord->rgord()[1].pt.x && lpfl->pt.y == lpfl->lpplord->rgord()[1].pt.y) {
+                        lpfl->lpplord->rgord()[0] = lpfl->lpplord->rgord()[1];
+                        if (lpfl->lpplord->rgord()[0].grobj != grobjFleet)
                             goto NoOrdFixupYet;
-                        if (lpfl->lpplord->rgord[0].grTask == grTaskXfer)
+                        if (lpfl->lpplord->rgord()[0].grTask == grTaskXfer)
                             goto NoOrdFixupYet;
-                        if (lpfl->lpplord->rgord[0].grTask == grTaskMerge)
+                        if (lpfl->lpplord->rgord()[0].grTask == grTaskMerge)
                             goto NoOrdFixupYet;
                         if (lpfl->idPlanet == idPlanetDeepSpace) {
-                            lpfl->lpplord->rgord[0].grobj = grobjOther;
-                            lpfl->lpplord->rgord[0].id = 0;
+                            lpfl->lpplord->rgord()[0].grobj = grobjOther;
+                            lpfl->lpplord->rgord()[0].id = 0;
                             goto NoOrdFixupYet;
                         }
-                        lpfl->lpplord->rgord[0].grobj = grobjPlanet;
-                        lpfl->lpplord->rgord[0].id = lpfl->idPlanet;
+                        lpfl->lpplord->rgord()[0].grobj = grobjPlanet;
+                        lpfl->lpplord->rgord()[0].id = lpfl->idPlanet;
                     NoOrdFixupYet:
-                        if (lpfl->lpplord->rgord[1].grTask != grTaskPatrol || lpfl->lpplord->rgord[1].grobj != grobjFleet) {
+                        if (lpfl->lpplord->rgord()[1].grTask != grTaskPatrol || lpfl->lpplord->rgord()[1].grobj != grobjFleet) {
                             fRep = lpfl->fRepOrders;
                         } else {
                             fRep = FALSE;
                         }
                         DeleteWpFar(lpfl, 1, fRep);
                         if (lpfl->cord == 1) {
-                            switch (lpfl->lpplord->rgord[0].grTask) {
+                            switch (lpfl->lpplord->rgord()[0].grTask) {
                             case grTaskXfer:
                             case grTaskColonize:
                             case grTaskMine:
@@ -299,7 +299,7 @@ void NoAutoTrackFleet(FLEET *lpflTarget) {
         if (!rglpfl[ifl])
             break;
         if (lpfl->iPlayer != iplr && lpfl->cord > 1) {
-            lpord = &lpfl->lpplord->rgord[1];
+            lpord = &lpfl->lpplord->rgord()[1];
             i = 1;
             while (i < lpfl->cord) {
                 if (lpord->grobj == grobjFleet && lpord->id == idTarget) {
@@ -331,7 +331,7 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
 
     lpfl->cord = 2;
     lpfl->lpplord->iordMac = 2;
-    lpord = &lpfl->lpplord->rgord[1];
+    lpord = &lpfl->lpplord->rgord()[1];
     lpord->grTask = grTaskAutoRoute;
     lpord->grobj = grobjPlanet;
     lpord->id = lppl->idRoute - 1;
@@ -422,7 +422,7 @@ void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
     int16_t fFoundFleet;
 
     fFoundFleet = FALSE;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     if ((lppl->iPlayer == iplrNone || (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh && lppl->iPlayer == lpfl->iPlayer)) &&
         CMineFromLpfl(lpfl) != 0) {
         if (lppl->iPlayer == iplrNone) {

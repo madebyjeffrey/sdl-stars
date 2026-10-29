@@ -62,7 +62,7 @@ static int16_t FColonizeWith(const char *pszTest, int16_t cModule) {
     TEST_ASSERT(idPlanet >= 0);
     lpfl = LpflStarsTestAddFleet(0, idPlanet, ishNew, 1);
     lpfl->rgwtMin[3] = 100;
-    lpord = &lpfl->lpplord->rgord[0];
+    lpord = &lpfl->lpplord->rgord()[0];
     lpord->grTask = grTaskColonize;
     lpord->fValidTask = TRUE;
     TEST_ASSERT(FStarsTestSaveHost());
@@ -121,11 +121,11 @@ static int32_t WtStealFromAiHomeworld(const char *pszTest, int16_t j) {
 
     lpfl = LpflStarsTestAddFleet(0, lppl->id, ishNew, 1);
     idfl = lpfl->id;
-    lpord = &lpfl->lpplord->rgord[0];
+    lpord = &lpfl->lpplord->rgord()[0];
     lpord->grTask = grTaskXfer;
     lpord->fValidTask = TRUE;
-    lpord->txp.rgia[j].iAction = iActionLoadExact;
-    lpord->txp.rgia[j].cQuan = 10;
+    lpord->txp.rgia[j].SetIAction(iActionLoadExact);
+    lpord->txp.rgia[j].SetCQuan(10);
     TEST_ASSERT(FStarsTestSaveHost());
 
     TEST_ASSERT(FStarsTestGenerate());

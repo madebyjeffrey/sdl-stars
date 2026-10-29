@@ -219,9 +219,9 @@ void DoCyberAiTurn(PROD *rgprod) {
             if (i <= 13) {
                 lpfl->lpflNext = lpflAttack;
                 lpflAttack = lpfl;
-                if (j > 5 && ((lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet) || lpfl->idPlanet != idPlanetDeepSpace)) {
-                    if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet) {
-                        id = lpfl->lpplord->rgord[1].id;
+                if (j > 5 && ((lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet) || lpfl->idPlanet != idPlanetDeepSpace)) {
+                    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet) {
+                        id = lpfl->lpplord->rgord()[1].id;
                     } else {
                         id = lpfl->idPlanet;
                     }
@@ -233,9 +233,9 @@ void DoCyberAiTurn(PROD *rgprod) {
                 } else {
                     cFlDestroyers++;
                 }
-            } else if ((lpfl->rgcsh[2] > 0 || lpfl->rgcsh[3] > 0) && lpfl->cord > 1 && lpfl->rgwtMin[3] > 0 && lpfl->lpplord->rgord[1].grobj == grobjPlanet &&
-                       lpciPlanTemp[lpfl->lpplord->rgord[1].id].cFreightersDst < 3) {
-                lpciPlanTemp[lpfl->lpplord->rgord[1].id].cFreightersDst = lpciPlanTemp[lpfl->lpplord->rgord[1].id].cFreightersDst + 1;
+            } else if ((lpfl->rgcsh[2] > 0 || lpfl->rgcsh[3] > 0) && lpfl->cord > 1 && lpfl->rgwtMin[3] > 0 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet &&
+                       lpciPlanTemp[lpfl->lpplord->rgord()[1].id].cFreightersDst < 3) {
+                lpciPlanTemp[lpfl->lpplord->rgord()[1].id].cFreightersDst = lpciPlanTemp[lpfl->lpplord->rgord()[1].id].cFreightersDst + 1;
             }
         }
     }
@@ -252,7 +252,7 @@ void DoCyberAiTurn(PROD *rgprod) {
                     lppl = LpplFromId(lpfl->idPlanet);
                     if (lppl && lppl->iPlayer == idPlayer && (lppl->fStarbase || Random(5) == 0)) {
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+                        sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
                         FLookupFleet(idWriteBack, &sel.fl);
                         continue;
                     }
@@ -296,15 +296,15 @@ void DoCyberAiTurn(PROD *rgprod) {
                 } else if (lpfl->cord <= 1) {
                     if (game.turn <= 5 && lpfl->rgcsh[0] > 0 && lpfl->cord == 1) {
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+                        sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
                         FLookupFleet(idWriteBack, &sel.fl);
                     } else {
                         if (lpfl->rgcsh[1] > 0) {
                             idPlanDst = IdNearestColonizablePlanet(lpfl, NULL);
                             if (idPlanDst == idplNone) {
-                                if (lpfl->lpplord->rgord[0].grobj != grobjPlanet)
+                                if (lpfl->lpplord->rgord()[0].grobj != grobjPlanet)
                                     continue;
-                                lpciPlanTemp[lpfl->lpplord->rgord[0].id].fIdleColonizers = TRUE;
+                                lpciPlanTemp[lpfl->lpplord->rgord()[0].id].fIdleColonizers = TRUE;
                                 continue;
                             }
                             ChangeMainObjSel(grobjFleet, lpfl->id);
@@ -318,7 +318,7 @@ void DoCyberAiTurn(PROD *rgprod) {
                             if (idPlanDst != idplNone) {
                                 if (!FColonizeAiFleet(lpfl, idPlanDst) || lpfl->cord <= 1)
                                     continue;
-                                vlpbAiPlanet[lpfl->lpplord->rgord[1].id * 16 + 15] = 4;
+                                vlpbAiPlanet[lpfl->lpplord->rgord()[1].id * 16 + 15] = 4;
                                 continue;
                             }
                         }
@@ -331,7 +331,7 @@ void DoCyberAiTurn(PROD *rgprod) {
                             DoCyberFreighter(lpfl, lpciPlanTemp);
                         } else if (lpfl->rgcsh[0] > 0 && game.turn > 40 && lpfl->cord == 1) {
                             if (lpfl->cord > 1) {
-                                if (lpfl->lpplord->rgord[0].grTask != grTaskNone) {
+                                if (lpfl->lpplord->rgord()[0].grTask != grTaskNone) {
                                     ClearAiCurrentTask(lpfl, TRUE);
                                 }
                             } else if ((cFlMineLayers <= 55 && (cFlMineLayers <= 40 || Random(3) == 0)) || !FFindBuddyAndJoinUp(lpfl, 0, 0, 72, 108)) {
@@ -343,19 +343,19 @@ void DoCyberAiTurn(PROD *rgprod) {
                                         ord.grobj = grobjPlanet;
                                         ord.pt = rgptPlan[idPlanDst];
                                         ord.grTask = grTaskLayMines;
-                                        ord.tlm.cTime = 5;
-                                        ord.tlm.cTimeOld = 5;
+                                        ord.tlm().cTime = 5;
+                                        ord.tlm().cTimeOld = 5;
                                         ord.fValidTask = TRUE;
                                         ord.iWarp = 4;
                                         FMoveAiFleet(lpfl, &ord, FALSE);
                                         continue;
                                     }
                                 }
-                                if (lpfl->lpplord->rgord[0].grTask != grTaskLayMines) {
+                                if (lpfl->lpplord->rgord()[0].grTask != grTaskLayMines) {
                                     ChangeMainObjSel(grobjFleet, lpfl->id);
-                                    sel.fl.lpplord->rgord[0].grTask = grTaskLayMines;
-                                    sel.fl.lpplord->rgord[0].tlm.cTime = 5;
-                                    sel.fl.lpplord->rgord[0].tlm.cTimeOld = 5;
+                                    sel.fl.lpplord->rgord()[0].grTask = grTaskLayMines;
+                                    sel.fl.lpplord->rgord()[0].tlm().cTime = 5;
+                                    sel.fl.lpplord->rgord()[0].tlm().cTimeOld = 5;
                                     FLookupFleet(idWriteBack, &sel.fl);
                                 }
                             }
@@ -1023,12 +1023,12 @@ void DoCyberFreighter(FLEET *lpfl, CYBERINFOTEMP *lpciPlanTemp) {
         ord.id = idPlanDst;
         ord.grTask = grTaskXfer;
         ord.fValidTask = TRUE;
-        ord.txp.rgia[3].iAction = iActionUnloadAll;
+        ord.txp.rgia[3].SetIAction(iActionUnloadAll);
         ChangeMainObjSel(grobjFleet, lpfl->id);
-        if (sel.fl.lpplord->rgord[0].id == idPlanDst && sel.fl.lpplord->rgord[0].grobj == grobjPlanet) {
-            sel.fl.lpplord->rgord[0] = ord;
+        if (sel.fl.lpplord->rgord()[0].id == idPlanDst && sel.fl.lpplord->rgord()[0].grobj == grobjPlanet) {
+            sel.fl.lpplord->rgord()[0] = ord;
         } else {
-            sel.fl.lpplord->rgord[1] = ord;
+            sel.fl.lpplord->rgord()[1] = ord;
         }
         FLookupFleet(idWriteBack, &sel.fl);
         FMoveToNearestStarbase(lpfl, FALSE);
@@ -1394,7 +1394,7 @@ void TargetCyberArmada(FLEET *lpfl) {
     PLANET *lpplTarget;
 
     if (lpfl->cord > 1) {
-        ord = lpfl->lpplord->rgord[1];
+        ord = lpfl->lpplord->rgord()[1];
         if (LDistance2(lpfl->pt, ord.pt) > 62500 && ord.grobj == grobjFleet)
             goto LTryNewTarget;
         if (ord.grobj == grobjFleet) {

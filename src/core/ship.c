@@ -359,16 +359,16 @@ void DeleteWpFar(FLEET *lpfl, int16_t iDel, int16_t fRecycle) {
 
     if (fRecycle) {
         if (iDel == 86 || lpfl->cord == 2 ||
-            (lpfl->lpplord->rgord[lpfl->cord - 1].pt.x == lpfl->lpplord->rgord[iDel].pt.x &&
-             lpfl->lpplord->rgord[lpfl->cord - 1].pt.y == lpfl->lpplord->rgord[iDel].pt.y)) {
+            (lpfl->lpplord->rgord()[lpfl->cord - 1].pt.x == lpfl->lpplord->rgord()[iDel].pt.x &&
+             lpfl->lpplord->rgord()[lpfl->cord - 1].pt.y == lpfl->lpplord->rgord()[iDel].pt.y)) {
             fRecycle = FALSE;
         } else {
-            ord = lpfl->lpplord->rgord[iDel];
+            ord = lpfl->lpplord->rgord()[iDel];
         }
     }
-    memmove(&lpfl->lpplord->rgord[iDel], &lpfl->lpplord->rgord[iDel + 1], (lpfl->cord - iDel - 1) * sizeof(ORDER));
+    memmove(&lpfl->lpplord->rgord()[iDel], &lpfl->lpplord->rgord()[iDel + 1], (lpfl->cord - iDel - 1) * sizeof(ORDER));
     if (fRecycle) {
-        lpfl->lpplord->rgord[lpfl->cord - 1] = ord;
+        lpfl->lpplord->rgord()[lpfl->cord - 1] = ord;
     } else {
         lpfl->cord--;
         lpfl->lpplord->iordMac--;
@@ -395,7 +395,7 @@ int32_t EstFuelUse(FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, in
     iEffCur = 0;
     gd.fRadiatingEngine = FALSE;
     if (iWarp == -1) {
-        iWarp = lpfl->lpplord->rgord[iOrd + 1].iWarp;
+        iWarp = lpfl->lpplord->rgord()[iOrd + 1].iWarp;
     }
     fEfficient = GetRaceGrbit(&rgplr[lpfl->iPlayer], ibitRaceIFE);
     for (i = 0, lpshdef = rglpshdef[lpfl->iPlayer]; i < 16; i++, lpshdef++) {
@@ -423,7 +423,7 @@ int32_t EstFuelUse(FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, in
         if (fRangeOnly) {
             dTravel = 1000;
         } else {
-            lpord = &lpfl->lpplord->rgord[iOrd];
+            lpord = &lpfl->lpplord->rgord()[iOrd];
             d = DGetDistance(lpord->pt.x, lpord->pt.y, lpord[1].pt.x, lpord[1].pt.y);
             dTravel = (int16_t)LOWORD((int32_t)((double)d + 0.9999));
         }
@@ -549,7 +549,7 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
     if (fAi) {
         iWarpAi = IFindIdealWarp(NULL, TRUE);
     }
-    for (iwp = lpfl->cord - 1; iwp >= 0 && lpord != &lpfl->lpplord->rgord[iwp]; iwp--) {
+    for (iwp = lpfl->cord - 1; iwp >= 0 && lpord != &lpfl->lpplord->rgord()[iwp]; iwp--) {
     }
     if (iwp <= 0) {
         return iWarp;
@@ -667,7 +667,7 @@ int32_t LFuelUseToWaypoint(FLEET *lpfl, int16_t iwp, int16_t fMaxCargo) {
 
     lTot = 0;
     lCur = 0;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     for (i = 0; i < iwp; i++) {
         iWarp = lpord[i + 1].iWarp;
         if (iWarp > 0 && iWarp < 11) {
@@ -1094,7 +1094,7 @@ void FleetOrdersChangeTarget(FLEET *lpflOld) {
             break;
         if (lpfl->lpplord) {
             for (iord = lpfl->cord - 1; iord >= 0; iord--) {
-                if (lpfl->lpplord->rgord[iord].grobj == grobjFleet && lpfl->lpplord->rgord[iord].id == lpflOld->id) {
+                if (lpfl->lpplord->rgord()[iord].grobj == grobjFleet && lpfl->lpplord->rgord()[iord].id == lpflOld->id) {
                     if (!fChg) {
                         pt = lpflOld->pt;
                         lpflOld->pt.x++;
@@ -1112,8 +1112,8 @@ void FleetOrdersChangeTarget(FLEET *lpflOld) {
                         }
                         lpflOld->pt.x--;
                     }
-                    lpfl->lpplord->rgord[iord].id = id;
-                    lpfl->lpplord->rgord[iord].grobj = grobj;
+                    lpfl->lpplord->rgord()[iord].id = id;
+                    lpfl->lpplord->rgord()[iord].grobj = grobj;
                 }
             }
         }

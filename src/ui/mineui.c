@@ -281,7 +281,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         TextOut(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpfl->det == detAll) {
-            lpord = lpfl->lpplord->rgord;
+            lpord = lpfl->lpplord->rgord();
             if (lpfl->cord > 1) {
                 lpord++;
             }
@@ -712,7 +712,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                         lpfl = rglpfl[ifl];
                         if (!rglpfl[ifl])
                             break;
-                        if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord[0].grTask == grTaskMine) {
+                        if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                             cMines = CMineFromLpfl(lpfl);
                             if (cMines > 0) {
                                 EstMineralsMined(&pl, rglT, cMines, FALSE);
@@ -1124,7 +1124,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                             lpfl = rglpfl[ifl];
                             if (!rglpfl[ifl])
                                 break;
-                            if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord[0].grTask == grTaskMine) {
+                            if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                                 cMines = CMineFromLpfl(lpfl);
                                 if (cMines > 0) {
                                     EstMineralsMined(&pl, rglT, cMines, FALSE);

@@ -207,7 +207,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
             StateAppend("fleet.%d=%s|%d|%d|%ld|%ld|%ld|%ld|%ld|%u\n", fleet->id, PszGetFleetName(fleet->id), point.x, point.y, (long)fleet->rgwtMin[0],
                         (long)fleet->rgwtMin[1], (long)fleet->rgwtMin[2], (long)fleet->rgwtMin[3], (long)fleet->rgwtMin[4], fleet->fRepOrders);
             for (j = 0; j < fleet->cord; j++) {
-                order = &fleet->lpplord->rgord[j];
+                order = &fleet->lpplord->rgord()[j];
                 point = order->pt;
                 LogicalToScan(&point);
                 StateAppend("waypoint.%d.%d=%d|%d|%u|%u|%d|%d\n", fleet->id, j, order->grobj, order->id, order->grTask, order->iWarp, point.x, point.y);

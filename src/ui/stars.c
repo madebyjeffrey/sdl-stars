@@ -526,7 +526,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
         case VK_OEM_PERIOD:
             if (sel.grobj == grobjFleet && (sel.iwpAct > 0 || sel.fl.cord > 1)) {
                 iwp = sel.iwpAct <= 0 ? 1 : sel.iwpAct;
-                iWarp = sel.fl.lpplord->rgord[iwp].iWarp;
+                iWarp = sel.fl.lpplord->rgord()[iwp].iWarp;
                 if (iKey == VK_OEM_COMMA) {
                     iWarp--;
                 } else {

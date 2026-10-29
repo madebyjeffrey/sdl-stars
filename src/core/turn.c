@@ -128,11 +128,11 @@ int16_t FGenerateTurn() {
             if (!rglpfl[ifl])
                 break;
             lpfl->fNoHeal = FALSE;
-            if (lpfl->cord == 1 && lpfl->lpplord->rgord[0].grobj == grobjFleet) {
+            if (lpfl->cord == 1 && lpfl->lpplord->rgord()[0].grobj == grobjFleet) {
                 fFollow = TRUE;
                 lpfl->fMark = TRUE;
             } else {
-                if (lpfl->lpplord->rgord[0].grobj == grobjFleet && lpfl->cord == 1) {
+                if (lpfl->lpplord->rgord()[0].grobj == grobjFleet && lpfl->cord == 1) {
                     FSendPlrMsg(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 }
                 lpfl->fMark = FALSE;
@@ -148,14 +148,14 @@ int16_t FGenerateTurn() {
                     if (!rglpfl[ifl])
                         break;
                     if (lpfl->fMark && lpfl->cord == 1) {
-                        ord = lpfl->lpplord->rgord[0];
+                        ord = lpfl->lpplord->rgord()[0];
                         if (ord.grobj != grobjFleet) {
                         LUnmark:
                             lpfl->fMark = FALSE;
                             continue;
                         }
                         lpflTarget = LpflFromId(ord.id);
-                        if (!lpflTarget || (lpflTarget->cord == 1 && lpflTarget->lpplord->rgord[0].grobj != grobjFleet)) {
+                        if (!lpflTarget || (lpflTarget->cord == 1 && lpflTarget->lpplord->rgord()[0].grobj != grobjFleet)) {
                             FSendPlrMsg(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                             goto LUnmark;
                         }
@@ -163,10 +163,10 @@ int16_t FGenerateTurn() {
                             continue;
                         fFollow = TRUE;
                         if (lpfl->lpplord->iordMax <= 1) {
-                            lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, 2);
+                            lpfl->lpplord = LpplReAlloc(lpfl->lpplord, 2);
                         }
-                        lpfl->lpplord->rgord[1] = lpflTarget->lpplord->rgord[1];
-                        lpfl->lpplord->rgord[1].txp = lpfl->lpplord->rgord[0].txp;
+                        lpfl->lpplord->rgord()[1] = lpflTarget->lpplord->rgord()[1];
+                        lpfl->lpplord->rgord()[1].txp = lpfl->lpplord->rgord()[0].txp;
                         lpfl->cord = 2;
                         lpfl->lpplord->iordMac = 2;
                     }
@@ -1322,7 +1322,7 @@ void MoveFleets() {
             }
             if (!lpfl->fDead && (cPass <= 0 || !lpfl->fDone)) {
                 lpfl->fDone = TRUE;
-                lpord = lpfl->lpplord->rgord;
+                lpord = lpfl->lpplord->rgord();
                 if (lpord->grTask != grTaskXfer && lpord->grTask != grTaskLayMines && lpfl->cord > 1 && lpord[1].iWarp != 0) {
                     if (cPass == 0 && lpord[1].iWarp > 6 && lpord[1].iWarp != 11 && GetRaceGrbit(&rgplr[lpfl->iPlayer], ibitRaceCheapEngines) != 0 &&
                         Random(10) == 0) {
@@ -1557,7 +1557,7 @@ void MoveFleets() {
                                     i++;
                                 } while (EstFuelUse(lpfl, 0, i, -1, FALSE) == 0 && i < 10);
                                 if (i > 1) {
-                                    lpfl->lpplord->rgord[1].iWarp = i - 1;
+                                    lpfl->lpplord->rgord()[1].iWarp = i - 1;
                                     FSendPlrMsg2(lpfl->iPlayer, idmHasRunFuelFleetsSpeedHasDecreased, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, i - 1);
                                 } else {
                                     FSendPlrMsg2(lpfl->iPlayer, idmHasRunFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
@@ -1576,7 +1576,7 @@ void MoveFleets() {
                                 }
                                 lpfl->dirFltX = dx + 127;
                                 lpfl->dirFltY = dy + 127;
-                                lpfl->iwarpFlt = lpfl->lpplord->rgord[1].iWarp;
+                                lpfl->iwarpFlt = lpfl->lpplord->rgord()[1].iWarp;
                             }
                             dActTravel = (int32_t)((double)d - 0.99999);
                             dMineTravel = dTravel < dActTravel ? LOWORD(dTravel) : LOWORD(dActTravel);
@@ -1756,7 +1756,7 @@ int16_t FTravelThroughMineFields(FLEET *lpfl, int16_t *pdTravel, THING *lpthHit)
         goto LHitSkip1;
     }
     ptSrc = lpfl->pt;
-    ptDst = lpfl->lpplord->rgord[1].pt;
+    ptDst = lpfl->lpplord->rgord()[1].pt;
     for (iWarp = 3; iWarp < 10 && iWarp * iWarp < dTravel - 1; iWarp++) {
     }
     if (iWarp <= fMineExpert + 3 || (ptSrc.x == ptDst.x && ptSrc.y == ptDst.y)) {

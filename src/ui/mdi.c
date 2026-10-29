@@ -2535,10 +2535,10 @@ void WriteIniSettings() {
             if (vrgZip[i].fValid) {
                 psz = szWork;
                 for (iPass = 0; iPass < 5; iPass++) {
-                    *psz++ = vrgZip[i].txp.rgia[iPass].iAction + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan & 0xf) + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan >> 4 & 0xf) + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan >> 8 & 0xf) + 'a';
+                    *psz++ = vrgZip[i].txp.rgia[iPass].iAction() + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() & 0xf) + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() >> 4 & 0xf) + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() >> 8 & 0xf) + 'a';
                 }
                 strcpy(psz, vrgZip[i].szName);
             } else {

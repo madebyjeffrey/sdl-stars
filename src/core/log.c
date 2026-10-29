@@ -109,6 +109,9 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
     int16_t   cbWp;
     char     *pbWp;
     HDR       hdr;
+    RTWAYPT rtwpPrev{};
+    std::byte rgbWp[cbWireWaypt + cbWireOrder];
+    std::byte rgbShipInt[cbWireShipInt];
 
     fChg = FALSE;
     if (gd.fGeneratingTurn)
@@ -152,16 +155,18 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
     if (pfl->iplan != pflNew->iplan) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->iplan;
-        WriteMemRt(rtLogFleetPlan, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetPlan, cbWireShipInt, rgbShipInt);
     }
     if (pfl->fRepOrders != pflNew->fRepOrders) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->fRepOrders;
-        WriteMemRt(rtLogFleetFlagBit9, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetFlagBit9, cbWireShipInt, rgbShipInt);
     }
     d = pflNew->cord - pfl->cord;
     for (iordOld = 0;
-         iordOld < pfl->cord && iordOld < pflNew->cord && memcmp(&pfl->lpplord->rgord[iordOld], &pflNew->lpplord->rgord[iordOld], sizeof(ORDER)) == 0;
+         iordOld < pfl->cord && iordOld < pflNew->cord && memcmp(&pfl->lpplord->rgord()[iordOld], &pflNew->lpplord->rgord()[iordOld], sizeof(ORDER)) == 0;
          iordOld++) {
     }
     iordNew = iordOld;
@@ -173,32 +178,36 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
         if (d == -2) {
             rtsi.i |= 0x8000;
         }
-        WriteMemRt(rtLogFleetOrderDelete, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetOrderDelete, cbWireShipInt, rgbShipInt);
         goto NextTest;
     } else if (d > 0) {
         cbWp = 22;
         rtwp.id = pflNew->id;
         rtwp.iWaypt = iordNew;
-        rtwp.order = pflNew->lpplord->rgord[iordNew];
-        pbWp = (char *)&rtwp;
+        rtwp.order = pflNew->lpplord->rgord()[iordNew];
+        FEncodeRtWaypt(rtwp, rgbWp);
+        pbWp = reinterpret_cast<char *>(rgbWp);
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(rtLogFleetOrderInsert, cbWp, &rtwp);
+        WriteMemRt(rtLogFleetOrderInsert, cbWp, rgbWp);
         goto NextTest;
     } else {
         cbWp = 22;
-        if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogFleetOrderUpdate && ((RTWAYPT *)rgbCur)->id == pflNew->id && ((RTWAYPT *)rgbCur)->iWaypt == iordNew) {
+        if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogFleetOrderUpdate &&
+            FDecodeRtWayptPrefix(std::as_bytes(std::span(rgbCur)), rtwpPrev) && rtwpPrev.id == pflNew->id && rtwpPrev.iWaypt == iordNew) {
             imemLogCur = imemLogPrev;
         }
         rtwp.id = pflNew->id;
         rtwp.iWaypt = iordNew;
-        rtwp.order = pflNew->lpplord->rgord[iordNew];
-        pbWp = (char *)&rtwp;
+        rtwp.order = pflNew->lpplord->rgord()[iordNew];
+        FEncodeRtWaypt(rtwp, rgbWp);
+        pbWp = reinterpret_cast<char *>(rgbWp);
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(rtLogFleetOrderUpdate, cbWp, &rtwp);
+        WriteMemRt(rtLogFleetOrderUpdate, cbWp, rgbWp);
     }
 NextTest:
     return;
@@ -588,6 +597,8 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     MessageId idm;
     RTCHGPRODQ rtcpq{};
     PROD prod{};
+    int16_t iordLog, grTaskLog;
+    uint16_t wOrderLog;
 
     lpxfCur = NULL;
     switch (rt) {
@@ -974,43 +985,36 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         }
         break;
     case rtLogFleetOrderDelete:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0 || lpfl->cord <= 0 || (iLook = ((RTSHIPINT *)lpb)->i & 0x7fff) >= lpfl->cord) {
-            return FALSE;
-        }
-        fExtra = (((RTSHIPINT *)lpb)->i & 0x8000) != 0;
-        if (fExtra && iLook + 1 >= lpfl->cord) {
-            return FALSE;
-        }
-        memmove(&lpfl->lpplord->rgord[iLook], &lpfl->lpplord->rgord[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id)) || lpfl->cord <= 0) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadU16Le(wOrderLog);
+        iLook = wOrderLog & 0x7fff;
+        if (iLook >= lpfl->cord) return FALSE;
+        fExtra = (wOrderLog & 0x8000) != 0;
+        if (fExtra && iLook + 1 >= lpfl->cord) return FALSE;
+        memmove(&lpfl->lpplord->rgord()[iLook], &lpfl->lpplord->rgord()[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
         lpfl->cord -= fExtra + 1;
         lpfl->lpplord->iordMac -= fExtra + 1;
         break;
     case rtLogFleetOrderInsert:
-        if ((lpfl = LpflFromId(((RTWAYPT *)lpb)->id)) == 0 || ((RTWAYPT *)lpb)->iWaypt < 0 || ((RTWAYPT *)lpb)->iWaypt > lpfl->cord) {
-            return FALSE;
-        }
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iordLog);
+        if (iordLog < 0 || iordLog > lpfl->cord) return FALSE;
         if (lpfl->cord == lpfl->lpplord->iordMax) {
-            lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, lpfl->cord + 3);
+            lpfl->lpplord = LpplReAlloc(lpfl->lpplord, lpfl->cord + 3);
         }
-        memmove(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt + 1], &lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt],
-                (lpfl->cord - ((RTWAYPT *)lpb)->iWaypt) * sizeof(ORDER));
-        if ((uint16_t)cb < 22) {
-            memset(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt], 0, sizeof(ORDER));
-        }
-        memmove(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt], &((RTWAYPT *)lpb)->order, cb - 4);
-        lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt].fNoAutoTrack = FALSE;
+        memmove(&lpfl->lpplord->rgord()[iordLog + 1], &lpfl->lpplord->rgord()[iordLog], (lpfl->cord - iordLog) * sizeof(ORDER));
+        if (!FApplyOrderBytes(lpfl->lpplord, iordLog, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return FALSE;
         lpfl->cord++;
         lpfl->lpplord->iordMac++;
         break;
     case rtLogFleetOrderUpdate:
-        if ((lpfl = LpflFromId(((RTWAYPT *)lpb)->id)) == 0 || lpfl->cord < 0 || (iLook = ((RTWAYPT *)lpb)->iWaypt) >= lpfl->cord) {
-            return FALSE;
-        }
-        if ((uint16_t)cb < 22) {
-            memset(&lpfl->lpplord->rgord[iLook], 0, sizeof(ORDER));
-        }
-        memmove(&lpfl->lpplord->rgord[iLook], &((RTWAYPT *)lpb)->order, cb - 4);
-        lpfl->lpplord->rgord[iLook].fNoAutoTrack = FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id)) || lpfl->cord < 0) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
+        if (iLook >= lpfl->cord) return FALSE;
+        if (!FApplyOrderBytes(lpfl->lpplord, iLook, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return FALSE;
         break;
     case rtBtlPlan:
         if (cb < 2) return FALSE;
@@ -1035,23 +1039,27 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (i == rgcbtlplan[idPlayer]) rgcbtlplan[idPlayer]++;
         break;
     case rtLogFleetPlan:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0)
-            goto BombOut;
-        lpfl->iplan = ((RTSHIPINT *)lpb)->i;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) goto BombOut;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
+        lpfl->iplan = iLook;
         break;
     case rtLogFleetFlagBit9:
     case rtLogFleetOrderAttrNib:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) {
         BombOut:
             return FALSE;
         }
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iordLog);
         if (rt == rtLogFleetFlagBit9) {
-            lpfl->fRepOrders = ((RTSHIPINT *)lpb)->i;
+            lpfl->fRepOrders = iordLog;
             break;
         }
-        if (lpfl->cord <= ((RTSHIPINT2 *)lpb)->i || ((RTSHIPINT2 *)lpb)->i2 >= 10)
-            goto BombOut;
-        lpfl->lpplord->rgord[((RTSHIPINT2 *)lpb)->i].grTask = ((RTSHIPINT2 *)lpb)->i2;
+        if (lpfl->cord <= iordLog) goto BombOut;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 4, 2))).FReadI16Le(grTaskLog);
+        if (grTaskLog >= 10) goto BombOut;
+        if (!FSetOrderTask(lpfl->lpplord, iordLog, grTaskLog)) return FALSE;
         break;
     case rtLogPlanetRouting:
         lppl = LpplFromId(((RTCHGPLANETLONG *)lpb)->id);

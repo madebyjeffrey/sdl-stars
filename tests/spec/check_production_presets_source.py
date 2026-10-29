@@ -7,6 +7,7 @@ refinement. No out-of-allocation catalog access is executed.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -74,7 +75,7 @@ typedef struct { int left,top,right,bottom; } RECT;
 '''
     for tag, alias in [('_prod', 'PROD'), ('PLPROD', 'PLPROD'), ('_pl', 'PL'),
                        ('_prodq1', 'PRODQ1'), ('_zipprodq1', 'ZIPPRODQ1'), ('_zipprodq', 'ZIPPRODQ')]:
-        start = types.index('struct ' + tag + ' {')
+        start = struct_start(types, tag)
         end = types.index('\n};', start) + 3
         declarations += types[start:end] + f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''

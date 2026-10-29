@@ -1387,7 +1387,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             }
             break;
         case colFleetFuel:
-            fEnough = lpfl->cord <= 1 || lpfl->rgwtMin[4] >= EstFuelUse(lpfl, 0, lpfl->lpplord->rgord[1].iWarp, -1, FALSE);
+            fEnough = lpfl->cord <= 1 || lpfl->rgwtMin[4] >= EstFuelUse(lpfl, 0, lpfl->lpplord->rgord()[1].iWarp, -1, FALSE);
             DrawMineralItem(hdc, dx * 4 + prc->left, prc->top, -fEnough, lpfl->rgwtMin[4]);
             break;
         case colFleetComposition:

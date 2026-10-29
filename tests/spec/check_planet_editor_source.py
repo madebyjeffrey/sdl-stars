@@ -8,6 +8,7 @@ they identify the reached boundary, not a recovered native result.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import re
 import shlex
@@ -42,7 +43,7 @@ typedef enum HeapType HeapType;
     start=types.index('struct _hb {')
     declarations+=types[start:types.index('\n};',start)+3]+'\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''
 #pragma pack(pop)

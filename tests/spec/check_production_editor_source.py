@@ -7,6 +7,7 @@ sanitation ranges before undefined behavior; it does not repair the algorithm.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -56,7 +57,7 @@ typedef int HWND;
     start = enums.index('enum ProdItemType : uint16_t {')
     declarations += enums[start:enums.index('\n};', start)+3] + '\n'
     for tag, alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL')]:
-        start = types.index('struct '+tag+' {')
+        start = struct_start(types, tag)
         declarations += types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''
 typedef struct { struct { int grhst,iItem; } hs; } PART;

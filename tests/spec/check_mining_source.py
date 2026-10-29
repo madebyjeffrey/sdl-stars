@@ -187,6 +187,7 @@ def cases():
 def main():
     declarations=r'''
 #include "common.h"
+#include "liststorage.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -209,14 +210,14 @@ int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? Native
     harness=r'''
 static void setup(void){
     memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(&gd,0,sizeof(gd));memset(designs,0,sizeof(designs));
-    memset(fleets,0,sizeof(fleets));memset(orderStorage,0,sizeof(orderStorage));for(int i=0;i<4;i++)orders[i]=(PLORD *)orderStorage[i].bytes;draws=mineCalls=partCalls=operCalls=0;lRandSeed1=7;lRandSeed2=11;
+    memset(fleets,0,sizeof(fleets));memset(orderStorage,0,sizeof(orderStorage));for(int i=0;i<4;i++)orders[i]=LpStartPl<PLORD,ORDER>(orderStorage[i].bytes,sizeof(orderStorage[i].bytes));draws=mineCalls=partCalls=operCalls=0;lRandSeed1=7;lRandSeed2=11;
     planet.iPlayer=(int16_t)cfg[4];planet.rgwtMin[3]=cfg[5];planet.cMines=4095;planet.fHomeworld=cfg[7];gd.fGeneratingTurn=cfg[9];cFleet=(int16_t)cfg[21];
     for(int i=0;i<16;i++){rgplr[i].rgAttr[rsMajorAdv]=(int8_t)cfg[6];rgplr[i].rgAttr[rsMineProd]=(int8_t)cfg[3];rglpshdef[i]=designs;
         designs[i].hul.chs=(uint8_t)cfg[24];for(int j=0;j<16;j++){designs[i].hul.rghs[j].grhst=(HullSlotType)cfg[25];designs[i].hul.rghs[j].iItem=cfg[26];designs[i].hul.rghs[j].cItem=cfg[27];}}
     for(int i=0;i<8;i++)mining[i].grAbility=(int16_t)cfg[28];
     for(int i=0;i<3;i++){planet.rgwtMin[i]=cfg[12+i];planet.rgMinConc[i]=(uint8_t)cfg[15+i];planet.rgpctMinLevel[i]=(uint8_t)cfg[18+i];}
     for(int i=0;i<4;i++){int at=29+8*i;fleets[i].idPlanet=(int16_t)cfg[at];fleets[i].iPlayer=(int16_t)cfg[at+1];fleets[i].fDead=cfg[at+2];
-        fleets[i].cord=(int16_t)cfg[at+3];fleets[i].lpplord=cfg[at+4]<0 ? NULL:orders[i];orders[i]->rgord[0].grTask=cfg[at+4]<0 ? 0:cfg[at+4];fleets[i].fHereAllTurn=cfg[at+6];
+        fleets[i].cord=(int16_t)cfg[at+3];fleets[i].lpplord=cfg[at+4]<0 ? NULL:orders[i];orders[i]->rgord()[0].grTask=cfg[at+4]<0 ? 0:cfg[at+4];fleets[i].fHereAllTurn=cfg[at+6];
         for(int j=0;j<16;j++)fleets[i].rgcsh[j]=(int16_t)((j==0 || cfg[0]==2) ? cfg[23]:0);rglpfl[i]=i==cfg[22] ? NULL:&fleets[i];}
 }
 int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);unsigned long cases=0,checks=0;int64_t expected[22];

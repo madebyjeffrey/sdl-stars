@@ -394,7 +394,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                             ifl++;
                                         }
                                         lpflNew->pt = lpfl->pt;
-                                        lpflNew->lpplord->rgord[0].pt = lpfl->pt;
+                                        lpflNew->lpplord->rgord()[0].pt = lpfl->pt;
                                         lpflNew->fHereAllTurn = TRUE;
                                         lpshdefDest = rglpshdef[iplr] + ish;
                                         if (lpshdefDest->fFree) {

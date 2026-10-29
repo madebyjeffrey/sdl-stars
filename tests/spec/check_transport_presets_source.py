@@ -6,6 +6,7 @@ single-line synchronous EN_CHANGE behavior of the SDL wrapper; real lifetime,
 focus and rendering remain separate obligations. Undefined slot scans are not run.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -68,11 +69,11 @@ typedef struct { int16_t x,y; } POINT16;
     declarations += enums[start:enums.index('\n};', start)+3] + '\n'
     for tag, alias in [('_itemaction','ITEMACTION'), ('_taskxport','TASKXPORT'), ('_tasklaymines','TASKLAYMINES'),
                        ('_taskpatrol','TASKPATROL'), ('_tasksell','TASKSELL'), ('_order','ORDER'), ('_ziporder','ZIPORDER')]:
-        start = types.index('struct ' + tag + ' {')
+        start = struct_start(types, tag)
         declarations += types[start:types.index('\n};',start)+3] + f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''
 static ZIPORDER vrgZip[4];
-static struct { ORDER rgord[2]; } orders;
+static struct { ORDER rgordStore[2]; ORDER *rgord() { return rgordStore; } } orders;
 static struct { struct { void *unused; typeof(orders) *lpplord; } fl; int iwpAct; } sel;
 static struct { int fChgZipOrd; } gd;
 static struct { int cPlayer; } game;
@@ -113,7 +114,7 @@ static void GetWindowText(HWND hwnd,char *out,int capacity) {
     size_t n=strlen(editText);(void)hwnd;if(n>=(size_t)capacity)n=capacity-1;memcpy(out,editText,n);out[n]=0;
 }
 static int FLookupFleet(int id,void *p) {
-    (void)id;(void)p;if(writes<16)snapshots[writes]=orders.rgord[sel.iwpAct];writes++;return 0;
+    (void)id;(void)p;if(writes<16)snapshots[writes]=orders.rgord()[sel.iwpAct];writes++;return 0;
 }
 static void DrawPlanShip(void *p,int tile) { (void)p;(void)tile;draws++; }
 static int LGetFleetStat(void *p,int stat) { (void)p;(void)stat;return hasCargo; }
@@ -140,7 +141,7 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *
 }
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;} } while(0)
 '''.replace('typeof(orders)', 'struct OrderArray')
-    declarations = declarations.replace('static struct { ORDER rgord[2]; } orders;', 'static struct OrderArray { ORDER rgord[2]; } orders;')
+    declarations = declarations.replace('static struct { ORDER rgordStore[2]; ORDER *rgord() { return rgordStore; } } orders;', 'static struct OrderArray { ORDER rgordStore[2]; ORDER *rgord() { return rgordStore; } } orders;')
     bodies = function('src/ui/ship2ui.c', 'void EnableZipBtns(') + '\n'
     block = between(custom, '            case IDC_IMPORT:\n            case IDC_RENAME:', '            case IDC_HELP:')
     bodies += 'static void edit(int wParam) {int hwnd=1,lpProc;char *psz,*pszT;switch(wParam){' + block + '}}\n'
@@ -158,12 +159,12 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *
     bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.c', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'
     block = between(ui,'            fActive = TRUE;\n            switch (l) {','            psz = vrgszUnits[i];')
     bodies += 'static int quantityControl(int l,int i,int *unit) {int fActive;' + block + '*unit=i;return fActive;}\n'
-    block = between(custom,'                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction);', '                TextOut(hdc, xCtr + 6,')
+    block = between(custom,'                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction());', '                TextOut(hdc, xCtr + 6,')
     bodies += 'static void paintLabel(int i) {int cch;XferActionType iAction;' + block + '}\n'
     bodies += r'''
 static void reset(void) {
     memset(vrgZip,0,sizeof(vrgZip));memset(&orders,0,sizeof(orders));memset(&sel,0,sizeof(sel));
-    sel.fl.lpplord=&orders;sel.iwpAct=1;orders.rgord[1].grTask=1;
+    sel.fl.lpplord=&orders;sel.iwpAct=1;orders.rgord()[1].grTask=1;
     comboCount[0]=comboCount[2]=10;comboCount[1]=5;
     comboSelection[0]=1;comboSelection[1]=comboSelection[2]=0;
     writes=draws=updates=alerts=renameCalls=gd.fChgZipOrd=depth=0;
@@ -175,36 +176,36 @@ int main(void) {
     int mode,i,mask,k,rank,n,pass,expected;ZIPORDER before[4];TASKXPORT prior;unsigned char header[8];
     CHECK(sizeof(ITEMACTION)==2 && sizeof(TASKXPORT)==10 && sizeof(ORDER)==18 && sizeof(ZIPORDER)==24);
     for(mode=0;mode<4;mode++) {
-        reset();orders.rgord[1].grTask=2;comboSelection[0]=2; // direct handler does not change task
-        for(i=0;i<5;i++){orders.rgord[1].txp.rgia[i].iAction=15;orders.rgord[1].txp.rgia[i].cQuan=1234+i;}
-        orders.rgord[1].pt=(POINT16){123,-45};orders.rgord[1].id=231;orders.rgord[1].iWarp=9;
-        orders.rgord[1].grobj=2;orders.rgord[1].fValidTask=1;orders.rgord[1].fNoAutoTrack=1;orders.rgord[1].fUnused=3;
-        memcpy(header,&orders.rgord[1],8);popupResult=mode;popup();CHECK(memcmp(header,&orders.rgord[1],8)==0);
-        CHECK(writes==1 && updates==1 && draws==1 && orders.rgord[1].grTask==2);
+        reset();orders.rgord()[1].grTask=2;comboSelection[0]=2; // direct handler does not change task
+        for(i=0;i<5;i++){orders.rgord()[1].txp.rgia[i].SetIAction(15);orders.rgord()[1].txp.rgia[i].SetCQuan(1234+i);}
+        orders.rgord()[1].pt=(POINT16){123,-45};orders.rgord()[1].id=231;orders.rgord()[1].iWarp=9;
+        orders.rgord()[1].grobj=2;orders.rgord()[1].fValidTask=1;orders.rgord()[1].fNoAutoTrack=1;orders.rgord()[1].fUnused=3;
+        memcpy(header,&orders.rgord()[1],8);popupResult=mode;popup();CHECK(memcmp(header,&orders.rgord()[1],8)==0);
+        CHECK(writes==1 && updates==1 && draws==1 && orders.rgord()[1].grTask==2);
         for(i=0;i<5;i++){
             expected=mode==3 ? 0 : mode==2 && i<3 ? 100 : 1234+i;
-            CHECK(orders.rgord[1].txp.rgia[i].cQuan==expected);
+            CHECK(orders.rgord()[1].txp.rgia[i].cQuan()==expected);
             expected=mode==3 ? 0 : i==4 ? 7 : mode==1 ? 2 : i==3 ? 0 : mode==0 ? 1:6;
-            CHECK(orders.rgord[1].txp.rgia[i].iAction==expected);
+            CHECK(orders.rgord()[1].txp.rgia[i].iAction()==expected);
         }
     }
     for(mask=0;mask<16;mask++) {
-        reset();k=0;for(i=0;i<4;i++){vrgZip[i].fValid=(mask>>i)&1;k+=vrgZip[i].fValid;vrgZip[i].txp.rgia[0].cQuan=100+i;}
+        reset();k=0;for(i=0;i<4;i++){vrgZip[i].fValid=(mask>>i)&1;k+=vrgZip[i].fValid;vrgZip[i].txp.rgia[0].SetCQuan(100+i);}
         memcpy(before,vrgZip,sizeof(before));rank=0;
-        for(i=0;i<4;i++)if(vrgZip[i].fValid){popupResult=5+rank++;writes=0;popup();CHECK(orders.rgord[1].txp.rgia[0].cQuan==100+i && writes==1);}
+        for(i=0;i<4;i++)if(vrgZip[i].fValid){popupResult=5+rank++;writes=0;popup();CHECK(orders.rgord()[1].txp.rgia[0].cQuan()==100+i && writes==1);}
         popupResult=(k ? 6+k:5);outerResult=0;gd.fChgZipOrd=0;writes=0;popup();
         CHECK(popupCount==(k ? 7+k:6) && popupCount<=11 && memcmp(before,vrgZip,96)==0 && gd.fChgZipOrd && writes==0);
     }
-    reset();prior=orders.rgord[1].txp;popupResult=-1;popup();CHECK(writes==0);
-    popupResult=4;popup();CHECK(writes==1 && memcmp(&prior,&orders.rgord[1].txp,10)==0);
-    popupResult=-2;popup();CHECK(writes==2 && memcmp(&prior,&orders.rgord[1].txp,10)==0);
+    reset();prior=orders.rgord()[1].txp;popupResult=-1;popup();CHECK(writes==0);
+    popupResult=4;popup();CHECK(writes==1 && memcmp(&prior,&orders.rgord()[1].txp,10)==0);
+    popupResult=-2;popup();CHECK(writes==2 && memcmp(&prior,&orders.rgord()[1].txp,10)==0);
     popupResult=5;outerResult=65536;memcpy(before,vrgZip,96);popup();CHECK(memcmp(before,vrgZip,96)==0);
     popupResult=5;outerResult=-1;popup();CHECK(vrgZip[0].fValid==0x5a);
     reset();iResTechNow=0;renameResult=0;memcpy(before,vrgZip,sizeof(before));edit(IDC_IMPORT);
     CHECK(renameCalls==1 && gd.fChgZipOrd && memcmp(before,vrgZip,96)==0);
     renameResult=-1;edit(IDC_RENAME);CHECK(strcmp(vrgZip[0].szName,"Custom0")==0 && !vrgZip[0].fValid);
-    strcpy(renameText,"A&B");for(i=0;i<5;i++){orders.rgord[1].txp.rgia[i].iAction=15;orders.rgord[1].txp.rgia[i].cQuan=4095;}
-    edit(IDC_IMPORT);CHECK(vrgZip[0].fValid && strcmp(radioLabel,"A&&B")==0 && memcmp(&vrgZip[0].txp,&orders.rgord[1].txp,10)==0 && enabledDelete && enabledRename);
+    strcpy(renameText,"A&B");for(i=0;i<5;i++){orders.rgord()[1].txp.rgia[i].SetIAction(15);orders.rgord()[1].txp.rgia[i].SetCQuan(4095);}
+    edit(IDC_IMPORT);CHECK(vrgZip[0].fValid && strcmp(radioLabel,"A&&B")==0 && memcmp(&vrgZip[0].txp,&orders.rgord()[1].txp,10)==0 && enabledDelete && enabledRename);
     memcpy(before,vrgZip,96);edit(IDC_DELETE);before[0].fValid=0;
     CHECK(memcmp(before,vrgZip,96)==0 && enabledDelete && enabledRename); // no button refresh after Delete
     EnableZipBtns(1,0);CHECK(!enabledDelete && !enabledRename);
@@ -214,42 +215,42 @@ int main(void) {
         int narrowed=n<32768 ? n:n-65536;int maximum=pass ? 100:4000;
         expected=narrowed<0 ? 0:narrowed>maximum ? maximum:narrowed;
         comboSelection[2]=pass ? 5:3;sprintf(editText,"%d",n);writes=alerts=0;amount();
-        CHECK(orders.rgord[1].txp.rgia[4].cQuan==expected && alerts==(narrowed!=expected) && writes==(narrowed!=expected ? 2:1));
+        CHECK(orders.rgord()[1].txp.rgia[4].cQuan()==expected && alerts==(narrowed!=expected) && writes==(narrowed!=expected ? 2:1));
     }
-    strcpy(editText,"65636");comboSelection[2]=5;alerts=0;amount();CHECK(orders.rgord[1].txp.rgia[4].cQuan==100 && alerts==0 && strcmp(editText,"65636")==0);
-    strcpy(editText,"-65535");comboSelection[2]=3;alerts=0;amount();CHECK(orders.rgord[1].txp.rgia[4].cQuan==1 && alerts==0 && strcmp(editText,"-65535")==0);
-    strcpy(editText,"40001234");amount();CHECK(orders.rgord[1].txp.rgia[4].cQuan==2427 && strcmp(editText,"40001234")==0);
-    strcpy(editText,"junk");amount();CHECK(orders.rgord[1].txp.rgia[4].cQuan==0 && strcmp(editText,"junk")==0);
-    reset();notifications=1;for(i=0;i<5;i++){orders.rgord[1].txp.rgia[i].iAction=15;orders.rgord[1].txp.rgia[i].cQuan=4095;}
-    popupResult=2;popup();CHECK(snapshots[0].txp.rgia[4].cQuan==4095 && orders.rgord[1].txp.rgia[4].cQuan==4000 && writes==3 && alerts==1);
-    CHECK(orders.rgord[1].txp.rgia[0].cQuan==100 && orders.rgord[1].txp.rgia[3].cQuan==4095 && strcmp(comboLabels[2][7],"Load Optimal")==0);
-    reset();notifications=1;orders.rgord[1].txp.rgia[0].iAction=5;orders.rgord[1].txp.rgia[0].cQuan=4095;
-    UpdateOrdersDDs(1);CHECK(comboSelection[1]==1 && orders.rgord[1].txp.rgia[0].cQuan==100 && writes==2 && alerts==1);
-    reset();notifications=1;hasCargo=0;orders.rgord[1].txp.rgia[0].iAction=5;orders.rgord[1].txp.rgia[0].cQuan=4095;
-    UpdateOrdersDDs(1);CHECK(comboCount[1]==1 && comboSelection[1]==0 && orders.rgord[1].txp.rgia[0].cQuan==4095);
-    reset();notifications=1;orders.rgord[1].txp.rgia[4].iAction=15;orders.rgord[1].txp.rgia[4].cQuan=4095;
-    UpdateOrdersDDs(1);CHECK(comboSelection[2]==-1 && orders.rgord[1].txp.rgia[4].cQuan==4000);
-    reset();notifications=1;comboSelection[1]=1;comboSelection[2]=5;orders.rgord[1].txp.rgia[0].cQuan=4095;action();
-    CHECK(snapshots[0].txp.rgia[0].iAction==5 && snapshots[0].txp.rgia[0].cQuan==4095 && orders.rgord[1].txp.rgia[0].cQuan==100 && writes==3);
-    comboSelection[1]=0;comboSelection[2]=-1;action();CHECK(orders.rgord[1].txp.rgia[4].iAction==15);
+    strcpy(editText,"65636");comboSelection[2]=5;alerts=0;amount();CHECK(orders.rgord()[1].txp.rgia[4].cQuan()==100 && alerts==0 && strcmp(editText,"65636")==0);
+    strcpy(editText,"-65535");comboSelection[2]=3;alerts=0;amount();CHECK(orders.rgord()[1].txp.rgia[4].cQuan()==1 && alerts==0 && strcmp(editText,"-65535")==0);
+    strcpy(editText,"40001234");amount();CHECK(orders.rgord()[1].txp.rgia[4].cQuan()==2427 && strcmp(editText,"40001234")==0);
+    strcpy(editText,"junk");amount();CHECK(orders.rgord()[1].txp.rgia[4].cQuan()==0 && strcmp(editText,"junk")==0);
+    reset();notifications=1;for(i=0;i<5;i++){orders.rgord()[1].txp.rgia[i].SetIAction(15);orders.rgord()[1].txp.rgia[i].SetCQuan(4095);}
+    popupResult=2;popup();CHECK(snapshots[0].txp.rgia[4].cQuan()==4095 && orders.rgord()[1].txp.rgia[4].cQuan()==4000 && writes==3 && alerts==1);
+    CHECK(orders.rgord()[1].txp.rgia[0].cQuan()==100 && orders.rgord()[1].txp.rgia[3].cQuan()==4095 && strcmp(comboLabels[2][7],"Load Optimal")==0);
+    reset();notifications=1;orders.rgord()[1].txp.rgia[0].SetIAction(5);orders.rgord()[1].txp.rgia[0].SetCQuan(4095);
+    UpdateOrdersDDs(1);CHECK(comboSelection[1]==1 && orders.rgord()[1].txp.rgia[0].cQuan()==100 && writes==2 && alerts==1);
+    reset();notifications=1;hasCargo=0;orders.rgord()[1].txp.rgia[0].SetIAction(5);orders.rgord()[1].txp.rgia[0].SetCQuan(4095);
+    UpdateOrdersDDs(1);CHECK(comboCount[1]==1 && comboSelection[1]==0 && orders.rgord()[1].txp.rgia[0].cQuan()==4095);
+    reset();notifications=1;orders.rgord()[1].txp.rgia[4].SetIAction(15);orders.rgord()[1].txp.rgia[4].SetCQuan(4095);
+    UpdateOrdersDDs(1);CHECK(comboSelection[2]==-1 && orders.rgord()[1].txp.rgia[4].cQuan()==4000);
+    reset();notifications=1;comboSelection[1]=1;comboSelection[2]=5;orders.rgord()[1].txp.rgia[0].SetCQuan(4095);action();
+    CHECK(snapshots[0].txp.rgia[0].iAction()==5 && snapshots[0].txp.rgia[0].cQuan()==4095 && orders.rgord()[1].txp.rgia[0].cQuan()==100 && writes==3);
+    comboSelection[1]=0;comboSelection[2]=-1;action();CHECK(orders.rgord()[1].txp.rgia[4].iAction()==15);
     for(pass=0;pass<2;pass++)for(mask=0;mask<32;mask++) {
         int selected=4,priority[5]={4,0,1,2,3};reset();notifications=1;hasCargo=pass;
-        for(i=0;i<5;i++){orders.rgord[1].txp.rgia[i].iAction=(mask>>i)&1;orders.rgord[1].txp.rgia[i].cQuan=4095;}
+        for(i=0;i<5;i++){orders.rgord()[1].txp.rgia[i].SetIAction((mask>>i)&1);orders.rgord()[1].txp.rgia[i].SetCQuan(4095);}
         for(i=0;i<(pass ? 5:1);i++)if((mask>>priority[i])&1){selected=priority[i];break;}
         UpdateOrdersDDs(1);CHECK(comboSelection[1]==(selected==4 ? 0:selected+1));
-        for(i=0;i<5;i++)CHECK(orders.rgord[1].txp.rgia[i].cQuan==(i==selected ? 4000:4095));
+        for(i=0;i<5;i++)CHECK(orders.rgord()[1].txp.rgia[i].cQuan()==(i==selected ? 4000:4095));
     }
     for(i=-1;i<16;i++){int unit;int enabled=quantityControl(i,4,&unit);CHECK(enabled==(i!=0 && i!=1 && i!=2 && i!=7) && unit==((i==5 || i==6) ? 5:4));}
-    reset();iResTechNow=0;vrgZip[0].txp.rgia[0].iAction=5;vrgZip[0].txp.rgia[0].cQuan=120;paintLabel(0);
+    reset();iResTechNow=0;vrgZip[0].txp.rgia[0].SetIAction(5);vrgZip[0].txp.rgia[0].SetCQuan(120);paintLabel(0);
     CHECK(strcmp(szWork,"Fill Up to % 120kT")==0);
-    vrgZip[0].txp.rgia[0].iAction=7;paintLabel(0);CHECK(strcmp(szWork,"Load Dunnage")==0);
+    vrgZip[0].txp.rgia[0].SetIAction(7);paintLabel(0);CHECK(strcmp(szWork,"Load Dunnage")==0);
     printf("M10 source-extracted transport witnesses: %d assertions passed\n",checks);return 0;
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m10-presets-') as work:
         source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
-        source.write_text(declarations + bodies + witnesses)
+        source.write_text('#include "' + str(ROOT/'src/core/taskviews.h') + '"\n' + declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
                        ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
                         str(source),'-o',str(binary)],check=True)

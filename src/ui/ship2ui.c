@@ -86,10 +86,10 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 SetTextColor(hdc, rgcrMinerals[i]);
                 RightTextOut(hdc, xCtr, rcGBox.top, rgszMinerals[i], 0, 0);
                 SetTextColor(hdc, 0);
-                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction);
+                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction());
                 cch = CchGetString(static_cast<StringId>(idsAction + static_cast<int>(iAction)), szWork);
                 if (szWork[cch - 1] == '.') {
-                    wsprintf(&szWork[cch - 3], " %dkT", vrgZip[iResTechNow].txp.rgia[i].cQuan);
+                    wsprintf(&szWork[cch - 3], " %dkT", vrgZip[iResTechNow].txp.rgia[i].cQuan());
                 }
                 TextOut(hdc, xCtr + 6, rcGBox.top, szWork, strlen(szWork));
                 rcGBox.top += dyArial8;
@@ -140,7 +140,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     SetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
                     if (LOWORD(wParam) == IDC_IMPORT) {
                         vrgZip[iResTechNow].fValid = TRUE;
-                        vrgZip[iResTechNow].txp = sel.fl.lpplord->rgord[sel.iwpAct].txp;
+                        vrgZip[iResTechNow].txp = sel.fl.lpplord->rgord()[sel.iwpAct].txp;
                         InvalidateRect(hwnd, NULL, TRUE);
                     }
                     EnableZipBtns(hwnd, iResTechNow);

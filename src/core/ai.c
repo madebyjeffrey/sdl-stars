@@ -333,9 +333,9 @@ void DoRobotoidAiTurn(PROD *rgprod) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjThing) {
-            dx = lpfl->pt.x - lpfl->lpplord->rgord[1].pt.x;
-            dy = lpfl->pt.y - lpfl->lpplord->rgord[1].pt.y;
+        if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjThing) {
+            dx = lpfl->pt.x - lpfl->lpplord->rgord()[1].pt.x;
+            dy = lpfl->pt.y - lpfl->lpplord->rgord()[1].pt.y;
             lDist = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
             if (lDist > 40000) {
                 ChangeMainObjSel(grobjFleet, lpfl->id);
@@ -359,25 +359,25 @@ void DoRobotoidAiTurn(PROD *rgprod) {
                     ord.fValidTask = TRUE;
                     ord.iWarp = 4;
                     FMoveAiFleet(lpfl, &ord, FALSE);
-                } else if (lpfl->lpplord->rgord[0].grTask == grTaskNone) {
+                } else if (lpfl->lpplord->rgord()[0].grTask == grTaskNone) {
                     ChangeMainObjSel(grobjFleet, lpfl->id);
-                    sel.fl.lpplord->rgord[0].grTask = grTaskLayMines;
-                    sel.fl.lpplord->rgord[0].tlm.cTime = 5;
-                    sel.fl.lpplord->rgord[0].tlm.cTimeOld = 5;
+                    sel.fl.lpplord->rgord()[0].grTask = grTaskLayMines;
+                    sel.fl.lpplord->rgord()[0].tlm().cTime = 5;
+                    sel.fl.lpplord->rgord()[0].tlm().cTimeOld = 5;
                     FLookupFleet(idWriteBack, &sel.fl);
                     continue;
                 }
             } else if (FIsAiAttack(lpfl)) {
                 lpfl->lpflNext = lpflAttack;
                 lpflAttack = lpfl;
-                if (lpfl->lpplord->rgord[0].grTask == grTaskLayMines) {
+                if (lpfl->lpplord->rgord()[0].grTask == grTaskLayMines) {
                     ClearAiCurrentTask(lpfl, TRUE);
                 }
                 for (j = 2; j <= 7 && lpfl->rgcsh[j] <= 0; j++) {
                 }
-                if (j <= 7 && ((lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet) || lpfl->idPlanet != idPlanetDeepSpace)) {
-                    if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet) {
-                        id = lpfl->lpplord->rgord[1].id;
+                if (j <= 7 && ((lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet) || lpfl->idPlanet != idPlanetDeepSpace)) {
+                    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet) {
+                        id = lpfl->lpplord->rgord()[1].id;
                     } else {
                         id = lpfl->idPlanet;
                     }
@@ -388,10 +388,10 @@ void DoRobotoidAiTurn(PROD *rgprod) {
                 }
             } else if (FIsAiTransport(lpfl)) {
                 idPlanDst = idplNone;
-                if (lpfl->cord <= 1 || lpfl->lpplord->rgord[0].grTask != grTaskNone) {
+                if (lpfl->cord <= 1 || lpfl->lpplord->rgord()[0].grTask != grTaskNone) {
                     idPlanDst = lpfl->idPlanet;
-                } else if (lpfl->lpplord->rgord[1].grobj == grobjPlanet) {
-                    idPlanDst = lpfl->lpplord->rgord[1].id;
+                } else if (lpfl->lpplord->rgord()[1].grobj == grobjPlanet) {
+                    idPlanDst = lpfl->lpplord->rgord()[1].id;
                 }
                 if (idPlanDst != idplNone) {
                     lppl = LpplFromId(idPlanDst);
@@ -406,7 +406,7 @@ void DoRobotoidAiTurn(PROD *rgprod) {
             }
             if (game.turn <= 20 && lpfl->rgcsh[0] > 0) {
                 ChangeMainObjSel(grobjFleet, lpfl->id);
-                sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+                sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
                 FLookupFleet(idWriteBack, &sel.fl);
             } else if (lpfl->cord <= 1 && lpfl->rgcsh[1] != 0 && (game.turn >= 5 || game.mdStartDist == startDistClose)) {
                 if (iAiLvl > 1 && lpfl->idPlanet != idPlanetDeepSpace) {
@@ -419,9 +419,9 @@ void DoRobotoidAiTurn(PROD *rgprod) {
                         ord.grobj = grobjPlanet;
                         ord.fValidTask = TRUE;
                         ord.grTask = grTaskXfer;
-                        ord.txp.rgia[3].iAction = iActionUnloadAll;
+                        ord.txp.rgia[3].SetIAction(iActionUnloadAll);
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        sel.fl.lpplord->rgord[0] = ord;
+                        sel.fl.lpplord->rgord()[0] = ord;
                         FLookupFleet(idWriteBack, &sel.fl);
                         lpplDrop = LpplFindClosestEnum(lpplDrop, FEnumOurStarbase);
                         if (!lpplDrop)
@@ -441,7 +441,7 @@ void DoRobotoidAiTurn(PROD *rgprod) {
                 if (idPlanDst == idplNone && !lpthWorm) {
                     if (lpfl->idPlanet != idPlanetDeepSpace) {
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+                        sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
                         FLookupFleet(idWriteBack, &sel.fl);
                     }
                 } else {
@@ -504,12 +504,12 @@ AtkMissions:
                     lppl = LpplFromId(lpfl->idPlanet);
                     if (lppl && lppl->iPlayer == idPlayer && (lppl->fStarbase || Random(5) == 0)) {
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+                        sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
                         FLookupFleet(idWriteBack, &sel.fl);
                         continue;
                     }
                 }
-                if ((lpfl->cord > 1 && lpfl->idPlanet == idPlanetDeepSpace && lpfl->lpplord->rgord[1].grobj == grobjPlanet) ||
+                if ((lpfl->cord > 1 && lpfl->idPlanet == idPlanetDeepSpace && lpfl->lpplord->rgord()[1].grobj == grobjPlanet) ||
                     FMoveToNearestStarbase(lpfl, FALSE))
                     continue;
             }
@@ -519,7 +519,7 @@ AtkMissions:
                     break;
                 }
             }
-            if (i > 10 && FIsAiAttack(lpfl) && (lpfl->cord <= 1 || lpfl->lpplord->rgord[1].grobj != grobjFleet) &&
+            if (i > 10 && FIsAiAttack(lpfl) && (lpfl->cord <= 1 || lpfl->lpplord->rgord()[1].grobj != grobjFleet) &&
                 ((cFlDestroyers <= (game.turn <= 120 ? 70 : 50) && (cFlDestroyers <= (game.turn <= 120 ? 60 : 40) || Random(3) != 0)) ||
                  ((iLatestDestroyer != ishdefNone && lpfl->rgcsh[iLatestDestroyer] >= 20 && Random(20) != 0) || !FFindBuddyAndJoinUp(lpfl, 14, 15, 36, 72)))) {
                 IdTargetAttack(lpfl, lpflAttack, lpflEnemy, game.fAisBand);
@@ -611,7 +611,7 @@ int16_t IdTargetArmada(FLEET *lpfl) {
     int32_t cXfer;
 
     if (lpfl->cord > 1) {
-        ord = lpfl->lpplord->rgord[1];
+        ord = lpfl->lpplord->rgord()[1];
         if (LDistance2(lpfl->pt, ord.pt) > 62500 && ord.grobj == grobjFleet)
             goto LTryNewTarget;
         if (ord.grobj == grobjFleet) {
@@ -1151,7 +1151,7 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                 lpflAttack = lpfl;
             }
             lpfl->fMark = FALSE;
-            if ((lpfl->rgcsh[2] != 0 || lpfl->rgcsh[3] != 0) && lpfl->lpplord->rgord[lpfl->cord - 1].grTask != grTaskNone) {
+            if ((lpfl->rgcsh[2] != 0 || lpfl->rgcsh[3] != 0) && lpfl->lpplord->rgord()[lpfl->cord - 1].grTask != grTaskNone) {
                 if (lpfl->idPlanet != idPlanetDeepSpace) {
                     if (LpplFromId(lpfl->idPlanet)->iPlayer != iplrNone) {
                     LBlowAwayOrders:
@@ -1166,10 +1166,10 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                 } else {
                     if (lpfl->cord <= 1)
                         continue;
-                    lpfl->lpplord->rgord[1].grTask = grTaskMine;
-                    if (lpfl->lpplord->rgord[1].grobj != grobjPlanet) {
+                    lpfl->lpplord->rgord()[1].grTask = grTaskMine;
+                    if (lpfl->lpplord->rgord()[1].grobj != grobjPlanet) {
                     }
-                    idPlanDst = lpfl->lpplord->rgord[1].id;
+                    idPlanDst = lpfl->lpplord->rgord()[1].id;
                 }
                 vlpbAiPlanet[idPlanDst * 16 + 1] = vlpbAiPlanet[idPlanDst * 16 + 1] | 0x80;
                 continue;
@@ -1177,8 +1177,8 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
             if (lpfl->rgcsh[8] != 0 || lpfl->rgcsh[9] != 0) {
                 idPlanDst = idplNone;
                 if (lpfl->cord > 1) {
-                    if (lpfl->lpplord->rgord[1].grobj == grobjPlanet) {
-                        idPlanDst = lpfl->lpplord->rgord[1].id;
+                    if (lpfl->lpplord->rgord()[1].grobj == grobjPlanet) {
+                        idPlanDst = lpfl->lpplord->rgord()[1].id;
                     }
                 } else {
                     idPlanDst = lpfl->idPlanet;
@@ -1196,12 +1196,12 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                         ord.id = idPlanDst;
                         ord.grTask = grTaskXfer;
                         ord.fValidTask = TRUE;
-                        ord.txp.rgia[3].iAction = iActionUnloadAll;
+                        ord.txp.rgia[3].SetIAction(iActionUnloadAll);
                         ChangeMainObjSel(grobjFleet, lpfl->id);
-                        if (sel.fl.lpplord->rgord[0].id == idPlanDst && sel.fl.lpplord->rgord[0].grobj == grobjPlanet) {
-                            sel.fl.lpplord->rgord[0] = ord;
+                        if (sel.fl.lpplord->rgord()[0].id == idPlanDst && sel.fl.lpplord->rgord()[0].grobj == grobjPlanet) {
+                            sel.fl.lpplord->rgord()[0] = ord;
                         } else {
-                            sel.fl.lpplord->rgord[1] = ord;
+                            sel.fl.lpplord->rgord()[1] = ord;
                         }
                         FLookupFleet(idWriteBack, &sel.fl);
                         vlpbAiPlanet[idPlanDst * 16 + 3] = vlpbAiPlanet[idPlanDst * 16 + 3] | 0x80;
@@ -1209,7 +1209,7 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                         continue;
                     }
                     goto LBlowAwayOrders;
-                } else if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjOther) {
+                } else if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjOther) {
                     goto LBlowAwayOrders;
                 }
             } else {
@@ -1217,8 +1217,8 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                     continue;
                 idPlanDst = idplNone;
                 if (lpfl->cord > 1) {
-                    if (lpfl->lpplord->rgord[1].grobj == grobjPlanet) {
-                        idPlanDst = lpfl->lpplord->rgord[1].id;
+                    if (lpfl->lpplord->rgord()[1].grobj == grobjPlanet) {
+                        idPlanDst = lpfl->lpplord->rgord()[1].id;
                     }
                 } else {
                     idPlanDst = lpfl->idPlanet;
@@ -1275,7 +1275,7 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                 continue;
         LScrapFleet:
             ChangeMainObjSel(grobjFleet, lpfl->id);
-            sel.fl.lpplord->rgord[0].grTask = grTaskScrap;
+            sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
             FLookupFleet(idWriteBack, &sel.fl);
             continue;
         } else {
@@ -1305,7 +1305,7 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
                     ord.grTask = grTaskXfer;
                     ord.fValidTask = TRUE;
                     ord.iWarp = 6;
-                    ord.txp.rgia[3].iAction = iActionUnloadAll;
+                    ord.txp.rgia[3].SetIAction(iActionUnloadAll);
                     FMoveAiFleet(lpfl, &ord, FALSE);
                     continue;
                 }
@@ -1392,12 +1392,12 @@ void DoTurinDroneAiTurn(PROD *rgprod) {
     LTryMinelayers:
         if (lpfl->rgcsh[12] == 0)
             continue;
-        if (lpfl->cord != 1 || lpfl->lpplord->rgord[0].grTask != grTaskNone)
+        if (lpfl->cord != 1 || lpfl->lpplord->rgord()[0].grTask != grTaskNone)
             continue;
         ChangeMainObjSel(grobjFleet, lpfl->id);
-        sel.fl.lpplord->rgord[0].grTask = grTaskLayMines;
-        sel.fl.lpplord->rgord[0].tlm.cTime = 5;
-        sel.fl.lpplord->rgord[0].tlm.cTimeOld = 5;
+        sel.fl.lpplord->rgord()[0].grTask = grTaskLayMines;
+        sel.fl.lpplord->rgord()[0].tlm().cTime = 5;
+        sel.fl.lpplord->rgord()[0].tlm().cTimeOld = 5;
         FLookupFleet(idWriteBack, &sel.fl);
         continue;
     }

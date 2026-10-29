@@ -1,13 +1,13 @@
 #include "win.h"
 
-ITEMACTION rgiaUnloadAllCol[5] = {{0}, {0}, {0}, {.iAction = iActionUnloadAll}};
-ITEMACTION rgiaQuikDrop[5] = {{.iAction = iActionUnloadAll},
-                              {.iAction = iActionUnloadAll},
-                              {.iAction = iActionUnloadAll},
-                              {.iAction = iActionUnloadAll},
-                              {.iAction = iActionLoadDunnage}};
-ITEMACTION rgiaQuikLoad[5] = {{.iAction = iActionLoadAll}, {.iAction = iActionLoadAll}, {.iAction = iActionLoadAll}, {0}, {.iAction = iActionLoadDunnage}};
-ITEMACTION rgiaLoadAllCol[5] = {{0}, {0}, {0}, {.iAction = iActionLoadAll}};
+ITEMACTION rgiaUnloadAllCol[5] = {{0}, {0}, {0}, IaMake(0, iActionUnloadAll)};
+ITEMACTION rgiaQuikDrop[5] = {IaMake(0, iActionUnloadAll),
+                              IaMake(0, iActionUnloadAll),
+                              IaMake(0, iActionUnloadAll),
+                              IaMake(0, iActionUnloadAll),
+                              IaMake(0, iActionLoadDunnage)};
+ITEMACTION rgiaQuikLoad[5] = {IaMake(0, iActionLoadAll), IaMake(0, iActionLoadAll), IaMake(0, iActionLoadAll), {0}, IaMake(0, iActionLoadDunnage)};
+ITEMACTION rgiaLoadAllCol[5] = {{0}, {0}, {0}, IaMake(0, iActionLoadAll)};
 ZIPPRODQ1  rgzpqTut[2] = {
     {
          .fNoResearch = TRUE,
@@ -1070,7 +1070,7 @@ int16_t FTutorTaskDone() {
                         tutor.fProgress = FALSE;
                         return TRUE;
                     }
-                    if (FCheckSelection(grobjFleet, 11) && sel.fl.lpplord->rgord[sel.iwpAct].grTask == grTaskXfer &&
+                    if (FCheckSelection(grobjFleet, 11) && sel.fl.lpplord->rgord()[sel.iwpAct].grTask == grTaskXfer &&
                         SendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
                         tutor.idtBold = idtThirdUnload;
                     } else {
@@ -1710,7 +1710,7 @@ int16_t FTutorTaskDone() {
                 tutor.idtBold = idtRead2MessagesWatchBattle;
                 return FALSE;
             }
-            if (LpflFromId(4)->lpplord->rgord[0].grobj != grobjFleet) {
+            if (LpflFromId(4)->lpplord->rgord()[0].grobj != grobjFleet) {
                 tutor.idtBold = idtRightClickBlueDiamondFleetWaypointsTile;
                 tutor.idh = idhFleetWaypointsTile;
                 return FALSE;
@@ -2242,7 +2242,7 @@ int16_t FCheckZip(int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
         piaCur = vrgZip[iZip].txp.rgia;
         i = 0;
         while (i < 5) {
-            piaCur->iAction = lpiaGoal->iAction;
+            piaCur->SetIAction(lpiaGoal->iAction());
             i++;
             piaCur++;
             lpiaGoal++;
@@ -2261,7 +2261,7 @@ int16_t FCheckZip(int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
     tutor.idh = idhWaypointTaskTile;
     i = 0;
     while (i < 5) {
-        if (piaCur->iAction != lpiaGoal->iAction && piaCur->iAction != iActionNone) {
+        if (piaCur->iAction() != lpiaGoal->iAction() && piaCur->iAction() != iActionNone) {
             return FALSE;
         }
         i++;
@@ -2488,7 +2488,7 @@ int16_t FCheckFleetWP(uint16_t ifl, int16_t iord, GrobjClass grobj, int16_t id, 
     tutor.idh = idhAddingFleetWaypoints;
     if (lpfl->cord < iord + 1)
         goto LReturn;
-    ord = lpfl->lpplord->rgord[iord];
+    ord = lpfl->lpplord->rgord()[iord];
     if ((id & 0x7fff) != 0x7fff && (ord.grobj != grobj || ord.id != id)) {
         TutorError(idsTutorialHaveGivenFleetWrongDestinationPress);
         tutor.idh = idhMovingFleetWaypoints;
@@ -2548,7 +2548,7 @@ int16_t FCheckLayingWP(uint16_t ifl, int16_t iord, int16_t id, int16_t iYears) {
     if (!FCheckFleetWP(ifl, iord, grobj, id & 0x7fff, grTaskLayMines, iWarpAny)) {
         return FALSE;
     }
-    if (lpfl->lpplord->rgord[iord].tsell.iPlrX != iYears) {
+    if (lpfl->lpplord->rgord()[iord].tsell().iPlrX != iYears) {
         return FALSE;
     }
     tutor.idh = static_cast<HelpContextId>(idhSav);
@@ -2596,7 +2596,7 @@ int16_t FCheckPatrolWP(uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, u
     if (!FCheckFleetWP(ifl, iord, grobj, id & 0x7fff, grTaskPatrol, iWarp)) {
         return FALSE;
     }
-    if (iDist != iDistAny && lpfl->lpplord->rgord[iord].tptl.iDist != iDist) {
+    if (iDist != iDistAny && lpfl->lpplord->rgord()[iord].tptl().iDist != iDist) {
         tutor.idh = idhWaypointTaskTile;
         return FALSE;
     }
@@ -2629,18 +2629,18 @@ int16_t FCheckXferWP(uint16_t ifl, int16_t iord, int16_t id, uint16_t iWarp, ITE
     if (!FCheckFleetWP(ifl, iord, grobj, id, grTaskXfer, iWarp)) {
         return FALSE;
     }
-    ord = lpfl->lpplord->rgord[iord];
+    ord = lpfl->lpplord->rgord()[iord];
     piaCur = ord.txp.rgia;
     tutor.idh = idhWaypointTaskTile;
     i = 0;
     while (i < 5) {
-        if (piaCur->iAction != lpiaGoal->iAction) {
-            if (piaCur->iAction == iActionNone)
+        if (piaCur->iAction() != lpiaGoal->iAction()) {
+            if (piaCur->iAction() == iActionNone)
                 goto LReturn;
             TutorError(idsTutorialHaveGivenIncorrectTransferOrderPlease);
             goto LReturn;
         }
-        if ((piaCur->iAction == iActionUnloadExact || piaCur->iAction == iActionSetAmount) && piaCur->cQuan != lpiaGoal->cQuan)
+        if ((piaCur->iAction() == iActionUnloadExact || piaCur->iAction() == iActionSetAmount) && piaCur->cQuan() != lpiaGoal->cQuan())
             goto LReturn;
         i++;
         piaCur++;

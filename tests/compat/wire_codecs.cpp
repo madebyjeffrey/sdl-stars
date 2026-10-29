@@ -134,6 +134,94 @@ int main() {
         CHECK(FDecodeRtChgProdQ(rgbId, rtcpq) && rtcpq.id == -2);
         CHECK(FDecodeProdBytes({}, {}) && FEncodeProdQueue({}, {}));
     }
-    std::puts("History/production wire vectors, signed domains, partial bytes and bounded primitives passed");
+    {
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::array<std::byte, 2> rgb = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256)};
+            ITEMACTION ia{0};
+            std::array<std::byte, 2> output;
+            CHECK(FDecodeItemAction(rgb, ia) && ia.w == w && ia.cQuan() == w % 4096 && ia.iAction() == w / 4096);
+            CHECK(FEncodeItemAction(ia, output) && output == rgb);
+            ia.w = static_cast<std::uint16_t>(w ^ 0xa55a);
+            const auto action = ia.iAction();
+            CHECK(ia.SetCQuan(static_cast<std::uint16_t>(w)) == w % 4096 && ia.iAction() == action);
+            CHECK(ia.SetIAction(static_cast<std::uint16_t>(w)) == w % 16 && ia.cQuan() == w % 4096);
+            CHECK(ia.w == (w % 4096) + (w % 16) * 4096);
+            CHECK(IaMake(static_cast<std::uint16_t>(w), static_cast<std::uint16_t>(w)).w == ia.w);
+            for (std::size_t cb = 0; cb < 2; cb++) {
+                const auto before = ia.w;
+                output.fill(std::byte{0xa5});
+                CHECK(!FDecodeItemAction(std::span(rgb).first(cb), ia) && ia.w == before);
+                CHECK(!FEncodeItemAction(ia, std::span(output).first(cb)) && output[0] == std::byte{0xa5} && output[1] == std::byte{0xa5});
+            }
+        }
+    }
+    {
+        const std::array<std::byte, 18> golden = {
+            std::byte{0xe8}, std::byte{3}, std::byte{0xff}, std::byte{0x7f}, std::byte{0xff}, std::byte{0xff}, std::byte{0xba}, std::byte{0xfd},
+            std::byte{0}, std::byte{0}, std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0x80}, std::byte{0x34}, std::byte{0x12}, std::byte{0xcd}, std::byte{0xab}};
+        ORDER ord{};
+        std::array<std::byte, 20> output;
+        static_assert(sizeof(ORDER) == 18 && alignof(ORDER) == 2 && sizeof(PLORD) == 4 && alignof(PLORD) == 2);
+        CHECK(FDecodeOrder(golden, ord));
+        CHECK(ord.pt.x == 1000 && ord.pt.y == 32767 && ord.id == -1 && ord.grTask == 10 && ord.iWarp == 11 && ord.grobj == 13 &&
+              ord.fValidTask == 1 && ord.fNoAutoTrack == 1 && ord.fUnused == 3);
+        CHECK(ord.txp.rgia[0].w == 0 && ord.txp.rgia[1].w == 65535 && ord.txp.rgia[2].w == 32768 &&
+              ord.txp.rgia[3].w == 0x1234 && ord.txp.rgia[4].w == 0xabcd);
+        output.fill(std::byte{0xa5});
+        CHECK(FEncodeOrder(ord, std::span(output).subspan(1, 18)) && std::memcmp(output.data() + 1, golden.data(), 18) == 0);
+        CHECK(output[0] == std::byte{0xa5} && output[19] == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 18; cb++) {
+            const auto before = ord;
+            CHECK(!FDecodeOrder(std::span(golden).first(cb), ord) && std::memcmp(&ord, &before, sizeof(ord)) == 0);
+            output.fill(std::byte{0xa5});
+            CHECK(!FEncodeOrder(ord, std::span(output).first(cb)));
+            for (auto ch : output) CHECK(ch == std::byte{0xa5});
+            if (cb < 8) {
+                CHECK(!FDecodeOrderHeader(std::span(golden).first(cb), ord) && std::memcmp(&ord, &before, sizeof(ord)) == 0);
+                CHECK(!FEncodeOrderHeader(ord, std::span(output).first(cb)));
+                for (auto ch : output) CHECK(ch == std::byte{0xa5});
+            }
+        }
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            std::array<std::byte, 8> header{};
+            header[6] = static_cast<std::byte>(w % 256);
+            header[7] = static_cast<std::byte>(w / 256);
+            CHECK(FDecodeOrderHeader(header, ord));
+            CHECK(ord.grTask == w % 16 && ord.iWarp == (w / 16) % 16 && ord.grobj == (w / 256) % 16 &&
+                  ord.fValidTask == (w / 4096) % 2 && ord.fNoAutoTrack == (w / 8192) % 2 && ord.fUnused == w / 16384);
+            CHECK(FEncodeOrderHeader(ord, output) && std::memcmp(header.data(), output.data(), 8) == 0);
+            // Decoding the eight-byte form must leave the omitted task words.
+            CHECK(ord.txp.rgia[4].w == 0xabcd);
+        }
+        const std::array<std::byte, 18> incoming = {
+            std::byte{1}, std::byte{2}, std::byte{3}, std::byte{4}, std::byte{5}, std::byte{6}, std::byte{7}, std::byte{8},
+            std::byte{9}, std::byte{10}, std::byte{11}, std::byte{12}, std::byte{13}, std::byte{14}, std::byte{15}, std::byte{16}, std::byte{17}, std::byte{18}};
+        for (std::size_t cb = 0; cb <= 18; cb++) {
+            auto expected = golden;
+            CHECK(FDecodeOrder(golden, ord));
+            CHECK(FDecodeOrderPrefix(std::span(incoming).first(cb), ord));
+            std::memcpy(expected.data(), incoming.data(), cb);
+            CHECK(FEncodeOrder(ord, output) && std::memcmp(output.data(), expected.data(), 18) == 0);
+        }
+        const auto before = ord;
+        CHECK(!FDecodeOrderPrefix(output, ord) && std::memcmp(&ord, &before, sizeof(ord)) == 0);
+        ord.tlm().cTime = 0xabcd;
+        ord.tlm().cTimeOld = 0x1234;
+        CHECK(ord.txp.rgia[0].cQuan() == 0xbcd && ord.txp.rgia[0].iAction() == 10 && ord.tsell().iPlrX == 0xabcd);
+        const ORDER &readOnly = ord;
+        ORDER other{};
+        other.txp.rgia[2].w = 0xf00d;
+        other.tptl() = readOnly.tptl();
+        CHECK(other.tptl().iWarp == 0xabcd && other.tptl().iDist == 0x1234 && other.txp.rgia[2].w == 0xf00d);
+        other.tptl() = other.tptl();
+        CHECK(other.tlm().cTime == 0xabcd && other.tlm().cTimeOld == 0x1234);
+        RTWAYPT rtwp{-2, 32767, ord}, decoded{};
+        std::array<std::byte, 22> waypoint;
+        CHECK(FEncodeRtWaypt(rtwp, waypoint));
+        CHECK(waypoint[0] == std::byte{0xfe} && waypoint[1] == std::byte{0xff} && waypoint[2] == std::byte{0xff} && waypoint[3] == std::byte{0x7f});
+        CHECK(FDecodeRtWayptPrefix(waypoint, decoded) && decoded.id == -2 && decoded.iWaypt == 32767);
+        CHECK(FDecodeOrder(std::span(waypoint).subspan(4), decoded.order) && decoded.order.tlm().cTime == 0xabcd);
+    }
+    std::puts("History/production/action/order wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

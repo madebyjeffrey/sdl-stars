@@ -446,8 +446,8 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                 lpfl = rglpfl[i];
                 if (!rglpfl[i] || lpfl->iPlayer > lppl->iPlayer)
                     break;
-                if (lpfl->iPlayer >= lppl->iPlayer && lpfl->lpplord->rgord[0].pt.x == rgptPlan[lppl->id].x &&
-                    lpfl->lpplord->rgord[0].pt.y == rgptPlan[lppl->id].y && 32766 - cBuilt > lpfl->rgcsh[iItem]) {
+                if (lpfl->iPlayer >= lppl->iPlayer && lpfl->lpplord->rgord()[0].pt.x == rgptPlan[lppl->id].x &&
+                    lpfl->lpplord->rgord()[0].pt.y == rgptPlan[lppl->id].y && 32766 - cBuilt > lpfl->rgcsh[iItem]) {
                     if (lpfl->rgcsh[iItem] != 0 && lpfl->rgdv[iItem].pctDp != 0) {
                         dpShdef = rglpshdef[lpfl->iPlayer][iItem].hul.dp;
                         cshOrig = lpfl->rgcsh[iItem];
@@ -483,10 +483,10 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
         if (lppl->idRoute != 0) {
             AutoRouteFleet(lpfl, lppl);
             if (cBuilt == 1) {
-                idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewWhichWillRouted : idmStarbaseHasBuiltNewWhichRouted;
+                idm = lpfl->lpplord->rgord()[1].iWarp == 0 ? idmStarbaseHasBuiltNewWhichWillRouted : idmStarbaseHasBuiltNewWhichRouted;
                 FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0, 0);
             } else {
-                idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewShipsWhichWill : idmStarbaseHasBuiltNewShipsWhichRouted;
+                idm = lpfl->lpplord->rgord()[1].iWarp == 0 ? idmStarbaseHasBuiltNewShipsWhichWill : idmStarbaseHasBuiltNewShipsWhichRouted;
                 FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0);
             }
         } else {

@@ -7,6 +7,7 @@ whole-host state are not replaced by claims about these providers.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import re
 import shlex
@@ -42,7 +43,7 @@ def main():
     start=enums.index('enum HeapType : uint16_t {');declarations+=enums[start:enums.index(';',start)+1]+'\ntypedef enum HeapType HeapType;\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)

@@ -22,6 +22,13 @@ def enum_source():
 ENUM_STORAGE = dict(re.findall(r"enum (\w+) : (\w+) \{", enum_source()))
 
 
+def struct_start(text, tag):
+    match = re.search(r"\bstruct(?:\s+alignas\([^)]*\))?\s+" + re.escape(tag) + r"\s*\{", text)
+    if not match:
+        raise ValueError("Missing C++ struct " + tag)
+    return match.start()
+
+
 def function(path, signature):
     text = (ROOT / path).read_text()
     start = text.index(signature)

@@ -701,15 +701,15 @@ void ReadIniSettings() {
             if (iPass >= 20) {
                 psz = szWork;
                 for (iPass = 0; iPass < 5; iPass++) {
-                    vrgZip[i].txp.rgia[iPass].iAction = *psz - 'a';
+                    vrgZip[i].txp.rgia[iPass].SetIAction(*psz - 'a');
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan = *psz - 'a';
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(*psz - 'a');
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan =
-                        ((uint32_t)(*psz - 'a') & 0xfff) << 4 | (vrgZip[i].txp.rgia[iPass].cQuan | vrgZip[i].txp.rgia[iPass].iAction << 0xc);
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(
+                        ((uint32_t)(*psz - 'a') & 0xfff) << 4 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan =
-                        ((uint32_t)(*psz - 'a') & 0xff) << 8 | (vrgZip[i].txp.rgia[iPass].cQuan | vrgZip[i].txp.rgia[iPass].iAction << 0xc);
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(
+                        ((uint32_t)(*psz - 'a') & 0xff) << 8 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
                 }
                 strcpy(vrgZip[i].szName, psz);

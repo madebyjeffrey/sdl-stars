@@ -2,6 +2,7 @@
 
 B04 introduces checked, little-endian byte operations and migrates `RTHISTHDR`.
 B05 migrates production queue storage and its file/log byte boundaries.
+B06 migrates order arrays, task-word views and full/partial waypoint records.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
@@ -25,8 +26,8 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve historical variable-tail dispositions below (ten active zero-array
-  declarations and two migrated production families);
+  all twelve historical variable-tail dispositions below (nine active zero-array
+  declarations and three migrated list families);
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
@@ -44,7 +45,7 @@ expressions that would become stale when unrelated lines move.
 | --- | --- | --- |
 | History header read in `file.c`, write in `log.c` | Explicit two-signed-16 codec; exact four bytes; complete scratch backing preserves existing short-declared-payload behavior | B04 migrated |
 | Production queues and queue log edits | PROD scalar bits, PLPROD runtime storage, RTCHGPRODQ byte prefix; allocation/capacity and forecast lifetimes | B05 migrated |
-| Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 |
+| Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 migrated |
 | Hulls and designs | HS/HUL/HULDEF/SHDEF/RTSHDEF slots, catalog and design import/export | B07 |
 | Fleets and ID lists | FLEET/FLEETSOME/RTFLEET/FLEETID/RTFLEETIDS, optional cargo/damage fields, split/merge traversal | B08 |
 | Battle and AI | TOK/KILL/BTLDATA/BTLREC/BTLREC26, packed replay, token alignment, AI state/data and traversal | B09 |
@@ -81,7 +82,7 @@ are while the runtime representation changes.
 | RTFLEET.rgb | Fourteen-byte prefix followed by conditional counts, cargo and damage fields | B08 |
 | RTFLEETIDS.rgid | Zero-byte prefix + payload-derived signed-16 IDs; never sizeof an empty C++ object | B08 |
 | RTPLRMSG.rgbMsg | Twelve-byte wire prefix + abs(cLen); native pointer is encoded as the existing zero marker | B10 |
-| PLORD.rgord | Four-byte runtime prefix + iordMax × sizeof(ORDER); iordMac live items; wire items are 18/8 bytes | B06 |
+| PLORD.rgord | Four-byte runtime prefix + iordMax × sizeof(ORDER); iordMac live items; wire items are 18/8 bytes | B06 migrated |
 | BTLDATA.rgtok | Fourteen-byte prefix + ctok × 29-byte TOK, then variable BTLREC events through cbData | B09 |
 
 ## First codec and compatibility evidence
@@ -108,3 +109,35 @@ a reintroduced zero-array declaration. PROD's wire fields, reserved bits and
 incomplete-row behavior are covered by independent codec vectors and real log
 replay tests rather than a native struct dump. Runtime queue copies retain their
 existing four-byte element storage and pooled lifetimes.
+
+## Order and task-word migration
+
+ITEMACTION now stores a uint16 word with explicit 12/4-bit masks. ORDER owns one
+real TASKXPORT array; mine-laying, patrol and player-transfer aliases are scoped
+references to those actual words. Value assignment copies the selected words,
+including const-to-mutable copies, while leaving the remaining payload unchanged.
+The PLORD accessor borrows a real ORDER array started over its existing physical
+pool slot. Counter widths, rounding, address stability/reallocation and 18-byte
+item stride remain unchanged.
+
+The eight-byte order header, full eighteen-byte order, four-byte waypoint prefix
+and signed ship/index words use explicit little-endian codecs. Header-only
+encoding never consumes omitted task words. File reads keep the old zeroed
+reusable-buffer prefix for short declared records, and log writers trim the same
+trailing zeros after encoding. Replay keeps lookup/read predicate order, signed
+index/task admission, shifts before copying, short-record zeroing, neighboring
+row effects and final fNoAutoTrack clearing.
+
+Legacy order log edits can address neighboring runtime bytes. Their adapter
+borrows the owning allocation and uses aligned ORDER temporaries; it never
+invents typed objects at those offsets. Physical copies outside that allocation
+remain outside the original defined domain. No new logical index/nonnegative
+task policy is introduced. Tests retain bounded negative-index and oversized
+neighbor mutations, including restoring deliberately changed test metadata.
+
+ITEMACTION/TASKXPORT/ORDER/PLORD/RTWAYPT/ZIPORDER now require native alignment two
+so references to uint16 task words are valid. Their sizes remain 2/10/18/4/22/24
+bytes. The frozen C inputs and all 259 size/prefix measurements remain intact;
+the comparator explicitly checks these six new runtime alignments and keeps
+every other alignment comparison unchanged. These types no longer supply file
+bytes by native layout. Independent wire vectors check their byte contracts.

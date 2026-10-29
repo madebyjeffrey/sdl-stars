@@ -13,8 +13,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B02: dispatch and callback guards | Complete | Locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. Full local matrix and all 16 Linux/Windows checks pass for d5de69e. |
 | B03: const-correct text and scoped views | Complete | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. All 16 Linux/Windows checks pass for b799348. |
 | B04: record codecs and complete storage inventory | Complete | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix and all 16 Linux/Windows checks for d6bd60f. |
-| B05: production payloads | Active: platform CI pending | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix. |
-| B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
+| B05: production payloads | Complete | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix and all 16 Linux/Windows checks for c0e0075. |
+| B06: waypoint/order payloads | Active | Full local matrix passes: typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Linux/Windows gate pending. |
 | B07: hull/design payloads | Pending | Preserve slot strides, catalog IDs and design import/export. |
 | B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
 | B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
@@ -631,3 +631,51 @@ no-read path, tested with a null input pointer, and reads packed scalar outputs
 through aligned temporaries. Linux sanitizer qualification now includes the
 real core log/storage unit program. B05 local qualification is complete; its
 platform gate remains required. B06–B14 remain in scope.
+
+
+## B05 platform completion gate
+
+All 16 Linux/Windows checks pass for `c0e0075`, including the expanded Linux
+ASan/UBSan/LSan job with actual core log/storage tests, Windows SDL/SDK, source
+witnesses, desktop/host regressions and tutorial coverage. B05 is complete.
+B06 is active: explicit transport word masks pass all 65,536 word values and
+the unchanged transport/preset vectors; order array lifetimes, task views and
+wire/replay consumers are being migrated next. B06–B14 are not complete.
+
+
+## B06 orders, task aliases and waypoint codecs in qualification
+
+Transport actions use a real uint16 word with explicit 12/4-bit masks. Quantity
+and action names remain accessors with width-preserving setters; constant
+tutorial goals retain their original values. All 65,536 words and existing
+transport/preset vectors pass. ORDER's task union becomes one actual TASKXPORT
+array with call-scoped aliases to its words, and PLORD owns actual adjacent
+ORDER object lifetimes through the same typed pool operations as production.
+
+Full/partial order, waypoint and ship/index fields have explicit byte codecs.
+Readers retain zeroed scratch-prefix and signed/logical admission behavior;
+writers retain eight/eighteen-byte lengths and trailing-zero trimming. Legacy
+replay applies bounded runtime byte effects through aligned temporaries, keeping
+neighbor writes and negative-index behavior without forming invalid typed views.
+Native alignment two is now checked separately for six migrated families; every
+frozen size/prefix and all remaining alignment comparisons stay in force.
+
+Focused results: wire/layout/log/util contracts pass, including every flag word,
+unaligned wire slices, partial prefixes, task alias assignment, actual order
+array growth/movement, byte-count wrapping and real replay mutations. The first
+source run passed 26/27; its method-bearing forecast projection needed a native
+C++ tag name, then passed 272,841 assertions. Providers explicitly start bounded
+order arrays; independent vectors, exclusions and expected receipts are unchanged.
+Full local and platform qualification remain required.
+
+
+B06 final local qualification: 114/114 complete macOS desktop tests (all 27
+native leak checks), 25/25 SDL-free host tests, 32/32 ASan/UBSan cases and a
+fresh complete 27/27 source-witness run. All public headers compile in both
+include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match all 519 files through turn 150, with
+25 accepted unused-storage warnings, no differences/errors and no skipped
+inputs. All 259 frozen size/prefix contracts remain covered; the six migrated
+runtime alignments are explicitly checked at two bytes. Independent frozen
+inputs, catalogs and regression baselines remain unchanged. Linux/Windows
+qualification remains required; B07–B14 remain pending.

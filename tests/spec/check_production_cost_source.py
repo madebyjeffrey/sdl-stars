@@ -6,6 +6,7 @@ Part lookup/pricing and hull-catalog access are explicit quote doubles; this
 checks the whole caller algorithm, not M11 miniaturization or pointer validity.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import re
 import shlex
@@ -37,7 +38,7 @@ def main():
         declarations+=f'#define {name} {value}\n'
     declarations+='typedef uint16_t HulDef;\ntypedef struct PLPROD PLPROD;\n#pragma pack(push,1)\n'
     for tag,alias in [('_hs','HS'),('_hul','HUL'),('_shdef','SHDEF'),('_planetary','PLANETARY'),('_prod','PROD'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)

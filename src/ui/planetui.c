@@ -1794,7 +1794,7 @@ void ShowFleetSel() {
     FillOrdersLB();
     FillFleetCompLB();
     FillBattleDD(sel.fl.iplan + 1);
-    SendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord[0].grTask, 0);
+    SendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
     return;
 }
 

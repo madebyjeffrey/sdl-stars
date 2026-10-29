@@ -113,7 +113,7 @@ static int32_t LResourceScoreAfterLoading(const char *pszTest, int16_t fLoad, in
     lpfl->pt.x = rgptPlan[lppl->id].x + 20;
     lpfl->pt.y = rgptPlan[lppl->id].y;
     lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     lpord[0].pt = lpfl->pt;
     lpfl->cord = 2;
     lpfl->lpplord->iordMac = 2;
@@ -124,7 +124,7 @@ static int32_t LResourceScoreAfterLoading(const char *pszTest, int16_t fLoad, in
     lpord[1].iWarp = 5;
     lpord[1].fValidTask = TRUE;
     lpord[1].grTask = fLoad ? grTaskXfer : grTaskNone;
-    lpord[1].txp.rgia[3].iAction = iActionLoadAll;
+    lpord[1].txp.rgia[3].SetIAction(iActionLoadAll);
     idfl = lpfl->id;
     if (!FStarsTestSaveHost() || !FStarsTestGenerate() || !FStarsTestLoadPlayer(0))
         return -1;

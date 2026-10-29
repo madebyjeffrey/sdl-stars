@@ -3,15 +3,18 @@
 void WriteOrders(FLEET *lpfl) {
     int16_t cord;
     ORDER  *lpord;
+    std::byte rgbOrder[cbWireOrder];
 
     if (lpfl->cord != 0) {
         cord = lpfl->cord;
-        lpord = lpfl->lpplord->rgord;
+        lpord = lpfl->lpplord->rgord();
         for (; cord != 0; cord--) {
             if (lpord->grTask == grTaskNone) {
-                WriteRt(rtOrderB, 8, lpord);
+                FEncodeOrderHeader(*lpord, rgbOrder);
+                WriteRt(rtOrderB, cbWireOrderHeader, rgbOrder);
             } else {
-                WriteRt(rtOrderA, 18, lpord);
+                FEncodeOrder(*lpord, rgbOrder);
+                WriteRt(rtOrderA, cbWireOrder, rgbOrder);
             }
             lpord++;
         }
@@ -154,7 +157,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                 if (j == 16) {
                     lpfl->fDead = TRUE;
                 } else {
-                    lpord = lpfl->lpplord->rgord;
+                    lpord = lpfl->lpplord->rgord();
                     if (lpord->grobj == grobjFleet) {
                         if (FFindNearestObject(lpord->pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
                             lpord->grobj = grobjPlanet;
@@ -166,8 +169,8 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                     }
                     if (lpord->grTask == grTaskNone && lpfl->cord > 1 && lpord[1].grTask == grTaskPatrol) {
                         lpord->grTask = grTaskPatrol;
-                        lpord->tptl.iWarp = lpord[1].tptl.iWarp;
-                        lpord->tptl.iDist = lpord[1].tptl.iDist;
+                        lpord->tptl().iWarp = lpord[1].tptl().iWarp;
+                        lpord->tptl().iDist = lpord[1].tptl().iDist;
                     }
                     if (lpord->grTask == grTaskPatrol && (lpfl->cord <= 1 || lpord[1].grobj != grobjFleet)) {
                         lpflBest = NULL;
@@ -201,14 +204,14 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                         if (fFoundIdeal && !gd.fTutorial) {
                             lpflBest->fMark = TRUE;
                         }
-                        j = 50 * lpord->tptl.iDist + 50;
+                        j = 50 * lpord->tptl().iDist + 50;
                         if (j == 550) {
                             j = 10000;
                         }
                         if (lpflBest && lBest != 0 && lBest <= (int32_t)(uint32_t)(j * j)) {
                             if (lpfl->lpplord->iordMax <= lpfl->cord + 1) {
-                                lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, lpfl->cord + 2);
-                                lpord = lpfl->lpplord->rgord;
+                                lpfl->lpplord = LpplReAlloc(lpfl->lpplord, lpfl->cord + 2);
+                                lpord = lpfl->lpplord->rgord();
                             }
                             if (lpfl->cord > 1) {
                                 memmove(lpord + 2, lpord + 1, (lpfl->cord - 1) * sizeof(ORDER));
@@ -217,11 +220,11 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                 memset(lpord + 1, 0, sizeof(ORDER));
                                 lpord[1].fValidTask = TRUE;
                                 lpord[1].grTask = grTaskPatrol;
-                                lpord[1].tptl = lpord->tptl;
-                                if (lpord[1].tptl.iWarp == 0) {
+                                lpord[1].tptl() = lpord->tptl();
+                                if (lpord[1].tptl().iWarp == 0) {
                                     lpord[1].iWarp = IFindIdealWarp(lpfl, FALSE);
                                 } else {
-                                    lpord[1].iWarp = lpord[1].tsell.iPlrX;
+                                    lpord[1].iWarp = lpord[1].tsell().iPlrX;
                                 }
                                 if (lpfl->fRepOrders) {
                                     lpord[2] = *lpord;
@@ -229,10 +232,10 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                     lpfl->cord++;
                                     lpfl->lpplord->iordMac++;
                                 }
-                            } else if (lpord[1].tsell.iPlrX == 0) {
+                            } else if (lpord[1].tsell().iPlrX == 0) {
                                 lpord[1].iWarp = IFindIdealWarp(lpfl, FALSE);
                             } else {
-                                lpord[1].iWarp = lpord[1].tsell.iPlrX;
+                                lpord[1].iWarp = lpord[1].tsell().iPlrX;
                             }
                             lpord[1].pt = lpflBest->pt;
                             lpord[1].id = lpflBest->id;
@@ -1286,7 +1289,7 @@ void SetVisPFInit(int16_t iPlr) {
                 if (iSteal >= 2) {
                     detNew = 4;
                 }
-                if (lpfl->fHereAllTurn && lppl->iPlayer == iplrNone && lpfl->lpplord->rgord[0].grTask == grTaskMine && CMineFromLpfl(lpfl) > 0) {
+                if (lpfl->fHereAllTurn && lppl->iPlayer == iplrNone && lpfl->lpplord->rgord()[0].grTask == grTaskMine && CMineFromLpfl(lpfl) > 0) {
                     detNew = 4;
                 }
                 MarkPlanet(lppl, iPlr, static_cast<DetType>(detNew));

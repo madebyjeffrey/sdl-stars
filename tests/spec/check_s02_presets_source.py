@@ -5,6 +5,7 @@ INI/text operations are doubles; valid UTF-8 names fit the stored byte capacity.
 This checks storage codecs, not M09/M10 preset application or native filesystem I/O.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -32,7 +33,7 @@ def main():
     for tag, alias in [("itemaction", "ITEMACTION"), ("taskxport", "TASKXPORT"),
                        ("prodq1", "PRODQ1"), ("ziporder", "ZIPORDER"),
                        ("zipprodq1", "ZIPPRODQ1"), ("zipprodq", "ZIPPRODQ")]:
-        start = types.index("struct _" + tag + " {")
+        start = struct_start(types, "_" + tag)
         end = types.index("\n};", start) + 3
         declarations += types[start:end] + f"\ntypedef struct _{tag} {alias};\n"
     declarations += r'''
@@ -70,7 +71,7 @@ int main(void) {
     CHECK(sizeof(vrgZip)==96 && sizeof(vrgZipProd)==200);
     reset();readPresets();CHECK(vrgZipProd[0].fValid && !vrgZipProd[1].fValid && !vrgZip[0].fValid && strcmp(vrgZipProd[0].szName,"Default")==0);
     reset();transport[0]="pbadaaaaaaaaaaaaaaaaName";readPresets();
-    CHECK(vrgZip[0].fValid && vrgZip[0].txp.rgia[0].iAction==15 && vrgZip[0].txp.rgia[0].cQuan==769 && strcmp(vrgZip[0].szName,"Name")==0);
+    CHECK(vrgZip[0].fValid && vrgZip[0].txp.rgia[0].iAction()==15 && vrgZip[0].txp.rgia[0].cQuan()==769 && strcmp(vrgZip[0].szName,"Name")==0);
     gd.fChgZipOrd=1;writePresets();CHECK(writes==4 && strcmp(savedTransport[0],transport[0])==0 && savedTransport[1][0]==0);
     reset();transport[0]="qaaaaaaaaaaaaaaaaaaa";transport[1]="aaaaaaaaaaaaaaaaaaa";transport[2]="aaaaaaaaaaaaaaaaaaaa1234567890123";readPresets();
     CHECK(!vrgZip[0].fValid && !vrgZip[1].fValid && !vrgZip[2].fValid);

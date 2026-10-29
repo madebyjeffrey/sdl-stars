@@ -66,7 +66,7 @@ static void SetFleetDest(FLEET *lpfl, FLEET *lpflTarget, int16_t dx) {
     lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
     lpfl->cord = 2;
     lpfl->lpplord->iordMac = 2;
-    lpord = &lpfl->lpplord->rgord[1];
+    lpord = &lpfl->lpplord->rgord()[1];
     memset(lpord, 0, sizeof(ORDER));
     lpord->iWarp = 9;
     lpord->fValidTask = TRUE;
@@ -157,8 +157,8 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
         lpfl = LpflStarsTestAddFleet(0, lppl->id, ish, 1);
         pt = lpfl->pt;
         SetFleetDest(lpfl, NULL, 0);
-        lpfl->lpplord->rgord[1].pt.x = pt.x + 81 * rgdxy[idir][0];
-        lpfl->lpplord->rgord[1].pt.y = pt.y + 81 * rgdxy[idir][1];
+        lpfl->lpplord->rgord()[1].pt.x = pt.x + 81 * rgdxy[idir][0];
+        lpfl->lpplord->rgord()[1].pt.y = pt.y + 81 * rgdxy[idir][1];
         lpth = LpthNew(1, ithMinefield);
         lpth->pt.x = pt.x + 40 * rgdxy[idir][0];
         lpth->pt.y = pt.y + 40 * rgdxy[idir][1];

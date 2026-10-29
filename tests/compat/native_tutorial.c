@@ -328,14 +328,14 @@ static BOOL FSaveOrders(const char *pszPath) {
         CchNativePrintf(lpfile, "%s{\"id\":%d,\"repeatOrders\":%s,\"cargo\":[%ld,%ld,%ld,%ld,%ld],\"orders\":[", cWritten++ ? "," : "", lpfl->id, lpfl->fRepOrders ? "true" : "false",
                 (long)lpfl->rgwtMin[0], (long)lpfl->rgwtMin[1], (long)lpfl->rgwtMin[2], (long)lpfl->rgwtMin[3], (long)lpfl->rgwtMin[4]);
         for (j = 0; j < lpfl->cord; j++) {
-            lpord = &lpfl->lpplord->rgord[j];
+            lpord = &lpfl->lpplord->rgord()[j];
             CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"position\":[%d,%d],\"task\":%u,\"warp\":%u",
                     j ? "," : "", lpord->grobj, lpord->id, lpord->pt.x, lpord->pt.y, lpord->grTask, lpord->iWarp);
             if (lpord->grTask == grTaskXfer) {
                 IPutNativeString(",\"transport\":[", lpfile);
                 for (k = 0; k < 5; k++) {
                     CchNativePrintf(lpfile, "%s{\"action\":%u,\"quantity\":%u}", k ? "," : "",
-                            lpord->txp.rgia[k].iAction, lpord->txp.rgia[k].cQuan);
+                            lpord->txp.rgia[k].iAction(), lpord->txp.rgia[k].cQuan());
                 }
                 IPutNativeString("]", lpfile);
             }
@@ -556,8 +556,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal) { pszFailure = "unexpected dialog after map order"; goto LFail; }
         if (tutor.idt != 16 || tutor.idtBold != 18) return;
         lpfl = LpflFromId(0);
-        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord[1].grobj != grobjPlanet || lpfl->lpplord->rgord[1].id != objTarget.id ||
-            lpfl->lpplord->rgord[1].pt.x != objTarget.ptUniverse.x || lpfl->lpplord->rgord[1].pt.y != objTarget.ptUniverse.y) {
+        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != objTarget.id ||
+            lpfl->lpplord->rgord()[1].pt.x != objTarget.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != objTarget.ptUniverse.y) {
             pszFailure = "Shift-click did not issue the inspected planet order";
             goto LFail;
         }
@@ -767,8 +767,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 29:
         if (SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idt != 80 || tutor.idtBold != 80) return;
         lpfl = LpflFromId(5);
-        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord[1].grobj != grobjPlanet ||
-            lpfl->lpplord->rgord[1].id != 12 || lpfl->lpplord->rgord[1].grTask != grTaskMine) goto LInput;
+        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet ||
+            lpfl->lpplord->rgord()[1].id != 12 || lpfl->lpplord->rgord()[1].grTask != grTaskMine) goto LInput;
         if (!FSaveOrders("year-2402-mining-orders.json") || !FSaveState("mining")) goto LArtifact;
         if (fColonization) { iStage = 30; goto LQueued; }
         fPassed = fRejected && cPage == 11;
@@ -1491,7 +1491,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                     !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
                 iStage = 114; goto LQueued;
             }
-            if (lpfl->cord != 2 || lpfl->lpplord->rgord[1].id != 8) goto LInput;
+            if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].id != 8) goto LInput;
             if (!FClick(rghwndOrderDD[0])) goto LInput;
             iStage = 115; goto LQueued;
         }
@@ -1572,7 +1572,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (i == 8) return;
             lpfl = LpflFromId(7);
             if (!lpfl || lpfl->cord != 2 || !FFindPlanet("Sea Squared")) goto LInput;
-            ptLogical = lpfl->lpplord->rgord[1].pt;
+            ptLogical = lpfl->lpplord->rgord()[1].pt;
             LogicalToScan(&ptLogical);
             ptRow = (POINT){ptLogical.x, ptLogical.y};
             if (!FDragPoint(hwndScanner, ptRow, objTarget.ptClient)) goto LInput;
@@ -1642,7 +1642,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 118; goto LQueued;
     case 120:
         lpfl = LpflFromId(7);
-        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord[1].id != 17 || lpfl->lpplord->rgord[1].grTask != grTaskColonize) return;
+        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].id != 17 || lpfl->lpplord->rgord()[1].grTask != grTaskColonize) return;
         if (!FSaveOrders("year-2408-drag-orders.json") || !FSaveState("waypoint-drag")) goto LArtifact;
         LogState("waypoint-dragged");
         iStage = 118; goto LQueued;
@@ -1746,7 +1746,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (i == 9) return;
             lpfl = LpflFromId(0);
             if (!lpfl || lpfl->cord != 2 || !FFindPlanet("Mozart")) goto LInput;
-            ptLogical = lpfl->lpplord->rgord[1].pt;
+            ptLogical = lpfl->lpplord->rgord()[1].pt;
             LogicalToScan(&ptLogical);
             ptRow = (POINT){ptLogical.x, ptLogical.y};
             if (!FDragPoint(hwndScanner, ptRow, objTarget.ptClient)) goto LInput;
@@ -1834,7 +1834,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 133; goto LQueued;
     case 148:
         lpfl = LpflFromId(0);
-        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord[1].id != 4) return;
+        if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].id != 4) return;
         if (!FSaveState("mozart-waypoint")) goto LArtifact;
         LogState("mozart-waypoint-dragged");
         iStage = 133; goto LQueued;
@@ -2380,8 +2380,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                     !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
                 iStage = 204; goto LQueued;
             }
-            iOrderCombo = sel.fl.lpplord->rgord[1].grTask != grTaskXfer ? 0 :
-                sel.fl.lpplord->rgord[1].txp.rgia[3].iAction != iActionUnloadAll ? 1 : 2;
+            iOrderCombo = sel.fl.lpplord->rgord()[1].grTask != grTaskXfer ? 0 :
+                sel.fl.lpplord->rgord()[1].txp.rgia[3].iAction() != iActionUnloadAll ? 1 : 2;
             iOrderRow = iOrderCombo == 0 ? grTaskXfer : iOrderCombo == 1 ? 4 : iActionUnloadAll;
             iOrderReturn = 203; pszOrderSnapshot = "year-2413-transport.json";
             if (!FClick(rghwndOrderDD[iOrderCombo])) goto LInput;
@@ -2725,7 +2725,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                     !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
                 iStage = 236; goto LQueued;
             }
-            iOrderCombo = lpfl->lpplord->rgord[1].grTask != grTaskXfer ? 0 : 1;
+            iOrderCombo = lpfl->lpplord->rgord()[1].grTask != grTaskXfer ? 0 : 1;
             iOrderRow = iOrderCombo == 0 ? grTaskXfer : 4; iOrderReturn = 235; pszOrderSnapshot = "year-2415-transport.json";
             if (!FClick(rghwndOrderDD[iOrderCombo])) goto LInput;
             iStage = 209; goto LQueued;
@@ -2820,12 +2820,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 iStage = 245; goto LQueued;
             }
             if (idflAction == 7) {
-                if (lpfl->lpplord->rgord[1].grTask != grTaskMerge) {
+                if (lpfl->lpplord->rgord()[1].grTask != grTaskMerge) {
                     iOrderCombo = 0; iOrderRow = grTaskMerge; iOrderReturn = 244; pszOrderSnapshot = "year-2416-merge.json";
                     if (!FClick(rghwndOrderDD[0])) goto LInput;
                     iStage = 209; goto LQueued;
                 }
-                if (lpfl->lpplord->rgord[1].grobj != grobjFleet || lpfl->lpplord->rgord[1].id != 5) {
+                if (lpfl->lpplord->rgord()[1].grobj != grobjFleet || lpfl->lpplord->rgord()[1].id != 5) {
                     pszMenu = "Cotton Picker #6";
                     ptRow = (POINT){(rgrcRef[12].left + rgrcRef[12].right) / 2, (rgrcRef[12].top + rgrcRef[12].bottom) / 2};
                     if (!FClickPoint(hwndPlanet, ptRow, SDL_BUTTON_RIGHT)) goto LInput;

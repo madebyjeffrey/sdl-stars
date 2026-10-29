@@ -19,6 +19,7 @@ from check_s02_source import ROOT, function
 def native_construction():
     declarations=r'''
 #include "common.h"
+#include "liststorage.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -68,9 +69,9 @@ HULDEF *LphuldefFromId(int16_t hull){(void)hull;catalogCalls++;return &catalogHu
 int16_t IWarpMAFromLppl(PLANET *p,int16_t *two){assert(p==&planet);int at=warpCalls<2 ? warpCalls:1;warpBase[at]=p->isb;warpCalls++;if(two)*two=twoValues[at];return warpValues[at];}
 int16_t FLookupPlanet(int16_t id,PLANET *out){assert(id==planet.id);lookups++;*out=planet;return TRUE;}
 void FillSelProdLB(void){fills++;}
-FLEET *LpflNew(int16_t player,int16_t id){assert(!player && id==planet.id);newFleets++;FLEET *f=&fleetBodies[3];f->iPlayer=player;f->idPlanet=id;f->lpplord=(PLORD *)orderStorage[3].data;rgplr[player].cFleet++;return f;}
+FLEET *LpflNew(int16_t player,int16_t id){assert(!player && id==planet.id);newFleets++;FLEET *f=&fleetBodies[3];f->iPlayer=player;f->idPlanet=id;f->lpplord=LpStartPl<PLORD,ORDER>(orderStorage[3].data,sizeof(orderStorage[3].data));rgplr[player].cFleet++;return f;}
 int32_t LGetFleetStat(FLEET *f,int16_t stat){assert(f && stat==1);return 12345;}
-void AutoRouteFleet(FLEET *f,PLANET *p){assert(f && p==&planet);routes++;f->lpplord->rgord[1].iWarp=1;}
+void AutoRouteFleet(FLEET *f,PLANET *p){assert(f && p==&planet);routes++;f->lpplord->rgord()[1].iWarp=1;}
 void AutoFleetOrder(FLEET *f,PLANET *p){assert(f && p==&planet);defaults++;}
 int16_t IBestTerraform(PLANET *p,int16_t help){assert(p==&planet && help);terraformCalls++;if(terraformChoice<-3 || terraformChoice>3)longjmp(boundary,1);return terraformChoice;}
 void LookupBestPlanetaryScanner(PART *part){assert(idPlayer==planet.iPlayer);part->hs.iItem=(uint8_t)partIndex;}
@@ -96,7 +97,7 @@ static void reset(void){
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);heaps=0;
     memset(&game,0,sizeof(game));memset(&gd,0,sizeof(gd));memset(&sel,0,sizeof(sel));memset(rgplr,0,sizeof(rgplr));
     memset(ships,0,sizeof(ships));memset(bases,0,sizeof(bases));memset(&planet,0,sizeof(planet));memset(fleetBodies,0,4*sizeof(fleetBodies[0]));memset(orderStorage,0,4*sizeof(orderStorage[0]));
-    for(int i=0;i<4;i++){fleetSlots[i]=&fleetBodies[i];fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;}
+    for(int i=0;i<4;i++){fleetSlots[i]=&fleetBodies[i];fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));}
     rglpshdef[0]=ships;rglpshdefSB[0]=bases;lpThings=NULL;cThing=cThingAlloc=cFleet=0;
     canBuild=1;catalogCalls=canCalls=lookups=fills=shipKills=packetKills=warpCalls=0;cap=operableCap=100;removed=0;gross=100;
     warpValues[0]=warpValues[1]=10;twoValues[0]=twoValues[1]=0;terraformChoice=1;terraformCalls=randomCalls=messages=newFleets=routes=defaults=0;
@@ -196,11 +197,11 @@ int main(void){
     for(unsigned cargo=0;cargo<3;cargo++){reset();bases[0].hul.wtCargoMax=cargos[cargo];CHECK(call(2,16,1));
         CHECK(messageIds[0]==idmHasBuiltNew+(cargo==0 ? 0:cargo==2 ? 2:1) && messageArgs[0][2]==123 && catalogCalls==1);}
     reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetSlots[0]=NULL;CHECK(!call(2,0,1));
-    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=2;fleetBodies[0].iPlayer=1;fleetBodies[1].lpplord->rgord[0].pt=rgptPlan[5];CHECK(!call(2,0,1));
-    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=32765;CHECK(!call(2,0,1));
+    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=2;fleetBodies[0].iPlayer=1;fleetBodies[1].lpplord->rgord()[0].pt=rgptPlan[5];CHECK(!call(2,0,1));
+    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord()[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=32765;CHECK(!call(2,0,1));
     fleetBodies[0].rgcsh[0]=32764;fleetBodies[0].fDead=1;CHECK(call(2,0,1) && fleetBodies[0].rgcsh[0]==32765);
     for(unsigned word=0;word<65536;word++){
-        reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=10;fleetBodies[0].rgdv[0].dp=(uint16_t)word;ships[0].hul.dp=100;
+        reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord()[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=10;fleetBodies[0].rgdv[0].dp=(uint16_t)word;ships[0].hul.dp=100;
         unsigned expected;CHECK(damageExpected(10,1,word,100,&expected));CHECK(call(2,0,1));CHECK(fleetBodies[0].rgdv[0].dp==expected && fleetBodies[0].rgcsh[0]==11 && ships[0].cBuilt==1 && ships[0].cExist==1);
     }
     reset();fleetBodies[0].rgcsh[0]=32767;ships[0].cBuilt=ships[0].cExist=UINT32_MAX;CreateShip(0,&fleetBodies[0],0,1);
@@ -231,7 +232,7 @@ int main(void){
     planet.fStarbase=1;bases[0].hul.ihuldef=ihuldefOrbitalFort;rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
         fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
-        fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord[0].pt=fleetBodies[i].pt;}
+        fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord()[0].pt=fleetBodies[i].pt;}
     planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(!planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10 && !newFleets);
     reset();cap=2;operableCap=5;planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(5,7,1,0);

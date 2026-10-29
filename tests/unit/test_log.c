@@ -136,6 +136,102 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
     TEST_CHECK_(lppl->lpplprod->rgprod()[0].pct == 0, "the edited design kept %d%%", lppl->lpplprod->rgprod()[0].pct);
 }
 
+// Trimmed insert/update records keep the old byte-prefix and neighboring-row
+// effects, while the signed index and task-value admission remain unchanged.
+static void test_FRunLogRecord_order_bytes(void) {
+    char szDir[MAX_PATH];
+    FLEET *lpfl;
+    PLORD *lpplord;
+    ORDER ordLast, ordNeighbor;
+    HB *lphb;
+    uint8_t *lpbFlag;
+    uintptr_t ibFlag;
+    uint16_t id, wBefore, wAfter;
+    bool fResult;
+    uint8_t rgb[40] = {};
+    const uint8_t rgbShort[] = {0xe8, 3, 0xd0, 7, 13, 0, 0x41, 0xb2, 0xab};
+    const uint8_t rgbFull[] = {0xe8, 3, 0xd0, 7, 13, 0, 0x41, 0xb2, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa};
+    uint8_t rgbMissing[] = {0xff, 0xff};
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("FRunLogRecord_order_bytes", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadPlayer(0));
+    lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, 0, 1);
+    TEST_ASSERT(lpfl != NULL);
+    FreePl(lpfl->lpplord);
+    lpfl->lpplord = LpplAlloc<PLORD>(18, 2, htOrd);
+    lpplord = lpfl->lpplord;
+    memset(lpplord->rgord(), 0, 2 * sizeof(ORDER));
+    lpplord->iordMac = lpfl->cord = 2;
+    lpplord->rgord()[0].pt = {101, 201};
+    lpplord->rgord()[1].pt = {102, 202};
+    lpplord->rgord()[1].id = 18;
+    lpplord->rgord()[1].txp.rgia[4].w = 0xbeef;
+    lpplord->rgord()[1].fNoAutoTrack = TRUE;
+    ordLast = lpplord->rgord()[1];
+    id = static_cast<uint16_t>(lpfl->id);
+    rgb[0] = static_cast<uint8_t>(id % 256);
+    rgb[1] = static_cast<uint8_t>(id / 256);
+    rgb[2] = 1;
+    memcpy(rgb + 4, rgbShort, sizeof(rgbShort));
+    TEST_ASSERT(FRunLogRecord(rtLogFleetOrderInsert, 4 + sizeof(rgbShort), rgb));
+    lpplord = lpfl->lpplord;
+    TEST_CHECK(lpfl->cord == 3 && lpplord->iordMac == 3 && lpplord->iordMax == 5);
+    TEST_CHECK(lpplord->rgord()[0].pt.x == 101 && lpplord->rgord()[0].pt.y == 201);
+    TEST_CHECK(memcmp(&lpplord->rgord()[2], &ordLast, sizeof(ORDER)) == 0);
+    TEST_CHECK(lpplord->rgord()[1].pt.x == 1000 && lpplord->rgord()[1].pt.y == 2000 && lpplord->rgord()[1].id == 13);
+    TEST_CHECK(lpplord->rgord()[1].grTask == 1 && lpplord->rgord()[1].iWarp == 4 && lpplord->rgord()[1].grobj == 2 &&
+               lpplord->rgord()[1].fValidTask && !lpplord->rgord()[1].fNoAutoTrack && lpplord->rgord()[1].fUnused == 2);
+    TEST_CHECK(lpplord->rgord()[1].txp.rgia[0].w == 0xab && lpplord->rgord()[1].txp.rgia[4].w == 0 && rgb[11] == 0xb2);
+
+    // An oversized update used to copy the prefix of the following row too.
+    // Keep that effect when the destination remains inside the owning pool.
+    lpplord->rgord()[1].id = 0x1234;
+    ordNeighbor = lpplord->rgord()[1];
+    ordNeighbor.pt = {11, 22};
+    ordNeighbor.id = 0x1278;
+    rgb[2] = 0;
+    memcpy(rgb + 4, rgbFull, sizeof(rgbFull));
+    rgb[22] = 11; rgb[23] = 0; rgb[24] = 22; rgb[25] = 0; rgb[26] = 0x78;
+    TEST_ASSERT(FRunLogRecord(rtLogFleetOrderUpdate, 27, rgb));
+    TEST_CHECK(lpfl->cord == 3 && lpplord->iordMac == 3);
+    TEST_CHECK(memcmp(&lpplord->rgord()[1], &ordNeighbor, sizeof(ORDER)) == 0 && memcmp(&lpplord->rgord()[2], &ordLast, sizeof(ORDER)) == 0);
+    TEST_CHECK(lpplord->rgord()[0].txp.rgia[4].w == 0xaa99 && !lpplord->rgord()[0].fNoAutoTrack);
+
+    // The original task update accepts a negative signed value and truncates
+    // it to four bits. No new nonnegative-value policy is introduced.
+    rgb[2] = rgb[3] = 0;
+    rgb[4] = rgb[5] = 0xff;
+    TEST_ASSERT(FRunLogRecord(rtLogFleetOrderAttrNib, 6, rgb));
+    TEST_CHECK(lpplord->rgord()[0].grTask == 15 && lpplord->rgord()[0].iWarp == 4);
+    rgb[2] = rgb[3] = 0xff;
+    TEST_ASSERT(FRunLogRecord(rtLogFleetFlagBit9, 4, rgb));
+    TEST_CHECK(lpfl->fRepOrders);
+
+    // Preserve a bounded negative-index mutation without forming an ORDER
+    // outside its array. Restore its neighboring bytes before any heap use.
+    lphb = LphbFromLpHt(lpplord, htOrd);
+    TEST_ASSERT(lphb != NULL);
+    ibFlag = reinterpret_cast<uintptr_t>(lpplord) - reinterpret_cast<uintptr_t>(lphb->hmem) - 8;
+    TEST_ASSERT(ibFlag + 2 <= lphb->cbBlock);
+    lpbFlag = static_cast<uint8_t *>(lphb->hmem) + ibFlag;
+    wBefore = RawLoad16(lpbFlag);
+    rgb[4] = 3; rgb[5] = 0;
+    fResult = FRunLogRecord(rtLogFleetOrderAttrNib, 6, rgb);
+    wAfter = RawLoad16(lpbFlag);
+    RawStore16(lpbFlag, wBefore);
+    TEST_CHECK(fResult && wAfter == static_cast<uint16_t>((wBefore & 0xfff0) | 3));
+
+    // Deleting two rows retains the high-bit flag and index interpretation.
+    rgb[2] = 1; rgb[3] = 0x80;
+    TEST_ASSERT(FRunLogRecord(rtLogFleetOrderDelete, 4, rgb));
+    TEST_CHECK(lpfl->cord == 1 && lpplord->iordMac == 1 && lpplord->rgord()[0].grTask == 15);
+    // Lookup failure must not consume an absent index/task suffix.
+    TEST_CHECK(!FRunLogRecord(rtLogFleetOrderInsert, sizeof(rgbMissing), rgbMissing));
+    TEST_CHECK(!FRunLogRecord(rtLogFleetOrderAttrNib, sizeof(rgbMissing), rgbMissing));
+}
+
 // Queue log replay preserves matched partial progress, clears unmatched input
 // progress in place, retains reserved bits and ignores a trailing partial row.
 static void test_FRunLogRecord_production_bytes(void) {
@@ -177,6 +273,52 @@ static void test_FRunLogRecord_production_bytes(void) {
     cPlanet = 0;
     TEST_CHECK(!FRunLogRecord(rtLogPlanetProdQ, 0, nullptr));
     cPlanet = cPlanetSav;
+}
+
+static void test_order_storage_lifetime(void) {
+    PLORD *lpplord;
+    PLORD *lpplordOld;
+    ORDER *lpord;
+    void *lpOther;
+    uint16_t cbSlot;
+    int16_t i;
+
+    TEST_ASSERT(FStarsTestInit());
+    lpplord = LpplAlloc<PLORD>(18, 3, htOrd);
+    lpplord->iordMac = 3;
+    lpplord->cAlloc = 9;
+    lpplord->fMark = TRUE;
+    lpord = lpplord->rgord();
+    cbSlot = CbPlSlot(lpplord);
+    for (i = 0; i < 3; i++) {
+        lpord[i] = {};
+        lpord[i].pt = {static_cast<int16_t>(100 + i), static_cast<int16_t>(200 + i)};
+        lpord[i].id = i;
+        lpord[i].txp.rgia[4].w = static_cast<uint16_t>(0xf120 + i);
+    }
+    TEST_CHECK(reinterpret_cast<const uint8_t *>(&lpord[1]) - reinterpret_cast<const uint8_t *>(&lpord[0]) == 18);
+    lpplordOld = lpplord;
+    lpplord = LpplReAlloc(lpplord, 3);
+    TEST_CHECK(lpplord == lpplordOld && lpplord->rgord() == lpord && CbPlSlot(lpplord) == cbSlot);
+    lpOther = LpAlloc(512, htOrd);
+    lpplord = LpplReAlloc(lpplord, 32);
+    TEST_CHECK(lpplord != lpplordOld && lpplord->iordMax == 32 && lpplord->iordMac == 3);
+    TEST_CHECK(lpplord->cAlloc == 9 && lpplord->fMark);
+    for (i = 0; i < 3; i++) {
+        TEST_CHECK(lpplord->rgord()[i].pt.x == 100 + i && lpplord->rgord()[i].pt.y == 200 + i && lpplord->rgord()[i].id == i);
+        TEST_CHECK(lpplord->rgord()[i].txp.rgia[4].w == static_cast<uint16_t>(0xf120 + i));
+    }
+    lpplordOld = lpplord;
+    cbSlot = CbPlSlot(lpplord);
+    lpplord = LpplReAlloc(lpplord, 0);
+    TEST_CHECK(lpplord == lpplordOld && lpplord->iordMax == 0 && CbPlSlot(lpplord) == cbSlot);
+    lpplord = LpplReAlloc(lpplord, 256);
+    TEST_CHECK(lpplord->iordMax == 0 && lpplord->iordMac == 3 && CbPlSlot(lpplord) >= 4612);
+    lpplord->rgord()[255] = {};
+    lpplord->rgord()[255].txp.rgia[4].w = 0xffff;
+    TEST_CHECK(lpplord->rgord()[255].txp.rgia[4].iAction() == 15 && lpplord->rgord()[0].id == 0);
+    FreePl(lpplord);
+    FreeLp(lpOther, htOrd);
 }
 
 // Typed queue construction keeps the old physical slot, byte counters and
@@ -228,7 +370,9 @@ static void test_production_storage_lifetime(void) {
     FreeLp(lpOther, htOrd);
 }
 
-TEST_LIST = {{"production log bytes preserve replay and incomplete-row effects", test_FRunLogRecord_production_bytes},
+TEST_LIST = {{"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},
+             {"order log bytes preserve prefixes, neighbors and signed admission", test_FRunLogRecord_order_bytes},
+             {"production log bytes preserve replay and incomplete-row effects", test_FRunLogRecord_production_bytes},
              {"production queues retain typed storage and pool capacity", test_production_storage_lifetime},
              {"FRunLogRecord refunds undelivered cargo", test_FRunLogRecord_refunds_undelivered_cargo},
              {"fleet-name orders reject malformed UTF-8 without changing the name", test_FRunLogRecord_rejects_invalid_utf8_name},

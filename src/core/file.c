@@ -1119,16 +1119,18 @@ int16_t FReadFleet(FLEET *lpfl) {
     pb = (uint8_t *)pus;
     lpfl->iplan = *pb++;
     lpfl->cord = *pb++;
-    lpfl->lpplord = (PLORD *)LpplAlloc(18, lpfl->cord + 1, htOrd);
-    memset(lpfl->lpplord->rgord, 0, (lpfl->cord + 1) * 18);
+    lpfl->lpplord = LpplAlloc<PLORD>(18, lpfl->cord + 1, htOrd);
+    memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);
     cord = lpfl->cord;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     for (; cord != 0; cord--) {
         memset(rgbCur, 0, 18);
         ReadRt();
         if (hdrCur.rt != rtOrderA && hdrCur.rt != rtOrderB)
             goto Corrupt;
-        *lpord = *(ORDER *)rgbCur;
+        // The reader historically consumes the zeroed reusable prefix even
+        // when the declared order is shorter; keep that admission behavior.
+        FDecodeOrder(std::as_bytes(std::span(rgbCur)), *lpord);
         lpord->fNoAutoTrack = FALSE;
         lpord++;
     }

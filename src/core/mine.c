@@ -158,7 +158,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
             if (!rglpfl[ifl])
                 break;
             if (lpfl->idPlanet == lppl->id && lpfl->iPlayer == lppl->iPlayer && !lpfl->fDead && lpfl->cord <= 1 &&
-                lpfl->lpplord->rgord[0].grTask == grTaskMine) {
+                lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                 cMines = CMineFromLpfl(lpfl);
                 if (cMines > 0) {
                     EstMineralsMined(lppl, rglQuan, cMines, fApply);

@@ -2,6 +2,7 @@
 #define STARS_DECOMPILED_STRUCTS_H
 
 #include <stdint.h>
+#include "taskviews.h"
 
 #include "enums.h"
 #include "native.h"
@@ -427,10 +428,24 @@ struct _huldef {
     uint8_t  rgbrc[16];  /* +0x007F (16) */
 }; /* size=0x8f */
 
-struct _itemaction {
-    uint16_t cQuan : 12, /* +0x0000 (2) @bit0 */
-        iAction : 4;     /* @bit12 */
+struct alignas(2) _itemaction {
+    uint16_t w;
+
+    constexpr uint16_t cQuan() const noexcept { return w & 0x0fff; }
+    constexpr uint16_t iAction() const noexcept { return w >> 12; }
+    constexpr uint16_t SetCQuan(uint16_t cQuanNew) noexcept {
+        w = static_cast<uint16_t>((w & 0xf000) | (cQuanNew & 0x0fff));
+        return cQuan();
+    }
+    constexpr uint16_t SetIAction(uint16_t iActionNew) noexcept {
+        w = static_cast<uint16_t>((w & 0x0fff) | ((iActionNew & 0x0f) << 12));
+        return iAction();
+    }
 }; /* size=0x2 */
+
+inline constexpr ITEMACTION IaMake(uint16_t cQuan, uint16_t iAction) noexcept {
+    return {static_cast<uint16_t>((cQuan & 0x0fff) | ((iAction & 0x0f) << 12))};
+}
 
 struct _kill {
     uint8_t  itok;      /* +0x0000 (1) */
@@ -1247,11 +1262,11 @@ struct _tasksell {
     uint16_t iPlrX; /* +0x0000 (2) */
 }; /* size=0x2 */
 
-struct _taskxport {
+struct alignas(2) _taskxport {
     ITEMACTION rgia[5]; /* +0x0000 (10) */
 }; /* size=0xa */
 
-struct _order {
+struct alignas(2) _order {
     POINT16  pt;          /* +0x0000 (4) */
     int16_t  id;          /* +0x0004 (2) */
     uint16_t grTask : 4,  /* +0x0006 (2) @bit0 */
@@ -1260,25 +1275,28 @@ struct _order {
         fValidTask : 1,   /* @bit12 */
         fNoAutoTrack : 1, /* @bit13 */
         fUnused : 2;      /* @bit14 */
-    union {
-        TASKXPORT    txp;   /* +0x0008 (10) */
-        TASKLAYMINES tlm;   /* +0x0008 (4) */
-        TASKPATROL   tptl;  /* +0x0008 (4) */
-        TASKSELL     tsell; /* +0x0008 (2) */
-    };
+    TASKXPORT txp;
+
+    NATIVETASKLAYMINESVIEW<uint16_t> tlm() noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKLAYMINESVIEW<const uint16_t> tlm() const noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKPATROLVIEW<uint16_t> tptl() noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKPATROLVIEW<const uint16_t> tptl() const noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKSELLVIEW<uint16_t> tsell() noexcept { return {txp.rgia[0].w}; }
+    NATIVETASKSELLVIEW<const uint16_t> tsell() const noexcept { return {txp.rgia[0].w}; }
 }; /* size=0x12 */
 
-struct PLORD {
+struct alignas(2) PLORD {
     uint16_t cbItem : 8, /* +0x0000 (2) @bit0 */
         fMark : 1,       /* @bit8 */
         ht : 3,          /* @bit9 */
         cAlloc : 4;      /* @bit12 */
     uint8_t iordMax;     /* +0x0002 (1) */
     uint8_t iordMac;     /* +0x0003 (1) */
-    ORDER   rgord[0];    /* +0x0004 (0) */
+    ORDER *rgord() noexcept { return reinterpret_cast<ORDER *>(reinterpret_cast<uint8_t *>(this) + 4); }
+    const ORDER *rgord() const noexcept { return reinterpret_cast<const ORDER *>(reinterpret_cast<const uint8_t *>(this) + 4); }
 }; /* size=0x4 */
 
-struct _rtwaypt {
+struct alignas(2) _rtwaypt {
     int16_t id;     /* +0x0000 (2) */
     int16_t iWaypt; /* +0x0002 (2) */
     ORDER   order;  /* +0x0004 (18) */
@@ -1525,7 +1543,7 @@ struct _xferfull {
     int32_t rgcQuan[5];  /* +0x0005 (20) */
 }; /* size=0x19 */
 
-struct _ziporder {
+struct alignas(2) _ziporder {
     TASKXPORT txp;        /* +0x0000 (10) */
     char      szName[13]; /* +0x000A (13) */
     uint8_t   fValid;     /* +0x0017 (1) */

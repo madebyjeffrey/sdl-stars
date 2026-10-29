@@ -1,5 +1,6 @@
 #include "common.h"
 #include "liststorage.h"
+#include <algorithm>
 
 static uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
@@ -279,4 +280,83 @@ void FreePl(PLPROD *lppl) {
 
 uint16_t CbPlSlot(const void *lp) {
     return RawLoad16(static_cast<const uint8_t *>(lp) - 2);
+}
+
+template<>
+PLORD *LpplAlloc<PLORD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
+    PL *lppl;
+
+    lppl = LpplAlloc(cbItem, cAlloc, ht);
+    return LpStartPl<PLORD, ORDER>(lppl, CbPlSlot(lppl));
+}
+
+PLORD *LpplReAlloc(PLORD *lppl, uint16_t cAlloc) {
+    void *lp;
+
+    lp = LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
+    lppl = LpStartPl<PLORD, ORDER>(lp, CbPlSlot(lp));
+    lppl->iordMax = cAlloc;
+    return lppl;
+}
+
+void FreePl(PLORD *lppl) {
+    if (lppl) FreeLp(lppl, static_cast<HeapType>(lppl->ht));
+}
+
+// Legacy replay can address neighboring runtime bytes through a signed order
+// index. Borrow the owning allocation, not an invented ORDER at that offset.
+// Logical admission remains in the caller; out-of-allocation copies are outside
+// the original defined domain. No view survives this callback-free operation.
+static std::span<std::byte> RgbOrderStorage(PLORD *lpplord, int16_t iord, int16_t ibExtra) {
+    HB *lphb;
+    int64_t ib;
+
+    lphb = LphbFromLpHt(lpplord, htOrd);
+    if (!lphb) return {};
+    ib = static_cast<int64_t>(reinterpret_cast<uintptr_t>(lpplord) - reinterpret_cast<uintptr_t>(lphb->hmem)) +
+         4 + static_cast<int64_t>(iord) * static_cast<int64_t>(sizeof(ORDER)) + ibExtra;
+    if (ib < 0 || static_cast<uint64_t>(ib) > lphb->cbBlock) return {};
+    return std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock).subspan(static_cast<std::size_t>(ib));
+}
+
+bool FApplyOrderBytes(PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t cb, bool fZero) {
+    std::span<std::byte> storage = RgbOrderStorage(lpplord, iord, 0);
+    std::size_t cbCopy = static_cast<std::size_t>(cb - static_cast<int16_t>(cbWireWaypt));
+    std::size_t ib = 0;
+    std::size_t cbChunk, cbNative;
+    ORDER ord{};
+
+    static_assert(sizeof(ORDER) == cbWireOrder);
+    if (fZero) {
+        if (storage.size() < sizeof(ORDER)) return false;
+        std::memset(storage.data(), 0, sizeof(ORDER));
+    }
+    if (cbCopy > storage.size()) return false;
+    // Wire records and the order heap are separate storage. A native temporary
+    // permits byte-prefix effects without reading inactive/unaligned objects.
+    do {
+        cbNative = (std::min)(sizeof(ORDER), storage.size() - ib);
+        if (cbNative == 0) return false;
+        ord = {};
+        std::memcpy(&ord, storage.data() + ib, cbNative);
+        cbChunk = (std::min)(cbWireOrder, cbCopy - ib);
+        FDecodeOrderPrefix(std::as_bytes(std::span(rgb + ib, cbChunk)), ord);
+        if (ib == 0) ord.fNoAutoTrack = FALSE;
+        std::memcpy(storage.data() + ib, &ord, cbNative);
+        ib += cbChunk;
+    } while (ib < cbCopy);
+    return true;
+}
+
+bool FSetOrderTask(PLORD *lpplord, int16_t iord, int16_t grTask) {
+    std::span<std::byte> storage = RgbOrderStorage(lpplord, iord, cbWireOrderHeader - sizeof(uint16_t));
+    ORDER ord{};
+    auto rgbNative = std::as_writable_bytes(std::span(&ord, 1)).subspan(cbWireOrderHeader - sizeof(uint16_t), sizeof(uint16_t));
+
+    static_assert(offsetof(ORDER, txp) == cbWireOrderHeader);
+    if (storage.size() < sizeof(uint16_t)) return false;
+    std::memcpy(rgbNative.data(), storage.data(), sizeof(uint16_t));
+    ord.grTask = grTask;
+    std::memcpy(storage.data(), rgbNative.data(), sizeof(uint16_t));
+    return true;
 }

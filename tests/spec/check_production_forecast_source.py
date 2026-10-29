@@ -8,6 +8,7 @@ stop before invalid queue copies; escaping helpers have no invented recovery.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -38,13 +39,13 @@ def main():
     declarations+=enums[enums.index('enum HeapType : uint16_t {'):enums.index(';',enums.index('enum HeapType : uint16_t {'))+1]+'\ntypedef enum HeapType HeapType;\n'
     declarations+='#define iprodEstimateResearchResources 65535\n#pragma pack(push,1)\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)
 typedef struct {int8_t pctResearch,rgAttr[16];uint32_t grbitAttr;} PLAYER;
 typedef struct {uint16_t grTask;} ORDER;
-typedef struct {ORDER rgord[1];} PLORD;
+struct PLORD {ORDER rgordStore[1];ORDER *rgord(){return rgordStore;}};
 typedef struct {int16_t idPlanet,iPlayer;unsigned fDead:1,fHereAllTurn:1;uint16_t cord;PLORD *lpplord;int32_t mines;} FLEET;
 static PLAYER rgplr[16];
 static struct {int fGeneratingTurn;} gd;
@@ -229,18 +230,18 @@ int main(void) {
     for(int generating=0;generating<2;generating++) {
         reset();original.lpplprod=queue(1,1);original.lpplprod->rgprod()[0]=row(1,0,2);original.cMines=1;actualMining=1;resource=100;gd.fGeneratingTurn=generating;
         rgplr[0].rgAttr[rsMajorAdv]=raMacintosh;fleet.idPlanet=original.id;fleet.iPlayer=0;fleet.fHereAllTurn=1;fleet.cord=1;fleet.mines=2;
-        orders.rgord[0].grTask=grTaskMine;fleet.lpplord=&orders;rglpfl[0]=&fleet;cFleet=1;before=original;begin();estimate(NULL,65535,&first,&last);
+        orders.rgord()[0].grTask=grTaskMine;fleet.lpplord=&orders;rglpfl[0]=&fleet;cFleet=1;before=original;begin();estimate(NULL,65535,&first,&last);
         CHECK(!fleet.fHereAllTurn && draws==3*generating && ((lRandSeed1!=7 || lRandSeed2!=11)==generating));
         CHECK(memcmp(&before,&original,sizeof(before))==0 && first==90 && lastPlanet.rgwtMin[0]==100+1+(generating && drawValues[0]<50));
     }
     reset();original.lpplprod=queue(0,0);actualMining=1;resource=0;rgplr[0].rgAttr[rsMajorAdv]=raMacintosh;
-    fleet.idPlanet=original.id;fleet.iPlayer=0;fleet.fHereAllTurn=1;fleet.cord=1;fleet.mines=2;fleet.lpplord=&orders;orders.rgord[0].grTask=grTaskMine;
+    fleet.idPlanet=original.id;fleet.iPlayer=0;fleet.fHereAllTurn=1;fleet.cord=1;fleet.mines=2;fleet.lpplord=&orders;orders.rgord()[0].grTask=grTaskMine;
     rglpfl[0]=NULL;rglpfl[1]=&fleet;cFleet=2;begin();estimate(NULL,65534,&first,&last);CHECK(fleet.fHereAllTurn);
     for(int ar=0;ar<2;ar++)for(int apply=0;apply<2;apply++)for(int task=0;task<16;task++)for(int own=0;own<2;own++)
     for(int same=0;same<2;same++)for(int dead=0;dead<2;dead++)for(int cord=0;cord<3;cord++)for(int positive=0;positive<3;positive++)for(int hole=0;hole<2;hole++) {
         reset();rgplr[0].rgAttr[rsMajorAdv]=ar ? raMacintosh:raCheapCol;fleet.idPlanet=original.id+!same;fleet.iPlayer=own ? 0:1;
         fleet.fDead=dead;fleet.cord=cord;fleet.mines=positive==0 ? -1:positive==1 ? 0:2;fleet.fHereAllTurn=1;
-        fleet.lpplord=&orders;orders.rgord[0].grTask=task;rglpfl[0]=hole ? NULL:&fleet;rglpfl[1]=&fleet;cFleet=hole ? 2:1;
+        fleet.lpplord=&orders;orders.rgord()[0].grTask=task;rglpfl[0]=hole ? NULL:&fleet;rglpfl[1]=&fleet;cFleet=hole ? 2:1;
         PLANET copy=original;int32_t amounts[3];NativeEstMineralsMined(&copy,amounts,-1,apply);
         int marked=ar && apply && task==grTaskMine && own && same && !dead && cord<=1 && positive==2 && !hole;
         CHECK(fleet.fHereAllTurn==(unsigned)!marked);

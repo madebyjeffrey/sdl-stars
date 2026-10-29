@@ -313,9 +313,9 @@ int16_t IdNearestColonizablePlanet(FLEET *lpflCol, THING **plpthWorm) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        if (lpfl->iPlayer == idPlayer && lpfl->cord > 1 && lpfl != lpflCol && lpfl->lpplord->rgord[1].grobj == grobjPlanet &&
-            ((rgplr[idPlayer].idAi != idAiRobotoid && rgplr[idPlayer].idAi != idAiMacinti) || lpfl->lpplord->rgord[1].grTask == grTaskColonize)) {
-            vlpbAiPlanet[lpfl->lpplord->rgord[1].id * 16 + 15] = 4;
+        if (lpfl->iPlayer == idPlayer && lpfl->cord > 1 && lpfl != lpflCol && lpfl->lpplord->rgord()[1].grobj == grobjPlanet &&
+            ((rgplr[idPlayer].idAi != idAiRobotoid && rgplr[idPlayer].idAi != idAiMacinti) || lpfl->lpplord->rgord()[1].grTask == grTaskColonize)) {
+            vlpbAiPlanet[lpfl->lpplord->rgord()[1].id * 16 + 15] = 4;
         }
     }
 LFindNearest:
@@ -624,10 +624,10 @@ LSelectFleet:
         }
         goto WarpSet;
     }
-    i = IWarpBestForWaypoint(lpfl, &lpfl->lpplord->rgord[1]);
+    i = IWarpBestForWaypoint(lpfl, &lpfl->lpplord->rgord()[1]);
 WarpSet:
-    if (i != lpfl->lpplord->rgord[1].iWarp) {
-        sel.fl.lpplord->rgord[1].iWarp = i;
+    if (i != lpfl->lpplord->rgord()[1].iWarp) {
+        sel.fl.lpplord->rgord()[1].iWarp = i;
         FLookupFleet(idWriteBack, &sel.fl);
     }
     return;
@@ -668,7 +668,7 @@ int16_t IdTargetAttack(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fO
         lpflAtk2 = lpflAtk;
         cShipsDst = 0;
         for (; lpflAtk2; lpflAtk2 = lpflAtk2->lpflNext) {
-            if (lpflAtk2 != lpfl && lpflAtk2->cord >= 2 && lpflAtk2->lpplord->rgord[1].id == lpflT->id && lpflAtk2->lpplord->rgord[1].grobj == grobjFleet) {
+            if (lpflAtk2 != lpfl && lpflAtk2->cord >= 2 && lpflAtk2->lpplord->rgord()[1].id == lpflT->id && lpflAtk2->lpplord->rgord()[1].grobj == grobjFleet) {
                 for (i = 0; i < 16; i++) {
                     cShipsDst += lpflAtk2->rgcsh[i];
                 }
@@ -700,8 +700,8 @@ int16_t IdTargetAttack(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fO
             lppl = lpPlanets;
             lpplMac = lpPlanets + cPlanet;
             for (; lppl < lpplMac; lppl++) {
-                for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord[1].id != lppl->id ||
-                                                      lpflAtk2->lpplord->rgord[1].grobj != grobjPlanet);
+                for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lppl->id ||
+                                                      lpflAtk2->lpplord->rgord()[1].grobj != grobjPlanet);
                      lpflAtk2 = lpflAtk2->lpflNext) {
                 }
                 if (!lpflAtk2) {
@@ -773,7 +773,7 @@ int16_t IdTargetAttack(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fO
         }
     }
 ThwakSumthin:
-    if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
+    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
         return -1;
     }
     ord.grTask = grTaskNone;
@@ -843,9 +843,9 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        if (lpfl->iPlayer == idPlayer && lpfl->cord > 1 && lpfl != lpflFr && lpfl->lpplord->rgord[1].grobj == grobjPlanet && lpfl->rgcsh[ishFreighter] != 0 &&
-            lpfl->lpplord->rgord[1].id != lpplHome->id) {
-            vlpbAiPlanet[lpfl->lpplord->rgord[1].id * 16 + 14] = 1;
+        if (lpfl->iPlayer == idPlayer && lpfl->cord > 1 && lpfl != lpflFr && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && lpfl->rgcsh[ishFreighter] != 0 &&
+            lpfl->lpplord->rgord()[1].id != lpplHome->id) {
+            vlpbAiPlanet[lpfl->lpplord->rgord()[1].id * 16 + 14] = 1;
         }
     }
     wtCargoMax = LGetFleetStat(lpflFr, 2);
@@ -961,7 +961,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
     ord.fValidTask = TRUE;
     ord.iWarp = 4;
     for (i = 0; i <= 2; i++) {
-        ord.txp.rgia[i].iAction = !lpthBest && idBest == lpplHome->id ? 2 : 1;
+        ord.txp.rgia[i].SetIAction(!lpthBest && idBest == lpplHome->id ? 2 : 1);
     }
     if (rgplr[idPlayer].idAi == idAiTurinDrone) {
         if (lpplHome->id == lpflFr->idPlanet) {
@@ -972,7 +972,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
             FLookupFleet(lpflFr->id, &sel.fl);
         }
         if (!lpthBest && lpplBest->iPlayer != iplrNone && lpplBest != lpplHome) {
-            ord.txp.rgia[3].iAction = iActionUnloadAll;
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
         }
     } else if (rgplr[idPlayer].idAi == idAiRobotoid && lpplHome->id == lpflFr->idPlanet && !lpthBest && lpplBest->iPlayer != iplrNone) {
         if (lpplBest->iPlayer != idPlayer) {
@@ -983,7 +983,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
                 XferAiSupply(grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, 100);
             }
             FLookupFleet(lpflFr->id, &sel.fl);
-            ord.txp.rgia[3].iAction = iActionUnloadAll;
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
         } else if (lpplBest->rgwtMin[3] < 1000 && lpplHome->rgwtMin[3] > (int32_t)(lpplBest->rgwtMin[3] * 3) / 2 && lpplHome->rgwtMin[3] > 500) {
             if (lpplHome->rgwtMin[3] > 2000) {
                 l = 10;
@@ -998,7 +998,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
             ChangeMainObjSel(grobjFleet, lpflFr->id);
             XferAiSupply(grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, LOWORD(l));
             FLookupFleet(lpflFr->id, &sel.fl);
-            ord.txp.rgia[3].iAction = iActionUnloadAll;
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
         }
     }
     if (lpthBest) {
@@ -1008,18 +1008,18 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
         if (fNeedy == 2 || lpplBest->rgwtMin[iWorst] >= wtCargoFree) {
             for (i = 0; i <= 2; i++) {
                 if (i != iWorst) {
-                    ord.txp.rgia[i].iAction = iActionNone;
+                    ord.txp.rgia[i].SetIAction(iActionNone);
                 }
             }
         } else if (lpthBest || lpplBest->iPlayer != iplrNone) {
             for (i = 0; i <= 2; i++) {
-                ord.txp.rgia[i].iAction = iActionFillPercent;
+                ord.txp.rgia[i].SetIAction(iActionFillPercent);
                 if (i == iWorst) {
                     l = 66;
                 } else {
                     l = 33;
                 }
-                ord.txp.rgia[i].cQuan = LOWORD(l);
+                ord.txp.rgia[i].SetCQuan(LOWORD(l));
             }
         }
     }
@@ -1105,16 +1105,16 @@ int16_t FMoveAiFleet(FLEET *lpfl, ORDER *pord, int16_t fAppend) {
 
     ChangeMainObjSel(grobjFleet, lpfl->id);
     if (sel.fl.lpplord->iordMax == sel.fl.cord) {
-        sel.fl.lpplord = (PLORD *)LpplReAlloc((PL *)sel.fl.lpplord, sel.fl.cord + 1);
+        sel.fl.lpplord = LpplReAlloc(sel.fl.lpplord, sel.fl.cord + 1);
     }
     iord = !fAppend ? 0 : sel.fl.cord - 1;
-    if (pord->pt.x != sel.fl.lpplord->rgord[iord].pt.x || pord->pt.y != sel.fl.lpplord->rgord[iord].pt.y) {
+    if (pord->pt.x != sel.fl.lpplord->rgord()[iord].pt.x || pord->pt.y != sel.fl.lpplord->rgord()[iord].pt.y) {
         iord++;
     } else if (sel.fl.cord > 1) {
         sel.fl.cord = 1;
         FLookupFleet(idWriteBack, &sel.fl);
     }
-    sel.fl.lpplord->rgord[iord] = *pord;
+    sel.fl.lpplord->rgord()[iord] = *pord;
     sel.fl.cord = iord + 1;
     sel.fl.lpplord->iordMac = iord + 1;
     return FLookupFleet(idWriteBack, &sel.fl);
@@ -1775,7 +1775,7 @@ void ClearAiCurrentTask(FLEET *lpfl, int16_t fChangeSel) {
     if (fChangeSel) {
         ChangeMainObjSel(grobjFleet, lpfl->id);
     }
-    sel.fl.lpplord->rgord[0].grTask = grTaskNone;
+    sel.fl.lpplord->rgord()[0].grTask = grTaskNone;
     FLookupFleet(idWriteBack, &sel.fl);
     return;
 }
@@ -1827,8 +1827,8 @@ int16_t IdTargetScout(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fOn
     for (; lpflT; lpflT = lpflT->lpflNext) {
         if (fOnlyHumans && rgplr[lpflT->iPlayer].fAi)
             goto NextTarg;
-        for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord[1].id != lpflT->id ||
-                                              lpflAtk2->lpplord->rgord[1].grobj != grobjFleet);
+        for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lpflT->id ||
+                                              lpflAtk2->lpplord->rgord()[1].grobj != grobjFleet);
              lpflAtk2 = lpflAtk2->lpflNext) {
         }
         if (lpflAtk2 && Random(3) == 0)
@@ -1858,8 +1858,8 @@ int16_t IdTargetScout(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fOn
         lppl = lpPlanets;
         lpplMac = lpPlanets + cPlanet;
         for (; lppl < lpplMac; lppl++) {
-            for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord[1].id != lppl->id ||
-                                                  lpflAtk2->lpplord->rgord[1].grobj != grobjPlanet);
+            for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lppl->id ||
+                                                  lpflAtk2->lpplord->rgord()[1].grobj != grobjPlanet);
                  lpflAtk2 = lpflAtk2->lpflNext) {
             }
             if (!lpflAtk2) {
@@ -1905,7 +1905,7 @@ LFindPlanet:
         ord.pt = rgptPlan[idClosest];
     }
 ThwakSumthin:
-    if (lpfl->cord > 1 && lpfl->lpplord->rgord[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
+    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
         return -1;
     }
     if (ord.grobj == grobjPlanet) {
@@ -2045,7 +2045,7 @@ int16_t IdplFindClosestStarbase(FLEET *lpfl, int16_t fBigOnes) {
 
     lBest = 10000000;
     lpplBest = NULL;
-    pt = lpfl->lpplord->rgord[0].pt;
+    pt = lpfl->lpplord->rgord()[0].pt;
     lpplT = lpPlanets;
     lpplTMac = lpPlanets + cPlanet;
     for (; lpplT < lpplTMac; lpplT++) {
@@ -2095,7 +2095,7 @@ void MoveToNearestPlanetOrEnemy(FLEET *lpfl, int16_t dEnemyRange) {
 
     lBest = 10000000;
     lpplBest = NULL;
-    pt = lpfl->lpplord->rgord[0].pt;
+    pt = lpfl->lpplord->rgord()[0].pt;
     lpplT = lpPlanets;
     lpplTMac = lpPlanets + cPlanet;
     for (; lpplT < lpplTMac; lpplT++) {

@@ -9,6 +9,7 @@ implementation, persistent publication or rendering.
 """
 from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -58,7 +59,7 @@ typedef int FARPROC;
 typedef struct { int32_t left,top,right,bottom; } RECT;
 '''
     for tag, alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL')]:
-        start = types.index('struct '+tag+' {')
+        start = struct_start(types, tag)
         declarations += types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''
 typedef struct { int16_t id,iPlayer;PLPROD *lpplprod;uint32_t fNoResearch:1,fStarbase:1,isb:4; } PLANET;

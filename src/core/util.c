@@ -635,9 +635,9 @@ int16_t FLookupFleet(int16_t idFleet, FLEET *pfl) {
             LogChangeFleet(lpfl, pfl);
             if (lpfl->lpplord != pfl->lpplord) {
                 if (lpfl->lpplord->iordMax < pfl->cord) {
-                    lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, pfl->cord + 3);
+                    lpfl->lpplord = LpplReAlloc(lpfl->lpplord, pfl->cord + 3);
                 }
-                memcpy(lpfl->lpplord->rgord, pfl->lpplord->rgord, pfl->lpplord->iordMac * 18);
+                memcpy(lpfl->lpplord->rgord(), pfl->lpplord->rgord(), pfl->lpplord->iordMac * 18);
                 lpfl->lpplord->iordMac = pfl->lpplord->iordMac;
             }
             memcpy(lpfl, pfl, 100);
@@ -663,17 +663,17 @@ int16_t FDupFleet(FLEET *lpfl, FLEET *pfl) {
     *pfl = *lpfl;
     if (!lpfl->lpplord) {
         if (lpplordT) {
-            FreePl((PL *)lpplordT);
+            FreePl(lpplordT);
         }
         return TRUE;
     }
     pfl->lpplord = lpplordT;
     if (!pfl->lpplord) {
-        pfl->lpplord = (PLORD *)LpplAlloc(18, lpfl->lpplord->iordMax, htOrd);
+        pfl->lpplord = LpplAlloc<PLORD>(18, lpfl->lpplord->iordMax, htOrd);
     } else if ((int16_t)pfl->lpplord->iordMax < lpfl->lpplord->iordMac) {
-        pfl->lpplord = (PLORD *)LpplReAlloc((PL *)pfl->lpplord, lpfl->lpplord->iordMax);
+        pfl->lpplord = LpplReAlloc(pfl->lpplord, lpfl->lpplord->iordMax);
     }
-    memcpy(pfl->lpplord->rgord, lpfl->lpplord->rgord, lpfl->lpplord->iordMac * 18);
+    memcpy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
     pfl->lpplord->iordMac = lpfl->lpplord->iordMac;
     return TRUE;
 }
@@ -905,7 +905,7 @@ int16_t FDeleteFleet(int16_t idFleet, GrobjClass grobjSel, int16_t idSel) {
     }
     lpfl->fDead = TRUE;
     FleetOrdersChangeTarget(lpfl);
-    FreePl((PL *)lpfl->lpplord);
+    FreePl(lpfl->lpplord);
     if (lpfl->lpszName) {
         FreeLp(lpfl->lpszName, htString);
     }
@@ -1016,10 +1016,10 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
     }
     lpfl->cord = 1;
     lpfl->fRepOrders = FALSE;
-    lpfl->lpplord = (PLORD *)LpplAlloc(18, 3, htOrd);
+    lpfl->lpplord = LpplAlloc<PLORD>(18, 3, htOrd);
     lpfl->lpplord->iordMac = 1;
     lpfl->fdirValid = 0;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     lpord->pt = lpfl->pt;
     lpord->id = lpfl->idPlanet;
     lpord->grobj = lpfl->idPlanet == idPlanetDeepSpace ? 4 : 1;
@@ -1046,9 +1046,9 @@ FLEET *LpflNewSplit(FLEET *pfl) {
     lpflNew->iplan = pfl->iplan;
     iordMac = pfl->lpplord->iordMac;
     if (lpflNew->lpplord->iordMax < iordMac) {
-        lpflNew->lpplord = (PLORD *)LpplReAlloc((PL *)lpflNew->lpplord, pfl->lpplord->iordMax);
+        lpflNew->lpplord = LpplReAlloc(lpflNew->lpplord, pfl->lpplord->iordMax);
     }
-    memcpy(lpflNew->lpplord->rgord, pfl->lpplord->rgord, iordMac * 18);
+    memcpy(lpflNew->lpplord->rgord(), pfl->lpplord->rgord(), iordMac * 18);
     lpflNew->lpplord->iordMac = iordMac;
     lpflNew->cord = pfl->cord;
     LogSplitFleet(pfl->id);
@@ -1373,7 +1373,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
     }
     if ((grobj & grobjOther) && sel.grobj == grobjFleet) {
         for (i = sel.fl.cord - 1; i >= 0; i--) {
-            ptWp = sel.fl.lpplord->rgord[i].pt;
+            ptWp = sel.fl.lpplord->rgord()[i].pt;
             dx = pt.x - ptWp.x;
             dy = pt.y - ptWp.y;
             lTry = (uint32_t)(dx * dx);
@@ -2124,34 +2124,34 @@ void ValidateWaypoints() {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        if (lpfl->lpplord->rgord[0].grobj != grobjPlanet && lpfl->lpplord->rgord[0].grTask != grTaskXfer && lpfl->lpplord->rgord[0].grTask != grTaskMerge &&
+        if (lpfl->lpplord->rgord()[0].grobj != grobjPlanet && lpfl->lpplord->rgord()[0].grTask != grTaskXfer && lpfl->lpplord->rgord()[0].grTask != grTaskMerge &&
             !lpfl->fMark) {
             if (lpfl->idPlanet == idPlanetDeepSpace) {
-                lpfl->lpplord->rgord[0].grobj = grobjOther;
-                lpfl->lpplord->rgord[0].id = 0;
+                lpfl->lpplord->rgord()[0].grobj = grobjOther;
+                lpfl->lpplord->rgord()[0].id = 0;
             } else {
-                lpfl->lpplord->rgord[0].grobj = grobjPlanet;
-                lpfl->lpplord->rgord[0].id = lpfl->idPlanet;
+                lpfl->lpplord->rgord()[0].grobj = grobjPlanet;
+                lpfl->lpplord->rgord()[0].id = lpfl->idPlanet;
             }
         }
         if (!lpfl->fDead) {
             if (lpfl->pt.x < 1000) {
                 lpfl->pt.x = 1000;
-                lpfl->lpplord->rgord[0].pt.x = 1000;
+                lpfl->lpplord->rgord()[0].pt.x = 1000;
             } else if (lpfl->pt.x > dGal + 1000) {
                 lpfl->pt.x = dGal + 1000;
-                lpfl->lpplord->rgord[0].pt.x = dGal + 1000;
+                lpfl->lpplord->rgord()[0].pt.x = dGal + 1000;
             }
             if (lpfl->pt.y < 1000) {
                 lpfl->pt.y = 1000;
-                lpfl->lpplord->rgord[0].pt.y = 1000;
+                lpfl->lpplord->rgord()[0].pt.y = 1000;
             } else if (lpfl->pt.y > dGal + 1000) {
                 lpfl->pt.y = dGal + 1000;
-                lpfl->lpplord->rgord[0].pt.y = dGal + 1000;
+                lpfl->lpplord->rgord()[0].pt.y = dGal + 1000;
             }
             if (lpfl->cord > 1 || lpfl->fMark) {
                 iord = lpfl->fMark == 0;
-                lpord = &lpfl->lpplord->rgord[iord];
+                lpord = &lpfl->lpplord->rgord()[iord];
                 while (iord < lpfl->cord) {
                     if (lpord->grobj == grobjThing) {
                         lpth = LpthFromId(lpord->id);
@@ -2539,7 +2539,7 @@ int16_t CchGetETA(HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, int16_t fSmall) {
     StringId ids;
 
     cYears = 0;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     i = 0;
     while (i < iwp) {
         dbl = DGetDistance(lpord->pt.x, lpord->pt.y, lpord[1].pt.x, lpord[1].pt.y);

@@ -898,7 +898,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                 break;
             if (!lpfl->fDead && lpfl->det >= detAll && lpfl->cord > 1 && (CShipsScanVis(lpfl) > 0 || lpfl->id == id || lpfl->id == id2)) {
                 for (iord = 0; iord < lpfl->cord; iord++) {
-                    pt = lpfl->lpplord->rgord[iord].pt;
+                    pt = lpfl->lpplord->rgord()[iord].pt;
                     pt.x = PtToScan(xOff + pt.x);
                     pt.y = PtToScan(yOff - pt.y);
                     if (iord == 0) {
@@ -1376,8 +1376,8 @@ int32_t CShipsScanVis(FLEET *lpfl) {
     csh = 0;
     if (grbitScan & grbitScanIdleFleets) {
         if (lpfl->iPlayer == idPlayer &&
-            (lpfl->cord != 1 || lpfl->lpplord->rgord[0].grTask == grTaskLayMines || lpfl->lpplord->rgord[0].grTask == grTaskScrap ||
-             lpfl->lpplord->rgord[0].grTask == grTaskMine || lpfl->lpplord->rgord[0].grTask == grTaskPatrol)) {
+            (lpfl->cord != 1 || lpfl->lpplord->rgord()[0].grTask == grTaskLayMines || lpfl->lpplord->rgord()[0].grTask == grTaskScrap ||
+             lpfl->lpplord->rgord()[0].grTask == grTaskMine || lpfl->lpplord->rgord()[0].grTask == grTaskPatrol)) {
             return 0;
         }
         if (lpfl->iPlayer != idPlayer && lpfl->iwarpFlt == 0) {
@@ -1574,7 +1574,7 @@ void SetScanPathWarp(int16_t iwp, int16_t iWarp) {
     if (fVis) {
         DrawShipScanPath(NULL, FALSE);
     }
-    sel.fl.lpplord->rgord[iwp].iWarp = iWarp;
+    sel.fl.lpplord->rgord()[iwp].iWarp = iWarp;
     if (fVis) {
         DrawShipScanPath(NULL, TRUE);
     }
@@ -1742,7 +1742,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
         }
         if (sel.grobj == grobjFleet && sel.fl.cord > 1) {
             memset(rgDup, 0, sel.fl.cord * 2);
-            lpord1 = sel.fl.lpplord->rgord;
+            lpord1 = sel.fl.lpplord->rgord();
             pt = lpord1->pt;
             i = 1;
             while (i < sel.fl.cord) {
@@ -1771,11 +1771,11 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
             if (fShow && (grbitScan & grbitScanFleetPaths)) {
                 hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
-                pt = sel.fl.lpplord->rgord[0].pt;
+                pt = sel.fl.lpplord->rgord()[0].pt;
                 LogicalToScan(&pt);
                 MoveToEx(hdc, pt.x, pt.y, NULL);
                 for (i = 1; i < sel.fl.cord; i++) {
-                    pt2 = sel.fl.lpplord->rgord[i].pt;
+                    pt2 = sel.fl.lpplord->rgord()[i].pt;
                     LogicalToScan(&pt2);
                     LineTo(hdc, pt2.x, pt2.y);
                     pt = pt2;
@@ -1784,13 +1784,13 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             }
             hpenSav = (HPEN)SelectObject(hdc, hpenShip);
             iRopSav = SetROP2(hdc, R2_XORPEN);
-            pt = sel.fl.lpplord->rgord[0].pt;
+            pt = sel.fl.lpplord->rgord()[0].pt;
             dRad = pt.x == sel.pt.x && pt.y == sel.pt.y ? 5 : 5;
             LogicalToScan(&pt);
             ExcludeClipRect(hdc, pt.x - dRad, pt.y - dRad, pt.x + dRad + 1, pt.y + dRad + 1);
             MoveToEx(hdc, pt.x, pt.y, NULL);
             for (i = 1; i < sel.fl.cord; i++) {
-                pt2 = sel.fl.lpplord->rgord[i].pt;
+                pt2 = sel.fl.lpplord->rgord()[i].pt;
                 dRad = pt2.x == sel.pt.x && pt2.y == sel.pt.y ? 5 : 5;
                 LogicalToScan(&pt2);
                 ExcludeClipRect(hdc, pt2.x - dRad, pt2.y - dRad, pt2.x + dRad + 1, pt2.y + dRad + 1);
@@ -1804,7 +1804,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
                     if (rgDup[i] == 1) {
                         SelectObject(hdc, hpenShip);
                     }
-                    DrawPathYearTicks(hdc, sel.fl.lpplord->rgord[i - 1].pt, sel.fl.lpplord->rgord[i].pt, sel.fl.lpplord->rgord[i].iWarp);
+                    DrawPathYearTicks(hdc, sel.fl.lpplord->rgord()[i - 1].pt, sel.fl.lpplord->rgord()[i].pt, sel.fl.lpplord->rgord()[i].iWarp);
                 }
                 pt = pt2;
             }
@@ -2322,7 +2322,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
         rgpt[1] = pscan->pt;
         if (sel.iwpAct < sel.fl.cord - 1) {
             cpt = 3;
-            rgpt[2] = sel.fl.lpplord->rgord[sel.iwpAct + 1].pt;
+            rgpt[2] = sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt;
         } else {
             cpt = 2;
         }
@@ -2338,7 +2338,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
         pscan->iwp = sel.iwpAct + 1;
         pscan->pt = ptIn;
     }
-    lpord = &sel.fl.lpplord->rgord[sel.iwpAct];
+    lpord = &sel.fl.lpplord->rgord()[sel.iwpAct];
     if (pscan->pt.x == lpord->pt.x && pscan->pt.y == lpord->pt.y) {
         return FALSE;
     }
@@ -2348,8 +2348,8 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     hdc = GetDC(hwndScanner);
     DrawShipScanPath(hdc, FALSE);
     if (sel.fl.lpplord->iordMax == sel.fl.cord) {
-        sel.fl.lpplord = (PLORD *)LpplReAlloc((PL *)sel.fl.lpplord, sel.fl.cord + 3);
-        lpord = &sel.fl.lpplord->rgord[sel.iwpAct + 1];
+        sel.fl.lpplord = LpplReAlloc(sel.fl.lpplord, sel.fl.cord + 3);
+        lpord = &sel.fl.lpplord->rgord()[sel.iwpAct + 1];
     } else {
         lpord++;
     }
@@ -2383,7 +2383,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     pscan->iwp = sel.iwpAct + 1;
     RedrawScanSel(NULL, 0);
     FLookupFleet(idWriteBack, &sel.fl);
-    if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell.iPlrX == 5) {
+    if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell().iPlrX == 5) {
         memset((uint8_t *)lpord - 10, 0, 10);
         lpord[-1].grTask = grTaskNone;
         FLookupFleet(idWriteBack, &sel.fl);
@@ -2416,7 +2416,7 @@ int16_t FNearAWayPoint(POINT16 pt, int16_t fLogical) {
     }
     if (scan.grobjFull & grobjOther) {
         if (scan.pt.x == sel.pt.x && scan.pt.y == sel.pt.y) {
-            lpord = &sel.fl.lpplord->rgord[1];
+            lpord = &sel.fl.lpplord->rgord()[1];
             i = 1;
             for (; i < sel.fl.cord && (lpord->pt.x != scan.pt.x || lpord->pt.y != scan.pt.y); lpord++) {
                 i++;
@@ -2458,23 +2458,23 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
     fMarker = FALSE;
     LogicalToScan(&pt);
     if (sel.iwpAct == 0) {
-        lpord = &sel.fl.lpplord->rgord[1];
+        lpord = &sel.fl.lpplord->rgord()[1];
         i = 1;
         for (; i < sel.fl.cord && (sel.fl.pt.x != lpord->pt.x || sel.fl.pt.y != lpord->pt.y); lpord++) {
             i++;
         }
         SetScanWp(i);
     }
-    rgpt[2] = sel.fl.lpplord->rgord[sel.iwpAct - 1].pt;
+    rgpt[2] = sel.fl.lpplord->rgord()[sel.iwpAct - 1].pt;
     ptPrev = rgpt[2];
     if (sel.iwpAct == sel.fl.cord - 1) {
         cpt = 3;
     } else {
         cpt = 4;
-        rgpt[3] = sel.fl.lpplord->rgord[sel.iwpAct + 1].pt;
+        rgpt[3] = sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt;
         ptNext = rgpt[3];
     }
-    rgpt[0] = sel.fl.lpplord->rgord[sel.iwpAct].pt;
+    rgpt[0] = sel.fl.lpplord->rgord()[sel.iwpAct].pt;
     rgpt[1] = rgpt[0];
     for (i = 0; i < cpt; i++) {
         LogicalToScan(&rgpt[i]);
@@ -2540,7 +2540,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         }
         fDup = scan.pt.x == ptPrev.x && scan.pt.y == ptPrev.y;
         if (!fDup && sel.iwpAct < sel.fl.cord - 1) {
-            fDup = (scan.pt.x == sel.fl.lpplord->rgord[sel.iwpAct + 1].pt.x && scan.pt.y == sel.fl.lpplord->rgord[sel.iwpAct + 1].pt.y) * 2;
+            fDup = (scan.pt.x == sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt.x && scan.pt.y == sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt.y) * 2;
         }
         GetClientRect(hwndScanner, &rc);
         if (fDup) {
@@ -2610,7 +2610,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         default:
             i = scan.iwp;
         }
-        lpord = &sel.fl.lpplord->rgord[sel.iwpAct];
+        lpord = &sel.fl.lpplord->rgord()[sel.iwpAct];
         lpord->grobj = scan.grobj;
         lpord->id = i;
         lpord->pt = scan.pt;
@@ -2674,7 +2674,7 @@ int16_t SetScanWp(int16_t iNew) {
     if (iNew == sel.iwpAct) {
         return iNew;
     }
-    FFindNearestObject(sel.fl.lpplord->rgord[iNew].pt, grobjOther, &scan);
+    FFindNearestObject(sel.fl.lpplord->rgord()[iNew].pt, grobjOther, &scan);
     scan.iwp = iNew;
     ChangeScanSel(&scan, 1);
     return iNew;
@@ -2854,12 +2854,12 @@ void GetScanFleetOrientation(FLEET *lpfl, POINT16 *ppt, POINT16 *pptD) {
     int16_t dx;
 
     if (lpfl->iPlayer == idPlayer) {
-        if (lpfl->cord <= 1 || lpfl->lpplord->rgord[1].iWarp == 0) {
+        if (lpfl->cord <= 1 || lpfl->lpplord->rgord()[1].iWarp == 0) {
         NoInfo:
             dx = dy = 0;
         } else {
-            dx = lpfl->lpplord->rgord[1].pt.x - lpfl->pt.x;
-            dy = lpfl->lpplord->rgord[1].pt.y - lpfl->pt.y;
+            dx = lpfl->lpplord->rgord()[1].pt.x - lpfl->pt.x;
+            dy = lpfl->lpplord->rgord()[1].pt.y - lpfl->pt.y;
         }
     } else {
         if (!lpfl->fdirValid || lpfl->iwarpFlt == 0)

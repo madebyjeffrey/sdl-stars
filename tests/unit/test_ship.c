@@ -107,7 +107,7 @@ static int16_t FAddScoutLeg(const char *pszTest, int16_t dx, int32_t lFuel) {
     idPlayer = 0;
     sel.fl = *lpflDst;
     sel.fl.rgwtMin[4] = lFuel;
-    lpord = &sel.fl.lpplord->rgord[1];
+    lpord = &sel.fl.lpplord->rgord()[1];
     *lpord = lpord[-1];
     lpord->pt.x += dx;
     lpord->grobj = grobjOther;
@@ -119,7 +119,7 @@ static int16_t FAddScoutLeg(const char *pszTest, int16_t dx, int32_t lFuel) {
 
 // LFuelAtWarp returns the fuel sel.fl uses to reach waypoint 1 at iWarp.
 static int32_t LFuelAtWarp(int16_t iWarp) {
-    sel.fl.lpplord->rgord[1].iWarp = iWarp;
+    sel.fl.lpplord->rgord()[1].iWarp = iWarp;
     return LFuelUseToWaypoint(&sel.fl, 1, TRUE);
 }
 
@@ -128,7 +128,7 @@ static int16_t CYearsAtWarp(int16_t iWarp) {
     ORDER *lpord;
     double dbl;
 
-    lpord = sel.fl.lpplord->rgord;
+    lpord = sel.fl.lpplord->rgord();
     dbl = DGetDistance(lpord[0].pt.x, lpord[0].pt.y, lpord[1].pt.x, lpord[1].pt.y);
     return (int16_t)ceil(dbl / (iWarp * iWarp));
 }
@@ -142,7 +142,7 @@ static int16_t IWarpCheckFastest(int16_t iWarpBest) {
     int16_t i;
 
     lFuel = sel.fl.rgwtMin[4];
-    iWarp = IWarpFastestForWaypoint(&sel.fl, &sel.fl.lpplord->rgord[1]);
+    iWarp = IWarpFastestForWaypoint(&sel.fl, &sel.fl.lpplord->rgord()[1]);
     TEST_CHECK_(iWarp >= iWarpBest && iWarp <= 9, "fastest warp %d, best warp %d", iWarp, iWarpBest);
     TEST_CHECK_(LFuelAtWarp(iWarp) <= lFuel, "warp %d needs %d mg of %d", iWarp, LFuelAtWarp(iWarp), lFuel);
     for (i = iWarp + 1; i <= 9; i++) {
@@ -163,7 +163,7 @@ static void test_IWarpFastestForWaypoint_plenty_of_fuel(void) {
     int16_t iWarp;
 
     TEST_ASSERT(FAddScoutLeg("IWarpFastest_plenty", 150, 1000));
-    iWarpBest = IWarpBestForWaypoint(&sel.fl, &sel.fl.lpplord->rgord[1]);
+    iWarpBest = IWarpBestForWaypoint(&sel.fl, &sel.fl.lpplord->rgord()[1]);
     iWarp = IWarpCheckFastest(iWarpBest);
     TEST_CHECK_(iWarp == 9, "fastest warp %d", iWarp);
     TEST_CHECK_(CYearsAtWarp(iWarp) < CYearsAtWarp(iWarpBest), "warp %d is no sooner than warp %d", iWarp, iWarpBest);

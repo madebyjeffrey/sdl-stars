@@ -7,6 +7,7 @@ signed operations before C execution; no sanitizer failure is an expected pass.
 This checks bounded vectors, not a proof of C/Dafny refinement or host closure.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import random
 import shlex
@@ -225,7 +226,7 @@ def main():
         declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in (('_prod','PROD'),('PLPROD','PLPROD'),('_planet','PLANET')):
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)

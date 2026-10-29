@@ -83,10 +83,10 @@ static FLEET *AddPursuer(int16_t ish, POINT16 pt, int16_t idTarget, POINT16 ptTa
 
     lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, ish, 1);
     lpfl->pt = pt;
-    lpfl->lpplord->rgord[0].pt = pt;
+    lpfl->lpplord->rgord()[0].pt = pt;
     lpfl->lpplord->iordMac = 2;
     lpfl->cord = 2;
-    lpord = &lpfl->lpplord->rgord[1];
+    lpord = &lpfl->lpplord->rgord()[1];
     memset(lpord, 0, sizeof(*lpord));
     lpord->pt = ptTarget;
     lpord->id = idTarget;
@@ -140,8 +140,8 @@ static void test_ValidateWaypoints_pursuers_take_heaviest(void) {
     lpflB = AddPursuer(ish0, ptStart, (1 << 9) | 401, ptFled);
 
     ValidateWaypoints();
-    TEST_CHECK_(lpflA->lpplord->rgord[1].id == lpflHeavy->id, "first pursuer took %#x, heavy %#x", lpflA->lpplord->rgord[1].id, lpflHeavy->id);
-    TEST_CHECK_(lpflB->lpplord->rgord[1].id == lpflHeavy->id, "second pursuer took %#x, heavy %#x light %#x", lpflB->lpplord->rgord[1].id, lpflHeavy->id,
+    TEST_CHECK_(lpflA->lpplord->rgord()[1].id == lpflHeavy->id, "first pursuer took %#x, heavy %#x", lpflA->lpplord->rgord()[1].id, lpflHeavy->id);
+    TEST_CHECK_(lpflB->lpplord->rgord()[1].id == lpflHeavy->id, "second pursuer took %#x, heavy %#x light %#x", lpflB->lpplord->rgord()[1].id, lpflHeavy->id,
                 lpflLight->id);
 }
 

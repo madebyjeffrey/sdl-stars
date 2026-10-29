@@ -1182,26 +1182,26 @@ static BOOL FCheckWaypointTask(int idFleet) {
     int i;
     int iwp = sel.iwpAct;
     if (sel.grobj != grobjFleet || sel.fl.id != idFleet || iwp != 0 || sel.fl.cord == 0) return FALSE;
-    ordSav = sel.fl.lpplord->rgord[iwp];
+    ordSav = sel.fl.lpplord->rgord()[iwp];
     if (ordSav.grTask != grTaskNone) return FALSE;
     UpdateWindow(GetParent(rghwndOrderDD[0]));
     if (!FChooseWorkflowCombo(rghwndOrderDD[0], grTaskXfer)) return FALSE;
     lpfl = LpflFromId((int16_t)idFleet);
-    if (!lpfl || lpfl->lpplord->rgord[iwp].grTask != grTaskXfer || sel.fl.lpplord->rgord[iwp].grTask != grTaskXfer) return FALSE;
+    if (!lpfl || lpfl->lpplord->rgord()[iwp].grTask != grTaskXfer || sel.fl.lpplord->rgord()[iwp].grTask != grTaskXfer) return FALSE;
     if (!FCheckTransportPreset(0)) return FALSE;
     for (i = 0; i < 5; i++)
-        if (lpfl->lpplord->rgord[iwp].txp.rgia[i].iAction != (i < 3 ? iActionLoadAll : i == 3 ? iActionNone : iActionLoadDunnage)) return FALSE;
+        if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 3 ? iActionLoadAll : i == 3 ? iActionNone : iActionLoadDunnage)) return FALSE;
     if (!FCheckTransportPreset(1)) return FALSE;
     for (i = 0; i < 5; i++)
-        if (lpfl->lpplord->rgord[iwp].txp.rgia[i].iAction != (i < 4 ? iActionUnloadAll : iActionLoadDunnage)) return FALSE;
+        if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 4 ? iActionUnloadAll : iActionLoadDunnage)) return FALSE;
     if (!FCheckTransportPreset(2)) return FALSE;
     for (i = 0; i < 5; i++) {
-        if (lpfl->lpplord->rgord[iwp].txp.rgia[i].iAction != (i < 3 ? iActionWaitPercent : i == 3 ? iActionNone : iActionLoadDunnage)) return FALSE;
-        if (i < 3 && lpfl->lpplord->rgord[iwp].txp.rgia[i].cQuan != 100) return FALSE;
+        if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != (i < 3 ? iActionWaitPercent : i == 3 ? iActionNone : iActionLoadDunnage)) return FALSE;
+        if (i < 3 && lpfl->lpplord->rgord()[iwp].txp.rgia[i].cQuan() != 100) return FALSE;
     }
     if (!FCheckTransportPreset(3)) return FALSE;
     for (i = 0; i < 5; i++)
-        if (lpfl->lpplord->rgord[iwp].txp.rgia[i].iAction != iActionNone || lpfl->lpplord->rgord[iwp].txp.rgia[i].cQuan != 0) return FALSE;
+        if (lpfl->lpplord->rgord()[iwp].txp.rgia[i].iAction() != iActionNone || lpfl->lpplord->rgord()[iwp].txp.rgia[i].cQuan() != 0) return FALSE;
     SelectAdjFleet(0, (int16_t)idFleet);
     UpdateWindow(GetParent(rghwndOrderDD[0]));
     if (SendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskXfer ||
@@ -1209,7 +1209,7 @@ static BOOL FCheckWaypointTask(int idFleet) {
     SelectAdjFleet(0, (int16_t)idFleet);
     UpdateWindow(GetParent(rghwndOrderDD[0]));
     if (SendMessage(rghwndOrderDD[0], CB_GETCURSEL, 0, 0) != grTaskNone ||
-        memcmp(&ordSav, &lpfl->lpplord->rgord[iwp], sizeof(ordSav))) return FALSE;
+        memcmp(&ordSav, &lpfl->lpplord->rgord()[iwp], sizeof(ordSav))) return FALSE;
     puts("Waypoint task commit, reselection and restoration passed");
     return TRUE;
 }
@@ -1264,7 +1264,7 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     size_t i;
     BOOL fPassed = FALSE;
     if (!lpfl || lpfl->cord != 1) return FALSE;
-    ordSav = lpfl->lpplord->rgord[0];
+    ordSav = lpfl->lpplord->rgord()[0];
     if (!FCaptureScanner(&snap)) return FALSE;
     for (i = 0; i < snap.cObject; i++) {
         obj = snap.rgobj[i];
@@ -1286,8 +1286,8 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
         if (GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
-    if (lpfl->cord != 2 || lpfl->lpplord->rgord[1].grobj != grobjPlanet || lpfl->lpplord->rgord[1].id != obj.id ||
-        lpfl->lpplord->rgord[1].pt.x != obj.ptUniverse.x || lpfl->lpplord->rgord[1].pt.y != obj.ptUniverse.y) goto LDone;
+    if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != obj.id ||
+        lpfl->lpplord->rgord()[1].pt.x != obj.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != obj.ptUniverse.y) goto LDone;
     // Re-capture after the append: the UI may have changed the scanner view.
     if (!FCaptureScanner(&snap)) goto LDone;
     for (i = 0; i < snap.cObject; i++)
@@ -1305,12 +1305,12 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
     fPassed = FALSE;
     if (!FPushWorkflowDrag(hwndScanner, ptFrom, objDrag.ptClient)) goto LDone;
     ullStart = SDL_GetTicks();
-    while (lpfl->lpplord->rgord[1].id != objDrag.id && SDL_GetTicks() - ullStart < 3000) {
+    while (lpfl->lpplord->rgord()[1].id != objDrag.id && SDL_GetTicks() - ullStart < 3000) {
         if (GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
-    if (lpfl->cord != 2 || lpfl->lpplord->rgord[1].grobj != grobjPlanet || lpfl->lpplord->rgord[1].id != objDrag.id ||
-        lpfl->lpplord->rgord[1].pt.x != objDrag.ptUniverse.x || lpfl->lpplord->rgord[1].pt.y != objDrag.ptUniverse.y) goto LDone;
+    if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != objDrag.id ||
+        lpfl->lpplord->rgord()[1].pt.x != objDrag.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != objDrag.ptUniverse.y) goto LDone;
     UpdateWindow(hwndPlanet);
     if (!FPushListRow(hwndShipLB, 1) || !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, TRUE) ||
         !FPushWorkflowKey(hwndFrame, SDL_SCANCODE_DELETE, FALSE)) goto LDone;
@@ -1319,7 +1319,7 @@ static BOOL FCheckRouteAppendDelete(int idFleet) {
         if (GetMessage(&msg, NULL, 0, 0) <= 0) goto LDone;
         DispatchWorkflowInput(&msg);
     }
-    fPassed = lpfl->cord == 1 && sel.fl.cord == 1 && !memcmp(&ordSav, &lpfl->lpplord->rgord[0], sizeof(ordSav));
+    fPassed = lpfl->cord == 1 && sel.fl.cord == 1 && !memcmp(&ordSav, &lpfl->lpplord->rgord()[0], sizeof(ordSav));
 LDone:
     KillTimer(NULL, id);
     if (!fPassed) fprintf(stderr, "Route append/delete failed: count %d selected %d waypoint %d\n", lpfl->cord, sel.fl.cord, sel.iwpAct);
