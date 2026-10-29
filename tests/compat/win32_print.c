@@ -1,6 +1,7 @@
 /* Printer DC lifetime, raster pages, atomic PDF output and real process spooling. */
 #include <windows.h>
 #include <stars_compat.h>
+#include "fileio.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,12 +45,12 @@ static int InitPrinter(PRINTDLG *lp, const char *pszFile) {
 }
 static void FreePrinter(PRINTDLG *lp) { DeleteDC(lp->hDC); GlobalFree(lp->hDevMode); GlobalFree(lp->hDevNames); }
 static int FPrefix(const char *pszFile, const char *psz) {
-    FILE *lp = fopen(pszFile, "rb");
+    NATIVEFILE *lp = PfNativeOpen(pszFile, "rb");
     char sz[16] = {0};
     size_t cb = strlen(psz), cbRead;
     if (!lp) return 0;
-    if (cb > sizeof(sz)) { fclose(lp); return 0; }
-    cbRead = fread(sz, 1, cb, lp); fclose(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
+    if (cb > sizeof(sz)) { ICloseNativeFile(lp); return 0; }
+    cbRead = CReadNative(sz, 1, cb, lp); ICloseNativeFile(lp); return cbRead == cb && memcmp(sz, psz, cb) == 0;
 }
 extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     cViewer++;
@@ -76,22 +77,26 @@ int main(int argc, char **argv) {
     LOGFONT lf = {0};
     HBRUSH hbr;
     WNDCLASS wc = {0};
-    char szPages[4096], szAbort[4096], szImplicit[4096], szPaper[4096], szMock[4096], szLog[4096], szCapture[4096], szPath[8192];
-    char szArg[4096], szRetained[4096];
+    char szPages[4096], szAbort[4096], szImplicit[4096], szPaper[4096];
+#ifndef _WIN32
+    char szMock[4096], szLog[4096], szCapture[4096], szPath[8192], szArg[4096], szRetained[4096];
     const char *pszOldPath = getenv("PATH");
-    FILE *lpfile;
+#endif
+    NATIVEFILE *lpfile;
     POINT pt;
     RECT rc;
     int query = NEWFRAME;
     CHECK(argc <= 2 && strlen(pszDir) < 2000);
-    CHECK(mkdir(pszDir, 0700) == 0 || access(pszDir, F_OK) == 0);
+    CHECK(ICreateNativeDirectory(pszDir, 0700) == 0 || IAccessNativePath(pszDir, 0) == 0);
     snprintf(szPages, sizeof(szPages), "%s/pages.pdf", pszDir);
     snprintf(szAbort, sizeof(szAbort), "%s/abort.pdf", pszDir);
     snprintf(szImplicit, sizeof(szImplicit), "%s/implicit.pdf", pszDir);
     snprintf(szPaper, sizeof(szPaper), "%s/landscape-a4.pdf", pszDir);
+#ifndef _WIN32
     snprintf(szMock, sizeof(szMock), "%s/lp", pszDir);
     snprintf(szLog, sizeof(szLog), "%s/spool-args.txt", pszDir);
     snprintf(szCapture, sizeof(szCapture), "%s/spooled.pdf", pszDir);
+#endif
     unsetenv("STARS_SDL_PRINTER"); unsetenv("STARS_SDL_PRINT_PAPER"); unsetenv("STARS_SDL_PRINT_ORIENTATION");
     CHECK(InitPrinter(&pd, szPages) && pd.hDC && pd.hDevMode && pd.hDevNames && pd.nCopies == 1);
     CHECK(CommDlgExtendedError() == 0);
@@ -105,7 +110,7 @@ int main(int argc, char **argv) {
     CHECK(Escape(pd.hDC, GETPHYSPAGESIZE, 0, NULL, &pt) == 1 && pt.x == 2550 && pt.y == 3300);
     CHECK(Escape(pd.hDC, QUERYESCSUPPORT, sizeof(query), (char *)&query, NULL) == 1);
     CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == SP_ERROR);
-    lpfile = fopen(szPages, "wb"); CHECK(lpfile); fputs("sentinel", lpfile); fclose(lpfile);
+    lpfile = PfNativeOpen(szPages, "wb"); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
     CHECK(Escape(pd.hDC, STARTDOC, 9, "Page test", NULL) > 0);
     CHECK(FPrefix(szPages, "sentinel"));
     hbr = CreateSolidBrush(RGB(255, 0, 0)); CHECK(hbr); rc = (RECT){100, 100, 500, 400}; CHECK(FillRect(pd.hDC, &rc, hbr)); DeleteObject(hbr);
@@ -126,7 +131,7 @@ int main(int argc, char **argv) {
     CHECK(!SelectObject(pd.hDC, hbmp)); CHECK(DeleteObject(hbmp)); CHECK(DeleteDC(hdcOther));
     CHECK(Escape(pd.hDC, 99999, 0, NULL, NULL) == 0); FreePrinter(&pd);
     CHECK(InitPrinter(&pd, szAbort));
-    lpfile = fopen(szAbort, "wb"); CHECK(lpfile); fputs("sentinel", lpfile); fclose(lpfile);
+    lpfile = PfNativeOpen(szAbort, "wb"); CHECK(lpfile); CchNativePrintf(lpfile, "%s", "sentinel"); ICloseNativeFile(lpfile);
     CHECK(Escape(pd.hDC, STARTDOC, 5, "Abort", NULL) > 0); CHECK(Escape(pd.hDC, NEWFRAME, 0, NULL, NULL) == 1);
     CHECK(Escape(pd.hDC, ABORTDOC, 0, NULL, NULL) == 1 && FPrefix(szAbort, "sentinel"));
     CHECK(Escape(pd.hDC, STARTDOC, 5, "Abort", NULL) > 0); FreePrinter(&pd); CHECK(FPrefix(szAbort, "sentinel"));
@@ -140,7 +145,7 @@ int main(int argc, char **argv) {
     unsetenv("STARS_SDL_PRINT_PAPER"); unsetenv("STARS_SDL_PRINT_ORIENTATION");
     wc.lpszClassName = "PrintOwner"; wc.lpfnWndProc = OwnerProc; wc.hInstance = GetModuleHandle(NULL); CHECK(RegisterClass(&wc));
     hwndOwner = CreateWindow(wc.lpszClassName, "Printer owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 260, 150, NULL, NULL, GetModuleHandle(NULL), NULL); CHECK(hwndOwner);
-    snprintf(szChosen, sizeof(szChosen), "%s/chosen.pdf", pszDir); remove(szChosen);
+    snprintf(szChosen, sizeof(szChosen), "%s/chosen.pdf", pszDir); IUnlinkNativePath(szChosen);
     CHECK(InitPrinter(&pd, NULL)); hdcChoosing = pd.hDC; CHECK(SetTimer(hwndOwner, 1, 20, NULL));
     CHECK(Escape(pd.hDC, STARTDOC, 6, "Chosen", NULL) > 0); CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == 1);
     CHECK(FPrefix(szChosen, "%PDF-")); FreePrinter(&pd); KillTimer(hwndOwner, 1);
@@ -150,33 +155,36 @@ int main(int argc, char **argv) {
     CHECK(Escape(pd.hDC, STARTDOC, 6, "Cancel", NULL) == SP_APPABORT);
     KillTimer(hwndOwner, 2); FreePrinter(&pd); fChooseCancel = FALSE;
     CHECK(cViewer == 4); DestroyWindow(hwndOwner);
-    lpfile = fopen(szMock, "wb"); CHECK(lpfile);
-    fputs("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$STARS_TEST_PRINT_LOG\"\nfor szPdf do :; done\ncp -- \"$szPdf\" \"$STARS_TEST_PRINT_CAPTURE\"\nexit \"${STARS_TEST_PRINT_EXIT:-0}\"\n", lpfile);
-    fclose(lpfile); CHECK(chmod(szMock, 0700) == 0);
+#ifndef _WIN32
+    // CUPS queue submission is a Unix path; Windows uses the PDF backend.
+    lpfile = PfNativeOpen(szMock, "wb"); CHECK(lpfile);
+    CchNativePrintf(lpfile, "%s", "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$STARS_TEST_PRINT_LOG\"\nfor szPdf do :; done\ncp -- \"$szPdf\" \"$STARS_TEST_PRINT_CAPTURE\"\nexit \"${STARS_TEST_PRINT_EXIT:-0}\"\n");
+    ICloseNativeFile(lpfile); CHECK(chmod(szMock, 0700) == 0);
     snprintf(szPath, sizeof(szPath), "%s:%s", pszDir, pszOldPath ? pszOldPath : "/usr/bin:/bin");
     setenv("PATH", szPath, 1); setenv("STARS_TEST_PRINT_LOG", szLog, 1); setenv("STARS_TEST_PRINT_CAPTURE", szCapture, 1);
     setenv("STARS_SDL_PRINTER", "QA printer;false", 1);
     CHECK(InitPrinter(&pd, NULL)); CHECK(Escape(pd.hDC, STARTDOC, 5, "Spool", NULL) > 0);
     CHECK(Escape(pd.hDC, NEWFRAME, 0, NULL, NULL) == 1); CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == 1); FreePrinter(&pd);
-    CHECK(FPrefix(szCapture, "%PDF-")); lpfile = fopen(szLog, "rb"); CHECK(lpfile);
-    CHECK(fgets(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "-d\n") == 0);
-    CHECK(fgets(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "QA printer;false\n") == 0); fclose(lpfile);
+    CHECK(FPrefix(szCapture, "%PDF-")); lpfile = PfNativeOpen(szLog, "rb"); CHECK(lpfile);
+    CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "-d\n") == 0);
+    CHECK(PszGetNativeLine(szArg, sizeof(szArg), lpfile) && strcmp(szArg, "QA printer;false\n") == 0); ICloseNativeFile(lpfile);
     setenv("STARS_TEST_PRINT_EXIT", "1", 1);
     CHECK(InitPrinter(&pd, NULL)); CHECK(Escape(pd.hDC, STARTDOC, 4, "Fail", NULL) > 0);
     CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == SP_ERROR && GetLastError() == ERROR_WRITE_FAULT);
-    lpfile = fopen(szLog, "rb"); CHECK(lpfile); szRetained[0] = 0;
-    while (fgets(szArg, sizeof(szArg), lpfile)) strcpy(szRetained, szArg);
-    fclose(lpfile); szRetained[strcspn(szRetained, "\r\n")] = 0;
-    CHECK(FPrefix(szRetained, "%PDF-")); FreePrinter(&pd); CHECK(FPrefix(szRetained, "%PDF-")); CHECK(remove(szRetained) == 0);
+    lpfile = PfNativeOpen(szLog, "rb"); CHECK(lpfile); szRetained[0] = 0;
+    while (PszGetNativeLine(szArg, sizeof(szArg), lpfile)) strcpy(szRetained, szArg);
+    ICloseNativeFile(lpfile); szRetained[strcspn(szRetained, "\r\n")] = 0;
+    CHECK(FPrefix(szRetained, "%PDF-")); FreePrinter(&pd); CHECK(FPrefix(szRetained, "%PDF-")); CHECK(IUnlinkNativePath(szRetained) == 0);
     unsetenv("STARS_SDL_PRINTER");
+#endif
     CHECK(InitPrinter(&pd, "/stars-nonexistent-output-dir/out.pdf"));
     CHECK(Escape(pd.hDC, STARTDOC, 5, "Error", NULL) == SP_ERROR); FreePrinter(&pd);
     snprintf(szChosen, sizeof(szChosen), "%s/blocked-target", pszDir);
-    CHECK(mkdir(szChosen, 0700) == 0);
+    CHECK(ICreateNativeDirectory(szChosen, 0700) == 0);
     CHECK(InitPrinter(&pd, szChosen));
     CHECK(Escape(pd.hDC, STARTDOC, 6, "Failed", NULL) > 0);
     CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == SP_ERROR && cViewer == 4);
-    FreePrinter(&pd); CHECK(rmdir(szChosen) == 0);
+    FreePrinter(&pd); CHECK(IRemoveNativePath(szChosen, 1) == 0);
     memset(&pd, 0, sizeof(pd)); CHECK(!PrintDlg(&pd) && CommDlgExtendedError() == CDERR_STRUCTSIZE);
     pd.lStructSize = sizeof(pd); pd.Flags = PD_RETURNDC; CHECK(!PrintDlg(&pd) && CommDlgExtendedError() == CDERR_INITIALIZATION);
     snprintf(szChosen, sizeof(szChosen), "%s/viewer-\xc3\xa9 #%%.pdf", pszDir);
@@ -186,5 +194,5 @@ int main(int argc, char **argv) {
     CHECK(Escape(pd.hDC, ENDDOC, 0, NULL, NULL) == 1 && FPrefix(szChosen, "%PDF-"));
     FreePrinter(&pd);
     CHECK(cNotice == 1 && strstr(szViewerUri, "%C3%A9%20%23%25.pdf") && cErrors == 0);
-    StarsCompatShutdown(); CHECK(cErrors == 0); puts("Printer metadata, pages, abort, atomic output and spool process checks passed"); return 0;
+    StarsCompatShutdown(); CHECK(cErrors == 0); puts("Printer metadata, pages, abort, atomic output and supported-platform spooling checks passed"); return 0;
 }

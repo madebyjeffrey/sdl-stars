@@ -1,6 +1,6 @@
 # Milestone B implementation ledger
 
-Status: implementation active. Tracking: [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65).
+Status: implementation active. Tracking: [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65); implementation [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
 Base: `develop` at `417e526`, after milestone A merged in #64.
 
 The complete [milestone B plan](CPP-MIGRATION.md#milestone-b-ownership-records-and-standard-c)
@@ -79,3 +79,15 @@ macOS ASan/UBSan pass the portable resource contracts. Its runtime explicitly
 rejects `detect_leaks=1`, so native `leaks` is a separate macOS gate. Linux CI
 retains ASan/UBSan with leak detection enabled. No global sanitizer or leak
 suppression is used to hide an application allocation.
+
+Windows runs the same PDF metadata/page/abort/publication/owner/viewer cases
+with UTF-8 fixture file operations through the native file module. CUPS queue
+submission is a documented Unix-only path and its real shell/process cases
+remain on Linux/macOS; this migration does not add a Windows CUPS feature.
+
+The first ownership/fault/leaks batch passes 67/67 macOS CTest cases and all
+five ASan/UBSan resource contracts. Linux CI's resource ASan/UBSan/LSan job
+also passes with `detect_leaks=1`. Both final local regressions again match
+519 files, 25 accepted unused-storage warnings, zero differences/errors and
+no skipped inputs. These results qualify this initial B01 batch, not B01's
+remaining persistent owners or later B checkpoints.
