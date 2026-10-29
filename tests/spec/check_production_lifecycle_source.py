@@ -25,7 +25,7 @@ def main():
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <setjmp.h>
+#include "errors.h"
 #define TRUE 1
 #define FALSE 0
 #define LOWORD(x) ((uint16_t)(x))
@@ -72,7 +72,7 @@ static int16_t cPlanet,idPlayer,fAi;
 static PLPROD *lpplProdGlob;
 static HWND hwndProdDlg,hwndFrame=99;
 static int fDlgUp,hInst,ProductionDlg,ptStickyProduceDlg,yTopFutureTech=20,dyArial8=10;
-static jmp_buf originalEnvironment,*penvMem=&originalEnvironment;
+
 static char trace[8192];
 static int checks,allocations,alive[128],frees,failAt,mutateWrite,mutateReload,mutateTutorial;
 static int modalNext,shiftKey,queueSelection,sourceSelection,researchCheck,initCalls,writeCount,initialSelections;
@@ -82,14 +82,14 @@ static unsigned storedCounts[8],storedResearch[8];
 static void *allocs[128];
 static void event(const char *s) { assert(strlen(trace)+strlen(s)<sizeof(trace));strcat(trace,s); }
 static PLPROD *queue(unsigned count) {
-    assert(allocations<128 && count<=255);PLPROD *p=calloc(1,4+count*4);assert(p);
+    assert(allocations<128 && count<=255);PLPROD *p=(PLPROD *)calloc(1,4+count*4);assert(p);
     p->cbItem=4;p->iprodMac=count;p->iprodMax=count;
     allocs[allocations]=p;alive[allocations++]=1;return p;
 }
 static int allocation(void *p) { for(int i=0;i<allocations;i++)if(allocs[i]==p)return i;abort(); }
 static void FreeLp(void *p,int ht) {(void)ht;int i=allocation(p);assert(alive[i]);alive[i]=0;frees++;event("F;");}
 static HULDEF *LphuldefFromId(int i) { assert(i>=0 && i<8);return &hulls[i]; }
-static void fail(int stage) { if(failAt==stage)longjmp(*penvMem,1); }
+static void fail(int stage) { if(failAt==stage)StarsThrowError(starsErrorMemory,0); }
 static void InitProduction(PROD *rows) {
     event(rows ? "I;":"i;");initCalls++;gd.fNoResearchSav=sel.pl.fNoResearch;
     fail(rows ? 1:5);
@@ -167,7 +167,7 @@ static void reset(void) {
     memset(storedCounts,0,sizeof(storedCounts));memset(storedResearch,0,sizeof(storedResearch));
     memset(planets,0,sizeof(planets));memset(hulls,0,sizeof(hulls));
     lpplProdGlob=NULL;sel.pl.id=2;sel.grobj=1;sel.pl.lpplprod=queue(2);
-    hwndProdDlg=0;fDlgUp=0;penvMem=&originalEnvironment;idPlayer=fAi=cPlanet=0;
+    hwndProdDlg=0;fDlgUp=0;idPlayer=fAi=cPlanet=0;
     queueSelection=sourceSelection=researchCheck=-99;
 }
 static int referenceTarget(int current,int next) {
@@ -203,7 +203,7 @@ int main(void) {
     const intptr_t results[]={0,1,-1,65536,65537,-65536};
     for(unsigned i=0;i<sizeof(results)/sizeof(results[0]);i++) {
         reset();modalResult=results[i];PLPROD *old=sel.pl.lpplprod;
-        CHECK(ChangeProduction(0)==1 && penvMem==&originalEnvironment && !hwndProdDlg && !fDlgUp && !lpplProdGlob);
+        CHECK(ChangeProduction(0)==1 && !FStarsRecoveryActive() && !hwndProdDlg && !fDlgUp && !lpplProdGlob);
         int accept=(int16_t)results[i]!=0;
         CHECK(writeCount==accept && sel.pl.fNoResearch==(unsigned)accept);
         CHECK(alive[allocation(old)]==!accept);CHECK((strstr(trace,"Stats;")!=NULL)==accept);
@@ -215,7 +215,7 @@ int main(void) {
     CHECK(sel.pl.lpplprod==preexisting); // direct Clear assumes global null; does not enforce it
     for(int stage=1;stage<=4;stage++) {
         reset();failAt=stage;modalResult=1;PLPROD *old=sel.pl.lpplprod;
-        CHECK(ChangeProduction(0)==0 && penvMem==&originalEnvironment && !lpplProdGlob && !hwndProdDlg && !fDlgUp);
+        CHECK(ChangeProduction(0)==0 && !FStarsRecoveryActive() && !lpplProdGlob && !hwndProdDlg && !fDlgUp);
         CHECK(sel.pl.fNoResearch==(unsigned)(stage!=1));CHECK(strstr(trace,"Alert;")!=NULL);
         CHECK((strstr(trace,"End0;")!=NULL)==(stage==2));
         CHECK(alive[allocation(old)]==(stage<=2));
@@ -256,9 +256,9 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-lifecycle-') as work:
-        path=Path(work);source=path/'witness.c';binary=path/'witness'
+        path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=c++17','-iquote',str(ROOT/'src/platform'),str(ROOT/'src/platform/errors.cpp'),'-Wall','-Wextra','-Werror',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

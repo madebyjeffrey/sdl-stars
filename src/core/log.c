@@ -1066,8 +1066,6 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
 }
 
 int16_t FLoadLogFile(char *pszLog) {
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     int16_t  fRet;
     int16_t  cbLog;
     int16_t  iCur;
@@ -1077,10 +1075,88 @@ int16_t FLoadLogFile(char *pszLog) {
     fRet = TRUE;
     imemLogCur = 0;
     imemLogPrev = -1;
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        if (game.fTutorial && idPlayer == 0 && gd.fGeneratingTurn) {
+            cSkip = game.turn;
+            vlpMemStream = LpbLoadTutorLog();
+            if (!vlpMemStream) {
+                return FALSE;
+            }
+            if (game.turn >= *vlpMemStream) {
+                vlpMemStream = NULL;
+                goto StrOpen;
+            }
+            vlpMemStream++;
+            while (cSkip-- != 0) {
+                do {
+                    vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
+                } while (((HDR *)vlpMemStream)->rt != rtBOF);
+            }
+        } else {
+        StrOpen:
+            StreamOpen(pszLog, 16416);
+        }
+
+        ReadRt();
+        if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+            FileError(idsFileDoesBelongVersionStars);
+            goto FailSuccess;
+        }
+        if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
+        FailSuccess:
+            if (vlpMemStream) {
+                vlpMemStream = NULL;
+            } else {
+                StreamClose();
+            }
+            return TRUE;
+        }
+        if (((RTBOF *)rgbCur)->turn != game.turn) {
+            FileError(idsLogFileRecentGameTryingLoadIgnoring);
+            goto FailSuccess;
+        }
+        if (((RTBOF *)rgbCur)->wGen != game.wGen) {
+            FileError(idsFileGame);
+            goto FailSuccess;
+        }
+        wVersFile = ((RTBOF *)rgbCur)->wVersion;
+        gd.fFileCrippled = ((RTBOF *)rgbCur)->fCrippled;
+        if (gd.fGeneratingTurn) {
+            rgplr[idPlayer].fCrippled = ((RTBOF *)rgbCur)->fCrippled;
+        }
+        ReadRt();
+        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
+            ReadRt();
+            memmove(lpLog + iCur, &hdrCur, sizeof(HDR));
+            memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
+        }
+        ReadRt();
+        for (lpmp = (MSGPLR *)&vlpmsgplrOut; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
+        }
+        while (hdrCur.rt == rtPlrMsg) {
+            lpmp->lpmsgplrNext = LpmsgplrFromRt();
+            if (lpmp->lpmsgplrNext) {
+                lpmp = lpmp->lpmsgplrNext;
+                vcmsgplrOut++;
+            }
+            ReadRt();
+        }
+        if (hdrCur.rt != rtEOF) {
+            fRet = FALSE;
+            goto Done;
+        }
+        imemLogCur = cbLog;
+Done:
+        if (vlpMemStream) {
+            vlpMemStream = NULL;
+        } else {
+            StreamClose();
+        }
+        DirtyGame(FALSE);
+        return fRet;
+    } catch (const StarsError &) {
         if (vlpMemStream) {
             return FALSE;
         }
@@ -1090,93 +1166,9 @@ int16_t FLoadLogFile(char *pszLog) {
         StreamClose();
         return FALSE;
     }
-    if (game.fTutorial && idPlayer == 0 && gd.fGeneratingTurn) {
-        cSkip = game.turn;
-        vlpMemStream = LpbLoadTutorLog();
-        if (!vlpMemStream) {
-            penvMem = penvMemSav;
-            return FALSE;
-        }
-        if (game.turn >= *vlpMemStream) {
-            vlpMemStream = NULL;
-            goto StrOpen;
-        }
-        vlpMemStream++;
-        while (cSkip-- != 0) {
-            do {
-                vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
-            } while (((HDR *)vlpMemStream)->rt != rtBOF);
-        }
-    } else {
-    StrOpen:
-        StreamOpen(pszLog, 16416);
-    }
-
-    ReadRt();
-    if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
-        FileError(idsFileDoesBelongVersionStars);
-        goto FailSuccess;
-    }
-    if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
-    FailSuccess:
-        if (vlpMemStream) {
-            vlpMemStream = NULL;
-        } else {
-            StreamClose();
-        }
-        penvMem = penvMemSav;
-        return TRUE;
-    }
-    if (((RTBOF *)rgbCur)->turn != game.turn) {
-        FileError(idsLogFileRecentGameTryingLoadIgnoring);
-        goto FailSuccess;
-    }
-    if (((RTBOF *)rgbCur)->wGen != game.wGen) {
-        FileError(idsFileGame);
-        goto FailSuccess;
-    }
-    wVersFile = ((RTBOF *)rgbCur)->wVersion;
-    gd.fFileCrippled = ((RTBOF *)rgbCur)->fCrippled;
-    if (gd.fGeneratingTurn) {
-        rgplr[idPlayer].fCrippled = ((RTBOF *)rgbCur)->fCrippled;
-    }
-    ReadRt();
-    cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
-    for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
-        ReadRt();
-        memmove(lpLog + iCur, &hdrCur, sizeof(HDR));
-        memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
-    }
-    ReadRt();
-    for (lpmp = (MSGPLR *)&vlpmsgplrOut; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
-    }
-    while (hdrCur.rt == rtPlrMsg) {
-        lpmp->lpmsgplrNext = LpmsgplrFromRt();
-        if (lpmp->lpmsgplrNext) {
-            lpmp = lpmp->lpmsgplrNext;
-            vcmsgplrOut++;
-        }
-        ReadRt();
-    }
-    if (hdrCur.rt != rtEOF) {
-        fRet = FALSE;
-        goto Done;
-    }
-    imemLogCur = cbLog;
-Done:
-    if (vlpMemStream) {
-        vlpMemStream = NULL;
-    } else {
-        StreamClose();
-    }
-    penvMem = penvMemSav;
-    DirtyGame(FALSE);
-    return fRet;
 }
 
 int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     int16_t  fRet;
     int16_t  cbLog;
     int16_t  iCur;
@@ -1184,10 +1176,34 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
     fRet = TRUE;
     imemLogCur = 0;
     imemLogPrev = -1;
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        idsFileError = 0;
+        if (!FOpenFile(dtLog, iplr, 32)) {
+            if (idsFileError != idsCantOpenFile) {
+                *pfError = idsFileError;
+            }
+            return FALSE;
+        }
+        ReadRt();
+        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
+            ReadRt();
+        }
+        ReadRt();
+        while (hdrCur.rt == rtPlrMsg) {
+            ReadRt();
+        }
+        if (hdrCur.rt != rtEOF) {
+            *pfError = 3;
+            fRet = FALSE;
+            goto Done;
+        }
+        imemLogCur = cbLog;
+Done:
+        StreamClose();
+        return fRet;
+    } catch (const StarsError &) {
         if (hf == -1) {
             return TRUE;
         }
@@ -1195,37 +1211,9 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
         *pfError = 3;
         return FALSE;
     }
-    idsFileError = 0;
-    if (!FOpenFile(dtLog, iplr, 32)) {
-        if (idsFileError != idsCantOpenFile) {
-            *pfError = idsFileError;
-        }
-        return FALSE;
-    }
-    ReadRt();
-    cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
-    for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
-        ReadRt();
-    }
-    ReadRt();
-    while (hdrCur.rt == rtPlrMsg) {
-        ReadRt();
-    }
-    if (hdrCur.rt != rtEOF) {
-        *pfError = 3;
-        fRet = FALSE;
-        goto Done;
-    }
-    imemLogCur = cbLog;
-Done:
-    StreamClose();
-    penvMem = penvMemSav;
-    return fRet;
 }
 
 int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     int16_t  iCur;
     HDR     *lprts;
     RTLOGHDR rtlh;
@@ -1248,40 +1236,36 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         AlertSz(PszFormatIds(idsUnableCreateLogFile, NULL), MB_ICONHAND);
         return FALSE;
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        rtlh.cbLog = imemLogCur;
+        /* Preserve the unused 15-byte metadata area in the orders-file header. */
+        memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
+        WriteRt(9, 17, &rtlh);
+        for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
+            lprts = (HDR *)(lpLog + iCur);
+            WriteRt(lprts->rt, lprts->cb, lpLog + (2 + iCur));
+        }
+        iCur = vcmsgplrOut;
+        lpmp = vlpmsgplrOut;
+        while (iCur-- != 0) {
+            WriteRtPlrMsg(lpmp);
+            lpmp = lpmp->lpmsgplrNext;
+        }
+        WriteRt(rtEOF, 0, NULL);
+        StreamClose();
+        DirtyGame(FALSE);
+        gd.fWriteTurnNum = TRUE;
+        return TRUE;
+    } catch (const StarsError &) {
         StreamClose();
         return FALSE;
     }
-    rtlh.cbLog = imemLogCur;
-    /* Preserve the unused 15-byte metadata area in the orders-file header. */
-    memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
-    WriteRt(9, 17, &rtlh);
-    for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-        lprts = (HDR *)(lpLog + iCur);
-        WriteRt(lprts->rt, lprts->cb, lpLog + (2 + iCur));
-    }
-    iCur = vcmsgplrOut;
-    lpmp = vlpmsgplrOut;
-    while (iCur-- != 0) {
-        WriteRtPlrMsg(lpmp);
-        lpmp = lpmp->lpmsgplrNext;
-    }
-    WriteRt(rtEOF, 0, NULL);
-    StreamClose();
-    penvMem = penvMemSav;
-    DirtyGame(FALSE);
-    gd.fWriteTurnNum = TRUE;
-    return TRUE;
 }
 
 int16_t FWriteHistFile(int16_t iPlayer) {
     PLANET   *lppl;
     int16_t   i;
-    jmp_buf  *penvMemSav;
-    jmp_buf   env;
     uint16_t  cTurnBase;
     SHDEF    *lpshdef;
     int16_t   j;
@@ -1292,76 +1276,74 @@ int16_t FWriteHistFile(int16_t iPlayer) {
         AlertSz(PszFormatIds(idsUnableCreateHistoryFile, NULL), MB_ICONHAND);
         return FALSE;
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        rthh.cPlanet = cPlanet;
+        rthh.cPlanetExtra = rgplr[iPlayer].cFleet;
+        WriteRt(rtHistHdr, 4, &rthh);
+        i = 0;
+        lppl = lpPlanets;
+        while (i < cPlanet) {
+            WritePlanet(lppl, lppl->det < detSome ? 15 : rtPlanetB, TRUE);
+            i++;
+            lppl++;
+        }
+        WriteRt(rtMsgFilt, cbbitfMsg, bitfMsgFiltered);
+        for (i = 0; i < game.cPlayer; i++) {
+            if (i != iPlayer && rgplr[i].det != detNone) {
+                WriteRtPlr(&rgplr[i], NULL);
+            }
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgplr[i].fInclude && i != iPlayer) {
+                lpshdef = rglpshdef[i];
+                for (j = 0; j < 16; j++) {
+                    if (!lpshdef[j].fFree) {
+                        WriteRtShDef(lpshdef + j, NULL);
+                    }
+                }
+            }
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgplr[i].fInclude && i != iPlayer) {
+                lpshdef = rglpshdefSB[i];
+                for (j = 0; j < 10; j++) {
+                    if (!lpshdef[j].fFree) {
+                        WriteRtShDef(lpshdef + j, NULL);
+                    }
+                }
+            }
+        }
+        if (game.turn <= 100) {
+            cTurnBase = 0;
+        } else {
+            cTurnBase = game.turn - 100;
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgsxPlr[i]) {
+                for (j = 0; j < rgcsxPlr[i]; j++) {
+                    if (rgsxPlr[i][j].turn >= cTurnBase) {
+                        WriteRt(rtScore, 24, rgsxPlr[i] + j);
+                    }
+                }
+            }
+        }
+        if (vlpbAiData && ((AIHIST *)vlpbAiData)->cbAiHist > 2) {
+            i = ((AIHIST *)vlpbAiData)->cbAiHist;
+            lpb = vlpbAiData;
+            for (; i >= 1024; i -= 1023) {
+                WriteRt(rtAiData, 1023, lpb);
+                lpb += 1023;
+            }
+            WriteRt(rtAiData, i, lpb);
+        }
+        WriteRt(rtEOF, 0, NULL);
+        StreamClose();
+        return TRUE;
+    } catch (const StarsError &) {
         StreamClose();
         return FALSE;
     }
-    rthh.cPlanet = cPlanet;
-    rthh.cPlanetExtra = rgplr[iPlayer].cFleet;
-    WriteRt(rtHistHdr, 4, &rthh);
-    i = 0;
-    lppl = lpPlanets;
-    while (i < cPlanet) {
-        WritePlanet(lppl, lppl->det < detSome ? 15 : rtPlanetB, TRUE);
-        i++;
-        lppl++;
-    }
-    WriteRt(rtMsgFilt, cbbitfMsg, bitfMsgFiltered);
-    for (i = 0; i < game.cPlayer; i++) {
-        if (i != iPlayer && rgplr[i].det != detNone) {
-            WriteRtPlr(&rgplr[i], NULL);
-        }
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude && i != iPlayer) {
-            lpshdef = rglpshdef[i];
-            for (j = 0; j < 16; j++) {
-                if (!lpshdef[j].fFree) {
-                    WriteRtShDef(lpshdef + j, NULL);
-                }
-            }
-        }
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude && i != iPlayer) {
-            lpshdef = rglpshdefSB[i];
-            for (j = 0; j < 10; j++) {
-                if (!lpshdef[j].fFree) {
-                    WriteRtShDef(lpshdef + j, NULL);
-                }
-            }
-        }
-    }
-    if (game.turn <= 100) {
-        cTurnBase = 0;
-    } else {
-        cTurnBase = game.turn - 100;
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgsxPlr[i]) {
-            for (j = 0; j < rgcsxPlr[i]; j++) {
-                if (rgsxPlr[i][j].turn >= cTurnBase) {
-                    WriteRt(rtScore, 24, rgsxPlr[i] + j);
-                }
-            }
-        }
-    }
-    if (vlpbAiData && ((AIHIST *)vlpbAiData)->cbAiHist > 2) {
-        i = ((AIHIST *)vlpbAiData)->cbAiHist;
-        lpb = vlpbAiData;
-        for (; i >= 1024; i -= 1023) {
-            WriteRt(rtAiData, 1023, lpb);
-            lpb += 1023;
-        }
-        WriteRt(rtAiData, i, lpb);
-    }
-    WriteRt(rtEOF, 0, NULL);
-    StreamClose();
-    penvMem = penvMemSav;
-    return TRUE;
 }
 
 void EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), void *lpPass, int16_t iPass) {

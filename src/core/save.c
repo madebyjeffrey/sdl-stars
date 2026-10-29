@@ -117,12 +117,10 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
     int16_t  fNoAutoTrack;
     BTLPLAN *lpbtlplan;
     int16_t  j;
-    jmp_buf *penvMemSav;
     int16_t  i;
     ORDER   *lpord;
     THING   *lpth;
     FLEET   *lpfl;
-    jmp_buf  env;
     int16_t  iord;
     SHDEF   *lpshdef;
     THING   *lpthMac;
@@ -302,174 +300,177 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
     } else {
         CchSprintf(szWork, "%s.m%d", pszFileBase, iPlayer + 1);
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-    LFail:
-        idPlayer = iPlayer;
-        if (fAppend) {
-            AlertSz(PszFormatIds(idsUnableUpdateTurnFile, NULL), MB_ICONHAND);
-        } else if (iPlayer != iplrNone) {
-            AlertSz(PszFormatIds(idsUnableCreateNewTurnFile, NULL), MB_ICONHAND);
-        } else {
-            idPlayer = iplrNone;
-            AlertSz(PszFormatIds(idsUnableCreateHostFile, NULL), MB_ICONHAND);
-        }
-        idPlayer = iplrNone;
-        fRet = FALSE;
-        goto FreeUp;
-    }
-    if (fAppend && FAppendFile(iPlayer))
-        goto LAppend;
-    if (!FCreateFile(iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, NULL))
-        goto LFail;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        if (fAppend && FAppendFile(iPlayer))
+            goto LAppend;
+        if (!FCreateFile(iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, NULL))
+            goto LFail;
 LAppend:
-    WriteBattles(iPlayer);
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude || rgplr[i].fDead) {
-            /* A Claim Adjuster's file carries other players' habitat (their
-               planet values in DrawMineSurvey), which only a full-detail
-               record holds. The original raised the live record to full
-               detail, sending tech, research, traits, production template
-               and relations too, and read rgplr[-1] for the host file. Send a
-               full-detail copy with only the habitat filled in. */
-            if (iPlayer != iplrNone && i != iPlayer && !rgplr[i].fDead && GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
-                plrT = rgplr[i];
-                memset(&plrT.idPlanetHome, 0, (uint8_t *)&plrT.szName - (uint8_t *)&plrT.idPlanetHome);
-                memcpy(plrT.rgEnvVar, rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar));
-                memcpy(plrT.rgEnvVarMin, rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
-                memcpy(plrT.rgEnvVarMax, rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
-                plrT.det = detAll;
-                WriteRtPlr(&plrT, NULL);
-            } else {
-                WriteRtPlr(&rgplr[i], NULL);
-            }
-        }
-    }
-    if (iPlayer == iplrNone && lSaltCur != 0) {
-        WriteRt(rtChgPassword, 4, &lSaltCur);
-    }
-    WritePlayerMessages(iPlayer);
-    i = 0;
-    lpplT = lpPlanets;
-    while (i < cPlanet) {
-        if (lpplT->fInclude) {
-            if (lpplT->det == detAll) {
-                WritePlanet(lpplT, rtPlanet, FALSE);
-                if (lpplT->lpplprod) {
-                    WriteRt(rtProdQ, lpplT->lpplprod->iprodMac * 4, lpplT->lpplprod->rgprod);
-                }
-            } else if (lpplT->det == detObscure) {
-                pl = *lpplT;
-                lpplT->fStarbase = FALSE;
-                lpplT->det = detSome;
-                WritePlanet(lpplT, rtPlanetB, FALSE);
-                *lpplT = pl;
-            } else {
-                WritePlanet(lpplT, rtPlanetB, FALSE);
-            }
-        }
-        i++;
-        lpplT++;
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude) {
-            lpshdef = rglpshdef[i];
-            for (j = 0; j < 16; j++) {
-                if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                    WriteRtShDef(lpshdef + j, NULL);
-                }
-            }
-        }
-    }
-    for (i = 0; i < cFleet; i++) {
-        lpflT = rglpfl[i];
-        if (!rglpfl[i])
-            break;
-        if (lpflT->fInclude) {
-            WriteFleet(lpflT);
-        }
-    }
-    for (i = 0; i < game.cPlayer; i++) {
-        if (rgplr[i].fInclude) {
-            lpshdef = rglpshdefSB[i];
-            for (j = 0; j < 10; j++) {
-                if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
-                    WriteRtShDef(lpshdef + j, NULL);
-                }
-            }
-        }
-    }
-    if (iPlayer != iplrNone && vlprgScoreX) {
+        WriteBattles(iPlayer);
         for (i = 0; i < game.cPlayer; i++) {
-            if (gd.fGameOverMan || i == iPlayer || rgplr[i].fDead || (game.fVisScores && game.turn >= 20)) {
-                WriteRt(rtScore, 24, vlprgScoreX + i);
+            if (rgplr[i].fInclude || rgplr[i].fDead) {
+                /* A Claim Adjuster's file carries other players' habitat (their
+                   planet values in DrawMineSurvey), which only a full-detail
+                   record holds. The original raised the live record to full
+                   detail, sending tech, research, traits, production template
+                   and relations too, and read rgplr[-1] for the host file. Send a
+                   full-detail copy with only the habitat filled in. */
+                if (iPlayer != iplrNone && i != iPlayer && !rgplr[i].fDead && GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
+                    plrT = rgplr[i];
+                    memset(&plrT.idPlanetHome, 0, (uint8_t *)&plrT.szName - (uint8_t *)&plrT.idPlanetHome);
+                    memcpy(plrT.rgEnvVar, rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar));
+                    memcpy(plrT.rgEnvVarMin, rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
+                    memcpy(plrT.rgEnvVarMax, rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
+                    plrT.det = detAll;
+                    WriteRtPlr(&plrT, NULL);
+                } else {
+                    WriteRtPlr(&rgplr[i], NULL);
+                }
             }
         }
-    }
-    i = 0;
-    lpth = lpThings;
-    lpthMac = lpThings + cThing;
-    for (; lpth < lpthMac; lpth++) {
-        if (iPlayer == iplrNone || (iPlayer == lpth->iplr && lpth->ith != ithMineralPacket && lpth->ith != ithMysteryTrader && lpth->ith != ithWormhole) ||
-            (lpth->ith == ithMinefield && (1 << iPlayer & lpth->thm.grbitPlrNow)) || (lpth->ith == ithMineralPacket && lpth->thp.fInclude) ||
-            (lpth->ith == ithMysteryTrader && lpth->tht.fInclude) || (lpth->ith == ithWormhole && lpth->thw.fInclude)) {
-            i++;
+        if (iPlayer == iplrNone && lSaltCur != 0) {
+            WriteRt(rtChgPassword, 4, &lSaltCur);
         }
-    }
-    if (i > 0) {
-        WriteRt(rtThing, 2, &i);
+        WritePlayerMessages(iPlayer);
+        i = 0;
+        lpplT = lpPlanets;
+        while (i < cPlanet) {
+            if (lpplT->fInclude) {
+                if (lpplT->det == detAll) {
+                    WritePlanet(lpplT, rtPlanet, FALSE);
+                    if (lpplT->lpplprod) {
+                        WriteRt(rtProdQ, lpplT->lpplprod->iprodMac * 4, lpplT->lpplprod->rgprod);
+                    }
+                } else if (lpplT->det == detObscure) {
+                    pl = *lpplT;
+                    lpplT->fStarbase = FALSE;
+                    lpplT->det = detSome;
+                    WritePlanet(lpplT, rtPlanetB, FALSE);
+                    *lpplT = pl;
+                } else {
+                    WritePlanet(lpplT, rtPlanetB, FALSE);
+                }
+            }
+            i++;
+            lpplT++;
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgplr[i].fInclude) {
+                lpshdef = rglpshdef[i];
+                for (j = 0; j < 16; j++) {
+                    if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
+                        WriteRtShDef(lpshdef + j, NULL);
+                    }
+                }
+            }
+        }
+        for (i = 0; i < cFleet; i++) {
+            lpflT = rglpfl[i];
+            if (!rglpfl[i])
+                break;
+            if (lpflT->fInclude) {
+                WriteFleet(lpflT);
+            }
+        }
+        for (i = 0; i < game.cPlayer; i++) {
+            if (rgplr[i].fInclude) {
+                lpshdef = rglpshdefSB[i];
+                for (j = 0; j < 10; j++) {
+                    if (!lpshdef[j].fFree && lpshdef[j].fInclude) {
+                        WriteRtShDef(lpshdef + j, NULL);
+                    }
+                }
+            }
+        }
+        if (iPlayer != iplrNone && vlprgScoreX) {
+            for (i = 0; i < game.cPlayer; i++) {
+                if (gd.fGameOverMan || i == iPlayer || rgplr[i].fDead || (game.fVisScores && game.turn >= 20)) {
+                    WriteRt(rtScore, 24, vlprgScoreX + i);
+                }
+            }
+        }
+        i = 0;
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
             if (iPlayer == iplrNone || (iPlayer == lpth->iplr && lpth->ith != ithMineralPacket && lpth->ith != ithMysteryTrader && lpth->ith != ithWormhole) ||
                 (lpth->ith == ithMinefield && (1 << iPlayer & lpth->thm.grbitPlrNow)) || (lpth->ith == ithMineralPacket && lpth->thp.fInclude) ||
                 (lpth->ith == ithMysteryTrader && lpth->tht.fInclude) || (lpth->ith == ithWormhole && lpth->thw.fInclude)) {
-                if (iPlayer == iplrNone) {
-                    WriteRt(rtThing, 18, lpth);
-                } else {
-                    /* A player's file keeps only that player's bit of each
-                       per-player mask, and not the part the Mystery Trader
-                       carries. The original wrote the whole record, telling
-                       every player who else had seen these things. */
-                    th = *lpth;
-                    switch (th.ith) {
-                    case ithMinefield:
-                        th.thm.grbitPlr &= 1 << iPlayer;
-                        th.thm.grbitPlrNow &= 1 << iPlayer;
-                        break;
-                    case ithWormhole:
-                        th.thw.grbitPlr &= 1 << iPlayer;
-                        th.thw.grbitPlrTrav &= 1 << iPlayer;
-                        break;
-                    case ithMysteryTrader:
-                        th.tht.grbitPlr &= 1 << iPlayer;
-                        th.tht.grbitTrader = grbitTraderNone;
-                        break;
+                i++;
+            }
+        }
+        if (i > 0) {
+            WriteRt(rtThing, 2, &i);
+            lpth = lpThings;
+            lpthMac = lpThings + cThing;
+            for (; lpth < lpthMac; lpth++) {
+                if (iPlayer == iplrNone || (iPlayer == lpth->iplr && lpth->ith != ithMineralPacket && lpth->ith != ithMysteryTrader && lpth->ith != ithWormhole) ||
+                    (lpth->ith == ithMinefield && (1 << iPlayer & lpth->thm.grbitPlrNow)) || (lpth->ith == ithMineralPacket && lpth->thp.fInclude) ||
+                    (lpth->ith == ithMysteryTrader && lpth->tht.fInclude) || (lpth->ith == ithWormhole && lpth->thw.fInclude)) {
+                    if (iPlayer == iplrNone) {
+                        WriteRt(rtThing, 18, lpth);
+                    } else {
+                        /* A player's file keeps only that player's bit of each
+                           per-player mask, and not the part the Mystery Trader
+                           carries. The original wrote the whole record, telling
+                           every player who else had seen these things. */
+                        th = *lpth;
+                        switch (th.ith) {
+                        case ithMinefield:
+                            th.thm.grbitPlr &= 1 << iPlayer;
+                            th.thm.grbitPlrNow &= 1 << iPlayer;
+                            break;
+                        case ithWormhole:
+                            th.thw.grbitPlr &= 1 << iPlayer;
+                            th.thw.grbitPlrTrav &= 1 << iPlayer;
+                            break;
+                        case ithMysteryTrader:
+                            th.tht.grbitPlr &= 1 << iPlayer;
+                            th.tht.grbitTrader = grbitTraderNone;
+                            break;
+                        }
+                        WriteRt(rtThing, 18, &th);
                     }
-                    WriteRt(rtThing, 18, &th);
                 }
             }
         }
-    }
-    if (iPlayer == iplrNone) {
-        i = 0;
-        iMax = game.cPlayer;
-    } else {
-        i = iPlayer;
-        iMax = iPlayer + 1;
-    }
-    for (; i < iMax; i++) {
-        lpbtlplan = rglpbtlplan[i];
-        j = 0;
-        while (j < rgcbtlplan[i]) {
-            WriteBattlePlan(lpbtlplan, FALSE);
-            j++;
-            lpbtlplan++;
+        if (iPlayer == iplrNone) {
+            i = 0;
+            iMax = game.cPlayer;
+        } else {
+            i = iPlayer;
+            iMax = iPlayer + 1;
         }
+        for (; i < iMax; i++) {
+            lpbtlplan = rglpbtlplan[i];
+            j = 0;
+            while (j < rgcbtlplan[i]) {
+                WriteBattlePlan(lpbtlplan, FALSE);
+                j++;
+                lpbtlplan++;
+            }
+        }
+        WriteRt(rtEOF, 2, &game.turn);
+        StreamClose();
+    } catch (const StarsError &) {
+        goto LFail;
     }
-    WriteRt(rtEOF, 2, &game.turn);
-    StreamClose();
+    goto FreeUp;
+LFail:
+    idPlayer = iPlayer;
+    if (fAppend) {
+        AlertSz(PszFormatIds(idsUnableUpdateTurnFile, NULL), MB_ICONHAND);
+    } else if (iPlayer != iplrNone) {
+        AlertSz(PszFormatIds(idsUnableCreateNewTurnFile, NULL), MB_ICONHAND);
+    } else {
+        idPlayer = iplrNone;
+        AlertSz(PszFormatIds(idsUnableCreateHostFile, NULL), MB_ICONHAND);
+    }
+    idPlayer = iplrNone;
+    fRet = FALSE;
+    goto FreeUp;
+
 FreeUp:
     SetVisiblePlanFleet(iplrNone);
     return fRet;
@@ -872,7 +873,7 @@ void WriteRtString(char *lpsz) {
     if (lpsz && *lpsz != 0) {
         if (strlen(lpsz) > 31 || !FUtf8Valid(lpsz, strlen(lpsz))) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
-            if (penvMem) StarsLongJump(penvMem, -1);
+            if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
             return;
         }
         cOut = 31;
@@ -1000,8 +1001,6 @@ void SetSzWorkFromDt(DtFileType dt, int16_t iPlayer) {
 }
 
 int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szForceName) {
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     char    *psz;
 
     if (szForceName) {
@@ -1010,16 +1009,16 @@ int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szFor
         SetSzWorkFromDt(dt, iPlayer);
         psz = szWork;
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
+    StarsRecoveryScope scopeRecovery;
+    try {
+        StarsFileGuard closeStream(hf);
+        StreamOpen(psz, mdCreate);
+        WriteBOF(iPlayer, dt, FALSE);
+        closeStream.Release();
+        return TRUE;
+    } catch (const StarsError &) {
         return FALSE;
     }
-    StreamOpen(psz, mdCreate);
-    WriteBOF(iPlayer, dt, FALSE);
-    penvMem = penvMemSav;
-    return TRUE;
 }
 
 void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
@@ -1048,8 +1047,6 @@ void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
 int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
     StringId ids;
     RTBOF    rtbof;
-    jmp_buf *penvMemSav;
-    jmp_buf  env;
     int16_t  fChange;
     int16_t  fSuccess;
     int16_t  fSilentSav;
@@ -1060,97 +1057,95 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
     fSuccess = FALSE;
     ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
     SetSzWorkFromDt(dt & 0xff, iPlayer);
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
+    StarsRecoveryScope scopeRecovery;
+    try {
+        fFileErrSilent = TRUE;
+        StreamOpen(szWork, mdReadWrite);
+        fFileErrSilent = fSilentSav;
+        ids = idsGameFileAppearsCorruptUnableLoadFile;
+        ReadRt();
+        if (hdrCur.rt != rtBOF) {
+            FileError(idsFileDoesBelongVersionStars);
+            goto LBadFile;
+        }
+        if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
+            FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
+            goto LBadFile;
+        }
+        if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
+            FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
+            goto LBadFile;
+        }
+        rtbof = *((RTBOF *)rgbCur);
+        if (game.lid == 0)
+            goto LBadFile;
+        if (rtbof.lidGame != game.lid) {
+            FileError(idsFileGame);
+            goto LBadFile;
+        }
+        fChange = FALSE;
+        switch (mdMark) {
+        case mdMarkInUse:
+            if (rtbof.fInUse != f) {
+                rtbof.fInUse = f;
+                fChange = TRUE;
+            }
+            break;
+        case mdMarkDone:
+            if (rtbof.fDone != f) {
+                rtbof.fDone = f;
+                fChange = TRUE;
+            }
+            break;
+        case mdMarkMulti:
+            if (rtbof.fMulti != f) {
+                rtbof.fMulti = f;
+                fChange = TRUE;
+            }
+            break;
+        case mdMarkAi:
+            do {
+                GetFileSeeds(&lSeedSav1, &lSeedSav2);
+                ReadRt();
+            } while (hdrCur.rt != rtPlr || ((PLAYER *)rgbCur)->iPlayer != iPlayer);
+            if (((PLAYER *)rgbCur)->fAi != f) {
+                if (((PLAYER *)rgbCur)->fAi != 0) {
+                    if (((PLAYER *)rgbCur)->idAi != idAiMaid)
+                        goto LBadFile;
+                    ((PLAYER *)rgbCur)->fAi = FALSE;
+                } else {
+                    ((PLAYER *)rgbCur)->fAi = TRUE;
+                    ((PLAYER *)rgbCur)->idAi = idAiMaid;
+                }
+                ((PLAYER *)rgbCur)->lSalt = ~((PLAYER *)rgbCur)->lSalt;
+                LSeekFile(hf, (int16_t)-(hdrCur.cb + 2), 1);
+                SetFileSeeds(lSeedSav1, lSeedSav2);
+                WriteRt(rtPlr, hdrCur.cb, rgbCur);
+                fChange = dt == dtTurn;
+                rtbof.fDone = FALSE;
+            }
+            break;
+        }
+        if (fChange) {
+            LSeekFile(hf, 0, 0);
+            WriteRt(rtBOF, 16, &rtbof);
+        }
+        fSuccess = TRUE;
+LBadFile:
+        if ((dt & 0x2000) && fSuccess) {
+            LSeekFile(hf, 0, 2);
+        } else {
+            StreamClose();
+        }
+        return fSuccess;
+    } catch (const StarsError &) {
         fFileErrSilent = fSilentSav;
         if (ids != idsUniverseDefinitionFileSeemsMissingCorrupt) {
             FileError(ids);
         }
         StreamClose();
-        penvMem = penvMemSav;
         return FALSE;
     }
-    fFileErrSilent = TRUE;
-    StreamOpen(szWork, mdReadWrite);
-    fFileErrSilent = fSilentSav;
-    ids = idsGameFileAppearsCorruptUnableLoadFile;
-    ReadRt();
-    if (hdrCur.rt != rtBOF) {
-        FileError(idsFileDoesBelongVersionStars);
-        goto LBadFile;
-    }
-    if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
-        FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
-        goto LBadFile;
-    }
-    if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
-        FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
-        goto LBadFile;
-    }
-    rtbof = *((RTBOF *)rgbCur);
-    if (game.lid == 0)
-        goto LBadFile;
-    if (rtbof.lidGame != game.lid) {
-        FileError(idsFileGame);
-        goto LBadFile;
-    }
-    fChange = FALSE;
-    switch (mdMark) {
-    case mdMarkInUse:
-        if (rtbof.fInUse != f) {
-            rtbof.fInUse = f;
-            fChange = TRUE;
-        }
-        break;
-    case mdMarkDone:
-        if (rtbof.fDone != f) {
-            rtbof.fDone = f;
-            fChange = TRUE;
-        }
-        break;
-    case mdMarkMulti:
-        if (rtbof.fMulti != f) {
-            rtbof.fMulti = f;
-            fChange = TRUE;
-        }
-        break;
-    case mdMarkAi:
-        do {
-            GetFileSeeds(&lSeedSav1, &lSeedSav2);
-            ReadRt();
-        } while (hdrCur.rt != rtPlr || ((PLAYER *)rgbCur)->iPlayer != iPlayer);
-        if (((PLAYER *)rgbCur)->fAi != f) {
-            if (((PLAYER *)rgbCur)->fAi != 0) {
-                if (((PLAYER *)rgbCur)->idAi != idAiMaid)
-                    goto LBadFile;
-                ((PLAYER *)rgbCur)->fAi = FALSE;
-            } else {
-                ((PLAYER *)rgbCur)->fAi = TRUE;
-                ((PLAYER *)rgbCur)->idAi = idAiMaid;
-            }
-            ((PLAYER *)rgbCur)->lSalt = ~((PLAYER *)rgbCur)->lSalt;
-            LSeekFile(hf, (int16_t)-(hdrCur.cb + 2), 1);
-            SetFileSeeds(lSeedSav1, lSeedSav2);
-            WriteRt(rtPlr, hdrCur.cb, rgbCur);
-            fChange = dt == dtTurn;
-            rtbof.fDone = FALSE;
-        }
-        break;
-    }
-    if (fChange) {
-        LSeekFile(hf, 0, 0);
-        WriteRt(rtBOF, 16, &rtbof);
-    }
-    fSuccess = TRUE;
-LBadFile:
-    if ((dt & 0x2000) && fSuccess) {
-        LSeekFile(hf, 0, 2);
-    } else {
-        StreamClose();
-    }
-    penvMem = penvMemSav;
-    return fSuccess;
 }
 
 void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
@@ -1174,7 +1169,7 @@ void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
 void RgToStream(void *rg, uint16_t cb) {
     if (cb != 0 && CbWriteFile(hf, rg, cb) != cb) {
         AlertSz(PszFormatIds(idsErrorWritingFile, NULL), MB_ICONHAND);
-        StarsLongJump(penvMem, -1);
+        StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     return;
 }

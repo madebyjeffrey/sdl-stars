@@ -62,7 +62,7 @@ static void test_PszFromLong(void) {
 
 // StarsCopyFile closed the stream's hf instead of its destination, leaving
 // the copy open with exclusive sharing, and its failed-open return skipped
-// restoring penvMem and fFileErrSilent.
+// restoring recovery state and fFileErrSilent.
 static void test_StarsCopyFile(void) {
     char    szCwd[MAX_PATH];
     char    szSrc[MAX_PATH];
@@ -70,7 +70,6 @@ static void test_StarsCopyFile(void) {
     char    szBad[MAX_PATH];
     char    rgb[16];
     FILE   *fp;
-    jmp_buf env;
     int16_t fSilentSav;
 
     TEST_ASSERT(FStarsTestInit());
@@ -84,17 +83,17 @@ static void test_StarsCopyFile(void) {
     fputs("stars copy", fp);
     fclose(fp);
 
-    penvMem = &env;
+    TEST_CHECK(!FStarsRecoveryActive());
     fSilentSav = fFileErrSilent;
     StarsCopyFile(szSrc, szDst);
-    TEST_CHECK(penvMem == &env);
+    TEST_CHECK(!FStarsRecoveryActive());
     fp = fopen(szDst, "rb");
     TEST_ASSERT_(fp != NULL, "copy still open");
     TEST_CHECK(fgets(rgb, sizeof(rgb), fp) != NULL && strcmp(rgb, "stars copy") == 0);
     fclose(fp);
 
     StarsCopyFile(szSrc, szBad);
-    TEST_CHECK_(penvMem == &env, "penvMem not restored");
+    TEST_CHECK_(!FStarsRecoveryActive(), "recovery scope not restored");
     TEST_CHECK(fFileErrSilent == fSilentSav);
 }
 

@@ -139,7 +139,7 @@ static int16_t FReadHostIni(const char *szFile) {
     return TRUE;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -230,4 +230,11 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     return vretExitValue;
+} catch (const StarsError &error) {
+    fprintf(stderr, "stars-host: %s failure (message %u)\n",
+            error.mdError == starsErrorMemory ? "memory" : "file", (unsigned)error.ids);
+    return 2;
+} catch (...) {
+    fprintf(stderr, "stars-host: unexpected operation failure\n");
+    return 2;
 }

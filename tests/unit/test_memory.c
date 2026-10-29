@@ -1,3 +1,4 @@
+#include "common.h"
 #include "acutest.h"
 #include "stars_test.h"
 
@@ -34,9 +35,9 @@ static void TestReuseAndGrowth(void) {
     cbAllocSav = mphtcbAlloc[htMisc];
     // All three allocations must share one block even with 16-byte alignment.
     mphtcbAlloc[htMisc] = 256;
-    lp1 = LpAlloc(17, htMisc);
-    lp2 = LpAlloc(17, htMisc);
-    lp3 = LpAlloc(17, htMisc);
+    lp1 = (uint8_t *)LpAlloc(17, htMisc);
+    lp2 = (uint8_t *)LpAlloc(17, htMisc);
+    lp3 = (uint8_t *)LpAlloc(17, htMisc);
     lphb = rglphb[htMisc];
     // Request more than one allocation can hold, whatever its native alignment.
     cbRequest = RawLoad16(lp1 - 2) + 1;
@@ -47,19 +48,19 @@ static void TestReuseAndGrowth(void) {
     }
     FreeLp(lp1, htMisc);
     FreeLp(lp2, htMisc);
-    lpNew = LpAlloc(cbRequest, htMisc);
+    lpNew = (uint8_t *)LpAlloc(cbRequest, htMisc);
     CheckAligned(lpNew);
     TEST_CHECK(lpNew == lp1);
     TEST_CHECK(rglphb[htMisc] == lphb);
     memset(lp3, 0x5a, 17);
-    lpNew = LpReAlloc(lp3, 80, htMisc);
+    lpNew = (uint8_t *)LpReAlloc(lp3, 80, htMisc);
     CheckAligned(lpNew);
     for (i = 0; i < 17; i++) TEST_CHECK(lpNew[i] == 0x5a);
     FreeLp(lpNew, htMisc);
-    lpNew = LpAlloc(1, htMisc);
+    lpNew = (uint8_t *)LpAlloc(1, htMisc);
     CheckAligned(lpNew);
     memset(lpNew, 0x3c, 1);
-    lp1 = LpReAlloc(lpNew, 17, htMisc);
+    lp1 = (uint8_t *)LpReAlloc(lpNew, 17, htMisc);
     CheckAligned(lp1);
     TEST_CHECK(lp1 == lpNew);
     TEST_CHECK(lp1[0] == 0x3c);
@@ -74,9 +75,9 @@ static void TestSingleBlockGrowth(void) {
     int i;
 
     for (ht = htPlanets; ht <= htThings; ht += htThings - htPlanets) {
-        lp = LpAlloc(31, ht);
+        lp = (uint8_t *)LpAlloc(31, ht);
         memset(lp, 0x69, 31);
-        lp = LpReAlloc(lp, 30000, ht);
+        lp = (uint8_t *)LpReAlloc(lp, 30000, ht);
         CheckAligned(lp);
         for (i = 0; i < 31; i++) TEST_CHECK(lp[i] == 0x69);
         TEST_CHECK(rglphb[ht]->lphbNext == NULL);
@@ -86,19 +87,16 @@ static void TestSingleBlockGrowth(void) {
 }
 
 static void TestAllocationOverflow(void) {
-    jmp_buf env;
-    jmp_buf *penvSav;
 
     TEST_ASSERT(FStarsTestInit());
-    penvSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) == 0) {
+    try {
         LpAlloc(UINT16_MAX, htMisc);
         TEST_CHECK(FALSE);
-    } else {
+    } catch (const StarsError &error) {
+        TEST_CHECK(error.mdError == starsErrorMemory);
         TEST_CHECK(cStarsTestAlert == 1);
     }
-    penvMem = penvSav;
+    TEST_CHECK(!FStarsRecoveryActive());
 }
 
 TEST_LIST = {{"aligned mixed allocations and reset", TestMixedAllocations},

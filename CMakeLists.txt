@@ -53,11 +53,17 @@ set(STARS_UI_SOURCES
 # Preserve the original filenames while compiling the game as C++. The SDL
 # compatibility runtime, generated tables and C harnesses retain their C ABI.
 set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
-    src/host/host.c src/host/hostui.c PROPERTIES LANGUAGE CXX)
+    src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
+
+# Error state and pending callback failures are shared by game and SDL runtime.
+add_library(stars_errors STATIC src/platform/errors.cpp)
+target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
+target_link_libraries(stars_errors PRIVATE stars_sanitizers)
+target_compile_options(stars_errors PRIVATE -Wall -Wextra -Werror)
 
 # Settings every target that compiles game code shares.
 add_library(stars_options INTERFACE)
-target_link_libraries(stars_options INTERFACE stars_sanitizers)
+target_link_libraries(stars_options INTERFACE stars_sanitizers stars_errors)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
 add_library(stars_encoding STATIC src/platform/encoding.c)

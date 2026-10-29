@@ -73,4 +73,8 @@ decltype(FNativeOpenFileName) STARS_TEST_IMPL(FNativeOpenFileName);
 }
 #endif
 
+#ifdef __cplusplus
+#include "win_calls.h"
+#endif
+
 #endif

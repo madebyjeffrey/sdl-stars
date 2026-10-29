@@ -145,8 +145,9 @@ static void AlertSz(const char *s,int flags) { (void)s;(void)flags;alerts++; }
     block = between(ui, '            memcpy(rgzp, vrgZipProd, 160);', '        if (i < 0)')
     # Includes the closing brace of the caller's Customize branch.
     bodies += 'static void customize(void) {ZIPPRODQ rgzp[4];int lpProc,hwnd=1;int16_t fRet;do {if(1){' + block + '}while(0);}\n'
-    block = between(ui, '        if (lpplProdGlob) {', '    if (fClear) {')
-    bodies += 'static int recover(jmp_buf *penvMemSav) {if(1){' + block + 'return 1;}\n'
+    recovery = function('src/ui/produceui.c', 'int16_t ChangeProduction(')
+    block = recovery.split('} catch (const StarsError &) {', 1)[1].rsplit('}', 2)[0]
+    bodies += 'static int recover(void) {' + block + '}\n'
     bodies += r'''
 static void reset(unsigned n) {
     if(lpplProdGlob)FreePl((PL *)lpplProdGlob);
@@ -206,7 +207,7 @@ int main(void) {
     sel.pl.fNoResearch=1;hwndProdDlg=1;fDlgUp=1;failAllocation=1;penvMem=&env;
     if(setjmp(env)==0){apply(IDC_IMPORT,0);CHECK(0);}
     CHECK(pProdGlob[0].cItem==2 && lpplProdGlob!=NULL && freed==0);
-    CHECK(recover(NULL)==0 && lpplProdGlob==NULL && hwndProdDlg==0 && !fDlgUp && penvMem==NULL);
+    CHECK(recover()==0 && lpplProdGlob==NULL && hwndProdDlg==0 && !fDlgUp);
     CHECK(freed==1 && ended==1 && alerts==1 && sel.pl.fNoResearch==1);
     reset(14);lpplProdGlob->rgprod[0]=manual;for(i=1;i<14;i++)lpplProdGlob->rgprod[i]=automatic;
     strcpy(vrgZipProd[0].szName,"Default");iResTechNow=0;sel.pl.fNoResearch=1;renameResult=0;edit(IDC_IMPORT);

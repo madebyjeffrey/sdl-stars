@@ -39,6 +39,12 @@ ctest --test-dir dist/sdl-debug -L client --output-on-failure
 The `client` label also runs the real startup/race-wizard input tests on dummy
 and private X11/Openbox displays. See [client testing](../../docs/WIN32-CLIENT.md).
 
+`test_memory.c` and `test_exceptions.c` compile as C++ under their original
+filenames. Allocation overflow, missing files and short reads exercise typed
+failure handling and scoped cleanup. Other C harnesses continue through the C
+ABI. The separate `win32_exception_callbacks` test injects failures through real
+C dispatchers and checks modal cleanup before C++ delivery.
+
 ## Two kinds of test
 
 - **Function tests** call one game function with crafted inputs, such as

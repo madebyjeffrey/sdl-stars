@@ -247,19 +247,16 @@ void OutputFileString(char *szFile, char *sz) {
 
 void StarsCopyFile(char *szSrc, char *szDst) {
     char     rgb[2048];
-    int16_t  fFileErrSav;
     int16_t  fMissing;
-    jmp_buf  env;
     int16_t  hfDst;
     int32_t  cb;
-    jmp_buf *penvSav;
 
-    fFileErrSav = fFileErrSilent;
     hfDst = -1;
+    StarsRestore<int16_t> restoreSilent(fFileErrSilent);
+    StarsFileGuard closeDestination(hfDst);
+    StarsRecoveryScope scopeRecovery;
     fFileErrSilent = TRUE;
-    penvSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) == 0) {
+    try {
         StreamOpen(szSrc, mdRead);
         hfDst = HfOpenFile(szDst, 4114, &fMissing);
         if (hfDst == -1)
@@ -273,16 +270,10 @@ void StarsCopyFile(char *szSrc, char *szDst) {
             RgFromStream(rgb, LOWORD(cb));
             CbWriteFile(hfDst, rgb, LOWORD(cb));
         }
+    } catch (const StarsError &) {
     }
 LStreamError:
     StreamClose();
-    /* The original closed hf, leaving the copy open with exclusive sharing,
-       and returned early on a failed OpenFile without restoring penvMem. */
-    if (hfDst != -1) {
-        CloseFile(hfDst);
-    }
-    penvMem = penvSav;
-    fFileErrSilent = fFileErrSav;
     return;
 }
 

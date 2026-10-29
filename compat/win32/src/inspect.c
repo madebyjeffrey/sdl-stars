@@ -305,7 +305,7 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshInspector(hwnd);
-        else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED && pfnObjectInspector) pfnObjectInspector();
+        else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED && pfnObjectInspector) CompatInvokeInspector(pfnObjectInspector, hwnd);
         else if (LOWORD(w) == 1 && HIWORD(w) == LBN_SELCHANGE) InspectDetails(hwnd);
         return 0;
     case WM_DESTROY:

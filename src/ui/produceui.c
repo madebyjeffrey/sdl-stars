@@ -1,15 +1,29 @@
 #include "win.h"
 
 int16_t ChangeProduction(int16_t fClear) {
-    jmp_buf  env;
-    jmp_buf *penvMemSav;
     FARPROC  lpProcProd;
     PROD     rgprod[64];
     int16_t  fSuccess;
-
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
+    StarsRecoveryScope scopeRecovery;
+    try {
+        if (fClear) {
+            fSuccess = 1;
+            goto LWriteProdQ;
+        }
+        InitProduction(rgprod);
+        fDlgUp = TRUE;
+        lpProcProd = MakeProcInstance(ProductionDlg, hInst);
+        fSuccess = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
+        FreeProcInstance(lpProcProd);
+        hwndProdDlg = 0;
+        fDlgUp = FALSE;
+LWriteProdQ:
+        FinishProduction(fSuccess);
+        if (fSuccess && sel.grobj == grobjPlanet) {
+            DrawPlanShip(NULL, tilePlanetStats);
+        }
+        return TRUE;
+    } catch (const StarsError &) {
         if (lpplProdGlob) {
             FreePl((PL *)lpplProdGlob);
         }
@@ -20,27 +34,8 @@ int16_t ChangeProduction(int16_t fClear) {
         hwndProdDlg = 0;
         fDlgUp = FALSE;
         AlertSz(PszFormatIds(idsThereIsntEnoughFreeMemoryModifyProduction, NULL), MB_ICONHAND);
-        penvMem = penvMemSav;
         return FALSE;
     }
-    if (fClear) {
-        fSuccess = 1;
-        goto LWriteProdQ;
-    }
-    InitProduction(rgprod);
-    fDlgUp = TRUE;
-    lpProcProd = MakeProcInstance(ProductionDlg, hInst);
-    fSuccess = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
-    FreeProcInstance(lpProcProd);
-    hwndProdDlg = 0;
-    fDlgUp = FALSE;
-LWriteProdQ:
-    FinishProduction(fSuccess);
-    if (fSuccess && sel.grobj == grobjPlanet) {
-        DrawPlanShip(NULL, tilePlanetStats);
-    }
-    penvMem = penvMemSav;
-    return TRUE;
 }
 
 INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {

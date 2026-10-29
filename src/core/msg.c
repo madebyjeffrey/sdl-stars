@@ -717,11 +717,9 @@ void ReadPlayerMessages() {
     uint8_t *lpbMax;
     int16_t  iMax;
     int16_t  fOOM;
-    jmp_buf *penvMemSav;
     MSGHDR  *lpmh;
     uint16_t imemMsgT;
     int16_t  i;
-    jmp_buf  env;
     MSGPLR  *lpmp;
     uint8_t *lpb;
     uint16_t u;
@@ -752,22 +750,20 @@ void ReadPlayerMessages() {
     }
     for (lpmp = (MSGPLR *)&vlpmsgplrIn; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
     }
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
-        penvMem = penvMemSav;
-        fOOM = TRUE;
-        goto LOutOfMem;
-    }
+
     while (hdrCur.rt == rtPlrMsg) {
-        if (fOOM)
-            goto LOutOfMem;
-        lpmp->lpmsgplrNext = LpmsgplrFromRt();
-        if (lpmp->lpmsgplrNext) {
-            lpmp = lpmp->lpmsgplrNext;
-            vcmsgplrIn++;
+        if (!fOOM) {
+            try {
+                lpmp->lpmsgplrNext = LpmsgplrFromRt();
+                if (lpmp->lpmsgplrNext) {
+                    lpmp = lpmp->lpmsgplrNext;
+                    vcmsgplrIn++;
+                }
+            } catch (const StarsError &error) {
+                if (error.mdError != starsErrorMemory) throw;
+                fOOM = TRUE;
+            }
         }
-    LOutOfMem:
         ReadRt();
     }
     iMsgCur = imsgNone;

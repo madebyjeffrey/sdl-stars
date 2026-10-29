@@ -2273,30 +2273,26 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
     uint16_t rgPlrLosses[256];
     uint16_t wtNext;
     int16_t  itok;
-    jmp_buf  env;
-    jmp_buf *penvMemSav;
     PLANET  *lppl;
     int32_t  lwt;
     HB      *lphb; /* NATIVE: recover the Win16 heap-relative offset. */
 
     if (!lpbBattleLog) {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            penvMem = penvMemSav;
+        StarsRecoveryScope scopeRecovery;
+        try {
+            lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
+            lpbBattleCur = lpbBattleLog;
+        } catch (const StarsError &) {
             return -1;
         }
-        lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
-        lpbBattleCur = lpbBattleLog;
     }
     if (!lpbBattleT) {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            penvMem = penvMemSav;
+        StarsRecoveryScope scopeRecovery;
+        try {
+            lpbBattleT = (uint8_t *)LpAlloc(0xffc8, htBattle);
+        } catch (const StarsError &) {
             return -1;
         }
-        lpbBattleT = (uint8_t *)LpAlloc(0xffc8, htBattle);
     }
     lpbSav = lpbBattleCur;
     lpbBattleCur = lpbBattleT;
