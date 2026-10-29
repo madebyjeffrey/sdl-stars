@@ -53,6 +53,7 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
 #define IRenameNativePath TestRename
 #define IUnlinkNativePath TestUnlink
 '''
+    stubs = f'#include "{ROOT / "src/platform/ownership.h"}"\n' + stubs
     # A function-like macro avoids rewriting the struct stat type.
     stubs=stubs.replace("#define stat TestStat", "#define stat(path,st) TestStat(path,st)")
     body=function("compat/win32/src/profile.c", "static BOOL FSaveProfile(")

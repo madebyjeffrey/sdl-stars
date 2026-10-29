@@ -33,7 +33,7 @@ typedef struct COMPATPROFILE {
     char *szRaw,*szParsed,*pszSection,*pszKey,*pszValue;
     struct COMPATPROFILE *lpNext;
 } COMPATPROFILE;
-static std::atomic_flag fProfileLock=ATOMIC_FLAG_INIT;
+static NATIVEFLAGLOCK fProfileLock;
 static const char *const *fixture;
 static int loadOK=1;
 static void CchGetString(StringId id,char *out) {strcpy(out,id==1?"A":"k");}
@@ -41,6 +41,8 @@ static char *SzProfilePath(const char *path) {return path?strdup(path):NULL;}
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;}}while(0)
 '''
+    declarations = (f'#include "{ROOT / "src/platform/locking.h"}"\n'
+                    f'#include "{ROOT / "src/platform/ownership.h"}"\n') + declarations
     bodies = "\n".join(
         function("src/platform/encoding.c", signature) for signature in
         ["int CbUtf8Char(", "size_t CchUtf8Prefix(", "int FUtf8Valid("])

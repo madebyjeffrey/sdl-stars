@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `GetPrivateProfileStringA` and `WritePrivateProfileStringA` release their
+  registry lock and partial profile storage when a C++ I/O operation throws.
+  Fault injection previously deadlocked a retry. Failed profile saves now also
+  close/remove their temporary file during unwinding; publication stays checked
+  and the existing destination remains unchanged.
+
 - `OpenCombo` stops on dropdown notification failure and closes a partial popup
   when owner drawing fails. Previously failed initialization could leave the
   combo dropped with capture held. Rollback restores capture and selection;

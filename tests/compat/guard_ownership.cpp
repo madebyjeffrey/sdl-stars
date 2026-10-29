@@ -1,15 +1,27 @@
 /* Fail inside a held production file lock, then retry through the same API. */
 #include "internal.h"
+#include "path_utf8.h"
 #include <stars_compat.h>
 #include <cstdio>
 #include <cstring>
 #include <string>
 
 static bool fFailRead, fCleanupFailure, fMenuFailure;
-static int cNested, cDepthErrors;
+static int cNested, cDepthErrors, cProfileLines = -1;
+static bool fFailProfileWrite;
 int64_t StarsTest_CbReadNativeFile(NATIVEFILE *pf, void *rgb, size_t cb) {
     if (fFailRead) { fFailRead = false; StarsThrowError(starsErrorFile, 417); }
     return CbReadNativeFile(pf, rgb, cb);
+}
+int64_t StarsTest_CbGetNativeLine(char **ppsz, size_t *pcb, NATIVEFILE *pf) {
+    int64_t cb = CbGetNativeLine(ppsz, pcb, pf);
+    if (cProfileLines == 0) { cProfileLines = -1; StarsThrowError(starsErrorFile, 417); }
+    if (cProfileLines > 0) cProfileLines--;
+    return cb;
+}
+size_t StarsTest_CWriteNative(const void *rgb, size_t cb, size_t c, NATIVEFILE *pf) {
+    if (fFailProfileWrite) { fFailProfileWrite = false; StarsThrowError(starsErrorFile, 417); }
+    return CWriteNative(rgb, cb, c, pf);
 }
 static LRESULT CALLBACK GuardProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_APP + 1) {
@@ -50,6 +62,27 @@ int main(int argc, char **argv) {
     std::fputs("Injected exception caught; retrying the same file token\n", stderr);
     CHECK(_lread(hf, rgb, sizeof(rgb)) == 4 && !std::memcmp(rgb, "wire", 4));
     CHECK(_lclose(hf) == 0 && IUnlinkNativePath(szPath.c_str()) == 0);
+
+    std::string szProfile = std::string(argv[1]) + "-Ω.ini";
+    auto pathProfile = PathFromUtf8(szProfile.c_str());
+    std::string szPrefix = SzFromUtf8(pathProfile.filename().u8string()) + ".";
+    CHECK(WritePrivateProfileStringA("Game", "Name", "wire", szProfile.c_str()));
+    for (i = 0; i < 3; i++) {
+        cProfileLines = i < 2 ? 1 : -1; fFailProfileWrite = i == 2; fCaught = false;
+        try {
+            if (i == 0) (void)GetPrivateProfileStringA("Game", "Name", "", rgb, sizeof(rgb), szProfile.c_str());
+            else (void)WritePrivateProfileStringA("Game", "Name", "changed", szProfile.c_str());
+        } catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+        CHECK(fCaught && cProfileLines == -1 && !fFailProfileWrite && !FStarsErrorPending());
+        std::fputs("Injected profile exception caught; retrying the profile registry\n", stderr);
+        CHECK(GetPrivateProfileStringA("Game", "Name", "", rgb, sizeof(rgb), szProfile.c_str()) == 4);
+        CHECK(!std::strcmp(rgb, "wire"));
+        for (const auto &entry : std::filesystem::directory_iterator(pathProfile.parent_path()))
+            CHECK(!SzFromUtf8(entry.path().filename().u8string()).starts_with(szPrefix));
+    }
+    CHECK(WritePrivateProfileStringA("Game", "Name", "retry", szProfile.c_str()));
+    CHECK(GetPrivateProfileStringA("Game", "Name", "", rgb, sizeof(rgb), szProfile.c_str()) == 5 && !std::strcmp(rgb, "retry"));
+    CHECK(IUnlinkNativePath(szProfile.c_str()) == 0);
 
     wc.lpfnWndProc = GuardProc; wc.lpszClassName = "GuardOwnership";
     CHECK(RegisterClassA(&wc));

@@ -27,8 +27,10 @@ and toolbars now retire their window ownership immediately while active callback
 frames retain borrowed control storage; scoped flags restore before those leases
 end. Failed owner-disable callbacks now stop dialog/file-chooser/message-box
 initialization, and combo opening rolls back its own failed popup while retaining
-a reentrant replacement. The profile lock/cleanup inventory remains active before
-B02 completion.
+a reentrant replacement. Profile read/write locks and partial buffers/temporary
+files now unwind safely; injected read/load/save failures preserve the existing
+destination and permit retry. B02 local qualification passes, with platform CI
+pending before its checkpoint is marked complete.
 
 ## C++ migration
 

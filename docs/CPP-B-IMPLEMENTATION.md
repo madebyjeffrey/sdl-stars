@@ -10,7 +10,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
 | B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
-| B02: dispatch and callback guards | Active | Preserve cleanup-before-delivery and foreign callback containment. |
+| B02: dispatch and callback guards | Active: platform CI pending | Implementation and local checkpoint matrix pass: locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
 | B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
@@ -459,3 +459,35 @@ Results remain 109/109 full macOS CTest, 26 native leak checks, 28/28 ASan/UBSan
 warning-free builds and 519 native regression matches / 25 accepted unused-storage
 warnings / zero differences, errors or skipped inputs. Baselines are unchanged.
 The remaining B02 lock inventory includes profile operations before completion.
+
+
+## B02 profile locks, partial loads and checked temporary publication
+
+The final lock inventory found manual profile spin-lock pairs. A production
+profile-read fault after partial loading catches its error, then the old retry
+hangs (three-second reproduction timeout). Both profile entry points now use the
+existing acquire/release lock policy through a C++ guard. Partial lines, parsed
+chains and paths are scoped; profile saving scopes its temporary handle/path
+while retaining explicit checked close, replacement and directory-sync order.
+`NATIVECLEANUPSCOPE` requires a non-throwing release callable and is separate from
+notification-capable callback cleanup.
+
+The actual profile harness injects failure after a line buffer and parsed row
+exist, during write-side loading, and after a save temporary has opened. Every
+retry succeeds, the existing profile bytes remain unchanged, and no temporary is
+left behind. A subsequent successful update still publishes normally. The full
+existing profile contracts join native leaks and sanitizer qualification.
+Source witnesses use the actual C++ ownership/locking headers instead of their
+old atomic-only declaration. Their independent inputs, exclusions and expected
+results remain unchanged.
+
+Local checkpoint results: 111/111 full macOS CTest, 55 ownership contracts
+including 27 native leak checks, 29/29 ASan/UBSan cases (28 ownership/callback cases
+plus core exception units), 22/22 SDL-free host CTest, and complete desktop and
+host regressions each at 519 matches / 25 accepted unused-storage warnings / zero
+differences, errors or skipped inputs. No new warnings, baseline changes or frozen
+reference changes. All 27 source witnesses pass: the first run passed 25 and
+identified missing C++ helper declarations in the two profile witnesses; both
+then passed after the include/declaration update (25 and 42 assertions).
+B02 implementation and local qualification are complete; its tracker remains
+active until the platform CI result is available. B03–B14 remain in scope.

@@ -2,7 +2,7 @@ add_executable(stars-resource-guards tests/compat/guard_ownership.cpp)
 target_include_directories(stars-resource-guards PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-resource-guards PRIVATE stars_win32 SDL3::SDL3)
 target_compile_options(stars-resource-guards PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-resource-guards CbReadNativeFile)
+stars_test_redirect(stars-resource-guards CbReadNativeFile CbGetNativeLine CWriteNative)
 add_test(NAME win32_sdl_resource_guards COMMAND stars-resource-guards "${CMAKE_BINARY_DIR}/guard-file")
 set_tests_properties(win32_sdl_resource_guards PROPERTIES LABELS "compat;ownership;lifetime"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
@@ -59,7 +59,7 @@ endif()
 
 # Control state is retired immediately, while active callback frames retain its
 # storage. Reuse behavioral/SDK contracts alongside explicit lifetime vectors.
-foreach(STARS_CONTROL_KIND list combo toolbar)
+foreach(STARS_CONTROL_KIND list combo toolbar profile)
     add_executable(stars-resource-${STARS_CONTROL_KIND} tests/compat/win32_${STARS_CONTROL_KIND}.c)
     target_include_directories(stars-resource-${STARS_CONTROL_KIND} PRIVATE
         "${PROJECT_SOURCE_DIR}/compat/win32/src" "${STARS_BITMAP_GENERATED}")
@@ -77,10 +77,18 @@ add_test(NAME win32_sdl_resource_controls COMMAND stars-resource-controls)
 set_tests_properties(win32_sdl_resource_controls PROPERTIES LABELS "compat;ownership;lifetime"
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
 if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
-    foreach(STARS_CONTROL_KIND list combo toolbar controls)
+    foreach(STARS_CONTROL_KIND list combo toolbar controls profile)
         add_test(NAME win32_sdl_leaks_${STARS_CONTROL_KIND} COMMAND "${STARS_GUARD_LEAKS_EXECUTABLE}"
             --quiet --noContent --atExit -- "$<TARGET_FILE:stars-resource-${STARS_CONTROL_KIND}>")
         set_tests_properties(win32_sdl_leaks_${STARS_CONTROL_KIND} PROPERTIES LABELS "compat;ownership;lifetime;leaks"
             ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" RUN_SERIAL TRUE TIMEOUT 60)
     endforeach()
+endif()
+
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ownership-profile")
+set_tests_properties(win32_sdl_resource_profile PROPERTIES RUN_SERIAL TRUE
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/ownership-profile")
+if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
+    set_tests_properties(win32_sdl_leaks_profile PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/ownership-profile")
 endif()

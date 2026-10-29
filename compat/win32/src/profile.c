@@ -1,4 +1,5 @@
-#include <atomic>
+#include "locking.h"
+#include "ownership.h"
 /* File-backed UTF-8 profiles. Preserve unrelated lines when updating settings. */
 #include <windows.h>
 #include <ctype.h>
@@ -17,7 +18,7 @@ typedef struct COMPATPROFILE {
     struct COMPATPROFILE *lpNext;
 } COMPATPROFILE;
 
-static std::atomic_flag fProfileLock = ATOMIC_FLAG_INIT;
+static NATIVEFLAGLOCK fProfileLock;
 
 static DWORD DwProfileError(void) {
     if (errno == ENOENT) return ERROR_FILE_NOT_FOUND;
@@ -63,12 +64,17 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
 }
 
 static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
-    NATIVEFILE *fp;
+    NATIVEFILE *fp = NULL;
     char *sz = NULL;
     size_t cb = 0, cbTotal = 0;
     ssize_t cbLine;
     COMPATPROFILE **lplpNext = lplp;
     BOOL fRet = FALSE;
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
+        free(sz);
+        if (fp) ICloseNativeFile(fp);
+        if (!fRet) { FreeProfile(*lplp); *lplp = NULL; }
+    });
 
     *lplp = NULL;
     fp = PfNativeOpen(pszPath, "rb");
@@ -90,8 +96,6 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     if (FNativeStreamError(fp)) { SetLastError(ERROR_READ_FAULT); goto LReturn; }
     fRet = TRUE;
 LReturn:
-    free(sz); ICloseNativeFile(fp);
-    if (!fRet) { FreeProfile(*lplp); *lplp = NULL; }
     return fRet;
 }
 
@@ -192,18 +196,20 @@ static BOOL FMakeProfileDir(char *szPath) {
 
 DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
-    char *szPath;
+    char *szPath = NULL;
     COMPATPROFILE *lpAll = NULL, *lp, *lpKey;
     const char *psz;
     size_t cch, cchOut = 0, cchCopy;
     BOOL fMulti = !pszSection || !pszKey;
+    std::unique_lock lockProfile(fProfileLock, std::defer_lock);
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); free(szPath); });
 
     if (!szResult || cchMax == 0) return 0;
     szResult[0] = 0;
     if (fMulti && cchMax > 1) szResult[1] = 0;
     szPath = SzProfilePath(pszFile);
     if (!szPath) return 0;
-    while (std::atomic_flag_test_and_set_explicit(&fProfileLock, std::memory_order_acquire)) {}
+    lockProfile.lock();
     FLoadProfile(szPath, &lpAll);
     if (fMulti) {
         lp = pszSection ? LpProfileSection(lpAll, pszSection) : lpAll;
@@ -238,8 +244,8 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
         cchOut = CchUtf8Prefix(psz, cch < cchMax - 1 ? cch : cchMax - 1);
         memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
     }
-    FreeProfile(lpAll); free(szPath);
-    std::atomic_flag_clear_explicit(&fProfileLock, std::memory_order_release);
+    releaseProfile.Close();
+    lockProfile.unlock();
     return (DWORD)cchOut;
 }
 
@@ -265,10 +271,15 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
 }
 
 static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
-    char *szTemp;
-    NATIVEFILE *fp;
+    char *szTemp = NULL;
+    NATIVEFILE *fp = NULL;
     BOOL fRet = FALSE;
     BOOL fTemporary = FALSE;
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
+        if (fp) ICloseNativeFile(std::exchange(fp, nullptr));
+        if (!fRet && fTemporary) IUnlinkNativePath(szTemp);
+        free(szTemp);
+    });
 
     szTemp = (char *)malloc(strlen(pszPath) + 12);
     if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
@@ -277,31 +288,31 @@ static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
     if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
     fTemporary = TRUE;
     if (ICopyNativePermissions(fp, pszPath) != 0) {
-        SetLastError(DwProfileError()); ICloseNativeFile(fp); goto LReturn;
+        SetLastError(DwProfileError()); ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (CWriteNative("\xef\xbb\xbf", 1, 3, fp) != 3) { ICloseNativeFile(fp); goto LReturn; }
+    if (CWriteNative("\xef\xbb\xbf", 1, 3, fp) != 3) { ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn; }
     for (; lp; lp = lp->lpNext) {
         if (IPutNativeString(lp->szRaw, fp) == EOF) break;
         if (lp->lpNext && *lp->szRaw && lp->szRaw[strlen(lp->szRaw) - 1] != '\n')
             if (ChPutNativeFile('\n', fp) == EOF) break;
     }
     if (lp || IFlushNativeFile(fp) != 0 || ISyncNativeFile(fp) != 0) {
-        SetLastError(DwProfileError()); ICloseNativeFile(fp); goto LReturn;
+        SetLastError(DwProfileError()); ICloseNativeFile(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (ICloseNativeFile(fp) != 0 || IRenameNativePath(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
+    if (ICloseNativeFile(std::exchange(fp, nullptr)) != 0 || IRenameNativePath(szTemp, pszPath, TRUE, TRUE) != 0) { SetLastError(DwProfileError()); goto LReturn; }
     fRet = TRUE;
 LReturn:
-    if (!fRet && fTemporary) IUnlinkNativePath(szTemp);
-    free(szTemp);
     return fRet;
 }
 
 BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
-    char *szPath, *szLine = NULL;
+    char *szPath = NULL, *szLine = NULL;
     COMPATPROFILE *lpAll = NULL, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
     BOOL fRet = FALSE;
     size_t cb;
+    std::unique_lock lockProfile(fProfileLock, std::defer_lock);
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { free(szLine); free(szPath); FreeProfile(lpAll); });
 
     if (!pszSection && !pszKey && !pszValue) return FALSE; // No cache to flush.
     if (!pszSection || !FUtf8Valid(pszSection, strlen(pszSection)) ||
@@ -313,7 +324,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     }
     szPath = SzProfilePath(pszFile);
     if (!szPath) return FALSE;
-    while (std::atomic_flag_test_and_set_explicit(&fProfileLock, std::memory_order_acquire)) {}
+    lockProfile.lock();
     if (!FLoadProfile(szPath, &lpAll)) goto LReturn;
     lpSection = LpProfileSection(lpAll, pszSection);
     lpKey = LpProfileKey(lpSection, pszKey);
@@ -353,7 +364,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
 LMemory:
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 LReturn:
-    free(szLine); free(szPath); FreeProfile(lpAll);
-    std::atomic_flag_clear_explicit(&fProfileLock, std::memory_order_release);
+    releaseProfile.Close();
+    lockProfile.unlock();
     return fRet;
 }
