@@ -15,7 +15,7 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         // Native close paths do not pass through the mouse-release handler.
         if (hwndPopup == hwnd) {
             hwndPopup = 0;
-            GlobalPD.grPopup = 0;
+            GlobalPD.grPopup = static_cast<GrPopupType>(0);
         }
         return 0;
     case WM_ERASEBKGND:
@@ -41,7 +41,7 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         }
         DestroyWindow(hwndPopup);
         hwndPopup = 0;
-        GlobalPD.grPopup = 0;
+        GlobalPD.grPopup = static_cast<GrPopupType>(0);
         ReleaseCapture();
         if (!gd.fTutorial) {
             return 0;
@@ -61,7 +61,7 @@ int16_t FIsPopupHullType(int16_t ishdef) {
     if (GlobalPD.grbit == 0 || GlobalPD.grbit == 0xff) {
         return TRUE;
     }
-    imd = LphuldefFromId(rglpshdef[GlobalPD.lpfl->iPlayer][ishdef].hul.ihuldef)->imdCategory;
+    imd = static_cast<HullCategory>(LphuldefFromId(rglpshdef[GlobalPD.lpfl->iPlayer][ishdef].hul.ihuldef)->imdCategory);
     return mpimdgrbitBU[imd] & GlobalPD.grbit;
 }
 
@@ -88,6 +88,8 @@ void DrawPopup(HWND hwnd, HDC hdc) {
     hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
     GetClientRect(hwnd, &rc);
     switch (GlobalPD.grPopup) {
+    default:
+        break;
     case grPopupMineral:
         CtrTextOut(hdc, rc.right >> 1, 4, rgszMinerals[GlobalPD.rgi[0]], 0);
         SelectObject(hdc, rghfontArial8[0]);
@@ -258,6 +260,8 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     hdc = GetDC(hwnd);
     hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
     switch (GlobalPD.grPopup) {
+    default:
+        break;
     case grPopupMineral:
         psz = PszGetCompressedString(idsMineralConcentration0000000kt);
         dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
@@ -401,7 +405,7 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                 if (rgids[i] & 0x10000000) {
                     psz = (char *)"Deep Space";
                 } else if (rgids[i] & 0x40000000) {
-                    psz = PszGetCompressedString(LOWORD(rgids[i]));
+                    psz = PszGetCompressedString(static_cast<StringId>(LOWORD(rgids[i])));
                 } else if (rgids[i] & 0x20000000) {
                     psz = PszGetThingName(LOWORD(rgids[i]));
                 } else if (rgids[i] & 0x80000000) {
@@ -500,7 +504,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
     DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsCurrently), 0, fPrint);
     SelectObject(hdc, rghfontArial8[1]);
     if (GlobalPD.iPlanVal >= 0) {
-        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlanVal), 0, fPrint);
+        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), GlobalPD.iPlanVal), 0, fPrint);
     } else {
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsUnknown2), 0, fPrint);
     }
@@ -531,11 +535,11 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         DxStreamTextOut(hdc, &x, y, rgszPlanetAttr[GlobalPD.iPlanetVar], 0, fPrint);
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsBetween), 0, fPrint);
         SelectObject(hdc, rghfontArial8[1]);
-        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlrMin), 0, fPrint);
+        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), GlobalPD.iPlrMin), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsAnd), 0, fPrint);
         SelectObject(hdc, rghfontArial8[1]);
-        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlrMax), 0, fPrint);
+        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), GlobalPD.iPlrMax), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
     }
@@ -564,11 +568,11 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
         y += dyArial8;
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsWithinRange), 0, fPrint);
         SelectObject(hdc, rghfontArial8[1]);
-        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlanMin), 0, fPrint);
+        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), GlobalPD.iPlanMin), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, PszGetCompressedString(idsTo), 0, fPrint);
         SelectObject(hdc, rghfontArial8[1]);
-        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(GlobalPD.iPlanetVar, GlobalPD.iPlanMax), 0, fPrint);
+        DxStreamTextOut(hdc, &x, y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), GlobalPD.iPlanMax), 0, fPrint);
         SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, (char *)".", 1, fPrint);
         if (x > xMax) {
@@ -601,7 +605,7 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
                 SelectObject(hdc, rghfontArial8[0]);
                 WrapTextOut(hdc, &x, &y, PszGetCompressedString(idsTo), 0, 4, xMax - 4, NULL, FALSE, fPrint);
                 SelectObject(hdc, rghfontArial8[1]);
-                WrapTextOut(hdc, &x, &y, PszCalcEnvVar(GlobalPD.iPlanetVar, iNewVal), 0, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, NULL, FALSE, fPrint);
                 SelectObject(hdc, rghfontArial8[0]);
                 cch = CchGetString(idsPlanetsValueWouldImprove, szWork);
                 WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, FALSE, fPrint);
@@ -936,7 +940,7 @@ POINT16 PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint) {
         case 8:
             SelectObject(hdc, rghfontArial8[0]);
             psz = PszGetCompressedString(ids);
-            ids++;
+            ids = static_cast<StringId>(ids + 1);
             break;
         case 1:
             cnt = GlobalPD.cCur;
@@ -1000,7 +1004,7 @@ POINT16 PtDisplayResourceInfo(HDC hdc, int16_t dx, int16_t fPrint) {
         case 9:
             SelectObject(hdc, rghfontArial8[0]);
             psz = PszGetCompressedString(ids);
-            ids++;
+            ids = static_cast<StringId>(ids + 1);
             break;
         case 2:
             cnt = GlobalPD.iPlanetVar;

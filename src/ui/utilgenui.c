@@ -1147,7 +1147,7 @@ void ShowProgressGauge() {
     if (!hwndProgressGauge) {
         CreateDialog(hInst, MAKEINTRESOURCE(IDD_Gauge), hwndFrame, lpfnGaugeDlgProc);
     } else {
-        UpdateProgressGauge(0);
+        UpdateProgressGauge(static_cast<ProgressStep>(0));
     }
     return;
 }
@@ -1311,17 +1311,17 @@ void UpdateProgressGauge(ProgressStep pctX10) {
     if (hwndProgressGauge) {
         iNum = 0;
         if (pctX10 == progressStep4) {
-            pctX10 = vpctProgressGauge + 4;
+            pctX10 = static_cast<ProgressStep>(vpctProgressGauge + 4);
         } else if (pctX10 == progressStep1) {
-            pctX10 = vpctProgressGauge + 1;
+            pctX10 = static_cast<ProgressStep>(vpctProgressGauge + 1);
         } else if (pctX10 < 0) {
-            pctX10 = 0;
+            pctX10 = static_cast<ProgressStep>(0);
         } else if (pctX10 > 1000) {
             if (!gd.fProgressTxt) {
                 return;
             }
             iNum = pctX10;
-            pctX10 = vpctProgressGauge;
+            pctX10 = static_cast<ProgressStep>(vpctProgressGauge);
         }
         vpctProgressGauge = pctX10;
         DrawProgressGauge(NULL, FALSE, iNum);

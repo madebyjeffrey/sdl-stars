@@ -1755,6 +1755,9 @@ static int acutest_under_debugger_(void) {
     return 0;
 }
 
+#ifdef __cplusplus
+} /* main has C++ linkage */
+#endif
 int main(int argc, char **argv) {
     int i, index;
     int exit_code = 1;
@@ -1933,6 +1936,10 @@ int main(int argc, char **argv) {
     acutest_cleanup_();
     return exit_code;
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #endif /* #ifndef TEST_NO_MAIN */
 

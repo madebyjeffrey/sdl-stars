@@ -168,11 +168,18 @@ BOOL WINAPI PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT 
 BOOL WINAPI GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     SDL_Event event;
     int cMillis;
+    BOOL fMessage;
 
     if (!lpmsg || !FValidFilter(hwnd, msgMin, msgMax))
         return -1;
     for (;;) {
-        if (PeekMessageA(lpmsg, hwnd, msgMin, msgMax, PM_REMOVE))
+        // Thread timers have no enclosing HWND to abort. Let every modal
+        // pump finish its C cleanup before the C++ caller receives the error.
+        if (FStarsErrorPending()) return -1;
+        fMessage = PeekMessageA(lpmsg, hwnd, msgMin, msgMax, PM_REMOVE);
+        // Peeking also routes SDL events, which can invoke application code.
+        if (FStarsErrorPending()) return -1;
+        if (fMessage)
             return lpmsg->message == WM_QUIT ? FALSE : TRUE;
         cMillis = CMillisCompatTimerWait(hwnd, msgMin, msgMax);
         if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) return -1;
@@ -207,7 +214,7 @@ LRESULT WINAPI CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam,
     if (!SDL_IsMainThread() || !lpfn)
         return 0;
     cDispatch++;
-    lr = lpfn(hwnd, msg, wParam, lParam);
+    lr = CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
     cDispatch--;
     return lr;
 }
@@ -227,7 +234,7 @@ LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
     if (lpmsg->message == WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         cDispatch++;
-        ((TIMERPROC)lpmsg->lParam)(lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
+        CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, WM_TIMER, lpmsg->wParam, GetTickCount());
         cDispatch--;
         return 0;
     }

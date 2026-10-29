@@ -77,7 +77,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
         game.rgvc[6] = 9;
         game.rgvc[7] = 7;
         game.rgvc[8] = 1;
-        CchGetString(idsShootingFishBarrel + 5 * lvlAi + game.mdSize, game.szName);
+        CchGetString(static_cast<StringId>(idsShootingFishBarrel + 5 * lvlAi + game.mdSize), game.szName);
         goto Step1;
     }
     lvlAi = lvlAiStandard;
@@ -102,7 +102,7 @@ Step1:
         gd.fNoIdleChecks = fIdleSav;
         return;
     }
-    InitNewGamePlr(iStepMaxSoFar, lvlAi);
+    InitNewGamePlr(iStepMaxSoFar, static_cast<AiLevel>(lvlAi));
     if (mdRet == 3)
         goto Finish;
 Step2:
@@ -114,7 +114,7 @@ Step2:
     if (iStepMaxSoFar < 1) {
         iStepMaxSoFar = 1;
     }
-    InitNewGamePlr(iStepMaxSoFar, lvlAi);
+    InitNewGamePlr(iStepMaxSoFar, static_cast<AiLevel>(lvlAi));
     if (mdRet == 1)
         goto Step1;
     if (mdRet == 3)
@@ -154,22 +154,22 @@ Finish:
                 c = vrgplrTypeNew[i] >> 2;
                 rgplr[i] = vrgplrDef[c];
             }
-            CchGetString(idsHumanoid + c, rgplr[i].szName);
+            CchGetString(static_cast<StringId>(idsHumanoid + c), rgplr[i].szName);
             wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
             break;
         case 2:
             rgplr[i] = rgplrLocal[vrgplrTypeNew[i] >> 2];
             break;
         case 3:
-            idAi = vrgplrTypeNew[i] >> 2 & 7;
+            idAi = static_cast<AiRace>(vrgplrTypeNew[i] >> 2 & 7);
             lvlAi = vrgplrTypeNew[i] >> 5;
             if (lvlAi >= 4) {
                 lvlAi = Random(4);
             }
             if ((int16_t)idAi >= idAiRandom) {
-                idAi = Random(6);
+                idAi = static_cast<AiRace>(Random(6));
             }
-            rgplr[i] = *LpplrComp(idAi, lvlAi);
+            rgplr[i] = *LpplrComp(idAi, static_cast<AiLevel>(lvlAi));
             rgplr[i].fAi = TRUE;
             rgplr[i].lvlAi = lvlAi;
             rgplr[i].idAi = idAi;
@@ -182,7 +182,7 @@ Finish:
             rgplr[i].fHacker = TRUE;
         }
         if (rgplr[i].szName[0] == 0) {
-            CchGetString(idsBerserker + Random(24), rgplr[i].szName);
+            CchGetString(static_cast<StringId>(idsBerserker + Random(24)), rgplr[i].szName);
         }
         if (rgplr[i].szNames[0] == 0) {
             wsprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
@@ -194,7 +194,7 @@ Finish:
         if (j < i) {
             c = Random(24);
             while (1) {
-                for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, PszGetCompressedString(idsBerserker + c)) != 0; j++) {
+                for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, PszGetCompressedString(static_cast<StringId>(idsBerserker + c))) != 0; j++) {
                 }
                 if (j == game.cPlayer)
                     break;
@@ -203,7 +203,7 @@ Finish:
                     c = 0;
                 }
             }
-            CchGetString(idsBerserker + c, rgplr[i].szName);
+            CchGetString(static_cast<StringId>(idsBerserker + c), rgplr[i].szName);
             strcpy(rgplr[i].szNames, rgplr[i].szName);
             strcat(rgplr[i].szNames, "s");
         }
@@ -386,13 +386,13 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (iRet != 0) {
                 for (i = 1000; i <= 1004 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
-                game.mdSize = i - 1000;
+                game.mdSize = static_cast<UniverseSize>(i - 1000);
                 for (i = 1005; i <= 1008 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
-                game.mdDensity = i - 1005;
+                game.mdDensity = static_cast<UniverseDensity>(i - 1005);
                 for (i = 1009; i <= 1012 && IsDlgButtonChecked(hwnd, i) == 0; i++) {
                 }
-                game.mdStartDist = i - 1009;
+                game.mdStartDist = static_cast<StartDistance>(i - 1009);
                 game.fExtraFuel = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_MAX_MINERALS);
                 game.fSlowTech = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_SLOWER_TECH);
                 game.fBBSPlay = IsDlgButtonChecked(hwnd, IDC_NEW_GAME_ACCELERATED_BBS);
@@ -513,7 +513,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         rghmenuSubPopup[0] = CreatePopupMenu();
         for (i = 0; i < 6; i++) {
             iChecked = iCurVal == i * 4 + 1 ? 8 : 0;
-            psz = PszGetCompressedString(idsHumanoid + i);
+            psz = PszGetCompressedString(static_cast<StringId>(idsHumanoid + i));
             AppendMenu(rghmenuSubPopup[0], iChecked, i + 15016, psz);
         }
         AppendMenu(rghmenuSubPopup[0], iCurVal == 25 ? MF_CHECKED : 0, 15022, PszGetCompressedString(idsRandom));
@@ -601,7 +601,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             } else if (iPopMenuSel == 2) {
                 if ((iCurVal & 3) == 1) {
                     vplr = vrgplrDef[iCurVal >> 2];
-                    CchGetString((iCurVal >> 2) + 0x567, vplr.szName);
+                    CchGetString(static_cast<StringId>((iCurVal >> 2) + 0x567), vplr.szName);
                     wsprintf(vplr.szNames, "%ss", vplr.szName);
                 } else {
                     vplr = vrgplrNew[iCurVal >> 2];
@@ -734,7 +734,7 @@ void DrawNewGame2(HWND hwnd, HDC hdc, int16_t iDraw) {
                 break;
             }
             CchGetString(idsS, szT);
-            wsprintf(szWork, szT, PszGetCompressedString(idsHumanoid + iPlr));
+            wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(idsHumanoid + iPlr)));
             break;
         case 2:
             pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : vrgszFileNew + iPlr * 13;
@@ -776,7 +776,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 3);
         for (i = 0; i < 7; i++) {
-            SendMessage(GetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, (i >= 2) + i), 0);
+            SendMessage(GetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, static_cast<VictoryCondition>((i >= 2) + i)), 0);
             if (fRCWReadOnly) {
                 EnableWindow(GetDlgItem(hwnd, i + 291), FALSE);
             }
@@ -833,7 +833,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         }
         if (LOWORD(wParam) >= IDC_VC_OWNS_PLANETS && LOWORD(wParam) <= IDC_VC_HIGHEST_SCORE) {
             i = LOWORD(SendMessage(GetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
-            SetVCCheck(&game, LOWORD(wParam) - 291 + ((uint16_t)(LOWORD(wParam) - 291) >= 2), i);
+            SetVCCheck(&game, static_cast<VictoryCondition>(LOWORD(wParam) - 291 + ((uint16_t)(LOWORD(wParam) - 291) >= 2)), i);
             DrawNewGame3(hwnd, NULL, 8);
         }
     }
@@ -886,7 +886,8 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
             xLeft = rcCBox.left;
             yTop = rcCBox.bottom + 6 + (int16_t)(3 * dyArial8) / 2;
         }
-        cch = CchGetString(ids++, szWork);
+        cch = CchGetString(ids, szWork);
+        ids = static_cast<StringId>(ids + 1);
         if (iDraw == -1) {
             TextOut(hdc, xLeft, yTop, szWork, cch);
         }
@@ -894,10 +895,10 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
         for (j = 0; j < 2; j++) {
             dxItem = abs(rgNG3Width[i][j]) * dxDig;
             if (dxItem == 0) {
-                ids++;
+                ids = static_cast<StringId>(ids + 1);
                 break;
             }
-            wsprintf(szWork, PCTD, GetVCVal(&game, vcCur, FALSE));
+            wsprintf(szWork, PCTD, GetVCVal(&game, static_cast<VictoryCondition>(vcCur), FALSE));
             if (rgNG3Width[i][j] < 0) {
                 dxItem += (int16_t)(3 * dxDig) / 2;
                 strcat(szWork, "%");
@@ -923,7 +924,7 @@ void DrawNewGame3(HWND hwnd, HDC hdc, int16_t iDraw) {
                 TextOut(hdc, xLeft, yTop, szWork, cch);
             }
             xLeft += LOWORD(GetTextExtent(hdc, szWork, cch));
-            ids++;
+            ids = static_cast<StringId>(ids + 1);
             irc += 2;
         }
     }
@@ -963,8 +964,8 @@ int16_t FTrackNewGameDlg3(HWND hwnd, POINT16 pt, int16_t kbd) {
         dShift = 5 * dShift;
     }
     while (FTrackBtn(&btnt)) {
-        iStat = GetVCVal(&game, i, TRUE);
-        if (SetVCVal(&game, i, iStat + dShift) != iStat) {
+        iStat = GetVCVal(&game, static_cast<VictoryCondition>(i), TRUE);
+        if (SetVCVal(&game, static_cast<VictoryCondition>(i), iStat + dShift) != iStat) {
             DrawNewGame3(hwnd, btnt.hdc, i);
         }
     }
@@ -975,7 +976,7 @@ void SetNGWTitle(HWND hwnd, int16_t iStep) {
     int16_t cch;
     char    szBuf[50];
 
-    cch = CchGetString(idsAdvancedNewGameWizardStepD3 + fRCWReadOnly, szBuf);
+    cch = CchGetString(static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + fRCWReadOnly), szBuf);
     cch = wsprintf(szWork, szBuf, iStep);
     SetWindowText(hwnd, szWork);
     return;

@@ -106,22 +106,22 @@ static int32_t LIniInt(char *pszText, StringId idsSection, StringId idsKey, int3
 static int16_t FReadHostIni(const char *szFile) {
     char *pszText;
     long  cb;
-    FILE *pf;
+    NATIVEFILE *pf;
 
     pf = PfOpenNativeFile(szFile, "rb");
     if (!pf) {
         return FALSE;
     }
-    fseek(pf, 0, SEEK_END);
-    cb = ftell(pf);
-    fseek(pf, 0, SEEK_SET);
+    ISeekNativeFile(pf, 0, SEEK_END);
+    cb = LNativePosition(pf);
+    ISeekNativeFile(pf, 0, SEEK_SET);
     pszText = (char *)malloc((size_t)cb + 1);
-    if (!pszText || fread(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
+    if (!pszText || CReadNative(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
         free(pszText);
-        fclose(pf);
+        ICloseNativeFile(pf);
         return FALSE;
     }
-    fclose(pf);
+    ICloseNativeFile(pf);
     pszText[cb] = 0;
     if (!FUtf8Valid(pszText, (size_t)cb)) { free(pszText); return FALSE; }
     if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
@@ -139,7 +139,7 @@ static int16_t FReadHostIni(const char *szFile) {
     return TRUE;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -230,4 +230,11 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     return vretExitValue;
+} catch (const StarsError &error) {
+    fprintf(stderr, "stars-host: %s failure (message %u)\n",
+            error.mdError == starsErrorMemory ? "memory" : "file", (unsigned)error.ids);
+    return 2;
+} catch (...) {
+    fprintf(stderr, "stars-host: unexpected operation failure\n");
+    return 2;
 }

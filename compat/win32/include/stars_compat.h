@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "fileio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,7 @@ typedef struct STARSCOMPATSNAPSHOT {
 BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
 /* JSON uses UTF-8 text and decimal strings for IDs, to preserve 64-bit values. */
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, FILE *lpfile);
+BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile);
 uint64_t StarsCompatWindowId(HWND hwnd);
 HWND StarsCompatResolveWindow(uint64_t id);
 /* Unique immediate child; zero means absent or ambiguous. NULL class matches any. */

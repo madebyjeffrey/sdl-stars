@@ -1,15 +1,29 @@
 #include "win.h"
 
 int16_t ChangeProduction(int16_t fClear) {
-    jmp_buf  env;
-    jmp_buf *penvMemSav;
     FARPROC  lpProcProd;
     PROD     rgprod[64];
     int16_t  fSuccess;
-
-    penvMemSav = penvMem;
-    penvMem = &env;
-    if (setjmp(env) != 0) {
+    StarsRecoveryScope scopeRecovery;
+    try {
+        if (fClear) {
+            fSuccess = 1;
+            goto LWriteProdQ;
+        }
+        InitProduction(rgprod);
+        fDlgUp = TRUE;
+        lpProcProd = MakeProcInstance(ProductionDlg, hInst);
+        fSuccess = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
+        FreeProcInstance(lpProcProd);
+        hwndProdDlg = 0;
+        fDlgUp = FALSE;
+LWriteProdQ:
+        FinishProduction(fSuccess);
+        if (fSuccess && sel.grobj == grobjPlanet) {
+            DrawPlanShip(NULL, tilePlanetStats);
+        }
+        return TRUE;
+    } catch (const StarsError &) {
         if (lpplProdGlob) {
             FreePl((PL *)lpplProdGlob);
         }
@@ -20,27 +34,8 @@ int16_t ChangeProduction(int16_t fClear) {
         hwndProdDlg = 0;
         fDlgUp = FALSE;
         AlertSz(PszFormatIds(idsThereIsntEnoughFreeMemoryModifyProduction, NULL), MB_ICONHAND);
-        penvMem = penvMemSav;
         return FALSE;
     }
-    if (fClear) {
-        fSuccess = 1;
-        goto LWriteProdQ;
-    }
-    InitProduction(rgprod);
-    fDlgUp = TRUE;
-    lpProcProd = MakeProcInstance(ProductionDlg, hInst);
-    fSuccess = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
-    FreeProcInstance(lpProcProd);
-    hwndProdDlg = 0;
-    fDlgUp = FALSE;
-LWriteProdQ:
-    FinishProduction(fSuccess);
-    if (fSuccess && sel.grobj == grobjPlanet) {
-        DrawPlanShip(NULL, tilePlanetStats);
-    }
-    penvMem = penvMemSav;
-    return TRUE;
 }
 
 INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -567,7 +562,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
                 rc.bottom += (int16_t)(3 * dyArial8) / 2;
                 SelectObject(hdc, rghfontArial8[1]);
                 c = wsprintf(szT, PszGetCompressedString(idsDDoneCompletion), prod.pct);
-                if (PszProductionETA(&sel.pl, lpplProdGlob, LOWORD(lSel), NULL, NULL) != szWork) {
+                if (PszProductionETA(&sel.pl, lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), NULL, NULL) != szWork) {
                 }
                 strcpy(&szT[c], szWork);
                 TextOut(hdc, rc.left - 20, rc.bottom, szT, strlen(szT));
@@ -709,14 +704,14 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
         rcGBox.top = rcGBox.bottom + 8;
         if (vrgZipProd[iResTechNow].fValid) {
-            cch = CchGetString(idsContributeResearch + vrgZipProd[iResTechNow].fNoResearch, szWork);
+            cch = CchGetString(static_cast<StringId>(idsContributeResearch + vrgZipProd[iResTechNow].fNoResearch), szWork);
             TextOut(hdc, rcGBox.left, vyZPDStatic, szWork, cch);
         }
         EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_ZIP_PROD_PRESET_1 && LOWORD(wParam) <= IDC_ZIP_PROD_PRESET_4) {
-            iResTechNow = LOWORD(wParam) - 1073;
+            iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
             EnableZipProdBtns(hwnd, iResTechNow);
             FillZipProdLB(hwnd, &vrgZipProd[iResTechNow]);
         } else {
@@ -820,7 +815,7 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
     } else {
         CchGetString(idsSD2, szFormat);
         for (i = 0; i < pzpq->cpq; i++) {
-            CchGetString(idsMines + pzpq->rgpq[i].mdIdle, szAuto);
+            CchGetString(static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle), szAuto);
             if (pzpq->rgpq[i].cQuan == 1 || pzpq->rgpq[i].mdIdle == iobjAlchemy) {
                 strcpy(szWork, szAuto);
             } else {

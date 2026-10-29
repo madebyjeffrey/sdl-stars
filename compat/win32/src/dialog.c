@@ -43,7 +43,7 @@ LRESULT CALLBACK CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     if (msg == WM_CREATE) return 0;
     lp->lDlgMsgResult = 0;
-    result = lp->lpfnDlg ? lp->lpfnDlg(hwnd, msg, w, l) : 0;
+    result = lp->lpfnDlg ? CompatInvokeWindowProc(lp->lpfnDlg, hwnd, msg, w, l) : 0;
     // EndDialog defers destruction; default handling must not replace its result.
     if (!IsWindow(hwnd) || lp->fEndDialog) return result;
     if (msg == WM_INITDIALOG) return result;
@@ -248,4 +248,16 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
     CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
     return value;
+}
+
+// Abort the enclosing modal operation, allowing its C cleanup to run before
+// C++ rethrows at the game boundary. GetMessage stops modal and outer pumps
+// for unowned failures, including thread timers without an HWND.
+void CompatAbortCallback(HWND hwnd) {
+    HWND lp;
+    while ((lp = LpCompatWindow(hwnd)) != NULL) {
+        if (lp->fDialog && lp->fModal) { EndDialog(hwnd, 0); return; }
+        hwnd = lp->hwndParent ? lp->hwndParent : lp->hwndOwner;
+    }
+    PostMessageA(NULL, WM_NULL, 0, 0);
 }

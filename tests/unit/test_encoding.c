@@ -59,33 +59,33 @@ static void TestPasswords(void) {
 static void TestInvalidDefinition(void) {
     char szDir[MAX_PATH], szFile[MAX_PATH];
     char szPadding[1024];
-    FILE *pf;
+    NATIVEFILE *pf;
     int i;
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("utf8_invalid_definition", szDir, sizeof(szDir)));
     snprintf(szFile, sizeof(szFile), "%s%sbad.def", szDir, szDirSep);
-    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
-    fputs("\xe9\r\n", pf); fclose(pf);
+    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    IPutNativeString("\xe9\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
-    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
-    fputs("Title\r\n\xff\r\n", pf); fclose(pf);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    IPutNativeString("Title\r\n\xff\r\n", pf); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
-    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
-    fputs("Title\r\n", pf);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    IPutNativeString("Title\r\n", pf);
     memset(szPadding, 'a', sizeof(szPadding));
-    for (i = 0; i < 64; i++) TEST_CHECK(fwrite(szPadding, 1, sizeof(szPadding), pf) == sizeof(szPadding));
-    fclose(pf);
+    for (i = 0; i < 64; i++) TEST_CHECK(CWriteNative(szPadding, 1, sizeof(szPadding), pf) == sizeof(szPadding));
+    ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
-    pf = fopen(szFile, "wb"); TEST_ASSERT(pf);
-    TEST_CHECK(fwrite("Title\0hidden\r\n", 1, 14, pf) == 14); fclose(pf);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
+    pf = PfNativeOpen(szFile, "wb"); TEST_ASSERT(pf);
+    TEST_CHECK(CWriteNative("Title\0hidden\r\n", 1, 14, pf) == 14); ICloseNativeFile(pf);
     TEST_CHECK(!GenNewGameFromFile(szFile));
     TEST_CHECK(idsFileError == idsUniverseCreationFileAppearsInvalid);
-    TEST_CHECK(penvMem == NULL && lpbDefUni == NULL);
+    TEST_CHECK(!FStarsRecoveryActive() && lpbDefUni == NULL);
 }
 
 static void TestFormattedTextBounds(void) {
@@ -116,21 +116,21 @@ static void TestScannerSnapshotUtf8(void) {
     SCANSNAPSHOT snap = {0};
     char sz[2048];
     size_t cb;
-    FILE *pf;
+    NATIVEFILE *pf;
     const char *psz = "\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80";
 
     snprintf(obj.szName, sizeof(obj.szName), "Quoted \"%s\"\r\n", psz);
     snap.rgobj = &obj; snap.cObject = 1;
-    pf = tmpfile(); TEST_ASSERT(pf);
+    pf = PfNativeTemporary(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
-    rewind(pf); cb = fread(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
+    ISeekNativeFile(pf, 0, 0); cb = CReadNative(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(sz, cb));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");
     TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
     memset(obj.szName, 'a', sizeof(obj.szName));
     TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
-    fclose(pf);
+    ICloseNativeFile(pf);
 }
 #endif
 

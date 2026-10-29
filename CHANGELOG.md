@@ -6,6 +6,36 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Windows SDK reference tests can be enabled alongside the ordinary tests.
+  CMake registers their shared enum-ABI and file-service contract targets once;
+  previously the combined configuration failed with duplicate-target errors.
+
+- SDL modal message pumps now unwind when a thread timer or another unowned
+  callback fails, completing dialog and owner cleanup before delivering the
+  pending C++ exception. Previously they continued dispatching commands until
+  the dialog was closed. Turn generation and regression baselines are unchanged.
+
+- Stored constants now use C++ enums with explicit underlying types matching
+  the original widths and signedness. C11 callers and generated tables retain
+  compatible integer typedefs. Integer/record-field conversions and enum
+  arithmetic are explicit; a cross-language ABI test checks all 145 stored
+  types. Constant values, file format 2.85 and regression baselines are unchanged.
+
+- Application-owned files now use a shared C++17 stream/filesystem service for
+  game records, host settings, library metadata/import/export, profiles, help,
+  inspection and PDF output. Opaque streams and owned legacy tokens keep native
+  handles private. Exclusive creation, private temporary-file modes, sharing,
+  live-file identity, truncation and durable publication retain narrow native
+  adapters. UTF-8 paths, binary record sizes, turn results and baselines stay
+  unchanged.
+
+- Recoverable memory and file failures now use typed C++ exceptions instead of
+  `setjmp`/`longjmp`. Scoped guards restore recovery state and flags and release
+  owned handles. Window, dialog, timer and inspector callback failures are
+  contained inside C++ thunks; the C runtime completes its dispatch/modal cleanup
+  before the game receives the error. Existing operation-specific recovery and
+  format 2.85 remain intact. Turn results and regression baselines are unchanged.
+
 - The game, desktop UI and command-line host now compile as GNU C++17 while
   retaining their source filenames, C ABI, integer storage widths and binary
   record formats. The SDL wrapper and generated tables remain C11. This first

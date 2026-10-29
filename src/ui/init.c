@@ -106,17 +106,17 @@ int16_t FCreateStuff() {
         fFailed = TRUE;
     }
     for (i = 0; i < 5; i++) {
-        rghdibShips[i] = HdibLoadBigResource(i + 552);
+        rghdibShips[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 552));
         if (!rghdibShips[i]) {
             fFailed = TRUE;
         }
-        rghdibShipsT[i] = HdibLoadBigResource(i + 557);
+        rghdibShipsT[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 557));
         if (!rghdibShipsT[i]) {
             fFailed = TRUE;
         }
     }
     for (i = 0; i < 7; i++) {
-        rghdibInventory[i] = HdibLoadBigResource(i + 500);
+        rghdibInventory[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 500));
         if (!rghdibInventory[i]) {
             fFailed = TRUE;
         }
@@ -168,7 +168,7 @@ int16_t FCreateFonts(HDC hdc) {
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
     for (i = 0; i < 4; i++) {
         if (rgszArial[i][0] == 0) {
-            CchGetString(idsArial2 + i, rgszArial[i]);
+            CchGetString(static_cast<StringId>(idsArial2 + i), rgszArial[i]);
         }
     }
     plf->lfHeight = -MulDiv(10, GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -468,7 +468,7 @@ void ReadIniSettings() {
         AlertSz(PszFormatIds(idsNoteStarsPrefersScreenResolutionLeast800x600, NULL), MB_ICONHAND);
     }
     CchGetString(idsLayout, szEntry);
-    iWindowLayout = GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
+    iWindowLayout = static_cast<WindowLayout>(GetPrivateProfileInt(szSection, szEntry, 1, szIniFile));
     iWindowLayout = 2 < (layoutLarge <= (int16_t)iWindowLayout ? iWindowLayout : 0) ? layoutSmall
                     : layoutLarge > (int16_t)iWindowLayout                          ? layoutLarge
                                                                                     : iWindowLayout;
@@ -544,7 +544,7 @@ void ReadIniSettings() {
     CchGetString(idsScanzoom, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 4, szIniFile);
     if (w >= 1 && w <= 9) {
-        iScanZoom = w - 5;
+        iScanZoom = static_cast<ScanZoom>(w - 5);
     }
     CchGetString(idsScanfilterv25, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
@@ -563,12 +563,12 @@ void ReadIniSettings() {
     vpctRadarView = w;
     CchGetString(idsScanmodev25, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 224, szIniFile);
-    grbitScan = w & 0xc00f;
+    grbitScan = static_cast<GrbitScan>(w & 0xc00f);
     if (grbitScan >= 6) {
-        grbitScan = 0;
+        grbitScan = static_cast<GrbitScan>(0);
         grbitScanShip = 0;
     } else {
-        grbitScan |= w & 0x3ff0;
+        grbitScan = static_cast<GrbitScan>(grbitScan | w & 0x3ff0);
     }
     CchGetString(idsMineralscale, szEntry);
     cMinGrafMax = GetPrivateProfileInt(szSection, szEntry, cMinGrafMax, szIniFile);
@@ -676,7 +676,7 @@ void ReadIniSettings() {
     gd.fTrialPeriodOver = uDateCur >= (uint16_t)(uDateInstalled + 21);
     CchGetString(idsFonts, szSection);
     for (i = 0; i < 4; i++) {
-        CchGetString(idsArial + i, szEntry);
+        CchGetString(static_cast<StringId>(idsArial + i), szEntry);
         GetPrivateProfileString(szSection, szEntry, "", szWork, 80, szIniFile);
         cch = strlen(szWork);
         if (cch >= 5 && cch <= 31) {

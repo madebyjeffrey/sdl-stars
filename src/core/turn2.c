@@ -6,6 +6,7 @@ void Produce() {
     int32_t    rgResAvail[4];
     int16_t    iprodCur;
     mdProdStat mdStatus;
+    int16_t    mdStatusRaw;
     int16_t    cBuilt;
     int16_t    fNoResearch;
     PLANET    *lppl;
@@ -28,7 +29,7 @@ void Produce() {
     for (; lppl < lpplMac; lppl++) {
         if (!lppl->lpplprod) {
             if (lppl->iPlayer != iplrNone) {
-                FSendPlrMsg2(lppl->iPlayer, idmProductionQueueEmpty, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(lppl->iPlayer, idmProductionQueueEmpty, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 lResCur = CResourcesAtPlanet(lppl, lppl->iPlayer);
                 if (lResCur != 0 && vrgPlanResExtra[lppl->id] != 0) {
                     lResCur += (int32_t)(lResCur * (uint32_t)vrgPlanResExtra[lppl->id]) / (int32_t)((uint32_t)vrgPlanResExtra[lppl->id] + lResCur);
@@ -65,12 +66,12 @@ void Produce() {
                         if ((lpprod->iItem >= iobjPlanetaryScannerFirst && lpprod->iItem <= iobjPlanetaryScannerSnooper620X) ||
                             lpprod->iItem == iobjPlanetaryScanner) {
                             if (lppl->iScanner != 31) {
-                                FSendPlrMsg2(lppl->iPlayer, idmOrderBuildScannerCanceledAlreadyHaveScanner, lppl->id, lppl->id, 0);
+                                FSendPlrMsg2(lppl->iPlayer, idmOrderBuildScannerCanceledAlreadyHaveScanner, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                                 goto RemoveFromQueue;
                             }
                         } else if (lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed) {
                             if (IWarpMAFromLppl(lppl, NULL) == 0 || lppl->idFling == 0) {
-                                FSendPlrMsg2(lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, lppl->id, lppl->id, 0);
+                                FSendPlrMsg2(lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                                 goto RemoveFromQueue;
                             }
                         } else {
@@ -86,7 +87,7 @@ void Produce() {
                                 idm = idmHasOrdersBuildPlanetaryInstallationsBeyondMaximu;
                             LCantBuildP2:
                                 if (cMax < (int32_t)lpprod->cItem) {
-                                    FSendPlrMsg2(lppl->iPlayer, idm, lppl->id, lppl->id, 0);
+                                    FSendPlrMsg2(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                                     if (cMax <= 0)
                                         goto RemoveFromQueue;
                                     lpprod->cItem = cMax;
@@ -121,11 +122,12 @@ void Produce() {
                         continue;
                     }
                     prodPartial.cItem = 0;
-                    cBuilt = CBuildProdItem(lppl, lpprod, &prodPartial, rgResAvail, fPrevProdIsAlch, (int16_t *)&mdStatus, FALSE);
+                    cBuilt = CBuildProdItem(lppl, lpprod, &prodPartial, rgResAvail, fPrevProdIsAlch, &mdStatusRaw, FALSE);
+                    mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                     if (fAutoBuildDone && (mdStatus == mdProdStatSomeAuto || mdStatus == mdProdStatNoneAuto)) {
                         fAutoBuildDone = FALSE;
                     }
-                    if (cBuilt > 0 && !FBuildObject(lppl, lpprod->grobj, lpprod->iItem, cBuilt, rgResAvail) &&
+                    if (cBuilt > 0 && !FBuildObject(lppl, static_cast<GrobjClass>(lpprod->grobj), lpprod->iItem, cBuilt, rgResAvail) &&
                         (lpprod->grobj != grobjPlanet || lpprod->iItem >= mdIdleFactory)) {
                         lpprod->cItem = 0;
                     }
@@ -159,7 +161,7 @@ void Produce() {
                     fPrevProdIsAlch = FALSE;
                 }
                 if (!lppl->lpplprod || (iprodCur >= lppl->lpplprod->iprodMac && fAutoBuildDone)) {
-                    FSendPlrMsg2(lppl->iPlayer, idmHasCompletedOrdersProductionQueueEmpty, lppl->id, lppl->id, 0);
+                    FSendPlrMsg2(lppl->iPlayer, idmHasCompletedOrdersProductionQueueEmpty, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 }
                 for (i = 0; i < 3; i++) {
                     lppl->rgwtMin[i] = rgResAvail[i];
@@ -342,7 +344,7 @@ int16_t CBuildProdItem(PLANET *lppl, PROD *lpprod, PROD *pprodPartial, int32_t *
         }
     }
     if (cAlchemy != 0 && !fCalcOnly && gd.fGeneratingTurn) {
-        FSendPlrMsg2(lppl->iPlayer, idmScientistsHaveTransmutedCommonMaterialsKtEach, lppl->id, lppl->id, cAlchemy);
+        FSendPlrMsg2(lppl->iPlayer, idmScientistsHaveTransmutedCommonMaterialsKtEach, static_cast<MsgGoto>(lppl->id), lppl->id, cAlchemy);
     }
     if (pmdStatus) {
         if (fAutoBuild == 2) {
@@ -400,12 +402,12 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             }
             idm = idmHasBuiltNew;
             if (lpshdef->hul.wtCargoMax != 0) {
-                idm++;
+                idm = static_cast<MessageId>(idm + 1);
                 if ((uint32_t)lpshdef->hul.wtCargoMax == 0xffff) {
-                    idm++;
+                    idm = static_cast<MessageId>(idm + 1);
                 }
             }
-            FSendPlrMsg(lppl->iPlayer, idm, lppl->id, lppl->id, lppl->iPlayer << 5 | (iItem + 0x10), LphuldefFromId(lpshdef->hul.ihuldef)->hul.wtCargoMax, 0, 0,
+            FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->iPlayer << 5 | (iItem + 0x10), LphuldefFromId(lpshdef->hul.ihuldef)->hul.wtCargoMax, 0, 0,
                         0, 0);
             if (lppl->fStarbase && (int16_t)rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef > (int16_t)rglpshdefSB[lppl->iPlayer][iItem].hul.ihuldef) {
                 KillQueuedShips(lppl);
@@ -436,7 +438,7 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
         }
         lpshdef = rglpshdef[lppl->iPlayer] + iItem;
         if (lpshdef->fFree || !FCanBuildShdef(lpshdef, lppl->iPlayer)) {
-            FSendPlrMsg2(lppl->iPlayer, idmStarbaseFailedBuildNewShipTypeBecause, lppl->id, iItem + 1, 0);
+            FSendPlrMsg2(lppl->iPlayer, idmStarbaseFailedBuildNewShipTypeBecause, static_cast<MsgGoto>(lppl->id), iItem + 1, 0);
             return FALSE;
         }
         if (rgplr[lppl->iPlayer].cFleet == 0x200) {
@@ -467,12 +469,12 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                         lpfl->rgdv[iItem].dp = 0;
                     }
                     CreateShip(lppl->iPlayer, lpfl, iItem, cBuilt);
-                    FSendPlrMsg(lppl->iPlayer, idmStarbaseBuiltNewSDueLack27b, lpfl->id | 0x8000, lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lpfl->id, 0, 0,
+                    FSendPlrMsg(lppl->iPlayer, idmStarbaseBuiltNewSDueLack27b, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lpfl->id, 0, 0,
                                 0);
                     return TRUE;
                 }
             }
-            FSendPlrMsg(lppl->iPlayer, idmStarbaseBuiltNewShipSTypeLost, lppl->id, lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, 0, 0, 0, 0);
+            FSendPlrMsg(lppl->iPlayer, idmStarbaseBuiltNewShipSTypeLost, static_cast<MsgGoto>(lppl->id), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, 0, 0, 0, 0);
             return FALSE;
         }
         lpfl = LpflNew(lppl->iPlayer, lppl->id);
@@ -482,17 +484,17 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             AutoRouteFleet(lpfl, lppl);
             if (cBuilt == 1) {
                 idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewWhichWillRouted : idmStarbaseHasBuiltNewWhichRouted;
-                FSendPlrMsg(lppl->iPlayer, idm, lpfl->id | 0x8000, lppl->id, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0, 0);
+                FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0, 0);
             } else {
                 idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewShipsWhichWill : idmStarbaseHasBuiltNewShipsWhichRouted;
-                FSendPlrMsg(lppl->iPlayer, idm, lpfl->id | 0x8000, lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0);
+                FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0);
             }
         } else {
             AutoFleetOrder(lpfl, lppl);
             if (cBuilt == 1) {
-                FSendPlrMsg2(lppl->iPlayer, idmStarbaseHasBuiltNew, lpfl->id | 0x8000, lppl->id, lppl->iPlayer << 5 | iItem);
+                FSendPlrMsg2(lppl->iPlayer, idmStarbaseHasBuiltNew, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, lppl->iPlayer << 5 | iItem);
             } else {
-                FSendPlrMsg(lppl->iPlayer, idmStarbaseHasBuiltNewShips, lpfl->id | 0x8000, lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, 0, 0, 0, 0);
+                FSendPlrMsg(lppl->iPlayer, idmStarbaseHasBuiltNewShips, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, 0, 0, 0, 0);
             }
         }
     } else {
@@ -512,11 +514,11 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             lppl->cFactories += cBuilt;
             idm = idmHaveBuiltFactory;
         SendMsgFactMine:
-            cBuilt += FRemovePlayerMessage(lppl->iPlayer, idm, lppl->id);
+            cBuilt += FRemovePlayerMessage(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id));
             if (cBuilt > 1) {
-                FSendPlrMsg2(lppl->iPlayer, idm + 1, lppl->id, cBuilt, lppl->id);
+                FSendPlrMsg2(lppl->iPlayer, static_cast<MessageId>(idm + 1), static_cast<MsgGoto>(lppl->id), cBuilt, lppl->id);
             } else {
-                FSendPlrMsg2(lppl->iPlayer, idm, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
             }
             break;
         case iobjMine:
@@ -549,14 +551,14 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
         case iobjPacketBor:
         case iobjPacketGerm:
         case iobjPacketMixed:
-            raMajor = GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv);
+            raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv));
             iWarp = IWarpMAFromLppl(lppl, &fTwoMAs);
             if (iWarp == 0) {
-                FSendPlrMsg2(lppl->iPlayer, idmMineralPacketFormedHasDisintegratedBecausePlanet, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(lppl->iPlayer, idmMineralPacketFormedHasDisintegratedBecausePlanet, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 return FALSE;
             }
             if (lppl->idFling == 0) {
-                FSendPlrMsg2(lppl->iPlayer, idmMineralPacketFormedHasDisintegratedBecauseDidnt, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(lppl->iPlayer, idmMineralPacketFormedHasDisintegratedBecauseDidnt, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 return FALSE;
             }
             if (iItem == iobjPacket) {
@@ -585,10 +587,10 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             if (iWarpAsked <= iWarp + fTwoMAs) {
                 iDecayRate = decayNone;
             } else {
-                iDecayRate = iWarpAsked - iWarp - fTwoMAs;
+                iDecayRate = static_cast<PacketDecay>(iWarpAsked - iWarp - fTwoMAs);
             }
             if (raMajor == raStargate && (int16_t)iDecayRate < decay50Pct) {
-                iDecayRate++;
+                iDecayRate = static_cast<PacketDecay>(iDecayRate + 1);
             }
             iWarp = iWarpAsked - 4;
             lpth = lpThings;
@@ -607,12 +609,12 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                     }
                     lpth->thp.wtMax += (int16_t)(lpth->thp.rgwtMin[i] + 9) / 10;
                 }
-                FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasCombined, lppl->id, lppl->id, lppl->idFling - 1);
+                FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasCombined, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->idFling - 1);
                 return TRUE;
             }
             lpth = LpthNew(lppl->iPlayer, ithMineralPacket);
             if (!lpth) {
-                FSendPlrMsg2(lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 return TRUE;
             }
             for (i = 0; i < 3; i++) {
@@ -623,11 +625,11 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             lpth->thp.iDecayRate = iDecayRate;
             lpth->thp.idPlanet = lppl->idFling - 1;
             lpth->pt = rgptPlan[lppl->id];
-            FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasDestination, lppl->id, lppl->id, lppl->idFling - 1);
+            FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasDestination, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->idFling - 1);
             return TRUE;
         case iobjGenesis:
             for (i = 0; i < game.cPlayer; i++) {
-                FSendPlrMsg2(i, idmStrongFundamentalForcesHaveRebirthed, lppl->id, lppl->id, 0);
+                FSendPlrMsg2(i, idmStrongFundamentalForcesHaveRebirthed, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
             }
             if (GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
                 lppl->cFactories = 0;
@@ -647,7 +649,7 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             while (cBuilt-- != 0) {
                 i = IBestTerraform(lppl, TRUE);
                 if (i != 0) {
-                    iEnv = abs(i) - 1;
+                    iEnv = static_cast<EnvType>(abs(i) - 1);
                     cAllowed = lppl->rgEnvVar[iEnv] + (i <= 0 ? -1 : 1);
                     if (1 > (99 >= cAllowed ? cAllowed : 99)) {
                         cAllowed = 1;
@@ -655,7 +657,7 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                         cAllowed = 99;
                     }
                     lppl->rgEnvVar[iEnv] = cAllowed;
-                    FSendPlrMsg(lppl->iPlayer, idmTerraformingEffortsHave, lppl->id, lppl->id, i > 0, iEnv, iEnv * 256 + cAllowed, 0, 0, 0);
+                    FSendPlrMsg(lppl->iPlayer, idmTerraformingEffortsHave, static_cast<MsgGoto>(lppl->id), lppl->id, i > 0, iEnv, iEnv * 256 + cAllowed, 0, 0, 0);
                 }
             }
             return TRUE;
@@ -674,7 +676,7 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
         case iobjPlanetaryScannerSnooper400X:
         case iobjPlanetaryScannerSnooper500X:
         case iobjPlanetaryScannerSnooper620X:
-            FSendPlrMsg(lppl->iPlayer, idmHasBuiltNewPlanetaryScanner, lppl->id, lppl->id, -32768, iItem - 18, 0, 0, 0, 0);
+            FSendPlrMsg(lppl->iPlayer, idmHasBuiltNewPlanetaryScanner, static_cast<MsgGoto>(lppl->id), lppl->id, -32768, iItem - 18, 0, 0, 0, 0);
             lppl->iScanner = iItem - 18;
             break;
         }
@@ -712,7 +714,7 @@ void TransferToOthers() {
         lpxfCur = lpxf;
         lpxfMax = lpxf + cXferFull;
         for (; lpxfCur < lpxfMax; lpxfCur++) {
-            if (!FLookupObject(lpxfCur->grobj2, lpxfCur->id2, &rgxf[1].fl))
+            if (!FLookupObject(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, &rgxf[1].fl))
                 goto DoNext;
             if (lpxfCur->grobj1 == 1) {
                 rgxf[0].fl.iPlayer = LpplFromId(lpxfCur->id1)->iPlayer;
@@ -722,28 +724,28 @@ void TransferToOthers() {
             for (i = 0; i < 5; i++) {
                 l2 = lpxfCur->rgcQuan[i];
                 if (l2 != 0) {
-                    l = ChgCargo(lpxfCur->grobj2, lpxfCur->id2, i, l2, NULL);
+                    l = ChgCargo(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, static_cast<MineralType>(i), l2, NULL);
                     if (l != l2) {
                         idm = i == 4 ? idmAttemptedTransferColonistsSuccessfullyReceivedRe : idmAttemptedTransferSuccessfullyReceived;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
                         idDst = lpxfCur->id2 | (lpxfCur->grobj2 == 2 ? 0x8000 : 0);
                         if (l == 0) {
-                            idm += 4;
+                            idm = static_cast<MessageId>(idm + 4);
                         }
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, idSrc, idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
+                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
                         idm = i == 4 ? idmReceivedHoweverColonistsSentRemainsOtherColonist : idmReceivedHoweverSentRemainderLostSpace;
                         if (l == 0) {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, idm + 4, idDst, idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
+                            FSendPlrMsg(rgxf[1].fl.iPlayer, static_cast<MessageId>(idm + 4), static_cast<MsgGoto>(idDst), idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
                         } else {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, idm, idDst, idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
+                            FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
                         }
                     } else {
                         idm = i == 4 ? idmSuccessfullyTransferred2 : idmSuccessfullyTransferred;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
                         idDst = lpxfCur->id2 | (lpxfCur->grobj2 == 2 ? 0x8000 : 0);
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, idSrc, idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
+                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
                         idm = i == 4 ? idmSuccessfullyReceived2 : idmSuccessfullyReceived;
-                        FSendPlrMsg(rgxf[1].fl.iPlayer, idm, idDst, idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
+                        FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
                     }
                 }
             }
@@ -798,12 +800,12 @@ void DropColonists() {
                 for (lpcdLook = lpcdCur; lpcdLook < lpcdMax; lpcdLook++) {
                     if (idPlanet == lpcdLook->idPlanetDst) {
                         if (GetRaceStat(&rgplr[lpcdLook->idPlr], rsMajorAdv) == raMacintosh && (!lpcdLook->fCanColonize || pl.iPlayer != iplrNone)) {
-                            FSendPlrMsg2(lpcdLook->idPlr, idmColonistsAttemptingSetShopReducedProtoplasmicBlo, pl.id, pl.id, 0);
+                            FSendPlrMsg2(lpcdLook->idPlr, idmColonistsAttemptingSetShopReducedProtoplasmicBlo, static_cast<MsgGoto>(pl.id), pl.id, 0);
                         } else if (pl.iPlayer == iplrNone && !lpcdLook->fCanColonize) {
-                            FSendPlrMsg(lpcdLook->idPlr, idmColonistsForcedTransportDiedBecauseDidColonize, pl.id, LOWORD(lpcdLook->cColonist),
+                            FSendPlrMsg(lpcdLook->idPlr, idmColonistsForcedTransportDiedBecauseDidColonize, static_cast<MsgGoto>(pl.id), LOWORD(lpcdLook->cColonist),
                                         HIWORD(lpcdLook->cColonist), pl.id, 0, 0, 0, 0);
                         } else if (pl.fStarbase && pl.iPlayer != iplrNone) {
-                            FSendPlrMsg2(lpcdLook->idPlr, idmColonistsAssaultingHaveKilledForcesOrbitingStarb, pl.id, pl.id, 0);
+                            FSendPlrMsg2(lpcdLook->idPlr, idmColonistsAssaultingHaveKilledForcesOrbitingStarb, static_cast<MsgGoto>(pl.id), pl.id, 0);
                         } else {
                             rgcCol[lpcdLook->idPlr] = rgcCol[lpcdLook->idPlr] + lpcdLook->cColonist;
                             cColTot += lpcdLook->cColonist;
@@ -832,14 +834,14 @@ void DropColonists() {
                         for (i = 0; i < 16; i++) {
                             if (rgcCol[i] != 0) {
                                 if ((double)pctSurvive == (double)1.0) {
-                                    FSendPlrMsg(i, idmColonistsDroppedMassacredGroundTroops, pl.id, LOWORD(rgcCol[i]), HIWORD(rgcCol[i]), pl.id,
+                                    FSendPlrMsg(i, idmColonistsDroppedMassacredGroundTroops, static_cast<MsgGoto>(pl.id), LOWORD(rgcCol[i]), HIWORD(rgcCol[i]), pl.id,
                                                 pl.iPlayer | 0x30, 0, 0, 0);
-                                    FSendPlrMsg(pl.iPlayer, idmGroundTroopsValiantlyDestroyedAttackingBarbarian, pl.id, pl.id, LOWORD(rgcCol[i]),
+                                    FSendPlrMsg(pl.iPlayer, idmGroundTroopsValiantlyDestroyedAttackingBarbarian, static_cast<MsgGoto>(pl.id), pl.id, LOWORD(rgcCol[i]),
                                                 HIWORD(rgcCol[i]), i | 0x30, 0, 0, 0);
                                 } else {
-                                    FSendPlrMsg(i, idmColonistsDroppedDestroyedPlanetaryDefensesRestMa, pl.id, LOWORD(rgcCol[i]), HIWORD(rgcCol[i]), pl.id,
+                                    FSendPlrMsg(i, idmColonistsDroppedDestroyedPlanetaryDefensesRestMa, static_cast<MsgGoto>(pl.id), LOWORD(rgcCol[i]), HIWORD(rgcCol[i]), pl.id,
                                                 (int32_t)(((double)1.0 - pctSurvive) * 10000), pl.iPlayer | 0x30, 0, 0);
-                                    FSendPlrMsg(pl.iPlayer, idmPlanetaryDefensesGroundTroopsDestroyedInvadingTr, pl.id, pl.id, LOWORD(rgcCol[i]),
+                                    FSendPlrMsg(pl.iPlayer, idmPlanetaryDefensesGroundTroopsDestroyedInvadingTr, static_cast<MsgGoto>(pl.id), pl.id, LOWORD(rgcCol[i]),
                                                 HIWORD(rgcCol[i]), i | 0x30, 0, 0, 0);
                                 }
                             }
@@ -878,11 +880,11 @@ void DropColonists() {
                 if (fTie) {
                     for (i = 0; i < game.cPlayer; i++) {
                         if (rgcCol[i] != 0) {
-                            FSendPlrMsg2(i, idmInvolvedWayAssaultNobodysTroopsSurvivedBrutal, pl.id, cSides, pl.id);
+                            FSendPlrMsg2(i, idmInvolvedWayAssaultNobodysTroopsSurvivedBrutal, static_cast<MsgGoto>(pl.id), cSides, pl.id);
                         }
                     }
                     if (iplrOldOwner != iplrNone) {
-                        FSendPlrMsg2(iplrOldOwner, idmMultitudeEnemiesHaveMountedProngAttackResulting, pl.id, cSides, pl.id);
+                        FSendPlrMsg2(iplrOldOwner, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(pl.id), cSides, pl.id);
                         pl.iPlayer = iplrNone;
                     }
                 } else {
@@ -890,13 +892,13 @@ void DropColonists() {
                         for (i = 0; i < 16; i++) {
                             if (rgcCol[i] != 0) {
                                 if (i == iMax) {
-                                    FSendPlrMsg2(i, idmTroopsCrushSColonistsControlPlanet, pl.id, iplrOldOwner | 0x20, pl.id);
+                                    FSendPlrMsg2(i, idmTroopsCrushSColonistsControlPlanet, static_cast<MsgGoto>(pl.id), iplrOldOwner | 0x20, pl.id);
                                 } else {
-                                    FSendPlrMsg2(i, idmColonistsDroppedDestroyedSpiritedFighting, pl.id, pl.id, 0);
+                                    FSendPlrMsg2(i, idmColonistsDroppedDestroyedSpiritedFighting, static_cast<MsgGoto>(pl.id), pl.id, 0);
                                 }
                             }
                         }
-                        FSendPlrMsg(iplrOldOwner, idmHaveAttackedFirstRateStormTroopersThough, pl.id, iMax | 0x30, pl.id, LOWORD(rgcCol[iMax]),
+                        FSendPlrMsg(iplrOldOwner, idmHaveAttackedFirstRateStormTroopersThough, static_cast<MsgGoto>(pl.id), iMax | 0x30, pl.id, LOWORD(rgcCol[iMax]),
                                     HIWORD(rgcCol[iMax]), 0, 0, 0);
                         memset(rgTechBattle, 0, 6);
                         memset(rgTechTrader, 0, 13);
@@ -909,14 +911,14 @@ void DropColonists() {
                         for (i = 0; i < 16; i++) {
                             if (rgcCol[i] != 0) {
                                 if (i == iMax) {
-                                    FSendPlrMsg2(i, idmInvolvedWayRaceUninhabitedPlanetForcesCrush, pl.id, cSides, pl.id);
+                                    FSendPlrMsg2(i, idmInvolvedWayRaceUninhabitedPlanetForcesCrush, static_cast<MsgGoto>(pl.id), cSides, pl.id);
                                 } else {
-                                    FSendPlrMsg(i, idmColonistsDestroyedWayRaceUninhabitedPlanetContro, pl.id, cSides, pl.id, iMax | 0xb0, 0, 0, 0, 0);
+                                    FSendPlrMsg(i, idmColonistsDestroyedWayRaceUninhabitedPlanetContro, static_cast<MsgGoto>(pl.id), cSides, pl.id, iMax | 0xb0, 0, 0, 0, 0);
                                 }
                             }
                         }
                     } else {
-                        FSendPlrMsg2(iMax, idmColonistsControl + (GetRaceStat(&rgplr[iMax], rsMajorAdv) == raMacintosh), pl.id, pl.id, 0);
+                        FSendPlrMsg2(iMax, static_cast<MessageId>(idmColonistsControl + (GetRaceStat(&rgplr[iMax], rsMajorAdv) == raMacintosh)), static_cast<MsgGoto>(pl.id), pl.id, 0);
                     }
                     if (iMax != -1) {
                         cpq = rgplr[iMax].zpq1.cpq;
@@ -1116,7 +1118,7 @@ void AutoTerraform() {
                         } else {
                             lppl->rgEnvVarOrig[i]++;
                         }
-                        FSendPlrMsg2(lppl->iPlayer, idmEngineersHaveManagedImproveUnderlying1, lppl->id, lppl->id, i);
+                        FSendPlrMsg2(lppl->iPlayer, idmEngineersHaveManagedImproveUnderlying1, static_cast<MsgGoto>(lppl->id), lppl->id, i);
                     }
                 }
                 if (FCanTerraformLppl(lppl, rgMin, rgMax, rgCost, TRUE)) {
@@ -1128,7 +1130,7 @@ void AutoTerraform() {
                         }
                     }
                     i = PctPlanetDesirability(lppl, lppl->iPlayer);
-                    FSendPlrMsg2(lppl->iPlayer, idmHasAutoTerraformedValue, lppl->id, lppl->id, i);
+                    FSendPlrMsg2(lppl->iPlayer, idmHasAutoTerraformedValue, static_cast<MsgGoto>(lppl->id), lppl->id, i);
                 }
             }
         }
@@ -1165,7 +1167,7 @@ void RemoteTerraforming() {
                         iBest = IBestRemoteTerra(lppl, lpfl->iPlayer, fHelp);
                         if (iBest == 0)
                             break;
-                        iEnv = abs(iBest) - 1;
+                        iEnv = static_cast<EnvType>(abs(iBest) - 1);
                         cAllowed = lppl->rgEnvVar[iEnv] + (iBest <= 0 ? -1 : 1);
                         if (1 > (99 >= cAllowed ? cAllowed : 99)) {
                             cAllowed = 1;
@@ -1176,10 +1178,10 @@ void RemoteTerraforming() {
                         cDone++;
                     }
                     pctNew = PctPlanetDesirability(lppl, lppl->iPlayer);
-                    FSendPlrMsg(lpfl->iPlayer, (!fHelp ? idmHasDegradedValue : idmHasImprovedValue) + (pctCur == pctNew), lpfl->id | 0x8000, lpfl->id, lppl->id,
+                    FSendPlrMsg(lpfl->iPlayer, static_cast<MessageId>((!fHelp ? idmHasDegradedValue : idmHasImprovedValue) + (pctCur == pctNew)), static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id,
                                 pctCur, pctNew, 0, 0, 0);
                     if (lpfl->iPlayer != lppl->iPlayer && pctNew != pctCur) {
-                        FSendPlrMsg(lppl->iPlayer, !fHelp ? idmHasDegradedValue : idmHasImprovedValue, lppl->id, lpfl->id, lppl->id, pctCur, pctNew, 0, 0, 0);
+                        FSendPlrMsg(lppl->iPlayer, !fHelp ? idmHasDegradedValue : idmHasImprovedValue, static_cast<MsgGoto>(lppl->id), lpfl->id, lppl->id, pctCur, pctNew, 0, 0, 0);
                     }
                 }
             }
@@ -1231,18 +1233,18 @@ void UpdatePopulations() {
         if (lPopChg != 0 && lPopChg < 0 && lppl->rgwtMin[3] > 0) {
             lPopOld = lppl->rgwtMin[3] - lPopChg;
             if (PctPlanetDesirability(lppl, lppl->iPlayer) < 0) {
-                FSendPlrMsg(lppl->iPlayer, idmPopulationHasDecreased, lppl->id, lppl->id, LOWORD(lPopOld), HIWORD(lPopOld), LOWORD(lppl->rgwtMin[3]),
+                FSendPlrMsg(lppl->iPlayer, idmPopulationHasDecreased, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(lPopOld), HIWORD(lPopOld), LOWORD(lppl->rgwtMin[3]),
                             HIWORD(lppl->rgwtMin[3]), 0, 0);
             } else {
-                FSendPlrMsg(lppl->iPlayer, idmPopulationHasDecreasedColonistsDueOvercrowding, lppl->id, lppl->id, -LOWORD(lPopChg),
+                FSendPlrMsg(lppl->iPlayer, idmPopulationHasDecreasedColonistsDueOvercrowding, static_cast<MsgGoto>(lppl->id), lppl->id, -LOWORD(lPopChg),
                             LOWORD((uint32_t)((uint32_t)-lPopChg >> 0x10)), 0, 0, 0, 0);
             }
         }
     NextPlanet:
         if (lppl->iPlayer != iplrNone && lppl->rgwtMin[3] == 0) {
             fMac = GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh;
-            FSendPlrMsg2(lppl->iPlayer, (lPopChg < 0 ? idmColonistsHaveDiedOffLongerControlPlanet : idmColonistsHaveJumpedShipLongerControlPlanet) + fMac,
-                         lppl->id, lppl->id, 0);
+            FSendPlrMsg2(lppl->iPlayer, static_cast<MessageId>((lPopChg < 0 ? idmColonistsHaveDiedOffLongerControlPlanet : idmColonistsHaveJumpedShipLongerControlPlanet) + fMac),
+                         static_cast<MsgGoto>(lppl->id), lppl->id, 0);
             UninhabitPlanet(lppl);
         }
         if (lppl->iPlayer == iplrNone) {
@@ -1344,10 +1346,10 @@ void MeteorStrike() {
             }
             for (i = 0; i < game.cPlayer; i++) {
                 FSendPlrMsg(i,
-                            (i == lppl->iPlayer && GetRaceStat(&rgplr[i], rsMajorAdv) != raMacintosh ? idmSmallCometHasCrashedPlanetKilling25
+                            static_cast<MessageId>((i == lppl->iPlayer && GetRaceStat(&rgplr[i], rsMajorAdv) != raMacintosh ? idmSmallCometHasCrashedPlanetKilling25
                                                                                                      : idmSmallCometHasCrashedBringingNewMinerals) +
-                                iSize,
-                            lppl->id, lppl->id, rgEnv[0], rgEnv[1], rgEnv[2], 0, 0, 0);
+                                iSize),
+                            static_cast<MsgGoto>(lppl->id), lppl->id, rgEnv[0], rgEnv[1], rgEnv[2], 0, 0, 0);
             }
             if (lppl->iPlayer != iplrNone && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
                 lppl->rgwtMin[3] -= (int32_t)(lppl->rgwtMin[3] * (int16_t)(20 * iSize + 25)) / 100;
@@ -1431,7 +1433,7 @@ void PlanetaryClimateChange() {
         if (lppl->iPlayer == iplrNone || lppl->rgwtMin[3] <= 50 || game.turn >= 20) {
             i = Random(3);
             if (lppl->iPlayer != iplrNone) {
-                FSendPlrMsg2(lppl->iPlayer, idmFundamentalChangesEnvironmentHavePermanentlyAlte, lppl->id, lppl->id, i);
+                FSendPlrMsg2(lppl->iPlayer, idmFundamentalChangesEnvironmentHavePermanentlyAlte, static_cast<MsgGoto>(lppl->id), lppl->id, i);
             }
             iT = Random(3) + 3;
             if (iT == 3) {
@@ -1469,7 +1471,7 @@ void DiscoverNewMinerals() {
         if (game.turn >= 10) {
             i = Random(3);
             if (lppl->iPlayer != iplrNone) {
-                FSendPlrMsg(lppl->iPlayer, idmSurveyorsHaveDiscoveredPreviouslyUnknownDepositS, lppl->id, lppl->id, i, 0, 0, 0, 0, 0);
+                FSendPlrMsg(lppl->iPlayer, idmSurveyorsHaveDiscoveredPreviouslyUnknownDepositS, static_cast<MsgGoto>(lppl->id), lppl->id, i, 0, 0, 0, 0, 0);
             }
             if (lppl->rgMinConc[i] < 180) {
                 lppl->rgMinConc[i] += Random(15) + 5;
@@ -1538,13 +1540,15 @@ void MysteryTrader() {
                         lpth->tht.grbitTrader = grbitTraderNone;
                     }
                 } else {
-                    grbitTrader = 1 << Random(13);
+                    grbitTrader = static_cast<GrbitTrader>(1 << Random(13));
                     switch (grbitTrader) {
+                    default:
+                        break;
                     case grbitTraderTorp:
                     case grbitTraderBeam:
                     case grbitTraderGenesis:
                     case grbitTraderJumpgate:
-                        grbitTrader = 1 << Random(13);
+                        grbitTrader = static_cast<GrbitTrader>(1 << Random(13));
                         if (((game.turn < 120 && grbitTrader == grbitTraderBeam) || (game.turn < 150 && grbitTrader == grbitTraderGenesis) ||
                              (game.turn < 180 && grbitTrader == grbitTraderJumpgate)) &&
                             Random(2) != 0) {
@@ -1718,7 +1722,7 @@ void UpdatePlayerScores() {
                         } else {
                             imsg = idmHaveDeclaredWinnerGameMayContinuePlay;
                         }
-                        FSendPrependedPlrMsg(i, imsg, gotoScore, wWinners2, 0, 0, 0, 0, 0, 0);
+                        FSendPrependedPlrMsg(i, static_cast<MessageId>(imsg), gotoScore, wWinners2, 0, 0, 0, 0, 0, 0);
                         i++;
                         j *= 2;
                     }
@@ -1958,7 +1962,7 @@ void SweepForMines() {
                         if (cMineCur > lpth->thm.cMines) {
                             cMineCur = lpth->thm.cMines;
                         }
-                        FSendPlrMsg(lpfl->iPlayer, idmHasSweptMinesMineField, 0x8000 | lpfl->id, lpfl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
+                        FSendPlrMsg(lpfl->iPlayer, idmHasSweptMinesMineField, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
                                     lpth->thm.iType, lpth->pt.x, lpth->pt.y);
                         FSendPlrMsg(lpth->iplr, idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull, LOWORD(cMineCur), HIWORD(cMineCur), lpth->thm.iType,
                                     lpth->pt.x, lpth->pt.y, 0);
@@ -2006,7 +2010,7 @@ void SweepForMines() {
                             if (cMineCur > lpth->thm.cMines) {
                                 cMineCur = lpth->thm.cMines;
                             }
-                            FSendPlrMsg(iplr, idmStarbaseHasSweptMinesMineField, lppl->id, lppl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
+                            FSendPlrMsg(iplr, idmStarbaseHasSweptMinesMineField, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
                                         lpth->thm.iType, lpth->pt.x, lpth->pt.y);
                             FSendPlrMsg(lpth->iplr, idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull, LOWORD(cMineCur), HIWORD(cMineCur),
                                         lpth->thm.iType, lpth->pt.x, lpth->pt.y, 0);
@@ -2057,14 +2061,14 @@ void BreedColonistsInTransit() {
                 }
                 lColGainAct = ChgCargo(grobjFleet, lpfl->id, Colonists, lColGain, NULL);
                 if (lColGainAct > 0) {
-                    FSendPlrMsg2(lpfl->iPlayer, idmColonistsHaveMadeGoodUseTimeIncreasing, lpfl->id | 0x8000, lpfl->id, LOWORD(lColGainAct));
+                    FSendPlrMsg2(lpfl->iPlayer, idmColonistsHaveMadeGoodUseTimeIncreasing, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lColGainAct));
                 }
                 if (lColGainAct < lColGain && lpfl->idPlanet != idPlanetDeepSpace) {
                     lppl = LpplFromId(lpfl->idPlanet);
                     if (lppl && lppl->iPlayer == lpfl->iPlayer) {
                         lColGain -= lColGainAct;
                         lppl->rgwtMin[3] += lColGain;
-                        FSendPlrMsg(lpfl->iPlayer, idmBreedingActivitiesHaveOverflowedLivingSpaceColon, lpfl->id | 0x8000, lpfl->id, LOWORD(lColGain),
+                        FSendPlrMsg(lpfl->iPlayer, idmBreedingActivitiesHaveOverflowedLivingSpaceColon, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lColGain),
                                     HIWORD(lColGain), lpfl->idPlanet, 0, 0, 0);
                     }
                 }
@@ -2148,7 +2152,7 @@ void UpdateResearchStatus(int16_t fUsePool) {
             }
         CheckForBreakthrough:
             if (rgplr[i].rgTech[iT] < 26 && (!rgplr[i].fCrippled || rgplr[i].rgTech[iT] < 10)) {
-                l = GetTechLevelCost(iT, rgplr[i].rgTech[iT] + 1, i);
+                l = GetTechLevelCost(static_cast<TechFieldType>(iT), rgplr[i].rgTech[iT] + 1, i);
                 if (l <= lSpent && !(rgplr[i].rgTech[iT] >= 26 && (rgplr[i].fCrippled || rgplr[i].rgTech[iT] >= 26))) {
                     iTechNext2 = iTechCur;
                     lSpent -= l;
@@ -2181,7 +2185,7 @@ void UpdateResearchStatus(int16_t fUsePool) {
                             part.hs.grhst = grbitCur;
                             while (1) {
                                 part.hs.iItem = iItem;
-                                mdAvail = FLookupPart(&part);
+                                mdAvail = static_cast<mdPartAvail>(FLookupPart(&part));
                                 if (mdAvail == mdPartAvailInvalid)
                                     break;
                                 if (mdAvail == mdPartAvailAvailable &&
@@ -2206,12 +2210,12 @@ void UpdateResearchStatus(int16_t fUsePool) {
                                         }
                                         iGoto = ibitCur << 8 | 0xc000 | iItem;
                                     }
-                                    FSendPlrMsg(i, idm, iGoto, iT, grbitCur, iItem, 0, 0, 0, 0);
+                                    FSendPlrMsg(i, idm, static_cast<MsgGoto>(iGoto), iT, grbitCur, iItem, 0, 0, 0, 0);
                                 }
                                 iItem++;
                             }
                         }
-                        grbitCur *= 2;
+                        grbitCur = static_cast<HullSlotType>(grbitCur * 2);
                         ibitCur++;
                     }
                     if ((fUsePool || fChgNow || iTechNext == 7) && iTechNext != 6 && iT == iTechCur) {

@@ -141,9 +141,10 @@ native chooser/printer and complete tutorial qualification remain separate work.
 
 ## Platform boundary and future Rust integration
 
-The SDK-backed core filesystem implementation remains in `native.c`. SDL UI
-sources include the wrapper's `windows.h`; `platform_windows.c` includes
-real SDK declarations for filesystem services; `filedialog_windows_sdk.c` isolates
+The shared C++ filesystem implementation is in `src/platform/fileio.cpp`;
+`native.c` retains the game-facing adapters. SDL UI sources include the wrapper's
+`windows.h`; `fileio.cpp` includes real SDK declarations for its narrow native
+file operations; `filedialog_windows_sdk.c` isolates
 the system Unicode open/save dialog APIs. CMake generates Windows wrapper
 symbol aliases such as `StarsCompat_CreateWindowExA`, so wrapper handles cannot
 accidentally reach identically named system APIs. Linux/macOS keep their current

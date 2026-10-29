@@ -8,9 +8,9 @@
 
 #include <ctype.h>
 #include <math.h>
-#include <setjmp.h>
 #include <string.h>
 #include <time.h>
+#include "errors.h"
 
 #ifdef __cplusplus
 #define _Static_assert static_assert
@@ -36,15 +36,9 @@ static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
 #include "enums.h"
 #include "native.h"
 
-// Native storage; the analysis model retains the original 18-byte layout.
-typedef jmp_buf ENV;
-
 // Comparator for qsort and bsearch, which call it through the native int
 // return type.
 typedef int (*QSORTCOMPARE)(const void *, const void *);
-
-// Dereference the saved pointer to the native jump-buffer array.
-#define StarsLongJump(env, value) longjmp(*(env), (value))
 
 #include "structs.h"
 
@@ -95,6 +89,10 @@ decltype(RemoveNativeFile) STARS_TEST_IMPL(RemoveNativeFile);
 decltype(ReplaceNativeFile) STARS_TEST_IMPL(ReplaceNativeFile);
 decltype(RenameNativeFile) STARS_TEST_IMPL(RenameNativeFile);
 }
+#endif
+
+#ifdef __cplusplus
+#include "file_guard.h"
 #endif
 
 #endif

@@ -257,16 +257,16 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         hmenu = GetASubMenu(hwndFrame, menuReport);
         switch (vprptCur->irpt) {
         case rptFleets:
-            idm = 2303;
+            idm = static_cast<MessageId>(2303);
             break;
         case rptEnemyFleets:
-            idm = 2304;
+            idm = static_cast<MessageId>(2304);
             break;
         case rptPlanets:
-            idm = 2301;
+            idm = static_cast<MessageId>(2301);
             break;
         case rptBattles:
-            idm = 2305;
+            idm = static_cast<MessageId>(2305);
         }
         CheckMenuItem(hmenu, idm, MF_UNCHECKED);
         vprptCur = 0;
@@ -476,7 +476,7 @@ INT_PTR CALLBACK ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
         for (i = 0; i < 8; i++) {
             strcpy(&szWork[i * 40], szT);
             psz = &szWork[i * 40 + cchHistory];
-            cch = CchGetString(idsPlanets + i, psz);
+            cch = CchGetString(static_cast<StringId>(idsPlanets + i), psz);
             psz[cch - 1] = 0;
             rgid[c] = (uint32_t)(gd.iCurGraph == i);
             rgszScan[c++] = &szWork[i * 40];
@@ -558,7 +558,7 @@ void InitScoreDlg(HWND hwnd, int16_t fVictory) {
     SetWindowPos(GetDlgItem(hwnd, IDC_SCORE_SWITCH), NULL, dx, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     SetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     SetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    SetWindowText(hwnd, PszGetCompressedString(idsPlayerScores + fVictory));
+    SetWindowText(hwnd, PszGetCompressedString(static_cast<StringId>(idsPlayerScores + fVictory)));
     return;
 }
 
@@ -621,7 +621,7 @@ void DrawVCReport(HDC hdc) {
         for (j = 0; j < 7; j++, grbitVC >>= 1) {
             if (grbitVC & 1) {
                 BitBlt(hdc, xLeft + pt.x, yTop + pt.y + (int16_t)(j * dyArial8 * 3) / 2, 14, 12, hdcMem, 0, 0, SRCAND);
-                if ((rgplr[i].fInclude && rgplr[i].fDead) || GetVCCheck(&game, (j > 1) + j) == 0) {
+                if ((rgplr[i].fInclude && rgplr[i].fDead) || GetVCCheck(&game, static_cast<VictoryCondition>((j > 1) + j)) == 0) {
                     SetTextColor(hdc, crButtonShadow);
                 LOrIt:
                     SetBkColor(hdc, 0);
@@ -646,7 +646,7 @@ void DrawVCReport(HDC hdc) {
                 cCurSav = cCur;
                 xStart = 0;
             } else {
-                ids -= 3;
+                ids = static_cast<StringId>(ids - 3);
                 cCur = cCurSav;
                 if (i < 7) {
                     xStart = vdxScoreX - xLeft;
@@ -661,18 +661,19 @@ void DrawVCReport(HDC hdc) {
                     yTop += dyArial8 / 2;
                 }
             }
-            cch = CchGetString(ids++, szWork);
+            cch = CchGetString(ids, szWork);
+            ids = static_cast<StringId>(ids + 1);
             if (iPass == 1) {
-                SetTextColor(hdc, i >= 7 || GetVCCheck(&game, cCur) != 0 ? 0 : 8355711);
+                SetTextColor(hdc, i >= 7 || GetVCCheck(&game, static_cast<VictoryCondition>(cCur)) != 0 ? 0 : 8355711);
                 TextOut(hdc, xLeft, yTop, szWork, cch);
             }
             xLeft += LOWORD(GetTextExtent(hdc, szWork, cch));
             for (j = 0; j < 2; j++) {
                 if (j == 1 && i != 1) {
-                    ids++;
+                    ids = static_cast<StringId>(ids + 1);
                     break;
                 }
-                vcVal = GetVCVal(&game, cCur, FALSE);
+                vcVal = GetVCVal(&game, static_cast<VictoryCondition>(cCur), FALSE);
                 if (i == 0) {
                     idsT = idsPlanets3;
                     vcVal = LOWORD((int32_t)(vcVal * game.cPlanMax) / 100);
@@ -697,7 +698,7 @@ void DrawVCReport(HDC hdc) {
                 }
                 xLeft += LOWORD(GetTextExtent(hdc, szWork, cch));
                 cCur++;
-                ids++;
+                ids = static_cast<StringId>(ids + 1);
             }
             if (iPass == 1) {
                 yTop += (int16_t)(3 * dyArial8) / 2;
@@ -759,7 +760,8 @@ void DrawScoreReport(HDC hdc) {
     SetTextColor(hdc, 0);
     for (i = 0; i < 9; i++) {
         PatBlt(hdc, vdxScoreX + 4, yTop - dyArial8 / 4, game.cPlayer * dxDig * 5, 1, PATCOPY);
-        cch = CchGetString(ids++, szWork);
+        cch = CchGetString(ids, szWork);
+        ids = static_cast<StringId>(ids + 1);
         SetTextColor(hdc, 0);
         RightTextOut(hdc, vdxScoreX, yTop, szWork, cch, 0);
         xLeft = 5 * dxDig + vdxScoreX + 2;
@@ -853,7 +855,7 @@ void DrawHistoryReport(HDC hdc) {
     rc.bottom = rc.top + dyArial10;
     cch = CchGetString(idsHistory, szT);
     psz = &szT[cch];
-    cch = CchGetString(idsPlanets + gd.iCurGraph, psz);
+    cch = CchGetString(static_cast<StringId>(idsPlanets + gd.iCurGraph), psz);
     psz[cch - 1] = 0;
     SelectObject(hdc, rghfontArial10[1]);
     SetTextColor(hdc, crButtonText);
@@ -1027,7 +1029,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         *psz = 0;
         return 0;
     case rptPlanets:
-        cch = CchGetString(idsPlanetName + iCol, psz);
+        cch = CchGetString(static_cast<StringId>(idsPlanetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if ((uint16_t)iCol > colPlanetRoutingDest)
             break;
@@ -1074,7 +1076,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptFleets:
-        cch = CchGetString(idsFleetName + iCol, psz);
+        cch = CchGetString(static_cast<StringId>(idsFleetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if ((uint16_t)iCol > colFleetMass)
             break;
@@ -1110,7 +1112,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptEnemyFleets:
-        cch = CchGetString(idsFleetName2 + iCol, psz);
+        cch = CchGetString(static_cast<StringId>(idsFleetName2 + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         switch (iCol) {
         case colEnemyFleetLocation:
@@ -1125,7 +1127,7 @@ int16_t DxReportColHdr(ReportType irpt, int16_t iCol, char *psz, HDC hdc) {
         }
         break;
     case rptBattles:
-        cch = CchGetString(idsLocation4 + iCol, psz);
+        cch = CchGetString(static_cast<StringId>(idsLocation4 + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz, cch));
         if (iCol == colBattleLocation) {
             dx = dx * 2 + dx / 2;
@@ -1450,9 +1452,9 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             DrawMineralItem(hdc, prc->right - 2, prc->top, -1, (uint32_t)lpbd->cplr);
             break;
         case colBattleStarbase:
-            if (CBattleUnits(lpbd, grBuOurUnits | grBuIncludeSb) != 0) {
+            if (CBattleUnits(lpbd, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb)) != 0) {
                 chT = 'O';
-            } else if (CBattleUnits(lpbd, grBuTheirUnits | grBuIncludeSb) != 0) {
+            } else if (CBattleUnits(lpbd, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) != 0) {
                 chT = 'T';
             } else {
                 chT = ' ';
@@ -1483,7 +1485,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
         case colBattleTheirs:
             i = 254;
         BtlUnitsCom:
-            DrawMineralItem(hdc, prc->right - 2, prc->top, -1, CBattleUnits(lpbd, i));
+            DrawMineralItem(hdc, prc->right - 2, prc->top, -1, CBattleUnits(lpbd, static_cast<BattleUnitFlags>(i)));
             break;
         case colBattleOurDead:
         case colBattleTheirDead:
@@ -1493,7 +1495,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
         case colBattleOursLeft:
             i = 253;
         LUnitsLeft:
-            l = CBattleUnits(lpbd, i);
+            l = CBattleUnits(lpbd, static_cast<BattleUnitFlags>(i));
             l -= CBattleKills(lpbd, icol == colBattleOursLeft);
             DrawMineralItem(hdc, prc->right - 2, prc->top, -1, l);
             break;
@@ -2060,14 +2062,14 @@ TryTier2:
             iRet = strcmp(szT, psz);
             break;
         case colBattleStarbase:
-            l1 = CBattleUnits(lpbd1, grBuOurUnits | grBuIncludeSb);
+            l1 = CBattleUnits(lpbd1, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l1 == 0) {
-                l1 = (int32_t)(CBattleUnits(lpbd1, grBuTheirUnits | grBuIncludeSb) * 2);
+                l1 = (int32_t)(CBattleUnits(lpbd1, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2);
             }
-            l2 = CBattleUnits(lpbd2, grBuOurUnits | grBuIncludeSb);
+            l2 = CBattleUnits(lpbd2, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l2 != 0)
                 goto LRetDiff;
-            l2 = (int32_t)(CBattleUnits(lpbd2, grBuTheirUnits | grBuIncludeSb) * 2);
+            l2 = (int32_t)(CBattleUnits(lpbd2, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2);
             goto LRetDiff;
         case colBattleSides:
             l1 = (uint32_t)lpbd1->cplr;
@@ -2097,8 +2099,8 @@ TryTier2:
         case colBattleTheirs:
             i = 254;
         BtlUnitsCom:
-            l1 = CBattleUnits(lpbd1, i);
-            l2 = CBattleUnits(lpbd2, i);
+            l1 = CBattleUnits(lpbd1, static_cast<BattleUnitFlags>(i));
+            l2 = CBattleUnits(lpbd2, static_cast<BattleUnitFlags>(i));
             goto LRetDiff;
         case colBattleOurDead:
         case colBattleTheirDead:
@@ -2108,8 +2110,8 @@ TryTier2:
         case colBattleOursLeft:
             i = 253;
         LUnitsLeft:
-            l1 = CBattleUnits(lpbd1, i);
-            l2 = CBattleUnits(lpbd2, i);
+            l1 = CBattleUnits(lpbd1, static_cast<BattleUnitFlags>(i));
+            l2 = CBattleUnits(lpbd2, static_cast<BattleUnitFlags>(i));
             l1 -= CBattleKills(lpbd1, icolSort == colBattleOursLeft);
             l2 -= CBattleKills(lpbd2, icolSort == colBattleOursLeft);
             goto LRetDiff;
@@ -2184,13 +2186,13 @@ TryTier2:
                 l1 = 0;
                 for (i = 0; i < 16; i++) {
                     if (lpfl1->rgcsh[i] != 0) {
-                        j = LphuldefFromId(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory;
+                        j = static_cast<HullCategory>(LphuldefFromId(rglpshdef[lpfl1->iPlayer][i].hul.ihuldef)->imdCategory);
                         if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
                             l1 += lpfl1->rgcsh[i];
                         }
                     }
                     if (lpfl2->rgcsh[i] != 0) {
-                        j = LphuldefFromId(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory;
+                        j = static_cast<HullCategory>(LphuldefFromId(rglpshdef[lpfl2->iPlayer][i].hul.ihuldef)->imdCategory);
                         if ((int16_t)j <= hullCatFreighter || (int16_t)j >= hullCatMiner) {
                             l2 += lpfl2->rgcsh[i];
                         }
@@ -2577,7 +2579,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
             goto LDisplayVCRAnyway;
 
         scan.pt = lpbd->pt;
-        scan.grobj = grobjPlanet | grobjFleet | grobjOther | grobjThing | mdExact;
+        scan.grobj = static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjOther | grobjThing | mdExact);
         ChangeScanSel(&scan, 0);
         CtrPointScan(scan.pt, TRUE);
         InvalidateReport(rptPlanets, 0);

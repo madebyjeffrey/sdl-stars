@@ -16,16 +16,27 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def enum_source():
-    # Extract the C spelling of fixed-width constant containers for C fixtures.
+    # Source fixtures compile the C11 declarations of the shared enum header.
     text = (ROOT / "src/core/enums.h").read_text()
-    return re.sub(r"STARS_CONSTANTS\((\w+)\)", r"enum \1", text)
+    return re.sub(r"#ifdef __cplusplus\nenum (\w+) : \w+ \{\n#else\nenum \1 \{\n#endif",
+                  r"enum \1 {", text)
+
+
+def c_source(text):
+    # The extracted algorithms still run as C11. Preserve each conversion's
+    # numeric storage contract; enum identity and C++ ABI have separate tests.
+    storage = {name: base for base, name in re.findall(
+        r"typedef\s+(u?int(?:16|32)_t)\s+(\w+)\s*;",
+        (ROOT / "src/core/enums.h").read_text())}
+    return re.sub(r"static_cast<(\w+)>\(",
+                  lambda match: "(" + storage.get(match[1], match[1]) + ")(", text)
 
 
 def function(path, signature):
     text = (ROOT / path).read_text()
     start = text.index(signature)
     end = text.index("\n}", start) + 2
-    return text[start:end]
+    return c_source(text[start:end])
 
 
 def main():

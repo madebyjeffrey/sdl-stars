@@ -1,8 +1,8 @@
 # Native port
 
 The SDL client now has a native Windows x64 build using the same source wrapper
-as Linux/macOS, and is the only maintained desktop build. Its SDK filesystem bridge is isolated in
-`compat/win32/src/platform_windows.c`, and its wrapper symbols are namespaced
+as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
+`src/platform/fileio.cpp`, and its wrapper symbols are namespaced
 to avoid SDK import collisions. Native Unicode open/save lives in the separate
 `filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
@@ -26,7 +26,7 @@ MinGW, and the game code alone builds as `stars-host` with a C++17 compiler
 (see Platforms below). This document covers what the port changes and what
 it must keep.
 
-SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
+Host and SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
 the C declarations in `filesystem.h`. The profile and picker test fixtures use
 this bridge for temporary directories, directory creation, canonical paths and
 non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
@@ -40,13 +40,41 @@ C ABI. Host-only builds now require a C++17 compiler, but remain independent
 of SDL. CMake preserves signed `char`, binary64 arithmetic boundaries and
 contraction/fast-math settings for both languages.
 
-`STARS_CONSTANTS` keeps the original fixed-width aliases and constant names.
-C++ shares tag and typedef namespaces, so these constant containers are
-anonymous in C++ instead of replacing `uint16_t` aliases with enum objects.
+The stored enum types now use explicit C++ underlying types (`uint16_t`,
+`int16_t` or `uint32_t`) with their original constant and type names. C11
+consumers retain named enum tags and the original integer typedefs through
+conditional declarations. The text and YAML generators emit the same boundary;
+`STARS_CONSTANTS` is removed. Integer fields, indexes, masked identifiers and
+arithmetic cross into enum types through explicit casts. Partial switches retain
+explicit no-op defaults; splitter masks switch on their underlying integer.
+`test_enum_abi` requires real C++ enums with the captured underlying type and
+checks C/C++ argument/return values, callbacks and pointer writes for all 145
+stored types using six boundary inputs each. The fixed underlying type admits
+all of its storage bit patterns, including legacy sentinels and combined flags.
 `test_record_layout` compares C and C++ sizes/alignment for the shared structs
 and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
 offset is zero in both languages; the C++ minimum class size is never used as
 a record length. The full native and host regressions check serialized results.
+
+Memory and stream failures use `StarsError` and normal C++ stack unwinding.
+The 24 former jump-recovery sites now have operation-specific catches; the
+`penvMem` global and jump-buffer alias are removed. `StarsRecoveryScope` records
+only whether optional record validation is inside a recoverable operation, so
+standalone validators retain their existing status-return behavior. It holds
+no destination address. Nested scopes restore that state automatically.
+`StarsRestore` and `StarsFileGuard` provide non-throwing cleanup; resource
+release does not substitute for checked writes, publication or game-state
+rollback.
+
+The C SDL runtime calls application window/dialog/timer/inspector callbacks
+through C++ containment thunks. A thrown failure becomes pending state, an
+active modal dialog ends, and the C dispatcher finishes its counters, window
+and owner cleanup. Typed wrappers around callback-dispatching UI APIs deliver
+that pending failure only after the C call returns. Native file-picker pumps
+cancel on a pending failure too. Desktop and host entrypoints contain remaining
+failures; no C++ exception is allowed to escape through the C entrypoint.
+The callback fault test exercises nested dialogs, owner re-enabling, allocation
+exceptions, timers, synchronous delivery and automatic destruction.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).
@@ -81,12 +109,21 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
-  paths with `chDirSep`. Windows strictly converts UTF-8 paths to UTF-16 and
-  uses CRT descriptors through `_wsopen`, `_read`, `_write` and related calls;
-  backups/cleanup and native text-file opens use the same path boundary through
-  `RenameNativeFile`, `RemoveNativeFile` and `PfOpenNativeFile`. POSIX uses `open`, `read` and the like,
-  which have no share modes, so a file another program has open is not
-  refused. The game's heaps (`memory.c`) come from `calloc` and `realloc`.
+  paths with `chDirSep`. The adapters forward to `fileio.h`/`fileio.cpp`, shared
+  with profiles, help, PDF output, inspection and managed-library operations.
+  `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
+  directory enumeration and publication. C-compatible opaque streams contain
+  exceptions and expose errors through return values and `errno`. Small owned
+  tokens retain the game's `int16_t` handle storage.
+  C++17 cannot express exclusive creation, exact private modes, sharing,
+  descriptor identity, fsync or live-handle truncation; narrow native adapters
+  preserve those contracts inside the service. Windows converts UTF-8 paths
+  through `u8path` to UTF-16. POSIX retains its existing lack of share modes.
+  Temporary publication checks flush, sync and close before replacing a path.
+  Raw game writes flush before returning to preserve immediate error reporting
+  through the legacy void close interface. Process logging and third-party
+  libraries' internally owned files remain outside this service. The game's
+  heaps (`memory.c`) come from `calloc` and `realloc`.
 - **Formatting and rounding** (`native.c`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)

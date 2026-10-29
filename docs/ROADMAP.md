@@ -16,10 +16,38 @@ match all 519 files through turn 150, with 21 accepted unused-storage warnings,
 zero differences/errors and no skipped inputs. The available SDL tutorial smoke
 checkpoint passes; full tutorial coverage remains incomplete.
 
-Exception-based recovery and C++ file services are the next separately reviewed
-steps. This compile-only step retains the existing jump-based recovery and file
-implementations. Linux and Windows execution is left to their CI qualification.
+The second step replaces all 24 jump-recovery sites with typed exceptions,
+scoped cleanup and contained callbacks. On Apple-silicon macOS, all 54 desktop
+checks and 18 host checks pass; full desktop/host regressions each match 519
+files, with 25 accepted unused-storage warnings and no differences/errors or
+skipped inputs. Four additional warnings are confined to unused storage in
+`oneai6` host/player files at turns 100 and 150. The third step replaces application-owned file operations with a shared C++17
+stream/filesystem service and opaque C interfaces. Native adapters remain only
+for exclusive creation, sharing, exact modes, durable writes and live-handle
+identity/truncation. Both full regressions again match 519 files, with the same
+25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Checks pass 55/55 for desktop and 19/19 for host, including the layout
+contract and available tutorial checkpoint. Linux/Windows CI qualification is
+recorded in the stacked PRs. No baseline or record layout changes.
+The fourth step replaces `STARS_CONSTANTS` and the C++ integer aliases with
+explicit fixed-underlying enums, preserving signedness, widths and constant
+names. C11 declarations retain their integer aliases. A cross-language ABI test
+covers all 145 stored enum types in addition to the existing layout comparison;
+full verification is recorded in the fourth stacked PR.
 See [native-port constraints](NATIVE-PORT.md).
+
+The callback recovery follow-up fixes unowned timer/window errors during modal
+operations: `GetMessageA` stops on pending failures, including failures while
+peeking SDL events, so existing dialog, message-box, picker and menu cleanup runs
+before C++ delivery. Fault coverage checks that later dialog commands do not run
+and that the owner is re-enabled for both thread-timer and owner-window failures.
+This does not change turn generation or the native regression baseline.
+
+The shared enum-ABI and file-service test targets are registered once when
+ordinary tests, SDK reference tests or both are enabled. Windows CI configures
+both suites together before running the SDL checks, covering the former
+duplicate-target configuration failure. Test selection and game results are
+unchanged.
 
 ## SDL desktop consolidation
 

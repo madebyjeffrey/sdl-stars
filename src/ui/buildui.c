@@ -53,11 +53,11 @@ int16_t FCheckQueuedShip(HWND hwnd, SHDEF *lpshdef, int16_t fEdit) {
             wsprintf(szWork, PszGetCompressedString(ids), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s", cshQueued,
                      !fProgress ? "" : rgch);
         } else if (cshQueued != 0) {
-            wsprintf(szWork, PszGetCompressedString(ids + 1), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
+            wsprintf(szWork, PszGetCompressedString(static_cast<StringId>(ids + 1)), cshQueued, lpshdef->hul.szClass, cshQueued == 1 ? "" : "s", !fProgress ? "" : rgch);
         } else {
-            wsprintf(szWork, PszGetCompressedString(ids + 2), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
+            wsprintf(szWork, PszGetCompressedString(static_cast<StringId>(ids + 2)), LOWORD(lpshdef->cExist), lpshdef->hul.szClass, lpshdef->cExist == 1 ? "" : "s");
         }
-        id = MessageBox(GetFocus(), szWork, PszGetCompressedString(idsDeleteDesign + fEdit), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL);
+        id = MessageBox(GetFocus(), szWork, PszGetCompressedString(static_cast<StringId>(idsDeleteDesign + fEdit)), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL);
         SetFocus(hwnd);
         if (id == 7) {
             return FALSE;
@@ -233,7 +233,7 @@ INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
         LRestart:
             lpshdefBuild = NULL;
             fHullCopy = FALSE;
-            mdBuild = LOWORD(wParam) - 2066;
+            mdBuild = static_cast<MdBuild>(LOWORD(wParam) - 2066);
             hwndItem = GetDlgItem(hwnd, IDC_COMBOBOX);
             UpdateSlotGlobals();
             FillBuildDD(hwndItem, mdBuild);
@@ -317,7 +317,7 @@ INT_PTR CALLBACK SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             }
                         }
                         shdefBuild.hul = LphuldefFromId(i)->hul;
-                        shdefBuild.hul.ihuldef = i & 0xff;
+                        shdefBuild.hul.ihuldef = static_cast<HulDef>(i & 0xff);
                         for (i = 0; i < shdefBuild.hul.chs; i++) {
                             shdefBuild.hul.rghs[i].cItem = 0;
                         }
@@ -862,7 +862,7 @@ int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBo
         SendMessage(hwnd, LB_GETTEXT, iSel, (LPARAM)szWork);
         ibmp = szWork[2] - 'A' + (szWork[3] - 'A') * 26;
         iSrc = -1;
-        hs.grhst = 1 << (szWork[0] - 'A');
+        hs.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
         hs.iItem = szWork[1] - 'A';
         hs.cItem = 1;
         rcStart.left = 2;
@@ -1051,7 +1051,7 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
                 goto Restore;
             SendMessage(GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST), LB_GETTEXT, iSel, (LPARAM)szWork);
             hsShip.cItem = 1;
-            hsShip.grhst = 1 << (szWork[0] - 'A');
+            hsShip.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
             hsShip.iItem = szWork[1] - 'A';
             goto HullPart;
         } else {
@@ -1329,7 +1329,7 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
             }
             cch = wsprintf(szWork, PszGetCompressedString(idsDS), i, &rgszSpeed[j * 3]);
             RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan);
-            cch = CchGetString(idsInitiativeMoves + (dyArial8 > 14), szWork);
+            cch = CchGetString(static_cast<StringId>(idsInitiativeMoves + (dyArial8 > 14)), szWork);
             TextOut(hdc, rc.left, rc.top, szWork, cch);
             rc.top += dyArial8;
             if (!fStarbaseMode) {
@@ -1346,14 +1346,14 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                         cch = wsprintf(szWork, PszGetCompressedString(idsDDD), dRange, dPlanRange, pctDetect);
                     }
                     RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 40);
-                    cch = CchGetString(idsScannerRange2 + (dyArial8 > 14), szWork);
+                    cch = CchGetString(static_cast<StringId>(idsScannerRange2 + (dyArial8 > 14)), szWork);
                     TextOut(hdc, rc.left, rc.top, szWork, cch);
                     rc.top += dyArial8;
                 }
             } else if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
                 cch = CommaFormatLong(szWork, (uint32_t)(rglPopMac[lpshdefBuild->hul.ihuldef - ihuldefOrbitalFort] * 100));
                 RightTextOut(hdc, rc.right - 8, rc.top, szWork, cch, dxMaxMineralQuan + 16);
-                cch = CchGetString(idsMaxPopulation + (dyArial8 > 14), szWork);
+                cch = CchGetString(static_cast<StringId>(idsMaxPopulation + (dyArial8 > 14)), szWork);
                 TextOut(hdc, rc.left, rc.top, szWork, cch);
                 rc.top += dyArial8;
             }
@@ -1672,7 +1672,7 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
             part.hs.grhst = grbitCur;
             while (1) {
                 part.hs.iItem = i;
-                mdAvail = FLookupPart(&part);
+                mdAvail = static_cast<mdPartAvail>(FLookupPart(&part));
                 if (mdAvail == mdPartAvailInvalid)
                     break;
                 if (fStarbaseMode && grbitCur == hstSpecialE && (i == ispecialETachyonDetector || i == ispecialEAntiMatterGenerator)) {
@@ -1688,7 +1688,7 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
                 i++;
             }
         }
-        grbitCur *= 2;
+        grbitCur = static_cast<HullSlotType>(grbitCur * 2);
         sz[0]++;
     }
     return;
@@ -1718,7 +1718,7 @@ LRESULT CALLBACK FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     return 0;
                 }
                 SendMessage(hwnd, LB_GETTEXT, iSel, (LPARAM)szWork);
-                GlobalPD.part.hs.grhst = 1 << (szWork[0] - 'A');
+                GlobalPD.part.hs.grhst = static_cast<HullSlotType>(1 << (szWork[0] - 'A'));
                 GlobalPD.part.hs.iItem = szWork[1] - 'A';
                 FLookupPart(&GlobalPD.part);
                 GlobalPD.grPopup = grPopupComponent;

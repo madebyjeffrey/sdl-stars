@@ -19,7 +19,7 @@ FARPROC        lpfnBrowserDlgProc = 0;
 FARPROC        lpfnGaugeDlgProc = 0;
 FARPROC        lpfnTutorDlgProc = 0;
 FRAMESTUFF     vfs = {0};
-GrbitScan      grbitScan = 0;
+GrbitScan      grbitScan = static_cast<GrbitScan>(0);
 HACCEL         hAccel = 0;
 HACCEL         hAccelTitle = 0;
 HBITMAP        hbmpBackBld = 0;
@@ -107,7 +107,7 @@ HPEN           hpenStarbase = 0;
 HPEN           hpenYellow = 0;
 HRGN           hrgnHuge = 0;
 HRGN           hrgnScratch = 0;
-HS             rghsFutureTech[8] = {0};
+HS             rghsFutureTech[8] = {};
 HWND           hwndActive = 0;
 HWND           hwndBattleDD = 0;
 HWND           hwndBrowser = 0;
@@ -146,14 +146,14 @@ HWND           rghwndBtnSplash[4] = {0};
 HWND           rghwndBtn[13] = {0};
 HWND           rghwndMsgBtn[4] = {0};
 HWND           rghwndOrderDD[3] = {0};
-HostTimer      uTimerType = 0;
+HostTimer      uTimerType = static_cast<HostTimer>(0);
 HullSlotType   rgmapBuildBmps[21] = {hstEnabled,  hstEngine,    hstScanner, hstShield,   hstWeapon,   hstSome,        hstSpecialEM,
                                      hstScanSpec, hstBomb,      hstShArm,   hstArmor,    hstMining,   hstScanSpecArm, hstShWeap,
                                      hstMines,    hstSpecialSB, hstSomeSB,  hstSpecMine, hstSpecialE, hstSpecialM,    hstShSpec};
 MdBuild        mdBuild = mdBuildShdef;
 MdMsgObj       mdMsgObj = mdMsgObjNone;
 MdXfer         mdXferDlg = mdXferNone;
-PART           vpartBrowser = {0};
+PART           vpartBrowser = {};
 PLAYER        *vrgplrNew = 0;
 POINT16        ptPlaque = {0};
 POINT16        ptSpeedVCR = {0};
@@ -181,7 +181,7 @@ POINT16        rgptArrow[5] = {{.x = 3}, {.y = 3}, {.x = -1, .y = 3}, {.x = 2, .
 POINT16        rgptTriangle[3] = {{.x = 4}, {.y = 4}, {.x = -1, .y = 4}};
 POINT16        vptMsg = {0};
 POINT16        vptTbLast = {.x = -1, .y = -1};
-POPUPDATA      GlobalPD = {0};
+POPUPDATA      GlobalPD = {};
 RECT          *vrgrcRCW = 0;
 RECT           rcCargo = {0};
 RECT           rcMsgText = {0};
@@ -194,7 +194,7 @@ RECT           rgrcRef[19] = {0};
 RECT           vrcTooltip = {0};
 RECT           vrgrcSlot[16] = {0};
 RPT           *vprptCur = 0;
-RaceWizardPage iPanelActive = 0;
+RaceWizardPage iPanelActive = static_cast<RaceWizardPage>(0);
 SHDEF         *lpshdefBuild = 0;
 TILE           rgtilePlanet[6] = {{
                                       .yTop = 1,

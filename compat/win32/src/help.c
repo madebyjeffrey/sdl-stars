@@ -18,10 +18,10 @@
 
 static BOOL FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
-    struct stat st;
+    NATIVEFILEINFO st;
     size_t i;
     int cch;
-    FILE *lpFile;
+    NATIVEFILE *lpFile;
     BOOL fStamp;
 
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
@@ -30,19 +30,19 @@ static BOOL FHelpAssets(const char *pszDirectory) {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
             return FALSE;
         }
-        if (stat(szFile, &st) || !S_ISREG(st.st_mode) || st.st_size <= 0) {
+        if (IGetNativeFileInfo(szFile, &st, TRUE) || !st.fRegular || st.cb <= 0) {
             SetLastError(ERROR_FILE_NOT_FOUND);
             return FALSE;
         }
     }
     snprintf(szFile, sizeof(szFile), "%s/complete.stamp", pszDirectory);
-    lpFile = fopen(szFile, "rb");
+    lpFile = PfNativeOpen(szFile, "rb");
     if (!lpFile) {
         SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
-    fStamp = fgets(szStamp, sizeof(szStamp), lpFile) && !strcmp(szStamp, STARS_HELP_SHA "\n");
-    fclose(lpFile);
+    fStamp = PszGetNativeLine(szStamp, sizeof(szStamp), lpFile) && !strcmp(szStamp, STARS_HELP_SHA "\n");
+    ICloseNativeFile(lpFile);
     if (!fStamp) SetLastError(ERROR_BAD_FORMAT);
     return fStamp;
 }
@@ -51,19 +51,19 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
     char *pszBase, *pszBody = NULL, *pszMarker, *pszResult = NULL;
-    FILE *lpSource = NULL, *lpTarget = NULL;
+    NATIVEFILE *lpSource = NULL, *lpTarget = NULL;
     size_t cbPrefix, cbRead;
-    int fd, cch;
+    int cch;
     BOOL fOk;
 
     cch = snprintf(szSource, sizeof(szSource), "%s/offline.html", pszDirectory);
     if (cch < 0 || (size_t)cch >= sizeof(szSource)) goto fail;
-    lpSource = fopen(szSource, "rb");
+    lpSource = PfNativeOpen(szSource, "rb");
     pszBody = malloc((size_t)STARS_HELP_BUNDLE_SIZE + 1);
     if (!lpSource || !pszBody) goto fail;
-    cbRead = fread(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
-    fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !ferror(lpSource) && fgetc(lpSource) == EOF;
-    fclose(lpSource); lpSource = NULL;
+    cbRead = CReadNative(pszBody, 1, STARS_HELP_BUNDLE_SIZE, lpSource);
+    fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
+    ICloseNativeFile(lpSource); lpSource = NULL;
     if (!fOk || (uint32_t)crc32(0, (const BYTE *)pszBody, (uInt)cbRead) != STARS_HELP_BUNDLE_CRC) {
         SetLastError(ERROR_BAD_FORMAT); goto done;
     }
@@ -81,25 +81,23 @@ static char *PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     if (cch < 0 || (size_t)cch >= sizeof(szTarget)) goto fail;
     cch = snprintf(szTemp, sizeof(szTemp), "%s.tmp-XXXXXX", szTarget);
     if (cch < 0 || (size_t)cch >= sizeof(szTemp)) goto fail;
-    fd = mkstemp(szTemp);
-    if (fd < 0) goto fail;
-    lpTarget = fdopen(fd, "wb");
-    if (!lpTarget) { close(fd); unlink(szTemp); goto fail; }
+    lpTarget = PfNativeCreateTemp(szTemp);
+    if (!lpTarget) goto fail;
     cbPrefix = (size_t)(pszMarker - pszBody);
-    fOk = fwrite(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
-          fputs(pszPage, lpTarget) >= 0 &&
-          fwrite(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
-    if (fflush(lpTarget) || fsync(fileno(lpTarget))) fOk = FALSE;
-    if (fclose(lpTarget)) fOk = FALSE;
+    fOk = CWriteNative(pszBody, 1, cbPrefix, lpTarget) == cbPrefix &&
+          IPutNativeString(pszPage, lpTarget) >= 0 &&
+          CWriteNative(pszMarker + sizeof(szMarker) - 1, 1, cbRead - cbPrefix - sizeof(szMarker) + 1, lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
+    if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = FALSE;
+    if (ICloseNativeFile(lpTarget)) fOk = FALSE;
     lpTarget = NULL;
-    if (!fOk || rename(szTemp, szTarget)) { unlink(szTemp); goto fail; }
+    if (!fOk || IRenameNativePath(szTemp, szTarget, TRUE, TRUE)) { IUnlinkNativePath(szTemp); goto fail; }
     pszResult = strdup(szTarget);
     if (!pszResult) goto fail;
     goto done;
 fail:
     SetLastError(ERROR_ACCESS_DENIED);
 done:
-    if (lpSource) fclose(lpSource);
+    if (lpSource) ICloseNativeFile(lpSource);
     free(pszBody);
     return pszResult;
 }
@@ -152,14 +150,14 @@ BOOL WINAPI WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         SetLastError(ERROR_FILENAME_EXCED_RANGE);
         return FALSE;
     }
-    pszDirectory = realpath(szDirectory, NULL);
+    pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
     if (!pszDirectory) {
         cch = snprintf(szDirectory, sizeof(szDirectory), "%s%s/help", pszBase, STARS_INSTALLED_DATA);
         if (cch < 0 || (size_t)cch >= sizeof(szDirectory)) {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
             return FALSE;
         }
-        pszDirectory = realpath(szDirectory, NULL);
+        pszDirectory = PszCanonicalNativePath(szDirectory, NULL, 0);
         if (!pszDirectory) {
             SetLastError(ERROR_PATH_NOT_FOUND);
             return FALSE;

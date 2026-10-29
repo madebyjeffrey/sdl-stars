@@ -153,41 +153,41 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     return TRUE;
 }
 
-static BOOL FWriteString(FILE *lpfile, const char *psz, BOOL fUtf8) {
+static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
     const BYTE *lpch = (const BYTE *)psz;
     char rgb[4], *lpEnd;
     DWORD ch;
     size_t cb = strlen(psz);
     int c;
     (void)fUtf8;
-    if (fputc('"', lpfile) == EOF) return FALSE;
+    if (ChPutNativeFile('"', lpfile) == EOF) return FALSE;
     while (*lpch) {
         c = CbUtf8Char((const char *)lpch, cb, &ch);
         if (c == 0) return FALSE;
         lpch += c; cb -= c;
         if (ch == '"' || ch == '\\') {
-            if (fputc('\\', lpfile) == EOF || fputc((int)ch, lpfile) == EOF) return FALSE;
+            if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile((int)ch, lpfile) == EOF) return FALSE;
         } else if (ch < 32) {
-            if (fprintf(lpfile, "\\u%04x", (unsigned)ch) < 0) return FALSE;
+            if (CchNativePrintf(lpfile, "\\u%04x", (unsigned)ch) < 0) return FALSE;
         } else {
             lpEnd = SDL_UCS4ToUTF8(ch, rgb);
-            if (fwrite(rgb, 1, (size_t)(lpEnd - rgb), lpfile) != (size_t)(lpEnd - rgb)) return FALSE;
+            if (CWriteNative(rgb, 1, (size_t)(lpEnd - rgb), lpfile) != (size_t)(lpEnd - rgb)) return FALSE;
         }
     }
-    return fputc('"', lpfile) != EOF;
+    return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, FILE *lpfile) {
+BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
     size_t i;
     const STARSCOMPATWINDOW *lp;
     char szStyle[2048], szExStyle[2048];
     if (!lpsnap || !lpfile || (lpsnap->cWindow != 0 && !lpsnap->rgWindow)) return FALSE;
-    if (fputs("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return FALSE;
+    if (IPutNativeString("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return FALSE;
     for (i = 0; i < lpsnap->cWindow; i++) {
         lp = &lpsnap->rgWindow[i];
         FormatStyles(lp, FALSE, szStyle, sizeof(szStyle));
         FormatStyles(lp, TRUE, szExStyle, sizeof(szExStyle));
-        if (fprintf(lpfile, "%s{\"id\":\"%" PRIu64 "\",\"parent\":\"%" PRIu64
+        if (CchNativePrintf(lpfile, "%s{\"id\":\"%" PRIu64 "\",\"parent\":\"%" PRIu64
                     "\",\"owner\":\"%" PRIu64 "\",\"controlId\":\"%" PRIdPTR
                     "\",\"style\":%u,\"exStyle\":%u,\"controlKind\":%u,\"dialog\":%s,"
                     "\"visible\":%s,\"enabled\":%s,\"focused\":%s,\"captured\":%s,"
@@ -198,13 +198,13 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, FILE *lpfile) 
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
                     lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
                     lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom) < 0 ||
-            !FWriteString(lpfile, lp->pszClass, FALSE) || fputs(",\"text\":", lpfile) == EOF ||
-            !FWriteString(lpfile, lp->pszText, lp->fUtf8Text) || fputs(",\"styleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szStyle, FALSE) || fputs(",\"exStyleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szExStyle, FALSE) || fputs(",\"controlKindName\":", lpfile) == EOF ||
-            !FWriteString(lpfile, PszControlKind(lp->iControl), FALSE) || fputc('}', lpfile) == EOF) return FALSE;
+            !FWriteString(lpfile, lp->pszClass, FALSE) || IPutNativeString(",\"text\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->pszText, lp->fUtf8Text) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szStyle, FALSE) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szExStyle, FALSE) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
+            !FWriteString(lpfile, PszControlKind(lp->iControl), FALSE) || ChPutNativeFile('}', lpfile) == EOF) return FALSE;
     }
-    return fputs("\n]}\n", lpfile) != EOF && !ferror(lpfile);
+    return IPutNativeString("\n]}\n", lpfile) != EOF && !FNativeStreamError(lpfile);
 }
 
 static void InspectDetails(HWND hwnd) {
@@ -305,7 +305,7 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshInspector(hwnd);
-        else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED && pfnObjectInspector) pfnObjectInspector();
+        else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED && pfnObjectInspector) CompatInvokeInspector(pfnObjectInspector, hwnd);
         else if (LOWORD(w) == 1 && HIWORD(w) == LBN_SELCHANGE) InspectDetails(hwnd);
         return 0;
     case WM_DESTROY:

@@ -39,10 +39,10 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             cshOrig += flSrc.rgcsh[ishdef];
             switch (MdCalcStargateDamage(isbsSrc, isbsDst, dDist, rglpshdef[flSrc.iPlayer][ishdef].hul.wtEmpty, &rgpct[ishdef])) {
             case -1:
-                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, flSrc.id | 0x8000, flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
+                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
                 return FALSE;
             case -2:
-                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseShips, flSrc.id | 0x8000, flSrc.id, flSrc.idPlanet, id, ishdef, 0, 0, 0);
+                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseShips, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, ishdef, 0, 0, 0);
                 return FALSE;
             case 0:
                 cshdef--;
@@ -55,7 +55,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
     if (cshdef == 0) {
     LKilledEmAll:
         lpfl->fDead = TRUE;
-        FSendPlrMsg(flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, flSrc.id | 0x8000, flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
+        FSendPlrMsg(flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
         return FALSE;
     }
     memset(&flDead, 0, sizeof(FLEET));
@@ -133,7 +133,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
         goto LKilledEmAll;
     if (cshKill != 0) {
         if (cshKill & 0xffff0000) {
-            FSendPlrMsg(lpfl->iPlayer, idmUsedStargateReachLosingUnbelievableShipsJump, lpfl->id | 0x8000, lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill),
+            FSendPlrMsg(lpfl->iPlayer, idmUsedStargateReachLosingUnbelievableShipsJump, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill),
                         HIWORD(cshKill), 0, 0);
         } else {
             if (cshKill < (int32_t)(cshOrig >> 2)) {
@@ -143,7 +143,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             } else {
                 idm = idmUsedStargateReachLosingShipsUnforgivingVoid;
             }
-            FSendPlrMsg(lpfl->iPlayer, idm, lpfl->id | 0x8000, lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill), 0, 0, 0);
+            FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill), 0, 0, 0);
         }
         flDead.iPlayer = flSrc.iPlayer;
         flDead.fDead = TRUE;
@@ -218,7 +218,7 @@ void KillUsedWaypoints() {
             if (lpfl->cord > 1) {
                 if (lpfl->fMark) {
                     DeleteWpFar(lpfl, 1, FALSE);
-                    FSendPlrMsg(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, lpfl->id | 0x8000, lpfl->id, 0, 0, 0, 0, 0, 0);
+                    FSendPlrMsg(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 } else {
                     for (j = 1; j < lpfl->cord; j++) {
                         if (lpfl->lpplord->rgord[j].grobj == grobjFleet) {
@@ -273,7 +273,7 @@ void KillUsedWaypoints() {
                                 }
                                 /* fallthrough */
                             default:
-                                FSendPlrMsg(lpfl->iPlayer, idmHasCompletedAssignedOrders, lpfl->id | 0x8000, lpfl->id, 0, 0, 0, 0, 0, 0);
+                                FSendPlrMsg(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                         }
                     }
@@ -745,6 +745,8 @@ int16_t CPtsCloakFromLphs(HS *lphs) {
         return 0;
     }
     switch (lphs->grhst) {
+    default:
+        break;
     case hstSpecialE:
         if (lphs->iItem < ispecialETransportCloaking || lphs->iItem > ispecialEMultiFunctionPod)
             break;
@@ -826,6 +828,8 @@ void MarkTechsSeen(HUL *lphul, int16_t iplr) {
             }
             iTech = -1;
             switch (part.hs.grhst) {
+            default:
+                break;
             case hstSpecialM:
                 if (part.hs.iItem == ispecialMMultiCargoPod) {
                     iTech = 0;

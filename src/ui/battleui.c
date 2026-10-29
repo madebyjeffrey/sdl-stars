@@ -84,7 +84,7 @@ INT_PTR CALLBACK RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_DESTROY:
         if (!fDirtyPlan)
             break;
-        mdSBase = grbitScan & grbitScanViewMask;
+        mdSBase = static_cast<ScanView>(grbitScan & grbitScanViewMask);
         LogChangeRelations();
         InvalidateRect(hwndScanner, NULL, TRUE);
         break;
@@ -159,16 +159,16 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         EnableWindow(GetDlgItem(hwnd, IDC_RENAME), iPlanSelDlg > 0);
         EnableWindow(GetDlgItem(hwnd, IDC_DELETE), iPlanSelDlg > 0);
         for (i = idsDisengage; i <= idsMaximizeDamage; i++) {
-            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(i));
+            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
         }
         SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_SETCURSEL, btlplan.mdTactic, 0);
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(i));
+            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
         }
         SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_SETCURSEL, btlplan.mdTarget1, 0);
         if (!game.fSinglePlr) {
             for (i = idsNobody; i <= idsEveryone; i++) {
-                SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(i));
+                SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
             }
             for (i = 0; i < game.cPlayer; i++) {
                 if (i != idPlayer) {
@@ -186,7 +186,7 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             EnableWindow(GetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), FALSE);
         }
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(i));
+            SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
         }
         SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_SETCURSEL, btlplan.mdTarget2, 0);
         SendMessage(GetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), BM_SETCHECK, btlplan.fDumpCargo, 0);

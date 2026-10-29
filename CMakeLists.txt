@@ -53,11 +53,17 @@ set(STARS_UI_SOURCES
 # Preserve the original filenames while compiling the game as C++. The SDL
 # compatibility runtime, generated tables and C harnesses retain their C ABI.
 set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
-    src/host/host.c src/host/hostui.c PROPERTIES LANGUAGE CXX)
+    src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
+
+# Error state and pending callback failures are shared by game and SDL runtime.
+add_library(stars_errors STATIC src/platform/errors.cpp)
+target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
+target_link_libraries(stars_errors PRIVATE stars_sanitizers)
+target_compile_options(stars_errors PRIVATE -Wall -Wextra -Werror)
 
 # Settings every target that compiles game code shares.
 add_library(stars_options INTERFACE)
-target_link_libraries(stars_options INTERFACE stars_sanitizers)
+target_link_libraries(stars_options INTERFACE stars_sanitizers stars_errors)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
 add_library(stars_encoding STATIC src/platform/encoding.c)
@@ -65,9 +71,16 @@ target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHE
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
+add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp)
+set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
+target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
+target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_link_libraries(stars_filesystem PRIVATE "$<$<PLATFORM_ID:Windows>:bcrypt>")
+
 # The core is shared by the SDL client, host and unit tests.
 add_library(stars_core OBJECT ${STARS_CORE_SOURCES})
-target_link_libraries(stars_core PUBLIC stars_options stars_encoding "$<$<PLATFORM_ID:Windows>:shell32>")
+target_link_libraries(stars_core PUBLIC stars_options stars_encoding stars_filesystem "$<$<PLATFORM_ID:Windows>:shell32>")
 
 # The command-line host: the game code and src/host/host.c, no windows.
 add_executable(stars-host src/host/host.c src/host/hostui.c)
@@ -239,8 +252,20 @@ endif()
 target_link_libraries(stars_options INTERFACE m)
 option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
-if(STARS_BUILD_TESTS)
+if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
+    add_executable(stars-test-enum-abi tests/compat/enum_abi.c tests/compat/enum_abi.cpp)
+    target_link_libraries(stars-test-enum-abi PRIVATE stars_options)
+    target_compile_options(stars-test-enum-abi PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME test_enum_abi COMMAND stars-test-enum-abi)
+    set_tests_properties(test_enum_abi PROPERTIES LABELS build TIMEOUT 30)
+    add_executable(stars-test-fileio tests/compat/fileio.c)
+    target_link_libraries(stars-test-fileio PRIVATE stars_filesystem)
+    target_compile_options(stars-test-fileio PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME test_fileio_contract COMMAND stars-test-fileio)
+    set_tests_properties(test_fileio_contract PROPERTIES TIMEOUT 30)
+endif()
+if(STARS_BUILD_TESTS)
     add_executable(stars-layout-c tests/compat/record_layout.c)
     add_executable(stars-layout-cxx tests/compat/record_layout.cpp)
     target_link_libraries(stars-layout-c PRIVATE stars_options)
@@ -265,13 +290,6 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
 endif()
 if(STARS_BUILD_SDL_CLIENT)
-    # The filesystem bridge has a C ABI; game and wrapper sources remain C11.
-    enable_language(CXX)
-    add_library(stars_filesystem STATIC src/platform/filesystem.cpp)
-    set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
-    target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
-    target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
-    target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
     if(STARS_BUILD_TESTS)
         add_executable(stars-test-filesystem tests/compat/filesystem.c)
         target_link_libraries(stars-test-filesystem PRIVATE stars_filesystem)
@@ -312,6 +330,5 @@ if(STARS_BUILD_WIN32_REFERENCE_TESTS)
         message(FATAL_ERROR "SDK reference tests require a Windows toolchain")
     endif()
     enable_language(RC)
-    enable_testing()
     include(cmake/win32-reference-tests.cmake)
 endif()

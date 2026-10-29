@@ -37,7 +37,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             hwndMessage = hwnd;
-            rghwndMsgBtn[i] = CreateWindow("BUTTON", PszGetCompressedString(idsPrev2 + i), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
+            rghwndMsgBtn[i] = CreateWindow("BUTTON", PszGetCompressedString(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
                                            NULL, hInst, NULL);
             SendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
@@ -93,7 +93,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         CheckBox:
             if (iMsgCur < 0)
                 break;
-            idm = IdmGetMessageN(iMsgCur);
+            idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
             fSet = (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) != 0;
             SetFilteringGroups(idm, fSet == 0);
             DirtyGame(TRUE);
@@ -200,7 +200,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 }
                 lpsz = (char *)lpb2k;
             } else {
-                idm = IdmGetMessageN(iMsgCur);
+                idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
                 if (iMsgCur < 0 && cMsg > 0) {
                     lpsz = PszGetCompressedString(idsMessagesHaveSentYearFilteredIfWant);
                 } else if (iMsgCur >= 0 && (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) && !fViewFilteredMsg) {
@@ -333,11 +333,13 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 goto ToggleMsgMode;
             if (mdMsgObj <= mdMsgObjBattleReport) {
                 switch (mdMsgObj) {
+                default:
+                    break;
                 case mdMsgObjPlanet:
                     SelectAdjPlanet(0, idMsgObj);
                     UpdateWindow(hwndScanner);
                     SendMessage(hwndScanner, WM_CHAR, 'v', 0);
-                    idm = IdmGetMessageN(iMsgCur);
+                    idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
                     if (idm != idmHasCompletedOrdersProductionQueueEmpty && idm != idmProductionQueueEmpty &&
                         (idm < idmHasBuiltManyMinesCurrentPopulationCan || idm > idmHasBuiltManyDefensesPlanetCanSupport))
                         break;
@@ -391,7 +393,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     PostMessage(hwndFrame, WM_COMMAND, IDM_REPORT_BATTLE, 0);
                     break;
                 case mdMsgObjPart:
-                    vpartBrowser.hs.grhst = 1 << (idMsgObj >> 8 & 0xf);
+                    vpartBrowser.hs.grhst = static_cast<HullSlotType>(1 << (idMsgObj >> 8 & 0xf));
                     vpartBrowser.hs.iItem = idMsgObj & 0xff;
                     FLookupPart(&vpartBrowser);
                     if (hwndBrowser) {
@@ -440,7 +442,7 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     xyStart = (int16_t)(prc->bottom - prc->top - 11) / 2 + prc->top;
     if (iMsgCur < 0 || iMsgCur >= cMsg)
         goto DoMinMax;
-    idm = IdmGetMessageN(iMsgCur);
+    idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
     if (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) {
         ySrc = 14;
         dxSrc = 14;
@@ -619,7 +621,7 @@ void SetMsgTitle(HWND hwnd) {
         }
         cMsgTot = cMsg + vcmsgplrIn;
         i = gd.fSendMsgMode ? idsDone : iMsgCur >= cMsg ? idsReply : gd.fGotoVCR ? idsView : idsGoto3;
-        SetWindowText(rghwndMsgBtn[1], PszGetCompressedString(i));
+        SetWindowText(rghwndMsgBtn[1], PszGetCompressedString(static_cast<StringId>(i)));
         if (gd.fSendMsgMode) {
             wsprintf(szWork, PszGetCompressedString(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
             rc = rcMsgText;
@@ -666,7 +668,7 @@ void SetMsgTitle(HWND hwnd) {
             EnableWindow(rghwndMsgBtn[1], TRUE);
             goto FinishUp;
         }
-        if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(iMsgCur, &mb)) {
+        if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(static_cast<MessageId>(iMsgCur), &mb)) {
             if (mb.wGoto != gotoNone) {
                 idMsgObj = mb.wGoto & 0x7fff;
                 switch (mb.wGoto) {

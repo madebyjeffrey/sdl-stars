@@ -15,7 +15,7 @@ static BOOL fExpectedRejection;
 static int idtBefore, cPage, iMsgBefore;
 static BOOL rgfPage[80];
 static const char *pszFailure = "client exited before smoke completion";
-static FILE *lpEvents;
+static NATIVEFILE *lpEvents;
 static SCANOBJECT objTarget;
 static const char *pszMenu;
 static int iFactoryRow;
@@ -84,32 +84,32 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
 
 static void LogState(const char *pszEvent) {
     if (!lpEvents) return;
-    fprintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u,\"productionSelection\":%ld}\n",
+    CchNativePrintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u,\"productionSelection\":%ld}\n",
             pszEvent, iStage, game.turn, tutor.idt / 8 + 1, tutor.idtBold, gd.fTutorial, tutor.fAutoComplete, cActions, (unsigned long long)SDL_GetTicks(),
             sel.grobj, sel.id, tutor.fTurnDone, grbitScan & grbitScanViewMask,
             IsWindow(hwndPlanetProdLB) ? (long)SendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0) : -1L);
-    fflush(lpEvents);
+    IFlushNativeFile(lpEvents);
 }
 
 static BOOL FSaveState(const char *pszName) {
     STARSCOMPATSNAPSHOT snap = {0};
     SCANSNAPSHOT scan = {0};
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     char szPath[100];
     BOOL fResult;
 
     snprintf(szPath, sizeof(szPath), "%s-hierarchy.json", pszName);
     if (!StarsCompatCaptureHierarchy(&snap)) return FALSE;
-    lpfile = fopen(szPath, "w");
+    lpfile = PfNativeOpen(szPath, "w");
     fResult = lpfile && StarsCompatWriteHierarchy(&snap, lpfile);
-    if (lpfile && fclose(lpfile)) fResult = FALSE;
+    if (lpfile && ICloseNativeFile(lpfile)) fResult = FALSE;
     StarsCompatFreeHierarchy(&snap);
     if (!fResult || !IsWindow(hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
     if (!FCaptureScanner(&scan)) return FALSE;
-    lpfile = fopen(szPath, "w");
+    lpfile = PfNativeOpen(szPath, "w");
     fResult = lpfile && FWriteScannerSnapshot(&scan, lpfile);
-    if (lpfile && fclose(lpfile)) fResult = FALSE;
+    if (lpfile && ICloseNativeFile(lpfile)) fResult = FALSE;
     FreeScannerSnapshot(&scan);
     return fResult;
 }
@@ -306,16 +306,16 @@ static BOOL FPushControlKey(HWND hwnd, SDL_Scancode sc) {
 }
 
 static BOOL FSaveOrders(const char *pszPath) {
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     FLEET *lpfl;
     ORDER *lpord;
     PLANET *lppl;
     PROD prod;
     SHDEF *lpshdef;
     int i, j, k, cWritten = 0;
-    lpfile = fopen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
-    fprintf(lpfile, "{\"schema\":1,\"turn\":%u,\"turnDone\":%d,\"research\":[%u,%u,%d],\"scannerMode\":%u,\"nextMessage\":%d,\"filteredFactories\":%s,\"filteredMines\":%s,\"filteredUnloads\":%s,\"filteredMiningLoads\":%s,\"filteredDismantles\":%s,\"ownedFleetCount\":%u,\"fleets\":[",
+    CchNativePrintf(lpfile, "{\"schema\":1,\"turn\":%u,\"turnDone\":%d,\"research\":[%u,%u,%d],\"scannerMode\":%u,\"nextMessage\":%d,\"filteredFactories\":%s,\"filteredMines\":%s,\"filteredUnloads\":%s,\"filteredMiningLoads\":%s,\"filteredDismantles\":%s,\"ownedFleetCount\":%u,\"fleets\":[",
             game.turn, tutor.fTurnDone, rgplr[0].iTechNow, rgplr[0].iTechNext, rgplr[0].pctResearch, grbitScan & grbitScanViewMask, IMsgNext(FALSE),
             bitfMsgFiltered[idmHaveBuiltFactories >> 3] & (1 << (idmHaveBuiltFactories & 7)) ? "true" : "false",
             bitfMsgFiltered[idmHaveBuiltMines >> 3] & (1 << (idmHaveBuiltMines & 7)) ? "true" : "false",
@@ -325,66 +325,66 @@ static BOOL FSaveOrders(const char *pszPath) {
     for (i = 0; i < cFleet; i++) {
         lpfl = rglpfl[i];
         if (!lpfl || lpfl->fDead || lpfl->iPlayer != idPlayer) continue;
-        fprintf(lpfile, "%s{\"id\":%d,\"repeatOrders\":%s,\"cargo\":[%ld,%ld,%ld,%ld,%ld],\"orders\":[", cWritten++ ? "," : "", lpfl->id, lpfl->fRepOrders ? "true" : "false",
+        CchNativePrintf(lpfile, "%s{\"id\":%d,\"repeatOrders\":%s,\"cargo\":[%ld,%ld,%ld,%ld,%ld],\"orders\":[", cWritten++ ? "," : "", lpfl->id, lpfl->fRepOrders ? "true" : "false",
                 (long)lpfl->rgwtMin[0], (long)lpfl->rgwtMin[1], (long)lpfl->rgwtMin[2], (long)lpfl->rgwtMin[3], (long)lpfl->rgwtMin[4]);
         for (j = 0; j < lpfl->cord; j++) {
             lpord = &lpfl->lpplord->rgord[j];
-            fprintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"position\":[%d,%d],\"task\":%u,\"warp\":%u",
+            CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"position\":[%d,%d],\"task\":%u,\"warp\":%u",
                     j ? "," : "", lpord->grobj, lpord->id, lpord->pt.x, lpord->pt.y, lpord->grTask, lpord->iWarp);
             if (lpord->grTask == grTaskXfer) {
-                fputs(",\"transport\":[", lpfile);
+                IPutNativeString(",\"transport\":[", lpfile);
                 for (k = 0; k < 5; k++) {
-                    fprintf(lpfile, "%s{\"action\":%u,\"quantity\":%u}", k ? "," : "",
+                    CchNativePrintf(lpfile, "%s{\"action\":%u,\"quantity\":%u}", k ? "," : "",
                             lpord->txp.rgia[k].iAction, lpord->txp.rgia[k].cQuan);
                 }
-                fputs("]", lpfile);
+                IPutNativeString("]", lpfile);
             }
-            fputs("}", lpfile);
+            IPutNativeString("}", lpfile);
         }
-        fputs("],\"ships\":[", lpfile);
-        for (j = 0; j < 16; j++) fprintf(lpfile, "%s%d", j ? "," : "", lpfl->rgcsh[j]);
-        fputs("]}", lpfile);
+        IPutNativeString("],\"ships\":[", lpfile);
+        for (j = 0; j < 16; j++) CchNativePrintf(lpfile, "%s%d", j ? "," : "", lpfl->rgcsh[j]);
+        IPutNativeString("]}", lpfile);
     }
-    fputs("],\"designs\":[", lpfile);
+    IPutNativeString("],\"designs\":[", lpfile);
     cWritten = 0;
     for (i = 0; i < 16; i++) {
         lpshdef = &rglpshdef[idPlayer][i];
         if (lpshdef->fFree) continue;
-        fprintf(lpfile, "%s{\"index\":%d,\"hull\":%u,\"parts\":[", cWritten++ ? "," : "", i, lpshdef->hul.ihuldef);
+        CchNativePrintf(lpfile, "%s{\"index\":%d,\"hull\":%u,\"parts\":[", cWritten++ ? "," : "", i, lpshdef->hul.ihuldef);
         for (j = 0; j < lpshdef->hul.chs; j++)
-            fprintf(lpfile, "%s[%u,%u,%u]", j ? "," : "", lpshdef->hul.rghs[j].grhst, lpshdef->hul.rghs[j].iItem, lpshdef->hul.rghs[j].cItem);
-        fputs("]}", lpfile);
+            CchNativePrintf(lpfile, "%s[%u,%u,%u]", j ? "," : "", lpshdef->hul.rghs[j].grhst, lpshdef->hul.rghs[j].iItem, lpshdef->hul.rghs[j].cItem);
+        IPutNativeString("]}", lpfile);
     }
-    fputs("],\"production\":[", lpfile);
+    IPutNativeString("],\"production\":[", lpfile);
     cWritten = 0;
     for (i = 0; i < cPlanet; i++) {
         lppl = &lpPlanets[i];
         if (lppl->iPlayer != idPlayer || !lppl->lpplprod) continue;
         for (j = 0; j < lppl->lpplprod->iprodMac; j++) {
             prod = lppl->lpplprod->rgprod[j];
-            fprintf(lpfile, "%s{\"planet\":%u,\"kind\":%u,\"item\":%u,\"quantity\":%u}",
+            CchNativePrintf(lpfile, "%s{\"planet\":%u,\"kind\":%u,\"item\":%u,\"quantity\":%u}",
                     cWritten++ ? "," : "", lppl->id, prod.grobj, prod.iItem, prod.cItem);
         }
     }
-    fputs("],\"planetFlags\":[", lpfile);
+    IPutNativeString("],\"planetFlags\":[", lpfile);
     cWritten = 0;
     for (i = 0; i < cPlanet; i++) {
         lppl = &lpPlanets[i];
         if (lppl->iPlayer != idPlayer) continue;
-        fprintf(lpfile, "%s{\"planet\":%u,\"leftoverResearch\":%u}",
+        CchNativePrintf(lpfile, "%s{\"planet\":%u,\"leftoverResearch\":%u}",
                 cWritten++ ? "," : "", lppl->id, lppl->fNoResearch);
     }
-    fprintf(lpfile, "],\"defaultTemplate\":{\"valid\":%s,\"leftoverResearch\":%u,\"count\":%u,\"items\":[",
+    CchNativePrintf(lpfile, "],\"defaultTemplate\":{\"valid\":%s,\"leftoverResearch\":%u,\"count\":%u,\"items\":[",
             vrgZipProd[0].fValid ? "true" : "false", vrgZipProd[0].fNoResearch, vrgZipProd[0].cpq);
     for (j = 0; j < vrgZipProd[0].cpq && j < 12; j++)
-        fprintf(lpfile, "%s{\"item\":%u,\"quantity\":%u}", j ? "," : "", vrgZipProd[0].rgpq[j].mdIdle, vrgZipProd[0].rgpq[j].cQuan);
-    fputs("]}}\n", lpfile);
-    i = ferror(lpfile);
-    return fclose(lpfile) == 0 && !i;
+        CchNativePrintf(lpfile, "%s{\"item\":%u,\"quantity\":%u}", j ? "," : "", vrgZipProd[0].rgpq[j].mdIdle, vrgZipProd[0].rgpq[j].cQuan);
+    IPutNativeString("]}}\n", lpfile);
+    i = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !i;
 }
 
 static BOOL FSaveEnemyDesign(void) {
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     FLEET *lpfl;
     int ishdef, fError;
 
@@ -394,17 +394,17 @@ static BOOL FSaveEnemyDesign(void) {
     for (ishdef = 0; ishdef < 16; ishdef++)
         if (lpfl->rgcsh[ishdef] != 0 && &rglpshdef[lpfl->iPlayer][ishdef] == GlobalPD.lpshdef) break;
     if (ishdef == 16) return FALSE;
-    lpfile = fopen("enemy-design.json", "w");
+    lpfile = PfNativeOpen("enemy-design.json", "w");
     if (!lpfile) return FALSE;
-    fprintf(lpfile, "{\"fleet\":%d,\"player\":%u,\"design\":%d,\"hideCounts\":%s,\"summary\":%s,\"showDamage\":%s,\"token\":%s}\n",
+    CchNativePrintf(lpfile, "{\"fleet\":%d,\"player\":%u,\"design\":%d,\"hideCounts\":%s,\"summary\":%s,\"showDamage\":%s,\"token\":%s}\n",
             lpfl->id, lpfl->iPlayer, ishdef, GlobalPD.fHideCounts ? "true" : "false",
             GlobalPD.fSummary ? "true" : "false", GlobalPD.fShowDamage ? "true" : "false", GlobalPD.fToken ? "true" : "false");
-    fError = ferror(lpfile);
-    return fclose(lpfile) == 0 && !fError;
+    fError = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
 static BOOL FSaveTutorialPopup(const char *pszPath, BOOL fResearch) {
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     int fError;
 
     if (!IsWindowVisible(hwndPopup) || GetCapture() != hwndPopup) return FALSE;
@@ -412,55 +412,55 @@ static BOOL FSaveTutorialPopup(const char *pszPath, BOOL fResearch) {
         if (GlobalPD.grPopup != grPopupComponent || GlobalPD.part.hs.grhst != hstTerra ||
             GlobalPD.part.hs.iItem != iterraRadiationTerraform7) return FALSE;
     } else if (GlobalPD.grPopup != grPopupPlanetEnv || GlobalPD.idPlanet != 5 || GlobalPD.iPlanetVar != 2) return FALSE;
-    lpfile = fopen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
-    if (fResearch) fprintf(lpfile, "{\"type\":%d,\"kind\":%u,\"item\":%u}\n",
+    if (fResearch) CchNativePrintf(lpfile, "{\"type\":%d,\"kind\":%u,\"item\":%u}\n",
                            GlobalPD.grPopup, GlobalPD.part.hs.grhst, GlobalPD.part.hs.iItem);
-    else fprintf(lpfile, "{\"type\":%d,\"planet\":%d,\"environment\":%d}\n",
+    else CchNativePrintf(lpfile, "{\"type\":%d,\"planet\":%d,\"environment\":%d}\n",
                  GlobalPD.grPopup, GlobalPD.idPlanet, GlobalPD.iPlanetVar);
-    fError = ferror(lpfile);
-    return fclose(lpfile) == 0 && !fError;
+    fError = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
 static BOOL FSaveBattle(const char *pszPath) {
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     int fError;
     if (!vlpbdVCR || !vrgtok) return FALSE;
-    lpfile = fopen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
-    fprintf(lpfile, "{\"battle\":%u,\"tokens\":%u,\"step\":%d,\"lastStep\":%d,\"playing\":%s}\n",
+    CchNativePrintf(lpfile, "{\"battle\":%u,\"tokens\":%u,\"step\":%d,\"lastStep\":%d,\"playing\":%s}\n",
             vlpbdVCR->id, vlpbdVCR->ctok, viStepVCRCur, vcStepVCR, gd.fVCRTimer ? "true" : "false");
-    fError = ferror(lpfile);
-    return fclose(lpfile) == 0 && !fError;
+    fError = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
 static BOOL FSaveSalvage(void) {
     THING *lpth;
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     int fError;
     if (sel.scan.grobj != grobjThing || sel.scan.ith < 0 || sel.scan.ith >= cThing) return FALSE;
     lpth = &lpThings[sel.scan.ith];
     if (lpth->ith != ithMineralPacket || lpth->thp.iWarp != 0) return FALSE;
-    lpfile = fopen("salvage.json", "w");
+    lpfile = PfNativeOpen("salvage.json", "w");
     if (!lpfile) return FALSE;
-    fprintf(lpfile, "{\"id\":%u,\"position\":[%d,%d],\"minerals\":[%d,%d,%d]}\n",
+    CchNativePrintf(lpfile, "{\"id\":%u,\"position\":[%d,%d],\"minerals\":[%d,%d,%d]}\n",
             lpth->idFull, lpth->pt.x, lpth->pt.y, lpth->thp.rgwtMin[0], lpth->thp.rgwtMin[1], lpth->thp.rgwtMin[2]);
-    fError = ferror(lpfile);
-    return fclose(lpfile) == 0 && !fError;
+    fError = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
 static BOOL FSaveReport(const char *pszPath) {
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     int i, fError;
     if (!IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return FALSE;
-    lpfile = fopen(pszPath, "w");
+    lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
-    fprintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
+    CchNativePrintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
             game.turn, vprptCur->irpt, vprptCur->icolSort, vprptCur->iSubsort, vprptCur->fAscending ? "true" : "false");
-    for (i = 0; i < vprptCur->cRows; i++) fprintf(lpfile, "%s%u", i ? "," : "", lpPlanets[vlprgidRep[i]].id);
-    fputs("]}\n", lpfile);
-    fError = ferror(lpfile);
-    return fclose(lpfile) == 0 && !fError;
+    for (i = 0; i < vprptCur->cRows; i++) CchNativePrintf(lpfile, "%s%u", i ? "," : "", lpPlanets[vlprgidRep[i]].id);
+    IPutNativeString("]}\n", lpfile);
+    fError = FNativeStreamError(lpfile);
+    return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
 static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWORD tick) {
@@ -2928,7 +2928,7 @@ int16_t StarsTest_InitInstance(int16_t nCmdShow) {
 int main(int argc, char **argv) {
     char szCommand[] = "";
     int nResult;
-    FILE *lpfile;
+    NATIVEFILE *lpfile;
     if (argc != 2 || (strcmp(argv[1], "--smoke") && strcmp(argv[1], "--first-year") && strcmp(argv[1], "--two-years") && strcmp(argv[1], "--scouting") && strcmp(argv[1], "--mining") && strcmp(argv[1], "--colonization") && strcmp(argv[1], "--logistics") && strcmp(argv[1], "--colonizer-production") && strcmp(argv[1], "--second-colonization") && strcmp(argv[1], "--transport-cycle") && strcmp(argv[1], "--expansion") && strcmp(argv[1], "--fleet-split") && strcmp(argv[1], "--research-cycle") && strcmp(argv[1], "--oxygen-colonization") && strcmp(argv[1], "--production-templates") && strcmp(argv[1], "--battle-cycle") && strcmp(argv[1], "--terraform-cycle") && strcmp(argv[1], "--design-cycle") && strcmp(argv[1], "--automation-cycle") && strcmp(argv[1], "--report-cycle") && strcmp(argv[1], "--merge-cycle"))) {
         fprintf(stderr, "Usage: stars-native-tutorial --smoke|--first-year|--two-years|--scouting|--mining|--colonization|--logistics|--colonizer-production|--second-colonization|--transport-cycle|--expansion|--fleet-split|--research-cycle|--oxygen-colonization|--production-templates|--battle-cycle|--terraform-cycle|--design-cycle|--automation-cycle|--report-cycle|--merge-cycle\nFull 80-page execution is not implemented yet.\n");
         return 2;
@@ -2953,20 +2953,20 @@ int main(int argc, char **argv) {
     fScouting = fMining || !strcmp(argv[1], "--scouting");
     fTwoYears = fScouting || !strcmp(argv[1], "--two-years");
     fFirstYear = fTwoYears || !strcmp(argv[1], "--first-year");
-    lpEvents = fopen("events.jsonl", "w");
+    lpEvents = PfNativeOpen("events.jsonl", "w");
     if (!lpEvents) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (idTimer) KillTimer(NULL, idTimer);
-    lpfile = fopen("result.json", "w");
+    lpfile = PfNativeOpen("result.json", "w");
     if (lpfile) {
-        fprintf(lpfile, "{\"scenario\":\"%s\",\"status\":\"%s\",\"fullTutorial\":false,\"actions\":%d,\"pages\":%d,\"rejectedGenerate\":%s,\"detail\":\"%s\"}\n",
+        CchNativePrintf(lpfile, "{\"scenario\":\"%s\",\"status\":\"%s\",\"fullTutorial\":false,\"actions\":%d,\"pages\":%d,\"rejectedGenerate\":%s,\"detail\":\"%s\"}\n",
                 fMergeCycle ? "merge-cycle" : fReportCycle ? "report-cycle" : fAutomationCycle ? "automation-cycle" : fDesignCycle ? "design-cycle" : fTerraformCycle ? "terraform-cycle" : fBattleCycle ? "battle-cycle" : fProdTemplates ? "production-templates" : fOxygenColony ? "oxygen-colonization" : fResearchCycle ? "research-cycle" : fFleetSplit ? "fleet-split" : fExpansion ? "expansion" : fTransportCycle ? "transport-cycle" : fSecondColonization ? "second-colonization" : fColonizerProduction ? "colonizer-production" : fLogistics ? "logistics" : fColonization ? "colonization" : fMining ? "mining" : fScouting ? "scouting" : fTwoYears ? "two-years" : fFirstYear ? "first-year" : "smoke", fPassed && nResult == 0 ? (fFirstYear ? "partial" : "passed") : "failed",
                 cActions, cPage, fRejected ? "true" : "false",
                 fPassed ? "bounded scenario; complete tutorial remains unverified" : pszFailure);
-        if (fclose(lpfile)) fPassed = FALSE;
+        if (ICloseNativeFile(lpfile)) fPassed = FALSE;
     } else fPassed = FALSE;
-    fclose(lpEvents);
+    ICloseNativeFile(lpEvents);
     SDL_SetModState(SDL_KMOD_NONE);
     StarsCompatProcessExit();
     SDL_Quit();

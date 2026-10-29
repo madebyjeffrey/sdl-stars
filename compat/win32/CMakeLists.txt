@@ -69,8 +69,8 @@ foreach(STARS_DEPENDENCY Freetype::Freetype ZLIB::ZLIB PkgConfig::STARS_FONTCONF
 endforeach()
 
 # Only adapted C11 implementations are built, never the upstream reference copy.
-add_library(stars_win32 STATIC src/toolbar.c src/inspect.c src/session.c src/help.c src/document.c src/print.c src/filedialog.c src/audio.c src/messagebox.c src/combo.c src/dialog.c src/dialog_template.c src/image.c src/accelerator.c src/menu.c src/rect.c src/time.c src/window.c src/message.c src/input.c src/control.c src/edit.c src/list.c src/paint.c src/dib.c src/resource.c src/memory.c src/timer.c src/services.c src/system.c src/scroll.c src/profile.c src/file.c src/font.c "${STARS_BITMAP_GENERATED}/font_resources.c" "${STARS_BITMAP_GENERATED}/bitmap_resources.c" "${STARS_BITMAP_GENERATED}/ui_resources.c" "${STARS_BITMAP_GENERATED}/image_resources.c")
-target_link_libraries(stars_win32 PUBLIC stars_win32_headers stars_sanitizers stars_encoding ZLIB::ZLIB
+add_library(stars_win32 STATIC src/callback.cpp src/toolbar.c src/inspect.c src/session.c src/help.c src/document.c src/print.c src/filedialog.c src/audio.c src/messagebox.c src/combo.c src/dialog.c src/dialog_template.c src/image.c src/accelerator.c src/menu.c src/rect.c src/time.c src/window.c src/message.c src/input.c src/control.c src/edit.c src/list.c src/paint.c src/dib.c src/resource.c src/memory.c src/timer.c src/services.c src/system.c src/scroll.c src/profile.c src/file.c src/font.c "${STARS_BITMAP_GENERATED}/font_resources.c" "${STARS_BITMAP_GENERATED}/bitmap_resources.c" "${STARS_BITMAP_GENERATED}/ui_resources.c" "${STARS_BITMAP_GENERATED}/image_resources.c")
+target_link_libraries(stars_win32 PUBLIC stars_win32_headers stars_sanitizers stars_encoding stars_errors stars_filesystem ZLIB::ZLIB
     PRIVATE SDL3::SDL3 Freetype::Freetype PkgConfig::STARS_FONTCONFIG PkgConfig::STARS_CAIRO m)
 option(STARS_NATIVE_FILE_DIALOGS "Use platform-native file selection" ON)
 if(STARS_NATIVE_FILE_DIALOGS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -93,16 +93,10 @@ elseif(STARS_NATIVE_FILE_DIALOGS AND WIN32)
     target_compile_definitions(stars_win32 PRIVATE STARS_FILE_DIALOG_WINDOWS=1)
 endif()
 
-target_compile_options(stars_win32 PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(stars_win32 PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
 
 if(WIN32)
-    # This translation unit alone includes the actual SDK, never wrapper headers.
-    add_library(stars_compat_platform OBJECT src/platform_windows.c)
-    target_compile_definitions(stars_compat_platform PRIVATE _FILE_OFFSET_BITS=64)
     target_compile_definitions(stars_win32 PUBLIC _FILE_OFFSET_BITS=64)
-    target_link_libraries(stars_win32 PRIVATE bcrypt)
-    target_compile_options(stars_compat_platform PRIVATE -Wall -Wextra -Wpedantic -Werror)
-    target_sources(stars_win32 PRIVATE $<TARGET_OBJECTS:stars_compat_platform>)
 endif()
 
 target_include_directories(stars_win32 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")

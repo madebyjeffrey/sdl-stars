@@ -36,7 +36,7 @@ char *PszGetDestName(FLEET *lpfl, HDC hdc) {
         }
     }
     ord = lpfl->lpplord->rgord[1];
-    return PszGetLocName(ord.grobj, ord.id, ord.pt.x, ord.pt.y);
+    return PszGetLocName(static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
 
 LNoDest:
     return szDblDash;
@@ -160,7 +160,7 @@ char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
     }
 LShowTask:
     if (ord.fValidTask) {
-        ids = idsTaskHere + ord.grTask;
+        ids = static_cast<StringId>(idsTaskHere + ord.grTask);
         switch (ord.grTask) {
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
@@ -171,8 +171,10 @@ LShowTask:
             iZip = -1;
             if (ord.txp.rgia[4].iAction == iActionLoadDunnage &&
                 (ord.txp.rgia[3].iAction == iActionNone || (ord.txp.rgia[3].iAction == iActionUnloadAll && ord.txp.rgia[0].iAction == iActionUnloadAll))) {
-                opOrd = ord.txp.rgia[0].iAction;
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[0].iAction);
                 switch (opOrd) {
+                default:
+                    break;
                 case iActionLoadAll:
                 case iActionUnloadAll:
                 case iActionWaitPercent:
@@ -180,6 +182,8 @@ LShowTask:
                     }
                     if (i == 3) {
                         switch (opOrd) {
+                        default:
+                            break;
                         case iActionLoadAll:
                             iZip = 0;
                             break;
@@ -194,16 +198,16 @@ LShowTask:
                 }
             }
             for (i = 4; i >= 0; i--) {
-                opOrd = ord.txp.rgia[i].iAction;
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction);
                 if (idsAction + opOrd > (int16_t)ids) {
-                    ids = idsAction + opOrd;
+                    ids = static_cast<StringId>(idsAction + opOrd);
                     icr = i;
                 }
             }
             if (ids == idsAction) {
                 return PszGetCompressedString(idsTransport);
             }
-            opOrd = ord.txp.rgia[icr].iAction;
+            opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction);
             *picr = icr;
             fPercent = FALSE;
             switch (opOrd) {
@@ -258,11 +262,9 @@ LShowTask:
 void DumpUniverse() {
     StringId ids;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     int16_t  cch;
 
     fSilentSav = fFileErrSilent;
@@ -272,17 +274,8 @@ void DumpUniverse() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             CchSprintf(szWork, "%s.map", szBase);
             StreamOpen(szWork, mdCreate);
@@ -293,6 +286,13 @@ void DumpUniverse() {
                 RgToStream(szWork, cch);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -304,7 +304,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 
@@ -316,11 +315,9 @@ void DumpPlanets() {
     char     szForm[256];
     int16_t  j;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     char    *psz;
     int16_t  cch;
     int32_t  l;
@@ -335,17 +332,8 @@ void DumpPlanets() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.p%d", szBase, idPlayer + 1);
@@ -356,7 +344,7 @@ void DumpPlanets() {
             fOpen = TRUE;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = CchGetString(idsPlanetNameOwnerStarbaseTypeReportAge + i, szForm);
+                cch = CchGetString(static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
@@ -455,11 +443,11 @@ void DumpPlanets() {
                 if (gd.fPerPlayerDumps) {
                     if (lppl->det >= detSome) {
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(i, lppl->rgEnvVar[i]));
+                            strcpy(&szForm[1], PszCalcEnvVar(static_cast<EnvType>(i), lppl->rgEnvVar[i]));
                             RgToStream(szForm, strlen(szForm));
                         }
                         for (i = 0; i < 3; i++) {
-                            strcpy(&szForm[1], PszCalcEnvVar(i, lppl->rgEnvVarOrig[i]));
+                            strcpy(&szForm[1], PszCalcEnvVar(static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]));
                             RgToStream(szForm, strlen(szForm));
                         }
                         strcpy(&szForm[1], PszFromInt(PctPlanetOptValue(lppl, idPlayer), NULL));
@@ -523,6 +511,13 @@ void DumpPlanets() {
                 RgToStream(szCRLF, 2);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -534,7 +529,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 
@@ -547,11 +541,9 @@ void DumpFleets() {
     FLEET   *lpfl;
     int16_t  j;
     int16_t  i;
-    jmp_buf  env;
     int16_t  fOpen;
     int16_t  fSuccess;
     int16_t  fSilentSav;
-    jmp_buf *penvMemSav;
     char    *psz;
     int16_t  cch;
     int32_t  l;
@@ -564,17 +556,8 @@ void DumpFleets() {
         fSuccess = FALSE;
         goto DisplayStatus;
     } else {
-        penvMemSav = penvMem;
-        penvMem = &env;
-        if (setjmp(env) != 0) {
-            if (fOpen) {
-                StreamClose();
-            }
-            fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
-            penvMem = penvMemSav;
-            goto DisplayStatus;
-        } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
             fFileErrSilent = TRUE;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.f%d", szBase, idPlayer + 1);
@@ -585,7 +568,7 @@ void DumpFleets() {
             fOpen = TRUE;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = CchGetString(idsFleetNameXYPlanetDestinationBattle + i, szForm);
+                cch = CchGetString(static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
@@ -714,6 +697,13 @@ void DumpFleets() {
                 RgToStream(szCRLF, 2);
             }
             StreamClose();
+        } catch (const StarsError &) {
+            if (fOpen) {
+                StreamClose();
+            }
+            fFileErrSilent = fSilentSav;
+            fSuccess = FALSE;
+            goto DisplayStatus;
         }
     }
 DisplayStatus:
@@ -725,7 +715,6 @@ DisplayStatus:
         AlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
-    penvMem = penvMemSav;
     return;
 }
 

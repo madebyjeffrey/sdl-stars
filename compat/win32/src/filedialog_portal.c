@@ -177,9 +177,10 @@ static BOOL FPumpChooser(HWND hwndOwner) {
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) { PostQuitMessage((int)msg.wParam); return FALSE; }
         TranslateMessage(&msg); DispatchMessageA(&msg);
+        if (FStarsErrorPending()) return 0;
         if (hwndOwner && !IsWindow(hwndOwner)) return FALSE;
     }
-    return !hwndOwner || IsWindow(hwndOwner);
+    return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
 int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
@@ -192,7 +193,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     dbus_bool_t fTrue = TRUE, fFalse = FALSE;
     const char *pszParent, *pszHandle = NULL;
     char szParent[64] = "", szToken[64], szRequest[512], szSender[256];
-    FILE *lpRandom;
+    NATIVEFILE *lpRandom;
     unsigned char rgbToken[16];
     const char *pszUnique;
     char *pszTitleUtf = NULL, *pszRequest = NULL, *pszSender = NULL, *pszWaylandParent = NULL;
@@ -230,10 +231,10 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
         if (xid != 0) snprintf(szParent, sizeof(szParent), "x11:%llx", (unsigned long long)xid);
     }
     pszParent = pszWaylandParent ? pszWaylandParent : szParent;
-    lpRandom = fopen("/dev/urandom", "rb");
+    lpRandom = PfNativeOpen("/dev/urandom", "rb");
     if (!lpRandom) goto done;
-    if (fread(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { fclose(lpRandom); goto done; }
-    fclose(lpRandom);
+    if (CReadNative(rgbToken, 1, sizeof(rgbToken), lpRandom) != sizeof(rgbToken)) { ICloseNativeFile(lpRandom); goto done; }
+    ICloseNativeFile(lpRandom);
     strcpy(szToken, "stars_");
     for (i = 0; i < 16; i++) snprintf(szToken + 6 + i * 2, 3, "%02x", rgbToken[i]);
     pszUnique = dbus_bus_get_unique_name(lpBus);
