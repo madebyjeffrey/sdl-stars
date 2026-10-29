@@ -440,7 +440,7 @@ static BOOL FPendingPaintTree(HWND hwnd) {
 BOOL FCompatPaintTree(HWND hwnd) {
     HWND lp, lpNext;
 
-    if (!UpdateWindow(hwnd) || !IsWindow(hwnd)) return FALSE;
+    if (FStarsErrorPending() || !UpdateWindow(hwnd) || !IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
     for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = lpNext) {
         lpNext = GetWindow(lp, GW_HWNDNEXT);
         if (lp->fVisible && !FCompatPaintTree(lp)) return FALSE;
@@ -459,13 +459,13 @@ BOOL FCompatRefreshPresent(HWND hwnd) {
     // Cocoa can clear its view during exposure after the initial show. Reuse
     // the last completed texture even if a new paint is pending; never reenter
     // application drawing from a native exposure callback.
+    StarsRestore<BOOL> restorePresenting(fPresenting);
     fPresenting = TRUE;
     fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer.get(), 0, 0, 0,
                                 SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
           SDL_RenderClear(lpwin->lpRenderer.get()) &&
           SDL_RenderTexture(lpwin->lpRenderer.get(), lpwin->lpTexture.get(), NULL, NULL) &&
           SDL_RenderPresent(lpwin->lpRenderer.get());
-    fPresenting = FALSE;
     return fOk;
 }
 

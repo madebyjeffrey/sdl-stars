@@ -3,6 +3,7 @@
  * Stars adaptation: retained class data, independent handles and reentrant teardown.
  */
 #include "internal.h"
+#include "cleanup.h"
 #include <stars_compat.h>
 #include <stdlib.h>
 #include <new>
@@ -133,40 +134,44 @@ void StarsCompatEndDialogSequence(void) {
     }
 }
 
-static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) {
+static void UpdateCompatLiveResize(SDL_Event *lpevent) {
     HWND lpwin;
     RECT rc;
 
-    (void)lpv;
     if (!SDL_IsMainThread() || fShutdown || fLiveResize ||
-        lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return true;
+        lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return;
     lpwin = LpCompatWindowFromId(lpevent->window.windowID);
-    if (!lpwin || !lpwin->fCreated || !GetClientRect(lpwin, &rc)) return true;
+    if (!lpwin || !lpwin->fCreated || !GetClientRect(lpwin, &rc)) return;
     if (!lpwin->fVisible) {
         // A reused wizard window stays native-visible while its next logical
         // page initializes. Exposure must restore the retained completed frame.
         if (lpwin->fDeferPresent && !(SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_HIDDEN))
             FCompatRefreshPresent(lpwin);
-        return true;
+        return;
     }
     if (lpevent->window.data1 != 1 || CCompatDispatch() != 0) {
         FCompatRefreshPresent(lpwin);
-        return true;
+        return;
     }
     // SDL permits application drawing from a watcher during native live resize.
+    StarsRestore<BOOL> restoreResize(fLiveResize);
+    COMPATPRESENTSCOPE deferPresent(lpwin);
     fLiveResize = TRUE;
-    lpwin->cPresentDefer++;
     SendMessageA(lpwin, WM_SIZE, IsZoomed(lpwin) ? SIZE_MAXIMIZED : SIZE_RESTORED,
                  MAKELPARAM(rc.right, rc.bottom));
-    if (IsWindow(lpwin)) {
+    if (IsWindow(lpwin) && !FStarsErrorPending()) {
         InvalidateRect(lpwin, NULL, TRUE);
         FCompatPaintTree(lpwin);
-        if (IsWindow(lpwin)) {
-            lpwin->cPresentDefer--;
+        if (IsWindow(lpwin) && !FStarsErrorPending()) {
+            deferPresent.Close();
             FCompatPresent(lpwin);
         }
     }
-    fLiveResize = FALSE;
+}
+
+static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) noexcept {
+    (void)lpv;
+    CompatInvokeCleanup([](void *lpvEvent) { UpdateCompatLiveResize(static_cast<SDL_Event *>(lpvEvent)); }, lpevent, NULL);
     return true;
 }
 
@@ -820,15 +825,15 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     if (fPrepare) {
         // Show-time layout must see logical visibility, while the native window
         // stays hidden until its background and visible descendants are painted.
-        lpwin->cPresentDefer++;
+        COMPATPRESENTSCOPE deferPresent(lpwin);
         lpwin->fVisible = TRUE;
         lpwin->dwStyle |= WS_VISIBLE;
         if (fNotify) SendMessageA(hwnd, WM_SHOWWINDOW, TRUE, 0);
-        if (!IsWindow(hwnd)) return FALSE;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
         InvalidateRect(hwnd, NULL, TRUE);
         fOk = FCompatPaintTree(hwnd);
-        if (!IsWindow(hwnd)) return FALSE;
-        lpwin->cPresentDefer--;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
+        deferPresent.Close();
         if (!fOk || !FCompatPresent(hwnd)) {
             lpwin->fVisible = FALSE;
             lpwin->dwStyle &= ~WS_VISIBLE;
@@ -895,10 +900,10 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     // A native renderer can acquire a new drawable when the hidden window is
     // shown. Submit the completed frame there without waiting for queued exposure.
     if (fPrepare && lpwin->fAlive) {
-        lpwin->cPresentDefer++;
+        COMPATPRESENTSCOPE deferPresent(lpwin);
         FCompatPaintTree(hwnd);
-        if (!IsWindow(hwnd)) return fWasVisible;
-        lpwin->cPresentDefer--;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return fWasVisible;
+        deferPresent.Close();
         FCompatPresent(hwnd);
     }
     if (lpwin->fAlive && fVisible && !lpwin->hwndParent && fNotify &&

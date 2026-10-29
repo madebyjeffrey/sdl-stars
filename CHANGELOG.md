@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `FWatchLiveResize` stops painting/presentation after a failed layout or paint
+  callback. Previously it continued drawing after layout failure. Presentation
+  counters and refresh/resize flags now restore during failure or window
+  destruction, and renderer exceptions are contained before returning to SDL.
+
 - `HwndCreateDialog` destroys a modeless dialog when its creation callbacks fail.
   Previously it returned a live window while the checked C++ caller received an
   exception and could not take ownership. Initialization stops at the first

@@ -352,3 +352,27 @@ cases, warning-free product builds and 519 native regression matches / 25
 accepted unused-storage warnings / zero differences, errors or skipped inputs.
 No baseline or independent reference changed. B02 presentation and deferred
 control lifetimes remain active.
+
+
+## B02 presentation guards and foreign watcher containment
+
+The live-resize reproduction fails before the fix: a `WM_SIZE` error is pending
+but painting and frame submission still run. Layout/paint failure now stops that
+work. Presentation scopes balance only their own defer-counter increments,
+including callbacks that destroy the window. Refresh and live-resize flags
+restore during unwinding, and the SDL event watcher contains renderer failures
+before returning through SDL. Show-time and scrollbar batches use the same
+counter guard; normal frame batching and drawing order remain unchanged.
+
+The existing paint-batch contract now tests layout failure, paint failure,
+renderer failure in refresh and live resize, successful retry, destruction during
+layout, and failed/destroying show callbacks. Existing first-frame, pane pixel,
+retained exposure and native-resize layout assertions remain. This harness joins
+native macOS leaks and Linux sanitizer qualification.
+
+Results: 101/101 full macOS CTest, 45 ownership cases including 22 native leak
+checks, 24/24 ASan/UBSan cases (23 ownership/callback cases plus core exception
+units), warning-free builds and 519 native regression matches / 25 accepted
+unused-storage warnings / zero differences, errors or skipped inputs. Baselines
+and independent references remain unchanged. B02 deferred control lifetimes are
+still active.

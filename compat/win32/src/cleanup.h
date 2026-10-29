@@ -24,4 +24,17 @@ public:
     void Release() noexcept { fActive = false; }
 };
 
+// Window tokens survive logical destruction until runtime shutdown. Balance
+// only this scope's increment, preserving nested presentation batches.
+class COMPATPRESENTSCOPE {
+    HWND hwnd;
+    bool fActive = true;
+public:
+    explicit COMPATPRESENTSCOPE(HWND hwnd) noexcept : hwnd(hwnd) { hwnd->cPresentDefer++; }
+    ~COMPATPRESENTSCOPE() noexcept { Close(); }
+    COMPATPRESENTSCOPE(const COMPATPRESENTSCOPE &) = delete;
+    COMPATPRESENTSCOPE &operator=(const COMPATPRESENTSCOPE &) = delete;
+    void Close() noexcept { if (std::exchange(fActive, false)) hwnd->cPresentDefer--; }
+};
+
 #endif
