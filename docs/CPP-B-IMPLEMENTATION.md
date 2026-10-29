@@ -14,7 +14,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B03: const-correct text and scoped views | Complete | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. All 16 Linux/Windows checks pass for b799348. |
 | B04: record codecs and complete storage inventory | Complete | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix and all 16 Linux/Windows checks for d6bd60f. |
 | B05: production payloads | Complete | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix and all 16 Linux/Windows checks for c0e0075. |
-| B06: waypoint/order payloads | Active | Full local matrix passes: typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Linux/Windows gate pending. |
+| B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
 | B07: hull/design payloads | Active | Explicit full/partial design, HS and design-log codecs remove the variable wire overlay. Full local qualification passes, including reader/export/replay contracts and the expanded sanitizer suite. Linux/Windows gate pending. |
 | B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
 | B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
@@ -718,3 +718,11 @@ inputs. All 259 frozen size/prefix measurements and the six explicit runtime
 alignment checks pass. Independent C inputs, catalogs and baseline fixtures
 remain unchanged. B07's Linux/Windows gate remains required; B08–B14 remain
 pending.
+
+
+## B06 platform completion gate
+
+All 16 Linux/Windows checks pass for `a7614a6`: desktop/host regressions,
+Windows SDL/SDK and unit workflows, source witnesses, Linux ASan/UBSan/LSan
+and tutorial coverage. B06 is complete. B07 `79b3303` has passed its complete
+local matrix and is entering platform qualification. B08–B14 remain required.
