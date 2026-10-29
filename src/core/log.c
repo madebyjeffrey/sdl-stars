@@ -37,17 +37,20 @@ void LogMergeFleet(int16_t id) {
 void LogChangeShDef(SHDEF *lpshdefNew) {
     uint8_t  rgb[149];
     uint8_t *pb;
+    RTCHGSHDEF rtchg{};
 
     if (!gd.fGeneratingTurn) {
-        ((RTCHGSHDEF *)rgb)->ishdef = lpshdefNew->ishdef;
-        ((RTCHGSHDEF *)rgb)->iPlr = idPlayer;
+        rtchg.ishdef = lpshdefNew->ishdef;
+        rtchg.iPlr = idPlayer;
         if (lpshdefNew->fFree) {
-            ((RTCHGSHDEF *)rgb)->mdChg = 0;
-            WriteMemRt(rtLogShDef, 2, rgb);
+            rtchg.mdChg = 0;
+            FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
+            WriteMemRt(rtLogShDef, cbWireChgShDef, rgb);
         } else {
-            ((RTCHGSHDEF *)rgb)->mdChg = 1;
+            rtchg.mdChg = 1;
             lpshdefNew->det = detAll;
-            pb = (uint8_t *)&((RTCHGSHDEF *)rgb)->rtshdef;
+            FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
+            pb = rgb + cbWireChgShDef;
             WriteRtShDef(lpshdefNew, &pb);
             WriteMemRt(rtLogShDef, pb - rgb, rgb);
         }
@@ -599,6 +602,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     PROD prod{};
     int16_t iordLog, grTaskLog;
     uint16_t wOrderLog;
+    RTCHGSHDEF rtchgshdef{};
 
     lpxfCur = NULL;
     switch (rt) {
@@ -680,9 +684,10 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         lpth->thm.fDetonate = ((RTLOGTHING *)lpb)->fDetonate;
         break;
     case rtLogShDef:
-        if (cb < (int16_t)offsetof(RTCHGSHDEF, rtshdef)) return FALSE;
-        i = ((RTCHGSHDEF *)lpb)->ishdef;
-        iLook = ((RTCHGSHDEF *)lpb)->iPlr;
+        if (cb < (int16_t)cbWireChgShDef) return FALSE;
+        FDecodeRtChgShDefPrefix(std::as_bytes(std::span(lpb, cbWireChgShDef)), rtchgshdef);
+        i = rtchgshdef.ishdef;
+        iLook = rtchgshdef.iPlr;
         if (iLook >= game.cPlayer || iLook != idPlayer) {
             return FALSE;
         }
@@ -694,7 +699,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         } else {
             lpshdef = rglpshdef[iLook] + i;
         }
-        if (!lpshdef->fFree && lpshdef->cExist != 0 && ((RTCHGSHDEF *)lpb)->mdChg != 0) {
+        if (!lpshdef->fFree && lpshdef->cExist != 0 && rtchgshdef.mdChg != 0) {
             return FALSE;
         }
         /* Work done on queued ships or starbases of the old design doesn't
@@ -712,7 +717,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 }
             }
         }
-        switch (((RTCHGSHDEF *)lpb)->mdChg) {
+        switch (rtchgshdef.mdChg) {
         case 0:
             if (lpshdef->fFree)
                 break;
@@ -733,12 +738,12 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 }
             }
             if (i >= 16) {
-                if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdefSB[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
+                if (FReadShDef(lpb + cbWireChgShDef, rglpshdefSB[iLook], idPlayer, cb - cbWireChgShDef))
                     break;
                 rgplr[iLook].cshdefSB += 15;
                 return FALSE;
             }
-            if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdef[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
+            if (FReadShDef(lpb + cbWireChgShDef, rglpshdef[iLook], idPlayer, cb - cbWireChgShDef))
                 break;
             rgplr[iLook].cShDef--;
             return FALSE;

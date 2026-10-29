@@ -179,4 +179,105 @@ inline bool FEncodeRtShipInt(RTSHIPINT rtsi, std::span<std::byte> rgb) noexcept 
     return output.FWriteI16Le(rtsi.id) && output.FWriteI16Le(rtsi.i);
 }
 
+
+inline constexpr std::size_t cbWireHs = 4;
+inline constexpr std::size_t cbWireShDefPartial = 6;
+inline constexpr std::size_t cbWireShDefFull = 17;
+inline constexpr std::size_t cbWireChgShDef = 2;
+
+inline bool FDecodeHs(std::span<const std::byte> rgb, HS &hs) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t grhst;
+    std::uint8_t iItem, cItem;
+    if (!input.FReadU16Le(grhst) || !input.FReadU8(iItem) || !input.FReadU8(cItem)) return false;
+    hs.grhst = static_cast<HullSlotType>(grhst);
+    hs.iItem = iItem;
+    hs.cItem = cItem;
+    return true;
+}
+
+inline bool FEncodeHs(HS hs, std::span<std::byte> rgb) noexcept {
+    NATIVEBYTEWRITER output(rgb);
+    if (rgb.size() < cbWireHs) return false;
+    return output.FWriteU16Le(static_cast<std::uint16_t>(hs.grhst)) && output.FWriteU8(hs.iItem) && output.FWriteU8(hs.cItem);
+}
+
+// A partial design places its string marker at byte six. That marker also
+// populated hul.chs in the original reader; do not normalize it to a slot count.
+// Full wire slots start at the unaligned byte seventeen and become real HS values.
+inline bool FDecodeShDefFixed(std::span<const std::byte> rgb, SHDEF &shdef, std::size_t &ibName) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    SHDEF shdefRead{};
+    std::uint16_t wFlags, dp, turn;
+    std::uint8_t ihuldef, ibmp, chs;
+    std::uint32_t cBuilt, cExist;
+    std::size_t ibNameRead;
+    if (!input.FReadU16Le(wFlags) || !input.FReadU8(ihuldef) || !input.FReadU8(ibmp) ||
+        !input.FReadU16Le(dp) || !input.FReadU8(chs)) return false;
+    shdefRead.det = wFlags & 0xff;
+    shdefRead.fInclude = (wFlags >> 8) & 1;
+    shdefRead.fFree = (wFlags >> 9) & 1;
+    shdefRead.ishdef = (wFlags >> 10) & 0x1f;
+    shdefRead.fGift = wFlags >> 15;
+    shdefRead.hul.ihuldef = static_cast<HulDef>(ihuldef);
+    shdefRead.hul.ibmp = ibmp;
+    shdefRead.hul.chs = chs;
+    if (shdefRead.det == detAll) {
+        if (chs > 16 || rgb.size() < cbWireShDefFull + chs * cbWireHs) return false;
+        input.FReadU16Le(turn);
+        input.FReadU32Le(cBuilt);
+        input.FReadU32Le(cExist);
+        shdefRead.hul.dp = dp;
+        shdefRead.turn = turn;
+        shdefRead.cBuilt = cBuilt;
+        shdefRead.cExist = cExist;
+        for (std::size_t i = 0; i < chs; i++) FDecodeHs(rgb.subspan(cbWireShDefFull + i * cbWireHs, cbWireHs), shdefRead.hul.rghs[i]);
+        ibNameRead = cbWireShDefFull + chs * cbWireHs;
+    } else {
+        shdefRead.hul.wtEmpty = dp;
+        ibNameRead = cbWireShDefPartial;
+    }
+    shdef = shdefRead;
+    ibName = ibNameRead;
+    return true;
+}
+
+// Stage only the fields present at this detail level. Native packing, inactive
+// aliases and pointer size never define output bytes, including overlapping output.
+inline bool FEncodeShDefFixed(const SHDEF &shdef, std::span<std::byte> rgb, std::size_t &ibName) noexcept {
+    std::byte rgbFixed[cbWireShDefFull + 16 * cbWireHs];
+    NATIVEBYTEWRITER output(rgbFixed);
+    std::size_t cb = shdef.det == detAll ? cbWireShDefFull + shdef.hul.chs * cbWireHs : cbWireShDefPartial;
+    if ((shdef.det == detAll && shdef.hul.chs > 16) || rgb.size() < cb) return false;
+    output.FWriteU16Le(shdef.wFlags());
+    output.FWriteU8(static_cast<std::uint8_t>(shdef.hul.ihuldef));
+    output.FWriteU8(static_cast<std::uint8_t>(shdef.hul.ibmp));
+    output.FWriteU16Le(shdef.det == detAll ? shdef.hul.dp : shdef.hul.wtEmpty);
+    if (shdef.det == detAll) {
+        output.FWriteU8(shdef.hul.chs);
+        output.FWriteU16Le(shdef.turn);
+        output.FWriteU32Le(shdef.cBuilt);
+        output.FWriteU32Le(shdef.cExist);
+        for (std::size_t i = 0; i < shdef.hul.chs; i++) FEncodeHs(shdef.hul.rghs[i], std::span(rgbFixed).subspan(cbWireShDefFull + i * cbWireHs, cbWireHs));
+    }
+    std::memmove(rgb.data(), rgbFixed, cb);
+    ibName = cb;
+    return true;
+}
+
+inline bool FDecodeRtChgShDefPrefix(std::span<const std::byte> rgb, RTCHGSHDEF &rtchg) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t w;
+    if (!input.FReadU16Le(w)) return false;
+    rtchg.mdChg = w & 0x0f;
+    rtchg.iPlr = (w >> 4) & 0x0f;
+    rtchg.ishdef = (w >> 8) & 0x1f;
+    rtchg.junk = w >> 13;
+    return true;
+}
+
+inline bool FEncodeRtChgShDefPrefix(RTCHGSHDEF rtchg, std::span<std::byte> rgb) noexcept {
+    return NATIVEBYTEWRITER(rgb).FWriteU16Le(static_cast<std::uint16_t>(rtchg.mdChg | (rtchg.iPlr << 4) | (rtchg.ishdef << 8) | (rtchg.junk << 13)));
+}
+
 #endif

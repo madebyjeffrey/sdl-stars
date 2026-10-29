@@ -126,14 +126,73 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
     shdef = rglpshdefSB[0][isb];
     shdef.det = detAll;
     memset(rgb, 0, sizeof(rgb));
-    ((RTCHGSHDEF *)rgb)->ishdef = 16 + isb;
-    ((RTCHGSHDEF *)rgb)->iPlr = 0;
-    ((RTCHGSHDEF *)rgb)->mdChg = 1;
-    pb = (uint8_t *)&((RTCHGSHDEF *)rgb)->rtshdef;
+    rgb[0] = 1; // mdChg=1, player=0; design occupies bits 8–12.
+    rgb[1] = 16 + isb;
+    pb = rgb + cbWireChgShDef;
     WriteRtShDef(&shdef, &pb);
     TEST_ASSERT(FRunLogRecord(rtLogShDef, (int16_t)(pb - rgb), rgb));
     TEST_ASSERT(lppl->lpplprod != NULL && lppl->lpplprod->iprodMac == 1);
     TEST_CHECK_(lppl->lpplprod->rgprod()[0].pct == 0, "the edited design kept %d%%", lppl->lpplprod->rgprod()[0].pct);
+}
+
+
+// Rejected and unknown design edits retain their distinct partial-effect
+// receipts. In particular, failed replacement can clear progress and decrement
+// the roster count; decoding must not turn the workflow into a transaction.
+static void test_FRunLogRecord_design_partial_effects(void) {
+    char szDir[MAX_PATH];
+    PLANET *lppl;
+    SHDEF shdef, shdefBefore;
+    uint8_t rgb[] = {1, 0xe0}; // mode=1, player=0, slot=0; all junk bits set.
+    uint8_t rgbShort[] = {1};
+    uint8_t rgbWritten[160];
+    HDR hdr;
+    int16_t cBefore;
+    int16_t i;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("design_log_partial_effects", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    idPlayer = 0;
+    gd.fGeneratingTurn = TRUE;
+    for (i = 0; i < cPlanet && lpPlanets[i].iPlayer != 0; i++) {}
+    TEST_ASSERT(i < cPlanet);
+    lppl = &lpPlanets[i];
+    if (lppl->lpplprod) FreePl(lppl->lpplprod);
+    lppl->lpplprod = LpplAlloc<PLPROD>(4, 3, htOrd);
+    lppl->lpplprod->iprodMac = 1;
+    lppl->lpplprod->rgprod()[0] = {};
+    lppl->lpplprod->rgprod()[0].grobj = grobjFleet;
+    lppl->lpplprod->rgprod()[0].iItem = 0;
+    lppl->lpplprod->rgprod()[0].pct = 37;
+    rglpshdef[0][0].fFree = FALSE;
+    rglpshdef[0][0].cExist = 1;
+    cBefore = rgplr[0].cShDef;
+    TEST_CHECK(!FRunLogRecord(rtLogShDef, 1, rgbShort));
+    TEST_CHECK(!FRunLogRecord(rtLogShDef, sizeof(rgb), rgb));
+    TEST_CHECK(lppl->lpplprod->rgprod()[0].pct == 37 && rgplr[0].cShDef == cBefore);
+    rglpshdef[0][0].cExist = 0;
+    shdefBefore = rglpshdef[0][0];
+    rgb[0] = 15; // An unrecognized mode is accepted after clearing progress.
+    TEST_CHECK(FRunLogRecord(rtLogShDef, sizeof(rgb), rgb));
+    TEST_CHECK(lppl->lpplprod->rgprod()[0].pct == 0 && rgplr[0].cShDef == cBefore);
+    TEST_CHECK(memcmp(&rglpshdef[0][0], &shdefBefore, sizeof(shdefBefore)) == 0);
+    lppl->lpplprod->rgprod()[0].pct = 37;
+    rgb[0] = 1;
+    TEST_CHECK(!FRunLogRecord(rtLogShDef, sizeof(rgb), rgb));
+    TEST_CHECK(lppl->lpplprod->rgprod()[0].pct == 0 && rgplr[0].cShDef == cBefore - 1);
+    TEST_CHECK(memcmp(&rglpshdef[0][0], &shdefBefore, sizeof(shdefBefore)) == 0);
+    // The real writer emits the same two-byte header and a full design. Only
+    // previously indeterminate junk bits are now initialized to zero.
+    shdef = shdefBefore;
+    shdef.det = detSome;
+    gd.fGeneratingTurn = FALSE;
+    LogChangeShDef(&shdef);
+    TEST_CHECK(shdef.det == detAll);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgbWritten));
+    TEST_CHECK(hdr.rt == rtLogShDef && hdr.cb > 2 && rgbWritten[0] == 1 && rgbWritten[1] == 0);
+    TEST_CHECK(rgbWritten[2] == detAll && rgbWritten[4] == shdef.hul.ihuldef);
 }
 
 // Trimmed insert/update records keep the old byte-prefix and neighboring-row
@@ -370,7 +429,8 @@ static void test_production_storage_lifetime(void) {
     FreeLp(lpOther, htOrd);
 }
 
-TEST_LIST = {{"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},
+TEST_LIST = {{"design log codecs retain partial-effect receipts", test_FRunLogRecord_design_partial_effects},
+             {"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},
              {"order log bytes preserve prefixes, neighbors and signed admission", test_FRunLogRecord_order_bytes},
              {"production log bytes preserve replay and incomplete-row effects", test_FRunLogRecord_production_bytes},
              {"production queues retain typed storage and pool capacity", test_production_storage_lifetime},

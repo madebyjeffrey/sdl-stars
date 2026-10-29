@@ -3,6 +3,7 @@
 B04 introduces checked, little-endian byte operations and migrates `RTHISTHDR`.
 B05 migrates production queue storage and its file/log byte boundaries.
 B06 migrates order arrays, task-word views and full/partial waypoint records.
+B07 migrates full/partial ship designs, hull slots and design-change headers.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
@@ -26,8 +27,8 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve historical variable-tail dispositions below (nine active zero-array
-  declarations and three migrated list families);
+  all twelve historical variable-tail dispositions below (eight active zero-array
+  declarations and four migrated families);
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
@@ -46,7 +47,7 @@ expressions that would become stale when unrelated lines move.
 | History header read in `file.c`, write in `log.c` | Explicit two-signed-16 codec; exact four bytes; complete scratch backing preserves existing short-declared-payload behavior | B04 migrated |
 | Production queues and queue log edits | PROD scalar bits, PLPROD runtime storage, RTCHGPRODQ byte prefix; allocation/capacity and forecast lifetimes | B05 migrated |
 | Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 migrated |
-| Hulls and designs | HS/HUL/HULDEF/SHDEF/RTSHDEF slots, catalog and design import/export | B07 |
+| Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | FLEET/FLEETSOME/RTFLEET/FLEETID/RTFLEETIDS, optional cargo/damage fields, split/merge traversal | B08 |
 | Battle and AI | TOK/KILL/BTLDATA/BTLREC/BTLREC26, packed replay, token alignment, AI state/data and traversal | B09 |
 | Messages and logs | MSGHDR/MSGPLR/RTPLRMSG/MSGBIG/LOGXFER/RTLOGHDR, compression/framing, passwords and message filters | B10 |
@@ -141,3 +142,17 @@ bytes. The frozen C inputs and all 259 size/prefix measurements remain intact;
 the comparator explicitly checks these six new runtime alignments and keeps
 every other alignment comparison unchanged. These types no longer supply file
 bytes by native layout. Independent wire vectors check their byte contracts.
+
+
+## B07 design storage and wire boundary
+
+A full design is decoded from a seventeen-byte prefix plus four-byte HS slots
+into the existing fixed sixteen-slot runtime HUL. A partial design places its
+name marker at offset six; the old marker-to-hul.chs effect remains, without
+applying full-slot validation to partial names. Full/partial name selection,
+compression, bitmap/category/engine repairs and prior-knowledge retention remain
+in their callers. The RTSHDEF metadata type has no trailing array and no wire
+overlay consumers; neither its sizeof nor native flag layout defines file bytes.
+Design change replay preserves mode/index admission and partial effects, including
+failed replacements and unknown modes. Only formerly indeterminate output junk
+bits acquire a defined zero value; incoming junk bits decode unchanged.

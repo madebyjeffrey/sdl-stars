@@ -272,8 +272,8 @@ int16_t FGenerateTurn() {
         for (i = 0; i < game.cPlayer; i++) {
             for (j = 0; j < 10; j++) {
                 if (!rglpshdefSB[i][j].fFree) {
-                    rglpshdefSB[i][j].lVisible = (int16_t)(100 - PctCloakFromHuldef(&rglpshdefSB[i][j].hul, i, NULL));
-                    rglpshdefSB[i][j].lVisible = (uint32_t)(rglpshdefSB[i][j].lVisible * rglpshdefSB[i][j].lVisible);
+                    rglpshdefSB[i][j].SetLVisible((int16_t)(100 - PctCloakFromHuldef(&rglpshdefSB[i][j].hul, i, NULL)));
+                    rglpshdefSB[i][j].SetLVisible((uint32_t)(rglpshdefSB[i][j].lVisible() * rglpshdefSB[i][j].lVisible()));
                 }
             }
             for (j = 0; j < 16; j++) {

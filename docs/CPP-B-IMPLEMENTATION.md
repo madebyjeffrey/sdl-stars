@@ -15,7 +15,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B04: record codecs and complete storage inventory | Complete | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix and all 16 Linux/Windows checks for d6bd60f. |
 | B05: production payloads | Complete | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix and all 16 Linux/Windows checks for c0e0075. |
 | B06: waypoint/order payloads | Active | Full local matrix passes: typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Linux/Windows gate pending. |
-| B07: hull/design payloads | Pending | Preserve slot strides, catalog IDs and design import/export. |
+| B07: hull/design payloads | Active | Explicit full/partial design, HS and design-log codecs remove the variable wire overlay. Full local qualification passes, including reader/export/replay contracts and the expanded sanitizer suite. Linux/Windows gate pending. |
 | B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
 | B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
 | B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
@@ -679,3 +679,42 @@ inputs. All 259 frozen size/prefix contracts remain covered; the six migrated
 runtime alignments are explicitly checked at two bytes. Independent frozen
 inputs, catalogs and regression baselines remain unchanged. Linux/Windows
 qualification remains required; B07–B14 remain pending.
+
+
+## B07 ship-design payloads in qualification
+
+HS slots have an explicit four-byte codec. Full design payloads use their
+seventeen-byte prefix and decoded runtime slots; partial payloads keep the
+six-byte prefix and encoded name. No typed array is formed at odd byte seventeen.
+Design and change-log words encode their original flags and reserved input bits
+explicitly. The design's flag word and power/visibility aliases become value
+accessors over one actual representation; widths and all frozen measurements
+remain unchanged. The unused zero-length RTSHDEF tail is removed.
+
+Import retains bitmap repair, name bounds, hull/slot admission, existing-full
+knowledge retention, cost/mass and engine repairs. Partial names still populate
+hul.chs with their marker, including compressed lengths above sixteen. Replay
+retains early rejection, accepted unknown modes, progress clearing and the
+nontransactional roster-count receipt after failed replacement. Writer junk
+bits that previously had indeterminate stack contents are initialized to zero;
+defined fields and incoming reserved bits are unchanged. Invalid runtime full
+slot counts outside the sixteen-slot HUL array cannot enter the codec; this
+does not tighten the existing reader, which already rejects them.
+
+Focused wire/layout/save/log tests pass. Independent vectors cover every category
+word, every design/change flag word, all slot counts, short-prefix failures,
+unaligned slots and overlapping output. Real import/export and replay tests
+cover the behaviors above. The actual save/reader unit program joins Linux
+ASan/UBSan/LSan qualification. Full local and platform gates remain required.
+
+
+B07 final local qualification: 114/114 complete macOS desktop tests, all 27
+native leak checks, 25/25 host tests, 33/33 ASan/UBSan cases including the actual
+save-reader program, all 27 source witnesses, and 93 public headers in both
+include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match 519 files through turn 150 with the
+same 25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. All 259 frozen size/prefix measurements and the six explicit runtime
+alignment checks pass. Independent C inputs, catalogs and baseline fixtures
+remain unchanged. B07's Linux/Windows gate remains required; B08–B14 remain
+pending.

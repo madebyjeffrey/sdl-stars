@@ -222,6 +222,94 @@ int main() {
         CHECK(FDecodeRtWayptPrefix(waypoint, decoded) && decoded.id == -2 && decoded.iWaypt == 32767);
         CHECK(FDecodeOrder(std::span(waypoint).subspan(4), decoded.order) && decoded.order.tlm().cTime == 0xabcd);
     }
-    std::puts("History/production/action/order wire vectors, signed domains, partial bytes and bounded primitives passed");
+
+    {
+        // S01 HS is u16 category + u8 index + u8 count, even at odd wire offsets.
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::array<std::byte, 4> golden = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+                                                    static_cast<std::byte>((w * 17) % 256), static_cast<std::byte>((w / 256 + 13) % 256)};
+            HS hs{};
+            std::array<std::byte, 6> output;
+            CHECK(FDecodeHs(golden, hs) && hs.grhst == w && hs.iItem == (w * 17) % 256 && hs.cItem == (w / 256 + 13) % 256);
+            output.fill(std::byte{0xa5});
+            CHECK(FEncodeHs(hs, std::span(output).subspan(1, 4)) && std::memcmp(output.data() + 1, golden.data(), 4) == 0);
+            CHECK(output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+            for (std::size_t cb = 0; cb < 4; cb++) {
+                HS unchanged = hs;
+                CHECK(!FDecodeHs(std::span(golden).first(cb), hs) && std::memcmp(&hs, &unchanged, sizeof(hs)) == 0);
+                output.fill(std::byte{0xa5});
+                CHECK(!FEncodeHs(hs, std::span(output).first(cb)));
+                for (auto b : output) CHECK(b == std::byte{0xa5});
+            }
+        }
+        const std::array<std::byte, 26> full = {std::byte{7}, std::byte{0xfd}, std::byte{36}, std::byte{255}, std::byte{0xcd}, std::byte{0xab}, std::byte{2},
+            std::byte{0x34}, std::byte{0x12}, std::byte{0x78}, std::byte{0x56}, std::byte{0x34}, std::byte{0x12}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff},
+            std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0}, std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0xff}, std::byte{0xa5}};
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            auto input = full;
+            input[0] = static_cast<std::byte>(w % 256); input[1] = static_cast<std::byte>(w / 256);
+            SHDEF shdef{};
+            std::size_t ibName = 999;
+            std::array<std::byte, 28> output;
+            CHECK(FDecodeShDefFixed(input, shdef, ibName));
+            CHECK(shdef.det == w % 256 && shdef.fInclude == (w / 256) % 2 && shdef.fFree == (w / 512) % 2 && shdef.ishdef == (w / 1024) % 32 && shdef.fGift == w / 32768);
+            CHECK(shdef.wFlags() == w && shdef.hul.ihuldef == 36 && shdef.hul.ibmp == 255 && shdef.hul.chs == 2);
+            if (shdef.det == 7) {
+                CHECK(ibName == 25 && shdef.hul.dp == 0xabcd && shdef.turn == 0x1234 && shdef.cBuilt == 0x12345678 && shdef.cExist == 0xffffffff);
+                CHECK(shdef.hul.rghs[0].grhst == 0x8000 && shdef.hul.rghs[0].iItem == 255 && shdef.hul.rghs[1].cItem == 255);
+            } else CHECK(ibName == 6 && shdef.hul.wtEmpty == 0xabcd && shdef.turn == 0 && shdef.hul.rghs[0].grhst == 0);
+            output.fill(std::byte{0xa5});
+            CHECK(FEncodeShDefFixed(shdef, std::span(output).subspan(1), ibName));
+            CHECK(std::memcmp(output.data() + 1, input.data(), ibName) == 0 && output[0] == std::byte{0xa5} && output[ibName + 1] == std::byte{0xa5});
+            RTCHGSHDEF rtchg{};
+            CHECK(FDecodeRtChgShDefPrefix(input, rtchg) && rtchg.mdChg == w % 16 && rtchg.iPlr == (w / 16) % 16 && rtchg.ishdef == (w / 256) % 32 && rtchg.junk == w / 8192);
+            CHECK(FEncodeRtChgShDefPrefix(rtchg, output) && output[0] == input[0] && output[1] == input[1]);
+        }
+        {
+            SHDEF shdef{};
+            std::size_t cb;
+            CHECK(FDecodeShDefFixed(full, shdef, cb));
+            auto storage = std::as_writable_bytes(std::span(&shdef, 1));
+            CHECK(FEncodeShDefFixed(shdef, storage.subspan(1), cb) && cb == 25);
+            CHECK(std::memcmp(storage.data() + 1, full.data(), cb) == 0);
+            RTCHGSHDEF rtchg{};
+            rtchg.mdChg = 15; rtchg.iPlr = 14; rtchg.ishdef = 31; rtchg.junk = 7;
+            const auto before = rtchg;
+            std::array<std::byte, 2> output;
+            for (std::size_t cut = 0; cut < 2; cut++) {
+                CHECK(!FDecodeRtChgShDefPrefix(std::span(full).first(cut), rtchg) && std::memcmp(&rtchg, &before, sizeof(rtchg)) == 0);
+                output.fill(std::byte{0xa5});
+                CHECK(!FEncodeRtChgShDefPrefix(rtchg, std::span(output).first(cut)) && output[0] == std::byte{0xa5} && output[1] == std::byte{0xa5});
+            }
+        }
+        for (unsigned c = 0; c < 256; c++) {
+            std::array<std::byte, 83> rgb;
+            for (std::size_t i = 0; i < rgb.size(); i++) rgb[i] = static_cast<std::byte>((i * 19 + 3) % 256);
+            rgb[0] = std::byte{7}; rgb[6] = static_cast<std::byte>(c);
+            SHDEF shdef{};
+            std::size_t cb = 17 + c * 4, ibName = 999;
+            const auto before = shdef;
+            if (c > 16) {
+                CHECK(!FDecodeShDefFixed(rgb, shdef, ibName) && ibName == 999 && std::memcmp(&shdef, &before, sizeof(shdef)) == 0);
+            } else {
+                for (std::size_t cut = 0; cut < cb; cut++) {
+                    CHECK(!FDecodeShDefFixed(std::span(rgb).first(cut), shdef, ibName) && ibName == 999 && std::memcmp(&shdef, &before, sizeof(shdef)) == 0);
+                }
+                CHECK(FDecodeShDefFixed(std::span(rgb).first(cb), shdef, ibName) && ibName == cb);
+                std::array<std::byte, 83> output;
+                for (std::size_t cut = 0; cut < cb; cut++) {
+                    output.fill(std::byte{0xa5}); ibName = 999;
+                    CHECK(!FEncodeShDefFixed(shdef, std::span(output).subspan(1, cut), ibName) && ibName == 999);
+                    for (auto b : output) CHECK(b == std::byte{0xa5});
+                }
+                CHECK(FEncodeShDefFixed(shdef, std::span(output).subspan(1), ibName) && ibName == cb && std::memcmp(output.data() + 1, rgb.data(), cb) == 0);
+                CHECK(output[0] == std::byte{0xa5} && output[cb + 1] == std::byte{0xa5});
+            }
+            // The byte at six is a name marker in the partial form, for all values.
+            rgb[0] = std::byte{1};
+            CHECK(FDecodeShDefFixed(std::span(rgb).first(7), shdef, ibName) && ibName == 6 && shdef.hul.chs == c);
+        }
+    }
+    std::puts("History/production/action/order/design wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

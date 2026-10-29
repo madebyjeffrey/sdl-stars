@@ -8,7 +8,7 @@
 extern char mpishdefishTutor[6];
 
 int16_t FReadUserString(const uint8_t *lpb, size_t cb, char *psz, size_t cchMax, size_t *pcbRead);
-int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb);
+int16_t FReadShDef(const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb);
 void    ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb);
 int16_t FLoadGame(const char *pszFileName, const char *pszExt);
 int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPreInited);

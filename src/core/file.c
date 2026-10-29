@@ -26,9 +26,9 @@ int16_t FReadUserString(const uint8_t *lpb, size_t cb, char *psz, size_t cchMax,
     return TRUE;
 }
 
-int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb) {
+int16_t FReadShDef(const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb) {
     SHDEF    shdef;
-    uint8_t *lpb;
+    const uint8_t *lpb;
     int16_t  ishdef;
     int16_t  iFirst;
     int16_t  fOkay;
@@ -37,32 +37,18 @@ int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb) {
     int16_t  c;
     HUL     *lphul;
     PART     part;
+    size_t   ibName;
 
     memset(&shdef, 0, sizeof(SHDEF));
-    if (cb <= offsetof(RTSHDEF, chs) || lprt->ihuldef > ihuldefDeathStart) return FALSE;
-    shdef.hul.ihuldef = static_cast<HulDef>(lprt->ihuldef);
-    shdef.wFlags = lprt->wFlags;
-    shdef.hul.chs = lprt->chs;
-    shdef.hul.ibmp = lprt->ibmp;
-    if (shdef.det == detAll) {
-        if (lprt->chs > sizeof(shdef.hul.rghs) / sizeof(HS) ||
-            cb <= offsetof(RTSHDEF, rghs) + lprt->chs * sizeof(HS)) return FALSE;
-        shdef.hul.dp = lprt->dp;
-        shdef.turn = lprt->turn;
-        shdef.cBuilt = lprt->cBuilt;
-        shdef.cExist = lprt->cExist;
-        lpb = (uint8_t *)lprt->rghs;
-        memmove(shdef.hul.rghs, lpb, lprt->chs * 4);
-        lpb += 4 * lprt->chs;
-    } else {
-        shdef.hul.wtEmpty = lprt->wtEmpty;
-        lpb = &lprt->chs;
-    }
+
+    if (!FDecodeShDefFixed(std::as_bytes(std::span(lprt, cb)), shdef, ibName) ||
+        shdef.hul.ihuldef > ihuldefDeathStart || cb <= ibName) return FALSE;
+    lpb = lprt + ibName;
     iFirst = LphuldefFromId(shdef.hul.ihuldef)->hul.ibmp;
     if (shdef.hul.ibmp < iFirst || shdef.hul.ibmp >= iFirst + 4) {
         shdef.hul.ibmp = (shdef.hul.ibmp & 3) | iFirst;
     }
-    if (!FReadUserString(lpb, cb - (size_t)(lpb - (uint8_t *)lprt), shdef.hul.szClass,
+    if (!FReadUserString(lpb, cb - (size_t)(lpb - lprt), shdef.hul.szClass,
                          sizeof(shdef.hul.szClass), NULL)) return FALSE;
     ishdef = shdef.ishdef;
     if (ishdef >= 16) {
@@ -289,7 +275,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 } else {
                     idPlayer = iplrNone;
                 }
-                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
+                if (!FReadShDef((const uint8_t *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
                     goto CorruptHist;
                 idPlayer = iplrSav;
                 rgplr[i].cShDef--;
@@ -314,7 +300,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 } else {
                     idPlayer = iplrNone;
                 }
-                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
+                if (!FReadShDef((const uint8_t *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
                     goto CorruptHist;
                 idPlayer = iplrSav;
                 rgplr[i].cshdefSB += 15;
@@ -547,7 +533,7 @@ LNextTurn:
                     idPlayer = iplrSav;
                     goto Corrupt;
                 }
-                if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
+                if (!FReadShDef((const uint8_t *)rgbCur, rglpshdef[i], iplrSav, hdrCur.cb))
                     goto Corrupt;
                 ReadRt();
             }
@@ -594,7 +580,7 @@ LNextTurn:
                         idPlayer = iplrSav;
                         goto Corrupt;
                     }
-                    if (!FReadShDef((RTSHDEF *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
+                    if (!FReadShDef((const uint8_t *)rgbCur, rglpshdefSB[i], iplrSav, hdrCur.cb))
                         goto Corrupt;
                     ReadRt();
                 }

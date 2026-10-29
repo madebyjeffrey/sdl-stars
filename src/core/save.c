@@ -73,23 +73,13 @@ void WriteRtShDef(SHDEF *lpshdef, uint8_t **ppbStore) {
     char     szHulName[32];
     uint8_t *pb;
     int16_t  cOut;
+    size_t   ibName;
 
-    ((RTSHDEF *)rgb)->ihuldef = lpshdef->hul.ihuldef;
-    ((RTSHDEF *)rgb)->wFlags = lpshdef->wFlags;
-    ((RTSHDEF *)rgb)->chs = lpshdef->hul.chs;
-    ((RTSHDEF *)rgb)->ibmp = lpshdef->hul.ibmp;
-    if (lpshdef->det == detAll) {
-        ((RTSHDEF *)rgb)->dp = lpshdef->hul.dp;
-        ((RTSHDEF *)rgb)->turn = lpshdef->turn;
-        ((RTSHDEF *)rgb)->cBuilt = lpshdef->cBuilt;
-        ((RTSHDEF *)rgb)->cExist = lpshdef->cExist;
-        pb = (uint8_t *)&((RTSHDEF *)rgb)->rghs;
-        memmove(pb, lpshdef->hul.rghs, ((RTSHDEF *)rgb)->chs * 4);
-        pb += ((RTSHDEF *)rgb)->chs * 4;
-    } else {
-        ((RTSHDEF *)rgb)->wtEmpty = lpshdef->hul.wtEmpty;
-        pb = &((RTSHDEF *)rgb)->chs;
+    if (!FEncodeShDefFixed(*lpshdef, std::as_writable_bytes(std::span(rgb)), ibName)) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        return;
     }
+    pb = rgb + ibName;
     if (lpshdef->det == detAll) {
         strcpy(szHulName, lpshdef->hul.szClass);
     } else {
@@ -1468,7 +1458,7 @@ void SetVisPFFleets(int16_t iPlr) {
                                         if (!lppl->fStarbase || lppl->iPlayer == iplrNone)
                                             goto LMark101;
 
-                                        lVis2 = rglpshdefSB[lppl->iPlayer][lppl->isb].lVisible;
+                                        lVis2 = rglpshdefSB[lppl->iPlayer][lppl->isb].lVisible();
                                         if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
                                             MarkPlanet(lppl, iPlr, detObscure);
                                             continue;
@@ -1653,7 +1643,7 @@ void SetVisPFPlanets(int16_t iPlr) {
                         d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                         if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) > lRadius2)
                             continue;
-                        lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible;
+                        lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
                         if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000))
                             continue;
 
@@ -1691,7 +1681,7 @@ void SetVisPFPlanets(int16_t iPlr) {
                                     if (!lppl2->fStarbase || lppl2->iPlayer == iplrNone)
                                         goto LMark102;
 
-                                    lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible;
+                                    lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
                                     if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
                                         MarkPlanet(lppl2, iPlr, detObscure);
                                         continue;
@@ -1822,7 +1812,7 @@ void SetVisPFThings(int16_t iPlr) {
                                     if (!lppl2->fStarbase || lppl2->iPlayer == iplrNone)
                                         goto LMark103;
 
-                                    lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible;
+                                    lVis2 = rglpshdefSB[lppl2->iPlayer][lppl2->isb].lVisible();
                                     if (lVis2 < 10000 && d2 > (int32_t)((int64_t)lRadius2 * lVis2 / 10000)) {
                                         MarkPlanet(lppl2, iPlr, detObscure);
                                         continue;

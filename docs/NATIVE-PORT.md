@@ -52,8 +52,10 @@ explicit no-op defaults; splitter masks switch on their underlying integer.
 checks C/C++ argument/return values, callbacks and pointer writes for all 145
 stored types using six boundary inputs each. The fixed underlying type admits
 all of its storage bit patterns, including legacy sentinels and combined flags.
-`test_record_layout` compares C and C++ sizes/alignment for the shared structs
-and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
+`test_record_layout` retains all 259 frozen C size/prefix measurements.
+Codecs now separate migrated file bytes from runtime storage: six task/order
+types retain their widths while requiring explicitly checked two-byte runtime
+alignment. All remaining alignment comparisons stay exact. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
 offset is zero in both languages; the C++ minimum class size is never used as
 a record length. The full native and host regressions check serialized results.
 

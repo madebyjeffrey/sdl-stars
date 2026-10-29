@@ -975,27 +975,22 @@ struct _rtplanet {
 }; /* size=0x4 */
 
 struct _rtshdef {
-    union {
-        struct {
-            uint16_t det : 8, /* +0x0000 (2) @bit0 */
-                fInclude : 1, /* @bit8 */
-                fFree : 1,    /* @bit9 */
-                ishdef : 5,   /* @bit10 */
-                fGift : 1;    /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x0000 (2) */
-    };
+    uint16_t det : 8, /* Detail byte; encoded independently of native bitfield layout. */
+        fInclude : 1,
+        fFree : 1,
+        ishdef : 5,
+        fGift : 1;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(det | (fInclude << 8) | (fFree << 9) | (ishdef << 10) | (fGift << 15));
+    }
     uint8_t ihuldef; /* +0x0002 (1) */
     uint8_t ibmp;    /* +0x0003 (1) */
-    union {
-        uint16_t wtEmpty; /* +0x0004 (2) */
-        uint16_t dp;      /* +0x0004 (2) */
-    };
+    uint16_t dp; /* Full armor / partial empty mass, decoded explicitly. */
+    constexpr uint16_t wtEmpty() const noexcept { return dp; }
     uint8_t  chs;     /* +0x0006 (1) */
     uint16_t turn;    /* +0x0007 (2) */
     uint32_t cBuilt;  /* +0x0009 (4) */
     uint32_t cExist;  /* +0x000D (4) */
-    HS       rghs[0]; /* +0x0011 (0) */
 }; /* size=0x11 */
 
 struct _rtchgshdef {
@@ -1184,23 +1179,20 @@ struct _selSome {
 
 struct _shdef {
     HUL hul; /* +0x0000 (123) */
-    union {
-        struct {
-            uint16_t det : 8, /* +0x007B (2) @bit0 */
-                fInclude : 1, /* @bit8 */
-                fFree : 1,    /* @bit9 */
-                ishdef : 5,   /* @bit10 */
-                fGift : 1;    /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x007B (2) */
-    };
+    uint16_t det : 8, /* Detail byte; encoded independently of native bitfield layout. */
+        fInclude : 1,
+        fFree : 1,
+        ishdef : 5,
+        fGift : 1;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(det | (fInclude << 8) | (fFree << 9) | (ishdef << 10) | (fGift << 15));
+    }
     uint16_t turn;   /* +0x007D (2) */
     uint32_t cBuilt; /* +0x007F (4) */
     uint32_t cExist; /* +0x0083 (4) */
-    union {
-        int32_t lPower;   /* +0x0087 (4) */
-        int32_t lVisible; /* +0x0087 (4) */
-    };
+    int32_t lPower; /* Combat power or squared starbase visibility. */
+    int32_t lVisible() const noexcept { return lPower; }
+    void SetLVisible(int32_t lVisibleNew) noexcept { lPower = lVisibleNew; }
     uint16_t grbitPlr;    /* +0x008B (2) */
     uint16_t dScanRange;  /* +0x008D (2) */
     uint16_t dScanRange2; /* +0x008F (2) */

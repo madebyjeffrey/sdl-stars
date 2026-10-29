@@ -32,7 +32,7 @@ static DetType DetScanCloakedStarbase(const char *pszTest, int16_t dScanRange2, 
     lpfl->idPlanet = idPlanetDeepSpace;
     lpfl->pt.x = rgptPlan[lppl1->id].x + 100;
     lpfl->pt.y = rgptPlan[lppl1->id].y;
-    rglpshdefSB[1][lppl1->isb].lVisible = lVis2;
+    rglpshdefSB[1][lppl1->isb].SetLVisible(lVis2);
 
     for (i = 0; i < cPlanet; i++) {
         lpPlanets[i].fInclude = FALSE;
@@ -327,16 +327,16 @@ static void test_utf8_design_and_plan_bounds(void) {
     uint8_t rgb[64];
     SHDEF rgshdefT[16];
     BTLPLAN btlplan;
-    RTSHDEF *lprt = (RTSHDEF *)rgb;
+    const uint8_t *lprt = rgb;
 
     TEST_ASSERT(FStarsTestInit());
     idPlayer = iplrNone;
     memset(rgb, 0, sizeof(rgb));
     memset(rgshdefT, 0, sizeof(rgshdefT));
-    lprt->det = detSome; lprt->ihuldef = ihuldefScout;
-    memcpy(rgb + offsetof(RTSHDEF, chs), "\0\xc3\xa9\0", 4);
-    TEST_CHECK(!FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 3));
-    TEST_CHECK(FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 4));
+    rgb[0] = detSome; rgb[2] = ihuldefScout;
+    memcpy(rgb + cbWireShDefPartial, "\0\xc3\xa9\0", 4);
+    TEST_CHECK(!FReadShDef(lprt, rgshdefT, 0, cbWireShDefPartial + 3));
+    TEST_CHECK(FReadShDef(lprt, rgshdefT, 0, cbWireShDefPartial + 4));
     TEST_CHECK(!strcmp(rgshdefT[0].hul.szClass, "\xc3\xa9"));
     memset(rgb, 0, sizeof(rgb));
     memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
@@ -370,7 +370,71 @@ static void test_utf8_raw_battle_plan(void) {
     TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
 }
 
-TEST_LIST = {{"UTF-8 records require complete in-record text", test_utf8_record_bounds},
+
+// Fixed bytes are independent of the native metadata type. Failed import keeps
+// the installed roster; matching partial knowledge retains an existing full design.
+static void test_design_wire_admission(void) {
+    SHDEF rgshdefT[16] = {}, before[16];
+    uint8_t rgb[147] = {7, 8, ihuldefScout, 0xff, 0x34, 0x12, 0,
+                        0xff, 0xff, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0x80, 0, 0};
+    const char szName[] = "abcdefghijklmnopqrstuvwxyz01234";
+    char szPacked[64];
+    int16_t cOut = 63;
+    size_t cb;
+    int16_t ibmp;
+    uint8_t *pb;
+    uint8_t rgbWritten[147];
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = iplrNone;
+    memcpy(before, rgshdefT, sizeof(before));
+    TEST_CHECK(!FReadShDef(NULL, rgshdefT, 0, 0));
+    for (cb = 0; cb < sizeof(rgb); cb++) {
+        if (cb < 19) {
+            TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, cb));
+            TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+        }
+    }
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 19));
+    TEST_CHECK(rgshdefT[2].det == detAll && rgshdefT[2].ishdef == 2 && rgshdefT[2].hul.chs == 0);
+    TEST_CHECK(rgshdefT[2].turn == 0xffff && rgshdefT[2].cBuilt == 0x12345678 && rgshdefT[2].cExist == 0x80000000);
+    ibmp = (LphuldefFromId(ihuldefScout)->hul.ibmp | 3);
+    TEST_CHECK(rgshdefT[2].hul.ibmp == ibmp);
+    TEST_CHECK(rgshdefT[2].hul.wtEmpty == LphuldefFromId(ihuldefScout)->hul.wtEmpty);
+    strcpy(rgshdefT[2].hul.szClass, "kept full knowledge");
+    memcpy(before, rgshdefT, sizeof(before));
+    rgb[0] = detSome; rgb[3] = (uint8_t)ibmp;
+    memcpy(rgb + 6, "\0partial\0", 9);
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 15));
+    TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+    // Compressed partial names may have a marker above sixteen. It remains
+    // hul.chs, rather than becoming a full-design slot validation rule.
+    TEST_ASSERT(FCompressUserString(szName, szPacked, &cOut));
+    TEST_ASSERT(cOut > 16 && cOut < 32);
+    memset(rgshdefT, 0, sizeof(rgshdefT));
+    rgb[6] = cOut;
+    memcpy(rgb + 7, szPacked, cOut);
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 7 + cOut));
+    TEST_CHECK(rgshdefT[2].hul.chs == cOut && !strcmp(rgshdefT[2].hul.szClass, szName));
+    TEST_CHECK(rgshdefT[2].hul.wtEmpty == 0x1234);
+    // Partial export uses the catalog name and its six-byte prefix, ignoring
+    // custom text and the non-slot marker retained in hul.chs.
+    pb = rgbWritten;
+    WriteRtShDef(&rgshdefT[2], &pb);
+    memset(rgshdefT, 0, sizeof(rgshdefT));
+    TEST_ASSERT(FReadShDef(rgbWritten, rgshdefT, 0, pb - rgbWritten));
+    TEST_CHECK(!strcmp(rgshdefT[2].hul.szClass, LphuldefFromId(ihuldefScout)->hul.szClass));
+    // Existing full-design count/hull rejection remains before publication.
+    memcpy(before, rgshdefT, sizeof(before));
+    rgb[0] = detAll; rgb[6] = 17;
+    TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, sizeof(rgb)));
+    rgb[6] = 0; rgb[2] = 0xff;
+    TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, sizeof(rgb)));
+    TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+}
+
+TEST_LIST = {{"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
+             {"UTF-8 records require complete in-record text", test_utf8_record_bounds},
              {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},
              {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},
              {"UTF-8 saved names and byte capacities", test_utf8_saved_names},
