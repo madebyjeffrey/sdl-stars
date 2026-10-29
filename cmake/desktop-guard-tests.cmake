@@ -29,3 +29,28 @@ if(STARS_NATIVE_FILE_DIALOGS)
             ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=native" RUN_SERIAL TRUE TIMEOUT 60)
     endif()
 endif()
+
+# Qualify notification-capable cleanup with the existing message-box and nested
+# callback vectors on every desktop backend, including Windows SDL private cases.
+add_executable(stars-resource-messagebox tests/compat/win32_messagebox.c)
+target_include_directories(stars-resource-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-resource-messagebox PRIVATE stars_win32 SDL3::SDL3)
+target_compile_options(stars-resource-messagebox PRIVATE -Wall -Wextra -Werror)
+stars_test_redirect(stars-resource-messagebox SDL_PutAudioStreamData)
+add_test(NAME win32_sdl_resource_messagebox COMMAND stars-resource-messagebox)
+set_tests_properties(win32_sdl_resource_messagebox PROPERTIES LABELS "compat;ownership;lifetime"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 60)
+set_property(TEST win32_exception_callbacks APPEND PROPERTY LABELS ownership lifetime)
+if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
+    foreach(STARS_MODAL_LEAK_KIND messagebox exception_callbacks)
+        if(STARS_MODAL_LEAK_KIND STREQUAL "messagebox")
+            set(STARS_MODAL_LEAK_TARGET stars-resource-messagebox)
+        else()
+            set(STARS_MODAL_LEAK_TARGET stars-compat-exceptions)
+        endif()
+        add_test(NAME win32_sdl_leaks_${STARS_MODAL_LEAK_KIND} COMMAND "${STARS_GUARD_LEAKS_EXECUTABLE}"
+            --quiet --noContent --atExit -- "$<TARGET_FILE:${STARS_MODAL_LEAK_TARGET}>")
+        set_tests_properties(win32_sdl_leaks_${STARS_MODAL_LEAK_KIND} PROPERTIES LABELS "compat;ownership;lifetime;leaks"
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" RUN_SERIAL TRUE TIMEOUT 60)
+    endforeach()
+endif()

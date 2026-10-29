@@ -17,7 +17,9 @@ old disabled-owner/stale-counter state and verifies restoration, cancellation
 and cleanup-failure delivery without opening a native picker.
 Popup teardown failure now prevents a queued command or selected-ID return;
 actual failure/capture tests also retain ordinary successful command delivery.
-Remaining modal/menu and reentrant control lifetime guards are in progress.
+Message-box, popup-tracking, folder and dialog-factory cleanup scopes are
+implemented. Failure publication and reentrant control/presentation lifetimes
+remain in progress.
 
 ## C++ migration
 

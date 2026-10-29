@@ -270,10 +270,10 @@ static INT_PTR CALLBACK FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l
 static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     char szName[PATH_MAX], szPath[PATH_MAX];
     RECT rc, work;
-    HWND hwndFolder, hwndFocus;
+    HWND hwndFolder, hwndFocus = NULL;
     MSG msg;
     int iRet;
-    BOOL fAccepted = FALSE;
+    BOOL fAccepted = FALSE, fDisabled = FALSE;
 
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) return;
     rc.left = work.left + (work.right - work.left - 360) / 2;
@@ -281,15 +281,21 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     rc.right = rc.left + 360; rc.bottom = rc.top + 156;
     hwndFolder = HwndCompatDynamicDialog("New folder", WS_POPUP | WS_CAPTION | WS_SYSMENU, 0, &rc, hwnd, FolderDialogProc);
     if (!hwndFolder) { FileError(hwnd, "The new folder dialog could not be opened."); return; }
+    COMPATCLEANUPSCOPE restoreParent([&] {
+        if (!fDisabled || !IsWindow(hwnd)) return;
+        EnableWindow(hwnd, TRUE);
+        if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
+    }, hwnd);
+    COMPATCLEANUPSCOPE destroyFolder([&] { if (IsWindow(hwndFolder)) DestroyWindow(hwndFolder); }, hwnd);
     if (!HwndFileControl(hwndFolder, "Static", "Folder &name:", 0, 12, 12, 320, 24, 0x441) ||
         !HwndFileControl(hwndFolder, "Edit", "New folder", WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 12, 40, 336, 26, ID_FILE_NAME) ||
         !HwndFileControl(hwndFolder, "Button", "&Create", WS_TABSTOP | BS_DEFPUSHBUTTON, 172, 96, 80, 28, IDOK) ||
         !HwndFileControl(hwndFolder, "Button", "Cancel", WS_TABSTOP, 268, 96, 80, 28, IDCANCEL)) {
-        DestroyWindow(hwndFolder); FileError(hwnd, "The new folder dialog could not be initialized."); return;
+        destroyFolder.Close(); FileError(hwnd, "The new folder dialog could not be initialized."); return;
     }
     SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
     SendMessageA(hwndFolder, WM_INITDIALOG, 0, (LPARAM)szName);
-    hwndFocus = GetFocus(); EnableWindow(hwnd, FALSE);
+    hwndFocus = GetFocus(); fDisabled = TRUE; EnableWindow(hwnd, FALSE);
     ShowWindow(hwndFolder, SW_SHOW); SetFocus(GetDlgItem(hwndFolder, ID_FILE_NAME));
     SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_SETSEL, 0, -1);
     while (IsWindow(hwndFolder) && !hwndFolder->fEndDialog) {
@@ -299,11 +305,10 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     }
     if (IsWindow(hwndFolder)) {
         fAccepted = hwndFolder->fEndDialog && hwndFolder->lDlgResult == IDOK;
-        DestroyWindow(hwndFolder);
     }
+    destroyFolder.Close();
     if (!IsWindow(hwnd)) return;
-    EnableWindow(hwnd, TRUE);
-    if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
+    restoreParent.Close();
     if (!fAccepted) return;
     if (!FJoinFile(szPath, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
     if (ICreateNativeDirectory(szPath, 0777) != 0) {

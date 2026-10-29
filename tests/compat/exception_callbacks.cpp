@@ -1,4 +1,4 @@
-// Throw through application callbacks; the C dispatcher must finish cleanup.
+// Throw through application callbacks; the dispatcher must finish modal cleanup.
 #include <windows.h>
 #include <stars_compat.h>
 #include "errors.h"

@@ -97,13 +97,14 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGCREATE dc = {};
     HWND hwnd;
+    COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) DeleteObject(dc.hfont); });
     dlg.cPoints = 8;
     dc.lpfn = lpfn; dc.fModal = TRUE;
-    if (!FDialogUnits(&dlg, &dc)) { if (dc.hfont) DeleteObject(dc.hfont); return NULL; }
+    if (!FDialogUnits(&dlg, &dc)) return NULL;
     hwnd = CreateWindowExA(dwExStyle, "#32770", pszTitle, dwStyle & ~WS_VISIBLE,
                          lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
                          hwndOwner, NULL, GetModuleHandleA(NULL), &dc);
-    if (dc.hfont) DeleteObject(dc.hfont);
+    deleteFont.Close();
     return hwnd;
 }
 static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
@@ -121,6 +122,9 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     WORD i;
     LPCSTR pszClass, pszTitle;
     BOOL fFocus;
+    COMPATCLEANUPSCOPE freeTemplate([&] { CompatFreeDialogTemplate(&dlg); });
+    COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) DeleteObject(dc.hfont); });
+    COMPATCLEANUPSCOPE destroyDialog([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
     if (!SDL_IsMainThread() || (hwndOwner && !IsWindow(hwndOwner))) return NULL;
     if (!hinst) hinst = GetModuleHandleA(NULL);
     hrsrc = FindResourceA(hinst, psz, RT_DIALOG);
@@ -174,11 +178,13 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!IsWindow(hwnd)) hwnd = NULL;
     goto done;
 fail:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
+    destroyDialog.Close();
     hwnd = NULL;
 done:
-    if (dc.hfont) DeleteObject(dc.hfont);
-    CompatFreeDialogTemplate(&dlg); return hwnd;
+    deleteFont.Close();
+    freeTemplate.Close();
+    destroyDialog.Release();
+    return hwnd;
 }
 HWND WINAPI CreateDialogParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
     return HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, FALSE);

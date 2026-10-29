@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "cleanup.h"
 #include "ownership.h"
 #include <limits.h>
 #include <new>
@@ -687,6 +687,22 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
                    TPM_BOTTOMALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_NOANIMATION))) return FALSE;
     track.hwndOwner = hwnd; track.hmenuRoot = hbar ? hbar : hmenu; track.hmenuBar = hbar; track.iBar = iBar; track.flags = flags; track.lpPrevious = lptrack; lptrack = &track;
     hwndCapture = GetCapture();
+    COMPATCLEANUPSCOPE restoreTrack([&] {
+        lptrack = track.lpPrevious;
+        if (hbar && LpCompatWindow(hwnd)) { hwnd->iMenuHot = -1; hwnd->fMenuDirty = TRUE; FCompatPresent(hwnd); }
+    }, hwnd);
+    COMPATCLEANUPSCOPE exitNotifications([&] {
+        if (!(flags & TPM_NONOTIFY) && IsWindow(hwnd)) {
+            SendMessageA(hwnd, WM_MENUSELECT, MAKEWPARAM(0, 0xffff), 0);
+            if (IsWindow(hwnd)) SendMessageA(hwnd, WM_EXITMENULOOP, !hbar, 0);
+        }
+    }, hwnd);
+    COMPATCLEANUPSCOPE restoreCapture([&] {
+        if (GetCapture() == hwnd) {
+            if (IsWindow(hwndCapture)) SetCapture(hwndCapture); else ReleaseCapture();
+        }
+    }, hwnd);
+    COMPATCLEANUPSCOPE closePopups([&] { ClosePopups(&track, 0); }, hwnd);
     if (!(flags & TPM_NONOTIFY)) {
         SendMessageA(hwnd, WM_ENTERMENULOOP, !hbar, 0);
         if (IsWindow(hwnd) && !track.fDone) SendMessageA(hwnd, WM_INITMENU, (WPARAM)(hbar ? hbar : hmenu), 0);
@@ -702,16 +718,10 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
             }
         }
     }
-    ClosePopups(&track, 0);
-    if (GetCapture() == hwnd) {
-        if (IsWindow(hwndCapture)) SetCapture(hwndCapture); else ReleaseCapture();
-    }
-    if (!(flags & TPM_NONOTIFY) && IsWindow(hwnd)) {
-        SendMessageA(hwnd, WM_MENUSELECT, MAKEWPARAM(0, 0xffff), 0);
-        if (IsWindow(hwnd)) SendMessageA(hwnd, WM_EXITMENULOOP, !hbar, 0);
-    }
-    lptrack = track.lpPrevious;
-    if (hbar && LpCompatWindow(hwnd)) { hwnd->iMenuHot = -1; hwnd->fMenuDirty = TRUE; FCompatPresent(hwnd); }
+    closePopups.Close();
+    restoreCapture.Close();
+    exitNotifications.Close();
+    restoreTrack.Close();
     // Popup teardown can fail after selection; that operation must not issue a command.
     if (FStarsErrorPending()) return FALSE;
     if (!track.fFailed && track.id != 0 && !(flags & (TPM_NONOTIFY | TPM_RETURNCMD)) && IsWindow(hwnd))

@@ -307,3 +307,27 @@ depth and first-error delivery, then proves normal selection still posts command
 cases, warning-free builds and 519 native regression matches / 25 accepted
 unused-storage warnings / no differences, errors or skipped inputs. Baselines
 and independent references remain unchanged. B02 remains active.
+
+
+## B02 remaining modal cleanup scopes
+
+Message boxes scope their window, icon font, disabled owners and saved focus;
+their owner list is a typed pointer array. Popup tracking scopes its popup
+windows, capture, exit notifications and restoration of the previous tracking
+frame. The new-folder dialog scopes its window and parent/focus restoration.
+Dialog factories scope templates, untransferred fonts and partial windows, with
+explicit release when a successful window is handed to its caller. Normal
+cleanup order, nested loops and retained wizard presentation remain unchanged.
+
+The existing message-box vectors now run as an ownership contract on every
+desktop, including Windows SDL's private audio/pixel/clipboard cases. Independent
+SDK cases retain their original branches. Both message boxes and the existing
+nested/unowned callback-failure harness join macOS native leaks and sanitizer
+qualification; the callback harness keeps its existing functional expectations.
+
+Results: 100/100 full macOS CTest, 43/43 ownership contracts including 21 native
+leak checks, 23/23 ASan/UBSan cases (22 ownership/callback cases plus core exception
+units), warning-free builds and 519 native regression matches / 25 accepted
+unused-storage warnings / zero differences, errors or skipped inputs. Baselines
+remain unchanged. B02 still requires failure-publication and deferred control/
+presentation lifetime work before its completion gate.

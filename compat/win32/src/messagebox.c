@@ -1,5 +1,6 @@
 /* Source-level message boxes use the same controls and modal queue as dialogs. */
-#include "internal.h"
+#include "cleanup.h"
+#include <new>
 #include <stars_compat.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,7 +172,7 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
 
 int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {};
-    HWND hwnd = NULL, hwndRoot, hwndFocus, lpwin, hwndButton;
+    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL, lpwin, hwndButton;
     HWND *rghwnd = NULL;
     size_t cDisabled = 0, iDisabled, cTop = 0;
     HDC hdc;
@@ -181,8 +182,15 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     MSG msg;
     int i, result, value = 0, cx, cy, cxButtons, xText, x, y, cyMax;
     DWORD ex;
-    BOOL fSound = TRUE;
+    BOOL fSound = TRUE, fRestoreFocus = FALSE;
     UINT allowed = 0x000f | 0x00f0 | 0x0300 | MB_TASKMODAL | MB_SYSTEMMODAL | MB_SETFOREGROUND | MB_TOPMOST | MB_RIGHT;
+    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus); }, hwndOwner);
+    std::unique_ptr<HWND[]> rghwndOwner;
+    COMPATCLEANUPSCOPE restoreOwners([&] {
+        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], TRUE);
+    }, hwndOwner);
+    COMPATCLEANUPSCOPE deleteIconFont([&] { if (box.hfontIcon) DeleteObject(box.hfontIcon); });
+    COMPATCLEANUPSCOPE destroyBox([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
     if (!SDL_IsMainThread() || !FCompatVideo()) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
     if ((type & ~allowed) || (type & 0xf) > 6 || (type & 0xf0) > MB_ICONASTERISK ||
         (type & 0x3000) == 0x3000) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
@@ -198,12 +206,12 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     if (box.cButtons == 1) box.idCancel = IDOK;
     box.iDefault = (type >> 8) & 3;
     if (box.iDefault >= box.cButtons) box.iDefault = 0;
-    hwndFocus = GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
+    hwndFocus = GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL; fRestoreFocus = TRUE;
     if (!hwndRoot && (type & MB_TASKMODAL)) {
         for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT)) cTop++;
     } else if (hwndRoot) cTop = 1;
     if (cTop) {
-        rghwnd = (HWND *)(SDL_calloc(cTop, sizeof(*rghwnd)));
+        rghwndOwner.reset(new (std::nothrow) HWND[cTop]{}); rghwnd = rghwndOwner.get();
         if (!rghwnd) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         if (hwndRoot) { if (IsWindowEnabled(hwndRoot)) rghwnd[cDisabled++] = hwndRoot; }
         else for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT))
@@ -278,10 +286,10 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     if (IsWindow(hwnd) && hwnd->fEndDialog) value = (int)hwnd->lDlgResult;
     if (value == 0) SetLastError(ERROR_CANCELLED);
 done:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
-    if (box.hfontIcon) DeleteObject(box.hfontIcon);
-    for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], TRUE);
-    SDL_free(rghwnd);
-    if (IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+    destroyBox.Close();
+    deleteIconFont.Close();
+    restoreOwners.Close();
+    rghwndOwner.reset(); rghwnd = NULL;
+    restoreFocus.Close();
     return value;
 }
