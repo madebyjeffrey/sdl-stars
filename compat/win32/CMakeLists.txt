@@ -72,6 +72,7 @@ set_source_files_properties(src/rect.c src/time.c src/system.c src/services.c
     src/memory.c src/file.c src/profile.c src/document.c src/audio.c
     PROPERTIES LANGUAGE CXX)
 
+set_source_files_properties(src/paint.c src/dib.c src/image.c src/font.c src/print.c src/resource.c PROPERTIES LANGUAGE CXX)
 
 # Only adapted implementations are built, never the upstream reference copy.
 add_library(stars_win32 STATIC src/callback.cpp src/toolbar.c src/inspect.c src/session.c src/help.c src/document.c src/print.c src/filedialog.c src/audio.c src/messagebox.c src/combo.c src/dialog.c src/dialog_template.c src/image.c src/accelerator.c src/menu.c src/rect.c src/time.c src/window.c src/message.c src/input.c src/control.c src/edit.c src/list.c src/paint.c src/dib.c src/resource.c src/memory.c src/timer.c src/services.c src/system.c src/scroll.c src/profile.c src/file.c src/font.c "${STARS_BITMAP_GENERATED}/font_resources.c" "${STARS_BITMAP_GENERATED}/bitmap_resources.c" "${STARS_BITMAP_GENERATED}/ui_resources.c" "${STARS_BITMAP_GENERATED}/image_resources.c")

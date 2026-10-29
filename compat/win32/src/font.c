@@ -42,7 +42,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
     lp->y = lpfont->tm.tmAscent - face->glyph->bitmap_top;
     lp->dx = (int)((face->glyph->advance.x + 32) >> 6);
     if (lp->cx && lp->cy) {
-        lp->rgb = malloc((size_t)lp->cx * lp->cy);
+        lp->rgb = (BYTE *)(malloc((size_t)lp->cx * lp->cy));
         if (!lp->rgb) return NULL;
         for (y = 0; y < lp->cy; y++) {
             rgbRow = lpbm->buffer + (lpbm->pitch >= 0 ? y : lp->cy - 1 - y) * abs(lpbm->pitch);
@@ -118,7 +118,7 @@ static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
         for (lpp = &lpfont->lpGlyphUtf8; (*lpp)->lpNext; lpp = &(*lpp)->lpNext) {}
         free((*lpp)->rgb); free(*lpp); *lpp = NULL; lpfont->cGlyphUtf8--;
     }
-    lp = calloc(1, sizeof(*lp));
+    lp = (COMPATGLYPH *)(calloc(1, sizeof(*lp)));
     if (!lp) return NULL;
     face = FT_Get_Char_Index(lpfont->face, ch) ? NULL : FaceFallback(lpfont, ch);
     if (!LpLoadGlyph(lpfont, face ? face : lpfont->face, ch, lp)) {
@@ -161,7 +161,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
         !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
     if (!library && FT_Init_FreeType(&library)) return NULL;
-    lpfont = calloc(1, sizeof(*lpfont));
+    lpfont = (COMPATFONT *)(calloc(1, sizeof(*lpfont)));
     if (!lpfont) return NULL;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);

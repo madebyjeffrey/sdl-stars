@@ -7,7 +7,7 @@ BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cb
     BITMAPINFOHEADER bi;
     DWORD cbHeader;
     size_t i;
-    const BYTE *rgb = lpInfo;
+    const BYTE *rgb = (const BYTE *)(lpInfo);
 
     if (!rgb || !lpdib || cbInfo < sizeof(cbHeader))
         return FALSE;
@@ -41,7 +41,7 @@ BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cb
         return SDL_SetError("Truncated DIB color table or pixel buffer");
     for (i = 0; i < (size_t)lpdib->cColors; i++)
         lpdib->rgcr[i] = RGB(rgb[sizeof(bi) + i * 4 + 2], rgb[sizeof(bi) + i * 4 + 1], rgb[sizeof(bi) + i * 4]);
-    lpdib->lpBits = lpBits;
+    lpdib->lpBits = (const BYTE *)(lpBits);
     return TRUE;
 }
 

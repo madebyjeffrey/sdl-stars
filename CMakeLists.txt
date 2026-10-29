@@ -71,6 +71,7 @@ set_source_files_properties(compat/win32/src/rect.c compat/win32/src/time.c
     compat/win32/src/file.c compat/win32/src/profile.c compat/win32/src/document.c
     compat/win32/src/audio.c PROPERTIES LANGUAGE CXX)
 
+set_source_files_properties(compat/win32/src/paint.c compat/win32/src/dib.c compat/win32/src/image.c compat/win32/src/font.c compat/win32/src/print.c compat/win32/src/resource.c PROPERTIES LANGUAGE CXX)
 
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)
