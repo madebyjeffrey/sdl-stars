@@ -34,7 +34,7 @@ endif()
 
 # The client and compile check share the existing Windows UI sources.
 add_library(stars-ui-compat-check OBJECT EXCLUDE_FROM_ALL ${STARS_UI_SOURCES}
-    "${STARS_GENERATED_DIR}/text_tutorial.c")
+    "${STARS_GENERATED_DIR}/text_tutorial.cpp")
 target_link_libraries(stars-ui-compat-check PRIVATE stars_options stars_win32_headers SDL3::SDL3 ZLIB::ZLIB)
 target_compile_options(stars-ui-compat-check PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration> $<$<COMPILE_LANGUAGE:C>:-Werror=incompatible-pointer-types>)

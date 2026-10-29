@@ -186,7 +186,7 @@ endif()
 set(Python3_EXECUTABLE "${STARS_PYTHON_VENV_EXECUTABLE}")
 set(STARS_TEXT_SOURCES text/strings.txt text/messages.txt text/tutorial.txt text/planets.txt)
 list(TRANSFORM STARS_TEXT_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
-set(STARS_TEXT_OUTPUTS textids.h text_strings.c text_messages.c text_planets.c text_tutorial.c)
+set(STARS_TEXT_OUTPUTS textids.h text_strings.cpp text_messages.cpp text_planets.cpp text_tutorial.cpp)
 list(TRANSFORM STARS_TEXT_OUTPUTS PREPEND "${STARS_GENERATED_DIR}/")
 add_custom_command(
     OUTPUT ${STARS_TEXT_OUTPUTS}
@@ -198,10 +198,10 @@ add_custom_command(
 add_custom_target(stars_text DEPENDS ${STARS_TEXT_OUTPUTS})
 
 # The data tables: data/datagen.py builds dataids.h (the hull, part,
-# starting design and AI recipe enums) and data_tables.c (the parts, races,
+# starting design and AI recipe enums) and data_tables.cpp (the parts, races,
 # default battle plans and AI recipes) from data/**/*.yaml.
 file(GLOB_RECURSE STARS_DATA_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/data/*.yaml")
-set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.c")
+set(STARS_DATA_OUTPUTS "${STARS_GENERATED_DIR}/dataids.h" "${STARS_GENERATED_DIR}/data_tables.cpp")
 add_custom_command(
     OUTPUT ${STARS_DATA_OUTPUTS}
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/data/datagen.py" "${STARS_GENERATED_DIR}"
@@ -214,10 +214,10 @@ add_custom_target(stars_data DEPENDS ${STARS_DATA_OUTPUTS})
 # Everything that includes enums.h needs textids.h and dataids.h first.
 add_dependencies(stars_options stars_text stars_data)
 target_sources(stars_core PRIVATE
-    "${STARS_GENERATED_DIR}/text_strings.c"
-    "${STARS_GENERATED_DIR}/text_messages.c"
-    "${STARS_GENERATED_DIR}/text_planets.c"
-    "${STARS_GENERATED_DIR}/data_tables.c"
+    "${STARS_GENERATED_DIR}/text_strings.cpp"
+    "${STARS_GENERATED_DIR}/text_messages.cpp"
+    "${STARS_GENERATED_DIR}/text_planets.cpp"
+    "${STARS_GENERATED_DIR}/data_tables.cpp"
 )
 
 # The game's headers are found for #include "..." only (-iquote): strings.h
@@ -282,6 +282,12 @@ if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     set_tests_properties(test_fileio_contract PROPERTIES TIMEOUT 30)
 endif()
 if(STARS_BUILD_TESTS)
+    add_executable(stars-catalog-dump tests/compat/catalog_dump.cpp)
+    target_link_libraries(stars-catalog-dump PRIVATE stars_options)
+    target_include_directories(stars-catalog-dump PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/include")
+    add_test(NAME test_catalog_bytes COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compat/check_catalog.py" "$<TARGET_FILE:stars-catalog-dump>")
+    set_tests_properties(test_catalog_bytes PROPERTIES LABELS build TIMEOUT 30)
     add_executable(stars-layout-c tests/compat/record_layout.c)
     add_executable(stars-layout-cxx tests/compat/record_layout.cpp)
     target_link_libraries(stars-layout-c PRIVATE stars_options)
