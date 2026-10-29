@@ -21,30 +21,31 @@ is committed. Metadata is published by replacing a flushed temporary file throug
 `ReplaceNativeFile`; Windows uses `MoveFileExW` so failed replacement preserves
 previous metadata. The command-line host never resolves or requires this library.
 
-The reconstructed sources build as a native Win32/Win64 executable with
-MinGW, and the game code alone builds as `stars-host` with a C++17 compiler
-(see Platforms below). This document covers what the port changes and what
-it must keep.
+The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
+The shared game also builds as `stars-host`, independently of SDL. Owned production
+and ordinary test translation units compile as GNU C++20 under their original
+source filenames; AppKit glue compiles as Objective-C++20. Independent C storage
+fixtures, real SDK contract tests and third-party libraries remain separate.
 
-Host and SDL builds also compile `src/platform/filesystem.cpp` as C++17, exposing only
-the C declarations in `filesystem.h`. The profile and picker test fixtures use
-this bridge for temporary directories, directory creation, canonical paths and
-non-recursive removal. Inputs and outputs are strict UTF-8; Windows path
-conversion uses `std::filesystem::u8path`/`generic_u8string`, and exceptions never cross
-the C ABI. Output buffers are caller-owned, must not overlap input paths, and
-remain empty on failure. Returned paths use forward slashes, matching the SDL
-wrapper's canonical path contract. Temporary directories are claimed with atomic directory
-creation rather than a temporary-file-name/delete sequence. The game, desktop UI and host compile as GNU C++17 under their original `.c`
-filenames. Generated tables, the SDL wrapper and C harnesses retain C11 and a
-C ABI. Host-only builds now require a C++17 compiler, but remain independent
-of SDL. CMake preserves signed `char`, binary64 arithmetic boundaries and
-contraction/fast-math settings for both languages.
+Application headers expose native C++ declarations. The platform file and
+filesystem interfaces retain their buffer/handle shapes and error contracts.
+Inputs and outputs are strict UTF-8; `path_utf8.h` copies application bytes into
+C++20 UTF-8 code units and copies returned code units back to char storage.
+File-service exceptions are contained to preserve the existing failure receipts.
+Output buffers are caller-owned, must not overlap input paths, and remain empty
+on failure. Canonical paths use forward slashes. Temporary directories are
+claimed atomically. Native adapters still supply exclusive creation, sharing,
+exact private modes, durable writes and live-handle identity/truncation.
+CMake preserves signed `char`, binary64 operation boundaries and contraction/
+fast-math settings. GNU storage extensions remain until milestone B.
 
-The stored enum types now use explicit C++ underlying types (`uint16_t`,
-`int16_t` or `uint32_t`) with their original constant and type names. C11
-consumers retain named enum tags and the original integer typedefs through
-conditional declarations. The text and YAML generators emit the same boundary;
-`STARS_CONSTANTS` is removed. Integer fields, indexes, masked identifiers and
+Stored enums have explicit C++ underlying types (`uint16_t`, `int16_t` or
+`uint32_t`) with their original constant and type names. Text/data generators
+emit native C++ declarations and `constinit` catalogs. Historical integer/wire
+inputs are frozen in `tests/reference/cpp-a`; 145 enum storage contracts and
+259 layout/prefix measurements remain checked independently. The application
+has no parallel C declaration branch. `STARS_CONSTANTS` is removed.
+Integer fields, indexes, masked identifiers and
 arithmetic cross into enum types through explicit casts. Partial switches retain
 explicit no-op defaults; splitter masks switch on their underlying integer.
 `test_enum_abi` requires real C++ enums with the captured underlying type and
@@ -115,7 +116,7 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   directory enumeration and publication. C-compatible opaque streams contain
   exceptions and expose errors through return values and `errno`. Small owned
   tokens retain the game's `int16_t` handle storage.
-  C++17 cannot express exclusive creation, exact private modes, sharing,
+  C++20 cannot express exclusive creation, exact private modes, sharing,
   descriptor identity, fsync or live-handle truncation; narrow native adapters
   preserve those contracts inside the service. Windows converts UTF-8 paths
   through `u8path` to UTF-16. POSIX retains its existing lack of share modes.

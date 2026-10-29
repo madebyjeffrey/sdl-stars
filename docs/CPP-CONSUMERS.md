@@ -20,13 +20,19 @@ Original source filenames are retained; CMake source languages determine compila
 | SDK reference tests, frozen wire/enum C inputs, isolated CMake redirect fixture | Independent reference | C11; cannot require application headers to expose a C interface |
 | `compat/win32/upstream/`, archived Win32 tutorial observer | Historical reference | Outside production compilation |
 
-## Temporary linkage ledger
+## Final linkage ledger
 
-Until A13, `common.h`, `win.h`, fixed enum generators, platform file/error
-headers and wrapper public headers retain existing C declarations. Private wrapper
-helpers acquire explicit temporary mixed linkage when a group has both C and C++
-callers. These declarations must be removed together at A13. SDK types remain
-isolated from identically named wrapper types in the Windows picker bridge.
+Application-owned headers and implementation functions now have native C++
+linkage. The temporary C declarations are removed. The only explicit C linkage
+in ordinary tests is for named SDL symbol providers, whose foreign ABI remains
+owned by SDL. SDK types remain isolated in the Windows picker implementation;
+AppKit glue uses Objective-C++ and borrowed native object references.
+
+`test_cpp_compilation_manifest` audits the actual compiler commands, C++20
+language flags and remaining C reference exceptions. `stars-cpp-header-checks`
+compiles every public header independently with standard headers before/after it.
+Frozen C layout inputs live in `tests/reference/cpp-a`; SDK test wrappers remain
+C translation units even when their portable bodies also serve C++ tests.
 
 C++ compilation preserves current allocation and error contracts. The callback
 containment and pending-failure delivery protocol remains in place, including

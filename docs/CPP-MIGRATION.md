@@ -1,6 +1,6 @@
 # Native C++ application migration
 
-Status: milestone A implementation in progress as one PR; milestone B remains proposed.
+Status: milestone A implemented in one PR; qualification in progress. Milestone B remains proposed.
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
 Prerequisites: merged PRs [#57](https://github.com/madebyjeffrey/sdl-stars/pull/57),
@@ -33,10 +33,9 @@ Two independently useful milestones make completion observable:
   code builds as ISO C++20 with extensions disabled. Legacy state is owned by one
   application/session context, with deterministic initialization and shutdown.
 
-C++20 is the proposed target: it provides standard member designated initializers,
+C++20 is the adopted baseline: it provides standard member designated initializers,
 `std::span`, and object-lifetime facilities. C array designators still need a
-new generator representation. A01 must verify the actual supported toolchains
-and standard library features before changing the language policy.
+new generator representation. A01 probes the actual toolchains and required library features at configure time.
 
 External libraries can continue to be implemented in C. Their supplied headers
 may contain C linkage declarations. Narrow foreign entry/callback thunks may need
@@ -90,7 +89,8 @@ unmerged dependent PR targets its predecessor. Merge in the listed order,
 retargeting/rebasing each dependent PR onto `develop` after its predecessor lands.
 A squash merge requires particular care to avoid replaying previous changes.
 
-The IDs below describe proposed PR slots, not already-created GitHub PRs.
+The A IDs below are checkpoints in the single implementation PR requested by the user.
+The B IDs describe proposed future PR slots.
 Each PR contains a working implementation, evidence, risks and rollback notes;
 there are no empty placeholder PRs. A row listing several record families is a
 repeatable slot: create a separate PR for each family when it cannot be reviewed
@@ -109,7 +109,7 @@ PRs here as implementation proceeds.
 
 ## Milestone A: remove application-owned C interfaces
 
-A01–A13 are implementation checkpoints in one PR, as requested on 2026-10-28.
+A01–A13 are implemented as checkpoints in one PR, as requested on 2026-10-28.
 Focused commits separate compiler policy, generators, consumers, wrapper groups
 and final declaration cleanup. Milestone B remains outside this PR.
 
@@ -128,6 +128,17 @@ and final declaration cleanup. Milestone B remains outside this PR.
 | **A11 — C++ wrapper assets and native adapters** | Convert resource-generator outputs and the application entry adapter. Convert paired Windows/portal bridge callers and implementations to C++; compile AppKit glue as Objective-C++. | Preserve resource IDs/bytes, command-line handling, cancellation, native chooser pumping and SDK/wrapper type isolation. Foreign callback/entry thunks contain all exceptions. SDK reference fixtures remain independent. |
 | **A12 — C++ header hygiene** | Make public headers self-contained; remove owned `min`/`max` macros and C spelling shims, using explicit typed operations and native C++ spellings. | Compile standard C++ headers both before and after each application-facing header. Preserve operand conversions and evaluation counts, including side-effecting calls; do not blindly replace a reevaluating macro with a once-evaluated function. |
 | **A13 — native C++ declarations** | Remove broad C linkage and C fallback branches from core/UI/platform/wrapper headers, generated enum declarations and ordinary test declarations. Remove temporary mixed-language declarations and the application entry's C-linkage dependency. | The A exit gate below passes. All owned production translation units are C++/Objective-C++; every remaining C source/linkage entry has a real foreign or independent-reference purpose. |
+
+### Implementation evidence
+
+Ticket #63 tracks the single PR. All A01–A13 code changes are implemented.
+Local qualification includes C++20 SDL Debug/Release and SDL-free host builds,
+85 independently compiled public headers in both standard-library include orders,
+56 generated catalog arrays (112,780 bytes) matched to pre-conversion hashes,
+unchanged wrapper resource bytes/descriptors, all 27 C++ source witnesses,
+145 enum storage contracts and 259 frozen C/current C++ layout/prefix checks.
+Full regression and supported-platform CI results are recorded in the PR.
+The available tutorial checkpoints remain partial coverage of the 80-page tutorial.
 
 ### Witness migration ledger
 
