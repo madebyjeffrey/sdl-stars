@@ -67,7 +67,7 @@ int main() {
         std::uint16_t w = 777;
         CHECK(!input.FReadU16Le(w) && w == 777 && input.CbRead() == 0);
         CHECK(!input.FReadBytes(rgb) && rgb == expected && input.CbRead() == 0);
-        NATIVEBYTEWRITER output(std::span(rgb).first(1));
+        NATIVEBYTEWRITER output{std::span(rgb).first(1)};
         CHECK(!output.FWriteU16Le(0) && rgb == expected && output.CbWritten() == 0);
         CHECK(!output.FWriteBytes(std::as_bytes(std::span(rgb))) && rgb == expected && output.CbWritten() == 0);
         CHECK(output.FWriteU8(0xff) && rgb[0] == std::byte{0xff});
