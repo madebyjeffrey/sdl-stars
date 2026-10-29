@@ -68,7 +68,51 @@ static void TestNestedRecoveryRestoresParent(void) {
     TEST_CHECK(!FStarsRecoveryActive());
 }
 
+struct PENDINGCLEANUP {
+    ~PENDINGCLEANUP() noexcept {
+        try { StarsThrowError(starsErrorMemory, 418); }
+        catch (...) { StarsCapturePendingError(); }
+    }
+};
+
+static void TestCleanupKeepsInFlightFailure(void) {
+    bool fCaught = false;
+    TEST_ASSERT(!FStarsErrorPending());
+    try {
+        PENDINGCLEANUP cleanup;
+        StarsThrowError(starsErrorFile, 417);
+    } catch (const StarsError &error) {
+        fCaught = error.mdError == starsErrorFile && error.ids == 417;
+    }
+    TEST_CHECK(fCaught && !FStarsErrorPending());
+    // Drain a failing implementation so one assertion cannot poison later cases.
+    try { StarsRethrowPendingError(); } catch (...) {}
+}
+
+static void TestCleanupDeliversWithoutPrimary(void) {
+    bool fCaught = false;
+    TEST_ASSERT(!FStarsErrorPending());
+    { PENDINGCLEANUP cleanup; }
+    TEST_CHECK(FStarsErrorPending());
+    try { StarsRethrowPendingError(); }
+    catch (const StarsError &error) { fCaught = error.mdError == starsErrorMemory && error.ids == 418; }
+    TEST_CHECK(fCaught && !FStarsErrorPending());
+}
+
+static void TestPendingKeepsFirst(void) {
+    bool fCaught = false;
+    TEST_ASSERT(!FStarsErrorPending());
+    try { StarsThrowError(starsErrorFile, 417); } catch (...) { StarsCapturePendingError(); }
+    { PENDINGCLEANUP cleanup; }
+    try { StarsRethrowPendingError(); }
+    catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+    TEST_CHECK(fCaught && !FStarsErrorPending());
+}
+
 TEST_LIST = {{"file failure restores scope and flags", TestFileFailureUnwinds},
              {"short read closes the owned stream", TestShortReadClosesStream},
              {"nested recovery retains its parent", TestNestedRecoveryRestoresParent},
+             {"cleanup retains an in-flight failure", TestCleanupKeepsInFlightFailure},
+             {"standalone cleanup failures remain deliverable", TestCleanupDeliversWithoutPrimary},
+             {"pending delivery keeps the first failure", TestPendingKeepsFirst},
              {NULL, NULL}};

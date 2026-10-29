@@ -58,6 +58,17 @@ int main(int argc, char **argv) {
     try { StarsRethrowPendingError(); }
     catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
     CHECK(fCaught && !FStarsErrorPending());
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Unwinding", WS_OVERLAPPEDWINDOW, 0, 0, 120, 80, NULL, NULL, NULL, NULL);
+    CHECK(hwnd);
+    fCaught = false;
+    try {
+        struct WINDOWCLEANUP {
+            HWND hwnd;
+            ~WINDOWCLEANUP() noexcept { DestroyWindow(hwnd); }
+        } cleanup{hwnd};
+        StarsThrowError(starsErrorFile, 417);
+    } catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+    CHECK(fCaught && !IsWindow(hwnd) && !FStarsErrorPending() && CCompatDispatch() == 0);
     fCleanupFailure = false;
     StarsCompatShutdown();
     CHECK(!FStarsErrorPending() && CCompatDispatch() == 0);

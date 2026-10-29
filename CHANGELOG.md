@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `StarsCapturePendingError` keeps a C++ exception already unwinding as the
+  primary failure. A callback failing during cleanup previously left a secondary
+  error pending after the primary had been caught. Standalone cleanup failures
+  and the first already-pending error remain deliverable.
+
 - `_lread` and the other wrapper registry operations release their locks during
   C++ exception unwinding. Manual release could leave the file registry locked
   and deadlock a retry. Fault injection reproduces the old hang; the scoped-lock

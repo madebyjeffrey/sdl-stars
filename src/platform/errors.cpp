@@ -12,7 +12,9 @@ StarsRecoveryScope::~StarsRecoveryScope() noexcept { --cRecovery; }
 
 void StarsThrowError(StarsErrorKind mdError, uint16_t ids) { throw StarsError{mdError, ids}; }
 void StarsCapturePendingError() noexcept {
-    if (!errorPending) errorPending = std::current_exception();
+    // An in-flight C++ exception is already the primary failure. A callback
+    // caught from its cleanup must not leave a secondary error for later delivery.
+    if (!errorPending && std::uncaught_exceptions() == 0) errorPending = std::current_exception();
 }
 void StarsRethrowPendingError() {
     if (errorPending) std::rethrow_exception(std::exchange(errorPending, nullptr));

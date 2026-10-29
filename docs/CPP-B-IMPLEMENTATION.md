@@ -239,3 +239,26 @@ Windows Unicode workflows, native/host regressions, host units, source witnesses
 Linux ASan/UBSan/LSan and tutorial checks. B01 is complete. B02 remains active:
 modal scopes, deferred control lifetimes and in-flight failure handling remain
 required before its completion gate.
+
+
+## B02 in-flight failure preservation
+
+A separate reproduction showed `StarsCapturePendingError` leaving secondary error
+418 pending after primary error 417 had unwound and been caught. The service now
+recognizes an exception already unwinding as the primary failure. It still
+captures a standalone cleanup failure and retains the first previously pending
+error. This policy also applies to native chooser callback boundaries, which
+use the same service.
+
+Three core unit cases cover these distinct states. The real-window harness also
+throws a primary error while its scope destroys a window whose destruction
+callback fails; destruction finishes, dispatch depth returns to zero and no
+secondary pending error survives. The identical standalone reproduction now
+passes both in-flight and standalone-cleanup assertions.
+
+Verification: 95/95 full macOS desktop CTest (18 native leak checks), 22/22
+SDL-free host CTest, 20/20 ASan/UBSan cases (19 ownership contracts plus the
+exception unit executable), warning-free builds, and both complete desktop/host
+regressions at 519 matches / 25 accepted unused-storage warnings / zero
+differences, errors or skipped inputs. No baseline or independent reference
+changed. B02's modal and deferred control lifetime work remains active.

@@ -8,6 +8,9 @@ and its builds count toward 2.9.1.
 B02 now scopes file/memory registry locks with the existing acquire/release spin
 policy. A native-operation fault test reproduces the previous retry deadlock;
 scoped unlocking, nested dispatch and primary-failure cleanup tests pass.
+The pending-error service also preserves an exception already unwinding rather
+than storing a later callback failure from its cleanup. Core and real-window
+fault cases distinguish this from standalone cleanup failure delivery.
 Modal and reentrant control lifetime guards remain in progress.
 
 ## C++ migration
