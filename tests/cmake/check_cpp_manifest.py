@@ -41,4 +41,6 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
         text = path.read_text(encoding="utf-8")
         assert not re.search(r'extern\s+"C"|__cplusplus', text), f"Owned C interface remains: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
+        assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
+        assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"
 print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}")

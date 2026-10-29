@@ -556,9 +556,9 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
     size_t cbKeep;
     int16_t fShortened;
 
-    if (CchCp1252ToUtf8(szName, sizeof(szName), (const unsigned char *)pplr->szName, strlen(pplr->szName)) < 0) return FALSE;
+    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return FALSE;
     if (fPlural) {
-        if (CchCp1252ToUtf8(szNames, sizeof(szNames), (const unsigned char *)pplr->szNames, strlen(pplr->szNames)) < 0) return FALSE;
+        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return FALSE;
     } else {
         cbName = strlen(szName);
         if (cbName + 1 >= sizeof(szNames)) return FALSE;

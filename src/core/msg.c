@@ -262,20 +262,21 @@ char *PszGetMessageN(int16_t iMsg) {
 // Formatting may expand bounded names or paths beyond the message buffer.
 static char *PchAppendMessageText(char *pch, const char *psz) {
     size_t cch;
+    std::string_view szText(psz);
 
-    cch = CchUtf8Prefix(psz, (size_t)(szMsgBuf + sizeof(szMsgBuf) - 1 - pch));
+    cch = CchUtf8Prefix(szText, (size_t)(szMsgBuf + sizeof(szMsgBuf) - 1 - pch));
     memmove(pch, psz, cch);
     pch[cch] = 0;
     return pch + cch;
 }
 
-char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
+char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
     int16_t  iMineral;
     int16_t  cOut;
     int16_t  c;
     int16_t  i;
     int16_t *pParams;
-    char    *pchT;
+    const char *pchT;
     char     szBuf[480];
     uint16_t w;
     char    *pch;

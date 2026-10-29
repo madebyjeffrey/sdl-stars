@@ -89,7 +89,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
-int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
+int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
     return IDOK;
 }

@@ -50,7 +50,7 @@ INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     return 0;
 }
 
-void CtrTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen) {
+void CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen) {
     int16_t dx;
 
     if (cLen == 0) {
@@ -61,7 +61,7 @@ void CtrTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen) {
     return;
 }
 
-int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, char *psz, int16_t cLen, int16_t fPrint) {
+int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_t cLen, int16_t fPrint) {
     int16_t dx;
 
     if (cLen == 0) {
@@ -75,14 +75,14 @@ int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, char *psz, int16_t cLen
     return dx;
 }
 
-void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint) {
+void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, const char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint) {
     int16_t dxRemain;
-    char   *pchEnd;
+    const char   *pchEnd;
     int16_t fItFit;
     int16_t xRight;
     int16_t dx;
-    char   *pchStart;
-    char   *pch;
+    const char   *pchStart;
+    const char   *pch;
 
     xRight = xLeft + dxWidth;
     dxRemain = dxWidth - (*px - xLeft);
@@ -136,14 +136,14 @@ Done:
     return;
 }
 
-void AddBackTrailingSpaces(char **ppch, char *pchEnd) {
+void AddBackTrailingSpaces(const char **ppch, const char *pchEnd) {
     while (*ppch < pchEnd && **ppch == ' ') {
         (*ppch)++;
     }
     return;
 }
 
-void ChopLastWord(char *pBeg, char **ppEnd) {
+void ChopLastWord(const char *pBeg, const char **ppEnd) {
     while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
         (*ppEnd)--;
     }
@@ -156,14 +156,14 @@ void ChopLastWord(char *pBeg, char **ppEnd) {
     return;
 }
 
-void ChopTrailingSpaces(char *pBeg, char **ppEnd) {
+void ChopTrailingSpaces(const char *pBeg, const char **ppEnd) {
     while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
         (*ppEnd)--;
     }
     return;
 }
 
-void RcCtrTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
+void RcCtrTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
     int16_t y;
     int16_t x;
     int32_t l;
@@ -183,11 +183,19 @@ void RcCtrTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
 }
 
 void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_t dxErase) {
+    if (cLen == -1) cLen = CchGetString(idsNone2, psz);
+    RightTextOut(hdc, x, y, static_cast<const char *>(psz), cLen, dxErase);
+}
+
+void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, int16_t dxErase) {
     int16_t dx;
     RECT    rc;
 
     if (cLen == -1) {
-        cLen = CchGetString(idsNone2, psz);
+        char szNone[sizeof(szLastStrGet)];
+        cLen = CchGetString(idsNone2, szNone);
+        RightTextOut(hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
+        return;
     } else if (cLen == 0) {
         cLen = lstrlen(psz);
     }
@@ -204,7 +212,7 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_
     return;
 }
 
-void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
+void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
     double   angle;
     HFONT    hfont;
     int16_t  dxFlat;
@@ -413,7 +421,7 @@ void _Draw3dFrame(HDC hdc, RECT *prc, int16_t fErase) {
     return;
 }
 
-void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, char *szText) {
+void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, const char *szText) {
     pbtnt->hwnd = hwnd;
     pbtnt->fCreatedDC = hdc == NULL;
     if (!hdc) {
@@ -472,7 +480,7 @@ int16_t FTrackBtn(BTNT *pbtnt) {
     return FALSE;
 }
 
-void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText) {
+void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) {
     int32_t  dxFace;
     int16_t  ipt;
     int16_t  dyOffset;
@@ -1291,7 +1299,7 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
 
 // IdAlertBox shows an AlertSz message in a message box and returns the
 // button the player chose.
-int16_t IdAlertBox(char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz, "Stars!", mbType); }
+int16_t IdAlertBox(const char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz, "Stars!", mbType); }
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.

@@ -14,7 +14,7 @@ void DrawShipOrders(HDC hdc, TILE *ptile, OBJ obj) {
     int16_t xRight;
     int16_t iScanActual;
     RECT    rcGauge;
-    char   *psz;
+    const char *psz;
     int16_t xLeft;
     ORDER   ord;
     int32_t l;
@@ -79,7 +79,7 @@ void DrawShipOrders(HDC hdc, TILE *ptile, OBJ obj) {
             psz = PszGetLocName(static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
             iScanActual = sel.iwpAct;
         } else if (sel.fl.cord <= 1) {
-            psz = (char *)"";
+            psz = "";
         } else {
             ord = sel.fl.lpplord->rgord[1];
             psz = PszGetLocName(static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
@@ -183,7 +183,7 @@ void DrawShipWayPtOrders(HDC hdc, TILE *ptile, OBJ obj) {
     char     szT[8];
     int16_t  yBot;
     int16_t  dxRight2;
-    char    *psz;
+    const char    *psz;
     int16_t  cch;
     int16_t  xLeft;
     int32_t  l;
@@ -461,7 +461,7 @@ void DrawShipWayPtOrders(HDC hdc, TILE *ptile, OBJ obj) {
                         c = wsprintf(szWork, PCTLD, rgl[i]);
                         DxStreamTextOut(hdc, &dxRight, yTopMsg, szWork, c, TRUE);
                         SetTextColor(hdc, crButtonText);
-                        DxStreamTextOut(hdc, &dxRight, yTopMsg, (char *)"kT  ", 4, TRUE);
+                        DxStreamTextOut(hdc, &dxRight, yTopMsg, "kT  ", 4, TRUE);
                     }
                     goto DoneMine;
                 }
@@ -2014,7 +2014,7 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
     int16_t    cMax;
     char       sz255[2];
     int16_t    i;
-    char      *rgszZip[11];
+    const char *rgszZip[11];
     ZIPORDER   rgzo[4];
     FARPROC    lpProc;
     int16_t    fRet;

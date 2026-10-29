@@ -40,7 +40,7 @@ namespace fs = std::filesystem;
 
 static bool FPath(const char *psz) {
     if (!psz) { errno = EINVAL; return false; }
-    if (!FUtf8Valid(psz, std::strlen(psz))) { errno = EILSEQ; return false; }
+    if (!FUtf8Valid(std::string_view(psz))) { errno = EILSEQ; return false; }
     return true;
 }
 static void SetError(const std::error_code &ec) {

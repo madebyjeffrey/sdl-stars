@@ -70,7 +70,7 @@ int32_t  WtFromLpfl(FLEET *lpfl);
 int16_t  FCanBuildShdef(SHDEF *lpshdef, int16_t iplr);
 int16_t  IshFindSimilarDesign(HUL *lphul, int16_t iPlrDst);
 void     ClearFile(int16_t dt);
-void     OutputSz(int16_t dt, char *sz);
+void     OutputSz(int16_t dt, const char *sz);
 void     TurnLog(StringId ids);
 int16_t  PtToScan(int16_t d);
 int16_t  ScanToPt(int16_t d);

@@ -333,7 +333,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         fErrSav = fFileErrSilent;
         fFileErrSilent = TRUE;
         gd.fDontDoLogFiles = TRUE;
-        if (!FLoadGame(szBase, (char *)"m1")) {
+        if (!FLoadGame(szBase, "m1")) {
             fFileErrSilent = fErrSav;
             gd.fDontDoLogFiles = FALSE;
             return 0;
@@ -1117,9 +1117,9 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, (char *)"2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, "|", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, "+", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, "2", 1);
                             if (hfontPrint) {
                                 SelectObject(pd.hDC, hfontPrint);
                             }
@@ -2951,7 +2951,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 SetBkMode(hdc, TRANSPARENT);
                 rcT = rcWnd;
                 rcT.bottom = (int16_t)(3 * rcT.bottom) / 4;
-                RcCtrTextOut(hdc, &rcT, (char *)"Stars!", 6);
+                RcCtrTextOut(hdc, &rcT, "Stars!", 6);
                 SelectObject(hdc, hfontSav);
                 DeleteObject(hfont);
             }

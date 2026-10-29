@@ -2494,7 +2494,7 @@ void ClearFile(int16_t dt) {
     return;
 }
 
-void OutputSz(int16_t dt, char *sz) {
+void OutputSz(int16_t dt, const char *sz) {
     char szTime[100];
     char szFile[256];
     char szDate[100];

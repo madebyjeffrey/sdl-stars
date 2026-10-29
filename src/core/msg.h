@@ -21,7 +21,7 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
 int16_t IdmGetMessageN(int16_t iMsg);
 int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb);
 char   *PszGetMessageN(int16_t iMsg);
-char   *PszFormatString(char *pszFormat, int16_t *pParamsReal);
+char   *PszFormatString(const char *pszFormat, int16_t *pParamsReal);
 char   *PszFormatMessage(MessageId idm, int16_t *pParams);
 char   *PszFormatIds(StringId ids, int16_t *pParams);
 int16_t FRemovePlayerMessage(int16_t iPlr, MessageId iMsg, MsgGoto iObj);

@@ -700,7 +700,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 c = wsprintf(szWork, PCTD, i * dNum);
                 CtrTextOut(hdc, xBeg, dy, szWork, c);
             }
-            RightTextOut(hdc, xL - 4, dy, (char *)"kT", 2, 0);
+            RightTextOut(hdc, xL - 4, dy, "kT", 2, 0);
             if (pl.iPlayer == idPlayer) {
                 EstMineralsMined(&pl, rgl, -1, FALSE);
             } else {

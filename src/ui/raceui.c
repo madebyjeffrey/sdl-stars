@@ -671,7 +671,7 @@ int16_t FTrackRaceDlg2(HWND hwnd, POINT16 pt, int16_t kbd) {
     int16_t i;
     int16_t irc;
     int16_t iMod;
-    char   *psz;
+    const char *psz;
     int16_t dWidth;
     int16_t dx;
 

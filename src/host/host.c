@@ -12,7 +12,7 @@
 // stderr and questions get the cautious answer. hostui.c has the rest of
 // ui.h.
 
-int16_t IdAlertBox(char *sz, int16_t mbType) {
+int16_t IdAlertBox(const char *sz, int16_t mbType) {
     fprintf(stderr, "stars-host: %s\n", sz);
     switch (mbType & 0x000f) {
     case MB_OKCANCEL:
@@ -36,12 +36,12 @@ static int16_t FSzEqNoCase(const char *sz1, const char *sz2) {
 
 // FIniValue copies key szKey's value in [szSection] of the INI text pszText
 // into szValue, as GetPrivateProfileString finds it.
-static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
+static int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
     char    szSection[32];
     char    szKey[32];
     char    szLine[256];
-    char   *pch;
-    char   *pchEnd;
+    const char   *pch;
+    const char   *pchEnd;
     char   *pchEq;
     size_t  cch;
     int16_t fInSection;
@@ -90,7 +90,7 @@ static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, ch
 
 // LIniInt reads an INI key as GetPrivateProfileInt does: its leading
 // number, or lDefault if the key is missing.
-static int32_t LIniInt(char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
+static int32_t LIniInt(const char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
     char szValue[32];
 
     if (!FIniValue(pszText, idsSection, idsKey, szValue, sizeof(szValue))) {

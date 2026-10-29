@@ -135,7 +135,7 @@ static int DialogBox(int instance,int resource,HWND hwnd,int proc) {
     if(resource==IDD_RENAME){renameCalls++;if(renameResult)strcpy(szWork,renameText);return renameResult;}
     memset(vrgZip,0x5a,sizeof(vrgZip));gd.fChgZipOrd=1;return outerResult;
 }
-static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,char **labels,int selected,int flag) {
+static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *labels,int selected,int flag) {
     (void)hwnd;(void)x;(void)y;(void)p;(void)labels;(void)selected;(void)flag;popupCount=count;return popupResult;
 }
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;} } while(0)

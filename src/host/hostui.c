@@ -32,7 +32,7 @@ void PostOpenGame() { return; }
 
 void ShowTitleScreen() { return; }
 
-void AddMRUFile(char *pszFileName, char *pszExt) { return; }
+void AddMRUFile(const char *pszFileName, const char *pszExt) { return; }
 
 void CloseGameWindows() { return; }
 

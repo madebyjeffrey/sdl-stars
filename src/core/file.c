@@ -137,7 +137,7 @@ invalid:
     if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
 }
 
-int16_t FLoadGame(char *pszFileName, char *pszExt) {
+int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
     int16_t  iplrSav;
     int16_t  cPlanetHist;
     STARPACK sp;
@@ -753,7 +753,7 @@ LNextTurn:
             CchSprintf(szWork, PszGetCompressedString(idsNoteDYearsDataRead), cturn);
             AlertSz(szWork, MB_ICONASTERISK);
         }
-        if (FSzPrefixNoCase(pszExt, (char *)"hst", 3))
+        if (FSzPrefixNoCase(pszExt, "hst", 3))
             goto DoneNow;
         if (!rgplr[iPlayer].fAi) {
             lpth = lpThings;
@@ -1511,7 +1511,7 @@ int16_t FBadFileError(StringId ids) {
     }
 }
 
-void STARS_TEST_IMPL(StreamOpen)(char *szFile, MdOpenFlags mdOpen) {
+void STARS_TEST_IMPL(StreamOpen)(const char *szFile, MdOpenFlags mdOpen) {
     uint32_t dwTick;
     int16_t  fMissing;
     int16_t  fNoErr;

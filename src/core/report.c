@@ -2,7 +2,7 @@
 
 uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
-char *PszGetDestName(FLEET *lpfl, HDC hdc) {
+const char *PszGetDestName(FLEET *lpfl, HDC hdc) {
     int16_t i;
     ORDER   ord;
 
@@ -72,7 +72,7 @@ int16_t FDestIsWP0(FLEET *lpfl) {
     return TRUE;
 }
 
-char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
+const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
     POINT16 pt;
     int16_t c;
     int16_t i;
@@ -126,7 +126,7 @@ LNoETA:
     return szDblDash;
 }
 
-char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
+const char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
     int16_t        icr;
     StringId       ids;
     XferActionType opOrd;

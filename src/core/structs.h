@@ -836,7 +836,7 @@ struct _btnt {
     RECT     rc;          /* +0x0004 (8) */
     int16_t  dTimer;      /* +0x000C (2) */
     int16_t  btf;         /* +0x000E (2) */
-    char    *szText;      /* +0x0010 (2) */
+    const char *szText;   /* +0x0010 (2) */
     int32_t  lTicks;      /* +0x0012 (4) */
     uint16_t fFirst : 1,  /* +0x0016 (2) @bit0 */
         fDown : 1,        /* @bit1 */

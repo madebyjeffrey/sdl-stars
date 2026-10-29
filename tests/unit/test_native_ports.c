@@ -28,7 +28,7 @@ void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
 
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iPlayer, char *psz) { return TRUE; }
 void    StarsTest_StreamClose(void) {}
-void    StarsTest_StreamOpen(char *szFile, MdOpenFlags mdOpen) {}
+void    StarsTest_StreamOpen(const char *szFile, MdOpenFlags mdOpen) {}
 void    StarsTest_DirtyGame(int16_t fDirty) { if (fDirty) cDirty++; }
 
 void StarsTest_ReadRt(void) {

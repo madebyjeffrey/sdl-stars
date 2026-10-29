@@ -6,23 +6,25 @@
 #include <windows.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             CtrTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen);
-int16_t          DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, char *psz, int16_t cLen, int16_t fPrint);
-void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint);
-void AddBackTrailingSpaces(char **ppch, char *pchEnd);
-void ChopLastWord(char *pBeg, char **ppEnd);
-void ChopTrailingSpaces(char *pBeg, char **ppEnd);
-void RcCtrTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen);
+void             CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen);
+int16_t          DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_t cLen, int16_t fPrint);
+void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, const char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint);
+void AddBackTrailingSpaces(const char **ppch, const char *pchEnd);
+void ChopLastWord(const char *pBeg, const char **ppEnd);
+void ChopTrailingSpaces(const char *pBeg, const char **ppEnd);
+void RcCtrTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen);
+// The mutable overload preserves the legacy cLen == -1 output-buffer request.
+void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, int16_t dxErase);
 void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_t dxErase);
-void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen);
+void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen);
 void ExpandRc(RECT *prc, int16_t dx, int16_t dy);
 void OffsetRc(RECT *prc, int16_t dx, int16_t dy);
 void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit);
 int32_t  LDrawGauge(HDC hdc, RECT *prc, int16_t cSegs, int32_t *rgSize, HBRUSH *rghbr, int32_t cTot);
 void     _Draw3dFrame(HDC hdc, RECT *prc, int16_t fErase);
-void     InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, char *szText);
+void     InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, const char *szText);
 int16_t  FTrackBtn(BTNT *pbtnt);
-void     DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText);
+void     DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText);
 int16_t  FGetMouseMove(POINT16 *ppt);
 int16_t  FGetRMouseMove(POINT16 *ppt);
 void     DrawFuzzyBorder(HDC hdc, RECT *prc);

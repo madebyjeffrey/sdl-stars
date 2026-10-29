@@ -96,7 +96,7 @@ void ShowTitleScreen() {
 
 // AddMRUFile puts a game the player opened at the top of the File menu's
 // recent files and saves the list to stars.ini.
-void AddMRUFile(char *pszFileName, char *pszExt) {
+void AddMRUFile(const char *pszFileName, const char *pszExt) {
     int16_t i;
     char    szT[256];
     char    szIniFile[16];

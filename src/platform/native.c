@@ -221,7 +221,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
     _strtime(szTime);
 }
 
-int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
+int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
 
 #else
 
@@ -242,7 +242,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
     strftime(szTime, 9, "%H:%M:%S", ptm);
 }
 
-int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
+int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
 int64_t LNativeTime(void) { return (int64_t)time(NULL); }
@@ -258,17 +258,17 @@ int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {
 
 // Legacy entrypoints retain their small handles and test-adapter symbols;
 // resource ownership, binary streams and native exceptions live in fileio.cpp.
-int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
+int16_t HfOpenFile(const char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
     return HfNativeOpenLegacy(szFile, mdOpen, pfMissing);
 }
 int32_t CbReadFile(int16_t hf, void *rg, uint16_t cb) { return CbNativeReadLegacy(hf, rg, cb); }
-int32_t CbWriteFile(int16_t hf, void *rg, uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }
+int32_t CbWriteFile(int16_t hf, const void *rg, uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }
 int32_t LSeekFile(int16_t hf, int32_t l, int16_t iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
 int32_t CbFileSize(int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(int16_t hf) { CloseNativeLegacy(hf); }
-int16_t FFileExists(char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
-int16_t FFileReadOnly(char *szFile) { return IAccessNativePath(szFile, 2) != 0; }
-void MakeDir(char *szDir) { ICreateNativeDirectory(szDir, 0777); }
+int16_t FFileExists(const char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
+int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) != 0; }
+void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
 int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {

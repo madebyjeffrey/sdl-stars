@@ -227,7 +227,7 @@ char *PszGetCompressedPlanet(int16_t id) {
     return szLastGet;
 }
 
-void OutputFileString(char *szFile, char *sz) {
+void OutputFileString(const char *szFile, const char *sz) {
     int16_t  fMissing;
     uint16_t w;
     int16_t  hf;
@@ -245,7 +245,7 @@ void OutputFileString(char *szFile, char *sz) {
     return;
 }
 
-void StarsCopyFile(char *szSrc, char *szDst) {
+void StarsCopyFile(const char *szSrc, const char *szDst) {
     char     rgb[2048];
     int16_t  fMissing;
     int16_t  hfDst;
@@ -277,7 +277,7 @@ LStreamError:
     return;
 }
 
-int16_t STARS_TEST_IMPL(AlertSz)(char *sz, int16_t mbType) {
+int16_t STARS_TEST_IMPL(AlertSz)(const char *sz, int16_t mbType) {
     char szT[256];
 
     if (ini.fValidate || (ini.fLogging && ini.fGen)) {
@@ -403,7 +403,7 @@ void BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt) {
     return;
 }
 
-int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut) {
+int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -448,7 +448,7 @@ int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut) {
     return TRUE;
 }
 
-static int16_t FDecompressUserStringInternal(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
+static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -506,11 +506,11 @@ invalid:
     return FALSE;
 }
 
-int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+int16_t FDecompressUserString(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
     return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, TRUE);
 }
 
-int16_t FDecompressUserStringBytes(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+int16_t FDecompressUserStringBytes(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
     return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, FALSE);
 }
 
@@ -684,7 +684,7 @@ int16_t FCheckPassword() {
     return PromptPassword();
 }
 
-int32_t LSaltFromSz(char *psz) {
+int32_t LSaltFromSz(const char *psz) {
     int32_t lSalt;
 
     lSalt = 0;

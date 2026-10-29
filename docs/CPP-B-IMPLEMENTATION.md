@@ -11,7 +11,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | --- | --- | --- |
 | B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
 | B02: dispatch and callback guards | Complete | Locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. Full local matrix and all 16 Linux/Windows checks pass for d5de69e. |
-| B03: const-correct text and scoped views | Active | Const literal-backed text and read-only interfaces; bounded call-scoped UTF-8/output/byte views. Preserve mutable scratch/output contracts and qualify all consumers. |
+| B03: const-correct text and scoped views | Active: platform CI pending | Implementation and local matrix pass: const text/path/format/menu contracts, bounded UTF-8/output/byte views, retained mutable scratch/sentinel behavior and literal-cast audit. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
 | B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
 | B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
@@ -500,3 +500,45 @@ Linux ASan/UBSan/LSan, desktop/host regressions, tutorial coverage and Windows S
 plus independent SDK/reference configurations. The Windows job API confirms
 success (job 123581087970); the aggregate PR check listing had retained an older
 in-progress state. B02 is complete. B03 is active; B04–B14 remain pending.
+
+
+## B03 const text, mutable outputs and bounded views
+
+The 24 literal-backed core/UI globals now expose immutable text. Paths, stream
+writes, formatting, drawing, menu labels, compression inputs and password hashing
+use const input contracts; mutable output/scratch buffers remain mutable. Report
+name helpers return borrowed const text, while formatted/decompressed scratch
+buffers retain their existing mutable interfaces and invalidation rules. Original
+names, scalar widths, signedness and record layouts are unchanged. BTNT's text
+pointer is const-qualified without changing its layout.
+
+`encoding.h` adds call-scoped `string_view`, output `span<char>` and binary
+`span<const byte>` interfaces. New views are consumed inside callback-free path
+validation, message copying and legacy race-name conversion. No view is retained
+across callbacks, resets, reallocations or reuse of the compressed-string cache.
+A standalone, SDL-free contract executable tests nonterminated and truncated
+slices, complete-code-point byte budgets, NUL rejection/termination, empty spans,
+overlapping copies and UTF-16 byte parity. It joins Linux sanitizer qualification.
+The compilation audit now rejects mutable string-literal casts.
+
+`RightTextOut` has a legacy `cLen == -1` output-buffer mode. Its mutable overload
+preserves that write; a separate const overload draws borrowed text without
+mutating it. The real map-printing harness checks both modes and literal text.
+Formatting into mutable report scratch arrays stays explicit before they are
+borrowed as const display text. Source-witness adapters use const labels/inputs
+or genuinely mutable local arrays; all independent expected values remain intact.
+
+Verification: 112/112 full macOS CTest (27 native leak checks), 30/30 ASan/UBSan
+cases (29 boundary/ownership cases plus core exception units), 23/23 SDL-free
+host tests, all 27 source witnesses, 89 headers in both include orders, frozen
+layout/enum/catalog checks and warning-free Debug/Release builds. Complete native
+and host regressions each match 519 files / 25 accepted unused-storage warnings /
+zero differences, errors or skipped inputs. Baselines and frozen references are
+unchanged.
+
+The first desktop/sanitizer runs encountered four workflow timeouts and one
+toolbar timeout while macOS repeatedly slept; the power log records matching
+sleep intervals. All five cases passed unchanged on retry. Fresh complete runs
+with a temporary idle-sleep assertion passed 112/112 and 30/30 using the original
+test deadlines. No product change or timeout increase was used to mask a failure.
+B03 local qualification is complete; platform CI remains its final checkpoint.

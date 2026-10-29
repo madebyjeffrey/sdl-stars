@@ -837,7 +837,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                     y += 5 * dyArial8;
                 }
                 SetRect(&rc, x, y + 4, x + dyArial8 + 4, y + dyArial8 + 8);
-                DrawBtn(hdc, &rc, 8, FALSE, (char *)"?");
+                DrawBtn(hdc, &rc, 8, FALSE, "?");
             }
         }
         iStart = 0;

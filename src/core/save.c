@@ -1166,7 +1166,7 @@ void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
     return;
 }
 
-void RgToStream(void *rg, uint16_t cb) {
+void RgToStream(const void *rg, uint16_t cb) {
     if (cb != 0 && CbWriteFile(hf, rg, cb) != cb) {
         AlertSz(PszFormatIds(idsErrorWritingFile, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);

@@ -30,7 +30,10 @@ initialization, and combo opening rolls back its own failed popup while retainin
 a reentrant replacement. Profile read/write locks and partial buffers/temporary
 files now unwind safely; injected read/load/save failures preserve the existing
 destination and permit retry. B02 local qualification and all 16 Linux/Windows
-checks pass for `d5de69e`; B03 const text/buffer-view work is active.
+checks pass for `d5de69e`. B03 adds const text/path/format/menu inputs and
+call-scoped UTF-8/output/byte views, retaining mutable scratch buffers and the
+legacy text-drawing output mode. Its full local matrix passes; platform CI is
+pending.
 
 ## C++ migration
 

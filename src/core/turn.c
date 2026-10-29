@@ -58,7 +58,7 @@ int16_t FGenerateTurn() {
     fErrSav = fFileErrSilent;
     fFileErrSilent = TRUE;
     UpdateProgressGauge(static_cast<ProgressStep>(360));
-    if (!FLoadGame(szBase, (char *)"hst")) {
+    if (!FLoadGame(szBase, "hst")) {
         fFileErrSilent = fErrSav;
         TurnLog(idsCantFindHostFile);
         return FALSE;
@@ -380,7 +380,7 @@ void EnsureAis() {
         fHostSav = gd.fHostMode;
         if (!gd.fHostMode) {
             DestroyCurGame();
-            FLoadGame(szBase, (char *)"hst");
+            FLoadGame(szBase, "hst");
         }
         for (iPlayer = 0; iPlayer < game.cPlayer; iPlayer++) {
             *(uint16_t *)&rgmdplr[iPlayer] = rgplr[iPlayer].wMdPlr;
@@ -407,7 +407,7 @@ void EnsureAis() {
         gd.fSubmit = fSubmitSav;
         if (fWorkDone) {
             DestroyCurGame();
-            FLoadGame(szBase, (char *)"hst");
+            FLoadGame(szBase, "hst");
         }
         fFileErrSilent = fErrSav;
         gd.fAisDone = TRUE;
@@ -762,7 +762,7 @@ int16_t FRunCmdLine() {
     if (ini.fValidate) {
         fFileErrSilent = TRUE;
         ClearFile(7);
-        if (FLoadGame(szBase, (char *)"hst")) {
+        if (FLoadGame(szBase, "hst")) {
             VerifyTurns();
             DestroyCurGame();
             EnsureAis();

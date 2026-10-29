@@ -1141,13 +1141,13 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
     BTLDATA *lpbd;
     char     szT[100];
     char     chT;
-    char    *lpsz;
+    const char *lpsz;
     PLANET  *lppl;
     int16_t  j;
     int16_t  i;
     FLEET   *lpfl;
     int16_t  dx;
-    char    *psz;
+    const char *psz;
     int16_t  xCur;
     int16_t  cch;
     int32_t  l;
@@ -1360,7 +1360,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 psz = PszGetPlanetName(lpfl->idPlanet);
             } else {
                 psz = szT;
-                wsprintf(psz, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
+                wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
             }
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             break;
@@ -1399,7 +1399,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             psz = rgshdef[i].hul.szClass;
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             psz = szT;
-            cch = wsprintf(psz, PCTD, lpfl->rgcsh[i]);
+            cch = wsprintf(szT, PCTD, lpfl->rgcsh[i]);
             chT = '+';
             RightTextOut(hdc, 6 * dx + prc->right - LOWORD(GetTextExtent(hdc, &chT, 1)), prc->top, psz, cch, 0);
             if (j <= 1)
@@ -1413,7 +1413,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 psz = szDblDash;
             } else {
                 psz = szT;
-                cch = wsprintf(psz, PCTDPCTPCT, i);
+                cch = wsprintf(szT, PCTDPCTPCT, i);
             }
             RightTextOut(hdc, prc->right - 5, prc->top, psz, cch, 0);
             break;
@@ -1422,7 +1422,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             break;
         case colFleetId:
             psz = szT;
-            cch = wsprintf(psz, "%d", lpfl->ifl + 1);
+            cch = wsprintf(szT, "%d", lpfl->ifl + 1);
             RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
         }
         break;
@@ -1441,7 +1441,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 psz = PszGetPlanetName(lpbd->idPlanet);
             } else {
                 psz = szT;
-                wsprintf(psz, PszGetCompressedString(idsSpaceDD), lpbd->pt.x, lpbd->pt.y);
+                wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpbd->pt.x, lpbd->pt.y);
             }
             if (lpbd->pt.x == sel.scan.pt.x && lpbd->pt.y == sel.scan.pt.y) {
                 SetTextColor(hdc, 127);
@@ -1524,7 +1524,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                     psz = PszGetPlanetName(lpfl->idPlanet);
                 } else {
                     psz = szT;
-                    wsprintf(psz, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
+                    wsprintf(szT, PszGetCompressedString(idsSpaceDD), lpfl->pt.x, lpfl->pt.y);
                 }
                 ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
                 break;
@@ -1534,7 +1534,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 lpsz = rglpshdef[lpfl->iPlayer][i].hul.szClass;
                 ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, lpsz, strlen(lpsz), NULL);
                 psz = szT;
-                cch = wsprintf(psz, PCTD, lpfl->rgcsh[i]);
+                cch = wsprintf(szT, PCTD, lpfl->rgcsh[i]);
                 chT = '+';
                 RightTextOut(hdc, 6 * dx + prc->right - LOWORD(GetTextExtent(hdc, &chT, 1)), prc->top, psz, cch, 0);
                 if (j <= 1)
@@ -1585,16 +1585,16 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 break;
             case colEnemyFleetId:
                 psz = szT;
-                cch = wsprintf(psz, "%d", lpfl->ifl + 1);
+                cch = wsprintf(szT, "%d", lpfl->ifl + 1);
                 RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
                 break;
             case colEnemyFleetWarp:
                 if (!lpfl->fdirValid || lpfl->iwarpFlt <= 0) {
-                    psz = (char *)"--";
+                    psz = "--";
                     cch = 2;
                 } else {
                     psz = szT;
-                    cch = wsprintf(psz, "%d", lpfl->iwarpFlt);
+                    cch = wsprintf(szT, "%d", lpfl->iwarpFlt);
                 }
                 RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
             }
@@ -1605,7 +1605,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
 }
 
 void DrawMineralItem(HDC hdc, int16_t x, int16_t y, int16_t iMineral, int32_t l) {
-    char   *psz;
+    const char *psz;
     int16_t cch;
 
     if (iMineral < 0) {
@@ -1708,7 +1708,7 @@ int ICompReport(uint16_t *pid1, uint16_t *pid2) {
     int16_t      i;
     int32_t      l1;
     int16_t      iSubsort;
-    char        *psz;
+    const char        *psz;
     int16_t      iRet;
     int16_t      i2;
     int16_t      fTier2;

@@ -1514,7 +1514,7 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return fRet;
 }
 
-int16_t StarsTest_AlertSz(char *sz, int16_t mbType) {
+int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     if (fRejectRacePassword) return IDOK;
     if (PszCompatEnvironment("STARS_CLIENT_RACE_VERSION_TEST") && strstr(sz, "was unable to save your race data file")) {
         fRaceVersionSaveFailed = TRUE;

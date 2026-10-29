@@ -61,7 +61,8 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"stage %d witness %d failed: %s\n",failure,checks,#x);return 1;}}while(0)
 int main(void){
-    COMPATPROFILE second={const_cast<char *>("B\n"),NULL},first={const_cast<char *>("A"),&second};int ret;
+    char szSecond[]="B\n",szFirst[]="A";
+    COMPATPROFILE second={szSecond,NULL},first={szFirst,&second};int ret;
     for(failure=Ok;failure<=Rename;failure++){
         lastError=77;published=unlinked=opened=closed=syncCalled=renameCalled=0;used=0;cleanupOK=1;
         ret=FSaveProfile(&first,"unused");
