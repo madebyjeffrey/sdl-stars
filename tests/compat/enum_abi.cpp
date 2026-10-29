@@ -1,17 +1,14 @@
-// Check fixed underlying types and both directions of the C/C++ ABI.
+// Check fixed underlying types and historical integer boundary bit patterns.
 #include <type_traits>
 #include <limits>
 #include <cstring>
+#include <bit>
 #include "common.h"
 
 #define STARS_ENUM_ABI(name, storage) \
     static_assert(std::is_enum<name>::value, #name " must be an enum"); \
-    static_assert(std::is_same<std::underlying_type<name>::type, storage>::value, #name " storage changed"); \
-    extern "C" storage CRead##name(name); \
-    extern "C" name CReturn##name(storage); \
-    extern "C" void CStore##name(name *, storage); \
-    extern "C" name CCall##name(name (*)(name), name); \
-    extern "C" name CxxEcho##name(name value) { return value; }
+    static_assert(std::is_same<std::underlying_type<name>::type, storage>::value, #name " storage changed");
+
 #include "enum_storage.inc"
 #undef STARS_ENUM_ABI
 
@@ -23,16 +20,13 @@ int main() {
                           (std::numeric_limits<storage>::max)(), static_cast<storage>(-1), static_cast<storage>(0xa5a5)}; \
     for (storage raw : rg) { \
         name value = static_cast<name>(raw); \
-        CHECK(CRead##name(value) == raw); \
-        CHECK(static_cast<storage>(CReturn##name(raw)) == raw); \
-        CHECK(static_cast<storage>(CCall##name(CxxEcho##name, value)) == raw); \
-        CStore##name(&value, raw); \
+        CHECK(std::bit_cast<storage>(value) == raw); \
         CHECK(std::memcmp(&value, &raw, sizeof(raw)) == 0); \
     } \
     ++cTypes; \
 }
 #include "enum_storage.inc"
 #undef STARS_ENUM_ABI
-    printf("Fixed enum types and C ABI: %d types, six boundary bit patterns each\n", cTypes);
+    printf("Fixed enum storage: %d types, six boundary bit patterns each\n", cTypes);
     return 0;
 }

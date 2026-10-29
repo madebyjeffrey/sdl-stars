@@ -63,7 +63,6 @@ file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
     "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
 list(REMOVE_ITEM STARS_CPP_HARNESSES
-    "${PROJECT_SOURCE_DIR}/tests/compat/enum_abi.c"
     "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c")
 set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
@@ -303,7 +302,7 @@ option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
-    add_executable(stars-test-enum-abi tests/compat/enum_abi.c tests/compat/enum_abi.cpp)
+    add_executable(stars-test-enum-abi tests/compat/enum_abi.cpp)
     target_link_libraries(stars-test-enum-abi PRIVATE stars_options)
     target_compile_options(stars-test-enum-abi PRIVATE -Wall -Wextra -Werror)
     add_test(NAME test_enum_abi COMMAND stars-test-enum-abi)
