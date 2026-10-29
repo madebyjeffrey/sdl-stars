@@ -43,6 +43,12 @@ before C++ delivery. Fault coverage checks that later dialog commands do not run
 and that the owner is re-enabled for both thread-timer and owner-window failures.
 This does not change turn generation or the native regression baseline.
 
+The shared enum-ABI and file-service test targets are registered once when
+ordinary tests, SDK reference tests or both are enabled. Windows CI configures
+both suites together before running the SDL checks, covering the former
+duplicate-target configuration failure. Test selection and game results are
+unchanged.
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native

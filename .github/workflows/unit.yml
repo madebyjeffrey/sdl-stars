@@ -84,6 +84,8 @@ jobs:
         shell: msys2 {0}
         run: |
           # Use MSYS2 Python so CMake can create the build-local environment.
-          cmake --preset windows-sdl-debug -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          # Both suites share contract targets; configure their combined registry.
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=ON -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
+          cmake --preset windows-sdl-debug -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --build --preset windows-sdl-debug --parallel 2
           ctest --preset windows-sdl-headless

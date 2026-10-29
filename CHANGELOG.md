@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Windows SDK reference tests can be enabled alongside the ordinary tests.
+  CMake registers their shared enum-ABI and file-service contract targets once;
+  previously the combined configuration failed with duplicate-target errors.
+
 - SDL modal message pumps now unwind when a thread timer or another unowned
   callback fails, completing dialog and owner cleanup before delivering the
   pending C++ exception. Previously they continued dispatching commands until
