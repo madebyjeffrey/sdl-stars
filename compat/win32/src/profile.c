@@ -1,8 +1,8 @@
+#include <atomic>
 /* File-backed UTF-8 profiles. Preserve unrelated lines when updating settings. */
 #include <windows.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +17,7 @@ typedef struct COMPATPROFILE {
     struct COMPATPROFILE *lpNext;
 } COMPATPROFILE;
 
-static atomic_flag fProfileLock = ATOMIC_FLAG_INIT;
+static std::atomic_flag fProfileLock = ATOMIC_FLAG_INIT;
 
 static DWORD DwProfileError(void) {
     if (errno == ENOENT) return ERROR_FILE_NOT_FOUND;
@@ -44,7 +44,7 @@ static char *PszTrimProfile(char *psz) {
 }
 
 static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
-    COMPATPROFILE *lp = calloc(1, sizeof(*lp));
+    COMPATPROFILE *lp = (COMPATPROFILE *)calloc(1, sizeof(*lp));
     char *psz, *pszEnd;
 
     if (!lp) return NULL;
@@ -134,7 +134,7 @@ static char *SzProfilePath(LPCSTR pszFile) {
     if (!pszDir || !*pszDir) pszDir = getenv("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 2;
-        sz = malloc(cb);
+        sz = (char *)(malloc(cb));
         if (sz) snprintf(sz, cb, "%s/%s", pszDir, pszFile);
         goto LReturn;
     }
@@ -151,11 +151,11 @@ static char *SzProfilePath(LPCSTR pszFile) {
 #else
     if (pszDir && *pszDir == '/') {
         cb = strlen(pszDir) + strlen(pszFile) + 8;
-        sz = malloc(cb);
+        sz = (char *)(malloc(cb));
         if (sz) snprintf(sz, cb, "%s/stars/%s", pszDir, pszFile);
     } else if (pszHome && *pszHome == '/') {
         cb = strlen(pszHome) + strlen(pszFile) + 16;
-        sz = malloc(cb);
+        sz = (char *)(malloc(cb));
         if (sz) snprintf(sz, cb, "%s/.config/stars/%s", pszHome, pszFile);
     } else {
         sz = strdup(pszFile);
@@ -203,7 +203,7 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     if (fMulti && cchMax > 1) szResult[1] = 0;
     szPath = SzProfilePath(pszFile);
     if (!szPath) return 0;
-    while (atomic_flag_test_and_set_explicit(&fProfileLock, memory_order_acquire)) {}
+    while (std::atomic_flag_test_and_set_explicit(&fProfileLock, std::memory_order_acquire)) {}
     FLoadProfile(szPath, &lpAll);
     if (fMulti) {
         lp = pszSection ? LpProfileSection(lpAll, pszSection) : lpAll;
@@ -239,7 +239,7 @@ DWORD WINAPI GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
         memcpy(szResult, psz, cchOut); szResult[cchOut] = 0;
     }
     FreeProfile(lpAll); free(szPath);
-    atomic_flag_clear_explicit(&fProfileLock, memory_order_release);
+    std::atomic_flag_clear_explicit(&fProfileLock, std::memory_order_release);
     return (DWORD)cchOut;
 }
 
@@ -270,9 +270,9 @@ static BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath) {
     BOOL fRet = FALSE;
     BOOL fTemporary = FALSE;
 
-    szTemp = malloc(strlen(pszPath) + 12);
+    szTemp = (char *)malloc(strlen(pszPath) + 12);
     if (!szTemp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE; }
-    sprintf(szTemp, "%s.XXXXXX", pszPath);
+    snprintf(szTemp, strlen(pszPath) + 12, "%s.XXXXXX", pszPath);
     fp = PfNativeCreateTemp(szTemp);
     if (!fp) { SetLastError(DwProfileError()); goto LReturn; }
     fTemporary = TRUE;
@@ -313,7 +313,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     }
     szPath = SzProfilePath(pszFile);
     if (!szPath) return FALSE;
-    while (atomic_flag_test_and_set_explicit(&fProfileLock, memory_order_acquire)) {}
+    while (std::atomic_flag_test_and_set_explicit(&fProfileLock, std::memory_order_acquire)) {}
     if (!FLoadProfile(szPath, &lpAll)) goto LReturn;
     lpSection = LpProfileSection(lpAll, pszSection);
     lpKey = LpProfileKey(lpSection, pszKey);
@@ -326,7 +326,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     } else {
         if (!lpSection) {
             cb = strlen(pszSection) + 4;
-            szLine = malloc(cb);
+            szLine = (char *)(malloc(cb));
             if (!szLine) goto LMemory;
             snprintf(szLine, cb, "[%s]\n", pszSection);
             lpSection = LpProfileLine(szLine);
@@ -336,7 +336,7 @@ BOOL WINAPI WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
             *lplp = lpSection;
         }
         cb = strlen(pszKey) + strlen(pszValue) + 3;
-        szLine = malloc(cb);
+        szLine = (char *)(malloc(cb));
         if (!szLine) goto LMemory;
         snprintf(szLine, cb, "%s=%s\n", pszKey, pszValue);
         lpNew = LpProfileLine(szLine);
@@ -354,6 +354,6 @@ LMemory:
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 LReturn:
     free(szLine); free(szPath); FreeProfile(lpAll);
-    atomic_flag_clear_explicit(&fProfileLock, memory_order_release);
+    std::atomic_flag_clear_explicit(&fProfileLock, std::memory_order_release);
     return fRet;
 }

@@ -1,6 +1,6 @@
+#include <atomic>
 /* Fixed pointers and movable heap handles stay distinct from immutable resources. */
 #include "internal.h"
-#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,19 +14,19 @@ typedef struct COMPATMEMORY {
 } COMPATMEMORY;
 
 static COMPATMEMORY *lpMemory;
-static atomic_flag fMemoryLock = ATOMIC_FLAG_INIT;
+static std::atomic_flag fMemoryLock = ATOMIC_FLAG_INIT;
 static UINT_PTR idMemory = 1;
-static _Thread_local DWORD dwError;
+static thread_local DWORD dwError;
 
 DWORD WINAPI GetLastError(void) { return dwError; }
 void WINAPI SetLastError(DWORD dw) { dwError = dw; }
 
 static void LockMemory(void) {
-    while (atomic_flag_test_and_set_explicit(&fMemoryLock, memory_order_acquire)) {}
+    while (std::atomic_flag_test_and_set_explicit(&fMemoryLock, std::memory_order_acquire)) {}
 }
 
 static void UnlockMemory(void) {
-    atomic_flag_clear_explicit(&fMemoryLock, memory_order_release);
+    std::atomic_flag_clear_explicit(&fMemoryLock, std::memory_order_release);
 }
 
 static COMPATMEMORY *LpMemory(HANDLE h) {
@@ -45,7 +45,7 @@ HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
-    lp = calloc(1, sizeof(*lp));
+    lp = (COMPATMEMORY *)(calloc(1, sizeof(*lp)));
     if (!lp) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
@@ -53,7 +53,7 @@ HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
     lp->fMoveable = (flags & GMEM_MOVEABLE) != 0;
     lp->cb = cb;
     if (cb != 0 || !lp->fMoveable) {
-        lp->rgb = flags & GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1);
+        lp->rgb = (BYTE *)(flags & GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));
         if (!lp->rgb) {
             free(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return NULL;
@@ -186,7 +186,7 @@ HGLOBAL WINAPI GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
         else SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         goto LReturn;
     }
-    rgb = realloc(lp->rgb, cb ? cb : 1);
+    rgb = (BYTE *)(realloc(lp->rgb, cb ? cb : 1));
     if (!rgb) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }
     if ((flags & GMEM_ZEROINIT) && cb > lp->cb)
         memset(rgb + lp->cb, 0, cb - lp->cb);

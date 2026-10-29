@@ -65,6 +65,13 @@ list(REMOVE_ITEM STARS_CPP_HARNESSES
 set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
+# Source language belongs in the parent scope so private test clones inherit it.
+set_source_files_properties(compat/win32/src/rect.c compat/win32/src/time.c
+    compat/win32/src/system.c compat/win32/src/services.c compat/win32/src/memory.c
+    compat/win32/src/file.c compat/win32/src/profile.c compat/win32/src/document.c
+    compat/win32/src/audio.c PROPERTIES LANGUAGE CXX)
+
+
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)
 target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
@@ -76,6 +83,7 @@ add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers stars_errors)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
+set_source_files_properties(src/platform/encoding.c PROPERTIES LANGUAGE CXX)
 add_library(stars_encoding STATIC src/platform/encoding.c)
 target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
