@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `LpNewFontRaster` and fallback glyph matching use their owned Fontconfig
+  configuration for default substitution on Fontconfig 2.17 and newer. The older
+  default entry point initialized a second configuration outside the wrapper's
+  ownership; native macOS `leaks` found three leaked allocations (416 bytes).
+  Font contracts pass and game behavior/regression baselines are unchanged.
+
 - The C++ compilation audit explicitly reads UTF-8 sources and compiler manifests,
   fixing a decoding failure on Windows systems using the default CP1252 locale.
   Game behavior and regression baselines are unchanged.

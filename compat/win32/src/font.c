@@ -72,6 +72,16 @@ static BOOL FFontConfig(void) {
     return TRUE;
 }
 
+static void SetCompatFontDefaults(FcPattern *lppattern) {
+#if FC_VERSION >= 21700
+    // The older entry point initializes a second, process-global configuration.
+    // Default substitution must use the same configuration that matching owns.
+    FcConfigSetDefaultSubstitute(lpConfig, lppattern);
+#else
+    FcDefaultSubstitute(lppattern);
+#endif
+}
+
 static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FcPattern *pattern, *match;
     FcCharSet *charset;
@@ -91,7 +101,7 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FcPatternAddString(pattern, FC_FAMILY, (const FcChar8 *)lpfont->lf.lfFaceName);
     FcPatternAddInteger(pattern, FC_WEIGHT, lpfont->tm.tmWeight >= 700 ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
     FcPatternAddInteger(pattern, FC_SLANT, lpfont->tm.tmItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-    FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); FcDefaultSubstitute(pattern);
+    FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
     lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get();
     if (match) {
         if (FcPatternGetString(match, FC_FILE, 0, &pszFile) == FcResultMatch &&
@@ -188,7 +198,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         FcPatternAddString(pattern, FC_FAMILY, (FcChar8 *)szFamily);
         FcPatternAddInteger(pattern, FC_WEIGHT, fBold ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
         FcPatternAddInteger(pattern, FC_SLANT, fItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-        FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); FcDefaultSubstitute(pattern);
+        FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
         lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get(); lppatternOwner.reset();
         if (!match) goto LFail;
         FcPatternGetInteger(match, FC_INDEX, 0, &index);

@@ -15,8 +15,14 @@ Application headers have native C++ linkage and compile independently with
 standard headers in either order. Independent C storage and SDK references remain
 separate. The compilation audit reads sources and compiler manifests explicitly
 as UTF-8 so Windows locale settings do not affect qualification. Milestone B
-(ownership, wire codecs, state and ISO C++ storage) remains proposed; GNU storage
+(ownership, wire codecs, state and ISO C++ storage) is being implemented as one
+PR under [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65); GNU storage
 extensions and manual heaps are retained for now.
+
+Native `leaks` checks now exercise image/font/print ownership and allocation
+failure. `LpNewFontRaster` no longer triggers a second, unowned configuration
+through default substitution on Fontconfig 2.17+; older versions retain their
+original entry point. See the [B implementation ledger](CPP-B-IMPLEMENTATION.md).
 
 The prerequisite steps below record the earlier migration checkpoints.
 
