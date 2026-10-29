@@ -1,0 +1,58 @@
+# Milestone B implementation ledger
+
+Status: implementation active. Tracking: [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65).
+Base: `develop` at `417e526`, after milestone A merged in #64.
+
+The complete [milestone B plan](CPP-MIGRATION.md#milestone-b-ownership-records-and-standard-c)
+is delivered in one PR, as requested. Each checkpoint keeps focused commits and
+its own verification evidence. An active or pending checkpoint is not completion.
+
+| Checkpoint | Status | Evidence / remaining work |
+| --- | --- | --- |
+| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor ownership. Remaining persistent font/GDI/menu/print/window/audio ownership and fault/sanitizer qualification are still in scope. |
+| B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
+| B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
+| B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
+| B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
+| B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
+| B07: hull/design payloads | Pending | Preserve slot strides, catalog IDs and design import/export. |
+| B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
+| B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
+| B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
+| B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
+| B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
+| B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
+| B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
+
+## Ownership changes in progress
+
+`src/platform/ownership.h` supplies move-only owners using the actual release
+routine. A view or borrowed selection never enters an owner. `release()` marks
+transfer into persistent ownership; cleanup destructors do not throw or call
+application callbacks.
+
+| Storage | Owner / transfer | Borrowing and invalidation |
+| --- | --- | --- |
+| Temporary Fontconfig patterns/character sets | Scoped owners in `FaceFallback` and `LpNewFontRaster` | Borrowed matched filename bytes are used before releasing the matching pattern. |
+| Font construction and uncached glyph raster | Scoped owners until the font/cache accepts them | Faces are released after rasterization; cached glyphs keep their own copied pixels. Persistent font storage remains to migrate. |
+| Icon/cursor XOR surface, AND bytes and native cursor | Typed `COMPATIMAGE` construction and member owners | Cached/shared handles remain module-owned. Explicit destruction clears resources but retains the handle tombstone; shutdown deletes tombstones after resetting the active cursor. |
+| Temporary image/cursor/mask surfaces | Scoped owners until copied or accepted by a persistent image/GDI object | `HbmpCompatSurface` copies input pixels. Selected GDI objects remain borrowed. |
+| Cairo page pixels and drawing context | Scoped owners, context released before image storage | Cairo can retain page pixels while finalizing a later PDF page. The Cairo image owns its copied pixels. |
+| Print submission process | Scoped process owner | The existing wait/kill policy and synchronous event pumping remain unchanged. |
+| Menu bar rectangle replacement | Scoped allocation until the new layout is complete | Existing layout remains installed on failure. The window owns the published rectangles. |
+
+## Verification evidence
+
+Evidence is recorded for the actual batch and revision; it is not a claim that
+all B gates have passed. The first scoped-owner batch builds without warnings
+and its existing macOS suite passes 58/58. The persistent-image batch builds
+without warnings, passes the expanded 62/62 macOS suite (including all four
+portable image/font/print/PDF contracts), and matches both full regressions:
+519 files each, 25 accepted unused-storage warnings, zero differences/errors
+and no skipped inputs. Address/undefined-behavior/leak instrumentation and a
+focused allocation-failure test are being qualified next.
+
+Independent frozen C/SDK inputs and native regression fixtures remain unchanged.
+The baseline contract is 519 files through turn 150 for nine scenarios, with
+25 accepted unused-storage warnings recorded for milestone A. Report actual
+results, the first unexpected difference and skipped inputs for each B batch.
