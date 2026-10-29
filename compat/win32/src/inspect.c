@@ -96,7 +96,7 @@ uint64_t StarsCompatFindControl(uint64_t idParent, LONG_PTR idControl, LPCSTR ps
     if (!hwndParent) return 0;
     for (lpwin = hwndParent->hwndFirstChild; lpwin; lpwin = lpwin->hwndZNext)
         if (lpwin->fAlive && !lpwin->fDestroying && lpwin->idChild == idControl &&
-            (!pszClass || SDL_strcasecmp(pszClass, lpwin->lpclass->pszClass) == 0)) {
+            (!pszClass || SDL_strcasecmp(pszClass, lpwin->lpclass->pszClass.get()) == 0)) {
             if (id != 0) return 0;
             id = lpwin->idInspect;
         }
@@ -141,7 +141,7 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         lpitem->fVisible = IsWindowVisible(lpwin); lpitem->fEnabled = IsWindowEnabled(lpwin);
         lpitem->fFocused = GetFocus() == lpwin; lpitem->fCaptured = GetCapture() == lpwin;
         lpitem->fUtf8Text = TRUE;
-        lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass);
+        lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass.get());
         lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & ES_PASSWORD) ?
                                     "[password]" : lpwin->pszTitle);
         if (!lpitem->pszClass || !lpitem->pszText || !GetWindowRect(lpwin, &lpitem->rcWindow) ||

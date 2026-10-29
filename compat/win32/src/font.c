@@ -6,6 +6,7 @@
 #include <fontconfig/fontconfig.h>
 #include <limits.h>
 #include <new>
+#include <utility>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -24,6 +25,8 @@ static void FreeCompatGlyphs(COMPATGLYPH *lp) noexcept {
 }
 
 struct COMPATFONT {
+    // A face keeps its library alive even when module shutdown drops its root.
+    std::shared_ptr<FT_LibraryRec_> library;
     LOGFONTA lf;
     TEXTMETRICA tm;
     NATIVEOWNER<FT_FaceRec_, FT_Done_Face> face;
@@ -34,8 +37,8 @@ struct COMPATFONT {
     int iScale;
 };
 
-static FT_Library library;
-static FcConfig *lpConfig;
+static std::shared_ptr<FT_LibraryRec_> library;
+static NATIVEOWNER<FcConfig, FcConfigDestroy> lpConfig;
 
 static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMPATGLYPH *lp) {
     FT_Bitmap *lpbm;
@@ -70,10 +73,9 @@ static COMPATGLYPH *LpGlyph(COMPATFONT *lpfont, BYTE ch) {
 
 static BOOL FFontConfig(void) {
     if (lpConfig) return TRUE;
-    lpConfig = FcConfigCreate();
-    if (!lpConfig || !FcConfigParseAndLoad(lpConfig, NULL, FcTrue) || !FcConfigBuildFonts(lpConfig)) {
-        if (lpConfig) FcConfigDestroy(lpConfig);
-        lpConfig = NULL;
+    lpConfig.reset(FcConfigCreate());
+    if (!lpConfig || !FcConfigParseAndLoad(lpConfig.get(), NULL, FcTrue) || !FcConfigBuildFonts(lpConfig.get())) {
+        lpConfig.reset();
         return FALSE;
     }
     return TRUE;
@@ -83,7 +85,7 @@ static void SetCompatFontDefaults(FcPattern *lppattern) {
 #if FC_VERSION >= 21700
     // The older entry point initializes a second, process-global configuration.
     // Default substitution must use the same configuration that matching owns.
-    FcConfigSetDefaultSubstitute(lpConfig, lppattern);
+    FcConfigSetDefaultSubstitute(lpConfig.get(), lppattern);
 #else
     FcDefaultSubstitute(lppattern);
 #endif
@@ -95,6 +97,7 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FcResult result;
     FcChar8 *pszFile;
     FT_Face face = NULL;
+    NATIVEOWNER<FT_FaceRec_, FT_Done_Face> lpfaceOwner;
     FT_Matrix matrix;
     FT_Vector delta;
     int index = 0;
@@ -108,22 +111,21 @@ static FT_Face FaceFallback(COMPATFONT *lpfont, DWORD ch) {
     FcPatternAddString(pattern, FC_FAMILY, (const FcChar8 *)lpfont->lf.lfFaceName);
     FcPatternAddInteger(pattern, FC_WEIGHT, lpfont->tm.tmWeight >= 700 ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
     FcPatternAddInteger(pattern, FC_SLANT, lpfont->tm.tmItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-    FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
-    lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get();
-    if (match) {
-        if (FcPatternGetString(match, FC_FILE, 0, &pszFile) == FcResultMatch &&
-            FcPatternGetInteger(match, FC_INDEX, 0, &index) == FcResultMatch &&
-            !FT_New_Face(library, (const char *)pszFile, index, &face)) {
-            if (!FT_Get_Char_Index(face, ch) || FT_Set_Pixel_Sizes(face, 0, lpfont->face->size->metrics.y_ppem)) {
-                FT_Done_Face(face); face = NULL;
-            } else {
-                FT_Get_Transform(lpfont->face.get(), &matrix, &delta);
-                FT_Set_Transform(face, &matrix, &delta);
-            }
+    FcConfigSubstitute(lpConfig.get(), pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
+    lpmatchOwner.reset(FcFontMatch(lpConfig.get(), pattern, &result)); match = lpmatchOwner.get();
+    if (match && FcPatternGetString(match, FC_FILE, 0, &pszFile) == FcResultMatch &&
+        FcPatternGetInteger(match, FC_INDEX, 0, &index) == FcResultMatch) {
+        int iError = FT_New_Face(lpfont->library.get(), (const char *)pszFile, index, &face);
+        lpfaceOwner.reset(face);
+        if (iError || !FT_Get_Char_Index(face, ch) || FT_Set_Pixel_Sizes(face, 0, lpfont->face->size->metrics.y_ppem))
+            lpfaceOwner.reset();
+        else {
+            FT_Get_Transform(lpfont->face.get(), &matrix, &delta);
+            FT_Set_Transform(face, &matrix, &delta);
         }
     }
 done:
-    return face;
+    return lpfaceOwner.release();
 }
 
 static COMPATGLYPH *LpGlyphUtf8(COMPATFONT *lpfont, DWORD ch) {
@@ -164,6 +166,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     char *psz;
     int index = 0, cHeight, i, cWidth = 0, dxMax = 0, iFaceError;
     FT_Face face = NULL;
+    FT_Library libraryNew = NULL;
+    NATIVEOWNER<FT_LibraryRec_, FT_Done_FreeType> libraryOwner;
     BOOL fBold, fItalic;
     COMPATGLYPH *lpglyph;
     FT_Matrix matrix = {65536, 0, 0, 65536};
@@ -174,9 +178,16 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
         !memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
         !FUtf8Valid(lplf->lfFaceName, strlen(lplf->lfFaceName))) return NULL;
-    if (!library && FT_Init_FreeType(&library)) return NULL;
+    if (!library) {
+        iFaceError = FT_Init_FreeType(&libraryNew);
+        libraryOwner.reset(libraryNew);
+        if (iFaceError) return NULL;
+        try { library = std::shared_ptr<FT_LibraryRec_>(std::move(libraryOwner)); }
+        catch (const std::bad_alloc &) { return NULL; }
+    }
     lpfontOwner.reset(new (std::nothrow) COMPATFONT{}); lpfont = lpfontOwner.get();
     if (!lpfont) return NULL;
+    lpfont->library = library;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);
     fBold = lplf->lfWeight >= 600;
@@ -192,7 +203,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     else if (!strcasecmp(szFamily, "Courier New") || !strcasecmp(szFamily, "Liberation Mono") || !strcasecmp(szFamily, "monospace")) i = 8;
     if (i >= 0) {
         i += (fBold ? 1 : 0) + (fItalic ? 2 : 0);
-        iFaceError = FT_New_Memory_Face(library, rgCompatFontData[i].rgb, (FT_Long)rgCompatFontData[i].cb, 0, &face);
+        iFaceError = FT_New_Memory_Face(lpfont->library.get(), rgCompatFontData[i].rgb, (FT_Long)rgCompatFontData[i].cb, 0, &face);
         lpfont->face.reset(face);
         if (iFaceError) goto LFail;
     } else {
@@ -202,12 +213,12 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
         FcPatternAddString(pattern, FC_FAMILY, (FcChar8 *)szFamily);
         FcPatternAddInteger(pattern, FC_WEIGHT, fBold ? FC_WEIGHT_BOLD : FC_WEIGHT_REGULAR);
         FcPatternAddInteger(pattern, FC_SLANT, fItalic ? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
-        FcConfigSubstitute(lpConfig, pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
-        lpmatchOwner.reset(FcFontMatch(lpConfig, pattern, &result)); match = lpmatchOwner.get(); lppatternOwner.reset();
+        FcConfigSubstitute(lpConfig.get(), pattern, FcMatchPattern); SetCompatFontDefaults(pattern);
+        lpmatchOwner.reset(FcFontMatch(lpConfig.get(), pattern, &result)); match = lpmatchOwner.get(); lppatternOwner.reset();
         if (!match) goto LFail;
         FcPatternGetInteger(match, FC_INDEX, 0, &index);
         if (FcPatternGetString(match, FC_FILE, 0, &pszFile) != FcResultMatch) goto LFail;
-        iFaceError = FT_New_Face(library, (const char *)pszFile, index, &face);
+        iFaceError = FT_New_Face(lpfont->library.get(), (const char *)pszFile, index, &face);
         lpfont->face.reset(face);
         if (iFaceError) goto LFail;
         lpmatchOwner.reset();
@@ -347,8 +358,6 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
 }
 
 void CompatShutdownFonts(void) {
-    if (lpConfig) FcConfigDestroy(lpConfig);
-    lpConfig = NULL;
-    if (library) FT_Done_FreeType(library);
-    library = NULL;
+    lpConfig.reset();
+    library.reset();
 }

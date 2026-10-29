@@ -49,6 +49,8 @@ int main() {
     BYTE *rgbAnd;
     HMENU hmenu, hsub, hother;
     char sz[32];
+    LOGFONTA lf = {};
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont;
 
     CHECK(FCompatVideo());
     hSource = LoadIconA(GetModuleHandleA(NULL), "StarsIco");
@@ -77,6 +79,13 @@ int main() {
     CHECK(GetSubMenu(hmenu, 0) == hsub && GetMenuItemID(hmenu, 1) == 41);
     CHECK(DeleteMenu(hmenu, 0, MF_BYPOSITION) && !IsMenu(hsub));
     CHECK(DestroyMenu(hmenu) && DestroyMenu(hother));
+    // FreeType has already allocated its library when the shared owner fails.
+    CompatShutdownFonts(); lf.lfHeight = -12;
+    SDL_strlcpy(lf.lfFaceName, "Arial", sizeof(lf.lfFaceName));
+    fFailNew = true; lpfont.reset(LpNewCompatFont(&lf));
+    CHECK(!lpfont && !fFailNew);
+    lpfont.reset(LpNewCompatFont(&lf)); CHECK(lpfont);
+    lpfont.reset();
     StarsCompatShutdown();
     CHECK(cDestroyed == 3);
     std::puts("Image and menu allocation failure, retry, cleanup, borrowing and stale handles passed");

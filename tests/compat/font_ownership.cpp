@@ -14,7 +14,7 @@ int main() {
     SIZE before, after;
     char sz[3] = {};
     int ch, cPixels = 0;
-    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont;
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont, lpfontRetained;
 
     lf.lfHeight = -12;
     std::strcpy(lf.lfFaceName, "Arial");
@@ -29,11 +29,14 @@ int main() {
     CHECK(before.cx == after.cx && before.cy == after.cy);
     CHECK(FCompatFontDrawScaled(lpfont.get(), "\xc4\x80", 2, NULL, 2, CountGlyph, &cPixels));
     CHECK(cPixels > 0);
-    lpfont.reset(); CompatShutdownFonts();
+    lpfontRetained = std::move(lpfont); CompatShutdownFonts();
+    // Module cleanup drops its root; a live face still owns its library.
+    CHECK(FCompatFontSizeUtf8(lpfontRetained.get(), "\xc4\x80", 2, &after));
+    CHECK(before.cx == after.cx && before.cy == after.cy);
     lpfont.reset(LpNewCompatFont(&lf)); CHECK(lpfont);
     CHECK(FCompatFontSizeUtf8(lpfont.get(), "\xc4\x80", 2, &after));
     CHECK(before.cx == after.cx && before.cy == after.cy);
-    lpfont.reset(); CompatShutdownFonts();
+    lpfont.reset(); CompatShutdownFonts(); lpfontRetained.reset();
     std::puts("Glyph eviction/reload, scaled pixels and font restart preserve metrics");
     return 0;
 }

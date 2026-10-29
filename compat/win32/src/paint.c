@@ -31,12 +31,12 @@ typedef struct COMPATOBJECT {
 } COMPATOBJECT;
 
 struct HDC__ {
-    COMPATPRINT *lpprint;
+    NATIVEOWNER<COMPATPRINT, CompatDeletePrinter> lpprint;
     HDC hdcToken;
     HWND hwnd;
     RECT rcClip;
     POINT pt, ptOrg, ptBrush;
-    RECT *rgrcRegion, *rgrcPaint;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcRegion, rgrcPaint;
     size_t crcPaint;
     size_t crcRegion;
     BOOL fRegion;
@@ -313,6 +313,8 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale) {
 static BOOL FCanvas(HWND hwnd) {
     SDL_Surface *lpnew;
     SDL_Texture *lptex;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Texture, SDL_DestroyTexture> lptextureOwner;
     int dx, dy, cyMenu, iScale, iOld = StarsMax(1, hwnd->iCanvasScale);
     float cxTexture, cyTexture;
     RECT rc;
@@ -342,12 +344,13 @@ static BOOL FCanvas(HWND hwnd) {
         if (!hwnd->lpRenderer.get())
             return FALSE;
     }
-    lpnew = SDL_CreateSurface(dx, dy, SDL_PIXELFORMAT_RGBA32);
-    lptex = hwnd->hwndParent ? NULL :
-        SDL_CreateTexture(hwnd->lpRenderer.get(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu);
+    lpsurfaceOwner.reset(SDL_CreateSurface(dx, dy, SDL_PIXELFORMAT_RGBA32)); lpnew = lpsurfaceOwner.get();
+    lptextureOwner.reset(hwnd->hwndParent ? NULL :
+        SDL_CreateTexture(hwnd->lpRenderer.get(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu));
+    lptex = lptextureOwner.get();
     if (!lpnew || (!hwnd->hwndParent && !lptex)) {
-        SDL_DestroySurface(lpnew);
-        SDL_DestroyTexture(lptex);
+        lpsurfaceOwner.reset();
+        lptextureOwner.reset();
         return FALSE;
     }
     SDL_FillSurfaceRect(lpnew, NULL, SDL_MapSurfaceRGB(lpnew, 0, 0, 0));
@@ -366,8 +369,8 @@ static BOOL FCanvas(HWND hwnd) {
     hwnd->lpTexture.reset();
     hwnd->lpCanvas.reset();
     hwnd->lpComposite.reset();
-    hwnd->lpTexture.reset(lptex);
-    hwnd->lpCanvas.reset(lpnew);
+    hwnd->lpTexture.reset(lptextureOwner.release());
+    hwnd->lpCanvas.reset(lpsurfaceOwner.release());
     hwnd->iCanvasScale = iScale;
     if (iOld != iScale) InvalidateCompatCanvasTree(hwnd);
     return TRUE;
@@ -486,7 +489,6 @@ BOOL FCompatPresent(HWND hwnd) {
         lpnew = SDL_CreateSurface(lpwin->lpCanvas->w, lpwin->lpCanvas->h + cyMenu * iScale, SDL_PIXELFORMAT_RGBA32);
         if (!lpnew) return FALSE;
         SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
-        lpwin->lpComposite.reset();
         lpwin->lpComposite.reset(lpnew);
     }
     dst = (SDL_Rect){0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
@@ -517,7 +519,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     if (idDCNext > UINTPTR_MAX / 16 || !SDL_IsMainThread() ||
         (hwnd && (!LpCompatWindow(hwnd) || !FCanvas(hwnd))))
         return NULL;
-    lpdc = (HDC)(calloc(1, sizeof(*lpdc)));
+    lpdc = new (std::nothrow) HDC__{};
     if (!lpdc)
         return NULL;
     // Never dereference public HDC tokens. Monotonic IDs permit immediate release
@@ -530,7 +532,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     lpdc->lpbrush = (COMPATOBJECT *)(GetStockObject(WHITE_BRUSH));
     lpdc->lpfont = (COMPATOBJECT *)(GetStockObject(SYSTEM_FONT));
     lpdc->lppalette = (COMPATOBJECT *)(GetStockObject(DEFAULT_PALETTE));
-    if (!lpdc->lpfont) { free(lpdc); return NULL; }
+    if (!lpdc->lpfont) { delete lpdc; return NULL; }
     lpdc->lppen->cSelected++;
     lpdc->lpbrush->cSelected++;
     lpdc->lpfont->cSelected++;
@@ -630,7 +632,7 @@ int WINAPI GetObjectA(HANDLE h, int cb, LPVOID lpv) {
 static void CloseDC(HDC lpdc) {
     HDC *lplp = &lpDCs;
 
-    CompatDeletePrinter(lpdc->lpprint);
+    lpdc->lpprint.reset();
     lpdc->lppen->cSelected--;
     lpdc->lpbrush->cSelected--;
     lpdc->lpfont->cSelected--;
@@ -644,9 +646,7 @@ static void CloseDC(HDC lpdc) {
     while (*lplp != lpdc)
         lplp = &(*lplp)->lpNext;
     *lplp = lpdc->lpNext;
-    free(lpdc->rgrcRegion);
-    free(lpdc->rgrcPaint);
-    free(lpdc);
+    delete lpdc;
 }
 
 BOOL WINAPI DeleteDC(HDC hdc) {
@@ -654,7 +654,7 @@ BOOL WINAPI DeleteDC(HDC hdc) {
 
     if (!lpdc || !lpdc->fMemory)
         return FALSE;
-    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint)) { SetLastError(ERROR_BUSY); return FALSE; }
+    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint.get())) { SetLastError(ERROR_BUSY); return FALSE; }
     CloseDC(lpdc);
     return TRUE;
 }
@@ -666,7 +666,7 @@ HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy) {
     hdc = HdcNew(NULL, FALSE);
     if (!hdc) { DeleteObject(lpbitmap); return NULL; }
     lpdc = lpDCs;
-    lpdc->lpprint = lpprint;
+    lpdc->lpprint.reset(lpprint);
     lpdc->fMemory = TRUE;
     lpdc->lpbitmap = lpdc->lpbitmapDefault = lpbitmap;
     lpbitmap->fStock = TRUE; lpbitmap->cSelected = 1;
@@ -675,7 +675,7 @@ HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy) {
 }
 COMPATPRINT *LpCompatPrinter(HDC hdc) {
     HDC lpdc = LpDC(hdc);
-    return lpdc ? lpdc->lpprint : NULL;
+    return lpdc ? lpdc->lpprint.get() : NULL;
 }
 SDL_Surface *LpCompatPrinterSurface(HDC hdc) {
     HDC lpdc = LpDC(hdc);
@@ -724,7 +724,7 @@ static BOOL FSubtractUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc, const RECT *l
 
 static void SetUpdate(HWND hwnd, RECT *rgrc, size_t crc) {
     size_t i;
-    free(hwnd->rgrcUpdate); hwnd->rgrcUpdate = rgrc; hwnd->crcUpdate = crc;
+    hwnd->rgrcUpdate.reset(rgrc); hwnd->crcUpdate = crc;
     hwnd->rcUpdate = (RECT){}; hwnd->fUpdate = crc != 0;
     for (i = 0; i < crc; i++) {
         if (i == 0) hwnd->rcUpdate = rgrc[i];
@@ -745,10 +745,10 @@ BOOL WINAPI InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     size_t crc;
     if (!lpwin || !GetClientRect(hwnd, &rcClient)) return FALSE;
     if (!IntersectRect(&rc, lprc ? lprc : &rcClient, &rcClient)) return TRUE;
-    rgrc = lpwin->rgrcUpdate; crc = lpwin->crcUpdate;
+    rgrc = lpwin->rgrcUpdate.get(); crc = lpwin->crcUpdate;
     if (!FAddUpdate(&rgrc, &crc, rc)) return FALSE;
     // FAddUpdate may have relocated the allocation; retain ownership before SetUpdate.
-    lpwin->rgrcUpdate = NULL;
+    (void)lpwin->rgrcUpdate.release();
     SetUpdate(lpwin, rgrc, crc); lpwin->fErase |= fErase;
     return TRUE;
 }
@@ -758,9 +758,9 @@ static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
     if (hwnd->crcUpdate != 0) {
         rgrc = (RECT *)(malloc(hwnd->crcUpdate * sizeof(*rgrc)));
         if (!rgrc) return FALSE;
-        memcpy(rgrc, hwnd->rgrcUpdate, hwnd->crcUpdate * sizeof(*rgrc));
+        memcpy(rgrc, hwnd->rgrcUpdate.get(), hwnd->crcUpdate * sizeof(*rgrc));
     }
-    lpdc->rgrcPaint = rgrc; lpdc->crcPaint = hwnd->crcUpdate;
+    lpdc->rgrcPaint.reset(rgrc); lpdc->crcPaint = hwnd->crcUpdate;
     lpdc->fPaint = TRUE; lpdc->fClip = TRUE; lpdc->rcClip = hwnd->rcUpdate;
     return TRUE;
 }
@@ -800,8 +800,8 @@ HDC WINAPI BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     lpps->hdc = hdc;
     lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : (RECT){};
     LpDC(hdc)->rcClip = lpps->rcPaint;
-    LpDC(hdc)->rgrcPaint = lpwin->rgrcUpdate; LpDC(hdc)->crcPaint = lpwin->crcUpdate;
-    lpwin->rgrcUpdate = NULL; lpwin->crcUpdate = 0;
+    LpDC(hdc)->rgrcPaint.reset(lpwin->rgrcUpdate.release()); LpDC(hdc)->crcPaint = lpwin->crcUpdate;
+    lpwin->crcUpdate = 0;
     fErase = lpwin->fErase;
     lpwin->fUpdate = FALSE;
     lpwin->fErase = FALSE;
@@ -943,7 +943,7 @@ int WINAPI SelectClipRgn(HDC hdc, HRGN hrgn) {
         if (!rgrc) return ERROR;
         *rgrc = lpobj->rcRegion; crc = 1;
     }
-    free(lpdc->rgrcRegion); lpdc->rgrcRegion = rgrc; lpdc->crcRegion = crc;
+    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc;
     lpdc->fRegion = hrgn != NULL;
     return hrgn ? IRegionKind(crc) : SIMPLEREGION;
 }
@@ -980,7 +980,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
             if (!FClip(lpdc, &rcBase)) return ERROR;
         } else rcBase = rcCut;
         rgsrc = &rcBase; crcSrc = 1;
-    } else { rgsrc = lpdc->rgrcRegion; crcSrc = lpdc->crcRegion; }
+    } else { rgsrc = lpdc->rgrcRegion.get(); crcSrc = lpdc->crcRegion; }
     if (crcSrc > SIZE_MAX / (4 * sizeof(*rgrc))) return ERROR;
     rgrc = (RECT *)(crcSrc ? malloc(crcSrc * 4 * sizeof(*rgrc)) : NULL);
     if (crcSrc != 0 && !rgrc) return ERROR;
@@ -998,7 +998,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
         }
     }
     MergeRegion(rgrc, &crc);
-    free(lpdc->rgrcRegion); lpdc->rgrcRegion = rgrc; lpdc->crcRegion = crc; lpdc->fRegion = TRUE;
+    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc; lpdc->fRegion = TRUE;
     return IRegionKind(crc);
 }
 
@@ -1018,8 +1018,8 @@ static BOOL FRectPixel(const RECT *rgrc, size_t crc, int64_t x, int64_t y) {
 }
 
 static BOOL FRegionPixel(HDC lpdc, int64_t x, int64_t y) {
-    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint, lpdc->crcPaint, x, y)) &&
-           (!lpdc->fRegion || FRectPixel(lpdc->rgrcRegion, lpdc->crcRegion, x, y));
+    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint.get(), lpdc->crcPaint, x, y)) &&
+           (!lpdc->fRegion || FRectPixel(lpdc->rgrcRegion.get(), lpdc->crcRegion, x, y));
 }
 
 static void DevicePixel(HDC lpdc, int64_t x, int64_t y, COLORREF crColor) {
@@ -1666,7 +1666,7 @@ int WINAPI GetDeviceCaps(HDC hdc, int index) {
     const SDL_DisplayMode *lpMode;
     SDL_DisplayID id;
     if (!lpdc) return 0;
-    if (lpdc->lpprint) return ICompatPrinterCaps(lpdc->lpprint, index);
+    if (lpdc->lpprint) return ICompatPrinterCaps(lpdc->lpprint.get(), index);
     if (index == LOGPIXELSX || index == LOGPIXELSY) return 96;
     if (index == PLANES) return 1;
     if (index == BITSPIXEL) return 32;
@@ -2001,6 +2001,7 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     HDC lpdc = LpDC(hdc);
     COMPATDIB dib;
     SDL_Surface *lpsrc;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     RECT rcClip;
     BYTE rop = (BYTE)(dwRop >> 16);
     int64_t px, py;
@@ -2015,7 +2016,7 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     if (xSrc < 0 || yTop < 0 || (int64_t)xSrc + cxSrc > dib.cx || yTop + cySrc > dib.cy ||
         (FUsesPattern(rop) && lpdc->lpbrush->fNull) || !FClip(lpdc, &rcClip))
         return 0;
-    lpsrc = LpCompatDibSurface(&dib);
+    lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsrc = lpsurfaceOwner.get();
     if (!lpsrc)
         return 0;
     px = (int64_t)xDest - lpdc->ptOrg.x; py = (int64_t)yDest - lpdc->ptOrg.y;
@@ -2034,7 +2035,6 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
                   CrRop(rop, crPattern, crSource, crDest));
         }
     }
-    SDL_DestroySurface(lpsrc);
     return cySrc;
 }
 

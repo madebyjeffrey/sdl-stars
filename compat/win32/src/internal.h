@@ -63,9 +63,9 @@ void CompatShutdownFonts(void);
 typedef struct COMPATCLASS {
     WNDCLASSA wc;
     ATOM atom;
-    char *pszClass;
-    char *pszMenu;
-    BYTE *rgbExtra;
+    NATIVEOWNER<char, SDL_free> pszClass;
+    NATIVEOWNER<char, SDL_free> pszMenu;
+    NATIVEARRAYOWNER<BYTE, std::free> rgbExtra;
     struct COMPATCLASS *lpNext;
 } COMPATCLASS;
 
@@ -85,7 +85,7 @@ struct HWND__ {
     HWND hwndParent, hwndOwner, hwndRestoreFocus;
     HMENU hmenu;
     HBITMAP hbmpMenu;
-    RECT *rgrcMenu;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcMenu;
     int cMenu, cyMenu, cxMenu, iMenuHot;
     WPARAM vkMenuSuppress;
     BOOL fMenuDirty, fMenuLayoutDirty, fCreated, fMenuAltUsed;
@@ -143,7 +143,7 @@ struct HWND__ {
     NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpRenderer;
     NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpTexture;
     RECT rcUpdate;
-    RECT *rgrcUpdate;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcUpdate;
     size_t crcUpdate;
     BOOL fUpdate, fErase;
     HDC hdcPaint;

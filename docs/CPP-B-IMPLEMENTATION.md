@@ -9,8 +9,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
-| B01: desktop resource owners | Active | Scoped font/image/Cairo/process/menu allocations and typed persistent icon/cursor/font/glyph/scaled-font ownership. Audio, menu and window owners are being qualified; library-context lifetime integration remains in scope. |
-| B02: dispatch and callback guards | Pending | Preserve cleanup-before-delivery and foreign callback containment. |
+| B01: desktop resource owners | Implemented; platform qualification pending | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; final platform matrix remains required. |
+| B02: dispatch and callback guards | Active | Preserve cleanup-before-delivery and foreign callback containment. |
 | B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
 | B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
@@ -182,3 +182,29 @@ including 15 native leak checks, and 16/16 ASan/UBSan ownership contracts. All
 differences/errors or skipped inputs). Builds introduce no warnings. B01 still
 requires library-context lifetime integration and the remaining cleanup scopes;
 these results do not complete the later B checkpoints.
+
+
+## B01 lifetime integration gate
+
+Each font retains shared ownership of its FreeType library before its face; the
+face and glyph/scaled-font storage are destroyed before that library reference.
+Module shutdown resets its roots without making a retained face depend on
+cross-translation-unit static destruction order. Fontconfig configuration storage
+also has a typed owner. Allocation-failure coverage now fails the library owner
+control block after FreeType initialization, checks cleanup/retry, and native
+leaks verifies that failure path. A retained face also survives module-root
+shutdown while a fresh font is created, with unchanged glyph metrics.
+
+Registered classes own copied names and extra bytes. Windows own menu/update
+geometry; BeginPaint transfers update geometry into its DC. Printer DCs own
+their jobs and clipping/paint arrays. Temporary canvas, texture and decoded DIB
+surfaces stay scoped until publication or explicit factory transfer. Borrowed
+selected objects and SDK/font pattern data remain borrowed.
+
+Final local B01 integration results: 89/89 complete macOS CTest, 31/31 focused
+ownership contracts including 15 native leak checks, 16/16 ASan/UBSan resource
+contracts, no new warnings, and 519 native regression matches (25 accepted
+unused-storage warnings; zero differences/errors/skipped inputs). Independent
+references and all regression baselines remain unchanged. Windows/Linux CI is
+being requalified for the final resource commits. B02 and later checkpoints
+remain required for milestone completion; the PR remains a draft.

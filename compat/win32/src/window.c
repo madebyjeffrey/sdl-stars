@@ -233,7 +233,7 @@ static COMPATCLASS *LpFindClass(LPCSTR pszClass, HINSTANCE hInstance) {
     for (lpclass = lpClasses; lpclass; lpclass = lpclass->lpNext)
         if (lpclass->wc.hInstance == hInstance &&
             ((idClass <= UINT16_MAX && lpclass->atom == idClass) ||
-             (idClass > UINT16_MAX && SDL_strcasecmp(lpclass->pszClass, pszClass) == 0)))
+             (idClass > UINT16_MAX && SDL_strcasecmp(lpclass->pszClass.get(), pszClass) == 0)))
             return lpclass;
     return NULL;
 }
@@ -250,26 +250,23 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
         SDL_SetError("Win32 class already registered");
         return 0;
     }
-    lpclass = (COMPATCLASS *)(calloc(1, sizeof(*lpclass)));
+    lpclass = new (std::nothrow) COMPATCLASS{};
     if (!lpclass)
         return 0;
     lpclass->wc = *lpwc;
-    lpclass->pszClass = SDL_strdup(lpwc->lpszClassName);
+    lpclass->pszClass.reset(SDL_strdup(lpwc->lpszClassName));
     if ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX)
-        lpclass->pszMenu = SDL_strdup(lpwc->lpszMenuName);
+        lpclass->pszMenu.reset(SDL_strdup(lpwc->lpszMenuName));
     if (lpwc->cbClsExtra != 0)
-        lpclass->rgbExtra = (BYTE *)(calloc(1, (size_t)lpwc->cbClsExtra));
+        lpclass->rgbExtra.reset((BYTE *)calloc(1, (size_t)lpwc->cbClsExtra));
     if (!lpclass->pszClass || ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
-        SDL_free(lpclass->pszClass);
-        SDL_free(lpclass->pszMenu);
-        free(lpclass->rgbExtra);
-        free(lpclass);
+        delete lpclass;
         return 0;
     }
-    lpclass->wc.lpszClassName = lpclass->pszClass;
+    lpclass->wc.lpszClassName = lpclass->pszClass.get();
     if (lpclass->pszMenu)
-        lpclass->wc.lpszMenuName = lpclass->pszMenu;
+        lpclass->wc.lpszMenuName = lpclass->pszMenu.get();
     lpclass->atom = (ATOM)atomNext++;
     lpclass->lpNext = lpClasses;
     lpClasses = lpclass;
@@ -1138,8 +1135,8 @@ int WINAPI GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = CchUtf8Prefix(lpwin->lpclass->pszClass, (size_t)cchMax - 1);
-    memcpy(psz, lpwin->lpclass->pszClass, cch); psz[cch] = 0;
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), (size_t)cchMax - 1);
+    memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
     return (int)cch;
 }
 
@@ -1431,10 +1428,7 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     }
     for (lpclass = lpClasses; lpclass; lpclass = lpclassNext) {
         lpclassNext = lpclass->lpNext;
-        SDL_free(lpclass->pszClass);
-        SDL_free(lpclass->pszMenu);
-        free(lpclass->rgbExtra);
-        free(lpclass);
+        delete lpclass;
     }
     CompatShutdownGdi();
     CompatShutdownMemory();

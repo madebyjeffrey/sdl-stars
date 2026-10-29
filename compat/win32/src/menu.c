@@ -201,7 +201,7 @@ HMENU WINAPI GetMenu(HWND hwnd) {
 void CompatFreeMenuBar(HWND hwnd) {
     if (hwnd->hbmpMenu) DeleteObject(hwnd->hbmpMenu);
     hwnd->hbmpMenu = NULL;
-    free(hwnd->rgrcMenu); hwnd->rgrcMenu = NULL;
+    hwnd->rgrcMenu.reset();
     hwnd->cyMenu = hwnd->cxMenu = hwnd->cMenu = 0;
     hwnd->fMenuDirty = hwnd->fMenuLayoutDirty = TRUE;
 }
@@ -233,7 +233,7 @@ int CyCompatMenuBar(HWND hwnd) {
     }
     SelectObject(hdc, hfont); ReleaseDC(NULL, hdc);
     if (i != lp->citem) return 0;
-    free(hwnd->rgrcMenu); hwnd->rgrcMenu = rgrcOwner.release();
+    hwnd->rgrcMenu.reset(rgrcOwner.release());
     hwnd->cyMenu = y + cy; hwnd->cxMenu = cx; hwnd->cMenu = lp->citem;
     hwnd->fMenuLayoutDirty = FALSE; hwnd->fMenuDirty = TRUE;
     return hwnd->cyMenu;

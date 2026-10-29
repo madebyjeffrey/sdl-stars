@@ -47,12 +47,13 @@ BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cb
 
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
     SDL_Surface *lpsurface;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     int x, y, iColor;
     COLORREF cr;
     const BYTE *rgb;
     BYTE *lpout;
 
-    lpsurface = SDL_CreateSurface(lpdib->cx, lpdib->cy, SDL_PIXELFORMAT_RGBA32);
+    lpsurfaceOwner.reset(SDL_CreateSurface(lpdib->cx, lpdib->cy, SDL_PIXELFORMAT_RGBA32)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
         return NULL;
     for (y = 0; y < lpdib->cy; y++) {
@@ -63,7 +64,7 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
                 iColor = lpdib->cBits == 1 ? (rgb[x / 8] >> (7 - x % 8)) & 1 :
                          lpdib->cBits == 4 ? (rgb[x / 2] >> (x % 2 == 0 ? 4 : 0)) & 15 : rgb[x];
                 if (iColor >= lpdib->cColors) {
-                    SDL_DestroySurface(lpsurface);
+                    lpsurfaceOwner.reset();
                     SDL_SetError("DIB pixel index is outside its color table");
                     return NULL;
                 }
@@ -77,5 +78,5 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
             lpout[x * 4 + 3] = 255;
         }
     }
-    return lpsurface;
+    return lpsurfaceOwner.release();
 }
