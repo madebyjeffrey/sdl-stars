@@ -199,8 +199,8 @@ LShowTask:
             }
             for (i = 4; i >= 0; i--) {
                 opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction);
-                if (idsAction + opOrd > (int16_t)ids) {
-                    ids = static_cast<StringId>(idsAction + opOrd);
+                if (idsAction + static_cast<int>(opOrd) > (int16_t)ids) {
+                    ids = static_cast<StringId>(idsAction + static_cast<int>(opOrd));
                     icr = i;
                 }
             }

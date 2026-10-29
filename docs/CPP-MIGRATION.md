@@ -1,6 +1,6 @@
 # Native C++ application migration
 
-Status: proposed implementation plan; no runtime changes in this document.
+Status: milestone A implementation in progress as one PR; milestone B remains proposed.
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
 Prerequisites: merged PRs [#57](https://github.com/madebyjeffrey/sdl-stars/pull/57),
@@ -109,8 +109,9 @@ PRs here as implementation proceeds.
 
 ## Milestone A: remove application-owned C interfaces
 
-All A slots are proposed. Each depends on the previous slot, so every intermediate
-revision builds and can be merged independently.
+A01–A13 are implementation checkpoints in one PR, as requested on 2026-10-28.
+Focused commits separate compiler policy, generators, consumers, wrapper groups
+and final declaration cleanup. Milestone B remains outside this PR.
 
 | PR slot | Bounded scope | Additional completion evidence |
 | --- | --- | --- |

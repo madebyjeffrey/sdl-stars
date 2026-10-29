@@ -39,7 +39,7 @@ When goals conflict, apply them in this order:
   `i` index, `f` flag, `lp` pointer, `rg` array, `h` handle, `psz`/`sz`
   strings, `id`/`ish`/`ipl` and the like. Check `structs.h` and nearby code
   for existing prefixes before you invent one.
-- Build game, UI and host sources as C++17 (GNU extensions on); the SDL
+- Build game, UI and host sources as C++20 (GNU extensions on); the SDL
   compatibility runtime and C test harnesses retain C11 and a C ABI. Preserve
   explicit enum underlying widths/signedness, C integer aliases and record
   layouts. Keep scalar locals at the top of a
@@ -100,7 +100,7 @@ When goals conflict, apply them in this order:
   enums (`dataids.h`) and `data_tables.c`. Saved ship designs store hull
   and part numbers, so the parts files are append-only: never reorder or
   remove an entry.
-- Application-owned file streams and paths use the C-compatible C++17 service
+- Application-owned file streams and paths use the C-compatible C++20 service
   in `src/platform/fileio.h`/`fileio.cpp`. Native descriptors stay private to that
   service for exclusive creation, sharing, durable writes and live-handle operations.
   Game files, the clock and formatting go through `native.c` (`HfOpenFile`,

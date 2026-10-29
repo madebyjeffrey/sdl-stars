@@ -106,7 +106,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (itb == tbScannerRange) iRadar = c;
             } else {
                 rgbtn[c].iBitmap = itb;
-                CchGetString(static_cast<StringId>(idsNormalView + itb), rgszTip[itb]);
+                CchGetString(static_cast<StringId>(idsNormalView + static_cast<int>(itb)), rgszTip[itb]);
                 rgbtn[c].iString = (INT_PTR)rgszTip[itb];
                 rgbtn[c].fsStyle = itb <= tbNoPlayerInfoView ? BTNS_CHECKGROUP : BTNS_CHECK;
                 if (itb == tbShipDesignFilter || itb == tbEnemyClassFilter) rgbtn[c].fsStyle |= BTNS_DROPDOWN;

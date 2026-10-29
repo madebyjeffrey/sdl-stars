@@ -11,7 +11,7 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -72,7 +72,7 @@ target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
 add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp)
-set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
+set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
 target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -238,15 +238,31 @@ target_compile_options(stars_options INTERFACE
 )
 
 # Binary64 operation boundaries are intentional; see docs/DOUBLE-PRECISION.md.
-include(CheckCSourceCompiles)
-check_c_source_compiles("
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("
     #include <float.h>
     #if DBL_MANT_DIG != 53 || DBL_MAX_EXP != 1024 || FLT_EVAL_METHOD != 0
     #error unsupported double evaluation
     #endif
-    int main(void) { return 0; }" STARS_BINARY64_DOUBLE)
-if(NOT STARS_BINARY64_DOUBLE)
+    int main(void) { return 0; }" STARS_BINARY64_DOUBLE_CXX20)
+if(NOT STARS_BINARY64_DOUBLE_CXX20)
     message(FATAL_ERROR "Stars requires binary64 double without excess evaluation precision")
+endif()
+
+# Probe the language/library facilities used by the native interfaces.
+check_cxx_source_compiles("
+    #include <span>
+    #include <bit>
+    #include <cstdint>
+    struct Probe { int i; };
+    constinit Probe probe{.i = 20};
+    int main() {
+        int values[1] = {probe.i};
+        std::span<int> view(values);
+        return std::bit_cast<std::uint32_t>(1.0f) == 0 || view.size() != 1;
+    }" STARS_CXX20_INTERFACES)
+if(NOT STARS_CXX20_INTERFACES)
+    message(FATAL_ERROR "Stars requires C++20 designated initializers, constinit, span and bit_cast")
 endif()
 
 target_link_libraries(stars_options INTERFACE m)

@@ -340,7 +340,7 @@ DrawRightSide:
         c = CchGetString(idsCurrentlyResearching, szWork);
         TextOut(hdc, rc.left + 8, rc.top - (dyArial8 >> 1), szWork, c);
         rc.top += dyArial8;
-        CchGetString(static_cast<StringId>(idsEnergy + iResTechNow), szTemp);
+        CchGetString(static_cast<StringId>(idsEnergy + static_cast<int>(iResTechNow)), szTemp);
         CchGetString(idsSTechLevelD, szTemp2);
         c = wsprintf(szWork, szTemp2, szTemp, rgplr[idPlayer].rgTech[iResTechNow] + 1);
         RightTextOut(hdc, xCtr, rc.top, szWork, c, 0);
