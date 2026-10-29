@@ -191,6 +191,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     }, hwndOwner);
     COMPATCLEANUPSCOPE deleteIconFont([&] { if (box.hfontIcon) DeleteObject(box.hfontIcon); });
     COMPATCLEANUPSCOPE destroyBox([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
+    if (FStarsErrorPending()) return 0;
     if (!SDL_IsMainThread() || !FCompatVideo()) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
     if ((type & ~allowed) || (type & 0xf) > 6 || (type & 0xf0) > MB_ICONASTERISK ||
         (type & 0x3000) == 0x3000) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
@@ -216,7 +217,10 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
         if (hwndRoot) { if (IsWindowEnabled(hwndRoot)) rghwnd[cDisabled++] = hwndRoot; }
         else for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT))
             if (IsWindowEnabled(lpwin)) rghwnd[cDisabled++] = lpwin;
-        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], FALSE);
+        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) {
+            if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], FALSE);
+            if (FStarsErrorPending()) goto done;
+        }
     }
     if (hwndRoot && !IsWindow(hwndRoot)) { SetLastError(ERROR_INVALID_WINDOW_HANDLE); goto done; }
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0)) goto done;

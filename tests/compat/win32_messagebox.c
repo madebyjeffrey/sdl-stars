@@ -13,6 +13,7 @@ static HWND hwndOwner, hwndOther, hwndDisabled, hwndExpectedOwner;
 static int mode, idChoose, idDefault, stage, cErrors, cSeen;
 static BOOL fTask, fDone;
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
+static BOOL fDisableFailure;
 static int cAudioQueues;
 bool SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb);
 extern "C" bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
@@ -45,6 +46,9 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     MSG message;
     char sz[64] = {0};
     int nested;
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    if (msg == WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 836);
+#endif
     if (msg == WM_TIMER && !fDone && (hbox = HwndBox())) {
         if (!stage) {
             cSeen++;
@@ -209,6 +213,14 @@ int main(int argc, char **argv) {
     CHECK(SetTimer(hwndOwner, 91, 20, NULL));
     CHECK(MessageBox(hwndOwner, "Initially disabled owner", "Stars Message Contract", MB_OK) == IDOK);
     KillTimer(hwndOwner, 91); CHECK(!IsWindowEnabled(hwndOwner)); EnableWindow(hwndOwner, TRUE);
+    before = cAudioQueues; fDisableFailure = TRUE;
+    CHECK(!MessageBox(hwndOwner, "Failed owner disable", "Stars Message Contract", MB_OK | MB_ICONHAND));
+    CHECK(FStarsErrorPending() && IsWindowEnabled(hwndOwner) && cAudioQueues == before);
+    CHECK(!MessageBox(hwndOwner, "Failure already pending", "Stars Message Contract", MB_OK | MB_ICONHAND));
+    CHECK(IsWindowEnabled(hwndOwner) && cAudioQueues == before);
+    try { StarsRethrowPendingError(); CHECK(FALSE); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 836); }
+    fDisableFailure = FALSE;
     hwndSave = hwndOwner;
     hwndOwner = CreateWindow(wc.lpszClassName, "Destroyed owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               40, 40, 300, 200, NULL, NULL, NULL, NULL); CHECK(hwndOwner);

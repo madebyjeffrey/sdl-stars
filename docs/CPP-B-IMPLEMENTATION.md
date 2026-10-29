@@ -434,3 +434,12 @@ operation while an error is already pending. The permanent case verifies enabled
 owner, saved focus, zero native-dialog count, unchanged UTF-8 filename bytes and
 preservation of the disabling error even when owner restoration also fails.
 The 109-test / 26-leak / 28-sanitizer / 519-match batch above includes this case.
+
+
+## B02 message-box failure produces no prompt sound
+
+The permanent audio-hook vector fails before the fix: a message box still queues
+its alert sound after its owner-disable callback fails. Setup now stops at that
+failure and restores the owners. A second call with the original error pending
+creates no work or sound. Independent SDK branches remain unchanged. This passes
+in the same 109-test / 26-leak / 28-sanitizer / 519-match qualification batch.

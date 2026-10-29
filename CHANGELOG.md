@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `MessageBoxA` stops modal setup when an owner-disable callback fails. It
+  previously continued creating a prompt and queued its alert sound with the
+  error pending. Owners restore before the first error reaches its caller.
+
 - `FFileDialog` stops before launching a chooser if disabling its owner fails.
   Previously it still called the native adapter. Restoration preserves owner,
   focus, native-dialog count, filename bytes and the original callback error.
