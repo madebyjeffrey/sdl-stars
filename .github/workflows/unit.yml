@@ -112,4 +112,5 @@ jobs:
           cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=OFF -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --preset windows-sdl-debug -DSTARS_BUILD_TESTS=ON -DSTARS_BUILD_WIN32_REFERENCE_TESTS=OFF -DPython3_EXECUTABLE="$(cygpath -m "$MINGW_PREFIX/bin/python.exe")"
           cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
+          ctest --test-dir dist/windows-sdl-debug -R '^test_' --output-on-failure
           ctest --preset windows-sdl-headless
