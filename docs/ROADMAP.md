@@ -24,6 +24,11 @@ failure. `LpNewFontRaster` no longer triggers a second, unowned configuration
 through default substitution on Fontconfig 2.17+; older versions retain their
 original entry point. See the [B implementation ledger](CPP-B-IMPLEMENTATION.md).
 
+The platform environment adapter now uses an explicit lookup helper instead of
+a `getenv` macro, preserving Windows SDL/POSIX CRT behavior without poisoning
+C++ standard-library declarations. Its private header joins the independent
+include-order compilation gate.
+
 The prerequisite steps below record the earlier migration checkpoints.
 
 The first migration step compiled the game, UI and host as GNU C++17 under

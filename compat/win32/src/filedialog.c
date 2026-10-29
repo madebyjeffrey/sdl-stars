@@ -339,9 +339,9 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
         }
         return TRUE;
     case ID_FILE_HOME:
-        pszHome = getenv("HOME");
+        pszHome = PszCompatEnvironment("HOME");
 #ifdef _WIN32
-        pszHome = getenv("USERPROFILE");
+        pszHome = PszCompatEnvironment("USERPROFILE");
 #endif
         if (pszHome && *pszHome) FChangeFileDirectory(hwnd, lp, pszHome, TRUE);
         else FileError(hwnd, "The home directory is not available.");
@@ -447,7 +447,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
     hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
-    fNative = !getenv("STARS_FILE_DIALOG_BACKEND") || strcmp(getenv("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
+    fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
 #endif
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);

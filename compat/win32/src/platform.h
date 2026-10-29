@@ -1,9 +1,17 @@
 #ifndef STARS_COMPAT_PLATFORM_H
 #define STARS_COMPAT_PLATFORM_H
 #include "fileio.h"
+#include <cstdlib>
 #ifdef _WIN32
 #include <SDL3/SDL.h>
-// SDL exposes the Windows environment as UTF-8, independently of the CRT code page.
-#define getenv SDL_getenv
 #endif
+
+inline const char *PszCompatEnvironment(const char *pszName) {
+#ifdef _WIN32
+    // SDL exposes the Windows environment as UTF-8, independent of the CRT.
+    return SDL_getenv(pszName);
+#else
+    return std::getenv(pszName);
+#endif
+}
 #endif

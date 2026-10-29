@@ -130,18 +130,18 @@ static char *SzProfilePath(LPCSTR pszFile) {
         || strchr(pszFile, '\\') || strchr(pszFile, ':')
 #endif
     ) { sz = strdup(pszFile); goto LReturn; }
-    pszDir = getenv("STARS_PROFILE_DIR");
-    if (!pszDir || !*pszDir) pszDir = getenv("STARS_SETTINGS_DIR");
+    pszDir = PszCompatEnvironment("STARS_PROFILE_DIR");
+    if (!pszDir || !*pszDir) pszDir = PszCompatEnvironment("STARS_SETTINGS_DIR");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 2;
         sz = (char *)(malloc(cb));
         if (sz) snprintf(sz, cb, "%s/%s", pszDir, pszFile);
         goto LReturn;
     }
-    pszDir = getenv("XDG_CONFIG_HOME");
-    pszHome = getenv("HOME");
+    pszDir = PszCompatEnvironment("XDG_CONFIG_HOME");
+    pszHome = PszCompatEnvironment("HOME");
 #ifdef _WIN32
-    pszDir = getenv("LOCALAPPDATA");
+    pszDir = PszCompatEnvironment("LOCALAPPDATA");
     if (pszDir && *pszDir) {
         cb = strlen(pszDir) + strlen(pszFile) + 8;
         sz = (char *)malloc(cb);
