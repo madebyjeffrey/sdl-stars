@@ -57,7 +57,7 @@ the dummy backend.
 
 ## Sources and verification
 
-The implementation is project C11 code. Wine's
+The implementation is project C++20 code. Wine's
 [toolbar implementation](https://github.com/wine-mirror/wine/blob/master/dlls/comctl32/toolbar.c)
 was consulted for button styles and dropdown notification timing; its source was
 not copied into this control. Microsoft documents the

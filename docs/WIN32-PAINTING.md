@@ -1,6 +1,6 @@
 # Win32 painting milestone
 
-The local C11 runtime now paints two independent SDL windows through Win32
+The local C++20 runtime now paints two independent SDL windows through Win32
 APIs. Each top-level window owns an RGBA canvas, SDL renderer and streaming texture.
 [Logical children](WIN32-CHILDREN.md) own canvases and are composited into their
 root window for presentation.

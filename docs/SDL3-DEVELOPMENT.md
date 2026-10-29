@@ -28,8 +28,8 @@ for an interactive test, or use `--self-test` for automated checks. See
 [Win32 windows and dispatch](WIN32-WINDOWS.md) for scope and debugging.
 
 The SDL presets also build `stars-compat-abi`, `stars-ui-compat-check` and
-`stars-compat-runtime`. The runtime target tests the initial C11 implementation
-adapted from Free API; see [adoption and coverage](FREE-API-ADOPTION.md).
+`stars-compat-runtime`. The runtime target tests the C++20 implementation
+originally adapted from Free API; see [adoption and coverage](FREE-API-ADOPTION.md).
 The former validates the Win32 source ABI; the latter compiles the existing
 UI against native compatibility declarations without linking it. See
 [compatibility headers](../compat/win32/README.md) for scope, the Windows

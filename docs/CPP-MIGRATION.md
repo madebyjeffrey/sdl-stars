@@ -68,7 +68,10 @@ of refinement. Existing behavior remains owned by [S01 persistence](../spec/S01-
 
 ## Observed dependencies
 
-| Current evidence | Migration implication |
+The inventory below records the starting point before milestone A at `5654a47`.
+Completed migration evidence is recorded in the milestone A section.
+
+| Starting evidence | Migration implication |
 | --- | --- |
 | [CMakeLists.txt](../CMakeLists.txt) compiles core/UI/host `.c` files as GNU C++17; encoding, generated tables and most harnesses remain C11. | File extensions do not determine the language. Inspect the actual target/source compilation graph; preserve original filenames initially. |
 | [common.h](../src/core/common.h) and [win.h](../src/ui/win.h) place game/UI declarations under broad C linkage. | Move every real C consumer first, then remove the linkage blocks together with dependent declarations and adapters. |

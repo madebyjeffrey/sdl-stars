@@ -1,6 +1,6 @@
 # Memory DC and bitmap milestone
 
-The native C11 runtime now supports memory DCs, compatible bitmaps, bitmap
+The native C++20 runtime now supports memory DCs, compatible bitmaps, bitmap
 selection and unscaled bitmap transfers. Memory DCs draw through the same
 geometry and text APIs as window DCs, without creating SDL windows or
 renderers. Their lifetime is independent of the window used as a reference.
