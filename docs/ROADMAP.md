@@ -36,6 +36,13 @@ covers all 145 stored enum types in addition to the existing layout comparison;
 full verification is recorded in the fourth stacked PR.
 See [native-port constraints](NATIVE-PORT.md).
 
+The callback recovery follow-up fixes unowned timer/window errors during modal
+operations: `GetMessageA` stops on pending failures, including failures while
+peeking SDL events, so existing dialog, message-box, picker and menu cleanup runs
+before C++ delivery. Fault coverage checks that later dialog commands do not run
+and that the owner is re-enabled for both thread-timer and owner-window failures.
+This does not change turn generation or the native regression baseline.
+
 ## SDL desktop consolidation
 
 The desktop product uses SDL3 through `compat/win32` on every platform. The native

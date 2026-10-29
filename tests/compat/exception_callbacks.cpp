@@ -8,7 +8,9 @@
 
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 static int cDestroyed;
+static int cUnexpected;
 static HWND hwndFailed;
+static HWND hwndQueueOwner;
 struct CallbackGuard { ~CallbackGuard() { ++cDestroyed; } };
 
 static auto pfnRawDialog = &DialogBoxParamA;
@@ -35,6 +37,21 @@ static INT_PTR CALLBACK ThrowingDialog(HWND hwnd, UINT msg, WPARAM, LPARAM mode)
 static void CALLBACK ThrowingTimer(HWND, UINT, UINT_PTR, DWORD) {
     CallbackGuard guard;
     StarsThrowError(starsErrorFile, 456);
+}
+static INT_PTR CALLBACK QueuedFailureDialog(HWND hwnd, UINT msg, WPARAM, LPARAM mode) {
+    if (msg == WM_INITDIALOG) {
+        hwndFailed = hwnd;
+        if (mode == 0) PostMessage(nullptr, WM_TIMER, 77, (LPARAM)ThrowingTimer);
+        else PostMessage(hwndQueueOwner, WM_APP + 40, 0, 0);
+        PostMessage(hwnd, WM_APP + 41, 0, 0);
+        return TRUE;
+    }
+    if (msg == WM_APP + 41) {
+        ++cUnexpected;
+        EndDialog(hwnd, 9);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 int main() {
@@ -71,6 +88,20 @@ int main() {
     try { StarsRethrowPendingError(); CHECK(false); }
     catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 456); }
     CHECK(!FStarsErrorPending());
+    hwndQueueOwner = hwndOwner;
+    for (int i = 0; i < 2; ++i) {
+        INT_PTR result = pfnRawDialog(wc.hInstance, MAKEINTRESOURCE(IDD_PASSWORD), hwndOwner, QueuedFailureDialog, i);
+        CHECK(result == -1 && cUnexpected == 0 && IsWindowEnabled(hwndOwner));
+        CHECK(!IsWindow(hwndFailed) && FStarsErrorPending());
+        try { StarsRethrowPendingError(); CHECK(false); }
+        catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == (i == 0 ? 456 : 777)); }
+        try {
+            DialogBoxParam(wc.hInstance, MAKEINTRESOURCE(IDD_PASSWORD), hwndOwner, QueuedFailureDialog, i);
+            CHECK(false);
+        } catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == (i == 0 ? 456 : 777)); }
+        CHECK(!FStarsErrorPending() && !IsWindow(hwndFailed) && cUnexpected == 0 && IsWindowEnabled(hwndOwner));
+    }
+    CHECK(cDestroyed == 11);
     CHECK(DestroyWindow(hwndOwner));
     StarsCompatShutdown();
     std::puts("Callback exceptions: modal cleanup, nested ownership, timer and C++ destruction passed");

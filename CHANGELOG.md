@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- SDL modal message pumps now unwind when a thread timer or another unowned
+  callback fails, completing dialog and owner cleanup before delivering the
+  pending C++ exception. Previously they continued dispatching commands until
+  the dialog was closed. Turn generation and regression baselines are unchanged.
+
 - Stored constants now use C++ enums with explicit underlying types matching
   the original widths and signedness. C11 callers and generated tables retain
   compatible integer typedefs. Integer/record-field conversions and enum
