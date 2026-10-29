@@ -7,6 +7,11 @@ and its builds count toward 2.9.1.
 
 ## C++ migration
 
+The proposed [native C++ migration plan](CPP-MIGRATION.md) continues the merged
+prerequisites below. It sequences removal of application-owned C linkage first,
+then ownership, record storage and strict C++20 migration in reviewable PRs.
+Its implementation slots are proposed and have not been completed by the plan.
+
 The first migration step compiles the game, UI and host as GNU C++17 under
 existing source filenames, keeping a C ABI for the C11 wrapper, generated tables
 and harnesses. Fixed-width integer aliases remain unchanged; C/C++ layout checks
