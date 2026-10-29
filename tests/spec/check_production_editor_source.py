@@ -52,7 +52,7 @@ def main():
 typedef int HeapType;
 typedef int HWND;
 '''
-    start = enums.index('enum ProdItemType {')
+    start = enums.index('enum ProdItemType : uint16_t {')
     declarations += enums[start:enums.index('\n};', start)+3] + '\n'
     for tag, alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL')]:
         start = types.index('struct '+tag+' {')
@@ -120,7 +120,7 @@ if(cmd==100)goto AddItem;if(cmd==101)goto RemoveItem;
 switch(cmd){'''+block+move+'''}return;RedrawText:redraw++;}
 '''
     bodies += r'''
-static PROD row(unsigned count,unsigned item,unsigned kind) {PROD p={0};p.cItem=count;p.iItem=item;p.grobj=kind;return p;}
+static PROD row(unsigned count,unsigned item,unsigned kind) {PROD p={};p.cItem=count;p.iItem=item;p.grobj=kind;return p;}
 static void reset(unsigned n,int hasQueue) {
     int i;if(lpplProdGlob)FreePl((PL *)lpplProdGlob);lpplProdGlob=NULL;
     if(sel.pl.lpplprod)FreePl((PL *)sel.pl.lpplprod);memset(&sel,0,sizeof(sel));memset(&gd,0,sizeof(gd));
@@ -229,10 +229,10 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-editor-') as work:
-        source=Path(work)/'witness.c';binary=Path(work)/'witness'
+        source=Path(work)/'witness.cpp';binary=Path(work)/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+
-                       ['-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+
+                       ['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-sanitize-recover=all',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

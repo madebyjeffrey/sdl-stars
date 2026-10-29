@@ -36,7 +36,7 @@ def main():
 typedef enum HeapType HeapType;
 #pragma pack(push,1)
 '''
-    declarations=declarations.replace('#define htOrd 1',enums[enums.index('enum HeapType {'):enums.index(';',enums.index('enum HeapType {'))+1])
+    declarations=declarations.replace('#define htOrd 1',enums[enums.index('enum HeapType : uint16_t {'):enums.index(';',enums.index('enum HeapType : uint16_t {'))+1])
     declarations+='typedef struct _hb HB;\n'
     start=types.index('struct _hb {')
     declarations+=types[start:types.index('\n};',start)+3]+'\n'
@@ -130,9 +130,9 @@ static uint32_t word(PLPROD *p,unsigned i) {uint32_t w;assert(within(&p->rgprod[
 static void begin(void) {trace[0]=0;allocations=reallocations=frees=0;requested=0;}
 static void prefix(PLANET *p,unsigned byte,int id) {memset(p,byte,52);p->id=id;}
 int main(void) {
-    _Static_assert(offsetof(PLANET,lpplprod)==52,"native packed prefix");
-    _Static_assert(sizeof(PLANET)==52+sizeof(void *),"pointer after prefix");
-    _Static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(PL)==4,"queue widths");
+    static_assert(offsetof(PLANET,lpplprod)==52,"native packed prefix");
+    static_assert(sizeof(PLANET)==52+sizeof(void *),"pointer after prefix");
+    static_assert(sizeof(PROD)==4 && sizeof(PLPROD)==4 && sizeof(PL)==4,"queue widths");
     CHECK(CbHeapAlign(htOrd)==_Alignof(max_align_t) && CbHeapAlign(htBattle)==2);
     for(unsigned count=0;count<=1;count++) {
         unsigned payload=CbHeapItem(4+4*count,htOrd)-2;
@@ -167,7 +167,7 @@ int main(void) {
     }
     reset();planets[0].lpplprod=queue(4,2,33);sel.pl.lpplprod=planets[0].lpplprod;begin();
     CHECK(FLookupPlanet(-1,&sel.pl)==1 && !allocations && !reallocations && !frees);
-    reset();sel.pl.lpplprod=queue(1,1,88);planets[0].lpplprod=queue(2,1,17);PLANET borrowed={0};begin();
+    reset();sel.pl.lpplprod=queue(1,1,88);planets[0].lpplprod=queue(2,1,17);PLANET borrowed={};begin();
     CHECK(FLookupPlanet(0,&borrowed)==1 && borrowed.lpplprod==planets[0].lpplprod && !allocations && !frees);
     borrowed.lpplprod=sel.pl.lpplprod;planets[0].lpplprod=NULL; // ordinary read overwrites this pointer; it does not free it
     CHECK(FLookupPlanet(0,&borrowed)==1 && borrowed.lpplprod==NULL && !frees);
@@ -221,9 +221,9 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='s06-planet-copy-') as work:
-        path=Path(work);source=path/'witness.c';binary=path/'witness'
+        path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

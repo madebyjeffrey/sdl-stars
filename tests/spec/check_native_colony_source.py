@@ -312,7 +312,7 @@ static void setup(void){
     for(int player=0;player<2;player++){
         int at=player ? 29:8;rgplr[player].rgAttr[rsMajorAdv]=(int8_t)cfg[at];rgplr[player].rgAttr[rsResGen]=(int8_t)cfg[at+1];
         rgplr[player].rgAttr[rsFactProd]=(int8_t)cfg[at+2];rgplr[player].rgAttr[rsFactOperate]=(int8_t)cfg[at+3];rgplr[player].rgAttr[rsMineOperate]=(int8_t)cfg[at+4];
-        rgplr[player].pctIdealGrowth=(int8_t)cfg[at+5];rgplr[player].rgTech[0]=(int8_t)cfg[at+6];rgplr[player].grbitAttr=cfg[at+7] ? grbitRaceOBRM:0;
+        rgplr[player].pctIdealGrowth=(int8_t)cfg[at+5];rgplr[player].rgTech[0]=(int8_t)cfg[at+6];rgplr[player].grbitAttr=static_cast<RaceTraitBits>(cfg[at+7] ? grbitRaceOBRM:0);
         for(int axis=0;axis<3;axis++){rgplr[player].rgEnvVarMin[axis]=0;rgplr[player].rgEnvVar[axis]=50;rgplr[player].rgEnvVarMax[axis]=100;}
         rglpshdefSB[player]=bases[player];for(int i=0;i<10;i++)bases[player][i].hul.ihuldef=(HulDef)(ihuldefOrbitalFort+cfg[22]);
     }
@@ -352,7 +352,7 @@ int main(int argc,char **argv){
 }
 '''
     with tempfile.TemporaryDirectory(prefix='native-colony-') as work:
-        path=Path(work);source=path/'witness.c';binary=path/'witness';data=path/'vectors.bin';excluded={};count=0
+        path=Path(work);source=path/'witness.cpp';binary=path/'witness';data=path/'vectors.bin';excluded={};count=0
         with data.open('wb') as stream:
             for c in cases():
                 assert len(c)==37
@@ -366,7 +366,7 @@ int main(int argc,char **argv){
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source.write_text(declarations+bodies+harness)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror',
             '-Wno-unused-variable','-Wno-unused-but-set-variable','-fsanitize=address,undefined','-fno-sanitize-recover=all',
             '-ffp-contract=off','-fno-fast-math','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)

@@ -12,6 +12,7 @@ import shlex
 import subprocess
 import tempfile
 from check_s02_source import ROOT, function, enum_source
+from check_s02_source import ENUM_STORAGE
 
 
 def main():
@@ -29,8 +30,8 @@ def main():
 #define LOWORD(x) ((uint16_t)(x))
 '''
     for name in ['ProdItemType','RaceStat','RaceAttribute','RaceGrbit','HullSlotType','GrobjClass']:
-        start=enums.index('enum '+name+' {')
-        declarations+=enums[start:enums.index('\n};',start)+3]+f'\ntypedef uint16_t {name};\n'
+        start=enums.index('enum '+name+' : '+ENUM_STORAGE[name]+' {')
+        declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
     for name in ['iplanetarySDI','iplanetaryGenesisDevice']:
         value=planetary_names.index(name)
         declarations+=f'#define {name} {value}\n'
@@ -133,7 +134,7 @@ static int compare(int player,int one) {
         } else if(cursor || lookups || lastHull!=-1)return 0;
     } else {
         int expectedLookup=-1,expectedQuotes=0;
-        if(prod.iItem==2 || prod.iItem==9)expectedLookup=iplanetarySDI;
+        if(prod.iItem==2 || prod.iItem==9)expectedLookup=static_cast<int>(iplanetarySDI);
         else if(prod.iItem==13){expectedLookup=iplanetaryGenesisDevice;expectedQuotes=1;}
         else if(prod.iItem>=18 && prod.iItem<=27){expectedLookup=prod.iItem==27 ? 0:prod.iItem-18;expectedQuotes=1;}
         if(lookups!=(expectedLookup>=0) || cursor!=expectedQuotes)return 0;
@@ -154,7 +155,7 @@ static void reset(void) {
 static uint32_t randomState=12345;
 static unsigned randomWord(void) {randomState^=randomState<<13;randomState^=randomState>>17;randomState^=randomState<<5;return randomState;}
 int main(void) {
-    _Static_assert(sizeof(PROD)==4 && sizeof(HS)==4 && sizeof(HUL)==123 && sizeof(SHDEF)==147,"native cost layouts");
+    static_assert(sizeof(PROD)==4 && sizeof(HS)==4 && sizeof(HUL)==123 && sizeof(SHDEF)==147,"native cost layouts");
     reset();
     for(unsigned owner=0;owner<10;owner++)for(unsigned pricing=0;pricing<10;pricing++)for(unsigned traits=0;traits<16;traits++) {
         rgplr[0].rgAttr[rsMajorAdv]=owner;rgplr[1].rgAttr[rsMajorAdv]=pricing;
@@ -167,7 +168,7 @@ int main(void) {
     reset();prod.grobj=2;prod.iItem=17;prod.cItem=3;planet.fStarbase=1;planet.isb=0;bases[0].hul.chs=1;bases[1].hul.chs=1;
     for(unsigned word=0;word<65536;word++)for(unsigned mode=0;mode<3;mode++)for(unsigned counts=0;counts<3;counts++) {
         unsigned oldCount=counts==0 ? 1:counts==1 ? 17:255,newCount=counts==0 ? 1:counts==1 ? 253:255;
-        bases[0].hul.rghs[0]=(HS){hstBeam,3,oldCount};bases[1].hul.rghs[0]=(HS){mode==0 ? hstArmor:hstBeam,mode==1 ? 4:3,newCount};
+        bases[0].hul.rghs[0]=HS{hstBeam,3,(uint16_t)oldCount};bases[1].hul.rghs[0]=HS{mode==0 ? hstArmor:hstBeam,(uint16_t)(mode==1 ? 4:3),(uint16_t)newCount};
         for(unsigned d=0;d<4;d++) {
             quotes[0][d]=(uint16_t)(word+d*123);quotes[1][d]=(uint16_t)(word+d*19);quotes[2][d]=(uint16_t)(65535-word+d*37);
             bases[1].hul.rgwtOreCost[d%3]=(uint16_t)(word+d*7919);bases[1].hul.resCost=word;
@@ -177,7 +178,7 @@ int main(void) {
     reset();prod.grobj=2;prod.iItem=17;prod.cItem=1023;planet.fStarbase=1;bases[0].hul.ihuldef=1;bases[1].hul.ihuldef=2;
     for(unsigned d=0;d<3;d++){bases[0].hul.rgwtOreCost[d]=65535;bases[1].hul.rgwtOreCost[d]=65535;}
     bases[0].hul.resCost=bases[1].hul.resCost=65535;rgplr[0].grbitAttr=UINT32_C(1)<<ibitRaceISB;
-    CHECK(compare(0,1));uint32_t exact[4]={0};GetProductionCosts(&planet,&prod,exact,0,1);
+    CHECK(compare(0,1));uint32_t exact[4]={};GetProductionCosts(&planet,&prod,exact,0,1);
     CHECK(exact[0]==13107 && exact[1]==13107 && exact[2]==13107 && exact[3]==13107);rgplr[0].grbitAttr=0;
     for(unsigned word=0;word<65536;word++) {
         for(unsigned d=0;d<3;d++){bases[0].hul.rgwtOreCost[d]=65535-word;bases[1].hul.rgwtOreCost[d]=word;}
@@ -188,7 +189,7 @@ int main(void) {
         for(unsigned i=0;i<26;i++) {
             SHDEF *s=i<16 ? &ships[i]:&bases[i-16];s->fFree=randomWord()%7==0;s->hul.ihuldef=randomWord()%2;s->hul.chs=randomWord()%17;
             for(unsigned d=0;d<3;d++)s->hul.rgwtOreCost[d]=randomWord();s->hul.resCost=randomWord();
-            for(unsigned j=0;j<16;j++)s->hul.rghs[j]=(HS){randomWord()%3,randomWord()%3,randomWord()%4};
+            for(unsigned j=0;j<16;j++)s->hul.rghs[j]=HS{static_cast<HullSlotType>(randomWord()%3),(uint16_t)(randomWord()%3),(uint16_t)(randomWord()%4)};
         }
         for(unsigned q=0;q<33;q++)for(unsigned d=0;d<4;d++)quotes[q][d]=randomWord();
         rgplr[0].rgAttr[rsMajorAdv]=randomWord()%10;rgplr[0].grbitAttr=(randomWord()%2) ? UINT32_C(1)<<ibitRaceISB:0;
@@ -212,9 +213,9 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-cost-') as work:
-        path=Path(work);source=path/'witness.c';binary=path/'witness'
+        path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=c11','-Wall','-Wextra','-Werror',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

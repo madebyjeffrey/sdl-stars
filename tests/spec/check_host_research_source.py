@@ -245,7 +245,7 @@ int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t
     bodies+=function('src/core/turn2.c','void UpdateResearchStatus(').replace('void UpdateResearchStatus(', 'static void NativeUpdateResearchStatus(',1)+'\n'
     harness=r'''
 static void setup(void){memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));hash=costs=lookups=messages=generals=tts=primaries=entries=0;lastField=lastLevel=0;memset(typeCalls,0,sizeof(typeCalls));game.cPlayer=(int16_t)cfg[0];game.fSlowTech=cfg[2];idPlayer=(int16_t)cfg[6];
-    for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=(cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0);
+    for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=static_cast<RaceTraitBits>((cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0));
         p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->iTechNow=cfg[at+5];p->iTechNext=cfg[at+6];p->lResLastYear=cfg[at+7];
         for(int f=0;f<6;f++){p->rgTech[f]=(int8_t)cfg[at+8+f];p->rgAttr[8+f]=(int8_t)cfg[at+14+f];p->rgResSpent[f]=(uint32_t)cfg[at+20+f];}}
 }
@@ -272,8 +272,8 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         print(f'Prepared {count} host research vectors; excluded before C: {excluded}',flush=True)
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable','-Wno-pointer-sign',
+        source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
@@ -311,9 +311,9 @@ int main(void){
     printf("Native actual catalog terminators: %lu assertions passed, all 16 counts below byte wrap\n",checks);return 0;
 }
 '''
-        catalog=path/'catalog.c';catalog.write_text(catalog_declarations+catalog_bodies+catalog_harness);catalog_binary=path/'catalog'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(catalog),str(path/'data_tables.c'),'-lm','-o',str(catalog_binary)],check=True)
+        catalog=path/'catalog.cpp';catalog.write_text(catalog_declarations+catalog_bodies+catalog_harness);catalog_binary=path/'catalog'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(catalog),str(path/'data_tables.cpp'),'-lm','-o',str(catalog_binary)],check=True)
         subprocess.run([str(catalog_binary)],check=True)
 
 

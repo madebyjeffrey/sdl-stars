@@ -159,14 +159,14 @@ static int rgCalls[8],cCalls;
 #define CHECK(f) do { cChecks++;if(!(f)){fprintf(stderr,"case %lu check failed at line %d: %s\n",cCases,__LINE__,#f);abort();}} while(0)
 static void Call(int tag){CHECK(cCalls<8);rgCalls[cCalls++]=tag;}
 '''
-    declarations+='\n'.join(f'_Static_assert({name}=={value},"model identity {name}");' for name,value in IDENTITIES.items())+'\n'
+    declarations+='\n'.join(f'static_assert({name}=={value},"model identity {name}");' for name,value in IDENTITIES.items())+'\n'
     bindings={'raCheapCol':0,'raStealth':1,'raAttack':2,'raTerra':3,'raDefend':4,'raMines':5,'raMassAccel':6,'raStargate':7,'raMacintosh':8,'raNone':9,
               'ibitRaceIFE':0,'ibitRaceTT':1,'ibitRaceARM':2,'ibitRaceISB':3,'ibitRaceNoRamscoops':7,'ibitRaceOBRM':9,'ibitRaceNoAdvScanner':10,
               'grbitTraderCargo':1,'grbitTraderSpecial':2,'grbitTraderShield':4,'grbitTraderArmor':8,'grbitTraderMiner':16,'grbitTraderBomb':32,
               'grbitTraderTorp':64,'grbitTraderBeam':128,'grbitTraderHull':256,'grbitTraderEngine':512,'grbitTraderGenesis':1024,'grbitTraderJumpgate':2048}
     mask_names=('hstEngine','hstScanner','hstShield','hstArmor','hstBeam','hstTorp','hstBomb','hstMining','hstMines','hstSpecialSB','hstSBHull','hstSpecialE','hstSpecialM','hstTerra','hstHull','hstPlanetary')
     bindings.update({name:1<<k for k,name in enumerate(mask_names)})
-    declarations+='\n'.join(f'_Static_assert({name}=={value},"native protocol {name}");' for name,value in bindings.items())+'\n'
+    declarations+='\n'.join(f'static_assert({name}=={value},"native protocol {name}");' for name,value in bindings.items())+'\n'
     bodies=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('GetRaceStat(','NativeGetRaceStat(',1)+'\n'
     bodies+=function('src/core/race.c','int16_t GetRaceGrbit(').replace('GetRaceGrbit(','NativeGetRaceGrbit(',1)+'\n'
     bodies+=function('src/core/parts.c','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
@@ -207,10 +207,10 @@ int main(int argc,char **argv){
         for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;
         memset(rgplr,0x53,sizeof(rgplr));memset(&game,0x35,sizeof(game));
         idPlayer=(int16_t)(rgIn[1]?iplrNone:rgIn[9]);int target=rgIn[9];
-        rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=(uint32_t)rgIn[3];rgplr[target].grbitTrader=(uint16_t)rgIn[4];rgplr[target].iTechNow=rgIn[5];
+        rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].iTechNow=rgIn[5];
         for(int f=0;f<6;f++)rgplr[target].rgTech[f]=(int8_t)rgIn[10+f];
         PLAYER rgBefore[16];GAME gameBefore;memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));int16_t idBefore=idPlayer;
-        PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=(uint16_t)mask;part.hs.iItem=item;part.hs.cItem=rgIn[8];part.pcom=&comPrior;memcpy(&expected,&part,sizeof(part));
+        PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.pcom=&comPrior;memcpy(&expected,&part,sizeof(part));
         memset(rgCalls,-1,sizeof(rgCalls));cCalls=0;int result;
         if(rgIn[0]==0){result=FLookupPart(&part);if(kind<16 && item<rgcRows[kind])expected.pcom=LpcomRow(kind,item);}
         else if(rgIn[0]==1)result=FShouldPartBeHidden(&part);
@@ -226,9 +226,9 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.c'),'-lm','-o',str(binary)],check=True)
+        source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror',
+            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={}
         for row in struct.iter_unpack('<9i',export.read_bytes()):table[row[0],row[1]]=(row[2:8],row[8])

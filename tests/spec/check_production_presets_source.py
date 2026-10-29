@@ -20,6 +20,7 @@ def main():
     types = (ROOT / 'src/core/structs.h').read_text()
     declarations = r'''
 #include <stdint.h>
+typedef uint16_t StringId;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -238,11 +239,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix='m09-presets-') as work:
-        source = Path(work) / 'witness.c'
+        source = Path(work) / 'witness.cpp'
         binary = Path(work) / 'witness'
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get('CC', 'cc')) +
-                       ['-std=c11', '-Wall', '-Wextra', '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
+                       ['-std=gnu++20','-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
                         str(source), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

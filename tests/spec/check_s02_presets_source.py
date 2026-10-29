@@ -99,11 +99,11 @@ int main(void) {
 }
 '''
     with tempfile.TemporaryDirectory(prefix="s02-presets-") as work:
-        source = Path(work) / "witness.c"
+        source = Path(work) / "witness.cpp"
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
-        subprocess.run(shlex.split(os.environ.get("CC", "cc")) +
-                       ["-std=c11", "-Wall", "-Wextra", "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+        subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
+                       ["-std=gnu++20", "-x", "c++", "-Wall", "-Wextra", "-Werror", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
                         str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

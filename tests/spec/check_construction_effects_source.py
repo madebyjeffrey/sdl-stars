@@ -90,7 +90,7 @@ void KillQueuedMassPackets(PLANET *p){packetKills++;NativeKillQueuedMassPackets(
         bodies+=function('src/core/build.c','void '+name+'(').replace('void '+name+'(', 'static void Native'+name+'(',1)+'\n'
     bodies+='\n'.join(function('src/core/turn2.c',s) for s in ['int16_t FBuildObject(','void CreateShip(','int16_t CBuildProdItem(','void Produce('])
     witnesses=r'''
-static PROD row(unsigned count,unsigned item,unsigned kind,unsigned pct){PROD r={0};r.cItem=count;r.iItem=item;r.grobj=kind;r.pct=pct;r.unused=31;return r;}
+static PROD row(unsigned count,unsigned item,unsigned kind,unsigned pct){PROD r={};r.cItem=count;r.iItem=item;r.grobj=kind;r.pct=pct;r.unused=31;return r;}
 static void reset(void){
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);heaps=0;
     memset(&game,0,sizeof(game));memset(&gd,0,sizeof(gd));memset(&sel,0,sizeof(sel));memset(rgplr,0,sizeof(rgplr));
@@ -119,7 +119,7 @@ static int damageExpected(int prior,int add,unsigned word,unsigned hp,unsigned *
     *out=newShare+128*((unsigned)(scaled/(int)hp)&511);return 1;
 }
 int main(void){
-    _Static_assert(sizeof(PROD)==4 && sizeof(DV)==2 && sizeof(THPACK)==10 && sizeof(THING)==18,"native object layout");
+    static_assert(sizeof(PROD)==4 && sizeof(DV)==2 && sizeof(THPACK)==10 && sizeof(THING)==18,"native object layout");
     reset();CHECK(!call(0,0,1) && !call(1,-1,1) && !call(1,28,1));
     for(int raw=-32768;raw<=32767;raw++)for(unsigned which=0;which<6;which++){
         reset();unsigned items[]={0,8,1,7,2,9};unsigned item=items[which];cap=(int16_t)raw;removed=3;
@@ -178,7 +178,7 @@ int main(void){
     reset();THING *p=LpthNew(0,ithMineralPacket);p->pt=rgptPlan[5];p->thp.iWarp=6;p->thp.idPlanet=7;p->thp.iDecayRate=0;p->thp.wtMax=1629;
     for(int i=0;i<3;i++)p->thp.rgwtMin[i]=32760;CHECK(call(1,17,1) && cThing==1);CHECK(p->thp.rgwtMin[0]==32760 && p->thp.wtMax==6556 && messageIds[0]==idmHasProducedMineralPacketWhichHasCombined);
     p->thp.wtMax=1630;CHECK(call(1,17,1) && cThing==2);
-    reset();cThing=cThingAlloc=512;lpThings=LpAlloc((uint16_t)(512*sizeof(THING)),htThings);
+    reset();cThing=cThingAlloc=512;lpThings=static_cast<THING *>(LpAlloc((uint16_t)(512*sizeof(THING)),htThings));
     for(int i=0;i<512;i++){lpThings[i].ith=ithMineralPacket;lpThings[i].iplr=0;lpThings[i].id=i;lpThings[i].pt.x=99;}
     CHECK(call(1,17,1) && cThing==512 && messageIds[0]==idmHasOrdersBuildMineralPacketEitherDoesnt);
     // Fleet limit uses first-order point, first null/greater owner and strict
@@ -206,7 +206,7 @@ int main(void){
     CHECK(fleetBodies[0].rgcsh[0]==-32768 && ships[0].cBuilt==0 && ships[0].cExist==0);
     // Actual base invalidators reset surviving base progress in both the
     // copied prefix and old physical source slot.
-    reset();planet.fStarbase=1;planet.isb=0;bases[0].hul.ihuldef=10;bases[1].hul.ihuldef=5;bases[0].cExist=1;
+    reset();planet.fStarbase=1;planet.isb=0;bases[0].hul.ihuldef=static_cast<HulDef>(10);bases[1].hul.ihuldef=static_cast<HulDef>(5);bases[0].cExist=1;
     planet.lpplprod=(PLPROD *)LpplAlloc(4,3,htOrd);planet.lpplprod->iprodMac=3;
     planet.lpplprod->rgprod[0]=row(1,0,2,50);planet.lpplprod->rgprod[1]=row(1,16,2,59);planet.lpplprod->rgprod[2]=row(1,14,1,0);
     sel.grobj=grobjPlanet;sel.pl.id=planet.id;warpValues[0]=warpValues[1]=0;
@@ -251,12 +251,12 @@ def main():
         path=Path(work)
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';binary=path/'witness';source.write_text(declarations+bodies+witnesses)
+        source=path/'witness.cpp';binary=path/'witness';source.write_text(declarations+bodies+witnesses)
         # Existing reconstructed bodies have an unused resource parameter and
         # corresponding signed/unsigned cost-pointer convention; match project
         # warning exclusions while making other warnings and sanitizers fatal.
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror',
-            '-Wno-unused-parameter','-Wno-pointer-sign','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-x','c++','-Wall','-Wextra','-Werror',
+            '-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all',
             '-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
