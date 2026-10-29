@@ -23,6 +23,7 @@ void CompatLayoutScrollbars(HWND hwnd) {
     BOOL fShow;
     /* Combo scroll styles apply to the dropdown, not the closed field. */
     if (!IsWindow(hwnd) || hwnd->fDestroying || hwnd->fScrollLayout || hwnd->fNcScroll || hwnd->lpcombo || !hwnd->fCreated) return;
+    StarsRestore<BOOL> restoreLayout(hwnd->fScrollLayout);
     hwnd->fScrollLayout = TRUE;
     CompatGetSurfaceRect(hwnd, &rc); GetClientRect(hwnd, &client);
     for (i = 0; i < 2; i++) {
@@ -54,7 +55,6 @@ void CompatLayoutScrollbars(HWND hwnd) {
         if (!IsWindow(hwnd)) return;
         InvalidateRect(hbar, NULL, TRUE);
     }
-    hwnd->fScrollLayout = FALSE;
 }
 
 BOOL WINAPI ShowScrollBar(HWND hwnd, int sb, BOOL fShow) {

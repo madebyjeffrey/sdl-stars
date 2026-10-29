@@ -132,9 +132,10 @@ struct HWND__ {
     int iScrollTrack, dScrollGrab;
     UINT_PTR idScrollTimer;
     LPARAM lScrollPoint;
-    COMPATTOOLBAR *lptoolbar;
-    COMPATLIST *lplist;
-    COMPATCOMBO *lpcombo;
+    // Callback frames retain control storage after immediate logical teardown.
+    std::shared_ptr<COMPATTOOLBAR> lptoolbar;
+    std::shared_ptr<COMPATLIST> lplist;
+    std::shared_ptr<COMPATCOMBO> lpcombo;
     WPARAM wMouseButtons;
     double dWheelX, dWheelY;
     BOOL fAlive, fDestroying, fVisible;

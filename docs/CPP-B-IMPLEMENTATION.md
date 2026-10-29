@@ -376,3 +376,36 @@ units), warning-free builds and 519 native regression matches / 25 accepted
 unused-storage warnings / zero differences, errors or skipped inputs. Baselines
 and independent references remain unchanged. B02 deferred control lifetimes are
 still active.
+
+
+## B02 deferred control storage and reentrancy flags
+
+List, combo and toolbar state now has typed shared ownership in its HWND, with
+local leases in operations that borrow state across callbacks. Logical teardown
+still detaches the control immediately. The last active operation releases its
+storage afterwards, making scoped flag restoration safe when a callback destroys
+the window. List reset also scopes its detached item array and remaining labels;
+toolbar tooltip destruction stays in logical teardown rather than the physical
+storage destructor. Silent process-exit cleanup uses the same owners.
+
+List scroll synchronization, combo synchronization/opening/closing/sizing,
+toolbar pressed state, scrollbar layout and edit-scroll synchronization now use
+scope restoration. Existing normal restoration points before notifications and
+publication remain. Construction uses value-initialized typed allocations and
+maps allocation failure to the existing failed-creation result.
+
+The new lifetime harness destroys list/combo/toolbar controls from their actual
+owner-draw/dropdown notifications, with and without a callback exception. It
+asserts immediate handle invalidation/detachment, retained borrowed storage inside
+the callback, physical release at operation exit, balanced dispatch and delivery
+of the original error. A combo opening frame borrows combo state; its unborrowed
+list state is allowed to retire immediately. Existing complete list/combo/toolbar
+behavior vectors now qualify all desktop platforms, including Windows SDL private
+cases while keeping independent SDK branches intact.
+
+Results: 109/109 full macOS CTest, 53 ownership contracts including 26 native
+leak checks, 28/28 ASan/UBSan cases (27 ownership/callback cases plus core exception
+units), warning-free builds and 519 native regression matches / 25 accepted
+unused-storage warnings / zero differences, errors or skipped inputs. No baseline
+or independent reference changed. Final B02 failure-publication checks remain
+active before declaring the checkpoint complete.

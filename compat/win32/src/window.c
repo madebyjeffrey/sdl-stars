@@ -347,8 +347,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     // Control-owned storage must still be released on that silent path.
     CompatDestroyList(lpwin);
     CompatDestroyToolbar(lpwin);
-    SDL_free(lpwin->lpcombo);
-    lpwin->lpcombo = NULL;
+    lpwin->lpcombo.reset();
     SDL_free(lpwin->pszEditComposition); lpwin->pszEditComposition = NULL;
     SDL_free(lpwin->pszEditUndo);
     lpwin->pszEditUndo = NULL;

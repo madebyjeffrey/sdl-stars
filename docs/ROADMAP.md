@@ -22,8 +22,10 @@ implemented. Modeless initialization failure now destroys the partial window
 before checked C++ delivery instead of publishing an unreachable live handle.
 Presentation batching now balances its counters on failure/destruction; refresh
 and live-resize flags restore during unwinding. The SDL watcher contains foreign
-callback failures and stops drawing after failed layout or paint. Reentrant
-control lifetimes remain in progress.
+callback failures and stops drawing after failed layout or paint. Lists, combos
+and toolbars now retire their window ownership immediately while active callback
+frames retain borrowed control storage; scoped flags restore before those leases
+end. Final B02 failure-publication checks remain in progress.
 
 ## C++ migration
 

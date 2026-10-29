@@ -16,6 +16,11 @@ struct COMPATTOOLBAR {
     DWORD dwExStyle;
     UINT cbButton;
     HWND hwndTip;
+    ~COMPATTOOLBAR() noexcept {
+        for (int i = 0; i < c; i++) SDL_free(rgbtn[i].psz);
+        for (int i = 0; i < cbmp; i++) DeleteObject(rgbmp[i].hbmp);
+        free(rgbtn); free(rgbmp);
+    }
 };
 
 BOOL WINAPI InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit) {
@@ -27,20 +32,15 @@ BOOL WINAPI InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit) {
 }
 
 static void HideTip(HWND hwnd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     if (lp->hwndTip) ShowWindow(lp->hwndTip, SW_HIDE);
     KillTimer(hwnd, 1);
 }
 
 void CompatDestroyToolbar(HWND hwnd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
-    int i;
-    if (!lp) return;
-    if (IsWindow(lp->hwndTip)) DestroyWindow(lp->hwndTip);
-    for (i = 0; i < lp->c; i++) SDL_free(lp->rgbtn[i].psz);
-    for (i = 0; i < lp->cbmp; i++) DeleteObject(lp->rgbmp[i].hbmp);
-    free(lp->rgbtn); free(lp->rgbmp); free(lp);
-    hwnd->lptoolbar = NULL;
+    auto lptoolbarKeep = std::move(hwnd->lptoolbar);
+    if (lptoolbarKeep && IsWindow(lptoolbarKeep->hwndTip)) DestroyWindow(lptoolbarKeep->hwndTip);
 }
 
 static int IndexButton(COMPATTOOLBAR *lp, int id) {
@@ -55,7 +55,8 @@ static BOOL FArrow(COMPATTOOLBAR *lp, TBBUTTON *lpbtn) {
 }
 
 static void LayoutToolbar(HWND hwnd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBUTTON *lpbtn;
     int i, x = lp->xIndent, cx;
     for (i = 0; i < lp->c; i++) {
@@ -76,7 +77,8 @@ static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
 }
 
 static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBUTTON *rgNew;
     size_t i;
     if (!rgbtn || iInsert < 0 || iInsert > lp->c || c > 4096 || c + lp->c > 4096 ||
@@ -105,7 +107,8 @@ static BOOL AddButtons(HWND hwnd, int iInsert, size_t c, const TBBUTTON *rgbtn) 
 }
 
 static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBITMAP *rgbmp;
     HBITMAP hbmp, hcopy, hOldSrc, hOldDst;
     HDC hsrc, hdst;
@@ -140,7 +143,8 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
 }
 
 static void PaintToolbar(HWND hwnd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     PAINTSTRUCT ps;
     HDC hdc, hsrc;
     HBITMAP hOld;
@@ -200,7 +204,8 @@ static void PaintToolbar(HWND hwnd) {
 }
 
 static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     NMTOOLBARA nm = {};
     TBBUTTON btn;
     HWND hwndParent = hwnd->hwndParent;
@@ -215,10 +220,11 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
         nm.iItem = btn.idCommand; nm.tbButton = btn; nm.rcButton = lp->rgbtn[i].rc;
         // Menu activation is independent of the split button's action/check
         // state, and remains visible throughout the parent's modal menu loop.
+        StarsRestore<BOOL> restorePressed(lp->fDropPressed);
         lp->idDrop = btn.idCommand; lp->fDropPressed = TRUE;
         InvalidateRect(hwnd, NULL, TRUE); UpdateWindow(hwnd);
         result = SendMessageA(hwndParent, WM_NOTIFY, nm.hdr.idFrom, (LPARAM)&nm);
-        if (!IsWindow(hwnd) || !(lp = hwnd->lptoolbar)) return;
+        if (!IsWindow(hwnd) || !(lp = hwnd->lptoolbar.get())) return;
         lp->fDropPressed = FALSE;
         InvalidateRect(hwnd, NULL, TRUE);
         i = IndexButton(lp, btn.idCommand);
@@ -254,7 +260,8 @@ LRESULT CALLBACK CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 static void ShowToolbarTip(HWND hwnd) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBUTTON *lpbtn;
     RECT rc, rcRoot;
     POINT pt;
@@ -282,7 +289,8 @@ static void ShowToolbarTip(HWND hwnd) {
 }
 
 LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    COMPATTOOLBAR *lp = hwnd->lptoolbar;
+    auto lptoolbarKeep = hwnd->lptoolbar;
+    COMPATTOOLBAR *lp = lptoolbarKeep.get();
     POINT pt = {(int16_t)LOWORD(l), (int16_t)HIWORD(l)};
     int i, j, id, step;
     BYTE mask;
@@ -291,8 +299,10 @@ LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     TBBUTTON *lpbtn;
     if (msg == WM_NCCREATE) {
-        lp = (COMPATTOOLBAR *)(calloc(1, sizeof(*lp))); if (!lp) return FALSE;
-        hwnd->lptoolbar = lp; hwnd->iControl = 7;
+        try { lptoolbarKeep = std::make_shared<COMPATTOOLBAR>(); }
+        catch (const std::bad_alloc &) { return FALSE; }
+        lp = lptoolbarKeep.get();
+        hwnd->lptoolbar = lptoolbarKeep; hwnd->iControl = 7;
         lp->cx = 23; lp->cy = 22; lp->cxBitmap = 16; lp->cyBitmap = 15;
         lp->iDown = lp->iHot = -1; lp->cTextRows = 1;
         return TRUE;

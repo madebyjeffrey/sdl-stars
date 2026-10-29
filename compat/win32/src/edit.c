@@ -310,6 +310,7 @@ static void SyncEditScroll(HWND hwnd) {
     UINT ich, next, end, cch;
     int cy, cxMax = 0;
     if (!(hwnd->dwStyle & ES_MULTILINE) || hwnd->fEditScrollSync || hwnd->fDestroying) return;
+    StarsRestore<BOOL> restoreSync(hwnd->fEditScrollSync);
     hwnd->fEditScrollSync = TRUE;
     EditFormat(hwnd, &rc); cy = CyEdit(hwnd); cch = CchEdit(hwnd);
     if (hwnd->fEditV) {
@@ -333,7 +334,6 @@ static void SyncEditScroll(HWND hwnd) {
         hwnd->xEditScroll = SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
         if (!IsWindow(hwnd)) return;
     }
-    hwnd->fEditScrollSync = FALSE;
 }
 
 static void ScrollEdit(HWND hwnd, int dx, int dy) {

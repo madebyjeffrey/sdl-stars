@@ -67,8 +67,8 @@ jobs:
           UBSAN_OPTIONS: halt_on_error=1
         run: |
           cmake --preset sdl-sanitize
-          cmake --build --preset sdl-sanitize --target stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
-          ctest --test-dir dist/sdl-sanitize -R '^win32_(images|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|modal|messagebox|audio_.*))$' --output-on-failure
+          cmake --build --preset sdl-sanitize --target stars-compat-images stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-resource-list stars-resource-combo stars-resource-toolbar stars-resource-controls stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^win32_(images|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|modal|messagebox|list|combo|toolbar|controls|audio_.*))$' --output-on-failure
 
   source-witnesses:
     name: Source witnesses (C++20)
