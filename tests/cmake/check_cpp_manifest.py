@@ -6,7 +6,7 @@ import sys
 
 root = Path(sys.argv[1]).resolve()
 manifest = Path(sys.argv[2]).resolve()
-rows = json.loads(manifest.read_text())
+rows = json.loads(manifest.read_text(encoding="utf-8"))
 generated = (manifest.parent / "generated", manifest.parent / "compat/win32/generated")
 count = 0
 production = set()
@@ -38,7 +38,7 @@ for directory in ("src", "compat/win32/include", "compat/win32/src"):
     for path in (root / directory).rglob("*"):
         if path.suffix not in (".h", ".c", ".cpp", ".m"):
             continue
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         assert not re.search(r'extern\s+"C"|__cplusplus', text), f"Owned C interface remains: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
 print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}")

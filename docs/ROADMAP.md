@@ -13,8 +13,10 @@ in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64) against `develop
 wrapper/native adapters and ordinary harnesses use C++20/Objective-C++20.
 Application headers have native C++ linkage and compile independently with
 standard headers in either order. Independent C storage and SDK references remain
-separate. Milestone B (ownership, wire codecs, state and ISO C++ storage) remains
-proposed; GNU storage extensions and manual heaps are retained for now.
+separate. The compilation audit reads sources and compiler manifests explicitly
+as UTF-8 so Windows locale settings do not affect qualification. Milestone B
+(ownership, wire codecs, state and ISO C++ storage) remains proposed; GNU storage
+extensions and manual heaps are retained for now.
 
 The prerequisite steps below record the earlier migration checkpoints.
 
