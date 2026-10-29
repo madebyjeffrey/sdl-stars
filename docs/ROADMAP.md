@@ -29,8 +29,8 @@ end. Failed owner-disable callbacks now stop dialog/file-chooser/message-box
 initialization, and combo opening rolls back its own failed popup while retaining
 a reentrant replacement. Profile read/write locks and partial buffers/temporary
 files now unwind safely; injected read/load/save failures preserve the existing
-destination and permit retry. B02 local qualification passes, with platform CI
-pending before its checkpoint is marked complete.
+destination and permit retry. B02 local qualification and all 16 Linux/Windows
+checks pass for `d5de69e`; B03 const text/buffer-view work is active.
 
 ## C++ migration
 

@@ -10,8 +10,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | Checkpoint | Status | Evidence / remaining work |
 | --- | --- | --- |
 | B01: desktop resource owners | Complete | Typed SDL/Cairo/FreeType, image/font/menu/audio/window/DC/geometry/class owners. Local full suite, native leaks, ASan/UBSan and regression pass; all 16 Linux/Windows checks pass for ff617cb. |
-| B02: dispatch and callback guards | Active: platform CI pending | Implementation and local checkpoint matrix pass: locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. |
-| B03: const-correct text and scoped views | Pending | Preserve UTF-8 byte budgets, NUL contracts and borrowed-buffer lifetimes. |
+| B02: dispatch and callback guards | Complete | Locks, dispatch/modal/presentation guards, deferred controls, failure rollback and foreign callback containment. Full local matrix and all 16 Linux/Windows checks pass for d5de69e. |
+| B03: const-correct text and scoped views | Active | Const literal-backed text and read-only interfaces; bounded call-scoped UTF-8/output/byte views. Preserve mutable scratch/output contracts and qualify all consumers. |
 | B04: record codecs and complete storage inventory | Pending | Use S01's existing record/bit contracts and independent vectors; account for every raw file/resource access. |
 | B05: production payloads | Pending | Separate queue storage and serialized widths without changing heap lifetime or forecast results. |
 | B06: waypoint/order payloads | Pending | Preserve order edits/replay, transport presets and growth/failure receipts. |
@@ -491,3 +491,12 @@ identified missing C++ helper declarations in the two profile witnesses; both
 then passed after the include/declaration update (25 and 42 assertions).
 B02 implementation and local qualification are complete; its tracker remains
 active until the platform CI result is available. B03–B14 remain in scope.
+
+
+## B02 platform completion gate
+
+All 16 Linux/Windows checks pass for `d5de69e`, including source witnesses,
+Linux ASan/UBSan/LSan, desktop/host regressions, tutorial coverage and Windows SDL
+plus independent SDK/reference configurations. The Windows job API confirms
+success (job 123581087970); the aggregate PR check listing had retained an older
+in-progress state. B02 is complete. B03 is active; B04–B14 remain pending.
