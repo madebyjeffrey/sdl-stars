@@ -690,6 +690,39 @@ int main() {
         NATIVEPLAYERMESSAGEVIEW prefix{partial, 0};
         CHECK(prefix.iPlrFrom() == -1);
     }
+    {
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::uint32_t v = 65535 - w;
+            const std::array<std::byte, 5> golden = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+                static_cast<std::byte>(v % 256), static_cast<std::byte>(v / 256)};
+            MSGTURN mt{};
+            CHECK(FDecodeMsgTurn(golden, mt));
+            CHECK(mt.iPlr == w % 16 && mt.cbParams == (w / 16) % 16 && mt.msghdr.iMsg == w % 512 && mt.msghdr.grWord == w / 512);
+            CHECK(mt.msghdr.wGoto == (v < 32768 ? static_cast<std::int32_t>(v) : static_cast<std::int32_t>(v) - 65536));
+            std::array<std::byte, 7> output;
+            output.fill(std::byte{0xa5});
+            CHECK(FEncodeMsgTurn(mt, std::span(output).subspan(1, 5)));
+            CHECK(std::memcmp(output.data() + 1, golden.data(), 5) == 0 && output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+        }
+        const std::array<std::byte, 5> golden = {std::byte{0x31}, std::byte{5}, std::byte{4}, std::byte{5}, std::byte{0x80}};
+        for (std::size_t cb = 0; cb < 5; cb++) {
+            MSGTURN mt{}; mt.iPlr = 13; mt.msghdr.iMsg = 511;
+            CHECK(!FDecodeMsgTurn(std::span(golden).first(cb), mt) && mt.iPlr == 13 && mt.msghdr.iMsg == 511);
+            std::array<std::byte, 5> output; output.fill(std::byte{0xa5});
+            CHECK(!FEncodeMsgTurn(mt, std::span(output).first(cb)));
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+        std::array<std::byte, 9> backing{};
+        std::memcpy(backing.data() + 1, golden.data(), 5);
+        NATIVEMESSAGETURNVIEW turn{backing, 1};
+        CHECK(turn.iPlr() == 1 && turn.cbParams() == 3 && turn.msghdr().iMsg() == 5 && turn.msghdr().grWord() == 2);
+        CHECK(turn.msghdr().wGoto() == static_cast<MsgGoto>(-32763) && turn.Next() == reinterpret_cast<std::uint8_t *>(backing.data()) + 9);
+        turn.msghdr().SetIMsg(511);
+        CHECK(turn.msghdr().grWord() == 2 && backing[2] == std::byte{0xff} && backing[3] == std::byte{5});
+        std::array<std::byte, 1> shortTurn{std::byte{0xf3}};
+        NATIVEMESSAGETURNVIEW prefix{shortTurn, 0};
+        CHECK(prefix.iPlr() == 3 && prefix.cbParams() == 15);
+    }
     std::puts("History/production/action/order/design/fleet/battle/AI wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

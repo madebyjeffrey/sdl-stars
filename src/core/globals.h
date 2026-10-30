@@ -74,7 +74,7 @@ extern char      szRaceFile[16];
 extern char      szRacePass[16];
 extern char      szWork[360];
 extern char      vszDefPass[17];
-extern int16_t  *lpMsg;
+extern uint8_t  *lpMsg;
 extern int16_t  *vrgiflMerge;
 extern int16_t  *vrgiplrPopScore;
 extern int16_t   bitTbl[8];

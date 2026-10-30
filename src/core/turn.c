@@ -14,7 +14,7 @@ void InitGameStuff() {
     gd.fAisDone = FALSE;
     vplr = vrgplrDef[0];
     lpLog = (uint8_t *)LpAlloc(32000, htLog);
-    lpMsg = (int16_t *)LpAlloc(0xffc8, htMsg);
+    lpMsg = (uint8_t *)LpAlloc(0xffc8, htMsg);
     vlprgidPlanet = (uint16_t *)LpAlloc(0x800, htPerm);
     vlprgidFleet = (uint16_t *)LpAlloc(0x800, htPerm);
     CchGetString(idsDefault, vrgZipProd[0].szName);

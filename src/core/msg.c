@@ -93,7 +93,8 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
     int16_t *pi;
     int16_t  i;
     uint16_t grbit;
-    MSGTURN *lpmt;
+    uint8_t *lpmt;
+    MSGTURN mt{};
     uint8_t *lpb;
     uint8_t *lpbBase;
     int16_t  rgArgs[7];
@@ -116,11 +117,12 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
         return -1;
     }
     lpb = pb;
-    lpmt = (MSGTURN *)lpb;
-    lpmt->iPlr = iPlr & 0xf;
-    lpmt->msghdr.iMsg = iMsg;
-    lpmt->msghdr.grWord = 0;
-    lpmt->msghdr.wGoto = iObj;
+    lpmt = lpb;
+    mt.iPlr = iPlr & 0xf;
+    mt.msghdr.iMsg = iMsg;
+    mt.msghdr.grWord = 0;
+    mt.msghdr.wGoto = iObj;
+    FEncodeMsgTurn(mt, std::as_writable_bytes(std::span(lpb, cbWireMsgTurn)));
     lpb += 5;
     lpbBase = lpb;
     grbit = 1;
@@ -135,8 +137,8 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            lpmt->msghdr.grWord |= grbit;
-            RawStore16(lpb, *pi);
+            MtvFromPrefix(lpmt).msghdr().SetGrWord(MtvFromPrefix(lpmt).msghdr().grWord() | grbit);
+            SetMsgParam(lpb, *pi);
             lpb += 2;
         } else {
             *lpb = *pi;
@@ -146,7 +148,7 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
         pi++;
         grbit *= 2;
     }
-    lpmt->cbParams = (lpb - lpbBase) & 0xf;
+    MtvFromPrefix(lpmt).SetCbParams((lpb - lpbBase) & 0xf);
     return lpb - pb;
 }
 
@@ -157,18 +159,20 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     uint16_t grbit;
     uint8_t *pb;
     uint16_t cSize;
-    MSGHDR  *pmsghdr;
+    uint8_t *pmsghdr;
+    MSGHDR mh{};
     int16_t  rgArgs[2];
 
     if ((uint16_t)(imemMsgCur + 20) > 0xffc8) {
         return FALSE;
     }
     pb = rgb;
-    pmsghdr = (MSGHDR *)pb;
-    pmsghdr->iMsg = iMsg;
+    pmsghdr = pb;
+    mh.iMsg = iMsg;
     bitfMsgSent[iMsg >> 3] = (bitfMsgSent[iMsg >> 3] & ~(1 << (iMsg & 7))) | 1 << (iMsg & 7);
-    pmsghdr->grWord = 0;
-    pmsghdr->wGoto = iObj;
+    mh.grWord = 0;
+    mh.wGoto = iObj;
+    FEncodeMsgHdr(mh, std::as_writable_bytes(std::span(pb, cbWireMsgHdr)));
     pb += 4;
     grbit = 1;
     rgArgs[0] = p1;
@@ -177,8 +181,8 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            pmsghdr->grWord |= grbit;
-            RawStore16(pb, *pi);
+            MhvFromPrefix(pmsghdr).SetGrWord(MhvFromPrefix(pmsghdr).grWord() | grbit);
+            SetMsgParam(pb, *pi);
             pb += 2;
         } else {
             *pb = *pi;
@@ -214,7 +218,7 @@ int16_t IdmGetMessageN(int16_t iMsg) {
 int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
     uint8_t *lpbMax;
     int16_t  iMax;
-    MSGHDR  *lpmh;
+    uint8_t *lpmh;
     int16_t  i;
     uint8_t *lpb;
     uint16_t u;
@@ -225,17 +229,17 @@ int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
     while (lpb < lpbMax) {
-        lpmh = (MSGHDR *)lpb;
-        u = lpmh->grWord;
+        lpmh = lpb;
+        u = MhvFromLp(lpmh).grWord();
         lpb += 4;
         if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-            pmb->iMsg = lpmh->iMsg;
-            pmb->wGoto = lpmh->wGoto;
+            pmb->iMsg = MhvFromLp(lpmh).iMsg();
+            pmb->wGoto = MhvFromLp(lpmh).wGoto();
         }
-        iMax = rgcMsgArgs[lpmh->iMsg];
+        iMax = rgcMsgArgs[MhvFromLp(lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-                pmb->rgParam[i] = !(u & 1) ? *lpb : RawLoad16(lpb);
+                pmb->rgParam[i] = !(u & 1) ? *lpb : WMsgParam(lpb);
             }
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
@@ -524,10 +528,10 @@ int16_t FRemovePlayerMessage(int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     cDel = 0;
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlr && ((MSGTURN *)lpb)->msghdr.iMsg == iMsg && ((MSGTURN *)lpb)->msghdr.wGoto == iObj) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlr && MtvFromLp(lpb).msghdr().iMsg() == iMsg && MtvFromLp(lpb).msghdr().wGoto() == iObj) {
             cDel++;
-            ((MSGTURN *)lpb)->msghdr.iMsg = 0x1ff;
+            MtvFromLp(lpb).msghdr().SetIMsg(0x1ff);
         }
     }
     return cDel;
@@ -539,8 +543,8 @@ int16_t FFindPlayerMessage(int16_t iPlr, int16_t iMsg, MsgGoto iObj) {
 
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlr && ((MSGTURN *)lpb)->msghdr.iMsg == iMsg && ((MSGTURN *)lpb)->msghdr.wGoto == iObj) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlr && MtvFromLp(lpb).msghdr().iMsg() == iMsg && MtvFromLp(lpb).msghdr().wGoto() == iObj) {
             return TRUE;
         }
     }
@@ -556,18 +560,18 @@ void MarkPlanetsPlayerLost(int16_t iPlayer) {
 
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlayer) {
-            switch (((MSGTURN *)lpb)->msghdr.iMsg) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlayer) {
+            switch (MtvFromLp(lpb).msghdr().iMsg()) {
             case 0x8f:
-                w = ((MSGTURN *)lpb)->msghdr.grWord;
+                w = MtvFromLp(lpb).msghdr().grWord();
                 lpbT = lpb + (((w & 1) == 1) + 6);
-                w = !(w & 2) ? *lpbT : RawLoad16(lpbT);
+                w = !(w & 2) ? *lpbT : WMsgParam(lpbT);
                 goto LLookupPlanet;
             case 7:
             case 0x23:
             case 0x40:
-                w = ((MSGTURN *)lpb)->msghdr.wGoto;
+                w = MtvFromLp(lpb).msghdr().wGoto();
             LLookupPlanet:
                 lppl = LpplFromId(w);
                 if (lppl) {
@@ -602,7 +606,7 @@ void MarkPlanetsPlayerLost(int16_t iPlayer) {
             case 0x114:
             case 0x115:
             case 0x116:
-                w = ((MSGTURN *)lpb)->msghdr.wGoto;
+                w = MtvFromLp(lpb).msghdr().wGoto();
             }
             continue;
         }
@@ -635,14 +639,14 @@ void WritePlayerMessages(int16_t iPlayer) {
     if (iPlayer != iplrNone) {
         lpb = (uint8_t *)lpMsg;
         lpbMax = lpb + imemMsgCur;
-        for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
+        for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
             if (cbMsg + 20 >= 1024) {
                 WriteRt(rtMsg, cbMsg, rgb);
                 cbMsg = 0;
             }
-            if (((MSGTURN *)lpb)->iPlr == iPlayer && ((MSGTURN *)lpb)->msghdr.iMsg != 0x1ff) {
-                memmove(&rgb[cbMsg], &((MSGTURN *)lpb)->msghdr, sizeof(MSGHDR) + ((MSGTURN *)lpb)->cbParams);
-                cbMsg += sizeof(MSGHDR) + ((MSGTURN *)lpb)->cbParams;
+            if (MtvFromLp(lpb).iPlr() == iPlayer && MtvFromLp(lpb).msghdr().iMsg() != 0x1ff) {
+                memmove(&rgb[cbMsg], MtvFromLp(lpb).Header(), cbWireMsgHdr + MtvFromLp(lpb).cbParams());
+                cbMsg += cbWireMsgHdr + MtvFromLp(lpb).cbParams();
             }
         }
         if (cbMsg != 0) {
@@ -725,7 +729,7 @@ void ReadPlayerMessages() {
     uint8_t *lpbMax;
     int16_t  iMax;
     int16_t  fOOM;
-    MSGHDR  *lpmh;
+    uint8_t *lpmh;
     uint16_t imemMsgT;
     int16_t  i;
     MSGPLR  *lpmp;
@@ -746,12 +750,12 @@ void ReadPlayerMessages() {
     imemMsgCur += imemMsgT;
     lpbMax = lpb + imemMsgT;
     while (lpb < lpbMax) {
-        lpmh = (MSGHDR *)lpb;
-        bitfMsgSent[lpmh->iMsg >> 3] = (bitfMsgSent[lpmh->iMsg >> 3] & ~(1 << (lpmh->iMsg & 7))) | 1 << (lpmh->iMsg & 7);
+        lpmh = lpb;
+        bitfMsgSent[MhvFromLp(lpmh).iMsg() >> 3] = (bitfMsgSent[MhvFromLp(lpmh).iMsg() >> 3] & ~(1 << (MhvFromLp(lpmh).iMsg() & 7))) | 1 << (MhvFromLp(lpmh).iMsg() & 7);
         cMsg++;
-        u = lpmh->grWord;
+        u = MhvFromLp(lpmh).grWord();
         lpb += 4;
-        iMax = rgcMsgArgs[lpmh->iMsg];
+        iMax = rgcMsgArgs[MhvFromLp(lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;

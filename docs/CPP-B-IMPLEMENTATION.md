@@ -18,7 +18,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. All battle, AI and battle-plan families pass the full local matrix; final Linux/Windows qualification is required. |
-| B10: message/log payloads | Active | Player-message prefix, typed payloads and real list-head slots pass the full local matrix; parameter/cargo/log families and platform qualification remain required. |
+| B10: message/log payloads | Active | Player-message storage/prefixes and generated parameter framing pass the full local matrix; control/cargo/log families and final platform qualification remain required. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
@@ -934,3 +934,42 @@ unused-storage warnings, zero differences/errors and no skipped inputs.
 Independent inputs, catalogs, baselines and layout/alignment contracts remain
 unchanged. B09's final platform checks are pending; this focused B10 family
 is locally qualified, while parameter/cargo/log migration remains required.
+
+
+## B10 generated message parameters in qualification
+
+Four-/five-byte message headers and per-argument words now encode their numeric
+fields explicitly. The generation buffer is borrowed bytes, and heap views read
+only the required header fields. Producers encode an initialized prefix after
+the existing no-player/AI/capacity returns; parameter masks and final byte counts
+keep their original publication points. Byte/word selection, signed destinations,
+prepend order, tombstone flags, recipient filtering and grouping thresholds stay
+unchanged. Expanded MSGBIG values remain ordinary runtime values.
+
+Readers continue to walk existing physical scratch backing when a logical record
+ends inside a header or parameter list. The existing admitted stale-byte behavior
+is covered by an actual one-byte record test. Independent vectors and real
+writer/reader tests cover seven mixed-width arguments, all header words/signed
+destinations, capacity words, no-write early returns, unchanged RNG, prepend,
+owner filtering and the preserved negative fleet destination. Focused tests pass;
+full local/platform qualification and cargo/log migration remain required.
+
+
+## B09 platform completion gate
+
+All 16 Linux/Windows checks pass for `2812b24`, including Windows SDL/SDK,
+desktop/host regressions, tutorial checkpoints, source witnesses and Linux
+ASan/UBSan/LSan. B09 is complete. B10 player messages pass their full local
+matrix; generated parameters are in qualification, and control/cargo/log
+families remain required. B10–B14 are not complete.
+
+
+Generated parameter-message local qualification: 114/114 desktop tests including
+all 27 native leak checks and available tutorial smoke coverage, 25/25 host
+tests, 37/37 ASan/UBSan cases, all 27 source witnesses and 100 public headers
+in both include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Both full regressions match 519 files through turn 150, with 25 accepted
+unused-storage warnings and zero differences/errors/skipped inputs. The signed
+16-bit capacity boundary is explicit in its test fixture. Independent inputs,
+catalogs, baselines and layout/alignment contracts remain unchanged. Remaining
+B10 control/cargo/log families and its final platform gate are required.

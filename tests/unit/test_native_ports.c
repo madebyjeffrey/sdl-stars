@@ -14,15 +14,17 @@
 
 static uint8_t rgRecord[4][1024];
 static int16_t rgcbRecord[4];
+static RecordType rgrtRecord[4];
 static int     cRecord;
 static int     iRead;
 static int     fLogRead;
 static int     cDirty;
 
 void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
-    if (rt != rtPlrMsg)
+    if (rt != rtPlrMsg && rt != rtMsg)
         return;
-    TEST_ASSERT(cRecord < 4 && cb >= 12 && cb <= 1023);
+    TEST_ASSERT(cRecord < 4 && cb >= (rt == rtPlrMsg ? 12 : 0) && cb <= 1023);
+    rgrtRecord[cRecord] = rt;
     rgcbRecord[cRecord] = cb;
     memcpy(rgRecord[cRecord++], rg, cb);
 }
@@ -45,7 +47,7 @@ void StarsTest_ReadRt(void) {
         hdrCur.rt = 9;
         hdrCur.cb = 17;
     } else if (iRead < cRecord) {
-        hdrCur.rt = rtPlrMsg;
+        hdrCur.rt = rgrtRecord[iRead];
         hdrCur.cb = rgcbRecord[iRead];
         memcpy(rgbCur, rgRecord[iRead], hdrCur.cb);
     } else {
@@ -104,7 +106,7 @@ static void TestMessages(void) {
     mp2->lpmsgplrNext = mp3;
     vlpmsgplrOut = mp;
     vcmsgplrOut = 3;
-    lpMsg = (int16_t *)rgbMsgBuffer;
+    lpMsg = rgbMsgBuffer;
     imemMsgCur = 0;
     imemLogCur = 0;
     idPlayer = -1;
@@ -251,7 +253,7 @@ static void TestBattleRollover(void) {
     TEST_ASSERT(FDoCoolBattle(&fl, 0, grfAttack, 0, 0) == 1);
     TEST_ASSERT(lpbBattleT == lpbScratch);
     TEST_ASSERT(lpbBattleCur == lpbStart + 65462);
-    TEST_ASSERT(((BTLDATA *)(lpbStart + 65448))->cbData == 14);
+    TEST_ASSERT(BdvFromLp(lpbStart + 65448).cbData() == 14);
     TEST_ASSERT(FDoCoolBattle(&fl, 0, grfAttack, 0, 0) == 1);
     TEST_ASSERT(lpbBattleT == NULL);
     TEST_ASSERT(RawLoad16(lpbStart + 65462) == 0xffff);
@@ -265,25 +267,18 @@ static void TestBattleRollover(void) {
 // A fleet's goto has its high bit set, so it is negative as a MsgGoto. The
 // stored word was compared unsigned, so fleet messages never matched.
 static void TestFleetMessageGoto(void) {
-    MSGTURN rgmt[2];
-    MsgGoto iObj;
+    const uint8_t rgb[] = {1, (uint8_t)(idmHasCompletedAssignedOrders & 255), (uint8_t)(idmHasCompletedAssignedOrders >> 8), 5, 0x80,
+                          1, (uint8_t)(idmHasCompletedAssignedOrders & 255), (uint8_t)(idmHasCompletedAssignedOrders >> 8), 5, 0};
+    MsgGoto iObj = static_cast<MsgGoto>(static_cast<int16_t>(0x8005));
 
-    iObj = (MsgGoto)(5 | 0x8000);
-    memset(rgmt, 0, sizeof(rgmt));
-    rgmt[0].iPlr = 1;
-    rgmt[0].msghdr.iMsg = idmHasCompletedAssignedOrders;
-    rgmt[0].msghdr.wGoto = iObj;
-    rgmt[1] = rgmt[0];
-    rgmt[1].msghdr.wGoto = (MsgGoto)(5);
-    lpMsg = (int16_t *)rgmt;
-    imemMsgCur = sizeof(rgmt);
-
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(lpMsg, rgb, sizeof(rgb));
+    imemMsgCur = sizeof(rgb);
     TEST_CHECK(FFindPlayerMessage(1, idmHasCompletedAssignedOrders, iObj));
     TEST_CHECK(FRemovePlayerMessage(1, idmHasCompletedAssignedOrders, iObj) == 1);
-    TEST_CHECK(rgmt[0].msghdr.iMsg == 0x1ff);
-    TEST_CHECK(rgmt[1].msghdr.iMsg == idmHasCompletedAssignedOrders);
+    TEST_CHECK(MtvFromLp(lpMsg).msghdr().iMsg() == 0x1ff);
+    TEST_CHECK(MtvFromLp(lpMsg + 5).msghdr().iMsg() == idmHasCompletedAssignedOrders);
     TEST_CHECK(!FFindPlayerMessage(1, idmHasCompletedAssignedOrders, iObj));
-    lpMsg = NULL;
     imemMsgCur = 0;
 }
 
@@ -333,7 +328,77 @@ static void TestPlayerMessageStorage(void) {
     FreeLp(lpmp, htPlrMsg); FreeLp(lpmpNext, htPlrMsg);
 }
 
-TEST_LIST = {{"player-message storage retains links, capacities and spare bytes", TestPlayerMessageStorage},
+static void TestPackedMessageParameters(void) {
+    const uint8_t expected[] = {0x46, 0x78, 0xf9, 0xff, 0, 0xff, 0, 1, 0xff, 0xff, 0, 0x80, 0xff, 0x7f, 1,
+                                5, 4, 5, 0x80, 0xff, 0xff, 0xff};
+    const int16_t params[] = {0, 255, 256, -1, -32768, 32767, 1};
+    MSGBIG mb;
+    int16_t i;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(rgcMsgArgs[idmMultitudeEnemiesHaveMountedProngAttackResulting] == 2 && rgcMsgArgs[idmAttemptedTransferSuccessfullyReceived] == 7);
+    ResetMessages();
+    TEST_ASSERT(FSendPlrMsg(1, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(-32763), 255, -1, 0, 0, 0, 0, 0));
+    TEST_ASSERT(FSendPrependedPlrMsg(1, idmAttemptedTransferSuccessfullyReceived, gotoBattleReport, 0, 255, 256, -1, -32768, 32767, 1));
+    TEST_ASSERT(FSendPlrMsg(2, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, -32768, 7, 0, 0, 0, 0, 0));
+    TEST_CHECK(cMsg == 3 && imemMsgCur == 32 && lpMsg[0] == 0xb1 && lpMsg[16] == 0x31);
+    cRecord = 0;
+    WritePlayerMessages(1);
+    TEST_ASSERT(cRecord == 1 && rgrtRecord[0] == rtMsg && rgcbRecord[0] == sizeof(expected));
+    TEST_CHECK(memcmp(rgRecord[0], expected, sizeof(expected)) == 0);
+    ResetMessages(); fLogRead = FALSE; iRead = 0; StarsTest_ReadRt();
+    ReadPlayerMessages();
+    TEST_CHECK(cMsg == 2 && imemMsgCur == sizeof(expected) && memcmp(lpMsg, expected, sizeof(expected)) == 0);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.wGoto == gotoBattleReport);
+    for (i = 0; i < 7; i++) TEST_CHECK(mb.rgParam[i] == params[i]);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(1), &mb));
+    TEST_CHECK(mb.iMsg == idmMultitudeEnemiesHaveMountedProngAttackResulting && mb.wGoto == static_cast<MsgGoto>(-32763));
+    TEST_CHECK(mb.rgParam[0] == 255 && mb.rgParam[1] == -1);
+    // A one-byte record retains the rest of the previous physical backing;
+    // the existing reader still admits the first complete stale message there.
+    rgcbRecord[0] = 1;
+    ResetMessages(); iRead = 0; StarsTest_ReadRt(); ReadPlayerMessages();
+    TEST_CHECK(cMsg == 1 && imemMsgCur == 1);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.rgParam[4] == -32768 && mb.rgParam[6] == 1);
+}
+
+static void TestMessagePackingAdmissionAndPrepend(void) {
+    const uint8_t expected[] = {5, 2, 0xff, 0xff, 0, 1, 1, 5, 4, 5, 0x80, 0xff, 0xff, 0xff};
+    uint8_t rgb[40];
+    int16_t cb;
+    int32_t seed1, seed2;
+    MSGBIG mb;
+
+    TEST_ASSERT(FStarsTestInit());
+    ResetMessages(); seed1 = lRandSeed1; seed2 = lRandSeed2;
+    memset(rgb, 0xa5, sizeof(rgb));
+    TEST_CHECK(PackageUpMsg(rgb, iplrNone, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == 0);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    rgplr[1].fAi = TRUE; rgplr[1].idAi = idAiRobotoid;
+    TEST_CHECK(PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == 0);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    rgplr[1].fAi = FALSE;
+    imemMsgCur = static_cast<int16_t>(0xffc8 - 20);
+    cb = PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0);
+    TEST_CHECK(cb == 8);
+    imemMsgCur++; memset(rgb, 0xa5, sizeof(rgb));
+    TEST_CHECK(PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == -1);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    TEST_CHECK(lRandSeed1 == seed1 && lRandSeed2 == seed2);
+    ResetMessages();
+    TEST_ASSERT(FSendPlrMsg2XGen(FALSE, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(-32763), 255, -1));
+    TEST_ASSERT(FSendPlrMsg2XGen(TRUE, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 256, 1));
+    TEST_CHECK(imemMsgCur == sizeof(expected) && cMsg == 2 && memcmp(lpMsg, expected, sizeof(expected)) == 0);
+    TEST_CHECK(bitfMsgSent[0] & (1 << 5));
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.wGoto == gotoNone && mb.rgParam[0] == 256 && mb.rgParam[1] == 1);
+}
+
+TEST_LIST = {{"packed message parameters preserve framing and scratch admission", TestPackedMessageParameters},
+             {"message packing retains early returns, capacity, RNG and prepend", TestMessagePackingAdmissionAndPrepend},
+             {"player-message storage retains links, capacities and spare bytes", TestPlayerMessageStorage},
              {"player-message prefix preserves signed fields and spare tail", TestPlayerMessagePrefixAndTail},
              {"player messages", TestMessages},
              {"unchanged raw UTF-8 messages compare only their stored bytes", TestRawMessageEdit},

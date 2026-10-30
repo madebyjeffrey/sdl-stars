@@ -394,3 +394,5 @@ MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb) {
     void *lp = LpReAlloc(lpmp, cb, htPlrMsg);
     return LpStartPl<MSGPLR, uint8_t>(lp, CbPlSlot(lp));
 }
+
+NATIVEBYTEWINDOW MbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htMsg); }
