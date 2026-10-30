@@ -21,6 +21,88 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 
 int main() {
     for (std::uint32_t w = 0; w < 65536; w++) {
+        INI ini{};
+        TUTOR tutor{};
+        GDATA gd{};
+        gd.fUnused2 = 12345;
+        ini.SetWFlags(static_cast<std::uint16_t>(w));
+        CHECK(ini.wFlags() == w && ini.fStartupFile == (w & 1) && ini.grobjSel == ((w >> 5) & 15));
+        CHECK(ini.fCmdLine == ((w >> 1) & 1) && ini.fWait == ((w >> 2) & 1) && ini.fGen == ((w >> 3) & 1));
+        CHECK(ini.fTry == ((w >> 4) & 1) && ini.fBatch == ((w >> 9) & 1) && ini.fNewGame == ((w >> 10) & 1));
+        CHECK(ini.fDumpFleets == ((w >> 11) & 1) && ini.fDumpPlanets == ((w >> 12) & 1) && ini.fDumpMap == ((w >> 13) & 1));
+        CHECK(ini.fValidate == ((w >> 14) & 1) && ini.fLogging == (w >> 15));
+        const auto flags = static_cast<std::int16_t>(w < 32768 ? std::int32_t(w) : std::int32_t(w) - 65536);
+        tutor.SetWFlags(flags);
+        CHECK(tutor.wFlags() == flags && tutor.cError == ((w >> 6) & 7) && tutor.unused == (w >> 15));
+        CHECK(tutor.fVisible == (w & 1) && tutor.fGameSaved == ((w >> 1) & 1) && tutor.fChange == ((w >> 2) & 1));
+        CHECK(tutor.fTurnDone == ((w >> 3) & 1) && tutor.fTutorDone == ((w >> 4) & 1) && tutor.fNoErrors == ((w >> 5) & 1));
+        CHECK(tutor.fAutoComplete == ((w >> 9) & 1) && tutor.fProgress == ((w >> 10) & 1) && tutor.fTBVis == ((w >> 11) & 1));
+        CHECK(tutor.fValidQ == ((w >> 12) & 1) && tutor.fFreeing == ((w >> 13) & 1) && tutor.fShowHidMsg == ((w >> 14) & 1));
+        const std::uint32_t bits = w | ((65535u - w) << 16);
+        const auto signedBits = std::bit_cast<std::int32_t>(bits);
+        gd.SetGrBits(signedBits); gd.SetGrBits2(signedBits);
+        CHECK(gd.grBits() == signedBits && gd.grBits2() == signedBits);
+        CHECK(gd.fUnknownShip == ((bits >> 0) & 1u));
+        CHECK(gd.fGeneratingTurn == ((bits >> 1) & 1u));
+        CHECK(gd.fForceTurn == ((bits >> 2) & 1u));
+        CHECK(gd.fHostMode == ((bits >> 3) & 1u));
+        CHECK(gd.fSubmit == ((bits >> 4) & 1u));
+        CHECK(gd.fNoResearchSav == ((bits >> 5) & 1u));
+        CHECK(gd.fRadiatingEngine == ((bits >> 6) & 1u));
+        CHECK(gd.fNoIdleChecks == ((bits >> 7) & 1u));
+        CHECK(gd.fSendMsgMode == ((bits >> 8) & 1u));
+        CHECK(gd.fRetryOpens == ((bits >> 9) & 1u));
+        CHECK(gd.fAisDone == ((bits >> 10) & 1u));
+        CHECK(gd.fTutorial == ((bits >> 11) & 1u));
+        CHECK(gd.fGotoVCR == ((bits >> 12) & 1u));
+        CHECK(gd.fVCRTimer == ((bits >> 13) & 1u));
+        CHECK(gd.mdScreenSize == ((bits >> 14) & 3u));
+        CHECK(gd.fGameOverMan == ((bits >> 16) & 1u));
+        CHECK(gd.fDontDoLogFiles == ((bits >> 17) & 1u));
+        CHECK(gd.fFileCrippled == ((bits >> 18) & 1u));
+        CHECK(gd.fSmallTileMode == ((bits >> 19) & 1u));
+        CHECK(gd.fAllAis == ((bits >> 20) & 1u));
+        CHECK(gd.fReadOnly == ((bits >> 21) & 1u));
+        CHECK(gd.fExitWindows == ((bits >> 22) & 1u));
+        CHECK(gd.fPartialTurn == ((bits >> 23) & 1u));
+        CHECK(gd.fSetMassMode == ((bits >> 24) & 1u));
+        CHECK(gd.fRptSafeDraw == ((bits >> 25) & 1u));
+        CHECK(gd.fProgressTxt == ((bits >> 26) & 1u));
+        CHECK(gd.fSoundFX == ((bits >> 27) & 1u));
+        CHECK(gd.fNoSound == ((bits >> 28) & 1u));
+        CHECK(gd.fSetRouteMode == ((bits >> 29) & 1u));
+        CHECK(gd.fBleedingEdge == ((bits >> 30) & 1u));
+        CHECK(gd.fToolbar == ((bits >> 31) & 1u));
+        CHECK(gd.fNoScannerDraw == ((bits >> 0) & 1u));
+        CHECK(gd.fTrialPeriodOver == ((bits >> 1) & 1u));
+        CHECK(gd.fClose == ((bits >> 2) & 1u));
+        CHECK(gd.fDontCalcBleed == ((bits >> 3) & 1u));
+        CHECK(gd.fChgZipOrd == ((bits >> 4) & 1u));
+        CHECK(gd.fChgZipProd == ((bits >> 5) & 1u));
+        CHECK(gd.fChgScanner == ((bits >> 6) & 1u));
+        CHECK(gd.fChgReports == ((bits >> 7) & 1u));
+        CHECK(gd.fWriteTurnNum == ((bits >> 8) & 1u));
+        CHECK(gd.fHotSeat == ((bits >> 9) & 1u));
+        CHECK(gd.fFleetLinkValid == ((bits >> 10) & 1u));
+        CHECK(gd.fScoreVictory == ((bits >> 11) & 3u));
+        CHECK(gd.iCurGraph == ((bits >> 16) & 15u));
+        CHECK(gd.fMusic == ((bits >> 20) & 1u));
+        CHECK(gd.fPerPlayerDumps == ((bits >> 21) & 1u));
+        CHECK(gd.fNoHostNames == ((bits >> 22) & 1u));
+        CHECK(gd.fUnused2 == 12345);
+        CHECK(gd.unused3 == ((bits >> 13) & 7) && gd.unused4 == (bits >> 23));
+        ini.SetWFlags(0); tutor.SetWFlags(0); gd.SetGrBits(0); gd.SetGrBits2(0);
+        CHECK(ini.wFlags() == 0 && tutor.wFlags() == 0 && gd.grBits() == 0 && gd.grBits2() == 0 && gd.fUnused2 == 12345);
+    }
+    if constexpr (alignof(GDATA) == 1 && alignof(TUTOR) == 1) {
+        alignas(4) std::byte rgbGd[sizeof(GDATA) + 1]{}, rgbTutor[sizeof(TUTOR) + 1]{};
+        auto *gd = ::new (rgbGd + 1) GDATA{};
+        auto *tutor = ::new (rgbTutor + 1) TUTOR{};
+        gd->SetGrBits(-1); gd->SetGrBits2(-2); tutor->SetWFlags(-3);
+        CHECK(gd->grBits() == -1 && gd->grBits2() == -2 && tutor->wFlags() == -3);
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
         const std::uint32_t flags = 65535 - w;
         const std::array<std::byte, 4> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8), static_cast<std::byte>(flags), static_cast<std::byte>(flags >> 8)};
         RTPLANET rtpl{};

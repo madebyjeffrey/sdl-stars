@@ -265,3 +265,10 @@ Validation remains incremental over original physical scratch; missing optional
 data, preinitialized fields, reserved bits and history/discovery effects retain
 their prior behavior. Writer/reader detObscure thresholds intentionally remain
 different. Runtime arena alignment/stride retirement remains assigned to B12.
+
+
+B11 flag aliases: INI/TUTOR/GDATA use actual fields and numeric accessors, with
+INI resets retaining the complete sixteen-bit clear and GDATA spare word bits
+retained explicitly. These types are runtime state; preferences are persisted
+through existing text keys, not their native representation. Independent frozen
+layout measurements remain unchanged; application state ownership is still B13.

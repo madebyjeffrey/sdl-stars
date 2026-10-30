@@ -1793,7 +1793,7 @@ LGotFileName:
     strcpy(szBase, szFile);
     if (!FLoadGame(szFile, &szFile[ofn.nFileExtension])) {
         if (ini.fStartupFile) {
-            ini.wFlags = 0;
+            ini.SetWFlags(0);
             fFileErrSilent = FALSE;
         }
         return 0;

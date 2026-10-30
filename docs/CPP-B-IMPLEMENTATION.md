@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing and planet families pass the full local matrix. PLAYER/THING/preferences/resource families and final platform qualification remain required. |
+| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing and planet families pass the full local matrix. PLAYER/THING/resource families and final platform qualification remain required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1296,3 +1296,33 @@ regressions each match 519 files through turn 150, with 25 accepted unused-stora
 warnings, zero differences/errors and no skipped inputs. Frozen inputs, catalogs,
 baselines and production layout/alignment contracts remain unchanged. Remaining
 B11 families and its final complete platform gate remain required.
+
+
+## B11 session/preference/tutorial flag aliases in qualification
+
+INI, TUTOR and GDATA retain actual named flag fields with numeric accessors;
+inactive word overlays and anonymous aggregate unions are removed. The four
+owned INI resets clear the same full word. Unused GDATA word bits now have
+explicit storage so the historical numeric accessors retain all bit patterns.
+Preferences still use their existing text/key encoding; no object dump is added.
+Exhaustive sixteen-bit flag vectors, independent frozen field-position checks
+and odd-aligned packed-object cases cover both packed/natural harnesses. Full
+local/source/platform qualification remains required.
+
+
+Planet platform qualification: all sixteen Linux/Windows checks pass for
+700a637, including both regressions, source witnesses, Linux sanitizers, Windows
+SDL/SDK and available tutorial checkpoints. This qualifies the published subset;
+the remaining B11 families and B12–B14 remain in scope.
+
+Session/preference/tutorial flag local qualification: 115/115 desktop tests
+including all 27 native leak checks and available tutorial smoke coverage,
+26/26 host tests, 39/39 ASan/UBSan cases, all 27 source witnesses and 104 headers
+in both include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match 519 files through turn 150, with 25
+accepted unused-storage warnings, zero differences/errors and no skipped inputs.
+The final flag fixture checks the separate trailing GDATA word is untouched;
+an initial fixture mistakenly included it in the preceding word and was fixed
+before publication. Frozen inputs, catalogs, baselines and production layout/
+alignment contracts remain unchanged. Remaining B11 families and its final
+complete platform gate remain required.

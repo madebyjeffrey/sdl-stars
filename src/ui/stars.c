@@ -7,7 +7,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hInst = hInstance;
     szBase[0] = 0;
-    ini.wFlags = 0;
+    ini.SetWFlags(0);
     memset(&tutor, 0, sizeof(TUTOR));
     memset(&vtimer, 0, sizeof(TIMER));
     vtimer.fAutoGenWhenIn = TRUE;

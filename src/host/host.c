@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) try {
         strcat(szCmdLine, argv[i]);
     }
     szBase[0] = 0;
-    ini.wFlags = 0;
+    ini.SetWFlags(0);
     ini.idPlayer = iplrNone;
     InitGameStuff();
     if (szIniPath && !FReadHostIni(szIniPath)) {

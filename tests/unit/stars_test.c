@@ -54,7 +54,7 @@ int16_t FStarsTestInit(void) {
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
     szBase[0] = 0;
-    ini.wFlags = 0;
+    ini.SetWFlags(0);
     memset(&tutor, 0, sizeof(TUTOR));
     Randomize2(12345);
     fFileErrSilent = TRUE;

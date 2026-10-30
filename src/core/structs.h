@@ -323,63 +323,130 @@ struct _game {
 }; /* size=0x40 */
 
 struct _gdata {
-    union {
-        int32_t grBits; /* +0x0000 (4) */
-        struct {
-            uint16_t fUnknownShip : 1, /* +0x0000 (2) @bit0 */
-                fGeneratingTurn : 1,   /* @bit1 */
-                fForceTurn : 1,        /* @bit2 */
-                fHostMode : 1,         /* @bit3 */
-                fSubmit : 1,           /* @bit4 */
-                fNoResearchSav : 1,    /* @bit5 */
-                fRadiatingEngine : 1,  /* @bit6 */
-                fNoIdleChecks : 1,     /* @bit7 */
-                fSendMsgMode : 1,      /* @bit8 */
-                fRetryOpens : 1,       /* @bit9 */
-                fAisDone : 1,          /* @bit10 */
-                fTutorial : 1,         /* @bit11 */
-                fGotoVCR : 1,          /* @bit12 */
-                fVCRTimer : 1,         /* @bit13 */
-                mdScreenSize : 2;      /* @bit14 */
-            uint16_t fGameOverMan : 1, /* +0x0002 (2) @bit0 */
-                fDontDoLogFiles : 1,   /* @bit1 */
-                fFileCrippled : 1,     /* @bit2 */
-                fSmallTileMode : 1,    /* @bit3 */
-                fAllAis : 1,           /* @bit4 */
-                fReadOnly : 1,         /* @bit5 */
-                fExitWindows : 1,      /* @bit6 */
-                fPartialTurn : 1,      /* @bit7 */
-                fSetMassMode : 1,      /* @bit8 */
-                fRptSafeDraw : 1,      /* @bit9 */
-                fProgressTxt : 1,      /* @bit10 */
-                fSoundFX : 1,          /* @bit11 */
-                fNoSound : 1,          /* @bit12 */
-                fSetRouteMode : 1,     /* @bit13 */
-                fBleedingEdge : 1,     /* @bit14 */
-                fToolbar : 1;          /* @bit15 */
-        };
-    };
-    union {
-        int32_t grBits2; /* +0x0004 (4) */
-        struct {
-            uint16_t fNoScannerDraw : 1, /* +0x0004 (2) @bit0 */
-                fTrialPeriodOver : 1,    /* @bit1 */
-                fClose : 1,              /* @bit2 */
-                fDontCalcBleed : 1,      /* @bit3 */
-                fChgZipOrd : 1,          /* @bit4 */
-                fChgZipProd : 1,         /* @bit5 */
-                fChgScanner : 1,         /* @bit6 */
-                fChgReports : 1,         /* @bit7 */
-                fWriteTurnNum : 1,       /* @bit8 */
-                fHotSeat : 1,            /* @bit9 */
-                fFleetLinkValid : 1,     /* @bit10 */
-                fScoreVictory : 2;       /* @bit11 */
-            uint16_t iCurGraph : 4,      /* +0x0006 (2) @bit0 */
-                fMusic : 1,              /* @bit4 */
-                fPerPlayerDumps : 1,     /* @bit5 */
-                fNoHostNames : 1;        /* @bit6 */
-        };
-    };
+    uint16_t fUnknownShip : 1, /* +0x0000 (2) @bit0 */
+        fGeneratingTurn : 1,   /* @bit1 */
+        fForceTurn : 1,        /* @bit2 */
+        fHostMode : 1,         /* @bit3 */
+        fSubmit : 1,           /* @bit4 */
+        fNoResearchSav : 1,    /* @bit5 */
+        fRadiatingEngine : 1,  /* @bit6 */
+        fNoIdleChecks : 1,     /* @bit7 */
+        fSendMsgMode : 1,      /* @bit8 */
+        fRetryOpens : 1,       /* @bit9 */
+        fAisDone : 1,          /* @bit10 */
+        fTutorial : 1,         /* @bit11 */
+        fGotoVCR : 1,          /* @bit12 */
+        fVCRTimer : 1,         /* @bit13 */
+        mdScreenSize : 2;      /* @bit14 */
+    uint16_t fGameOverMan : 1, /* +0x0002 (2) @bit0 */
+        fDontDoLogFiles : 1,   /* @bit1 */
+        fFileCrippled : 1,     /* @bit2 */
+        fSmallTileMode : 1,    /* @bit3 */
+        fAllAis : 1,           /* @bit4 */
+        fReadOnly : 1,         /* @bit5 */
+        fExitWindows : 1,      /* @bit6 */
+        fPartialTurn : 1,      /* @bit7 */
+        fSetMassMode : 1,      /* @bit8 */
+        fRptSafeDraw : 1,      /* @bit9 */
+        fProgressTxt : 1,      /* @bit10 */
+        fSoundFX : 1,          /* @bit11 */
+        fNoSound : 1,          /* @bit12 */
+        fSetRouteMode : 1,     /* @bit13 */
+        fBleedingEdge : 1,     /* @bit14 */
+        fToolbar : 1;          /* @bit15 */
+    int32_t grBits() const noexcept {
+        const uint32_t w = uint32_t(fUnknownShip) | uint32_t(fGeneratingTurn) << 1 | uint32_t(fForceTurn) << 2 |
+            uint32_t(fHostMode) << 3 | uint32_t(fSubmit) << 4 | uint32_t(fNoResearchSav) << 5 | uint32_t(fRadiatingEngine) << 6 |
+            uint32_t(fNoIdleChecks) << 7 | uint32_t(fSendMsgMode) << 8 | uint32_t(fRetryOpens) << 9 | uint32_t(fAisDone) << 10 |
+            uint32_t(fTutorial) << 11 | uint32_t(fGotoVCR) << 12 | uint32_t(fVCRTimer) << 13 | uint32_t(mdScreenSize) << 14 |
+            uint32_t(fGameOverMan) << 16 | uint32_t(fDontDoLogFiles) << 17 | uint32_t(fFileCrippled) << 18 |
+            uint32_t(fSmallTileMode) << 19 | uint32_t(fAllAis) << 20 | uint32_t(fReadOnly) << 21 | uint32_t(fExitWindows) << 22 |
+            uint32_t(fPartialTurn) << 23 | uint32_t(fSetMassMode) << 24 | uint32_t(fRptSafeDraw) << 25 | uint32_t(fProgressTxt) << 26 |
+            uint32_t(fSoundFX) << 27 | uint32_t(fNoSound) << 28 | uint32_t(fSetRouteMode) << 29 | uint32_t(fBleedingEdge) << 30 |
+            uint32_t(fToolbar) << 31;
+        return std::bit_cast<int32_t>(w);
+    }
+    void SetGrBits(int32_t grBits) noexcept {
+        const uint32_t w = std::bit_cast<uint32_t>(grBits);
+        fUnknownShip = w & 1u;
+        fGeneratingTurn = (w >> 1) & 1u;
+        fForceTurn = (w >> 2) & 1u;
+        fHostMode = (w >> 3) & 1u;
+        fSubmit = (w >> 4) & 1u;
+        fNoResearchSav = (w >> 5) & 1u;
+        fRadiatingEngine = (w >> 6) & 1u;
+        fNoIdleChecks = (w >> 7) & 1u;
+        fSendMsgMode = (w >> 8) & 1u;
+        fRetryOpens = (w >> 9) & 1u;
+        fAisDone = (w >> 10) & 1u;
+        fTutorial = (w >> 11) & 1u;
+        fGotoVCR = (w >> 12) & 1u;
+        fVCRTimer = (w >> 13) & 1u;
+        mdScreenSize = (w >> 14) & 3u;
+        fGameOverMan = (w >> 16) & 1u;
+        fDontDoLogFiles = (w >> 17) & 1u;
+        fFileCrippled = (w >> 18) & 1u;
+        fSmallTileMode = (w >> 19) & 1u;
+        fAllAis = (w >> 20) & 1u;
+        fReadOnly = (w >> 21) & 1u;
+        fExitWindows = (w >> 22) & 1u;
+        fPartialTurn = (w >> 23) & 1u;
+        fSetMassMode = (w >> 24) & 1u;
+        fRptSafeDraw = (w >> 25) & 1u;
+        fProgressTxt = (w >> 26) & 1u;
+        fSoundFX = (w >> 27) & 1u;
+        fNoSound = (w >> 28) & 1u;
+        fSetRouteMode = (w >> 29) & 1u;
+        fBleedingEdge = (w >> 30) & 1u;
+        fToolbar = (w >> 31) & 1u;
+    }
+    uint16_t fNoScannerDraw : 1, /* +0x0004 (2) @bit0 */
+        fTrialPeriodOver : 1,    /* @bit1 */
+        fClose : 1,              /* @bit2 */
+        fDontCalcBleed : 1,      /* @bit3 */
+        fChgZipOrd : 1,          /* @bit4 */
+        fChgZipProd : 1,         /* @bit5 */
+        fChgScanner : 1,         /* @bit6 */
+        fChgReports : 1,         /* @bit7 */
+        fWriteTurnNum : 1,       /* @bit8 */
+        fHotSeat : 1,            /* @bit9 */
+        fFleetLinkValid : 1,     /* @bit10 */
+        fScoreVictory : 2,       /* @bit11 */
+        unused3 : 3;             /* @bit13 */
+    uint16_t iCurGraph : 4,      /* +0x0006 (2) @bit0 */
+        fMusic : 1,              /* @bit4 */
+        fPerPlayerDumps : 1,     /* @bit5 */
+        fNoHostNames : 1,        /* @bit6 */
+        unused4 : 9;             /* @bit7 */
+    int32_t grBits2() const noexcept {
+        const uint32_t w = uint32_t(fNoScannerDraw) | uint32_t(fTrialPeriodOver) << 1 | uint32_t(fClose) << 2 |
+            uint32_t(fDontCalcBleed) << 3 | uint32_t(fChgZipOrd) << 4 | uint32_t(fChgZipProd) << 5 | uint32_t(fChgScanner) << 6 |
+            uint32_t(fChgReports) << 7 | uint32_t(fWriteTurnNum) << 8 | uint32_t(fHotSeat) << 9 | uint32_t(fFleetLinkValid) << 10 |
+            uint32_t(fScoreVictory) << 11 | uint32_t(unused3) << 13 | uint32_t(iCurGraph) << 16 | uint32_t(fMusic) << 20 |
+            uint32_t(fPerPlayerDumps) << 21 | uint32_t(fNoHostNames) << 22 | uint32_t(unused4) << 23;
+        return std::bit_cast<int32_t>(w);
+    }
+    void SetGrBits2(int32_t grBits2) noexcept {
+        const uint32_t w = std::bit_cast<uint32_t>(grBits2);
+        fNoScannerDraw = w & 1u;
+        fTrialPeriodOver = (w >> 1) & 1u;
+        fClose = (w >> 2) & 1u;
+        fDontCalcBleed = (w >> 3) & 1u;
+        fChgZipOrd = (w >> 4) & 1u;
+        fChgZipProd = (w >> 5) & 1u;
+        fChgScanner = (w >> 6) & 1u;
+        fChgReports = (w >> 7) & 1u;
+        fWriteTurnNum = (w >> 8) & 1u;
+        fHotSeat = (w >> 9) & 1u;
+        fFleetLinkValid = (w >> 10) & 1u;
+        fScoreVictory = (w >> 11) & 3u;
+        unused3 = (w >> 13) & 7u;
+        iCurGraph = (w >> 16) & 15u;
+        fMusic = (w >> 20) & 1u;
+        fPerPlayerDumps = (w >> 21) & 1u;
+        fNoHostNames = (w >> 22) & 1u;
+        unused4 = (w >> 23) & 511u;
+    }
     uint16_t fUnused2 : 14; /* +0x0008 (2) @bit0 */
 }; /* size=0xa */
 
@@ -1531,24 +1598,42 @@ struct _wn {
 
 struct _ini {
     WN wnFrame; /* +0x0000 (10) */
-    union {
-        struct {
-            uint16_t fStartupFile : 1, /* +0x000A (2) @bit0 */
-                fCmdLine : 1,          /* @bit1 */
-                fWait : 1,             /* @bit2 */
-                fGen : 1,              /* @bit3 */
-                fTry : 1,              /* @bit4 */
-                grobjSel : 4,          /* @bit5 */
-                fBatch : 1,            /* @bit9 */
-                fNewGame : 1,          /* @bit10 */
-                fDumpFleets : 1,       /* @bit11 */
-                fDumpPlanets : 1,      /* @bit12 */
-                fDumpMap : 1,          /* @bit13 */
-                fValidate : 1,         /* @bit14 */
-                fLogging : 1;          /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x000A (2) */
-    };
+    uint16_t fStartupFile : 1, /* +0x000A (2) @bit0 */
+        fCmdLine : 1,          /* @bit1 */
+        fWait : 1,             /* @bit2 */
+        fGen : 1,              /* @bit3 */
+        fTry : 1,              /* @bit4 */
+        grobjSel : 4,          /* @bit5 */
+        fBatch : 1,            /* @bit9 */
+        fNewGame : 1,          /* @bit10 */
+        fDumpFleets : 1,       /* @bit11 */
+        fDumpPlanets : 1,      /* @bit12 */
+        fDumpMap : 1,          /* @bit13 */
+        fValidate : 1,         /* @bit14 */
+        fLogging : 1;          /* @bit15 */
+    uint16_t wFlags() const noexcept {
+        const uint16_t w = uint16_t(fStartupFile) | uint16_t(fCmdLine) << 1 | uint16_t(fWait) << 2 | uint16_t(fGen) << 3 |
+            uint16_t(fTry) << 4 | uint16_t(grobjSel) << 5 | uint16_t(fBatch) << 9 | uint16_t(fNewGame) << 10 |
+            uint16_t(fDumpFleets) << 11 | uint16_t(fDumpPlanets) << 12 | uint16_t(fDumpMap) << 13 | uint16_t(fValidate) << 14 |
+            uint16_t(fLogging) << 15;
+        return w;
+    }
+    void SetWFlags(uint16_t wFlags) noexcept {
+        const uint16_t w = wFlags;
+        fStartupFile = w & 1u;
+        fCmdLine = (w >> 1) & 1u;
+        fWait = (w >> 2) & 1u;
+        fGen = (w >> 3) & 1u;
+        fTry = (w >> 4) & 1u;
+        grobjSel = (w >> 5) & 15u;
+        fBatch = (w >> 9) & 1u;
+        fNewGame = (w >> 10) & 1u;
+        fDumpFleets = (w >> 11) & 1u;
+        fDumpPlanets = (w >> 12) & 1u;
+        fDumpMap = (w >> 13) & 1u;
+        fValidate = (w >> 14) & 1u;
+        fLogging = (w >> 15) & 1u;
+    }
     uint16_t turn;     /* +0x000C (2) */
     int16_t  iObjSel;  /* +0x000E (2) */
     int16_t  idPlayer; /* +0x0010 (2) */
@@ -1649,25 +1734,44 @@ struct _player {
 }; /* size=0xc0 */
 
 struct _tutor {
-    union {
-        int16_t wFlags; /* +0x0000 (2) */
-        struct {
-            uint16_t fVisible : 1, /* +0x0000 (2) @bit0 */
-                fGameSaved : 1,    /* @bit1 */
-                fChange : 1,       /* @bit2 */
-                fTurnDone : 1,     /* @bit3 */
-                fTutorDone : 1,    /* @bit4 */
-                fNoErrors : 1,     /* @bit5 */
-                cError : 3,        /* @bit6 */
-                fAutoComplete : 1, /* @bit9 */
-                fProgress : 1,     /* @bit10 */
-                fTBVis : 1,        /* @bit11 */
-                fValidQ : 1,       /* @bit12 */
-                fFreeing : 1,      /* @bit13 */
-                fShowHidMsg : 1,   /* @bit14 */
-                unused : 1;        /* @bit15 */
-        };
-    };
+    uint16_t fVisible : 1, /* +0x0000 (2) @bit0 */
+        fGameSaved : 1,    /* @bit1 */
+        fChange : 1,       /* @bit2 */
+        fTurnDone : 1,     /* @bit3 */
+        fTutorDone : 1,    /* @bit4 */
+        fNoErrors : 1,     /* @bit5 */
+        cError : 3,        /* @bit6 */
+        fAutoComplete : 1, /* @bit9 */
+        fProgress : 1,     /* @bit10 */
+        fTBVis : 1,        /* @bit11 */
+        fValidQ : 1,       /* @bit12 */
+        fFreeing : 1,      /* @bit13 */
+        fShowHidMsg : 1,   /* @bit14 */
+        unused : 1;        /* @bit15 */
+    int16_t wFlags() const noexcept {
+        const uint16_t w = uint16_t(fVisible) | uint16_t(fGameSaved) << 1 | uint16_t(fChange) << 2 | uint16_t(fTurnDone) << 3 |
+            uint16_t(fTutorDone) << 4 | uint16_t(fNoErrors) << 5 | uint16_t(cError) << 6 | uint16_t(fAutoComplete) << 9 |
+            uint16_t(fProgress) << 10 | uint16_t(fTBVis) << 11 | uint16_t(fValidQ) << 12 | uint16_t(fFreeing) << 13 |
+            uint16_t(fShowHidMsg) << 14 | uint16_t(unused) << 15;
+        return std::bit_cast<int16_t>(w);
+    }
+    void SetWFlags(int16_t wFlags) noexcept {
+        const uint16_t w = std::bit_cast<uint16_t>(wFlags);
+        fVisible = w & 1u;
+        fGameSaved = (w >> 1) & 1u;
+        fChange = (w >> 2) & 1u;
+        fTurnDone = (w >> 3) & 1u;
+        fTutorDone = (w >> 4) & 1u;
+        fNoErrors = (w >> 5) & 1u;
+        cError = (w >> 6) & 7u;
+        fAutoComplete = (w >> 9) & 1u;
+        fProgress = (w >> 10) & 1u;
+        fTBVis = (w >> 11) & 1u;
+        fValidQ = (w >> 12) & 1u;
+        fFreeing = (w >> 13) & 1u;
+        fShowHidMsg = (w >> 14) & 1u;
+        unused = (w >> 15) & 1u;
+    }
     TutorId       idt;       /* +0x0002 (2) */
     TutorId       idtBold;   /* +0x0004 (2) */
     HelpContextId idh;       /* +0x0006 (2) */
