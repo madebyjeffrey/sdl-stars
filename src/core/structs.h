@@ -539,7 +539,9 @@ struct _msgplr {
     int16_t iPlrTo;       /* +0x0006 (2) */
     int16_t iInRe;        /* +0x0008 (2) */
     int16_t cLen;         /* +0x000A (2) */
-    uint8_t rgbMsg[0];    /* +0x000C (0) */
+    // The typed allocator starts an adjacent byte array with its own lifetime.
+    uint8_t *rgbMsg() noexcept { return reinterpret_cast<uint8_t *>(this) + sizeof(*this); }
+    const uint8_t *rgbMsg() const noexcept { return reinterpret_cast<const uint8_t *>(this) + sizeof(*this); }
 }; /* size=0xc */
 
 struct _msgturn {
@@ -1091,7 +1093,6 @@ struct _rtplrmsg {
     int16_t  iPlrTo;       /* +0x0006 (2) */
     int16_t  iInRe;        /* +0x0008 (2) */
     int16_t  cLen;         /* +0x000A (2) */
-    uint8_t  rgbMsg[0];    /* +0x000C (0) */
 }; /* size=0xc */
 
 struct _rtresearch {

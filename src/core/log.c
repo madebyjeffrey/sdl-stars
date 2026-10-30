@@ -1111,6 +1111,7 @@ int16_t FLoadLogFile(char *pszLog) {
     int16_t  cbLog;
     int16_t  iCur;
     MSGPLR  *lpmp;
+    MSGPLR **lppmp;
     int16_t  cSkip;
 
     fRet = TRUE;
@@ -1174,12 +1175,13 @@ int16_t FLoadLogFile(char *pszLog) {
             memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
         }
         ReadRt();
-        for (lpmp = (MSGPLR *)&vlpmsgplrOut; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
+        for (lppmp = &vlpmsgplrOut; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
         }
         while (hdrCur.rt == rtPlrMsg) {
-            lpmp->lpmsgplrNext = LpmsgplrFromRt();
-            if (lpmp->lpmsgplrNext) {
-                lpmp = lpmp->lpmsgplrNext;
+            *lppmp = LpmsgplrFromRt();
+            if (*lppmp) {
+                lpmp = *lppmp;
+                lppmp = &lpmp->lpmsgplrNext;
                 vcmsgplrOut++;
             }
             ReadRt();

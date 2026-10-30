@@ -32,8 +32,8 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve historical variable-tail dispositions below (three active zero-array
-  declarations and nine migrated families);
+  all twelve historical variable-tail dispositions below (one active zero-array
+  declaration and eleven migrated families);
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
@@ -80,14 +80,14 @@ are while the runtime representation changes.
 | --- | --- | --- |
 | BTLREC.rgkill | Six-byte wire prefix + ctok × eight-byte KILL; scoped arena byte views | B09 battle migrated |
 | BTLREC26.rgkill | Six-byte legacy prefix + ctok × eight-byte KILL; explicit legacy conversion | B09 battle migrated |
-| MSGPLR.rgbMsg | Runtime offsetof(MSGPLR,rgbMsg) + abs(cLen); native next pointer stays runtime-only | B10 |
+| MSGPLR.rgbMsg | Typed runtime header + byte array over physical slot capacity; native next pointer stays runtime-only | B10 player family migrated |
 | PL.rgb | Four-byte runtime prefix + iMax × cbItem; iMac live items; pooled/reset lifetime | B12 |
 | PLPROD.rgprod | Four-byte runtime prefix + iprodMax × four-byte PROD; iprodMac live items; rtProdQ wire prefix is zero | B05 migrated |
 | RTCHGPRODQ.rgprod | Two-byte ID prefix + payload-derived four-byte PROD items | B05/B06 |
 | RTSHDEF.rghs | Seventeen-byte wire prefix + chs × four-byte HS | B07 |
 | RTFLEET.rgb | Fourteen-byte prefix followed by conditional counts, cargo and damage fields | B08 |
 | RTFLEETIDS.rgid | Zero-byte prefix + payload-derived signed-16 IDs; never sizeof an empty C++ object | B08 |
-| RTPLRMSG.rgbMsg | Twelve-byte wire prefix + abs(cLen); native pointer is encoded as the existing zero marker | B10 |
+| RTPLRMSG.rgbMsg | Explicit twelve-byte wire prefix + abs(cLen); native pointer is encoded as the existing zero marker | B10 player family migrated |
 | PLORD.rgord | Four-byte runtime prefix + iordMax × sizeof(ORDER); iordMac live items; wire items are 18/8 bytes | B06 migrated |
 | BTLDATA.rgtok | Fourteen-byte prefix + ctok × 29-byte TOK, then variable BTLREC events through cbData; scoped arena byte views | B09 battle migrated |
 

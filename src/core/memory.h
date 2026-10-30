@@ -26,4 +26,7 @@ void FreePl(PLORD *lppl);
 bool FApplyOrderBytes(PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t cb, bool fZero);
 bool FSetOrderTask(PLORD *lpplord, int16_t iord, int16_t grTask);
 
+MSGPLR *LpmsgplrAlloc(uint16_t cb);
+MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb);
+
 #endif

@@ -673,15 +673,21 @@ void ResetMessages() {
 
 void WriteRtPlrMsg(MSGPLR *lpmp) {
     uint8_t rgb[1024];
+    RTPLRMSG msg{};
 
-    ((RTPLRMSG *)rgb)->lpmsgplrNext = 0;
-    ((RTPLRMSG *)rgb)->iPlrFrom = lpmp->iPlrFrom;
-    ((RTPLRMSG *)rgb)->iPlrTo = lpmp->iPlrTo;
-    ((RTPLRMSG *)rgb)->iInRe = lpmp->iInRe;
-    ((RTPLRMSG *)rgb)->cLen = lpmp->cLen;
-    memcpy(((RTPLRMSG *)rgb)->rgbMsg, lpmp->rgbMsg, abs(lpmp->cLen));
-    WriteRt(rtPlrMsg, sizeof(RTPLRMSG) + abs(lpmp->cLen), rgb);
+    msg.lpmsgplrNext = 0;
+    msg.iPlrFrom = lpmp->iPlrFrom;
+    msg.iPlrTo = lpmp->iPlrTo;
+    msg.iInRe = lpmp->iInRe;
+    msg.cLen = lpmp->cLen;
+    FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgb)).first(cbWirePlrMsg));
+    memcpy(rgb + cbWirePlrMsg, lpmp->rgbMsg(), abs(lpmp->cLen));
+    WriteRt(rtPlrMsg, cbWirePlrMsg + abs(lpmp->cLen), rgb);
     return;
+}
+
+static NATIVEPLAYERMESSAGEVIEW PmvCur() noexcept {
+    return {std::as_writable_bytes(std::span(rgbCur)), 0};
 }
 
 // Returns the rtPlrMsg record in rgbCur as a new message, or NULL if the
@@ -694,24 +700,24 @@ MSGPLR *LpmsgplrFromRt() {
     const char *pszEnd;
 
     /* NATIVE: skip records too short for their header or text; see WIN16-PARITY.md. */
-    if (hdrCur.cb < sizeof(RTPLRMSG) || abs(((RTPLRMSG *)rgbCur)->cLen) + sizeof(RTPLRMSG) > hdrCur.cb)
+    if (hdrCur.cb < cbWirePlrMsg || abs(PmvCur().cLen()) + cbWirePlrMsg > hdrCur.cb)
         return NULL;
-    cLen = ((RTPLRMSG *)rgbCur)->cLen;
+    cLen = PmvCur().cLen();
     if (cLen >= 0) {
         cOut = sizeof(szText) - 1;
-        if (!FDecompressUserString((char *)((RTPLRMSG *)rgbCur)->rgbMsg, cLen, szText, &cOut)) return NULL;
+        if (!FDecompressUserString((char *)PmvCur().RgbMsg(), cLen, szText, &cOut)) return NULL;
     } else {
-        pszEnd = (const char *)memchr(((RTPLRMSG *)rgbCur)->rgbMsg, 0, -cLen);
-        if (!pszEnd || pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg >= (int)sizeof(szText) ||
-            !FUtf8Valid((char *)((RTPLRMSG *)rgbCur)->rgbMsg, (size_t)(pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg))) return NULL;
+        pszEnd = (const char *)memchr(PmvCur().RgbMsg(), 0, -cLen);
+        if (!pszEnd || pszEnd - (char *)PmvCur().RgbMsg() >= (int)sizeof(szText) ||
+            !FUtf8Valid((char *)PmvCur().RgbMsg(), (size_t)(pszEnd - (char *)PmvCur().RgbMsg()))) return NULL;
     }
-    lpmp = (MSGPLR *)LpAlloc(offsetof(MSGPLR, rgbMsg) + hdrCur.cb - sizeof(RTPLRMSG), htPlrMsg);
+    lpmp = LpmsgplrAlloc(sizeof(MSGPLR) + hdrCur.cb - cbWirePlrMsg);
     lpmp->lpmsgplrNext = NULL;
-    lpmp->iPlrFrom = ((RTPLRMSG *)rgbCur)->iPlrFrom;
-    lpmp->iPlrTo = ((RTPLRMSG *)rgbCur)->iPlrTo;
-    lpmp->iInRe = ((RTPLRMSG *)rgbCur)->iInRe;
-    lpmp->cLen = ((RTPLRMSG *)rgbCur)->cLen;
-    memcpy(lpmp->rgbMsg, ((RTPLRMSG *)rgbCur)->rgbMsg, hdrCur.cb - sizeof(RTPLRMSG));
+    lpmp->iPlrFrom = PmvCur().iPlrFrom();
+    lpmp->iPlrTo = PmvCur().iPlrTo();
+    lpmp->iInRe = PmvCur().iInRe();
+    lpmp->cLen = PmvCur().cLen();
+    memcpy(lpmp->rgbMsg(), PmvCur().RgbMsg(), hdrCur.cb - cbWirePlrMsg);
     return lpmp;
 }
 
@@ -723,6 +729,7 @@ void ReadPlayerMessages() {
     uint16_t imemMsgT;
     int16_t  i;
     MSGPLR  *lpmp;
+    MSGPLR **lppmp;
     uint8_t *lpb;
     uint16_t u;
 
@@ -750,15 +757,16 @@ void ReadPlayerMessages() {
             u >>= 1;
         }
     }
-    for (lpmp = (MSGPLR *)&vlpmsgplrIn; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
+    for (lppmp = &vlpmsgplrIn; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
     }
 
     while (hdrCur.rt == rtPlrMsg) {
         if (!fOOM) {
             try {
-                lpmp->lpmsgplrNext = LpmsgplrFromRt();
-                if (lpmp->lpmsgplrNext) {
-                    lpmp = lpmp->lpmsgplrNext;
+                *lppmp = LpmsgplrFromRt();
+                if (*lppmp) {
+                    lpmp = *lppmp;
+                    lppmp = &lpmp->lpmsgplrNext;
                     vcmsgplrIn++;
                 }
             } catch (const StarsError &error) {

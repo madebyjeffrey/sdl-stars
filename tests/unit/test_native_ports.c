@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 #include "stars_test.h"
+#include "liststorage.h"
 
 static uint8_t rgRecord[4][1024];
 static int16_t rgcbRecord[4];
@@ -58,16 +59,17 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
     MSGPLR *mp;
     int     i;
 
-    mp = (MSGPLR *)(malloc(sizeof(MSGPLR) + abs(len)));
+    mp = (MSGPLR *)malloc(sizeof(MSGPLR) + abs(len));
     TEST_ASSERT(mp != NULL);
+    mp = LpStartPl<MSGPLR, uint8_t>(mp, sizeof(MSGPLR) + abs(len));
     mp->lpmsgplrNext = NULL;
     mp->iPlrFrom = from;
     mp->iPlrTo = to;
     mp->iInRe = 123;
     mp->cLen = len;
     for (i = 0; i < abs(len); i++)
-        mp->rgbMsg[i] = len < 0 ? 'A' + from : 0;
-    if (len < 0) mp->rgbMsg[-len - 1] = 0;
+        mp->rgbMsg()[i] = len < 0 ? 'A' + from : 0;
+    if (len < 0) mp->rgbMsg()[-len - 1] = 0;
     return mp;
 }
 
@@ -75,7 +77,7 @@ static void CheckRecord(int i, MSGPLR *mp) {
     TEST_ASSERT(rgcbRecord[i] == abs(mp->cLen) + 12);
     TEST_ASSERT(RawLoad32(rgRecord[i]) == 0);
     TEST_ASSERT(memcmp(rgRecord[i] + 4, &mp->iPlrFrom, 8) == 0);
-    TEST_ASSERT(memcmp(rgRecord[i] + 12, mp->rgbMsg, abs(mp->cLen)) == 0);
+    TEST_ASSERT(memcmp(rgRecord[i] + 12, mp->rgbMsg(), abs(mp->cLen)) == 0);
 }
 
 static void CheckReadMessage(MSGPLR *actual, MSGPLR *expected) {
@@ -84,7 +86,7 @@ static void CheckReadMessage(MSGPLR *actual, MSGPLR *expected) {
     TEST_ASSERT(actual->iPlrTo == expected->iPlrTo);
     TEST_ASSERT(actual->iInRe == expected->iInRe);
     TEST_ASSERT(actual->cLen == expected->cLen);
-    TEST_ASSERT(memcmp(actual->rgbMsg, expected->rgbMsg, abs(expected->cLen)) == 0);
+    TEST_ASSERT(memcmp(actual->rgbMsg(), expected->rgbMsg(), abs(expected->cLen)) == 0);
 }
 
 static void TestMessages(void) {
@@ -95,7 +97,7 @@ static void TestMessages(void) {
 
     mp = MakeMessage(0, 0, 31);
     TEST_ASSERT(sizeof(mp->iPlrFrom) == 2 && sizeof(mp->cLen) == 2);
-    TEST_ASSERT((uint8_t *)mp->rgbMsg - (uint8_t *)&mp->iPlrFrom == 8);
+    TEST_ASSERT((uint8_t *)mp->rgbMsg() - (uint8_t *)&mp->iPlrFrom == 8);
     mp2 = MakeMessage(1, 2, -1000);
     mp3 = MakeMessage(2, 3, 7);
     mp->lpmsgplrNext = mp2;
@@ -152,6 +154,14 @@ static void TestMessages(void) {
     CheckReadMessage(vlpmsgplrOut->lpmsgplrNext, mp2);
     CheckReadMessage(vlpmsgplrOut->lpmsgplrNext->lpmsgplrNext, mp3);
     TEST_ASSERT(vlpmsgplrOut->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext == NULL);
+    // An invalid first record does not prevent later records from appending
+    // to an existing list, and the old tail remains the publication slot.
+    rgRecord[0][10] = 0xff; rgRecord[0][11] = 0x7f;
+    fLogRead = FALSE; iRead = 0; StarsTest_ReadRt();
+    ReadPlayerMessages();
+    TEST_CHECK(vcmsgplrIn == 5);
+    CheckReadMessage(vlpmsgplrIn->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext, mp2);
+    CheckReadMessage(vlpmsgplrIn->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext, mp3);
     free(mp);
     free(mp2);
     free(mp3);
@@ -161,20 +171,21 @@ static void TestMessages(void) {
 }
 
 static void TestMessageTextBounds(void) {
-    RTPLRMSG *lprt = (RTPLRMSG *)rgbCur;
+    RTPLRMSG msg{};
 
     TEST_ASSERT(FStarsTestInit());
     memset(rgbCur, 0, sizeof(rgbCur));
-    hdrCur.cb = sizeof(RTPLRMSG) + 3;
-    lprt->cLen = -3;
-    memcpy(lprt->rgbMsg, "\xc3\xa9\0", 3);
+    hdrCur.cb = cbWirePlrMsg + 3;
+    msg.cLen = -3;
+    FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgbCur)));
+    memcpy((rgbCur + cbWirePlrMsg), "\xc3\xa9\0", 3);
     TEST_CHECK(LpmsgplrFromRt() != NULL);
-    lprt->rgbMsg[2] = 'x';
+    (rgbCur + cbWirePlrMsg)[2] = 'x';
     TEST_CHECK(LpmsgplrFromRt() == NULL);
-    lprt->rgbMsg[2] = 0; lprt->rgbMsg[0] = 0xff;
+    (rgbCur + cbWirePlrMsg)[2] = 0; (rgbCur + cbWirePlrMsg)[0] = 0xff;
     TEST_CHECK(LpmsgplrFromRt() == NULL);
-    lprt->cLen = 1; lprt->rgbMsg[0] = 0x0b;
-    hdrCur.cb = sizeof(RTPLRMSG) + 1;
+    msg.cLen = 1; FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgbCur))); (rgbCur + cbWirePlrMsg)[0] = 0x0b;
+    hdrCur.cb = cbWirePlrMsg + 1;
     TEST_CHECK(LpmsgplrFromRt() == NULL);
 }
 
@@ -197,10 +208,18 @@ static void TestRawMessageEdit(void) {
     cDirty = 0;
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 0 && vcmsgplrOut == 1);
-    TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg, psz));
+    TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg(), psz));
     TEST_ASSERT(SetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
-    TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg, "\xe4\xba\xac\xe6\x9d\xb1"));
+    TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg(), "\xe4\xba\xac\xe6\x9d\xb1"));
+    iMsgSendCur = vcmsgplrOut;
+    TEST_ASSERT(SetWindowText(hwndMsgEdit, "Second"));
+    TEST_ASSERT(FFinishPlrMsgEntry(0));
+    TEST_CHECK(vcmsgplrOut == 2 && vlpmsgplrOut->lpmsgplrNext != NULL);
+    TEST_CHECK(!FFinishPlrMsgEntry(1000));
+    TEST_CHECK(vcmsgplrOut == 1 && vlpmsgplrOut->lpmsgplrNext == NULL && iMsgSendCur == 0);
+    TEST_CHECK(!FFinishPlrMsgEntry(1000));
+    TEST_CHECK(vcmsgplrOut == 0 && vlpmsgplrOut == NULL);
     DestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
 }
 
@@ -268,7 +287,55 @@ static void TestFleetMessageGoto(void) {
     imemMsgCur = 0;
 }
 
-TEST_LIST = {{"player messages", TestMessages},
+// A valid raw string may carry trailing record bytes beyond its first NUL;
+// the reader admits and retains those bytes, and ignores arbitrary link markers.
+static void TestPlayerMessagePrefixAndTail(void) {
+    const uint8_t wire[] = {0xef, 0xbe, 0xad, 0xde, 0, 0x80, 0xff, 0x7f, 0xff, 0xff, 0xfe, 0xff, 'A', 0, 0xff, 0x80};
+    MSGPLR *lpmp;
+
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(rgbCur, wire, sizeof(wire)); hdrCur.cb = sizeof(wire);
+    lpmp = LpmsgplrFromRt();
+    TEST_ASSERT(lpmp != NULL);
+    TEST_CHECK(lpmp->lpmsgplrNext == NULL && lpmp->iPlrFrom == -32768 && lpmp->iPlrTo == 32767 && lpmp->iInRe == -1 && lpmp->cLen == -2);
+    TEST_CHECK(memcmp(lpmp->rgbMsg(), wire + 12, 4) == 0);
+    TEST_CHECK(CbPlSlot(lpmp) >= sizeof(MSGPLR) + 4);
+    FreeLp(lpmp, htPlrMsg);
+    hdrCur.cb = 11;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+    hdrCur.cb = 12; rgbCur[10] = 0; rgbCur[11] = (char)0x80;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+}
+
+// Restart header/byte-array lifetimes without changing physical slot capacity,
+// the list link, retained spare bytes or the allocator's move/shrink policy.
+static void TestPlayerMessageStorage(void) {
+    MSGPLR *lpmp, *lpmpOld, *lpmpNext;
+    uint8_t rgb[128];
+    uint16_t cb, i;
+
+    TEST_ASSERT(FStarsTestInit());
+    lpmp = LpmsgplrAlloc(sizeof(MSGPLR) + 17);
+    lpmpNext = LpmsgplrAlloc(sizeof(MSGPLR) + 1);
+    lpmp->lpmsgplrNext = lpmpNext;
+    lpmp->iPlrFrom = 3; lpmp->iPlrTo = 4; lpmp->iInRe = -1; lpmp->cLen = -17;
+    cb = CbPlSlot(lpmp) - sizeof(MSGPLR);
+    TEST_ASSERT(cb <= sizeof(rgb));
+    for (i = 0; i < cb; i++) rgb[i] = lpmp->rgbMsg()[i] = (uint8_t)(i * 7);
+    lpmpOld = lpmp;
+    lpmp = LpmsgplrReAlloc(lpmp, sizeof(MSGPLR) + cb + 32);
+    TEST_CHECK(lpmp != lpmpOld && lpmp->lpmsgplrNext == lpmpNext);
+    TEST_CHECK(lpmp->iPlrFrom == 3 && lpmp->iPlrTo == 4 && lpmp->iInRe == -1 && lpmp->cLen == -17);
+    TEST_CHECK(memcmp(lpmp->rgbMsg(), rgb, cb) == 0);
+    lpmpOld = lpmp;
+    lpmp = LpmsgplrReAlloc(lpmp, sizeof(MSGPLR) + 1);
+    TEST_CHECK(lpmp == lpmpOld && lpmp->lpmsgplrNext == lpmpNext && memcmp(lpmp->rgbMsg(), rgb, cb) == 0);
+    FreeLp(lpmp, htPlrMsg); FreeLp(lpmpNext, htPlrMsg);
+}
+
+TEST_LIST = {{"player-message storage retains links, capacities and spare bytes", TestPlayerMessageStorage},
+             {"player-message prefix preserves signed fields and spare tail", TestPlayerMessagePrefixAndTail},
+             {"player messages", TestMessages},
              {"unchanged raw UTF-8 messages compare only their stored bytes", TestRawMessageEdit},
              {"player-message text is bounded and strictly UTF-8", TestMessageTextBounds},
              {"fleet message goto", TestFleetMessageGoto},

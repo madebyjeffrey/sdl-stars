@@ -4,6 +4,7 @@
 #include "battlecodec.h"
 #include "battleviews.h"
 #include "aiviews.h"
+#include "messageviews.h"
 #include <array>
 #include <cstdio>
 #include <limits>
@@ -658,6 +659,36 @@ int main() {
         std::array<std::byte, 2> deletion{std::byte{0xd3}, std::byte{0xff}};
         NATIVEBATTLEPLANVIEW deletionView{deletion, 0};
         CHECK(deletionView.fDelete() && deletionView.fDumpCargo() && deletionView.unused1() == 3);
+    }
+    {
+        const std::array<std::byte, 12> golden = {std::byte{0xef}, std::byte{0xbe}, std::byte{0xad}, std::byte{0xde},
+            std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f}, std::byte{0xff}, std::byte{0xff}, std::byte{0xfc}, std::byte{0xff}};
+        RTPLRMSG msg{};
+        CHECK(FDecodePlrMsgPrefix(golden, msg));
+        CHECK(msg.lpmsgplrNext == 0xdeadbeef && msg.iPlrFrom == -32768 && msg.iPlrTo == 32767 && msg.iInRe == -1 && msg.cLen == -4);
+        std::array<std::byte, 14> output;
+        output.fill(std::byte{0xa5});
+        CHECK(FEncodePlrMsgPrefix(msg, std::span(output).subspan(1, 12)));
+        CHECK(std::memcmp(output.data() + 1, golden.data(), 12) == 0 && output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 12; cb++) {
+            RTPLRMSG unchanged = msg;
+            CHECK(!FDecodePlrMsgPrefix(std::span(golden).first(cb), unchanged) && unchanged.lpmsgplrNext == msg.lpmsgplrNext && unchanged.cLen == -4);
+            output.fill(std::byte{0xa5});
+            CHECK(!FEncodePlrMsgPrefix(msg, std::span(output).subspan(1, cb)));
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            auto rgb = golden;
+            rgb[10] = static_cast<std::byte>(w % 256); rgb[11] = static_cast<std::byte>(w / 256);
+            CHECK(FDecodePlrMsgPrefix(rgb, msg));
+            CHECK(msg.cLen == (w < 32768 ? static_cast<std::int32_t>(w) : static_cast<std::int32_t>(w) - 65536));
+            std::array<std::byte, 12> encoded;
+            CHECK(FEncodePlrMsgPrefix(msg, encoded) && encoded == rgb);
+        }
+        std::array<std::byte, 7> partial{};
+        partial[4] = std::byte{0xff}; partial[5] = std::byte{0xff};
+        NATIVEPLAYERMESSAGEVIEW prefix{partial, 0};
+        CHECK(prefix.iPlrFrom() == -1);
     }
     std::puts("History/production/action/order/design/fleet/battle/AI wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;

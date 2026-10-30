@@ -62,7 +62,7 @@ tails = {
     "PLORD": ("rgord", "B06", "4 + iordMax * sizeof(ORDER)", "runtime; wire orders use 18/8 bytes"),
     "BTLDATA": ("rgtok", "B09", "14 + ctok * 29 + battle events", "wire; cbData bounds complete data"),
 }
-migrated_tails = {"PLPROD", "RTCHGPRODQ", "PLORD", "RTSHDEF", "RTFLEET", "RTFLEETIDS", "BTLREC", "BTLREC26", "BTLDATA"}
+migrated_tails = {"PLPROD", "RTCHGPRODQ", "PLORD", "RTSHDEF", "RTFLEET", "RTFLEETIDS", "BTLREC", "BTLREC26", "BTLDATA", "MSGPLR", "RTPLRMSG"}
 report = {"schema": 1, "contract": "spec/S01-game-file-records.md", "records": [], "tails": [], "zero_storage": [], "sites": []}
 paths = sorted(p for d in ("src", "compat/win32/src", "compat/win32/include")
                for p in (root / d).rglob("*") if p.suffix in (".h", ".c", ".cpp", ".mm"))

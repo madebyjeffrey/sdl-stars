@@ -18,7 +18,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. All battle, AI and battle-plan families pass the full local matrix; final Linux/Windows qualification is required. |
-| B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
+| B10: message/log payloads | Active | Player-message prefix, typed payloads and real list-head slots pass the full local matrix; parameter/cargo/log families and platform qualification remain required. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
@@ -897,3 +897,40 @@ same 25 accepted unused-storage warnings, zero differences/errors and no
 skipped inputs. Frozen inputs, catalogs, baselines, all 259 size/prefix contracts
 and six migrated runtime alignment contracts remain unchanged. Linux/Windows
 qualification is still required before B09 completion; B10–B14 remain pending.
+
+
+## B10 player-message family in qualification
+
+The twelve-byte file prefix has explicit little-endian signed fields and its
+existing four-byte zero link marker. Incoming legacy markers remain ignored.
+Runtime messages retain their native header width but now have actual adjacent
+byte arrays over the complete physical slot. Typed allocate/reallocate adapters
+restart lifetimes while preserving header/link bytes, spare capacity, original
+allocation requests, move/shrink policy and failure order. No native pointer
+enters the encoded prefix.
+
+Readers retain compression/raw UTF-8 admission, signed length handling and all
+trailing record bytes, including bytes beyond the first raw-string NUL. Fresh
+scratch views read fields at their original points, including after allocation.
+Real pointer slots replace the fake list-head objects in both readers and the
+message editor; append, invalid-record, deletion and publication effects remain.
+The two player-message zero-length tails are removed, leaving generic PL's tail
+for B12. Existing production/order list lifetimes use the same generalized
+header-size helper without changing their four-byte headers.
+
+Focused golden/short/signed-prefix, real readers, existing-list append, raw UTF-8
+editing, deletion and reallocation/spare-byte tests pass. The actual native-port
+message program joins Linux sanitizer qualification. Full local/platform gates
+and B10's parameter/cargo/log families remain required.
+
+
+Player-message local qualification: 114/114 desktop tests including all 27
+native leak checks and the available tutorial smoke checkpoint, 25/25 host
+tests, 37/37 ASan/UBSan cases including actual message readers/editor/storage,
+all 27 source witnesses and 100 public headers in both include orders.
+Debug/Release/host/sanitizer builds introduce no warnings. Desktop and host
+regressions each match 519 files through turn 150 with the same 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs.
+Independent inputs, catalogs, baselines and layout/alignment contracts remain
+unchanged. B09's final platform checks are pending; this focused B10 family
+is locally qualified, while parameter/cargo/log migration remains required.

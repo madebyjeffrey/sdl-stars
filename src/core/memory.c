@@ -385,3 +385,12 @@ static NATIVEBYTEWINDOW BbwFromLpHt(void *lp, HeapType ht) noexcept {
 
 NATIVEBYTEWINDOW BbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htBattle); }
 NATIVEBYTEWINDOW AbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htMisc); }
+
+MSGPLR *LpmsgplrAlloc(uint16_t cb) {
+    void *lp = LpAlloc(cb, htPlrMsg);
+    return LpStartPl<MSGPLR, uint8_t>(lp, CbPlSlot(lp));
+}
+MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb) {
+    void *lp = LpReAlloc(lpmp, cb, htPlrMsg);
+    return LpStartPl<MSGPLR, uint8_t>(lp, CbPlSlot(lp));
+}

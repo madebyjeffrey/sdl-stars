@@ -50,6 +50,8 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "memory.h"
 #include "mine.h"
 #include "msg.h"
+#include "messagecodec.h"
+#include "messageviews.h"
 #include "parts.h"
 #include "planet.h"
 #include "produce.h"
