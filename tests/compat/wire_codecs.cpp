@@ -11,9 +11,59 @@
 #include <cstdio>
 #include <limits>
 
+#ifdef STARS_TEST_NATURAL_RECORD_LAYOUT
+static_assert(alignof(RTBOF) > 1);
+static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
+#endif
+
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main() {
+    for (std::uint32_t w = 0; w < 65536; w++) {
+        std::array<std::byte, 64> golden = {std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff},
+            std::byte{1}, std::byte{0x80}, std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0x80},
+            std::byte{0xff}, std::byte{0x7f}, std::byte{0xfe}, std::byte{0xff}, std::byte{0xff}, std::byte{0x7f},
+            static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256), std::byte{0x85}, std::byte{0xa5}};
+        for (int i = 0; i < 12; i++) golden[20 + i] = static_cast<std::byte>(i + 128);
+        for (int i = 0; i < 32; i++) golden[32 + i] = static_cast<std::byte>(i + 160);
+        GAME game{};
+        std::array<std::byte, 66> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeGame(golden, game) && game.lid == -1 && game.mdSize == 0x8001 && game.mdDensity == 65535 && game.mdStartDist == 65534);
+        CHECK(game.cPlayer == -32768 && game.cPlanMax == 32767 && game.fDirty == 32767 && game.turn == 0xa585 && game.wCrap() == w);
+        CHECK(game.fExtraFuel == (w & 1) && game.fSlowTech == ((w >> 1) & 1) && game.fSinglePlr == ((w >> 2) & 1));
+        CHECK(game.fTutorial == ((w >> 3) & 1) && game.fAisBand == ((w >> 4) & 1) && game.fBBSPlay == ((w >> 5) & 1));
+        CHECK(game.fVisScores == ((w >> 6) & 1) && game.fNoRandom == ((w >> 7) & 1) && game.fClumping == ((w >> 8) & 1));
+        CHECK(game.wGen == ((w >> 9) & 7) && game.unused == w / 4096);
+        CHECK(!std::memcmp(game.rgvc, golden.data() + 20, 12) && !std::memcmp(game.szName, golden.data() + 32, 32));
+        CHECK(FEncodeGame(game, std::span(rgb).subspan(1, 64)) && !std::memcmp(rgb.data() + 1, golden.data(), 64));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        if (w == 32768) for (std::size_t cb = 0; cb < 64; cb++) {
+            game.lid = 999; game.cPlayer = -123;
+            CHECK(!FDecodeGame(std::span(golden).first(cb), game) && game.lid == 999 && game.cPlayer == -123);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeGame(game, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+    for (std::uint32_t i = 0; i < 65570; i++) {
+        const std::uint32_t w = i < 32 ? (std::uint32_t{1} << i) : i == 32 ? 0 : i == 33 ? 0xffffffffu : ((i - 34) | ((65569 - i) << 16));
+        const std::array<std::byte, 4> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8), static_cast<std::byte>(w >> 16), static_cast<std::byte>(w >> 24)};
+        STARPACK sp{};
+        std::array<std::byte, 6> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeStarpack(golden, sp) && sp.dx == w % 1024 && sp.y == (w / 1024) % 4096 && sp.id == w / 4194304);
+        CHECK(FEncodeStarpack(sp, std::span(rgb).subspan(1, 4)) && !std::memcmp(rgb.data() + 1, golden.data(), 4));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        if (i == 32768) for (std::size_t cb = 0; cb < 4; cb++) {
+            sp.dx = 123; sp.y = 456; sp.id = 789;
+            CHECK(!FDecodeStarpack(std::span(golden).first(cb), sp) && sp.dx == 123 && sp.y == 456 && sp.id == 789);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeStarpack(sp, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+
     for (std::uint32_t w = 0; w < 65536; w++) {
         const std::uint32_t flags = 65535 - w;
         const std::array<std::byte, 16> golden = {std::byte{0x4a}, std::byte{0x33}, std::byte{0x4a}, std::byte{0x33},
@@ -869,6 +919,6 @@ int main() {
         }
         CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
     }
-    std::puts("History/production/action/order/design/fleet/battle/AI/message/log wire vectors, signed domains, partial bytes and bounded primitives passed");
+    std::puts("Universe/starpack/history/production/action/order/design/fleet/battle/AI/message/log wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

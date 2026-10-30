@@ -127,7 +127,10 @@ typedef struct _zipprodq        ZIPPRODQ;
 typedef void (*TILEDRAWPROC)(HDC hdc, TILE *ptile, OBJ obj);
 
 // Win16 structs are byte-packed; keep the original field offsets.
+// The codec harness also compiles these types with natural runtime alignment.
+#ifndef STARS_TEST_NATURAL_RECORD_LAYOUT
 #pragma pack(push, 1)
+#endif
 
 struct _aipart {
     uint16_t ibit : 4, /* +0x0000 (2) @bit0 */
@@ -297,22 +300,21 @@ struct _game {
     int16_t         cPlanMax;    /* +0x000A (2) */
     StartDistance   mdStartDist; /* +0x000C (2) */
     int16_t         fDirty;      /* +0x000E (2) */
-    union {
-        struct {
-            uint16_t fExtraFuel : 1, /* +0x0010 (2) @bit0 */
-                fSlowTech : 1,       /* @bit1 */
-                fSinglePlr : 1,      /* @bit2 */
-                fTutorial : 1,       /* @bit3 */
-                fAisBand : 1,        /* @bit4 */
-                fBBSPlay : 1,        /* @bit5 */
-                fVisScores : 1,      /* @bit6 */
-                fNoRandom : 1,       /* @bit7 */
-                fClumping : 1,       /* @bit8 */
-                wGen : 3,            /* @bit9 */
-                unused : 4;          /* @bit12 */
-        };
-        uint16_t wCrap; /* +0x0010 (2) */
-    };
+    uint16_t fExtraFuel : 1, /* +0x0010 (2) @bit0 */
+        fSlowTech : 1,       /* @bit1 */
+        fSinglePlr : 1,      /* @bit2 */
+        fTutorial : 1,       /* @bit3 */
+        fAisBand : 1,        /* @bit4 */
+        fBBSPlay : 1,        /* @bit5 */
+        fVisScores : 1,      /* @bit6 */
+        fNoRandom : 1,       /* @bit7 */
+        fClumping : 1,       /* @bit8 */
+        wGen : 3,            /* @bit9 */
+        unused : 4;          /* @bit12 */
+    uint16_t wCrap() const noexcept {
+        return static_cast<uint16_t>(fExtraFuel | (fSlowTech << 1) | (fSinglePlr << 2) | (fTutorial << 3) | (fAisBand << 4) |
+            (fBBSPlay << 5) | (fVisScores << 6) | (fNoRandom << 7) | (fClumping << 8) | (wGen << 9) | (unused << 12));
+    }
     uint16_t turn;       /* +0x0012 (2) */
     uint8_t  rgvc[12];   /* +0x0014 (12) */
     char     szName[32]; /* +0x0020 (32) */
@@ -1684,6 +1686,8 @@ struct _zipprodq {
     };
 }; /* size=0x28 */
 
+#ifndef STARS_TEST_NATURAL_RECORD_LAYOUT
 #pragma pack(pop)
+#endif
 
 #endif

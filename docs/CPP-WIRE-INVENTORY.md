@@ -56,7 +56,7 @@ expressions that would become stale when unrelated lines move.
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
-| Remaining fixed game records | GAME/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
+| Remaining fixed game records | PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
@@ -221,3 +221,21 @@ B11 EOF values: all owned two-byte EOF producers encode numeric words explicitly
 turn-date and race-checksum readers decode little-endian values from the same
 scratch backing. Empty EOF records retain their existing calls. Native copies
 used for THING counts remain assigned to the forthcoming THING record family.
+
+
+B11 universe family: GAME64 and STARPACK4 use explicit codecs for creation,
+loading and library inspection. GAME flags are actual fields with a numeric
+wCrap accessor. All stored name/victory/reserved bytes retain their old values;
+UTF-8 and gameplay validation stay with their callers. The separate
+test_wire_codecs_natural target defines STARS_TEST_NATURAL_RECORD_LAYOUT to
+remove outer core-struct packing only in its isolated executable. The same
+golden suite must pass despite verified runtime alignment/offset differences.
+This supplements the unchanged frozen C/layout comparison; production packing
+retirement still requires the remaining entity and runtime-family work.
+
+
+Selection record disposition: rtSel (22) has no producer and no interpreted
+payload consumer in owned application code. FLoadGame discards its already
+framed payload by calling ReadRt for the next record. SELSOME is unused runtime
+metadata, retained for its frozen measurements. This role requires no invented
+selection parser or change to accepted frame lengths/tags.

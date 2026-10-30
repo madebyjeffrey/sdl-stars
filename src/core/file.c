@@ -127,6 +127,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
     int16_t  iplrSav;
     int16_t  cPlanetHist;
     STARPACK sp;
+    std::byte rgbStarpack[cbWireStarpack];
     int16_t  cPlanetAlloc;
     int16_t  fHaveHistoryData;
     int16_t  fSilentSav;
@@ -173,12 +174,12 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
         if (!FOpenFile(dtXY, iplrNone, 32))
             goto LError;
         ReadRt();
-        if (hdrCur.rt != rtGame || hdrCur.cb != sizeof(GAME)) {
+        if (hdrCur.rt != rtGame || hdrCur.cb != cbWireGame) {
         XYCorrupt:
             AlertSz(PszFormatIds(idsUniverseDefinitionFileSeemsMissingCorrupt, NULL), MB_ICONHAND);
             goto LError;
         }
-        game = *(GAME *)rgbCur;
+        FDecodeGame(std::as_bytes(std::span(rgbCur)), game);
         if (strnlen(game.szName, sizeof(game.szName)) == sizeof(game.szName) ||
             !FUtf8Valid(game.szName, strlen(game.szName))) goto XYCorrupt;
         game.fDirty = FALSE;
@@ -186,7 +187,8 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
         dGalInv = dGal + 2000;
         x = 1000;
         for (i = 0; i < game.cPlanMax; i++) {
-            RgFromStream(&sp, 4);
+            RgFromStream(rgbStarpack, cbWireStarpack);
+            FDecodeStarpack(rgbStarpack, sp);
             x += sp.dx;
             rgptPlan[i].x = x;
             rgptPlan[i].y = sp.y;

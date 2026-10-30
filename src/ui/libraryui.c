@@ -2435,6 +2435,7 @@ static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
     HDR hdr;
     RTBOF rtbof;
     GAME gameImport;
+    uint8_t rgbGame[cbWireGame];
     int32_t lSeed1, lSeed2;
     int16_t fRead;
 
@@ -2442,15 +2443,16 @@ static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
     if (!pf) return FALSE;
     fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
             FReadLibraryBof(pf, &rtbof) &&
-            FReadLibraryHdr(pf, &hdr) && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
-            CReadNative(&gameImport, sizeof(gameImport), 1, pf) == 1;
+            FReadLibraryHdr(pf, &hdr) && hdr.rt == rtGame && hdr.cb == cbWireGame &&
+            CReadNative(rgbGame, cbWireGame, 1, pf) == 1;
     ICloseNativeFile(pf);
     if (!fRead) return FALSE;
     /* Inspect the selected universe without disturbing an open game's stream. */
     GetFileSeeds(&lSeed1, &lSeed2);
     SetFileXorStream(rtbof.lidGame, rtbof.lSaltTime, rtbof.turn, rtbof.iPlayer, rtbof.fCrippled);
-    XorFileBuf((char *)&gameImport, sizeof(gameImport));
+    XorFileBuf((char *)rgbGame, cbWireGame);
     SetFileSeeds(lSeed1, lSeed2);
+    FDecodeGame(std::as_bytes(std::span(rgbGame)), gameImport);
     return gameImport.lid == rtbof.lidGame && gameImport.cPlayer > 0 && gameImport.cPlayer <= 16 &&
            iplr >= 0 && iplr < gameImport.cPlayer;
 }

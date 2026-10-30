@@ -483,4 +483,44 @@ inline bool FEncodeRtXferFHeader(RTXFERF rtxf, std::span<std::byte> rgb) noexcep
     return true;
 }
 
+inline constexpr std::size_t cbWireGame = 64;
+inline constexpr std::size_t cbWireStarpack = 4;
+
+inline bool FDecodeGame(std::span<const std::byte> rgb, GAME &game) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    GAME value{};
+    std::int32_t lid;
+    std::int16_t cPlayer, cPlanMax, fDirty;
+    std::uint16_t size, density, distance, flags, turn;
+    if (!input.FReadI32Le(lid) || !input.FReadU16Le(size) || !input.FReadU16Le(density) || !input.FReadI16Le(cPlayer) ||
+        !input.FReadI16Le(cPlanMax) || !input.FReadU16Le(distance) || !input.FReadI16Le(fDirty) || !input.FReadU16Le(flags) ||
+        !input.FReadU16Le(turn) || !input.FReadBytes(std::as_writable_bytes(std::span(value.rgvc))) ||
+        !input.FReadBytes(std::as_writable_bytes(std::span(value.szName)))) return false;
+    value.lid = lid; value.mdSize = static_cast<UniverseSize>(size); value.mdDensity = static_cast<UniverseDensity>(density);
+    value.cPlayer = cPlayer; value.cPlanMax = cPlanMax; value.mdStartDist = static_cast<StartDistance>(distance); value.fDirty = fDirty;
+    value.fExtraFuel = flags & 1; value.fSlowTech = (flags >> 1) & 1; value.fSinglePlr = (flags >> 2) & 1;
+    value.fTutorial = (flags >> 3) & 1; value.fAisBand = (flags >> 4) & 1; value.fBBSPlay = (flags >> 5) & 1;
+    value.fVisScores = (flags >> 6) & 1; value.fNoRandom = (flags >> 7) & 1; value.fClumping = (flags >> 8) & 1;
+    value.wGen = (flags >> 9) & 7; value.unused = flags >> 12; value.turn = turn;
+    game = value;
+    return true;
+}
+inline bool FEncodeGame(const GAME &game, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireGame) return false;
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteI32Le(game.lid) && output.FWriteU16Le(game.mdSize) && output.FWriteU16Le(game.mdDensity) &&
+        output.FWriteI16Le(game.cPlayer) && output.FWriteI16Le(game.cPlanMax) && output.FWriteU16Le(game.mdStartDist) &&
+        output.FWriteI16Le(game.fDirty) && output.FWriteU16Le(game.wCrap()) && output.FWriteU16Le(game.turn) &&
+        output.FWriteBytes(std::as_bytes(std::span(game.rgvc))) && output.FWriteBytes(std::as_bytes(std::span(game.szName)));
+}
+inline bool FDecodeStarpack(std::span<const std::byte> rgb, STARPACK &sp) noexcept {
+    std::uint32_t ul;
+    if (!NATIVEBYTEREADER(rgb).FReadU32Le(ul)) return false;
+    sp.dx = ul & 1023; sp.y = (ul >> 10) & 4095; sp.id = ul >> 22;
+    return true;
+}
+inline bool FEncodeStarpack(STARPACK sp, std::span<std::byte> rgb) noexcept {
+    return NATIVEBYTEWRITER(rgb).FWriteU32Le(static_cast<std::uint32_t>(sp.dx | (std::uint32_t(sp.y) << 10) | (std::uint32_t(sp.id) << 22)));
+}
+
 #endif

@@ -1162,3 +1162,32 @@ warnings, zero differences/errors and no skipped inputs. The new seed-alias
 regression passes alongside existing ciphertext and exact RNG-state vectors.
 Frozen inputs, catalogs, baselines and layout/alignment contracts remain
 unchanged. Remaining B11 families and its final platform gate remain required.
+
+
+## B11 universe and star-coordinate records in qualification
+
+GAME's sixty-four bytes and each four-byte STARPACK use explicit numeric codecs.
+All flag/reserved bits, unsigned enum domains, signed counts, victory bytes and
+complete name buffers retain their defined values. The inactive GAME flag union
+is removed; wCrap remains a numeric accessor. Creation, global-load publication
+and library inspection keep their old validation and encryption/RNG order.
+
+Independent vectors cover every flag word, signed/enum boundaries, all name
+bytes, all coordinate bits and mixed coordinate words, short spans and odd
+offsets. A second wire harness compiles the actual core structs with natural
+alignment. Assertions prove its runtime layout differs, and the same complete
+golden suite passes in both variants. The alternate layout is test-only; frozen
+C/layout inputs and production layouts remain unchanged. Linux and local
+sanitizers include both harnesses. Five focused codec/layout/save tests pass;
+full local and final B11 platform qualification remain required.
+
+
+Universe/star-coordinate local qualification: 115/115 desktop tests including
+all 27 native leak checks and available tutorial smoke coverage, 26/26 host
+tests, 39/39 ASan/UBSan cases including both packed/natural wire harnesses, all
+27 source witnesses and 104 headers in both include orders. Debug/Release/host/
+sanitizer builds introduce no warnings. Desktop and host regressions each match
+519 files through turn 150, with 25 accepted unused-storage warnings, zero
+differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines and
+production layout/alignment contracts remain unchanged. Remaining B11 entity/
+resource families and its final platform gate remain required.

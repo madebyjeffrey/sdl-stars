@@ -324,6 +324,12 @@ if(STARS_BUILD_TESTS)
     target_compile_options(stars-test-wire-codecs PRIVATE -Wall -Wextra -Werror)
     add_test(NAME test_wire_codecs COMMAND stars-test-wire-codecs)
     set_tests_properties(test_wire_codecs PROPERTIES LABELS "build;wire" TIMEOUT 30)
+    add_executable(stars-test-wire-codecs-natural tests/compat/wire_codecs.cpp)
+    target_link_libraries(stars-test-wire-codecs-natural PRIVATE stars_options)
+    target_compile_definitions(stars-test-wire-codecs-natural PRIVATE STARS_TEST_NATURAL_RECORD_LAYOUT=1)
+    target_compile_options(stars-test-wire-codecs-natural PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME test_wire_codecs_natural COMMAND stars-test-wire-codecs-natural)
+    set_tests_properties(test_wire_codecs_natural PROPERTIES LABELS "build;wire" TIMEOUT 30)
     add_test(NAME test_wire_inventory COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/cmake/check_wire_inventory.py"
         "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/wire-inventory.json")

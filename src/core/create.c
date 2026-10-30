@@ -26,6 +26,8 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     int16_t       fFound;
     int16_t       iMax;
     STARPACK      starpack;
+    std::byte     rgbGame[cbWireGame];
+    std::byte     rgbStarpack[cbWireStarpack];
     int16_t       dy;
     int16_t       dGalMinSq;
     int16_t       iLow;
@@ -902,14 +904,16 @@ RetryAll:
             DestroyCurGame();
             return FALSE;
         }
-        WriteRt(rtGame, 64, &game);
+        FEncodeGame(game, rgbGame);
+        WriteRt(rtGame, cbWireGame, rgbGame);
         xOld = 1000;
         for (i = 0; i < cPlanMax; i++) {
             starpack.y = LOWORD(rgptPlan[i].y);
             starpack.id = LOWORD(rgidPlan[i]);
             dx = rgptPlan[i].x - xOld;
             starpack.dx = dx;
-            RgToStream(&starpack, 4);
+            FEncodeStarpack(starpack, rgbStarpack);
+            RgToStream(rgbStarpack, cbWireStarpack);
             xOld = rgptPlan[i].x;
         }
         i = game.cPlayer;
