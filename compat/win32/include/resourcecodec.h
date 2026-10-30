@@ -7,6 +7,22 @@
 inline constexpr std::size_t cbWireDibHeader = 40;
 inline constexpr std::size_t cbWireRgbQuad = 4;
 
+inline constexpr std::size_t cbWireDibCoreHeader = 12;
+inline bool FDecodeDibCoreHeader(std::span<const std::byte> rgb, BITMAPCOREHEADER &bc) noexcept {
+    if (rgb.size() < cbWireDibCoreHeader) return false;
+    NATIVEBYTEREADER input(rgb);
+    BITMAPCOREHEADER value{};
+    std::uint32_t ul;
+    std::uint16_t w;
+    input.FReadU32Le(ul); value.bcSize = ul;
+    input.FReadU16Le(w); value.bcWidth = w;
+    input.FReadU16Le(w); value.bcHeight = w;
+    input.FReadU16Le(w); value.bcPlanes = w;
+    input.FReadU16Le(w); value.bcBitCount = w;
+    bc = value;
+    return true;
+}
+
 // SDK header objects are adapter values. Embedded resource bytes have their
 // own fixed little-endian layout, independent of native alignment/endian order.
 inline bool FDecodeDibHeader(std::span<const std::byte> rgb, BITMAPINFOHEADER &bi) noexcept {

@@ -19,8 +19,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag, player/template, resource-header and THING families pass the full local matrix. Runtime-alias families and final platform qualification remain required. |
-| B12: typed stable game arenas | Active | Typed physical-slot arrays and heap-chain ownership are integrated; scoped transfer/host/UI buffer cleanup is under full qualification. Addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure remain required. |
+| B11: remaining packed/resource layouts | Active | Record, THING, PART, popup and transfer families plus named SDK aggregates pass the full local matrix and all 16 platform checks at 449a53d. Final public resource-codec follow-up awaits platform qualification. |
+| B12: typed stable game arenas | Active | Typed physical slots, heap chains, ZIP/library buffers and native GUI temporaries pass the full local matrix. Final platform qualification and remaining printing/callback resource accounting are required. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
 
@@ -1672,3 +1672,40 @@ B13's single session owner and B14's actual strict compiler policy also remain.
 All frozen C/SDK inputs, catalog/resource bytes and regression baselines stay
 unchanged. The transfer-frame cleanup fix is isolated in its own commit and
 recorded in CHANGELOG.md and KNOWN-BUGS.md; it moves no regression checkpoint.
+
+
+## B11/B12 resource publication and remaining buffers
+
+All sixteen Linux/Windows checks pass at 449a53d, qualifying the preceding
+heap, alias and named SDK aggregate changes. The public resource codec now also
+publishes complete twelve-byte core bitmap headers as actual native values in
+the application's writable resource copy. Forty-byte information headers use
+the existing explicit little-endian decoder. Unknown/short prefixes keep their
+original copied bytes, and palettes/pixel payloads stay opaque and unchanged.
+The new core-header fixture checks all 65,536 patterns through four distinct
+field mappings, odd addresses and every short extent without output mutation.
+
+Heap arithmetic derives addresses from the owning byte allocation. Lifetime
+operations retain initialized physical slot representations instead of relying
+on default array initialization. ZIP recursion, archive publication, inflate
+state, native argument storage, library list growth and temporary fonts/palettes
+now have scoped C++ cleanup using their existing allocators and release points.
+Allocation sizes, growth decisions, partial publication and file admission
+remain unchanged. Asynchronous chooser payload handoffs are assigned to B13's
+callback lifetime work; the remaining print-resource accounting is still open.
+
+Joint qualification passes 117 desktop tests (all 28 permanent native macOS
+leak checks and available tutorial smoke coverage), 26 SDL-free host tests,
+42 ASan/UBSan cases, all 27 source witnesses and 108 public headers in both
+include orders. Debug, Release, host and sanitizer builds introduce no warnings.
+Desktop and host each match all 519 regression files through turn 150, with
+25 accepted unused-storage warnings and zero differences/errors/skipped inputs.
+The two native bitmap converter repairs are isolated in separate commits with
+CHANGELOG and KNOWN-BUGS entries. The rejected-conversion resource-count test
+fails in a controlled build retaining the former lost-handle effect, while the
+owned implementation passes. A reachable wrapper registry entry is deliberately
+checked by count rather than treated as proof from a zero-leak report.
+
+This batch does not complete B12–B14. Final platform qualification of the public
+resource-header follow-up is also required before B11 is marked complete.
+Frozen C/SDK inputs, catalog/resource bytes and all baselines remain unchanged.

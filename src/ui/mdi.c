@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 #include <SDL3/SDL.h>
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
@@ -2677,6 +2678,7 @@ void RefitFrameChildren() {
 }
 
 LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     HDC         hdc;
     int16_t     i;
     HPALETTE    hpalSav;
@@ -2925,6 +2927,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         }
         plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+        plfOwner.reset(plf);
         hdc = BeginPaint(hwnd, &ps);
         hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
         GetClientRect(hwnd, &rcWnd);
@@ -2965,7 +2968,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         rcWnd.bottom = (int16_t)(3 * dyArial8) / 2 + rcWnd.top;
         RcCtrTextOut(hdc, &rcWnd, szWork, strlen(szWork));
         EndPaint(hwnd, &ps);
-        LocalFree(plf);
+        plfOwner.reset();
         break;
     default:
     Default:

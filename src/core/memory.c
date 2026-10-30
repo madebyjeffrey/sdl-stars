@@ -53,7 +53,8 @@ HB *LphbAlloc(uint16_t cb, HeapType ht) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
-    hmem = ::new (hmem) std::byte[cb];
+    // The lifetime operation retains calloc's initialized representation.
+    hmem = std::memmove(hmem, hmem, cb);
     lphb = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphb->hmem = hmem;
     lphb->cbBlock = cb;
@@ -100,8 +101,8 @@ HB *LphbReAlloc(HB *lphb) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
-    memset((uint8_t *)hmem + cbCur, 0, cbGrow);
-    hmem = ::new (hmem) std::byte[static_cast<std::size_t>(cbCur) + cbGrow];
+    hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
+    memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow);
     lphbNew = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphbNew->hmem = hmem;
     *plphb = lphbNew;
@@ -146,10 +147,10 @@ void ResetHb(HeapType ht) {
 void *LpAlloc(uint16_t cb, HeapType ht) {
     int16_t  fFree;
     uint16_t cbItem;
-    uint8_t *lpbPrev;
-    uint8_t *lpbTop;
+    std::byte *lpbPrev;
+    std::byte *lpbTop;
     HB      *lphb;
-    uint8_t *lpb;
+    std::byte *lpb;
 
     lphb = rglphb[ht];
     cb = CbHeapItem(cb, ht);
@@ -160,7 +161,7 @@ void *LpAlloc(uint16_t cb, HeapType ht) {
     if (!lphb) {
         lphb = LphbAlloc(cb, ht);
     }
-    lpbTop = (uint8_t *)lphb->hmem + lphb->ibTop;
+    lpbTop = static_cast<std::byte *>(lphb->hmem) + lphb->ibTop;
     if (lphb->cbSlop >= cb) {
         RawStore16(lpbTop, cb - 2);
         lphb->ibTop += cb;
@@ -168,7 +169,7 @@ void *LpAlloc(uint16_t cb, HeapType ht) {
         lphb->cbSlop -= cb;
         return lpbTop + 2;
     }
-    lpb = (uint8_t *)lphb->hmem + CbHbHeader(ht);
+    lpb = static_cast<std::byte *>(lphb->hmem) + CbHbHeader(ht);
     while (lpb < lpbTop) {
         lpbPrev = lpb;
         fFree = RawLoad16(lpb) & 1;
@@ -210,27 +211,31 @@ void *LpReAlloc(void *lp, uint16_t cb, HeapType ht) {
     HB      *lphb;
     uint16_t cbCur;
     uint16_t cbGrow;
+    std::byte *lpb;
 
-    cbCur = RawLoad16((uint8_t *)lp - 0x2);
+    lphb = LphbFromLpHt(lp, ht);
+    lpb = static_cast<std::byte *>(lphb->hmem) +
+          (reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem));
+    cbCur = RawLoad16(lpb - 2);
     cb = CbHeapItem(cb, ht) - 2;
     cbGrow = cb - cbCur;
     if (cb <= cbCur) {
         return lp;
     }
-    lphb = LphbFromLpHt(lp, ht);
 LGrewHeap:
-    if ((uint8_t *)lphb->hmem + lphb->ibTop == (uint8_t *)lp + cbCur && lphb->cbSlop >= cbGrow) {
+    if (static_cast<std::byte *>(lphb->hmem) + lphb->ibTop == lpb + cbCur && lphb->cbSlop >= cbGrow) {
         lphb->cbSlop -= cbGrow;
         lphb->cbFree -= cbGrow;
         lphb->ibTop += cbGrow;
-        RawStore16((uint8_t *)lp - 0x2, cb);
+        RawStore16(lpb - 2, cb);
     } else if (ht == htPlanets || ht == htThings) {
         lphb = LphbReAlloc(lphb);
-        lp = (uint8_t *)lphb->hmem + (CbHbHeader(ht) + 2);
+        lpb = static_cast<std::byte *>(lphb->hmem) + (CbHbHeader(ht) + 2);
+        lp = lpb;
         goto LGrewHeap;
     } else {
         lpNew = LpAlloc(cb, ht);
-        memcpy(lpNew, lp, cbCur);
+        memcpy(lpNew, lpb, cbCur);
         FreeLp(lp, ht);
         lp = lpNew;
     }
@@ -240,13 +245,16 @@ LGrewHeap:
 void FreeLp(void *lp, HeapType ht) {
     uint16_t cbFree;
     HB      *lphb;
+    std::byte *lpb;
 
     if (lp) {
         lphb = LphbFromLpHt(lp, ht);
-        cbFree = RawLoad16((uint8_t *)lp - 0x2) + 2;
-        RawStore16((uint8_t *)lp - 0x2, RawLoad16((uint8_t *)lp - 0x2) | 1);
+        lpb = static_cast<std::byte *>(lphb->hmem) +
+              (reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem));
+        cbFree = RawLoad16(lpb - 2) + 2;
+        RawStore16(lpb - 2, RawLoad16(lpb - 2) | 1);
         lphb->cbFree += cbFree;
-        if ((uint8_t *)lp - (uint8_t *)lphb->hmem + cbFree - 2 == lphb->ibTop) {
+        if (lpb - static_cast<std::byte *>(lphb->hmem) + cbFree - 2 == lphb->ibTop) {
             lphb->ibTop -= cbFree;
             lphb->cbSlop += cbFree;
         }
@@ -303,7 +311,15 @@ void FreePl(PLPROD *lppl) {
 }
 
 uint16_t CbPlSlot(const void *lp) {
-    return RawLoad16(static_cast<const uint8_t *>(lp) - 2);
+    for (int i = htOrd; i < htCount; i++) {
+        HB *lphb = LphbFromLpHt(const_cast<void *>(lp), static_cast<HeapType>(i));
+        if (lphb) {
+            std::size_t ib = reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem);
+            return RawLoad16(static_cast<const std::byte *>(lphb->hmem) + ib - 2);
+        }
+    }
+    assert(false && "physical slot has no owning heap");
+    return 0;
 }
 
 template<>

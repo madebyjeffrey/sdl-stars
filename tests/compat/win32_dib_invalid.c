@@ -39,6 +39,26 @@ static int TestDibHeaderBytes(void) {
         CHECK(!FEncodeDibHeader(bi, std::span(rgb).subspan(1, cb)));
         for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
     }
+    {
+        std::array<std::byte, 14> rgbCore{};
+        rgbCore[1] = std::byte{12};
+        BITMAPCOREHEADER bc{};
+        for (uint32_t w = 0; w < 65536; w++) {
+            const uint16_t fields[] = {static_cast<uint16_t>(w), static_cast<uint16_t>(w ^ 0xa55au),
+                static_cast<uint16_t>(65535u - w), static_cast<uint16_t>((w << 5) | (w >> 11))};
+            for (std::size_t i = 0; i < 4; i++) {
+                rgbCore[5 + i * 2] = static_cast<std::byte>(fields[i] & 255);
+                rgbCore[6 + i * 2] = static_cast<std::byte>(fields[i] >> 8);
+            }
+            CHECK(FDecodeDibCoreHeader(std::span(rgbCore).subspan(1, 12), bc));
+            CHECK(bc.bcSize == 12 && bc.bcWidth == fields[0] && bc.bcHeight == fields[1] && bc.bcPlanes == fields[2] && bc.bcBitCount == fields[3]);
+        }
+        for (std::size_t cb = 0; cb < 12; cb++) {
+            bc.bcSize = 123;
+            const BITMAPCOREHEADER saved = bc;
+            CHECK(!FDecodeDibCoreHeader(std::span(rgbCore).subspan(1, cb), bc) && !memcmp(&bc, &saved, sizeof(bc)));
+        }
+    }
     return 0;
 }
 

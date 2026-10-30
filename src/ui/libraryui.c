@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
 #include <errno.h>
@@ -20,7 +21,7 @@ typedef struct {
     uint16_t grfPlayers;
     uint16_t rgturn[16];
 } LIBRARYGAMELISTITEM;
-static LIBRARYGAMELISTITEM *rgLibraryGameList;
+static NATIVEARRAYOWNER<LIBRARYGAMELISTITEM, SDL_free> rgLibraryGameList;
 static int cLibraryGameList;
 static int cLibraryGameListMax;
 static uint32_t idRaceStage;
@@ -137,11 +138,12 @@ static int16_t FInitRaceLibrary(void) {
     const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     char *pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
     int cch;
+    NATIVEOWNER<char, SDL_free> rootPath(pszRoot);
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
     cch = CchSnprintf(szRaceLibraryRoot, sizeof(szRaceLibraryRoot), "%s%sRace Designs",
                       pszOverride ? pszOverride : pszSettings ? pszSettings : pszRoot,
                       pszOverride || pszSettings ? szDirSep : "");
-    SDL_free(pszRoot);
+    rootPath.reset();
     return cch > 0 && cch < (int)sizeof(szRaceLibraryRoot) && FEnsureNativeDir(szRaceLibraryRoot);
 }
 
@@ -206,11 +208,12 @@ static int16_t FInitLibrary(void) {
     pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
     pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     pszRoot = pszOverride || pszSettings ? NULL : SDL_GetPrefPath("", "Stars!");
+    NATIVEOWNER<char, SDL_free> rootPath(pszRoot);
     if (!pszOverride && !pszSettings && !pszRoot) return FALSE;
     cch = CchSnprintf(szLibraryRoot, sizeof(szLibraryRoot), "%s%sGames",
                       pszOverride ? pszOverride : pszSettings ? pszSettings : pszRoot,
                       pszOverride || pszSettings ? szDirSep : "");
-    SDL_free(pszRoot);
+    rootPath.reset();
     return cch > 0 && cch < (int)sizeof(szLibraryRoot) && FEnsureNativeDir(szLibraryRoot);
 }
 
@@ -2736,9 +2739,10 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
     LIBRARYGAMELISTITEM *rgNew;
     if (cLibraryGameList == cLibraryGameListMax) {
         cNew = cLibraryGameListMax ? cLibraryGameListMax * 2 : 32;
-        rgNew = (LIBRARYGAMELISTITEM *)SDL_realloc(rgLibraryGameList, (size_t)cNew * sizeof(*rgNew));
+        rgNew = (LIBRARYGAMELISTITEM *)SDL_realloc(rgLibraryGameList.get(), (size_t)cNew * sizeof(*rgNew));
         if (!rgNew) return FALSE;
-        rgLibraryGameList = rgNew;
+        rgLibraryGameList.release();
+        rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;
     }
     i = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)pszName);
@@ -2753,8 +2757,7 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
 }
 
 static void ClearLibraryGameList(void) {
-    SDL_free(rgLibraryGameList);
-    rgLibraryGameList = NULL;
+    rgLibraryGameList.reset();
     cLibraryGameList = 0;
     cLibraryGameListMax = 0;
 }

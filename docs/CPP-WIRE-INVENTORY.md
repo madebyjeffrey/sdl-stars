@@ -359,3 +359,10 @@ rounded spare capacity. All twelve historical zero-tail families now have
 explicit migrated dispositions. Private packed runtime geometry remains where
 needed for existing stride/capacity contracts; no persistence codec consumes
 those representations.
+
+
+B11 resource publication: the application's writable DIB copy contains native
+BITMAPCOREHEADER or BITMAPINFOHEADER values decoded from fixed little-endian
+resource bytes. Palette and pixel bytes are copied unchanged; complete known
+header publication adds no rejection of short/unknown copied resource prefixes.
+The public adapter codec is shared by wrapper and application producers.

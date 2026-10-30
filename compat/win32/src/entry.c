@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
 #include <stdio.h>
+#include "ownership.h"
 #include <string.h>
 #include "version.h"
 #ifdef _WIN32
@@ -74,8 +75,9 @@ int main(int argc, char **argv) try {
 
     (void)argv;
     if (!rgpsz) return 2;
+    NATIVEOWNER<char *, std::free> arguments(rgpsz);
     nResult = ICompatMain(argc, rgpsz);
-    free(rgpsz);
+    arguments.reset();
     return nResult;
 #else
     return ICompatMain(argc, argv);

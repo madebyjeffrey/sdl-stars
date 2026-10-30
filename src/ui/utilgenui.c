@@ -1,5 +1,6 @@
 #include "win.h"
 #include "ownership.h"
+#include "resourcecodec.h"
 #include <stars_compat.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -214,6 +215,7 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, 
 }
 
 void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     double   angle;
     HFONT    hfont;
     int16_t  dxFlat;
@@ -241,6 +243,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
     dy = prc->bottom - prc->top;
     if (dx >= 10 && dy >= 10) {
         plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+        plfOwner.reset(plf);
         plf->lfWeight = 900;
         strcpy(plf->lfFaceName, rgszArial[1]);
         plf->lfHeight = -(dx <= dy ? dy : dx);
@@ -290,7 +293,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
         DeleteObject(hfont);
 
     FreeLF:
-        LocalFree(plf);
+        plfOwner.reset();
     }
     return;
 }
@@ -783,15 +786,19 @@ uint16_t DibNumColors(void *pv) {
     int16_t           bits;
     BITMAPCOREHEADER *lpbc;
     BITMAPINFOHEADER *lpbi;
+    BITMAPINFOHEADER bi;
+    BITMAPCOREHEADER bc;
 
-    lpbi = (BITMAPINFOHEADER *)pv;
-    lpbc = (BITMAPCOREHEADER *)pv;
-    if (lpbi->biSize != 12) {
+    lpbi = &bi;
+    lpbc = &bc;
+    if (RawLoad32(pv) != 12) {
+        memcpy(lpbi, pv, sizeof(bi));
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
         }
         bits = lpbi->biBitCount;
     } else {
+        memcpy(lpbc, pv, sizeof(bc));
         bits = lpbc->bcBitCount;
     }
     switch (bits) {
@@ -807,6 +814,7 @@ uint16_t DibNumColors(void *pv) {
 }
 
 HPALETTE HpalFromDib(HGLOBAL hdib) {
+    NATIVEOWNER<LOGPALETTE, LocalFree> ppalOwner;
     HPALETTE          hpal;
     int16_t           cColors;
     int16_t           i;
@@ -826,6 +834,7 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
         return NULL;
     }
     ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
+    ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     memcpy(ppal->palPalEntry, lpb + 40, cColors * 4);
@@ -835,12 +844,13 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
         ppal->palPalEntry[i].peBlue = bT;
     }
     hpal = CreatePalette(ppal);
-    LocalFree(ppal);
+    ppalOwner.reset();
     GlobalUnlock(hdib);
     return hpal;
 }
 
 HPALETTE HpalBlackReserved() {
+    NATIVEOWNER<LOGPALETTE, LocalFree> ppalOwner;
     HPALETTE    hpal;
     int16_t     cColors;
     int16_t     i;
@@ -848,6 +858,7 @@ HPALETTE HpalBlackReserved() {
 
     cColors = 256;
     ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
+    ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     for (i = 0; i < cColors; i++) {
@@ -857,7 +868,7 @@ HPALETTE HpalBlackReserved() {
         ppal->palPalEntry[i].peFlags = 1;
     }
     hpal = CreatePalette(ppal);
-    LocalFree(ppal);
+    ppalOwner.reset();
     return hpal;
 }
 
@@ -867,7 +878,7 @@ uint16_t PaletteSize(void *pv) {
 
     lpbi = (BITMAPINFOHEADER *)pv;
     NumColors = DibNumColors(lpbi);
-    if (lpbi->biSize == 12) {
+    if (RawLoad32(lpbi) == 12) {
         return 3 * NumColors;
     }
     return NumColors * 4;
@@ -884,7 +895,7 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
     if (!lpbi) {
         return 0;
     }
-    pBuf = (char *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi);
+    pBuf = (char *)lpbi + LOWORD(RawLoad32(lpbi)) + PaletteSize(lpbi);
     StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, (LPBITMAPINFO)lpbi, 0, rop);
     GlobalUnlock(hdib);
     return 1;
@@ -974,6 +985,9 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     char    *lpstr;
     HGLOBAL  hdib;
     uint32_t cb;
+    uint32_t cbHeader;
+    BITMAPINFOHEADER bi;
+    BITMAPCOREHEADER bc;
 
     hrsrc = FindResource(hInst, MAKEINTRESOURCE(idb), MAKEINTRESOURCE(2));
     if (hrsrc == 0) {
@@ -994,6 +1008,16 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
         return NULL;
     }
     memcpy((char *)hdib, lpstr, cb);
+    // Embedded bytes become actual native GDI headers in the writable copy.
+    // Incomplete/unknown resource prefixes retain their prior copied bytes.
+    const auto rgb = std::as_bytes(std::span(lpstr, cb));
+    if (NATIVEBYTEREADER(rgb).FReadU32Le(cbHeader)) {
+        if (cbHeader == cbWireDibCoreHeader) {
+            if (FDecodeDibCoreHeader(rgb, bc)) memcpy(hdib, &bc, sizeof(bc));
+        } else if (FDecodeDibHeader(rgb, bi)) {
+            memcpy(hdib, &bi, sizeof(bi));
+        }
+    }
     return hdib;
 }
 
@@ -1280,12 +1304,14 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
 }
 
 HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     HFONT      hfontNew;
     LOGFONT   *plf;
     TEXTMETRIC tm;
     HFONT      hfontSav;
 
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+    plfOwner.reset(plf);
     memset(plf, 0, sizeof(LOGFONT));
     plf->lfHeight = -MulDiv(iSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     strcpy(plf->lfFaceName, rgszArial[1]);
@@ -1296,7 +1322,7 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
         *pdyFont = tm.tmHeight + tm.tmExternalLeading;
         SelectObject(hdc, hfontSav);
     }
-    LocalFree(plf);
+    plfOwner.reset();
     return hfontNew;
 }
 
