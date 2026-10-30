@@ -967,13 +967,13 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
             EnableWindow(rghwndBtn[1], FALSE);
         } else {
             fObjIsThing = xf.grobj == grobjThing;
-            EnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.fl.iPlayer == idPlayer);
+            EnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
         }
         rgrcRef[1].top = -5;
         rgrcRef[1].bottom = -6;
         rgrcRef[4].top = -5;
         rgrcRef[4].bottom = -6;
-        fUnknown = fObjIsThing == 0 && xf.fl.det != detAll;
+        fUnknown = fObjIsThing == 0 && xf.detObj() != detAll;
         if (!gd.fSmallTileMode) {
             if (!fDoneDrawing && !fUnknown) {
                 SelectObject(hdc, rghfontArial8[1]);
@@ -991,7 +991,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 if (idSkip != idflNone) {
                     rgrcRef[1] = rcGauge;
                 }
-                DrawFleetGauge(hdc, &rcGauge, &xf.fl, 4);
+                DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 4);
             } else if (ptile->fMinDraw || fUnknown != gd.fUnknownShip) {
                 SetRect(&rcGauge, xLeft, yTop, xRight, dyArial8 * 2 + yTop + 8);
                 FillRect(hdc, &rcGauge, hbrButtonFace);
@@ -1006,9 +1006,9 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
                 rgrcRef[4] = rcGauge;
                 if (fObjIsThing) {
-                    DrawThingGauge(hdc, &rcGauge, &xf.th, 5);
+                    DrawThingGauge(hdc, &rcGauge, &xf.th(), 5);
                 } else {
-                    DrawFleetGauge(hdc, &rcGauge, &xf.fl, 5);
+                    DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 5);
                 }
                 if (fObjIsThing) {
                     OffsetRect(&rcGauge, 0, dyArial8 + 4);

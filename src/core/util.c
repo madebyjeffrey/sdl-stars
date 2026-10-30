@@ -705,7 +705,7 @@ int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t i
             if (lpfl->idPlanet == idPlanet && lpfl->id != idSkip &&
                 ((idSkip == idflNone || (lpfl->pt.x == sel.pt.x && lpfl->pt.y == sel.pt.y)) && iNth-- == 0)) {
                 if (pxf) {
-                    pxf->fl = *lpfl;
+                    pxf->fl() = *lpfl;
                     pxf->grobj = grobjFleet;
                     pxf->id = lpfl->id;
                 }
@@ -718,7 +718,7 @@ int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t i
     for (; lpth < lpthMac; lpth++) {
         if (lpth->ith() == ithMineralPacket && lpth->pt().x() == sel.pt.x && lpth->pt().y() == sel.pt.y && iNth-- == 0) {
             if (pxf) {
-                pxf->th = *lpth;
+                pxf->th() = *lpth;
                 pxf->grobj = grobjThing;
                 pxf->id = lpth->idFull();
             }

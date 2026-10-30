@@ -883,15 +883,15 @@ static BOOL FCheckSplitWorkflow(HWND hwndDialog) {
     if (iWorkflowStep == 0) {
         for (i = 0; i < crgbtnXfer; i++) {
             if (rgbtnXfer[i].fVisible && !(rgbtnXfer[i].bt & 4) && rgbtnXfer[i].iSide == 1 &&
-                rgbtnXfer[i].iVal >= 0 && rgbtnXfer[i].iVal < 16 && pxfer[0].fl.rgcsh[rgbtnXfer[i].iVal] > 0) break;
+                rgbtnXfer[i].iVal >= 0 && rgbtnXfer[i].iVal < 16 && pxfer[0].fl().rgcsh[rgbtnXfer[i].iVal] > 0) break;
         }
         if (i == crgbtnXfer) return FALSE;
         ishXferWorkflow = rgbtnXfer[i].iVal;
-        cXferWorkflow = pxfer[0].fl.rgcsh[ishXferWorkflow];
+        cXferWorkflow = pxfer[0].fl().rgcsh[ishXferWorkflow];
         idXferWorkflow = pxfer[1].id;
-        return pxfer[1].fl.rgcsh[ishXferWorkflow] == 0 && FPushClientRect(hwndDialog, &rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
+        return pxfer[1].fl().rgcsh[ishXferWorkflow] == 0 && FPushClientRect(hwndDialog, &rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
     }
-    if (pxfer[1].fl.rgcsh[ishXferWorkflow] != 1 || pxfer[0].fl.rgcsh[ishXferWorkflow] != cXferWorkflow - 1) return FALSE;
+    if (pxfer[1].fl().rgcsh[ishXferWorkflow] != 1 || pxfer[0].fl().rgcsh[ishXferWorkflow] != cXferWorkflow - 1) return FALSE;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 15 ? IDCANCEL : IDOK, "Button");
     fWorkflowPassed = hwndControl && FPushClick(hwndControl);
     return fWorkflowPassed;
@@ -914,12 +914,12 @@ static BOOL FCheckCargoWorkflow(HWND hwndDialog) {
         }
         if (i == crgbtnXfer) return FALSE;
         iSupplyWorkflow = rgbtnXfer[i].iVal;
-        cCargoFleetWorkflow = pxfer[0].fl.rgwtMin[iSupplyWorkflow];
-        cCargoPlanetWorkflow = pxfer[1].pl.rgwtMin[iSupplyWorkflow];
+        cCargoFleetWorkflow = pxfer[0].fl().rgwtMin[iSupplyWorkflow];
+        cCargoPlanetWorkflow = pxfer[1].pl().rgwtMin[iSupplyWorkflow];
         return FPushClientRect(hwndDialog, &rgbtnXfer[i].rc, SDL_BUTTON_LEFT);
     }
-    if (pxfer[0].fl.rgwtMin[iSupplyWorkflow] != cCargoFleetWorkflow + dCargo ||
-        pxfer[1].pl.rgwtMin[iSupplyWorkflow] != cCargoPlanetWorkflow - dCargo) return FALSE;
+    if (pxfer[0].fl().rgwtMin[iSupplyWorkflow] != cCargoFleetWorkflow + dCargo ||
+        pxfer[1].pl().rgwtMin[iSupplyWorkflow] != cCargoPlanetWorkflow - dCargo) return FALSE;
     hwndControl = HwndWorkflowControl(hwndDialog, iWorkflow == 17 ? IDCANCEL : IDOK, "Button");
     fWorkflowPassed = hwndControl && FPushClick(hwndControl);
     return fWorkflowPassed;

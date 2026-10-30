@@ -185,7 +185,34 @@ static void test_FLookupPart_host(void) {
     idPlayer = idPlayerSav;
 }
 
-TEST_LIST = {{"FLookupPart host sentinel", test_FLookupPart_host},
+// Lookup's Other/unknown fallback is THING; cargo's default is FLEET. The
+// shared frame must retain initialized cargo outside the eighteen-byte copy.
+static void test_Xfer_lookup_and_cargo_fallbacks(void) {
+    char szDir[MAX_PATH];
+    XFER xf{};
+    THING *lpth;
+    int16_t id;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("Xfer_fallbacks", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    while (cThing != 0) FreeLpth(lpThings);
+    lpth = LpthNew(0, ithMinefield);
+    TEST_ASSERT(lpth != NULL);
+    lpth->pt().Set({123, 456});
+    id = lpth->idFull();
+    xf.fl().rgwtMin[0] = 42;
+    TEST_ASSERT(FLookupObject(grobjOther, id, xf.LpvLookup(grobjOther)));
+    TEST_CHECK(xf.idObj() == id && xf.iPlayerObj() == 123);
+    TEST_CHECK(ChgCargo(static_cast<GrobjClass>(3), id, static_cast<MineralType>(0), 0,
+                        xf.LpvCargo(static_cast<GrobjClass>(3))) == 42);
+    TEST_CHECK(ChgCargo(grobjOther, id, static_cast<MineralType>(0), 0, xf.LpvCargo(grobjOther)) == 0);
+    TEST_CHECK(xf.th().idFull() == id && xf.th().pt().x() == 123 && xf.th().pt().y() == 456);
+}
+
+TEST_LIST = {{"transfer lookup/cargo fallbacks retain prefix and tail", test_Xfer_lookup_and_cargo_fallbacks},
+             {"FLookupPart host sentinel", test_FLookupPart_host},
              {"generated fleet names preserve complete UTF-8", test_FleetName_utf8_boundary},
              {"PtToScan negative coordinates", test_PtToScan_negative},
              {"ValidateWaypoints pursuers take the heaviest fleet", test_ValidateWaypoints_pursuers_take_heaviest},

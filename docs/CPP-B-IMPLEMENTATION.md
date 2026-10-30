@@ -1555,3 +1555,39 @@ an explicit quote double; models, input domains and assertion counts stay.
 Frozen C/SDK declarations, the independent popup C oracle, resource/catalog bytes
 and regression baselines are unchanged. Transfer storage, final B11 platform
 qualification and B12–B14 remain required.
+
+
+## B11 transfer scratch lifetime
+
+XFER owns aligned native scratch storage and explicitly starts its actual
+PLANET/FLEET/THING payload lifetimes. C++20 memmove supplies implicit object
+creation while retaining the complete physical representation; the
+[adopted object-lifetime paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0593r6.html)
+describes this self-copy operation. It introduces no allocation, value clearing,
+wire encoding, pointer representation codec or new object-class admission gate.
+A different typed accessor invalidates earlier typed borrows; numeric common
+prefix operations do not switch type. Cached pointer/callback paths were audited
+against that rule. Existing partial-copy/spare-tail effects remain observable.
+
+The lookup and cargo fallbacks intentionally differ. Lookup selects THING for
+Other/unknown classes; cargo selects PLANET for Other and FLEET for unknown
+classes. Generic callers now explicitly select the appropriate actual object.
+The old fixed payload-address offset is removed from transfer/UI callers.
+
+Both layout variants independently compare 1,189,648 transfer publications
+against the frozen C declaration, including every sixteen-bit value for all
+eighteen scalar/pointer/object operations and mixed sequences. A real lookup/
+cargo workflow additionally checks the different fallbacks, the signed THING
+point prefix and retention of fleet cargo beyond an eighteen-byte copy. That
+workflow joins the sanitizer targets. Integrated qualification is in progress;
+the checkpoint is not complete until its full local and platform gates pass.
+
+Full integrated qualification passes 117 desktop tests (all 28 permanent native
+leak checks and available tutorial smoke coverage), 26 SDL-free host tests,
+42 sanitizer cases, all 27 source witnesses and 107 public headers in both
+include orders. Both regressions match 519 files through turn 150 with the same
+25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Debug/Release/host/sanitizer builds introduce no warnings. Runtime XFER
+size is unchanged; frozen C/SDK inputs and all regression baselines remain
+unchanged. The final wrapper aggregate and B11 platform gate, followed by
+B12–B14, are still required.

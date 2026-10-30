@@ -331,3 +331,16 @@ runtime footprint gains one byte (4 + pointer width to 5 + pointer width), and
 POPUPDATA consequently becomes 73 + four pointer widths. Both independent C
 measurements remain checked explicitly. No serialized field or arena stride
 changes, and the frozen input declarations stay unchanged.
+
+
+B11 XFER: runtime scratch uses aligned owned byte storage with explicit C++20
+implicit-lifetime operations for its actual PLANET/FLEET/THING payload. Switching
+type invalidates earlier typed borrows; common prefix reads/writes use numeric
+byte copies and do not switch type during callbacks. Lookup keeps its THING
+fallback; cargo keeps its different FLEET fallback (and PLANET for Other).
+Short object copies retain initialized physical tail bytes. This is native
+scratch storage, not a wire image or a pointer codec. Its existing runtime
+footprint is retained, with alignment derived from its actual payload types.
+The independent frozen C oracle covers every sixteen-bit value for all eighteen
+scalar/pointer/object publication operations and mixed operation sequences in
+both runtime-layout configurations. No anonymous aggregate remains in structs.h.

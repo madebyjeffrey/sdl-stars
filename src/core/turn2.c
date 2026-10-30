@@ -714,12 +714,12 @@ void TransferToOthers() {
         lpxfCur = lpxf;
         lpxfMax = lpxf + cXferFull;
         for (; lpxfCur < lpxfMax; lpxfCur++) {
-            if (!FLookupObject(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, &rgxf[1].fl))
+            if (!FLookupObject(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, rgxf[1].LpvLookup(static_cast<GrobjClass>(lpxfCur->grobj2))))
                 goto DoNext;
             if (lpxfCur->grobj1 == 1) {
-                rgxf[0].fl.iPlayer = LpplFromId(lpxfCur->id1)->iPlayer;
+                rgxf[0].SetIPlayerObj(LpplFromId(lpxfCur->id1)->iPlayer);
             } else {
-                rgxf[0].fl.iPlayer = lpxfCur->id1 >> 9 & 0xf;
+                rgxf[0].SetIPlayerObj(lpxfCur->id1 >> 9 & 0xf);
             }
             for (i = 0; i < 5; i++) {
                 l2 = lpxfCur->rgcQuan[i];
@@ -732,20 +732,20 @@ void TransferToOthers() {
                         if (l == 0) {
                             idm = static_cast<MessageId>(idm + 4);
                         }
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
+                        FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
                         idm = i == 4 ? idmReceivedHoweverColonistsSentRemainsOtherColonist : idmReceivedHoweverSentRemainderLostSpace;
                         if (l == 0) {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, static_cast<MessageId>(idm + 4), static_cast<MsgGoto>(idDst), idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
+                            FSendPlrMsg(rgxf[1].iPlayerObj(), static_cast<MessageId>(idm + 4), static_cast<MsgGoto>(idDst), idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
                         } else {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
+                            FSendPlrMsg(rgxf[1].iPlayerObj(), idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
                         }
                     } else {
                         idm = i == 4 ? idmSuccessfullyTransferred2 : idmSuccessfullyTransferred;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
                         idDst = lpxfCur->id2 | (lpxfCur->grobj2 == 2 ? 0x8000 : 0);
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
+                        FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
                         idm = i == 4 ? idmSuccessfullyReceived2 : idmSuccessfullyReceived;
-                        FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
+                        FSendPlrMsg(rgxf[1].iPlayerObj(), idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
                     }
                 }
             }

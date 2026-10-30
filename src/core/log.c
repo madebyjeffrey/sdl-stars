@@ -800,11 +800,11 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        if (!FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), &rgxf[0].fl)) {
+        if (!FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), rgxf[0].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())))) {
             return FALSE;
         }
-        rgxf[1].fl.id = idflNone;
-        if (CxvFromPrefix(lpb, 5).grobj2() != grobjOther && !FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), &rgxf[1].fl)) {
+        rgxf[1].SetIdObj(idflNone);
+        if (CxvFromPrefix(lpb, 5).grobj2() != grobjOther && !FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), rgxf[1].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())))) {
             if (CxvFromPrefix(lpb, 5).grobj2() == grobjFleet && (CxvFromPrefix(lpb, 4).id2() >> 9 & 0xf) != idPlayer)
                 break;
             return FALSE;
@@ -829,22 +829,22 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 if (rgcXfer[i] != 0) {
                     cXfer = rgcXfer[i];
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), cXfer, &rgxf[0].fl);
+                        l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
                         if (l != cXfer) {
                             id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
-                            id |= rgxf[0].fl.id;
-                            FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
+                            id |= rgxf[0].idObj();
+                            FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
                             rgcXfer[i] = l;
                         }
                     }
                     if (((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) && CxvFromPrefix(lpb, 5).grobj2() != grobjOther) {
                         if (i == 3 && cXfer != 0 && gd.fGeneratingTurn && CxvFromPrefix(lpb, 5).grobj2() == grobjPlanet && CxvFromPrefix(lpb, 5).grobj1() == grobjFleet &&
-                            rgxf[0].fl.iPlayer != rgxf[1].fl.iPlayer) {
+                            rgxf[0].iPlayerObj() != rgxf[1].iPlayerObj()) {
                             lpcdT = lpcd;
                             iColDrop = 0;
                             if (cXfer > 0) {
                                 for (; iColDrop < cColDrop && cXfer > 0; iColDrop++) {
-                                    if (lpcdT->idPlanetDst == rgxf[1].pl.id && lpcdT->idPlr == rgxf[0].fl.iPlayer) {
+                                    if (lpcdT->idPlanetDst == rgxf[1].pl().id && lpcdT->idPlr == rgxf[0].iPlayerObj()) {
                                         l = cXfer < lpcdT->cColonist ? cXfer : lpcdT->cColonist;
                                         cXfer -= l;
                                         lpcdT->cColonist -= l;
@@ -852,21 +852,21 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                     lpcdT++;
                                 }
                             } else {
-                                for (; iColDrop < cColDrop && (lpcdT->idFleetSrc != rgxf[0].fl.id || lpcdT->idPlanetDst != rgxf[1].pl.id); iColDrop++) {
+                                for (; iColDrop < cColDrop && (lpcdT->idFleetSrc != rgxf[0].idObj() || lpcdT->idPlanetDst != rgxf[1].pl().id); iColDrop++) {
                                     lpcdT++;
                                 }
                                 if (iColDrop == cColDrop) {
-                                    lpcdT->idFleetSrc = rgxf[0].fl.id;
-                                    lpcdT->idPlr = rgxf[0].fl.iPlayer;
-                                    lpcdT->idPlanetDst = rgxf[1].fl.id;
+                                    lpcdT->idFleetSrc = rgxf[0].idObj();
+                                    lpcdT->idPlr = rgxf[0].iPlayerObj();
+                                    lpcdT->idPlanetDst = rgxf[1].idObj();
                                     lpcdT->cColonist = 0;
-                                    lpcdT->fCanColonize = rgxf[1].fl.iPlayer != iplrNone;
+                                    lpcdT->fCanColonize = rgxf[1].iPlayerObj() != iplrNone;
                                     cColDrop++;
                                 }
                                 lpcdT->cColonist -= cXfer;
                             }
                         } else {
-                            if (cXfer != 0 && gd.fGeneratingTurn && rgxf[1].fl.iPlayer != rgxf[0].fl.iPlayer && CxvFromPrefix(lpb, 5).grobj2() != grobjThing) {
+                            if (cXfer != 0 && gd.fGeneratingTurn && rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj() && CxvFromPrefix(lpb, 5).grobj2() != grobjThing) {
                                 lpxfMax = lpxf + cXferFull;
                                 if (cXfer > 0) {
                                     for (lpxfCur = lpxf; lpxfCur < lpxfMax && cXfer > 0; lpxfCur++) {
@@ -898,7 +898,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                 goto DoNext;
                             }
                         StealCargo:
-                            l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), static_cast<MineralType>(i), -cXfer, &rgxf[1].fl);
+                            l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())));
                             if (l != -cXfer) {
                                 rgcXfer[i] = -l;
                                 /* Cargo the destination can't hold goes back to
@@ -907,18 +907,18 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                    another player's fleet beyond its free hold
                                    space were lost. */
                                 if (cXfer < 0) {
-                                    ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), -cXfer - l, &rgxf[0].fl);
+                                    ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
                                 }
                                 if (CxvFromPrefix(lpb, 5).grobj2() == grobjThing) {
                                     idm = idmDidntGetAttemptedTransferMineralPacketAnother;
                                     if (l == 0) {
                                         idm = static_cast<MessageId>(idm + 1);
                                     }
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(rgxf[0].fl.id | 0x8000), rgxf[0].fl.id, i, -LOWORD(l), i, 0, 0, 0);
+                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(rgxf[0].idObj() | 0x8000), rgxf[0].idObj(), i, -LOWORD(l), i, 0, 0, 0);
                                 } else {
                                     id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
-                                    id |= rgxf[0].fl.id;
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
+                                    id |= rgxf[0].idObj();
+                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
                                                 0);
                                 }
                             }
@@ -929,30 +929,30 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             }
         }
         if (CxvFromPrefix(lpb, 5).grobj1() == grobjFleet) {
-            FLookupFleet(idWriteBack, &rgxf[0].fl);
+            FLookupFleet(idWriteBack, &rgxf[0].fl());
         } else {
-            FLookupPlanet(idWriteBack, &rgxf[0].pl);
+            FLookupPlanet(idWriteBack, &rgxf[0].pl());
         }
         switch (CxvFromPrefix(lpb, 5).grobj2()) {
         case grobjFleet:
-            FLookupFleet(idWriteBack, &rgxf[1].fl);
+            FLookupFleet(idWriteBack, &rgxf[1].fl());
             break;
         case grobjPlanet:
         case grobjOther:
-            FLookupPlanet(idWriteBack, &rgxf[1].pl);
+            FLookupPlanet(idWriteBack, &rgxf[1].pl());
             break;
         case grobjThing:
-            FLookupThing(idWriteBack, &rgxf[1].th);
+            FLookupThing(idWriteBack, &rgxf[1].th());
         }
         break;
     case rtLogFleetSplit:
     case rtLogFleetMerge:
         FReadFleetId({std::as_bytes(std::span(lpb, cbWireFleetId))}, 0, idFleet);
-        if (!FLookupObject(grobjFleet, idFleet, &rgxf[0].fl)) {
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
             return FALSE;
         }
         if (rt == rtLogFleetSplit) {
-            if (LpflNewSplit(&rgxf[0].fl) != 0)
+            if (LpflNewSplit(&rgxf[0].fl()) != 0)
                 break;
             return FALSE;
         }
@@ -963,7 +963,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 lpfl = rglpfl[ifl];
                 if (!rglpfl[ifl])
                     break;
-                if (lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->pt.x == rgxf[0].fl.pt.x && lpfl->pt.y == rgxf[0].fl.pt.y) {
+                if (lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->pt.x == rgxf[0].fl().pt.x && lpfl->pt.y == rgxf[0].fl().pt.y) {
                     rgifl[vcflMerge++] = lpfl->id;
                     lpfl->SetFCompChg(TRUE);
                 }
@@ -983,19 +983,19 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 }
             }
         }
-        if (FFleetMergeAll(&rgxf[0].fl))
+        if (FFleetMergeAll(&rgxf[0].fl()))
             break;
         return FALSE;
     case rtLogFleetCargoXfer:
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(idFleet);
-        if (!FLookupObject(grobjFleet, idFleet, &rgxf[0].fl)) {
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
             return FALSE;
         }
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(idFleet);
-        if (!FLookupObject(grobjFleet, idFleet, &rgxf[1].fl)) {
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[1].LpvLookup(grobjFleet))) {
             return FALSE;
         }
-        if (rgxf[1].fl.iPlayer != rgxf[0].fl.iPlayer) {
+        if (rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj()) {
             return FALSE;
         }
         for (iPass = 0; iPass < 2; iPass++) {
@@ -1007,20 +1007,20 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                     NATIVEBYTEREADER(std::as_bytes(std::span(lpb + cbWireXferF + iLook * 2, 2))).FReadI16Le(cShipXfer);
                     cXfer = cShipXfer;
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        if (rgxf[0].fl.rgcsh[i] + cXfer < 0) {
-                            cXfer = (int16_t)-rgxf[0].fl.rgcsh[i];
-                        } else if ((int16_t)(32766 - rgxf[0].fl.rgcsh[i]) <= cXfer) {
-                            cXfer = (int16_t)(32766 - rgxf[0].fl.rgcsh[i] - 1);
+                        if (rgxf[0].fl().rgcsh[i] + cXfer < 0) {
+                            cXfer = (int16_t)-rgxf[0].fl().rgcsh[i];
+                        } else if ((int16_t)(32766 - rgxf[0].fl().rgcsh[i]) <= cXfer) {
+                            cXfer = (int16_t)(32766 - rgxf[0].fl().rgcsh[i] - 1);
                         }
-                        rgxf[0].fl.rgcsh[i] += LOWORD(cXfer);
+                        rgxf[0].fl().rgcsh[i] += LOWORD(cXfer);
                     }
                     if ((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) {
-                        if (rgxf[1].fl.rgcsh[i] - cXfer < 0) {
-                            cXfer = rgxf[1].fl.rgcsh[i];
-                        } else if ((int16_t)(32766 - rgxf[1].fl.rgcsh[i]) <= -cXfer) {
-                            cXfer = (int16_t)-(32766 - rgxf[1].fl.rgcsh[i] - 1);
+                        if (rgxf[1].fl().rgcsh[i] - cXfer < 0) {
+                            cXfer = rgxf[1].fl().rgcsh[i];
+                        } else if ((int16_t)(32766 - rgxf[1].fl().rgcsh[i]) <= -cXfer) {
+                            cXfer = (int16_t)-(32766 - rgxf[1].fl().rgcsh[i] - 1);
                         }
-                        rgxf[1].fl.rgcsh[i] -= LOWORD(cXfer);
+                        rgxf[1].fl().rgcsh[i] -= LOWORD(cXfer);
                     }
                     iLook++;
                 }
@@ -1028,17 +1028,17 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 grbit >>= 1;
             }
         }
-        FleetTransferCargoBalance(&rgxf[0].fl, &rgxf[1].fl);
+        FleetTransferCargoBalance(&rgxf[0].fl(), &rgxf[1].fl());
         for (iPass = 0; iPass < 2; iPass++) {
-            FLookupFleet(idWriteBack, &rgxf[iPass].fl);
-            lpfl = LpflFromId(rgxf[iPass].fl.id);
+            FLookupFleet(idWriteBack, &rgxf[iPass].fl());
+            lpfl = LpflFromId(rgxf[iPass].idObj());
             if (lpfl) {
                 lpfl->SetFCompChg(TRUE);
             }
-            for (i = 0; i < 16 && rgxf[iPass].fl.rgcsh[i] == 0; i++) {
+            for (i = 0; i < 16 && rgxf[iPass].fl().rgcsh[i] == 0; i++) {
             }
             if (i == 16) {
-                FDeleteFleet(rgxf[iPass].fl.id, grobjNone, 0);
+                FDeleteFleet(rgxf[iPass].idObj(), grobjNone, 0);
             }
         }
         break;

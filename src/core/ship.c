@@ -243,11 +243,11 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         if (pobj) {
             ppl = (PLANET *)pobj;
         } else if (grobj == grobjPlanet) {
-            FLookupPlanet(id, &xfer.pl);
-            ppl = &xfer.pl;
+            FLookupPlanet(id, &xfer.pl());
+            ppl = &xfer.pl();
         } else {
-            memset(&xfer.pl, 0, sizeof(PLANET));
-            ppl = &xfer.pl;
+            memset(&xfer.pl(), 0, sizeof(PLANET));
+            ppl = &xfer.pl();
         }
         if (iSupply <= Fuel) {
             if (iSupply == Fuel) {
@@ -263,14 +263,14 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         }
         if (dChg == 0 || pobj || grobj == grobjOther)
             break;
-        FLookupPlanet(idWriteBack, &xfer.pl);
+        FLookupPlanet(idWriteBack, &xfer.pl());
         break;
     case grobjThing:
         if (pobj) {
             pth = (THING *)pobj;
         } else {
-            FLookupThing(id, &xfer.th);
-            pth = &xfer.th;
+            FLookupThing(id, &xfer.th());
+            pth = &xfer.th();
         }
         if (iSupply >= Colonists) {
             return 0;
@@ -299,8 +299,8 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         if (pobj) {
             pfl = (FLEET *)pobj;
         } else {
-            FLookupFleet(id, &xfer.fl);
-            pfl = &xfer.fl;
+            FLookupFleet(id, &xfer.fl());
+            pfl = &xfer.fl();
         }
         if (iSupply <= Fuel) {
             if (dChg == 0) {
@@ -340,16 +340,16 @@ int32_t XferSupply(MineralType iSupply, int32_t cQuan) {
     if (iSrc == 0) {
         cQuan = -cQuan;
     }
-    cAvailable = ChgCargo(pxfer[iSrc].grobj, pxfer[iSrc].id, iSupply, 0, (uint8_t *)(pxfer + iSrc) + 4);
+    cAvailable = ChgCargo(pxfer[iSrc].grobj, pxfer[iSrc].id, iSupply, 0, pxfer[iSrc].LpvCargo(pxfer[iSrc].grobj));
     if (cQuan > cAvailable) {
         cQuan = cAvailable;
     }
     if (cQuan == 0) {
         return 0;
     }
-    dChg = ChgCargo(pxfer[iSrc == 0].grobj, pxfer[iSrc == 0].id, iSupply, cQuan, (uint8_t *)(pxfer + (iSrc == 0)) + 4);
+    dChg = ChgCargo(pxfer[iSrc == 0].grobj, pxfer[iSrc == 0].id, iSupply, cQuan, pxfer[(iSrc == 0)].LpvCargo(pxfer[(iSrc == 0)].grobj));
     if (dChg != 0) {
-        ChgCargo(pxfer[iSrc].grobj, pxfer[iSrc].id, iSupply, -dChg, (uint8_t *)(pxfer + iSrc) + 4);
+        ChgCargo(pxfer[iSrc].grobj, pxfer[iSrc].id, iSupply, -dChg, pxfer[iSrc].LpvCargo(pxfer[iSrc].grobj));
     }
     return dChg;
 }

@@ -23,6 +23,9 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 extern "C" void InitPopupReference(void);
 extern "C" uint16_t WPopupReference(uint16_t op, int32_t value);
 
+extern "C" void InitXferReference(void);
+extern "C" void ApplyXferReference(uint16_t op, int32_t value, void *pv, int32_t *out);
+
 int main() {
     {
         POPUPDATA pd{};
@@ -95,7 +98,64 @@ int main() {
         part.SetParmor(&armor);
         CHECK(com == &hul && part.pcom() == &armor);
         CHECK(com.rgTech() == hul.rgTech && com.szName() == hul.szClass);
-        for (std::uint32_t w = 0; w < 65536; w++) {
+        {
+        XFER xf{};
+        alignas(16) std::byte rgbBorrow[128]{};
+        const void *pvFrame = &xf.fl();
+        CHECK(pvFrame == &xf.pl() && pvFrame == &xf.th());
+        InitXferReference();
+        auto apply = [&](uint16_t op, int32_t value, void *pv) {
+            const int16_t w = static_cast<int16_t>(static_cast<uint16_t>(value));
+            switch (op) {
+            case 0: xf.SetIdObj(w); break;
+            case 1: xf.SetIPlayerObj(w); break;
+            case 2: xf.pl().id = w; break;
+            case 3: xf.pl().iPlayer = w; break;
+            case 4: xf.th().SetIdFull(static_cast<uint16_t>(value)); break;
+            case 5: xf.th().pt().SetX(w); break;
+            case 6: xf.th().pt().SetY(w); break;
+            case 7: xf.pl().rgwtMin[0] = value; break;
+            case 8: xf.fl().rgcsh[0] = w; break;
+            case 9: xf.fl().det = static_cast<uint16_t>(value); break;
+            case 10: xf.fl().rgwtMin[0] = value; break;
+            case 11: xf.pl().rgEnvVar[0] = static_cast<int8_t>(static_cast<uint8_t>(value)); break;
+            case 12: xf.fl().lpplord = static_cast<PLORD *>(pv); break;
+            case 13: xf.pl().lpplprod = static_cast<PLPROD *>(pv); break;
+            case 14: {
+                THING th{};
+                th.SetIdFull(static_cast<uint16_t>(value)); th.pt().SetX(w); th.pt().SetY(static_cast<int16_t>(static_cast<uint16_t>(~static_cast<uint16_t>(value))));
+                th.thp().SetIdPlanet(static_cast<uint16_t>(value)); th.thp().SetIWarp(static_cast<uint16_t>(value) >> 10);
+                th.thp().SetFMoved(static_cast<uint16_t>(value) >> 14); th.thp().SetFInclude(static_cast<uint16_t>(value) >> 15);
+                th.thp().SetRgwtMin(0, w); th.SetTurn(static_cast<uint16_t>(value));
+                xf.th() = th; break;
+            }
+            case 15: {
+                FLEET fl{};
+                fl.id = w; fl.iPlayer = static_cast<int16_t>(static_cast<uint32_t>(value) >> 16);
+                fl.rgwtMin[0] = value; fl.rgcsh[0] = w; fl.lpplord = static_cast<PLORD *>(pv);
+                xf.fl() = fl; break;
+            }
+            case 16: xf.id = w; break;
+            case 17: xf.grobj = static_cast<GrobjClass>(static_cast<uint16_t>(value)); break;
+            }
+            const int32_t got[] = {xf.idObj(), xf.iPlayerObj(), xf.detObj(), xf.th().idFull(), xf.th().pt().x(), xf.th().pt().y(),
+                xf.fl().rgcsh[0], xf.fl().rgwtMin[0], xf.pl().rgwtMin[0], xf.pl().rgEnvVar[0],
+                xf.fl().lpplord == static_cast<PLORD *>(pv), xf.pl().lpplprod == static_cast<PLPROD *>(pv), xf.id, xf.grobj};
+            std::array<int32_t, 14> expected{};
+            ApplyXferReference(op, value, pv, expected.data());
+            return std::equal(expected.begin(), expected.end(), std::begin(got));
+        };
+        for (uint32_t w = 0; w < 65536; w++) for (uint16_t op = 0; op < 18; op++) {
+            CHECK(apply(op, std::bit_cast<int32_t>(w * 0x10001u), (w & 1) ? rgbBorrow : nullptr));
+        }
+        uint32_t state = 0x029e746b;
+        for (int i = 0; i < 10000; i++) {
+            state = state * 1664525u + 1013904223u;
+            CHECK(apply(static_cast<uint16_t>((state >> 8) % 18), std::bit_cast<int32_t>(state), (state & 1) ? rgbBorrow : nullptr));
+        }
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
             hul.wtEmpty = static_cast<uint16_t>(w);
             hul.rgwtOreCost[0] = static_cast<uint16_t>(w);
             hul.resCost = static_cast<uint16_t>(w);

@@ -1231,29 +1231,29 @@ int16_t TransferStuff(int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass gr
     mdXferDlg = mdXfer;
     for (i = 0; i < 2; i++) {
         if (xfer[i].grobj != grobjOther) {
-            if (!FLookupObject(xfer[i].grobj, xfer[i].id, &xfer[i].fl)) {
+            if (!FLookupObject(xfer[i].grobj, xfer[i].id, xfer[i].LpvLookup(xfer[i].grobj))) {
                 return 0;
             }
             if (xfer[i].grobj == grobjPlanet) {
-                lPopPrev = xfer[i].pl.rgwtMin[3];
+                lPopPrev = xfer[i].pl().rgwtMin[3];
             }
         } else if (mdXfer == mdXferShips) {
-            lpfl = LpflNewSplit(&xfer[0].fl);
-            xfer[1].fl = *lpfl;
+            lpfl = LpflNewSplit(&xfer[0].fl());
+            xfer[1].fl() = *lpfl;
             xfer[1].id = lpfl->id;
             xfer[1].grobj = grobjFleet;
         } else {
-            xfer[i].fl.id = idflNone;
+            xfer[i].SetIdObj(idflNone);
             for (j = 0; j < 4; j++) {
-                xfer[i].pl.rgwtMin[j] = 0;
+                xfer[i].pl().rgwtMin[j] = 0;
             }
-            EnumLogRts((int16_t (*)(void *, int16_t, int16_t, void *, int16_t))FEnumCalcJettison, &xfer[i].pl, id1);
+            EnumLogRts((int16_t (*)(void *, int16_t, int16_t, void *, int16_t))FEnumCalcJettison, &xfer[i].pl(), id1);
         }
     }
     if (mdXfer == mdXferShips) {
         cXferValidHulls = 0;
         for (i = 0; i < 16; i++) {
-            if (xfer[0].fl.rgcsh[i] != 0 || (xfer[1].grobj == grobjFleet && xfer[1].fl.rgcsh[i] != 0)) {
+            if (xfer[0].fl().rgcsh[i] != 0 || (xfer[1].grobj == grobjFleet && xfer[1].fl().rgcsh[i] != 0)) {
                 rgValidHull[cXferValidHulls++] = i;
             }
         }
@@ -1270,11 +1270,11 @@ int16_t TransferStuff(int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass gr
     if (fSuccess) {
         iDelFleet = -1;
         if (mdXfer == mdXferShips) {
-            for (i = 0; i < 16 && xfer[1].fl.rgcsh[i] <= 0; i++) {
+            for (i = 0; i < 16 && xfer[1].fl().rgcsh[i] <= 0; i++) {
             }
             if (i == 16 && grobj2 == grobjOther)
                 goto CancelSplit;
-            FleetTransferCargoBalance(&xfer[0].fl, &xfer[1].fl);
+            FleetTransferCargoBalance(&xfer[0].fl(), &xfer[1].fl());
         }
         for (i = 0; i < 2; i++) {
             switch (xfer[i].grobj) {
@@ -1282,27 +1282,27 @@ int16_t TransferStuff(int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass gr
                 break;
             case grobjPlanet:
             case grobjOther:
-                FLookupPlanet(idWriteBack, &xfer[i].pl);
-                if (xfer[i].grobj != grobjPlanet || lPopPrev != xfer[i].pl.rgwtMin[3])
+                FLookupPlanet(idWriteBack, &xfer[i].pl());
+                if (xfer[i].grobj != grobjPlanet || lPopPrev != xfer[i].pl().rgwtMin[3])
                     break;
                 lPopPrev = -1;
                 break;
             case grobjFleet:
-                FLookupFleet(idWriteBack, &xfer[i].fl);
+                FLookupFleet(idWriteBack, &xfer[i].fl());
                 if (mdXfer != mdXferShips)
                     break;
-                for (j = 0; j < 16 && xfer[i].fl.rgcsh[j] == 0; j++) {
+                for (j = 0; j < 16 && xfer[i].fl().rgcsh[j] == 0; j++) {
                 }
                 if (j != 16)
                     break;
                 iDelFleet = i;
                 break;
             case grobjThing:
-                FLookupThing(idWriteBack, &xfer[i].th);
+                FLookupThing(idWriteBack, &xfer[i].th());
             }
         }
         if (iDelFleet != -1) {
-            FDeleteFleet(xfer[iDelFleet].fl.id, grobjFleet, xfer[iDelFleet == 0].fl.id);
+            FDeleteFleet(xfer[iDelFleet].idObj(), grobjFleet, xfer[iDelFleet == 0].idObj());
         }
         if (mdXfer == mdXferShips) {
             FillShipDD(sel.fl.id);
@@ -1343,7 +1343,7 @@ int16_t TransferStuff(int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass gr
         }
     } else if (mdXfer == mdXferShips && grobj2 == grobjOther) {
     CancelSplit:
-        FDeleteFleet(xfer[1].fl.id, grobjNone, 0);
+        FDeleteFleet(xfer[1].idObj(), grobjNone, 0);
         CancelMemRt(rtLogFleetSplit);
     }
     mdXferDlg = mdXferNone;
@@ -1470,7 +1470,7 @@ int16_t FTrackXfer(HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
         if (pxfer[1].grobj == grobjThing) {
             if (iVal == 4 || iVal == 3)
                 goto FinishUp;
-        } else if (pxfer[btn.iSide].fl.iPlayer != idPlayer) {
+        } else if (pxfer[btn.iSide].iPlayerObj() != idPlayer) {
             goto FinishUp;
         }
         SetCapture(hwnd);
@@ -1480,14 +1480,14 @@ int16_t FTrackXfer(HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
             if (pt.x != ptOld.x || pt.y != ptOld.y) {
                 ptOld = pt;
                 if (btn.iSide == 1 && pxfer[1].grobj == grobjThing) {
-                    cNew = (uint32_t)(pxfer[1].th.thp().wtMax() * 10);
+                    cNew = (uint32_t)(pxfer[1].th().thp().wtMax() * 10);
                 } else if (iVal == 4) {
-                    cNew = LGetFleetStat(&pxfer[btn.iSide].fl, 1);
+                    cNew = LGetFleetStat(&pxfer[btn.iSide].fl(), 1);
                 } else {
-                    cNew = LGetFleetStat(&pxfer[btn.iSide].fl, 2);
+                    cNew = LGetFleetStat(&pxfer[btn.iSide].fl(), 2);
                 }
                 cNew = (int32_t)((int16_t)(pt.x - btn.rc.left) * cNew) / (int16_t)(btn.rc.right - btn.rc.left - 2);
-                cCur = ChgCargo(pxfer[btn.iSide].grobj, pxfer[btn.iSide].id, static_cast<MineralType>(iVal), 0, (uint8_t *)(pxfer + btn.iSide) + 4);
+                cCur = ChgCargo(pxfer[btn.iSide].grobj, pxfer[btn.iSide].id, static_cast<MineralType>(iVal), 0, pxfer[btn.iSide].LpvCargo(pxfer[btn.iSide].grobj));
                 dChg = cNew - cCur;
                 if (XferSupply(static_cast<MineralType>(iVal), btn.iSide == 0 ? dChg : -dChg) != 0) {
                     DrawXferDlg(hwnd, NULL, &rc, static_cast<MineralType>(iVal));
@@ -1506,13 +1506,13 @@ int16_t FTrackXfer(HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
         }
         while (FTrackBtn(&btnt)) {
             if (mdXferDlg == mdXferShips) {
-                i = (int16_t)LOWORD(dChg) < pxfer[btn.iSide == 0].fl.rgcsh[iVal] ? LOWORD(dChg) : pxfer[btn.iSide == 0].fl.rgcsh[iVal];
+                i = (int16_t)LOWORD(dChg) < pxfer[btn.iSide == 0].fl().rgcsh[iVal] ? LOWORD(dChg) : pxfer[btn.iSide == 0].fl().rgcsh[iVal];
                 if (i != 0) {
-                    if (pxfer[btn.iSide].fl.rgcsh[iVal] >= 32766 - i) {
+                    if (pxfer[btn.iSide].fl().rgcsh[iVal] >= 32766 - i) {
                         i = 1;
                     }
-                    pxfer[btn.iSide].fl.rgcsh[iVal] = pxfer[btn.iSide].fl.rgcsh[iVal] + i;
-                    pxfer[btn.iSide == 0].fl.rgcsh[iVal] -= i;
+                    pxfer[btn.iSide].fl().rgcsh[iVal] = pxfer[btn.iSide].fl().rgcsh[iVal] + i;
+                    pxfer[btn.iSide == 0].fl().rgcsh[iVal] -= i;
                     DrawXferDlg(hwnd, btnt.hdc, &rc, static_cast<MineralType>(iBtn));
                 }
             } else if (iVal >= 0 && iVal <= 4 && XferSupply(static_cast<MineralType>(iVal), btn.iSide == 0 ? dChg : -dChg) != 0) {
@@ -1539,21 +1539,21 @@ void UpdateXferBtns() {
         if (rgbtnXfer[i].fVisible && (iVal <= iLastButton || mdXferDlg == mdXferShips)) {
             iSide = rgbtnXfer[i].iSide;
             if (mdXferDlg == mdXferShips) {
-                if (pxfer[iSide].fl.rgcsh[iVal] == 32766) {
+                if (pxfer[iSide].fl().rgcsh[iVal] == 32766) {
                     lLeft = 0;
                 } else {
-                    lLeft = pxfer[iSide == 0].fl.rgcsh[iVal];
+                    lLeft = pxfer[iSide == 0].fl().rgcsh[iVal];
                 }
             } else {
-                lLeft = ChgCargo(pxfer[iSide == 0].grobj, pxfer[iSide == 0].id, static_cast<MineralType>(iVal), 0, (uint8_t *)(pxfer + (iSide == 0)) + 4);
+                lLeft = ChgCargo(pxfer[iSide == 0].grobj, pxfer[iSide == 0].id, static_cast<MineralType>(iVal), 0, pxfer[(iSide == 0)].LpvCargo(pxfer[(iSide == 0)].grobj));
                 if (lLeft == 0 || pxfer[iSide].grobj != grobjFleet) {
                     if (pxfer[iSide].grobj == grobjPlanet && iVal == 4) {
                         lLeft = 0;
                     }
                 } else if (iVal == 4) {
-                    lLeft = GetFuelFree(&pxfer[iSide].fl);
+                    lLeft = GetFuelFree(&pxfer[iSide].fl());
                 } else {
-                    lLeft = GetCargoFree(&pxfer[iSide].fl);
+                    lLeft = GetCargoFree(&pxfer[iSide].fl());
                 }
             }
             if (lLeft == 0) {
@@ -1591,20 +1591,20 @@ void DrawXferDlg(HWND hwnd, HDC hdc, RECT *prc, MineralType iSupply) {
     GetXferLeftRightRcs(prc, rgrc, &rgrc[1]);
     for (i = 0; i < 2; i++) {
         if (mdXferDlg == mdXferShips) {
-            DrawFleetShipsXferSide(hdc, &rgrc[i], &pxfer[i].fl, iSupply);
+            DrawFleetShipsXferSide(hdc, &rgrc[i], &pxfer[i].fl(), iSupply);
         } else {
             switch (pxfer[i].grobj) {
             default:
                 break;
             case grobjFleet:
-                DrawFleetCargoXferSide(hdc, &rgrc[i], &pxfer[i].fl, iSupply);
+                DrawFleetCargoXferSide(hdc, &rgrc[i], &pxfer[i].fl(), iSupply);
                 break;
             case grobjPlanet:
             case grobjOther:
-                DrawPlanetXferSide(hdc, &rgrc[i], &pxfer[i].pl, iSupply);
+                DrawPlanetXferSide(hdc, &rgrc[i], &pxfer[i].pl(), iSupply);
                 break;
             case grobjThing:
-                DrawThingXferSide(hdc, &rgrc[i], &pxfer[i].th, iSupply);
+                DrawThingXferSide(hdc, &rgrc[i], &pxfer[i].th(), iSupply);
             }
         }
     }
@@ -2226,12 +2226,12 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
             }
             lSel = SendMessage(hwndShipDD, CB_GETCURSEL, 0, 0);
             FLookupOrbitingXfer(idPlan, LOWORD(lSel), &xf, iSkip);
-            if (xf.grobj != grobjFleet || xf.fl.iPlayer != idPlayer) {
+            if (xf.grobj != grobjFleet || xf.iPlayerObj() != idPlayer) {
                 return NULL;
             }
             irc = 1;
-            lMax = LGetFleetStat(&xf.fl, 1);
-            lCur = xf.fl.rgwtMin[4];
+            lMax = LGetFleetStat(&xf.fl(), 1);
+            lCur = xf.fl().rgwtMin[4];
             grbit = 4;
             if (sel.grobj == grobjFleet) {
                 lTempMax = lCur + sel.fl.rgwtMin[4];
@@ -2333,8 +2333,8 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
                     } else {
                         DrawPlanShip(NULL, static_cast<TileBits>(tileMineralsOrCargo | tileMinimized));
                     }
-                    xf.fl.rgwtMin[4] = lNew;
-                    DrawFleetGauge(hdc, &rgrcRef[irc], &xf.fl, grbit);
+                    xf.fl().rgwtMin[4] = lNew;
+                    DrawFleetGauge(hdc, &rgrcRef[irc], &xf.fl(), grbit);
                 }
                 lCur = lNew;
             }
@@ -2352,7 +2352,7 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
             InvalidateRect(hwndMine, NULL, TRUE);
         }
     } else if (irc == 1) {
-        FLookupFleet(idWriteBack, &xf.fl);
+        FLookupFleet(idWriteBack, &xf.fl());
         if (sel.grobj == grobjFleet) {
             FLookupFleet(idWriteBack, &sel.fl);
             DrawPlanShip(NULL, static_cast<TileBits>(tileMineralsOrCargo | tileFleetOrders | tileFleetComp | tileMinimized));

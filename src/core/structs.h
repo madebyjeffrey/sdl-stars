@@ -11,6 +11,8 @@
 #include "enums.h"
 #include "native.h"
 #include "thingviews.h"
+#include "nativeobject.h"
+#include <algorithm>
 
 typedef struct _aipart          AIPART;
 typedef struct _aistarbase      AISTARBASE;
@@ -1686,15 +1688,39 @@ struct _ini {
     int16_t  iMsg;     /* +0x0018 (2) */
 }; /* size=0x1a */
 
+// Runtime scratch follows its native payload alignment when root packing is
+// retired in B12. No file codec consumes this storage.
+inline constexpr std::size_t cbXferPayload = (std::max)({sizeof(FLEET), sizeof(PLANET), sizeof(THING)});
+inline constexpr std::size_t cbXferAlign = (std::max)({alignof(FLEET), alignof(PLANET), alignof(THING)});
 struct _xfer {
-    int16_t    id;    /* +0x0000 (2) */
-    GrobjClass grobj; /* +0x0002 (2) */
-    union {
-        FLEET  fl; /* +0x0004 (124) */
-        PLANET pl; /* +0x0004 (56) */
-        THING  th; /* +0x0004 (18) */
-    };
-}; /* size=0x80 */
+    int16_t id;
+    GrobjClass grobj;
+    NATIVEOBJECTSTORAGE<cbXferPayload, cbXferAlign> storage;
+    FLEET &fl() noexcept { return storage.As<FLEET>(); }
+    const FLEET &fl() const noexcept { return storage.As<FLEET>(); }
+    PLANET &pl() noexcept { return storage.As<PLANET>(); }
+    const PLANET &pl() const noexcept { return storage.As<PLANET>(); }
+    THING &th() noexcept { return storage.As<THING>(); }
+    const THING &th() const noexcept { return storage.As<THING>(); }
+    int16_t idObj() const noexcept { return storage.ReadPrefix<int16_t>(0); }
+    void SetIdObj(int16_t value) noexcept { storage.WritePrefix(0, value); }
+    int16_t iPlayerObj() const noexcept { return storage.ReadPrefix<int16_t>(2); }
+    void SetIPlayerObj(int16_t value) noexcept { storage.WritePrefix(2, value); }
+    uint16_t detObj() const noexcept { return storage.ReadPrefix<uint8_t>(4); }
+    // Lookup defaults to THING; cargo defaults to FLEET. Keep both old domains.
+    void *LpvLookup(GrobjClass kind) noexcept {
+        if (kind == grobjFleet) return &fl();
+        if (kind == grobjPlanet) return &pl();
+        return &th();
+    }
+    void *LpvCargo(GrobjClass kind) noexcept {
+        if (kind == grobjPlanet || kind == grobjOther) return &pl();
+        if (kind == grobjThing) return &th();
+        return &fl();
+    }
+};
+static_assert(std::is_trivially_copyable_v<XFER> && std::is_standard_layout_v<XFER>);
+static_assert(alignof(XFER) >= cbXferAlign && offsetof(XFER, storage) % cbXferAlign == 0);
 
 struct _xferfull {
     uint16_t id1;        /* +0x0000 (2) */

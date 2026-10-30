@@ -823,7 +823,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 35:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 25) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 36:
@@ -990,7 +990,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 52:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 210) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 210) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 53:
@@ -1214,7 +1214,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 74:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 25) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 75:
@@ -1411,7 +1411,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 95:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 25) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 96:
@@ -1516,7 +1516,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClickPoint(hwndModal, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         break;
     case 109:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgcsh[2] != 2 || pxfer[1].fl.rgcsh[2] != 1) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgcsh[2] != 2 || pxfer[1].fl().rgcsh[2] != 1) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 110:
@@ -1535,7 +1535,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 112:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 50) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 50) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 113:
@@ -1814,7 +1814,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 143:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != 25) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 144:
@@ -2118,7 +2118,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 170:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != cCargoGoal) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != cCargoGoal) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 171:
@@ -2485,7 +2485,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FDragPoint(hwndModal, ptRow, ptTo)) goto LInput;
         break;
     case 206:
-        if (!hwndModal || !pxfer || pxfer[0].fl.rgwtMin[3] != cCargoExpected) return;
+        if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != cCargoExpected) return;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 207:
