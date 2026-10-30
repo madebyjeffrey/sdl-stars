@@ -21,6 +21,7 @@ int16_t FCreateFile(DtFileType dt, int16_t iPlayer, char *szForceName);
 void    WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti);
 int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f);
 void    WriteRt(RecordType rt, int16_t cb, void *rg);
+void    WriteRtEof(uint16_t w);
 void    RgToStream(const void *rg, uint16_t cb);
 void    SetVisiblePlanFleet(int16_t iPlr);
 void    SetVisPFInit(int16_t iPlr);

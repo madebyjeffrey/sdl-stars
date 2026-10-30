@@ -125,6 +125,15 @@ static void TestRecordFramingBytes() {
     ReadRt();
     TEST_CHECK(hdrCur.rt == rtEOF && hdrCur.cb == 3 && vlpMemStream == stream + 5 && !memcmp(rgbCur, stream + 2, 3));
     vlpMemStream = NULL;
+    StreamOpen(szFile, mdCreate);
+    WriteRtEof(0x80ff);
+    StreamClose();
+    hfRead = HfOpenFile(szFile, mdRead, &fMissing);
+    TEST_ASSERT(hfRead != -1);
+    TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == 4);
+    CloseFile(hfRead);
+    TEST_CHECK(written[0] == 2 && written[1] == 0 && written[2] == 0xff && written[3] == 0x80);
+    TEST_CHECK(WFromStreamBytes(written + 2) == 0x80ff);
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 

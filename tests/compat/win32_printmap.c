@@ -104,7 +104,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
         fPassed = FCreateFile(dtRace, iplrNone, szInstalledRace);
         if (fPassed) {
             WriteRtPlr(&plr, NULL); icksum = IRaceChecksum(&plr);
-            WriteRt(rtEOF, 2, &icksum); StreamClose();
+            WriteRtEof(icksum); StreamClose();
         }
     }
 done:

@@ -627,7 +627,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                         }
                         ReadRt();
                         icksum = IRaceChecksum(&plr);
-                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
+                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && WFromStreamBytes(rgbCur) == icksum) {
                             fProtected = fLegacy && plr.lSalt != 0;
                             if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
                                 idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;

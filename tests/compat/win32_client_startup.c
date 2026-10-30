@@ -1750,7 +1750,7 @@ static BOOL FTestLegacyRaceImport(void) {
         WriteRt(rtBOF, cbWireBof, rgbBof);
         WriteRtPlr(&plr, NULL);
         icksum = IRaceChecksum(&plr);
-        WriteRt(rtEOF, sizeof(icksum), &icksum);
+        WriteRtEof(icksum);
         StreamClose();
         if (!FTestCopyFile(szSource, szSnapshot)) goto LDone;
         cLegacyRacePasswords = 0;

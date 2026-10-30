@@ -1436,7 +1436,7 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
         }
         WriteRtPlr(pplr, NULL);
         icksum = IRaceChecksum(pplr);
-        WriteRt(rtEOF, 2, &icksum);
+        WriteRtEof(icksum);
         StreamClose();
         SetSzRaceFile(&szFile[ofn.nFileOffset]);
         return TRUE;

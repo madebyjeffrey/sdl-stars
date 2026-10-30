@@ -67,7 +67,7 @@ static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const cha
     FEncodeBof(rtbof, rgbBof);
     WriteRt(rtBOF, cbWireBof, rgbBof);
     WriteRt(rtPlr, (int16_t)(pb - rgb), rgb);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     return TRUE;
 }
@@ -127,7 +127,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
     WriteRtPlr(&vplr, NULL);
     icksum = IRaceChecksum(&vplr);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     TEST_CHECK(FWasRaceFile(szSaved, FALSE) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
@@ -207,7 +207,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
     WriteRtPlr(&vplr, NULL);
     icksum = IRaceChecksum(&vplr);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     strcpy(vszDefPass, "Replacement");
     TEST_CHECK(FWasRaceFile(szSaved, TRUE) == 1);
@@ -330,7 +330,7 @@ static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szFile));
     WriteRtPlr(&plr, NULL);
     icksum = IRaceChecksum(&plr);
-    WriteRt(rtEOF, 2, &icksum);
+    WriteRtEof(icksum);
     StreamClose();
 
     TEST_CHECK(FWasRaceFile(szFile, FALSE));

@@ -47,4 +47,12 @@ inline bool FEncodeBof(const RTBOF &bof, std::span<std::byte> rgb) noexcept {
            output.FWriteU16Le(bof.turn) && output.FWriteU16Le(playerSalt) && output.FWriteU16Le(flags);
 }
 
+// Callers already own the physical two-byte scalar prefix. Logical record
+// admission remains at the existing call site.
+inline std::uint16_t WFromStreamBytes(const void *lp) noexcept {
+    std::uint16_t w = 0;
+    NATIVEBYTEREADER(std::span(static_cast<const std::byte *>(lp), 2)).FReadU16Le(w);
+    return w;
+}
+
 #endif

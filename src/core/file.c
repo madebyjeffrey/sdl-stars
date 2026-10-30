@@ -1262,7 +1262,7 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
                     ReadRt();
                     if (hdrCur.rt != rtEOF && hdrCur.cb != 2)
                         goto LBadFile;
-                    rtbof.turn = RawLoad16(rgbCur);
+                    rtbof.turn = WFromStreamBytes(rgbCur);
                     game.wGen = rtbof.wGen;
                 }
                 if (game.turn == 0 && game.turn != rtbof.turn) {

@@ -913,7 +913,7 @@ RetryAll:
             xOld = rgptPlan[i].x;
         }
         i = game.cPlayer;
-        WriteRt(rtEOF, 2, &i);
+        WriteRtEof(i);
         StreamClose();
         for (i = -1; i < game.cPlayer; i++) {
             FWriteDataFile(szBase, i, FALSE);

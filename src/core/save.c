@@ -453,7 +453,7 @@ LAppend:
                 lpbtlplan++;
             }
         }
-        WriteRt(rtEOF, 2, &game.turn);
+        WriteRtEof(game.turn);
         StreamClose();
     } catch (const StarsError &) {
         goto LFail;
@@ -1064,6 +1064,13 @@ LBadFile:
         StreamClose();
         return FALSE;
     }
+}
+
+void WriteRtEof(uint16_t w) {
+    std::byte rgb[2];
+
+    NATIVEBYTEWRITER(rgb).FWriteU16Le(w);
+    WriteRt(rtEOF, 2, rgb);
 }
 
 void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {

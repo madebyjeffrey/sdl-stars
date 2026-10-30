@@ -638,7 +638,7 @@ int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
     }
     WriteRtPlr(pplr, NULL);
     icksum = IRaceChecksum(pplr);
-    WriteRt(rtEOF, 2, &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     fOkay = ReplaceNativeFile(szRaceLibraryTemp, szPath) == 0;
     if (!fOkay) {

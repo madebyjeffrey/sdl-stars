@@ -55,9 +55,9 @@ expressions that would become stale when unrelated lines move.
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
-| Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 in qualification |
-| Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
-| Record stream boundary in `file.c` / `save.c` | HDR 10-bit length/6-bit type, XOR/checksum state, continuation records, partial read/write effects | B11 after dependent families |
+| Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
+| Remaining fixed game records | GAME/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
+| Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
 | FreeType/Fontconfig/Cairo/zlib/SDL and actual OS SDK layouts | Genuine foreign seams; external decoders remain in their adapters; owned byte parsing still belongs above | B11 adapter review / B14 isolation |
@@ -215,3 +215,9 @@ reads/writes over its physical byte buffer. No native int32_t object is invented
 at the byte address. Trailing-byte operations and exact XOR-seed consumption
 remain unchanged. This retires the encryption loop's raw scalar alias only;
 other RawLoad/RawStore sites remain assigned to their own wire/runtime family.
+
+
+B11 EOF values: all owned two-byte EOF producers encode numeric words explicitly;
+turn-date and race-checksum readers decode little-endian values from the same
+scratch backing. Empty EOF records retain their existing calls. Native copies
+used for THING counts remain assigned to the forthcoming THING record family.
