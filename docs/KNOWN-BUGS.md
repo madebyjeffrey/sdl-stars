@@ -17,6 +17,17 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Abandoned asynchronous post records — fixed on main
+
+`message.c`/`input.c`: a worker allocated its SDL user-event record and only the
+main-thread consumer released it. Shutdown could discard the event before that
+consumer ran. The registry now owns accepted records, with a separate producer
+reference while SDL filters run; cancellation releases them without dereferencing
+stale event pointers. Owned payloads survive nested dispatch and release on
+rejection, dropped delivery or shutdown. Permanent allocation/filter/race/stale-ID
+fixtures pass functionally, under native leaks and with sanitizers. This changes
+no game files or host results.
+
 ## Cleanup while handling a primary exception — fixed on main
 
 `errors.cpp`: checking only `std::uncaught_exceptions()` prevented replacement

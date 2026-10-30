@@ -5,15 +5,50 @@
 #include "internal.h"
 #include <stars_compat.h>
 #include <stdlib.h>
+#include "ownership.h"
+#include "locking.h"
+#include <atomic>
+#include <initializer_list>
+#include <new>
 
 typedef struct COMPATMESSAGE {
     MSG msg;
+    STARSCOMPATPAYLOAD payload;
     BOOL fTimer, fInput;
     BYTE rgbKey[256];
     struct COMPATMESSAGE *lpNext;
 } COMPATMESSAGE;
 
 static COMPATMESSAGE *lpFirst, *lpLast;
+static void FreeMessage(COMPATMESSAGE *lp) noexcept {
+    if (lp) { lp->~COMPATMESSAGE(); free(lp); }
+}
+using COMPATMESSAGEOWNER = NATIVEOWNER<COMPATMESSAGE, FreeMessage>;
+static COMPATMESSAGE *lpPending, *lpDispatchPayload;
+
+static COMPATMESSAGEOWNER TakePayloadMessage(const MSG &msg) noexcept {
+    for (auto **first : {&lpPending, &lpFirst}) {
+        for (auto **link = first; *link; link = &(*link)->lpNext) {
+            auto *lp = *link;
+            if (lp->payload && lp->msg.hwnd == msg.hwnd && lp->msg.message == msg.message &&
+                lp->msg.wParam == msg.wParam && lp->msg.lParam == msg.lParam) {
+                *link = lp->lpNext;
+                if (lpLast == lp) {
+                    lpLast = lpFirst;
+                    if (lpLast) while (lpLast->lpNext) lpLast = lpLast->lpNext;
+                }
+                lp->lpNext = nullptr;
+                return COMPATMESSAGEOWNER(lp);
+            }
+        }
+    }
+    return {};
+}
+
+void *PvCompatMessagePayload(WPARAM id) noexcept {
+    return lpDispatchPayload && lpDispatchPayload->msg.wParam == id ? lpDispatchPayload->payload.get() : nullptr;
+}
+
 static int cDispatch;
 
 class COMPATDISPATCHSCOPE {
@@ -36,6 +71,8 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         SDL_SetError("Win32 message allocation failed");
         return FALSE;
     }
+    lpmsg = ::new (lpmsg) COMPATMESSAGE{};
+    COMPATMESSAGEOWNER message(lpmsg);
     lpmsg->msg.hwnd = hwnd;
     lpmsg->msg.message = msg;
     lpmsg->msg.wParam = wParam;
@@ -46,28 +83,135 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     else
         lpFirst = lpmsg;
     lpLast = lpmsg;
+    message.release();
     return TRUE;
 }
 
-BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    COMPATASYNCPOST *lpPost;
-    SDL_Event event = {};
+struct COMPATASYNCPOST {
+    HWND hwnd = nullptr;
+    uint64_t idWindow = 0;
+    UINT msg = 0;
+    WPARAM wParam = 0;
+    LPARAM lParam = 0;
+    STARSCOMPATPAYLOAD payload;
+    std::atomic<unsigned> cRef{2}; // Producer and registry; SDL only borrows.
+    uintptr_t id = 0;
+    COMPATASYNCPOST *lpNext = nullptr;
+};
 
-    if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
-    lpPost = (COMPATASYNCPOST *)(malloc(sizeof(*lpPost)));
-    if (!lpPost) return FALSE;
-    lpPost->hwnd = hwnd;
-    lpPost->msg = msg;
-    lpPost->wParam = wParam;
-    lpPost->lParam = lParam;
+static NATIVEFLAGLOCK lockPosts;
+static COMPATASYNCPOST *lpPosts;
+static bool fAcceptPosts = true;
+static uintptr_t idPostNext = 1;
+static WPARAM idPayloadNext = 1;
+
+static void ReleasePost(COMPATASYNCPOST *lp) noexcept {
+    if (lp->cRef.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        lp->~COMPATASYNCPOST();
+        free(lp);
+    }
+}
+
+using COMPATASYNCOWNER = NATIVEOWNER<COMPATASYNCPOST, ReleasePost>;
+
+static COMPATASYNCOWNER TakePost(const void *pv, uintptr_t id) noexcept {
+    std::unique_lock guard(lockPosts);
+    for (auto **link = &lpPosts; *link; link = &(*link)->lpNext) {
+        auto *lp = *link;
+        if (lp == pv && lp->id == id) {
+            *link = lp->lpNext;
+            lp->lpNext = nullptr;
+            return COMPATASYNCOWNER(lp);
+        }
+    }
+    return {};
+}
+
+void CompatStartAsyncMessages() noexcept {
+    std::unique_lock guard(lockPosts);
+    fAcceptPosts = true;
+}
+
+void CompatStopAsyncMessages() noexcept {
+    COMPATASYNCPOST *lp;
+    {
+        std::unique_lock guard(lockPosts);
+        fAcceptPosts = false;
+        lp = std::exchange(lpPosts, nullptr);
+    }
+    while (lp) {
+        auto *next = lp->lpNext;
+        COMPATASYNCOWNER post(lp);
+        lp = next;
+    }
+}
+
+static BOOL PostOwnedMessage(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+    {
+        std::unique_lock guard(lockPosts);
+        if (!fAcceptPosts) return FALSE;
+    }
+    HWND hwnd = StarsCompatResolveWindow(idWindow);
+    if (!hwnd || !payload || idPayloadNext == 0) return FALSE;
+    WPARAM id = idPayloadNext++;
+    if (!PostMessageA(hwnd, msg, id, lParam)) return FALSE;
+    lpLast->payload = std::move(payload);
+    return TRUE;
+}
+
+static BOOL PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
+    COMPATASYNCOWNER producer(lp);
+    {
+        std::unique_lock guard(lockPosts);
+        if (!fAcceptPosts || idPostNext == 0) {
+            // Only the producer owns a record that was never registered.
+            lp->cRef.store(1, std::memory_order_relaxed);
+            return FALSE;
+        }
+        lp->id = idPostNext++;
+        lp->lpNext = lpPosts;
+        lpPosts = lp;
+    }
+    SDL_Event event{};
     event.type = SDL_EVENT_USER;
     event.user.code = COMPAT_ASYNC_POST_CODE;
-    event.user.data1 = lpPost;
-    if (!SDL_PushEvent(&event)) {
-        free(lpPost);
-        return FALSE;
+    event.user.data1 = lp;
+    event.user.data2 = reinterpret_cast<void *>(lp->id);
+    BOOL fOk = FALSE;
+    // Do not hold the registry lock across SDL event-watch callbacks.
+    try { fOk = SDL_PushEvent(&event); } catch (...) {}
+    if (!fOk) {
+        auto registered = TakePost(lp, lp->id);
     }
-    return TRUE;
+    return fOk;
+}
+
+BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
+    void *pv = malloc(sizeof(COMPATASYNCPOST));
+    if (!pv) return FALSE;
+    auto *lp = ::new (pv) COMPATASYNCPOST;
+    lp->hwnd = hwnd; lp->msg = msg; lp->wParam = wParam; lp->lParam = lParam;
+    return PushAsyncPost(lp);
+}
+
+BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+    if (SDL_IsMainThread()) return PostOwnedMessage(idWindow, msg, std::move(payload), lParam);
+    if (!payload) return FALSE;
+    void *pv = malloc(sizeof(COMPATASYNCPOST));
+    if (!pv) return FALSE;
+    auto *lp = ::new (pv) COMPATASYNCPOST;
+    lp->idWindow = idWindow; lp->msg = msg; lp->lParam = lParam;
+    lp->payload = std::move(payload);
+    return PushAsyncPost(lp);
+}
+
+void CompatConsumeAsyncMessage(const SDL_Event *event) {
+    auto post = TakePost(event->user.data1, reinterpret_cast<uintptr_t>(event->user.data2));
+    if (!post) return; // Canceled/stale SDL events never dereference their old data.
+    auto *lp = post.get();
+    if (lp->payload) PostOwnedMessage(lp->idWindow, lp->msg, std::move(lp->payload), lp->lParam);
+    else PostMessageA(lp->hwnd, lp->msg, lp->wParam, lp->lParam);
 }
 
 BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -93,32 +237,28 @@ BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn) {
     return TRUE;
 }
 
-void CompatPurgeMessages(HWND hwnd) {
-    COMPATMESSAGE **lplpmsg = &lpFirst;
-    COMPATMESSAGE *lpmsg;
-
-    lpLast = NULL;
-    while (*lplpmsg) {
-        lpmsg = *lplpmsg;
-        if (lpmsg->msg.hwnd == hwnd) {
-            *lplpmsg = lpmsg->lpNext;
-            free(lpmsg);
-        } else {
-            lpLast = lpmsg;
-            lplpmsg = &lpmsg->lpNext;
-        }
+static void PurgeMessageChain(COMPATMESSAGE *&first, HWND hwnd, bool fAll) noexcept {
+    for (auto **link = &first; *link;) {
+        auto *lp = *link;
+        if (fAll || lp->msg.hwnd == hwnd) {
+            *link = lp->lpNext;
+            FreeMessage(lp);
+        } else link = &lp->lpNext;
     }
 }
 
-void CompatClearMessages(void) {
-    COMPATMESSAGE *lpmsg;
+void CompatPurgeMessages(HWND hwnd) {
+    PurgeMessageChain(lpFirst, hwnd, false);
+    PurgeMessageChain(lpPending, hwnd, false);
+    lpLast = lpFirst;
+    if (lpLast) while (lpLast->lpNext) lpLast = lpLast->lpNext;
+}
 
-    while (lpFirst) {
-        lpmsg = lpFirst;
-        lpFirst = lpmsg->lpNext;
-        free(lpmsg);
-    }
-    lpLast = NULL;
+void CompatClearMessages() {
+    CompatStopAsyncMessages();
+    PurgeMessageChain(lpFirst, nullptr, true);
+    PurgeMessageChain(lpPending, nullptr, true);
+    lpLast = nullptr;
 }
 
 static BOOL FMessageMatches(const MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
@@ -153,7 +293,10 @@ static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UIN
             else lpFirst = lpmsg->lpNext;
             if (lpLast == lpmsg) lpLast = lpPrev;
             if (lpmsg->fTimer) CompatTimerDequeued(lpmsg->msg.hwnd, lpmsg->msg.wParam);
-            free(lpmsg);
+            if (lpmsg->payload) {
+                lpmsg->lpNext = lpPending;
+                lpPending = lpmsg;
+            } else FreeMessage(lpmsg);
         }
         return TRUE;
     }
@@ -236,6 +379,9 @@ LRESULT WINAPI SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 LRESULT WINAPI DispatchMessageA(const MSG *lpmsg) {
     if (!lpmsg || !SDL_IsMainThread() || lpmsg->message == WM_QUIT) return 0;
+    auto payload = TakePayloadMessage(*lpmsg);
+    StarsRestore restorePayload(lpDispatchPayload);
+    lpDispatchPayload = payload.get();
     if (lpmsg->message == WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         COMPATDISPATCHSCOPE dispatch;

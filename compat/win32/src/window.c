@@ -185,6 +185,7 @@ BOOL FCompatVideo(void) {
         if (!SDL_AddEventWatch(FWatchLiveResize, NULL)) return FALSE;
         fResizeWatch = TRUE;
     }
+    CompatStartAsyncMessages();
     return TRUE;
 }
 
@@ -343,7 +344,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     }
     CompatDestroyPaint(lpwin);
     CompatDestroyDialog(lpwin);
-    // Process exit skips application callbacks after game heaps are freed.
+    // Silent shutdown skips application callbacks; control storage still closes.
     // Control-owned storage must still be released on that silent path.
     CompatDestroyList(lpwin);
     CompatDestroyToolbar(lpwin);
@@ -1413,6 +1414,7 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
         return;
     }
     fShutdown = TRUE;
+    CompatStopAsyncMessages();
     if (fResizeWatch) SDL_RemoveEventWatch(FWatchLiveResize, NULL);
     fResizeWatch = FALSE;
     StarsCompatEndDialogSequence();
@@ -1451,6 +1453,8 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     fVideoOwned = FALSE;
     fShutdown = FALSE;
 }
+
+BOOL StarsCompatCanShutdown() noexcept { return SDL_IsMainThread() && CCompatDispatch() == 0; }
 
 void StarsCompatShutdown(void) { ShutdownCompatRuntime(TRUE); }
 void StarsCompatProcessExit(void) { ShutdownCompatRuntime(FALSE); }

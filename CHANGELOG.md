@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `StarsCompatPostMessageAsync` owns pending worker-post records through delivery
+  or shutdown. Previously records left in SDL's event queue could be abandoned.
+  Owned one-shot payloads now also release on target destruction, allocation
+  failure, callback failure, cancellation and runtime restart. MSG layout and
+  successful numeric-post behavior are unchanged.
+
 - `StarsCapturePendingError` preserves a primary failure already being handled
   while UI cleanup runs. Previously a cleanup callback inside a catch handler
   could leave its secondary error pending for the next operation. A scoped

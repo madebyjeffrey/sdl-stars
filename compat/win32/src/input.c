@@ -398,11 +398,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     }
     if (lpevent->type == SDL_EVENT_USER && lpevent->user.code == COMPAT_ASYNC_POST_CODE) {
-        COMPATASYNCPOST *lpPost = (COMPATASYNCPOST *)(lpevent->user.data1);
-        if (lpPost) {
-            PostMessageA(lpPost->hwnd, lpPost->msg, lpPost->wParam, lpPost->lParam);
-            free(lpPost);
-        }
+        CompatConsumeAsyncMessage(lpevent);
         return;
     }
     // Window/input SDL event unions all use windowID; never fall back to another HWND.

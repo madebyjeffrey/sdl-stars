@@ -92,3 +92,18 @@ if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
     set_tests_properties(win32_sdl_leaks_profile PROPERTIES
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/ownership-profile")
 endif()
+
+add_executable(stars-resource-messages tests/compat/message_ownership.cpp)
+target_include_directories(stars-resource-messages PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
+target_link_libraries(stars-resource-messages PRIVATE stars_win32 SDL3::SDL3)
+target_compile_options(stars-resource-messages PRIVATE -Wall -Wextra -Werror)
+stars_test_redirect(stars-resource-messages calloc malloc)
+add_test(NAME win32_sdl_resource_messages COMMAND stars-resource-messages)
+set_tests_properties(win32_sdl_resource_messages PROPERTIES LABELS "compat;ownership;lifetime"
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" TIMEOUT 30)
+if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
+    add_test(NAME win32_sdl_leaks_messages COMMAND "${STARS_GUARD_LEAKS_EXECUTABLE}"
+        --quiet --noContent --atExit -- "$<TARGET_FILE:stars-resource-messages>")
+    set_tests_properties(win32_sdl_leaks_messages PROPERTIES LABELS "compat;ownership;lifetime;leaks"
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software" RUN_SERIAL TRUE TIMEOUT 60)
+endif()

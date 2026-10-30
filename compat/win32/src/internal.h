@@ -17,12 +17,9 @@ decltype(TrackPopupMenu) STARS_TEST_IMPL_TrackPopupMenu;
 void CompatAbortCallback(HWND hwnd) noexcept;
 
 typedef struct COMPATPRINT COMPATPRINT;
-typedef struct COMPATASYNCPOST {
-    HWND hwnd;
-    UINT msg;
-    WPARAM wParam;
-    LPARAM lParam;
-} COMPATASYNCPOST;
+void CompatConsumeAsyncMessage(const SDL_Event *event);
+void CompatStartAsyncMessages() noexcept;
+void CompatStopAsyncMessages() noexcept;
 #define COMPAT_ASYNC_POST_CODE 0x53544152
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
