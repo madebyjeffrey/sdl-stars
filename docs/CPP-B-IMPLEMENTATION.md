@@ -1857,3 +1857,12 @@ message allocation sites after all headers. Standard declarations and production
 allocators remain unchanged; the same failure vectors and assertions still run.
 The failed tutorial build is retained as a failure receipt, and the corrected
 revision must pass platform qualification before readiness.
+
+
+The next Linux tutorial build reached two Linux-only ordinary harnesses whose
+nested zero/designated initializers still triggered GCC missing-field warnings.
+Their C++ empty initialization followed by the same field assignments preserves
+all inputs and assertions without restoring suppressions. Shared SDK reference
+inputs are unchanged. Both complete regressions and Linux source/host gates
+passed for the allocation-hook revision; these harness corrections require fresh
+platform qualification.

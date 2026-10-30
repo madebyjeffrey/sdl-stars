@@ -333,7 +333,7 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
 
 int main(int argc, char **argv) {
     WNDCLASS wc = {};
-    WINDOWTEST rgwin[2] = {{0}, {0}};
+    WINDOWTEST rgwin[2] = {};
     HWND rghwnd[2];
     ATOM atom;
     HINSTANCE hInstance = (HINSTANCE)(UINT_PTR)0x1234;
