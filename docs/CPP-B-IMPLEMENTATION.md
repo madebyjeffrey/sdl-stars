@@ -1441,3 +1441,21 @@ resource/guard checks; native leak scanning is separate from ASan/UBSan.
 All sixteen Linux/Windows checks now pass for the preceding published resource
 checkpoint `8b587b8`. THING platform qualification and the remaining B11 aliases,
 B12 arenas, B13 session owner and B14 strict gate are still required.
+
+
+## B11 unused scalar aliases
+
+PLANETSOME stores its actual twelve-/four-bit guesses and computes the word
+numerically. TIMER stores the signed sixteen-bit hours word and computes its
+minute/player views without an inactive union. Their aliases have no active
+owned consumers; no timer/profile persistence or new parser was introduced.
+Both wire-layout harnesses cover every word and both setter directions.
+
+The combined scalar/drawing-borrow verification batch passes 117 desktop tests
+(including 28 native leak checks and available tutorial smoke coverage), 26
+SDL-free host tests, 41 sanitizer cases, all 27 source witnesses and 105 headers
+in both include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Both regressions match 519 files through turn 150 with the same 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs. All
+frozen references, baselines, serialized widths and retained layout contracts
+remain unchanged. Platform checks and the remaining B11/B12–B14 work continue.

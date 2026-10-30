@@ -769,13 +769,10 @@ struct _planetsome {
     int8_t   rgMinConc[3];     /* +0x000C (3) */
     int8_t   rgEnvVar[3];      /* +0x000F (3) */
     int8_t   rgEnvVarOrig[3];  /* +0x0012 (3) */
-    union {
-        struct {
-            uint16_t uPopGuess : 12, /* +0x0015 (2) @bit0 */
-                uDefGuess : 4;       /* @bit12 */
-        };
-        uint16_t uGuesses; /* +0x0015 (2) */
-    };
+    uint16_t uPopGuess : 12,
+        uDefGuess : 4;
+    uint16_t uGuesses() const noexcept { return static_cast<uint16_t>(uPopGuess | (uDefGuess << 12)); }
+    void SetUGuesses(uint16_t uGuesses) noexcept { uPopGuess = uGuesses & 4095; uDefGuess = uGuesses >> 12; }
 }; /* size=0x17 */
 
 struct _fleet {
@@ -1530,13 +1527,17 @@ struct _tile {
 struct _timer {
     int16_t mdForce;        /* +0x0000 (2) */
     int16_t fAutoGenWhenIn; /* +0x0002 (2) */
-    union {
-        int16_t hrsForce; /* +0x0004 (2) */
-        struct {
-            uint16_t minForce : 12, /* +0x0004 (2) @bit0 */
-                cPlr : 4;           /* @bit12 */
-        };
-    };
+    int16_t hrsForce; /* +0x0004 (2) */
+    uint16_t minForce() const noexcept { return static_cast<uint16_t>(hrsForce) & 4095; }
+    uint16_t cPlr() const noexcept { return static_cast<uint16_t>(hrsForce) >> 12; }
+    void SetMinForce(uint16_t minForce) noexcept {
+        const uint16_t w = static_cast<uint16_t>((static_cast<uint16_t>(hrsForce) & 0xf000u) | (minForce & 4095));
+        hrsForce = std::bit_cast<int16_t>(w);
+    }
+    void SetCPlr(uint16_t cPlr) noexcept {
+        const uint16_t w = static_cast<uint16_t>((static_cast<uint16_t>(hrsForce) & 4095u) | ((cPlr & 15) << 12));
+        hrsForce = std::bit_cast<int16_t>(w);
+    }
     int32_t tickcount; /* +0x0006 (4) */
 }; /* size=0xa */
 

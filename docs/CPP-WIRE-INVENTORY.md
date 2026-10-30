@@ -296,3 +296,9 @@ unknown tag values, wormhole reserved/opaque bytes and all signed quantities.
 The heap byte window preserves short and overlong copy effects on initialized
 physical neighbors/spare bytes; it imposes no new logical record-length rule.
 Runtime stride remains eighteen, independent of compiler packing.
+
+
+B11 unused metadata aliases: PLANETSOME guesses use actual twelve-/four-bit
+fields and a numeric word accessor; TIMER retains an actual signed sixteen-bit
+hours word with numeric minute/player accessors. No owned consumer persists
+these object representations. Frozen width/alignment measurements are retained.

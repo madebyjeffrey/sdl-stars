@@ -21,6 +21,19 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 
 int main() {
     for (std::uint32_t w = 0; w < 65536; w++) {
+        PLANETSOME pl{};
+        TIMER timer{};
+        pl.SetUGuesses(static_cast<uint16_t>(w));
+        CHECK(pl.uGuesses() == w && pl.uPopGuess == (w & 4095) && pl.uDefGuess == (w >> 12));
+        timer.hrsForce = static_cast<int16_t>(w < 32768 ? int32_t(w) : int32_t(w) - 65536);
+        CHECK(timer.minForce() == (w & 4095) && timer.cPlr() == (w >> 12));
+        timer.SetMinForce(static_cast<uint16_t>(65535 - w));
+        CHECK(timer.minForce() == ((65535 - w) & 4095) && timer.cPlr() == (w >> 12));
+        timer.SetCPlr(static_cast<uint16_t>(w));
+        CHECK(timer.cPlr() == (w & 15) && timer.minForce() == ((65535 - w) & 4095));
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
         std::array<std::byte, 18> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8),
             std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f},
             std::byte{1}, std::byte{0}, std::byte{0}, std::byte{0x80}, std::byte{0xdc}, std::byte{0xfe},
