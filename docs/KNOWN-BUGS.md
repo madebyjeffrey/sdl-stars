@@ -17,6 +17,15 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Transfer dialog borrowed frame — fixed on main
+
+`shipui.c`: `TransferStuff` published its stack `xfer` through `pxfer` but did
+not restore the old pointer on return. Failed object lookup also left
+`mdXferDlg` installed; nested calls could overwrite the outer frame/mode.
+A scoped restoration now covers every return and exception. A real rejected
+lookup fixture checks both outer values, while desktop/host regressions remain
+519 matches with the same 25 accepted warnings and no differences or skips.
+
 ## Mystery Trader movement message state — fixed on main
 
 `turn.c`: `MoveThings` previously tested `idm` after the no-course-change branch

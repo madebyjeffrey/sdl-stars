@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 
 void DrawShipOrders(HDC hdc, TILE *ptile, OBJ obj) {
     int16_t swp;
@@ -1227,6 +1228,9 @@ int16_t TransferStuff(int16_t id1, GrobjClass grobj1, int16_t id2, GrobjClass gr
     xfer[0].grobj = grobj1;
     xfer[1].id = id2;
     xfer[1].grobj = grobj2;
+    XFER *pxferSav = pxfer;
+    MdXfer mdXferSav = mdXferDlg;
+    NATIVECLEANUPSCOPE transferRoot([pxferSav, mdXferSav]() noexcept { pxfer = pxferSav; mdXferDlg = mdXferSav; });
     pxfer = xfer;
     mdXferDlg = mdXfer;
     for (i = 0; i < 2; i++) {

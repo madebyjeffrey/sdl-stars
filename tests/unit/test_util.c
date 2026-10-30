@@ -211,7 +211,27 @@ static void test_Xfer_lookup_and_cargo_fallbacks(void) {
     TEST_CHECK(xf.th().idFull() == id && xf.th().pt().x() == 123 && xf.th().pt().y() == 456);
 }
 
-TEST_LIST = {{"transfer lookup/cargo fallbacks retain prefix and tail", test_Xfer_lookup_and_cargo_fallbacks},
+
+#ifdef STARS_UI_SDL
+static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
+    XFER rgSaved[2]{};
+    XFER *pxferSav;
+    MdXfer mdXferSav;
+
+    TEST_ASSERT(FStarsTestInit());
+    pxferSav = pxfer; mdXferSav = mdXferDlg;
+    pxfer = rgSaved; mdXferDlg = mdXferShips;
+    TEST_CHECK(!TransferStuff(INT16_MAX, grobjPlanet, 0, grobjOther, mdXferCargo));
+    TEST_CHECK(pxfer == rgSaved && mdXferDlg == mdXferShips);
+    pxfer = pxferSav; mdXferDlg = mdXferSav;
+}
+#endif
+
+TEST_LIST = {
+#ifdef STARS_UI_SDL
+    {"transfer lookup failure restores the outer borrowed frame", test_TransferStuff_restores_borrowed_frame_on_lookup_failure},
+#endif
+{"transfer lookup/cargo fallbacks retain prefix and tail", test_Xfer_lookup_and_cargo_fallbacks},
              {"FLookupPart host sentinel", test_FLookupPart_host},
              {"generated fleet names preserve complete UTF-8", test_FleetName_utf8_boundary},
              {"PtToScan negative coordinates", test_PtToScan_negative},

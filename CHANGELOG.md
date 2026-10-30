@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `TransferStuff` restores the previous transfer frame and dialog mode on every
+  return or exception. A failed lookup previously left `pxfer` pointing at a
+  returned stack frame and left its dialog mode installed. Nested transfers now
+  restore the outer frame. This UI cleanup does not change host results or files.
+
 - `MoveThings` initializes its retargeting message ID before processing things.
   Previously a trader could compare an uninitialized ID when it kept its course;
   the THING view migration exposed an optimized-build movement difference.
