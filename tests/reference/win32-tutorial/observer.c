@@ -153,7 +153,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     x = 4;
     for (i = 0; i < 29; i++) {
         int button = (int8_t)vrgTBBtn[i];
-        int width = DxOfBtn(button);
+        int width = DxOfBtn(static_cast<ToolbarButton>(button));
         if (button >= 0) {
             SetRect(&rect, x, 0, x + width, 28);
             StateRect("toolbarButton", button, hwndTb, &rect);
@@ -226,8 +226,9 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
         StateAppend("transferMode=%d\n", mdXferDlg);
         for (i = 0; i < 2; i++) {
             if (pxfer[i].grobj == grobjFleet) {
-                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, pxfer[i].fl.id, (long)pxfer[i].fl.rgwtMin[3], (long)pxfer[i].fl.rgwtMin[4],
-                            (long)LGetFleetStat(&pxfer[i].fl, 1));
+                FLEET &fl = pxfer[i].fl();
+                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, fl.id, (long)fl.rgwtMin[3], (long)fl.rgwtMin[4],
+                            (long)LGetFleetStat(&fl, 1));
             }
         }
         for (i = 0; i < crgbtnXfer; i++) {

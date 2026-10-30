@@ -39,3 +39,13 @@ add_test(NAME test_cpp_compilation_manifest COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/cmake/check_cpp_manifest.py"
     "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
 set_tests_properties(test_cpp_compilation_manifest PROPERTIES LABELS build TIMEOUT 30)
+
+
+# The historical native observer is no longer runnable on the SDL backend. Keep
+# its original-name reads and payload accessors type-correct without linking a
+# native Win32 runtime or pretending this is a walkthrough execution.
+if(STARS_BUILD_SDL_CLIENT)
+    add_library(stars-archived-observer-types OBJECT tests/compat/archived_tutorial_types.cpp)
+    target_link_libraries(stars-archived-observer-types PRIVATE stars_options stars_win32_headers SDL3::SDL3)
+    target_compile_options(stars-archived-observer-types PRIVATE -Werror)
+endif()
