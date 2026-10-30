@@ -67,6 +67,16 @@ protected:
         return static_cast<std::uint16_t>((w >> i) & mask);
     }
     template<std::ptrdiff_t ibWord, unsigned iBit, unsigned cBits>
+    std::uint32_t GetBits32() const noexcept {
+        static_assert(cBits > 0 && iBit + cBits <= 32);
+        constexpr unsigned i = iBit % 8;
+        constexpr unsigned cb = (i + cBits + 7) / 8;
+        constexpr std::uint32_t mask = static_cast<std::uint32_t>((std::uint64_t{1} << cBits) - 1);
+        std::uint32_t ul = 0;
+        for (unsigned j = 0; j < cb; j++) ul |= std::uint32_t(GetU8(ibWord + std::ptrdiff_t(iBit / 8 + j))) << (j * 8);
+        return (ul >> i) & mask;
+    }
+    template<std::ptrdiff_t ibWord, unsigned iBit, unsigned cBits>
     std::uint16_t SetBits(std::uint16_t value) noexcept {
         static_assert(cBits > 0 && iBit + cBits <= 16);
         constexpr unsigned i = iBit % 8;

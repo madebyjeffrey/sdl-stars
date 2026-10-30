@@ -968,16 +968,15 @@ struct _rtchgname {
 
 struct _rtChgPlanetLong {
     int16_t id; /* +0x0000 (2) */
-    union {
-        uint32_t ul; /* +0x0002 (4) */
-        struct {
-            uint32_t fNoResearch : 1, /* +0x0002 (4) @bit0 */
-                idFling : 10,         /* @bit1 */
-                iWarpFling : 4,       /* @bit11 */
-                idRoute : 10,         /* @bit15 */
-                unused : 7;           /* @bit25 */
-        };
-    };
+    uint32_t fNoResearch : 1, /* +0x0002 (4) @bit0 */
+        idFling : 10,         /* @bit1 */
+        iWarpFling : 4,       /* @bit11 */
+        idRoute : 10,         /* @bit15 */
+        unused : 7;           /* @bit25 */
+    uint32_t ul() const noexcept {
+        return uint32_t(fNoResearch) | (uint32_t(idFling) << 1) | (uint32_t(iWarpFling) << 11) |
+            (uint32_t(idRoute) << 15) | (uint32_t(unused) << 25);
+    }
 }; /* size=0x6 */
 
 struct _rtChgProdQ {

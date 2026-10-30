@@ -267,6 +267,7 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
     LOGXFER lxNew;
     RTCHGPRODQ rtcpq{};
     std::byte rgbProdId[cbWireChgProdQ];
+    RTCHGPLANETLONG routing{};
 
     fChg = FALSE;
     if (!gd.fGeneratingTurn) {
@@ -318,13 +319,13 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
             }
             if ((uint32_t)ppl->fNoResearch != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
                 ppl->idRoute != pplNew->idRoute) {
-                ((RTCHGPLANETLONG *)rgbCur)->id = pplNew->id;
-                ((RTCHGPLANETLONG *)rgbCur)->ul = 0;
-                ((RTCHGPLANETLONG *)rgbCur)->fNoResearch = pplNew->fNoResearch;
-                ((RTCHGPLANETLONG *)rgbCur)->idFling = pplNew->idFling;
-                ((RTCHGPLANETLONG *)rgbCur)->iWarpFling = pplNew->iWarpFling;
-                ((RTCHGPLANETLONG *)rgbCur)->idRoute = pplNew->idRoute;
-                WriteMemRt(rtLogPlanetRouting, 6, rgbCur);
+                routing.id = pplNew->id;
+                routing.fNoResearch = pplNew->fNoResearch;
+                routing.idFling = pplNew->idFling;
+                routing.iWarpFling = pplNew->iWarpFling;
+                routing.idRoute = pplNew->idRoute;
+                FEncodePlanetRouting(routing, std::as_writable_bytes(std::span(rgbCur)));
+                WriteMemRt(rtLogPlanetRouting, cbWirePlanetRouting, rgbCur);
             }
         }
     }
@@ -704,11 +705,11 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         }
         break;
     case rtThing:
-        lpth = LpthFromId(((RTLOGTHING *)lpb)->idFull);
+        lpth = LpthFromId(LtvFromPrefix(lpb, 2).idFull());
         if (!lpth || lpth->ith != ithMinefield) {
             return FALSE;
         }
-        lpth->thm.fDetonate = ((RTLOGTHING *)lpb)->fDetonate;
+        lpth->thm.fDetonate = LtvFromPrefix(lpb, 4).fDetonate();
         break;
     case rtLogShDef:
         if (cb < (int16_t)cbWireChgShDef) return FALSE;
@@ -1100,13 +1101,13 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (!FSetOrderTask(lpfl->lpplord, iordLog, grTaskLog)) return FALSE;
         break;
     case rtLogPlanetRouting:
-        lppl = LpplFromId(((RTCHGPLANETLONG *)lpb)->id);
+        lppl = LpplFromId(RlvFromPrefix(lpb, 2).id());
         if (!lppl || lppl->iPlayer != idPlayer)
             goto BombOut;
-        lppl->fNoResearch = ((RTCHGPLANETLONG *)lpb)->fNoResearch;
-        lppl->idFling = ((RTCHGPLANETLONG *)lpb)->idFling;
-        lppl->iWarpFling = ((RTCHGPLANETLONG *)lpb)->iWarpFling;
-        lppl->idRoute = ((RTCHGPLANETLONG *)lpb)->idRoute;
+        lppl->fNoResearch = RlvFromPrefix(lpb, 3).fNoResearch();
+        lppl->idFling = RlvFromPrefix(lpb, 4).idFling();
+        lppl->iWarpFling = RlvFromPrefix(lpb, 4).iWarpFling();
+        lppl->idRoute = RlvFromPrefix(lpb, 6).idRoute();
         break;
     case rtChgPassword:
         if (gd.fGeneratingTurn) {

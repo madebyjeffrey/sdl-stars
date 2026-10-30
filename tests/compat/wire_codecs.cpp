@@ -20,6 +20,47 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main() {
+    for (std::uint32_t i = 0; i < 65570; i++) {
+        const std::uint32_t ul = i < 32 ? (std::uint32_t{1} << i) : i == 32 ? 0 : i == 33 ? 0xffffffffu : (i - 34) * 2654435761u;
+        const std::array<std::byte, 6> golden = {std::byte{0}, std::byte{0x80}, static_cast<std::byte>(ul), static_cast<std::byte>(ul >> 8), static_cast<std::byte>(ul >> 16), static_cast<std::byte>(ul >> 24)};
+        RTCHGPLANETLONG routing{};
+        std::array<std::byte, 8> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodePlanetRouting(golden, routing) && routing.id == -32768 && routing.ul() == ul);
+        CHECK(routing.fNoResearch == (ul & 1) && routing.idFling == ((ul >> 1) & 1023) && routing.iWarpFling == ((ul >> 11) & 15));
+        CHECK(routing.idRoute == ((ul >> 15) & 1023) && routing.unused == ul >> 25);
+        CHECK(FEncodePlanetRouting(routing, std::span(rgb).subspan(1, 6)) && !std::memcmp(rgb.data() + 1, golden.data(), 6));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        auto lp = rgb.data() + 1;
+        CHECK(RlvFromPrefix(lp, 2).id() == -32768 && RlvFromPrefix(lp, 3).fNoResearch() == (ul & 1));
+        CHECK(RlvFromPrefix(lp, 4).idFling() == ((ul >> 1) & 1023) && RlvFromPrefix(lp, 4).iWarpFling() == ((ul >> 11) & 15));
+        CHECK(RlvFromPrefix(lp, 6).idRoute() == ((ul >> 15) & 1023));
+        if (i == 32) for (std::size_t cb = 0; cb < 6; cb++) {
+            routing.id = 123; routing.unused = 99;
+            CHECK(!FDecodePlanetRouting(std::span(golden).first(cb), routing) && routing.id == 123 && routing.unused == 99);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodePlanetRouting(routing, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+    for (std::uint32_t w = 0; w < 65536; w++) {
+        const std::array<std::byte, 4> golden = {std::byte{0xff}, std::byte{0x80}, static_cast<std::byte>(w), static_cast<std::byte>(w >> 8)};
+        RTLOGTHING thing{};
+        std::array<std::byte, 6> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeLogThing(golden, thing) && thing.idFull == 0x80ff && thing.fDetonate == (w < 32768 ? std::int32_t(w) : std::int32_t(w) - 65536));
+        CHECK(FEncodeLogThing(thing, std::span(rgb).subspan(1, 4)) && !std::memcmp(rgb.data() + 1, golden.data(), 4));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        CHECK(LtvFromPrefix(rgb.data() + 1, 2).idFull() == 0x80ff && LtvFromPrefix(rgb.data() + 1, 4).fDetonate() == thing.fDetonate);
+        if (w == 32768) for (std::size_t cb = 0; cb < 4; cb++) {
+            thing.idFull = 123; thing.fDetonate = -456;
+            CHECK(!FDecodeLogThing(std::span(golden).first(cb), thing) && thing.idFull == 123 && thing.fDetonate == -456);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeLogThing(thing, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+
     if constexpr (alignof(SCOREX) == 1) {
         // A packed object can legally start at an odd byte. Its numeric
         // accessor must copy the field before binding a scalar reference.

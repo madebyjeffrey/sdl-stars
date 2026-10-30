@@ -1236,3 +1236,31 @@ accepted unused-storage warnings, zero differences/errors and no skipped inputs.
 Frozen inputs, catalogs, baselines and production layout/alignment contracts
 remain unchanged. Remaining B11 families and its final complete platform gate
 remain required.
+
+
+## B11 routing and minefield-log prefixes in qualification
+
+Planet-routing changes encode their signed ID and explicit thirty-two-bit flag
+word. The runtime flag fields replace an inactive word union, retaining ul as a
+numeric accessor. Prefix views read only the physical bytes needed after the
+existing lookup/ownership gates. The writer still publishes through global
+scratch before WriteMemRt's callbacks. Minefield log changes encode their four
+bytes explicitly, preserving lookup/subtype checks before flag access.
+
+Both packed/natural golden suites, layout/inventory checks and actual routing
+writer/replay tests pass; the replay harness also passes ASan/UBSan. A test-only
+null-payload mistake was corrected after confirming rtThing and
+rtLogThingByteParam are both numeric tag 43; that existing alias and its payload
+requirement remain unchanged. Unknown tag 63 retains the original default
+no-read behavior. Full local and final B11 platform qualification remain required.
+
+
+Routing/minefield-log local qualification: 115/115 desktop tests including all
+27 native leak checks and available tutorial smoke coverage, 26/26 host tests,
+39/39 ASan/UBSan cases, all 27 source witnesses and 104 headers in both include
+orders. Debug/Release/host/sanitizer builds introduce no warnings. Desktop and
+host regressions each match 519 files through turn 150, with 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
+inputs, catalogs, baselines and production layout/alignment contracts remain
+unchanged. Remaining B11 families and its final complete platform gate remain
+required.

@@ -13,6 +13,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     RECT        rc2;
     int16_t     fDetonate;
     RTLOGTHING  rtlt;
+    std::byte   rgbThing[cbWireLogThing];
 
     switch (message) {
     case WM_CREATE:
@@ -81,7 +82,8 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         fDetonate = LOWORD(SendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
         rtlt.idFull = lpThings[sel.scan.ith].idFull;
         rtlt.fDetonate = fDetonate;
-        WriteMemRt(rtThing, 4, &rtlt);
+        FEncodeLogThing(rtlt, rgbThing);
+        WriteMemRt(rtThing, cbWireLogThing, rgbThing);
         lpThings[sel.scan.ith].thm.fDetonate = fDetonate;
         break;
     default:

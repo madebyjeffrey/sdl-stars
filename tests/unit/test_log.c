@@ -596,7 +596,56 @@ static void test_log_header_bytes_and_callback(void) {
     TEST_CHECK(c == 2);
 }
 
-TEST_LIST = {{"log framing uses bytes and re-reads callback-mutated strides", test_log_header_bytes_and_callback},
+static void test_routing_writer_bytes(void) {
+    PLANET pl{}, plNew{};
+    const uint8_t golden[] = {0x45, 0x23, 0xab, 0x7a, 0x55, 1};
+    uint8_t rgb[6];
+    HDR hdr;
+
+    TEST_ASSERT(FStarsTestInit());
+    fAi = TRUE; fLogOff = FALSE; gd.fGeneratingTurn = FALSE; fValidLx = FALSE;
+    imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
+    pl.id = plNew.id = 0x2345;
+    plNew.fNoResearch = 1; plNew.idFling = 0x155; plNew.iWarpFling = 15; plNew.idRoute = 0x2aa;
+    LogChangePlanet(&pl, &plNew);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogPlanetRouting && hdr.cb == 6 && !memcmp(rgb, golden, sizeof(golden)));
+}
+
+static void test_routing_replay_read_boundaries(void) {
+    char szDir[MAX_PATH];
+    uint8_t missing[] = {0xff, 1};
+    uint8_t routing[] = {0, 0, 0xab, 0x7a, 0x55, 1};
+    uint8_t noThing[] = {0xff, 0x7f};
+    uint8_t foreign[2];
+    PLANET *lppl;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("routing-prefixes", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost()); idPlayer = 0;
+    TEST_CHECK(!FRunLogRecord(rtLogPlanetRouting, 0, missing));
+    lppl = LpplStarsTestHomeworld(0); TEST_ASSERT(lppl != NULL);
+    routing[0] = (uint8_t)lppl->id; routing[1] = (uint8_t)((uint16_t)lppl->id >> 8);
+    TEST_CHECK(FRunLogRecord(rtLogPlanetRouting, 0, routing));
+    TEST_CHECK(lppl->fNoResearch && lppl->idFling == 0x155 && lppl->iWarpFling == 15 && lppl->idRoute == 0x2aa);
+    lppl->iPlayer = 1;
+    memcpy(foreign, routing, sizeof(foreign));
+    TEST_CHECK(!FRunLogRecord(rtLogPlanetRouting, 0, foreign));
+    TEST_CHECK(!FRunLogRecord(rtLogPlanetRouting, 0, missing));
+    {
+        StarsRestore<int16_t> restoreCount(cThing);
+        cThing = 0;
+        TEST_CHECK(!FRunLogRecord(rtThing, 0, noThing));
+    }
+    TEST_CHECK(rtLogThingByteParam == rtThing);
+    TEST_CHECK(!FRunLogRecord(rtLogThingByteParam, 0, noThing));
+    TEST_CHECK(FRunLogRecord(static_cast<RecordType>(63), 0, NULL));
+}
+
+TEST_LIST = {{"routing writer preserves exact prefix bytes", test_routing_writer_bytes},
+             {"routing and thing logs retain prefix/no-read paths", test_routing_replay_read_boundaries},
+             {"log framing uses bytes and re-reads callback-mutated strides", test_log_header_bytes_and_callback},
              {"cargo log widths, coalescing and signed ID comparisons", test_cargo_log_wire_widths},
              {"cargo lookup failures stop before a missing mask", test_cargo_lookup_prefixes},
              {"control records retain partial research and password reads", test_control_record_partial_effects},

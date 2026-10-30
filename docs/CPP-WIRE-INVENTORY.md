@@ -247,3 +247,11 @@ decodes the complete physical scratch at the old publication point. Numeric
 flags and one actual unsigned turn word replace inactive aliases, with a signed
 iRank accessor/setter preserving every sixteen-bit pattern. Score history
 allocation, insertion/compaction and post-allocation reads remain unchanged.
+
+
+B11 fixed log prefixes: routing uses six explicit bytes, including all reserved
+flag bits; minefield detonation uses four bytes and a signed flag word. Views
+preserve missing-object/foreign-owner/subtype early exits before absent later
+fields. rtThing and rtLogThingByteParam both denote tag 43, interpreted as a
+THING sequence in game files and a four-byte change in the log replay context.
+The migration preserves that numeric/contextual alias.

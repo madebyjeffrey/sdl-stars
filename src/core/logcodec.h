@@ -69,4 +69,35 @@ inline bool FEncodeCargoXferPrefix(RTXFER transfer, std::span<std::byte> rgb) no
            output.FWriteU8(static_cast<std::uint8_t>(transfer.grobj1 | (transfer.grobj2 << 4))) && output.FWriteU8(transfer.grbitItems);
 }
 
+inline constexpr std::size_t cbWirePlanetRouting = 6;
+inline constexpr std::size_t cbWireLogThing = 4;
+
+inline bool FDecodePlanetRouting(std::span<const std::byte> rgb, RTCHGPLANETLONG &routing) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::int16_t id;
+    std::uint32_t ul;
+    if (!input.FReadI16Le(id) || !input.FReadU32Le(ul)) return false;
+    routing.id = id; routing.fNoResearch = ul & 1; routing.idFling = (ul >> 1) & 1023;
+    routing.iWarpFling = (ul >> 11) & 15; routing.idRoute = (ul >> 15) & 1023; routing.unused = ul >> 25;
+    return true;
+}
+inline bool FEncodePlanetRouting(const RTCHGPLANETLONG &routing, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWirePlanetRouting) return false;
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteI16Le(routing.id) && output.FWriteU32Le(routing.ul());
+}
+inline bool FDecodeLogThing(std::span<const std::byte> rgb, RTLOGTHING &thing) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t id;
+    std::int16_t fDetonate;
+    if (!input.FReadU16Le(id) || !input.FReadI16Le(fDetonate)) return false;
+    thing.idFull = id; thing.fDetonate = fDetonate;
+    return true;
+}
+inline bool FEncodeLogThing(RTLOGTHING thing, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireLogThing) return false;
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteU16Le(thing.idFull) && output.FWriteI16Le(thing.fDetonate);
+}
+
 #endif
