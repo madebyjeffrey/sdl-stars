@@ -904,6 +904,8 @@ void MoveThings(int16_t fPostProd) {
     double    dxRound;
     double    r;
 
+    // No retargeting message has been selected when this movement pass starts.
+    idm = static_cast<MessageId>(idmNone);
     fAnythingMoved = FALSE;
     lpth = lpThings;
     lpthMac = lpThings + cThing;

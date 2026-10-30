@@ -172,7 +172,34 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
     }
 }
 
-TEST_LIST = {{"generate one turn", test_generate_one_turn},
+// With a seed that does not select a course change, a trader sends no messages.
+// It must still move when no retargeting message was selected this pass.
+static void test_MoveThings_trader_without_retargeting_moves(void) {
+    char szDir[MAX_PATH];
+    THING *lpth;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("MoveThings_trader", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    while (cThing != 0) FreeLpth(lpThings);
+    lpth = LpthNew(0, ithMysteryTrader);
+    TEST_ASSERT(lpth != NULL);
+    lpth->pt = {1200, 1200};
+    lpth->tht.ptDest = {2000, 1200};
+    lpth->tht.iWarp = 9;
+    PushRandom(123456, 789012);
+    TEST_ASSERT(Random(25) != 0);
+    PopRandom();
+    PushRandom(123456, 789012);
+    MoveThings(FALSE);
+    PopRandom();
+    TEST_CHECK(lpth->pt.x == 1281 && lpth->pt.y == 1200);
+    TEST_CHECK(lpth->tht.ptDest.x == 2000 && lpth->tht.ptDest.y == 1200);
+}
+
+TEST_LIST = {{"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+             {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},
              {"FTravelThroughMineFields speed bump stops a fleet any direction", test_FTravelThroughMineFields_speed_bump_any_direction},

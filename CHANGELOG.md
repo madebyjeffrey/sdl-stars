@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `MoveThings` initializes its retargeting message ID before processing things.
+  Previously a trader could compare an uninitialized ID when it kept its course;
+  the THING view migration exposed an optimized-build movement difference.
+  The initialization retains the existing native regression results.
+
 - `GetPrivateProfileStringA` and `WritePrivateProfileStringA` release their
   registry lock and partial profile storage when a C++ I/O operation throws.
   Fault injection previously deadlocked a retry. Failed profile saves now also

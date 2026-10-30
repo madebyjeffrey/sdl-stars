@@ -17,6 +17,19 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Mystery Trader movement message state — fixed on main
+
+`turn.c`: `MoveThings` previously tested `idm` after the no-course-change branch
+without first assigning it. The THING view migration exposed this undefined
+read in optimized macOS builds: the first native checkpoint difference was
+`noai`, turn 50, `game.hst`, record 156, with the trader's position changed while
+its destination and speed matched. Initializing the movement pass to `idmNone`
+restores the existing baseline: desktop and host each match all 519 files through
+turn 150, with the same 25 accepted unused-storage warnings and no differences.
+A movement fixture covers
+an unchanged course with a fixed random seed. Full migration qualification is
+recorded in [the implementation ledger](CPP-B-IMPLEMENTATION.md).
+
 ## Production editor queue sanitization — located on main
 
 `produce.c`: `InitProduction` removes an unavailable copied queue row with
