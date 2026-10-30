@@ -1344,7 +1344,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
         switch (icol) {
         case colFleetBattlePlan:
             i = lpfl->iplan;
-            strcpy(szT, rglpbtlplan[lpfl->iplr][lpfl->iplan].szName);
+            strcpy(szT, rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
             psz = szT;
             ExtTextOut(hdc, prc->left, prc->top, ETO_CLIPPED, prc, psz, strlen(psz), NULL);
             break;
@@ -1422,7 +1422,7 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
             break;
         case colFleetId:
             psz = szT;
-            cch = wsprintf(szT, "%d", lpfl->ifl + 1);
+            cch = wsprintf(szT, "%d", lpfl->ifl() + 1);
             RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
         }
         break;
@@ -1581,20 +1581,20 @@ void DrawReportItem(HDC hdc, RECT *prc, ReportType irpt, int16_t irow, int16_t i
                 j = 4;
                 goto LEFleetCount;
             case colEnemyFleetMass:
-                DrawMineralItem(hdc, prc->right - 2, prc->top, -1, lpfl->wtFleet);
+                DrawMineralItem(hdc, prc->right - 2, prc->top, -1, lpfl->wtFleet());
                 break;
             case colEnemyFleetId:
                 psz = szT;
-                cch = wsprintf(szT, "%d", lpfl->ifl + 1);
+                cch = wsprintf(szT, "%d", lpfl->ifl() + 1);
                 RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
                 break;
             case colEnemyFleetWarp:
-                if (!lpfl->fdirValid || lpfl->iwarpFlt <= 0) {
+                if (!lpfl->fdirValid() || lpfl->iwarpFlt() <= 0) {
                     psz = "--";
                     cch = 2;
                 } else {
                     psz = szT;
-                    cch = wsprintf(szT, "%d", lpfl->iwarpFlt);
+                    cch = wsprintf(szT, "%d", lpfl->iwarpFlt());
                 }
                 RightTextOut(hdc, prc->right - 2, prc->top, psz, cch, 0);
             }
@@ -1649,7 +1649,7 @@ void SortReportCache(ReportType irpt, int16_t icol) {
                 lpfl = rglpfl[iItem];
                 if (!rglpfl[iItem])
                     break;
-                if (lpfl->iplr == idPlayer) {
+                if (lpfl->iplr() == idPlayer) {
                     rgidRep[cRows++] = iItem;
                 }
             }
@@ -1661,7 +1661,7 @@ void SortReportCache(ReportType irpt, int16_t icol) {
                 lpfl = rglpfl[iItem];
                 if (!rglpfl[iItem])
                     break;
-                if (lpfl->iplr != idPlayer) {
+                if (lpfl->iplr() != idPlayer) {
                     rgidRep[cRows++] = iItem;
                 }
                 if (cRows >= 1020)
@@ -2166,12 +2166,12 @@ TryTier2:
                 iRet = i1 - i2;
                 break;
             case colEnemyFleetMass:
-                l1 = lpfl1->wtFleet;
-                l2 = lpfl2->wtFleet;
+                l1 = lpfl1->wtFleet();
+                l2 = lpfl2->wtFleet();
                 goto LRetDiff;
             case colEnemyFleetId:
-                l1 = lpfl1->ifl;
-                l2 = lpfl2->ifl;
+                l1 = lpfl1->ifl();
+                l2 = lpfl2->ifl();
                 goto LRetDiff;
             case colEnemyFleetShips:
                 l2 = 0;
@@ -2223,13 +2223,13 @@ TryTier2:
                 j = hullCatUtility;
                 goto LEFleetCount;
             case colEnemyFleetWarp:
-                if (lpfl1->fdirValid) {
-                    l1 = lpfl1->iwarpFlt;
+                if (lpfl1->fdirValid()) {
+                    l1 = lpfl1->iwarpFlt();
                 } else {
                     l1 = -1;
                 }
-                if (lpfl2->fdirValid) {
-                    l2 = lpfl2->iwarpFlt;
+                if (lpfl2->fdirValid()) {
+                    l2 = lpfl2->iwarpFlt();
                     goto LRetDiff;
                 }
                 l2 = -1;

@@ -1373,23 +1373,23 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                 } else {
                     dv.dp = 0;
                     if (GlobalPD.fSummary) {
-                        dv.pctDp = LpplFromId(sel.scan.idpl)->pctDp;
+                        dv.SetPctDp(LpplFromId(sel.scan.idpl)->pctDp);
                     } else {
-                        dv.pctDp = sel.pl.pctDp;
+                        dv.SetPctDp(sel.pl.pctDp);
                     }
                     csh = 1;
-                    if (dv.pctDp != 0) {
-                        dv.pctSh = 100;
+                    if (dv.pctDp() != 0) {
+                        dv.SetPctSh(100);
                     }
                 }
             }
             if (dv.dp != 0) {
                 SetTextColor(hdc, 127);
-                pct = dv.pctDp / 5;
+                pct = dv.pctDp() / 5;
                 if (pct <= 0) {
                     pct = 1;
                 }
-                csh = LOWORD((int32_t)(csh * dv.pctSh) / 100);
+                csh = LOWORD((int32_t)(csh * dv.pctSh()) / 100);
                 if (csh <= 0) {
                     csh = 1;
                 }

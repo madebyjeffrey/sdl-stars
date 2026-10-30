@@ -371,6 +371,52 @@ static void test_utf8_raw_battle_plan(void) {
 }
 
 
+
+// The file reader historically borrows the complete reusable scratch backing,
+// even when the current record declares zero bytes. Keep that admission and the
+// exact next-record consumption, including a full fleet with no orders.
+static void test_fleet_scratch_admission(void) {
+    const uint8_t partial[] = {0, 0, 0xff, 0xff, 1, 8, 0xff, 0xff, 0, 0x80, 0xff, 0x7f, 1, 0,
+                               0xff, 0x78, 0x56, 0x34, 0x12, 0xff, 0xff, 0xff, 0xff};
+    const uint8_t full[] = {0, 0, 0, 0, 7, 8, 0xff, 0xff, 0xe8, 3, 0xe8, 3, 0, 0,
+                            0, 0, 0, 0, 0xff, 0};
+    uint8_t eof[] = {0, 0};
+    FLEET fl;
+    bool fRead;
+
+    TEST_ASSERT(FStarsTestInit());
+    memset(rgbCur, 0xcc, sizeof(rgbCur));
+    memcpy(rgbCur, partial, sizeof(partial));
+    hdrCur.rt = rtFleetB; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof + 2);
+    vlpMemStream = NULL;
+    TEST_ASSERT(fRead);
+    TEST_CHECK(fl.id == 0 && fl.iPlayer == -1 && fl.rgcsh[0] == 255 && !fl.fDead && fl.fDone);
+    TEST_CHECK(fl.pt.x == -32768 && fl.pt.y == 32767 && fl.dirLong == 0x12345678 && fl.wtFleet() == -1);
+    TEST_CHECK(fl.lpplord == NULL && hdrCur.rt == rtEOF);
+    memcpy(rgbCur, full, sizeof(full));
+    hdrCur.rt = rtFleetA; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof + 2);
+    vlpMemStream = NULL;
+    TEST_ASSERT(fRead);
+    TEST_CHECK(fl.fDead && fl.fDone && fl.cord == 0 && fl.iplan == 255 && fl.lpplord != NULL);
+    TEST_CHECK(fl.lpplord->iordMac == 0 && fl.lpplord->iordMax == 1 && fl.lpplord->rgord()[0].grTask == 0);
+    FreePl(fl.lpplord);
+    // Wrong full-record tag fails after prefix/count/cargo publication, before
+    // order allocation or consuming a following record.
+    memcpy(rgbCur, full, sizeof(full));
+    hdrCur.rt = rtFleetB; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof);
+    vlpMemStream = NULL;
+    TEST_CHECK(!fRead && fl.det == detAll && fl.fDead && fl.lpplord == NULL && fl.iplan == 0);
+}
+
 // Fixed bytes are independent of the native metadata type. Failed import keeps
 // the installed roster; matching partial knowledge retains an existing full design.
 static void test_design_wire_admission(void) {
@@ -433,7 +479,8 @@ static void test_design_wire_admission(void) {
     TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
 }
 
-TEST_LIST = {{"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
+TEST_LIST = {{"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
+             {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
              {"UTF-8 records require complete in-record text", test_utf8_record_bounds},
              {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},
              {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},

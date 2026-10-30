@@ -1,10 +1,12 @@
 #include "common.h"
 
 void LogSplitFleet(int16_t id) {
+    std::byte rgb[cbWireFleetId];
     if (gd.fGeneratingTurn) {
-        LpflFromId(id)->fCompChg = TRUE;
+        LpflFromId(id)->SetFCompChg(TRUE);
     } else {
-        WriteMemRt(rtLogFleetSplit, 2, &id);
+        NATIVEBYTEWRITER(rgb).FWriteI16Le(id);
+        WriteMemRt(rtLogFleetSplit, cbWireFleetId, rgb);
     }
     return;
 }
@@ -13,6 +15,7 @@ void LogMergeFleet(int16_t id) {
     uint16_t idCur;
     int16_t  i;
     uint16_t rgid[512];
+    std::byte rgb[512 * cbWireFleetId];
     int16_t  j;
 
     if (!gd.fGeneratingTurn) {
@@ -28,7 +31,8 @@ void LogMergeFleet(int16_t id) {
                     }
                 }
             }
-            WriteMemRt(rtLogFleetMerge, j * 2, rgid);
+            FEncodeFleetIds(std::span(rgid, j), rgb);
+            WriteMemRt(rtLogFleetMerge, j * cbWireFleetId, rgb);
         }
     }
     return;
@@ -457,7 +461,7 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
 }
 
 void LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2) {
-    RTXFERF *prt;
+    RTXFERF rtxf{};
     int16_t  iOff;
     int16_t  i;
     char     rgbuf[41];
@@ -476,20 +480,22 @@ void LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2) {
         grFlag *= 2;
     }
     if (grbit != 0) {
-        prt = (RTXFERF *)&rgbuf;
-        prt->grobj1 = plxf1->grobj & 0xf;
-        prt->grobj2 = plxf2->grobj & 0xf;
-        prt->id1 = plxf1->id;
-        prt->id2 = plxf2->id;
-        prt->grbitItems = grbit;
-        cb = 7;
+        rtxf.grobj1 = plxf1->grobj & 0xf;
+        rtxf.grobj2 = plxf2->grobj & 0xf;
+        rtxf.id1 = plxf1->id;
+        rtxf.id2 = plxf2->id;
+        rtxf.grbitItems = grbit;
+        FEncodeRtXferFHeader(rtxf, std::as_writable_bytes(std::span(rgbuf)));
+        NATIVEBYTEWRITER output{std::as_writable_bytes(std::span(rgbuf)).subspan(cbWireXferF)};
+        cb = cbWireXferF;
         iOff = 0;
         for (i = 0; i < 16; i++) {
             if (plxf1->rgdItem[i] != 0) {
-                prt->rgcQuan[iOff++] = plxf1->rgdItem[i];
-                cb += 2;
+                output.FWriteI16Le(plxf1->rgdItem[i]);
+                iOff++;
             }
         }
+        cb = cbWireXferF + iOff * 2;
         WriteMemRt(rtLogFleetCargoXfer, cb, rgbuf);
     }
     return;
@@ -603,6 +609,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     int16_t iordLog, grTaskLog;
     uint16_t wOrderLog;
     RTCHGSHDEF rtchgshdef{};
+    int16_t idFleet, cShipXfer;
 
     lpxfCur = NULL;
     switch (rt) {
@@ -899,7 +906,8 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         break;
     case rtLogFleetSplit:
     case rtLogFleetMerge:
-        if (!FLookupObject(grobjFleet, ((RTFLEETIDS *)lpb)->rgid[0], &rgxf[0].fl)) {
+        FReadFleetId({std::as_bytes(std::span(lpb, cbWireFleetId))}, 0, idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, &rgxf[0].fl)) {
             return FALSE;
         }
         if (rt == rtLogFleetSplit) {
@@ -916,7 +924,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                     break;
                 if (lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->pt.x == rgxf[0].fl.pt.x && lpfl->pt.y == rgxf[0].fl.pt.y) {
                     rgifl[vcflMerge++] = lpfl->id;
-                    lpfl->fCompChg = TRUE;
+                    lpfl->SetFCompChg(TRUE);
                 }
             }
         } else {
@@ -925,9 +933,10 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                     lpfl = rglpfl[ifl];
                     if (!rglpfl[ifl])
                         break;
-                    if (lpfl->id == ((RTFLEETIDS *)lpb)->rgid[i]) {
+                    FReadFleetId({std::as_bytes(std::span(lpb + i * cbWireFleetId, cbWireFleetId))}, 0, idFleet);
+                    if (lpfl->id == idFleet) {
                         rgifl[vcflMerge++] = lpfl->id;
-                        lpfl->fCompChg = TRUE;
+                        lpfl->SetFCompChg(TRUE);
                         break;
                     }
                 }
@@ -937,22 +946,25 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             break;
         return FALSE;
     case rtLogFleetCargoXfer:
-        if (!FLookupObject(grobjFleet, ((RTXFERF *)lpb)->id1, &rgxf[0].fl)) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, &rgxf[0].fl)) {
             return FALSE;
         }
-        if (!FLookupObject(grobjFleet, ((RTXFERF *)lpb)->id2, &rgxf[1].fl)) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, &rgxf[1].fl)) {
             return FALSE;
         }
         if (rgxf[1].fl.iPlayer != rgxf[0].fl.iPlayer) {
             return FALSE;
         }
         for (iPass = 0; iPass < 2; iPass++) {
-            grbit = ((RTXFERF *)lpb)->grbitItems;
+            NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 5, 2))).FReadU16Le(grbit);
             i = 0;
             iLook = 0;
             while (i < 16) {
                 if (grbit & 1) {
-                    cXfer = ((RTXFERF *)lpb)->rgcQuan[iLook];
+                    NATIVEBYTEREADER(std::as_bytes(std::span(lpb + cbWireXferF + iLook * 2, 2))).FReadI16Le(cShipXfer);
+                    cXfer = cShipXfer;
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
                         if (rgxf[0].fl.rgcsh[i] + cXfer < 0) {
                             cXfer = (int16_t)-rgxf[0].fl.rgcsh[i];
@@ -980,7 +992,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             FLookupFleet(idWriteBack, &rgxf[iPass].fl);
             lpfl = LpflFromId(rgxf[iPass].fl.id);
             if (lpfl) {
-                lpfl->fCompChg = TRUE;
+                lpfl->SetFCompChg(TRUE);
             }
             for (i = 0; i < 16 && rgxf[iPass].fl.rgcsh[i] == 0; i++) {
             }

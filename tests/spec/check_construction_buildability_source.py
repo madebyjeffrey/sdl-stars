@@ -192,7 +192,7 @@ int main(int argc,char **argv){
     rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){
         memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
-        fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
+        fleetBodies[i].SetIfl(i);fleetBodies[i].iPlayer=0;fleetBodies[i].SetIplr(0);fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
         fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord()[0].pt=fleetBodies[i].pt;
     }
     cQueries=cGateLookups=mdCheckResult=fInCheck=0;memset(rgQueries,-1,sizeof(rgQueries));memset(rgGateRequests,-1,sizeof(rgGateRequests));

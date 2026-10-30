@@ -25,6 +25,75 @@ static int16_t FAddScoutPair(const char *pszTest, FLEET **plpflDst, FLEET **plpf
     return TRUE;
 }
 
+
+// Merge log IDs retain their ascending input order, duplicate entries and odd
+// trailing-byte treatment. Native view sizeof is never a record prefix length.
+static void test_fleet_id_log_bytes(void) {
+    FLEET *lpflDst, *lpflSrc;
+    int16_t ishdef, idDst, idSrc;
+    int16_t rgifl[5];
+    uint8_t rgb[16] = {};
+    HDR hdr;
+    bool fReplay;
+
+    TEST_ASSERT(FAddScoutPair("fleet_id_log_bytes", &lpflDst, &lpflSrc, &ishdef));
+    idPlayer = 0;
+    idDst = lpflDst->id; idSrc = lpflSrc->id;
+    rgifl[0] = idDst; rgifl[1] = idSrc; rgifl[2] = iflNone; rgifl[3] = idSrc; rgifl[4] = idDst;
+    vrgiflMerge = rgifl; vcflMerge = 5;
+    gd.fGeneratingTurn = FALSE;
+    LogMergeFleet(idDst);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogFleetMerge && hdr.cb == 6);
+    TEST_CHECK(rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8));
+    TEST_CHECK(rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
+    TEST_CHECK(rgb[4] == rgb[2] && rgb[5] == rgb[3]);
+    rgb[6] = 0xa5;
+    gd.fGeneratingTurn = TRUE;
+    fReplay = FRunLogRecord(rtLogFleetMerge, 7, rgb);
+    // FRunLogRecord temporarily installs its stack ID array in this global.
+    vrgiflMerge = NULL; vcflMerge = 0;
+    TEST_ASSERT(fReplay);
+    lpflDst = LpflFromId(idDst);
+    TEST_ASSERT(lpflDst != NULL);
+    TEST_CHECK(lpflDst->rgcsh[ishdef] == 2 && LpflFromId(idSrc) == NULL && lpflDst->fCompChg());
+    gd.fGeneratingTurn = FALSE;
+    LogSplitFleet(idDst);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogFleetSplit && hdr.cb == 2 && rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8));
+    gd.fGeneratingTurn = TRUE;
+    TEST_ASSERT(FRunLogRecord(rtLogFleetSplit, 2, rgb));
+}
+
+static void test_ship_transfer_log_bytes(void) {
+    FLEET *lpflDst, *lpflSrc;
+    int16_t ishdef;
+    LOGXFERF lxf1{}, lxf2{};
+    uint8_t rgb[48] = {}, missing[] = {0xff, 0x01}; // Positive unused slot; negative IDs request write-back.
+    HDR hdr;
+    int16_t idDst, idSrc;
+
+    TEST_ASSERT(FAddScoutPair("ship_transfer_log_bytes", &lpflDst, &lpflSrc, &ishdef));
+    idPlayer = 0;
+    idDst = lpflDst->id; idSrc = lpflSrc->id;
+    lpflSrc->rgcsh[ishdef] = 5;
+    lxf1.grobj = grobjFleet; lxf1.id = idDst;
+    lxf2.grobj = grobjFleet; lxf2.id = idSrc;
+    lxf1.rgdItem[ishdef] = 2;
+    gd.fGeneratingTurn = FALSE;
+    LogMakeValidXferf(&lxf1, &lxf2);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogFleetCargoXfer && hdr.cb == 9 && rgb[4] == 0x22);
+    TEST_CHECK(rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8) && rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
+    TEST_CHECK(rgb[5] == (uint8_t)(1u << ishdef) && rgb[6] == (uint8_t)((1u << ishdef) >> 8) && rgb[7] == 2 && rgb[8] == 0);
+    gd.fGeneratingTurn = TRUE;
+    TEST_ASSERT(LpflFromId(0x1ff) == NULL);
+    TEST_CHECK(!FRunLogRecord(rtLogFleetCargoXfer, 2, missing));
+    TEST_CHECK(!FRunLogRecord(rtLogFleetMerge, 2, missing));
+    TEST_ASSERT(FRunLogRecord(rtLogFleetCargoXfer, 9, rgb));
+    TEST_CHECK(LpflFromId(idDst)->rgcsh[ishdef] == 3 && LpflFromId(idSrc)->rgcsh[ishdef] == 3);
+}
+
 // Repair after gating: a fleet that gated (or fought, or hit mines) can't
 // heal this turn, but merging it by waypoint into a fleet that stayed put
 // dropped its fNoHeal, so HealShips repaired the merged ships.
@@ -34,8 +103,8 @@ static void test_Merge2Fleets_keeps_no_heal(void) {
     int16_t ishdef;
 
     TEST_ASSERT(FAddScoutPair("Merge2Fleets_no_heal", &lpflDst, &lpflSrc, &ishdef));
-    lpflSrc->rgdv[ishdef].pctSh = 100;
-    lpflSrc->rgdv[ishdef].pctDp = 100;
+    lpflSrc->rgdv[ishdef].SetPctSh(100);
+    lpflSrc->rgdv[ishdef].SetPctDp(100);
     lpflSrc->fNoHeal = TRUE;
     lpflDst->fHereAllTurn = TRUE;
 
@@ -43,7 +112,7 @@ static void test_Merge2Fleets_keeps_no_heal(void) {
     TEST_ASSERT(lpflDst->rgcsh[ishdef] == 2);
     TEST_CHECK(lpflDst->fNoHeal);
     HealShips();
-    TEST_CHECK_(lpflDst->rgdv[ishdef].pctDp == 100, "pctDp %d", lpflDst->rgdv[ishdef].pctDp);
+    TEST_CHECK_(lpflDst->rgdv[ishdef].pctDp() == 100, "pctDp %d", lpflDst->rgdv[ishdef].pctDp());
 }
 
 // 32k ships per fleet: fleet ship counts are int16_t. A waypoint merge added
@@ -183,7 +252,9 @@ static void test_IWarpFastestForWaypoint_low_fuel(void) {
     TEST_CHECK_(iWarp == iWarpIdeal + 1, "fastest warp %d, ideal warp %d", iWarp, iWarpIdeal);
 }
 
-TEST_LIST = {{"Merge2Fleets keeps no-heal", test_Merge2Fleets_keeps_no_heal},
+TEST_LIST = {{"fleet ID log bytes preserve order, duplicates and prefix length", test_fleet_id_log_bytes},
+             {"ship-transfer log bytes retain signed quantities and lookup order", test_ship_transfer_log_bytes},
+             {"Merge2Fleets keeps no-heal", test_Merge2Fleets_keeps_no_heal},
              {"Merge2Fleets caps ship counts", test_Merge2Fleets_caps_ship_count},
              {"FFleetMergeAll keeps a fleet that would overflow", test_FFleetMergeAll_keeps_overflow_fleet},
              {"IWarpFastestForWaypoint with plenty of fuel", test_IWarpFastestForWaypoint_plenty_of_fuel},

@@ -603,16 +603,16 @@ void DumpFleets() {
                 RgToStream(szForm, cch);
                 if (lpfl->det == detAll) {
                     strcpy(&szForm[1], PszGetDestName(lpfl, NULL));
-                } else if (gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid) {
-                    strcpy(&szForm[1], PszFromInt(lpfl->dirFltX, NULL));
+                } else if (gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
+                    strcpy(&szForm[1], PszFromInt(lpfl->dirFltX(), NULL));
                     strcat(szForm, ".");
-                    strcat(szForm, PszFromInt(lpfl->dirFltY, NULL));
+                    strcat(szForm, PszFromInt(lpfl->dirFltY(), NULL));
                 } else {
                     szForm[1] = 0;
                 }
                 RgToStream(szForm, strlen(szForm));
-                if (rglpbtlplan[lpfl->iplr] != 0) {
-                    strcpy(&szForm[1], rglpbtlplan[lpfl->iplr][lpfl->iplan].szName);
+                if (rglpbtlplan[lpfl->iplr()] != 0) {
+                    strcpy(&szForm[1], rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;
                 }
@@ -639,8 +639,8 @@ void DumpFleets() {
                     RgToStream(szForm, strlen(szForm));
                     if (lpfl->cord >= 2) {
                         i = lpfl->lpplord->rgord()[1].iWarp;
-                    } else if (lpfl->det < detAll && lpfl->fdirValid) {
-                        i = lpfl->iwarpFlt;
+                    } else if (lpfl->det < detAll && lpfl->fdirValid()) {
+                        i = lpfl->iwarpFlt();
                     } else {
                         i = 0;
                     }

@@ -448,23 +448,23 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                     break;
                 if (lpfl->iPlayer >= lppl->iPlayer && lpfl->lpplord->rgord()[0].pt.x == rgptPlan[lppl->id].x &&
                     lpfl->lpplord->rgord()[0].pt.y == rgptPlan[lppl->id].y && 32766 - cBuilt > lpfl->rgcsh[iItem]) {
-                    if (lpfl->rgcsh[iItem] != 0 && lpfl->rgdv[iItem].pctDp != 0) {
+                    if (lpfl->rgcsh[iItem] != 0 && lpfl->rgdv[iItem].pctDp() != 0) {
                         dpShdef = rglpshdef[lpfl->iPlayer][iItem].hul.dp;
                         cshOrig = lpfl->rgcsh[iItem];
-                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh * cshOrig) / 100);
+                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh() * cshOrig) / 100);
                         if (cshDamaged == 0) {
                             cshDamaged = 1;
                         }
-                        dpOrig = (int32_t)((int32_t)((uint32_t)dpShdef * lpfl->rgdv[iItem].pctDp) / 10 * cshDamaged) / 50;
-                        lpfl->rgdv[iItem].pctSh = LOWORD((int32_t)(cshDamaged * 100) / (int16_t)(cshOrig + cBuilt));
-                        if (lpfl->rgdv[iItem].pctSh == 0) {
-                            lpfl->rgdv[iItem].pctSh = 1;
+                        dpOrig = (int32_t)((int32_t)((uint32_t)dpShdef * lpfl->rgdv[iItem].pctDp()) / 10 * cshDamaged) / 50;
+                        lpfl->rgdv[iItem].SetPctSh(LOWORD((int32_t)(cshDamaged * 100) / (int16_t)(cshOrig + cBuilt)));
+                        if (lpfl->rgdv[iItem].pctSh() == 0) {
+                            lpfl->rgdv[iItem].SetPctSh(1);
                         }
-                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh * (int16_t)(cshOrig + cBuilt)) / 100);
+                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh() * (int16_t)(cshOrig + cBuilt)) / 100);
                         if (cshDamaged == 0) {
                             cshDamaged = 1;
                         }
-                        lpfl->rgdv[iItem].pctDp = LOWORD((int32_t)((int32_t)(dpOrig * 5) / cshDamaged) * 100 / (int32_t)dpShdef);
+                        lpfl->rgdv[iItem].SetPctDp(LOWORD((int32_t)((int32_t)(dpOrig * 5) / cshDamaged) * 100 / (int32_t)dpShdef));
                     } else {
                         lpfl->rgdv[iItem].dp = 0;
                     }
@@ -1053,8 +1053,8 @@ void HealShips() {
                 pct += pctShipHeal;
                 for (ishdef = 0; ishdef < 16; ishdef++) {
                     if (lpfl->rgdv[ishdef].dp != 0) {
-                        if (lpfl->rgdv[ishdef].pctDp > (uint16_t)pct) {
-                            lpfl->rgdv[ishdef].pctDp -= pct;
+                        if (lpfl->rgdv[ishdef].pctDp() > (uint16_t)pct) {
+                            lpfl->rgdv[ishdef].SetPctDp(lpfl->rgdv[ishdef].pctDp() - (pct));
                         } else {
                             lpfl->rgdv[ishdef].dp = 0;
                         }
@@ -1937,8 +1937,8 @@ void SweepForMines() {
             break;
         cMine = CMineSweepFromLpfl(lpfl);
         if (cMine > 0 && !lpfl->fDead) {
-            iplr = lpfl->iplr;
-            grbitPlr = 1 << lpfl->iplr;
+            iplr = lpfl->iplr();
+            grbitPlr = 1 << lpfl->iplr();
             pt = lpfl->pt;
             lpth = lpThings;
             lpthMac = lpThings + cThing;

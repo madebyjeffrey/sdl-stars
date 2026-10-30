@@ -1008,103 +1008,17 @@ LFinishBRecord:
 }
 
 int16_t FReadFleet(FLEET *lpfl) {
-    uint16_t  us;
     int16_t   cord;
-    int16_t   fByte;
     ORDER    *lpord;
-    int16_t   i;
-    int16_t   cish;
-    uint8_t  *pb;
-    uint16_t *pus;
+    int16_t   i = 0;
     char      szT[33];
 
-    cish = 0;
     memset(lpfl, 0, sizeof(FLEET));
-    memmove(lpfl, rgbCur, offsetof(RTFLEET, grbitCsh));
-    fByte = ((RTFLEET *)rgbCur)->fByteCsh;
-    us = ((RTFLEET *)rgbCur)->grbitCsh;
-    pb = ((RTFLEET *)rgbCur)->rgb;
-    if (fByte) {
-        i = 0;
-        for (; us != 0; us >>= 1) {
-            if (us & 1) {
-                lpfl->rgcsh[i] = *pb++;
-                if (lpfl->rgcsh[i] != 0) {
-                    cish++;
-                }
-            }
-            i++;
-        }
-    } else {
-        pus = (uint16_t *)pb;
-        i = 0;
-        for (; us != 0; us >>= 1) {
-            if (us & 1) {
-                lpfl->rgcsh[i] = *pus++;
-                if (lpfl->rgcsh[i] != 0) {
-                    cish++;
-                }
-            }
-            i++;
-        }
-        pb = (uint8_t *)pus;
-    }
-    if (cish == 0) {
-        lpfl->fDead = TRUE;
-    }
-    if (lpfl->det >= detMore) {
-        us = RawLoad16(pb);
-        pb += 2;
-        i = 0;
-        while (i < 5) {
-            switch (us & 3) {
-            default:
-                break;
-            case 1:
-                lpfl->rgwtMin[i] = (uint32_t)*pb;
-                pb++;
-                break;
-            case 2:
-                lpfl->rgwtMin[i] = (uint32_t)RawLoad16(pb);
-                pb += 2;
-                break;
-            case 3:
-                lpfl->rgwtMin[i] = RawLoad32(pb);
-                pb += 4;
-            }
-            i++;
-            us >>= 2;
-        }
-    }
+    if (!FDecodeRtFleet(std::as_bytes(std::span(rgbCur)), *lpfl, hdrCur.rt == rtFleetA, i)) goto Corrupt;
     if (lpfl->det < detAll) {
-        lpfl->dirLong = RawLoad32(pb);
-        pb += 4;
-        lpfl->wtFleet = RawLoad32(pb);
-        pb += 4;
         ReadRt();
         return TRUE;
     }
-    if (hdrCur.rt != rtFleetA) {
-    Corrupt:
-        AlertSz(PszFormatIds(idsGameFileAppearsCorruptUnableLoadFile, NULL), MB_ICONHAND);
-        return FALSE;
-    }
-    us = RawLoad16(pb);
-    pb += 2;
-    pus = (uint16_t *)pb;
-    i = 0;
-    for (; us != 0; us >>= 1) {
-        if (us & 1) {
-            lpfl->rgdv[i].dp = *pus++;
-            if (lpfl->rgdv[i].pctDp >= 500) {
-                lpfl->rgdv[i].pctDp = 499;
-            }
-        }
-        i++;
-    }
-    pb = (uint8_t *)pus;
-    lpfl->iplan = *pb++;
-    lpfl->cord = *pb++;
     lpfl->lpplord = LpplAlloc<PLORD>(18, lpfl->cord + 1, htOrd);
     memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18);
     cord = lpfl->cord;
@@ -1141,6 +1055,9 @@ int16_t FReadFleet(FLEET *lpfl) {
         lpfl->lpszName = NULL;
     }
     return TRUE;
+Corrupt:
+    AlertSz(PszFormatIds(idsGameFileAppearsCorruptUnableLoadFile, NULL), MB_ICONHAND);
+    return FALSE;
 }
 
 int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb) {

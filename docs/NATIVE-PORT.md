@@ -55,9 +55,9 @@ all of its storage bit patterns, including legacy sentinels and combined flags.
 `test_record_layout` retains all 259 frozen C size/prefix measurements.
 Codecs now separate migrated file bytes from runtime storage: six task/order
 types retain their widths while requiring explicitly checked two-byte runtime
-alignment. All remaining alignment comparisons stay exact. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
-offset is zero in both languages; the C++ minimum class size is never used as
-a record length. The full native and host regressions check serialized results.
+alignment. All remaining alignment comparisons stay exact. `RTFLEETIDS` is an aligned call-scoped byte-span view; its `rgid`
+offset still matches the frozen zero-prefix measurement. The wire prefix is
+explicitly zero, independently of the runtime view size. The full native and host regressions check serialized results.
 
 Memory and stream failures use `StarsError` and normal C++ stack unwinding.
 The 24 former jump-recovery sites now have operation-specific catches; the

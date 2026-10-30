@@ -4,6 +4,7 @@ B04 introduces checked, little-endian byte operations and migrates `RTHISTHDR`.
 B05 migrates production queue storage and its file/log byte boundaries.
 B06 migrates order arrays, task-word views and full/partial waypoint records.
 B07 migrates full/partial ship designs, hull slots and design-change headers.
+B08 migrates fleet snapshots, ID sequences and signed ship-transfer logs.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
@@ -27,8 +28,8 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve historical variable-tail dispositions below (eight active zero-array
-  declarations and four migrated families);
+  all twelve historical variable-tail dispositions below (six active zero-array
+  declarations and six migrated families);
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
@@ -48,7 +49,7 @@ expressions that would become stale when unrelated lines move.
 | Production queues and queue log edits | PROD scalar bits, PLPROD runtime storage, RTCHGPRODQ byte prefix; allocation/capacity and forecast lifetimes | B05 migrated |
 | Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 migrated |
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
-| Fleets and ID lists | FLEET/FLEETSOME/RTFLEET/FLEETID/RTFLEETIDS, optional cargo/damage fields, split/merge traversal | B08 |
+| Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | TOK/KILL/BTLDATA/BTLREC/BTLREC26, packed replay, token alignment, AI state/data and traversal | B09 |
 | Messages and logs | MSGHDR/MSGPLR/RTPLRMSG/MSGBIG/LOGXFER/RTLOGHDR, compression/framing, passwords and message filters | B10 |
 | Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
@@ -156,3 +157,21 @@ overlay consumers; neither its sizeof nor native flag layout defines file bytes.
 Design change replay preserves mode/index admission and partial effects, including
 failed replacements and unknown modes. Only formerly indeterminate output junk
 bits acquire a defined zero value; incoming junk bits decode unchanged.
+
+
+## B08 fleet storage and wire boundary
+
+The fleet header has fourteen wire bytes. Its count presence mask selects
+ascending byte/word counts; cargo and damage suffixes are decoded by numeric
+width/mask, with existing detail and clamp rules. FReadFleet still consumes its
+full reusable scratch backing, preserving short-declared records and the partial
+state published before tag errors. No byte view survives into subsequent record
+reads. Runtime IDs, damage/mass, power/movement and direction words have explicit
+value accessors; no inactive union determines serialized bits.
+
+RTFLEETIDS is now an aligned, call-scoped span of bytes. Its first member stays
+at offset zero, matching the frozen prefix measurement. The runtime view's size
+is unrelated to the explicitly zero-byte wire prefix. IDs are decoded into
+aligned signed scalars; no integer span aliases packet bytes. Split/merge keeps
+input order, duplicates and odd trailing bytes, and ship transfers retain their
+seven-byte prefix, signed deltas, lookup/read order and two-pass mutation order.

@@ -177,7 +177,7 @@ int32_t DpOfLpflIshdef(FLEET *lpfl, int16_t ishdef) {
     int32_t dp;
 
     dpShdef = rglpshdef[lpfl->iPlayer][ishdef].hul.dp;
-    dp = (int32_t)(lpfl->rgcsh[ishdef] * (int16_t)((int16_t)(lpfl->rgdv[ishdef].pctSh * dpShdef) / 10 * lpfl->rgdv[ishdef].pctDp)) / 5000;
+    dp = (int32_t)(lpfl->rgcsh[ishdef] * (int16_t)((int16_t)(lpfl->rgdv[ishdef].pctSh() * dpShdef) / 10 * lpfl->rgdv[ishdef].pctDp())) / 5000;
     return dp;
 }
 
@@ -823,7 +823,7 @@ uint16_t WFromLpfl(FLEET *lpfl) {
     int16_t  ishdef;
 
     ishdef = IshdefPrimaryFromLpfl(lpfl, &cshdef);
-    w = ishdef << 9 | lpfl->ifl;
+    w = ishdef << 9 | lpfl->ifl();
     if (cshdef > 1) {
         w |= 0x2000;
     }
@@ -993,9 +993,9 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
         if (!rglpfl[i])
             break;
         if (lpfl->iPlayer >= iPlr) {
-            if (lpfl->iPlayer > iPlr || lpfl->ifl != iflPrev + 1)
+            if (lpfl->iPlayer > iPlr || lpfl->ifl() != iflPrev + 1)
                 break;
-            iflPrev = lpfl->ifl;
+            iflPrev = lpfl->ifl();
         }
     }
     rglpfl = (FLEET **)LpReAlloc(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
@@ -1006,9 +1006,9 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
     cFleet++;
     rgplr[iPlr].cFleet++;
     memset(lpfl, 0, sizeof(FLEET));
-    lpfl->ifl = iflPrev + 1;
+    lpfl->SetIfl(iflPrev + 1);
     lpfl->iPlayer = iPlr;
-    lpfl->iplr = iPlr;
+    lpfl->SetIplr(iPlr);
     lpfl->det = detAll;
     lpfl->idPlanet = idPl;
     if (idPl != idPlanetDeepSpace) {
@@ -1018,7 +1018,7 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
     lpfl->fRepOrders = FALSE;
     lpfl->lpplord = LpplAlloc<PLORD>(18, 3, htOrd);
     lpfl->lpplord->iordMac = 1;
-    lpfl->fdirValid = 0;
+    lpfl->SetFdirValid(0);
     lpord = lpfl->lpplord->rgord();
     lpord->pt = lpfl->pt;
     lpord->id = lpfl->idPlanet;
@@ -1081,7 +1081,7 @@ int16_t FFleetMergeAll(FLEET *pfl) {
             /* Ship counts are int16_t. The original clamped a count that
                passed 32767 to 32766 and lost the rest; a fleet that doesn't
                fit is left out of the merge. */
-            if (lpfl && lpfl->ifl != pfl->ifl) {
+            if (lpfl && lpfl->ifl() != pfl->ifl()) {
                 for (j = 0; j < 16 && (int32_t)pfl->rgcsh[j] + lpfl->rgcsh[j] <= 32767; j++) {
                 }
                 if (j < 16) {
@@ -1094,15 +1094,15 @@ int16_t FFleetMergeAll(FLEET *pfl) {
                 while (j < 16) {
                     if (lpfl->rgcsh[j] != 0) {
                         if (lpfl->rgdv[j].dp != 0) {
-                            cshT = LOWORD((int32_t)(lpfl->rgcsh[j] * (int16_t)lpfl->rgdv[j].pctSh) / 100);
+                            cshT = LOWORD((int32_t)(lpfl->rgcsh[j] * (int16_t)lpfl->rgdv[j].pctSh()) / 100);
                             if (cshT == 0) {
                                 cshT = 1;
                             }
                             rgcshDamaged[j] += cshT;
-                            dpT = (uint32_t)(lpfl->rgdv[j].pctDp * cshT);
+                            dpT = (uint32_t)(lpfl->rgdv[j].pctDp() * cshT);
                             rgdp[j] += dpT;
                         }
-                        if (lpfl->ifl != pfl->ifl) {
+                        if (lpfl->ifl() != pfl->ifl()) {
                             pfl->rgcsh[j] += lpfl->rgcsh[j];
                             lpfl->rgcsh[j] = 0;
                         }
@@ -1110,7 +1110,7 @@ int16_t FFleetMergeAll(FLEET *pfl) {
                     j++;
                     lpshdef++;
                 }
-                if (lpfl->ifl == pfl->ifl) {
+                if (lpfl->ifl() == pfl->ifl()) {
                     lpflMerge = lpfl;
                 } else {
                     for (j = 0; j < 5; j++) {
@@ -1129,9 +1129,8 @@ int16_t FFleetMergeAll(FLEET *pfl) {
         if (rgcshDamaged[j] == 0 || lpflMerge->rgcsh[j] == 0) {
             lpflMerge->rgdv[j].dp = 0;
         } else {
-            lpflMerge->rgdv[j].pctSh =
-                LOWORD((int32_t)((int32_t)((uint32_t)(rgcshDamaged[j] * 100) + (int16_t)(lpflMerge->rgcsh[j] - 1)) / lpflMerge->rgcsh[j]));
-            lpflMerge->rgdv[j].pctDp = LOWORD((int32_t)(rgdp[j] / rgcshDamaged[j]));
+            lpflMerge->rgdv[j].SetPctSh(LOWORD((int32_t)((int32_t)((uint32_t)(rgcshDamaged[j] * 100) + (int16_t)(lpflMerge->rgcsh[j] - 1)) / lpflMerge->rgcsh[j])));
+            lpflMerge->rgdv[j].SetPctDp(LOWORD((int32_t)(rgdp[j] / rgcshDamaged[j])));
         }
         j++;
         lpshdef++;
@@ -2168,7 +2167,7 @@ void ValidateWaypoints() {
                     } else if (lpord->grobj == grobjFleet && !lpord->fNoAutoTrack) {
                         lpflTarget = LpflFromId(lpord->id);
                         if (!lpflTarget || lpflTarget->pt.x != lpord->pt.x || lpflTarget->pt.y != lpord->pt.y ||
-                            (lpflTarget->fCompChg && lpflTarget->iPlayer != lpfl->iPlayer)) {
+                            (lpflTarget->fCompChg() && lpflTarget->iPlayer != lpfl->iPlayer)) {
                             lpflTarget = NULL;
                             iplrHi = lpord->id & 0xfe00;
                             cFound = 0;
@@ -2191,7 +2190,7 @@ void ValidateWaypoints() {
                                         }
                                     }
                                     cFound++;
-                                    if (Random(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted || Random(2) != 0)) {
+                                    if (Random(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted() || Random(2) != 0)) {
                                         lpflTarget = lpfl2;
                                     }
                                 }
@@ -2202,10 +2201,10 @@ void ValidateWaypoints() {
                             if (lpflTarget) {
                                 lpord->id = lpflTarget->id;
                                 lpord->pt = lpflTarget->pt;
-                                lpflTarget->fTargeted = TRUE;
+                                lpflTarget->SetFTargeted(TRUE);
                             }
                         } else if (lpflTarget) {
-                            lpflTarget->fTargeted = TRUE;
+                            lpflTarget->SetFTargeted(TRUE);
                         }
                     }
                     iord++;

@@ -75,7 +75,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                 }
                 dpShdef = rglpshdef[lpfl->iPlayer][ishdef].hul.dp;
                 if (flSrc.rgdv[ishdef].dp != 0) {
-                    cshDamagedOld = LOWORD((int32_t)(cshT * (int16_t)flSrc.rgdv[ishdef].pctSh) / 100);
+                    cshDamagedOld = LOWORD((int32_t)(cshT * (int16_t)flSrc.rgdv[ishdef].pctSh()) / 100);
                     if (cshDamagedOld == 0) {
                         cshDamagedOld = 1;
                     }
@@ -86,7 +86,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                     for (i = 0; i < flSrc.rgcsh[ishdef]; i++) {
                         if (Random(100) < pctKill) {
                             cshT--;
-                            if (cshDamagedOld != 0 && (uint16_t)Random(500) < flSrc.rgdv[ishdef].pctDp) {
+                            if (cshDamagedOld != 0 && (uint16_t)Random(500) < flSrc.rgdv[ishdef].pctDp()) {
                                 cshDamagedOld--;
                             }
                         }
@@ -95,7 +95,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                 }
                 if (cshT != 0) {
                     if (flSrc.rgdv[ishdef].dp != 0) {
-                        dpPerShdefOld = LOWORD((int32_t)(dpShdef * (int16_t)flSrc.rgdv[ishdef].pctDp) / 500);
+                        dpPerShdefOld = LOWORD((int32_t)(dpShdef * (int16_t)flSrc.rgdv[ishdef].pctDp()) / 500);
                         if (dpPerShdefOld == 0) {
                             dpPerShdefOld = 1;
                         }
@@ -116,8 +116,8 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                         if (pct == 0) {
                             pct = 1;
                         }
-                        flSrc.rgdv[ishdef].pctDp = pct;
-                        flSrc.rgdv[ishdef].pctSh = 100;
+                        flSrc.rgdv[ishdef].SetPctDp(pct);
+                        flSrc.rgdv[ishdef].SetPctSh(100);
                     }
                 }
                 flSrc.rgcsh[ishdef] = cshT;

@@ -152,7 +152,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
                         SetTextColor(hdc, 0);
                     }
                 }
-                DecorateHullName(GlobalPD.lpfl->iplr, i, szTB);
+                DecorateHullName(GlobalPD.lpfl->iplr(), i, szTB);
                 lpsz = szTB;
                 TextOut(hdc, 4, yCur, lpsz, strlen(lpsz));
                 c = wsprintf(szWork, PCTD, GlobalPD.lpfl->rgcsh[i]);
@@ -291,7 +291,7 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
         for (i = 0; i < 16; i++) {
             if (GlobalPD.lpfl->rgcsh[i] > 0 && (GlobalPD.grbit == 0 || FIsPopupHullType(i))) {
                 dy += dyArial8;
-                DecorateHullName(GlobalPD.lpfl->iplr, i, szTB);
+                DecorateHullName(GlobalPD.lpfl->iplr(), i, szTB);
                 lpsz = szTB;
                 dx = LOWORD(GetTextExtent(hdc, lpsz, strlen(lpsz)));
                 dxL = dxL <= dx ? dx : dxL;

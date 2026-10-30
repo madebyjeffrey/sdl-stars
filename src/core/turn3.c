@@ -71,10 +71,10 @@ void SatisfyOrders(int16_t iPass) {
             if (!rglpfl[ifltcur])
                 break;
             if (iPass == 1) {
-                lpfl->fCompChg = FALSE;
-                lpfl->fTargeted = FALSE;
+                lpfl->SetFCompChg(FALSE);
+                lpfl->SetFTargeted(FALSE);
             }
-            if (!lpfl->fDead && !lpfl->fSkipped) {
+            if (!lpfl->fDead && !lpfl->fSkipped()) {
                 ord = lpfl->lpplord->rgord()[0];
                 if (ord.grTask == grTaskXfer) {
                     fFulfilled = TRUE;
@@ -656,7 +656,7 @@ void SatisfyOrders(int16_t iPass) {
                                         HIWORD(lResUltimate), i);
                         } else if (pl.id == idplNone) {
                             lpthWP = NULL;
-                            DropSalvage(&lpthWP, pl.rgwtMin, lpfl->iplr, &ord.pt);
+                            DropSalvage(&lpthWP, pl.rgwtMin, lpfl->iplr(), &ord.pt);
                             FSendPlrMsg2(lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull, WFromLpfl(lpfl));
                         } else {
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited + pl.fStarbase);

@@ -310,6 +310,151 @@ int main() {
             CHECK(FDecodeShDefFixed(std::span(rgb).first(7), shdef, ibName) && ibName == 6 && shdef.hul.chs == c);
         }
     }
-    std::puts("History/production/action/order/design wire vectors, signed domains, partial bytes and bounded primitives passed");
+
+    {
+        static_assert(cbWireFleetIds == 0 && offsetof(RTFLEETIDS, rgid) == 0);
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            DV dv{static_cast<std::uint16_t>(w)};
+            CHECK(dv.pctSh() == w % 128 && dv.pctDp() == w / 128);
+            dv.SetPctSh(static_cast<std::uint16_t>(65535 - w));
+            CHECK(dv.dp == (w / 128) * 128 + (65535 - w) % 128);
+            dv.SetPctDp(static_cast<std::uint16_t>(w));
+            CHECK(dv.dp == (w % 512) * 128 + (65535 - w) % 128);
+            const auto signedWord = static_cast<std::int16_t>(w < 32768 ? static_cast<std::int32_t>(w) : static_cast<std::int32_t>(w) - 65536);
+            FLEET fl{};
+            fl.id = signedWord;
+            CHECK(fl.ifl() == w % 512 && fl.iplr() == (w / 512) % 16 && fl.junk() == w / 8192);
+            fl.SetIfl(65535);
+            CHECK(static_cast<std::uint16_t>(fl.id) == (w / 512) * 512 + 511);
+            fl.SetIplr(static_cast<std::uint16_t>(w));
+            CHECK(static_cast<std::uint16_t>(fl.id) == (w / 8192) * 8192 + (w % 16) * 512 + 511);
+            fl.SetDMoveLeft(signedWord); fl.SetDMoveUsed(static_cast<std::int16_t>(-1));
+            CHECK(fl.dMoveLeft() == signedWord && fl.dMoveUsed() == -1 && static_cast<std::uint32_t>(fl.lPower) == 0xffff0000u + w);
+            fl.dirLong = static_cast<std::int32_t>(w * 2654435761u);
+            const std::uint32_t dw = static_cast<std::uint32_t>(fl.dirLong);
+            CHECK(fl.dirFltX() == dw % 256 && fl.dirFltY() == (dw / 256) % 256 && fl.iwarpFlt() == (dw / 65536) % 16);
+            CHECK(fl.fdirValid() == (dw / 1048576) % 2 && fl.fCompChg() == (dw / 2097152) % 2 && fl.fTargeted() == (dw / 4194304) % 2 && fl.fSkipped() == (dw / 8388608) % 2 && fl.fUnused() == dw / 16777216);
+            fl.SetFCompChg(0);
+            CHECK(static_cast<std::uint32_t>(fl.dirLong) == (dw & 0xffdfffff));
+            fl.SetDirFltX(65535);
+            CHECK(fl.dirFltX() == 255 && (static_cast<std::uint32_t>(fl.dirLong) & 0xffffff00) == (dw & 0xffdfff00));
+            std::array<std::byte, 14> header = {std::byte{0xfe}, std::byte{0xff}, std::byte{0xff}, std::byte{0x7f}, static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+                std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0x80}, std::byte{0xe8}, std::byte{3}, std::byte{1}, std::byte{0x80}};
+            std::uint16_t mask = 0;
+            std::array<std::byte, 16> output;
+            CHECK(FDecodeRtFleetHeader(header, fl, mask) && mask == 0x8001 && fl.id == -2 && fl.iPlayer == 32767 && fl.idPlanet == -1 && fl.pt.x == -32768 && fl.pt.y == 1000);
+            CHECK(fl.det == w % 256 && fl.fInclude == (w / 256) % 2 && fl.fRepOrders == (w / 512) % 2 && fl.fDead == (w / 1024) % 2 && fl.fDone == (w / 2048) % 2);
+            CHECK(fl.fBombed == (w / 4096) % 2 && fl.fHereAllTurn == (w / 8192) % 2 && fl.fNoHeal == (w / 16384) % 2 && fl.fMark == w / 32768);
+            output.fill(std::byte{0xa5});
+            CHECK(FEncodeRtFleetHeader(fl, fl.fDone, mask, std::span(output).subspan(1, 14)) && std::memcmp(output.data() + 1, header.data(), 14) == 0);
+            CHECK(output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+            const std::array<std::byte, 3> idBytes = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256), std::byte{0xa5}};
+            std::int16_t id = 123;
+            CHECK(FReadFleetId({idBytes}, 0, id) && id == signedWord);
+            CHECK(!FReadFleetId({idBytes}, 1, id) && id == signedWord);
+            CHECK(!FReadFleetId({idBytes}, std::numeric_limits<std::size_t>::max(), id) && id == signedWord);
+        }
+        for (auto wt : {std::numeric_limits<std::int32_t>::min(), -1, 0, 0x12345678, std::numeric_limits<std::int32_t>::max()}) {
+            FLEET fl{};
+            fl.rgdv[15].dp = 0xabcd; fl.SetWtFleet(wt);
+            CHECK(fl.wtFleet() == wt && fl.rgdv[0].dp == static_cast<std::uint16_t>(wt) && fl.rgdv[1].dp == static_cast<std::uint32_t>(wt) / 65536 && fl.rgdv[15].dp == 0xabcd);
+        }
+        const std::array<std::byte, 37> golden = {std::byte{0x34}, std::byte{0x12}, std::byte{0xff}, std::byte{0xff}, std::byte{7}, std::byte{0xfd}, std::byte{0xff}, std::byte{0xff}, std::byte{0xe8}, std::byte{3}, std::byte{0}, std::byte{0x80}, std::byte{1}, std::byte{0x80},
+            std::byte{0xff}, std::byte{1}, std::byte{0x39}, std::byte{3}, std::byte{0xff}, std::byte{0}, std::byte{1}, std::byte{0}, std::byte{0}, std::byte{1}, std::byte{0}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0x7f},
+            std::byte{1}, std::byte{0x80}, std::byte{0xff}, std::byte{0xff}, std::byte{0x34}, std::byte{0x12}, std::byte{0xff}, std::byte{0xfe}};
+        FLEET fl{};
+        fl.id = 0x1234; fl.iPlayer = -1; fl.det = 7; fl.fInclude = 1; fl.fDead = 1; fl.fBombed = 1; fl.fHereAllTurn = 1; fl.fNoHeal = 1; fl.fMark = 1;
+        fl.idPlanet = -1; fl.pt.x = 1000; fl.pt.y = -32768; fl.rgcsh[0] = 255; fl.rgcsh[15] = 1;
+        fl.rgwtMin[0] = 255; fl.rgwtMin[1] = 256; fl.rgwtMin[2] = 65536; fl.rgwtMin[3] = -1; fl.rgwtMin[4] = 0x7fffffff;
+        fl.rgdv[0].dp = 0xffff; fl.rgdv[15].dp = 0x1234; fl.iplan = 255; fl.cord = 254;
+        std::array<std::byte, 134> output;
+        std::size_t cb = 999;
+        output.fill(std::byte{0xa5});
+        CHECK(FEncodeRtFleet(fl, 0, output, cb) && cb == golden.size() && std::memcmp(output.data(), golden.data(), cb) == 0 && output[cb] == std::byte{0xa5} && !fl.fDone);
+        for (std::size_t cut = 0; cut < golden.size(); cut++) {
+            output.fill(std::byte{0xa5}); cb = 999;
+            CHECK(!FEncodeRtFleet(fl, 0, std::span(output).first(cut), cb) && cb == 999);
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+        FLEET decoded{};
+        std::int16_t iDamage = 999;
+        CHECK(FDecodeRtFleet(golden, decoded, true, iDamage) && iDamage == 16 && decoded.rgcsh[0] == 255 && decoded.rgcsh[15] == 1);
+        CHECK(decoded.rgwtMin[2] == 65536 && decoded.rgwtMin[3] == 0 && decoded.rgwtMin[4] == 0x7fffffff && decoded.iplan == 255 && decoded.cord == 254);
+        CHECK(decoded.rgdv[0].pctDp() == 499 && decoded.rgdv[0].pctSh() == 127 && decoded.rgdv[15].dp == 0x1234);
+        decoded = {}; iDamage = 999;
+        CHECK(!FDecodeRtFleet(golden, decoded, false, iDamage) && decoded.rgcsh[0] == 255 && decoded.rgwtMin[4] == 0x7fffffff && decoded.rgdv[0].dp == 0 && decoded.cord == 0 && iDamage == 999);
+        for (std::uint32_t mask = 0; mask < 65536; mask++) for (unsigned phase = 0; phase < 2; phase++) {
+            FLEET source{};
+            source.det = 1; source.dirLong = 0x12345678;
+            unsigned count = 0;
+            for (unsigned i = 0; i < 16; i++) {
+                source.rgcsh[i] = mask & (1u << i) ? static_cast<std::int16_t>((phase ? 256 : 1) + i) : -1;
+                if (mask & (1u << i)) count++;
+            }
+            CHECK(FEncodeRtFleet(source, -1, output, cb) && cb == 22 + count * (phase ? 2 : 1));
+            CHECK(std::to_integer<unsigned>(output[12]) == mask % 256 && std::to_integer<unsigned>(output[13]) == mask / 256);
+            std::size_t ib = 14;
+            for (unsigned i = 0; i < 16; i++) if (mask & (1u << i)) {
+                CHECK(std::to_integer<unsigned>(output[ib++]) == static_cast<unsigned>(source.rgcsh[i]) % 256);
+                if (phase) CHECK(std::to_integer<unsigned>(output[ib++]) == 1);
+            }
+            const std::array<std::byte, 8> suffix = {std::byte{0x78}, std::byte{0x56}, std::byte{0x34}, std::byte{0x12}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff}};
+            CHECK(std::memcmp(output.data() + ib, suffix.data(), 8) == 0);
+            decoded = {}; iDamage = 999;
+            CHECK(FDecodeRtFleet(std::span(output).first(cb), decoded, false, iDamage) && decoded.wtFleet() == -1 && decoded.dirLong == 0x12345678 && iDamage == 999);
+            CHECK(decoded.fDone == (phase == 0 || mask == 0) && decoded.fDead == (mask == 0));
+            for (unsigned i = 0; i < 16; i++) CHECK(decoded.rgcsh[i] == (mask & (1u << i) ? source.rgcsh[i] : 0));
+        }
+        // Every cargo width mask, including signed dwords and partial-record
+        // population/fuel that the writer omits but the reader still accepts.
+        for (unsigned detail : {4u, 7u, 8u, 255u}) for (unsigned widths = 0; widths < 1024; widths++) {
+            std::array<std::byte, 134> input{};
+            input[4] = static_cast<std::byte>(detail);
+            std::size_t ib = 14;
+            auto put = [&](std::uint32_t v, unsigned n) { for (unsigned j = 0; j < n; j++) input[ib++] = static_cast<std::byte>((v >> (8 * j)) & 255); };
+            put(widths | 0xfc00, 2);
+            for (unsigned i = 0; i < 5; i++) {
+                unsigned width = (widths >> (2 * i)) & 3;
+                if (width) put(width == 1 ? 255 : width == 2 ? 65535 : 0x80000000u + i, width == 3 ? 4 : width);
+            }
+            if (detail < 7) { put(0x12345678, 4); put(0xffffffff, 4); }
+            else { put(0, 2); put(255, 1); put(254, 1); }
+            decoded = {}; iDamage = 999;
+            CHECK(FDecodeRtFleet(std::span(input).first(ib), decoded, true, iDamage));
+            for (unsigned i = 0; i < 5; i++) {
+                unsigned width = (widths >> (2 * i)) & 3;
+                std::int32_t expected = width == 0 ? 0 : width == 1 ? 255 : width == 2 ? 65535 : std::numeric_limits<std::int32_t>::min() + static_cast<std::int32_t>(i);
+                CHECK(decoded.rgwtMin[i] == expected);
+            }
+            if (detail < 7) CHECK(decoded.wtFleet() == -1 && decoded.dirLong == 0x12345678 && iDamage == 999);
+            else CHECK(decoded.iplan == 255 && decoded.cord == 254 && iDamage == 0);
+        }
+        {
+            const std::array<std::uint16_t, 5> ids = {0xffff, 0, 0x8000, 0x7fff, 0};
+            const std::array<std::byte, 10> expected = {std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0}, std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f}, std::byte{0}, std::byte{0}};
+            CHECK(FEncodeFleetIds(ids, output) && std::memcmp(output.data(), expected.data(), 10) == 0);
+            for (std::size_t cut = 0; cut < 14; cut++) {
+                FLEET unchanged = fl;
+                std::uint16_t mask = 123;
+                CHECK(!FDecodeRtFleetHeader(std::span(golden).first(cut), fl, mask) && mask == 123 && std::memcmp(&fl, &unchanged, sizeof(fl)) == 0);
+            }
+            for (std::uint32_t w = 0; w < 65536; w++) {
+                RTXFERF rtxf{};
+                rtxf.id1 = static_cast<std::uint16_t>(w); rtxf.id2 = static_cast<std::uint16_t>(65535 - w);
+                rtxf.grobj1 = w % 16; rtxf.grobj2 = (w / 16) % 16; rtxf.grbitItems = static_cast<std::uint16_t>(w);
+                output.fill(std::byte{0xa5});
+                CHECK(FEncodeRtXferFHeader(rtxf, std::span(output).subspan(1)));
+                CHECK(std::to_integer<unsigned>(output[1]) == w % 256 && std::to_integer<unsigned>(output[2]) == w / 256 && std::to_integer<unsigned>(output[3]) == (65535 - w) % 256 && std::to_integer<unsigned>(output[4]) == (65535 - w) / 256);
+                CHECK(std::to_integer<unsigned>(output[5]) == w % 256 && output[6] == output[1] && output[7] == output[2] && output[8] == std::byte{0xa5});
+            }
+        }
+        // Negative word counts remain nonzero stored i16 values; they are not
+        // rejected or silently widened to a positive native count.
+        std::array<std::byte, 24> negative{};
+        negative[4] = std::byte{1}; negative[12] = std::byte{1}; negative[14] = std::byte{0xff}; negative[15] = std::byte{0xff};
+        decoded = {}; iDamage = 999;
+        CHECK(FDecodeRtFleet(negative, decoded, false, iDamage) && decoded.rgcsh[0] == -1 && !decoded.fDead);
+    }
+    std::puts("History/production/action/order/design/fleet wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

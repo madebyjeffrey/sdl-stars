@@ -15,8 +15,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B04: record codecs and complete storage inventory | Complete | [Source-located wire/storage inventory](CPP-WIRE-INVENTORY.md), checked byte primitives and the history-header codec pass the full local matrix and all 16 Linux/Windows checks for d6bd60f. |
 | B05: production payloads | Complete | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix and all 16 Linux/Windows checks for c0e0075. |
 | B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
-| B07: hull/design payloads | Active | Explicit full/partial design, HS and design-log codecs remove the variable wire overlay. Full local qualification passes, including reader/export/replay contracts and the expanded sanitizer suite. Linux/Windows gate pending. |
-| B08: fleet/identifier payloads | Pending | Preserve split/merge order, iteration and zero-prefix wire lengths. |
+| B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
+| B08: fleet/identifier payloads | Active | Explicit fleet/ship-transfer/ID codecs and scalar runtime aliases pass focused wire/layout/reader/replay tests. Full local matrix passes; Linux/Windows gate pending. |
 | B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
 | B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
@@ -726,3 +726,62 @@ All 16 Linux/Windows checks pass for `a7614a6`: desktop/host regressions,
 Windows SDL/SDK and unit workflows, source witnesses, Linux ASan/UBSan/LSan
 and tutorial coverage. B06 is complete. B07 `79b3303` has passed its complete
 local matrix and is entering platform qualification. B08–B14 remain required.
+
+
+## B08 fleet payloads in qualification
+
+Fleet snapshots use explicit fourteen-byte headers, positive count masks and
+byte/word variants, cargo width masks, partial direction/mass and full damage/
+plan/order suffixes. Readers retain signed word counts, scratch-backed admission,
+nonzero/dead logic, damage clamping and their incremental publication before a
+wrong full-record tag. The damage-mask scan index still controls the original
+turn-zero coordinate repair. Partial mass arithmetic and record/callback order
+stay in the caller.
+
+DV, fleet IDs, mass/damage, movement/power and direction/flag aliases now have one
+actual numeric representation with width/signedness-preserving accessors. The
+original scalar assignments were reviewed; compound setters repeat only stable
+pointer/index reads, and function receivers are evaluated once. Fleet ID lists
+are call-scoped byte views with explicit zero wire prefix, not typed integer
+arrays at arbitrary byte addresses. RTFLEET has no zero-length tail. All frozen
+size/prefix contracts, including RTFLEETIDS.rgid offset zero, still pass.
+
+Split/merge and ship-transfer logs use explicit little-endian values. They retain
+ID order, duplicates, odd trailing-byte treatment, the one-ID gather case, lookup
+no-read paths, signed deltas and two-pass transfer order. Actual reader tests
+cover zero declared length, exact next-record consumption and pre-error state;
+actual split/merge and transfer writer/replay tests pass. Independent vectors
+cover every header, ID and DV word, all presence masks in both count formats,
+cargo width masks, high detail values, signed counts and damage clamp boundaries.
+The actual ship unit program joins sanitizer qualification. Full local and
+platform gates remain required.
+
+
+## B07 platform completion gate
+
+All 16 Linux/Windows checks pass for `c2f9791`, including Windows SDL/SDK, both
+regressions, all source witnesses and the expanded Linux ASan/UBSan/LSan job
+with actual save-reader/import/export cases. B07 is complete. B08 is in full
+local qualification; B08–B14 remain required.
+
+
+The first expanded B08 sanitizer run passed 33/34 programs. The new missing-ID
+fixture used 0xffff, which selects FLookupFleet's existing negative-ID write-back
+operation and accesses an uninitialized replay frame. The prior FRunLogRecord
+and unchanged FLookupFleet use this same path; it is outside the fixture's
+intended read-only lookup domain. The fixture now asserts that positive slot
+511 is absent before exercising the no-read rejection. Production lookup and
+admission code are unchanged. Final functional/sanitizer qualification is being
+repeated; the failed run is not reported as a passing gate.
+
+
+B08 final local qualification: 114/114 complete desktop tests including all
+27 native leak checks, 25/25 host tests, 34/34 ASan/UBSan cases and all 27
+source witnesses. The corrected positive-ID fixture passes both functional and
+sanitizer reruns. All 93 public headers compile in both include orders, all
+259 frozen size/prefix contracts and the six migrated runtime alignment checks
+pass, and Debug/Release/host/sanitizer builds introduce no warnings. Desktop
+and host regressions each match all 519 files through turn 150, with the same
+25 accepted unused-storage warnings and no differences/errors/skipped inputs.
+Independent reference inputs, catalogs and baselines remain unchanged. B08's
+platform gate remains required; B09–B14 are pending.

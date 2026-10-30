@@ -2,6 +2,8 @@
 #define STARS_DECOMPILED_STRUCTS_H
 
 #include <stdint.h>
+#include <cstddef>
+#include <span>
 #include "taskviews.h"
 
 #include "enums.h"
@@ -250,13 +252,17 @@ struct _cyberinfotemp {
 }; /* size=0x2 */
 
 struct _dv {
-    union {
-        uint16_t dp; /* +0x0000 (2) */
-        struct {
-            uint16_t pctSh : 7, /* +0x0000 (2) @bit0 */
-                pctDp : 9;      /* @bit7 */
-        };
-    };
+    uint16_t dp;
+    constexpr uint16_t pctSh() const noexcept { return dp & 0x7f; }
+    constexpr uint16_t pctDp() const noexcept { return dp >> 7; }
+    constexpr uint16_t SetPctSh(uint16_t pctShNew) noexcept {
+        dp = static_cast<uint16_t>((dp & 0xff80) | (pctShNew & 0x7f));
+        return pctSh();
+    }
+    constexpr uint16_t SetPctDp(uint16_t pctDpNew) noexcept {
+        dp = static_cast<uint16_t>((dp & 0x7f) | ((pctDpNew & 0x1ff) << 7));
+        return pctDp();
+    }
 }; /* size=0x2 */
 
 struct _engine {
@@ -695,14 +701,22 @@ struct _planetsome {
 }; /* size=0x17 */
 
 struct _fleet {
-    union {
-        int16_t id; /* +0x0000 (2) */
-        struct {
-            uint16_t ifl : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,     /* @bit9 */
-                junk : 3;     /* @bit13 */
-        };
-    };
+    int16_t id;
+    constexpr uint16_t ifl() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 0) & 0x1ff); }
+    constexpr uint16_t SetIfl(uint16_t iflNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xfe00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(iflNew)) & 0x1ffu) << 0));
+        return ifl();
+    }
+    constexpr uint16_t iplr() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 9) & 0xf); }
+    constexpr uint16_t SetIplr(uint16_t iplrNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xe1ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iplrNew)) & 0xfu) << 9));
+        return iplr();
+    }
+    constexpr uint16_t junk() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 13) & 0x7); }
+    constexpr uint16_t SetJunk(uint16_t junkNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0x1fffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(junkNew)) & 0x7u) << 13));
+        return junk();
+    }
     int16_t  iPlayer;     /* +0x0002 (2) */
     uint16_t det : 8,     /* +0x0004 (2) @bit0 */
         fInclude : 1,     /* @bit8 */
@@ -716,37 +730,73 @@ struct _fleet {
     int16_t idPlanet;     /* +0x0006 (2) */
     POINT16 pt;           /* +0x0008 (4) */
     int16_t rgcsh[16];    /* +0x000C (32) */
-    union {
-        DV      rgdv[16]; /* +0x002C (32) */
-        int32_t wtFleet;  /* +0x002C (4) */
-    };
+    DV rgdv[16];
+    int32_t wtFleet() const noexcept {
+        return static_cast<int32_t>(static_cast<uint32_t>(rgdv[0].dp) | (static_cast<uint32_t>(rgdv[1].dp) << 16));
+    }
+    void SetWtFleet(int32_t wtFleetNew) noexcept {
+        rgdv[0].dp = static_cast<uint16_t>(wtFleetNew);
+        rgdv[1].dp = static_cast<uint16_t>(static_cast<uint32_t>(wtFleetNew) >> 16);
+    }
     int32_t rgwtMin[5]; /* +0x004C (20) */
     uint8_t iplan;      /* +0x0060 (1) */
     uint8_t bUnused;    /* +0x0061 (1) */
     int16_t cord;       /* +0x0062 (2) */
     PLORD  *lpplord;    /* +0x0064 (4) */
     FLEET  *lpflNext;   /* +0x0068 (4) */
-    union {
-        int32_t lPower; /* +0x006C (4) */
-        struct {
-            int16_t dMoveLeft; /* +0x006C (2) */
-            int16_t dMoveUsed; /* +0x006E (2) */
-        };
-    };
+    int32_t lPower;
+    constexpr int16_t dMoveLeft() const noexcept { return static_cast<int16_t>((static_cast<uint32_t>(lPower) >> 0) & 0xffff); }
+    constexpr int16_t SetDMoveLeft(int16_t dMoveLeftNew) noexcept {
+        lPower = static_cast<int32_t>((static_cast<uint32_t>(lPower) & 0xffff0000u) | ((static_cast<uint32_t>(static_cast<uint16_t>(dMoveLeftNew)) & 0xffffu) << 0));
+        return dMoveLeft();
+    }
+    constexpr int16_t dMoveUsed() const noexcept { return static_cast<int16_t>((static_cast<uint32_t>(lPower) >> 16) & 0xffff); }
+    constexpr int16_t SetDMoveUsed(int16_t dMoveUsedNew) noexcept {
+        lPower = static_cast<int32_t>((static_cast<uint32_t>(lPower) & 0xffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(dMoveUsedNew)) & 0xffffu) << 16));
+        return dMoveUsed();
+    }
     int32_t lFuelUsed; /* +0x0070 (4) */
-    union {
-        int32_t dirLong; /* +0x0074 (4) */
-        struct {
-            uint16_t dirFltX : 8,  /* +0x0074 (2) @bit0 */
-                dirFltY : 8;       /* @bit8 */
-            uint16_t iwarpFlt : 4, /* +0x0076 (2) @bit0 */
-                fdirValid : 1,     /* @bit4 */
-                fCompChg : 1,      /* @bit5 */
-                fTargeted : 1,     /* @bit6 */
-                fSkipped : 1,      /* @bit7 */
-                fUnused : 8;       /* @bit8 */
-        };
-    };
+    int32_t dirLong;
+    constexpr uint16_t dirFltX() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 0) & 0xff); }
+    constexpr uint16_t SetDirFltX(uint16_t dirFltXNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffffff00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(dirFltXNew)) & 0xffu) << 0));
+        return dirFltX();
+    }
+    constexpr uint16_t dirFltY() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 8) & 0xff); }
+    constexpr uint16_t SetDirFltY(uint16_t dirFltYNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffff00ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(dirFltYNew)) & 0xffu) << 8));
+        return dirFltY();
+    }
+    constexpr uint16_t iwarpFlt() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 16) & 0xf); }
+    constexpr uint16_t SetIwarpFlt(uint16_t iwarpFltNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xfff0ffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iwarpFltNew)) & 0xfu) << 16));
+        return iwarpFlt();
+    }
+    constexpr uint16_t fdirValid() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 20) & 0x1); }
+    constexpr uint16_t SetFdirValid(uint16_t fdirValidNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffefffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fdirValidNew)) & 0x1u) << 20));
+        return fdirValid();
+    }
+    constexpr uint16_t fCompChg() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 21) & 0x1); }
+    constexpr uint16_t SetFCompChg(uint16_t fCompChgNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffdfffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fCompChgNew)) & 0x1u) << 21));
+        return fCompChg();
+    }
+    constexpr uint16_t fTargeted() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 22) & 0x1); }
+    constexpr uint16_t SetFTargeted(uint16_t fTargetedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffbfffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fTargetedNew)) & 0x1u) << 22));
+        return fTargeted();
+    }
+    constexpr uint16_t fSkipped() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 23) & 0x1); }
+    constexpr uint16_t SetFSkipped(uint16_t fSkippedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xff7fffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fSkippedNew)) & 0x1u) << 23));
+        return fSkipped();
+    }
+    constexpr uint16_t fUnused() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 24) & 0xff); }
+    constexpr uint16_t SetFUnused(uint16_t fUnusedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fUnusedNew)) & 0xffu) << 24));
+        return fUnused();
+    }
     char *lpszName; /* +0x0078 (4) */
 }; /* size=0x7c */
 
@@ -1004,14 +1054,22 @@ struct _rtchgshdef {
 // rtFleetA/rtFleetB: the first 12 bytes of FLEET, then the ship counts named
 // by grbitCsh (bytes or words, per fByteCsh) and further packed fields.
 struct _rtfleet {
-    union {
-        int16_t id; /* +0x0000 (2) */
-        struct {
-            uint16_t ifl : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,     /* @bit9 */
-                junk : 3;     /* @bit13 */
-        };
-    };
+    int16_t id;
+    constexpr uint16_t ifl() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 0) & 0x1ff); }
+    constexpr uint16_t SetIfl(uint16_t iflNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xfe00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(iflNew)) & 0x1ffu) << 0));
+        return ifl();
+    }
+    constexpr uint16_t iplr() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 9) & 0xf); }
+    constexpr uint16_t SetIplr(uint16_t iplrNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xe1ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iplrNew)) & 0xfu) << 9));
+        return iplr();
+    }
+    constexpr uint16_t junk() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 13) & 0x7); }
+    constexpr uint16_t SetJunk(uint16_t junkNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0x1fffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(junkNew)) & 0x7u) << 13));
+        return junk();
+    }
     int16_t  iPlayer;     /* +0x0002 (2) */
     uint16_t det : 8,     /* +0x0004 (2) @bit0 */
         fInclude : 1,     /* @bit8 */
@@ -1025,22 +1083,15 @@ struct _rtfleet {
     int16_t  idPlanet;    /* +0x0006 (2) */
     POINT16  pt;          /* +0x0008 (4) */
     uint16_t grbitCsh;    /* +0x000C (2) */
-    uint8_t  rgb[0];      /* +0x000E (0) */
 }; /* size=0xe */
 
 // rtLogFleetSplit holds the fleet split from; rtLogFleetMerge holds the fleet
 // merged into, then the fleets merged into it.
-// A zero-prefix record view: only offsetof(rgid), never sizeof, reaches disk.
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wextern-c-compat"
-#endif
-struct _rtfleetids {
-    int16_t rgid[0]; /* +0x0000 (0) */
-}; /* size=0x0 in C; C++ class size is not a record length. */
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+// The borrowed bytes have a zero-byte wire prefix. This runtime view's size
+// is never a record length, and no int16_t array is invented over wire storage.
+struct alignas(alignof(std::span<const std::byte>)) _rtfleetids {
+    std::span<const std::byte> rgid;
+};
 
 // MSGPLR as written to disk: the Win16 lpmsgplrNext far pointer is written as
 // zero and ignored on read.

@@ -1380,7 +1380,7 @@ int32_t CShipsScanVis(FLEET *lpfl) {
              lpfl->lpplord->rgord()[0].grTask == grTaskMine || lpfl->lpplord->rgord()[0].grTask == grTaskPatrol)) {
             return 0;
         }
-        if (lpfl->iPlayer != idPlayer && lpfl->iwarpFlt == 0) {
+        if (lpfl->iPlayer != idPlayer && lpfl->iwarpFlt() == 0) {
             return 0;
         }
     }
@@ -1643,13 +1643,13 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             goto LNoObjPath;
         lpfl = rglpfl[sel.scan.ifl];
         ptCur = lpfl->pt;
-        if (!lpfl->fdirValid || lpfl->iwarpFlt <= 0)
+        if (!lpfl->fdirValid() || lpfl->iwarpFlt() <= 0)
             goto LNoObjPath;
-        dx = lpfl->dirFltX - 127;
-        dy = lpfl->dirFltY - 127;
+        dx = lpfl->dirFltX() - 127;
+        dy = lpfl->dirFltY() - 127;
         if (dx == 0 && dy == 0)
             goto LNoObjPath;
-        lWarp2 = (uint32_t)(lpfl->iwarpFlt * lpfl->iwarpFlt * 5);
+        lWarp2 = (uint32_t)(lpfl->iwarpFlt() * lpfl->iwarpFlt() * 5);
     LCommonLineCode:
         GetClientRect(hwndScanner, &rc);
         ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
@@ -2862,10 +2862,10 @@ void GetScanFleetOrientation(FLEET *lpfl, POINT16 *ppt, POINT16 *pptD) {
             dy = lpfl->lpplord->rgord()[1].pt.y - lpfl->pt.y;
         }
     } else {
-        if (!lpfl->fdirValid || lpfl->iwarpFlt == 0)
+        if (!lpfl->fdirValid() || lpfl->iwarpFlt() == 0)
             goto NoInfo;
-        dx = lpfl->dirFltX - 127;
-        dy = lpfl->dirFltY - 127;
+        dx = lpfl->dirFltX() - 127;
+        dy = lpfl->dirFltY() - 127;
     }
     GetDxDyOrientation(dx, dy, ppt, pptD);
     return;

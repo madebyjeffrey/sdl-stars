@@ -1520,13 +1520,13 @@ void MoveFleets() {
                                 }
                             } else {
                                 if (lpfl->lpflNext->fDone) {
-                                    dTravel = lpfl->dMoveLeft;
+                                    dTravel = lpfl->dMoveLeft();
                                 } else {
-                                    dTravel = lpfl->dMoveLeft >= (int16_t)(lpfl->dMoveLeft + lpfl->dMoveUsed + 4) / 5
-                                                  ? (int16_t)((int16_t)(lpfl->dMoveLeft + lpfl->dMoveUsed + 4) / 5)
-                                                  : lpfl->dMoveLeft;
+                                    dTravel = lpfl->dMoveLeft() >= (int16_t)(lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4) / 5
+                                                  ? (int16_t)((int16_t)(lpfl->dMoveLeft() + lpfl->dMoveUsed() + 4) / 5)
+                                                  : lpfl->dMoveLeft();
                                 }
-                                dRange -= lpfl->dMoveUsed;
+                                dRange -= lpfl->dMoveUsed();
                                 if (dRange < 0) {
                                     dRange = 0;
                                 }
@@ -1541,12 +1541,12 @@ void MoveFleets() {
                             } else {
                                 if (cPass > 0) {
                                     lpfl->rgwtMin[4] += lpfl->lFuelUsed;
-                                    dTravel += lpfl->dMoveUsed;
+                                    dTravel += lpfl->dMoveUsed();
                                 }
                                 wtFuelUsed = EstFuelUse(lpfl, 0, -1, dTravel, FALSE);
                                 if (cPass > 0) {
                                     lpfl->lFuelUsed = wtFuelUsed;
-                                    dTravel -= lpfl->dMoveUsed;
+                                    dTravel -= lpfl->dMoveUsed();
                                 }
                                 lpfl->rgwtMin[4] = 0 <= lpfl->rgwtMin[4] - wtFuelUsed ? lpfl->rgwtMin[4] - wtFuelUsed : 0;
                             }
@@ -1570,18 +1570,18 @@ void MoveFleets() {
                             dx = ptEnd.x - ptBeg.x;
                             dy = ptEnd.y - ptBeg.y;
                             if (dx != 0 || dy != 0) {
-                                lpfl->fdirValid = 1;
+                                lpfl->SetFdirValid(1);
                                 for (; abs(dx) > 127 || abs(dy) > 127; dy /= 2) {
                                     dx /= 2;
                                 }
-                                lpfl->dirFltX = dx + 127;
-                                lpfl->dirFltY = dy + 127;
-                                lpfl->iwarpFlt = lpfl->lpplord->rgord()[1].iWarp;
+                                lpfl->SetDirFltX(dx + 127);
+                                lpfl->SetDirFltY(dy + 127);
+                                lpfl->SetIwarpFlt(lpfl->lpplord->rgord()[1].iWarp);
                             }
                             dActTravel = (int32_t)((double)d - 0.99999);
                             dMineTravel = dTravel < dActTravel ? LOWORD(dTravel) : LOWORD(dActTravel);
                             if (lpord[1].iWarp < 11 && !FTravelThroughMineFields(lpfl, &dMineTravel, NULL)) {
-                                lpfl->dMoveLeft = 0;
+                                lpfl->SetDMoveLeft(0);
                                 if (lpfl->fDead)
                                     continue;
                                 if (dMineTravel < dActTravel) {
@@ -1611,9 +1611,9 @@ void MoveFleets() {
                                    fleet done instead, which stopped it short of
                                    its own target. */
                                 if (cPass > 0 && !lpfl->lpflNext->fDone) {
-                                    lpfl->dMoveUsed += LOWORD(dTravel);
-                                    lpfl->dMoveLeft -= LOWORD(dTravel);
-                                    if (lpfl->dMoveLeft > 0 && !fRanOutOfFuel) {
+                                    lpfl->SetDMoveUsed(lpfl->dMoveUsed() + (LOWORD(dTravel)));
+                                    lpfl->SetDMoveLeft(lpfl->dMoveLeft() - (LOWORD(dTravel)));
+                                    if (lpfl->dMoveLeft() > 0 && !fRanOutOfFuel) {
                                         fDone = FALSE;
                                         lpfl->fDone = FALSE;
                                     }
@@ -1627,10 +1627,10 @@ void MoveFleets() {
                                     lpfl->pt.y = LOWORD((int32_t)((double)r * (int16_t)(ptEnd.y - ptBeg.y) + dyRound)) + ptBeg.y;
                                     lpfl->idPlanet = idPlanetDeepSpace;
                                 }
-                                if (cPass > 0 && lpfl->dMoveLeft > 0) {
-                                    lpfl->dMoveUsed += LOWORD(dTravel);
-                                    lpfl->dMoveLeft -= LOWORD(dTravel);
-                                    if (lpfl->dMoveLeft > 0 && !fRanOutOfFuel) {
+                                if (cPass > 0 && lpfl->dMoveLeft() > 0) {
+                                    lpfl->SetDMoveUsed(lpfl->dMoveUsed() + (LOWORD(dTravel)));
+                                    lpfl->SetDMoveLeft(lpfl->dMoveLeft() - (LOWORD(dTravel)));
+                                    if (lpfl->dMoveLeft() > 0 && !fRanOutOfFuel) {
                                         fDone = FALSE;
                                         lpfl->fDone = FALSE;
                                     }
@@ -1882,8 +1882,8 @@ LHitSkip1:
                 dmgTot += dmgToApply;
                 dmgReduce = dpShield < (int32_t)(dmgToApply >> 1) ? dpShield : (int32_t)(dmgToApply >> 1);
                 dmgToApply -= dmgReduce;
-                cshDamaged = LOWORD((int32_t)(lpfl->rgcsh[i] * lpfl->rgdv[i].pctSh) / 100);
-                dmgToApply += (int32_t)((uint32_t)(dpsh * lpfl->rgdv[i].pctDp) * cshDamaged) / 500;
+                cshDamaged = LOWORD((int32_t)(lpfl->rgcsh[i] * lpfl->rgdv[i].pctSh()) / 100);
+                dmgToApply += (int32_t)((uint32_t)(dpsh * lpfl->rgdv[i].pctDp()) * cshDamaged) / 500;
                 dmgExtra = 0;
                 dmgPerShip = (int32_t)(dmgToApply / cshT);
                 if (dmgPerShip > dpsh) {
@@ -1892,10 +1892,10 @@ LHitSkip1:
                     flSrc.rgcsh[i] = 0;
                     cshT = 0;
                 } else {
-                    flSrc.rgdv[i].pctSh = 100;
-                    flSrc.rgdv[i].pctDp = LOWORD((int32_t)((int32_t)(dmgPerShip * 500) / dpsh));
-                    if (flSrc.rgdv[i].pctDp == 0) {
-                        flSrc.rgdv[i].pctDp = 1;
+                    flSrc.rgdv[i].SetPctSh(100);
+                    flSrc.rgdv[i].SetPctDp(LOWORD((int32_t)((int32_t)(dmgPerShip * 500) / dpsh)));
+                    if (flSrc.rgdv[i].pctDp() == 0) {
+                        flSrc.rgdv[i].SetPctDp(1);
                     }
                 }
                 dmgToApply = 0;
@@ -1931,7 +1931,7 @@ LHitSkip1:
                 if (lpthSalvage == lpthMac) {
                     lpthSalvage = NULL;
                 }
-                DropSalvage(&lpthSalvage, lpfl->rgwtMin, flSrc.iplr, &ptAct);
+                DropSalvage(&lpthSalvage, lpfl->rgwtMin, flSrc.iplr(), &ptAct);
             }
             d2Closest = 100000000;
             lpth = lpThings;

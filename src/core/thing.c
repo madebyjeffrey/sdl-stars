@@ -262,7 +262,7 @@ void DoThingInteractions(int16_t fPostMove) {
                         }
                         if (wtMin < 5000) {
                             if (!lpfl->fHereAllTurn) {
-                                FSendPlrMsg2(lpfl->iplr, idmMysteryTraderHasRefusedGiveCaptainAudience, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                FSendPlrMsg2(lpfl->iplr(), idmMysteryTraderHasRefusedGiveCaptainAudience, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             }
                         } else {
                             cPlrTrueMaxTech = !rgplr[lpfl->iPlayer].fCrippled ? 26 : 10;
@@ -272,7 +272,7 @@ void DoThingInteractions(int16_t fPostMove) {
                             grbitPlrTrader = rgplr[lpfl->iPlayer].grbitTrader;
                             iplr = lpfl->iPlayer;
                             if (1 << iplr & lpth->tht.grbitPlr) {
-                                FSendPlrMsg2(lpfl->iplr, idmMysteryTraderEyesCaptainSuspiciouslySuggestsHe, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                FSendPlrMsg2(lpfl->iplr(), idmMysteryTraderEyesCaptainSuspiciouslySuggestsHe, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             } else {
                                 lpth->tht.grbitPlr |= 1 << iplr;
                                 FRemovePlayerMessage(iplr, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
@@ -282,7 +282,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                         if (Random(5) != 0)
                                             goto LGivePart;
                                         idm = idmHasAbsorbedMysteryTraderHoweverTraderUnable2;
-                                        FSendPlrMsg2(lpfl->iplr, idm, gotoNone, WFromLpfl(lpfl), 0);
+                                        FSendPlrMsg2(lpfl->iplr(), idm, gotoNone, WFromLpfl(lpfl), 0);
                                         continue;
                                     } else {
                                         cTechCur = 0;
@@ -309,7 +309,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                         } else {
                                             idm = idmHasAbsorbedMysteryTraderReturnTraderHas;
                                         }
-                                        FSendPlrMsg(lpfl->iplr, idm, gotoNone, WFromLpfl(lpfl), LOWORD(cTech), 0, 0, 0, 0, 0);
+                                        FSendPlrMsg(lpfl->iplr(), idm, gotoNone, WFromLpfl(lpfl), LOWORD(cTech), 0, 0, 0, 0, 0);
                                         while (cTech-- != 0) {
                                             if (Random(4) < 3) {
                                                 iLowest = Random(6);
@@ -367,9 +367,9 @@ void DoThingInteractions(int16_t fPostMove) {
                                                 ish++;
                                             } while (ish < 16 && !rglpshdef[iplr][ish].fFree);
                                         }
-                                        if (ish >= 16 || rgplr[lpfl->iplr].cFleet >= 0x200) {
+                                        if (ish >= 16 || rgplr[lpfl->iplr()].cFleet >= 0x200) {
                                         LNoLifeboat:
-                                            FSendPlrMsg2(lpfl->iplr, idmHasAbsorbedMysteryTraderReturnTraderTried, gotoNone, WFromLpfl(lpfl), 0);
+                                            FSendPlrMsg2(lpfl->iplr(), idmHasAbsorbedMysteryTraderReturnTraderTried, gotoNone, WFromLpfl(lpfl), 0);
                                             continue;
                                         }
                                         if (Random(3) == 0) {
@@ -389,7 +389,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                         lpflNew = LpflNew(iplr, lpfl->idPlanet);
                                         if (!lpflNew)
                                             goto LNoLifeboat;
-                                        FSendPlrMsg2(lpfl->iplr, idmHasAbsorbedMysteryTraderReturnHaveGiven3, static_cast<MsgGoto>(lpflNew->id | 0x8000), WFromLpfl(lpfl), cGive);
+                                        FSendPlrMsg2(lpfl->iplr(), idmHasAbsorbedMysteryTraderReturnHaveGiven3, static_cast<MsgGoto>(lpflNew->id | 0x8000), WFromLpfl(lpfl), cGive);
                                         if (lpflNew->id < lpfl->id) {
                                             ifl++;
                                         }
@@ -404,7 +404,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                             lpshdefDest->cBuilt = 0;
                                             lpshdefDest->cExist = 0;
                                             rgplr[iplr].cShDef++;
-                                            idPlayer = lpfl->iplr;
+                                            idPlayer = lpfl->iplr();
                                             UpdateShdefCost(lpshdefDest);
                                             idPlayer = iplrNone;
                                         }
@@ -416,7 +416,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                     }
                                 } else {
                                     idm = static_cast<MessageId>(IdmGiveTraderPart(grbitTrader, iplr, (uint16_t *)&iGoto));
-                                    FSendPlrMsg2(lpfl->iplr, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), 0);
+                                    FSendPlrMsg2(lpfl->iplr(), idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), 0);
                                 }
                             }
                         }

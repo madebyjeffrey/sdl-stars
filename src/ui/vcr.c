@@ -171,11 +171,11 @@ int32_t LdpFromItokDv(int16_t itok, DV *lpdv) {
     dpShdef = LpshdefFromTok(vrgtok + itok)->hul.dp;
     dp = (uint32_t)((uint32_t)dpShdef * (uint32_t)vrgtok[itok].csh);
     if (dv.dp != 0) {
-        csh = LOWORD((int32_t)((uint32_t)vrgtok[itok].csh * dv.pctSh) / 100);
+        csh = LOWORD((int32_t)((uint32_t)vrgtok[itok].csh * dv.pctSh()) / 100);
         if (csh <= 0) {
             csh = 1;
         }
-        dp -= (int32_t)((int32_t)((uint32_t)dpShdef * dv.pctDp) / 10 * csh) / 50;
+        dp -= (int32_t)((int32_t)((uint32_t)dpShdef * dv.pctDp()) / 10 * csh) / 50;
     }
     return dp;
 }
@@ -512,15 +512,15 @@ void GetVCRStats(int16_t itok, int32_t *pdpArmor, DV *pdv, int32_t *pdpShields, 
         dpShdef = LpshdefFromTok(vrgtok + itok)->hul.dp;
         cshT = vrgtok[itok].csh - cshKill;
         dpArmor = (uint32_t)((uint32_t)dpShdef * cshT);
-        cshT = LOWORD((int32_t)(cshT * dv.pctSh) / 100);
+        cshT = LOWORD((int32_t)(cshT * dv.pctSh()) / 100);
         if (cshT <= 0) {
             cshT = 1;
         }
-        dpArmor -= (int32_t)((int32_t)((uint32_t)dpShdef * dv.pctDp) / 10 * cshT) / 50;
+        dpArmor -= (int32_t)((int32_t)((uint32_t)dpShdef * dv.pctDp()) / 10 * cshT) / 50;
     } else {
         dv.dp = vrgtok[itok].dv.dp;
-        if (dv.pctDp > 499) {
-            dv.pctDp = 499;
+        if (dv.pctDp() > 499) {
+            dv.SetPctDp(499);
         }
     }
     cshT = vrgtok[itok].csh - cshKill;
@@ -773,11 +773,11 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                         c = CchGetString(idsDamageNone, szWork);
                     } else {
                         csh -= cshT;
-                        csh = LOWORD((int32_t)(dv.pctSh * csh) / 100);
+                        csh = LOWORD((int32_t)(dv.pctSh() * csh) / 100);
                         if (csh <= 0) {
                             csh = 1;
                         }
-                        dpT = (uint32_t)(dv.pctDp / 5);
+                        dpT = (uint32_t)(dv.pctDp() / 5);
                         if (dpT == 0) {
                             dpT = 1;
                         }

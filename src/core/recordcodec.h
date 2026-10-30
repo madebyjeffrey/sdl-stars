@@ -280,4 +280,207 @@ inline bool FEncodeRtChgShDefPrefix(RTCHGSHDEF rtchg, std::span<std::byte> rgb) 
     return NATIVEBYTEWRITER(rgb).FWriteU16Le(static_cast<std::uint16_t>(rtchg.mdChg | (rtchg.iPlr << 4) | (rtchg.ishdef << 8) | (rtchg.junk << 13)));
 }
 
+
+inline constexpr std::size_t cbWireFleetHeader = 14;
+inline constexpr std::size_t cbWireFleetIds = 0;
+inline constexpr std::size_t cbWireFleetId = 2;
+inline constexpr std::size_t cbWireXferF = 7;
+
+inline bool FReadFleetId(RTFLEETIDS ids, std::size_t i, std::int16_t &id) noexcept {
+    if (i >= ids.rgid.size() / cbWireFleetId) return false;
+    return NATIVEBYTEREADER(ids.rgid.subspan(i * cbWireFleetId, cbWireFleetId)).FReadI16Le(id);
+}
+
+inline bool FEncodeFleetIds(std::span<const std::uint16_t> rgid, std::span<std::byte> rgb) noexcept {
+    if (rgid.size() > rgb.size() / cbWireFleetId) return false;
+    NATIVEBYTEWRITER output(rgb);
+    for (auto id : rgid) output.FWriteU16Le(id);
+    return true;
+}
+
+inline bool FEncodeRtFleetHeader(const FLEET &fl, bool fByte, std::uint16_t grbitCsh, std::span<std::byte> rgb) noexcept {
+    std::byte rgbHeader[cbWireFleetHeader];
+    NATIVEBYTEWRITER output(rgbHeader);
+    std::uint16_t w;
+    if (rgb.size() < cbWireFleetHeader) return false;
+    w = static_cast<std::uint16_t>(fl.det | (fl.fInclude << 8) | (fl.fRepOrders << 9) | (fl.fDead << 10) | (fByte << 11) |
+                                   (fl.fBombed << 12) | (fl.fHereAllTurn << 13) | (fl.fNoHeal << 14) | (fl.fMark << 15));
+    output.FWriteI16Le(fl.id);
+    output.FWriteI16Le(fl.iPlayer);
+    output.FWriteU16Le(w);
+    output.FWriteI16Le(fl.idPlanet);
+    output.FWriteI16Le(fl.pt.x);
+    output.FWriteI16Le(fl.pt.y);
+    output.FWriteU16Le(grbitCsh);
+    std::memmove(rgb.data(), rgbHeader, cbWireFleetHeader);
+    return true;
+}
+
+inline bool FDecodeRtFleetHeader(std::span<const std::byte> rgb, FLEET &fl, std::uint16_t &grbitCsh) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::int16_t id, iPlayer, idPlanet, x, y;
+    std::uint16_t w, mask;
+    if (!input.FReadI16Le(id) || !input.FReadI16Le(iPlayer) || !input.FReadU16Le(w) || !input.FReadI16Le(idPlanet) ||
+        !input.FReadI16Le(x) || !input.FReadI16Le(y) || !input.FReadU16Le(mask)) return false;
+    fl.id = id;
+    fl.iPlayer = iPlayer;
+    fl.det = w & 0xff;
+    fl.fInclude = (w >> 8) & 1;
+    fl.fRepOrders = (w >> 9) & 1;
+    fl.fDead = (w >> 10) & 1;
+    fl.fDone = (w >> 11) & 1;
+    fl.fBombed = (w >> 12) & 1;
+    fl.fHereAllTurn = (w >> 13) & 1;
+    fl.fNoHeal = (w >> 14) & 1;
+    fl.fMark = w >> 15;
+    fl.idPlanet = idPlanet;
+    fl.pt.x = x;
+    fl.pt.y = y;
+    grbitCsh = mask;
+    return true;
+}
+
+// The caller starts a zeroed fleet. Keep the original incremental publication:
+// counts/cargo precede the full-record tag check, damage/plan/orders follow it.
+// File loading passes the reusable scratch backing, not the declared length.
+inline bool FDecodeRtFleet(std::span<const std::byte> rgb, FLEET &fl, bool fTypeA, std::int16_t &iDamage) noexcept {
+    std::uint16_t mask, w;
+    std::uint8_t ch;
+    std::int16_t csh;
+    std::int32_t dw;
+    unsigned i = 0;
+    unsigned cish = 0;
+    if (!FDecodeRtFleetHeader(rgb, fl, mask)) return false;
+    NATIVEBYTEREADER input(rgb.subspan(cbWireFleetHeader));
+    for (; mask != 0; mask >>= 1, i++) {
+        if (mask & 1) {
+            if (fl.fDone) {
+                if (!input.FReadU8(ch)) return false;
+                fl.rgcsh[i] = ch;
+            } else {
+                if (!input.FReadI16Le(csh)) return false;
+                fl.rgcsh[i] = csh;
+            }
+            if (fl.rgcsh[i] != 0) cish++;
+        }
+    }
+    if (cish == 0) fl.fDead = TRUE;
+    if (fl.det >= detMore) {
+        if (!input.FReadU16Le(mask)) return false;
+        for (i = 0; i < 5; i++, mask >>= 2) {
+            switch (mask & 3) {
+            case 0: break;
+            case 1:
+                if (!input.FReadU8(ch)) return false;
+                fl.rgwtMin[i] = ch;
+                break;
+            case 2:
+                if (!input.FReadU16Le(w)) return false;
+                fl.rgwtMin[i] = w;
+                break;
+            case 3:
+                if (!input.FReadI32Le(dw)) return false;
+                fl.rgwtMin[i] = dw;
+                break;
+            }
+        }
+    }
+    if (fl.det < detAll) {
+        if (!input.FReadI32Le(dw)) return false;
+        fl.dirLong = dw;
+        if (!input.FReadI32Le(dw)) return false;
+        fl.SetWtFleet(dw);
+        return true;
+    }
+    if (!fTypeA) return false;
+    if (!input.FReadU16Le(mask)) return false;
+    i = 0;
+    for (; mask != 0; mask >>= 1, i++) {
+        if (mask & 1) {
+            if (!input.FReadU16Le(w)) return false;
+            fl.rgdv[i].dp = w;
+            if (fl.rgdv[i].pctDp() >= 500) fl.rgdv[i].SetPctDp(499);
+        }
+    }
+    iDamage = static_cast<std::int16_t>(i);
+    if (!input.FReadU8(ch)) return false;
+    fl.iplan = ch;
+    if (!input.FReadU8(ch)) return false;
+    fl.cord = ch;
+    return true;
+}
+
+// Preserve the writer's positive-count and detail rules. The caller computes
+// partial fleet mass in its original arithmetic order using the design catalog.
+inline bool FEncodeRtFleet(const FLEET &fl, std::int32_t wtPartial, std::span<std::byte> rgb, std::size_t &cbWritten) noexcept {
+    std::byte rgbFleet[134];
+    std::uint16_t mask = 0, grMask = 1;
+    bool fByte = true;
+    for (unsigned i = 0; i < 16; i++, grMask = static_cast<std::uint16_t>(grMask * 2)) {
+        if (fl.rgcsh[i] > 0) {
+            mask |= grMask;
+            if (fl.rgcsh[i] > 255) fByte = false;
+        }
+    }
+    FEncodeRtFleetHeader(fl, fByte, mask, rgbFleet);
+    NATIVEBYTEWRITER output{std::span(rgbFleet).subspan(cbWireFleetHeader)};
+    for (unsigned i = 0; i < 16; i++) {
+        if (fl.rgcsh[i] > 0) {
+            if (fByte) output.FWriteU8(static_cast<std::uint8_t>(fl.rgcsh[i]));
+            else output.FWriteI16Le(fl.rgcsh[i]);
+        }
+    }
+    if (fl.det >= detMore) {
+        mask = 0;
+        std::size_t ibMask = cbWireFleetHeader + output.CbWritten();
+        output.FWriteU16Le(0);
+        for (unsigned i = 0; i < 5; i++) {
+            if (fl.rgwtMin[i] > 0 && (fl.det == detAll || (i != 4 && i != 3))) {
+                if (fl.rgwtMin[i] <= 255) {
+                    mask |= static_cast<std::uint16_t>(1u << (2 * i));
+                    output.FWriteU8(static_cast<std::uint8_t>(fl.rgwtMin[i]));
+                } else if (fl.rgwtMin[i] > 65535) {
+                    mask |= static_cast<std::uint16_t>(3u << (2 * i));
+                    output.FWriteI32Le(fl.rgwtMin[i]);
+                } else {
+                    mask |= static_cast<std::uint16_t>(2u << (2 * i));
+                    output.FWriteU16Le(static_cast<std::uint16_t>(fl.rgwtMin[i]));
+                }
+            }
+        }
+        NATIVEBYTEWRITER(std::span(rgbFleet).subspan(ibMask, 2)).FWriteU16Le(mask);
+    }
+    if (fl.det < detAll) {
+        output.FWriteI32Le(fl.dirLong);
+        output.FWriteI32Le(wtPartial);
+    } else {
+        mask = 0; grMask = 1;
+        for (unsigned i = 0; i < 16; i++, grMask = static_cast<std::uint16_t>(grMask * 2)) {
+            if (fl.rgdv[i].dp != 0) mask |= grMask;
+        }
+        output.FWriteU16Le(mask);
+        for (unsigned i = 0; i < 16; i++) if (fl.rgdv[i].dp != 0) output.FWriteU16Le(fl.rgdv[i].dp);
+        output.FWriteU8(fl.iplan);
+        output.FWriteU8(static_cast<std::uint8_t>(fl.cord));
+    }
+    std::size_t cb = cbWireFleetHeader + output.CbWritten();
+    if (rgb.size() < cb) return false;
+    std::memmove(rgb.data(), rgbFleet, cb);
+    cbWritten = cb;
+    return true;
+}
+
+
+inline bool FEncodeRtXferFHeader(RTXFERF rtxf, std::span<std::byte> rgb) noexcept {
+    std::byte rgbHeader[cbWireXferF];
+    NATIVEBYTEWRITER output(rgbHeader);
+    if (rgb.size() < cbWireXferF) return false;
+    output.FWriteU16Le(rtxf.id1);
+    output.FWriteU16Le(rtxf.id2);
+    output.FWriteU8(static_cast<std::uint8_t>(rtxf.grobj1 | (rtxf.grobj2 << 4)));
+    output.FWriteU16Le(rtxf.grbitItems);
+    std::memmove(rgb.data(), rgbHeader, cbWireXferF);
+    return true;
+}
+
 #endif

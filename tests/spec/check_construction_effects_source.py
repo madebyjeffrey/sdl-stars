@@ -231,7 +231,7 @@ int main(void){
     reset();planet.id=0;rgptPlan[0]=(POINT16){10,20};game.cPlayer=1;game.cPlanMax=1;
     planet.fStarbase=1;bases[0].hul.ihuldef=ihuldefOrbitalFort;rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
-        fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
+        fleetBodies[i].SetIfl(i);fleetBodies[i].iPlayer=0;fleetBodies[i].SetIplr(0);fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
         fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord()[0].pt=fleetBodies[i].pt;}
     planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(!planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10 && !newFleets);

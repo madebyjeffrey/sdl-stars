@@ -787,12 +787,12 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
             if (!fDeadFleet && rgrgcshLoss[0][ishdef] == -rgrgcshLoss[1][ishdef] && rgrgcshLoss[0][ishdef] != 0) {
                 iSrc = rgrgcshLoss[0][ishdef] < 0;
                 if (rgflCur[iSrc].rgcsh[ishdef] > 0) {
-                    cshDmgSrc = (int32_t)(rgflCur[iSrc].rgdv[ishdef].pctSh * rgflCur[iSrc].rgcsh[ishdef]) / 100;
+                    cshDmgSrc = (int32_t)(rgflCur[iSrc].rgdv[ishdef].pctSh() * rgflCur[iSrc].rgcsh[ishdef]) / 100;
                 } else {
                     cshDmgSrc = 0;
                 }
                 if (rgflCur[iSrc == 0].rgcsh[ishdef] > 0) {
-                    cshDmgDst = (int32_t)(rgflCur[iSrc == 0].rgdv[ishdef].pctSh * rgflCur[iSrc == 0].rgcsh[ishdef]) / 100;
+                    cshDmgDst = (int32_t)(rgflCur[iSrc == 0].rgdv[ishdef].pctSh() * rgflCur[iSrc == 0].rgcsh[ishdef]) / 100;
                 } else {
                     cshDmgDst = 0;
                 }
@@ -802,10 +802,10 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
                     } else {
                         cshDmgMoved = cshDmgSrc;
                     }
-                    pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp) +
-                                                 (uint32_t)(cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) /
+                    pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgDst * rgflCur[iSrc == 0].rgdv[ishdef].pctDp()) +
+                                                 (uint32_t)(cshDmgMoved * rgflCur[iSrc].rgdv[ishdef].pctDp()) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) /
                                        rgpflNew[iSrc == 0]->rgcsh[ishdef]);
-                    rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh | (LOWORD(pctNew) & 0x1ff) * 0x80;
+                    rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (LOWORD(pctNew) & 0x1ff) * 0x80;
                     pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgDst + cshDmgMoved) * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) /
                                        rgpflNew[iSrc == 0]->rgcsh[ishdef]);
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
@@ -814,7 +814,7 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
                     } else {
                         pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgSrc - cshDmgMoved) * 100) + rgpflNew[iSrc]->rgcsh[ishdef] - 1) /
                                            rgpflNew[iSrc]->rgcsh[ishdef]);
-                        rgpflNew[iSrc]->rgdv[ishdef].pctSh = LOWORD(pctNew);
+                        rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
                 } else if (cshDmgSrc != 0) {
                     if (cshDmgSrc > rgrgcshLoss[iSrc][ishdef]) {
@@ -822,7 +822,7 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
                     } else {
                         cshDmgMoved = cshDmgSrc;
                     }
-                    rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh | (rgpflNew[iSrc]->rgdv[ishdef].pctDp & 0x1ff) * 0x80;
+                    rgpflNew[iSrc == 0]->rgdv[ishdef].dp = rgpflNew[iSrc == 0]->rgdv[ishdef].pctSh() | (rgpflNew[iSrc]->rgdv[ishdef].pctDp() & 0x1ff) * 0x80;
                     pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgMoved * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) / rgpflNew[iSrc == 0]->rgcsh[ishdef]);
                     rgpflNew[iSrc == 0]->rgdv[ishdef].dp = (rgpflNew[iSrc == 0]->rgdv[ishdef].dp & 0xff80) | (LOWORD(pctNew) & 0x7f);
                     if (cshDmgMoved == cshDmgSrc) {
@@ -830,7 +830,7 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
                     } else {
                         pctNew = (int32_t)((int32_t)((uint32_t)((cshDmgSrc - cshDmgMoved) * 100) + rgpflNew[iSrc]->rgcsh[ishdef] - 1) /
                                            rgpflNew[iSrc]->rgcsh[ishdef]);
-                        rgpflNew[iSrc]->rgdv[ishdef].pctSh = LOWORD(pctNew);
+                        rgpflNew[iSrc]->rgdv[ishdef].SetPctSh(LOWORD(pctNew));
                     }
                 } else if (cshDmgDst != 0) {
                     pctNew = (int32_t)((int32_t)((uint32_t)(cshDmgDst * 100) + rgpflNew[iSrc == 0]->rgcsh[ishdef] - 1) / rgpflNew[iSrc == 0]->rgcsh[ishdef]);
@@ -936,7 +936,7 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
                 FDeleteFleet(lpfl->id, grobjNone, -1);
                 continue;
             }
-            flDead.iplr = iplr;
+            flDead.SetIplr(iplr);
             flDead.fDead = TRUE;
             flDead.rgcsh[ishdef] = cKill;
             flNew = *lpfl;

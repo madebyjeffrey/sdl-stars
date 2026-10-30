@@ -141,7 +141,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
             lpfl = rglpfl[i];
             if (!rglpfl[i])
                 break;
-            if (!lpfl->fDead && lpfl->iplr == iPlayer) {
+            if (!lpfl->fDead && lpfl->iplr() == iPlayer) {
                 for (j = 0; j < 16 && lpfl->rgcsh[j] == 0; j++) {
                 }
                 if (j == 16) {
@@ -743,81 +743,13 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
 }
 
 void WriteFleet(FLEET *lpfl) {
-    uint8_t  *pus;
-    uint8_t   rgb[134];
-    uint16_t  us;
-    int16_t   i;
-    uint8_t  *pb;
-    int16_t   fByte;
-    uint16_t  grMask;
-    int32_t   wt;
+    uint8_t rgb[134];
+    int16_t i;
+    int32_t wt = 0;
+    bool fPartial = lpfl->det < detAll;
+    size_t cb;
 
-    memmove(rgb, lpfl, offsetof(RTFLEET, grbitCsh));
-    fByte = TRUE;
-    grMask = 1;
-    us = 0;
-    i = 0;
-    while (i < 16) {
-        if (lpfl->rgcsh[i] > 0) {
-            us |= grMask;
-            if (lpfl->rgcsh[i] > 255) {
-                fByte = FALSE;
-            }
-        }
-        i++;
-        grMask *= 2;
-    }
-    ((RTFLEET *)rgb)->fByteCsh = fByte;
-    ((RTFLEET *)rgb)->grbitCsh = us;
-    pb = ((RTFLEET *)rgb)->rgb;
-    if (fByte) {
-        for (i = 0; i < 16; i++) {
-            if (lpfl->rgcsh[i] > 0) {
-                *pb++ = lpfl->rgcsh[i];
-            }
-        }
-    } else {
-        pus = pb;
-        for (i = 0; i < 16; i++) {
-            if (lpfl->rgcsh[i] > 0) {
-                RawStore16(pus, lpfl->rgcsh[i]);
-                pus += 2;
-            }
-        }
-        pb = (uint8_t *)pus;
-    }
-    if (lpfl->det >= detMore) {
-        fByte = FALSE;
-        grMask = 3;
-        pus = pb;
-        pb += 2;
-        us = 0;
-        i = 0;
-        while (i < 5) {
-            if (lpfl->rgwtMin[i] > 0 && (lpfl->det == detAll || (i != 4 && i != 3))) {
-                if (lpfl->rgwtMin[i] <= 255) {
-                    us |= grMask & 0x155;
-                    *pb = lpfl->rgwtMin[i];
-                    pb++;
-                } else if (lpfl->rgwtMin[i] > 65535) {
-                    us |= grMask & 0x3ff;
-                    RawStore32(pb, lpfl->rgwtMin[i]);
-                    pb += 4;
-                } else {
-                    us |= grMask & 0x2aa;
-                    RawStore16(pb, LOWORD(lpfl->rgwtMin[i]));
-                    pb += 2;
-                }
-            }
-            i++;
-            grMask *= 4;
-        }
-        RawStore16(pus, us);
-    }
-    if (lpfl->det < detAll) {
-        wt = 0;
-        RawStore32(pb, lpfl->dirLong);
-        pb += 4;
+    if (fPartial) {
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
                 wt += (uint32_t)(lpfl->rgcsh[i] * (uint32_t)rglpshdef[lpfl->iPlayer][i].hul.wtEmpty);
@@ -826,39 +758,16 @@ void WriteFleet(FLEET *lpfl) {
         for (i = 0; i <= 3; i++) {
             wt += lpfl->rgwtMin[i];
         }
-        RawStore32(pb, wt);
-        pb += 4;
-        WriteRt(rtFleetB, pb - rgb, rgb);
-    } else {
-        grMask = 1;
-        us = 0;
-        i = 0;
-        while (i < 16) {
-            if (lpfl->rgdv[i].dp != 0) {
-                us |= grMask;
-            }
-            i++;
-            grMask *= 2;
-        }
-        RawStore16(pb, us);
-        pb += 2;
-        pus = pb;
-        for (i = 0; i < 16; i++) {
-            if (lpfl->rgdv[i].dp != 0) {
-                RawStore16(pus, lpfl->rgdv[i].dp);
-                pus += 2;
-            }
-        }
-        pb = (uint8_t *)pus;
-        *pb++ = lpfl->iplan;
-        *pb++ = lpfl->cord;
-        WriteRt(rtFleetA, pb - rgb, rgb);
-        WriteOrders(lpfl);
-        if (lpfl->lpszName) {
-            WriteRtString(lpfl->lpszName);
-        }
     }
-    return;
+    if (!FEncodeRtFleet(*lpfl, wt, std::as_writable_bytes(std::span(rgb)), cb)) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        return;
+    }
+    WriteRt(fPartial ? rtFleetB : rtFleetA, cb, rgb);
+    if (!fPartial) {
+        WriteOrders(lpfl);
+        if (lpfl->lpszName) WriteRtString(lpfl->lpszName);
+    }
 }
 
 void WriteRtString(char *lpsz) {
@@ -892,7 +801,7 @@ void MarkFleet(FLEET *lpfl, DetType det) {
         lpshdef = rglpshdef[lpfl->iPlayer];
         lpfl->fInclude = TRUE;
         lpfl->det = detNone;
-        lpfl->fdirValid = 1;
+        lpfl->SetFdirValid(1);
         rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] != 0) {
@@ -1262,7 +1171,7 @@ void SetVisPFInit(int16_t iPlr) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        lpfl->fdirValid = 0;
+        lpfl->SetFdirValid(0);
         lpfl->fMark = FALSE;
         if ((iPlr == iplrNone || iPlr == lpfl->iPlayer) && !lpfl->fDead) {
             lpfl->fInclude = TRUE;

@@ -239,7 +239,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         SelectObject(hdc, hbrSav);
         lpfl = rglpfl[sel.scan.ifl];
         DrawFleetBitmap(lpfl, hdc, xLeft + 2, yTop + 2, FALSE, -1, 0, FALSE, -1, 0);
-        iOffset = rgplr[lpfl->iplr].iPlrBmp;
+        iOffset = rgplr[lpfl->iplr()].iPlrBmp;
         SelectPalette(hdc, vhpal, FALSE);
         RealizePalette(hdc);
         DibBlt(hdc, xLeft + 19, yTop + 71, 32, 32, hdibRaces, (iOffset & 7) * 0x20, (3 - (iOffset >> 3)) * 0x20, 32, 32, 13369376);
@@ -274,7 +274,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 yTop += dyArial8 + 2;
             }
         } else {
-            cMass = lpfl->wtFleet;
+            cMass = lpfl->wtFleet();
         }
         c = CchGetString(!gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, szT);
         c = wsprintf(szWork, szT, cMass);
@@ -318,11 +318,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             yTop += dyArial8 + 2;
             goto FinishUp;
         }
-        if (!lpfl->fdirValid)
+        if (!lpfl->fdirValid())
             goto FinishUp;
-        if (lpfl->iwarpFlt != 0) {
+        if (lpfl->iwarpFlt() != 0) {
             CchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
-            c = wsprintf(szWork, szT, lpfl->iwarpFlt);
+            c = wsprintf(szWork, szT, lpfl->iwarpFlt());
         } else {
             c = CchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
         }
@@ -896,7 +896,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             } else if (sel.scan.grobj == grobjThing) {
                 GlobalPD.iPlayer = lpThings[sel.scan.ith].iplr;
             } else {
-                GlobalPD.iPlayer = rglpfl[sel.scan.ifl]->iplr;
+                GlobalPD.iPlayer = rglpfl[sel.scan.ifl]->iplr();
             }
             GlobalPD.grPopup = grPopupPlayer;
             Popup(hwndMine, x, y);
