@@ -37,7 +37,7 @@ static BOOL FSaveState(const char *pszName);
 
 BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
     char szText[256];
     int i, j, iItem = -1, cSteps = 0;
@@ -92,8 +92,8 @@ static void LogState(const char *pszEvent) {
 }
 
 static BOOL FSaveState(const char *pszName) {
-    STARSCOMPATSNAPSHOT snap = {0};
-    SCANSNAPSHOT scan = {0};
+    STARSCOMPATSNAPSHOT snap = {};
+    SCANSNAPSHOT scan = {};
     NATIVEFILE *lpfile;
     char szPath[100];
     BOOL fResult;
@@ -115,7 +115,7 @@ static BOOL FSaveState(const char *pszName) {
 }
 
 static BOOL FPushKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
     // SDL_Event is a union; zero all bytes, including inactive-member fields.
     SDL_zero(event);
@@ -129,7 +129,7 @@ static BOOL FPushKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
 }
 
 static BOOL FPushTextKey(SDL_Scancode sc, const char *pszText) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwndFrame);
     SDL_zero(event);
     if (!hwndRoot || !FPushKey(hwndFrame, sc, TRUE)) return FALSE;
@@ -142,7 +142,7 @@ static BOOL FPushTextKey(SDL_Scancode sc, const char *pszText) {
 
 static BOOL FMousePoint(HWND hwnd, POINT pt, Uint8 iButton, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    SDL_Event event = {0};
+    SDL_Event event = {};
     SDL_zero(event);
     if (!hwndRoot || !IsWindowVisible(hwnd) || !IsWindowEnabled(hwnd)) return FALSE;
     ClientToScreen(hwnd, &pt);
@@ -200,7 +200,7 @@ static BOOL FChooseCombo(HWND hwndCombo, const char *pszName) {
 
 static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    SDL_Event event = {0};
+    SDL_Event event = {};
     if (!hwndRoot || !ClientToScreen(hwnd, &ptFrom) || !ScreenToClient(hwndRoot, &ptFrom) ||
         !ClientToScreen(hwnd, &ptTo) || !ScreenToClient(hwndRoot, &ptTo)) return FALSE;
     ptFrom.y += CyCompatMenuBar(hwndRoot); ptTo.y += CyCompatMenuBar(hwndRoot);
@@ -221,7 +221,7 @@ static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
 
 /* Resolve a fresh hierarchy every time; a callback can destroy the old dialog. */
 static HWND HwndModal(void) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd = NULL, hwndT;
     size_t i;
     if (!StarsCompatCaptureHierarchy(&snap)) return NULL;
@@ -235,7 +235,7 @@ static HWND HwndModal(void) {
 }
 
 static BOOL FFindMapObject(uint16_t grType, uint16_t idObject, const char *pszName) {
-    SCANSNAPSHOT snap = {0};
+    SCANSNAPSHOT snap = {};
     size_t i;
     BOOL fFound = FALSE, fReveal = FALSE;
     if (!FCaptureScanner(&snap)) return FALSE;
@@ -271,7 +271,7 @@ static BOOL FFindPlanet(const char *pszName) {
 }
 
 static BOOL FFindSalvageHere(void) {
-    SCANSNAPSHOT snap = {0};
+    SCANSNAPSHOT snap = {};
     POINT pt = objTarget.ptUniverse;
     char szName[64];
     size_t i;
@@ -291,7 +291,7 @@ static BOOL FFindSalvageHere(void) {
 }
 
 static BOOL FPushControlKey(HWND hwnd, SDL_Scancode sc) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
 
     if (!hwndRoot || !FPushKey(hwnd, SDL_SCANCODE_LCTRL, TRUE)) return FALSE;
@@ -2310,7 +2310,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         hwndList = GetDlgItem(hwndModal, IDC_EDIT1);
         if (GetFocus() != hwndList) return;
         {
-            SDL_Event event = {0};
+            SDL_Event event = {};
             event.type = SDL_EVENT_TEXT_INPUT;
             event.text.windowID = HwndCompatRoot(hwndList)->id;
             event.text.text = "Teamster #4";

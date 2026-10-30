@@ -13,10 +13,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OBJCXX_STANDARD 20)
 set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
-set(CMAKE_OBJCXX_EXTENSIONS ON)
+set(CMAKE_OBJCXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop client and wrapper" ON)
@@ -65,7 +65,21 @@ file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
 list(REMOVE_ITEM STARS_CPP_HARNESSES
     "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c"
     "${PROJECT_SOURCE_DIR}/tests/compat/popup_payload_reference.c")
-set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
+set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX)
+
+# These unchanged C vectors also compile independently against the real SDK.
+# Their C11 zero-initializer spelling is intentional; isolate only its C++
+# missing-field/braces diagnostics from ordinary C++ harnesses and production.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake")
+file(READ "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake" STARS_CPP_SDK_REFERENCE_CMAKE)
+string(REGEX MATCHALL "tests/compat/[A-Za-z0-9_]+\\.c" STARS_CPP_SDK_REFERENCE_NAMES "${STARS_CPP_SDK_REFERENCE_CMAKE}")
+list(REMOVE_DUPLICATES STARS_CPP_SDK_REFERENCE_NAMES)
+set(STARS_CPP_SDK_SHARED_HARNESSES)
+foreach(STARS_CPP_SDK_REFERENCE_NAME IN LISTS STARS_CPP_SDK_REFERENCE_NAMES)
+    list(APPEND STARS_CPP_SDK_SHARED_HARNESSES "${PROJECT_SOURCE_DIR}/${STARS_CPP_SDK_REFERENCE_NAME}")
+endforeach()
+set_source_files_properties(${STARS_CPP_SDK_SHARED_HARNESSES} PROPERTIES
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
 # Source language belongs in the parent scope so private test clones inherit it.
@@ -411,4 +425,5 @@ if(STARS_BUILD_WIN32_REFERENCE_TESTS)
     include(cmake/win32-reference-tests.cmake)
 endif()
 
+include(cmake/strict-cpp.cmake)
 include(cmake/cpp-interface-checks.cmake)

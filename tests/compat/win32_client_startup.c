@@ -170,7 +170,7 @@ static BOOL fRacePresentation = TRUE;
 
 extern "C" bool SDLCALL StarsTest_SDL_SetWindowTitle(SDL_Window *lpWindow, const char *pszTitle) {
     HWND hwnd = LpCompatWindowFromId(SDL_GetWindowID(lpWindow));
-    SDL_Event event = {0};
+    SDL_Event event = {};
     unsigned cPresentBefore = cRenderPresent;
     bool fResult = SDL_SetWindowTitle(lpWindow, pszTitle);
 
@@ -301,7 +301,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
         return TRUE;
     }
     if (iTransportPreset >= 0) {
-        SDL_Event event = {0};
+        SDL_Event event = {};
         HWND hwndRoot = HwndCompatRoot(hwnd);
         BOOL fResult;
         int i, iPreset = iTransportPreset;
@@ -327,7 +327,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
 }
 
 static BOOL FCheckMapInspection(void) {
-    SCANSNAPSHOT snap = {0}, fresh = {0};
+    SCANSNAPSHOT snap = {}, fresh = {};
     size_t i, j, cPlanetFound = 0;
     POINT16 pt;
     POINT screen;
@@ -432,7 +432,7 @@ static BOOL FCheckToolbarPlacement(void) {
     HWND hwndRoot = HwndCompatRoot(hwndTb);
     HWND hwndButtons;
     char szClass[64];
-    SDL_Event event = {0};
+    SDL_Event event = {};
     int i, x, iRange;
 
     if (!GetClientRect(hwndScanner, &rcClient) || !GetScrollInfo(hwndScanner, SB_HORZ, &si)) return FALSE;
@@ -627,7 +627,7 @@ static BOOL FPushClick(HWND hwnd) {
     HWND hwndAncestor, hwndPane;
     int i, iPosition;
     HWND lpTitle = HwndCompatRoot(hwnd);
-    SDL_Event event = {0};
+    SDL_Event event = {};
     for (hwndAncestor = hwnd; hwndAncestor; hwndAncestor = GetParent(hwndAncestor)) {
         if (hwndAncestor != hwndPlanet) continue;
         hwndPane = GetParent(hwndPlanet);
@@ -707,7 +707,7 @@ static BOOL FPushComboRow(HWND hwnd, int iRow) {
     HWND hwndRoot = HwndCompatRoot(hwndPopup);
     POINT pt;
     RECT rc;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     int cy, iTop;
     if (!hwndPopup || !hwndRoot || !GetClientRect(hwndPopup, &rc)) return FALSE;
     cy = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
@@ -727,7 +727,7 @@ static BOOL FPushListRow(HWND hwnd, int iRow) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     RECT rc;
     POINT pt;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     if (!hwndRoot || SendMessage(hwnd, LB_GETITEMRECT, iRow, (LPARAM)&rc) == LB_ERR) return FALSE;
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
     if (!ClientToScreen(hwnd, &pt) || !ScreenToClient(hwndRoot, &pt)) return FALSE;
@@ -743,7 +743,7 @@ static BOOL FPushClientRect(HWND hwnd, const RECT *lprc, Uint8 button) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     RECT rc;
     POINT pt;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     memcpy(&rc, lprc, sizeof(rc));
     pt = (POINT){(rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2};
     if (!hwndRoot || !ClientToScreen(hwnd, &pt) || !ScreenToClient(hwndRoot, &pt)) return FALSE;
@@ -760,7 +760,7 @@ static BOOL fWorkflowPassed, fWorkflowBusy;
 static uint64_t idWorkflowDialog;
 
 static HWND HwndWorkflowDialog(void) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     uint64_t idOwner = StarsCompatWindowId(hwndFrame), idDialog = 0;
     size_t i;
     if (!StarsCompatCaptureHierarchy(&snap)) return NULL;
@@ -790,7 +790,7 @@ static const char szRenameName[] = "Compat Renamed";
 
 static BOOL FCheckShipWorkflow(HWND hwndDialog) {
     HWND hwndControl;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     LPCSTR pszName = iWorkflow == 10 ? "Discarded edit" : iWorkflow == 11 ? szRenameName : szCopyName;
     int iStep = iWorkflowStep, iRow;
     char sz[32];
@@ -1221,7 +1221,7 @@ static BOOL FCheckWaypointTask(int idFleet) {
 
 static BOOL FPushWorkflowKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    SDL_Event event = {0};
+    SDL_Event event = {};
     if (!hwndRoot) return FALSE;
     event.type = fDown ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
     event.key.windowID = hwndRoot->id; event.key.scancode = sc;
@@ -1231,7 +1231,7 @@ static BOOL FPushWorkflowKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
 
 static BOOL FPushWorkflowDrag(HWND hwnd, POINT ptFrom, POINT ptTo) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
-    SDL_Event event = {0};
+    SDL_Event event = {};
     if (!hwndRoot || !ClientToScreen(hwnd, &ptFrom) || !ScreenToClient(hwndRoot, &ptFrom) ||
         !ClientToScreen(hwnd, &ptTo) || !ScreenToClient(hwndRoot, &ptTo)) return FALSE;
     ptFrom.y += CyCompatMenuBar(hwndRoot); ptTo.y += CyCompatMenuBar(hwndRoot);
@@ -1257,7 +1257,7 @@ static void DispatchWorkflowInput(MSG *lpmsg) {
 }
 
 static BOOL FCheckRouteAppendDelete(int idFleet) {
-    SCANSNAPSHOT snap = {0};
+    SCANSNAPSHOT snap = {};
     SCANOBJECT obj, objDrag;
     POINT ptFrom;
     FLEET *lpfl = LpflFromId((int16_t)idFleet);
@@ -1724,7 +1724,7 @@ static BOOL FTestRaceCancellation(void) {
 /* Inspect the managed bytes without completing the optional race wizard. */
 static BOOL FTestLegacyRaceImport(void) {
     char szOldPassword[] = "old-password", szNewPassword[] = "new-\xc3\xa9";
-    RTBOF rtbof = {0};
+    RTBOF rtbof = {};
     std::byte rgbBof[cbWireBof];
     PLAYER plr, plrSav;
     char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
@@ -1801,7 +1801,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     const char *pszExpected, *pszTarget, *pszYear, *pszCopyName;
     const char *pszHostSource, *pszHostPlayerSource, *pszHostOrderBase, *pszHostPickerBase;
     const char *pszDeleteMode;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     BOOL fDifferent = FALSE;
     RECT rcFrame;
     RECT rcScanner;

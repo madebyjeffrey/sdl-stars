@@ -8,6 +8,8 @@ root = Path(sys.argv[1]).resolve()
 manifest = Path(sys.argv[2]).resolve()
 rows = json.loads(manifest.read_text(encoding="utf-8"))
 generated = (manifest.parent / "generated", manifest.parent / "compat/win32/generated")
+sdk_shared = set(re.findall(r"tests/compat/[A-Za-z0-9_]+\.c",
+                           (root / "cmake/win32-reference-tests.cmake").read_text(encoding="utf-8")))
 count = 0
 production = set()
 references = set()
@@ -21,10 +23,15 @@ for row in rows:
     cpp = "-x c++" in command or "-x objective-c++" in command or path.suffix in (".cpp", ".mm")
     if name.startswith(("src/", "compat/win32/src/")) or any(path.is_relative_to(directory) for directory in generated):
         assert cpp, f"Owned production source compiled as C/Objective-C: {path}"
-        assert re.search(r"-std=(?:gnu|c)\+\+(?:20|2a)(?:\s|$)", command), f"Owned production source lacks C++20: {path}"
+        standards = re.findall(r"-std=(\S+)", command)
+        assert standards and standards[-1] in ("c++20", "c++2a"), f"Owned production source lacks ISO C++20: {path}"
+        assert "-Wpedantic" in command and "-Werror" in command, f"Owned production source lacks strict diagnostics: {path}"
+        assert not re.search(r"-fpermissive|-Wno-(?:missing-field-initializers|missing-braces|pedantic)|-Wno-error(?:=pedantic)?(?:\s|$)", command), f"Owned production source disables strict diagnostics: {path}"
         count += 1
         production.add(path)
     elif name.startswith("tests/"):
+        if name not in sdk_shared:
+            assert "-Wno-missing-field-initializers" not in command and "-Wno-missing-braces" not in command, f"Ordinary C++ consumer retains a migration suppression: {path}"
         if name in ("tests/compat/record_layout.c", "tests/compat/popup_payload_reference.c"):
             assert not cpp, "Independent frozen-declaration reference must remain C"
             references.add(name)

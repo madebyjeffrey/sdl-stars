@@ -68,7 +68,7 @@ static int TestPicker(HWND hwnd) {
 }
 
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword, hwndList;
     HMENU hmenu;
     HDC hdc, hdcOrdinary;
@@ -78,7 +78,7 @@ int main(void) {
     char szSnapshotDir[4096], szSnapshotPath[8192];
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     NATIVEFILE *pf;
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     OFSTRUCT ofs;
     size_t cb, i;
     BOOL fFound = FALSE;

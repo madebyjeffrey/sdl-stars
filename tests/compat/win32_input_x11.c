@@ -9,7 +9,7 @@
 #include <string.h>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); iResult = 1; goto LExit; } } while (0)
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd = NULL;
     Display *lpDisplay = NULL;
     Window window;

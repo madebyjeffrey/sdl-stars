@@ -357,9 +357,9 @@ static BOOL FCanvas(HWND hwnd) {
     SDL_FillSurfaceRect(lpnew, NULL, SDL_MapSurfaceRGB(lpnew, 0, 0, 0));
     if (hwnd->lpCanvas.get()) {
         SDL_Rect src, dst;
-        src = (SDL_Rect){0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
+        src = SDL_Rect{0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
                               StarsMin(hwnd->lpCanvas->h / iOld, dy / iScale) * iOld};
-        dst = (SDL_Rect){0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
+        dst = SDL_Rect{0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
         SDL_BlitSurfaceScaled(hwnd->lpCanvas.get(), &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
     }
     SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
@@ -394,7 +394,7 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         right = ((((int64_t)lprcClip->right) < (x + rc.right)) ? ((int64_t)lprcClip->right) : (x + rc.right));
         bottom = ((((int64_t)lprcClip->bottom) < (y + rc.bottom)) ? ((int64_t)lprcClip->bottom) : (y + rc.bottom));
         if (right > left && bottom > top) {
-            dst = (SDL_Rect){(int)left * iScale, (int)top * iScale,
+            dst = SDL_Rect{(int)left * iScale, (int)top * iScale,
                              (int)(right - left) * iScale, (int)(bottom - top) * iScale};
             cr = GetSysColor(COLOR_BTNFACE);
             SDL_FillSurfaceRect(lpSurface, &dst, SDL_MapSurfaceRGB(lpSurface, cr & 255, (cr >> 8) & 255, (cr >> 16) & 255));
@@ -421,8 +421,8 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         rc.right = (LONG)(right < clip.right ? right : clip.right);
         rc.bottom = (LONG)(bottom < clip.bottom ? bottom : clip.bottom);
         if (!FCanvas(lp)) return FALSE;
-        dst = (SDL_Rect){rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
-        src = (SDL_Rect){(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
+        dst = SDL_Rect{rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
+        src = SDL_Rect{(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
         if (!SDL_BlitSurface(lp->lpCanvas.get(), &src, lpSurface, &dst) ||
             !FComposeChildren(lp, lpSurface, left, top, &rc, iScale)) return FALSE;
     }
@@ -492,7 +492,7 @@ BOOL FCompatPresent(HWND hwnd) {
         SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
         lpwin->lpComposite.reset(lpnew);
     }
-    dst = (SDL_Rect){0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
+    dst = SDL_Rect{0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
     if (!SDL_BlitSurface(lpwin->lpCanvas.get(), NULL, lpwin->lpComposite.get(), &dst)) return FALSE;
     CompatGetSurfaceRect(lpwin, &rc);
     OffsetRect(&rc, 0, cyMenu);
@@ -717,16 +717,16 @@ static BOOL FAddUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc) {
 static BOOL FSubtractUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc, const RECT *lprcCut) {
     RECT hit;
     if (!IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(lprgrc, lpcrc, rc);
-    return FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, rc.top, rc.right, hit.top}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, hit.bottom, rc.right, rc.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, hit.top, hit.left, hit.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){hit.right, hit.top, rc.right, hit.bottom});
+    return FAddUpdate(lprgrc, lpcrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.bottom, rc.right, rc.bottom}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.top, hit.left, hit.bottom}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{hit.right, hit.top, rc.right, hit.bottom});
 }
 
 static void SetUpdate(HWND hwnd, RECT *rgrc, size_t crc) {
     size_t i;
     hwnd->rgrcUpdate.reset(rgrc); hwnd->crcUpdate = crc;
-    hwnd->rcUpdate = (RECT){}; hwnd->fUpdate = crc != 0;
+    hwnd->rcUpdate = RECT{}; hwnd->fUpdate = crc != 0;
     for (i = 0; i < crc; i++) {
         if (i == 0) hwnd->rcUpdate = rgrc[i];
         else {
@@ -773,7 +773,7 @@ BOOL WINAPI GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
     if (!lpwin)
         return FALSE;
     if (lprc)
-        *lprc = lpwin->fUpdate ? lpwin->rcUpdate : (RECT){};
+        *lprc = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     if (fErase && lpwin->fUpdate && lpwin->fErase) {
         hdc = GetDC(hwnd);
         if (hdc) {
@@ -799,7 +799,7 @@ HDC WINAPI BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
         return NULL;
     memset(lpps, 0, sizeof(*lpps));
     lpps->hdc = hdc;
-    lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : (RECT){};
+    lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     LpDC(hdc)->rcClip = lpps->rcPaint;
     LpDC(hdc)->rgrcPaint.reset(lpwin->rgrcUpdate.release()); LpDC(hdc)->crcPaint = lpwin->crcUpdate;
     lpwin->crcUpdate = 0;
@@ -863,7 +863,7 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
 
     if (!lpsurface)
         return FALSE;
-    rcClient = (RECT){0, 0, lpsurface->w / IDCScale(lpdc), lpsurface->h / IDCScale(lpdc)};
+    rcClient = RECT{0, 0, lpsurface->w / IDCScale(lpdc), lpsurface->h / IDCScale(lpdc)};
     if (lpdc->hwnd && !GetClientRect(lpdc->hwnd, &rcClient)) return FALSE;
     if (lpdc->fClip)
         IntersectRect(lprc, &lpdc->rcClip, &rcClient);
@@ -880,7 +880,7 @@ static LONG LCoord(int64_t l) {
 }
 
 static RECT RcDevice(HDC lpdc, RECT rc) {
-    return (RECT){LCoord((int64_t)rc.left - lpdc->ptOrg.x), LCoord((int64_t)rc.top - lpdc->ptOrg.y),
+    return RECT{LCoord((int64_t)rc.left - lpdc->ptOrg.x), LCoord((int64_t)rc.top - lpdc->ptOrg.y),
                   LCoord((int64_t)rc.right - lpdc->ptOrg.x), LCoord((int64_t)rc.bottom - lpdc->ptOrg.y)};
 }
 
@@ -888,7 +888,7 @@ BOOL WINAPI SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptOrg;
-    lpdc->ptOrg = (POINT){x, y};
+    lpdc->ptOrg = POINT{x, y};
     return TRUE;
 }
 
@@ -896,7 +896,7 @@ BOOL WINAPI SetBrushOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptBrush;
-    lpdc->ptBrush = (POINT){x, y};
+    lpdc->ptBrush = POINT{x, y};
     return TRUE;
 }
 
@@ -928,7 +928,7 @@ HRGN WINAPI CreateRectRgn(int left, int top, int right, int bottom) {
         return NULL;
     lpobj = LpNewObject(objRegion, 0, FALSE);
     if (!lpobj) return NULL;
-    lpobj->rcRegion = (RECT){StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
+    lpobj->rcRegion = RECT{StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
     return (HRGN)lpobj;
 }
 
@@ -992,10 +992,10 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
             if (fExclude) rgrc[crc++] = rc;
         } else if (!fExclude) rgrc[crc++] = rcHit;
         else {
-            if (rc.top < rcHit.top) rgrc[crc++] = (RECT){rc.left, rc.top, rc.right, rcHit.top};
-            if (rcHit.bottom < rc.bottom) rgrc[crc++] = (RECT){rc.left, rcHit.bottom, rc.right, rc.bottom};
-            if (rc.left < rcHit.left) rgrc[crc++] = (RECT){rc.left, rcHit.top, rcHit.left, rcHit.bottom};
-            if (rcHit.right < rc.right) rgrc[crc++] = (RECT){rcHit.right, rcHit.top, rc.right, rcHit.bottom};
+            if (rc.top < rcHit.top) rgrc[crc++] = RECT{rc.left, rc.top, rc.right, rcHit.top};
+            if (rcHit.bottom < rc.bottom) rgrc[crc++] = RECT{rc.left, rcHit.bottom, rc.right, rc.bottom};
+            if (rc.left < rcHit.left) rgrc[crc++] = RECT{rc.left, rcHit.top, rcHit.left, rcHit.bottom};
+            if (rcHit.right < rc.right) rgrc[crc++] = RECT{rcHit.right, rcHit.top, rc.right, rcHit.bottom};
         }
     }
     MergeRegion(rgrc, &crc);
@@ -1135,13 +1135,13 @@ void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, BOOL fSunken, BOOL fRight)
 int WINAPI FrameRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     RECT rc;
     if (!lprc || lprc->left >= lprc->right || lprc->top >= lprc->bottom) return 0;
-    rc = (RECT){lprc->left, lprc->top, lprc->right, lprc->top + 1};
+    rc = RECT{lprc->left, lprc->top, lprc->right, lprc->top + 1};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->left, lprc->bottom - 1, lprc->right, lprc->bottom};
+    rc = RECT{lprc->left, lprc->bottom - 1, lprc->right, lprc->bottom};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->left, lprc->top + 1, lprc->left + 1, lprc->bottom - 1};
+    rc = RECT{lprc->left, lprc->top + 1, lprc->left + 1, lprc->bottom - 1};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->right - 1, lprc->top + 1, lprc->right, lprc->bottom - 1};
+    rc = RECT{lprc->right - 1, lprc->top + 1, lprc->right, lprc->bottom - 1};
     return FillRect(hdc, &rc, hbr);
 }
 
@@ -1204,7 +1204,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
                 if (lpdc->fPaint) {
                     if (!IntersectRect(&rcPaint, &rcPart, &lpdc->rgrcPaint[j])) continue;
                 } else rcPaint = rcPart;
-                sdlrc = (SDL_Rect){rcPaint.left * iScale, rcPaint.top * iScale,
+                sdlrc = SDL_Rect{rcPaint.left * iScale, rcPaint.top * iScale,
                                    (rcPaint.right - rcPaint.left) * iScale, (rcPaint.bottom - rcPaint.top) * iScale};
                 if (!SDL_FillSurfaceRect(lpsurface, &sdlrc, SDL_MapSurfaceRGB(lpsurface,
                                         (BYTE)cr, (BYTE)(cr >> 8), (BYTE)(cr >> 16)))) return FALSE;
@@ -1335,7 +1335,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
         }
     }
     if (!fArea) goto MoveChildren;
-    rcMoved = (RECT){LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
+    rcMoved = RECT{LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
                      LCoord((int64_t)rcArea.right + dx), LCoord((int64_t)rcArea.bottom + dy)};
     fCopy = IntersectRect(&rcDest, &rcArea, &rcMoved);
     fErase = lpwin->fErase;
@@ -1345,7 +1345,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             // The whole-client variant moves pending damage with the pixels.
             if (!FSubtractUpdate(&rgrc, &crc, rc, &rcClip)) goto Fail;
             if (!IntersectRect(&rc, &rc, &rcClip)) continue;
-            rc = (RECT){LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
+            rc = RECT{LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
                         LCoord((int64_t)rc.right + dx), LCoord((int64_t)rc.bottom + dy)};
             if (!IntersectRect(&rc, &rc, &rcClip)) continue;
         }
@@ -1400,7 +1400,7 @@ BOOL WINAPI MoveToEx(HDC hdc, int x, int y, LPPOINT lppt) {
         return FALSE;
     if (lppt)
         *lppt = lpdc->pt;
-    lpdc->pt = (POINT){x, y};
+    lpdc->pt = POINT{x, y};
     return TRUE;
 }
 
@@ -1482,7 +1482,7 @@ BOOL WINAPI LineTo(HDC hdc, int x, int y) {
     if (!lpdc)
         return FALSE;
     pt = lpdc->pt;
-    lpdc->pt = (POINT){x, y};
+    lpdc->pt = POINT{x, y};
     if (!FClip(lpdc, &rc))
         return FALSE;
     Line(lpdc, rc, pt, lpdc->pt, TRUE, NULL);
@@ -1501,17 +1501,17 @@ BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
         return FALSE;
     if (l == r || t == b)
         return TRUE;
-    rcFill = lpdc->lppen->fNull ? (RECT){l, t, r, b} : (RECT){l + 1, t + 1, r - 1, b - 1};
+    rcFill = lpdc->lppen->fNull ? RECT{l, t, r, b} : RECT{l + 1, t + 1, r - 1, b - 1};
     FFillDevice(lpdc, RcDevice(lpdc, rcFill), lpdc->lpbrush, TRUE);
     // Counterclockwise from top-right, sharing one dash phase and painting
     // each corner once, matches the default Win32 rectangle traversal.
-    if (r - (int64_t)l == 1) Line(lpdc, rc, (POINT){l, t}, (POINT){l, b - 1}, FALSE, &iPhase);
-    else if (b - (int64_t)t == 1) Line(lpdc, rc, (POINT){r - 1, t}, (POINT){l, t}, FALSE, &iPhase);
+    if (r - (int64_t)l == 1) Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, FALSE, &iPhase);
+    else if (b - (int64_t)t == 1) Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, FALSE, &iPhase);
     else {
-        Line(lpdc, rc, (POINT){r - 1, t}, (POINT){l, t}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){l, t}, (POINT){l, b - 1}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){l, b - 1}, (POINT){r - 1, b - 1}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){r - 1, b - 1}, (POINT){r - 1, t}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{l, b - 1}, POINT{r - 1, b - 1}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{r - 1, b - 1}, POINT{r - 1, t}, TRUE, &iPhase);
     }
     return TRUE;
 }
@@ -1580,8 +1580,8 @@ BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
         SDL_SetError("Ellipse currently supports solid or null cosmetic pens"); return FALSE;
     }
     if (lpdc->lppen->fNull && (r - l <= 2 || b - t <= 2))
-        return FFillDevice(lpdc, (RECT){LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, TRUE);
-    el.rc = (RECT){(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
+        return FFillDevice(lpdc, RECT{LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, TRUE);
+    el.rc = RECT{(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
                    (LONG)StarsMin(r, rcClip.right), (LONG)StarsMin(b, rcClip.bottom)};
     el.cx = el.rc.right - el.rc.left;
     if ((size_t)el.cx > SIZE_MAX / (size_t)(el.rc.bottom - el.rc.top)) return FALSE;
@@ -1822,14 +1822,14 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
             dx += size.cx;
             if (dx > INT_MAX) goto LReturn;
             if ((flags & DT_WORDBREAK) && !(flags & DT_SINGLELINE) && dx > dxAvail && iBreak > iStart) {
-                rgline[cLines++] = (COMPATTEXTLINE){iStart, iBreak - iStart, dxBreak};
+                rgline[cLines++] = COMPATTEXTLINE{iStart, iBreak - iStart, dxBreak};
                 i = iBreak + 1;
                 while (i < c && sz[i] == ' ') i++;
                 goto LNextLine;
             }
             i += cStep;
         }
-        rgline[cLines++] = (COMPATTEXTLINE){iStart, i - iStart, (int)dx};
+        rgline[cLines++] = COMPATTEXTLINE{iStart, i - iStart, (int)dx};
         if (i < c && sz[i++] == '\r' && i < c && sz[i] == '\n') i++;
 LNextLine:
         if (rgline[cLines - 1].dx > dxMax) dxMax = rgline[cLines - 1].dx;
@@ -1947,8 +1947,8 @@ int WINAPI GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     lpbmi->bmiHeader = bi;
     // A format query may supply only the 40-byte header, with no palette storage.
     if (bi.biBitCount == 1 && !fQuery) {
-        lpbmi->bmiColors[0] = (RGBQUAD){0, 0, 0, 0};
-        lpbmi->bmiColors[1] = (RGBQUAD){255, 255, 255, 0};
+        lpbmi->bmiColors[0] = RGBQUAD{0, 0, 0, 0};
+        lpbmi->bmiColors[1] = RGBQUAD{255, 255, 255, 0};
     }
     if (!lpBits)
         return lpsurface->h;
@@ -1990,7 +1990,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
         memcpy(&index, rgb + sizeof(info.bi) + i * sizeof(index), sizeof(index));
         if (index >= lpdc->lppalette->cEntries) return FALSE;
         pe = RgpeCompatPalette(lpdc->lppalette)[index];
-        info.rgq[i] = (RGBQUAD){pe.peBlue, pe.peGreen, pe.peRed, 0};
+        info.rgq[i] = RGBQUAD{pe.peBlue, pe.peGreen, pe.peRed, 0};
     }
     // The decoder copies the color table; only the caller's bits remain borrowed.
     return FCompatNativeDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);

@@ -19,10 +19,10 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Record, THING, PART, popup and transfer families plus named SDK aggregates pass the full local matrix and all 16 platform checks at 449a53d. Final public resource-codec follow-up awaits platform qualification. |
-| B12: typed stable game arenas | Active | Typed physical slots, heap chains, ZIP/library buffers and native GUI temporaries pass the full local matrix. Final platform qualification and remaining printing/callback resource accounting are required. |
-| B13: application/session owner | Active | Core/UI value-state owners, original-name reference aliases, RNG fields and an owned native legacy file table are implemented and entering qualification. Entry/close ordering, callback payload handoffs and observer accounting remain required. |
-| B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
+| B11: remaining packed/resource layouts | Active | Every inventoried family, alias and SDK/resource adapter is implemented and passes the final strict local matrix. Final revision platform qualification remains. |
+| B12: typed stable game arenas | Active | Typed pools, ZIP/library arrays, heap chains, print/native temporaries and cleanup are implemented and pass the final strict local matrix. Final revision platform qualification remains. |
+| B13: application/session owner | Active | State/RNG/file/heap ownership, close/restart, primary-error handling, async handoffs and archived-observer type accounting pass the final strict local matrix. Final revision platform qualification remains. |
+| B14: strict C++20 gate | Active | ISO C++20, strict production variants and standalone headers are enforced. Final local matrix and 30 MinGW/GCC core syntax checks pass; final Linux/Windows CI remains. |
 
 ## Ownership changes in progress
 
@@ -1742,7 +1742,7 @@ and lifecycle accounting remain a required follow-up.
 
 
 The first complete foundation matrix passes 117 desktop / 28 native leaks /
-26 host / 42 sanitizer cases, all 27 source witnesses, and both 519-file
+26 host / 42 sanitizer cases and both 519-file
 regressions with the same 25 accepted warnings and no differences or skips.
 Cross-compiler header qualification additionally exposed GCC warnings on partial
 aggregate initializers that Clang accepts. The owner constructors now initialize
@@ -1754,9 +1754,97 @@ checks. The final matrix is being repeated for this portable initialization form
 The portable initialization form passes the complete matrix: 117 desktop tests
 (including all 28 native macOS leak checks and available tutorial smoke coverage),
 26 SDL-free host tests, 42 sanitizer cases and 111 public headers in both include
-orders. All 27 independent source witnesses pass with their unchanged models and
-assertion domains. Core/UI owner headers additionally pass local MinGW/GCC
+orders. The source-witness receipt is corrected below. Core/UI owner headers additionally pass local MinGW/GCC
 warning checks. Both regressions retain 519 matches through turn 150, the same
 25 accepted unused-storage warnings and zero differences/errors/skips.
 Debug/Release/host/sanitizer builds introduce no warnings. Platform CI and the
 remaining B13 lifecycle/handoff work are still required; B13 is not complete.
+
+
+A fresh source-witness run after moving globals into the owner exposed two
+remaining source-location assumptions: the library width guard and population
+table extractor still read globals.c. The earlier B13 claim of all 27 witness
+passes is superseded by this correction. Both now read the actual owner field
+in appstate.h; the library check also verifies the original-name alias. The
+population initializer, field-width guard, independent models, inputs, assertion
+domains and reported cases are unchanged. All 27 witnesses are being rerun before
+final qualification; a stale extraction failure is not a pass.
+
+
+## B13 application shutdown and callback handoffs
+
+WinMain has an outer session cleanup scope so initialization returns and handled
+failures close after primary alerts. FreeStuff stops the native UI while game/UI
+values are still alive, closes module snapshots/caches, then closes streams/heaps
+and resets the original value fields. Repeated close is safe; close from an
+active WNDPROC is rejected. The SDL-free host has its own scoped session close.
+Private inspection-class, library-path/list and input accumulators reset with
+that lifetime. Temporary-file serials and logical window IDs remain process
+metadata. A real fixture covers reentrant rejection, owned queued payload release,
+closed file tokens, cleared heap roots and successful initialization after close.
+
+Dialog callbacks capture monotonic logical IDs instead of HWND pointers. A
+move-only payload passes through the worker-post registry, queue and dispatch
+scope. It releases on rejection, allocation failure, removed-but-undispatched
+messages, target destruction, callback failure, shutdown and stale targets after
+restart. The registry keeps separate producer/registry references across SDL
+filters and validates pointer plus serial before reading an event's borrowed
+record. No registry lock is held across SDL callbacks or payload release. Nested
+dispatch restores its outer borrowed payload. Allocation requests/counts on
+successful paths remain unchanged; MSG/SDK layouts do not change. The permanent
+message fixture includes a producer blocked in an SDL filter during cancellation,
+and joins native macOS leaks plus Linux ASan/UBSan/LSan coverage.
+
+Native memory-block chains and application print temporaries have explicit owners.
+ZIP entry/pointer arrays and library list growth start actual trivial array
+lifetimes using the existing byte-preserving helper, retaining every allocation
+size and spare representation. The archived observer now uses the typed fleet
+accessor and signed toolbar enum. A compile-only object target checks its reads
+against current headers with declarations for its retired native-only inspection
+APIs. It does not execute or restore the retired native backend. The actual SDL
+observer continues in the available tutorial checks; original tutor parser
+signatures and observation output are unchanged.
+
+The two source-location adaptations now pass a fresh complete run: all 27
+witnesses, with unchanged models/case domains. The colony extractor retains
+239,344 cases and 1,331,470 assertions. This supersedes the earlier B13 receipt
+that still assumed declarations lived in globals.c.
+
+
+## B14 strict production gate
+
+Production C++/Objective-C++ uses ISO C++20 with extensions off and
+-Wpedantic -Werror for every owned source variant, private test clone and generated
+table. The manifest checks the actual commands: 116 production sources and
+1,358 variants locally. CMake spells the Objective-C++ ISO mode c++2a; GNU modes
+remain rejected. All 112 public headers compile independently in both standard
+library include orders with strict diagnostics. Local MinGW/GCC syntax checks
+also pass all 30 core sources. The unused zero-storage CRT symbol is removed,
+and C compound literals become standard C++ braced values.
+
+Ordinary C++ harnesses lose their blanket missing-field/braces suppressions and
+use equivalent empty initializers. Only the 38 unchanged C inputs also compiled
+independently against the real Windows SDK retain their named C-style initializer
+warning exception. Their contents, independent C compilation and assertion
+vectors are unchanged. The two frozen C layout/payload oracles remain C; external
+SDKs retain their own ABI. These are reference/interop boundaries, not production
+GNU language allowances. Runtime packing remains the separately inventoried
+private physical-geometry constraint; wire codecs use explicit byte layouts.
+
+Final local qualification passes 119 desktop tests, including all 29 permanent
+native macOS leak checks and available tutorial smoke coverage; 26 SDL-free host
+tests; 43 ASan/UBSan cases; all 27 source witnesses; and both 519-file regressions
+through turn 150 with the same 25 accepted unused-storage warnings and zero
+differences/errors/skipped inputs. Debug/Release/host/sanitizer builds introduce
+no warnings. The full 80-page tutorial remains unfinished. Final revision
+Linux/Windows CI is still required before milestone completion and PR readiness.
+
+
+The final desktop and SDL-free host executables additionally pass native macOS
+leaks after turn generation in separate isolated copies: zero leaks/bytes for
+both. Paired functional runs return the documented successful generation status
+1; leaks returns 0. The archived observer's new compile-only target passes in
+the Debug test build. Release builds have tests disabled and therefore omit that
+target; their production application build passes independently. The manifest
+also rejects controlled GNU-mode overrides, removed pedantic diagnostics and
+production missing-braces suppression; its actual final CTest passes.

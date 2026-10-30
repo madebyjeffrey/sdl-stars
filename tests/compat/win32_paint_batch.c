@@ -34,7 +34,7 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     HBRUSH hbr;
     int i = (int)GetWindowLongPtr(hwnd, GWLP_ID);
-    SDL_Event event = {0};
+    SDL_Event event = {};
 
     if (msg == WM_APP) {
         event.type = SDL_EVENT_WINDOW_EXPOSED;
@@ -78,10 +78,10 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd;
     MSG msg;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HDC hdc;
     HBRUSH hbr;
     RECT rc;

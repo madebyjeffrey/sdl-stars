@@ -114,7 +114,7 @@ static void TestFormattedTextBounds(void) {
 
 #ifdef STARS_UI_SDL
 static void TestScannerSnapshotUtf8(void) {
-    SCANSNAPSHOT snap = {0};
+    SCANSNAPSHOT snap = {};
     char sz[2048];
     size_t cb;
     NATIVEFILE *pf;

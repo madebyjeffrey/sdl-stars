@@ -8,7 +8,7 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int nCmdShow) {
     const char *pszExpected = getenv("STARS_TEST_COMMAND");
     const char *pszHeadless = getenv("STARS_TEST_HEADLESS");
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd;
     RECT rc;
     if (!SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING) ||

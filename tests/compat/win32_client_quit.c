@@ -17,9 +17,9 @@ static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 #endif
 
 static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     size_t i;
     const char *pszRoot;
     char szCollision[512];

@@ -434,7 +434,7 @@ static void test_battle_plan_prefix_replay(void) {
     uint8_t badIndex[] = {0xf0, 0x40};
     uint8_t shortPlan[] = {0, 0};
     uint8_t threeBytes[] = {0, 0, 0};
-    uint8_t oneByte[] = {0};
+    uint8_t oneByte[] = {};
     uint8_t invalidName[] = {0, 0, 0, 0, 0, 0xc3, 0};
     uint8_t validName[] = {0x10, 0xb2, 0x35, 0xe4, 0, 'X', 0};
     BTLPLAN rgplan[16]{};

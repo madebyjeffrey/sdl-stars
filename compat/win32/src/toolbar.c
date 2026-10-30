@@ -137,7 +137,7 @@ static int AddBitmap(HWND hwnd, int c, const TBADDBITMAP *lpadd) {
     rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));
     if (!rgbmp) { DeleteObject(hcopy); return -1; }
     lp->rgbmp = rgbmp; iFirst = lp->cImage;
-    lp->rgbmp[lp->cbmp++] = (COMPATTOOLBITMAP){hcopy, iFirst, c}; lp->cImage += c;
+    lp->rgbmp[lp->cbmp++] = COMPATTOOLBITMAP{hcopy, iFirst, c}; lp->cImage += c;
     InvalidateRect(hwnd, NULL, TRUE);
     return iFirst;
 }
@@ -216,7 +216,7 @@ static void ClickToolbar(HWND hwnd, int i, BOOL fDrop) {
     btn = lp->rgbtn[i].btn;
     if (!IsWindowEnabled(hwnd) || !(btn.fsState & TBSTATE_ENABLED) || (btn.fsStyle & BTNS_SEP)) return;
     if (fDrop) {
-        nm.hdr = (NMHDR){hwnd, (UINT_PTR)hwnd->idChild, TBN_DROPDOWN};
+        nm.hdr = NMHDR{hwnd, (UINT_PTR)hwnd->idChild, TBN_DROPDOWN};
         nm.iItem = btn.idCommand; nm.tbButton = btn; nm.rcButton = lp->rgbtn[i].rc;
         // Menu activation is independent of the split button's action/check
         // state, and remains visible throughout the parent's modal menu loop.

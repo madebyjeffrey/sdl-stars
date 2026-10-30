@@ -1053,7 +1053,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    wp = (WINDOWPOS){hwnd, hwndAfter, x, y, dx, dy, flags};
+    wp = WINDOWPOS{hwnd, hwndAfter, x, y, dx, dy, flags};
     wpOld = wp;
     if (!FCompatPosition(lpwin, &wpOld)) return FALSE;
     if (!(flags & SWP_NOSENDCHANGING)) SendMessageA(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);

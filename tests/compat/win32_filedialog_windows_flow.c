@@ -37,8 +37,8 @@ int StarsTest_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle
 }
 
 int main(void) {
-    WNDCLASSA wc = {0};
-    OPENFILENAMEA of = {0};
+    WNDCLASSA wc = {};
+    OPENFILENAMEA of = {};
     char szCwd[PATH_MAX], szAfter[PATH_MAX], szFile[PATH_MAX], szTitle[128];
     NATIVEFILE *lpfile;
     MSG msg;

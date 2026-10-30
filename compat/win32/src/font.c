@@ -295,7 +295,7 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize)
         dx += lp->dx; i += c;
     }
     if (dx > INT_MAX) return FALSE;
-    *lpsize = (SIZE){(LONG)dx, lpfont->tm.tmHeight};
+    *lpsize = SIZE{(LONG)dx, lpfont->tm.tmHeight};
     return TRUE;
 }
 

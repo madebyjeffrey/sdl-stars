@@ -12,7 +12,7 @@ static int cMessages, cDialogs, cDialogErrors, cCommands;
 static uint64_t rgidDialog[2];
 static SDL_WindowID rgidNative[2];
 static INT_PTR CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     size_t i;
     BOOL fFound = FALSE;
     (void)w; (void)l;
@@ -39,7 +39,7 @@ static const STARSCOMPATWINDOW *LpItem(const STARSCOMPATSNAPSHOT *lpsnap, uint64
     return NULL;
 }
 static int SDLCALL Worker(void *lpv) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     uint64_t id = *(uint64_t *)lpv;
     if (StarsCompatCaptureHierarchy(&snap) || StarsCompatResolveWindow(id) || StarsCompatShowInspector()) return 1;
     return 0;
@@ -58,7 +58,7 @@ static int TestStyles(void) {
         { 0, TRUE, WS_POPUP | DS_SETFONT | DS_MODALFRAME, "DS_SETFONT | DS_MODALFRAME", "BS_" },
         { 1, FALSE, WS_CHILD | 0x000c, "0x0000000c", "BS_PUSHBUTTON" },
     };
-    STARSCOMPATWINDOW item = {0};
+    STARSCOMPATWINDOW item = {};
     STARSCOMPATSNAPSHOT snap = { &item, 1 };
     size_t i, cb;
     NATIVEFILE *lpfile;
@@ -75,17 +75,17 @@ static int TestStyles(void) {
     return 0;
 }
 int main(int argc, char **argv) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndChild, hwndNested, hwndHidden, hwndOwned, hwndDuplicate, hwndViewer, hwndNew, hwndPaint;
     uint64_t id, idChild, idNested, idViewer;
-    STARSCOMPATSNAPSHOT snap = {0}, snapAfter = {0};
+    STARSCOMPATSNAPSHOT snap = {}, snapAfter = {};
     const STARSCOMPATWINDOW *lp;
     NATIVEFILE *lpfile;
     char sz[8192];
     size_t cb, i;
     int cBefore, iStatus;
     SDL_Thread *lpthread;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     BYTE r, g, b, a;
 
     CHECK(TestStyles() == 0);

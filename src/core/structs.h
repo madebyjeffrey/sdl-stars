@@ -1688,7 +1688,7 @@ struct _ini {
 }; /* size=0x1a */
 
 // Runtime scratch follows its native payload alignment when root packing is
-// retired in B12. No file codec consumes this storage.
+// retained for private allocation geometry. No file codec consumes this storage.
 inline constexpr std::size_t cbXferPayload = (std::max)({sizeof(FLEET), sizeof(PLANET), sizeof(THING)});
 inline constexpr std::size_t cbXferAlign = (std::max)({alignof(FLEET), alignof(PLANET), alignof(THING)});
 struct _xfer {

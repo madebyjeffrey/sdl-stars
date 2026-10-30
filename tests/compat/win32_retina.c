@@ -20,7 +20,7 @@ int main(void) {
     HDC hdc;
     HBITMAP hbmp, hbmpOld;
     HFONT hfont, hfontOld;
-    LOGFONTA lf = {0};
+    LOGFONTA lf = {};
     TEXTMETRICA tmBefore, tmAfter;
     SIZE sizeBefore, sizeAfter;
     RECT rc = {0, 0, 200, 60}, rcClip = {5, 30, 20, 50};

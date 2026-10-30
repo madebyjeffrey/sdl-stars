@@ -117,7 +117,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
     memmove(lp->rgitem + i + 1, lp->rgitem + i, (size_t)(lp->cItem - i) * sizeof(*lp->rgitem));
-    lp->rgitem[i] = (COMPATLISTITEM){pszNew, 0, FALSE}; lp->cItem++; lp->nMutation++;
+    lp->rgitem[i] = COMPATLISTITEM{pszNew, 0, FALSE}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
     if (lp->iAnchor >= i) lp->iAnchor++;

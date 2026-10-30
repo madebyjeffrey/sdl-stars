@@ -488,4 +488,3 @@ decltype(APPUISTATE::rgszSpeed) &rgszSpeed = GetAppUiState().rgszSpeed;
 decltype(APPUISTATE::vbrcVCRFocus) &vbrcVCRFocus = GetAppUiState().vbrcVCRFocus;
 decltype(APPUISTATE::vrgbEnvCur) &vrgbEnvCur = GetAppUiState().vrgbEnvCur;
 decltype(APPUISTATE::vrgbMachineConfig) &vrgbMachineConfig = GetAppUiState().vrgbMachineConfig;
-uint8_t _ctype[0];

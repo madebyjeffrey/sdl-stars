@@ -45,7 +45,7 @@ static void Init(OPENFILENAMEA *lp, char *pszFile, const char *pszTitle, const c
     pszFile[0] = 0; cTicks = 0; cPrompts = 0; fPromptPending = FALSE;
 }
 int main(int argc, char **argv) {
-    WNDCLASSA wc = {0};
+    WNDCLASSA wc = {};
     OPENFILENAMEA ofn;
     char szFile[4096], szCwd[4096], szAfter[4096];
     const char *rgInvalid[] = {"Portal bad URI", "Portal remote", "Portal malformed", "Portal empty", "Portal multiple", "Portal unavailable", "Portal failed"};

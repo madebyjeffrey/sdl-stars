@@ -170,7 +170,7 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     TEXTMETRIC tm;
     PAINTSTRUCT ps, psOther;
     MSG msg;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     SDL_Window *lpSDL[2];
     SDL_Renderer *lpRenderer[2];
     int cPaint, x, y, cText;
@@ -311,7 +311,7 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
 }
 
 int main(int argc, char **argv) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND rghwnd[2];
     PAINTTEST rgwin[2] = {{.i = 0, .color = RGB(32, 64, 112), .fOk = TRUE},
                          {.i = 1, .color = RGB(96, 48, 64), .fOk = TRUE}};

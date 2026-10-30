@@ -46,7 +46,7 @@ static int InitPrinter(PRINTDLG *lp, const char *pszFile) {
 static void FreePrinter(PRINTDLG *lp) { DeleteDC(lp->hDC); GlobalFree(lp->hDevMode); GlobalFree(lp->hDevNames); }
 static int FPrefix(const char *pszFile, const char *psz) {
     NATIVEFILE *lp = PfNativeOpen(pszFile, "rb");
-    char sz[16] = {0};
+    char sz[16] = {};
     size_t cb = strlen(psz), cbRead;
     if (!lp) return 0;
     if (cb > sizeof(sz)) { ICloseNativeFile(lp); return 0; }
@@ -74,9 +74,9 @@ int main(int argc, char **argv) {
     HBITMAP hbmp;
     HFONT hfont;
     HGDIOBJ hfontOld;
-    LOGFONT lf = {0};
+    LOGFONT lf = {};
     HBRUSH hbr;
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     char szPages[4096], szAbort[4096], szImplicit[4096], szPaper[4096];
 #ifndef _WIN32
     char szMock[4096], szLog[4096], szCapture[4096], szPath[8192], szArg[4096], szRetained[4096];

@@ -354,7 +354,7 @@ static void test_utf8_design_and_plan_bounds(void) {
 }
 
 static void test_utf8_raw_battle_plan(void) {
-    BTLPLAN btlplan = {0};
+    BTLPLAN btlplan = {};
     BTLPLAN btlplanRead;
     HDR hdr;
     uint8_t rgb[64];

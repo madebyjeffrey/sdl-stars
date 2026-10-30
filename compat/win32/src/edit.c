@@ -516,7 +516,7 @@ static void EditContextMenu(HWND hwnd, LPARAM l) {
     UINT id;
     hmenu = CreatePopupMenu();
     if (!hmenu) return;
-    if (l == -1) { pt = (POINT){2, 2}; ClientToScreen(hwnd, &pt); }
+    if (l == -1) { pt = POINT{2, 2}; ClientToScreen(hwnd, &pt); }
     AppendMenuA(hmenu, MF_STRING | (hwnd->pszEditUndo && fWrite ? 0 : MF_GRAYED), WM_UNDO, "&Undo");
     AppendMenuA(hmenu, MF_SEPARATOR, 0, NULL);
     AppendMenuA(hmenu, MF_STRING | (fCopy && fWrite ? 0 : MF_GRAYED), WM_CUT, "Cu&t");

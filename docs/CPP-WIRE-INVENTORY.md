@@ -366,3 +366,17 @@ BITMAPCOREHEADER or BITMAPINFOHEADER values decoded from fixed little-endian
 resource bytes. Palette and pixel bytes are copied unchanged; complete known
 header publication adds no rejection of short/unknown copied resource prefixes.
 The public adapter codec is shared by wrapper and application producers.
+
+
+B12/B13 final ownership accounting: SDL-owned ZIP entry/pointer arrays and library
+list growth use the same byte-preserving typed lifetime helper as physical game
+slots, without changing allocation sizes or spare contents. Native memory chains,
+print temporaries, queued/worker payloads, stream tables and core/UI values have
+explicit session/resource owners. Callback/timer shutdown precedes game storage
+release. New owner metadata never enters record codecs; original enum/field
+widths, fixed wire sizes and all baseline bytes remain unchanged.
+
+B14 removes the final unused `_ctype[0]` CRT declaration. All twelve historical
+zero-tail families have migrated dispositions, and owned declarations compile
+under strict ISO C++20. Private runtime packing remains only for the measured
+physical geometry already documented above; persistence uses explicit codecs.

@@ -143,7 +143,7 @@ static void LayoutCombo(HWND hwnd, BOOL fRequested) {
     if (lp->fSizing || !GetWindowRect(hwnd, &rc)) return;
     cy = lp->cyField + 6;
     if (fRequested && rc.bottom - rc.top > cy) lp->cyDrop = StarsMax(3 * cy, rc.bottom - rc.top - cy);
-    pt = (POINT){rc.left, rc.top};
+    pt = POINT{rc.left, rc.top};
     if (hwnd->hwndParent) ScreenToClient(hwnd->hwndParent, &pt);
     {
         StarsRestore<BOOL> restoreSizing(lp->fSizing);
@@ -214,21 +214,21 @@ static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
         cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0); c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0);
         n = NCompatListMutation(hwnd);
         for (i = iTop, y = 1; i < c && y < rc.bottom - 1; i++, y += cyItem) {
-            item = (RECT){1, y, rc.right - 1, StarsMin(rc.bottom - 1, y + cyItem)};
+            item = RECT{1, y, rc.right - 1, StarsMin(rc.bottom - 1, y + cyItem)};
             if (!DrawComboItem(hwnd, hdc, &item, i, FALSE, i == iSel) || !IsWindow(hwndPaint)) return;
             if (NCompatListMutation(hwnd) != n) { InvalidateRect(hwndPaint, NULL, TRUE); break; }
         }
     } else {
         // Keep the complete raised button inside the field's two-pixel sunken
         // frame; painting on that frame would overwrite its top/right bevel.
-        arrow = (RECT){StarsMax(2, rc.right - 19), 2, rc.right - 2, rc.bottom - 2};
-        item = (RECT){2, 2, arrow.left, rc.bottom - 2};
+        arrow = RECT{StarsMax(2, rc.right - 19), 2, rc.right - 2, rc.bottom - 2};
+        item = RECT{2, 2, arrow.left, rc.bottom - 2};
         if (!lp->hwndEdit && !DrawComboItem(hwnd, hdc, &item, iSel, TRUE, GetFocus() == hwnd)) return;
         hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
         if (hbr) { FillRect(hdc, &arrow, hbr); DeleteObject(hbr); }
         CompatDrawClassicEdge(hdc, &arrow, lp->fDropped, TRUE);
         for (j = 0; j < 4; j++) {
-            item = (RECT){arrow.left + 5 + j, (rc.bottom - 4) / 2 + j, arrow.right - 5 - j, (rc.bottom - 4) / 2 + j + 1};
+            item = RECT{arrow.left + 5 + j, (rc.bottom - 4) / 2 + j, arrow.right - 5 - j, (rc.bottom - 4) / 2 + j + 1};
             if (lp->fDropped) OffsetRect(&item, 1, 1);
             FillRect(hdc, &item, (HBRUSH)GetStockObject(IsWindowEnabled(hwnd) ? BLACK_BRUSH : GRAY_BRUSH));
         }
@@ -405,7 +405,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!FCombo(hwnd, lp)) return 0;
         if (!lp->fDropped) OpenCombo(hwnd);
         else {
-            pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+            pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
             if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
                 cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
                 i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
@@ -416,7 +416,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_LBUTTONUP:
         if (!lp->fDropped) return 0;
-        pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
         if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
@@ -427,7 +427,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_MOUSEMOVE:
         if (!lp->fDropped) return 0;
-        pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
         if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0); i = iTop + (pt.y - rc.top - 1) / cyItem;

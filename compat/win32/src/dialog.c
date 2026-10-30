@@ -148,7 +148,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
         pszTitle = lpitem->pszTitle ? lpitem->pszTitle : MAKEINTRESOURCE(lpitem->idTitle);
         if (!pszClass || lpitem->cbCreate || (UINT_PTR)pszTitle <= UINT16_MAX) goto fail;
-        rc = (RECT){lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
+        rc = RECT{lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
         MapDialogRect(hwnd, &rc);
         hwndChild = CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,

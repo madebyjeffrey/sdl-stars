@@ -243,7 +243,7 @@ HCURSOR WINAPI SetCursor(HCURSOR hcursor) {
 }
 void CompatCursorPoint(HWND hwnd, int x, int y) {
     HWND hwndOld = hwndMouse;
-    hwndMouse = hwnd; ptMouse = (POINT){x, y};
+    hwndMouse = hwnd; ptMouse = POINT{x, y};
     if (lpCursor && lpCursor->fInvert) {
         if (hwndOld != hwnd && LpCompatWindow(hwndOld)) FCompatPresent(hwndOld);
         FCompatPresent(hwnd);

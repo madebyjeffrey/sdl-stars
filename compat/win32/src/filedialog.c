@@ -322,7 +322,7 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     char szPath[PATH_MAX];
     const char *pszHome;
     if (msg == WM_GETMINMAXINFO) {
-        ((MINMAXINFO *)l)->ptMinTrackSize = (POINT){420, 320}; return TRUE;
+        ((MINMAXINFO *)l)->ptMinTrackSize = POINT{420, 320}; return TRUE;
     }
     if (msg == WM_INITDIALOG) { SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
     if (!lp) return FALSE;
@@ -499,7 +499,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     cx = StarsMin(640, work.right - work.left - 32); cy = StarsMin(440, work.bottom - work.top - 64);
     if (cx < 420 || cy < 320) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
-    rc = (RECT){work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
+    rc = RECT{work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
     rc.right = rc.left + cx; rc.bottom = rc.top + cy;
     hwnd = HwndCompatDynamicDialog(lpof->lpstrTitle ? lpof->lpstrTitle : fSave ? "Save As" : "Open", WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME, 0, &rc, hwndRoot, FileDialogProc);
     if (!hwnd) { dlg.dwError = CDERR_MEMALLOCFAILURE; goto restore; }

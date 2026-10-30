@@ -68,7 +68,7 @@ static void RefitPlanetPane(HWND hwnd) {
     si.nMax = StarsMax(0, dy - 1); si.nPage = StarsMax(1, rc.bottom); si.nPos = lp->y;
     SetPlanetPaneScroll(hwnd, SB_VERT, &si);
     GetWindowRect(lp->hwndContent, &rcContent);
-    pt = (POINT){rcContent.left, rcContent.top};
+    pt = POINT{rcContent.left, rcContent.top};
     ScreenToClient(hwnd, &pt);
     if (rcContent.right - rcContent.left != StarsMax(dx, rc.right) || rcContent.bottom - rcContent.top != StarsMax(dy, rc.bottom)) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = TRUE;

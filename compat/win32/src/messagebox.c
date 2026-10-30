@@ -52,7 +52,7 @@ LRESULT CALLBACK CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     switch (msg) {
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps); if (!hdc) return 0;
-        rc = (RECT){0, 0, lp->cxText, lp->cyText};
+        rc = RECT{0, 0, lp->cxText, lp->cyText};
         hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
         if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
         hrgn = CreateRectRgn(0, 0, lp->cxText, lp->cyText);
@@ -114,7 +114,7 @@ static void PaintMessageIcon(HWND hwnd, COMPATMSGBOX *lp) {
         }
         holdFont = SelectObject(hdc, lp->hfontIcon);
         SetBkMode(hdc, TRANSPARENT); SetTextColor(hdc, icon == MB_ICONEXCLAMATION ? RGB(0, 0, 0) : RGB(255, 255, 255));
-        rc = (RECT){16, 16, 48, 48}; DrawTextA(hdc, psz, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        rc = RECT{16, 16, 48, 48}; DrawTextA(hdc, psz, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
         if (holdFont) SelectObject(hdc, holdFont);
     }
     EndPaint(hwnd, &ps);
@@ -228,7 +228,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     cxButtons = box.cButtons * 88 + (box.cButtons - 1) * 8;
     cx = (((StarsMax(320, cxButtons + 32)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(320, cxButtons + 32)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
     cx = (((StarsMax(cx, 480)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(cx, 480)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
-    rc = (RECT){rcWork.left, rcWork.top, rcWork.left + cx, rcWork.top + 160};
+    rc = RECT{rcWork.left, rcWork.top, rcWork.left + cx, rcWork.top + 160};
     ex = (type & (MB_TOPMOST | MB_SYSTEMMODAL)) ? WS_EX_TOPMOST : 0;
     hwnd = HwndCompatDynamicDialog(pszCaption ? pszCaption : "Error", WS_POPUP | WS_CAPTION | WS_SYSMENU, ex, &rc, hwndRoot, MessageDialogProc);
     if (!hwnd) goto done;
@@ -236,11 +236,11 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     hdc = CreateCompatibleDC(NULL); if (!hdc) goto done;
     hold = SelectObject(hdc, box.hfont);
     box.cxText = StarsMax(32, cx - xText - 16);
-    rcText = (RECT){0, 0, box.cxText, 0};
+    rcText = RECT{0, 0, box.cxText, 0};
     result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
     cyMax = StarsMax(32, rcWork.bottom - rcWork.top - 128);
     if (rcText.bottom > cyMax) {
-        box.cxText -= 20; rcText = (RECT){0, 0, box.cxText, 0};
+        box.cxText -= 20; rcText = RECT{0, 0, box.cxText, 0};
         result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
     }
     SelectObject(hdc, hold); DeleteDC(hdc);

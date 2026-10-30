@@ -19,11 +19,11 @@ static void Drain(void) {
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
 }
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndSecond, hwndChild, hwndPopup;
     RECT rc, rcOwner;
     POINT pt, ptCursor;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HMENU hmenu;
     HDC hdc;
     HBRUSH hbr;

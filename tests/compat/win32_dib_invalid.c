@@ -64,7 +64,7 @@ static int TestDibHeaderBytes(void) {
 
 int TestInvalidDibs(void) {
     struct { BITMAPINFOHEADER bi; RGBQUAD rgcr[2]; } info = {};
-    BYTE rgb[8] = {0};
+    BYTE rgb[8] = {};
     COMPATDIB dib;
     SDL_Surface *lpsurface;
 

@@ -374,7 +374,7 @@ static void PopupPaint(COMPATPOPUP *lppop) {
         rc = lppop->rgrc[i];
         y = (rc.top + rc.bottom) / 2;
         if (lp->rgitem[i].flags & MF_SEPARATOR) {
-            text = (RECT){rc.left + 6, y, rc.right - 6, y + 1};
+            text = RECT{rc.left + 6, y, rc.right - 6, y + 1};
             hbr = CreateSolidBrush(GetSysColor(COLOR_BTNSHADOW)); FillRect(hdc, &text, hbr); DeleteObject(hbr);
             OffsetRect(&text, 0, 1);
             hbr = CreateSolidBrush(GetSysColor(COLOR_BTNHIGHLIGHT)); FillRect(hdc, &text, hbr); DeleteObject(hbr); continue;

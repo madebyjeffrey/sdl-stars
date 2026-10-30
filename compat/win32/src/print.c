@@ -227,7 +227,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     }
     if (idEscape == GETPHYSPAGESIZE || idEscape == GETPRINTINGOFFSET) {
         if (!lpOut) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
-        *(POINT *)lpOut = idEscape == GETPHYSPAGESIZE ? (POINT){lp->cxPhysical, lp->cyPhysical} : (POINT){75, 75}; return 1;
+        *(POINT *)lpOut = idEscape == GETPHYSPAGESIZE ? POINT{lp->cxPhysical, lp->cyPhysical} : POINT{75, 75}; return 1;
     }
     lpSurface = LpCompatPrinterSurface(hdc);
     if (idEscape == STARTDOC) {
