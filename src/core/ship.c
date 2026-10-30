@@ -176,36 +176,36 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
     int16_t  grbit;
     FLEET    fl;
     int16_t  j;
-    RTXFERX *prtxferx;
-    RTXFER  *prtxfer;
+    uint8_t *prtxferx;
+    uint8_t  *prtxfer;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        prtxfer = (RTXFER *)lprt;
-        if (prtxfer->grobj1 != grobjFleet || prtxfer->grobj2 != grobjOther) {
+        prtxfer = (uint8_t *)lprt;
+        if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
             return TRUE;
         }
         if (!FLookupFleet(iFleet, &fl)) {
             return TRUE;
         }
         pt = fl.pt;
-        if (!FLookupFleet(prtxfer->id1, &fl)) {
+        if (!FLookupFleet(CxvFromPrefix(prtxfer, 2).id1(), &fl)) {
             return TRUE;
         }
         if (fl.pt.x != pt.x || fl.pt.y != pt.y) {
             return TRUE;
         }
-        grbit = prtxfer->grbitItems;
+        grbit = CxvFromPrefix(prtxfer, 6).grbitItems();
         if (rt == rtLogCargoXfer16) {
-            prtxferx = (RTXFERX *)lprt;
+            prtxferx = (uint8_t *)lprt;
         }
         j = 0;
         i = 0;
         while (i < 5) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    lppl->rgwtMin[i] -= (int16_t)prtxfer->rgcQuan[j];
+                    lppl->rgwtMin[i] -= (int16_t)CxvFromPrefix(prtxfer, 6 + (j + 1)).cQuan8(j);
                 } else {
-                    lppl->rgwtMin[i] -= prtxferx->rgcQuan[j];
+                    lppl->rgwtMin[i] -= CxvFromPrefix(prtxferx, 6 + (j + 1) * 2).cQuan16(j);
                 }
                 j++;
             }

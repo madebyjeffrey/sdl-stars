@@ -67,12 +67,9 @@ static void test_FRunLogRecord_refunds_undelivered_cargo(void) {
     gd.fGeneratingTurn = TRUE;
     idPlayer = 0;
     memset(rgb, 0, sizeof(rgb));
-    ((RTXFER *)rgb)->id1 = lppl->id;
-    ((RTXFER *)rgb)->id2 = idfl;
-    ((RTXFER *)rgb)->grobj1 = grobjPlanet;
-    ((RTXFER *)rgb)->grobj2 = grobjFleet;
-    ((RTXFER *)rgb)->grbitItems = 1;
-    ((RTXFER *)rgb)->rgcQuan[0] = -100;
+    rgb[0] = (uint8_t)lppl->id; rgb[1] = (uint8_t)((uint16_t)lppl->id >> 8);
+    rgb[2] = (uint8_t)idfl; rgb[3] = (uint8_t)((uint16_t)idfl >> 8);
+    rgb[4] = 0x21; rgb[5] = 1; rgb[6] = 0x9c;
     TEST_ASSERT(FRunLogRecord(rtLogCargoXfer8, 7, rgb));
 
     lppl = LpplStarsTestHomeworld(0);
@@ -500,7 +497,76 @@ static void test_control_record_partial_effects(void) {
     TEST_CHECK(hdr.rt == rtChgPassword && hdr.cb == 4 && memcmp(rgb, minusOne, 4) == 0);
 }
 
-TEST_LIST = {{"control records retain partial research and password reads", test_control_record_partial_effects},
+static void test_cargo_log_wire_widths(void) {
+    struct XFERCASE { int32_t rgQuan[5]; RecordType rt; uint8_t mask; uint8_t rgb[12]; int16_t cb; };
+    const XFERCASE cases[] = {
+        {{127, -127, 0, 1, 0}, rtLogCargoXfer8, 0x0b, {0x7f, 0x81, 1}, 3},
+        {{-128, 32767, 0, 0, 1}, rtLogCargoXfer16, 0x13, {0x80, 0xff, 0xff, 0x7f, 1, 0}, 6},
+        {{-32768, 32768, 0, -1, 0}, rtLogCargoXfer32, 0x0b, {0, 0x80, 0xff, 0xff, 0, 0x80, 0, 0, 0xff, 0xff, 0xff, 0xff}, 12},
+    };
+    LOGXFER source{}, target{};
+    HDR hdr;
+    uint8_t rgb[32];
+    const uint8_t prefix[] = {0x41, 1, 0x8e, 2, 0x42};
+
+    TEST_ASSERT(FStarsTestInit());
+    source.id = 321; source.grobj = grobjFleet; target.id = 654; target.grobj = grobjOther;
+    for (const XFERCASE &v : cases) {
+        imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
+        memcpy(source.rgdItem, v.rgQuan, sizeof(source.rgdItem));
+        LogMakeValidXfer(&source, &target);
+        TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+        TEST_CHECK(hdr.rt == v.rt && hdr.cb == 6 + v.cb);
+        TEST_CHECK(memcmp(rgb, prefix, sizeof(prefix)) == 0 && rgb[5] == v.mask && memcmp(rgb + 6, v.rgb, v.cb) == 0);
+    }
+    imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
+    source.rgdItem[0] = 127; source.rgdItem[1] = -127; source.rgdItem[2] = 0; source.rgdItem[3] = 1; source.rgdItem[4] = 0;
+    LogMakeValidXfer(&source, &target);
+    source.rgdItem[0] = -126; source.rgdItem[1] = 127; source.rgdItem[3] = -1;
+    LogMakeValidXfer(&source, &target);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogCargoXfer8 && hdr.cb == 7 && rgb[5] == 1 && rgb[6] == 1 && imemLogCur == 9);
+    source.rgdItem[0] = -1; source.rgdItem[1] = 0; source.rgdItem[3] = 0;
+    LogMakeValidXfer(&source, &target);
+    TEST_CHECK(imemLogCur == 0 && hdrPrev.rt == rtEOF);
+    // Writer-only signed-ID fixture: old unsigned wire IDs do not compare
+    // equal to negative native IDs. Never replay a negative lookup ID here.
+    imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
+    source.id = -1; source.rgdItem[0] = 5;
+    LogMakeValidXfer(&source, &target);
+    source.rgdItem[0] = 6;
+    LogMakeValidXfer(&source, &target);
+    TEST_CHECK(imemLogCur == 18);
+}
+
+static void test_cargo_lookup_prefixes(void) {
+    char szDir[MAX_PATH];
+    FLEET *lpfl;
+    PLANET *lppl;
+    uint8_t missing[] = {0xff, 1, 0, 0, 0x42};
+    uint8_t foreign[] = {0, 0, 0xff, 3, 0x22};
+    int16_t ish;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("cargo_lookup_prefixes", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost()); idPlayer = 0;
+    TEST_ASSERT(LpflFromId(511) == NULL && LpflFromId(1023) == NULL);
+    for (ish = 0; ish < 16 && rglpshdef[0][ish].fFree; ish++) {}
+    TEST_ASSERT(ish < 16);
+    lppl = LpplStarsTestHomeworld(0); TEST_ASSERT(lppl != NULL);
+    lpfl = LpflStarsTestAddFleet(0, lppl->id, ish, 1);
+    foreign[0] = (uint8_t)lpfl->id; foreign[1] = (uint8_t)((uint16_t)lpfl->id >> 8);
+    const RecordType rgrt[] = {rtLogCargoXfer8, rtLogCargoXfer16, rtLogCargoXfer32};
+    for (RecordType rt : rgrt) {
+        TEST_CHECK(!FRunLogRecord(rt, 0, missing));
+        TEST_CHECK(FRunLogRecord(rt, 0, foreign));
+    }
+}
+
+TEST_LIST = {{"cargo log widths, coalescing and signed ID comparisons", test_cargo_log_wire_widths},
+             {"cargo lookup failures stop before a missing mask", test_cargo_lookup_prefixes},
+             {"control records retain partial research and password reads", test_control_record_partial_effects},
              {"battle-plan replay retains short deletion and publication", test_battle_plan_prefix_replay},
              {"design log codecs retain partial-effect receipts", test_FRunLogRecord_design_partial_effects},
              {"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},

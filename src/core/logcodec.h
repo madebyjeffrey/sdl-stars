@@ -51,4 +51,22 @@ inline bool FEncodeLogHdr(RTLOGHDR header, std::span<std::byte> rgb) noexcept {
     return output.FWriteI16Le(header.cbLog) && output.FWriteBytes(std::as_bytes(std::span(header.rgbUnused)));
 }
 
+inline constexpr std::size_t cbWireCargoXfer = 6;
+
+inline bool FDecodeCargoXferPrefix(std::span<const std::byte> rgb, RTXFER &transfer) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t id1, id2;
+    std::uint8_t grobj, items;
+    if (!input.FReadU16Le(id1) || !input.FReadU16Le(id2) || !input.FReadU8(grobj) || !input.FReadU8(items)) return false;
+    transfer.id1 = id1; transfer.id2 = id2;
+    transfer.grobj1 = grobj & 15; transfer.grobj2 = grobj >> 4; transfer.grbitItems = items;
+    return true;
+}
+inline bool FEncodeCargoXferPrefix(RTXFER transfer, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireCargoXfer) return false;
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteU16Le(transfer.id1) && output.FWriteU16Le(transfer.id2) &&
+           output.FWriteU8(static_cast<std::uint8_t>(transfer.grobj1 | (transfer.grobj2 << 4))) && output.FWriteU8(transfer.grbitItems);
+}
+
 #endif

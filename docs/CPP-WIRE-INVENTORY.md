@@ -55,7 +55,7 @@ expressions that would become stale when unrelated lines move.
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, qualification active |
-| Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer logs remain active | B10 in qualification |
+| Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 in qualification |
 | Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | HDR 10-bit length/6-bit type, XOR/checksum state, continuation records, partial read/write effects | B11 after dependent families |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |
@@ -179,3 +179,16 @@ is unrelated to the explicitly zero-byte wire prefix. IDs are decoded into
 aligned signed scalars; no integer span aliases packet bytes. Split/merge keeps
 input order, duplicates and odd trailing bytes, and ship transfers retain their
 seven-byte prefix, signed deltas, lookup/read order and two-pass mutation order.
+
+
+## Historical minimum transfer records
+
+The generated inventory separately records the four historical one-element
+quantity fields. RTXFER/RTXFERX/RTXFERL retain their seven-/eight-/ten-byte
+minimum metadata measurements; RTXFERF retains its nine-byte measurement.
+Their actual wire prefixes are six/six/six/seven bytes, followed by mask-selected
+signed quantities of width one/two/four/two. No production consumer traverses
+these fields as variable arrays: explicit codecs/views read/write the bytes.
+The first three families migrate in B10; ship transfer migrated in B08.
+These declarations retain frozen measurements while B11 finishes packing/layout
+retirement; they are not a new runtime variable-storage scheme.

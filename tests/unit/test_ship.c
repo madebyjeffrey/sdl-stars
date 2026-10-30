@@ -252,7 +252,30 @@ static void test_IWarpFastestForWaypoint_low_fuel(void) {
     TEST_CHECK_(iWarp == iWarpIdeal + 1, "fastest warp %d, ideal warp %d", iWarp, iWarpIdeal);
 }
 
-TEST_LIST = {{"fleet ID log bytes preserve order, duplicates and prefix length", test_fleet_id_log_bytes},
+static void test_jettison_log_bytes(void) {
+    FLEET *lpflDst, *lpflSrc;
+    int16_t ishdef;
+    PLANET pl{};
+    uint8_t wrongObject[] = {0, 0, 0, 0, 0x11};
+    uint8_t rgb[10]{};
+
+    TEST_ASSERT(FAddScoutPair("jettison_log_bytes", &lpflDst, &lpflSrc, &ishdef));
+    TEST_CHECK(FEnumCalcJettison(NULL, rtLogCargoXfer32, 0, NULL, 0));
+    TEST_CHECK(FEnumCalcJettison(wrongObject, rtLogCargoXfer8, 0, NULL, 0));
+    TEST_CHECK(FEnumCalcJettison(wrongObject, rtLogCargoXfer16, 0, NULL, 0));
+    rgb[0] = (uint8_t)lpflSrc->id; rgb[1] = (uint8_t)((uint16_t)lpflSrc->id >> 8);
+    rgb[4] = 0x42; rgb[5] = 5; rgb[6] = 0x81; rgb[7] = 0x7e;
+    pl.rgwtMin[0] = 1000; pl.rgwtMin[2] = 500;
+    TEST_CHECK(FEnumCalcJettison(rgb, rtLogCargoXfer8, 0, &pl, lpflDst->id));
+    TEST_CHECK(pl.rgwtMin[0] == 1127 && pl.rgwtMin[2] == 374);
+    rgb[6] = 0; rgb[7] = 0x80; rgb[8] = 0xff; rgb[9] = 0x7f;
+    pl.rgwtMin[0] = 1000; pl.rgwtMin[2] = 500;
+    TEST_CHECK(FEnumCalcJettison(rgb, rtLogCargoXfer16, 0, &pl, lpflDst->id));
+    TEST_CHECK(pl.rgwtMin[0] == 33768 && pl.rgwtMin[2] == -32267);
+}
+
+TEST_LIST = {{"jettison preserves signed log quantities and lookup read paths", test_jettison_log_bytes},
+             {"fleet ID log bytes preserve order, duplicates and prefix length", test_fleet_id_log_bytes},
              {"ship-transfer log bytes retain signed quantities and lookup order", test_ship_transfer_log_bytes},
              {"Merge2Fleets keeps no-heal", test_Merge2Fleets_keeps_no_heal},
              {"Merge2Fleets caps ship counts", test_Merge2Fleets_caps_ship_count},

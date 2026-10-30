@@ -17,8 +17,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
-| B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. All battle, AI and battle-plan families pass the full local matrix; final Linux/Windows qualification is required. |
-| B10: message/log payloads | Active | Player-message storage/prefixes and generated parameter framing pass the full local matrix; control/cargo/log families and final platform qualification remain required. |
+| B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
+| B10: message/log payloads | Active | All player, parameter, control and cargo families pass the full local matrix. Final Linux/Windows qualification remains required. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
@@ -1006,3 +1006,33 @@ host regressions each match 519 files through turn 150, with 25 accepted
 unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
 inputs, catalogs, baselines and layout/alignment contracts remain unchanged.
 Cargo-transfer logs and final B10 platform qualification remain required.
+
+
+## B10 cargo-transfer logs in qualification
+
+Cargo headers and signed byte/word/long quantities use explicit little-endian
+access. Coalescing retains its original unsigned wire-ID/native signed-ID
+comparison, magnitude thresholds, masks, cancellation/no-scrub behavior and
+quantity order. Writer headers initialize their numeric prefix before quantity
+packing. Original runtime LOGXFER frames, arithmetic and two-pass effects remain.
+
+Replay and jettison read only the bytes required at each old lookup/callback
+boundary. A missing first/foreign second fleet can return before an absent mask;
+ignored jettison record types still read nothing. Independent vectors and real
+writer/replay tests cover width boundaries, signed quantities/IDs, coalescing,
+cancellation, odd offsets, minimal five-byte lookup prefixes and jettison.
+Production one-element-tail overlays are removed; the inventory records their
+four remaining historical minimum-size metadata declarations separately.
+Focused contracts pass. Full local and final platform qualification remain
+required before B10 completion; B11–B14 remain pending.
+
+
+Cargo-transfer local qualification: 114/114 desktop tests including all 27
+native leak checks and available tutorial smoke coverage, 25/25 host tests,
+37/37 ASan/UBSan cases, all 27 source witnesses and 102 public headers in both
+include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match 519 files through turn 150, with 25
+accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Frozen inputs, catalogs, baselines and layout/alignment contracts remain
+unchanged. This completes B10 implementation and local qualification; its final
+Linux/Windows gate remains pending. B11–B14 remain required for PR completion.

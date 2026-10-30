@@ -63,7 +63,13 @@ tails = {
     "BTLDATA": ("rgtok", "B09", "14 + ctok * 29 + battle events", "wire; cbData bounds complete data"),
 }
 migrated_tails = {"PLPROD", "RTCHGPRODQ", "PLORD", "RTSHDEF", "RTFLEET", "RTFLEETIDS", "BTLREC", "BTLREC26", "BTLDATA", "MSGPLR", "RTPLRMSG"}
-report = {"schema": 1, "contract": "spec/S01-game-file-records.md", "records": [], "tails": [], "zero_storage": [], "sites": []}
+# These historical minimum-size records keep their frozen measurement fields;
+# production payload traversal uses explicit bytes, never an oversized array.
+minimum_records = {
+    "RTXFER": (6, 1, 5, "B10"), "RTXFERX": (6, 2, 5, "B10"),
+    "RTXFERL": (6, 4, 5, "B10"), "RTXFERF": (7, 2, 16, "B08"),
+}
+report = {"schema": 1, "contract": "spec/S01-game-file-records.md", "records": [], "tails": [], "zero_storage": [], "minimum_records": [], "sites": []}
 paths = sorted(p for d in ("src", "compat/win32/src", "compat/win32/include")
                for p in (root / d).rglob("*") if p.suffix in (".h", ".c", ".cpp", ".mm"))
 # Include every generic byte-copy and size/offset expression, rather than trying
@@ -119,6 +125,14 @@ for path in paths:
         assert match[1] == member, f"Unknown tail member: {owner}:{match[0]}"
         report["tails"].append(dict(type=owner, member=member, checkpoint=phase, length=length, role=role))
         site("zero-tail", match.start(), match.end(), type=owner, checkpoint=phase)
+    if name == "src/core/structs.h":
+        for match in re.finditer(r"\b(?:int8_t|int16_t|int32_t)\s+rgcQuan\s*\[1\]\s*;", text):
+            tag = list(re.finditer(r"\bstruct\s+(\w+)\s*\{", text[:match.start()]))[-1][1]
+            owner = re.findall(r"typedef\s+struct\s+" + re.escape(tag) + r"\s+(\w+)\s*;", text)[0]
+            prefix, width, count, phase = minimum_records[owner]
+            report["minimum_records"].append(dict(type=owner, member="rgcQuan", prefix=prefix, width=width,
+                count=count, checkpoint=phase, role="frozen minimum-size metadata; variable payload uses byte views"))
+            site("historical-minimum-record", match.start(), match.end(), type=owner, checkpoint=phase)
     if name == "src/core/enums.h":
         start = text.index("enum RecordType")
         body = text[text.index("{", start):close(text, text.index("{", start), "{", "}")]
@@ -126,6 +140,7 @@ for path in paths:
             assert match[1] in record_phase, f"Uninventoried record type: {match[1]}"
             report["records"].append(dict(name=match[1], value=int(match[2]), checkpoint=record_phase[match[1]]))
 assert {row["type"] for row in report["tails"]} == set(tails) - migrated_tails, "Tail inventory changed: update the migration disposition"
+assert {row["type"] for row in report["minimum_records"]} == set(minimum_records), "Minimum-record disposition changed"
 assert {row["name"] for row in report["records"]} == set(record_phase), "Record inventory changed"
 # Independent historical sizes/offsets remain part of the report. These are
 # expected C reference measurements, not new expectations derived from codecs.

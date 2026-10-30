@@ -770,6 +770,53 @@ int main() {
             for (auto b : encoded) CHECK(b == std::byte{0xa5});
         }
     }
+    {
+        const std::array<std::byte, 6> golden = {std::byte{0x34}, std::byte{0x12}, std::byte{0xcd}, std::byte{0xab}, std::byte{0xf2}, std::byte{0xa5}};
+        RTXFER transfer{}; transfer.rgcQuan[0] = -7;
+        CHECK(FDecodeCargoXferPrefix(golden, transfer));
+        CHECK(transfer.id1 == 0x1234 && transfer.id2 == 0xabcd && transfer.grobj1 == 2 && transfer.grobj2 == 15 && transfer.grbitItems == 0xa5 && transfer.rgcQuan[0] == -7);
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::uint32_t v = 65535 - w;
+            auto rgb = golden;
+            rgb[0] = static_cast<std::byte>(w % 256); rgb[1] = static_cast<std::byte>(w / 256);
+            rgb[2] = static_cast<std::byte>(v % 256); rgb[3] = static_cast<std::byte>(v / 256);
+            CHECK(FDecodeCargoXferPrefix(rgb, transfer) && transfer.id1 == w && transfer.id2 == v);
+            std::array<std::byte, 8> output; output.fill(std::byte{0x55});
+            CHECK(FEncodeCargoXferPrefix(transfer, std::span(output).subspan(1, 6)));
+            CHECK(std::memcmp(output.data() + 1, rgb.data(), 6) == 0 && output.front() == std::byte{0x55} && output.back() == std::byte{0x55});
+        }
+        for (std::size_t cb = 0; cb < 6; cb++) {
+            transfer.id1 = 42; transfer.id2 = 43; transfer.grbitItems = 0x55;
+            CHECK(!FDecodeCargoXferPrefix(std::span(golden).first(cb), transfer) && transfer.id1 == 42 && transfer.id2 == 43 && transfer.grbitItems == 0x55);
+            std::array<std::byte, 6> output; output.fill(std::byte{0x55});
+            CHECK(!FEncodeCargoXferPrefix(transfer, std::span(output).first(cb)));
+            for (auto b : output) CHECK(b == std::byte{0x55});
+        }
+        std::array<std::byte, 5> lookupPrefix{};
+        std::memcpy(lookupPrefix.data(), golden.data(), 5);
+        NATIVECARGOXFERVIEW prefix{lookupPrefix, 0};
+        CHECK(prefix.id1() == 0x1234 && prefix.id2() == 0xabcd && prefix.grobj1() == 2 && prefix.grobj2() == 15);
+        std::array<std::byte, 28> rgb; rgb.fill(std::byte{0xa5});
+        NATIVECARGOXFERVIEW quantities{rgb, 1};
+        for (unsigned w = 0; w < 256; w++) {
+            const auto q = static_cast<std::int8_t>(w < 128 ? static_cast<int>(w) : static_cast<int>(w) - 256);
+            quantities.SetCQuan8(0, q);
+            CHECK(quantities.cQuan8(0) == q && std::to_integer<unsigned>(rgb[7]) == w);
+        }
+        for (unsigned w = 0; w < 65536; w++) {
+            const auto q = static_cast<std::int16_t>(w < 32768 ? static_cast<int>(w) : static_cast<int>(w) - 65536);
+            quantities.SetCQuan16(1, q);
+            CHECK(quantities.cQuan16(1) == q && std::to_integer<unsigned>(rgb[9]) == w % 256 && std::to_integer<unsigned>(rgb[10]) == w / 256);
+        }
+        const std::int32_t values[] = {0, 1, -1, 127, -128, 32767, -32768, std::numeric_limits<std::int32_t>::min(), std::numeric_limits<std::int32_t>::max()};
+        for (auto q : values) {
+            quantities.SetCQuan32(4, q);
+            CHECK(quantities.cQuan32(4) == q);
+            const auto bits = std::bit_cast<std::uint32_t>(q);
+            for (unsigned j = 0; j < 4; j++) CHECK(std::to_integer<unsigned>(rgb[23 + j]) == ((bits >> (8 * j)) & 255));
+        }
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+    }
     std::puts("History/production/action/order/design/fleet/battle/AI/message/log wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }
