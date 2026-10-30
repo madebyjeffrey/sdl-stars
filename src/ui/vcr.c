@@ -371,7 +371,7 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 GlobalPD.lpshdef = rglpshdef[vrgtok[viVCRFocus].iplr] + vrgtok[viVCRFocus].ishdef;
             }
             GlobalPD.fShowDamage = TRUE;
-            GlobalPD.fToken = TRUE;
+            GlobalPD.SetFToken(TRUE);
             GlobalPD.fHideCounts = vrgtok[viVCRFocus].iplr != idPlayer;
             Popup(hwnd, LOWORD(lParam), HIWORD(lParam));
             return 0;

@@ -213,8 +213,8 @@ int main(void) {
     CHECK(GetFocus() == hwndFocus && DestroyWindow(hwnd) && !hwndTooltip);
     for (i = 0; i < 3; i++) {
         GlobalPD.grPopup = grPopupMineral;
-        GlobalPD.rgi[0] = 0; GlobalPD.rgi[1] = 0;
-        GlobalPD.rgi[2] = 2000; GlobalPD.rgi[3] = 68; GlobalPD.rgi[4] = 11;
+        GlobalPD.SetRgi(0, 0); GlobalPD.SetRgi(1, 0);
+        GlobalPD.SetRgi(2, 2000); GlobalPD.SetRgi(3, 68); GlobalPD.SetRgi(4, 11);
         Popup(hwndFrame, 200, 180);
         hwnd = LpCompatWindow(hwndPopup);
         CHECK(hwnd && hwnd->hwndOwner == hwndFrame && IsWindowVisible(hwnd));

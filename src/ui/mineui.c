@@ -934,7 +934,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                 GlobalPD.lpshdef = rglpshdef[lpfl->iPlayer] + rgid[c];
                 GlobalPD.fHideCounts = idPlayer != lpfl->iPlayer;
                 GlobalPD.fShowDamage = FALSE;
-                GlobalPD.fToken = FALSE;
+                GlobalPD.SetFToken(FALSE);
                 GlobalPD.fSummary = TRUE;
             } else {
                 GlobalPD.grPopup = grPopupFleet;
@@ -950,7 +950,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             GlobalPD.lpshdef = rglpshdefSB[lppl->iPlayer] + lppl->isb;
             GlobalPD.fHideCounts = idPlayer != lppl->iPlayer;
             GlobalPD.fShowDamage = TRUE;
-            GlobalPD.fToken = FALSE;
+            GlobalPD.SetFToken(FALSE);
             GlobalPD.fSummary = TRUE;
             Popup(hwndMine, x, y);
             break;
@@ -973,22 +973,22 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             }
             if (pl.det >= detSome && FCanTerraformLppl(&pl, rgMin, rgMax, rgCost, TRUE)) {
                 GlobalPD.iPlanMin = rgMin[GlobalPD.iPlanetVar];
-                GlobalPD.iPlanMax = rgMax[GlobalPD.iPlanetVar];
+                GlobalPD.SetIPlanMax(rgMax[GlobalPD.iPlanetVar]);
                 if (GlobalPD.iPlanMin == envNone) {
                     GlobalPD.iPlanMin = GlobalPD.iPlanVal;
                 }
                 if (GlobalPD.iPlanMax == envNone) {
-                    GlobalPD.iPlanMax = GlobalPD.iPlanVal;
+                    GlobalPD.SetIPlanMax(GlobalPD.iPlanVal);
                 }
                 if (GlobalPD.iPlanMin == GlobalPD.iPlanMax)
                     goto NoTerra;
             } else {
             NoTerra:
                 GlobalPD.iPlanMin = envNone;
-                GlobalPD.iPlanMax = envNone;
+                GlobalPD.SetIPlanMax(envNone);
             }
             GlobalPD.iPlrVal = rgplr[idPlayer].rgEnvVar[GlobalPD.iPlanetVar];
-            GlobalPD.iPlrMin = rgplr[idPlayer].rgEnvVarMin[GlobalPD.iPlanetVar];
+            GlobalPD.SetIPlrMin(rgplr[idPlayer].rgEnvVarMin[GlobalPD.iPlanetVar]);
             GlobalPD.iPlrMax = rgplr[idPlayer].rgEnvVarMax[GlobalPD.iPlanetVar];
             Popup(hwndMine, x, y);
             break;
@@ -1109,18 +1109,18 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
         case htMineMineralConc3:
             FLookupPlanet(sel.scan.idpl, &pl);
             GlobalPD.grPopup = grPopupMineral;
-            GlobalPD.rgi[0] = (int16_t)(ht - 1);
+            GlobalPD.SetRgi(0, (int16_t)(ht - 1));
             for (i = 1; i <= 4; i++) {
-                GlobalPD.rgi[i] = -1;
+                GlobalPD.SetRgi(i, -1);
             }
             if (pl.det >= detSome) {
-                GlobalPD.rgi[3] = (uint32_t)pl.rgpctMinLevel[ht + 2];
-                GlobalPD.rgi[1] = pl.fHomeworld;
+                GlobalPD.SetRgi(3, (uint32_t)pl.rgpctMinLevel[ht + 2]);
+                GlobalPD.SetRgi(1, pl.fHomeworld);
                 if (pl.det > detSome) {
                     lVal = 0;
-                    GlobalPD.rgi[2] = pl.rgwtMin[ht - 1];
+                    GlobalPD.SetRgi(2, pl.rgwtMin[ht - 1]);
                     EstMineralsMined(&pl, rglQuan, -1, FALSE);
-                    GlobalPD.rgi[4] = rglQuan[ht - 1];
+                    GlobalPD.SetRgi(4, rglQuan[ht - 1]);
                     if (pl.iPlayer == iplrNone) {
                         for (ifl = 0; ifl < cFleet; ifl++) {
                             lpfl = rglpfl[ifl];
@@ -1135,7 +1135,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                             }
                         }
                         if (lVal > 0) {
-                            GlobalPD.rgi[4] = lVal;
+                            GlobalPD.SetRgi(4, lVal);
                         }
                     }
                 }

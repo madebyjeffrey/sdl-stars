@@ -25,8 +25,8 @@ for row in rows:
         count += 1
         production.add(path)
     elif name.startswith("tests/"):
-        if name == "tests/compat/record_layout.c":
-            assert not cpp, "Frozen layout reference must remain C"
+        if name in ("tests/compat/record_layout.c", "tests/compat/popup_payload_reference.c"):
+            assert not cpp, "Independent frozen-declaration reference must remain C"
             references.add(name)
         else:
             assert cpp, f"Ordinary test source compiled as C/Objective-C: {path}"

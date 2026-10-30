@@ -1480,3 +1480,42 @@ All sixteen Linux/Windows checks now pass for the preceding complete THING
 checkpoint `0c6222a`, including the Windows SDL/SDK, tutorial, both regression,
 source-witness and sanitizer gates. The scalar/drawing batch above is locally
 qualified; its platform checks will run on publication.
+
+
+## B11 popup payloads
+
+POPUPDATA has separate actual scalar and borrowed-pointer payloads; its anonymous
+aggregate/variant overlays are removed. Names, scalar widths, pointer borrowing,
+callback order and tag clearing stay. The existing factory/mine display reads
+`grbit`, which previously shared a numeric word with mineral, environment and
+design payloads. Explicit setters preserve those numeric carry effects, including
+the existing native-pointer-width distinction; this is not a factory-label fix.
+No pointer representation is encoded, copied into a byte codec or persisted.
+
+The independent frozen C POPUPDATA declaration remains a twenty-two-byte
+measurement. The owned runtime carrier now uses seventy-two scalar/header bytes
+and four native pointers (104 bytes on this platform); its former overlay size
+is retired explicitly in the layout comparison. Every file-record width and
+all other measured widths remain unchanged; the six previously migrated runtime
+alignment contracts stay. The immutable C declarations are not edited.
+
+A named independent C test oracle uses those frozen declarations; it remains C
+through an explicit, test-only compilation exception. Both ordinary and natural
+wire harnesses compare the new setters against every sixteen-bit value over all
+34 numeric/pointer publication operations and 100,000 mixed operations. These
+sanitizer probes and all 90 staged core/UI/unit syntax checks pass. The mutable
+SDL tutorial observer retains field access through the updated shared header;
+the archived observer has no POPUPDATA/GlobalPD access and its source parser's
+literal tutor signatures are unchanged.
+
+Full integrated qualification passes 117 desktop tests, including all 28 native
+leak checks and available tutorial smoke coverage; 26 SDL-independent host tests;
+41 sanitizer cases; all 27 source witnesses; and 105 headers in both include
+orders. The two layout variants each compare 2,328,224 popup publications against
+the C oracle. Both regressions match 519 files through turn 150 with the same
+25 accepted unused-storage warnings, zero differences/errors and no skipped
+inputs. Debug/Release/host/sanitizer builds introduce no warnings. All frozen
+references, resource/catalog bytes and regression baselines remain unchanged.
+The explicit POPUPDATA runtime-footprint retirement is the only new layout
+comparison change; it does not alter a file format. Platform qualification and
+the remaining component/transfer families and B12–B14 are still required.

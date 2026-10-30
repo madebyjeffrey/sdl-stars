@@ -37,6 +37,8 @@ must not be reported as executable call counts. The report records:
   the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
+  Runtime-only carriers can retire an owned footprint explicitly, with separate
+  behavior evidence; the independent historical measurement remains checked.
 
 The checker rejects an unassigned record name or zero-tail declaration. It is a
 conservative source index, not a C++ alias-analysis or lifetime proof. Each later
@@ -56,7 +58,7 @@ expressions that would become stale when unrelated lines move.
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
-| Remaining fixed game records | THING and remaining runtime aliases; PLAYER/PLANET/preferences migrated locally; unknown tags and reserved bits | B11 |
+| Remaining fixed game records | THING/PLAYER/PLANET/preferences use explicit codecs and fields; component/popup/transfer runtime aliases remain in progress | B11 |
 | Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Bounded menu/dialog/accelerator bytes and explicit DIB/icon/cursor headers; native GDI SDK input isolated in FCompatNativeDib; ownership stays module-scoped | B11 locally qualified |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
@@ -308,3 +310,13 @@ B11 OBJ: drawing callbacks carry a single actual void pointer and convert it
 back to their selected actual object type. The pointer stays borrowed and never
 enters a record codec. The inactive pointer union is removed with its existing
 runtime size, alignment, callback signatures and selection rules retained.
+
+
+B11 POPUPDATA: separate actual scalar and pointer payloads replace the native
+union. Borrowed pointers never enter a byte codec. A compatibility word retains
+the numeric `grbit` carry between popup kinds through explicit setters, verified
+against an independent C oracle using the unchanged frozen declarations. Only
+this runtime footprint is retired: twenty-two legacy overlay bytes become
+72 + four native-pointer widths; field widths and file records are unchanged.
+The archived native observer does not read this carrier; the current SDL
+observer compiles its original field names against the shared declaration.

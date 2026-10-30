@@ -813,7 +813,7 @@ void ShipCommandProc(HWND hwnd, WPARAM wParam, LPARAM lParam) {
                 GlobalPD.lpshdef = &rgshdef[ishdef];
                 GlobalPD.fHideCounts = FALSE;
                 GlobalPD.fShowDamage = TRUE;
-                GlobalPD.fToken = FALSE;
+                GlobalPD.SetFToken(FALSE);
                 GlobalPD.fSummary = FALSE;
                 Popup(hwndFleetCompLB, 10, 10);
             }

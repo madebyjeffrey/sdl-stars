@@ -893,48 +893,41 @@ struct _fleetsome {
 }; /* size=0xc */
 
 struct _popupdata {
-    GrPopupType grPopup; /* +0x0000 (2) */
-    union {
-        int32_t rgi[5]; /* +0x0002 (20) */
-        struct {
-            int16_t idPlanet;   /* +0x0002 (2) */
-            int16_t iPlanetVar; /* +0x0004 (2) */
-            int16_t iPlanVal;   /* +0x0006 (2) */
-            int16_t iPlanMin;   /* +0x0008 (2) */
-            int16_t iPlanMax;   /* +0x000A (2) */
-            int16_t iPlrVal;    /* +0x000C (2) */
-            int16_t iPlrMin;    /* +0x000E (2) */
-            int16_t iPlrMax;    /* +0x0010 (2) */
-        };
-        struct {
-            int16_t idPlan;   /* +0x0002 (2) */
-            int16_t cMax;     /* +0x0004 (2) */
-            int16_t cCur;     /* +0x0006 (2) */
-            int16_t cOperate; /* +0x0008 (2) */
-            int16_t fFactory; /* +0x000A (2) */
-        };
-        struct {
-            int16_t dxOut; /* +0x0002 (2) */
-            char   *psz;   /* +0x0004 (2) */
-        };
-        int16_t iPlayer; /* +0x0002 (2) */
-        struct {
-            FLEET   *lpfl;       /* +0x0002 (4) */
-            int16_t  fRedDamage; /* +0x0006 (2) */
-            int16_t  dxDamage;   /* +0x0008 (2) */
-            uint16_t grbit;      /* +0x000A (2) */
-        };
-        PART part; /* +0x0002 (8) */
-        struct {
-            SHDEF  *lpshdef;     /* +0x0002 (4) */
-            int16_t fShowDamage; /* +0x0006 (2) */
-            int16_t fHideCounts; /* +0x0008 (2) */
-            int16_t fToken;      /* +0x000A (2) */
-            int16_t fSummary;    /* +0x000C (2) */
-            int16_t itok;        /* +0x000E (2) */
-        };
-    };
-}; /* size=0x16 */
+    GrPopupType grPopup;
+    int32_t rgi[5];
+    int16_t idPlanet, iPlanetVar, iPlanVal, iPlanMin, iPlanMax, iPlrVal, iPlrMin, iPlrMax;
+    int16_t idPlan, cMax, cCur, cOperate, fFactory;
+    int16_t dxOut;
+    char *psz;
+    int16_t iPlayer;
+    FLEET *lpfl;
+    int16_t fRedDamage, dxDamage;
+    uint16_t grbit;
+    PART part;
+    SHDEF *lpshdef;
+    int16_t fShowDamage, fHideCounts, fToken, fSummary, itok;
+
+    // The factory/mine display reads the old shared grbit word. Preserve its
+    // numeric carry between popup kinds without overlaying borrowed pointers.
+    // Other payloads are actual fields; their original scalar widths stay.
+    void SetRgi(int i, int32_t value) noexcept {
+        rgi[i] = value;
+        if (i == static_cast<int>((sizeof(void *) + 4) / 4)) grbit = static_cast<uint16_t>(value);
+    }
+    void SetIPlrMin(int16_t value) noexcept {
+        iPlrMin = value;
+        if constexpr (sizeof(void *) == 8) grbit = static_cast<uint16_t>(value);
+    }
+    void SetIPlanMax(int16_t value) noexcept {
+        iPlanMax = value;
+        if constexpr (sizeof(void *) == 4) grbit = static_cast<uint16_t>(value);
+    }
+    void SetFFactory(int16_t value) noexcept {
+        fFactory = value;
+        if constexpr (sizeof(void *) == 4) grbit = static_cast<uint16_t>(value);
+    }
+    void SetFToken(int16_t value) noexcept { fToken = value; grbit = static_cast<uint16_t>(value); }
+}; /* Runtime popup state, never serialized. */
 
 struct _prod {
     uint32_t cItem : 10, /* +0x0000 (4) @bit0 */

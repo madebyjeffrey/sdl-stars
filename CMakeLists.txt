@@ -63,7 +63,8 @@ file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
     "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
 list(REMOVE_ITEM STARS_CPP_HARNESSES
-    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c")
+    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c"
+    "${PROJECT_SOURCE_DIR}/tests/compat/popup_payload_reference.c")
 set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
@@ -319,12 +320,12 @@ if(STARS_BUILD_TESTS)
     target_compile_options(stars-test-encoding-views PRIVATE -Wall -Wextra -Wpedantic -Werror)
     add_test(NAME test_encoding_views COMMAND stars-test-encoding-views)
     set_tests_properties(test_encoding_views PROPERTIES LABELS "build;encoding" TIMEOUT 30)
-    add_executable(stars-test-wire-codecs tests/compat/wire_codecs.cpp)
+    add_executable(stars-test-wire-codecs tests/compat/wire_codecs.cpp tests/compat/popup_payload_reference.c)
     target_link_libraries(stars-test-wire-codecs PRIVATE stars_options)
     target_compile_options(stars-test-wire-codecs PRIVATE -Wall -Wextra -Werror)
     add_test(NAME test_wire_codecs COMMAND stars-test-wire-codecs)
     set_tests_properties(test_wire_codecs PROPERTIES LABELS "build;wire" TIMEOUT 30)
-    add_executable(stars-test-wire-codecs-natural tests/compat/wire_codecs.cpp)
+    add_executable(stars-test-wire-codecs-natural tests/compat/wire_codecs.cpp tests/compat/popup_payload_reference.c)
     target_link_libraries(stars-test-wire-codecs-natural PRIVATE stars_options)
     target_compile_definitions(stars-test-wire-codecs-natural PRIVATE STARS_TEST_NATURAL_RECORD_LAYOUT=1)
     target_compile_options(stars-test-wire-codecs-natural PRIVATE -Wall -Wextra -Werror)

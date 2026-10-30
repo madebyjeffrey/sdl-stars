@@ -2457,7 +2457,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
                 GlobalPD.lpshdef = rglpshdefSB[idPlayer] + sel.pl.isb;
                 GlobalPD.fHideCounts = FALSE;
                 GlobalPD.fShowDamage = TRUE;
-                GlobalPD.fToken = FALSE;
+                GlobalPD.SetFToken(FALSE);
                 GlobalPD.fSummary = FALSE;
                 Popup(hwndReportDlg, pt.x, pt.y);
             }
@@ -2506,12 +2506,12 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
             }
             i--;
             GlobalPD.grPopup = grPopupMineral;
-            GlobalPD.rgi[0] = i;
-            GlobalPD.rgi[2] = sel.pl.rgwtMin[i];
-            GlobalPD.rgi[3] = (uint32_t)sel.pl.rgMinConc[i];
+            GlobalPD.SetRgi(0, i);
+            GlobalPD.SetRgi(2, sel.pl.rgwtMin[i]);
+            GlobalPD.SetRgi(3, (uint32_t)sel.pl.rgMinConc[i]);
             EstMineralsMined(&sel.pl, rglQuan, -1, FALSE);
-            GlobalPD.rgi[4] = rglQuan[i];
-            GlobalPD.rgi[1] = sel.pl.fHomeworld;
+            GlobalPD.SetRgi(4, rglQuan[i]);
+            GlobalPD.SetRgi(1, sel.pl.fHomeworld);
             Popup(hwndReportDlg, pt.x, pt.y);
             break;
         case colPlanetProduction:
@@ -2523,7 +2523,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
         case colPlanetFactories:
             GlobalPD.grPopup = grPopupPlanetIndustry;
             GlobalPD.idPlan = sel.pl.id;
-            GlobalPD.fFactory = icol == colPlanetFactories;
+            GlobalPD.SetFFactory(icol == colPlanetFactories);
             if (GlobalPD.fFactory) {
                 GlobalPD.cMax = CMaxFactories(&sel.pl, idPlayer);
                 GlobalPD.cCur = sel.pl.cFactories;

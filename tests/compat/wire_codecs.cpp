@@ -19,7 +19,72 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
+// This test-only foreign seam compares the independent frozen C declaration.
+extern "C" void InitPopupReference(void);
+extern "C" uint16_t WPopupReference(uint16_t op, int32_t value);
+
 int main() {
+    {
+        POPUPDATA pd{};
+        FLEET fl{};
+        SHDEF sh{};
+        ARMOR armor{};
+        char szText[] = "popup";
+        InitPopupReference();
+        auto apply = [&](uint16_t op, int32_t value) {
+            const int16_t w = static_cast<int16_t>(static_cast<uint16_t>(value));
+            switch (op) {
+            case 0: pd.SetRgi(0, value); break;
+            case 1: pd.SetRgi(1, value); break;
+            case 2: pd.SetRgi(2, value); break;
+            case 3: pd.SetRgi(3, value); break;
+            case 4: pd.SetRgi(4, value); break;
+            case 5: pd.SetIPlrMin(w); break;
+            case 6: pd.SetIPlanMax(w); break;
+            case 7: pd.SetFFactory(w); break;
+            case 8: pd.SetFToken(w); break;
+            case 9: pd.grbit = static_cast<uint16_t>(w); break;
+            case 10: pd.idPlanet = w; break;
+            case 11: pd.iPlanetVar = w; break;
+            case 12: pd.iPlanVal = w; break;
+            case 13: pd.iPlanMin = w; break;
+            case 14: pd.iPlrVal = w; break;
+            case 15: pd.iPlrMax = w; break;
+            case 16: pd.idPlan = w; break;
+            case 17: pd.cMax = w; break;
+            case 18: pd.cCur = w; break;
+            case 19: pd.cOperate = w; break;
+            case 20: pd.dxOut = w; break;
+            case 21: pd.iPlayer = w; break;
+            case 22: pd.fRedDamage = w; break;
+            case 23: pd.dxDamage = w; break;
+            case 24: pd.fShowDamage = w; break;
+            case 25: pd.fHideCounts = w; break;
+            case 26: pd.fSummary = w; break;
+            case 27: pd.itok = w; break;
+            case 28: pd.lpfl = &fl; break;
+            case 29: pd.psz = szText; break;
+            case 30: pd.lpshdef = &sh; break;
+            case 31: pd.part.parmor = &armor; break;
+            case 32: pd.part.hs.grhst = static_cast<HullSlotType>(static_cast<uint16_t>(value)); break;
+            case 33: { PART part{}; part.parmor = &armor; pd.part = part; break; }
+            }
+        };
+        for (uint32_t w = 0; w < 65536; w++) for (uint16_t op = 0; op < 34; op++) {
+            const int32_t value = std::bit_cast<int32_t>(w * 0x10001u);
+            apply(op, value);
+            CHECK(pd.grbit == WPopupReference(op, value));
+        }
+        uint32_t state = 0x8172a9b5;
+        for (int i = 0; i < 100000; i++) {
+            state = state * 1664525u + 1013904223u;
+            const uint16_t op = static_cast<uint16_t>((state >> 8) % 34);
+            const int32_t value = std::bit_cast<int32_t>(state);
+            apply(op, value);
+            CHECK(pd.grbit == WPopupReference(op, value));
+        }
+    }
+
     for (std::uint32_t w = 0; w < 65536; w++) {
         PLANETSOME pl{};
         TIMER timer{};

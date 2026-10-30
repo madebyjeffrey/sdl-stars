@@ -1192,12 +1192,12 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         i = (int16_t)(pt.y - rgrcRef[6].top) / dyArial8;
         GlobalPD.grPopup = grPopupMineral;
-        GlobalPD.rgi[0] = i;
-        GlobalPD.rgi[2] = sel.pl.rgwtMin[i];
-        GlobalPD.rgi[3] = (uint32_t)sel.pl.rgMinConc[i];
+        GlobalPD.SetRgi(0, i);
+        GlobalPD.SetRgi(2, sel.pl.rgwtMin[i]);
+        GlobalPD.SetRgi(3, (uint32_t)sel.pl.rgMinConc[i]);
         EstMineralsMined(&sel.pl, rglQuan, -1, FALSE);
-        GlobalPD.rgi[4] = rglQuan[i];
-        GlobalPD.rgi[1] = sel.pl.fHomeworld;
+        GlobalPD.SetRgi(4, rglQuan[i]);
+        GlobalPD.SetRgi(1, sel.pl.fHomeworld);
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[7], PointFrom16(pt)) != 0) {
         if (fCursor) {
@@ -1205,7 +1205,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         GlobalPD.grPopup = grPopupPlanetIndustry;
         GlobalPD.idPlan = sel.pl.id;
-        GlobalPD.fFactory = pt.y >= rgrcRef[7].top + dyArial8;
+        GlobalPD.SetFFactory(pt.y >= rgrcRef[7].top + dyArial8);
         if (GlobalPD.fFactory) {
             GlobalPD.cMax = CMaxFactories(&sel.pl, idPlayer);
             GlobalPD.cCur = sel.pl.cFactories;
@@ -1281,7 +1281,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.lpshdef = rglpshdefSB[idPlayer] + sel.pl.isb;
         GlobalPD.fHideCounts = FALSE;
         GlobalPD.fShowDamage = TRUE;
-        GlobalPD.fToken = FALSE;
+        GlobalPD.SetFToken(FALSE);
         GlobalPD.fSummary = FALSE;
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[16], PointFrom16(pt)) != 0) {
