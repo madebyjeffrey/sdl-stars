@@ -11,6 +11,19 @@
 #include <initializer_list>
 #include <new>
 
+// STARS_TEST_ALLOC_* substitutes only these fault-injection sites. Defining
+// malloc/calloc globally would also rewrite libstdc++'s CRT declarations.
+#ifdef STARS_TEST_ALLOC_malloc
+void *STARS_TEST_ALLOC_malloc(size_t cb) noexcept;
+#else
+#define STARS_TEST_ALLOC_malloc malloc
+#endif
+#ifdef STARS_TEST_ALLOC_calloc
+void *STARS_TEST_ALLOC_calloc(size_t c, size_t cb) noexcept;
+#else
+#define STARS_TEST_ALLOC_calloc calloc
+#endif
+
 typedef struct COMPATMESSAGE {
     MSG msg;
     STARSCOMPATPAYLOAD payload;
@@ -66,7 +79,7 @@ BOOL WINAPI PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd)))
         return FALSE;
-    lpmsg = (COMPATMESSAGE *)(calloc(1, sizeof(*lpmsg)));
+    lpmsg = (COMPATMESSAGE *)(STARS_TEST_ALLOC_calloc(1, sizeof(*lpmsg)));
     if (!lpmsg) {
         SDL_SetError("Win32 message allocation failed");
         return FALSE;
@@ -188,7 +201,7 @@ static BOOL PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
 
 BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (SDL_IsMainThread()) return PostMessageA(hwnd, msg, wParam, lParam);
-    void *pv = malloc(sizeof(COMPATASYNCPOST));
+    void *pv = STARS_TEST_ALLOC_malloc(sizeof(COMPATASYNCPOST));
     if (!pv) return FALSE;
     auto *lp = ::new (pv) COMPATASYNCPOST;
     lp->hwnd = hwnd; lp->msg = msg; lp->wParam = wParam; lp->lParam = lParam;
@@ -198,7 +211,7 @@ BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
     if (SDL_IsMainThread()) return PostOwnedMessage(idWindow, msg, std::move(payload), lParam);
     if (!payload) return FALSE;
-    void *pv = malloc(sizeof(COMPATASYNCPOST));
+    void *pv = STARS_TEST_ALLOC_malloc(sizeof(COMPATASYNCPOST));
     if (!pv) return FALSE;
     auto *lp = ::new (pv) COMPATASYNCPOST;
     lp->idWindow = idWindow; lp->msg = msg; lp->lParam = lParam;

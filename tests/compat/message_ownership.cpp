@@ -7,11 +7,11 @@
 
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr,"line %d: %s (%s)\n",__LINE__,#f,SDL_GetError()); return 1; } } while (0)
 static std::atomic<bool> fFailCalloc, fFailMalloc;
-extern "C" void *StarsTest_calloc(size_t c, size_t cb) noexcept {
+void *StarsTest_calloc(size_t c, size_t cb) noexcept {
     if (fFailCalloc.exchange(false)) return nullptr;
     return std::calloc(c,cb);
 }
-extern "C" void *StarsTest_malloc(size_t cb) noexcept {
+void *StarsTest_malloc(size_t cb) noexcept {
     if (fFailMalloc.exchange(false)) return nullptr;
     return std::malloc(cb);
 }

@@ -1848,3 +1848,12 @@ the Debug test build. Release builds have tests disabled and therefore omit that
 target; their production application build passes independently. The manifest
 also rejects controlled GNU-mode overrides, removed pedantic diagnostics and
 production missing-braces suppression; its actual final CTest passes.
+
+
+Final-head Linux CI caught a fault-injection portability error: the new message
+harness's command-line malloc/calloc macros rewrote libstdc++ CRT declarations
+before <cstdlib> imported them. Allocation substitution now names only the three
+message allocation sites after all headers. Standard declarations and production
+allocators remain unchanged; the same failure vectors and assertions still run.
+The failed tutorial build is retained as a failure receipt, and the corrected
+revision must pass platform qualification before readiness.
