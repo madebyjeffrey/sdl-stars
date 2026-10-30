@@ -568,6 +568,12 @@ struct _mdplr {
         fAi : 1,           /* @bit9 */
         lvlAi : 3,         /* @bit10 */
         idAi : 3;          /* @bit13 */
+    uint16_t wMdPlr() const noexcept {
+        return static_cast<uint16_t>(reserved | (fAi << 9) | (lvlAi << 10) | (idAi << 13));
+    }
+    void SetWMdPlr(uint16_t wMdPlr) noexcept {
+        reserved = wMdPlr & 511; fAi = (wMdPlr >> 9) & 1; lvlAi = (wMdPlr >> 10) & 7; idAi = wMdPlr >> 13;
+    }
 }; /* size=0x2 */
 
 struct _mines {
@@ -950,14 +956,16 @@ struct PLPROD {
 }; /* size=0x4 */
 
 struct _prodq1 {
-    union {
-        uint16_t w; /* +0x0000 (2) */
-        struct {
-            uint16_t mdIdle : 6, /* +0x0000 (2) @bit0 */
-                cQuan : 10;      /* @bit6 */
-        };
-    };
+    uint16_t w; /* +0x0000 (2) */
+    uint16_t mdIdle() const noexcept { return w & 63; }
+    uint16_t cQuan() const noexcept { return w >> 6; }
+    void SetMdIdle(uint16_t mdIdle) noexcept { w = (w & 0xffc0u) | (mdIdle & 63); }
+    void SetCQuan(uint16_t cQuan) noexcept { w = (w & 63u) | ((cQuan & 1023) << 6); }
 }; /* size=0x2 */
+
+inline constexpr PRODQ1 PqMake(uint16_t mdIdle, uint16_t cQuan) noexcept {
+    return {static_cast<uint16_t>((mdIdle & 63) | ((cQuan & 1023) << 6))};
+}
 
 struct _btn {
     RECT     rc;           /* +0x0000 (8) */
@@ -1678,21 +1686,21 @@ struct _player {
     int16_t  cPlanet;     /* +0x0002 (2) */
     uint16_t cFleet : 12, /* +0x0004 (2) @bit0 */
         cshdefSB : 4;     /* @bit12 */
-    union {
-        struct {
-            uint16_t det : 3, /* +0x0006 (2) @bit0 */
-                iPlrBmp : 5,  /* @bit3 */
-                fInclude : 1, /* @bit8 */
-                mdPlayer : 7; /* @bit9 */
-        };
-        struct {
-            uint16_t reserved : 9, /* +0x0006 (2) @bit0 */
-                fAi : 1,           /* @bit9 */
-                lvlAi : 3,         /* @bit10 */
-                idAi : 3;          /* @bit13 */
-        };
-        uint16_t wMdPlr; /* +0x0006 (2) */
-    };
+    uint16_t det : 3, /* +0x0006 (2) @bit0 */
+        iPlrBmp : 5,  /* @bit3 */
+        fInclude : 1, /* @bit8 */
+        fAi : 1,      /* @bit9 */
+        lvlAi : 3,    /* @bit10 */
+        idAi : 3;     /* @bit13 */
+    uint16_t wMdPlr() const noexcept {
+        return static_cast<uint16_t>(det | (iPlrBmp << 3) | (fInclude << 8) | (fAi << 9) | (lvlAi << 10) | (idAi << 13));
+    }
+    void SetWMdPlr(uint16_t wMdPlr) noexcept {
+        det = wMdPlr & 7; iPlrBmp = (wMdPlr >> 3) & 31; fInclude = (wMdPlr >> 8) & 1;
+        fAi = (wMdPlr >> 9) & 1; lvlAi = (wMdPlr >> 10) & 7; idAi = wMdPlr >> 13;
+    }
+    uint16_t mdPlayer() const noexcept { return wMdPlr() >> 9; }
+    uint16_t reserved() const noexcept { return wMdPlr() & 511; }
     int16_t  idPlanetHome;   /* +0x0008 (2) */
     uint16_t wScore;         /* +0x000A (2) */
     int32_t  lSalt;          /* +0x000C (4) */
@@ -1703,30 +1711,36 @@ struct _player {
     int8_t   rgTech[6];      /* +0x001A (6) */
     uint32_t rgResSpent[6];  /* +0x0020 (24) */
     int8_t   pctResearch;    /* +0x0038 (1) */
-    union {
-        int8_t iTechCur; /* +0x0039 (1) */
-        struct {
-            // iTechNext is signed, as iTechCur >> 4 was: 6 means the
-            // same field, 7 the lowest.
-            uint8_t iTechNow : 4;  /* +0x0039 (1) @bit0 */
-            int8_t  iTechNext : 4; /* @bit4 */
-        };
-    };
+    int8_t iTechCur; /* +0x0039 (1) */
+    uint8_t iTechNow() const noexcept { return static_cast<uint8_t>(iTechCur) & 15; }
+    // Keep the signed high nibble of the historical iTechCur >> 4.
+    int8_t iTechNext() const noexcept {
+        const int16_t iTech = static_cast<uint8_t>(iTechCur) >> 4;
+        return static_cast<int8_t>(iTech < 8 ? iTech : iTech - 16);
+    }
+    void SetITechNow(uint8_t iTechNow) noexcept {
+        iTechCur = std::bit_cast<int8_t>(uint8_t((static_cast<uint8_t>(iTechCur) & 0xf0u) | (iTechNow & 15)));
+    }
+    void SetITechNext(int8_t iTechNext) noexcept {
+        iTechCur = std::bit_cast<int8_t>(uint8_t((static_cast<uint8_t>(iTechCur) & 15u) | ((static_cast<uint8_t>(iTechNext) & 15) << 4)));
+    }
     int32_t       lResLastYear; /* +0x003A (4) */
     int8_t        rgAttr[16];   /* +0x003E (16) */
     RaceTraitBits grbitAttr;    /* +0x004E (4) */
     GrbitTrader   grbitTrader;  /* +0x0052 (2) */
-    union {
-        struct {
-            uint16_t fDead : 1, /* +0x0054 (2) @bit0 */
-                fCrippled : 1,  /* @bit1 */
-                fUnused : 1,    /* @bit2 */
-                fLearned : 1,   /* @bit3 */
-                fHacker : 1,    /* @bit4 */
-                unused : 11;    /* @bit5 */
-        };
-        uint16_t wFlags; /* +0x0054 (2) */
-    };
+    uint16_t fDead : 1, /* +0x0054 (2) @bit0 */
+        fCrippled : 1,  /* @bit1 */
+        fUnused : 1,    /* @bit2 */
+        fLearned : 1,   /* @bit3 */
+        fHacker : 1,    /* @bit4 */
+        unused : 11;    /* @bit5 */
+    uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(fDead | (fCrippled << 1) | (fUnused << 2) | (fLearned << 3) | (fHacker << 4) | (unused << 5));
+    }
+    void SetWFlags(uint16_t wFlags) noexcept {
+        fDead = wFlags & 1; fCrippled = (wFlags >> 1) & 1; fUnused = (wFlags >> 2) & 1;
+        fLearned = (wFlags >> 3) & 1; fHacker = (wFlags >> 4) & 1; unused = wFlags >> 5;
+    }
     ZIPPRODQ1 zpq1;             /* +0x0056 (26) */
     int8_t    rgmdRelation[16]; /* +0x0070 (16) */
     char      szName[32];       /* +0x0080 (32) */
@@ -1786,14 +1800,19 @@ struct _tutor {
 struct _zipprodq {
     char    szName[13]; /* +0x0000 (13) */
     uint8_t fValid;     /* +0x000D (1) */
-    union {
-        ZIPPRODQ1 zpq1; /* +0x000E (26) */
-        struct {
-            uint8_t fNoResearch; /* +0x000E (1) */
-            uint8_t cpq;         /* +0x000F (1) */
-            PRODQ1  rgpq[12];    /* +0x0010 (24) */
-        };
-    };
+    uint8_t fNoResearch; /* +0x000E (1) */
+    uint8_t cpq;         /* +0x000F (1) */
+    PRODQ1  rgpq[12];    /* +0x0010 (24) */
+    ZIPPRODQ1 zpq1() const noexcept {
+        ZIPPRODQ1 zpq{};
+        zpq.fNoResearch = fNoResearch; zpq.cpq = cpq;
+        for (int i = 0; i < 12; i++) zpq.rgpq[i] = rgpq[i];
+        return zpq;
+    }
+    void SetZpq1(const ZIPPRODQ1 &zpq1) noexcept {
+        fNoResearch = zpq1.fNoResearch; cpq = zpq1.cpq;
+        for (int i = 0; i < 12; i++) rgpq[i] = zpq1.rgpq[i];
+    }
 }; /* size=0x28 */
 
 #ifndef STARS_TEST_NATURAL_RECORD_LAYOUT

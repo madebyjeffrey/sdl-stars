@@ -412,7 +412,7 @@ int16_t TechStatus(char *rgTech) {
     for (i = 0; i < 6; i++) {
         if (rgplr[idPlayer].rgTech[i] < rgTech[i]) {
             cMiss++;
-            if (i == rgplr[idPlayer].iTechNow) {
+            if (i == rgplr[idPlayer].iTechNow()) {
                 if (rgplr[idPlayer].rgTech[i] + 1 == rgTech[i]) {
                     fAlmost = TRUE;
                 } else {

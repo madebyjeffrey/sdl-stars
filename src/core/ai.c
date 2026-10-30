@@ -32,7 +32,7 @@ void DoAiTurn(int16_t iPlayer, uint16_t wMdPlr) {
     IncreaseAIMinefieldSizes();
     InitRandomPlanetList();
     if (wMdPlr != 0xffff) {
-        rgplr[iPlayer].wMdPlr = wMdPlr;
+        rgplr[iPlayer].SetWMdPlr(wMdPlr);
     }
     switch (rgplr[iPlayer].idAi) {
     case idAiRobotoid:

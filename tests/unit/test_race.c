@@ -353,8 +353,8 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 
     // 40 relations, an uncompressed "Bob" and a 60-character plural name.
     memset(rgb, 0, sizeof(rgb));
-    ((PLAYER *)rgb)->det = detAll;
-    iOff = offsetof(PLAYER, rgmdRelation);
+    rgb[6] = detAll;
+    iOff = cbWirePlayerPrefix;
     rgb[iOff++] = 40;
     memset(&rgb[iOff], 1, 40);
     iOff += 40;
@@ -553,7 +553,16 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
 }
 #endif
 
-TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
+static void test_IRaceChecksum_wire_image(void) {
+    std::byte rgb[192];
+    PLAYER plr{};
+    for (int i = 0; i < 192; i++) rgb[i] = static_cast<std::byte>((i * 73 + 11) & 255);
+    TEST_ASSERT(FDecodePlayer(rgb, plr));
+    TEST_CHECK(IRaceChecksum(&plr) == 0x80c0);
+}
+
+TEST_LIST = {{"race checksum uses the fixed 192-byte wire image", test_IRaceChecksum_wire_image},
+             {"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"FWasRaceFile imports unprotected legacy race designs", test_FWasRaceFile_imports_unprotected_legacy_designs},
              {"FWasRaceFile replaces protected legacy passwords and confirms name shortening", test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening},

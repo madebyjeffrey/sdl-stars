@@ -643,7 +643,114 @@ static void test_routing_replay_read_boundaries(void) {
     TEST_CHECK(FRunLogRecord(static_cast<RecordType>(63), 0, NULL));
 }
 
-TEST_LIST = {{"routing writer preserves exact prefix bytes", test_routing_writer_bytes},
+static void ChangeZipProdDuringAlert() {
+    vrgZipProd[0].fNoResearch = 0x42;
+    vrgZipProd[0].cpq = 0xab;
+}
+
+static void test_zipprod_replay_and_callback_order(void) {
+    uint8_t incoming[26], expected[26], actual[26];
+    uint8_t *lpLogSav;
+    int16_t imemSav, imemPrevSav;
+    HDR hdr, hdrSav;
+    ZIPPRODQ rgZipSav[5];
+    int16_t fDirtySav, fLogOffSav;
+    std::array<uint8_t, 32100> rgbLog{};
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = 0;
+    for (int i = 0; i < 5; i++) rgZipSav[i] = vrgZipProd[i];
+    fDirtySav = game.fDirty; fLogOffSav = fLogOff;
+    for (int i = 0; i < 26; i++) incoming[i] = static_cast<uint8_t>(i * 7 + 5);
+    gd.fGeneratingTurn = TRUE;
+    for (int cb = 0; cb <= 26; cb++) {
+        rgplr[0].zpq1.fNoResearch = 0x11; rgplr[0].zpq1.cpq = 0x22;
+        expected[0] = 0x11; expected[1] = 0x22;
+        for (int i = 0; i < 12; i++) {
+            rgplr[0].zpq1.rgpq[i].w = static_cast<uint16_t>(0xa5c0 + i);
+            expected[2 + i * 2] = static_cast<uint8_t>(0xc0 + i); expected[3 + i * 2] = 0xa5;
+        }
+        memcpy(expected, incoming, cb);
+        TEST_CHECK(FRunLogRecord(rtLogPlayerZpq1, cb, cb == 0 ? nullptr : incoming));
+        FEncodeZipProdQ1(rgplr[0].zpq1, std::as_writable_bytes(std::span(actual)));
+        TEST_CHECK(!memcmp(actual, expected, 26));
+    }
+    TEST_CHECK(!FRunLogRecord(rtLogPlayerZpq1, -1, nullptr));
+    TEST_CHECK(!FRunLogRecord(rtLogPlayerZpq1, 27, nullptr));
+    gd.fGeneratingTurn = FALSE;
+    TEST_CHECK(FRunLogRecord(rtLogPlayerZpq1, -1, nullptr));
+    lpLogSav = lpLog; imemSav = imemLogCur; imemPrevSav = imemLogPrev; hdrSav = hdrPrev;
+    lpLog = rgbLog.data(); imemLogCur = 31999; fLogOff = FALSE; game.fDirty = TRUE;
+    vrgZipProd[0].fNoResearch = 1; vrgZipProd[0].cpq = 0;
+    pfnStarsTestAlertObserver = ChangeZipProdDuringAlert;
+    WriteMemZpqRt(2);
+    pfnStarsTestAlertObserver = nullptr;
+    FDecodeHdr(std::as_bytes(std::span(rgbLog)).subspan(31999, 2), hdr);
+    TEST_CHECK(hdr.rt == rtLogPlayerZpq1 && hdr.cb == 2 && imemLogCur == 32003);
+    TEST_CHECK(rgbLog[32001] == 0x42 && rgbLog[32002] == 0xab);
+    // A historical over-count copies the following physical templates too.
+    imemLogCur = 0;
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 13; j++) vrgZipProd[i].szName[j] = static_cast<char>(i * 17 + j);
+        vrgZipProd[i].fValid = static_cast<uint8_t>(i + 3);
+        vrgZipProd[i].fNoResearch = static_cast<uint8_t>(i + 5); vrgZipProd[i].cpq = static_cast<uint8_t>(i + 7);
+        for (int j = 0; j < 12; j++) vrgZipProd[i].rgpq[j].w = static_cast<uint16_t>(i * 256 + j);
+    }
+    WriteMemZpqRt(186);
+    for (int ib = 0; ib < 186; ib++) {
+        const int templateIndex = (ib + 14) / 40, offset = (ib + 14) % 40;
+        uint8_t ch;
+        if (offset < 13) ch = static_cast<uint8_t>(templateIndex * 17 + offset);
+        else if (offset == 13) ch = static_cast<uint8_t>(templateIndex + 3);
+        else if (offset == 14) ch = static_cast<uint8_t>(templateIndex + 5);
+        else if (offset == 15) ch = static_cast<uint8_t>(templateIndex + 7);
+        else ch = static_cast<uint8_t>((offset & 1) ? templateIndex : (offset - 16) / 2);
+        TEST_CHECK(rgbLog[2 + ib] == ch);
+    }
+    lpLog = lpLogSav; imemLogCur = imemSav; imemLogPrev = imemPrevSav; hdrPrev = hdrSav;
+    for (int i = 0; i < 5; i++) vrgZipProd[i] = rgZipSav[i];
+    game.fDirty = fDirtySav; fLogOff = fLogOffSav;
+}
+
+static void test_zipprod_comparison_physical_tail(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    PLAYER plrSav;
+    ZIPPRODQ rgZipSav[5];
+    GAME gameSav;
+    HDR hdr, hdrSav;
+    int16_t imemSav, imemPrevSav, fLogOffSav, idPlayerSav, cmsgSav;
+    uint8_t rgb[32];
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("zipprod-physical-tail", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sgame", szDir, szDirSep);
+    plrSav = rgplr[0]; gameSav = game; hdrSav = hdrPrev;
+    imemSav = imemLogCur; imemPrevSav = imemLogPrev; fLogOffSav = fLogOff; idPlayerSav = idPlayer; cmsgSav = vcmsgplrOut;
+    for (int i = 0; i < 5; i++) rgZipSav[i] = vrgZipProd[i];
+    vrgZipProd[0] = ZIPPRODQ{}; vrgZipProd[0].cpq = 13;
+    strcpy(vrgZipProd[1].szName, "QR");
+    rgplr[0] = PLAYER{}; rgplr[0].zpq1 = vrgZipProd[0].zpq1();
+    rgplr[0].rgmdRelation[0] = 'Q'; rgplr[0].rgmdRelation[1] = 'R';
+    idPlayer = 0; game.cPlayer = 1; fLogOff = FALSE; vcmsgplrOut = 0;
+    imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
+    TEST_CHECK(FWriteLogFile(szFile, 0));
+    TEST_CHECK(imemLogCur == 0);
+    // Only a byte beyond the 26-byte template differs. It still triggers the
+    // old 28-byte comparison and copies the following template's name bytes.
+    rgplr[0].rgmdRelation[1] = 'S'; hdrPrev.rt = rtEOF;
+    TEST_CHECK(FWriteLogFile(szFile, 0));
+    TEST_CHECK(imemLogCur == 30 && FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogPlayerZpq1 && hdr.cb == 28 && rgb[1] == 13 && rgb[26] == 'Q' && rgb[27] == 'R');
+    SetSzWorkFromDt(dtLog, 0);
+    TEST_CHECK(RemoveNativeFile(szWork) == 0);
+    rgplr[0] = plrSav; game = gameSav; hdrPrev = hdrSav;
+    imemLogCur = imemSav; imemLogPrev = imemPrevSav; fLogOff = fLogOffSav; idPlayer = idPlayerSav; vcmsgplrOut = cmsgSav;
+    for (int i = 0; i < 5; i++) vrgZipProd[i] = rgZipSav[i];
+}
+
+TEST_LIST = {{"default template comparison retains adjacent physical bytes", test_zipprod_comparison_physical_tail},
+             {"production template replay retains odd bytes and callback timing", test_zipprod_replay_and_callback_order},
+             {"routing writer preserves exact prefix bytes", test_routing_writer_bytes},
              {"routing and thing logs retain prefix/no-read paths", test_routing_replay_read_boundaries},
              {"log framing uses bytes and re-reads callback-mutated strides", test_log_header_bytes_and_callback},
              {"cargo log widths, coalescing and signed ID comparisons", test_cargo_log_wire_widths},

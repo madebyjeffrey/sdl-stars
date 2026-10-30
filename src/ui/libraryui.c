@@ -658,8 +658,10 @@ int16_t FSaveLibraryRace(HWND hwnd, const char *pszName, PLAYER *pplr) {
  * its collision-prone checksum or unused bytes after name terminators. */
 static int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrRight) {
     PLAYER plrLeft = *pplrLeft, plrRight = *pplrRight;
+    std::byte rgbLeft[cbWirePlayer], rgbRight[cbWirePlayer];
     plrLeft.fLearned = plrRight.fLearned = FALSE;
-    return !memcmp(&plrLeft, &plrRight, offsetof(PLAYER, szName)) &&
+    FEncodePlayer(plrLeft, rgbLeft); FEncodePlayer(plrRight, rgbRight);
+    return !memcmp(rgbLeft, rgbRight, ibWirePlayerNames) &&
            !strcmp(plrLeft.szName, plrRight.szName) && !strcmp(plrLeft.szNames, plrRight.szNames);
 }
 

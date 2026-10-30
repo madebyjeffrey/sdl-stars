@@ -207,7 +207,7 @@ int main(int argc,char **argv){
         for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;
         memset(rgplr,0x53,sizeof(rgplr));memset(&game,0x35,sizeof(game));
         idPlayer=(int16_t)(rgIn[1]?iplrNone:rgIn[9]);int target=rgIn[9];
-        rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].iTechNow=rgIn[5];
+        rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].SetITechNow(rgIn[5]);
         for(int f=0;f<6;f++)rgplr[target].rgTech[f]=(int8_t)rgIn[10+f];
         PLAYER rgBefore[16];GAME gameBefore;memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));int16_t idBefore=idPlayer;
         PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.pcom=&comPrior;memcpy(&expected,&part,sizeof(part));

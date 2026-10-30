@@ -160,7 +160,9 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         } else {
             for (i = 0; i < 7; i++) {
                 vplr.iPlrBmp = vrgplrDef[i].iPlrBmp;
-                if (memcmp(&vplr, &vrgplrDef[i], 128) == 0)
+                std::byte rgb[cbWirePlayer], rgbDef[cbWirePlayer];
+                FEncodePlayer(vplr, rgb); FEncodePlayer(vrgplrDef[i], rgbDef);
+                if (memcmp(rgb, rgbDef, ibWirePlayerNames) == 0)
                     break;
             }
             vplr.iPlrBmp = iPlrBmp;

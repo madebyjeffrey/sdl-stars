@@ -527,7 +527,7 @@ void CancelMemRt(RecordType rt) {
     return;
 }
 
-void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
+static void WriteMemRtCore(RecordType rt, int16_t cb, void *rg, bool fZipProd) {
     HDR      hdr;
     uint8_t *lpv;
 
@@ -543,7 +543,16 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
         lpv += imemLogCur;
         FEncodeHdr(hdr, std::as_writable_bytes(std::span(lpv, cbWireHdr)));
         if (cb > 0) {
-            memcpy(lpv + 2, rg, cb);
+            if (fZipProd) {
+                // Read live template state after the existing advisory/title
+                // callbacks, at the old global-source copy point.
+                std::byte rgb[5 * cbWireZipProdQ];
+                for (int i = 0; i < 5; i++) FEncodeZipProdQ(vrgZipProd[i], std::span(rgb).subspan(i * cbWireZipProdQ));
+                assert(static_cast<std::size_t>(cb) <= sizeof(rgb) - 14);
+                memcpy(lpv + 2, rgb + 14, cb);
+            } else {
+                memcpy(lpv + 2, rg, cb);
+            }
         }
         imemLogCur += cb + 2;
         if (rt != rtEOF) {
@@ -551,6 +560,14 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
         }
     }
     return;
+}
+
+void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
+    WriteMemRtCore(rt, cb, rg, false);
+}
+
+void WriteMemZpqRt(int16_t cb) {
+    WriteMemRtCore(rtLogPlayerZpq1, cb, nullptr, true);
 }
 
 void STARS_TEST_IMPL(DirtyGame)(int16_t fDirty) {
@@ -689,7 +706,10 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             if ((uint16_t)cb > 26) {
                 return FALSE;
             }
-            memcpy(&rgplr[idPlayer].zpq1, lpb, cb);
+            std::byte rgb[cbWireZipProdQ1];
+            FEncodeZipProdQ1(rgplr[idPlayer].zpq1, rgb);
+            if (cb != 0) memcpy(rgb, lpb, cb);
+            FDecodeZipProdQ1(rgb, rgplr[idPlayer].zpq1);
         }
         break;
     case rtLogFleetName:
@@ -1289,8 +1309,15 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
     iCur = 0;
     if (iPlayer == idPlayer && !rgplr[iPlayer].fAi && hdrPrev.rt != rtLogPlayerZpq1) {
         cb = 26 - (12 - vrgZipProd[0].cpq) * 2;
-        if (memcmp(&rgplr[iPlayer].zpq1, (uint8_t *)(ZIPPRODQ *)vrgZipProd + 14, cb) != 0) {
-            WriteMemRt(rtLogPlayerZpq1, cb, (uint8_t *)(ZIPPRODQ *)vrgZipProd + 14);
+        std::byte rgbPlayer[16 * cbWirePlayer], rgbZip[5 * cbWireZipProdQ];
+        for (int i = 0; i < 16; i++) FEncodePlayer(rgplr[i], std::span(rgbPlayer).subspan(i * cbWirePlayer));
+        for (int i = 0; i < 5; i++) FEncodeZipProdQ(vrgZipProd[i], std::span(rgbZip).subspan(i * cbWireZipProdQ));
+        // Historical over-counts can compare into adjacent initialized template/
+        // player storage. Preserve that physical image rather than clamp to 26.
+        assert(static_cast<std::size_t>(cb) <= sizeof(rgbZip) - 14);
+        assert(static_cast<std::size_t>(iPlayer) * cbWirePlayer + 86 + cb <= sizeof(rgbPlayer));
+        if (memcmp(rgbPlayer + iPlayer * cbWirePlayer + 86, rgbZip + 14, cb) != 0) {
+            WriteMemZpqRt(cb);
         }
     }
     /* NATIVE: callers pass szBase itself, and strcpy onto itself is

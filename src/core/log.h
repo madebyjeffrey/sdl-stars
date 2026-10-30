@@ -17,6 +17,7 @@ void    LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2);
 void    LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2);
 void    CancelMemRt(RecordType rt);
 void    WriteMemRt(RecordType rt, int16_t cb, void *rg);
+void    WriteMemZpqRt(int16_t cb);
 void    DirtyGame(int16_t fDirty);
 int16_t FGetPrevLogRt(HDR *phdr, uint8_t *pb);
 int16_t FRunLogFile();

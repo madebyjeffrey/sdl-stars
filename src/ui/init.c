@@ -750,11 +750,11 @@ void ReadIniSettings() {
                         psz++;
                         vrgZipProd[i].rgpq[iPass].w |= (*psz - 'a') * 0x1000;
                         psz++;
-                        if (vrgZipProd[i].rgpq[iPass].cQuan > 1020) {
-                            vrgZipProd[i].rgpq[iPass].cQuan = 1;
+                        if (vrgZipProd[i].rgpq[iPass].cQuan() > 1020) {
+                            vrgZipProd[i].rgpq[iPass].SetCQuan(1);
                         }
-                        if (vrgZipProd[i].rgpq[iPass].mdIdle >= mdIdleFactory) {
-                            vrgZipProd[i].rgpq[iPass].mdIdle = iobjMine;
+                        if (vrgZipProd[i].rgpq[iPass].mdIdle() >= mdIdleFactory) {
+                            vrgZipProd[i].rgpq[iPass].SetMdIdle(iobjMine);
                         }
                     }
                 }

@@ -154,7 +154,7 @@ static void ready(void){
     for(int p=0;p<16;p++){
         int fields=p==1?23:14,levels=p==1?38:32;
         rgplr[p].grbitAttr=static_cast<RaceTraitBits>(((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0)|((capcfg[0]!=0 && cfg[52])?UINT32_C(1)<<ibitRaceNoAdvScanner:0));
-        rgplr[p].rgAttr[rsMajorAdv]=capcfg[0]==0?0:(int8_t)(p==1?cfg[51]:cfg[50]);rgplr[p].iTechNow=capcfg[0]==0?0:cfg[53];
+        rgplr[p].rgAttr[rsMajorAdv]=capcfg[0]==0?0:(int8_t)(p==1?cfg[51]:cfg[50]);rgplr[p].SetITechNow(capcfg[0]==0?0:cfg[53]);
         rgplr[p].wScore=100+p;rgplr[p].lSalt=10000+p;rgplr[p].idPlanetHome=p;
         for(int i=0;i<3;i++){rgplr[p].rgEnvVar[i]=(int8_t)cfg[fields+i];rgplr[p].rgEnvVarMin[i]=(int8_t)cfg[fields+3+i];rgplr[p].rgEnvVarMax[i]=(int8_t)cfg[fields+6+i];}
         for(int f=0;f<6;f++)rgplr[p].rgTech[f]=(int8_t)cfg[levels+f];rglpshdefSB[p]=NULL;

@@ -929,11 +929,11 @@ void DropColonists() {
                             prod.grobj = grobjPlanet;
                             iDst = 0;
                             for (ipq = 0; ipq < cpq; ipq++) {
-                                if ((GetRaceStat(&rgplr[iMax], rsMajorAdv) != raMacintosh || rgplr[iMax].zpq1.rgpq[ipq].mdIdle > iobjDefense) &&
+                                if ((GetRaceStat(&rgplr[iMax], rsMajorAdv) != raMacintosh || rgplr[iMax].zpq1.rgpq[ipq].mdIdle() > iobjDefense) &&
                                     (GetRaceStat(&rgplr[iMax], rsMajorAdv) != raTerra ||
-                                     (rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMinTerraform && rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMaxTerraform))) {
-                                    prod.iItem = rgplr[iMax].zpq1.rgpq[ipq].mdIdle;
-                                    prod.cItem = rgplr[iMax].zpq1.rgpq[ipq].cQuan;
+                                     (rgplr[iMax].zpq1.rgpq[ipq].mdIdle() != iobjMinTerraform && rgplr[iMax].zpq1.rgpq[ipq].mdIdle() != iobjMaxTerraform))) {
+                                    prod.iItem = rgplr[iMax].zpq1.rgpq[ipq].mdIdle();
+                                    prod.cItem = rgplr[iMax].zpq1.rgpq[ipq].cQuan();
                                     pl.lpplprod->rgprod()[iDst] = prod;
                                     iDst++;
                                 }
@@ -2114,8 +2114,8 @@ void UpdateResearchStatus(int16_t fUsePool) {
     for (i = 0; i < game.cPlayer; i++) {
         fUsePool = fUsePoolOrig;
         fGeneral = GetRaceGrbit(&rgplr[i], ibitRaceGeneralizedResearch);
-        iTechCur = rgplr[i].iTechNow;
-        iTechNext = rgplr[i].iTechNext;
+        iTechCur = rgplr[i].iTechNow();
+        iTechNext = rgplr[i].iTechNext();
         idPlayer = i;
         if (!rgplr[i].fDead) {
             cPlrAlive++;
@@ -2226,13 +2226,13 @@ void UpdateResearchStatus(int16_t fUsePool) {
                                     iTechNext = jj;
                                 }
                             }
-                            rgplr[idPlayer].iTechNow = iTechNext;
+                            rgplr[idPlayer].SetITechNow(iTechNext);
                             rgplr[i].rgResSpent[iT] = 0;
                             iTechCur = iTechNext;
                             iTechNext = 7;
                         } else {
-                            rgplr[idPlayer].iTechNext = 6;
-                            rgplr[idPlayer].iTechNow = iTechNext;
+                            rgplr[idPlayer].SetITechNext(6);
+                            rgplr[idPlayer].SetITechNow(iTechNext);
                             rgplr[i].rgResSpent[iT] = 0;
                             iTechCur = iTechNext;
                             iTechNext = 6;

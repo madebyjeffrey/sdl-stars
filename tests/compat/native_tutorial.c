@@ -316,7 +316,7 @@ static BOOL FSaveOrders(const char *pszPath) {
     lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
     CchNativePrintf(lpfile, "{\"schema\":1,\"turn\":%u,\"turnDone\":%d,\"research\":[%u,%u,%d],\"scannerMode\":%u,\"nextMessage\":%d,\"filteredFactories\":%s,\"filteredMines\":%s,\"filteredUnloads\":%s,\"filteredMiningLoads\":%s,\"filteredDismantles\":%s,\"ownedFleetCount\":%u,\"fleets\":[",
-            game.turn, tutor.fTurnDone, rgplr[0].iTechNow, rgplr[0].iTechNext, rgplr[0].pctResearch, grbitScan & grbitScanViewMask, IMsgNext(FALSE),
+            game.turn, tutor.fTurnDone, rgplr[0].iTechNow(), rgplr[0].iTechNext(), rgplr[0].pctResearch, grbitScan & grbitScanViewMask, IMsgNext(FALSE),
             bitfMsgFiltered[idmHaveBuiltFactories >> 3] & (1 << (idmHaveBuiltFactories & 7)) ? "true" : "false",
             bitfMsgFiltered[idmHaveBuiltMines >> 3] & (1 << (idmHaveBuiltMines & 7)) ? "true" : "false",
             bitfMsgFiltered[idmHasUnloaded >> 3] & (1 << (idmHasUnloaded & 7)) ? "true" : "false",
@@ -377,7 +377,7 @@ static BOOL FSaveOrders(const char *pszPath) {
     CchNativePrintf(lpfile, "],\"defaultTemplate\":{\"valid\":%s,\"leftoverResearch\":%u,\"count\":%u,\"items\":[",
             vrgZipProd[0].fValid ? "true" : "false", vrgZipProd[0].fNoResearch, vrgZipProd[0].cpq);
     for (j = 0; j < vrgZipProd[0].cpq && j < 12; j++)
-        CchNativePrintf(lpfile, "%s{\"item\":%u,\"quantity\":%u}", j ? "," : "", vrgZipProd[0].rgpq[j].mdIdle, vrgZipProd[0].rgpq[j].cQuan);
+        CchNativePrintf(lpfile, "%s{\"item\":%u,\"quantity\":%u}", j ? "," : "", vrgZipProd[0].rgpq[j].mdIdle(), vrgZipProd[0].rgpq[j].cQuan());
     IPutNativeString("]}}\n", lpfile);
     i = FNativeStreamError(lpfile);
     return ICloseNativeFile(lpfile) == 0 && !i;
@@ -592,7 +592,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             cActions++;
             break;
         case 39:
-            if (!tutor.fTurnDone || rgplr[0].iTechNow != Weapons || rgplr[0].iTechNext != TechFieldCount || rgplr[0].pctResearch != 15) {
+            if (!tutor.fTurnDone || rgplr[0].iTechNow() != Weapons || rgplr[0].iTechNext() != TechFieldCount || rgplr[0].pctResearch != 15) {
                 pszFailure = "Generate requested before first-year tasks passed"; goto LFail;
             }
             if (!FSaveOrders("year-2400-orders.json") || !FSaveState("before-generate")) goto LArtifact;
@@ -617,7 +617,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 10:
         if (hwndModal) return;
-        if (rgplr[0].iTechNow != Weapons || pctResGlob != -1) { pszFailure = "research choice was not accepted"; goto LFail; }
+        if (rgplr[0].iTechNow() != Weapons || pctResGlob != -1) { pszFailure = "research choice was not accepted"; goto LFail; }
         iStage = 7;
         goto LQueued;
     case 11:
@@ -1939,8 +1939,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 157:
         if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !vrgZipProd[0].fValid || vrgZipProd[0].cpq != 2) return;
-        if (vrgZipProd[0].rgpq[0].mdIdle != iobjFactory || vrgZipProd[0].rgpq[0].cQuan != 3 ||
-            vrgZipProd[0].rgpq[1].mdIdle != iobjMine || vrgZipProd[0].rgpq[1].cQuan != 3 || !vrgZipProd[0].fNoResearch) return;
+        if (vrgZipProd[0].rgpq[0].mdIdle() != iobjFactory || vrgZipProd[0].rgpq[0].cQuan() != 3 ||
+            vrgZipProd[0].rgpq[1].mdIdle() != iobjMine || vrgZipProd[0].rgpq[1].cQuan() != 3 || !vrgZipProd[0].fNoResearch) return;
         if (!FSaveOrders("year-2410-imported-template.json") || !FSaveState("template-imported")) goto LArtifact;
         if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
@@ -2657,7 +2657,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 230:
         if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !vrgZipProd[0].fValid || vrgZipProd[0].cpq < 3) return;
-        if (vrgZipProd[0].rgpq[0].mdIdle != iobjMinTerraform || vrgZipProd[0].rgpq[0].cQuan != 2) return;
+        if (vrgZipProd[0].rgpq[0].mdIdle() != iobjMinTerraform || vrgZipProd[0].rgpq[0].cQuan() != 2) return;
         if (!FSaveOrders("year-2414-imported-template.json") || !FSaveState("terraform-template-imported") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 231:

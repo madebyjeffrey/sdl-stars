@@ -56,7 +56,7 @@ expressions that would become stale when unrelated lines move.
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
-| Remaining fixed game records | PLAYER/THING and preferences; PLANET migrated locally; unknown tags and reserved bits | B11 |
+| Remaining fixed game records | THING and remaining runtime aliases; PLAYER/PLANET/preferences migrated locally; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
@@ -272,3 +272,11 @@ INI resets retaining the complete sixteen-bit clear and GDATA spare word bits
 retained explicitly. These types are runtime state; preferences are persisted
 through existing text keys, not their native representation. Independent frozen
 layout measurements remain unchanged; application state ownership is still B13.
+
+
+B11 player/default-template family: PLAYER fixed192, detailed112 and partial8
+images use explicit field codecs. Relation counts and names retain their caller
+validation/publication order. Race checksums and 128-byte comparisons use wire
+images. Numeric mode/research/flag accessors, a real PRODQ1 word and actual
+ZIPPRODQ fields replace inactive aliases. Default-template log copies preserve
+partial words, adjacent physical images and callback-before-source-read timing.

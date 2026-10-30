@@ -22,7 +22,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     switch (message) {
     case WM_INITDIALOG:
         pctResGlob = rgplr[idPlayer].pctResearch;
-        iResTechNow = static_cast<TechFieldType>(rgplr[idPlayer].iTechNow);
+        iResTechNow = static_cast<TechFieldType>(rgplr[idPlayer].iTechNow());
         CheckRadioButton(hwnd, IDC_RESEARCH_ENERGY, IDC_RESEARCH_BIOTECH, iResTechNow + 1073);
         hdc = GetDC(hwnd);
         hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[1]);
@@ -51,7 +51,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             psz = PszGetCompressedString(static_cast<StringId>(idsSameField + i));
             SendMessage(hwndRad, CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        i = rgplr[idPlayer].iTechNext;
+        i = rgplr[idPlayer].iTechNext();
         if (i == 6) {
             i = 0;
         } else if (i < 6) {
@@ -150,10 +150,10 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 } else if (iResTechNext <= 6) {
                     iResTechNext--;
                 }
-                if (iResTechNow != rgplr[idPlayer].iTechNow || iResTechNext != rgplr[idPlayer].iTechNext || pctResGlob != rgplr[idPlayer].pctResearch) {
+                if (iResTechNow != rgplr[idPlayer].iTechNow() || iResTechNext != rgplr[idPlayer].iTechNext() || pctResGlob != rgplr[idPlayer].pctResearch) {
                     rgplr[idPlayer].pctResearch = pctResGlob;
-                    rgplr[idPlayer].iTechNow = iResTechNow;
-                    rgplr[idPlayer].iTechNext = iResTechNext;
+                    rgplr[idPlayer].SetITechNow(iResTechNow);
+                    rgplr[idPlayer].SetITechNext(iResTechNext);
                     i = rgplr[idPlayer].iTechCur * 256 + pctResGlob;
                     WriteMemResearch(i);
                     fChg = TRUE;
@@ -255,7 +255,7 @@ DrawComingAttractions:
         _Draw3dFrame(hdc, &rc, -1);
         c = CchGetString(idsExpectedResearchBenefits, szWork);
         TextOut(hdc, rc.left + 8, rc.top - (dyArial8 >> 1), szWork, c);
-        iTechSav = rgplr[idPlayer].iTechNow;
+        iTechSav = rgplr[idPlayer].iTechNow();
         cFutureTech = 0;
         yTopFutureTech = rc.top + dyArial8;
         for (iter = 1; iter < 10; iter++) {
@@ -272,7 +272,7 @@ DrawComingAttractions:
                 }
             }
             grbitCur = hstEngine;
-            rgplr[idPlayer].iTechNow = iResTechNow;
+            rgplr[idPlayer].SetITechNow(iResTechNow);
             for (; grbitCur != hstNone; grbitCur = static_cast<HullSlotType>(grbitCur * 2)) {
                 if (grbitCur & (hstEngine | hstScanner | hstShield | hstArmor | hstBeam | hstTorp | hstBomb | hstMining | hstMines | hstSpecialSB | hstSBHull |
                                 hstSpecialE | hstSpecialM | hstTerra | hstHull | hstPlanetary)) {
@@ -302,7 +302,7 @@ DrawComingAttractions:
             }
         }
     TooManyToFinish:
-        rgplr[idPlayer].iTechNow = iTechSav;
+        rgplr[idPlayer].SetITechNow(iTechSav);
         SetTextColor(hdc, 0);
     }
 

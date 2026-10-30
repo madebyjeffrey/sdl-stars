@@ -91,7 +91,7 @@ int main(void) {
         encoded[2]=(char)('a'+(w&15));encoded[3]=(char)('a'+((w>>4)&15));
         encoded[4]=(char)('a'+((w>>8)&15));encoded[5]=(char)('a'+((w>>12)&15));
         readPresets();
-        CHECK(vrgZipProd[1].fValid && vrgZipProd[1].rgpq[0].mdIdle==((w&63)>=7 ? 0 : (w&63)) && vrgZipProd[1].rgpq[0].cQuan==((w>>6)>1020 ? 1 : (w>>6)));
+        CHECK(vrgZipProd[1].fValid && vrgZipProd[1].rgpq[0].mdIdle()==((w&63)>=7 ? 0 : (w&63)) && vrgZipProd[1].rgpq[0].cQuan()==((w>>6)>1020 ? 1 : (w>>6)));
         gd.fChgZipProd=1;writePresets();
         CHECK(savedProduction[1][2]=='a'+(vrgZipProd[1].rgpq[0].w&15) && savedProduction[1][3]=='a'+((vrgZipProd[1].rgpq[0].w>>4)&15) && savedProduction[1][4]=='a'+((vrgZipProd[1].rgpq[0].w>>8)&15) && savedProduction[1][5]=='a'+((vrgZipProd[1].rgpq[0].w>>12)&15));
     }

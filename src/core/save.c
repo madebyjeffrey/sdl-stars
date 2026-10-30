@@ -41,17 +41,17 @@ void WriteRtPlr(PLAYER *pplr, uint8_t *pbStore) {
     if (pplr->fDead) {
         pplr->det = detAll;
     }
-    memmove(pbStore, pplr, sizeof(PLAYER));
+    FEncodePlayer(*pplr, std::as_writable_bytes(std::span(pbStore, cbWirePlayer)));
     if (pplr->det == detAll) {
         for (i = 15; i >= 0 && pplr->rgmdRelation[i] == 0; i--) {
         }
         i++;
-        pb = pbStore + offsetof(PLAYER, rgmdRelation);
+        pb = pbStore + cbWirePlayerPrefix;
         *pb++ = i;
         memmove(pb, pplr->rgmdRelation, i);
         pb += i;
     } else {
-        pb = pbStore + offsetof(PLAYER, idPlanetHome);
+        pb = pbStore + cbWirePlayerPartial;
     }
     cOut = 31;
     if (pplr->szName[0] != 0 && FCompressUserString(pplr->szName, (char *)pb + 1, &cOut)) {
@@ -1026,17 +1026,17 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
             do {
                 GetFileSeeds(&lSeedSav1, &lSeedSav2);
                 ReadRt();
-            } while (hdrCur.rt != rtPlr || ((PLAYER *)rgbCur)->iPlayer != iPlayer);
-            if (((PLAYER *)rgbCur)->fAi != f) {
-                if (((PLAYER *)rgbCur)->fAi != 0) {
-                    if (((PLAYER *)rgbCur)->idAi != idAiMaid)
+            } while (hdrCur.rt != rtPlr || PlvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer() != iPlayer);
+            if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi() != f) {
+                if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi() != 0) {
+                    if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).idAi() != idAiMaid)
                         goto LBadFile;
-                    ((PLAYER *)rgbCur)->fAi = FALSE;
+                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(FALSE);
                 } else {
-                    ((PLAYER *)rgbCur)->fAi = TRUE;
-                    ((PLAYER *)rgbCur)->idAi = idAiMaid;
+                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(TRUE);
+                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetIdAi(idAiMaid);
                 }
-                ((PLAYER *)rgbCur)->lSalt = ~((PLAYER *)rgbCur)->lSalt;
+                PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetLSalt(~PlvFromPrefix(rgbCur, sizeof(rgbCur)).lSalt());
                 LSeekFile(hf, (int16_t)-(hdrCur.cb + 2), 1);
                 SetFileSeeds(lSeedSav1, lSeedSav2);
                 WriteRt(rtPlr, hdrCur.cb, rgbCur);

@@ -69,4 +69,20 @@ inline NATIVEPLANETRECORDVIEW PpvFromPrefix(void *lp, std::size_t cb) noexcept {
     return {std::span(static_cast<std::byte *>(lp), cb), 0};
 }
 
+class NATIVEPLAYERRECORDVIEW : public NATIVEBYTEWINDOW {
+public:
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
+    std::int8_t iPlayer() const noexcept { return std::bit_cast<std::int8_t>(GetU8(0)); }
+    std::uint16_t det() const noexcept { return GetBits<6, 0, 3>(); }
+    std::uint16_t fAi() const noexcept { return GetBits<6, 9, 1>(); }
+    std::uint16_t idAi() const noexcept { return GetBits<6, 13, 3>(); }
+    std::int32_t lSalt() const noexcept { return GetI32(12); }
+    void SetFAi(std::uint16_t value) noexcept { SetBits<6, 9, 1>(value); }
+    void SetIdAi(std::uint16_t value) noexcept { SetBits<6, 13, 3>(value); }
+    void SetLSalt(std::int32_t value) noexcept { SetI32(12, value); }
+};
+inline NATIVEPLAYERRECORDVIEW PlvFromPrefix(void *lp, std::size_t cb) noexcept {
+    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+}
+
 #endif

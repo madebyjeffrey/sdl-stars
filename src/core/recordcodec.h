@@ -573,4 +573,94 @@ inline bool FEncodePlanetPrefix(RTPLANET rtpl, std::span<std::byte> rgb) noexcep
     return output.FWriteU16Le(id) && output.FWriteU16Le(flags);
 }
 
+inline constexpr std::size_t cbWireZipProdQ1 = 26;
+inline constexpr std::size_t cbWireZipProdQ = 40;
+inline constexpr std::size_t cbWirePlayer = 192;
+inline constexpr std::size_t cbWirePlayerPartial = 8;
+inline constexpr std::size_t cbWirePlayerPrefix = 112;
+inline constexpr std::size_t ibWirePlayerNames = 128;
+
+inline bool FEncodeZipProdQ1(ZIPPRODQ1 zpq, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireZipProdQ1) return false;
+    NATIVEBYTEWRITER output(rgb);
+    output.FWriteU8(zpq.fNoResearch); output.FWriteU8(zpq.cpq);
+    for (const auto &pq : zpq.rgpq) output.FWriteU16Le(pq.w);
+    return true;
+}
+inline bool FDecodeZipProdQ1(std::span<const std::byte> rgb, ZIPPRODQ1 &zpq) noexcept {
+    if (rgb.size() < cbWireZipProdQ1) return false;
+    NATIVEBYTEREADER input(rgb);
+    std::uint8_t ch;
+    std::uint16_t w;
+    input.FReadU8(ch); zpq.fNoResearch = ch;
+    input.FReadU8(ch); zpq.cpq = ch;
+    for (auto &pq : zpq.rgpq) { input.FReadU16Le(w); pq.w = w; }
+    return true;
+}
+inline bool FEncodeZipProdQ(const ZIPPRODQ &zpq, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireZipProdQ) return false;
+    NATIVEBYTEWRITER output(rgb);
+    output.FWriteBytes(std::as_bytes(std::span(zpq.szName))); output.FWriteU8(zpq.fValid);
+    return FEncodeZipProdQ1(zpq.zpq1(), rgb.subspan(14));
+}
+
+// Fixed physical image, including relation/name spare bytes. Framed player
+// records replace its relation/name tail at their original compression points.
+inline bool FEncodePlayer(PLAYER plr, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWirePlayer) return false;
+    NATIVEBYTEWRITER output(rgb);
+    output.FWriteU8(static_cast<std::uint8_t>(plr.iPlayer)); output.FWriteU8(static_cast<std::uint8_t>(plr.cShDef));
+    output.FWriteI16Le(plr.cPlanet); output.FWriteU16Le(static_cast<std::uint16_t>(plr.cFleet | (plr.cshdefSB << 12)));
+    output.FWriteU16Le(plr.wMdPlr()); output.FWriteI16Le(plr.idPlanetHome); output.FWriteU16Le(plr.wScore); output.FWriteI32Le(plr.lSalt);
+    output.FWriteBytes(std::as_bytes(std::span(plr.rgEnvVar))); output.FWriteBytes(std::as_bytes(std::span(plr.rgEnvVarMin)));
+    output.FWriteBytes(std::as_bytes(std::span(plr.rgEnvVarMax))); output.FWriteU8(static_cast<std::uint8_t>(plr.pctIdealGrowth));
+    output.FWriteBytes(std::as_bytes(std::span(plr.rgTech)));
+    for (int i = 0; i < 6; i++) output.FWriteU32Le(plr.rgResSpent[i]);
+    output.FWriteU8(static_cast<std::uint8_t>(plr.pctResearch)); output.FWriteU8(static_cast<std::uint8_t>(plr.iTechCur));
+    output.FWriteI32Le(plr.lResLastYear); output.FWriteBytes(std::as_bytes(std::span(plr.rgAttr)));
+    output.FWriteU32Le(static_cast<std::uint32_t>(plr.grbitAttr)); output.FWriteU16Le(static_cast<std::uint16_t>(plr.grbitTrader));
+    output.FWriteU16Le(plr.wFlags());
+    FEncodeZipProdQ1(plr.zpq1, rgb.subspan(86));
+    NATIVEBYTEWRITER tail(rgb.subspan(cbWirePlayerPrefix));
+    tail.FWriteBytes(std::as_bytes(std::span(plr.rgmdRelation))); tail.FWriteBytes(std::as_bytes(std::span(plr.szName)));
+    return tail.FWriteBytes(std::as_bytes(std::span(plr.szNames)));
+}
+
+// Callers choose the already admitted fixed prefix. Preserve the destination
+// tail for partial/detailed records; their string readers publish separately.
+inline bool FDecodePlayer(std::span<const std::byte> rgb, PLAYER &plr, std::size_t cbFixed = cbWirePlayer) noexcept {
+    if ((cbFixed != cbWirePlayerPartial && cbFixed != cbWirePlayerPrefix && cbFixed != cbWirePlayer) || rgb.size() < cbFixed) return false;
+    NATIVEBYTEREADER input(rgb.first(cbFixed));
+    std::uint8_t ch;
+    std::uint16_t w;
+    std::int16_t i;
+    std::uint32_t ul;
+    std::int32_t l;
+    input.FReadU8(ch); plr.iPlayer = std::bit_cast<std::int8_t>(ch);
+    input.FReadU8(ch); plr.cShDef = std::bit_cast<std::int8_t>(ch);
+    input.FReadI16Le(i); plr.cPlanet = i;
+    input.FReadU16Le(w); plr.cFleet = w & 4095; plr.cshdefSB = w >> 12;
+    input.FReadU16Le(w); plr.SetWMdPlr(w);
+    if (cbFixed == cbWirePlayerPartial) return true;
+    input.FReadI16Le(i); plr.idPlanetHome = i;
+    input.FReadU16Le(w); plr.wScore = w;
+    input.FReadI32Le(l); plr.lSalt = l;
+    input.FReadBytes(std::as_writable_bytes(std::span(plr.rgEnvVar))); input.FReadBytes(std::as_writable_bytes(std::span(plr.rgEnvVarMin)));
+    input.FReadBytes(std::as_writable_bytes(std::span(plr.rgEnvVarMax)));
+    input.FReadU8(ch); plr.pctIdealGrowth = std::bit_cast<std::int8_t>(ch);
+    input.FReadBytes(std::as_writable_bytes(std::span(plr.rgTech)));
+    for (int j = 0; j < 6; j++) { input.FReadU32Le(ul); plr.rgResSpent[j] = ul; }
+    input.FReadU8(ch); plr.pctResearch = std::bit_cast<std::int8_t>(ch);
+    input.FReadU8(ch); plr.iTechCur = std::bit_cast<std::int8_t>(ch);
+    input.FReadI32Le(l); plr.lResLastYear = l;
+    input.FReadBytes(std::as_writable_bytes(std::span(plr.rgAttr)));
+    input.FReadU32Le(ul); plr.grbitAttr = static_cast<RaceTraitBits>(ul);
+    input.FReadU16Le(w); plr.grbitTrader = static_cast<GrbitTrader>(w);
+    input.FReadU16Le(w); plr.SetWFlags(w);
+    FDecodeZipProdQ1(rgb.subspan(86), plr.zpq1); input.FSkip(cbWireZipProdQ1);
+    if (cbFixed == cbWirePlayerPrefix) return true;
+    input.FReadBytes(std::as_writable_bytes(std::span(plr.rgmdRelation))); input.FReadBytes(std::as_writable_bytes(std::span(plr.szName)));
+    return input.FReadBytes(std::as_writable_bytes(std::span(plr.szNames)));
+}
+
 #endif

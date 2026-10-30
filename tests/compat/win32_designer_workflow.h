@@ -154,20 +154,20 @@ static BOOL FCheckDesignerWorkflows(void) {
 }
 
 static BOOL FCheckSaveReloadWorkflow(void) {
-    int iResearch = (rgplr[idPlayer].iTechNow + 1) % 6, iPlayerSav = idPlayer;
+    int iResearch = (rgplr[idPlayer].iTechNow() + 1) % 6, iPlayerSav = idPlayer;
     int32_t lidSav = game.lid;
     char szLog[512];
 
-    if (!FRunWorkflow(1, iResearch) || rgplr[idPlayer].iTechNow != iResearch) return FALSE;
+    if (!FRunWorkflow(1, iResearch) || rgplr[idPlayer].iTechNow() != iResearch) return FALSE;
     SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_SAVE, 0);
     snprintf(szLog, sizeof(szLog), "%s.x%d", szBase, idPlayer + 1);
     if (!FFileExists(szLog) || game.fDirty) return FALSE;
     // Reload through the actual MRU command: FLoadGame resets the world before
     // replaying the saved orders, so the new research choice must persist.
-    rgplr[idPlayer].iTechNow = (iResearch + 1) % 6;
+    rgplr[idPlayer].SetITechNow((iResearch + 1) % 6);
     SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_MRU1, 0);
     if (game.lid != lidSav || idPlayer != iPlayerSav || !IsWindow(hwndScanner) ||
-        !IsWindowEnabled(hwndFrame) || rgplr[idPlayer].iTechNow != iResearch) return FALSE;
+        !IsWindowEnabled(hwndFrame) || rgplr[idPlayer].iTechNow() != iResearch) return FALSE;
     puts("Save orders and MRU reload preserve the committed research choice and game identity");
     return TRUE;
 }

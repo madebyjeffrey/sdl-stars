@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing and planet families pass the full local matrix. PLAYER/THING/resource families and final platform qualification remain required. |
+| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag and player/template families pass the full local matrix. THING/resource/runtime-alias families and final platform qualification remain required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1326,3 +1326,40 @@ an initial fixture mistakenly included it in the preceding word and was fixed
 before publication. Frozen inputs, catalogs, baselines and production layout/
 alignment contracts remain unchanged. Remaining B11 families and its final
 complete platform gate remain required.
+
+
+## B11 player/default-production records in qualification
+
+PLAYER fixed images and partial/detailed prefixes use explicit little-endian
+codecs; framed names/relations retain the existing compression, length and
+partial-publication rules. Race checksums and both race-prefix comparisons use
+the same fixed wire image. Raw player-ID/AI/salt scratch accesses use minimum
+byte views at their original gates. Numeric mode/research/flag carriers and
+actual production-template fields replace inactive aliases.
+
+Default-template replay preserves every admitted zero/odd/partial byte count.
+Comparison includes adjacent initialized player/template storage when the old
+count reaches beyond a single template. Log payload encoding reads live global
+state after the existing capacity/title callbacks, at the old copy point.
+Packed/natural goldens and thin sanitizer probes pass before application; full
+actual reader/writer/replay, source and local/platform qualification are pending.
+
+
+Player/default-template local qualification: 115/115 desktop tests including
+all 27 native leak checks and available tutorial smoke coverage, 26/26 host
+tests, 40/40 ASan/UBSan cases, all 27 source witnesses and 104 headers in both
+include orders. The sanitizer set and Linux CI now include the actual race
+workflow. Mutable tutorial/workflow observers and six witness call sites use
+the new accessors; independent inputs, models, assertions and exclusions stay
+unchanged. Debug/Release/host/sanitizer builds introduce no warnings. Desktop
+and host regressions each match 519 files through turn 150, with 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs.
+
+Actual integration covers the twelve-byte encrypted partial player record and
+three-word seed consumption, the independent 192-byte race-checksum vector,
+zero/odd/partial template replay and callback-mutated template publication. An
+orders-file case proves a difference only in the bytes after the 26-byte
+template still triggers the historical 28-byte comparison and output. A separate
+186-byte case retains all following template bytes. Frozen references, catalogs,
+baselines and production layout/alignment contracts remain unchanged. Remaining
+B11 families and its final complete platform gate remain required.

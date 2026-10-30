@@ -940,7 +940,7 @@ static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTim
     if (iWorkflow == 1) {
         if (hwndDialog->lpfnDlg != ResearchDlg) goto LFail;
         if (iWorkflowStep == 0) {
-            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + rgplr[idPlayer].iTechNow, "Button");
+            hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_ENERGY + rgplr[idPlayer].iTechNow(), "Button");
             if (!hwndControl || SendMessage(hwndControl, BM_GETCHECK, 0, 0) != BST_CHECKED) goto LFail;
             hwndControl = HwndWorkflowControl(hwndDialog, IDC_RESEARCH_NEXT_FIELD, "ComboBox");
             if (!hwndControl || SendMessage(hwndControl, CB_GETCOUNT, 0, 0) != 8) goto LFail;
@@ -1420,7 +1420,7 @@ static BOOL FCheckGameplayWorkflows(void) {
     SHDEF rgshdefSav[16];
     BTLPLAN btlplanSav = rglpbtlplan[idPlayer][0];
     int iRelationSav = rgplr[idPlayer].rgmdRelation[idPlayer == 0];
-    int iResearchSav = rgplr[idPlayer].iTechNow, cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
+    int iResearchSav = rgplr[idPlayer].iTechNow(), cProdSav, cProdItemsSav = 0, i, iResearchNew = (iResearchSav + 1) % 6;
     int16_t fNoResearchSav, fSinglePlrSav;
     const char *pszWorkflow = PszCompatEnvironment("STARS_CLIENT_WORKFLOW");
     if (pszWorkflow) {
@@ -1432,11 +1432,11 @@ static BOOL FCheckGameplayWorkflows(void) {
         fprintf(stderr, "Workflow selection: grobj %u planet %d owner %d player %d\n", sel.grobj, sel.pl.id, sel.pl.iPlayer, idPlayer);
         return FALSE;
     }
-    if (!FRunWorkflow(1, iResearchNew) || rgplr[idPlayer].iTechNow != iResearchNew) {
-        fprintf(stderr, "Research commit: wanted %d got %d\n", iResearchNew, rgplr[idPlayer].iTechNow); return FALSE;
+    if (!FRunWorkflow(1, iResearchNew) || rgplr[idPlayer].iTechNow() != iResearchNew) {
+        fprintf(stderr, "Research commit: wanted %d got %d\n", iResearchNew, rgplr[idPlayer].iTechNow()); return FALSE;
     }
-    if (!FRunWorkflow(1, iResearchSav) || rgplr[idPlayer].iTechNow != iResearchSav) {
-        fprintf(stderr, "Research restore: wanted %d got %d\n", iResearchSav, rgplr[idPlayer].iTechNow); return FALSE;
+    if (!FRunWorkflow(1, iResearchSav) || rgplr[idPlayer].iTechNow() != iResearchSav) {
+        fprintf(stderr, "Research restore: wanted %d got %d\n", iResearchSav, rgplr[idPlayer].iTechNow()); return FALSE;
     }
     cProdSav = sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac : 0;
     if (cProdSav > (int)SDL_arraysize(rgprodSav)) { fprintf(stderr, "Production count %d\n", cProdSav); return FALSE; }
@@ -2867,7 +2867,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             if (iStage != 21) {
                 char szBlocked[256];
                 int16_t idPlayerBefore = idPlayer;
-                int16_t iResearch = (rgplr[idPlayer].iTechNow + 1) % 6;
+                int16_t iResearch = (rgplr[idPlayer].iTechNow() + 1) % 6;
                 PLANET *lpPlanetsBefore = lpPlanets;
                 if (pszFailure) {
                     if (!FRunWorkflow(1, iResearch)) goto LDone;
@@ -2878,7 +2878,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                     gd.fSubmit = FALSE;
                     SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
                     if (IsWindow(hwndTitle) || lpPlanets != lpPlanetsBefore || idPlayer != idPlayerBefore ||
-                        !game.fDirty || gd.fSubmit || rgplr[idPlayer].iTechNow != iResearch || cAlerts != 2)
+                        !game.fDirty || gd.fSubmit || rgplr[idPlayer].iTechNow() != iResearch || cAlerts != 2)
                         goto LDone;
                     if (RemoveNativePath(szBlocked) != 0) goto LDone;
                     puts("Failed save preserves the active player and pending research; retrying the save");

@@ -471,7 +471,8 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
 
 uint16_t IRaceChecksum(PLAYER *pplr) {
     uint16_t  ick;
-    uint16_t *p;
+    std::byte rgb[cbWirePlayer];
+    uint16_t w;
     int16_t   i;
     int16_t   cs;
     size_t    cch;
@@ -487,11 +488,13 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
     memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);
     cch = strnlen(plr.szNames, sizeof(plr.szNames));
     memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);
-    p = (uint16_t *)&plr;
+    FEncodePlayer(plr, rgb);
+    NATIVEBYTEREADER input(rgb);
     cs = 96;
     ick = 0;
     for (i = 0; i < cs; i++) {
-        ick ^= p[i];
+        input.FReadU16Le(w);
+        ick ^= w;
     }
     return ick;
 }
@@ -525,17 +528,17 @@ static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb
     size_t cbRead;
 
     memset(pplr, 0, sizeof(PLAYER));
-    if (cb < offsetof(PLAYER, idPlanetHome)) return FALSE;
-    if (((PLAYER *)lpb)->det == detAll) {
-        iOff = offsetof(PLAYER, rgmdRelation);
+    if (cb < cbWirePlayerPartial) return FALSE;
+    if ((lpb[6] & 7) == detAll) {
+        iOff = cbWirePlayerPrefix;
         if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
             lpb[iOff] > cb - (size_t)iOff - 1) return FALSE;
-        memmove(pplr, lpb, iOff);
+        FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
         memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
     } else {
-        iOff = offsetof(PLAYER, idPlanetHome);
-        memmove(pplr, lpb, iOff);
+        iOff = cbWirePlayerPartial;
+        FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
     if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return FALSE;
     iOff += (int16_t)cbRead;

@@ -127,7 +127,7 @@ int main(int argc,char **argv){
     while(fread(rgIn,sizeof(rgIn),1,file)==1){
         memset(rgplr,0x53,sizeof(rgplr));memset(&game,0x35,sizeof(game));memset(&design,0x5a,sizeof(design));
         int player=rgIn[1]==-1?0:rgIn[1];CHECK(player>=0 && player<16);
-        rgplr[player].rgAttr[rsMajorAdv]=(int8_t)rgIn[4];rgplr[player].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[5]);rgplr[player].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[6]);rgplr[player].iTechNow=rgIn[7];
+        rgplr[player].rgAttr[rsMajorAdv]=(int8_t)rgIn[4];rgplr[player].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[5]);rgplr[player].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[6]);rgplr[player].SetITechNow(rgIn[7]);
         for(int f=0;f<6;f++)rgplr[player].rgTech[f]=(int8_t)rgIn[10+f];
         design.hul.ihuldef=static_cast<HulDef>((uint16_t)rgIn[2]);design.hul.chs=(uint8_t)rgIn[3];design.fFree=rgIn[8];design.fGift=rgIn[9];
         for(int at=0;at<16;at++){design.hul.rghs[at].grhst=static_cast<HullSlotType>((uint16_t)rgIn[16+3*at]);design.hul.rghs[at].iItem=rgIn[17+3*at];design.hul.rghs[at].cItem=rgIn[18+3*at];}

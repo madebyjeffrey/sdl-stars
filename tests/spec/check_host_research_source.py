@@ -246,7 +246,7 @@ int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t
     harness=r'''
 static void setup(void){memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));hash=costs=lookups=messages=generals=tts=primaries=entries=0;lastField=lastLevel=0;memset(typeCalls,0,sizeof(typeCalls));game.cPlayer=(int16_t)cfg[0];game.fSlowTech=cfg[2];idPlayer=(int16_t)cfg[6];
     for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=static_cast<RaceTraitBits>((cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0));
-        p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->iTechNow=cfg[at+5];p->iTechNext=cfg[at+6];p->lResLastYear=cfg[at+7];
+        p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->SetITechNow(cfg[at+5]);p->SetITechNext(cfg[at+6]);p->lResLastYear=cfg[at+7];
         for(int f=0;f<6;f++){p->rgTech[f]=(int8_t)cfg[at+8+f];p->rgAttr[8+f]=(int8_t)cfg[at+14+f];p->rgResSpent[f]=(uint32_t)cfg[at+20+f];}}
 }
 int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");assert(file);unsigned long cases=0,checks=0;int64_t expected[234];

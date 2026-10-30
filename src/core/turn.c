@@ -383,7 +383,7 @@ void EnsureAis() {
             FLoadGame(szBase, "hst");
         }
         for (iPlayer = 0; iPlayer < game.cPlayer; iPlayer++) {
-            *(uint16_t *)&rgmdplr[iPlayer] = rgplr[iPlayer].wMdPlr;
+            rgmdplr[iPlayer].SetWMdPlr(rgplr[iPlayer].wMdPlr());
         }
         gd.fSubmit = TRUE;
         fErrSav = fFileErrSilent;
@@ -400,7 +400,7 @@ void EnsureAis() {
                 if (fOpened) {
                     StreamClose();
                 } else {
-                    DoAiTurn(iPlayer, *(uint16_t *)&rgmdplr[iPlayer]);
+                    DoAiTurn(iPlayer, rgmdplr[iPlayer].wMdPlr());
                 }
             }
         }

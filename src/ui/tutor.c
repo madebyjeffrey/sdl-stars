@@ -12,12 +12,12 @@ ZIPPRODQ1  rgzpqTut[2] = {
     {
          .fNoResearch = TRUE,
          .cpq = 2,
-         .rgpq = {{.mdIdle = iobjFactory, .cQuan = 3}, {.cQuan = 3}},
+         .rgpq = {PqMake(iobjFactory, 3), PqMake(0, 3)},
     },
     {
          .fNoResearch = TRUE,
          .cpq = 3,
-         .rgpq = {{.mdIdle = iobjMinTerraform, .cQuan = 2}, {.mdIdle = iobjFactory, .cQuan = 3}, {.cQuan = 3}},
+         .rgpq = {PqMake(iobjMinTerraform, 2), PqMake(iobjFactory, 3), PqMake(0, 3)},
     }};
 
 INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -357,9 +357,9 @@ void SaveGameState() {
     tutor.grbitScan = grbitScan;
     tutor.iScanZoom = iScanZoom;
     tutor.fTBVis = gd.fToolbar;
-    tutor.zpq = vrgZipProd[0].zpq1;
+    tutor.zpq = vrgZipProd[0].zpq1();
     tutor.fValidQ = vrgZipProd[0].fValid;
-    vrgZipProd[0].zpq1 = vrgZipProd[4].zpq1;
+    vrgZipProd[0].SetZpq1(vrgZipProd[4].zpq1());
     vrgZipProd[0].fValid = vrgZipProd[4].fValid;
     if (!gd.fToolbar) {
         hmenu = GetASubMenu(hwndFrame, menuView);
@@ -386,9 +386,9 @@ void RestoreGameState() {
     }
     grbitScan = static_cast<GrbitScan>(tutor.grbitScan);
     iScanZoom = tutor.iScanZoom;
-    vrgZipProd[4].zpq1 = vrgZipProd[0].zpq1;
+    vrgZipProd[4].SetZpq1(vrgZipProd[0].zpq1());
     vrgZipProd[4].fValid = vrgZipProd[0].fValid;
-    vrgZipProd[0].zpq1 = tutor.zpq;
+    vrgZipProd[0].SetZpq1(tutor.zpq);
     vrgZipProd[0].fValid = tutor.fValidQ;
     if (gd.fToolbar != tutor.fTBVis) {
         hmenu = GetASubMenu(hwndFrame, menuView);
@@ -2283,7 +2283,7 @@ int16_t FCheckTemplate(int16_t iTemplate) {
     tutor.idh = idhProductionTemplates;
     if (tutor.fAutoComplete) {
         vrgZipProd[0].fValid = TRUE;
-        vrgZipProd[0].zpq1 = rgzpqTut[iTemplate];
+        vrgZipProd[0].SetZpq1(rgzpqTut[iTemplate]);
         gd.fChgZipProd = TRUE;
         return TRUE;
     }
@@ -2465,7 +2465,7 @@ int16_t FCheckMessages(int16_t imsg, MessageId idm, int16_t fFilter) {
 }
 
 int16_t FCheckResearch(TechFieldType iTech, TechFieldType iTechNext, int16_t pct) {
-    if (rgplr[0].iTechNow == iTech && rgplr[0].iTechNext == iTechNext && rgplr[0].pctResearch == pct) {
+    if (rgplr[0].iTechNow() == iTech && rgplr[0].iTechNext() == iTechNext && rgplr[0].pctResearch == pct) {
         return TRUE;
     }
     tutor.idh = idhResearchDialog;

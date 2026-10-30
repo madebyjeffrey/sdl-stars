@@ -94,24 +94,22 @@ int16_t FReadShDef(const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t
 
 void ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb) {
     int16_t iOff;
-    PLAYER *pplrRaw;
     size_t cbRead;
 
-    pplrRaw = (PLAYER *)pbIn;
     memset(pplr, 0, sizeof(PLAYER));
-    if (cb < offsetof(PLAYER, idPlanetHome)) goto invalid;
+    if (cb < cbWirePlayerPartial) goto invalid;
     // A full record stores a relation count where rgmdRelation begins, then
     // that many relations; a partial one stops before idPlanetHome.
-    if (pplrRaw->det == detAll) {
-        iOff = offsetof(PLAYER, rgmdRelation);
+    if (PlvFromPrefix(pbIn, cb).det() == detAll) {
+        iOff = cbWirePlayerPrefix;
         if (cb <= (size_t)iOff || pbIn[iOff] > cb - iOff - 1) goto invalid;
-        memmove(pplr, pbIn, iOff);
+        FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
         // Keep a corrupt count from overrunning rgmdRelation; skip the rest.
         memmove(pplr->rgmdRelation, pbIn + iOff + 1, (((pbIn[iOff]) < (sizeof(pplr->rgmdRelation))) ? (pbIn[iOff]) : (sizeof(pplr->rgmdRelation))));
         iOff += pbIn[iOff] + 1;
     } else {
-        iOff = offsetof(PLAYER, idPlanetHome);
-        memmove(pplr, pbIn, iOff);
+        iOff = cbWirePlayerPartial;
+        FDecodePlayer(std::as_bytes(std::span(pbIn, cb)), *pplr, iOff);
     }
     if (!FReadUserString(pbIn + iOff, cb - iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) goto invalid;
     iOff += (int16_t)cbRead;
@@ -252,7 +250,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 ReadRt();
             }
             while (hdrCur.rt == rtPlr) {
-                i = ((PLAYER *)rgbCur)->iPlayer;
+                i = PlvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer();
                 ReadRtPlr(&rgplr[i], (uint8_t *)rgbCur, hdrCur.cb);
                 rgplr[i].cPlanet = 0;
                 rgplr[i].cFleet = 0;
@@ -425,7 +423,7 @@ LNextTurn:
             }
         }
         while (hdrCur.rt == rtPlr) {
-            i = ((PLAYER *)rgbCur)->iPlayer;
+            i = PlvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer();
             ReadRtPlr(&rgplr[i], (uint8_t *)rgbCur, hdrCur.cb);
             cPlanet += rgplr[i].cPlanet;
             rgplr[i].cPlanet = 0;
@@ -1375,8 +1373,8 @@ int16_t FCheckFile(DtFileType dt, int16_t iPlayer, MdMark md) {
         } else {
             do {
                 ReadRt();
-            } while (hdrCur.rt != rtEOF && (hdrCur.rt != rtPlr || ((PLAYER *)rgbCur)->iPlayer != iPlayer));
-            fReturn = hdrCur.rt == rtPlr && ((PLAYER *)rgbCur)->fAi;
+            } while (hdrCur.rt != rtEOF && (hdrCur.rt != rtPlr || PlvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer() != iPlayer));
+            fReturn = hdrCur.rt == rtPlr && PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi();
         }
     }
     if (fOpened) {

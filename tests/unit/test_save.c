@@ -656,7 +656,33 @@ static void test_FReadPlanet_partial_publication(void) {
     TEST_CHECK(pl.rgEnvVar[0] == 10 && pl.rgEnvVar[2] == 30 && pl.rgEnvVarOrig[0] == 40 && pl.rgEnvVarOrig[1] == 20);
 }
 
-TEST_LIST = {{"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
+static void test_WriteRtPlr_partial_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xfe, 0xff, 0, 0x80, 0xff, 0xff, 0x89, 0xaf, 0, 0, 0, 0};
+    PLAYER plr{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("player-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%splayer", szDir, szDirSep);
+    plr.iPlayer = -2; plr.cShDef = -1; plr.cPlanet = -32768; plr.cFleet = 4095; plr.cshdefSB = 15;
+    plr.det = detMinimal; plr.iPlrBmp = 17; plr.fInclude = 1; plr.fAi = 1; plr.lvlAi = 3; plr.idAi = 5;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WriteRtPlr(&plr, NULL);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 125172514 && lSeed2 == 2112981774);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtPlr && hdrCur.cb == 12 && !memcmp(rgbCur, golden, sizeof(golden)));
+    ReadRtPlr(&decoded, reinterpret_cast<uint8_t *>(rgbCur), hdrCur.cb);
+    TEST_CHECK(decoded.iPlayer == -2 && decoded.cShDef == -1 && decoded.cPlanet == -32768 && decoded.cFleet == 4095 && decoded.cshdefSB == 15);
+    TEST_CHECK(decoded.wMdPlr() == 0xaf89 && decoded.szName[0] == 0 && decoded.szNames[0] == 0 && !decoded.fLearned);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+TEST_LIST = {{"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
+             {"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
              {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},
              {"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},
              {"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},

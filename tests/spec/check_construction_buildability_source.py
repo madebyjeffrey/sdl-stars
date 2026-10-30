@@ -153,7 +153,7 @@ int main(int argc,char **argv){
         planet.fStarbase=data[1];planet.iPlayer=(int16_t)owner;planet.isb=data[21];
         if(owner>=0 && owner<16){
             rglpshdef[owner]=data[3]?ships:NULL;rglpshdefSB[owner]=data[4]?bases:NULL;
-            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=static_cast<RaceTraitBits>((uint32_t)data[13]);rgplr[owner].grbitTrader=static_cast<GrbitTrader>((uint16_t)data[14]);rgplr[owner].iTechNow=data[16];
+            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=static_cast<RaceTraitBits>((uint32_t)data[13]);rgplr[owner].grbitTrader=static_cast<GrbitTrader>((uint16_t)data[14]);rgplr[owner].SetITechNow(data[16]);
             for(int f=0;f<6;f++)rgplr[owner].rgTech[f]=(int8_t)data[15];rgplr[owner].cFleet=data[18]?512:0;
         }
         for(int i=0;i<16;i++){ships[i].cBuilt=100+i;ships[i].cExist=50+i;}

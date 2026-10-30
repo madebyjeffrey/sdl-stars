@@ -21,6 +21,78 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 
 int main() {
     for (std::uint32_t w = 0; w < 65536; w++) {
+        PLAYER plr{};
+        MDPLR md{};
+        PRODQ1 pq{};
+        plr.SetWMdPlr(static_cast<std::uint16_t>(w)); plr.SetWFlags(static_cast<std::uint16_t>(w)); md.SetWMdPlr(static_cast<std::uint16_t>(w));
+        CHECK(plr.wMdPlr() == w && plr.mdPlayer() == (w >> 9) && plr.reserved() == (w & 511) && md.wMdPlr() == w);
+        CHECK(plr.det == (w & 7) && plr.iPlrBmp == ((w >> 3) & 31) && plr.fInclude == ((w >> 8) & 1));
+        CHECK(plr.fAi == ((w >> 9) & 1) && plr.lvlAi == ((w >> 10) & 7) && plr.idAi == (w >> 13));
+        CHECK(md.reserved == (w & 511) && md.fAi == plr.fAi && md.lvlAi == plr.lvlAi && md.idAi == plr.idAi);
+        CHECK(plr.wFlags() == w && plr.fDead == (w & 1) && plr.fCrippled == ((w >> 1) & 1));
+        CHECK(plr.fUnused == ((w >> 2) & 1) && plr.fLearned == ((w >> 3) & 1) && plr.fHacker == ((w >> 4) & 1) && plr.unused == (w >> 5));
+        pq.w = static_cast<std::uint16_t>(w);
+        CHECK(pq.mdIdle() == (w & 63) && pq.cQuan() == (w >> 6));
+        pq.SetMdIdle(static_cast<std::uint16_t>(65535 - w));
+        CHECK(pq.mdIdle() == ((65535 - w) & 63) && pq.cQuan() == (w >> 6));
+        pq.SetCQuan(static_cast<std::uint16_t>(w));
+        CHECK(pq.mdIdle() == ((65535 - w) & 63) && pq.cQuan() == (w & 1023));
+        plr.iTechCur = std::bit_cast<std::int8_t>(static_cast<std::uint8_t>(w));
+        const std::int16_t hi = (w & 255) >> 4;
+        CHECK(plr.iTechNow() == (w & 15) && plr.iTechNext() == (hi < 8 ? hi : hi - 16));
+        plr.SetITechNow(static_cast<std::uint8_t>(65535 - w));
+        CHECK(plr.iTechNow() == ((65535 - w) & 15) && plr.iTechNext() == (hi < 8 ? hi : hi - 16));
+        plr.SetITechNext(static_cast<std::int8_t>(w & 127));
+        const std::int16_t lo = w & 15;
+        CHECK(plr.iTechNext() == (lo < 8 ? lo : lo - 16) && plr.iTechNow() == ((65535 - w) & 15));
+    }
+    {
+        std::array<std::byte, 192> golden;
+        for (std::size_t i = 0; i < golden.size(); i++) golden[i] = static_cast<std::byte>((i * 73 + 11) & 255);
+        auto b = [&](std::size_t i) { return std::to_integer<std::uint32_t>(golden[i]); };
+        auto w = [&](std::size_t i) { return b(i) | (b(i + 1) << 8); };
+        auto l = [&](std::size_t i) { return w(i) | (w(i + 2) << 16); };
+        auto si = [&](std::size_t i) { return w(i) < 32768 ? std::int32_t(w(i)) : std::int32_t(w(i)) - 65536; };
+        PLAYER plr{};
+        CHECK(FDecodePlayer(golden, plr));
+        CHECK(static_cast<std::uint8_t>(plr.iPlayer) == b(0) && static_cast<std::uint8_t>(plr.cShDef) == b(1));
+        CHECK(plr.cPlanet == si(2) && plr.cFleet == (w(4) & 4095) && plr.cshdefSB == (w(4) >> 12));
+        CHECK(plr.wMdPlr() == w(6) && plr.idPlanetHome == si(8) && plr.wScore == w(10) && std::uint32_t(plr.lSalt) == l(12));
+        CHECK(!std::memcmp(plr.rgEnvVar, golden.data() + 16, 3) && !std::memcmp(plr.rgEnvVarMin, golden.data() + 19, 3));
+        CHECK(!std::memcmp(plr.rgEnvVarMax, golden.data() + 22, 3) && std::uint8_t(plr.pctIdealGrowth) == b(25));
+        CHECK(!std::memcmp(plr.rgTech, golden.data() + 26, 6));
+        for (int i = 0; i < 6; i++) CHECK(plr.rgResSpent[i] == l(32 + i * 4));
+        CHECK(std::uint8_t(plr.pctResearch) == b(56) && std::uint8_t(plr.iTechCur) == b(57) && std::uint32_t(plr.lResLastYear) == l(58));
+        CHECK(!std::memcmp(plr.rgAttr, golden.data() + 62, 16) && std::uint32_t(plr.grbitAttr) == l(78) && std::uint16_t(plr.grbitTrader) == w(82));
+        CHECK(plr.wFlags() == w(84) && plr.zpq1.fNoResearch == b(86) && plr.zpq1.cpq == b(87));
+        for (int i = 0; i < 12; i++) CHECK(plr.zpq1.rgpq[i].w == w(88 + i * 2));
+        CHECK(!std::memcmp(plr.rgmdRelation, golden.data() + 112, 16));
+        CHECK(!std::memcmp(plr.szName, golden.data() + 128, 32) && !std::memcmp(plr.szNames, golden.data() + 160, 32));
+        std::array<std::byte, 194> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FEncodePlayer(plr, std::span(rgb).subspan(1, 192)) && !std::memcmp(rgb.data() + 1, golden.data(), 192));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 192; cb++) {
+            PLAYER untouched{}; untouched.iPlayer = 123;
+            CHECK(!FDecodePlayer(std::span(golden).first(cb), untouched) && untouched.iPlayer == 123);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodePlayer(plr, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+        plr.idPlanetHome = 123; plr.zpq1.cpq = 42; plr.rgmdRelation[0] = 99; plr.szName[0] = 'z';
+        CHECK(FDecodePlayer(std::span(golden).first(8), plr, 8));
+        CHECK(plr.idPlanetHome == 123 && plr.zpq1.cpq == 42 && plr.rgmdRelation[0] == 99 && plr.szName[0] == 'z');
+        CHECK(FDecodePlayer(std::span(golden).first(112), plr, 112));
+        CHECK(plr.idPlanetHome == si(8) && plr.zpq1.cpq == b(87) && plr.rgmdRelation[0] == 99 && plr.szName[0] == 'z');
+        if constexpr (alignof(PLAYER) == 1) {
+            alignas(4) std::byte rgbPlr[sizeof(PLAYER) + 1]{};
+            auto *odd = ::new (rgbPlr + 1) PLAYER{};
+            CHECK(FDecodePlayer(golden, *odd) && FEncodePlayer(*odd, std::span(rgb).subspan(1, 192)));
+            CHECK(!std::memcmp(rgb.data() + 1, golden.data(), 192));
+        }
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
         INI ini{};
         TUTOR tutor{};
         GDATA gd{};

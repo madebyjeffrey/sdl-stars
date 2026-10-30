@@ -78,11 +78,11 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         if (IsWindow(hwndTitle)) goto LWait;
         if (!lpPlanets || idPlayer != iPlayer || !IsWindow(hwndScanner)) goto LFail;
         if (fVerify) {
-            if (rgplr[idPlayer].iTechNow != iResearch) goto LFail;
+            if (rgplr[idPlayer].iTechNow() != iResearch) goto LFail;
             goto LDone;
         }
-        if (rgplr[idPlayer].iTechNow == iResearch) goto LFail;
-        if (!FRunWorkflow(1, iResearch) || !game.fDirty || rgplr[idPlayer].iTechNow != iResearch) goto LFail;
+        if (rgplr[idPlayer].iTechNow() == iResearch) goto LFail;
+        if (!FRunWorkflow(1, iResearch) || !game.fDirty || rgplr[idPlayer].iTechNow() != iResearch) goto LFail;
         if (!strcmp(pszAction, "submit")) {
             SendMessage(hwndFrame, WM_COMMAND, IDM_TURN_SAVE_SUBMIT, 0);
             if (game.fDirty || !gd.fSubmit) goto LFail;
