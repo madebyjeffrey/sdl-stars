@@ -208,3 +208,10 @@ publication and version/mark/import short circuits. Signed player/salt bits
 retain their domains and encryption inputs. RTBOF version aliases now compute
 the numeric word from its actual fields; VERS casts of wVersFile are removed.
 The historical RTBOF/VERS size contracts remain independently measured.
+
+
+B11 encryption words: XorFileBuf now uses explicit four-byte little-endian
+reads/writes over its physical byte buffer. No native int32_t object is invented
+at the byte address. Trailing-byte operations and exact XOR-seed consumption
+remain unchanged. This retires the encryption loop's raw scalar alias only;
+other RawLoad/RawStore sites remain assigned to their own wire/runtime family.

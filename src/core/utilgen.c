@@ -139,16 +139,19 @@ int32_t LGetNextFileXor() {
 }
 
 void XorFileBuf(char *rgb, int16_t cb) {
-    int32_t *plMac;
-    int32_t *pl;
+    char    *plMac;
+    char    *pl;
     int32_t  lPrev;
+    uint32_t ul;
     char    *pch;
 
     lPrev = 0;
-    pl = (int32_t *)rgb;
-    plMac = pl + (cb >> 2);
-    for (; pl < plMac; pl++) {
-        *pl ^= LGetNextFileXor();
+    pl = rgb;
+    plMac = pl + (cb >> 2) * 4;
+    for (; pl < plMac; pl += 4) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
+        ul ^= static_cast<uint32_t>(LGetNextFileXor());
+        NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
     }
     cb &= 3;
     if (cb > 0) {

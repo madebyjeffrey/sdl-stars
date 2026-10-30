@@ -97,7 +97,32 @@ static void test_StarsCopyFile(void) {
     TEST_CHECK(fFileErrSilent == fSilentSav);
 }
 
-TEST_LIST = {{"StarsCopyFile", test_StarsCopyFile},
+// Literal vectors use an independently evaluated numeric recurrence, fixing
+// ciphertext and seed consumption without deriving either from XorFileBuf.
+static void test_XorFileBuf_unaligned_bytes(void) {
+    const uint8_t golden[35] = {0x79, 0xf9, 0x98, 0x94, 0x6e, 0x0e, 0x12, 0xb6, 0x99, 0xee, 0x2b, 0x49, 0xcb, 0x14, 0xa9, 0x08, 0xb0, 0xa7, 0x29, 0xc5, 0x18, 0xb4, 0x3e, 0x62, 0xb9, 0x52, 0xaa, 0x0e, 0x66, 0xa5, 0x58, 0xf7, 0x1d, 0x9b, 0x6c};
+    const int32_t seeds[10][2] = {{123456, 789012}, {645001258, 2041708718}, {622877478, 1520895743}, {125172514, 2112981774}, {721306280, 514018446}, {170401200, 2097781771}, {173304275, 470715282}, {372834923, 941819463}, {48296761, 528849842}, {1958871517, 26629285}};
+    uint8_t rgb[42];
+    int32_t lSeed1, lSeed2;
+
+    for (int ib = 0; ib < 4; ib++) for (int cb = 0; cb <= 35; cb++) {
+        memset(rgb, 0xa5, sizeof(rgb));
+        for (int i = 0; i < cb; i++) rgb[ib + i] = (uint8_t)(i * 17 + 5);
+        SetFileSeeds(123456, 789012);
+        XorFileBuf((char *)rgb + ib, cb);
+        GetFileSeeds(&lSeed1, &lSeed2);
+        TEST_CHECK(!memcmp(rgb + ib, golden, cb));
+        TEST_CHECK(lSeed1 == seeds[(cb + 3) / 4][0] && lSeed2 == seeds[(cb + 3) / 4][1]);
+        for (int i = 0; i < ib; i++) TEST_CHECK(rgb[i] == 0xa5);
+        for (int i = ib + cb; i < (int)sizeof(rgb); i++) TEST_CHECK(rgb[i] == 0xa5);
+        SetFileSeeds(123456, 789012);
+        XorFileBuf((char *)rgb + ib, cb);
+        for (int i = 0; i < cb; i++) TEST_CHECK(rgb[ib + i] == (uint8_t)(i * 17 + 5));
+    }
+}
+
+TEST_LIST = {{"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},
+             {"StarsCopyFile", test_StarsCopyFile},
              {"PszFromLong", test_PszFromLong},
              {"FIntersectCircleLine horizontal", test_FIntersectCircleLine_horizontal},
              {"FIntersectCircleLine diagonal", test_FIntersectCircleLine_diagonal},

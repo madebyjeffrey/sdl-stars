@@ -1095,3 +1095,26 @@ each match 519 files through turn 150, with 25 accepted unused-storage warnings,
 zero differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines
 and layout/alignment contracts remain unchanged. Remaining B11 fixed/resource
 families and its final platform gate remain required.
+
+
+## B11 encryption-word access in qualification
+
+XorFileBuf reads and writes explicit little-endian words through byte cursors,
+removing cast-based unaligned/native-object access. Full-word order, one RNG
+word per trailing fragment, signed arithmetic and trailing-byte operations stay
+unchanged. Literal ciphertext and seed vectors verify every length from zero to
+35 at four offsets, guard bytes and repeated XOR restoration. The focused
+harness passes. Its sanitizer target now joins local/CI qualification; Linux
+also instruments the actual stream-exception harness used by B11 header tests.
+Full local and final B11 platform qualification remain required.
+
+
+Encryption-word local qualification: 114/114 desktop tests including all 27
+native leak checks and available tutorial smoke coverage, 25/25 host tests,
+38/38 ASan/UBSan cases including actual encryption and stream-error harnesses,
+all 27 source witnesses and 104 headers in both include orders. Debug/Release/
+host/sanitizer builds introduce no warnings. Desktop and host regressions each
+match 519 files through turn 150, with 25 accepted unused-storage warnings, zero
+differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines and
+layout/alignment contracts remain unchanged. Remaining B11 fixed/resource
+families and its final platform gate remain required.
