@@ -1096,14 +1096,10 @@ struct _rtplrmsg {
 }; /* size=0xc */
 
 struct _rtresearch {
-    int8_t pctResearch; /* +0x0000 (1) */
-    union {
-        int8_t iTechCur; /* +0x0001 (1) */
-        struct {
-            uint8_t iTechNow : 4, /* +0x0001 (1) @bit0 */
-                iTechNext : 4;    /* @bit4 */
-        };
-    };
+    int8_t pctResearch;
+    int8_t iTechCur;
+    constexpr uint8_t iTechNow() const noexcept { return static_cast<uint8_t>(iTechCur) & 15; }
+    constexpr uint8_t iTechNext() const noexcept { return static_cast<uint8_t>(iTechCur) >> 4; }
 }; /* size=0x2 */
 
 struct _rtshipint {

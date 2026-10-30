@@ -5,6 +5,7 @@
 #include "battleviews.h"
 #include "aiviews.h"
 #include "messageviews.h"
+#include "logviews.h"
 #include <array>
 #include <cstdio>
 #include <limits>
@@ -723,6 +724,52 @@ int main() {
         NATIVEMESSAGETURNVIEW prefix{shortTurn, 0};
         CHECK(prefix.iPlr() == 3 && prefix.cbParams() == 15);
     }
-    std::puts("History/production/action/order/design/fleet/battle/AI wire vectors, signed domains, partial bytes and bounded primitives passed");
+    {
+        const std::array<std::byte, 4> golden = {std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0xff}};
+        RTCHGNAME name{};
+        name.rgb[0] = 0x55;
+        CHECK(FDecodeChangeNamePrefix(golden, name) && name.id == -32768 && name.grobj == -1 && name.rgb[0] == 0x55);
+        std::array<std::byte, 6> output;
+        output.fill(std::byte{0xa5});
+        CHECK(FEncodeChangeNamePrefix(name, std::span(output).subspan(1, 4)));
+        CHECK(std::memcmp(output.data() + 1, golden.data(), 4) == 0 && output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 4; cb++) {
+            name.id = 42; name.grobj = 43;
+            CHECK(!FDecodeChangeNamePrefix(std::span(golden).first(cb), name) && name.id == 42 && name.grobj == 43);
+            output.fill(std::byte{0xa5});
+            CHECK(!FEncodeChangeNamePrefix(name, std::span(output).subspan(1, cb)));
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            std::array<std::byte, 2> rgb = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256)};
+            RTRESEARCH research{};
+            CHECK(FDecodeResearch(rgb, research));
+            CHECK(research.pctResearch == (w % 256 < 128 ? static_cast<int>(w % 256) : static_cast<int>(w % 256) - 256));
+            CHECK(research.iTechNow() == (w / 256) % 16 && research.iTechNext() == w / 4096);
+            std::array<std::byte, 2> encoded;
+            CHECK(FEncodeResearch(research, encoded) && encoded == rgb);
+            NATIVERESEARCHVIEW view{rgb, 0};
+            CHECK(view.pctResearch() == research.pctResearch && view.iTechCur() == research.iTechCur);
+            CHECK(view.iTechNow() == research.iTechNow() && view.iTechNext() == research.iTechNext());
+        }
+        std::array<std::byte, 1> invalid{std::byte{0x80}};
+        NATIVERESEARCHVIEW firstByte{invalid, 0};
+        CHECK(firstByte.pctResearch() == -128);
+        RTLOGHDR header{};
+        std::array<std::byte, 17> logGolden{};
+        logGolden[1] = std::byte{0x80};
+        for (unsigned i = 0; i < 15; i++) logGolden[i + 2] = static_cast<std::byte>(0xa0 + i);
+        CHECK(FDecodeLogHdr(logGolden, header) && header.cbLog == -32768 && header.rgbUnused[14] == 0xae);
+        std::array<std::byte, 17> encoded;
+        CHECK(FEncodeLogHdr(header, encoded) && encoded == logGolden);
+        for (std::size_t cb = 0; cb < 17; cb++) {
+            header.cbLog = 999; std::memset(header.rgbUnused, 0x55, 15);
+            CHECK(!FDecodeLogHdr(std::span(logGolden).first(cb), header) && header.cbLog == 999 && header.rgbUnused[14] == 0x55);
+            encoded.fill(std::byte{0xa5});
+            CHECK(!FEncodeLogHdr(header, std::span(encoded).first(cb)));
+            for (auto b : encoded) CHECK(b == std::byte{0xa5});
+        }
+    }
+    std::puts("History/production/action/order/design/fleet/battle/AI/message/log wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

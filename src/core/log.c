@@ -1,5 +1,19 @@
 #include "common.h"
 
+void WriteMemResearch(int16_t wResearch) {
+    uint8_t rgb[cbWireResearch];
+
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI16Le(wResearch);
+    WriteMemRt(rtLogResearch, cbWireResearch, rgb);
+}
+
+void WriteMemPassword(int32_t lSalt) {
+    uint8_t rgb[cbWirePassword];
+
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
+    WriteMemRt(rtChgPassword, cbWirePassword, rgb);
+}
+
 void LogSplitFleet(int16_t id) {
     std::byte rgb[cbWireFleetId];
     if (gd.fGeneratingTurn) {
@@ -70,6 +84,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
     FLEET    *lpfl;
     int16_t   cOut;
     RTCHGNAME rtchgname;
+    uint8_t rgbName[cbWireChangeName + 33];
 
     lpfl = LpflFromId(id);
     if (lpfl) {
@@ -95,7 +110,9 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
         }
         rtchgname.grobj = grobj;
         rtchgname.id = id;
-        WriteMemRt(rtLogFleetName, cOut + 5, &rtchgname);
+        FEncodeChangeNamePrefix(rtchgname, std::as_writable_bytes(std::span(rgbName)).first(cbWireChangeName));
+        memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
+        WriteMemRt(rtLogFleetName, cOut + 5, rgbName);
         if (gd.fTutorial) {
             AdvanceTutor();
         }
@@ -673,9 +690,10 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         }
         break;
     case rtLogFleetName:
-        if (cb < (int16_t)offsetof(RTCHGNAME, rgb) ||
-            !FReadUserString(((RTCHGNAME *)lpb)->rgb, cb - offsetof(RTCHGNAME, rgb), szT, 32, NULL)) return FALSE;
-        if ((lpfl = LpflFromId(((RTCHGNAME *)lpb)->id)) == 0) return FALSE;
+        if (cb < (int16_t)cbWireChangeName ||
+            !FReadUserString(lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, NULL)) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if ((lpfl = LpflFromId(id)) == 0) return FALSE;
         if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
         lpfl->lpszName = NULL;
         if (*szT) {
@@ -1090,17 +1108,18 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         break;
     case rtChgPassword:
         if (gd.fGeneratingTurn) {
-            rgplr[idPlayer].lSalt = RawLoad32(lpb);
+            NATIVEBYTEREADER(std::as_bytes(std::span(lpb, cbWirePassword))).FReadI32Le(l);
+            rgplr[idPlayer].lSalt = l;
         }
         break;
     case rtLogResearch:
-        ch = ((RTRESEARCH *)lpb)->pctResearch;
+        ch = RsvFromPrefix(lpb, 1).pctResearch();
         if (ch < 0 || ch > 100)
             goto BombOut;
         rgplr[idPlayer].pctResearch = ch;
-        if (((RTRESEARCH *)lpb)->iTechNow >= 6 || ((RTRESEARCH *)lpb)->iTechNext > 7)
+        if (RsvFromPrefix(lpb, 2).iTechNow() >= 6 || RsvFromPrefix(lpb, 2).iTechNext() > 7)
             goto BombOut;
-        rgplr[idPlayer].iTechCur = ((RTRESEARCH *)lpb)->iTechCur;
+        rgplr[idPlayer].iTechCur = RsvFromPrefix(lpb, 2).iTechCur();
         break;
     }
     return TRUE;
@@ -1168,7 +1187,7 @@ int16_t FLoadLogFile(char *pszLog) {
             rgplr[idPlayer].fCrippled = ((RTBOF *)rgbCur)->fCrippled;
         }
         ReadRt();
-        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
             ReadRt();
             memmove(lpLog + iCur, &hdrCur, sizeof(HDR));
@@ -1229,7 +1248,7 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
             return FALSE;
         }
         ReadRt();
-        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
             ReadRt();
         }
@@ -1260,6 +1279,7 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
     int16_t  iCur;
     HDR     *lprts;
     RTLOGHDR rtlh;
+    uint8_t rgbLogHdr[cbWireLogHdr];
     MSGPLR  *lpmp;
     int16_t  cb;
 
@@ -1284,7 +1304,8 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         rtlh.cbLog = imemLogCur;
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
         memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
-        WriteRt(static_cast<RecordType>(9), 17, &rtlh);
+        FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
+        WriteRt(static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
         for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
             lprts = (HDR *)(lpLog + iCur);
             WriteRt(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));

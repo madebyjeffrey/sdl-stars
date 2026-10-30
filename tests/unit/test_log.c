@@ -462,7 +462,46 @@ static void test_battle_plan_prefix_replay(void) {
     rglpbtlplan[0] = NULL; rgcbtlplan[0] = 0;
 }
 
-TEST_LIST = {{"battle-plan replay retains short deletion and publication", test_battle_plan_prefix_replay},
+// Invalid technology still leaves a valid percentage applied. Invalid
+// percentage rejects from one physical byte before touching technology data.
+static void test_control_record_partial_effects(void) {
+    uint8_t negative[] = {0x80}, tooLarge[] = {101};
+    uint8_t badNow[] = {25, 0x06}, badNext[] = {50, 0x80}, valid[] = {100, 0x75};
+    uint8_t password[] = {0x78, 0x56, 0x34, 0x12};
+    uint8_t minusOne[] = {0xff, 0xff, 0xff, 0xff};
+    uint8_t rgb[32];
+    HDR hdr;
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = 0; rgplr[0].pctResearch = 17; rgplr[0].iTechCur = 0x12;
+    TEST_CHECK(!FRunLogRecord(rtLogResearch, 1, negative));
+    TEST_CHECK(!FRunLogRecord(rtLogResearch, 1, tooLarge));
+    TEST_CHECK(rgplr[0].pctResearch == 17 && rgplr[0].iTechCur == 0x12);
+    TEST_CHECK(!FRunLogRecord(rtLogResearch, 2, badNow));
+    TEST_CHECK(rgplr[0].pctResearch == 25 && rgplr[0].iTechCur == 0x12);
+    TEST_CHECK(!FRunLogRecord(rtLogResearch, 2, badNext));
+    TEST_CHECK(rgplr[0].pctResearch == 50 && rgplr[0].iTechCur == 0x12);
+    TEST_CHECK(FRunLogRecord(rtLogResearch, 0, valid)); // Declared length never became the old field-read bound.
+    TEST_CHECK(rgplr[0].pctResearch == 100 && rgplr[0].iTechCur == 0x75);
+    gd.fGeneratingTurn = FALSE; rgplr[0].lSalt = 42;
+    TEST_CHECK(FRunLogRecord(rtChgPassword, 0, NULL) && rgplr[0].lSalt == 42);
+    gd.fGeneratingTurn = TRUE;
+    TEST_CHECK(FRunLogRecord(rtChgPassword, 0, password) && rgplr[0].lSalt == 0x12345678);
+    TEST_CHECK(FRunLogRecord(rtChgPassword, 4, minusOne) && rgplr[0].lSalt == -1);
+    gd.fGeneratingTurn = FALSE;
+    WriteMemResearch(static_cast<int16_t>(0x7319));
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtLogResearch && hdr.cb == 2 && rgb[0] == 25 && rgb[1] == 0x73);
+    WriteMemResearch(static_cast<int16_t>(0xff80));
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.cb == 2 && rgb[0] == 0x80 && rgb[1] == 0xff);
+    WriteMemPassword(-1);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtChgPassword && hdr.cb == 4 && memcmp(rgb, minusOne, 4) == 0);
+}
+
+TEST_LIST = {{"control records retain partial research and password reads", test_control_record_partial_effects},
+             {"battle-plan replay retains short deletion and publication", test_battle_plan_prefix_replay},
              {"design log codecs retain partial-effect receipts", test_FRunLogRecord_design_partial_effects},
              {"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},
              {"order log bytes preserve prefixes, neighbors and signed admission", test_FRunLogRecord_order_bytes},

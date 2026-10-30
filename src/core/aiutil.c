@@ -1186,7 +1186,7 @@ int16_t IroEnsureAi(uint8_t *lpbRes, int16_t cRes, int16_t *pishdefSBLatest, int
     if (i == 6) {
         rgplr[idPlayer].pctResearch = 0;
         pctTech = rgplr[idPlayer].iTechCur * 256;
-        WriteMemRt(rtLogResearch, 2, &pctTech);
+        WriteMemResearch(pctTech);
     }
     for (i = 0; i < cRes; i++) {
         ilvl = rgplr[idPlayer].rgTech[lpbRes[i] >> 5];
@@ -1196,7 +1196,7 @@ int16_t IroEnsureAi(uint8_t *lpbRes, int16_t cRes, int16_t *pishdefSBLatest, int
                 rgplr[idPlayer].iTechNext = lpbRes[i + 1] >> 5;
             }
             pctTech = rgplr[idPlayer].pctResearch + rgplr[idPlayer].iTechCur * 256;
-            WriteMemRt(rtLogResearch, 2, &pctTech);
+            WriteMemResearch(pctTech);
             return i;
         }
     }
@@ -1212,7 +1212,7 @@ int16_t IroEnsureAi(uint8_t *lpbRes, int16_t cRes, int16_t *pishdefSBLatest, int
             rgplr[idPlayer].pctResearch = 0;
         }
         pctTech = rgplr[idPlayer].pctResearch + rgplr[idPlayer].iTechCur * 256;
-        WriteMemRt(rtLogResearch, 2, &pctTech);
+        WriteMemResearch(pctTech);
     }
     return 926;
 }

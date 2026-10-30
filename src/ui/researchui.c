@@ -155,7 +155,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     rgplr[idPlayer].iTechNow = iResTechNow;
                     rgplr[idPlayer].iTechNext = iResTechNext;
                     i = rgplr[idPlayer].iTechCur * 256 + pctResGlob;
-                    WriteMemRt(rtLogResearch, 2, &i);
+                    WriteMemResearch(i);
                     fChg = TRUE;
                     if (gd.fTutorial && idPlayer == 0) {
                         tutor.fChange = TRUE;

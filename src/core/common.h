@@ -47,6 +47,8 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "file.h"
 #include "globals.h"
 #include "log.h"
+#include "logcodec.h"
+#include "logviews.h"
 #include "memory.h"
 #include "mine.h"
 #include "msg.h"

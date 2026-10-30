@@ -55,7 +55,7 @@ expressions that would become stale when unrelated lines move.
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, qualification active |
-| Messages and logs | MSGHDR/MSGPLR/RTPLRMSG/MSGBIG/LOGXFER/RTLOGHDR, compression/framing, passwords and message filters | B10 |
+| Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer logs remain active | B10 in qualification |
 | Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | HDR 10-bit length/6-bit type, XOR/checksum state, continuation records, partial read/write effects | B11 after dependent families |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |

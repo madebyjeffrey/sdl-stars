@@ -1120,7 +1120,7 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     }
                     strcpy((char *)GetWindowLongPtr(hwnd, DWLP_USER), szPass);
                 } else if (idPlayer != iplrNone) {
-                    WriteMemRt(rtChgPassword, 4, &lSalt);
+                    WriteMemPassword(lSalt);
                 } else {
                     lSaltCur = lSalt;
                     if (FWriteDataFile(szBase, idPlayer, FALSE)) {

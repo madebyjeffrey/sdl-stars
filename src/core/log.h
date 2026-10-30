@@ -29,4 +29,7 @@ void    EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), vo
 
 decltype(DirtyGame) STARS_TEST_IMPL(DirtyGame);
 
+void WriteMemResearch(int16_t wResearch);
+void WriteMemPassword(int32_t lSalt);
+
 #endif

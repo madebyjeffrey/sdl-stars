@@ -1,5 +1,12 @@
 #include "common.h"
 
+static void WriteRtPassword(int32_t lSalt) {
+    uint8_t rgb[cbWirePassword];
+
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
+    WriteRt(rtChgPassword, cbWirePassword, rgb);
+}
+
 void WriteOrders(FLEET *lpfl) {
     int16_t cord;
     ORDER  *lpord;
@@ -324,7 +331,7 @@ LAppend:
             }
         }
         if (iPlayer == iplrNone && lSaltCur != 0) {
-            WriteRt(rtChgPassword, 4, &lSaltCur);
+            WriteRtPassword(lSaltCur);
         }
         WritePlayerMessages(iPlayer);
         i = 0;

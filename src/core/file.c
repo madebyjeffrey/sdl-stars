@@ -434,7 +434,7 @@ LNextTurn:
         if (dt != 2) {
             lSaltCur = rgplr[iPlayer].lSalt;
         } else if (hdrCur.rt == rtChgPassword) {
-            lSaltCur = RawLoad32(rgbCur);
+            NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(cbWirePassword)).FReadI32Le(lSaltCur);
             ReadRt();
         } else {
             lSaltCur = 0;

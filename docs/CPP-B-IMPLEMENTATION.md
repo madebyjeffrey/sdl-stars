@@ -973,3 +973,36 @@ unused-storage warnings and zero differences/errors/skipped inputs. The signed
 16-bit capacity boundary is explicit in its test fixture. Independent inputs,
 catalogs, baselines and layout/alignment contracts remain unchanged. Remaining
 B10 control/cargo/log families and its final platform gate are required.
+
+
+## B10 log/control prefixes in qualification
+
+Fleet-name changes encode their signed ID/object prefix independently of the
+runtime name object. Replay still validates text before ID lookup and ignores
+the existing object word. The log-file header explicitly encodes its seventeen
+bytes, retaining the signed count and the writer's fifteen zero metadata bytes;
+readers continue to read only the old two-byte count from scratch backing.
+
+Research metadata has one actual signed technology byte with nibble accessors.
+Replay reads/rejects the percentage from one byte, publishes a valid percentage
+before technology validation, and keeps that partial update on later failure.
+Research/password writers encode their original numeric words; password replay
+still reads nothing outside turn generation. Signed salt bits, existing hash/
+XOR sequencing, callbacks and logical-length admission remain unchanged.
+
+Independent control/header vectors, all research words and real replay/writer
+cases pass, including partial research updates and a null password payload on
+the ignored path. Message filters and optional strings already use byte codecs:
+filters preserve their partial-length copy, and strings preserve bounded UTF-8
+and the existing compression marker. Full local/platform qualification and
+cargo-transfer log migration remain required.
+
+
+Control-record local qualification: 114/114 desktop tests including all 27 native
+leak checks and available tutorial smoke coverage, 25/25 host tests, 37/37
+ASan/UBSan cases, all 27 source witnesses and 102 public headers in both include
+orders. Debug/Release/host/sanitizer builds introduce no warnings. Desktop and
+host regressions each match 519 files through turn 150, with 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
+inputs, catalogs, baselines and layout/alignment contracts remain unchanged.
+Cargo-transfer logs and final B10 platform qualification remain required.
