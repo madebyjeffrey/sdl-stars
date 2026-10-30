@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag and player/template families pass the full local matrix. THING/runtime-alias families and final platform qualification remain required. |
+| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag, player/template, resource-header and THING families pass the full local matrix. Runtime-alias families and final platform qualification remain required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1396,3 +1396,48 @@ warnings, zero differences/errors and no skipped inputs. Frozen C/SDK inputs,
 resource bytes, catalogs, baselines and production layout/alignment contracts
 remain unchanged. Remaining B11 entity/runtime aliases and the final complete
 platform gate remain required.
+
+
+## B11 THING records
+
+THING owns a canonical eighteen-byte array. Numeric header and scoped point/
+variant views replace both inactive unions; every opaque payload bit survives
+type changes. Scalar getters preserve signed/unsigned widths and minimum field
+reads. Mutations snapshot their RHS before borrowing the destination, retaining
+compound arithmetic promotions and evaluation order. No view crosses a callback.
+
+Writers encode the byte image/count explicitly. Loaders copy admitted physical
+bytes through the owning heap window, retaining zero/short/overlong effects on
+neighbors and spare storage instead of adding an eighteen-byte length gate.
+The existing stride, initialization, compaction and allocation rules remain.
+Packed/natural golden sanitizer probes cover every header word, signed points,
+variant masks and retained wormhole spare bits. Actual writer fixtures verify
+all eighteen encrypted bytes and five RNG words; replay retains the numeric
+rtThing/log alias, minimum physical prefixes and signed-byte truncation.
+Physical-copy fixtures cover zero through eighty admitted bytes, neighboring
+records and heap spare storage.
+
+The initial full native regression failed: 316 matches, zero accepted warnings,
+203 differences/errors and no skipped inputs. The first difference was `noai`,
+turn 50, `game.hst`, record 156: an eighteen-byte Mystery Trader record had a
+different position but identical destination and speed. `MoveThings` compared an
+uninitialized message ID when no course change was selected. The separate
+`3ddd731` fix initializes that pass to `idmNone`; it has a fixed-seed movement
+fixture. An isolated noai run through turn 50 then matched all nineteen files.
+
+The corrected complete local matrix passes 117 desktop tests, including all
+28 permanent native leak checks and available tutorial smoke coverage; 26
+SDL-independent host tests; 41 sanitizer cases; all 27 source witnesses; and
+105 headers in both include orders. Debug/Release/host/sanitizer builds introduce
+no warnings. Desktop and host each match all 519 files through turn 150, with
+the same 25 accepted unused-storage warnings, zero differences/errors and no
+skipped inputs. No baseline or frozen reference was changed.
+
+The requested native `leaks --quiet --noContent --atExit` also reports zero
+leaks/bytes for actual desktop and SDL-free host turn-generation runs, each
+using an isolated copy of the noai turn-25 game. These supplement the permanent
+resource/guard checks; native leak scanning is separate from ASan/UBSan.
+
+All sixteen Linux/Windows checks now pass for the preceding published resource
+checkpoint `8b587b8`. THING platform qualification and the remaining B11 aliases,
+B12 arenas, B13 session owner and B14 strict gate are still required.

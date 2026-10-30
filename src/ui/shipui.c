@@ -523,7 +523,7 @@ void DrawShipPlanet(HDC hdc, TILE *ptile, OBJ obj) {
         if (obj.pfl->idPlanet == idPlanetDeepSpace) {
             lpth = lpThings;
             lpthMac = lpThings + cThing;
-            for (; lpth < lpthMac && (lpth->ith != ithMineralPacket || obj.pfl->pt.x != lpth->pt.x || obj.pfl->pt.y != lpth->pt.y); lpth++) {
+            for (; lpth < lpthMac && (lpth->ith() != ithMineralPacket || obj.pfl->pt.x != lpth->pt().x() || obj.pfl->pt.y != lpth->pt().y()); lpth++) {
             }
             EnableWindow(rghwndBtn[7], lpth == lpthMac);
         } else {
@@ -1480,7 +1480,7 @@ int16_t FTrackXfer(HWND hwnd, int16_t x, int16_t y, int16_t fkb) {
             if (pt.x != ptOld.x || pt.y != ptOld.y) {
                 ptOld = pt;
                 if (btn.iSide == 1 && pxfer[1].grobj == grobjThing) {
-                    cNew = (uint32_t)(pxfer[1].th.thp.wtMax * 10);
+                    cNew = (uint32_t)(pxfer[1].th.thp().wtMax() * 10);
                 } else if (iVal == 4) {
                     cNew = LGetFleetStat(&pxfer[btn.iSide].fl, 1);
                 } else {
@@ -1743,7 +1743,7 @@ void DrawThingXferSide(HDC hdc, RECT *prc, THING *pth, MineralType iSupply) {
         _Draw3dFrame(hdc, &rc, 0);
     }
     if (iSupply == SupplyAll) {
-        RcCtrTextOut(hdc, &rc, PszGetThingName(pth->idFull), 0);
+        RcCtrTextOut(hdc, &rc, PszGetThingName(pth->idFull()), 0);
     }
     xLeft = prc->left + 4;
     xRight = prc->right - 4;
@@ -2159,12 +2159,12 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (scan.pt.x == lpth->pt.x && scan.pt.y == lpth->pt.y) {
+                if (scan.pt.x == lpth->pt().x() && scan.pt.y == lpth->pt().y()) {
                     if (!fSep) {
                         rgid[c++] = -1;
                         fSep = TRUE;
                     }
-                    rgid[c++] = (uint32_t)(uint16_t)lpth->idFull | 0x20000000;
+                    rgid[c++] = (uint32_t)(uint16_t)lpth->idFull() | 0x20000000;
                 }
             }
             i = PopupMenu(hwndPlanet, pt.x, pt.y, c, rgid, NULL, iChecked, TRUE);
@@ -2249,7 +2249,7 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
                 } else {
                     lpth = lpThings;
                     lpthMac = lpThings + cThing;
-                    for (; lpth < lpthMac && (lpth->ith != ithMineralPacket || sel.fl.pt.x != lpth->pt.x || sel.fl.pt.y != lpth->pt.y); lpth++) {
+                    for (; lpth < lpthMac && (lpth->ith() != ithMineralPacket || sel.fl.pt.x != lpth->pt().x() || sel.fl.pt.y != lpth->pt().y()); lpth++) {
                     }
                     if (lpth == lpthMac) {
                         TransferStuff(sel.fl.id, grobjFleet, -1, grobjOther, mdXferCargo);

@@ -340,11 +340,11 @@ void LogChangeThing(THING *lpth, THING *pthNew) {
     fChg = FALSE;
     if (!gd.fGeneratingTurn) {
         memset(&lxNew, 0, sizeof(LOGXFER));
-        lxNew.id = pthNew->idFull;
+        lxNew.id = pthNew->idFull();
         lxNew.grobj = grobjThing;
         for (i = 0; i < 3; i++) {
-            lxNew.rgdItem[i] = (int16_t)(pthNew->thp.rgwtMin[i] - lpth->thp.rgwtMin[i]);
-            if ((int16_t)(pthNew->thp.rgwtMin[i] - lpth->thp.rgwtMin[i]) != 0) {
+            lxNew.rgdItem[i] = (int16_t)(pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i));
+            if ((int16_t)(pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i)) != 0) {
                 fChg = TRUE;
             }
         }
@@ -726,10 +726,10 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         break;
     case rtThing:
         lpth = LpthFromId(LtvFromPrefix(lpb, 2).idFull());
-        if (!lpth || lpth->ith != ithMinefield) {
+        if (!lpth || lpth->ith() != ithMinefield) {
             return FALSE;
         }
-        lpth->thm.fDetonate = LtvFromPrefix(lpb, 4).fDetonate();
+        { const auto fDetonateForThing = (LtvFromPrefix(lpb, 4).fDetonate()); auto &thForThing = *(lpth); thForThing.thm().SetFDetonate(fDetonateForThing); }
         break;
     case rtLogShDef:
         if (cb < (int16_t)cbWireChgShDef) return FALSE;

@@ -1726,10 +1726,10 @@ void FillShipDD(int16_t idSkip) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket && lpth->pt.x == ptSel.x && lpth->pt.y == ptSel.y) {
-            PszGetThingName(lpth->idFull);
+        if (lpth->ith() == ithMineralPacket && lpth->pt().x() == ptSel.x && lpth->pt().y() == ptSel.y) {
+            PszGetThingName(lpth->idFull());
             memmove(&szWork[1], szWork, 50);
-            szWork[0] = lpth->iplr == idPlayer ? 32 : 120;
+            szWork[0] = lpth->iplr() == idPlayer ? 32 : 120;
             SendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }

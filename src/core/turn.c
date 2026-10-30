@@ -910,41 +910,41 @@ void MoveThings(int16_t fPostProd) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithWormhole && fPostProd) {
+        if (lpth->ith() == ithWormhole && fPostProd) {
             k = 0;
-            ptBase = lpth->pt;
+            ptBase = lpth->pt();
             fMajorMove = Random(100) < PctWormholeMoves(lpth);
             if (fMajorMove) {
-                lpth->thw.grbitPlr = 0;
+                lpth->thw().SetGrbitPlr(0);
                 dUni = 400 * game.mdSize + 400;
-                lpth->thw.cLastMove = 0;
+                lpth->thw().SetCLastMove(0);
             } else {
-                lpth->thw.cLastMove++;
+                lpth->thw().SetCLastMove(lpth->thw().cLastMove() + 1);
             }
             iMax = 16;
             while (k++ < 100) {
                 if (fMajorMove) {
-                    lpth->pt.x = Random(dUni) + 1000;
-                    lpth->pt.y = Random(dUni) + 1000;
+                    { const auto xForThing = (Random(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                    { const auto yForThing = (Random(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                 } else {
-                    lpth->pt.x = Random(25) + ptBase.x - 12;
-                    lpth->pt.y = Random(25) + ptBase.y - 12;
+                    { const auto xForThing = (Random(25) + ptBase.x - 12); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                    { const auto yForThing = (Random(25) + ptBase.y - 12); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                 }
-                if (lpth->pt.x != ptBase.x || lpth->pt.y != ptBase.y) {
+                if (lpth->pt().x() != ptBase.x || lpth->pt().y() != ptBase.y) {
                     iLow = IValidateWormholePos(lpth);
                     if (iLow == 0)
                         break;
                     if (iLow < iMax) {
                         iMax = iLow;
-                        pt = lpth->pt;
+                        pt = lpth->pt();
                     }
                 }
             }
             if (iLow != 0) {
-                lpth->pt = pt;
+                lpth->pt().Set(pt);
             }
-        } else if (lpth->ith == ithMysteryTrader && !fPostProd) {
-            dRange = lpth->tht.iWarp;
+        } else if (lpth->ith() == ithMysteryTrader && !fPostProd) {
+            dRange = lpth->tht().iWarp();
             if (dRange < 13 && Random(25) == 0) {
                 idm = idmMysteryTraderHasUnexplicablyChangedHisCourse;
                 if (Random(3) != 0)
@@ -957,57 +957,57 @@ void MoveThings(int16_t fPostProd) {
                 }
                 rgC[1] = Random(400 * game.mdSize + 361) + 1020;
                 iX = Random(2);
-                lpth->tht.ptDest.x = rgC[iX];
-                lpth->tht.ptDest.y = rgC[iX == 0];
+                lpth->tht().ptDest().SetX(rgC[iX]);
+                lpth->tht().ptDest().SetY(rgC[iX == 0]);
             LSpeedUpOnly:
                 dRange++;
-                lpth->tht.iWarp = dRange;
+                lpth->tht().SetIWarp(dRange);
                 for (k = 0; k < game.cPlayer; k++) {
-                    FSendPlrMsg2(k, idm, gotoThing, lpth->idFull, 0);
+                    FSendPlrMsg2(k, idm, gotoThing, lpth->idFull(), 0);
                 }
             }
-            dRange = lpth->tht.iWarp;
+            dRange = lpth->tht().iWarp();
             dRange *= dRange;
-            ptDst = lpth->tht.ptDest;
+            ptDst = lpth->tht().ptDest();
             fAnythingMoved = TRUE;
             if (idm == idmMysteryTraderHasDecidedMakeAnotherPass)
                 continue;
             goto MoveTh;
         } else {
-            if (lpth->ith != ithMineralPacket || lpth->thp.iWarp == 0 || (fPostProd && lpth->thp.fMoved))
+            if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() == 0 || (fPostProd && lpth->thp().fMoved()))
                 continue;
-            if (lpth->thp.rgwtMin[0] == 0 && lpth->thp.rgwtMin[1] == 0 && lpth->thp.rgwtMin[2] == 0)
+            if (lpth->thp().rgwtMin(0) == 0 && lpth->thp().rgwtMin(1) == 0 && lpth->thp().rgwtMin(2) == 0)
                 goto LFreeThePacket;
-            lpth->thp.fMoved = TRUE;
+            lpth->thp().SetFMoved(TRUE);
             fAnythingMoved = TRUE;
-            dRange = lpth->thp.iWarp + 4;
+            dRange = lpth->thp().iWarp() + 4;
             dRange *= dRange;
             if (fPostProd) {
                 dRange >>= 1;
             }
-            ptDst = rgptPlan[lpth->thp.idPlanet];
+            ptDst = rgptPlan[lpth->thp().idPlanet()];
         MoveTh:
-            ptSrc = lpth->pt;
+            ptSrc = lpth->pt();
             d = DGetDistance(ptSrc.x, ptSrc.y, ptDst.x, ptDst.y);
             dLeft = LOWORD((int32_t)d);
             if (dLeft <= dRange) {
             MadeItThere:
-                if (lpth->ith == ithMysteryTrader) {
+                if (lpth->ith() == ithMysteryTrader) {
                     lpth2 = lpThings;
                     lpth2Mac = lpThings + cThing;
-                    for (; lpth2 < lpth2Mac && (lpth2->ith != ithMysteryTrader || lpth2 == lpth); lpth2++) {
+                    for (; lpth2 < lpth2Mac && (lpth2->ith() != ithMysteryTrader || lpth2 == lpth); lpth2++) {
                     }
                     if (lpth2 != lpth2Mac || Random(2) == 0)
                         goto LFreeThePacket;
-                    lpth->pt = lpth->tht.ptDest;
-                    dRange = lpth->tht.iWarp - 2;
+                    { const POINT16 ptForThing = (lpth->tht().ptDest()); auto &thForThing = *(lpth); thForThing.pt().Set(ptForThing); }
+                    dRange = lpth->tht().iWarp() - 2;
                     if (dRange < 6) {
                         dRange = 6;
                     }
                     idm = idmMysteryTraderHasDecidedMakeAnotherPass;
                     goto LRetargetFreighter;
                 }
-                if (lpth->ith == ithMineralPacket) {
+                if (lpth->ith() == ithMineralPacket) {
                     pctRate = LMulDiv(dLeft, 100, dRange);
                     if (pctRate < 0) {
                         pctRate = 0;
@@ -1020,16 +1020,16 @@ void MoveThings(int16_t fPostProd) {
                     if (FPacketDecay(lpth, pctRate))
                         goto LPacketAlreadyFreed;
                 }
-                lppl = lpPlanets + lpth->thp.idPlanet;
-                iWarpPacket = lpth->thp.iWarp + 4;
+                lppl = lpPlanets + lpth->thp().idPlanet();
+                iWarpPacket = lpth->thp().iWarp() + 4;
                 iWarp = IWarpMAFromLppl(lppl, &fTwoMAs);
                 if (fTwoMAs) {
                     iWarp++;
                 }
-                if (iWarp > 0 && GetRaceStat(&rgplr[lpth->iplr], rsMajorAdv) == raMassAccel) {
-                    rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr = rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr | 1 << lpth->iplr;
+                if (iWarp > 0 && GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel) {
+                    rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr = rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr | 1 << lpth->iplr();
                 }
-                fTerra = GetRaceStat(&rgplr[lpth->iplr], rsMajorAdv) == raMassAccel;
+                fTerra = GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel;
                 iWarp2 = iWarp * iWarp;
                 iWarpPacket2 = iWarpPacket * iWarpPacket;
                 if (lppl->iPlayer != iplrNone && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raStargate) {
@@ -1045,22 +1045,22 @@ void MoveThings(int16_t fPostProd) {
                 }
                 pctMinKeep = 1000 - pctCaught;
                 for (i = 0; i < 3; i++) {
-                    rgwtTerra[i] = LOWORD((int32_t)(lpth->thp.rgwtMin[i] * pctMinKeep) / 1000);
+                    rgwtTerra[i] = LOWORD((int32_t)(lpth->thp().rgwtMin(i) * pctMinKeep) / 1000);
                 }
                 pctMinKeep = (int16_t)(1000 - pctCaught) / 9 + pctCaught;
                 wtTot = 0;
                 for (i = 0; i < 3; i++) {
-                    if (lpth->thp.rgwtMin[i] < 0) {
-                        lpth->thp.rgwtMin[i] = 0;
+                    if (lpth->thp().rgwtMin(i) < 0) {
+                        lpth->thp().SetRgwtMin(i, 0);
                     }
-                    wtTot += lpth->thp.rgwtMin[i];
-                    lppl->rgwtMin[i] += (int32_t)(lpth->thp.rgwtMin[i] * pctMinKeep) / 1000;
+                    wtTot += lpth->thp().rgwtMin(i);
+                    lppl->rgwtMin[i] += (int32_t)(lpth->thp().rgwtMin(i) * pctMinKeep) / 1000;
                 }
                 if (pctCaught == 1000)
                     goto LAllSafe;
                 dmgRaw = (int32_t)((int16_t)(iWarpPacket * iWarpPacket - iWarp) * wtTot) / 160;
                 if (fTerra) {
-                    iplr = lpth->iplr;
+                    iplr = lpth->iplr();
                     for (i = 0; i < 3; i++) {
                         cTerraTemp = 0;
                         cTerraPerm = 0;
@@ -1143,7 +1143,7 @@ void MoveThings(int16_t fPostProd) {
                 LAllSafe:
                     FSendPlrMsg(lppl->iPlayer,
                                 iWarp <= 0 ? idmBombardedPacketContainingKtMineralsHoweverPacket : idmMassAcceleratorHasSuccessfullyCapturedPacketCont,
-                                static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr, LOWORD(wtTot), HIWORD(wtTot), 0, 0, 0);
+                                static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr(), LOWORD(wtTot), HIWORD(wtTot), 0, 0, 0);
                     goto LFreeThePacket;
                 }
                 lColKilled = lppl->rgwtMin[3];
@@ -1153,7 +1153,7 @@ void MoveThings(int16_t fPostProd) {
                         lColKilled = dmgRaw;
                     }
                     if (lppl->rgwtMin[3] > 0 && (lColKilled >= lppl->rgwtMin[3] || lColKilled < 0)) {
-                        FSendPlrMsg2(lppl->iPlayer, idmAnnihilatedMineralPacketColonistsKilled, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr);
+                        FSendPlrMsg2(lppl->iPlayer, idmAnnihilatedMineralPacketColonistsKilled, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
                         UninhabitPlanet(lppl);
                         goto LFreeThePacket;
                     }
@@ -1169,15 +1169,15 @@ void MoveThings(int16_t fPostProd) {
                     }
                     if (lDefKilled == 0) {
                         idm = iWarp == 0 ? idmBombardedKtMineralPacketColonistsKilledCollision : idmMassAcceleratorPartiallySuccessfullyCapturingKtM;
-                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr, LOWORD(lColKilled), 0, 0);
+                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), 0, 0);
                     } else {
                         idm = iWarp == 0 ? idmBombardedKtMineralPacketColonistsDefensesDestroy : idmMassAcceleratorPartiallySuccessfullyCapturingKtM2;
-                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr, LOWORD(lColKilled), LOWORD(lDefKilled),
+                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), LOWORD(lDefKilled),
                                     0);
                         lppl->cDefenses -= LOWORD(lDefKilled);
                     }
                 } else {
-                    FSendPlrMsg2(lppl->iPlayer, idmBombardedKtMineralPacketFortunatelyOneHome, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr);
+                    FSendPlrMsg2(lppl->iPlayer, idmBombardedKtMineralPacketFortunatelyOneHome, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
                     lDefKilled = lppl->cDefenses;
                     lColKilled = 0;
                 }
@@ -1196,9 +1196,9 @@ void MoveThings(int16_t fPostProd) {
                     ptSrc.y = LOWORD((int32_t)((double)r * (int16_t)(ptDst.y - ptSrc.y) + dyRound)) + ptSrc.y;
                     if (ptSrc.x == ptDst.x && ptSrc.y == ptDst.y)
                         goto MadeItThere;
-                    lpth->pt = ptSrc;
+                    lpth->pt().Set(ptSrc);
                 }
-                if (fPostProd && lpth->ith == ithMineralPacket && FPacketDecay(lpth, 50))
+                if (fPostProd && lpth->ith() == ithMineralPacket && FPacketDecay(lpth, 50))
                     goto LPacketAlreadyFreed;
             }
         }
@@ -1655,15 +1655,15 @@ void MoveFleets() {
                         }
                         if (ptEnd.x == lpfl->pt.x && ptEnd.y == lpfl->pt.y && lpord[1].grobj == grobjThing) {
                             lpth = LpthFromId(lpord[1].id);
-                            if (lpth && lpth->ith == ithWormhole) {
+                            if (lpth && lpth->ith() == ithWormhole) {
                                 grbitPlr = 1 << lpfl->iPlayer;
-                                lpthDest = LpthFromId(lpth->thw.idPartner);
+                                lpthDest = LpthFromId(lpth->thw().idPartner());
                                 NoAutoTrackFleet(lpfl);
-                                lpth->thw.grbitPlrTrav |= grbitPlr;
-                                lpthDest->thw.grbitPlrTrav |= grbitPlr;
-                                lpthDest->thw.grbitPlr |= grbitPlr;
-                                lpfl->pt = lpthDest->pt;
-                                lpord[1].pt = lpthDest->pt;
+                                lpth->thw().SetGrbitPlrTrav(lpth->thw().grbitPlrTrav() | grbitPlr);
+                                lpthDest->thw().SetGrbitPlrTrav(lpthDest->thw().grbitPlrTrav() | grbitPlr);
+                                lpthDest->thw().SetGrbitPlr(lpthDest->thw().grbitPlr() | grbitPlr);
+                                lpfl->pt = lpthDest->pt();
+                                lpord[1].pt = lpthDest->pt();
                             }
                         }
                         if (lpfl->idPlanet == idPlanetDeepSpace && FFindNearestObject(lpfl->pt, static_cast<GrobjClass>(grobjPlanet | mdExact), &scan)) {
@@ -1770,9 +1770,9 @@ int16_t FTravelThroughMineFields(FLEET *lpfl, int16_t *pdTravel, THING *lpthHit)
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->iplr != iPlayer && lpth->ith == ithMinefield && rgplr[lpth->iplr].rgmdRelation[iPlayer] != 1 &&
-            FIntersectCircleLine(ptSrc, ptDst, lpth->pt, lpth->thm.cMines, dTravel, &dStart, &dEnd)) {
-            iType = static_cast<MineFieldType>(lpth->thm.iType);
+        if (lpth->iplr() != iPlayer && lpth->ith() == ithMinefield && rgplr[lpth->iplr()].rgmdRelation[iPlayer] != 1 &&
+            FIntersectCircleLine(ptSrc, ptDst, lpth->pt(), lpth->thm().cMines(), dTravel, &dStart, &dEnd)) {
+            iType = static_cast<MineFieldType>(lpth->thm().iType());
             for (i = 0; i < rgcField[iType] && rgFieldE[iType][i] < dStart; i++) {
             }
             if (i == rgcField[iType]) {
@@ -1830,7 +1830,7 @@ LHitSkip1:
         }
     }
     if (lpthHit) {
-        iType = static_cast<MineFieldType>(lpthHit->thm.iType);
+        iType = static_cast<MineFieldType>(lpthHit->thm().iType());
         goto LHitSkip2;
     }
     rgi[2] = 0;
@@ -1873,7 +1873,7 @@ LHitSkip1:
         flDead.det = detAll;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0 &&
-                (!lpthHit || lpthHit->iplr != lpfl->iPlayer ||
+                (!lpthHit || lpthHit->iplr() != lpfl->iPlayer ||
                  (rglpshdef[lpfl->iPlayer][i].hul.ihuldef != ihuldefMiniMineLayer && rglpshdef[lpfl->iPlayer][i].hul.ihuldef != ihuldefSuperMineLayer))) {
                 cshT = lpfl->rgcsh[i];
                 rgishInc[cishInc++] = i;
@@ -1927,7 +1927,7 @@ LHitSkip1:
                 lpthSalvage = lpThings;
                 lpthMac = lpThings + cThing;
                 for (; lpthSalvage < lpthMac &&
-                       (lpthSalvage->pt.x != ptAct.x || lpthSalvage->pt.y != ptAct.y || lpthSalvage->ith != ithMineralPacket || lpthSalvage->thp.iWarp != 0);
+                       (lpthSalvage->pt().x() != ptAct.x || lpthSalvage->pt().y() != ptAct.y || lpthSalvage->ith() != ithMineralPacket || lpthSalvage->thp().iWarp() != 0);
                      lpthSalvage++) {
                 }
                 if (lpthSalvage == lpthMac) {
@@ -1939,19 +1939,19 @@ LHitSkip1:
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (lpth->iplr != iPlayer && lpth->ith == ithMinefield && rgplr[lpth->iplr].rgmdRelation[iPlayer] != 1 && lpth->thm.iType == iType) {
-                    dx = lpth->pt.x - ptAct.x;
-                    dy = lpth->pt.y - ptAct.y;
-                    d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * (int16_t)(lpth->pt.y - ptAct.y)) - lpth->thm.cMines;
+                if (lpth->iplr() != iPlayer && lpth->ith() == ithMinefield && rgplr[lpth->iplr()].rgmdRelation[iPlayer] != 1 && lpth->thm().iType() == iType) {
+                    dx = lpth->pt().x() - ptAct.x;
+                    dy = lpth->pt().y() - ptAct.y;
+                    d2 = (uint32_t)(dx * dx) + (uint32_t)(dy * (int16_t)(lpth->pt().y() - ptAct.y)) - lpth->thm().cMines();
                     if (d2 < d2Closest) {
                         d2Closest = d2;
                         lpthClosest = lpth;
                     }
                 }
             }
-            d2 = (int32_t)(lpthClosest->thm.cMines / 20);
+            d2 = (int32_t)(lpthClosest->thm().cMines() / 20);
             if (d2 > 50) {
-                d2 = (int32_t)(lpthClosest->thm.cMines / 100);
+                d2 = (int32_t)(lpthClosest->thm().cMines() / 100);
                 if (d2 < 50) {
                     d2 = 50;
                 }
@@ -1959,11 +1959,11 @@ LHitSkip1:
                 d2 = 10;
             }
         } else {
-            ptAct = lpthHit->pt;
+            ptAct = lpthHit->pt();
             lpthClosest = lpthHit;
         }
-        if (GetRaceStat(&rgplr[lpthClosest->iplr], rsMajorAdv) == raMines) {
-            ibit = 1 << lpthClosest->iplr;
+        if (GetRaceStat(&rgplr[lpthClosest->iplr()], rsMajorAdv) == raMines) {
+            ibit = 1 << lpthClosest->iplr();
             if (cishInc == 0) {
                 for (i = 0; i < 16; i++) {
                     if (lpfl->rgcsh[i] > 0) {
@@ -1980,49 +1980,49 @@ LHitSkip1:
             dmgTot = 32760;
         }
         if (dmgTot == 0) {
-            if (iPlayer != lpthClosest->iplr) {
-                FSendPlrMsg(iPlayer, idmHasStoppedMineField, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, lpthClosest->iplr, iType, ptAct.x, ptAct.y, 0, 0);
+            if (iPlayer != lpthClosest->iplr()) {
+                FSendPlrMsg(iPlayer, idmHasStoppedMineField, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
             }
-            FSendPlrMsg(lpthClosest->iplr, idmHasStoppedMineField2, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, 0, 0, 0);
+            FSendPlrMsg(lpthClosest->iplr(), idmHasStoppedMineField2, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, 0, 0, 0);
         } else if (cshDead == 0) {
-            if (iPlayer != lpthClosest->iplr) {
+            if (iPlayer != lpthClosest->iplr()) {
                 FSendPlrMsg(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken : idmHasDamagedDetonatingMineFieldFleetHas, static_cast<MsgGoto>(lpfl->id | 0x8000),
-                            lpfl->id | 0x8000, lpthClosest->iplr, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), 0);
+                            lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, LOWORD(dmgTot), 0);
             }
-            FSendPlrMsg(lpthClosest->iplr, !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted : idmHasDamagedDetonatingMineFieldMinesHave, static_cast<MsgGoto>(lpfl->id | 0x8000),
+            FSendPlrMsg(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted : idmHasDamagedDetonatingMineFieldMinesHave, static_cast<MsgGoto>(lpfl->id | 0x8000),
                         lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), 0, 0);
         } else if (cshDead < csh) {
-            if (iPlayer != lpthClosest->iplr) {
+            if (iPlayer != lpthClosest->iplr()) {
                 FSendPlrMsg(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken2 : idmHasTakenDamageDetonatingMineFieldFleet, static_cast<MsgGoto>(lpfl->id | 0x8000),
-                            lpfl->id | 0x8000, lpthClosest->iplr, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), cshDead);
+                            lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, LOWORD(dmgTot), cshDead);
             }
-            FSendPlrMsg(lpthClosest->iplr, !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted2 : idmHasDamagedDetonatingMineFieldMinesHave2, static_cast<MsgGoto>(lpfl->id | 0x8000),
+            FSendPlrMsg(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted2 : idmHasDamagedDetonatingMineFieldMinesHave2, static_cast<MsgGoto>(lpfl->id | 0x8000),
                         lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), cshDead, 0);
         } else if (lpthSalvage) {
             flDead.id = lpfl->id;
-            if (iPlayer != lpthClosest->iplr) {
-                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField, gotoThing, lpthSalvage->idFull, WFromLpfl(&flDead), lpthClosest->iplr, iType, ptAct.x, ptAct.y,
+            if (iPlayer != lpthClosest->iplr()) {
+                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField, gotoThing, lpthSalvage->idFull(), WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y,
                             0);
             }
-            FSendPlrMsg(lpthClosest->iplr, idmHasAnnihilatedMineField2, gotoThing, lpthSalvage->idFull, lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
+            FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthSalvage->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
         } else {
             flDead.id = lpfl->id;
-            if (iPlayer != lpthClosest->iplr) {
-                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField3, gotoNone, WFromLpfl(&flDead), lpthClosest->iplr, iType, ptAct.x, ptAct.y, 0, 0);
+            if (iPlayer != lpthClosest->iplr()) {
+                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField3, gotoNone, WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
             }
-            if (lpfl->iPlayer == lpthClosest->iplr) {
-                FSendPlrMsg(lpthClosest->iplr, idmHasAnnihilatedMineField4, gotoNone, WFromLpfl(&flDead), iType, ptAct.x, ptAct.y, 0, 0, 0);
+            if (lpfl->iPlayer == lpthClosest->iplr()) {
+                FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField4, gotoNone, WFromLpfl(&flDead), iType, ptAct.x, ptAct.y, 0, 0, 0);
             } else {
-                FSendPlrMsg(lpthClosest->iplr, idmHasAnnihilatedMineField2, gotoThing, lpthClosest->idFull, lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
+                FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthClosest->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
             }
         }
         if (!lpthHit) {
-            if (d2 >= lpthClosest->thm.cMines) {
+            if (d2 >= lpthClosest->thm().cMines()) {
                 FreeLpth(lpthClosest);
             } else {
-                lpthClosest->thm.cMines -= d2;
-                lpthClosest->thm.grbitPlrNow |= 1 << iPlayer;
-                lpthClosest->thm.grbitPlr |= 1 << iPlayer;
+                lpthClosest->thm().SetCMines(lpthClosest->thm().cMines() - d2);
+                lpthClosest->thm().SetGrbitPlrNow(lpthClosest->thm().grbitPlrNow() | (1 << iPlayer));
+                lpthClosest->thm().SetGrbitPlr(lpthClosest->thm().grbitPlr() | (1 << iPlayer));
             }
             *pdTravel = dEnd;
         }

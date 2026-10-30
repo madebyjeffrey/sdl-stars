@@ -838,29 +838,29 @@ RetryAll:
             for (i = 0; i < iBest; i++) {
                 for (j = 0; j < 2; j++) {
                     lpth = LpthNew(0, ithWormhole);
-                    lpth->thw.iStable = Random(3);
+                    { const auto iStableForThing = (Random(3)); auto &thForThing = *(lpth); thForThing.thw().SetIStable(iStableForThing); }
                     if (j == 1) {
                         lpthLast = LpthFromId(idLast);
-                        lpth->thw.idPartner = lpthLast->idFull;
-                        lpthLast->thw.idPartner = lpth->idFull;
+                        { const auto idPartnerForThing = (lpthLast->idFull()); auto &thForThing = *(lpth); thForThing.thw().SetIdPartner(idPartnerForThing); }
+                        { const auto idPartnerForThing = (lpth->idFull()); auto &thForThing = *(lpthLast); thForThing.thw().SetIdPartner(idPartnerForThing); }
                     } else {
-                        idLast = lpth->idFull;
+                        idLast = lpth->idFull();
                     }
                     k = 0;
                     iMax = 16;
                     while (k++ < 100) {
-                        lpth->pt.x = Random(dGal) + 1000;
-                        lpth->pt.y = Random(dGal) + 1000;
+                        { const auto xForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                        { const auto yForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                         iLow = IValidateWormholePos(lpth);
                         if (iLow == 0)
                             break;
                         if (iLow < iMax) {
                             iMax = iLow;
-                            pt = lpth->pt;
+                            pt = lpth->pt();
                         }
                     }
                     if (iLow != 0) {
-                        lpth->pt = pt;
+                        lpth->pt().Set(pt);
                     }
                 }
             }

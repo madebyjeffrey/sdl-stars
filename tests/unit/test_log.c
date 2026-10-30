@@ -748,7 +748,25 @@ static void test_zipprod_comparison_physical_tail(void) {
     for (int i = 0; i < 5; i++) vrgZipProd[i] = rgZipSav[i];
 }
 
-TEST_LIST = {{"default template comparison retains adjacent physical bytes", test_zipprod_comparison_physical_tail},
+static void test_minefield_log_replay_bytes(void) {
+    char szDir[MAX_PATH];
+    uint8_t rgb[4];
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("minefield-log-wire", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    auto *lpth = LpthNew(0, ithMinefield);
+    TEST_ASSERT(lpth);
+    rgb[0] = static_cast<uint8_t>(lpth->idFull()); rgb[1] = static_cast<uint8_t>(lpth->idFull() >> 8);
+    rgb[2] = 0xfe; rgb[3] = 0xff;
+    TEST_CHECK(FRunLogRecord(rtThing, 0, rgb) && lpth->thm().fDetonate() == 254);
+    auto *lpPacket = LpthNew(0, ithMineralPacket);
+    TEST_ASSERT(lpPacket);
+    uint8_t wrongSubtype[2] = {static_cast<uint8_t>(lpPacket->idFull()), static_cast<uint8_t>(lpPacket->idFull() >> 8)};
+    TEST_CHECK(!FRunLogRecord(rtThing, 0, wrongSubtype));
+}
+
+TEST_LIST = {{"minefield log replay keeps signed flag and subtype/no-read behavior", test_minefield_log_replay_bytes},
+             {"default template comparison retains adjacent physical bytes", test_zipprod_comparison_physical_tail},
              {"production template replay retains odd bytes and callback timing", test_zipprod_replay_and_callback_order},
              {"routing writer preserves exact prefix bytes", test_routing_writer_bytes},
              {"routing and thing logs retain prefix/no-read paths", test_routing_replay_read_boundaries},

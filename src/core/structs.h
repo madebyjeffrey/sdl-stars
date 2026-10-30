@@ -10,6 +10,7 @@
 
 #include "enums.h"
 #include "native.h"
+#include "thingviews.h"
 
 typedef struct _aipart          AIPART;
 typedef struct _aistarbase      AISTARBASE;
@@ -1460,24 +1461,38 @@ struct _thworm {
 }; /* size=0x8 */
 
 struct _thing {
-    union {
-        uint16_t idFull; /* +0x0000 (2) */
-        struct {
-            uint16_t id : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,    /* @bit9 */
-                ith : 3;     /* @bit13 */
-        };
-    };
-    POINT16 pt; /* +0x0002 (4) */
-    union {
-        uint8_t  rgb[10]; /* +0x0006 (10) */
-        THMINE   thm;     /* +0x0006 (10) */
-        THPACK   thp;     /* +0x0006 (10) */
-        THWORM   thw;     /* +0x0006 (8) */
-        THTRADER tht;     /* +0x0006 (10) */
-    };
-    uint16_t turn; /* +0x0010 (2) */
-}; /* size=0x12 */
+    // Actual byte storage, not a native overlay. Partial/neighbor file copies
+    // retain their physical eighteen-byte image and every opaque payload bit.
+    std::byte rgbThing[18];
+    std::span<std::byte, 18> RgbRecord() noexcept { return rgbThing; }
+    std::span<const std::byte, 18> RgbRecord() const noexcept { return rgbThing; }
+private:
+    std::span<std::byte, 18> RgbBorrowed() const noexcept { return std::span<std::byte, 18>(const_cast<std::byte *>(rgbThing), 18); }
+public:
+    uint16_t idFull() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).idFull(); }
+    void SetIdFull(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIdFull(value); }
+    uint16_t id() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).id(); }
+    void SetId(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetId(value); }
+    uint16_t iplr() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).iplr(); }
+    void SetIplr(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIplr(value); }
+    uint16_t ith() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).ith(); }
+    void SetIth(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIth(value); }
+    uint16_t turn() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).turn(); }
+    void SetTurn(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetTurn(value); }
+    NATIVETHINGPOINTVIEW<true> pt() noexcept { return {RgbRecord(), 2}; }
+    NATIVETHINGPOINTVIEW<false> pt() const noexcept { return {RgbBorrowed(), 2}; }
+    std::span<std::byte, 10> rgb() noexcept { return RgbRecord().subspan<6, 10>(); }
+    std::span<const std::byte, 10> rgb() const noexcept { return RgbRecord().subspan<6, 10>(); }
+    NATIVETHINGMINEVIEW<true> thm() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGMINEVIEW<false> thm() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGPACKVIEW<true> thp() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGPACKVIEW<false> thp() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGWORMVIEW<true> thw() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGWORMVIEW<false> thw() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGTRADERVIEW<true> tht() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGTRADERVIEW<false> tht() const noexcept { return {RgbBorrowed(), 6}; }
+};
+static_assert(sizeof(THING) == 18 && alignof(THING) == 1); /* size=0x12 */
 
 struct _sel {
     POINT16    pt;        /* +0x0000 (4) */

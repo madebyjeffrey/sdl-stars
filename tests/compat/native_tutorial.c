@@ -440,11 +440,11 @@ static BOOL FSaveSalvage(void) {
     int fError;
     if (sel.scan.grobj != grobjThing || sel.scan.ith < 0 || sel.scan.ith >= cThing) return FALSE;
     lpth = &lpThings[sel.scan.ith];
-    if (lpth->ith != ithMineralPacket || lpth->thp.iWarp != 0) return FALSE;
+    if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() != 0) return FALSE;
     lpfile = PfNativeOpen("salvage.json", "w");
     if (!lpfile) return FALSE;
     CchNativePrintf(lpfile, "{\"id\":%u,\"position\":[%d,%d],\"minerals\":[%d,%d,%d]}\n",
-            lpth->idFull, lpth->pt.x, lpth->pt.y, lpth->thp.rgwtMin[0], lpth->thp.rgwtMin[1], lpth->thp.rgwtMin[2]);
+            lpth->idFull(), lpth->pt().x(), lpth->pt().y(), lpth->thp().rgwtMin(0), lpth->thp().rgwtMin(1), lpth->thp().rgwtMin(2));
     fError = FNativeStreamError(lpfile);
     return ICloseNativeFile(lpfile) == 0 && !fError;
 }

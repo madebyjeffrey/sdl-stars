@@ -277,19 +277,19 @@ int32_t ChgCargo(GrobjClass grobj, int16_t id, MineralType iSupply, int32_t dChg
         }
         if (iSupply <= Fuel) {
             if (dChg == 0) {
-                return pth->thp.rgwtMin[iSupply];
+                return pth->thp().rgwtMin(iSupply);
             }
-            if (pth->thp.rgwtMin[iSupply] + dChg < 0) {
-                dChg = (int16_t)-pth->thp.rgwtMin[iSupply];
+            if (pth->thp().rgwtMin(iSupply) + dChg < 0) {
+                dChg = (int16_t)-pth->thp().rgwtMin(iSupply);
             }
-            wtFree = (uint32_t)(pth->thp.wtMax * 10);
+            wtFree = (uint32_t)(pth->thp().wtMax() * 10);
             for (i = 0; i < 3; i++) {
-                wtFree -= pth->thp.rgwtMin[i];
+                wtFree -= pth->thp().rgwtMin(i);
             }
             if (dChg > wtFree) {
                 dChg = wtFree;
             }
-            pth->thp.rgwtMin[iSupply] += LOWORD(dChg);
+            { const auto rgwtMinForThing = +(LOWORD(dChg)); auto &thForThing = *(pth); thForThing.thp().SetRgwtMin(iSupply, thForThing.thp().rgwtMin(iSupply) + rgwtMinForThing); }
         }
         if (dChg == 0 || pobj)
             break;

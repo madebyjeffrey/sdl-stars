@@ -10,23 +10,23 @@ THING *LpthNew(int16_t iplr, ThingType ith) {
         return NULL;
     }
     memset(&thNew, 0, sizeof(THING));
-    thNew.iplr = iplr;
-    thNew.ith = ith;
+    thNew.SetIplr(iplr);
+    thNew.SetIth(ith);
     lpth = lpThings;
     i = 0;
-    for (; i < cThing && thNew.idFull > lpth->idFull; lpth++) {
+    for (; i < cThing && thNew.idFull() > lpth->idFull(); lpth++) {
         i++;
     }
-    if (i < cThing && thNew.idFull == lpth->idFull) {
-        iItem = lpth->id;
+    if (i < cThing && thNew.idFull() == lpth->idFull()) {
+        iItem = lpth->id();
         while (i < cThing) {
             if (iItem >= 511) {
                 return NULL;
             }
-            if (lpth->idFull != thNew.idFull)
+            if (lpth->idFull() != thNew.idFull())
                 break;
             i++;
-            thNew.id++;
+            thNew.SetId(thNew.id() + 1);
             lpth++;
             iItem++;
         }
@@ -113,7 +113,7 @@ int16_t IValidateWormholePos(THING *lpthWorm) {
 
     iRet = 0;
     dUni = 400 * game.mdSize + 1400;
-    pt = lpthWorm->pt;
+    pt = lpthWorm->pt();
     if (pt.x < 1000 || pt.y < 1000) {
         return 15;
     }
@@ -123,7 +123,7 @@ int16_t IValidateWormholePos(THING *lpthWorm) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (pt.x == lpth->pt.x && pt.y == lpth->pt.y && lpth != lpthWorm) {
+        if (pt.x == lpth->pt().x() && pt.y == lpth->pt().y() && lpth != lpthWorm) {
             return 15;
         }
     }
@@ -146,11 +146,11 @@ int16_t IValidateWormholePos(THING *lpthWorm) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithWormhole && lpth != lpthWorm) {
-            dx = (int16_t)(pt.x - lpth->pt.x);
-            dy = (int16_t)(pt.y - lpth->pt.y);
+        if (lpth->ith() == ithWormhole && lpth != lpthWorm) {
+            dx = (int16_t)(pt.x - lpth->pt().x());
+            dy = (int16_t)(pt.y - lpth->pt().y());
             l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-            if (lpth->idFull == lpthWorm->thw.idPartner) {
+            if (lpth->idFull() == lpthWorm->thw().idPartner()) {
                 if (l < 4900) {
                     if (l < 25) {
                         iRet |= 8;
@@ -197,8 +197,8 @@ int16_t IValidateWormholePos(THING *lpthWorm) {
 int16_t PctWormholeMoves(THING *lpth) {
     int16_t pct;
 
-    pct = (int16_t)lpth->thw.cLastMove / 5;
-    pct -= 2 - lpth->thw.iStable;
+    pct = (int16_t)lpth->thw().cLastMove() / 5;
+    pct -= 2 - lpth->thw().iStable();
     if (pct < 0) {
         pct = 0;
     } else if (pct > 6) {
@@ -249,8 +249,8 @@ void DoThingInteractions(int16_t fPostMove) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->ith == ithMysteryTrader) {
-                pt = lpth->pt;
+            if (lpth->ith() == ithMysteryTrader) {
+                pt = lpth->pt();
                 for (ifl = 0; ifl < cFleet; ifl++) {
                     lpfl = rglpfl[ifl];
                     if (!rglpfl[ifl])
@@ -271,13 +271,13 @@ void DoThingInteractions(int16_t fPostMove) {
                             fMaxTech = i == 6;
                             grbitPlrTrader = rgplr[lpfl->iPlayer].grbitTrader;
                             iplr = lpfl->iPlayer;
-                            if (1 << iplr & lpth->tht.grbitPlr) {
+                            if (1 << iplr & lpth->tht().grbitPlr()) {
                                 FSendPlrMsg2(lpfl->iplr(), idmMysteryTraderEyesCaptainSuspiciouslySuggestsHe, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             } else {
-                                lpth->tht.grbitPlr |= 1 << iplr;
+                                lpth->tht().SetGrbitPlr(lpth->tht().grbitPlr() | (1 << iplr));
                                 FRemovePlayerMessage(iplr, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
                                 lpfl->fDead = TRUE;
-                                if (lpth->tht.grbitTrader == grbitTraderNone || (lpth->tht.grbitTrader & grbitPlrTrader)) {
+                                if (lpth->tht().grbitTrader() == grbitTraderNone || (lpth->tht().grbitTrader() & grbitPlrTrader)) {
                                     if (fMaxTech) {
                                         if (Random(5) != 0)
                                             goto LGivePart;
@@ -344,7 +344,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                 }
                             LGivePart:
                                 cTry = 25;
-                                grbitTrader = lpth->tht.grbitTrader;
+                                grbitTrader = lpth->tht().grbitTrader();
                                 if (grbitTrader == grbitTraderNone) {
                                     grbitTrader = static_cast<GrbitTrader>(1 << Random(13));
                                 }
@@ -353,7 +353,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                 if (cTry <= 0) {
                                     grbitTrader = grbitTraderLifeboat;
                                 }
-                                lpth->tht.grbitPlr |= 1 << iplr;
+                                lpth->tht().SetGrbitPlr(lpth->tht().grbitPlr() | (1 << iplr));
                                 if (grbitTrader == grbitTraderLifeboat) {
                                     if (!rgplr[iplr].fAi) {
                                         iOffset = Random(4 - (game.turn > 100));
@@ -426,7 +426,7 @@ void DoThingInteractions(int16_t fPostMove) {
                 lpplMac = lpPlanets + cPlanet;
                 for (; lppl < lpplMac; lppl++) {
                     if (lppl->iPlayer != iplrNone && lppl->fStarbase && rgplr[lppl->iPlayer].fAi && rgplr[lppl->iPlayer].lvlAi >= lvlAiTough &&
-                        !(1 << lppl->iPlayer & lpth->tht.grbitPlr)) {
+                        !(1 << lppl->iPlayer & lpth->tht().grbitPlr())) {
                         dx = (int16_t)(rgptPlan[lppl->id].x - pt.x);
                         if (dx > 100)
                             break;
@@ -440,17 +440,17 @@ void DoThingInteractions(int16_t fPostMove) {
                             iplr = lppl->iPlayer;
                             wtThreshhold = (uint32_t)(rgplr[iplr].lvlAi == lvlAiTough ? 3500 : 5000);
                             if (wtNext >= wtThreshhold) {
-                                if (lpth->tht.grbitTrader == grbitTraderNone)
+                                if (lpth->tht().grbitTrader() == grbitTraderNone)
                                     goto LAutoTech;
                                 cTry = 50;
-                                for (grbitTrader = lpth->tht.grbitTrader; (grbitTrader & rgplr[iplr].grbitTrader) != 0 && cTry-- > 0;
+                                for (grbitTrader = lpth->tht().grbitTrader(); (grbitTrader & rgplr[iplr].grbitTrader) != 0 && cTry-- > 0;
                                      grbitTrader = static_cast<GrbitTrader>(1 << Random(13))) {
                                 }
                                 if (cTry <= 0)
                                     goto LAutoTech;
                                 rgplr[iplr].grbitTrader = static_cast<GrbitTrader>(rgplr[iplr].grbitTrader | grbitTrader);
                             LChgMin:
-                                lpth->tht.grbitPlr |= 1 << iplr;
+                                lpth->tht().SetGrbitPlr(lpth->tht().grbitPlr() | (1 << iplr));
                                 for (i = 2; wtNext > 0 && i >= 0; i--) {
                                     wtMin = wtNext < lppl->rgwtMin[i] ? wtNext : lppl->rgwtMin[i];
                                     lppl->rgwtMin[i] -= wtMin;

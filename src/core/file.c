@@ -360,7 +360,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 }
             }
             if (hdrCur.rt == rtThing) {
-                cThing = RawLoad16(rgbCur);
+                cThing = std::bit_cast<int16_t>(WFromStreamBytes(rgbCur));
                 cThingAlloc = cThing + 10;
                 if (cThingAlloc > 4050) {
                     cThingAlloc = 4050;
@@ -373,7 +373,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 for (i = 0, lpth = lpThings; i < cThing; i++, lpth++) {
                     if (hdrCur.rt != rtThing)
                         goto CorruptHist;
-                    memcpy(lpth, rgbCur, hdrCur.cb);
+                    CopyThingBytes(lpth, rgbCur, hdrCur.cb);
                     ReadRt();
                 }
             }
@@ -646,7 +646,7 @@ LNextTurn:
         }
         if (hdrCur.rt == rtThing) {
             fHist = cThing > 0;
-            cThingFile = RawLoad16(rgbCur);
+            cThingFile = std::bit_cast<int16_t>(WFromStreamBytes(rgbCur));
             cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
             if (!lpThings) {
                 lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
@@ -660,10 +660,10 @@ LNextTurn:
             for (i = 0; i < cThingFile; i++) {
                 fHaveHistoryData = FALSE;
                 if (fHist) {
-                    for (; j < cThing && ((THING *)rgbCur)->idFull > lpth->idFull; lpth++) {
+                    for (; j < cThing && WFromStreamBytes(rgbCur) > lpth->idFull(); lpth++) {
                         j++;
                     }
-                    if (j < cThing && ((THING *)rgbCur)->idFull == lpth->idFull) {
+                    if (j < cThing && WFromStreamBytes(rgbCur) == lpth->idFull()) {
                         fHaveHistoryData = TRUE;
                         goto LFoundThing;
                     }
@@ -679,8 +679,8 @@ LNextTurn:
                 }
                 cThing++;
             LFoundThing:
-                memcpy(lpth, rgbCur, hdrCur.cb);
-                lpth->turn = game.turn;
+                CopyThingBytes(lpth, rgbCur, hdrCur.cb);
+                lpth->SetTurn(game.turn);
                 lpth++;
                 j++;
                 ReadRt();
@@ -750,12 +750,12 @@ LNextTurn:
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (lpth->ith == ithMineralPacket && lpth->thp.iWarp != 0) {
-                    lppl = LpplFromId(lpth->thp.idPlanet);
+                if (lpth->ith() == ithMineralPacket && lpth->thp().iWarp() != 0) {
+                    lppl = LpplFromId(lpth->thp().idPlanet());
                     if (lppl && lppl->iPlayer == iPlayer) {
                         iWarp = IWarpMAFromLppl(lppl, &fTwo);
-                        if (iWarp + fTwo < lpth->thp.iWarp + 4) {
-                            FSendPlrMsg2XGen(FALSE, idmMassPacketAppearsCollisionCourseWhichCurrently, gotoThing, lpth->idFull, lppl->id);
+                        if (iWarp + fTwo < lpth->thp().iWarp() + 4) {
+                            FSendPlrMsg2XGen(FALSE, idmMassPacketAppearsCollisionCourseWhichCurrently, gotoThing, lpth->idFull(), lppl->id);
                         }
                     }
                 }

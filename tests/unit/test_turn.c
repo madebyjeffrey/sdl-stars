@@ -160,11 +160,11 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
         lpfl->lpplord->rgord()[1].pt.x = pt.x + 81 * rgdxy[idir][0];
         lpfl->lpplord->rgord()[1].pt.y = pt.y + 81 * rgdxy[idir][1];
         lpth = LpthNew(1, ithMinefield);
-        lpth->pt.x = pt.x + 40 * rgdxy[idir][0];
-        lpth->pt.y = pt.y + 40 * rgdxy[idir][1];
-        lpth->thm.cMines = 10000;
-        lpth->thm.iType = mineSpeedBump;
-        lpth->thm.grbitPlr = 1 << 1;
+        lpth->pt().SetX(pt.x + 40 * rgdxy[idir][0]);
+        lpth->pt().SetY(pt.y + 40 * rgdxy[idir][1]);
+        lpth->thm().SetCMines(10000);
+        lpth->thm().SetIType(mineSpeedBump);
+        lpth->thm().SetGrbitPlr(1 << 1);
 
         dTravel = 81;
         TEST_CHECK_(!FTravelThroughMineFields(lpfl, &dTravel, NULL), "the fleet crossed the field");
@@ -185,17 +185,17 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
     while (cThing != 0) FreeLpth(lpThings);
     lpth = LpthNew(0, ithMysteryTrader);
     TEST_ASSERT(lpth != NULL);
-    lpth->pt = {1200, 1200};
-    lpth->tht.ptDest = {2000, 1200};
-    lpth->tht.iWarp = 9;
+    lpth->pt().Set({1200, 1200});
+    lpth->tht().ptDest().Set({2000, 1200});
+    lpth->tht().SetIWarp(9);
     PushRandom(123456, 789012);
     TEST_ASSERT(Random(25) != 0);
     PopRandom();
     PushRandom(123456, 789012);
     MoveThings(FALSE);
     PopRandom();
-    TEST_CHECK(lpth->pt.x == 1281 && lpth->pt.y == 1200);
-    TEST_CHECK(lpth->tht.ptDest.x == 2000 && lpth->tht.ptDest.y == 1200);
+    TEST_CHECK(lpth->pt().x() == 1281 && lpth->pt().y() == 1200);
+    TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);
 }
 
 TEST_LIST = {{"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},

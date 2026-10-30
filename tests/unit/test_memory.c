@@ -217,7 +217,29 @@ static void TestAiHistoryBytes(void) {
     lpPlanets = lpplSav; cPlanet = cPlanetSav; game.cPlanMax = cPlanMaxSav;
 }
 
-TEST_LIST = {{"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
+static void TestThingPhysicalCopies(void) {
+    HB *lphbSav = rglphb[htThings];
+    uint16_t cbAllocSav = mphtcbAlloc[htThings];
+    uint8_t input[80], expected[80];
+    rglphb[htThings] = nullptr; mphtcbAlloc[htThings] = 512;
+    auto *pth = static_cast<THING *>(LpAlloc(3 * 18, htThings));
+    auto storage = TbwFromLp(pth).Rgb();
+    TEST_ASSERT(storage.size() >= 80);
+    TEST_CHECK(sizeof(THING) == 18 && reinterpret_cast<uint8_t *>(pth + 1) - reinterpret_cast<uint8_t *>(pth) == 18);
+    for (int i = 0; i < 80; i++) input[i] = static_cast<uint8_t>(i * 11 + 3);
+    for (uint16_t cb = 0; cb <= 80; cb++) {
+        memset(storage.data(), 0xa5, 80); memset(expected, 0xa5, 80);
+        memcpy(expected, input, cb);
+        CopyThingBytes(pth, input, cb);
+        TEST_CHECK(!memcmp(storage.data(), expected, 80));
+        TEST_CHECK(pth[1].idFull() == static_cast<uint16_t>(expected[18] | (expected[19] << 8)));
+        TEST_CHECK(pth[2].turn() == static_cast<uint16_t>(expected[52] | (expected[53] << 8)));
+    }
+    FreeHb(rglphb[htThings]); rglphb[htThings] = lphbSav; mphtcbAlloc[htThings] = cbAllocSav;
+}
+
+TEST_LIST = {{"thing records retain partial, neighbor and physical spare copies", TestThingPhysicalCopies},
+             {"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
              {"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},
              {"battle byte views retain physical arena and wire stride", TestBattleByteWindows},
              {"aligned mixed allocations and reset", TestMixedAllocations},

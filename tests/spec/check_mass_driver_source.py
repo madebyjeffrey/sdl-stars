@@ -140,7 +140,7 @@ int main(int argc,char **argv){
         if(accepted){
             int asked=configured+4;if(asked<5 || asked>warps[pattern]+3)asked=warps[pattern]+twos[pattern];
             int decay=asked<=warps[pattern]+twos[pattern]?0:asked-warps[pattern]-twos[pattern];
-            CHECK(cThing==1 && lpThings[0].thp.iWarp==asked-4 && lpThings[0].thp.iDecayRate==decay);
+            CHECK(cThing==1 && lpThings[0].thp().iWarp()==asked-4 && lpThings[0].thp().iDecayRate()==decay);
         }else CHECK(cThing==0);
         integrations++;
     }

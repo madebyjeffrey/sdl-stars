@@ -214,38 +214,38 @@ void DropSalvage(THING **plpth, int32_t *rgwtMinerals, int16_t iplr, POINT16 *pp
         if (!lpth) {
             return;
         }
-        lpth->thp.iWarp = 0;
-        lpth->pt.x = ppt->x;
-        lpth->pt.y = ppt->y;
-        lpth->thp.idPlanet = 0x3ff;
+        lpth->thp().SetIWarp(0);
+        lpth->pt().SetX(ppt->x);
+        lpth->pt().SetY(ppt->y);
+        lpth->thp().SetIdPlanet(0x3ff);
     } else {
         for (i = 0; i < 3; i++) {
-            rgwtMinerals[i] += lpth->thp.rgwtMin[i];
-            wtTotal += lpth->thp.rgwtMin[i];
-            lpth->thp.rgwtMin[i] = 0;
+            rgwtMinerals[i] += lpth->thp().rgwtMin(i);
+            wtTotal += lpth->thp().rgwtMin(i);
+            lpth->thp().SetRgwtMin(i, 0);
         }
-        lpth->thp.wtMax = 0;
+        lpth->thp().SetWtMax(0);
     }
-    lpth->thp.fMoved = TRUE;
+    lpth->thp().SetFMoved(TRUE);
     while (wtTotal > 0) {
         for (i = 0; i < 3; i++) {
-            if ((uint32_t)(lpth->thp.wtMax * 10) + rgwtMinerals[i] > 30000) {
-                wt = 30000 - (uint32_t)(lpth->thp.wtMax * 10);
+            if ((uint32_t)(lpth->thp().wtMax() * 10) + rgwtMinerals[i] > 30000) {
+                wt = 30000 - (uint32_t)(lpth->thp().wtMax() * 10);
                 wtTotal -= wt;
-                lpth->thp.wtMax = 3000;
-                lpth->thp.rgwtMin[i] += LOWORD(wt);
+                lpth->thp().SetWtMax(3000);
+                { const auto rgwtMinForThing = +(LOWORD(wt)); auto &thForThing = *(lpth); thForThing.thp().SetRgwtMin(i, thForThing.thp().rgwtMin(i) + rgwtMinForThing); }
                 rgwtMinerals[i] -= wt;
                 lpth = LpthNew(iplr, ithMineralPacket);
                 if (!lpth) {
                     return;
                 }
-                lpth->thp.iWarp = 0;
-                lpth->thp.idPlanet = 0x3ff;
-                lpth->pt.x = ppt->x;
-                lpth->pt.y = ppt->y;
+                lpth->thp().SetIWarp(0);
+                lpth->thp().SetIdPlanet(0x3ff);
+                lpth->pt().SetX(ppt->x);
+                lpth->pt().SetY(ppt->y);
             } else {
-                lpth->thp.wtMax += (rgwtMinerals[i] + 9) / 10;
-                lpth->thp.rgwtMin[i] += LOWORD(rgwtMinerals[i]);
+                { const auto wtMaxForThing = +((rgwtMinerals[i] + 9) / 10); auto &thForThing = *(lpth); thForThing.thp().SetWtMax(thForThing.thp().wtMax() + wtMaxForThing); }
+                { const auto rgwtMinForThing = +(LOWORD(rgwtMinerals[i])); auto &thForThing = *(lpth); thForThing.thp().SetRgwtMin(i, thForThing.thp().rgwtMin(i) + rgwtMinForThing); }
                 wtTotal -= rgwtMinerals[i];
                 rgwtMinerals[i] = 0;
             }

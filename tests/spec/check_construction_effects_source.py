@@ -169,19 +169,19 @@ int main(void){
         int asked=configured+4;if(asked<5 || asked>abilities[w]+3)asked=s16(abilities[w]+two);
         unsigned decay=(uint16_t)(asked<=abilities[w]+two ? 0:asked-abilities[w]-two);
         if(primaries[t]==7 && s16((int)decay)<3)decay=(uint16_t)(decay+1);
-        CHECK(cThing==1 && lpThings[0].thp.iWarp==((unsigned)s16(asked-4)&15) && lpThings[0].thp.iDecayRate==(decay&3) && lpThings[0].thp.idPlanet==7);
-        unsigned weight=0;for(int i=0;i<3;i++){int ore=mixed || i==packets[item]-14 ? quantity:0;CHECK(lpThings[0].thp.rgwtMin[i]==ore);weight=(weight+s16(ore+9)/10)&16383;}
-        CHECK(lpThings[0].thp.wtMax==weight);
+        CHECK(cThing==1 && lpThings[0].thp().iWarp()==((unsigned)s16(asked-4)&15) && lpThings[0].thp().iDecayRate()==(decay&3) && lpThings[0].thp().idPlanet()==7);
+        unsigned weight=0;for(int i=0;i<3;i++){int ore=mixed || i==packets[item]-14 ? quantity:0;CHECK(lpThings[0].thp().rgwtMin(i)==ore);weight=(weight+s16(ore+9)/10)&16383;}
+        CHECK(lpThings[0].thp().wtMax()==weight);
     }
     // Packet quantity saturation and weight's signed-16 narrowing.
-    reset();CHECK(call(1,17,1000) && cThing==1);CHECK(lpThings[0].thp.rgwtMin[0]==32760 && lpThings[0].thp.wtMax==6556);
+    reset();CHECK(call(1,17,1000) && cThing==1);CHECK(lpThings[0].thp().rgwtMin(0)==32760 && lpThings[0].thp().wtMax()==6556);
     reset();warpValues[0]=0;CHECK(!call(1,6,1) && messageIds[0]==idmMineralPacketFormedHasDisintegratedBecausePlanet);
     reset();planet.idFling=0;CHECK(!call(1,6,1) && messageIds[0]==idmMineralPacketFormedHasDisintegratedBecauseDidnt);
-    reset();THING *p=LpthNew(0,ithMineralPacket);p->pt=rgptPlan[5];p->thp.iWarp=6;p->thp.idPlanet=7;p->thp.iDecayRate=0;p->thp.wtMax=1629;
-    for(int i=0;i<3;i++)p->thp.rgwtMin[i]=32760;CHECK(call(1,17,1) && cThing==1);CHECK(p->thp.rgwtMin[0]==32760 && p->thp.wtMax==6556 && messageIds[0]==idmHasProducedMineralPacketWhichHasCombined);
-    p->thp.wtMax=1630;CHECK(call(1,17,1) && cThing==2);
+    reset();THING *p=LpthNew(0,ithMineralPacket);p->pt().Set(rgptPlan[5]);p->thp().SetIWarp(6);p->thp().SetIdPlanet(7);p->thp().SetIDecayRate(0);p->thp().SetWtMax(1629);
+    for(int i=0;i<3;i++)p->thp().SetRgwtMin(i, 32760);CHECK(call(1,17,1) && cThing==1);CHECK(p->thp().rgwtMin(0)==32760 && p->thp().wtMax()==6556 && messageIds[0]==idmHasProducedMineralPacketWhichHasCombined);
+    p->thp().SetWtMax(1630);CHECK(call(1,17,1) && cThing==2);
     reset();cThing=cThingAlloc=512;lpThings=static_cast<THING *>(LpAlloc((uint16_t)(512*sizeof(THING)),htThings));
-    for(int i=0;i<512;i++){lpThings[i].ith=ithMineralPacket;lpThings[i].iplr=0;lpThings[i].id=i;lpThings[i].pt.x=99;}
+    for(int i=0;i<512;i++){lpThings[i].SetIth(ithMineralPacket);lpThings[i].SetIplr(0);lpThings[i].SetId(i);lpThings[i].pt().SetX(99);}
     CHECK(call(1,17,1) && cThing==512 && messageIds[0]==idmHasOrdersBuildMineralPacketEitherDoesnt);
     // Fleet limit uses first-order point, first null/greater owner and strict
     // 32766-built > prior count, independently of fleet point or dead flag.

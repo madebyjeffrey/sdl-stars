@@ -385,6 +385,13 @@ static NATIVEBYTEWINDOW BbwFromLpHt(void *lp, HeapType ht) noexcept {
 
 NATIVEBYTEWINDOW BbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htBattle); }
 NATIVEBYTEWINDOW AbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htMisc); }
+NATIVEBYTEWINDOW TbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htThings); }
+
+void CopyThingBytes(THING *pth, const void *rgb, uint16_t cb) noexcept {
+    auto storage = TbwFromLp(pth).Rgb();
+    assert(cb <= storage.size());
+    std::memcpy(storage.data(), rgb, cb);
+}
 
 MSGPLR *LpmsgplrAlloc(uint16_t cb) {
     void *lp = LpAlloc(cb, htPlrMsg);

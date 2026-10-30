@@ -21,6 +21,52 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 
 int main() {
     for (std::uint32_t w = 0; w < 65536; w++) {
+        std::array<std::byte, 18> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8),
+            std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f},
+            std::byte{1}, std::byte{0}, std::byte{0}, std::byte{0x80}, std::byte{0xdc}, std::byte{0xfe},
+            std::byte{0xff}, std::byte{0xa5}, std::byte{0xab}, std::byte{0x89}, std::byte{0xfe}, std::byte{0xff}};
+        THING th{};
+        CHECK(FDecodeThing(golden, th));
+        CHECK(th.idFull() == w && th.id() == (w & 511) && th.iplr() == ((w >> 9) & 15) && th.ith() == (w >> 13));
+        CHECK(th.pt().x() == -32768 && th.pt().y() == 32767 && th.turn() == 65534);
+        CHECK(th.thm().cMines() == -2147483647 && th.thm().grbitPlr() == 0xfedc && th.thm().iType() == 255);
+        CHECK(th.thm().fDetonate() == 0xa5 && th.thm().grbitPlrNow() == 0x89ab);
+        CHECK(th.thp().rgwtMin(0) == -32768 && th.thp().rgwtMin(1) == -292 && th.thp().rgwtMin(2) == -23041);
+        CHECK(th.thp().wtMax() == 0x09ab && th.thp().iDecayRate() == 2);
+        CHECK(th.thp().rgwtMin(3) == -30293 && th.thp().rgwtMin(4) == -2 && th.thp().rgwtMin(-1) == 1);
+        CHECK(static_cast<std::uint16_t>(th.tht().grbitTrader()) == 0x89ab && th.thw().idPartner() == 0xa5ff);
+        std::array<std::byte, 20> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FEncodeThing(th, std::span(rgb).subspan(1, 18)) && !std::memcmp(rgb.data() + 1, golden.data(), 18));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        th.SetId(static_cast<std::uint16_t>(65535 - w));
+        CHECK(th.idFull() == ((w & 0xfe00u) | ((65535 - w) & 511)));
+        th.SetIplr(static_cast<std::uint16_t>(w)); th.SetIth(static_cast<std::uint16_t>(w >> 1));
+        CHECK(th.iplr() == (w & 15) && th.ith() == ((w >> 1) & 7));
+        th.rgb()[0] = static_cast<std::byte>(w); th.rgb()[1] = static_cast<std::byte>(w >> 8);
+        CHECK(th.thp().idPlanet() == (w & 1023) && th.thp().iWarp() == ((w >> 10) & 15));
+        CHECK(th.thp().fMoved() == ((w >> 14) & 1) && th.thp().fInclude() == (w >> 15));
+        CHECK(th.thw().iStable() == (w & 3) && th.thw().cLastMove() == ((w >> 2) & 1023));
+        CHECK(th.thw().fDestKnown() == ((w >> 12) & 1) && th.thw().fInclude() == ((w >> 13) & 1));
+        th.thw().SetIStable(static_cast<std::uint16_t>(65535 - w)); th.thw().SetCLastMove(static_cast<std::uint16_t>(w));
+        const std::uint16_t word = static_cast<std::uint16_t>((w & 0xf000u) | ((65535 - w) & 3) | ((w & 1023) << 2));
+        CHECK(th.rgb()[0] == static_cast<std::byte>(word) && th.rgb()[1] == static_cast<std::byte>(word >> 8));
+        CHECK(th.rgb()[8] == std::byte{0xab} && th.rgb()[9] == std::byte{0x89});
+        th.tht().SetGrbitTrader(static_cast<GrbitTrader>(w));
+        CHECK(static_cast<std::uint16_t>(th.tht().grbitTrader()) == w);
+        const auto signedWord = static_cast<std::int16_t>(w < 32768 ? std::int32_t(w) : std::int32_t(w) - 65536);
+        th.thp().SetRgwtMin(0, signedWord);
+        CHECK(th.thp().rgwtMin(0) == signedWord && th.rgb()[2] == static_cast<std::byte>(w) && th.rgb()[3] == static_cast<std::byte>(w >> 8));
+        if (w == 0) for (std::size_t cb = 0; cb < 18; cb++) {
+            THING untouched{}; untouched.SetIdFull(123);
+            CHECK(!FDecodeThing(std::span(golden).first(cb), untouched) && untouched.idFull() == 123);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeThing(th, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
         PLAYER plr{};
         MDPLR md{};
         PRODQ1 pq{};

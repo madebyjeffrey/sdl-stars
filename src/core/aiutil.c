@@ -251,9 +251,9 @@ int16_t FGotoWormholeAiFleet(FLEET *lpfl, THING *lpthWorm) {
 
     ChangeMainObjSel(grobjFleet, lpfl->id);
     memset(&ord, 0, sizeof(ORDER));
-    ord.pt = lpthWorm->pt;
+    ord.pt = lpthWorm->pt();
     ord.grobj = grobjThing;
-    ord.id = lpthWorm->idFull;
+    ord.id = lpthWorm->idFull();
     ord.grTask = grTaskNone;
     ord.fValidTask = FALSE;
     ord.iWarp = (uint16_t)IFindIdealWarp(lpfl, TRUE);
@@ -377,12 +377,12 @@ THING *LpthWormFind(POINT16 *ppt, int32_t d2) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithWormhole) {
-            dx = abs(ppt->x - lpth->pt.x);
-            dy = abs(ppt->y - lpth->pt.y);
+        if (lpth->ith() == ithWormhole) {
+            dx = abs(ppt->x - lpth->pt().x());
+            dy = abs(ppt->y - lpth->pt().y());
             d2Cur = (int16_t)(dx * dx + dy * dy);
             if (d2Cur <= (int32_t)(d2 * 4) && d2Cur <= 46656) {
-                if (lpth->thw.grbitPlrTrav & grbitplr) {
+                if (lpth->thw().grbitPlrTrav() & grbitplr) {
                     iVal = PctWormholeMoves(lpth);
                     iVal = 70 - 10 * iVal;
                 } else if (d2Cur <= d2) {
@@ -554,10 +554,10 @@ int16_t FFleetInField(FLEET *lpfl, THING *lpth) {
     int16_t dx;
     int32_t dxy2;
 
-    dx = abs(lpfl->pt.x - lpth->pt.x);
-    dy = abs(lpfl->pt.y - lpth->pt.y);
+    dx = abs(lpfl->pt.x - lpth->pt().x());
+    dy = abs(lpfl->pt.y - lpth->pt().y());
     dxy2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-    if (dxy2 < lpth->thm.cMines) {
+    if (dxy2 < lpth->thm().cMines()) {
         return TRUE;
     }
     return FALSE;
@@ -579,7 +579,7 @@ void SetAiFleetIdealSpeed(FLEET *lpfl, int16_t wtFuelMax, int16_t cMinefields, T
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->ith == ithMinefield && lpth->iplr != idPlayer && lpth->thm.iType != mineSpeedBump && FFleetInField(lpfl, lpth)) {
+            if (lpth->ith() == ithMinefield && lpth->iplr() != idPlayer && lpth->thm().iType() != mineSpeedBump && FFleetInField(lpfl, lpth)) {
                 fMinefield = TRUE;
                 goto LSelectFleet;
             }
@@ -598,7 +598,7 @@ void SetAiFleetIdealSpeed(FLEET *lpfl, int16_t wtFuelMax, int16_t cMinefields, T
 LSelectFleet:
     ChangeMainObjSel(grobjFleet, lpfl->id);
     if (fMinefield) {
-        switch (lpth->thm.iType) {
+        switch (lpth->thm().iType()) {
         case mineHeavy:
             i = 6;
             break;
@@ -951,7 +951,7 @@ int16_t IdTargetFreighter(FLEET *lpflFr, PLANET *lpplHome) {
     memset(&ord, 0, sizeof(ORDER));
     if (lpthBest) {
         ord.grobj = grobjThing;
-        ord.pt = lpthBest->pt;
+        ord.pt = lpthBest->pt();
     } else {
         ord.grobj = grobjPlanet;
         ord.pt = rgptPlan[idBest];
@@ -1048,17 +1048,17 @@ int16_t FSalvageTargetFreighter2(FLEET *lpflFr, int16_t fNeedy, int16_t iWorst, 
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket && lpth->thp.iWarp == 0) {
-            dx = pt.x - lpth->pt.x;
-            dy = pt.y - lpth->pt.y;
+        if (lpth->ith() == ithMineralPacket && lpth->thp().iWarp() == 0) {
+            dx = pt.x - lpth->pt().x();
+            dy = pt.y - lpth->pt().y();
             if (dx == 0 && dy == 0) {
-                if (fNeedy && lpth->thp.rgwtMin[iWorst] != 0) {
-                    XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, static_cast<MineralType>(iWorst), lpth->thp.rgwtMin[iWorst]);
+                if (fNeedy && lpth->thp().rgwtMin(iWorst) != 0) {
+                    XferAiSupply(grobjThing, lpth->idFull(), grobjFleet, lpflFr->id, static_cast<MineralType>(iWorst), lpth->thp().rgwtMin(iWorst));
                 }
                 if (fNeedy != 2) {
                     for (i = 0; i < 3; i++) {
-                        if (lpth->thp.rgwtMin[i] != 0) {
-                            XferAiSupply(grobjThing, lpth->idFull, grobjFleet, lpflFr->id, static_cast<MineralType>(i), lpth->thp.rgwtMin[i]);
+                        if (lpth->thp().rgwtMin(i) != 0) {
+                            XferAiSupply(grobjThing, lpth->idFull(), grobjFleet, lpflFr->id, static_cast<MineralType>(i), lpth->thp().rgwtMin(i));
                         }
                     }
                 }
@@ -1066,14 +1066,14 @@ int16_t FSalvageTargetFreighter2(FLEET *lpflFr, int16_t fNeedy, int16_t iWorst, 
                 FLookupFleet(lpflFr->id, &sel.fl);
             } else if ((dx <= dy ? dy : dx) <= 200) {
                 if (fNeedy == 2) {
-                    wtPlanCargo = lpth->thp.rgwtMin[iWorst];
+                    wtPlanCargo = lpth->thp().rgwtMin(iWorst);
                 } else {
                     wtPlanCargo = 0;
                     for (i = 0; i < 3; i++) {
                         if (fNeedy && i != iWorst) {
-                            wtPlanCargo += (int16_t)(lpth->thp.rgwtMin[i] >> 1);
+                            wtPlanCargo += (int16_t)(lpth->thp().rgwtMin(i) >> 1);
                         } else {
-                            wtPlanCargo += lpth->thp.rgwtMin[i];
+                            wtPlanCargo += lpth->thp().rgwtMin(i);
                         }
                     }
                 }
@@ -1091,7 +1091,7 @@ int16_t FSalvageTargetFreighter2(FLEET *lpflFr, int16_t fNeedy, int16_t iWorst, 
                     if (score > scoreBest) {
                         scoreBest = score;
                         *plpthBest = lpth;
-                        *pidBest = lpth->idFull;
+                        *pidBest = lpth->idFull();
                     }
                 }
             }
@@ -1230,7 +1230,7 @@ void KeepFleetsMoving() {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMinefield && lpth->iplr != idPlayer && lpth->thm.iType != mineSpeedBump) {
+        if (lpth->ith() == ithMinefield && lpth->iplr() != idPlayer && lpth->thm().iType() != mineSpeedBump) {
             if (ith == 100) {
                 ith = -1;
                 goto LKeepMovn;
@@ -1884,9 +1884,9 @@ int16_t IdTargetScout(FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, int16_t fOn
 LFindPlanet:
     idClosest = IdNearestUnknownPlanet(lpfl, plpthWorm);
     if (plpthWorm && *plpthWorm) {
-        ord.pt = (*plpthWorm)->pt;
+        ord.pt = (*plpthWorm)->pt();
         ord.grobj = grobjThing;
-        ord.id = (*plpthWorm)->idFull;
+        ord.id = (*plpthWorm)->idFull();
     } else {
         if (idClosest == idplNone) {
             if (rgplr[idPlayer].idPlanetHome == idplNone) {
@@ -2824,9 +2824,9 @@ void IncreaseAIMinefieldSizes() {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMinefield) {
-            cMines = (int32_t)((double)sqrt((double)lpth->thm.cMines) + 10.5);
-            lpth->thm.cMines = (uint32_t)(cMines * cMines);
+        if (lpth->ith() == ithMinefield) {
+            cMines = (int32_t)((double)sqrt((double)lpth->thm().cMines()) + 10.5);
+            { const auto cMinesForThing = ((uint32_t)(cMines * cMines)); auto &thForThing = *(lpth); thForThing.thm().SetCMines(cMinesForThing); }
         }
     }
     return;

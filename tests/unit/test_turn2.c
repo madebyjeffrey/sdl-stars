@@ -8,11 +8,11 @@ static void AddDetonatingField(int16_t iplr, POINT16 pt) {
     THING *lpth;
 
     lpth = LpthNew(iplr, ithMinefield);
-    lpth->pt = pt;
-    lpth->thm.cMines = 10000;
-    lpth->thm.iType = mineStandard;
-    lpth->thm.fDetonate = TRUE;
-    lpth->thm.grbitPlr = 1 << iplr;
+    lpth->pt().Set(pt);
+    lpth->thm().SetCMines(10000);
+    lpth->thm().SetIType(mineStandard);
+    lpth->thm().SetFDetonate(TRUE);
+    lpth->thm().SetGrbitPlr(1 << iplr);
 }
 
 // AddScout adds one ship of player 0's first design at its homeworld and

@@ -75,16 +75,16 @@ BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap) {
     for (i = 0; lpThings && i < (size_t)cThing; i++) {
         lpth = &lpThings[i];
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
-        lpobj->grType = grobjThing; lpobj->id = lpth->idFull; lpobj->ith = lpth->ith;
-        lpobj->iPlayer = lpth->iplr; lpobj->det = 0;
-        CchSprintf(lpobj->szName, "%s", PszGetThingName(lpth->idFull));
-        ScanObjectPosition(lpsnap, lpobj, lpth->pt);
+        lpobj->grType = grobjThing; lpobj->id = lpth->idFull(); lpobj->ith = lpth->ith();
+        lpobj->iPlayer = lpth->iplr(); lpobj->det = 0;
+        CchSprintf(lpobj->szName, "%s", PszGetThingName(lpth->idFull()));
+        ScanObjectPosition(lpsnap, lpobj, lpth->pt());
         lpobj->fScanSelected = sel.scan.grobj == grobjThing && sel.scan.ith == (int16_t)i;
         lpobj->fFiltered = (grbitScan & grbitScanViewMask) == scanViewNoPlayerInfo;
-        if (lpth->ith == ithMinefield) {
-            grRelation = lpth->iplr == idPlayer ? 1 :
-                rgplr[idPlayer].rgmdRelation[lpth->iplr] == 1 ? 2 :
-                rgplr[idPlayer].rgmdRelation[lpth->iplr] == 0 ? 4 : 8;
+        if (lpth->ith() == ithMinefield) {
+            grRelation = lpth->iplr() == idPlayer ? 1 :
+                rgplr[idPlayer].rgmdRelation[lpth->iplr()] == 1 ? 2 :
+                rgplr[idPlayer].rgmdRelation[lpth->iplr()] == 0 ? 4 : 8;
             lpobj->fFiltered = !(grbitScan & grbitScanMineFields) || (!lpobj->fScanSelected && !(grbitScanMines & grRelation));
         }
     }
@@ -106,9 +106,9 @@ BOOL FSelectScannerObject(const SCANSNAPSHOT *lpsnap, uint16_t grType, uint16_t 
         if (i == cFleet || !rglpfl[i]) return FALSE;
         scan.ifl = i; pt = rglpfl[i]->pt;
     } else if (grType == grobjThing) {
-        for (i = 0; lpThings && i < cThing; i++) if (lpThings[i].idFull == id) break;
+        for (i = 0; lpThings && i < cThing; i++) if (lpThings[i].idFull() == id) break;
         if (!lpThings || i == cThing) return FALSE;
-        scan.ith = i; pt = lpThings[i].pt;
+        scan.ith = i; pt = lpThings[i].pt();
     } else return FALSE;
     /* Find co-located categories, then override the object identity: multiple
        fleets at one planet must not all resolve to the nearest fleet. */

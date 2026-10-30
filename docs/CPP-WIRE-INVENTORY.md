@@ -288,3 +288,11 @@ an explicit forty-byte codec and four-byte palette entries; embedded byte
 decoding is separate from the named native GDI SDK-header/palette adapter.
 Shared validation retains the original admission and partial-output effects.
 The SDK pixel/reference inputs and immutable resource bytes remain unchanged.
+
+
+B11 THING family: an actual eighteen-byte array with scoped numeric/point/body
+views replaces native word/variant aliases. Explicit byte/count codecs retain
+unknown tag values, wormhole reserved/opaque bytes and all signed quantities.
+The heap byte window preserves short and overlong copy effects on initialized
+physical neighbors/spare bytes; it imposes no new logical record-length rule.
+Runtime stride remains eighteen, independent of compiler packing.

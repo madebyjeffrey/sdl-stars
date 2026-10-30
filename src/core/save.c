@@ -246,14 +246,14 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                         for (iord = 1; iord < lpfl->cord; iord++) {
                             if (lpord[iord].grobj == grobjThing) {
                                 lpth = LpthFromId(lpord[iord].id);
-                                if (!lpth || (lpth->ith == ithMysteryTrader && !lpth->tht.fInclude) ||
-                                    (lpth->ith == ithMinefield && !(1 << iPlayer & lpth->thm.grbitPlrNow)) ||
-                                    (lpth->ith == ithWormhole && !lpth->thw.fInclude)) {
-                                    if (lpth && lpth->ith == ithWormhole) {
+                                if (!lpth || (lpth->ith() == ithMysteryTrader && !lpth->tht().fInclude()) ||
+                                    (lpth->ith() == ithMinefield && !(1 << iPlayer & lpth->thm().grbitPlrNow())) ||
+                                    (lpth->ith() == ithWormhole && !lpth->thw().fInclude())) {
+                                    if (lpth && lpth->ith() == ithWormhole) {
                                         FSendPlrMsg2(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
-                                    } else if (lpth && lpth->ith == ithMysteryTrader) {
+                                    } else if (lpth && lpth->ith() == ithMysteryTrader) {
                                         FSendPlrMsg2(lpfl->iPlayer, idmMysteryTraderHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
-                                    } else if (lpth && lpth->ith == ithMinefield) {
+                                    } else if (lpth && lpth->ith() == ithMinefield) {
                                         FSendPlrMsg2(lpfl->iPlayer, idmMineFieldHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     }
                                     lpord[iord].grobj = grobjOther;
@@ -396,43 +396,45 @@ LAppend:
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (iPlayer == iplrNone || (iPlayer == lpth->iplr && lpth->ith != ithMineralPacket && lpth->ith != ithMysteryTrader && lpth->ith != ithWormhole) ||
-                (lpth->ith == ithMinefield && (1 << iPlayer & lpth->thm.grbitPlrNow)) || (lpth->ith == ithMineralPacket && lpth->thp.fInclude) ||
-                (lpth->ith == ithMysteryTrader && lpth->tht.fInclude) || (lpth->ith == ithWormhole && lpth->thw.fInclude)) {
+            if (iPlayer == iplrNone || (iPlayer == lpth->iplr() && lpth->ith() != ithMineralPacket && lpth->ith() != ithMysteryTrader && lpth->ith() != ithWormhole) ||
+                (lpth->ith() == ithMinefield && (1 << iPlayer & lpth->thm().grbitPlrNow())) || (lpth->ith() == ithMineralPacket && lpth->thp().fInclude()) ||
+                (lpth->ith() == ithMysteryTrader && lpth->tht().fInclude()) || (lpth->ith() == ithWormhole && lpth->thw().fInclude())) {
                 i++;
             }
         }
         if (i > 0) {
-            WriteRt(rtThing, 2, &i);
+            uint8_t rgbThingCount[2];
+            NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgbThingCount))).FWriteI16Le(i);
+            WriteRt(rtThing, 2, rgbThingCount);
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (iPlayer == iplrNone || (iPlayer == lpth->iplr && lpth->ith != ithMineralPacket && lpth->ith != ithMysteryTrader && lpth->ith != ithWormhole) ||
-                    (lpth->ith == ithMinefield && (1 << iPlayer & lpth->thm.grbitPlrNow)) || (lpth->ith == ithMineralPacket && lpth->thp.fInclude) ||
-                    (lpth->ith == ithMysteryTrader && lpth->tht.fInclude) || (lpth->ith == ithWormhole && lpth->thw.fInclude)) {
+                if (iPlayer == iplrNone || (iPlayer == lpth->iplr() && lpth->ith() != ithMineralPacket && lpth->ith() != ithMysteryTrader && lpth->ith() != ithWormhole) ||
+                    (lpth->ith() == ithMinefield && (1 << iPlayer & lpth->thm().grbitPlrNow())) || (lpth->ith() == ithMineralPacket && lpth->thp().fInclude()) ||
+                    (lpth->ith() == ithMysteryTrader && lpth->tht().fInclude()) || (lpth->ith() == ithWormhole && lpth->thw().fInclude())) {
                     if (iPlayer == iplrNone) {
-                        WriteRt(rtThing, 18, lpth);
+                        WriteRtThing(lpth);
                     } else {
                         /* A player's file keeps only that player's bit of each
                            per-player mask, and not the part the Mystery Trader
                            carries. The original wrote the whole record, telling
                            every player who else had seen these things. */
                         th = *lpth;
-                        switch (th.ith) {
+                        switch (th.ith()) {
                         case ithMinefield:
-                            th.thm.grbitPlr &= 1 << iPlayer;
-                            th.thm.grbitPlrNow &= 1 << iPlayer;
+                            th.thm().SetGrbitPlr(th.thm().grbitPlr() & (1 << iPlayer));
+                            th.thm().SetGrbitPlrNow(th.thm().grbitPlrNow() & (1 << iPlayer));
                             break;
                         case ithWormhole:
-                            th.thw.grbitPlr &= 1 << iPlayer;
-                            th.thw.grbitPlrTrav &= 1 << iPlayer;
+                            th.thw().SetGrbitPlr(th.thw().grbitPlr() & (1 << iPlayer));
+                            th.thw().SetGrbitPlrTrav(th.thw().grbitPlrTrav() & (1 << iPlayer));
                             break;
                         case ithMysteryTrader:
-                            th.tht.grbitPlr &= 1 << iPlayer;
-                            th.tht.grbitTrader = grbitTraderNone;
+                            th.tht().SetGrbitPlr(th.tht().grbitPlr() & (1 << iPlayer));
+                            th.tht().SetGrbitTrader(grbitTraderNone);
                             break;
                         }
-                        WriteRt(rtThing, 18, &th);
+                        WriteRtThing(&th);
                     }
                 }
             }
@@ -1067,6 +1069,12 @@ LBadFile:
     }
 }
 
+void WriteRtThing(const THING *pth) {
+    std::byte rgb[cbWireThing];
+    FEncodeThing(*pth, rgb);
+    WriteRt(rtThing, cbWireThing, rgb);
+}
+
 void WriteRtScore(const SCOREX *psx) {
     std::byte rgb[cbWireScoreX];
 
@@ -1231,28 +1239,28 @@ void SetVisPFInit(int16_t iPlr) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        switch (lpth->ith) {
+        switch (lpth->ith()) {
         case ithMineralPacket:
             if (iPlr == iplrNone || raMajor == raMassAccel) {
-                lpth->thp.fInclude = TRUE;
-                if (rgplr[lpth->iplr].fInclude)
+                lpth->thp().SetFInclude(TRUE);
+                if (rgplr[lpth->iplr()].fInclude)
                     break;
-                rgplr[lpth->iplr].fInclude = TRUE;
-                rgplr[lpth->iplr].det = detSome;
+                rgplr[lpth->iplr()].fInclude = TRUE;
+                rgplr[lpth->iplr()].det = detSome;
                 break;
             }
-            lpth->thp.fInclude = FALSE;
+            lpth->thp().SetFInclude(FALSE);
             break;
         case ithWormhole:
-            lpth->thw.fInclude = iPlr == iplrNone;
+            lpth->thw().SetFInclude(iPlr == iplrNone);
             break;
         case ithMysteryTrader:
-            lpth->tht.fInclude = TRUE;
+            lpth->tht().SetFInclude(TRUE);
             break;
         case ithMinefield:
-            if ((lpth->thm.grbitPlrNow & grbitPlr) && !rgplr[lpth->iplr].fInclude) {
-                rgplr[lpth->iplr].fInclude = TRUE;
-                rgplr[lpth->iplr].det = detSome;
+            if ((lpth->thm().grbitPlrNow() & grbitPlr) && !rgplr[lpth->iplr()].fInclude) {
+                rgplr[lpth->iplr()].fInclude = TRUE;
+                rgplr[lpth->iplr()].det = detSome;
             }
         }
     }
@@ -1338,38 +1346,38 @@ void SetVisPFFleets(int16_t iPlr) {
                 lpthMac = lpThings + cThing;
                 for (; lpth < lpthMac; lpth++) {
                     if (iPlr != iplrNone) {
-                        switch (lpth->ith) {
+                        switch (lpth->ith()) {
                         case ithMinefield:
                         case ithMineralPacket:
                         case ithMysteryTrader:
                         case ithWormhole:
-                            if ((lpth->ith != ithMinefield || !(lpth->thm.grbitPlrNow & grbitPlr)) && (lpth->ith != ithMysteryTrader || !lpth->tht.fInclude) &&
-                                (lpth->ith != ithMineralPacket || !lpth->thp.fInclude) && (lpth->ith != ithWormhole || !lpth->thw.fInclude)) {
-                                dx = abs(pt.x - lpth->pt.x);
-                                dy = abs(pt.y - lpth->pt.y);
+                            if ((lpth->ith() != ithMinefield || !(lpth->thm().grbitPlrNow() & grbitPlr)) && (lpth->ith() != ithMysteryTrader || !lpth->tht().fInclude()) &&
+                                (lpth->ith() != ithMineralPacket || !lpth->thp().fInclude()) && (lpth->ith() != ithWormhole || !lpth->thw().fInclude())) {
+                                dx = abs(pt.x - lpth->pt().x());
+                                dy = abs(pt.y - lpth->pt().y());
                                 l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                if (l <= lRadius2 || lpth->ith == ithMinefield) {
-                                    if (lpth->ith == ithMineralPacket) {
-                                        lpth->thp.fInclude = TRUE;
+                                if (l <= lRadius2 || lpth->ith() == ithMinefield) {
+                                    if (lpth->ith() == ithMineralPacket) {
+                                        lpth->thp().SetFInclude(TRUE);
                                     LThIncPlr:
-                                        if (!rgplr[lpth->iplr].fInclude) {
-                                            rgplr[lpth->iplr].fInclude = TRUE;
-                                            rgplr[lpth->iplr].det = detSome;
+                                        if (!rgplr[lpth->iplr()].fInclude) {
+                                            rgplr[lpth->iplr()].fInclude = TRUE;
+                                            rgplr[lpth->iplr()].det = detSome;
                                         }
-                                    } else if (lpth->ith == ithMysteryTrader) {
-                                        lpth->tht.fInclude = TRUE;
+                                    } else if (lpth->ith() == ithMysteryTrader) {
+                                        lpth->tht().SetFInclude(TRUE);
 
-                                    } else if (lpth->ith == ithWormhole) {
-                                        if (!(lpth->thw.grbitPlr & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
+                                    } else if (lpth->ith() == ithWormhole) {
+                                        if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
                                             continue;
-                                        lpth->thw.grbitPlr |= grbitPlr;
-                                        lpth->thw.fInclude = TRUE;
+                                        lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
+                                        lpth->thw().SetFInclude(TRUE);
 
                                     } else {
-                                        if (((lpth->thm.grbitPlr & grbitPlr) && l <= lRadius2) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4) ||
-                                            l <= lpth->thm.cMines) {
-                                            lpth->thm.grbitPlr |= grbitPlr;
-                                            lpth->thm.grbitPlrNow |= grbitPlr;
+                                        if (((lpth->thm().grbitPlr() & grbitPlr) && l <= lRadius2) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4) ||
+                                            l <= lpth->thm().cMines()) {
+                                            lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | grbitPlr);
+                                            lpth->thm().SetGrbitPlrNow(lpth->thm().grbitPlrNow() | grbitPlr);
                                             goto LThIncPlr;
                                         }
                                     }
@@ -1508,39 +1516,39 @@ void SetVisPFPlanets(int16_t iPlr) {
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
                 if (iPlr != iplrNone) {
-                    switch (lpth->ith) {
+                    switch (lpth->ith()) {
                     case ithMinefield:
                     case ithMineralPacket:
                     case ithMysteryTrader:
                     case ithWormhole:
-                        if ((lpth->ith != ithMinefield || !(lpth->thm.grbitPlrNow & grbitPlr)) && (lpth->ith != ithMysteryTrader || !lpth->tht.fInclude) &&
-                            (lpth->ith != ithMineralPacket || !lpth->thp.fInclude) && (lpth->ith != ithWormhole || !lpth->thw.fInclude)) {
-                            dx = abs(pt.x - lpth->pt.x);
+                        if ((lpth->ith() != ithMinefield || !(lpth->thm().grbitPlrNow() & grbitPlr)) && (lpth->ith() != ithMysteryTrader || !lpth->tht().fInclude()) &&
+                            (lpth->ith() != ithMineralPacket || !lpth->thp().fInclude()) && (lpth->ith() != ithWormhole || !lpth->thw().fInclude())) {
+                            dx = abs(pt.x - lpth->pt().x());
                             if (dx <= iRadius) {
-                                dy = abs(pt.y - lpth->pt.y);
+                                dy = abs(pt.y - lpth->pt().y());
                                 if (dy <= iRadius) {
                                     l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                     if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
-                                        if (lpth->ith == ithMineralPacket) {
-                                            lpth->thp.fInclude = TRUE;
+                                        if (lpth->ith() == ithMineralPacket) {
+                                            lpth->thp().SetFInclude(TRUE);
                                         LThIncPlr2:
-                                            if (!rgplr[lpth->iplr].fInclude) {
-                                                rgplr[lpth->iplr].fInclude = TRUE;
-                                                rgplr[lpth->iplr].det = detSome;
+                                            if (!rgplr[lpth->iplr()].fInclude) {
+                                                rgplr[lpth->iplr()].fInclude = TRUE;
+                                                rgplr[lpth->iplr()].det = detSome;
                                             }
-                                        } else if (lpth->ith == ithMysteryTrader) {
-                                            lpth->tht.fInclude = TRUE;
+                                        } else if (lpth->ith() == ithMysteryTrader) {
+                                            lpth->tht().SetFInclude(TRUE);
 
-                                        } else if (lpth->ith == ithWormhole) {
-                                            if (!(lpth->thw.grbitPlr & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
+                                        } else if (lpth->ith() == ithWormhole) {
+                                            if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
                                                 continue;
-                                            lpth->thw.grbitPlr |= grbitPlr;
-                                            lpth->thw.fInclude = TRUE;
+                                            lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
+                                            lpth->thw().SetFInclude(TRUE);
 
                                         } else {
-                                            if ((lpth->thm.grbitPlr & grbitPlr) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4)) {
-                                                lpth->thm.grbitPlr |= grbitPlr;
-                                                lpth->thm.grbitPlrNow |= grbitPlr;
+                                            if ((lpth->thm().grbitPlr() & grbitPlr) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4)) {
+                                                lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | grbitPlr);
+                                                lpth->thm().SetGrbitPlrNow(lpth->thm().grbitPlrNow() | grbitPlr);
                                                 goto LThIncPlr2;
                                             }
                                         }
@@ -1665,12 +1673,12 @@ void SetVisPFThings(int16_t iPlr) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->ith == ithMineralPacket && lpth->iplr == iPlr && lpth->thp.iWarp != 0) {
-                lpth->thp.fInclude = TRUE;
-                iRadius = lpth->thp.iWarp + 4;
+            if (lpth->ith() == ithMineralPacket && lpth->iplr() == iPlr && lpth->thp().iWarp() != 0) {
+                lpth->thp().SetFInclude(TRUE);
+                iRadius = lpth->thp().iWarp() + 4;
                 iRadius *= iRadius;
                 lRadius2 = (uint32_t)(iRadius * iRadius);
-                pt = lpth->pt;
+                pt = lpth->pt();
                 for (j = 0; j < cFleet; j++) {
                     lpfl2 = rglpfl[j];
                     if (!rglpfl[j])
@@ -1697,39 +1705,39 @@ void SetVisPFThings(int16_t iPlr) {
                 lpthMac2 = lpThings + cThing;
                 for (; lpth2 < lpthMac2; lpth2++) {
                     if (iPlr != iplrNone) {
-                        switch (lpth2->ith) {
+                        switch (lpth2->ith()) {
                         case ithMinefield:
                         case ithMineralPacket:
                         case ithMysteryTrader:
                         case ithWormhole:
-                            if ((lpth2->ith != ithMinefield || !(lpth2->thm.grbitPlrNow & grbitPlr)) &&
-                                (lpth2->ith != ithMysteryTrader || !lpth2->tht.fInclude) && (lpth2->ith != ithMineralPacket || !lpth2->thp.fInclude) &&
-                                (lpth2->ith != ithWormhole || !lpth2->thw.fInclude)) {
-                                dx = abs(pt.x - lpth2->pt.x);
+                            if ((lpth2->ith() != ithMinefield || !(lpth2->thm().grbitPlrNow() & grbitPlr)) &&
+                                (lpth2->ith() != ithMysteryTrader || !lpth2->tht().fInclude()) && (lpth2->ith() != ithMineralPacket || !lpth2->thp().fInclude()) &&
+                                (lpth2->ith() != ithWormhole || !lpth2->thw().fInclude())) {
+                                dx = abs(pt.x - lpth2->pt().x());
                                 if (dx <= iRadius) {
-                                    dy = abs(pt.y - lpth2->pt.y);
+                                    dy = abs(pt.y - lpth2->pt().y());
                                     if (dy <= iRadius) {
                                         l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                         if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
-                                            if (lpth2->ith == ithMineralPacket) {
-                                                lpth2->thp.fInclude = TRUE;
+                                            if (lpth2->ith() == ithMineralPacket) {
+                                                lpth2->thp().SetFInclude(TRUE);
                                             LThIncPlr3:
-                                                if (!rgplr[lpth2->iplr].fInclude) {
-                                                    rgplr[lpth2->iplr].fInclude = TRUE;
-                                                    rgplr[lpth2->iplr].det = detSome;
+                                                if (!rgplr[lpth2->iplr()].fInclude) {
+                                                    rgplr[lpth2->iplr()].fInclude = TRUE;
+                                                    rgplr[lpth2->iplr()].det = detSome;
                                                 }
-                                            } else if (lpth2->ith == ithMysteryTrader) {
-                                                lpth2->tht.fInclude = TRUE;
+                                            } else if (lpth2->ith() == ithMysteryTrader) {
+                                                lpth2->tht().SetFInclude(TRUE);
 
-                                            } else if (lpth2->ith == ithWormhole) {
-                                                if (!(lpth2->thw.grbitPlr & grbitPlr) && l > lRadius2)
+                                            } else if (lpth2->ith() == ithWormhole) {
+                                                if (!(lpth2->thw().grbitPlr() & grbitPlr) && l > lRadius2)
                                                     continue;
-                                                lpth2->thw.grbitPlr |= grbitPlr;
-                                                lpth2->thw.fInclude = TRUE;
+                                                lpth2->thw().SetGrbitPlr(lpth2->thw().grbitPlr() | grbitPlr);
+                                                lpth2->thw().SetFInclude(TRUE);
 
                                             } else {
-                                                lpth2->thm.grbitPlr |= grbitPlr;
-                                                lpth2->thm.grbitPlrNow |= grbitPlr;
+                                                lpth2->thm().SetGrbitPlr(lpth2->thm().grbitPlr() | grbitPlr);
+                                                lpth2->thm().SetGrbitPlrNow(lpth2->thm().grbitPlrNow() | grbitPlr);
                                                 goto LThIncPlr3;
                                             }
                                         }
@@ -1771,9 +1779,9 @@ void SetVisPFThings(int16_t iPlr) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->ith == ithMinefield && lpth->iplr == iPlr) {
-                lRadius2 = lpth->thm.cMines;
-                pt = lpth->pt;
+            if (lpth->ith() == ithMinefield && lpth->iplr() == iPlr) {
+                lRadius2 = lpth->thm().cMines();
+                pt = lpth->pt();
                 for (j = 0; j < cFleet; j++) {
                     lpfl2 = rglpfl[j];
                     if (!rglpfl[j])

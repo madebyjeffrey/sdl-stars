@@ -189,7 +189,7 @@ static THING *LpthFind(ThingType ith, int16_t iplr) {
     int16_t i;
 
     for (i = 0; i < cThing; i++) {
-        if (lpThings[i].ith == ith && lpThings[i].iplr == iplr)
+        if (lpThings[i].ith() == ith && lpThings[i].iplr() == iplr)
             return &lpThings[i];
     }
     return NULL;
@@ -219,41 +219,41 @@ static void test_FWriteDataFile_masks_other_players_things(void) {
     while ((lpth = LpthFind(ithWormhole, 0)) != NULL)
         FreeLpth(lpth);
     lpth = LpthNew(1, ithMinefield);
-    lpth->pt = pt;
-    lpth->thm.cMines = 2500;
-    lpth->thm.iType = mineStandard;
-    lpth->thm.grbitPlr = 1 << 1;
-    lpth->thm.grbitPlrNow = 1 << 1;
+    lpth->pt().Set(pt);
+    lpth->thm().SetCMines(2500);
+    lpth->thm().SetIType(mineStandard);
+    lpth->thm().SetGrbitPlr(1 << 1);
+    lpth->thm().SetGrbitPlrNow(1 << 1);
     lpth = LpthNew(0, ithMysteryTrader);
-    lpth->pt = pt;
-    lpth->tht.ptDest = pt;
-    lpth->tht.grbitPlr = 1 << 1;
-    lpth->tht.grbitTrader = grbitTraderBeam;
+    lpth->pt().Set(pt);
+    lpth->tht().ptDest().Set(pt);
+    lpth->tht().SetGrbitPlr(1 << 1);
+    lpth->tht().SetGrbitTrader(grbitTraderBeam);
     lpth = LpthNew(0, ithWormhole);
-    lpth->pt = pt;
-    lpth->thw.grbitPlr = (1 << 0) | (1 << 1);
-    lpth->thw.grbitPlrTrav = 1 << 1;
-    idWorm1 = lpth->idFull;
+    lpth->pt().Set(pt);
+    { const auto grbitPlrForThing = ((1 << 0) | (1 << 1)); auto &thForThing = *(lpth); thForThing.thw().SetGrbitPlr(grbitPlrForThing); }
+    lpth->thw().SetGrbitPlrTrav(1 << 1);
+    idWorm1 = lpth->idFull();
     lpth = LpthNew(0, ithWormhole);
-    lpth->pt.x = pt.x + 200;
-    lpth->pt.y = pt.y;
-    lpth->thw.grbitPlr = 1 << 1;
-    lpth->thw.grbitPlrTrav = 1 << 1;
-    idWorm2 = lpth->idFull;
-    lpth->thw.idPartner = idWorm1;
-    LpthFromId(idWorm1)->thw.idPartner = idWorm2;
+    lpth->pt().SetX(pt.x + 200);
+    lpth->pt().SetY(pt.y);
+    lpth->thw().SetGrbitPlr(1 << 1);
+    lpth->thw().SetGrbitPlrTrav(1 << 1);
+    idWorm2 = lpth->idFull();
+    lpth->thw().SetIdPartner(idWorm1);
+    { const auto idPartnerForThing = (idWorm2); auto &thForThing = *(LpthFromId(idWorm1)); thForThing.thw().SetIdPartner(idPartnerForThing); }
     TEST_ASSERT(FWriteDataFile(szBase, 0, FALSE));
 
     TEST_ASSERT(FStarsTestLoadPlayer(0));
     lpth = LpthFind(ithMinefield, 1);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the minefield");
-    TEST_CHECK_(lpth->thm.grbitPlr == 1 && lpth->thm.grbitPlrNow == 1, "minefield seen by %#x, now %#x", lpth->thm.grbitPlr, lpth->thm.grbitPlrNow);
+    TEST_CHECK_(lpth->thm().grbitPlr() == 1 && lpth->thm().grbitPlrNow() == 1, "minefield seen by %#x, now %#x", lpth->thm().grbitPlr(), lpth->thm().grbitPlrNow());
     lpth = LpthFind(ithMysteryTrader, 0);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the trader");
-    TEST_CHECK_(lpth->tht.grbitPlr == 0 && lpth->tht.grbitTrader == 0, "trader met by %#x, carrying %#x", lpth->tht.grbitPlr, lpth->tht.grbitTrader);
+    TEST_CHECK_(lpth->tht().grbitPlr() == 0 && lpth->tht().grbitTrader() == 0, "trader met by %#x, carrying %#x", lpth->tht().grbitPlr(), lpth->tht().grbitTrader());
     lpth = LpthFind(ithWormhole, 0);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the wormhole");
-    TEST_CHECK_(lpth->thw.grbitPlr == 1 && lpth->thw.grbitPlrTrav == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw.grbitPlr, lpth->thw.grbitPlrTrav);
+    TEST_CHECK_(lpth->thw().grbitPlr() == 1 && lpth->thw().grbitPlrTrav() == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw().grbitPlr(), lpth->thw().grbitPlrTrav());
 }
 
 static void test_SetVisPFInit_host(void) {
@@ -266,15 +266,15 @@ static void test_SetVisPFInit_host(void) {
     memset(rgshdefSB, 0, sizeof(rgshdefSB));
     rglpshdef[0] = rgshdef;
     rglpshdefSB[0] = rgshdefSB;
-    th.ith = ithMineralPacket;
-    th.iplr = 0;
+    th.SetIth(ithMineralPacket);
+    th.SetIplr(0);
     lpThings = &th;
     cThing = 1;
     game.cPlayer = 1;
     SetVisPFInit(iplrNone);
     TEST_CHECK(rgplr[0].fInclude);
     TEST_CHECK(rgplr[0].det == detAll);
-    TEST_CHECK(th.thp.fInclude);
+    TEST_CHECK(th.thp().fInclude());
     lpThings = NULL;
     cThing = 0;
     rglpshdef[0] = rglpshdefSB[0] = NULL;
@@ -681,7 +681,29 @@ static void test_WriteRtPlr_partial_bytes(void) {
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
-TEST_LIST = {{"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
+static void test_WriteRtThing_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0x23, 0xe1, 0, 0x80, 0xff, 0x7f, 1, 0, 0, 0x80, 0xdc, 0xfe, 0xff, 0xa5, 0xab, 0x89, 0xfe, 0xff};
+    THING th{}, decoded{};
+    int32_t lSeed1, lSeed2;
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("thing-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sthing", szDir, szDirSep);
+    TEST_ASSERT(FDecodeThing(std::as_bytes(std::span(golden)), th));
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012); WriteRtThing(&th);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 170401200 && lSeed2 == 2097781771);
+    TEST_CHECK(!memcmp(th.RgbRecord().data(), golden, sizeof(golden)));
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtThing && hdrCur.cb == 18 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(FDecodeThing(std::as_bytes(std::span(rgbCur)), decoded) && decoded.idFull() == 0xe123);
+    TEST_CHECK(decoded.pt().x() == -32768 && decoded.pt().y() == 32767 && decoded.turn() == 65534);
+    StreamClose(); TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+TEST_LIST = {{"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
+             {"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
              {"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
              {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},
              {"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},

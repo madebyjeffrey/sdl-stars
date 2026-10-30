@@ -2396,7 +2396,7 @@ int16_t FCheckSummary(GrobjClass grobj, int16_t id) {
         fRet = FALSE;
         break;
     case grobjThing:
-        fRet = sel.scan.grobj == grobjThing && (id == idAny || lpThings[sel.scan.ith].idFull == id);
+        fRet = sel.scan.grobj == grobjThing && (id == idAny || lpThings[sel.scan.ith].idFull() == id);
     }
     if (!fRet) {
         tutor.idh = idhKeyToTheScanner;

@@ -663,4 +663,12 @@ inline bool FDecodePlayer(std::span<const std::byte> rgb, PLAYER &plr, std::size
     return input.FReadBytes(std::as_writable_bytes(std::span(plr.szNames)));
 }
 
+inline constexpr std::size_t cbWireThing = 18;
+inline bool FDecodeThing(std::span<const std::byte> rgb, THING &th) noexcept {
+    return NATIVEBYTEREADER(rgb).FReadBytes(th.RgbRecord());
+}
+inline bool FEncodeThing(const THING &th, std::span<std::byte> rgb) noexcept {
+    return NATIVEBYTEWRITER(rgb).FWriteBytes(th.RgbRecord());
+}
+
 #endif

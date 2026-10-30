@@ -361,7 +361,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     lpth = LpthFromId(vptMsg.x);
                     if (!lpth)
                         break;
-                    scan.pt = lpth->pt;
+                    scan.pt = lpth->pt();
                     scan.grobj = grobjThing;
                     ChangeScanSel(&scan, 0);
                     CtrPointScan(scan.pt, TRUE);

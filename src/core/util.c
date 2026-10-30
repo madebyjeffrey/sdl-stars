@@ -45,7 +45,7 @@ THING *LpthFromId(int16_t idth) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->idFull == idth) {
+        if (lpth->idFull() == idth) {
             return lpth;
         }
     }
@@ -190,7 +190,7 @@ int16_t FLookupThing(int16_t idth, THING *pth) {
         return FALSE;
     }
     if (idth < 0) {
-        idth = pth->idFull;
+        idth = pth->idFull();
         fWrite = TRUE;
     }
     lpth = LpthFromId(idth);
@@ -716,11 +716,11 @@ int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t i
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket && lpth->pt.x == sel.pt.x && lpth->pt.y == sel.pt.y && iNth-- == 0) {
+        if (lpth->ith() == ithMineralPacket && lpth->pt().x() == sel.pt.x && lpth->pt().y() == sel.pt.y && iNth-- == 0) {
             if (pxf) {
                 pxf->th = *lpth;
                 pxf->grobj = grobjThing;
-                pxf->id = lpth->idFull;
+                pxf->id = lpth->idFull();
             }
             return TRUE;
         }
@@ -737,22 +737,22 @@ char *PszGetThingName(int16_t id) {
         szWork[0] = 0;
         return szWork;
     }
-    switch (lpth->ith) {
+    switch (lpth->ith()) {
     case ithMinefield:
-        if (lpth->iplr != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr, FALSE, FALSE, FALSE, 0, NULL));
+        if (lpth->iplr() != idPlayer) {
+            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(szWork, PszGetCompressedString(idsSSMineField), szPlr, rgszMineField[lpth->thm.iType]);
+        CchSprintf(szWork, PszGetCompressedString(idsSSMineField), szPlr, rgszMineField[lpth->thm().iType()]);
         break;
     case ithMineralPacket:
-        if (lpth->thp.iWarp == 0) {
+        if (lpth->thp().iWarp() == 0) {
             CchGetString(idsSalvage, szWork);
             return szWork;
         }
-        if (lpth->iplr != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr, FALSE, FALSE, FALSE, 0, NULL));
+        if (lpth->iplr() != idPlayer) {
+            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
@@ -1340,13 +1340,13 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            dx = pt.x - lpth->pt.x;
-            dy = pt.y - lpth->pt.y;
+            dx = pt.x - lpth->pt().x();
+            dy = pt.y - lpth->pt().y();
             lTry = (uint32_t)(dx * dx);
             if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
                 lTry += (uint32_t)(dy * dy);
                 if (lTry <= lSquare) {
-                    if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet))) || (lpth->pt.x == scan.pt.x && lpth->pt.y == scan.pt.y)) {
+                    if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet))) || (lpth->pt().x() == scan.pt.x && lpth->pt().y() == scan.pt.y)) {
                         if (scan.grobjFull & grobjThing)
                             continue;
                         scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
@@ -1360,7 +1360,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
                         lSquare = lTry;
                     }
                 SelectThing:
-                    scan.pt = lpth->pt;
+                    scan.pt = lpth->pt();
                     scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
                     scan.idpl = idplNone;
                     scan.ifl = iflNone;
@@ -2154,15 +2154,15 @@ void ValidateWaypoints() {
                 while (iord < lpfl->cord) {
                     if (lpord->grobj == grobjThing) {
                         lpth = LpthFromId(lpord->id);
-                        if (!lpth || (lpth->ith == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw.grbitPlr) &&
-                                      (lpth->pt.x != lpord->pt.x || lpth->pt.y != lpord->pt.y))) {
+                        if (!lpth || (lpth->ith() == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw().grbitPlr()) &&
+                                      (lpth->pt().x() != lpord->pt.x || lpth->pt().y() != lpord->pt.y))) {
                             if (lpth) {
                                 FSendPlrMsg(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                             lpord->grobj = grobjOther;
                             lpord->id = iord;
                         } else {
-                            lpord->pt = lpth->pt;
+                            lpord->pt = lpth->pt();
                         }
                     } else if (lpord->grobj == grobjFleet && !lpord->fNoAutoTrack) {
                         lpflTarget = LpflFromId(lpord->id);

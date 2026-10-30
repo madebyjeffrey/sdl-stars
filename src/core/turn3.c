@@ -156,9 +156,9 @@ void SatisfyOrders(int16_t iPass) {
                     }
                     iLoad = (iPass - 1) & 1;
                     fOptFuel = FALSE;
-                    if (ord.grobj == grobjThing && (!lpthWP || lpthWP->ith != ithMineralPacket)) {
+                    if (ord.grobj == grobjThing && (!lpthWP || lpthWP->ith() != ithMineralPacket)) {
                         if (lpthWP) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmHadOrdersTransferCargoFutilePursuit, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpthWP->ith);
+                            FSendPlrMsg2(lpfl->iPlayer, idmHadOrdersTransferCargoFutilePursuit, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpthWP->ith());
                         }
                         goto CancelOrder;
                     }
@@ -182,7 +182,7 @@ void SatisfyOrders(int16_t iPass) {
                                 break;
                             case grobjThing:
                                 if (j < 3) {
-                                    amountWP = lpthWP->thp.rgwtMin[j];
+                                    amountWP = lpthWP->thp().rgwtMin(j);
                                 }
                             }
                             switch (action) {
@@ -657,7 +657,7 @@ void SatisfyOrders(int16_t iPass) {
                         } else if (pl.id == idplNone) {
                             lpthWP = NULL;
                             DropSalvage(&lpthWP, pl.rgwtMin, lpfl->iplr(), &ord.pt);
-                            FSendPlrMsg2(lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull, WFromLpfl(lpfl));
+                            FSendPlrMsg2(lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull(), WFromLpfl(lpfl));
                         } else {
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited + pl.fStarbase);
                             FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, 0, 0, 0);
@@ -858,24 +858,22 @@ void SatisfyOrders(int16_t iPass) {
                                 lpth = lpThings;
                                 lpthMac = lpThings + cThing;
                                 for (; lpth < lpthMac; lpth++) {
-                                    if (lpth->iplr == lpfl->iPlayer && lpth->ith == ithMinefield && lpth->thm.iType == j) {
-                                        dx = (int16_t)(lpfl->pt.x - lpth->pt.x);
-                                        dy = (int16_t)(lpfl->pt.y - lpth->pt.y);
+                                    if (lpth->iplr() == lpfl->iPlayer && lpth->ith() == ithMinefield && lpth->thm().iType() == j) {
+                                        dx = (int16_t)(lpfl->pt.x - lpth->pt().x());
+                                        dy = (int16_t)(lpfl->pt.y - lpth->pt().y());
                                         l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                                        if (lpth->thm.cMines >= l && l < lBest) {
+                                        if (lpth->thm().cMines() >= l && l < lBest) {
                                             lBest = l;
                                             lpthBest = lpth;
                                         }
                                     }
                                 }
-                                if (lpthBest && lpthBest->thm.cMines < 1000000) {
-                                    lpthBest->pt.x =
-                                        LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt.x * lpthBest->thm.cMines) + (uint32_t)(lpfl->pt.x * cMine)) /
-                                                         (cMine + lpthBest->thm.cMines)));
-                                    lpthBest->pt.y =
-                                        LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt.y * lpthBest->thm.cMines) + (uint32_t)(lpfl->pt.y * cMine)) /
-                                                         (cMine + lpthBest->thm.cMines)));
-                                    lpthBest->thm.cMines += cMine;
+                                if (lpthBest && lpthBest->thm().cMines() < 1000000) {
+                                    { const auto xForThing = (LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt().x() * lpthBest->thm().cMines()) + (uint32_t)(lpfl->pt.x * cMine)) /
+                                                         (cMine + lpthBest->thm().cMines())))); auto &thForThing = *(lpthBest); thForThing.pt().SetX(xForThing); }
+                                    { const auto yForThing = (LOWORD((int32_t)((int32_t)((uint32_t)(lpthBest->pt().y() * lpthBest->thm().cMines()) + (uint32_t)(lpfl->pt.y * cMine)) /
+                                                         (cMine + lpthBest->thm().cMines())))); auto &thForThing = *(lpthBest); thForThing.pt().SetY(yForThing); }
+                                    lpthBest->thm().SetCMines(lpthBest->thm().cMines() + cMine);
                                     idm = idmHasIncreasedMinefieldMines;
                                 } else {
                                     lpth = LpthNew(lpfl->iPlayer, ithMinefield);
@@ -883,9 +881,9 @@ void SatisfyOrders(int16_t iPass) {
                                         FSendPlrMsg2(lpfl->iPlayer, idmFailedLayMinesYearDueTechnicalDifficulties, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                         continue;
                                     }
-                                    lpth->pt = lpfl->pt;
-                                    lpth->thm.cMines = cMine;
-                                    lpth->thm.iType = j;
+                                    lpth->pt().Set(lpfl->pt);
+                                    lpth->thm().SetCMines(cMine);
+                                    lpth->thm().SetIType(j);
                                 }
                                 FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(cMine), HIWORD(cMine), 0, 0, 0, 0);
                             }
