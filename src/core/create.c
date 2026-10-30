@@ -821,7 +821,7 @@ RetryAll:
         }
         for (i = 0; i < game.cPlayer; i++) {
             rgcbtlplan[i] = 5;
-            rglpbtlplan[i] = (BTLPLAN *)LpAlloc(16 * sizeof(BTLPLAN), htShips);
+            rglpbtlplan[i] = ::new (LpAlloc(16 * sizeof(BTLPLAN), htShips)) BTLPLAN[16];
             for (j = 0; j < 5; j++) {
                 InitBattlePlan(rglpbtlplan[i] + j, j, i);
             }

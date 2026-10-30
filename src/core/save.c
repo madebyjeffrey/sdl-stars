@@ -817,12 +817,12 @@ void MarkFleet(FLEET *lpfl, DetType det) {
 
 void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
     // A raw name adds a length marker before its fixed 32-byte field.
-    uint8_t  rgb[sizeof(BTLPLAN) + 1];
+    uint8_t  rgb[cbWireBattlePlan + 32 + 1];
     uint8_t *pb;
     char     szPlanName[32];
     int16_t  cOut;
 
-    memmove(rgb, lpbtlplan, 4);
+    FEncodeBattlePlanPrefix(*lpbtlplan, std::as_writable_bytes(std::span(rgb)).first(cbWireBattlePlan));
     if (lpbtlplan->fDelete) {
         pb = &rgb[2];
     } else {

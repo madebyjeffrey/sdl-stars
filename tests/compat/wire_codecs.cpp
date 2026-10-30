@@ -627,6 +627,38 @@ int main() {
         shortCyber.SetFNeedScanPkt(0);
         CHECK(prefix[0] == std::byte{0x7f});
     }
+    {
+        BTLPLAN plan{};
+        std::strcpy(plan.szName, "retained");
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::uint32_t v = 65535 - w;
+            const std::array<std::byte, 4> golden = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+                                                    static_cast<std::byte>(v % 256), static_cast<std::byte>(v / 256)};
+            CHECK(FDecodeBattlePlanPrefix(golden, plan));
+            CHECK(plan.iplr == w % 16 && plan.iplan == (w / 16) % 16 && plan.mdTactic == (w / 256) % 16);
+            CHECK(plan.unused1 == (w / 4096) % 4 && plan.fDelete == (w / 16384) % 2 && plan.fDumpCargo == w / 32768);
+            CHECK(plan.mdTarget1 == v % 16 && plan.mdTarget2 == (v / 16) % 16 && plan.iplrAttack == (v / 256) % 32 && plan.unused2 == v / 8192);
+            CHECK(std::strcmp(plan.szName, "retained") == 0);
+            std::array<std::byte, 6> output;
+            output.fill(std::byte{0xa5});
+            CHECK(FEncodeBattlePlanPrefix(plan, std::span(output).subspan(1, 4)));
+            CHECK(std::memcmp(output.data() + 1, golden.data(), 4) == 0 && output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+        }
+        std::array<std::byte, 4> input{};
+        for (std::size_t cb = 0; cb < 4; cb++) {
+            plan.iplan = 13; plan.unused2 = 7;
+            CHECK(!FDecodeBattlePlanPrefix(std::span(input).first(cb), plan) && plan.iplan == 13 && plan.unused2 == 7);
+            input.fill(std::byte{0xa5});
+            CHECK(!FEncodeBattlePlanPrefix(plan, std::span(input).first(cb)));
+            for (auto b : input) CHECK(b == std::byte{0xa5});
+        }
+        std::array<std::byte, 1> owner{std::byte{0xd3}};
+        NATIVEBATTLEPLANVIEW ownerView{owner, 0};
+        CHECK(ownerView.iplr() == 3 && ownerView.iplan() == 13);
+        std::array<std::byte, 2> deletion{std::byte{0xd3}, std::byte{0xff}};
+        NATIVEBATTLEPLANVIEW deletionView{deletion, 0};
+        CHECK(deletionView.fDelete() && deletionView.fDumpCargo() && deletionView.unused1() == 3);
+    }
     std::puts("History/production/action/order/design/fleet/battle/AI wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

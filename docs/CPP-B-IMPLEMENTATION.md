@@ -17,7 +17,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
-| B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. The remaining battle-plan prefix and final platform qualification are active. |
+| B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. All battle, AI and battle-plan families pass the full local matrix; final Linux/Windows qualification is required. |
 | B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
@@ -867,3 +867,33 @@ alignment checks pass; independent inputs and baselines remain unchanged.
 The remaining native battle-plan prefix copies are assigned to B09 by the
 inventory and will migrate before B09 completion. Final platform qualification
 is also required; B10–B14 remain pending.
+
+
+## B09 battle-plan prefixes in qualification
+
+The four-byte plan prefix encodes both words explicitly, including reserved
+bits. Deletion logs still emit only the first two bytes. Replay reads only that
+word before owner/index/deletion decisions, and reaches the target word only
+after its original four-byte guard. Loading still reads the owner from the
+complete reusable scratch backing before allocation/name admission. Full text
+validation finishes before prefix/name publication; plan-index override and
+failed-edit receipts remain unchanged. Both plan allocations now start actual
+sixteen-element arrays with the same allocation and initialization policy.
+
+Independent vectors cover every word, output/short-input guards and one-/two-
+byte field views. Real save/replay tests verify exact deletion bytes, ignored
+wrong-owner/index deletions, short nondeletion rejection, deletion compaction,
+invalid UTF-8 preservation, new-plan publication and reserved bits. Existing
+raw UTF-8/compression tests also pass. Final B09 matrix/platform qualification
+remains required; B10–B14 are pending.
+
+
+Final B09 local qualification: 114/114 desktop tests including all 27 native
+macOS leak checks and the available tutorial smoke checkpoint, 25/25 host tests,
+36/36 ASan/UBSan cases, all 27 source witnesses and 98 public headers in both
+include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match 519 files through turn 150, with the
+same 25 accepted unused-storage warnings, zero differences/errors and no
+skipped inputs. Frozen inputs, catalogs, baselines, all 259 size/prefix contracts
+and six migrated runtime alignment contracts remain unchanged. Linux/Windows
+qualification is still required before B09 completion; B10–B14 remain pending.

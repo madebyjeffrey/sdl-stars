@@ -548,7 +548,22 @@ static void test_battle_continuations(void) {
     lpbBattleLog = lpbBattleCur = NULL;
 }
 
-TEST_LIST = {{"battle continuation bytes and boundaries", test_battle_continuations},
+static void test_battle_plan_deletion_wire(void) {
+    BTLPLAN plan{};
+    HDR hdr;
+    uint8_t rgb[64];
+    const uint8_t deleted[] = {0xd3, 0xf2};
+
+    TEST_ASSERT(FStarsTestInit());
+    plan.iplr = 3; plan.iplan = 13; plan.mdTactic = 2; plan.unused1 = 3; plan.fDelete = 1; plan.fDumpCargo = 1;
+    plan.mdTarget1 = 8; plan.mdTarget2 = 7; plan.iplrAttack = 31; plan.unused2 = 7;
+    WriteBattlePlan(&plan, TRUE);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == 2 && memcmp(rgb, deleted, sizeof(deleted)) == 0);
+}
+
+TEST_LIST = {{"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},
+             {"battle continuation bytes and boundaries", test_battle_continuations},
              {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
              {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
              {"UTF-8 records require complete in-record text", test_utf8_record_bounds},

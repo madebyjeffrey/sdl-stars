@@ -129,4 +129,27 @@ inline bool FEncodeTok(TOK tok, std::span<std::byte> rgb) noexcept {
     return true;
 }
 
+inline constexpr std::size_t cbWireBattlePlan = 4;
+
+// Only the numeric prefix is published; the caller owns the name's validation
+// and initialization policy. Reserved bits have their original wire positions.
+inline bool FDecodeBattlePlanPrefix(std::span<const std::byte> rgb, BTLPLAN &plan) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t w0, w1;
+    if (!input.FReadU16Le(w0) || !input.FReadU16Le(w1)) return false;
+    plan.iplr = w0 & 15; plan.iplan = (w0 >> 4) & 15; plan.mdTactic = (w0 >> 8) & 15;
+    plan.unused1 = (w0 >> 12) & 3; plan.fDelete = (w0 >> 14) & 1; plan.fDumpCargo = w0 >> 15;
+    plan.mdTarget1 = w1 & 15; plan.mdTarget2 = (w1 >> 4) & 15;
+    plan.iplrAttack = (w1 >> 8) & 31; plan.unused2 = w1 >> 13;
+    return true;
+}
+inline bool FEncodeBattlePlanPrefix(BTLPLAN plan, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireBattlePlan) return false;
+    const std::uint16_t w0 = static_cast<std::uint16_t>(plan.iplr | (plan.iplan << 4) | (plan.mdTactic << 8) |
+        (plan.unused1 << 12) | (plan.fDelete << 14) | (plan.fDumpCargo << 15));
+    const std::uint16_t w1 = static_cast<std::uint16_t>(plan.mdTarget1 | (plan.mdTarget2 << 4) | (plan.iplrAttack << 8) | (plan.unused2 << 13));
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteU16Le(w0) && output.FWriteU16Le(w1);
+}
+
 #endif

@@ -695,10 +695,10 @@ LNextTurn:
         }
         iplrSav = idPlayer;
         while (hdrCur.rt == rtBtlPlan) {
-            iP = ((BTLPLAN *)rgbCur)->iplr;
+            iP = NATIVEBATTLEPLANVIEW(std::as_writable_bytes(std::span(rgbCur)), 0).iplr();
             idPlayer = iP;
             if (!rglpbtlplan[iP]) {
-                rglpbtlplan[iP] = (BTLPLAN *)LpAlloc(16 * sizeof(BTLPLAN), htShips);
+                rglpbtlplan[iP] = ::new (LpAlloc(16 * sizeof(BTLPLAN), htShips)) BTLPLAN[16];
             }
             if (!UnpackBattlePlan((uint8_t *)rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb)) goto Corrupt;
             rgcbtlplan[iP]++;
@@ -1065,7 +1065,7 @@ int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t
 
     if (cb < 4) goto invalid;
     if (!FReadUserString(lpb + 4, cb - 4, szName, sizeof(szName), NULL)) goto invalid;
-    memmove(lpbtlplan, lpb, 4);
+    FDecodeBattlePlanPrefix(std::as_bytes(std::span(lpb, cbWireBattlePlan)), *lpbtlplan);
     strcpy(lpbtlplan->szName, szName);
     lpbtlplan->iplan = iplan;
     return TRUE;

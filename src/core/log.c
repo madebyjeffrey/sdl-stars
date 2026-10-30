@@ -1035,18 +1035,19 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         break;
     case rtBtlPlan:
         if (cb < 2) return FALSE;
-        i = ((BTLPLAN *)lpb)->iplan;
-        if (((BTLPLAN *)lpb)->iplr != idPlayer || i < 0 || i > rgcbtlplan[idPlayer]) {
-            if (((BTLPLAN *)lpb)->fDelete != 0)
+        // Deletions stop after the owner/plan word, before target/name bytes.
+        i = BpvFromPrefix(lpb, 2).iplan();
+        if (BpvFromPrefix(lpb, 2).iplr() != idPlayer || i < 0 || i > rgcbtlplan[idPlayer]) {
+            if (BpvFromPrefix(lpb, 2).fDelete() != 0)
                 break;
             goto BombOut;
         }
-        if (((BTLPLAN *)lpb)->fDelete != 0) {
+        if (BpvFromPrefix(lpb, 2).fDelete() != 0) {
             FDeleteBattlePlan(i, FALSE);
             break;
         }
         if (cb < 4) return FALSE;
-        if (((BTLPLAN *)lpb)->mdTactic > 6 || ((BTLPLAN *)lpb)->mdTarget1 > 8 || ((BTLPLAN *)lpb)->mdTarget2 > 8)
+        if (BpvFromPrefix(lpb, 4).mdTactic() > 6 || BpvFromPrefix(lpb, 4).mdTarget1() > 8 || BpvFromPrefix(lpb, 4).mdTarget2() > 8)
             goto BombOut;
         if (i == rgcbtlplan[idPlayer]) {
             if (i >= 16)

@@ -166,4 +166,24 @@ inline NATIVEBATTLEKILLVIEW BkvFromPrefix(std::uint8_t *lp) noexcept { return {s
 inline NATIVEBATTLEEVENTVIEW BevFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireBattleRecord)), 0}; }
 inline NATIVEBATTLEDATAVIEW BdvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireBattleData)), 0}; }
 
+// Deletion logs have only the first two bytes. Accessors read their own field
+// bytes so owner/plan/deletion decisions do not require the full prefix.
+class NATIVEBATTLEPLANVIEW : public NATIVEBYTEWINDOW {
+public:
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
+    std::uint16_t iplr() const noexcept { return GetBits<0, 0, 4>(); }
+    std::uint16_t iplan() const noexcept { return GetBits<0, 4, 4>(); }
+    std::uint16_t mdTactic() const noexcept { return GetBits<0, 8, 4>(); }
+    std::uint16_t unused1() const noexcept { return GetBits<0, 12, 2>(); }
+    std::uint16_t fDelete() const noexcept { return GetBits<0, 14, 1>(); }
+    std::uint16_t fDumpCargo() const noexcept { return GetBits<0, 15, 1>(); }
+    std::uint16_t mdTarget1() const noexcept { return GetBits<2, 0, 4>(); }
+    std::uint16_t mdTarget2() const noexcept { return GetBits<2, 4, 4>(); }
+    std::uint16_t iplrAttack() const noexcept { return GetBits<2, 8, 5>(); }
+    std::uint16_t unused2() const noexcept { return GetBits<2, 13, 3>(); }
+};
+inline NATIVEBATTLEPLANVIEW BpvFromPrefix(std::uint8_t *lp, std::size_t cb) noexcept {
+    return {std::as_writable_bytes(std::span(lp, cb)), 0};
+}
+
 #endif

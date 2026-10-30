@@ -429,7 +429,41 @@ static void test_production_storage_lifetime(void) {
     FreeLp(lpOther, htOrd);
 }
 
-TEST_LIST = {{"design log codecs retain partial-effect receipts", test_FRunLogRecord_design_partial_effects},
+// These are actual two-/three-byte allocations: deletion and rejection must
+// not peek at a missing target/name prefix, including an ignored wrong owner.
+static void test_battle_plan_prefix_replay(void) {
+    uint8_t deletion[] = {0, 0x40};
+    uint8_t wrongOwner[] = {1, 0x40};
+    uint8_t badIndex[] = {0xf0, 0x40};
+    uint8_t shortPlan[] = {0, 0};
+    uint8_t threeBytes[] = {0, 0, 0};
+    uint8_t oneByte[] = {0};
+    uint8_t invalidName[] = {0, 0, 0, 0, 0, 0xc3, 0};
+    uint8_t validName[] = {0x10, 0xb2, 0x35, 0xe4, 0, 'X', 0};
+    BTLPLAN rgplan[16]{};
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = 0; rglpbtlplan[0] = rgplan; rgcbtlplan[0] = 2;
+    std::strcpy(rgplan[0].szName, "First"); std::strcpy(rgplan[1].szName, "Second"); rgplan[1].iplan = 1;
+    TEST_CHECK(FRunLogRecord(rtBtlPlan, 2, wrongOwner) && rgcbtlplan[0] == 2);
+    TEST_CHECK(FRunLogRecord(rtBtlPlan, 2, badIndex) && rgcbtlplan[0] == 2);
+    TEST_CHECK(!FRunLogRecord(rtBtlPlan, 0, NULL));
+    TEST_CHECK(!FRunLogRecord(rtBtlPlan, 1, oneByte));
+    TEST_CHECK(!FRunLogRecord(rtBtlPlan, 2, shortPlan));
+    TEST_CHECK(!FRunLogRecord(rtBtlPlan, 3, threeBytes));
+    TEST_CHECK(FRunLogRecord(rtBtlPlan, 2, deletion));
+    TEST_CHECK(rgcbtlplan[0] == 1 && rgplan[0].iplan == 0 && !strcmp(rgplan[0].szName, "Second"));
+    TEST_CHECK(!FRunLogRecord(rtBtlPlan, sizeof(invalidName), invalidName));
+    TEST_CHECK(rgcbtlplan[0] == 1 && !strcmp(rgplan[0].szName, "Second"));
+    TEST_CHECK(FRunLogRecord(rtBtlPlan, sizeof(validName), validName));
+    TEST_CHECK(rgcbtlplan[0] == 2 && rgplan[1].iplan == 1 && !strcmp(rgplan[1].szName, "X"));
+    TEST_CHECK(rgplan[1].iplr == 0 && rgplan[1].mdTactic == 2 && rgplan[1].unused1 == 3 && rgplan[1].fDumpCargo);
+    TEST_CHECK(rgplan[1].mdTarget1 == 5 && rgplan[1].mdTarget2 == 3 && rgplan[1].iplrAttack == 4 && rgplan[1].unused2 == 7);
+    rglpbtlplan[0] = NULL; rgcbtlplan[0] = 0;
+}
+
+TEST_LIST = {{"battle-plan replay retains short deletion and publication", test_battle_plan_prefix_replay},
+             {"design log codecs retain partial-effect receipts", test_FRunLogRecord_design_partial_effects},
              {"orders retain typed storage, stride and pool capacity", test_order_storage_lifetime},
              {"order log bytes preserve prefixes, neighbors and signed admission", test_FRunLogRecord_order_bytes},
              {"production log bytes preserve replay and incomplete-row effects", test_FRunLogRecord_production_bytes},

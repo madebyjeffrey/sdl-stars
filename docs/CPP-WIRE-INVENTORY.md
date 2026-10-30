@@ -7,7 +7,8 @@ B07 migrates full/partial ship designs, hull slots and design-change headers.
 B08 migrates fleet snapshots, ID sequences and signed ship-transfer logs.
 B09 battle producers, loaders, continuations and UI replay use explicit byte views.
 AI history and persistent/temporary Cybertron words use the same scoped byte
-window primitives, with live mutation and signed domains preserved.
+window primitives, with live mutation and signed domains preserved. Battle-plan
+prefix codecs retain the two-byte deletion variant and four-byte full header.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
