@@ -1,6 +1,6 @@
 # Linux already registers these portable contracts in sdl-client.cmake. Keep the
 # same image/font/printing cases on Apple and Windows during ownership changes.
-foreach(STARS_RESOURCE_KIND images font print bitmap drawing_state palette menu popup menubar file memory)
+foreach(STARS_RESOURCE_KIND images font print bitmap dib drawing_state palette menu popup menubar file memory)
     set(STARS_RESOURCE_TARGET stars-resource-${STARS_RESOURCE_KIND})
     add_executable(${STARS_RESOURCE_TARGET} tests/compat/win32_${STARS_RESOURCE_KIND}.c)
     target_link_libraries(${STARS_RESOURCE_TARGET} PRIVATE stars_win32 SDL3::SDL3)
@@ -12,6 +12,8 @@ foreach(STARS_RESOURCE_KIND images font print bitmap drawing_state palette menu 
     set_tests_properties(win32_sdl_resource_${STARS_RESOURCE_KIND} PROPERTIES LABELS "compat;ownership"
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat" TIMEOUT 60)
 endforeach()
+target_sources(stars-resource-dib PRIVATE tests/compat/win32_dib_invalid.c)
+add_dependencies(stars-resource-dib stars_bitmap_resources)
 set(STARS_RESOURCE_PRINT_DIR "${CMAKE_BINARY_DIR}/resource-print-output")
 target_compile_definitions(stars-resource-print PRIVATE STARS_TEST_PRINT_OUTPUT="${STARS_RESOURCE_PRINT_DIR}")
 stars_test_redirect(stars-resource-print SDL_OpenURL SDL_ShowSimpleMessageBox)
@@ -28,7 +30,7 @@ endif()
 if(APPLE AND NOT STARS_ENABLE_SANITIZERS)
     # leaks inspects the native allocator; ASan uses a separate allocator/check.
     find_program(STARS_LEAKS_EXECUTABLE leaks REQUIRED)
-    foreach(STARS_LEAK_KIND images font print faults glyphs bitmap drawing_state palette menu popup menubar file memory)
+    foreach(STARS_LEAK_KIND images font print faults glyphs bitmap dib drawing_state palette menu popup menubar file memory)
         set(STARS_LEAK_ARGS)
         if(STARS_LEAK_KIND STREQUAL "print")
             list(APPEND STARS_LEAK_ARGS "${CMAKE_BINARY_DIR}/resource-leaks-print-output")

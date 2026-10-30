@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag and player/template families pass the full local matrix. THING/resource/runtime-alias families and final platform qualification remain required. |
+| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag and player/template families pass the full local matrix. THING/runtime-alias families and final platform qualification remain required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1363,3 +1363,36 @@ template still triggers the historical 28-byte comparison and output. A separate
 186-byte case retains all following template bytes. Frozen references, catalogs,
 baselines and production layout/alignment contracts remain unchanged. Remaining
 B11 families and its final complete platform gate remain required.
+
+
+## B11 wrapper bitmap/icon resources in qualification
+
+Embedded DIB/icon/cursor headers decode/encode forty explicit little-endian
+bytes; palettes retain their four-byte channel layout. The native GDI header/
+palette input seam is named separately and retains its actual SDK ABI checks.
+Both paths share the original dimension, palette, buffer and partial-output
+validation, with no new admission policy. Menu/dialog/accelerator parsers already
+read bounded words/bytes explicitly; their existing parsing and failure order
+remain unchanged.
+
+A staged link of the production decoder changes passes the unchanged 38-asset
+SDK pixel contracts and native leaks (zero leaked bytes), alongside standalone
+header goldens/bounds/ASan/UBSan. The DIB contract and its native leaks gate are
+now registered permanently on macOS; Linux sanitizers also include the existing
+DIB contract. Full integrated local/source/platform qualification remains pending.
+
+
+Wrapper bitmap/icon resource local qualification: 117/117 desktop tests,
+including all 28 native leak checks and available tutorial smoke coverage;
+26/26 SDL-free host tests; 41/41 ASan/UBSan cases; all 27 source witnesses;
+and 104 public headers in both include orders. The added DIB contract covers
+38 unchanged canonical assets, palettes, orientation, stretch, clipping, readback
+and malformed input. Its resource-header goldens include signed extrema, every
+fixed field, unaligned byte spans and all incomplete header lengths. Linux CI
+now instruments this existing DIB contract alongside race/resource cases.
+Debug/Release/host/sanitizer builds introduce no warnings. Desktop and host
+regressions each match 519 files through turn 150, with 25 accepted unused-storage
+warnings, zero differences/errors and no skipped inputs. Frozen C/SDK inputs,
+resource bytes, catalogs, baselines and production layout/alignment contracts
+remain unchanged. Remaining B11 entity/runtime aliases and the final complete
+platform gate remain required.

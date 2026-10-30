@@ -3,6 +3,7 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include "resourcecodec.h"
 #include "ownership.h"
 #include <limits.h>
 #include <math.h>
@@ -1888,13 +1889,13 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb) {
     NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     size_t cbInfo, cColors;
 
-    if (!rgb || cb < sizeof(bi))
+    if (!rgb || cb < cbWireDibHeader)
         return NULL;
-    memcpy(&bi, rgb, sizeof(bi));
+    FDecodeDibHeader(std::as_bytes(std::span(rgb, cbWireDibHeader)), bi);
     cColors = bi.biClrUsed ? bi.biClrUsed : (bi.biBitCount <= 8 ? 1u << bi.biBitCount : 0);
     if (cColors > 256)
         return NULL;
-    cbInfo = sizeof(bi) + cColors * sizeof(RGBQUAD);
+    cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
     if (cbInfo > cb || !FCompatDib(rgb, cbInfo, rgb + cbInfo, cb - cbInfo, &dib))
         return NULL;
     lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsurface = lpsurfaceOwner.get();
@@ -1979,7 +1980,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     WORD index;
     PALETTEENTRY pe;
     const BYTE *rgb = (const BYTE *)lpbmi;
-    if (usage == DIB_RGB_COLORS) return FCompatDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
+    if (usage == DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
     if (usage != DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return FALSE;
     info.bi = lpbmi->bmiHeader;
     if (info.bi.biBitCount != 1 && info.bi.biBitCount != 4 && info.bi.biBitCount != 8) return FALSE;
@@ -1992,7 +1993,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
         info.rgq[i] = (RGBQUAD){pe.peBlue, pe.peGreen, pe.peRed, 0};
     }
     // The decoder copies the color table; only the caller's bits remain borrowed.
-    return FCompatDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
+    return FCompatNativeDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
 }
 
 int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,

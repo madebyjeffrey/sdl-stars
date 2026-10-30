@@ -1,5 +1,6 @@
 /* Immutable module images and owned copies; resource reads stay bounded. */
 #include "internal.h"
+#include "resourcecodec.h"
 #include "ownership.h"
 #include <new>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
     COMPATDIB dib;
     COMPATIMAGE *lp;
     SDL_Surface *lpSurface;
-    BYTE rgInfo[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)], *rgAnd;
+    BYTE rgInfo[cbWireDibHeader + 256 * cbWireRgbQuad], *rgAnd;
     const BYTE *lpAnd;
     size_t cbInfo, cbMaskRow, cbMask, cColors;
     int x, y;
@@ -46,17 +47,17 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
         if (cb < 4) return NULL;
         xHot = WImage(rgb); yHot = WImage(rgb + 2); rgb += 4; cb -= 4;
     }
-    if (cb < sizeof(bi)) return NULL;
-    memcpy(&bi, rgb, sizeof(bi));
-    if (bi.biSize != sizeof(bi) || bi.biHeight <= 0 || bi.biHeight % 2 || bi.biWidth <= 0 || bi.biWidth > 256 || bi.biHeight > 512)
+    if (cb < cbWireDibHeader) return NULL;
+    FDecodeDibHeader(std::as_bytes(std::span(rgb, cbWireDibHeader)), bi);
+    if (bi.biSize != cbWireDibHeader || bi.biHeight <= 0 || bi.biHeight % 2 || bi.biWidth <= 0 || bi.biWidth > 256 || bi.biHeight > 512)
         return NULL;
     bi.biHeight /= 2;
     if (fCursor && (xHot >= (UINT)bi.biWidth || yHot >= (UINT)bi.biHeight)) return NULL;
     cColors = bi.biClrUsed ? bi.biClrUsed : (bi.biBitCount <= 8 ? (size_t)1 << bi.biBitCount : 0);
     if (cColors > 256) return NULL;
-    cbInfo = sizeof(bi) + cColors * sizeof(RGBQUAD);
+    cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
     if (cbInfo > cb) return NULL;
-    memcpy(rgInfo, rgb, cbInfo); memcpy(rgInfo, &bi, sizeof(bi));
+    memcpy(rgInfo, rgb, cbInfo); FEncodeDibHeader(bi, std::as_writable_bytes(std::span(rgInfo)));
     if (!FCompatDib(rgInfo, cbInfo, rgb + cbInfo, cb - cbInfo, &dib)) return NULL;
     cbMaskRow = (((size_t)dib.cx + 31) / 32) * 4; cbMask = cbMaskRow * (size_t)dib.cy;
     if (dib.cbBits > cb - cbInfo || cbMask > cb - cbInfo - dib.cbBits) return NULL;

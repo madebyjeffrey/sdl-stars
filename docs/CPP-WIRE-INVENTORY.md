@@ -58,7 +58,7 @@ expressions that would become stale when unrelated lines move.
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
 | Remaining fixed game records | THING and remaining runtime aliases; PLAYER/PLANET/preferences migrated locally; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
-| Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Menu/dialog/DIB/icon/cursor/accelerator bytes; resource ownership stays module-scoped | B11 |
+| Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Bounded menu/dialog/accelerator bytes and explicit DIB/icon/cursor headers; native GDI SDK input isolated in FCompatNativeDib; ownership stays module-scoped | B11 locally qualified |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
 | FreeType/Fontconfig/Cairo/zlib/SDL and actual OS SDK layouts | Genuine foreign seams; external decoders remain in their adapters; owned byte parsing still belongs above | B11 adapter review / B14 isolation |
 | Global stream/game/RNG/UI roots | One session owner, deterministic reset/shutdown and callback stop order | B13 |
@@ -280,3 +280,11 @@ validation/publication order. Race checksums and 128-byte comparisons use wire
 images. Numeric mode/research/flag accessors, a real PRODQ1 word and actual
 ZIPPRODQ fields replace inactive aliases. Default-template log copies preserve
 partial words, adjacent physical images and callback-before-source-read timing.
+
+
+B11 wrapper resources: menu/dialog/accelerator payloads already use bounded
+little-endian scalar and UTF-16 byte reads. Bitmap/icon/cursor headers now use
+an explicit forty-byte codec and four-byte palette entries; embedded byte
+decoding is separate from the named native GDI SDK-header/palette adapter.
+Shared validation retains the original admission and partial-output effects.
+The SDK pixel/reference inputs and immutable resource bytes remain unchanged.

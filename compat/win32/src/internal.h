@@ -226,6 +226,7 @@ typedef struct COMPATDIB {
 } COMPATDIB;
 
 BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
+BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib);
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
 HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb);
 
