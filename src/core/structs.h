@@ -640,26 +640,49 @@ struct _obj {
     void SetPth(THING *pth) noexcept { lpv = pth; }
 }; /* Runtime borrow; never serialized. */
 
+enum PartPointerKind : uint8_t { ppkCommon, ppkArmor, ppkHull, ppkEngine, ppkScanner, ppkBeam, ppkTorp, ppkBomb, ppkShield, ppkSpecial, ppkSpecialSB, ppkMines, ppkMining, ppkPlanetary, ppkTerra };
+class NATIVEPARTCOMMONVIEW;
+
 struct _part {
-    HS hs; /* +0x0000 (4) */
-    union {
-        COMPART   *pcom;       /* +0x0004 (4) */
-        ARMOR     *parmor;     /* +0x0004 (4) */
-        HUL       *phul;       /* +0x0004 (4) */
-        ENGINE    *pengine;    /* +0x0004 (4) */
-        SCANNER   *pscanner;   /* +0x0004 (4) */
-        BEAM      *pbeam;      /* +0x0004 (4) */
-        TORP      *ptorp;      /* +0x0004 (4) */
-        BOMB      *pbomb;      /* +0x0004 (4) */
-        SHIELD    *pshield;    /* +0x0004 (4) */
-        SPECIAL   *pspecial;   /* +0x0004 (4) */
-        SPECIALSB *pspecialsb; /* +0x0004 (4) */
-        MINES     *pmines;     /* +0x0004 (4) */
-        MINING    *pmining;    /* +0x0004 (4) */
-        PLANETARY *pplanetary; /* +0x0004 (4) */
-        TERRA     *pterra;     /* +0x0004 (4) */
-    };
-}; /* size=0x8 */
+    HS hs;
+private:
+    void *lpv;
+    PartPointerKind ppk;
+public:
+    // Retain the pointer kind independently of hs: a failed lookup leaves the
+    // previous catalog borrow installed even after the caller changes hs.
+    NATIVEPARTCOMMONVIEW pcom() const noexcept;
+    void SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept;
+    void SetPcom(COMPART *pcom) noexcept { lpv = pcom; ppk = ppkCommon; }
+    ARMOR *parmor() const noexcept { return static_cast<ARMOR *>(lpv); }
+    void SetParmor(ARMOR *parmor) noexcept { lpv = parmor; ppk = ppkArmor; }
+    HUL *phul() const noexcept { return static_cast<HUL *>(lpv); }
+    void SetPhul(HUL *phul) noexcept { lpv = phul; ppk = ppkHull; }
+    ENGINE *pengine() const noexcept { return static_cast<ENGINE *>(lpv); }
+    void SetPengine(ENGINE *pengine) noexcept { lpv = pengine; ppk = ppkEngine; }
+    SCANNER *pscanner() const noexcept { return static_cast<SCANNER *>(lpv); }
+    void SetPscanner(SCANNER *pscanner) noexcept { lpv = pscanner; ppk = ppkScanner; }
+    BEAM *pbeam() const noexcept { return static_cast<BEAM *>(lpv); }
+    void SetPbeam(BEAM *pbeam) noexcept { lpv = pbeam; ppk = ppkBeam; }
+    TORP *ptorp() const noexcept { return static_cast<TORP *>(lpv); }
+    void SetPtorp(TORP *ptorp) noexcept { lpv = ptorp; ppk = ppkTorp; }
+    BOMB *pbomb() const noexcept { return static_cast<BOMB *>(lpv); }
+    void SetPbomb(BOMB *pbomb) noexcept { lpv = pbomb; ppk = ppkBomb; }
+    SHIELD *pshield() const noexcept { return static_cast<SHIELD *>(lpv); }
+    void SetPshield(SHIELD *pshield) noexcept { lpv = pshield; ppk = ppkShield; }
+    SPECIAL *pspecial() const noexcept { return static_cast<SPECIAL *>(lpv); }
+    void SetPspecial(SPECIAL *pspecial) noexcept { lpv = pspecial; ppk = ppkSpecial; }
+    SPECIALSB *pspecialsb() const noexcept { return static_cast<SPECIALSB *>(lpv); }
+    void SetPspecialsb(SPECIALSB *pspecialsb) noexcept { lpv = pspecialsb; ppk = ppkSpecialSB; }
+    MINES *pmines() const noexcept { return static_cast<MINES *>(lpv); }
+    void SetPmines(MINES *pmines) noexcept { lpv = pmines; ppk = ppkMines; }
+    MINING *pmining() const noexcept { return static_cast<MINING *>(lpv); }
+    void SetPmining(MINING *pmining) noexcept { lpv = pmining; ppk = ppkMining; }
+    PLANETARY *pplanetary() const noexcept { return static_cast<PLANETARY *>(lpv); }
+    void SetPplanetary(PLANETARY *pplanetary) noexcept { lpv = pplanetary; ppk = ppkPlanetary; }
+    TERRA *pterra() const noexcept { return static_cast<TERRA *>(lpv); }
+    void SetPterra(TERRA *pterra) noexcept { lpv = pterra; ppk = ppkTerra; }
+}; /* Runtime catalog borrow; never serialized. */
 
 struct _pl {
     uint16_t cbItem : 8, /* +0x0000 (2) @bit0 */
@@ -1831,5 +1854,7 @@ struct _zipprodq {
 #ifndef STARS_TEST_NATURAL_RECORD_LAYOUT
 #pragma pack(pop)
 #endif
+
+#include "partviews.h"
 
 #endif

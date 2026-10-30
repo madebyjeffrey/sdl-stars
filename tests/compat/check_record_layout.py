@@ -16,7 +16,10 @@ for line in before:
     fields = line.split()
     if fields[0] == "POPUPDATA":
         assert tuple(map(int, fields[1:])) == (22, 1), "Frozen popup measurement changed"
-        expected.append(f"POPUPDATA {72 + 4 * pointer_width} 1\n")
+        expected.append(f"POPUPDATA {73 + 4 * pointer_width} 1\n")
+    elif fields[0] == "PART":
+        assert tuple(map(int, fields[1:])) == (4 + pointer_width, 1), "Frozen PART measurement changed"
+        expected.append(f"PART {5 + pointer_width} 1\n")
     elif fields[0] in migrated:
         name = fields[0]
         assert tuple(map(int, fields[1:])) == (migrated[name], 1), f"Frozen contract changed: {line}"
@@ -28,4 +31,4 @@ assert seen == set(migrated), "Missing migrated type in the independent referenc
 if expected != after:
     sys.stderr.writelines(difflib.unified_diff(expected, after, fromfile="frozen widths/prefixes + declared runtime alignment", tofile="C++20 runtime"))
     sys.exit(1)
-print(f"{len(before)} historical measurements checked; POPUPDATA has separate runtime payloads; {len(migrated)} migrated runtime alignments verified at two; all other widths/alignments unchanged")
+print(f"{len(before)} historical measurements checked; POPUPDATA has separate runtime payloads and PART adds a borrow-kind byte; {len(migrated)} migrated runtime alignments verified at two; all other widths/alignments unchanged")

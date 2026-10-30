@@ -135,8 +135,8 @@ int16_t FLookupPart(PART *part){
     assert(extraCalls<16 && ((mask==hstSpecialSB && item<16) || (mask==hstPlanetary && item<15)));
     int quantity=capcfg[0]==3?-1:part->hs.cItem,status;extraPlayer=idPlayer;
     if(!cfg[1])status=NativeLookupPart(part);
-    else{if(mask==hstSpecialSB)part->pspecialsb=fakeSpecial+item;else part->pplanetary=rgplanetary+item;status=(cfg[2]&(1<<item))?1:-1;}
-    assert(part->pcom==(COMPART *)(mask==hstSpecialSB?(void *)(cfg[1]?fakeSpecial+item:rgspecialSB+item):(void *)(rgplanetary+item)));
+    else{if(mask==hstSpecialSB)part->SetPspecialsb(fakeSpecial+item);else part->SetPplanetary(rgplanetary+item);status=(cfg[2]&(1<<item))?1:-1;}
+    assert(part->pcom()==(COMPART *)(mask==hstSpecialSB?(void *)(cfg[1]?fakeSpecial+item:rgspecialSB+item):(void *)(rgplanetary+item)));
     extraTrace[extraCalls][0]=mask;extraTrace[extraCalls][1]=item;extraTrace[extraCalls][2]=status;extraTrace[extraCalls++][3]=quantity;return status;
 }
 '''+bodies[end:]
@@ -175,10 +175,10 @@ int main(int argc,char **argv){
     while(fread(data,sizeof(data),1,file)==1){
         memcpy(capcfg,data,sizeof(capcfg));ready();PLAYER expectedPlayers[16];PLANET expectedPlanet=planet;GAME expectedGame=game;SHDEF expectedBases[10];
         memcpy(expectedPlayers,rgplr,sizeof(rgplr));memcpy(expectedBases,bases,sizeof(bases));
-        int result;PART part={};part.hs.cItem=capcfg[61];part.pplanetary=rgplanetary+14;
+        int result;PART part={};part.hs.cItem=capcfg[61];part.SetPplanetary(rgplanetary+14);
         if(cfg[0]==0)result=IpctCanTerraformLppl(&planet);
         else if(cfg[0]==1)result=StargateRangeFromLppl(capcfg[54]?NULL:&planet,(int16_t)cfg[4],(int16_t)capcfg[56]);
-        else if(cfg[0]==2){LookupBestPlanetaryScanner(&part);result=part.hs.iItem;CHECK(part.hs.grhst==hstPlanetary && part.hs.cItem==capcfg[61] && part.pplanetary==rgplanetary+part.hs.iItem);}
+        else if(cfg[0]==2){LookupBestPlanetaryScanner(&part);result=part.hs.iItem;CHECK(part.hs.grhst==hstPlanetary && part.hs.cItem==capcfg[61] && part.pplanetary()==rgplanetary+part.hs.iItem);}
         else result=call(grobjPlanet,iobjPlanetaryScanner,1);
         int actual[278];actual[0]=result;actual[1]=idPlayer;
         for(int i=0;i<3;i++){actual[2+i]=planet.rgEnvVar[i];actual[5+i]=observedLow[i];actual[8+i]=observedHigh[i];actual[11+i]=observedCost[i];}

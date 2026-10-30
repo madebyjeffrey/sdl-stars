@@ -103,9 +103,9 @@ void CalcPctSurvive(PLANET *lppl, float *ppct, float *ppctSmart) {
             if (cMax < cDefenses) {
                 cDefenses = cMax;
             }
-            pct = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 1000.0), (double)cDefenses);
+            pct = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 1000.0), (double)cDefenses);
             if (ppctSmart) {
-                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 2000.0), (double)cDefenses);
+                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 2000.0), (double)cDefenses);
             }
         } else {
             pct = (float)1.0;
@@ -235,22 +235,22 @@ int32_t LComputePower(SHDEF *lpshdef) {
             default:
                 break;
             case hstBeam:
-                dp = (int32_t)((uint32_t)(part.pbeam->dp * part.hs.cItem) * (int16_t)(part.pbeam->dRangeMax + 3)) / 4;
-                if (part.pbeam->grfAbilities & beamSapper) {
+                dp = (int32_t)((uint32_t)(part.pbeam()->dp * part.hs.cItem) * (int16_t)(part.pbeam()->dRangeMax + 3)) / 4;
+                if (part.pbeam()->grfAbilities & beamSapper) {
                     dp = (int32_t)(dp / 3);
                 }
                 dpBeams += dp;
                 break;
             case hstTorp:
-                dpTorps += (int32_t)((uint32_t)(part.ptorp->dp * part.hs.cItem) * (int16_t)(part.ptorp->dRangeMax - 2)) / 2;
+                dpTorps += (int32_t)((uint32_t)(part.ptorp()->dp * part.hs.cItem) * (int16_t)(part.ptorp()->dRangeMax - 2)) / 2;
                 break;
             case hstBomb:
-                dpBombs += (uint32_t)((part.pbomb->dDmgCol + part.pbomb->dDmgBldg) * part.hs.cItem * 2);
+                dpBombs += (uint32_t)((part.pbomb()->dDmgCol + part.pbomb()->dDmgBldg) * part.hs.cItem * 2);
                 break;
             case hstSpecialE:
                 if (part.hs.iItem == ispecialEEnergyCapacitor || part.hs.iItem == ispecialEFluxCapacitor) {
                     for (i = part.hs.cItem; i > 0; i--) {
-                        pctCap = (int32_t)(pctCap * (part.pspecial->grAbility + 100)) / 100;
+                        pctCap = (int32_t)(pctCap * (part.pspecial()->grAbility + 100)) / 100;
                     }
                 }
             }
@@ -301,7 +301,7 @@ int32_t DpShieldOfShdef(SHDEF *lpshdef, int16_t iplr) {
         if (lphs->grhst == hstShield && lphs->cItem > 0) {
             part.hs = *lphs;
             FLookupPart(&part);
-            dpShdef += (uint32_t)(part.pshield->dp * lphs->cItem);
+            dpShdef += (uint32_t)(part.pshield()->dp * lphs->cItem);
         } else if (lphs->grhst == hstArmor && lphs->cItem > 0 && lphs->iItem == iarmorFieldedKelarium) {
             dpShdef += (uint32_t)(lphs->cItem * 50);
         } else if (lphs->grhst == hstArmor && lphs->iItem == iarmorMegaPolyShell) {
@@ -433,15 +433,15 @@ int16_t FCalcFleetBombDamage(FLEET *lpfl, int32_t *pdmgPeople, int32_t *pdmgPeop
                         if (part.hs.iItem == ibombRetroBomb) {
                             *ppctTerra += (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
                         } else if (part.hs.cItem > 0) {
-                            if (part.pbomb->dDmgBldg == 0) {
+                            if (part.pbomb()->dDmgBldg == 0) {
                                 cIter = (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
-                                dmgT = (double)(1.0 - (double)part.pbomb->dDmgCol / 1000.0);
+                                dmgT = (double)(1.0 - (double)part.pbomb()->dDmgCol / 1000.0);
                                 while (cIter-- > 0) {
                                     dmgSmart = (double)((double)dmgSmart * dmgT);
                                 }
                             } else {
-                                *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb->dDmgCol);
-                                *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb->dDmgBldg);
+                                *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgCol);
+                                *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgBldg);
                                 if (part.hs.iItem >= ibombLadyFingerBomb && part.hs.iItem <= ibombCherryBomb) {
                                     dmgFloor = 3;
                                     *pdmgPeopleMin += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * dmgFloor);
@@ -1539,7 +1539,7 @@ void UpdateShdefCost(SHDEF *lpshdef) {
     }
     lphul = &LphuldefFromId(lpshdef->hul.ihuldef)->hul;
     part.hs.grhst = hstNone;
-    part.phul = lphul;
+    part.SetPhul(lphul);
     GetTruePartCost(idPlayer, &part, rgCosts);
     for (c = 0; c < 3; c++) {
         rgMin[c] = (uint32_t)rgCosts[c];
@@ -1557,14 +1557,14 @@ void UpdateShdefCost(SHDEF *lpshdef) {
                 rgMin[k] += (uint32_t)(lphul->rghs[c].cItem * rgCosts[k]);
             }
             resCost += (uint32_t)(lphul->rghs[c].cItem * rgCosts[3]);
-            wt += (uint32_t)(lphul->rghs[c].cItem * part.pcom->cMass);
+            wt += (uint32_t)(lphul->rghs[c].cItem * part.pcom().cMass());
             switch (lphul->rghs[c].grhst) {
             default:
                 break;
             case hstArmor:
                 /* 32-bit: the original's int16_t overflowed for large slots
                    (24 Superlatanium), and RS then halved the negative value. */
-                dpT = (int32_t)lphul->rghs[c].cItem * part.parmor->dp;
+                dpT = (int32_t)lphul->rghs[c].cItem * part.parmor()->dp;
                 if (fWeakArmor) {
                     dpT >>= 1;
                 }
@@ -1629,10 +1629,10 @@ int16_t GetPlanetScannerRange(PLANET *lppl, int16_t *pDeep) {
             return 0;
         }
         LookupBestPlanetaryScanner(&part);
-        if (pDeep && part.pplanetary->grAbility < 0) {
-            *pDeep = -part.pplanetary->grAbility >> 1;
+        if (pDeep && part.pplanetary()->grAbility < 0) {
+            *pDeep = -part.pplanetary()->grAbility >> 1;
         }
-        dRange = abs(part.pplanetary->grAbility);
+        dRange = abs(part.pplanetary()->grAbility);
         if (GetRaceGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;
         }

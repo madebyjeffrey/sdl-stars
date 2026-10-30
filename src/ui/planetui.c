@@ -447,7 +447,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             LookupBestPlanetaryScanner(&part);
-            strcpy(szWork, part.pcom->szName);
+            strcpy(szWork, part.pcom().szName());
             dRange = GetPlanetScannerRange(&sel.pl, &dRangeP);
         }
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);
@@ -500,7 +500,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             FGetBestDefensePart(&part);
-            strcpy(szWork, part.pcom->szName);
+            strcpy(szWork, part.pcom().szName());
             dRange = 1;
         }
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);

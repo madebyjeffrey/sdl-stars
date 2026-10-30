@@ -432,7 +432,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 part.hs.iItem = *pParams;
                 if (FLookupPart(&part) <= mdPartAvailInvalid) {
                 }
-                pch = PchAppendMessageText(pch, part.pcom->szName);
+                pch = PchAppendMessageText(pch, part.pcom().szName());
                 pParams++;
                 break;
             case 'g':

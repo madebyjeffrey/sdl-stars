@@ -224,10 +224,10 @@ static int kind(uint16_t mask){for(int i=0;i<16;i++)if(mask==(UINT32_C(1)<<i))re
 int16_t FLookupPart(PART *part){int k=kind(part->hs.grhst),item=part->hs.iItem,at=typeCalls[k]++;hv(50);hv(idPlayer);hv(k);hv(item);lookups++;
     if((int)lookups-1==cfg[5])longjmp(escaped,1);
     int limit=cfg[3]==0 ? 0:(cfg[3]==1 || cfg[3]==2 || cfg[3]==6) ? 18:cfg[3]==3 ? k%3+1:cfg[3]==5 ? 32769:258;
-    if(at>=limit){part->pcom=NULL;return mdPartAvailInvalid;}assert(cfg[3]!=6);
+    if(at>=limit){part->SetPcom(NULL);return mdPartAvailInvalid;}assert(cfg[3]!=6);
     int avail=mdPartAvailAvailable,requirement=lastLevel;
     if(cfg[3]==1){static const int states[]={1,-1,2,99,1};avail=states[item%5];if(item%5)requirement=(int8_t)(lastLevel-1);}
-    memset(&supplied,0,sizeof(supplied));for(int i=0;i<6;i++)supplied.rgTech[i]=(int8_t)requirement;part->pcom=&supplied;return (int16_t)avail;
+    memset(&supplied,0,sizeof(supplied));for(int i=0;i<6;i++)supplied.rgTech[i]=(int8_t)requirement;part->SetPcom(&supplied);return (int16_t)avail;
 }
 int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t b,int16_t d,int16_t p4,int16_t p5,int16_t p6,int16_t p7){
     assert(!p4 && !p5 && !p6 && !p7);int tag;
@@ -304,7 +304,7 @@ int main(void){
     for(unsigned k=0;k<16;k++){assert(counts[k]<256);checks++;assert(counts[k]==rgcModelLimits[k]);checks++;idPlayer=iplrNone;
         for(unsigned item=0;item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
             int available=FLookupPart(&part);if((available==mdPartAvailInvalid)!=(item>=counts[k])){fprintf(stderr,"catalog kind %u item %u count %u status %d\n",k,item,counts[k],available);return 1;}checks++;
-            if(item<counts[k]){assert(part.pcom);checks++;}}
+            if(item<counts[k]){assert(part.pcom());checks++;}}
         idPlayer=0;for(int trait=-128;trait<128;trait++){rgplr[0].rgAttr[rsMajorAdv]=(int8_t)trait;
             for(unsigned item=counts[k];item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
                 assert(FLookupPart(&part)==mdPartAvailInvalid);checks++;}}}

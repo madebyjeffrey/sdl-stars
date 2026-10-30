@@ -17,7 +17,7 @@ int16_t FCreateAiShdef(int16_t ishdef, HulDef ihul, uint8_t *rgaip) {
     if (FLookupPartX(&part, ishdef < 0 ? 0x400 : 0x4000, ihul) != mdPartAvailAvailable) {
         return FALSE;
     }
-    lphul = part.phul;
+    lphul = part.phul();
     shdef.hul = *lphul;
     shdef.hul.ihuldef = lphul->ihuldef;
     for (ihs = 0; ihs < lphul->chs; ihs++) {

@@ -117,7 +117,7 @@ int16_t FLookupPart(PART *part){
     assert(fInCheck && cGateLookups<17);int at=cGateLookups;unsigned mask=part->hs.grhst,item=part->hs.iItem;
     rgGateRequests[at][0]=idPlayer;rgGateRequests[at][1]=mask;rgGateRequests[at][2]=item;rgGateRequests[at][3]=at==0?-1:part->hs.cItem;rgGateRequests[at][5]=cQueries;
     int16_t status=NativeLookupPart(part);rgGateRequests[at][4]=status;
-    if(status!=0){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;assert(kind<16 && part->pcom==LpcomRow(kind,item));}
+    if(status!=0){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;assert(kind<16 && part->pcom()==LpcomRow(kind,item));}
     cGateLookups++;return status;
 }
 '''
@@ -139,8 +139,8 @@ int main(int argc,char **argv){
     if(argv[1][0]=='e'){
         for(unsigned k=0;k<16;k++){
             for(unsigned item=0;item<rgcRows[k];item++){
-                int32_t data[9];COMPART *p=LpcomRow(k,item);data[0]=k;data[1]=item;
-                for(int f=0;f<6;f++)data[2+f]=p->rgTech[f];data[8]=k==15?rgplanetary[item].grAbility:0;
+                int32_t data[9];NATIVEPARTCOMMONVIEW p=LpcomRow(k,item);data[0]=k;data[1]=item;
+                for(int f=0;f<6;f++)data[2+f]=p.rgTech()[f];data[8]=k==15?rgplanetary[item].grAbility:0;
                 assert(fwrite(data,sizeof(data),1,file)==1);
             }
         }

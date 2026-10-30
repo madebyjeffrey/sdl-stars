@@ -1519,3 +1519,39 @@ references, resource/catalog bytes and regression baselines remain unchanged.
 The explicit POPUPDATA runtime-footprint retirement is the only new layout
 comparison change; it does not alter a file format. Platform qualification and
 the remaining component/transfer families and B12–B14 are still required.
+
+
+## B11 component/catalog borrows
+
+PART retains an actual pointer plus an explicit eight-bit concrete-pointer kind.
+The kind is independent of `hs`: failed lookups keep their previous pointer even
+when callers change the requested slot. Publication still follows the original
+race query and precedes restriction/visibility/technology queries. Direct
+concrete getters keep the existing borrowed pointers without a new class gate.
+
+The common-prefix view snapshots pointer identity and kind, then reads members
+of the actual catalog type. It neither aliases an unrelated COMPART object nor
+copies eager field values. Hull names/weights/ore fields map to their actual
+members, retaining the old signed interpretation of sixteen-bit hull bit
+patterns. Packed scalar values are copied before bit_cast, avoiding a reference
+to an under-aligned field. Arrays remain actual borrowed catalog arrays.
+
+Only runtime footprints change: PART adds one kind byte (4 + pointer width
+becomes 5 + pointer width). POPUPDATA includes that additional byte, becoming
+73 + four pointer widths (105 here). Their independent C measurements stay
+unchanged and checked; all other measured widths and the six earlier alignment
+contracts remain. These carriers are not file records or pooled game objects.
+
+Full qualification passes 117 desktop tests (28 native leak checks and available
+tutorial smoke coverage), 26 SDL-free host tests, 41 sanitizer cases, all 27
+source witnesses and 106 headers in both include orders. Both regressions match
+519 files through turn 150 with the same 25 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. Debug/Release/host/sanitizer
+builds introduce no warnings. Permanent tests cover stale/snapshotted borrows,
+live catalog changes and every sixteen-bit hull weight/ore value in both
+layouts. Source witness changes adapt only the borrow API/catalog exporter and
+an explicit quote double; models, input domains and assertion counts stay.
+
+Frozen C/SDK declarations, the independent popup C oracle, resource/catalog bytes
+and regression baselines are unchanged. Transfer storage, final B11 platform
+qualification and B12–B14 remain required.

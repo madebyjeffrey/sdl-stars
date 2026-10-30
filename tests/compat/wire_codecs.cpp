@@ -65,9 +65,9 @@ int main() {
             case 28: pd.lpfl = &fl; break;
             case 29: pd.psz = szText; break;
             case 30: pd.lpshdef = &sh; break;
-            case 31: pd.part.parmor = &armor; break;
+            case 31: pd.part.SetParmor(&armor); break;
             case 32: pd.part.hs.grhst = static_cast<HullSlotType>(static_cast<uint16_t>(value)); break;
-            case 33: { PART part{}; part.parmor = &armor; pd.part = part; break; }
+            case 33: { PART part{}; part.SetParmor(&armor); pd.part = part; break; }
             }
         };
         for (uint32_t w = 0; w < 65536; w++) for (uint16_t op = 0; op < 34; op++) {
@@ -82,6 +82,26 @@ int main() {
             const int32_t value = std::bit_cast<int32_t>(state);
             apply(op, value);
             CHECK(pd.grbit == WPopupReference(op, value));
+        }
+    }
+
+    {
+        HUL hul{};
+        ARMOR armor{};
+        PART part{};
+        CHECK(!part.pcom());
+        part.SetPhul(&hul);
+        const auto com = part.pcom();
+        part.SetParmor(&armor);
+        CHECK(com == &hul && part.pcom() == &armor);
+        CHECK(com.rgTech() == hul.rgTech && com.szName() == hul.szClass);
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            hul.wtEmpty = static_cast<uint16_t>(w);
+            hul.rgwtOreCost[0] = static_cast<uint16_t>(w);
+            hul.resCost = static_cast<uint16_t>(w);
+            hul.ibmp = static_cast<int16_t>(w < 32768 ? int32_t(w) : int32_t(w) - 65536);
+            CHECK(com.cMass() == hul.ibmp && com.rgwtOreCost(0) == hul.ibmp);
+            CHECK(com.resCost() == w && com.ibmp() == hul.ibmp);
         }
     }
 

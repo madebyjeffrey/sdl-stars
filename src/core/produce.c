@@ -273,7 +273,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             } else {
                 lphulT = &LphuldefFromId(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
-                part.phul = lphulT;
+                part.SetPhul(lphulT);
                 GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
@@ -360,9 +360,9 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             part.hs.iItem = iplanetarySDI;
             FLookupPart(&part);
             for (i = 0; i < 3; i++) {
-                rgCost[i] = part.pplanetary->rgwtOreCost[i];
+                rgCost[i] = part.pplanetary()->rgwtOreCost[i];
             }
-            rgCost[3] = (uint32_t)part.pplanetary->resCost;
+            rgCost[3] = (uint32_t)part.pplanetary()->resCost;
             if (GetRaceStat(&rgplr[iplr], rsMajorAdv) != raDefend)
                 break;
             for (i = 0; i < 4; i++) {

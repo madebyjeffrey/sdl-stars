@@ -142,8 +142,7 @@ def cases():
 
 
 def catalog_rows_source():
-    tables=['rgengine','rgscanner','rgshield','rgarmor','rgbeam','rgtorp','rgbomb','rgmining','rgmines','rgspecialSB','rghuldefSB','rgspecialE','rgspecialM','rgterra','rghuldef','rgplanetary']
-    return 'static COMPART *LpcomRow(unsigned k,unsigned item){switch(k){\n'+''.join(f'case {k}:return (COMPART *)&{table}[item]'+('.hul' if k in (10,14) else '')+';\n' for k,table in enumerate(tables))+'default:abort();}}\n'
+    return 'static NATIVEPARTCOMMONVIEW LpcomRow(unsigned k,unsigned item){PART part{};switch(k){\ncase 0:part.SetPengine(&rgengine[item]);break;\ncase 1:part.SetPscanner(&rgscanner[item]);break;\ncase 2:part.SetPshield(&rgshield[item]);break;\ncase 3:part.SetParmor(&rgarmor[item]);break;\ncase 4:part.SetPbeam(&rgbeam[item]);break;\ncase 5:part.SetPtorp(&rgtorp[item]);break;\ncase 6:part.SetPbomb(&rgbomb[item]);break;\ncase 7:part.SetPmining(&rgmining[item]);break;\ncase 8:part.SetPmines(&rgmines[item]);break;\ncase 9:part.SetPspecialsb(&rgspecialSB[item]);break;\ncase 10:part.SetPhul(&rghuldefSB[item].hul);break;\ncase 11:part.SetPspecial(&rgspecialE[item]);break;\ncase 12:part.SetPspecial(&rgspecialM[item]);break;\ncase 13:part.SetPterra(&rgterra[item]);break;\ncase 14:part.SetPhul(&rghuldef[item].hul);break;\ncase 15:part.SetPplanetary(&rgplanetary[item]);break;\ndefault:abort();}return part.pcom();}\n'
 
 
 def native_parts(call_capacity=8):
@@ -193,8 +192,8 @@ int main(int argc,char **argv){
     if(argv[1][0]=='e'){
         for(unsigned k=0;k<16;k++){
           for(unsigned item=0;item<rgcRows[k];item++){
-            int32_t rgData[9];COMPART *p=LpcomRow(k,item);rgData[0]=k;rgData[1]=item;
-            for(int f=0;f<6;f++)rgData[2+f]=p->rgTech[f];
+            int32_t rgData[9];NATIVEPARTCOMMONVIEW p=LpcomRow(k,item);rgData[0]=k;rgData[1]=item;
+            for(int f=0;f<6;f++)rgData[2+f]=p.rgTech()[f];
             rgData[8]=k==15?rgplanetary[item].grAbility:0;
             assert(fwrite(rgData,sizeof(rgData),1,file)==1);
           }
@@ -210,9 +209,9 @@ int main(int argc,char **argv){
         rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].SetITechNow(rgIn[5]);
         for(int f=0;f<6;f++)rgplr[target].rgTech[f]=(int8_t)rgIn[10+f];
         PLAYER rgBefore[16];GAME gameBefore;memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));int16_t idBefore=idPlayer;
-        PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.pcom=&comPrior;memcpy(&expected,&part,sizeof(part));
+        PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.SetPcom(&comPrior);memcpy(&expected,&part,sizeof(part));
         memset(rgCalls,-1,sizeof(rgCalls));cCalls=0;int result;
-        if(rgIn[0]==0){result=FLookupPart(&part);if(kind<16 && item<rgcRows[kind])expected.pcom=LpcomRow(kind,item);}
+        if(rgIn[0]==0){result=FLookupPart(&part);if(kind<16 && item<rgcRows[kind])expected.SetPcom(LpcomRow(kind,item));}
         else if(rgIn[0]==1)result=FShouldPartBeHidden(&part);
         else {char rgNeed[6],rgNeedBefore[6];for(int f=0;f<6;f++)rgNeed[f]=(char)rgIn[16+f];memcpy(rgNeedBefore,rgNeed,sizeof(rgNeed));result=TechStatus(rgNeed);CHECK(memcmp(rgNeed,rgNeedBefore,sizeof(rgNeed))==0);}
         if(result!=rgIn[22]){fprintf(stderr,"mode %d mask %u item %u primary %d flags %u grants %u current %d: got %d expected %d\n",rgIn[0],mask,item,rgIn[2],(uint32_t)rgIn[3],(uint32_t)rgIn[4],rgIn[5],result,rgIn[22]);abort();}cChecks++;

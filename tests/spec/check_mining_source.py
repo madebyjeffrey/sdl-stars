@@ -197,7 +197,7 @@ static union {max_align_t align;uint8_t bytes[sizeof(PLORD)+sizeof(ORDER)];} ord
 static SHDEF designs[16];SHDEF *rglpshdef[16];static MINING mining[8];
 int32_t lRandSeed1,lRandSeed2;static int draws,mineCalls,partCalls,operCalls;
 static int16_t NativeRandom(int16_t bound);static int32_t NativeCMineFromLpfl(FLEET *fleet);
-int16_t FLookupPart(PART *part){assert(part->hs.grhst==hstMining && part->hs.iItem<=iminingAlienMiner);partCalls++;part->pmining=&mining[part->hs.iItem];return TRUE;}
+int16_t FLookupPart(PART *part){assert(part->hs.grhst==hstMining && part->hs.iItem<=iminingAlienMiner);partCalls++;part->SetPmining(&mining[part->hs.iItem]);return TRUE;}
 int32_t CMineFromLpfl(FLEET *fleet){mineCalls++;int i=(int)(fleet-fleets);assert(0<=i && i<4);return cfg[29+8*i+7] ? NativeCMineFromLpfl(fleet):cfg[29+8*i+5];}
 int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next){(void)p;assert(player==cfg[4] && !next);return (int16_t)cfg[2];}
 int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? NativeRandom(bound):(int16_t)cfg[11];}

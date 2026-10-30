@@ -704,10 +704,10 @@ int16_t StargateRangeFromLppl(PLANET *lppl, int16_t iplr, int16_t ish) {
             lphul->rghs[i].iItem <= ispecialSBStargateAnyAny) {
             part.hs = lphul->rghs[i];
             FLookupPart(&part);
-            if (part.pspecialsb->grAbility2 == -1) {
+            if (part.pspecialsb()->grAbility2 == -1) {
                 return 10000;
             }
-            return part.pspecialsb->grAbility2;
+            return part.pspecialsb()->grAbility2;
         }
     }
     return 0;
@@ -771,8 +771,8 @@ int16_t FCanTerraformLppl(PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, in
     if (i >= 0) {
         fRet = TRUE;
         for (i = 0; i < 3; i++) {
-            rgMove[i] = part.pterra->grAbility;
-            rgEnvCost[i] = part.pterra->resCost;
+            rgMove[i] = part.pterra()->grAbility;
+            rgEnvCost[i] = part.pterra()->resCost;
         }
     } else {
         fRet = FALSE;
@@ -785,30 +785,30 @@ int16_t FCanTerraformLppl(PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, in
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[0]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[0]) {
         fRet = TRUE;
-        rgMove[0] = part.pterra->grAbility;
-        *rgEnvCost = part.pterra->resCost;
+        rgMove[0] = part.pterra()->grAbility;
+        *rgEnvCost = part.pterra()->resCost;
     }
     for (i = 3; i >= 0; i--) {
         part.hs.iItem = i + 12;
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[1]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[1]) {
         fRet = TRUE;
-        rgMove[1] = part.pterra->grAbility;
-        rgEnvCost[1] = part.pterra->resCost;
+        rgMove[1] = part.pterra()->grAbility;
+        rgEnvCost[1] = part.pterra()->resCost;
     }
     for (i = 3; i >= 0; i--) {
         part.hs.iItem = i + 16;
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[2]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[2]) {
         fRet = TRUE;
-        rgMove[2] = part.pterra->grAbility;
-        rgEnvCost[2] = part.pterra->resCost;
+        rgMove[2] = part.pterra()->grAbility;
+        rgEnvCost[2] = part.pterra()->resCost;
     }
     if (!fRet) {
         idPlayer = iPlrSav;

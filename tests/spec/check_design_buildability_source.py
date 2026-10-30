@@ -103,7 +103,7 @@ int16_t FLookupPart(PART *ppart){
     int16_t result=NativeLookupPart(ppart);rgRequests[at][4]=result;
     CHECK(ppart->hs.grhst==mask && ppart->hs.iItem==item);
     if(at!=0)CHECK(ppart->hs.cItem==rgRequests[at][3]);
-    if(result!=mdPartAvailInvalid){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;CHECK(kind<16);CHECK(ppart->pcom==LpcomRow(kind,item));}
+    if(result!=mdPartAvailInvalid){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;CHECK(kind<16);CHECK(ppart->pcom()==LpcomRow(kind,item));}
     cLookups++;return result;
 }
 '''
@@ -115,8 +115,8 @@ int main(int argc,char **argv){
     if(argv[1][0]=='e'){
         for(unsigned k=0;k<16;k++){
             for(unsigned item=0;item<rgcRows[k];item++){
-                int32_t rgData[9];COMPART *p=LpcomRow(k,item);rgData[0]=k;rgData[1]=item;
-                for(int f=0;f<6;f++)rgData[2+f]=p->rgTech[f];
+                int32_t rgData[9];NATIVEPARTCOMMONVIEW p=LpcomRow(k,item);rgData[0]=k;rgData[1]=item;
+                for(int f=0;f<6;f++)rgData[2+f]=p.rgTech()[f];
                 rgData[8]=k==15?rgplanetary[item].grAbility:0;
                 assert(fwrite(rgData,sizeof(rgData),1,file)==1);
             }

@@ -488,9 +488,9 @@ void DumpPlanets() {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
                                 FLookupPart(&part);
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb->grAbility2, NULL));
+                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility2, NULL));
                                 RgToStream(szForm, strlen(szForm));
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb->grAbility, NULL));
+                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility, NULL));
                                 RgToStream(szForm, strlen(szForm));
                             }
                         } else {

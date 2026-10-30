@@ -52,10 +52,10 @@ static int TestBrowserAvailableTechnology(void) {
         CHECK(FLookupPart(&vpartBrowser) != mdPartAvailAvailable);
         SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY));
-        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
         CHECK(SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_GETCURSEL, 0, 0) == iCategory);
         SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
-        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
         hs = vpartBrowser.hs;
         SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);

@@ -58,7 +58,7 @@ expressions that would become stale when unrelated lines move.
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
-| Remaining fixed game records | THING/PLAYER/PLANET/preferences use explicit codecs and fields; component/popup/transfer runtime aliases remain in progress | B11 |
+| Remaining fixed game records | THING/PLAYER/PLANET/preferences use explicit codecs and fields; component/popup runtime aliases are migrated locally; transfer storage remains in progress | B11 |
 | Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
 | Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Bounded menu/dialog/accelerator bytes and explicit DIB/icon/cursor headers; native GDI SDK input isolated in FCompatNativeDib; ownership stays module-scoped | B11 locally qualified |
 | Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
@@ -315,8 +315,19 @@ runtime size, alignment, callback signatures and selection rules retained.
 B11 POPUPDATA: separate actual scalar and pointer payloads replace the native
 union. Borrowed pointers never enter a byte codec. A compatibility word retains
 the numeric `grbit` carry between popup kinds through explicit setters, verified
-against an independent C oracle using the unchanged frozen declarations. Only
-this runtime footprint is retired: twenty-two legacy overlay bytes become
-72 + four native-pointer widths; field widths and file records are unchanged.
+against an independent C oracle using the unchanged frozen declarations. The
+legacy twenty-two-byte overlay measurement remains checked; its separate payloads
+initially require 72 + four native-pointer widths. The component kind byte below
+adds one more byte. Field widths and file records are unchanged.
 The archived native observer does not read this carrier; the current SDL
 observer compiles its original field names against the shared declaration.
+
+
+B11 PART: a native borrowed pointer retains its concrete eight-bit kind separately
+from mutable HS requests. Common getters visit the actual catalog object;
+concrete getters keep pointer identity and the old lookup/publication ordering.
+No catalog prefix is accessed through an unrelated COMPART pointer. The owned
+runtime footprint gains one byte (4 + pointer width to 5 + pointer width), and
+POPUPDATA consequently becomes 73 + four pointer widths. Both independent C
+measurements remain checked explicitly. No serialized field or arena stride
+changes, and the frozen input declarations stay unchanged.

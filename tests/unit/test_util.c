@@ -161,12 +161,27 @@ static void test_PtToScan_negative(void) {
 
 static void test_FLookupPart_host(void) {
     PART part;
+    NATIVEPARTCOMMONVIEW comPrior;
+    ENGINE *pengine;
+    int16_t cMassSav;
     int16_t idPlayerSav = idPlayer;
 
     memset(&part, 0, sizeof(part));
     idPlayer = iplrNone;
     TEST_CHECK(FLookupPartX(&part, hstEngine, iengineSettlersDelight) == mdPartAvailAvailable);
-    TEST_CHECK(part.pengine == LpengineFromId(iengineSettlersDelight));
+    TEST_CHECK(part.pengine() == LpengineFromId(iengineSettlersDelight));
+    pengine = part.pengine();
+    comPrior = part.pcom();
+    part.hs.grhst = hstArmor;
+    part.hs.iItem = 255;
+    TEST_CHECK(FLookupPart(&part) == mdPartAvailInvalid);
+    TEST_CHECK(part.pcom() == pengine && part.pcom().cMass() == pengine->cMass);
+    TEST_CHECK(FLookupPartX(&part, hstArmor, 0) == mdPartAvailAvailable);
+    TEST_CHECK(part.parmor() == rgarmor && comPrior == pengine);
+    cMassSav = pengine->cMass;
+    pengine->cMass = -32768;
+    TEST_CHECK(comPrior.cMass() == -32768);
+    pengine->cMass = cMassSav;
     idPlayer = idPlayerSav;
 }
 

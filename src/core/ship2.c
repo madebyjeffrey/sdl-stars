@@ -168,15 +168,15 @@ int16_t MdCalcStargateDamage(int16_t isbsSrc, int16_t isbsDst, int16_t dDist, in
     partDst.hs.iItem = isbsDst;
     FLookupPart(&partSrc);
     FLookupPart(&partDst);
-    dBaseDistance = partSrc.pspecialsb->grAbility2;
+    dBaseDistance = partSrc.pspecialsb()->grAbility2;
     if (dBaseDistance == -1) {
         dBaseDistance = 8000;
     }
     if ((int32_t)dDist > (int32_t)(uint32_t)(dBaseDistance * 5)) {
         return -1;
     }
-    if ((partSrc.pspecialsb->grAbility > 0 && (int32_t)wt > (int32_t)(uint32_t)(partSrc.pspecialsb->grAbility * 5)) ||
-        (partDst.pspecialsb->grAbility > 0 && (int32_t)wt > (int32_t)(uint32_t)(partDst.pspecialsb->grAbility * 5))) {
+    if ((partSrc.pspecialsb()->grAbility > 0 && (int32_t)wt > (int32_t)(uint32_t)(partSrc.pspecialsb()->grAbility * 5)) ||
+        (partDst.pspecialsb()->grAbility > 0 && (int32_t)wt > (int32_t)(uint32_t)(partDst.pspecialsb()->grAbility * 5))) {
         return -2;
     }
     if (dDist > dBaseDistance) {
@@ -184,14 +184,14 @@ int16_t MdCalcStargateDamage(int16_t isbsSrc, int16_t isbsDst, int16_t dDist, in
         if (pctSurvive <= 0)
             goto TotalDeath;
     }
-    if (wt > partSrc.pspecialsb->grAbility && partSrc.pspecialsb->grAbility > 0) {
-        pctSurviveT = (int32_t)((int32_t)(((uint32_t)(partSrc.pspecialsb->grAbility * 5) - wt) * 2500) / partSrc.pspecialsb->grAbility);
+    if (wt > partSrc.pspecialsb()->grAbility && partSrc.pspecialsb()->grAbility > 0) {
+        pctSurviveT = (int32_t)((int32_t)(((uint32_t)(partSrc.pspecialsb()->grAbility * 5) - wt) * 2500) / partSrc.pspecialsb()->grAbility);
         if (pctSurviveT <= 0)
             goto TotalDeath;
         pctSurvive = (int32_t)(pctSurvive * pctSurviveT) / 10000;
     }
-    if (wt > partDst.pspecialsb->grAbility && partDst.pspecialsb->grAbility > 0) {
-        pctSurviveT = (int32_t)((int32_t)(((uint32_t)(partDst.pspecialsb->grAbility * 5) - wt) * 2500) / partDst.pspecialsb->grAbility);
+    if (wt > partDst.pspecialsb()->grAbility && partDst.pspecialsb()->grAbility > 0) {
+        pctSurviveT = (int32_t)((int32_t)(((uint32_t)(partDst.pspecialsb()->grAbility * 5) - wt) * 2500) / partDst.pspecialsb()->grAbility);
         if (pctSurviveT <= 0)
             goto TotalDeath;
         pctSurvive = (int32_t)(pctSurvive * pctSurviveT) / 10000;
@@ -477,7 +477,7 @@ int32_t CMineFromLpfl(FLEET *lpfl) {
                 if (lphs->grhst == hstMining && lphs->iItem >= iminingRoboMidgetMiner && lphs->iItem <= iminingAlienMiner) {
                     part.hs = *lphs;
                     FLookupPart(&part);
-                    cMine += (uint32_t)(lphs->cItem * part.pmining->grAbility);
+                    cMine += (uint32_t)(lphs->cItem * part.pmining()->grAbility);
                 }
                 j++;
                 lphs++;
@@ -563,7 +563,7 @@ int32_t CLayMinesFromLpfl(FLEET *lpfl, MineFieldType iType, int16_t ishdef) {
                 if (lphs->grhst == hstMines && lphs->iItem >= iMin && lphs->iItem <= iMax) {
                     part.hs = *lphs;
                     FLookupPart(&part);
-                    cMine += (uint32_t)(lphs->cItem * part.pmines->grAbility);
+                    cMine += (uint32_t)(lphs->cItem * part.pmines()->grAbility);
                 } else if ((int16_t)iType <= mineStandard && lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
                     cMine += (int32_t)(lphs->cItem * 4);
                 }
@@ -618,17 +618,17 @@ int32_t CMineSweepFromLphul(HUL *lphul) {
         if (lphs->grhst == hstBeam) {
             part.hs = *lphs;
             FLookupPart(&part);
-            if (part.pbeam->grfAbilities & beamGatling) {
+            if (part.pbeam()->grfAbilities & beamGatling) {
                 lRange = 4;
             } else {
-                if (part.pbeam->grfAbilities & beamSapper)
+                if (part.pbeam()->grfAbilities & beamSapper)
                     continue;
-                lRange = part.pbeam->dRangeMax;
+                lRange = part.pbeam()->dRangeMax;
             }
             if (fStarbase) {
                 lRange++;
             }
-            lPow += (uint32_t)((uint32_t)((uint32_t)(lRange * lRange) * lphs->cItem) * part.pbeam->dp);
+            lPow += (uint32_t)((uint32_t)((uint32_t)(lRange * lRange) * lphs->cItem) * part.pbeam()->dp);
         }
     }
     if (lPow <= 0) {
@@ -752,7 +752,7 @@ int16_t CPtsCloakFromLphs(HS *lphs) {
             break;
         part.hs = *lphs;
         FLookupPart(&part);
-        cPts = part.pspecial->grAbility;
+        cPts = part.pspecial()->grAbility;
         break;
     case hstSpecialM:
         if (lphs->iItem != ispecialMMultiCargoPod)
@@ -817,14 +817,14 @@ void MarkTechsSeen(HUL *lphul, int16_t iplr) {
     part.hs.iItem = lphul->ihuldef;
     FLookupPart(&part);
     for (iTech = 0; iTech < 6; iTech++) {
-        rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.phul->rgTech[iTech] ? part.phul->rgTech[iTech] : rgTechBattle[iTech];
+        rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.phul()->rgTech[iTech] ? part.phul()->rgTech[iTech] : rgTechBattle[iTech];
     }
     for (ihs = 0; ihs < lphul->chs; ihs++) {
         if (lphul->rghs[ihs].cItem != 0) {
             part.hs = lphul->rghs[ihs];
             FLookupPart(&part);
             for (iTech = 0; iTech < 6; iTech++) {
-                rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.pcom->rgTech[iTech] ? part.pcom->rgTech[iTech] : rgTechBattle[iTech];
+                rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.pcom().rgTech()[iTech] ? part.pcom().rgTech()[iTech] : rgTechBattle[iTech];
             }
             iTech = -1;
             switch (part.hs.grhst) {

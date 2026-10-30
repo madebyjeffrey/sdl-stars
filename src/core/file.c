@@ -76,7 +76,7 @@ int16_t FReadShDef(const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t
                 if (!(part.hs.grhst & lphulBase->rghs[c].grhst) || ((fOkay > 1 && !shdef.fGift) || part.hs.cItem > lphulBase->rghs[c].cItem)) {
                     lphul->rghs[c].cItem = 0;
                 }
-                wt += (uint32_t)(part.pcom->cMass * lphul->rghs[c].cItem);
+                wt += (uint32_t)(part.pcom().cMass() * lphul->rghs[c].cItem);
             }
             if (c == 0 && lphul->rghs[0].cItem == 0 && lphulBase->rghs[0].grhst == hstEngine) {
                 lphul->rghs[0].grhst = hstEngine;
@@ -84,7 +84,7 @@ int16_t FReadShDef(const uint8_t *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t
                 lphul->rghs[0].cItem = lphulBase->rghs[0].cItem;
                 part.hs = lphul->rghs[0];
                 FLookupPart(&part);
-                wt += (uint32_t)(part.pcom->cMass * lphul->rghs[0].cItem);
+                wt += (uint32_t)(part.pcom().cMass() * lphul->rghs[0].cItem);
             }
         }
         lphul->wtEmpty = LOWORD(wt);

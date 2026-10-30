@@ -1125,13 +1125,13 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
     int16_t  cExcess;
     int16_t  cCur;
     int16_t  i;
-    COMPART *lpcom;
+    NATIVEPARTCOMMONVIEW lpcom;
 
-    lpcom = ppart->pcom;
+    lpcom = ppart->pcom();
     for (i = 0; i < 3; i++) {
-        rgCost[i] = lpcom->rgwtOreCost[i];
+        rgCost[i] = lpcom.rgwtOreCost(i);
     }
-    rgCost[3] = lpcom->resCost;
+    rgCost[3] = lpcom.resCost();
     if (iPlayer != iplrNone) {
         if ((ppart->hs.grhst & hstTerra) ||
             ((ppart->hs.grhst & hstPlanetary) && ppart->hs.iItem >= iplanetarySDI && ppart->hs.iItem <= iplanetaryNeutronShield) ||
@@ -1139,8 +1139,8 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             goto LOtherDiddles;
         cExcess = 100;
         for (i = 0; i < 6; i++) {
-            cCur = rgplr[iPlayer].rgTech[i] - lpcom->rgTech[i];
-            if (lpcom->rgTech[i] > 0 && cCur < cExcess) {
+            cCur = rgplr[iPlayer].rgTech[i] - lpcom.rgTech()[i];
+            if (lpcom.rgTech()[i] > 0 && cCur < cExcess) {
                 cExcess = cCur;
             }
         }
@@ -1218,7 +1218,7 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             }
         }
         if (cExcess < 1 && GetRaceGrbit(&rgplr[iPlayer], ibitRaceBleedingEdgeTech) != 0 && !gd.fDontCalcBleed) {
-            for (i = 0; i < 6 && lpcom->rgTech[i] <= 0; i++) {
+            for (i = 0; i < 6 && lpcom.rgTech()[i] <= 0; i++) {
             }
             if (i < 6) {
                 gd.fBleedingEdge = TRUE;

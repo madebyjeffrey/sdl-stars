@@ -2189,7 +2189,7 @@ void UpdateResearchStatus(int16_t fUsePool) {
                                 if (mdAvail == mdPartAvailInvalid)
                                     break;
                                 if (mdAvail == mdPartAvailAvailable &&
-                                    rgplr[i].rgTech[iT] == LOBYTE((int16_t)(((uint16_t)iT & 0xff00) | ((uint16_t)part.pcom->rgTech[iT] & 0xff)))) {
+                                    rgplr[i].rgTech[iT] == LOBYTE((int16_t)(((uint16_t)iT & 0xff00) | ((uint16_t)part.pcom().rgTech()[iT] & 0xff)))) {
                                     if (grbitCur == hstSBHull) {
                                         idm = idmRecentBreakthroughHasAlsoGivenHullDesign;
                                         iGoto = -3;

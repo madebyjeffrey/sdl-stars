@@ -45,7 +45,14 @@ def main():
     declarations+=r'''
 #pragma pack(pop)
 typedef struct {int8_t rgAttr[16];uint32_t grbitAttr;} PLAYER;
-typedef struct {HS hs;union {HUL *phul;PLANETARY *pplanetary;void *pcom;};} PART;
+// Quote double: only the caller's concrete borrow operations are used here.
+struct PART {
+    HS hs;void *lpv;
+    HUL *phul() const {return static_cast<HUL *>(lpv);}
+    PLANETARY *pplanetary() const {return static_cast<PLANETARY *>(lpv);}
+    void SetPhul(HUL *p) {lpv=p;}
+    void SetPplanetary(PLANETARY *p) {lpv=p;}
+};
 typedef struct {HUL hul;} HULDEF;
 static PLAYER rgplr[16];
 static SHDEF ships[16],bases[10],otherShips[16],otherBases[10],*rglpshdef[16],*rglpshdefSB[16];
@@ -58,7 +65,7 @@ static uint16_t lookupKind[33],lookupItem[33],quoteKind[33],quoteItem[33];
 static int quotePlayer[33];
 static PLANET planet;
 static PROD prod;
-static int16_t FLookupPart(PART *p) {assert(lookups<33);lookupKind[lookups]=p->hs.grhst;lookupItem[lookups++]=p->hs.iItem;p->pplanetary=&planetary;return 2;}
+static int16_t FLookupPart(PART *p) {assert(lookups<33);lookupKind[lookups]=p->hs.grhst;lookupItem[lookups++]=p->hs.iItem;p->SetPplanetary(&planetary);return 2;}
 static HULDEF *LphuldefFromId(HulDef id) {lastHull=id;return &hull;}
 static void GetTruePartCost(int16_t player,PART *part,void *out) {
     assert(cursor<33);quoteKind[cursor]=part->hs.grhst;quoteItem[cursor]=(cursor==0 && part->hs.grhst==hstNone) ? 0:part->hs.iItem;quotePlayer[cursor]=player;memcpy(out,quotes[cursor++],8);

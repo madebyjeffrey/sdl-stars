@@ -24,7 +24,7 @@ int16_t PctJammerFromHul(HUL *lphul) {
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
                 FLookupPart(&part);
-                pctJam = (int16_t)(100 - part.pspecial->grAbility);
+                pctJam = (int16_t)(100 - part.pspecial()->grAbility);
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
             } else {

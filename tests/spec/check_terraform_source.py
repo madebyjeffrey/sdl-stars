@@ -198,7 +198,7 @@ int16_t FLookupPart(PART *part){
     if(part->hs.grhst!=hstTerra)return GateLookup(part);
     assert(terraCalls<128 && part->hs.iItem<20);terraItems[terraCalls++]=part->hs.iItem;
     if(!cfg[1])return NativeLookupPart(part);
-    part->pterra=scripted+part->hs.iItem;return (cfg[2]&(1<<part->hs.iItem))?1:0;
+    part->SetPterra(scripted+part->hs.iItem);return (cfg[2]&(1<<part->hs.iItem))?1:0;
 }
 '''+bodies[end:]
     bodies+='\n'+function('src/core/planet.c','int16_t FCanTerraformLppl(').replace('int16_t FCanTerraformLppl(','static int16_t NativeCan(',1)
