@@ -245,7 +245,7 @@ int main(void) {
         binary = Path(work) / 'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=False, free=True) + bodies + storage_definitions('(void)lp;return lastBytes;', allocate=True, resize=False, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
-                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
+                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
                         str(source), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

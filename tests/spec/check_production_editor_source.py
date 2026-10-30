@@ -234,7 +234,7 @@ int main(void) {
         source=Path(work)/'witness.cpp';binary=Path(work)/'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=True, free=True) + bodies + storage_definitions('(void)lp;return lastBytes;', allocate=True, resize=True, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX','c++'))+
-                       ['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-fsanitize=address,undefined','-fno-sanitize-recover=all',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

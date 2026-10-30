@@ -84,3 +84,6 @@ int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
     CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
     return IdAlertBox(szPrompt, MB_YESNO | MB_ICONQUESTION) == IDYES;
 }
+
+#include "appstate.h"
+APPSESSION &GetAppSession() { static APPSESSION session; return session; }

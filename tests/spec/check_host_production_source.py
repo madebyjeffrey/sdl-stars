@@ -255,7 +255,7 @@ int main(void){
     with tempfile.TemporaryDirectory(prefix='m09-host-production-') as work:
         path=Path(work); source=path/'witness.cpp'; binary=path/'witness'
         source.write_text(declarations + storage_declarations(allocate=False, resize=True, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=False, resize=True, free=True) + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

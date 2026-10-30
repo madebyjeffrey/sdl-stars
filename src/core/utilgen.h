@@ -9,8 +9,13 @@ extern uint8_t acPN[];
 extern int16_t rgPrimes[128];
 extern char    aPNCmpr[];
 extern char    rgPNLookupTable[];
+#ifdef STARS_TEST_STATE_DOUBLE
 extern int32_t lFileSeed1;
 extern int32_t lFileSeed2;
+#else
+extern int32_t &lFileSeed1;
+extern int32_t &lFileSeed2;
+#endif
 
 void    PushRandom(int32_t lNew1, int32_t lNew2);
 void    PopRandom();

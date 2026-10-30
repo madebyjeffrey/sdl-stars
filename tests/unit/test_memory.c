@@ -1,6 +1,28 @@
 #include "common.h"
+#include "appstate.h"
 #include "acutest.h"
 #include "stars_test.h"
+
+static void TestApplicationStateOwner(void) {
+    APPSESSION &session = GetAppSession();
+    TEST_CHECK(&game == &session.state.game);
+    TEST_CHECK(&ini == &session.state.ini);
+    TEST_CHECK(&rglphb == &session.state.rglphb);
+    TEST_CHECK(&lFileSeed1 == &session.state.lFileSeed1);
+    TEST_CHECK(&lFileSeed2 == &session.state.lFileSeed2);
+    TEST_CHECK(sizeof(rgplr) == sizeof(session.state.rgplr));
+    game.cPlayer = 7;
+    lFileSeed1 = 123;
+    lFileSeed2 = 456;
+    LpAlloc(31, htMisc);
+    TEST_ASSERT(rglphb[htMisc]);
+    session.Close(); session.Close();
+    for (auto *lphb : rglphb) TEST_CHECK(!lphb);
+    session.Reset();
+    TEST_CHECK(game.cPlayer == 2 && game.mdSize == sizeMedium);
+    TEST_CHECK(lFileSeed1 == 0 && lFileSeed2 == 0);
+    TEST_CHECK(&game == &session.state.game);
+}
 
 static void CheckAligned(void *lp) {
     TEST_ASSERT(lp != NULL);
@@ -273,7 +295,7 @@ static void TestTypedHeapOwner(void) {
     mphtcbAlloc[htMisc] = cbAllocSav;
 }
 
-TEST_LIST = {{"typed heap ownership preserves spare bytes, reset and idempotent teardown", TestTypedHeapOwner},
+TEST_LIST = {{"application state aliases borrow one resettable session", TestApplicationStateOwner},{"typed heap ownership preserves spare bytes, reset and idempotent teardown", TestTypedHeapOwner},
              {"thing records retain partial, neighbor and physical spare copies", TestThingPhysicalCopies},
              {"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
              {"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},

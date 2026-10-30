@@ -289,7 +289,7 @@ int main(int argc,char **argv) {
         assert excluded.get('signed overflow',0)>0 and excluded.get('uninitialized need',0)>0
         print(f'Prepared {count} defined vectors; excluded before C execution: {excluded}',flush=True)
         source.write_text(declarations+body+harness)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 

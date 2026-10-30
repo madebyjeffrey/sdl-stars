@@ -2,7 +2,6 @@
 #include "liststorage.h"
 #include <algorithm>
 
-static NATIVEGAMEHEAPS heaps(rglphb);
 
 NATIVEGAMEHEAPS::~NATIVEGAMEHEAPS() noexcept { Close(); }
 

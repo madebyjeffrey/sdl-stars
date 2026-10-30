@@ -21,7 +21,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
 | B11: remaining packed/resource layouts | Active | Record, THING, PART, popup and transfer families plus named SDK aggregates pass the full local matrix and all 16 platform checks at 449a53d. Final public resource-codec follow-up awaits platform qualification. |
 | B12: typed stable game arenas | Active | Typed physical slots, heap chains, ZIP/library buffers and native GUI temporaries pass the full local matrix. Final platform qualification and remaining printing/callback resource accounting are required. |
-| B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
+| B13: application/session owner | Active | Core/UI value-state owners, original-name reference aliases, RNG fields and an owned native legacy file table are implemented and entering qualification. Entry/close ordering, callback payload handoffs and observer accounting remain required. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
 
 ## Ownership changes in progress
@@ -1709,3 +1709,54 @@ checked by count rather than treated as proof from a zero-leak report.
 This batch does not complete B12–B14. Final platform qualification of the public
 resource-header follow-up is also required before B11 is marked complete.
 Frozen C/SDK inputs, catalog/resource bytes and all baselines remain unchanged.
+
+
+## B13 single state and file owner foundation
+
+One application session contains the core state, both file RNG words, stable
+heap-chain owner and native legacy stream table. The desktop derives a concrete
+session containing its UI state; the SDL-free host owns only core state.
+Original global names borrow the corresponding value members through C++
+references, retaining array extents and original initializers. There is no
+second mutable copy or additional startup allocation. Private immutable catalog
+and policy tables remain module data.
+
+The platform file session owns the same fixed 32,768-slot table, lock and native
+stream owners. Application construction binds that table; standalone platform
+fixtures retain an independent fallback. Close is idempotent, closes streams and
+heaps and restores the previous binding after quiescence. A fresh binding keeps
+first-token numbering at three. Core reset restores original initial values;
+its caller must stop UI borrowers first. The real fixture checks original-name
+address identity, array extents, RNG reset and repeated close. The actual file
+service fixture checks owned close, bad-handle behavior, token reuse and scope
+release.
+
+Isolated source witnesses explicitly select raw test-provider declarations;
+their independent algorithms, inputs, models and assertion domains stay intact.
+Ordinary tests and the actual application use the owned reference aliases.
+This foundation is under local qualification. It does not yet complete B13's
+entry-point cleanup, stopped-callback ordering, private UI state accounting or
+asynchronous chooser payload handoffs. The existing archived observer reads
+names through shared declarations rather than absolute addresses; its support
+and lifecycle accounting remain a required follow-up.
+
+
+The first complete foundation matrix passes 117 desktop / 28 native leaks /
+26 host / 42 sanitizer cases, all 27 source witnesses, and both 519-file
+regressions with the same 25 accepted warnings and no differences or skips.
+Cross-compiler header qualification additionally exposed GCC warnings on partial
+aggregate initializers that Clang accepts. The owner constructors now initialize
+zero-valued fields first and assign the same original nonzero defaults explicitly;
+no warning suppression is added. Core and UI owner headers pass local MinGW/GCC
+checks. The final matrix is being repeated for this portable initialization form.
+
+
+The portable initialization form passes the complete matrix: 117 desktop tests
+(including all 28 native macOS leak checks and available tutorial smoke coverage),
+26 SDL-free host tests, 42 sanitizer cases and 111 public headers in both include
+orders. All 27 independent source witnesses pass with their unchanged models and
+assertion domains. Core/UI owner headers additionally pass local MinGW/GCC
+warning checks. Both regressions retain 519 matches through turn 150, the same
+25 accepted unused-storage warnings and zero differences/errors/skips.
+Debug/Release/host/sanitizer builds introduce no warnings. Platform CI and the
+remaining B13 lifecycle/handoff work are still required; B13 is not complete.

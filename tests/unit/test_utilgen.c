@@ -123,8 +123,8 @@ static void test_XorFileBuf_unaligned_bytes(void) {
 
 // Compound assignment evaluates the RNG call before reading its destination.
 // Keep that order even when a caller supplies one of the actual seed objects.
-extern int32_t lFileSeed1;
-extern int32_t lFileSeed2;
+extern int32_t &lFileSeed1;
+extern int32_t &lFileSeed2;
 static void test_XorFileBuf_seed_alias_order(void) {
     int32_t lSeed1, lSeed2;
 
