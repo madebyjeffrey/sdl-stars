@@ -1039,6 +1039,15 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             pd.lStructSize = sizeof(PRINTDLG);
             pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
             if (PrintDlg(&pd) != 0) {
+                hfontPrint = NULL;
+                hfontPrintTiny = NULL;
+                NATIVECLEANUPSCOPE print([&]() noexcept {
+                    if (hfontPrint) DeleteObject(hfontPrint);
+                    if (hfontPrintTiny) DeleteObject(hfontPrintTiny);
+                    DeleteDC(pd.hDC);
+                    if (pd.hDevMode) GlobalFree(pd.hDevMode);
+                    if (pd.hDevNames) GlobalFree(pd.hDevNames);
+                });
                 dxMax = GetDeviceCaps(pd.hDC, HORZRES);
                 dyMax = GetDeviceCaps(pd.hDC, VERTRES);
                 dxDPI = GetDeviceCaps(pd.hDC, LOGPIXELSX);
@@ -1177,19 +1186,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 }
                 iPrintResult = Escape(pd.hDC, ENDDOC, 0, NULL, NULL);
 LPrintMapCleanup:
-                if (hfontPrint) {
-                    DeleteObject(hfontPrint);
-                }
-                if (hfontPrintTiny) {
-                    DeleteObject(hfontPrintTiny);
-                }
-                DeleteDC(pd.hDC);
-                if (pd.hDevMode) {
-                    GlobalFree(pd.hDevMode);
-                }
-                if (pd.hDevNames) {
-                    GlobalFree(pd.hDevNames);
-                }
+                print.Close();
                 if (iPrintResult <= 0 && iPrintResult != SP_APPABORT)
                     AlertSz(PszFormatIds(idsUnablePrintGameMapPrinterMayOff, NULL), MB_ICONHAND);
             } else {

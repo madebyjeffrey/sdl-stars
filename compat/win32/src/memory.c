@@ -16,6 +16,31 @@ typedef struct COMPATMEMORY {
 static COMPATMEMORY *lpMemory;
 static NATIVEFLAGLOCK fMemoryLock;
 static UINT_PTR idMemory = 1;
+static void FreeMemoryBlock(COMPATMEMORY *lp) noexcept {
+    free(lp->rgb);
+    free(lp);
+}
+
+// One chain owns every registered block; callers retain borrowed handle tokens.
+class COMPATMEMORYOWNER {
+    COMPATMEMORY *&first;
+    NATIVEFLAGLOCK &lock;
+public:
+    COMPATMEMORYOWNER(COMPATMEMORY *&first, NATIVEFLAGLOCK &lock) noexcept : first(first), lock(lock) {}
+    ~COMPATMEMORYOWNER() noexcept { Close(); }
+    COMPATMEMORYOWNER(const COMPATMEMORYOWNER &) = delete;
+    COMPATMEMORYOWNER &operator=(const COMPATMEMORYOWNER &) = delete;
+    void Close() noexcept {
+        std::unique_lock guard(lock);
+        while (first) {
+            auto *lp = first;
+            first = lp->lpNext;
+            NATIVEOWNER<COMPATMEMORY, FreeMemoryBlock> block(lp);
+        }
+    }
+};
+static COMPATMEMORYOWNER memory(lpMemory, fMemoryLock);
+
 static thread_local DWORD dwError;
 
 DWORD WINAPI GetLastError(void) { return dwError; }
@@ -32,6 +57,7 @@ static COMPATMEMORY *LpMemory(HANDLE h) {
 
 HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
     COMPATMEMORY *lp;
+    NATIVEOWNER<COMPATMEMORY, FreeMemoryBlock> block;
 
     if (flags & ~(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DISCARDABLE | GMEM_NOCOMPACT | GMEM_NODISCARD | GMEM_SHARE)) {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -42,12 +68,13 @@ HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
+    block.reset(lp);
     lp->fMoveable = (flags & GMEM_MOVEABLE) != 0;
     lp->cb = cb;
     if (cb != 0 || !lp->fMoveable) {
         lp->rgb = (BYTE *)(flags & GMEM_ZEROINIT ? calloc(1, cb ? cb : 1) : malloc(cb ? cb : 1));
         if (!lp->rgb) {
-            free(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return NULL;
         }
     }
@@ -55,7 +82,7 @@ HGLOBAL WINAPI GlobalAlloc(UINT flags, SIZE_T cb) {
     // Movable handles are tagged IDs, never pointers into an allocation header.
     lp->h = lp->fMoveable ? (HANDLE)(idMemory++ * 16 + 3) : (HANDLE)lp->rgb;
     lp->lpNext = lpMemory;
-    lpMemory = lp;
+    lpMemory = block.release();
     lockMemory.unlock();
     return lp->h;
 }
@@ -70,7 +97,7 @@ HGLOBAL WINAPI GlobalFree(HGLOBAL h) {
         lp = *lplp;
         if (lp->h == h) {
             *lplp = lp->lpNext;
-            free(lp->rgb); free(lp);
+            FreeMemoryBlock(lp);
             lockMemory.unlock();
             return NULL;
         }
@@ -199,16 +226,7 @@ UINT WINAPI LocalFlags(HLOCAL h) { return GlobalFlags(h); }
 HLOCAL WINAPI LocalReAlloc(HLOCAL h, SIZE_T cb, UINT flags) { return GlobalReAlloc(h, cb, flags); }
 HLOCAL WINAPI LocalHandle(LPCVOID lpv) { return GlobalHandle(lpv); }
 
-void CompatShutdownMemory(void) {
-    COMPATMEMORY *lp;
-
-    std::unique_lock lockMemory(fMemoryLock);
-    while (lpMemory) {
-        lp = lpMemory; lpMemory = lp->lpNext;
-        free(lp->rgb); free(lp);
-    }
-    lockMemory.unlock();
-}
+void CompatShutdownMemory(void) { memory.Close(); }
 
 #ifdef STARS_TEST_MEMORY_OBSERVE
 size_t CCompatMemoryBlocks() {
