@@ -54,7 +54,7 @@ expressions that would become stale when unrelated lines move.
 | Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 migrated |
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
-| Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, qualification active |
+| Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 in qualification |
 | Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | HDR 10-bit length/6-bit type, XOR/checksum state, continuation records, partial read/write effects | B11 after dependent families |
@@ -192,3 +192,11 @@ these fields as variable arrays: explicit codecs/views read/write the bytes.
 The first three families migrate in B10; ship transfer migrated in B08.
 These declarations retain frozen measurements while B11 finishes packing/layout
 retirement; they are not a new runtime variable-storage scheme.
+
+
+B11 stream-header family: explicit two-byte codecs now serve file/memory logs,
+tutorial record traversal and library inspectors. Header lengths/types use
+numeric little-endian bits, independent of runtime HDR packing. Zero-/one-byte
+read failures publish the merged old/new header before error callbacks; payload
+partial publication, callback-mutated strides, unknown tags and length wrapping
+remain. Remaining BOF/entity/resource boundaries still require migration.

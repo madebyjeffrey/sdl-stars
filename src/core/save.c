@@ -1061,6 +1061,7 @@ LBadFile:
 
 void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
     HDR hdr;
+    std::byte rgbHdr[cbWireHdr];
 
     if (cb != 0)
         memmove(rgbCur, rg, cb);
@@ -1072,7 +1073,8 @@ void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
     }
     hdr.cb = cb;
     hdr.rt = rt;
-    RgToStream(&hdr, 2);
+    FEncodeHdr(hdr, rgbHdr);
+    RgToStream(rgbHdr, cbWireHdr);
     RgToStream(rgbCur, cb);
     return;
 }

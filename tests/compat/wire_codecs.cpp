@@ -6,6 +6,7 @@
 #include "aiviews.h"
 #include "messageviews.h"
 #include "logviews.h"
+#include "streamviews.h"
 #include <array>
 #include <cstdio>
 #include <limits>
@@ -13,6 +14,25 @@
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main() {
+    for (std::uint32_t w = 0; w < 65536; w++) {
+        const std::array<std::byte, 2> golden = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256)};
+        HDR hdr{};
+        std::array<std::byte, 4> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeHdr(golden, hdr) && hdr.cb == w % 1024 && hdr.rt == w / 1024);
+        CHECK(FEncodeHdr(hdr, std::span(rgb).subspan(1, 2)));
+        CHECK(rgb[0] == std::byte{0xa5} && rgb[3] == std::byte{0xa5} && std::memcmp(rgb.data() + 1, golden.data(), 2) == 0);
+        CHECK(HdvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1)).cb() == w % 1024);
+        CHECK(HdvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1)).rt() == w / 1024);
+        for (std::size_t cb = 0; cb < 2; cb++) {
+            hdr.cb = 999; hdr.rt = 61;
+            CHECK(!FDecodeHdr(std::span(golden).first(cb), hdr) && hdr.cb == 999 && hdr.rt == 61);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeHdr(hdr, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+
     struct HISTVECTOR { std::int16_t cPlanet, cPlanetExtra; std::array<std::byte, 4> rgb; };
     const HISTVECTOR rgcase[] = {
         {0, 0, {std::byte{0}, std::byte{0}, std::byte{0}, std::byte{0}}},

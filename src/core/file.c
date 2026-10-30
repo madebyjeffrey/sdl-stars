@@ -1386,8 +1386,29 @@ int16_t FCheckFile(DtFileType dt, int16_t iPlayer, MdMark md) {
     return fReturn;
 }
 
+// Publish even a partial header before FileError calls the UI. Seeding the
+// unread byte retains the old global header on a zero/one-byte read failure.
+static void ReadRtHeader() {
+    std::byte rgb[cbWireHdr];
+    int32_t cb;
+
+    FEncodeHdr(hdrCur, rgb);
+    if (vlpMemStream) {
+        memcpy(rgb, vlpMemStream, cbWireHdr);
+        vlpMemStream += cbWireHdr;
+        cb = cbWireHdr;
+    } else {
+        cb = CbReadFile(hf, rgb, cbWireHdr);
+    }
+    FDecodeHdr(rgb, hdrCur);
+    if (cb != cbWireHdr) {
+        FileError(idsGameFileAppearsCorruptUnableLoadFile);
+        StarsThrowError(starsErrorFile, idsFileError);
+    }
+}
+
 void STARS_TEST_IMPL(ReadRt)() {
-    RgFromStream(&hdrCur, 2);
+    ReadRtHeader();
     if (hdrCur.cb != 0) {
         RgFromStream(rgbCur, hdrCur.cb);
     }

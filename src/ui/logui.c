@@ -33,16 +33,16 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
         vlpMemStream++;
         while (cSkip-- != 0) {
             do {
-                vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
-            } while (((HDR *)vlpMemStream)->rt != rtBOF);
+                vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
+            } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
         }
         cch = CchGetString(idsTutorial, szT);
         strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
         StreamOpen(szT, mdCreate);
         do {
-            RgToStream(vlpMemStream, ((HDR *)vlpMemStream)->cb + 2);
-            vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
-        } while (((HDR *)vlpMemStream)->rt != rtBOF);
+            RgToStream(vlpMemStream, HdvFromPrefix(vlpMemStream).cb() + 2);
+            vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
+        } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
         StreamClose();
         vlpMemStream = NULL;
         GlobalUnlock(hres);

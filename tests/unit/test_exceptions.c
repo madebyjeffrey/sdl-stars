@@ -53,6 +53,81 @@ static void TestShortReadClosesStream(void) {
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
+static HDR hdrAtAlert;
+static uint8_t rgbAtAlert[3];
+static int cHeaderAlerts;
+
+static void CaptureReadFailure() {
+    hdrAtAlert = hdrCur;
+    memcpy(rgbAtAlert, rgbCur, sizeof(rgbAtAlert));
+    cHeaderAlerts++;
+}
+
+static void TestPartialRecordPublication() {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t rgbFile[] = {3, 0xfc, 0x37}; // unknown type 63, three-byte payload
+    const int rgcb[] = {0, 1, 3};
+    int16_t hfWrite, fMissing;
+    bool fCaught;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("record-publication", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%spartial", szDir, szDirSep);
+    for (int cb : rgcb) {
+        hfWrite = HfOpenFile(szFile, mdCreate, &fMissing);
+        TEST_ASSERT(hfWrite != -1);
+        if (cb != 0) TEST_ASSERT(CbWriteFile(hfWrite, rgbFile, cb) == cb);
+        CloseFile(hfWrite);
+        hdrCur.cb = 0x155; hdrCur.rt = 0x2a;
+        memset(rgbCur, 0xa5, sizeof(rgbCur));
+        cHeaderAlerts = 0; fCaught = false;
+        try {
+            StarsRecoveryScope scopeRecovery;
+            StarsRestore<int16_t> restoreSilent(fFileErrSilent);
+            StarsRestore<decltype(pfnStarsTestAlertObserver)> restoreObserver(pfnStarsTestAlertObserver);
+            StarsFileGuard closeStream(hf);
+            fFileErrSilent = FALSE; gd.fGeneratingTurn = FALSE;
+            pfnStarsTestAlertObserver = CaptureReadFailure;
+            StreamOpen(szFile, mdRead);
+            ReadRt();
+        } catch (const StarsError &error) {
+            fCaught = error.mdError == starsErrorFile && error.ids == idsGameFileAppearsCorruptUnableLoadFile;
+        }
+        TEST_CHECK(fCaught && cHeaderAlerts == 1 && hf == -1 && !FStarsRecoveryActive());
+        TEST_CHECK(hdrAtAlert.cb == (cb == 0 ? 0x155 : cb == 1 ? 0x103 : 3));
+        TEST_CHECK(hdrAtAlert.rt == (cb == 3 ? 63 : 0x2a));
+        TEST_CHECK(rgbAtAlert[0] == (cb == 3 ? 0x37 : 0xa5) && rgbAtAlert[1] == 0xa5 && rgbAtAlert[2] == 0xa5);
+        TEST_CHECK(hdrCur.cb == hdrAtAlert.cb && hdrCur.rt == hdrAtAlert.rt && !pfnStarsTestAlertObserver);
+    }
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+static void TestRecordFramingBytes() {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    uint8_t rgb[1024], written[1026], stream[] = {3, 0, 0x31, 0x32, 0x33};
+    int16_t hfRead, fMissing;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("record-framing", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sheader", szDir, szDirSep);
+    for (int i = 0; i < 1024; i++) rgb[i] = (uint8_t)i;
+    StreamOpen(szFile, mdCreate);
+    // The historical ten-bit header wraps at 1024; the physical payload is
+    // still written. Encoding must not introduce a new length rejection.
+    WriteRt(rtEOF, 1024, rgb);
+    StreamClose();
+    hfRead = HfOpenFile(szFile, mdRead, &fMissing);
+    TEST_ASSERT(hfRead != -1);
+    TEST_CHECK(CbReadFile(hfRead, written, sizeof(written)) == sizeof(written));
+    CloseFile(hfRead);
+    TEST_CHECK(written[0] == 0 && written[1] == 0 && !memcmp(written + 2, rgb, sizeof(rgb)));
+    vlpMemStream = stream;
+    ReadRt();
+    TEST_CHECK(hdrCur.rt == rtEOF && hdrCur.cb == 3 && vlpMemStream == stream + 5 && !memcmp(rgbCur, stream + 2, 3));
+    vlpMemStream = NULL;
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
 static void TestNestedRecoveryRestoresParent(void) {
     TEST_ASSERT(!FStarsRecoveryActive());
     {
@@ -109,7 +184,9 @@ static void TestPendingKeepsFirst(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"file failure restores scope and flags", TestFileFailureUnwinds},
+TEST_LIST = {{"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
+             {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
+             {"file failure restores scope and flags", TestFileFailureUnwinds},
              {"short read closes the owned stream", TestShortReadClosesStream},
              {"nested recovery retains its parent", TestNestedRecoveryRestoresParent},
              {"cleanup retains an in-flight failure", TestCleanupKeepsInFlightFailure},

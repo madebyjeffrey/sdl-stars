@@ -540,7 +540,7 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
         hdr.rt = rt;
         lpv = lpLog;
         lpv += imemLogCur;
-        *(HDR *)lpv = hdr;
+        FEncodeHdr(hdr, std::as_writable_bytes(std::span(lpv, cbWireHdr)));
         if (cb > 0) {
             memcpy(lpv + 2, rg, cb);
         }
@@ -569,7 +569,7 @@ int16_t FGetPrevLogRt(HDR *phdr, uint8_t *pb) {
         return FALSE;
     }
     lpv = lpLog + imemLogPrev;
-    *phdr = *(HDR *)lpv;
+    FDecodeHdr(std::as_bytes(std::span(lpv, cbWireHdr)), *phdr);
     if (phdr->cb > 0) {
         memcpy(pb, lpv + 2, phdr->cb);
     }
@@ -580,7 +580,7 @@ int16_t FRunLogFile() {
     int16_t fLogOld;
     int16_t fRet;
     int16_t iCur;
-    HDR    *lprts;
+    uint8_t *lprts;
 
     iCur = 0;
     fRet = TRUE;
@@ -589,9 +589,9 @@ int16_t FRunLogFile() {
         return TRUE;
     }
     fLogOff = TRUE;
-    for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-        lprts = (HDR *)(lpLog + iCur);
-        fRet &= FRunLogRecord(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
+    for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+        lprts = lpLog + iCur;
+        fRet &= FRunLogRecord(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
     }
     fLogOff = fLogOld;
     gd.fFleetLinkValid = FALSE;
@@ -1153,8 +1153,8 @@ int16_t FLoadLogFile(char *pszLog) {
             vlpMemStream++;
             while (cSkip-- != 0) {
                 do {
-                    vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
-                } while (((HDR *)vlpMemStream)->rt != rtBOF);
+                    vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
+                } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
             }
         } else {
         StrOpen:
@@ -1192,7 +1192,7 @@ int16_t FLoadLogFile(char *pszLog) {
         NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
             ReadRt();
-            memmove(lpLog + iCur, &hdrCur, sizeof(HDR));
+            FEncodeHdr(hdrCur, std::as_writable_bytes(std::span(lpLog + iCur, cbWireHdr)));
             memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
         }
         ReadRt();
@@ -1279,7 +1279,7 @@ Done:
 
 int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
     int16_t  iCur;
-    HDR     *lprts;
+    uint8_t *lprts;
     RTLOGHDR rtlh;
     uint8_t rgbLogHdr[cbWireLogHdr];
     MSGPLR  *lpmp;
@@ -1308,9 +1308,9 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
         WriteRt(static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
-        for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-            lprts = (HDR *)(lpLog + iCur);
-            WriteRt(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
+        for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+            lprts = lpLog + iCur;
+            WriteRt(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
         }
         iCur = vcmsgplrOut;
         lpmp = vlpmsgplrOut;
@@ -1418,15 +1418,15 @@ void EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), void 
     int16_t fLogOld;
     int16_t fRet;
     int16_t iCur;
-    HDR    *lprts;
+    uint8_t *lprts;
 
     iCur = 0;
     fRet = TRUE;
     fLogOld = fLogOff;
     if (imemLogCur != 0) {
-        for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-            lprts = (HDR *)(lpLog + iCur);
-            if (pfn(lpLog + (2 + iCur), lprts->rt, lprts->cb, lpPass, iPass) == 0)
+        for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+            lprts = lpLog + iCur;
+            if (pfn(lpLog + (2 + iCur), HdvFromPrefix(lprts).rt(), HdvFromPrefix(lprts).cb(), lpPass, iPass) == 0)
                 break;
         }
     }

@@ -8,6 +8,7 @@
 #endif
 
 int  cStarsTestAlert;
+void (*pfnStarsTestAlertObserver)();
 char szStarsTestAlert[512];
 int16_t iStarsTestAlertResponse;
 int16_t fStarsTestAcceptLegacyRacePassword;
@@ -25,6 +26,7 @@ int16_t FStarsTestPromptLegacyRacePassword(char *szPassword) {
 // FStarsTestAlert records a message box and gives the answer that lets the
 // game carry on.
 static int16_t FStarsTestAlert(const char *sz, int16_t mbType) {
+    if (pfnStarsTestAlertObserver) pfnStarsTestAlertObserver();
     cStarsTestAlert++;
     snprintf(szStarsTestAlert, sizeof(szStarsTestAlert), "%s", sz);
     if (((mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)

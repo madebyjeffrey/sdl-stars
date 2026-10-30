@@ -489,6 +489,12 @@ static int16_t RemovePendingFile(void *lpUnused, const char *pszFile) {
     return TRUE;
 }
 
+static int16_t FReadLibraryHdr(NATIVEFILE *pf, HDR *phdr) {
+    std::byte rgb[cbWireHdr];
+
+    return CReadNative(rgb, cbWireHdr, 1, pf) == 1 && FDecodeHdr(rgb, *phdr);
+}
+
 /* GenerateWorld's original companion-write loop ignores writer return values.
  * Verify complete record framing without replacing the loaded player state. */
 static int16_t FCompleteGeneratedFile(const char *pszFile, DtFileType dt, int iplr) {
@@ -502,16 +508,16 @@ static int16_t FCompleteGeneratedFile(const char *pszFile, DtFileType dt, int ip
     if (!pf) return FALSE;
     fComplete = FALSE;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
-    if (CReadNative(&hdr, 2, 1, pf) != 1 || hdr.rt != rtBOF || hdr.cb != 16 ||
+    if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != 16 ||
         CReadNative(&rtbof, 16, 1, pf) != 1 || memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.lidGame != game.lid || rtbof.turn != game.turn || rtbof.dt != dt || rtbof.iPlayer != iplr) goto LDone;
     /* XY stores raw four-byte star packs between its GAME and EOF records. */
     if (dt == dtXY) {
         if (cbFile != 18 + 66 + 4L * game.cPlanMax + 4 || ISeekNativeFile(pf, -4, SEEK_END) != 0) goto LDone;
-        fComplete = CReadNative(&hdr, 2, 1, pf) == 1 && hdr.rt == rtEOF && hdr.cb == 2;
+        fComplete = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtEOF && hdr.cb == 2;
         goto LDone;
     }
-    while (CReadNative(&hdr, 2, 1, pf) == 1) {
+    while (FReadLibraryHdr(pf, &hdr)) {
         ib = LNativePosition(pf);
         if (ib < 0 || ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
@@ -663,7 +669,7 @@ static int16_t FReadManagedRace(char *pszPath, PLAYER *pplr) {
     pf = PfOpenNativeFile(pszPath, "rb");
     if (!pf) return FALSE;
     // Browsing versions must never trigger legacy conversion/password dialogs.
-    fOkay = CReadNative(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(bof) &&
+    fOkay = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(bof) &&
             CReadNative(&bof, sizeof(bof), 1, pf) == 1 && !memcmp(bof.rgid, "J3J3", 4) &&
             bof.verMajor == 2 && bof.verMinor == 85 && bof.dt == dtRace;
     ICloseNativeFile(pf);
@@ -1245,15 +1251,15 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     if (!pf) return FALSE;
     fComplete = FALSE;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
-    if (CReadNative(&hdr, 2, 1, pf) != 1 || hdr.rt != rtBOF || hdr.cb != sizeof(RTBOF) ||
+    if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != sizeof(RTBOF) ||
         CReadNative(&rtbof, sizeof(rtbof), 1, pf) != 1 || memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.verMajor != 2 || rtbof.verMinor != 85 || rtbof.dt != dt ||
         rtbof.iPlayer != iplr || rtbof.lidGame == 0) goto LDone;
     if (dt == dtXY) {
         uint32_t cPlanets;
         if (cbFile < 88 || (cbFile - 88) % 4 != 0 || (cPlanets = (uint32_t)((cbFile - 88) / 4)) > 999 ||
-            ISeekNativeFile(pf, 18, SEEK_SET) != 0 || CReadNative(&hdr, 2, 1, pf) != 1 || hdr.rt != rtGame || hdr.cb != 64 ||
-            ISeekNativeFile(pf, -4, SEEK_END) != 0 || CReadNative(&hdr, 2, 1, pf) != 1 || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
+            ISeekNativeFile(pf, 18, SEEK_SET) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtGame || hdr.cb != 64 ||
+            ISeekNativeFile(pf, -4, SEEK_END) != 0 || !FReadLibraryHdr(pf, &hdr) || hdr.rt != rtEOF || hdr.cb != 2) goto LDone;
         fComplete = TRUE;
         *plidGame = rtbof.lidGame;
         if (pturn) *pturn = rtbof.turn;
@@ -1261,7 +1267,7 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
         *pfMulti = rtbof.fMulti;
         goto LDone;
     }
-    while (CReadNative(&hdr, 2, 1, pf) == 1) {
+    while (FReadLibraryHdr(pf, &hdr)) {
         ib = LNativePosition(pf);
         if (ib < 0 || ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
@@ -2048,7 +2054,7 @@ int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
     fRace = FALSE;
     pf = PfOpenNativeFile(pszSource, "rb");
     if (pf) {
-        fRace = CReadNative(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(rtbof) &&
+        fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(rtbof) &&
                 CReadNative(&rtbof, sizeof(rtbof), 1, pf) == 1 && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
         ICloseNativeFile(pf);
     }
@@ -2428,9 +2434,9 @@ static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
 
     pf = PfOpenNativeFile(pszUniverse, "rb");
     if (!pf) return FALSE;
-    fRead = CReadNative(&hdr, 2, 1, pf) == 1 && hdr.rt == rtBOF && hdr.cb == sizeof(RTBOF) &&
+    fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(RTBOF) &&
             CReadNative(&rtbof, sizeof(rtbof), 1, pf) == 1 &&
-            CReadNative(&hdr, 2, 1, pf) == 1 && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
+            FReadLibraryHdr(pf, &hdr) && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
             CReadNative(&gameImport, sizeof(gameImport), 1, pf) == 1;
     ICloseNativeFile(pf);
     if (!fRead) return FALSE;

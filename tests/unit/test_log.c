@@ -564,7 +564,40 @@ static void test_cargo_lookup_prefixes(void) {
     }
 }
 
-TEST_LIST = {{"cargo log widths, coalescing and signed ID comparisons", test_cargo_log_wire_widths},
+static int16_t FEnumHeaderMutation(void *lp, int16_t rt, int16_t cb, void *lpPass, int16_t iPass) {
+    int *pc = (int *)lpPass;
+    (void)iPass;
+    if (*pc == 0) {
+        TEST_CHECK(rt == 63 && cb == 1 && lp == lpLog + 2);
+        lpLog[0] = 2; // callback changes the stride used after it returns
+    } else {
+        TEST_CHECK(rt == 62 && cb == 0 && lp == lpLog + 6);
+    }
+    (*pc)++;
+    return TRUE;
+}
+
+static void test_log_header_bytes_and_callback(void) {
+    const uint8_t rgb[] = {0x11, 0x22, 0x33};
+    uint8_t readback[3];
+    HDR hdr;
+    int c = 0;
+
+    TEST_ASSERT(FStarsTestInit());
+    fAi = TRUE; fLogOff = FALSE; imemLogCur = 0; imemLogPrev = -1;
+    WriteMemRt(static_cast<RecordType>(63), 3, (void *)rgb);
+    TEST_CHECK(imemLogCur == 5 && lpLog[0] == 3 && lpLog[1] == 0xfc && !memcmp(lpLog + 2, rgb, 3));
+    TEST_ASSERT(FGetPrevLogRt(&hdr, readback));
+    TEST_CHECK(hdr.cb == 3 && hdr.rt == 63 && !memcmp(readback, rgb, 3));
+    lpLog[0] = 1; lpLog[1] = 0xfc;
+    lpLog[4] = 0; lpLog[5] = 0xf8;
+    imemLogCur = 6;
+    EnumLogRts(FEnumHeaderMutation, &c, 0);
+    TEST_CHECK(c == 2);
+}
+
+TEST_LIST = {{"log framing uses bytes and re-reads callback-mutated strides", test_log_header_bytes_and_callback},
+             {"cargo log widths, coalescing and signed ID comparisons", test_cargo_log_wire_widths},
              {"cargo lookup failures stop before a missing mask", test_cargo_lookup_prefixes},
              {"control records retain partial research and password reads", test_control_record_partial_effects},
              {"battle-plan replay retains short deletion and publication", test_battle_plan_prefix_replay},

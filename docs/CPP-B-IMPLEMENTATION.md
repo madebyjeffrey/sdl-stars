@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Active | All player, parameter, control and cargo families pass the full local matrix. Final Linux/Windows qualification remains required. |
-| B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
+| B11: remaining packed/resource layouts | Active | Stream/memory record headers use explicit codecs; partial-read publication and callback-mutated strides pass focused contracts. Remaining fixed/resource families and full qualification are required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1036,3 +1036,29 @@ accepted unused-storage warnings, zero differences/errors and no skipped
 inputs. Frozen inputs, catalogs, baselines and layout/alignment contracts remain
 unchanged. This completes B10 implementation and local qualification; its final
 Linux/Windows gate remains pending. B11–B14 remain required for PR completion.
+
+
+## B11 record-header framing in qualification
+
+Two-byte record headers use explicit ten-bit lengths and six-bit types in
+streams, memory logs, tutorial resource traversal and library framing inspectors.
+Unknown types and the writer's existing 1024-byte length wrapping remain.
+Short file-header reads seed unread bytes from the old global header and publish
+the partial result before error callbacks; payload reads retain direct partial
+publication. Memory-log traversals re-read their lengths after callbacks.
+
+All 65,536 header words pass independent byte vectors, unaligned and short-span
+checks. Actual file/memory tests cover zero-/one-byte header failures, a partial
+payload observed during the alert callback, full physical 1024-byte writes and
+callback-mutated log strides. Focused wire/log/exception harnesses pass. Full
+local and B11 platform qualification remain required. B12–B14 remain pending.
+
+
+Record-header local qualification: 114/114 desktop tests including 27 native
+leak checks and available tutorial smoke coverage, 25/25 host tests, 37/37
+ASan/UBSan cases, all 27 source witnesses and 104 headers in both include
+orders. Debug/Release/host/sanitizer builds introduce no warnings. Desktop and
+host regressions each match 519 files through turn 150, with 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
+inputs, catalogs, baselines and layout/alignment contracts remain unchanged.
+Remaining B11 fixed/resource families and its final platform gate are required.
