@@ -103,9 +103,9 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
                 CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
     lpdm->dmFields = DM_ORIENTATION | DM_PAPERSIZE | DM_COPIES | DM_PRINTQUALITY | DM_YRESOLUTION;
-    lpdm->dmOrientation = lp->cxPhysical > lp->cyPhysical ? DMORIENT_LANDSCAPE : DMORIENT_PORTRAIT;
-    lpdm->dmPaperSize = lp->idPaper;
-    lpdm->dmCopies = 1; lpdm->dmPrintQuality = lpdm->dmYResolution = 300;
+    lpdm->mode.printer.dmOrientation = lp->cxPhysical > lp->cyPhysical ? DMORIENT_LANDSCAPE : DMORIENT_PORTRAIT;
+    lpdm->mode.printer.dmPaperSize = lp->idPaper;
+    lpdm->mode.printer.dmCopies = 1; lpdm->mode.printer.dmPrintQuality = lpdm->dmYResolution = 300;
     GlobalUnlock(hMode);
     if (lppd->Flags & PD_RETURNDC) {
         hdc = HdcCompatPrinter(lp, lp->cx, lp->cy);

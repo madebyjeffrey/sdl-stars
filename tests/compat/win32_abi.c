@@ -54,6 +54,13 @@ SIZE(BITMAP, 32); OFFSET(BITMAP, bmBits, 24);
 SIZE(OPENFILENAMEA, 152); OFFSET(OPENFILENAMEA, Flags, 96); OFFSET(OPENFILENAMEA, lpfnHook, 120);
 SIZE(PRINTDLGA, 120); OFFSET(PRINTDLGA, hDC, 32); OFFSET(PRINTDLGA, lpfnPrintHook, 72);
 SIZE(DEVMODEA, 156); OFFSET(DEVMODEA, dmFields, 40); OFFSET(DEVMODEA, dmFormName, 70);
+#ifdef STARS_UI_SDL
+OFFSET(DEVMODEA, mode.printer.dmOrientation, 44); OFFSET(DEVMODEA, mode.display.dmPosition, 44);
+OFFSET(DEVMODEA, displayFlags.dmDisplayFlags, 116); OFFSET(DEVMODEA, displayFlags.dmNup, 116);
+#else
+OFFSET(DEVMODEA, dmOrientation, 44); OFFSET(DEVMODEA, dmPosition, 44);
+OFFSET(DEVMODEA, dmDisplayFlags, 116); OFFSET(DEVMODEA, dmNup, 116);
+#endif
 #else
 #error The initial compatibility ABI is validated for 64-bit builds only
 #endif

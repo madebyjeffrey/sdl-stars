@@ -344,3 +344,10 @@ footprint is retained, with alignment derived from its actual payload types.
 The independent frozen C oracle covers every sixteen-bit value for all eighteen
 scalar/pointer/object publication operations and mixed operation sequences in
 both runtime-layout configurations. No anonymous aggregate remains in structs.h.
+
+
+B11 DEVMODEA: named printer/display and flags/N-up payloads retain the actual SDK
+size and offsets. Only the printer payload is produced/read in owned code;
+the display alternatives are named foreign-layout metadata. No anonymous struct
+extension or inactive alternate read is needed. Both SDK and wrapper assertions
+check the corresponding offsets independently.

@@ -100,8 +100,8 @@ int main(int argc, char **argv) {
     unsetenv("STARS_SDL_PRINTER"); unsetenv("STARS_SDL_PRINT_PAPER"); unsetenv("STARS_SDL_PRINT_ORIENTATION");
     CHECK(InitPrinter(&pd, szPages) && pd.hDC && pd.hDevMode && pd.hDevNames && pd.nCopies == 1);
     CHECK(CommDlgExtendedError() == 0);
-    lpdm = (DEVMODE*)(GlobalLock(pd.hDevMode)); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->dmPaperSize == DMPAPER_LETTER);
-    CHECK(lpdm->dmOrientation == DMORIENT_PORTRAIT && lpdm->dmPrintQuality == 300); GlobalUnlock(pd.hDevMode);
+    lpdm = (DEVMODE*)(GlobalLock(pd.hDevMode)); CHECK(lpdm && lpdm->dmSize == sizeof(*lpdm) && lpdm->mode.printer.dmPaperSize == DMPAPER_LETTER);
+    CHECK(lpdm->mode.printer.dmOrientation == DMORIENT_PORTRAIT && lpdm->mode.printer.dmPrintQuality == 300); GlobalUnlock(pd.hDevMode);
     lpn = (DEVNAMES*)(GlobalLock(pd.hDevNames)); CHECK(lpn && lpn->wDefault == 1);
     CHECK(strcmp((char *)lpn + lpn->wDeviceOffset, "Stars PDF") == 0); GlobalUnlock(pd.hDevNames);
     CHECK(GetDeviceCaps(pd.hDC, HORZRES) == 2400 && GetDeviceCaps(pd.hDC, VERTRES) == 3150);

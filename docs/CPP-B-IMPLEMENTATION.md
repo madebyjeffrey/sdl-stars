@@ -1591,3 +1591,19 @@ inputs. Debug/Release/host/sanitizer builds introduce no warnings. Runtime XFER
 size is unchanged; frozen C/SDK inputs and all regression baselines remain
 unchanged. The final wrapper aggregate and B11 platform gate, followed by
 B12–B14, are still required.
+
+
+## B11 named foreign-layout aggregates
+
+The wrapper's DEVMODEA printer/display and flags/N-up unions now have named
+payloads. Its actual print producer selects the printer payload; unused display
+alternatives retain their SDK-compatible layout without anonymous structs.
+The SDK reference assertions independently measure the same offsets. This
+removes the final anonymous aggregate in owned core/wrapper declarations without
+changing the SDK record size or the printer's initialized bytes. Standalone ABI,
+actual print/PDF and native print leak checks pass. Full joint qualification
+with the typed-heap batch passes 117 desktop / 28 native leaks / 26 host /
+42 sanitizer cases, all 27 source witnesses, 107 headers in both include orders
+and both 519-file regressions with the same 25 accepted warnings and no
+differences or skips. The final B11 platform gate remains required.
+

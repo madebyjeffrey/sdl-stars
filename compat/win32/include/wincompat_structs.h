@@ -316,14 +316,14 @@ typedef struct _devicemodeA {
     WORD dmSpecVersion, dmDriverVersion, dmSize, dmDriverExtra;
     DWORD dmFields;
     union {
-        struct { SHORT dmOrientation, dmPaperSize, dmPaperLength, dmPaperWidth, dmScale, dmCopies, dmDefaultSource, dmPrintQuality; };
-        struct { POINT dmPosition; DWORD dmDisplayOrientation, dmDisplayFixedOutput; };
-    };
+        struct { SHORT dmOrientation, dmPaperSize, dmPaperLength, dmPaperWidth, dmScale, dmCopies, dmDefaultSource, dmPrintQuality; } printer;
+        struct { POINT dmPosition; DWORD dmDisplayOrientation, dmDisplayFixedOutput; } display;
+    } mode;
     SHORT dmColor, dmDuplex, dmYResolution, dmTTOption, dmCollate;
     CHAR dmFormName[32];
     WORD dmLogPixels;
     DWORD dmBitsPerPel, dmPelsWidth, dmPelsHeight;
-    union { DWORD dmDisplayFlags, dmNup; };
+    union { DWORD dmDisplayFlags; DWORD dmNup; } displayFlags;
     DWORD dmDisplayFrequency, dmICMMethod, dmICMIntent, dmMediaType, dmDitherType;
     DWORD dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight;
 } DEVMODEA, *LPDEVMODEA;
