@@ -1162,11 +1162,11 @@ int16_t FLoadLogFile(char *pszLog) {
         }
 
         ReadRt();
-        if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+        if (hdrCur.rt != rtBOF || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() != 85) {
             FileError(idsFileDoesBelongVersionStars);
             goto FailSuccess;
         }
-        if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
+        if (game.lid != BfvFromPrefix(rgbCur, sizeof(rgbCur)).lidGame() || game.turn > BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn()) {
         FailSuccess:
             if (vlpMemStream) {
                 vlpMemStream = NULL;
@@ -1175,18 +1175,18 @@ int16_t FLoadLogFile(char *pszLog) {
             }
             return TRUE;
         }
-        if (((RTBOF *)rgbCur)->turn != game.turn) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn() != game.turn) {
             FileError(idsLogFileRecentGameTryingLoadIgnoring);
             goto FailSuccess;
         }
-        if (((RTBOF *)rgbCur)->wGen != game.wGen) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).wGen() != game.wGen) {
             FileError(idsFileGame);
             goto FailSuccess;
         }
-        wVersFile = ((RTBOF *)rgbCur)->wVersion;
-        gd.fFileCrippled = ((RTBOF *)rgbCur)->fCrippled;
+        wVersFile = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wVersion();
+        gd.fFileCrippled = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled();
         if (gd.fGeneratingTurn) {
-            rgplr[idPlayer].fCrippled = ((RTBOF *)rgbCur)->fCrippled;
+            rgplr[idPlayer].fCrippled = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled();
         }
         ReadRt();
         NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);

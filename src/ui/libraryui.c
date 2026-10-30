@@ -495,6 +495,12 @@ static int16_t FReadLibraryHdr(NATIVEFILE *pf, HDR *phdr) {
     return CReadNative(rgb, cbWireHdr, 1, pf) == 1 && FDecodeHdr(rgb, *phdr);
 }
 
+static int16_t FReadLibraryBof(NATIVEFILE *pf, RTBOF *pbof) {
+    std::byte rgb[cbWireBof];
+
+    return CReadNative(rgb, cbWireBof, 1, pf) == 1 && FDecodeBof(rgb, *pbof);
+}
+
 /* GenerateWorld's original companion-write loop ignores writer return values.
  * Verify complete record framing without replacing the loaded player state. */
 static int16_t FCompleteGeneratedFile(const char *pszFile, DtFileType dt, int iplr) {
@@ -509,7 +515,7 @@ static int16_t FCompleteGeneratedFile(const char *pszFile, DtFileType dt, int ip
     fComplete = FALSE;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != 16 ||
-        CReadNative(&rtbof, 16, 1, pf) != 1 || memcmp(rtbof.rgid, "J3J3", 4) ||
+        !FReadLibraryBof(pf, &rtbof) || memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.lidGame != game.lid || rtbof.turn != game.turn || rtbof.dt != dt || rtbof.iPlayer != iplr) goto LDone;
     /* XY stores raw four-byte star packs between its GAME and EOF records. */
     if (dt == dtXY) {
@@ -669,8 +675,8 @@ static int16_t FReadManagedRace(char *pszPath, PLAYER *pplr) {
     pf = PfOpenNativeFile(pszPath, "rb");
     if (!pf) return FALSE;
     // Browsing versions must never trigger legacy conversion/password dialogs.
-    fOkay = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(bof) &&
-            CReadNative(&bof, sizeof(bof), 1, pf) == 1 && !memcmp(bof.rgid, "J3J3", 4) &&
+    fOkay = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
+            FReadLibraryBof(pf, &bof) && !memcmp(bof.rgid, "J3J3", 4) &&
             bof.verMajor == 2 && bof.verMinor == 85 && bof.dt == dtRace;
     ICloseNativeFile(pf);
     if (!fOkay) return FALSE;
@@ -1177,7 +1183,7 @@ int16_t FImportLibraryRace(HWND hwnd, const char *pszSource) {
         RestoreRaceState(&rsSav, TRUE, TRUE);
         return FALSE;
     }
-    fLegacy = ((VERS *)&wVersFile)->verMinor < 85;
+    fLegacy = VerMinor(wVersFile) < 85;
     pchSlash = strrchr(szSource, '/');
     pch = strrchr(szSource, '\\');
     if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
@@ -1251,8 +1257,8 @@ static int16_t FInspectImportFile(const char *pszFile, DtFileType dt, int iplr,
     if (!pf) return FALSE;
     fComplete = FALSE;
     if (ISeekNativeFile(pf, 0, SEEK_END) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, SEEK_SET) != 0) goto LDone;
-    if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != sizeof(RTBOF) ||
-        CReadNative(&rtbof, sizeof(rtbof), 1, pf) != 1 || memcmp(rtbof.rgid, "J3J3", 4) ||
+    if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != cbWireBof ||
+        !FReadLibraryBof(pf, &rtbof) || memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.verMajor != 2 || rtbof.verMinor != 85 || rtbof.dt != dt ||
         rtbof.iPlayer != iplr || rtbof.lidGame == 0) goto LDone;
     if (dt == dtXY) {
@@ -2054,8 +2060,8 @@ int16_t FImportDesktopFile(HWND hwnd, const char *pszSource) {
     fRace = FALSE;
     pf = PfOpenNativeFile(pszSource, "rb");
     if (pf) {
-        fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(rtbof) &&
-                CReadNative(&rtbof, sizeof(rtbof), 1, pf) == 1 && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
+        fRace = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
+                FReadLibraryBof(pf, &rtbof) && !memcmp(rtbof.rgid, "J3J3", 4) && rtbof.dt == dtRace;
         ICloseNativeFile(pf);
     }
     return fRace ? FImportLibraryRaceAndEdit(hwnd, pszSource) : FImportLibraryGame(hwnd, pszSource);
@@ -2434,8 +2440,8 @@ static int16_t FInspectImportPlayer(const char *pszUniverse, int iplr) {
 
     pf = PfOpenNativeFile(pszUniverse, "rb");
     if (!pf) return FALSE;
-    fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == sizeof(RTBOF) &&
-            CReadNative(&rtbof, sizeof(rtbof), 1, pf) == 1 &&
+    fRead = FReadLibraryHdr(pf, &hdr) && hdr.rt == rtBOF && hdr.cb == cbWireBof &&
+            FReadLibraryBof(pf, &rtbof) &&
             FReadLibraryHdr(pf, &hdr) && hdr.rt == rtGame && hdr.cb == sizeof(GAME) &&
             CReadNative(&gameImport, sizeof(gameImport), 1, pf) == 1;
     ICloseNativeFile(pf);

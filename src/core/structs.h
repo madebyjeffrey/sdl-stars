@@ -941,14 +941,10 @@ struct _rpt {
 struct _rtbof {
     char    rgid[4]; /* +0x0000 (4) */
     int32_t lidGame; /* +0x0004 (4) */
-    union {
-        struct {
-            uint16_t verInc : 5, /* +0x0008 (2) @bit0 */
-                verMinor : 7,    /* @bit5 */
-                verMajor : 4;    /* @bit12 */
-        };
-        uint16_t wVersion; /* +0x0008 (2) */
-    };
+    uint16_t verInc : 5, /* +0x0008 (2) @bit0 */
+        verMinor : 7,    /* @bit5 */
+        verMajor : 4;    /* @bit12 */
+    uint16_t wVersion() const noexcept { return static_cast<uint16_t>(verInc | (verMinor << 5) | (verMajor << 12)); }
     uint16_t turn;        /* +0x000A (2) */
     int16_t  iPlayer : 5, /* +0x000C (2) @bit0 */
         lSaltTime : 11;   /* @bit5 */

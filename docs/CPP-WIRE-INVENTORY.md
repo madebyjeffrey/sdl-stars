@@ -200,3 +200,11 @@ numeric little-endian bits, independent of runtime HDR packing. Zero-/one-byte
 read failures publish the merged old/new header before error callbacks; payload
 partial publication, callback-mutated strides, unknown tags and length wrapping
 remain. Remaining BOF/entity/resource boundaries still require migration.
+
+
+B11 BOF family: explicit sixteen-byte codecs replace raw preamble dumps in
+writers and library inspectors. Scoped byte fields preserve per-read scratch
+publication and version/mark/import short circuits. Signed player/salt bits
+retain their domains and encryption inputs. RTBOF version aliases now compute
+the numeric word from its actual fields; VERS casts of wVersFile are removed.
+The historical RTBOF/VERS size contracts remain independently measured.

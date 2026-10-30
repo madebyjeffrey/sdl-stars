@@ -392,7 +392,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
         if (!FOpenFile(static_cast<DtFileType>(dt | grf), iPlayer, 32))
             goto LError;
         if (iPlayer == iplrNone) {
-            gd.fGameOverMan = ((RTBOF *)rgbCur)->fGameOverMan;
+            gd.fGameOverMan = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fGameOverMan();
         }
 LNextTurn:
         cturn++;
@@ -418,7 +418,7 @@ LNextTurn:
         }
         if (lpbBattleCur) {
             RawStore16(lpbBattleCur, 0xffff);
-            if (((VERS *)&wVersFile)->verMinor < 80) {
+            if (VerMinor(wVersFile) < 80) {
                 UpdateBattleRecords();
             }
         }
@@ -713,8 +713,8 @@ LNextTurn:
         if (CbFileSize(hf) != LSeekFile(hf, 0, 1)) {
             ReadRt();
             if (hdrCur.rt == rtBOF) {
-                game.turn = ((RTBOF *)rgbCur)->turn;
-                game.wGen = ((RTBOF *)rgbCur)->wGen;
+                game.turn = BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn();
+                game.wGen = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wGen();
                 for (i = 0; i < game.cPlayer; i++) {
                     rgplr[i].cShDef = 0;
                     rgplr[i].cFleet = 0;
@@ -1238,15 +1238,15 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
             goto LBadFile;
         }
-        if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() < 2 || (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() == 2 && BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85)) {
             FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
             goto LBadFile;
         }
-        if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() > 2 || (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() == 2 && BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85)) {
             FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
             goto LBadFile;
         }
-        rtbof = *((RTBOF *)rgbCur);
+        FDecodeBof(std::as_bytes(std::span(rgbCur)), rtbof);
         if (rtbof.iPlayer != iPlayer) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
             goto LBadFile;
@@ -1295,7 +1295,7 @@ int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md) {
             LSeekFile(hf, 0, 0);
             ReadRt();
         }
-        wVersFile = rtbof.wVersion;
+        wVersFile = rtbof.wVersion();
         gd.fFileCrippled = rtbof.fCrippled;
         return TRUE;
 LBadFile:
@@ -1345,21 +1345,21 @@ int16_t FCheckFile(DtFileType dt, int16_t iPlayer, MdMark md) {
     fOpened = FOpenFile(dt, iPlayer, 32);
     switch (md) {
     case mdMarkInUse:
-        if (!fOpened || ((RTBOF *)rgbCur)->fInUse) {
+        if (!fOpened || BfvFromPrefix(rgbCur, sizeof(rgbCur)).fInUse()) {
             fReturn = TRUE;
             break;
         }
         fReturn = FALSE;
         break;
     case mdMarkDone:
-        if (fOpened && ((RTBOF *)rgbCur)->fDone) {
+        if (fOpened && BfvFromPrefix(rgbCur, sizeof(rgbCur)).fDone()) {
             fReturn = TRUE;
             break;
         }
         fReturn = FALSE;
         break;
     case mdMarkMulti:
-        if (fOpened && ((RTBOF *)rgbCur)->fMulti) {
+        if (fOpened && BfvFromPrefix(rgbCur, sizeof(rgbCur)).fMulti()) {
             fReturn = TRUE;
             break;
         }
@@ -1413,13 +1413,13 @@ void STARS_TEST_IMPL(ReadRt)() {
         RgFromStream(rgbCur, hdrCur.cb);
     }
     if (hdrCur.rt == rtBOF) {
-        if (hdrCur.cb != sizeof(RTBOF)) {
+        if (hdrCur.cb != cbWireBof) {
             FileError(idsGameFileAppearsCorruptUnableLoadFile);
             if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, idsFileError);
             return;
         }
-        SetFileXorStream(((RTBOF *)rgbCur)->lidGame, ((RTBOF *)rgbCur)->lSaltTime, ((RTBOF *)rgbCur)->turn, ((RTBOF *)rgbCur)->iPlayer,
-                         ((RTBOF *)rgbCur)->fCrippled);
+        SetFileXorStream(BfvFromPrefix(rgbCur, sizeof(rgbCur)).lidGame(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).lSaltTime(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer(),
+                         BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled());
     } else if (hdrCur.rt != rtEOF) {
         XorFileBuf(rgbCur, hdrCur.cb);
     }

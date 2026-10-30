@@ -1720,6 +1720,7 @@ static BOOL FTestRaceCancellation(void) {
 static BOOL FTestLegacyRaceImport(void) {
     char szOldPassword[] = "old-password", szNewPassword[] = "new-\xc3\xa9";
     RTBOF rtbof = {0};
+    std::byte rgbBof[cbWireBof];
     PLAYER plr, plrSav;
     char szSource[512], szSnapshot[512], szImported[512], szCancelled[512];
     const char *pszSettings = PszCompatEnvironment("STARS_SETTINGS_DIR");
@@ -1745,7 +1746,8 @@ static BOOL FTestLegacyRaceImport(void) {
         rtbof.verMinor = 84;
         rtbof.dt = dtRace;
         StreamOpen(szSource, mdCreate);
-        WriteRt(rtBOF, sizeof(rtbof), &rtbof);
+        FEncodeBof(rtbof, rgbBof);
+        WriteRt(rtBOF, cbWireBof, rgbBof);
         WriteRtPlr(&plr, NULL);
         icksum = IRaceChecksum(&plr);
         WriteRt(rtEOF, sizeof(icksum), &icksum);
@@ -1755,7 +1757,7 @@ static BOOL FTestLegacyRaceImport(void) {
         if (!FImportLibraryRaceAs(0, szSource, rgszName[i]) || cLegacyRacePasswords != i ||
             !FTestFilesEqual(szSource, szSnapshot)) goto LDone;
         CchSnprintf(szImported, sizeof(szImported), "%s%sRace Designs%s%s", pszSettings, szDirSep, szDirSep, rgszName[i]);
-        if (FWasRaceFile(szImported, FALSE) != 1 || ((VERS *)&wVersFile)->verMinor != 85 ||
+        if (FWasRaceFile(szImported, FALSE) != 1 || VerMinor(wVersFile) != 85 ||
             strcmp(vplr.szName, "R\xc3\xa9") || strcmp(vplr.szNames, "R\xc3\xa9s") ||
             vplr.lSalt != (i == 0 ? 0 : LSaltFromSz(szNewPassword)) || cLegacyRacePasswords != i) goto LDone;
     }

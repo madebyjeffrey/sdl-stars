@@ -65,7 +65,7 @@ int16_t FGenerateTurn() {
     }
     TurnLog(idsGeneratingYearD);
     fFileErrSilent = fErrSav;
-    if (((VERS *)&wVersFile)->verMajor <= 0) {
+    if (VerMajor(wVersFile) <= 0) {
         for (i = 0; i < game.cPlayer && rgplr[i].iPlrBmp == 0; i++) {
         }
         if (i == game.cPlayer) {

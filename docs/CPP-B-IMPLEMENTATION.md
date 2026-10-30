@@ -18,7 +18,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
-| B10: message/log payloads | Active | All player, parameter, control and cargo families pass the full local matrix. Final Linux/Windows qualification remains required. |
+| B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
 | B11: remaining packed/resource layouts | Active | Stream/memory record headers use explicit codecs; partial-read publication and callback-mutated strides pass focused contracts. Remaining fixed/resource families and full qualification are required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
@@ -1062,3 +1062,36 @@ host regressions each match 519 files through turn 150, with 25 accepted
 unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
 inputs, catalogs, baselines and layout/alignment contracts remain unchanged.
 Remaining B11 fixed/resource families and its final platform gate are required.
+
+
+## B11 file-preamble family in qualification
+
+The sixteen-byte BOF preamble now uses explicit little-endian numeric codecs,
+including signed five-bit player and eleven-bit salt fields. Version words use
+actual scalar extraction; the inactive version union and VERS pointer aliases
+are removed. Readers keep field access at the old scratch/callback boundaries,
+and library inspectors decode only after their existing complete reads.
+
+Writers encode BOF bytes before the existing stream call. File-version checks,
+legacy race admission, mark/update flags, RNG calls and encryption setup keep
+their existing order. Mutable legacy fixtures now emit bytes; independent frozen
+inputs and layout expectations remain unchanged. All version/flag/player/salt
+words, odd offsets and short spans pass independent vectors. Real encryption-
+seed, save-version and legacy race cases pass, along with frozen layouts. Full
+local and B11 platform qualification remain required.
+
+
+B10 final platform qualification: all sixteen Linux/Windows checks pass for
+17f8bf5, including both regressions, source witnesses, Linux ownership sanitizers,
+Windows SDL/SDK and available tutorial checkpoints. B01–B10 are complete.
+B11–B14 remain required before this PR can become ready for review.
+
+
+BOF local qualification: 114/114 desktop tests including all 27 native leak
+checks and available tutorial smoke coverage, 25/25 host tests, 37/37 ASan/UBSan
+cases, all 27 source witnesses and 104 headers in both include orders. Debug/
+Release/host/sanitizer builds introduce no warnings. Desktop and host regressions
+each match 519 files through turn 150, with 25 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines
+and layout/alignment contracts remain unchanged. Remaining B11 fixed/resource
+families and its final platform gate remain required.

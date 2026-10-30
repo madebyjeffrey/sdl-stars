@@ -106,7 +106,8 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
 // Format 2.85 is UTF-8; older and newer formats are refused.
 static int16_t FSetHostVersion(int16_t verMinor) {
     char  szFile[MAX_PATH];
-    VERS  vers;
+    uint8_t rgbVersion[2];
+    uint16_t wVersion;
     FILE *fp;
 
     snprintf(szFile, sizeof(szFile), "%s.hst", szBase);
@@ -114,18 +115,20 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     if (fp == NULL)
         return FALSE;
     // The RTBOF record follows its 2-byte header and isn't encrypted.
-    fseek(fp, 2 + offsetof(RTBOF, wVersion), SEEK_SET);
-    if (fread(&vers, sizeof(vers), 1, fp) != 1) {
+    fseek(fp, 2 + 8, SEEK_SET);
+    if (fread(rgbVersion, sizeof(rgbVersion), 1, fp) != 1) {
         fclose(fp);
         return FALSE;
     }
+    wVersion = rgbVersion[0] | (uint16_t(rgbVersion[1]) << 8);
     if (verMinor < 0) {
         fclose(fp);
-        return vers.verMajor == 2 && vers.verMinor == 85 && vers.verInc == 0;
+        return (wVersion >> 12) == 2 && ((wVersion >> 5) & 127) == 85 && (wVersion & 31) == 0;
     }
-    vers.verMinor = verMinor;
-    fseek(fp, 2 + offsetof(RTBOF, wVersion), SEEK_SET);
-    fwrite(&vers, sizeof(vers), 1, fp);
+    wVersion = (wVersion & 0xf01f) | ((uint16_t(verMinor) & 127) << 5);
+    rgbVersion[0] = (uint8_t)wVersion; rgbVersion[1] = (uint8_t)(wVersion >> 8);
+    fseek(fp, 2 + 8, SEEK_SET);
+    fwrite(rgbVersion, sizeof(rgbVersion), 1, fp);
     fclose(fp);
     return TRUE;
 }

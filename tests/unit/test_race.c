@@ -14,6 +14,7 @@
 static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const char *szName, const char *szNames,
                                        int16_t fPlural, int16_t fCompressed, int32_t lSalt) {
     RTBOF rtbof = {0};
+    std::byte rgbBof[cbWireBof];
     PLAYER plr;
     uint8_t rgb[sizeof(PLAYER) + 80];
     uint8_t *pb;
@@ -63,7 +64,8 @@ static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const cha
     rtbof.verMinor = verMinor;
     rtbof.dt = dtRace;
     StreamOpen(szFile, mdCreate);
-    WriteRt(rtBOF, sizeof(rtbof), &rtbof);
+    FEncodeBof(rtbof, rgbBof);
+    WriteRt(rtBOF, cbWireBof, rgbBof);
     WriteRt(rtPlr, (int16_t)(pb - rgb), rgb);
     WriteRt(rtEOF, sizeof(icksum), &icksum);
     StreamClose();
@@ -361,8 +363,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     iOff += 4;
     memset(&rgb[iOff + 1], 'N', 60);
     wVersFile = 0;
-    ((VERS *)&wVersFile)->verMajor = 2;
-    ((VERS *)&wVersFile)->verMinor = 85;
+    wVersFile = (wVersFile & 31) | (85u << 5) | (2u << 12);
 
     memset(&buf, 0x55, sizeof(buf));
     ReadRtPlr(&buf.plr, rgb, sizeof(rgb));

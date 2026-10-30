@@ -607,16 +607,16 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
         {
             StreamOpen(szFile, mdRead);
             ReadRt();
-            if (hdrCur.rt != rtBOF || hdrCur.cb != sizeof(RTBOF) || ((RTBOF *)rgbCur)->verMajor != 2 ||
-                ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor > 85) {
+            if (hdrCur.rt != rtBOF || hdrCur.cb != cbWireBof || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 ||
+                BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 49 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85) {
                 idsError = idsFileDoesBelongVersionStars;
                 fRet = -1;
                 goto LBadFile;
             } else {
-                wVersFile = ((RTBOF *)rgbCur)->wVersion;
-                fLegacy = ((RTBOF *)rgbCur)->verMinor < 85;
-                fPlural = ((RTBOF *)rgbCur)->verMinor >= 55;
-                if (((RTBOF *)rgbCur)->dt == 5) {
+                wVersFile = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wVersion();
+                fLegacy = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85;
+                fPlural = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() >= 55;
+                if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).dt() == 5) {
                     ReadRt();
                     if (hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;

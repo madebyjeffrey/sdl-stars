@@ -128,6 +128,24 @@ static void TestRecordFramingBytes() {
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
+static void TestBofSignedEncryptionFields() {
+    uint8_t stream[] = {16, 32, 'J', '3', 'J', '3', 1, 0, 0, 0x80, 0xa0, 0x2a, 0xfe, 0xff, 0x10, 0x80, 5, 0x10};
+    int32_t lSeed1, lSeed2, expected1, expected2;
+
+    TEST_ASSERT(FStarsTestInit());
+    // These expectations are signed five-/eleven-bit fields, independent of
+    // native bitfield layout and the stream decoder under test.
+    SetFileXorStream(-2147483647, -1024, -2, -16, TRUE);
+    GetFileSeeds(&expected1, &expected2);
+    vlpMemStream = stream;
+    ReadRt();
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(hdrCur.rt == rtBOF && hdrCur.cb == 16 && vlpMemStream == stream + sizeof(stream));
+    TEST_CHECK(lSeed1 == expected1 && lSeed2 == expected2);
+    TEST_CHECK(BfvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer() == -16 && BfvFromPrefix(rgbCur, sizeof(rgbCur)).lSaltTime() == -1024);
+    vlpMemStream = NULL;
+}
+
 static void TestNestedRecoveryRestoresParent(void) {
     TEST_ASSERT(!FStarsRecoveryActive());
     {
@@ -184,7 +202,8 @@ static void TestPendingKeepsFirst(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
+TEST_LIST = {{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
+             {"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
              {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
              {"file failure restores scope and flags", TestFileFailureUnwinds},
              {"short read closes the owned stream", TestShortReadClosesStream},

@@ -932,10 +932,17 @@ int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szFor
     }
 }
 
+static void WriteRtBof(const RTBOF &rtbof) {
+    std::byte rgb[cbWireBof];
+
+    FEncodeBof(rtbof, rgb);
+    WriteRt(rtBOF, cbWireBof, rgb);
+}
+
 void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
     RTBOF rtbof;
 
-    memset(&rtbof, 0, sizeof(RTBOF));
+    memset(&rtbof, 0, sizeof(rtbof));
     strncpy(rtbof.rgid, "J3J3", 4);
     rtbof.lidGame = game.lid;
     rtbof.wGen = game.wGen;
@@ -951,7 +958,7 @@ void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
     rtbof.fDone = gd.fSubmit;
     rtbof.fInUse = gd.fHostMode;
     rtbof.fGameOverMan = dt == 2 && gd.fGameOverMan != 0;
-    WriteRt(rtBOF, 16, &rtbof);
+    WriteRtBof(rtbof);
     return;
 }
 
@@ -979,15 +986,15 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
             FileError(idsFileDoesBelongVersionStars);
             goto LBadFile;
         }
-        if (((RTBOF *)rgbCur)->verMajor < 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor < 85)) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() < 2 || (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() == 2 && BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85)) {
             FileError(idsSorryFileCreatedOlderVersionStarsIncompatible);
             goto LBadFile;
         }
-        if (((RTBOF *)rgbCur)->verMajor > 2 || (((RTBOF *)rgbCur)->verMajor == 2 && ((RTBOF *)rgbCur)->verMinor > 85)) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() > 2 || (BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() == 2 && BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85)) {
             FileError(idsFileCreatedNewerVersionStarsMustUpgrade);
             goto LBadFile;
         }
-        rtbof = *((RTBOF *)rgbCur);
+        FDecodeBof(std::as_bytes(std::span(rgbCur)), rtbof);
         if (game.lid == 0)
             goto LBadFile;
         if (rtbof.lidGame != game.lid) {
@@ -1039,7 +1046,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
         }
         if (fChange) {
             LSeekFile(hf, 0, 0);
-            WriteRt(rtBOF, 16, &rtbof);
+            WriteRtBof(rtbof);
         }
         fSuccess = TRUE;
 LBadFile:
@@ -1066,8 +1073,8 @@ void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
     if (cb != 0)
         memmove(rgbCur, rg, cb);
     if (rt == rtBOF) {
-        SetFileXorStream(((RTBOF *)rgbCur)->lidGame, ((RTBOF *)rgbCur)->lSaltTime, ((RTBOF *)rgbCur)->turn, ((RTBOF *)rgbCur)->iPlayer,
-                         ((RTBOF *)rgbCur)->fCrippled);
+        SetFileXorStream(BfvFromPrefix(rgbCur, sizeof(rgbCur)).lidGame(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).lSaltTime(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn(), BfvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer(),
+                         BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled());
     } else if (rt != rtEOF) {
         XorFileBuf(rgbCur, cb);
     }

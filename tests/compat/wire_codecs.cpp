@@ -15,6 +15,38 @@
 
 int main() {
     for (std::uint32_t w = 0; w < 65536; w++) {
+        const std::uint32_t flags = 65535 - w;
+        const std::array<std::byte, 16> golden = {std::byte{0x4a}, std::byte{0x33}, std::byte{0x4a}, std::byte{0x33},
+            std::byte{1}, std::byte{0}, std::byte{0}, std::byte{0x80}, static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+            std::byte{0xfe}, std::byte{0xff}, static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256),
+            static_cast<std::byte>(flags % 256), static_cast<std::byte>(flags / 256)};
+        const std::int16_t player = static_cast<std::int16_t>((w % 32) < 16 ? std::int32_t(w % 32) : std::int32_t(w % 32) - 32);
+        const std::int16_t salt = static_cast<std::int16_t>((w / 32) < 1024 ? std::int32_t(w / 32) : std::int32_t(w / 32) - 2048);
+        RTBOF bof{};
+        std::array<std::byte, 18> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeBof(golden, bof) && std::memcmp(bof.rgid, "J3J3", 4) == 0 && bof.lidGame == -2147483647 && bof.turn == 65534);
+        CHECK(bof.wVersion() == w && bof.verInc == w % 32 && bof.verMinor == (w / 32) % 128 && bof.verMajor == w / 4096);
+        CHECK(bof.iPlayer == player && bof.lSaltTime == salt && bof.dt == flags % 256 && bof.wGen == flags / 8192);
+        CHECK(bof.fDone == ((flags >> 8) & 1) && bof.fInUse == ((flags >> 9) & 1) && bof.fMulti == ((flags >> 10) & 1));
+        CHECK(bof.fGameOverMan == ((flags >> 11) & 1) && bof.fCrippled == ((flags >> 12) & 1));
+        CHECK(FEncodeBof(bof, std::span(rgb).subspan(1, 16)) && std::memcmp(rgb.data() + 1, golden.data(), 16) == 0);
+        CHECK(rgb[0] == std::byte{0xa5} && rgb[17] == std::byte{0xa5});
+        auto view = BfvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1), 16);
+        CHECK(view.lidGame() == bof.lidGame && view.wVersion() == w && view.turn() == 65534 && view.iPlayer() == player && view.lSaltTime() == salt);
+        CHECK(view.verInc() == bof.verInc && view.verMinor() == bof.verMinor && view.verMajor() == bof.verMajor);
+        CHECK(view.dt() == bof.dt && view.fDone() == bof.fDone && view.fInUse() == bof.fInUse && view.fMulti() == bof.fMulti);
+        CHECK(view.fGameOverMan() == bof.fGameOverMan && view.fCrippled() == bof.fCrippled && view.wGen() == bof.wGen);
+        if (w == 32768) for (std::size_t cb = 0; cb < 16; cb++) {
+            bof.lidGame = 999; bof.turn = 123; bof.iPlayer = -7; bof.lSaltTime = -123;
+            CHECK(!FDecodeBof(std::span(golden).first(cb), bof) && bof.lidGame == 999 && bof.turn == 123 && bof.iPlayer == -7 && bof.lSaltTime == -123);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeBof(bof, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
         const std::array<std::byte, 2> golden = {static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256)};
         HDR hdr{};
         std::array<std::byte, 4> rgb;
