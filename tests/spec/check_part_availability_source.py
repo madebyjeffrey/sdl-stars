@@ -209,7 +209,7 @@ int main(int argc,char **argv){
         rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].SetITechNow(rgIn[5]);
         for(int f=0;f<6;f++)rgplr[target].rgTech[f]=(int8_t)rgIn[10+f];
         PLAYER rgBefore[16];GAME gameBefore;memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));int16_t idBefore=idPlayer;
-        PART part,expected;memset(&part,0xa5,sizeof(part));part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.SetPcom(&comPrior);memcpy(&expected,&part,sizeof(part));
+        PART part,expected;auto rgbPart=std::as_writable_bytes(std::span(&part,1));std::fill(rgbPart.begin(),rgbPart.end(),std::byte{0xa5});part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.SetPcom(&comPrior);memcpy(&expected,&part,sizeof(part));
         memset(rgCalls,-1,sizeof(rgCalls));cCalls=0;int result;
         if(rgIn[0]==0){result=FLookupPart(&part);if(kind<16 && item<rgcRows[kind])expected.SetPcom(LpcomRow(kind,item));}
         else if(rgIn[0]==1)result=FShouldPartBeHidden(&part);
