@@ -1459,3 +1459,24 @@ Both regressions match 519 files through turn 150 with the same 25 accepted
 unused-storage warnings, zero differences/errors and no skipped inputs. All
 frozen references, baselines, serialized widths and retained layout contracts
 remain unchanged. Platform checks and the remaining B11/B12–B14 work continue.
+
+
+## B11 drawing callback borrows
+
+OBJ stores one actual void pointer and returns the selected PLANET/FLEET/THING
+borrow through typed accessors. Tile groups still select their corresponding
+callback and object; the null callback object remains null. No owner, new tag,
+validation gate, allocation or serialization is introduced. The inactive
+pointer union is gone, while its footprint and callback signatures stay fixed.
+
+This is the second focused commit of the complete scalar/drawing verification
+batch above: 117 desktop / 28 native leaks / 26 host / 41 sanitizer cases,
+27 source witnesses, 105 headers in both include orders, and both 519-file
+regressions with the same 25 accepted warnings and no differences/skips.
+The B11 component/popup/transfer aliases and final platform gate remain required;
+B12 arenas, B13 session ownership and B14 strict compilation are still pending.
+
+All sixteen Linux/Windows checks now pass for the preceding complete THING
+checkpoint `0c6222a`, including the Windows SDL/SDK, tutorial, both regression,
+source-witness and sanitizer gates. The scalar/drawing batch above is locally
+qualified; its platform checks will run on publication.

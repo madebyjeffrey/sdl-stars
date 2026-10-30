@@ -302,3 +302,9 @@ B11 unused metadata aliases: PLANETSOME guesses use actual twelve-/four-bit
 fields and a numeric word accessor; TIMER retains an actual signed sixteen-bit
 hours word with numeric minute/player accessors. No owned consumer persists
 these object representations. Frozen width/alignment measurements are retained.
+
+
+B11 OBJ: drawing callbacks carry a single actual void pointer and convert it
+back to their selected actual object type. The pointer stays borrowed and never
+enters a record codec. The inactive pointer union is removed with its existing
+runtime size, alignment, callback signatures and selection rules retained.

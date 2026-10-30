@@ -279,7 +279,7 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
     PLANET *ppl;
     RECT    rc;
 
-    ppl = obj.ppl;
+    ppl = obj.ppl();
     if (ptile->fFixCtls) {
         rgrcRef[6].top = -5;
         rgrcRef[6].bottom = -6;
@@ -735,7 +735,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
     PLANET *ppl;
     RECT    rc;
 
-    ppl = obj.ppl;
+    ppl = obj.ppl();
     if (ptile->fFixCtls) {
         ShowWindow(hwndPlanetProdLB, SW_HIDE);
         ShowWindow(rghwndBtn[11], SW_HIDE);
@@ -832,12 +832,12 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
 
     if (sel.grobj == grobjPlanet) {
-        psz = PszGetPlanetName(obj.ppl->id);
-        i = obj.ppl->id;
+        psz = PszGetPlanetName(obj.ppl()->id);
+        i = obj.ppl()->id;
         i += 8;
         iOffset = i % 28;
     } else {
-        psz = PszGetFleetName(obj.pfl->id);
+        psz = PszGetFleetName(obj.pfl()->id);
     }
     if (ptile->fFixCtls) {
         for (i = 4; i <= 6; i++) {
@@ -917,7 +917,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
     int32_t l;
     RECT    rc;
 
-    pfl = obj.pfl;
+    pfl = obj.pfl();
     fDoneDrawing = FALSE;
     fObjIsThing = FALSE;
     if (ptile->fFixCtls) {
@@ -1617,7 +1617,7 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
     RECT     rc;
 
     fDC = FALSE;
-    objNull.pfl = 0;
+    objNull.SetPfl(0);
     if (sel.id == -1) {
         for (i = 0; i < 13; i++) {
             ShowWindow(rghwndBtn[i], SW_HIDE);
@@ -1647,11 +1647,11 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
         if (sel.grobj == grobjFleet) {
             ptile = rgtileShip;
             ctile = 7;
-            obj.pfl = &sel.fl;
+            obj.SetPfl(&sel.fl);
         } else {
             ptile = rgtilePlanet;
             ctile = 6;
-            obj.ppl = &sel.pl;
+            obj.SetPpl(&sel.pl);
         }
         if (!hdc) {
             fDC = TRUE;

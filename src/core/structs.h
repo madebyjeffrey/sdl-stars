@@ -629,12 +629,16 @@ struct _msgturn {
 }; /* size=0x5 */
 
 struct _obj {
-    union {
-        PLANET *ppl; /* +0x0000 (2) */
-        FLEET  *pfl; /* +0x0000 (2) */
-        THING  *pth; /* +0x0000 (2) */
-    };
-}; /* size=0x2 */
+    // Drawing callbacks borrow the object chosen by their tile group.
+    // Converting through void preserves that pointer without an inactive union.
+    void *lpv;
+    PLANET *ppl() const noexcept { return static_cast<PLANET *>(lpv); }
+    FLEET *pfl() const noexcept { return static_cast<FLEET *>(lpv); }
+    THING *pth() const noexcept { return static_cast<THING *>(lpv); }
+    void SetPpl(PLANET *ppl) noexcept { lpv = ppl; }
+    void SetPfl(FLEET *pfl) noexcept { lpv = pfl; }
+    void SetPth(THING *pth) noexcept { lpv = pth; }
+}; /* Runtime borrow; never serialized. */
 
 struct _part {
     HS hs; /* +0x0000 (4) */

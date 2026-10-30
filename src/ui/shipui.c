@@ -20,7 +20,7 @@ void DrawShipOrders(HDC hdc, TILE *ptile, OBJ obj) {
     int32_t l;
     RECT    rc;
 
-    pfl = obj.pfl;
+    pfl = obj.pfl();
     if (ptile->fFixCtls) {
         rgrcRef[0].top = -5;
         rgrcRef[0].bottom = -6;
@@ -213,7 +213,7 @@ void DrawShipWayPtOrders(HDC hdc, TILE *ptile, OBJ obj) {
         }
         ShowWindow(hwndOrderED, SW_HIDE);
     } else {
-        pfl = obj.pfl;
+        pfl = obj.pfl();
         xLeft = rc.left + 4;
         xRight = rc.right - 4;
         yTop = (!gd.fSmallTileMode ? 4 : 2) + rc.top;
@@ -499,8 +499,8 @@ void DrawShipPlanet(HDC hdc, TILE *ptile, OBJ obj) {
     THING  *lpth;
     THING  *lpthMac;
 
-    if (obj.pfl->idPlanet != idPlanetDeepSpace) {
-        psz = PszGetPlanetName(obj.pfl->idPlanet | 0x8000);
+    if (obj.pfl()->idPlanet != idPlanetDeepSpace) {
+        psz = PszGetPlanetName(obj.pfl()->idPlanet | 0x8000);
     } else {
         psz = PszGetCompressedString(idsDeepSpace2);
     }
@@ -518,12 +518,12 @@ void DrawShipPlanet(HDC hdc, TILE *ptile, OBJ obj) {
         yTop = (!gd.fSmallTileMode ? 4 : 1) + rc.top;
         dx = (int16_t)(xRight - xLeft - 16) / 3;
         dy = 3 * dyArial8 >> 1;
-        EnableWindow(rghwndBtn[3], obj.pfl->idPlanet != idPlanetDeepSpace && sel.pl.iPlayer == idPlayer);
-        SetWindowText(rghwndBtn[7], PszGetCompressedString(obj.pfl->idPlanet == idPlanetDeepSpace ? idsJettison2 : idsXFer));
-        if (obj.pfl->idPlanet == idPlanetDeepSpace) {
+        EnableWindow(rghwndBtn[3], obj.pfl()->idPlanet != idPlanetDeepSpace && sel.pl.iPlayer == idPlayer);
+        SetWindowText(rghwndBtn[7], PszGetCompressedString(obj.pfl()->idPlanet == idPlanetDeepSpace ? idsJettison2 : idsXFer));
+        if (obj.pfl()->idPlanet == idPlanetDeepSpace) {
             lpth = lpThings;
             lpthMac = lpThings + cThing;
-            for (; lpth < lpthMac && (lpth->ith() != ithMineralPacket || obj.pfl->pt.x != lpth->pt().x() || obj.pfl->pt.y != lpth->pt().y()); lpth++) {
+            for (; lpth < lpthMac && (lpth->ith() != ithMineralPacket || obj.pfl()->pt.x != lpth->pt().x() || obj.pfl()->pt.y != lpth->pt().y()); lpth++) {
             }
             EnableWindow(rghwndBtn[7], lpth == lpthMac);
         } else {
@@ -555,7 +555,7 @@ void DrawShipCargo(HDC hdc, TILE *ptile, OBJ obj) {
     int32_t l;
     RECT    rc;
 
-    pfl = obj.pfl;
+    pfl = obj.pfl();
     if (ptile->fFixCtls) {
         rgrcRef[2].top = -5;
         rgrcRef[2].bottom = -6;
@@ -636,7 +636,7 @@ void DrawFleetComp(HDC hdc, TILE *ptile, OBJ obj) {
     int32_t l;
     RECT    rc;
 
-    pfl = obj.pfl;
+    pfl = obj.pfl();
     if (ptile->fFixCtls) {
         ShowWindow(hwndFleetCompLB, SW_HIDE);
         ShowWindow(rghwndBtn[8], SW_HIDE);
