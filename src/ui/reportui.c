@@ -2698,3 +2698,5 @@ void SetHdcTextColor(HDC hdc, uint32_t cr) {
     SetTextColor(hdc, cr);
     return;
 }
+
+void ResetReportInputSession() noexcept { dWheelRows = dWheelCols = 0; }

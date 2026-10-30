@@ -260,3 +260,9 @@ void CloseScannerInspector(void) {
     hwndScanInspector = NULL;
     FreeScannerSnapshot(&snapScanInspector);
 }
+
+void ResetScannerInspectorSession() noexcept {
+    hwndScanInspector = NULL;
+    FreeScannerSnapshot(&snapScanInspector);
+    fScanInspectorClass = FALSE;
+}

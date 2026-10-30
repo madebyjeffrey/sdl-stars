@@ -105,14 +105,42 @@ APPUISTATE::APPUISTATE() noexcept {
 }
 
 namespace {
+enum class APPUISESSIONPHASE : uint8_t { ready, closing, closed };
 class APPUISESSION final : public APPSESSION {
 public:
     APPUISTATE ui;
+    APPUISESSIONPHASE phase = APPUISESSIONPHASE::ready;
 };
 APPUISESSION &UiSession() { static APPUISESSION session; return session; }
 }
 APPSESSION &GetAppSession() { return UiSession(); }
 APPUISTATE &GetAppUiState() { return UiSession().ui; }
+
+void BeginAppUiSession() noexcept {
+    auto &session = UiSession();
+    if (session.phase == APPUISESSIONPHASE::closed) {
+        session.BindFiles();
+        session.phase = APPUISESSIONPHASE::ready;
+    }
+}
+bool FBeginAppUiClose() noexcept {
+    auto &session = UiSession();
+    if (session.phase != APPUISESSIONPHASE::ready) return false;
+    session.phase = APPUISESSIONPHASE::closing;
+    return true;
+}
+void CancelAppUiClose() noexcept {
+    auto &session = UiSession();
+    if (session.phase == APPUISESSIONPHASE::closing) session.phase = APPUISESSIONPHASE::ready;
+}
+void EndAppUiClose() noexcept {
+    auto &session = UiSession();
+    session.Close();
+    session.state = APPGAMESTATE{};
+    session.ui = APPUISTATE{};
+    session.phase = APPUISESSIONPHASE::closed;
+}
+
 
 decltype(APPUISTATE::vlpbdVCR) &vlpbdVCR = GetAppUiState().vlpbdVCR;
 decltype(APPUISTATE::vlpbdVCRNext) &vlpbdVCRNext = GetAppUiState().vlpbdVCRNext;

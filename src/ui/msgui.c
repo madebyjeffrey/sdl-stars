@@ -732,3 +732,5 @@ void UpdateMsgTitle() {
     SetMsgTitle(hwndMessage);
     return;
 }
+
+void ResetMessageInputSession() noexcept { dWheelMessages = 0; }

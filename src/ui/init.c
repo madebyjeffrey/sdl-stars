@@ -1,5 +1,6 @@
 #include "win.h"
 #include "ownership.h"
+#include "uistate.h"
 #include <stars_compat.h>
 
 uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
@@ -11,6 +12,7 @@ int16_t FCreateStuff() {
     HBITMAP hbmp;
     int16_t dx;
 
+    BeginAppUiSession();
     fFailed = FALSE;
     dx = GetSystemMetrics(SM_CXSCREEN);
     dy = GetSystemMetrics(SM_CYSCREEN);

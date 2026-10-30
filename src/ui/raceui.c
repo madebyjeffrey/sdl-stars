@@ -1460,3 +1460,5 @@ void SetRCWTitle(HWND hwnd, int16_t iStep) {
     SetWindowText(hwnd, szWork);
     return;
 }
+
+void ResetRaceUiSession() noexcept { szRaceFileSuggest[0] = 0; }

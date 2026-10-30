@@ -3247,3 +3247,12 @@ void RememberLibraryGame(void) {
     if (FWriteLibraryMetadata(szDir, pch + 1, idPlayer))
         WritePrivateProfileString("Library", "ContinueDeleted", NULL, PszGetCompressedString(idsStarsIni));
 }
+
+void CloseLibraryUiSession() noexcept {
+    ClearLibraryGameList();
+    szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
+    szRaceLibraryRoot[0] = szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
+    fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = FALSE;
+    pszRaceLibraryNameOverride = nullptr;
+    continueLibrary = LIBRARYCONTINUE{};
+}

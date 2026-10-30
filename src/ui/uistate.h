@@ -361,5 +361,15 @@ struct APPUISTATE {
 };
 
 APPUISTATE &GetAppUiState();
+void BeginAppUiSession() noexcept;
+bool FBeginAppUiClose() noexcept;
+void CancelAppUiClose() noexcept;
+void EndAppUiClose() noexcept;
+void ResetScannerInspectorSession() noexcept;
+void CloseLibraryUiSession() noexcept;
+void ResetRaceUiSession() noexcept;
+void ResetScannerInputSession() noexcept;
+void ResetMessageInputSession() noexcept;
+void ResetReportInputSession() noexcept;
 
 #endif

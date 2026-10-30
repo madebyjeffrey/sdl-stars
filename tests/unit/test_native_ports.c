@@ -11,6 +11,11 @@
 
 #include "stars_test.h"
 #include "liststorage.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#include <stars_compat.h>
+#include <errno.h>
+#endif
 
 static uint8_t rgRecord[4][1024];
 static int16_t rgcbRecord[4];
@@ -400,6 +405,58 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
 #ifdef STARS_UI_SDL
 // Provided only by wrapper memory.c builds marked STARS_TEST_MEMORY_OBSERVE.
 size_t CCompatMemoryBlocks();
+static bool fCleanupKeptState;
+static int cSessionPayloadReleased;
+static LRESULT CALLBACK SessionCleanupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == WM_APP + 77) {
+        HB *lphb = rglphb[htPerm];
+        FreeStuff();
+        fCleanupKeptState = IsWindow(hwnd) && lphb && rglphb[htPerm] == lphb;
+        return 0;
+    }
+    return DefWindowProc(hwnd,msg,w,l);
+}
+static void TestApplicationUiSessionClose(void) {
+    char szDir[MAX_PATH], szPath[MAX_PATH + 64];
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("session-cleanup",szDir,sizeof(szDir)));
+    CchSnprintf(szPath,sizeof(szPath),"%s%ssession.dat",szDir,szDirSep);
+    NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
+    TEST_ASSERT(pf);
+    TEST_ASSERT(CWriteNative("x",1,1,pf) == 1 && ICloseNativeFile(pf) == 0);
+    int16_t missing = 0;
+    int16_t hfSession = HfNativeOpenLegacy(szPath,0x40,&missing);
+    TEST_ASSERT(hfSession >= 3 && !missing);
+    WNDCLASS wc{};
+    wc.lpfnWndProc = SessionCleanupProc;
+    wc.hInstance = hInst;
+    wc.lpszClassName = "StarsSessionCleanupTest";
+    TEST_ASSERT(RegisterClass(&wc));
+    HWND hwnd = CreateWindow(wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
+    TEST_ASSERT(hwnd);
+    STARSCOMPATPAYLOAD payload(std::malloc(8), {[](void *pv) noexcept { ++cSessionPayloadReleased; std::free(pv); }});
+    TEST_ASSERT(payload);
+    const int cReleased = cSessionPayloadReleased;
+    TEST_ASSERT(StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),WM_APP+78,std::move(payload),0));
+    SendMessage(hwnd,WM_APP+77,0,0);
+    TEST_ASSERT(fCleanupKeptState && cSessionPayloadReleased == cReleased);
+    FreeStuff();
+    TEST_CHECK(!IsWindow(hwnd) && !hwndFrame && !hwndPlanet && !hInst);
+    TEST_CHECK(cSessionPayloadReleased == cReleased+1 && CCompatMemoryBlocks() == 0);
+    for (auto *lphb : rglphb) TEST_CHECK(!lphb);
+    TEST_CHECK(!lpLog && !lpMsg && !lpPlanets && lFileSeed1 == 0 && lFileSeed2 == 0);
+    GetAppSession().BindFiles();
+    char ch = 0;
+    errno = 0;
+    TEST_CHECK(CbNativeReadLegacy(hfSession,&ch,1) == -1 && errno == EBADF);
+    FreeStuff();
+    TEST_CHECK(CCompatMemoryBlocks() == 0 && cSessionPayloadReleased == cReleased+1);
+    TEST_ASSERT(FStarsTestInit());
+    TEST_CHECK(hInst && rglphb[htPerm] && CCompatMemoryBlocks() != 0);
+    FreeStuff(); FreeStuff();
+    TEST_CHECK(CCompatMemoryBlocks() == 0 && !FStarsErrorPending());
+}
+
 static void TestDibFromBitmapNativeQuery(void) {
     TEST_ASSERT(FStarsTestInit());
     HDC hdc = GetDC(NULL);
@@ -432,6 +489,7 @@ static void TestDibFromBitmapFailureReleasesStorage(void) {
 
 TEST_LIST = {
 #ifdef STARS_UI_SDL
+    {"application session stops UI before releasing files and heaps", TestApplicationUiSessionClose},
     {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},
     {"failed bitmap conversion releases temporary global storage", TestDibFromBitmapFailureReleasesStorage},
 #endif

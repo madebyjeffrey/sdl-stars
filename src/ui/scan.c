@@ -3084,3 +3084,5 @@ void ShowSelAt(POINT16 pt) {
     SetMineralTitleBar(hwndMine);
     return;
 }
+
+void ResetScannerInputSession() noexcept { dWheelZoom = dWheelScroll = fPanDown = fPanning = 0; ptPan = POINT16{}; xPanTop = yPanTop = 0; }

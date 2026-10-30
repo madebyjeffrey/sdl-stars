@@ -1,6 +1,7 @@
 #include "common.h"
 #include "version.h"
 #include "ownership.h"
+#include "appstate.h"
 
 // stars-host: the game's host without its windows. It takes the Windows
 // game's host command line (-a, -g, -b, -t, -v, -s, -p, -l, and the -dm,
@@ -140,6 +141,7 @@ static int16_t FReadHostIni(const char *szFile) {
 }
 
 int main(int argc, char *argv[]) try {
+    NATIVECLEANUPSCOPE session([]() noexcept { GetAppSession().Close(); });
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -149,6 +151,7 @@ int main(int argc, char *argv[]) try {
     char **rgpszNative;
 #endif
 
+    GetAppSession().BindFiles();
 #ifdef _WIN32
     rgpszNative = RgpszNativeArguments(&argc);
     if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }

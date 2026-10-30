@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `WinMain` and the command-line host close their application session on every
+  exit. `FreeStuff` stops native callbacks, timers and windows before releasing
+  game streams/heaps, then clears borrowed UI state and private caches. Repeated
+  close is safe; reentrant close from a window procedure keeps its active frame
+  alive. A new initialization after close restores the original defaults. This
+  ownership change preserves game files and all native host results.
+
 - Library folder callbacks capture logical window IDs and transfer their UTF-8
   paths through owned messages. Previously a late result could retain its path
   after a window closed, or target a recycled HWND after runtime restart.
