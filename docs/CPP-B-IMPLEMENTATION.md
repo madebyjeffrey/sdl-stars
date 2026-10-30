@@ -1139,3 +1139,26 @@ each match 519 files through turn 150, with 25 accepted unused-storage warnings,
 zero differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines
 and layout/alignment contracts remain unchanged. Remaining B11 entity/resource
 families and its final platform gate remain required.
+
+
+## B11 encryption evaluation-order audit
+
+Review found that the original compound assignment calls LGetNextFileXor before
+reading its destination. The initial byte-access rewrite read the destination
+first. All three production callers use separate byte buffers, so the full
+file regressions remained unchanged; a caller using an actual seed object as
+the buffer could observe the difference. A new literal seed-alias test failed
+both seed cases against that rewrite and passes after restoring RNG-before-read
+order. Existing ciphertext/offset/guard/seed-consumption cases still pass.
+Full local qualification is running before publishing this correction.
+
+
+Encryption-order correction qualification: 114/114 desktop tests including all
+27 native leak checks and available tutorial smoke coverage, 25/25 host tests,
+38/38 ASan/UBSan cases, all 27 source witnesses and 104 headers in both include
+orders. Debug/Release/host/sanitizer builds introduce no warnings. Both full
+regressions match 519 files through turn 150, with 25 accepted unused-storage
+warnings, zero differences/errors and no skipped inputs. The new seed-alias
+regression passes alongside existing ciphertext and exact RNG-state vectors.
+Frozen inputs, catalogs, baselines and layout/alignment contracts remain
+unchanged. Remaining B11 families and its final platform gate remain required.

@@ -149,8 +149,9 @@ void XorFileBuf(char *rgb, int16_t cb) {
     pl = rgb;
     plMac = pl + (cb >> 2) * 4;
     for (; pl < plMac; pl += 4) {
+        lPrev = LGetNextFileXor();
         NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
-        ul ^= static_cast<uint32_t>(LGetNextFileXor());
+        ul ^= static_cast<uint32_t>(lPrev);
         NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
     }
     cb &= 3;

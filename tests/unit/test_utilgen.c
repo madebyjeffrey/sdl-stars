@@ -121,7 +121,25 @@ static void test_XorFileBuf_unaligned_bytes(void) {
     }
 }
 
-TEST_LIST = {{"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},
+// Compound assignment evaluates the RNG call before reading its destination.
+// Keep that order even when a caller supplies one of the actual seed objects.
+extern int32_t lFileSeed1;
+extern int32_t lFileSeed2;
+static void test_XorFileBuf_seed_alias_order(void) {
+    int32_t lSeed1, lSeed2;
+
+    SetFileSeeds(123456, 789012);
+    XorFileBuf(reinterpret_cast<char *>(&lFileSeed1), 4);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == -1966203050 && lSeed2 == 2041708718);
+    SetFileSeeds(123456, 789012);
+    XorFileBuf(reinterpret_cast<char *>(&lFileSeed2), 4);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
+}
+
+TEST_LIST = {{"XorFileBuf retains RHS-before-destination evaluation", test_XorFileBuf_seed_alias_order},
+             {"XorFileBuf retains bytes, unaligned access and seed consumption", test_XorFileBuf_unaligned_bytes},
              {"StarsCopyFile", test_StarsCopyFile},
              {"PszFromLong", test_PszFromLong},
              {"FIntersectCircleLine horizontal", test_FIntersectCircleLine_horizontal},
