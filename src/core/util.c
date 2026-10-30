@@ -998,11 +998,11 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
             iflPrev = lpfl->ifl();
         }
     }
-    rglpfl = (FLEET **)LpReAlloc(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
+    rglpfl = LpReAlloc<FLEET *>(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
     if (cFleet != i) {
         memmove(rglpfl + (i + 1), rglpfl + i, (cFleet - i) * sizeof(FLEET *));
     }
-    rglpfl[i] = lpfl = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
+    rglpfl[i] = lpfl = LpAlloc<FLEET>(sizeof(FLEET), htFleets);
     cFleet++;
     rgplr[iPlr].cFleet++;
     memset(lpfl, 0, sizeof(FLEET));

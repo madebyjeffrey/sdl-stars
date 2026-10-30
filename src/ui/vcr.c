@@ -32,9 +32,9 @@ void BattleVCR(int16_t iBattle) {
     StarsRecoveryScope scopeRecovery;
     try {
         cTokAlloc = BdvFromLp(vlpbdVCR).ctok();
-        vrgtok = ::new (LpAlloc(cTokAlloc * sizeof(TOK), htMisc)) TOK[cTokAlloc];
+        vrgtok = LpAlloc<TOK>(cTokAlloc * sizeof(TOK), htMisc);
         cTokAlloc = BdvFromLp(vlpbdVCR).ctok();
-        vrgdpVCR = ::new (LpAlloc(cTokAlloc * 4, htMisc)) int32_t[cTokAlloc];
+        vrgdpVCR = LpAlloc<int32_t>(cTokAlloc * 4, htMisc);
         vcStepVCR = SetVCRBoard(30000) - 1;
         vcRound = viRound;
         SetVCRBoard(-1);

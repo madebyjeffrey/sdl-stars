@@ -2134,7 +2134,7 @@ HCURSOR ClickInShipOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fRig
                and a separator. The original stopped at 100 entries, so
                objects past them couldn't be targeted (target list
                overload). */
-            rgid = (int32_t *)LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = LpAlloc<int32_t>((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
             if (scan.idpl != idplNone) {
                 rgid[0] = scan.idpl;
             } else {

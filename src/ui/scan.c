@@ -190,7 +190,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             /* Room for every fleet and thing here, a planet and a separator.
                The original stopped at 100 entries, so objects past them
                couldn't be picked (target list overload). */
-            rgid = (int32_t *)LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = LpAlloc<int32_t>((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
             if (scan.grobjFull & grobjPlanet) {
                 rgid[0] = scan.idpl;
                 rgid[1] = -1;

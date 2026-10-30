@@ -20,7 +20,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
 | B11: remaining packed/resource layouts | Active | Stream, universe, score, routing, planet, flag, player/template, resource-header and THING families pass the full local matrix. Runtime-alias families and final platform qualification remain required. |
-| B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
+| B12: typed stable game arenas | Active | Typed physical-slot arrays and heap-chain ownership are integrated; scoped transfer/host/UI buffer cleanup is under full qualification. Addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure remain required. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
 
@@ -1607,3 +1607,68 @@ with the typed-heap batch passes 117 desktop / 28 native leaks / 26 host /
 and both 519-file regressions with the same 25 accepted warnings and no
 differences or skips. The final B11 platform gate remains required.
 
+
+## B12 stable heap and buffer ownership
+
+The legacy root array remains the single heap index. A noncopyable heap-chain
+owner releases its current roots, and explicit release detaches a chain before
+freeing it. Closing repeatedly or after ordinary desktop cleanup is safe.
+No registry, extra allocation or new allocation-failure point is introduced.
+The existing calloc/realloc requests, zero-filled growth, alignment, free-list
+coalescing, initialized spare bytes and reset reuse remain unchanged.
+
+Each backing allocation starts a byte array and actual HB lifetime. Typed
+allocation/reallocation helpers start actual trivial arrays over the complete
+physical slot, retaining rounded spare items through a C++20 lifetime operation.
+Address calculations use the owning byte-array pointer, and reallocation saves
+the stable root/link slot before releasing its former address. The unused PL
+zero-length tail is removed; its four-byte header and every allocation request
+stay fixed. The twelve historical zero-tail dispositions are now all migrated.
+
+Runtime packing remains a private allocation-geometry constraint where needed
+to preserve existing strides, capacities and initialized neighbor/spare effects.
+Record codecs do not use it: the same golden wire suite also runs with natural
+runtime alignment. B12's specified preservation of physical geometry does not
+require changing those strides. Strict compilation is still a B14 gate; these
+layout directives do not justify enabling GNU language extensions or suppressing
+pedantic diagnostics.
+
+Transfer UI borrows restore their outer frame/mode on every return or exception.
+Host settings buffers, native argument storage, scanner snapshots and planet-pane
+state use scoped C++ owners with their existing allocators and release points.
+The scanner snapshot itself owns its copied object array; clearing it resets the
+owner and metadata. Independent source providers adapt only the typed allocation
+API and call the production lifetime helpers where they supply pooled storage;
+models, vectors, assertion domains and fault receipts remain unchanged.
+
+Focused real heap and transfer tests pass. Permanent coverage checks initialized
+physical spare items, growth, reset reuse, explicit release followed by repeated
+owner cleanup, scope teardown and a failed transfer lookup restoring the outer
+UI frame. Full local and platform qualification is in progress; B12 and the
+later session/strict-compilation checkpoints are not complete.
+
+
+The stable-heap/buffer batch passes the full local matrix: 117 desktop tests
+(including 28 native leak checks and available tutorial smoke coverage), 26
+SDL-free host tests, 42 sanitizer cases, all 27 source witnesses and 107 headers
+in both include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Both regressions match all 519 files through turn 150, retaining 25 accepted
+unused-storage warnings, zero differences/errors and no skipped inputs.
+Native leaks additionally reports zero leaks/bytes for real desktop and host
+turn generation from separate isolated turn-25 copies. Paired functional runs
+return the documented successful-generation status 1; leaks itself returns 0.
+
+Linux source-witness CI at transfer commit 3a6c79a exposed GCC's class-memaccess
+diagnostic for a fixture's typed PART memset after PART gained private members.
+The fixture now writes the identical 0xa5 representation through a writable
+byte span, retaining its whole-frame comparisons, 2,047,760 cases and 32,854,889
+assertions. It passes locally without adding a diagnostic suppression; CI
+requalification is pending. Other revision-specific platform results are not
+substitutes for the final gate.
+
+B12 remains active: ZIP/library dynamic buffers, GUI temporary allocations and
+their cleanup/callback handoffs still require accounting and qualification.
+B13's single session owner and B14's actual strict compiler policy also remain.
+All frozen C/SDK inputs, catalog/resource bytes and regression baselines stay
+unchanged. The transfer-frame cleanup fix is isolated in its own commit and
+recorded in CHANGELOG.md and KNOWN-BUGS.md; it moves no regression checkpoint.

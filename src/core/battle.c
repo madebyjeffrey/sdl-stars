@@ -632,8 +632,8 @@ void DoBattles(int16_t fPostMovement) {
 
     LinkFleets(fPostMovement);
     static_assert(std::is_trivially_default_constructible_v<TOK> && std::is_trivially_destructible_v<TOK>);
-    vrgtok = ::new (LpAlloc(256 * sizeof(TOK), htMisc)) TOK[256];
-    vlpwtCargo = ::new (LpAlloc(0x200, htMisc)) uint16_t[256];
+    vrgtok = LpAlloc<TOK>(256 * sizeof(TOK), htMisc);
+    vlpwtCargo = LpAlloc<uint16_t>(0x200, htMisc);
     for (ifl = 0; ifl < cFleet; ifl++) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
@@ -2286,7 +2286,7 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
     if (!lpbBattleLog) {
         StarsRecoveryScope scopeRecovery;
         try {
-            lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
+            lpbBattleLog = LpAlloc<uint8_t>(0xffc8, htBattle);
             lpbBattleCur = lpbBattleLog;
         } catch (const StarsError &) {
             return -1;
@@ -2295,7 +2295,7 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
     if (!lpbBattleT) {
         StarsRecoveryScope scopeRecovery;
         try {
-            lpbBattleT = (uint8_t *)LpAlloc(0xffc8, htBattle);
+            lpbBattleT = LpAlloc<uint8_t>(0xffc8, htBattle);
         } catch (const StarsError &) {
             return -1;
         }

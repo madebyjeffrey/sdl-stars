@@ -62,7 +62,7 @@ tails = {
     "PLORD": ("rgord", "B06", "4 + iordMax * sizeof(ORDER)", "runtime; wire orders use 18/8 bytes"),
     "BTLDATA": ("rgtok", "B09", "14 + ctok * 29 + battle events", "wire; cbData bounds complete data"),
 }
-migrated_tails = {"PLPROD", "RTCHGPRODQ", "PLORD", "RTSHDEF", "RTFLEET", "RTFLEETIDS", "BTLREC", "BTLREC26", "BTLDATA", "MSGPLR", "RTPLRMSG"}
+migrated_tails = {"PL", "PLPROD", "RTCHGPRODQ", "PLORD", "RTSHDEF", "RTFLEET", "RTFLEETIDS", "BTLREC", "BTLREC26", "BTLDATA", "MSGPLR", "RTPLRMSG"}
 # These historical minimum-size records keep their frozen measurement fields;
 # production payload traversal uses explicit bytes, never an oversized array.
 minimum_records = {

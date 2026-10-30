@@ -225,7 +225,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
             if (cPlanetAlloc > 1000) {
                 cPlanetAlloc = 1000;
             }
-            lpPlanets = (PLANET *)LpAlloc((1 <= cPlanetAlloc ? cPlanetAlloc : 1) * sizeof(PLANET), htPlanets);
+            lpPlanets = LpAlloc<PLANET>((1 <= cPlanetAlloc ? cPlanetAlloc : 1) * sizeof(PLANET), htPlanets);
             ReadRt();
             for (i = 0, lppl = lpPlanets; i < cPlanetHist; i++, lppl++) {
                 if (hdrCur.rt != rtPlanetB)
@@ -263,7 +263,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 if (i == game.cPlayer)
                     break;
                 if (!rglpshdef[i]) {
-                    rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+                    rglpshdef[i] = LpAlloc<SHDEF>(16 * sizeof(SHDEF), htShips);
                     for (j = 0; j < 16; j++) {
                         rglpshdef[i][j].fFree = TRUE;
                         rglpshdef[i][j].grbitPlr = 0;
@@ -288,7 +288,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 if (i == game.cPlayer)
                     break;
                 if (!rglpshdefSB[i]) {
-                    rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+                    rglpshdefSB[i] = LpAlloc<SHDEF>(10 * sizeof(SHDEF), htShips);
                     for (j = 0; j < 10; j++) {
                         rglpshdefSB[i][j].fFree = TRUE;
                         rglpshdefSB[i][j].grbitPlr = 0;
@@ -310,7 +310,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 iplr = static_cast<uint8_t>(rgbCur[0]) & 31;
                 FDecodeScoreX(std::as_bytes(std::span(rgbCur)), sx);
                 if (!rgsxPlr[iplr]) {
-                    rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
+                    rgsxPlr[iplr] = LpAlloc<SCOREX>(101 * sizeof(SCOREX), htMisc);
                     rgcsxPlr[iplr] = 0;
                 }
                 if (rgsxPlr[iplr]) {
@@ -343,7 +343,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
             if (hdrCur.rt == rtAiData) {
                 if (rgplr[idPlayer].fAi) {
                     if (!vlpbAiData) {
-                        vlpbAiData = (uint8_t *)LpAlloc(8096, htMisc);
+                        vlpbAiData = LpAlloc<uint8_t>(8096, htMisc);
                         if (!vlpbAiData)
                             goto CorruptHist;
                     }
@@ -365,7 +365,7 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 if (cThingAlloc > 4050) {
                     cThingAlloc = 4050;
                 }
-                lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+                lpThings = LpAlloc<THING>(cThingAlloc * sizeof(THING), htThings);
                 if (!lpThings)
                     goto CorruptHist;
                 memset(lpThings, 0, cThingAlloc * sizeof(THING));
@@ -402,14 +402,14 @@ LNextTurn:
         while (hdrCur.rt == rtBtlData || hdrCur.rt == rtContinue) {
             if (hdrCur.rt != rtContinue) {
                 if (!lpbBattleLog) {
-                    lpbBattleLog = (uint8_t *)LpAlloc(0xffc8, htBattle);
+                    lpbBattleLog = LpAlloc<uint8_t>(0xffc8, htBattle);
                     lpbBattleCur = lpbBattleLog;
                 }
                 /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
                 lphb = LphbFromLpHt(lpbBattleCur, htBattle);
                 if (0xffc8 - (uint32_t)(lpbBattleCur - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)NATIVEBATTLEDATAVIEW(std::as_writable_bytes(std::span(rgbCur)), 0).cbData()) {
                     RawStore16(lpbBattleCur, 0xffff);
-                    lpbBattleCur = (uint8_t *)LpAlloc(0xffc8, htBattle);
+                    lpbBattleCur = LpAlloc<uint8_t>(0xffc8, htBattle);
                 }
             }
             memmove(lpbBattleCur, rgbCur, hdrCur.cb);
@@ -451,7 +451,7 @@ LNextTurn:
         rglpfl = NULL;
         if (!lpPlanets) {
             cPlanetAlloc = 1 <= cPlanet ? cPlanet : 1;
-            lpPlanets = (PLANET *)LpAlloc(cPlanetAlloc * sizeof(PLANET), htPlanets);
+            lpPlanets = LpAlloc<PLANET>(cPlanetAlloc * sizeof(PLANET), htPlanets);
         }
         lppl = lpPlanets;
         j = 0;
@@ -470,7 +470,7 @@ LNextTurn:
                 }
                 if (cPlanetAlloc == cPlanetHist) {
                     cPlanetAlloc += 8;
-                    lpPlanets = (PLANET *)LpReAlloc(lpPlanets, cPlanetAlloc * sizeof(PLANET), htPlanets);
+                    lpPlanets = LpReAlloc<PLANET>(lpPlanets, cPlanetAlloc * sizeof(PLANET), htPlanets);
                     lppl = lpPlanets + j;
                 }
                 if (j < cPlanetHist) {
@@ -512,7 +512,7 @@ LNextTurn:
             }
             if (rgplr[i].fInclude) {
                 if (!rglpshdef[i]) {
-                    rglpshdef[i] = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+                    rglpshdef[i] = LpAlloc<SHDEF>(16 * sizeof(SHDEF), htShips);
                 FreeShdef:
                     for (j = 0; j < 16; j++) {
                         rglpshdef[i][j].fFree = TRUE;
@@ -553,9 +553,9 @@ LNextTurn:
                 }
             }
         }
-        rglpfl = (FLEET **)LpAlloc((1 <= cFleet ? cFleet : 1) * sizeof(FLEET *), htMisc);
+        rglpfl = LpAlloc<FLEET *>((1 <= cFleet ? cFleet : 1) * sizeof(FLEET *), htMisc);
         for (i = 0; i < cFleet; i++) {
-            lpfl = rglpfl[i] = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
+            lpfl = rglpfl[i] = LpAlloc<FLEET>(sizeof(FLEET), htFleets);
             if (!FReadFleet(lpfl))
                 goto LError;
             rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
@@ -563,7 +563,7 @@ LNextTurn:
         for (i = 0; i < game.cPlayer; i++) {
             if (rgplr[i].fInclude) {
                 if (!rglpshdefSB[i]) {
-                    rglpshdefSB[i] = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+                    rglpshdefSB[i] = LpAlloc<SHDEF>(10 * sizeof(SHDEF), htShips);
                     for (j = 0; j < 10; j++) {
                         rglpshdefSB[i][j].fFree = TRUE;
                         rglpshdefSB[i][j].grbitPlr = 0;
@@ -602,14 +602,14 @@ LNextTurn:
             }
         }
         if (!vlprgScoreX) {
-            vlprgScoreX = (SCOREX *)LpAlloc(game.cPlayer * sizeof(SCOREX), htMisc);
+            vlprgScoreX = LpAlloc<SCOREX>(game.cPlayer * sizeof(SCOREX), htMisc);
             memset(vlprgScoreX, 0, game.cPlayer * sizeof(SCOREX));
         }
         while (hdrCur.rt == rtScore) {
             iplr = static_cast<uint8_t>(rgbCur[0]) & 31;
             FDecodeScoreX(std::as_bytes(std::span(rgbCur)), vlprgScoreX[iplr]);
             if (!rgsxPlr[iplr]) {
-                rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
+                rgsxPlr[iplr] = LpAlloc<SCOREX>(101 * sizeof(SCOREX), htMisc);
                 rgcsxPlr[iplr] = 0;
             }
             if (rgsxPlr[iplr]) {
@@ -649,7 +649,7 @@ LNextTurn:
             cThingFile = std::bit_cast<int16_t>(WFromStreamBytes(rgbCur));
             cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
             if (!lpThings) {
-                lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+                lpThings = LpAlloc<THING>(cThingAlloc * sizeof(THING), htThings);
                 if (!lpThings)
                     goto LError;
                 memset(lpThings, 0, cThingAlloc * sizeof(THING));
@@ -669,7 +669,7 @@ LNextTurn:
                     }
                     if (cThingAlloc == cThing) {
                         cThingAlloc += 8;
-                        lpThings = (THING *)LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
+                        lpThings = LpReAlloc<THING>(lpThings, cThingAlloc * sizeof(THING), htThings);
                         lpth = lpThings + j;
                     }
                     if (j < cThing) {
@@ -688,7 +688,7 @@ LNextTurn:
         } else {
             cThing = 0;
             cThingAlloc = 10;
-            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+            lpThings = LpAlloc<THING>(cThingAlloc * sizeof(THING), htThings);
         }
         if (hdrCur.rt == rtSel) {
             ReadRt();
@@ -698,7 +698,7 @@ LNextTurn:
             iP = NATIVEBATTLEPLANVIEW(std::as_writable_bytes(std::span(rgbCur)), 0).iplr();
             idPlayer = iP;
             if (!rglpbtlplan[iP]) {
-                rglpbtlplan[iP] = ::new (LpAlloc(16 * sizeof(BTLPLAN), htShips)) BTLPLAN[16];
+                rglpbtlplan[iP] = LpAlloc<BTLPLAN>(16 * sizeof(BTLPLAN), htShips);
             }
             if (!UnpackBattlePlan((uint8_t *)rgbCur, rglpbtlplan[iP] + rgcbtlplan[iP], rgcbtlplan[iP], hdrCur.cb)) goto Corrupt;
             rgcbtlplan[iP]++;
@@ -1050,7 +1050,7 @@ int16_t FReadFleet(FLEET *lpfl) {
     ReadRt();
     if (hdrCur.rt == rtString) {
         if (!FReadUserString((uint8_t *)rgbCur, hdrCur.cb, szT, 32, NULL)) goto Corrupt;
-        lpfl->lpszName = (char *)LpAlloc(strlen(szT) + 1, htString);
+        lpfl->lpszName = LpAlloc<char>(strlen(szT) + 1, htString);
         strcpy(lpfl->lpszName, szT);
         ReadRt();
     } else {

@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 
 #define wmRefitPlanetPane (WM_USER + 37)
 
@@ -84,12 +85,15 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
     int iAxis, iCode, iPosition, d, c;
 
     switch (message) {
-    case WM_CREATE:
-        lp = (PLANETPANE *)calloc(1, sizeof(*lp));
+    case WM_CREATE: {
+        NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(calloc(1, sizeof(*lp))));
+        lp = pane.get();
         if (!lp) return -1;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
+        pane.release();
         lp->hwndContent = CreateWindow(szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);
         return lp->hwndContent ? 0 : -1;
+    }
     case WM_SIZE:
     case wmRefitPlanetPane:
         RefitPlanetPane(hwnd);
@@ -125,10 +129,11 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         else lp->y -= d;
         RefitPlanetPane(hwnd);
         return 0;
-    case WM_DESTROY:
+    case WM_DESTROY: {
+        NATIVEOWNER<PLANETPANE, std::free> pane(lp);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-        free(lp);
         return 0;
+    }
     }
     return DefWindowProc(hwnd, message, wParam, lParam);
 }

@@ -13,10 +13,10 @@ void InitGameStuff() {
     gd.fNoIdleChecks = FALSE;
     gd.fAisDone = FALSE;
     vplr = vrgplrDef[0];
-    lpLog = (uint8_t *)LpAlloc(32000, htLog);
-    lpMsg = (uint8_t *)LpAlloc(0xffc8, htMsg);
-    vlprgidPlanet = (uint16_t *)LpAlloc(0x800, htPerm);
-    vlprgidFleet = (uint16_t *)LpAlloc(0x800, htPerm);
+    lpLog = LpAlloc<uint8_t>(32000, htLog);
+    lpMsg = LpAlloc<uint8_t>(0xffc8, htMsg);
+    vlprgidPlanet = LpAlloc<uint16_t>(0x800, htPerm);
+    vlprgidFleet = LpAlloc<uint16_t>(0x800, htPerm);
     CchGetString(idsDefault, vrgZipProd[0].szName);
     vrgZipProd[0].fValid = TRUE;
     return;
@@ -76,12 +76,12 @@ int16_t FGenerateTurn() {
     }
     StarsRecoveryScope scopeRecovery;
     try {
-        lpcd = (COLDROP *)LpAlloc(1000 * sizeof(COLDROP), htMisc);
-        lpxf = (XFERFULL *)LpAlloc(1000 * sizeof(XFERFULL), htMisc);
-        vrgPlanResExtra = (uint16_t *)LpAlloc(game.cPlanMax * 2, htMisc);
+        lpcd = LpAlloc<COLDROP>(1000 * sizeof(COLDROP), htMisc);
+        lpxf = LpAlloc<XFERFULL>(1000 * sizeof(XFERFULL), htMisc);
+        vrgPlanResExtra = LpAlloc<uint16_t>(game.cPlanMax * 2, htMisc);
         memset(vrgPlanResExtra, 0, game.cPlanMax * 2);
-        vrgwtPopScore = (int32_t *)LpAlloc(game.cPlanMax * sizeof(int32_t), htMisc);
-        vrgiplrPopScore = (int16_t *)LpAlloc(game.cPlanMax * sizeof(int16_t), htMisc);
+        vrgwtPopScore = LpAlloc<int32_t>(game.cPlanMax * sizeof(int32_t), htMisc);
+        vrgiplrPopScore = LpAlloc<int16_t>(game.cPlanMax * sizeof(int16_t), htMisc);
         memset(vrgiplrPopScore, 0xff, game.cPlanMax * sizeof(int16_t));
         UpdateProgressGauge(static_cast<ProgressStep>(370));
         cColDrop = 0;
@@ -426,9 +426,9 @@ void VerifyTurns() {
     idCur = idPlayer;
     cOut = 0;
     cAi = 0;
-    lpcd = (COLDROP *)LpAlloc(1000 * sizeof(COLDROP), htMisc);
-    lpxf = (XFERFULL *)LpAlloc(1000 * sizeof(XFERFULL), htMisc);
-    vrgPlanResExtra = (uint16_t *)LpAlloc(game.cPlanMax * 2, htMisc);
+    lpcd = LpAlloc<COLDROP>(1000 * sizeof(COLDROP), htMisc);
+    lpxf = LpAlloc<XFERFULL>(1000 * sizeof(XFERFULL), htMisc);
+    vrgPlanResExtra = LpAlloc<uint16_t>(game.cPlanMax * 2, htMisc);
     memset(vrgPlanResExtra, 0, game.cPlanMax * 2);
     cColDrop = 0;
     cXferFull = 0;
@@ -567,7 +567,7 @@ int16_t FSetUpBatchProcessing() {
     try {
         StreamOpen(szBase, mdRead);
         cb = LOWORD(CbFileSize(hf));
-        lpchBatch = (char *)LpAlloc(cb, htPerm);
+        lpchBatch = LpAlloc<char>(cb, htPerm);
         RgFromStream(lpchBatch, cb);
         lpchBatchMac = lpchBatch + cb;
         pch = szBase;

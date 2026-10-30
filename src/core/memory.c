@@ -2,6 +2,18 @@
 #include "liststorage.h"
 #include <algorithm>
 
+static NATIVEGAMEHEAPS heaps(rglphb);
+
+NATIVEGAMEHEAPS::~NATIVEGAMEHEAPS() noexcept { Close(); }
+
+void NATIVEGAMEHEAPS::Close() noexcept {
+    for (HB *&lphb : rglphb) {
+        HB *lphbFree = lphb;
+        lphb = nullptr;
+        FreeHb(lphbFree);
+    }
+}
+
 static uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
        are walked and written using their original two-byte boundaries. */
@@ -41,7 +53,8 @@ HB *LphbAlloc(uint16_t cb, HeapType ht) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
-    lphb = (HB *)hmem;
+    hmem = ::new (hmem) std::byte[cb];
+    lphb = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphb->hmem = hmem;
     lphb->cbBlock = cb;
     lphb->cbSlop = cb - CbHbHeader(ht);
@@ -57,6 +70,7 @@ HB *LphbReAlloc(HB *lphb) {
     void    *hmem;
     HB      *lphbT;
     HB      *lphbNew;
+    HB     **plphb;
     uint16_t cbCur;
     uint16_t cbGrow;
 
@@ -71,6 +85,14 @@ HB *LphbReAlloc(HB *lphb) {
     if (cbCur > (uint16_t)(0xffdc - cbGrow)) {
         cbGrow = 0xffdc - cbCur;
     }
+    // Keep the stable link slot before realloc invalidates the old address.
+    if (rglphb[lphb->ht] == lphb) {
+        plphb = &rglphb[lphb->ht];
+    } else {
+        for (lphbT = rglphb[lphb->ht]; lphbT && lphbT->lphbNext != lphb; lphbT = lphbT->lphbNext) {
+        }
+        plphb = &lphbT->lphbNext;
+    }
     /* NATIVE: GlobalReAlloc zero-filled the bytes it added. */
     hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));
     if (!hmem) {
@@ -79,25 +101,27 @@ HB *LphbReAlloc(HB *lphb) {
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     memset((uint8_t *)hmem + cbCur, 0, cbGrow);
-    lphbNew = (HB *)hmem;
+    hmem = ::new (hmem) std::byte[static_cast<std::size_t>(cbCur) + cbGrow];
+    lphbNew = static_cast<HB *>(std::memmove(hmem, hmem, sizeof(HB)));
     lphbNew->hmem = hmem;
-    if (rglphb[lphbNew->ht] == lphb) {
-        rglphb[lphbNew->ht] = lphbNew;
-    } else {
-        for (lphbT = rglphb[lphbNew->ht]; lphbT && lphbT->lphbNext != lphb; lphbT = lphbT->lphbNext) {
-        }
-        lphbT->lphbNext = lphbNew;
-    }
+    *plphb = lphbNew;
     lphbNew->cbBlock += cbGrow;
     lphbNew->cbFree += cbGrow;
     lphbNew->cbSlop += cbGrow;
     return lphbNew;
 }
 
-void FreeHb(HB *lphb) {
+void FreeHb(HB *lphb) noexcept {
     void *hmem;
     HB   *lphbNext;
 
+    // Detach before release so explicit shutdown and owner cleanup are both
+    // idempotent. A subchain may be released without invalidating its prefix.
+    if (lphb) {
+        HB **plphb = &rglphb[lphb->ht];
+        while (*plphb && *plphb != lphb) plphb = &(*plphb)->lphbNext;
+        if (*plphb) *plphb = nullptr;
+    }
     if (lphb) {
         for (; lphb; lphb = lphbNext) {
             lphbNext = lphb->lphbNext;
@@ -136,7 +160,7 @@ void *LpAlloc(uint16_t cb, HeapType ht) {
     if (!lphb) {
         lphb = LphbAlloc(cb, ht);
     }
-    lpbTop = (uint8_t *)lphb + lphb->ibTop;
+    lpbTop = (uint8_t *)lphb->hmem + lphb->ibTop;
     if (lphb->cbSlop >= cb) {
         RawStore16(lpbTop, cb - 2);
         lphb->ibTop += cb;
@@ -144,7 +168,7 @@ void *LpAlloc(uint16_t cb, HeapType ht) {
         lphb->cbSlop -= cb;
         return lpbTop + 2;
     }
-    lpb = (uint8_t *)lphb + CbHbHeader(ht);
+    lpb = (uint8_t *)lphb->hmem + CbHbHeader(ht);
     while (lpb < lpbTop) {
         lpbPrev = lpb;
         fFree = RawLoad16(lpb) & 1;
@@ -173,7 +197,7 @@ HB *LphbFromLpHt(void *lp, HeapType ht) {
     if ((int16_t)ht < htOrd || (int16_t)ht >= htCount) {
         return NULL;
     }
-    for (lphb = rglphb[ht]; lphb && ((HB *)lp <= lphb || (uint8_t *)lp >= (uint8_t *)lphb + lphb->cbBlock); lphb = lphb->lphbNext) {
+    for (lphb = rglphb[ht]; lphb && (reinterpret_cast<uintptr_t>(lp) <= reinterpret_cast<uintptr_t>(lphb->hmem) || reinterpret_cast<uintptr_t>(lp) - reinterpret_cast<uintptr_t>(lphb->hmem) >= lphb->cbBlock); lphb = lphb->lphbNext) {
     }
     if (!lphb) {
         return NULL;
@@ -195,14 +219,14 @@ void *LpReAlloc(void *lp, uint16_t cb, HeapType ht) {
     }
     lphb = LphbFromLpHt(lp, ht);
 LGrewHeap:
-    if ((uint8_t *)lphb + lphb->ibTop == (uint8_t *)lp + cbCur && lphb->cbSlop >= cbGrow) {
+    if ((uint8_t *)lphb->hmem + lphb->ibTop == (uint8_t *)lp + cbCur && lphb->cbSlop >= cbGrow) {
         lphb->cbSlop -= cbGrow;
         lphb->cbFree -= cbGrow;
         lphb->ibTop += cbGrow;
         RawStore16((uint8_t *)lp - 0x2, cb);
     } else if (ht == htPlanets || ht == htThings) {
         lphb = LphbReAlloc(lphb);
-        lp = (uint8_t *)lphb + (CbHbHeader(ht) + 2);
+        lp = (uint8_t *)lphb->hmem + (CbHbHeader(ht) + 2);
         goto LGrewHeap;
     } else {
         lpNew = LpAlloc(cb, ht);
@@ -222,7 +246,7 @@ void FreeLp(void *lp, HeapType ht) {
         cbFree = RawLoad16((uint8_t *)lp - 0x2) + 2;
         RawStore16((uint8_t *)lp - 0x2, RawLoad16((uint8_t *)lp - 0x2) | 1);
         lphb->cbFree += cbFree;
-        if ((uint8_t *)lp - (uint8_t *)lphb + cbFree - 2 == lphb->ibTop) {
+        if ((uint8_t *)lp - (uint8_t *)lphb->hmem + cbFree - 2 == lphb->ibTop) {
             lphb->ibTop -= cbFree;
             lphb->cbSlop += cbFree;
         }
@@ -231,7 +255,7 @@ void FreeLp(void *lp, HeapType ht) {
 }
 
 PL *LpplReAlloc(PL *lppl, uint16_t cAlloc) {
-    lppl = (PL *)LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
+    lppl = LpReAlloc<PL>(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
     lppl->iMax = cAlloc;
     return lppl;
 }
@@ -239,7 +263,7 @@ PL *LpplReAlloc(PL *lppl, uint16_t cAlloc) {
 PL *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
-    lppl = (PL *)LpAlloc(cbItem * cAlloc + 4, ht);
+    lppl = LpAlloc<PL>(cbItem * cAlloc + 4, ht);
     lppl->iMax = cAlloc;
     lppl->iMac = 0;
     lppl->fMark = FALSE;

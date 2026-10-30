@@ -238,7 +238,43 @@ static void TestThingPhysicalCopies(void) {
     FreeHb(rglphb[htThings]); rglphb[htThings] = lphbSav; mphtcbAlloc[htThings] = cbAllocSav;
 }
 
-TEST_LIST = {{"thing records retain partial, neighbor and physical spare copies", TestThingPhysicalCopies},
+
+// Ownership must preserve slots, spare bytes and reset reuse; explicit release
+// and scope teardown must both clear the same published roots.
+static void TestTypedHeapOwner(void) {
+    HB *rglphbSav[12];
+    uint16_t cbAllocSav = mphtcbAlloc[htMisc];
+    std::memcpy(rglphbSav, rglphb, sizeof(rglphbSav));
+    std::memset(rglphb, 0, sizeof(rglphbSav));
+    mphtcbAlloc[htMisc] = 512;
+    {
+        NATIVEGAMEHEAPS owner(rglphb);
+        auto *rg = LpAlloc<int32_t>(9, htMisc);
+        const std::size_t cPhysical = CbPlSlot(rg) / sizeof(*rg);
+        TEST_ASSERT(cPhysical > 2);
+        for (std::size_t i = 0; i < cPhysical; i++) rg[i] = static_cast<int32_t>(0x12345600u + i);
+        auto *rgOther = LpAlloc<int32_t>(9, htMisc);
+        TEST_CHECK(rgOther != rg);
+        FreeLp(rgOther, htMisc);
+        auto *grown = LpReAlloc<int32_t>(rg, 80, htMisc);
+        for (std::size_t i = 0; i < cPhysical; i++) TEST_CHECK(grown[i] == static_cast<int32_t>(0x12345600u + i));
+        grown[0] = 0x5a5a;
+        ResetHb(htMisc);
+        auto *reused = LpAlloc<int32_t>(9, htMisc);
+        TEST_CHECK(reused[0] == 0x5a5a);
+        FreeHb(rglphb[htMisc]);
+        TEST_CHECK(rglphb[htMisc] == nullptr);
+        owner.Close();
+        TEST_CHECK(rglphb[htMisc] == nullptr);
+        LpAlloc<int16_t>(2, htMisc);
+    }
+    for (HB *lphb : rglphb) TEST_CHECK(lphb == nullptr);
+    std::memcpy(rglphb, rglphbSav, sizeof(rglphbSav));
+    mphtcbAlloc[htMisc] = cbAllocSav;
+}
+
+TEST_LIST = {{"typed heap ownership preserves spare bytes, reset and idempotent teardown", TestTypedHeapOwner},
+             {"thing records retain partial, neighbor and physical spare copies", TestThingPhysicalCopies},
              {"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
              {"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},
              {"battle byte views retain physical arena and wire stride", TestBattleByteWindows},

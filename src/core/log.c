@@ -98,7 +98,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
             lpfl->lpszName = NULL;
         } else {
             cOut = strlen(szName);
-            lpfl->lpszName = (char *)LpAlloc(strlen(szName) + 1, htString);
+            lpfl->lpszName = LpAlloc<char>(strlen(szName) + 1, htString);
             strcpy(lpfl->lpszName, szName);
             if (FCompressUserString(szName, (char *)&rtchgname.rgb[1], &cOut)) {
                 rtchgname.rgb[0] = cOut;
@@ -720,7 +720,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
         lpfl->lpszName = NULL;
         if (*szT) {
-            lpfl->lpszName = (char *)LpAlloc(strlen(szT) + 1, htString);
+            lpfl->lpszName = LpAlloc<char>(strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
         }
         break;

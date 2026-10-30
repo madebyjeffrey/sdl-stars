@@ -45,6 +45,7 @@ static const char *inputs[9],*startupInput;
 static int attempts,failAt;
 static int16_t under[9];
 static void *LpAlloc(size_t n,int kind) { (void)kind; if(n!=sizeof(memory))abort(); return memory; }
+template<class T> static T *LpAlloc(size_t n,int kind) { return static_cast<T *>(LpAlloc(n,kind)); }
 static void CchGetString(int id,char *out) { strcpy(out,id==idsFile1 ? "File1" : id==idsFiles ? "Files" : "stars.ini"); }
 static int CchSnprintf(char *out,size_t cap,const char *format,...) {
     va_list args; int n; va_start(args,format);n=vsnprintf(out,cap,format,args);va_end(args);return n;

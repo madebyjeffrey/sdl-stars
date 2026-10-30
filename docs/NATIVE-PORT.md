@@ -126,7 +126,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   Raw game writes flush before returning to preserve immediate error reporting
   through the legacy void close interface. Process logging and third-party
   libraries' internally owned files remain outside this service. The game's
-  heaps (`memory.c`) come from `calloc` and `realloc`.
+  heaps (`memory.c`) retain their `calloc`/`realloc` allocation geometry under an
+  explicit chain owner and C++20 typed lifetime operations.
 - **Formatting and rounding** (`native.c`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)

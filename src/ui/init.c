@@ -147,8 +147,8 @@ int16_t FCreateStuff() {
     lpfnBrowserDlgProc = MakeProcInstance(BrowserDlg, hInst);
     lpfnReportDlgProc = MakeProcInstance(ReportDlg, hInst);
     lpfnGaugeDlgProc = MakeProcInstance(ProgressGaugeDlg, hInst);
-    lpb2k = (uint8_t *)LpAlloc(0x800, htPerm);
-    vlprgidMisc = (uint16_t *)LpAlloc(0x800, htPerm);
+    lpb2k = LpAlloc<uint8_t>(0x800, htPerm);
+    vlprgidMisc = LpAlloc<uint16_t>(0x800, htPerm);
     InitGameStuff();
     if (fFailed || !hbmpScanner || !hbmpUnknownPlanet || !hbmpBackBld || !hdibRaces || !hdibRacesT || !hdibRacesX || !hbmpMono || !hbmpScanShip || !hbmpMsg ||
         !hiconHost || !hiconStars || !hiconWait) {
@@ -589,7 +589,7 @@ void ReadIniSettings() {
         ini.fStartupFile = FALSE;
     }
     if (!vrgszMRU) {
-        vrgszMRU = (char *)LpAlloc(2304, htPerm);
+        vrgszMRU = LpAlloc<char>(2304, htPerm);
     }
     psz = &szEntry[strlen(szEntry) - 1];
     for (i = 0; i < 9; i++) {

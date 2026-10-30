@@ -232,8 +232,8 @@ UTF-8 and gameplay validation stay with their callers. The separate
 test_wire_codecs_natural target defines STARS_TEST_NATURAL_RECORD_LAYOUT to
 remove outer core-struct packing only in its isolated executable. The same
 golden suite must pass despite verified runtime alignment/offset differences.
-This supplements the unchanged frozen C/layout comparison; production packing
-retirement still requires the remaining entity and runtime-family work.
+This supplements the unchanged frozen C/layout comparison. B12 audits private
+runtime allocation geometry separately; persisted bytes use the explicit codecs.
 
 
 Selection record disposition: rtSel (22) has no producer and no interpreted
@@ -266,7 +266,8 @@ explicit numeric/byte accessors while retaining actual field names and widths.
 Validation remains incremental over original physical scratch; missing optional
 data, preinitialized fields, reserved bits and history/discovery effects retain
 their prior behavior. Writer/reader detObscure thresholds intentionally remain
-different. Runtime arena alignment/stride retirement remains assigned to B12.
+different. B12 retains the runtime arena geometry while making its lifetimes and owners
+explicit; those private strides do not determine the file format.
 
 
 B11 flag aliases: INI/TUTOR/GDATA use actual fields and numeric accessors, with
@@ -351,3 +352,10 @@ size and offsets. Only the printer payload is produced/read in owned code;
 the display alternatives are named foreign-layout metadata. No anonymous struct
 extension or inactive alternate read is needed. Both SDK and wrapper assertions
 check the corresponding offsets independently.
+
+B12 PL: the unused zero-length rgb member is removed. Actual four-byte header
+objects and typed payload arrays retain the complete physical slot, including
+rounded spare capacity. All twelve historical zero-tail families now have
+explicit migrated dispositions. Private packed runtime geometry remains where
+needed for existing stride/capacity contracts; no persistence codec consumes
+those representations.

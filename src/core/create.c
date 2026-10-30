@@ -176,7 +176,7 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     cPlanet = cPlanMax;
     StarsRecoveryScope scopeRecovery;
     try {
-        lpPlanets = (PLANET *)LpAlloc(cPlanMax * sizeof(PLANET), htPlanets);
+        lpPlanets = LpAlloc<PLANET>(cPlanMax * sizeof(PLANET), htPlanets);
         memset(lpPlanets, 0, cPlanMax * sizeof(PLANET));
         i = 0;
         lppl = lpPlanets;
@@ -559,7 +559,7 @@ RetryAll:
                 rgplr[i].rgmdRelation[j] = 0;
             }
             rgplr[i].cshdefSB = 1;
-            lpshdef = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+            lpshdef = LpAlloc<SHDEF>(10 * sizeof(SHDEF), htShips);
             memmove(lpshdef, LpshdefSBT(), 4 * sizeof(SHDEF));
             memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));
             lpshdef->cBuilt = 1;
@@ -602,10 +602,10 @@ RetryAll:
             }
         }
         cFleet = 0;
-        rglpfl = (FLEET **)LpAlloc(sizeof(FLEET *), htMisc);
+        rglpfl = LpAlloc<FLEET *>(sizeof(FLEET *), htMisc);
         for (i = 0; i < game.cPlayer; i++) {
             idPlayer = i;
-            lpshdef = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+            lpshdef = LpAlloc<SHDEF>(16 * sizeof(SHDEF), htShips);
             memset(lpshdef, 0, 16 * sizeof(SHDEF));
             for (j = 0; j < 16; j++) {
                 lpshdef[j].fFree = TRUE;
@@ -823,7 +823,7 @@ RetryAll:
         }
         for (i = 0; i < game.cPlayer; i++) {
             rgcbtlplan[i] = 5;
-            rglpbtlplan[i] = ::new (LpAlloc(16 * sizeof(BTLPLAN), htShips)) BTLPLAN[16];
+            rglpbtlplan[i] = LpAlloc<BTLPLAN>(16 * sizeof(BTLPLAN), htShips);
             for (j = 0; j < 5; j++) {
                 InitBattlePlan(rglpbtlplan[i] + j, j, i);
             }
@@ -1006,7 +1006,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
             goto LError;
         }
         cb = (int16_t)cbFile;
-        lpbDef = (char *)LpAlloc(cb + 1, htPerm);
+        lpbDef = LpAlloc<char>(cb + 1, htPerm);
         lpbDefMac = lpbDef + cb;
         RgFromStream(lpbDef, cb);
         StreamClose();

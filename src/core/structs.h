@@ -693,7 +693,6 @@ struct _pl {
         cAlloc : 4;      /* @bit12 */
     uint8_t iMax;        /* +0x0002 (1) */
     uint8_t iMac;        /* +0x0003 (1) */
-    uint8_t rgb[0];      /* +0x0004 (0) */
 }; /* size=0x4 */
 
 struct _planet {

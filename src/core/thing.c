@@ -34,9 +34,9 @@ THING *LpthNew(int16_t iplr, ThingType ith) {
     if (cThing >= cThingAlloc) {
         cThingAlloc += 10;
         if (!lpThings) {
-            lpThings = (THING *)LpAlloc(cThingAlloc * sizeof(THING), htThings);
+            lpThings = LpAlloc<THING>(cThingAlloc * sizeof(THING), htThings);
         } else {
-            lpThings = (THING *)LpReAlloc(lpThings, cThingAlloc * sizeof(THING), htThings);
+            lpThings = LpReAlloc<THING>(lpThings, cThingAlloc * sizeof(THING), htThings);
         }
         lpth = lpThings + i;
     }
