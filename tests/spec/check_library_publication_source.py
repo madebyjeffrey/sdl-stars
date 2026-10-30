@@ -389,7 +389,8 @@ def main():
     source=(ROOT/'src/ui/libraryui.c').read_text()
     for name in ('szLibraryRoot','szLibraryPending','szLibraryName'):
         assert f'static char {name}[256];' in source
-    assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/globals.c').read_text())
+    assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/appstate.h').read_text())
+    assert 'decltype(APPGAMESTATE::szBase) &szBase = GetAppSession().state.szBase;' in (ROOT/'src/core/globals.c').read_text()
     assert 'char szUniverse[512], szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];' in extract('FImportSubsequentTurn')
     # Enumerate every reached Boolean reply combination, including repeated
     # restore/cleanup calls, plus partial residue and stage/previous collisions.

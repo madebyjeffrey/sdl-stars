@@ -10,6 +10,7 @@ from pathlib import Path
 import math
 import os
 import random
+import re
 import shlex
 import struct
 import subprocess
@@ -285,8 +286,10 @@ int16_t FLookupPlanet(int16_t id,PLANET *out){assert(id==0);lookups++;*out=store
 int16_t PctPlanetDesirability(PLANET *p,int16_t player){assert(player==0 || player==1);return cfg[17] ? (int16_t)cfg[16]:NativeHabitat(p,player);}
 int32_t ChgPopFromPlanet(PLANET *p,int16_t update){growths++;if(cfg[25]){assert(!update);return cfg[26];}return NativeGrowth(p,update);}
 '''
-    population_table=next(line for line in (ROOT/'src/core/globals.c').read_text().splitlines()
-                          if line.startswith('int32_t') and 'rglPopMac[5]' in line)
+    population_match=re.search(r'\bint32_t\s+rglPopMac\[5\]\s*=\s*\{[^}]+\};',
+                               (ROOT/'src/core/appstate.h').read_text())
+    assert population_match
+    population_table=population_match.group(0)
     declarations=declarations.replace('/* SOURCE_POPULATION_TABLE */',population_table)
     getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
     getter=getter.replace('return pplr->rgAttr[iStat];','stats++; return pplr->rgAttr[iStat];')
