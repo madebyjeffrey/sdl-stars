@@ -565,7 +565,38 @@ static void test_battle_plan_deletion_wire(void) {
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == 2 && memcmp(rgb, deleted, sizeof(deleted)) == 0);
 }
 
-TEST_LIST = {{"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},
+static void test_WriteRtScore_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xd3, 0xa5, 0xfe, 0xff, 1, 0, 0, 0x80, 0xff, 0xff, 0xff, 0x7f,
+        0xfe, 0xff, 0xff, 0x7f, 0xff, 0xff, 0, 0x80, 1, 0, 0, 0x80};
+    SCOREX sx{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("score-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sscore", szDir, szDirSep);
+    sx.iPlayer = 19; sx.fValid = 0; sx.grbitVC = 0x97; sx.fWinner = 0; sx.fHistory = 1; sx.turn = 65534;
+    sx.score.lScore = -2147483647; sx.score.cResources = 2147483647; sx.score.cPlanet = -2; sx.score.cStarbase = 32767;
+    sx.score.rgcsh[0] = 65535; sx.score.rgcsh[1] = 32768; sx.score.rgcsh[2] = 1; sx.score.cTechLevels = -32768;
+    StreamOpen(szFile, mdCreate);
+    SetFileSeeds(123456, 789012);
+    WriteRtScore(&sx);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
+    StreamClose();
+    StreamOpen(szFile, mdRead);
+    SetFileSeeds(123456, 789012);
+    ReadRt();
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(hdrCur.rt == rtScore && hdrCur.cb == 24 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
+    TEST_CHECK(FDecodeScoreX(std::as_bytes(std::span(rgbCur)), decoded) && decoded.wWord() == 0xa5d3 && decoded.turn == 65534 && decoded.iRank() == -2);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+TEST_LIST = {{"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},
+             {"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},
              {"battle continuation bytes and boundaries", test_battle_continuations},
              {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
              {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},

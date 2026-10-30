@@ -1191,3 +1191,48 @@ sanitizer builds introduce no warnings. Desktop and host regressions each match
 differences/errors and no skipped inputs. Frozen inputs, catalogs, baselines and
 production layout/alignment contracts remain unchanged. Remaining B11 entity/
 resource families and its final platform gate remain required.
+
+
+## B11 score records in qualification
+
+Twenty-four-byte SCOREX records explicitly encode flags, unsigned turn bits and
+every signed/unsigned score field. The inactive flag and rank/turn unions are
+removed; numeric wWord and signed iRank accessors retain their names and domains.
+Both loader paths keep the original player read and full scratch snapshot/
+publication before allocation. History insertion/compaction and live flag reads
+after allocation remain unchanged; logical short records gain no new admission
+rule. Both current/history writers encode the same fixed bytes before the
+existing encrypted stream call.
+
+All flag/turn/rank words and signed field boundaries pass both packed and natural
+golden harnesses. The actual writer/ReadRt test matches independent plaintext
+bytes and exact six-word XOR-seed states. Five focused wire/layout/save tests and
+all 27 source witnesses pass. Full local and final B11 platform qualification
+remain required. Frozen references and production layout contracts are unchanged.
+
+
+Score alignment review: the first complete score matrix passed, but a focused
+UBSan probe of a legally odd-aligned packed SCOREX exposed reference binding
+inside the new bit_cast accessor. Copying the turn value into a scalar temporary
+before bit_cast removes that binding. The permanent wire suite now constructs
+that odd-aligned object explicitly in its packed variant. Both sanitizer wire
+harnesses pass; the complete matrix is being repeated before score publication.
+No score-family commit has been published with the defective accessor.
+
+
+Universe platform qualification: all sixteen Linux/Windows checks pass for
+00fbf13, including the natural-layout harness, both regressions, source witnesses,
+Linux ownership sanitizers, Windows SDL/SDK and available tutorial checkpoints.
+This qualifies the published stream/universe subset; remaining B11 families and
+B12–B14 are still required for milestone completion.
+
+
+Final score qualification, including odd-alignment coverage: 115/115 desktop
+tests with all 27 native leak checks and available tutorial smoke coverage,
+26/26 host tests, 39/39 ASan/UBSan cases, all 27 source witnesses and 104 headers
+in both include orders. Debug/Release/host/sanitizer builds introduce no warnings.
+Desktop and host regressions each match 519 files through turn 150, with 25
+accepted unused-storage warnings, zero differences/errors and no skipped inputs.
+Frozen inputs, catalogs, baselines and production layout/alignment contracts
+remain unchanged. Remaining B11 families and its final complete platform gate
+remain required.

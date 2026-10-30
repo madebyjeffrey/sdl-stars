@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <cstddef>
+#include <bit>
 #include <span>
 #include "taskviews.h"
 
@@ -1187,20 +1188,17 @@ struct _score {
 }; /* size=0x14 */
 
 struct _scorex {
-    union {
-        uint16_t wWord; /* +0x0000 (2) */
-        struct {
-            uint16_t iPlayer : 5, /* +0x0000 (2) @bit0 */
-                fValid : 1,       /* @bit5 */
-                grbitVC : 8,      /* @bit6 */
-                fWinner : 1,      /* @bit14 */
-                fHistory : 1;     /* @bit15 */
-        };
-    };
-    union {
-        int16_t  iRank; /* +0x0002 (2) */
-        uint16_t turn;  /* +0x0002 (2) */
-    };
+    uint16_t iPlayer : 5, /* +0x0000 (2) @bit0 */
+        fValid : 1,       /* @bit5 */
+        grbitVC : 8,      /* @bit6 */
+        fWinner : 1,      /* @bit14 */
+        fHistory : 1;     /* @bit15 */
+    uint16_t wWord() const noexcept {
+        return static_cast<uint16_t>(iPlayer | (fValid << 5) | (grbitVC << 6) | (fWinner << 14) | (fHistory << 15));
+    }
+    uint16_t turn; /* +0x0002 (2) */
+    int16_t iRank() const noexcept { return std::bit_cast<int16_t>(uint16_t{turn}); }
+    void SetIRank(int16_t iRank) noexcept { turn = std::bit_cast<uint16_t>(iRank); }
     SCORE score; /* +0x0004 (20) */
 }; /* size=0x18 */
 

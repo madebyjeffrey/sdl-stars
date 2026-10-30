@@ -523,4 +523,32 @@ inline bool FEncodeStarpack(STARPACK sp, std::span<std::byte> rgb) noexcept {
     return NATIVEBYTEWRITER(rgb).FWriteU32Le(static_cast<std::uint32_t>(sp.dx | (std::uint32_t(sp.y) << 10) | (std::uint32_t(sp.id) << 22)));
 }
 
+inline constexpr std::size_t cbWireScoreX = 24;
+
+inline bool FDecodeScoreX(std::span<const std::byte> rgb, SCOREX &sx) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    SCOREX value{};
+    std::uint16_t flags, turn, ships[3];
+    std::int32_t score, resources;
+    std::int16_t planets, bases, tech;
+    if (!input.FReadU16Le(flags) || !input.FReadU16Le(turn) || !input.FReadI32Le(score) || !input.FReadI32Le(resources) ||
+        !input.FReadI16Le(planets) || !input.FReadI16Le(bases) || !input.FReadU16Le(ships[0]) || !input.FReadU16Le(ships[1]) ||
+        !input.FReadU16Le(ships[2]) || !input.FReadI16Le(tech)) return false;
+    value.iPlayer = flags & 31; value.fValid = (flags >> 5) & 1; value.grbitVC = (flags >> 6) & 255;
+    value.fWinner = (flags >> 14) & 1; value.fHistory = flags >> 15; value.turn = turn;
+    value.score.lScore = score; value.score.cResources = resources; value.score.cPlanet = planets; value.score.cStarbase = bases;
+    for (int i = 0; i < 3; i++) value.score.rgcsh[i] = ships[i];
+    value.score.cTechLevels = tech;
+    sx = value;
+    return true;
+}
+inline bool FEncodeScoreX(const SCOREX &sx, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWireScoreX) return false;
+    NATIVEBYTEWRITER output(rgb);
+    return output.FWriteU16Le(sx.wWord()) && output.FWriteU16Le(sx.turn) && output.FWriteI32Le(sx.score.lScore) &&
+        output.FWriteI32Le(sx.score.cResources) && output.FWriteI16Le(sx.score.cPlanet) && output.FWriteI16Le(sx.score.cStarbase) &&
+        output.FWriteU16Le(sx.score.rgcsh[0]) && output.FWriteU16Le(sx.score.rgcsh[1]) && output.FWriteU16Le(sx.score.rgcsh[2]) &&
+        output.FWriteI16Le(sx.score.cTechLevels);
+}
+
 #endif

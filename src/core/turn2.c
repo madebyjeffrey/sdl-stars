@@ -1643,7 +1643,7 @@ void UpdatePlayerScores() {
         }
     }
     if (game.cPlayer == 1) {
-        vlprgScoreX->iRank = 1;
+        vlprgScoreX->SetIRank(1);
     } else {
         for (i = 0; i < game.cPlayer; i++) {
             if (rgplr[i].fDead) {

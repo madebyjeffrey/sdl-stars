@@ -388,7 +388,7 @@ LAppend:
         if (iPlayer != iplrNone && vlprgScoreX) {
             for (i = 0; i < game.cPlayer; i++) {
                 if (gd.fGameOverMan || i == iPlayer || rgplr[i].fDead || (game.fVisScores && game.turn >= 20)) {
-                    WriteRt(rtScore, 24, vlprgScoreX + i);
+                    WriteRtScore(vlprgScoreX + i);
                 }
             }
         }
@@ -1064,6 +1064,13 @@ LBadFile:
         StreamClose();
         return FALSE;
     }
+}
+
+void WriteRtScore(const SCOREX *psx) {
+    std::byte rgb[cbWireScoreX];
+
+    FEncodeScoreX(*psx, rgb);
+    WriteRt(rtScore, cbWireScoreX, rgb);
 }
 
 void WriteRtEof(uint16_t w) {

@@ -10,6 +10,7 @@
 #include <array>
 #include <cstdio>
 #include <limits>
+#include <new>
 
 #ifdef STARS_TEST_NATURAL_RECORD_LAYOUT
 static_assert(alignof(RTBOF) > 1);
@@ -19,6 +20,44 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main() {
+    if constexpr (alignof(SCOREX) == 1) {
+        // A packed object can legally start at an odd byte. Its numeric
+        // accessor must copy the field before binding a scalar reference.
+        alignas(2) std::byte rgb[sizeof(SCOREX) + 2]{};
+        auto *psx = ::new (rgb + 1) SCOREX{};
+        psx->SetIRank(-2);
+        CHECK(psx->iRank() == -2 && psx->turn == 65534);
+    }
+
+    for (std::uint32_t w = 0; w < 65536; w++) {
+        const std::uint32_t turn = 65535 - w;
+        const std::array<std::byte, 24> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8),
+            static_cast<std::byte>(turn), static_cast<std::byte>(turn >> 8), std::byte{0}, std::byte{0}, std::byte{0}, std::byte{0x80},
+            std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0x7f}, std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f},
+            std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0x80}, std::byte{1}, std::byte{0}, std::byte{0xfe}, std::byte{0xff}};
+        SCOREX sx{};
+        std::array<std::byte, 26> rgb;
+        rgb.fill(std::byte{0xa5});
+        CHECK(FDecodeScoreX(golden, sx) && sx.wWord() == w && sx.turn == turn);
+        CHECK(sx.iPlayer == (w & 31) && sx.fValid == ((w >> 5) & 1) && sx.grbitVC == ((w >> 6) & 255));
+        CHECK(sx.fWinner == ((w >> 14) & 1) && sx.fHistory == (w >> 15));
+        CHECK(sx.iRank() == (turn < 32768 ? std::int32_t(turn) : std::int32_t(turn) - 65536));
+        CHECK(sx.score.lScore == std::numeric_limits<std::int32_t>::min() && sx.score.cResources == 2147483647);
+        CHECK(sx.score.cPlanet == -32768 && sx.score.cStarbase == 32767 && sx.score.cTechLevels == -2);
+        CHECK(sx.score.rgcsh[0] == 65535 && sx.score.rgcsh[1] == 32768 && sx.score.rgcsh[2] == 1);
+        CHECK(FEncodeScoreX(sx, std::span(rgb).subspan(1, 24)) && !std::memcmp(rgb.data() + 1, golden.data(), 24));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        if (w == 32768) for (std::size_t cb = 0; cb < 24; cb++) {
+            sx.turn = 123; sx.score.lScore = 456;
+            CHECK(!FDecodeScoreX(std::span(golden).first(cb), sx) && sx.turn == 123 && sx.score.lScore == 456);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodeScoreX(sx, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+        sx.SetIRank(static_cast<std::int16_t>(turn < 32768 ? std::int32_t(turn) : std::int32_t(turn) - 65536));
+        CHECK(sx.turn == turn);
+    }
+
     for (std::uint32_t w = 0; w < 65536; w++) {
         std::array<std::byte, 64> golden = {std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff},
             std::byte{1}, std::byte{0x80}, std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0x80},

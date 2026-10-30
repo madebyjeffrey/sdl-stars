@@ -1391,7 +1391,7 @@ int16_t FWriteHistFile(int16_t iPlayer) {
             if (rgsxPlr[i]) {
                 for (j = 0; j < rgcsxPlr[i]; j++) {
                     if (rgsxPlr[i][j].turn >= cTurnBase) {
-                        WriteRt(rtScore, 24, rgsxPlr[i] + j);
+                        WriteRtScore(rgsxPlr[i] + j);
                     }
                 }
             }

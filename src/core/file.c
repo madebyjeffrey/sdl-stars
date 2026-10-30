@@ -309,8 +309,8 @@ int16_t FLoadGame(const char *pszFileName, const char *pszExt) {
                 ReadRt();
             }
             while (hdrCur.rt == rtScore) {
-                iplr = ((SCOREX *)rgbCur)->iPlayer;
-                sx = *(SCOREX *)rgbCur;
+                iplr = static_cast<uint8_t>(rgbCur[0]) & 31;
+                FDecodeScoreX(std::as_bytes(std::span(rgbCur)), sx);
                 if (!rgsxPlr[iplr]) {
                     rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
                     rgcsxPlr[iplr] = 0;
@@ -608,8 +608,8 @@ LNextTurn:
             memset(vlprgScoreX, 0, game.cPlayer * sizeof(SCOREX));
         }
         while (hdrCur.rt == rtScore) {
-            iplr = ((SCOREX *)rgbCur)->iPlayer;
-            vlprgScoreX[iplr] = *(SCOREX *)rgbCur;
+            iplr = static_cast<uint8_t>(rgbCur[0]) & 31;
+            FDecodeScoreX(std::as_bytes(std::span(rgbCur)), vlprgScoreX[iplr]);
             if (!rgsxPlr[iplr]) {
                 rgsxPlr[iplr] = (SCOREX *)LpAlloc(101 * sizeof(SCOREX), htMisc);
                 rgcsxPlr[iplr] = 0;
