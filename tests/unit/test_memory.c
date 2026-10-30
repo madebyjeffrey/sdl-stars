@@ -159,7 +159,66 @@ static void TestLegacyBattleConversion(void) {
     rglphb[htBattle] = NULL;
 }
 
-TEST_LIST = {{"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},
+// Use the actual AI validator, including whole-row compaction and the old
+// donor-count decrement / receiver-count postincrement / ID publication order.
+static void TestAiHistoryBytes(void) {
+    PLANET rgpl[4]{};
+    PLANET *lpplSav;
+    int16_t cPlanetSav, cPlanMaxSav;
+    int32_t seed1, seed2;
+    int16_t i, j;
+
+    TEST_ASSERT(FStarsTestInit());
+    vlpbAiData = (uint8_t *)LpAlloc(8192, htMisc);
+    memset(vlpbAiData, 0xa5, 8192);
+    idPlayer = 0; rgplr[0].idAi = idAiRobotoid;
+    lpplSav = lpPlanets; cPlanetSav = cPlanet; cPlanMaxSav = game.cPlanMax;
+    lpPlanets = rgpl; cPlanet = game.cPlanMax = 4;
+    for (i = 0; i < 4; i++) { rgpl[i].id = i; rgpl[i].iPlayer = i == 3 ? 1 : 0; rgpl[i].fStarbase = TRUE; }
+    seed1 = lRandSeed1; seed2 = lRandSeed2;
+    AhvFromLp(vlpbAiData).SetCbAiHist(2); AhvFromLp(vlpbAiData).SetCStarbase(-1);
+    game.turn = 19;
+    ValidateStarbaseHistory();
+    TEST_CHECK(AhvFromLp(vlpbAiData).cStarbase() == 0 && AhvFromLp(vlpbAiData).cbAiHist() == 2 && vlpbAiData[4] == 0xa5);
+    game.turn = 20;
+    AhvFromLp(vlpbAiData).SetCbAiHist(4); AhvFromLp(vlpbAiData).SetCStarbase(65);
+    ValidateStarbaseHistory();
+    TEST_CHECK(AhvFromLp(vlpbAiData).cStarbase() == 0 && AhvFromLp(vlpbAiData).cbAiHist() == 4);
+    AhvFromLp(vlpbAiData).SetCStarbase(3);
+    for (i = 0; i < 3; i++) {
+        AhvFromLp(vlpbAiData).rgasb(i).SetIdPlanet(i == 0 ? 3 : i - 1);
+        AhvFromLp(vlpbAiData).rgasb(i).SetCFreighter(i == 1 ? 9 : 4);
+        for (j = 0; j < 8; j++) AhvFromLp(vlpbAiData).rgasb(i).SetRgflid(j, (i == 1 ? 200 : 100) + j);
+    }
+    ValidateStarbaseHistory();
+    TEST_CHECK(AhvFromLp(vlpbAiData).cStarbase() == 2 && AhvFromLp(vlpbAiData).cbAiHist() == 44);
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(0).idPlanet() == 0 && AhvFromLp(vlpbAiData).rgasb(0).cFreighter() == 1);
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(0).rgflid(0) == 103 && AhvFromLp(vlpbAiData).rgasb(0).rgflid(7) == 207);
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(1).idPlanet() == 1 && AhvFromLp(vlpbAiData).rgasb(1).cFreighter() == 3);
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(1).rgflid(2) == 102 && AhvFromLp(vlpbAiData).rgasb(1).rgflid(3) == 103);
+    ValidateStarbaseHistory();
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(0).cFreighter() == 2 && AhvFromLp(vlpbAiData).rgasb(0).rgflid(1) == 102);
+    TEST_CHECK(AhvFromLp(vlpbAiData).rgasb(1).cFreighter() == 2 && lRandSeed1 == seed1 && lRandSeed2 == seed2);
+    rgplr[0].idAi = idAiCybertron;
+    AhvFromLp(vlpbAiData).SetCStarbase(-123);
+    ValidateStarbaseHistory();
+    TEST_CHECK(AhvFromLp(vlpbAiData).cStarbase() == -123); // Alternate history is opaque to this validator.
+    // Callback traversal indexes the same temporary words by planet ID.
+    CtvFromLp(vlpbAiData + 10).SetWInfo1(0xa500);
+    CtvFromLp(vlpbAiData + 10).At(1).SetWInfo1(0xa500);
+    rgptPlan[0] = {1000, 1000}; rgptPlan[1] = {1100, 1000};
+    TEST_CHECK(FEnumDropOffStage1(&rgpl[0], &rgpl[1]));
+    CtvFromLp(vlpbAiData + 10).At(1).SetCFreightersDst(3);
+    TEST_CHECK(!FEnumDropOffStage1(&rgpl[0], &rgpl[1]) && !FEnumDropOffStage2(&rgpl[0], &rgpl[1]));
+    CtvFromLp(vlpbAiData + 10).At(1).SetCFreightersDst(1);
+    TEST_CHECK(!FEnumDropOffStage1(&rgpl[0], &rgpl[1]) && FEnumDropOffStage2(&rgpl[0], &rgpl[1]));
+    TEST_CHECK(CtvFromLp(vlpbAiData + 10).At(1).wInfo1() == 0xa508);
+    FreeLp(vlpbAiData, htMisc); vlpbAiData = NULL;
+    lpPlanets = lpplSav; cPlanet = cPlanetSav; game.cPlanMax = cPlanMaxSav;
+}
+
+TEST_LIST = {{"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
+             {"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},
              {"battle byte views retain physical arena and wire stride", TestBattleByteWindows},
              {"aligned mixed allocations and reset", TestMixedAllocations},
              {"free coalescing and realloc preservation", TestReuseAndGrowth},

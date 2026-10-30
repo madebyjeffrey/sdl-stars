@@ -3,6 +3,7 @@
 #include "recordcodec.h"
 #include "battlecodec.h"
 #include "battleviews.h"
+#include "aiviews.h"
 #include <array>
 #include <cstdio>
 #include <limits>
@@ -567,6 +568,65 @@ int main() {
         // Access remains governed by the physical arena, not a new count gate.
         CHECK(data.rgtok(1).Lpb() == reinterpret_cast<std::uint8_t *>(rgb.data()) + 43);
     }
-    std::puts("History/production/action/order/design/fleet/battle wire vectors, signed domains, partial bytes and bounded primitives passed");
+    {
+        const std::array<std::byte, 20> golden = {std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0x7f},
+            std::byte{0xff}, std::byte{0xff}, std::byte{0}, std::byte{0}, std::byte{1}, std::byte{0}, std::byte{0xff}, std::byte{0x7f},
+            std::byte{0}, std::byte{0x80}, std::byte{0x34}, std::byte{0x12}, std::byte{0xcd}, std::byte{0xab}, std::byte{0xfe}, std::byte{0xff}};
+        AISTARBASE asb{};
+        CHECK(FDecodeAiStarbase(golden, asb));
+        CHECK(asb.idPlanet == -32768 && asb.cFreighter == 32767 && asb.rgflid[0] == -1 && asb.rgflid[6] == -21555 && asb.rgflid[7] == -2);
+        std::array<std::byte, 22> encoded;
+        encoded.fill(std::byte{0xa5});
+        CHECK(FEncodeAiStarbase(asb, std::span(encoded).subspan(1, 20)));
+        CHECK(std::memcmp(encoded.data() + 1, golden.data(), 20) == 0 && encoded.front() == std::byte{0xa5} && encoded.back() == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 20; cb++) {
+            AISTARBASE unchanged = asb;
+            CHECK(!FDecodeAiStarbase(std::span(golden).first(cb), unchanged));
+            CHECK(unchanged.idPlanet == asb.idPlanet && unchanged.cFreighter == asb.cFreighter && unchanged.rgflid[7] == -2);
+            encoded.fill(std::byte{0xa5});
+            CHECK(!FEncodeAiStarbase(asb, std::span(encoded).subspan(1, cb)));
+            for (auto b : encoded) CHECK(b == std::byte{0xa5});
+        }
+        std::array<std::byte, 1320> rgb;
+        rgb.fill(std::byte{0xa5});
+        NATIVEAIHISTORYVIEW hist{rgb, 1};
+        NATIVEAICYBERVIEW cyber{rgb, 1};
+        NATIVEAICYBERTEMPVIEW temp{rgb, 3};
+        NATIVEAIHISTSIZEVIEW length{rgb, 1};
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            const std::int32_t signedWord = w < 32768 ? static_cast<std::int32_t>(w) : static_cast<std::int32_t>(w) - 65536;
+            hist.SetCbAiHist(static_cast<std::uint16_t>(w));
+            CHECK(length.value() == signedWord && hist.cbAiHist() == w);
+            CHECK(cyber.iLstPktDir() == w % 8 && cyber.fBltColony() == (w / 8) % 2 && cyber.fLaunchedPkt() == (w / 16) % 2);
+            CHECK(cyber.iPktTarget() == (w / 32) % 4 && cyber.fNeedScanPkt() == (w / 128) % 2 && cyber.unused() == w / 256);
+            cyber.SetIPktTarget(static_cast<std::uint16_t>(cyber.iPktTarget() + 0x7ff));
+            CHECK(cyber.wInfo() == (w & ~96u) + (((w / 32 + 3) % 4) * 32));
+            temp.SetWInfo1(static_cast<std::uint16_t>(w));
+            CHECK(temp.fIdleColonizers() == w % 2 && temp.cIdleFreighters() == (w / 2) % 4 && temp.cFreightersDst() == (w / 8) % 4);
+            CHECK(temp.fNeedDefenders() == (w / 32) % 2 && temp.fDefended() == (w / 64) % 2 && temp.fUnderAttack() == (w / 128) % 2);
+            CHECK(temp.fNeedsMin1() == (w / 256) % 2 && temp.fNeedsMin2() == (w / 512) % 2 && temp.fNeedsMin3() == (w / 1024) % 2 && temp.unused() == w / 2048);
+            temp.SetCIdleFreighters(static_cast<std::uint16_t>(w));
+            CHECK(temp.wInfo1() == (w & ~6u) + (w % 4) * 2);
+        }
+        hist.SetCbAiHist(2); hist.SetCStarbase(0);
+        hist.rgasb(63).SetValue(asb);
+        CHECK(hist.rgasb(63).idPlanet() == -32768 && hist.rgasb(63).rgflid(7) == -2);
+        hist.rgasb(64).SetIdPlanet(42); // Physical spare storage is not a new logical admission gate.
+        CHECK(hist.rgasb(64).idPlanet() == 42);
+        hist.rgasb(0).SetCFreighter(7); hist.rgasb(0).SetNextFlid(-32768);
+        CHECK(hist.rgasb(0).cFreighter() == 8 && hist.rgasb(0).rgflid(7) == -32768);
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        NATIVEAIMINERALVIEW mineral{rgb, 1};
+        mineral.SetValue(std::numeric_limits<std::int32_t>::min());
+        CHECK(rgb[1] == std::byte{0} && rgb[4] == std::byte{0x80} && mineral.value() == std::numeric_limits<std::int32_t>::min());
+        mineral.SetValue(-1);
+        CHECK(rgb[1] == std::byte{0xff} && rgb[4] == std::byte{0xff} && mineral.value() == -1);
+        std::array<std::byte, 1> prefix{std::byte{0xff}};
+        NATIVEAICYBERVIEW shortCyber{prefix, 0};
+        CHECK(shortCyber.iPktTarget() == 3);
+        shortCyber.SetFNeedScanPkt(0);
+        CHECK(prefix[0] == std::byte{0x7f});
+    }
+    std::puts("History/production/action/order/design/fleet/battle/AI wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

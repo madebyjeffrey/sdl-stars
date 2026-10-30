@@ -1370,8 +1370,8 @@ int16_t FWriteHistFile(int16_t iPlayer) {
                 }
             }
         }
-        if (vlpbAiData && ((AIHIST *)vlpbAiData)->cbAiHist > 2) {
-            i = ((AIHIST *)vlpbAiData)->cbAiHist;
+        if (vlpbAiData && AhvFromLp(vlpbAiData).cbAiHist() > 2) {
+            i = AhvFromLp(vlpbAiData).cbAiHist();
             lpb = vlpbAiData;
             for (; i >= 1024; i -= 1023) {
                 WriteRt(rtAiData, 1023, lpb);

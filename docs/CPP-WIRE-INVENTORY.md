@@ -6,6 +6,8 @@ B06 migrates order arrays, task-word views and full/partial waypoint records.
 B07 migrates full/partial ship designs, hull slots and design-change headers.
 B08 migrates fleet snapshots, ID sequences and signed ship-transfer logs.
 B09 battle producers, loaders, continuations and UI replay use explicit byte views.
+AI history and persistent/temporary Cybertron words use the same scoped byte
+window primitives, with live mutation and signed domains preserved.
 The canonical record fields, bit positions, optional fields and malformed-input
 observations remain in [S01 records](../spec/S01-game-file-records.md) and
 [S01 orders](../spec/S01-game-file-orders.md). This document assigns migration
@@ -51,7 +53,7 @@ expressions that would become stale when unrelated lines move.
 | Orders and order logs | ORDER/PLORD runtime items, 18/8-byte full/partial encoding, transport/edit/replay operations | B06 migrated |
 | Hulls and designs | Four-byte HS codecs, explicit full/partial SHDEF prefixes and design-log words; fixed runtime slots and unchanged catalog IDs | B07 migrated |
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
-| Battle and AI | TOK/KILL/BTLDATA/BTLREC/BTLREC26, packed replay, token alignment, AI state/data and traversal | B09 |
+| Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, qualification active |
 | Messages and logs | MSGHDR/MSGPLR/RTPLRMSG/MSGBIG/LOGXFER/RTLOGHDR, compression/framing, passwords and message filters | B10 |
 | Remaining fixed game records | GAME/RTBOF/PLAYER/PLANET/THING/SCOREX and preferences; unknown tags and reserved bits | B11 |
 | Record stream boundary in `file.c` / `save.c` | HDR 10-bit length/6-bit type, XOR/checksum state, continuation records, partial read/write effects | B11 after dependent families |

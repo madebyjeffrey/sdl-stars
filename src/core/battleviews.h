@@ -2,99 +2,17 @@
 #define STARS_BATTLEVIEWS_H
 
 #include "battlecodec.h"
-#include <cassert>
-
-// Borrow an arena's bytes only for this operation. The position may denote an
-// end boundary; reading a field requires only that field's physical bytes.
-// Declared counts/lengths do not become a new admission policy here.
-class NATIVEBATTLEWINDOW {
-protected:
-    std::span<std::byte> rgb;
-    std::ptrdiff_t ib = 0;
-    std::span<std::byte> RgbField(std::ptrdiff_t dib, std::size_t cb) const noexcept {
-        std::ptrdiff_t ibField = ib + dib;
-        if (ibField < 0 || static_cast<std::size_t>(ibField) > rgb.size() || cb > rgb.size() - static_cast<std::size_t>(ibField)) {
-            assert(false && "battle field outside its physical arena");
-            return {};
-        }
-        return rgb.subspan(static_cast<std::size_t>(ibField), cb);
-    }
-    std::uint8_t GetU8(std::ptrdiff_t dib) const noexcept {
-        std::uint8_t ch = 0;
-        if (!NATIVEBYTEREADER(RgbField(dib, 1)).FReadU8(ch)) assert(false);
-        return ch;
-    }
-    std::uint16_t GetU16(std::ptrdiff_t dib) const noexcept {
-        std::uint16_t w = 0;
-        if (!NATIVEBYTEREADER(RgbField(dib, 2)).FReadU16Le(w)) assert(false);
-        return w;
-    }
-    std::int16_t GetI16(std::ptrdiff_t dib) const noexcept {
-        std::int16_t w = 0;
-        if (!NATIVEBYTEREADER(RgbField(dib, 2)).FReadI16Le(w)) assert(false);
-        return w;
-    }
-    std::uint8_t SetU8(std::ptrdiff_t dib, std::uint8_t ch) noexcept {
-        if (!NATIVEBYTEWRITER(RgbField(dib, 1)).FWriteU8(ch)) assert(false);
-        return ch;
-    }
-    std::uint16_t SetU16(std::ptrdiff_t dib, std::uint16_t w) noexcept {
-        if (!NATIVEBYTEWRITER(RgbField(dib, 2)).FWriteU16Le(w)) assert(false);
-        return w;
-    }
-    std::int16_t SetI16(std::ptrdiff_t dib, std::int16_t w) noexcept {
-        if (!NATIVEBYTEWRITER(RgbField(dib, 2)).FWriteI16Le(w)) assert(false);
-        return w;
-    }
-    template<std::ptrdiff_t ibWord, unsigned iBit, unsigned cBits>
-    std::uint16_t GetBits() const noexcept {
-        static_assert(cBits > 0 && iBit + cBits <= 16);
-        constexpr unsigned i = iBit % 8;
-        constexpr unsigned cb = (i + cBits + 7) / 8;
-        constexpr std::uint16_t mask = static_cast<std::uint16_t>((std::uint32_t{1} << cBits) - 1);
-        std::uint16_t w;
-        if constexpr (cb == 1) w = GetU8(ibWord + iBit / 8);
-        else w = GetU16(ibWord + iBit / 8);
-        return static_cast<std::uint16_t>((w >> i) & mask);
-    }
-    template<std::ptrdiff_t ibWord, unsigned iBit, unsigned cBits>
-    std::uint16_t SetBits(std::uint16_t value) noexcept {
-        static_assert(cBits > 0 && iBit + cBits <= 16);
-        constexpr unsigned i = iBit % 8;
-        constexpr unsigned cb = (i + cBits + 7) / 8;
-        constexpr std::uint16_t mask = static_cast<std::uint16_t>((std::uint32_t{1} << cBits) - 1);
-        std::uint16_t w;
-        if constexpr (cb == 1) w = GetU8(ibWord + iBit / 8);
-        else w = GetU16(ibWord + iBit / 8);
-        w = static_cast<std::uint16_t>((w & ~(std::uint32_t(mask) << i)) | (std::uint32_t(value & mask) << i));
-        if constexpr (cb == 1) SetU8(ibWord + iBit / 8, static_cast<std::uint8_t>(w));
-        else SetU16(ibWord + iBit / 8, w);
-        return value & mask;
-    }
-    NATIVEBATTLEWINDOW Shift(std::ptrdiff_t dib) const noexcept { return {rgb, ib + dib}; }
-public:
-    NATIVEBATTLEWINDOW() = default;
-    NATIVEBATTLEWINDOW(std::span<std::byte> rgb, std::ptrdiff_t ib = 0) noexcept : rgb(rgb), ib(ib) {
-        assert(ib >= 0 && static_cast<std::size_t>(ib) <= rgb.size());
-    }
-    explicit operator bool() const noexcept { return rgb.data() != nullptr; }
-    std::uint8_t *Lpb() const noexcept {
-        if (!rgb.data()) return nullptr;
-        assert(ib >= 0 && static_cast<std::size_t>(ib) <= rgb.size());
-        return reinterpret_cast<std::uint8_t *>(rgb.data() + ib);
-    }
-    std::span<std::byte> Rgb() const noexcept { return RgbField(0, rgb.size() - static_cast<std::size_t>(ib)); }
-};
+#include "byteview.h"
 
 // The game heap adapter supplies the physical allocation, including its old
 // spare bytes. Pure codec/view tests can instead supply an explicit byte span.
-NATIVEBATTLEWINDOW BbwFromLp(void *lp) noexcept;
+NATIVEBYTEWINDOW BbwFromLp(void *lp) noexcept;
 
-class NATIVEBATTLEPOINTVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLEPOINTVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLEPOINTVIEW() = default;
-    explicit NATIVEBATTLEPOINTVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLEPOINTVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::int16_t x() const noexcept { return GetI16(0); }
     std::int16_t SetX(std::int16_t value) noexcept { return SetI16(0, value); }
     std::int16_t y() const noexcept { return GetI16(2); }
@@ -102,11 +20,11 @@ public:
     POINT16 ReadValue() const noexcept { return {x(), y()}; }
 };
 
-class NATIVEBATTLEDVVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLEDVVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLEDVVIEW() = default;
-    explicit NATIVEBATTLEDVVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLEDVVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::uint16_t dp() const noexcept { return GetU16(0); }
     std::uint16_t SetDp(std::uint16_t value) noexcept { return SetU16(0, value); }
     std::uint16_t pctSh() const noexcept { return GetBits<0, 0, 7>(); }
@@ -116,11 +34,11 @@ public:
     DV ReadValue() const noexcept { return {dp()}; }
 };
 
-class NATIVEBATTLEKILLVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLEKILLVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLEKILLVIEW() = default;
-    explicit NATIVEBATTLEKILLVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLEKILLVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::uint8_t itok() const noexcept { return GetU8(0); }
     std::uint8_t SetItok(std::uint8_t value) noexcept { return SetU8(0, value); }
     std::uint8_t grfWeapon() const noexcept { return GetU8(1); }
@@ -137,11 +55,11 @@ public:
     }
 };
 
-class NATIVEBATTLETOKENVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLETOKENVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLETOKENVIEW() = default;
-    explicit NATIVEBATTLETOKENVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLETOKENVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::uint16_t id() const noexcept { return GetU16(0); }
     std::uint8_t iplr() const noexcept { return GetU8(2); }
     std::uint8_t grobj() const noexcept { return GetU8(3); }
@@ -184,11 +102,11 @@ public:
     }
 };
 
-class NATIVEBATTLEEVENTVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLEEVENTVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLEEVENTVIEW() = default;
-    explicit NATIVEBATTLEEVENTVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLEEVENTVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::uint8_t itok() const noexcept { return GetU8(0); }
     std::uint8_t SetItok(std::uint8_t value) noexcept { return SetU8(0, value); }
     std::uint8_t brcDest() const noexcept { return GetU8(1); }
@@ -210,11 +128,11 @@ public:
     }
 };
 
-class NATIVEBATTLEDATAVIEW : public NATIVEBATTLEWINDOW {
+class NATIVEBATTLEDATAVIEW : public NATIVEBYTEWINDOW {
 public:
-    using NATIVEBATTLEWINDOW::NATIVEBATTLEWINDOW;
+    using NATIVEBYTEWINDOW::NATIVEBYTEWINDOW;
     NATIVEBATTLEDATAVIEW() = default;
-    explicit NATIVEBATTLEDATAVIEW(NATIVEBATTLEWINDOW window) noexcept : NATIVEBATTLEWINDOW(window) {}
+    explicit NATIVEBATTLEDATAVIEW(NATIVEBYTEWINDOW window) noexcept : NATIVEBYTEWINDOW(window) {}
     std::uint16_t id() const noexcept { return GetU16(0); }
     std::uint16_t SetId(std::uint16_t value) noexcept { return SetU16(0, value); }
     std::uint8_t cplr() const noexcept { return GetU8(2); }

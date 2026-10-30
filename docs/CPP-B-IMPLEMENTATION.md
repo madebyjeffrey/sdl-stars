@@ -17,7 +17,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
-| B09: battle/AI payloads | Active | Battle producers, loading, continuation writes and replay/report byte views pass the full local matrix. AI data and platform qualification remain required. |
+| B09: battle/AI payloads | Active | Battle and AI history families pass the full local matrix. The remaining battle-plan prefix and final platform qualification are active. |
 | B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
@@ -831,3 +831,39 @@ zero differences/errors and no skipped inputs. All 259 frozen measurements and
 six migrated runtime alignment checks pass. Independent inputs, catalogs and
 baselines remain unchanged. B09 AI data and platform qualification remain
 required; B10–B14 are pending.
+
+
+## B09 AI history in qualification
+
+Ordinary AI history uses signed little-endian planet/freighter/ID fields and
+explicit twenty-byte row codecs for compaction. Scoped byte windows retain
+physical spare bytes, stale fields and the existing pre-turn-20 behavior and
+later count clamps. Redistribution evaluates the donor ID before the receiver
+postincrement, publishes the count before its ID, and retains unused slots.
+History length is still unsigned for logging and signed for Cybertron setup.
+
+Cybertron's persistent and temporary words have explicit bit accessors; inactive
+raw-word unions are replaced by actual numeric words. Its planet-ID traversal,
+low-byte field accesses, reserved bits, two-bit countdown, scratch clear lengths
+and incremental updates remain at the original positions. The trailing mineral
+scratch uses explicit signed 32-bit little-endian access. Macinti's opaque
+history remains untouched by the ordinary validator. Raw history read/write
+chunks retain their original lengths and do not acquire stricter admission.
+
+The byte-window primitives now live in platform/byteview.h and serve both record
+families. Heap adapters still borrow their physical allocations; persistent roots
+remain byte pointers, with no deferred flush on normal return. Focused golden,
+all-word, signed/short-prefix, real validator/heap and replay tests pass. Full
+local and platform qualification remain required.
+
+
+AI history local qualification: 114/114 desktop tests including all 27 native
+macOS leak checks, 25/25 host tests, 36/36 ASan/UBSan cases, all 27 source
+witnesses and 98 public headers in both include orders. Debug/Release/host/
+sanitizer builds introduce no warnings. Desktop and host regressions each match
+519 files through turn 150 with 25 accepted unused-storage warnings, zero
+differences/errors and no skipped inputs. All frozen layout and migrated
+alignment checks pass; independent inputs and baselines remain unchanged.
+The remaining native battle-plan prefix copies are assigned to B09 by the
+inventory and will migrate before B09 completion. Final platform qualification
+is also required; B10–B14 remain pending.

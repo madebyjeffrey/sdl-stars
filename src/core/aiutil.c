@@ -1422,52 +1422,52 @@ void ValidateStarbaseHistory() {
     int32_t l;
 
     if (rgplr[idPlayer].idAi != idAiCybertron && rgplr[idPlayer].idAi != idAiMacinti) {
-        if (((AIHIST *)vlpbAiData)->cbAiHist <= 2) {
-            ((AIHIST *)vlpbAiData)->cStarbase = 0;
+        if (AhvFromLp(vlpbAiData).cbAiHist() <= 2) {
+            AhvFromLp(vlpbAiData).SetCStarbase(0);
         }
         if (game.turn >= 20) {
             iWrite = 0;
-            if (((AIHIST *)vlpbAiData)->cStarbase < 0 || ((AIHIST *)vlpbAiData)->cStarbase > 64) {
-                ((AIHIST *)vlpbAiData)->cStarbase = 0;
+            if (AhvFromLp(vlpbAiData).cStarbase() < 0 || AhvFromLp(vlpbAiData).cStarbase() > 64) {
+                AhvFromLp(vlpbAiData).SetCStarbase(0);
             }
-            for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-                if (((AIHIST *)vlpbAiData)->rgasb[i].cFreighter < 0 || ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter > 8) {
-                    ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter = 0;
+            for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+                if (AhvFromLp(vlpbAiData).rgasb(i).cFreighter() < 0 || AhvFromLp(vlpbAiData).rgasb(i).cFreighter() > 8) {
+                    AhvFromLp(vlpbAiData).rgasb(i).SetCFreighter(0);
                 }
-                lppl = LpplFromId(((AIHIST *)vlpbAiData)->rgasb[i].idPlanet);
+                lppl = LpplFromId(AhvFromLp(vlpbAiData).rgasb(i).idPlanet());
                 if (lppl && lppl->iPlayer == idPlayer) {
                     if (iWrite != i) {
-                        ((AIHIST *)vlpbAiData)->rgasb[iWrite] = ((AIHIST *)vlpbAiData)->rgasb[i];
+                        AhvFromLp(vlpbAiData).rgasb(iWrite).SetValue(AhvFromLp(vlpbAiData).rgasb(i).ReadValue());
                     }
                     iWrite++;
                 }
             }
-            ((AIHIST *)vlpbAiData)->cStarbase = iWrite;
+            AhvFromLp(vlpbAiData).SetCStarbase(iWrite);
             for (ipl = 0; ipl < vclpplAi; ipl++) {
                 lppl = vrglpplAi[ipl];
                 if (!vrglpplAi[ipl])
                     break;
                 if (lppl->fStarbase) {
-                    for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase && ((AIHIST *)vlpbAiData)->rgasb[i].idPlanet != lppl->id; i++) {
+                    for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase() && AhvFromLp(vlpbAiData).rgasb(i).idPlanet() != lppl->id; i++) {
                     }
-                    if (i == ((AIHIST *)vlpbAiData)->cStarbase && i < 64) {
-                        ((AIHIST *)vlpbAiData)->rgasb[i].idPlanet = lppl->id;
-                        ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter = 0;
-                        ((AIHIST *)vlpbAiData)->cStarbase++;
+                    if (i == AhvFromLp(vlpbAiData).cStarbase() && i < 64) {
+                        AhvFromLp(vlpbAiData).rgasb(i).SetIdPlanet(lppl->id);
+                        AhvFromLp(vlpbAiData).rgasb(i).SetCFreighter(0);
+                        AhvFromLp(vlpbAiData).SetCStarbase(AhvFromLp(vlpbAiData).cStarbase() + 1);
                     }
                 }
             }
             lppl = lpPlanets;
             lpplMac = lpPlanets + cPlanet;
-            for (; lppl < lpplMac && ((AIHIST *)vlpbAiData)->cStarbase < 64; lppl++) {
+            for (; lppl < lpplMac && AhvFromLp(vlpbAiData).cStarbase() < 64; lppl++) {
                 if (lppl->iPlayer == idPlayer && !lppl->fStarbase && lppl->rgwtMin[3] >= 80) {
                     l = 0;
                     for (i = 0; i < 3; i++) {
                         l += (int32_t)((uint32_t)((uint32_t)lppl->rgMinConc[i] * (uint32_t)lppl->rgMinConc[i]) * 4) + lppl->rgwtMin[i];
                     }
                     if (l >= 7000 && lppl->cMines >= 20 && lppl->cFactories >= 20) {
-                        for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-                            id = ((AIHIST *)vlpbAiData)->rgasb[i].idPlanet;
+                        for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+                            id = AhvFromLp(vlpbAiData).rgasb(i).idPlanet();
                             if (id == lppl->id)
                                 break;
                             if (rgplr[idPlayer].idAi == idAiRobotoid) {
@@ -1479,10 +1479,10 @@ void ValidateStarbaseHistory() {
                                     break;
                             }
                         }
-                        if (i >= ((AIHIST *)vlpbAiData)->cStarbase) {
-                            ((AIHIST *)vlpbAiData)->rgasb[((AIHIST *)vlpbAiData)->cStarbase].idPlanet = lppl->id;
-                            ((AIHIST *)vlpbAiData)->rgasb[((AIHIST *)vlpbAiData)->cStarbase].cFreighter = 0;
-                            ((AIHIST *)vlpbAiData)->cStarbase++;
+                        if (i >= AhvFromLp(vlpbAiData).cStarbase()) {
+                            AhvFromLp(vlpbAiData).rgasb(AhvFromLp(vlpbAiData).cStarbase()).SetIdPlanet(lppl->id);
+                            AhvFromLp(vlpbAiData).rgasb(AhvFromLp(vlpbAiData).cStarbase()).SetCFreighter(0);
+                            AhvFromLp(vlpbAiData).SetCStarbase(AhvFromLp(vlpbAiData).cStarbase() + 1);
                         }
                     }
                 }
@@ -1492,18 +1492,18 @@ void ValidateStarbaseHistory() {
                 if (!rglpfl[ifl])
                     break;
                 if (lpfl->iPlayer == idPlayer && FIsAiTransport(lpfl)) {
-                    for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-                        for (j = 0; j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter && ((AIHIST *)vlpbAiData)->rgasb[i].rgflid[j] != lpfl->id; j++) {
+                    for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+                        for (j = 0; j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
                         }
-                        if (j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter)
+                        if (j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter())
                             break;
                     }
-                    if (i == ((AIHIST *)vlpbAiData)->cStarbase) {
+                    if (i == AhvFromLp(vlpbAiData).cStarbase()) {
                         iBest = -1;
                         lBest = 10000000;
-                        for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-                            if (((AIHIST *)vlpbAiData)->rgasb[i].cFreighter < 8) {
-                                pt = rgptPlan[((AIHIST *)vlpbAiData)->rgasb[i].idPlanet];
+                        for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+                            if (AhvFromLp(vlpbAiData).rgasb(i).cFreighter() < 8) {
+                                pt = rgptPlan[AhvFromLp(vlpbAiData).rgasb(i).idPlanet()];
                                 dx = pt.x - lpfl->pt.x;
                                 dy = pt.y - lpfl->pt.y;
                                 l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
@@ -1514,27 +1514,27 @@ void ValidateStarbaseHistory() {
                             }
                         }
                         if (iBest != -1) {
-                            ((AIHIST *)vlpbAiData)->rgasb[iBest].rgflid[((AIHIST *)vlpbAiData)->rgasb[iBest].cFreighter++] = lpfl->id;
+                            AhvFromLp(vlpbAiData).rgasb(iBest).SetNextFlid(lpfl->id);
                         }
                     }
                 }
             }
-            for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-                cFr = ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter;
+            for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+                cFr = AhvFromLp(vlpbAiData).rgasb(i).cFreighter();
                 if (cFr < 4) {
-                    for (j = 0; j < ((AIHIST *)vlpbAiData)->cStarbase; j++) {
-                        cFr2 = ((AIHIST *)vlpbAiData)->rgasb[j].cFreighter;
+                    for (j = 0; j < AhvFromLp(vlpbAiData).cStarbase(); j++) {
+                        cFr2 = AhvFromLp(vlpbAiData).rgasb(j).cFreighter();
                         if (cFr2 >= cFr + 2)
                             break;
                     }
-                    if (j < ((AIHIST *)vlpbAiData)->cStarbase) {
-                        ((AIHIST *)vlpbAiData)->rgasb[j].cFreighter--;
-                        ((AIHIST *)vlpbAiData)->rgasb[i].rgflid[((AIHIST *)vlpbAiData)->rgasb[i].cFreighter++] =
-                            ((AIHIST *)vlpbAiData)->rgasb[j].rgflid[((AIHIST *)vlpbAiData)->rgasb[j].cFreighter];
+                    if (j < AhvFromLp(vlpbAiData).cStarbase()) {
+                        AhvFromLp(vlpbAiData).rgasb(j).SetCFreighter(AhvFromLp(vlpbAiData).rgasb(j).cFreighter() - 1);
+                        AhvFromLp(vlpbAiData).rgasb(i).SetNextFlid(
+                            AhvFromLp(vlpbAiData).rgasb(j).rgflid(AhvFromLp(vlpbAiData).rgasb(j).cFreighter()));
                     }
                 }
             }
-            ((AIHIST *)vlpbAiData)->cbAiHist = ((AIHIST *)vlpbAiData)->cStarbase * 20 + 4;
+            AhvFromLp(vlpbAiData).SetCbAiHist(AhvFromLp(vlpbAiData).cStarbase() * 20 + 4);
         }
     }
     return;
@@ -2435,9 +2435,9 @@ void QueueAiStarbases(PROD *rgprod, int16_t ishdefSBLatest) {
             } else {
                 if (lppl->iPlayer != idPlayer || ((lppl->fStarbase && lppl->isb <= 9) || lppl->rgwtMin[3] < 80 || vlpbAiPlanet[lppl->id * 16 + 2] != 0))
                     continue;
-                for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase && ((AIHIST *)vlpbAiData)->rgasb[i].idPlanet != lppl->id; i++) {
+                for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase() && AhvFromLp(vlpbAiData).rgasb(i).idPlanet() != lppl->id; i++) {
                 }
-                if (i == ((AIHIST *)vlpbAiData)->cStarbase)
+                if (i == AhvFromLp(vlpbAiData).cStarbase())
                     continue;
             }
             ChangeMainObjSel(grobjPlanet, lppl->id);

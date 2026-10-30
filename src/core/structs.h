@@ -220,35 +220,27 @@ struct _compart {
 }; /* size=0x34 */
 
 struct _cyberinfo {
-    union {
-        struct {
-            uint16_t iLstPktDir : 3, /* +0x0000 (2) @bit0 */
-                fBltColony : 1,      /* @bit3 */
-                fLaunchedPkt : 1,    /* @bit4 */
-                iPktTarget : 2,      /* @bit5 */
-                fNeedScanPkt : 1,    /* @bit7 */
-                unused : 8;          /* @bit8 */
-        };
-        uint16_t wInfo; /* +0x0000 (2) */
-    };
+    uint16_t wInfo;
+    constexpr uint16_t iLstPktDir() const noexcept { return (wInfo >> 0) & 0x7; }
+    constexpr uint16_t fBltColony() const noexcept { return (wInfo >> 3) & 0x1; }
+    constexpr uint16_t fLaunchedPkt() const noexcept { return (wInfo >> 4) & 0x1; }
+    constexpr uint16_t iPktTarget() const noexcept { return (wInfo >> 5) & 0x3; }
+    constexpr uint16_t fNeedScanPkt() const noexcept { return (wInfo >> 7) & 0x1; }
+    constexpr uint16_t unused() const noexcept { return (wInfo >> 8) & 0xff; }
 }; /* size=0x2 */
 
 struct _cyberinfotemp {
-    union {
-        struct {
-            uint16_t fIdleColonizers : 1, /* +0x0000 (2) @bit0 */
-                cIdleFreighters : 2,      /* @bit1 */
-                cFreightersDst : 2,       /* @bit3 */
-                fNeedDefenders : 1,       /* @bit5 */
-                fDefended : 1,            /* @bit6 */
-                fUnderAttack : 1,         /* @bit7 */
-                fNeedsMin1 : 1,           /* @bit8 */
-                fNeedsMin2 : 1,           /* @bit9 */
-                fNeedsMin3 : 1,           /* @bit10 */
-                unused : 5;               /* @bit11 */
-        };
-        uint16_t wInfo1; /* +0x0000 (2) */
-    };
+    uint16_t wInfo1;
+    constexpr uint16_t fIdleColonizers() const noexcept { return (wInfo1 >> 0) & 0x1; }
+    constexpr uint16_t cIdleFreighters() const noexcept { return (wInfo1 >> 1) & 0x3; }
+    constexpr uint16_t cFreightersDst() const noexcept { return (wInfo1 >> 3) & 0x3; }
+    constexpr uint16_t fNeedDefenders() const noexcept { return (wInfo1 >> 5) & 0x1; }
+    constexpr uint16_t fDefended() const noexcept { return (wInfo1 >> 6) & 0x1; }
+    constexpr uint16_t fUnderAttack() const noexcept { return (wInfo1 >> 7) & 0x1; }
+    constexpr uint16_t fNeedsMin1() const noexcept { return (wInfo1 >> 8) & 0x1; }
+    constexpr uint16_t fNeedsMin2() const noexcept { return (wInfo1 >> 9) & 0x1; }
+    constexpr uint16_t fNeedsMin3() const noexcept { return (wInfo1 >> 10) & 0x1; }
+    constexpr uint16_t unused() const noexcept { return (wInfo1 >> 11) & 0x1f; }
 }; /* size=0x2 */
 
 struct _dv {

@@ -363,22 +363,25 @@ bool FSetOrderTask(PLORD *lpplord, int16_t iord, int16_t grTask) {
 
 // Byte views preserve physical spare/neighbor reads without pretending that a
 // packed event or token object lives there. End positions remain valid bounds.
-NATIVEBATTLEWINDOW BbwFromLp(void *lp) noexcept {
+static NATIVEBYTEWINDOW BbwFromLpHt(void *lp, HeapType ht) noexcept {
     HB *lphb;
     uintptr_t p, base;
 
     if (!lp) return {};
     p = reinterpret_cast<uintptr_t>(lp);
-    for (lphb = rglphb[htBattle]; lphb; lphb = lphb->lphbNext) {
+    for (lphb = rglphb[ht]; lphb; lphb = lphb->lphbNext) {
         base = reinterpret_cast<uintptr_t>(lphb->hmem);
         if (p >= base && p - base < lphb->cbBlock)
             return {std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock), static_cast<std::ptrdiff_t>(p - base)};
     }
-    for (lphb = rglphb[htBattle]; lphb; lphb = lphb->lphbNext) {
+    for (lphb = rglphb[ht]; lphb; lphb = lphb->lphbNext) {
         base = reinterpret_cast<uintptr_t>(lphb->hmem);
         if (p >= base && p - base == lphb->cbBlock)
             return {std::span(static_cast<std::byte *>(lphb->hmem), lphb->cbBlock), static_cast<std::ptrdiff_t>(p - base)};
     }
-    assert(false && "battle view has no owning allocation");
+    assert(false && "byte view has no owning allocation");
     return {};
 }
+
+NATIVEBYTEWINDOW BbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htBattle); }
+NATIVEBYTEWINDOW AbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htMisc); }

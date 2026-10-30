@@ -147,7 +147,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
             if (i < lpplProdGlob->iprodMac) {
                 FinishProduction(FALSE);
             } else {
-                cFr = rgplr[idPlayer].cPlanet / 10 <= ((AIHIST *)vlpbAiData)->cStarbase * 2 ? ((AIHIST *)vlpbAiData)->cStarbase * 2
+                cFr = rgplr[idPlayer].cPlanet / 10 <= AhvFromLp(vlpbAiData).cStarbase() * 2 ? AhvFromLp(vlpbAiData).cStarbase() * 2
                                                                                             : rgplr[idPlayer].cPlanet / 10;
                 if (rgplr[idPlayer].rgTech[2] >= 5 && iLatestCargo != ishdefNone &&
                     (cExistCargo < cFr || (cExistCargo < (int16_t)(10 * cFr) / 7 && Random(4) == 0))) {
@@ -372,14 +372,14 @@ void DoAutomitronAiTurn(PROD *rgprod) {
         if (!lpplHome)
             goto BestSpeed;
         lppl = NULL;
-        for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-            for (j = 0; j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter && ((AIHIST *)vlpbAiData)->rgasb[i].rgflid[j] != lpfl->id; j++) {
+        for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+            for (j = 0; j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
             }
-            if (j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter)
+            if (j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter())
                 break;
         }
-        if (i < ((AIHIST *)vlpbAiData)->cStarbase) {
-            lppl = LpplFromId(((AIHIST *)vlpbAiData)->rgasb[i].idPlanet);
+        if (i < AhvFromLp(vlpbAiData).cStarbase()) {
+            lppl = LpplFromId(AhvFromLp(vlpbAiData).rgasb(i).idPlanet());
         }
         IdTargetFreighter(lpfl, !lppl ? lpplHome : lppl);
         continue;
@@ -752,14 +752,14 @@ void DoRototillAiTurn(PROD *rgprod) {
         if (!lpplHome)
             goto BestSpeed;
         lppl = NULL;
-        for (i = 0; i < ((AIHIST *)vlpbAiData)->cStarbase; i++) {
-            for (j = 0; j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter && ((AIHIST *)vlpbAiData)->rgasb[i].rgflid[j] != lpfl->id; j++) {
+        for (i = 0; i < AhvFromLp(vlpbAiData).cStarbase(); i++) {
+            for (j = 0; j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
             }
-            if (j < ((AIHIST *)vlpbAiData)->rgasb[i].cFreighter)
+            if (j < AhvFromLp(vlpbAiData).rgasb(i).cFreighter())
                 break;
         }
-        if (i < ((AIHIST *)vlpbAiData)->cStarbase) {
-            lppl = LpplFromId(((AIHIST *)vlpbAiData)->rgasb[i].idPlanet);
+        if (i < AhvFromLp(vlpbAiData).cStarbase()) {
+            lppl = LpplFromId(AhvFromLp(vlpbAiData).rgasb(i).idPlanet());
         }
         IdTargetFreighter(lpfl, !lppl ? lpplHome : lppl);
         continue;
