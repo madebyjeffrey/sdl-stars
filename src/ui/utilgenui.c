@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 #include <stars_compat.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -890,13 +891,23 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
 }
 
 HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE hpal) {
-    HDC               hdc;
+    HDC               hdc = NULL;
     HGLOBAL           h;
     uint32_t          dwLen;
     BITMAP            bm;
     BITMAPINFOHEADER  bi;
     HGLOBAL           hdib;
     BITMAPINFOHEADER *lpbi;
+    NATIVECLEANUPSCOPE dc([&]() noexcept {
+        if (hdc) {
+            SelectPalette(hdc, hpal, FALSE);
+            ReleaseDC(NULL, hdc);
+        }
+    });
+    NATIVEOWNER<void, GlobalFree> dib;
+    bool fLocked = false;
+    NATIVECLEANUPSCOPE unlock([&]() noexcept { if (fLocked) GlobalUnlock(hdib); });
+
 
     if (!hbm) {
         return NULL;
@@ -924,16 +935,15 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     hpal = SelectPalette(hdc, hpal, FALSE);
     RealizePalette(hdc);
     hdib = GlobalAlloc(66, dwLen);
+    dib.reset(hdib);
     if (!hdib) {
-        SelectPalette(hdc, hpal, FALSE);
-        ReleaseDC(NULL, hdc);
         return NULL;
     }
-    lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib);
+    lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib); fLocked = lpbi != NULL;
     *lpbi = bi;
     GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), NULL, (BITMAPINFO *)lpbi, 0);
     bi = *lpbi;
-    GlobalUnlock(hdib);
+    GlobalUnlock(hdib); fLocked = false;
     if (bi.biSizeImage == 0) {
         bi.biSizeImage = (uint32_t)((int32_t)((uint32_t)(((uint32_t)(bm.bmWidth * (uint32_t)biBits) + 31) / 32) * 4) * bm.bmHeight);
         if (biStyle != 0) {
@@ -943,26 +953,19 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize + bi.biSizeImage;
     h = GlobalReAlloc(hdib, dwLen, 0);
     if (h) {
+        dib.release();
         hdib = h;
-        lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib);
+        dib.reset(hdib);
+        lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib); fLocked = lpbi != NULL;
         if (GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), (uint8_t *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi), (BITMAPINFO *)lpbi, 0) == 0) {
-            GlobalUnlock(hdib);
-            hdib = 0;
-            SelectPalette(hdc, hpal, FALSE);
-            ReleaseDC(NULL, hdc);
+            GlobalUnlock(hdib); fLocked = false;
             return NULL;
         }
         bi = *lpbi;
-        GlobalUnlock(hdib);
-        SelectPalette(hdc, hpal, FALSE);
-        ReleaseDC(NULL, hdc);
-        return hdib;
+        GlobalUnlock(hdib); fLocked = false;
+        return dib.release();
     }
-    GlobalFree(hdib);
-    hdib = 0;
-    SelectPalette(hdc, hpal, FALSE);
-    ReleaseDC(NULL, hdc);
-    return hdib;
+    return NULL;
 }
 
 HGLOBAL HdibLoadBigResource(BitmapId idb) {

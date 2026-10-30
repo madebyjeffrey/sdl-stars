@@ -396,7 +396,10 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
     TEST_CHECK(mb.wGoto == gotoNone && mb.rgParam[0] == 256 && mb.rgParam[1] == 1);
 }
 
+
 #ifdef STARS_UI_SDL
+// Provided only by wrapper memory.c builds marked STARS_TEST_MEMORY_OBSERVE.
+size_t CCompatMemoryBlocks();
 static void TestDibFromBitmapNativeQuery(void) {
     TEST_ASSERT(FStarsTestInit());
     HDC hdc = GetDC(NULL);
@@ -413,11 +416,24 @@ static void TestDibFromBitmapNativeQuery(void) {
     DeleteObject(hbm);
     ReleaseDC(NULL, hdc);
 }
+static void TestDibFromBitmapFailureReleasesStorage(void) {
+    TEST_ASSERT(FStarsTestInit());
+    HDC hdc = GetDC(NULL);
+    TEST_ASSERT(hdc);
+    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    TEST_ASSERT(hbm);
+    const size_t cMemory = CCompatMemoryBlocks();
+    TEST_CHECK(DibFromBitmap(hbm, BI_RLE8, 8, NULL) == NULL);
+    TEST_CHECK(CCompatMemoryBlocks() == cMemory);
+    DeleteObject(hbm);
+    ReleaseDC(NULL, hdc);
+}
 #endif
 
 TEST_LIST = {
 #ifdef STARS_UI_SDL
     {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},
+    {"failed bitmap conversion releases temporary global storage", TestDibFromBitmapFailureReleasesStorage},
 #endif
 {"packed message parameters preserve framing and scratch admission", TestPackedMessageParameters},
              {"message packing retains early returns, capacity, RNG and prepend", TestMessagePackingAdmissionAndPrepend},

@@ -17,6 +17,17 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Failed bitmap conversion storage — fixed on main
+
+`utilgenui.c`: after successful reallocation, a rejected `GetDIBits` conversion
+returned without releasing its global-memory block. The wrapper registry kept
+the block reachable, so a leak detector alone could miss it. Scoped owners now
+release the block and restore native drawing state on failure or unwinding.
+An unsupported RLE conversion checks the registry count before and after; a
+controlled build that releases ownership on that return fails this assertion.
+Both regressions retain 519 matches, 25 accepted warnings and no differences
+through turn 150.
+
 ## Native bitmap query size — fixed on main
 
 `utilgenui.c`: `DibFromBitmap` requested a 14-byte Win16 `BITMAP` from the

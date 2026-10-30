@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DibFromBitmap` releases its temporary global-memory block when pixel
+  conversion fails. Previously it discarded the handle and retained the block
+  in the wrapper registry. Scoped cleanup also restores the selected palette
+  and device context during unwinding. A resource-count fixture detects the
+  old retained handle; host results and regression checkpoints stay unchanged.
+
 - `DibFromBitmap` queries the native `BITMAP` size instead of the original
   14-byte Win16 size, which left dimensions uninitialized when the native query
   rejected it. A 2-by-2 bitmap now converts with its actual dimensions and size.

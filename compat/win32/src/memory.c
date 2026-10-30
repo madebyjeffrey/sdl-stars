@@ -209,3 +209,12 @@ void CompatShutdownMemory(void) {
     }
     lockMemory.unlock();
 }
+
+#ifdef STARS_TEST_MEMORY_OBSERVE
+size_t CCompatMemoryBlocks() {
+    size_t c = 0;
+    std::unique_lock lockMemory(fMemoryLock);
+    for (COMPATMEMORY *lp = lpMemory; lp; lp = lp->lpNext) c++;
+    return c;
+}
+#endif
