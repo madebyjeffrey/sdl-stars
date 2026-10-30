@@ -27,6 +27,8 @@ def main():
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <array>
+#include <bit>
 #include <setjmp.h>
 #define FALSE 0
 #define TRUE 1

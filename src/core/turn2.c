@@ -1291,7 +1291,7 @@ void UpdateGuesses() {
                 lppl->uDefGuess = LOWORD(l);
             }
         } else {
-            lppl->uGuesses = 0;
+            lppl->SetUGuesses(0);
         }
     }
     return;

@@ -898,7 +898,7 @@ void UninhabitPlanet(PLANET *lppl) {
     lppl->fStarbase = FALSE;
     lppl->cDefenses = 0;
     lppl->iScanner = 31;
-    lppl->lStarbase = 0;
+    lppl->SetLStarbase(0);
     return;
 }
 

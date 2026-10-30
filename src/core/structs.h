@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <cstddef>
+#include <array>
 #include <bit>
 #include <span>
 #include "taskviews.h"
@@ -607,46 +608,54 @@ struct _planet {
     uint8_t rgMinConc[3];     /* +0x0009 (3) */
     int8_t  rgEnvVar[3];      /* +0x000C (3) */
     int8_t  rgEnvVarOrig[3];  /* +0x000F (3) */
-    union {
-        struct {
-            uint16_t uPopGuess : 12, /* +0x0012 (2) @bit0 */
-                uDefGuess : 4;       /* @bit12 */
-        };
-        uint16_t uGuesses; /* +0x0012 (2) */
-    };
-    union {
-        struct {
-            uint32_t iDeltaPop : 8,  /* +0x0014 (4) @bit0 */
-                cMines : 12,         /* @bit8 */
-                cFactories : 12;     /* @bit20 */
-            uint32_t cDefenses : 12, /* +0x0018 (4) @bit0 */
-                iScanner : 5,        /* @bit12 */
-                unused5 : 5,         /* @bit17 */
-                fArtifact : 1,       /* @bit22 */
-                fNoResearch : 1,     /* @bit23 */
-                unused2 : 8;         /* @bit24 */
-        };
-        uint8_t rgbImp[8]; /* +0x0014 (8) */
-    };
+    uint16_t uPopGuess : 12, /* +0x0012 (2) @bit0 */
+        uDefGuess : 4;       /* @bit12 */
+    uint16_t uGuesses() const noexcept { return static_cast<uint16_t>(uPopGuess | (uDefGuess << 12)); }
+    void SetUGuesses(uint16_t uGuesses) noexcept { uPopGuess = uGuesses & 4095; uDefGuess = uGuesses >> 12; }
+    uint32_t iDeltaPop : 8,  /* +0x0014 (4) @bit0 */
+        cMines : 12,         /* @bit8 */
+        cFactories : 12;     /* @bit20 */
+    uint32_t cDefenses : 12, /* +0x0018 (4) @bit0 */
+        iScanner : 5,        /* @bit12 */
+        unused5 : 5,         /* @bit17 */
+        fArtifact : 1,       /* @bit22 */
+        fNoResearch : 1,     /* @bit23 */
+        unused2 : 8;         /* @bit24 */
+    std::array<uint8_t, 8> rgbImp() const noexcept {
+        const uint32_t ul1 = uint32_t(iDeltaPop) | (uint32_t(cMines) << 8) | (uint32_t(cFactories) << 20);
+        const uint32_t ul2 = uint32_t(cDefenses) | (uint32_t(iScanner) << 12) | (uint32_t(unused5) << 17) |
+            (uint32_t(fArtifact) << 22) | (uint32_t(fNoResearch) << 23) | (uint32_t(unused2) << 24);
+        return {uint8_t(ul1), uint8_t(ul1 >> 8), uint8_t(ul1 >> 16), uint8_t(ul1 >> 24),
+                uint8_t(ul2), uint8_t(ul2 >> 8), uint8_t(ul2 >> 16), uint8_t(ul2 >> 24)};
+    }
+    void SetRgbImp(const std::array<uint8_t, 8> &rgbImp) noexcept {
+        const uint32_t ul1 = uint32_t(rgbImp[0]) | (uint32_t(rgbImp[1]) << 8) | (uint32_t(rgbImp[2]) << 16) | (uint32_t(rgbImp[3]) << 24);
+        const uint32_t ul2 = uint32_t(rgbImp[4]) | (uint32_t(rgbImp[5]) << 8) | (uint32_t(rgbImp[6]) << 16) | (uint32_t(rgbImp[7]) << 24);
+        iDeltaPop = ul1 & 255; cMines = (ul1 >> 8) & 4095; cFactories = ul1 >> 20;
+        cDefenses = ul2 & 4095; iScanner = (ul2 >> 12) & 31; unused5 = (ul2 >> 17) & 31;
+        fArtifact = (ul2 >> 22) & 1; fNoResearch = (ul2 >> 23) & 1; unused2 = ul2 >> 24;
+    }
     int32_t rgwtMin[4]; /* +0x001C (16) */
-    union {
-        struct {
-            uint16_t isb : 4,      /* +0x002C (2) @bit0 */
-                pctDp : 12;        /* @bit4 */
-            uint16_t idFling : 10, /* +0x002E (2) @bit0 */
-                iWarpFling : 4,    /* @bit10 */
-                fNoHeal : 1,       /* @bit14 */
-                unused3 : 1;       /* @bit15 */
-        };
-        int32_t lStarbase; /* +0x002C (4) */
-    };
-    union {
-        struct {
-            uint16_t idRoute : 10, /* +0x0030 (2) @bit0 */
-                unused4 : 6;       /* @bit10 */
-        };
-        uint16_t wRouting; /* +0x0030 (2) */
-    };
+    uint16_t isb : 4,      /* +0x002C (2) @bit0 */
+        pctDp : 12;        /* @bit4 */
+    uint16_t idFling : 10, /* +0x002E (2) @bit0 */
+        iWarpFling : 4,    /* @bit10 */
+        fNoHeal : 1,       /* @bit14 */
+        unused3 : 1;       /* @bit15 */
+    int32_t lStarbase() const noexcept {
+        const uint32_t ul = uint32_t(isb) | (uint32_t(pctDp) << 4) | (uint32_t(idFling) << 16) |
+            (uint32_t(iWarpFling) << 26) | (uint32_t(fNoHeal) << 30) | (uint32_t(unused3) << 31);
+        return std::bit_cast<int32_t>(ul);
+    }
+    void SetLStarbase(int32_t lStarbase) noexcept {
+        const uint32_t ul = std::bit_cast<uint32_t>(lStarbase);
+        isb = ul & 15; pctDp = (ul >> 4) & 4095; idFling = (ul >> 16) & 1023;
+        iWarpFling = (ul >> 26) & 15; fNoHeal = (ul >> 30) & 1; unused3 = ul >> 31;
+    }
+    uint16_t idRoute : 10, /* +0x0030 (2) @bit0 */
+        unused4 : 6;       /* @bit10 */
+    uint16_t wRouting() const noexcept { return static_cast<uint16_t>(idRoute | (unused4 << 10)); }
+    void SetWRouting(uint16_t wRouting) noexcept { idRoute = wRouting & 1023; unused4 = wRouting >> 10; }
     int16_t turn;     /* +0x0032 (2) */
     PLPROD *lpplprod; /* +0x0034 (4) */
 }; /* size=0x38 */

@@ -441,7 +441,7 @@ RetryAll:
             } else {
                 lpPlanets[iMin].rgwtMin[3] = 250;
             }
-            lpPlanets[iMin].uGuesses = (lpPlanets[iMin].uGuesses & 0xf000) | ((uint32_t)LOWORD(lpPlanets[iMin].rgwtMin[3]) / 4 & 0xfff);
+            lpPlanets[iMin].SetUGuesses((lpPlanets[iMin].uGuesses() & 0xf000) | ((uint32_t)LOWORD(lpPlanets[iMin].rgwtMin[3]) / 4 & 0xfff));
             for (j = 0; j < 3; j++) {
                 lpPlanets[iMin].rgwtMin[j] = lpPlanets->rgwtMin[j];
                 if (gd.fTutorial) {
@@ -727,7 +727,7 @@ RetryAll:
                 }
                 lpplPicked->iScanner = 0;
                 lpPlanets[idHome].rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 4) / 5;
-                lpPlanets[idHome].uGuesses = (lpPlanets[idHome].uGuesses & 0xf000) | ((uint32_t)LOWORD(lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff);
+                lpPlanets[idHome].SetUGuesses((lpPlanets[idHome].uGuesses() & 0xf000) | ((uint32_t)LOWORD(lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff));
                 CreateStartupShip(i, lpplPicked->id, 0, FALSE);
             } else if (raMajor == raNone) {
                 CreateStartupShip(i, idHome, rgplr[i].rgTech[3] < 4 ? 6 : 8, TRUE);

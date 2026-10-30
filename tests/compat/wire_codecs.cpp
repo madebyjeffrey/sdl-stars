@@ -20,6 +20,57 @@ static_assert(offsetof(SHDEF, cBuilt) != 0x7f);
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 int main() {
+    for (std::uint32_t w = 0; w < 65536; w++) {
+        const std::uint32_t flags = 65535 - w;
+        const std::array<std::byte, 4> golden = {static_cast<std::byte>(w), static_cast<std::byte>(w >> 8), static_cast<std::byte>(flags), static_cast<std::byte>(flags >> 8)};
+        RTPLANET rtpl{};
+        std::array<std::byte, 6> rgb;
+        rgb.fill(std::byte{0xa5});
+        const std::int16_t id = static_cast<std::int16_t>((w & 2047) < 1024 ? std::int32_t(w & 2047) : std::int32_t(w & 2047) - 2048);
+        const std::int16_t player = static_cast<std::int16_t>((w >> 11) < 16 ? std::int32_t(w >> 11) : std::int32_t(w >> 11) - 32);
+        CHECK(FDecodePlanetPrefix(golden, rtpl) && rtpl.id == id && rtpl.iPlayer == player && rtpl.det == (flags & 127));
+        CHECK(FEncodePlanetPrefix(rtpl, std::span(rgb).subspan(1, 4)) && !std::memcmp(rgb.data() + 1, golden.data(), 4));
+        CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
+        auto view = PpvFromPrefix(rgb.data() + 1, 4);
+        CHECK(view.id() == id && view.iPlayer() == player && view.det() == (flags & 127));
+        CHECK(view.fHomeworld() == ((flags >> 7) & 1) && view.fInclude() == ((flags >> 8) & 1) && view.fStarbase() == ((flags >> 9) & 1));
+        CHECK(view.fIncEVO() == ((flags >> 10) & 1) && view.fIncImp() == ((flags >> 11) & 1) && view.fIsArtifact() == ((flags >> 12) & 1));
+        CHECK(view.fIncSurfMin() == ((flags >> 13) & 1) && view.fRouting() == ((flags >> 14) & 1) && view.fFirstYear() == (flags >> 15));
+        view.SetId(id); view.SetIPlayer(player); view.SetDet(rtpl.det); view.SetFHomeworld(rtpl.fHomeworld); view.SetFInclude(rtpl.fInclude);
+        view.SetFStarbase(rtpl.fStarbase); view.SetFIncEVO(rtpl.fIncEVO); view.SetFIncImp(rtpl.fIncImp); view.SetFIsArtifact(rtpl.fIsArtifact);
+        view.SetFIncSurfMin(rtpl.fIncSurfMin); view.SetFRouting(rtpl.fRouting); view.SetFFirstYear(rtpl.fFirstYear);
+        CHECK(!std::memcmp(rgb.data() + 1, golden.data(), 4));
+        PLANET pl{};
+        pl.SetUGuesses(static_cast<std::uint16_t>(w)); pl.SetWRouting(static_cast<std::uint16_t>(flags));
+        CHECK(pl.uGuesses() == w && pl.uPopGuess == (w & 4095) && pl.uDefGuess == w / 4096);
+        CHECK(pl.wRouting() == flags && pl.idRoute == (flags & 1023) && pl.unused4 == flags / 1024);
+        const std::uint32_t ul = w * 2654435761u;
+        const std::uint32_t ul2 = ~ul;
+        std::array<std::uint8_t, 8> improvements = {std::uint8_t(ul), std::uint8_t(ul >> 8), std::uint8_t(ul >> 16), std::uint8_t(ul >> 24),
+            std::uint8_t(ul2), std::uint8_t(ul2 >> 8), std::uint8_t(ul2 >> 16), std::uint8_t(ul2 >> 24)};
+        pl.SetRgbImp(improvements);
+        CHECK(pl.rgbImp() == improvements && pl.iDeltaPop == (ul & 255) && pl.cMines == ((ul >> 8) & 4095) && pl.cFactories == ul >> 20);
+        CHECK(pl.cDefenses == (ul2 & 4095) && pl.iScanner == ((ul2 >> 12) & 31) && pl.unused5 == ((ul2 >> 17) & 31));
+        CHECK(pl.fArtifact == ((ul2 >> 22) & 1) && pl.fNoResearch == ((ul2 >> 23) & 1) && pl.unused2 == ul2 >> 24);
+        const auto l = std::bit_cast<std::int32_t>(ul);
+        pl.SetLStarbase(l);
+        CHECK(pl.lStarbase() == l && pl.isb == (ul & 15) && pl.pctDp == ((ul >> 4) & 4095));
+        CHECK(pl.idFling == ((ul >> 16) & 1023) && pl.iWarpFling == ((ul >> 26) & 15) && pl.fNoHeal == ((ul >> 30) & 1) && pl.unused3 == ul >> 31);
+        if (w == 32768) for (std::size_t cb = 0; cb < 4; cb++) {
+            rtpl.id = 123; rtpl.iPlayer = -7;
+            CHECK(!FDecodePlanetPrefix(std::span(golden).first(cb), rtpl) && rtpl.id == 123 && rtpl.iPlayer == -7);
+            rgb.fill(std::byte{0xa5});
+            CHECK(!FEncodePlanetPrefix(rtpl, std::span(rgb).subspan(1, cb)));
+            for (auto ch : rgb) CHECK(ch == std::byte{0xa5});
+        }
+    }
+    if constexpr (alignof(PLANET) == 1) {
+        alignas(4) std::byte rgb[sizeof(PLANET) + 2]{};
+        auto *pl = ::new (rgb + 1) PLANET{};
+        pl->SetLStarbase(-2); pl->SetUGuesses(65535); pl->SetWRouting(65535);
+        CHECK(pl->lStarbase() == -2 && pl->uGuesses() == 65535 && pl->wRouting() == 65535);
+    }
+
     for (std::uint32_t i = 0; i < 65570; i++) {
         const std::uint32_t ul = i < 32 ? (std::uint32_t{1} << i) : i == 32 ? 0 : i == 33 ? 0xffffffffu : (i - 34) * 2654435761u;
         const std::array<std::byte, 6> golden = {std::byte{0}, std::byte{0x80}, static_cast<std::byte>(ul), static_cast<std::byte>(ul >> 8), static_cast<std::byte>(ul >> 16), static_cast<std::byte>(ul >> 24)};

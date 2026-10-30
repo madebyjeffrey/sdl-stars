@@ -19,7 +19,7 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Header, BOF, encryption-word and EOF families pass the full local matrix. Remaining entity/resource families and final platform qualification are required. |
+| B11: remaining packed/resource layouts | Active | Stream, universe, score, routing and planet families pass the full local matrix. PLAYER/THING/preferences/resource families and final platform qualification remain required. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
 | B13: application/session owner | Pending | One owner; stop callbacks/timers before destroying referenced game/UI state. Update the archived observer when needed. |
 | B14: strict C++20 gate | Pending | Disable owned production extensions and require strict Linux/macOS/Windows diagnostics plus the full contract matrix. |
@@ -1264,3 +1264,35 @@ unused-storage warnings, zero differences/errors and no skipped inputs. Frozen
 inputs, catalogs, baselines and production layout/alignment contracts remain
 unchanged. Remaining B11 families and its final complete platform gate remain
 required.
+
+
+## B11 planet records in qualification
+
+Planet prefixes and conditional scalar fields use explicit little-endian byte
+access at their old read/write points. Guesses, improvement bytes, signed
+starbase data and routing words have actual field storage and numeric/byte
+accessors; inactive unions are removed without changing production layouts.
+The reader retains incremental header, mineral and environment publication,
+including earlier updates on later validation failure and full physical scratch
+admission for a short declared record. Existing history/preinitialized branches,
+reserved bits, optional fields and discovery-message timing remain unchanged.
+
+Packed/natural vectors cover all signed ID/player and flag words, scalar aliases,
+improvement/reserved bits and odd-aligned packed planet objects. Actual encrypted
+history, partial mineral/environment/EVO failure and detObscure cases pass. The
+latter deliberately keeps the old differing writer/reader thresholds and turn
+interpretation. Five focused codec/layout/save tests pass. Full local/source/
+platform qualification remains required; frozen references and baselines stay
+unchanged.
+
+
+Planet local qualification: 115/115 desktop tests including all 27 native leak
+checks and available tutorial smoke coverage, 26/26 host tests, 39/39 ASan/UBSan
+cases, all 27 source witnesses and 104 headers in both include orders. Five
+source-witness extraction wrappers include the standard array/bit declarations
+now used by PLANET; their independent inputs, models and assertions are unchanged.
+Debug/Release/host/sanitizer builds introduce no warnings. Desktop and host
+regressions each match 519 files through turn 150, with 25 accepted unused-storage
+warnings, zero differences/errors and no skipped inputs. Frozen inputs, catalogs,
+baselines and production layout/alignment contracts remain unchanged. Remaining
+B11 families and its final complete platform gate remain required.

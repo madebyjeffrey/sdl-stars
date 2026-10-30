@@ -22,6 +22,8 @@ def main():
     planetary_names=re.findall(r'^- name:\s*(\w+)\s*$',(ROOT/'data/parts/planetary.yaml').read_text(),re.MULTILINE)
     declarations=r'''
 #include <assert.h>
+#include <array>
+#include <bit>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

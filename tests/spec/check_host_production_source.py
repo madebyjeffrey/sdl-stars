@@ -29,6 +29,8 @@ def main():
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <array>
+#include <bit>
 #define TRUE 1
 #define FALSE 0
 #define LOWORD(x) ((uint16_t)(x))

@@ -595,7 +595,70 @@ static void test_WriteRtScore_bytes(void) {
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
-TEST_LIST = {{"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},
+static void test_WritePlanet_minimal_history_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xfe, 7, 0x81, 0x83, 9, 0xfe, 0xff};
+    PLANET pl{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("planet-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%splanet", szDir, szDirSep);
+    pl.id = -2; pl.iPlayer = 0; pl.det = detMinimal; pl.fHomeworld = 1; pl.fInclude = 1; pl.fStarbase = 1; pl.fFirstYear = 1;
+    pl.isb = 9; pl.turn = -2;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WritePlanet(&pl, rtPlanetB, TRUE);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 622877478 && lSeed2 == 1520895743);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtPlanetB && hdrCur.cb == 7 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE));
+    TEST_CHECK(decoded.id == -2 && decoded.iPlayer == 0 && decoded.det == detMinimal && decoded.fStarbase && decoded.isb == 9 && decoded.turn == -2);
+    StreamClose();
+    // detObscure's historical writer/reader thresholds differ: the writer
+    // includes environment bytes that this reader skips before the turn.
+    const uint8_t obscure[] = {0xfe, 0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0xfe, 0xff};
+    pl = PLANET{}; pl.id = -2; pl.iPlayer = iplrNone; pl.det = detObscure; pl.turn = -2;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WritePlanet(&pl, rtPlanetB, TRUE);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.cb == sizeof(obscure) && !memcmp(rgbCur, obscure, sizeof(obscure)));
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE) && decoded.det == detObscure && decoded.turn == 0);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+static void test_FReadPlanet_partial_publication(void) {
+    const uint8_t minimal[] = {0xfe, 0xff, 3, 0x81, 0, 1, 2, 3, 4, 5, 6, 0xfe, 0xff};
+    const uint8_t levelBad[] = {0xfe, 0xff, 3, 0x81, 9, 17};
+    const uint8_t envBad[] = {0xfe, 0xff, 3, 0x81, 0, 1, 2, 3, 20, 101};
+    const uint8_t evoBad[] = {0xfe, 0xff, 3, 0x85, 0, 1, 2, 3, 10, 20, 30, 40, 101};
+    PLANET pl{};
+
+    TEST_ASSERT(FStarsTestInit());
+    hdrCur.rt = rtPlanetB; hdrCur.cb = 0;
+    memset(rgbCur, 0, sizeof(rgbCur)); memcpy(rgbCur, minimal, sizeof(minimal));
+    TEST_CHECK(FReadPlanet(iplrNone, &pl, TRUE, FALSE));
+    TEST_CHECK(pl.id == -2 && pl.iPlayer == -1 && pl.det == detSome && pl.fInclude && pl.fFirstYear && pl.turn == -2);
+    TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 4 && pl.rgEnvVarOrig[2] == 6);
+    pl.rgpctMinLevel[0] = 90; pl.rgpctMinLevel[1] = 91; pl.rgpctMinLevel[2] = 92; pl.rgMinConc[0] = 93; pl.turn = 123;
+    memcpy(rgbCur, levelBad, sizeof(levelBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgpctMinLevel[0] == 17 && pl.rgpctMinLevel[1] == 91 && pl.rgpctMinLevel[2] == 92 && pl.rgMinConc[0] == 93 && pl.turn == 123);
+    pl.rgEnvVar[0] = 70; pl.rgEnvVar[1] = 71; pl.rgEnvVarOrig[0] = 80; pl.rgEnvVarOrig[1] = 81;
+    memcpy(rgbCur, envBad, sizeof(envBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 20 && pl.rgEnvVarOrig[0] == 20 && pl.rgEnvVar[1] == 71 && pl.rgEnvVarOrig[1] == 81);
+    memcpy(rgbCur, evoBad, sizeof(evoBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgEnvVar[0] == 10 && pl.rgEnvVar[2] == 30 && pl.rgEnvVarOrig[0] == 40 && pl.rgEnvVarOrig[1] == 20);
+}
+
+TEST_LIST = {{"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
+             {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},
+             {"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},
              {"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},
              {"battle continuation bytes and boundaries", test_battle_continuations},
              {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},

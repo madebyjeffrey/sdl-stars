@@ -638,20 +638,20 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
     uint8_t *pb;
 
     memset(rgb, 0, 80);
-    ((RTPLANET *)rgb)->id = lppl->id;
-    ((RTPLANET *)rgb)->iPlayer = lppl->iPlayer;
-    ((RTPLANET *)rgb)->det = lppl->det;
+    PpvFromPrefix(rgb, sizeof(rgb)).SetId(lppl->id);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetIPlayer(lppl->iPlayer);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetDet(lppl->det);
     if (rt == rtPlanetB && lppl->det > detSome) {
-        ((RTPLANET *)rgb)->det = !fHistory ? 4 : 3;
+        PpvFromPrefix(rgb, sizeof(rgb)).SetDet(!fHistory ? 4 : 3);
     }
-    ((RTPLANET *)rgb)->fInclude = lppl->fInclude;
-    ((RTPLANET *)rgb)->fStarbase = lppl->fStarbase;
-    ((RTPLANET *)rgb)->fHomeworld = lppl->fHomeworld;
-    ((RTPLANET *)rgb)->fFirstYear = lppl->fFirstYear;
-    ((RTPLANET *)rgb)->fRouting = lppl->idRoute != 0;
-    pbBase = (uint8_t *)(((RTPLANET *)rgb) + 1);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetFInclude(lppl->fInclude);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetFStarbase(lppl->fStarbase);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetFHomeworld(lppl->fHomeworld);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetFFirstYear(lppl->fFirstYear);
+    PpvFromPrefix(rgb, sizeof(rgb)).SetFRouting(lppl->idRoute != 0);
+    pbBase = rgb + cbWirePlanet;
     pb = pbBase;
-    if (((RTPLANET *)rgb)->det <= detMinimal)
+    if (PpvFromPrefix(rgb, sizeof(rgb)).det() <= detMinimal)
         goto LFinishBRecord;
 
     pb = pbBase + 1;
@@ -674,19 +674,19 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
     for (i = 0; i < 3; i++) {
         *pb++ = lppl->rgEnvVar[i];
         if (lppl->rgEnvVar[i] != lppl->rgEnvVarOrig[i]) {
-            ((RTPLANET *)rgb)->fIncEVO = TRUE;
+            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncEVO(TRUE);
         }
     }
-    if (((RTPLANET *)rgb)->fIncEVO != 0) {
+    if (PpvFromPrefix(rgb, sizeof(rgb)).fIncEVO() != 0) {
         for (i = 0; i < 3; i++) {
             *pb++ = lppl->rgEnvVarOrig[i];
         }
     }
     if (lppl->iPlayer != iplrNone) {
-        RawStore16(pb, lppl->uGuesses);
+        NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteU16Le(lppl->uGuesses());
         pb += 2;
     }
-    if (((RTPLANET *)rgb)->det <= detSome)
+    if (PpvFromPrefix(rgb, sizeof(rgb)).det() <= detSome)
         goto LFinishBRecord;
 
     pbBase = pb;
@@ -700,11 +700,11 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
                 *pb++ = lppl->rgwtMin[i];
             } else if (lppl->rgwtMin[i] > 65535) {
                 *pbBase |= bMask;
-                RawStore32(pb, lppl->rgwtMin[i]);
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 4))).FWriteI32Le(lppl->rgwtMin[i]);
                 pb += 4;
             } else {
                 *pbBase |= bMask & 0xaa;
-                RawStore16(pb, LOWORD(lppl->rgwtMin[i]));
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteU16Le(LOWORD(lppl->rgwtMin[i]));
                 pb += 2;
             }
         }
@@ -714,7 +714,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
     if (*pbBase == 0) {
         pb = pbBase;
     } else {
-        ((RTPLANET *)rgb)->fIncSurfMin = TRUE;
+        PpvFromPrefix(rgb, sizeof(rgb)).SetFIncSurfMin(TRUE);
     }
     if (rt == rtPlanetB) {
     LFinishBRecord:
@@ -723,25 +723,26 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
             pb++;
         }
         if (fHistory) {
-            RawStore16(pb, lppl->turn);
+            NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteI16Le(lppl->turn);
             pb += 2;
         }
         WriteRt(rtPlanetB, pb - rgb, rgb);
     } else {
-        ((RTPLANET *)rgb)->fIsArtifact = lppl->fArtifact;
+        PpvFromPrefix(rgb, sizeof(rgb)).SetFIsArtifact(lppl->fArtifact);
         if ((lppl->iPlayer != iplrNone && (lppl->iDeltaPop != 0 || lppl->fNoResearch)) ||
             (lppl->cMines != 0 || lppl->cFactories != 0 || lppl->cDefenses != 0 || lppl->iScanner != 31)) {
-            ((RTPLANET *)rgb)->fIncImp = TRUE;
-            memmove(pb, lppl->rgbImp, 8);
+            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncImp(TRUE);
+            const auto rgbImp = lppl->rgbImp();
+            memmove(pb, rgbImp.data(), 8);
             pb += 8;
         }
         if (lppl->iPlayer != iplrNone) {
             if (lppl->fStarbase) {
-                RawStore32(pb, lppl->lStarbase);
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 4))).FWriteI32Le(lppl->lStarbase());
                 pb += 4;
             }
             if (lppl->idRoute != 0) {
-                RawStore16(pb, lppl->wRouting);
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteU16Le(lppl->wRouting());
                 pb += 2;
             }
         }

@@ -551,4 +551,26 @@ inline bool FEncodeScoreX(const SCOREX &sx, std::span<std::byte> rgb) noexcept {
         output.FWriteI16Le(sx.score.cTechLevels);
 }
 
+inline constexpr std::size_t cbWirePlanet = 4;
+
+inline bool FDecodePlanetPrefix(std::span<const std::byte> rgb, RTPLANET &rtpl) noexcept {
+    NATIVEBYTEREADER input(rgb);
+    std::uint16_t id, flags;
+    if (!input.FReadU16Le(id) || !input.FReadU16Le(flags)) return false;
+    rtpl.id = static_cast<std::int16_t>((id & 2047) < 1024 ? std::int32_t(id & 2047) : std::int32_t(id & 2047) - 2048);
+    rtpl.iPlayer = static_cast<std::int16_t>((id >> 11) < 16 ? std::int32_t(id >> 11) : std::int32_t(id >> 11) - 32);
+    rtpl.det = flags & 127; rtpl.fHomeworld = (flags >> 7) & 1; rtpl.fInclude = (flags >> 8) & 1; rtpl.fStarbase = (flags >> 9) & 1;
+    rtpl.fIncEVO = (flags >> 10) & 1; rtpl.fIncImp = (flags >> 11) & 1; rtpl.fIsArtifact = (flags >> 12) & 1;
+    rtpl.fIncSurfMin = (flags >> 13) & 1; rtpl.fRouting = (flags >> 14) & 1; rtpl.fFirstYear = flags >> 15;
+    return true;
+}
+inline bool FEncodePlanetPrefix(RTPLANET rtpl, std::span<std::byte> rgb) noexcept {
+    if (rgb.size() < cbWirePlanet) return false;
+    NATIVEBYTEWRITER output(rgb);
+    const std::uint16_t id = static_cast<std::uint16_t>((std::uint16_t(rtpl.id) & 2047) | ((std::uint16_t(rtpl.iPlayer) & 31) << 11));
+    const std::uint16_t flags = static_cast<std::uint16_t>(rtpl.det | (rtpl.fHomeworld << 7) | (rtpl.fInclude << 8) | (rtpl.fStarbase << 9) |
+        (rtpl.fIncEVO << 10) | (rtpl.fIncImp << 11) | (rtpl.fIsArtifact << 12) | (rtpl.fIncSurfMin << 13) | (rtpl.fRouting << 14) | (rtpl.fFirstYear << 15));
+    return output.FWriteU16Le(id) && output.FWriteU16Le(flags);
+}
+
 #endif

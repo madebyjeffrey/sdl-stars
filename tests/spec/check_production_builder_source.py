@@ -211,6 +211,8 @@ def main():
     enums=enum_source(); types=(ROOT/'src/core/structs.h').read_text()
     declarations=r'''
 #include <assert.h>
+#include <array>
+#include <bit>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

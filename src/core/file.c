@@ -460,12 +460,12 @@ LNextTurn:
         for (i = 0; i < cPlanet; i++) {
             fHaveHistoryData = FALSE;
             if (cPlanetHist != 0) {
-                while (j < cPlanetHist && ((RTPLANET *)rgbCur)->id > lppl->id) {
+                while (j < cPlanetHist && PpvFromPrefix(rgbCur, sizeof(rgbCur)).id() > lppl->id) {
                     j++;
                     lppl++;
                 }
                 if (j < cPlanetHist) {
-                    if (((RTPLANET *)rgbCur)->id == lppl->id) {
+                    if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).id() == lppl->id) {
                         fHaveHistoryData = TRUE;
                         goto LFoundPlanet;
                     }
@@ -855,7 +855,7 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
         memset(lppl, 0, sizeof(PLANET));
     }
     if (fHistory || iPlayer == iplrNone) {
-        lppl->fFirstYear = ((RTPLANET *)rgbCur)->fFirstYear;
+        lppl->fFirstYear = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fFirstYear();
     } else if (!fPreInited) {
         fFirstYear = TRUE;
         lppl->fFirstYear = TRUE;
@@ -866,23 +866,23 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
             fFirstYear = TRUE;
         }
     }
-    lppl->id = ((RTPLANET *)rgbCur)->id;
-    lppl->iPlayer = ((RTPLANET *)rgbCur)->iPlayer;
-    if (lppl->det < ((RTPLANET *)rgbCur)->det) {
-        lppl->det = ((RTPLANET *)rgbCur)->det;
+    lppl->id = PpvFromPrefix(rgbCur, sizeof(rgbCur)).id();
+    lppl->iPlayer = PpvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer();
+    if (lppl->det < PpvFromPrefix(rgbCur, sizeof(rgbCur)).det()) {
+        lppl->det = PpvFromPrefix(rgbCur, sizeof(rgbCur)).det();
     }
-    lppl->fInclude = ((RTPLANET *)rgbCur)->fInclude;
-    lppl->fStarbase = ((RTPLANET *)rgbCur)->fStarbase;
-    lppl->fHomeworld = ((RTPLANET *)rgbCur)->fHomeworld;
-    fRouting = ((RTPLANET *)rgbCur)->fRouting;
+    lppl->fInclude = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fInclude();
+    lppl->fStarbase = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fStarbase();
+    lppl->fHomeworld = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fHomeworld();
+    fRouting = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fRouting();
     if (lppl->fStarbase && lppl->iPlayer == iplrNone) {
         lppl->fStarbase = FALSE;
     }
     if (!fHistory) {
         lppl->turn = game.turn;
     }
-    pb = (uint8_t *)(((RTPLANET *)rgbCur) + 1);
-    if (((RTPLANET *)rgbCur)->det >= detSome) {
+    pb = (uint8_t *)rgbCur + cbWirePlanet;
+    if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).det() >= detSome) {
         bMask = *pb;
         pb++;
         i = 0;
@@ -910,7 +910,7 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
             }
             lppl->rgEnvVar[i] = lppl->rgEnvVarOrig[i] = *pb++;
         }
-        if (((RTPLANET *)rgbCur)->fIncEVO != 0) {
+        if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).fIncEVO() != 0) {
             for (i = 0; i < 3; i++) {
                 if (*pb > 100) {
                     return FALSE;
@@ -918,13 +918,13 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
                 lppl->rgEnvVarOrig[i] = *pb++;
             }
         }
-        if (((RTPLANET *)rgbCur)->iPlayer != iplrNone) {
-            lppl->uGuesses = RawLoad16(pb);
+        if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer() != iplrNone) {
+            lppl->SetUGuesses(WFromStreamBytes(pb));
             pb += 2;
         }
         if (lppl->det <= detSome)
             goto LFinishBRecord;
-        if (((RTPLANET *)rgbCur)->fIncSurfMin != 0) {
+        if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).fIncSurfMin() != 0) {
             bMask = *pb;
             pb++;
             i = 0;
@@ -939,11 +939,11 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
                     lppl->rgwtMin[i] = (uint32_t)*pb++;
                     break;
                 case 2:
-                    lppl->rgwtMin[i] = (uint32_t)RawLoad16(pb);
+                    lppl->rgwtMin[i] = (uint32_t)WFromStreamBytes(pb);
                     pb += 2;
                     break;
                 case 3:
-                    lppl->rgwtMin[i] = RawLoad32(pb);
+                    lppl->rgwtMin[i] = LFromStreamBytes(pb);
                     pb += 4;
                 }
                 i++;
@@ -952,22 +952,24 @@ int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPr
         }
         if (hdrCur.rt == rtPlanetB)
             goto LFinishBRecord;
-        if (((RTPLANET *)rgbCur)->fIncImp != 0) {
-            memmove(lppl->rgbImp, pb, 8);
+        if (PpvFromPrefix(rgbCur, sizeof(rgbCur)).fIncImp() != 0) {
+            std::array<uint8_t, 8> rgbImp;
+            memmove(rgbImp.data(), pb, 8);
+            lppl->SetRgbImp(rgbImp);
             pb += 8;
         } else {
-            lppl->fArtifact = ((RTPLANET *)rgbCur)->fIsArtifact;
+            lppl->fArtifact = PpvFromPrefix(rgbCur, sizeof(rgbCur)).fIsArtifact();
             lppl->iScanner = 31;
             lppl->cDefenses = 0;
         }
         if (lppl->iPlayer != iplrNone) {
             if (lppl->fStarbase) {
-                lppl->lStarbase = RawLoad32(pb);
+                lppl->SetLStarbase(LFromStreamBytes(pb));
                 lppl->fNoHeal = FALSE;
                 pb += 4;
             }
             if (fRouting) {
-                lppl->wRouting = RawLoad16(pb);
+                lppl->SetWRouting(WFromStreamBytes(pb));
             }
         }
         return TRUE;
@@ -978,7 +980,7 @@ LFinishBRecord:
         pb++;
     }
     if (fHistory) {
-        lppl->turn = RawLoad16(pb);
+        lppl->turn = WFromStreamBytes(pb);
         pb += 2;
     } else if (fFirstYear) {
         if (lppl->iPlayer != iplrNone) {
