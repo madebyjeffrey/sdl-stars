@@ -211,7 +211,28 @@ static void TestPendingKeepsFirst(void) {
     TEST_CHECK(fCaught && !FStarsErrorPending());
 }
 
-TEST_LIST = {{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
+static void TestCleanupKeepsHandledPrimary(void) {
+    TEST_ASSERT(!FStarsErrorPending());
+    try {
+        StarsThrowError(starsErrorFile, 417);
+    } catch (const StarsError &error) {
+        StarsPrimaryErrorScope primary;
+        TEST_CHECK(error.ids == 417);
+        { PENDINGCLEANUP cleanup; }
+        TEST_CHECK(!FStarsErrorPending());
+    }
+    try { StarsThrowError(starsErrorFile, 417); } catch (...) { StarsCapturePendingError(); }
+    {
+        StarsPrimaryErrorScope primary;
+        { PENDINGCLEANUP cleanup; }
+    }
+    bool fCaught = false;
+    try { StarsRethrowPendingError(); }
+    catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
+    TEST_CHECK(fCaught && !FStarsErrorPending());
+}
+
+TEST_LIST = {{"cleanup retains a primary failure already being handled", TestCleanupKeepsHandledPrimary},{"BOF signed fields retain encryption seed inputs", TestBofSignedEncryptionFields},
              {"record failures publish partial bytes before alert callbacks", TestPartialRecordPublication},
              {"record headers retain explicit framing and wrapping", TestRecordFramingBytes},
              {"file failure restores scope and flags", TestFileFailureUnwinds},

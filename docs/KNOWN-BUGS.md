@@ -17,6 +17,15 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Cleanup while handling a primary exception — fixed on main
+
+`errors.cpp`: checking only `std::uncaught_exceptions()` prevented replacement
+while a C++ exception unwound, but a catch handler has no uncaught exception.
+Its cleanup callback could therefore leave a secondary error pending. A named
+primary-error scope now covers those handlers and final failure cleanup. The
+real exception fixture checks both suppressed secondary capture and preservation
+of the first already-pending error. Both regression baselines remain unchanged.
+
 ## Failed bitmap conversion storage — fixed on main
 
 `utilgenui.c`: after successful reallocation, a rejected `GetDIBits` conversion

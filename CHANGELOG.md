@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `StarsCapturePendingError` preserves a primary failure already being handled
+  while UI cleanup runs. Previously a cleanup callback inside a catch handler
+  could leave its secondary error pending for the next operation. A scoped
+  primary-error guard suppresses that secondary capture and retains any first
+  already-pending error. Host results and regression checkpoints are unchanged.
+
 - `DibFromBitmap` releases its temporary global-memory block when pixel
   conversion fails. Previously it discarded the handle and retained the block
   in the wrapper registry. Scoped cleanup also restores the selected palette
