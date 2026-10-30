@@ -17,6 +17,15 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Native bitmap query size — fixed on main
+
+`utilgenui.c`: `DibFromBitmap` requested a 14-byte Win16 `BITMAP` from the
+native wrapper, which requires the full native structure. The rejected query
+left dimensions uninitialized. It now requests `sizeof(bm)`; the actual
+converter fixture checks a 2-by-2, 32-bit image and its sixteen pixel bytes.
+Desktop and host each retain all 519 baseline matches through turn 150, with
+25 accepted warnings and no differences, errors or skipped inputs.
+
 ## Transfer dialog borrowed frame — fixed on main
 
 `shipui.c`: `TransferStuff` published its stack `xfer` through `pxfer` but did

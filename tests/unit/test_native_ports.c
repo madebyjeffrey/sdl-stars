@@ -396,7 +396,30 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
     TEST_CHECK(mb.wGoto == gotoNone && mb.rgParam[0] == 256 && mb.rgParam[1] == 1);
 }
 
-TEST_LIST = {{"packed message parameters preserve framing and scratch admission", TestPackedMessageParameters},
+#ifdef STARS_UI_SDL
+static void TestDibFromBitmapNativeQuery(void) {
+    TEST_ASSERT(FStarsTestInit());
+    HDC hdc = GetDC(NULL);
+    TEST_ASSERT(hdc);
+    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    TEST_ASSERT(hbm);
+    HGLOBAL hdib = DibFromBitmap(hbm, BI_RGB, 32, NULL);
+    TEST_ASSERT(hdib);
+    auto *lpbi = static_cast<BITMAPINFOHEADER *>(GlobalLock(hdib));
+    TEST_ASSERT(lpbi);
+    TEST_CHECK(lpbi->biWidth == 2 && lpbi->biHeight == 2 && lpbi->biBitCount == 32 && lpbi->biSizeImage == 16);
+    GlobalUnlock(hdib);
+    GlobalFree(hdib);
+    DeleteObject(hbm);
+    ReleaseDC(NULL, hdc);
+}
+#endif
+
+TEST_LIST = {
+#ifdef STARS_UI_SDL
+    {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},
+#endif
+{"packed message parameters preserve framing and scratch admission", TestPackedMessageParameters},
              {"message packing retains early returns, capacity, RNG and prepend", TestMessagePackingAdmissionAndPrepend},
              {"player-message storage retains links, capacities and spare bytes", TestPlayerMessageStorage},
              {"player-message prefix preserves signed fields and spare tail", TestPlayerMessagePrefixAndTail},

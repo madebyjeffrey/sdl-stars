@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DibFromBitmap` queries the native `BITMAP` size instead of the original
+  14-byte Win16 size, which left dimensions uninitialized when the native query
+  rejected it. A 2-by-2 bitmap now converts with its actual dimensions and size.
+  This UI repair changes no host results or regression checkpoints.
+
 - `TransferStuff` restores the previous transfer frame and dialog mode on every
   return or exception. A failed lookup previously left `pxfer` pointing at a
   returned stack frame and left its dialog mode installed. Nested transfers now

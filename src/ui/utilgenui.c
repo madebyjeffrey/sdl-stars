@@ -904,7 +904,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     if (!hpal) {
         hpal = (HPALETTE)GetStockObject(DEFAULT_PALETTE);
     }
-    GetObject(hbm, 14, &bm);
+    GetObject(hbm, sizeof(bm), &bm);
     if (biBits == 0) {
         biBits = bm.bmPlanes * bm.bmBitsPixel;
     }
