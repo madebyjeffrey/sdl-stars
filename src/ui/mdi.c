@@ -1,4 +1,5 @@
 #include "win.h"
+#include <stars_compat.h>
 #include "ownership.h"
 #include <SDL3/SDL.h>
 
@@ -2905,18 +2906,16 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_STARS_IMPORT_FOLDER:
-        if ((char *)wParam) {
-            if (FImportLibraryGame(hwnd, (char *)wParam)) {
+        if (auto *pszPath = static_cast<char *>(PvCompatMessagePayload(wParam))) {
+            if (FImportLibraryGame(hwnd, pszPath)) {
                 RefreshLibraryGames(hwnd);
                 RefreshLibraryHostGames(hwnd);
             }
-            SDL_free((char *)wParam);
         }
         break;
     case WM_STARS_EXPORT_FOLDER:
-        if ((char *)wParam) {
-            FExportSelectedLibraryGame(hwnd, (char *)wParam);
-            SDL_free((char *)wParam);
+        if (auto *pszPath = static_cast<char *>(PvCompatMessagePayload(wParam))) {
+            FExportSelectedLibraryGame(hwnd, pszPath);
         }
         break;
     case WM_PAINT:

@@ -97,7 +97,7 @@ static int16_t FZipEnsureCapacity(ZIPFILES *pz) {
     cCapacity = pz->cMax ? pz->cMax * 2 : 16;
     rgpszFiles = (char **)SDL_realloc(pz->rgpsz, (size_t)cCapacity * sizeof(*rgpszFiles));
     if (!rgpszFiles) { pz->fBad = TRUE; return FALSE; }
-    pz->rgpsz = rgpszFiles;
+    pz->rgpsz = LpStartHeapArray<char *>(rgpszFiles,(size_t)cCapacity * sizeof(*rgpszFiles));
     pz->cMax = cCapacity;
     return TRUE;
 }
@@ -200,6 +200,7 @@ int16_t FZipLibraryDirectory(const char *pszDirectory, const char *pszArchive) {
     if (!pf) goto done;
     rgzentry = (ZIPENTRY *)SDL_calloc(zf.c ? (size_t)zf.c : 1, sizeof(*rgzentry));
     if (!rgzentry) goto done;
+    rgzentry = LpStartHeapArray<ZIPENTRY>(rgzentry,(zf.c ? (size_t)zf.c : 1) * sizeof(*rgzentry));
     for (i = 0; i < zf.c; i++) {
         rgzentry[i].pszName = SDL_strdup(zf.rgpsz[i]);
         if (!rgzentry[i].pszName || !FWriteZipEntry(pf, pszDirectory, &rgzentry[i])) goto done;

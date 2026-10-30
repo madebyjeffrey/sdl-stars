@@ -925,6 +925,11 @@ static BOOL FCheckCargoWorkflow(HWND hwndDialog) {
     return fWorkflowPassed;
 }
 
+static BOOL FPostOwnedTestFolder(HWND hwnd, char *pszFolder) {
+    STARSCOMPATPAYLOAD folder(pszFolder,{[](void *pv) noexcept { SDL_free(pv); }});
+    return StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),WM_STARS_IMPORT_FOLDER,std::move(folder),0);
+}
+
 static void CALLBACK CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND hwndDialog, hwndControl;
     (void)hwnd; (void)msg; (void)dwTime;
@@ -1815,7 +1820,6 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     int cchHostOrder;
     int64_t cbHostFile;
     HWND hwndHostDialog;
-    char *pszHostFolder;
     FLEET *lpflHostOrder;
     int iFleetHostOrder;
     BOOL fHadFleetName;
@@ -1858,14 +1862,12 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
             return;
         }
         if (iHostLibraryTestStage == 20) {
-            pszHostFolder = SDL_strdup(pszHostSource);
             if (!(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_HOST_GAMES), GWL_STYLE) & WS_VISIBLE) ||
                 (GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_GAMES), GWL_STYLE) & WS_VISIBLE) ||
-                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE) ||
-                !pszHostFolder || !StarsCompatPostMessageAsync(hwndTitle, WM_STARS_IMPORT_FOLDER, (WPARAM)pszHostFolder, 0)) {
-                SDL_free(pszHostFolder);
+                !(GetWindowLongPtr(GetDlgItem(hwndTitle, IDC_LIBRARY_IMPORT_ORDERS), GWL_STYLE) & WS_VISIBLE)) {
                 goto LDone;
             }
+            if (!FPostOwnedTestFolder(hwndTitle,SDL_strdup(pszHostSource))) goto LDone;
             iHostLibraryTestStage = 21;
             return;
         }
@@ -1899,12 +1901,7 @@ static void CALLBACK CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
                 fprintf(stderr, "Host-only game actions are disabled\n");
                 goto LDone;
             }
-            pszHostFolder = SDL_strdup(pszHostPlayerSource);
-            if (!pszHostFolder || !StarsCompatPostMessageAsync(hwndTitle, WM_STARS_IMPORT_FOLDER,
-                                                                (WPARAM)pszHostFolder, 0)) {
-                SDL_free(pszHostFolder);
-                goto LDone;
-            }
+            if (!FPostOwnedTestFolder(hwndTitle,SDL_strdup(pszHostPlayerSource))) goto LDone;
             iHostLibraryTestStage = 25;
             return;
         }

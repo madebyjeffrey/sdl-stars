@@ -45,7 +45,13 @@ static LIBRARYCONTINUE continueLibrary;
 static int16_t FFindContinueLibraryGame(void);
 static int16_t FCopyNativeFile(const char *pszSource, const char *pszTarget);
 static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName);
-static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter);
+static void *PvLibraryFolderContext(HWND hwnd) {
+    const uint64_t id = StarsCompatWindowId(hwnd);
+    // SDL carries one pointer-sized opaque value; no window pointer outlives UI.
+    return id <= UINTPTR_MAX ? reinterpret_cast<void *>(static_cast<uintptr_t>(id)) : nullptr;
+}
+
+static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept;
 static int16_t FWriteLibraryMetadataValues(const char *pszDir, const char *pszName, int iplr,
                                            long long lPlayed, const char *pszExchangeName);
 
@@ -1673,7 +1679,7 @@ int16_t FExportLibraryGame(HWND hwnd, const char *pszName, const char *pszTarget
                 return FExportSelectedLibraryGame(hwnd, szZipName);
             }
         }
-        SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
+        SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, FALSE);
         return TRUE;
     }
     if (!FInitLibrary() || !FPortableLibraryName(pszName)) return FALSE;
@@ -1741,13 +1747,15 @@ LFail:
     return FALSE;
 }
 
-static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
-    HWND hwnd = (HWND)lpData;
-    char *pszPath;
+static void SDLCALL LibraryExportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept {
     (void)iFilter;
-    if (!rgpszPath || !rgpszPath[0]) return;
-    pszPath = SDL_strdup(rgpszPath[0]);
-    if (!pszPath || !StarsCompatPostMessageAsync(hwnd, WM_STARS_EXPORT_FOLDER, (WPARAM)pszPath, 0)) SDL_free(pszPath);
+    try {
+        if (!rgpszPath || !rgpszPath[0]) return;
+        STARSCOMPATPAYLOAD path(SDL_strdup(rgpszPath[0]), {[](void *pv) noexcept { SDL_free(pv); }});
+        StarsCompatPostOwnedMessageAsync(reinterpret_cast<uintptr_t>(lpData), WM_STARS_EXPORT_FOLDER, std::move(path), 0);
+    } catch (...) {
+        // The foreign dialog boundary cannot propagate a C++ failure.
+    }
 }
 
 int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
@@ -1763,7 +1771,7 @@ int16_t FExportSelectedLibraryGame(HWND hwnd, const char *pszTarget) {
 }
 
 void ShowLibraryExportFolderPicker(HWND hwnd) {
-    SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, hwnd, NULL, NULL, FALSE);
+    SDL_ShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, FALSE);
 }
 
 static int16_t FindImportUniverse(void *lpData, const char *pszName) {
@@ -2010,17 +2018,19 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     return TRUE;
 }
 
-static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) {
-    HWND hwnd = (HWND)lpData;
-    char *pszPath;
+static void SDLCALL LibraryImportFolderSelected(void *lpData, const char * const *rgpszPath, int iFilter) noexcept {
     (void)iFilter;
-    if (!rgpszPath || !rgpszPath[0]) return;
-    pszPath = SDL_strdup(rgpszPath[0]);
-    if (!pszPath || !StarsCompatPostMessageAsync(hwnd, WM_STARS_IMPORT_FOLDER, (WPARAM)pszPath, 0)) SDL_free(pszPath);
+    try {
+        if (!rgpszPath || !rgpszPath[0]) return;
+        STARSCOMPATPAYLOAD path(SDL_strdup(rgpszPath[0]), {[](void *pv) noexcept { SDL_free(pv); }});
+        StarsCompatPostOwnedMessageAsync(reinterpret_cast<uintptr_t>(lpData), WM_STARS_IMPORT_FOLDER, std::move(path), 0);
+    } catch (...) {
+        // The foreign dialog boundary cannot propagate a C++ failure.
+    }
 }
 
 void ShowLibraryImportFolderPicker(HWND hwnd) {
-    SDL_ShowOpenFolderDialog(LibraryImportFolderSelected, hwnd, NULL, NULL, FALSE);
+    SDL_ShowOpenFolderDialog(LibraryImportFolderSelected, PvLibraryFolderContext(hwnd), NULL, NULL, FALSE);
 }
 
 static int16_t FChooseLibraryImportFile(HWND hwnd, char *pszChosen, size_t cchChosen) {
@@ -2741,6 +2751,7 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
         cNew = cLibraryGameListMax ? cLibraryGameListMax * 2 : 32;
         rgNew = (LIBRARYGAMELISTITEM *)SDL_realloc(rgLibraryGameList.get(), (size_t)cNew * sizeof(*rgNew));
         if (!rgNew) return FALSE;
+        rgNew = LpStartHeapArray<LIBRARYGAMELISTITEM>(rgNew,(size_t)cNew * sizeof(*rgNew));
         rgLibraryGameList.release();
         rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;

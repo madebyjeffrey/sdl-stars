@@ -17,6 +17,16 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Late library folder results — fixed on main
+
+`libraryui.c`/`mdi.c`: import/export chooser callbacks copied a path and posted
+it through a borrowed HWND; only the receiving handler freed it. Window closure,
+dropped messages or handler failure could retain the allocation, and HWND reuse
+could route a late result into a new runtime. The callbacks now capture monotonic
+logical IDs on the UI thread and transfer one-shot payloads whose dispatch owns
+the path through nested dialogs. Generic cancellation/restart fixtures and the
+actual library import workflows pass; no file-format or host results move.
+
 ## Abandoned asynchronous post records — fixed on main
 
 `message.c`/`input.c`: a worker allocated its SDL user-event record and only the

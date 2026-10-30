@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Library folder callbacks capture logical window IDs and transfer their UTF-8
+  paths through owned messages. Previously a late result could retain its path
+  after a window closed, or target a recycled HWND after runtime restart.
+  Nested dialogs borrow the path until dispatch returns; cancellation and failed
+  callbacks release it. Game files and host results are unchanged.
+
 - `StarsCompatPostMessageAsync` owns pending worker-post records through delivery
   or shutdown. Previously records left in SDL's event queue could be abandoned.
   Owned one-shot payloads now also release on target destruction, allocation
