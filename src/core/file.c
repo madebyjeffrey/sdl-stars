@@ -407,7 +407,7 @@ LNextTurn:
                 }
                 /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
                 lphb = LphbFromLpHt(lpbBattleCur, htBattle);
-                if (0xffc8 - (uint32_t)(lpbBattleCur - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)((BTLDATA *)rgbCur)->cbData) {
+                if (0xffc8 - (uint32_t)(lpbBattleCur - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)NATIVEBATTLEDATAVIEW(std::as_writable_bytes(std::span(rgbCur)), 0).cbData()) {
                     RawStore16(lpbBattleCur, 0xffff);
                     lpbBattleCur = (uint8_t *)LpAlloc(0xffc8, htBattle);
                 }
@@ -1076,35 +1076,34 @@ invalid:
 }
 
 void UpdateBattleRecords() {
-    BTLDATA  *lpbd;
-    BTLREC   *lpbr;
+    uint8_t *lpbd;
+    uint8_t *lpbr;
     int16_t   cKill;
     HB       *lphb;
-    BTLREC26 *lpbr26;
+    BTLREC26 br26{};
     int16_t   itok;
 
     lphb = rglphb[11];
     if (lphb) {
-        lpbd = (BTLDATA *)((uint8_t *)lphb + (sizeof(HB) + 2));
+        lpbd = (uint8_t *)((uint8_t *)lphb + (sizeof(HB) + 2));
         while (1) {
-            if (lpbd->id == 0xffff) {
+            if (BdvFromLp(lpbd).id() == 0xffff) {
                 lphb = lphb->lphbNext;
                 if (!lphb || lphb->ibTop <= sizeof(HB))
                     break;
-                lpbd = (BTLDATA *)((uint8_t *)lphb + (sizeof(HB) + 2));
+                lpbd = (uint8_t *)((uint8_t *)lphb + (sizeof(HB) + 2));
             } else {
-                if (lpbd->cbData == 0)
+                if (BdvFromLp(lpbd).cbData() == 0)
                     break;
-                lpbr = (BTLREC *)&lpbd->rgtok[lpbd->ctok];
-                lpbr26 = (BTLREC26 *)lpbr;
-                lpbd = (BTLDATA *)((uint8_t *)lpbd + lpbd->cbData);
-                while (lpbr < (BTLREC *)lpbd) {
-                    cKill = lpbr26->ctok;
-                    itok = lpbr26->itokAttack;
-                    lpbr->ctok = cKill;
-                    lpbr->itokAttack = itok;
-                    lpbr = (BTLREC *)&lpbr->rgkill[lpbr->ctok];
-                    lpbr26 = (BTLREC26 *)lpbr;
+                lpbr = BdvFromLp(lpbd).FirstEvent();
+                lpbd = (uint8_t *)((uint8_t *)lpbd + BdvFromLp(lpbd).cbData());
+                while (lpbr < lpbd) {
+                    FDecodeBattleRecord26(std::as_bytes(BevFromLp(lpbr).Rgb()), br26);
+                    cKill = br26.ctok;
+                    itok = br26.itokAttack;
+                    BevFromLp(lpbr).SetCtok(cKill);
+                    BevFromLp(lpbr).SetItokAttack(itok);
+                    lpbr = BevFromLp(lpbr).Next();
                 }
             }
         }

@@ -35,7 +35,7 @@ int32_t ScoreGuessBattleDamage(TOK *ptokSrc, uint8_t brc, int16_t fPrimary, uint
 int32_t ScoreFromGiveAndTakeAndTactic(int32_t dpGive, int32_t dpTake, BattleTactic mdTactic);
 int16_t DxyMoveTokTo(TOK *ptok, int16_t spdMove, uint16_t grfAttack);
 int32_t CTorpHit(int32_t cTorpBase, TOK *ptok, int16_t pctBase, int16_t pctBC);
-int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t grfAttack);
+int16_t FAttack(int16_t itokAttacker, int16_t init, uint8_t *lpbtlrec, uint16_t grfAttack);
 void    KillShips(TOK *ptok, int16_t cshKill, int16_t ishdef, FLEET *lpfl, int16_t fFallout);
 void    CreateSalvage(FLEET *pfl, THING **plpth);
 int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, GrfWeapon grfWeapon, int16_t fShieldsOnly, int32_t *pcTorp);

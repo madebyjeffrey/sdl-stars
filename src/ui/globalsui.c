@@ -3,10 +3,10 @@
 static_assert(alignof(TILE) >= alignof(TILEDRAWPROC) && offsetof(TILE, pfn) % alignof(TILEDRAWPROC) == 0,
                "Tile callback pointers require native alignment");
 
-BTLDATA       *vlpbdVCR = 0;
-BTLDATA       *vlpbdVCRNext = 0;
+uint8_t       *vlpbdVCR = 0;
+uint8_t       *vlpbdVCRNext = 0;
 BTLPLAN        btlplan = {0};
-BTLREC        *vlpbrVCR = 0;
+uint8_t        *vlpbrVCR = 0;
 BTN           *rgbtnXfer = 0;
 COLORREF       crButtonFace = 0;
 COLORREF       crButtonHilite = 0;

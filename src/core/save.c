@@ -487,10 +487,10 @@ void WriteBattles(int16_t iPlayer) {
     FLEET   *lpfl;
     int16_t  cbT;
     uint16_t fPlayerCur;
-    BTLREC  *lpbtlrec;
+    uint8_t *lpbtlrec;
     uint8_t *lpbBattle;
     HB      *lphb;
-    BTLDATA *lpbtldata;
+    uint8_t *lpbtldata;
     int16_t  cb;
     int16_t  iplr;
 
@@ -500,41 +500,41 @@ void WriteBattles(int16_t iPlayer) {
         lpbBattle = (uint8_t *)lphb + (sizeof(HB) + 2);
         fPlayerCur = 1 << iPlayer;
         while (lphb) {
-            for (lpbtldata = (BTLDATA *)lpbBattle; lphb->ibTop <= sizeof(HB) || lpbtldata->id == 0xffff; lpbtldata = (BTLDATA *)lpbBattle) {
+            for (lpbtldata = (uint8_t *)lpbBattle; lphb->ibTop <= sizeof(HB) || BdvFromLp(lpbtldata).id() == 0xffff; lpbtldata = (uint8_t *)lpbBattle) {
                 lphb = lphb->lphbNext;
                 if (!lphb) {
                     return;
                 }
                 lpbBattle = (uint8_t *)lphb + (sizeof(HB) + 2);
             }
-            if (lpbtldata->grfPlr & fPlayerCur) {
+            if (BdvFromLp(lpbtldata).grfPlr() & fPlayerCur) {
                 for (i = 0; i < game.cPlayer; i++) {
-                    if (i != iPlayer && !rgplr[i].fInclude && (1 << i & lpbtldata->grfPlr)) {
+                    if (i != iPlayer && !rgplr[i].fInclude && (1 << i & BdvFromLp(lpbtldata).grfPlr())) {
                         rgplr[i].fInclude = TRUE;
                         rgplr[i].det = detSome;
                     }
                 }
-                for (i = 0; i < lpbtldata->ctok; i++) {
-                    if (lpbtldata->rgtok[i].iplr != iPlayer) {
-                        if (lpbtldata->rgtok[i].grobj == grobjPlanet) {
-                            iplr = lpbtldata->rgtok[i].iplr;
-                            lppl = LpplFromId(lpbtldata->rgtok[i].id);
-                            if (!rglpshdefSB[iplr][lpbtldata->rgtok[i].ishdef - 16].fInclude) {
-                                rglpshdefSB[iplr][lpbtldata->rgtok[i].ishdef - 16].fInclude = TRUE;
+                for (i = 0; i < BdvFromLp(lpbtldata).ctok(); i++) {
+                    if (BdvFromLp(lpbtldata).rgtok(i).iplr() != iPlayer) {
+                        if (BdvFromLp(lpbtldata).rgtok(i).grobj() == grobjPlanet) {
+                            iplr = BdvFromLp(lpbtldata).rgtok(i).iplr();
+                            lppl = LpplFromId(BdvFromLp(lpbtldata).rgtok(i).id());
+                            if (!rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].fInclude) {
+                                rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].fInclude = TRUE;
                                 rgplr[iplr].cshdefSB++;
                             }
-                            rglpshdefSB[iplr][lpbtldata->rgtok[i].ishdef - 16].det = detAll;
+                            rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].det = detAll;
                         } else {
-                            lpfl = LpflFromId(lpbtldata->rgtok[i].id);
+                            lpfl = LpflFromId(BdvFromLp(lpbtldata).rgtok(i).id());
                             if (lpfl->iPlayer != iPlayer && !rgplr[lpfl->iPlayer].fInclude) {
                                 rgplr[lpfl->iPlayer].fInclude = TRUE;
                                 rgplr[lpfl->iPlayer].det = detSome;
                             }
-                            if (!rglpshdef[lpfl->iPlayer][lpbtldata->rgtok[i].ishdef].fInclude) {
-                                rglpshdef[lpfl->iPlayer][lpbtldata->rgtok[i].ishdef].fInclude = TRUE;
+                            if (!rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].fInclude) {
+                                rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].fInclude = TRUE;
                                 rgplr[lpfl->iPlayer].cShDef = rgplr[lpfl->iPlayer].cShDef + 1;
                             }
-                            rglpshdef[lpfl->iPlayer][lpbtldata->rgtok[i].ishdef].det = detAll;
+                            rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].det = detAll;
                             if (!lpfl->fDead) {
                                 if (!lpfl->fInclude) {
                                     rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
@@ -548,28 +548,28 @@ void WriteBattles(int16_t iPlayer) {
                         }
                     }
                 }
-                if (lpbtldata->idPlanet != idPlanetNone) {
-                    lppl = LpplFromId(lpbtldata->idPlanet);
+                if (BdvFromLp(lpbtldata).idPlanet() != idPlanetNone) {
+                    lppl = LpplFromId(BdvFromLp(lpbtldata).idPlanet());
                     MarkPlanet(lppl, iPlayer, detMinimal);
                 }
-                if (lpbtldata->cbData < 0x400) {
-                    WriteRt(rtBtlData, lpbtldata->cbData, lpbBattle);
-                    lpbBattle += lpbtldata->cbData;
+                if (BdvFromLp(lpbtldata).cbData() < 0x400) {
+                    WriteRt(rtBtlData, BdvFromLp(lpbtldata).cbData(), lpbBattle);
+                    lpbBattle += BdvFromLp(lpbtldata).cbData();
                 } else {
-                    cb = lpbtldata->ctok * 29 + 14;
-                    lpbtlrec = (BTLREC *)(lpbBattle + cb);
+                    cb = BdvFromLp(lpbtldata).ctok() * 29 + 14;
+                    lpbtlrec = (uint8_t *)(lpbBattle + cb);
                     if (cb < 1024) {
                         WriteRt(rtBtlData, cb, lpbBattle);
                         lpbBattle += cb;
                     } else {
                         ctok = 34;
-                        ctok = ctok >= lpbtldata->ctok ? lpbtldata->ctok : ctok;
-                        if (ctok > lpbtldata->ctok) {
-                            ctok = lpbtldata->ctok;
+                        ctok = ctok >= BdvFromLp(lpbtldata).ctok() ? BdvFromLp(lpbtldata).ctok() : ctok;
+                        if (ctok > BdvFromLp(lpbtldata).ctok()) {
+                            ctok = BdvFromLp(lpbtldata).ctok();
                         }
                         WriteRt(rtBtlData, ctok * 29 + 14, lpbBattle);
                         lpbBattle += 14 + 29 * ctok;
-                        ctok = lpbtldata->ctok - ctok;
+                        ctok = BdvFromLp(lpbtldata).ctok() - ctok;
                         while (ctok > 0) {
                             if ((uint16_t)ctok > 35) {
                                 WriteRt(rtContinue, 1015, lpbBattle);
@@ -582,31 +582,31 @@ void WriteBattles(int16_t iPlayer) {
                             }
                         }
                     }
-                    cb = lpbtldata->cbData - 14 - lpbtldata->ctok * 29;
+                    cb = BdvFromLp(lpbtldata).cbData() - 14 - BdvFromLp(lpbtldata).ctok() * 29;
                     if (cb < 1024) {
                         WriteRt(rtContinue, cb, lpbtlrec);
                         lpbBattle += cb;
                     } else {
                         while (cb != 0) {
-                            cbRec = lpbtlrec->ctok * 8 + 6;
+                            cbRec = BevFromLp(lpbtlrec).ctok() * 8 + 6;
                             if (cbRec >= 1024) {
                                 cb -= cbRec;
                                 for (; cbRec >= 1024; cbRec -= 1023) {
                                     WriteRt(rtContinue, 1023, lpbtlrec);
-                                    lpbtlrec = (BTLREC *)((uint8_t *)lpbtlrec + 0x3ff);
+                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + 0x3ff);
                                 }
                                 if (cbRec != 0) {
                                     WriteRt(rtContinue, cbRec, lpbtlrec);
-                                    lpbtlrec = (BTLREC *)((uint8_t *)lpbtlrec + cbRec);
+                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + cbRec);
                                 }
                             } else {
                                 cbT = 0;
                                 do {
                                     cbT += cbRec;
-                                    lpbtlrec = (BTLREC *)((uint8_t *)lpbtlrec + cbRec);
+                                    lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + cbRec);
                                     cb -= cbRec;
                                     if (cb != 0) {
-                                        cbRec = lpbtlrec->ctok * 8 + 6;
+                                        cbRec = BevFromLp(lpbtlrec).ctok() * 8 + 6;
                                     }
                                 } while (cb != 0 && cbT + cbRec < 1024);
                                 WriteRt(rtContinue, cbT, lpbBattle);
@@ -616,7 +616,7 @@ void WriteBattles(int16_t iPlayer) {
                     }
                 }
             } else {
-                lpbBattle += lpbtldata->cbData;
+                lpbBattle += BdvFromLp(lpbtldata).cbData();
             }
         }
     }

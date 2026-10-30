@@ -468,7 +468,6 @@ struct _btlrec {
     uint16_t iRound : 4, /* +0x0004 (2) @bit0 */
         dzDis : 4,       /* @bit4 */
         itokAttack : 8;  /* @bit8 */
-    KILL rgkill[0];      /* +0x0006 (0) */
 }; /* size=0x6 */
 
 struct _btlrec26 {
@@ -479,7 +478,6 @@ struct _btlrec26 {
     uint16_t iRound : 4, /* +0x0004 (2) @bit0 */
         dzDis : 4,       /* @bit4 */
         unused : 8;      /* @bit8 */
-    KILL rgkill[0];      /* +0x0006 (0) */
 }; /* size=0x6 */
 
 struct _logxfer {
@@ -1486,19 +1484,18 @@ struct _tok {
         dxyMax : 4,         /* @bit4 */
         spd : 4,            /* @bit8 */
         cTarget : 4;        /* @bit12 */
-    union {
-        struct {
-            uint16_t fActive : 1, /* +0x001B (2) @bit0 */
-                fDetector : 1,    /* @bit1 */
-                fTorp : 1,        /* @bit2 */
-                fRegen : 1,       /* @bit3 */
-                fMoved : 1,       /* @bit4 */
-                dzDis : 5,        /* @bit5 */
-                dwt : 4,          /* @bit10 */
-                dMovesLeft : 2;   /* @bit14 */
-        };
-        uint16_t wFlags; /* +0x001B (2) */
-    };
+    uint16_t fActive : 1,
+        fDetector : 1,
+        fTorp : 1,
+        fRegen : 1,
+        fMoved : 1,
+        dzDis : 5,
+        dwt : 4,
+        dMovesLeft : 2;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(fActive | (fDetector << 1) | (fTorp << 2) | (fRegen << 3) |
+                                     (fMoved << 4) | (dzDis << 5) | (dwt << 10) | (dMovesLeft << 14));
+    }
 }; /* size=0x1d */
 
 struct _btldata {
@@ -1509,7 +1506,6 @@ struct _btldata {
     uint16_t cbData;   /* +0x0006 (2) */
     uint16_t idPlanet; /* +0x0008 (2) */
     POINT16  pt;       /* +0x000A (4) */
-    TOK      rgtok[0]; /* +0x000E (0) */
 }; /* size=0xe */
 
 struct _torp {

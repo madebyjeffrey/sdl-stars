@@ -479,7 +479,77 @@ static void test_design_wire_admission(void) {
     TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
 }
 
-TEST_LIST = {{"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
+// Exercise the real encrypted writer/reader with the original 34/35-token
+// boundaries and an event split at byte 1023, including its odd-byte DV words.
+static void test_battle_continuations(void) {
+    struct BATTLECASE { int16_t ctok, cKill; int16_t rgcb[5]; int16_t cRec; };
+    const BATTLECASE rgcase[] = {{34, 0, {1006}, 1}, {35, 0, {1000, 29, 6}, 3},
+                                {69, 0, {1000, 1015, 6}, 3}, {70, 128, {1000, 1015, 29, 1023, 7}, 5}};
+    char szDir[MAX_PATH], szFile[MAX_PATH];
+    uint8_t *lpb;
+    int16_t cb, i, j, ib;
+    TOK tok{};
+    BTLREC br{};
+    KILL kill{};
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("battle_continuations", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%cbattle.bin", szDir, chDirSep);
+    lpb = (uint8_t *)LpAlloc(0xffc8, htBattle);
+    game.cPlayer = 1;
+    for (const BATTLECASE &bcase : rgcase) {
+        TEST_CASE_("%d tokens, %d kills", bcase.ctok, bcase.cKill);
+        cb = 14 + bcase.ctok * 29 + 6 + bcase.cKill * 8;
+        memset(lpb, 0, cb + 2);
+        BdvFromLp(lpb).SetId(3);
+        BdvFromLp(lpb).SetCtok(bcase.ctok);
+        BdvFromLp(lpb).SetCplr(1);
+        BdvFromLp(lpb).SetGrfPlr(1);
+        BdvFromLp(lpb).SetCbData(cb);
+        BdvFromLp(lpb).SetIdPlanet(idPlanetNone);
+        BdvFromLp(lpb).SetPt({32767, -1});
+        for (i = 0; i < bcase.ctok; i++) {
+            tok.id = i; tok.iplr = 0; tok.csh = 0x1234 + i; tok.dpShield = 0x5678 + i;
+            tok.dv.dp = 0x9abc + i;
+            TEST_ASSERT(FEncodeTok(tok, std::as_writable_bytes(std::span(lpb + 14 + i * 29, 29))));
+        }
+        br.itok = 33; br.brcDest = 0xab; br.ctok = bcase.cKill; br.itokAttack = 34; br.iRound = 15; br.dzDis = 4;
+        ib = 14 + bcase.ctok * 29;
+        TEST_ASSERT(FEncodeBattleRecord(br, std::as_writable_bytes(std::span(lpb + ib, 6))));
+        for (i = 0; i < bcase.cKill; i++) {
+            kill.itok = i % bcase.ctok; kill.grfWeapon = i; kill.cshKill = 0x1234 + i;
+            kill.dpShield = 0x5678 + i; kill.dv.dp = 0x9abc + i;
+            TEST_ASSERT(FEncodeKill(kill, std::as_writable_bytes(std::span(lpb + ib + 6 + i * 8, 8))));
+        }
+        lpb[cb] = lpb[cb + 1] = 0xff;
+        lpbBattleLog = lpb; lpbBattleCur = lpb + cb;
+        StreamOpen(szFile, mdCreate);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        WriteBattles(0);
+        WriteRt(rtEOF, 0, NULL);
+        StreamClose();
+        StreamOpen(szFile, mdRead);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        ib = 0;
+        for (j = 0; j < bcase.cRec; j++) {
+            ReadRt();
+            TEST_ASSERT(hdrCur.rt == (j == 0 ? rtBtlData : rtContinue));
+            TEST_ASSERT(hdrCur.cb == bcase.rgcb[j]);
+            TEST_CHECK(memcmp(rgbCur, lpb + ib, hdrCur.cb) == 0);
+            ib += hdrCur.cb;
+        }
+        TEST_CHECK(ib == cb);
+        ReadRt();
+        TEST_CHECK(hdrCur.rt == rtEOF);
+        StreamClose();
+    }
+    FreeHb(rglphb[htBattle]);
+    rglphb[htBattle] = NULL;
+    lpbBattleLog = lpbBattleCur = NULL;
+}
+
+TEST_LIST = {{"battle continuation bytes and boundaries", test_battle_continuations},
+             {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
              {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
              {"UTF-8 records require complete in-record text", test_utf8_record_bounds},
              {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},

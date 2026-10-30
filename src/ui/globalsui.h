@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <windows.h>
 
-extern BTLDATA       *vlpbdVCR;
-extern BTLDATA       *vlpbdVCRNext;
+extern uint8_t       *vlpbdVCR;
+extern uint8_t       *vlpbdVCRNext;
 extern BTLPLAN        btlplan;
-extern BTLREC        *vlpbrVCR;
+extern uint8_t        *vlpbrVCR;
 extern BTN           *rgbtnXfer;
 extern COLORREF       crButtonFace;
 extern COLORREF       crButtonHilite;

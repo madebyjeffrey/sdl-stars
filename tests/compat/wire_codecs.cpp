@@ -1,6 +1,8 @@
 // Exact wire expectations come from S01's little-endian field table, not from
 // a native struct dump. Exercise unaligned slices and every signed 16-bit value.
 #include "recordcodec.h"
+#include "battlecodec.h"
+#include "battleviews.h"
 #include <array>
 #include <cstdio>
 #include <limits>
@@ -455,6 +457,116 @@ int main() {
         decoded = {}; iDamage = 999;
         CHECK(FDecodeRtFleet(negative, decoded, false, iDamage) && decoded.rgcsh[0] == -1 && !decoded.fDead);
     }
-    std::puts("History/production/action/order/design/fleet wire vectors, signed domains, partial bytes and bounded primitives passed");
+
+    {
+        const std::array<std::byte, 29> golden = {std::byte{0x34}, std::byte{0x12}, std::byte{0xff}, std::byte{2}, std::byte{31}, std::byte{0x99}, std::byte{0}, std::byte{1}, std::byte{63}, std::byte{254},
+            std::byte{100}, std::byte{101}, std::byte{102}, std::byte{103}, std::byte{104}, std::byte{0}, std::byte{0x80}, std::byte{0xff}, std::byte{0xff}, std::byte{0xff}, std::byte{0x7f}, std::byte{0xce}, std::byte{0xfa},
+            std::byte{0xcd}, std::byte{0xab}, std::byte{0x34}, std::byte{0x12}, std::byte{0xa7}, std::byte{0xf5}};
+        TOK tok{};
+        CHECK(FDecodeTok(golden, tok) && tok.id == 0x1234 && tok.iplr == 255 && tok.grobj == 2 && tok.ishdef == 31 && tok.brc == 0x99);
+        CHECK(tok.initBase == 0 && tok.initMin == 1 && tok.initMac == 63 && tok.itokTarget == 254 && tok.pctCloak == 100 && tok.pctJam == 101 && tok.pctBC == 102 && tok.pctCap == 103 && tok.pctBeamDef == 104);
+        CHECK(tok.wt == 0x8000 && tok.dpShield == 65535 && tok.csh == 32767 && tok.dv.dp == 0xface);
+        CHECK(tok.mdTarget1 == 13 && tok.mdTarget2 == 12 && tok.mdTactic == 11 && tok.mdTarget0 == 10 && tok.dxyLim == 4 && tok.dxyMax == 3 && tok.spd == 2 && tok.cTarget == 1);
+        CHECK(tok.wFlags() == 0xf5a7);
+        std::array<std::byte, 31> output;
+        output.fill(std::byte{0xa5});
+        CHECK(FEncodeTok(tok, std::span(output).subspan(1, 29)) && std::memcmp(output.data() + 1, golden.data(), 29) == 0 && output.front() == std::byte{0xa5} && output.back() == std::byte{0xa5});
+        for (std::size_t cb = 0; cb < 29; cb++) {
+            auto before = tok;
+            CHECK(!FDecodeTok(std::span(golden).first(cb), tok) && std::memcmp(&tok, &before, sizeof(tok)) == 0);
+            output.fill(std::byte{0xa5});
+            CHECK(!FEncodeTok(tok, std::span(output).subspan(1, cb)));
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            auto input = golden;
+            input[23] = static_cast<std::byte>(w % 256); input[24] = static_cast<std::byte>(w / 256);
+            input[25] = static_cast<std::byte>((65535 - w) % 256); input[26] = static_cast<std::byte>((65535 - w) / 256);
+            input[27] = input[23]; input[28] = input[24];
+            CHECK(FDecodeTok(input, tok));
+            CHECK(tok.mdTarget1 == w % 16 && tok.mdTarget2 == (w / 16) % 16 && tok.mdTactic == (w / 256) % 16 && tok.mdTarget0 == w / 4096);
+            CHECK(tok.dxyLim == (65535 - w) % 16 && tok.dxyMax == ((65535 - w) / 16) % 16 && tok.spd == ((65535 - w) / 256) % 16 && tok.cTarget == (65535 - w) / 4096);
+            CHECK(tok.fActive == w % 2 && tok.fDetector == (w / 2) % 2 && tok.fTorp == (w / 4) % 2 && tok.fRegen == (w / 8) % 2 && tok.fMoved == (w / 16) % 2 && tok.dzDis == (w / 32) % 32 && tok.dwt == (w / 1024) % 16 && tok.dMovesLeft == w / 16384);
+            CHECK(FEncodeTok(tok, output) && std::memcmp(output.data(), input.data(), 29) == 0);
+            std::array<std::byte, 6> event = {std::byte{255}, std::byte{15}, static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256), static_cast<std::byte>(w % 256), static_cast<std::byte>(w / 256)};
+            BTLREC br{};
+            std::int32_t c = w < 32768 ? static_cast<std::int32_t>(w) : static_cast<std::int32_t>(w) - 65536;
+            CHECK(FDecodeBattleRecord(event, br) && br.itok == 255 && br.brcDest == 15 && br.ctok == c && br.iRound == w % 16 && br.dzDis == (w / 16) % 16 && br.itokAttack == w / 256);
+            CHECK(FEncodeBattleRecord(br, output) && std::memcmp(output.data(), event.data(), 6) == 0);
+        }
+        const std::array<std::byte, 8> killBytes = {std::byte{255}, std::byte{0xa5}, std::byte{255}, std::byte{255}, std::byte{0x34}, std::byte{0x12}, std::byte{255}, std::byte{255}};
+        KILL kill{};
+        CHECK(FDecodeKill(killBytes, kill) && kill.itok == 255 && kill.grfWeapon == 0xa5 && kill.cshKill == 65535 && kill.dpShield == 0x1234 && kill.dv.dp == 65535);
+        CHECK(FEncodeKill(kill, output) && std::memcmp(output.data(), killBytes.data(), 8) == 0);
+        const std::array<std::byte, 14> data = {std::byte{0x34}, std::byte{0x12}, std::byte{16}, std::byte{255}, std::byte{0xaa}, std::byte{0xaa}, std::byte{255}, std::byte{0x80}, std::byte{255}, std::byte{255}, std::byte{0}, std::byte{0x80}, std::byte{255}, std::byte{0x7f}};
+        BTLDATA bd{};
+        CHECK(FDecodeBattleData(data, bd) && bd.id == 0x1234 && bd.cplr == 16 && bd.ctok == 255 && bd.grfPlr == 0xaaaa && bd.cbData == 0x80ff && bd.idPlanet == 65535 && bd.pt.x == -32768 && bd.pt.y == 32767);
+        CHECK(FEncodeBattleData(bd, output) && std::memcmp(output.data(), data.data(), 14) == 0);
+        for (std::size_t cb = 0; cb < 14; cb++) {
+            auto before = bd;
+            CHECK(!FDecodeBattleData(std::span(data).first(cb), bd) && std::memcmp(&bd, &before, sizeof(bd)) == 0);
+            output.fill(std::byte{0xa5});
+            CHECK(!FEncodeBattleData(bd, std::span(output).first(cb)));
+            for (auto b : output) CHECK(b == std::byte{0xa5});
+        }
+    }
+
+    {
+        // A view does not eagerly read a complete header/token. These bounded
+        // prefixes exercise the fields that the original could inspect alone.
+        std::array<std::byte, 2> sentinel = {std::byte{255}, std::byte{255}};
+        NATIVEBATTLEDATAVIEW shortData{sentinel, 0};
+        CHECK(shortData.id() == 65535);
+        std::array<std::byte, 3> tokenPrefix = {std::byte{0x34}, std::byte{0x12}, std::byte{255}};
+        NATIVEBATTLETOKENVIEW shortTok{tokenPrefix, 0};
+        CHECK(shortTok.id() == 0x1234 && shortTok.iplr() == 255);
+        std::array<std::byte, 5> eventPrefix = {std::byte{1}, std::byte{2}, std::byte{255}, std::byte{255}, std::byte{0xa5}};
+        NATIVEBATTLEEVENTVIEW shortEvent{eventPrefix, 0};
+        CHECK(shortEvent.ctok() == -1 && shortEvent.iRound() == 5 && shortEvent.dzDis() == 10);
+        shortEvent.SetIRound(65535);
+        CHECK(eventPrefix[4] == std::byte{0xaf});
+        shortEvent.SetDzDis(0);
+        CHECK(eventPrefix[4] == std::byte{15});
+        std::array<std::byte, 12> pointPrefix{};
+        NATIVEBATTLEDATAVIEW pointData{pointPrefix, 0};
+        pointData.pt().SetX(-32768);
+        CHECK(pointData.pt().x() == -32768 && pointPrefix[10] == std::byte{0} && pointPrefix[11] == std::byte{0x80});
+        std::array<std::byte, 28> lowFlags{};
+        lowFlags[27] = std::byte{0x17};
+        NATIVEBATTLETOKENVIEW partialTok{lowFlags, 0};
+        CHECK(partialTok.fActive() && partialTok.fDetector() && partialTok.fTorp() && !partialTok.fRegen() && partialTok.fMoved());
+        std::array<std::byte, 64> rgb;
+        rgb.fill(std::byte{0xa5});
+        NATIVEBATTLEEVENTVIEW event{rgb, 16};
+        for (std::uint32_t w = 0; w < 65536; w++) {
+            event.SetIRound(static_cast<std::uint16_t>(w));
+            event.SetDzDis(static_cast<std::uint16_t>(65535 - w));
+            event.SetItokAttack(static_cast<std::uint16_t>(w));
+            CHECK(std::to_integer<unsigned>(rgb[20]) == w % 16 + ((65535 - w) % 16) * 16 && std::to_integer<unsigned>(rgb[21]) == w % 256);
+            auto dv = event.rgkill(0).dv();
+            dv.SetDp(static_cast<std::uint16_t>(w));
+            CHECK(dv.pctSh() == w % 128 && dv.pctDp() == w / 128);
+            dv.SetPctSh(static_cast<std::uint16_t>(65535 - w));
+            CHECK(dv.dp() == (w / 128) * 128 + (65535 - w) % 128);
+            dv.SetPctDp(static_cast<std::uint16_t>(w));
+            CHECK(dv.dp() == (w % 512) * 128 + (65535 - w) % 128);
+        }
+        CHECK(rgb[15] == std::byte{0xa5} && rgb[22] == std::byte{0xa5} && rgb[30] == std::byte{0xa5});
+        event.SetCtok(-1);
+        CHECK(event.Next() == reinterpret_cast<std::uint8_t *>(rgb.data()) + 14);
+        CHECK(event.rgkill(-1).Lpb() == event.Next());
+        auto before = rgb;
+        std::array<std::byte, 64> other{};
+        NATIVEBATTLEEVENTVIEW rebound{other, 8};
+        event = rebound;
+        event.SetCtok(42);
+        CHECK(rgb == before && other[10] == std::byte{42} && other[11] == std::byte{0});
+        CHECK(event.ctok() == 42);
+        NATIVEBATTLEDATAVIEW data{rgb, 0};
+        data.SetCtok(0);
+        // Access remains governed by the physical arena, not a new count gate.
+        CHECK(data.rgtok(1).Lpb() == reinterpret_cast<std::uint8_t *>(rgb.data()) + 43);
+    }
+    std::puts("History/production/action/order/design/fleet/battle wire vectors, signed domains, partial bytes and bounded primitives passed");
     return 0;
 }

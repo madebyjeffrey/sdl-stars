@@ -16,8 +16,8 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B05: production payloads | Complete | Typed pooled arrays, explicit queue/log codecs and preserved physical capacities/partial effects pass the full local matrix and all 16 Linux/Windows checks for c0e0075. |
 | B06: waypoint/order payloads | Complete | Typed arrays, task aliases and explicit waypoint/order codecs preserve replay, capacities and partial effects. Full local matrix and all 16 Linux/Windows checks pass for a7614a6. |
 | B07: hull/design payloads | Complete | Explicit full/partial design, HS and log codecs preserve import/export/replay contracts. Full local matrix and all 16 Linux/Windows checks pass for c2f9791. |
-| B08: fleet/identifier payloads | Active | Explicit fleet/ship-transfer/ID codecs and scalar runtime aliases pass focused wire/layout/reader/replay tests. Full local matrix passes; Linux/Windows gate pending. |
-| B09: battle/AI payloads | Pending | Preserve battle alignment, RNG/tie/rounding order and replay. |
+| B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
+| B09: battle/AI payloads | Active | Battle producers, loading, continuation writes and replay/report byte views pass the full local matrix. AI data and platform qualification remain required. |
 | B10: message/log payloads | Pending | Preserve compression/encryption/framing and incomplete-record behavior. |
 | B11: remaining packed/resource layouts | Pending | Explicit codecs replace compiler packing and anonymous aliases after all direct consumers migrate. |
 | B12: typed stable game arenas | Pending | Preserve addresses, stride-derived identity, reset/invalidation rules, capacities and allocation failure. |
@@ -785,3 +785,49 @@ and host regressions each match all 519 files through turn 150, with the same
 25 accepted unused-storage warnings and no differences/errors/skipped inputs.
 Independent reference inputs, catalogs and baselines remain unchanged. B08's
 platform gate remains required; B09–B14 are pending.
+
+
+## B08 platform completion gate
+
+All 16 Linux/Windows checks pass for `d91f49a`, including Windows SDL/SDK,
+desktop/host regressions, all source witnesses and the expanded Linux
+ASan/UBSan/LSan job with actual ship-transfer and split/merge replay cases.
+B08 is complete. B09 fixed battle codecs and scoped byte windows pass focused
+wire/layout/real-heap tests; producers, replay/continuations, variable tails,
+AI data and the full matrix remain required. B09–B14 are not complete.
+
+
+## B09 battle record family
+
+Battle data, events, kills and tokens have explicit 14/6/8/29-byte codecs.
+Producers publish byte fields at the original points, including kill counts
+before KillShips and the battle length before SendBattleMessages, with player
+flags still published afterward. Runtime token/cargo/replay arrays have explicit
+array lifetimes over the same allocations. RNG, tie ordering, arithmetic and
+allocation order remain unchanged.
+
+Loaders, legacy conversion, continuation writers, replay and battle reports use
+scoped byte views over the physical arena. A getter reads only its field bytes;
+short declared records still use existing scratch/spare backing. Signed event
+counts and boundary positions retain their original traversal domain. Persistent
+replay roots remain borrowed byte pointers, with fresh views on access. The
+three battle zero-length tails and TOK's inactive raw-word alias are removed;
+metadata widths and all frozen measurements remain unchanged. The tutorial
+observer follows the borrowed battle root through the same accessor.
+
+Real replay tests cover seeking/reset, movement, attack damage, shield counts,
+round transition and summaries. The actual encrypted writer/reader verifies
+34/35-token continuation boundaries, a 1023-byte event split and every payload
+byte. Independent golden vectors, signed event counts, bit words, short physical
+prefixes and real heap/legacy-conversion fixtures pass. Actual battle and memory
+unit programs join the sanitizer gate.
+
+Battle family local qualification: 114/114 desktop tests including all 27 native
+macOS leak checks, 25/25 host tests, 36/36 ASan/UBSan cases, all 27 source
+witnesses and 95 public headers in both include orders. Debug/Release/host/
+sanitizer builds introduce no warnings. Desktop and host regressions each match
+519 files through turn 150 with the same 25 accepted unused-storage warnings,
+zero differences/errors and no skipped inputs. All 259 frozen measurements and
+six migrated runtime alignment checks pass. Independent inputs, catalogs and
+baselines remain unchanged. B09 AI data and platform qualification remain
+required; B10–B14 are pending.

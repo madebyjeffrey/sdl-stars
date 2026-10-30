@@ -631,8 +631,9 @@ void DoBattles(int16_t fPostMovement) {
     uint16_t rggrfAttack[16];
 
     LinkFleets(fPostMovement);
-    vrgtok = (TOK *)LpAlloc(256 * sizeof(TOK), htMisc);
-    vlpwtCargo = (uint16_t *)LpAlloc(0x200, htMisc);
+    static_assert(std::is_trivially_default_constructible_v<TOK> && std::is_trivially_destructible_v<TOK>);
+    vrgtok = ::new (LpAlloc(256 * sizeof(TOK), htMisc)) TOK[256];
+    vlpwtCargo = ::new (LpAlloc(0x200, htMisc)) uint16_t[256];
     for (ifl = 0; ifl < cFleet; ifl++) {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
@@ -1004,7 +1005,7 @@ void InitializeBoard(FLEET *lpfl, int16_t ibrc, uint16_t grfPlayer, uint8_t *pin
                         CheckTarget(ptok, lpflCur, ishdef);
                         ptok->spd = SpdOfShip(lpflCur, ishdef, ptok, fDumpCargo, NULL);
                         ptok++;
-                        if ((int16_t)((uint8_t *)ptok - (uint8_t *)vrgtok) / 29 > 0xff)
+                        if ((int16_t)(ptok - vrgtok) > 0xff)
                             goto LTooManyTokens;
                     }
                 }
@@ -1013,7 +1014,7 @@ void InitializeBoard(FLEET *lpfl, int16_t ibrc, uint16_t grfPlayer, uint8_t *pin
         lpflCur = lpflCur->lpflNext;
     } while (lpflCur != lpfl);
 LTooManyTokens:
-    vctok = (int16_t)((uint8_t *)ptok - (uint8_t *)vrgtok) / 29;
+    vctok = (int16_t)(ptok - vrgtok);
     RandomizeTokOrder();
     for (ptokT = vrgtok; ptokT < ptok; ptokT++) {
         ptokT->fMoved = TRUE;
@@ -1025,8 +1026,8 @@ LTooManyTokens:
         if (fDampeningField && ptokT->grobj != grobjPlanet) {
             ptokT->spd = ptokT->spd - 4 <= 0 ? 0 : ptokT->spd - 4;
         }
-        *(TOK *)lpbBattleCur = *ptokT;
-        lpbBattleCur += 29;
+        FEncodeTok(*ptokT, std::as_writable_bytes(std::span(lpbBattleCur, cbWireTok)));
+        lpbBattleCur += cbWireTok;
         if (ptokT->initMin != 0xff && (initMin == -1 || ptokT->initMin < initMin)) {
             initMin = ptokT->initMin;
         }
@@ -1656,7 +1657,7 @@ int32_t CTorpHit(int32_t cTorpBase, TOK *ptok, int16_t pctBase, int16_t pctBC) {
     return cTorpHit;
 }
 
-int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t grfAttack) {
+int16_t FAttack(int16_t itokAttacker, int16_t init, uint8_t *lpbtlrec, uint16_t grfAttack) {
     int32_t   dpShieldLeft;
     int16_t   dz;
     SHDEF    *lpshdefE;
@@ -1740,7 +1741,7 @@ int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t g
                             if (FDamageTok(ptokE, itok, &dp, 0, grfWeapon, part.pbeam->grfAbilities & beamSapper, NULL)) {
                                 if (!fSetItok) {
                                     fSetItok = TRUE;
-                                    lpbtlrec->itokAttack = itok;
+                                    BevFromPrefix(lpbtlrec).SetItokAttack(itok);
                                 }
                                 ctokDamaged++;
                             }
@@ -1864,7 +1865,7 @@ int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t g
                         dpT = dp;
                         if (FDamageTok(ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam->grfAbilities & beamSapper, NULL)) {
                             if (!fSetItok) {
-                                lpbtlrec->itokAttack = itokTarget;
+                                BevFromPrefix(lpbtlrec).SetItokAttack(itokTarget);
                                 fSetItok = TRUE;
                             }
                             ctokDamaged++;
@@ -1930,7 +1931,7 @@ int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t g
                         ctokDamaged++;
                         if (!fSetItok) {
                             fSetItok = TRUE;
-                            lpbtlrec->itokAttack = itokTarget;
+                            BevFromPrefix(lpbtlrec).SetItokAttack(itokTarget);
                         }
                         cTorpsLeft -= cTorpFire + cTorpMiss;
                     }
@@ -1940,7 +1941,7 @@ int16_t FAttack(int16_t itokAttacker, int16_t init, BTLREC *lpbtlrec, uint16_t g
             }
         }
     }
-    lpbtlrec->ctok = ctokDamaged;
+    BevFromPrefix(lpbtlrec).SetCtok(ctokDamaged);
     if (ctokDamaged != 0) {
         return TRUE;
     }
@@ -2069,30 +2070,30 @@ int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, Gr
 
     dp = *pdpBeam;
     memset(lpbBattleCur, 0, 8);
-    ((KILL *)lpbBattleCur)->itok = itok;
-    ((KILL *)lpbBattleCur)->grfWeapon = grfWeapon;
+    BkvFromPrefix(lpbBattleCur).SetItok(itok);
+    BkvFromPrefix(lpbBattleCur).SetGrfWeapon(grfWeapon);
     if (ptok->dpShield != 0) {
         dpOrig = (uint32_t)ptok->dpShield;
         dpT = (uint32_t)ptok->dpShield - dpOrig;
         dpOrig = (uint32_t)(dpOrig * (uint32_t)ptok->csh);
         if (dpOrig > dp) {
             dpOrig -= dp;
-            ((KILL *)lpbBattleCur)->dpShield = WPackLong(dp);
+            BkvFromPrefix(lpbBattleCur).SetDpShield(WPackLong(dp));
             ptok->dpShield = LOWORD((int32_t)(dpOrig / (int32_t)ptok->csh)) + LOWORD(dpT);
             dp = 0;
         } else {
             dp -= dpOrig;
-            ((KILL *)lpbBattleCur)->dpShield = WPackLong(dpOrig);
+            BkvFromPrefix(lpbBattleCur).SetDpShield(WPackLong(dpOrig));
             ptok->dpShield = 0;
         }
     } else if (fShieldsOnly) {
         return FALSE;
     }
     if ((dp == 0 || fShieldsOnly) && dpTorp == 0) {
-        ((KILL *)lpbBattleCur)->dv.dp = ptok->dv.dp;
+        BkvFromPrefix(lpbBattleCur).dv().SetDp(ptok->dv.dp);
         *pdpBeam = dp;
-        if (((KILL *)lpbBattleCur)->grfWeapon & bitFTorp) {
-            ((KILL *)lpbBattleCur)->grfWeapon |= bitFNoHit | bitFDeflected;
+        if (BkvFromPrefix(lpbBattleCur).grfWeapon() & bitFTorp) {
+            BkvFromPrefix(lpbBattleCur).SetGrfWeapon(BkvFromPrefix(lpbBattleCur).grfWeapon() | (bitFNoHit | bitFDeflected));
         }
         lpbBattleCur += 8;
         return TRUE;
@@ -2113,8 +2114,8 @@ int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, Gr
             dp += (int32_t)(dpShdef * dv.pctDp()) / 500;
         }
         if (dp >= dpShdef) {
-            ((KILL *)lpbBattleCur)->dv.SetPctDp(500);
-            ((KILL *)lpbBattleCur)->cshKill = 1;
+            BkvFromPrefix(lpbBattleCur).dv().SetPctDp(500);
+            BkvFromPrefix(lpbBattleCur).SetCshKill(1);
             ptok->fActive = FALSE;
             ptok->csh = 0;
             fStarbaseDied = TRUE;
@@ -2130,12 +2131,12 @@ int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, Gr
             } else {
                 lppl->pctDp++;
             }
-            ((KILL *)lpbBattleCur)->dv.SetPctDp(lppl->pctDp);
+            BkvFromPrefix(lpbBattleCur).dv().SetPctDp(lppl->pctDp);
             fStarbaseDamaged = TRUE;
         }
-        if (((KILL *)lpbBattleCur)->dv.pctDp() != 0) {
-            ((KILL *)lpbBattleCur)->dv.SetPctSh(100);
-            ptok->dv.dp = ((KILL *)lpbBattleCur)->dv.dp;
+        if (BkvFromPrefix(lpbBattleCur).dv().pctDp() != 0) {
+            BkvFromPrefix(lpbBattleCur).dv().SetPctSh(100);
+            ptok->dv.dp = BkvFromPrefix(lpbBattleCur).dv().dp();
         }
         *pdpBeam = 0;
         lpbBattleCur += 8;
@@ -2211,9 +2212,9 @@ int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, Gr
         pctSh = 0;
         pctDp = 0;
     }
-    ((KILL *)lpbBattleCur)->cshKill = ptok->csh - csh;
+    BkvFromPrefix(lpbBattleCur).SetCshKill(ptok->csh - csh);
     if (csh != ptok->csh) {
-        KillShips(ptok, ((KILL *)lpbBattleCur)->cshKill, ishdef, lpfl, TRUE);
+        KillShips(ptok, BkvFromPrefix(lpbBattleCur).cshKill(), ishdef, lpfl, TRUE);
     }
     if (csh != 0) {
         if (pctDp > 499) {
@@ -2231,7 +2232,7 @@ int16_t FDamageTok(TOK *ptok, int16_t itok, int32_t *pdpBeam, int32_t dpTorp, Gr
         *pdpBeam = 0;
     }
     dpOrig -= *pdpBeam;
-    ((KILL *)lpbBattleCur)->dv.dp = ptok->dv.dp;
+    BkvFromPrefix(lpbBattleCur).dv().SetDp(ptok->dv.dp);
     lpbBattleCur += 8;
     if (pcTorp) {
         *pcTorp = cKillMax;
@@ -2258,7 +2259,6 @@ int16_t DxyFromSpdRound(uint16_t spd, int16_t iRound) {
 
 int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t grfPlayer, uint16_t grfSpectator) {
     int16_t  cShipsInvolved;
-    uint8_t *lpbMax;
     TOK     *ptok;
     uint16_t wt;
     int16_t  cShdefsInvolved;
@@ -2270,11 +2270,11 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
     int16_t  i;
     int16_t  j;
     int16_t  initMin;
-    BTLREC  *lpbtlrec;
+    uint8_t *lpbtlrec;
     int16_t  iRound;
     FLEET   *lpflT;
     uint16_t brcOrig;
-    BTLDATA *lpbtldata;
+    uint8_t *lpbtldata;
     uint8_t  rgfInit[64];
     uint16_t rgPlrLosses[256];
     uint16_t wtNext;
@@ -2302,13 +2302,12 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
     }
     lpbSav = lpbBattleCur;
     lpbBattleCur = lpbBattleT;
-    lpbMax = lpbBattleT - 72;
     memset(rgPlrLosses, 0, 0x200);
     vrgPlrLosses = rgPlrLosses;
     memset(rgfInit, 0, 64);
     memset(vrgtok, 0, 256 * sizeof(TOK));
     vctok = 0;
-    lpbtldata = (BTLDATA *)lpbBattleCur;
+    lpbtldata = (uint8_t *)lpbBattleCur;
     lpbBattleCur += 14;
     memset(rgTechBattle, 0, 6);
     memset(rgTechTrader, 0, 13);
@@ -2344,11 +2343,11 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
         }
     }
     InitializeBoard(lpfl, (int16_t)((cplr - 1) * cplr) / 2, grfPlayer, rgfInit, &initMin, &initMac);
-    lpbtldata->cplr = cplr;
-    lpbtldata->ctok = vctok;
-    lpbtldata->idPlanet = lpfl->idPlanet;
-    lpbtldata->pt = lpfl->pt;
-    lpbtldata->id = idBattle++;
+    BdvFromPrefix(lpbtldata).SetCplr(cplr);
+    BdvFromPrefix(lpbtldata).SetCtok(vctok);
+    BdvFromPrefix(lpbtldata).SetIdPlanet(lpfl->idPlanet);
+    BdvFromPrefix(lpbtldata).SetPt(lpfl->pt);
+    BdvFromPrefix(lpbtldata).SetId(idBattle++);
     for (iRound = 0; iRound < 16; iRound++) {
         grplrLeft = 0;
         for (itok = 0; itok < vctok; itok++) {
@@ -2396,18 +2395,18 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
                         if (wtT == wt) {
                             i--;
                             if ((int16_t)ptok->dMovesLeft >= j) {
-                                lpbtlrec = (BTLREC *)lpbBattleCur;
+                                lpbtlrec = (uint8_t *)lpbBattleCur;
                                 lpbBattleCur += 6;
-                                lpbtlrec->itok = itok;
-                                lpbtlrec->ctok = 0;
-                                lpbtlrec->itokAttack = itok;
-                                lpbtlrec->iRound = iRound;
-                                lpbtlrec->dzDis = ptok->dzDis;
+                                BevFromPrefix(lpbtlrec).SetItok(itok);
+                                BevFromPrefix(lpbtlrec).SetCtok(0);
+                                BevFromPrefix(lpbtlrec).SetItokAttack(itok);
+                                BevFromPrefix(lpbtlrec).SetIRound(iRound);
+                                BevFromPrefix(lpbtlrec).SetDzDis(ptok->dzDis);
                                 brcOrig = vrgtok[itok].brc;
                                 if (ptok->mdTactic == mdTacticDisengage) {
                                     brcOrig = 0xff;
                                     if (ptok->dzDis == 0) {
-                                        lpbtlrec->brcDest = 0xff;
+                                        BevFromPrefix(lpbtlrec).SetBrcDest(0xff);
                                         ptok->fActive = FALSE;
                                         continue;
                                     }
@@ -2416,7 +2415,7 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
                                 DxyMoveTokTo(ptok, j, rggrfAttack[ptok->iplr]);
                                 ptok->dMovesLeft += 3;
                                 if (ptok->grobj != grobjPlanet && (brcOrig != ptok->brc || ptok->initMin == 0xff)) {
-                                    lpbtlrec->brcDest = ptok->brc;
+                                    BevFromPrefix(lpbtlrec).SetBrcDest(ptok->brc);
                                 } else {
                                     lpbBattleCur -= 6;
                                 }
@@ -2455,14 +2454,14 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
                             break;
                         ptok = vrgtok + itok;
                         if (ptok->fActive) {
-                            lpbtlrec = (BTLREC *)lpbBattleCur;
+                            lpbtlrec = (uint8_t *)lpbBattleCur;
                             lpbBattleCur += 6;
-                            lpbtlrec->itok = itok;
-                            lpbtlrec->ctok = 0;
-                            lpbtlrec->iRound = iRound;
-                            lpbtlrec->brcDest = ptok->brc;
-                            lpbtlrec->itokAttack = itok;
-                            lpbtlrec->dzDis = ptok->dzDis;
+                            BevFromPrefix(lpbtlrec).SetItok(itok);
+                            BevFromPrefix(lpbtlrec).SetCtok(0);
+                            BevFromPrefix(lpbtlrec).SetIRound(iRound);
+                            BevFromPrefix(lpbtlrec).SetBrcDest(ptok->brc);
+                            BevFromPrefix(lpbtlrec).SetItokAttack(itok);
+                            BevFromPrefix(lpbtlrec).SetDzDis(ptok->dzDis);
                             if (!FAttack(itok, init, lpbtlrec, rggrfAttack[ptok->iplr])) {
                                 lpbBattleCur -= 6;
                             } else {
@@ -2476,17 +2475,17 @@ int16_t FDoCoolBattle(FLEET *lpfl, int16_t cplr, uint16_t *rggrfAttack, uint16_t
         if (!((grplrLeft - 1) & grplrLeft))
             break;
     }
-    lpbtldata->cbData = lpbBattleCur - (uint8_t *)lpbtldata;
-    SendBattleMessages(lpfl, cplr, lpbtldata->id, rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
-    lpbtldata->grfPlr = grfPlayer;
+    BdvFromPrefix(lpbtldata).SetCbData(lpbBattleCur - (uint8_t *)lpbtldata);
+    SendBattleMessages(lpfl, cplr, BdvFromPrefix(lpbtldata).id(), rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
+    BdvFromPrefix(lpbtldata).SetGrfPlr(grfPlayer);
     /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
     lphb = LphbFromLpHt(lpbSav, htBattle);
-    if (0xffc8 - (uint32_t)(lpbSav - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)lpbtldata->cbData) {
+    if (0xffc8 - (uint32_t)(lpbSav - (uint8_t *)lphb - sizeof(HB) + 16) < (uint32_t)BdvFromPrefix(lpbtldata).cbData()) {
         RawStore16(lpbSav, 0xffff);
         lpbBattleT = NULL;
     } else {
-        memmove(lpbSav, lpbtldata, lpbtldata->cbData);
-        lpbBattleCur = lpbSav + lpbtldata->cbData;
+        memmove(lpbSav, lpbtldata, BdvFromPrefix(lpbtldata).cbData());
+        lpbBattleCur = lpbSav + BdvFromPrefix(lpbtldata).cbData();
     }
     return 1;
 }
@@ -3138,7 +3137,7 @@ void DoBombing() {
 }
 
 int16_t CBattles() {
-    BTLDATA *lpbd;
+    uint8_t *lpbd;
     HB      *lphb;
     int16_t  cBattles;
 
@@ -3147,18 +3146,18 @@ int16_t CBattles() {
     if (!lphb) {
         return 0;
     }
-    lpbd = (BTLDATA *)((uint8_t *)lphb + (sizeof(HB) + 2));
+    lpbd = (uint8_t *)((uint8_t *)lphb + (sizeof(HB) + 2));
     while (1) {
-        if (lpbd->id == 0xffff) {
+        if (BdvFromLp(lpbd).id() == 0xffff) {
             lphb = lphb->lphbNext;
             if (!lphb || lphb->ibTop <= sizeof(HB))
                 break;
-            lpbd = (BTLDATA *)((uint8_t *)lphb + (sizeof(HB) + 2));
+            lpbd = (uint8_t *)((uint8_t *)lphb + (sizeof(HB) + 2));
         } else {
-            if (lpbd->cbData == 0) {
+            if (BdvFromLp(lpbd).cbData() == 0) {
                 return cBattles;
             }
-            lpbd = (BTLDATA *)((uint8_t *)lpbd + lpbd->cbData);
+            lpbd = (uint8_t *)((uint8_t *)lpbd + BdvFromLp(lpbd).cbData());
             cBattles++;
         }
     }

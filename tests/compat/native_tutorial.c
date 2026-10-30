@@ -429,7 +429,7 @@ static BOOL FSaveBattle(const char *pszPath) {
     lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
     CchNativePrintf(lpfile, "{\"battle\":%u,\"tokens\":%u,\"step\":%d,\"lastStep\":%d,\"playing\":%s}\n",
-            vlpbdVCR->id, vlpbdVCR->ctok, viStepVCRCur, vcStepVCR, gd.fVCRTimer ? "true" : "false");
+            BdvFromLp(vlpbdVCR).id(), BdvFromLp(vlpbdVCR).ctok(), viStepVCRCur, vcStepVCR, gd.fVCRTimer ? "true" : "false");
     fError = FNativeStreamError(lpfile);
     return ICloseNativeFile(lpfile) == 0 && !fError;
 }
