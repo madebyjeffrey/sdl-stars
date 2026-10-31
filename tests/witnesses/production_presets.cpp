@@ -84,10 +84,13 @@ static const char *TestPszGetCompressedString(int id) {
     return "Automatic orders";
 }
 static void TestCchGetString(int id, char *out) {
+    char szItem[16];
     if (id == idsSD2)
         strcpy(out, "%s %d");
-    else
-        snprintf(out, 15, "Item%d", id - idsMines);
+    else {
+        snprintf(szItem, sizeof(szItem), "Item%d", id - idsMines);
+        snprintf(out, 15, "%.14s", szItem);
+    }
 }
 static int TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
     (void)instance;

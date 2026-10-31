@@ -422,6 +422,13 @@ callback. The complete export/save workflow passes after both corrections.
 All previous callback names were audited for a typed binding reference. Moved-only
 unused locals were removed; existing unrelated warnings remain unchanged.
 
+The first enabled Linux CI run passes all native/host regression jobs, host
+units and resource sanitizers. The witness/tutorial builds both reject the same
+fixture-only `snprintf` truncation warning under GCC. The fixture now formats
+into a full-size temporary and explicitly retains the original 14-byte text
+limit; its linked witness and strict GCC syntax check pass. The corrected CI
+run remains pending; no production behavior or independent expectation changes.
+
 An additional historical precision experiment exposed a pre-existing reference
 adapter issue: its frozen C bodies include current C++ headers. The arm64 run
 also requires an x86 extended-precision oracle. Source discovery passes; the
