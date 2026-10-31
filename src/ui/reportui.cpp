@@ -43,10 +43,10 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         ReleaseDC(hwnd, hdc);
         SortReportCache(vprptCur->irpt, vprptCur->icolSort);
-        SetWindowPos(hwnd, NULL, 0, 0, vprptCur->ptSize.x, vprptCur->ptSize.y, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
+        FUiSetWindowPos(hwnd, NULL, 0, 0, vprptCur->ptSize.x, vprptCur->ptSize.y, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
         StickyDlgPos(hwnd, &vprptCur->ptDlg, TRUE);
-        vprptCur->hwndVScroll = CreateWindow("SCROLLBAR", NULL, SBS_VERT | WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
-        vprptCur->hwndHScroll = CreateWindow("SCROLLBAR", NULL, WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
+        vprptCur->hwndVScroll = HwndUiCreateWindowEx(0, "SCROLLBAR", NULL, SBS_VERT | WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
+        vprptCur->hwndHScroll = HwndUiCreateWindowEx(0, "SCROLLBAR", NULL, WS_CHILD, 0, 0, 50, 50, hwnd, NULL, hInst, NULL);
         if (gd.fTutorial) {
             AdvanceTutor();
         }
@@ -71,7 +71,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                 vprptCur->cRowsVis, vprptCur->irowFirst, TRUE);
         }
         dx = GetSystemMetrics(SM_CXVSCROLL);
-        SetWindowPos(vprptCur->hwndVScroll, NULL, rc.right - dx, dyArial8 + 6, dx, (dyArial8 + 4) * vprptCur->cRowsVis + 1, swp);
+        FUiSetWindowPos(vprptCur->hwndVScroll, NULL, rc.right - dx, dyArial8 + 6, dx, (dyArial8 + 4) * vprptCur->cRowsVis + 1, swp);
         SetHScrollBar();
         if (msg == WM_CREATE) {
             return 1;
@@ -137,14 +137,14 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             cRow = CWheelNotches(&dWheelRows, i);
             if (cRow != 0) {
                 iNew = GetScrollPos(vprptCur->hwndVScroll, SB_CTL) - cRow * CWheelLines(vprptCur->cRowsVis - 1);
-                SendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndVScroll);
+                LUiSendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndVScroll);
             }
             return 0;
         }
         iCol = CWheelNotches(&dWheelCols, msg == WM_MOUSEWHEEL ? -i : i);
         if (iCol != 0) {
             iNew = GetScrollPos(vprptCur->hwndHScroll, SB_CTL) + iCol;
-            SendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndHScroll);
+            LUiSendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)iNew), (LPARAM)vprptCur->hwndHScroll);
         }
         return 0;
     case WM_VSCROLL:
@@ -190,7 +190,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             rc.bottom = (dyArial8 + 4) * vprptCur->cRowsVis + rc.top;
             ScrollWindow(hwnd, 0, (dyArial8 + 4) * (iCur - iNew), &rc, &rc);
             SetScrollPos((HWND)lParam, SB_CTL, iNew, TRUE);
-            UpdateWindow(hwnd);
+            FUiUpdateWindow(hwnd);
         }
         return 0;
     case WM_HSCROLL:
@@ -237,7 +237,7 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 vprptCur->cFieldFirst = i;
                 InvalidateRect(hwnd, NULL, TRUE);
-                UpdateWindow(hwnd);
+                FUiUpdateWindow(hwnd);
             }
         }
         return 0;
@@ -276,12 +276,12 @@ LRESULT CALLBACK ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         break;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) {
-            DestroyWindow(hwnd);
+            FUiDestroyWindow(hwnd);
             return 1;
         }
         break;
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void SetHScrollBar() {
@@ -335,7 +335,7 @@ void SetHScrollBar() {
         vprptCur->cColScroll = ccolHidden;
     }
     dy = GetSystemMetrics(SM_CYHSCROLL);
-    SetWindowPos(vprptCur->hwndHScroll, NULL, xTitle, dyArial8 + 6 + (dyArial8 + 4) * vprptCur->cRowsVis + 1, rc.right - dx - xTitle, dy, swp);
+    FUiSetWindowPos(vprptCur->hwndHScroll, NULL, xTitle, dyArial8 + 6 + (dyArial8 + 4) * vprptCur->cRowsVis + 1, rc.right - dx - xTitle, dy, swp);
     return;
 }
 
@@ -550,15 +550,15 @@ void InitScoreDlg(HWND hwnd, int16_t fVictory) {
     GetClientRect(hwnd, &rc);
     dxFrame = rcWindow.right - rcWindow.left - rc.right;
     dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
-    SetWindowPos(hwnd, NULL, 0, 0, dxFrame + dx, dyFrame + dy, SWP_NOMOVE | SWP_NOZORDER);
+    FUiSetWindowPos(hwnd, NULL, 0, 0, dxFrame + dx, dyFrame + dy, SWP_NOMOVE | SWP_NOZORDER);
     GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
     MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
     OffsetRect(&rc, 0, dy - 4 - rc.bottom);
     dx = (int16_t)(dx - (rc.right - rc.left) * 3) / 4;
-    SetWindowPos(GetDlgItem(hwnd, IDC_SCORE_SWITCH), NULL, dx, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    SetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    SetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    SetWindowText(hwnd, PszGetCompressedString(static_cast<StringId>(idsPlayerScores + fVictory)));
+    FUiSetWindowPos(GetDlgItem(hwnd, IDC_SCORE_SWITCH), NULL, dx, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    FUiSetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dx * 2 + (rc.right - rc.left), rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    FUiSetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, 3 * dx + (rc.right - rc.left) * 2, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    FUiSetWindowText(hwnd, PszGetCompressedString(static_cast<StringId>(idsPlayerScores + fVictory)));
     return;
 }
 
@@ -2560,7 +2560,7 @@ void ExecuteReportClick(POINT16 pt, ReportType irpt, int16_t icol, int16_t irow)
         case colFleetTask:
             if (FDestIsWP0(lpfl))
                 break;
-            SendMessage(hwndShipLB, LB_SETCURSEL, 1, 0);
+            LUiSendMessage(hwndShipLB, LB_SETCURSEL, 1, 0);
             SetScanWp(1);
             break;
         case colFleetComposition:
@@ -2632,11 +2632,11 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
     case WM_INITDIALOG:
         for (i = 0; i < 2; i++) {
             hwndEdit = GetDlgItem(hwnd, i + 268);
-            SendMessage(hwndEdit, EM_LIMITTEXT, 1, 0);
-            SendMessage(hwndEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            LUiSendMessage(hwndEdit, EM_LIMITTEXT, 1, 0);
+            LUiSendMessage(hwndEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             szWork[0] = vrgcPrintMapPage[i] + '0';
             szWork[1] = 0;
-            SetWindowText(hwndEdit, szWork);
+            FUiSetWindowText(hwndEdit, szWork);
         }
         StickyDlgPos(hwnd, &ptStickyPrintMapDlg, TRUE);
         return 1;
@@ -2666,7 +2666,7 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
                     GetWindowText(hwndEdit, szWork, 10);
                     if (szWork[0] == 0 || szWork[1] != 0 || szWork[0] <= '0' || szWork[0] > '9') {
                         AlertSz(PszFormatIds(idsMustSpecifyNumberBetween19, NULL), MB_ICONHAND);
-                        SetFocus(hwndEdit);
+                        HwndUiSetFocus(hwndEdit);
                         break;
                     }
                     vrgcPrintMapPage[i] = szWork[0] - '0';
@@ -2684,7 +2684,7 @@ INT_PTR CALLBACK PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
                 GetWindowText((HWND)lParam, szWork, 10);
                 if (szWork[0] != 0 && (szWork[0] <= '0' || szWork[0] > '9')) {
                     MessageBeep(MB_OK);
-                    SetWindowText((HWND)lParam, &szWork[1]);
+                    FUiSetWindowText((HWND)lParam, &szWork[1]);
                 }
             }
         }

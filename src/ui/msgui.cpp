@@ -37,40 +37,40 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             hwndMessage = hwnd;
-            rghwndMsgBtn[i] = CreateWindow("BUTTON", PszGetCompressedString(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
+            rghwndMsgBtn[i] = HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
                                            NULL, hInst, NULL);
-            SendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            LUiSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
-        hwndMsgDrop = CreateWindow("COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        SendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgEdit = CreateWindow("EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        SendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
-        SendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgScroll = CreateWindow("EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
+        hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
+        LUiSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
+        LUiSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
+        LUiSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        hwndMsgScroll = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
                                      NULL, hInst, NULL);
         SetMsgTitle(hwnd);
-        SendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsEverybody));
+        LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsEverybody));
         for (i = 0; i < game.cPlayer; i++) {
             psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
-            SendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
+            LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        SendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+        LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
         break;
     case WM_SIZE:
         dx = LOWORD(lParam);
         dy = HIWORD(lParam);
         for (i = 0; i < 3; i++) {
-            SetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
+            FUiSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
         SetRect(&rcMsgText, 4, dyArial8 * 2 + 3, dx - 52, dy - 4);
         SetRect(&rcMsgTitle, 4, 4, dx - 4, dyArial8 * 2 - 4);
         rc = rcMsgText;
         ExpandRc(&rc, -4, -4);
-        SetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
-        SetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        FUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
+        FUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         rc.top += dyShipDD + 3;
-        SetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
+        FUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
         goto Default;
     case WM_ERASEBKGND:
         GetClientRect(hwnd, &rc);
@@ -137,7 +137,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             gd.fSendMsgMode = gd.fSendMsgMode == 0;
             InvalidateRect(hwndMessage, NULL, TRUE);
             SetMsgTitle(hwnd);
-            SetFocus(hwndMsgEdit);
+            HwndUiSetFocus(hwndMsgEdit);
         }
         break;
     case WM_GETMINMAXINFO:
@@ -221,12 +221,12 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             rcActual = rc;
             DrawText(hdc, lpsz, strlen(lpsz), &rcActual, DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
-                ShowWindow(hwndMsgScroll, SW_HIDE);
+                FUiShowWindow(hwndMsgScroll, SW_HIDE);
                 DrawText(hdc, lpsz, strlen(lpsz), &rc, DT_WORDBREAK | DT_NOPREFIX);
             } else {
-                SetWindowText(hwndMsgScroll, lpsz);
+                FUiSetWindowText(hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
-                SetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+                FUiSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
             }
             SetBkMode(hdc, iMode);
         } else {
@@ -243,8 +243,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_MOUSEWHEEL:
         if (gd.fSendMsgMode || (LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) return 0;
         i = CWheelNotches(&dWheelMessages, (int16_t)HIWORD(wParam));
-        while (i > 0) { SendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
-        while (i < 0) { SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
+        while (i > 0) { LUiSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
+        while (i < 0) { LUiSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
         return 0;
     case WM_KEYDOWN:
         if (wParam == VK_DOWN)
@@ -278,7 +278,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         return 0;
     case WM_COMMAND:
         if (HIWORD(wParam) == 0) {
-            SetFocus(hwndFrame);
+            HwndUiSetFocus(hwndFrame);
         }
         if ((HWND)lParam == rghwndMsgBtn[0] && HIWORD(wParam) == 0) {
         PrevMsg:
@@ -337,8 +337,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     break;
                 case mdMsgObjPlanet:
                     SelectAdjPlanet(0, idMsgObj);
-                    UpdateWindow(hwndScanner);
-                    SendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    FUiUpdateWindow(hwndScanner);
+                    LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
                     idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
                     if (idm != idmHasCompletedOrdersProductionQueueEmpty && idm != idmProductionQueueEmpty &&
                         (idm < idmHasBuiltManyMinesCurrentPopulationCan || idm > idmHasBuiltManyDefensesPlanetCanSupport))
@@ -354,8 +354,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     break;
                 case mdMsgObjFleet:
                     SelectAdjFleet(0, idMsgObj);
-                    UpdateWindow(hwndScanner);
-                    SendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    FUiUpdateWindow(hwndScanner);
+                    LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
                     break;
                 case mdMsgObjThing:
                     lpth = LpthFromId(vptMsg.x);
@@ -414,7 +414,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
     default:
     Default:
-        return DefWindowProc(hwnd, message, wParam, lParam);
+        return LUiDefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
@@ -571,7 +571,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         lpbMsg = lpb2k;
     }
     cbNew = abs(cb) + 12;
-    iPlrTo = LOWORD(SendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
+    iPlrTo = LOWORD(LUiSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
         if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
             DirtyGame(TRUE);
@@ -613,45 +613,45 @@ void SetMsgTitle(HWND hwnd) {
             ch = ' ';
         }
         sw = !gd.fSendMsgMode ? 0 : 5;
-        ShowWindow(hwndMsgEdit, sw);
-        ShowWindow(hwndMsgDrop, sw);
-        ShowWindow(rghwndMsgBtn[3], sw);
+        FUiShowWindow(hwndMsgEdit, sw);
+        FUiShowWindow(hwndMsgDrop, sw);
+        FUiShowWindow(rghwndMsgBtn[3], sw);
         if (gd.fSendMsgMode) {
-            ShowWindow(hwndMsgScroll, SW_HIDE);
+            FUiShowWindow(hwndMsgScroll, SW_HIDE);
         }
         cMsgTot = cMsg + vcmsgplrIn;
         i = gd.fSendMsgMode ? idsDone : iMsgCur >= cMsg ? idsReply : gd.fGotoVCR ? idsView : idsGoto3;
-        SetWindowText(rghwndMsgBtn[1], PszGetCompressedString(static_cast<StringId>(i)));
+        FUiSetWindowText(rghwndMsgBtn[1], PszGetCompressedString(static_cast<StringId>(i)));
         if (gd.fSendMsgMode) {
             wsprintf(szWork, PszGetCompressedString(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
             rc = rcMsgText;
             ExpandRc(&rc, -4, -4);
-            SetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            SetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+            FUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            FUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
             rc.top += dyShipDD + 3;
-            SetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            EnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
-            EnableWindow(rghwndMsgBtn[1], TRUE);
-            EnableWindow(rghwndMsgBtn[2], TRUE);
+            FUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            FUiEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
+            FUiEnableWindow(rghwndMsgBtn[1], TRUE);
+            FUiEnableWindow(rghwndMsgBtn[2], TRUE);
             lpmp = vlpmsgplrOut;
             i = iMsgSendCur;
             while (i-- > 0) {
                 lpmp = lpmp->lpmsgplrNext;
             }
             if (lpmp) {
-                SendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
+                LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    SetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
+                    FUiSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
                     goto FinishUp;
                 } else {
                     i = 1000;
                     FDecompressUserString((char *)lpmp->rgbMsg(), lpmp->cLen, (char *)lpb2k, &i);
-                    SetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
+                    FUiSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
                 }
                 goto FinishUp;
             } else {
-                SendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
-                SetWindowText(hwndMsgEdit, "");
+                LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
+                FUiSetWindowText(hwndMsgEdit, "");
                 goto FinishUp;
             }
         }
@@ -662,10 +662,10 @@ void SetMsgTitle(HWND hwnd) {
             CchGetString(idsYearDCMessagesNone, szT);
             wsprintf(szWork, szT, game.turn + 2400, ch);
         }
-        EnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
-        EnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
+        FUiEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
+        FUiEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
         if (iMsgCur >= cMsg) {
-            EnableWindow(rghwndMsgBtn[1], TRUE);
+            FUiEnableWindow(rghwndMsgBtn[1], TRUE);
             goto FinishUp;
         }
         if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(static_cast<MessageId>(iMsgCur), &mb)) {
@@ -718,7 +718,7 @@ void SetMsgTitle(HWND hwnd) {
             (iMsgCur < 0 || (!fViewFilteredMsg && (bitfMsgFiltered[IdmGetMessageN(iMsgCur) >> 3] & 1 << (IdmGetMessageN(iMsgCur) & 7))))) {
             mdMsgObj = mdMsgObjNone;
         }
-        EnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
+        FUiEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
     FinishUp:
         strcpy(szMsgTitle, szWork);
         InvalidateRect(hwndMessage, &rcMsgTitle, TRUE);

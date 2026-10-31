@@ -147,7 +147,7 @@ void CreateChildWindows() {
     FSetNativeWindowTitle(hwndFrame, szData);
     if (idPlayer != iplrNone) {
         if (!hwndScanner) {
-            hwndScanner = CreateWindow(szScan, NULL, WS_CHILD | WS_VISIBLE, -200, -200, 10, 10, hwndFrame, NULL, hInst, NULL);
+            hwndScanner = HwndUiCreateWindowEx(0, szScan, NULL, WS_CHILD | WS_VISIBLE, -200, -200, 10, 10, hwndFrame, NULL, hInst, NULL);
         } else {
             InvalidateRect(hwndScanner, NULL, TRUE);
             yScanTop = 1000;
@@ -155,7 +155,7 @@ void CreateChildWindows() {
             SetScanScrollBars(hwndScanner);
         }
         if (!hwndMine) {
-            hwndMine = CreateWindow(szMine, NULL, WS_CHILD | WS_VISIBLE, -500, -500, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
+            hwndMine = HwndUiCreateWindowEx(0, szMine, NULL, WS_CHILD | WS_VISIBLE, -500, -500, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
         } else {
             InvalidateRect(hwndMine, NULL, TRUE);
         }
@@ -165,14 +165,14 @@ void CreateChildWindows() {
             InvalidateRect(hwndPlanet, NULL, TRUE);
         }
         if (!hwndTb) {
-            hwndTb = CreateWindow(szTb, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
+            hwndTb = HwndUiCreateWindowEx(0, szTb, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
         } else {
             InvalidateRect(hwndTb, NULL, TRUE);
         }
         if (hwndMessage) {
-            DestroyWindow(hwndMessage);
+            FUiDestroyWindow(hwndMessage);
         }
-        hwndMessage = CreateWindow(szMessage, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
+        hwndMessage = HwndUiCreateWindowEx(0, szMessage, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
         RefitFrameChildren();
     }
     return;
@@ -181,7 +181,7 @@ void CreateChildWindows() {
 // PostOpenGame finishes opening a game GenerateWorld just created, as the
 // File menu does after opening one.
 void PostOpenGame() {
-    SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
     return;
 }
 
@@ -230,7 +230,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_QUERYNEWPALETTE:
     MapIt:
         if (hwndTitle) {
-            return SendMessage(hwndTitle, msg, wParam, lParam);
+            return LUiSendMessage(hwndTitle, msg, wParam, lParam);
         }
         hdc = GetDC(hwnd);
         hpalSav = SelectPalette(hdc, vhpal, FALSE);
@@ -281,7 +281,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
                 goto LExit;
             } else {
-                ShowWindow(hwndFrame, SW_SHOW);
+                FUiShowWindow(hwndFrame, SW_SHOW);
                 InitializeMenu(NULL);
                 PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 if (!ini.fWait)
@@ -323,7 +323,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         CommandHandler(hwnd, wParam);
         return 0;
     case WM_CLOSE:
-        DestroyWindow(hwnd);
+        FUiDestroyWindow(hwnd);
         return 0;
     case WM_STARS_HOST:
         BringUpHostDlg();
@@ -352,9 +352,9 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             gd.fGeneratingTurn = FALSE;
         }
         CreateChildWindows();
-        SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (wParam == 2506) {
-            SendMessage(hwndMessage, WM_KEYDOWN, VK_END, 0);
+            LUiSendMessage(hwndMessage, WM_KEYDOWN, VK_END, 0);
         }
         tutor.idt = idtWelcomeStarsTutorialWillGuideThrough36;
         tutor.fTurnDone = FALSE;
@@ -394,7 +394,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
                 return 1;
             }
-            SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             goto Default;
         }
         if (uTimerIdOld == 0)
@@ -419,22 +419,22 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 return 1;
             }
         }
-        SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (sel.pt.x <= 1000 || sel.pt.y <= 1000)
             goto Default;
         CtrPointScan(sel.pt, TRUE);
         goto Default;
     case WM_CHAR:
         if (hwndScanner && (wParam == '-' || wParam == '+')) {
-            SendMessage(hwndScanner, WM_CHAR, wParam, lParam);
+            LUiSendMessage(hwndScanner, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndMessage && (wParam == '-' || wParam == '+' || wParam == '\r')) {
-            SendMessage(hwndMessage, WM_CHAR, wParam, lParam);
+            LUiSendMessage(hwndMessage, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndPlanet && (wParam == 'f' || wParam == 'F')) {
-            SendMessage(hwndPlanet, WM_CHAR, wParam, lParam);
+            LUiSendMessage(hwndPlanet, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndPlanet && sel.grobj == grobjPlanet && (wParam == 'q' || wParam == 'Q')) {
@@ -628,7 +628,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     default:
     Default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
     }
 }
 
@@ -943,11 +943,11 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
         switch (LOWORD(wParam)) {
         case IDM_HELP_ABOUT:
             lpProc = MakeProcInstance(About, hInst);
-            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwnd, lpProc);
+            LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwnd, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_FILE_EXIT:
-            SendMessage(hwnd, WM_CLOSE, 0, 0);
+            LUiSendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
         case IDM_VIEW_LAYOUT_0:
         case IDM_VIEW_LAYOUT_1:
@@ -1029,7 +1029,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(PrintMapDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRINT_MAP), hwndFrame, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PRINT_MAP), hwndFrame, lpProc);
             FreeProcInstance(lpProc);
             if (!fRet)
                 break;
@@ -1207,7 +1207,7 @@ LPrintMapCleanup:
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(FindDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_FIND), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_FIND), hwnd, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_GAME_SCORE:
@@ -1215,7 +1215,7 @@ LPrintMapCleanup:
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(ScoreXDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_SCORE), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_SCORE), hwnd, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_FILE_HOST_GAME:
@@ -1324,7 +1324,7 @@ LPrintMapCleanup:
             HideProgressGauge();
             idPlayer = idCur;
             CreateChildWindows();
-            SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             SetCursor(hcurSav);
             if (!gd.fTutorial)
                 break;
@@ -1338,10 +1338,10 @@ LPrintMapCleanup:
                 break;
             if (!hwndBrowser) {
                 mf = 8;
-                CreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
+                HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
             } else {
                 mf = 0;
-                DestroyWindow(hwndBrowser);
+                FUiDestroyWindow(hwndBrowser);
             }
             hmenu = GetASubMenu(hwnd, menuHelp);
             CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, mf);
@@ -1411,9 +1411,9 @@ LPrintMapCleanup:
                 }
                 psz = PszGetCompressedString(ids);
                 wsprintf(szWork, psz, cObj, cObj == 1 ? 32 : 115);
-                hwndReportDlg = CreateWindow(szReport, szWork, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100,
+                hwndReportDlg = HwndUiCreateWindowEx(0, szReport, szWork, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100,
                                              100, hwndFrame, NULL, hInst, NULL);
-                SetWindowPos(hwndReportDlg, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+                FUiSetWindowPos(hwndReportDlg, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
                 CheckMenuItem(hmenu, LOWORD(wParam), mf);
                 break;
             } else {
@@ -1423,7 +1423,7 @@ LPrintMapCleanup:
                     ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
                 }
                 mf = 0;
-                DestroyWindow(hwndReportDlg);
+                FUiDestroyWindow(hwndReportDlg);
                 CheckMenuItem(hmenu, LOWORD(wParam) == IDM_REPORT_FLEET ? IDM_REPORT_FLEET : IDM_REPORT_PLANET, mf);
                 if (ids != idsPlayerLogFileAppearsCorruptUnableLoad) {
                     return;
@@ -1460,14 +1460,14 @@ LPrintMapCleanup:
                     AlertSz(PszFormatIds(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
                 } else {
                     CreateChildWindows();
-                    SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 }
             } else {
                 gd.fSubmit = TRUE;
                 FWriteLogFile(szBase, idPlayer);
                 FWriteHistFile(idPlayer);
-                SetWindowText(hwndFrame, PszGetCompressedString(idsWaitingNewTurn));
-                ShowWindow(hwndFrame, SW_SHOWMINIMIZED);
+                FUiSetWindowText(hwndFrame, PszGetCompressedString(idsWaitingNewTurn));
+                FUiShowWindow(hwndFrame, SW_SHOWMINIMIZED);
                 uTimerId = SetTimer(NULL, hostTimerWaitTurn, 10000, lpfnHostTimerProc);
                 uTimerType = hostTimerWaitTurn;
                 HostTimerProc(NULL, WM_NULL, uTimerId, 0);
@@ -1533,14 +1533,14 @@ LPrintMapCleanup:
             ini.idPlayer = iplrNone;
             InitializeMenu(NULL);
             ShowTitleScreen();
-            ShowWindow(hwndFrame, SW_HIDE);
+            FUiShowWindow(hwndFrame, SW_HIDE);
             break;
         case IDM_GAME_RESEARCH:
         case IDM_GAME_RESEARCH2:
             if (game.lid == 0 || idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(ResearchDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_RESEARCH), hwndFrame, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RESEARCH), hwndFrame, lpProc);
             FreeProcInstance(lpProc);
             if (!fRet || sel.grobj != grobjPlanet)
                 break;
@@ -1554,7 +1554,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(BattlePlansDlg, hInst);
-            DialogBox(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), hwndFrame, lpProc);
+            LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), hwndFrame, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_GAME_RELATIONS:
@@ -1562,7 +1562,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone || game.fSinglePlr)
                 break;
             lpProc = MakeProcInstance(RelationsDlg, hInst);
-            DialogBox(hInst, MAKEINTRESOURCE(IDD_RELATIONS), hwndFrame, lpProc);
+            LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RELATIONS), hwndFrame, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_RACE_EDIT1:
@@ -1585,7 +1585,7 @@ LPrintMapCleanup:
             pt.x = 610;
             pt.y = 450;
             if (hwndPopup) {
-                SendMessage(hwndPopup, WM_RBUTTONUP, 0, 0);
+                LUiSendMessage(hwndPopup, WM_RBUTTONUP, 0, 0);
             }
             ShipBuilder(pt);
             break;
@@ -1602,7 +1602,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone || ((game.fSinglePlr && lSaltCur <= 0) || !FCheckPassword()))
                 break;
             lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc);
             FreeProcInstance(lpProc);
             break;
         case IDM_SCAN_ZOOM_0:
@@ -1647,7 +1647,7 @@ LPrintMapCleanup:
             RefitFrameChildren();
             gd.fNoScannerDraw = FALSE;
             InvalidateRect(hwndScanner, NULL, TRUE);
-            UpdateWindow(hwndScanner);
+            FUiUpdateWindow(hwndScanner);
             break;
         case IDM_FLEET_DELETE_WAYPOINT:
         case IDM_FLEET_INSERT_WAYPOINT:
@@ -1657,7 +1657,7 @@ LPrintMapCleanup:
             goto Default;
         default:
         Default:
-            DefWindowProc(hwnd, WM_COMMAND, wParam, 0);
+            LUiDefWindowProc(hwnd, WM_COMMAND, wParam, 0);
         }
     }
 }
@@ -1826,7 +1826,7 @@ LGotFileName:
     CreateChildWindows();
     if (idPlayer != iplrNone) {
         grobjIni = static_cast<GrobjClass>(ini.grobjSel);
-        SendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (grobjIni != grobjNone && ini.grobjSel == 0) {
             return 1;
         }
@@ -1834,7 +1834,7 @@ LGotFileName:
     } else {
         if (hwndTitle && !fFreeingTitle) {
             fFreeingTitle = TRUE;
-            DestroyWindow(hwndTitle);
+            FUiDestroyWindow(hwndTitle);
             hwndTitle = 0;
         }
         BringUpHostDlg();
@@ -1857,18 +1857,18 @@ void BringUpHostDlg() {
         }
         gd.fHostMode = TRUE;
     }
-    ShowWindow(hwndFrame, SW_HIDE);
+    FUiShowWindow(hwndFrame, SW_HIDE);
     if (ini.fWait) {
         ini.fWait = FALSE;
         goto LAutoMode;
     }
 Top:
     lpProc = MakeProcInstance(HostModeDialog, hInst);
-    fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_MODE), hwndFrame, lpProc);
+    fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_MODE), hwndFrame, lpProc);
     FreeProcInstance(lpProc);
     if (fRet == -1) {
     LAutoMode:
-        ShowWindow(hwndFrame, SW_SHOWMINIMIZED);
+        FUiShowWindow(hwndFrame, SW_SHOWMINIMIZED);
         uTimerId = SetTimer(NULL, hostTimerAutoGen, 10000, lpfnHostTimerProc);
         uTimerType = hostTimerAutoGen;
         HostTimerProc(NULL, WM_NULL, uTimerId, 0);
@@ -1951,7 +1951,7 @@ void DrawHostDialog2(HWND hwnd, HDC hdcIn) {
         yCur += dyArial8 + 4;
     }
     cch = wsprintf(szWork, PCTD, game.turn + 2401);
-    SetWindowText(GetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), szWork);
+    FUiSetWindowText(GetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), szWork);
     dsec = (uint32_t)((GetTickCount() - ctickLast) / 1000);
     if (dsec < 60) {
         cch = wsprintf(szWork, PszGetCompressedString(idsDSeconds), LOWORD(dsec));
@@ -1972,7 +1972,7 @@ void DrawHostDialog2(HWND hwnd, HDC hdcIn) {
             }
         }
     }
-    SetWindowText(GetDlgItem(hwnd, IDC_HOST_TIME_SINCE_TEXT), szWork);
+    FUiSetWindowText(GetDlgItem(hwnd, IDC_HOST_TIME_SINCE_TEXT), szWork);
     SetBkMode(hdc, bkMode);
     SetBkColor(hdc, crBackSav);
     if (!hdcIn) {
@@ -2000,11 +2000,11 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     switch (message) {
     case WM_INITDIALOG:
         StickyDlgPos(hwnd, &ptStickyHostModeDlg, TRUE);
-        SetWindowText(GetDlgItem(hwnd, IDC_HOST_GAME_NAME_TEXT), game.szName);
-        SetWindowText(GetDlgItem(hwnd, IDC_HOST_FILE_TEXT), szBase);
-        EnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fReadOnly == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
-        EnableWindow(GetDlgItem(hwnd, IDC_HOST_GENERATE_NOW), gd.fReadOnly == 0);
-        EnableWindow(GetDlgItem(hwnd, IDC_HOST_PASSWORD), gd.fReadOnly == 0);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_HOST_GAME_NAME_TEXT), game.szName);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_HOST_FILE_TEXT), szBase);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fReadOnly == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_GENERATE_NOW), gd.fReadOnly == 0);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_PASSWORD), gd.fReadOnly == 0);
         uTimerId = SetTimer(hwnd, 13, 10000, NULL);
         /* fallthrough */
     case WM_TIMER:
@@ -2066,10 +2066,10 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
         ClientToScreen16(hwnd, &pt);
         tpm = message == WM_LBUTTONDOWN ? TPM_LEFTBUTTON : TPM_RIGHTBUTTON;
-        TrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
+        FUiTrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
         DestroyMenu(hmenuPopup);
         iRet = -1;
-        if (PeekMessage(&msg, hwnd, 273, 273, 2) != 0 && msg.wParam >= 15000 && msg.wParam < 15100) {
+        if (FUiPeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15100) {
             iRet = msg.wParam - 15000;
         }
         if (iRet != -1 && iSel != iRet) {
@@ -2083,7 +2083,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             gd.fAisDone = FALSE;
             fProcessingTimer = TRUE;
             CFindTurnsOutstanding();
-            EnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
             DrawHostDialog2(hwnd, NULL);
             fProcessingTimer = FALSE;
         }
@@ -2094,7 +2094,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             CFindTurnsOutstanding();
         }
         if (!gd.fReadOnly) {
-            EnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
         }
         DrawHostDialog2(hwnd, hdc);
         EndPaint(hwnd, &ps);
@@ -2139,17 +2139,17 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             if (!FCheckPassword())
                 break;
             lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, lpProc);
             FreeProcInstance(lpProc);
-            SetFocus(hwnd);
+            HwndUiSetFocus(hwnd);
             return fRet;
         case 1029:
             lpProc = MakeProcInstance(HostOptionsDialog, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, lpProc);
             FreeProcInstance(lpProc);
-            SetFocus(hwnd);
+            HwndUiSetFocus(hwnd);
             if (fRet && !gd.fReadOnly) {
-                EnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+                FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
             }
             return fRet;
         case IDC_HELP:
@@ -2236,7 +2236,7 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
             uTimerId = SetTimer(NULL, hostTimerTurnReady, 1000, lpfnHostTimerProc);
             uTimerType = hostTimerTurnReady;
             FlashWindow(hwndFrame, TRUE);
-            SetWindowText(hwndFrame, PszGetCompressedString(idsNewTurnAvailable2));
+            FUiSetWindowText(hwndFrame, PszGetCompressedString(idsNewTurnAvailable2));
             MessageBeep(MB_ICONEXCLAMATION);
             cOut = 1;
             goto RedrawText;
@@ -2249,7 +2249,7 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
         cOut = CFindTurnsOutstanding();
         if (gd.fAllAis) {
             AlertSz(PszFormatIds(idsAutoGenerateDisabledBecauseHumanPlayersDead, NULL), MB_ICONHAND);
-            EnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), FALSE);
             goto Done;
         }
         wsprintf(szWork, PszGetCompressedString(idsHostModeDPlayer), cOut);
@@ -2257,7 +2257,7 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
             strcat(szWork, "s");
         }
         strcat(szWork, PszGetCompressedString(idsOut));
-        SetWindowText(hwndFrame, szWork);
+        FUiSetWindowText(hwndFrame, szWork);
     RedrawText:
         hwndT = GetWindow(hwndFrame, GW_HWNDPREV);
         if (GetWindow(hwndT, GW_OWNER) == hwndFrame) {
@@ -2619,16 +2619,16 @@ void RefitFrameChildren() {
             if (!hwndScanner)
                 break;
             if (gd.fToolbar) {
-                MoveWindow(hwndTb, vfs.xTop + 8, 0, vfs.dx - vfs.xTop - 8, 36, TRUE);
+                FUiMoveWindow(hwndTb, vfs.xTop + 8, 0, vfs.dx - vfs.xTop - 8, 36, TRUE);
                 yScanner = 36;
             } else {
-                MoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
+                FUiMoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
                 yScanner = 0;
             }
-            MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.dy - yScanner, TRUE);
+            FUiMoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.dy - yScanner, TRUE);
             MovePlanetPane(0, 0, vfs.xTop, vfs.y1);
-            MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
-            MoveWindow(hwndMine, 0, vfs.y2 + 8, vfs.xTop, dyMin, TRUE);
+            FUiMoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
+            FUiMoveWindow(hwndMine, 0, vfs.y2 + 8, vfs.xTop, dyMin, TRUE);
             break;
         case layoutMedium:
         case layoutSmall:
@@ -2654,16 +2654,16 @@ void RefitFrameChildren() {
             vfs.y2 = vfs.dy - dyMin - 8;
             if (hwndScanner) {
                 if (gd.fToolbar) {
-                    MoveWindow(hwndTb, 0, 0, vfs.dx, 36, TRUE);
+                    FUiMoveWindow(hwndTb, 0, 0, vfs.dx, 36, TRUE);
                     yScanner = 36;
                 } else {
-                    MoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
+                    FUiMoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
                     yScanner = 0;
                 }
-                MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.y2 - yScanner, TRUE);
+                FUiMoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.y2 - yScanner, TRUE);
                 MovePlanetPane(0, yScanner, vfs.xTop, vfs.y1 - yScanner);
-                MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
-                MoveWindow(hwndMine, vfs.xTop + 8, vfs.y2 + 8, vfs.dx - vfs.xTop - 8, dyMin, TRUE);
+                FUiMoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
+                FUiMoveWindow(hwndMine, vfs.xTop + 8, vfs.y2 + 8, vfs.dx - vfs.xTop - 8, dyMin, TRUE);
             }
         }
         hmenu = GetASubMenu(hwndFrame, menuView);
@@ -2717,14 +2717,14 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
             psz = PszGetCompressedString(static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
-            hwndButton = CreateWindow("BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
+            hwndButton = HwndUiCreateWindowEx(0, "BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
                                       (HMENU)(uintptr_t)idButton, hInst, NULL);
             if (i != 3) rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (szBase[0] == 0 || !FFileExists(szBase))) {
-                EnableWindow(rghwndBtnSplash[2], FALSE);
+                FUiEnableWindow(rghwndBtnSplash[2], FALSE);
             }
             if (rc.bottom < 500) {
-                SendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+                LUiSendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             }
             xCur += dx + dxGap;
         }
@@ -2732,15 +2732,15 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         InitLibraryRaces(hwnd, &rc);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
-        SetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
+        FUiSetWindowText(rghwndBtnSplash[1], PszGetCompressedString(idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
         InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+        FUiUpdateWindow(hwnd);
         for (i = 0; i < 4; i++) {
-            UpdateWindow(rghwndBtnSplash[i]);
+            FUiUpdateWindow(rghwndBtnSplash[i]);
         }
-        UpdateWindow(GetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
+        FUiUpdateWindow(GetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:
@@ -2786,17 +2786,17 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0:
             NewGameWizard(hwnd, FALSE);
             if (!lpPlanets && game.lid == 0) {
-                ShowWindow(hwndFrame, SW_HIDE);
-                ShowWindow(hwndTitle, SW_SHOW);
-                SetFocus(hwndTitle);
+                FUiShowWindow(hwndFrame, SW_HIDE);
+                FUiShowWindow(hwndTitle, SW_SHOW);
+                HwndUiSetFocus(hwndTitle);
                 break;
             }
             if (!fFreeingTitle) {
                 fFreeingTitle = TRUE;
-                DestroyWindow(hwndTitle);
+                FUiDestroyWindow(hwndTitle);
                 hwndTitle = 0;
             }
-            ShowWindow(hwndFrame, SW_SHOW);
+            FUiShowWindow(hwndFrame, SW_SHOW);
             break;
         case IDC_LIBRARY_IMPORT:
             if (FImportLibraryGame(hwnd, NULL)) {
@@ -2861,7 +2861,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             goto LOpenGame;
         case IDC_LIBRARY_PLAYERS:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                EnableWindow(rghwndBtnSplash[1], SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
+                FUiEnableWindow(rghwndBtnSplash[1], LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
             break;
         case IDC_LIBRARY_HOST_GAMES:
             if (HIWORD(wParam) != LBN_DBLCLK) break;
@@ -2873,11 +2873,11 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (FOpenGame(hwnd, FALSE) > 0) {
                 if (!fFreeingTitle) {
                     fFreeingTitle = TRUE;
-                    DestroyWindow(hwndTitle);
+                    FUiDestroyWindow(hwndTitle);
                     hwndTitle = 0;
                 }
                 if (idPlayer != iplrNone) {
-                    ShowWindow(hwndFrame, SW_SHOW);
+                    FUiShowWindow(hwndFrame, SW_SHOW);
                 }
                 RememberLibraryGame();
                 InitializeMenu(NULL);
@@ -2886,7 +2886,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     StartTutor(FALSE);
                 }
             } else if (IsWindow(hwndTitle)) {
-                SetFocus(hwnd);
+                HwndUiSetFocus(hwnd);
             }
             ini.fStartupFile = FALSE;
             break;
@@ -2968,7 +2968,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     default:
     Default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
 }

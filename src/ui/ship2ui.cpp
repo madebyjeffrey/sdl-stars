@@ -16,8 +16,8 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, PszGetCompressedString(idsCustomizeZipOrders));
-        ShowWindow(GetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), SW_HIDE);
+        FUiSetWindowText(hwnd, PszGetCompressedString(idsCustomizeZipOrders));
+        FUiShowWindow(GetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), SW_HIDE);
         hwndZipOrderDlg = hwnd;
         CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
         EnableZipBtns(hwnd, 0);
@@ -39,7 +39,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 psz = szWork;
             }
             hwndRad = GetDlgItem(hwnd, i);
-            SetWindowText(hwndRad, psz);
+            FUiSetWindowText(hwndRad, psz);
         }
         StickyDlgPos(hwnd, &ptStickyZipOrderDlg, TRUE);
         if (gd.fTutorial) {
@@ -124,7 +124,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     wsprintf(szWork, PszGetCompressedString(idsCustomD), iResTechNow);
                 }
                 lpProc = MakeProcInstance(RenameZipDlg, hInst);
-                if (DialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc) != 0) {
+                if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc) != 0) {
                     if (szWork[0] == 0) {
                         wsprintf(szWork, PszGetCompressedString(idsCustomD), iResTechNow);
                     }
@@ -137,7 +137,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                         }
                     }
                     *pszT = 0;
-                    SetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
+                    FUiSetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
                     if (LOWORD(wParam) == IDC_IMPORT) {
                         vrgZip[iResTechNow].fValid = TRUE;
                         vrgZip[iResTechNow].txp = sel.fl.lpplord->rgord()[sel.iwpAct].txp;
@@ -146,13 +146,13 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     EnableZipBtns(hwnd, iResTechNow);
                 }
                 FreeProcInstance(lpProc);
-                SetFocus(hwnd);
+                HwndUiSetFocus(hwnd);
                 gd.fChgZipOrd = TRUE;
                 break;
             case IDC_DELETE:
                 vrgZip[iResTechNow].fValid = FALSE;
                 wsprintf(szWork, PszGetCompressedString(idsUnusedD), iResTechNow + 1);
-                SetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), szWork);
+                FUiSetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), szWork);
                 InvalidateRect(hwnd, NULL, TRUE);
                 gd.fChgZipOrd = TRUE;
                 break;
@@ -169,8 +169,8 @@ void EnableZipBtns(HWND hwnd, int16_t iSel) {
     int16_t fEnabled;
 
     fEnabled = vrgZip[iSel].fValid;
-    EnableWindow(GetDlgItem(hwnd, IDC_DELETE), fEnabled);
-    EnableWindow(GetDlgItem(hwnd, IDC_RENAME), fEnabled);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_DELETE), fEnabled);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_RENAME), fEnabled);
     return;
 }
 
@@ -185,10 +185,10 @@ INT_PTR CALLBACK RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         } else {
             ids = idsRenameProductionTemplate;
         }
-        SetWindowText(hwnd, PszGetCompressedString(ids));
-        SetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xc, 0);
-        SetWindowText(GetDlgItem(hwnd, IDC_EDIT1), szWork);
+        FUiSetWindowText(hwnd, PszGetCompressedString(ids));
+        FUiSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xc, 0);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_EDIT1), szWork);
         StickyDlgPos(hwnd, &ptStickyRenameDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
@@ -231,10 +231,10 @@ INT_PTR CALLBACK RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, PszGetCompressedString(idsRenameFleet));
-        SetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
-        SetWindowText(GetDlgItem(hwnd, IDC_EDIT1), szWork);
+        FUiSetWindowText(hwnd, PszGetCompressedString(idsRenameFleet));
+        FUiSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_EDIT1), szWork);
         StickyDlgPos(hwnd, &ptStickyRenameDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
@@ -268,10 +268,10 @@ INT_PTR CALLBACK RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
             if (HIWORD(wParam) == 0x400 && !fInEditUpdate) {
                 fInEditUpdate = TRUE;
                 GetWindowText((HWND)lParam, szWork, 250);
-                lSel = SendMessage((HWND)lParam, EM_GETSEL, 0, 0);
+                lSel = LUiSendMessage((HWND)lParam, EM_GETSEL, 0, 0);
                 if (!FStringFitsScreen(szWork, 160)) {
-                    SetWindowText((HWND)lParam, szWork);
-                    SendMessage((HWND)lParam, EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
+                    FUiSetWindowText((HWND)lParam, szWork);
+                    LUiSendMessage((HWND)lParam, EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
                 }
                 fInEditUpdate = FALSE;
                 break;
@@ -302,8 +302,8 @@ INT_PTR CALLBACK MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             if (rglpfl[vrgiflMerge[i]]->cord > 1) {
                 strcat(szT, " *");
             }
-            SendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_ADDSTRING, 0, (LPARAM)szT);
-            SendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, vcflMerge == 2 || rglpfl[vrgiflMerge[i]]->id == sel.fl.id, i);
+            LUiSendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_ADDSTRING, 0, (LPARAM)szT);
+            LUiSendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, vcflMerge == 2 || rglpfl[vrgiflMerge[i]]->id == sel.fl.id, i);
         }
         if (gd.fTutorial) {
             AdvanceTutor();
@@ -330,7 +330,7 @@ INT_PTR CALLBACK MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         case IDOK:
         case IDCANCEL:
             for (i = 0; i < vcflMerge; i++) {
-                if (SendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_GETSEL, i, 0) == 0) {
+                if (LUiSendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_GETSEL, i, 0) == 0) {
                     vrgiflMerge[i] = iflNone;
                 }
             }
@@ -346,7 +346,7 @@ INT_PTR CALLBACK MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         case IDC_MERGE_FLEETS_SELECT_ALL:
         case IDC_MERGE_FLEETS_UNSELECT_ALL:
             for (i = 0; i < vcflMerge; i++) {
-                SendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, LOWORD(wParam) == IDC_MERGE_FLEETS_SELECT_ALL, i);
+                LUiSendMessage(GetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, LOWORD(wParam) == IDC_MERGE_FLEETS_SELECT_ALL, i);
             }
             return 1;
         }

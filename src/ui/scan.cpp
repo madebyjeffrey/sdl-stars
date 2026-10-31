@@ -91,7 +91,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             }
         }
         if (iScanNew != iScanZoom) {
-            SendMessage(hwndFrame, WM_COMMAND, iScanNew + 3905, 0);
+            LUiSendMessage(hwndFrame, WM_COMMAND, iScanNew + 3905, 0);
         }
         break;
     case WM_PAINT:
@@ -129,7 +129,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_LBUTTONDBLCLK:
     case WM_RBUTTONDOWN:
     case WM_MBUTTONDOWN:
-        SetFocus(hwndFrame);
+        HwndUiSetFocus(hwndFrame);
         pt.x = LOWORD(lParam);
         pt.y = HIWORD(lParam);
         GetClientRect(hwnd, &rc);
@@ -315,11 +315,11 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         // the new tops are rounded to them from where the drag began.
         d = ((xPanTop - ScanToPt(pt.x - ptPan.x)) + 2) & 0xfffc;
         if (d != xScanTop) {
-            SendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)d), 0);
+            LUiSendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)d), 0);
         }
         d = ((yPanTop - ScanToPt(pt.y - ptPan.y)) + 2) & 0xfffc;
         if (d != yScanTop) {
-            SendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)d), 0);
+            LUiSendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)d), 0);
         }
         break;
     case WM_LBUTTONUP:
@@ -367,7 +367,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         if (c == 0)
             break;
         d = c * CWheelLines(dScanPage / dScanInc) * dScanInc;
-        SendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)(xScanTop + d)), 0);
+        LUiSendMessage(hwnd, WM_HSCROLL, MAKEWPARAM(SB_THUMBPOSITION, (WORD)(xScanTop + d)), 0);
         break;
     case WM_SIZE:
         SetScanScrollBars(hwnd);
@@ -375,7 +375,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         PostMessage(hwnd, WM_STARS_SCAN_RESIZE, 0, 0);
         goto Default;
     case WM_STARS_SCAN_RESIZE:
-        SendMessage(hwndFrame, WM_COMMAND, iScanZoom + 3905, 0);
+        LUiSendMessage(hwndFrame, WM_COMMAND, iScanZoom + 3905, 0);
         break;
     case WM_HSCROLL:
     case WM_VSCROLL:
@@ -417,7 +417,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         break;
     default:
     Default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
 }
@@ -2082,7 +2082,7 @@ void ScrollScanner(int16_t dx, int16_t dy) {
             goto RelDC;
         }
         rc.bottom -= dySBar;
-        UpdateWindow(hwndScanner);
+        FUiUpdateWindow(hwndScanner);
         ScrollWindow(hwndScanner, dx, dy, &rc, &rc);
         if (dy > 0) {
             SetRect(&rcUpd2, 0, 0, rc.right, dy);
@@ -2111,7 +2111,7 @@ void ScrollScanner(int16_t dx, int16_t dy) {
         if (dy != 0) {
             DrawScanner(hdc, &rcUpd2);
         }
-        UpdateWindow(hwndScanner);
+        FUiUpdateWindow(hwndScanner);
     RelDC:
         ReleaseDC(hwndScanner, hdc);
     }
@@ -2272,7 +2272,7 @@ void ZoomScanAt(ScanZoom iScanNew, POINT16 ptScan) {
     }
     pt = ptScan;
     ScanToLogical(&pt);
-    SendMessage(hwndFrame, WM_COMMAND, iScanNew + 3905, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, iScanNew + 3905, 0);
     if (iScanZoom != iScanNew)
         return;
     pt.x += (ScanToPt(rc.right) >> 1) - ScanToPt(ptScan.x);
@@ -2729,7 +2729,7 @@ INT_PTR CALLBACK FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG:
         StickyDlgPos(hwnd, &ptStickyFindDlg, TRUE);
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x27, 0);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x27, 0);
         return 1;
     case WM_ERASEBKGND:
         GetClientRect(hwnd, &rc);
@@ -2755,8 +2755,8 @@ INT_PTR CALLBACK FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 GetDlgItemText(hwnd, IDC_EDIT1, szName, 40);
                 if (!FSelectSz(szName)) {
                     AlertSz(PszFormatIds(idsSorryCantFindPlanetFleetName, NULL), MB_ICONHAND);
-                    SetFocus(GetDlgItem(hwnd, IDC_EDIT1));
-                    SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
+                    HwndUiSetFocus(GetDlgItem(hwnd, IDC_EDIT1));
+                    LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     return 0;
                 }
             }
@@ -2793,8 +2793,8 @@ GoWithPartial:
         FFindNearestObject(rgptPlan[ipl], grobjPlanet, &scan);
         ChangeScanSel(&scan, 1);
         FEnsurePointOnScreen(scan.pt, TRUE);
-        UpdateWindow(hwndScanner);
-        SendMessage(hwndScanner, WM_CHAR, 'v', 0);
+        FUiUpdateWindow(hwndScanner);
+        LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
         return TRUE;
     }
 
@@ -2829,8 +2829,8 @@ GoWithPartial:
             scan.ifl = IflFromLpfl(lpfl);
             ChangeScanSel(&scan, 2);
             FEnsurePointOnScreen(scan.pt, TRUE);
-            UpdateWindow(hwndScanner);
-            SendMessage(hwndScanner, WM_CHAR, 'v', 0);
+            FUiUpdateWindow(hwndScanner);
+            LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
             return TRUE;
         }
     }

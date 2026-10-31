@@ -408,25 +408,25 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     fLogOffSave = fLogOff;
     idPlayer = 0;
     fLogOff = TRUE;
-    hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
+    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
     TEST_ASSERT(hwnd != NULL);
     hwndEdit = GetDlgItem(hwnd, IDC_EDIT1);
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
-    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    LUiSendMessage(hwndEdit, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    SendMessage(hwndEdit, WM_CHAR, '\b', 0);
-    SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    LUiSendMessage(hwndEdit, WM_CHAR, '\b', 0);
+    LUiSendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
     cStarsTestAlert = 0;
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 1);
     TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
     TEST_CHECK(IsWindow(hwnd));
 
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
-    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    LUiSendMessage(hwndEdit, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
@@ -434,60 +434,60 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     hwndEdit = GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM);
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(SDL_SetClipboardText(pszUnicodeTooLong));
-    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    LUiSendMessage(hwndEdit, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    SendMessage(hwndEdit, WM_CHAR, '\b', 0);
-    SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    LUiSendMessage(hwndEdit, WM_CHAR, '\b', 0);
+    LUiSendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 2);
     TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
     TEST_CHECK(IsWindow(hwnd));
 
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
-    SendMessage(hwndEdit, WM_PASTE, 0, 0);
+    LUiSendMessage(hwndEdit, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
 
-    TEST_ASSERT(SetWindowText(hwndEdit, "different"));
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_ASSERT(FUiSetWindowText(hwndEdit, "different"));
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 3);
     TEST_CHECK(strstr(szStarsTestAlert, "not the same") != NULL);
     TEST_CHECK(IsWindow(hwnd));
-    TEST_ASSERT(SetWindowText(hwndEdit, pszExact));
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
+    TEST_ASSERT(FUiSetWindowText(hwndEdit, pszExact));
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 3);
     TEST_CHECK(IsWindow(hwnd));
-    hwndOrdinary = CreateWindowExA(0, "EDIT", "", WS_CHILD, 0, 0, 100, 24, hwnd, NULL, hInst, NULL);
+    hwndOrdinary = HwndUiCreateWindowEx(0, "EDIT", "", WS_CHILD, 0, 0, 100, 24, hwnd, NULL, hInst, NULL);
     TEST_ASSERT(hwndOrdinary != NULL);
-    SendMessage(hwndOrdinary, EM_LIMITTEXT, 15, 0);
+    LUiSendMessage(hwndOrdinary, EM_LIMITTEXT, 15, 0);
     TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
-    SendMessage(hwndOrdinary, WM_PASTE, 0, 0);
+    LUiSendMessage(hwndOrdinary, WM_PASTE, 0, 0);
     TEST_CHECK(GetWindowText(hwndOrdinary, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(!StarsCompatTextInputRejected(hwndOrdinary));
-    hwndEdit = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+    hwndEdit = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
                                   (LPARAM)szReplacement);
     TEST_ASSERT(hwndEdit != NULL);
-    TEST_ASSERT(SetWindowText(GetDlgItem(hwndEdit, IDC_EDIT1), pszExact));
-    TEST_ASSERT(SetWindowText(GetDlgItem(hwndEdit, IDC_PASSWORD_CONFIRM), pszExact));
-    SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
+    TEST_ASSERT(FUiSetWindowText(GetDlgItem(hwndEdit, IDC_EDIT1), pszExact));
+    TEST_ASSERT(FUiSetWindowText(GetDlgItem(hwndEdit, IDC_PASSWORD_CONFIRM), pszExact));
+    LUiSendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
     TEST_CHECK(strcmp(szReplacement, pszExact) == 0);
-    DestroyWindow(hwndEdit);
+    FUiDestroyWindow(hwndEdit);
     szReplacement[0] = 0;
-    hwndEdit = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+    hwndEdit = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
                                   (LPARAM)szReplacement);
     TEST_ASSERT(hwndEdit != NULL);
     cStarsTestAlert = 0;
-    SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
+    LUiSendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)GetDlgItem(hwndEdit, IDOK));
     TEST_CHECK(cStarsTestAlert == 1);
     TEST_CHECK(strstr(szStarsTestAlert, "replacement password is required") != NULL);
     TEST_CHECK(IsWindow(hwndEdit));
-    DestroyWindow(hwndEdit);
+    FUiDestroyWindow(hwndEdit);
     idPlayer = idPlayerSave;
     fLogOff = fLogOffSave;
-    DestroyWindow(hwnd);
+    FUiDestroyWindow(hwnd);
 }
 
 // Random race: the Random template is only the random-race bit, which
@@ -503,13 +503,13 @@ static void test_RaceWizardDlg1_custom_clears_random(void) {
     TEST_ASSERT(GetRaceGrbit(&vplr, ibitRaceAIPlayer) != 0);
     strcpy(vplr.szName, "Randomite");
     strcpy(vplr.szNames, "Randomites");
-    hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), NULL, RaceWizardDlg1, 0);
+    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), NULL, RaceWizardDlg1, 0);
     TEST_ASSERT(hwnd != NULL);
     CheckRadioButton(hwnd, IDC_RACE_HUMANOID, IDC_RACE_CUSTOM, IDC_RACE_CUSTOM);
     hwndCtl = GetDlgItem(hwnd, IDC_RACE_CUSTOM);
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RACE_CUSTOM, BN_CLICKED), (LPARAM)hwndCtl);
-    SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_NEXT, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_NEXT));
-    DestroyWindow(hwnd);
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RACE_CUSTOM, BN_CLICKED), (LPARAM)hwndCtl);
+    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_NEXT, BN_CLICKED), (LPARAM)GetDlgItem(hwnd, IDC_NEXT));
+    FUiDestroyWindow(hwnd);
     TEST_CHECK_(GetRaceGrbit(&vplr, ibitRaceAIPlayer) == 0, "the custom race is still random");
 }
 
@@ -528,27 +528,27 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
     vrgrcRCW = rgrc;
     iPanelActive = rwPageHabitability;
     fRCWReadOnly = FALSE;
-    hwnd = CreateDialogParamA(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), NULL, RaceWizardDlg2, 0);
+    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), NULL, RaceWizardDlg2, 0);
     TEST_ASSERT(hwnd != NULL);
     TEST_CHECK(crcRCW == 17);
-    ShowWindow(hwnd, SW_SHOW);
-    TEST_CHECK(UpdateWindow(hwnd));
+    FUiShowWindow(hwnd, SW_SHOW);
+    TEST_CHECK(FUiUpdateWindow(hwnd));
     for (i = 0; i < 3; i++) {
         CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_CHECKED);
-        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+        LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
                     (LPARAM)GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
         TEST_CHECK(vplr.rgEnvVarMax[i] == envImmune);
     }
     DrawRace2(hwnd, NULL, -1);
     for (i = 0; i < 3; i++) {
         CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_UNCHECKED);
-        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+        LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
                     (LPARAM)GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
         TEST_CHECK(vplr.rgEnvVarMin[i] == 20 && vplr.rgEnvVarMax[i] == 80);
     }
     InvalidateRect(hwnd, NULL, TRUE);
-    TEST_CHECK(UpdateWindow(hwnd));
-    DestroyWindow(hwnd);
+    TEST_CHECK(FUiUpdateWindow(hwnd));
+    FUiDestroyWindow(hwnd);
     vrgrcRCW = NULL;
 }
 #endif

@@ -156,17 +156,17 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
 }
 
 static void ScannerInspectDetails(HWND hwnd) {
-    int i = (int)SendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
+    int i = (int)LUiSendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
     SCANOBJECT *lp;
     char sz[768];
-    if (i < 0 || (size_t)i >= snapScanInspector.cObject) { SetWindowText(GetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
+    if (i < 0 || (size_t)i >= snapScanInspector.cObject) { FUiSetWindowText(GetDlgItem(hwnd,2), "No active player scanner. Load a game and refresh."); return; }
     lp = &snapScanInspector.rgobj[i];
     CchSprintf(sz,"%s\r\nKind %u, ID %u, owner %d, detail %d\r\nUniverse (%ld, %ld)\r\nScanner (%ld, %ld), screen (%ld, %ld)\r\nOn screen: %s; filtered: %s\r\nScanner selection: %s; main selection: %s\r\nGame %ld, turn %u, player %d",
         lp->szName,lp->grType,lp->id,lp->iPlayer,lp->det,(long)lp->ptUniverse.x,(long)lp->ptUniverse.y,
         (long)lp->ptClient.x,(long)lp->ptClient.y,(long)lp->ptScreen.x,(long)lp->ptScreen.y,
         lp->fOnScreen?"yes":"no",lp->fFiltered?"yes":"no",lp->fScanSelected?"yes":"no",lp->fMainSelected?"yes":"no",
         (long)snapScanInspector.lidGame,snapScanInspector.turn,snapScanInspector.idPlayer);
-    SetWindowText(GetDlgItem(hwnd,2),sz);
+    FUiSetWindowText(GetDlgItem(hwnd,2),sz);
 }
 
 static void RefreshScannerInspector(HWND hwnd) {
@@ -175,16 +175,16 @@ static void RefreshScannerInspector(HWND hwnd) {
     const SCANOBJECT *lp;
 
     FreeScannerSnapshot(&snapScanInspector);
-    SendMessage(GetDlgItem(hwnd, 1), LB_RESETCONTENT, 0, 0);
+    LUiSendMessage(GetDlgItem(hwnd, 1), LB_RESETCONTENT, 0, 0);
     if (FCaptureScanner(&snapScanInspector)) {
         for (i = 0; i < snapScanInspector.cObject; i++) {
             lp = &snapScanInspector.rgobj[i];
             CchSprintf(sz, "%s %u: %s%s", lp->grType == grobjPlanet ? "Planet" : lp->grType == grobjFleet ? "Fleet" : "Thing",
                        lp->id, lp->szName, lp->fOnScreen ? "" : " [offscreen]");
-            SendMessage(GetDlgItem(hwnd, 1), LB_ADDSTRING, 0, (LPARAM)sz);
+            LUiSendMessage(GetDlgItem(hwnd, 1), LB_ADDSTRING, 0, (LPARAM)sz);
         }
     }
-    SendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, 0, 0);
+    LUiSendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, 0, 0);
     ScannerInspectDetails(hwnd);
 }
 
@@ -195,30 +195,30 @@ static LRESULT CALLBACK ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPAR
 
     switch (msg) {
     case WM_CREATE:
-        if (!CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+        if (!HwndUiCreateWindowEx(0, "ListBox", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                           8, 40, 300, 300, hwnd, (HMENU)(INT_PTR)1, hInst, NULL) ||
-            !CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
+            !HwndUiCreateWindowEx(0, "Edit", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
                           320, 40, 320, 300, hwnd, (HMENU)(INT_PTR)2, hInst, NULL) ||
-            !CreateWindow("Button", "Refresh", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+            !HwndUiCreateWindowEx(0, "Button", "Refresh", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                           8, 8, 90, 24, hwnd, (HMENU)(INT_PTR)3, hInst, NULL) ||
-            !CreateWindow("Button", "Select / reveal", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+            !HwndUiCreateWindowEx(0, "Button", "Select / reveal", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                           108, 8, 130, 24, hwnd, (HMENU)(INT_PTR)4, hInst, NULL)) return -1;
         return 0;
     case WM_SIZE:
         GetClientRect(hwnd, &rc);
-        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, StarsMax(0, rc.right / 2 - 12), StarsMax(0, rc.bottom - 48), TRUE);
-        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
+        FUiMoveWindow(GetDlgItem(hwnd, 1), 8, 40, StarsMax(0, rc.right / 2 - 12), StarsMax(0, rc.bottom - 48), TRUE);
+        FUiMoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshScannerInspector(hwnd);
         else if (LOWORD(w) == 1 && HIWORD(w) == LBN_SELCHANGE) ScannerInspectDetails(hwnd);
         else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED) {
-            i = (int)SendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
+            i = (int)LUiSendMessage(GetDlgItem(hwnd, 1), LB_GETCURSEL, 0, 0);
             if (i >= 0 && (size_t)i < snapScanInspector.cObject) {
                 lp = &snapScanInspector.rgobj[i];
                 if (!FSelectScannerObject(&snapScanInspector, lp->grType, lp->id, TRUE)) MessageBeep(MB_ICONEXCLAMATION);
                 RefreshScannerInspector(hwnd);
-                SendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, i, 0);
+                LUiSendMessage(GetDlgItem(hwnd, 1), LB_SETCURSEL, i, 0);
                 ScannerInspectDetails(hwnd);
             }
         }
@@ -228,7 +228,7 @@ static LRESULT CALLBACK ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPAR
         FreeScannerSnapshot(&snapScanInspector);
         return 0;
     default:
-        return DefWindowProc(hwnd, msg, w, l);
+        return LUiDefWindowProc(hwnd, msg, w, l);
     }
 }
 
@@ -246,17 +246,17 @@ HWND ShowScannerInspector(void) {
             if (!RegisterClass(&wc)) return NULL;
             fScanInspectorClass = TRUE;
         }
-        hwndScanInspector = CreateWindow(wc.lpszClassName, "Stars scanner objects", WS_OVERLAPPEDWINDOW,
+        hwndScanInspector = HwndUiCreateWindowEx(0, wc.lpszClassName, "Stars scanner objects", WS_OVERLAPPEDWINDOW,
                                          CW_USEDEFAULT, CW_USEDEFAULT, 800, 450, hwndFrame, NULL, hInst, NULL);
         if (!hwndScanInspector) return NULL;
     }
     RefreshScannerInspector(hwndScanInspector);
-    ShowWindow(hwndScanInspector, SW_SHOWNORMAL);
+    FUiShowWindow(hwndScanInspector, SW_SHOWNORMAL);
     return hwndScanInspector;
 }
 
 void CloseScannerInspector(void) {
-    if (IsWindow(hwndScanInspector)) DestroyWindow(hwndScanInspector);
+    if (IsWindow(hwndScanInspector)) FUiDestroyWindow(hwndScanInspector);
     hwndScanInspector = NULL;
     FreeScannerSnapshot(&snapScanInspector);
 }

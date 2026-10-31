@@ -38,7 +38,7 @@ LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         break;
     case WM_STARS_SYSCOMMAND:
         if (IsIconic(hwnd))
-            ShowWindow(hwnd, SW_RESTORE);
+            FUiShowWindow(hwnd, SW_RESTORE);
         return FrameWndProc(hwnd, WM_SYSCOMMAND, wParam, lParam);
     }
     return FrameWndProc(hwnd, msg, wParam, lParam);
@@ -114,8 +114,8 @@ int16_t CWheelLines(int16_t cPage) {
 }
 
 
-BOOL STARS_TEST_IMPL(FNativeOpenFileName)(OPENFILENAMEA *lpof) { return GetOpenFileNameA(lpof); }
-BOOL STARS_TEST_IMPL(FNativeSaveFileName)(OPENFILENAMEA *lpof) { return GetSaveFileNameA(lpof); }
+BOOL STARS_TEST_IMPL(FNativeOpenFileName)(OPENFILENAMEA *lpof) { return FUiGetOpenFileName(lpof); }
+BOOL STARS_TEST_IMPL(FNativeSaveFileName)(OPENFILENAMEA *lpof) { return FUiGetSaveFileName(lpof); }
 DWORD DwNativeFileDialogError(void) { return CommDlgExtendedError(); }
 
 int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
@@ -127,7 +127,7 @@ int CchGetUtf8WindowText(HWND hwnd, char *psz, int cchMax) {
 }
 
 BOOL FSetUtf8WindowText(HWND hwnd, const char *psz) {
-    return SetWindowTextA(hwnd, psz);
+    return FUiSetWindowText(hwnd, psz);
 }
 
 BOOL FSetNativeWindowTitle(HWND hwnd, const char *psz) {

@@ -30,7 +30,7 @@ void PromptSaveGame() {
     int16_t fRet;
 
     lpProc = MakeProcInstance(AskSaveDialog, hInst);
-    fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc);
+    fRet = LUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc);
     FreeProcInstance(lpProc);
     if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
@@ -47,7 +47,7 @@ int16_t FCanLeaveCurrentGame(void) {
 
     if (idPlayer == iplrNone || !game.fDirty) return TRUE;
     lpProc = MakeProcInstance(AskSaveDialog, hInst);
-    fRet = DialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+    fRet = LUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
                      hwndFrame, lpProc);
     FreeProcInstance(lpProc);
     if (fRet == 0 || fRet == -2) return FALSE;
@@ -84,12 +84,12 @@ void ShowTitleScreen() {
                  GetSystemMetrics(SM_CYCAPTION) - 2 * GetSystemMetrics(SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
-        hwndTitle = CreateWindow(szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        hwndTitle = HwndUiCreateWindowEx(0, szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
                     (void *)hwndTitle, IsWindow(hwndTitle), IsWindowVisible(hwndTitle));
         fFreeingTitle = FALSE;
-        ShowWindow(hwndFrame, SW_HIDE);
+        FUiShowWindow(hwndFrame, SW_HIDE);
     }
     return;
 }
@@ -136,13 +136,13 @@ void CloseGameWindows() {
     int16_t i;
 
     if (hwndBrowser) {
-        DestroyWindow(hwndBrowser);
+        FUiDestroyWindow(hwndBrowser);
     }
     if (hwndReportDlg) {
-        DestroyWindow(hwndReportDlg);
+        FUiDestroyWindow(hwndReportDlg);
     }
     if (hwndPopup) {
-        DestroyWindow(hwndPopup);
+        FUiDestroyWindow(hwndPopup);
         hwndPopup = 0;
     }
     hwndActive = 0;

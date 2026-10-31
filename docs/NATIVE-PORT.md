@@ -72,15 +72,19 @@ no destination address. Nested scopes restore that state automatically.
 release does not substitute for checked writes, publication or game-state
 rollback.
 
-The C SDL runtime calls application window/dialog/timer/inspector callbacks
-through C++ containment thunks. A thrown failure becomes pending state, an
-active modal dialog ends, and the C dispatcher finishes its counters, window
-and owner cleanup. Typed wrappers around callback-dispatching UI APIs deliver
-that pending failure only after the C call returns. Native file-picker pumps
-cancel on a pending failure too. Desktop and host entrypoints contain remaining
-failures; no C++ exception is allowed to escape through the C entrypoint.
+The SDL runtime calls application window/dialog/timer/inspector callbacks
+through C++ containment adapters. A thrown failure becomes pending state, an
+active modal dialog ends, and the dispatcher finishes its counters, window
+and owner cleanup. Owned UI callers explicitly use the typed functions in
+`wincompat_calls.h` (`LUiSendMessage`, `LUiDialogBox`, `FUiDestroyWindow`, etc.).
+These deliver pending failures after the raw operation returns; internal runtime
+calls keep the raw APIs so their outer cleanup finishes before delivery.
+API macros no longer insert error delivery into application calls. Native
+file-picker pumps cancel on a pending failure too. Desktop and host entrypoints
+contain remaining failures; foreign entrypoints and callbacks contain exceptions.
 The callback fault test exercises nested dialogs, owner re-enabling, allocation
-exceptions, timers, synchronous delivery and automatic destruction.
+exceptions, timers, synchronous delivery, text/position/enable notifications and
+automatic destruction.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).

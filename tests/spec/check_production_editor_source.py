@@ -100,7 +100,7 @@ static void *guardedMemcpy(void *dst,const void *src,size_t n) {
     return memcpy(dst,src,n);
 }
 static HWND GetDlgItem(HWND hwnd,int id) {(void)hwnd;return id;}
-static intptr_t SendMessage(HWND hwnd,int message,int value,intptr_t param) {
+static intptr_t LUiSendMessage(HWND hwnd,int message,int value,intptr_t param) {
     (void)param;if(message==LB_GETCURSEL)return hwnd==IDC_PRODUCTION_QUEUE ? queueSelection:sourceSelection;
     if(message==LB_SETCURSEL){setSelection=value;queueSelection=value;return value;}abort();
 }

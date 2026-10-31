@@ -11,8 +11,8 @@ INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowPos(hwnd, NULL, 256, 256, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
+        FUiSetWindowPos(hwnd, NULL, 256, 256, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
         return 1;
     case WM_ERASEBKGND:
         GetClientRect(hwnd, &rc);
@@ -343,7 +343,7 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
                 rc.top = 0;
             }
         }
-        SetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        FUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
     return;
 }
@@ -664,7 +664,7 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
 int16_t FGetMouseMove(POINT16 *ppt) {
     MSG msg;
 
-    while (PeekMessage(&msg, NULL, 0, 0, 1) != 0) {
+    while (FUiPeekMessage(&msg, NULL, 0, 0, 1)) {
         if (msg.message == WM_MOUSEMOVE || msg.message == WM_LBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
@@ -680,7 +680,7 @@ int16_t FGetMouseMove(POINT16 *ppt) {
 int16_t FGetRMouseMove(POINT16 *ppt) {
     MSG msg;
 
-    while (PeekMessage(&msg, NULL, 0, 0, 1) != 0) {
+    while (FUiPeekMessage(&msg, NULL, 0, 0, 1)) {
         if (msg.message == WM_MOUSEMOVE || msg.message == WM_RBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
@@ -1028,8 +1028,8 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_INITDIALOG:
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
-        SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsEnterPassword));
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsEnterPassword));
         return 1;
     case WM_ERASEBKGND:
         GetClientRect(hwnd, &rc);
@@ -1066,8 +1066,8 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     vcPasswordFailures++;
                     Delay(vcPasswordFailures < 10 ? 1000 : vcPasswordFailures < 100 ? 5000 : 10000);
                     AlertSz(PszFormatIds(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
-                    SetFocus(GetDlgItem(hwnd, IDC_EDIT1));
-                    SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
+                    HwndUiSetFocus(GetDlgItem(hwnd, IDC_EDIT1));
+                    LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     break;
                 }
             }
@@ -1090,17 +1090,17 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
     switch (message) {
     case WM_INITDIALOG:
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
-        SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
+        LUiSendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         if (lParam != 0) {
-            SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNativeLegacyRacePassword));
-            SetWindowText(hwnd, PszGetCompressedString(idsNativeLegacyRacePassword));
+            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNativeLegacyRacePassword));
+            FUiSetWindowText(hwnd, PszGetCompressedString(idsNativeLegacyRacePassword));
         } else if (idPlayer == iplrNone) {
-            SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNotePasswordEffectiveImmediately));
-            SetWindowText(hwnd, PszGetCompressedString(idsChangeHostPassword));
+            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNotePasswordEffectiveImmediately));
+            FUiSetWindowText(hwnd, PszGetCompressedString(idsChangeHostPassword));
         } else {
-            SetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNoteNewPasswordWillTakeEffectUntil));
+            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNoteNewPasswordWillTakeEffectUntil));
         }
         return 1;
     case WM_ERASEBKGND:
@@ -1136,8 +1136,8 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
                     AlertSz(PszFormatIds(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);
-                    SetFocus(GetDlgItem(hwnd, IDC_EDIT1));
-                    SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
+                    HwndUiSetFocus(GetDlgItem(hwnd, IDC_EDIT1));
+                    LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     break;
                 }
                 if (GetWindowLongPtr(hwnd, DWLP_USER) != 0) {
@@ -1173,14 +1173,14 @@ int16_t STARS_TEST_IMPL(FPromptLegacyRacePassword)(char *szPassword) {
     int16_t fRet;
 
     lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-    fRet = (int16_t)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
+    fRet = (int16_t)LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
     FreeProcInstance(lpProc);
     return fRet > 0;
 }
 
 void ShowProgressGauge() {
     if (!hwndProgressGauge) {
-        CreateDialog(hInst, MAKEINTRESOURCE(IDD_Gauge), hwndFrame, lpfnGaugeDlgProc);
+        HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_Gauge), hwndFrame, lpfnGaugeDlgProc);
     } else {
         UpdateProgressGauge(static_cast<ProgressStep>(0));
     }
@@ -1189,7 +1189,7 @@ void ShowProgressGauge() {
 
 void HideProgressGauge() {
     if (hwndProgressGauge) {
-        DestroyWindow(hwndProgressGauge);
+        FUiDestroyWindow(hwndProgressGauge);
         hwndProgressGauge = 0;
     }
     return;
@@ -1211,11 +1211,11 @@ INT_PTR CALLBACK ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         dy = GetSystemMetrics(SM_CYSCREEN);
         psz = PszGetCompressedString(idsGeneratingDataYearD);
         wsprintf(szWork, psz, game.turn + 2401);
-        SetWindowText(GetDlgItem(hwnd, IDC_GAUGE_TEXT), szWork);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_GAUGE_TEXT), szWork);
         GetWindowRect(hwnd, &rc);
         rc.left = (dx - (rc.right - rc.left)) >> 1;
         rc.top = (dy - (rc.bottom - rc.top)) >> 1;
-        SetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        FUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         return 1;
     case WM_ERASEBKGND:
         GetClientRect(hwnd, &rc);
@@ -1337,7 +1337,7 @@ int16_t STARS_TEST_IMPL(PromptPassword)() {
     int16_t fRet;
 
     lpProc = MakeProcInstance(PasswordDlg, hInst);
-    fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc);
+    fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc);
     FreeProcInstance(lpProc);
     return fRet;
 }

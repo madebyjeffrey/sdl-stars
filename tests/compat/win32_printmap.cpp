@@ -35,8 +35,8 @@ static void CALLBACK ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) 
     for (hwndDialog = GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
         hwndEdit = GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_X);
         if (!hwndEdit || !GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y)) continue;
-        sz[0] = '0' + cPageX; sz[1] = 0; SetWindowText(hwndEdit, sz);
-        sz[0] = '0' + cPageY; SetWindowText(GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y), sz);
+        sz[0] = '0' + cPageX; sz[1] = 0; FUiSetWindowText(hwndEdit, sz);
+        sz[0] = '0' + cPageY; FUiSetWindowText(GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y), sz);
         PostMessage(hwndDialog, WM_COMMAND, fCancel ? IDCANCEL : IDOK, 0);
         return;
     }
@@ -80,22 +80,22 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanPlanetNames);
     snprintf(szTarget, sizeof(szTarget), "%s/single.pdf", pszOutput); pszTarget = szTarget;
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 1 || cAlert != 0) goto done;
     cPageX = cPageY = 2;
     snprintf(szTarget, sizeof(szTarget), "%s/tiled.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 2 || cAlert != 0) goto done;
     cPageX = cPageY = 1;
     SDL_setenv_unsafe("STARS_SDL_PRINT_PAPER", "a4", 1);
     SDL_setenv_unsafe("STARS_SDL_PRINT_ORIENTATION", "landscape", 1);
     snprintf(szTarget, sizeof(szTarget), "%s/a4.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 3 || cAlert != 0) goto done;
     fCancel = TRUE;
-    SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    LUiSendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     fPassed = cLaunch == 3 && cAlert == 0 && !memcmp(&game, &gameSav, sizeof(game));
     if (fPassed) {
         // Use the normal race serializer to prepare an unprotected predefined

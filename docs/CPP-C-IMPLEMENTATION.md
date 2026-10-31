@@ -1,7 +1,8 @@
 # Milestone C implementation evidence
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
-Started: 2026-10-31. Branch: `codex/cpp-milestone-c`, targeting `develop`.
+Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
+Current continuation: `codex/cpp-c03-callback-boundaries` from merged C01–C02.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -24,8 +25,8 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Local qualification complete | Rename map/live consumers and all local gates pass. Only the slow full Linux desktop and Windows SDL CI jobs are deferred; the remaining automatic checks stay enabled. |
-| C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
+| C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
+| C03 | Local qualification complete; enabled CI pending | 23 explicit typed entry functions replace macro interception; 1,329 references migrated. All 119 desktop / 26 host tests, callback ASan/UBSan faults, full regressions and 27 unchanged witness receipts pass. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
 | C06 | Pending | Replace generated wrapper names with namespaces and qualify Windows SDK isolation. |
@@ -182,3 +183,81 @@ Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
 pending. This change removes filename/language machinery only; the inventoried
 callback, effect, witness-body, namespace and state migrations are subsequent
 work.
+
+## C03: explicit callback boundaries
+
+Parent: `a65e653afef2efb70f69ecf1dd3d12de41664ac7`, the merge of
+[PR #68](https://github.com/madebyjeffrey/sdl-stars/pull/68). All 15 enabled
+C02 jobs passed; the two full desktop jobs were skipped under the recorded
+user priority. C03 uses `codex/cpp-c03-callback-boundaries` and targets `develop`.
+
+`compat/win32/include/wincompat_calls.h` declares 23 ordinary C++ functions,
+implemented in `compat/win32/src/calls.cpp`. Each calls its underlying raw API,
+then delivers the pending exception after that operation returns. Compile-time
+signature assertions retain exact return types, arguments and pointer widths.
+The dialog functions accept the existing zero initialization argument by default;
+former `CreateWindow` calls pass their original zero extended style explicitly.
+No owned dispatch frame or callback cleanup is bypassed.
+
+| Boundary family | Explicit entry examples |
+| --- | --- |
+| Window/dialog creation and modal lifetime | `HwndUiCreateWindowEx`, `HwndUiCreateDialog`, `LUiDialogBox`, `FUiDestroyWindow` |
+| Dispatch, messages and translation | `LUiCallWindowProc`, `LUiDispatchMessage`, `FUiGetMessage`, `FUiPeekMessage`, `LUiSendMessage`, `LUiSendDlgItemMessage`, `FUiIsDialogMessage`, `IUiTranslateAccelerator` |
+| Window/control effects | `FUiShowWindow`, `FUiEnableWindow`, `HwndUiSetFocus`, `FUiSetWindowPos`, `FUiMoveWindow`, `FUiUpdateWindow`, `FUiSetWindowText`, `LUiDefWindowProc` |
+| Popup and native file selection | `FUiTrackPopupMenu`, `FUiGetOpenFileName`, `FUiGetSaveFileName` |
+
+All 931 production UI API references now name the checked functions; 1,329
+references moved in total including ordinary units and UI harnesses. Strings,
+comments, debug-symbol function/field names and calculation bodies are preserved.
+Boolean message-pump truth tests follow the repository's bare `F…()` convention.
+Five source-witness programs rename their existing UI effect doubles to match;
+their independent algorithms, cases, domains and exclusions are unchanged.
+All 27 complete witness receipts are byte-identical to C02.
+
+`src/ui/win_calls.h`, `STARS_CPP_CALL`, `StarsCFunction`, `StarsCall_*` and their
+include-dependent alternate-declaration guards are removed. There is no new
+source-call redirection. The new translation unit participates in the existing
+wrapper variants without adding hooks or clone kinds. C04 still owns removal
+of those test variants, and C06 still owns the generated Windows symbol aliases.
+
+Runtime internals retain their raw calls. Their guards can notify or retire
+windows while unwinding; delivering a captured error inside those frames would
+run before the outer cleanup completes. Existing foreign callback adapters,
+pending-error state, primary-error preservation and shutdown/reset policy are
+unchanged. The raw function pointers in the callback fixture are intentional
+coverage of containment before the owned checked boundary delivers the failure.
+
+The real callback fixture retains its nested/modal/modeless, allocation, timer,
+unowned window and no-post-failure-command cases. Three additional faults throw
+from text, position and enable notifications, proving that the new checked calls
+deliver the error after callback destruction and preserve a usable owner. The
+fixture restores an explicitly disabled owner after the test; it does not assert
+or introduce transactional rollback of existing partial window effects.
+
+Local qualification:
+
+- SDL Debug and Release builds: zero compiler diagnostics. The actual Debug
+  manifest has 117 production sources / 1,376 variants and 112 headers in both
+  include orders; the removed private header is replaced by the public one.
+- Full desktop suite: 119/119 pass in 320.12 seconds, including all 29 native
+  leak checks, 17 game unit programs and available tutorial smoke coverage.
+  The real callback fixture also passes under ASan/UBSan with no diagnostics.
+- `make test-host`: 26/26 pass. Both full desktop/host regressions match all
+  519 baseline files through turn 150, with the same 25 accepted unused-storage
+  warnings and zero differences/errors/skipped inputs.
+- Direct comparison against C02 desktop/host outputs also matches all 519 files
+  in each suite, with zero differences/errors/skipped inputs.
+- All 27 witnesses pass, with byte-identical complete assertion/exclusion
+  receipts compared with C02.
+- Local MinGW/GCC syntax checks pass all 23 exact signatures, the existing
+  generated Windows API isolation and the popup test-provider variant.
+- Specification links: 2,812 links / 700 IDs, zero errors. Formal inputs are
+  byte-identical to C02; its proof receipts remain historical evidence.
+- Core/host/platform-service sources, wire layouts, data/text/resources, all
+  canonical formal files and frozen reference inputs are unchanged. No new
+  gameplay behavior, proof or whole-program refinement is claimed.
+
+Complete local receipts are saved under `dist/verification/c03/`. Enabled CI
+qualification is pending publication; the two full platform jobs retain the
+user's opt-in policy. C04–C10 remain pending; no baseline is regenerated for this
+refactor.

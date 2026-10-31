@@ -69,8 +69,8 @@ static void AdvanceTutor(void) {
     if(mutateTutor) { ini.grobjSel=1;ini.iObjSel=5;planets[1].iPlayer=idPlayer;iMsgCur=3;gd.fGotoVCR=1; }
 }
 static void RefitFrameChildren(void) { assert(gd.fNoScannerDraw);event("R;"); }
-static void UpdateWindow(void *hwnd) { assert(hwnd==hwndScanner && !gd.fNoScannerDraw);event("U;"); }
-static void DestroyWindow(void *hwnd) { (void)hwnd;event("D;"); }
+static void FUiUpdateWindow(void *hwnd) { assert(hwnd==hwndScanner && !gd.fNoScannerDraw);event("U;"); }
+static void FUiDestroyWindow(void *hwnd) { (void)hwnd;event("D;"); }
 static void BringUpHostDlg(void) { event("H;"); }
 static void reset(void) {
     int i;memset(planets,0,sizeof(planets));memset(fleets,0,sizeof(fleets));memset(rglpfl,0,sizeof(rglpfl));
@@ -97,7 +97,7 @@ static void reset(void) {
         'static int16_t FFindSomethingAndSelectIt(void) { event("F;");return findBody(); }',
         function("src/ui/mdi.cpp", "void RestoreSelection("),
         "static void postOpen(void) { do {\n" + post + "} while(0); }",
-        "static void SendMessage(void *hwnd,int message,int command,int param) { assert(hwnd==hwndFrame && message==WM_COMMAND && command==IDM_FRAME_POST_OPEN && param==0);postOpen(); }",
+        "static void LUiSendMessage(void *hwnd,int message,int command,int param) { assert(hwnd==hwndFrame && message==WM_COMMAND && command==IDM_FRAME_POST_OPEN && param==0);postOpen(); }",
         "static int finishOpen(void) { int16_t grobjIni;\n" + tail,
     ])
     witnesses = r'''

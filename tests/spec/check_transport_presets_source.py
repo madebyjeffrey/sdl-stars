@@ -98,7 +98,7 @@ static char szLiteral5[] = "Other";
 static void amount(void);
 void UpdateOrdersDDs(int16_t);
 static HWND GetDlgItem(HWND hwnd,int id) { (void)hwnd;return id; }
-static intptr_t SendMessage(HWND hwnd,int message,int value,LPARAM param) {
+static intptr_t LUiSendMessage(HWND hwnd,int message,int value,LPARAM param) {
     int c=hwnd-10;if(c<0 || c>=3)abort();
     if(message==CB_GETCURSEL)return comboSelection[c];
     if(message==CB_RESETCONTENT){comboCount[c]=0;comboSelection[c]=-1;return 0;}
@@ -106,7 +106,7 @@ static intptr_t SendMessage(HWND hwnd,int message,int value,LPARAM param) {
     if(message==CB_SETCURSEL){comboSelection[c]=(value>=0 && value<comboCount[c]) ? value:-1;return comboSelection[c];}
     abort();
 }
-static void SetWindowText(HWND hwnd,const char *s) {
+static void FUiSetWindowText(HWND hwnd,const char *s) {
     if(hwnd==hwndOrderED){strcpy(editText,s);if(notifications){if(++depth>3)abort();amount();depth--;}}
     else strcpy(radioLabel,s);
 }
@@ -128,10 +128,10 @@ static char *PszGetCompressedString(int id) {
 static const char *PszFormatIds(int id,void *p) { (void)id;(void)p;return "amount"; }
 static int CchGetString(int id,char *out) { strcpy(out,PszGetCompressedString(id));return (int)strlen(out); }
 static void AlertSz(const char *s,int flags) { (void)s;(void)flags;alerts++; }
-static void EnableWindow(HWND hwnd,int value) {if(hwnd==IDC_DELETE)enabledDelete=value;if(hwnd==IDC_RENAME)enabledRename=value;}
+static void FUiEnableWindow(HWND hwnd,int value) {if(hwnd==IDC_DELETE)enabledDelete=value;if(hwnd==IDC_RENAME)enabledRename=value;}
 static void InvalidateRect(HWND hwnd,void *rc,int erase) {(void)hwnd;(void)rc;(void)erase;}
-static void SetFocus(HWND hwnd) {(void)hwnd;}
-static int DialogBox(int instance,int resource,HWND hwnd,int proc) {
+static void HwndUiSetFocus(HWND hwnd) {(void)hwnd;}
+static int LUiDialogBox(int instance,int resource,HWND hwnd,int proc) {
     (void)instance;(void)hwnd;(void)proc;
     if(resource==IDD_RENAME){renameCalls++;if(renameResult)strcpy(szWork,renameText);return renameResult;}
     memset(vrgZip,0x5a,sizeof(vrgZip));gd.fChgZipOrd=1;return outerResult;
@@ -149,11 +149,11 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *
     block = between(click, '            sz255[0] = -1;', '        } else {\n            GlobalPD.grPopup')
     bodies += 'static void popup(void) {int16_t i,cMax,iSkip,fRet;int lpProc;POINT16 pt={0,0};char sz255[2],*rgszZip[11];ZIPORDER rgzo[4];TASKXPORT *lptxp;' + block + '}\n'
     start = ui.index('    } else if ((HWND)lParam == hwndOrderED && HIWORD(wParam) == 768) {')
-    start = ui.index('        lSel = SendMessage(', start)
+    start = ui.index('        lSel = LUiSendMessage(', start)
     block = ui[start:ui.index('\n    }\n    return;',start)]
     bodies += 'static void amount(void) {int32_t lSel,lMin;int16_t iInit,i,fPercent=FALSE;char rgb[8];' + block + '}\n'
     start = ui.index('    } else if ((HWND)lParam == rghwndOrderDD[2]) {')
-    start = ui.index('            lSel = SendMessage(',start)
+    start = ui.index('            lSel = LUiSendMessage(',start)
     end = ui.index('            DrawPlanShip(NULL, tileStarbaseOrWaypoint);',start)+len('            DrawPlanShip(NULL, tileStarbaseOrWaypoint);')
     bodies += 'static void action(void) {int32_t lSel,lMin;' + ui[start:end] + '}\n'
     bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.cpp', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'

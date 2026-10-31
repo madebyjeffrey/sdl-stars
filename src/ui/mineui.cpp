@@ -17,9 +17,9 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_CREATE:
-        hwndMineCB = CreateWindow(szButton, PszGetCompressedString(idsDetonateMineFieldYear), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
+        hwndMineCB = HwndUiCreateWindowEx(0, szButton, PszGetCompressedString(idsDetonateMineFieldYear), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
                                   hInst, NULL);
-        SendMessage(hwndMineCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        LUiSendMessage(hwndMineCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         SetMineralTitleBar(hwnd);
         break;
     case WM_LBUTTONDOWN:
@@ -79,7 +79,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         if ((HWND)lParam != hwndMineCB || HIWORD(wParam) != 0)
             break;
-        fDetonate = LOWORD(SendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
+        fDetonate = LOWORD(LUiSendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
         rtlt.idFull = lpThings[sel.scan.ith].idFull();
         rtlt.fDetonate = fDetonate;
         FEncodeLogThing(rtlt, rgbThing);
@@ -88,7 +88,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         break;
     default:
     Default:
-        return DefWindowProc(hwnd, message, wParam, lParam);
+        return LUiDefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
@@ -1182,10 +1182,10 @@ void SetMineralTitleBar(HWND hwnd) {
                  GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMines;
     }
     if (fVisCB) {
-        SendMessage(hwndMineCB, BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
+        LUiSendMessage(hwndMineCB, BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
     }
     GetClientRect(hwnd, &rc);
-    SetWindowPos(hwndMineCB, NULL, 80, rc.bottom - dyArial8 * 2, rc.right - 88, dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
+    FUiSetWindowPos(hwndMineCB, NULL, 80, rc.bottom - dyArial8 * 2, rc.right - 88, dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
     return;
 }
 
