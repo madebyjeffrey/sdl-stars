@@ -111,3 +111,8 @@ qualification are recorded separately; automatic slow-job defaults are unchanged
 No baseline, game record layout, canonical model, catalog ID or immutable C
 reference input changes. The maintained archived tutorial observer changes its
 integer truth spellings only. Local receipts: `dist/verification/c07/`.
+
+The first Linux CI build finds one remaining string-literal concatenation in
+`filedialog_portal.cpp`. It now formats the typed `PORTAL_PATH` as `%s`, followed
+by the same request/sender/token bytes. No portal path, argument or truncation
+limit changes. Corrected Linux/platform reruns are pending.

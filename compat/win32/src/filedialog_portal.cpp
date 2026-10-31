@@ -243,7 +243,7 @@ int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFol
     if (!pszUnique || strlen(pszUnique) >= sizeof(szSender)) goto done;
     strcpy(szSender, pszUnique + 1);
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';
-    snprintf(szRequest, sizeof(szRequest), PORTAL_PATH "/request/%s/%s", szSender, szToken);
+    snprintf(szRequest, sizeof(szRequest), "%s/request/%s/%s", PORTAL_PATH, szSender, szToken);
     pszRequest = strdup(szRequest); if (!pszRequest) goto done;
     if (!dbus_validate_utf8(pszName, &error)) goto done;
     pszTitleUtf = PszPortalLabel(pszTitle); if (!pszTitleUtf) goto done;
