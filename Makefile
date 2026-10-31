@@ -15,7 +15,7 @@ PYTHON_VENV = $(DIST_DIR)/$(HOST_PRESET)/python-venv/bin/python
 endif
 GO          ?= go
 SAVE_CLI    := $(abspath $(DIST_DIR))/stars-save$(if $(filter Windows_NT,$(OS)),.exe,)
-FORMAT_FILES ?= $(wildcard src/core/*.c src/core/*.h src/ui/*.c src/ui/*.h src/host/*.c src/platform/*.c src/platform/*.h res/*.h tests/scaffold/*.c tests/scaffold/*.h)
+FORMAT_FILES ?= $(wildcard src/core/*.cpp src/core/*.h src/ui/*.cpp src/ui/*.h src/host/*.cpp src/platform/*.cpp src/platform/*.h res/*.h tests/scaffold/*.c tests/scaffold/*.h)
 SEED        ?= 12345
 # The native regression: a release build, its fixed-seed run, and the
 # checked-in baseline it is compared against (tests/scaffold/REGRESSION.md).
@@ -59,7 +59,7 @@ help:
 	@echo "  precision-turns      Compare real turns from two temporary host builds (PRECISION_TURN_ARGS)"
 	@echo "  test-precision       Check the precision experiment's coverage, witnesses and reports"
 	@echo "  scenario             Build a test game into dist/scenarios/SCENARIO (no SCENARIO: list them)"
-	@echo "  fmt                  Format C sources and headers (FORMAT_FILES=src/core/ai.c to limit)"
+	@echo "  fmt                  Format C++ sources and headers (FORMAT_FILES=src/core/ai.cpp to limit)"
 	@echo "  compile-check        Compile the SDL client and generated resources"
 	@echo "  python-env           Configure the host preset and set up its Python venv"
 	@echo "  text-header/data-header Generate text and game-data tables"

@@ -32,7 +32,7 @@ endif()
 
 # Qualify notification-capable cleanup with the existing message-box and nested
 # callback vectors on every desktop backend, including Windows SDL private cases.
-add_executable(stars-resource-messagebox tests/compat/win32_messagebox.c)
+add_executable(stars-resource-messagebox tests/compat/win32_messagebox.cpp)
 target_include_directories(stars-resource-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-resource-messagebox PRIVATE stars_win32 SDL3::SDL3)
 target_compile_options(stars-resource-messagebox PRIVATE -Wall -Wextra -Werror)
@@ -60,7 +60,7 @@ endif()
 # Control state is retired immediately, while active callback frames retain its
 # storage. Reuse behavioral/SDK contracts alongside explicit lifetime vectors.
 foreach(STARS_CONTROL_KIND list combo toolbar profile)
-    add_executable(stars-resource-${STARS_CONTROL_KIND} tests/compat/win32_${STARS_CONTROL_KIND}.c)
+    add_executable(stars-resource-${STARS_CONTROL_KIND} tests/compat/win32_${STARS_CONTROL_KIND}.cpp)
     target_include_directories(stars-resource-${STARS_CONTROL_KIND} PRIVATE
         "${PROJECT_SOURCE_DIR}/compat/win32/src" "${STARS_BITMAP_GENERATED}")
     target_link_libraries(stars-resource-${STARS_CONTROL_KIND} PRIVATE stars_win32 SDL3::SDL3)

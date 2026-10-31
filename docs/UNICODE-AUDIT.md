@@ -145,7 +145,7 @@ operations through the same native abstraction.
 
 **High priority for cross-platform interchange.** The SDL renderer explicitly
 maps CP1252 in
-[DwCompatAnsiChar](/home/jdrake/Projects/stars/compat/win32/src/font.c:27).
+[DwCompatAnsiChar](/home/jdrake/Projects/stars/compat/win32/src/font.cpp:27).
 `res/stars.rc` specifies code page 1252 and `datagen.py` emits CP1252 bytes.
 Native Windows narrow UI calls use Windows code-page conversion instead of an
 explicit CP1252 boundary.
@@ -166,10 +166,10 @@ documents a separate GDI limitation for the UTF-8 process manifest setting.
 ### 3 The fallback file browser corrupts the interpretation of native paths
 
 **High priority, runtime confirmed.**
-[FRefreshFiles](/home/jdrake/Projects/stars/compat/win32/src/filedialog.c:80)
+[FRefreshFiles](/home/jdrake/Projects/stars/compat/win32/src/filedialog.cpp:80)
 passes `readdir` names and directory paths directly into CP1252 lists and edit
 controls. Selecting a file similarly copies its native basename into the name
-edit. [AcceptFile](/home/jdrake/Projects/stars/compat/win32/src/filedialog.c:205)
+edit. [AcceptFile](/home/jdrake/Projects/stars/compat/win32/src/filedialog.cpp:205)
 then reads that edit as filesystem bytes. The path edit and new-folder edit
 have the same mismatch.
 
@@ -213,9 +213,9 @@ their own encoding. Preserve the original hash for existing game files.
 ### 5 Unsupported input and clipboard text are silently replaced
 
 **High priority for preventing text loss; an intentional current limitation.**
-[FAnsiInput](/home/jdrake/Projects/stars/compat/win32/src/input.c:141),
-[PasteEdit](/home/jdrake/Projects/stars/compat/win32/src/edit.c:183), and
-[CompatEditComposition](/home/jdrake/Projects/stars/compat/win32/src/edit.c:16)
+[FAnsiInput](/home/jdrake/Projects/stars/compat/win32/src/input.cpp:141),
+[PasteEdit](/home/jdrake/Projects/stars/compat/win32/src/edit.cpp:183), and
+[CompatEditComposition](/home/jdrake/Projects/stars/compat/win32/src/edit.cpp:16)
 replace characters absent from CP1252 with `?`. This affects names, messages,
 passwords, and the fallback filename fields. The existing input test explicitly
 expects an emoji to become `?`.
@@ -255,7 +255,7 @@ decoded display text at a valid boundary; use `chDirSep` for basename handling.
 ### 7 Case comparison and character classification are inconsistent
 
 **Medium priority, partly runtime confirmed.**
-[lstrcmpiA and CRT shims](/home/jdrake/Projects/stars/compat/win32/src/services.c:44)
+[lstrcmpiA and CRT shims](/home/jdrake/Projects/stars/compat/win32/src/services.cpp:44)
 use `strcasecmp`/`strncasecmp`; `_strlwr` uses byte-wise `tolower`. They do not
 implement a defined CP1252 case map or Unicode case folding. A runtime probe
 compared CP1252 `é` and `É` as unequal, returning `32`, although the edit's
@@ -284,7 +284,7 @@ text migration.
 ### 8 Settings and universe definitions have ambiguous encoding
 
 **Medium priority.**
-[profile.c](/home/jdrake/Projects/stars/compat/win32/src/profile.c:63) reads and
+[profile.cpp](/home/jdrake/Projects/stars/compat/win32/src/profile.cpp:63) reads and
 writes raw bytes. Values include native paths, legacy passwords, saved
 templates, and font names. String returns truncate by byte count. The parser
 does not recognize a UTF-8 BOM or decode UTF-16 settings; a BOM before the first
@@ -350,7 +350,7 @@ also incomplete unless moving games and hosting turns preserves its data.
 ### 11 Edit controls assume one byte per character
 
 **Architectural blocker; also exercised by finding 3.**
-[edit.c](/home/jdrake/Projects/stars/compat/win32/src/edit.c:37) uses byte counts
+[edit.cpp](/home/jdrake/Projects/stars/compat/win32/src/edit.cpp:37) uses byte counts
 for length, caret, selection, hit testing, deletion, wrapping, undo, and limits.
 `WM_CHAR` accepts only values through 255 and appends one byte. `WM_GETTEXT`
 and combo returns can truncate inside a multibyte sequence.
@@ -369,7 +369,7 @@ every `cch`/`ich` silently would break application and test callers.
 ### 12 Drawing is limited to 256 byte-indexed glyphs
 
 **Architectural blocker.**
-[font.c](/home/jdrake/Projects/stars/compat/win32/src/font.c:21) caches 256
+[font.cpp](/home/jdrake/Projects/stars/compat/win32/src/font.cpp:21) caches 256
 glyphs, maps each input byte through CP1252, and measures/draws one glyph at a
 time from one face. UTF-8 strings are drawn as several CP1252 characters.
 There is no shaped-run pipeline, per-run fallback, or bidirectional layout.
@@ -410,8 +410,8 @@ saved design/race storage must still respect the legacy storage policy.
 ### 14 UTF-16 resources are deliberately narrowed back to CP1252
 
 **Build/runtime blocker.**
-[FDlgField](/home/jdrake/Projects/stars/compat/win32/src/dialog_template.c:25)
-and [menu decoding](/home/jdrake/Projects/stars/compat/win32/src/resource.c:94)
+[FDlgField](/home/jdrake/Projects/stars/compat/win32/src/dialog_template.cpp:25)
+and [menu decoding](/home/jdrake/Projects/stars/compat/win32/src/resource.cpp:94)
 read 16-bit resource units and require each to map to a CP1252 byte. A
 nonrepresentable title fails decoding; supplementary characters represented by
 surrogate pairs are not decoded as pairs.
@@ -477,8 +477,8 @@ text input location.
 ### 17 Native service strings and instrumentation need encoding contracts
 
 **Medium priority.**
-[PszNativeTitle](/home/jdrake/Projects/stars/compat/win32/src/window.c:22) and
-[inspection JSON](/home/jdrake/Projects/stars/compat/win32/src/inspect.c:155)
+[PszNativeTitle](/home/jdrake/Projects/stars/compat/win32/src/window.cpp:22) and
+[inspection JSON](/home/jdrake/Projects/stars/compat/win32/src/inspect.cpp:155)
 correctly convert CP1252 to UTF-8 when their inputs are CP1252. They double
 encode native UTF-8 paths if those have been inserted into window text.
 Tests relying on hierarchy JSON can consequently observe misleading names.

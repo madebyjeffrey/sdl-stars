@@ -65,7 +65,7 @@ def generate_catalog(stage):
         output.write("global Controls := Map(\n")
         output.write(",\n".join(f'    "{name}", {value}' for name, value in sorted(defines.items())))
         output.write("\n)\n")
-    task_source = (ROOT / "src/ui/tutor.c").read_text().split("int16_t FTutorTaskDone() {", 1)[1].split("int16_t FCheck", 1)[0]
+    task_source = (ROOT / "src/ui/tutor.cpp").read_text().split("int16_t FTutorTaskDone() {", 1)[1].split("int16_t FCheck", 1)[0]
     tutor_ids = {row.name: row.id for row in rows}
     required = set()
     for assignment in re.findall(r"tutor\.idtBold\s*=\s*([^;]+);", task_source):

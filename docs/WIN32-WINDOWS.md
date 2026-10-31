@@ -23,11 +23,11 @@ The existing `stars-compat-smoke` still tests SDL GPU/software rendering.
 Useful breakpoints:
 
 - `RegisterClassA`, `CreateWindowExA`, `DestroyCompatWindow` in
-  `compat/win32/src/window.c`.
+  `compat/win32/src/window.cpp`.
 - `PeekMessageA`, `SendMessageA`, `DispatchMessageA` in
-  `compat/win32/src/message.c`.
-- `CompatRouteEvent` in `compat/win32/src/input.c`.
-- `TestWndProc` in `tests/compat/win32_windows.c`.
+  `compat/win32/src/message.cpp`.
+- `CompatRouteEvent` in `compat/win32/src/input.cpp`.
+- `TestWndProc` in `tests/compat/win32_windows.cpp`.
 
 Use program arguments `--self-test` for the automated test. For a headless
 CLion run, set environment variable `SDL_VIDEODRIVER=dummy` in that run

@@ -56,7 +56,7 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
     stubs = f'#include "{ROOT / "src/platform/ownership.h"}"\n' + stubs
     # A function-like macro avoids rewriting the struct stat type.
     stubs=stubs.replace("#define stat TestStat", "#define stat(path,st) TestStat(path,st)")
-    body=function("compat/win32/src/profile.c", "static BOOL FSaveProfile(")
+    body=function("compat/win32/src/profile.cpp", "static BOOL FSaveProfile(")
     witnesses=r'''
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"stage %d witness %d failed: %s\n",failure,checks,#x);return 1;}}while(0)
@@ -84,7 +84,7 @@ int main(void){
         path=Path(work);source=path/"witness.cpp";binary=path/"witness"
         source.write_text(stubs+body+witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

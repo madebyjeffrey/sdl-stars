@@ -114,12 +114,12 @@ static void *checkedCopy(void *dst,const void *src,size_t n) {
 }
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s (year=%d builds=%d)\n",checks,#x,year,builds);return 1;}}while(0)
 '''
-    bodies=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
-    bodies+=function('src/core/race.c','int16_t GetRaceGrbit(')+'\n'
-    bodies+=function('src/core/utilgen.c','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
-    bodies+='\n'.join(function('src/core/memory.c',sig) for sig in ['PL *LpplAlloc(','void FreePl('])+'\n'
-    bodies+=function('src/core/mine.c','void EstMineralsMined(').replace('EstMineralsMined(', 'NativeEstMineralsMined(').replace('void NativeEstMineralsMined(', 'static void NativeEstMineralsMined(',1)+'\n'
-    bodies+=function('src/core/turn2.c','int16_t CBuildProdItem(').replace('int16_t CBuildProdItem(', 'static int16_t NativeCBuildProdItem(',1)+'\n'
+    bodies=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
+    bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(')+'\n'
+    bodies+=function('src/core/utilgen.cpp','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
+    bodies+='\n'.join(function('src/core/memory.cpp',sig) for sig in ['PL *LpplAlloc(','void FreePl('])+'\n'
+    bodies+=function('src/core/mine.cpp','void EstMineralsMined(').replace('EstMineralsMined(', 'NativeEstMineralsMined(').replace('void NativeEstMineralsMined(', 'static void NativeEstMineralsMined(',1)+'\n'
+    bodies+=function('src/core/turn2.cpp','int16_t CBuildProdItem(').replace('int16_t CBuildProdItem(', 'static int16_t NativeCBuildProdItem(',1)+'\n'
     wrapper=r'''
 static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int16_t alchemy,int16_t *status,int16_t calc) {
     seen=p;escape(4);assert(!calc && builds<400);int index=-1;
@@ -140,7 +140,7 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *res,int
     memcpy(lastResources,res,16);return built;
 }
 '''
-    bodies+=wrapper+'\n#define memcpy checkedCopy\n'+function('src/core/produce.c','void EstimateItemProdSched(')+'\n#undef memcpy\n'
+    bodies+=wrapper+'\n#define memcpy checkedCopy\n'+function('src/core/produce.cpp','void EstimateItemProdSched(')+'\n#undef memcpy\n'
     witnesses=r'''
 static PLPROD *queue(unsigned capacity,unsigned count) {
     PLPROD *q=LpplAlloc<PLPROD>(4,capacity,htOrd);q->iprodMac=count;
@@ -255,7 +255,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='m09-forecast-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=False, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=True, resize=False, free=True) + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

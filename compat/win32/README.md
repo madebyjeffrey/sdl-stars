@@ -71,7 +71,7 @@ pointer types are errors. In CLion, select the SDL Debug profile and build
 this target; select `stars-compat-abi` to debug the assertions and runtime
 pointer tests. `stars-compat-smoke` remains available for the two-window test.
 
-`tests/compat/win32_abi.c` is shared with the Windows target
+`tests/compat/win32_abi.cpp` is shared with the Windows target
 `test_win32_abi_reference`, which uses real MinGW headers. It checks sizes,
 field offsets, constants and signatures at compile time, then exercises
 macros and high-bit callback parameters without calling OS APIs. A Linux-only

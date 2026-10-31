@@ -8,8 +8,8 @@ root = Path(sys.argv[1]).resolve()
 manifest = Path(sys.argv[2]).resolve()
 rows = json.loads(manifest.read_text(encoding="utf-8"))
 generated = (manifest.parent / "generated", manifest.parent / "compat/win32/generated")
-sdk_shared = set(re.findall(r"tests/compat/[A-Za-z0-9_]+\.c",
-                           (root / "cmake/win32-reference-tests.cmake").read_text(encoding="utf-8")))
+sdk_shared = {Path(name).with_suffix(".cpp").as_posix() for name in re.findall(r"tests/compat/[A-Za-z0-9_]+\.inc",
+                           (root / "cmake/win32-reference-tests.cmake").read_text(encoding="utf-8"))}
 count = 0
 production = set()
 references = set()
@@ -22,6 +22,7 @@ for row in rows:
     command = row.get("command", " ".join(row.get("arguments", [])))
     cpp = "-x c++" in command or "-x objective-c++" in command or path.suffix in (".cpp", ".mm")
     if name.startswith(("src/", "compat/win32/src/")) or any(path.is_relative_to(directory) for directory in generated):
+        assert path.suffix in (".cpp", ".mm"), f"Owned production source has a migration extension: {path}"
         assert cpp, f"Owned production source compiled as C/Objective-C: {path}"
         standards = re.findall(r"-std=(\S+)", command)
         assert standards and standards[-1] in ("c++20", "c++2a"), f"Owned production source lacks ISO C++20: {path}"
@@ -36,18 +37,35 @@ for row in rows:
             assert not cpp, "Independent frozen-declaration reference must remain C"
             references.add(name)
         else:
+            assert path.suffix in (".cpp", ".mm"), f"Ordinary test source has a migration extension: {path}"
             assert cpp, f"Ordinary test source compiled as C/Objective-C: {path}"
     elif "/sdk-reference/" in path.as_posix():
         assert not cpp, f"SDK reference source must remain C: {path}"
         references.add(path.name)
 
+# A renamed/generated source with an unknown extension can disappear from the
+# compiler manifest without failing the build. Account for both header orders.
+header_directories = [root / "src/core", root / "src/platform"]
+if any(path.is_relative_to(root / "compat/win32/src") for path in production):
+    header_directories += [root / "src/ui", root / "compat/win32/include"]
+    private_headers = [root / "compat/win32/src/platform.h", root / "compat/win32/src/cleanup.h"]
+else:
+    private_headers = []
+headers = [path for directory in header_directories for path in directory.glob("*.h")] + private_headers
+expected_headers = {str(manifest.parent / "header-checks" /
+                        (path.relative_to(root).as_posix().replace("/", "_") + "_" + order + ".cpp"))
+                    for path in headers for order in ("before", "after")}
+actual_headers = {str(Path(row["file"]).resolve()) for row in rows
+                  if Path(row["file"]).resolve().parent == manifest.parent / "header-checks"}
+assert actual_headers == expected_headers, f"Standalone header compile inventory differs: missing={sorted(expected_headers - actual_headers)}, unexpected={sorted(actual_headers - expected_headers)}"
+
 for directory in ("src", "compat/win32/include", "compat/win32/src"):
     for path in (root / directory).rglob("*"):
-        if path.suffix not in (".h", ".c", ".cpp", ".m"):
+        if path.suffix not in (".h", ".c", ".cpp", ".m", ".mm"):
             continue
         text = path.read_text(encoding="utf-8")
         assert not re.search(r'extern\s+"C"|__cplusplus', text), f"Owned C interface remains: {path}"
         assert not re.search(r"#\s*define\s+(?:min|max)\s*\(", text), f"Owned min/max macro remains: {path}"
         assert not re.search(r'\(\s*(?:char\s*\*|LPSTR|PSTR)\s*\)\s*"', text), f"Mutable string-literal cast remains: {path}"
         assert not re.search(r'const_cast\s*<\s*char\s*\*\s*>\s*\(\s*"', text), f"Mutable string-literal cast remains: {path}"
-print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}")
+print(f"Owned C++20 sources: {len(production)}; compiled variants: {count}; independent C references: {len(references)}; standalone headers: {len(headers)} in both orders")

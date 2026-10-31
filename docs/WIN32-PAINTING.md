@@ -135,7 +135,7 @@ extreme coordinates, font measurement and actual glyph pixels, paint clipping,
 message ordering, invalidation during painting, resize/exposure and survivor
 input/repainting after one window closes.
 
-`tests/compat/win32_gdi_reference.c` exercises the same basic geometry, DC
+`tests/compat/win32_gdi_reference.inc` exercises the same basic geometry, DC
 state and painting contracts against our runtime and actual Win32 under Wine.
 Font tests check valid measurement and drawing without asserting identical
 Windows font pixels or metrics. Native target: `stars-compat-gdi-reference`;

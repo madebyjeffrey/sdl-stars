@@ -74,7 +74,7 @@ ANDed with `1 << iPlayer` and `tht.grbitTrader` cleared; the `.hst` keeps
 everything. That covers what StarsClean does, plus `thm.grbitPlrNow`. The
 record stays 18 bytes. The AI reads only its own bits
 (`aiutil.c`'s wormhole search), so the native regression's AI play doesn't
-change; only the turn files' thing records do (`tests/unit/test_save.c`).
+change; only the turn files' thing records do (`tests/unit/test_save.cpp`).
 
 ### Other players' race records
 
@@ -115,7 +115,7 @@ Battle plan block 30: if plan 0 (the default plan, which starbases use) has
 starbase's attack-player case indexed `rggrfAttack` with uninitialized
 `iplrCur`. The native build already uses `iplrStarbase` (see
 [WIN16-PARITY.md](WIN16-PARITY.md), "Starbase attack mask index").
-`tests/unit/test_battle.c` gives a starbase's default plan one target, with
+`tests/unit/test_battle.cpp` gives a starbase's default plan one target, with
 a friend and the target in orbit, for every order of three players: the
 starbase attacks only its target and nobody fires on the friend.
 TotalHost's workaround isn't needed with 2.8.
@@ -219,7 +219,7 @@ old name has to have been longer at the same position.
 
 **2.8:** fixed in `IRaceChecksum`, which now checksums a copy with the
 names zeroed after their terminators, so the editor and every other caller
-agree with what `ReadRtPlr` loads (`tests/unit/test_race.c`). The file
+agree with what `ReadRtPlr` loads (`tests/unit/test_race.cpp`). The file
 format and checksum algorithm are unchanged, so races saved by 2.8 load in
 2.6j. Files already saved with a bad checksum are still rejected:
 TotalHost's repair just recomputes the checksum, which is also all a

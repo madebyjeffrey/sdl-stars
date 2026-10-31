@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Pending | Apply the recorded rename map, migrate every live consumer and qualify fresh configurations. |
+| C02 | Qualification active | Rename map and live consumers implemented; local builds/regressions/witnesses pass. Full desktop, formal and Linux/Windows results pending. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -91,7 +91,58 @@ from those historical runs.
 
 ## C02 implementation and qualification
 
-Pending. Mechanical renames preserve implementation basenames and debug-symbol
-names. Shared SDK input contents and independent/frozen references remain exact.
-Source body changes, callback protocols, effect seams and state migration belong
-to their subsequent checkpoints.
+The filename migration is implemented. All 201 moved bodies are byte-identical
+to B: 105 production `.c` to `.cpp`, one production `.m` to `.mm`, 57 ordinary
+harness/adaptor inputs to `.cpp`/`.mm`, and 38 shared SDK bodies to `.inc`.
+The latter have one-line `.cpp` application entries and independent C11 SDK
+entries that include the same vectors. Their 38 parent SHA-256 hashes match.
+The five independent C/foreign/historical harness exceptions in C01 remain C.
+
+Root/wrapper language overrides are removed; native AppKit ARC/blocks options
+remain. Source lists, dynamic harness paths, unit globs, packaging, wrapper API
+auditing, witness paths/temp filenames, historical precision discovery, archived
+tutorial parsing and live source/evidence links follow the new extensions.
+Historical migration receipts and immutable Git reference paths retain their
+original names. Current source-line evidence for shared SDK vectors points to
+`.inc`, where the assertions actually reside.
+
+The compiler audit requires `.cpp`/`.mm` for owned implementations and verifies
+that every public header has both standalone compile commands. It includes `.mm`
+in owned-interface inspection and normalizes SDK exception names for Windows.
+Controlled negative manifests prove that missing header compilations and a C
+extension on either production or an ordinary test are rejected. The existing
+C/C++ redirect fixture now uses honest suffixes for each language; its removal
+remains C04/C09 work.
+
+Fresh configuration first caught five dynamically constructed `.c` test path
+templates. Comparing parent/current manifests then exposed a generated header
+filename typo that omitted 224 header-check compiles. Both are corrected; the
+new negative inventory check prevents silent header coverage loss.
+
+Local results so far:
+
+| Check | Actual result |
+| --- | --- |
+| Fresh `macos-sdl-debug` at `dist/c02-debug` | Build passes without compiler diagnostics; 116 production sources / 1,358 variants; 112 headers in both orders |
+| Fresh SDL-free Release at `dist/c02-host` | Build and 26/26 tests pass |
+| Full desktop CTest | Running; final result pending |
+| Full desktop and host regressions | Each matches all 519 baseline files through turn 150; same 25 accepted unused-storage warnings and zero differences/errors/skipped references |
+| All source witnesses | 27/27 pass; complete output, assertion counts and exclusions are byte-identical to the parent receipts |
+| Specification links / requirements | 2,812 local links and 700 requirement IDs pass |
+| Handbook / traceability unit tests | 26/26 pass |
+| Historical precision discovery | Existing `SourceCoverage` test passes; immutable historical C source names retained |
+| Archived tutorial parser | 640 fragments / 80 pages; highlighted actions accounted for; compile-only observer also builds |
+| Flatpak source preparation | Staged export passes; untracked `.cpp`, `.mm` and `.inc` negative probes are rejected |
+| Wrapper API discovery | 178/178 local API definitions and 6/6 CRT helpers found; source positions regenerated |
+| Body / input integrity | All 201 bodies identical to B; frozen references, original/native baselines, data, text, resources and canonical Dafny files unchanged |
+
+Full Dafny verification at the existing 120-second limit has reported a timeout
+in unchanged `S02Profile.ParsingVectors` (`spec/dafny/S02-profile.dfy:122`). The
+collection run and a focused retry with 300 seconds are pending. No proof or
+formal input has been changed to make this check pass. Audit completion and
+Linux/Windows CI remain pending; C02 is not yet fully qualified.
+
+Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
+pending. This change removes filename/language machinery only; the inventoried
+callback, effect, witness-body, namespace and state migrations are subsequent
+work.

@@ -68,9 +68,9 @@ static int checks;
 #define CHECK(x) do { checks++; if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;} } while(0)
 '''
     bodies = "\n".join([
-        function("src/ui/init.c", "void GetIniWinRc("),
-        function("src/ui/init.c", "void ReadIniTileSettings("),
-        function("compat/win32/src/profile.c", "UINT WINAPI GetPrivateProfileIntA("),
+        function("src/ui/init.cpp", "void GetIniWinRc("),
+        function("src/ui/init.cpp", "void ReadIniTileSettings("),
+        function("compat/win32/src/profile.cpp", "UINT WINAPI GetPrivateProfileIntA("),
     ])
     witnesses = r'''
 int main(void) {
@@ -112,7 +112,7 @@ int main(void) {
         binary = path / "witness"
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", str(source), "-o", str(binary)], check=True)
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 
 

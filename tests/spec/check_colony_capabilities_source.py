@@ -122,7 +122,7 @@ def main():
     declarations=declarations.replace('#include <setjmp.h>','#include <setjmp.h>\nstatic int32_t capcfg[110];static int extraCalls,extraPlayer,extraTrace[16][4],selectedScanner;static SPECIALSB fakeSpecial[16];')
     declarations+='\nstatic_assert(hstSpecialSB==512 && hstPlanetary==32768 && iplanetaryViewer50==0 && iplanetarySnooper620X==8 && ispecialSBStargate100250==0 && ispecialSBStargateAnyAny==6 && ibitRaceNoAdvScanner==10,"colony capability identities");\n'
     stub='int16_t IpctCanTerraformLppl(PLANET *p){assert(p==&planet);return 10;}'
-    assert stub in declarations;declarations=declarations.replace(stub,function('src/core/planet.c','int16_t IpctCanTerraformLppl('))
+    assert stub in declarations;declarations=declarations.replace(stub,function('src/core/planet.cpp','int16_t IpctCanTerraformLppl('))
     stub='void LookupBestPlanetaryScanner(PART *part){assert(idPlayer==planet.iPlayer);part->hs.iItem=(uint8_t)partIndex;}'
     assert stub in declarations
     declarations=declarations.replace(stub,'static void NativeScanner(PART *part);\nvoid LookupBestPlanetaryScanner(PART *part){NativeScanner(part);selectedScanner=part->hs.iItem;}')
@@ -140,8 +140,8 @@ int16_t FLookupPart(PART *part){
     extraTrace[extraCalls][0]=mask;extraTrace[extraCalls][1]=item;extraTrace[extraCalls][2]=status;extraTrace[extraCalls++][3]=quantity;return status;
 }
 '''+bodies[end:]
-    bodies+='\n'+function('src/core/parts.c','void LookupBestPlanetaryScanner(').replace('void LookupBestPlanetaryScanner(','static void NativeScanner(',1)
-    bodies+='\n'+function('src/core/planet.c','int16_t StargateRangeFromLppl(')
+    bodies+='\n'+function('src/core/parts.cpp','void LookupBestPlanetaryScanner(').replace('void LookupBestPlanetaryScanner(','static void NativeScanner(',1)
+    bodies+='\n'+function('src/core/planet.cpp','int16_t StargateRangeFromLppl(')
     harness=r'''
 static void ready(void){
     reset();memcpy(cfg,capcfg,sizeof(cfg));terraCalls=desireCalls=currentDesire=extraCalls=0;extraPlayer=selectedScanner=-1;memset(terraItems,-1,sizeof(terraItems));memset(extraTrace,-1,sizeof(extraTrace));
@@ -210,7 +210,7 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);raw=export.read_bytes();table=list(struct.iter_unpack('<8i',raw[:640]));special=list(struct.iter_unpack('<7i',raw[640:1088]));planetary=list(struct.iter_unpack('<7i',raw[1088:]));assert (len(table),len(special),len(planetary))==(20,16,15)
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)
         try:

@@ -87,11 +87,11 @@ When goals conflict, apply them in this order:
 - The game code (`STARS_CORE_SOURCES` in `CMakeLists.txt`) includes only
   `common.h`, never `windows.h`, and builds without Windows headers. It
   reaches the player only through the functions in `ui.h`, which the
-  SDL-backed desktop UI and `hostui.c` implement. Put dialogs, drawing and window
-  state in the UI files (`*ui.c` and the others in `STARS_UI_SOURCES`,
+  SDL-backed desktop UI and `hostui.cpp` implement. Put dialogs, drawing and window
+  state in the UI files (`*ui.cpp` and the others in `STARS_UI_SOURCES`,
   which include `win.h`); when a game file needs one, add a `ui.h` call.
 - A file split for 2.9 keeps its game logic under its original name, and
-  its window code moves to `<name>ui.c`.
+  its window code moves to `<name>ui.cpp`.
 - The game's text (strings, messages, tutorial, planet names) is in
   `text/*.txt`; `text/textgen.py` builds the ID enums (`textids.h`) and the
   compressed tables from it at build time. IDs never move: delete a row
@@ -106,7 +106,7 @@ When goals conflict, apply them in this order:
 - Application-owned file streams and paths use the C++20 service
   in `src/platform/fileio.h`/`fileio.cpp`. Native descriptors stay private to that
   service for exclusive creation, sharing, durable writes and live-handle operations.
-  Game files, the clock and formatting go through `native.c` (`HfOpenFile`,
+  Game files, the clock and formatting go through `native.cpp` (`HfOpenFile`,
   `DwTickCount`, `CchSprintf`, `LMulDiv`, `chDirSep`), never Win32 or
   `wsprintf` directly.
 
@@ -123,7 +123,7 @@ When goals conflict, apply them in this order:
   in turn generation. The intentional migration to binary64 is documented in
   `docs/DOUBLE-PRECISION.md`; changing them is a behavior change, not a cleanup.
 - The archived native tutorial observer (`tests/reference/win32-tutorial`) depends on `InitInstance`, `ScannerWndProc`, the
-  globals and struct layouts it reads, and the literal `tutor.c` signatures
+  globals and struct layouts it reads, and the literal `tutor.cpp` signatures
   `int16_t FTutorTaskDone() {` and `int16_t FCheck`. Update the observer and
   parser in the same change if any of these move.
 

@@ -202,11 +202,11 @@ int32_t CMineFromLpfl(FLEET *fleet){mineCalls++;int i=(int)(fleet-fleets);assert
 int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next){(void)p;assert(player==cfg[4] && !next);return (int16_t)cfg[2];}
 int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? NativeRandom(bound):(int16_t)cfg[11];}
 '''
-    getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
-    bodies=getter+'\n'+function('src/core/planet.c','int16_t CMinesOperating(').replace('    iplr =', '    operCalls++;\n    iplr =',1)+'\n'
-    bodies+=function('src/core/ship2.c','int32_t CMineFromLpfl(').replace('int32_t CMineFromLpfl(', 'static int32_t NativeCMineFromLpfl(',1)+'\n'
-    bodies+=function('src/core/mine.c','void EstMineralsMined(')+'\n'
-    bodies+=function('src/core/utilgen.c','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
+    getter=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
+    bodies=getter+'\n'+function('src/core/planet.cpp','int16_t CMinesOperating(').replace('    iplr =', '    operCalls++;\n    iplr =',1)+'\n'
+    bodies+=function('src/core/ship2.cpp','int32_t CMineFromLpfl(').replace('int32_t CMineFromLpfl(', 'static int32_t NativeCMineFromLpfl(',1)+'\n'
+    bodies+=function('src/core/mine.cpp','void EstMineralsMined(')+'\n'
+    bodies+=function('src/core/utilgen.cpp','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
     harness=r'''
 static void setup(void){
     memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(&gd,0,sizeof(gd));memset(designs,0,sizeof(designs));
@@ -246,7 +246,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");asser
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-ffp-contract=off','-fno-fast-math',
             '-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)

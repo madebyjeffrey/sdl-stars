@@ -69,7 +69,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Economy: canonical rules and domains
 
-`EstMineralsMined` in [mine.c](../src/core/mine.c) uses the local sentinel `cMines=-1`
+`EstMineralsMined` in [mine.cpp](../src/core/mine.cpp) uses the local sentinel `cMines=-1`
 to compute operating mines. An unowned/empty local colony produces the sentinel
 triple (-1,-1,-1), not three zero yields. For a productive colony, the `Concentration`
 rule applies a homeworld floor of 30 except non-AR remote mining; `MiningScaled`
@@ -92,7 +92,7 @@ it does not use efficiency-adjusted or randomized yield. M10 supplies the
 [checked fleet capacity algorithm](dafny/M10-mining-capacity.dfy). Complete native
 pointer/catalog/RNG/caller-state correspondence remains E19-1.
 
-`ChgPopFromPlanet` in [util.c](../src/core/util.c) returns zero for unowned/empty colonies.
+`ChgPopFromPlanet` in [util.cpp](../src/core/util.cpp) returns zero for unowned/empty colonies.
 For populated colonies, hostile habitat uses `HostileLoss`; non-hostile growth
 uses `GrowthAt`, given the owner's capacity and growth/habitat-derived rate.
 `CrowdedRate` preserves quarter-capacity cutoff, quadratic crowding, truncation
@@ -255,7 +255,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[resolution source](../src/core/turn.c), [economy/research](../src/core/turn2.c), [task resolution](../src/core/turn3.c), [combat](../src/core/battle.c), [mining](../src/core/mine.c), [objects](../src/core/thing.c), [population arithmetic](../src/core/util.c), and [known bugs](../docs/KNOWN-BUGS.md). Existing source behavior, including known bugs, is not an endorsement of a new rule.
+[resolution source](../src/core/turn.cpp), [economy/research](../src/core/turn2.cpp), [task resolution](../src/core/turn3.cpp), [combat](../src/core/battle.cpp), [mining](../src/core/mine.cpp), [objects](../src/core/thing.cpp), [population arithmetic](../src/core/util.cpp), and [known bugs](../docs/KNOWN-BUGS.md). Existing source behavior, including known bugs, is not an endorsement of a new rule.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

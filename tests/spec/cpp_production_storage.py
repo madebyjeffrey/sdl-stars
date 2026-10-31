@@ -26,9 +26,9 @@ def definitions(extent="", allocate=True, resize=True, free=True):
     if allocate or resize:
         text += "uint16_t CbPlSlot(const void *lp) {" + extent + "}\n"
     if allocate:
-        text += "template<>\n" + function('src/core/memory.c', 'PLPROD *LpplAlloc<PLPROD>(') + "\n"
+        text += "template<>\n" + function('src/core/memory.cpp', 'PLPROD *LpplAlloc<PLPROD>(') + "\n"
     if resize:
-        text += function('src/core/memory.c', 'PLPROD *LpplReAlloc(') + "\n"
+        text += function('src/core/memory.cpp', 'PLPROD *LpplReAlloc(') + "\n"
     if free:
-        text += function('src/core/memory.c', 'void FreePl(PLPROD *') + "\n"
+        text += function('src/core/memory.cpp', 'void FreePl(PLPROD *') + "\n"
     return text

@@ -175,8 +175,8 @@ All arrays in these schemas are ordered.
 
 Sources: [structs.h](../src/core/structs.h), [globals.h](../src/core/globals.h),
 [enums.h](../src/core/enums.h); `LpplFromId`, `LpflFromId`, `LpflNew`,
-`FLookupPlanet`, `FLookupFleet` in [util.c](../src/core/util.c);
-`LpthNew`, `FreeLpth` in [thing.c](../src/core/thing.c).
+`FLookupPlanet`, `FLookupFleet` in [util.cpp](../src/core/util.cpp);
+`LpthNew`, `FreeLpth` in [thing.cpp](../src/core/thing.cpp).
 
 Proposed keys are distinct types even where Dafny subset types share integer
 representation. `FleetId`, `DesignId` and `ThingId` use tagged constructors.
@@ -247,10 +247,10 @@ array construction, pointer lifetime, logging and arbitrary callbacks remain ope
 | Battle `idPlanet=0xffff` | No planet; battle coordinates remain available. |
 | `grTaskAny=0xffff`, `iWarpAny`, `iDistAny` | Query/tutorial wildcards, not saved task, warp or distance variants. |
 
-Evidence: sentinel enums; `SatisfyOrders` in [turn3.c](../src/core/turn3.c)
+Evidence: sentinel enums; `SatisfyOrders` in [turn3.cpp](../src/core/turn3.cpp)
 (for gift and mine-laying task execution), production packet creation in
-[turn2.c](../src/core/turn2.c), route/report handling in
-[report.c](../src/core/report.c), and [S01 order schemas](S01-game-file-orders.md).
+[turn2.cpp](../src/core/turn2.cpp), route/report handling in
+[report.cpp](../src/core/report.cpp), and [S01 order schemas](S01-game-file-orders.md).
 Dafny proves fleet-key uniqueness/round-trip, thing-key uniqueness, optional
 planet-link round-trip and gift-recipient round-trip.
 
@@ -270,9 +270,9 @@ planet-link round-trip and gift-recipient round-trip.
 | Damage | `DV.pctSh` 7-bit fraction of ships damaged, `pctDp` 9-bit damage fraction | Ship damage uses a scale of 500; loader clamps pctDp >=500 to 499. Starbase `pctDp` uses the same 500 scale but has separate 12-bit storage. Do not collapse all `pct` fields into one generic percentage. |
 | Production progress | `PROD.pct`, 7-bit storage; normal progress in whole percent | `CBuildProdItem` applies `cost*pct/100`; 0..100 is the proposed normalized boundary, not the whole 0..127 bit domain. |
 
-Evidence: `LGetFleetStat`, `Merge2Fleets` in [ship.c](../src/core/ship.c),
-`CBuildProdItem` in [turn2.c](../src/core/turn2.c), `FReadFleet` in
-[file.c](../src/core/file.c), and creation loops in [create.c](../src/core/create.c).
+Evidence: `LGetFleetStat`, `Merge2Fleets` in [ship.cpp](../src/core/ship.cpp),
+`CBuildProdItem` in [turn2.cpp](../src/core/turn2.cpp), `FReadFleet` in
+[file.cpp](../src/core/file.cpp), and creation loops in [create.cpp](../src/core/create.cpp).
 Resource/cost derivations remain with gameplay modules. The Dafny transfer
 lemma requires enough source quantity and no destination overflow; it does not
 prove cargo capacity, ownership, fuel rules, or correctness of C transfers.
@@ -308,9 +308,9 @@ unavailable groups in knowledge types (§6); they do not default them to zero.
 | Counts and home | `cPlanet/cFleet/cShDef/cshdefSB`, `idPlanetHome`, `wScore` | Counts summarize the loaded dataset/detail and can be temporarily stale during mutation. Home records the starting world; do not demand its continued ownership. `wScore` is not the full i32 SCORE result. |
 
 Evidence: PLAYER/GAME in [structs.h](../src/core/structs.h), `GenerateWorld`,
-`InitBattlePlan` in [create.c](../src/core/create.c), `FRunLogRecord` in
-[log.c](../src/core/log.c), research in [research.c](../src/core/research.c)
-and `UpdateResearchStatus` in [turn2.c](../src/core/turn2.c).
+`InitBattlePlan` in [create.cpp](../src/core/create.cpp), `FRunLogRecord` in
+[log.cpp](../src/core/log.cpp), research in [research.cpp](../src/core/research.cpp)
+and `UpdateResearchStatus` in [turn2.cpp](../src/core/turn2.cpp).
 
 There is no general zero-PLAYER default: a setup slot copies an M04 preset and
 M05 selectively initializes runtime fields. Creation explicitly clears six
@@ -361,8 +361,8 @@ union, not two simultaneous facts. Full and partial design observations need
 different variants: the latter cannot supply part lists or exact capabilities.
 Default design slots are free until installed; starting templates and replacements
 belong to M05/M11. Existing ships refer to slots, so replacement/deletion must
-honor in-use checks. Source: `FReadShDef` in [file.c](../src/core/file.c),
-`WriteRtShDef` in [save.c](../src/core/save.c), [build.c](../src/core/build.c),
+honor in-use checks. Source: `FReadShDef` in [file.cpp](../src/core/file.cpp),
+`WriteRtShDef` in [save.cpp](../src/core/save.cpp), [build.cpp](../src/core/build.cpp),
 and [S01 design mapping](S01-game-file-records.md#7-ship-and-starbase-designs).
 
 ## 4. Planets, fleets, production and waypoints
@@ -437,8 +437,8 @@ Every entry has `cItem` (10-bit, 0..1023; zero can represent partial/scratch
 state) and `pct` progress (§2.3). `ProductionFits` is a structural contract;
 technology, owner, base capacity, automatic-repeat semantics and refunds are
 owned by M09. It does not promise that every declared code is offered by the UI.
-Source: `InitProduction`, `GetProductionCosts` in [produce.c](../src/core/produce.c),
-`CBuildProdItem` in [turn2.c](../src/core/turn2.c), `ProdItemType` enum.
+Source: `InitProduction`, `GetProductionCosts` in [produce.cpp](../src/core/produce.cpp),
+`CBuildProdItem` in [turn2.cpp](../src/core/turn2.cpp), `ProdItemType` enum.
 
 ### 4.4 Object references and waypoint variants
 
@@ -479,8 +479,8 @@ settings have proposed valid range 0..100. “Set waypoint” sets the amount at
 the endpoint, not a waypoint index or target ID. Fuel dunnage implements the
 optimal-fuel path; it is not an eleventh action. Arguments for all/none/dunnage
 have no independent logical meaning. See `SatisfyOrders` in
-[turn3.c](../src/core/turn3.c), `DeleteWpFar` in
-[ship.c](../src/core/ship.c), [shipui.c](../src/ui/shipui.c) controls, and
+[turn3.cpp](../src/core/turn3.cpp), `DeleteWpFar` in
+[ship.cpp](../src/core/ship.cpp), [shipui.cpp](../src/ui/shipui.cpp) controls, and
 [S01 waypoints](S01-game-file-records.md#9-snapshot-waypoints).
 The [M10 transport adapter](M10-fleet-operations.md#314-native-mapping-and-evidence)
 now retains raw packed actions separately and maps supported codes into this
@@ -512,9 +512,9 @@ key/entity agreement and the total allocation bound. Neither proves movement,
 detonation, packet decay or trader reward algorithms. It is not valid to apply
 full-host pairing to a filtered player file.
 
-Sources: `LpthNew` in [thing.c](../src/core/thing.c), `MoveThings` and salvage
-creation in [turn.c](../src/core/turn.c), `GenerateWorld` in
-[create.c](../src/core/create.c), `FWriteDataFile` in [save.c](../src/core/save.c),
+Sources: `LpthNew` in [thing.cpp](../src/core/thing.cpp), `MoveThings` and salvage
+creation in [turn.cpp](../src/core/turn.cpp), `GenerateWorld` in
+[create.cpp](../src/core/create.cpp), `FWriteDataFile` in [save.cpp](../src/core/save.cpp),
 [THING record adapters](S01-game-file-records.md#13-scores-and-things).
 
 ## 6. Knowledge, messages, scores and battles
@@ -555,8 +555,8 @@ rather than applying a generic merge that changes the observed game.
 observations; signed/wrapped history and future-import policy are S01 concerns.
 
 Source: `FReadPlanet`, `FReadFleet`, `FReadShDef`, history handling in
-[file.c](../src/core/file.c); `FWriteDataFile` and `FWriteDataFile` in
-[save.c](../src/core/save.c); [S01 validation](S01-game-file-validation.md).
+[file.cpp](../src/core/file.cpp); `FWriteDataFile` and `FWriteDataFile` in
+[save.cpp](../src/core/save.cpp); [S01 validation](S01-game-file-validation.md).
 
 ### 6.2 Results and communications
 
@@ -637,7 +637,7 @@ seed alone omits some of those inputs.
 For positive c it takes a modulo, without a uniform-distribution guarantee.
 The exact recurrence and C wrap boundaries are in
 [M03 §4.1](M03-new-game-wizard.md#41-arithmetic-conventions-and-rng), traced to
-[utilgen.c](../src/core/utilgen.c). Dafny `Draw` models normalized seeds
+[utilgen.cpp](../src/core/utilgen.cpp). Dafny `Draw` models normalized seeds
 `0<s1<2147483563`, `0<s2<2147483399` and signed-i16 bounds. Under those
 preconditions it proves next-state validity and the return range. It makes no
 claim about arbitrary negative/corrupt seed states or C-level equivalence.
@@ -657,9 +657,9 @@ without bounds checks in C; the proposed preconditions are depth<4 for push,
 depth>0 for pop. `PushPopRestores` proves exact logical restoration.
 
 Source: `Randomize/Randomize2/Random/PushRandom/PopRandom` in utilgen.c,
-startup in [host.c](../src/host/host.c) / [stars.c](../src/ui/stars.c),
+startup in [host.cpp](../src/host/host.cpp) / [stars.cpp](../src/ui/stars.cpp),
 `CreateTutorWorld/GenNewGameFromFile` in create.c, `FGenerateTurn` in turn.c,
-and isolated drawing context in [utilui.c](../src/ui/utilui.c).
+and isolated drawing context in [utilui.cpp](../src/ui/utilui.cpp).
 
 ### 8.2 Lifetime inventory
 
@@ -676,13 +676,13 @@ and isolated drawing context in [utilui.c](../src/ui/utilui.c).
 | Application/S02 | INI, window arrangement, presets, remembered game/player | Outlives a game, can remember identity but not live pointers. |
 | File operation/S01/S04 | `hf`, current header/buffer, XOR state, version and error flags | Scoped to I/O; not simulation state. Failure cleanup and retries are entry-point-specific. |
 
-`DestroyCurGame` in [file.c](../src/core/file.c) calls message completion/save
+`DestroyCurGame` in [file.cpp](../src/core/file.cpp) calls message completion/save
 prompt, resets game heaps and pointers, clears counts, logs, scores/battles,
 AI pointer, game identity/settings selection and report/link validity. It may
 retain selected identity in INI first. `InitGameStuff` in
-[turn.c](../src/core/turn.c) creates application-held log/message/report buffers.
+[turn.cpp](../src/core/turn.cpp) creates application-held log/message/report buffers.
 Neither routine is a blanket zeroing of every global or a promise to roll back
-an interrupted generation. See [FGenerateTurn](../src/core/turn.c) for failure
+an interrupted generation. See [FGenerateTurn](../src/core/turn.cpp) for failure
 cleanup and reload; [S01 recovery](S01-game-file-formats.md) for disk outcomes.
 
 ## 9. Formal verification and acceptance
@@ -727,10 +727,10 @@ visibility/noninterference, gameplay transitions, battle results, generation
 termination, or crash-safe publication. No `assume`, axiom, disabled-verification
 attribute or unimplemented proof body is needed.
 
-Existing C evidence to retain: [test_utilgen.c](../tests/unit/test_utilgen.c),
-[test_util.c](../tests/unit/test_util.c), [test_ship.c](../tests/unit/test_ship.c),
-[test_log.c](../tests/unit/test_log.c), [test_save.c](../tests/unit/test_save.c),
-[test_native_files.c](../tests/unit/test_native_files.c), and the
+Existing C evidence to retain: [test_utilgen.cpp](../tests/unit/test_utilgen.cpp),
+[test_util.cpp](../tests/unit/test_util.cpp), [test_ship.cpp](../tests/unit/test_ship.cpp),
+[test_log.cpp](../tests/unit/test_log.cpp), [test_save.cpp](../tests/unit/test_save.cpp),
+[test_native_files.cpp](../tests/unit/test_native_files.cpp), and the
 [native regression suite](../tests/scaffold/REGRESSION.md). Their existence is
 not a formal connection between C and Dafny. Neither native nor frozen original
 baselines are modified by this specification.
@@ -853,8 +853,8 @@ Trace: [S06-US01/AC01](#s06-us01), [US03/AC04](#s06-us03),
 [canonical contracts](S06-state-specification.dfy): `FleetId`, `DesignId`,
 `PlanetFits`, `FleetFits`, `HostTopology`; extension `FPlayer`.
 Evidence: [structs.h](../src/core/structs.h) `GAME`, `PLAYER`, `PLANET`, `FLEET`,
-`SHDEF`, `BTLPLAN`; [util.c](../src/core/util.c) `LpflNew`, `LpplFromId`, `LpflFromId`;
-[create.c](../src/core/create.c) `GenerateWorld`.
+`SHDEF`, `BTLPLAN`; [util.cpp](../src/core/util.cpp) `LpflNew`, `LpplFromId`, `LpflFromId`;
+[create.cpp](../src/core/create.cpp) `GenerateWorld`.
 
 ```mermaid
 erDiagram
@@ -922,8 +922,8 @@ Trace: [S06-US03](#s06-us03), [waypoints](#44-object-references-and-waypoint-var
 [canonical contracts](S06-state-specification.dfy): `ObjectRef`, `Task`,
 `WaypointFits`, `ThingPayload`, `ThingFits`, `WormholePairs`.
 Evidence: [structs.h](../src/core/structs.h) `ORDER`, `THING`, task/thing unions;
-[ship.c](../src/core/ship.c) `DeleteWpFar`; [thing.c](../src/core/thing.c) `LpthNew`;
-[turn3.c](../src/core/turn3.c) `SatisfyOrders`.
+[ship.cpp](../src/core/ship.cpp) `DeleteWpFar`; [thing.cpp](../src/core/thing.cpp) `LpthNew`;
+[turn3.cpp](../src/core/turn3.cpp) `SatisfyOrders`.
 
 ```mermaid
 classDiagram
@@ -997,9 +997,9 @@ Trace: [S06-US02](#s06-us02), [US04](#s06-us04),
 [lifetimes](#82-lifetime-inventory), [canonical contracts](S06-state-specification.dfy):
 `Knowledge`, `PopulationView`, `BattleEventIndicesFit`; extensions `DesignView`,
 `FleetView`, `Score`, `Held`, `FLiveReference`, `DestroySession`.
-Evidence: [file.c](../src/core/file.c) `FReadPlanet`, `FReadFleet`, `FReadShDef`;
-[save.c](../src/core/save.c) `SetVisiblePlanFleet`, `FWriteDataFile`;
-[file.c](../src/core/file.c) `DestroyCurGame`.
+Evidence: [file.cpp](../src/core/file.cpp) `FReadPlanet`, `FReadFleet`, `FReadShDef`;
+[save.cpp](../src/core/save.cpp) `SetVisiblePlanFleet`, `FWriteDataFile`;
+[file.cpp](../src/core/file.cpp) `DestroyCurGame`.
 
 ```mermaid
 classDiagram

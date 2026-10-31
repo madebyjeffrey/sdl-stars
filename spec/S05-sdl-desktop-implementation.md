@@ -65,7 +65,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Message delivery and filtering
 
-[message.c](../compat/win32/src/message.c) accepts `PostMessageA` only from the
+[message.cpp](../compat/win32/src/message.cpp) accepts `PostMessageA` only from the
 main thread and for a live window or a thread message (`CanPost`). Worker work
 uses the SDL event bridge; it must not bypass lifetime validation. `Motion`
 coalesces consecutive input mouse-move messages only when target, message code
@@ -85,7 +85,7 @@ message. Do not treat every false/negative result as an ordinary empty queue.
 
 ### Timers, capture, focus and destruction
 
-[timer.c](../compat/win32/src/timer.c) clamps intervals to 10–2147483647 ms
+[timer.cpp](../compat/win32/src/timer.cpp) clamps intervals to 10–2147483647 ms
 (`TimerPeriod`), gives thread timers their own IDs and keeps at most one pending
 message per timer. `Due` requires the timer to be due, eligible for the filter
 and not already queued. The next due time advances from dispatch/generation time,
@@ -206,7 +206,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[compatibility source](../compat/win32/src), [message queue](../compat/win32/src/message.c), [timer tests](../tests/compat/win32_timers.c), [capture tests](../tests/compat/win32_capture.c), [help tests](../tests/compat/win32_help.c), and [SDL development guide](../docs/SDL3-DEVELOPMENT.md). Passing dummy tests must be reported separately from visible/native acceptance.
+[compatibility source](../compat/win32/src), [message queue](../compat/win32/src/message.cpp), [timer tests](../tests/compat/win32_timers.inc), [capture tests](../tests/compat/win32_capture.inc), [help tests](../tests/compat/win32_help.cpp), and [SDL development guide](../docs/SDL3-DEVELOPMENT.md). Passing dummy tests must be reported separately from visible/native acceptance.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

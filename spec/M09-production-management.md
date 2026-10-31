@@ -84,8 +84,8 @@ capabilities and object-creation failures have distinct outcomes.
 
 ### 3.1 Open, edit and close
 
-Evidence: [produce.c](../src/core/produce.c), `InitProduction`,
-`FinishProduction`; [produceui.c](../src/ui/produceui.c),
+Evidence: [produce.cpp](../src/core/produce.cpp), `InitProduction`,
+`FinishProduction`; [produceui.cpp](../src/ui/produceui.cpp),
 `ChangeProduction`, `ProductionDlg` / `ProdCommandHandler`. Models: `Row`, `Fits`, `Quantum`, `AddCount`, `Availability`,
 `CanInsert`, `Remove`, `Swap`, `Editor`, `Finish`.
 
@@ -131,7 +131,7 @@ The inputs identify actual getters and fields: signed 16-bit `CMaxFactories`,
 installed counts; 5-bit scanner; 4-bit base index (must be <10 when a base is
 installed); unsigned 16-bit design mass and construction capacity; design
 free/gift flags; availability result and primary trait. These values are supplied
-projections from [planet.c](../src/core/planet.c), `FLookupPart`, hull lookup and live design arrays.
+projections from [planet.cpp](../src/core/planet.cpp), `FLookupPart`, hull lookup and live design arrays.
 Their full calculation/reference/lifetime refinement remains M08/M11/M19/S03/S06
 work. The model does not replace those rules with independently invented formulas.
 
@@ -168,7 +168,7 @@ catalogue entries. A missing source selection does nothing. It copies the raw
 source row and requests 1 normally, 10 with Shift, 100 with Control, or 1020 with
 both (`Quantum`); modifier requests cap to available count. It decrements finite
 availability immediately, before locating a merge, checking row limits or
-reallocating through [memory.c](../src/core/memory.c). Availability 1023 remains unlimited. Invalid supplied source ranks
+reallocating through [memory.cpp](../src/core/memory.cpp). Availability 1023 remains unlimited. Invalid supplied source ranks
 can select an inactive allocated entry; a no-modifier request from its zero
 count wraps availability to 1023. A physical index beyond the catalogue is an
 explicit undefined access boundary. Neither is a normal list selection.
@@ -227,7 +227,7 @@ distinct saved/working ownership, header access and native lifetime evidence.
 | Direct Clear | The colony-pane button first requires YES from its confirmation. `ChangeProduction(TRUE)` then bypasses initializer and modal setup/cleanup, assigns `fSuccess=1` and uses the same finish path. With the expected null working global it installs no queue and leaves research unchanged; it does **not** force a nonnull stale working pointer to null before finishing. Valid entry/global state is a caller obligation. |
 | Allocation escape | Free a nonnull working queue, null the global, end a live production dialog with result zero, then zero the handle/clear `fDlgUp`, alert, restore the previous allocation-error environment and return FALSE. This does not restore research or reverse an earlier commit. If the escape occurs after transfer to the selected queue, the global is already null and recovery does not free that transferred pointer. |
 
-`FLookupPlanet` in [util.c](../src/core/util.c) is not an atomic assignment: its write path logs changes,
+`FLookupPlanet` in [util.cpp](../src/core/util.cpp) is not an atomic assignment: its write path logs changes,
 allocates/copies the persistent queue and can call the tutorial; its selected
 read path uses `FDupPlanet`. The [S06 planet editor companion](S06-planet-editor-contracts.md)
 now specifies queue/prefix copying, entry dispatch and allocation effects, with
@@ -380,7 +380,7 @@ M11 quote inputs, including source widths, mixed player contexts and the
 no-default incoming-buffer path. The older scalar rules below are arithmetic
 projections; they do not imply native equivalence outside their no-wrap domains.
 
-Evidence: `GetProductionCosts`, `EstimateItemProdSched` in [produce.c](../src/core/produce.c).
+Evidence: `GetProductionCosts`, `EstimateItemProdSched` in [produce.cpp](../src/core/produce.cpp).
 Models: `AlchemyCost`, `TerraformCost`, `ChangedHullCost`, `ChangedSlotCost`,
 `BaseCost`; M11 part/hull pricing. Integer divisions and their order are retained.
 
@@ -418,7 +418,7 @@ fleet flags have explicit [effect boundaries](M09-production-forecast.md#local-c
 
 ### 3.4 Host execution and paid progress
 
-Evidence: [turn2.c](../src/core/turn2.c), `Produce`, `CBuildProdItem`,
+Evidence: [turn2.cpp](../src/core/turn2.cpp), `Produce`, `CBuildProdItem`,
 `FBuildObject`; models `Research`, `Paid`, `Charge`, `DimensionPercent`,
 `Progress`, `CanComplete`, `Result`.
 
@@ -486,7 +486,7 @@ All criteria below describe Observed behavior, including current limitations.
 | <a id="m09-ac31"></a>M09-AC31 / US02 | Given a known four-word quote, nonzero single-item mode preserves it even for count zero; quantity mode multiplies all four dimensions modulo 2^32. | `Cost`, `Scale`, `ScaleIdentity` in [native costs](dafny/M09-costs.dfy); `GetProductionCosts`. | General scale properties, width witnesses and [source matrix](../tests/spec/check_production_cost_source.py); actual quote extraction remains E09-2. |
 | <a id="m09-ac32"></a>M09-AC32 / US02 | Given an existing same-hull base, subtract the signed bare-hull quote, then credit only paired occupied slots through the old base's slot bound in source order. | `Ship`, `Slots`; [design calculation](M09-production-costs.md#design-costs-and-ordered-base-credits). | Checked vector/monotonicity contracts and deterministic multi-slot source cases. Above-16 slot bounds are undefined-domain markers, not native errors. |
 | <a id="m09-ac33"></a>M09-AC33 / US02 | Given raw new/old totals 65535 on different base hulls, the native intermediate is 32767, while the unbounded scalar projection is 32768. | `ChangedHull`; native signed half-old/difference narrowing. | Formal witness and all-word changed-hull source cases; no replacement of stored design costs. |
-| <a id="m09-ac34"></a>M09-AC34 / US02 | Given paired slots, narrow signed quote products and the 3/7 or 2/8 factors before division; apply each unsigned credit without increasing the remaining total. | `SlotCost`, `Credit`, `NativeCreditEquivalent`, `Slots`; [source](../src/core/produce.c). | General native-credit equivalence and monotonic pass; 65,536-word × match/count matrices in [source fixtures](../tests/spec/check_production_cost_source.py). |
+| <a id="m09-ac34"></a>M09-AC34 / US02 | Given paired slots, narrow signed quote products and the 3/7 or 2/8 factors before division; apply each unsigned credit without increasing the remaining total. | `SlotCost`, `Credit`, `NativeCreditEquivalent`, `Slots`; [source](../src/core/produce.cpp). | General native-credit equivalence and monotonic pass; 65,536-word × match/count matrices in [source fixtures](../tests/spec/check_production_cost_source.py). |
 | <a id="m09-ac35"></a>M09-AC35 / US02 | Given different colony and pricing players, packet/Claim Adjuster behavior uses colony primary trait; factory/mine costs, Total Terraforming, Inner Strength and base ISB/AR use pricing-player data. | `Inputs`, `Planetary`, `Ship`; [context table](M09-production-costs.md#planetary-costs-and-player-contexts). | Native cross-player trait/tutorial matrix and source race accessors; live owner/pricing identities remain an adapter obligation. |
 | <a id="m09-ac36"></a>M09-AC36 / US02 | Given a free valid design, return four zeros before part quotation; invalid roster/current-base/slot accesses remain outside the defined native result domain. | `Ship`, native early return and explicit marker cases. | Formal index marker and native free-design/zero-quote fixtures; no new validation or error handling claimed. |
 | <a id="m09-ac37"></a>M09-AC37 / US02 | Given an unhandled item and an initialized output buffer, preserve those unit words and apply requested quantity; other nonfleet categories follow the same planetary switch. | `Planetary`, `Cost`; [quantity and observations](M09-production-costs.md#quantity-and-observations). | Native all-item/nonfleet cases and checked unknown-item vectors. Indeterminate input-buffer outcomes remain undefined. |
@@ -543,8 +543,8 @@ All criteria below describe Observed behavior, including current limitations.
 | E09-3 | Forecast copy preparation, full controller, native budget/query arithmetic, partial/row order, post-build state, output aliasing and cleanup now have checked contracts/native fixtures. M08/M19 now specify native capacity/resources/installations/growth and numeric handoffs. The full numeric mining/depletion/AR remote loop now has [M19 contracts](M19-mining-and-depletion.md); source/copied-state/helper frames, builder termination/refinement, pointer/heap frames and presentation remain open. GAP-15 copy extents and GAP-16 RNG/live-fleet/message effects are explicit. | M09/M08/M12/M19/S04/S06/S05; [forecast companion](M09-production-forecast.md) names each missing adapter and caller-context qualification. No global purity or end-to-end simulation claim. |
 | E09-4 | The complete CBuild numeric/control step relation now covers native caps, paid amounts, cumulative blocks, alchemy retries, partials and caller/status/message publication. Alchemy termination over declared game inputs, complete native helper/pointer/callback/object refinement, annual/planet loop state and failure frames remain open. Applied family algorithms and physical queue invalidation now have M19/M10/M09 contracts. Host entry/resource, manual validation, row removal/prepend and post-application routing now have checked caller contracts. | M09/M18/M19; [builder contract](M09-production-builder.md), checked transition/accounting properties and native differential vectors; [host execution companion](M09-production-execution.md), complete callback/Produce/FBuildObject state and real fleet-capacity/auto-policy integration scenarios. |
 
-Evidence: named functions above; [Continue workflow harness](../tests/compat/win32_client_startup.c)
-for ordinary production commit/cancel/reopen; [turn2 tests](../tests/unit/test_turn2.c)
+Evidence: named functions above; [Continue workflow harness](../tests/compat/win32_client_startup.cpp)
+for ordinary production commit/cancel/reopen; [turn2 tests](../tests/unit/test_turn2.cpp)
 for population-score timing, not a general production test suite; broad native
 regression and partial tutorial. Runtime results are recorded in the linked
 collection run, independently of formal proofs.

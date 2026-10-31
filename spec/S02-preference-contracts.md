@@ -20,12 +20,12 @@ This inventory covers all application calls to `GetPrivateProfile*` and
 The current bare profile filename is **StarsUtf8.ini**. Unused string IDs such as
 SoundFX, Music, Tracks and GlobalSettings do not establish live preferences.
 
-Sources: [init.c](../src/ui/init.c) `ReadIniSettings`, `GetIniWinRc`,
-`ReadIniTileSettings`; [mdi.c](../src/ui/mdi.c) `WriteIniSettings`,
-`SetWindowIniString`; [fileui.c](../src/ui/fileui.c) `AddMRUFile`;
-[libraryui.c](../src/ui/libraryui.c) recent-file deletion and Continue;
-[host.c](../src/host/host.c) `FIniValue`, `LIniInt`, `FReadHostIni`;
-[profile.c](../compat/win32/src/profile.c); [field widths](../src/core/structs.h).
+Sources: [init.cpp](../src/ui/init.cpp) `ReadIniSettings`, `GetIniWinRc`,
+`ReadIniTileSettings`; [mdi.cpp](../src/ui/mdi.cpp) `WriteIniSettings`,
+`SetWindowIniString`; [fileui.cpp](../src/ui/fileui.cpp) `AddMRUFile`;
+[libraryui.cpp](../src/ui/libraryui.cpp) recent-file deletion and Continue;
+[host.cpp](../src/host/host.cpp) `FIniValue`, `LIniInt`, `FReadHostIni`;
+[profile.cpp](../compat/win32/src/profile.cpp); [field widths](../src/core/structs.h).
 
 Formal strings denote C string contents with ASCII syntax. For a byte buffer,
 stop at its first NUL before invoking the string model. The source uses C locale
@@ -270,7 +270,7 @@ as lowercase hex, but a universal read/write identity round trip is consequently
 not claimed. Its formatting adapter remains open.
 
 These are persisted preference fields, not validated live-object references.
-`RestoreSelection` in [mdi.c](../src/ui/mdi.c) checks game/player identity,
+`RestoreSelection` in [mdi.cpp](../src/ui/mdi.cpp) checks game/player identity,
 looks up fleets/owned planets, falls back to the home planet or another object,
 and restores eligible messages/tutorial effects. M07/M06 own that consuming
 selection lifecycle, M15/M16 its message/tutorial handoffs. The

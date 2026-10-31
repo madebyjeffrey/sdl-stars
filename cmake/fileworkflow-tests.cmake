@@ -1,5 +1,5 @@
 # The portable chooser replays the same real file workflow as the Linux portal.
-add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.c)
+add_executable(stars-compat-fileworkflow tests/compat/win32_fileworkflow.cpp)
 target_link_libraries(stars-compat-fileworkflow PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-fileworkflow PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-fileworkflow PRIVATE STARS_TEST_FILE_WORKFLOW=1)

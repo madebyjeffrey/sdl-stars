@@ -292,7 +292,7 @@ last seen. 2.6j RC3 ("fleets that split up ... will all be chased down", in
 [26JFIN.txt](26JFIN.txt)) first tries only fleets no other pursuer has taken,
 spreading pursuers over the pieces. The jrc4 binary (`0008:497a`) dropped
 that pass again: every pursuer takes the heaviest matching fleet. 2.8
-follows jrc4 (`tests/unit/test_util.c`).
+follows jrc4 (`tests/unit/test_util.cpp`).
 
 ### Profitable Scrapping — different here
 
@@ -337,7 +337,7 @@ planet state rather than using the production total. WP1 loading can therefore
 lower the published resource score after resources were already produced;
 WP0 unloading next year restores population before production.
 
-**2.8:** confirmed by `tests/unit/test_turn2.c`: two freighters loading
+**2.8:** confirmed by `tests/unit/test_turn2.cpp`: two freighters loading
 50 kT of colonists at a homeworld after production cut the published
 resources from 38 to 33. `Produce` now records each planet's population
 and owner when it finishes, and `CalcPlayerScore` scores a planet with
@@ -355,7 +355,7 @@ farther along a north/south route. The source supports a vertical intersection
 bug, but does not justify a universal immunity when the starting point is
 already inside a field. The list reports a JRC4 fix.
 
-**2.8:** confirmed by `tests/unit/test_utilgen.c` (a vertical route through
+**2.8:** confirmed by `tests/unit/test_utilgen.cpp` (a vertical route through
 a field's center found no intersection) and fixed: a vertical route's
 closest point is level with the field's center (`yI = ptC.y`).
 
@@ -368,7 +368,7 @@ calculation, and there is no obvious blanket horizontal speed-bump exemption.
 The reported east/west-only defect is not yet isolated. The list reports a
 JRC4 fix; do not equate this report with the vertical projection defect above.
 
-**2.8:** `tests/unit/test_turn.c` sends a warp 9 fleet 81 ly east, west,
+**2.8:** `tests/unit/test_turn.cpp` sends a warp 9 fleet 81 ly east, west,
 north and south through another player's speed bump field; it is stopped
 in every direction. Whatever the report saw may have been the vertical
 projection defect, fixed above, or something since changed.
@@ -384,7 +384,7 @@ colonist transfer from an enemy planet. This differs from the intended manual
 transfer restrictions. The list reports a JRC4 fix and a caveat about zip orders
 that include population loading.
 
-**2.8:** confirmed by `tests/unit/test_turn3.c`: a freighter with a Robber
+**2.8:** confirmed by `tests/unit/test_turn3.cpp`: a freighter with a Robber
 Baron scanner loaded 10 kT of colonists from an enemy homeworld by waypoint
 order. The binary's string table has "attempted to shanghai colonists ...
 The attempt was unsuccessful" and the matching fuel message, but never sends
@@ -418,7 +418,7 @@ This supports retaining cheap partial work when the design becomes expensive.
 The delete-and-recreate UltraStation variant depends on builder-close timing
 and remains unconfirmed.
 
-**2.8:** confirmed by `tests/unit/test_log.c`: a starbase design half built
+**2.8:** confirmed by `tests/unit/test_log.cpp`: a starbase design half built
 at a colony kept its 50% when the design was replaced. The host's replay
 of a design change or deletion (`FRunLogRecord`) now clears the progress
 of every queued item of that design on the player's planets, which also
@@ -440,7 +440,7 @@ remainder was lost in space" messages) is never filled: `FRunLogRecord`
 only reaches the code that adds to it for a zero quantity, which it skips.
 Transfers to other players are delivered during replay instead.
 
-**2.8:** confirmed by `tests/unit/test_log.c`: 100 kT of ironium sent from
+**2.8:** confirmed by `tests/unit/test_log.cpp`: 100 kT of ironium sent from
 a homeworld to an AI ship with a 10 kT hold left the ship with 10 kT and
 the planet 100 kT poorer. What doesn't fit now goes back to the source,
 as the "unable to transfer" message says.
@@ -470,7 +470,7 @@ This is integer overflow rather than an identified overwrite of a buffer.
 The reported Space Dock/ISB combination supplies the large armor slot; ISB is
 not an explicit condition in this arithmetic.
 
-**2.8:** confirmed by `tests/unit/test_util.c`: an RS Space Dock with 24
+**2.8:** confirmed by `tests/unit/test_util.cpp`: an RS Space Dock with 24
 Superlatanium had 51018 dp instead of 18250. `dpT` is now 32-bit.
 
 ### ISB Trumps IT Gate Scanning — fixed in 2.8
@@ -487,7 +487,7 @@ the range/visibility arithmetic explains why gate types behave differently.
 **2.8:** the same product appears in all four cloaked-starbase checks
 (`SetVisPFFleets`, two in `SetVisPFPlanets`, `SetVisPFThings`), so any
 scanner range above about 463 ly could fail against a cloaked starbase, not
-only gates. `tests/unit/test_save.c` showed a 600 ly penetrating scanner
+only gates. `tests/unit/test_save.cpp` showed a 600 ly penetrating scanner
 100 ly away only obscuring a starbase with `lVisible` 9000 while seeing one
 with 2500. The product is now 64-bit.
 
@@ -502,7 +502,7 @@ memory beyond the array to be modified. The current `NATIVE` repair uses
 `CplrBattle`, but the supplied precise highest/lowest-player friendly-fire
 scenario has not been reproduced under the repaired code.
 
-**2.8:** `tests/unit/test_battle.c` gives a starbase's default plan one
+**2.8:** `tests/unit/test_battle.cpp` gives a starbase's default plan one
 target player, with a friend of the owner and the target in orbit, for all
 six ways to cast three players in those roles. The starbase attacks only
 its target, and nobody attacks the friend or is attacked by it.
@@ -516,7 +516,7 @@ Gating sets the traveling fleet's `fNoHeal`. WP1 merging precedes healing.
 propagating the deleted source fleet's `fNoHeal`. `HealShips` tests the surviving
 fleet's flag, so a stationary destination can repair the newly merged ships.
 
-**2.8:** confirmed by `tests/unit/test_ship.c`: a damaged fleet marked
+**2.8:** confirmed by `tests/unit/test_ship.cpp`: a damaged fleet marked
 `fNoHeal` merged into another healed fully in `HealShips`. `Merge2Fleets`
 now marks the surviving fleet `fNoHeal` when the merged fleet was.
 
@@ -541,7 +541,7 @@ the owner's Mini Mine Layer and Super Mine Layer hulls from its own explosions.
 Consequently an immune encounter can consume the fleet's one explosion check.
 The exact player-number ordering depends on the `lpThings` traversal order.
 
-**2.8:** confirmed by `tests/unit/test_turn2.c`: a mine layer inside its
+**2.8:** confirmed by `tests/unit/test_turn2.cpp`: a mine layer inside its
 owner's detonating field and another player's took no damage. A fleet
 immune to a detonation is no longer marked `fBombed`, so the next
 detonating field still checks it. The same test found that any detonation
@@ -557,7 +557,7 @@ colonization modules without checking `cItem > 0`. An empty slot retaining its
 module identity can therefore qualify. `FColonizer` is a separate hull-based
 classification and is not proof that the host requires an installed module.
 
-**2.8:** confirmed by `tests/unit/test_turn3.c`: a copy of the colony ship
+**2.8:** confirmed by `tests/unit/test_turn3.cpp`: a copy of the colony ship
 with its module count set to 0 still colonized. The check now requires
 `cItem > 0`.
 
@@ -576,7 +576,7 @@ and the checksum no longer matches. Only a save where the old name was
 longer at the same position is affected. TotalHost rejects these files and
 can rewrite their checksum; see [TOTALHOST.md](TOTALHOST.md).
 
-**2.8:** confirmed by `tests/unit/test_race.c`: a race saved after "Bos"
+**2.8:** confirmed by `tests/unit/test_race.cpp`: a race saved after "Bos"
 was written over "Longnames" failed `FWasRaceFile`. `IRaceChecksum` now
 checksums a copy with the names zeroed after their terminators, as
 `ReadRtPlr` restores them. Files with a bad checksum still fail to load.
@@ -591,7 +591,7 @@ the resulting player data. `GenerateWorld` calls `CreateRandomRace` when
 the reported failure to clear the random setting after deselection has not
 been demonstrated. The supplied report also notes a failed reproduction.
 
-**2.8:** confirmed by `tests/unit/test_race.c`. The Random template is
+**2.8:** confirmed by `tests/unit/test_race.cpp`. The Random template is
 only `ibitRaceAIPlayer`. Leaving the wizard's first page copies the chosen
 template into the race, but with Custom chosen it keeps the race being
 edited, so a race that had been Random kept the bit through every later
@@ -610,7 +610,7 @@ Other stated limits are represented by the 512-fleet checks, 16 ship-design
 and 10 base-design slots, and battle token admission described above; the
 complete 512-minefield allocation limit has not been audited here.
 
-**2.8:** confirmed by `tests/unit/test_ship.c`. A waypoint merge of 32000
+**2.8:** confirmed by `tests/unit/test_ship.cpp`. A waypoint merge of 32000
 and 1000 ships of a design left -32536, and merging all fleets at a
 location (`FFleetMergeAll`, the client's Merge and its log replay) clamped
 the count to 32766 and lost the rest. `Merge2Fleets` now moves only the
@@ -682,7 +682,7 @@ mechanism by which an earlier-processed secondary pursuer can stop its main
 pursuer. The reported ID ordering and own-race restriction need a scenario
 test before being treated as universal constraints.
 
-**2.8:** confirmed by `tests/unit/test_turn.c`: with A chasing B and B
+**2.8:** confirmed by `tests/unit/test_turn.cpp`: with A chasing B and B
 chasing C, all starting together, B never left the start. A pursuer that
 catches a fleet still on its own pursuit now keeps following it with the
 rest of its move, and the caught fleet finishes its pursuit.

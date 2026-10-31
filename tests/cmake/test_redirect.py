@@ -9,7 +9,8 @@ with tempfile.TemporaryDirectory(prefix="stars-test-redirect-") as directory:
     for language in ("C", "CXX"):
         source = pathlib.Path(directory) / language
         source.mkdir()
-        (source / "core.c").write_text('''#include "test_impl.h"
+        suffix = ".c" if language == "C" else ".cpp"
+        (source / ("core" + suffix)).write_text('''#include "test_impl.h"
     #ifndef LATE_SETTINGS
     #error private libraries lost the completed target settings
     #endif
@@ -18,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix="stars-test-redirect-") as directory:
     int CallAlert(void) { return AlertSz(4); }
     int STARS_TEST_IMPL(Random)(int x) { return x + 2; }
     ''')
-        (source / "main.c").write_text('''int CallAlert(void);
+        (source / ("main" + suffix)).write_text('''int CallAlert(void);
     int Random(int x);
     #ifdef TEST_ALERT
     int StarsTestReal_AlertSz(int x);
@@ -30,10 +31,10 @@ with tempfile.TemporaryDirectory(prefix="stars-test-redirect-") as directory:
     ''')
         # A separate translation unit exercises calls into the second substituted
         # implementation. Direct calls from the harness still use its public API.
-        (source / "random.c").write_text('''int Random(int x);
+        (source / ("random" + suffix)).write_text('''int Random(int x);
     int CallRandom(void) { return Random(4); }
     ''')
-        (source / "both.c").write_text('''int CallAlert(void), CallRandom(void);
+        (source / ("both" + suffix)).write_text('''int CallAlert(void), CallRandom(void);
     int AlertSz(int x), Random(int x);
     int StarsTestReal_AlertSz(int x), StarsTestReal_Random(int x);
     int StarsTest_AlertSz(int x) { return StarsTestReal_AlertSz(x) * 2; }
@@ -47,20 +48,19 @@ with tempfile.TemporaryDirectory(prefix="stars-test-redirect-") as directory:
     project(redirect_contract C CXX)
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set_source_files_properties(core.c main.c random.c both.c PROPERTIES LANGUAGE {language})
     set(CMAKE_C_STANDARD 11)
     enable_testing()
     include("{root.as_posix()}/cmake/test-redirect.cmake")
-    add_library(stars_core OBJECT core.c random.c)
+    add_library(stars_core OBJECT core{suffix} random{suffix})
     target_include_directories(stars_core PRIVATE "{root.as_posix()}/src/platform")
-    add_executable(product main.c)
+    add_executable(product main{suffix})
     target_compile_definitions(product PRIVATE EXPECT_ALERT=5)
     target_link_libraries(product PRIVATE stars_core)
-    add_executable(mocked main.c)
+    add_executable(mocked main{suffix})
     target_compile_definitions(mocked PRIVATE TEST_ALERT=1 EXPECT_ALERT=10)
     target_link_libraries(mocked PRIVATE stars_core)
     stars_test_redirect(mocked AlertSz)
-    add_executable(both both.c)
+    add_executable(both both{suffix})
     target_link_libraries(both PRIVATE stars_core)
     stars_test_redirect(both AlertSz)
     stars_test_redirect(both Random)

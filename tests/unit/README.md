@@ -1,6 +1,6 @@
 # Unit tests
 
-Each `test_<name>.c` is an Acutest program linked with the game core and SDL
+Each `test_<name>.cpp` is an Acutest program linked with the game core and SDL
 wrapper UI. `make test-unit` builds the platform SDL preset and runs the game
 unit programs; `CLIENT_PRESET` can override the preset. Use CTest's `-R` filter
 for a subset. Executables are in `<build>/tests-client/sdl_test_<name>`.
@@ -39,7 +39,8 @@ ctest --test-dir dist/sdl-debug -L client --output-on-failure
 The `client` label also runs the real startup/race-wizard input tests on dummy
 and private X11/Openbox displays. See [client testing](../../docs/WIN32-CLIENT.md).
 
-Game and wrapper harnesses compile as C++20 under their original filenames.
+Game and wrapper harnesses compile as C++20 from `.cpp` sources.
+Shared `.inc` vectors also compile independently through Windows SDK C entries.
 Allocation overflow, missing files and short reads exercise typed failure
 handling and scoped cleanup. Independent frozen-layout and real Windows SDK
 reference programs remain C. The separate `win32_exception_callbacks` test
@@ -49,7 +50,7 @@ C++ delivery.
 ## Two kinds of test
 
 - **Function tests** call one game function with crafted inputs, such as
-  `FIntersectCircleLine` in `test_utilgen.c`.
+  `FIntersectCircleLine` in `test_utilgen.cpp`.
 - **Turn tests** build a game and generate turns with the helpers in
   `stars_test.h`: `FStarsTestInit`, `FStarsTestDir` (a fresh
   `work/<name>` directory), `FStarsTestNewGame` (a tiny universe with the
@@ -58,12 +59,12 @@ C++ delivery.
   change the loaded game (`LpplStarsTestHomeworld`, `LpflStarsTestAddFleet`,
   or directly) and save it with `FStarsTestSaveHost`. AI players give their
   orders while one turn generates and the next turn carries them out, so AI
-  behavior needs two generations. `test_turn.c` shows the plumbing and
-  `test_ai4.c` a full example.
+  behavior needs two generations. `test_turn.cpp` shows the plumbing and
+  `test_ai4.cpp` a full example.
 
 ## Golden files
 
-`test_report.c` checks the universe, planet and fleet dumps against
+`test_report.cpp` checks the universe, planet and fleet dumps against
 `tests/unit/golden`, so the Windows build and `stars-host` keep writing
 the same files. If a change to the dumps is intended, regenerate them from
 the Windows build and commit them with the change:
@@ -79,7 +80,7 @@ fails on the code before the fix. Name the test after the behavior it
 checks and put it in the file for the source file that holds the fix.
 The game's message boxes are recorded in `cStarsTestAlert`/`szStarsTestAlert`
 instead of shown (Yes/No boxes answer Yes). SDL test builds redirect `AlertSz`
-to `StarsTest_AlertSz`; host builds supply `IdAlertBox`. `test_native_ports.c`
+to `StarsTest_AlertSz`; host builds supply `IdAlertBox`. `test_native_ports.cpp`
 also substitutes record/file operations.
 
 ## Portable test adapters

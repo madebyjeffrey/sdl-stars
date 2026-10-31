@@ -4,7 +4,7 @@ The SDL client now has a native Windows x64 build using the same source wrapper
 as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
 `src/platform/fileio.cpp`, and its wrapper symbols are namespaced
 to avoid SDK import collisions. Native Unicode open/save lives in the separate
-`filedialog_windows_sdk.c` bridge. This does not change disk layouts or core
+`filedialog_windows_sdk.cpp` bridge. This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 
@@ -106,12 +106,12 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   locals (marked `NATIVE`). Keep this split when adding Win32 calls.
   `POINT16` is in `native.h`; its conversions (`GetCursorPos16`,
   `ScreenToClient16` and the like) are in `nativeui.h`.
-- **Other helpers** (`nativeui.c`): `GetTextExtent` keeps Win16's packed
+- **Other helpers** (`nativeui.cpp`): `GetTextExtent` keeps Win16's packed
   width/height result, which about 140 callers split with `LOWORD`/`HIWORD`;
   `FrameWndProcDeferred` posts the frame's restore and maximize commands back
   to the message loop so Wine's macOS driver can't deadlock the
   load-or-unsubmit `MessageBox`.
-- **Platform layer** (`native.h`/`native.c`): the game code reaches files,
+- **Platform layer** (`native.h`/`native.cpp`): the game code reaches files,
   the clock and directories only through `HfOpenFile`, `CbReadFile`,
   `CbWriteFile`, `LSeekFile`, `CbFileSize`, `CloseFile`, `FFileExists`,
   `FFileReadOnly`, `MakeDir`, `DwTickCount` and `GetDateTimeSz`, and builds
@@ -129,9 +129,9 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   Raw game writes flush before returning to preserve immediate error reporting
   through the legacy void close interface. Process logging and third-party
   libraries' internally owned files remain outside this service. The game's
-  heaps (`memory.c`) retain their `calloc`/`realloc` allocation geometry under an
+  heaps (`memory.cpp`) retain their `calloc`/`realloc` allocation geometry under an
   explicit chain owner and C++20 typed lifetime operations.
-- **Formatting and rounding** (`native.c`): the game code formats with
+- **Formatting and rounding** (`native.cpp`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)
   and, like `wsprintf`, writes at most 1024 bytes,
@@ -154,7 +154,7 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   leaves a pending quit message for the outer loop without opening another page.
   Modal dialogs request native input focus after painting and showing, then
   assign logical control focus; no-activate windows are excluded.
-- **Toolchain parity (keep):** `qsort16` (`native.c`) reproduces the
+- **Toolchain parity (keep):** `qsort16` (`native.cpp`) reproduces the
   Win16 CRT's tie order. The remaining casts and operation boundaries are
   deliberate, so don't simplify them without checking turn results.
 - **Warnings kept** (`-Wall -Wextra -Wno-unused-parameter`, 118):

@@ -28,15 +28,17 @@ def snapshot(destination, fDouble, core):
     destination.mkdir()
     hashes = {}
     cCasts = 0
+    historical = precision_reference.source_names()
     shutil.copyfile(ROOT / "CMakeLists.txt", destination / "CMakeLists.txt")
     for path in sorted((ROOT / "src").rglob("*")):
-        if not path.is_file() or path.suffix not in (".c", ".h"):
+        if not path.is_file() or path.suffix not in (".c", ".cpp", ".h"):
             continue
         relative = path.relative_to(ROOT)
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        if path.suffix == ".c":
-            source = precision_reference.read_source(path.name)
+        if path.suffix in (".c", ".cpp"):
+            source = (precision_reference.read_source(path.name)
+                      if path.with_suffix(".c").name in historical else path.read_text())
             hashes[str(relative)] = hashlib.sha256(source.encode()).hexdigest()
             if relative.as_posix() in core:
                 cCasts += source.count("long double")

@@ -16,10 +16,10 @@ from check_s02_state_source import between
 
 
 def main():
-    mdi = (ROOT / "src/ui/mdi.c").read_text()
+    mdi = (ROOT / "src/ui/mdi.cpp").read_text()
     post = between(mdi, "        case IDM_FRAME_POST_OPEN:\n", "        case IDM_FLEET_DELETE_WAYPOINT:")
     post = post[post.index("\n") + 1:]
-    opened = function("src/ui/mdi.c", "int16_t FOpenGame(")
+    opened = function("src/ui/mdi.cpp", "int16_t FOpenGame(")
     tail = opened[opened.index("    CreateChildWindows();") + len("    CreateChildWindows();"):]
     declarations = r'''
 #include <assert.h>
@@ -88,14 +88,14 @@ static void reset(void) {
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s; trace=%s\n",checks,#x,trace);return 1;} } while(0)
 '''
     bodies = "\n".join([
-        function("src/core/msg.c", "int16_t IMsgNext("),
-        function("src/core/msg.c", "int16_t IMsgPrev("),
-        function("src/core/util.c", "PLANET *LpplFromId("),
-        function("src/core/util.c", "FLEET *LpflFromId("),
-        function("src/core/util.c", "int16_t FFindSomethingAndSelectIt(").replace(
+        function("src/core/msg.cpp", "int16_t IMsgNext("),
+        function("src/core/msg.cpp", "int16_t IMsgPrev("),
+        function("src/core/util.cpp", "PLANET *LpplFromId("),
+        function("src/core/util.cpp", "FLEET *LpflFromId("),
+        function("src/core/util.cpp", "int16_t FFindSomethingAndSelectIt(").replace(
             "int16_t FFindSomethingAndSelectIt()", "static int16_t findBody(void)"),
         'static int16_t FFindSomethingAndSelectIt(void) { event("F;");return findBody(); }',
-        function("src/ui/mdi.c", "void RestoreSelection("),
+        function("src/ui/mdi.cpp", "void RestoreSelection("),
         "static void postOpen(void) { do {\n" + post + "} while(0); }",
         "static void SendMessage(void *hwnd,int message,int command,int param) { assert(hwnd==hwndFrame && message==WM_COMMAND && command==IDM_FRAME_POST_OPEN && param==0);postOpen(); }",
         "static int finishOpen(void) { int16_t grobjIni;\n" + tail,
@@ -170,7 +170,7 @@ int main(void) {
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined",
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined",
                         "-fno-sanitize-recover=undefined", str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

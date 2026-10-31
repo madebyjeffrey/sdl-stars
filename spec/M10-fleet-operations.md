@@ -97,10 +97,10 @@ turn report the actual result.
 
 ### 3.1 Selection, names and order controls
 
-Evidence: [ship.c](../src/core/ship.c), `SelectAdjFleet`;
-[shipui.c](../src/ui/shipui.c), `ShipCommandProc`, `FillFleetCompLB`,
+Evidence: [ship.cpp](../src/core/ship.cpp), `SelectAdjFleet`;
+[shipui.cpp](../src/ui/shipui.cpp), `ShipCommandProc`, `FillFleetCompLB`,
 `FillOrdersLB`, `UpdateOrdersDDs`, `ClickInShipOrders`;
-[ship2ui.c](../src/ui/ship2ui.c), `RenameDlg`, `ZipOrderDlg`.
+[ship2ui.cpp](../src/ui/ship2ui.cpp), `RenameDlg`, `ZipOrderDlg`.
 Rules: S06 typed `Task`, `Action`, `Waypoint`; S01 order effects; adapter E10-1.
 
 Owned previous/next follows the fleet report ordering and wraps. Selecting a
@@ -129,7 +129,7 @@ failures remain visible in S02's persistence contract.
 #### 3.1.1 Applying transport presets
 
 Evidence: `ClickInShipOrders`, `DrawShipWayPtOrders`, `UpdateOrdersDDs` and
-`ShipCommandProc` in [shipui.c](../src/ui/shipui.c). The transport task's drawing
+`ShipCommandProc` in [shipui.cpp](../src/ui/shipui.cpp). The transport task's drawing
 path exposes the preset diamond. Its click handler assumes live selected-fleet
 and active-waypoint storage; the inner command does not recheck the task tag.
 The [command model](dafny/M10-presets.dfy) separates the initial write from the
@@ -213,9 +213,9 @@ The parser model uses bounded ASCII/C-locale text; other locale classification
 and invalid UTF-8/control-buffer behavior remain S04/S05 adapters.
 
 `UpdateOrdersDDs` writes the selected row's quantity into the edit control.
-The actual [SDL edit control](../compat/win32/src/edit.c), `WM_SETTEXT` and
+The actual [SDL edit control](../compat/win32/src/edit.cpp), `WM_SETTEXT` and
 `ChangedEdit`, synchronously sends EN_CHANGE for a live single-line edit; the
-[control creation](../src/ui/planetui.c) uses that style. Consequently a refresh
+[control creation](../src/ui/planetui.cpp) uses that style. Consequently a refresh
 can normalize one selected quantity, even if its action disables user editing.
 The amount handler writes back once normally. If clamping replaces text, the
 nested notification writes back once and the outer handler writes again. A
@@ -325,9 +325,9 @@ behavior. Target redirects on deletion/merge are S01/S06 integration obligations
 ### 3.5 Fuel estimates and host execution
 
 Evidence: `EstFuelUse`, `IFindIdealWarp`, `IWarpForWaypoint`,
-`LFuelUseToWaypoint` in ship.c; [ship2.c](../src/core/ship2.c),
+`LFuelUseToWaypoint` in ship.c; [ship2.cpp](../src/core/ship2.cpp),
 `FStargateJump`, `MdCalcStargateDamage`, task/route helpers;
-[turn.c](../src/core/turn.c), [turn3.c](../src/core/turn3.c).
+[turn.cpp](../src/core/turn.cpp), [turn3.cpp](../src/core/turn3.cpp).
 Models: `Efficiency`, `FuelTerm`, `FuelTotal`, `Range`, plus existing
 [M03 scoring/speed](dafny/M03-scoring.dfy); ordered/full simulation E10-4.
 
@@ -404,9 +404,9 @@ player merge/split, combat or full native routing/allocator refinement.
 | E10-3 | Split allocation/destruction, bulk-merge policy, packed damage averaging beyond the separate construction-stack contract, proportional cargo and binary64 threshold/remainder order, redirects. `Merge` covers only per-design two-fleet overflow. | M10/S06; full composition transition model and conservation/rounding fixtures. |
 | E10-4 | Fuel cargo assignment/distance/floating branches/warp recommendation; gates and gate damage; arrival/repeat/auto-target helpers; remote mining task eligibility/cancellation/phase integration (numeric capacity and mineral/depletion effects now specified in the [mining companion](M19-mining-and-depletion.md)), colonization, transport, scrap, patrol, route, mine-laying/sweeping, ownership transfer and phase interactions. All are representable future extraction, not unspecified successful tasks. | M10/M19/M18/M14; task-by-task execution companions with RNG, arithmetic and prerequisite traces. |
 
-Evidence: [ship unit tests](../tests/unit/test_ship.c) cover two-fleet overflow,
+Evidence: [ship unit tests](../tests/unit/test_ship.cpp) cover two-fleet overflow,
 bulk-merge overflow retention, no-heal and waypoint/warp regressions. The
-[client harness](../tests/compat/win32_client_startup.c) has cargo reversal/cancel,
+[client harness](../tests/compat/win32_client_startup.cpp) has cargo reversal/cancel,
 waypoint, repeat/preset, split and merge workflows; its fleet branch is run
 explicitly in the collection verification. Native regression covers host outcomes
 indirectly; it does not enumerate all task/trait/target combinations.

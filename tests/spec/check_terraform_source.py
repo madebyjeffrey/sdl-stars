@@ -201,7 +201,7 @@ int16_t FLookupPart(PART *part){
     part->SetPterra(scripted+part->hs.iItem);return (cfg[2]&(1<<part->hs.iItem))?1:0;
 }
 '''+bodies[end:]
-    bodies+='\n'+function('src/core/planet.c','int16_t FCanTerraformLppl(').replace('int16_t FCanTerraformLppl(','static int16_t NativeCan(',1)
+    bodies+='\n'+function('src/core/planet.cpp','int16_t FCanTerraformLppl(').replace('int16_t FCanTerraformLppl(','static int16_t NativeCan(',1)
     bodies+=r'''
 int16_t FCanTerraformLppl(PLANET *p,int16_t *low,int16_t *high,int16_t *cost,int16_t help){
     // Supply initialized local outputs for observation; Best never reads them
@@ -211,10 +211,10 @@ int16_t FCanTerraformLppl(PLANET *p,int16_t *low,int16_t *high,int16_t *cost,int
     for(int i=0;i<3;i++){observedLow[i]=low[i];observedHigh[i]=high[i];observedCost[i]=cost[i];}return result;
 }
 '''
-    bodies+='\n'+function('src/core/planet.c','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(','static int16_t NativeHabitat(',1)
-    bodies+='\n'+function('src/core/planet.c','int16_t IBestTerraform(').replace('int16_t IBestTerraform(','static int16_t NativeBest(',1)
-    bodies+='\n'+function('src/core/planet.c','int16_t PctPlanetOptValue(')
-    bodies+='\n'+function('src/core/turn2.c','int16_t IBestRemoteTerra(')
+    bodies+='\n'+function('src/core/planet.cpp','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(','static int16_t NativeHabitat(',1)
+    bodies+='\n'+function('src/core/planet.cpp','int16_t IBestTerraform(').replace('int16_t IBestTerraform(','static int16_t NativeBest(',1)
+    bodies+='\n'+function('src/core/planet.cpp','int16_t PctPlanetOptValue(')
+    bodies+='\n'+function('src/core/turn2.cpp','int16_t IBestRemoteTerra(')
     return declarations,bodies,helpers
 
 
@@ -264,7 +264,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);table=list(struct.iter_unpack('<8i',export.read_bytes()));assert len(table)==20
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)

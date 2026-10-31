@@ -251,7 +251,7 @@ static void FSendPlrMsg2(int16_t player,int id,int a,int b,int c) {
     messages++;messageArg=c;calls=calls*10+8;
 }
 '''
-    body=function('src/core/turn2.c','int16_t CBuildProdItem(')
+    body=function('src/core/turn2.cpp','int16_t CBuildProdItem(')
     harness=r'''
 int main(int argc,char **argv) {
     static_assert(sizeof(PROD)==4,"PROD wire width");assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);
@@ -289,7 +289,7 @@ int main(int argc,char **argv) {
         assert excluded.get('signed overflow',0)>0 and excluded.get('uninitialized need',0)>0
         print(f'Prepared {count} defined vectors; excluded before C execution: {excluded}',flush=True)
         source.write_text(declarations+body+harness)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 

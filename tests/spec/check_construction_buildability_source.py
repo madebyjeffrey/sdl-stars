@@ -108,10 +108,10 @@ static void Query(int tag){if(fInCheck){assert(cQueries<128);rgQueries[cQueries+
 int16_t GetRaceStat(PLAYER *p,RaceStat stat){if(fInCheck)assert(p==&rgplr[idPlayer] && stat==rsMajorAdv);Query(0);return NativeGetRaceStat(p,stat);}
 int16_t GetRaceGrbit(PLAYER *p,RaceGrbit bit){if(fInCheck)assert(p==&rgplr[idPlayer]);Query(100+bit);return NativeGetRaceGrbit(p,bit);}
 '''
-    extra+=function('src/core/parts.c','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
-    extra+=function('src/core/research.c','int16_t FShouldPartBeHidden(').replace('FShouldPartBeHidden(','NativeHidden(',1)+'\n'
+    extra+=function('src/core/parts.cpp','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
+    extra+=function('src/core/research.cpp','int16_t FShouldPartBeHidden(').replace('FShouldPartBeHidden(','NativeHidden(',1)+'\n'
     extra+='int16_t TechStatus(char *need){Query(2);return NativeTechStatus(need);}\nint16_t FShouldPartBeHidden(PART *part){Query(1);return NativeHidden(part);}\n'
-    extra+=function('src/core/parts.c','int16_t FLookupPart(').replace('FLookupPart(','NativeLookupPart(',1)+'\n'+catalog_rows_source()
+    extra+=function('src/core/parts.cpp','int16_t FLookupPart(').replace('FLookupPart(','NativeLookupPart(',1)+'\n'+catalog_rows_source()
     extra+=r'''
 int16_t FLookupPart(PART *part){
     assert(fInCheck && cGateLookups<17);int at=cGateLookups;unsigned mask=part->hs.grhst,item=part->hs.iItem;
@@ -121,10 +121,10 @@ int16_t FLookupPart(PART *part){
     cGateLookups++;return status;
 }
 '''
-    extra+=function('src/core/util.c','int16_t FCanBuildShdef(').replace('int16_t FCanBuildShdef(','static int16_t NativeCanBuild(',1)+'\n'
+    extra+=function('src/core/util.cpp','int16_t FCanBuildShdef(').replace('int16_t FCanBuildShdef(','static int16_t NativeCanBuild(',1)+'\n'
     # One-line source function extractor needs the complete declaration line.
-    extra+=next(line for line in (ROOT/'src/core/parts.c').read_text().splitlines() if line.startswith('HULDEF *LphuldefSBFromId('))+'\n'
-    extra+=function('src/core/parts.c','HULDEF *LphuldefFromId(').replace('HULDEF *LphuldefFromId(','static HULDEF *NativeHullFromId(',1)+'\n'
+    extra+=next(line for line in (ROOT/'src/core/parts.cpp').read_text().splitlines() if line.startswith('HULDEF *LphuldefSBFromId('))+'\n'
+    extra+=function('src/core/parts.cpp','HULDEF *LphuldefFromId(').replace('HULDEF *LphuldefFromId(','static HULDEF *NativeHullFromId(',1)+'\n'
     bodies+=extra
     helpers=witnesses[:witnesses.index('static int16_t s16(')]
     return declarations,bodies,helpers
@@ -206,7 +206,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={r[:2]:(r[2:8],r[8]) for r in struct.iter_unpack('<9i',export.read_bytes())};assert len(table)==sum(LIMITS)

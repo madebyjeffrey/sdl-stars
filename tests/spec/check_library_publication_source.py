@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def extract(name):
-    source = (ROOT / 'src/ui/libraryui.c').read_text()
+    source = (ROOT / 'src/ui/libraryui.cpp').read_text()
     marker = 'static int16_t ' + name + '('
     at = source.rfind(marker)
     assert at >= 0
@@ -170,7 +170,7 @@ static int CreateNativeDir(const char *path){int p=role(path),ok=decision() && !
 
 
 def family():
-    source = (ROOT / 'src/ui/libraryui.c').read_text()
+    source = (ROOT / 'src/ui/libraryui.cpp').read_text()
     start = source.index('    CchSnprintf(szStage, sizeof(szStage), "%s%s.importing.%lld"')
     end = source.index('\nLInvalidSource:', start)
     return r'''
@@ -376,21 +376,21 @@ int main(void){
     return 0;
 }
 '''
-    c, binary = tmp/'copy.c', tmp/'copy'
+    c, binary = tmp/'copy.cpp', tmp/'copy'
     body=extract('FCopyNativeFileContents')+'\n'+extract('FCopyNativeFileExclusive')
     for old,new in {'NATIVEFILE':'FILE','CReadNative':'fread','CWriteNative':'fwrite','FNativeStreamError':'ferror','ICloseNativeFile':'fclose'}.items():
         body=body.replace(old,new)
     c.write_text(prelude+'\n'+body+'\n'+harness)
-    subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
+    subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],cwd=tmp,check=True)
 
 
 def main():
-    source=(ROOT/'src/ui/libraryui.c').read_text()
+    source=(ROOT/'src/ui/libraryui.cpp').read_text()
     for name in ('szLibraryRoot','szLibraryPending','szLibraryName'):
         assert f'static char {name}[256];' in source
     assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/appstate.h').read_text())
-    assert 'decltype(APPGAMESTATE::szBase) &szBase = GetAppSession().state.szBase;' in (ROOT/'src/core/globals.c').read_text()
+    assert 'decltype(APPGAMESTATE::szBase) &szBase = GetAppSession().state.szBase;' in (ROOT/'src/core/globals.cpp').read_text()
     assert 'char szUniverse[512], szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];' in extract('FImportSubsequentTurn')
     # Enumerate every reached Boolean reply combination, including repeated
     # restore/cleanup calls, plus partial residue and stage/previous collisions.
@@ -400,11 +400,11 @@ def main():
     profiles += [(p,v,0) for p in (0,1) for v in (22,23,24)]
     inputs = ''.join(f'{p} {m} {v}\n' for p,v,bits in profiles for m in range(1<<bits))
     with tempfile.TemporaryDirectory(prefix='stars-library-publication-') as tmp:
-        tmp = Path(tmp); c = tmp/'controller.c'; binary = tmp/'controller'; output = tmp/'cases.jsonl'
+        tmp = Path(tmp); c = tmp/'controller.cpp'; binary = tmp/'controller'; output = tmp/'cases.jsonl'
         bodies = later()+'\n'+extract('FReplaceConflictingLibraryTurn')+'\n'+extract('FImportConflictingTurnAsCopy')+'\n'+family()
         c.write_text(DECLARATIONS+'\n'+bodies+'\n'+HARNESS)
         compiler = shlex.split(os.environ.get('CXX','c++'))
-        subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-O0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
+        subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-O0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
         with output.open('w') as stream:
             subprocess.run([str(binary)],input=inputs,text=True,stdout=stream,check=True)
         count=0;unique=[set() for _ in range(5)];witnesses={}

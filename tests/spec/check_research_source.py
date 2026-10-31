@@ -150,7 +150,7 @@ def cases():
 
 
 def main():
-    source=(ROOT/'src/core/research.c').read_text();start=source.index('int32_t  rglTechCost[27]')
+    source=(ROOT/'src/core/research.cpp').read_text();start=source.index('int32_t  rglTechCost[27]')
     table=source[start:source.index(';',start)+1]
     declarations=r'''
 #include "common.h"
@@ -178,9 +178,9 @@ static void callback(int kind,int index,int argument){calls++;hashValue(kind);ha
 int16_t CResourcesAtPlanet(PLANET *planet,int16_t player){int index=(int)(planet-storage);assert(index>=0 && index<cfg[32]);callback(1,index,player);return (int16_t)cfg[40+5*(index%4)];}
 void EstimateItemProdSched(PLANET *planet,PLPROD *row,ProdItemType item,int16_t *first,int16_t *last){int index=(int)(planet-storage);assert(!row && item==static_cast<ProdItemType>(iprodEstimateResearchResources));callback(2,index,idPlayer);*first=(int16_t)cfg[41+5*(index%4)];*last=123;}
 '''
-    getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
-    bodies=table+'\n'+getter+'\n'+function('src/core/research.c','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
-    bodies+=function('src/core/research.c','int32_t CostOfDevelopingItem(')+'\n'+function('src/core/research.c','int32_t ProjectedResearchSpending(')+'\n'
+    getter=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
+    bodies=table+'\n'+getter+'\n'+function('src/core/research.cpp','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
+    bodies+=function('src/core/research.cpp','int32_t CostOfDevelopingItem(')+'\n'+function('src/core/research.cpp','int32_t ProjectedResearchSpending(')+'\n'
     harness=r'''
 static void setup(void){
     memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));memset(queues,0,sizeof(queues));calls=grossCalls=forecastCalls=mutated=0;traceHash=0;idPlayer=0;
@@ -218,7 +218,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         c_file=path/'witness.cpp';c_file.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(c_file),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 

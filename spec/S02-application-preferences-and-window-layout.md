@@ -67,7 +67,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Location and loading
 
-[profile.c](../compat/win32/src/profile.c) `SzProfilePath` keeps explicit paths
+[profile.cpp](../compat/win32/src/profile.cpp) `SzProfilePath` keeps explicit paths
 literal. A bare name chooses `STARS_PROFILE_DIR`, then `STARS_SETTINGS_DIR`, then
 the platform user location, then the literal working-directory name. Windows
 uses `LOCALAPPDATA/stars`; POSIX uses absolute `XDG_CONFIG_HOME/stars`, else
@@ -87,7 +87,7 @@ process-local locking remain E02-1. Per-key writes are not a transaction spannin
 
 ### Normalization and layout
 
-[init.c](../src/ui/init.c) `ReadIniSettings` initializes generation flags false,
+[init.cpp](../src/ui/init.cpp) `ReadIniSettings` initializes generation flags false,
 reads placement rectangles and recognizes the unset-position sentinel -32768.
 `ProfileI16` preserves the source’s 16-bit narrowing before comparison.
 `Layout` then clamps arrangement to 0–2 and `PaneSize` clamps pane dimensions to
@@ -118,7 +118,7 @@ separate boundary: the desktop accepts a hexadecimal prefix; host `LIniInt` uses
 
 ### Saving, cancellation and recovery
 
-[mdi.c](../src/ui/mdi.c) `WriteIniSettings` serializes current preferences.
+[mdi.cpp](../src/ui/mdi.cpp) `WriteIniSettings` serializes current preferences.
 The profile implementation preserves unrelated lines on updates; a write can
 fail and must not be called successful merely because the in-memory preference
 changed. Dialog-specific Apply/Cancel semantics belong to the caller: closing
@@ -201,7 +201,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[settings reader](../src/ui/init.c), [settings writer](../src/ui/mdi.c), [profile implementation](../compat/win32/src/profile.c), [profile tests](../tests/compat/win32_profile.c), and [UTF-8 boundaries](../docs/UNICODE-BOUNDARIES.md). Per-key source defaults remain authoritative where not normalized by the named model.
+[settings reader](../src/ui/init.cpp), [settings writer](../src/ui/mdi.cpp), [profile implementation](../compat/win32/src/profile.cpp), [profile tests](../tests/compat/win32_profile.inc), and [UTF-8 boundaries](../docs/UNICODE-BOUNDARIES.md). Per-key source defaults remain authoritative where not normalized by the named model.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

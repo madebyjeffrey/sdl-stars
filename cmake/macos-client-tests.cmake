@@ -1,5 +1,5 @@
 # Portable client workflows also qualify the macOS desktop.
-add_executable(stars-compat-client-startup tests/compat/win32_client_startup.c)
+add_executable(stars-compat-client-startup tests/compat/win32_client_startup.cpp)
 target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-compat-check
     stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
@@ -56,7 +56,7 @@ set_property(TEST win32_client_mac_shortcuts_dummy APPEND PROPERTY ENVIRONMENT
 set_property(TEST win32_client_race_dummy APPEND PROPERTY ENVIRONMENT
     "STARS_CLIENT_RACE_CAPTURE=${CMAKE_BINARY_DIR}/test-client/race/habitat.bmp")
 
-add_executable(stars-native-tutorial tests/compat/native_tutorial.c)
+add_executable(stars-native-tutorial tests/compat/native_tutorial.cpp)
 target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-check
     stars_options stars_win32 SDL3::SDL3)
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
@@ -70,7 +70,7 @@ add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
 set_tests_properties(win32_native_tutorial_smoke_dummy PROPERTIES LABELS "client;tutorial-smoke" TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 
-add_executable(stars-compat-controls tests/compat/win32_controls.c)
+add_executable(stars-compat-controls tests/compat/win32_controls.cpp)
 target_include_directories(stars-compat-controls PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-compat-controls PRIVATE stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-compat-controls PRIVATE -Wall -Wextra -Werror)
@@ -79,7 +79,7 @@ add_test(NAME win32_controls COMMAND stars-compat-controls)
 set_tests_properties(win32_controls PROPERTIES LABELS compat TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
 
-add_executable(stars-compat-messagebox tests/compat/win32_messagebox.c)
+add_executable(stars-compat-messagebox tests/compat/win32_messagebox.cpp)
 target_include_directories(stars-compat-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-compat-messagebox PRIVATE stars_options stars_win32 SDL3::SDL3)
 stars_test_redirect(stars-compat-messagebox SDL_PutAudioStreamData)
@@ -90,7 +90,7 @@ set_tests_properties(win32_messagebox PROPERTIES LABELS compat TIMEOUT 30
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software")
 
 foreach(STARS_UTF8_TEST utf8 font edit profile)
-    add_executable(stars-compat-${STARS_UTF8_TEST} tests/compat/win32_${STARS_UTF8_TEST}.c)
+    add_executable(stars-compat-${STARS_UTF8_TEST} tests/compat/win32_${STARS_UTF8_TEST}.cpp)
     target_include_directories(stars-compat-${STARS_UTF8_TEST} PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
     target_link_libraries(stars-compat-${STARS_UTF8_TEST} PRIVATE stars_options stars_win32 SDL3::SDL3)
     if(STARS_UTF8_TEST STREQUAL "utf8" OR STARS_UTF8_TEST STREQUAL "profile")
@@ -102,7 +102,7 @@ foreach(STARS_UTF8_TEST utf8 font edit profile)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
 endforeach()
 
-add_executable(stars-compat-help tests/compat/win32_help.c)
+add_executable(stars-compat-help tests/compat/win32_help.cpp)
 target_include_directories(stars-compat-help PRIVATE "${STARS_HELP_GENERATED}")
 target_link_libraries(stars-compat-help PRIVATE stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-compat-help PRIVATE -Wall -Wextra -Werror)

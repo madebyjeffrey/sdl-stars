@@ -19,11 +19,11 @@ entries. Follow the [glossary](../GLOSSARY.md) and
 A numbered `.rN` identifies a race version, not a game player slot. Stored race
 name, current library filename and sanitized filename stem are distinct values.
 
-The implementation lives chiefly in [libraryui.c](../src/ui/libraryui.c), with
-race loading/conversion in [race.c](../src/core/race.c), wizard/password UI in
-[raceui.c](../src/ui/raceui.c), roster handoffs in
-[createui.c](../src/ui/createui.c) and title dispatch in
-[mdi.c](../src/ui/mdi.c). This specification does not require a source refactor.
+The implementation lives chiefly in [libraryui.cpp](../src/ui/libraryui.cpp), with
+race loading/conversion in [race.cpp](../src/core/race.cpp), wizard/password UI in
+[raceui.cpp](../src/ui/raceui.cpp), roster handoffs in
+[createui.cpp](../src/ui/createui.cpp) and title dispatch in
+[mdi.cpp](../src/ui/mdi.cpp). This specification does not require a source refactor.
 
 | Owner | Handoff |
 | --- | --- |
@@ -370,8 +370,8 @@ C refinement, end-to-end filesystem guarantees and accessibility remain unproved
 Relevant test sources are the [race-library runner](../tests/compat/run_racelibrary.py),
 [version workflow](../tests/compat/win32_raceversion_workflow.h),
 [roster workflow](../tests/compat/win32_raceroster_workflow.h),
-[startup harness](../tests/compat/win32_client_startup.c) and
-[race unit tests](../tests/unit/test_race.c).
+[startup harness](../tests/compat/win32_client_startup.cpp) and
+[race unit tests](../tests/unit/test_race.cpp).
 See the [shared verification record](README.md#m01-and-m02-verification) for this
 batch's actual commands/results; named harness coverage is not an assertion that
 every acceptance row is exercised.
@@ -457,9 +457,9 @@ Trace: [M02 save target](#33-find-versions-and-choose-a-save-target),
 [staging and cancellation](#34-staged-save-cancellation-and-failure),
 [M04 editor](M04-race-design.md), [M03 customization](M03-new-game-wizard.md#32-roster-editing),
 [canonical library contracts](M02-library-specification.dfy) and
-[S01 race bytes](S01-game-file-validation.md). Evidence: [libraryui.c](../src/ui/libraryui.c)
+[S01 race bytes](S01-game-file-validation.md). Evidence: [libraryui.cpp](../src/ui/libraryui.cpp)
 `FBeginLibraryRace`, `FEditLibraryRace`, `FCustomizeLibraryRace`,
-`FSaveCurrentLibraryRace`, `FSaveLibraryRace`; [raceui.c](../src/ui/raceui.c)
+`FSaveCurrentLibraryRace`, `FSaveLibraryRace`; [raceui.cpp](../src/ui/raceui.cpp)
 `RaceCreationWizard`. Covers existing M02 stories; no new persistence policy.
 
 ```mermaid

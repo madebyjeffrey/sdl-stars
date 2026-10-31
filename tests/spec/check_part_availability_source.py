@@ -166,17 +166,17 @@ static void Call(int tag){CHECK(cCalls<8);rgCalls[cCalls++]=tag;}
     mask_names=('hstEngine','hstScanner','hstShield','hstArmor','hstBeam','hstTorp','hstBomb','hstMining','hstMines','hstSpecialSB','hstSBHull','hstSpecialE','hstSpecialM','hstTerra','hstHull','hstPlanetary')
     bindings.update({name:1<<k for k,name in enumerate(mask_names)})
     declarations+='\n'.join(f'static_assert({name}=={value},"native protocol {name}");' for name,value in bindings.items())+'\n'
-    bodies=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('GetRaceStat(','NativeGetRaceStat(',1)+'\n'
-    bodies+=function('src/core/race.c','int16_t GetRaceGrbit(').replace('GetRaceGrbit(','NativeGetRaceGrbit(',1)+'\n'
-    bodies+=function('src/core/parts.c','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
-    bodies+=function('src/core/research.c','int16_t FShouldPartBeHidden(').replace('FShouldPartBeHidden(','NativeHidden(',1)+'\n'
+    bodies=next(x for x in (ROOT/'src/core/race.cpp').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('GetRaceStat(','NativeGetRaceStat(',1)+'\n'
+    bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(').replace('GetRaceGrbit(','NativeGetRaceGrbit(',1)+'\n'
+    bodies+=function('src/core/parts.cpp','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
+    bodies+=function('src/core/research.cpp','int16_t FShouldPartBeHidden(').replace('FShouldPartBeHidden(','NativeHidden(',1)+'\n'
     bodies+=r'''
 int16_t GetRaceStat(PLAYER *p,RaceStat stat){CHECK(idPlayer>=0 && idPlayer<16 && p==&rgplr[idPlayer] && stat==rsMajorAdv);Call(0);return NativeGetRaceStat(p,stat);}
 int16_t GetRaceGrbit(PLAYER *p,RaceGrbit bit){CHECK(idPlayer>=0 && idPlayer<16 && p==&rgplr[idPlayer]);Call(100+bit);return NativeGetRaceGrbit(p,bit);}
 int16_t TechStatus(char *need){Call(2);return NativeTechStatus(need);}
 int16_t FShouldPartBeHidden(PART *part){Call(1);return NativeHidden(part);}
 '''
-    bodies+=function('src/core/parts.c','int16_t FLookupPart(')+'\n'
+    bodies+=function('src/core/parts.cpp','int16_t FLookupPart(')+'\n'
     bodies+=catalog_rows_source()
     declarations=declarations.replace("rgCalls[8]","rgCalls["+str(call_capacity)+"]").replace("cCalls<8","cCalls<"+str(call_capacity))
     return declarations,bodies
@@ -226,7 +226,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={}

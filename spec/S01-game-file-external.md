@@ -48,8 +48,8 @@ Checks for this story expansion are recorded in the
 
 ## 1. Batch universe definitions
 
-Evidence: [create.c](../src/core/create.c) `GenNewGameFromFile` and
-[utilgen.c](../src/core/utilgen.c) `PszGetLine`, `CParseNumbers`.
+Evidence: [create.cpp](../src/core/create.cpp) `GenNewGameFromFile` and
+[utilgen.cpp](../src/core/utilgen.cpp) `PszGetLine`, `CParseNumbers`.
 [M03 §4.8](M03-new-game-wizard.md#48-batch-input-is-a-separate-entry-point) owns
 semantic ranges, defaults, threshold conversions and subsequent normalization.
 This section specifies the input syntax.
@@ -123,7 +123,7 @@ Input acceptance and complete output-file creation are distinct success checks.
 
 ## 2. Text report exports
 
-Evidence: [report.c](../src/core/report.c) `DumpUniverse`, `DumpPlanets`,
+Evidence: [report.cpp](../src/core/report.cpp) `DumpUniverse`, `DumpPlanets`,
 `DumpFleets`, `FDumpCmdLineGame`; exact labels in
 [text/strings.txt](../text/strings.txt), IDs 0x04dc–0x04e1; fixtures in
 [tests/unit/golden](../tests/unit/golden).
@@ -158,7 +158,7 @@ Library user workflows now live in [M01 Game Library](M01-game-library.md) and
 live in [S01 library names](dafny/S01-library-names.dfy); this companion retains
 metadata bytes, archive formats and publication contracts.
 
-Evidence: [libraryui.c](../src/ui/libraryui.c)
+Evidence: [libraryui.cpp](../src/ui/libraryui.cpp)
 `FWriteLibraryMetadataValues`, `FReadLibraryMetadata`, `FImportFamilyMember`,
 `FPortableLibraryName`, `FPortableRaceFilename`; accepted behavior in
 [ADR 0001](../docs/adr/0001-desktop-managed-libraries.md).
@@ -283,7 +283,7 @@ legacy policy conflict remains recorded in the S01 entry.
 
 ## 5. ZIP envelope
 
-Evidence: [libraryzip.c](../src/ui/libraryzip.c) `FZipLibraryDirectory`,
+Evidence: [libraryzip.cpp](../src/ui/libraryzip.cpp) `FZipLibraryDirectory`,
 `FUnzipLibraryArchive`, `FZipSafeName`, `FZipNameUtf8Supported`.
 This section specifies the implemented ZIP subset, not a general-purpose
 archive standard or an additional Stars! record format.
@@ -351,9 +351,9 @@ on 2026-10-25. Trace: [story-linked requirements](#story-linked-requirements),
 `Metadata`, `MetadataBytes`, publication predicates in
 [S01External](dafny/S01-external.dfy); [M01 ownership](M01-game-library.md),
 [M02 race versions](M02-race-library.md), [library glossary](../GLOSSARY.md).
-Evidence: [libraryui.c](../src/ui/libraryui.c) `FWriteLibraryMetadataValues`,
+Evidence: [libraryui.cpp](../src/ui/libraryui.cpp) `FWriteLibraryMetadataValues`,
 `FReadLibraryMetadata`, `FImportLibraryGame`, `FExportLibraryGame`;
-[libraryzip.c](../src/ui/libraryzip.c) archive transport.
+[libraryzip.cpp](../src/ui/libraryzip.cpp) archive transport.
 
 ```mermaid
 classDiagram

@@ -209,7 +209,12 @@ def extract(root=ROOT):
     result = []
     cCasts = 0
     digest = hashlib.sha256()
-    for path in sorted((root / "src").rglob("*.c") if (root / "src").is_dir() else root.glob("*.c")):
+    directory = root / "src" if (root / "src").is_dir() else root
+    paths = sorted(p for p in directory.rglob("*") if p.suffix in (".c", ".cpp"))
+    historical = precision_reference.source_names() if root == ROOT else None
+    for path in paths:
+        if historical is not None and path.with_suffix(".c").name not in historical:
+            continue
         source = precision_reference.read_source(path.name) if root == ROOT else path.read_text()
         masked = mask_c(source)
         casts = list(re.finditer(r"\(long\s+double\)", masked))

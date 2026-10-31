@@ -203,7 +203,7 @@ def cases():
 
 
 def main():
-    research=(ROOT/'src/core/research.c').read_text();start=research.index('int32_t  rglTechCost[27]');table=research[start:research.index(';',start)+1]
+    research=(ROOT/'src/core/research.cpp').read_text();start=research.index('int32_t  rglTechCost[27]');table=research[start:research.index(';',start)+1]
     declarations=r'''
 #include "common.h"
 #include <setjmp.h>
@@ -238,11 +238,11 @@ int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t
     messages++;hv(10);hv(player);hv(tag);hv((int16_t)target);hv(a);hv(b);hv(d);if(tag<2){lastField=b;lastLevel=a;memset(typeCalls,0,sizeof(typeCalls));}return (int16_t)cfg[4];
 }
 '''
-    getter=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('int16_t GetRaceStat(', 'static int16_t NativeGetRaceStat(',1)
-    bodies=table+'\n'+getter+'\n'+function('src/core/race.c','int16_t GetRaceGrbit(').replace('int16_t GetRaceGrbit(', 'static int16_t NativeGetRaceGrbit(',1)+'\n'
-    bodies+=function('src/core/research.c','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
-    bodies+=next(x for x in (ROOT/'src/core/msg.c').read_text().splitlines() if x.startswith('int16_t FSendPlrMsg2('))+'\n'
-    bodies+=function('src/core/turn2.c','void UpdateResearchStatus(').replace('void UpdateResearchStatus(', 'static void NativeUpdateResearchStatus(',1)+'\n'
+    getter=next(x for x in (ROOT/'src/core/race.cpp').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('int16_t GetRaceStat(', 'static int16_t NativeGetRaceStat(',1)
+    bodies=table+'\n'+getter+'\n'+function('src/core/race.cpp','int16_t GetRaceGrbit(').replace('int16_t GetRaceGrbit(', 'static int16_t NativeGetRaceGrbit(',1)+'\n'
+    bodies+=function('src/core/research.cpp','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
+    bodies+=next(x for x in (ROOT/'src/core/msg.cpp').read_text().splitlines() if x.startswith('int16_t FSendPlrMsg2('))+'\n'
+    bodies+=function('src/core/turn2.cpp','void UpdateResearchStatus(').replace('void UpdateResearchStatus(', 'static void NativeUpdateResearchStatus(',1)+'\n'
     harness=r'''
 static void setup(void){memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));hash=costs=lookups=messages=generals=tts=primaries=entries=0;lastField=lastLevel=0;memset(typeCalls,0,sizeof(typeCalls));game.cPlayer=(int16_t)cfg[0];game.fSlowTech=cfg[2];idPlayer=(int16_t)cfg[6];
     for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=static_cast<RaceTraitBits>((cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0));
@@ -273,7 +273,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
@@ -286,11 +286,11 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
 #include <assert.h>
 PLAYER rgplr[16];int16_t idPlayer;
 '''
-        catalog_bodies=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat('))+'\n'
-        catalog_bodies+=function('src/core/race.c','int16_t GetRaceGrbit(')+'\n'
-        catalog_bodies+=function('src/core/parts.c','int16_t FLookupPart(')+'\n'
-        catalog_bodies+=function('src/core/parts.c','int16_t TechStatus(')+'\n'
-        catalog_bodies+=function('src/core/research.c','int16_t FShouldPartBeHidden(')+'\n'
+        catalog_bodies=next(x for x in (ROOT/'src/core/race.cpp').read_text().splitlines() if x.startswith('int16_t GetRaceStat('))+'\n'
+        catalog_bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(')+'\n'
+        catalog_bodies+=function('src/core/parts.cpp','int16_t FLookupPart(')+'\n'
+        catalog_bodies+=function('src/core/parts.cpp','int16_t TechStatus(')+'\n'
+        catalog_bodies+=function('src/core/research.cpp','int16_t FShouldPartBeHidden(')+'\n'
         model=(ROOT/'spec/dafny/S03-research-catalog.dfy').read_text()
         match=re.search(r'function Limits\(\).*?\{\s*\[([0-9,\s]+)\]\s*\}',model,re.S)
         if match is None:raise AssertionError('expected literal S03 research catalog limits')
@@ -312,7 +312,7 @@ int main(void){
 }
 '''
         catalog=path/'catalog.cpp';catalog.write_text(catalog_declarations+catalog_bodies+catalog_harness);catalog_binary=path/'catalog'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(catalog),str(path/'data_tables.cpp'),'-lm','-o',str(catalog_binary)],check=True)
         subprocess.run([str(catalog_binary)],check=True)
 

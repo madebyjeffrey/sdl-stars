@@ -16,8 +16,8 @@ from check_s02_state_source import between
 
 
 def main():
-    init = (ROOT / "src/ui/init.c").read_text()
-    mdi = (ROOT / "src/ui/mdi.c").read_text()
+    init = (ROOT / "src/ui/init.cpp").read_text()
+    mdi = (ROOT / "src/ui/mdi.cpp").read_text()
     types = (ROOT / "src/core/structs.h").read_text()
     declarations = r'''
 #include <stdint.h>
@@ -104,7 +104,7 @@ int main(void) {
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
                         str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

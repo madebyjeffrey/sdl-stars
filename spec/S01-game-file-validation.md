@@ -58,10 +58,10 @@ Checks for this story expansion are recorded in the
 | `FCompleteGeneratedFile` | Expected identity/type/player, whole-file framing/length and ending. | No semantic reload; its header check does not independently enforce format version or decode GAME. |
 | ZIP extraction | Entry/name/path/method/CRC/length checks and size budgets. | Packaging checks do not prove that contained Stars! payloads decode or replay. |
 
-Sources: [file.c](../src/core/file.c), [save.c](../src/core/save.c),
-[log.c](../src/core/log.c), [race.c](../src/core/race.c),
-[msg.c](../src/core/msg.c), [libraryui.c](../src/ui/libraryui.c),
-[libraryzip.c](../src/ui/libraryzip.c). These are source observations, not
+Sources: [file.cpp](../src/core/file.cpp), [save.cpp](../src/core/save.cpp),
+[log.cpp](../src/core/log.cpp), [race.cpp](../src/core/race.cpp),
+[msg.cpp](../src/core/msg.cpp), [libraryui.cpp](../src/ui/libraryui.cpp),
+[libraryzip.cpp](../src/ui/libraryzip.cpp). These are source observations, not
 claims that exploitability has been tested or a security audit completed.
 
 ## 2. Proposed strict decoder contract
@@ -142,13 +142,13 @@ as an executable test unless the evidence column identifies existing coverage;
 
 | Area | Tests / tools inspected |
 | --- | --- |
-| Save/version/visibility | [test_save.c](../tests/unit/test_save.c). |
-| Race framing/checksum/conversion | [test_race.c](../tests/unit/test_race.c). |
-| Order effects | [test_log.c](../tests/unit/test_log.c). |
-| Filesystem / UTF-8 | [test_native_files.c](../tests/unit/test_native_files.c), [test_encoding.c](../tests/unit/test_encoding.c). |
-| Message layout, text bounds, heap rollover | [test_native_ports.c](../tests/unit/test_native_ports.c). |
-| Report bytes | [test_report.c](../tests/unit/test_report.c), [goldens](../tests/unit/golden). |
-| Creation, import and host orders | [run_newgame.py](../tests/compat/run_newgame.py), [run_hostgames.py](../tests/compat/run_hostgames.py), [client harness](../tests/compat/win32_client_startup.c). |
+| Save/version/visibility | [test_save.cpp](../tests/unit/test_save.cpp). |
+| Race framing/checksum/conversion | [test_race.cpp](../tests/unit/test_race.cpp). |
+| Order effects | [test_log.cpp](../tests/unit/test_log.cpp). |
+| Filesystem / UTF-8 | [test_native_files.cpp](../tests/unit/test_native_files.cpp), [test_encoding.cpp](../tests/unit/test_encoding.cpp). |
+| Message layout, text bounds, heap rollover | [test_native_ports.cpp](../tests/unit/test_native_ports.cpp). |
+| Report bytes | [test_report.cpp](../tests/unit/test_report.cpp), [goldens](../tests/unit/golden). |
+| Creation, import and host orders | [run_newgame.py](../tests/compat/run_newgame.py), [run_hostgames.py](../tests/compat/run_hostgames.py), [client harness](../tests/compat/win32_client_startup.cpp). |
 | Export and ZIP boundaries | [run_game_export.py](../tests/compat/run_game_export.py). |
 | Library rename/delete/races | [run_game_library_safety.py](../tests/compat/run_game_library_safety.py), [run_game_library_delete.py](../tests/compat/run_game_library_delete.py), [run_racelibrary.py](../tests/compat/run_racelibrary.py). |
 | Independent record tooling | [save CLI](../tests/savecli/README.md), [savefile.go](../tests/savecli/savefile/savefile.go), its comparison/update unit tests. |

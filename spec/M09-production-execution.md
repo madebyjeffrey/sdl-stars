@@ -8,9 +8,9 @@ Canonical definitions are the [construction handoffs](dafny/M09-construction-han
 and [host caller rules](dafny/M09-host-production.dfy). Verification is recorded
 in the [collection continuation](README.md#host-production-handoff-continuation).
 
-Sources: [turn2.c](../src/core/turn2.c) `Produce`, `CBuildProdItem`,
-`FBuildObject`; [produce.c](../src/core/produce.c) `EstimateItemProdSched`;
-[memory.c](../src/core/memory.c) `LpplReAlloc`, `FreePl`;
+Sources: [turn2.cpp](../src/core/turn2.cpp) `Produce`, `CBuildProdItem`,
+`FBuildObject`; [produce.cpp](../src/core/produce.cpp) `EstimateItemProdSched`;
+[memory.cpp](../src/core/memory.cpp) `LpplReAlloc`, `FreePl`;
 [structs.h](../src/core/structs.h) `PLANET`, `PROD`, `PLPROD`, `PL`;
 [enums.h](../src/core/enums.h) production IDs/statuses.
 The host caller assumes live player/planet IDs, valid supplementary arrays and
