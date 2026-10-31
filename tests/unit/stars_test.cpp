@@ -51,7 +51,7 @@ int16_t FStarsTestInit(void) {
     cStarsTestLegacyRacePasswordPrompt = 0;
     szStarsTestLegacyRacePassword[0] = 0;
 #ifdef STARS_UI_SDL
-    hInst = GetModuleHandle(NULL);
+    hInst = win32::GetModuleHandle(NULL);
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
     szBase[0] = 0;

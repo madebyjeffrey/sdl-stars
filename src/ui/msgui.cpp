@@ -43,44 +43,44 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             hwndMessage = hwnd;
-            rghwndMsgBtn[i] = HwndUiCreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
+            rghwndMsgBtn[i] = ui::CreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
                                            NULL, hInst, NULL);
-            ControlIO().pfnLUiSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ControlIO().pfnSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
-        hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        ControlIO().pfnLUiSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
-        ControlIO().pfnLUiSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
-        hwndMsgScroll = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
+        hwndMsgDrop = ui::CreateWindowEx(0, "COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        hwndMsgEdit = ui::CreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
+        ControlIO().pfnSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
+        ControlIO().pfnSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        hwndMsgScroll = ui::CreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
                                      NULL, hInst, NULL);
         ControlIO().pfnSetMsgTitle(hwnd);
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEverybody));
+        ControlIO().pfnSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEverybody));
         for (i = 0; i < game.cPlayer; i++) {
             psz = TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
-            ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
+            ControlIO().pfnSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+        ControlIO().pfnSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
         break;
     case WM_SIZE:
         dx = LOWORD(lParam);
         dy = HIWORD(lParam);
         for (i = 0; i < 3; i++) {
-            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
+            ControlIO().pfnSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
-        SetRect(&rcMsgText, 4, dyArial8 * 2 + 3, dx - 52, dy - 4);
-        SetRect(&rcMsgTitle, 4, 4, dx - 4, dyArial8 * 2 - 4);
+        win32::SetRect(&rcMsgText, 4, dyArial8 * 2 + 3, dx - 52, dy - 4);
+        win32::SetRect(&rcMsgTitle, 4, 4, dx - 4, dyArial8 * 2 - 4);
         rc = rcMsgText;
         ExpandRc(&rc, -4, -4);
-        ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
-        ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         rc.top += dyShipDD + 3;
-        ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
         goto Default;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_SETCURSOR:
         hcs = 0;
@@ -88,7 +88,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         ScreenToClient16(hwnd, &pt);
         if (HtMsgBox(pt) == htMsgNone)
             goto Default;
-        SetCursor(hcurHand);
+        win32::SetCursor(hcurHand);
         return 1;
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
@@ -143,7 +143,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             gd.fSendMsgMode = gd.fSendMsgMode == 0;
             ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
             ControlIO().pfnSetMsgTitle(hwnd);
-            ControlIO().pfnHwndUiSetFocus(hwndMsgEdit);
+            ControlIO().pfnSetFocus(hwndMsgEdit);
         }
         break;
     case WM_GETMINMAXINFO:
@@ -159,13 +159,13 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_CTLCOLORSTATIC:
         if ((HWND)lParam != hwndMsgScroll)
             goto Default;
-        SetBkColor((HDC)wParam, crButtonFace);
+        win32::SetBkColor((HDC)wParam, crButtonFace);
         return (LRESULT)hbrButtonFace;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         _Draw3dFrame(hdc, &rcMsgTitle, 0);
-        crFore = SetTextColor(hdc, crButtonText);
-        crBack = SetBkColor(hdc, crButtonFace);
+        crFore = win32::SetTextColor(hdc, crButtonText);
+        crBack = win32::SetBkColor(hdc, crButtonFace);
         cch = strlen(szMsgTitle);
         dxMax = rcMsgTitle.right - rcMsgTitle.left - 48;
         while (cch > 0 && (int16_t)LOWORD(GetTextExtent(hdc, szMsgTitle, cch)) > dxMax) {
@@ -176,13 +176,13 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         rc = rcMsgText;
         dx = rc.right - rc.left;
         dy = rc.bottom - rc.top;
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
-        PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
-        PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
-        SelectObject(hdc, hbrButtonHilite);
-        PatBlt(hdc, rc.left, rc.bottom - 1, dx, 1, PATCOPY);
-        PatBlt(hdc, rc.right - 1, rc.top, 1, dy, PATCOPY);
-        SelectObject(hdc, hbrSav);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
+        win32::PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
+        win32::PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
+        win32::SelectObject(hdc, hbrButtonHilite);
+        win32::PatBlt(hdc, rc.left, rc.bottom - 1, dx, 1, PATCOPY);
+        win32::PatBlt(hdc, rc.right - 1, rc.top, 1, dy, PATCOPY);
+        win32::SelectObject(hdc, hbrSav);
         ExpandRc(&rc, -4, -4);
         if (!gd.fSendMsgMode) {
             if (iMsgCur >= cMsg) {
@@ -192,10 +192,10 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 }
                 if (TextIO().pfnCchGetString(idsSCC, szT) >= 32) {
                 }
-                cch = wsprintf((LPSTR)lpb2k, szT, TextIO().pfnPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
+                cch = win32::wsprintf((LPSTR)lpb2k, szT, TextIO().pfnPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
                 if (TextIO().pfnCchGetString(idsSCC2, szT) >= 32) {
                 }
-                cch += wsprintf((LPSTR)lpb2k + cch, szT,
+                cch += win32::wsprintf((LPSTR)lpb2k + cch, szT,
                                 lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(idsEverybody) : TextIO().pfnPlayerName(lpmsgplr->iPlrTo - 1, TRUE, TRUE, TRUE, 0, NULL),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
@@ -215,42 +215,42 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     lpsz = PszGetMessageN(iMsgCur);
                 }
             }
-            SetTextColor(hdc, 0xffffff);
-            iMode = SetBkMode(hdc, TRANSPARENT);
+            win32::SetTextColor(hdc, 0xffffff);
+            iMode = win32::SetBkMode(hdc, TRANSPARENT);
             if ((iMsgCur < 0 && cMsg > 0) ||
                 (iMsgCur >= 0 && iMsgCur < cMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7)))) {
                 cch = TextIO().pfnCchGetString(idsFiltered, szWork);
                 DiaganolTextOut(hdc, &rc, szWork, cch);
                 lpsz = PszGetMessageN(iMsgCur);
             }
-            SetTextColor(hdc, crButtonText);
+            win32::SetTextColor(hdc, crButtonText);
             rcActual = rc;
-            DrawText(hdc, lpsz, strlen(lpsz), &rcActual, DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
+            win32::DrawText(hdc, lpsz, strlen(lpsz), &rcActual, DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
-                FUiShowWindow(hwndMsgScroll, SW_HIDE);
-                DrawText(hdc, lpsz, strlen(lpsz), &rc, DT_WORDBREAK | DT_NOPREFIX);
+                ui::ShowWindow(hwndMsgScroll, SW_HIDE);
+                win32::DrawText(hdc, lpsz, strlen(lpsz), &rc, DT_WORDBREAK | DT_NOPREFIX);
             } else {
-                ControlIO().pfnFUiSetWindowText(hwndMsgScroll, lpsz);
+                ControlIO().pfnSetWindowText(hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
-                ControlIO().pfnFUiSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+                ControlIO().pfnSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
             }
-            SetBkMode(hdc, iMode);
+            win32::SetBkMode(hdc, iMode);
         } else {
-            iMode = SetBkMode(hdc, TRANSPARENT);
-            SetTextColor(hdc, crButtonText);
+            iMode = win32::SetBkMode(hdc, TRANSPARENT);
+            win32::SetTextColor(hdc, crButtonText);
             cch = TextIO().pfnCchGetString(idsTo3, szT);
             RightTextOut(hdc, rc.left + 26, rc.top, szT, cch, 0);
-            SetBkMode(hdc, iMode);
+            win32::SetBkMode(hdc, iMode);
         }
-        SetTextColor(hdc, crFore);
-        SetBkColor(hdc, crBack);
-        EndPaint(hwnd, &ps);
+        win32::SetTextColor(hdc, crFore);
+        win32::SetBkColor(hdc, crBack);
+        win32::EndPaint(hwnd, &ps);
         break;
     case WM_MOUSEWHEEL:
         if (gd.fSendMsgMode || (LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) return 0;
         i = CWheelNotches(&dWheelMessages, (int16_t)HIWORD(wParam));
-        while (i > 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
-        while (i < 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
+        while (i > 0) { ControlIO().pfnSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
+        while (i < 0) { ControlIO().pfnSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
         return 0;
     case WM_KEYDOWN:
         if (wParam == VK_DOWN)
@@ -284,7 +284,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         return 0;
     case WM_COMMAND:
         if (HIWORD(wParam) == 0) {
-            ControlIO().pfnHwndUiSetFocus(hwndFrame);
+            ControlIO().pfnSetFocus(hwndFrame);
         }
         if ((HWND)lParam == rghwndMsgBtn[0] && HIWORD(wParam) == 0) {
         PrevMsg:
@@ -343,8 +343,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     break;
                 case mdMsgObjPlanet:
                     PresentationIO().pfnSelectPlanet(0, idMsgObj);
-                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
-                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    ControlIO().pfnUpdateWindow(hwndScanner);
+                    ControlIO().pfnSendMessage(hwndScanner, WM_CHAR, 'v', 0);
                     idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
                     if (idm != idmHasCompletedOrdersProductionQueueEmpty && idm != idmProductionQueueEmpty &&
                         (idm < idmHasBuiltManyMinesCurrentPopulationCan || idm > idmHasBuiltManyDefensesPlanetCanSupport))
@@ -360,8 +360,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     break;
                 case mdMsgObjFleet:
                     PresentationIO().pfnSelectFleet(0, idMsgObj);
-                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
-                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    ControlIO().pfnUpdateWindow(hwndScanner);
+                    ControlIO().pfnSendMessage(hwndScanner, WM_CHAR, 'v', 0);
                     break;
                 case mdMsgObjThing:
                     lpth = LpthFromId(vptMsg.x);
@@ -382,21 +382,21 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     ControlIO().pfnSetMsgTitle(hwnd);
                     break;
                 case mdMsgObjResearch:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
                     break;
                 case mdMsgObjScore:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SCORE, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SCORE, 0);
                     break;
                 case mdMsgObjShipDesign:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_SHIP_BUILDER, 0);
                     break;
                 case mdMsgObjRelations:
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS2, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RELATIONS2, 0);
                     break;
                 case mdMsgObjBattleReport:
                     if (hwndReportDlg && vprptCur == &vrptBattle)
                         break;
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_REPORT_BATTLE, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_REPORT_BATTLE, 0);
                     break;
                 case mdMsgObjPart:
                     vpartBrowser.hs.grhst = static_cast<HullSlotType>(1 << (idMsgObj >> 8 & 0xf));
@@ -406,7 +406,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                         ControlIO().pfnInvalidateRect(hwndBrowserChild, NULL, TRUE);
                     } else {
                         fBrowserValid = TRUE;
-                        PostMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
+                        win32::PostMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
                     }
                 }
             }
@@ -420,7 +420,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         }
     default:
     Default:
-        return LUiDefWindowProc(hwnd, message, wParam, lParam);
+        return ui::DefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
@@ -441,8 +441,8 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     COLORREF  crBkSav;
     COLORREF  crTextSav;
 
-    hdcMem = CreateCompatibleDC(hdc);
-    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMono);
+    hdcMem = win32::CreateCompatibleDC(hdc);
+    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpMono);
     if (gd.fSendMsgMode)
         goto Cleanup;
     xyStart = (int16_t)(prc->bottom - prc->top - 11) / 2 + prc->top;
@@ -464,11 +464,11 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
         yDst = xyStart - 3;
         ySrcMask = 28;
     }
-    crTextSav = SetTextColor(hdc, 0);
-    crBkSav = SetBkColor(hdc, 0xffffff);
-    BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrcMask, SRCAND);
-    hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmpMsg);
-    BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, SRCPAINT);
+    crTextSav = win32::SetTextColor(hdc, 0);
+    crBkSav = win32::SetBkColor(hdc, 0xffffff);
+    win32::BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrcMask, SRCAND);
+    hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpMsg);
+    win32::BitBlt(hdc, xDst, yDst, dxSrc, dySrc, hdcMem, 0, ySrc, SRCPAINT);
 DoMinMax:
     for (i = 0; (uint16_t)i < 49 && (bitfMsgSent[i] & bitfMsgFiltered[i]) == 0; i++) {
     }
@@ -484,36 +484,36 @@ DoMinMax:
         ySrcMask = 69;
     }
     xDst = prc->right - (prc->bottom - prc->top) - 1;
-    hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
-    PatBlt(hdc, xDst, prc->top, 1, prc->bottom - prc->top, PATCOPY);
-    SelectObject(hdc, hbrButtonHilite);
-    PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, PATCOPY);
-    SelectObject(hdc, hbrSav);
+    hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
+    win32::PatBlt(hdc, xDst, prc->top, 1, prc->bottom - prc->top, PATCOPY);
+    win32::SelectObject(hdc, hbrButtonHilite);
+    win32::PatBlt(hdc, xDst + 1, prc->top, 1, prc->bottom - prc->top, PATCOPY);
+    win32::SelectObject(hdc, hbrSav);
     yDst = (int16_t)(prc->bottom - prc->top - 15) / 2 + prc->top;
     xDst = prc->right - (prc->bottom - yDst);
-    SelectObject(hdcMem, hbmpMono);
-    BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrcMask, SRCAND);
-    SelectObject(hdcMem, hbmpMsg);
-    BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrc, SRCPAINT);
+    win32::SelectObject(hdcMem, hbmpMono);
+    win32::BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrcMask, SRCAND);
+    win32::SelectObject(hdcMem, hbmpMsg);
+    win32::BitBlt(hdc, xDst, yDst, 15, 15, hdcMem, 0, ySrc, SRCPAINT);
 Cleanup:
-    SetTextColor(hdc, crTextSav);
-    SetBkColor(hdc, crBkSav);
+    win32::SetTextColor(hdc, crTextSav);
+    win32::SetBkColor(hdc, crBkSav);
     if (!game.fSinglePlr) {
-        SelectObject(hdcMem, hbmpMsg);
+        win32::SelectObject(hdcMem, hbmpMsg);
         xDst = prc->right - 45;
         yDst = (int16_t)(prc->bottom - prc->top - 7) / 2 + prc->top;
-        PatBlt(hdc, xDst - 1, yDst - 1, 17, 11, BLACKNESS);
-        BitBlt(hdc, xDst, yDst, 15, 9, hdcMem, 0, 56, SRCCOPY);
+        win32::PatBlt(hdc, xDst - 1, yDst - 1, 17, 11, BLACKNESS);
+        win32::BitBlt(hdc, xDst, yDst, 15, 9, hdcMem, 0, 56, SRCCOPY);
     }
-    SelectObject(hdcMem, hbmpSav);
-    DeleteDC(hdcMem);
+    win32::SelectObject(hdcMem, hbmpSav);
+    win32::DeleteDC(hdcMem);
     return;
 }
 
 HtMsgType HtMsgBox(POINT16 pt) {
     int16_t i;
 
-    if (PtInRect(&rcMsgTitle, PointFrom16(pt)) != 0) {
+    if (win32::PtInRect(&rcMsgTitle, PointFrom16(pt)) != 0) {
         if (pt.x < rcMsgTitle.bottom - rcMsgTitle.top + rcMsgTitle.left && iMsgCur >= 0 && iMsgCur < cMsg && !gd.fSendMsgMode) {
             return htMsgCurrent;
         }
@@ -577,7 +577,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         lpbMsg = lpb2k;
     }
     cbNew = abs(cb) + 12;
-    iPlrTo = LOWORD(ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
+    iPlrTo = LOWORD(ControlIO().pfnSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
         if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
             RecordIO().pfnDirtyGame(TRUE);
@@ -619,59 +619,59 @@ void SetMsgTitle(HWND hwnd) {
             ch = ' ';
         }
         sw = !gd.fSendMsgMode ? 0 : 5;
-        FUiShowWindow(hwndMsgEdit, sw);
-        FUiShowWindow(hwndMsgDrop, sw);
-        FUiShowWindow(rghwndMsgBtn[3], sw);
+        ui::ShowWindow(hwndMsgEdit, sw);
+        ui::ShowWindow(hwndMsgDrop, sw);
+        ui::ShowWindow(rghwndMsgBtn[3], sw);
         if (gd.fSendMsgMode) {
-            FUiShowWindow(hwndMsgScroll, SW_HIDE);
+            ui::ShowWindow(hwndMsgScroll, SW_HIDE);
         }
         cMsgTot = cMsg + vcmsgplrIn;
         i = gd.fSendMsgMode ? idsDone : iMsgCur >= cMsg ? idsReply : gd.fGotoVCR ? idsView : idsGoto3;
-        ControlIO().pfnFUiSetWindowText(rghwndMsgBtn[1], TextIO().pfnCompressed(static_cast<StringId>(i)));
+        ControlIO().pfnSetWindowText(rghwndMsgBtn[1], TextIO().pfnCompressed(static_cast<StringId>(i)));
         if (gd.fSendMsgMode) {
-            wsprintf(szWork, TextIO().pfnCompressed(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
+            win32::wsprintf(szWork, TextIO().pfnCompressed(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
             rc = rcMsgText;
             ExpandRc(&rc, -4, -4);
-            ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
             rc.top += dyShipDD + 3;
-            ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], TRUE);
+            ControlIO().pfnSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
+            ControlIO().pfnEnableWindow(rghwndMsgBtn[1], TRUE);
+            ControlIO().pfnEnableWindow(rghwndMsgBtn[2], TRUE);
             lpmp = vlpmsgplrOut;
             i = iMsgSendCur;
             while (i-- > 0) {
                 lpmp = lpmp->lpmsgplrNext;
             }
             if (lpmp) {
-                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
+                ControlIO().pfnSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
+                    ControlIO().pfnSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
                     goto FinishUp;
                 } else {
                     i = 1000;
                     FDecompressUserString((char *)lpmp->rgbMsg(), lpmp->cLen, (char *)lpb2k, &i);
-                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
+                    ControlIO().pfnSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
                 }
                 goto FinishUp;
             } else {
-                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
-                ControlIO().pfnFUiSetWindowText(hwndMsgEdit, "");
+                ControlIO().pfnSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
+                ControlIO().pfnSetWindowText(hwndMsgEdit, "");
                 goto FinishUp;
             }
         }
         if (cMsgTot != 0) {
             TextIO().pfnCchGetString(idsYearDCMessagesDD, szT);
-            wsprintf(szWork, szT, game.turn + 2400, ch, iMsgCur + 1, cMsgTot);
+            win32::wsprintf(szWork, szT, game.turn + 2400, ch, iMsgCur + 1, cMsgTot);
         } else {
             TextIO().pfnCchGetString(idsYearDCMessagesNone, szT);
-            wsprintf(szWork, szT, game.turn + 2400, ch);
+            win32::wsprintf(szWork, szT, game.turn + 2400, ch);
         }
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
+        ControlIO().pfnEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
+        ControlIO().pfnEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
         if (iMsgCur >= cMsg) {
-            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
+            ControlIO().pfnEnableWindow(rghwndMsgBtn[1], TRUE);
             goto FinishUp;
         }
         if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(static_cast<MessageId>(iMsgCur), &mb)) {
@@ -724,7 +724,7 @@ void SetMsgTitle(HWND hwnd) {
             (iMsgCur < 0 || (!fViewFilteredMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7))))) {
             mdMsgObj = mdMsgObjNone;
         }
-        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
+        ControlIO().pfnEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
     FinishUp:
         strcpy(szMsgTitle, szWork);
         ControlIO().pfnInvalidateRect(hwndMessage, &rcMsgTitle, TRUE);

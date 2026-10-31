@@ -16,13 +16,16 @@ static BOOL FTestGetCursorPos(LPPOINT lppt) {
     return TRUE;
 }
 
-#define GetCursorPos FTestGetCursorPos
 #ifdef STARS_UI_SDL
 #include "../../src/ui/nativeui.h"
+static BOOL FReadCursor16(POINT16 *lppt) { return GetCursorPos16(lppt, FTestGetCursorPos); }
 #else
+// The independent frozen C adapter retains its historical injection boundary.
+#define GetCursorPos FTestGetCursorPos
 #include "../reference/cpp-a/nativeui.h"
-#endif
 #undef GetCursorPos
+static BOOL FReadCursor16(POINT16 *lppt) { return GetCursorPos16(lppt); }
+#endif
 
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "Point adapter check failed at line %d\n", __LINE__); return 1; } } while (0)
 
@@ -31,13 +34,13 @@ int main(void) {
     static const POINT rgpt[] = {{0, 0}, {123, -456}, {-32768, 32767}};
     size_t i;
 
-    CHECK(!GetCursorPos16(&pt) && pt.x == 0 && pt.y == 0);
+    CHECK(!FReadCursor16(&pt) && pt.x == 0 && pt.y == 0);
     fCursor = TRUE;
     for (i = 0; i < sizeof(rgpt) / sizeof(rgpt[0]); i++) {
         ptCursor = rgpt[i];
-        CHECK(GetCursorPos16(&pt) && pt.x == ptCursor.x && pt.y == ptCursor.y);
+        CHECK(FReadCursor16(&pt) && pt.x == ptCursor.x && pt.y == ptCursor.y);
     }
     fCursor = FALSE;
-    CHECK(!GetCursorPos16(&pt) && pt.x == 0 && pt.y == 0);
+    CHECK(!FReadCursor16(&pt) && pt.x == 0 && pt.y == 0);
     return 0;
 }

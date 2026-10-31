@@ -25,13 +25,13 @@ int main(void) {
     CHECK(PszNativeCwd(szCwd, sizeof(szCwd)));
     CHECK(snprintf(szPath, sizeof(szPath), "%s/%s/\xe6\x9d\xb1\xe4\xba\xac.bin", szCwd, pszDir) < (int)sizeof(szPath));
     CHECK(snprintf(szOther, sizeof(szOther), "%s/%s/other.bin", szCwd, pszDir) < (int)sizeof(szOther));
-    hf = OpenFile(szPath, &of, OF_CREATE | OF_SHARE_EXCLUSIVE);
-    CHECK(hf != HFILE_ERROR && _lwrite(hf, rgb, sizeof(rgb)) == sizeof(rgb));
-    hfOther = OpenFile(szOther, &of, OF_CREATE | OF_SHARE_EXCLUSIVE);
-    CHECK(hfOther != HFILE_ERROR && _lclose(hfOther) == 0);
-    CHECK(OpenFile(szPath, &of, OF_READ | OF_SHARE_DENY_NONE) == HFILE_ERROR && of.nErrCode == ERROR_SHARING_VIOLATION);
-    CHECK(_llseek(hf, 0, SEEK_SET) == 0 && _lread(hf, rgbRead, sizeof(rgbRead)) == sizeof(rgbRead));
-    CHECK(memcmp(rgb, rgbRead, sizeof(rgb)) == 0 && _lclose(hf) == 0);
+    hf = win32::OpenFile(szPath, &of, OF_CREATE | OF_SHARE_EXCLUSIVE);
+    CHECK(hf != HFILE_ERROR && win32::_lwrite(hf, rgb, sizeof(rgb)) == sizeof(rgb));
+    hfOther = win32::OpenFile(szOther, &of, OF_CREATE | OF_SHARE_EXCLUSIVE);
+    CHECK(hfOther != HFILE_ERROR && win32::_lclose(hfOther) == 0);
+    CHECK(win32::OpenFile(szPath, &of, OF_READ | OF_SHARE_DENY_NONE) == HFILE_ERROR && of.nErrCode == ERROR_SHARING_VIOLATION);
+    CHECK(win32::_llseek(hf, 0, SEEK_SET) == 0 && win32::_lread(hf, rgbRead, sizeof(rgbRead)) == sizeof(rgbRead));
+    CHECK(memcmp(rgb, rgbRead, sizeof(rgb)) == 0 && win32::_lclose(hf) == 0);
     CHECK(IRenameNativePath(szPath, szOther, TRUE, TRUE) == 0 && IAccessNativePath(szPath, 0) != 0);
     pszReal = PszCanonicalNativePath(szOther, NULL, 0);
     CHECK(pszReal && strcmp(pszReal, szOther) == 0); free(pszReal);
@@ -44,13 +44,13 @@ int main(void) {
 
     // Sparse sizing tests 64-bit metadata without writing gigabytes of data.
     CHECK(FTestSparseFile(szOther));
-    hf = OpenFile(szOther, &of, OF_READ | OF_SHARE_DENY_NONE); CHECK(hf != HFILE_ERROR);
-    CHECK(GetFileSize((HANDLE)(INT_PTR)hf, &dwHigh) == 7 && dwHigh == 1 && _lclose(hf) == 0);
+    hf = win32::OpenFile(szOther, &of, OF_READ | OF_SHARE_DENY_NONE); CHECK(hf != HFILE_ERROR);
+    CHECK(win32::GetFileSize((HANDLE)(INT_PTR)hf, &dwHigh) == 7 && dwHigh == 1 && win32::_lclose(hf) == 0);
     CHECK(IUnlinkNativePath(szOther) == 0);
     CHECK(SDL_setenv_unsafe("STARS_SETTINGS_DIR", pszDir, 1) == 0);
-    CHECK(WritePrivateProfileStringA("Probe", "Value", "first", "Stars.ini"));
-    CHECK(WritePrivateProfileStringA("Probe", "Value", "second", "Stars.ini"));
-    CHECK(GetPrivateProfileStringA("Probe", "Value", "", sz, sizeof(sz), "Stars.ini") == 6 && strcmp(sz, "second") == 0);
+    CHECK(win32::WritePrivateProfileStringA("Probe", "Value", "first", "Stars.ini"));
+    CHECK(win32::WritePrivateProfileStringA("Probe", "Value", "second", "Stars.ini"));
+    CHECK(win32::GetPrivateProfileStringA("Probe", "Value", "", sz, sizeof(sz), "Stars.ini") == 6 && strcmp(sz, "second") == 0);
     puts("Windows UTF-8 paths, file identity, binary I/O, 64-bit sizes and settings replacement passed");
     return 0;
 }

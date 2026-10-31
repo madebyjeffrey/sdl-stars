@@ -3,8 +3,8 @@
 #include <windows.h>
 
 struct PROFILETEXTIO {
-    decltype(&GetPrivateProfileStringA)   pfnReadString = GetPrivateProfileStringA;
-    decltype(&WritePrivateProfileStringA) pfnWriteString = WritePrivateProfileStringA;
+    decltype(&win32::GetPrivateProfileStringA)   pfnReadString = win32::GetPrivateProfileStringA;
+    decltype(&win32::WritePrivateProfileStringA) pfnWriteString = win32::WritePrivateProfileStringA;
 };
 const PROFILETEXTIO &ProfileTextIO() noexcept;
 class PROFILETEXTIOSCOPE {

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
+namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
 static BOOL fPlayers, fRace, fQuit, fCheckFocus, fFocusPassed, fSaveOwner, fOwnerPassed;
 static BOOL fLaunchFocus, fLaunchFocusPassed;
 static HWND hwndNewGame;
@@ -25,28 +25,28 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
     char szCollision[512];
 
     (void)hwndTimer; (void)msg; (void)id; (void)time;
-    if (iStage == 0 && IsWindowVisible(hwndTitle)) {
+    if (iStage == 0 && win32::IsWindowVisible(hwndTitle)) {
         if (fLaunchFocus) {
             hwnd = LpCompatWindow(hwndTitle);
             fLaunchFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() &&
-                HwndCompatRoot(GetFocus()) == hwndTitle;
+                HwndCompatRoot(win32::GetFocus()) == hwndTitle;
             if (!fLaunchFocusPassed && ++cFocusWait < 20) return;
         }
 #ifdef __APPLE__
         if (fCheckIcon) fIconPassed = FTestCocoaAppIcon();
 #endif
         iStage = 1;
-        PostMessage(hwndTitle, WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
+        win32::PostMessage(hwndTitle, WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
         return;
     }
     if (iStage == 0 || fQuit || !StarsCompatCaptureHierarchy(&snap)) return;
 #ifdef __APPLE__
-    if (fNativeSaveOwner && iStage == 2 && IsWindow(hwndNewGame)) {
+    if (fNativeSaveOwner && iStage == 2 && win32::IsWindow(hwndNewGame)) {
         hwnd = LpCompatWindow(hwndNewGame);
         if (FTestCocoaSaveOwner(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()),
                 SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL))) {
-            fOwnerPassed = IsWindowVisible(hwndNewGame) && !IsWindowEnabled(hwndNewGame) &&
-                !IsWindowVisible(hwndFrame);
+            fOwnerPassed = win32::IsWindowVisible(hwndNewGame) && !win32::IsWindowEnabled(hwndNewGame) &&
+                !win32::IsWindowVisible(hwndFrame);
             iStage = 3;
         }
     }
@@ -59,21 +59,21 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
                 hwndNewGame = hwnd;
                 pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
                 if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
-                if (!pszRoot) { StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return; }
+                if (!pszRoot) { StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return; }
                 CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
-                if (!SDL_CreateDirectory(szCollision) || !SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
-                    StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return;
+                if (!SDL_CreateDirectory(szCollision) || !win32::SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
+                    StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return;
                 }
                 iStage = 2;
-                PostMessage(hwnd, WM_COMMAND, IDC_FINISH, 0);
+                win32::PostMessage(hwnd, WM_COMMAND, IDC_FINISH, 0);
                 break;
-            } else if (iStage == 2 && GetWindow(hwnd, GW_OWNER) == hwndNewGame) {
-                fOwnerPassed = IsWindowVisible(hwndNewGame) && !IsWindowEnabled(hwndNewGame) &&
-                    !IsWindowVisible(hwndFrame);
+            } else if (iStage == 2 && win32::GetWindow(hwnd, GW_OWNER) == hwndNewGame) {
+                fOwnerPassed = win32::IsWindowVisible(hwndNewGame) && !win32::IsWindowEnabled(hwndNewGame) &&
+                    !win32::IsWindowVisible(hwndFrame);
                 iStage = 3;
-                PostMessage(hwnd, WM_COMMAND, IDCANCEL, 0);
+                win32::PostMessage(hwnd, WM_COMMAND, IDCANCEL, 0);
                 break;
-            } else if (iStage == 3 && hwnd == hwndNewGame && IsWindowEnabled(hwndNewGame)) {
+            } else if (iStage == 3 && hwnd == hwndNewGame && win32::IsWindowEnabled(hwndNewGame)) {
                 event.type = SDL_EVENT_QUIT;
                 fQuit = SDL_PushEvent(&event);
                 break;
@@ -82,7 +82,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         }
         if (fPlayers && iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
             iStage = 2;
-            PostMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+            win32::PostMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
             break;
         }
         if ((!fPlayers && !fRace && hwnd->lpfnDlg == NewGameDlg) ||
@@ -90,7 +90,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
             (fRace && hwnd->lpfnDlg == RaceWizardDlg1)) {
             // Optional real-desktop check; dummy video cannot grant native keyboard focus.
             if (fCheckFocus) {
-                fFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() && IsChild(hwnd, GetFocus());
+                fFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() && win32::IsChild(hwnd, win32::GetFocus());
                 if (!fFocusPassed && ++cFocusWait < 20) break;
             }
             event.type = SDL_EVENT_QUIT;
@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
     if (fNativeSaveOwner) fSaveOwner = TRUE;
     fCheckIcon = argc == 2 && !strcmp(argv[1], "icon");
 #endif
-    idTimer = SetTimer(NULL, 0, 25, CheckQuit);
+    idTimer = win32::SetTimer(NULL, 0, 25, CheckQuit);
     if (!idTimer) return 1;
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    KillTimer(NULL, idTimer);
+    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();
     if (nResult != 0 || !fQuit || gd.fNoIdleChecks) return 1;

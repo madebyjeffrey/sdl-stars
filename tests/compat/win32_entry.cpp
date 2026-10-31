@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int nCmdShow) {
+namespace ui {
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int nCmdShow) {
     const char *pszExpected = getenv("STARS_TEST_COMMAND");
     const char *pszHeadless = getenv("STARS_TEST_HEADLESS");
     WNDCLASS wc = {};
@@ -19,14 +20,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszComman
         return 90;
     }
     if (pszHeadless) {
-        wc.hInstance = hInstance; wc.lpszClassName = "HeadlessEntry"; wc.lpfnWndProc = DefWindowProc;
-        if (!RegisterClass(&wc)) return 91;
-        hwnd = CreateWindow(wc.lpszClassName, "Invisible UI", WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+        wc.hInstance = hInstance; wc.lpszClassName = "HeadlessEntry"; wc.lpfnWndProc = win32::DefWindowProcA;
+        if (!win32::RegisterClass(&wc)) return 91;
+        hwnd = win32::CreateWindow(wc.lpszClassName, "Invisible UI", WS_VISIBLE | WS_OVERLAPPEDWINDOW,
                             0, 0, 120, 80, NULL, NULL, hInstance, NULL);
         if (!hwnd || !SDL_GetCurrentVideoDriver() || strcmp(SDL_GetCurrentVideoDriver(), "dummy") ||
             strcmp(SDL_getenv("SDL_AUDIODRIVER"), "dummy") || strcmp(SDL_getenv("STARS_SDL_RENDERER"), "software") ||
             (!SDL_getenv("STARS_FILE_DIALOG_BACKEND") || strcmp(SDL_getenv("STARS_FILE_DIALOG_BACKEND"), "compat")) ||
-            !IsWindowVisible(hwnd) || !GetClientRect(hwnd, &rc) || rc.right != 120 || rc.bottom != 80)
+            !win32::IsWindowVisible(hwnd) || !win32::GetClientRect(hwnd, &rc) || rc.right != 120 || rc.bottom != 80)
         {
             fprintf(stderr, "Headless window=%p video=%s audio=%s renderer=%s error=%s\n", (void *)hwnd,
                     SDL_GetCurrentVideoDriver(), SDL_getenv("SDL_AUDIODRIVER"), SDL_getenv("STARS_SDL_RENDERER"), SDL_GetError());
@@ -35,3 +36,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszComman
     }
     return 37;
 }
+
+} // namespace ui

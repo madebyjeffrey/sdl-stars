@@ -21,19 +21,19 @@ static BOOL FCheckRaceVersionWorkflow(void) {
     CchSnprintf(szThirdSnapshot, sizeof(szThirdSnapshot), "%s%sthird.snapshot", pszRoot, szDirSep);
     CchSnprintf(szFirstSnapshot, sizeof(szFirstSnapshot), "%s%sfirst.snapshot", pszRoot, szDirSep);
     CchSnprintf(szSecondSnapshot, sizeof(szSecondSnapshot), "%s%ssecond.snapshot", pszRoot, szDirSep);
-    for (hwnd = HwndCompatFirstTop(); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT))
+    for (hwnd = HwndCompatFirstTop(); hwnd; hwnd = win32::GetWindow(hwnd, GW_HWNDNEXT))
         if (hwnd->fDialog && hwnd->lpfnDlg == LibraryNameDlg) {
             fprintf(stderr, "New Race unexpectedly asked for a filename\n");
             return FALSE;
         }
     if (iPhase == 0) {
-        if (!IsWindowVisible(hwndTitle) || !IsWindowEnabled(hwndTitle)) return TRUE;
+        if (!win32::IsWindowVisible(hwndTitle) || !win32::IsWindowEnabled(hwndTitle)) return TRUE;
         fChecked = fTitlePainted = TRUE;
         iPhase = 1;
-        if (iRun == 0 || iRun == 1 || iRun == 6 || iRun == 8) return FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW));
+        if (iRun == 0 || iRun == 1 || iRun == 6 || iRun == 8) return FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_NEW));
         RefreshLibraryRaces(hwndTitle);
         if (!FSelectClientRaceName(hwndTitle, iRun == 2 ? "\xc3\x89lan_CON.r1" : iRun == 7 ? "\xc3\xa9LAN_CON.r3" : "\xc3\x89lan_CON.r2")) return FALSE;
-        return FPushClick(GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT));
+        return FPushClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_RACE_EDIT));
     }
     if (iPhase == 1) {
         hwndDialog = HwndRosterDialog(LibraryRaceSaveDlg);
@@ -41,22 +41,22 @@ static BOOL FCheckRaceVersionWorkflow(void) {
             cPrompts++;
             if ((iRun != 2 && iRun != 3 && iRun != 5 && iRun != 6 && iRun != 7 && iRun != 8) || cPrompts != 1) return FALSE;
             if (iRun == 8) {
-                if (!GetDlgItemText(hwndDialog, IDC_LIBRARY_RACE_SAVE_TEXT, szPrompt, sizeof(szPrompt)) ||
+                if (!win32::GetDlgItemText(hwndDialog, IDC_LIBRARY_RACE_SAVE_TEXT, szPrompt, sizeof(szPrompt)) ||
                     !strstr(szPrompt, "Imported.r8")) return FALSE;
             }
             if (iRun == 5) iPhase = 2;
             if (iRun == 7) { fFailRaceVersionSave = TRUE; iPhase = 4; }
-            return FPushClick(GetDlgItem(hwndDialog, iRun == 5 ? IDCANCEL :
+            return FPushClick(win32::GetDlgItem(hwndDialog, iRun == 5 ? IDCANCEL :
                                         (iRun == 3 || iRun == 7) ? IDC_LIBRARY_RACE_UPDATE : IDC_LIBRARY_RACE_VERSION));
         }
         if (iPage < 6) {
             hwndDialog = HwndRosterDialog(rglpfn[iPage]);
             if (!hwndDialog) return TRUE;
-            if (iPage == 0 && (!SetDlgItemText(hwndDialog, IDC_RACE_NAME, pszName) ||
-                              !SetDlgItemText(hwndDialog, IDC_RACE_PLURAL_NAME, rgszPlural[iRun]))) return FALSE;
-            return FPushClick(GetDlgItem(hwndDialog, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
+            if (iPage == 0 && (!win32::SetDlgItemText(hwndDialog, IDC_RACE_NAME, pszName) ||
+                              !win32::SetDlgItemText(hwndDialog, IDC_RACE_PLURAL_NAME, rgszPlural[iRun]))) return FALSE;
+            return FPushClick(win32::GetDlgItem(hwndDialog, iPage++ == 5 ? IDC_FINISH : IDC_NEXT));
         }
-        if (!IsWindowEnabled(hwndTitle)) return TRUE;
+        if (!win32::IsWindowEnabled(hwndTitle)) return TRUE;
         iPhase = 3;
     }
     if (iPhase == 4) {
@@ -67,9 +67,9 @@ static BOOL FCheckRaceVersionWorkflow(void) {
         hwndDialog = HwndRosterDialog(RaceWizardDlg1);
         if (!hwndDialog) return TRUE;
         iPhase = 3;
-        return FPushClick(GetDlgItem(hwndDialog, IDCANCEL));
+        return FPushClick(win32::GetDlgItem(hwndDialog, IDCANCEL));
     }
-    if (!IsWindowEnabled(hwndTitle)) return TRUE;
+    if (!win32::IsWindowEnabled(hwndTitle)) return TRUE;
     if (iRun == 0) {
         if (!FTestCopyFile(szFirst, szFirstSnapshot)) return FALSE;
     } else if (!FTestFilesEqual(szFirst, szFirstSnapshot)) return FALSE;
@@ -97,7 +97,7 @@ static BOOL FCheckRaceVersionWorkflow(void) {
             strcmp(vplr.szName, "Legacy") || strcmp(vplr.szNames, rgszPlural[iRun])) return FALSE;
         fPassed = TRUE;
         puts("Wizard names, Update/New Version/Cancel, failed saves, UTF-8 and imported version families passed");
-        PostQuitMessage(0);
+        win32::PostQuitMessage(0);
         return TRUE;
     }
     iRun++;

@@ -33,7 +33,7 @@ static_assert(RGB(0x12, 0x34, 0x56) == 0x563412, "COLORREF byte order");
 #ifdef STARS_UI_SDL
 static_assert(std::is_same_v<WNDPROC, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "WNDPROC signature");
 static_assert(std::is_same_v<DLGPROC, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "DLGPROC signature");
-static_assert(std::is_same_v<decltype(&GetWindowLongPtrA), LONG_PTR (WINAPI *)(HWND, int)>, "pointer accessor signature");
+static_assert(std::is_same_v<decltype(&GetWindowLongPtrA), LONG_PTR (*)(HWND, int)>, "pointer accessor signature");
 #else
 static_assert(_Generic((WNDPROC)0, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "WNDPROC signature");
 static_assert(_Generic((DLGPROC)0, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "DLGPROC signature");
@@ -44,7 +44,7 @@ static_assert(_Generic(&GetWindowLongPtrA, LONG_PTR (WINAPI *)(HWND, int): 1, de
 SIZE(ICONINFO, 32); OFFSET(ICONINFO, xHotspot, 4); OFFSET(ICONINFO, hbmMask, 16);
 SIZE(WINDOWPOS, 40); OFFSET(WINDOWPOS, x, 16); OFFSET(WINDOWPOS, flags, 32);
 SIZE(WNDCLASSA, 72); OFFSET(WNDCLASSA, lpfnWndProc, 8); OFFSET(WNDCLASSA, lpszClassName, 64);
-SIZE(MSG, 48); OFFSET(MSG, wParam, 16); OFFSET(MSG, lParam, 24); OFFSET(MSG, pt, 36);
+SIZE(APPMSG, 48); OFFSET(APPMSG, wParam, 16); OFFSET(APPMSG, lParam, 24); OFFSET(APPMSG, pt, 36);
 SIZE(PAINTSTRUCT, 72); OFFSET(PAINTSTRUCT, rcPaint, 12);
 SIZE(CREATESTRUCTA, 80); OFFSET(CREATESTRUCTA, style, 48); OFFSET(CREATESTRUCTA, lpszName, 56);
 SIZE(DRAWITEMSTRUCT, 64); OFFSET(DRAWITEMSTRUCT, itemData, 56);

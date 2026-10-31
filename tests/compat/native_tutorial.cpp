@@ -42,25 +42,25 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     HWND hwndRoot = HwndCompatRoot(hwnd);
     char szText[256];
     int i, j, iItem = -1, cSteps = 0;
-    if (!pszMenu) return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!pszMenu) return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     /* PopupMenu sends commands to the frame even when a modal owns the input. */
-    if (hwndRoot && !IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
-    for (i = 0; i < GetMenuItemCount(hmenu); i++) {
-        if (GetMenuState(hmenu, i, MF_BYPOSITION) & MF_SEPARATOR) continue;
-        GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
+    if (hwndRoot && !win32::IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
+    for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
+        if (win32::GetMenuState(hmenu, i, MF_BYPOSITION) & MF_SEPARATOR) continue;
+        win32::GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
         if (!strcmp(szText, pszMenu)) { iItem = cSteps; break; }
         cSteps++;
     }
     if (iItem < 0) {
         fprintf(stderr, "Requested scanner menu item '%s' was absent; entries:\n", pszMenu);
-        for (i = 0; i < GetMenuItemCount(hmenu); i++) {
-            GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
+        for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
+            win32::GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
             fprintf(stderr, "  %d: '%s'\n", i, szText);
         }
         FSaveState("missing-menu");
     }
     pszMenu = NULL;
-    if (iItem < 0 || !hwndRoot) { pszFailure = "requested scanner menu item was absent"; PostQuitMessage(93); return FALSE; }
+    if (iItem < 0 || !hwndRoot) { pszFailure = "requested scanner menu item was absent"; win32::PostQuitMessage(93); return FALSE; }
     for (j = 0; j < iItem + 2; j++) {
         event.type = SDL_EVENT_KEY_DOWN; event.key.windowID = hwndRoot->id;
         event.key.scancode = j == 0 ? SDL_SCANCODE_HOME : j == iItem + 1 ? SDL_SCANCODE_RETURN : SDL_SCANCODE_DOWN;
@@ -69,17 +69,17 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
         event.type = SDL_EVENT_KEY_UP; event.key.down = false;
         if (!SDL_PushEvent(&event)) return FALSE;
     }
-    return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.
      */
     fExpectedRejection = iStage == 3 && pszText &&
         strstr(pszText, "You have not yet completed all of the tutorial tasks");
     fprintf(stderr, "Message box at stage %d: %s\n", iStage, pszText ? pszText : "");
-    return MessageBoxA(hwnd, pszText, pszCaption, type);
+    return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
 static void LogState(const char *pszEvent) {
@@ -87,7 +87,7 @@ static void LogState(const char *pszEvent) {
     CchNativePrintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u,\"productionSelection\":%ld}\n",
             pszEvent, iStage, game.turn, tutor.idt / 8 + 1, tutor.idtBold, gd.fTutorial, tutor.fAutoComplete, cActions, (unsigned long long)SDL_GetTicks(),
             sel.grobj, sel.id, tutor.fTurnDone, grbitScan & grbitScanViewMask,
-            IsWindow(hwndPlanetProdLB) ? (long)LUiSendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0) : -1L);
+            win32::IsWindow(hwndPlanetProdLB) ? (long)ui::SendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0) : -1L);
     IFlushNativeFile(lpEvents);
 }
 
@@ -104,7 +104,7 @@ static BOOL FSaveState(const char *pszName) {
     fResult = lpfile && StarsCompatWriteHierarchy(&snap, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = FALSE;
     StarsCompatFreeHierarchy(&snap);
-    if (!fResult || !IsWindow(hwndScanner)) return fResult;
+    if (!fResult || !win32::IsWindow(hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
     if (!FCaptureScanner(&scan)) return FALSE;
     lpfile = PfNativeOpen(szPath, "w");
@@ -144,9 +144,9 @@ static BOOL FMousePoint(HWND hwnd, POINT pt, Uint8 iButton, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
     SDL_zero(event);
-    if (!hwndRoot || !IsWindowVisible(hwnd) || !IsWindowEnabled(hwnd)) return FALSE;
-    ClientToScreen(hwnd, &pt);
-    ScreenToClient(hwndRoot, &pt);
+    if (!hwndRoot || !win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd)) return FALSE;
+    win32::ClientToScreen(hwnd, &pt);
+    win32::ScreenToClient(hwndRoot, &pt);
     event.type = fDown ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
     event.button.windowID = hwndRoot->id;
     event.button.button = iButton;
@@ -165,7 +165,7 @@ static BOOL FClickPoint(HWND hwnd, POINT pt, Uint8 iButton) {
 static BOOL FClick(HWND hwnd) {
     RECT rc;
     POINT pt;
-    if (!IsWindow(hwnd) || !GetClientRect(hwnd, &rc)) return FALSE;
+    if (!win32::IsWindow(hwnd) || !win32::GetClientRect(hwnd, &rc)) return FALSE;
     pt.x = (rc.right - rc.left) / 2;
     pt.y = (rc.bottom - rc.top) / 2;
     return FClickPoint(hwnd, pt, SDL_BUTTON_LEFT);
@@ -176,7 +176,7 @@ static BOOL FClickComboRow(HWND hwndCombo, int iRow) {
     RECT rc;
     POINT pt;
     int cy, iTop;
-    if (!hwndDrop || !GetClientRect(hwndDrop, &rc)) return FALSE;
+    if (!hwndDrop || !win32::GetClientRect(hwndDrop, &rc)) return FALSE;
     cy = (int)CompatListProc(hwndCombo, LB_GETITEMHEIGHT, 0, 0);
     iTop = (int)CompatListProc(hwndCombo, LB_GETTOPINDEX, 0, 0);
     pt = (POINT){rc.right / 2, 1 + (iRow - iTop) * cy + cy / 2};
@@ -186,12 +186,12 @@ static BOOL FClickComboRow(HWND hwndCombo, int iRow) {
 static BOOL FChooseCombo(HWND hwndCombo, const char *pszName) {
     char szItem[256];
     int i;
-    for (i = 0; i < LUiSendMessage(hwndCombo, CB_GETCOUNT, 0, 0); i++) {
-        if (LUiSendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) return FALSE;
-        LUiSendMessage(hwndCombo, CB_GETLBTEXT, i, (LPARAM)szItem);
+    for (i = 0; i < ui::SendMessage(hwndCombo, CB_GETCOUNT, 0, 0); i++) {
+        if (ui::SendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) return FALSE;
+        ui::SendMessage(hwndCombo, CB_GETLBTEXT, i, (LPARAM)szItem);
         if (!strcmp(szItem, pszName)) break;
     }
-    if (i == LUiSendMessage(hwndCombo, CB_GETCOUNT, 0, 0) || !FClick(hwndCombo)) return FALSE;
+    if (i == ui::SendMessage(hwndCombo, CB_GETCOUNT, 0, 0) || !FClick(hwndCombo)) return FALSE;
     // Commit by mouse after focus and keyboard navigation have settled.
     hwndDesignCombo = hwndCombo;
     iDesignCombo = i;
@@ -201,8 +201,8 @@ static BOOL FChooseCombo(HWND hwndCombo, const char *pszName) {
 static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
-    if (!hwndRoot || !ClientToScreen(hwnd, &ptFrom) || !ScreenToClient(hwndRoot, &ptFrom) ||
-        !ClientToScreen(hwnd, &ptTo) || !ScreenToClient(hwndRoot, &ptTo)) return FALSE;
+    if (!hwndRoot || !win32::ClientToScreen(hwnd, &ptFrom) || !win32::ScreenToClient(hwndRoot, &ptFrom) ||
+        !win32::ClientToScreen(hwnd, &ptTo) || !win32::ScreenToClient(hwndRoot, &ptTo)) return FALSE;
     ptFrom.y += CyCompatMenuBar(hwndRoot); ptTo.y += CyCompatMenuBar(hwndRoot);
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
@@ -228,7 +228,7 @@ static HWND HwndModal(void) {
     for (i = 0; i < snap.cWindow; i++) {
         hwndT = StarsCompatResolveWindow(snap.rgWindow[i].id);
         /* Snapshots list older windows first; a nested modal disables its owner. */
-        if (hwndT && hwndT->fModal && snap.rgWindow[i].fVisible && IsWindowEnabled(hwndT)) hwnd = hwndT;
+        if (hwndT && hwndT->fModal && snap.rgWindow[i].fVisible && win32::IsWindowEnabled(hwndT)) hwnd = hwndT;
     }
     StarsCompatFreeHierarchy(&snap);
     return hwnd;
@@ -407,7 +407,7 @@ static BOOL FSaveTutorialPopup(const char *pszPath, BOOL fResearch) {
     NATIVEFILE *lpfile;
     int fError;
 
-    if (!IsWindowVisible(hwndPopup) || GetCapture() != hwndPopup) return FALSE;
+    if (!win32::IsWindowVisible(hwndPopup) || win32::GetCapture() != hwndPopup) return FALSE;
     if (fResearch) {
         if (GlobalPD.grPopup != grPopupComponent || GlobalPD.part.hs.grhst != hstTerra ||
             GlobalPD.part.hs.iItem != iterraRadiationTerraform7) return FALSE;
@@ -452,7 +452,7 @@ static BOOL FSaveSalvage(void) {
 static BOOL FSaveReport(const char *pszPath) {
     NATIVEFILE *lpfile;
     int i, fError;
-    if (!IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return FALSE;
+    if (!win32::IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return FALSE;
     lpfile = PfNativeOpen(pszPath, "w");
     if (!lpfile) return FALSE;
     CchNativePrintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
@@ -508,14 +508,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     hwndModal = HwndModal();
     switch (iStage) {
     case 0:
-        if (!IsWindowVisible(hwndTitle)) return;
-        if (!FClick(GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LInput;
+        if (!win32::IsWindowVisible(hwndTitle)) return;
+        if (!FClick(win32::GetDlgItem(hwndTitle, IDC_LIBRARY_TUTORIAL))) goto LInput;
         break;
     case 1:
-        if (!gd.fTutorial || !IsWindow(hwndScanner)) return;
+        if (!gd.fTutorial || !win32::IsWindow(hwndScanner)) return;
         break;
     case 2:
-        if (!gd.fTutorial || tutor.idtBold != 5 || !IsWindow(hwndScanner) || hwndModal) return;
+        if (!gd.fTutorial || tutor.idtBold != 5 || !win32::IsWindow(hwndScanner) || hwndModal) return;
         if (game.turn != 0 || tutor.fTurnDone) { pszFailure = "unexpected initial tutorial state"; goto LFail; }
         if (!FSaveState("start")) goto LArtifact;
         if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
@@ -527,7 +527,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             pszFailure = "unexpected dialog instead of unfinished-task rejection";
             goto LFail;
         }
-        if (!FSaveState("rejected") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FSaveState("rejected") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         fRejected = TRUE;
         break;
     case 4:
@@ -535,7 +535,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!gd.fTutorial || game.turn != 0) { pszFailure = "premature Generate changed tutorial state"; goto LFail; }
         if (tutor.idtBold == 5) {
             if (++cReadActions > 100) { pszFailure = "messages did not advance after bounded clicks"; goto LFail; }
-            if (!IsWindowEnabled(rghwndMsgBtn[2])) return;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2])) return;
             if (!FClick(rghwndMsgBtn[2])) goto LInput;
             cWait = 0;
             LogState("read-message");
@@ -565,8 +565,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (fFirstYear) { iStage = 7; goto LQueued; }
         fPassed = fRejected && gd.fTutorial && game.turn == 0 && !tutor.fTurnDone;
         LogState("smoke-passed");
-        KillTimer(NULL, id);
-        PostQuitMessage(fPassed ? 0 : 93);
+        win32::KillTimer(NULL, id);
+        win32::PostQuitMessage(fPassed ? 0 : 93);
         return;
     case 7:
         if (hwndModal || !gd.fTutorial || game.turn != 0) { pszFailure = "unexpected first-year state or dialog"; goto LFail; }
@@ -608,12 +608,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 8:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ResearchDlg || tutor.idtBold != 38) { pszFailure = "unexpected research dialog"; goto LFail; }
-        if (!FClick(GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + (int)Weapons))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_RESEARCH_ENERGY + (int)Weapons))) goto LInput;
         break;
     case 9:
         if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg) { pszFailure = "research dialog vanished"; goto LFail; }
         if (iResTechNow != Weapons) return;
-        if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 10:
         if (hwndModal) return;
@@ -635,8 +635,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (fTwoYears) { iStage = 13; goto LQueued; }
         fPassed = fRejected && cPage == 6;
         LogState("first-year-partial");
-        KillTimer(NULL, id);
-        PostQuitMessage(fPassed ? 0 : 93);
+        win32::KillTimer(NULL, id);
+        win32::PostQuitMessage(fPassed ? 0 : 93);
         return;
     case 13:
         if (!FFindPlanet("Stove Top")) goto LInput;
@@ -651,14 +651,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 15:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob || tutor.idtBold != 43) { pszFailure = "unexpected production dialog"; goto LFail; }
-        hwndList = GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
+        hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
         iFactoryRow = -1;
-        for (i = 0; i < LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (LUiSendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) >= 6 && !strcmp(szItem + 6, "Factory")) { iFactoryRow = i; break; }
         }
-        if (iFactoryRow < 0 || LUiSendMessage(hwndList, LB_GETITEMRECT, LUiSendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (iFactoryRow < 0 || ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
         ptRow.x = (rcRow.left + rcRow.right) / 2; ptRow.y = (rcRow.top + rcRow.bottom) / 2;
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
@@ -668,21 +668,21 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 16:
         if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg) goto LInput;
-        if (LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
+        if (ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
         /* Pushed SDL events do not change device state read by GetAsyncKeyState.
          * Hold the test modifier until the real Add callbacks have completed. */
         SDL_SetModState(SDL_KMOD_LSHIFT);
-        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, TRUE) || !FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
+        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, TRUE) || !FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         break;
     case 17:
         if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 10) return;
-        if (!FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         break;
     case 18:
         if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 20) return;
         if (lpplProdGlob->rgprod()[0].grobj != grobjPlanet || lpplProdGlob->rgprod()[0].iItem != mdIdleFactory) goto LInput;
         SDL_SetModState(SDL_KMOD_NONE);
-        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, FALSE) || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, FALSE) || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 19:
         if (hwndModal || tutor.idtBold != 47 || !tutor.fTurnDone) return;
@@ -701,7 +701,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (fScouting) { iStage = 21; goto LQueued; }
         fPassed = fRejected && cPage == 7;
         LogState("two-years-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 21:
         if (hwndModal || game.turn != 2 || !gd.fTutorial) { pszFailure = "unexpected scouting state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -711,14 +711,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (fMining) { iStage = 22; goto LQueued; }
             fPassed = fRejected && cPage == 10;
             LogState("scouting-partial");
-            KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+            win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
         }
         if (tutor.idtBold == 48 || tutor.idtBold == 71) {
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 24; goto LQueued;
         }
         if (tutor.idtBold == 55 || tutor.idtBold == 61 || tutor.idtBold == 63 || tutor.idtBold == 69) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 23; goto LQueued;
         }
         for (i = 0; i < (int)(sizeof(rgScout) / sizeof(rgScout[0])); i++) {
@@ -729,10 +729,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         pszFailure = "unimplemented scouting instruction"; goto LFail;
     case 22:
-        if (!GetClientRect(hwndFrame, &rcRow)) goto LInput;
+        if (!win32::GetClientRect(hwndFrame, &rcRow)) goto LInput;
         /* A private window manager may already have maximized the frame;
          * requesting a smaller SDL size then fails while maximized. */
-        if (rcRow.bottom < 650 && !FUiSetWindowPos(hwndFrame, NULL, 0, 0, 900, 700,
+        if (rcRow.bottom < 650 && !ui::SetWindowPos(hwndFrame, NULL, 0, 0, 900, 700,
                                                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)) {
             pszFailure = "unable to resize tutorial frame"; goto LFail;
         }
@@ -761,11 +761,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 28:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskMine)) goto LInput;
         break;
     case 29:
-        if (LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idt != 80 || tutor.idtBold != 80) return;
+        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idt != 80 || tutor.idtBold != 80) return;
         lpfl = LpflFromId(5);
         if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet ||
             lpfl->lpplord->rgord()[1].id != 12 || lpfl->lpplord->rgord()[1].grTask != grTaskMine) goto LInput;
@@ -773,13 +773,13 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (fColonization) { iStage = 30; goto LQueued; }
         fPassed = fRejected && cPage == 11;
         LogState("mining-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 30:
         if (hwndModal || game.turn != 2) { pszFailure = "unexpected colonization state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
         LogState("colonization-instruction");
         if (tutor.idtBold == 80 || tutor.idtBold == 84 || tutor.idtBold == 86) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 31; goto LQueued;
         }
         if (tutor.idtBold == 83) {
@@ -824,7 +824,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 35:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 36:
         if (hwndModal || tutor.idtBold != 92) return;
@@ -838,7 +838,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 38:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 39:
@@ -861,10 +861,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 13;
         LogState("colonization-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 41:
-        if (!IsWindow(hwndPopup)) return;
-        if (!IsWindowVisible(hwndPopup) || GetCapture() != hwndPopup || !GetClientRect(hwndPopup, &rcRow)) goto LInput;
+        if (!win32::IsWindow(hwndPopup)) return;
+        if (!win32::IsWindowVisible(hwndPopup) || win32::GetCapture() != hwndPopup || !win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         if (!FSaveState("summary-popup")) goto LArtifact;
         LogState("summary-popup");
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
@@ -881,7 +881,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 44; goto LQueued;
         }
         if (tutor.idtBold == 98 || tutor.idtBold == 104 || tutor.idtBold == 115) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 43; goto LQueued;
         }
         if (tutor.idtBold == 101 || tutor.idtBold == 106) {
@@ -902,7 +902,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 44; goto LQueued;
         }
         if (tutor.idtBold == 123) {
-            if (LUiSendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 59; goto LQueued;
@@ -925,23 +925,23 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 45:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LInput;
-        if (rgProduction[iProdPass].fLeftovers && LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) != BST_CHECKED &&
-            !FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY))) goto LInput;
-        hwndList = GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
+        if (rgProduction[iProdPass].fLeftovers && ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) != BST_CHECKED &&
+            !FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY))) goto LInput;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
         iFactoryRow = -1;
-        for (i = 0; i < LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (LUiSendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) >= 6 && !strcmp(szItem + 6, rgProduction[iProdPass].pszName)) { iFactoryRow = i; break; }
         }
-        if (iFactoryRow < 0 || LUiSendMessage(hwndList, LB_GETITEMRECT, LUiSendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (iFactoryRow < 0 || ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
         ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         iStage = 49; goto LQueued;
     case 49:
         if (!hwndModal) goto LInput;
-        hwndList = GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
-        if (GetFocus() != hwndList) return;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
+        if (win32::GetFocus() != hwndList) return;
         /* Keyboard events must be translated after the click changes focus. */
         if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
         for (i = 0; i < iFactoryRow; i++) {
@@ -950,10 +950,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 46; goto LQueued;
     case 46:
         if (hwndModal && cWait == 20) fprintf(stderr, "Production item %s: selected %ld, expected row %d\n", rgProduction[iProdPass].pszName,
-            (long)LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0), iFactoryRow);
-        if (!hwndModal || LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
+            (long)ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0), iFactoryRow);
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
         SDL_SetModState(iProdPass == 15 ? SDL_KMOD_LCTRL : rgProduction[iProdPass].fShift ? SDL_KMOD_LSHIFT : SDL_KMOD_NONE);
-        if (!FClick(GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         cProdAdded += iProdPass == 15 ? 100 : rgProduction[iProdPass].fShift ? 10 : 1;
         break;
     case 47:
@@ -966,13 +966,13 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         SDL_SetModState(SDL_KMOD_NONE);
         if (iProdPass == 1) { iProdPass = 2; cProdAdded = 0; iStage = 45; goto LQueued; }
         if (iProdPass == 5 || iProdPass == 8) { iProdPass++; cProdAdded = 0; iStage = 68; goto LQueued; }
-        hwndList = GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY);
-        if (LUiSendMessage(hwndList, BM_GETCHECK, 0, 0) != (rgProduction[iProdPass].fLeftovers ? BST_CHECKED : BST_UNCHECKED) && !FClick(hwndList)) goto LInput;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY);
+        if (ui::SendMessage(hwndList, BM_GETCHECK, 0, 0) != (rgProduction[iProdPass].fLeftovers ? BST_CHECKED : BST_UNCHECKED) && !FClick(hwndList)) goto LInput;
         break;
     case 48:
-        if (!hwndModal || LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) !=
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) !=
             (rgProduction[iProdPass].fLeftovers ? BST_CHECKED : BST_UNCHECKED)) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         iStage = iProdReturn; goto LQueued;
     case 50:
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 3 || tutor.idtBold != 110) return;
@@ -991,7 +991,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 52:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 210) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 53:
         if (hwndModal || tutor.idtBold != 112) return;
@@ -1003,11 +1003,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 55:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskXfer)) goto LInput;
         break;
     case 56:
-        if (tutor.idtBold != 114 || LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (tutor.idtBold != 114 || ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         ptRow = (POINT){(rgrcRef[5].left + rgrcRef[5].right) / 2, (rgrcRef[5].top + rgrcRef[5].bottom) / 2};
         pszMenu = "QuikDrop";
         if (!FClickPoint(hwndPlanet, ptRow, SDL_BUTTON_RIGHT)) goto LInput;
@@ -1019,7 +1019,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 0) return;
         iStage = 42; goto LQueued;
     case 59:
-        if (GetFocus() != hwndShipLB || LUiSendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
         if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
         cActions++;
         break;
@@ -1037,7 +1037,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 17;
         LogState("logistics-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 62:
         if (hwndModal || game.turn != 4) { pszFailure = "unexpected colonizer-production state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -1053,7 +1053,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 65; goto LQueued;
         }
         if (tutor.idtBold == 131 || tutor.idtBold == 132) {
-            if (LUiSendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 66; goto LQueued;
@@ -1091,20 +1091,20 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 4) return;
         iStage = 62; goto LQueued;
     case 66:
-        if (GetFocus() != hwndShipLB || LUiSendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
         if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
         cActions++; iStage = 64; goto LQueued;
     case 68:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LInput;
         /* Add inserts before the selected queue row. */
-        hwndList = GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE);
-        if (LUiSendMessage(hwndList, LB_GETITEMRECT, rgProduction[iProdPass].iQueue, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE);
+        if (ui::SendMessage(hwndList, LB_GETITEMRECT, rgProduction[iProdPass].iQueue, (LPARAM)&rcRow) == LB_ERR) goto LInput;
         ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         iStage = 70; goto LQueued;
     case 70:
-        if (!hwndModal || LUiSendMessage(GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0) != rgProduction[iProdPass].iQueue) return;
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0) != rgProduction[iProdPass].iQueue) return;
         iStage = 45; goto LQueued;
     case 69:
         if (hwndModal) { pszFailure = "unexpected fifth-generation dialog"; goto LFail; }
@@ -1117,7 +1117,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 19;
         LogState("colonizer-production-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 71:
         if (hwndModal || game.turn != 5) { pszFailure = "unexpected second-colonization state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -1134,9 +1134,9 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 73; goto LQueued;
         }
         if (tutor.idtBold == 150 || tutor.idtBold == 153) {
-            hwndList = GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
+            hwndList = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
             i = tutor.idtBold == 150 ? tbPlanetValueView : tbNormalView;
-            if (!LUiSendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
+            if (!ui::SendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 72; goto LQueued;
@@ -1187,7 +1187,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 78; goto LQueued;
             }
-            if (LUiSendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 80; goto LQueued;
@@ -1215,14 +1215,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 74:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 75:
         if (hwndModal || tutor.idtBold == 146 || tutor.idtBold == 148) return;
         if (!FSaveOrders("year-2405-cargo.json")) goto LArtifact;
         iStage = 71; goto LQueued;
     case 76:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         iStage = 72; goto LQueued;
     case 78:
@@ -1232,7 +1232,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu) return;
         iStage = 71; goto LQueued;
     case 80:
-        if (GetFocus() != hwndShipLB || LUiSendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
         if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
         cActions++; iStage = 72; goto LQueued;
     case 81:
@@ -1246,7 +1246,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 21;
         LogState("second-colonization-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 82:
         if (hwndModal || game.turn != 6) { pszFailure = "unexpected transport-cycle state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold;
@@ -1274,7 +1274,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 83; goto LQueued;
         }
         if (tutor.idtBold == 166) {
-            if (LUiSendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 87; goto LQueued;
@@ -1305,14 +1305,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || tutor.idtBold == idtBefore) return;
         iStage = 82; goto LQueued;
     case 84:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskXfer)) goto LInput;
         iStage = 83; goto LQueued;
     case 86:
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 3) return;
         iStage = 82; goto LQueued;
     case 87:
-        if (LUiSendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1 || sel.iwpAct != 1) return;
+        if (ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1 || sel.iwpAct != 1) return;
         if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
             !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
         iStage = 83; goto LQueued;
@@ -1327,7 +1327,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 23;
         LogState("transport-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 91:
         if (hwndModal || game.turn != 7) { pszFailure = "unexpected expansion state or dialog"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -1343,9 +1343,9 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 94; goto LQueued;
         }
         if (tutor.idtBold == 177 || tutor.idtBold == 182) {
-            hwndList = GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
+            hwndList = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
             i = tutor.idtBold == 177 ? tbPlanetValueView : tbNormalView;
-            if (!LUiSendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
+            if (!ui::SendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 92; goto LQueued;
@@ -1371,7 +1371,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             cActions++; iStage = 68; goto LQueued;
         }
         if (tutor.idtBold == 184 || tutor.idtBold == 187 || tutor.idtBold == 190) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 101; goto LQueued;
         }
         if (tutor.idtBold == 186) {
@@ -1412,7 +1412,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 95:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 96:
         if (hwndModal || tutor.idtBold == 176) return;
@@ -1423,7 +1423,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 99:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         iStage = 92; goto LQueued;
     case 101:
@@ -1436,15 +1436,15 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_RIGHT, TRUE)) goto LInput;
         cActions++; break;
     case 103:
-        if (!IsWindow(hwndPopup)) return;
-        if (!IsWindowVisible(hwndPopup) || GetCapture() != hwndPopup || !GetClientRect(hwndPopup, &rcRow)) goto LInput;
+        if (!win32::IsWindow(hwndPopup)) return;
+        if (!win32::IsWindowVisible(hwndPopup) || win32::GetCapture() != hwndPopup || !win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         if (!FSaveState("enemy-design-popup") || !FSaveEnemyDesign()) goto LArtifact;
         LogState("enemy-design-popup");
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
         if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_RIGHT, FALSE)) goto LInput;
         break;
     case 104:
-        if (IsWindow(hwndPopup)) return;
+        if (win32::IsWindow(hwndPopup)) return;
         iStage = 91; goto LQueued;
     case 105:
         if (hwndModal) { pszFailure = "unexpected eighth-generation dialog"; goto LFail; }
@@ -1457,7 +1457,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 26;
         LogState("expansion-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 106:
         if (hwndModal || game.turn != 8) { pszFailure = "unexpected fleet splitting state or dialog"; goto LFail; }
         if (tutor.idt == 208) {
@@ -1465,7 +1465,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (fResearchCycle) { iStage = 118; goto LQueued; }
             fPassed = fRejected && cPage == 27;
             LogState("fleet-split-partial");
-            KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+            win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
         }
         idtBefore = tutor.idtBold;
         LogState("fleet-split-instruction");
@@ -1517,7 +1517,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 109:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgcsh[2] != 2 || pxfer[1].fl().rgcsh[2] != 1) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 110:
         if (hwndModal) return;
@@ -1536,7 +1536,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 112:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 50) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 113:
         if (hwndModal) return;
@@ -1546,11 +1546,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (sel.grobj != grobjFleet || sel.id != 7 || sel.fl.cord != 2) return;
         iStage = 106; goto LQueued;
     case 115:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 116:
-        if (LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
+        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
         iStage = 106; goto LQueued;
     case 117:
         if (tutor.idt != 208 || rgplr[idPlayer].cFleet != 11) return;
@@ -1591,14 +1591,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 iStage = 123; goto LQueued;
             }
             if (tutor.idtBold == 216 || IMsgNext(FALSE) != imsgNone) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 122; goto LQueued;
             }
             if (!FFindPlanet("Wallaby") || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 124; goto LQueued;
         }
         if (tutor.idtBold == 219) {
-            if (!GetClientRect(hwndMine, &rcRow)) goto LInput;
+            if (!win32::GetClientRect(hwndMine, &rcRow)) goto LInput;
             i = ((rcRow.bottom - (2 * dyArial8 - 4) - 4 * dyArial8 - 2) / 6 + 1) & ~1;
             ptRow = (POINT){30, 4 * dyArial8 - 4 + 2 * i + i / 2};
             if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_LEFT, TRUE)) goto LInput;
@@ -1621,7 +1621,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 228) {
             if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg) goto LInput;
             if (pctResGlob == 30) {
-                if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+                if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
                 iStage = 131; goto LQueued;
             }
             pctResearchBefore = pctResGlob;
@@ -1660,30 +1660,30 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (sel.scan.grobj != grobjPlanet || sel.scan.idpl != 5) return;
         iStage = 118; goto LQueued;
     case 125:
-        if (!IsWindow(hwndPopup)) return;
+        if (!win32::IsWindow(hwndPopup)) return;
         if (!FSaveTutorialPopup("wallaby-radiation.json", FALSE) || !FSaveState("wallaby-radiation")) goto LArtifact;
         LogState("environment-popup");
-        if (!GetClientRect(hwndPopup, &rcRow)) goto LInput;
+        if (!win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
         if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, FALSE)) goto LInput;
         break;
     case 126:
-        if (IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
+        if (win32::IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
         iStage = 118; goto LQueued;
     case 127:
         if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || tutor.idtBold == idtBefore) return;
         if (!FSaveState("research-benefits")) goto LArtifact;
         iStage = 118; goto LQueued;
     case 128:
-        if (!IsWindow(hwndPopup)) return;
+        if (!win32::IsWindow(hwndPopup)) return;
         if (!FSaveTutorialPopup("radiation-benefit.json", TRUE) || !FSaveState("radiation-benefit")) goto LArtifact;
         LogState("research-benefit-popup");
-        if (!GetClientRect(hwndPopup, &rcRow)) goto LInput;
+        if (!win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
         if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, FALSE)) goto LInput;
         break;
     case 129:
-        if (IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
+        if (win32::IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
         iStage = 118; goto LQueued;
     case 130:
         if (!hwndModal || pctResGlob == pctResearchBefore) return;
@@ -1702,7 +1702,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 30;
         LogState("research-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 133:
         if (game.turn != 9 || (hwndModal && hwndModal->lpfnDlg != ResearchDlg)) {
             pszFailure = "unexpected Oxygen colonization state or dialog"; goto LFail;
@@ -1714,12 +1714,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 134; goto LQueued;
         }
         if (tutor.idtBold == 236) {
-            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD))) goto LInput;
+            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD))) goto LInput;
             iStage = 135; goto LQueued;
         }
         if (tutor.idtBold == 238) {
             if (IdmGetMessageN(iMsgCur) != idmHasLoadedMiningRobotsWorking) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 138; goto LQueued;
             }
             ptRow = (POINT){rcMsgTitle.left + (rcMsgTitle.bottom - rcMsgTitle.top) / 2,
@@ -1729,7 +1729,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 240) {
             if (mdMsgObj != mdMsgObjPlanet || idMsgObj != 2) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 138; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -1774,15 +1774,15 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 133; goto LQueued;
     case 135:
         if (!hwndModal) return;
-        hwndList = GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (!LUiSendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
+        if (!ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(hwndList, Construction + 1)) goto LInput;
         break;
     case 136:
         if (!hwndModal) return;
-        hwndList = GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (LUiSendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || LUiSendMessage(hwndList, CB_GETCURSEL, 0, 0) != Construction + 1) return;
-        if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
+        if (ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, CB_GETCURSEL, 0, 0) != Construction + 1) return;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 137:
         if (hwndModal || pctResGlob != -1 || tutor.idtBold == idtBefore) return;
@@ -1815,7 +1815,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 143:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != 25) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 144:
         if (hwndModal) return;
@@ -1826,11 +1826,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 146:
-        if (!LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 147:
-        if (LUiSendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
+        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
         iStage = 133; goto LQueued;
     case 148:
         lpfl = LpflFromId(0);
@@ -1849,7 +1849,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 32;
         LogState("oxygen-colonization-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 150:
         if (game.turn != 10 || (hwndModal && hwndModal->lpfnDlg != ProductionDlg && hwndModal->lpfnDlg != ZipProdDlg)) {
             pszFailure = "unexpected production template state or dialog"; goto LFail;
@@ -1858,7 +1858,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         LogState("production-templates-instruction");
         if (tutor.idtBold == 248) {
             if (IdmGetMessageN(iMsgCur) != idmHasDismantledKtMineralsWhichHaveDeposited) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 151; goto LQueued;
             }
             ptRow = (POINT){rcMsgTitle.left + (rcMsgTitle.bottom - rcMsgTitle.top) / 2,
@@ -1869,7 +1869,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 249 || tutor.idtBold == 259) {
             i = tutor.idtBold == 249 ? 14 : 23;
             if (mdMsgObj != mdMsgObjPlanet || idMsgObj != i) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 151; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -1926,29 +1926,29 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 150; goto LQueued;
     case 155:
         if (pszMenu || !hwndModal || hwndModal->lpfnDlg != ZipProdDlg) return;
-        if (!IsWindow(hwndModal->hwndOwner) || hwndModal->hwndOwner->lpfnDlg != ProductionDlg || IsWindowEnabled(hwndModal->hwndOwner)) {
+        if (!win32::IsWindow(hwndModal->hwndOwner) || hwndModal->hwndOwner->lpfnDlg != ProductionDlg || win32::IsWindowEnabled(hwndModal->hwndOwner)) {
             pszFailure = "template dialog did not disable its production owner"; goto LFail;
         }
         if (!FSaveState("template-open")) goto LArtifact;
         LogState("template-nested-open");
-        if (!FClick(GetDlgItem(hwndModal, IDC_ZIP_PROD_PRESET_1))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_ZIP_PROD_PRESET_1))) goto LInput;
         break;
     case 156:
-        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !IsDlgButtonChecked(hwndModal, IDC_ZIP_PROD_PRESET_1)) return;
-        if (!FClick(GetDlgItem(hwndModal, IDC_IMPORT))) goto LInput;
+        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !win32::IsDlgButtonChecked(hwndModal, IDC_ZIP_PROD_PRESET_1)) return;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_IMPORT))) goto LInput;
         break;
     case 157:
         if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !vrgZipProd[0].fValid || vrgZipProd[0].cpq != 2) return;
         if (vrgZipProd[0].rgpq[0].mdIdle() != iobjFactory || vrgZipProd[0].rgpq[0].cQuan() != 3 ||
             vrgZipProd[0].rgpq[1].mdIdle() != iobjMine || vrgZipProd[0].rgpq[1].cQuan() != 3 || !vrgZipProd[0].fNoResearch) return;
         if (!FSaveOrders("year-2410-imported-template.json") || !FSaveState("template-imported")) goto LArtifact;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 158:
-        if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg || !IsWindowEnabled(hwndModal)) return;
+        if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg || !win32::IsWindowEnabled(hwndModal)) return;
         if (!FSaveState("template-owner-restored")) goto LArtifact;
         LogState("template-owner-restored");
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 159:
         if (hwndModal || lpplProdGlob) return;
@@ -1956,7 +1956,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         /* An earlier progress flag can skip the prompt; still exercise its Goto. */
         if (mdMsgObj != mdMsgObjPlanet || idMsgObj != 23) {
             iMsgBefore = iMsgCur;
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 164; goto LQueued;
         }
         if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -1980,7 +1980,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 34;
         LogState("production-templates-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 163:
         if (!(bitfMsgFiltered[idmHasDismantledKtMineralsWhichHaveDeposited >> 3] & (1 << (idmHasDismantledKtMineralsWhichHaveDeposited & 7)))) return;
         iStage = 150; goto LQueued;
@@ -2000,7 +2000,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (sel.grobj != grobjFleet || sel.id != idflAction) {
                 if ((mdMsgObj != mdMsgObjFleet || idMsgObj != idflAction) &&
                     !(tutor.idtBold == 286 && mdMsgObj == mdMsgObjBattle && !gd.fGotoVCR)) {
-                    if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                    if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                     iStage = 166; goto LQueued;
                 }
                 if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -2044,7 +2044,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 280) {
             if (sel.grobj != grobjPlanet || sel.id != 13) {
                 if (mdMsgObj != mdMsgObjPlanet || idMsgObj != 13) {
-                    if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                    if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                     iStage = 166; goto LQueued;
                 }
                 if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -2056,32 +2056,32 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 281) {
             if (mdMsgObj != mdMsgObjResearch) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 166; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 177; goto LQueued;
         }
         if (tutor.idtBold == 282) {
-            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD))) goto LInput;
+            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD))) goto LInput;
             iStage = 178; goto LQueued;
         }
         if (tutor.idtBold == 283) {
             if (iMsgCur < 11) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 191; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 181; goto LQueued;
         }
         if (tutor.idtBold == 284) {
-            if (!IsWindow(hwndBrowser) || !FSaveState("technology-browser")) goto LArtifact;
+            if (!win32::IsWindow(hwndBrowser) || !FSaveState("technology-browser")) goto LArtifact;
             LogState("technology-browser-open");
-            if (!FClick(GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
+            if (!FClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
             iStage = 182; goto LQueued;
         }
         if (tutor.idtBold == 285 || tutor.idtBold == 291) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 166; goto LQueued;
         }
         if (tutor.idtBold == 289) {
@@ -2119,18 +2119,18 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 170:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != cCargoGoal) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 171:
         if (hwndModal) return;
         if (!FSaveOrders(idflAction == 2 ? "year-2411-colonizer-cargo.json" : "year-2411-troop-cargo.json")) goto LArtifact;
         iStage = 165; goto LQueued;
     case 173:
-        if (!LUiSendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[iOrderCombo], iOrderRow)) goto LInput;
         break;
     case 174:
-        if (LUiSendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0) || LUiSendMessage(rghwndOrderDD[iOrderCombo], CB_GETCURSEL, 0, 0) != iOrderRow) return;
+        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETCURSEL, 0, 0) != iOrderRow) return;
         iStage = 165; goto LQueued;
     case 175:
         if (sel.grobj != grobjPlanet || sel.id != 13) return;
@@ -2144,32 +2144,32 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 165; goto LQueued;
     case 178:
         if (!hwndModal) return;
-        hwndList = GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (!LUiSendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
+        if (!ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(hwndList, Biotechnology + 1)) goto LInput;
         break;
     case 179:
         if (!hwndModal) return;
-        hwndList = GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (LUiSendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || LUiSendMessage(hwndList, CB_GETCURSEL, 0, 0) != Biotechnology + 1) return;
-        if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
+        if (ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, CB_GETCURSEL, 0, 0) != Biotechnology + 1) return;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 180:
         if (hwndModal || pctResGlob != -1) return;
         if (!FSaveOrders("year-2411-research.json")) goto LArtifact;
         iStage = 165; goto LQueued;
     case 181:
-        if (!IsWindow(hwndBrowser)) return;
+        if (!win32::IsWindow(hwndBrowser)) return;
         if (vpartBrowser.hs.grhst != hstTorp || vpartBrowser.hs.iItem != itorpBetaTorpedo) {
             pszFailure = "technology browser did not show the Beta Torpedo"; goto LFail;
         }
         /* FTutorTaskDone can advance the prompt as soon as this window opens. */
         if (!FSaveState("technology-browser")) goto LArtifact;
         LogState("technology-browser-open");
-        if (!FClick(GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
         break;
     case 182:
-        if (IsWindow(hwndBrowser)) return;
+        if (win32::IsWindow(hwndBrowser)) return;
         if (!FSaveState("technology-browser-closed")) goto LArtifact;
         LogState("technology-browser-closed");
         iStage = 165; goto LQueued;
@@ -2178,33 +2178,33 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveState("battle-open") || !FSaveBattle("battle-open.json")) goto LArtifact;
         LogState("battle-open");
         iStepBefore = viStepVCRCur;
-        if (!FClick(GetDlgItem(hwndModal, IDC_VCR_PLAY_PAUSE))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_VCR_PLAY_PAUSE))) goto LInput;
         break;
     case 184:
         if (!hwndModal || hwndModal->lpfnDlg != VCRDlg || viStepVCRCur <= iStepBefore || !gd.fVCRTimer) return;
         if (!FSaveState("battle-playing") || !FSaveBattle("battle-playing.json")) goto LArtifact;
         LogState("battle-playing");
-        if (!FClick(GetDlgItem(hwndModal, IDC_VCR_PLAY_PAUSE))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_VCR_PLAY_PAUSE))) goto LInput;
         break;
     case 185:
         if (gd.fVCRTimer) return;
-        if (!FClick(GetDlgItem(hwndModal, IDC_VCR_FWD_ALL))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_VCR_FWD_ALL))) goto LInput;
         break;
     case 186:
         if (viStepVCRCur != vcStepVCR) return;
         if (!FSaveBattle("battle-end.json")) goto LArtifact;
-        if (!FClick(GetDlgItem(hwndModal, IDC_VCR_REW_ALL))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_VCR_REW_ALL))) goto LInput;
         break;
     case 187:
         if (viStepVCRCur != -1) return;
-        if (!FSaveBattle("battle-rewound.json") || !FClick(GetDlgItem(hwndModal, IDC_VCR_FWD))) goto LInput;
+        if (!FSaveBattle("battle-rewound.json") || !FClick(win32::GetDlgItem(hwndModal, IDC_VCR_FWD))) goto LInput;
         break;
     case 188:
         if (viStepVCRCur <= -1) return;
-        if (!FSaveBattle("battle-stepped.json") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FSaveBattle("battle-stepped.json") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 189:
-        if (hwndModal || vrgtok || IsWindow(hwndVCRDlg) || gd.fVCRTimer) return;
+        if (hwndModal || vrgtok || win32::IsWindow(hwndVCRDlg) || gd.fVCRTimer) return;
         if (!FSaveState("battle-closed")) goto LArtifact;
         LogState("battle-closed");
         iStage = 165; goto LQueued;
@@ -2219,14 +2219,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 38;
         LogState("battle-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 191:
         if (iMsgCur == iMsgBefore) return;
         /* Production list selection can satisfy fProgress before this prompt.
          * Read its message and use Goto even if the highlighted task moved. */
         if (iMsgCur < 11) {
             iMsgBefore = iMsgCur;
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             goto LQueued;
         }
         if (iMsgCur != 11 || mdMsgObj != mdMsgObjPart) goto LInput;
@@ -2241,7 +2241,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (iMsgCur >= 1 && ((tutor.idtBold == 297 && sel.grobj == grobjFleet && sel.id == i) ||
                 (tutor.idtBold != 297 && sel.grobj == grobjPlanet && sel.id == i))) return;
             if (iMsgCur < 1 || mdMsgObj != (tutor.idtBold == 297 ? mdMsgObjFleet : mdMsgObjPlanet) || idMsgObj != i) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 193; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
@@ -2259,7 +2259,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 196; goto LQueued;
         }
         if (tutor.idtBold == 306 || tutor.idtBold == 308) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 193; goto LQueued;
         }
         if (tutor.idtBold == 316 || tutor.idtBold == 318) {
@@ -2303,12 +2303,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 196:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != FindDlg || !FSaveState("find-teamster-open")) goto LArtifact;
-        if (!FClick(GetDlgItem(hwndModal, IDC_EDIT1))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_EDIT1))) goto LInput;
         break;
     case 197:
         if (!hwndModal || hwndModal->lpfnDlg != FindDlg) goto LInput;
-        hwndList = GetDlgItem(hwndModal, IDC_EDIT1);
-        if (GetFocus() != hwndList) return;
+        hwndList = win32::GetDlgItem(hwndModal, IDC_EDIT1);
+        if (win32::GetFocus() != hwndList) return;
         {
             SDL_Event event = {};
             event.type = SDL_EVENT_TEXT_INPUT;
@@ -2319,9 +2319,9 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 198:
         if (!hwndModal || hwndModal->lpfnDlg != FindDlg) goto LInput;
-        GetDlgItemText(hwndModal, IDC_EDIT1, szItem, sizeof(szItem));
+        win32::GetDlgItemText(hwndModal, IDC_EDIT1, szItem, sizeof(szItem));
         if (strcmp(szItem, "Teamster #4")) return;
-        if (!FSaveState("find-teamster-entered") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FSaveState("find-teamster-entered") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         iStage = 201; goto LQueued;
     case 199:
         if (hwndModal) return;
@@ -2338,7 +2338,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 41;
         LogState("terraform-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 201:
         if (hwndModal || sel.scan.grobj != grobjFleet || sel.scan.ifl == iflNone || rglpfl[sel.scan.ifl]->id != 3) return;
         if (!FSaveState("find-teamster-closed")) goto LArtifact;
@@ -2389,46 +2389,46 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 322 || tutor.idtBold == 324 || tutor.idtBold == 325) {
             if (hwndModal && hwndModal->lpfnDlg == ResearchDlg) {
-                if (!FChooseCombo(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Propulsion")) goto LInput;
+                if (!FChooseCombo(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Propulsion")) goto LInput;
                 iDesignReturn = 211; iStage = 221; goto LQueued;
             }
             if (tutor.idtBold == 322 || (tutor.idtBold == 324 && mdMsgObj != mdMsgObjResearch) ||
                 (tutor.idtBold == 325 && mdMsgObj != mdMsgObjPart)) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 204; goto LQueued;
             }
             if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 327) {
-            if (IsWindow(hwndBrowser)) {
-                if (!FClick(GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
+            if (win32::IsWindow(hwndBrowser)) {
+                if (!FClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
                 iStage = 204; goto LQueued;
             }
             if (!FPushKey(hwndFrame, SDL_SCANCODE_F4, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F4, FALSE)) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 328 || tutor.idtBold == 329 || tutor.idtBold == 330) {
-            if (!IsWindow(hwndSlotDlg)) goto LInput;
+            if (!win32::IsWindow(hwndSlotDlg)) goto LInput;
             if (tutor.idtBold == 328) {
-                if (!FClick(GetDlgItem(hwndSlotDlg, IDC_DESIGNER_HULLS))) goto LInput;
+                if (!FClick(win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_HULLS))) goto LInput;
             } else if (tutor.idtBold == 329) {
-                if (!FChooseCombo(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), "Mini-Miner")) goto LInput;
+                if (!FChooseCombo(win32::GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), "Mini-Miner")) goto LInput;
                 iDesignReturn = 204; iStage = 221; goto LQueued;
-            } else if (!FClick(GetDlgItem(hwndSlotDlg, IDC_IMPORT))) goto LInput;
+            } else if (!FClick(win32::GetDlgItem(hwndSlotDlg, IDC_IMPORT))) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 332 || tutor.idtBold == 333 || tutor.idtBold == 334 || tutor.idtBold == 335) {
-            if (!IsWindow(hwndSlotDlg) || mdBuild != mdBuildEdit || !lpshdefBuild) goto LInput;
+            if (!win32::IsWindow(hwndSlotDlg) || mdBuild != mdBuildEdit || !lpshdefBuild) goto LInput;
             iDesignSlot = tutor.idtBold == 332 ? 0 : tutor.idtBold == 333 ? 1 : lpshdefBuild->hul.rghs[2].cItem == 0 ? 2 : 3;
             pszDesignCategory = iDesignSlot == 0 ? "Engines" : iDesignSlot == 1 ? "Scanners" : "Mining Robots";
             pszDesignPart = iDesignSlot == 0 ? "Long Hump 6" : iDesignSlot == 1 ? "Rhino Scanner" : "Robo-Miner";
-            if (!FChooseCombo(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), pszDesignCategory)) goto LInput;
+            if (!FChooseCombo(win32::GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), pszDesignCategory)) goto LInput;
             iDesignReturn = 213; iStage = 221; goto LQueued;
         }
         if (tutor.idtBold == 337 || tutor.idtBold == 338) {
-            if (!IsWindow(hwndSlotDlg) || !FSaveState("mini-miner-designed") ||
-                !FClick(GetDlgItem(hwndSlotDlg, tutor.idtBold == 337 ? IDOK : IDCANCEL))) goto LInput;
+            if (!win32::IsWindow(hwndSlotDlg) || !FSaveState("mini-miner-designed") ||
+                !FClick(win32::GetDlgItem(hwndSlotDlg, tutor.idtBold == 337 ? IDOK : IDCANCEL))) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 339 || tutor.idtBold == 341 || tutor.idtBold == 342) {
@@ -2444,14 +2444,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 344) {
             hwndList = hwndPlanetProdLB;
-            if (!IsWindow(hwndList) || LUiSendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             iProductionInspect = 0;
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 219; goto LQueued;
         }
         if (tutor.idtBold == 345) {
-            if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+            if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 348) {
@@ -2486,7 +2486,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 206:
         if (!hwndModal || !pxfer || pxfer[0].fl().rgwtMin[3] != cCargoExpected) return;
-        if (!FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 207:
         if (hwndModal) return;
@@ -2497,11 +2497,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         iStage = iCargoReturn; goto LQueued;
     case 209:
-        if (!LUiSendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[iOrderCombo], iOrderRow)) goto LInput;
         break;
     case 210:
-        if (LUiSendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
         if (iOrderCombo == 1) {
             iOrderCombo = 2; iOrderRow = iActionUnloadAll;
             if (!FClick(rghwndOrderDD[2])) goto LInput;
@@ -2510,43 +2510,43 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveOrders(pszOrderSnapshot)) goto LArtifact;
         iStage = iOrderReturn; goto LQueued;
     case 211:
-        if (!hwndModal || LUiSendMessage(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0) != iResearchNext + 1) return;
-        if (!FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0) != iResearchNext + 1) return;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 212:
         if (hwndModal) return;
         if (!FSaveOrders(pszResearchSnapshot)) goto LArtifact;
         iStage = iResearchReturn; goto LQueued;
     case 213:
-        if (!IsWindow(hwndSlotDlg)) goto LInput;
-        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        if (!win32::IsWindow(hwndSlotDlg)) goto LInput;
+        hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
         iDesignRow = -1;
-        for (i = 0; i < LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (LUiSendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) > 4 && !strcmp(szItem + 4, pszDesignPart)) { iDesignRow = i; break; }
         }
         if (iDesignRow < 0) return;
-        if (LUiSendMessage(hwndList, LB_GETITEMRECT, LUiSendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
         ptRow = (POINT){rcRow.right - 4, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         break;
     case 214:
-        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
-        if (GetFocus() != hwndList) return;
+        hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        if (win32::GetFocus() != hwndList) return;
         if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
         for (i = 0; i < iDesignRow; i++) {
             if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
         }
         break;
     case 215:
-        hwndList = GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
-        if (LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0) != iDesignRow) return;
-        if (LUiSendMessage(hwndList, LB_GETITEMRECT, iDesignRow, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
+        if (ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iDesignRow) return;
+        if (ui::SendMessage(hwndList, LB_GETITEMRECT, iDesignRow, (LPARAM)&rcRow) == LB_ERR) goto LInput;
         ptRow = (POINT){32, (rcRow.top + rcRow.bottom) / 2};
         ptTo = (POINT){(vrgrcSlot[iDesignSlot].left + vrgrcSlot[iDesignSlot].right) / 2,
                        (vrgrcSlot[iDesignSlot].top + vrgrcSlot[iDesignSlot].bottom) / 2};
-        ClientToScreen(hwndSlotDlg, &ptTo); ScreenToClient(hwndList, &ptTo);
+        win32::ClientToScreen(hwndSlotDlg, &ptTo); win32::ScreenToClient(hwndList, &ptTo);
         if (!FDragPoint(hwndList, ptRow, ptTo)) goto LInput;
         break;
     case 216:
@@ -2559,7 +2559,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (iProdPass == 15) {
             // A progress flag can skip the prompt; still inspect the real item.
             hwndList = hwndPlanetProdLB;
-            if (!IsWindow(hwndList) || LUiSendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             iProductionInspect = 0;
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
@@ -2568,10 +2568,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 203; goto LQueued;
     case 219:
         hwndList = hwndPlanetProdLB;
-        if (LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0) != iProductionInspect) return;
+        if (ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iProductionInspect) return;
         LogState("production-item-inspected");
-        if (++iProductionInspect < LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0)) {
-            if (LUiSendMessage(hwndList, LB_GETITEMRECT, iProductionInspect, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (++iProductionInspect < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0)) {
+            if (ui::SendMessage(hwndList, LB_GETITEMRECT, iProductionInspect, (LPARAM)&rcRow) == LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             goto LQueued;
@@ -2589,10 +2589,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 45;
         LogState("design-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 221:
-        if (!IsWindow(hwndDesignCombo) || !LUiSendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
-        if (GetFocus() != hwndDesignCombo) return;
+        if (!win32::IsWindow(hwndDesignCombo) || !ui::SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (win32::GetFocus() != hwndDesignCombo) return;
         // SDL assigns keyboard targets when translating the event batch.
         // Translate these only after the preceding click establishes focus.
         if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, FALSE)) goto LInput;
@@ -2601,12 +2601,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         iStage = 223; goto LQueued;
     case 223:
-        if (!IsWindow(hwndDesignCombo) || !hwndDesignCombo->lpcombo || hwndDesignCombo->lpcombo->iHot != iDesignCombo) return;
+        if (!win32::IsWindow(hwndDesignCombo) || !hwndDesignCombo->lpcombo || hwndDesignCombo->lpcombo->iHot != iDesignCombo) return;
         if (!FClickComboRow(hwndDesignCombo, iDesignCombo)) goto LInput;
         iStage = 222; goto LQueued;
     case 222:
-        if (LUiSendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
-        if (LUiSendMessage(hwndDesignCombo, CB_GETCURSEL, 0, 0) != iDesignCombo) goto LInput;
+        if (ui::SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (ui::SendMessage(hwndDesignCombo, CB_GETCURSEL, 0, 0) != iDesignCombo) goto LInput;
         iStage = iDesignReturn; goto LQueued;
     case 224:
         if (game.turn != 14) { pszFailure = "unexpected automation year"; goto LFail; }
@@ -2615,7 +2615,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 352 || tutor.idtBold == 354) {
             i = tutor.idtBold == 352 ? 17 : 2;
             if (mdMsgObj != mdMsgObjPlanet || idMsgObj != i || (i == 2 && IMsgNext(FALSE) != imsgNone)) {
-                if (!IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
+                if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             } else if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 225; goto LQueued;
         }
@@ -2648,21 +2648,21 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 228:
         if (pszMenu || !hwndModal || hwndModal->lpfnDlg != ZipProdDlg) return;
-        if (!IsWindow(hwndModal->hwndOwner) || hwndModal->hwndOwner->lpfnDlg != ProductionDlg || IsWindowEnabled(hwndModal->hwndOwner)) goto LInput;
-        if (!FSaveState("terraform-template-open") || !FClick(GetDlgItem(hwndModal, IDC_ZIP_PROD_PRESET_1))) goto LInput;
+        if (!win32::IsWindow(hwndModal->hwndOwner) || hwndModal->hwndOwner->lpfnDlg != ProductionDlg || win32::IsWindowEnabled(hwndModal->hwndOwner)) goto LInput;
+        if (!FSaveState("terraform-template-open") || !FClick(win32::GetDlgItem(hwndModal, IDC_ZIP_PROD_PRESET_1))) goto LInput;
         break;
     case 229:
-        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !IsDlgButtonChecked(hwndModal, IDC_ZIP_PROD_PRESET_1)) return;
-        if (!FClick(GetDlgItem(hwndModal, IDC_IMPORT))) goto LInput;
+        if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !win32::IsDlgButtonChecked(hwndModal, IDC_ZIP_PROD_PRESET_1)) return;
+        if (!FClick(win32::GetDlgItem(hwndModal, IDC_IMPORT))) goto LInput;
         break;
     case 230:
         if (!hwndModal || hwndModal->lpfnDlg != ZipProdDlg || !vrgZipProd[0].fValid || vrgZipProd[0].cpq < 3) return;
         if (vrgZipProd[0].rgpq[0].mdIdle() != iobjMinTerraform || vrgZipProd[0].rgpq[0].cQuan() != 2) return;
-        if (!FSaveOrders("year-2414-imported-template.json") || !FSaveState("terraform-template-imported") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FSaveOrders("year-2414-imported-template.json") || !FSaveState("terraform-template-imported") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 231:
-        if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg || !IsWindowEnabled(hwndModal)) return;
-        if (!FSaveState("terraform-template-owner-restored") || !FClick(GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg || !win32::IsWindowEnabled(hwndModal)) return;
+        if (!FSaveState("terraform-template-owner-restored") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 232:
         if (hwndModal || lpplProdGlob) return;
@@ -2679,7 +2679,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 46;
         LogState("automation-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 235:
         if (game.turn != 15) { pszFailure = "unexpected report cycle year"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -2710,11 +2710,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 236; goto LQueued;
         }
         if (tutor.idtBold == 363 || tutor.idtBold == 364) {
-            if (!IsWindow(hwndReportDlg) && (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE))) goto LInput;
+            if (!win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE))) goto LInput;
             iStage = 237; goto LQueued;
         }
         if (tutor.idtBold == 366) {
-            if (IsWindow(hwndReportDlg) && (!FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE))) goto LInput;
+            if (win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE))) goto LInput;
             iStage = 240; goto LQueued;
         }
         if (tutor.idtBold == 367) {
@@ -2735,7 +2735,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 241; goto LQueued;
         }
         if (tutor.idtBold == 371) {
-            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
+            if (!hwndModal || hwndModal->lpfnDlg != ResearchDlg || !FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
             iStage = 242; goto LQueued;
         }
         if (tutor.idtBold == 374) {
@@ -2749,11 +2749,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || (idtBefore == tutor.idtBold && iMsgBefore == iMsgCur && cWait < 3)) return;
         iStage = 235; goto LQueued;
     case 237:
-        if (!IsWindow(hwndReportDlg) || !vprptCur) return;
+        if (!win32::IsWindow(hwndReportDlg) || !vprptCur) return;
         if (vprptCur->irpt != rptPlanets) goto LInput;
-        if (!GetClientRect(hwndReportDlg, &rcRow)) goto LInput;
+        if (!win32::GetClientRect(hwndReportDlg, &rcRow)) goto LInput;
         if (rcRow.right < 1000) {
-            if (!FUiSetWindowPos(hwndReportDlg, NULL, 0, 0, 1280, 700, SWP_NOZORDER)) goto LInput;
+            if (!ui::SetWindowPos(hwndReportDlg, NULL, 0, 0, 1280, 700, SWP_NOZORDER)) goto LInput;
             return;
         }
         if (!FSaveState("value-report-open")) goto LArtifact;
@@ -2771,7 +2771,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE)) goto LInput;
         iStage = 240; goto LQueued;
     case 240:
-        if (IsWindow(hwndReportDlg) || vprptCur) return;
+        if (win32::IsWindow(hwndReportDlg) || vprptCur) return;
         if (!FSaveState("value-report-closed")) goto LArtifact;
         fValueReportChecked = TRUE;
         iStage = 235; goto LQueued;
@@ -2794,7 +2794,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         fPassed = fRejected && cPage == 48;
         LogState("report-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 244:
         if (game.turn != 16 && game.turn != 17) { pszFailure = "unexpected merge cycle year"; goto LFail; }
         idtBefore = tutor.idtBold; iMsgBefore = iMsgCur;
@@ -2853,7 +2853,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
                 iStage = 245; goto LQueued;
             }
-            if (hwndModal->lpfnDlg != ResearchDlg || !FChooseCombo(GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Construction")) goto LInput;
+            if (hwndModal->lpfnDlg != ResearchDlg || !FChooseCombo(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Construction")) goto LInput;
             iResearchNext = Construction; iResearchReturn = 244; pszResearchSnapshot = "year-2416-research.json";
             iDesignReturn = 211; iStage = 221; goto LQueued;
         }
@@ -2896,7 +2896,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveState("year-2418")) goto LArtifact;
         fPassed = fRejected && cPage == 50;
         LogState("merge-cycle-partial");
-        KillTimer(NULL, id); PostQuitMessage(fPassed ? 0 : 93); return;
+        win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     default:
         pszFailure = "unknown runner stage";
         goto LFail;
@@ -2915,13 +2915,13 @@ LFail:
     LogState("failed");
     FSaveState("failure");
     fprintf(stderr, "%s at stage %d, instruction %d\n", pszFailure, iStage, tutor.idtBold);
-    KillTimer(NULL, id);
-    PostQuitMessage(93);
+    win32::KillTimer(NULL, id);
+    win32::PostQuitMessage(93);
 }
 
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
-    if (fResult) idTimer = SetTimer(NULL, 0, 50, RunTutorial);
+    if (fResult) idTimer = win32::SetTimer(NULL, 0, 50, RunTutorial);
     return fResult && idTimer ? fResult : FALSE;
 }
 
@@ -2964,8 +2964,8 @@ int main(int argc, char **argv) {
     lpEvents = PfNativeOpen("events.jsonl", "w");
     if (!lpEvents) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
-    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
-    if (idTimer) KillTimer(NULL, idTimer);
+    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    if (idTimer) win32::KillTimer(NULL, idTimer);
     lpfile = PfNativeOpen("result.json", "w");
     if (lpfile) {
         CchNativePrintf(lpfile, "{\"scenario\":\"%s\",\"status\":\"%s\",\"fullTutorial\":false,\"actions\":%d,\"pages\":%d,\"rejectedGenerate\":%s,\"detail\":\"%s\"}\n",

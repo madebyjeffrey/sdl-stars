@@ -14,7 +14,7 @@ static HWND OpenBattlePlans(const char *pszTest) {
     TEST_ASSERT(FStarsTestDir(pszTest, szDir, sizeof(szDir)));
     TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
     TEST_ASSERT(FStarsTestLoadPlayer(0));
-    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
+    hwnd = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
     TEST_ASSERT(hwnd != NULL);
     return hwnd;
 }
@@ -83,10 +83,10 @@ static void test_battle_replay_bytes(void) {
 static void ChooseIn(HWND hwnd, int idc, int i) {
     HWND hwndCtl;
 
-    hwndCtl = GetDlgItem(hwnd, idc);
+    hwndCtl = win32::GetDlgItem(hwnd, idc);
     TEST_ASSERT(hwndCtl != NULL);
-    TEST_ASSERT(LUiSendMessage(hwndCtl, CB_SETCURSEL, i, 0) == i);
-    LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(idc, CBN_SELCHANGE), (LPARAM)hwndCtl);
+    TEST_ASSERT(ui::SendMessage(hwndCtl, CB_SETCURSEL, i, 0) == i);
+    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(idc, CBN_SELCHANGE), (LPARAM)hwndCtl);
 }
 
 // The Battle Plans drop-downs read their selection with the Win16 message
@@ -102,7 +102,7 @@ static void test_BattlePlansDlg_stores_choices(void) {
     TEST_CHECK_(btlplan.mdTarget2 == 3, "secondary target %d", btlplan.mdTarget2);
     ChooseIn(hwnd, IDC_BATTLE_PLAN_TACTIC, 1);
     TEST_CHECK_(btlplan.mdTactic == 1, "tactic %d", btlplan.mdTactic);
-    FUiDestroyWindow(hwnd);
+    ui::DestroyWindow(hwnd);
 }
 #endif
 

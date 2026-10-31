@@ -26,7 +26,7 @@ static LRESULT CALLBACK ChildProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
         lp->fCreateData = lpcs->hwndParent == lp->hwndParent && (INT_PTR)lpcs->hMenu == lp->id;
     }
-    if (!lp) return DefWindowProc(hwnd, msg, w, l);
+    if (!lp) return DefWindowProcA(hwnd, msg, w, l);
     switch (msg) {
     case WM_CREATE: return lp->fReject ? -1 : 0;
     case WM_MOVE:
@@ -44,13 +44,13 @@ static LRESULT CALLBACK ChildProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (lp->fDestroyParent) DestroyWindow(lp->hwndParent);
         return 0;
     case WM_NCDESTROY: lp->cNcDestroy++; lp->iNcDestroy = ++iMessage; return 0;
-    default: return DefWindowProc(hwnd, msg, w, l);
+    default: return DefWindowProcA(hwnd, msg, w, l);
     }
 }
 
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 
 static int FillWindow(HWND hwnd, COLORREF cr) {
@@ -74,7 +74,7 @@ static COLORREF CrComposite(HWND hwnd, int x, int y) {
 
 static int TestComposition(HWND hwnd, HWND hwndChild, HWND hwndNested, HWND hwndSibling) {
     SDL_Event event = {0};
-    MSG msg;
+    APPMSG msg;
     SDL_Window **rglp;
     int cWindows;
     CHECK(FillWindow(hwnd, RGB(1, 2, 3)) == 0);
@@ -103,11 +103,11 @@ static int TestComposition(HWND hwnd, HWND hwndChild, HWND hwndNested, HWND hwnd
     event.motion.windowID = hwnd->id;
     event.motion.x = 28; event.motion.y = 40;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(msg.hwnd == hwndNested && (int16_t)LOWORD(msg.lParam) == 1 && (int16_t)HIWORD(msg.lParam) == 1);
     EnableWindow(hwndNested, FALSE);
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(msg.hwnd == hwndChild && LOWORD(msg.lParam) == 8 && HIWORD(msg.lParam) == 10);
     EnableWindow(hwndNested, TRUE);
     SetFocus(hwndNested);
@@ -115,11 +115,11 @@ static int TestComposition(HWND hwnd, HWND hwndChild, HWND hwndNested, HWND hwnd
     event.type = SDL_EVENT_KEY_DOWN;
     event.key.windowID = hwnd->id; event.key.scancode = SDL_SCANCODE_A;
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE) && msg.hwnd == hwndNested);
+    CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE) && msg.hwnd == hwndNested);
     event.type = SDL_EVENT_TEXT_INPUT;
     event.text.windowID = hwnd->id; event.text.text = "a";
     CHECK(SDL_PushEvent(&event));
-    CHECK(PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.hwnd == hwndNested && msg.wParam == 'a');
+    CHECK(PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.hwnd == hwndNested && msg.wParam == 'a');
     CHECK(DestroyWindow(hwndSibling));
     CHECK(CrComposite(hwnd, 115, 105) == RGB(10, 20, 30));
     CHECK(CrComposite(hwnd, 130, 115) == RGB(1, 2, 3));
@@ -134,7 +134,7 @@ int main(void) {
     CHILDTEST parent = {0}, child = {0}, nested = {0}, sibling = {0}, owned = {0}, failure = {0}, reentrant = {0};
     RECT rc;
     POINT pt, origin = {0, 0};
-    MSG msg;
+    APPMSG msg;
     int cFocus, cBlur, cEnable;
     DWORD msStart;
     BOOL fTimer;
@@ -178,7 +178,7 @@ int main(void) {
     CHECK(ClientToScreen(hwndNested, &pt) && pt.x == origin.x + 23 && pt.y == origin.y + 45);
     CHECK(ScreenToClient(hwndNested, &pt) && pt.x == -4 && pt.y == 6);
     CHECK(GetClientRect(hwndNested, &rc) && rc.left == 0 && rc.top == 0 && rc.right == 40 && rc.bottom == 30);
-    CHECK(SetWindowText(hwndNested, "retained child text"));
+    CHECK(SetWindowTextA(hwndNested, "retained child text"));
     {
         char sz[80];
         CHECK(GetWindowText(hwndNested, sz, sizeof(sz)) == 19 && strcmp(sz, "retained child text") == 0);
@@ -208,7 +208,7 @@ int main(void) {
     CHECK(SetFocus(hwndNested) == NULL);
     CHECK(EnableWindow(hwndNested, TRUE));
     CHECK(PostMessage(hwndNested, msgChild, 47, 0));
-    CHECK(PeekMessage(&msg, hwnd, msgChild, msgChild, PM_REMOVE) && msg.hwnd == hwndNested && msg.wParam == 47);
+    CHECK(PeekMessageA(&msg, hwnd, msgChild, msgChild, PM_REMOVE) && msg.hwnd == hwndNested && msg.wParam == 47);
     CHECK(SetTimer(hwndNested, 18, 10, NULL));
     /* Wine 9 excludes descendant timers from an ancestor filter, even after generation. */
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -218,7 +218,7 @@ int main(void) {
 #endif
     msStart = GetTickCount();
     do {
-        fTimer = PeekMessage(&msg, hwndTimerFilter, WM_TIMER, WM_TIMER, PM_REMOVE);
+        fTimer = PeekMessageA(&msg, hwndTimerFilter, WM_TIMER, WM_TIMER, PM_REMOVE);
         if (fTimer) break;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
         Sleep(10);

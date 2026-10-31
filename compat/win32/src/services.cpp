@@ -22,7 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 
-int WINAPI MulDiv(int nNumber, int nNumerator, int nDenominator) {
+int win32::MulDiv(int nNumber, int nNumerator, int nDenominator) {
     int64_t lProduct = (int64_t)nNumber * nNumerator;
     int64_t lDenominator = nDenominator, lResult;
     BOOL fNegative;
@@ -38,7 +38,7 @@ int WINAPI MulDiv(int nNumber, int nNumerator, int nDenominator) {
     return lResult <= INT32_MIN || lResult > INT32_MAX ? -1 : (int)lResult;
 }
 
-DWORD WINAPI GetCurrentThreadId(void) {
+DWORD win32::GetCurrentThreadId(void) {
 #ifdef _WIN32
     return (DWORD)SDL_GetCurrentThreadID();
 #elif defined(__APPLE__)
@@ -49,15 +49,15 @@ DWORD WINAPI GetCurrentThreadId(void) {
 #endif
 }
 
-LPSTR WINAPI lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }
-LPSTR WINAPI lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
+LPSTR win32::lstrcatA(LPSTR pszDest, LPCSTR pszSource) { return strcat(pszDest, pszSource); }
+LPSTR win32::lstrcpyA(LPSTR pszDest, LPCSTR pszSource) {
     if (!pszDest || !pszSource) return NULL;
     return strcpy(pszDest, pszSource);
 }
-int WINAPI lstrlenA(LPCSTR psz) { return psz ? (int)strlen(psz) : 0; }
-int WINAPI lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
+int win32::lstrlenA(LPCSTR psz) { return psz ? (int)strlen(psz) : 0; }
+int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 
-int WINAPIV wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
+int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     char szFormat[1024];
     const char *psz = pszFormat, *pszStart;
     size_t cch = 0;
@@ -106,7 +106,7 @@ int WINAPIV wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     return cchResult;
 LInvalid:
     pszDest[0] = 0;
-    SetLastError(ERROR_INVALID_PARAMETER);
+    win32::SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
 }
 

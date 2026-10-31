@@ -34,7 +34,7 @@ typedef struct COMPATOBJECT {
     struct COMPATOBJECT *lpNext;
 } COMPATOBJECT;
 
-struct HDC__ {
+struct win32::HDC__ {
     NATIVEOWNER<COMPATPRINT, CompatDeletePrinter> lpprint;
     HDC hdcToken;
     HWND hwnd;
@@ -49,7 +49,7 @@ struct HDC__ {
     int iBkMode, iRop2;
     BOOL fAlive, fPaint, fClip, fMemory, fScreen;
     int iScale;
-    struct HDC__ *lpNext;
+    struct win32::HDC__ *lpNext;
 };
 
 static COMPATOBJECT *lpObjects;
@@ -109,7 +109,7 @@ static HDC LpDC(HDC hdc) {
     return NULL;
 }
 
-HGDIOBJ WINAPI GetStockObject(int i) {
+HGDIOBJ win32::GetStockObject(int i) {
     int j;
     static const BYTE rgGray[] = {255, 192, 128, 64, 0, 0};
 
@@ -169,7 +169,7 @@ static COMPATOBJECT *LpNewObject(int iKind, COLORREF crColor, BOOL fNull) {
     return lpobj;
 }
 
-HPEN WINAPI CreatePen(int iStyle, int cWidth, COLORREF crColor) {
+HPEN win32::CreatePen(int iStyle, int cWidth, COLORREF crColor) {
     COMPATOBJECT *lpobj;
     if (iStyle < PS_SOLID || iStyle > PS_NULL || cWidth < 0 || cWidth > 1) {
         SDL_SetError("GDI supports cosmetic solid/dashed/dotted or null pens, width 0 or 1");
@@ -180,11 +180,11 @@ HPEN WINAPI CreatePen(int iStyle, int cWidth, COLORREF crColor) {
     return (HPEN)lpobj;
 }
 
-HBRUSH WINAPI CreateSolidBrush(COLORREF crColor) {
+HBRUSH win32::CreateSolidBrush(COLORREF crColor) {
     return (HBRUSH)LpNewObject(objBrush, crColor, FALSE);
 }
 
-HPALETTE WINAPI CreatePalette(const LOGPALETTE *lppal) {
+HPALETTE win32::CreatePalette(const LOGPALETTE *lppal) {
     COMPATOBJECT *lpobj;
     PALETTEENTRY *rgpe;
     NATIVEARRAYOWNER<PALETTEENTRY, std::free> rgpeOwner;
@@ -199,7 +199,7 @@ HPALETTE WINAPI CreatePalette(const LOGPALETTE *lppal) {
     return (HPALETTE)lpobj;
 }
 
-HPALETTE WINAPI SelectPalette(HDC hdc, HPALETTE hpal, BOOL fBackground) {
+HPALETTE win32::SelectPalette(HDC hdc, HPALETTE hpal, BOOL fBackground) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT *lpobj = LpObject((HGDIOBJ)hpal), *lpold;
     (void)fBackground;
@@ -210,18 +210,18 @@ HPALETTE WINAPI SelectPalette(HDC hdc, HPALETTE hpal, BOOL fBackground) {
     return (HPALETTE)lpold;
 }
 
-UINT WINAPI RealizePalette(HDC hdc) {
+UINT win32::RealizePalette(HDC hdc) {
     // RGBA display and memory canvases have no physical palette to remap.
     return LpDC(hdc) ? 0 : GDI_ERROR;
 }
 
-BOOL WINAPI UnrealizeObject(HGDIOBJ h) {
+BOOL win32::UnrealizeObject(HGDIOBJ h) {
     COMPATOBJECT *lpobj = LpObject(h);
     // True-color palettes need no remapping; brush origins belong to the DC.
     return lpobj && !lpobj->fStock && (lpobj->iKind == objPalette || lpobj->iKind == objBrush);
 }
 
-UINT WINAPI GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALETTEENTRY rgpe) {
+UINT win32::GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALETTEENTRY rgpe) {
     COMPATOBJECT *lpobj = LpObject((HGDIOBJ)hpal);
     if (!lpobj || lpobj->iKind != objPalette) return 0;
     if (!rgpe) return lpobj->cEntries;
@@ -231,7 +231,7 @@ UINT WINAPI GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALET
     return cEntries;
 }
 
-HFONT WINAPI CreateFontIndirectA(const LOGFONTA *lplf) {
+HFONT win32::CreateFontIndirectA(const LOGFONTA *lplf) {
     COMPATOBJECT *lpobj;
     COMPATFONT *lpfont;
     NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfontOwner;
@@ -244,7 +244,7 @@ HFONT WINAPI CreateFontIndirectA(const LOGFONTA *lplf) {
     return (HFONT)lpobj;
 }
 
-BOOL WINAPI DeleteObject(HGDIOBJ h) {
+BOOL win32::DeleteObject(HGDIOBJ h) {
     COMPATOBJECT *lpobj = LpObject(h);
 
     if (!lpobj || lpobj->fStock || lpobj->cSelected != 0)
@@ -257,7 +257,7 @@ BOOL WINAPI DeleteObject(HGDIOBJ h) {
     return TRUE;
 }
 
-HGDIOBJ WINAPI SelectObject(HDC hdc, HGDIOBJ h) {
+HGDIOBJ win32::SelectObject(HDC hdc, HGDIOBJ h) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT *lpobj = LpObject(h), *lpold, **lplp;
 
@@ -302,8 +302,8 @@ static int IDCScale(HDC lpdc) {
 
 static void InvalidateCompatCanvasTree(HWND hwnd) {
     HWND lp;
-    InvalidateRect(hwnd, NULL, TRUE);
-    for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = GetWindow(lp, GW_HWNDNEXT))
+    win32::InvalidateRect(hwnd, NULL, TRUE);
+    for (lp = win32::GetWindow(hwnd, GW_CHILD); lp; lp = win32::GetWindow(lp, GW_HWNDNEXT))
         if (lp->fVisible) InvalidateCompatCanvasTree(lp);
 }
 
@@ -389,7 +389,7 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
     int64_t left, top, right, bottom;
     COLORREF cr;
 
-    GetClientRect(hwnd, &client);
+    win32::GetClientRect(hwnd, &client);
     if (!hwnd->lpcombo && (hwnd->dwStyle & (WS_HSCROLL | WS_VSCROLL)) == (WS_HSCROLL | WS_VSCROLL)) {
         CompatGetSurfaceRect(hwnd, &rc);
         left = ((((int64_t)lprcClip->left) > (x + client.right)) ? ((int64_t)lprcClip->left) : (x + client.right));
@@ -399,16 +399,16 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         if (right > left && bottom > top) {
             dst = SDL_Rect{(int)left * iScale, (int)top * iScale,
                              (int)(right - left) * iScale, (int)(bottom - top) * iScale};
-            cr = GetSysColor(COLOR_BTNFACE);
+            cr = win32::GetSysColor(COLOR_BTNFACE);
             SDL_FillSurfaceRect(lpSurface, &dst, SDL_MapSurfaceRGB(lpSurface, cr & 255, (cr >> 8) & 255, (cr >> 16) & 255));
         }
     }
     // Nonclient scrollbar children occupy the reserved strips; ordinary children
     // must not paint into those strips even when they extend beyond the client.
     // Draw bottom to top; descendants are clipped by every ancestor.
-    lp = GetWindow(hwnd, GW_CHILD);
-    if (lp) lp = GetWindow(lp, GW_HWNDLAST);
-    for (; lp; lp = GetWindow(lp, GW_HWNDPREV)) {
+    lp = win32::GetWindow(hwnd, GW_CHILD);
+    if (lp) lp = win32::GetWindow(lp, GW_HWNDLAST);
+    for (; lp; lp = win32::GetWindow(lp, GW_HWNDPREV)) {
         if (!lp->fVisible || lp->fDestroying) continue;
         clip = *lprcClip;
         if (!lp->fNcScroll) {
@@ -436,7 +436,7 @@ static BOOL FPendingPaintTree(HWND hwnd) {
     HWND lp;
 
     if (hwnd->hdcPaint || hwnd->fUpdate) return TRUE;
-    for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = GetWindow(lp, GW_HWNDNEXT))
+    for (lp = win32::GetWindow(hwnd, GW_CHILD); lp; lp = win32::GetWindow(lp, GW_HWNDNEXT))
         if (lp->fVisible && FPendingPaintTree(lp)) return TRUE;
     return FALSE;
 }
@@ -444,11 +444,11 @@ static BOOL FPendingPaintTree(HWND hwnd) {
 BOOL FCompatPaintTree(HWND hwnd) {
     HWND lp, lpNext;
 
-    if (FStarsErrorPending() || !UpdateWindow(hwnd) || !IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
-    for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = lpNext) {
-        lpNext = GetWindow(lp, GW_HWNDNEXT);
+    if (FStarsErrorPending() || !win32::UpdateWindow(hwnd) || !win32::IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
+    for (lp = win32::GetWindow(hwnd, GW_CHILD); lp; lp = lpNext) {
+        lpNext = win32::GetWindow(lp, GW_HWNDNEXT);
         if (lp->fVisible && !FCompatPaintTree(lp)) return FALSE;
-        if (!IsWindow(hwnd)) return FALSE;
+        if (!win32::IsWindow(hwnd)) return FALSE;
     }
     return TRUE;
 }
@@ -498,7 +498,7 @@ BOOL FCompatPresent(HWND hwnd) {
     dst = SDL_Rect{0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
     if (!SDL_BlitSurface(lpwin->lpCanvas.get(), NULL, lpwin->lpComposite.get(), &dst)) return FALSE;
     CompatGetSurfaceRect(lpwin, &rc);
-    OffsetRect(&rc, 0, cyMenu);
+    win32::OffsetRect(&rc, 0, cyMenu);
     if (!FComposeChildren(lpwin, lpwin->lpComposite.get(), 0, cyMenu, &rc, iScale) ||
         !FCompatDrawMenuBar(lpwin, lpwin->lpComposite.get())) return FALSE;
     CompatDrawCursor(lpwin, lpwin->lpComposite.get());
@@ -523,7 +523,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     if (idDCNext > UINTPTR_MAX / 16 || !SDL_IsMainThread() ||
         (hwnd && (!LpCompatWindow(hwnd) || !FCanvas(hwnd))))
         return NULL;
-    lpdc = new (std::nothrow) HDC__{};
+    lpdc = new (std::nothrow) win32::HDC__{};
     if (!lpdc)
         return NULL;
     // Never dereference public HDC tokens. Monotonic IDs permit immediate release
@@ -531,11 +531,11 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     lpdc->hdcToken = (HDC)(idDCNext++ * 16);
     lpdc->hwnd = hwnd;
     if (hwnd)
-        GetClientRect(hwnd, &lpdc->rcClip);
-    lpdc->lppen = (COMPATOBJECT *)(GetStockObject(BLACK_PEN));
-    lpdc->lpbrush = (COMPATOBJECT *)(GetStockObject(WHITE_BRUSH));
-    lpdc->lpfont = (COMPATOBJECT *)(GetStockObject(SYSTEM_FONT));
-    lpdc->lppalette = (COMPATOBJECT *)(GetStockObject(DEFAULT_PALETTE));
+        win32::GetClientRect(hwnd, &lpdc->rcClip);
+    lpdc->lppen = (COMPATOBJECT *)(win32::GetStockObject(BLACK_PEN));
+    lpdc->lpbrush = (COMPATOBJECT *)(win32::GetStockObject(WHITE_BRUSH));
+    lpdc->lpfont = (COMPATOBJECT *)(win32::GetStockObject(SYSTEM_FONT));
+    lpdc->lppalette = (COMPATOBJECT *)(win32::GetStockObject(DEFAULT_PALETTE));
     if (!lpdc->lpfont) { delete lpdc; return NULL; }
     lpdc->lppen->cSelected++;
     lpdc->lpbrush->cSelected++;
@@ -569,7 +569,7 @@ static COMPATOBJECT *LpNewBitmap(int cx, int cy, BOOL fMono) {
     return lpobj;
 }
 
-HBITMAP WINAPI CreateCompatibleBitmap(HDC hdc, int cx, int cy) {
+HBITMAP win32::CreateCompatibleBitmap(HDC hdc, int cx, int cy) {
     HDC lpdc = LpDC(hdc);
 
     if (!lpdc || cx < 0 || cy < 0)
@@ -579,7 +579,7 @@ HBITMAP WINAPI CreateCompatibleBitmap(HDC hdc, int cx, int cy) {
     return (HBITMAP)LpNewBitmap(cx, cy, lpdc->fMemory && lpdc->lpbitmap->fMono);
 }
 
-HDC WINAPI CreateCompatibleDC(HDC hdc) {
+HDC win32::CreateCompatibleDC(HDC hdc) {
     HDC hdcNew, lpdc;
     COMPATOBJECT *lpbitmap;
 
@@ -591,7 +591,7 @@ HDC WINAPI CreateCompatibleDC(HDC hdc) {
         return NULL;
     hdcNew = HdcNew(NULL, FALSE);
     if (!hdcNew) {
-        DeleteObject(lpbitmap);
+        win32::DeleteObject(lpbitmap);
         return NULL;
     }
     lpdc = lpDCs;
@@ -602,7 +602,7 @@ HDC WINAPI CreateCompatibleDC(HDC hdc) {
     return hdcNew;
 }
 
-int WINAPI GetObjectA(HANDLE h, int cb, LPVOID lpv) {
+int win32::GetObjectA(HANDLE h, int cb, LPVOID lpv) {
     COMPATOBJECT *lpobj = LpObject(h);
     BITMAP bm = {};
 
@@ -653,12 +653,12 @@ static void CloseDC(HDC lpdc) {
     delete lpdc;
 }
 
-BOOL WINAPI DeleteDC(HDC hdc) {
+BOOL win32::DeleteDC(HDC hdc) {
     HDC lpdc = LpDC(hdc);
 
     if (!lpdc || !lpdc->fMemory)
         return FALSE;
-    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint.get())) { SetLastError(ERROR_BUSY); return FALSE; }
+    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint.get())) { win32::SetLastError(ERROR_BUSY); return FALSE; }
     CloseDC(lpdc);
     return TRUE;
 }
@@ -668,7 +668,7 @@ HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy) {
     HDC hdc, lpdc;
     if (!lpbitmap) return NULL;
     hdc = HdcNew(NULL, FALSE);
-    if (!hdc) { DeleteObject(lpbitmap); return NULL; }
+    if (!hdc) { win32::DeleteObject(lpbitmap); return NULL; }
     lpdc = lpDCs;
     lpdc->lpprint.reset(lpprint);
     lpdc->fMemory = TRUE;
@@ -686,13 +686,13 @@ SDL_Surface *LpCompatPrinterSurface(HDC hdc) {
     return lpdc && lpdc->lpprint ? lpdc->lpbitmap->lpSurface.get() : NULL;
 }
 
-HDC WINAPI GetDC(HWND hwnd) {
+HDC win32::GetDC(HWND hwnd) {
     HDC hdc = HdcNew(hwnd, FALSE);
     if (hdc && !hwnd) lpDCs->fScreen = TRUE;
     return hdc;
 }
 
-int WINAPI ReleaseDC(HWND hwnd, HDC hdc) {
+int win32::ReleaseDC(HWND hwnd, HDC hdc) {
     HDC lpdc = LpDC(hdc);
     BOOL fOk;
 
@@ -719,7 +719,7 @@ static BOOL FAddUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc) {
 
 static BOOL FSubtractUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc, const RECT *lprcCut) {
     RECT hit;
-    if (!IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(lprgrc, lpcrc, rc);
+    if (!win32::IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(lprgrc, lpcrc, rc);
     return FAddUpdate(lprgrc, lpcrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
            FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.bottom, rc.right, rc.bottom}) &&
            FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.top, hit.left, hit.bottom}) &&
@@ -742,13 +742,13 @@ static void SetUpdate(HWND hwnd, RECT *rgrc, size_t crc) {
     if (crc == 0) hwnd->fErase = FALSE;
 }
 
-BOOL WINAPI InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
+BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT rc, rcClient;
     RECT *rgrc;
     size_t crc;
-    if (!lpwin || !GetClientRect(hwnd, &rcClient)) return FALSE;
-    if (!IntersectRect(&rc, lprc ? lprc : &rcClient, &rcClient)) return TRUE;
+    if (!lpwin || !win32::GetClientRect(hwnd, &rcClient)) return FALSE;
+    if (!win32::IntersectRect(&rc, lprc ? lprc : &rcClient, &rcClient)) return TRUE;
     rgrc = lpwin->rgrcUpdate.get(); crc = lpwin->crcUpdate;
     if (!FAddUpdate(&rgrc, &crc, rc)) return FALSE;
     // FAddUpdate may have relocated the allocation; retain ownership before SetUpdate.
@@ -769,7 +769,7 @@ static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
     return TRUE;
 }
 
-BOOL WINAPI GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
+BOOL win32::GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
     HWND lpwin = LpCompatWindow(hwnd);
     HDC hdc;
 
@@ -778,19 +778,19 @@ BOOL WINAPI GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
     if (lprc)
         *lprc = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     if (fErase && lpwin->fUpdate && lpwin->fErase) {
-        hdc = GetDC(hwnd);
+        hdc = win32::GetDC(hwnd);
         if (hdc) {
-            if (!FPaintClip(LpDC(hdc), lpwin)) { ReleaseDC(hwnd, hdc); return FALSE; }
-            if (SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0) && LpCompatWindow(hwnd))
+            if (!FPaintClip(LpDC(hdc), lpwin)) { win32::ReleaseDC(hwnd, hdc); return FALSE; }
+            if (win32::SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0) && LpCompatWindow(hwnd))
                 lpwin->fErase = FALSE;
             if (LpDC(hdc)) LpDC(hdc)->fPaint = FALSE;
-            ReleaseDC(hwnd, hdc);
+            win32::ReleaseDC(hwnd, hdc);
         }
     }
     return lpwin->fAlive && lpwin->fUpdate;
 }
 
-HDC WINAPI BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
+HDC win32::BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     HWND lpwin = LpCompatWindow(hwnd);
     HDC hdc;
     BOOL fErase;
@@ -811,11 +811,11 @@ HDC WINAPI BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     lpwin->fErase = FALSE;
     lpwin->hdcPaint = hdc;
     if (fErase)
-        lpps->fErase = !SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+        lpps->fErase = !win32::SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
     return LpDC(hdc) ? hdc : NULL;
 }
 
-BOOL WINAPI EndPaint(HWND hwnd, const PAINTSTRUCT *lpps) {
+BOOL win32::EndPaint(HWND hwnd, const PAINTSTRUCT *lpps) {
     HWND lpwin = LpCompatWindow(hwnd);
     HDC lpdc = lpps ? LpDC(lpps->hdc) : NULL;
     BOOL fOk;
@@ -828,17 +828,17 @@ BOOL WINAPI EndPaint(HWND hwnd, const PAINTSTRUCT *lpps) {
     return fOk;
 }
 
-BOOL WINAPI UpdateWindow(HWND hwnd) {
+BOOL win32::UpdateWindow(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin)
         return FALSE;
     if (lpwin->fUpdate && !lpwin->hdcPaint)
-        SendMessageA(hwnd, WM_PAINT, 0, 0);
+        win32::SendMessageA(hwnd, WM_PAINT, 0, 0);
     return TRUE;
 }
 
-BOOL WINAPI ValidateRect(HWND hwnd, const RECT *lprc) {
+BOOL win32::ValidateRect(HWND hwnd, const RECT *lprc) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT *rgrc = NULL;
     size_t crc = 0, i;
@@ -867,9 +867,9 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
     if (!lpsurface)
         return FALSE;
     rcClient = RECT{0, 0, lpsurface->w / IDCScale(lpdc), lpsurface->h / IDCScale(lpdc)};
-    if (lpdc->hwnd && !GetClientRect(lpdc->hwnd, &rcClient)) return FALSE;
+    if (lpdc->hwnd && !win32::GetClientRect(lpdc->hwnd, &rcClient)) return FALSE;
     if (lpdc->fClip)
-        IntersectRect(lprc, &lpdc->rcClip, &rcClient);
+        win32::IntersectRect(lprc, &lpdc->rcClip, &rcClient);
     else
         *lprc = rcClient;
     return TRUE;
@@ -887,7 +887,7 @@ static RECT RcDevice(HDC lpdc, RECT rc) {
                   LCoord((int64_t)rc.right - lpdc->ptOrg.x), LCoord((int64_t)rc.bottom - lpdc->ptOrg.y)};
 }
 
-BOOL WINAPI SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
+BOOL win32::SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptOrg;
@@ -895,7 +895,7 @@ BOOL WINAPI SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     return TRUE;
 }
 
-BOOL WINAPI SetBrushOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
+BOOL win32::SetBrushOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptBrush;
@@ -903,12 +903,12 @@ BOOL WINAPI SetBrushOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     return TRUE;
 }
 
-int WINAPI GetROP2(HDC hdc) {
+int win32::GetROP2(HDC hdc) {
     HDC lpdc = LpDC(hdc);
     return lpdc ? lpdc->iRop2 : 0;
 }
 
-int WINAPI SetROP2(HDC hdc, int iRop) {
+int win32::SetROP2(HDC hdc, int iRop) {
     HDC lpdc = LpDC(hdc);
     int iOld;
     if (!lpdc || iRop < 1 || iRop > 16) return 0;
@@ -923,7 +923,7 @@ static int IRegionKind(size_t crc) {
     return crc == 0 ? NULLREGION : crc == 1 ? SIMPLEREGION : COMPLEXREGION;
 }
 
-HRGN WINAPI CreateRectRgn(int left, int top, int right, int bottom) {
+HRGN win32::CreateRectRgn(int left, int top, int right, int bottom) {
     COMPATOBJECT *lpobj;
     // GDI regions use signed 27-bit coordinates, even on a 64-bit host.
     if (left < -67108864 || top < -67108864 || right < -67108864 || bottom < -67108864 ||
@@ -935,7 +935,7 @@ HRGN WINAPI CreateRectRgn(int left, int top, int right, int bottom) {
     return (HRGN)lpobj;
 }
 
-int WINAPI SelectClipRgn(HDC hdc, HRGN hrgn) {
+int win32::SelectClipRgn(HDC hdc, HRGN hrgn) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT *lpobj = hrgn ? LpObject((HGDIOBJ)hrgn) : NULL;
     RECT *rgrc = NULL;
@@ -991,7 +991,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
     for (i = 0; i < crcSrc; i++) {
         rc = rgsrc[i];
         if (rc.left >= rc.right || rc.top >= rc.bottom) continue;
-        if (!IntersectRect(&rcHit, &rc, &rcCut)) {
+        if (!win32::IntersectRect(&rcHit, &rc, &rcCut)) {
             if (fExclude) rgrc[crc++] = rc;
         } else if (!fExclude) rgrc[crc++] = rcHit;
         else {
@@ -1006,11 +1006,11 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
     return IRegionKind(crc);
 }
 
-int WINAPI IntersectClipRect(HDC hdc, int left, int top, int right, int bottom) {
+int win32::IntersectClipRect(HDC hdc, int left, int top, int right, int bottom) {
     return IClipRect(hdc, left, top, right, bottom, FALSE);
 }
 
-int WINAPI ExcludeClipRect(HDC hdc, int left, int top, int right, int bottom) {
+int win32::ExcludeClipRect(HDC hdc, int left, int top, int right, int bottom) {
     return IClipRect(hdc, left, top, right, bottom, TRUE);
 }
 
@@ -1047,7 +1047,7 @@ static void Pixel(HDC lpdc, const RECT *lprc, int64_t x, int64_t y, COLORREF crC
         DevicePixel(lpdc, x * iScale + ix, y * iScale + iy, crColor);
 }
 
-COLORREF WINAPI GetPixel(HDC hdc, int x, int y) {
+COLORREF win32::GetPixel(HDC hdc, int x, int y) {
     HDC lpdc = LpDC(hdc);
     RECT rc;
     BYTE *rgb;
@@ -1064,7 +1064,7 @@ COLORREF WINAPI GetPixel(HDC hdc, int x, int y) {
 
 static void ShapePixel(HDC lpdc, const RECT *lprc, int64_t x, int64_t y, COLORREF crPen);
 
-COLORREF WINAPI SetPixel(HDC hdc, int x, int y, COLORREF cr) {
+COLORREF win32::SetPixel(HDC hdc, int x, int y, COLORREF cr) {
     HDC lpdc = LpDC(hdc);
     RECT rc;
     int64_t px, py;
@@ -1093,7 +1093,7 @@ static COLORREF CrBrush(HDC lpdc, COMPATOBJECT *lpbrush, int64_t x, int64_t y) {
     return RGB(rgb[0], rgb[1], rgb[2]);
 }
 
-HBRUSH WINAPI CreatePatternBrush(HBITMAP hbmp) {
+HBRUSH win32::CreatePatternBrush(HBITMAP hbmp) {
     COMPATOBJECT *lpbm = LpObject((HGDIOBJ)hbmp), *lpobj;
     SDL_Surface *lpsurface;
     if (!lpbm || lpbm->iKind != objBitmap) return NULL;
@@ -1108,11 +1108,11 @@ HBRUSH WINAPI CreatePatternBrush(HBITMAP hbmp) {
 
 static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop);
 
-int WINAPI FillRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
+int win32::FillRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT brush = {}, *lpbrush = LpObject(hbr);
     if ((UINT_PTR)hbr > 0 && (UINT_PTR)hbr <= COLOR_MENUBAR + 1) {
-        brush.iKind = objBrush; brush.crColor = GetSysColor((int)(UINT_PTR)hbr - 1); lpbrush = &brush;
+        brush.iKind = objBrush; brush.crColor = win32::GetSysColor((int)(UINT_PTR)hbr - 1); lpbrush = &brush;
     }
     if (!lpdc || !lprc || !lpbrush || lpbrush->iKind != objBrush) return 0;
     return FFillDevice(lpdc, RcDevice(lpdc, *lprc), lpbrush, FALSE);
@@ -1123,29 +1123,29 @@ void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, BOOL fSunken, BOOL fRight)
     HBRUSH hbr;
     int i;
     for (i = 0; i < 2 && rc.right > rc.left && rc.bottom > rc.top; i++) {
-        hbr = CreateSolidBrush(GetSysColor(fSunken ? (i ? COLOR_3DDKSHADOW : COLOR_BTNSHADOW) :
+        hbr = win32::CreateSolidBrush(win32::GetSysColor(fSunken ? (i ? COLOR_3DDKSHADOW : COLOR_BTNSHADOW) :
                                           (i ? COLOR_3DLIGHT : COLOR_BTNHIGHLIGHT)));
-        edge = rc; edge.bottom = rc.top + 1; FillRect(hdc, &edge, hbr);
-        edge = rc; edge.right = rc.left + 1; FillRect(hdc, &edge, hbr); DeleteObject(hbr);
-        hbr = CreateSolidBrush(GetSysColor(fSunken ? (i ? COLOR_3DLIGHT : COLOR_BTNHIGHLIGHT) :
+        edge = rc; edge.bottom = rc.top + 1; win32::FillRect(hdc, &edge, hbr);
+        edge = rc; edge.right = rc.left + 1; win32::FillRect(hdc, &edge, hbr); win32::DeleteObject(hbr);
+        hbr = win32::CreateSolidBrush(win32::GetSysColor(fSunken ? (i ? COLOR_3DLIGHT : COLOR_BTNHIGHLIGHT) :
                                           (i ? COLOR_BTNSHADOW : COLOR_3DDKSHADOW)));
-        edge = rc; edge.top = rc.bottom - 1; FillRect(hdc, &edge, hbr);
-        if (fRight) { edge = rc; edge.left = rc.right - 1; FillRect(hdc, &edge, hbr); }
-        DeleteObject(hbr); InflateRect(&rc, -1, -1);
+        edge = rc; edge.top = rc.bottom - 1; win32::FillRect(hdc, &edge, hbr);
+        if (fRight) { edge = rc; edge.left = rc.right - 1; win32::FillRect(hdc, &edge, hbr); }
+        win32::DeleteObject(hbr); win32::InflateRect(&rc, -1, -1);
     }
 }
 
-int WINAPI FrameRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
+int win32::FrameRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     RECT rc;
     if (!lprc || lprc->left >= lprc->right || lprc->top >= lprc->bottom) return 0;
     rc = RECT{lprc->left, lprc->top, lprc->right, lprc->top + 1};
-    if (!FillRect(hdc, &rc, hbr)) return 0;
+    if (!win32::FillRect(hdc, &rc, hbr)) return 0;
     rc = RECT{lprc->left, lprc->bottom - 1, lprc->right, lprc->bottom};
-    if (!FillRect(hdc, &rc, hbr)) return 0;
+    if (!win32::FillRect(hdc, &rc, hbr)) return 0;
     rc = RECT{lprc->left, lprc->top + 1, lprc->left + 1, lprc->bottom - 1};
-    if (!FillRect(hdc, &rc, hbr)) return 0;
+    if (!win32::FillRect(hdc, &rc, hbr)) return 0;
     rc = RECT{lprc->right - 1, lprc->top + 1, lprc->right, lprc->bottom - 1};
-    return FillRect(hdc, &rc, hbr);
+    return win32::FillRect(hdc, &rc, hbr);
 }
 
 static BOOL FUsesSource(BYTE rop) {
@@ -1191,7 +1191,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
     size_t i, j, crc, crcPaint;
     COLORREF cr;
     if (!FClip(lpdc, &rcClip)) return FALSE;
-    if (lpbrush->fNull || !IntersectRect(&rc, &rcFill, &rcClip)) return TRUE;
+    if (lpbrush->fNull || !win32::IntersectRect(&rc, &rcFill, &rcClip)) return TRUE;
     // Solid copies are common for erase/paint and can fill entire clipped spans.
     if (!lpbrush->lpSurface.get() && (!fRop || lpdc->iRop2 == R2_COPYPEN)) {
         lpsurface = LpDCSurface(lpdc); cr = CrPalette(lpdc, lpbrush->crColor);
@@ -1200,12 +1200,12 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
         crc = lpdc->fRegion ? lpdc->crcRegion : 1;
         for (i = 0; i < crc; i++) {
             if (lpdc->fRegion) {
-                if (!IntersectRect(&rcPart, &rc, &lpdc->rgrcRegion[i])) continue;
+                if (!win32::IntersectRect(&rcPart, &rc, &lpdc->rgrcRegion[i])) continue;
             } else rcPart = rc;
             crcPaint = lpdc->fPaint ? lpdc->crcPaint : 1;
             for (j = 0; j < crcPaint; j++) {
                 if (lpdc->fPaint) {
-                    if (!IntersectRect(&rcPaint, &rcPart, &lpdc->rgrcPaint[j])) continue;
+                    if (!win32::IntersectRect(&rcPaint, &rcPart, &lpdc->rgrcPaint[j])) continue;
                 } else rcPaint = rcPart;
                 sdlrc = SDL_Rect{rcPaint.left * iScale, rcPaint.top * iScale,
                                    (rcPaint.right - rcPaint.left) * iScale, (rcPaint.bottom - rcPaint.top) * iScale};
@@ -1235,7 +1235,7 @@ static COLORREF CrRop(BYTE rop, COLORREF crPattern, COLORREF crSource, COLORREF 
     return cr & UINT32_C(0x00ffffff);
 }
 
-BOOL WINAPI BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, int ySrc, DWORD dwRop) {
+BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, int ySrc, DWORD dwRop) {
     HDC lpdc = LpDC(hdc), lpdcSrc = NULL;
     SDL_Surface *lpsrc = NULL;
     RECT rcClip;
@@ -1312,7 +1312,7 @@ BOOL WINAPI BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
     return TRUE;
 }
 
-BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT *lprcClip) {
+BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT *lprcClip) {
     HWND lpwin = LpCompatWindow(hwnd), hwndChild, hwndNext;
     RECT rcClient, rcScroll, rcClip, rcArea, rcMoved, rcDest, rc;
     RECT *rgrc = NULL;
@@ -1322,35 +1322,35 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
     int y, yFirst, yLast, dRow, iScale;
     size_t cbRow;
     BOOL fErase, fCopy, fArea;
-    if (!lpwin || lpwin->fDestroying || !GetClientRect(hwnd, &rcClient)) {
-        SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE;
+    if (!lpwin || lpwin->fDestroying || !win32::GetClientRect(hwnd, &rcClient)) {
+        win32::SetLastError(ERROR_INVALID_WINDOW_HANDLE); return FALSE;
     }
     if (dx == 0 && dy == 0) return TRUE;
-    fArea = IntersectRect(&rcScroll, lprc ? lprc : &rcClient, &rcClient) &&
-            IntersectRect(&rcClip, lprcClip ? lprcClip : &rcClient, &rcClient) &&
-            IntersectRect(&rcArea, &rcScroll, &rcClip);
+    fArea = win32::IntersectRect(&rcScroll, lprc ? lprc : &rcClient, &rcClient) &&
+            win32::IntersectRect(&rcClip, lprcClip ? lprcClip : &rcClient, &rcClient) &&
+            win32::IntersectRect(&rcArea, &rcScroll, &rcClip);
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndChild->hwndZNext) {
         if ((int64_t)hwndChild->rcChild.left + dx < INT_MIN ||
             (int64_t)hwndChild->rcChild.right + dx > INT_MAX ||
             (int64_t)hwndChild->rcChild.top + dy < INT_MIN ||
             (int64_t)hwndChild->rcChild.bottom + dy > INT_MAX) {
-            SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
+            win32::SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
         }
     }
     if (!fArea) goto MoveChildren;
     rcMoved = RECT{LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
                      LCoord((int64_t)rcArea.right + dx), LCoord((int64_t)rcArea.bottom + dy)};
-    fCopy = IntersectRect(&rcDest, &rcArea, &rcMoved);
+    fCopy = win32::IntersectRect(&rcDest, &rcArea, &rcMoved);
     fErase = lpwin->fErase;
     for (i = 0; i < lpwin->crcUpdate; i++) {
         rc = lpwin->rgrcUpdate[i];
         if (!lprc) {
             // The whole-client variant moves pending damage with the pixels.
             if (!FSubtractUpdate(&rgrc, &crc, rc, &rcClip)) goto Fail;
-            if (!IntersectRect(&rc, &rc, &rcClip)) continue;
+            if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
             rc = RECT{LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
                         LCoord((int64_t)rc.right + dx), LCoord((int64_t)rc.bottom + dy)};
-            if (!IntersectRect(&rc, &rc, &rcClip)) continue;
+            if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
         }
         if (!FAddUpdate(&rgrc, &crc, rc)) goto Fail;
     }
@@ -1373,30 +1373,30 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
         }
     }
     SetUpdate(lpwin, rgrc, crc); rgrc = NULL;
-    lpwin->fErase = crc != 0 && (fErase || !EqualRect(&rcArea, &rcDest));
+    lpwin->fErase = crc != 0 && (fErase || !win32::EqualRect(&rcArea, &rcDest));
 MoveChildren:
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndNext) {
         hwndNext = hwndChild->hwndZNext;
-        if (!IsWindow(hwndChild)) continue;
-        if (!SetWindowPos(hwndChild, NULL, (int)((int64_t)hwndChild->rcChild.left + dx),
+        if (!win32::IsWindow(hwndChild)) continue;
+        if (!win32::SetWindowPos(hwndChild, NULL, (int)((int64_t)hwndChild->rcChild.left + dx),
                           (int)((int64_t)hwndChild->rcChild.top + dy), 0, 0,
                           SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW)) return FALSE;
-        if (!IsWindow(hwnd)) return FALSE;
+        if (!win32::IsWindow(hwnd)) return FALSE;
     }
     if (fArea) FCompatPresent(hwnd);
     return TRUE;
 Fail:
-    free(rgrc); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE;
+    free(rgrc); win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY); return FALSE;
 }
 
 
-BOOL WINAPI PatBlt(HDC hdc, int x, int y, int cx, int cy, DWORD dwRop) {
+BOOL win32::PatBlt(HDC hdc, int x, int y, int cx, int cy, DWORD dwRop) {
     if (FUsesSource((BYTE)(dwRop >> 16)))
         return FALSE;
-    return BitBlt(hdc, x, y, cx, cy, NULL, 0, 0, dwRop);
+    return win32::BitBlt(hdc, x, y, cx, cy, NULL, 0, 0, dwRop);
 }
 
-BOOL WINAPI MoveToEx(HDC hdc, int x, int y, LPPOINT lppt) {
+BOOL win32::MoveToEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
 
     if (!lpdc)
@@ -1477,7 +1477,7 @@ static void Line(HDC lpdc, RECT rc, POINT pt0, POINT pt1, BOOL fExcludeEnd, uint
     }
 }
 
-BOOL WINAPI LineTo(HDC hdc, int x, int y) {
+BOOL win32::LineTo(HDC hdc, int x, int y) {
     HDC lpdc = LpDC(hdc);
     RECT rc;
     POINT pt;
@@ -1492,7 +1492,7 @@ BOOL WINAPI LineTo(HDC hdc, int x, int y) {
     return TRUE;
 }
 
-BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
+BOOL win32::Rectangle(HDC hdc, int left, int top, int right, int bottom) {
     HDC lpdc = LpDC(hdc);
     RECT rc, rcFill;
     uint64_t iPhase = 0;
@@ -1564,7 +1564,7 @@ static void EllipseOutline(COMPATELLIPSE *lp, int64_t x0, int64_t y0, int64_t x1
     }
 }
 
-BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
+BOOL win32::Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     HDC lpdc = LpDC(hdc);
     COMPATELLIPSE el = {};
     RECT rcClip;
@@ -1609,7 +1609,7 @@ BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
     return TRUE;
 }
 
-COLORREF WINAPI SetTextColor(HDC hdc, COLORREF crColor) {
+COLORREF win32::SetTextColor(HDC hdc, COLORREF crColor) {
     HDC lpdc = LpDC(hdc);
     COLORREF crOld;
 
@@ -1619,7 +1619,7 @@ COLORREF WINAPI SetTextColor(HDC hdc, COLORREF crColor) {
     return crOld;
 }
 
-COLORREF WINAPI SetBkColor(HDC hdc, COLORREF crColor) {
+COLORREF win32::SetBkColor(HDC hdc, COLORREF crColor) {
     HDC lpdc = LpDC(hdc);
     COLORREF crOld;
 
@@ -1629,7 +1629,7 @@ COLORREF WINAPI SetBkColor(HDC hdc, COLORREF crColor) {
     return crOld;
 }
 
-int WINAPI SetBkMode(HDC hdc, int iMode) {
+int win32::SetBkMode(HDC hdc, int iMode) {
     HDC lpdc = LpDC(hdc);
     int lOld;
 
@@ -1650,22 +1650,22 @@ static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
     return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), psz, cch, lpsize);
 }
 
-BOOL WINAPI GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
+BOOL win32::GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
     HDC lpdc = LpDC(hdc);
     return lpdc && FTextSize(lpdc, psz, cch, lpsize);
 }
 
-BOOL WINAPI GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
+BOOL win32::GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
     HDC lpdc = LpDC(hdc);
     return lpdc && FCompatFontMetrics(lpdc->lpfont->lpFont.get(), lptm);
 }
 
-COLORREF WINAPI GetBkColor(HDC hdc) {
+COLORREF win32::GetBkColor(HDC hdc) {
     HDC lpdc = LpDC(hdc);
     return lpdc ? lpdc->crBk : CLR_INVALID;
 }
 
-int WINAPI GetDeviceCaps(HDC hdc, int index) {
+int win32::GetDeviceCaps(HDC hdc, int index) {
     HDC lpdc = LpDC(hdc);
     const SDL_DisplayMode *lpMode;
     SDL_DisplayID id;
@@ -1741,10 +1741,10 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     if (options & ETO_OPAQUE) {
         RECT rc;
         int ix, iy;
-        if (IntersectRect(&rc, &draw.rc, lprc))
+        if (win32::IntersectRect(&rc, &draw.rc, lprc))
             for (iy = rc.top; iy < rc.bottom; iy++) for (ix = rc.left; ix < rc.right; ix++) Pixel(lpdc, &rc, ix, iy, lpdc->crBk);
     }
-    if (options & ETO_CLIPPED) IntersectRect(&draw.rc, &draw.rc, lprc);
+    if (options & ETO_CLIPPED) win32::IntersectRect(&draw.rc, &draw.rc, lprc);
     draw.lpdc = lpdc; draw.x = (int64_t)x - lpdc->ptOrg.x; draw.y = (int64_t)y - lpdc->ptOrg.y;
     angle = (lpdc->lpfont->lf.lfEscapement % 3600) * (3.14159265358979323846 / 1800.0);
     draw.cs = cos(angle); draw.sn = sin(angle);
@@ -1759,12 +1759,12 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     return TRUE;
 }
 
-BOOL WINAPI TextOutA(HDC hdc, int x, int y, LPCSTR psz, int cch) {
+BOOL win32::TextOutA(HDC hdc, int x, int y, LPCSTR psz, int cch) {
     HDC lpdc = LpDC(hdc);
     return lpdc && FDrawText(lpdc, x, y, psz, cch, 0, NULL, NULL);
 }
 
-BOOL WINAPI ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
+BOOL win32::ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
                        LPCSTR psz, UINT cch, const INT *rgdx) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc || cch > INT_MAX || (options & ~(ETO_OPAQUE | ETO_CLIPPED))) return FALSE;
@@ -1773,7 +1773,7 @@ BOOL WINAPI ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
 
 typedef struct COMPATTEXTLINE { int i, cch, dx; } COMPATTEXTLINE;
 
-int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
+int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     HDC lpdc = LpDC(hdc);
     char *sz = NULL;
     BYTE *rgUnderline = NULL;
@@ -1820,7 +1820,7 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
             cStep = CbUtf8Char(sz + i, (size_t)(c - i), &ch);
             if (cStep == 0) goto LReturn;
-            if (!GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
+            if (!win32::GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = (int)dx; }
             dx += size.cx;
             if (dx > INT_MAX) goto LReturn;
@@ -1847,7 +1847,7 @@ LNextLine:
     rcOld = lpdc->rcClip; fOldClip = lpdc->fClip;
     if (!(flags & DT_NOCLIP)) {
         lpdc->rcClip = RcDevice(lpdc, *lprc);
-        if (fOldClip) IntersectRect(&lpdc->rcClip, &rcOld, &lpdc->rcClip);
+        if (fOldClip) win32::IntersectRect(&lpdc->rcClip, &rcOld, &lpdc->rcClip);
         lpdc->fClip = TRUE;
     }
     y = lprc->top;
@@ -1861,14 +1861,14 @@ LNextLine:
         if (flags & DT_CENTER) x += ((int64_t)lprc->right - lprc->left - rgline[i].dx) / 2;
         else if (flags & DT_RIGHT) x = (int64_t)lprc->right - rgline[i].dx;
         if (x < INT_MIN || x > INT_MAX || y < INT_MIN || y > INT_MAX ||
-            !TextOutA(hdc, (int)x, (int)y, sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
+            !win32::TextOutA(hdc, (int)x, (int)y, sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
         for (j = 0; j < rgline[i].cch; j++) {
             if (!rgUnderline[rgline[i].i + j]) continue;
-            GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
+            win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
             dx = x + size.cx;
             cStep = CbUtf8Char(sz + rgline[i].i + j, (size_t)(rgline[i].cch - j), &ch);
             if (cStep == 0) continue;
-            GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
+            win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
             if (dx >= INT_MIN && dx + size.cx <= INT_MAX && y + tm.tmAscent + 2 <= INT_MAX) {
@@ -1911,7 +1911,7 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb) {
     return (HBITMAP)lpobj;
 }
 
-int WINAPI GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBits, LPBITMAPINFO lpbmi, UINT usage) {
+int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBits, LPBITMAPINFO lpbmi, UINT usage) {
     HDC lpdc = LpDC(hdc);
     COMPATOBJECT *lpobj = LpObject(hbm);
     BITMAPINFOHEADER bi;
@@ -1999,7 +1999,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     return FCompatNativeDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
 }
 
-int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
+int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
                          int xSrc, int ySrc, int cxSrc, int cySrc, const VOID *lpBits,
                          const BITMAPINFO *lpbmi, UINT usage, DWORD dwRop) {
     HDC lpdc = LpDC(hdc);
@@ -2091,7 +2091,7 @@ HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
     lpobj->lpSurface.reset(lpsurfaceOwner.release()); lpobj->fMono = fMono;
     return (HBITMAP)lpobj;
 }
-BOOL WINAPI DrawIcon(HDC hdc, int x, int y, HICON hicon) {
+BOOL win32::DrawIcon(HDC hdc, int x, int y, HICON hicon) {
     HDC lpdc = LpDC(hdc);
     COMPATIMAGE *lp = LpCompatImage(hicon);
     RECT rc;

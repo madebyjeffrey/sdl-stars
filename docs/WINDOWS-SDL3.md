@@ -142,19 +142,19 @@ native chooser/printer and complete tutorial qualification remain separate work.
 ## Platform boundary and future Rust integration
 
 The shared C++ filesystem implementation is in `src/platform/fileio.cpp`;
-`native.c` retains the game-facing adapters. SDL UI sources include the wrapper's
+`native.cpp` retains the game-facing adapters. SDL UI sources include the wrapper's
 `windows.h`; `fileio.cpp` includes real SDK declarations for its narrow native
-file operations; `filedialog_windows_sdk.c` isolates
-the system Unicode open/save dialog APIs. CMake generates Windows wrapper
-symbol aliases such as `StarsCompat_CreateWindowExA`, so wrapper handles cannot
-accidentally reach identically named system APIs. Linux/macOS keep their current
-symbols. The wrapper's calling convention remains C, including its callbacks;
-it is independent of the SDK's historical Win32 calling convention.
+file operations; `filedialog_windows_sdk.cpp` isolates the system Unicode
+open/save dialog APIs, and `native_windows.cpp` isolates native process services.
+Raw wrapper operations live in the C++ `win32::` namespace. Application-facing
+`ui::` calls deliver captured callback errors after runtime cleanup. Wrapper
+handle and record tags have separate namespace identities from SDK types;
+`win32::MSG` also stays distinct from SDL's native Windows message hook. The
+wrapper has native C++ linkage and does not use generated symbol-name macros.
 
-A future Rust consumer can use the `stars_win32` C library through an
-`extern "C"` interface with a matching compiler/runtime, or through a DLL facade
-that keeps CRT-owned objects private. Bindings must use these wrapper declarations and opaque
-wrapper handles, not the Windows crate's system handles. Fixed-width integer
+A future Rust consumer would require an explicit foreign interface or DLL facade
+that keeps CRT-owned objects private. Bindings must use the wrapper's opaque
+handles, independently of the Windows crate's system handles. Fixed-width integer
 fields and pointer-sized parameters already distinguish disk storage from the
 process ABI. Keep allocations and frees on the owning side, and do not unwind
 Rust panics through C callbacks. Rust bindings, a supported public game-core API,

@@ -10,7 +10,7 @@
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 static LRESULT CALLBACK FontWindow(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
-    return DefWindowProc(hwnd, msg, wp, lp);
+    return DefWindowProcA(hwnd, msg, wp, lp);
 }
 
 int main(void) {

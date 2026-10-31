@@ -40,7 +40,7 @@ static LRESULT CALLBACK ScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fDestroy) { fDestroy = FALSE; DestroyWindow(hwnd); }
         return 777;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int TestAxis(HWND hwnd, int sb) {
     int iMin, iMax;
@@ -88,9 +88,9 @@ static int TestPage(HWND hwnd) {
     CHECK(!GetUpdateRect(hwnd, NULL, FALSE) && !GetUpdateRect(hwnd->rghwndScroll[SB_VERT], NULL, FALSE));
     CHECK(SetScrollPos(hwnd, SB_VERT, 81, TRUE) == 21);
     cScroll = 0;
-    SendMessage(hwnd->rghwndScroll[SB_VERT], WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd->rghwndScroll[SB_VERT], WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
     CHECK(cScroll == 1 && rgmsg[0] == WM_VSCROLL && hwndNotify == NULL);
-    SendMessage(hwnd->rghwndScroll[SB_VERT], WM_LBUTTONUP, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd->rghwndScroll[SB_VERT], WM_LBUTTONUP, 0, MAKELPARAM(8, 5));
 #endif
     si.fMask = SIF_PAGE | SIF_DISABLENOSCROLL; si.nPage = 1000;
     CHECK(SetScrollInfo(hwnd, SB_VERT, &si, TRUE) == -10);
@@ -135,7 +135,7 @@ static int TestThumbProportion(HWND hwndParent) {
     HDC hdc;
     SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 0, 99, 20, 0, 0};
     int i, y, cThumb;
-    MSG msg;
+    APPMSG msg;
     SDL_Event event = {0};
 
     hwnd = CreateWindow("ScrollBar", "", WS_CHILD | WS_VISIBLE | SBS_VERT,
@@ -153,30 +153,30 @@ static int TestThumbProportion(HWND hwndParent) {
     }
     /* Inspect the canvas before release or message draining: tracking must
        repaint immediately even while more mouse messages are pending. */
-    SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
-    SendMessage(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 80));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
+    SendMessageA(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 80));
     CHECK(GetCapture() == hwnd && GetScrollPos(hwnd, SB_CTL) == 0);
     hdc = GetDC(hwnd); CHECK(hdc);
     CHECK(GetPixel(hdc, 8, 30) == RGB(23, 45, 67));
     CHECK(GetPixel(hdc, 8, 80) != RGB(23, 45, 67)); ReleaseDC(hwnd, hdc);
-    SendMessage(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 80));
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
-    SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 80));
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
     event.type = SDL_EVENT_MOUSE_MOTION; event.motion.windowID = HwndCompatRoot(hwnd)->id;
     event.motion.state = SDL_BUTTON_LMASK; event.motion.x = 8;
     for (i = 31; i <= 80; i++) {
         event.motion.y = i; CHECK(SDL_PushEvent(&event));
     }
-    CHECK(PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    CHECK(PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK((short)HIWORD(msg.lParam) == 80);
-    DispatchMessage(&msg);
-    CHECK(!PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
+    DispatchMessageA(&msg);
+    CHECK(!PeekMessageA(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE));
     CHECK(GetCapture() == hwnd && hwnd->iScrollTrack == 50);
-    SendMessage(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 80));
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
-    SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 80));
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(8, 30));
     fDestroyColor = TRUE;
-    SendMessage(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 80));
+    SendMessageA(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 80));
     CHECK(!IsWindow(hwnd) && HwndCompatRoot(hwndParent)->cPresentDefer == 0);
     CHECK(DeleteObject(hbrTrack)); hbrTrack = NULL;
     return 0;
@@ -190,11 +190,11 @@ static int TestKeys(HWND hwnd, UINT msg) {
     ShowWindow(GetParent(hwnd), SW_SHOW); ShowWindow(hwnd, SW_SHOW); SetFocus(hwnd);
     CHECK(SetScrollRange(hwnd, SB_CTL, 0, 100, FALSE));
     SetScrollPos(hwnd, SB_CTL, 50, FALSE);
-    CHECK(SendMessage(hwnd, WM_GETDLGCODE, 0, 0) & DLGC_WANTARROWS);
+    CHECK(SendMessageA(hwnd, WM_GETDLGCODE, 0, 0) & DLGC_WANTARROWS);
     for (i = 0; i < sizeof(rgvk) / sizeof(rgvk[0]); i++) {
         cScroll = 0;
-        SendMessage(hwnd, WM_KEYDOWN, rgvk[i], 0);
-        SendMessage(hwnd, WM_KEYUP, rgvk[i], 0);
+        SendMessageA(hwnd, WM_KEYDOWN, rgvk[i], 0);
+        SendMessageA(hwnd, WM_KEYUP, rgvk[i], 0);
         CHECK(cScroll == 1 && rgsb[0] == rgsbExpect[i]);
         CHECK(rgmsg[0] == msg && hwndNotify == hwnd && GetScrollPos(hwnd, SB_CTL) == 50);
     }
@@ -205,27 +205,27 @@ static int TestInput(HWND hwnd) {
     HWND hwndParent = GetParent(hwnd), hwndOther;
     HDC hdc;
     SDL_Event event = {0};
-    MSG msg;
+    APPMSG msg;
     cScroll = 0;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
     CHECK(GetCapture() == hwnd && cScroll == 1 && rgsb[0] == SB_LINEUP);
     CHECK(hwnd->idScrollTimer != 0);
-    CHECK(GetMessage(&msg, hwnd, WM_TIMER, WM_TIMER) > 0);
-    DispatchMessage(&msg);
+    CHECK(GetMessageA(&msg, hwnd, WM_TIMER, WM_TIMER) > 0);
+    DispatchMessageA(&msg);
     CHECK(cScroll == 2 && rgsb[1] == SB_LINEUP);
-    SendMessage(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(30, 50));
-    SendMessage(hwnd, WM_TIMER, hwnd->idScrollTimer, 0);
+    SendMessageA(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(30, 50));
+    SendMessageA(hwnd, WM_TIMER, hwnd->idScrollTimer, 0);
     CHECK(cScroll == 2);
-    SendMessage(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 5));
     CHECK(!GetCapture() && cScroll == 3 && rgsb[2] == SB_ENDSCROLL && !hwnd->idScrollTimer);
     cScroll = 0;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 35));
-    SendMessage(hwnd, WM_CANCELMODE, 0, 0);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 35));
+    SendMessageA(hwnd, WM_CANCELMODE, 0, 0);
     CHECK(cScroll == 2 && rgsb[0] == SB_PAGEUP && rgsb[1] == SB_ENDSCROLL && !GetCapture());
     cScroll = 0;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 55));
-    SendMessage(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 118));
-    SendMessage(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 118));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 55));
+    SendMessageA(hwnd, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(8, 118));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(8, 118));
     CHECK(cScroll == 4 && rgsb[0] == SB_THUMBTRACK && rgpos[0] == 50);
     CHECK(rgsb[1] == SB_THUMBTRACK && rgpos[1] == 100);
     CHECK(rgsb[2] == SB_THUMBPOSITION && rgpos[2] == 100 && rgsb[3] == SB_ENDSCROLL);
@@ -234,13 +234,13 @@ static int TestInput(HWND hwnd) {
                              hwndParent, NULL, (HINSTANCE)(UINT_PTR)1, NULL);
     CHECK(hwndOther);
     cScroll = 0;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
     SetCapture(hwndOther);
     CHECK(cScroll == 2 && rgsb[1] == SB_ENDSCROLL && GetCapture() == hwndOther);
     ReleaseCapture(); DestroyWindow(hwndOther);
     EnableWindow(hwnd, FALSE); cScroll = 0;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
-    SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 0);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
     CHECK(cScroll == 0 && !GetCapture());
     EnableWindow(hwnd, TRUE);
     hbrTrack = CreateSolidBrush(RGB(23, 45, 67)); CHECK(hbrTrack);
@@ -251,16 +251,16 @@ static int TestInput(HWND hwnd) {
     SetScrollPos(hwnd, SB_CTL, 0, TRUE); CHECK(UpdateWindow(hwnd));
     hdc = GetDC(hwnd); CHECK(hdc);
     CHECK(GetPixel(hdc, 8, 30) != RGB(23, 45, 67)); ReleaseDC(hwnd, hdc);
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     cScroll = 0;
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
     event.button.windowID = hwndParent->id; event.button.button = SDL_BUTTON_LEFT;
     event.button.x = 8; event.button.y = 5;
     CHECK(SDL_PushEvent(&event));
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     CHECK(cScroll == 1 && rgsb[0] == SB_LINEUP && hwndNotify == hwnd && GetCapture() == hwnd);
     event.type = SDL_EVENT_MOUSE_BUTTON_UP; CHECK(SDL_PushEvent(&event));
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     CHECK(cScroll == 2 && rgsb[1] == SB_ENDSCROLL && !GetCapture());
     fDestroyColor = TRUE;
     InvalidateRect(hwnd, NULL, FALSE); UpdateWindow(hwnd);
@@ -270,7 +270,7 @@ static int TestInput(HWND hwnd) {
                         hwndParent, NULL, (HINSTANCE)(UINT_PTR)1, NULL);
     CHECK(hwnd && SetScrollRange(hwnd, SB_CTL, 0, 100, FALSE));
     fDestroyNotify = TRUE;
-    SendMessage(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(8, 5));
     CHECK(!IsWindow(hwnd) && !GetCapture());
     return 0;
 }
@@ -286,7 +286,7 @@ static int TestEmptyPaint(HWND hwndParent, HINSTANCE hInstance) {
         CHECK(InvalidateRect(hwnd, NULL, FALSE) && GetUpdateRect(hwnd, NULL, FALSE));
         CHECK(SetWindowPos(hwnd, NULL, 0, 0, i == 0 ? 0 : 17, i == 0 ? 120 : 0,
                            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW));
-        SendMessage(hwnd, WM_PAINT, 0, 0);
+        SendMessageA(hwnd, WM_PAINT, 0, 0);
         CHECK(!GetUpdateRect(hwnd, NULL, FALSE));
     }
     CHECK(SetWindowPos(hwnd, NULL, 0, 0, 17, 120, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE));

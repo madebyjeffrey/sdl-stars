@@ -20,18 +20,18 @@ static LRESULT CALLBACK ResourceProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (fDestroyInit) DestroyWindow(hwnd);
     }
     if (msg == WM_INITMENUPOPUP) cPopup++;
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int TestTranslate(HWND hwnd, HACCEL haccel, BYTE mod, UINT msg, WORD key, WORD cmd) {
     BYTE rgb[256] = {0};
-    MSG message = {0};
+    APPMSG message = {0};
     int cBefore = cCommand;
     rgb[VK_SHIFT] = mod & FSHIFT ? 0x80 : 0;
     rgb[VK_CONTROL] = mod & FCONTROL ? 0x80 : 0;
     rgb[VK_MENU] = mod & FALT ? 0x80 : 0;
     CHECK(SetKeyboardState(rgb));
     message.hwnd = hwnd; message.message = msg; message.wParam = key;
-    CHECK(TranslateAccelerator(hwnd, haccel, &message) == (cmd != 0));
+    CHECK(TranslateAcceleratorA(hwnd, haccel, &message) == (cmd != 0));
     CHECK(cCommand == cBefore + (cmd != 0));
     if (cmd != 0) CHECK(wCommand == MAKEWPARAM(cmd, 1));
     return 0;
@@ -47,7 +47,7 @@ int main(void) {
     ACCEL rg[32], custom = {0, 'q', 501};
     WNDCLASS wc = {0};
     HWND hwnd, hwndExplicit, hwndChild;
-    MSG msg = {0};
+    APPMSG msg = {0};
     BYTE rgkey[256] = {0};
     char sz[80];
     int i, cBefore, cTutorial = 0;
@@ -145,17 +145,17 @@ int main(void) {
     hmenuaccel = CreateAcceleratorTable(&menuaccel, 1);
     CHECK(hmenuaccel);
     cInit = cPopup = 0; cBefore = cCommand;
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg));
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg));
     CHECK(cCommand == cBefore + 1 && cInit == 1 && cPopup == 1);
     fDisableInit = TRUE; cBefore = cCommand;
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
     fDisableInit = FALSE;
     EnableMenuItem(GetMenu(hwnd), IDM_HELP_CONTENTS2, MF_BYCOMMAND | MF_ENABLED);
     EnableWindow(hwnd, FALSE);
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
     EnableWindow(hwnd, TRUE);
     SetCapture(hwnd);
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
     CHECK(ReleaseCapture());
     ShowWindow(hwnd, SW_SHOWMINIMIZED);
 #ifndef _WIN32
@@ -164,7 +164,7 @@ int main(void) {
 #endif
     CHECK(IsIconic(hwnd));
     cInit = cPopup = 0;
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
     CHECK(cInit == 1 && cPopup == 1);
     CHECK(TestTranslate(hwnd, hmain, 0, WM_KEYDOWN, VK_F12, IDM_DEBUG_GEN_10_TURNS) == 0);
     ShowWindow(hwnd, SW_RESTORE);
@@ -172,7 +172,7 @@ int main(void) {
     if (IsIconic(hwnd)) CompatWindowState(hwnd, SW_SHOWNORMAL, FALSE);
 #endif
     fDestroyInit = TRUE;
-    CHECK(TranslateAccelerator(hwnd, hmenuaccel, &msg) && !IsWindow(hwnd));
+    CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && !IsWindow(hwnd));
     CHECK(DestroyWindow(hwndExplicit));
     CHECK(!IsMenu(hsecond));
     CHECK(DestroyAcceleratorTable(hcustom));

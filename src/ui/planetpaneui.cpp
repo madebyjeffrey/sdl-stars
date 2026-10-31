@@ -13,15 +13,15 @@ typedef struct PLANETPANE {
 } PLANETPANE;
 
 static PLANETPANE *LpPlanetPane(HWND hwnd) {
-    return (PLANETPANE *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    return (PLANETPANE *)win32::GetWindowLongPtr(hwnd, GWLP_USERDATA);
 }
 
 static void SetPlanetPaneScroll(HWND hwnd, int iAxis, SCROLLINFO *lpsi) {
     SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 0, 0, 0, 0, 0};
 
-    if (!GetScrollInfo(hwnd, iAxis, &si) || si.nMin != lpsi->nMin || si.nMax != lpsi->nMax ||
+    if (!win32::GetScrollInfo(hwnd, iAxis, &si) || si.nMin != lpsi->nMin || si.nMax != lpsi->nMax ||
         si.nPage != lpsi->nPage || si.nPos != lpsi->nPos)
-        SetScrollInfo(hwnd, iAxis, lpsi, TRUE);
+        win32::SetScrollInfo(hwnd, iAxis, lpsi, TRUE);
 }
 
 static void RefitPlanetPane(HWND hwnd) {
@@ -33,7 +33,7 @@ static void RefitPlanetPane(HWND hwnd) {
     int dx = 198, dy = 0, cTile, i, dxOuter, dyOuter, dxBar, dyBar;
     BOOL fVertical, fHorizontal;
 
-    if (!lp || lp->fRefitting || !IsWindow(lp->hwndContent)) return;
+    if (!lp || lp->fRefitting || !win32::IsWindow(lp->hwndContent)) return;
     lp->fRefitting = TRUE; lp->fPending = FALSE;
     rgtile = sel.grobj == grobjFleet ? rgtileShip : rgtilePlanet;
     cTile = sel.grobj == grobjFleet ? 7 : 6;
@@ -43,10 +43,10 @@ static void RefitPlanetPane(HWND hwnd) {
             dy = (((dy) > (rgtile[i].yTop + (rgtile[i].fPopped ? rgtile[i].dyFull : dyArial8 + 3) + 4)) ? (dy) : (rgtile[i].yTop + (rgtile[i].fPopped ? rgtile[i].dyFull : dyArial8 + 3) + 4));
         }
     }
-    GetWindowRect(hwnd, &rcOuter);
+    win32::GetWindowRect(hwnd, &rcOuter);
     dxOuter = rcOuter.right - rcOuter.left; dyOuter = rcOuter.bottom - rcOuter.top;
     if (dx != lp->dxContent || dy != lp->dyContent || dxOuter != lp->dxOuter || dyOuter != lp->dyOuter) {
-        dxBar = GetSystemMetrics(SM_CXVSCROLL); dyBar = GetSystemMetrics(SM_CYHSCROLL);
+        dxBar = win32::GetSystemMetrics(SM_CXVSCROLL); dyBar = win32::GetSystemMetrics(SM_CYHSCROLL);
         fHorizontal = dx > dxOuter; fVertical = dy > dyOuter;
         // One bar can make the other necessary. Start with the full viewport
         // rather than its old client size, so both bars can disappear again.
@@ -54,8 +54,8 @@ static void RefitPlanetPane(HWND hwnd) {
             fHorizontal = dx > dxOuter - (fVertical ? dxBar : 0);
             fVertical = dy > dyOuter - (fHorizontal ? dyBar : 0);
         }
-        ShowScrollBar(hwnd, SB_VERT, fVertical);
-        ShowScrollBar(hwnd, SB_HORZ, fHorizontal);
+        win32::ShowScrollBar(hwnd, SB_VERT, fVertical);
+        win32::ShowScrollBar(hwnd, SB_HORZ, fHorizontal);
         lp->dxContent = dx; lp->dyContent = dy; lp->dxOuter = dxOuter; lp->dyOuter = dyOuter;
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -68,14 +68,14 @@ static void RefitPlanetPane(HWND hwnd) {
     SetPlanetPaneScroll(hwnd, SB_HORZ, &si);
     si.nMax = StarsMax(0, dy - 1); si.nPage = StarsMax(1, rc.bottom); si.nPos = lp->y;
     SetPlanetPaneScroll(hwnd, SB_VERT, &si);
-    GetWindowRect(lp->hwndContent, &rcContent);
+    win32::GetWindowRect(lp->hwndContent, &rcContent);
     pt = POINT{rcContent.left, rcContent.top};
-    ScreenToClient(hwnd, &pt);
+    win32::ScreenToClient(hwnd, &pt);
     if (rcContent.right - rcContent.left != StarsMax(dx, rc.right) || rcContent.bottom - rcContent.top != StarsMax(dy, rc.bottom)) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = TRUE;
-        FUiMoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
+        ui::MoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
     } else if (pt.x != -lp->x || pt.y != -lp->y) {
-        ControlIO().pfnFUiSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
     lp->fRefitting = FALSE;
 }
@@ -90,9 +90,9 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         NATIVEOWNER<PLANETPANE, std::free> pane(static_cast<PLANETPANE *>(calloc(1, sizeof(*lp))));
         lp = pane.get();
         if (!lp) return -1;
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
+        win32::SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
         pane.release();
-        lp->hwndContent = HwndUiCreateWindowEx(0, szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);
+        lp->hwndContent = ui::CreateWindowEx(0, szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);
         return lp->hwndContent ? 0 : -1;
     }
     case WM_SIZE:
@@ -132,47 +132,47 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         return 0;
     case WM_DESTROY: {
         NATIVEOWNER<PLANETPANE, std::free> pane(lp);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
+        win32::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
         return 0;
     }
     }
-    return LUiDefWindowProc(hwnd, message, wParam, lParam);
+    return ui::DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 HWND CreatePlanetPane(HWND hwndParent) {
     HWND hwnd;
     PLANETPANE *lp;
 
-    hwnd = HwndUiCreateWindowEx(0, "StarsPlanetPane", NULL, WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CLIPCHILDREN,
+    hwnd = ui::CreateWindowEx(0, "StarsPlanetPane", NULL, WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CLIPCHILDREN,
                         -500, -500, 10, 10, hwndParent, NULL, hInst, NULL);
     lp = hwnd ? LpPlanetPane(hwnd) : NULL;
     return lp ? lp->hwndContent : NULL;
 }
 
 void MovePlanetPane(int x, int y, int dx, int dy) {
-    if (IsWindow(hwndPlanet)) FUiMoveWindow(GetParent(hwndPlanet), x, y, dx, dy, TRUE);
+    if (win32::IsWindow(hwndPlanet)) ui::MoveWindow(win32::GetParent(hwndPlanet), x, y, dx, dy, TRUE);
 }
 
 void QueuePlanetPaneLayout(void) {
     HWND hwnd;
     PLANETPANE *lp;
 
-    if (!IsWindow(hwndPlanet)) return;
-    hwnd = GetParent(hwndPlanet); lp = LpPlanetPane(hwnd);
+    if (!win32::IsWindow(hwndPlanet)) return;
+    hwnd = win32::GetParent(hwndPlanet); lp = LpPlanetPane(hwnd);
     // Painting can hold a DC on the old canvas. Defer size changes until that
     // DC has been released, and coalesce repeated tile draws into one refit.
     if (lp && !lp->fPending && !lp->fRefitting) {
-        lp->fPending = PostMessage(hwnd, wmRefitPlanetPane, 0, 0);
+        lp->fPending = win32::PostMessage(hwnd, wmRefitPlanetPane, 0, 0);
     }
 }
 
 void ClosePlanetPane(void) {
     HWND hwnd;
 
-    if (!IsWindow(hwndPlanet)) return;
-    hwnd = GetParent(hwndPlanet);
+    if (!win32::IsWindow(hwndPlanet)) return;
+    hwnd = win32::GetParent(hwndPlanet);
     // WM_QUIT can leave the frame alive. Destroy the owned pane while game
     // state and brushes still exist; final SDL cleanup does not call WNDPROCs.
-    ControlIO().pfnFUiDestroyWindow(hwnd);
+    ControlIO().pfnDestroyWindow(hwnd);
     hwndPlanet = NULL;
 }

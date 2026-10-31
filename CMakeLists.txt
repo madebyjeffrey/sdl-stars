@@ -54,7 +54,7 @@ set(STARS_UI_SOURCES
     src/ui/library_publication_io.cpp src/ui/library_file_io.cpp src/ui/control_io.cpp src/ui/desktop_choice_io.cpp src/ui/preferencesui.cpp src/ui/library_path_io.cpp
 )
 
-# These unchanged shared vectors compile as C through independent SDK entries.
+# These shared reference vectors compile as C through independent SDK entries.
 # Their application entries use ordinary C++ source extensions.
 # Their C11 zero-initializer spelling is intentional; isolate only its C++
 # missing-field/braces diagnostics from ordinary C++ harnesses and production.
@@ -88,6 +88,10 @@ target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
 add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp src/platform/native_publish.cpp)
+if(WIN32)
+    target_sources(stars_filesystem PRIVATE src/platform/native_windows.cpp)
+    target_link_libraries(stars_filesystem PRIVATE shell32)
+endif()
 set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)

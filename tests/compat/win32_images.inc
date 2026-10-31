@@ -27,10 +27,10 @@ static COLORREF CrExpected(const BYTE *rgb, BOOL fCursor, int x, int y, COLORREF
     } else cr = RGB(pixels[x * (bits / 8) + 2], pixels[x * (bits / 8) + 1], pixels[x * (bits / 8)]);
     return ((mask[x / 8] & (0x80 >> (x % 8))) ? bg : 0) ^ cr;
 }
-static LRESULT CALLBACK ImageProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProc(hwnd, msg, w, l); }
+static LRESULT CALLBACK ImageProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProcA(hwnd, msg, w, l); }
 static void Drain(void) {
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
+    APPMSG msg;
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
 }
 int main(void) {
     HINSTANCE hinst = GetModuleHandle(NULL);
@@ -107,7 +107,7 @@ int main(void) {
     hwnd = CreateWindow(wc.lpszClassName, "Icons and cursors", WS_OVERLAPPEDWINDOW, 80, 80, 160, 120, NULL, NULL, hinst, NULL);
     hwndOther = CreateWindow(wc.lpszClassName, "Other", WS_OVERLAPPEDWINDOW, 260, 80, 160, 120, NULL, NULL, hinst, NULL);
     CHECK(hwnd && hwndOther); ShowWindow(hwnd, SW_SHOW); ShowWindow(hwndOther, SW_SHOW); Drain();
-    SetCursor(hwait); SendMessage(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+    SetCursor(hwait); SendMessageA(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
     CHECK(GetCursor() == harrow);
 #ifndef _WIN32
     hcur = LoadCursor(hinst, "ScannerCur"); lp = LpCompatImage((HICON)hcur); CHECK(lp);

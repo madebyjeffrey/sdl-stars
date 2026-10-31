@@ -65,7 +65,7 @@ void FreeCompatWindow(SDL_Window *lp) noexcept;
 void FreeCompatRenderer(SDL_Renderer *lp) noexcept;
 void FreeCompatTexture(SDL_Texture *lp) noexcept;
 
-struct HWND__ {
+struct win32::HWND__ {
     COMPATCLASS *lpclass;
     NATIVEOWNER<SDL_Window, FreeCompatWindow> lpWindow;
     SDL_WindowID id;
@@ -138,7 +138,7 @@ struct HWND__ {
     size_t crcUpdate;
     BOOL fUpdate, fErase;
     HDC hdcPaint;
-    struct HWND__ *lpNext;
+    struct win32::HWND__ *lpNext;
 };
 
 typedef struct COMPATRESOURCE {

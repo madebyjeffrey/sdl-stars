@@ -149,10 +149,10 @@ int main(void) {
     controlIO.pfnSetMsgTitle = WITNESSADAPTER<&TestSetMsgTitle, decltype(controlIO.pfnSetMsgTitle)>::Call;
     controlIO.pfnInvalidateRect = WITNESSADAPTER<&TestInvalidateRect, decltype(controlIO.pfnInvalidateRect)>::Call;
     controlIO.pfnRefitFrameChildren = WITNESSADAPTER<&TestRefitFrameChildren, decltype(controlIO.pfnRefitFrameChildren)>::Call;
-    controlIO.pfnFUiUpdateWindow = WITNESSADAPTER<&TestFUiUpdateWindow, decltype(controlIO.pfnFUiUpdateWindow)>::Call;
-    controlIO.pfnFUiDestroyWindow = WITNESSADAPTER<&TestFUiDestroyWindow, decltype(controlIO.pfnFUiDestroyWindow)>::Call;
+    controlIO.pfnUpdateWindow = WITNESSADAPTER<&TestFUiUpdateWindow, decltype(controlIO.pfnUpdateWindow)>::Call;
+    controlIO.pfnDestroyWindow = WITNESSADAPTER<&TestFUiDestroyWindow, decltype(controlIO.pfnDestroyWindow)>::Call;
     controlIO.pfnBringUpHostDlg = WITNESSADAPTER<&TestBringUpHostDlg, decltype(controlIO.pfnBringUpHostDlg)>::Call;
-    controlIO.pfnLUiSendMessage = WITNESSADAPTER<&TestSend, decltype(controlIO.pfnLUiSendMessage)>::Call;
+    controlIO.pfnSendMessage = WITNESSADAPTER<&TestSend, decltype(controlIO.pfnSendMessage)>::Call;
     CONTROLIOSCOPE controlScope(controlIO);
     lpPlanets = planets;
     rglpfl = fleetPointers;

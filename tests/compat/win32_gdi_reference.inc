@@ -11,7 +11,7 @@ static const RECT rcTest4 = {0, 0, 50, 50};
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 static LRESULT CALLBACK ReferenceProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 int main(void) {

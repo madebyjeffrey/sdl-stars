@@ -13,7 +13,7 @@ static const RECT rcTest3 = {4, 4, 8, 8};
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 
 static LRESULT CALLBACK BitmapProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static int TestBitmaps(HWND hwnd) {

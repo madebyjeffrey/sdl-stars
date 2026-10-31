@@ -87,17 +87,17 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     COMPATIMAGE *lp;
     HICON h;
     if (!hInstance || !psz) return NULL;
-    hgroup = FindResourceA(hInstance, psz, fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
-    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hgroup))); cb = SizeofResource(hInstance, hgroup);
+    hgroup = win32::FindResourceA(hInstance, psz, fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
+    rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hgroup))); cb = win32::SizeofResource(hInstance, hgroup);
     if (!rgb || cb < 20 || WImage(rgb) || WImage(rgb + 2) != (fCursor ? 2 : 1)) return NULL;
     count = WImage(rgb + 4);
     if (count == 0 || (size_t)count * 14 > cb - 6) return NULL;
     // All canonical images are 32x32. Group entries retain their original IDs.
     id = WImage(rgb + 18);
-    hrsrc = FindResourceA(hInstance, MAKEINTRESOURCE(id), fCursor ? RT_CURSOR : RT_ICON);
+    hrsrc = win32::FindResourceA(hInstance, MAKEINTRESOURCE(id), fCursor ? RT_CURSOR : RT_ICON);
     if (!hrsrc) return NULL;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->hrsrc == hrsrc && lp->fCursor == fCursor) return (HICON)lp;
-    rgb = (const BYTE *)(LockResource(LoadResource(hInstance, hrsrc))); cb = SizeofResource(hInstance, hrsrc);
+    rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc))); cb = win32::SizeofResource(hInstance, hrsrc);
     h = HiconCompatResource(rgb, cb, fCursor);
     if (h) {
         lp = LpCompatImage(h); lp->fShared = TRUE; lp->hrsrc = hrsrc;
@@ -106,7 +106,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     }
     return h;
 }
-HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
+HICON win32::LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
 static SDL_SystemCursor IdSystemCursor(UINT id) {
     switch (id) {
     case 32512: return SDL_SYSTEM_CURSOR_DEFAULT;
@@ -124,7 +124,7 @@ static SDL_SystemCursor IdSystemCursor(UINT id) {
     default: return SDL_SYSTEM_CURSOR_COUNT;
     }
 }
-HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
+HCURSOR win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     COMPATIMAGE *lp;
     UINT_PTR id = (UINT_PTR)psz;
     if (!FCompatVideo()) return NULL;
@@ -136,7 +136,7 @@ HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     lp->fShared = TRUE; lp->idSystem = (UINT)id;
     return (HCURSOR)lp;
 }
-HICON WINAPI CopyIcon(HICON hicon) {
+HICON win32::CopyIcon(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon), *lpNew;
     SDL_Surface *lpXor;
     BYTE *rgAnd;
@@ -159,13 +159,13 @@ static BOOL FDestroyImage(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     if (!lp) return FALSE;
     if (lp->fShared) return TRUE; // LoadIcon/LoadCursor handles belong to the module.
-    if (lpCursor == lp) SetCursor(NULL);
+    if (lpCursor == lp) win32::SetCursor(NULL);
     lp->lpCursor.reset(); lp->lpXor.reset(); lp->rgbAnd.reset(); lp->fAlive = FALSE;
     return TRUE;
 }
-BOOL WINAPI DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
-BOOL WINAPI DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
-BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
+BOOL win32::DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
+BOOL win32::DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
+BOOL win32::GetIconInfo(HICON hicon, PICONINFO lpii) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     ICONINFO ii = {};
     SDL_Surface *lpMask;
@@ -186,8 +186,8 @@ BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
     ii.hbmMask = HbmpCompatSurface(lpMask, TRUE); lpmaskOwner.reset();
     if (!lp->fMono) ii.hbmColor = HbmpCompatSurface(lp->lpXor.get(), FALSE);
     if (!ii.hbmMask || (!lp->fMono && !ii.hbmColor)) {
-        if (ii.hbmMask) DeleteObject(ii.hbmMask);
-        if (ii.hbmColor) DeleteObject(ii.hbmColor);
+        if (ii.hbmMask) win32::DeleteObject(ii.hbmMask);
+        if (ii.hbmColor) win32::DeleteObject(ii.hbmColor);
         return FALSE;
     }
     *lpii = ii; return TRUE;
@@ -227,8 +227,8 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     }
     return lp->lpCursor != NULL;
 }
-HCURSOR WINAPI GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
-HCURSOR WINAPI SetCursor(HCURSOR hcursor) {
+HCURSOR win32::GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
+HCURSOR win32::SetCursor(HCURSOR hcursor) {
     COMPATIMAGE *lp = LpCompatImage((HICON)hcursor), *lpOld = lpCursor;
     const char *pszDriver;
     if (!SDL_IsMainThread() || (hcursor && (!lp || !lp->fCursor)) || !FCompatVideo()) return NULL;

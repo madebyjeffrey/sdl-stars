@@ -248,12 +248,12 @@ int main(void) {
     HEAPIOSCOPE scopeHeap(ioHeap);
     CONTROLIO   ioControl;
     ioControl.pfnGetDlgItem = WITNESSADAPTER<&TestGetDlgItem, decltype(ioControl.pfnGetDlgItem)>::Call;
-    ioControl.pfnLUiSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnLUiSendMessage)>::Call;
+    ioControl.pfnSendMessage = WITNESSADAPTER<&TestLUiSendMessage, decltype(ioControl.pfnSendMessage)>::Call;
     ioControl.pfnGetClientRect = WITNESSADAPTER<&TestGetClientRect, decltype(ioControl.pfnGetClientRect)>::Call;
     ioControl.pfnInvalidateRect = WITNESSADAPTER<&TestInvalidateRect, decltype(ioControl.pfnInvalidateRect)>::Call;
     ioControl.pfnGetKeyState = WITNESSADAPTER<&TestGetKeyState, decltype(ioControl.pfnGetKeyState)>::Call;
-    ioControl.pfnFUiSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnFUiSetWindowText)>::Call;
-    ioControl.pfnLUiDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnLUiDialogBox)>::Call;
+    ioControl.pfnSetWindowText = WITNESSADAPTER<&TestFUiSetWindowText, decltype(ioControl.pfnSetWindowText)>::Call;
+    ioControl.pfnDialogBox = WITNESSADAPTER<&TestLUiDialogBox, decltype(ioControl.pfnDialogBox)>::Call;
     ioControl.pfnEndDialog = WITNESSADAPTER<&TestEndDialog, decltype(ioControl.pfnEndDialog)>::Call;
     ioControl.pfnFillProdSrcLB = WITNESSADAPTER<&TestFillProdSrcLB, decltype(ioControl.pfnFillProdSrcLB)>::Call;
     ioControl.pfnFillPlanetProdLB = WITNESSADAPTER<&TestFillPlanetProdLB, decltype(ioControl.pfnFillPlanetProdLB)>::Call;

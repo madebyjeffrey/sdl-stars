@@ -35,7 +35,7 @@ extern "C" bool SDLCALL StarsTest_SDL_GetDisplayUsableBounds(SDL_DisplayID id, S
 }
 #endif
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProc(hwnd, msg, w, l); }
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) { return DefWindowProcA(hwnd, msg, w, l); }
 int main(void) {
     WNDCLASS wc = {0};
     HWND hwnd, hwndA, hwndB;

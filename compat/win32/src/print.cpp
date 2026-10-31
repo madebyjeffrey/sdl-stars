@@ -50,18 +50,18 @@ int ICompatPrinterCaps(COMPATPRINT *lp, int index) {
 static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     const char *pszDriver = "Stars SDL3/Cairo", *pszDevice = lp->fSpool ? lp->szPrinter : "Stars PDF", *pszPort = lp->fSpool ? "CUPS:" : "FILE:";
     size_t cb = sizeof(DEVNAMES) + strlen(pszDriver) + strlen(pszDevice) + strlen(pszPort) + 3;
-    HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, cb);
+    HGLOBAL h = win32::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, cb);
     DEVNAMES *lpn;
     char *psz;
     if (!h) return NULL;
-    lpn = (DEVNAMES *)(GlobalLock(h)); if (!lpn) { GlobalFree(h); return NULL; }
+    lpn = (DEVNAMES *)(win32::GlobalLock(h)); if (!lpn) { win32::GlobalFree(h); return NULL; }
     psz = (char *)lpn + sizeof(*lpn);
     lpn->wDriverOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDriver); psz += strlen(psz) + 1;
     lpn->wDeviceOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszDevice); psz += strlen(psz) + 1;
     lpn->wOutputOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszPort); lpn->wDefault = 1;
-    GlobalUnlock(h); return h;
+    win32::GlobalUnlock(h); return h;
 }
-BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
+BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     COMPATPRINT *lp = NULL;
     HGLOBAL hMode = NULL, hNames = NULL;
     HDC hdc = NULL;
@@ -75,32 +75,32 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     if (!lppd || lppd->lStructSize != sizeof(*lppd)) { CompatSetDialogError(CDERR_STRUCTSIZE); return FALSE; }
     if (lppd->hDevMode || lppd->hDevNames) { CompatSetDialogError(PDERR_RETDEFFAILURE); return FALSE; }
     if (!(lppd->Flags & PD_RETURNDEFAULT) || (lppd->Flags & ~(PD_RETURNDEFAULT | PD_RETURNDC)) ||
-        !SDL_IsMainThread() || (lppd->hwndOwner && !IsWindow(lppd->hwndOwner))) { SetLastError(ERROR_NOT_SUPPORTED); goto fail; }
+        !SDL_IsMainThread() || (lppd->hwndOwner && !win32::IsWindow(lppd->hwndOwner))) { win32::SetLastError(ERROR_NOT_SUPPORTED); goto fail; }
     lpprintOwner.reset(new (std::nothrow) COMPATPRINT{}); lp = lpprintOwner.get(); if (!lp) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
-    lp->hwndOwner = lppd->hwndOwner ? HwndCompatRoot(lppd->hwndOwner) : GetActiveWindow();
+    lp->hwndOwner = lppd->hwndOwner ? HwndCompatRoot(lppd->hwndOwner) : win32::GetActiveWindow();
     lp->cCopies = 1; lp->idPaper = DMPAPER_LETTER; lp->cxPhysical = 2550; lp->cyPhysical = 3300;
     if (pszPaper && *pszPaper && SDL_strcasecmp(pszPaper, "letter") != 0) {
-        if (SDL_strcasecmp(pszPaper, "a4") != 0) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
+        if (SDL_strcasecmp(pszPaper, "a4") != 0) { win32::SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
         lp->idPaper = DMPAPER_A4; lp->cxPhysical = 2480; lp->cyPhysical = 3508;
     }
     if (pszOrientation && *pszOrientation && SDL_strcasecmp(pszOrientation, "portrait") != 0) {
-        if (SDL_strcasecmp(pszOrientation, "landscape") != 0) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
+        if (SDL_strcasecmp(pszOrientation, "landscape") != 0) { win32::SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
         temp = lp->cxPhysical; lp->cxPhysical = lp->cyPhysical; lp->cyPhysical = temp;
     }
     lp->cx = lp->cxPhysical - 150; lp->cy = lp->cyPhysical - 150;
     if (pszPrinter && *pszPrinter && SDL_strcasecmp(pszPrinter, "pdf") != 0) {
-        if (!FUtf8Valid(pszPrinter, strlen(pszPrinter))) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
-        if (SDL_strlcpy(lp->szPrinter, pszPrinter, sizeof(lp->szPrinter)) >= sizeof(lp->szPrinter)) { SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
+        if (!FUtf8Valid(pszPrinter, strlen(pszPrinter))) { win32::SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
+        if (SDL_strlcpy(lp->szPrinter, pszPrinter, sizeof(lp->szPrinter)) >= sizeof(lp->szPrinter)) { win32::SetLastError(ERROR_INVALID_PARAMETER); goto fail; }
         lp->fSpool = TRUE;
     }
     if (pszFile && *pszFile && (!FUtf8Valid(pszFile, strlen(pszFile)) ||
         SDL_strlcpy(lp->szTarget, pszFile, sizeof(lp->szTarget)) >= sizeof(lp->szTarget))) {
-        SetLastError(ERROR_INVALID_PARAMETER); goto fail;
+        win32::SetLastError(ERROR_INVALID_PARAMETER); goto fail;
     }
-    hMode = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(*lpdm));
+    hMode = win32::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(*lpdm));
     hNames = HglobPrintNames(lp);
     if (!hMode || !hNames) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
-    lpdm = (DEVMODEA *)(GlobalLock(hMode)); if (!lpdm) goto fail;
+    lpdm = (DEVMODEA *)(win32::GlobalLock(hMode)); if (!lpdm) goto fail;
     CchCopyUtf8(lpdm->dmDeviceName, sizeof(lpdm->dmDeviceName), lp->fSpool ? lp->szPrinter : "Stars PDF",
                 CchUtf8Prefix(lp->fSpool ? lp->szPrinter : "Stars PDF", sizeof(lpdm->dmDeviceName) - 1));
     lpdm->dmSize = sizeof(*lpdm); lpdm->dmSpecVersion = 0x401; lpdm->dmDriverVersion = 1;
@@ -108,7 +108,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     lpdm->mode.printer.dmOrientation = lp->cxPhysical > lp->cyPhysical ? DMORIENT_LANDSCAPE : DMORIENT_PORTRAIT;
     lpdm->mode.printer.dmPaperSize = lp->idPaper;
     lpdm->mode.printer.dmCopies = 1; lpdm->mode.printer.dmPrintQuality = lpdm->dmYResolution = 300;
-    GlobalUnlock(hMode);
+    win32::GlobalUnlock(hMode);
     if (lppd->Flags & PD_RETURNDC) {
         hdc = HdcCompatPrinter(lp, lp->cx, lp->cy);
         if (!hdc) { dwError = CDERR_MEMALLOCFAILURE; goto fail; }
@@ -118,8 +118,8 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd) {
     if (lppd->Flags & PD_RETURNDC) lppd->hDC = hdc;
     return TRUE;
 fail:
-    if (hdc) DeleteDC(hdc);
-    GlobalFree(hMode); GlobalFree(hNames); CompatSetDialogError(dwError); return FALSE;
+    if (hdc) win32::DeleteDC(hdc);
+    win32::GlobalFree(hMode); win32::GlobalFree(hNames); CompatSetDialogError(dwError); return FALSE;
 }
 static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb) {
     COMPATPRINT *lp = (COMPATPRINT *)(lpv);
@@ -128,27 +128,27 @@ static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb)
 static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
-    if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
-    if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
+    if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
+    if (cb != 0 && !FUtf8Valid(pszTitle, (size_t)cb)) { win32::SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (cb) memcpy(lp->szTitle, pszTitle, cb);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
-        ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
+        ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
         ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
         ofn.lpstrFilter = "PDF documents\0*.pdf\0"; ofn.nFilterIndex = 1; ofn.lpstrDefExt = "pdf";
         ofn.lpstrTitle = "Print to PDF"; ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-        if (!GetSaveFileNameA(&ofn)) return CommDlgExtendedError() ? SP_ERROR : SP_APPABORT;
+        if (!win32::GetSaveFileNameA(&ofn)) return win32::CommDlgExtendedError() ? SP_ERROR : SP_APPABORT;
         strcpy(lp->szTarget, szFile);
     }
     lp->fKeep = FALSE;
     if (lp->fSpool) strcpy(lp->szTemp, "/tmp/stars-print-XXXXXX");
     else if (snprintf(lp->szTemp, sizeof(lp->szTemp), "%s.tmp-XXXXXX", lp->szTarget) >= (int)sizeof(lp->szTemp)) {
-        lp->szTemp[0] = 0; SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR;
+        lp->szTemp[0] = 0; win32::SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR;
     }
     lp->lpfile.reset(PfNativeCreateTemp(lp->szTemp));
-    if (!lp->lpfile) { lp->szTemp[0] = 0; SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
+    if (!lp->lpfile) { lp->szTemp[0] = 0; win32::SetLastError(ERROR_ACCESS_DENIED); return SP_ERROR; }
     lp->lpPDF.reset(cairo_pdf_surface_create_for_stream(WritePDF, lp, lp->cxPhysical * 72.0 / 300, lp->cyPhysical * 72.0 / 300));
-    if (cairo_surface_status(lp->lpPDF.get()) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
+    if (cairo_surface_status(lp->lpPDF.get()) != CAIRO_STATUS_SUCCESS) { AbortPrint(lp); win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY); return SP_ERROR; }
     cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_TITLE, lp->szTitle);
     cairo_pdf_surface_set_metadata(lp->lpPDF.get(), CAIRO_PDF_METADATA_CREATOR, "Stars SDL3 compatibility printer");
     lp->cPages = 0; lp->fActive = TRUE;
@@ -228,7 +228,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
         return id == STARTDOC || id == NEWFRAME || id == ENDDOC || id == ABORTDOC || id == QUERYESCSUPPORT || id == GETPHYSPAGESIZE || id == GETPRINTINGOFFSET;
     }
     if (idEscape == GETPHYSPAGESIZE || idEscape == GETPRINTINGOFFSET) {
-        if (!lpOut) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
+        if (!lpOut) { win32::SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
         *(POINT *)lpOut = idEscape == GETPHYSPAGESIZE ? POINT{lp->cxPhysical, lp->cyPhysical} : POINT{75, 75}; return 1;
     }
     lpSurface = LpCompatPrinterSurface(hdc);
@@ -237,36 +237,36 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
         if (id > 0) SDL_FillSurfaceRect(lpSurface, NULL, SDL_MapSurfaceRGB(lpSurface, 255, 255, 255));
         return id;
     }
-    if (idEscape != NEWFRAME && idEscape != ENDDOC && idEscape != ABORTDOC) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
-    if (!lp->fActive) { SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
+    if (idEscape != NEWFRAME && idEscape != ENDDOC && idEscape != ABORTDOC) { win32::SetLastError(ERROR_NOT_SUPPORTED); return 0; }
+    if (!lp->fActive) { win32::SetLastError(ERROR_INVALID_PARAMETER); return SP_ERROR; }
     if (idEscape == ABORTDOC) { AbortPrint(lp); return 1; }
     if (idEscape == NEWFRAME) {
         if (FPrintPage(lp, lpSurface)) return 1;
-        AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR;
+        AbortPrint(lp); win32::SetLastError(ERROR_WRITE_FAULT); return SP_ERROR;
     }
     if ((lp->cPages == 0 || FPrintMarked(lpSurface)) && !FPrintPage(lp, lpSurface)) {
-        AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR;
+        AbortPrint(lp); win32::SetLastError(ERROR_WRITE_FAULT); return SP_ERROR;
     }
     cairo_surface_finish(lp->lpPDF.get()); fOk = cairo_surface_status(lp->lpPDF.get()) == CAIRO_STATUS_SUCCESS;
     lp->lpPDF.reset();
     if (IFlushNativeFile(lp->lpfile.get()) != 0 || ISyncNativeFile(lp->lpfile.get()) != 0) fOk = FALSE;
     if (ICloseNativeFile(lp->lpfile.release()) != 0) fOk = FALSE;
     lp->fActive = FALSE;
-    if (!fOk) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
+    if (!fOk) { AbortPrint(lp); win32::SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
     if (lp->fSpool) {
         if (!FSubmitPrint(lp)) {
-            lp->fKeep = TRUE; SetLastError(ERROR_WRITE_FAULT);
+            lp->fKeep = TRUE; win32::SetLastError(ERROR_WRITE_FAULT);
             SDL_Log("Printer submission failed; PDF retained at %s", lp->szTemp);
             return SP_ERROR;
         }
         IUnlinkNativePath(lp->szTemp); lp->szTemp[0] = 0;
     } else {
-        if (IRenameNativePath(lp->szTemp, lp->szTarget, TRUE, TRUE) != 0) { AbortPrint(lp); SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
+        if (IRenameNativePath(lp->szTemp, lp->szTarget, TRUE, TRUE) != 0) { AbortPrint(lp); win32::SetLastError(ERROR_WRITE_FAULT); return SP_ERROR; }
         lp->szTemp[0] = 0;
         // The completed PDF remains valid even when no viewer accepts it.
         if (!FCompatOpenDocument(lp->szTarget)) {
             char szMessage[PATH_MAX + 160];
-            HWND hwndOwner = IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
+            HWND hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : NULL;
             char *pszAbsolute = PszCanonicalNativePath(lp->szTarget, NULL, 0);
             snprintf(szMessage, sizeof(szMessage), "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", pszAbsolute ? pszAbsolute : lp->szTarget);
             SDL_Log("%s", szMessage);
@@ -277,10 +277,10 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     }
     return 1;
 }
-int WINAPI Escape(HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
+int win32::Escape(HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
     COMPATPRINT *lp = LpCompatPrinter(hdc);
-    if (!lp) { SetLastError(ERROR_INVALID_HANDLE); return SP_ERROR; }
-    if (lp->fEscaping) { SetLastError(ERROR_BUSY); return SP_ERROR; }
+    if (!lp) { win32::SetLastError(ERROR_INVALID_HANDLE); return SP_ERROR; }
+    if (lp->fEscaping) { win32::SetLastError(ERROR_BUSY); return SP_ERROR; }
     // The PDF destination picker dispatches caller timers. Keep this DC alive
     // until its synchronous escape returns, even if a timer tries to delete it.
     StarsRestore<BOOL> escaping(lp->fEscaping);

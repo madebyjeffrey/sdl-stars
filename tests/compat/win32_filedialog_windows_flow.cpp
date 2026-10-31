@@ -21,15 +21,15 @@ int StarsTest_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle
     cCalls++;
     if (fSave != fSaveExpected || strcmp(pszTitle, "Picker \xc3\xa9") != 0 || cFilter != 2 ||
         strcmp(rgfilter[0].pszPattern, "*.m?;*.hst") != 0 || *lpiFilter != 0 ||
-        IsWindowEnabled(hwndOwner) || hwndOwner->cNativeFileDialogs != 1) fBad = 1;
+        win32::IsWindowEnabled(hwndOwner) || hwndOwner->cNativeFileDialogs != 1) fBad = 1;
     if (iAction == 1) return 0;
     if (iAction == 2) {
-        PostQuitMessage(73);
+        win32::PostQuitMessage(73);
         if (pfnPump(lpv) != 0) fBad = 1;
         return 0;
     }
     if (iAction == 3) {
-        DestroyWindow(hwndOwner);
+        win32::DestroyWindow(hwndOwner);
         if (pfnPump(lpv) != 0) fBad = 1;
         return 0;
     }
@@ -43,7 +43,7 @@ int main(void) {
     OPENFILENAMEA of = {};
     char szCwd[PATH_MAX], szAfter[PATH_MAX], szFile[PATH_MAX], szTitle[128];
     NATIVEFILE *lpfile;
-    MSG msg;
+    win32::MSG msg;
     int i;
 
     WINDOWSCHOOSERIO io_windowschooserio;
@@ -55,9 +55,9 @@ int main(void) {
     CHECK(SDL_strlcpy(szChosen, szCwd, sizeof(szChosen)) < sizeof(szChosen));
     CHECK(SDL_strlcat(szChosen, "/\xce\xa9.m1", sizeof(szChosen)) < sizeof(szChosen));
     lpfile = PfNativeOpen(szChosen, "wb"); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
-    wc.lpfnWndProc = DefWindowProcA; wc.lpszClassName = "WindowsNativePickerFlow";
-    CHECK(RegisterClassA(&wc));
-    hwndOwner = CreateWindow(wc.lpszClassName, "Owner", WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);
+    wc.lpfnWndProc = win32::DefWindowProcA; wc.lpszClassName = "WindowsNativePickerFlow";
+    CHECK(win32::RegisterClassA(&wc));
+    hwndOwner = win32::CreateWindow(wc.lpszClassName, "Owner", WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);
     CHECK(hwndOwner);
     of.lStructSize = sizeof(of); of.hwndOwner = hwndOwner;
     of.lpstrFile = szFile; of.nMaxFile = sizeof(szFile);
@@ -67,20 +67,20 @@ int main(void) {
     of.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST;
     for (i = 0; i < 2; i++) {
         fSaveExpected = i; szFile[0] = 0; of.nFilterIndex = 1;
-        CHECK(i ? GetSaveFileNameA(&of) : GetOpenFileNameA(&of));
+        CHECK(i ? win32::GetSaveFileNameA(&of) : win32::GetOpenFileNameA(&of));
         CHECK(strcmp(szFile, szChosen) == 0 && strcmp(szTitle, "\xce\xa9.m1") == 0 && of.nFilterIndex == 2);
         CHECK(of.nFileOffset == strlen(szCwd) + 1 && of.nFileExtension == strlen(szChosen) - 2);
-        CHECK(IsWindowEnabled(hwndOwner) && hwndOwner->cNativeFileDialogs == 0);
+        CHECK(win32::IsWindowEnabled(hwndOwner) && hwndOwner->cNativeFileDialogs == 0);
     }
     fSaveExpected = 0;
     for (iAction = 1; iAction <= 3; iAction++) {
         strcpy(szFile, "unchanged.m1"); of.nFilterIndex = 1;
-        CHECK(!GetOpenFileNameA(&of) && CommDlgExtendedError() == 0);
+        CHECK(!win32::GetOpenFileNameA(&of) && win32::CommDlgExtendedError() == 0);
         CHECK(strcmp(szFile, "unchanged.m1") == 0 && of.nFilterIndex == 1);
-        if (iAction < 3) CHECK(IsWindowEnabled(hwndOwner) && hwndOwner->cNativeFileDialogs == 0);
-        if (iAction == 2) CHECK(PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 73);
+        if (iAction < 3) CHECK(win32::IsWindowEnabled(hwndOwner) && hwndOwner->cNativeFileDialogs == 0);
+        if (iAction == 2) CHECK(win32::PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 73);
     }
-    CHECK(!IsWindow(hwndOwner) && !fBad && cCalls == 5);
+    CHECK(!win32::IsWindow(hwndOwner) && !fBad && cCalls == 5);
     CHECK(PszNativeCwd(szAfter, sizeof(szAfter)) && strcmp(szAfter, szCwd) == 0);
     CHECK(IUnlinkNativePath(szChosen) == 0);
     StarsCompatShutdown();

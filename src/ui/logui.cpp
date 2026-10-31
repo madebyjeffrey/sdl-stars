@@ -13,23 +13,23 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
     StarsRecoveryScope scopeRecovery;
     try {
         if (iTurn < 32) {
-            hrsrc = FindResource(hInst, MAKEINTRESOURCE(10003), MAKEINTRESOURCE(10002));
+            hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10003), MAKEINTRESOURCE(10002));
         } else {
-            hrsrc = FindResource(hInst, MAKEINTRESOURCE(10005), MAKEINTRESOURCE(10004));
+            hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10005), MAKEINTRESOURCE(10004));
             cSkip -= 32;
         }
-        hres = LoadResource(hInst, hrsrc);
+        hres = win32::LoadResource(hInst, hrsrc);
         if (!hres) {
         BailOut:
             return 0;
         }
-        vlpMemStream = (uint8_t *)LockResource(hres);
+        vlpMemStream = (uint8_t *)win32::LockResource(hres);
         if (!vlpMemStream)
             goto BailOut;
         if (cSkip >= *vlpMemStream) {
             vlpMemStream = NULL;
-            GlobalUnlock(hres);
-            FreeResource(hres);
+            win32::GlobalUnlock(hres);
+            win32::FreeResource(hres);
             return 2;
         }
         vlpMemStream++;
@@ -47,13 +47,13 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
         } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
         RecordIO().pfnStreamClose();
         vlpMemStream = NULL;
-        GlobalUnlock(hres);
-        FreeResource(hres);
+        win32::GlobalUnlock(hres);
+        win32::FreeResource(hres);
         return 1;
     } catch (const StarsError &) {
         if (vlpMemStream) {
-            GlobalUnlock(hres);
-            FreeResource(hres);
+            win32::GlobalUnlock(hres);
+            win32::FreeResource(hres);
             return 0;
         }
         if (hf == -1) {
@@ -71,10 +71,10 @@ uint8_t *LpbLoadTutorLog() {
     HRSRC   hrsrc;
     HGLOBAL hres;
 
-    hrsrc = FindResource(hInst, MAKEINTRESOURCE(10001), MAKEINTRESOURCE(10000));
-    hres = LoadResource(hInst, hrsrc);
+    hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10001), MAKEINTRESOURCE(10000));
+    hres = win32::LoadResource(hInst, hrsrc);
     if (!hres) {
         return NULL;
     }
-    return (uint8_t *)LockResource(hres);
+    return (uint8_t *)win32::LockResource(hres);
 }

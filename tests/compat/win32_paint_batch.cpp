@@ -35,7 +35,7 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     PAINTSTRUCT ps;
     RECT rc;
     HBRUSH hbr;
-    int i = (int)GetWindowLongPtr(hwnd, GWLP_ID);
+    int i = (int)win32::GetWindowLongPtr(hwnd, GWLP_ID);
     SDL_Event event = {};
 
     if (msg == WM_APP) {
@@ -46,43 +46,43 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     if (msg == WM_SHOWWINDOW && w && !(hwnd->dwStyle & WS_CHILD)) {
         if (fFailShow) StarsThrowError(starsErrorFile, 732);
-        if (fDestroyShow) { DestroyWindow(hwnd); return 0; }
+        if (fDestroyShow) { win32::DestroyWindow(hwnd); return 0; }
     }
     if (msg == WM_SHOWWINDOW && w && fShowLayout && !(hwnd->dwStyle & WS_CHILD)) {
-        rghwndPane[0] = CreateWindow("StarsPaintBatch", "Late pane", WS_CHILD | WS_VISIBLE,
-                                    0, 0, 160, 160, hwnd, (HMENU)(INT_PTR)0, GetModuleHandle(NULL), NULL);
+        rghwndPane[0] = win32::CreateWindow("StarsPaintBatch", "Late pane", WS_CHILD | WS_VISIBLE,
+                                    0, 0, 160, 160, hwnd, (HMENU)(INT_PTR)0, win32::GetModuleHandle(NULL), NULL);
         return 0;
     }
     if (msg == WM_SIZE && !(hwnd->dwStyle & WS_CHILD)) {
         if (fFailSize) StarsThrowError(starsErrorFile, 730);
-        if (fDestroySize) { DestroyWindow(hwnd); return 0; }
-        if (IsWindow(rghwndPane[0])) {
-            MoveWindow(rghwndPane[0], 0, 0, LOWORD(l) / 2, HIWORD(l), FALSE);
-            MoveWindow(rghwndPane[1], LOWORD(l) / 2, 0, LOWORD(l) - LOWORD(l) / 2, HIWORD(l), FALSE);
-            InvalidateRect(rghwndPane[0], NULL, TRUE);
-            InvalidateRect(rghwndPane[1], NULL, TRUE);
+        if (fDestroySize) { win32::DestroyWindow(hwnd); return 0; }
+        if (win32::IsWindow(rghwndPane[0])) {
+            win32::MoveWindow(rghwndPane[0], 0, 0, LOWORD(l) / 2, HIWORD(l), FALSE);
+            win32::MoveWindow(rghwndPane[1], LOWORD(l) / 2, 0, LOWORD(l) - LOWORD(l) / 2, HIWORD(l), FALSE);
+            win32::InvalidateRect(rghwndPane[0], NULL, TRUE);
+            win32::InvalidateRect(rghwndPane[1], NULL, TRUE);
         }
         return 0;
     }
     if (msg == WM_PAINT) {
         if (fFailPaint) StarsThrowError(starsErrorFile, 733);
         cPaint++;
-        BeginPaint(hwnd, &ps);
-        GetClientRect(hwnd, &rc);
-        hbr = CreateSolidBrush((hwnd->dwStyle & WS_CHILD) ? rgcrPane[i] : RGB(200, 200, 200));
-        FillRect(ps.hdc, &rc, hbr);
-        DeleteObject(hbr);
-        if (hwnd->dwStyle & WS_CHILD) DrawIcon(ps.hdc, 8, 8, hicon);
-        EndPaint(hwnd, &ps);
+        win32::BeginPaint(hwnd, &ps);
+        win32::GetClientRect(hwnd, &rc);
+        hbr = win32::CreateSolidBrush((hwnd->dwStyle & WS_CHILD) ? rgcrPane[i] : RGB(200, 200, 200));
+        win32::FillRect(ps.hdc, &rc, hbr);
+        win32::DeleteObject(hbr);
+        if (hwnd->dwStyle & WS_CHILD) win32::DrawIcon(ps.hdc, 8, 8, hicon);
+        win32::EndPaint(hwnd, &ps);
         return 0;
     }
-    return DefWindowProc(hwnd, msg, w, l);
+    return win32::DefWindowProcA(hwnd, msg, w, l);
 }
 
 int main(void) {
     WNDCLASS wc = {};
     HWND hwnd;
-    MSG msg;
+    win32::MSG msg;
     SDL_Event event = {};
     HDC hdc;
     HBRUSH hbr;
@@ -95,45 +95,45 @@ int main(void) {
     COMPATRENDERIOSCOPE scope_compatrenderio(io_compatrenderio);
 
     wc.lpfnWndProc = PaintProc;
-    wc.hInstance = GetModuleHandle(NULL);
+    wc.hInstance = win32::GetModuleHandle(NULL);
     wc.lpszClassName = "StarsPaintBatch";
-    CHECK(RegisterClass(&wc));
-    hicon = LoadIcon(wc.hInstance, "StarsIco");
+    CHECK(win32::RegisterClass(&wc));
+    hicon = win32::LoadIcon(wc.hInstance, "StarsIco");
     CHECK(hicon);
-    hwnd = CreateWindow(wc.lpszClassName, "Paint batch", WS_OVERLAPPEDWINDOW, 0, 0, 320, 160,
+    hwnd = win32::CreateWindow(wc.lpszClassName, "Paint batch", WS_OVERLAPPEDWINDOW, 0, 0, 320, 160,
                         NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd);
-    rghwndPane[0] = CreateWindow(wc.lpszClassName, "Left", WS_CHILD | WS_VISIBLE, 0, 0, 160, 160,
+    rghwndPane[0] = win32::CreateWindow(wc.lpszClassName, "Left", WS_CHILD | WS_VISIBLE, 0, 0, 160, 160,
                                 hwnd, (HMENU)(INT_PTR)0, wc.hInstance, NULL);
-    rghwndPane[1] = CreateWindow(wc.lpszClassName, "Right", WS_CHILD | WS_VISIBLE, 160, 0, 160, 160,
+    rghwndPane[1] = win32::CreateWindow(wc.lpszClassName, "Right", WS_CHILD | WS_VISIBLE, 160, 0, 160, 160,
                                 hwnd, (HMENU)(INT_PTR)1, wc.hInstance, NULL);
     CHECK(rghwndPane[0] && rghwndPane[1]);
-    ShowWindow(hwnd, SW_SHOW);
+    win32::ShowWindow(hwnd, SW_SHOW);
     // The first frame is ready before any queued paint message is dispatched.
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0] && CrComposite(hwnd, 240, 80) == rgcrPane[1]);
-    CHECK(InvalidateRect(rghwndPane[0], NULL, TRUE));
+    CHECK(win32::InvalidateRect(rghwndPane[0], NULL, TRUE));
     cPaintSav = cPaint;
     cPresentSav = cPresent;
     // Native exposure can arrive inside menu/window dispatch, while new paint
     // is pending. It must resubmit the completed texture without application paint.
-    SendMessage(hwnd, WM_APP, 0, 0);
+    win32::SendMessageA(hwnd, WM_APP, 0, 0);
     CHECK(cPaint == cPaintSav && rghwndPane[0]->fUpdate);
     CHECK(cPresent == cPresentSav + 1);
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) win32::DispatchMessageA(&msg);
     rgcrPane[0] = RGB(180, 20, 30); rgcrPane[1] = RGB(30, 180, 20);
-    CHECK(InvalidateRect(rghwndPane[0], NULL, TRUE) && InvalidateRect(rghwndPane[1], NULL, TRUE));
-    CHECK(UpdateWindow(rghwndPane[0]));
+    CHECK(win32::InvalidateRect(rghwndPane[0], NULL, TRUE) && win32::InvalidateRect(rghwndPane[1], NULL, TRUE));
+    CHECK(win32::UpdateWindow(rghwndPane[0]));
     CHECK(CrComposite(hwnd, 80, 80) == RGB(20, 80, 120) && CrComposite(hwnd, 240, 80) == RGB(100, 140, 180));
-    CHECK(UpdateWindow(rghwndPane[1]));
+    CHECK(win32::UpdateWindow(rghwndPane[1]));
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0] && CrComposite(hwnd, 240, 80) == rgcrPane[1]);
-    CHECK(InvalidateRect(rghwndPane[0], NULL, FALSE));
-    hdc = GetDC(rghwndPane[0]);
-    hbr = CreateSolidBrush(RGB(50, 60, 200));
-    CHECK(hdc && hbr && GetClientRect(rghwndPane[0], &rc) && FillRect(hdc, &rc, hbr));
-    CHECK(DeleteObject(hbr) && ReleaseDC(rghwndPane[0], hdc));
-    CHECK(ValidateRect(rghwndPane[0], NULL));
-    PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE);
+    CHECK(win32::InvalidateRect(rghwndPane[0], NULL, FALSE));
+    hdc = win32::GetDC(rghwndPane[0]);
+    hbr = win32::CreateSolidBrush(RGB(50, 60, 200));
+    CHECK(hdc && hbr && win32::GetClientRect(rghwndPane[0], &rc) && win32::FillRect(hdc, &rc, hbr));
+    CHECK(win32::DeleteObject(hbr) && win32::ReleaseDC(rghwndPane[0], hdc));
+    CHECK(win32::ValidateRect(rghwndPane[0], NULL));
+    win32::PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE);
     rgcrPane[0] = RGB(50, 60, 200);
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
     CHECK(SDL_SetWindowSize(hwnd->lpWindow.get(), 400, 200) && SDL_SyncWindow(hwnd->lpWindow.get()));
@@ -145,14 +145,14 @@ int main(void) {
     CHECK(hwnd->lpComposite->w == 400 * hwnd->iCanvasScale && hwnd->lpComposite->h == 200 * hwnd->iCanvasScale);
     CHECK(rghwndPane[1]->rcChild.left == 200 && CrComposite(hwnd, 199, 100) == rgcrPane[0] &&
           CrComposite(hwnd, 200, 100) == rgcrPane[1]);
-    CHECK(DestroyWindow(hwnd));
+    CHECK(win32::DestroyWindow(hwnd));
     rghwndPane[0] = rghwndPane[1] = NULL;
     fShowLayout = TRUE;
-    hwnd = CreateWindow(wc.lpszClassName, "Show-time layout", WS_OVERLAPPEDWINDOW,
+    hwnd = win32::CreateWindow(wc.lpszClassName, "Show-time layout", WS_OVERLAPPEDWINDOW,
                         0, 0, 320, 160, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd);
-    ShowWindow(hwnd, SW_SHOW);
-    CHECK(IsWindow(rghwndPane[0]));
+    win32::ShowWindow(hwnd, SW_SHOW);
+    CHECK(win32::IsWindow(rghwndPane[0]));
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
     CHECK(!hwnd->fPresentPending && !rghwndPane[0]->fUpdate);
     // A failed layout cannot paint or publish a subsequent frame. Retrying the
@@ -191,23 +191,23 @@ int main(void) {
            hwnd->iCanvasScale);
     fDestroySize = TRUE;
     CHECK(SDL_PushEvent(&event));
-    CHECK(!IsWindow(hwnd) && hwnd->cPresentDefer == 0 && !FStarsErrorPending());
+    CHECK(!win32::IsWindow(hwnd) && hwnd->cPresentDefer == 0 && !FStarsErrorPending());
     fDestroySize = FALSE;
     fShowLayout = FALSE;
     for (int i = 0; i < 2; i++) {
-        hwnd = CreateWindow(wc.lpszClassName, "Interrupted show", WS_OVERLAPPEDWINDOW,
+        hwnd = win32::CreateWindow(wc.lpszClassName, "Interrupted show", WS_OVERLAPPEDWINDOW,
                             0, 0, 320, 160, NULL, NULL, wc.hInstance, NULL);
         CHECK(hwnd);
         fFailShow = i == 0; fDestroyShow = i == 1;
         cPaintSav = cPaint;
-        ShowWindow(hwnd, SW_SHOW);
+        win32::ShowWindow(hwnd, SW_SHOW);
         CHECK(cPaint == cPaintSav && hwnd->cPresentDefer == 0);
         if (fFailShow) {
-            CHECK(FStarsErrorPending() && IsWindow(hwnd));
+            CHECK(FStarsErrorPending() && win32::IsWindow(hwnd));
             try { StarsRethrowPendingError(); CHECK(FALSE); }
             catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 732); }
-            CHECK(DestroyWindow(hwnd));
-        } else CHECK(!IsWindow(hwnd) && !FStarsErrorPending());
+            CHECK(win32::DestroyWindow(hwnd));
+        } else CHECK(!win32::IsWindow(hwnd) && !FStarsErrorPending());
     }
     StarsCompatShutdown();
     return 0;

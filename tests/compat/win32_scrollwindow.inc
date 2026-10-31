@@ -29,7 +29,7 @@ static LRESULT CALLBACK ScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
 #endif
     if (msg == WM_ERASEBKGND) { cErase++; return 1; }
-    return DefWindowProc(hwnd, msg, w, l);
+    return DefWindowProcA(hwnd, msg, w, l);
 }
 static int TestPixels(HWND hwnd) {
     HDC hdc = GetDC(hwnd);

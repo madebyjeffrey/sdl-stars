@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "encoding.h"
 #include "fileio.h"
+#include "native_process.h"
+#include "windowtypes.h"
 
 /*
  * Win32 basics
@@ -47,28 +49,6 @@
 #define IDYES              6
 #define IDNO               7
 #endif
-
-// A Win32 RECT, for the frame window position in ini and the UI's structs.
-#ifndef _WINDEF_
-typedef struct tagRECT {
-#ifdef _WIN32
-    long left;
-    long top;
-    long right;
-    long bottom;
-#else
-    int32_t left;
-    int32_t top;
-    int32_t right;
-    int32_t bottom;
-#endif
-} RECT;
-#endif
-
-// Window and device context handles that game structs hold for the UI (RPT,
-// TUTOR, TILE). These match windows.h's STRICT declarations.
-typedef struct HWND__ *HWND;
-typedef struct HDC__  *HDC;
 
 /*
  * Win16 points
@@ -125,10 +105,6 @@ int     ReplaceNativeFile(const char *pszOld, const char *pszNew);
 int64_t LNativeTime(void);
 int     RenameNativeFile(const char *pszOld, const char *pszNew);
 NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode);
-#ifdef _WIN32
-char   *PszNativeCommandLine(void);
-char  **RgpszNativeArguments(int *lpc);
-#endif
 
 // File names: the directory separator.
 #ifdef _WIN32
@@ -139,9 +115,6 @@ char  **RgpszNativeArguments(int *lpc);
 #define szDirSep "/"
 #endif
 
-// DwTickCount counts milliseconds like GetTickCount, for retries and file
-// salts.
-uint32_t DwTickCount();
 // GetDateTimeSz writes the date as MM/DD/YY and the time as HH:MM:SS, as
 // _strdate and _strtime did, for the turn log.
 void GetDateTimeSz(char *szDate, char *szTime);

@@ -15,7 +15,7 @@ int main(void) {
     CHECK(FCompatVideo() && strcmp(SDL_GetCurrentVideoDriver(), "windows") == 0);
     for (i = 0; i < 10; i++) {
         CHECK(FTestNativeCursor(&xBefore, &yBefore));
-        CHECK(GetCursorPos(&pt));
+        CHECK(win32::GetCursorPos(&pt));
         CHECK(FTestNativeCursor(&xAfter, &yAfter));
         if (xBefore == xAfter && yBefore == yAfter) {
             CHECK(pt.x == xBefore && pt.y == yBefore);

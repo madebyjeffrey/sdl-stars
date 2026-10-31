@@ -60,7 +60,7 @@ output = []
 local_functions = {}
 for path in sorted(p for p in (ROOT / 'compat/win32/src').iterdir() if p.suffix in ('.cpp', '.mm')):
     clean = strip(path.read_text())
-    for match in re.finditer(r'\bWINAPIV?\s+(\w+)\s*\([^;{}]*\)\s*\{', clean):
+    for match in re.finditer(r'^[A-Za-z_][\w \t*]*\bwin32::(\w+)\s*\([^;{}]*\)\s*\{', clean, re.M):
         local_functions[match[1]] = f'{path.relative_to(ROOT)}:{clean.count(chr(10), 0, match.start()) + 1}'
     for symbol in counts:
         if categories[symbol] == 'Microsoft CRT dependencies':

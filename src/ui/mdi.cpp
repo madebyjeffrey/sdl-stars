@@ -23,77 +23,77 @@ int16_t InitMDIApp() {
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
-    wc.hIcon = LoadIcon(hInst, "StarsIco");
-    wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
+    wc.hIcon = win32::LoadIcon(hInst, "StarsIco");
+    wc.hCursor = win32::LoadCursor(NULL, MAKEINTRESOURCE(32512));
     wc.hbrBackground = (HBRUSH)13;
     wc.lpszMenuName = "StarsMenu";
     wc.lpszClassName = szFrame;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 523;
     wc.lpfnWndProc = MessageWndProc;
     wc.hIcon = 0;
     wc.lpszMenuName = NULL;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szMessage;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 523;
     wc.lpfnWndProc = ScannerWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(BLACK_BRUSH);
     wc.lpszClassName = szScan;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 523;
     wc.lpfnWndProc = MineWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szMine;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 520;
     wc.lpfnWndProc = TbWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.lpszClassName = szTb;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 0x200;
     wc.lpfnWndProc = PlanetWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szPlanet;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.lpfnWndProc = PlanetPaneWndProc;
     wc.lpszClassName = "StarsPlanetPane";
-    if (RegisterClass(&wc) == 0) return FALSE;
+    if (win32::RegisterClass(&wc) == 0) return FALSE;
     wc.style = 2560;
     wc.lpfnWndProc = PopupWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(WHITE_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szPopup;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 2560;
     wc.lpfnWndProc = TooltipWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(WHITE_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szTooltip;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 0x200;
     wc.lpfnWndProc = BrowserWndProc;
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.hIcon = 0;
     wc.lpszClassName = szBrowser;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 0;
@@ -102,11 +102,11 @@ int16_t InitMDIApp() {
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
     wc.hIcon = 0;
-    wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-    wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.hCursor = win32::LoadCursor(NULL, MAKEINTRESOURCE(32512));
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = szTitle;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     wc.style = 11;
@@ -115,11 +115,11 @@ int16_t InitMDIApp() {
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
     wc.hIcon = 0;
-    wc.hCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-    wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+    wc.hCursor = win32::LoadCursor(NULL, MAKEINTRESOURCE(32512));
+    wc.hbrBackground = (HBRUSH)win32::GetStockObject(LTGRAY_BRUSH);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = szReport;
-    if (RegisterClass(&wc) == 0) {
+    if (win32::RegisterClass(&wc) == 0) {
         return FALSE;
     }
     return TRUE;
@@ -143,21 +143,21 @@ void CreateChildWindows() {
         cch = CchUtf8Prefix(psz, 8);
         memcpy(szGame, psz, cch); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
-        wsprintf(&szGame[strlen(szGame)], ".m%d", idPlayer + 1);
+        win32::wsprintf(&szGame[strlen(szGame)], ".m%d", idPlayer + 1);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), game.szName, strlen(game.szName));
         psz = TextIO().pfnPlayerName(idPlayer, FALSE, TRUE, FALSE, 0, NULL);
         CchCopyUtf8(szPlayerUtf8, sizeof(szPlayerUtf8), psz, strlen(psz));
         snprintf(szData, sizeof(szData), "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         TextIO().pfnCchGetString(idsStarsSHostMode, szWork);
-        wsprintf(szData, szWork, game.szName);
+        win32::wsprintf(szData, szWork, game.szName);
         CchCopyUtf8(szNameUtf8, sizeof(szNameUtf8), szData, strlen(szData));
         strcpy(szData, szNameUtf8);
     }
     FSetNativeWindowTitle(hwndFrame, szData);
     if (idPlayer != iplrNone) {
         if (!hwndScanner) {
-            hwndScanner = HwndUiCreateWindowEx(0, szScan, NULL, WS_CHILD | WS_VISIBLE, -200, -200, 10, 10, hwndFrame, NULL, hInst, NULL);
+            hwndScanner = ui::CreateWindowEx(0, szScan, NULL, WS_CHILD | WS_VISIBLE, -200, -200, 10, 10, hwndFrame, NULL, hInst, NULL);
         } else {
             ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
             yScanTop = 1000;
@@ -165,7 +165,7 @@ void CreateChildWindows() {
             SetScanScrollBars(hwndScanner);
         }
         if (!hwndMine) {
-            hwndMine = HwndUiCreateWindowEx(0, szMine, NULL, WS_CHILD | WS_VISIBLE, -500, -500, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
+            hwndMine = ui::CreateWindowEx(0, szMine, NULL, WS_CHILD | WS_VISIBLE, -500, -500, pt.x, pt.y, hwndFrame, NULL, hInst, NULL);
         } else {
             ControlIO().pfnInvalidateRect(hwndMine, NULL, TRUE);
         }
@@ -175,14 +175,14 @@ void CreateChildWindows() {
             ControlIO().pfnInvalidateRect(hwndPlanet, NULL, TRUE);
         }
         if (!hwndTb) {
-            hwndTb = HwndUiCreateWindowEx(0, szTb, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
+            hwndTb = ui::CreateWindowEx(0, szTb, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
         } else {
             ControlIO().pfnInvalidateRect(hwndTb, NULL, TRUE);
         }
         if (hwndMessage) {
-            ControlIO().pfnFUiDestroyWindow(hwndMessage);
+            ControlIO().pfnDestroyWindow(hwndMessage);
         }
-        hwndMessage = HwndUiCreateWindowEx(0, szMessage, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
+        hwndMessage = ui::CreateWindowEx(0, szMessage, NULL, WS_CHILD | WS_VISIBLE, -500, -500, 10, 10, hwndFrame, NULL, hInst, NULL);
         ControlIO().pfnRefitFrameChildren();
     }
     return;
@@ -191,7 +191,7 @@ void CreateChildWindows() {
 // PostOpenGame finishes opening a game GenerateWorld just created, as the
 // File menu does after opening one.
 void PostOpenGame() {
-    ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+    ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
     return;
 }
 
@@ -226,12 +226,12 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch (msg) {
     case WM_CREATE:
-        hdc = GetDC(hwnd);
+        hdc = win32::GetDC(hwnd);
         FCreateFonts(hdc);
-        GetTextMetrics(hdc, &tm);
+        win32::GetTextMetrics(hdc, &tm);
         dySysFont = tm.tmHeight;
         dySBar = (dyArial8 + 12) * 2;
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseDC(hwnd, hdc);
         InitTiles();
         EnsureTileSize(iWindowLayout == layoutSmall);
         return 0;
@@ -240,13 +240,13 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_QUERYNEWPALETTE:
     MapIt:
         if (hwndTitle) {
-            return ControlIO().pfnLUiSendMessage(hwndTitle, msg, wParam, lParam);
+            return ControlIO().pfnSendMessage(hwndTitle, msg, wParam, lParam);
         }
-        hdc = GetDC(hwnd);
-        hpalSav = SelectPalette(hdc, vhpal, FALSE);
-        i = RealizePalette(hdc);
-        SelectPalette(hdc, hpalSav, FALSE);
-        ReleaseDC(hwnd, hdc);
+        hdc = win32::GetDC(hwnd);
+        hpalSav = win32::SelectPalette(hdc, vhpal, FALSE);
+        i = win32::RealizePalette(hdc);
+        win32::SelectPalette(hdc, hpalSav, FALSE);
+        win32::ReleaseDC(hwnd, hdc);
         if (i != 0) {
             ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
             return 1;
@@ -269,7 +269,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ExitWindows(vretExitValue, 0);
                     return 0;
                 }
-                PostQuitMessage(vretExitValue);
+                win32::PostQuitMessage(vretExitValue);
                 return 0;
             }
             CommandHandler(hwnd, 0xed9);
@@ -281,19 +281,19 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 goto LShowStartup;
             if (idPlayer != iplrNone && (ini.fDumpPlanets || ini.fDumpFleets || ini.fDumpMap)) {
                 if (ini.fDumpMap) {
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_UNIVERSE, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_UNIVERSE, 0);
                 }
                 if (ini.fDumpPlanets) {
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_PLANETS, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_PLANETS, 0);
                 }
                 if (ini.fDumpFleets) {
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_FLEETS, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_DEBUG_DUMP_FLEETS, 0);
                 }
                 goto LExit;
             } else {
-                FUiShowWindow(hwndFrame, SW_SHOW);
+                ui::ShowWindow(hwndFrame, SW_SHOW);
                 InitializeMenu(NULL);
-                PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                win32::PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 if (!ini.fWait)
                     goto LNop;
                 ini.fWait = FALSE;
@@ -333,7 +333,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         CommandHandler(hwnd, wParam);
         return 0;
     case WM_CLOSE:
-        ControlIO().pfnFUiDestroyWindow(hwnd);
+        ControlIO().pfnDestroyWindow(hwnd);
         return 0;
     case WM_STARS_HOST:
         ControlIO().pfnBringUpHostDlg();
@@ -355,16 +355,16 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         idPlayer = 0;
         if (wParam == 2506) {
             gd.fGeneratingTurn = TRUE;
-            wsprintf(szWork, "%s.x1", szBase);
+            win32::wsprintf(szWork, "%s.x1", szBase);
             if (FLoadLogFile(szWork)) {
                 FRunLogFile();
             }
             gd.fGeneratingTurn = FALSE;
         }
         CreateChildWindows();
-        ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (wParam == 2506) {
-            ControlIO().pfnLUiSendMessage(hwndMessage, WM_KEYDOWN, VK_END, 0);
+            ControlIO().pfnSendMessage(hwndMessage, WM_KEYDOWN, VK_END, 0);
         }
         tutor.idt = idtWelcomeStarsTutorialWillGuideThrough36;
         tutor.fTurnDone = FALSE;
@@ -377,7 +377,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         idCur = idPlayer;
         uTimerIdOld = uTimerId;
         if (uTimerId != 0) {
-            KillTimer(NULL, uTimerId);
+            win32::KillTimer(NULL, uTimerId);
             uTimerId = 0;
             CreateChildWindows();
         }
@@ -389,7 +389,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 id = AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNewTurnAvailableWouldLikeLoad, NULL), MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
             }
             if (id == 6) {
-                wsprintf(szExt, MPCTD, idPlayer + 1);
+                win32::wsprintf(szExt, MPCTD, idPlayer + 1);
                 DestroyCurGame();
                 if (!FLoadGame(szBase, szExt)) {
                     AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
@@ -398,26 +398,26 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
             } else if (id == 2) {
                 if (uTimerIdOld != 0) {
-                    PostMessage(hwndFrame, WM_COMMAND, IDM_TURN_WAIT_NEW, 0);
+                    win32::PostMessage(hwndFrame, WM_COMMAND, IDM_TURN_WAIT_NEW, 0);
                 } else {
-                    PostMessage(hwndFrame, WM_SYSCOMMAND, 0xf020, 0);
+                    win32::PostMessage(hwndFrame, WM_SYSCOMMAND, 0xf020, 0);
                 }
                 return 1;
             }
-            ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             goto Default;
         }
         if (uTimerIdOld == 0)
             goto Default;
         if (uTimerType == hostTimerAutoGen) {
-            PostMessage(hwnd, WM_STARS_HOST, 0, 0);
+            win32::PostMessage(hwnd, WM_STARS_HOST, 0, 0);
             goto Default;
         }
         if (uTimerType == hostTimerWaitTurn) {
             id = AlertIO().pfnAlertSz(TextIO().pfnFormat(idsTurnHasSubmittedChangesMadeAfterTurn, NULL), MB_YESNOCANCEL | MB_ICONQUESTION | MB_TASKMODAL);
             if (id == 6 && !FMarkFile(dtLog, idPlayer, mdMarkDone, FALSE)) {
                 AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNewTurnCurrentlyGeneratedHostNewTurn, NULL), MB_ICONHAND);
-                wsprintf(szExt, MPCTD, idPlayer + 1);
+                win32::wsprintf(szExt, MPCTD, idPlayer + 1);
                 DestroyCurGame();
                 if (!FLoadGame(szBase, szExt)) {
                     AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
@@ -425,26 +425,26 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     CreateChildWindows();
                 }
             } else if (id == 2) {
-                PostMessage(hwndFrame, WM_COMMAND, IDM_TURN_WAIT_NEW, 0);
+                win32::PostMessage(hwndFrame, WM_COMMAND, IDM_TURN_WAIT_NEW, 0);
                 return 1;
             }
         }
-        ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (sel.pt.x <= 1000 || sel.pt.y <= 1000)
             goto Default;
         CtrPointScan(sel.pt, TRUE);
         goto Default;
     case WM_CHAR:
         if (hwndScanner && (wParam == '-' || wParam == '+')) {
-            ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, wParam, lParam);
+            ControlIO().pfnSendMessage(hwndScanner, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndMessage && (wParam == '-' || wParam == '+' || wParam == '\r')) {
-            ControlIO().pfnLUiSendMessage(hwndMessage, WM_CHAR, wParam, lParam);
+            ControlIO().pfnSendMessage(hwndMessage, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndPlanet && (wParam == 'f' || wParam == 'F')) {
-            ControlIO().pfnLUiSendMessage(hwndPlanet, WM_CHAR, wParam, lParam);
+            ControlIO().pfnSendMessage(hwndPlanet, WM_CHAR, wParam, lParam);
             return 0;
         }
         if (hwndPlanet && sel.grobj == grobjPlanet && (wParam == 'q' || wParam == 'Q')) {
@@ -495,70 +495,70 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         return (LRESULT)hiconWait;
     case WM_ERASEBKGND:
-        if (IsIconic(hwnd) != 0) {
+        if (win32::IsIconic(hwnd) != 0) {
             ControlIO().pfnGetClientRect(hwnd, &rc);
-            FillRect((HDC)wParam, &rc, hbrDesktop);
+            win32::FillRect((HDC)wParam, &rc, hbrDesktop);
             return 0;
         }
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (hwndScanner) {
             ControlIO().pfnGetClientRect(hwndScanner, &rc2);
-            MapWindowPoints(hwndScanner, hwnd, (POINT *)&rc2, 2);
-            ExcludeClipRect((HDC)wParam, rc2.left, rc2.top, rc2.right, rc2.bottom);
+            win32::MapWindowPoints(hwndScanner, hwnd, (POINT *)&rc2, 2);
+            win32::ExcludeClipRect((HDC)wParam, rc2.left, rc2.top, rc2.right, rc2.bottom);
         }
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_PAINT:
-        if (IsIconic(hwnd) != 0) {
-            hdc = BeginPaint(hwnd, &ps);
-            DrawIcon(hdc, 2, 2, idPlayer == iplrNone && game.lid != 0 ? hiconHost : uTimerId == 0 ? hiconStars : hiconWait);
-            EndPaint(hwnd, &ps);
+        if (win32::IsIconic(hwnd) != 0) {
+            hdc = win32::BeginPaint(hwnd, &ps);
+            win32::DrawIcon(hdc, 2, 2, idPlayer == iplrNone && game.lid != 0 ? hiconHost : uTimerId == 0 ? hiconStars : hiconWait);
+            win32::EndPaint(hwnd, &ps);
             return 0;
         }
-        hdc = BeginPaint(hwnd, &ps);
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonShadow);
+        hdc = win32::BeginPaint(hwnd, &ps);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
         switch (iWindowLayout) {
         case layoutLarge:
         default:
-            PatBlt(hdc, vfs.xTop + 5, 0, 2, vfs.dy, PATCOPY);
-            PatBlt(hdc, 0, vfs.y1 + 5, vfs.xTop + 2, 2, PATCOPY);
-            PatBlt(hdc, 0, vfs.y2 + 5, vfs.xTop + 2, 2, PATCOPY);
-            SelectObject(hdc, hbrButtonHilite);
-            PatBlt(hdc, vfs.xTop + 1, 0, 1, vfs.y1 + 2, PATCOPY);
-            PatBlt(hdc, 0, vfs.y1 + 1, vfs.xTop + 1, 1, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 1, vfs.y1 + 6, 1, vfs.y2 - vfs.y1 - 4, PATCOPY);
-            PatBlt(hdc, 0, vfs.y2 + 1, vfs.xTop + 1, 1, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 1, vfs.y2 + 6, 1, vfs.dy - vfs.y2 - 6, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 5, 0, 2, vfs.dy, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y1 + 5, vfs.xTop + 2, 2, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y2 + 5, vfs.xTop + 2, 2, PATCOPY);
+            win32::SelectObject(hdc, hbrButtonHilite);
+            win32::PatBlt(hdc, vfs.xTop + 1, 0, 1, vfs.y1 + 2, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y1 + 1, vfs.xTop + 1, 1, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 1, vfs.y1 + 6, 1, vfs.y2 - vfs.y1 - 4, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y2 + 1, vfs.xTop + 1, 1, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 1, vfs.y2 + 6, 1, vfs.dy - vfs.y2 - 6, PATCOPY);
             break;
         case layoutMedium:
         case layoutSmall:
             yOffset = !gd.fToolbar ? 0 : 36;
-            PatBlt(hdc, vfs.xTop + 5, yOffset, 2, vfs.y2 + 2 - yOffset, PATCOPY);
-            PatBlt(hdc, 0, vfs.y1 + 5, vfs.xTop + 2, 2, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 5, vfs.y2 + 5, vfs.dx - vfs.xTop - 5, 2, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 5, vfs.y2 + 6, 2, vfs.dy - vfs.y2 - 5, PATCOPY);
-            SelectObject(hdc, hbrButtonHilite);
-            PatBlt(hdc, vfs.xTop + 1, yOffset, 1, vfs.y1 + 2 - yOffset, PATCOPY);
-            PatBlt(hdc, 0, vfs.y1 + 1, vfs.xTop + 1, 1, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 1, vfs.y1 + 6, 1, vfs.dy - vfs.y1 - 6, PATCOPY);
-            PatBlt(hdc, vfs.xTop + 6, vfs.y2 + 1, vfs.dx - vfs.xTop - 6, 1, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 5, yOffset, 2, vfs.y2 + 2 - yOffset, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y1 + 5, vfs.xTop + 2, 2, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 5, vfs.y2 + 5, vfs.dx - vfs.xTop - 5, 2, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 5, vfs.y2 + 6, 2, vfs.dy - vfs.y2 - 5, PATCOPY);
+            win32::SelectObject(hdc, hbrButtonHilite);
+            win32::PatBlt(hdc, vfs.xTop + 1, yOffset, 1, vfs.y1 + 2 - yOffset, PATCOPY);
+            win32::PatBlt(hdc, 0, vfs.y1 + 1, vfs.xTop + 1, 1, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 1, vfs.y1 + 6, 1, vfs.dy - vfs.y1 - 6, PATCOPY);
+            win32::PatBlt(hdc, vfs.xTop + 6, vfs.y2 + 1, vfs.dx - vfs.xTop - 6, 1, PATCOPY);
         }
-        SelectObject(hdc, hbrSav);
-        EndPaint(hwnd, &ps);
+        win32::SelectObject(hdc, hbrSav);
+        win32::EndPaint(hwnd, &ps);
         return 0;
     case WM_SETCURSOR:
         hcs = 0;
-        if (IsIconic(hwnd) != 0)
+        if (win32::IsIconic(hwnd) != 0)
             goto Default;
         GetCursorPos16(&pt);
         ScreenToClient16(hwndFrame, &pt);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        if (PtInRect(&rc, PointFrom16(pt)) == 0)
+        if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
         hcs = HcrsFromFrameWindowPt(pt, NULL);
         if (!hcs)
             goto Default;
-        SetCursor(hcs);
+        win32::SetCursor(hcs);
         return 1;
     case WM_LBUTTONDOWN:
         pt.x = LOWORD(lParam);
@@ -568,13 +568,13 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
         grSel = static_cast<PaneSplitter>(grSelRaw);
-        hdc = GetDC(hwnd);
-        hbrSav = (HBRUSH)SelectObject(hdc, hbr50Screen);
+        hdc = win32::GetDC(hwnd);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbr50Screen);
         ptD.y = 0;
         ptD.x = 0;
         InvertPaneBorder(hdc, grSel, ptD, NULL);
         ptStart = pt;
-        SetCapture(hwnd);
+        win32::SetCapture(hwnd);
         ptOld = pt;
         ptAct.y = 0;
         ptAct.x = 0;
@@ -589,9 +589,9 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
         }
         InvertPaneBorder(hdc, grSel, ptD, NULL);
-        ReleaseCapture();
-        SelectObject(hdc, hbrSav);
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseCapture();
+        win32::SelectObject(hdc, hbrSav);
+        win32::ReleaseDC(hwnd, hdc);
         if (ptAct.x == 0 && ptAct.y == 0) {
             return 0;
         }
@@ -622,7 +622,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     case WM_DESTROY:
         if (uTimerId != 0) {
-            KillTimer(NULL, uTimerId);
+            win32::KillTimer(NULL, uTimerId);
         }
         WriteIniSettings();
         uTimerId = 0;
@@ -634,11 +634,11 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ExitWindows(vretExitValue, 0);
             return 0;
         }
-        PostQuitMessage(vretExitValue);
+        win32::PostQuitMessage(vretExitValue);
         return 0;
     default:
     Default:
-        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
+        return ui::DefWindowProc(hwnd, msg, wParam, lParam);
     }
 }
 
@@ -753,9 +753,9 @@ POINT16 InvertPaneBorder(HDC hdc, PaneSplitter grSel, POINT16 dpt, POINT16 *pdpt
         dpt.y = 0;
         if (!pdptPrev || abs(dptPrev.x) >= 6) {
             if (pdptPrev) {
-                PatBlt(hdc, vfs.xTop + dpt.x - dptPrev.x + 1, 0, 6, vfs.dy, PATINVERT);
+                win32::PatBlt(hdc, vfs.xTop + dpt.x - dptPrev.x + 1, 0, 6, vfs.dy, PATINVERT);
             }
-            PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
+            win32::PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
             break;
         }
         dChg = dptPrev.x;
@@ -767,37 +767,37 @@ POINT16 InvertPaneBorder(HDC hdc, PaneSplitter grSel, POINT16 dpt, POINT16 *pdpt
         } else {
             x = vfs.xTop + dpt.x - dptPrev.x + 1;
         }
-        PatBlt(hdc, x, 0, dChg, vfs.dy, PATINVERT);
-        PatBlt(hdc, x + 6, 0, dChg, vfs.dy, PATINVERT);
+        win32::PatBlt(hdc, x, 0, dChg, vfs.dy, PATINVERT);
+        win32::PatBlt(hdc, x + 6, 0, dChg, vfs.dy, PATINVERT);
         break;
     case splitMessages:
         dpt.x = 0;
-        PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + 1, 6, PATINVERT);
+        win32::PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + 1, 6, PATINVERT);
         break;
     case splitLower:
         dpt.x = 0;
         if (iWindowLayout == layoutLarge) {
-            PatBlt(hdc, 0, vfs.y2 + dpt.y + 1, vfs.xTop + 1, 6, PATINVERT);
+            win32::PatBlt(hdc, 0, vfs.y2 + dpt.y + 1, vfs.xTop + 1, 6, PATINVERT);
             break;
         }
-        PatBlt(hdc, vfs.xTop + 7, vfs.y2 + dpt.y + 1, vfs.dx - vfs.xTop - 7, 6, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + 7, vfs.y2 + dpt.y + 1, vfs.dx - vfs.xTop - 7, 6, PATINVERT);
         break;
     case 3:
-        PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
-        PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
+        win32::PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
         break;
     case 5:
-        PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
         if (iWindowLayout == layoutLarge) {
-            PatBlt(hdc, 0, vfs.y2 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
+            win32::PatBlt(hdc, 0, vfs.y2 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
             break;
         }
-        PatBlt(hdc, vfs.xTop + dpt.x + 7, vfs.y2 + dpt.y + 1, vfs.dx - dpt.x - vfs.xTop - 7, 6, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + dpt.x + 7, vfs.y2 + dpt.y + 1, vfs.dx - dpt.x - vfs.xTop - 7, 6, PATINVERT);
         break;
     case 7:
-        PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
-        PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
-        PatBlt(hdc, vfs.xTop + dpt.x + 7, vfs.y2 + dpt.y + 1, vfs.dx - dpt.x - vfs.xTop - 7, 6, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + dpt.x + 1, 0, 6, vfs.dy, PATINVERT);
+        win32::PatBlt(hdc, 0, vfs.y1 + dpt.y + 1, vfs.xTop + dpt.x + 1, 6, PATINVERT);
+        win32::PatBlt(hdc, vfs.xTop + dpt.x + 7, vfs.y2 + dpt.y + 1, vfs.dx - dpt.x - vfs.xTop - 7, 6, PATINVERT);
     }
     return dpt;
 }
@@ -953,11 +953,11 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
         switch (LOWORD(wParam)) {
         case IDM_HELP_ABOUT:
             lpProc = MakeProcInstance(About, hInst);
-            ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwnd, lpProc, 0);
+            ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_FILE_EXIT:
-            ControlIO().pfnLUiSendMessage(hwnd, WM_CLOSE, 0, 0);
+            ControlIO().pfnSendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
         case IDM_VIEW_LAYOUT_0:
         case IDM_VIEW_LAYOUT_1:
@@ -1014,7 +1014,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 InitializeMenu(NULL);
                 CreateChildWindows();
                 if (uTimerId == 0) {
-                    PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                    win32::PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 }
                 if (!game.fTutorial || idPlayer != 0)
                     break;
@@ -1032,14 +1032,14 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
         case IDM_VIEW_TOOLBAR:
             hmenu = GetASubMenu(hwnd, menuView);
             gd.fToolbar = gd.fToolbar == 0;
-            CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
+            win32::CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
             ControlIO().pfnRefitFrameChildren();
             break;
         case IDM_FILE_PRINT_MAP:
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(PrintMapDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PRINT_MAP), hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_PRINT_MAP), hwndFrame, lpProc, 0);
             FreeProcInstance(lpProc);
             if (!fRet)
                 break;
@@ -1048,24 +1048,24 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             memset(&pd, 0, sizeof(PRINTDLG));
             pd.lStructSize = sizeof(PRINTDLG);
             pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
-            if (PrintDlg(&pd) != 0) {
+            if (win32::PrintDlg(&pd) != 0) {
                 hfontPrint = NULL;
                 hfontPrintTiny = NULL;
                 NATIVECLEANUPSCOPE print([&]() noexcept {
-                    if (hfontPrint) DeleteObject(hfontPrint);
-                    if (hfontPrintTiny) DeleteObject(hfontPrintTiny);
-                    DeleteDC(pd.hDC);
-                    if (pd.hDevMode) GlobalFree(pd.hDevMode);
-                    if (pd.hDevNames) GlobalFree(pd.hDevNames);
+                    if (hfontPrint) win32::DeleteObject(hfontPrint);
+                    if (hfontPrintTiny) win32::DeleteObject(hfontPrintTiny);
+                    win32::DeleteDC(pd.hDC);
+                    if (pd.hDevMode) win32::GlobalFree(pd.hDevMode);
+                    if (pd.hDevNames) win32::GlobalFree(pd.hDevNames);
                 });
-                dxMax = GetDeviceCaps(pd.hDC, HORZRES);
-                dyMax = GetDeviceCaps(pd.hDC, VERTRES);
-                dxDPI = GetDeviceCaps(pd.hDC, LOGPIXELSX);
-                dyDPI = GetDeviceCaps(pd.hDC, LOGPIXELSY);
+                dxMax = win32::GetDeviceCaps(pd.hDC, HORZRES);
+                dyMax = win32::GetDeviceCaps(pd.hDC, VERTRES);
+                dxDPI = win32::GetDeviceCaps(pd.hDC, LOGPIXELSX);
+                dyDPI = win32::GetDeviceCaps(pd.hDC, LOGPIXELSY);
                 dMargin = 32;
                 hfontPrint = HfontPrinterCreate(pd.hDC, 8, &dyPrint);
                 hfontPrintTiny = HfontPrinterCreate(pd.hDC, 5, &dyPrintTiny);
-                SetBkMode(pd.hDC, TRANSPARENT);
+                win32::SetBkMode(pd.hDC, TRANSPARENT);
                 rc.top = 0;
                 rc.left = 0;
                 if ((cPageX > cPageY) == (dxMax > dyMax)) {
@@ -1104,45 +1104,45 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 rc.right = dSize;
                 dSize -= dMargin * 2;
                 cch = TextIO().pfnCchGetString(idsStarsUniverseMap, szWork);
-                iPrintResult = Escape(pd.hDC, STARTDOC, cch, szWork, NULL);
+                iPrintResult = win32::Escape(pd.hDC, STARTDOC, cch, szWork, NULL);
                 if (iPrintResult <= 0) goto LPrintMapCleanup;
                 for (xPage = 0; xPage < cPageX; xPage++) {
                     for (yPage = 0; yPage < cPageY; yPage++) {
                         xOff = -dxMax * xPage;
                         yOff = -dyMax * yPage;
-                        Rectangle(pd.hDC, xOff, yOff, xOff + rc.right, yOff + rc.bottom);
+                        win32::Rectangle(pd.hDC, xOff, yOff, xOff + rc.right, yOff + rc.bottom);
                         if (hfontPrint) {
-                            hfontSav = (HFONT)SelectObject(pd.hDC, hfontPrint);
+                            hfontSav = (HFONT)win32::SelectObject(pd.hDC, hfontPrint);
                         } else {
                             hfontSav = 0;
                         }
                         y = ptLegendA.y + yOff;
                         cch = TextIO().pfnCchGetString(idsStarsUniverseMap, szWork);
-                        TextOut(pd.hDC, ptLegendA.x + xOff, y, szWork, cch);
+                        win32::TextOut(pd.hDC, ptLegendA.x + xOff, y, szWork, cch);
                         y += dyPrint;
-                        TextOut(pd.hDC, ptLegendA.x + xOff, y, game.szName, strlen(game.szName));
+                        win32::TextOut(pd.hDC, ptLegendA.x + xOff, y, game.szName, strlen(game.szName));
                         y += dyPrint;
                         psz = TextIO().pfnPlayerName(idPlayer, TRUE, TRUE, TRUE, 0, NULL);
-                        TextOut(pd.hDC, ptLegendA.x + xOff, y, psz, strlen(psz));
+                        win32::TextOut(pd.hDC, ptLegendA.x + xOff, y, psz, strlen(psz));
                         y += dyPrint;
-                        cch = wsprintf(szWork, TextIO().pfnCompressed(idsYearD), game.turn + 2400);
-                        TextOut(pd.hDC, ptLegendA.x + xOff, y, szWork, cch);
+                        cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsYearD), game.turn + 2400);
+                        win32::TextOut(pd.hDC, ptLegendA.x + xOff, y, szWork, cch);
                         if ((grbitScan & grbitScanViewMask) != 5) {
                             y = ptLegendB.y + yOff;
                             for (i = 0; i < 5; i++) {
                                 cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanet3 + i), szWork);
-                                TextOut(pd.hDC, ptLegendB.x + xOff, y, szWork, cch);
+                                win32::TextOut(pd.hDC, ptLegendB.x + xOff, y, szWork, cch);
                                 y += dyPrint;
                             }
                             y = ptLegendB.y + yOff;
                             if (hfontPrintTiny) {
-                                SelectObject(pd.hDC, hfontPrintTiny);
+                                win32::SelectObject(pd.hDC, hfontPrintTiny);
                             }
                             CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, "|", 1);
                             CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, "+", 1);
                             CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, "2", 1);
                             if (hfontPrint) {
-                                SelectObject(pd.hDC, hfontPrint);
+                                win32::SelectObject(pd.hDC, hfontPrint);
                             }
                             DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + dyPrint / 2, 1);
                             DrawPlanetPrintDot(pd.hDC, ptLegendB.x + xOff, y - 4 + (int16_t)(7 * dyPrint) / 2, 0);
@@ -1150,7 +1150,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                         }
                         if ((grbitScan & grbitScanViewMask) != 5) {
                             if (hfontPrintTiny) {
-                                SelectObject(pd.hDC, hfontPrintTiny);
+                                win32::SelectObject(pd.hDC, hfontPrintTiny);
                             }
                             lppl = lpPlanets;
                             lpplMac = lpPlanets + cPlanet;
@@ -1166,13 +1166,13 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                                     }
                                     DrawPlanetPrintDot(pd.hDC, LOWORD(x), LOWORD(y), 1);
                                 } else if (lppl->iPlayer != iplrNone) {
-                                    cch = wsprintf(szWork, PCTD, lppl->iPlayer + 1);
+                                    cch = win32::wsprintf(szWork, PCTD, lppl->iPlayer + 1);
                                     CtrTextOut(pd.hDC, LOWORD(x), LOWORD(y) - dyPrintTiny, szWork, cch);
                                 }
                             }
                         }
                         if (hfontPrint) {
-                            SelectObject(pd.hDC, hfontPrint);
+                            win32::SelectObject(pd.hDC, hfontPrint);
                         }
                         for (i = 0; i < game.cPlanMax; i++) {
                             x = (int16_t)(rgptPlan[i].x - 1000);
@@ -1185,16 +1185,16 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                             }
                         }
                         if (hfontSav) {
-                            SelectObject(pd.hDC, hfontSav);
+                            win32::SelectObject(pd.hDC, hfontSav);
                         }
-                        iPrintResult = Escape(pd.hDC, NEWFRAME, 0, NULL, NULL);
+                        iPrintResult = win32::Escape(pd.hDC, NEWFRAME, 0, NULL, NULL);
                         if (iPrintResult <= 0) {
-                            Escape(pd.hDC, ABORTDOC, 0, NULL, NULL);
+                            win32::Escape(pd.hDC, ABORTDOC, 0, NULL, NULL);
                             goto LPrintMapCleanup;
                         }
                     }
                 }
-                iPrintResult = Escape(pd.hDC, ENDDOC, 0, NULL, NULL);
+                iPrintResult = win32::Escape(pd.hDC, ENDDOC, 0, NULL, NULL);
 LPrintMapCleanup:
                 print.Close();
                 if (iPrintResult <= 0 && iPrintResult != SP_APPABORT)
@@ -1206,7 +1206,7 @@ LPrintMapCleanup:
         case IDM_VIEW_PLAYER_COLORS:
             hmenu = GetASubMenu(hwnd, menuView);
             grbitScan = static_cast<GrbitScan>(grbitScan ^ grbitScanPlayerColors);
-            CheckMenuItem(hmenu, IDM_VIEW_PLAYER_COLORS, !(grbitScan & grbitScanPlayerColors) ? MF_UNCHECKED : MF_CHECKED);
+            win32::CheckMenuItem(hmenu, IDM_VIEW_PLAYER_COLORS, !(grbitScan & grbitScanPlayerColors) ? MF_UNCHECKED : MF_CHECKED);
             gd.fChgScanner = TRUE;
             if (!(grbitScan & (grbitScanPlanetNames | grbitScanShipCounts)))
                 break;
@@ -1217,7 +1217,7 @@ LPrintMapCleanup:
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(FindDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_FIND), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_FIND), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_GAME_SCORE:
@@ -1225,7 +1225,7 @@ LPrintMapCleanup:
             if (idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(ScoreXDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_SCORE), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_SCORE), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_FILE_HOST_GAME:
@@ -1252,8 +1252,8 @@ LPrintMapCleanup:
                 iPassCnt = 0;
             }
             if (game.fSinglePlr && iPassCnt != 0) {
-                wsprintf(szWork, TextIO().pfnCompressed(idsSureWantForceGenerateDTurnsRow), iPassCnt);
-                if (CompatChoiceIO().pfnMessageBoxA(GetFocus(), szWork, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_TASKMODAL) != IDYES)
+                win32::wsprintf(szWork, TextIO().pfnCompressed(idsSureWantForceGenerateDTurnsRow), iPassCnt);
+                if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), szWork, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_TASKMODAL) != IDYES)
                     break;
             }
             if (idPlayer == iplrNone)
@@ -1281,10 +1281,10 @@ LPrintMapCleanup:
                     RemoveNativeFile(szWork);
                     RecordIO().pfnDirtyGame(FALSE);
                     ShowProgressGauge();
-                    dwTickBase = GetTickCount();
+                    dwTickBase = win32::GetTickCount();
                     do {
                         UpdateProgressGauge(static_cast<ProgressStep>((LOWORD(dwTickCur) - LOWORD(dwTickBase)) * 2));
-                        dwTickCur = GetTickCount();
+                        dwTickCur = win32::GetTickCount();
                     } while (dwTickCur >= dwTickBase && dwTickCur < dwTickBase + 500);
                     goto LTutorialFinishUp;
                 }
@@ -1301,15 +1301,15 @@ LPrintMapCleanup:
                     goto LWaitForTurn;
                 break;
             }
-            hcurSav = SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(32514)));
+            hcurSav = win32::SetCursor(win32::LoadCursor(NULL, MAKEINTRESOURCE(32514)));
             FWriteLogFile(szBase, idCur);
             FWriteHistFile(idCur);
         RepGen:
             ShowProgressGauge();
             EnsureAis();
-            hcurT = SetCursor(LoadCursor(NULL, IDC_WAIT));
+            hcurT = win32::SetCursor(win32::LoadCursor(NULL, IDC_WAIT));
             FGenerateTurn();
-            SetCursor(hcurT);
+            win32::SetCursor(hcurT);
             switch (LOWORD(wParam)) {
             case IDM_DEBUG_GEN_10_TURNS:
             case IDM_DEBUG_GEN_100_TURNS:
@@ -1324,9 +1324,9 @@ LPrintMapCleanup:
             iPassCnt = 0;
         LTutorialFinishUp:
             DestroyCurGame();
-            wsprintf(szExt, MPCTD, idCur + 1);
+            win32::wsprintf(szExt, MPCTD, idCur + 1);
             if (!FLoadGame(szBase, szExt)) {
-                SetCursor(hcurSav);
+                win32::SetCursor(hcurSav);
                 HideProgressGauge();
                 AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
                 break;
@@ -1334,8 +1334,8 @@ LPrintMapCleanup:
             HideProgressGauge();
             idPlayer = idCur;
             CreateChildWindows();
-            ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
-            SetCursor(hcurSav);
+            ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            win32::SetCursor(hcurSav);
             if (!gd.fTutorial)
                 break;
             tutor.fTurnDone = FALSE;
@@ -1348,13 +1348,13 @@ LPrintMapCleanup:
                 break;
             if (!hwndBrowser) {
                 mf = 8;
-                HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
+                ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
             } else {
                 mf = 0;
-                ControlIO().pfnFUiDestroyWindow(hwndBrowser);
+                ControlIO().pfnDestroyWindow(hwndBrowser);
             }
             hmenu = GetASubMenu(hwnd, menuHelp);
-            CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, mf);
+            win32::CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, mf);
             break;
         case IDM_REPORT_CYCLE:
             if (!hwndReportDlg) {
@@ -1420,11 +1420,11 @@ LPrintMapCleanup:
                     }
                 }
                 psz = TextIO().pfnCompressed(ids);
-                wsprintf(szWork, psz, cObj, cObj == 1 ? 32 : 115);
-                hwndReportDlg = HwndUiCreateWindowEx(0, szReport, szWork, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100,
+                win32::wsprintf(szWork, psz, cObj, cObj == 1 ? 32 : 115);
+                hwndReportDlg = ui::CreateWindowEx(0, szReport, szWork, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100,
                                              100, hwndFrame, NULL, hInst, NULL);
-                ControlIO().pfnFUiSetWindowPos(hwndReportDlg, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
-                CheckMenuItem(hmenu, LOWORD(wParam), mf);
+                ControlIO().pfnSetWindowPos(hwndReportDlg, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+                win32::CheckMenuItem(hmenu, LOWORD(wParam), mf);
                 break;
             } else {
                 if (LOWORD(wParam) != IDM_REPORT_BATTLE || vprptCur != &vrptBattle) {
@@ -1433,8 +1433,8 @@ LPrintMapCleanup:
                     ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
                 }
                 mf = 0;
-                ControlIO().pfnFUiDestroyWindow(hwndReportDlg);
-                CheckMenuItem(hmenu, LOWORD(wParam) == IDM_REPORT_FLEET ? IDM_REPORT_FLEET : IDM_REPORT_PLANET, mf);
+                ControlIO().pfnDestroyWindow(hwndReportDlg);
+                win32::CheckMenuItem(hmenu, LOWORD(wParam) == IDM_REPORT_FLEET ? IDM_REPORT_FLEET : IDM_REPORT_PLANET, mf);
                 if (ids != idsPlayerLogFileAppearsCorruptUnableLoad) {
                     return;
                 }
@@ -1442,11 +1442,11 @@ LPrintMapCleanup:
             }
         case IDM_HELP_CONTEXT_13002:
         case IDM_HELP_INTRO:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (uint32_t)(LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002));
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (uint32_t)(LOWORD(wParam) == IDM_HELP_INTRO ? 4501 : 13002));
             break;
         case IDM_HELP_CONTENTS:
         case IDM_HELP_CONTENTS2:
-            WinHelp(hwnd, szHelpFile, HELP_INDEX, 0);
+            win32::WinHelp(hwnd, szHelpFile, HELP_INDEX, 0);
             break;
         case IDM_TURN_WAIT_NEW:
         case IDM_GAME_WAIT_FOR_TURN:
@@ -1463,22 +1463,22 @@ LPrintMapCleanup:
                 } else {
                     AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNewTurnAvailable, NULL), MB_ICONASTERISK);
                 }
-                wsprintf(szExt, MPCTD, idPlayer + 1);
+                win32::wsprintf(szExt, MPCTD, idPlayer + 1);
                 game.fDirty = FALSE;
                 DestroyCurGame();
                 if (!FLoadGame(szBase, szExt)) {
                     AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
                 } else {
                     CreateChildWindows();
-                    ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                    ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 }
             } else {
                 gd.fSubmit = TRUE;
                 FWriteLogFile(szBase, idPlayer);
                 FWriteHistFile(idPlayer);
-                ControlIO().pfnFUiSetWindowText(hwndFrame, TextIO().pfnCompressed(idsWaitingNewTurn));
-                FUiShowWindow(hwndFrame, SW_SHOWMINIMIZED);
-                uTimerId = SetTimer(NULL, hostTimerWaitTurn, 10000, lpfnHostTimerProc);
+                ControlIO().pfnSetWindowText(hwndFrame, TextIO().pfnCompressed(idsWaitingNewTurn));
+                ui::ShowWindow(hwndFrame, SW_SHOWMINIMIZED);
+                uTimerId = win32::SetTimer(NULL, hostTimerWaitTurn, 10000, lpfnHostTimerProc);
                 uTimerType = hostTimerWaitTurn;
                 HostTimerProc(NULL, WM_NULL, uTimerId, 0);
             }
@@ -1512,7 +1512,7 @@ LPrintMapCleanup:
             if (ini.fStartupFile && FIsManagedLibraryGameFile(szBase)) {
                 if (FOpenGame(hwnd, FALSE) <= 0) break;
                 InitializeMenu(NULL);
-                if (uTimerId == 0) PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                if (uTimerId == 0) win32::PostMessage(hwnd, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 break;
             }
             fRet = FImportDesktopFile(hwnd, ini.fStartupFile ? szBase : NULL);
@@ -1528,7 +1528,7 @@ LPrintMapCleanup:
         case IDM_TITLE_EXIT:
             if (!hwndTitle)
                 break;
-            PostMessage(hwndTitle, WM_COMMAND, LOWORD(wParam) - 250, 0);
+            win32::PostMessage(hwndTitle, WM_COMMAND, LOWORD(wParam) - 250, 0);
             break;
         case IDM_FILE_RETURN_TO_TITLE:
             if (gd.fTutorial && !FAskKillTutor())
@@ -1543,14 +1543,14 @@ LPrintMapCleanup:
             ini.idPlayer = iplrNone;
             InitializeMenu(NULL);
             ShowTitleScreen();
-            FUiShowWindow(hwndFrame, SW_HIDE);
+            ui::ShowWindow(hwndFrame, SW_HIDE);
             break;
         case IDM_GAME_RESEARCH:
         case IDM_GAME_RESEARCH2:
             if (game.lid == 0 || idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(ResearchDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RESEARCH), hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_RESEARCH), hwndFrame, lpProc, 0);
             FreeProcInstance(lpProc);
             if (!fRet || sel.grobj != grobjPlanet)
                 break;
@@ -1564,7 +1564,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone)
                 break;
             lpProc = MakeProcInstance(BattlePlansDlg, hInst);
-            ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), hwndFrame, lpProc, 0);
+            ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), hwndFrame, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_GAME_RELATIONS:
@@ -1572,7 +1572,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone || game.fSinglePlr)
                 break;
             lpProc = MakeProcInstance(RelationsDlg, hInst);
-            ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RELATIONS), hwndFrame, lpProc, 0);
+            ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_RELATIONS), hwndFrame, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_RACE_EDIT1:
@@ -1595,7 +1595,7 @@ LPrintMapCleanup:
             pt.x = 610;
             pt.y = 450;
             if (hwndPopup) {
-                ControlIO().pfnLUiSendMessage(hwndPopup, WM_RBUTTONUP, 0, 0);
+                ControlIO().pfnSendMessage(hwndPopup, WM_RBUTTONUP, 0, 0);
             }
             ShipBuilder(pt);
             break;
@@ -1612,7 +1612,7 @@ LPrintMapCleanup:
             if (game.lid == 0 || idPlayer == iplrNone || ((game.fSinglePlr && lSaltCur <= 0) || !FCheckPassword()))
                 break;
             lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, 0);
             FreeProcInstance(lpProc);
             break;
         case IDM_SCAN_ZOOM_0:
@@ -1629,16 +1629,16 @@ LPrintMapCleanup:
                 break;
             }
             hmenu = GetASubMenu(hwnd, menuView);
-            hmenu = GetSubMenu(hmenu, 3);
-            CheckMenuItem(hmenu, iScanZoom + 4, MF_BYPOSITION);
+            hmenu = win32::GetSubMenu(hmenu, 3);
+            win32::CheckMenuItem(hmenu, iScanZoom + 4, MF_BYPOSITION);
             ControlIO().pfnGetClientRect(hwndScanner, &rc);
             rc.right = ScanToPt(rc.right) >> 1;
             rc.bottom = ScanToPt(rc.bottom) >> 1;
             dx = xScanTop;
             dy = dGalInv - yScanTop;
             iScanZoom = static_cast<ScanZoom>(LOWORD(wParam) - 3905);
-            CheckMenuItem(hmenu, iScanZoom + 4, MF_CHECKED | MF_BYPOSITION);
-            DrawMenuBar(hwnd);
+            win32::CheckMenuItem(hmenu, iScanZoom + 4, MF_CHECKED | MF_BYPOSITION);
+            win32::DrawMenuBar(hwnd);
             SetScanScrollBars(hwndScanner);
             ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
             if (sel.scan.grobj != grobjNone) {
@@ -1654,13 +1654,13 @@ LPrintMapCleanup:
             break;
         case IDM_FLEET_DELETE_WAYPOINT:
         case IDM_FLEET_INSERT_WAYPOINT:
-            if (sel.grobj == grobjFleet && GetFocus() != hwndOrderED) {
+            if (sel.grobj == grobjFleet && win32::GetFocus() != hwndOrderED) {
                 DeleteCurWayPoint(LOWORD(wParam) == IDM_FLEET_DELETE_WAYPOINT);
             }
             goto Default;
         default:
         Default:
-            LUiDefWindowProc(hwnd, WM_COMMAND, wParam, 0);
+            ui::DefWindowProc(hwnd, WM_COMMAND, wParam, 0);
         }
     }
 }
@@ -1671,43 +1671,43 @@ void InitializeMenu(HMENU hmenu) {
     HMENU   hmenuSub;
 
     if (!hmenu) {
-        hmenu = GetMenu(hwndFrame);
+        hmenu = win32::GetMenu(hwndFrame);
     }
     hmenuSub = GetASubMenu(hwndFrame, menuFile);
     for (i = 4300; i <= 4308; i++) {
-        DeleteMenu(hmenuSub, i, MF_BYCOMMAND);
+        win32::DeleteMenu(hmenuSub, i, MF_BYCOMMAND);
     }
     for (i = 0; i < 9 && vrgszMRU[i * 256] != 0; i++) {
         szWork[0] = '&';
         szWork[1] = i + '1';
         szWork[2] = ' ';
         strcpy(&szWork[3], vrgszMRU + 256 * i);
-        InsertMenu(hmenuSub, i + 9, MF_BYPOSITION, i + 4300, szWork);
+        win32::InsertMenu(hmenuSub, i + 9, MF_BYPOSITION, i + 4300, szWork);
     }
-    EnableMenuItem(hmenu, 106, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
-    EnableMenuItem(hmenu, 105, szBase[0] == 0 ? MF_GRAYED | MF_DISABLED : MF_ENABLED);
-    EnableMenuItem(hmenu, 270, szBase[0] != 0 && (!game.fSinglePlr || lSaltCur > 0) ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
-    EnableMenuItem(hmenu, 2014, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
-    EnableMenuItem(hmenu, 3803, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
+    win32::EnableMenuItem(hmenu, 106, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
+    win32::EnableMenuItem(hmenu, 105, szBase[0] == 0 ? MF_GRAYED | MF_DISABLED : MF_ENABLED);
+    win32::EnableMenuItem(hmenu, 270, szBase[0] != 0 && (!game.fSinglePlr || lSaltCur > 0) ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
+    win32::EnableMenuItem(hmenu, 2014, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
+    win32::EnableMenuItem(hmenu, 3803, szBase[0] != 0 && !game.fSinglePlr ? MF_ENABLED : MF_GRAYED | MF_DISABLED);
     hmenu = GetASubMenu(hwndFrame, menuView);
-    CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
-    CheckMenuItem(hmenu, IDM_VIEW_PLAYER_COLORS, !(grbitScan & grbitScanPlayerColors) ? MF_UNCHECKED : MF_CHECKED);
+    win32::CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
+    win32::CheckMenuItem(hmenu, IDM_VIEW_PLAYER_COLORS, !(grbitScan & grbitScanPlayerColors) ? MF_UNCHECKED : MF_CHECKED);
     if (!hwndScanner) {
-        EnableMenuItem(GetMenu(hwndFrame), 1, MF_GRAYED | MF_DISABLED | MF_BYPOSITION);
+        win32::EnableMenuItem(win32::GetMenu(hwndFrame), 1, MF_GRAYED | MF_DISABLED | MF_BYPOSITION);
     } else {
-        EnableMenuItem(GetMenu(hwndFrame), 1, MF_BYPOSITION);
+        win32::EnableMenuItem(win32::GetMenu(hwndFrame), 1, MF_BYPOSITION);
         hmenu = GetASubMenu(hwndFrame, menuView);
-        hmenu = GetSubMenu(hmenu, 3);
-        CheckMenuItem(hmenu, iScanZoom + 4, MF_CHECKED | MF_BYPOSITION);
-        cMenu = GetMenuItemCount(hmenu);
+        hmenu = win32::GetSubMenu(hmenu, 3);
+        win32::CheckMenuItem(hmenu, iScanZoom + 4, MF_CHECKED | MF_BYPOSITION);
+        cMenu = win32::GetMenuItemCount(hmenu);
         for (i = 0; i < cMenu; i++) {
-            EnableMenuItem(hmenu, i, MF_BYPOSITION);
+            win32::EnableMenuItem(hmenu, i, MF_BYPOSITION);
         }
         hmenu = GetASubMenu(hwndFrame, menuView);
-        hmenu = GetSubMenu(hmenu, 4);
-        CheckMenuItem(hmenu, iWindowLayout, MF_CHECKED | MF_BYPOSITION);
+        hmenu = win32::GetSubMenu(hmenu, 4);
+        win32::CheckMenuItem(hmenu, iWindowLayout, MF_CHECKED | MF_BYPOSITION);
     }
-    DrawMenuBar(hwndFrame);
+    win32::DrawMenuBar(hwndFrame);
     return;
 }
 
@@ -1715,9 +1715,9 @@ HMENU GetASubMenu(HWND hwnd, MainMenu iMenu) {
     int16_t fChildMenu;
     HMENU   hmenu;
 
-    fChildMenu = hwndActive && IsZoomed(hwndActive) != 0;
-    hmenu = GetMenu(hwnd);
-    hmenu = GetSubMenu(hmenu, iMenu + fChildMenu);
+    fChildMenu = hwndActive && win32::IsZoomed(hwndActive) != 0;
+    hmenu = win32::GetMenu(hwnd);
+    hmenu = win32::GetSubMenu(hmenu, iMenu + fChildMenu);
     return hmenu;
 }
 
@@ -1840,19 +1840,19 @@ void BringUpHostDlg() {
         }
         gd.fHostMode = TRUE;
     }
-    FUiShowWindow(hwndFrame, SW_HIDE);
+    ui::ShowWindow(hwndFrame, SW_HIDE);
     if (ini.fWait) {
         ini.fWait = FALSE;
         goto LAutoMode;
     }
 Top:
     lpProc = MakeProcInstance(HostModeDialog, hInst);
-    fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_MODE), hwndFrame, lpProc, 0);
+    fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_MODE), hwndFrame, lpProc, 0);
     FreeProcInstance(lpProc);
     if (fRet == -1) {
     LAutoMode:
-        FUiShowWindow(hwndFrame, SW_SHOWMINIMIZED);
-        uTimerId = SetTimer(NULL, hostTimerAutoGen, 10000, lpfnHostTimerProc);
+        ui::ShowWindow(hwndFrame, SW_SHOWMINIMIZED);
+        uTimerId = win32::SetTimer(NULL, hostTimerAutoGen, 10000, lpfnHostTimerProc);
         uTimerType = hostTimerAutoGen;
         HostTimerProc(NULL, WM_NULL, uTimerId, 0);
         return;
@@ -1863,9 +1863,9 @@ Top:
             ShowProgressGauge();
         }
         EnsureAis();
-        hcurSav = SetCursor(LoadCursor(NULL, IDC_WAIT));
+        hcurSav = win32::SetCursor(win32::LoadCursor(NULL, IDC_WAIT));
         FGenerateTurn();
-        SetCursor(hcurSav);
+        win32::SetCursor(hcurSav);
         if (iPassCnt != 0) {
             iPassCnt--;
             if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) >= 0 && ControlIO().pfnGetAsyncKeyState(VK_CONTROL) >= 0)
@@ -1905,61 +1905,61 @@ void DrawHostDialog2(HWND hwnd, HDC hdcIn) {
     if (hdcIn) {
         hdc = hdcIn;
     } else {
-        hdc = GetDC(hwnd);
+        hdc = win32::GetDC(hwnd);
     }
-    bkMode = SetBkMode(hdc, OPAQUE);
-    crBackSav = SetBkColor(hdc, crButtonFace);
-    SelectObject(hdc, rghfontArial8[1]);
+    bkMode = win32::SetBkMode(hdc, OPAQUE);
+    crBackSav = win32::SetBkColor(hdc, crButtonFace);
+    win32::SelectObject(hdc, rghfontArial8[1]);
     x = dyArial8 + 10 + LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsN16), 4));
     yCur = 48;
-    SetRect(&rcDiamond, 6, yCur, dyArial8 + 7, yCur + dyArial8 + 1);
+    win32::SetRect(&rcDiamond, 6, yCur, dyArial8 + 7, yCur + dyArial8 + 1);
     for (i = 0; i < game.cPlayer; i++) {
         DrawDiamond(hdc, &rcDiamond, hbrBBlue);
-        cch = wsprintf(szWork, TextIO().pfnCompressed(idsD2), i + 1);
+        cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsD2), i + 1);
         RightTextOut(hdc, x, yCur, szWork, cch, 0);
-        SetTextColor(hdc, rgOut[i] <= 0 ? 32512 : 127);
+        win32::SetTextColor(hdc, rgOut[i] <= 0 ? 32512 : 127);
         TextIO().pfnCchGetString(static_cast<StringId>(idsTurned + rgOut[i]), szStat);
         if (gd.fNoHostNames) {
-            cch = wsprintf(szWork, " %s", szStat);
+            cch = win32::wsprintf(szWork, " %s", szStat);
         } else {
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsSS), TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL), szStat);
+            cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsSS), TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL), szStat);
         }
         if (rgplr[i].fHacker) {
             strcat(szWork, " - HACKER");
             cch += 9;
         }
-        TextOut(hdc, x + 4, yCur, szWork, cch);
-        SetTextColor(hdc, crWindowText);
-        OffsetRect(&rcDiamond, 0, dyArial8 + 4);
+        win32::TextOut(hdc, x + 4, yCur, szWork, cch);
+        win32::SetTextColor(hdc, crWindowText);
+        win32::OffsetRect(&rcDiamond, 0, dyArial8 + 4);
         yCur += dyArial8 + 4;
     }
-    cch = wsprintf(szWork, PCTD, game.turn + 2401);
-    ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), szWork);
-    dsec = (uint32_t)((GetTickCount() - ctickLast) / 1000);
+    cch = win32::wsprintf(szWork, PCTD, game.turn + 2401);
+    ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_NEXT_YEAR_TEXT), szWork);
+    dsec = (uint32_t)((win32::GetTickCount() - ctickLast) / 1000);
     if (dsec < 60) {
-        cch = wsprintf(szWork, TextIO().pfnCompressed(idsDSeconds), LOWORD(dsec));
+        cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDSeconds), LOWORD(dsec));
     } else {
         dmin = LOWORD((uint32_t)(dsec / 60));
         dsec -= (uint32_t)(60 * dmin);
         if (dmin < 60) {
-            cch = wsprintf(szWork, TextIO().pfnCompressed(idsD02d), dmin, LOWORD(dsec));
+            cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsD02d), dmin, LOWORD(dsec));
         } else {
             dhour = (uint32_t)dmin / 60;
             dmin -= 60 * dhour;
             if (dhour < 24) {
-                cch = wsprintf(szWork, TextIO().pfnCompressed(idsD02d02d), dhour, dmin, LOWORD(dsec));
+                cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsD02d02d), dhour, dmin, LOWORD(dsec));
             } else {
                 dday = (uint32_t)dhour / 24;
                 dhour -= dday * 24;
-                cch = wsprintf(szWork, TextIO().pfnCompressed(idsDDaysD02d02d), dday, dhour, dmin, LOWORD(dsec));
+                cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsDDaysD02d02d), dday, dhour, dmin, LOWORD(dsec));
             }
         }
     }
-    ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_TIME_SINCE_TEXT), szWork);
-    SetBkMode(hdc, bkMode);
-    SetBkColor(hdc, crBackSav);
+    ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_TIME_SINCE_TEXT), szWork);
+    win32::SetBkMode(hdc, bkMode);
+    win32::SetBkColor(hdc, crBackSav);
     if (!hdcIn) {
-        ReleaseDC(hwnd, hdc);
+        win32::ReleaseDC(hwnd, hdc);
     }
     return;
 }
@@ -1976,19 +1976,19 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     int16_t     iSel;
     int16_t     iDiamond;
     HMENU       hmenuPopup;
-    MSG         msg;
+    win32::MSG         msg;
     HDC         hdc;
     PAINTSTRUCT ps;
 
     switch (message) {
     case WM_INITDIALOG:
         ControlIO().pfnStickyDlgPos(hwnd, &ptStickyHostModeDlg, TRUE);
-        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_GAME_NAME_TEXT), game.szName);
-        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_FILE_TEXT), szBase);
-        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fReadOnly == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
-        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_GENERATE_NOW), gd.fReadOnly == 0);
-        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_PASSWORD), gd.fReadOnly == 0);
-        uTimerId = SetTimer(hwnd, 13, 10000, NULL);
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_GAME_NAME_TEXT), game.szName);
+        ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_FILE_TEXT), szBase);
+        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fReadOnly == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_GENERATE_NOW), gd.fReadOnly == 0);
+        ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_PASSWORD), gd.fReadOnly == 0);
+        uTimerId = win32::SetTimer(hwnd, 13, 10000, NULL);
         /* fallthrough */
     case WM_TIMER:
         if (fProcessingTimer)
@@ -2006,7 +2006,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         return 0;
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -2015,7 +2015,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSCROLLBAR:
     case WM_CTLCOLORSTATIC:
-        SetBkColor((HDC)wParam, crButtonFace);
+        win32::SetBkColor((HDC)wParam, crButtonFace);
         return (INT_PTR)hbrButtonFace;
     case WM_SETCURSOR:
     case WM_LBUTTONDOWN:
@@ -2028,7 +2028,7 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         if (iDiamond >= game.cPlayer || (int16_t)(pt.y - 48) % (dyArial8 + 4) >= dyArial8 + 1)
             break;
         if (message == WM_SETCURSOR) {
-            SetCursor(hcurHand);
+            win32::SetCursor(hcurHand);
             return 1;
         }
         if (!rgplr[iDiamond].fAi) {
@@ -2038,21 +2038,21 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         } else {
             iSel = 1;
         }
-        hmenuPopup = CreatePopupMenu();
+        hmenuPopup = win32::CreatePopupMenu();
         iPopMenuSel = -1;
         for (i = 0; i < 3; i++) {
             TextIO().pfnCchGetString(static_cast<StringId>(idsHumanControlled + i), szWork);
             mf = i == 1                                                         ? rgplr[iDiamond].fAi != 0 && rgplr[iDiamond].idAi != idAiMaid ? 0 : 3
                  : rgplr[iDiamond].fAi == 0 || rgplr[iDiamond].idAi == idAiMaid ? 0
                                                                                 : 3;
-            AppendMenu(hmenuPopup, (i == iSel ? 8 : 0) | mf, i + 15000, szWork);
+            win32::AppendMenu(hmenuPopup, (i == iSel ? 8 : 0) | mf, i + 15000, szWork);
         }
         ClientToScreen16(hwnd, &pt);
         tpm = message == WM_LBUTTONDOWN ? TPM_LEFTBUTTON : TPM_RIGHTBUTTON;
-        FUiTrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
-        DestroyMenu(hmenuPopup);
+        ui::TrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
+        win32::DestroyMenu(hmenuPopup);
         iRet = -1;
-        if (FUiPeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15100) {
+        if (ui::PeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15100) {
             iRet = msg.wParam - 15000;
         }
         if (iRet != -1 && iSel != iRet) {
@@ -2066,21 +2066,21 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             gd.fAisDone = FALSE;
             fProcessingTimer = TRUE;
             CFindTurnsOutstanding();
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
             DrawHostDialog2(hwnd, NULL);
             fProcessingTimer = FALSE;
         }
         return 0;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         if (ctickLast == 0) {
             CFindTurnsOutstanding();
         }
         if (!gd.fReadOnly) {
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
         }
         DrawHostDialog2(hwnd, hdc);
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -2100,8 +2100,8 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     iPassCnt = 0;
                 }
                 if (iPassCnt != 0) {
-                    wsprintf(szWork, TextIO().pfnCompressed(idsSureWantForceGenerateDTurnsRow), iPassCnt + 1);
-                    if (CompatChoiceIO().pfnMessageBoxA(GetFocus(), szWork, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_TASKMODAL) != IDYES) {
+                    win32::wsprintf(szWork, TextIO().pfnCompressed(idsSureWantForceGenerateDTurnsRow), iPassCnt + 1);
+                    if (CompatChoiceIO().pfnMessageBoxA(win32::GetFocus(), szWork, "Stars!", MB_YESNO | MB_ICONEXCLAMATION | MB_TASKMODAL) != IDYES) {
                         iPassCnt = 0;
                         return 1;
                     }
@@ -2115,33 +2115,33 @@ INT_PTR CALLBACK HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             if (LOWORD(wParam) == IDC_HOST_AUTO_GENERATE) {
                 EnsureAis();
             } else if (LOWORD(wParam) == IDCANCEL && gd.fClose) {
-                PostQuitMessage(vretExitValue);
+                win32::PostQuitMessage(vretExitValue);
             }
             return 1;
         case IDC_HOST_PASSWORD:
             if (!FCheckPassword())
                 break;
             lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
-            ControlIO().pfnHwndUiSetFocus(hwnd);
+            ControlIO().pfnSetFocus(hwnd);
             return fRet;
         case 1029:
             lpProc = MakeProcInstance(HostOptionsDialog, hInst);
-            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, lpProc, 0);
+            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_HOST_OPTIONS), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
-            ControlIO().pfnHwndUiSetFocus(hwnd);
+            ControlIO().pfnSetFocus(hwnd);
             if (fRet && !gd.fReadOnly) {
-                ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
+                ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), gd.fAllAis == 0 && (vtimer.fAutoGenWhenIn || vtimer.mdForce != 0));
             }
             return fRet;
         case IDC_HELP:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhHostModeDialog);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhHostModeDialog);
             return 1;
         }
         break;
     case WM_DESTROY:
-        KillTimer(hwnd, uTimerId);
+        win32::KillTimer(hwnd, uTimerId);
         uTimerId = 0;
         break;
     }
@@ -2157,7 +2157,7 @@ INT_PTR CALLBACK HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARA
     case WM_INITDIALOG:
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -2166,12 +2166,12 @@ INT_PTR CALLBACK HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARA
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSCROLLBAR:
     case WM_CTLCOLORSTATIC:
-        SetBkColor((HDC)wParam, crButtonFace);
+        win32::SetBkColor((HDC)wParam, crButtonFace);
         return (INT_PTR)hbrButtonFace;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         DrawHostOptions(hwnd, hdc, -1);
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         return 1;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -2180,7 +2180,7 @@ INT_PTR CALLBACK HostOptionsDialog(HWND hwnd, UINT message, WPARAM wParam, LPARA
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhHostModeDialog);
+            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhHostModeDialog);
             return 1;
         }
         break;
@@ -2207,8 +2207,8 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
             if (!FNewTurnAvail(idPlayer))
                 goto Done;
             idCur = idPlayer;
-            KillTimer(hwnd, uTimerId);
-            wsprintf(szExt, MPCTD, idPlayer + 1);
+            win32::KillTimer(hwnd, uTimerId);
+            win32::wsprintf(szExt, MPCTD, idPlayer + 1);
             DestroyCurGame();
             if (!FLoadGame(szBase, szExt)) {
                 AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
@@ -2216,34 +2216,34 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
             }
             idPlayer = idCur;
             CreateChildWindows();
-            uTimerId = SetTimer(NULL, hostTimerTurnReady, 1000, lpfnHostTimerProc);
+            uTimerId = win32::SetTimer(NULL, hostTimerTurnReady, 1000, lpfnHostTimerProc);
             uTimerType = hostTimerTurnReady;
-            FlashWindow(hwndFrame, TRUE);
-            ControlIO().pfnFUiSetWindowText(hwndFrame, TextIO().pfnCompressed(idsNewTurnAvailable2));
+            win32::FlashWindow(hwndFrame, TRUE);
+            ControlIO().pfnSetWindowText(hwndFrame, TextIO().pfnCompressed(idsNewTurnAvailable2));
             ControlIO().pfnMessageBeep(MB_ICONEXCLAMATION);
             cOut = 1;
             goto RedrawText;
         }
         if (uTimerType == hostTimerTurnReady) {
-            FlashWindow(hwndFrame, TRUE);
+            win32::FlashWindow(hwndFrame, TRUE);
             goto Done;
         }
     Loop:
         cOut = CFindTurnsOutstanding();
         if (gd.fAllAis) {
             AlertIO().pfnAlertSz(TextIO().pfnFormat(idsAutoGenerateDisabledBecauseHumanPlayersDead, NULL), MB_ICONHAND);
-            ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_HOST_AUTO_GENERATE), FALSE);
             goto Done;
         }
-        wsprintf(szWork, TextIO().pfnCompressed(idsHostModeDPlayer), cOut);
+        win32::wsprintf(szWork, TextIO().pfnCompressed(idsHostModeDPlayer), cOut);
         if (cOut != 1) {
             strcat(szWork, "s");
         }
         strcat(szWork, TextIO().pfnCompressed(idsOut));
-        ControlIO().pfnFUiSetWindowText(hwndFrame, szWork);
+        ControlIO().pfnSetWindowText(hwndFrame, szWork);
     RedrawText:
-        hwndT = GetWindow(hwndFrame, GW_HWNDPREV);
-        if (GetWindow(hwndT, GW_OWNER) == hwndFrame) {
+        hwndT = win32::GetWindow(hwndFrame, GW_HWNDPREV);
+        if (win32::GetWindow(hwndT, GW_OWNER) == hwndFrame) {
             ControlIO().pfnInvalidateRect(hwndT, NULL, TRUE);
         }
         if (cOut == 0) {
@@ -2251,12 +2251,12 @@ VOID CALLBACK HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime)
                 ShowProgressGauge();
             }
             EnsureAis();
-            hcurSav = SetCursor(LoadCursor(NULL, IDC_WAIT));
+            hcurSav = win32::SetCursor(win32::LoadCursor(NULL, IDC_WAIT));
             FGenerateTurn();
-            SetCursor(hcurSav);
+            win32::SetCursor(hcurSav);
             HideProgressGauge();
             if (ini.fGen) {
-                PostQuitMessage(vretExitValue);
+                win32::PostQuitMessage(vretExitValue);
             } else {
                 EnsureAis();
                 goto Loop;
@@ -2273,7 +2273,7 @@ void GetWindowRc(HWND hwnd, RECT *prc) {
     WINDOWPLACEMENT wndpl;
 
     wndpl.length = 22;
-    GetWindowPlacement(hwnd, &wndpl);
+    win32::GetWindowPlacement(hwnd, &wndpl);
     *prc = wndpl.rcNormalPosition;
     prc->right -= prc->left;
     prc->bottom -= prc->top;
@@ -2284,15 +2284,15 @@ void SetWindowIniString(char *sz, HWND hwnd) {
     char ch;
     RECT rc;
 
-    if (IsZoomed(hwnd) != 0) {
+    if (win32::IsZoomed(hwnd) != 0) {
         ch = 'M';
-    } else if (IsIconic(hwnd) != 0) {
+    } else if (win32::IsIconic(hwnd) != 0) {
         ch = 'I';
     } else {
         ch = 'R';
     }
     GetWindowRc(hwnd, &rc);
-    wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), ch, rc.left, rc.top, rc.right, rc.bottom);
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), ch, rc.left, rc.top, rc.right, rc.bottom);
     return;
 }
 
@@ -2322,50 +2322,50 @@ void WriteIniSettings() {
     if (gd.mdScreenSize == 0) {
         i |= 2;
     }
-    wsprintf(szWork, szPd, i);
+    win32::wsprintf(szWork, szPd, i);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsMain, szEntry);
     SetWindowIniString(szWork, hwndFrame);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsReportfleetwin, szEntry);
-    wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptFleet.ptDlg.x, vrptFleet.ptDlg.y, vrptFleet.ptDlg.x + vrptFleet.ptSize.x,
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptFleet.ptDlg.x, vrptFleet.ptDlg.y, vrptFleet.ptDlg.x + vrptFleet.ptSize.x,
              vrptFleet.ptDlg.y + vrptFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsReportefleetwin, szEntry);
-    wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptEFleet.ptDlg.x, vrptEFleet.ptDlg.y, vrptEFleet.ptDlg.x + vrptEFleet.ptSize.x,
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptEFleet.ptDlg.x, vrptEFleet.ptDlg.y, vrptEFleet.ptDlg.x + vrptEFleet.ptSize.x,
              vrptEFleet.ptDlg.y + vrptEFleet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsReportbtlwin, szEntry);
-    wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptBattle.ptDlg.x, vrptBattle.ptDlg.y, vrptBattle.ptDlg.x + vrptBattle.ptSize.x,
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptBattle.ptDlg.x, vrptBattle.ptDlg.y, vrptBattle.ptDlg.x + vrptBattle.ptSize.x,
              vrptBattle.ptDlg.y + vrptBattle.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsReportplanwin, szEntry);
-    wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptPlanet.ptDlg.x, vrptPlanet.ptDlg.y, vrptPlanet.ptDlg.x + vrptPlanet.ptSize.x,
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsC04d04d04d04d), 77, vrptPlanet.ptDlg.x, vrptPlanet.ptDlg.y, vrptPlanet.ptDlg.x + vrptPlanet.ptSize.x,
              vrptPlanet.ptDlg.y + vrptPlanet.ptSize.y);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsLayout, szEntry);
-    wsprintf(szWork, szPd, iWindowLayout);
+    win32::wsprintf(szWork, szPd, iWindowLayout);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle1width, szEntry);
-    wsprintf(szWork, szPd, vfs.dxPlanWant);
+    win32::wsprintf(szWork, szPd, vfs.dxPlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle1height, szEntry);
-    wsprintf(szWork, szPd, vfs.dyMsgWant);
+    win32::wsprintf(szWork, szPd, vfs.dyMsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle1height2, szEntry);
-    wsprintf(szWork, szPd, vfs.dyMinWant);
+    win32::wsprintf(szWork, szPd, vfs.dyMinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle2width, szEntry);
-    wsprintf(szWork, szPd, vfs.dx2PlanWant);
+    win32::wsprintf(szWork, szPd, vfs.dx2PlanWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle2height, szEntry);
-    wsprintf(szWork, szPd, vfs.dy2MsgWant);
+    win32::wsprintf(szWork, szPd, vfs.dy2MsgWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsStyle2height2, szEntry);
-    wsprintf(szWork, szPd, vfs.dy2MinWant);
+    win32::wsprintf(szWork, szPd, vfs.dy2MinWant);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsToolbar, szEntry);
-    wsprintf(szWork, szPd, gd.fToolbar);
+    win32::wsprintf(szWork, szPd, gd.fToolbar);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     iPass = 2;
     rgtile = rgtilePlanet;
@@ -2408,13 +2408,13 @@ void WriteIniSettings() {
     case grobjOther:
         ch = 'E';
     }
-    wsprintf(szWork, TextIO().pfnCompressed(idsCCD), ch, (int16_t)(int8_t)LOBYTE(idPlayer + 66), sel.id);
+    win32::wsprintf(szWork, TextIO().pfnCompressed(idsCCD), ch, (int16_t)(int8_t)LOBYTE(idPlayer + 66), sel.id);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsMessage, szEntry);
-    wsprintf(szWork, PCTD, iMsgCur);
+    win32::wsprintf(szWork, PCTD, iMsgCur);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsGameid, szEntry);
-    wsprintf(szWork, "%lx", game.lid);
+    win32::wsprintf(szWork, "%lx", game.lid);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsScanzoom, szEntry);
     szWork[0] = iScanZoom + '5';
@@ -2452,60 +2452,60 @@ void WriteIniSettings() {
             gd.fWriteTurnNum = FALSE;
         }
         TextIO().pfnCchGetString(idsFile1, szEntry);
-        wsprintf(szWork, "%s.m%d", szBase, idPlayer + 1);
+        win32::wsprintf(szWork, "%s.m%d", szBase, idPlayer + 1);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     }
     TextIO().pfnCchGetString(idsMisc, szSection);
     if (gd.fChgReports) {
         TextIO().pfnCchGetString(idsReportplanfld, szEntry);
-        wsprintf(szWork, PCTD, LOWORD(vrptPlanet.grbitVisible));
+        win32::wsprintf(szWork, PCTD, LOWORD(vrptPlanet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportplansort, szEntry);
         i = vrptPlanet.icolSort;
         if (vrptPlanet.fAscending) {
             i |= 0x100;
         }
-        wsprintf(szWork, PCTD, i);
+        win32::wsprintf(szWork, PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportfleetfld, szEntry);
-        wsprintf(szWork, PCTD, LOWORD(vrptFleet.grbitVisible));
+        win32::wsprintf(szWork, PCTD, LOWORD(vrptFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportfleetsort, szEntry);
         i = vrptFleet.icolSort;
         if (vrptFleet.fAscending) {
             i |= 0x100;
         }
-        wsprintf(szWork, PCTD, i);
+        win32::wsprintf(szWork, PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportefleetfld, szEntry);
-        wsprintf(szWork, PCTD, LOWORD(vrptEFleet.grbitVisible));
+        win32::wsprintf(szWork, PCTD, LOWORD(vrptEFleet.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportefltsort, szEntry);
         i = vrptEFleet.icolSort;
         if (vrptEFleet.fAscending) {
             i |= 0x100;
         }
-        wsprintf(szWork, PCTD, i);
+        win32::wsprintf(szWork, PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportbtlfld, szEntry);
-        wsprintf(szWork, PCTD, LOWORD(vrptBattle.grbitVisible));
+        win32::wsprintf(szWork, PCTD, LOWORD(vrptBattle.grbitVisible));
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportbtlsort, szEntry);
         i = vrptBattle.icolSort;
         if (vrptBattle.fAscending) {
             i |= 0x100;
         }
-        wsprintf(szWork, PCTD, i);
+        win32::wsprintf(szWork, PCTD, i);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
         TextIO().pfnCchGetString(idsReportdefgraph, szEntry);
-        wsprintf(szWork, PCTD, gd.iCurGraph);
+        win32::wsprintf(szWork, PCTD, gd.iCurGraph);
         ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     }
     TextIO().pfnCchGetString(idsHistoryinfo, szEntry);
-    wsprintf(szWork, PCTD, uDateInstalled);
+    win32::wsprintf(szWork, PCTD, uDateInstalled);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     TextIO().pfnCchGetString(idsVcrspeed, szEntry);
-    wsprintf(szWork, PCTD, viSpeedVCR);
+    win32::wsprintf(szWork, PCTD, viSpeedVCR);
     ProfileTextIO().pfnWriteString(szSection, szEntry, szWork, szIniFile);
     WriteIniPresets(szIniFile);
     return;
@@ -2522,7 +2522,7 @@ void RefitFrameChildren() {
     int16_t dyTot;
     int16_t yScanner;
 
-    if (hwndFrame && IsIconic(hwndFrame) == 0) {
+    if (hwndFrame && win32::IsIconic(hwndFrame) == 0) {
         switch (iWindowLayout) {
         case layoutLarge:
         default:
@@ -2531,7 +2531,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dxPlanWant;
             }
-            vfs.xTop = (((vfs.xTop) > (198 + GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + GetSystemMetrics(SM_CXVSCROLL)));
+            vfs.xTop = (((vfs.xTop) > (198 + win32::GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + win32::GetSystemMetrics(SM_CXVSCROLL)));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dyMsgWant <= dyMsgMin ? dyMsgMin : vfs.dyMsgWant;
@@ -2541,8 +2541,8 @@ void RefitFrameChildren() {
             if (vfs.dy - (dyMsg + dyMin + 16) < 50) {
                 dyT = vfs.dy - 66;
                 dyTot = dyMsg + dyMin;
-                dyMsg = MulDiv(dyT, dyMsg, dyTot);
-                dyMin = MulDiv(dyT, dyMin, dyTot);
+                dyMsg = win32::MulDiv(dyT, dyMsg, dyTot);
+                dyMin = win32::MulDiv(dyT, dyMin, dyTot);
                 if (dyMsg < dyMsgMin) {
                     dyMin -= dyMsgMin - dyMsg;
                     dyMsg = dyMsgMin;
@@ -2556,16 +2556,16 @@ void RefitFrameChildren() {
             if (!hwndScanner)
                 break;
             if (gd.fToolbar) {
-                FUiMoveWindow(hwndTb, vfs.xTop + 8, 0, vfs.dx - vfs.xTop - 8, 36, TRUE);
+                ui::MoveWindow(hwndTb, vfs.xTop + 8, 0, vfs.dx - vfs.xTop - 8, 36, TRUE);
                 yScanner = 36;
             } else {
-                FUiMoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
+                ui::MoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
                 yScanner = 0;
             }
-            FUiMoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.dy - yScanner, TRUE);
+            ui::MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.dy - yScanner, TRUE);
             MovePlanetPane(0, 0, vfs.xTop, vfs.y1);
-            FUiMoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
-            FUiMoveWindow(hwndMine, 0, vfs.y2 + 8, vfs.xTop, dyMin, TRUE);
+            ui::MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
+            ui::MoveWindow(hwndMine, 0, vfs.y2 + 8, vfs.xTop, dyMin, TRUE);
             break;
         case layoutMedium:
         case layoutSmall:
@@ -2574,7 +2574,7 @@ void RefitFrameChildren() {
             } else {
                 vfs.xTop = vfs.dx2PlanWant;
             }
-            vfs.xTop = (((vfs.xTop) > (198 + GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + GetSystemMetrics(SM_CXVSCROLL)));
+            vfs.xTop = (((vfs.xTop) > (198 + win32::GetSystemMetrics(SM_CXVSCROLL))) ? (vfs.xTop) : (198 + win32::GetSystemMetrics(SM_CXVSCROLL)));
             dyMsgMin = (0xd * dyArial8 >> 1) + 0xa;
             dyMinMin = 13 * dyArial8 - 36;
             dyMsg = vfs.dy2MsgWant <= dyMsgMin ? dyMsgMin : vfs.dy2MsgWant;
@@ -2591,29 +2591,29 @@ void RefitFrameChildren() {
             vfs.y2 = vfs.dy - dyMin - 8;
             if (hwndScanner) {
                 if (gd.fToolbar) {
-                    FUiMoveWindow(hwndTb, 0, 0, vfs.dx, 36, TRUE);
+                    ui::MoveWindow(hwndTb, 0, 0, vfs.dx, 36, TRUE);
                     yScanner = 36;
                 } else {
-                    FUiMoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
+                    ui::MoveWindow(hwndTb, 0, -100, 50, 50, TRUE);
                     yScanner = 0;
                 }
-                FUiMoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.y2 - yScanner, TRUE);
+                ui::MoveWindow(hwndScanner, vfs.xTop + 8, yScanner, vfs.dx - vfs.xTop - 8, vfs.y2 - yScanner, TRUE);
                 MovePlanetPane(0, yScanner, vfs.xTop, vfs.y1 - yScanner);
-                FUiMoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
-                FUiMoveWindow(hwndMine, vfs.xTop + 8, vfs.y2 + 8, vfs.dx - vfs.xTop - 8, dyMin, TRUE);
+                ui::MoveWindow(hwndMessage, 0, vfs.y1 + 8, vfs.xTop, dyMsg, TRUE);
+                ui::MoveWindow(hwndMine, vfs.xTop + 8, vfs.y2 + 8, vfs.dx - vfs.xTop - 8, dyMin, TRUE);
             }
         }
         hmenu = GetASubMenu(hwndFrame, menuView);
-        hmenu = GetSubMenu(hmenu, 4);
+        hmenu = win32::GetSubMenu(hmenu, 4);
         for (i = 130; i <= 132; i++) {
-            CheckMenuItem(hmenu, i, i - 130 == iWindowLayout ? MF_CHECKED : MF_UNCHECKED);
+            win32::CheckMenuItem(hmenu, i, i - 130 == iWindowLayout ? MF_CHECKED : MF_UNCHECKED);
         }
     }
     return;
 }
 
 LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
+    NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     HDC         hdc;
     int16_t     i;
     HPALETTE    hpalSav;
@@ -2639,7 +2639,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] TitleWndProc WM_CREATE begin hwnd=%p visible=%d\n",
-                    (void *)hwnd, IsWindowVisible(hwnd));
+                    (void *)hwnd, win32::IsWindowVisible(hwnd));
         if (vcScreenColors >= 8) {
             vhdibTitle = HdibLoadBigResource(IDDIB_SPLASH);
             if (!vhpalSplash && vhdibTitle) {
@@ -2654,40 +2654,40 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (i = 0; i < 5; i++) {
             idButton = i == 3 ? IDC_LIBRARY_TUTORIAL : i == 4 ? 3 : i;
             psz = TextIO().pfnCompressed(static_cast<StringId>(i == 3 ? idsLibraryStartTutorial : idsNewGame + idButton));
-            hwndButton = HwndUiCreateWindowEx(0, "BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
+            hwndButton = ui::CreateWindowEx(0, "BUTTON", psz, WS_CHILD | WS_VISIBLE | WS_TABSTOP, xCur, rc.bottom - dy - (int16_t)(5 * dyArial8) / 2, dx, dy, hwnd,
                                       (HMENU)(uintptr_t)idButton, hInst, NULL);
             if (i != 3) rghwndBtnSplash[idButton] = hwndButton;
             if (i == 2 && (szBase[0] == 0 || !FFileExists(szBase))) {
-                ControlIO().pfnFUiEnableWindow(rghwndBtnSplash[2], FALSE);
+                ControlIO().pfnEnableWindow(rghwndBtnSplash[2], FALSE);
             }
             if (rc.bottom < 500) {
-                ControlIO().pfnLUiSendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+                ControlIO().pfnSendMessage(hwndButton, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
             }
             xCur += dx + dxGap;
         }
         InitLibraryGames(hwnd, &rc);
         InitLibraryRaces(hwnd, &rc);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
-            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", IsWindowVisible(hwnd));
-        ControlIO().pfnFUiSetWindowText(rghwndBtnSplash[1], TextIO().pfnCompressed(idsLibraryOpenGame));
+            fprintf(stderr, "[DEBUG-library-startup] TitleWndProc library initialized visible=%d\n", win32::IsWindowVisible(hwnd));
+        ControlIO().pfnSetWindowText(rghwndBtnSplash[1], TextIO().pfnCompressed(idsLibraryOpenGame));
         // Paint while the native window is hidden: startup cleanup can delay
         // the first queued WM_PAINT after CreateWindow makes it visible.
         ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
-        ControlIO().pfnFUiUpdateWindow(hwnd);
+        ControlIO().pfnUpdateWindow(hwnd);
         for (i = 0; i < 4; i++) {
-            ControlIO().pfnFUiUpdateWindow(rghwndBtnSplash[i]);
+            ControlIO().pfnUpdateWindow(rghwndBtnSplash[i]);
         }
-        ControlIO().pfnFUiUpdateWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
+        ControlIO().pfnUpdateWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_TUTORIAL));
         break;
     case WM_QUERYNEWPALETTE:
     MapIt:
         if (vcScreenColors < 8)
             break;
-        hdc = GetDC(hwnd);
-        hpalSav = SelectPalette(hdc, vhpalSplash, FALSE);
-        i = RealizePalette(hdc);
-        SelectPalette(hdc, hpalSav, FALSE);
-        ReleaseDC(hwnd, hdc);
+        hdc = win32::GetDC(hwnd);
+        hpalSav = win32::SelectPalette(hdc, vhpalSplash, FALSE);
+        i = win32::RealizePalette(hdc);
+        win32::SelectPalette(hdc, hpalSav, FALSE);
+        win32::ReleaseDC(hwnd, hdc);
         if (i != 0) {
             ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
             return 1;
@@ -2699,8 +2699,8 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_DESTROY:
         if (vhdibTitle) {
-            GlobalUnlock(vhdibTitle);
-            FreeResource(vhdibTitle);
+            win32::GlobalUnlock(vhdibTitle);
+            win32::FreeResource(vhdibTitle);
             vhdibTitle = 0;
         }
         if (fFreeingTitle)
@@ -2710,7 +2710,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             goto Default;
         }
         WriteIniSettings();
-        PostQuitMessage(vretExitValue);
+        win32::PostQuitMessage(vretExitValue);
         goto Default;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
@@ -2723,17 +2723,17 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0:
             DesktopChoiceIO().pfnNewGameWizard(hwnd, FALSE);
             if (!lpPlanets && game.lid == 0) {
-                FUiShowWindow(hwndFrame, SW_HIDE);
-                FUiShowWindow(hwndTitle, SW_SHOW);
-                ControlIO().pfnHwndUiSetFocus(hwndTitle);
+                ui::ShowWindow(hwndFrame, SW_HIDE);
+                ui::ShowWindow(hwndTitle, SW_SHOW);
+                ControlIO().pfnSetFocus(hwndTitle);
                 break;
             }
             if (!fFreeingTitle) {
                 fFreeingTitle = TRUE;
-                ControlIO().pfnFUiDestroyWindow(hwndTitle);
+                ControlIO().pfnDestroyWindow(hwndTitle);
                 hwndTitle = 0;
             }
-            FUiShowWindow(hwndFrame, SW_SHOW);
+            ui::ShowWindow(hwndFrame, SW_SHOW);
             break;
         case IDC_LIBRARY_IMPORT:
             if (FImportLibraryGame(hwnd, NULL)) {
@@ -2798,7 +2798,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             goto LOpenGame;
         case IDC_LIBRARY_PLAYERS:
             if (HIWORD(wParam) == CBN_SELCHANGE)
-                ControlIO().pfnFUiEnableWindow(rghwndBtnSplash[1], LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
+                ControlIO().pfnEnableWindow(rghwndBtnSplash[1], ui::SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0) != CB_ERR);
             break;
         case IDC_LIBRARY_HOST_GAMES:
             if (HIWORD(wParam) != LBN_DBLCLK) break;
@@ -2810,20 +2810,20 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (FOpenGame(hwnd, FALSE) > 0) {
                 if (!fFreeingTitle) {
                     fFreeingTitle = TRUE;
-                    ControlIO().pfnFUiDestroyWindow(hwndTitle);
+                    ControlIO().pfnDestroyWindow(hwndTitle);
                     hwndTitle = 0;
                 }
                 if (idPlayer != iplrNone) {
-                    FUiShowWindow(hwndFrame, SW_SHOW);
+                    ui::ShowWindow(hwndFrame, SW_SHOW);
                 }
                 RememberLibraryGame();
                 InitializeMenu(NULL);
-                PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+                win32::PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
                 if (game.fTutorial && idPlayer == 0) {
                     StartTutor(FALSE);
                 }
-            } else if (IsWindow(hwndTitle)) {
-                ControlIO().pfnHwndUiSetFocus(hwnd);
+            } else if (win32::IsWindow(hwndTitle)) {
+                ControlIO().pfnSetFocus(hwnd);
             }
             ini.fStartupFile = FALSE;
             break;
@@ -2835,7 +2835,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 ExitWindows(vretExitValue, 0);
             } else {
                 WriteIniSettings();
-                PostQuitMessage(vretExitValue);
+                win32::PostQuitMessage(vretExitValue);
             }
         }
         break;
@@ -2853,23 +2853,23 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_PAINT:
-        if (IsIconic(hwnd) != 0) {
-            hdc = BeginPaint(hwnd, &ps);
-            DrawIcon(hdc, 2, 2, hiconStars);
-            EndPaint(hwnd, &ps);
+        if (win32::IsIconic(hwnd) != 0) {
+            hdc = win32::BeginPaint(hwnd, &ps);
+            win32::DrawIcon(hdc, 2, 2, hiconStars);
+            win32::EndPaint(hwnd, &ps);
             break;
         }
-        plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+        plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
         plfOwner.reset(plf);
-        hdc = BeginPaint(hwnd, &ps);
-        hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
+        hdc = win32::BeginPaint(hwnd, &ps);
+        hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonFace);
         ControlIO().pfnGetClientRect(hwnd, &rcWnd);
         if (vcScreenColors >= 8) {
-            SetTextColor(hdc, 50298879);
+            win32::SetTextColor(hdc, 50298879);
             if (!vhdibTitle)
                 goto LTry16Color;
-            SelectPalette(hdc, vhpalSplash, FALSE);
-            RealizePalette(hdc);
+            win32::SelectPalette(hdc, vhpalSplash, FALSE);
+            win32::RealizePalette(hdc);
             DibBlt(hdc, 0, 0, rcWnd.right, rcWnd.bottom, vhdibTitle, 0, 0, 800, 600, 13369376);
         } else {
         LTry16Color:
@@ -2880,32 +2880,32 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             DrawABunchOfStars(hdc, &rcWnd);
             plf->lfHeight = (int16_t)-rcWnd.bottom / 3;
             strcpy(plf->lfFaceName, rgszArial[3]);
-            hfont = CreateFontIndirect(plf);
-            SetTextColor(hdc, 10158235);
+            hfont = win32::CreateFontIndirect(plf);
+            win32::SetTextColor(hdc, 10158235);
             if (hfont) {
-                hfontSav = (HFONT)SelectObject(hdc, hfont);
-                SetBkMode(hdc, TRANSPARENT);
+                hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
+                win32::SetBkMode(hdc, TRANSPARENT);
                 rcT = rcWnd;
                 rcT.bottom = (int16_t)(3 * rcT.bottom) / 4;
                 RcCtrTextOut(hdc, &rcT, "Stars!", 6);
-                SelectObject(hdc, hfontSav);
-                DeleteObject(hfont);
+                win32::SelectObject(hdc, hfontSav);
+                win32::DeleteObject(hfont);
             }
         }
-        SelectObject(hdc, rghfontArial10[1]);
-        SetBkMode(hdc, TRANSPARENT);
+        win32::SelectObject(hdc, rghfontArial10[1]);
+        win32::SetBkMode(hdc, TRANSPARENT);
         SzVersion();
-        GetWindowRect(rghwndBtnSplash[0], &rcT);
-        MapWindowPoints(NULL, hwnd, (POINT *)&rcT, 2);
+        win32::GetWindowRect(rghwndBtnSplash[0], &rcT);
+        win32::MapWindowPoints(NULL, hwnd, (POINT *)&rcT, 2);
         rcWnd.top = rcT.top - (int16_t)(9 * dyArial8) / 2;
         rcWnd.bottom = (int16_t)(3 * dyArial8) / 2 + rcWnd.top;
         RcCtrTextOut(hdc, &rcWnd, szWork, strlen(szWork));
-        EndPaint(hwnd, &ps);
+        win32::EndPaint(hwnd, &ps);
         plfOwner.reset();
         break;
     default:
     Default:
-        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
+        return ui::DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
 }
@@ -2918,7 +2918,7 @@ void RestoreGameWindows() {
     ControlIO().pfnRefitFrameChildren();
     gd.fNoScannerDraw = FALSE;
     ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
-    ControlIO().pfnFUiUpdateWindow(hwndScanner);
+    ControlIO().pfnUpdateWindow(hwndScanner);
     return;
 }
 
@@ -2926,7 +2926,7 @@ int16_t FinishOpenGame() {
     GrobjClass grobjIni;
     if (idPlayer != iplrNone) {
         grobjIni = static_cast<GrobjClass>(ini.grobjSel);
-        ControlIO().pfnLUiSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+        ControlIO().pfnSendMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         if (grobjIni != grobjNone && ini.grobjSel == 0) {
             return 1;
         }
@@ -2934,7 +2934,7 @@ int16_t FinishOpenGame() {
     } else {
         if (hwndTitle && !fFreeingTitle) {
             fFreeingTitle = TRUE;
-            ControlIO().pfnFUiDestroyWindow(hwndTitle);
+            ControlIO().pfnDestroyWindow(hwndTitle);
             hwndTitle = 0;
         }
         ControlIO().pfnBringUpHostDlg();

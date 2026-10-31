@@ -25,11 +25,11 @@ static COMPATTIMER *LpTimer(HWND hwnd, UINT_PTR id) {
     return NULL;
 }
 
-UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
+UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     COMPATTIMER *lp;
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd))) {
-        SetLastError(ERROR_INVALID_HANDLE); return 0;
+        win32::SetLastError(ERROR_INVALID_HANDLE); return 0;
     }
     if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) {
         if (!SDL_InitSubSystem(SDL_INIT_EVENTS)) return 0;
@@ -38,7 +38,7 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     lp = LpTimer(hwnd, id);
     if (!lp) {
         lp = (COMPATTIMER *)(calloc(1, sizeof(*lp)));
-        if (!lp) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
+        if (!lp) { win32::SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         lp->hwnd = hwnd;
         if (!hwnd) {
             do { id = idTimerNext++; } while (id == 0 || LpTimer(NULL, id));
@@ -52,7 +52,7 @@ UINT_PTR WINAPI SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     return lp->id ? lp->id : 1;
 }
 
-BOOL WINAPI KillTimer(HWND hwnd, UINT_PTR id) {
+BOOL win32::KillTimer(HWND hwnd, UINT_PTR id) {
     COMPATTIMER **lplp, *lp;
 
     if (!SDL_IsMainThread()) return FALSE;
@@ -68,7 +68,7 @@ BOOL WINAPI KillTimer(HWND hwnd, UINT_PTR id) {
 
 static BOOL FTimerMatches(COMPATTIMER *lp, HWND hwnd, UINT msgMin, UINT msgMax) {
     return ((msgMin == 0 && msgMax == 0) || (msgMin <= WM_TIMER && msgMax >= WM_TIMER)) &&
-           (!hwnd || ((INT_PTR)hwnd == -1 ? !lp->hwnd : hwnd == lp->hwnd || IsChild(hwnd, lp->hwnd)));
+           (!hwnd || ((INT_PTR)hwnd == -1 ? !lp->hwnd : hwnd == lp->hwnd || win32::IsChild(hwnd, lp->hwnd)));
 }
 
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {

@@ -138,14 +138,14 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         lpitem->idControl = lpwin->idChild;
         lpitem->dwStyle = lpwin->dwStyle; lpitem->dwExStyle = lpwin->dwExStyle;
         lpitem->iControl = lpwin->iControl; lpitem->fDialog = lpwin->fDialog;
-        lpitem->fVisible = IsWindowVisible(lpwin); lpitem->fEnabled = IsWindowEnabled(lpwin);
-        lpitem->fFocused = GetFocus() == lpwin; lpitem->fCaptured = GetCapture() == lpwin;
+        lpitem->fVisible = win32::IsWindowVisible(lpwin); lpitem->fEnabled = win32::IsWindowEnabled(lpwin);
+        lpitem->fFocused = win32::GetFocus() == lpwin; lpitem->fCaptured = win32::GetCapture() == lpwin;
         lpitem->fUtf8Text = TRUE;
         lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass.get());
         lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & ES_PASSWORD) ?
                                     "[password]" : lpwin->pszTitle);
-        if (!lpitem->pszClass || !lpitem->pszText || !GetWindowRect(lpwin, &lpitem->rcWindow) ||
-            !GetClientRect(lpwin, &lpitem->rcClient)) {
+        if (!lpitem->pszClass || !lpitem->pszText || !win32::GetWindowRect(lpwin, &lpitem->rcWindow) ||
+            !win32::GetClientRect(lpwin, &lpitem->rcClient)) {
             StarsCompatFreeHierarchy(lpsnap);
             return FALSE;
         }
@@ -208,15 +208,15 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
 }
 
 static void InspectDetails(HWND hwnd) {
-    HWND hwndList = GetDlgItem(hwnd, 1);
-    int i = (int)SendMessageA(hwndList, LB_GETCURSEL, 0, 0);
+    HWND hwndList = win32::GetDlgItem(hwnd, 1);
+    int i = (int)win32::SendMessageA(hwndList, LB_GETCURSEL, 0, 0);
     LRESULT iItem;
     const STARSCOMPATWINDOW *lp;
     char *psz;
     char szStyle[2048], szExStyle[2048];
     size_t cb;
     if (i == LB_ERR) return;
-    iItem = SendMessageA(hwndList, LB_GETITEMDATA, (WPARAM)i, 0);
+    iItem = win32::SendMessageA(hwndList, LB_GETITEMDATA, (WPARAM)i, 0);
     if (iItem < 0 || (size_t)iItem >= snapInspector.cWindow) return;
     lp = &snapInspector.rgWindow[iItem];
     FormatStyles(lp, FALSE, szStyle, sizeof(szStyle));
@@ -234,7 +234,7 @@ static void InspectDetails(HWND hwnd) {
         (unsigned)lp->dwStyle, szStyle, (unsigned)lp->dwExStyle, szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
-    SetWindowTextA(GetDlgItem(hwnd, 2), psz);
+    win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), psz);
     SDL_free(psz);
 }
 
@@ -258,21 +258,21 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, (intptr_t)lp->idControl, szText, lp->fVisible ? "" : " (hidden)");
-        iRow = (int)SendMessageA(hwndList, LB_ADDSTRING, 0, (LPARAM)sz);
-        if (iRow >= 0) SendMessageA(hwndList, LB_SETITEMDATA, (WPARAM)iRow, (LPARAM)i);
+        iRow = (int)win32::SendMessageA(hwndList, LB_ADDSTRING, 0, (LPARAM)sz);
+        if (iRow >= 0) win32::SendMessageA(hwndList, LB_SETITEMDATA, (WPARAM)iRow, (LPARAM)i);
         InspectRows(hwndList, lp->id, cDepth + 1);
     }
 }
 
 static BOOL RefreshInspector(HWND hwnd) {
     STARSCOMPATSNAPSHOT snap = {};
-    HWND hwndList = GetDlgItem(hwnd, 1);
+    HWND hwndList = win32::GetDlgItem(hwnd, 1);
     if (!StarsCompatCaptureHierarchy(&snap)) return FALSE;
-    SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
+    win32::SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
     StarsCompatFreeHierarchy(&snapInspector);
     snapInspector = snap;
     InspectRows(hwndList, 0, 0);
-    SendMessageA(hwndList, LB_SETCURSEL, 0, 0);
+    win32::SendMessageA(hwndList, LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);
     return TRUE;
 }
@@ -283,25 +283,25 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     int cxList, fPainted;
     switch (msg) {
     case WM_CREATE:
-        if (!CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY,
+        if (!win32::CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY,
                            8, 40, 400, 500, hwnd, (HMENU)(INT_PTR)1, NULL, NULL) ||
-            !CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
+            !win32::CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
                            ES_READONLY | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL,
                            420, 40, 360, 500, hwnd, (HMENU)(INT_PTR)2, NULL, NULL) ||
-            !CreateWindow("Button", "Refresh", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            !win32::CreateWindow("Button", "Refresh", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
                            8, 8, 100, 24, hwnd, (HMENU)(INT_PTR)3, NULL, NULL)) return -1;
-        if (pfnObjectInspector) CreateWindow("Button", "Map objects", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+        if (pfnObjectInspector) win32::CreateWindow("Button", "Map objects", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                                               120, 8, 110, 24, hwnd, (HMENU)(INT_PTR)4, NULL, NULL);
         return 0;
     case WM_ERASEBKGND:
-        if (!GetClientRect(hwnd, &rc) || !(hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE)))) return 0;
-        fPainted = FillRect((HDC)w, &rc, hbr);
-        DeleteObject(hbr);
+        if (!win32::GetClientRect(hwnd, &rc) || !(hbr = win32::CreateSolidBrush(win32::GetSysColor(COLOR_BTNFACE)))) return 0;
+        fPainted = win32::FillRect((HDC)w, &rc, hbr);
+        win32::DeleteObject(hbr);
         return fPainted;
     case WM_SIZE:
-        GetClientRect(hwnd, &rc); cxList = StarsMax(0, rc.right / 2 - 12);
-        MoveWindow(GetDlgItem(hwnd, 1), 8, 40, cxList, StarsMax(0, rc.bottom - 48), TRUE);
-        MoveWindow(GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
+        win32::GetClientRect(hwnd, &rc); cxList = StarsMax(0, rc.right / 2 - 12);
+        win32::MoveWindow(win32::GetDlgItem(hwnd, 1), 8, 40, cxList, StarsMax(0, rc.bottom - 48), TRUE);
+        win32::MoveWindow(win32::GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
         return 0;
     case WM_COMMAND:
         if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshInspector(hwnd);
@@ -310,7 +310,7 @@ static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_DESTROY:
         idInspector = 0; StarsCompatFreeHierarchy(&snapInspector); return 0;
-    default: return DefWindowProcA(hwnd, msg, w, l);
+    default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }
 
@@ -322,17 +322,17 @@ HWND StarsCompatShowInspector(void) {
     if (!hwnd) {
         wc.lpfnWndProc = InspectorProc; wc.lpszClassName = "StarsCompatInspector";
         if (!fInspectorClass) {
-            if (!RegisterClassA(&wc)) return NULL;
+            if (!win32::RegisterClassA(&wc)) return NULL;
             fInspectorClass = TRUE;
         }
-        hwnd = CreateWindow(wc.lpszClassName, "Stars window inspector", WS_OVERLAPPEDWINDOW,
+        hwnd = win32::CreateWindow(wc.lpszClassName, "Stars window inspector", WS_OVERLAPPEDWINDOW,
                              CW_USEDEFAULT, CW_USEDEFAULT, 900, 600, NULL, NULL, NULL, NULL);
         if (!hwnd) return NULL;
         idInspector = StarsCompatWindowId(hwnd);
     }
-    if (!RefreshInspector(hwnd)) { DestroyWindow(hwnd); return NULL; }
-    ShowWindow(hwnd, SW_SHOWNORMAL);
-    SetFocus(GetDlgItem(hwnd, 1));
+    if (!RefreshInspector(hwnd)) { win32::DestroyWindow(hwnd); return NULL; }
+    win32::ShowWindow(hwnd, SW_SHOWNORMAL);
+    win32::SetFocus(win32::GetDlgItem(hwnd, 1));
     return hwnd;
 }
 

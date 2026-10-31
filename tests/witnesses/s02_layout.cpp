@@ -8,7 +8,7 @@ static int16_t     GetString(StringId, char *out) {
     strcpy(out, "key");
     return 3;
 }
-static DWORD WINAPI ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
+static DWORD ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     size_t n = strlen(input);
     if (n >= cap)
         n = cap - 1;
@@ -74,7 +74,7 @@ int main(void) {
     CHECK(!wn.fInitalized && !wn.fMaximized);
     for (i = 0; i < sizeof(expected) / sizeof(expected[0]); i++) {
         input = strings[i];
-        CHECK(GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
+        CHECK(win32::GetPrivateProfileIntA("a", "b", 7, "unused") == expected[i]);
     }
     printf("S02 linked C witnesses: %d passed\n", checks);
     return 0;

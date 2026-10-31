@@ -2,8 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c04-c05-linked-tests` from PR #70 (`b12e172`),
-merged into `develop` at `caf8d27`.
+Current continuation: `codex/cpp-c06-namespaces` from C04/C05 PR #72
+(`c6940721`); that PR targets `develop` after merged PR #70 (`caf8d27`).
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -28,9 +28,9 @@ verification receipts below decide completion.
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
 | C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
 | C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
-| C04 | Locally complete; enabled CI pending | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
-| C05 | Locally complete; enabled CI pending | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
-| C06 | Pending | Replace generated wrapper names and all 23 C03 prefixed entry names with `ui::EnableWindow`-style calls; remove redundant forwarding functions while preserving cleanup-before-error-delivery and Windows SDK isolation. |
+| C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
+| C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
+| C06 | Qualification active | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
 | C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
 | C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
@@ -427,7 +427,8 @@ units and resource sanitizers. The witness/tutorial builds both reject the same
 fixture-only `snprintf` truncation warning under GCC. The fixture now formats
 into a full-size temporary and explicitly retains the original 14-byte text
 limit; its linked witness and strict GCC syntax check pass. The corrected CI
-run remains pending; no production behavior or independent expectation changes.
+run passes all 15 enabled jobs at `c6940721`; no production behavior or independent
+expectation changes. The two slow full platform jobs retain their opt-in policy.
 
 An additional historical precision experiment exposed a pre-existing reference
 adapter issue: its frozen C bodies include current C++ headers. The arm64 run
@@ -440,3 +441,43 @@ C06 remains the approved next checkpoint: use `ui::` operation basenames, replac
 all 23 C03 prefixed APIs, remove redundant forwarding functions and preserve the
 cleanup-before-error-delivery and SDK isolation contracts. C07–C10 follow in
 focused, dependent PRs for review; no PR is merged by the agent.
+
+
+## C06: actual wrapper namespaces
+
+The [boundary inventory](CPP-C06-BOUNDARIES.md) and JSON sidecar account for all
+23 checked entries, 223 raw API declarations plus common-control initialization,
+38 independent shared SDK vectors and the unchanged moved Windows process bodies.
+`ui::` names are the implementations themselves; old prefixed names and generated
+Windows aliases are deleted. Every checked body is identical after qualification.
+Their raw/checked distinction retains cleanup-before-error-delivery. Wrapper tags
+are actual namespaced types, with one core/UI geometry definition; `win32::MSG`
+coexists with SDL's native SDK hook. Windows process services are isolated from
+application records and wrapper headers. The archived observer remains C-compatible
+and uses explicit narrow SDK calls in its current C++ type-check entry.
+
+Local qualification passes all 149 current desktop checks across the final full
+collection and four unchanged-limit workflow retries. That full run times out
+four workflows during confirmed system sleep; all four isolated retries pass
+under a temporary process-scoped sleep assertion. The prior 148-check full run
+also passes. All 29 native leak checks, the available tutorial smoke checkpoint,
+34 final sanitizer checks and fresh SDL-free host tests (27/27) pass. Native/host
+regressions each match 519 baseline files through turn 150 with 25 accepted
+unused-storage warnings. Exact C04/C05 output comparisons match 519 files with
+25 native / 23 host accepted warnings; no differences/errors or skipped inputs.
+The manifest accounts for 156 production sources / 157 variants and 158 standalone
+headers in both include orders. All 38 SDK C inputs and 29 representative C++
+application/provider/isolated SDK units compile; paired wrapper/SDK identity
+contracts pass compilation. Documentation checks pass 26 tests and 2,819 links /
+700 requirement IDs. No model, baseline, frozen C input, record-layout or catalog
+change is made. Full Windows/Linux runtime checks remain the manual platform
+gate, with automatic CI policy unchanged. Receipts: `dist/verification/c06/`.
+
+
+C06's first manual Windows build identifies a `WINAPI` redefinition after SDL
+intrinsics. Empty owned C++ calling-convention annotations (`WINAPI`, `WINAPIV`,
+`APIENTRY`) are removed rather than masked; genuine SDK conventions stay native.
+The SDL-first type contract and a strict MinGW check with an inherited
+`WINAPI=__stdcall` now compile. Local builds and the full native regression
+(519 matches / 25 accepted warnings / zero differences/errors/skips) pass again;
+full desktop and corrected platform runs are pending.

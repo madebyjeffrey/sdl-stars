@@ -39,7 +39,7 @@ static void SyncToolbar(HWND hwnd) {
     int16_t itb;
 
     for (itb = tbNormalView; itb <= tbShipCounts; itb++) {
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(static_cast<ToolbarButton>(itb)));
+        ControlIO().pfnSendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(static_cast<ToolbarButton>(itb)));
     }
 }
 
@@ -64,38 +64,38 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     hwndButtons = ControlIO().pfnGetDlgItem(hwnd, IDC_STARS_TOOLBAR);
     switch (msg) {
     case WM_CREATE:
-        if (!InitCommonControlsEx(&icc)) return -1;
-        hwndButtons = HwndUiCreateWindowEx(0, TOOLBARCLASSNAME, NULL,
+        if (!win32::InitCommonControlsEx(&icc)) return -1;
+        hwndButtons = ui::CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
             WS_CHILD | WS_VISIBLE | TBSTYLE_TOOLTIPS | CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER,
             0, 2, 10, 32, hwnd, (HMENU)(INT_PTR)IDC_STARS_TOOLBAR, hInst, NULL);
         if (!hwndButtons) return -1;
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_SETBITMAPSIZE, 0, MAKELPARAM(24, 23));
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_SETBUTTONSIZE, 0, MAKELPARAM(29, 28));
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_SETINDENT, 4, 0);
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_SETMAXTEXTROWS, 0, 0);
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
+        ControlIO().pfnSendMessage(hwndButtons, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+        ControlIO().pfnSendMessage(hwndButtons, TB_SETBITMAPSIZE, 0, MAKELPARAM(24, 23));
+        ControlIO().pfnSendMessage(hwndButtons, TB_SETBUTTONSIZE, 0, MAKELPARAM(29, 28));
+        ControlIO().pfnSendMessage(hwndButtons, TB_SETINDENT, 4, 0);
+        ControlIO().pfnSendMessage(hwndButtons, TB_SETMAXTEXTROWS, 0, 0);
+        ControlIO().pfnSendMessage(hwndButtons, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
         // FGetSystemColors has mapped palette entry 253 to the button
         // face. Use that writable DIB instead of the magenta source resource.
-        lpbi = (BITMAPINFO *)GlobalLock(hdibToolbar);
+        lpbi = (BITMAPINFO *)win32::GlobalLock(hdibToolbar);
         if (!lpbi) return -1;
-        hdc = GetDC(hwndButtons);
-        hdcMem = CreateCompatibleDC(hdc);
-        hbmp = CreateCompatibleBitmap(hdc, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight);
-        hbmpSav = (HBITMAP)SelectObject(hdcMem, hbmp);
-        if (!hdcMem || !hbmp || !StretchDIBits(hdcMem, 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
+        hdc = win32::GetDC(hwndButtons);
+        hdcMem = win32::CreateCompatibleDC(hdc);
+        hbmp = win32::CreateCompatibleBitmap(hdc, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight);
+        hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmp);
+        if (!hdcMem || !hbmp || !win32::StretchDIBits(hdcMem, 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
                 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
                 (BYTE *)lpbi + lpbi->bmiHeader.biSize + PaletteSize(&lpbi->bmiHeader), lpbi, DIB_RGB_COLORS, SRCCOPY)) {
-            if (hbmpSav) SelectObject(hdcMem, hbmpSav);
-            DeleteDC(hdcMem); if (hbmp) DeleteObject(hbmp);
-            ReleaseDC(hwndButtons, hdc); GlobalUnlock(hdibToolbar);
+            if (hbmpSav) win32::SelectObject(hdcMem, hbmpSav);
+            win32::DeleteDC(hdcMem); if (hbmp) win32::DeleteObject(hbmp);
+            win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(hdibToolbar);
             return -1;
         }
-        SelectObject(hdcMem, hbmpSav); DeleteDC(hdcMem);
-        ReleaseDC(hwndButtons, hdc); GlobalUnlock(hdibToolbar);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)hbmp);
+        win32::SelectObject(hdcMem, hbmpSav); win32::DeleteDC(hdcMem);
+        win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(hdibToolbar);
+        win32::SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)hbmp);
         add.hInst = NULL; add.nID = (UINT_PTR)hbmp;
-        if (ControlIO().pfnLUiSendMessage(hwndButtons, TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
+        if (ControlIO().pfnSendMessage(hwndButtons, TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
         c = 0; iRadar = -1;
         for (i = 0; i < 29; i++) {
             itb = (ToolbarButton)(int8_t)vrgTBBtn[i];
@@ -117,46 +117,46 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             c++;
         }
-        if (!ControlIO().pfnLUiSendMessage(hwndButtons, TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
-        if (iRadar < 0 || !ControlIO().pfnLUiSendMessage(hwndButtons, TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
-        hwndTBRadar = HwndUiCreateWindowEx(0, "COMBOBOX", NULL, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
+        if (!ControlIO().pfnSendMessage(hwndButtons, TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
+        if (iRadar < 0 || !ControlIO().pfnSendMessage(hwndButtons, TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
+        hwndTBRadar = ui::CreateWindowEx(0, "COMBOBOX", NULL, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
             rc.left, (28 - dyArial8 - 8) / 2 + 4, rc.right - rc.left, 11 * dyArial8 + 28, hwnd, NULL, hInst, NULL);
         if (!hwndTBRadar) return -1;
-        ControlIO().pfnFUiSetWindowPos(hwndTBRadar, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        ControlIO().pfnLUiSendMessage(hwndTBRadar, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnSetWindowPos(hwndTBRadar, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        ControlIO().pfnSendMessage(hwndTBRadar, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         iSel = -1;
         for (j = 0; j < 10; j++) {
             pct = 100 - 10 * j;
             if (pct == vpctRadarView) iSel = j;
-            wsprintf(szWork, PCTDPCTPCT, pct);
-            ControlIO().pfnLUiSendMessage(hwndTBRadar, CB_ADDSTRING, 0, (LPARAM)szWork);
+            win32::wsprintf(szWork, PCTDPCTPCT, pct);
+            ControlIO().pfnSendMessage(hwndTBRadar, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
-        ControlIO().pfnLUiSendMessage(hwndTBRadar, CB_SETEXTENDEDUI, 4, 0);
-        ControlIO().pfnLUiSendMessage(hwndTBRadar, CB_SETCURSEL, iSel, 0);
-        wsprintf(szWork, PCTDPCTPCT, vpctRadarView); ControlIO().pfnFUiSetWindowText(hwndTBRadar, szWork);
-        lpfnRealComboProc = (WNDPROC)GetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC);
-        SetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC, (LONG_PTR)lpfnFakeComboProc);
-        hwndCE = GetWindow(hwndTBRadar, GW_CHILD);
+        ControlIO().pfnSendMessage(hwndTBRadar, CB_SETEXTENDEDUI, 4, 0);
+        ControlIO().pfnSendMessage(hwndTBRadar, CB_SETCURSEL, iSel, 0);
+        win32::wsprintf(szWork, PCTDPCTPCT, vpctRadarView); ControlIO().pfnSetWindowText(hwndTBRadar, szWork);
+        lpfnRealComboProc = (WNDPROC)win32::GetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC);
+        win32::SetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC, (LONG_PTR)lpfnFakeComboProc);
+        hwndCE = win32::GetWindow(hwndTBRadar, GW_CHILD);
         if (hwndCE) {
-            lpfnRealCEProc = (WNDPROC)GetWindowLongPtr(hwndCE, GWLP_WNDPROC);
-            SetWindowLongPtr(hwndCE, GWLP_WNDPROC, (LONG_PTR)lpfnFakeCEProc);
+            lpfnRealCEProc = (WNDPROC)win32::GetWindowLongPtr(hwndCE, GWLP_WNDPROC);
+            win32::SetWindowLongPtr(hwndCE, GWLP_WNDPROC, (LONG_PTR)lpfnFakeCEProc);
         }
         SyncToolbar(hwnd);
         return 0;
     case WM_NCDESTROY:
-        hbmp = (HBITMAP)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        if (hbmp) DeleteObject(hbmp);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
+        hbmp = (HBITMAP)win32::GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        if (hbmp) win32::DeleteObject(hbmp);
+        win32::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
+        return ui::DefWindowProc(hwnd, msg, wParam, lParam);
     case WM_MOUSEMOVE:
-        if (hwnd == hwndTBRadar || GetParent(hwnd) == hwndTBRadar) {
-            GetWindowRect(hwndTBRadar, &rc);
+        if (hwnd == hwndTBRadar || win32::GetParent(hwnd) == hwndTBRadar) {
+            win32::GetWindowRect(hwndTBRadar, &rc);
             ShowTooltip(idsScannerEffective, &rc);
         }
         return 0;
     case WM_SIZE:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FUiMoveWindow(hwndButtons, 0, 2, rc.right, 32, TRUE);
+        ui::MoveWindow(hwndButtons, 0, 2, rc.right, 32, TRUE);
         return 0;
     case WM_COMMAND:
         if ((HWND)lParam == hwndButtons) {
@@ -167,7 +167,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             return 0;
         }
-        if ((HWND)lParam == hwndTBRadar && HIWORD(wParam) == CBN_KILLFOCUS) PostMessage(hwnd, 1524, 0, 0);
+        if ((HWND)lParam == hwndTBRadar && HIWORD(wParam) == CBN_KILLFOCUS) win32::PostMessage(hwnd, 1524, 0, 0);
         return 0;
     case WM_NOTIFY:
         lpnm = (NMTOOLBAR *)lParam;
@@ -182,15 +182,15 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     case 1524: TerminateToolbarFocus(FALSE); return 0;
     case WM_ERASEBKGND:
-        ControlIO().pfnGetClientRect(hwnd, &rc); FillRect((HDC)wParam, &rc, hbrButtonFace); return 1;
+        ControlIO().pfnGetClientRect(hwnd, &rc); win32::FillRect((HDC)wParam, &rc, hbrButtonFace); return 1;
     case WM_CTLCOLORMSGBOX: case WM_CTLCOLOREDIT: case WM_CTLCOLORLISTBOX:
     case WM_CTLCOLORBTN: case WM_CTLCOLORDLG: case WM_CTLCOLORSCROLLBAR: case WM_CTLCOLORSTATIC:
-        SetBkColor((HDC)wParam, crButtonFace); return (LRESULT)hbrButtonFace;
+        win32::SetBkColor((HDC)wParam, crButtonFace); return (LRESULT)hbrButtonFace;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps); ControlIO().pfnGetClientRect(hwnd, &rc);
-        DrawToolbar(hdc, &rc); EndPaint(hwnd, &ps); return 0;
+        hdc = win32::BeginPaint(hwnd, &ps); ControlIO().pfnGetClientRect(hwnd, &rc);
+        DrawToolbar(hdc, &rc); win32::EndPaint(hwnd, &ps); return 0;
     }
-    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
+    return ui::DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void DrawToolbar(HDC hdc, RECT *prc) {
@@ -200,7 +200,7 @@ void DrawToolbar(HDC hdc, RECT *prc) {
 
 void DrawBitmapButton(HDC hdc, POINT16 pt, ToolbarButton ibtn, int16_t fDown) {
     (void)hdc; (void)pt;
-    ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwndTb, IDC_STARS_TOOLBAR), TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
+    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwndTb, IDC_STARS_TOOLBAR), TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
 }
 
 int16_t ItbFromPpt(POINT16 *ppt) {
@@ -210,12 +210,12 @@ int16_t ItbFromPpt(POINT16 *ppt) {
     RECT rc;
     TBBUTTON btn;
 
-    i = (int16_t)ControlIO().pfnLUiSendMessage(hwndButtons, TB_HITTEST, 0, (LPARAM)&pt);
+    i = (int16_t)ControlIO().pfnSendMessage(hwndButtons, TB_HITTEST, 0, (LPARAM)&pt);
     if (i < 0) {
         i = -i - 1;
     }
-    if (ControlIO().pfnLUiSendMessage(hwndButtons, TB_GETBUTTON, i, (LPARAM)&btn) &&
-        ControlIO().pfnLUiSendMessage(hwndButtons, TB_GETITEMRECT, i, (LPARAM)&rc) && PtInRect(&rc, pt)) {
+    if (ControlIO().pfnSendMessage(hwndButtons, TB_GETBUTTON, i, (LPARAM)&btn) &&
+        ControlIO().pfnSendMessage(hwndButtons, TB_GETITEMRECT, i, (LPARAM)&rc) && win32::PtInRect(&rc, pt)) {
         ppt->x = rc.left; ppt->y = rc.top + 2;
         return btn.idCommand - IDC_STARS_TOOLBUTTON_FIRST;
     }
@@ -288,9 +288,9 @@ static POINT16 PtToolbarMenu(ToolbarButton itb) {
 
     if (itb == tbShipDesignFilterMenu) itb = tbShipDesignFilter;
     else if (itb == tbEnemyClassFilterMenu) itb = tbEnemyClassFilter;
-    if (ControlIO().pfnLUiSendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, (LPARAM)&rc)) {
+    if (ControlIO().pfnSendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, (LPARAM)&rc)) {
         pt.x = rc.left; pt.y = rc.bottom;
-        MapWindowPoints(hwndButtons, hwndTb, &pt, 1);
+        win32::MapWindowPoints(hwndButtons, hwndTb, &pt, 1);
     }
     return PointTo16(pt);
 }
@@ -493,7 +493,7 @@ void ExecuteButton(ToolbarButton itb, int16_t fDown) {
         c = 0;
         for (i = 0; i < 9; i++) {
             rgid[c] = (uint32_t)(iScanZoom + 4 == i);
-            wsprintf(&szWork[i * 8], PCTDPCTPCT, vrgpctZoom[i]);
+            win32::wsprintf(&szWork[i * 8], PCTDPCTPCT, vrgpctZoom[i]);
             rgszScan[c++] = &szWork[i * 8];
         }
         pt = PtToolbarMenu(itb);
@@ -536,9 +536,9 @@ void TerminateToolbarFocus(int16_t fCancel) {
     } else if (pct > 100) {
         pct = 100;
     }
-    ControlIO().pfnLUiSendMessage(hwndTBRadar, CB_SETCURSEL, (int16_t)(100 - pct) / 10, 0);
-    wsprintf(szWork, PCTDPCTPCT, pct);
-    ControlIO().pfnFUiSetWindowText(hwndTBRadar, szWork);
+    ControlIO().pfnSendMessage(hwndTBRadar, CB_SETCURSEL, (int16_t)(100 - pct) / 10, 0);
+    win32::wsprintf(szWork, PCTDPCTPCT, pct);
+    ControlIO().pfnSetWindowText(hwndTBRadar, szWork);
     if (pct != vpctRadarView) {
         vpctRadarView = pct;
         if (!(grbitScan & grbitScanCoverage)) {
@@ -547,7 +547,7 @@ void TerminateToolbarFocus(int16_t fCancel) {
         grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanCoverage);
         ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
     }
-    ControlIO().pfnHwndUiSetFocus(hwndFrame);
+    ControlIO().pfnSetFocus(hwndFrame);
     return;
 }
 
@@ -558,31 +558,31 @@ void ShowTooltip(StringId ids, RECT *prc) {
     int16_t cch;
     int16_t fShowNow;
 
-    fVisCur = hwndTooltip && IsWindowVisible(hwndTooltip) != 0;
+    fVisCur = hwndTooltip && win32::IsWindowVisible(hwndTooltip) != 0;
     if ((int16_t)ids < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
         if (hwndTooltip) {
-            ControlIO().pfnFUiDestroyWindow(hwndTooltip);
+            ControlIO().pfnDestroyWindow(hwndTooltip);
         }
         if (fVisCur) {
-            vtickTooltipLast = GetTickCount();
+            vtickTooltipLast = win32::GetTickCount();
         }
-    } else if (ids != vidsTooltip || EqualRect(prc, &vrcTooltip) == 0) {
+    } else if (ids != vidsTooltip || win32::EqualRect(prc, &vrcTooltip) == 0) {
         vidsTooltip = ids;
         cch = TextIO().pfnCchGetString(static_cast<StringId>(vidsTooltip), szWork);
         vrcTooltip = *prc;
-        hdc = GetDC(NULL);
-        hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
+        hdc = win32::GetDC(NULL);
+        hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[0]);
         dxTip = LOWORD(GetTextExtent(hdc, szWork, cch));
-        SelectObject(hdc, hfontSav);
-        ReleaseDC(NULL, hdc);
+        win32::SelectObject(hdc, hfontSav);
+        win32::ReleaseDC(NULL, hdc);
         if (!hwndTooltip) {
-            HwndUiCreateWindowEx(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP, prc->left, prc->bottom + 2,
+            ui::CreateWindowEx(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP, prc->left, prc->bottom + 2,
                            dxTip + 6, dyArial8 + 6, hwndTb, NULL, hInst, NULL);
         } else {
             ControlIO().pfnInvalidateRect(hwndTooltip, NULL, TRUE);
         }
-        ControlIO().pfnFUiSetWindowPos(hwndTooltip, (HWND)-1, 0, 0, dxTip + 6, dyArial8 + 6, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
-        fShowNow = vtickTooltipLast + 400 >= GetTickCount() || fVisCur != 0;
+        ControlIO().pfnSetWindowPos(hwndTooltip, (HWND)-1, 0, 0, dxTip + 6, dyArial8 + 6, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        fShowNow = vtickTooltipLast + 400 >= win32::GetTickCount() || fVisCur != 0;
         TooltipWndProc(hwndTooltip, 1523, fShowNow, 0);
     }
     return;
@@ -603,7 +603,7 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_DESTROY:
         hwndTooltip = 0;
         if (vidTimerTooltip != -1) {
-            KillTimer(hwnd, vidTimerTooltip);
+            win32::KillTimer(hwnd, vidTimerTooltip);
             vidTimerTooltip = -1;
         }
         vidsTooltip = -1;
@@ -611,14 +611,14 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
-        ControlIO().pfnFUiDestroyWindow(hwnd);
+        ControlIO().pfnDestroyWindow(hwnd);
         return 0;
     case 1523:
         if (wParam == 0) {
             if (vidTimerTooltip != -1) {
-                KillTimer(hwnd, vidTimerTooltip);
+                win32::KillTimer(hwnd, vidTimerTooltip);
             }
-            if (SetTimer(hwnd, 926, 700, NULL) != 0) {
+            if (win32::SetTimer(hwnd, 926, 700, NULL) != 0) {
                 vidTimerTooltip = 926;
             } else {
                 vidTimerTooltip = -1;
@@ -630,57 +630,57 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_TIMER:
         if (wParam != 926)
             break;
-        if (msg != WM_TIMER || IsWindowVisible(hwnd) == 0) {
-            vtickTooltip1stVis = GetTickCount();
+        if (msg != WM_TIMER || win32::IsWindowVisible(hwnd) == 0) {
+            vtickTooltip1stVis = win32::GetTickCount();
             GetCursorPos16(&pt);
-            if (PtInRect(&vrcTooltip, PointFrom16(pt)) == 0)
+            if (win32::PtInRect(&vrcTooltip, PointFrom16(pt)) == 0)
                 goto LKillTip;
             // Anchor to the hovered control, independently of the pointer's
             // position inside it; keep the complete tip within the frame.
-            GetWindowRect(hwndFrame, &rc);
+            win32::GetWindowRect(hwndFrame, &rc);
             pt.x = (((rc.left) > (StarsMin(vrcTooltip.left, rc.right - dxTip - 6))) ? (rc.left) : (StarsMin(vrcTooltip.left, rc.right - dxTip - 6)));
             pt.y = vrcTooltip.bottom + 2;
             if (pt.y + dyArial8 + 6 > rc.bottom) {
                 pt.y = StarsMax(rc.top, vrcTooltip.top - dyArial8 - 8);
             }
-            ControlIO().pfnFUiSetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
-            ControlIO().pfnFUiUpdateWindow(hwnd);
+            ControlIO().pfnSetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
+            ControlIO().pfnUpdateWindow(hwnd);
             if (vidTimerTooltip != -1) {
-                KillTimer(hwnd, vidTimerTooltip);
+                win32::KillTimer(hwnd, vidTimerTooltip);
             }
-            if (SetTimer(hwnd, 926, 50, NULL) != 0) {
+            if (win32::SetTimer(hwnd, 926, 50, NULL) != 0) {
                 vidTimerTooltip = 926;
             } else {
                 vidTimerTooltip = -1;
             }
             return 0;
         } else {
-            vtickTooltipLast = GetTickCount();
+            vtickTooltipLast = win32::GetTickCount();
             GetCursorPos16(&pt);
-            if (PtInRect(&vrcTooltip, PointFrom16(pt)) == 0 || vtickTooltip1stVis + 10000 < vtickTooltipLast) {
+            if (win32::PtInRect(&vrcTooltip, PointFrom16(pt)) == 0 || vtickTooltip1stVis + 10000 < vtickTooltipLast) {
             LKillTip:
-                ControlIO().pfnFUiDestroyWindow(hwnd);
+                ControlIO().pfnDestroyWindow(hwnd);
             }
             return 0;
         }
     case WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FillRect((HDC)wParam, &rc, hbrTooltip);
+        win32::FillRect((HDC)wParam, &rc, hbrTooltip);
         return 1;
     case WM_PAINT:
-        hdc = BeginPaint(hwnd, &ps);
+        hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        FrameRect(hdc, &rc, hbrWindowFrame);
-        SelectObject(hdc, rghfontArial8[0]);
+        win32::FrameRect(hdc, &rc, hbrWindowFrame);
+        win32::SelectObject(hdc, rghfontArial8[0]);
         cch = TextIO().pfnCchGetString(static_cast<StringId>(vidsTooltip), szWork);
-        bkSav = SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, crWindowText);
-        ExtTextOut(hdc, 3, 3, 0, NULL, szWork, cch, NULL);
-        SetBkMode(hdc, bkSav);
-        EndPaint(hwnd, &ps);
+        bkSav = win32::SetBkMode(hdc, TRANSPARENT);
+        win32::SetTextColor(hdc, crWindowText);
+        win32::ExtTextOut(hdc, 3, 3, 0, NULL, szWork, cch, NULL);
+        win32::SetBkMode(hdc, bkSav);
+        win32::EndPaint(hwnd, &ps);
         return 0;
     }
-    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
+    return ui::DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -692,7 +692,7 @@ LRESULT CALLBACK FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
     }
-    return LUiCallWindowProc(lpfnRealComboProc, hwnd, msg, wParam, lParam);
+    return ui::CallWindowProc(lpfnRealComboProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -704,5 +704,5 @@ LRESULT CALLBACK FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
     }
-    return LUiCallWindowProc(lpfnRealCEProc, hwnd, msg, wParam, lParam);
+    return ui::CallWindowProc(lpfnRealCEProc, hwnd, msg, wParam, lParam);
 }

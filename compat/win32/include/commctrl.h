@@ -76,9 +76,16 @@
 #define TBDDRET_NODEFAULT 1
 #define TBDDRET_TREATPRESSED 2
 
-typedef struct tagNMHDR { HWND hwndFrom; UINT_PTR idFrom; UINT code; } NMHDR, *LPNMHDR;
-typedef struct tagINITCOMMONCONTROLSEX { DWORD dwSize, dwICC; } INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
-typedef struct _TBBUTTON {
+namespace win32 {
+struct tagNMHDR { HWND hwndFrom; UINT_PTR idFrom; UINT code; };
+} // namespace win32
+typedef win32::tagNMHDR NMHDR, *LPNMHDR;
+namespace win32 {
+struct tagINITCOMMONCONTROLSEX { DWORD dwSize, dwICC; };
+} // namespace win32
+typedef win32::tagINITCOMMONCONTROLSEX INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
+namespace win32 {
+struct _TBBUTTON {
     int iBitmap, idCommand;
     BYTE fsState, fsStyle;
 #if UINTPTR_MAX > UINT32_MAX
@@ -88,18 +95,28 @@ typedef struct _TBBUTTON {
 #endif
     DWORD_PTR dwData;
     INT_PTR iString;
-} TBBUTTON, *LPTBBUTTON;
+};
+} // namespace win32
+typedef win32::_TBBUTTON TBBUTTON, *LPTBBUTTON;
 typedef const TBBUTTON *LPCTBBUTTON;
-typedef struct tagTBADDBITMAP { HINSTANCE hInst; UINT_PTR nID; } TBADDBITMAP, *LPTBADDBITMAP;
-typedef struct tagNMTOOLBARA {
+namespace win32 {
+struct tagTBADDBITMAP { HINSTANCE hInst; UINT_PTR nID; };
+} // namespace win32
+typedef win32::tagTBADDBITMAP TBADDBITMAP, *LPTBADDBITMAP;
+namespace win32 {
+struct tagNMTOOLBARA {
     NMHDR hdr;
     int iItem;
     TBBUTTON tbButton;
     int cchText;
     LPSTR pszText;
     RECT rcButton;
-} NMTOOLBARA, *LPNMTOOLBARA;
+};
+} // namespace win32
+typedef win32::tagNMTOOLBARA NMTOOLBARA, *LPNMTOOLBARA;
 typedef NMTOOLBARA NMTOOLBAR;
-BOOL WINAPI InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
+namespace win32 {
+BOOL InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
+}
 
 #endif

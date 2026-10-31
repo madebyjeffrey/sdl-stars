@@ -5,19 +5,12 @@
 #error The Stars compatibility headers require narrow-character UI builds
 #endif
 
-#ifdef _WIN32
-// Wrapper handles must never be passed to Windows itself or to SDL's Win32 backend.
-#include "wincompat_namespace.h"
-#endif
-
 #include <stddef.h>
 #include <stdint.h>
+#include "windowtypes.h"
 // Match Win32 LLP64 on Linux LP64; never use native long for LONG/DWORD.
 #define _WINDEF_
-#define WINAPI
 #define CALLBACK
-#define APIENTRY WINAPI
-#define WINAPIV
 #define CONST const
 #define TRUE 1
 #define FALSE 0
@@ -43,9 +36,7 @@ typedef uintptr_t UINT_PTR, ULONG_PTR, DWORD_PTR, WPARAM;
 typedef size_t SIZE_T;
 typedef int HFILE;
 
-#define STARS_DECLARE_HANDLE(name) typedef struct name##__ *name
-STARS_DECLARE_HANDLE(HWND);
-STARS_DECLARE_HANDLE(HDC);
+#define STARS_DECLARE_HANDLE(name) namespace win32 { struct name##__; } typedef win32::name##__ *name
 STARS_DECLARE_HANDLE(HINSTANCE);
 STARS_DECLARE_HANDLE(HBITMAP);
 STARS_DECLARE_HANDLE(HBRUSH);
@@ -71,10 +62,6 @@ typedef UINT_PTR (CALLBACK *LPOFNHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 typedef UINT_PTR (CALLBACK *LPPRINTHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 typedef UINT_PTR (CALLBACK *LPSETUPHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 
-// common.h can precede windows.h in ABI tests and portable consumers.
-#ifndef STARS_NATIVE_H
-typedef struct tagRECT { LONG left, top, right, bottom; } RECT;
-#endif
 typedef RECT *LPRECT;
 typedef const RECT *LPCRECT;
 

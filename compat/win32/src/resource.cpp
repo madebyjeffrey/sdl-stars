@@ -4,7 +4,7 @@
 
 static BYTE bModule;
 
-HMODULE WINAPI GetModuleHandleA(LPCSTR pszName) {
+HMODULE win32::GetModuleHandleA(LPCSTR pszName) {
     if (!SDL_IsMainThread() || pszName) {
         SDL_SetError("Only the current embedded resource module is supported");
         return NULL;
@@ -34,7 +34,7 @@ static const COMPATRESOURCE *LpResource(HRSRC hrsrc) {
     return NULL;
 }
 
-HRSRC WINAPI FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
+HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     size_t i;
     UINT_PTR id = (UINT_PTR)pszName;
     const COMPATRESOURCE *lpres;
@@ -51,17 +51,17 @@ HRSRC WINAPI FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     return NULL;
 }
 
-DWORD WINAPI SizeofResource(HMODULE hModule, HRSRC hrsrc) {
+DWORD win32::SizeofResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
     return lpres ? (DWORD)lpres->cb : 0;
 }
 
-HGLOBAL WINAPI LoadResource(HMODULE hModule, HRSRC hrsrc) {
+HGLOBAL win32::LoadResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
     return lpres ? (HGLOBAL)lpres->rgb : NULL;
 }
 
-LPVOID WINAPI LockResource(HGLOBAL hres) {
+LPVOID win32::LockResource(HGLOBAL hres) {
     size_t i;
 
     if (!SDL_IsMainThread())
@@ -72,13 +72,13 @@ LPVOID WINAPI LockResource(HGLOBAL hres) {
     return NULL;
 }
 
-BOOL WINAPI FreeResource(HGLOBAL hres) {
+BOOL win32::FreeResource(HGLOBAL hres) {
     (void)hres; // Obsolete on Win32: embedded bytes are module-owned, never freed here.
     return FALSE;
 }
 
-HBITMAP WINAPI LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
-    const COMPATRESOURCE *lpres = LpResource(FindResourceA(hInstance, pszName, RT_BITMAP));
+HBITMAP win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
+    const COMPATRESOURCE *lpres = LpResource(win32::FindResourceA(hInstance, pszName, RT_BITMAP));
     return lpres ? HbmpCompatResource(lpres->rgb, lpres->cb) : NULL;
 }
 
@@ -99,7 +99,7 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
     BOOL fEnd;
 
     if (depth >= 64) return NULL;
-    hmenu = CreatePopupMenu();
+    hmenu = win32::CreatePopupMenu();
     if (!hmenu) return NULL;
     do {
         hsub = NULL;
@@ -121,8 +121,8 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
         if (!(flags & MF_POPUP) && id == 0 && cch == 0) flags |= MF_SEPARATOR;
         if (flags & MF_POPUP) hsub = HmenuTemplateItems(rgb, cb, lpib, depth + 1);
         if (((flags & MF_POPUP) && !hsub) ||
-            !AppendMenuA(hmenu, flags, hsub ? (UINT_PTR)hsub : id, psz)) {
-            if (hsub) DestroyMenu(hsub);
+            !win32::AppendMenuA(hmenu, flags, hsub ? (UINT_PTR)hsub : id, psz)) {
+            if (hsub) win32::DestroyMenu(hsub);
             free(psz);
             goto fail;
         }
@@ -130,7 +130,7 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, size_t cb, size_t *lpib, int de
     } while (!fEnd);
     return hmenu;
 fail:
-    DestroyMenu(hmenu);
+    win32::DestroyMenu(hmenu);
     return NULL;
 }
 HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
@@ -142,10 +142,10 @@ HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
         !FMenuWord(rgb, cb, &ib, &offset) || offset > cb - ib) return NULL;
     ib += offset;
     hmenu = HmenuTemplateItems(rgb, cb, &ib, 0);
-    if (hmenu && ib != cb) { DestroyMenu(hmenu); return NULL; }
+    if (hmenu && ib != cb) { win32::DestroyMenu(hmenu); return NULL; }
     return hmenu;
 }
-HMENU WINAPI LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
-    HRSRC hrsrc = FindResourceA(hInstance, pszName, RT_MENU);
-    return HmenuCompatTemplate((const BYTE *)(LockResource(LoadResource(hInstance, hrsrc))), SizeofResource(hInstance, hrsrc));
+HMENU win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
+    HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, RT_MENU);
+    return HmenuCompatTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc))), win32::SizeofResource(hInstance, hrsrc));
 }

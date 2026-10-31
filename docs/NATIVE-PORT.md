@@ -2,9 +2,13 @@
 
 The SDL client now has a native Windows x64 build using the same source wrapper
 as Linux/macOS, and is the only maintained desktop build. Its filesystem service is isolated in
-`src/platform/fileio.cpp`, and its wrapper symbols are namespaced
-to avoid SDK import collisions. Native Unicode open/save lives in the separate
-`filedialog_windows_sdk.cpp` bridge. This does not change disk layouts or core
+`src/platform/fileio.cpp`. Raw wrapper operations use the actual C++ `win32::`
+namespace on every platform; `ui::` calls deliver captured callback errors after
+runtime cleanup. Wrapper handle/record tags are distinct from SDK types, with
+shared core/UI geometry in `windowtypes.h`. Native Unicode open/save lives in
+`filedialog_windows_sdk.cpp`, and native process services in `native_windows.cpp`.
+These isolated SDK sources do not include application records or wrapper headers.
+This does not change disk layouts or core
 native I/O. The shared UI has no native-client fallback branches; captions and
 legacy input use the wrapper encoding boundary. See [Windows SDL3](WINDOWS-SDL3.md) for builds and qualification.
 

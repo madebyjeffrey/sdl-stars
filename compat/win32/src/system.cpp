@@ -11,7 +11,7 @@ static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
     id = CompatDisplayIO().pfnGetPrimaryDisplay();
     if (!id || !(fUsable ? CompatDisplayIO().pfnGetDisplayUsableBounds(id, &rc) : CompatDisplayIO().pfnGetDisplayBounds(id, &rc)) ||
         rc.w <= 0 || rc.h <= 0 || (int64_t)rc.x + rc.w > INT_MAX || (int64_t)rc.y + rc.h > INT_MAX) return FALSE;
-    SetRect(lprc, rc.x, rc.y, rc.x + rc.w, rc.y + rc.h);
+    win32::SetRect(lprc, rc.x, rc.y, rc.x + rc.w, rc.y + rc.h);
     return TRUE;
 }
 
@@ -31,11 +31,11 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     }
     SDL_free(rgid);
     if (!fOk || xMax > INT_MAX || yMax > INT_MAX || xMax - xMin > INT_MAX || yMax - yMin > INT_MAX) return FALSE;
-    SetRect(lprc, (int)xMin, (int)yMin, (int)xMax, (int)yMax); *lpc = c;
+    win32::SetRect(lprc, (int)xMin, (int)yMin, (int)xMax, (int)yMax); *lpc = c;
     return TRUE;
 }
 
-int WINAPI GetSystemMetrics(int i) {
+int win32::GetSystemMetrics(int i) {
     RECT rc;
     int c;
     if (!SDL_IsMainThread()) return 0;
@@ -61,10 +61,10 @@ int WINAPI GetSystemMetrics(int i) {
     }
 }
 
-BOOL WINAPI SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags) {
+BOOL win32::SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags) {
     RECT rc;
     (void)param; (void)flags;
-    if (!SDL_IsMainThread() || !lpv) { SetLastError(ERROR_INVALID_PARAMETER); return FALSE; }
+    if (!SDL_IsMainThread() || !lpv) { win32::SetLastError(ERROR_INVALID_PARAMETER); return FALSE; }
     switch (action) {
     case SPI_GETWORKAREA:
         if (!FDisplayRect(TRUE, &rc)) return FALSE;
@@ -72,12 +72,12 @@ BOOL WINAPI SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags
     case SPI_GETWHEELSCROLLLINES: case SPI_GETWHEELSCROLLCHARS:
         /* SDL exposes wheel deltas, but no portable desktop line/character preference. */
         *(UINT *)lpv = 3; return TRUE;
-    default: SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
+    default: win32::SetLastError(ERROR_INVALID_PARAMETER); return FALSE;
     }
 }
 
-DWORD WINAPI GetWindowThreadProcessId(HWND hwnd, LPDWORD lpdwProcess) {
-    if (!LpCompatWindow(hwnd)) { SetLastError(ERROR_INVALID_WINDOW_HANDLE); return 0; }
+DWORD win32::GetWindowThreadProcessId(HWND hwnd, LPDWORD lpdwProcess) {
+    if (!LpCompatWindow(hwnd)) { win32::SetLastError(ERROR_INVALID_WINDOW_HANDLE); return 0; }
     if (lpdwProcess) *lpdwProcess = (DWORD)getpid();
-    return GetCurrentThreadId();
+    return win32::GetCurrentThreadId();
 }
