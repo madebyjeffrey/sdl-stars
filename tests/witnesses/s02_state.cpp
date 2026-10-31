@@ -13,7 +13,7 @@ static int16_t     GetString(StringId id, char *out) {
     strcpy(out, id == idsFile1 ? "File1" : id == idsFiles ? "Files" : "stars.ini");
     return (int16_t)strlen(out);
 }
-static DWORD WINAPI ReadString(LPCSTR, LPCSTR key, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
+static DWORD ReadString(LPCSTR, LPCSTR key, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     const char *s = inputs[key[4] - '1'];
     size_t      n = strlen(s);
     if (n >= cap)
@@ -22,7 +22,7 @@ static DWORD WINAPI ReadString(LPCSTR, LPCSTR key, LPCSTR, LPSTR out, DWORD cap,
     out[n] = 0;
     return (DWORD)n;
 }
-static BOOL WINAPI WriteString(LPCSTR, LPCSTR key, LPCSTR value, LPCSTR) {
+static BOOL WriteString(LPCSTR, LPCSTR key, LPCSTR value, LPCSTR) {
     attempts++;
     if (attempts == failAt)
         return 0;

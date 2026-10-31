@@ -50,7 +50,7 @@ static COMPATMEMORY *LpMemory(HANDLE h) {
     return NULL;
 }
 
-HGLOBAL WINAPI win32::GlobalAlloc(UINT flags, SIZE_T cb) {
+HGLOBAL win32::GlobalAlloc(UINT flags, SIZE_T cb) {
     COMPATMEMORY *lp;
     NATIVEOWNER<COMPATMEMORY, FreeMemoryBlock> block;
 
@@ -82,7 +82,7 @@ HGLOBAL WINAPI win32::GlobalAlloc(UINT flags, SIZE_T cb) {
     return lp->h;
 }
 
-HGLOBAL WINAPI win32::GlobalFree(HGLOBAL h) {
+HGLOBAL win32::GlobalFree(HGLOBAL h) {
     COMPATMEMORY **lplp, *lp;
 
     if (!h)
@@ -101,7 +101,7 @@ HGLOBAL WINAPI win32::GlobalFree(HGLOBAL h) {
     return h;
 }
 
-LPVOID WINAPI win32::GlobalLock(HGLOBAL h) {
+LPVOID win32::GlobalLock(HGLOBAL h) {
     COMPATMEMORY *lp;
     LPVOID lpv = NULL;
 
@@ -118,7 +118,7 @@ LPVOID WINAPI win32::GlobalLock(HGLOBAL h) {
     return lpv;
 }
 
-BOOL WINAPI win32::GlobalUnlock(HGLOBAL h) {
+BOOL win32::GlobalUnlock(HGLOBAL h) {
     COMPATMEMORY *lp;
     BOOL fRet = FALSE;
 
@@ -140,7 +140,7 @@ BOOL WINAPI win32::GlobalUnlock(HGLOBAL h) {
     return fRet;
 }
 
-SIZE_T WINAPI win32::GlobalSize(HGLOBAL h) {
+SIZE_T win32::GlobalSize(HGLOBAL h) {
     COMPATMEMORY *lp;
     size_t cb = 0;
 
@@ -150,7 +150,7 @@ SIZE_T WINAPI win32::GlobalSize(HGLOBAL h) {
     return cb;
 }
 
-UINT WINAPI win32::GlobalFlags(HGLOBAL h) {
+UINT win32::GlobalFlags(HGLOBAL h) {
     COMPATMEMORY *lp;
     UINT flags = GMEM_INVALID_HANDLE;
 
@@ -160,7 +160,7 @@ UINT WINAPI win32::GlobalFlags(HGLOBAL h) {
     return flags;
 }
 
-HGLOBAL WINAPI win32::GlobalHandle(LPCVOID lpv) {
+HGLOBAL win32::GlobalHandle(LPCVOID lpv) {
     COMPATMEMORY *lp;
     HANDLE h = NULL;
 
@@ -172,7 +172,7 @@ HGLOBAL WINAPI win32::GlobalHandle(LPCVOID lpv) {
     return h;
 }
 
-HGLOBAL WINAPI win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
+HGLOBAL win32::GlobalReAlloc(HGLOBAL h, SIZE_T cb, UINT flags) {
     COMPATMEMORY *lp;
     BYTE *rgb;
     HANDLE hRet = NULL;
@@ -212,14 +212,14 @@ LReturn:
     return hRet;
 }
 
-HLOCAL WINAPI win32::LocalAlloc(UINT flags, SIZE_T cb) { return win32::GlobalAlloc(flags, cb); }
-HLOCAL WINAPI win32::LocalFree(HLOCAL h) { return win32::GlobalFree(h); }
-LPVOID WINAPI win32::LocalLock(HLOCAL h) { return win32::GlobalLock(h); }
-BOOL WINAPI win32::LocalUnlock(HLOCAL h) { return win32::GlobalUnlock(h); }
-SIZE_T WINAPI win32::LocalSize(HLOCAL h) { return win32::GlobalSize(h); }
-UINT WINAPI win32::LocalFlags(HLOCAL h) { return win32::GlobalFlags(h); }
-HLOCAL WINAPI win32::LocalReAlloc(HLOCAL h, SIZE_T cb, UINT flags) { return win32::GlobalReAlloc(h, cb, flags); }
-HLOCAL WINAPI win32::LocalHandle(LPCVOID lpv) { return win32::GlobalHandle(lpv); }
+HLOCAL win32::LocalAlloc(UINT flags, SIZE_T cb) { return win32::GlobalAlloc(flags, cb); }
+HLOCAL win32::LocalFree(HLOCAL h) { return win32::GlobalFree(h); }
+LPVOID win32::LocalLock(HLOCAL h) { return win32::GlobalLock(h); }
+BOOL win32::LocalUnlock(HLOCAL h) { return win32::GlobalUnlock(h); }
+SIZE_T win32::LocalSize(HLOCAL h) { return win32::GlobalSize(h); }
+UINT win32::LocalFlags(HLOCAL h) { return win32::GlobalFlags(h); }
+HLOCAL win32::LocalReAlloc(HLOCAL h, SIZE_T cb, UINT flags) { return win32::GlobalReAlloc(h, cb, flags); }
+HLOCAL win32::LocalHandle(LPCVOID lpv) { return win32::GlobalHandle(lpv); }
 
 void CompatShutdownMemory(void) { memory.Close(); }
 

@@ -6,7 +6,7 @@
 #include <string.h>
 
 namespace ui {
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int nCmdShow) {
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int nCmdShow) {
     const char *pszExpected = getenv("STARS_TEST_COMMAND");
     const char *pszHeadless = getenv("STARS_TEST_HEADLESS");
     WNDCLASS wc = {};

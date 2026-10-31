@@ -17,7 +17,7 @@ struct COMPATAUDIO {
 static COMPATAUDIO audio;
 
 void CompatShutdownAudio(void) noexcept { audio.Shutdown(); }
-BOOL WINAPI win32::MessageBeep(UINT type) {
+BOOL win32::MessageBeep(UINT type) {
     SDL_AudioSpec spec = {SDL_AUDIO_F32, 1, 22050};
     float rgSamples[3528];
     double hz, envelope;

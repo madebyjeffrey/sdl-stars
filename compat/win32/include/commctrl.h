@@ -116,7 +116,7 @@ struct tagNMTOOLBARA {
 typedef win32::tagNMTOOLBARA NMTOOLBARA, *LPNMTOOLBARA;
 typedef NMTOOLBARA NMTOOLBAR;
 namespace win32 {
-BOOL WINAPI InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
+BOOL InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit);
 }
 
 #endif

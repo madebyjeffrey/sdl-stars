@@ -21,7 +21,7 @@ void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
     if (fCursor) *lppt = ptCursor;
 }
 void CompatReadInput(const BYTE *rgb) { memcpy(rgbRead, rgb, sizeof(rgbRead)); }
-BOOL WINAPI win32::SetKeyboardState(BYTE *rgb) {
+BOOL win32::SetKeyboardState(BYTE *rgb) {
     if (!SDL_IsMainThread() || !rgb) return FALSE;
     CompatReadInput(rgb);
     return TRUE;
@@ -34,7 +34,7 @@ void CompatResetInput(void) {
     memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
 }
 
-SHORT WINAPI win32::GetKeyState(int vk) {
+SHORT win32::GetKeyState(int vk) {
     BYTE b;
     if (!SDL_IsMainThread() || vk < 0 || vk > 255) return 0;
     b = rgbRead[vk];
@@ -89,7 +89,7 @@ HWND HwndCompatPointerRoot(void) {
     return HwndCompatRoot(hwnd ? hwnd : LpCompatWindow(hwndCursor));
 }
 
-BOOL WINAPI win32::GetCursorPos(LPPOINT lppt) {
+BOOL win32::GetCursorPos(LPPOINT lppt) {
     const char *pszDriver;
     float x, y;
     HWND hwnd;
@@ -131,7 +131,7 @@ BOOL WINAPI win32::GetCursorPos(LPPOINT lppt) {
     return TRUE;
 }
 
-HWND WINAPI win32::GetCapture(void) { return LpCompatWindow(hwndCapture); }
+HWND win32::GetCapture(void) { return LpCompatWindow(hwndCapture); }
 
 static BOOL FCaptureForeground(HWND hwnd) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -142,7 +142,7 @@ static BOOL FCaptureForeground(HWND hwnd) {
         ((hwndRoot->dwExStyle & WS_EX_NOACTIVATE) && hwndRoot->hwndOwner == hwndFocusRoot));
 }
 
-HWND WINAPI win32::SetCapture(HWND hwnd) {
+HWND win32::SetCapture(HWND hwnd) {
     HWND hwndOld, lpwin = LpCompatWindow(hwnd);
 
     if (!SDL_IsMainThread() || (hwnd && (!lpwin || lpwin->fDestroying)))
@@ -155,7 +155,7 @@ HWND WINAPI win32::SetCapture(HWND hwnd) {
     return hwndOld;
 }
 
-BOOL WINAPI win32::ReleaseCapture(void) {
+BOOL win32::ReleaseCapture(void) {
     if (!SDL_IsMainThread()) return FALSE;
     win32::SetCapture(NULL);
     return TRUE;
@@ -256,7 +256,7 @@ static UINT VkSideFromScancode(SDL_Scancode sc) {
     }
 }
 
-SHORT WINAPI win32::GetAsyncKeyState(int vk) {
+SHORT win32::GetAsyncKeyState(int vk) {
     const bool *rgf;
     BYTE rgb[256] = {};
     SDL_Keymod mod;

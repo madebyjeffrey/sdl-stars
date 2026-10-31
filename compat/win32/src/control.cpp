@@ -2,7 +2,7 @@
 #include "internal.h"
 #include <stdlib.h>
 
-DWORD WINAPI win32::GetSysColor(int i) {
+DWORD win32::GetSysColor(int i) {
     static const COLORREF rgcr[] = {
         RGB(192,192,192), RGB(0,128,128), RGB(0,0,128), RGB(128,128,128),
         RGB(192,192,192), RGB(255,255,255), RGB(0,0,0), RGB(0,0,0),
@@ -16,33 +16,33 @@ DWORD WINAPI win32::GetSysColor(int i) {
     return i >= 0 && i < (int)(sizeof(rgcr) / sizeof(rgcr[0])) ? rgcr[i] : 0;
 }
 
-LRESULT WINAPI win32::SendDlgItemMessageA(HWND hwnd, int id, UINT msg, WPARAM w, LPARAM l) {
+LRESULT win32::SendDlgItemMessageA(HWND hwnd, int id, UINT msg, WPARAM w, LPARAM l) {
     HWND hwndChild = win32::GetDlgItem(hwnd, id);
     return hwndChild ? win32::SendMessageA(hwndChild, msg, w, l) : 0;
 }
 
-BOOL WINAPI win32::SetDlgItemTextA(HWND hwnd, int id, LPCSTR psz) {
+BOOL win32::SetDlgItemTextA(HWND hwnd, int id, LPCSTR psz) {
     HWND hwndChild = win32::GetDlgItem(hwnd, id);
     return hwndChild && win32::SetWindowTextA(hwndChild, psz ? psz : "");
 }
 
-UINT WINAPI win32::GetDlgItemTextA(HWND hwnd, int id, LPSTR psz, int cch) {
+UINT win32::GetDlgItemTextA(HWND hwnd, int id, LPSTR psz, int cch) {
     if (!psz || cch <= 0) return 0;
     psz[0] = 0;
     return (UINT)win32::SendDlgItemMessageA(hwnd, id, WM_GETTEXT, (WPARAM)cch, (LPARAM)psz);
 }
 
-BOOL WINAPI win32::CheckDlgButton(HWND hwnd, int id, UINT check) {
+BOOL win32::CheckDlgButton(HWND hwnd, int id, UINT check) {
     if (!SDL_IsMainThread()) return FALSE;
     win32::SendDlgItemMessageA(hwnd, id, BM_SETCHECK, check, 0);
     return TRUE;
 }
 
-UINT WINAPI win32::IsDlgButtonChecked(HWND hwnd, int id) {
+UINT win32::IsDlgButtonChecked(HWND hwnd, int id) {
     return (UINT)win32::SendDlgItemMessageA(hwnd, id, BM_GETCHECK, 0, 0);
 }
 
-BOOL WINAPI win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
+BOOL win32::CheckRadioButton(HWND hwnd, int idFirst, int idLast, int idCheck) {
     HWND lp, *rghwnd;
     int c = 0, i = 0, id;
     if (!LpCompatWindow(hwnd) || idFirst > idLast) return FALSE;

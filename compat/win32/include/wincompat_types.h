@@ -10,10 +10,7 @@
 #include "windowtypes.h"
 // Match Win32 LLP64 on Linux LP64; never use native long for LONG/DWORD.
 #define _WINDEF_
-#define WINAPI
 #define CALLBACK
-#define APIENTRY WINAPI
-#define WINAPIV
 #define CONST const
 #define TRUE 1
 #define FALSE 0

@@ -33,7 +33,7 @@ static_assert(RGB(0x12, 0x34, 0x56) == 0x563412, "COLORREF byte order");
 #ifdef STARS_UI_SDL
 static_assert(std::is_same_v<WNDPROC, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "WNDPROC signature");
 static_assert(std::is_same_v<DLGPROC, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM)>, "DLGPROC signature");
-static_assert(std::is_same_v<decltype(&GetWindowLongPtrA), LONG_PTR (WINAPI *)(HWND, int)>, "pointer accessor signature");
+static_assert(std::is_same_v<decltype(&GetWindowLongPtrA), LONG_PTR (*)(HWND, int)>, "pointer accessor signature");
 #else
 static_assert(_Generic((WNDPROC)0, LRESULT (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "WNDPROC signature");
 static_assert(_Generic((DLGPROC)0, INT_PTR (CALLBACK *)(HWND, UINT, WPARAM, LPARAM): 1, default: 0), "DLGPROC signature");

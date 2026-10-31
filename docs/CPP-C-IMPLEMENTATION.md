@@ -472,3 +472,12 @@ contracts pass compilation. Documentation checks pass 26 tests and 2,819 links /
 700 requirement IDs. No model, baseline, frozen C input, record-layout or catalog
 change is made. Full Windows/Linux runtime checks remain the manual platform
 gate, with automatic CI policy unchanged. Receipts: `dist/verification/c06/`.
+
+
+C06's first manual Windows build identifies a `WINAPI` redefinition after SDL
+intrinsics. Empty owned C++ calling-convention annotations (`WINAPI`, `WINAPIV`,
+`APIENTRY`) are removed rather than masked; genuine SDK conventions stay native.
+The SDL-first type contract and a strict MinGW check with an inherited
+`WINAPI=__stdcall` now compile. Local builds and the full native regression
+(519 matches / 25 accepted warnings / zero differences/errors/skips) pass again;
+full desktop and corrected platform runs are pending.

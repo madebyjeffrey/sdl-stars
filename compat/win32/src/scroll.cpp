@@ -57,7 +57,7 @@ void CompatLayoutScrollbars(HWND hwnd) {
     }
 }
 
-BOOL WINAPI win32::ShowScrollBar(HWND hwnd, int sb, BOOL fShow) {
+BOOL win32::ShowScrollBar(HWND hwnd, int sb, BOOL fShow) {
     DWORD style, styleOld;
     RECT rc;
     if (!LpCompatWindow(hwnd) || (sb != SB_HORZ && sb != SB_VERT && sb != SB_BOTH && sb != SB_CTL)) return FALSE;
@@ -73,7 +73,7 @@ BOOL WINAPI win32::ShowScrollBar(HWND hwnd, int sb, BOOL fShow) {
     return TRUE;
 }
 
-int WINAPI win32::SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw) {
+int win32::SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw) {
     COMPATSCROLL *lpscr;
     int64_t cRange;
     BOOL fShow;
@@ -107,7 +107,7 @@ int WINAPI win32::SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRed
     return lpscr->iPos;
 }
 
-BOOL WINAPI win32::GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi) {
+BOOL win32::GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi) {
     COMPATSCROLL *lpscr;
     HWND hbar;
     if (!LpScrollWindow(hwnd, sb)) return FALSE;
@@ -142,14 +142,14 @@ static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, 
     return TRUE;
 }
 
-int WINAPI win32::GetScrollPos(HWND hwnd, int sb) {
+int win32::GetScrollPos(HWND hwnd, int sb) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     if (!lpwin) return 0;
     if (sb == SB_CTL) return (int)win32::SendMessageA(hwnd, SBM_GETPOS, 0, 0);
     return lpwin->rgscr[sb].iPos;
 }
 
-BOOL WINAPI win32::GetScrollRange(HWND hwnd, int sb, int *lpiMin, int *lpiMax) {
+BOOL win32::GetScrollRange(HWND hwnd, int sb, int *lpiMin, int *lpiMax) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     LRESULT lr;
     if (!lpwin) return FALSE;
@@ -162,7 +162,7 @@ BOOL WINAPI win32::GetScrollRange(HWND hwnd, int sb, int *lpiMin, int *lpiMax) {
     return TRUE;
 }
 
-int WINAPI win32::SetScrollPos(HWND hwnd, int sb, int iPos, BOOL fRedraw) {
+int win32::SetScrollPos(HWND hwnd, int sb, int iPos, BOOL fRedraw) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     HWND hbar;
     if (!lpwin) return 0;
@@ -178,7 +178,7 @@ int WINAPI win32::SetScrollPos(HWND hwnd, int sb, int iPos, BOOL fRedraw) {
     return iPos;
 }
 
-BOOL WINAPI win32::SetScrollRange(HWND hwnd, int sb, int iMin, int iMax, BOOL fRedraw) {
+BOOL win32::SetScrollRange(HWND hwnd, int sb, int iMin, int iMax, BOOL fRedraw) {
     HWND lpwin = LpScrollWindow(hwnd, sb);
     DWORD dwStyle;
     if (!lpwin) return FALSE;

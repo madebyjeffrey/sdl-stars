@@ -100,3 +100,14 @@ catalog IDs, frozen C inputs and baselines are unchanged. C05's full unchanged
 model receipt remains 12,000 verified / zero errors and zero audit findings;
 no new proof run or whole-program refinement is claimed here. Local logs and
 comparison reports are retained in `dist/verification/c06/`.
+
+
+The first manual Windows build catches `WINAPI` redefinition when SDL intrinsics
+precede the wrapper. Owned C++ declarations/definitions now omit their empty
+`WINAPI`/`WINAPIV` annotations, and the unused `APIENTRY` alias is deleted. Native
+SDK declarations and callback annotations retain their real conventions. The
+C++ ABI assertion explicitly uses the same native C++ function type; its SDK C
+branch is unchanged. The type contract includes SDL first, checks native SDK
+`MSG` separation, and compiles with an inherited `WINAPI=__stdcall` definition.
+The corrected local build and strict MinGW regression compile checks pass;
+full local/runtime and manual platform reruns are pending.

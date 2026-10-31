@@ -25,7 +25,7 @@ static COMPATTIMER *LpTimer(HWND hwnd, UINT_PTR id) {
     return NULL;
 }
 
-UINT_PTR WINAPI win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
+UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     COMPATTIMER *lp;
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd))) {
@@ -52,7 +52,7 @@ UINT_PTR WINAPI win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC 
     return lp->id ? lp->id : 1;
 }
 
-BOOL WINAPI win32::KillTimer(HWND hwnd, UINT_PTR id) {
+BOOL win32::KillTimer(HWND hwnd, UINT_PTR id) {
     COMPATTIMER **lplp, *lp;
 
     if (!SDL_IsMainThread()) return FALSE;

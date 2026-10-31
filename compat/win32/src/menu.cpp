@@ -58,27 +58,27 @@ static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
         if (lp->rgitem[i].hsub && !FMenuDepth(lp->rgitem[i].hsub, cDepth + 1)) return FALSE;
     return TRUE;
 }
-HMENU WINAPI win32::CreatePopupMenu(void) {
+HMENU win32::CreatePopupMenu(void) {
     HMENU lp = new (std::nothrow) win32::HMENU__{};
     if (!lp) return NULL;
     lp->fAlive = TRUE; lp->hnext = hmenus; hmenus = lp;
     return lp;
 }
-HMENU WINAPI win32::CreateMenu(void) { return win32::CreatePopupMenu(); }
-BOOL WINAPI win32::IsMenu(HMENU hmenu) { return LpMenu(hmenu) != NULL; }
-int WINAPI win32::GetMenuItemCount(HMENU hmenu) {
+HMENU win32::CreateMenu(void) { return win32::CreatePopupMenu(); }
+BOOL win32::IsMenu(HMENU hmenu) { return LpMenu(hmenu) != NULL; }
+int win32::GetMenuItemCount(HMENU hmenu) {
     HMENU lp = LpMenu(hmenu);
     return lp ? lp->citem : -1;
 }
-HMENU WINAPI win32::GetSubMenu(HMENU hmenu, int i) {
+HMENU win32::GetSubMenu(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
     return lp && i >= 0 && i < lp->citem ? LpMenu(lp->rgitem[i].hsub) : NULL;
 }
-UINT WINAPI win32::GetMenuItemID(HMENU hmenu, int i) {
+UINT win32::GetMenuItemID(HMENU hmenu, int i) {
     HMENU lp = LpMenu(hmenu);
     return lp && i >= 0 && i < lp->citem && !lp->rgitem[i].hsub ? (UINT)lp->rgitem[i].id : UINT_MAX;
 }
-BOOL WINAPI win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
+BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = NULL, hp;
     COMPATMENUITEM item = {};
     std::unique_ptr<COMPATMENUITEM[]> rg;
@@ -112,10 +112,10 @@ BOOL WINAPI win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, L
     if (hsub) hsub->hparent = lp;
     return TRUE;
 }
-BOOL WINAPI win32::AppendMenuA(HMENU hmenu, UINT flags, UINT_PTR id, LPCSTR psz) {
+BOOL win32::AppendMenuA(HMENU hmenu, UINT flags, UINT_PTR id, LPCSTR psz) {
     return win32::InsertMenuA(hmenu, UINT_MAX, flags | MF_BYPOSITION, id, psz);
 }
-BOOL WINAPI win32::DestroyMenu(HMENU hmenu) {
+BOOL win32::DestroyMenu(HMENU hmenu) {
     HMENU lp = LpMenu(hmenu);
     int i;
     if (!lp) return FALSE;
@@ -143,9 +143,9 @@ static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
     lp->rgitem[--lp->citem] = COMPATMENUITEM{};
     return TRUE;
 }
-BOOL WINAPI win32::DeleteMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, TRUE); }
-BOOL WINAPI win32::RemoveMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, FALSE); }
-DWORD WINAPI win32::CheckMenuItem(HMENU hmenu, UINT id, UINT flags) {
+BOOL win32::DeleteMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, TRUE); }
+BOOL win32::RemoveMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, FALSE); }
+DWORD win32::CheckMenuItem(HMENU hmenu, UINT id, UINT flags) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
     int i;
@@ -156,7 +156,7 @@ DWORD WINAPI win32::CheckMenuItem(HMENU hmenu, UINT id, UINT flags) {
     lpitem->flags = (lpitem->flags & ~MF_CHECKED) | (flags & MF_CHECKED);
     return old;
 }
-BOOL WINAPI win32::EnableMenuItem(HMENU hmenu, UINT id, UINT flags) {
+BOOL win32::EnableMenuItem(HMENU hmenu, UINT id, UINT flags) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
     int i;
@@ -167,7 +167,7 @@ BOOL WINAPI win32::EnableMenuItem(HMENU hmenu, UINT id, UINT flags) {
     lpitem->flags = (lpitem->flags & ~(MF_DISABLED | MF_GRAYED)) | (flags & (MF_DISABLED | MF_GRAYED));
     return (BOOL)old;
 }
-UINT WINAPI win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
+UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
     int i;
@@ -175,7 +175,7 @@ UINT WINAPI win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
     if (!lpitem) return UINT_MAX;
     return lpitem->flags | (lpitem->hsub ? (UINT)(win32::GetMenuItemCount(lpitem->hsub) & 0xff) << 8 : 0);
 }
-int WINAPI win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
+int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
     size_t c;
@@ -195,7 +195,7 @@ void CompatShutdownMenus(void) {
     hmenus = NULL;
 }
 
-HMENU WINAPI win32::GetMenu(HWND hwnd) {
+HMENU win32::GetMenu(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
     return lpwin && !lpwin->hwndParent ? LpMenu(lpwin->hmenu) : NULL;
 }
@@ -284,7 +284,7 @@ BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
     lpBar = LpCompatBitmapSurface(hwnd->hbmpMenu);
     return lpBar && SDL_BlitSurface(lpBar, NULL, lpSurface, NULL);
 }
-BOOL WINAPI win32::DrawMenuBar(HWND hwnd) {
+BOOL win32::DrawMenuBar(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT rc;
     int cyOld;
@@ -298,7 +298,7 @@ BOOL WINAPI win32::DrawMenuBar(HWND hwnd) {
         win32::SendMessageA(hwnd, WM_SIZE, win32::IsIconic(hwnd) ? SIZE_MINIMIZED : win32::IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
     return LpCompatWindow(hwnd) && FCompatPresent(hwnd);
 }
-BOOL WINAPI win32::GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc) {
+BOOL win32::GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc) {
     HMENU lp = LpMenu(hmenu);
     HWND lpwin = LpCompatWindow(lp ? lp->hwndOwner : NULL);
     POINT pt = {0, 0};
@@ -308,7 +308,7 @@ BOOL WINAPI win32::GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc) 
     *lprc = lpwin->rgrcMenu[i];
     return win32::OffsetRect(lprc, pt.x, pt.y - lpwin->cyMenu);
 }
-BOOL WINAPI win32::SetMenu(HWND hwnd, HMENU hmenu) {
+BOOL win32::SetMenu(HWND hwnd, HMENU hmenu) {
     HWND lpwin = LpCompatWindow(hwnd);
     HMENU lp = LpMenu(hmenu), old;
     if (!lpwin || lpwin->fDestroying || lpwin->hwndParent ||
@@ -663,7 +663,7 @@ static BOOL PopupInput(COMPATTRACK *lpt, const win32::MSG *lpmsg) {
     return TRUE;
 
 }
-BOOL WINAPI win32::EndMenu(void) {
+BOOL win32::EndMenu(void) {
     if (!lptrack) return FALSE;
     lptrack->fDone = TRUE; return TRUE;
 }
@@ -730,7 +730,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     return flags & TPM_RETURNCMD ? (BOOL)track.id : !track.fFailed;
 }
 
-BOOL WINAPI win32::TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
+BOOL win32::TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
     return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, NULL, -1, FALSE);
 }
 BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {

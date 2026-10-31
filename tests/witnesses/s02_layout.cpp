@@ -8,7 +8,7 @@ static int16_t     GetString(StringId, char *out) {
     strcpy(out, "key");
     return 3;
 }
-static DWORD WINAPI ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
+static DWORD ReadString(LPCSTR, LPCSTR, LPCSTR, LPSTR out, DWORD cap, LPCSTR) {
     size_t n = strlen(input);
     if (n >= cap)
         n = cap - 1;

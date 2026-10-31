@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 
-BOOL WINAPI win32::ExitWindowsEx(UINT uFlags, DWORD dwReason) {
+BOOL win32::ExitWindowsEx(UINT uFlags, DWORD dwReason) {
     (void)uFlags;
     (void)dwReason;
     win32::SetLastError(ERROR_NOT_SUPPORTED);

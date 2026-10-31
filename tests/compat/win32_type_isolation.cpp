@@ -1,5 +1,12 @@
+#include <SDL3/SDL.h>
 #include <windows.h>
+#include <wincompat_calls.h>
 #include <type_traits>
+
+#ifdef _WIN32
+static_assert(!std::is_same_v<win32::MSG, ::MSG>);
+#endif
+static_assert(std::is_same_v<decltype(&win32::GetWindowLongPtrA), LONG_PTR (*)(HWND, int)>);
 
 static_assert(std::is_same_v<HWND, win32::HWND__ *>);
 static_assert(std::is_same_v<HDC, win32::HDC__ *>);

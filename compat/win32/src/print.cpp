@@ -61,7 +61,7 @@ static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
     lpn->wOutputOffset = (WORD)(psz - (char *)lpn); strcpy(psz, pszPort); lpn->wDefault = 1;
     win32::GlobalUnlock(h); return h;
 }
-BOOL WINAPI win32::PrintDlgA(LPPRINTDLGA lppd) {
+BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
     COMPATPRINT *lp = NULL;
     HGLOBAL hMode = NULL, hNames = NULL;
     HDC hdc = NULL;
@@ -277,7 +277,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     }
     return 1;
 }
-int WINAPI win32::Escape(HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
+int win32::Escape(HDC hdc, int idEscape, int cb, LPCSTR pszIn, LPVOID lpOut) {
     COMPATPRINT *lp = LpCompatPrinter(hdc);
     if (!lp) { win32::SetLastError(ERROR_INVALID_HANDLE); return SP_ERROR; }
     if (lp->fEscaping) { win32::SetLastError(ERROR_BUSY); return SP_ERROR; }

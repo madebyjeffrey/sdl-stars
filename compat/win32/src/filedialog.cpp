@@ -39,7 +39,7 @@ typedef struct COMPATFILEDIALOG {
     DWORD dwError;
 } COMPATFILEDIALOG;
 static thread_local DWORD dwDialogError;
-DWORD WINAPI win32::CommDlgExtendedError(void) { return dwDialogError; }
+DWORD win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
 static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, size_t cpat) {
@@ -564,8 +564,8 @@ done:
     dwDialogError = dlg.dwError;
     return fRet;
 }
-BOOL WINAPI win32::GetOpenFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, FALSE); }
-BOOL WINAPI win32::GetSaveFileNameA(LPOPENFILENAMEA lpof) {
+BOOL win32::GetOpenFileNameA(LPOPENFILENAMEA lpof) { return FFileDialog(lpof, FALSE); }
+BOOL win32::GetSaveFileNameA(LPOPENFILENAMEA lpof) {
     BOOL fResult = FFileDialog(lpof, TRUE);
     if (!fResult && dwDialogError != 0)
         SDL_Log("Save dialog failed (common-dialog error %lu)", (unsigned long)dwDialogError);

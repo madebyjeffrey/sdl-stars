@@ -46,7 +46,7 @@ static DWORD DwFileError(void) {
     }
 }
 
-HFILE WINAPI win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
+HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
     COMPATFILE *lp, *lpNew = NULL;
     NATIVEFILEINFO st;
@@ -128,7 +128,7 @@ LReturn:
     return hf;
 }
 
-HFILE WINAPI win32::_lclose(HFILE hf) {
+HFILE win32::_lclose(HFILE hf) {
     COMPATFILE **lplp, *lp;
     HFILE ret = HFILE_ERROR;
     BOOL fFound = FALSE;
@@ -148,7 +148,7 @@ HFILE WINAPI win32::_lclose(HFILE hf) {
     return ret;
 }
 
-LONG WINAPI win32::_llseek(HFILE hf, LONG offset, int origin) {
+LONG win32::_llseek(HFILE hf, LONG offset, int origin) {
     COMPATFILE *lp;
     int64_t pos = -1;
 
@@ -164,7 +164,7 @@ LONG WINAPI win32::_llseek(HFILE hf, LONG offset, int origin) {
     return (LONG)pos;
 }
 
-UINT WINAPI win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
+UINT win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbRead = -1;
 
@@ -181,7 +181,7 @@ UINT WINAPI win32::_lread(HFILE hf, LPVOID rgb, UINT cb) {
     return (UINT)cbRead;
 }
 
-UINT WINAPI win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
+UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
     int64_t pos;
@@ -203,7 +203,7 @@ UINT WINAPI win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     return (UINT)cbWrite;
 }
 
-DWORD WINAPI win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
+DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
     int64_t cb;
     DWORD dw = INVALID_FILE_SIZE;

@@ -23,7 +23,7 @@ struct COMPATTOOLBAR {
     }
 };
 
-BOOL WINAPI win32::InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit) {
+BOOL win32::InitCommonControlsEx(const INITCOMMONCONTROLSEX *lpInit) {
     if (!lpInit || lpInit->dwSize != sizeof(*lpInit) || (lpInit->dwICC & ~ICC_BAR_CLASSES)) {
         win32::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;

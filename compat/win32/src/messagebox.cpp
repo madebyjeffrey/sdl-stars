@@ -170,7 +170,7 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
     return TRUE;
 }
 
-int WINAPI win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {};
     HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL, lpwin, hwndButton;
     HWND *rghwnd = NULL;

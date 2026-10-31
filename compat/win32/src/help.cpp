@@ -103,7 +103,7 @@ done:
     return pszResult;
 }
 
-BOOL WINAPI win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
+BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
     const char *pszBase, *pszName, *pszPage = NULL;
     char szDirectory[PATH_MAX];
     char *pszDirectory, *pszDocument;

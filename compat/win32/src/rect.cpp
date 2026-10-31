@@ -4,7 +4,7 @@
  */
 #include <windows.h>
 
-BOOL WINAPI win32::SetRect(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom) {
+BOOL win32::SetRect(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom) {
     if (!lprc)
         return FALSE;
     lprc->left = xLeft;
@@ -14,19 +14,19 @@ BOOL WINAPI win32::SetRect(LPRECT lprc, int xLeft, int yTop, int xRight, int yBo
     return TRUE;
 }
 
-BOOL WINAPI win32::CopyRect(LPRECT lprcDst, const RECT *lprcSrc) {
+BOOL win32::CopyRect(LPRECT lprcDst, const RECT *lprcSrc) {
     if (!lprcDst || !lprcSrc)
         return FALSE;
     *lprcDst = *lprcSrc;
     return TRUE;
 }
 
-BOOL WINAPI win32::EqualRect(const RECT *lprc1, const RECT *lprc2) {
+BOOL win32::EqualRect(const RECT *lprc1, const RECT *lprc2) {
     return lprc1 && lprc2 && lprc1->left == lprc2->left && lprc1->top == lprc2->top &&
            lprc1->right == lprc2->right && lprc1->bottom == lprc2->bottom;
 }
 
-BOOL WINAPI win32::IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprcSrc2) {
+BOOL win32::IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprcSrc2) {
     RECT rc;
 
     if (!lprcDst || !lprcSrc1 || !lprcSrc2)
@@ -44,7 +44,7 @@ BOOL WINAPI win32::IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const REC
     return TRUE;
 }
 
-BOOL WINAPI win32::OffsetRect(LPRECT lprc, int dx, int dy) {
+BOOL win32::OffsetRect(LPRECT lprc, int dx, int dy) {
     if (!lprc)
         return FALSE;
     lprc->left += dx;
@@ -54,7 +54,7 @@ BOOL WINAPI win32::OffsetRect(LPRECT lprc, int dx, int dy) {
     return TRUE;
 }
 
-BOOL WINAPI win32::InflateRect(LPRECT lprc, int dx, int dy) {
+BOOL win32::InflateRect(LPRECT lprc, int dx, int dy) {
     if (!lprc)
         return FALSE;
     lprc->left -= dx;
@@ -64,7 +64,7 @@ BOOL WINAPI win32::InflateRect(LPRECT lprc, int dx, int dy) {
     return TRUE;
 }
 
-BOOL WINAPI win32::PtInRect(const RECT *lprc, POINT pt) {
+BOOL win32::PtInRect(const RECT *lprc, POINT pt) {
     return lprc && pt.x >= lprc->left && pt.x < lprc->right &&
            pt.y >= lprc->top && pt.y < lprc->bottom;
 }

@@ -186,7 +186,7 @@ static BOOL FMakeProfileDir(char *szPath) {
     return TRUE;
 }
 
-DWORD WINAPI win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
+DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
     char *szPath = NULL;
     COMPATPROFILE *lpAll = NULL, *lp, *lpKey;
@@ -241,7 +241,7 @@ DWORD WINAPI win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, L
     return (DWORD)cchOut;
 }
 
-UINT WINAPI win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
+UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault, LPCSTR pszFile) {
     char sz[128], *psz = sz;
     UINT u = 0, digit, radix = 10;
     BOOL fNegative = FALSE;
@@ -262,7 +262,7 @@ UINT WINAPI win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT n
     return fNegative ? 0u - u : u;
 }
 
-BOOL WINAPI win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
+BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
     char *szPath = NULL, *szLine = NULL;
     COMPATPROFILE *lpAll = NULL, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;

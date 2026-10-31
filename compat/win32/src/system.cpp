@@ -35,7 +35,7 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     return TRUE;
 }
 
-int WINAPI win32::GetSystemMetrics(int i) {
+int win32::GetSystemMetrics(int i) {
     RECT rc;
     int c;
     if (!SDL_IsMainThread()) return 0;
@@ -61,7 +61,7 @@ int WINAPI win32::GetSystemMetrics(int i) {
     }
 }
 
-BOOL WINAPI win32::SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags) {
+BOOL win32::SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UINT flags) {
     RECT rc;
     (void)param; (void)flags;
     if (!SDL_IsMainThread() || !lpv) { win32::SetLastError(ERROR_INVALID_PARAMETER); return FALSE; }
@@ -76,7 +76,7 @@ BOOL WINAPI win32::SystemParametersInfoA(UINT action, UINT param, PVOID lpv, UIN
     }
 }
 
-DWORD WINAPI win32::GetWindowThreadProcessId(HWND hwnd, LPDWORD lpdwProcess) {
+DWORD win32::GetWindowThreadProcessId(HWND hwnd, LPDWORD lpdwProcess) {
     if (!LpCompatWindow(hwnd)) { win32::SetLastError(ERROR_INVALID_WINDOW_HANDLE); return 0; }
     if (lpdwProcess) *lpdwProcess = (DWORD)getpid();
     return win32::GetCurrentThreadId();

@@ -64,7 +64,7 @@ public:
 
 int CCompatDispatch(void) { return cDispatch; }
 
-BOOL WINAPI win32::PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+BOOL win32::PostMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     COMPATMESSAGE *lpmsg;
 
     if (!SDL_IsMainThread() || (hwnd && !LpCompatWindow(hwnd)))
@@ -306,7 +306,7 @@ static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UIN
     return FALSE;
 }
 
-BOOL WINAPI win32::PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags) {
+BOOL win32::PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags) {
     SDL_Event event;
 
     if (!lpOut || !FValidFilter(hwnd, msgMin, msgMax)) return FALSE;
@@ -320,7 +320,7 @@ BOOL WINAPI win32::PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax
     return FQueuedMessage(lpOut, hwnd, msgMin, msgMax, flags, TRUE);
 }
 
-BOOL WINAPI win32::GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
+BOOL win32::GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     SDL_Event event;
     int cMillis;
     BOOL fMessage;
@@ -343,7 +343,7 @@ BOOL WINAPI win32::GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax)
     }
 }
 
-BOOL WINAPI win32::WaitMessage(void) {
+BOOL win32::WaitMessage(void) {
     win32::MSG msg;
     SDL_Event event;
     int cMillis;
@@ -359,18 +359,18 @@ BOOL WINAPI win32::WaitMessage(void) {
     return TRUE;
 }
 
-VOID WINAPI win32::PostQuitMessage(int code) {
+VOID win32::PostQuitMessage(int code) {
     win32::PostMessageA(NULL, WM_QUIT, (WPARAM)code, 0);
 }
 
-LRESULT WINAPI win32::CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT win32::CallWindowProcA(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (!SDL_IsMainThread() || !lpfn)
         return 0;
     COMPATDISPATCHSCOPE dispatch;
     return CompatInvokeWindowProc(lpfn, hwnd, msg, wParam, lParam);
 }
 
-LRESULT WINAPI win32::SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT win32::SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin)
@@ -380,7 +380,7 @@ LRESULT WINAPI win32::SendMessageA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
     return win32::CallWindowProcA(lpwin->lpfnWndProc, hwnd, msg, wParam, lParam);
 }
 
-LRESULT WINAPI win32::DispatchMessageA(const win32::MSG *lpmsg) {
+LRESULT win32::DispatchMessageA(const win32::MSG *lpmsg) {
     if (!lpmsg || !SDL_IsMainThread() || lpmsg->message == WM_QUIT) return 0;
     auto payload = TakePayloadMessage(*lpmsg);
     StarsRestore restorePayload(lpDispatchPayload);
@@ -395,7 +395,7 @@ LRESULT WINAPI win32::DispatchMessageA(const win32::MSG *lpmsg) {
     return win32::SendMessageA(lpmsg->hwnd, lpmsg->message, lpmsg->wParam, lpmsg->lParam);
 }
 
-BOOL WINAPI win32::TranslateMessage(const win32::MSG *lpmsg) {
+BOOL win32::TranslateMessage(const win32::MSG *lpmsg) {
     // SDL text events supply printable characters, but omit control characters.
     if (lpmsg && (lpmsg->message == WM_KEYDOWN || lpmsg->message == WM_SYSKEYDOWN) &&
         (lpmsg->wParam == VK_BACK || lpmsg->wParam == VK_TAB ||
@@ -406,7 +406,7 @@ BOOL WINAPI win32::TranslateMessage(const win32::MSG *lpmsg) {
                      lpmsg->message == WM_SYSKEYDOWN || lpmsg->message == WM_SYSKEYUP);
 }
 
-LRESULT WINAPI win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HWND lpwin = LpCompatWindow(hwnd);
     size_t cch;
     const char *psz;

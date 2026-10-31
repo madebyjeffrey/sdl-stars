@@ -209,7 +209,8 @@
     {
       "entry": "win32_abi",
       "scope": "complete shared input",
-      "normalized_tokens_sha256": "04cd338e0d984814dd7721880fca1b383431f1eafd238e2a412af627befdbd20"
+      "normalized_tokens_sha256": "1b1bc09da7804a117c8392206e49a5c07beb88db1cdf5b5c90d5d2ef12e72c65",
+      "native_cpp_signature": "The C++ pointer assertion omits the formerly empty WINAPI annotation; the SDK C assertion retains its real native annotation."
     },
     {
       "entry": "win32_attention",
@@ -392,7 +393,7 @@
       "normalized_tokens_sha256": "3692c9ac38f652ff9c0e7504e8f2a472add5bc109046f0cbf7aae5593620867c"
     }
   ],
-  "normalization": "Remove comments; map removed narrow API aliases and APPMSG to parent spellings. Cursor main vectors map the typed test reader to the original call. No constants, arguments or assertions are normalized.",
+  "normalization": "Remove comments; map removed narrow API aliases and APPMSG to parent spellings. Cursor main vectors map the typed test reader to the original call. No constants, arguments or assertions are normalized. The C++ pointer assertion expands the former empty WINAPI token; the SDK C branch is unchanged.",
   "api_header_export_count": 223,
   "common_control_exports": [
     "win32::InitCommonControlsEx"
@@ -410,5 +411,10 @@
       "function": "DwTickCount",
       "tokens_sha256": "3c061489211445f1f776fd3c49e3de7ed613f0beaee48f4923c8c0e78fc439df"
     }
+  ],
+  "removed_empty_calling_convention_macros": [
+    "WINAPI",
+    "WINAPIV",
+    "APIENTRY"
   ]
 }

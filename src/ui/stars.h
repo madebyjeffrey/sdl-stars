@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <windows.h>
 
-namespace ui { int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
+namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
 int16_t          IPlrAlsoCheater(int16_t iplr);
 int16_t          FGetSystemColors();
 void             FreeStuff() noexcept;

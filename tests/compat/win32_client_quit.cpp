@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace ui { int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
+namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow); }
 static BOOL fPlayers, fRace, fQuit, fCheckFocus, fFocusPassed, fSaveOwner, fOwnerPassed;
 static BOOL fLaunchFocus, fLaunchFocusPassed;
 static HWND hwndNewGame;

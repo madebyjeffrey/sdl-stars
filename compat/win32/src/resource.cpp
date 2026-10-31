@@ -4,7 +4,7 @@
 
 static BYTE bModule;
 
-HMODULE WINAPI win32::GetModuleHandleA(LPCSTR pszName) {
+HMODULE win32::GetModuleHandleA(LPCSTR pszName) {
     if (!SDL_IsMainThread() || pszName) {
         SDL_SetError("Only the current embedded resource module is supported");
         return NULL;
@@ -34,7 +34,7 @@ static const COMPATRESOURCE *LpResource(HRSRC hrsrc) {
     return NULL;
 }
 
-HRSRC WINAPI win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
+HRSRC win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszType) {
     size_t i;
     UINT_PTR id = (UINT_PTR)pszName;
     const COMPATRESOURCE *lpres;
@@ -51,17 +51,17 @@ HRSRC WINAPI win32::FindResourceA(HMODULE hModule, LPCSTR pszName, LPCSTR pszTyp
     return NULL;
 }
 
-DWORD WINAPI win32::SizeofResource(HMODULE hModule, HRSRC hrsrc) {
+DWORD win32::SizeofResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
     return lpres ? (DWORD)lpres->cb : 0;
 }
 
-HGLOBAL WINAPI win32::LoadResource(HMODULE hModule, HRSRC hrsrc) {
+HGLOBAL win32::LoadResource(HMODULE hModule, HRSRC hrsrc) {
     const COMPATRESOURCE *lpres = FModule(hModule) ? LpResource(hrsrc) : NULL;
     return lpres ? (HGLOBAL)lpres->rgb : NULL;
 }
 
-LPVOID WINAPI win32::LockResource(HGLOBAL hres) {
+LPVOID win32::LockResource(HGLOBAL hres) {
     size_t i;
 
     if (!SDL_IsMainThread())
@@ -72,12 +72,12 @@ LPVOID WINAPI win32::LockResource(HGLOBAL hres) {
     return NULL;
 }
 
-BOOL WINAPI win32::FreeResource(HGLOBAL hres) {
+BOOL win32::FreeResource(HGLOBAL hres) {
     (void)hres; // Obsolete on Win32: embedded bytes are module-owned, never freed here.
     return FALSE;
 }
 
-HBITMAP WINAPI win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
+HBITMAP win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
     const COMPATRESOURCE *lpres = LpResource(win32::FindResourceA(hInstance, pszName, RT_BITMAP));
     return lpres ? HbmpCompatResource(lpres->rgb, lpres->cb) : NULL;
 }
@@ -145,7 +145,7 @@ HMENU HmenuCompatTemplate(const BYTE *rgb, size_t cb) {
     if (hmenu && ib != cb) { win32::DestroyMenu(hmenu); return NULL; }
     return hmenu;
 }
-HMENU WINAPI win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
+HMENU win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, RT_MENU);
     return HmenuCompatTemplate((const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc))), win32::SizeofResource(hInstance, hrsrc));
 }

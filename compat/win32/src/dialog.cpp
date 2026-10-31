@@ -67,7 +67,7 @@ LRESULT CALLBACK CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }
-BOOL WINAPI win32::MapDialogRect(HWND hwnd, LPRECT lprc) {
+BOOL win32::MapDialogRect(HWND hwnd, LPRECT lprc) {
     HWND lp = LpCompatWindow(hwnd);
     if (!lp || !lp->fDialog || !lprc) return FALSE;
     lprc->left = win32::MulDiv(lprc->left, lp->cxDlgUnit, 4); lprc->right = win32::MulDiv(lprc->right, lp->cxDlgUnit, 4);
@@ -194,16 +194,16 @@ done:
     destroyDialog.Release();
     return hwnd;
 }
-HWND WINAPI win32::CreateDialogParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
+HWND win32::CreateDialogParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
     return HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, FALSE);
 }
-BOOL WINAPI win32::EndDialog(HWND hwnd, INT_PTR result) {
+BOOL win32::EndDialog(HWND hwnd, INT_PTR result) {
     HWND lp = LpCompatWindow(hwnd);
     if (!lp || !lp->fDialog || !lp->fModal) return FALSE;
     lp->lDlgResult = result; lp->fEndDialog = TRUE;
     return TRUE;
 }
-BOOL WINAPI win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
+BOOL win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     HWND lp = LpCompatWindow(hwnd), hwndFocus, hwndNext;
     LRESULT code;
     UINT id;
@@ -230,7 +230,7 @@ BOOL WINAPI win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     }
     return FALSE;
 }
-INT_PTR WINAPI win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
+INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
     HWND hwnd = NULL, hwndFocus = win32::GetFocus(), hwndRoot;
     BOOL fEnable;
     win32::MSG msg;

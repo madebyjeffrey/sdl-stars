@@ -11,7 +11,7 @@ static int16_t     GetString(StringId id, char *out) {
     strcpy(out, id == idsDefault ? "Default" : "ZipOrders");
     return (int16_t)strlen(out);
 }
-static DWORD WINAPI ReadString(LPCSTR section, LPCSTR key, LPCSTR fallback, LPSTR out, DWORD cap, LPCSTR file) {
+static DWORD ReadString(LPCSTR section, LPCSTR key, LPCSTR fallback, LPSTR out, DWORD cap, LPCSTR file) {
     const char *s = key[9] == 'P' ? production[key[10] - '1'] : transport[key[9] - '1'];
     size_t      n = strlen(s);
     (void)section;
@@ -23,7 +23,7 @@ static DWORD WINAPI ReadString(LPCSTR section, LPCSTR key, LPCSTR fallback, LPST
     out[n] = 0;
     return (DWORD)n;
 }
-static BOOL WINAPI WriteString(LPCSTR section, LPCSTR key, LPCSTR value, LPCSTR file) {
+static BOOL WriteString(LPCSTR section, LPCSTR key, LPCSTR value, LPCSTR file) {
     (void)section;
     (void)file;
     writes++;

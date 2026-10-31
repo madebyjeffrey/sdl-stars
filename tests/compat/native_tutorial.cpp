@@ -72,7 +72,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.
      */

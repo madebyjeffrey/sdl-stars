@@ -168,7 +168,7 @@ void FreeStuff() noexcept {
     }
 }
 
-int WINAPI ui::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int ui::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     BeginAppUiSession();
     NATIVECLEANUPSCOPE close([]() noexcept { FreeStuff(); });
     int result = IStarsMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);

@@ -81,7 +81,7 @@ LDone:
     if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
     return fCopied;
 }
-int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     const char *pszExport = PszCompatEnvironment("STARS_TEST_EXPORT_EXPECTED");
     if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
         if (!(type & MB_DEFBUTTON2)) return IDNO;

@@ -1568,7 +1568,7 @@ int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     return IDOK;
 }
 
-int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
+int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     (void)hwnd; (void)pszCaption;
     if (pszText && strstr(pszText, "Import games from your recent files")) {
         cRecentMigrationPrompts++;

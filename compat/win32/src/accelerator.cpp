@@ -19,7 +19,7 @@ static HACCEL LpAccel(HACCEL haccel) {
         if (lp == haccel) return lp->fAlive ? lp : NULL;
     return NULL;
 }
-HACCEL WINAPI win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
+HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     HACCEL lp;
     if (!SDL_IsMainThread() || !rgaccel || c <= 0 || (size_t)c > SIZE_MAX / sizeof(ACCEL)) return NULL;
     lp = (HACCEL)(calloc(1, sizeof(*lp)));
@@ -30,7 +30,7 @@ HACCEL WINAPI win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     lp->c = c; lp->fAlive = TRUE; lp->hnext = haccels; haccels = lp;
     return lp;
 }
-int WINAPI win32::CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
+int win32::CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     HACCEL lp = LpAccel(haccel);
     int i;
     if (!lp) return 0;
@@ -40,14 +40,14 @@ int WINAPI win32::CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c) {
     for (i = 0; i < c; i++) { rgaccel[i] = lp->rg[i]; rgaccel[i].fVirt &= ~0x80; }
     return c;
 }
-BOOL WINAPI win32::DestroyAcceleratorTable(HACCEL haccel) {
+BOOL win32::DestroyAcceleratorTable(HACCEL haccel) {
     HACCEL lp = LpAccel(haccel);
     if (!lp) return FALSE;
     if (lp->hrsrc) return TRUE; // Module-loaded tables live until module shutdown.
     lp->fAlive = FALSE; free(lp->rg); lp->rg = NULL;
     return TRUE;
 }
-HACCEL WINAPI win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
+HACCEL win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, RT_ACCELERATOR);
     const BYTE *rgb = (const BYTE *)(win32::LockResource(win32::LoadResource(hInstance, hrsrc)));
     DWORD cb = win32::SizeofResource(hInstance, hrsrc);
@@ -72,7 +72,7 @@ HACCEL WINAPI win32::LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR pszName) {
     if (lp) lp->hrsrc = hrsrc;
     return lp;
 }
-int WINAPI win32::TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
+int win32::TranslateAcceleratorA(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
     HACCEL lp = LpAccel(haccel);
     ACCEL accel;
     BYTE mod = 0;

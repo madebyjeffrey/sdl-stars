@@ -106,7 +106,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
     }
     return h;
 }
-HICON WINAPI win32::LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
+HICON win32::LoadIconA(HINSTANCE hInstance, LPCSTR psz) { return HimageLoad(hInstance, psz, FALSE); }
 static SDL_SystemCursor IdSystemCursor(UINT id) {
     switch (id) {
     case 32512: return SDL_SYSTEM_CURSOR_DEFAULT;
@@ -124,7 +124,7 @@ static SDL_SystemCursor IdSystemCursor(UINT id) {
     default: return SDL_SYSTEM_CURSOR_COUNT;
     }
 }
-HCURSOR WINAPI win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
+HCURSOR win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     COMPATIMAGE *lp;
     UINT_PTR id = (UINT_PTR)psz;
     if (!FCompatVideo()) return NULL;
@@ -136,7 +136,7 @@ HCURSOR WINAPI win32::LoadCursorA(HINSTANCE hInstance, LPCSTR psz) {
     lp->fShared = TRUE; lp->idSystem = (UINT)id;
     return (HCURSOR)lp;
 }
-HICON WINAPI win32::CopyIcon(HICON hicon) {
+HICON win32::CopyIcon(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon), *lpNew;
     SDL_Surface *lpXor;
     BYTE *rgAnd;
@@ -163,9 +163,9 @@ static BOOL FDestroyImage(HICON hicon) {
     lp->lpCursor.reset(); lp->lpXor.reset(); lp->rgbAnd.reset(); lp->fAlive = FALSE;
     return TRUE;
 }
-BOOL WINAPI win32::DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
-BOOL WINAPI win32::DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
-BOOL WINAPI win32::GetIconInfo(HICON hicon, PICONINFO lpii) {
+BOOL win32::DestroyIcon(HICON hicon) { return FDestroyImage(hicon); }
+BOOL win32::DestroyCursor(HCURSOR hcursor) { return FDestroyImage((HICON)hcursor); }
+BOOL win32::GetIconInfo(HICON hicon, PICONINFO lpii) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     ICONINFO ii = {};
     SDL_Surface *lpMask;
@@ -227,8 +227,8 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     }
     return lp->lpCursor != NULL;
 }
-HCURSOR WINAPI win32::GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
-HCURSOR WINAPI win32::SetCursor(HCURSOR hcursor) {
+HCURSOR win32::GetCursor(void) { return SDL_IsMainThread() ? (HCURSOR)lpCursor : NULL; }
+HCURSOR win32::SetCursor(HCURSOR hcursor) {
     COMPATIMAGE *lp = LpCompatImage((HICON)hcursor), *lpOld = lpCursor;
     const char *pszDriver;
     if (!SDL_IsMainThread() || (hcursor && (!lp || !lp->fCursor)) || !FCompatVideo()) return NULL;
