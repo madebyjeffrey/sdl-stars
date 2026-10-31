@@ -2,7 +2,7 @@
   "reference_revision": "bcdd77bf823cc5abcb4346b62df10efc6511790f",
   "observed_revision": "6e547f058c5e41f2a29e51d02e2c551f56fdcb63",
   "observed_run": 41220497527,
-  "purpose": "Unchanged native SDK behavior/automation probes; preserve and execute every original assertion, report failures without treating these pre-existing probe gaps as application regressions. All other selected SDK checks remain gates.",
+  "purpose": "Native SDK behavior/automation probes with reviewed source hashes; preserve assertions except explicitly documented compatibility bug fixes. Execute every probe and retain raw results. All other selected SDK checks remain gates.",
   "diagnostics": [
     {
       "test": "test_win32_toolbar_reference",
@@ -25,8 +25,8 @@
     {
       "test": "test_win32_controls_reference",
       "input": "tests/compat/win32_controls.inc",
-      "sha256": "c762ec9d0e9f31873675a03f48dc37e7a9f600c8b076dfe908dc9347914df0a1",
-      "observation": "Missing-control CheckDlgButton return"
+      "sha256": "87805a5e6d57ba84a8afe3d3d6c4d09c5b39b8c2e9ca0f171e24a3fcf2937efa",
+      "observation": "The missing-control CheckDlgButton expectation is corrected to failure; full native controls probe awaits requalification before removing this diagnostic classification."
     },
     {
       "test": "test_win32_scroll_reference",

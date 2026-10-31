@@ -459,7 +459,11 @@ uses `ToolbarWindow32` with common-control commands, split/dropdown buttons and
 anchored tooltips; Windows uses `comctl32`. See [toolbars](WIN32-TOOLBARS.md). Radio
 selection dots are round, toolbar menus anchor below their triggers, and tooltips
 use control-relative placement with an owned native tooltip role; see
-[controls](WIN32-CONTROLS.md). Basic narrow edit fields now support selection, limits,
+[controls](WIN32-CONTROLS.md).
+`CheckDlgButton` now rejects missing child controls and invalid dialog handles;
+the shared SDL/SDK vector requires failure for both. Valid button updates keep
+their existing success result.
+Basic narrow edit fields now support selection, limits,
 read-only/password behavior and input; see [edit fields](WIN32-EDIT.md). Complete
 edit conformance remains. Fixed-height string lists, multiple-selection messages
 and owner drawing now work; see [list boxes](WIN32-LISTS.md). Additional list

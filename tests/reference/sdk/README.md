@@ -11,7 +11,11 @@ changes their language. See `docs/CPP-POLICY.md` for the configuration matrix an
 precise reference exceptions. Shared case bodies and expected values stay in the
 `.inc` inputs.
 
-`diagnostics.json` pins the 19 unchanged native behavior/automation probes tracked
+`diagnostics.json` pins the 19 native behavior/automation probes tracked
 in issue #78. Their original assertions still execute and report their actual
 results; other SDK checks, missing/skipped execution and changed diagnostic inputs
 remain errors. See `docs/CPP-C09-SDK-FINDINGS.md` for the exact observed failures.
+
+The missing-control `CheckDlgButton` expectation is intentionally corrected after
+Milestone C. Its input hash is updated explicitly; the full native controls probe
+remains diagnostic until requalified.

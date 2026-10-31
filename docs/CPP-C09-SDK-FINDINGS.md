@@ -22,7 +22,7 @@ and SDK type-isolation check pass.
 | Toolbar | Line 131: split-dropdown notification/rectangle and command counts |
 | List | Line 72: owner-selection draw count; caller line 210 |
 | Edit | Line 55: multiline case-style undo restores empty text instead of `ABC DEF`; caller line 452 |
-| Controls | Line 192: `CheckDlgButton` on missing control 999 |
+| Controls | Original failure: `CheckDlgButton` on missing control 999. That expectation and the SDL return value are now corrected to failure; native requalification is pending. |
 | Scroll | Line 56: `SetScrollRange` with reversed endpoints; caller line 320 |
 | UI resources | Resource 6 differs at byte 452: `a9 / c2` |
 | Popup | Line 147: result, command and menu-loop notification counts |
@@ -56,3 +56,7 @@ Ordinary Windows qualification runs even when a probe fails, so one diagnostic
 cannot hide application, standalone-header or linked-witness results. The final
 matrix distinguishes passing contracts from recorded diagnostic failures; it does
 not claim that all 39 SDK probes pass.
+
+The `CheckDlgButton` correction is an intentional compatibility bug fix after
+Milestone C. Its shared expectation now rejects missing controls on both backends;
+no other diagnostic assertion is changed.

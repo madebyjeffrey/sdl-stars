@@ -33,8 +33,12 @@ UINT win32::GetDlgItemTextA(HWND hwnd, int id, LPSTR psz, int cch) {
 }
 
 BOOL win32::CheckDlgButton(HWND hwnd, int id, UINT check) {
+    HWND hwndChild;
     if (!SDL_IsMainThread()) return 0;
-    win32::SendDlgItemMessageA(hwnd, id, win32::BM_SETCHECK, check, 0);
+    hwndChild = win32::GetDlgItem(hwnd, id);
+    if (!hwndChild) return 0;
+    // BM_SETCHECK returns zero even when the button update succeeds.
+    win32::SendMessageA(hwndChild, win32::BM_SETCHECK, check, 0);
     return 1;
 }
 

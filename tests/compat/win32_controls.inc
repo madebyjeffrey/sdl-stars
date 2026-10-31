@@ -189,7 +189,9 @@ int main(void) {
     CHECK(GetDlgItemTextA(hwnd, 300, sz, 4) == 3 && strcmp(sz, "Upd") == 0);
     CHECK(!GetDlgItemTextA(hwnd, 999, sz, sizeof(sz)));
     CHECK(!SetDlgItemTextA(hwnd, 999, "missing"));
-    CHECK(CheckDlgButton(hwnd, 999, BST_CHECKED));
+    CHECK(!GetDlgItem(hwnd, 999));
+    CHECK(!CheckDlgButton(hwnd, 999, BST_CHECKED));
+    CHECK(!CheckDlgButton(NULL, 101, BST_CHECKED));
     CHECK(SendDlgItemMessageA(hwnd, 999, BM_GETCHECK, 0, 0) == 0);
     hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
     SendMessageA(hwndPush, WM_SETFONT, (WPARAM)hfont, 1);
