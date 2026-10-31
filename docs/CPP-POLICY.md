@@ -43,7 +43,9 @@ compiler policies; none supplies an owned C interface.
 Run `tests/cmake/configure_matrix.py --preset <platform-debug> --work <fresh-dir>`.
 It checks ordinary-only, SDK-only, both and neither configurations with distinct
 CMake caches and verifies exact registry membership (38 SDK vector tests plus SDK
-type isolation). Non-Windows toolchains must reject SDK configurations explicitly.
+type isolation). In SDK-only and combined builds it audits the compile manifest:
+each of the 38 C entry files must appear once, use CMake's C compiler and avoid
+C++ language overrides. Non-Windows toolchains must reject SDK configurations explicitly.
 On native Windows add `--run-sdk` to build and run all SDK vectors in both eligible
 configurations. The [native SDK findings](CPP-C09-SDK-FINDINGS.md) record 19
 individually named, hash-pinned pre-existing behavior/automation probes as

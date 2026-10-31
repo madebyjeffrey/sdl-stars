@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DispatchMessageA` now matches dequeued timer captures by message time.
+  The C08 pending list previously kept captures newest first, so rearming one
+  thread timer under another owner before dispatch could run its older message
+  against the newer owner. The callback-context test covers both dispatch orders.
+
 - `WinMain` and the command-line host close their application session on every
   exit. `FreeStuff` stops native callbacks, timers and windows before releasing
   game streams/heaps, then clears borrowed UI state and private caches. Repeated

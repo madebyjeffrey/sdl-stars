@@ -9,6 +9,7 @@
 
 static int cErrors, cNested, cTimer, cDestroy;
 static int ownerA, ownerB, caller;
+static void *pvTimerExpected;
 static HWND hwndA, hwndB;
 static uint64_t msNow;
 static constexpr UINT msgNested = win32::WM_APP + 123;
@@ -40,13 +41,13 @@ static LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 static void TimerProc(HWND, UINT, UINT_PTR, DWORD) {
-    if (PvCompatCallbackContext() != &ownerA) ++cErrors;
+    if (PvCompatCallbackContext() != pvTimerExpected) ++cErrors;
     ++cTimer;
 }
 
 int main() {
     WNDCLASS wc{};
-    win32::MSG msg{};
+    win32::MSG msg{}, msgFirst{}, msgSecond{};
     UINT_PTR id;
 
     wc.lpfnWndProc = WindowProc;
@@ -85,12 +86,55 @@ int main() {
         CHECK(win32::PeekMessageA(&msg, nullptr, win32::WM_TIMER, win32::WM_TIMER, win32::PM_REMOVE));
         CHECK(win32::KillTimer(nullptr, id));
         COMPATCALLBACKCONTEXTSCOPE context(&caller);
+        pvTimerExpected = &ownerA;
         win32::DispatchMessageA(&msg);
         CHECK(cTimer == 1 && cErrors == 0 && PvCompatCallbackContext() == &caller);
+
+        // Dequeue two messages from the same timer with different captured owners.
+        {
+            COMPATCALLBACKCONTEXTSCOPE first(&ownerA);
+            id = win32::SetTimer(nullptr, 0, 10, TimerProc);
+        }
+        CHECK(id != 0);
+        msNow = 20;
+        CHECK(win32::PeekMessageA(&msgFirst, nullptr, win32::WM_TIMER, win32::WM_TIMER, win32::PM_REMOVE));
+        {
+            COMPATCALLBACKCONTEXTSCOPE second(&ownerB);
+            CHECK(win32::SetTimer(nullptr, id, 10, TimerProc) == id);
+        }
+        msNow = 30;
+        CHECK(win32::PeekMessageA(&msgSecond, nullptr, win32::WM_TIMER, win32::WM_TIMER, win32::PM_REMOVE));
+        CHECK(win32::KillTimer(nullptr, id));
+        pvTimerExpected = &ownerA;
+        win32::DispatchMessageA(&msgFirst);
+        pvTimerExpected = &ownerB;
+        win32::DispatchMessageA(&msgSecond);
+        CHECK(cTimer == 3 && cErrors == 0 && PvCompatCallbackContext() == &caller);
+
+        // A caller can dispatch dequeued messages in a different order.
+        {
+            COMPATCALLBACKCONTEXTSCOPE first(&ownerA);
+            id = win32::SetTimer(nullptr, 0, 10, TimerProc);
+        }
+        CHECK(id != 0);
+        msNow = 40;
+        CHECK(win32::PeekMessageA(&msgFirst, nullptr, win32::WM_TIMER, win32::WM_TIMER, win32::PM_REMOVE));
+        {
+            COMPATCALLBACKCONTEXTSCOPE second(&ownerB);
+            CHECK(win32::SetTimer(nullptr, id, 10, TimerProc) == id);
+        }
+        msNow = 50;
+        CHECK(win32::PeekMessageA(&msgSecond, nullptr, win32::WM_TIMER, win32::WM_TIMER, win32::PM_REMOVE));
+        CHECK(win32::KillTimer(nullptr, id));
+        pvTimerExpected = &ownerB;
+        win32::DispatchMessageA(&msgSecond);
+        pvTimerExpected = &ownerA;
+        win32::DispatchMessageA(&msgFirst);
+        CHECK(cTimer == 5 && cErrors == 0 && PvCompatCallbackContext() == &caller);
     }
     CHECK(!PvCompatCallbackContext());
     CHECK(win32::DestroyWindow(hwndB) && win32::DestroyWindow(hwndA));
     CHECK(cDestroy == 2 && cErrors == 0 && !PvCompatCallbackContext());
-    puts("Target-bound owners survive nested dispatch, callback failure, queued timer removal and destruction");
+    puts("Target-bound owners survive nested dispatch, callback failure, queued timer ownership and destruction");
     return 0;
 }

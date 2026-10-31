@@ -43,10 +43,12 @@ C04/C05 through C10 are ready for review as the dependent draft stack #72–#77.
 Owned implementations have honest C++20/Objective-C++20 extensions, actual
 namespaces/direct UI calls, typed effects and explicit state consumers. Temporary
 routing, source extraction, state aliases and SDK language adapters are removed.
-All local and final manual Linux/Windows contract gates pass; the two full
-platform jobs remain opt-in for automatic CI. Nineteen unchanged native SDK
-behavior/automation probes are explicit diagnostics tracked in issue #78, with
-original assertions retained. Game/file behavior and baselines are unchanged.
+C08 timer dispatch preserves each dequeued owner's context when a thread timer
+is rearmed before both messages are dispatched. All local and final manual
+Linux/Windows contract gates pass; the two full platform jobs remain opt-in for
+automatic CI. Nineteen unchanged native SDK behavior/automation probes are
+explicit diagnostics tracked in issue #78, with original assertions retained.
+Game/file behavior and baselines are unchanged.
 [Final qualification](CPP-C10-QUALIFICATION.md) and the
 [implementation ledger](CPP-C-IMPLEMENTATION.md) record the evidence and review order.
 
