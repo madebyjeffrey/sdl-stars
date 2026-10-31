@@ -1,4 +1,7 @@
 #include "common.h"
+#include "colony_io.h"
+#include "race_query_io.h"
+#include "random_io.h"
 
 void GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm) {
     int16_t cthTotal;
@@ -78,7 +81,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
     FLEET  *lpfl;
 
     fRemote = cMines != -1;
-    fMacintosh = lppl->iPlayer != iplrNone && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh;
+    fMacintosh = lppl->iPlayer != iplrNone && RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh;
     if (cMines == -1) {
         if (lppl->iPlayer == iplrNone || lppl->rgwtMin[3] == 0) {
             for (i = 0; i < 3; i++) {
@@ -86,11 +89,11 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
             }
             return;
         }
-        lMine = CMinesOperating(lppl);
+        lMine = ColonyIO().pfnMinesOperating(lppl);
         if (fMacintosh) {
             lMineEff = 10;
         } else {
-            lMineEff = GetRaceStat(&rgplr[lppl->iPlayer], rsMineProd);
+            lMineEff = RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMineProd);
         }
     } else {
         lMine = cMines;
@@ -109,7 +112,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
         }
         lQuanRem = (int32_t)(lQuan % 100);
         lQuan = (int32_t)(lQuan / 100);
-        if (lQuanRem != 0 && gd.fGeneratingTurn && Random(100) < (int16_t)LOWORD(lQuanRem)) {
+        if (lQuanRem != 0 && gd.fGeneratingTurn && RandomIO().pfnRandom(100) < (int16_t)LOWORD(lQuanRem)) {
             lQuan++;
         }
         plQuan[i] = lQuan;
@@ -159,7 +162,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
                 break;
             if (lpfl->idPlanet == lppl->id && lpfl->iPlayer == lppl->iPlayer && !lpfl->fDead && lpfl->cord <= 1 &&
                 lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
-                cMines = CMineFromLpfl(lpfl);
+                cMines = ColonyIO().pfnFleetMining(lpfl);
                 if (cMines > 0) {
                     EstMineralsMined(lppl, rglQuan, cMines, fApply);
                     for (i = 0; i < 3; i++) {

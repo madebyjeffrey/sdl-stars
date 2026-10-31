@@ -1,5 +1,7 @@
 /* Own only audio initialized by the wrapper; exercise the real SDL stream. */
 #include "internal.h"
+#include "../../compat/win32/src/audio_io.h"
+
 #include <cstdio>
 #include <cstring>
 #include <cmath>
@@ -23,6 +25,10 @@ extern "C" bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, co
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
 int main(int argc, char **argv) {
     const char *pszMode = argc == 2 ? argv[1] : "owned";
+    COMPATAUDIOIO io_compataudioio;
+    io_compataudioio.pfnPutAudioStreamData = StarsTest_SDL_PutAudioStreamData;
+    COMPATAUDIOIOSCOPE scope_compataudioio(io_compataudioio);
+
     CHECK(argc <= 2);
     if (!std::strcmp(pszMode, "failure")) {
         CHECK(!MessageBeep(MB_OK) && GetLastError() == ERROR_NOT_SUPPORTED && cQueues == 0);

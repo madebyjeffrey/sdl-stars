@@ -11,7 +11,8 @@ if(STARS_BUILD_SDL_CLIENT)
     list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_DESKTOP_CPP_HEADERS})
     list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/platform.h")
     list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/cleanup.h")
-    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/profile_io.h")
+    file(GLOB STARS_EFFECT_CPP_HEADERS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/compat/win32/src/*_io.h")
+    list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_EFFECT_CPP_HEADERS})
     list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/file_read.h")
 endif()
 set(STARS_CPP_STANDARD_HEADERS "#include <algorithm>\n#include <atomic>\n#include <bit>\n#include <filesystem>\n#include <limits>\n#include <span>\n#include <string>\n#include <vector>\n#include <stdlib.h>\n")
@@ -41,6 +42,10 @@ add_test(NAME test_cpp_compilation_manifest COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/cmake/check_cpp_manifest.py"
     "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
 set_tests_properties(test_cpp_compilation_manifest PROPERTIES LABELS build TIMEOUT 30)
+add_test(NAME test_cpp_test_routing_policy COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/cmake/test_cpp_test_routing.py"
+    "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
+set_tests_properties(test_cpp_test_routing_policy PROPERTIES LABELS build TIMEOUT 30)
 
 
 # The historical native observer is no longer runnable on the SDL backend. Keep

@@ -1,5 +1,5 @@
-# Every owned production source variant, including private test clones and
-# generated tables, receives the same strict diagnostics. Source properties
+# Every owned production source, including generated tables, receives the
+# same strict diagnostics. Source properties
 # avoid exporting production warning policy to independent C/SDK consumers.
 function(stars_apply_strict_cpp_directory directory)
     get_property(targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)

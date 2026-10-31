@@ -8,15 +8,10 @@ Reached native undefined domains are excluded before C under ASan/UBSan.
 """
 from pathlib import Path
 import math
-import os
 import random
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT,function
-from check_construction_buildability_source import native_buildable_construction
 from check_native_colony_source import signed,div,checked,Boundary
 from check_part_availability_source import tech
 
@@ -173,99 +168,11 @@ def cases():
         yield c
 
 
-def native_terraform_construction():
-    declarations,bodies,helpers=native_buildable_construction()
-    declarations+='\nstatic_assert(hstTerra==8192 && envNone==-1 && envImmune==-1 && iterraCount==20 && ibitRaceTT==1,"terraform model identities");\n'
-    declarations=declarations.replace('#include <setjmp.h>','#include <setjmp.h>\nstatic int32_t cfg[54];static int currentDesire,terraCalls,desireCalls,terraItems[128],desireInputs[16][4],observedLow[3],observedHigh[3],observedCost[3];static TERRA scripted[20];')
-    stub='int16_t PctPlanetDesirability(PLANET *p,int16_t player){assert(p==&planet && !player);return 100;}'
-    assert stub in declarations
-    declarations=declarations.replace(stub,r'''
-static int16_t NativeHabitat(PLANET *,int16_t);
-int16_t PctPlanetDesirability(PLANET *p,int16_t player){
-    assert(p==&planet && desireCalls<16);int at=desireCalls++;desireInputs[at][0]=player;
-    for(int i=0;i<3;i++)desireInputs[at][i+1]=p->rgEnvVar[i];
-    return cfg[49]?(int16_t)cfg[50+currentDesire++]:NativeHabitat(p,player);
-}
-''')
-    stub='int16_t IBestTerraform(PLANET *p,int16_t help){assert(p==&planet && help);terraformCalls++;if(terraformChoice<-3 || terraformChoice>3)longjmp(boundary,1);return terraformChoice;}'
-    assert stub in declarations
-    declarations=declarations.replace(stub,'static int16_t NativeBest(PLANET *,int16_t);\nint16_t IBestTerraform(PLANET *p,int16_t help){terraformCalls++;currentDesire=0;return NativeBest(p,help);}')
-    declarations=declarations.replace('static jmp_buf boundary;','')
-    at=bodies.index('int16_t FLookupPart(PART *part){');end=bodies.index('\n}\n',at)+3
-    gate=bodies[at:end].replace('int16_t FLookupPart(','static int16_t GateLookup(',1)
-    bodies=bodies[:at]+gate+r'''
-int16_t FLookupPart(PART *part){
-    if(part->hs.grhst!=hstTerra)return GateLookup(part);
-    assert(terraCalls<128 && part->hs.iItem<20);terraItems[terraCalls++]=part->hs.iItem;
-    if(!cfg[1])return NativeLookupPart(part);
-    part->SetPterra(scripted+part->hs.iItem);return (cfg[2]&(1<<part->hs.iItem))?1:0;
-}
-'''+bodies[end:]
-    bodies+='\n'+function('src/core/planet.cpp','int16_t FCanTerraformLppl(').replace('int16_t FCanTerraformLppl(','static int16_t NativeCan(',1)
-    bodies+=r'''
-int16_t FCanTerraformLppl(PLANET *p,int16_t *low,int16_t *high,int16_t *cost,int16_t help){
-    // Supply initialized local outputs for observation; Best never reads them
-    // on FALSE and ignores cost, so defined caller outcomes are unchanged.
-    for(int i=0;i<3;i++)low[i]=high[i]=cost[i]=9876;
-    int16_t result=NativeCan(p,low,high,cost,help);
-    for(int i=0;i<3;i++){observedLow[i]=low[i];observedHigh[i]=high[i];observedCost[i]=cost[i];}return result;
-}
-'''
-    bodies+='\n'+function('src/core/planet.cpp','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(','static int16_t NativeHabitat(',1)
-    bodies+='\n'+function('src/core/planet.cpp','int16_t IBestTerraform(').replace('int16_t IBestTerraform(','static int16_t NativeBest(',1)
-    bodies+='\n'+function('src/core/planet.cpp','int16_t PctPlanetOptValue(')
-    bodies+='\n'+function('src/core/turn2.cpp','int16_t IBestRemoteTerra(')
-    return declarations,bodies,helpers
-
-
 def main():
-    declarations,bodies,helpers=native_terraform_construction()
-    harness=r'''
-int main(int argc,char **argv){
-    assert(argc==3);FILE *file=argv[2][0]=='-'?stdin:fopen(argv[2],argv[1][0]=='e'?"wb":"rb");assert(file);
-    if(argv[1][0]=='e'){
-        for(int i=0;i<20;i++){int32_t r[8];for(int f=0;f<6;f++)r[f]=rgterra[i].rgTech[f];r[6]=rgterra[i].grAbility;r[7]=rgterra[i].resCost;assert(fwrite(r,sizeof(r),1,file)==1);}fclose(file);return 0;
-    }
-    int32_t data[263];unsigned long cases=0;
-    while(fread(data,sizeof(data),1,file)==1){
-        reset();memcpy(cfg,data,sizeof(cfg));currentDesire=terraCalls=desireCalls=0;memset(terraItems,-1,sizeof(terraItems));
-        for(int i=0;i<16;i++)for(int f=0;f<4;f++)desireInputs[i][f]=-999;
-        for(int i=0;i<3;i++)observedLow[i]=observedHigh[i]=observedCost[i]=9876;
-        for(int i=0;i<20;i++)scripted[i]=rgterra[i];if(cfg[46]>=0){scripted[cfg[46]].grAbility=(int16_t)cfg[47];scripted[cfg[46]].resCost=(uint16_t)cfg[48];}
-        idPlayer=(int16_t)cfg[3];planet.iPlayer=(int16_t)cfg[4];
-        for(int i=0;i<3;i++){planet.rgEnvVar[i]=(int8_t)cfg[8+i];planet.rgEnvVarOrig[i]=(int8_t)cfg[11+i];}
-        for(int p=0;p<16;p++){
-            int fields=p==1?23:14,levels=p==1?38:32;rgplr[p].grbitAttr=static_cast<RaceTraitBits>((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0);
-            for(int i=0;i<3;i++){rgplr[p].rgEnvVar[i]=(int8_t)cfg[fields+i];rgplr[p].rgEnvVarMin[i]=(int8_t)cfg[fields+3+i];rgplr[p].rgEnvVarMax[i]=(int8_t)cfg[fields+6+i];}
-            for(int f=0;f<6;f++)rgplr[p].rgTech[f]=(int8_t)cfg[levels+f];
-        }
-        PLAYER expectedPlayers[16];PLANET expectedPlanet=planet;GAME expectedGame=game;memcpy(expectedPlayers,rgplr,sizeof(rgplr));
-        int result;int16_t low[3],high[3],cost[3];
-        if(cfg[0]==0)result=FCanTerraformLppl(&planet,low,high,cost,(int16_t)cfg[6]);
-        else if(cfg[0]==1)result=IBestTerraform(&planet,(int16_t)cfg[6]);
-        else if(cfg[0]==2)result=IBestRemoteTerra(&planet,(int16_t)cfg[5],(int16_t)cfg[6]);
-        else if(cfg[0]==4)result=PctPlanetOptValue(&planet,(int16_t)cfg[5]);
-        else result=call(grobjPlanet,iobjMaxTerraform,cfg[7]);
-        int actual[209];actual[0]=result;actual[1]=idPlayer;
-        for(int i=0;i<3;i++){actual[2+i]=planet.rgEnvVar[i];actual[5+i]=observedLow[i];actual[8+i]=observedHigh[i];actual[11+i]=observedCost[i];expectedPlanet.rgEnvVar[i]=data[56+i];}
-        actual[14]=terraCalls;actual[15]=desireCalls;actual[16]=messages;
-        for(int i=0;i<128;i++)actual[17+i]=terraItems[i];for(int i=0;i<16;i++)for(int f=0;f<4;f++)actual[145+4*i+f]=desireInputs[i][f];
-        for(int i=0;i<209;i++){if(actual[i]!=data[54+i]){fprintf(stderr,"terraform case %lu mode %d mask %x field %d got %d expected %d\n",cases,cfg[0],cfg[2],i,actual[i],data[54+i]);return 1;}checks++;}
-        CHECK(memcmp(expectedPlayers,rgplr,sizeof(rgplr))==0);CHECK(memcmp(&expectedPlanet,&planet,sizeof(planet))==0);CHECK(memcmp(&expectedGame,&game,sizeof(game))==0);CHECK(!randomCalls);
-        cases++;
-    }
-    CHECK(feof(file));fclose(file);reset();printf("Terraform selection: %lu cases, %d assertions passed\n",cases,checks);return 0;
-}
-'''
-    # row() belongs to the shared helper factory but is unused in this fixture.
-    helpers=helpers[helpers.index('static void reset(void)'):]
-    with tempfile.TemporaryDirectory(prefix='terraform-source-') as work:
+    from linked_witness import binary as linked_binary
+    binary=linked_binary("terraform")
+    with tempfile.TemporaryDirectory(prefix='terraform-') as work:
         path=Path(work)
-        for generator in ('text/textgen.py','data/datagen.py'):
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);table=list(struct.iter_unpack('<8i',export.read_bytes()));assert len(table)==20
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)
         try:

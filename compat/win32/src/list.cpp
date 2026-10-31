@@ -1,5 +1,6 @@
 /* String list boxes, including the fixed-height owner drawing used by Stars. */
 #include "internal.h"
+#include "time_io.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -516,9 +517,9 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case WM_CHAR:
         if (w < 32 || w > 255 || lp->cItem == 0) return 0;
         c = (int)strlen(lp->szSearch);
-        if (SDL_GetTicks() - lp->msSearch > 1000 || c >= (int)sizeof(lp->szSearch) - 1 ||
+        if (CompatTimeIO().pfnGetTicks() - lp->msSearch > 1000 || c >= (int)sizeof(lp->szSearch) - 1 ||
             (c == 1 && (BYTE)lp->szSearch[0] == (BYTE)w)) c = 0;
-        lp->szSearch[c] = (char)w; lp->szSearch[c + 1] = 0; lp->msSearch = SDL_GetTicks();
+        lp->szSearch[c] = (char)w; lp->szSearch[c + 1] = 0; lp->msSearch = CompatTimeIO().pfnGetTicks();
         i = (int)CompatListProc(hwnd, LB_FINDSTRING, c != 0 ? lp->iCaret - 1 : lp->iCaret, (LPARAM)lp->szSearch);
         if (i != LB_ERR) ExtendedSelectList(hwnd, i, FALSE, FALSE, TRUE);
         return 0;

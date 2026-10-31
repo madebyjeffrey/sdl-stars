@@ -7,15 +7,12 @@ all versioned model identities and limits bind to fresh generated enums.
 No game source, catalog or baseline is modified.
 """
 from pathlib import Path
-import os
 import random
 import re
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT,function
+from linked_witness import ROOT
 
 LIMITS=[16,16,10,12,24,12,15,8,10,16,5,17,11,20,32,15]
 IDENTITY_SOURCE=(ROOT/'spec/dafny/S03-lookup-identities.dfy').read_text()
@@ -141,93 +138,10 @@ def cases():
         kind=rng.randrange(16);yield [0,rng.randrange(2),rng.randrange(-128,128),rng.randrange(1<<32),rng.randrange(1<<16),rng.randrange(16),1<<kind,rng.randrange(256),rng.randrange(256),rng.randrange(16)]+[rng.randrange(-128,128) for _ in range(12)]
 
 
-def catalog_rows_source():
-    return 'static NATIVEPARTCOMMONVIEW LpcomRow(unsigned k,unsigned item){PART part{};switch(k){\ncase 0:part.SetPengine(&rgengine[item]);break;\ncase 1:part.SetPscanner(&rgscanner[item]);break;\ncase 2:part.SetPshield(&rgshield[item]);break;\ncase 3:part.SetParmor(&rgarmor[item]);break;\ncase 4:part.SetPbeam(&rgbeam[item]);break;\ncase 5:part.SetPtorp(&rgtorp[item]);break;\ncase 6:part.SetPbomb(&rgbomb[item]);break;\ncase 7:part.SetPmining(&rgmining[item]);break;\ncase 8:part.SetPmines(&rgmines[item]);break;\ncase 9:part.SetPspecialsb(&rgspecialSB[item]);break;\ncase 10:part.SetPhul(&rghuldefSB[item].hul);break;\ncase 11:part.SetPspecial(&rgspecialE[item]);break;\ncase 12:part.SetPspecial(&rgspecialM[item]);break;\ncase 13:part.SetPterra(&rgterra[item]);break;\ncase 14:part.SetPhul(&rghuldef[item].hul);break;\ncase 15:part.SetPplanetary(&rgplanetary[item]);break;\ndefault:abort();}return part.pcom();}\n'
-
-
-def native_parts(call_capacity=8):
-    declarations=r'''
-#include "common.h"
-#include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-PLAYER rgplr[16];int16_t idPlayer;GAME game;
-static unsigned long cCases,cChecks;
-static int rgCalls[8],cCalls;
-#define CHECK(f) do { cChecks++;if(!(f)){fprintf(stderr,"case %lu check failed at line %d: %s\n",cCases,__LINE__,#f);abort();}} while(0)
-static void Call(int tag){CHECK(cCalls<8);rgCalls[cCalls++]=tag;}
-'''
-    declarations+='\n'.join(f'static_assert({name}=={value},"model identity {name}");' for name,value in IDENTITIES.items())+'\n'
-    bindings={'raCheapCol':0,'raStealth':1,'raAttack':2,'raTerra':3,'raDefend':4,'raMines':5,'raMassAccel':6,'raStargate':7,'raMacintosh':8,'raNone':9,
-              'ibitRaceIFE':0,'ibitRaceTT':1,'ibitRaceARM':2,'ibitRaceISB':3,'ibitRaceNoRamscoops':7,'ibitRaceOBRM':9,'ibitRaceNoAdvScanner':10,
-              'grbitTraderCargo':1,'grbitTraderSpecial':2,'grbitTraderShield':4,'grbitTraderArmor':8,'grbitTraderMiner':16,'grbitTraderBomb':32,
-              'grbitTraderTorp':64,'grbitTraderBeam':128,'grbitTraderHull':256,'grbitTraderEngine':512,'grbitTraderGenesis':1024,'grbitTraderJumpgate':2048}
-    mask_names=('hstEngine','hstScanner','hstShield','hstArmor','hstBeam','hstTorp','hstBomb','hstMining','hstMines','hstSpecialSB','hstSBHull','hstSpecialE','hstSpecialM','hstTerra','hstHull','hstPlanetary')
-    bindings.update({name:1<<k for k,name in enumerate(mask_names)})
-    declarations+='\n'.join(f'static_assert({name}=={value},"native protocol {name}");' for name,value in bindings.items())+'\n'
-    bodies=next(x for x in (ROOT/'src/core/race.cpp').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('GetRaceStat(','NativeGetRaceStat(',1)+'\n'
-    bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(').replace('GetRaceGrbit(','NativeGetRaceGrbit(',1)+'\n'
-    bodies+=function('src/core/parts.cpp','int16_t TechStatus(').replace('TechStatus(','NativeTechStatus(',1)+'\n'
-    bodies+=function('src/core/research.cpp','int16_t FShouldPartBeHidden(').replace('FShouldPartBeHidden(','NativeHidden(',1)+'\n'
-    bodies+=r'''
-int16_t GetRaceStat(PLAYER *p,RaceStat stat){CHECK(idPlayer>=0 && idPlayer<16 && p==&rgplr[idPlayer] && stat==rsMajorAdv);Call(0);return NativeGetRaceStat(p,stat);}
-int16_t GetRaceGrbit(PLAYER *p,RaceGrbit bit){CHECK(idPlayer>=0 && idPlayer<16 && p==&rgplr[idPlayer]);Call(100+bit);return NativeGetRaceGrbit(p,bit);}
-int16_t TechStatus(char *need){Call(2);return NativeTechStatus(need);}
-int16_t FShouldPartBeHidden(PART *part){Call(1);return NativeHidden(part);}
-'''
-    bodies+=function('src/core/parts.cpp','int16_t FLookupPart(')+'\n'
-    bodies+=catalog_rows_source()
-    declarations=declarations.replace("rgCalls[8]","rgCalls["+str(call_capacity)+"]").replace("cCalls<8","cCalls<"+str(call_capacity))
-    return declarations,bodies
-
-
 def main():
-    declarations,bodies=native_parts()
-    harness=r'''
-int main(int argc,char **argv){
-    const unsigned rgcRows[]={iengineCount,iscannerCount,ishieldCount,iarmorCount,ibeamCount,itorpCount,ibombCount,iminingCount,iminesCount,ispecialSBCount,isbhullCount,ispecialECount,ispecialMCount,iterraCount,ihuldefOrbitalFort,iplanetaryCount};
-    assert(argc==3 && CHAR_MIN==-128 && sizeof(rgplr[0].rgTech)==6);
-    FILE *file=fopen(argv[2],argv[1][0]=='e'?"wb":"rb");assert(file);
-    if(argv[1][0]=='e'){
-        for(unsigned k=0;k<16;k++){
-          for(unsigned item=0;item<rgcRows[k];item++){
-            int32_t rgData[9];NATIVEPARTCOMMONVIEW p=LpcomRow(k,item);rgData[0]=k;rgData[1]=item;
-            for(int f=0;f<6;f++)rgData[2+f]=p.rgTech()[f];
-            rgData[8]=k==15?rgplanetary[item].grAbility:0;
-            assert(fwrite(rgData,sizeof(rgData),1,file)==1);
-          }
-        }
-        fclose(file);return 0;
-    }
-    int32_t rgIn[33];static COMPART comPrior;
-    while(fread(rgIn,sizeof(rgIn),1,file)==1){
-        unsigned mask=(unsigned)rgIn[6],item=(unsigned)rgIn[7],kind=16;
-        for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;
-        memset(rgplr,0x53,sizeof(rgplr));memset(&game,0x35,sizeof(game));
-        idPlayer=(int16_t)(rgIn[1]?iplrNone:rgIn[9]);int target=rgIn[9];
-        rgplr[target].rgAttr[rsMajorAdv]=(int8_t)rgIn[2];rgplr[target].grbitAttr=static_cast<RaceTraitBits>((uint32_t)rgIn[3]);rgplr[target].grbitTrader=static_cast<GrbitTrader>((uint16_t)rgIn[4]);rgplr[target].SetITechNow(rgIn[5]);
-        for(int f=0;f<6;f++)rgplr[target].rgTech[f]=(int8_t)rgIn[10+f];
-        PLAYER rgBefore[16];GAME gameBefore;memcpy(rgBefore,rgplr,sizeof(rgBefore));memcpy(&gameBefore,&game,sizeof(game));int16_t idBefore=idPlayer;
-        PART part,expected;auto rgbPart=std::as_writable_bytes(std::span(&part,1));std::fill(rgbPart.begin(),rgbPart.end(),std::byte{0xa5});part.hs.grhst=static_cast<HullSlotType>((uint16_t)mask);part.hs.iItem=item;part.hs.cItem=rgIn[8];part.SetPcom(&comPrior);memcpy(&expected,&part,sizeof(part));
-        memset(rgCalls,-1,sizeof(rgCalls));cCalls=0;int result;
-        if(rgIn[0]==0){result=FLookupPart(&part);if(kind<16 && item<rgcRows[kind])expected.SetPcom(LpcomRow(kind,item));}
-        else if(rgIn[0]==1)result=FShouldPartBeHidden(&part);
-        else {char rgNeed[6],rgNeedBefore[6];for(int f=0;f<6;f++)rgNeed[f]=(char)rgIn[16+f];memcpy(rgNeedBefore,rgNeed,sizeof(rgNeed));result=TechStatus(rgNeed);CHECK(memcmp(rgNeed,rgNeedBefore,sizeof(rgNeed))==0);}
-        if(result!=rgIn[22]){fprintf(stderr,"mode %d mask %u item %u primary %d flags %u grants %u current %d: got %d expected %d\n",rgIn[0],mask,item,rgIn[2],(uint32_t)rgIn[3],(uint32_t)rgIn[4],rgIn[5],result,rgIn[22]);abort();}cChecks++;
-        CHECK(memcmp(&part,&expected,sizeof(part))==0);CHECK(memcmp(rgplr,rgBefore,sizeof(rgBefore))==0);CHECK(memcmp(&game,&gameBefore,sizeof(game))==0);CHECK(idPlayer==idBefore);
-        CHECK(cCalls==rgIn[24]);for(int i=0;i<8;i++)CHECK(rgCalls[i]==rgIn[25+i]);
-        cCases++;
-    }CHECK(feof(file));fclose(file);printf("Native part availability: %lu cases, %lu assertions passed; pointers, query order and PLAYER/GAME/global frames checked\n",cCases,cChecks);return 0;
-}
-'''
+    from linked_witness import binary as linked_binary
     with tempfile.TemporaryDirectory(prefix='part-availability-') as work:
-        path=Path(work)
-        for generator in ('text/textgen.py','data/datagen.py'):
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
+        path=Path(work);binary=linked_binary('part-availability')
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={}
         for row in struct.iter_unpack('<9i',export.read_bytes()):table[row[0],row[1]]=(row[2:8],row[8])

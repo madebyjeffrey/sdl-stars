@@ -1,7 +1,6 @@
 #ifndef STARS_DECOMPILED_COMMON_H
 #define STARS_DECOMPILED_COMMON_H
 
-#include "test_impl.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

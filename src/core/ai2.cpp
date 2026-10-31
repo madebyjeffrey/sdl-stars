@@ -1,4 +1,10 @@
 #include "common.h"
+#include "fleet_query_io.h"
+#include "production_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "race_query_io.h"
+#include "random_io.h"
 
 void DoMaidAiTurn(PROD *rgprod) {
     int32_t rgResCost[4];
@@ -132,12 +138,12 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                 vlpbAiPlanet[lppl->id * 16 + 3] = 1;
             }
             cplBadGuy++;
-        } else if (lppl->iPlayer == idPlayer && PctPlanetDesirability(lppl, idPlayer) < 0) {
+        } else if (lppl->iPlayer == idPlayer && PlanetQueryIO().pfnDesirability(lppl, idPlayer) < 0) {
             cplNegative++;
             vlpbAiPlanet[lppl->id * 16 + 2] = 1;
         } else if (lppl->fStarbase && lppl->rgwtMin[3] >= 1500) {
             ChangeMainObjSel(grobjPlanet, lppl->id);
-            InitProduction(rgprod);
+            ProductionIO().pfnInitialize(rgprod);
             fWrite = FALSE;
             b = 0;
             i = 0;
@@ -150,7 +156,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                 cFr = rgplr[idPlayer].cPlanet / 10 <= AhvFromLp(vlpbAiData).cStarbase() * 2 ? AhvFromLp(vlpbAiData).cStarbase() * 2
                                                                                             : rgplr[idPlayer].cPlanet / 10;
                 if (rgplr[idPlayer].rgTech[2] >= 5 && iLatestCargo != ishdefNone &&
-                    (cExistCargo < cFr || (cExistCargo < (int16_t)(10 * cFr) / 7 && Random(4) == 0))) {
+                    (cExistCargo < cFr || (cExistCargo < (int16_t)(10 * cFr) / 7 && RandomIO().pfnRandom(4) == 0))) {
                     AddItemToQueue(iLatestCargo, 1, grobjFleet, addItemEnd);
                     fWrite = TRUE;
                 }
@@ -159,8 +165,8 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                     fWrite = TRUE;
                 }
                 l = (uint32_t)(lppl->rgwtMin[3] * PctTrueMaxGrowth(idPlayer));
-                cRes = CResourcesAtPlanet(lppl, idPlayer);
-                if (!rgshdef[6].fFree && Random(3) == 0) {
+                cRes = ResearchIO().pfnResources(lppl, idPlayer);
+                if (!rgshdef[6].fFree && RandomIO().pfnRandom(3) == 0) {
                     id = lppl->id;
                     cFr = 0;
                     for (ifl = 0; ifl < cFleet; ifl++) {
@@ -172,7 +178,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                             break;
                         }
                     }
-                    if ((cFr < 10 || (cFr < 17 && Random(8) == 0)) && Random(cFr * 2 + 1) == 0) {
+                    if ((cFr < 10 || (cFr < 17 && RandomIO().pfnRandom(8) == 0)) && RandomIO().pfnRandom(cFr * 2 + 1) == 0) {
                         AddItemToQueue(6, 3, grobjFleet, addItemEnd);
                         fWrite = TRUE;
                     }
@@ -265,7 +271,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                 lppl = LpplFromId(idPlanDst);
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == idPlayer))
                     continue;
-                if (vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
+                if (vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
                     memset(&ord, 0, sizeof(ORDER));
                     ord.pt = rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
@@ -279,7 +285,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                     } else {
                         sel.fl.lpplord->rgord()[1] = ord;
                     }
-                    FLookupFleet(idWriteBack, &sel.fl);
+                    FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
                     vlpbAiPlanet[idPlanDst * 16 + 3] = vlpbAiPlanet[idPlanDst * 16 + 3] | 0x80;
                     continue;
                 }
@@ -287,7 +293,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                 ChangeMainObjSel(grobjFleet, lpfl->id);
                 sel.fl.cord = 1;
                 sel.fl.lpplord->iordMac = 1;
-                FLookupFleet(idWriteBack, &sel.fl);
+                FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
                 ClearAiCurrentTask(lpfl, FALSE);
                 continue;
             } else {
@@ -324,7 +330,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
         LScrapFleet:
             ChangeMainObjSel(grobjFleet, lpfl->id);
             sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
-            FLookupFleet(idWriteBack, &sel.fl);
+            FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
             continue;
         }
         if (lpfl->rgcsh[6] != 0) {
@@ -334,7 +340,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
             sel.fl.lpplord->rgord()[0].grTask = grTaskLayMines;
             sel.fl.lpplord->rgord()[0].tlm().cTime = 5;
             sel.fl.lpplord->rgord()[0].tlm().cTimeOld = 5;
-            FLookupFleet(idWriteBack, &sel.fl);
+            FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
             continue;
         }
         if (lpfl->rgcsh[1] == 0)
@@ -353,7 +359,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
             if (lpfl->idPlanet != idPlanetDeepSpace && sel.pl.iPlayer == idPlayer) {
                 ChangeMainObjSel(grobjFleet, lpfl->id);
                 XferAiSupply(grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 150);
-                FLookupFleet(lpfl->id, &sel.fl);
+                FleetQueryIO().pfnLookup(lpfl->id, &sel.fl);
             }
             if (idPlanDst == idplNone)
                 continue;
@@ -394,7 +400,7 @@ void DoAutomitronAiTurn(PROD *rgprod) {
                     if ((lpfl->rgcsh[2] < 2 && lpfl->rgcsh[3] < 2) || (lpfl->rgcsh[9] < 3 && lpfl->rgcsh[10] < 3))
                         continue;
                 }
-                FLookupFleet(lpfl->id, &sel.fl);
+                FleetQueryIO().pfnLookup(lpfl->id, &sel.fl);
                 goto LTargetBomber;
             }
             if (lppl->iPlayer == iplrNone)
@@ -456,7 +462,7 @@ void EnsureISShdefs(int16_t iroCur) {
     }
     if (rgshdef[14].fFree && rgplr[idPlayer].rgTech[1] >= 5 && rgplr[idPlayer].rgTech[4] >= 6 && rgplr[idPlayer].rgTech[3] >= 4 &&
         rgplr[idPlayer].rgTech[2] >= 5) {
-        for (i = 0; i < 4 && FCreateAiShdef(14, ihuldefDestroyer, (uint8_t *)&vrgISAip[vrgISIshAip[iisRecipeDestroyerTorpedo + Random(1)]]) == 0; i++) {
+        for (i = 0; i < 4 && FCreateAiShdef(14, ihuldefDestroyer, (uint8_t *)&vrgISAip[vrgISIshAip[iisRecipeDestroyerTorpedo + RandomIO().pfnRandom(1)]]) == 0; i++) {
         }
     }
     if (rgshdef[1].fFree || rgshdef[1].cExist == 0) {
@@ -488,7 +494,7 @@ void EnsureISShdefs(int16_t iroCur) {
     }
     if (rgshdef[9].fFree && rgplr[idPlayer].rgTech[1] >= 5 && rgplr[idPlayer].rgTech[4] >= 6 && rgplr[idPlayer].rgTech[3] >= 13 &&
         rgplr[idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(9, ihuldefBattleship, (uint8_t *)&vrgISAip[vrgISIshAip[iisRecipeBattleshipBeamA + Random(4)]]) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(9, ihuldefBattleship, (uint8_t *)&vrgISAip[vrgISIshAip[iisRecipeBattleshipBeamA + RandomIO().pfnRandom(4)]]) == 0; i++) {
         }
     }
     return;
@@ -564,12 +570,12 @@ void DoRototillAiTurn(PROD *rgprod) {
                 vlpbAiPlanet[lppl->id * 16 + 3] = 1;
             }
             cplBadGuy++;
-        } else if (lppl->iPlayer == idPlayer && PctPlanetDesirability(lppl, idPlayer) < 0) {
+        } else if (lppl->iPlayer == idPlayer && PlanetQueryIO().pfnDesirability(lppl, idPlayer) < 0) {
             cplNegative++;
             vlpbAiPlanet[lppl->id * 16 + 2] = 1;
         } else if (lppl->fStarbase && lppl->rgwtMin[3] >= 1000) {
             ChangeMainObjSel(grobjPlanet, lppl->id);
-            InitProduction(rgprod);
+            ProductionIO().pfnInitialize(rgprod);
             fWrite = FALSE;
             b = 0;
             i = 0;
@@ -613,7 +619,7 @@ void DoRototillAiTurn(PROD *rgprod) {
                         ChangeMainObjSel(grobjFleet, lpfl->id);
                         sel.fl.cord = 1;
                         sel.fl.lpplord->iordMac = 1;
-                        FLookupFleet(idWriteBack, &sel.fl);
+                        FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
                         ClearAiCurrentTask(lpfl, FALSE);
                         continue;
                     }
@@ -641,7 +647,7 @@ void DoRototillAiTurn(PROD *rgprod) {
                 lppl = LpplFromId(idPlanDst);
                 if (lppl && (lppl->iPlayer == iplrNone || lppl->iPlayer == idPlayer))
                     continue;
-                if (vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
+                if (vlpbAiPlanet[idPlanDst * 16 + 3] != 0 && lpfl->rgwtMin[3] > 0 && RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) != raMacintosh) {
                     memset(&ord, 0, sizeof(ORDER));
                     ord.pt = rgptPlan[idPlanDst];
                     ord.grobj = grobjPlanet;
@@ -655,7 +661,7 @@ void DoRototillAiTurn(PROD *rgprod) {
                     } else {
                         sel.fl.lpplord->rgord()[1] = ord;
                     }
-                    FLookupFleet(idWriteBack, &sel.fl);
+                    FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
                     vlpbAiPlanet[idPlanDst * 16 + 3] = vlpbAiPlanet[idPlanDst * 16 + 3] | 0x80;
                     continue;
                 }
@@ -721,7 +727,7 @@ void DoRototillAiTurn(PROD *rgprod) {
         LScrapFleet:
             ChangeMainObjSel(grobjFleet, lpfl->id);
             sel.fl.lpplord->rgord()[0].grTask = grTaskScrap;
-            FLookupFleet(idWriteBack, &sel.fl);
+            FleetQueryIO().pfnLookup(idWriteBack, &sel.fl);
             continue;
         } else {
             lpthWorm = NULL;
@@ -729,7 +735,7 @@ void DoRototillAiTurn(PROD *rgprod) {
             if (lpfl->idPlanet != idPlanetDeepSpace && sel.pl.iPlayer == idPlayer) {
                 ChangeMainObjSel(grobjFleet, lpfl->id);
                 XferAiSupply(grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 25);
-                FLookupFleet(lpfl->id, &sel.fl);
+                FleetQueryIO().pfnLookup(lpfl->id, &sel.fl);
             }
             if (idPlanDst != idplNone) {
                 FColonizeAiFleet(lpfl, idPlanDst);
@@ -774,7 +780,7 @@ void DoRototillAiTurn(PROD *rgprod) {
                     if (lpfl->rgcsh[13] < 2 && lpfl->rgcsh[14] < 2)
                         continue;
                 }
-                FLookupFleet(lpfl->id, &sel.fl);
+                FleetQueryIO().pfnLookup(lpfl->id, &sel.fl);
                 goto LTargetBomber;
             }
             if (lppl->iPlayer == iplrNone)

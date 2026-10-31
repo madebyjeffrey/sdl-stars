@@ -1,4 +1,10 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
 
 LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
@@ -17,9 +23,9 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
     switch (message) {
     case WM_CREATE:
-        hwndMineCB = HwndUiCreateWindowEx(0, szButton, PszGetCompressedString(idsDetonateMineFieldYear), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
+        hwndMineCB = HwndUiCreateWindowEx(0, szButton, TextIO().pfnCompressed(idsDetonateMineFieldYear), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
                                   hInst, NULL);
-        LUiSendMessage(hwndMineCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndMineCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         SetMineralTitleBar(hwnd);
         break;
     case WM_LBUTTONDOWN:
@@ -30,7 +36,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         MineClick(LOWORD(lParam), HIWORD(lParam), message, wParam);
         break;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -45,7 +51,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_SETCURSOR:
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         if (PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
         ht = HtMineWindow(hwnd, pt.x, pt.y);
@@ -55,7 +61,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         return 1;
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         SetRect(&rc2, 4, 4, rc.right - 4, dyArial8 * 2 - 4);
         _Draw3dFrame(hdc, &rc2, 0);
         crFore = SetTextColor(hdc, crButtonText);
@@ -79,7 +85,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         if ((HWND)lParam != hwndMineCB || HIWORD(wParam) != 0)
             break;
-        fDetonate = LOWORD(LUiSendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
+        fDetonate = LOWORD(ControlIO().pfnLUiSendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
         rtlt.idFull = lpThings[sel.scan.ith].idFull();
         rtlt.fDetonate = fDetonate;
         FEncodeLogThing(rtlt, rgbThing);
@@ -102,12 +108,12 @@ void InvalidateMineralBars() {
     int16_t dxPop;
     RECT    rc;
 
-    GetClientRect(hwndMine, &rc);
+    ControlIO().pfnGetClientRect(hwndMine, &rc);
     hdc = GetDC(hwndMine);
     hfontSav = (HFONT)SelectObject(hdc, rghfontArial8[0]);
-    rc.right -= LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsN999mr), 5)) + 6;
+    rc.right -= LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsN999mr), 5)) + 6;
     SelectObject(hdc, rghfontArial8[1]);
-    dxPop = LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsPopulation1000000), 21)) + 6;
+    dxPop = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsPopulation1000000), 21)) + 6;
     dx = LOWORD(GetTextExtent(hdc, rgszPlanetAttr[1], strlen(rgszPlanetAttr[1]))) + 6;
     if (dx * 4 > rc.right) {
         rc.left += LOWORD(GetTextExtent(hdc, rgszPlanetAttr[1], 4)) + 6;
@@ -121,12 +127,12 @@ void InvalidateMineralBars() {
     rcPop.bottom = rcPop.top + dyArial8;
     rcPop.right = rc.right;
     rcPop.left = rc.right - dxPop;
-    InvalidateRect(hwndMine, &rcPop, TRUE);
+    ControlIO().pfnInvalidateRect(hwndMine, &rcPop, TRUE);
     dyRow = (int16_t)(rc.bottom - rc.top - dyArial8 * 4 - 2) / 6;
     dyRow = (dyRow + 1) & 0xfffe;
     rc.top += (5 * dyArial8 >> 1) + 3 * dyRow + 1;
     rc.bottom = 3 * dyRow + rc.top;
-    InvalidateRect(hwndMine, &rc, FALSE);
+    ControlIO().pfnInvalidateRect(hwndMine, &rc, FALSE);
     return;
 }
 
@@ -252,15 +258,15 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         for (i = 0; i < 16; i++) {
             cShip += lpfl->rgcsh[i];
         }
-        CchGetString(idsShipCountLd, szT);
+        TextIO().pfnCchGetString(idsShipCountLd, szT);
         c = wsprintf(szWork, szT, cShip);
         TextOut(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpfl->det == detAll || lpfl->det == detMore) {
             cMass = WtFromLpfl(lpfl);
-            c = CchGetString(idsFuel2, szT);
+            c = TextIO().pfnCchGetString(idsFuel2, szT);
             l = GetTextExtent(hdc, szT, c);
-            c2 = CchGetString(idsCargo, szWork);
+            c2 = TextIO().pfnCchGetString(idsCargo, szWork);
             l2 = GetTextExtent(hdc, szWork, c2);
             if (l2 > l) {
                 l = l2;
@@ -278,7 +284,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         } else {
             cMass = lpfl->wtFleet();
         }
-        c = CchGetString(!gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, szT);
+        c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, szT);
         c = wsprintf(szWork, szT, cMass);
         TextOut(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
@@ -287,34 +293,34 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             if (lpfl->cord > 1) {
                 lpord++;
             }
-            CchGetString(!gd.fSmallTileMode ? idsWaypointS : idsWpS, szWP);
+            TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWaypointS : idsWpS, szWP);
             if (lpfl->cord == 1) {
-                c = wsprintf(szT, szWP, PszGetCompressedString(idsNone));
+                c = wsprintf(szT, szWP, TextIO().pfnCompressed(idsNone));
             } else {
                 c = wsprintf(szT, szWP, PszGetLocName(static_cast<GrobjClass>(lpord->grobj), lpord->id, lpord->pt.x, lpord->pt.y));
             }
             TextOut(hdc, prc->left + 86, yTop, szT, c);
             yTop += dyArial8 + 2;
-            CchGetString(!gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, szT);
-            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(idsTaskHere + lpord->grTask)));
+            TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, szT);
+            c = wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(idsTaskHere + lpord->grTask)));
             TextOut(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             if (lpfl->cord > 1) {
                 if (lpord->iWarp == 11) {
-                    c = CchGetString(idsUseStargate, szWork);
+                    c = TextIO().pfnCchGetString(idsUseStargate, szWork);
                 } else {
-                    CchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
+                    TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
                     c = wsprintf(szWork, szT, lpord->iWarp);
                 }
             } else {
-                c = CchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
+                c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
             }
             TextOut(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             l = CMineSweepFromLpfl(lpfl);
             if (l <= 0)
                 goto FinishUp;
-            pszT = PszGetCompressedString(idsFleetCanDestroyLdMinesPerYear);
+            pszT = TextIO().pfnCompressed(idsFleetCanDestroyLdMinesPerYear);
             c = wsprintf(szWork, pszT, l);
             TextOut(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
@@ -323,10 +329,10 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         if (!lpfl->fdirValid())
             goto FinishUp;
         if (lpfl->iwarpFlt() != 0) {
-            CchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
+            TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
             c = wsprintf(szWork, szT, lpfl->iwarpFlt());
         } else {
-            c = CchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
+            c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
         }
         TextOut(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
@@ -386,19 +392,19 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             SetBkColor(hdc, crButtonFace);
             SelectObject(hdc, rghfontArial8[1]);
             if (lpth->thp().iWarp() != 0) {
-                CchGetString(idsTravelingWarpD, szT);
+                TextIO().pfnCchGetString(idsTravelingWarpD, szT);
                 c = wsprintf(szWork, szT, lpth->thp().iWarp() + 4);
                 TextOut(hdc, xLeft, yTop, szWork, c);
                 yTop += dyArial8 + 2;
-                CchGetString(idsDestination, szT);
-                psz = PszGetPlanetName(lpth->thp().idPlanet());
+                TextIO().pfnCchGetString(idsDestination, szT);
+                psz = TextIO().pfnPlanetName(lpth->thp().idPlanet());
                 strcat(szT, psz);
                 TextOut(hdc, xLeft, yTop, szT, strlen(szT));
             }
             yTop += (int16_t)(3 * dyArial8) / 2;
             xLeft += LOWORD(GetTextExtent(hdc, rgszMinerals[2], strlen(rgszMinerals[2])));
             for (i = 0; i < 3; i++) {
-                c = wsprintf(szWork, PszGetCompressedString(idsS2), rgszMinerals[i]);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsS2), rgszMinerals[i]);
                 RightTextOut(hdc, xLeft, yTop, szWork, c, 0);
                 c = wsprintf(szWork, PCTDKT, lpth->thp().rgwtMin(i));
                 TextOut(hdc, xLeft, yTop, szWork, c);
@@ -410,25 +416,25 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             SetTextColor(hdc, crButtonText);
             SetBkColor(hdc, crButtonFace);
             SelectObject(hdc, rghfontArial8[1]);
-            cch = CchGetString(idsLocation, szT);
+            cch = TextIO().pfnCchGetString(idsLocation, szT);
             xLeft += LOWORD(GetTextExtent(hdc, szT, cch)) + 20;
             RightTextOut(hdc, xLeft - 4, yTop, szT, cch, 0);
-            cch = CchGetString(idsDD5, szT);
+            cch = TextIO().pfnCchGetString(idsDD5, szT);
             c = wsprintf(szWork, szT, lpth->pt().x(), lpth->pt().y());
             TextOut(hdc, xLeft, yTop, szWork, c);
             yTop += (int16_t)(3 * dyArial8) / 2;
-            c = CchGetString(idsDestination2, szWork);
+            c = TextIO().pfnCchGetString(idsDestination2, szWork);
             RightTextOut(hdc, xLeft - 4, yTop, szWork, c, 0);
             if ((1 << idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(lpth->thw().idPartner())) != 0) {
                 c = wsprintf(szWork, szT, lpthDest->pt().x(), lpthDest->pt().y());
             } else {
-                c = CchGetString(idsUnknown2, szWork);
+                c = TextIO().pfnCchGetString(idsUnknown2, szWork);
             }
             TextOut(hdc, xLeft, yTop, szWork, c);
             yTop += (int16_t)(3 * dyArial8) / 2;
-            c = CchGetString(idsStability, szWork);
+            c = TextIO().pfnCchGetString(idsStability, szWork);
             RightTextOut(hdc, xLeft - 4, yTop, szWork, c, 0);
-            c = CchGetString(static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), szWork);
+            c = TextIO().pfnCchGetString(static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), szWork);
             TextOut(hdc, xLeft, yTop, szWork, c);
             goto FinishUp;
         } else if (lpth->ith() == ithMysteryTrader) {
@@ -438,10 +444,10 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             SelectObject(hdc, rghfontArial8[1]);
             SetRect(&rc, xLeft, yTop, prc->right - 8, prc->bottom - 8);
             if (!(1 << idPlayer & lpth->tht().grbitPlr())) {
-                psz = PszGetCompressedString(idsTraderRequestsInterestedPartiesSendFleetLeast);
+                psz = TextIO().pfnCompressed(idsTraderRequestsInterestedPartiesSendFleetLeast);
                 yTop += DrawText(hdc, psz, strlen(psz), &rc, DT_WORDBREAK | DT_NOPREFIX) + 8;
             }
-            cch = wsprintf(szWork, PszGetCompressedString(idsTraderTravelingWarpD), lpth->tht().iWarp());
+            cch = wsprintf(szWork, TextIO().pfnCompressed(idsTraderTravelingWarpD), lpth->tht().iWarp());
             TextOut(hdc, xLeft, yTop, szWork, cch);
             goto FinishUp;
         }
@@ -451,19 +457,19 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         SetTextColor(hdc, crButtonText);
         SetBkColor(hdc, crButtonFace);
         SelectObject(hdc, rghfontArial8[1]);
-        CchGetString(idsLocationDD, szT);
+        TextIO().pfnCchGetString(idsLocationDD, szT);
         c = wsprintf(szWork, szT, lpth->pt().x(), lpth->pt().y());
         TextOut(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
-        CchGetString(idsFieldTypeS, szT);
+        TextIO().pfnCchGetString(idsFieldTypeS, szT);
         c = wsprintf(szWork, szT, rgszMineField[lpth->thm().iType()]);
         TextOut(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
-        CchGetString(idsFieldRadiusDLYLdMines, szT);
+        TextIO().pfnCchGetString(idsFieldRadiusDLYLdMines, szT);
         c = wsprintf(szWork, szT, LOWORD((int32_t)sqrt((double)lpth->thm().cMines())), lpth->thm().cMines());
         TextOut(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
-        pctDecay = (int16_t)(((GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) != raMines) * 3 + 1) * CPlanetsInCircle(lpth->pt(), lpth->thm().cMines()) + 2);
+        pctDecay = (int16_t)(((RaceQueryIO().pfnStat(&rgplr[lpth->iplr()], rsMajorAdv) != raMines) * 3 + 1) * CPlanetsInCircle(lpth->pt(), lpth->thm().cMines()) + 2);
         if (pctDecay > 50) {
             pctDecay = 50;
         }
@@ -477,24 +483,24 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         if (lpth->thm().iType() != mineSpeedBump) {
             lDecay = 10 <= lDecay ? lDecay : 10;
         }
-        CchGetString(idsDecayRateLdYear, szT);
+        TextIO().pfnCchGetString(idsDecayRateLdYear, szT);
         c = wsprintf(szWork, szT, lDecay);
         TextOut(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpth->iplr() != idPlayer)
             goto FinishUp;
         GetMineFieldCounts(lpth->idFull(), &i, &c2);
-        CchGetString(idsFieldDD, szT);
+        TextIO().pfnCchGetString(idsFieldDD, szT);
         c = wsprintf(szWork, szT, i, c2);
         TextOut(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         goto FinishUp;
     } else {
-        if (sel.scan.idpl != idplNone && FLookupPlanet(sel.scan.idpl, &pl)) {
+        if (sel.scan.idpl != idplNone && PlanetQueryIO().pfnLookup(sel.scan.idpl, &pl)) {
             fShortLabels = FALSE;
             plrSav = rgplr[idPlayer];
             rc = *prc;
-            if (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raTerra && pl.iPlayer != iplrNone &&
+            if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raTerra && pl.iPlayer != iplrNone &&
                 (idPlayer == pl.iPlayer || rgplr[idPlayer].rgmdRelation[pl.iPlayer] == 1)) {
                 for (c = 0; c < 3; c++) {
                     rgplr[idPlayer].rgEnvVar[c] = rgplr[pl.iPlayer].rgEnvVar[c];
@@ -503,7 +509,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 }
             }
             SelectObject(hdc, rghfontArial8[0]);
-            dxRLabels = LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsN999mr), 5)) + 6;
+            dxRLabels = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(idsN999mr), 5)) + 6;
             SelectObject(hdc, rghfontArial8[1]);
             dxLabels = LOWORD(GetTextExtent(hdc, rgszPlanetAttr[1], strlen(rgszPlanetAttr[1]))) + 6;
             if (dxLabels * 4 > rc.right) {
@@ -530,11 +536,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 DeleteDC(hdcMem);
             }
             if (pl.det >= detSome) {
-                c = CchGetString(static_cast<StringId>(idsVal + (fShortLabels == 0)), szWork);
+                c = TextIO().pfnCchGetString(static_cast<StringId>(idsVal + (fShortLabels == 0)), szWork);
                 dx = LOWORD(GetTextExtent(hdc, szWork, c));
                 SetTextColor(hdc, crButtonText);
                 TextOut(hdc, xL, yCur, szWork, c);
-                dNum = PctPlanetDesirability(&pl, idPlayer);
+                dNum = PlanetQueryIO().pfnDesirability(&pl, idPlayer);
                 c = wsprintf(szWork, PCTDPCTPCT, dNum);
                 SetTextColor(hdc, dNum >= 0 ? 32512 : 0xff);
                 TextOut(hdc, xL + dx, yCur, szWork, c);
@@ -552,14 +558,14 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             SetTextColor(hdc, crButtonText);
             if (pl.iPlayer != iplrNone) {
-                strcpy(szT, PszGetCompressedString(static_cast<StringId>(idsPop + (fShortLabels == 0))));
+                strcpy(szT, TextIO().pfnCompressed(static_cast<StringId>(idsPop + (fShortLabels == 0))));
             }
             if (pl.det == detAll) {
                 c = strlen(szT);
                 c += CommaFormatLong(&szT[c], (uint32_t)(pl.rgwtMin[3] * 100));
                 RightTextOut(hdc, xR, yCur, szT, c, 0);
             } else if (pl.iPlayer == iplrNone) {
-                c = CchGetString(idsUninhabited, szT);
+                c = TextIO().pfnCchGetString(idsUninhabited, szT);
                 RightTextOut(hdc, xR, yCur, szT, c, 0);
             } else {
                 if (pl.det >= detSome) {
@@ -567,28 +573,28 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                     strcpy(szWork, szT);
                     c = strlen(szT);
                     if (l > 0) {
-                        c += wsprintf(&szWork[c], PszGetCompressedString(idsCLd00), 177, l);
+                        c += wsprintf(&szWork[c], TextIO().pfnCompressed(idsCLd00), 177, l);
                     } else {
-                        c += CchGetString(idsMsg1264, &szWork[c]);
+                        c += TextIO().pfnCchGetString(idsMsg1264, &szWork[c]);
                     }
                     RightTextOut(hdc, xR, yCur, szWork, c, 0);
                 }
                 SetTextColor(hdc, 0xff);
-                RightTextOut(hdc, xR, yCur + dyArial8 - 2, PszPlayerName(pl.iPlayer, FALSE, TRUE, FALSE, 0, NULL), 0, 0);
+                RightTextOut(hdc, xR, yCur + dyArial8 - 2, TextIO().pfnPlayerName(pl.iPlayer, FALSE, TRUE, FALSE, 0, NULL), 0, 0);
             }
             yCur += dyArial8 - 2;
             dNum = game.turn - pl.turn;
             if (dNum == 0) {
-                c = wsprintf(szWork, PszGetCompressedString(!fShortLabels ? idsReportCurrent : idsCurrent));
+                c = wsprintf(szWork, TextIO().pfnCompressed(!fShortLabels ? idsReportCurrent : idsCurrent));
             } else if (fShortLabels) {
-                c = wsprintf(szWork, PszGetCompressedString(idsOld2), dNum);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsOld2), dNum);
             } else {
-                c = wsprintf(szWork, PszGetCompressedString(idsReportDYear), dNum);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsReportDYear), dNum);
                 if (dNum > 1) {
                     strcat(szWork, "s");
                     c++;
                 }
-                c += CchGetString(idsOld, &szWork[c]);
+                c += TextIO().pfnCchGetString(idsOld, &szWork[c]);
             }
             SetTextColor(hdc, dNum > 5 ? 0xff : 0);
             TextOut(hdc, xL, yCur, szWork, c);
@@ -604,7 +610,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             PatBlt(hdc, xL, 3 * dyRow + yCur, xR - xL, 1, PATCOPY);
             SetTextColor(hdc, crButtonText);
             SetBkMode(hdc, TRANSPARENT);
-            fCanTerraform = FCanTerraformLppl(&pl, rgMin, rgMax, rgCost, TRUE);
+            fCanTerraform = ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, TRUE);
             dx = xR - xL - 4;
             dy = (dyRow - dyArial8) >> 1;
             i = 0;
@@ -704,7 +710,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             RightTextOut(hdc, xL - 4, dy, "kT", 2, 0);
             if (pl.iPlayer == idPlayer) {
-                EstMineralsMined(&pl, rgl, -1, FALSE);
+                ColonyIO().pfnEstimateMining(&pl, rgl, -1, FALSE);
             } else {
                 rgl[2] = 0;
                 rgl[1] = 0;
@@ -715,9 +721,9 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                         if (!rglpfl[ifl])
                             break;
                         if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
-                            cMines = CMineFromLpfl(lpfl);
+                            cMines = ColonyIO().pfnFleetMining(lpfl);
                             if (cMines > 0) {
-                                EstMineralsMined(&pl, rglT, cMines, FALSE);
+                                ColonyIO().pfnEstimateMining(&pl, rglT, cMines, FALSE);
                                 for (iT = 0; iT < 3; iT++) {
                                     rgl[iT] += rglT[iT];
                                 }
@@ -803,7 +809,7 @@ HtMineType HtMineWindow(HWND hwnd, int16_t x, int16_t y) {
             grobj = grobjNone;
         }
     }
-    GetClientRect(hwnd, &rc);
+    ControlIO().pfnGetClientRect(hwnd, &rc);
     rc.top += dyArial8 * 2;
     if (y < rc.top - 5 && y > 4 && x < rc.right - 4 && x > rc.right - rc.top && FOtherStuffAtScanSel()) {
         return htMineScanSel;
@@ -826,7 +832,7 @@ HtMineType HtMineWindow(HWND hwnd, int16_t x, int16_t y) {
         }
         return htMineNone;
     }
-    if (sel.scan.idpl == idplNone || !FLookupPlanet(sel.scan.idpl, &pl)) {
+    if (sel.scan.idpl == idplNone || !PlanetQueryIO().pfnLookup(sel.scan.idpl, &pl)) {
         return htMineNone;
     }
     rc.top -= 4;
@@ -906,7 +912,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
         case htMineMinefieldType:
             part.hs.iItem = mpiTypeiItem[lpThings[sel.scan.ith].thm().iType()];
             part.hs.grhst = hstMines;
-            FLookupPart(&part);
+            PartQueryIO().pfnLookup(&part);
             GlobalPD.grPopup = grPopupComponent;
             GlobalPD.part = part;
             Popup(hwndMine, x, y);
@@ -924,7 +930,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                     }
                 }
                 if (c > 1) {
-                    c = PopupMenu(hwndMine, x, y, c, NULL, rgpsz, -1, TRUE);
+                    c = ControlIO().pfnPopupMenu(hwndMine, x, y, c, NULL, rgpsz, -1, TRUE);
                     if (c == -1)
                         break;
                 } else {
@@ -962,7 +968,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
         case htMineEnvVar0:
         case htMineEnvVar1:
         case htMineEnvVar2:
-            FLookupPlanet(sel.scan.idpl, &pl);
+            PlanetQueryIO().pfnLookup(sel.scan.idpl, &pl);
             GlobalPD.grPopup = grPopupPlanetEnv;
             GlobalPD.idPlanet = pl.id;
             GlobalPD.iPlanetVar = ht - 6;
@@ -971,7 +977,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             } else {
                 GlobalPD.iPlanVal = envNone;
             }
-            if (pl.det >= detSome && FCanTerraformLppl(&pl, rgMin, rgMax, rgCost, TRUE)) {
+            if (pl.det >= detSome && ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, TRUE)) {
                 GlobalPD.iPlanMin = rgMin[GlobalPD.iPlanetVar];
                 GlobalPD.SetIPlanMax(rgMax[GlobalPD.iPlanetVar]);
                 if (GlobalPD.iPlanMin == envNone) {
@@ -1095,19 +1101,19 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                     iChecked = i;
                 }
             }
-            i = PopupMenu(hwndMine, x, y, 9, NULL, psz, iChecked, TRUE);
+            i = ControlIO().pfnPopupMenu(hwndMine, x, y, 9, NULL, psz, iChecked, TRUE);
             if (i == -1 || rgi[i] == cMinGrafMax)
                 break;
             cMinGrafMax = rgi[i];
-            InvalidateRect(hwndMine, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndMine, NULL, TRUE);
             if ((grbitScan & grbitScanViewMask) != 1)
                 break;
-            InvalidateRect(hwndScanner, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
             break;
         case htMineMineralConc1:
         case htMineMineralConc2:
         case htMineMineralConc3:
-            FLookupPlanet(sel.scan.idpl, &pl);
+            PlanetQueryIO().pfnLookup(sel.scan.idpl, &pl);
             GlobalPD.grPopup = grPopupMineral;
             GlobalPD.SetRgi(0, (int16_t)(ht - 1));
             for (i = 1; i <= 4; i++) {
@@ -1119,7 +1125,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                 if (pl.det > detSome) {
                     lVal = 0;
                     GlobalPD.SetRgi(2, pl.rgwtMin[ht - 1]);
-                    EstMineralsMined(&pl, rglQuan, -1, FALSE);
+                    ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, FALSE);
                     GlobalPD.SetRgi(4, rglQuan[ht - 1]);
                     if (pl.iPlayer == iplrNone) {
                         for (ifl = 0; ifl < cFleet; ifl++) {
@@ -1127,9 +1133,9 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                             if (!rglpfl[ifl])
                                 break;
                             if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
-                                cMines = CMineFromLpfl(lpfl);
+                                cMines = ColonyIO().pfnFleetMining(lpfl);
                                 if (cMines > 0) {
-                                    EstMineralsMined(&pl, rglT, cMines, FALSE);
+                                    ColonyIO().pfnEstimateMining(&pl, rglT, cMines, FALSE);
                                     lVal += rglT[ht - 1];
                                 }
                             }
@@ -1155,12 +1161,12 @@ void SetMineralTitleBar(HWND hwnd) {
     RECT       rc;
 
     fVisCB = FALSE;
-    CchGetString(idsDeepSpace, szDeepSpace);
-    CchGetString(idsSummary, szSummary);
+    TextIO().pfnCchGetString(idsDeepSpace, szDeepSpace);
+    TextIO().pfnCchGetString(idsSummary, szSummary);
     grobj = sel.scan.grobj == grobjOther ? sel.scan.grobjFull : sel.scan.grobj;
     if (grobj & grobjPlanet) {
         if (sel.scan.idpl != idplNone) {
-            psz = PszGetPlanetName(sel.scan.idpl);
+            psz = TextIO().pfnPlanetName(sel.scan.idpl);
             strcat(psz, szSummary);
         }
     } else if (grobj & grobjFleet) {
@@ -1176,16 +1182,16 @@ void SetMineralTitleBar(HWND hwnd) {
         strcat(psz, szSummary);
     }
     strcpy(szMineralTitle, psz);
-    InvalidateRect(hwnd, NULL, TRUE);
+    ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
     if (fVisCB) {
         fVisCB = lpThings[sel.scan.ith].ith() == ithMinefield && lpThings[sel.scan.ith].thm().iType() == mineStandard && lpThings[sel.scan.ith].iplr() == idPlayer &&
-                 GetRaceStat(&rgplr[idPlayer], rsMajorAdv) == raMines;
+                 RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMines;
     }
     if (fVisCB) {
-        LUiSendMessage(hwndMineCB, BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
+        ControlIO().pfnLUiSendMessage(hwndMineCB, BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
     }
-    GetClientRect(hwnd, &rc);
-    FUiSetWindowPos(hwndMineCB, NULL, 80, rc.bottom - dyArial8 * 2, rc.right - 88, dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
+    ControlIO().pfnGetClientRect(hwnd, &rc);
+    ControlIO().pfnFUiSetWindowPos(hwndMineCB, NULL, 80, rc.bottom - dyArial8 * 2, rc.right - 88, dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
     return;
 }
 
@@ -1302,7 +1308,7 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
             rgid[c++] = (uint32_t)(uint16_t)lpth->idFull() | 0x20000000;
         }
     }
-    i = PopupMenu(hwnd, x, y, c, rgid, NULL, iChecked, TRUE);
+    i = ControlIO().pfnPopupMenu(hwnd, x, y, c, rgid, NULL, iChecked, TRUE);
     if (i >= 0) {
         scan = sel.scan;
         if (rgid[i] & 0x80000000) {
@@ -1343,6 +1349,6 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
 
 // InvalidateMine redraws the mineral window.
 void InvalidateMine() {
-    InvalidateRect(hwndMine, NULL, TRUE);
+    ControlIO().pfnInvalidateRect(hwndMine, NULL, TRUE);
     return;
 }

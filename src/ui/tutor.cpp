@@ -1,4 +1,8 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "alert_io.h"
 
 ITEMACTION rgiaUnloadAllCol[5] = {{0}, {0}, {0}, IaMake(0, iActionUnloadAll)};
 ITEMACTION rgiaQuikDrop[5] = {IaMake(0, iActionUnloadAll),
@@ -29,11 +33,11 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_INITDIALOG:
         tutor.hwnd = hwnd;
-        FUiSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-        StickyDlgPos(hwnd, &ptStickyTutorDlg, TRUE);
+        ControlIO().pfnFUiSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyTutorDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_PAINT:
@@ -46,7 +50,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (LOWORD(wParam)) {
         case IDC_TUTOR_PANIC:
             lpProc = MakeProcInstance(PanicDlg, hInst);
-            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc);
+            fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc, 0);
             FreeProcInstance(lpProc);
             if (!fRet) {
                 return 0;
@@ -57,7 +61,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDCANCEL:
             ShowTutor(FALSE);
             if (tutor.fShowHidMsg) {
-                AlertSz(PszFormatIds(idsMakeTutorialReappearCompleteTaskChooseTutorial, NULL), MB_ICONASTERISK);
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMakeTutorialReappearCompleteTaskChooseTutorial, NULL), MB_ICONASTERISK);
                 tutor.fShowHidMsg = FALSE;
             }
             return 1;
@@ -68,11 +72,11 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             return 0;
         }
     case WM_DESTROY:
-        StickyDlgPos(hwnd, &ptStickyTutorDlg, FALSE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyTutorDlg, FALSE);
         tutor.hwnd = 0;
         hmenu = GetASubMenu(hwndFrame, menuHelp);
         CheckMenuItem(hmenu, IDM_HELP_TUTORIAL, MF_UNCHECKED);
-        EndDialog(hwnd, 1);
+        ControlIO().pfnEndDialog(hwnd, 1);
         EndTutor(TRUE);
         return 1;
     default:
@@ -85,7 +89,7 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message) {
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -103,14 +107,14 @@ INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDCANCEL:
-            EndDialog(hwnd, 0);
+            ControlIO().pfnEndDialog(hwnd, 0);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (int16_t)tutor.idh);
             return 1;
         case IDC_PANIC_REDO_TURN:
         case IDC_PANIC_COMPLETE_TURN:
-            EndDialog(hwnd, LOWORD(wParam));
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam));
             return 1;
         }
         break;
@@ -145,7 +149,7 @@ void DrawTutorText(HWND hwnd) {
     SetBkColor(hdc, crButtonFace);
     SelectObject(hdc, rghfontArial8[0]);
     GetWindowRect(hwnd, &rc);
-    GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rcBtn);
+    GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDCANCEL), &rcBtn);
     rc.bottom = rcBtn.top;
     ScreenToClient(hwnd, (POINT *)&rc);
     ScreenToClient(hwnd, (POINT *)&rc.right);
@@ -197,7 +201,7 @@ void StartTutor(int16_t fRestart) {
         if (!lpfnTutorDlgProc) {
             lpfnTutorDlgProc = MakeProcInstance(TutorDlg, hInst);
             if (!lpfnTutorDlgProc) {
-                AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
                 return;
             }
         }
@@ -205,7 +209,7 @@ void StartTutor(int16_t fRestart) {
         SaveGameState();
         if (!fFreeingTitle) {
             fFreeingTitle = TRUE;
-            FUiDestroyWindow(hwndTitle);
+            ControlIO().pfnFUiDestroyWindow(hwndTitle);
             hwndTitle = 0;
             FUiShowWindow(hwndFrame, SW_SHOW);
         }
@@ -221,11 +225,11 @@ void StartTutor(int16_t fRestart) {
             iScanZoom = zoom100;
         }
         if (game.lid == 0) {
-            cch = CchGetString(idsTutorial, szBase);
+            cch = TextIO().pfnCchGetString(idsTutorial, szBase);
             if (!fRestart) {
                 strcat(szBase, ".xy");
                 if (FFileExists(szBase) &&
-                    AlertSz(PszFormatIds(idsTutorialHasRunBeforeWouldLikeDestroy, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) {
+                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsTutorialHasRunBeforeWouldLikeDestroy, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) != IDYES) {
                     szBase[cch] = 0;
                     strcat(szBase, ".m1");
                     ini.fStartupFile = TRUE;
@@ -246,7 +250,7 @@ void StartTutor(int16_t fRestart) {
             PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             if (!fFreeingTitle) {
                 fFreeingTitle = TRUE;
-                FUiDestroyWindow(hwndTitle);
+                ControlIO().pfnFUiDestroyWindow(hwndTitle);
                 hwndTitle = 0;
             }
             FUiShowWindow(hwndFrame, SW_SHOW);
@@ -271,11 +275,11 @@ void StartTutor(int16_t fRestart) {
                 tutor.idt = static_cast<TutorId>(tutor.idt - 8);
             }
             tutor.idtBold = tutor.idt;
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
     }
     ShowTutor(TRUE);
-    InvalidateRect(tutor.hwnd, NULL, TRUE);
+    ControlIO().pfnInvalidateRect(tutor.hwnd, NULL, TRUE);
     return;
 }
 
@@ -321,14 +325,14 @@ void AdvanceTutor() {
         return;
     }
 LUpdatePage:
-    wsprintf(szTitle, PszGetCompressedString(idsStarsTutorPageD80), (int16_t)tutor.idt / 8 + 1);
-    FUiSetWindowText(tutor.hwnd, szTitle);
+    wsprintf(szTitle, TextIO().pfnCompressed(idsStarsTutorPageD80), (int16_t)tutor.idt / 8 + 1);
+    ControlIO().pfnFUiSetWindowText(tutor.hwnd, szTitle);
     ShowTutor(TRUE);
     GetWindowRect(tutor.hwnd, &rc);
     ScreenToClient(tutor.hwnd, (POINT *)&rc);
     ScreenToClient(tutor.hwnd, (POINT *)&rc.right);
     ExpandRc(&rc, -dyArial8, -2 * dyArial8);
-    InvalidateRect(tutor.hwnd, &rc, TRUE);
+    ControlIO().pfnInvalidateRect(tutor.hwnd, &rc, TRUE);
     return;
 }
 
@@ -336,7 +340,7 @@ void EndTutor(int16_t fClose) {
     if (gd.fTutorial) {
         gd.fTutorial = FALSE;
         if (tutor.hwnd) {
-            FUiDestroyWindow(tutor.hwnd);
+            ControlIO().pfnFUiDestroyWindow(tutor.hwnd);
         }
         game.fTutorial = FALSE;
         if (fClose) {
@@ -365,13 +369,13 @@ void SaveGameState() {
         hmenu = GetASubMenu(hwndFrame, menuView);
         gd.fToolbar = gd.fToolbar == 0;
         CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
-        RefitFrameChildren();
+        ControlIO().pfnRefitFrameChildren();
     }
     tutor.icolFSort = vrptFleet.icolSort;
     if (vrptFleet.icolSort != 1 || !vrptFleet.fAscending) {
         vrptFleet.icolSort = 1;
         vrptFleet.fAscending = TRUE;
-        InvalidateReport(rptFleets, 0);
+        PresentationIO().pfnInvalidateReport(rptFleets, 0);
     }
     if (game.lid != 0 && !game.fTutorial) {
         DestroyCurGame();
@@ -394,17 +398,17 @@ void RestoreGameState() {
         hmenu = GetASubMenu(hwndFrame, menuView);
         gd.fToolbar = gd.fToolbar == 0;
         CheckMenuItem(hmenu, IDM_VIEW_TOOLBAR, !gd.fToolbar ? MF_UNCHECKED : MF_CHECKED);
-        RefitFrameChildren();
+        ControlIO().pfnRefitFrameChildren();
     }
     if (vrptFleet.icolSort != tutor.icolFSort) {
         vrptFleet.icolSort = tutor.icolFSort;
-        InvalidateReport(rptFleets, 1);
+        PresentationIO().pfnInvalidateReport(rptFleets, 1);
     }
     return;
 }
 
 int16_t FAskKillTutor() {
-    if (game.turn >= 30 || AlertSz(PszFormatIds(idsCurrentlyRunningStarsTutorialDoWantExit, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES) {
+    if (game.turn >= 30 || AlertIO().pfnAlertSz(TextIO().pfnFormat(idsCurrentlyRunningStarsTutorialDoWantExit, NULL), MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL) == IDYES) {
         EndTutor(TRUE);
         return TRUE;
     }
@@ -1071,7 +1075,7 @@ int16_t FTutorTaskDone() {
                         return TRUE;
                     }
                     if (FCheckSelection(grobjFleet, 11) && sel.fl.lpplord->rgord()[sel.iwpAct].grTask == grTaskXfer &&
-                        LUiSendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
+                        ControlIO().pfnLUiSendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
                         tutor.idtBold = idtThirdUnload;
                     } else {
                         tutor.idtBold = idtSetSecondDropdownWaypointTaskTileColonists;
@@ -2247,7 +2251,7 @@ int16_t FCheckZip(int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
             piaCur++;
             lpiaGoal++;
         }
-        CchGetString(ids, szT);
+        TextIO().pfnCchGetString(ids, szT);
         strcpy(vrgZip[iZip].szName, szT);
         return TRUE;
     }
@@ -2268,7 +2272,7 @@ int16_t FCheckZip(int16_t iZip, ITEMACTION *lpiaGoal, StringId ids) {
         piaCur++;
         lpiaGoal++;
     }
-    CchGetString(ids, szT);
+    TextIO().pfnCchGetString(ids, szT);
     if (strcmpi(szT, vrgZip[iZip].szName) == 0) {
         tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
@@ -2311,7 +2315,7 @@ void TutorError(StringId idsError) {
     } else if (tutor.idsError != idsError || tutor.cError++ >= 3) {
         tutor.cError = 0;
         tutor.idsError = idsError;
-        AlertSz(PszFormatIds(idsError, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsError, NULL), MB_ICONHAND);
     }
     return;
 }
@@ -2362,7 +2366,7 @@ int16_t FCheckFleetName(int16_t id, StringId ids) {
         }
         return FALSE;
     }
-    CchGetString(ids, szT);
+    TextIO().pfnCchGetString(ids, szT);
     if (_stricmp(szT, lpfl->lpszName) == 0) {
         tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
@@ -2456,7 +2460,7 @@ int16_t FCheckMessages(int16_t imsg, MessageId idm, int16_t fFilter) {
         if (fFilter && !(bitfMsgFiltered[idm >> 3] & 1 << (idm & 7))) {
             return FALSE;
         }
-        if (!fFilter && IdmGetMessageN(iMsgCur) != idm) {
+        if (!fFilter && PresentationIO().pfnMessageId(iMsgCur) != idm) {
             return FALSE;
         }
     }
@@ -2791,7 +2795,7 @@ int16_t FCheckShipBuilder(int16_t iCategory, int16_t iShip) {
     if (iCategory != iCategoryAny && iCategory != mdBuild) {
         return FALSE;
     }
-    iSel = LOWORD(LUiSendMessage(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
+    iSel = LOWORD(ControlIO().pfnLUiSendMessage(ControlIO().pfnGetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
     if (iShip == iShipAny || iShip == iSel) {
         tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;
@@ -2915,7 +2919,7 @@ int16_t FTutorialEnabledShipBuilder(TutorShipBuilderAction itutsbAction) {
                     TutorError(idsTutorialHaventAddedRightPartDesignVerify);
                     return FALSE;
                 }
-                if (_stricmp(PszGetCompressedString(idsGater), lpshdefBuild->hul.szClass) != 0) {
+                if (_stricmp(TextIO().pfnCompressed(idsGater), lpshdefBuild->hul.szClass) != 0) {
                     TutorError(idsTutorialNameDesignEditboxMustGaterChange);
                     return FALSE;
                 }
@@ -2938,7 +2942,7 @@ int16_t FTutorialEnabledShipBuilder(TutorShipBuilderAction itutsbAction) {
                     TutorError(idsTutorialDontHaveRightPartsDesignVerify2);
                     return FALSE;
                 }
-                if (_stricmp(PszGetCompressedString(idsMineLayer), lpshdefBuild->hul.szClass) == 0)
+                if (_stricmp(TextIO().pfnCompressed(idsMineLayer), lpshdefBuild->hul.szClass) == 0)
                     break;
                 TutorError(idsTutorialNameDesignEditboxMustMineLayer);
                 return FALSE;

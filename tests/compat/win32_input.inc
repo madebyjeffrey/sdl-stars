@@ -1,3 +1,6 @@
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+#include "../../compat/win32/src/input_io.h"
+#endif
 /* Keyboard queue and ANSI input contracts; SDK checks use real SendInput. */
 #include <windows.h>
 #include <stdint.h>
@@ -293,6 +296,15 @@ int main(void) {
     int i;
     static const UINT rgControl[] = {VK_BACK, VK_TAB, VK_RETURN, VK_ESCAPE};
     static const UINT rgScan[] = {0x0e, 0x0f, 0x1c, 0x01};
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    COMPATINPUTIO io_compatinputio;
+    io_compatinputio.pfnGetKeyboardState = StarsTest_SDL_GetKeyboardState;
+    io_compatinputio.pfnGetModState = StarsTest_SDL_GetModState;
+    io_compatinputio.pfnGetGlobalMouseState = StarsTest_SDL_GetGlobalMouseState;
+    io_compatinputio.pfnGetCurrentVideoDriver = StarsTest_SDL_GetCurrentVideoDriver;
+    COMPATINPUTIOSCOPE scope_compatinputio(io_compatinputio);
+#endif
+
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
     hInstance = GetModuleHandle(NULL);
 #else

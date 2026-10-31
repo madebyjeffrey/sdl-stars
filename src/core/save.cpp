@@ -1,10 +1,18 @@
 #include "common.h"
+#include "text_io.h"
+#include "turn_io.h"
+#include "colony_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "alert_io.h"
+#include "random_io.h"
+#include "record_io.h"
 
 static void WriteRtPassword(int32_t lSalt) {
     uint8_t rgb[cbWirePassword];
 
     NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
-    WriteRt(rtChgPassword, cbWirePassword, rgb);
+    RecordIO().pfnWriteRt(rtChgPassword, cbWirePassword, rgb);
 }
 
 void WriteOrders(FLEET *lpfl) {
@@ -18,10 +26,10 @@ void WriteOrders(FLEET *lpfl) {
         for (; cord != 0; cord--) {
             if (lpord->grTask == grTaskNone) {
                 FEncodeOrderHeader(*lpord, rgbOrder);
-                WriteRt(rtOrderB, cbWireOrderHeader, rgbOrder);
+                RecordIO().pfnWriteRt(rtOrderB, cbWireOrderHeader, rgbOrder);
             } else {
                 FEncodeOrder(*lpord, rgbOrder);
-                WriteRt(rtOrderA, cbWireOrder, rgbOrder);
+                RecordIO().pfnWriteRt(rtOrderA, cbWireOrder, rgbOrder);
             }
             lpord++;
         }
@@ -71,7 +79,7 @@ void WriteRtPlr(PLAYER *pplr, uint8_t *pbStore) {
         *pb = 0;
         pb += 2 + strlen(pplr->szNames);
     }
-    WriteRt(rtPlr, pb - pbStore, pbStore);
+    RecordIO().pfnWriteRt(rtPlr, pb - pbStore, pbStore);
     return;
 }
 
@@ -90,7 +98,7 @@ void WriteRtShDef(SHDEF *lpshdef, uint8_t **ppbStore) {
     if (lpshdef->det == detAll) {
         strcpy(szHulName, lpshdef->hul.szClass);
     } else {
-        strcpy(szHulName, LphuldefFromId(lpshdef->hul.ihuldef)->hul.szClass);
+        strcpy(szHulName, PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul.szClass);
     }
     cOut = 31;
     if (szHulName[0] != 0 && FCompressUserString(szHulName, (char *)pb + 1, &cOut)) {
@@ -105,7 +113,7 @@ void WriteRtShDef(SHDEF *lpshdef, uint8_t **ppbStore) {
         memmove(*ppbStore, rgb, pb - rgb);
         *ppbStore += pb - rgb;
     } else {
-        WriteRt(rtShDef, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(rtShDef, pb - rgb, rgb);
     }
     return;
 }
@@ -239,7 +247,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                             lpord[1].grobj = grobjFleet;
                             lpfl->cord++;
                             lpfl->lpplord->iordMac++;
-                            FSendPlrMsg(iPlayer, idmPatrollingHasTargetedIntercept, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflBest->id, 0, 0, 0, 0, 0);
+                            TurnIO().pfnMessage(iPlayer, idmPatrollingHasTargetedIntercept, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflBest->id, 0, 0, 0, 0, 0);
                         }
                     }
                     if (lpord->grTask != grTaskXfer && lpfl->cord > 1) {
@@ -250,11 +258,11 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                     (lpth->ith() == ithMinefield && !(1 << iPlayer & lpth->thm().grbitPlrNow())) ||
                                     (lpth->ith() == ithWormhole && !lpth->thw().fInclude())) {
                                     if (lpth && lpth->ith() == ithWormhole) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     } else if (lpth && lpth->ith() == ithMysteryTrader) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmMysteryTraderHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idmMysteryTraderHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     } else if (lpth && lpth->ith() == ithMinefield) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmMineFieldHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idmMineFieldHeadingHasVanishedOrdersHave, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     }
                                     lpord[iord].grobj = grobjOther;
                                     lpord[iord].id = iord;
@@ -266,7 +274,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                 }
                                 lpflT = LpflFromId(lpord[iord].id);
                                 if (!lpflT || lpflT->fDead) {
-                                    FSendPlrMsg(iPlayer, idmSWaypointAppearsHaveDestroyedHasDisappeared, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpord[iord].id, 0, 0, 0,
+                                    TurnIO().pfnMessage(iPlayer, idmSWaypointAppearsHaveDestroyedHasDisappeared, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpord[iord].id, 0, 0, 0,
                                                 0, 0);
                                 FixupCoords:
                                     lpord[iord].grobj = grobjOther;
@@ -279,11 +287,11 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                     if (lpflT->fInclude)
                                         continue;
                                     if (lpflT->idPlanet != idPlanetDeepSpace && !fNoAutoTrack) {
-                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveDuckedBehindOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflT->idPlanet, 0, 0,
+                                        TurnIO().pfnMessage(iPlayer, idmFleetTrackingAppearsHaveDuckedBehindOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpflT->idPlanet, 0, 0,
                                                     0, 0, 0);
                                         goto FixupCoords;
                                     } else {
-                                        FSendPlrMsg(iPlayer, idmFleetTrackingAppearsHaveOutrunRangeScanners, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
+                                        TurnIO().pfnMessage(iPlayer, idmFleetTrackingAppearsHaveOutrunRangeScanners, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                                         goto FixupCoords;
                                     }
                                 }
@@ -305,7 +313,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
     try {
         if (fAppend && FAppendFile(iPlayer))
             goto LAppend;
-        if (!FCreateFile(iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, NULL))
+        if (!RecordIO().pfnFCreateFile(iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, NULL))
             goto LFail;
 LAppend:
         WriteBattles(iPlayer);
@@ -317,7 +325,7 @@ LAppend:
                    detail, sending tech, research, traits, production template
                    and relations too, and read rgplr[-1] for the host file. Send a
                    full-detail copy with only the habitat filled in. */
-                if (iPlayer != iplrNone && i != iPlayer && !rgplr[i].fDead && GetRaceStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
+                if (iPlayer != iplrNone && i != iPlayer && !rgplr[i].fDead && RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv) == raTerra) {
                     plrT = rgplr[i];
                     memset(&plrT.idPlanetHome, 0, (uint8_t *)&plrT.szName - (uint8_t *)&plrT.idPlanetHome);
                     memcpy(plrT.rgEnvVar, rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar));
@@ -342,7 +350,7 @@ LAppend:
                     WritePlanet(lpplT, rtPlanet, FALSE);
                     if (lpplT->lpplprod) {
                         if (!FEncodeProdQueue(std::span(lpplT->lpplprod->rgprod(), lpplT->lpplprod->iprodMac), rgbProd)) goto LFail;
-                        WriteRt(rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd);
+                        RecordIO().pfnWriteRt(rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd);
                     }
                 } else if (lpplT->det == detObscure) {
                     pl = *lpplT;
@@ -405,7 +413,7 @@ LAppend:
         if (i > 0) {
             uint8_t rgbThingCount[2];
             NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgbThingCount))).FWriteI16Le(i);
-            WriteRt(rtThing, 2, rgbThingCount);
+            RecordIO().pfnWriteRt(rtThing, 2, rgbThingCount);
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
@@ -456,7 +464,7 @@ LAppend:
             }
         }
         WriteRtEof(game.turn);
-        StreamClose();
+        RecordIO().pfnStreamClose();
     } catch (const StarsError &) {
         goto LFail;
     }
@@ -464,12 +472,12 @@ LAppend:
 LFail:
     idPlayer = iPlayer;
     if (fAppend) {
-        AlertSz(PszFormatIds(idsUnableUpdateTurnFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableUpdateTurnFile, NULL), MB_ICONHAND);
     } else if (iPlayer != iplrNone) {
-        AlertSz(PszFormatIds(idsUnableCreateNewTurnFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateNewTurnFile, NULL), MB_ICONHAND);
     } else {
         idPlayer = iplrNone;
-        AlertSz(PszFormatIds(idsUnableCreateHostFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), MB_ICONHAND);
     }
     idPlayer = iplrNone;
     fRet = FALSE;
@@ -562,13 +570,13 @@ void WriteBattles(int16_t iPlayer) {
                     MarkPlanet(lppl, iPlayer, detMinimal);
                 }
                 if (BdvFromLp(lpbtldata).cbData() < 0x400) {
-                    WriteRt(rtBtlData, BdvFromLp(lpbtldata).cbData(), lpbBattle);
+                    RecordIO().pfnWriteRt(rtBtlData, BdvFromLp(lpbtldata).cbData(), lpbBattle);
                     lpbBattle += BdvFromLp(lpbtldata).cbData();
                 } else {
                     cb = BdvFromLp(lpbtldata).ctok() * 29 + 14;
                     lpbtlrec = (uint8_t *)(lpbBattle + cb);
                     if (cb < 1024) {
-                        WriteRt(rtBtlData, cb, lpbBattle);
+                        RecordIO().pfnWriteRt(rtBtlData, cb, lpbBattle);
                         lpbBattle += cb;
                     } else {
                         ctok = 34;
@@ -576,16 +584,16 @@ void WriteBattles(int16_t iPlayer) {
                         if (ctok > BdvFromLp(lpbtldata).ctok()) {
                             ctok = BdvFromLp(lpbtldata).ctok();
                         }
-                        WriteRt(rtBtlData, ctok * 29 + 14, lpbBattle);
+                        RecordIO().pfnWriteRt(rtBtlData, ctok * 29 + 14, lpbBattle);
                         lpbBattle += 14 + 29 * ctok;
                         ctok = BdvFromLp(lpbtldata).ctok() - ctok;
                         while (ctok > 0) {
                             if ((uint16_t)ctok > 35) {
-                                WriteRt(rtContinue, 1015, lpbBattle);
+                                RecordIO().pfnWriteRt(rtContinue, 1015, lpbBattle);
                                 lpbBattle += 1015;
                                 ctok -= 35;
                             } else {
-                                WriteRt(rtContinue, ctok * 29, lpbBattle);
+                                RecordIO().pfnWriteRt(rtContinue, ctok * 29, lpbBattle);
                                 lpbBattle += 29 * ctok;
                                 ctok = 0;
                             }
@@ -593,7 +601,7 @@ void WriteBattles(int16_t iPlayer) {
                     }
                     cb = BdvFromLp(lpbtldata).cbData() - 14 - BdvFromLp(lpbtldata).ctok() * 29;
                     if (cb < 1024) {
-                        WriteRt(rtContinue, cb, lpbtlrec);
+                        RecordIO().pfnWriteRt(rtContinue, cb, lpbtlrec);
                         lpbBattle += cb;
                     } else {
                         while (cb != 0) {
@@ -601,11 +609,11 @@ void WriteBattles(int16_t iPlayer) {
                             if (cbRec >= 1024) {
                                 cb -= cbRec;
                                 for (; cbRec >= 1024; cbRec -= 1023) {
-                                    WriteRt(rtContinue, 1023, lpbtlrec);
+                                    RecordIO().pfnWriteRt(rtContinue, 1023, lpbtlrec);
                                     lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + 0x3ff);
                                 }
                                 if (cbRec != 0) {
-                                    WriteRt(rtContinue, cbRec, lpbtlrec);
+                                    RecordIO().pfnWriteRt(rtContinue, cbRec, lpbtlrec);
                                     lpbtlrec = (uint8_t *)((uint8_t *)lpbtlrec + cbRec);
                                 }
                             } else {
@@ -618,7 +626,7 @@ void WriteBattles(int16_t iPlayer) {
                                         cbRec = BevFromLp(lpbtlrec).ctok() * 8 + 6;
                                     }
                                 } while (cb != 0 && cbT + cbRec < 1024);
-                                WriteRt(rtContinue, cbT, lpbBattle);
+                                RecordIO().pfnWriteRt(rtContinue, cbT, lpbBattle);
                             }
                             lpbBattle = (uint8_t *)lpbtlrec;
                         }
@@ -728,7 +736,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
             NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteI16Le(lppl->turn);
             pb += 2;
         }
-        WriteRt(rtPlanetB, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(rtPlanetB, pb - rgb, rgb);
     } else {
         PpvFromPrefix(rgb, sizeof(rgb)).SetFIsArtifact(lppl->fArtifact);
         if ((lppl->iPlayer != iplrNone && (lppl->iDeltaPop != 0 || lppl->fNoResearch)) ||
@@ -748,7 +756,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
                 pb += 2;
             }
         }
-        WriteRt(rtPlanet, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(rtPlanet, pb - rgb, rgb);
     }
 }
 
@@ -773,7 +781,7 @@ void WriteFleet(FLEET *lpfl) {
         FileError(idsGameFileAppearsCorruptUnableLoadFile);
         return;
     }
-    WriteRt(fPartial ? rtFleetB : rtFleetA, cb, rgb);
+    RecordIO().pfnWriteRt(fPartial ? rtFleetB : rtFleetA, cb, rgb);
     if (!fPartial) {
         WriteOrders(lpfl);
         if (lpfl->lpszName) WriteRtString(lpfl->lpszName);
@@ -798,7 +806,7 @@ void WriteRtString(char *lpsz) {
             rgb[0] = 0;
             cOut = strlen(lpsz) + 1;
         }
-        WriteRt(rtString, cOut + 1, rgb);
+        RecordIO().pfnWriteRt(rtString, cOut + 1, rgb);
     }
     return;
 }
@@ -851,7 +859,7 @@ void WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog) {
     if (fLog) {
         WriteMemRt(rtBtlPlan, pb - rgb, rgb);
     } else {
-        WriteRt(rtBtlPlan, pb - rgb, rgb);
+        RecordIO().pfnWriteRt(rtBtlPlan, pb - rgb, rgb);
     }
     return;
 }
@@ -914,7 +922,7 @@ void SetSzWorkFromDt(DtFileType dt, int16_t iPlayer) {
     return;
 }
 
-int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szForceName) {
+int16_t FCreateFile(DtFileType dt, int16_t iPlayer, char *szForceName) {
     char    *psz;
 
     if (szForceName) {
@@ -926,7 +934,7 @@ int16_t STARS_TEST_IMPL(FCreateFile)(DtFileType dt, int16_t iPlayer, char *szFor
     StarsRecoveryScope scopeRecovery;
     try {
         StarsFileGuard closeStream(hf);
-        StreamOpen(psz, mdCreate);
+        RecordIO().pfnStreamOpen(psz, mdCreate);
         WriteBOF(iPlayer, dt, FALSE);
         closeStream.Release();
         return TRUE;
@@ -939,7 +947,7 @@ static void WriteRtBof(const RTBOF &rtbof) {
     std::byte rgb[cbWireBof];
 
     FEncodeBof(rtbof, rgb);
-    WriteRt(rtBOF, cbWireBof, rgb);
+    RecordIO().pfnWriteRt(rtBOF, cbWireBof, rgb);
 }
 
 void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
@@ -956,7 +964,7 @@ void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
     rtbof.turn = game.turn;
     rtbof.fCrippled = FALSE;
     rtbof.iPlayer = iPlayer;
-    rtbof.lSaltTime = (int16_t)(LOWORD(DwTickCount()) + Random(2000));
+    rtbof.lSaltTime = (int16_t)(LOWORD(DwTickCount()) + RandomIO().pfnRandom(2000));
     rtbof.dt = dt;
     rtbof.fDone = gd.fSubmit;
     rtbof.fInUse = gd.fHostMode;
@@ -981,10 +989,10 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
     StarsRecoveryScope scopeRecovery;
     try {
         fFileErrSilent = TRUE;
-        StreamOpen(szWork, mdReadWrite);
+        RecordIO().pfnStreamOpen(szWork, mdReadWrite);
         fFileErrSilent = fSilentSav;
         ids = idsGameFileAppearsCorruptUnableLoadFile;
-        ReadRt();
+        RecordIO().pfnReadRt();
         if (hdrCur.rt != rtBOF) {
             FileError(idsFileDoesBelongVersionStars);
             goto LBadFile;
@@ -1027,7 +1035,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
         case mdMarkAi:
             do {
                 GetFileSeeds(&lSeedSav1, &lSeedSav2);
-                ReadRt();
+                RecordIO().pfnReadRt();
             } while (hdrCur.rt != rtPlr || PlvFromPrefix(rgbCur, sizeof(rgbCur)).iPlayer() != iPlayer);
             if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi() != f) {
                 if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi() != 0) {
@@ -1041,7 +1049,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
                 PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetLSalt(~PlvFromPrefix(rgbCur, sizeof(rgbCur)).lSalt());
                 LSeekFile(hf, (int16_t)-(hdrCur.cb + 2), 1);
                 SetFileSeeds(lSeedSav1, lSeedSav2);
-                WriteRt(rtPlr, hdrCur.cb, rgbCur);
+                RecordIO().pfnWriteRt(rtPlr, hdrCur.cb, rgbCur);
                 fChange = dt == dtTurn;
                 rtbof.fDone = FALSE;
             }
@@ -1056,7 +1064,7 @@ LBadFile:
         if ((dt & 0x2000) && fSuccess) {
             LSeekFile(hf, 0, 2);
         } else {
-            StreamClose();
+            RecordIO().pfnStreamClose();
         }
         return fSuccess;
     } catch (const StarsError &) {
@@ -1064,7 +1072,7 @@ LBadFile:
         if (ids != idsUniverseDefinitionFileSeemsMissingCorrupt) {
             FileError(ids);
         }
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return FALSE;
     }
 }
@@ -1072,24 +1080,24 @@ LBadFile:
 void WriteRtThing(const THING *pth) {
     std::byte rgb[cbWireThing];
     FEncodeThing(*pth, rgb);
-    WriteRt(rtThing, cbWireThing, rgb);
+    RecordIO().pfnWriteRt(rtThing, cbWireThing, rgb);
 }
 
 void WriteRtScore(const SCOREX *psx) {
     std::byte rgb[cbWireScoreX];
 
     FEncodeScoreX(*psx, rgb);
-    WriteRt(rtScore, cbWireScoreX, rgb);
+    RecordIO().pfnWriteRt(rtScore, cbWireScoreX, rgb);
 }
 
 void WriteRtEof(uint16_t w) {
     std::byte rgb[2];
 
     NATIVEBYTEWRITER(rgb).FWriteU16Le(w);
-    WriteRt(rtEOF, 2, rgb);
+    RecordIO().pfnWriteRt(rtEOF, 2, rgb);
 }
 
-void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
+void WriteRt(RecordType rt, int16_t cb, void *rg) {
     HDR hdr;
     std::byte rgbHdr[cbWireHdr];
 
@@ -1111,7 +1119,7 @@ void STARS_TEST_IMPL(WriteRt)(RecordType rt, int16_t cb, void *rg) {
 
 void RgToStream(const void *rg, uint16_t cb) {
     if (cb != 0 && CbWriteFile(hf, rg, cb) != cb) {
-        AlertSz(PszFormatIds(idsErrorWritingFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsErrorWritingFile, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     return;
@@ -1154,7 +1162,7 @@ void SetVisPFInit(int16_t iPlr) {
     int16_t       iSteal;
 
     // Host visibility has no player race; every packet is included below.
-    raMajor = static_cast<RaceAttribute>(iPlr == iplrNone ? raNone : GetRaceStat(&rgplr[iPlr], rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(iPlr == iplrNone ? raNone : RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv));
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
     for (i = 0; i < game.cPlayer; i++) {
         rgplr[i].cPlanet = 0;
@@ -1227,7 +1235,7 @@ void SetVisPFInit(int16_t iPlr) {
                 if (iSteal >= 2) {
                     detNew = 4;
                 }
-                if (lpfl->fHereAllTurn && lppl->iPlayer == iplrNone && lpfl->lpplord->rgord()[0].grTask == grTaskMine && CMineFromLpfl(lpfl) > 0) {
+                if (lpfl->fHereAllTurn && lppl->iPlayer == iplrNone && lpfl->lpplord->rgord()[0].grTask == grTaskMine && ColonyIO().pfnFleetMining(lpfl) > 0) {
                     detNew = 4;
                 }
                 MarkPlanet(lppl, iPlr, static_cast<DetType>(detNew));
@@ -1453,7 +1461,7 @@ void SetVisPFPlanets(int16_t iPlr) {
 
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
     fStargateView = FALSE;
-    if (GetRaceStat(&rgplr[iPlr], rsMajorAdv) == raStargate) {
+    if (RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv) == raStargate) {
         for (i = 0; i < 10; i++) {
             rgStargateRange[i] = 0;
             if (!rglpshdefSB[iPlr][i].fFree) {
@@ -1669,7 +1677,7 @@ void SetVisPFThings(int16_t iPlr) {
     int32_t  lVis2;
 
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
-    if (GetRaceStat(&rgplr[iPlr], rsMajorAdv) == raMassAccel) {
+    if (RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv) == raMassAccel) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
@@ -1775,7 +1783,7 @@ void SetVisPFThings(int16_t iPlr) {
                 }
             }
         }
-    } else if (GetRaceStat(&rgplr[iPlr], rsMajorAdv) == raMines) {
+    } else if (RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv) == raMines) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
@@ -1794,7 +1802,7 @@ void SetVisPFThings(int16_t iPlr) {
                                 l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                 if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
                                     pctCloak = PctCloakFromLpfl(lpfl2);
-                                    if (pctCloak == 0 || Random(100) >= pctCloak) {
+                                    if (pctCloak == 0 || RandomIO().pfnRandom(100) >= pctCloak) {
                                         MarkFleet(lpfl2, detSome);
                                     }
                                 }
@@ -1813,7 +1821,7 @@ void SetVisPFFinish(int16_t iPlr) {
     int16_t j;
     int16_t i;
 
-    detMajor = GetRaceStat(&rgplr[iPlr], rsMajorAdv) == raAttack ? 7 : 3;
+    detMajor = RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv) == raAttack ? 7 : 3;
     for (i = 0; i < game.cPlayer; i++) {
         if (i != iPlr) {
             rgplr[i].cShDef = 0;

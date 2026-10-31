@@ -1,3 +1,4 @@
+#include "../../compat/win32/src/chooser_io.h"
 /* A C++ chooser failure must unwind owner state before reaching its caller. */
 #include "filedialog_backend.h"
 #include <stars_compat.h>
@@ -34,6 +35,10 @@ int main() {
     OPENFILENAMEA of = {};
     char szFile[256] = "café-Ω.m1";
     bool fCaught = false;
+    COMPATCHOOSERIO io_compatchooserio;
+    io_compatchooserio.pfnICompatChooseFile = StarsTest_ICompatChooseFile;
+    COMPATCHOOSERIOSCOPE scope_compatchooserio(io_compatchooserio);
+
     wc.lpfnWndProc = OwnerProc; wc.lpszClassName = "ModalOwnership";
     CHECK(RegisterClassA(&wc));
     hwndRoot = CreateWindowExA(0, wc.lpszClassName, "Modal owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE,

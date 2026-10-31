@@ -14,6 +14,7 @@
 #include "encoding.h"
 
 #include "profile_io.h"
+#include "profile_text_io.h"
 
 static NATIVEFLAGLOCK fProfileLock;
 
@@ -63,12 +64,12 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
     BOOL fRet = FALSE;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         free(sz);
-        if (fp) ICloseNativeFile(fp);
+        if (fp) io.pfnClose(fp);
         if (!fRet) { FreeProfile(*lplp); *lplp = NULL; }
     });
 
     *lplp = NULL;
-    fp = PfNativeOpen(pszPath, "rb");
+    fp = io.pfnOpen(pszPath, "rb");
     if (!fp) {
         SetLastError(DwProfileError());
         return errno == ENOENT;
@@ -245,7 +246,7 @@ UINT WINAPI GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
     UINT u = 0, digit, radix = 10;
     BOOL fNegative = FALSE;
 
-    if (GetPrivateProfileStringA(pszSection, pszKey, "", sz, sizeof(sz), pszFile) == 0)
+    if (ProfileTextIO().pfnReadString(pszSection, pszKey, "", sz, sizeof(sz), pszFile) == 0)
         return (UINT)nDefault;
     while (isspace((unsigned char)*psz)) psz++;
     if (*psz == '+' || *psz == '-') { fNegative = *psz == '-'; psz++; }

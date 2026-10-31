@@ -1,4 +1,10 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "heap_io.h"
+#include "part_query_io.h"
+#include "record_io.h"
 
 static int16_t dWheelMessages;
 
@@ -37,43 +43,43 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         dWheelMessages = 0;
         for (i = 0; i < 4; i++) {
             hwndMessage = hwnd;
-            rghwndMsgBtn[i] = HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
+            rghwndMsgBtn[i] = HwndUiCreateWindowEx(0, "BUTTON", TextIO().pfnCompressed(static_cast<StringId>(idsPrev2 + i)), WS_CHILD, 100, 100, i == 3 ? 50 : 44, (3 * dyArial8 >> 1) - 1, hwnd,
                                            NULL, hInst, NULL);
-            LUiSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            ControlIO().pfnLUiSendMessage(rghwndMsgBtn[i], WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "MsgDD", CBS_DROPDOWNLIST | WS_CHILD | WS_VSCROLL, 100, 100, 200, 80, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndMsgDrop, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | WS_CHILD | WS_BORDER, 100, 100, 200, 50, hwnd, NULL, hInst, NULL);
-        LUiSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
-        LUiSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnLUiSendMessage(hwndMsgEdit, EM_LIMITTEXT, 0x3c8, 0);
+        ControlIO().pfnLUiSendMessage(hwndMsgEdit, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         hwndMsgScroll = HwndUiCreateWindowEx(0, "EDIT", NULL, ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CHILD | WS_BORDER | WS_VSCROLL, 100, 100, 200, 50, hwnd,
                                      NULL, hInst, NULL);
-        SetMsgTitle(hwnd);
-        LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsEverybody));
+        ControlIO().pfnSetMsgTitle(hwnd);
+        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEverybody));
         for (i = 0; i < game.cPlayer; i++) {
-            psz = PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
-            LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
+            psz = TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL);
+            ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)psz);
         }
-        LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+        ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
         break;
     case WM_SIZE:
         dx = LOWORD(lParam);
         dy = HIWORD(lParam);
         for (i = 0; i < 3; i++) {
-            FUiSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
+            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[i], NULL, dx - 48, ((3 * dyArial8 >> 1) + 2) * i + 3 + dyArial8 * 2, 0, 0,
                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
         SetRect(&rcMsgText, 4, dyArial8 * 2 + 3, dx - 52, dy - 4);
         SetRect(&rcMsgTitle, 4, 4, dx - 4, dyArial8 * 2 - 4);
         rc = rcMsgText;
         ExpandRc(&rc, -4, -4);
-        FUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
-        FUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER);
+        ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         rc.top += dyShipDD + 3;
-        FUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
+        ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER);
         goto Default;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_SETCURSOR:
@@ -93,27 +99,27 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         CheckBox:
             if (iMsgCur < 0)
                 break;
-            idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
+            idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
             fSet = (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) != 0;
             SetFilteringGroups(idm, fSet == 0);
-            DirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(TRUE);
             if (gd.fTutorial) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
-            InvalidateRect(hwndMessage, NULL, TRUE);
-            SetMsgTitle(hwnd);
+            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
+            ControlIO().pfnSetMsgTitle(hwnd);
         } else if (ht == htMsgZoom) {
         ZoomBox:
             fViewFilteredMsg = fViewFilteredMsg == 0;
-            if (iMsgCur < 0 || ((bitfMsgFiltered[IdmGetMessageN(iMsgCur) >> 3] & 1 << (IdmGetMessageN(iMsgCur) & 7)) != 0) != fViewFilteredMsg) {
+            if (iMsgCur < 0 || ((bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7)) != 0) != fViewFilteredMsg) {
                 i = IMsgNext(fViewFilteredMsg);
                 if (i == imsgNone) {
                     i = IMsgPrev(fViewFilteredMsg);
                 }
                 iMsgCur = i;
             }
-            InvalidateRect(hwndMessage, NULL, TRUE);
-            SetMsgTitle(hwnd);
+            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
+            ControlIO().pfnSetMsgTitle(hwnd);
         } else if (ht == htMsgMode) {
         ToggleMsgMode:
             if (gd.fSendMsgMode) {
@@ -135,9 +141,9 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 viInRe = 0;
             }
             gd.fSendMsgMode = gd.fSendMsgMode == 0;
-            InvalidateRect(hwndMessage, NULL, TRUE);
-            SetMsgTitle(hwnd);
-            HwndUiSetFocus(hwndMsgEdit);
+            ControlIO().pfnInvalidateRect(hwndMessage, NULL, TRUE);
+            ControlIO().pfnSetMsgTitle(hwnd);
+            ControlIO().pfnHwndUiSetFocus(hwndMsgEdit);
         }
         break;
     case WM_GETMINMAXINFO:
@@ -184,13 +190,13 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 for (i = cMsg; i < iMsgCur; i++) {
                     lpmsgplr = lpmsgplr->lpmsgplrNext;
                 }
-                if (CchGetString(idsSCC, szT) >= 32) {
+                if (TextIO().pfnCchGetString(idsSCC, szT) >= 32) {
                 }
-                cch = wsprintf((LPSTR)lpb2k, szT, PszPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
-                if (CchGetString(idsSCC2, szT) >= 32) {
+                cch = wsprintf((LPSTR)lpb2k, szT, TextIO().pfnPlayerName(lpmsgplr->iPlrFrom, TRUE, TRUE, TRUE, 0, NULL), 13, 10);
+                if (TextIO().pfnCchGetString(idsSCC2, szT) >= 32) {
                 }
                 cch += wsprintf((LPSTR)lpb2k + cch, szT,
-                                lpmsgplr->iPlrTo == 0 ? PszGetCompressedString(idsEverybody) : PszPlayerName(lpmsgplr->iPlrTo - 1, TRUE, TRUE, TRUE, 0, NULL),
+                                lpmsgplr->iPlrTo == 0 ? TextIO().pfnCompressed(idsEverybody) : TextIO().pfnPlayerName(lpmsgplr->iPlrTo - 1, TRUE, TRUE, TRUE, 0, NULL),
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
@@ -200,11 +206,11 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 }
                 lpsz = (char *)lpb2k;
             } else {
-                idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
+                idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
                 if (iMsgCur < 0 && cMsg > 0) {
-                    lpsz = PszGetCompressedString(idsMessagesHaveSentYearFilteredIfWant);
+                    lpsz = TextIO().pfnCompressed(idsMessagesHaveSentYearFilteredIfWant);
                 } else if (iMsgCur >= 0 && (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) && !fViewFilteredMsg) {
-                    lpsz = PszGetCompressedString(idsMessageTypeHasFilteredWillShownDefault);
+                    lpsz = TextIO().pfnCompressed(idsMessageTypeHasFilteredWillShownDefault);
                 } else {
                     lpsz = PszGetMessageN(iMsgCur);
                 }
@@ -212,8 +218,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             SetTextColor(hdc, 0xffffff);
             iMode = SetBkMode(hdc, TRANSPARENT);
             if ((iMsgCur < 0 && cMsg > 0) ||
-                (iMsgCur >= 0 && iMsgCur < cMsg && (bitfMsgFiltered[IdmGetMessageN(iMsgCur) >> 3] & 1 << (IdmGetMessageN(iMsgCur) & 7)))) {
-                cch = CchGetString(idsFiltered, szWork);
+                (iMsgCur >= 0 && iMsgCur < cMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7)))) {
+                cch = TextIO().pfnCchGetString(idsFiltered, szWork);
                 DiaganolTextOut(hdc, &rc, szWork, cch);
                 lpsz = PszGetMessageN(iMsgCur);
             }
@@ -224,15 +230,15 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 FUiShowWindow(hwndMsgScroll, SW_HIDE);
                 DrawText(hdc, lpsz, strlen(lpsz), &rc, DT_WORDBREAK | DT_NOPREFIX);
             } else {
-                FUiSetWindowText(hwndMsgScroll, lpsz);
+                ControlIO().pfnFUiSetWindowText(hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);
-                FUiSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+                ControlIO().pfnFUiSetWindowPos(hwndMsgScroll, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
             }
             SetBkMode(hdc, iMode);
         } else {
             iMode = SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, crButtonText);
-            cch = CchGetString(idsTo3, szT);
+            cch = TextIO().pfnCchGetString(idsTo3, szT);
             RightTextOut(hdc, rc.left + 26, rc.top, szT, cch, 0);
             SetBkMode(hdc, iMode);
         }
@@ -243,8 +249,8 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     case WM_MOUSEWHEEL:
         if (gd.fSendMsgMode || (LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) return 0;
         i = CWheelNotches(&dWheelMessages, (int16_t)HIWORD(wParam));
-        while (i > 0) { LUiSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
-        while (i < 0) { LUiSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
+        while (i > 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_UP, 1); i--; }
+        while (i < 0) { ControlIO().pfnLUiSendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1); i++; }
         return 0;
     case WM_KEYDOWN:
         if (wParam == VK_DOWN)
@@ -278,7 +284,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         return 0;
     case WM_COMMAND:
         if (HIWORD(wParam) == 0) {
-            HwndUiSetFocus(hwndFrame);
+            ControlIO().pfnHwndUiSetFocus(hwndFrame);
         }
         if ((HWND)lParam == rghwndMsgBtn[0] && HIWORD(wParam) == 0) {
         PrevMsg:
@@ -286,7 +292,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 FFinishPlrMsgEntry(-1);
                 goto SetupNewMsg;
             }
-            if (GetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+            if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
                 iMsgCur = imsgNone;
                 i = IMsgNext(FALSE);
             } else {
@@ -301,11 +307,11 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             iMsgCur--;
         SetupNewMsg:
             gd.fGotoVCR = FALSE;
-            SetMsgTitle(hwnd);
-            InvalidateRect(hwnd, &rcMsgText, TRUE);
+            ControlIO().pfnSetMsgTitle(hwnd);
+            ControlIO().pfnInvalidateRect(hwnd, &rcMsgText, TRUE);
             if (gd.fTutorial) {
                 tutor.fChange = TRUE;
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
             break;
         } else if ((HWND)lParam == rghwndMsgBtn[2] && HIWORD(wParam) == 0) {
@@ -313,7 +319,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             if (gd.fSendMsgMode) {
                 FFinishPlrMsgEntry(1);
             } else {
-                if (GetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+                if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
                     iMsgCur = cMsg + vcmsgplrIn;
                     i = IMsgPrev(FALSE);
                 } else {
@@ -336,16 +342,16 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 default:
                     break;
                 case mdMsgObjPlanet:
-                    SelectAdjPlanet(0, idMsgObj);
-                    FUiUpdateWindow(hwndScanner);
-                    LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
-                    idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
+                    PresentationIO().pfnSelectPlanet(0, idMsgObj);
+                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
+                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
                     if (idm != idmHasCompletedOrdersProductionQueueEmpty && idm != idmProductionQueueEmpty &&
                         (idm < idmHasBuiltManyMinesCurrentPopulationCan || idm > idmHasBuiltManyDefensesPlanetCanSupport))
                         break;
                     if (!gd.fGotoVCR) {
                         gd.fGotoVCR = TRUE;
-                        SetMsgTitle(hwnd);
+                        ControlIO().pfnSetMsgTitle(hwnd);
                         break;
                     }
                     if (sel.grobj != grobjPlanet || sel.id != idMsgObj)
@@ -353,9 +359,9 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     ChangeProduction(FALSE);
                     break;
                 case mdMsgObjFleet:
-                    SelectAdjFleet(0, idMsgObj);
-                    FUiUpdateWindow(hwndScanner);
-                    LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+                    PresentationIO().pfnSelectFleet(0, idMsgObj);
+                    ControlIO().pfnFUiUpdateWindow(hwndScanner);
+                    ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
                     break;
                 case mdMsgObjThing:
                     lpth = LpthFromId(vptMsg.x);
@@ -373,7 +379,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                         break;
                     }
                     gd.fGotoVCR = TRUE;
-                    SetMsgTitle(hwnd);
+                    ControlIO().pfnSetMsgTitle(hwnd);
                     break;
                 case mdMsgObjResearch:
                     PostMessage(hwndFrame, WM_COMMAND, IDM_GAME_RESEARCH, 0);
@@ -395,9 +401,9 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 case mdMsgObjPart:
                     vpartBrowser.hs.grhst = static_cast<HullSlotType>(1 << (idMsgObj >> 8 & 0xf));
                     vpartBrowser.hs.iItem = idMsgObj & 0xff;
-                    FLookupPart(&vpartBrowser);
+                    PartQueryIO().pfnLookup(&vpartBrowser);
                     if (hwndBrowser) {
-                        InvalidateRect(hwndBrowserChild, NULL, TRUE);
+                        ControlIO().pfnInvalidateRect(hwndBrowserChild, NULL, TRUE);
                     } else {
                         fBrowserValid = TRUE;
                         PostMessage(hwndFrame, WM_COMMAND, IDM_VIEW_BROWSER_TOGGLE2, 0);
@@ -407,7 +413,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             if (!gd.fTutorial)
                 break;
             tutor.fChange = TRUE;
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
             break;
         } else {
             goto Default;
@@ -442,7 +448,7 @@ void DecorateMsgTitleBar(HDC hdc, RECT *prc) {
     xyStart = (int16_t)(prc->bottom - prc->top - 11) / 2 + prc->top;
     if (iMsgCur < 0 || iMsgCur >= cMsg)
         goto DoMinMax;
-    idm = static_cast<MessageId>(IdmGetMessageN(iMsgCur));
+    idm = static_cast<MessageId>(PresentationIO().pfnMessageId(iMsgCur));
     if (bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) {
         ySrc = 14;
         dxSrc = 14;
@@ -543,13 +549,13 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         cb = 0;
         dInc = 0;
     } else {
-        cb = GetWindowText(hwndMsgEdit, (LPSTR)lpb2k, 1000);
+        cb = ControlIO().pfnGetWindowText(hwndMsgEdit, (LPSTR)lpb2k, 1000);
     }
     if (cb == 0) {
         if (lpmpCur) {
-            DirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(TRUE);
             *lpmpPrev = lpmpCur->lpmsgplrNext;
-            FreeLp(lpmpCur, htPlrMsg);
+            HeapIO().pfnFree(lpmpCur, htPlrMsg);
             vcmsgplrOut--;
             if (iMsgSendCur > 0) {
                 iMsgSendCur--;
@@ -571,14 +577,14 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
         lpbMsg = lpb2k;
     }
     cbNew = abs(cb) + 12;
-    iPlrTo = LOWORD(LUiSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
+    iPlrTo = LOWORD(ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
         if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
-            DirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(TRUE);
         }
         lpmpCur = LpmsgplrReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12));
     } else {
-        DirtyGame(TRUE);
+        RecordIO().pfnDirtyGame(TRUE);
         lpmpCur = LpmsgplrAlloc(cbNew + (sizeof(MSGPLR) - 12));
         lpmpCur->lpmsgplrNext = NULL;
         vcmsgplrOut++;
@@ -621,51 +627,51 @@ void SetMsgTitle(HWND hwnd) {
         }
         cMsgTot = cMsg + vcmsgplrIn;
         i = gd.fSendMsgMode ? idsDone : iMsgCur >= cMsg ? idsReply : gd.fGotoVCR ? idsView : idsGoto3;
-        FUiSetWindowText(rghwndMsgBtn[1], PszGetCompressedString(static_cast<StringId>(i)));
+        ControlIO().pfnFUiSetWindowText(rghwndMsgBtn[1], TextIO().pfnCompressed(static_cast<StringId>(i)));
         if (gd.fSendMsgMode) {
-            wsprintf(szWork, PszGetCompressedString(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
+            wsprintf(szWork, TextIO().pfnCompressed(idsSendMessagesDD), iMsgSendCur + 1, vcmsgplrOut);
             rc = rcMsgText;
             ExpandRc(&rc, -4, -4);
-            FUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            FUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnFUiSetWindowPos(hwndMsgDrop, NULL, rc.left + 30, rc.top, rc.right - rc.left - 84, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnFUiSetWindowPos(rghwndMsgBtn[3], NULL, rc.right - 50, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
             rc.top += dyShipDD + 3;
-            FUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
-            FUiEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
-            FUiEnableWindow(rghwndMsgBtn[1], TRUE);
-            FUiEnableWindow(rghwndMsgBtn[2], TRUE);
+            ControlIO().pfnFUiSetWindowPos(hwndMsgEdit, NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_SHOWWINDOW);
+            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], iMsgSendCur > 0);
+            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
+            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], TRUE);
             lpmp = vlpmsgplrOut;
             i = iMsgSendCur;
             while (i-- > 0) {
                 lpmp = lpmp->lpmsgplrNext;
             }
             if (lpmp) {
-                LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
+                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    FUiSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
+                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
                     goto FinishUp;
                 } else {
                     i = 1000;
                     FDecompressUserString((char *)lpmp->rgbMsg(), lpmp->cLen, (char *)lpb2k, &i);
-                    FUiSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
+                    ControlIO().pfnFUiSetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
                 }
                 goto FinishUp;
             } else {
-                LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
-                FUiSetWindowText(hwndMsgEdit, "");
+                ControlIO().pfnLUiSendMessage(hwndMsgDrop, CB_SETCURSEL, viInRe, 0);
+                ControlIO().pfnFUiSetWindowText(hwndMsgEdit, "");
                 goto FinishUp;
             }
         }
         if (cMsgTot != 0) {
-            CchGetString(idsYearDCMessagesDD, szT);
+            TextIO().pfnCchGetString(idsYearDCMessagesDD, szT);
             wsprintf(szWork, szT, game.turn + 2400, ch, iMsgCur + 1, cMsgTot);
         } else {
-            CchGetString(idsYearDCMessagesNone, szT);
+            TextIO().pfnCchGetString(idsYearDCMessagesNone, szT);
             wsprintf(szWork, szT, game.turn + 2400, ch);
         }
-        FUiEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
-        FUiEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
+        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[0], IMsgPrev(FALSE) != imsgNone);
+        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[2], IMsgNext(FALSE) != imsgNone);
         if (iMsgCur >= cMsg) {
-            FUiEnableWindow(rghwndMsgBtn[1], TRUE);
+            ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], TRUE);
             goto FinishUp;
         }
         if (cMsg != 0 && iMsgCur < cMsg && FGetNMsgbig(static_cast<MessageId>(iMsgCur), &mb)) {
@@ -715,13 +721,13 @@ void SetMsgTitle(HWND hwnd) {
             }
         }
         if (mdMsgObj != mdMsgObjNone &&
-            (iMsgCur < 0 || (!fViewFilteredMsg && (bitfMsgFiltered[IdmGetMessageN(iMsgCur) >> 3] & 1 << (IdmGetMessageN(iMsgCur) & 7))))) {
+            (iMsgCur < 0 || (!fViewFilteredMsg && (bitfMsgFiltered[PresentationIO().pfnMessageId(iMsgCur) >> 3] & 1 << (PresentationIO().pfnMessageId(iMsgCur) & 7))))) {
             mdMsgObj = mdMsgObjNone;
         }
-        FUiEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
+        ControlIO().pfnFUiEnableWindow(rghwndMsgBtn[1], mdMsgObj != mdMsgObjNone);
     FinishUp:
         strcpy(szMsgTitle, szWork);
-        InvalidateRect(hwndMessage, &rcMsgTitle, TRUE);
+        ControlIO().pfnInvalidateRect(hwndMessage, &rcMsgTitle, TRUE);
     }
     return;
 }
@@ -729,7 +735,7 @@ void SetMsgTitle(HWND hwnd) {
 // UpdateMsgTitle refreshes the message window's title bar, as when the
 // game becomes dirty.
 void UpdateMsgTitle() {
-    SetMsgTitle(hwndMessage);
+    ControlIO().pfnSetMsgTitle(hwndMessage);
     return;
 }
 

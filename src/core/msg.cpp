@@ -1,4 +1,9 @@
 #include "common.h"
+#include "text_io.h"
+#include "presentation_io.h"
+#include "turn_io.h"
+#include "part_query_io.h"
+#include "record_io.h"
 
 int16_t IMsgNext(int16_t fFilteredOnly) {
     int16_t   i;
@@ -14,7 +19,7 @@ int16_t IMsgNext(int16_t fFilteredOnly) {
     do {
         i++;
         if (i < cMsg) {
-            idm = static_cast<MessageId>(IdmGetMessageN(i));
+            idm = static_cast<MessageId>(PresentationIO().pfnMessageId(i));
         } else {
             if (i < cMsg + vcmsgplrIn) {
                 return i;
@@ -44,12 +49,12 @@ int16_t IMsgPrev(int16_t fFilteredOnly) {
         if (i < 0) {
             return imsgNone;
         }
-        idm = static_cast<MessageId>(IdmGetMessageN(i));
+        idm = static_cast<MessageId>(PresentationIO().pfnMessageId(i));
     } while ((((bitfMsgFiltered[idm >> 3] & 1 << (idm & 7)) == 0) ^ fFilteredOnly) == 0);
     return i;
 }
 
-int16_t FSendPlrMsg2(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2) { return FSendPlrMsg(iPlr, iMsg, iObj, p1, p2, 0, 0, 0, 0, 0); }
+int16_t FSendPlrMsg2(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2) { return TurnIO().pfnMessage(iPlr, iMsg, iObj, p1, p2, 0, 0, 0, 0, 0); }
 
 int16_t FSendPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7) {
     uint8_t  rgbWork[40];
@@ -337,7 +342,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 pchT = PszCalcEnvVar(static_cast<EnvType>((uint16_t)*pParams >> 8 & 0xff & 0xff), *pParams & 0xff);
                 goto FinishString;
             case 'I':
-                pchT = PszGetCompressedString(static_cast<StringId>(idsDecreased + *pParams));
+                pchT = TextIO().pfnCompressed(static_cast<StringId>(idsDecreased + *pParams));
                 goto FinishString;
             case 'i':
                 c = CchSprintf(szBuf, PCTD, *pParams);
@@ -347,7 +352,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 break;
             case 'L':
             case 'l':
-                pchT = PszPlayerName(*pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, NULL);
+                pchT = TextIO().pfnPlayerName(*pParams & 0xf, *pszFormat == 'L', (*pParams & 0x10) != 0, (*pParams & 0x20) != 0, (*pParams & 0xc0) >> 6, NULL);
                 goto FinishString;
             case 'Z':
                 w = *pParams;
@@ -358,7 +363,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                     for (; (w & 1) == 0; w >>= 1) {
                         c++;
                     }
-                    pchT = PszPlayerName(c, FALSE, TRUE, TRUE, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(c, FALSE, TRUE, TRUE, 0, NULL);
                     goto FinishString;
                 }
                 cOut = 0;
@@ -369,10 +374,10 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                             if (w & 0xfffe) {
                                 pch = PchAppendMessageText(pch, ", ");
                             } else {
-                                pch = PchAppendMessageText(pch, PszGetCompressedString(idsAnd));
+                                pch = PchAppendMessageText(pch, TextIO().pfnCompressed(idsAnd));
                             }
                         }
-                        pchT = PszPlayerName(i, FALSE, TRUE, TRUE, 0, NULL);
+                        pchT = TextIO().pfnPlayerName(i, FALSE, TRUE, TRUE, 0, NULL);
                         pch = PchAppendMessageText(pch, pchT);
                         cOut++;
                     }
@@ -383,10 +388,10 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
             case 'S':
                 if (*pParams == idPlayer)
                     goto DoNothing;
-                CchGetString(idsOf2, szBuf);
-                pchT = PszPlayerName(*pParams, FALSE, FALSE, FALSE, 0, NULL);
+                TextIO().pfnCchGetString(idsOf2, szBuf);
+                pchT = TextIO().pfnPlayerName(*pParams, FALSE, FALSE, FALSE, 0, NULL);
                 strcat(szBuf, pchT);
-                strcat(szBuf, PszGetCompressedString(idsOrigin));
+                strcat(szBuf, TextIO().pfnCompressed(idsOrigin));
                 pchT = szBuf;
                 goto FinishString;
             case 'm':
@@ -407,7 +412,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 break;
             case 'p':
             DoPlanet:
-                pchT = PszGetPlanetName(*pParams);
+                pchT = TextIO().pfnPlanetName(*pParams);
             FinishString:
                 pch = PchAppendMessageText(pch, pchT);
             DoNothing:
@@ -424,13 +429,13 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 pchT = PszGetFleetName(w);
                 goto FinishString;
             case 'j':
-                pchT = PszGetCompressedString(static_cast<StringId>(idsEnergy + *pParams));
+                pchT = TextIO().pfnCompressed(static_cast<StringId>(idsEnergy + *pParams));
                 goto FinishString;
             case 'k':
                 part.hs.grhst = static_cast<HullSlotType>(*pParams);
                 pParams++;
                 part.hs.iItem = *pParams;
-                if (FLookupPart(&part) <= mdPartAvailInvalid) {
+                if (PartQueryIO().pfnLookup(&part) <= mdPartAvailInvalid) {
                 }
                 pch = PchAppendMessageText(pch, part.pcom().szName());
                 pParams++;
@@ -441,7 +446,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 goto FinishString;
             case 'G':
                 w = *pParams;
-                c = CchGetString(static_cast<StringId>(idsMineField + w), szBuf);
+                c = TextIO().pfnCchGetString(static_cast<StringId>(idsMineField + w), szBuf);
                 pch = PchAppendMessageText(pch, szBuf);
                 pParams++;
                 break;
@@ -463,7 +468,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 goto DoPlanet;
             case 'O':
                 w = (uint16_t)*pParams >> 9 & 0xf;
-                pchT = PszPlayerName(w, FALSE, FALSE, FALSE, 0, NULL);
+                pchT = TextIO().pfnPlayerName(w, FALSE, FALSE, FALSE, 0, NULL);
                 goto FinishString;
             case 'u':
                 c = CchSprintf(szBuf, "%u", *pParams);
@@ -497,7 +502,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                     lpshdef = rglpshdef[c] + w;
                 }
                 if (c != idPlayer) {
-                    pchT = PszPlayerName(c, FALSE, FALSE, TRUE, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(c, FALSE, FALSE, TRUE, 0, NULL);
                     CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
                     strcpy(szBuf, lpshdef->hul.szClass);
@@ -518,7 +523,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
 
 char *PszFormatMessage(MessageId idm, int16_t *pParams) { return PszFormatString(PszGetCompressedMessage(idm), pParams); }
 
-char *PszFormatIds(StringId ids, int16_t *pParams) { return PszFormatString(PszGetCompressedString(ids), pParams); }
+char *PszFormatIds(StringId ids, int16_t *pParams) { return PszFormatString(TextIO().pfnCompressed(ids), pParams); }
 
 int16_t FRemovePlayerMessage(int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     uint8_t *lpbMax;
@@ -641,7 +646,7 @@ void WritePlayerMessages(int16_t iPlayer) {
         lpbMax = lpb + imemMsgCur;
         for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
             if (cbMsg + 20 >= 1024) {
-                WriteRt(rtMsg, cbMsg, rgb);
+                RecordIO().pfnWriteRt(rtMsg, cbMsg, rgb);
                 cbMsg = 0;
             }
             if (MtvFromLp(lpb).iPlr() == iPlayer && MtvFromLp(lpb).msghdr().iMsg() != 0x1ff) {
@@ -650,7 +655,7 @@ void WritePlayerMessages(int16_t iPlayer) {
             }
         }
         if (cbMsg != 0) {
-            WriteRt(rtMsg, cbMsg, rgb);
+            RecordIO().pfnWriteRt(rtMsg, cbMsg, rgb);
         }
         for (lpmp = vlpmsgplrOut; lpmp; lpmp = lpmp->lpmsgplrNext) {
             if ((lpmp->iPlrTo == 0 && lpmp->iPlrFrom != iPlayer) || lpmp->iPlrTo - 1 == iPlayer) {
@@ -686,7 +691,7 @@ void WriteRtPlrMsg(MSGPLR *lpmp) {
     msg.cLen = lpmp->cLen;
     FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgb)).first(cbWirePlrMsg));
     memcpy(rgb + cbWirePlrMsg, lpmp->rgbMsg(), abs(lpmp->cLen));
-    WriteRt(rtPlrMsg, cbWirePlrMsg + abs(lpmp->cLen), rgb);
+    RecordIO().pfnWriteRt(rtPlrMsg, cbWirePlrMsg + abs(lpmp->cLen), rgb);
     return;
 }
 
@@ -745,7 +750,7 @@ void ReadPlayerMessages() {
             memmove(lpb + imemMsgT, rgbCur, hdrCur.cb);
             imemMsgT += hdrCur.cb;
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
     }
     imemMsgCur += imemMsgT;
     lpbMax = lpb + imemMsgT;
@@ -778,7 +783,7 @@ void ReadPlayerMessages() {
                 fOOM = TRUE;
             }
         }
-        ReadRt();
+        RecordIO().pfnReadRt();
     }
     iMsgCur = imsgNone;
     iMsgCur = IMsgNext(FALSE);

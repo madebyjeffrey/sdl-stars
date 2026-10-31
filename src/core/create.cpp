@@ -1,4 +1,13 @@
 #include "common.h"
+#include "text_io.h"
+#include "turn_io.h"
+#include "production_io.h"
+#include "planet_query_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "alert_io.h"
+#include "random_io.h"
+#include "record_io.h"
 
 int16_t vrgvcMax[10] = {16, 18, 4, 19, 28, 49, 29, 87, 7, 47};
 char    rgNG3Width[9][2] = {{-3}, {2, 1}, {5}, {-3}, {3}, {3}, {3}, {1}, {3}};
@@ -90,8 +99,8 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     dx = 1010;
     dy = dGal - 19;
     for (i = 0; i < iMax; i++) {
-        rgptPlan[i].x = Random(dy) + dx;
-        rgptPlan[i].y = Random(dy) + dx;
+        rgptPlan[i].x = RandomIO().pfnRandom(dy) + dx;
+        rgptPlan[i].y = RandomIO().pfnRandom(dy) + dx;
     }
     qsort16(rgptPlan, iMax, sizeof(POINT16), (QSORTCOMPARE)ICompLong);
     pptMax = &rgptPlan[iMax];
@@ -113,7 +122,7 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     }
     cKillMax = iMax - cPlanMax;
     while (cKill < cKillMax) {
-        i = Random(iMax);
+        i = RandomIO().pfnRandom(iMax);
         if (rgptPlan[i].y >= 0) {
             rgptPlan[i].y = -100;
             cKill++;
@@ -130,7 +139,7 @@ int16_t GenerateWorld(int16_t fBatchMode) {
         for (i = 0; i < cPlanMax; i++) {
             lBest = 10000000;
             iBest = 0;
-            j = Random(cPlanMax);
+            j = RandomIO().pfnRandom(cPlanMax);
             pt = rgptPlan[j];
             for (k = 0; k < cPlanMax; k++) {
                 if (k != j) {
@@ -163,7 +172,7 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     }
     memset(grUsed, 0, 128);
     for (i = 0; i < cPlanMax; i++) {
-        dx = Random(cPlanetName);
+        dx = RandomIO().pfnRandom(cPlanetName);
         while (grUsed[dx >> 3] & bitTbl[dx & 7]) {
             dx++;
             if (dx >= game.fTutorial + cPlanetName) {
@@ -186,15 +195,15 @@ int16_t GenerateWorld(int16_t fBatchMode) {
             lppl->det = detAll;
             lppl->iScanner = 31;
             if (!game.fNoRandom) {
-                lppl->fArtifact = (uint32_t)(Random(3) == 0) & 1;
+                lppl->fArtifact = (uint32_t)(RandomIO().pfnRandom(3) == 0) & 1;
             }
-            lppl->rgEnvVar[0] = Random(90) + 1;
-            lppl->rgEnvVar[0] += Random(10);
+            lppl->rgEnvVar[0] = RandomIO().pfnRandom(90) + 1;
+            lppl->rgEnvVar[0] += RandomIO().pfnRandom(10);
             lppl->rgEnvVarOrig[0] = lppl->rgEnvVar[0];
-            lppl->rgEnvVar[1] = Random(90) + 1;
-            lppl->rgEnvVar[1] += Random(10);
+            lppl->rgEnvVar[1] = RandomIO().pfnRandom(90) + 1;
+            lppl->rgEnvVar[1] += RandomIO().pfnRandom(10);
             lppl->rgEnvVarOrig[1] = lppl->rgEnvVar[1];
-            lppl->rgEnvVar[2] = lppl->rgEnvVarOrig[2] = Random(99) + 1;
+            lppl->rgEnvVar[2] = lppl->rgEnvVarOrig[2] = RandomIO().pfnRandom(99) + 1;
             if (game.fTutorial) {
                 if (i != 5) {
                     if (i == 11) {
@@ -213,9 +222,9 @@ int16_t GenerateWorld(int16_t fBatchMode) {
                     lppl->rgMinConc[j] = 100;
                 } else {
                     lppl->rgwtMin[j] = 0;
-                    lppl->rgMinConc[j] = Random(45) + Random(45) + 31;
+                    lppl->rgMinConc[j] = RandomIO().pfnRandom(45) + RandomIO().pfnRandom(45) + 31;
                     if (lppl->rgEnvVar[2] >= 90) {
-                        lppl->rgMinConc[j] += Random(99 - lppl->rgMinConc[j]) / 2;
+                        lppl->rgMinConc[j] += RandomIO().pfnRandom(99 - lppl->rgMinConc[j]) / 2;
                     }
                 }
                 lppl->rgpctMinLevel[j] = 0;
@@ -227,17 +236,17 @@ int16_t GenerateWorld(int16_t fBatchMode) {
             if (game.fExtraFuel) {
                 iT = 100;
             } else {
-                iT = Random(27);
+                iT = RandomIO().pfnRandom(27);
             }
             if (iT < 18) {
                 if (iT >= 9) {
-                    jj = Random(30);
-                    j = Random(3);
+                    jj = RandomIO().pfnRandom(30);
+                    j = RandomIO().pfnRandom(3);
                     lppl->rgMinConc[j] = jj + 1;
                 } else {
                     for (iT++; iT < 16; iT *= 2) {
-                        jj = Random(30);
-                        j = Random(3);
+                        jj = RandomIO().pfnRandom(30);
+                        j = RandomIO().pfnRandom(3);
                         lppl->rgMinConc[j] = jj + 1;
                     }
                 }
@@ -246,9 +255,9 @@ int16_t GenerateWorld(int16_t fBatchMode) {
             lppl++;
         }
         for (j = 0; j < 3; j++) {
-            lpPlanets->rgwtMin[j] = (int16_t)(Random(lpPlanets->rgMinConc[j] * 10) + 10);
+            lpPlanets->rgwtMin[j] = (int16_t)(RandomIO().pfnRandom(lpPlanets->rgMinConc[j] * 10) + 10);
             if (lpPlanets->rgwtMin[j] < 200) {
-                lpPlanets->rgwtMin[j] += (int16_t)(Random(150) + 155);
+                lpPlanets->rgwtMin[j] += (int16_t)(RandomIO().pfnRandom(150) + 155);
             }
             if (game.fBBSPlay) {
                 lpPlanets->rgwtMin[j] += (int32_t)(lpPlanets->rgwtMin[j] / 4);
@@ -269,7 +278,7 @@ RetryAll:
         dMin = dGal / 4 + 1000;
         dMax = (int16_t)(3 * dGal) / 4 + 1000;
         for (i = 0; i < 50; i++) {
-            rgi[0] = Random(cPlanMax);
+            rgi[0] = RandomIO().pfnRandom(cPlanMax);
             pt = rgptPlan[rgi[0]];
             if (pt.x < dMin) {
                 dx = dMin - pt.x;
@@ -308,7 +317,7 @@ RetryAll:
         }
         for (i = 1; i < game.cPlayer; i++) {
             for (j = 0; j < 50; j++) {
-                rgi[i] = Random(cPlanMax);
+                rgi[i] = RandomIO().pfnRandom(cPlanMax);
                 pt = rgptPlan[rgi[i]];
                 if (pt.x >= dMin && pt.y >= dMin && pt.x <= dMax && pt.y <= dMax) {
                     fFound = FALSE;
@@ -359,11 +368,11 @@ RetryAll:
             }
         }
         for (i = 0; i < game.cPlayer; i++) {
-            j = Random(game.cPlayer - i) + i;
+            j = RandomIO().pfnRandom(game.cPlayer - i) + i;
             k = rgi[j];
             rgi[j] = rgi[i];
             rgi[i] = k;
-            if (GetRaceGrbit(&rgplr[i], ibitRaceAIPlayer) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceAIPlayer) != 0) {
                 CreateRandomRace(&rgplr[i]);
             }
             rgplr[i].fDead = FALSE;
@@ -373,7 +382,7 @@ RetryAll:
                 rgplr[i].rgTech[j] = 0;
                 rgplr[i].rgResSpent[j] = 0;
             }
-            switch (GetRaceStat(&rgplr[i], rsMajorAdv)) {
+            switch (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv)) {
             case raAttack:
                 rgplr[i].rgTech[1] = 6;
                 rgplr[i].rgTech[2] = 1;
@@ -408,22 +417,22 @@ RetryAll:
                     rgplr[i].rgTech[j] = 3;
                 }
             }
-            if (GetRaceGrbit(&rgplr[i], ibitRaceTech3) != 0) {
-                iTechMin = (GetRaceStat(&rgplr[i], rsMajorAdv) == raNone) + 3;
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceTech3) != 0) {
+                iTechMin = (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raNone) + 3;
                 for (j = 0; j < 6; j++) {
-                    if (rgplr[i].rgTech[j] < iTechMin && GetRaceStat(&rgplr[i], static_cast<RaceStat>(j + 8)) == 0) {
+                    if (rgplr[i].rgTech[j] < iTechMin && RaceQueryIO().pfnStat(&rgplr[i], static_cast<RaceStat>(j + 8)) == 0) {
                         rgplr[i].rgTech[j] = iTechMin;
                     }
                 }
             }
-            if (GetRaceGrbit(&rgplr[i], ibitRaceCheapEngines) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceCheapEngines) != 0) {
                 rgplr[i].rgTech[2]++;
             }
-            if (GetRaceGrbit(&rgplr[i], ibitRaceIFE) != 0 && !game.fTutorial) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceIFE) != 0 && !game.fTutorial) {
                 rgplr[i].rgTech[2]++;
             }
             for (j = 0; j < 4; j++) {
-                FSendPlrMsg(i, static_cast<MessageId>(idmTipCanHideUnimportantMessagesClickingCheckmark + j), gotoNone, 0, 0, 0, 0, 0, 0, 0);
+                TurnIO().pfnMessage(i, static_cast<MessageId>(idmTipCanHideUnimportantMessagesClickingCheckmark + j), gotoNone, 0, 0, 0, 0, 0, 0, 0);
             }
         }
         for (i = 0; i < game.cPlayer; i++) {
@@ -436,7 +445,7 @@ RetryAll:
             lpPlanets[iMin].cMines = 10;
             lpPlanets[iMin].cDefenses = 10;
             lpPlanets[iMin].fHomeworld = TRUE;
-            if (GetRaceGrbit(&rgplr[i], ibitRaceLowStartingPop) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceLowStartingPop) != 0) {
                 lpPlanets[iMin].rgwtMin[3] = 175;
             } else {
                 lpPlanets[iMin].rgwtMin[3] = 250;
@@ -451,7 +460,7 @@ RetryAll:
                 }
             }
             lpPlanets[iMin].iScanner = 0;
-            FSendPlrMsg(i, idmHomePlanetPeopleReadyLeaveNestExplore, static_cast<MsgGoto>(iMin), iMin, 0, 0, 0, 0, 0, 0);
+            TurnIO().pfnMessage(i, idmHomePlanetPeopleReadyLeaveNestExplore, static_cast<MsgGoto>(iMin), iMin, 0, 0, 0, 0, 0, 0);
             if (50 < CAdvantagePoints(&rgplr[i])) {
                 iT = 50;
             } else {
@@ -469,7 +478,7 @@ RetryAll:
                 lpPlanets[iMin].rgwtMin[3] = (int32_t)(lpPlanets[iMin].rgwtMin[3] / 10);
                 lpPlanets[iMin].uPopGuess <<= 2;
             }
-            j = GetRaceStat(&rgplr[i], rsUseLeftover);
+            j = RaceQueryIO().pfnStat(&rgplr[i], rsUseLeftover);
             switch (j) {
             case 0:
             default:
@@ -523,7 +532,7 @@ RetryAll:
             case 4:
                 lpPlanets[iMin].cDefenses += (int16_t)(iT + 5) / 10;
             }
-            if (GetRaceStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
+            if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
                 lpPlanets[iMin].cMines = 0;
                 lpPlanets[iMin].cFactories = 0;
                 lpPlanets[iMin].cDefenses = 0;
@@ -531,19 +540,19 @@ RetryAll:
             rgplr[i].iPlayer = i;
             rgplr[i].idPlanetHome = iMin;
             if (rgplr[i].rgEnvVarMax[0] == envImmune) {
-                iT = Random(99) + 1;
+                iT = RandomIO().pfnRandom(99) + 1;
             } else {
                 iT = rgplr[i].rgEnvVarMin[0] + (int16_t)(rgplr[i].rgEnvVarMax[0] - rgplr[i].rgEnvVarMin[0]) / 2;
             }
             lpPlanets[iMin].rgEnvVar[0] = lpPlanets[iMin].rgEnvVarOrig[0] = iT;
             if (rgplr[i].rgEnvVarMax[1] == envImmune) {
-                iT = Random(99) + 1;
+                iT = RandomIO().pfnRandom(99) + 1;
             } else {
                 iT = rgplr[i].rgEnvVarMin[1] + (int16_t)(rgplr[i].rgEnvVarMax[1] - rgplr[i].rgEnvVarMin[1]) / 2;
             }
             lpPlanets[iMin].rgEnvVar[1] = lpPlanets[iMin].rgEnvVarOrig[1] = iT;
             if (rgplr[i].rgEnvVarMax[2] == envImmune) {
-                iT = Random(99) + 1;
+                iT = RandomIO().pfnRandom(99) + 1;
             } else {
                 iT = rgplr[i].rgEnvVarMin[2] + (int16_t)(rgplr[i].rgEnvVarMax[2] - rgplr[i].rgEnvVarMin[2]) / 2;
             }
@@ -568,7 +577,7 @@ RetryAll:
             for (j = 1; j < 10; j++) {
                 lpshdef[j].fFree = TRUE;
             }
-            if (GetRaceStat(&rgplr[i], rsMajorAdv) == raMassAccel) {
+            if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raMassAccel) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBMassDriver5;
                 lpshdef->hul.rghs[0].cItem = 1;
                 if ((int16_t)game.mdSize > sizeTiny) {
@@ -577,7 +586,7 @@ RetryAll:
                     lpshdef[1].cExist = 1;
                     lpshdef[1].cBuilt = 1;
                 }
-            } else if (GetRaceStat(&rgplr[i], rsMajorAdv) == raStargate && !game.fTutorial) {
+            } else if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raStargate && !game.fTutorial) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBStargate100250;
                 lpshdef->hul.rghs[0].cItem = 1;
                 if ((int16_t)game.mdSize > sizeTiny) {
@@ -588,7 +597,7 @@ RetryAll:
                     lpshdef[1].cExist = 1;
                     lpshdef[1].cBuilt = 1;
                 }
-            } else if (GetRaceStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
+            } else if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
                 idHome = rgplr[i].idPlanetHome;
                 lpshdef[1] = *lpshdef;
                 lpshdef[1].ishdef = 17;
@@ -612,7 +621,7 @@ RetryAll:
             }
             rglpshdef[i] = lpshdef;
             idHome = rgplr[i].idPlanetHome;
-            raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[i], rsMajorAdv));
+            raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv));
             switch (raMajor) {
             case raMassAccel:
                 CreateStartupShip(i, idHome, 4, TRUE);
@@ -687,7 +696,7 @@ RetryAll:
                         lDistCur2 = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                         if (lDistCur2 >= lDistMin2 && lDistCur2 <= lDistMax2) {
                             cFit++;
-                            if (Random(cFit) == 0) {
+                            if (RandomIO().pfnRandom(cFit) == 0) {
                                 lpplPicked = lppl;
                             }
                         } else if (!lpplPicked && lDistCur2 < lBest) {
@@ -703,9 +712,9 @@ RetryAll:
                 }
                 lpplPicked->iWarpFling = 1;
                 cFit = 0;
-                while (PctPlanetDesirability(lpplPicked, i) < 10 && cFit++ < 100) {
+                while (PlanetQueryIO().pfnDesirability(lpplPicked, i) < 10 && cFit++ < 100) {
                     for (j = 0; j < 3; j++) {
-                        lpplPicked->rgEnvVar[j] = lpplPicked->rgEnvVarOrig[j] = Random(97) + 2;
+                        lpplPicked->rgEnvVar[j] = lpplPicked->rgEnvVarOrig[j] = RandomIO().pfnRandom(97) + 2;
                     }
                 }
                 if (cFit >= 100) {
@@ -723,7 +732,7 @@ RetryAll:
                 lpplPicked->rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 2) / 5;
                 lpplPicked->uPopGuess = (uint32_t)LOWORD(lpplPicked->rgwtMin[3]) / 4;
                 for (j = 0; j < 3; j++) {
-                    lpplPicked->rgwtMin[j] = (int16_t)(Random(200) + 100);
+                    lpplPicked->rgwtMin[j] = (int16_t)(RandomIO().pfnRandom(200) + 100);
                 }
                 lpplPicked->iScanner = 0;
                 lpPlanets[idHome].rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 4) / 5;
@@ -734,7 +743,7 @@ RetryAll:
                 CreateStartupShip(i, idHome, 7, TRUE);
                 CreateStartupShip(i, idHome, 14, TRUE);
             }
-            if (GetRaceGrbit(&rgplr[i], ibitRaceOBRM) == 0 && GetRaceGrbit(&rgplr[i], ibitRaceARM) != 0) {
+            if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceOBRM) == 0 && RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceARM) != 0) {
                 ishRet = CreateStartupShip(i, idHome, 15, TRUE);
                 CreateStartupShip(i, idHome, ishRet, FALSE);
             }
@@ -802,7 +811,7 @@ RetryAll:
                     }
                     for (l = 0; l < cTry; l++) {
                         part.hs.iItem = rgTry[l];
-                        if (FLookupPart(&part) == mdPartAvailAvailable) {
+                        if (PartQueryIO().pfnLookup(&part) == mdPartAvailAvailable) {
                             lphs->iItem = rgTry[l];
                             break;
                         }
@@ -811,7 +820,7 @@ RetryAll:
                     lphs++;
                 }
             }
-            if (GetRaceStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
+            if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raMacintosh) {
                 lpPlanets[idHome].iScanner = 31;
             }
         }
@@ -832,13 +841,13 @@ RetryAll:
         if (game.fNoRandom) {
             iBest = 0;
         } else {
-            iBest = vrgWormholeMin[game.mdSize] + Random(vrgWormholeVar[game.mdSize]);
+            iBest = vrgWormholeMin[game.mdSize] + RandomIO().pfnRandom(vrgWormholeVar[game.mdSize]);
         }
         if (iBest > 0) {
             for (i = 0; i < iBest; i++) {
                 for (j = 0; j < 2; j++) {
                     lpth = LpthNew(0, ithWormhole);
-                    { const auto iStableForThing = (Random(3)); auto &thForThing = *(lpth); thForThing.thw().SetIStable(iStableForThing); }
+                    { const auto iStableForThing = (RandomIO().pfnRandom(3)); auto &thForThing = *(lpth); thForThing.thw().SetIStable(iStableForThing); }
                     if (j == 1) {
                         lpthLast = LpthFromId(idLast);
                         { const auto idPartnerForThing = (lpthLast->idFull()); auto &thForThing = *(lpth); thForThing.thw().SetIdPartner(idPartnerForThing); }
@@ -849,8 +858,8 @@ RetryAll:
                     k = 0;
                     iMax = 16;
                     while (k++ < 100) {
-                        { const auto xForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
-                        { const auto yForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
+                        { const auto xForThing = (RandomIO().pfnRandom(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                        { const auto yForThing = (RandomIO().pfnRandom(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                         iLow = IValidateWormholePos(lpth);
                         if (iLow == 0)
                             break;
@@ -867,10 +876,10 @@ RetryAll:
         }
         for (i = 0; i < game.cPlayer; i++) {
             if (rgplr[i].fHacker) {
-                FSendPlrMsg2(i, idmRaceDefinitionHasTamperedStatisticsHaveAltered, gotoNone, 0, 0);
+                TurnIO().pfnMessage2(i, idmRaceDefinitionHasTamperedStatisticsHaveAltered, gotoNone, 0, 0);
                 for (j = 0; j < game.cPlayer; j++) {
                     if (i != j && !rgplr[i].fAi) {
-                        FSendPlrMsg2(j, idmHackedRaceDiscoveredRaceStatisticsHaveAltered, gotoNone, i, 0);
+                        TurnIO().pfnMessage2(j, idmHackedRaceDiscoveredRaceStatisticsHaveAltered, gotoNone, i, 0);
                     }
                 }
             }
@@ -899,13 +908,13 @@ RetryAll:
             game.lid = DwTickCount();
         }
         CchSprintf(szWork, "%s.xy", szBase);
-        if (!FCreateFile(dtXY, iplrNone, NULL)) {
-            AlertSz(PszFormatIds(idsUnableCreateUniverseDefinitionFile, NULL), MB_ICONHAND);
+        if (!RecordIO().pfnFCreateFile(dtXY, iplrNone, NULL)) {
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateUniverseDefinitionFile, NULL), MB_ICONHAND);
             DestroyCurGame();
             return FALSE;
         }
         FEncodeGame(game, rgbGame);
-        WriteRt(rtGame, cbWireGame, rgbGame);
+        RecordIO().pfnWriteRt(rtGame, cbWireGame, rgbGame);
         xOld = 1000;
         for (i = 0; i < cPlanMax; i++) {
             starpack.y = LOWORD(rgptPlan[i].y);
@@ -918,7 +927,7 @@ RetryAll:
         }
         i = game.cPlayer;
         WriteRtEof(i);
-        StreamClose();
+        RecordIO().pfnStreamClose();
         for (i = -1; i < game.cPlayer; i++) {
             FWriteDataFile(szBase, i, FALSE);
         }
@@ -929,7 +938,7 @@ RetryAll:
             DestroyCurGame();
             CchSprintf(szExt, MPCTD, iplrSingle + 1);
             if (!FLoadGame(szBase, szExt)) {
-                AlertSz(PszFormatIds(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
                 return FALSE;
             }
             idPlayer = iplrSingle;
@@ -959,9 +968,9 @@ int16_t CreateStartupShip(int16_t iplr, int16_t idPlanet, int16_t ishdef, int16_
     }
     rglpshdef[iplr][ishdef].cExist++;
     rglpshdef[iplr][ishdef].cBuilt++;
-    lpfl = LpflNew(iplr, idPlanet);
+    lpfl = ProductionIO().pfnNewFleet(iplr, idPlanet);
     lpfl->rgcsh[ishdef] = 1;
-    lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
+    lpfl->rgwtMin[4] = ProductionIO().pfnFleetStat(lpfl, 1);
     lpfl->iplan = 0;
     return ishdef;
 }
@@ -999,7 +1008,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
             TurnLog(idsGeneratingYearD);
         }
         memset(&game, 0, sizeof(GAME));
-        StreamOpen(pszFile, mdRead);
+        RecordIO().pfnStreamOpen(pszFile, mdRead);
         cbFile = CbFileSize(hf);
         if (cbFile < 0 || cbFile >= 16000) {
             FileError(idsUniverseCreationFileAppearsInvalid);
@@ -1009,7 +1018,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         lpbDef = LpAlloc<char>(cb + 1, htPerm);
         lpbDefMac = lpbDef + cb;
         RgFromStream(lpbDef, cb);
-        StreamClose();
+        RecordIO().pfnStreamClose();
         lpbDef[cb] = 0;
         if (!FUtf8Valid(lpbDef, cb)) {
             FileError(idsUniverseCreationFileAppearsInvalid);
@@ -1019,7 +1028,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
         lpbStart = PszGetLine(&lpb);
         if (*lpbStart == 0 || strlen(lpbStart) > 31) {
-            AlertSz(PszFormatIds(idsIllegalGameTitle, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsIllegalGameTitle, NULL), MB_ICONHAND);
             goto LError;
         }
         if (CchCopyUtf8(game.szName, sizeof(game.szName), lpbStart, strlen(lpbStart)) < 0) {
@@ -1028,14 +1037,14 @@ int16_t GenNewGameFromFile(char *pszFile) {
         }
         if (lpb >= lpbDefMac) {
         LUniDefShort:
-            AlertSz(PszFormatIds(idsUniverseDefinitionFileAppearsTooShort, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUniverseDefinitionFileAppearsTooShort, NULL), MB_ICONHAND);
             goto LError;
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 4);
         if (cNum == -1) {
         LUniDefError:
-            AlertSz(PszFormatIds(idsLine2HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine2HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1060,7 +1069,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         cNum = CParseNumbers(lpbStart, rgl, 7);
         if (cNum == -1) {
         LUniDefError3:
-            AlertSz(PszFormatIds(idsLine3HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine3HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1091,7 +1100,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 1);
         if (cNum < 1 || rgl[0] < 1 || rgl[0] > 16) {
-            AlertSz(PszFormatIds(idsLine4HasImproperNumberPlayerFiles, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine4HasImproperNumberPlayerFiles, NULL), MB_ICONHAND);
             goto LError;
         }
         if (lpb >= lpbDefMac)
@@ -1115,12 +1124,12 @@ int16_t GenNewGameFromFile(char *pszFile) {
                     goto LCantGetRace;
                 }
                 if (lvlAi == 0) {
-                    lvlAi = Random(4);
+                    lvlAi = RandomIO().pfnRandom(4);
                 } else {
                     lvlAi--;
                 }
                 if (idAi == idAiRobotoid) {
-                    idAi = static_cast<AiRace>(Random(6));
+                    idAi = static_cast<AiRace>(RandomIO().pfnRandom(6));
                 } else {
                     idAi = static_cast<AiRace>(idAi - 1);
                 }
@@ -1133,8 +1142,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
                 fReadRace = FWasRaceFile(szWork, FALSE);
                 if (fReadRace != 1) {
                 LCantGetRace:
-                    CchSprintf(szWork, PszGetCompressedString(idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
-                    AlertSz(szWork, MB_ICONHAND);
+                    CchSprintf(szWork, TextIO().pfnCompressed(idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
+                    AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
                     goto LError;
                 }
                 rgplr[i] = vplr;
@@ -1148,8 +1157,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (cNum < 1 || rgl[0] < 0 || rgl[0] > 1) {
         LBadDefVc:
             i += cPlr + 5;
-            CchSprintf(szWork, PszGetCompressedString(idsLineDHasImproperVictoryConditionDefinition), i);
-            AlertSz(szWork, MB_ICONHAND);
+            CchSprintf(szWork, TextIO().pfnCompressed(idsLineDHasImproperVictoryConditionDefinition), i);
+            AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
             goto LError;
         }
         if (rgl[0] == 1) {
@@ -1269,7 +1278,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
                 rgplr[i].fHacker = TRUE;
             }
             if (rgplr[i].szName[0] == 0) {
-                CchGetString(static_cast<StringId>(idsBerserker + Random(24)), rgplr[i].szName);
+                TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(24)), rgplr[i].szName);
                 CchSprintf(rgplr[i].szNames, "%ss", rgplr[i].szName);
             }
         }
@@ -1277,9 +1286,9 @@ int16_t GenNewGameFromFile(char *pszFile) {
             for (j = 0; j < i && strcmp(rgplr[i].szName, rgplr[j].szName) != 0; j++) {
             }
             if (j < i) {
-                c = Random(24);
+                c = RandomIO().pfnRandom(24);
                 while (1) {
-                    for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, PszGetCompressedString(static_cast<StringId>(idsBerserker + c))) != 0; j++) {
+                    for (j = 0; j < game.cPlayer && strcmp(rgplr[j].szName, TextIO().pfnCompressed(static_cast<StringId>(idsBerserker + c))) != 0; j++) {
                     }
                     if (j == game.cPlayer)
                         break;
@@ -1288,7 +1297,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
                         c = 0;
                     }
                 }
-                CchGetString(static_cast<StringId>(idsBerserker + c), rgplr[i].szName);
+                TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + c), rgplr[i].szName);
                 strcpy(rgplr[i].szNames, rgplr[i].szName);
                 strcat(rgplr[i].szNames, "s");
             }
@@ -1304,13 +1313,13 @@ int16_t GenNewGameFromFile(char *pszFile) {
                 for (j = 0; j < i && rgplrbmp[j] != rgplrbmp[i]; j++) {
                 }
                 if (j < i) {
-                    rgplrbmp[Random(2) == 0 ? j : i] = -1;
+                    rgplrbmp[RandomIO().pfnRandom(2) == 0 ? j : i] = -1;
                 }
             }
         }
         for (i = 0; i < game.cPlayer; i++) {
             if (rgplrbmp[i] == -1) {
-                rgplrbmp[i] = Random(32);
+                rgplrbmp[i] = RandomIO().pfnRandom(32);
                 while (1) {
                     for (j = 0; j < game.cPlayer && (j == i || rgplrbmp[i] != rgplrbmp[j]); j++) {
                     }
@@ -1331,7 +1340,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
     } catch (const StarsError &) {
     }
 LError:
-    StreamClose();
+    RecordIO().pfnStreamClose();
     lpbDefUni = NULL;
     TurnLog(static_cast<StringId>(idsFailed + fSuccess));
     return fSuccess;
@@ -1352,20 +1361,20 @@ void CreateTutorWorld() {
     game.lid = 9236297;
     game.rgvc[7] = 128;
     game.rgvc[8] = 129;
-    CchGetString(idsTutorialGame, game.szName);
+    TextIO().pfnCchGetString(idsTutorialGame, game.szName);
     rgplr[0] = vrgplrDef[0];
-    CchGetString(idsHumanoid, rgplr[0].szName);
+    TextIO().pfnCchGetString(idsHumanoid, rgplr[0].szName);
     CchSprintf(rgplr[0].szNames, "%ss", rgplr[0].szName);
     rgplr[1] = *LpplrComp(idAiTurinDrone, lvlAiEasy);
     rgplr[1].fAi = TRUE;
     rgplr[1].lvlAi = lvlAiEasy;
     rgplr[1].idAi = idAiTurinDrone;
-    CchGetString(idsBerserker, rgplr[1].szName);
+    TextIO().pfnCchGetString(idsBerserker, rgplr[1].szName);
     Randomize(1234567890);
     for (i = 1; i <= 2; i++) {
-        CchSprintf(szWork, PszGetCompressedString(idsSHD), szBase, i);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsSHD), szBase, i);
         RemoveNativeFile(szWork);
-        CchSprintf(szWork, PszGetCompressedString(idsSXD), szBase, i);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsSXD), szBase, i);
         RemoveNativeFile(szWork);
     }
     GenerateWorld(FALSE);
@@ -1382,67 +1391,67 @@ void InitNewGamePlr(int16_t iStepMaxSoFar, AiLevel lvlAi) {
         if (iStepMaxSoFar < 1) {
             switch (game.mdSize) {
             case sizeTiny:
-                if (lvlAi == lvlAiExpert && Random(3) == 0) {
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(3) == 0) {
                     game.cPlayer = 3;
                     break;
                 }
                 game.cPlayer = 2;
                 break;
             case sizeSmall:
-                if (lvlAi == lvlAiExpert && Random(4) == 0) {
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(4) == 0) {
                     game.cPlayer = 5;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && Random(6 - lvlAi) == 0) {
+                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(6 - lvlAi) == 0) {
                     game.cPlayer = 4;
                     break;
                 }
                 game.cPlayer = 3;
                 break;
             case sizeMedium:
-                if (lvlAi == lvlAiExpert && Random(10) == 0) {
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(10) == 0) {
                     game.cPlayer = 9;
                     break;
                 }
-                if (lvlAi == lvlAiExpert && Random(10) == 0) {
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(10) == 0) {
                     game.cPlayer = 5;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && Random(7 - lvlAi) == 0) {
+                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(7 - lvlAi) == 0) {
                     game.cPlayer = 8;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && Random(7 - lvlAi) == 0) {
+                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(7 - lvlAi) == 0) {
                     game.cPlayer = 6;
                     break;
                 }
                 game.cPlayer = 7;
                 break;
             case sizeLarge:
-                if (lvlAi == lvlAiExpert && Random(10) == 0) {
-                    game.cPlayer = Random(2) + 14;
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(10) == 0) {
+                    game.cPlayer = RandomIO().pfnRandom(2) + 14;
                     break;
                 }
-                if (lvlAi == lvlAiExpert && Random(10) == 0) {
-                    game.cPlayer = 10 - Random(2);
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(10) == 0) {
+                    game.cPlayer = 10 - RandomIO().pfnRandom(2);
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && Random(7 - lvlAi) == 0) {
+                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(7 - lvlAi) == 0) {
                     game.cPlayer = 13;
                     break;
                 }
-                if ((int16_t)lvlAi >= lvlAiTough && Random(7 - lvlAi) == 0) {
+                if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(7 - lvlAi) == 0) {
                     game.cPlayer = 11;
                     break;
                 }
                 game.cPlayer = 12;
                 break;
             case sizeHuge:
-                if (lvlAi == lvlAiExpert && Random(10) == 0) {
-                    game.cPlayer = 13 - Random(3);
-                } else if ((int16_t)lvlAi >= lvlAiTough && Random(9 - lvlAi) == 0) {
+                if (lvlAi == lvlAiExpert && RandomIO().pfnRandom(10) == 0) {
+                    game.cPlayer = 13 - RandomIO().pfnRandom(3);
+                } else if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(9 - lvlAi) == 0) {
                     game.cPlayer = 14;
-                } else if ((int16_t)lvlAi >= lvlAiTough && Random(7 - lvlAi) == 0) {
+                } else if ((int16_t)lvlAi >= lvlAiTough && RandomIO().pfnRandom(7 - lvlAi) == 0) {
                     game.cPlayer = 15;
                 } else {
                     game.cPlayer = 16;
@@ -1513,7 +1522,7 @@ void InitNewGamePlr(int16_t iStepMaxSoFar, AiLevel lvlAi) {
                 }
             }
             for (i = 1; i < game.cPlayer - 1; i++) {
-                c = Random(game.cPlayer - i - 1) + i + 1;
+                c = RandomIO().pfnRandom(game.cPlayer - i - 1) + i + 1;
                 ch = vrgplrTypeNew[i];
                 vrgplrTypeNew[i] = vrgplrTypeNew[c];
                 vrgplrTypeNew[c] = ch;

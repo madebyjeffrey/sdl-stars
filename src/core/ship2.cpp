@@ -1,4 +1,9 @@
 #include "common.h"
+#include "turn_io.h"
+#include "colony_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "random_io.h"
 
 int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDist) {
     int16_t   dpPerShdefNew;
@@ -39,10 +44,10 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             cshOrig += flSrc.rgcsh[ishdef];
             switch (MdCalcStargateDamage(isbsSrc, isbsDst, dDist, rglpshdef[flSrc.iPlayer][ishdef].hul.wtEmpty, &rgpct[ishdef])) {
             case -1:
-                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
+                TurnIO().pfnMessage(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
                 return FALSE;
             case -2:
-                FSendPlrMsg(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseShips, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, ishdef, 0, 0, 0);
+                TurnIO().pfnMessage(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseShips, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, ishdef, 0, 0, 0);
                 return FALSE;
             case 0:
                 cshdef--;
@@ -55,7 +60,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
     if (cshdef == 0) {
     LKilledEmAll:
         lpfl->fDead = TRUE;
-        FSendPlrMsg(flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
+        TurnIO().pfnMessage(flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
         return FALSE;
     }
     memset(&flDead, 0, sizeof(FLEET));
@@ -68,7 +73,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                 cshdef--;
             } else {
                 cshT = flSrc.rgcsh[ishdef];
-                if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raStargate) {
+                if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raStargate) {
                     pctKill = 0;
                 } else {
                     pctKill = rgpct[ishdef] / 3;
@@ -84,9 +89,9 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
                 }
                 if (pctKill > 0) {
                     for (i = 0; i < flSrc.rgcsh[ishdef]; i++) {
-                        if (Random(100) < pctKill) {
+                        if (RandomIO().pfnRandom(100) < pctKill) {
                             cshT--;
-                            if (cshDamagedOld != 0 && (uint16_t)Random(500) < flSrc.rgdv[ishdef].pctDp()) {
+                            if (cshDamagedOld != 0 && (uint16_t)RandomIO().pfnRandom(500) < flSrc.rgdv[ishdef].pctDp()) {
                                 cshDamagedOld--;
                             }
                         }
@@ -133,7 +138,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
         goto LKilledEmAll;
     if (cshKill != 0) {
         if (cshKill & 0xffff0000) {
-            FSendPlrMsg(lpfl->iPlayer, idmUsedStargateReachLosingUnbelievableShipsJump, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill),
+            TurnIO().pfnMessage(lpfl->iPlayer, idmUsedStargateReachLosingUnbelievableShipsJump, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill),
                         HIWORD(cshKill), 0, 0);
         } else {
             if (cshKill < (int32_t)(cshOrig >> 2)) {
@@ -143,7 +148,7 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             } else {
                 idm = idmUsedStargateReachLosingShipsUnforgivingVoid;
             }
-            FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill), 0, 0, 0);
+            TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill), 0, 0, 0);
         }
         flDead.iPlayer = flSrc.iPlayer;
         flDead.fDead = TRUE;
@@ -166,8 +171,8 @@ int16_t MdCalcStargateDamage(int16_t isbsSrc, int16_t isbsDst, int16_t dDist, in
     partSrc.hs.grhst = hstSpecialSB;
     partSrc.hs.iItem = isbsSrc;
     partDst.hs.iItem = isbsDst;
-    FLookupPart(&partSrc);
-    FLookupPart(&partDst);
+    PartQueryIO().pfnLookup(&partSrc);
+    PartQueryIO().pfnLookup(&partDst);
     dBaseDistance = partSrc.pspecialsb()->grAbility2;
     if (dBaseDistance == -1) {
         dBaseDistance = 8000;
@@ -218,7 +223,7 @@ void KillUsedWaypoints() {
             if (lpfl->cord > 1) {
                 if (lpfl->fMark) {
                     DeleteWpFar(lpfl, 1, FALSE);
-                    FSendPlrMsg(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
+                    TurnIO().pfnMessage(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 } else {
                     for (j = 1; j < lpfl->cord; j++) {
                         if (lpfl->lpplord->rgord()[j].grobj == grobjFleet) {
@@ -273,7 +278,7 @@ void KillUsedWaypoints() {
                                 }
                                 /* fallthrough */
                             default:
-                                FSendPlrMsg(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                         }
                     }
@@ -362,7 +367,7 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
                 iWarp = 11;
             }
         }
-        if (iWarp < 9 && LphuldefFromId(rglpshdefSB[lpfl->iPlayer][lpplRoute->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
+        if (iWarp < 9 && PartQueryIO().pfnHull(rglpshdefSB[lpfl->iPlayer][lpplRoute->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
             for (iWarp = 9; iWarp > 0 && EstFuelUse(lpfl, 0, iWarp, -1, TRUE) < dTravel; iWarp--) {
             }
             lpord->iWarp = iWarp;
@@ -423,8 +428,8 @@ void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
 
     fFoundFleet = FALSE;
     lpord = lpfl->lpplord->rgord();
-    if ((lppl->iPlayer == iplrNone || (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh && lppl->iPlayer == lpfl->iPlayer)) &&
-        CMineFromLpfl(lpfl) != 0) {
+    if ((lppl->iPlayer == iplrNone || (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh && lppl->iPlayer == lpfl->iPlayer)) &&
+        ColonyIO().pfnFleetMining(lpfl) != 0) {
         if (lppl->iPlayer == iplrNone) {
             for (ifl = 0; ifl < cFleet; ifl++) {
                 lpflT = rglpfl[ifl];
@@ -434,7 +439,7 @@ void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
                     if (lpflT->iPlayer > lpfl->iPlayer)
                         break;
                     if (lpflT->pt.x == lpfl->pt.x && lpflT->pt.y == lpfl->pt.y) {
-                        cMine = CMineFromLpfl(lpflT);
+                        cMine = ColonyIO().pfnFleetMining(lpflT);
                         if (cMine > 0 && cMine < 4000) {
                             fFoundFleet = TRUE;
                             break;
@@ -476,7 +481,7 @@ int32_t CMineFromLpfl(FLEET *lpfl) {
             while (j < chs) {
                 if (lphs->grhst == hstMining && lphs->iItem >= iminingRoboMidgetMiner && lphs->iItem <= iminingAlienMiner) {
                     part.hs = *lphs;
-                    FLookupPart(&part);
+                    PartQueryIO().pfnLookup(&part);
                     cMine += (uint32_t)(lphs->cItem * part.pmining()->grAbility);
                 }
                 j++;
@@ -562,7 +567,7 @@ int32_t CLayMinesFromLpfl(FLEET *lpfl, MineFieldType iType, int16_t ishdef) {
             while (j < chs) {
                 if (lphs->grhst == hstMines && lphs->iItem >= iMin && lphs->iItem <= iMax) {
                     part.hs = *lphs;
-                    FLookupPart(&part);
+                    PartQueryIO().pfnLookup(&part);
                     cMine += (uint32_t)(lphs->cItem * part.pmines()->grAbility);
                 } else if ((int16_t)iType <= mineStandard && lphs->grhst == hstBeam && lphs->iItem == ibeamMultiContainedMunition) {
                     cMine += (int32_t)(lphs->cItem * 4);
@@ -617,7 +622,7 @@ int32_t CMineSweepFromLphul(HUL *lphul) {
     for (j = 0, lphs = lphul->rghs; j < chs; j++, lphs++) {
         if (lphs->grhst == hstBeam) {
             part.hs = *lphs;
-            FLookupPart(&part);
+            PartQueryIO().pfnLookup(&part);
             if (part.pbeam()->grfAbilities & beamGatling) {
                 lRange = 4;
             } else {
@@ -663,7 +668,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
             chs = lphul->chs;
             wtFleetCur = (uint32_t)(lpfl->rgcsh[i] * (uint32_t)lphul->wtEmpty);
             cPtsCur = 0;
-            if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raStealth) {
+            if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raStealth) {
                 cPtsCur += 300;
             }
             j = 0;
@@ -695,7 +700,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
     if (!fUseFloat && cPts == 0) {
         return 0;
     }
-    if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStealth) {
+    if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStealth) {
         if (fUseFloat) {
             for (i = 0; i <= 3; i++) {
                 dwtFleet = (double)((double)dwtFleet + lpfl->rgwtMin[i]);
@@ -751,7 +756,7 @@ int16_t CPtsCloakFromLphs(HS *lphs) {
         if (lphs->iItem < ispecialETransportCloaking || lphs->iItem > ispecialEMultiFunctionPod)
             break;
         part.hs = *lphs;
-        FLookupPart(&part);
+        PartQueryIO().pfnLookup(&part);
         cPts = part.pspecial()->grAbility;
         break;
     case hstSpecialM:
@@ -815,14 +820,14 @@ void MarkTechsSeen(HUL *lphul, int16_t iplr) {
     idPlayer = iplr;
     part.hs.grhst = hstHull;
     part.hs.iItem = lphul->ihuldef;
-    FLookupPart(&part);
+    PartQueryIO().pfnLookup(&part);
     for (iTech = 0; iTech < 6; iTech++) {
         rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.phul()->rgTech[iTech] ? part.phul()->rgTech[iTech] : rgTechBattle[iTech];
     }
     for (ihs = 0; ihs < lphul->chs; ihs++) {
         if (lphul->rghs[ihs].cItem != 0) {
             part.hs = lphul->rghs[ihs];
-            FLookupPart(&part);
+            PartQueryIO().pfnLookup(&part);
             for (iTech = 0; iTech < 6; iTech++) {
                 rgTechBattle[iTech] = (int16_t)rgTechBattle[iTech] <= part.pcom().rgTech()[iTech] ? part.pcom().rgTech()[iTech] : rgTechBattle[iTech];
             }

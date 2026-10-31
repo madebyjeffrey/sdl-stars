@@ -32,6 +32,9 @@ PL   *LpplReAlloc(PL *lppl, uint16_t cAlloc);
 PL   *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
 void  FreePl(PL *lppl);
 uint16_t CbPlSlot(const void *lp);
+uint16_t CbHeapAlign(HeapType ht);
+uint16_t CbHbHeader(HeapType ht);
+uint16_t CbHeapItem(uint16_t cb, HeapType ht);
 template<class T> T *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
 template<> PLPROD *LpplAlloc<PLPROD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht);
 PLPROD *LpplReAlloc(PLPROD *lppl, uint16_t cAlloc);
@@ -47,6 +50,26 @@ void CopyThingBytes(THING *pth, const void *rgb, uint16_t cb) noexcept;
 MSGPLR *LpmsgplrAlloc(uint16_t cb);
 MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb);
 
+// Queue storage can supply an allocator while retaining the real lifetime helpers.
+struct HEAPIO {
+    void *(*pfnCopy)(void *, const void *, std::size_t) = std::memcpy;
+    void *(*pfnMove)(void *, const void *, std::size_t) = std::memmove;
+    void *(*pfnAllocate)(uint16_t, HeapType) = static_cast<void *(*)(uint16_t, HeapType)>(&LpAlloc);
+    void *(*pfnResize)(void *, uint16_t, HeapType) = static_cast<void *(*)(void *, uint16_t, HeapType)>(&LpReAlloc);
+    decltype(&FreeLp) pfnFree = FreeLp;
+    decltype(&CbPlSlot) pfnExtent = CbPlSlot;
+};
+const HEAPIO &HeapIO() noexcept;
+class HEAPIOSCOPE {
+    HEAPIO io;
+    const HEAPIO *lpPrev;
+public:
+    explicit HEAPIOSCOPE(const HEAPIO &io) noexcept;
+    ~HEAPIOSCOPE() noexcept;
+    HEAPIOSCOPE(const HEAPIOSCOPE &) = delete;
+    HEAPIOSCOPE &operator=(const HEAPIOSCOPE &) = delete;
+};
+
 // Retain every initialized physical slot byte, including rounded spare items.
 // memmove is a C++20 implicit-lifetime operation; no value initialization,
 // allocation, logical count gate or moving container is introduced here.
@@ -56,12 +79,12 @@ template<class T> T *LpStartHeapArray(void *lp, std::size_t cb) noexcept {
     return std::launder(static_cast<T *>(std::memmove(lp, lp, cb)));
 }
 template<class T> T *LpAlloc(uint16_t cb, HeapType ht) {
-    void *lp = LpAlloc(cb, ht);
-    return LpStartHeapArray<T>(lp, CbPlSlot(lp));
+    void *lp = HeapIO().pfnAllocate(cb, ht);
+    return LpStartHeapArray<T>(lp, HeapIO().pfnExtent(lp));
 }
 template<class T> T *LpReAlloc(T *lp, uint16_t cb, HeapType ht) {
-    void *lpNew = LpReAlloc(static_cast<void *>(lp), cb, ht);
-    return LpStartHeapArray<T>(lpNew, CbPlSlot(lpNew));
+    void *lpNew = HeapIO().pfnResize(static_cast<void *>(lp), cb, ht);
+    return LpStartHeapArray<T>(lpNew, HeapIO().pfnExtent(lpNew));
 }
 
 #endif

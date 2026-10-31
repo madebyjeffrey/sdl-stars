@@ -1,3 +1,6 @@
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+#include "../../compat/win32/src/audio_io.h"
+#endif
 /* Real modal prompts driven by ordinary owner timers, also checked with SDK. */
 #include <windows.h>
 #include <stdio.h>
@@ -122,6 +125,9 @@ int main(int argc, char **argv) {
     char szLong[8192];
     HWND hwndSave;
     int i;
+    COMPATAUDIOIO io_compataudioio;
+    io_compataudioio.pfnPutAudioStreamData = StarsTest_SDL_PutAudioStreamData;
+    COMPATAUDIOIOSCOPE scope_compataudioio(io_compataudioio);
     if (argc == 2 && strcmp(argv[1], "--audio-failure") == 0) {
         CHECK(!MessageBeep(MB_OK) && GetLastError() == ERROR_NOT_SUPPORTED);
         CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));

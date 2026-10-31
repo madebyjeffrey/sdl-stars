@@ -1,4 +1,7 @@
 #include "common.h"
+#include "production_io.h"
+#include "planet_query_io.h"
+#include "part_query_io.h"
 
 HullSlotType rggrbitPartsSB[8] = {hstEnabledSB, hstArmor, hstBeam, hstSpecialE, hstSpecialSB, hstShield, hstTorp, hstWeapon};
 StringId     rgidsPartsSB[8] = {idsAll, idsArmor3, idsBeamWeapons, idsElectrical, idsOrbital, idsShields3, idsTorpedoes, idsWeapons2};
@@ -23,7 +26,7 @@ int16_t PctJammerFromHul(HUL *lphul) {
         part.hs = lphul->rghs[ihs];
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
-                FLookupPart(&part);
+                PartQueryIO().pfnLookup(&part);
                 pctJam = (int16_t)(100 - part.pspecial()->grAbility);
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
@@ -132,8 +135,8 @@ void KillQueuedMassPackets(PLANET *lppl) {
             lppl->lpplprod->iprodMac = iDst;
         }
         if (sel.grobj == grobjPlanet && sel.pl.id == lppl->id) {
-            FLookupPlanet(sel.pl.id, &sel.pl);
-            FillSelProdLB();
+            PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
+            ProductionIO().pfnRefresh();
         }
     }
     return;
@@ -168,8 +171,8 @@ void KillQueuedShips(PLANET *lppl) {
             lppl->lpplprod->iprodMac = iDst;
         }
         if (sel.grobj == grobjPlanet && sel.pl.id == lppl->id) {
-            FLookupPlanet(sel.pl.id, &sel.pl);
-            FillSelProdLB();
+            PlanetQueryIO().pfnLookup(sel.pl.id, &sel.pl);
+            ProductionIO().pfnRefresh();
         }
     }
     return;

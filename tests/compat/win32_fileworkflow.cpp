@@ -1,19 +1,21 @@
 /* Real game/race I/O through the native portal or a portable chooser adapter. */
 #include "win.h"
+#include "../../src/core/alert_io.h"
+#include "../../src/core/player_choice_io.h"
+#include "../../src/ui/desktop_choice_io.h"
+#include "../../compat/win32/src/choice_io.h"
+
 #include "internal.h"
 #include <stars_compat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fPassed, fRunning;
 static UINT_PTR idTimer;
 static int cAlerts, cReplaceChoices;
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "file workflow line %d: %s\n", __LINE__, #f); goto done; } } while (0)
 static int cFileChoices;
-BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAME *lpof);
-BOOL StarsTestReal_FNativeSaveFileName(OPENFILENAME *lpof);
 
 static const char *PszWorkflowFilename(const char *pszFile) {
     const char *pch = pszFile + strlen(pszFile);
@@ -41,11 +43,11 @@ static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
 }
 
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, FALSE) : StarsTestReal_FNativeOpenFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, FALSE) : FNativeOpenFileName(lpof);
 }
 
 BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, TRUE) : StarsTestReal_FNativeSaveFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, TRUE) : FNativeSaveFileName(lpof);
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
@@ -79,14 +81,13 @@ LDone:
     if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
     return fCopied;
 }
-int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     const char *pszExport = PszCompatEnvironment("STARS_TEST_EXPORT_EXPECTED");
     if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
         if (!(type & MB_DEFBUTTON2)) return IDNO;
         return ++cReplaceChoices == 1 ? IDNO : IDYES;
     }
-    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
+    return MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
 int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
@@ -193,13 +194,29 @@ done:
     PostQuitMessage(fPassed ? 0 : 92);
 }
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
+    int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idTimer = SetTimer(NULL, 0, 50, FileWorkflow);
     return fResult && idTimer ? fResult : FALSE;
 }
 int main(void) {
     char szCommand[] = "";
-    int nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    int nResult;
+    ALERTIO io_alertio;
+    io_alertio.pfnAlertSz = StarsTest_AlertSz;
+    ALERTIOSCOPE scope_alertio(io_alertio);
+    PLAYERCHOICEIO io_playerchoiceio;
+    io_playerchoiceio.pfnPromptPassword = StarsTest_PromptPassword;
+    PLAYERCHOICEIOSCOPE scope_playerchoiceio(io_playerchoiceio);
+    DESKTOPCHOICEIO io_desktopchoiceio;
+    io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
+    io_desktopchoiceio.pfnFNativeSaveFileName = StarsTest_FNativeSaveFileName;
+    io_desktopchoiceio.pfnFNativeOpenFileName = StarsTest_FNativeOpenFileName;
+    DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
+    COMPATCHOICEIO io_compatchoiceio;
+    io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
+    COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
+
+    nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
     if (idTimer) KillTimer(NULL, idTimer);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;

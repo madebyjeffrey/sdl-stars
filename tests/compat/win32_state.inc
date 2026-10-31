@@ -1,3 +1,6 @@
+#ifndef _WIN32
+#include "../../compat/win32/src/display_io.h"
+#endif
 /* Window states and normal placement, shared with the Windows SDK. */
 #include <windows.h>
 #include <stdio.h>
@@ -44,6 +47,13 @@ int main(void) {
     SDL_Rect rcDisplay, rcWork;
     SDL_DisplayID idDisplay;
 #endif
+#ifndef _WIN32
+    COMPATDISPLAYIO io_compatdisplayio;
+    io_compatdisplayio.pfnGetDisplayBounds = StarsTest_SDL_GetDisplayBounds;
+    io_compatdisplayio.pfnGetDisplayUsableBounds = StarsTest_SDL_GetDisplayUsableBounds;
+    COMPATDISPLAYIOSCOPE scope_compatdisplayio(io_compatdisplayio);
+#endif
+
 #ifdef _WIN32
     hInstance = GetModuleHandle(NULL);
 #else

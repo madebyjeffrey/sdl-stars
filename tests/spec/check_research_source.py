@@ -6,14 +6,10 @@ callbacks are explicit post-state providers, including controlled escapes.
 Undefined arithmetic/index candidates are excluded before C execution.
 """
 from pathlib import Path
-import os
 import random
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT, function
 from check_native_colony_source import Boundary, checked, signed, div
 
 TECH=[0,50,80,130,210,340,550,890,1440,2330,3770,6100,9870,13850,18040,22440,27050,31870,36900,42140,47590,53250,59120,65200,71490,77990,84700]
@@ -150,64 +146,9 @@ def cases():
 
 
 def main():
-    source=(ROOT/'src/core/research.cpp').read_text();start=source.index('int32_t  rglTechCost[27]')
-    table=source[start:source.index(';',start)+1]
-    declarations=r'''
-#include "common.h"
-#include <setjmp.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <inttypes.h>
-static int32_t cfg[64];PLAYER rgplr[16];GAME game;int16_t idPlayer,cPlanet;PLANET *lpPlanets;
-static PLANET *storage;static int capacity;static PLPROD queues[4];
-static int calls,grossCalls,forecastCalls,mutated;static uint32_t traceHash;static jmp_buf escaped;
-static int32_t NativeTechCost(TechFieldType field,int16_t level,int16_t player);
-static void hashValue(int32_t value){traceHash=traceHash*UINT32_C(16777619)^(uint32_t)value;}
-int32_t GetTechLevelCost(TechFieldType field,int16_t level,int16_t player){int total=0;for(int i=0;i<6;i++)total+=rgplr[player].rgTech[i];
-    int32_t result=NativeTechCost(field,level,player);calls++;hashValue(field);hashValue(level);hashValue(total);hashValue(result);return result;}
-static void setQueue(int index,int value){if(value<0)storage[index].lpplprod=NULL;else{queues[index%4].iprodMac=(uint8_t)value;storage[index].lpplprod=&queues[index%4];}}
-static void callback(int kind,int index,int argument){calls++;hashValue(kind);hashValue(index);hashValue(argument);hashValue(rgplr[0].pctResearch);hashValue(rgplr[1].pctResearch);
-    if(kind==1)grossCalls++;else forecastCalls++;
-    if((kind==1 || (cfg[34]&128)) && !mutated){
-        if(cfg[34]&1)idPlayer=(int16_t)cfg[35];if(cfg[34]&2){assert(0<=idPlayer && idPlayer<16);rgplr[idPlayer].pctResearch=(int8_t)cfg[36];}
-        if((cfg[34]&4) && cfg[42+5*(index%4)]!=-2)setQueue(index,cfg[42+5*(index%4)]);
-        if(cfg[34]&8)cPlanet=0;if((cfg[34]&16) && index+1<cfg[32])storage[index+1].iPlayer=idPlayer;mutated=1;
-    }
-    if(calls-1==cfg[33])longjmp(escaped,1);
-}
-int16_t CResourcesAtPlanet(PLANET *planet,int16_t player){int index=(int)(planet-storage);assert(index>=0 && index<cfg[32]);callback(1,index,player);return (int16_t)cfg[40+5*(index%4)];}
-void EstimateItemProdSched(PLANET *planet,PLPROD *row,ProdItemType item,int16_t *first,int16_t *last){int index=(int)(planet-storage);assert(!row && item==static_cast<ProdItemType>(iprodEstimateResearchResources));callback(2,index,idPlayer);*first=(int16_t)cfg[41+5*(index%4)];*last=123;}
-'''
-    getter=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
-    bodies=table+'\n'+getter+'\n'+function('src/core/research.cpp','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
-    bodies+=function('src/core/research.cpp','int32_t CostOfDevelopingItem(')+'\n'+function('src/core/research.cpp','int32_t ProjectedResearchSpending(')+'\n'
-    harness=r'''
-static void setup(void){
-    memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));memset(queues,0,sizeof(queues));calls=grossCalls=forecastCalls=mutated=0;traceHash=0;idPlayer=0;
-    game.fSlowTech=cfg[1];for(int i=0;i<6;i++){rgplr[0].rgTech[i]=(int8_t)cfg[4+i];rgplr[0].rgAttr[8+i]=(int8_t)cfg[10+i];rgplr[0].rgResSpent[i]=(uint32_t)cfg[22+i];}
-    if(cfg[0]==2){idPlayer=(int16_t)cfg[29];rgplr[0].pctResearch=(int8_t)cfg[30];rgplr[1].pctResearch=(int8_t)cfg[31];cPlanet=(int16_t)cfg[32];
-        int count=cfg[32]>4 ? cfg[32]:4;if(count>capacity){free(storage);storage=static_cast<PLANET *>(calloc((size_t)count,sizeof(*storage)));assert(storage);capacity=count;}lpPlanets=storage;
-        memset(storage,0,(size_t)count*sizeof(*storage));for(int i=0;i<cfg[32];i++){storage[i].iPlayer=(int16_t)cfg[38+5*(i%4)];setQueue(i,cfg[39+5*(i%4)]);}
-    }
-}
-int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");assert(file);unsigned long cases=0,checks=0;int64_t expected[22];
-    while(fread(cfg,sizeof(cfg),1,file)==1){assert(fread(expected,sizeof(expected),1,file)==1);setup();int64_t actual[22]={};
-        if(cfg[0]==0)actual[0]=GetTechLevelCost((TechFieldType)cfg[2],(int16_t)cfg[3],0);
-        else if(cfg[0]==1){char target[6];for(int i=0;i<6;i++)target[i]=(char)cfg[16+i];actual[0]=CostOfDevelopingItem(target);}
-        else {int complete=0;int32_t value=0;if(!setjmp(escaped)){value=ProjectedResearchSpending(cfg[28]);complete=1;}
-            actual[0]=complete ? value:0;actual[1]=rgplr[0].pctResearch;actual[2]=rgplr[1].pctResearch;actual[3]=idPlayer;
-            actual[4]=calls;actual[5]=grossCalls;actual[6]=forecastCalls;actual[7]=traceHash;actual[8]=complete;actual[9]=cPlanet;
-            for(int i=0;i<4 && i<cfg[32];i++){actual[10+i]=storage[i].iPlayer;actual[14+i]=storage[i].lpplprod ? storage[i].lpplprod->iprodMac:-1;}
-            actual[18]=rgplr[2].pctResearch;actual[19]=rgplr[3].pctResearch;actual[20]=rgplr[14].pctResearch;actual[21]=rgplr[15].pctResearch;
-        }
-        if(cfg[0]!=2){for(int i=0;i<6;i++){actual[1+i]=rgplr[0].rgTech[i];actual[9+i]=rgplr[0].rgResSpent[i];actual[15+i]=rgplr[0].rgAttr[8+i];}actual[7]=calls;actual[8]=traceHash;actual[21]=idPlayer;}
-        for(int i=0;i<22;i++){if(cfg[0]==2 && i==0 && !actual[8])continue;checks++;if(actual[i]!=expected[i]){fprintf(stderr,"case %lu mode %d field %d actual %lld expected %lld\n",cases,cfg[0],i,(long long)actual[i],(long long)expected[i]);return 1;}}cases++;
-    }
-    assert(feof(file));fclose(file);free(storage);printf("Native research quotes/preview: %lu cases, %lu assertions passed\n",cases,checks);return 0;
-}
-'''
     with tempfile.TemporaryDirectory(prefix='research-contract-') as work:
-        path=Path(work);data=path/'vectors.bin';excluded={};count=0
+        from linked_witness import binary as linked_binary
+        binary=linked_binary('research');path=Path(work);data=path/'vectors.bin';excluded={};count=0
         with data.open('wb') as stream:
             for c in cases():
                 assert len(c)==64
@@ -215,12 +156,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
                 except Boundary as why:excluded[str(why)]=excluded.get(str(why),0)+1;continue
                 stream.write(struct.pack('<64i22q',*c,*result));count+=1
         print(f'Prepared {count} defined research vectors; excluded before C: {excluded}',flush=True)
-        for generator in ['text/textgen.py','data/datagen.py']:
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        c_file=path/'witness.cpp';c_file.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(c_file),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
 
-if __name__=='__main__':main()
+if __name__=="__main__":main()

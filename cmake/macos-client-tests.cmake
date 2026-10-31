@@ -5,7 +5,7 @@ target_link_libraries(stars-compat-client-startup PRIVATE stars_core stars-ui-co
 target_include_directories(stars-compat-client-startup PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-compat-client-startup PRIVATE STARS_TEST_CLIENT_STARTUP=1)
 target_compile_options(stars-compat-client-startup PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-client-startup InitInstance AlertSz SDL_ShowWindow PromptPassword FPromptLegacyRacePassword AskSaveDialog TrackPopupMenu MessageBoxA RemoveNativeFile ReplaceNativeFile RenameNativeFile SDL_RenderPresent SDL_GetPrefPath NewGameWizard FCreateFile FNativeOpenFileName SDL_ShowOpenFolderDialog SDL_SetWindowTitle)
+
 set_target_properties(stars-compat-client-startup PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_client_continue_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_client_continue.py" "$<TARGET_FILE:stars-compat-client-startup>")
@@ -62,7 +62,7 @@ target_link_libraries(stars-native-tutorial PRIVATE stars_core stars-ui-compat-c
 target_include_directories(stars-native-tutorial PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_compile_definitions(stars-native-tutorial PRIVATE STARS_TEST_TUTORIAL=1)
 target_compile_options(stars-native-tutorial PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-native-tutorial InitInstance MessageBoxA TrackPopupMenu)
+
 set_target_properties(stars-native-tutorial PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_native_tutorial_smoke_dummy COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/compat/run_native_tutorial.py" "$<TARGET_FILE:stars-native-tutorial>"
@@ -82,7 +82,7 @@ set_tests_properties(win32_controls PROPERTIES LABELS compat TIMEOUT 60
 add_executable(stars-compat-messagebox tests/compat/win32_messagebox.cpp)
 target_include_directories(stars-compat-messagebox PRIVATE "${PROJECT_SOURCE_DIR}/compat/win32/src")
 target_link_libraries(stars-compat-messagebox PRIVATE stars_options stars_win32 SDL3::SDL3)
-stars_test_redirect(stars-compat-messagebox SDL_PutAudioStreamData)
+
 target_compile_options(stars-compat-messagebox PRIVATE -Wall -Wextra $<$<COMPILE_LANGUAGE:C>:-Wpedantic> -Werror)
 set_target_properties(stars-compat-messagebox PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_test(NAME win32_messagebox COMMAND stars-compat-messagebox)
@@ -106,7 +106,7 @@ add_executable(stars-compat-help tests/compat/win32_help.cpp)
 target_include_directories(stars-compat-help PRIVATE "${STARS_HELP_GENERATED}")
 target_link_libraries(stars-compat-help PRIVATE stars_options stars_win32 SDL3::SDL3)
 target_compile_options(stars-compat-help PRIVATE -Wall -Wextra -Werror)
-stars_test_redirect(stars-compat-help SDL_GetBasePath SDL_GetPrefPath SDL_OpenURL)
+
 add_dependencies(stars-compat-help stars-help-guide)
 add_test(NAME win32_utf8_help COMMAND stars-compat-help "${STARS_HELP_GENERATED}")
 set_tests_properties(win32_utf8_help PROPERTIES LABELS compat TIMEOUT 120)

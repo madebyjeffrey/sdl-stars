@@ -1,4 +1,5 @@
 #include "win.h"
+#include "control_io.h"
 #include "ownership.h"
 
 #define wmRefitPlanetPane (WM_USER + 37)
@@ -57,7 +58,7 @@ static void RefitPlanetPane(HWND hwnd) {
         ShowScrollBar(hwnd, SB_HORZ, fHorizontal);
         lp->dxContent = dx; lp->dyContent = dy; lp->dxOuter = dxOuter; lp->dyOuter = dyOuter;
     }
-    GetClientRect(hwnd, &rc);
+    ControlIO().pfnGetClientRect(hwnd, &rc);
     if (lp->idSelection != sel.id || lp->grobjSelection != sel.grobj) {
         lp->x = lp->y = 0; lp->dWheel = 0;
         lp->idSelection = sel.id; lp->grobjSelection = sel.grobj;
@@ -74,7 +75,7 @@ static void RefitPlanetPane(HWND hwnd) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = TRUE;
         FUiMoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
     } else if (pt.x != -lp->x || pt.y != -lp->y) {
-        FUiSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ControlIO().pfnFUiSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
     lp->fRefitting = FALSE;
 }
@@ -103,7 +104,7 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         if (!lp) return 0;
         iAxis = message == WM_VSCROLL ? SB_VERT : SB_HORZ;
         iCode = LOWORD(wParam); iPosition = iAxis == SB_VERT ? lp->y : lp->x;
-        GetClientRect(hwnd, &rc); d = iAxis == SB_VERT ? rc.bottom : rc.right;
+        ControlIO().pfnGetClientRect(hwnd, &rc); d = iAxis == SB_VERT ? rc.bottom : rc.right;
         if (iCode == SB_LINEUP) iPosition -= StarsMax(1, dyArial8 + 4);
         else if (iCode == SB_LINEDOWN) iPosition += StarsMax(1, dyArial8 + 4);
         else if (iCode == SB_PAGEUP) iPosition -= d;
@@ -120,7 +121,7 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         if (!lp) return 0;
         c = CWheelNotches(&lp->dWheel, (int16_t)HIWORD(wParam));
         if (c == 0) return 0;
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         d = StarsMax(1, dyArial8 + 4);
         iAxis = message == WM_MOUSEHWHEEL || (LOWORD(wParam) & MK_SHIFT) ? SB_HORZ : SB_VERT;
         d = c * CWheelLines((((1) > ((iAxis == SB_VERT ? rc.bottom : rc.right) / d)) ? (1) : ((iAxis == SB_VERT ? rc.bottom : rc.right) / d))) * d;
@@ -172,6 +173,6 @@ void ClosePlanetPane(void) {
     hwnd = GetParent(hwndPlanet);
     // WM_QUIT can leave the frame alive. Destroy the owned pane while game
     // state and brushes still exist; final SDL cleanup does not call WNDPROCs.
-    FUiDestroyWindow(hwnd);
+    ControlIO().pfnFUiDestroyWindow(hwnd);
     hwndPlanet = NULL;
 }

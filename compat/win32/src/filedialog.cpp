@@ -1,5 +1,7 @@
 /* Stars' wildcard filters need a browser independent of SDL's extension-only API. */
 #include "filedialog_backend.h"
+#include "choice_io.h"
+#include "chooser_io.h"
 #include "cleanup.h"
 #include <dirent.h>
 #include <errno.h>
@@ -95,7 +97,7 @@ static BOOL FJoinFile(char *pszOut, LPCSTR pszDir, LPCSTR pszName) {
 #endif
     return FUtf8Valid(pszOut, strlen(pszOut));
 }
-static void FileError(HWND hwnd, LPCSTR psz) { MessageBoxA(hwnd, psz, "File selection", MB_OK | MB_ICONEXCLAMATION); }
+static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", MB_OK | MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     NATIVEDIR *lpdir;
     const char *pszEntry;
@@ -218,7 +220,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
         ICloseNativeFile(lpfile);
     }
     if (lp->fSave && fExists && (lp->lpof->Flags & OFN_OVERWRITEPROMPT) &&
-        MessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return 0;
+        CompatChoiceIO().pfnMessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) != IDYES) return 0;
     if (hwnd && !IsWindow(hwnd)) return 0;
     strcpy(lp->szResult, szParent);
     cch = strlen(lp->szResult) + 1;
@@ -474,7 +476,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     /* Headless control tests opt into the compatibility browser explicitly. */
     if (fNative) {
         for (;;) {
-            iRet = ICompatChooseFile(hwndRoot, fSave, lpof->lpstrTitle ? lpof->lpstrTitle : fSave ? "Save As" : "Open",
+            iRet = CompatChooserIO().pfnICompatChooseFile(hwndRoot, fSave, lpof->lpstrTitle ? lpof->lpstrTitle : fSave ? "Save As" : "Open",
                                     dlg.szDir, szInitial, dlg.rgfilter, dlg.cFilter, &dlg.iFilter, szPath, sizeof(szPath));
             if (iRet < 0) {
                 dlg.dwError = CDERR_INITIALIZATION;

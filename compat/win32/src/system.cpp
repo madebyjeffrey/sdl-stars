@@ -1,5 +1,6 @@
 /* SDL display coordinates plus classic UI metrics for the source wrapper. */
 #include "internal.h"
+#include "display_io.h"
 #include <limits.h>
 #include <unistd.h>
 
@@ -7,8 +8,8 @@ static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
     SDL_Rect rc;
     SDL_DisplayID id;
     if (!FCompatVideo()) return FALSE;
-    id = SDL_GetPrimaryDisplay();
-    if (!id || !(fUsable ? SDL_GetDisplayUsableBounds(id, &rc) : SDL_GetDisplayBounds(id, &rc)) ||
+    id = CompatDisplayIO().pfnGetPrimaryDisplay();
+    if (!id || !(fUsable ? CompatDisplayIO().pfnGetDisplayUsableBounds(id, &rc) : CompatDisplayIO().pfnGetDisplayBounds(id, &rc)) ||
         rc.w <= 0 || rc.h <= 0 || (int64_t)rc.x + rc.w > INT_MAX || (int64_t)rc.y + rc.h > INT_MAX) return FALSE;
     SetRect(lprc, rc.x, rc.y, rc.x + rc.w, rc.y + rc.h);
     return TRUE;
@@ -21,10 +22,10 @@ static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
     int64_t xMin = INT_MAX, yMin = INT_MAX, xMax = INT_MIN, yMax = INT_MIN;
     BOOL fOk = TRUE;
     if (!FCompatVideo()) return FALSE;
-    rgid = SDL_GetDisplays(&c);
+    rgid = CompatDisplayIO().pfnGetDisplays(&c);
     if (!rgid || c <= 0) { SDL_free(rgid); return FALSE; }
     for (i = 0; i < c; i++) {
-        if (!SDL_GetDisplayBounds(rgid[i], &rc) || rc.w <= 0 || rc.h <= 0) { fOk = FALSE; break; }
+        if (!CompatDisplayIO().pfnGetDisplayBounds(rgid[i], &rc) || rc.w <= 0 || rc.h <= 0) { fOk = FALSE; break; }
         xMin = StarsMin(xMin, rc.x); yMin = StarsMin(yMin, rc.y);
         xMax = (((xMax) > ((int64_t)rc.x + rc.w)) ? (xMax) : ((int64_t)rc.x + rc.w)); yMax = (((yMax) > ((int64_t)rc.y + rc.h)) ? (yMax) : ((int64_t)rc.y + rc.h));
     }

@@ -1,5 +1,7 @@
 /* Ordinary windows activate; real detail cards retain their owner's focus. */
 #include "win.h"
+#include "../../src/core/player_choice_io.h"
+
 #include <stars_compat.h>
 #include "internal.h"
 #include <stdio.h>
@@ -184,6 +186,10 @@ int main(void) {
     BYTE r, g, b, a;
     SDL_Surface *lpFirst;
     int i;
+
+    PLAYERCHOICEIO io_playerchoiceio;
+    io_playerchoiceio.pfnPromptPassword = StarsTest_PromptPassword;
+    PLAYERCHOICEIOSCOPE scope_playerchoiceio(io_playerchoiceio);
 
     hInst = GetModuleHandle(NULL);
     CHECK(InitMDIApp() && FCreateStuff() && FGetSystemColors() && InitInstance(SW_SHOWNORMAL));

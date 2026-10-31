@@ -2,12 +2,14 @@
  * assigning tutorial or game state. The smoke scenario is deliberately bounded.
  */
 #include "win.h"
+#include "../../src/ui/desktop_choice_io.h"
+#include "../../compat/win32/src/choice_io.h"
+
 #include <stars_compat.h>
 #include "internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static UINT_PTR idTimer;
 static int iStage, cWait, cActions, cReadActions;
 static BOOL fPassed, fRejected, fFirstYear, fTwoYears, fScouting, fMining, fColonization, fLogistics, fColonizerProduction, fSecondColonization, fTransportCycle, fExpansion, fFleetSplit, fResearchCycle, fOxygenColony, fProdTemplates, fBattleCycle, fTerraformCycle, fDesignCycle, fAutomationCycle, fReportCycle, fMergeCycle;
@@ -35,13 +37,12 @@ static const char *pszResearchSnapshot = "year-2413-research.json", *pszOrderSna
 static HWND HwndModal(void);
 static BOOL FSaveState(const char *pszName);
 
-BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
     char szText[256];
     int i, j, iItem = -1, cSteps = 0;
-    if (!pszMenu) return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!pszMenu) return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     /* PopupMenu sends commands to the frame even when a modal owns the input. */
     if (hwndRoot && !IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
     for (i = 0; i < GetMenuItemCount(hmenu); i++) {
@@ -68,10 +69,9 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
         event.type = SDL_EVENT_KEY_UP; event.key.down = false;
         if (!SDL_PushEvent(&event)) return FALSE;
     }
-    return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
 
-int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     /* Observe text at the boundary; the real message box still opens and its
      * real OK control is clicked. Its owner-drawn body has no WM_GETTEXT text.
@@ -79,7 +79,7 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     fExpectedRejection = iStage == 3 && pszText &&
         strstr(pszText, "You have not yet completed all of the tutorial tasks");
     fprintf(stderr, "Message box at stage %d: %s\n", iStage, pszText ? pszText : "");
-    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
+    return MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
 static void LogState(const char *pszEvent) {
@@ -2920,7 +2920,7 @@ LFail:
 }
 
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
+    int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idTimer = SetTimer(NULL, 0, 50, RunTutorial);
     return fResult && idTimer ? fResult : FALSE;
 }
@@ -2929,6 +2929,14 @@ int main(int argc, char **argv) {
     char szCommand[] = "";
     int nResult;
     NATIVEFILE *lpfile;
+    DESKTOPCHOICEIO io_desktopchoiceio;
+    io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
+    DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
+    COMPATCHOICEIO io_compatchoiceio;
+    io_compatchoiceio.pfnTrackPopupMenu = StarsTest_TrackPopupMenu;
+    io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
+    COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
+
     if (argc != 2 || (strcmp(argv[1], "--smoke") && strcmp(argv[1], "--first-year") && strcmp(argv[1], "--two-years") && strcmp(argv[1], "--scouting") && strcmp(argv[1], "--mining") && strcmp(argv[1], "--colonization") && strcmp(argv[1], "--logistics") && strcmp(argv[1], "--colonizer-production") && strcmp(argv[1], "--second-colonization") && strcmp(argv[1], "--transport-cycle") && strcmp(argv[1], "--expansion") && strcmp(argv[1], "--fleet-split") && strcmp(argv[1], "--research-cycle") && strcmp(argv[1], "--oxygen-colonization") && strcmp(argv[1], "--production-templates") && strcmp(argv[1], "--battle-cycle") && strcmp(argv[1], "--terraform-cycle") && strcmp(argv[1], "--design-cycle") && strcmp(argv[1], "--automation-cycle") && strcmp(argv[1], "--report-cycle") && strcmp(argv[1], "--merge-cycle"))) {
         fprintf(stderr, "Usage: stars-native-tutorial --smoke|--first-year|--two-years|--scouting|--mining|--colonization|--logistics|--colonizer-production|--second-colonization|--transport-cycle|--expansion|--fleet-split|--research-cycle|--oxygen-colonization|--production-templates|--battle-cycle|--terraform-cycle|--design-cycle|--automation-cycle|--report-cycle|--merge-cycle\nFull 80-page execution is not implemented yet.\n");
         return 2;

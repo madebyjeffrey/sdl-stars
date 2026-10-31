@@ -1,4 +1,7 @@
 #include "common.h"
+#include "text_io.h"
+#include "heap_io.h"
+#include "alert_io.h"
 #include "liststorage.h"
 #include <algorithm>
 
@@ -13,25 +16,25 @@ void NATIVEGAMEHEAPS::Close() noexcept {
     }
 }
 
-static uint16_t CbHeapAlign(HeapType ht) {
+uint16_t CbHeapAlign(HeapType ht) {
     /* NATIVE: ordinary heaps also hold native pointer arrays. Battle records
        are walked and written using their original two-byte boundaries. */
     return ht == htBattle ? 2 : alignof(max_align_t);
 }
 
-static uint16_t CbHbHeader(HeapType ht) {
+uint16_t CbHbHeader(HeapType ht) {
     uint16_t cbAlign = CbHeapAlign(ht);
 
     return ht == htBattle ? sizeof(HB) :
         ((sizeof(HB) + 2 + cbAlign - 1) / cbAlign) * cbAlign - 2;
 }
 
-static uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
+uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
     uint32_t cbAlign = CbHeapAlign(ht);
     uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
     if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
-        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
@@ -49,7 +52,7 @@ HB *LphbAlloc(uint16_t cb, HeapType ht) {
     /* NATIVE: the original locked a zero-filled GlobalAlloc block. */
     hmem = calloc(1, cb);
     if (!hmem) {
-        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     // The lifetime operation retains calloc's initialized representation.
@@ -97,7 +100,7 @@ HB *LphbReAlloc(HB *lphb) {
     hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));
     if (!hmem) {
     LReAllocOOM:
-        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
@@ -233,9 +236,9 @@ LGrewHeap:
         lp = lpb;
         goto LGrewHeap;
     } else {
-        lpNew = LpAlloc(cb, ht);
+        lpNew = HeapIO().pfnAllocate(cb, ht);
         memcpy(lpNew, lpb, cbCur);
-        FreeLp(lp, ht);
+        HeapIO().pfnFree(lp, ht);
         lp = lpNew;
     }
     return lp;
@@ -281,7 +284,7 @@ PL *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
 
 void FreePl(PL *lppl) {
     if (lppl) {
-        FreeLp(lppl, static_cast<HeapType>(lppl->ht));
+        HeapIO().pfnFree(lppl, static_cast<HeapType>(lppl->ht));
     }
     return;
 }
@@ -293,20 +296,20 @@ PLPROD *LpplAlloc<PLPROD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
     lppl = LpplAlloc(cbItem, cAlloc, ht);
-    return LpStartPl<PLPROD, PROD>(lppl, CbPlSlot(lppl));
+    return LpStartPl<PLPROD, PROD>(lppl, HeapIO().pfnExtent(lppl));
 }
 
 PLPROD *LpplReAlloc(PLPROD *lppl, uint16_t cAlloc) {
     void *lp;
 
-    lp = LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
-    lppl = LpStartPl<PLPROD, PROD>(lp, CbPlSlot(lp));
+    lp = HeapIO().pfnResize(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
+    lppl = LpStartPl<PLPROD, PROD>(lp, HeapIO().pfnExtent(lp));
     lppl->iprodMax = cAlloc;
     return lppl;
 }
 
 void FreePl(PLPROD *lppl) {
-    if (lppl) FreeLp(lppl, static_cast<HeapType>(lppl->ht));
+    if (lppl) HeapIO().pfnFree(lppl, static_cast<HeapType>(lppl->ht));
 }
 
 uint16_t CbPlSlot(const void *lp) {
@@ -326,20 +329,20 @@ PLORD *LpplAlloc<PLORD>(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
     PL *lppl;
 
     lppl = LpplAlloc(cbItem, cAlloc, ht);
-    return LpStartPl<PLORD, ORDER>(lppl, CbPlSlot(lppl));
+    return LpStartPl<PLORD, ORDER>(lppl, HeapIO().pfnExtent(lppl));
 }
 
 PLORD *LpplReAlloc(PLORD *lppl, uint16_t cAlloc) {
     void *lp;
 
-    lp = LpReAlloc(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
-    lppl = LpStartPl<PLORD, ORDER>(lp, CbPlSlot(lp));
+    lp = HeapIO().pfnResize(lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
+    lppl = LpStartPl<PLORD, ORDER>(lp, HeapIO().pfnExtent(lp));
     lppl->iordMax = cAlloc;
     return lppl;
 }
 
 void FreePl(PLORD *lppl) {
-    if (lppl) FreeLp(lppl, static_cast<HeapType>(lppl->ht));
+    if (lppl) HeapIO().pfnFree(lppl, static_cast<HeapType>(lppl->ht));
 }
 
 // Legacy replay can address neighboring runtime bytes through a signed order
@@ -433,12 +436,12 @@ void CopyThingBytes(THING *pth, const void *rgb, uint16_t cb) noexcept {
 }
 
 MSGPLR *LpmsgplrAlloc(uint16_t cb) {
-    void *lp = LpAlloc(cb, htPlrMsg);
-    return LpStartPl<MSGPLR, uint8_t>(lp, CbPlSlot(lp));
+    void *lp = HeapIO().pfnAllocate(cb, htPlrMsg);
+    return LpStartPl<MSGPLR, uint8_t>(lp, HeapIO().pfnExtent(lp));
 }
 MSGPLR *LpmsgplrReAlloc(MSGPLR *lpmp, uint16_t cb) {
-    void *lp = LpReAlloc(lpmp, cb, htPlrMsg);
-    return LpStartPl<MSGPLR, uint8_t>(lp, CbPlSlot(lp));
+    void *lp = HeapIO().pfnResize(lpmp, cb, htPlrMsg);
+    return LpStartPl<MSGPLR, uint8_t>(lp, HeapIO().pfnExtent(lp));
 }
 
 NATIVEBYTEWINDOW MbwFromLp(void *lp) noexcept { return BbwFromLpHt(lp, htMsg); }

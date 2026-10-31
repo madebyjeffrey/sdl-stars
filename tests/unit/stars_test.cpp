@@ -1,4 +1,8 @@
 #include "stars_test.h"
+#ifdef STARS_UI_SDL
+#include "../../src/core/alert_io.h"
+#endif
+
 [[maybe_unused]] static char szTestLiteral1[] = "hst";
 
 #ifdef _WIN32
@@ -36,9 +40,6 @@ static int16_t FStarsTestAlert(const char *sz, int16_t mbType) {
 
 #ifdef STARS_UI_SDL
 int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
-int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
-    return FStarsTestPromptLegacyRacePassword(szPassword);
-}
 #else
 // The native tests link hostui.c for the rest of ui.h.
 int16_t IdAlertBox(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, mbType); }
@@ -222,3 +223,8 @@ int16_t FStarsTestGenerate(void) {
     EnsureAis();
     return FGenerateTurn();
 }
+
+#ifdef STARS_UI_SDL
+static const ALERTIO io_alertio = [] { ALERTIO io; io.pfnAlertSz = StarsTest_AlertSz; return io; }();
+static ALERTIOSCOPE scope_alertio(io_alertio);
+#endif

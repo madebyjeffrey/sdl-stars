@@ -38,7 +38,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     int16_t fFail = PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") != NULL;
     int cSaves;
 
-    if (hwndSave && hwndSave->lpfnDlg == AskSaveDialog) {
+    if (hwndSave && hwndSave->lpfnDlg == DesktopChoiceIO().pfnAskSaveDialog) {
         if (idGameExportSaveDialog == StarsCompatWindowId(hwndSave)) return TRUE;
         idGameExportSaveDialog = StarsCompatWindowId(hwndSave);
         cGameExportSaves++;
