@@ -17,8 +17,8 @@ from check_s02_state_source import between
 
 
 def main():
-    ui = (ROOT / 'src/ui/shipui.c').read_text()
-    custom = function('src/ui/ship2ui.c', 'INT_PTR CALLBACK ZipOrderDlg(')
+    ui = (ROOT / 'src/ui/shipui.cpp').read_text()
+    custom = function('src/ui/ship2ui.cpp', 'INT_PTR CALLBACK ZipOrderDlg(')
     types = (ROOT / 'src/core/structs.h').read_text()
     enums = enum_source()
     declarations = r'''
@@ -142,10 +142,10 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;} } while(0)
 '''.replace('typeof(orders)', 'struct OrderArray')
     declarations = declarations.replace('static struct { ORDER rgordStore[2]; ORDER *rgord() { return rgordStore; } } orders;', 'static struct OrderArray { ORDER rgordStore[2]; ORDER *rgord() { return rgordStore; } } orders;')
-    bodies = function('src/ui/ship2ui.c', 'void EnableZipBtns(') + '\n'
+    bodies = function('src/ui/ship2ui.cpp', 'void EnableZipBtns(') + '\n'
     block = between(custom, '            case IDC_IMPORT:\n            case IDC_RENAME:', '            case IDC_HELP:')
     bodies += 'static void edit(int wParam) {int hwnd=1,lpProc;char *psz,*pszT;switch(wParam){' + block + '}}\n'
-    click = function('src/ui/shipui.c', 'HCURSOR ClickInShipOrders(')
+    click = function('src/ui/shipui.cpp', 'HCURSOR ClickInShipOrders(')
     block = between(click, '            sz255[0] = -1;', '        } else {\n            GlobalPD.grPopup')
     bodies += 'static void popup(void) {int16_t i,cMax,iSkip,fRet;int lpProc;POINT16 pt={0,0};char sz255[2],*rgszZip[11];ZIPORDER rgzo[4];TASKXPORT *lptxp;' + block + '}\n'
     start = ui.index('    } else if ((HWND)lParam == hwndOrderED && HIWORD(wParam) == 768) {')
@@ -156,7 +156,7 @@ static int PopupMenu(HWND hwnd,int x,int y,int count,void *p,const char *const *
     start = ui.index('            lSel = SendMessage(',start)
     end = ui.index('            DrawPlanShip(NULL, tileStarbaseOrWaypoint);',start)+len('            DrawPlanShip(NULL, tileStarbaseOrWaypoint);')
     bodies += 'static void action(void) {int32_t lSel,lMin;' + ui[start:end] + '}\n'
-    bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.c', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'
+    bodies += '#define UpdateOrdersDDs UpdateOrdersBody\n' + function('src/ui/shipui.cpp', 'void UpdateOrdersDDs(') + '\n#undef UpdateOrdersDDs\nvoid UpdateOrdersDDs(int16_t level) {updates++;UpdateOrdersBody(level); }\n'
     block = between(ui,'            fActive = TRUE;\n            switch (l) {','            psz = vrgszUnits[i];')
     bodies += 'static int quantityControl(int l,int i,int *unit) {int fActive;' + block + '*unit=i;return fActive;}\n'
     block = between(custom,'                iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction());', '                TextOut(hdc, xCtr + 6,')
@@ -252,7 +252,7 @@ int main(void) {
         binary = Path(work) / 'witness'
         source.write_text('#include "' + str(ROOT/'src/core/taskviews.h') + '"\n' + declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
-                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
+                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations','-fsanitize=undefined','-fno-sanitize-recover=undefined',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

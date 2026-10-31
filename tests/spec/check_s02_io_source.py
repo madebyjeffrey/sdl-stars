@@ -44,10 +44,10 @@ static int checks;
     declarations = (f'#include "{ROOT / "src/platform/locking.h"}"\n'
                     f'#include "{ROOT / "src/platform/ownership.h"}"\n') + declarations
     bodies = "\n".join(
-        function("src/platform/encoding.c", signature) for signature in
+        function("src/platform/encoding.cpp", signature) for signature in
         ["int CbUtf8Char(", "size_t CchUtf8Prefix(", "int FUtf8Valid("])
     bodies += "\n" + "\n".join(
-        function("compat/win32/src/profile.c", signature) for signature in
+        function("compat/win32/src/profile.cpp", signature) for signature in
         ["static void FreeProfile(", "static char *PszTrimProfile(",
          "static COMPATPROFILE *LpProfileLine(", "static COMPATPROFILE *LpProfileSection(",
          "static COMPATPROFILE *LpProfileKey(", "static const char *PszProfileValue("])
@@ -59,9 +59,9 @@ static BOOL FLoadProfile(const char *path,COMPATPROFILE **out) {
     return TRUE;
 }
 '''
-    bodies += function("compat/win32/src/profile.c", "DWORD WINAPI GetPrivateProfileStringA(")
+    bodies += function("compat/win32/src/profile.cpp", "DWORD WINAPI GetPrivateProfileStringA(")
     bodies += "\n" + "\n".join(
-        function("src/host/host.c", signature) for signature in
+        function("src/host/host.cpp", signature) for signature in
         ["static int16_t FSzEqNoCase(", "static int16_t FIniValue(", "static int32_t LIniInt("])
     witnesses = r'''
 int main(void) {
@@ -113,7 +113,7 @@ int main(void) {
         binary=path/"witness"
         source.write_text(declarations+bodies+witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

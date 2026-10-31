@@ -72,12 +72,12 @@ static void GetTruePartCost(int16_t player,PART *part,void *out) {
 }
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;}}while(0)
 '''
-    bodies=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
-    bodies+=function('src/core/race.c','int16_t GetRaceGrbit(')+'\n'
+    bodies=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
+    bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(')+'\n'
     # A void-use annotation keeps the source getter's unused parameter from
     # masking warnings in the function under test; its body is otherwise exact.
-    bodies+=function('src/core/util.c','void GetTrueHullCost(').replace('{\n','{\n    (void)iPlayer;\n',1)+'\n'
-    bodies+=function('src/core/produce.c','void GetProductionCosts(')
+    bodies+=function('src/core/util.cpp','void GetTrueHullCost(').replace('{\n','{\n    (void)iPlayer;\n',1)+'\n'
+    bodies+=function('src/core/produce.cpp','void GetProductionCosts(')
     witnesses=r'''
 static int signed16(int64_t x) {unsigned u=(unsigned)((uint64_t)x&65535);return u<32768 ? (int)u:(int)u-65536;}
 static unsigned word16(int64_t x) {return (unsigned)((uint64_t)x&65535);}
@@ -225,7 +225,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='m09-cost-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

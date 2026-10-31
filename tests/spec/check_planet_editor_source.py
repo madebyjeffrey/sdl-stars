@@ -112,12 +112,12 @@ static void *checkedMemcpy(void *dst,const void *src,size_t n) {
     for name in ('rptPlanets','tileProductionOrOrbit'):
         value=re.search(r'\b'+name+r'\s*=\s*(0x[0-9A-Fa-f]+|[0-9]+)',enums).group(1)
         declarations=re.sub(r'(?m)^#define '+name+r' .+$','#define '+name+' '+value,declarations)
-    bodies = '\n'.join(function('src/core/memory.c',signature) for signature in
+    bodies = '\n'.join(function('src/core/memory.cpp',signature) for signature in
         ['static uint16_t CbHeapAlign(','static uint16_t CbHbHeader(','static uint16_t CbHeapItem(','PL *LpplReAlloc(','PL *LpplAlloc(','void FreePl('])
     bodies += '\n#define memcpy checkedMemcpy\n'
-    bodies += '\n'.join(function('src/core/util.c',signature) for signature in
+    bodies += '\n'.join(function('src/core/util.cpp',signature) for signature in
         ['int16_t FDupPlanet(','PLANET *LpplFromId(','int16_t FLookupPlanet('])
-    bodies += '\n'+function('src/core/produce.c','void FinishProduction(')+'\n#undef memcpy\n'
+    bodies += '\n'+function('src/core/produce.cpp','void FinishProduction(')+'\n#undef memcpy\n'
     witnesses = r'''
 static void reset(void) {
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);
@@ -227,7 +227,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='s06-planet-copy-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=True, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=True, resize=True, free=True) + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

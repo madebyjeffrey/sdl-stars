@@ -17,7 +17,7 @@ ordinary control flow after admission and choice. Its `Later`, `ConflictReplace`
 replies. [Collection evidence](README.md#m01-import-publication-and-recovery)
 records executed checks. No game code, format, catalog or baseline is changed.
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Sources: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
 `FImportLibraryGame`, `FCopyNativeFileExclusive`, `FCopyNativeFileContents`,
 `FInspectImportFile`, `FCreateLibraryGameStage`, `FStageConflictingTurn`,

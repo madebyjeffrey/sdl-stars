@@ -20,7 +20,7 @@ from check_s02_state_source import between
 
 def main():
     types = (ROOT / 'src/core/structs.h').read_text()
-    command = function('src/ui/produceui.c', 'void ProdCommandHandler(')
+    command = function('src/ui/produceui.cpp', 'void ProdCommandHandler(')
     declarations = r'''
 #include <assert.h>
 #include <stdint.h>
@@ -146,14 +146,14 @@ static intptr_t DialogBox(int instance,int resource,HWND parent,FARPROC proc);
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s; trace=%s\n",checks,#x,trace);return 1;}}while(0)
 '''
     bodies = '\n'.join([
-        function('src/core/memory.c','void FreePl('),
-        function('src/core/produce.c','void FinishProduction('),
-        function('src/core/planet.c','int16_t IdFindAdjStarbase('),
-        function('src/ui/produceui.c','void InitializeProductionDlg('),
+        function('src/core/memory.cpp','void FreePl('),
+        function('src/core/produce.cpp','void FinishProduction('),
+        function('src/core/planet.cpp','int16_t IdFindAdjStarbase('),
+        function('src/ui/produceui.cpp','void InitializeProductionDlg('),
     ])
     cases = between(command, '    case IDOK:', '    case IDC_PRODUCTION_ITEM_DOWN:')
     bodies += '\nstatic void Command(HWND hwnd,int wParam) { int16_t c;RECT rc;switch(wParam) {\n'+cases+'\n}}\n'
-    bodies += function('src/ui/produceui.c','int16_t ChangeProduction(')
+    bodies += function('src/ui/produceui.cpp','int16_t ChangeProduction(')
     witnesses = r'''
 static intptr_t DialogBox(int instance,int resource,HWND parent,FARPROC proc) {
     assert(instance==hInst && resource==IDD_PRODUCTION && parent==hwndFrame && proc==1 && fDlgUp);

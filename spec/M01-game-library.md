@@ -23,9 +23,9 @@ Follow the [glossary](../GLOSSARY.md) and
 A game with both player and host files can appear in both lists, backed by the
 same folder. Identical internal game IDs can belong to independent library copies.
 
-This boundary spans [libraryui.c](../src/ui/libraryui.c), title/action dispatch
-in [mdi.c](../src/ui/mdi.c), [fileui.c](../src/ui/fileui.c) and
-[libraryzip.c](../src/ui/libraryzip.c); it is not an isolated service today.
+This boundary spans [libraryui.cpp](../src/ui/libraryui.cpp), title/action dispatch
+in [mdi.cpp](../src/ui/mdi.cpp), [fileui.cpp](../src/ui/fileui.cpp) and
+[libraryzip.cpp](../src/ui/libraryzip.cpp); it is not an isolated service today.
 
 | Owner | Handoff |
 | --- | --- |
@@ -393,7 +393,7 @@ is introduced.
 ## 7. Evidence, verification and open decisions
 
 Source functions are named in §3; relevant test sources are the
-[startup harness](../tests/compat/win32_client_startup.c),
+[startup harness](../tests/compat/win32_client_startup.cpp),
 [game export runner](../tests/compat/run_game_export.py),
 [library safety runner](../tests/compat/run_game_library_safety.py) and
 [delete runner](../tests/compat/run_game_library_delete.py).
@@ -492,9 +492,9 @@ Trace: [target/conflict classification](#34-update-conflict-or-separate-copy),
 [M06 loading](M06-player-session-and-turn-orders.md#31-select-and-open-a-player-turn),
 [canonical library contracts](M01-library-specification.dfy),
 [S01 external publication](S01-game-file-external.md).
-Evidence: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Evidence: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
-`FSelectLibraryGame`; [mdi.c](../src/ui/mdi.c) `FOpenGame`.
+`FSelectLibraryGame`; [mdi.cpp](../src/ui/mdi.cpp) `FOpenGame`.
 The main branch illustrates a strictly later existing player's turn; import and
 opening are separate user operations. M01 owns the disk operation, M06 the live session.
 

@@ -291,16 +291,16 @@ int32_t ChgPopFromPlanet(PLANET *p,int16_t update){growths++;if(cfg[25]){assert(
     assert population_match
     population_table=population_match.group(0)
     declarations=declarations.replace('/* SOURCE_POPULATION_TABLE */',population_table)
-    getter=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
+    getter=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
     getter=getter.replace('return pplr->rgAttr[iStat];','stats++; return pplr->rgAttr[iStat];')
-    grbit=function('src/core/race.c','int16_t GetRaceGrbit(').replace('    if (UINT32_C(1)', '    grbits++;\n    if (UINT32_C(1)',1)
-    bodies=getter+'\n'+grbit+'\n'+function('src/core/race.c','int16_t PctTrueMaxGrowth(')+'\n'
-    bodies+=function('src/core/planet.c','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(', 'static int16_t NativeHabitat(',1)+'\n'
+    grbit=function('src/core/race.cpp','int16_t GetRaceGrbit(').replace('    if (UINT32_C(1)', '    grbits++;\n    if (UINT32_C(1)',1)
+    bodies=getter+'\n'+grbit+'\n'+function('src/core/race.cpp','int16_t PctTrueMaxGrowth(')+'\n'
+    bodies+=function('src/core/planet.cpp','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(', 'static int16_t NativeHabitat(',1)+'\n'
     for signature in ['int32_t CalcPlanetMaxPop(','int16_t CMaxMines(','int16_t CMaxFactories(',
                       'int16_t CMaxOperableMines(','int16_t CMaxOperableFactories(','int16_t CMaxDefenses(',
                       'int16_t CMaxOperableDefenses(','int16_t CFactoriesOperating(','int16_t CMinesOperating(',
                       'int16_t CResourcesAtPlanet(','int16_t STARS_TEST_IMPL(PctPlanetCapacity)(']:
-        body=function('src/core/planet.c',signature)
+        body=function('src/core/planet.cpp',signature)
         if signature.startswith('int16_t CMinesOperating'):
             body=body.replace('(int32_t)sqrt((double)lppl->rgwtMin[3])','(int32_t)RecordFloat(sqrt((double)lppl->rgwtMin[3]))')
         if signature.startswith('int16_t CResourcesAtPlanet'):
@@ -308,7 +308,7 @@ int32_t ChgPopFromPlanet(PLANET *p,int16_t update){growths++;if(cfg[25]){assert(
             assert body.count(expression)==1
             body=body.replace('(int32_t)('+expression+')','(int32_t)RecordFloat('+expression+')')
         bodies+=body+'\n'
-    bodies+=function('src/core/util.c','int32_t ChgPopFromPlanet(').replace('int32_t ChgPopFromPlanet(', 'static int32_t NativeGrowth(',1)
+    bodies+=function('src/core/util.cpp','int32_t ChgPopFromPlanet(').replace('int32_t ChgPopFromPlanet(', 'static int32_t NativeGrowth(',1)
     harness=r'''
 static void setup(void){
     memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(bases,0,sizeof(bases));
@@ -369,7 +369,7 @@ int main(int argc,char **argv){
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source.write_text(declarations+bodies+harness)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-Wno-unused-variable','-Wno-unused-but-set-variable','-fsanitize=address,undefined','-fno-sanitize-recover=all',
             '-ffp-contract=off','-fno-fast-math','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)

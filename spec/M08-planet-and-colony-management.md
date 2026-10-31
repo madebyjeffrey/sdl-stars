@@ -100,8 +100,8 @@ view state and resets when the selected object's identity or kind changes.
 
 ### 3.1 Selection and capability
 
-Evidence: [planet.c](../src/core/planet.c), `ChangeMainObjSel`, `SelectAdjPlanet`,
-`IdFindAdjStarbase`; [planetui.c](../src/ui/planetui.c), `PlanetClick`,
+Evidence: [planet.cpp](../src/core/planet.cpp), `ChangeMainObjSel`, `SelectAdjPlanet`,
+`IdFindAdjStarbase`; [planetui.cpp](../src/ui/planetui.cpp), `PlanetClick`,
 `ClickInPlanetOrders`. Canonical projections: `Select`, `ConstructionBase`.
 
 `ChangeMainObjSel` loads the chosen record, updates location, resets the active
@@ -159,8 +159,8 @@ not silently assigned new behavior by these mathematical functions.
 ### 3.3 Terraforming and forecast boundaries
 
 Evidence: `FCanTerraformLppl`, `IpctCanTerraformLppl`, `IBestTerraform`,
-`PctPlanetOptValue`; [util.c](../src/core/util.c), `ChgPopFromPlanet`;
-[mine.c](../src/core/mine.c), `EstMineralsMined`.
+`PctPlanetOptValue`; [util.cpp](../src/core/util.cpp), `ChgPopFromPlanet`;
+[mine.cpp](../src/core/mine.cpp), `EstMineralsMined`.
 Models: `Terraform`, `TerraformSteps`; M04 habitat evaluation.
 
 Technology/catalog lookup supplies the best available all-axis ability, then
@@ -202,7 +202,7 @@ range to 10000. The [native capability companion](M08-colony-capabilities.md)
 now specifies its actual lookup/metadata controller; gate usability and UI
 disclosure remain E08-3/M10.
 
-[planetpaneui.c](../src/ui/planetpaneui.c) computes content extents, refits both
+[planetpaneui.cpp](../src/ui/planetpaneui.cpp) computes content extents, refits both
 scrollbars in two passes, clamps offsets and coalesces deferred refit messages.
 Six planet tiles and seven fleet tiles use two columns; collapsed tiles retain
 their header height. Selection identity/kind changes reset offsets and wheel
@@ -270,7 +270,7 @@ below; proof vectors do not establish C refinement.
 
 Evidence sources are the named functions above, [gameplay qualification](../docs/GAMEPLAY-QUALIFICATION.md),
 [unit tests](../tests/unit/README.md) and the
-[client workflow harness](../tests/compat/win32_client_startup.c). Tutorial
+[client workflow harness](../tests/compat/win32_client_startup.cpp). Tutorial
 checkpoints exercise only part of colony interaction. No dedicated exhaustive
 colony numerical suite is implied by the broad runtime run.
 

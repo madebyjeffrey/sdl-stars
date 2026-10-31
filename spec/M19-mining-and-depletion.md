@@ -17,11 +17,11 @@ Canonical definitions: [M19 mining](dafny/M19-mining.dfy),
 arithmetic/finite floating evaluation. Stronger caller validation is not imposed
 on the runtime by documenting raw native fields.
 
-Source: [mine.c](../src/core/mine.c) `EstMineralsMined`,
-[ship2.c](../src/core/ship2.c) `CMineFromLpfl`,
-[planet.c](../src/core/planet.c) `CMinesOperating`,
-[race.c](../src/core/race.c) `GetRaceStat`,
-[utilgen.c](../src/core/utilgen.c) `Random`,
+Source: [mine.cpp](../src/core/mine.cpp) `EstMineralsMined`,
+[ship2.cpp](../src/core/ship2.cpp) `CMineFromLpfl`,
+[planet.cpp](../src/core/planet.cpp) `CMinesOperating`,
+[race.cpp](../src/core/race.cpp) `GetRaceStat`,
+[utilgen.cpp](../src/core/utilgen.cpp) `Random`,
 [structs.h](../src/core/structs.h) `PLANET`/`FLEET`/`HUL`/`HS`/`MINING`/`PLORD`.
 The [collection record](README.md#mining-and-depletion-continuation) records
 actual proofs, native fixtures and repository checks.

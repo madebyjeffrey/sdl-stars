@@ -85,7 +85,7 @@ and [LoadBitmap](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-
 
 ## Verification
 
-`tests/compat/win32_dib.c` runs unchanged against both the native runtime and
+`tests/compat/win32_dib.inc` runs unchanged against both the native runtime and
 the real Windows SDK/Wine. The SDK reference independently embeds the real
 RC resources, rather than linking the native loader. Checks cover all 38
 resource identities and payload sizes, independent bitmap ownership,

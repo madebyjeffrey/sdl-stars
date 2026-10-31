@@ -5,7 +5,7 @@ Status: observed `CBuildProdItem` behavior, reviewed 2026-10-25 at
 This companion supports [M09-US02](M09-production-management.md#m09-us02) and
 [M09-US05](M09-production-management.md#m09-us05); criteria remain in M09.
 [Canonical contracts](dafny/M09-builder.dfy) specify the numeric/control trace.
-Sources are [turn2.c](../src/core/turn2.c) `CBuildProdItem` and `Produce`,
+Sources are [turn2.cpp](../src/core/turn2.cpp) `CBuildProdItem` and `Produce`,
 [structs.h](../src/core/structs.h) `PROD`/`PLANET`, and
 [enums.h](../src/core/enums.h) `ProdItemType`/`mdProdStat`.
 

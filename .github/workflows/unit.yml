@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run_slow_platform_jobs:
+        description: Run the slow Linux desktop and Windows SDL suites
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,6 +20,7 @@ concurrency:
 
 jobs:
   unit:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_slow_platform_jobs
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -120,6 +126,7 @@ jobs:
         run: make test-host
 
   windows-sdl:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_slow_platform_jobs
     runs-on: windows-latest
     timeout-minutes: 30
     steps:

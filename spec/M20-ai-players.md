@@ -64,7 +64,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Entry, strategy and cleanup
 
-[ai.c](../src/core/ai.c) `DoAiTurn` saves the caller's player identity, sets AI
+[ai.cpp](../src/core/ai.cpp) `DoAiTurn` saves the caller's player identity, sets AI
 context, destroys prior loaded game state and loads that player's `.mN` view.
 Load failure restores identity/AI context and returns without writing AI output.
 Dead players skip strategy. It allocates planet records/pointers and AI history;
@@ -189,7 +189,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[AI entry](../src/core/ai.c), [AI helpers](../src/core/aiutil.c), [AI2](../src/core/ai2.c), [AI3](../src/core/ai3.c), [AI4](../src/core/ai4.c), [AI4 unit tests](../tests/unit/test_ai4.c), and [regression scenarios](../tests/scaffold/REGRESSION.md). Existing scenarios exercise selected AI families; they do not qualify every strategy, especially all Maid behaviors.
+[AI entry](../src/core/ai.cpp), [AI helpers](../src/core/aiutil.cpp), [AI2](../src/core/ai2.cpp), [AI3](../src/core/ai3.cpp), [AI4](../src/core/ai4.cpp), [AI4 unit tests](../tests/unit/test_ai4.cpp), and [regression scenarios](../tests/scaffold/REGRESSION.md). Existing scenarios exercise selected AI families; they do not qualify every strategy, especially all Maid behaviors.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

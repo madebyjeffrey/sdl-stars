@@ -66,7 +66,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Entry, replay and prerequisites
 
-[turn.c](../src/core/turn.c) `FGenerateTurn` destroys prior loaded state, uses
+[turn.cpp](../src/core/turn.cpp) `FGenerateTurn` destroys prior loaded state, uses
 `Randomize(1234567890)` in tutorial mode and loads the host. It allocates phase
 buffers, initializes generation flags/message position and shuffles player order:
 at each index `i`, draw in `[0, n-i)` and swap with `i + draw`. This includes the
@@ -191,7 +191,7 @@ production entry/resource, manual validation, builder handoff and queue/applicat
 routing rules. Complete native object/callback and annual-state effects remain
 open; the phase cursor alone does not prove them.
 
-[FGenerateTurn](../src/core/turn.c), [Produce](../src/core/turn2.c), [order effects](../src/core/turn3.c), [native regression](../tests/scaffold/REGRESSION.md), and [binary64 boundaries](../docs/DOUBLE-PRECISION.md). Frozen original fixtures are historical evidence and must not be regenerated.
+[FGenerateTurn](../src/core/turn.cpp), [Produce](../src/core/turn2.cpp), [order effects](../src/core/turn3.cpp), [native regression](../tests/scaffold/REGRESSION.md), and [binary64 boundaries](../docs/DOUBLE-PRECISION.md). Frozen original fixtures are historical evidence and must not be regenerated.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the
@@ -271,9 +271,9 @@ Trace: [entry/replay](#entry-replay-and-prerequisites),
 [M19 effects](M19-game-rules-and-resolution.md), [S06 lifetimes/RNG](S06-shared-game-state.md),
 [S01 publication](S01-game-file-formats.md),
 [canonical Schedule and Orders contracts](M18-generation-specification.dfy).
-Evidence: [turn.c](../src/core/turn.c) `FGenerateTurn`, `DoOrders`,
-[turn2.c](../src/core/turn2.c) `Produce`, `UpdateResearchStatus`,
-[turn3.c](../src/core/turn3.c) order effects. Covers [M18-US01–US04](#user-stories).
+Evidence: [turn.cpp](../src/core/turn.cpp) `FGenerateTurn`, `DoOrders`,
+[turn2.cpp](../src/core/turn2.cpp) `Produce`, `UpdateResearchStatus`,
+[turn3.cpp](../src/core/turn3.cpp) order effects. Covers [M18-US01–US04](#user-stories).
 
 ```mermaid
 sequenceDiagram

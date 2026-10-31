@@ -70,7 +70,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Policy editing and closing
 
-[researchui.c](../src/ui/researchui.c) `ResearchDlg` initializes local controls
+[researchui.cpp](../src/ui/researchui.cpp) `ResearchDlg` initializes local controls
 from the current player. The next-field list maps row zero to same-field (6),
 rows 1–6 to fields 0–5, row 7 to lowest (7): `NextChoice`/`ChoiceRow` are canonical.
 Changing fields refreshes estimates. The handler named `IDCANCEL` is the dialog's
@@ -81,7 +81,7 @@ policy change. Tutorial advancement and focus are UI adapters.
 
 ### Costs and projection
 
-[research.c](../src/core/research.c) `GetTechLevelCost` combines the next-level
+[research.cpp](../src/core/research.cpp) `GetTechLevelCost` combines the next-level
 table with ten times total current levels, applies race cost choice and slow-tech
 multiplier, preserving division order. `CostOfDevelopingItem` returns -1 when
 any requirement exceeds 26. Otherwise it walks the six fields in index order,
@@ -112,7 +112,7 @@ UI/caller state and real browser qualification remain E12-2; S03 retains item ID
 
 ### Applying research
 
-[turn2.c](../src/core/turn2.c) `UpdateResearchStatus` distinguishes pooled annual
+[turn2.cpp](../src/core/turn2.cpp) `UpdateResearchStatus` distinguishes pooled annual
 resources from previously earned/nonpool advances. Ordinary research receives
 the pool in its chosen field. Generalized Research gives rounded-up half to the
 primary field and rounded-up 15% to each other field (`PrimaryPool`, `OtherPool`);
@@ -234,7 +234,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[research source](../src/core/research.c), [research dialog](../src/ui/researchui.c), [host research](../src/core/turn2.c), and the [Continue workflow harness](../tests/compat/win32_client_startup.c). No dedicated exhaustive research trait/level suite is claimed.
+[research source](../src/core/research.cpp), [research dialog](../src/ui/researchui.cpp), [host research](../src/core/turn2.cpp), and the [Continue workflow harness](../tests/compat/win32_client_startup.cpp). No dedicated exhaustive research trait/level suite is claimed.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

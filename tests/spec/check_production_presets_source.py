@@ -18,7 +18,7 @@ from check_s02_state_source import between
 
 
 def main():
-    ui = (ROOT / 'src/ui/produceui.c').read_text()
+    ui = (ROOT / 'src/ui/produceui.cpp').read_text()
     types = (ROOT / 'src/core/structs.h').read_text()
     declarations = r'''
 #include <stdint.h>
@@ -134,21 +134,21 @@ static const char *PszFormatIds(int id,void *p) { (void)id;(void)p;return "memor
 static void AlertSz(const char *s,int flags) { (void)s;(void)flags;alerts++; }
 #define CHECK(x) do { checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;} } while(0)
 '''
-    bodies = function('src/core/memory.c', 'PL *LpplAlloc(') + '\n'
-    bodies += function('src/core/memory.c', 'void FreePl(') + '\n'
-    bodies += function('src/ui/produceui.c', 'void EnableZipProdBtns(') + '\n'
-    bodies += function('src/ui/produceui.c', 'void FillZipProdLB(') + '\n'
+    bodies = function('src/core/memory.cpp', 'PL *LpplAlloc(') + '\n'
+    bodies += function('src/core/memory.cpp', 'void FreePl(') + '\n'
+    bodies += function('src/ui/produceui.cpp', 'void EnableZipProdBtns(') + '\n'
+    bodies += function('src/ui/produceui.cpp', 'void FillZipProdLB(') + '\n'
     block = between(ui, '    case IDC_PRODUCTION_CLEAR:\n    case IDC_IMPORT:', '    case IDC_PRODUCTION_AVAILABLE_ITEMS:')
     bodies += 'static void apply(int wParam,int lParam) {int hwnd=1,ipl,iSrc,cMax,iDst;PROD *lpprod;PLPROD *lpplprodT;switch(wParam){' + block + '}RedrawText:; }\n'
     block = between(ui, '        for (cMax = 0; cMax < 4 && (!vrgZipProd[cMax].fValid || i-- != 0); cMax++) {', '        ProdCommandHandler(hwnd, 0x816, cMax);')
     bodies += 'static int popupSlot(int i) {int cMax;' + block + 'return cMax;}\n'
-    custom = function('src/ui/produceui.c', 'INT_PTR CALLBACK ZipProdDlg(')
+    custom = function('src/ui/produceui.cpp', 'INT_PTR CALLBACK ZipProdDlg(')
     block = between(custom, '            case IDC_IMPORT:\n            case IDC_RENAME:', '            case IDC_HELP:')
     bodies += 'static void edit(int wParam) {int hwnd=1,i,cpq,lpProc;char *psz,*pszT;switch(wParam){' + block + '}}\n'
     block = between(ui, '            memcpy(rgzp, vrgZipProd, 160);', '        if (i < 0)')
     # Includes the closing brace of the caller's Customize branch.
     bodies += 'static void customize(void) {ZIPPRODQ rgzp[4];int lpProc,hwnd=1;int16_t fRet;do {if(1){' + block + '}while(0);}\n'
-    recovery = function('src/ui/produceui.c', 'int16_t ChangeProduction(')
+    recovery = function('src/ui/produceui.cpp', 'int16_t ChangeProduction(')
     block = recovery.split('} catch (const StarsError &) {', 1)[1].rsplit('}', 2)[0]
     bodies += 'static int recover(void) {' + block + '}\n'
     bodies += r'''
@@ -245,7 +245,7 @@ int main(void) {
         binary = Path(work) / 'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=False, free=True) + bodies + storage_definitions('(void)lp;return lastBytes;', allocate=True, resize=False, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++')) +
-                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++', '-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
+                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall', '-Wextra', '-Werror','-Wno-misleading-indentation','-Wno-deprecated-declarations', '-fsanitize=undefined', '-fno-sanitize-recover=undefined',
                         str(source), '-o', str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

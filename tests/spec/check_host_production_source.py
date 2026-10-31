@@ -19,8 +19,8 @@ from check_s02_source import ENUM_STORAGE
 
 def main():
     types=(ROOT/'src/core/structs.h').read_text(); enums=enum_source()
-    produce=function('src/core/turn2.c','void Produce(')
-    builder=function('src/core/turn2.c','int16_t CBuildProdItem(')
+    produce=function('src/core/turn2.cpp','void Produce(')
+    builder=function('src/core/turn2.cpp','int16_t CBuildProdItem(')
     declarations=r'''
 #include <assert.h>
 #include <stdint.h>
@@ -110,7 +110,7 @@ static int16_t FBuildObject(PLANET *p,GrobjClass kind,int16_t item,int16_t count
 }
 #define CHECK(x) do{checks++;if(!(x)){fprintf(stderr,"witness %d: %s (builds %d status %u)\n",checks,#x,builds,forcedStatus);return 1;}}while(0)
 '''
-    bodies=function('src/core/memory.c','PL *LpplReAlloc(')+'\n'+function('src/core/memory.c','void FreePl(')+'\n'
+    bodies=function('src/core/memory.cpp','PL *LpplReAlloc(')+'\n'+function('src/core/memory.cpp','void FreePl(')+'\n'
     bodies+=builder.replace('int16_t CBuildProdItem(', 'static int16_t NativeCBuildProdItem(',1)
     bodies+=r'''
 static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *resources,int16_t alchemy,int16_t *status,int16_t calc){
@@ -255,7 +255,7 @@ int main(void){
     with tempfile.TemporaryDirectory(prefix='m09-host-production-') as work:
         path=Path(work); source=path/'witness.cpp'; binary=path/'witness'
         source.write_text(declarations + storage_declarations(allocate=False, resize=True, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=False, resize=True, free=True) + witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

@@ -64,7 +64,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Starting and checking tasks
 
-[tutor.c](../src/ui/tutor.c) `StartTutor` configures/reloads tutorial context
+[tutor.cpp](../src/ui/tutor.cpp) `StartTutor` configures/reloads tutorial context
 and uses `FTutorTaskDone` to reach the current relevant page. `SaveGameState`
 saves selected presentation/template fields and can destroy an existing
 nontutorial game; it does not serialize a general restore point. M06 owns any
@@ -101,7 +101,7 @@ subject to tutorial gates rather than an unrestricted host action.
 
 ### Offline help
 
-[help.c](../compat/win32/src/help.c) implements HELP_INDEX/HELP_CONTEXT for the
+[help.cpp](../compat/win32/src/help.cpp) implements HELP_INDEX/HELP_CONTEXT for the
 case-insensitive bare name `stars-help.html`; other filenames and explicit paths
 are rejected. It resolves the requested context, finds the packaged guide,
 checks its required assets and generation stamp, and validates `offline.html`
@@ -120,7 +120,7 @@ contents fallback must be explicit, not represented as success opening that topi
 mappings and 414 topics and historical rendering qualification. Its runtime overview now describes the packaged-HTML adapter above; the archive
 analysis remains historical source/extraction evidence, not a runtime HLP dependency.
 Archive parsing/generation, HTML export and browser presentation are E16-2.
-[tutor2.c](../src/ui/tutor2.c) uses S03's compressed fragments; text arithmetic
+[tutor2.cpp](../src/ui/tutor2.cpp) uses S03's compressed fragments; text arithmetic
 ranges must stay consecutive. Existing SDL tutorial checkpoints are partial;
 this spec does not claim all 80 pages are automated or that headless launch tests
 prove visual rendering.
@@ -195,7 +195,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[tutorial source](../src/ui/tutor.c), [help adapter](../compat/win32/src/help.c), [native tutorial harness](../tests/compat/native_tutorial.c), and [historical observer contract](../tests/reference/win32-tutorial/README.md). Existing help and tutorial test results must be distinguished from full desktop/browser acceptance.
+[tutorial source](../src/ui/tutor.cpp), [help adapter](../compat/win32/src/help.cpp), [native tutorial harness](../tests/compat/native_tutorial.cpp), and [historical observer contract](../tests/reference/win32-tutorial/README.md). Existing help and tutorial test results must be distinguished from full desktop/browser acceptance.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

@@ -66,7 +66,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Validate and display readiness
 
-[turn.c](../src/core/turn.c) `VerifyTurns` and `CFindTurnsOutstanding` inspect the
+[turn.cpp](../src/core/turn.cpp) `VerifyTurns` and `CFindTurnsOutstanding` inspect the
 current host's expected order files. `Status` captures precedence: an AI slot or
 valid completed log is ready; wrong-game, wrong-turn and other file errors then
 win even for a dead player; otherwise dead is -1, partial is 2, missing is 1.
@@ -83,7 +83,7 @@ and `S02HostProfile.Lookup`/`Integer` specify INI line/value bounds, duplicate
 sections, quoting and native-long conversion domains. This is shared canonical
 behavior; the remaining M17 CLI grammar and load/error integration are separate.
 
-[host.c](../src/host/host.c) accepts `--version`, `--ini` and the core command-line
+[host.cpp](../src/host/host.cpp) accepts `--version`, `--ini` and the core command-line
 form. Version returns zero; invalid host options, INI or no actionable request
 return 2. The joined command buffer is bounded; the legacy core parser does not
 support every quoted/space-containing path accepted by a desktop picker.
@@ -92,7 +92,7 @@ report dumps. For generation, `Generate` allows an unconditional request or a
 zero-outstanding wait/try request. It does not imply all phase/output operations
 will succeed. Validation dispatch returning true is not proof of a successfully
 loaded game; inspect the reported error/return value. Headless output is through
-[hostui.c](../src/host/hostui.c), without SDL or an interactive modal prompt.
+[hostui.cpp](../src/host/hostui.cpp), without SDL or an interactive modal prompt.
 
 ### AI completion, backup and failure
 
@@ -187,7 +187,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[host entry](../src/host/host.c), [turn dispatcher](../src/core/turn.c), [hosting notes](../docs/TOTALHOST.md), [library acceptance](M01-game-library.md) and [regression harness](../tests/scaffold/REGRESSION.md). Historical hosting notes may describe older interfaces; current source and S01 govern formats.
+[host entry](../src/host/host.cpp), [turn dispatcher](../src/core/turn.cpp), [hosting notes](../docs/TOTALHOST.md), [library acceptance](M01-game-library.md) and [regression harness](../tests/scaffold/REGRESSION.md). Historical hosting notes may describe older interfaces; current source and S01 govern formats.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the
@@ -262,9 +262,9 @@ Trace: [readiness](#validate-and-display-readiness), [AI/recovery](#ai-completio
 [M01 host orders](M01-game-library.md#36-export-and-host-orders),
 [M20 AI lifecycle](M20-ai-players.md#entry-strategy-and-cleanup),
 [M18 generation](M18-turn-generation.md#cross-module-sequences).
-Evidence: [libraryui.c](../src/ui/libraryui.c) `FImportLibraryOrders`,
-`FSelectLibraryHostGame`; [mdi.c](../src/ui/mdi.c) `BringUpHostDlg`,
-`HostModeDialog`; [turn.c](../src/core/turn.c) `CFindTurnsOutstanding`, `EnsureAis`.
+Evidence: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportLibraryOrders`,
+`FSelectLibraryHostGame`; [mdi.cpp](../src/ui/mdi.cpp) `BringUpHostDlg`,
+`HostModeDialog`; [turn.cpp](../src/core/turn.cpp) `CFindTurnsOutstanding`, `EnsureAis`.
 Goals: [M17-US01](#m17-us01), [US03](#m17-us03), [US04](#m17-us04).
 
 ```mermaid
@@ -325,9 +325,9 @@ Trace: [CLI policy](#cli-entry-policy-and-dispatch),
 [S02 host profile](S02-preference-contracts.md#headless-profile-grammar),
 [M18 sequence](M18-turn-generation.md#cross-module-sequences),
 [M20 AI persistence](M20-ai-players.md#entry-strategy-and-cleanup).
-Evidence: [host.c](../src/host/host.c) `main`, `FReadHostIni`,
-[turn.c](../src/core/turn.c) `FRunCmdLine`, `CTurnsOutSafe`, `VerifyTurns`,
-`EnsureAis`; [hostui.c](../src/host/hostui.c). Goal: [M17-US02](#m17-us02).
+Evidence: [host.cpp](../src/host/host.cpp) `main`, `FReadHostIni`,
+[turn.cpp](../src/core/turn.cpp) `FRunCmdLine`, `CTurnsOutSafe`, `VerifyTurns`,
+`EnsureAis`; [hostui.cpp](../src/host/hostui.cpp). Goal: [M17-US02](#m17-us02).
 
 ```mermaid
 sequenceDiagram

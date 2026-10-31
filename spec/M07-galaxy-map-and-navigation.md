@@ -102,10 +102,10 @@ edit, and navigate a player turn through the galaxy map. M07 owns navigation,
 coordinate conversion, selection arbitration, search precedence, presentation
 filters, and the scanner's semantic inspection interface.
 
-This is a proposed logical boundary across [scan.c](../src/ui/scan.c),
-[scaninspect.c](../src/ui/scaninspect.c), [tb.c](../src/ui/tb.c),
-[util.c](../src/core/util.c), [planet.c](../src/core/planet.c) and
-[mdi.c](../src/ui/mdi.c), not an already isolated service or an approved refactor.
+This is a proposed logical boundary across [scan.cpp](../src/ui/scan.cpp),
+[scaninspect.cpp](../src/ui/scaninspect.cpp), [tb.cpp](../src/ui/tb.cpp),
+[util.cpp](../src/core/util.cpp), [planet.cpp](../src/core/planet.cpp) and
+[mdi.cpp](../src/ui/mdi.cpp), not an already isolated service or an approved refactor.
 The command-line host has no interactive map workflow.
 
 M06 owns opening/replacing the player turn; S06 owns entities, identity, knowledge,
@@ -146,7 +146,7 @@ loaded state, search results, context menus or hit testing.
 
 ### 3.1 Hit testing
 
-Source: [util.c](../src/core/util.c) `FFindNearestObject`.
+Source: [util.cpp](../src/core/util.cpp) `FFindNearestObject`.
 Canonical definitions: `Radius2`, `Candidate`, `Hit`, `HitStep`, `Hits`, `CompleteHit`.
 
 The ordinary click searches with an initial squared distance of 1,000,000,000;
@@ -187,9 +187,9 @@ are not assigned new hit-testing behavior by this specification.
 
 ### 3.2 Scanner selection versus main selection
 
-Sources: `ChangeScanSel` in [util.c](../src/core/util.c), `ScannerWndProc`,
-`FGetNextObjHere`, `ShowScanSelChange` in [scan.c](../src/ui/scan.c),
-`ChangeMainObjSel`, `SelectAdjPlanet` in [planet.c](../src/core/planet.c).
+Sources: `ChangeScanSel` in [util.cpp](../src/core/util.cpp), `ScannerWndProc`,
+`FGetNextObjHere`, `ShowScanSelChange` in [scan.cpp](../src/ui/scan.cpp),
+`ChangeMainObjSel`, `SelectAdjPlanet` in [planet.cpp](../src/core/planet.cpp).
 
 `ChangeScanSel` mode 0 resolves the requested kind/point first; modes 1 and 2
 accept the supplied hit. On a changed `SCAN`, mode 0/1 promotes a present planet
@@ -238,7 +238,7 @@ for commit-before-navigation and reinitialization after a no-op target.
 
 ### 3.3 Find
 
-Sources: [scan.c](../src/ui/scan.c) `FindDlg`, `FSelectSz`.
+Sources: [scan.cpp](../src/ui/scan.cpp) `FindDlg`, `FSelectSz`.
 Canonical definitions: `Search`, `SkipSpaces`, `FleetDigits`, `ParseFleetNumber`, `FleetNumber`.
 
 Search precedence is exact planet name, existing own fleet number, exact fleet
@@ -304,10 +304,10 @@ waypoint indices use their current index. Narrow windows omit some status fields
 
 ## 4. Coordinates, zoom and panning
 
-Sources: [util.c](../src/core/util.c) `PtToScan`, `ScanToPt`;
-[scan.c](../src/ui/scan.c) conversion, scrolling, centering and gesture helpers;
-[nativeui.c](../src/ui/nativeui.c) `CWheelNotches`, `CWheelLines`;
-[mdi.c](../src/ui/mdi.c) zoom commands.
+Sources: [util.cpp](../src/core/util.cpp) `PtToScan`, `ScanToPt`;
+[scan.cpp](../src/ui/scan.cpp) conversion, scrolling, centering and gesture helpers;
+[nativeui.cpp](../src/ui/nativeui.cpp) `CWheelNotches`, `CWheelLines`;
+[mdi.cpp](../src/ui/mdi.cpp) zoom commands.
 
 | Zoom value | Label | Forward scale |
 | --- | --- | --- |
@@ -367,8 +367,8 @@ unsafe. Painting/capture interleavings remain S05 obligations.
 ## 5. Views, filters and overlays
 
 Sources: [enums.h](../src/core/enums.h) `ScanView`, `GrbitScan`;
-[scan.c](../src/ui/scan.c) `DrawScanner`, `CShipsScanVis`, `DrawScanFleetCount`,
-`DrawShipScanPath`; [tb.c](../src/ui/tb.c) `ExecuteButton`, `TerminateToolbarFocus`.
+[scan.cpp](../src/ui/scan.cpp) `DrawScanner`, `CShipsScanVis`, `DrawScanFleetCount`,
+`DrawShipScanPath`; [tb.cpp](../src/ui/tb.cpp) `ExecuteButton`, `TerminateToolbarFocus`.
 
 Six base views occupy the low nibble: normal, surface minerals, concentration,
 planet value, population, no player information. Choosing a view preserves
@@ -446,7 +446,7 @@ coordinates in the source; §7 records why pixel equivalence is not proved here.
 ## 6. Semantic scanner inspection and persistence
 
 Sources: [scaninspect.h](../src/ui/scaninspect.h),
-[scaninspect.c](../src/ui/scaninspect.c) `FScannerReady`, `FCaptureScanner`,
+[scaninspect.cpp](../src/ui/scaninspect.cpp) `FScannerReady`, `FCaptureScanner`,
 `FSelectScannerObject`, `FWriteScannerSnapshot`, `FreeScannerSnapshot`.
 
 Capture requires a live visible SDL scanner, nonzero game ID, active player in
@@ -484,8 +484,8 @@ API is UI-thread-only, not a concurrent host-data interface or a pixel visibilit
 oracle. `fOnScreen` tests the object's point, not its whole sprite or occlusion;
 `fFiltered` summarizes selected predicates, not exact raster output.
 
-`InitInstance` in [init.c](../src/ui/init.c) and `WriteIniSettings` in
-[mdi.c](../src/ui/mdi.c) own preference persistence. Zoom uses saved integer 1–9
+`InitInstance` in [init.cpp](../src/ui/init.cpp) and `WriteIniSettings` in
+[mdi.cpp](../src/ui/mdi.cpp) own preference persistence. Zoom uses saved integer 1–9
 mapped by minus five; mine mask is limited to four bits. Invalid radar values
 outside 0–100 become 100, mineral scale outside 100–30000 becomes 5000.
 `LoadZoom`, `LoadRadar`, `LoadMineralScale`, `LoadView` and
@@ -504,8 +504,8 @@ layout is introduced here.
 ### 6.1 Restoring selection after opening a turn
 
 Sources: `RestoreSelection` and `IDM_FRAME_POST_OPEN` in
-[mdi.c](../src/ui/mdi.c), `FFindSomethingAndSelectIt` in
-[util.c](../src/core/util.c). Canonical definitions are
+[mdi.cpp](../src/ui/mdi.cpp), `FFindSomethingAndSelectIt` in
+[util.cpp](../src/core/util.cpp). Canonical definitions are
 [`M07Restoration`](dafny/M07-restoration.dfy), using the shared
 [S06 lookup algorithms](S06-shared-game-state.md#native-lookup-adapters) and
 [M15 message traversal](M15-messages-and-reports.md#message-creation-filtering-and-navigation).
@@ -540,9 +540,9 @@ global search past a null fleet pointer is implied. `FleetTailAfterHoleIgnored`
 proves that changing entries after such a hole cannot change this choice.
 
 The callbacks are materially separate from requesting them. In
-[planet.c](../src/core/planet.c), `SelectAdjPlanet` can update only scanner
+[planet.cpp](../src/core/planet.cpp), `SelectAdjPlanet` can update only scanner
 selection for missing/incomplete planet details; foreign ownership can return
-without promotion. In [ship.c](../src/core/ship.c), `SelectAdjFleet` can update
+without promotion. In [ship.cpp](../src/core/ship.cpp), `SelectAdjFleet` can update
 only the scanner for a foreign fleet. Lookup also masks a saved fleet word to
 13 bits, while the subsequent selection call receives the original word. A
 found lookup for 8192 can therefore request 8192 rather than fleet 0. The saved
@@ -599,7 +599,7 @@ separate investigation; no safety theorem, fix or gameplay change is included.
 
 | Case | Required observation / evidence |
 | --- | --- |
-| Negative fractional zoom offsets | Preserve arithmetic-shift values -128/-256/-427/-512 for -341; `ArithmeticVectors`, `test_PtToScan_negative` in [test_util.c](../tests/unit/test_util.c). |
+| Negative fractional zoom offsets | Preserve arithmetic-shift values -128/-256/-427/-512 for -341; `ArithmeticVectors`, `test_PtToScan_negative` in [test_util.cpp](../tests/unit/test_util.cpp). |
 | Inverse fractional scaling overflows its short numerator | Keep narrowing before division; 4096 at 38% gives -10922 in the model. |
 | Two half-notches / direction reversal | One notch and zero remainder / discard old-direction remainder; `ArithmeticVectors`. |
 | Drag reaches only one axis threshold | Pan starts; before both thresholds it does not. Click selection may already have occurred. |
@@ -610,14 +610,14 @@ separate investigation; no safety theorem, fix or gameplay change is included.
 | Decline adjacent-waypoint deletion | Keep the order; do not promise rollback of active waypoint selection. |
 | Snapshot from another game/year/player | Reject; unchanged key still requires current ID resolution. |
 | Capture and select/reveal | Copy every planet, preserve main selection/orders, resolve coordinate transforms and reject invalid ID; existing startup harness. |
-| Snapshot Unicode, quotes and controls | Preserve valid UTF-8/escaping, reject malformed names; [test_encoding.c](../tests/unit/test_encoding.c) and startup harness. |
+| Snapshot Unicode, quotes and controls | Preserve valid UTF-8/escaping, reject malformed names; [test_encoding.cpp](../tests/unit/test_encoding.cpp) and startup harness. |
 | Population exactly at a threshold / count above 999 | Advance the population radius bucket / cap count label; formal boundary witnesses. |
 | Cancel filter/search/context menu | Respect distinct cancellation effects described above; no blanket transaction guarantee. |
 
-The [startup harness](../tests/compat/win32_client_startup.c) contains scanner
+The [startup harness](../tests/compat/win32_client_startup.cpp) contains scanner
 capture/reveal/stale-turn checks, toolbar/popup and scrollbar assertions,
 Shift-click append and waypoint drag workflows. The
-[SDL tutorial](../tests/compat/native_tutorial.c) contains map selection and
+[SDL tutorial](../tests/compat/native_tutorial.cpp) contains map selection and
 scanner-view checkpoints; it remains partial. These are implementation evidence,
 not exhaustive coverage of the acceptance matrix or proof of C/model equivalence.
 

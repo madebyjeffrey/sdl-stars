@@ -63,7 +63,7 @@ be treated as a separately committed record or as information known to every pla
 
 ### Message creation, filtering and navigation
 
-[msg.c](../src/core/msg.c) packages event messages with catalog-declared argument
+[msg.cpp](../src/core/msg.cpp) packages event messages with catalog-declared argument
 counts. No recipient suppresses emission successfully; most messages to ordinary
 AI are suppressed, with specific loss/combat exceptions and different Maid
 behavior. Buffer-capacity failure differs from suppression. S01 owns compact
@@ -114,7 +114,7 @@ not prove those callback effects or assume they leave the cursor unchanged.
 
 ### Player-message drafts
 
-[msgui.c](../src/ui/msgui.c) `FFinishPlrMsgEntry` reads bounded text when navigating
+[msgui.cpp](../src/ui/msgui.cpp) `FFinishPlrMsgEntry` reads bounded text when navigating
 or finishing a draft. Empty text, or explicit delete sentinel 1000, removes the
 current draft and adjusts the cursor (`FinishDraft`). Nonempty text is compressed
 when beneficial, otherwise stored with the raw-length sign convention; edits
@@ -126,7 +126,7 @@ modal Cancel transaction is implied.
 
 ### Reports, caches and exports
 
-[reportui.c](../src/ui/reportui.c) `SortReportCache` builds planet rows only for
+[reportui.cpp](../src/ui/reportui.cpp) `SortReportCache` builds planet rows only for
 owned full-detail planets (`PlanetRow`), own fleet rows, known enemy fleet rows
 capped at 1020 (`EnemyRows`), or recorded battle rows. Enemy/battle reports share
 a miscellaneous cache and invalidate each other. Sorting uses `ICompReport` and
@@ -135,7 +135,7 @@ choices and sort direction persist through S02. `InvalidateReport` distinguishes
 cache reload from redraw; report row indices are not entity IDs.
 
 `ExecuteReportClick` opens corresponding object/detail workflows. Scoring/history
-views consume recorded score fields and victory settings. [report.c](../src/core/report.c)
+views consume recorded score fields and victory settings. [report.cpp](../src/core/report.cpp)
 `DumpUniverse`, `DumpPlanets`, `DumpFleets`, `FDumpCmdLineGame` write viewpoint-
 appropriate reports with S01's column/encoding contract. Missing knowledge stays
 unknown or estimated; export must not be described as a host-authoritative full
@@ -213,7 +213,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 
 ## 7. Evidence and verification
 
-[report unit tests](../tests/unit/test_report.c), [message source](../src/core/msg.c), [report source](../src/core/report.c) and [client workflows](../tests/compat/win32_client_startup.c). Broad native regression does not cover every UI column/filter combination.
+[report unit tests](../tests/unit/test_report.cpp), [message source](../src/core/msg.cpp), [report source](../src/core/report.cpp) and [client workflows](../tests/compat/win32_client_startup.cpp). Broad native regression does not cover every UI column/filter combination.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the

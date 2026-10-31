@@ -1,5 +1,8 @@
 # Milestone A compilation and linkage inventory
 
+Follow-on removal work: [Milestone C](CPP-MILESTONE-C.md), with actual progress in
+[the C implementation ledger](CPP-C-IMPLEMENTATION.md). A/B receipts below remain historical.
+
 Implementation: [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64), ticket #63. A01–A13 are checkpoints in one PR against `develop`.
 Original source filenames are retained; CMake source languages determine compilation.
 

@@ -19,7 +19,7 @@ def between(source, start, end):
 
 
 def main():
-    init = (ROOT / "src/ui/init.c").read_text()
+    init = (ROOT / "src/ui/init.cpp").read_text()
     selection = between(init, "    if (cch < 3) {", "    CchGetString(idsMessage, szEntry);")
     identity = between(init, "    ini.lid = 0;", "    CchGetString(idsScanzoom, szEntry);")
     recent = between(init, "    if (cch > 3) {", "    CchGetString(idsTurn, szEntry);")
@@ -78,8 +78,8 @@ static int checks;
         + "static void identity(const char *szWork) { int cch=(int)strlen(szWork),i;\n" + identity + "}\n"
         + 'static void recent(void) { const char *first=startupInput ? startupInput : inputs[0]; int cch=(int)strlen(first),i,iPass; char szWork[256],szEntry[16]="File1",szSection[16]="Files",szIniFile[16]="stars.ini",*psz; strcpy(szWork,first);\n'
         + recent + "}\n"
-        + function("src/ui/fileui.c", "void AddMRUFile(") + "\n"
-        + function("src/ui/libraryui.c", "static int16_t FDeleteLibraryGameRecentPaths(")
+        + function("src/ui/fileui.cpp", "void AddMRUFile(") + "\n"
+        + function("src/ui/libraryui.cpp", "static int16_t FDeleteLibraryGameRecentPaths(")
     )
     witnesses = r'''
 int main(void) {
@@ -126,7 +126,7 @@ int main(void) {
         binary = Path(work) / "witness"
         source.write_text(declarations + bodies + witnesses)
         subprocess.run(shlex.split(os.environ.get("CXX", "c++")) +
-                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++", "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-Wall", "-Wextra", "-Werror", "-Wno-misleading-indentation", "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
                         str(source), "-o", str(binary)], check=True)
         subprocess.run([str(binary)], check=True)
 

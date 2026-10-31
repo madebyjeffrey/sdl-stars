@@ -64,7 +64,7 @@ not copied into this control. Microsoft documents the
 [toolbar interface](https://learn.microsoft.com/en-us/windows/win32/controls/toolbar-controls-overview)
 and [dropdown notification](https://learn.microsoft.com/en-us/windows/win32/controls/tbn-dropdown).
 
-`tests/compat/win32_toolbar.c` shares ABI and behavior checks with the actual
+`tests/compat/win32_toolbar.inc` shares ABI and behavior checks with the actual
 MinGW/Windows common control. Native additions check keyboard dropdowns, copied
 bitmap lifetime, tooltip position/role/focus and cleanup. Native pixel checks
 also verify the split button's independent beveled frames.

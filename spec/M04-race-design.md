@@ -110,7 +110,7 @@ decisions belong to
 [M02 Race Library](M02-race-library.md#33-find-versions-and-choose-a-save-target).
 Normalization can mutate the design during point calculation and display.
 Sources: `RaceCreationWizard`, `DrawRaceAdvantagePoints` in
-[raceui.c](../src/ui/raceui.c), `CAdvantagePoints` in [race.c](../src/core/race.c).
+[raceui.cpp](../src/ui/raceui.cpp), `CAdvantagePoints` in [race.cpp](../src/core/race.cpp).
 
 ## Workflow and completion
 
@@ -131,7 +131,7 @@ credentials, then either saves through the current library race / standalone
 save path or, with fDontWrite, returns success without saving. Read-only mode
 cannot finish a save. Cancel/dialog failure returns failure. Selecting Custom
 clears the Random template bit. Source: `RaceCreationWizard`, `RaceWizardDlg1`
-in [raceui.c](../src/ui/raceui.c).
+in [raceui.cpp](../src/ui/raceui.cpp).
 
 The historical calculation notes say fDontWrite is unused; **current source
 consults it**. Preserve the current behavior when implementing a new workflow.
@@ -155,7 +155,7 @@ The working race is shared mutable state; this specification does not claim
 that cancellation restores its original bytes. Library transaction guarantees
 and overwrite protection are documented in [M02](M02-race-library.md); M04 still
 needs the complete control/snapshot handoff audit.
-Source: [raceui.c](../src/ui/raceui.c), [library ADR](../docs/adr/0001-desktop-managed-libraries.md).
+Source: [raceui.cpp](../src/ui/raceui.cpp), [library ADR](../docs/adr/0001-desktop-managed-libraries.md).
 
 ## Interactions and proposed ownership
 
@@ -170,7 +170,7 @@ Source: [raceui.c](../src/ui/raceui.c), [library ADR](../docs/adr/0001-desktop-m
 
 These are logical ownership proposals following the [module map](README.md),
 not evidence of isolated code modules. Sources: [library ADR](../docs/adr/0001-desktop-managed-libraries.md),
-`GenerateWorld` in [create.c](../src/core/create.c),
+`GenerateWorld` in [create.cpp](../src/core/create.cpp),
 [predefined races](../data/races/predefined.yaml).
 
 ## Observable acceptance criteria
@@ -187,14 +187,14 @@ not evidence of isolated code modules. Sources: [library ADR](../docs/adr/0001-d
    unchanged. Every pricing input in the data model can be retained in Rust/SQL.
 
 Existing evidence includes the binary64 witness and high-bit/Custom regressions
-in [test_race.c](../tests/unit/test_race.c). Criteria 2, 4 and 5 require broader
+in [test_race.cpp](../tests/unit/test_race.cpp). Criteria 2, 4 and 5 require broader
 workflow/port coverage; listing them does not claim a new test has passed.
 
 ## Evidence and open questions
 
-Owning sources: [race.c](../src/core/race.c), [raceui.c](../src/ui/raceui.c),
-[planet.c](../src/core/planet.c), [enums.h](../src/core/enums.h),
-[structs.h](../src/core/structs.h), [test_race.c](../tests/unit/test_race.c).
+Owning sources: [race.cpp](../src/core/race.cpp), [raceui.cpp](../src/ui/raceui.cpp),
+[planet.cpp](../src/core/planet.cpp), [enums.h](../src/core/enums.h),
+[structs.h](../src/core/structs.h), [test_race.cpp](../tests/unit/test_race.cpp).
 Historical context: [calculation notes](../docs/RACE-WIZARD-CALCULATIONS.md),
 [current binary64 contract](../docs/DOUBLE-PRECISION.md).
 

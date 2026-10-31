@@ -83,14 +83,14 @@ void KillQueuedShips(PLANET *p){shipKills++;NativeKillQueuedShips(p);}
 void KillQueuedMassPackets(PLANET *p){packetKills++;NativeKillQueuedMassPackets(p);}
 #define CHECK(x) do{checks++;if(!(x)){fprintf(stderr,"construction witness %d: %s\n",checks,#x);return 1;}}while(0)
 '''
-    bodies='\n'.join(function('src/core/memory.c',s) for s in ['PL *LpplAlloc(','PL *LpplReAlloc(','void FreePl('])+'\n'
-    bodies+=function('src/core/thing.c','THING *LpthNew(')+'\n'
-    bodies+=function('src/core/utilgen.c','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
-    bodies+=next(line for line in (ROOT/'src/core/race.c').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
-    bodies+=function('src/core/race.c','int16_t GetRaceGrbit(')+'\n'
+    bodies='\n'.join(function('src/core/memory.cpp',s) for s in ['PL *LpplAlloc(','PL *LpplReAlloc(','void FreePl('])+'\n'
+    bodies+=function('src/core/thing.cpp','THING *LpthNew(')+'\n'
+    bodies+=function('src/core/utilgen.cpp','int16_t STARS_TEST_IMPL(Random)(').replace('int16_t STARS_TEST_IMPL(Random)(', 'static int16_t NativeRandom(',1)+'\n'
+    bodies+=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))+'\n'
+    bodies+=function('src/core/race.cpp','int16_t GetRaceGrbit(')+'\n'
     for name in ['KillQueuedShips','KillQueuedMassPackets']:
-        bodies+=function('src/core/build.c','void '+name+'(').replace('void '+name+'(', 'static void Native'+name+'(',1)+'\n'
-    bodies+='\n'.join(function('src/core/turn2.c',s) for s in ['int16_t FBuildObject(','void CreateShip(','int16_t CBuildProdItem(','void Produce('])
+        bodies+=function('src/core/build.cpp','void '+name+'(').replace('void '+name+'(', 'static void Native'+name+'(',1)+'\n'
+    bodies+='\n'.join(function('src/core/turn2.cpp',s) for s in ['int16_t FBuildObject(','void CreateShip(','int16_t CBuildProdItem(','void Produce('])
     witnesses=r'''
 static PROD row(unsigned count,unsigned item,unsigned kind,unsigned pct){PROD r={};r.cItem=count;r.iItem=item;r.grobj=kind;r.pct=pct;r.unused=31;return r;}
 static void reset(void){
@@ -257,7 +257,7 @@ def main():
         # Existing reconstructed bodies have an unused resource parameter and
         # corresponding signed/unsigned cost-pointer convention; match project
         # warning exclusions while making other warnings and sanitizers fatal.
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all',
             '-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)

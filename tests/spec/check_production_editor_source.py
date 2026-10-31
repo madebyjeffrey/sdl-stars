@@ -20,7 +20,7 @@ from check_s02_state_source import between
 def main():
     types = (ROOT / 'src/core/structs.h').read_text()
     enums = enum_source()
-    ui = function('src/ui/produceui.c', 'void ProdCommandHandler(')
+    ui = function('src/ui/produceui.cpp', 'void ProdCommandHandler(')
     declarations = r'''
 #include <stdint.h>
 #include <stdio.h>
@@ -110,10 +110,10 @@ static void FillProdSrcLB(HWND hwnd,int value) {(void)hwnd;(void)value;sourceFil
 static void MessageBeep(int value) {(void)value;beeps++;}
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s\n",checks,#x);return 1;}}while(0)
 '''
-    bodies = function('src/core/memory.c','PL *LpplAlloc(')+'\n'
-    bodies += function('src/core/memory.c','PL *LpplReAlloc(')+'\n'
-    bodies += function('src/core/memory.c','void FreePl(')+'\n'
-    bodies += '#define memcpy guardedMemcpy\n'+function('src/core/produce.c','void InitProduction(')+'\n#undef memcpy\n'
+    bodies = function('src/core/memory.cpp','PL *LpplAlloc(')+'\n'
+    bodies += function('src/core/memory.cpp','PL *LpplReAlloc(')+'\n'
+    bodies += function('src/core/memory.cpp','void FreePl(')+'\n'
+    bodies += '#define memcpy guardedMemcpy\n'+function('src/core/produce.cpp','void InitProduction(')+'\n#undef memcpy\n'
     block = between(ui,'    case IDC_PRODUCTION_ADD:', '    case IDC_PRODUCTION_CLEAR:')
     move = between(ui,'    case IDC_PRODUCTION_ITEM_DOWN:', '    case IDC_HELP:')
     bodies += '''static void command(int cmd) {
@@ -234,7 +234,7 @@ int main(void) {
         source=Path(work)/'witness.cpp';binary=Path(work)/'witness'
         source.write_text(declarations + storage_declarations(allocate=True, resize=True, free=True) + bodies + storage_definitions('(void)lp;return lastBytes;', allocate=True, resize=True, free=True) + witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX','c++'))+
-                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-fsanitize=address,undefined','-fno-sanitize-recover=all',
+                       ['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-fsanitize=address,undefined','-fno-sanitize-recover=all',
                         str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

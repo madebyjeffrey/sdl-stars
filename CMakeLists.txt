@@ -39,67 +39,36 @@ endif()
 # here only if the command-line host needs it; dialogs and drawing go
 # in STARS_UI_SOURCES and use the SDL wrapper.
 set(STARS_CORE_SOURCES
-    src/core/ai.c src/core/ai2.c src/core/ai3.c src/core/ai4.c src/core/aiutil.c src/core/battle.c src/core/build.c src/core/create.c src/core/file.c src/core/globals.c
-    src/core/log.c src/core/memory.c src/core/mine.c src/core/msg.c src/platform/native.c src/core/parts.c src/core/planet.c src/core/produce.c src/core/race.c
-    src/core/report.c src/core/research.c src/core/save.c src/core/ship.c src/core/ship2.c src/core/strings.c
-    src/core/thing.c src/core/turn.c src/core/turn2.c src/core/turn3.c src/core/util.c src/core/utilgen.c
+    src/core/ai.cpp src/core/ai2.cpp src/core/ai3.cpp src/core/ai4.cpp src/core/aiutil.cpp src/core/battle.cpp src/core/build.cpp src/core/create.cpp src/core/file.cpp src/core/globals.cpp
+    src/core/log.cpp src/core/memory.cpp src/core/mine.cpp src/core/msg.cpp src/platform/native.cpp src/core/parts.cpp src/core/planet.cpp src/core/produce.cpp src/core/race.cpp
+    src/core/report.cpp src/core/research.cpp src/core/save.cpp src/core/ship.cpp src/core/ship2.cpp src/core/strings.cpp
+    src/core/thing.cpp src/core/turn.cpp src/core/turn2.cpp src/core/turn3.cpp src/core/util.cpp src/core/utilgen.cpp
 )
 
 # The shared desktop UI, implemented through the SDL Win32 wrapper.
 set(STARS_UI_SOURCES
-    src/ui/battleui.c src/ui/buildui.c src/ui/createui.c src/ui/fileui.c src/ui/globalsui.c src/ui/init.c src/ui/logui.c src/ui/libraryui.c src/ui/libraryzip.c src/ui/mdi.c
-    src/ui/mineui.c src/ui/msgui.c src/ui/nativeui.c src/ui/planetui.c src/ui/planetpaneui.c src/ui/popup.c src/ui/produceui.c src/ui/raceui.c
-    src/ui/reportui.c src/ui/researchui.c src/ui/scan.c src/ui/scaninspect.c src/ui/ship2ui.c src/ui/shipui.c src/ui/stars.c src/ui/tb.c src/ui/thingui.c
-    src/ui/tutor.c src/ui/tutor2.c src/ui/utilgenui.c src/ui/utilui.c src/ui/vcr.c
+    src/ui/battleui.cpp src/ui/buildui.cpp src/ui/createui.cpp src/ui/fileui.cpp src/ui/globalsui.cpp src/ui/init.cpp src/ui/logui.cpp src/ui/libraryui.cpp src/ui/libraryzip.cpp src/ui/mdi.cpp
+    src/ui/mineui.cpp src/ui/msgui.cpp src/ui/nativeui.cpp src/ui/planetui.cpp src/ui/planetpaneui.cpp src/ui/popup.cpp src/ui/produceui.cpp src/ui/raceui.cpp
+    src/ui/reportui.cpp src/ui/researchui.cpp src/ui/scan.cpp src/ui/scaninspect.cpp src/ui/ship2ui.cpp src/ui/shipui.cpp src/ui/stars.cpp src/ui/tb.cpp src/ui/thingui.cpp
+    src/ui/tutor.cpp src/ui/tutor2.cpp src/ui/utilgenui.cpp src/ui/utilui.cpp src/ui/vcr.cpp
 )
 
-# Preserve the original filenames while compiling the game as C++. The SDL
-# compatibility runtime, generated tables and ordinary harnesses also use C++.
-set_source_files_properties(${STARS_CORE_SOURCES} ${STARS_UI_SOURCES}
-    src/host/host.c src/host/hostui.c tests/unit/test_memory.c tests/unit/test_exceptions.c PROPERTIES LANGUAGE CXX)
-
-# Ordinary application consumers use C++; independent C/SDK fixtures retain C.
-file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
-    "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
-list(REMOVE_ITEM STARS_CPP_HARNESSES
-    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c"
-    "${PROJECT_SOURCE_DIR}/tests/compat/popup_payload_reference.c")
-set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX)
-
-# These unchanged C vectors also compile independently against the real SDK.
+# These unchanged shared vectors compile as C through independent SDK entries.
+# Their application entries use ordinary C++ source extensions.
 # Their C11 zero-initializer spelling is intentional; isolate only its C++
 # missing-field/braces diagnostics from ordinary C++ harnesses and production.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake")
 file(READ "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake" STARS_CPP_SDK_REFERENCE_CMAKE)
-string(REGEX MATCHALL "tests/compat/[A-Za-z0-9_]+\\.c" STARS_CPP_SDK_REFERENCE_NAMES "${STARS_CPP_SDK_REFERENCE_CMAKE}")
+string(REGEX MATCHALL "tests/compat/[A-Za-z0-9_]+\\.inc" STARS_CPP_SDK_REFERENCE_NAMES "${STARS_CPP_SDK_REFERENCE_CMAKE}")
 list(REMOVE_DUPLICATES STARS_CPP_SDK_REFERENCE_NAMES)
 set(STARS_CPP_SDK_SHARED_HARNESSES)
 foreach(STARS_CPP_SDK_REFERENCE_NAME IN LISTS STARS_CPP_SDK_REFERENCE_NAMES)
-    list(APPEND STARS_CPP_SDK_SHARED_HARNESSES "${PROJECT_SOURCE_DIR}/${STARS_CPP_SDK_REFERENCE_NAME}")
+    string(REGEX REPLACE "\\.inc$" ".cpp" STARS_CPP_SDK_REFERENCE_ENTRY "${STARS_CPP_SDK_REFERENCE_NAME}")
+    list(APPEND STARS_CPP_SDK_SHARED_HARNESSES "${PROJECT_SOURCE_DIR}/${STARS_CPP_SDK_REFERENCE_ENTRY}")
 endforeach()
 set_source_files_properties(${STARS_CPP_SDK_SHARED_HARNESSES} PROPERTIES
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
-
-# Source language belongs in the parent scope so private test clones inherit it.
-set_source_files_properties(compat/win32/src/rect.c compat/win32/src/time.c
-    compat/win32/src/system.c compat/win32/src/services.c compat/win32/src/memory.c
-    compat/win32/src/file.c compat/win32/src/profile.c compat/win32/src/document.c
-    compat/win32/src/audio.c PROPERTIES LANGUAGE CXX)
-
-set_source_files_properties(compat/win32/src/paint.c compat/win32/src/dib.c compat/win32/src/image.c compat/win32/src/font.c compat/win32/src/print.c compat/win32/src/resource.c PROPERTIES LANGUAGE CXX)
-
-set_source_files_properties(compat/win32/src/edit.c compat/win32/src/list.c compat/win32/src/combo.c compat/win32/src/control.c compat/win32/src/toolbar.c compat/win32/src/scroll.c compat/win32/src/menu.c compat/win32/src/accelerator.c PROPERTIES LANGUAGE CXX)
-
-set_source_files_properties(compat/win32/src/window.c compat/win32/src/message.c compat/win32/src/input.c compat/win32/src/timer.c compat/win32/src/dialog.c compat/win32/src/dialog_template.c compat/win32/src/inspect.c compat/win32/src/session.c compat/win32/src/help.c compat/win32/src/messagebox.c compat/win32/src/filedialog.c PROPERTIES LANGUAGE CXX)
-
-set_source_files_properties(compat/win32/src/entry.c compat/win32/src/filedialog_cocoa.c
-    compat/win32/src/filedialog_windows.c compat/win32/src/filedialog_windows_sdk.c
-    compat/win32/src/filedialog_portal.c PROPERTIES LANGUAGE CXX)
-if(APPLE)
-    set_source_files_properties(compat/win32/src/filedialog_cocoa.m PROPERTIES LANGUAGE OBJCXX)
-endif()
 
 # Error state and pending callback failures are shared by game and SDL runtime.
 add_library(stars_errors STATIC src/platform/errors.cpp)
@@ -112,8 +81,7 @@ add_library(stars_options INTERFACE)
 target_link_libraries(stars_options INTERFACE stars_sanitizers stars_errors)
 
 # Encoding boundaries are shared by the native host and SDL UI without game state.
-set_source_files_properties(src/platform/encoding.c PROPERTIES LANGUAGE CXX)
-add_library(stars_encoding STATIC src/platform/encoding.c)
+add_library(stars_encoding STATIC src/platform/encoding.cpp)
 target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
@@ -129,8 +97,8 @@ target_link_libraries(stars_filesystem PRIVATE "$<$<PLATFORM_ID:Windows>:bcrypt>
 add_library(stars_core OBJECT ${STARS_CORE_SOURCES})
 target_link_libraries(stars_core PUBLIC stars_options stars_encoding stars_filesystem "$<$<PLATFORM_ID:Windows>:shell32>")
 
-# The command-line host: the game code and src/host/host.c, no windows.
-add_executable(stars-host src/host/host.c src/host/hostui.c)
+# The command-line host: the game code and src/host/host.cpp, no windows.
+add_executable(stars-host src/host/host.cpp src/host/hostui.cpp)
 target_link_libraries(stars-host PRIVATE stars_core)
 set_target_properties(stars-host PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -316,7 +284,7 @@ target_link_libraries(stars_options INTERFACE m)
 option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
 if(STARS_BUILD_TESTS AND STARS_BUILD_SDL_CLIENT)
-    set_source_files_properties(compat/win32/src/memory.c PROPERTIES
+    set_source_files_properties(compat/win32/src/memory.cpp PROPERTIES
         COMPILE_DEFINITIONS STARS_TEST_MEMORY_OBSERVE=1)
 endif()
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
@@ -326,7 +294,7 @@ if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     target_compile_options(stars-test-enum-abi PRIVATE -Wall -Wextra -Werror)
     add_test(NAME test_enum_abi COMMAND stars-test-enum-abi)
     set_tests_properties(test_enum_abi PROPERTIES LABELS build TIMEOUT 30)
-    add_executable(stars-test-fileio tests/compat/fileio.c)
+    add_executable(stars-test-fileio tests/compat/fileio.cpp)
     target_link_libraries(stars-test-fileio PRIVATE stars_filesystem)
     target_compile_options(stars-test-fileio PRIVATE -Wall -Wextra -Wpedantic -Werror)
     add_test(NAME test_fileio_contract COMMAND stars-test-fileio)
@@ -383,7 +351,7 @@ if(STARS_BUILD_TESTS)
 endif()
 if(STARS_BUILD_SDL_CLIENT)
     if(STARS_BUILD_TESTS)
-        add_executable(stars-test-filesystem tests/compat/filesystem.c)
+        add_executable(stars-test-filesystem tests/compat/filesystem.cpp)
         target_link_libraries(stars-test-filesystem PRIVATE stars_filesystem)
         target_compile_options(stars-test-filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror)
         add_test(NAME win32_utf8_filesystem COMMAND stars-test-filesystem)
@@ -396,14 +364,14 @@ elseif(STARS_BUILD_TESTS)
     execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/scaffold/utf8_fixtures.py"
         "${PROJECT_SOURCE_DIR}/tests/scaffold/fixtures/newgame/tiny/humanoid.r1"
         "${STARS_TEST_DIR}/data/humanoid.r1" COMMAND_ERROR_IS_FATAL ANY)
-    file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.c")
+    file(GLOB STARS_UNIT_TESTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_*.cpp")
     # These tests need the desktop UI and its private file adapters.
-    list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_fileui.c")
+    list(REMOVE_ITEM STARS_UNIT_TESTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_ports.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/test_native_fileui.cpp")
     set(STARS_HOST_TEST_TARGETS)
     foreach(STARS_UNIT_TEST IN LISTS STARS_UNIT_TESTS)
         get_filename_component(STARS_TEST_NAME "${STARS_UNIT_TEST}" NAME_WE)
-        add_executable(${STARS_TEST_NAME} "${STARS_UNIT_TEST}" tests/unit/stars_test.c src/host/hostui.c)
+        add_executable(${STARS_TEST_NAME} "${STARS_UNIT_TEST}" tests/unit/stars_test.cpp src/host/hostui.cpp)
         target_link_libraries(${STARS_TEST_NAME} PRIVATE stars_core)
         target_include_directories(${STARS_TEST_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests/unit")
         target_compile_definitions(${STARS_TEST_NAME} PRIVATE STARS_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/unit/golden")

@@ -19,8 +19,8 @@ the [M08 entry](M08-planet-and-colony-management.md#4-acceptance-criteria-and-tr
 and [M19 entry](M19-game-rules-and-resolution.md#4-acceptance-and-traceability).
 [Collection evidence](README.md#mass-driver-capability-continuation) records checks.
 
-Source: [planet.c](../src/core/planet.c) `IWarpMAFromLppl`;
-[turn2.c](../src/core/turn2.c) `FBuildObject`, `Produce`;
+Source: [planet.cpp](../src/core/planet.cpp) `IWarpMAFromLppl`;
+[turn2.cpp](../src/core/turn2.cpp) `FBuildObject`, `Produce`;
 [structs.h](../src/core/structs.h) PLANET/SHDEF/HUL/HS;
 [enums.h](../src/core/enums.h) detail/category constants;
 [generated catalog inputs](../data/parts/starbase-specials.yaml) driver identities.

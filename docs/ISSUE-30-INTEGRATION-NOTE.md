@@ -3,7 +3,7 @@
 PR #22 was merged into `develop` at `b6d6cf8` before the UTF-8 branch was
 reconciled. Merging the updated `develop` into `codex/utf8-application-text`
 exposed conflicts in `CHANGELOG.md`, `cmake/macos-client-tests.cmake`,
-`src/platform/native.c`, `tests/compat/win32_utf8.c`, and `text/strings.txt`.
+`src/platform/native.cpp`, `tests/compat/win32_utf8.cpp`, and `text/strings.txt`.
 The combined macOS test configuration also included the same test file twice,
 which was not reported as a textual merge conflict.
 

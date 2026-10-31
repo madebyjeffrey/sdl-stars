@@ -63,7 +63,7 @@ AI difficulty and score are player state and are unnecessary for race pricing.
 Names, portrait, credentials and leftover allocation do not affect point balance.
 Library race-version identifiers are metadata, not race settings or player slots.
 Sources: [`PLAYER`](../src/core/structs.h), `CAdvantagePoints` in
-[race.c](../src/core/race.c), [library ADR](../docs/adr/0001-desktop-managed-libraries.md).
+[race.cpp](../src/core/race.cpp), [library ADR](../docs/adr/0001-desktop-managed-libraries.md).
 
 | Data | Pricing input? | Design purpose |
 | --- | --- | --- |
@@ -95,8 +95,8 @@ Require `minimum < maximum` for a safe new calculator; the C bounds corrector
 can leave width zero, which causes division by zero. Width one is safe: midpoint
 is at minimum, and the zero-width lower half is not selected by an in-range point.
 Normal wizard controls aim to keep interval widths at least 20; that is not a
-universal import constraint. Source: `BoundsCheckPlayer` in [race.c](../src/core/race.c),
-`PctPlanetDesirability` in [planet.c](../src/core/planet.c).
+universal import constraint. Source: `BoundsCheckPlayer` in [race.cpp](../src/core/race.cpp),
+`PctPlanetDesirability` in [planet.cpp](../src/core/planet.cpp).
 
 Price coordinates directly. Physical display conversions are:
 
@@ -106,7 +106,7 @@ Price coordinates directly. Physical display conversions are:
   `v=200+24*(d-25)`. If `x<50`, set `v=10000/v` with integer division.
   Display `v/100` and two-digit `v%100` as g.
 
-Source: `PszCalcEnvVar`, `PszCalcGravity` in [planet.c](../src/core/planet.c).
+Source: `PszCalcEnvVar`, `PszCalcGravity` in [planet.cpp](../src/core/planet.cpp).
 
 ## Attribute slots and bounds
 
@@ -136,12 +136,12 @@ initializers are zero, including reserved slot 15.
 Research: 0 = 75% extra cost, 1 = standard, 2 = 50% reduced cost. These are cost
 choices, not attained technology levels. Growth is a separate i8 field, 1..20.
 Source: `RaceStat` in [enums.h](../src/core/enums.h), bounds and `SetRaceStat`
-in [race.c](../src/core/race.c), `RaceWizardDlg6` in [raceui.c](../src/ui/raceui.c).
+in [race.cpp](../src/core/race.cpp), `RaceWizardDlg6` in [raceui.cpp](../src/ui/raceui.cpp).
 
 Leftover choices: 0 surface minerals, 1 mineral concentrations, 2 mines,
 3 factories, 4 defenses. Values 5/6 take the surface-minerals default. Choice
 has no point price. M05 consumes at most 50 remaining points for a human's
-starting bonus; see `GenerateWorld` in [create.c](../src/core/create.c) and
+starting bonus; see `GenerateWorld` in [create.cpp](../src/core/create.cpp) and
 [historical bonus details](../docs/RACE-WIZARD-CALCULATIONS.md#leftover-points-and-related-gameplay-quantities).
 
 ## Primary traits
@@ -191,8 +191,8 @@ Use `1u32 << bit`, especially for bit 31. Only 0..13 enter lesser-trait count
 penalties. Bit 30 causes M05 to generate a new race, so a template's directly
 calculated balance is not the final generated race price. Source: `RaceGrbit`,
 `RaceTraitBits` in [enums.h](../src/core/enums.h); `CAdvantagePoints`,
-`CreateRandomRace` in [race.c](../src/core/race.c); `GenerateWorld` in
-[create.c](../src/core/create.c); `RaceWizardDlg1` in [raceui.c](../src/ui/raceui.c).
+`CreateRandomRace` in [race.cpp](../src/core/race.cpp); `GenerateWorld` in
+[create.cpp](../src/core/create.cpp); `RaceWizardDlg1` in [raceui.cpp](../src/ui/raceui.cpp).
 
 ## Optional credential interoperability
 
@@ -203,8 +203,8 @@ modulo 2^32. Empty input returns zero; nonempty final zero becomes one.
 Reinterpret final bits as i32. The UI password buffer allows 15 UTF-8 bytes
 plus NUL. This game hash is not suitable as a service login password hash.
 Legacy credential replacement policy belongs to M02/S01, not this data model.
-Source: `LSaltFromSz` in [utilgen.c](../src/core/utilgen.c),
-`RaceWizardDlg1` in [raceui.c](../src/ui/raceui.c).
+Source: `LSaltFromSz` in [utilgen.cpp](../src/core/utilgen.cpp),
+`RaceWizardDlg1` in [raceui.cpp](../src/ui/raceui.cpp).
 
 ## Proposed Rust representation
 

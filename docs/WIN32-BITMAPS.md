@@ -28,7 +28,7 @@ usable. `--self-test` checks the same path automatically.
 checking pixels and ownership. Its source is also compiled as the Windows
 `test_win32_bitmap_reference` target, using the actual SDK and GDI under Wine.
 Useful breakpoints are `CreateCompatibleDC`, `SelectObject`, `BitBlt` and
-`DeleteDC` in `compat/win32/src/paint.c`.
+`DeleteDC` in `compat/win32/src/paint.cpp`.
 
 ## Supported behavior
 
