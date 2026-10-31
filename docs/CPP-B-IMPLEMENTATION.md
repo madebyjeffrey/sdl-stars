@@ -1,6 +1,6 @@
 # Milestone B implementation ledger
 
-Status: implementation active. Tracking: [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65); implementation [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
+Status: complete; all B01–B14 checkpoints and the final verification gate passed. Tracking: [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65); implementation [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
 Base: `develop` at `417e526`, after milestone A merged in #64.
 
 The complete [milestone B plan](CPP-MIGRATION.md#milestone-b-ownership-records-and-standard-c)
@@ -19,12 +19,12 @@ its own verification evidence. An active or pending checkpoint is not completion
 | B08: fleet/identifier payloads | Complete | Explicit snapshot/ID/ship-transfer codecs, scalar aliases and preserved reader/replay effects pass the full local matrix and all 16 Linux/Windows checks for d91f49a. |
 | B09: battle/AI payloads | Complete | Battle, AI history and battle-plan families pass the full local matrix and all 16 Linux/Windows checks for 2812b24. |
 | B10: message/log payloads | Complete | All player, parameter, control and cargo families pass the full local matrix and all 16 Linux/Windows checks for 17f8bf5. |
-| B11: remaining packed/resource layouts | Active | Every inventoried family, alias and SDK/resource adapter is implemented and passes the final strict local matrix. Final revision platform qualification remains. |
-| B12: typed stable game arenas | Active | Typed pools, ZIP/library arrays, heap chains, print/native temporaries and cleanup are implemented and pass the final strict local matrix. Final revision platform qualification remains. |
-| B13: application/session owner | Active | State/RNG/file/heap ownership, close/restart, primary-error handling, async handoffs and archived-observer type accounting pass the final strict local matrix. Final revision platform qualification remains. |
-| B14: strict C++20 gate | Active | ISO C++20, strict production variants and standalone headers are enforced. Final local matrix and 30 MinGW/GCC core syntax checks pass; final Linux/Windows CI remains. |
+| B11: remaining packed/resource layouts | Complete | Every inventoried family, alias and SDK/resource adapter passes the final strict local matrix and all 16 Linux/Windows checks at d5a4eb2. |
+| B12: typed stable game arenas | Complete | Typed pools, ZIP/library arrays, heap chains, print/native temporaries and cleanup pass the final strict local matrix and all 16 Linux/Windows checks at d5a4eb2. |
+| B13: application/session owner | Complete | State/RNG/file/heap ownership, close/restart, primary-error handling, async handoffs and archived-observer type accounting pass the final strict local matrix and all 16 Linux/Windows checks at d5a4eb2. |
+| B14: strict C++20 gate | Complete | Strict ISO C++20 production variants and standalone headers, the final local matrix, 30 MinGW/GCC core syntax checks and all 16 Linux/Windows checks pass at d5a4eb2. |
 
-## Ownership changes in progress
+## Ownership foundations
 
 `src/platform/ownership.h` supplies move-only owners using the actual release
 routine. A view or borrowed selection never enters an owner. `release()` marks
@@ -1866,3 +1866,33 @@ all inputs and assertions without restoring suppressions. Shared SDK reference
 inputs are unchanged. Both complete regressions and Linux source/host gates
 passed for the allocation-hook revision; these harness corrections require fresh
 platform qualification.
+
+
+## Final milestone B completion receipt
+
+All B01–B14 checkpoints are complete. Final code revision `d5a4eb2` passes all
+16 Linux/Windows checks: ten desktop/host regression jobs, Linux desktop units,
+Windows SDL/SDK contracts, all source witnesses, Linux ASan/UBSan/LSan, host units
+and the available SDL tutorial checkpoints. Qualification runs:
+
+- [Unit, Windows, source and sanitizer gates](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41132249095).
+- [Desktop and host regressions](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41132249027).
+- [Available tutorial checkpoints](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41132248988).
+
+The corrected allocation-hook revision also passes the full local rerun:
+119/119 desktop tests (all 29 permanent native leaks gates), 26/26 host tests,
+43/43 sanitizer cases, zero Debug/Release/host/sanitizer compiler diagnostics,
+and both regressions at 519 matches / 25 accepted unused-storage warnings /
+zero differences/errors/skips. All 27 independent witnesses, 112 public headers
+in both include orders, 116 production sources / 1,358 strict compiled variants,
+and 30 MinGW/GCC core syntax checks are qualified. The two final Linux-only
+harness initializer corrections additionally pass strict MinGW/GCC syntax checks
+and the final Linux/Windows jobs above; their input values/assertions are unchanged.
+
+Fresh final desktop and host generation runs each report zero leaks / zero bytes
+under native macOS leaks; paired functional runs return the documented successful
+status 1 and leaks returns 0. Frozen C/SDK reference inputs, catalog/resource bytes
+and regression baselines remain unchanged. The full 80-page tutorial is still
+unfinished, and the archived native observer is type-checked rather than executed.
+These existing limits do not substitute for the available tutorial coverage.
+This final receipt changes documentation only after qualification of the code.

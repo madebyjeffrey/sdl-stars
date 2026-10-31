@@ -1,6 +1,6 @@
 # Native C++ application migration
 
-Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B implementation is active in [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65).
+Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B is complete in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66); the [implementation ledger](CPP-B-IMPLEMENTATION.md#final-milestone-b-completion-receipt) records its final qualification (ticket #65).
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
 Prerequisites: merged PRs [#57](https://github.com/madebyjeffrey/sdl-stars/pull/57),
@@ -211,11 +211,11 @@ C++ storage checks. Genuine foreign interfaces keep actual ABI tests.
 
 ## Milestone B: ownership, records and standard C++
 
-B01–B14 are being implemented as focused checkpoints in one PR, as requested on
-2026-10-29, following merged milestone A (#64). Their changes preserve the same
-external behavior and file contract. The [implementation ledger](CPP-B-IMPLEMENTATION.md)
-records active/completed checkpoints and measured evidence; pending rows remain
-in scope until the final strict C++20 gate passes.
+B01–B14 are implemented as focused checkpoints in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66),
+as requested on 2026-10-29, following merged milestone A (#64). Their changes
+preserve the file contract and deterministic baseline. The
+[implementation ledger](CPP-B-IMPLEMENTATION.md) records completed checkpoints,
+separately committed fixes and final strict C++20/platform qualification.
 
 | Checkpoint | Bounded scope | Additional completion evidence |
 | --- | --- | --- |

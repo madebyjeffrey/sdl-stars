@@ -32,8 +32,8 @@ files now unwind safely; injected read/load/save failures preserve the existing
 destination and permit retry. B02 local qualification and all 16 Linux/Windows
 checks pass for `d5de69e`. B03 adds const text/path/format/menu inputs and
 call-scoped UTF-8/output/byte views, retaining mutable scratch buffers and the
-legacy text-drawing output mode. Its full local matrix passes; platform CI is
-pending.
+legacy text-drawing output mode. Its full local matrix and all 16 Linux/Windows
+checks pass for `b799348`.
 
 ## C++ migration
 
@@ -45,9 +45,12 @@ Application headers have native C++ linkage and compile independently with
 standard headers in either order. Independent C storage and SDK references remain
 separate. The compilation audit reads sources and compiler manifests explicitly
 as UTF-8 so Windows locale settings do not affect qualification. Milestone B
-(ownership, wire codecs, state and ISO C++ storage) is being implemented as one
-PR under [#65](https://github.com/madebyjeffrey/sdl-stars/issues/65); GNU storage
-extensions and manual heaps are retained for now.
+(ownership, wire codecs, state and ISO C++ storage) is implemented in one
+[PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66), tracked by
+[#65](https://github.com/madebyjeffrey/sdl-stars/issues/65). Owned production uses
+strict ISO C++20; typed stable arenas retain the original allocation geometry.
+One application session owns game/UI state, RNG, heaps and native streams.
+Final platform qualification is recorded in the implementation ledger.
 
 Native `leaks` checks now exercise image/font/print ownership and allocation
 failure. `LpNewFontRaster` no longer triggers a second, unowned configuration

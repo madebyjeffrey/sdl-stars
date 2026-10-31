@@ -32,9 +32,9 @@ must not be reported as executable call counts. The report records:
   and bit-operation source line. Logical/runtime bit operations are retained as
   candidates rather than silently filtered out.
 - All 46 `RecordType` names, their numeric values and responsible checkpoints;
-  all twelve historical variable-tail dispositions below (one active zero-array
-  declaration and eleven migrated families);
-  the unused zero-storage `_ctype` declaration/definition (B14).
+  all twelve historical variable-tail dispositions below (zero active zero-array
+  declarations and twelve migrated families);
+  removal of the unused zero-storage `_ctype` declaration/definition (B14).
 - All 259 independent historical layout/prefix measurements. Those frozen C
   expectations remain unchanged while codecs replace native layout consumers.
   Runtime-only carriers can retire an owned footprint explicitly, with separate
@@ -47,7 +47,7 @@ bit operations and prefix expressions before retiring its old layout checks.
 The report is generated, rather than checking in thousands of duplicated source
 expressions that would become stale when unrelated lines move.
 
-## Family ownership and remaining consumers
+## Family ownership and boundaries
 
 | Family / source boundary | Responsibility | Checkpoint |
 | --- | --- | --- |
@@ -58,12 +58,12 @@ expressions that would become stale when unrelated lines move.
 | Fleets and ID lists | Explicit snapshot/count/cargo/damage codecs, zero-prefix byte ID views and signed ship-transfer logs; original split/merge traversal | B08 migrated |
 | Battle and AI | Explicit TOK/KILL/BTLDATA/event codecs and scoped byte views; AI history/word views preserve live traversal and original scratch/opaque bytes | B09 migrated, full qualification complete |
 | Messages and logs | Player/generated messages and log/control prefixes use explicit codecs; strings/filters retain existing byte encoding. Cargo transfer quantities use explicit 8/16/32-bit byte views with original lookup/read ordering | B10 migrated, full qualification complete |
-| Remaining fixed game records | THING/PLAYER/PLANET/preferences use explicit codecs and fields; component/popup runtime aliases are migrated locally; transfer storage remains in progress | B11 |
-| Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 stream families locally qualified; entity/resource work remains |
-| Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Bounded menu/dialog/accelerator bytes and explicit DIB/icon/cursor headers; native GDI SDK input isolated in FCompatNativeDib; ownership stays module-scoped | B11 locally qualified |
-| Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12, with family prerequisites |
-| FreeType/Fontconfig/Cairo/zlib/SDL and actual OS SDK layouts | Genuine foreign seams; external decoders remain in their adapters; owned byte parsing still belongs above | B11 adapter review / B14 isolation |
-| Global stream/game/RNG/UI roots | One session owner, deterministic reset/shutdown and callback stop order | B13 |
+| Remaining fixed game records | THING/PLAYER/PLANET/preferences use explicit codecs and fields; component/popup aliases and transfer scratch have explicit runtime storage | B11 migrated |
+| Record stream boundary in `file.c` / `save.c` | Explicit HDR/BOF words, XOR and EOF scalars; partial read/write and callback effects preserved | B11 migrated |
+| Wrapper resources in `resource.c`, `dialog.c`, `accelerator.c`, `image.c`, `dib.c` | Bounded menu/dialog/accelerator bytes and explicit DIB/icon/cursor headers; native GDI SDK input isolated in FCompatNativeDib; ownership stays module-scoped | B11 migrated |
+| Remaining runtime copies/casts and packed storage | Generic PL, heaps/pools, UI/control payloads, pointer/stride identities and aliases; no wire assumption | B12 implemented |
+| FreeType/Fontconfig/Cairo/zlib/SDL and actual OS SDK layouts | Genuine foreign seams; external decoders remain in their adapters; owned byte parsing still belongs above | B11 reviewed / B14 isolated |
+| Global stream/game/RNG/UI roots | One session owner, deterministic reset/shutdown and callback stop order | B13 implemented |
 
 Direct `ReadRt`/`WriteRt` and raw `RgFromStream`/`RgToStream` consumers remain
 indexed until all families have moved. `RawLoad16/32` and `RawStore16/32` still
@@ -83,7 +83,7 @@ are while the runtime representation changes.
 | BTLREC.rgkill | Six-byte wire prefix + ctok × eight-byte KILL; scoped arena byte views | B09 battle migrated |
 | BTLREC26.rgkill | Six-byte legacy prefix + ctok × eight-byte KILL; explicit legacy conversion | B09 battle migrated |
 | MSGPLR.rgbMsg | Typed runtime header + byte array over physical slot capacity; native next pointer stays runtime-only | B10 player family migrated |
-| PL.rgb | Four-byte runtime prefix + iMax × cbItem; iMac live items; pooled/reset lifetime | B12 |
+| PL.rgb | Four-byte runtime prefix + iMax × cbItem; iMac live items; pooled/reset lifetime | B12 migrated |
 | PLPROD.rgprod | Four-byte runtime prefix + iprodMax × four-byte PROD; iprodMac live items; rtProdQ wire prefix is zero | B05 migrated |
 | RTCHGPRODQ.rgprod | Two-byte ID prefix + payload-derived four-byte PROD items | B05/B06 |
 | RTSHDEF.rghs | Seventeen-byte wire prefix + chs × four-byte HS | B07 |
@@ -191,9 +191,9 @@ minimum metadata measurements; RTXFERF retains its nine-byte measurement.
 Their actual wire prefixes are six/six/six/seven bytes, followed by mask-selected
 signed quantities of width one/two/four/two. No production consumer traverses
 these fields as variable arrays: explicit codecs/views read/write the bytes.
-The first three families migrate in B10; ship transfer migrated in B08.
-These declarations retain frozen measurements while B11 finishes packing/layout
-retirement; they are not a new runtime variable-storage scheme.
+The first three families migrated in B10; ship transfer migrated in B08.
+These declarations retain frozen measurements after B11's packing/layout audit;
+they are not a runtime variable-storage scheme.
 
 
 B11 stream-header family: explicit two-byte codecs now serve file/memory logs,

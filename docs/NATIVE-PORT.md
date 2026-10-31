@@ -23,7 +23,7 @@ previous metadata. The command-line host never resolves or requires this library
 
 The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
 The shared game also builds as `stars-host`, independently of SDL. Owned production
-and ordinary test translation units compile as GNU C++20 under their original
+and ordinary test translation units compile as ISO C++20 under their original
 source filenames; AppKit glue compiles as Objective-C++20. Independent C storage
 fixtures, real SDK contract tests and third-party libraries remain separate.
 
@@ -37,7 +37,10 @@ on failure. Canonical paths use forward slashes. Temporary directories are
 claimed atomically. Native adapters still supply exclusive creation, sharing,
 exact private modes, durable writes and live-handle identity/truncation.
 CMake preserves signed `char`, binary64 operation boundaries and contraction/
-fast-math settings. GNU storage extensions remain until milestone B.
+fast-math settings. Owned production disables language extensions and enforces
+strict diagnostics. Explicit record codecs preserve wire layouts independently
+of the inventoried private runtime packing and physical arena geometry; the
+[B ledger](CPP-B-IMPLEMENTATION.md) records final platform qualification.
 
 Stored enums have explicit C++ underlying types (`uint16_t`, `int16_t` or
 `uint32_t`) with their original constant and type names. Text/data generators
@@ -115,7 +118,7 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   paths with `chDirSep`. The adapters forward to `fileio.h`/`fileio.cpp`, shared
   with profiles, help, PDF output, inspection and managed-library operations.
   `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
-  directory enumeration and publication. C-compatible opaque streams contain
+  directory enumeration and publication. Opaque stream adapters contain
   exceptions and expose errors through return values and `errno`. Small owned
   tokens retain the game's `int16_t` handle storage.
   C++20 cannot express exclusive creation, exact private modes, sharing,
