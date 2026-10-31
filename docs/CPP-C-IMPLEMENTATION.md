@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Qualification active | Rename map/live consumers implemented; full local desktop/host/regression/witness gates pass. Collection verification and Linux/Windows CI pending. |
+| C02 | Qualification active | Rename map/live consumers implemented; full local desktop/host/regression/witness gates pass. Collection verification passes; Linux/Windows CI pending. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -143,9 +143,10 @@ unchanged `S02Profile.ParsingVectors` (`spec/dafny/S02-profile.dfy:122`) and
 `M08NativeHabitat.AxisRefines` (`spec/dafny/M08-native-habitat.dfy:105`). Focused
 300-second retries of their complete include closures pass: 346 verified / zero
 errors for S02 and 986 verified / zero errors for M08. Audit of all 111 formal
-files completes with zero findings. A full 300-second collection retry with symbol progress is running;
-the 120-second run is not reported as a passing collection run.
-Canonical formal files remain unchanged.
+files completes with zero findings. The full 300-second collection retry then
+passes: 12,000 verified, zero errors, zero timeouts; collection audit zero findings.
+The earlier 120-second run remains a failure receipt. Canonical formal files
+remain unchanged.
 
 The first hand-written MinGW core probe enabled `-Wall -Wextra`, which the core's
 production policy does not enable; it stopped on existing unused-variable and
@@ -153,12 +154,10 @@ parameter warnings. Repeating the probe with the actual ISO C++20 / `-Wpedantic
 -Werror` production policy passes all 30 core files, without changing the code
 or its build flags. The failed extra-warning probe is retained separately.
 
-Remote publication was rejected by automatic approval review because pushing
-source/documentation and creating a GitHub PR lacked explicit publication
-permission. The requested destination is `madebyjeffrey/sdl-stars`, branch
-`codex/cpp-milestone-c`, draft PR targeting `develop`. User approval is pending;
-no push, PR or Linux/Windows C qualification is claimed. C02 remains in
-qualification until these remaining gates are resolved.
+The user approved publication of `codex/cpp-milestone-c` to
+`madebyjeffrey/sdl-stars`, with a draft PR targeting `develop`. All local gates
+are complete. Linux/Windows CI remains pending; C02 stays in qualification until
+its platform results are recorded.
 
 Complete local receipts are kept in `dist/verification/c02/`. C03–C10 remain
 pending. This change removes filename/language machinery only; the inventoried
