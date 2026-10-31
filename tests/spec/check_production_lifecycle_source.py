@@ -122,10 +122,10 @@ static void AlertSz(const char *s,int flags) {assert(strcmp(s,"memory")==0 && fl
 static HWND GetDlgItem(HWND hwnd,int id) {assert(hwnd==7);return id;}
 static const char *PszGetCompressedString(int id) {assert(id==idsProductionQueueS);return "Production %s";}
 static const char *PszGetPlanetName(int id) {(void)id;return "Test";}
-static void SetWindowText(HWND hwnd,const char *s) {assert(hwnd==7 && strcmp(s,"Production Test")==0);event("Title;");}
+static void FUiSetWindowText(HWND hwnd,const char *s) {assert(hwnd==7 && strcmp(s,"Production Test")==0);event("Title;");}
 static void FillProdSrcLB(HWND hwnd,int row) {assert(hwnd==IDC_PRODUCTION_AVAILABLE_ITEMS && row==-1);event("Source;");}
 static void FillPlanetProdLB(HWND hwnd,PLPROD *p,void *unused) {assert(hwnd==IDC_PRODUCTION_QUEUE && p==lpplProdGlob && !unused);event("Queue;");}
-static intptr_t SendMessage(HWND hwnd,int msg,intptr_t value,intptr_t param) {
+static intptr_t LUiSendMessage(HWND hwnd,int msg,intptr_t value,intptr_t param) {
     assert(!param);
     if(msg==LB_SETCURSEL && hwnd==IDC_PRODUCTION_AVAILABLE_ITEMS){sourceSelection=value;event("Src0;");}
     else if(msg==LB_SETCURSEL && hwnd==IDC_PRODUCTION_QUEUE){queueSelection=value;initialSelections++;event("QSel;");}
@@ -142,7 +142,7 @@ static void SelectAdjPlanet(int16_t delta,int16_t id) {
 }
 static void GetClientRect(HWND hwnd,RECT *r) {assert(hwnd==7);event("Rect;");*r=(RECT){0,0,800,600};}
 static void InvalidateRect(HWND hwnd,RECT *r,int erase) {assert(hwnd==7 && erase && r->top==20 && r->bottom==110);event("Paint;");}
-static intptr_t DialogBox(int instance,int resource,HWND parent,FARPROC proc);
+static intptr_t LUiDialogBox(int instance,int resource,HWND parent,FARPROC proc);
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"witness %d failed: %s; trace=%s\n",checks,#x,trace);return 1;}}while(0)
 '''
     bodies = '\n'.join([
@@ -155,7 +155,7 @@ static intptr_t DialogBox(int instance,int resource,HWND parent,FARPROC proc);
     bodies += '\nstatic void Command(HWND hwnd,int wParam) { int16_t c;RECT rc;switch(wParam) {\n'+cases+'\n}}\n'
     bodies += function('src/ui/produceui.cpp','int16_t ChangeProduction(')
     witnesses = r'''
-static intptr_t DialogBox(int instance,int resource,HWND parent,FARPROC proc) {
+static intptr_t LUiDialogBox(int instance,int resource,HWND parent,FARPROC proc) {
     assert(instance==hInst && resource==IDD_PRODUCTION && parent==hwndFrame && proc==1 && fDlgUp);
     event("Modal;");hwndProdDlg=7;sel.pl.fNoResearch=1;fail(2);
     if(modalNext){Command(7,modalNext>0 ? IDC_NEXT:IDC_BACK);sel.pl.fNoResearch=!gd.fNoResearchSav;}

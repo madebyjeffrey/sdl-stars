@@ -36,20 +36,20 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 dxResRadio = dx;
             }
             hwndRad = GetDlgItem(hwnd, i);
-            SetWindowText(hwndRad, szWork);
-            SendMessage(hwndRad, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+            FUiSetWindowText(hwndRad, szWork);
+            LUiSendMessage(hwndRad, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         }
         dxResRadio += 64;
         y = dyArial8 * 4 - (dyArial8 >> 1) + 1;
         for (i = 1073; i <= 1078; i++) {
             hwndRad = GetDlgItem(hwnd, i);
-            SetWindowPos(hwndRad, NULL, 16, y, dxResRadio, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER | SWP_SHOWWINDOW);
+            FUiSetWindowPos(hwndRad, NULL, 16, y, dxResRadio, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER | SWP_SHOWWINDOW);
             y += (int16_t)(3 * dyArial8) / 2;
         }
         hwndRad = GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD);
         for (i = 0; i <= 7; i++) {
             psz = PszGetCompressedString(static_cast<StringId>(idsSameField + i));
-            SendMessage(hwndRad, CB_ADDSTRING, 0, (LPARAM)psz);
+            LUiSendMessage(hwndRad, CB_ADDSTRING, 0, (LPARAM)psz);
         }
         i = rgplr[idPlayer].iTechNext();
         if (i == 6) {
@@ -57,7 +57,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         } else if (i < 6) {
             i++;
         }
-        SendMessage(hwndRad, CB_SETCURSEL, i, 0);
+        LUiSendMessage(hwndRad, CB_SETCURSEL, i, 0);
         dxResLeft = dxResRadio + dxCurrent + 40;
         dxResRight = 0;
         for (i = idsResourcesNeededComplete; i <= idsYearsProjectedResearchBudget; i++) {
@@ -71,13 +71,13 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         dx = LOWORD(GetTextExtent(hdc, PszGetCompressedString(idsN9999992), 7));
         dxResRight += dx + 48;
         y += 10 * dyArial8;
-        SetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dxResLeft + dxResRight - 152, y - (int16_t)(3 * dyArial8) / 2 - 8, 70, (int16_t)(3 * dyArial8) / 2,
+        FUiSetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, dxResLeft + dxResRight - 152, y - (int16_t)(3 * dyArial8) / 2 - 8, 70, (int16_t)(3 * dyArial8) / 2,
                      SWP_NOZORDER | SWP_SHOWWINDOW);
-        SetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, dxResLeft + dxResRight - 76, y - (int16_t)(3 * dyArial8) / 2 - 8, 70, (int16_t)(3 * dyArial8) / 2,
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_HELP), NULL, dxResLeft + dxResRight - 76, y - (int16_t)(3 * dyArial8) / 2 - 8, 70, (int16_t)(3 * dyArial8) / 2,
                      SWP_NOZORDER | SWP_SHOWWINDOW);
         GetWindowRect(hwnd, &rcWindow);
         GetClientRect(hwnd, &rc);
-        SetWindowPos(hwnd, NULL, 0, 0, dxResLeft + dxResRight + rcWindow.right - rcWindow.left - rc.right, y + rcWindow.bottom - rcWindow.top - rc.bottom,
+        FUiSetWindowPos(hwnd, NULL, 0, 0, dxResLeft + dxResRight + rcWindow.right - rcWindow.left - rc.right, y + rcWindow.bottom - rcWindow.top - rc.bottom,
                      SWP_NOMOVE | SWP_NOZORDER);
         StickyDlgPos(hwnd, &ptStickyResDlg, TRUE);
         SelectObject(hdc, hfontSav);
@@ -144,7 +144,7 @@ INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         } else {
             if (LOWORD(wParam) == IDCANCEL) {
                 fChg = FALSE;
-                iResTechNext = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0));
+                iResTechNext = LOWORD(LUiSendMessage(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0));
                 if (iResTechNext == 0) {
                     iResTechNext = 6;
                 } else if (iResTechNext <= 6) {
@@ -379,7 +379,7 @@ DrawYearComplete:
     GetClientRect(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), &rcT);
     MapWindowPoints(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), hwnd, (POINT *)&rcT, 2);
     if (rcT.top != rc.top + dyArial8 + 2) {
-        SetWindowPos(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), NULL, xCtr - 60, rc.top + dyArial8 + 2, rc.right - xCtr + 50, 9 * dyArial8,
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_RESEARCH_NEXT_FIELD), NULL, xCtr - 60, rc.top + dyArial8 + 2, rc.right - xCtr + 50, 9 * dyArial8,
                      SWP_NOZORDER | SWP_NOREDRAW);
     }
 
@@ -570,7 +570,7 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     switch (message) {
     case WM_INITDIALOG:
         hwndBrowser = hwnd;
-        SetWindowPos(hwnd, NULL, 0, 0, (dyArial8 <= 14 ? 0 : 40) + 358 + GetSystemMetrics(SM_CXDLGFRAME) * 2,
+        FUiSetWindowPos(hwnd, NULL, 0, 0, (dyArial8 <= 14 ? 0 : 40) + 358 + GetSystemMetrics(SM_CXDLGFRAME) * 2,
                      dyArial10 + 72 + 12 * dyArial8 + 6 + 3 * dyArial8 + 25 + GetSystemMetrics(SM_CYDLGFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION),
                      SWP_NOMOVE | SWP_NOZORDER);
         StickyDlgPos(hwnd, &ptStickyBrowserDlg, TRUE);
@@ -579,12 +579,12 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         hwndDD = GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY);
         c = GetDlgItemText(hwnd, IDC_BACK, szWork, 80);
         dx = LOWORD(GetTextExtent(hdc, szWork, c)) + 14;
-        SetWindowPos(GetDlgItem(hwnd, IDC_BACK), NULL, 6, 6, dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
-        SetWindowPos(GetDlgItem(hwnd, IDC_NEXT), NULL, (dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
-        SetWindowPos(hwndDD, NULL, dx + 12, 6, (dyArial8 <= 14 ? 0 : 40) + 344 - dx * 2 - 12, 18 * dyArial8, SWP_NOZORDER);
-        SetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, (dyArial8 <= 14 ? 0 : 40) + 350 - dx,
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_BACK), NULL, 6, 6, dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_NEXT), NULL, (dyArial8 <= 14 ? 0 : 40) + 350 - dx, 6, dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+        FUiSetWindowPos(hwndDD, NULL, dx + 12, 6, (dyArial8 <= 14 ? 0 : 40) + 344 - dx * 2 - 12, 18 * dyArial8, SWP_NOZORDER);
+        FUiSetWindowPos(GetDlgItem(hwnd, IDCANCEL), NULL, (dyArial8 <= 14 ? 0 : 40) + 350 - dx,
                      dyArial10 + 72 + 12 * dyArial8 + 6 + (int16_t)(3 * dyArial8) / 2 + 18, dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
-        SetWindowPos(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), NULL, 6, dyArial10 + 72 + 12 * dyArial8 + 6 + (int16_t)(3 * dyArial8) / 2 + 18,
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), NULL, 6, dyArial10 + 72 + 12 * dyArial8 + 6 + (int16_t)(3 * dyArial8) / 2 + 18,
                      (dyArial8 <= 14 ? 0 : 40) + 344 - dx, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
         SelectObject(hdc, hfontSav);
         ReleaseDC(hwnd, hdc);
@@ -593,12 +593,12 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             vpartBrowser.hs.iItem = 0;
         }
         FLookupPart(&vpartBrowser);
-        hwndBrowserChild = CreateWindow(szBrowser, NULL, WS_CHILD | WS_VISIBLE, 6, (int16_t)(3 * dyArial8) / 2 + 12, (dyArial8 <= 14 ? 0 : 40) + 344,
+        hwndBrowserChild = HwndUiCreateWindowEx(0, szBrowser, NULL, WS_CHILD | WS_VISIBLE, 6, (int16_t)(3 * dyArial8) / 2 + 12, (dyArial8 <= 14 ? 0 : 40) + 344,
                                         dyArial10 + 72 + 12 * dyArial8 + 6, hwnd, NULL, hInst, NULL);
         for (i = idsAll; i <= idsTorpedoes; i++) {
-            SendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
+            LUiSendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(static_cast<StringId>(i)));
         }
-        SendMessage(hwndDD, CB_SETCURSEL, 0, 0);
+        LUiSendMessage(hwndDD, CB_SETCURSEL, 0, 0);
         if (gd.fTutorial) {
             AdvanceTutor();
         }
@@ -641,7 +641,7 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             hmenu = GetASubMenu(hwndFrame, menuHelp);
             CheckMenuItem(hmenu, IDM_VIEW_BROWSER_TOGGLE2, MF_UNCHECKED);
             // The browser is modeless (CreateDialog), so no modal loop owns it.
-            DestroyWindow(hwnd);
+            FUiDestroyWindow(hwnd);
             if (gd.fTutorial) {
                 AdvanceTutor();
             }
@@ -655,7 +655,7 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 break;
         ResetCategory:
             fShowAll = IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY) == 0;
-            lSel = SendMessage(GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY), CB_GETCURSEL, 0, 0);
+            lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY), CB_GETCURSEL, 0, 0);
             if (lSel < 0)
                 break;
             vpartBrowser.hs.grhst = static_cast<HullSlotType>(rggrbitBrParts[lSel <= 1 ? 1 : lSel]);
@@ -676,7 +676,7 @@ INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case IDC_BACK:
             iItemStart = vpartBrowser.hs.iItem;
             cIter = 0;
-            lSel = SendMessage(GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY), CB_GETCURSEL, 0, 0);
+            lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_BROWSER_COMPONENT_CATEGORY), CB_GETCURSEL, 0, 0);
             fAllHsts = lSel == 0;
             for (i = 0; i < 17 && vpartBrowser.hs.grhst != rggrbitBrParts[i]; i++) {
             }
@@ -785,7 +785,7 @@ LRESULT CALLBACK BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         return 1;
     default:
     Default:
-        return DefWindowProc(hwnd, message, wParam, lParam);
+        return LUiDefWindowProc(hwnd, message, wParam, lParam);
     }
 }
 

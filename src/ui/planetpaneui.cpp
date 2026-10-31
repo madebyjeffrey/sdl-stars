@@ -72,9 +72,9 @@ static void RefitPlanetPane(HWND hwnd) {
     ScreenToClient(hwnd, &pt);
     if (rcContent.right - rcContent.left != StarsMax(dx, rc.right) || rcContent.bottom - rcContent.top != StarsMax(dy, rc.bottom)) {
         for (i = 0; i < cTile; i++) rgtile[i].fFixCtls = TRUE;
-        MoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
+        FUiMoveWindow(lp->hwndContent, -lp->x, -lp->y, StarsMax(dx, rc.right), StarsMax(dy, rc.bottom), TRUE);
     } else if (pt.x != -lp->x || pt.y != -lp->y) {
-        SetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        FUiSetWindowPos(lp->hwndContent, NULL, -lp->x, -lp->y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
     lp->fRefitting = FALSE;
 }
@@ -91,7 +91,7 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         if (!lp) return -1;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)lp);
         pane.release();
-        lp->hwndContent = CreateWindow(szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);
+        lp->hwndContent = HwndUiCreateWindowEx(0, szPlanet, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 198, 1, hwnd, NULL, hInst, NULL);
         return lp->hwndContent ? 0 : -1;
     }
     case WM_SIZE:
@@ -135,21 +135,21 @@ LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         return 0;
     }
     }
-    return DefWindowProc(hwnd, message, wParam, lParam);
+    return LUiDefWindowProc(hwnd, message, wParam, lParam);
 }
 
 HWND CreatePlanetPane(HWND hwndParent) {
     HWND hwnd;
     PLANETPANE *lp;
 
-    hwnd = CreateWindow("StarsPlanetPane", NULL, WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CLIPCHILDREN,
+    hwnd = HwndUiCreateWindowEx(0, "StarsPlanetPane", NULL, WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL | WS_CLIPCHILDREN,
                         -500, -500, 10, 10, hwndParent, NULL, hInst, NULL);
     lp = hwnd ? LpPlanetPane(hwnd) : NULL;
     return lp ? lp->hwndContent : NULL;
 }
 
 void MovePlanetPane(int x, int y, int dx, int dy) {
-    if (IsWindow(hwndPlanet)) MoveWindow(GetParent(hwndPlanet), x, y, dx, dy, TRUE);
+    if (IsWindow(hwndPlanet)) FUiMoveWindow(GetParent(hwndPlanet), x, y, dx, dy, TRUE);
 }
 
 void QueuePlanetPaneLayout(void) {
@@ -172,6 +172,6 @@ void ClosePlanetPane(void) {
     hwnd = GetParent(hwndPlanet);
     // WM_QUIT can leave the frame alive. Destroy the owned pane while game
     // state and brushes still exist; final SDL cleanup does not call WNDPROCs.
-    DestroyWindow(hwnd);
+    FUiDestroyWindow(hwnd);
     hwndPlanet = NULL;
 }

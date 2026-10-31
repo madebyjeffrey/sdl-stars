@@ -100,16 +100,16 @@ static void *LpAlloc(uint16_t cb,HeapType ht) {
 static void FreeLp(void *p,HeapType ht) { (void)ht;freed++;free(p); }
 static int GetRaceStat(void *p,int stat) { (void)p;(void)stat;return primary; }
 static HWND GetDlgItem(HWND hwnd,int id) { (void)hwnd;return id; }
-static void SendMessage(HWND hwnd,int message,int value,LPARAM param) {
+static void LUiSendMessage(HWND hwnd,int message,int value,LPARAM param) {
     (void)hwnd;(void)value;
     if(message==LB_RESETCONTENT)labelCount=0;
     if(message==LB_ADDSTRING){if(labelCount>=12)abort();strcpy(labels[labelCount++],(const char *)param);}
 }
 static void FillPlanetProdLB(HWND hwnd,PLPROD *q,void *p) { (void)hwnd;(void)q;(void)p; }
 static void FillProdSrcLB(HWND hwnd,int n) { (void)hwnd;(void)n; }
-static void SetWindowText(HWND hwnd,const char *s) { (void)hwnd;strcpy(label,s); }
-static void SetFocus(HWND hwnd) { (void)hwnd; }
-static void EnableWindow(HWND hwnd,int enabled) {
+static void FUiSetWindowText(HWND hwnd,const char *s) { (void)hwnd;strcpy(label,s); }
+static void HwndUiSetFocus(HWND hwnd) { (void)hwnd; }
+static void FUiEnableWindow(HWND hwnd,int enabled) {
     if(hwnd==IDC_DELETE)enabledDelete=enabled;
     if(hwnd==IDC_RENAME)enabledRename=enabled;
 }
@@ -123,7 +123,7 @@ static const char *PszGetCompressedString(int id) {
 static void CchGetString(int id,char *out) {
     if(id==idsSD2)strcpy(out,"%s %d");else sprintf(out,"Item%d",id-idsMines);
 }
-static int DialogBox(int instance,int resource,HWND hwnd,int proc) {
+static int LUiDialogBox(int instance,int resource,HWND hwnd,int proc) {
     (void)instance;(void)hwnd;(void)proc;
     if(resource==IDD_RENAME){renameCalls++;if(renameResult)strcpy(szWork,renameText);return renameResult;}
     memset(vrgZipProd,0x5a,4*sizeof(ZIPPRODQ));vrgZipProd[4].cpq=9;gd.fChgZipProd=1;

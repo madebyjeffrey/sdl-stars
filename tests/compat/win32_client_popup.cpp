@@ -22,7 +22,7 @@ static BOOL FNativeFocus(HWND hwnd) {
 
     if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy")) return TRUE;
     do {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+        while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
         if (SDL_GetKeyboardFocus() == hwnd->lpWindow.get()) return TRUE;
         SDL_Delay(10);
     } while (GetTickCount() < timeEnd);
@@ -40,29 +40,29 @@ static int TestBrowserAvailableTechnology(void) {
     int iCategory, c;
     HS hs;
 
-    hwnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
+    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
     CHECK(hwnd && hwnd == hwndBrowser);
     for (iCategory = 0; iCategory <= 1; iCategory++) {
         CheckDlgButton(hwnd, IDC_BROWSER_AVAILABLE_ONLY, BST_UNCHECKED);
-        SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_SETCURSEL, iCategory, 0);
-        SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BROWSER_COMPONENT_CATEGORY, CBN_SELCHANGE), 0);
+        LUiSendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_SETCURSEL, iCategory, 0);
+        LUiSendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_BROWSER_COMPONENT_CATEGORY, CBN_SELCHANGE), 0);
         for (c = 0; c < iarmorCount && vpartBrowser.hs.iItem != iarmorSuperlatanium; c++)
-            SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+            LUiSendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
         CHECK(vpartBrowser.hs.grhst == hstArmor && vpartBrowser.hs.iItem == iarmorSuperlatanium);
         CHECK(FLookupPart(&vpartBrowser) != mdPartAvailAvailable);
-        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY));
         CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
-        CHECK(SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_GETCURSEL, 0, 0) == iCategory);
-        SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+        CHECK(LUiSendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_GETCURSEL, 0, 0) == iCategory);
+        LUiSendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
         CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
         hs = vpartBrowser.hs;
-        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);
-        SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);
     }
-    CHECK(DestroyWindow(hwnd) && !hwndBrowser);
+    CHECK(FUiDestroyWindow(hwnd) && !hwndBrowser);
     return 0;
 }
 
@@ -85,7 +85,7 @@ static int TestDesignerReturnFocus(HWND hwndOwnerFocus) {
     strcpy(szBase, STARS_TEST_FOCUS_GAME);
     idPlayer = 0;
     CHECK(FLoadGame(szBase, szExtension));
-    SetFocus(hwndOwnerFocus);
+    HwndUiSetFocus(hwndOwnerFocus);
     idTimer = SetTimer(NULL, 0, 25, CloseDesigner);
     CHECK(idTimer);
     ShipBuilder(ptSize);
@@ -102,76 +102,76 @@ static HWND hwndRedirectFocus;
 
 static LRESULT CALLBACK ReturnFocusWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_DESTROY && hwndRedirectFocus && hwndRedirectFocus != hwnd)
-        ShowWindow(hwndRedirectFocus, SW_SHOW);
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+        FUiShowWindow(hwndRedirectFocus, SW_SHOW);
+    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 static int TestWindowFocus(void) {
     WNDCLASS wc = {};
     HWND hwnd, hwndChild, hwndCard, hwndOwnerFocus, hwndOther;
 
-    hwndOwnerFocus = CreateWindow("BUTTON", "Owner focus", WS_CHILD | WS_VISIBLE,
+    hwndOwnerFocus = HwndUiCreateWindowEx(0, "BUTTON", "Owner focus", WS_CHILD | WS_VISIBLE,
                                   10, 10, 50, 20, hwndFrame, NULL, hInst, NULL);
     CHECK(hwndOwnerFocus);
-    SetFocus(hwndOwnerFocus);
+    HwndUiSetFocus(hwndOwnerFocus);
     CHECK(TestDesignerReturnFocus(hwndOwnerFocus) == 0);
     idPlayer = 0;
-    hwnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
+    hwnd = HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_BROWSER), hwndFrame, lpfnBrowserDlgProc);
     CHECK(hwnd && hwnd == hwndBrowser && FNativeFocus(hwnd));
     CHECK(HwndCompatRoot(GetFocus()) == hwnd);
-    ShowWindow(hwnd, SW_HIDE);
-    ShowWindow(hwndFrame, SW_SHOW);
+    FUiShowWindow(hwnd, SW_HIDE);
+    FUiShowWindow(hwndFrame, SW_SHOW);
     CHECK(FNativeFocus(hwndFrame));
-    SetFocus(hwndOwnerFocus);
-    ShowWindow(hwnd, SW_SHOW);
+    HwndUiSetFocus(hwndOwnerFocus);
+    FUiShowWindow(hwnd, SW_SHOW);
     CHECK(FNativeFocus(hwnd) && HwndCompatRoot(GetFocus()) == hwnd);
-    CHECK(DestroyWindow(hwnd) && !hwndBrowser);
+    CHECK(FUiDestroyWindow(hwnd) && !hwndBrowser);
     CHECK(FNativeFocus(hwndFrame) && GetFocus() == hwndOwnerFocus);
-    CHECK(DestroyWindow(hwndOwnerFocus));
-    SetFocus(hwndFrame);
+    CHECK(FUiDestroyWindow(hwndOwnerFocus));
+    HwndUiSetFocus(hwndFrame);
     wc.lpszClassName = "FocusContract";
     wc.lpfnWndProc = ReturnFocusWndProc;
     wc.hInstance = hInst;
     CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Focus contract", WS_OVERLAPPEDWINDOW,
+    hwnd = HwndUiCreateWindowEx(0, wc.lpszClassName, "Focus contract", WS_OVERLAPPEDWINDOW,
                         100, 100, 320, 240, hwndFrame, NULL, hInst, NULL);
     CHECK(hwnd);
-    ShowWindow(hwnd, SW_SHOW);
+    FUiShowWindow(hwnd, SW_SHOW);
     CHECK(FNativeFocus(hwnd) && GetFocus() == hwnd);
-    hwndChild = CreateWindow("BUTTON", "Child", WS_CHILD | WS_VISIBLE,
+    hwndChild = HwndUiCreateWindowEx(0, "BUTTON", "Child", WS_CHILD | WS_VISIBLE,
                              10, 10, 50, 20, hwnd, NULL, hInst, NULL);
     CHECK(hwndChild && GetFocus() == hwnd);
-    SetFocus(hwndChild);
-    ShowWindow(hwnd, SW_SHOW);
+    HwndUiSetFocus(hwndChild);
+    FUiShowWindow(hwnd, SW_SHOW);
     CHECK(GetFocus() == hwndChild && FNativeFocus(hwnd));
-    ShowWindow(hwndFrame, SW_SHOW);
+    FUiShowWindow(hwndFrame, SW_SHOW);
     CHECK(FNativeFocus(hwndFrame));
-    CHECK(SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+    CHECK(FUiSetWindowPos(hwnd, NULL, 0, 0, 0, 0,
                        SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW));
     CHECK(GetFocus() == hwndFrame && FNativeFocus(hwndFrame));
-    EnableWindow(hwnd, FALSE);
-    ShowWindow(hwnd, SW_SHOW);
+    FUiEnableWindow(hwnd, FALSE);
+    FUiShowWindow(hwnd, SW_SHOW);
     CHECK(GetFocus() == hwndFrame && FNativeFocus(hwndFrame));
-    EnableWindow(hwnd, TRUE);
-    ShowWindow(hwnd, SW_SHOWMINIMIZED);
+    FUiEnableWindow(hwnd, TRUE);
+    FUiShowWindow(hwnd, SW_SHOWMINIMIZED);
     CHECK(GetFocus() == hwndFrame && FNativeFocus(hwndFrame));
-    hwndCard = CreateWindowExA(WS_EX_NOACTIVATE, wc.lpszClassName, "Detail card", WS_POPUP,
+    hwndCard = HwndUiCreateWindowEx(WS_EX_NOACTIVATE, wc.lpszClassName, "Detail card", WS_POPUP,
                              150, 150, 100, 100, hwndFrame, NULL, hInst, NULL);
     CHECK(hwndCard);
-    ShowWindow(hwndCard, SW_SHOW);
-    CHECK(SetWindowPos(hwndCard, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER));
+    FUiShowWindow(hwndCard, SW_SHOW);
+    CHECK(FUiSetWindowPos(hwndCard, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER));
     CHECK(GetFocus() == hwndFrame && FNativeFocus(hwndFrame));
-    CHECK(DestroyWindow(hwndCard));
-    ShowWindow(hwnd, SW_RESTORE);
+    CHECK(FUiDestroyWindow(hwndCard));
+    FUiShowWindow(hwnd, SW_RESTORE);
     CHECK(FNativeFocus(hwnd));
-    hwndOther = CreateWindow(wc.lpszClassName, "Teardown focus choice", WS_OVERLAPPEDWINDOW,
+    hwndOther = HwndUiCreateWindowEx(0, wc.lpszClassName, "Teardown focus choice", WS_OVERLAPPEDWINDOW,
                              100, 100, 320, 240, hwndFrame, NULL, hInst, NULL);
     CHECK(hwndOther);
     hwndRedirectFocus = hwndOther;
-    CHECK(DestroyWindow(hwnd));
+    CHECK(FUiDestroyWindow(hwnd));
     CHECK(FNativeFocus(hwndOther) && GetFocus() == hwndOther);
     hwndRedirectFocus = NULL;
-    CHECK(DestroyWindow(hwndOther) && FNativeFocus(hwndFrame));
+    CHECK(FUiDestroyWindow(hwndOther) && FNativeFocus(hwndFrame));
     return 0;
 }
 
@@ -187,15 +187,15 @@ int main(void) {
 
     hInst = GetModuleHandle(NULL);
     CHECK(InitMDIApp() && FCreateStuff() && FGetSystemColors() && InitInstance(SW_SHOWNORMAL));
-    ShowWindow(hwndFrame, SW_SHOW);
-    SetFocus(hwndFrame);
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    FUiShowWindow(hwndFrame, SW_SHOW);
+    HwndUiSetFocus(hwndFrame);
+    while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
     CHECK(TestWindowFocus() == 0);
     hwndFocus = GetFocus();
     // The recorded scanner-combobox tip uses SetWindowPos to reveal a hidden
     // starstt, rather than Popup's direct ShowWindow path.
     vidsTooltip = idsScannerEffective;
-    hwnd = CreateWindowExA(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP,
+    hwnd = HwndUiCreateWindowEx(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP,
                           200, 180, 180, dyArial8 + 6, hwndFrame, NULL, hInst, NULL);
     CHECK(hwnd && hwndTooltip == hwnd && !IsWindowVisible(hwnd));
 #ifdef __APPLE__
@@ -205,12 +205,12 @@ int main(void) {
                   SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL)));
     }
 #endif
-    CHECK(SetWindowPos(hwnd, HWND_TOPMOST, 200, 180, 0, 0,
+    CHECK(FUiSetWindowPos(hwnd, HWND_TOPMOST, 200, 180, 0, 0,
                        SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER));
-    CHECK(UpdateWindow(hwnd) && hwnd->lpComposite.get());
+    CHECK(FUiUpdateWindow(hwnd) && hwnd->lpComposite.get());
     CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite.get(), 5 * hwnd->iCanvasScale, (dyArial8 + 3) * hwnd->iCanvasScale, &r, &g, &b, &a));
     CHECK(RGB(r, g, b) == RGB(255, 255, 159) && a == 255);
-    CHECK(GetFocus() == hwndFocus && DestroyWindow(hwnd) && !hwndTooltip);
+    CHECK(GetFocus() == hwndFocus && FUiDestroyWindow(hwnd) && !hwndTooltip);
     for (i = 0; i < 3; i++) {
         GlobalPD.grPopup = grPopupMineral;
         GlobalPD.SetRgi(0, 0); GlobalPD.SetRgi(1, 0);
@@ -226,14 +226,14 @@ int main(void) {
             CHECK(flags & SDL_WINDOW_TOOLTIP);
             CHECK(SDL_GetWindowParent(hwnd->lpWindow.get()) == hwndFrame->lpWindow.get());
         }
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+        while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
         CHECK(GetFocus() == hwndFocus && GetCapture() == hwnd);
         if (i == 0) {
             SDL_zero(event);
             event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
             event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
             CHECK(SDL_PushEvent(&event));
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+            while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
         } else if (i == 1) {
             SDL_zero(event);
             event.type = SDL_EVENT_MOUSE_BUTTON_UP;
@@ -241,8 +241,8 @@ int main(void) {
             event.button.button = SDL_BUTTON_RIGHT;
             event.button.x = 200; event.button.y = 180;
             CHECK(SDL_PushEvent(&event));
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
-        } else DestroyWindow(hwnd);
+            while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
+        } else FUiDestroyWindow(hwnd);
         CHECK(!IsWindow(hwnd) && !hwndPopup && GlobalPD.grPopup == 0 && !GetCapture());
     }
     idPlayer = 0;
@@ -259,21 +259,21 @@ int main(void) {
     CHECK(!hwnd->fUpdate && !hwnd->fPresentPending);
     lpFirst = SDL_DuplicateSurface(hwnd->lpCanvas.get());
     CHECK(lpFirst);
-    CHECK(InvalidateRect(hwnd, NULL, TRUE) && UpdateWindow(hwnd));
+    CHECK(InvalidateRect(hwnd, NULL, TRUE) && FUiUpdateWindow(hwnd));
     CHECK(lpFirst->pitch == hwnd->lpCanvas->pitch &&
           !memcmp(lpFirst->pixels, hwnd->lpCanvas->pixels, (size_t)lpFirst->pitch * lpFirst->h));
     SDL_DestroySurface(lpFirst);
     if (SDL_getenv("STARS_TEST_POPUP_HOLD")) {
         DWORD timeEnd = GetTickCount() + 60000;
         while (GetTickCount() < timeEnd && IsWindow(hwnd)) {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+            while (FUiPeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) LUiDispatchMessage(&msg);
             SDL_Delay(10);
         }
     }
-    CHECK(DestroyWindow(hwnd));
+    CHECK(FUiDestroyWindow(hwnd));
     if (SDL_getenv("STARS_TEST_MENU_HOLD")) {
         CHECK(SetTimer(NULL, 0, 60000, CloseVisualMenu));
-        TrackPopupMenu(GetSubMenu(GetMenu(hwndFrame), 0), TPM_RETURNCMD, 200, 200, 0, hwndFrame, NULL);
+        FUiTrackPopupMenu(GetSubMenu(GetMenu(hwndFrame), 0), TPM_RETURNCMD, 200, 200, 0, hwndFrame, NULL);
     }
     FreeStuff();
     StarsCompatProcessExit();

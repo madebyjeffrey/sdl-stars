@@ -38,9 +38,11 @@ checks pass for `b799348`.
 ## C++ migration completion
 
 Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
-[Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`, starting with
-the removal inventory and source filename migration. It then removes callback,
-test, namespace and state-access scaffolding while preserving game/file behavior.
+[Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`. The removal
+inventory and source filename migration merged in PR #68. C03 replaces callback
+API interception with explicit typed calls and passes local qualification;
+enabled CI is pending. Test, namespace and state-access scaffolding follow while
+preserving game/file behavior.
 [Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
 status and verification; later C checkpoints remain pending.
 

@@ -37,20 +37,20 @@ static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
     Randomize2(fSeed ? lSeed : GetTickCount());
     StarsRethrowPendingError();
     PostMessage(hwndFrame, WM_STARS_STARTUP, 0, 0);
-    while (GetMessage(&msg, NULL, 0, 0) != 0) {
+    while (FUiGetMessage(&msg, NULL, 0, 0)) {
         StarsRethrowPendingError();
         if ((msg.message == WM_MOUSEWHEEL || msg.message == WM_MOUSEHWHEEL) && !FRouteMouseWheel(&msg))
             continue;
         if (hwndTitle) {
-            if (TranslateAccelerator(hwndFrame, hAccelTitle, &msg) == 0) {
+            if (IUiTranslateAccelerator(hwndFrame, hAccelTitle, &msg) == 0) {
                 TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                LUiDispatchMessage(&msg);
             }
-        } else if (IsIconic(hwndFrame) != 0 || TranslateAccelerator(hwndFrame, hAccel, &msg) == 0) {
+        } else if (IsIconic(hwndFrame) != 0 || IUiTranslateAccelerator(hwndFrame, hAccel, &msg) == 0) {
             TranslateMessage(&msg);
             if (((msg.message != WM_KEYDOWN && msg.message != WM_KEYUP) || !FHandleKey(msg.hwnd, msg.message, msg.wParam, msg.lParam)) &&
                 (msg.message != WM_CHAR || !FHandleChar(msg.hwnd, msg.wParam, msg.lParam))) {
-                DispatchMessage(&msg);
+                LUiDispatchMessage(&msg);
             }
         }
     }
@@ -189,7 +189,7 @@ INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_INITDIALOG:
         iAbout1st = -11;
         iAboutPartial = 0;
-        SetWindowText(GetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
         uTimerId = SetTimer(hwnd, 14, 50, NULL);
         return 1;
     case WM_ERASEBKGND:
@@ -260,7 +260,7 @@ int16_t FHandleChar(HWND hwnd, uint16_t ch, int32_t lParam) {
     if ((hwndScanner && (ch == 43 || ch == 45)) || (ch == 118 || ch == 86)) {
         hwndF = GetFocus();
         if (!hwndMessage || hwndF != hwndMsgEdit) {
-            SendMessage(hwndScanner, WM_CHAR, ch, lParam);
+            LUiSendMessage(hwndScanner, WM_CHAR, ch, lParam);
             return TRUE;
         }
     }
@@ -279,15 +279,15 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
 
     if (iMsg == WM_KEYDOWN) {
         if (iKey == VK_ESCAPE && hwndBrowser && GetActiveWindow() == hwndBrowser) {
-            DestroyWindow(hwndBrowser);
+            FUiDestroyWindow(hwndBrowser);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndPopup) {
-            SendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
+            LUiSendMessage(hwndPopup, WM_LBUTTONUP, 0, 0);
             return TRUE;
         }
         if (iKey == VK_ESCAPE && hwndReportDlg) {
-            DestroyWindow(hwndReportDlg);
+            FUiDestroyWindow(hwndReportDlg);
             return TRUE;
         }
     } else if (iMsg == WM_KEYUP && hwndTb && (iKey == VK_ESCAPE || iKey == VK_RETURN)) {
@@ -300,7 +300,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
         GetCursorPos16(&pt);
         hwndOver = WindowFromPoint(PointFrom16(pt));
         if (hwndOver == hwndScanner) {
-            SendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
+            LUiSendMessage(hwndOver, WM_SETCURSOR, (WPARAM)hwndOver, 0);
         }
     }
     if (iMsg != WM_KEYDOWN) {
@@ -391,7 +391,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
             if (hwndF == hwndShipLB) {
                 return FALSE;
             }
-            SendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
+            LUiSendMessage(hwndMessage, WM_KEYDOWN, iKey, dw);
             break;
         case VK_OEM_COMMA:
         case VK_OEM_PERIOD:

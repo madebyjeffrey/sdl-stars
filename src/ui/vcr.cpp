@@ -42,7 +42,7 @@ void BattleVCR(int16_t iBattle) {
             AdvanceTutor();
         }
         lpProc = MakeProcInstance(VCRDlg, hInst);
-        DialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc);
+        LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc);
 
     } catch (const StarsError &) {
         AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
@@ -282,7 +282,7 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         GetClientRect(hwnd, &rc);
         dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
         GetWindowRect(GetDlgItem(hwnd, IDC_VCR_REW_ALL), &rc);
-        SetWindowPos(hwnd, NULL, 0, 0, dxyVCRBoard + 250, dyFrame + 24 + dxyVCRBoard + (rc.bottom - rc.top), SWP_NOMOVE | SWP_NOZORDER);
+        FUiSetWindowPos(hwnd, NULL, 0, 0, dxyVCRBoard + 250, dyFrame + 24 + dxyVCRBoard + (rc.bottom - rc.top), SWP_NOMOVE | SWP_NOZORDER);
         for (i = 0; i < 7; i++) {
             if (i < 5) {
                 ibtn = i + 161;
@@ -301,7 +301,7 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 dx = 0;
             }
             OffsetRect(&rc, dx, dxyVCRBoard + 16 - rc.top);
-            SetWindowPos(GetDlgItem(hwnd, ibtn), NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            FUiSetWindowPos(GetDlgItem(hwnd, ibtn), NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         }
         EnableVCRButtons();
         StickyDlgPos(hwnd, &ptStickyVCRDlg, TRUE);
@@ -1186,15 +1186,15 @@ void EnableVCRButtons() {
     int16_t i;
 
     for (i = 161; i < 163; i++) {
-        EnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur > -1);
+        FUiEnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur > -1);
     }
     for (i = 163; i < 166; i++) {
-        EnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur < vcStepVCR);
+        FUiEnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur < vcStepVCR);
     }
     if (viStepVCRCur == -1) {
-        SetFocus(GetDlgItem(hwndVCRDlg, IDC_VCR_PLAY_PAUSE));
+        HwndUiSetFocus(GetDlgItem(hwndVCRDlg, IDC_VCR_PLAY_PAUSE));
     } else if (viStepVCRCur == vcStepVCR) {
-        SetFocus(GetDlgItem(hwndVCRDlg, IDOK));
+        HwndUiSetFocus(GetDlgItem(hwndVCRDlg, IDOK));
     }
     return;
 }

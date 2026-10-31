@@ -92,7 +92,7 @@ void STARS_TEST_IMPL(NewGameWizard)(HWND hwnd, int16_t fReadOnly) {
     }
 Step1:
     lpProc = MakeProcInstance(NewGameDlg, hInst);
-    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_1), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0) {
     Cancel:
@@ -107,7 +107,7 @@ Step1:
         goto Finish;
 Step2:
     lpProc = MakeProcInstance(NewGameDlg2, hInst);
-    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_2), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -120,7 +120,7 @@ Step2:
     if (mdRet == 3)
         goto Finish;
     lpProc = MakeProcInstance(NewGameDlg3, hInst);
-    mdRet = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, (LPARAM)szFile);
+    mdRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_GAME_3), hwnd, lpProc, (LPARAM)szFile);
     FreeProcInstance(lpProc);
     if (mdRet <= 0)
         goto Cancel;
@@ -243,9 +243,9 @@ Finish:
     }
     if (!fFreeingTitle) {
         fFreeingTitle = TRUE;
-        DestroyWindow(hwndTitle);
+        FUiDestroyWindow(hwndTitle);
         hwndTitle = 0;
-        ShowWindow(hwndFrame, SW_SHOW);
+        FUiShowWindow(hwndFrame, SW_SHOW);
     }
     if (!FFinishLibraryGame(hwnd, GenerateWorld(FALSE))) {
         DestroyCurGame();
@@ -287,33 +287,33 @@ INT_PTR CALLBACK NewGameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         CheckRadioButton(hwnd, IDC_NEW_GAME_TINY, IDC_NEW_GAME_HUGE, game.mdSize + 1000);
         CheckRadioButton(hwnd, IDC_NEW_GAME_SPARSE, IDC_NEW_GAME_PACKED, game.mdDensity + 1005);
         CheckRadioButton(hwnd, IDC_NEW_GAME_CLOSE, IDC_NEW_GAME_DISTANT, game.mdStartDist + 1009);
-        SetWindowText(GetDlgItem(hwnd, IDC_NEW_GAME_NAME), game.szName);
-        SendDlgItemMessage(hwnd, IDC_NEW_GAME_NAME, EM_LIMITTEXT, 0x1f, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), BM_SETCHECK, game.fExtraFuel, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), BM_SETCHECK, game.fSlowTech, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), BM_SETCHECK, game.fBBSPlay, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), BM_SETCHECK, game.fNoRandom, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), BM_SETCHECK, game.fAisBand, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), BM_SETCHECK, game.fVisScores, 0);
-        SendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), BM_SETCHECK, game.fClumping, 0);
+        FUiSetWindowText(GetDlgItem(hwnd, IDC_NEW_GAME_NAME), game.szName);
+        LUiSendDlgItemMessage(hwnd, IDC_NEW_GAME_NAME, EM_LIMITTEXT, 0x1f, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), BM_SETCHECK, game.fExtraFuel, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), BM_SETCHECK, game.fSlowTech, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), BM_SETCHECK, game.fBBSPlay, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), BM_SETCHECK, game.fNoRandom, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), BM_SETCHECK, game.fAisBand, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), BM_SETCHECK, game.fVisScores, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), BM_SETCHECK, game.fClumping, 0);
         if (fRCWReadOnly) {
             for (i = 1000; i <= 1004; i++) {
-                EnableWindow(GetDlgItem(hwnd, i), FALSE);
+                FUiEnableWindow(GetDlgItem(hwnd, i), FALSE);
             }
             for (i = 1005; i <= 1008; i++) {
-                EnableWindow(GetDlgItem(hwnd, i), FALSE);
+                FUiEnableWindow(GetDlgItem(hwnd, i), FALSE);
             }
             for (i = 1009; i <= 1012; i++) {
-                EnableWindow(GetDlgItem(hwnd, i), FALSE);
+                FUiEnableWindow(GetDlgItem(hwnd, i), FALSE);
             }
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_NAME), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_MAX_MINERALS), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_SLOWER_TECH), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_ACCELERATED_BBS), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_NO_RANDOM_EVENTS), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_GALAXY_CLUMPING), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_AI_ALLIANCES), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_NAME), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEW_GAME_PUBLIC_SCORES), FALSE);
         }
         StickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
         return 1;
@@ -457,12 +457,12 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 GetWindowRect(hwndBtn, &rc);
                 MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
                 OffsetRect(&rc, 0, dy - rc.top);
-                SetWindowPos(hwndBtn, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+                FUiSetWindowPos(hwndBtn, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
             }
             dy = rc.bottom + 6;
             GetClientRect(hwnd, &rc);
             if (dyCur < dy) {
-                SetWindowPos(hwnd, NULL, 0, 0, rcT.right - rcT.left, dy + rcT.bottom - rcT.top - rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
+                FUiSetWindowPos(hwnd, NULL, 0, 0, rcT.right - rcT.left, dy + rcT.bottom - rcT.top - rc.bottom, SWP_NOMOVE | SWP_NOZORDER);
             }
         }
         StickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
@@ -550,8 +550,8 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         iChecked = !(iCurVal & 3) ? 8 : 0;
         AppendMenu(hmenuPopup, iChecked, 0x3a9b, PszGetCompressedString(idsPlayer));
         tpm = message == WM_LBUTTONDOWN ? TPM_LEFTBUTTON : TPM_RIGHTBUTTON;
-        TrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
-        if (PeekMessage(&msg, hwnd, 273, 273, 2) != 0 && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
+        FUiTrackPopupMenu(hmenuPopup, TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, NULL);
+        if (FUiPeekMessage(&msg, hwnd, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + INT16_MAX) {
             iPopMenuSel = msg.wParam - 15000;
         }
         szLibraryRace[0] = 0;
@@ -652,7 +652,7 @@ INT_PTR CALLBACK NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             InvalidateRect(hwnd, NULL, TRUE);
         }
     FinishClick:
-        SetFocus(hwnd);
+        HwndUiSetFocus(hwnd);
         break;
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
@@ -776,9 +776,9 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         SetNGWTitle(hwnd, 3);
         for (i = 0; i < 7; i++) {
-            SendMessage(GetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, static_cast<VictoryCondition>((i >= 2) + i)), 0);
+            LUiSendMessage(GetDlgItem(hwnd, i + 291), BM_SETCHECK, GetVCCheck(&game, static_cast<VictoryCondition>((i >= 2) + i)), 0);
             if (fRCWReadOnly) {
-                EnableWindow(GetDlgItem(hwnd, i + 291), FALSE);
+                FUiEnableWindow(GetDlgItem(hwnd, i + 291), FALSE);
             }
         }
         StickyDlgPos(hwnd, &ptStickyNewDlg, TRUE);
@@ -832,7 +832,7 @@ INT_PTR CALLBACK NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return 1;
         }
         if (LOWORD(wParam) >= IDC_VC_OWNS_PLANETS && LOWORD(wParam) <= IDC_VC_HIGHEST_SCORE) {
-            i = LOWORD(SendMessage(GetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
+            i = LOWORD(LUiSendMessage(GetDlgItem(hwnd, LOWORD(wParam)), BM_GETCHECK, 0, 0));
             SetVCCheck(&game, static_cast<VictoryCondition>(LOWORD(wParam) - 291 + ((uint16_t)(LOWORD(wParam) - 291) >= 2)), i);
             DrawNewGame3(hwnd, NULL, 8);
         }
@@ -978,6 +978,6 @@ void SetNGWTitle(HWND hwnd, int16_t iStep) {
 
     cch = CchGetString(static_cast<StringId>(idsAdvancedNewGameWizardStepD3 + fRCWReadOnly), szBuf);
     cch = wsprintf(szWork, szBuf, iStep);
-    SetWindowText(hwnd, szWork);
+    FUiSetWindowText(hwnd, szWork);
     return;
 }

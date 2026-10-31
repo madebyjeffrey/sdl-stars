@@ -303,7 +303,7 @@ int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
         rc.left = CW_USEDEFAULT;
     if (rc.right == -32768)
         rc.right = CW_USEDEFAULT;
-    hwndFrame = CreateWindow(szFrame, "Stars!", WS_OVERLAPPEDWINDOW, rc.left, rc.top, rc.right, rc.bottom, NULL, NULL, hInst, NULL);
+    hwndFrame = HwndUiCreateWindowEx(0, szFrame, "Stars!", WS_OVERLAPPEDWINDOW, rc.left, rc.top, rc.right, rc.bottom, NULL, NULL, hInst, NULL);
     if (!hwndFrame) {
         return FALSE;
     }

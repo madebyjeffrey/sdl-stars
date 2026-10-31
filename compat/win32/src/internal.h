@@ -8,10 +8,10 @@
 #include "ownership.h"
 #include <SDL3/SDL.h>
 #include "platform.h"
-#if defined(STARS_TEST_IMPL_MessageBoxA) && !defined(STARS_WIN_CALLS_H)
+#if defined(STARS_TEST_IMPL_MessageBoxA)
 decltype(MessageBoxA) STARS_TEST_IMPL_MessageBoxA;
 #endif
-#if defined(STARS_TEST_IMPL_TrackPopupMenu) && !defined(STARS_WIN_CALLS_H)
+#if defined(STARS_TEST_IMPL_TrackPopupMenu)
 decltype(TrackPopupMenu) STARS_TEST_IMPL_TrackPopupMenu;
 #endif
 void CompatAbortCallback(HWND hwnd) noexcept;

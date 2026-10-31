@@ -36,7 +36,7 @@ static void SyncToolbar(HWND hwnd) {
     int16_t itb;
 
     for (itb = tbNormalView; itb <= tbShipCounts; itb++) {
-        SendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(static_cast<ToolbarButton>(itb)));
+        LUiSendMessage(hwndButtons, TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + itb, FIsButtonDown(static_cast<ToolbarButton>(itb)));
     }
 }
 
@@ -62,16 +62,16 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE:
         if (!InitCommonControlsEx(&icc)) return -1;
-        hwndButtons = CreateWindow(TOOLBARCLASSNAME, NULL,
+        hwndButtons = HwndUiCreateWindowEx(0, TOOLBARCLASSNAME, NULL,
             WS_CHILD | WS_VISIBLE | TBSTYLE_TOOLTIPS | CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER,
             0, 2, 10, 32, hwnd, (HMENU)(INT_PTR)IDC_STARS_TOOLBAR, hInst, NULL);
         if (!hwndButtons) return -1;
-        SendMessage(hwndButtons, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-        SendMessage(hwndButtons, TB_SETBITMAPSIZE, 0, MAKELPARAM(24, 23));
-        SendMessage(hwndButtons, TB_SETBUTTONSIZE, 0, MAKELPARAM(29, 28));
-        SendMessage(hwndButtons, TB_SETINDENT, 4, 0);
-        SendMessage(hwndButtons, TB_SETMAXTEXTROWS, 0, 0);
-        SendMessage(hwndButtons, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
+        LUiSendMessage(hwndButtons, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+        LUiSendMessage(hwndButtons, TB_SETBITMAPSIZE, 0, MAKELPARAM(24, 23));
+        LUiSendMessage(hwndButtons, TB_SETBUTTONSIZE, 0, MAKELPARAM(29, 28));
+        LUiSendMessage(hwndButtons, TB_SETINDENT, 4, 0);
+        LUiSendMessage(hwndButtons, TB_SETMAXTEXTROWS, 0, 0);
+        LUiSendMessage(hwndButtons, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
         // FGetSystemColors has mapped palette entry 253 to the button
         // face. Use that writable DIB instead of the magenta source resource.
         lpbi = (BITMAPINFO *)GlobalLock(hdibToolbar);
@@ -92,7 +92,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ReleaseDC(hwndButtons, hdc); GlobalUnlock(hdibToolbar);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)hbmp);
         add.hInst = NULL; add.nID = (UINT_PTR)hbmp;
-        if (SendMessage(hwndButtons, TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
+        if (LUiSendMessage(hwndButtons, TB_ADDBITMAP, 18, (LPARAM)&add) < 0) return -1;
         c = 0; iRadar = -1;
         for (i = 0; i < 29; i++) {
             itb = (ToolbarButton)(int8_t)vrgTBBtn[i];
@@ -114,23 +114,23 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             c++;
         }
-        if (!SendMessage(hwndButtons, TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
-        if (iRadar < 0 || !SendMessage(hwndButtons, TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
-        hwndTBRadar = CreateWindow("COMBOBOX", NULL, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
+        if (!LUiSendMessage(hwndButtons, TB_ADDBUTTONS, c, (LPARAM)rgbtn)) return -1;
+        if (iRadar < 0 || !LUiSendMessage(hwndButtons, TB_GETITEMRECT, iRadar, (LPARAM)&rc)) return -1;
+        hwndTBRadar = HwndUiCreateWindowEx(0, "COMBOBOX", NULL, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
             rc.left, (28 - dyArial8 - 8) / 2 + 4, rc.right - rc.left, 11 * dyArial8 + 28, hwnd, NULL, hInst, NULL);
         if (!hwndTBRadar) return -1;
-        SetWindowPos(hwndTBRadar, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        SendMessage(hwndTBRadar, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        FUiSetWindowPos(hwndTBRadar, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        LUiSendMessage(hwndTBRadar, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         iSel = -1;
         for (j = 0; j < 10; j++) {
             pct = 100 - 10 * j;
             if (pct == vpctRadarView) iSel = j;
             wsprintf(szWork, PCTDPCTPCT, pct);
-            SendMessage(hwndTBRadar, CB_ADDSTRING, 0, (LPARAM)szWork);
+            LUiSendMessage(hwndTBRadar, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
-        SendMessage(hwndTBRadar, CB_SETEXTENDEDUI, 4, 0);
-        SendMessage(hwndTBRadar, CB_SETCURSEL, iSel, 0);
-        wsprintf(szWork, PCTDPCTPCT, vpctRadarView); SetWindowText(hwndTBRadar, szWork);
+        LUiSendMessage(hwndTBRadar, CB_SETEXTENDEDUI, 4, 0);
+        LUiSendMessage(hwndTBRadar, CB_SETCURSEL, iSel, 0);
+        wsprintf(szWork, PCTDPCTPCT, vpctRadarView); FUiSetWindowText(hwndTBRadar, szWork);
         lpfnRealComboProc = (WNDPROC)GetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC);
         SetWindowLongPtr(hwndTBRadar, GWLP_WNDPROC, (LONG_PTR)lpfnFakeComboProc);
         hwndCE = GetWindow(hwndTBRadar, GW_CHILD);
@@ -144,7 +144,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         hbmp = (HBITMAP)GetWindowLongPtr(hwnd, GWLP_USERDATA);
         if (hbmp) DeleteObject(hbmp);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return LUiDefWindowProc(hwnd, msg, wParam, lParam);
     case WM_MOUSEMOVE:
         if (hwnd == hwndTBRadar || GetParent(hwnd) == hwndTBRadar) {
             GetWindowRect(hwndTBRadar, &rc);
@@ -153,7 +153,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     case WM_SIZE:
         GetClientRect(hwnd, &rc);
-        MoveWindow(hwndButtons, 0, 2, rc.right, 32, TRUE);
+        FUiMoveWindow(hwndButtons, 0, 2, rc.right, 32, TRUE);
         return 0;
     case WM_COMMAND:
         if ((HWND)lParam == hwndButtons) {
@@ -187,7 +187,7 @@ LRESULT CALLBACK TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         hdc = BeginPaint(hwnd, &ps); GetClientRect(hwnd, &rc);
         DrawToolbar(hdc, &rc); EndPaint(hwnd, &ps); return 0;
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void DrawToolbar(HDC hdc, RECT *prc) {
@@ -197,7 +197,7 @@ void DrawToolbar(HDC hdc, RECT *prc) {
 
 void DrawBitmapButton(HDC hdc, POINT16 pt, ToolbarButton ibtn, int16_t fDown) {
     (void)hdc; (void)pt;
-    SendMessage(GetDlgItem(hwndTb, IDC_STARS_TOOLBAR), TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
+    LUiSendMessage(GetDlgItem(hwndTb, IDC_STARS_TOOLBAR), TB_CHECKBUTTON, IDC_STARS_TOOLBUTTON_FIRST + ibtn, fDown);
 }
 
 int16_t ItbFromPpt(POINT16 *ppt) {
@@ -207,12 +207,12 @@ int16_t ItbFromPpt(POINT16 *ppt) {
     RECT rc;
     TBBUTTON btn;
 
-    i = (int16_t)SendMessage(hwndButtons, TB_HITTEST, 0, (LPARAM)&pt);
+    i = (int16_t)LUiSendMessage(hwndButtons, TB_HITTEST, 0, (LPARAM)&pt);
     if (i < 0) {
         i = -i - 1;
     }
-    if (SendMessage(hwndButtons, TB_GETBUTTON, i, (LPARAM)&btn) &&
-        SendMessage(hwndButtons, TB_GETITEMRECT, i, (LPARAM)&rc) && PtInRect(&rc, pt)) {
+    if (LUiSendMessage(hwndButtons, TB_GETBUTTON, i, (LPARAM)&btn) &&
+        LUiSendMessage(hwndButtons, TB_GETITEMRECT, i, (LPARAM)&rc) && PtInRect(&rc, pt)) {
         ppt->x = rc.left; ppt->y = rc.top + 2;
         return btn.idCommand - IDC_STARS_TOOLBUTTON_FIRST;
     }
@@ -285,7 +285,7 @@ static POINT16 PtToolbarMenu(ToolbarButton itb) {
 
     if (itb == tbShipDesignFilterMenu) itb = tbShipDesignFilter;
     else if (itb == tbEnemyClassFilterMenu) itb = tbEnemyClassFilter;
-    if (SendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, (LPARAM)&rc)) {
+    if (LUiSendMessage(hwndButtons, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + itb, (LPARAM)&rc)) {
         pt.x = rc.left; pt.y = rc.bottom;
         MapWindowPoints(hwndButtons, hwndTb, &pt, 1);
     }
@@ -533,9 +533,9 @@ void TerminateToolbarFocus(int16_t fCancel) {
     } else if (pct > 100) {
         pct = 100;
     }
-    SendMessage(hwndTBRadar, CB_SETCURSEL, (int16_t)(100 - pct) / 10, 0);
+    LUiSendMessage(hwndTBRadar, CB_SETCURSEL, (int16_t)(100 - pct) / 10, 0);
     wsprintf(szWork, PCTDPCTPCT, pct);
-    SetWindowText(hwndTBRadar, szWork);
+    FUiSetWindowText(hwndTBRadar, szWork);
     if (pct != vpctRadarView) {
         vpctRadarView = pct;
         if (!(grbitScan & grbitScanCoverage)) {
@@ -544,7 +544,7 @@ void TerminateToolbarFocus(int16_t fCancel) {
         grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanCoverage);
         InvalidateRect(hwndScanner, NULL, TRUE);
     }
-    SetFocus(hwndFrame);
+    HwndUiSetFocus(hwndFrame);
     return;
 }
 
@@ -558,7 +558,7 @@ void ShowTooltip(StringId ids, RECT *prc) {
     fVisCur = hwndTooltip && IsWindowVisible(hwndTooltip) != 0;
     if ((int16_t)ids < idsUniverseDefinitionFileSeemsMissingCorrupt || !prc) {
         if (hwndTooltip) {
-            DestroyWindow(hwndTooltip);
+            FUiDestroyWindow(hwndTooltip);
         }
         if (fVisCur) {
             vtickTooltipLast = GetTickCount();
@@ -573,12 +573,12 @@ void ShowTooltip(StringId ids, RECT *prc) {
         SelectObject(hdc, hfontSav);
         ReleaseDC(NULL, hdc);
         if (!hwndTooltip) {
-            CreateWindowExA(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP, prc->left, prc->bottom + 2,
+            HwndUiCreateWindowEx(WS_EX_NOACTIVATE, szTooltip, NULL, WS_POPUP, prc->left, prc->bottom + 2,
                            dxTip + 6, dyArial8 + 6, hwndTb, NULL, hInst, NULL);
         } else {
             InvalidateRect(hwndTooltip, NULL, TRUE);
         }
-        SetWindowPos(hwndTooltip, (HWND)-1, 0, 0, dxTip + 6, dyArial8 + 6, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        FUiSetWindowPos(hwndTooltip, (HWND)-1, 0, 0, dxTip + 6, dyArial8 + 6, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
         fShowNow = vtickTooltipLast + 400 >= GetTickCount() || fVisCur != 0;
         TooltipWndProc(hwndTooltip, 1523, fShowNow, 0);
     }
@@ -608,7 +608,7 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
     case WM_LBUTTONDBLCLK:
-        DestroyWindow(hwnd);
+        FUiDestroyWindow(hwnd);
         return 0;
     case 1523:
         if (wParam == 0) {
@@ -640,8 +640,8 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             if (pt.y + dyArial8 + 6 > rc.bottom) {
                 pt.y = StarsMax(rc.top, vrcTooltip.top - dyArial8 - 8);
             }
-            SetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
-            UpdateWindow(hwnd);
+            FUiSetWindowPos(hwnd, (HWND)-1, pt.x, pt.y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
+            FUiUpdateWindow(hwnd);
             if (vidTimerTooltip != -1) {
                 KillTimer(hwnd, vidTimerTooltip);
             }
@@ -656,7 +656,7 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             GetCursorPos16(&pt);
             if (PtInRect(&vrcTooltip, PointFrom16(pt)) == 0 || vtickTooltip1stVis + 10000 < vtickTooltipLast) {
             LKillTip:
-                DestroyWindow(hwnd);
+                FUiDestroyWindow(hwnd);
             }
             return 0;
         }
@@ -677,7 +677,7 @@ LRESULT CALLBACK TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         EndPaint(hwnd, &ps);
         return 0;
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return LUiDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -689,7 +689,7 @@ LRESULT CALLBACK FakeComboProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
     }
-    return CallWindowProc(lpfnRealComboProc, hwnd, msg, wParam, lParam);
+    return LUiCallWindowProc(lpfnRealComboProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -701,5 +701,5 @@ LRESULT CALLBACK FakeCEProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_MOUSEMOVE:
         TbWndProc(hwnd, msg, wParam, lParam);
     }
-    return CallWindowProc(lpfnRealCEProc, hwnd, msg, wParam, lParam);
+    return LUiCallWindowProc(lpfnRealCEProc, hwnd, msg, wParam, lParam);
 }

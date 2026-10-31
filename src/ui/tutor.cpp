@@ -29,7 +29,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message) {
     case WM_INITDIALOG:
         tutor.hwnd = hwnd;
-        SetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+        FUiSetWindowPos(hwnd, (HWND)-1, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
         StickyDlgPos(hwnd, &ptStickyTutorDlg, TRUE);
         return 1;
     case WM_ERASEBKGND:
@@ -46,7 +46,7 @@ INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (LOWORD(wParam)) {
         case IDC_TUTOR_PANIC:
             lpProc = MakeProcInstance(PanicDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PANIC), hwnd, lpProc);
             FreeProcInstance(lpProc);
             if (!fRet) {
                 return 0;
@@ -123,7 +123,7 @@ void ShowTutor(int16_t fShow) {
         // Instruction updates call this while the tutor is already visible;
         // activating it again takes focus from the control the player is using.
         if (!fShow || !IsWindowVisible(tutor.hwnd))
-            ShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
+            FUiShowWindow(tutor.hwnd, !fShow ? SW_HIDE : SW_SHOW);
         tutor.fVisible = fShow;
     }
     return;
@@ -205,9 +205,9 @@ void StartTutor(int16_t fRestart) {
         SaveGameState();
         if (!fFreeingTitle) {
             fFreeingTitle = TRUE;
-            DestroyWindow(hwndTitle);
+            FUiDestroyWindow(hwndTitle);
             hwndTitle = 0;
-            ShowWindow(hwndFrame, SW_SHOW);
+            FUiShowWindow(hwndFrame, SW_SHOW);
         }
         grbitScan = static_cast<GrbitScan>(grbitScanCoverage | grbitScanMineFields | grbitScanFleetPaths | grbitScanPlanetNames);
         cx = GetSystemMetrics(SM_CXSCREEN);
@@ -246,10 +246,10 @@ void StartTutor(int16_t fRestart) {
             PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
             if (!fFreeingTitle) {
                 fFreeingTitle = TRUE;
-                DestroyWindow(hwndTitle);
+                FUiDestroyWindow(hwndTitle);
                 hwndTitle = 0;
             }
-            ShowWindow(hwndFrame, SW_SHOW);
+            FUiShowWindow(hwndFrame, SW_SHOW);
         }
         tutor.idsError = -1;
         tutor.fShowHidMsg = TRUE;
@@ -264,7 +264,7 @@ void StartTutor(int16_t fRestart) {
             return;
         }
         if (!tutor.hwnd) {
-            CreateDialog(hInst, MAKEINTRESOURCE(IDD_TUTOR), hwndFrame, lpfnTutorDlgProc);
+            HwndUiCreateDialog(hInst, MAKEINTRESOURCE(IDD_TUTOR), hwndFrame, lpfnTutorDlgProc);
         }
         if (tutor.idt != idtWelcomeStarsTutorialWillGuideThrough36) {
             if (!tutor.fTurnDone) {
@@ -322,7 +322,7 @@ void AdvanceTutor() {
     }
 LUpdatePage:
     wsprintf(szTitle, PszGetCompressedString(idsStarsTutorPageD80), (int16_t)tutor.idt / 8 + 1);
-    SetWindowText(tutor.hwnd, szTitle);
+    FUiSetWindowText(tutor.hwnd, szTitle);
     ShowTutor(TRUE);
     GetWindowRect(tutor.hwnd, &rc);
     ScreenToClient(tutor.hwnd, (POINT *)&rc);
@@ -336,7 +336,7 @@ void EndTutor(int16_t fClose) {
     if (gd.fTutorial) {
         gd.fTutorial = FALSE;
         if (tutor.hwnd) {
-            DestroyWindow(tutor.hwnd);
+            FUiDestroyWindow(tutor.hwnd);
         }
         game.fTutorial = FALSE;
         if (fClose) {
@@ -1071,7 +1071,7 @@ int16_t FTutorTaskDone() {
                         return TRUE;
                     }
                     if (FCheckSelection(grobjFleet, 11) && sel.fl.lpplord->rgord()[sel.iwpAct].grTask == grTaskXfer &&
-                        SendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
+                        LUiSendMessage(rghwndOrderDD[1], CB_GETCURSEL, 0, 0) == 4) {
                         tutor.idtBold = idtThirdUnload;
                     } else {
                         tutor.idtBold = idtSetSecondDropdownWaypointTaskTileColonists;
@@ -2791,7 +2791,7 @@ int16_t FCheckShipBuilder(int16_t iCategory, int16_t iShip) {
     if (iCategory != iCategoryAny && iCategory != mdBuild) {
         return FALSE;
     }
-    iSel = LOWORD(SendMessage(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
+    iSel = LOWORD(LUiSendMessage(GetDlgItem(hwndSlotDlg, IDC_COMBOBOX), CB_GETCURSEL, 0, 0));
     if (iShip == iShipAny || iShip == iSel) {
         tutor.idh = static_cast<HelpContextId>(idhSav);
         return TRUE;

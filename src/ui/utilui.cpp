@@ -43,8 +43,8 @@ void SelectOursAtObject(POINT16 *ppt) {
         lpThings[scan.ith].thp().iWarp() == 0) {
         ChangeScanSel(&scan, 1);
         FEnsurePointOnScreen(scan.pt, TRUE);
-        UpdateWindow(hwndScanner);
-        SendMessage(hwndScanner, WM_CHAR, 'v', 0);
+        FUiUpdateWindow(hwndScanner);
+        LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
     } else if (id != idflNone) {
         SelectAdjFleet(0, id);
     }

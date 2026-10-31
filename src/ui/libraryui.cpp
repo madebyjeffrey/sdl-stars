@@ -329,7 +329,7 @@ INT_PTR CALLBACK LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, 
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, PszGetCompressedString(idsLibraryGameDuplicateTitle));
+        FUiSetWindowText(hwnd, PszGetCompressedString(idsLibraryGameDuplicateTitle));
         CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryGameDuplicatePrompt), (const char *)lParam);
         SetDlgItemText(hwnd, IDC_LIBRARY_GAME_REVISION_TEXT, szMessage);
         SetDlgItemText(hwnd, IDOK, PszGetCompressedString(idsLibraryGameAddRevision));
@@ -363,9 +363,9 @@ INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         y = rcOwner.top + ((rcOwner.bottom - rcOwner.top) - (rc.bottom - rc.top)) / 2;
         x = (((rcWork.left) > ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left))))) ? (rcWork.left) : ((((x) < (rcWork.right - (rc.right - rc.left))) ? (x) : (rcWork.right - (rc.right - rc.left)))));
         y = (((rcWork.top) > ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top))))) ? (rcWork.top) : ((((y) < (rcWork.bottom - (rc.bottom - rc.top))) ? (y) : (rcWork.bottom - (rc.bottom - rc.top)))));
-        SetWindowPos(hwnd, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        FUiSetWindowPos(hwnd, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
-        SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 255, 0);
+        LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 255, 0);
         SetDlgItemText(hwnd, IDC_EDIT1, (char *)lParam);
         return TRUE;
     case WM_COMMAND:
@@ -419,12 +419,12 @@ int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile, const char *pszName) {
     if (pszName) {
         if (!FLibraryNameAvailable(szLibraryRoot, szLibraryName)) {
             SuggestLibraryName(szLibraryName, TRUE);
-            if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_GAME_REVISION), hwnd,
+            if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_GAME_REVISION), hwnd,
                                LibraryGameRevisionDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
         }
     } else {
         SuggestLibraryName(szLibraryName, FALSE);
-        if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
+        if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     }
     if (!FPortableLibraryName(szLibraryName)) goto LFail;
     CchSnprintf(szLibraryPending, sizeof(szLibraryPending), "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
@@ -448,7 +448,7 @@ static int16_t FChooseLibraryRaceName(HWND hwnd, const char *pszSuggested, char 
     SuggestRaceFilename(szRaceLibraryName);
     if (!szRaceLibraryName[0]) return FALSE;
     fRaceLibraryNameDialog = TRUE;
-    if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg,
+    if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd, LibraryNameDlg,
                        (LPARAM)szRaceLibraryName) != TRUE) {
         fRaceLibraryNameDialog = FALSE;
         return FALSE;
@@ -762,7 +762,7 @@ INT_PTR CALLBACK LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPAR
     POINT16 pt = {-1, -1};
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, PszGetCompressedString(idsLibraryRaceSaveTitle));
+        FUiSetWindowText(hwnd, PszGetCompressedString(idsLibraryRaceSaveTitle));
         CchSnprintf(szMessage, sizeof(szMessage), PszGetCompressedString(idsLibraryRaceSavePrompt), (const char *)lParam);
         SetDlgItemText(hwnd, IDC_LIBRARY_RACE_SAVE_TEXT, szMessage);
         SetDlgItemText(hwnd, IDC_LIBRARY_RACE_UPDATE, PszGetCompressedString(idsLibraryRaceUpdate));
@@ -802,7 +802,7 @@ int16_t FSaveCurrentLibraryRace(HWND hwnd, PLAYER *pplr) {
         strcpy(szName, rv.szSame);
         goto LReuse;
     }
-    iChoice = pszExisting[0] ? (int)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
+    iChoice = pszExisting[0] ? (int)LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_RACE_SAVE), hwnd,
                                                  LibraryRaceSaveDlg, (LPARAM)szName) : 2;
     if (iChoice != 1 && iChoice != 2) return FALSE;
     if (iChoice == 2) {
@@ -1821,22 +1821,22 @@ INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LP
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         plm = (LIBRARYTURNMATCH *)lParam;
         hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
-        for (i = 0; i < plm->cMatches; i++) SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)plm->rgszName[i]);
-        EnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
+        for (i = 0; i < plm->cMatches; i++) LUiSendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)plm->rgszName[i]);
+        FUiEnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
         return TRUE;
     case WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) { EndDialog(hwnd, FALSE); return TRUE; }
         if (LOWORD(wParam) == IDC_LIBRARY_TURN_TARGET_LIST && HIWORD(wParam) == LBN_SELCHANGE) {
             hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
-            EnableWindow(GetDlgItem(hwnd, IDOK), SendMessage(hwndList, LB_GETCURSEL, 0, 0) != LB_ERR);
+            FUiEnableWindow(GetDlgItem(hwnd, IDOK), LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0) != LB_ERR);
             return TRUE;
         }
         if (LOWORD(wParam) == IDOK) {
             plm = (LIBRARYTURNMATCH *)GetWindowLongPtr(hwnd, DWLP_USER);
             hwndList = GetDlgItem(hwnd, IDC_LIBRARY_TURN_TARGET_LIST);
-            i = (int)SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+            i = (int)LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
             if (i == LB_ERR) return TRUE;
-            SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)plm->szSelected);
+            LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)plm->szSelected);
             EndDialog(hwnd, TRUE);
             return TRUE;
         }
@@ -1923,7 +1923,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
     if (lm.cMatches == 0) return -1;
     if (lm.cMatches > 1) {
         if (lm.cMatches > (int)(sizeof(lm.rgszName) / sizeof(lm.rgszName[0])) ||
-            DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_TARGET), hwnd,
+            LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_TARGET), hwnd,
                            LibraryTurnTargetDlg, (LPARAM)&lm) != TRUE) return FALSE;
     } else CchSnprintf(lm.szSelected, sizeof(lm.szSelected), "%s", lm.rgszName[0]);
     if (!lm.szSelected[0]) {
@@ -1957,7 +1957,7 @@ static int16_t FImportSubsequentTurn(HWND hwnd, const char *pszSource) {
         }
     }
     if (fHasTurn && turn <= turnCurrent) {
-        iChoice = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_CONFLICT), hwnd,
+        iChoice = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_TURN_CONFLICT), hwnd,
                                  LibraryTurnConflictDlg, 0);
         if (iChoice == 1) return FReplaceConflictingLibraryTurn(hwnd, lm.szSelected, pszSource,
                                                                szTarget, iplr, lidGame, turn);
@@ -2504,12 +2504,12 @@ int16_t FImportLibraryOrders(HWND hwnd, const char *pszSource) {
     }
     if (!FInitLibrary() || !IsWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES))) return FALSE;
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
-    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) {
         AlertSz(PszGetCompressedString(idsLibraryOrdersChooseHost), MB_ICONEXCLAMATION);
         return FALSE;
     }
-    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
+    LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
     pszFile = strrchr(pszSource, '/');
     pchSlash = strrchr(pszSource, '\\');
     if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
@@ -2634,7 +2634,7 @@ static int16_t FChooseSeparateCopyName(HWND hwnd, const char *pszName) {
     if (!FInitLibrary()) return FALSE;
     CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszName);
     SuggestLibraryName(szLibraryName, FALSE);
-    if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
+    if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
                        LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     return FPortableLibraryName(szLibraryName) && FLibraryNameAvailable(szLibraryRoot, szLibraryName);
 }
@@ -2756,14 +2756,14 @@ static int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int i
         rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;
     }
-    i = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    i = LUiSendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)pszName);
     if (i == LB_ERR || i == LB_ERRSPACE) return FALSE;
     CchSnprintf(rgLibraryGameList[cLibraryGameList].szName,
                 sizeof(rgLibraryGameList[cLibraryGameList].szName), "%s", pszName);
     rgLibraryGameList[cLibraryGameList].iplr = iplr;
     rgLibraryGameList[cLibraryGameList].grfPlayers = grfPlayers;
     memcpy(rgLibraryGameList[cLibraryGameList].rgturn, rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn));
-    SendMessage(hwndList, LB_SETITEMDATA, i, cLibraryGameList++);
+    LUiSendMessage(hwndList, LB_SETITEMDATA, i, cLibraryGameList++);
     return TRUE;
 }
 
@@ -2820,7 +2820,7 @@ static int16_t ListLibraryHostGame(void *lpList, const char *pszName) {
         !FInspectImportFile(szHost, dtHost, iplrNone, &lidHost, &turnHost, NULL, &fMulti) ||
         !FInspectImportFile(szUniverse, dtXY, iplrNone, &lidUniverse, NULL, NULL, &fMulti) ||
         lidHost != lidUniverse) return TRUE;
-    i = SendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    i = LUiSendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }
 
@@ -2887,47 +2887,47 @@ void InitLibraryGames(HWND hwnd, const RECT *lprc) {
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", (void *)hwnd);
     y = StarsMax(50, lprc->bottom - 360);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  24, y - 22, 58, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAMES_VIEW, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryHostGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryHostGames), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  86, y - 22, 82, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_HOST_VIEW, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryImportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportFolder), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryImportFolder), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 240, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_FOLDER, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImportOrders), WS_CHILD | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryImportOrders), WS_CHILD | WS_TABSTOP,
                  lprc->right - 128, y - 22, 104, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_IMPORT_ORDERS, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryExportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryExportGame), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 464, y - 22, 96, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAME_EXPORT, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 304, y - 22, 60, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_DUPLICATE, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsRename), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsRename), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 360, y - 22, 52, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_RENAME, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 524, y - 22, 56, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_GAME_DELETE, hInst, NULL);
-    CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
+    HwndUiCreateWindowEx(0, "LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_GAMES, hInst, NULL);
-    CreateWindow("LISTBOX", "", WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
+    HwndUiCreateWindowEx(0, "LISTBOX", "", WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 90, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_HOST_GAMES, hInst, NULL);
-    CreateWindow("STATIC", PszGetCompressedString(idsLibraryPlayerSelect), WS_CHILD | WS_VISIBLE,
+    HwndUiCreateWindowEx(0, "STATIC", PszGetCompressedString(idsLibraryPlayerSelect), WS_CHILD | WS_VISIBLE,
                  24, y + 100, 66, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_PLAYER_LABEL, hInst, NULL);
-    CreateWindow("COMBOBOX", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
+    HwndUiCreateWindowEx(0, "COMBOBOX", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST,
                  94, y + 96, StarsMin(280, lprc->right - 118), 160, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_PLAYERS, hInst, NULL);
-    CreateWindow("STATIC", "", WS_CHILD | WS_VISIBLE,
+    HwndUiCreateWindowEx(0, "STATIC", "", WS_CHILD | WS_VISIBLE,
                  24, y + 122, lprc->right - 48, 18, hwnd,
                  (HMENU)(uintptr_t)IDC_LIBRARY_CONTINUE_DETAILS, hInst, NULL);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), SW_HIDE);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), SW_HIDE);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), SW_HIDE);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES), SW_HIDE);
     RefreshLibraryGames(hwnd);
     RefreshLibraryHostGames(hwnd);
     if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
@@ -2959,27 +2959,27 @@ int16_t FEnumerateLibraryRaces(FNativeDirectoryEntryProc pfnEntry, void *lpData)
 static int16_t ListLibraryRace(void *lpList, const char *pszName) {
     LRESULT i;
 
-    i = SendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
+    i = LUiSendMessage((HWND)lpList, LB_ADDSTRING, 0, (LPARAM)pszName);
     return i != LB_ERR && i != LB_ERRSPACE;
 }
 
 void InitLibraryRaces(HWND hwnd, const RECT *lprc) {
     int y = StarsMax(160, lprc->bottom - 200);
-    CreateWindow("STATIC", PszGetCompressedString(idsLibraryRaceDesigns), WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
+    HwndUiCreateWindowEx(0, "STATIC", PszGetCompressedString(idsLibraryRaceDesigns), WS_CHILD | WS_VISIBLE, 24, y - 18, 160, 18,
                  hwnd, NULL, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryNew), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryNew), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 436, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_NEW, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryEdit), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryEdit), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 384, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EDIT, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryDuplicate), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 332, y - 20, 62, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DUPLICATE, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryExport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryExport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 266, y - 20, 48, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_EXPORT, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsDelete), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 214, y - 20, 56, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_DELETE, hInst, NULL);
-    CreateWindow("BUTTON", PszGetCompressedString(idsLibraryImport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+    HwndUiCreateWindowEx(0, "BUTTON", PszGetCompressedString(idsLibraryImport), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                  lprc->right - 152, y - 20, 112, 18, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACE_IMPORT, hInst, NULL);
-    CreateWindow("LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
+    HwndUiCreateWindowEx(0, "LISTBOX", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_SORT,
                  24, y, lprc->right - 48, 80, hwnd, (HMENU)(uintptr_t)IDC_LIBRARY_RACES, hInst, NULL);
     RefreshLibraryRaces(hwnd);
 }
@@ -2987,20 +2987,20 @@ void InitLibraryRaces(HWND hwnd, const RECT *lprc) {
 void RefreshLibraryRaces(HWND hwnd) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_RACES);
     if (!hwndList) return;
-    SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+    LUiSendMessage(hwndList, LB_RESETCONTENT, 0, 0);
     FEnumerateLibraryRaces(ListLibraryRace, hwndList);
-    SendMessage(hwndList, LB_SETCURSEL, 0, 0);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EDIT), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DUPLICATE), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EXPORT), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
-    EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DELETE), SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    LUiSendMessage(hwndList, LB_SETCURSEL, 0, 0);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EDIT), LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DUPLICATE), LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_EXPORT), LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RACE_DELETE), LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0);
 }
 
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_RACES);
-    LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    LRESULT i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) return FALSE;
-    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName);
+    LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName);
     return TRUE;
 }
 
@@ -3013,24 +3013,24 @@ void RefreshLibraryPlayers(HWND hwnd) {
     LIBRARYGAMELISTITEM *plgli;
 
     if (!hwndPlayers) return;
-    SendMessage(hwndPlayers, CB_RESETCONTENT, 0, 0);
-    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-    iItem = i == LB_ERR ? LB_ERR : SendMessage(hwndList, LB_GETITEMDATA, i, 0);
+    LUiSendMessage(hwndPlayers, CB_RESETCONTENT, 0, 0);
+    i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    iItem = i == LB_ERR ? LB_ERR : LUiSendMessage(hwndList, LB_GETITEMDATA, i, 0);
     if (iItem >= 0 && iItem < cLibraryGameList) {
         plgli = &rgLibraryGameList[iItem];
         for (iplr = 0; iplr < 16; iplr++) {
             if (!(plgli->grfPlayers & (1u << iplr))) continue;
             CchSnprintf(szPlayer, sizeof(szPlayer), PszGetCompressedString(idsLibraryPlayerTurn),
                         iplr + 1, plgli->rgturn[iplr] + 2400);
-            iPlayer = SendMessage(hwndPlayers, CB_ADDSTRING, 0, (LPARAM)szPlayer);
+            iPlayer = LUiSendMessage(hwndPlayers, CB_ADDSTRING, 0, (LPARAM)szPlayer);
             if (iPlayer == CB_ERR || iPlayer == CB_ERRSPACE) break;
-            SendMessage(hwndPlayers, CB_SETITEMDATA, iPlayer, iplr);
+            LUiSendMessage(hwndPlayers, CB_SETITEMDATA, iPlayer, iplr);
             if (iSelected == CB_ERR || iplr == plgli->iplr) iSelected = iPlayer;
         }
     }
-    SendMessage(hwndPlayers, CB_SETCURSEL, iSelected, 0);
-    EnableWindow(hwndPlayers, iSelected != CB_ERR);
-    if (!fHostLibraryView) EnableWindow(rghwndBtnSplash[1], iSelected != CB_ERR);
+    LUiSendMessage(hwndPlayers, CB_SETCURSEL, iSelected, 0);
+    FUiEnableWindow(hwndPlayers, iSelected != CB_ERR);
+    if (!fHostLibraryView) FUiEnableWindow(rghwndBtnSplash[1], iSelected != CB_ERR);
 }
 
 void RefreshLibraryGames(HWND hwnd) {
@@ -3043,11 +3043,11 @@ void RefreshLibraryGames(HWND hwnd) {
     LRESULT iContinue, iSelected, iPlayer, iItem;
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (!hwndList) return;
-    iSelected = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-    if (iSelected != LB_ERR) SendMessage(hwndList, LB_GETTEXT, iSelected, (LPARAM)szSelected);
-    iPlayer = SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0);
-    if (iPlayer != CB_ERR) iPlayer = SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETITEMDATA, iPlayer, 0);
-    SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+    iSelected = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    if (iSelected != LB_ERR) LUiSendMessage(hwndList, LB_GETTEXT, iSelected, (LPARAM)szSelected);
+    iPlayer = LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0);
+    if (iPlayer != CB_ERR) iPlayer = LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETITEMDATA, iPlayer, 0);
+    LUiSendMessage(hwndList, LB_RESETCONTENT, 0, 0);
     ClearLibraryGameList();
     fLibrary = FInitLibrary();
     if (fLibrary) {
@@ -3056,27 +3056,27 @@ void RefreshLibraryGames(HWND hwnd) {
     }
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     if (hwndList) {
-        iSelected = szSelected[0] ? SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)szSelected) : LB_ERR;
+        iSelected = szSelected[0] ? LUiSendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)szSelected) : LB_ERR;
         if (iSelected == LB_ERR) iSelected = 0;
         else if (iPlayer >= 0 && iPlayer < 16) {
-            iItem = SendMessage(hwndList, LB_GETITEMDATA, iSelected, 0);
+            iItem = LUiSendMessage(hwndList, LB_GETITEMDATA, iSelected, 0);
             if (iItem >= 0 && iItem < cLibraryGameList && (rgLibraryGameList[iItem].grfPlayers & (1u << iPlayer)))
                 rgLibraryGameList[iItem].iplr = (int)iPlayer;
         }
-        SendMessage(hwndList, LB_SETCURSEL, iSelected, 0);
+        LUiSendMessage(hwndList, LB_SETCURSEL, iSelected, 0);
     }
-    fHasGames = hwndList && SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
+    fHasGames = hwndList && LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
     if (!fHostLibraryView) {
-        EnableWindow(rghwndBtnSplash[1], fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
+        FUiEnableWindow(rghwndBtnSplash[1], fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
     }
     RefreshLibraryPlayers(hwnd);
     fContinue = FFindContinueLibraryGame() && continueLibrary.iPlayer >= 0;
     if (fContinue && !continueLibrary.fTurnAvailable) {
-        iContinue = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)continueLibrary.szName);
+        iContinue = LUiSendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)continueLibrary.szName);
         fContinue = iContinue != LB_ERR;
     }
     if (fContinue) {
@@ -3084,12 +3084,12 @@ void RefreshLibraryGames(HWND hwnd) {
                     PszGetCompressedString(idsLibraryContinuePlayer) : PszGetCompressedString(idsLibraryContinueChoosePlayer),
                     continueLibrary.szName, continueLibrary.iPlayer + 1, continueLibrary.iYear);
         SetDlgItemText(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, szLabel);
-        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsContinueGame));
-        EnableWindow(rghwndBtnSplash[2], TRUE);
+        FUiSetWindowText(rghwndBtnSplash[2], PszGetCompressedString(idsContinueGame));
+        FUiEnableWindow(rghwndBtnSplash[2], TRUE);
     } else {
         SetDlgItemText(hwnd, IDC_LIBRARY_CONTINUE_DETAILS, "");
-        SetWindowText(rghwndBtnSplash[2], PszGetCompressedString(static_cast<StringId>(idsNewGame + 2)));
-        EnableWindow(rghwndBtnSplash[2], FALSE);
+        FUiSetWindowText(rghwndBtnSplash[2], PszGetCompressedString(static_cast<StringId>(idsNewGame + 2)));
+        FUiEnableWindow(rghwndBtnSplash[2], FALSE);
     }
 }
 
@@ -3097,16 +3097,16 @@ void RefreshLibraryHostGames(HWND hwnd) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     int16_t fHasGames;
     if (!hwndList) return;
-    SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+    LUiSendMessage(hwndList, LB_RESETCONTENT, 0, 0);
     if (FInitLibrary()) FNativeEnumerateDirectory(szLibraryRoot, ListLibraryHostGame, hwndList);
-    SendMessage(hwndList, LB_SETCURSEL, 0, 0);
-    fHasGames = SendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
+    LUiSendMessage(hwndList, LB_SETCURSEL, 0, 0);
+    fHasGames = LUiSendMessage(hwndList, LB_GETCOUNT, 0, 0) > 0;
     if (fHostLibraryView) {
-        EnableWindow(rghwndBtnSplash[1], fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
-        EnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
+        FUiEnableWindow(rghwndBtnSplash[1], fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_EXPORT), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_DUPLICATE), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_RENAME), fHasGames);
+        FUiEnableWindow(GetDlgItem(hwnd, IDC_LIBRARY_GAME_DELETE), fHasGames);
     }
 }
 
@@ -3114,13 +3114,13 @@ void SelectLibraryView(HWND hwnd, int16_t fHost) {
     HWND hwndGames = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
     HWND hwndHost = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
     fHostLibraryView = fHost;
-    ShowWindow(hwndGames, fHost ? SW_HIDE : SW_SHOW);
-    ShowWindow(hwndHost, fHost ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_PLAYERS), fHost ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_PLAYER_LABEL), fHost ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT), fHost ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_FOLDER), fHost ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), fHost ? SW_SHOW : SW_HIDE);
+    FUiShowWindow(hwndGames, fHost ? SW_HIDE : SW_SHOW);
+    FUiShowWindow(hwndHost, fHost ? SW_SHOW : SW_HIDE);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_PLAYERS), fHost ? SW_HIDE : SW_SHOW);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_PLAYER_LABEL), fHost ? SW_HIDE : SW_SHOW);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT), fHost ? SW_HIDE : SW_SHOW);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_FOLDER), fHost ? SW_HIDE : SW_SHOW);
+    FUiShowWindow(GetDlgItem(hwnd, IDC_LIBRARY_IMPORT_ORDERS), fHost ? SW_SHOW : SW_HIDE);
     if (fHost) RefreshLibraryHostGames(hwnd);
     else RefreshLibraryGames(hwnd);
 }
@@ -3145,13 +3145,13 @@ int16_t FContinueLibraryGame(HWND hwnd) {
     // The remembered turn may have been removed after a newer game import.
     // Require an explicit choice when the remembered player's turn is missing.
     SelectLibraryView(hwnd, FALSE);
-    i = SendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)continueLibrary.szName);
+    i = LUiSendMessage(hwndList, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)continueLibrary.szName);
     if (i == LB_ERR) return FALSE;
-    SendMessage(hwndList, LB_SETCURSEL, i, 0);
+    LUiSendMessage(hwndList, LB_SETCURSEL, i, 0);
     RefreshLibraryPlayers(hwnd);
-    SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_SETCURSEL, (WPARAM)-1, 0);
-    EnableWindow(rghwndBtnSplash[1], FALSE);
-    SetFocus(GetDlgItem(hwnd, IDC_LIBRARY_PLAYERS));
+    LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_SETCURSEL, (WPARAM)-1, 0);
+    FUiEnableWindow(rghwndBtnSplash[1], FALSE);
+    HwndUiSetFocus(GetDlgItem(hwnd, IDC_LIBRARY_PLAYERS));
     return FALSE;
 }
 
@@ -3162,13 +3162,13 @@ int16_t FSelectLibraryGame(HWND hwnd) {
     if (fHostLibraryView) return FSelectLibraryHostGame(hwnd);
 
     hwndList = GetDlgItem(hwnd, IDC_LIBRARY_GAMES);
-    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) return FALSE;
-    iItem = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
+    iItem = LUiSendMessage(hwndList, LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return FALSE;
-    iPlayer = SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0);
+    iPlayer = LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETCURSEL, 0, 0);
     if (iPlayer == CB_ERR) return FALSE;
-    iPlayer = SendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETITEMDATA, iPlayer, 0);
+    iPlayer = LUiSendDlgItemMessage(hwnd, IDC_LIBRARY_PLAYERS, CB_GETITEMDATA, iPlayer, 0);
     if (iPlayer < 0 || iPlayer >= 16 || !(rgLibraryGameList[iItem].grfPlayers & (1u << iPlayer))) return FALSE;
     CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.m%d", szLibraryRoot, szDirSep,
                 rgLibraryGameList[iItem].szName, szDirSep, rgLibraryGameList[iItem].szName, (int)iPlayer + 1);
@@ -3178,11 +3178,11 @@ int16_t FSelectLibraryGame(HWND hwnd) {
 
 int16_t FSelectLibraryHostGame(HWND hwnd) {
     HWND hwndList = GetDlgItem(hwnd, IDC_LIBRARY_HOST_GAMES);
-    LRESULT i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    LRESULT i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
     char szName[256];
     int cch;
     if (i == LB_ERR) return FALSE;
-    SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
+    LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szName);
     cch = CchSnprintf(szBase, sizeof(szBase), "%s%s%s%s%s.hst", szLibraryRoot, szDirSep,
                       szName, szDirSep, szName);
     if (cch <= 0 || (size_t)cch >= sizeof(szBase)) return FALSE;
@@ -3194,14 +3194,14 @@ static int16_t FSelectedLibraryGameName(HWND hwnd, char *pszName, size_t cchName
     HWND hwndList = GetDlgItem(hwnd, fHostLibraryView ? IDC_LIBRARY_HOST_GAMES : IDC_LIBRARY_GAMES);
     LRESULT i, iItem;
     int cch;
-    i = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+    i = LUiSendMessage(hwndList, LB_GETCURSEL, 0, 0);
     if (i == LB_ERR) return FALSE;
     if (fHostLibraryView) {
-        cch = (int)SendMessage(hwndList, LB_GETTEXTLEN, i, 0);
+        cch = (int)LUiSendMessage(hwndList, LB_GETTEXTLEN, i, 0);
         if (cch <= 0 || (size_t)cch >= cchName) return FALSE;
-        return SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName) == cch;
+        return LUiSendMessage(hwndList, LB_GETTEXT, i, (LPARAM)pszName) == cch;
     }
-    iItem = SendMessage(hwndList, LB_GETITEMDATA, i, 0);
+    iItem = LUiSendMessage(hwndList, LB_GETITEMDATA, i, 0);
     if (iItem < 0 || iItem >= cLibraryGameList) return FALSE;
     cch = CchSnprintf(pszName, cchName, "%s", rgLibraryGameList[iItem].szName);
     return cch > 0 && (size_t)cch < cchName;
@@ -3212,7 +3212,7 @@ static int16_t FChooseLibraryGameActionName(HWND hwnd, const char *pszCurrentNam
     cch = CchSnprintf(szLibraryName, sizeof(szLibraryName), "%s", pszCurrentName);
     if (cch <= 0 || (size_t)cch >= sizeof(szLibraryName)) return FALSE;
     SuggestLibraryName(szLibraryName, FALSE);
-    if (!szLibraryName[0] || DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
+    if (!szLibraryName[0] || LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_LIBRARY_NAME), hwnd,
                                            LibraryNameDlg, (LPARAM)szLibraryName) != TRUE) return FALSE;
     cch = CchSnprintf(pszNewName, 256, "%s", szLibraryName);
     return cch > 0 && cch < 256;

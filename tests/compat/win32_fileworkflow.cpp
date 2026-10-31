@@ -118,7 +118,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     if (fRunning) {
         for (hwndDialog = GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = GetWindow(hwndDialog, GW_HWNDNEXT)) {
             if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && IsWindowVisible(hwndDialog)) {
-                SendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+                LUiSendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
                 return;
             }
         }

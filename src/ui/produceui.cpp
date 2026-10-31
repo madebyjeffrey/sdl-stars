@@ -13,7 +13,7 @@ int16_t ChangeProduction(int16_t fClear) {
         InitProduction(rgprod);
         fDlgUp = TRUE;
         lpProcProd = MakeProcInstance(ProductionDlg, hInst);
-        fSuccess = DialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
+        fSuccess = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd);
         FreeProcInstance(lpProcProd);
         hwndProdDlg = 0;
         fDlgUp = FALSE;
@@ -75,8 +75,8 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         rgidProdBtns[9] = 118;
         hwndProdDlg = hwnd;
         if (rgplr[idPlayer].cPlanet <= 1) {
-            EnableWindow(GetDlgItem(hwnd, IDC_NEXT), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_BACK), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_NEXT), FALSE);
+            FUiEnableWindow(GetDlgItem(hwnd, IDC_BACK), FALSE);
         }
         if (gd.mdScreenSize >= 1) {
             dx = 760;
@@ -85,16 +85,16 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             dx = 610;
             dy = 24 * dyArial8 + 24;
         }
-        SetWindowPos(hwnd, NULL, 0, 0, dx, dy, SWP_NOMOVE | SWP_NOZORDER);
+        FUiSetWindowPos(hwnd, NULL, 0, 0, dx, dy, SWP_NOMOVE | SWP_NOZORDER);
         GetClientRect(hwnd, &rc);
         xCtr = rc.right >> 1;
         dyLB = rc.bottom - (int16_t)(17 * dyArial8) / 2 - 24;
         rc.left = (int16_t)(11 * rc.right) / 20 + 16;
         dxPBtn = (int16_t)(rc.right - rc.left) / 4;
         rc.bottom -= (int16_t)(3 * dyArial8) / 2 + 6;
-        SetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), NULL, 6, rc.bottom, rc.left - 12, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), NULL, 6, rc.bottom, rc.left - 12, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
         for (i = 0; i < 4; i++) {
-            SetWindowPos(GetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+            FUiSetWindowPos(GetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
             rc.left += dxPBtn;
         }
         dxPBtn += 24;
@@ -106,12 +106,12 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             dy = 50;
         }
         for (i = 4; i < 10; i++) {
-            SetWindowPos(GetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+            FUiSetWindowPos(GetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
             rc.top += dy;
         }
-        SetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), NULL, 6, 6, rc.left - 12, dyLB, SWP_NOZORDER);
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), NULL, 6, 6, rc.left - 12, dyLB, SWP_NOZORDER);
         GetWindowRect(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), &rcT);
-        SetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), NULL, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, SWP_NOZORDER);
+        FUiSetWindowPos(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), NULL, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, SWP_NOZORDER);
         ScreenToClient(hwnd, (POINT *)&rcT.right);
         yTopFutureTech = rcT.bottom;
         InitializeProductionDlg(hwnd);
@@ -181,7 +181,7 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         if (i == cMax - 1) {
             memcpy(rgzp, vrgZipProd, 160);
             lpProc = MakeProcInstance(ZipProdDlg, hInst);
-            fRet = DialogBox(hInst, MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc);
+            fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc);
             FreeProcInstance(lpProc);
             if (fRet)
                 break;
@@ -233,7 +233,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
     switch (LOWORD(wParam)) {
     case IDC_PRODUCTION_ADD:
     AddItem:
-        lSel = SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0);
         if (lSel < 0)
             break;
         for (iSrc = 0; iSrc < cProdGlob && (pProdGlob[iSrc].cItem == 0 || lSel-- != 0); iSrc++) {
@@ -254,7 +254,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             pProdGlob[iSrc].cItem -= prod.cItem;
         }
         iMac = lpplProdGlob->iprodMac;
-        lSel = SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
         if (lSel < 0) {
             iDst = iMac - 1;
             if (iDst < 0) {
@@ -297,14 +297,14 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->iprodMac++;
     FixedUp:
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iDst + 1, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iDst + 1, 0);
         if (pProdGlob[iSrc].cItem != 0)
             goto RedrawText;
         FillProdSrcLB(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
         goto RedrawText;
     case IDC_PRODUCTION_REMOVE:
     RemoveItem:
-        lSel = SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
         if (lSel <= 0)
             break;
         iMac = lpplProdGlob->iprodMac;
@@ -342,7 +342,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         }
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
         if (lSel >= 0) {
-            SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
+            LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         }
         if (!fRefillSrc)
             goto RedrawText;
@@ -389,14 +389,14 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             FreePl(lpplProdGlob);
             lpplProdGlob = lpplprodT;
             sel.pl.fNoResearch = vrgZipProd[lParam].fNoResearch;
-            SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
+            LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
         } else {
             lpplProdGlob->iprodMac = 0;
         }
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, 0, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, 0, 0);
         FillProdSrcLB(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
-        SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
         goto RedrawText;
     case IDC_PRODUCTION_AVAILABLE_ITEMS:
     case IDC_PRODUCTION_QUEUE:
@@ -416,10 +416,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         break;
     case IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY:
         hwndLB = GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE);
-        sel.pl.fNoResearch = LOWORD(SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0));
-        lSel = SendMessage(hwndLB, LB_GETCURSEL, 0, 0);
+        sel.pl.fNoResearch = LOWORD(LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0));
+        lSel = LUiSendMessage(hwndLB, LB_GETCURSEL, 0, 0);
         FillPlanetProdLB(hwndLB, lpplProdGlob, NULL);
-        SendMessage(hwndLB, LB_SETCURSEL, LOWORD(lSel), 0);
+        LUiSendMessage(hwndLB, LB_SETCURSEL, LOWORD(lSel), 0);
         goto RedrawText;
     case IDOK:
     case IDCANCEL:
@@ -444,7 +444,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         InvalidateRect(hwnd, &rc, TRUE);
         break;
     case IDC_PRODUCTION_ITEM_DOWN:
-        lSel = SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
         iMac = lpplProdGlob->iprodMac;
         if (lSel <= 0 || lSel >= iMac)
             break;
@@ -453,10 +453,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
         lpplProdGlob->rgprod()[lSel + 1] = prod;
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 2, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 2, 0);
         goto RedrawText;
     case IDC_PRODUCTION_ITEM_UP:
-        lSel = SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
         if (lSel <= 1)
             break;
         iMac = lpplProdGlob->iprodMac;
@@ -465,7 +465,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
         lpplProdGlob->rgprod()[lSel + 1] = prod;
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
+        LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         goto RedrawText;
     case IDC_HELP:
         WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhProductionDialog);
@@ -480,9 +480,9 @@ void InitializeProductionDlg(HWND hwnd) {
 
     iSel = -1;
     wsprintf(rgch, PszGetCompressedString(idsProductionQueueS), PszGetPlanetName(sel.pl.id));
-    SetWindowText(hwnd, rgch);
+    FUiSetWindowText(hwnd, rgch);
     FillProdSrcLB(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
-    SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
+    LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
     i = 0;
     lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
@@ -493,8 +493,8 @@ void InitializeProductionDlg(HWND hwnd) {
         lpprod++;
     }
     FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-    SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iSel + 1, 0);
-    SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
+    LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iSel + 1, 0);
+    LUiSendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
     return;
 }
 
@@ -526,7 +526,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
         GetWindowRect(GetDlgItem(hwnd, idc), &rc);
         ScreenToClient(hwnd, (POINT *)&rc);
         ScreenToClient(hwnd, (POINT *)&rc.right);
-        lSel = SendMessage(GetDlgItem(hwnd, idc), LB_GETCURSEL, 0, 0);
+        lSel = LUiSendMessage(GetDlgItem(hwnd, idc), LB_GETCURSEL, 0, 0);
         if (lSel >= 0 && (lSel != 0 || i != 1)) {
             if (i == 0) {
                 for (iSrc = 0; iSrc < cProdGlob && (pProdGlob[iSrc].cItem == 0 || lSel-- != 0); iSrc++) {
@@ -594,7 +594,7 @@ void FillProdSrcLB(HWND hwndLB, int16_t mdFill) {
     for (i = 0; i < 6; i++) {
         szT[i] = ' ';
     }
-    SendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
+    LUiSendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
     for (i = 0; i < cProdGlob; i++) {
         if (pProdGlob[i].cItem > 0) {
             psz = PszNameProdItem(pProdGlob + i);
@@ -607,7 +607,7 @@ void FillProdSrcLB(HWND hwndLB, int16_t mdFill) {
             } else {
                 szT[0] = ' ';
             }
-            SendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szT);
+            LUiSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szT);
         }
     }
     return;
@@ -631,7 +631,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
     switch (message) {
     case WM_INITDIALOG:
-        SetWindowText(hwnd, PszGetCompressedString(idsCustomizeProductionTemplates));
+        FUiSetWindowText(hwnd, PszGetCompressedString(idsCustomizeProductionTemplates));
         GetWindowRect(hwnd, &rc);
         GetClientRect(hwnd, &rc2);
         dy = rc.bottom - rc.top - rc2.bottom;
@@ -639,7 +639,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         MapWindowPoints(NULL, hwnd, (POINT *)&rc2, 2);
         vyZPDStatic = rc2.bottom + 2;
         dy += rc2.bottom + dyArial8 + 6;
-        SetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, dy, SWP_NOMOVE | SWP_NOZORDER);
+        FUiSetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, dy, SWP_NOMOVE | SWP_NOZORDER);
         CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
         EnableZipProdBtns(hwnd, 0);
         iResTechNow = Energy;
@@ -662,7 +662,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 psz = szWork;
             }
             hwndRad = GetDlgItem(hwnd, i);
-            SetWindowText(hwndRad, psz);
+            FUiSetWindowText(hwndRad, psz);
         }
         StickyDlgPos(hwnd, &ptStickyZipProdDlg, TRUE);
         if (gd.fTutorial) {
@@ -735,7 +735,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 lpProc = MakeProcInstance(RenameZipDlg, hInst);
                 if (iResTechNow == Energy)
                     goto LDontRename;
-                if (DialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc) != 0) {
+                if (LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc) != 0) {
                     if (szWork[0] == 0) {
                         wsprintf(szWork, PszGetCompressedString(idsCustomD), iResTechNow);
                     }
@@ -748,7 +748,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                         }
                     }
                     *pszT = 0;
-                    SetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
+                    FUiSetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
                 LDontRename:
                     if (LOWORD(wParam) == IDC_IMPORT) {
                         vrgZipProd[iResTechNow].fValid = TRUE;
@@ -769,13 +769,13 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     EnableZipProdBtns(hwnd, iResTechNow);
                 }
                 FreeProcInstance(lpProc);
-                SetFocus(hwnd);
+                HwndUiSetFocus(hwnd);
                 gd.fChgZipProd = TRUE;
                 break;
             case IDC_DELETE:
                 vrgZipProd[iResTechNow].fValid = FALSE;
                 wsprintf(szWork, PszGetCompressedString(idsUnusedD), iResTechNow + 1);
-                SetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), szWork);
+                FUiSetWindowText(GetDlgItem(hwnd, iResTechNow + 1073), szWork);
                 FillZipProdLB(hwnd, &vrgZipProd[iResTechNow]);
                 gd.fChgZipProd = TRUE;
                 break;
@@ -792,8 +792,8 @@ void EnableZipProdBtns(HWND hwnd, int16_t iSel) {
     int16_t fEnabled;
 
     fEnabled = vrgZipProd[iSel].fValid != 0 && iSel > 0;
-    EnableWindow(GetDlgItem(hwnd, IDC_DELETE), fEnabled);
-    EnableWindow(GetDlgItem(hwnd, IDC_RENAME), fEnabled);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_DELETE), fEnabled);
+    FUiEnableWindow(GetDlgItem(hwnd, IDC_RENAME), fEnabled);
     return;
 }
 
@@ -809,9 +809,9 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
     rc.top = vyZPDStatic;
     rc.bottom = vyZPDStatic + dyArial8;
     InvalidateRect(hwndDlg, &rc, TRUE);
-    SendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
+    LUiSendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
     if (!pzpq->fValid || pzpq->cpq == 0) {
-        SendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsAutoBuildOrders));
+        LUiSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)PszGetCompressedString(idsAutoBuildOrders));
     } else {
         CchGetString(idsSD2, szFormat);
         for (i = 0; i < pzpq->cpq; i++) {
@@ -821,7 +821,7 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
             } else {
                 wsprintf(szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
             }
-            SendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szWork);
+            LUiSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
     return;

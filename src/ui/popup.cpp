@@ -39,7 +39,7 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         if (!hwndPopup) {
             return 0;
         }
-        DestroyWindow(hwndPopup);
+        FUiDestroyWindow(hwndPopup);
         hwndPopup = 0;
         GlobalPD.grPopup = static_cast<GrPopupType>(0);
         ReleaseCapture();
@@ -51,7 +51,7 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         return 0;
     default:
     Default:
-        return DefWindowProc(hwnd, message, wParam, lParam);
+        return LUiDefWindowProc(hwnd, message, wParam, lParam);
     }
 }
 
@@ -369,10 +369,10 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     pt.x = (((0) > ((((pt.x) < (GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (GetSystemMetrics(SM_CXSCREEN) - dx)))) ? (0) : ((((pt.x) < (GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (GetSystemMetrics(SM_CXSCREEN) - dx))));
     pt.y = (((0) > ((((pt.y) < (GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (GetSystemMetrics(SM_CYSCREEN) - dy)))) ? (0) : ((((pt.y) < (GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (GetSystemMetrics(SM_CYSCREEN) - dy))));
     // Popup drawing reads hwndPopup, so publish the handle before the first paint.
-    hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_BORDER,
+    hwndPopup = HwndUiCreateWindowEx(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_BORDER,
                                pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);
-    SendMessage(hwndPopup, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
-    ShowWindow(hwndPopup, SW_SHOW);
+    LUiSendMessage(hwndPopup, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+    FUiShowWindow(hwndPopup, SW_SHOW);
     SetCapture(hwndPopup);
     return;
 }
@@ -467,14 +467,14 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
     } else {
         tpm = TPM_LEFTBUTTON;
     }
-    TrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, hwndFrame, NULL);
+    FUiTrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, hwndFrame, NULL);
     DestroyMenu(hmenuPopup);
     if (hmenuSub) {
         DestroyMenu(hmenuSub);
     }
     /* The original accepted only the first 100 items; the target popups now
        list every object at a location. */
-    if (PeekMessage(&msg, hwndFrame, 273, 273, 2) != 0 && msg.wParam >= 15000 && msg.wParam < 15000 + (WPARAM)cString) {
+    if (FUiPeekMessage(&msg, hwndFrame, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + (WPARAM)cString) {
         iPopMenuSel = msg.wParam - 15000;
     }
     return iPopMenuSel;

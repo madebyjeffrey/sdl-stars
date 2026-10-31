@@ -61,6 +61,6 @@ decltype(FPromptLegacyRacePassword) STARS_TEST_IMPL(FPromptLegacyRacePassword);
 decltype(FNativeSaveFileName) STARS_TEST_IMPL(FNativeSaveFileName);
 decltype(FNativeOpenFileName) STARS_TEST_IMPL(FNativeOpenFileName);
 
-#include "win_calls.h"
+#include <wincompat_calls.h>
 
 #endif

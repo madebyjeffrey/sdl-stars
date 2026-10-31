@@ -29,6 +29,13 @@ use these headers with generated `StarsCompat_` symbol aliases. The host never
 includes these headers. Do not add this directory to global include paths or define
 `_WIN32` for a native build.
 
+Application UI code uses `wincompat_calls.h` for operations that can dispatch
+callbacks: for example, `LUiSendMessage` and `FUiDestroyWindow` call the raw APIs
+and deliver captured exceptions after dispatch/modal cleanup returns. Runtime
+internals and independent raw API contracts keep the raw calls. The 23 checked
+entry functions have compile-time signature checks against their underlying
+APIs; application call sites name them explicitly.
+
 The supported source interface is 64-bit, narrow-character C++20, with Win32 LLP64
 widths: `LONG`, `DWORD` and `BOOL` are 32 bits; handles and message parameters
 are pointer-sized. Structures use SDK packing, including packed bitmap file

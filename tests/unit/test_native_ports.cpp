@@ -201,33 +201,33 @@ static void TestRawMessageEdit(void) {
     const char *psz = "\xe6\x9d\xb1\xe4\xba\xac";
 
     TEST_ASSERT(FStarsTestInit());
-    hwnd = CreateWindow("STATIC", "", WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, NULL, NULL, hInst, NULL);
+    hwnd = HwndUiCreateWindowEx(0, "STATIC", "", WS_OVERLAPPEDWINDOW, 0, 0, 200, 100, NULL, NULL, hInst, NULL);
     TEST_ASSERT(hwnd != NULL);
-    hwndMsgEdit = CreateWindow("EDIT", "", WS_CHILD | ES_MULTILINE, 0, 0, 100, 30, hwnd, NULL, hInst, NULL);
-    hwndMsgDrop = CreateWindow("COMBOBOX", "", WS_CHILD | CBS_DROPDOWNLIST, 0, 40, 100, 30, hwnd, NULL, hInst, NULL);
+    hwndMsgEdit = HwndUiCreateWindowEx(0, "EDIT", "", WS_CHILD | ES_MULTILINE, 0, 0, 100, 30, hwnd, NULL, hInst, NULL);
+    hwndMsgDrop = HwndUiCreateWindowEx(0, "COMBOBOX", "", WS_CHILD | CBS_DROPDOWNLIST, 0, 40, 100, 30, hwnd, NULL, hInst, NULL);
     TEST_ASSERT(hwndMsgEdit != NULL && hwndMsgDrop != NULL);
-    SendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)"Everyone");
-    SendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
+    LUiSendMessage(hwndMsgDrop, CB_ADDSTRING, 0, (LPARAM)"Everyone");
+    LUiSendMessage(hwndMsgDrop, CB_SETCURSEL, 0, 0);
     vlpmsgplrOut = NULL; vcmsgplrOut = 0; iMsgSendCur = 0;
-    TEST_ASSERT(SetWindowText(hwndMsgEdit, psz));
+    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, psz));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_ASSERT(vlpmsgplrOut != NULL && vlpmsgplrOut->cLen == -7);
     cDirty = 0;
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 0 && vcmsgplrOut == 1);
     TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg(), psz));
-    TEST_ASSERT(SetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
+    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg(), "\xe4\xba\xac\xe6\x9d\xb1"));
     iMsgSendCur = vcmsgplrOut;
-    TEST_ASSERT(SetWindowText(hwndMsgEdit, "Second"));
+    TEST_ASSERT(FUiSetWindowText(hwndMsgEdit, "Second"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(vcmsgplrOut == 2 && vlpmsgplrOut->lpmsgplrNext != NULL);
     TEST_CHECK(!FFinishPlrMsgEntry(1000));
     TEST_CHECK(vcmsgplrOut == 1 && vlpmsgplrOut->lpmsgplrNext == NULL && iMsgSendCur == 0);
     TEST_CHECK(!FFinishPlrMsgEntry(1000));
     TEST_CHECK(vcmsgplrOut == 0 && vlpmsgplrOut == NULL);
-    DestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
+    FUiDestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
 }
 
 static void TestStaticColor(void) {
@@ -414,7 +414,7 @@ static LRESULT CALLBACK SessionCleanupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM
         fCleanupKeptState = IsWindow(hwnd) && lphb && rglphb[htPerm] == lphb;
         return 0;
     }
-    return DefWindowProc(hwnd,msg,w,l);
+    return LUiDefWindowProc(hwnd,msg,w,l);
 }
 static void TestApplicationUiSessionClose(void) {
     char szDir[MAX_PATH], szPath[MAX_PATH + 64];
@@ -432,13 +432,13 @@ static void TestApplicationUiSessionClose(void) {
     wc.hInstance = hInst;
     wc.lpszClassName = "StarsSessionCleanupTest";
     TEST_ASSERT(RegisterClass(&wc));
-    HWND hwnd = CreateWindow(wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
+    HWND hwnd = HwndUiCreateWindowEx(0, wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
     TEST_ASSERT(hwnd);
     STARSCOMPATPAYLOAD payload(std::malloc(8), {[](void *pv) noexcept { ++cSessionPayloadReleased; std::free(pv); }});
     TEST_ASSERT(payload);
     const int cReleased = cSessionPayloadReleased;
     TEST_ASSERT(StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),WM_APP+78,std::move(payload),0));
-    SendMessage(hwnd,WM_APP+77,0,0);
+    LUiSendMessage(hwnd,WM_APP+77,0,0);
     TEST_ASSERT(fCleanupKeptState && cSessionPayloadReleased == cReleased);
     FreeStuff();
     TEST_CHECK(!IsWindow(hwnd) && !hwndFrame && !hwndPlanet && !hInst);
