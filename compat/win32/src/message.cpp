@@ -17,6 +17,7 @@
 typedef struct COMPATMESSAGE {
     win32::MSG msg;
     STARSCOMPATPAYLOAD payload;
+    void *lpvCallbackContext;
     BOOL fTimer, fInput;
     BYTE rgbKey[256];
     struct COMPATMESSAGE *lpNext;
@@ -33,7 +34,7 @@ static COMPATMESSAGEOWNER TakePayloadMessage(const win32::MSG &msg) noexcept {
     for (auto **first : {&lpPending, &lpFirst}) {
         for (auto **link = first; *link; link = &(*link)->lpNext) {
             auto *lp = *link;
-            if (lp->payload && lp->msg.hwnd == msg.hwnd && lp->msg.message == msg.message &&
+            if ((lp->payload || (lp->fTimer && lp->lpvCallbackContext)) && lp->msg.hwnd == msg.hwnd && lp->msg.message == msg.message &&
                 lp->msg.wParam == msg.wParam && lp->msg.lParam == msg.lParam) {
                 *link = lp->lpNext;
                 if (lpLast == lp) {
@@ -234,9 +235,10 @@ BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return 1;
 }
 
-BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn) {
+BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext) {
     if (!win32::PostMessageA(hwnd, win32::WM_TIMER, id, (LPARAM)lpfn)) return 0;
     lpLast->fTimer = 1;
+    lpLast->lpvCallbackContext = lpvCallbackContext;
     return 1;
 }
 
@@ -296,7 +298,7 @@ static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UIN
             else lpFirst = lpmsg->lpNext;
             if (lpLast == lpmsg) lpLast = lpPrev;
             if (lpmsg->fTimer) CompatTimerDequeued(lpmsg->msg.hwnd, lpmsg->msg.wParam);
-            if (lpmsg->payload) {
+            if (lpmsg->payload || (lpmsg->fTimer && lpmsg->lpvCallbackContext)) {
                 lpmsg->lpNext = lpPending;
                 lpPending = lpmsg;
             } else FreeMessage(lpmsg);
@@ -388,6 +390,7 @@ LRESULT win32::DispatchMessageA(const win32::MSG *lpmsg) {
     if (lpmsg->message == win32::WM_TIMER && lpmsg->lParam) {
         if (lpmsg->hwnd && !LpCompatWindow(lpmsg->hwnd)) return 0;
         COMPATDISPATCHSCOPE dispatch;
+        COMPATCALLBACKCONTEXTSCOPE context(payload ? payload->lpvCallbackContext : PvCompatCallbackContext());
         CompatInvokeTimerProc((TIMERPROC)lpmsg->lParam, lpmsg->hwnd, win32::WM_TIMER, lpmsg->wParam, win32::GetTickCount());
         return 0;
     }

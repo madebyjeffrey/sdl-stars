@@ -32,7 +32,7 @@ int16_t IdAlertBox(const char *sz, int16_t mbType) {
 // ReadIniSettings does for the Windows game: logging, the default
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
-static int16_t FReadHostIni(const char *szFile) {
+static int16_t FReadHostIni(APPSESSION &app, const char *szFile) {
     char *pszText;
     long  cb;
     NATIVEFILE *pf;
@@ -54,21 +54,22 @@ static int16_t FReadHostIni(const char *szFile) {
     pszText[cb] = 0;
     if (!FUtf8Valid(pszText, (size_t)cb)) return 0;
     if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
-    ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
-    if (!FIniValue(pszText, idsMisc, idsDefaultpassword, vszDefPass, 16)) {
-        vszDefPass[0] = 0;
+    app.state.ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
+    if (!FIniValue(pszText, idsMisc, idsDefaultpassword, app.state.vszDefPass, 16)) {
+        app.state.vszDefPass[0] = 0;
     }
-    gd.fPerPlayerDumps = LIniInt(pszText, idsMisc, idsNewreports, 0) != 0;
-    gd.fNoHostNames = LIniInt(pszText, idsMisc, idsNohostnames, 0) != 0;
-    vcBackupDirs = LIniInt(pszText, idsMisc, idsBackups, 1);
-    if (vcBackupDirs < 1 || vcBackupDirs > 999) {
-        vcBackupDirs = 1;
+    app.state.gd.fPerPlayerDumps = LIniInt(pszText, idsMisc, idsNewreports, 0) != 0;
+    app.state.gd.fNoHostNames = LIniInt(pszText, idsMisc, idsNohostnames, 0) != 0;
+    app.state.vcBackupDirs = LIniInt(pszText, idsMisc, idsBackups, 1);
+    if (app.state.vcBackupDirs < 1 || app.state.vcBackupDirs > 999) {
+        app.state.vcBackupDirs = 1;
     }
     return 1;
 }
 
 int main(int argc, char *argv[]) try {
-    NATIVECLEANUPSCOPE session([]() noexcept { GetAppSession().Close(); });
+    APPSESSION &app = GetAppSession();
+    NATIVECLEANUPSCOPE session([&app]() noexcept { app.Close(); });
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) try {
     char **rgpszNative;
 #endif
 
-    GetAppSession().BindFiles();
+    app.BindFiles();
 #ifdef _WIN32
     rgpszNative = RgpszNativeArguments(&argc);
     if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
@@ -126,7 +127,7 @@ int main(int argc, char *argv[]) try {
     ini.SetWFlags(0);
     ini.idPlayer = iplrNone;
     InitGameStuff();
-    if (szIniPath && !FReadHostIni(szIniPath)) {
+    if (szIniPath && !FReadHostIni(app, szIniPath)) {
         fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
 #ifdef _WIN32
         nativeArguments.reset();

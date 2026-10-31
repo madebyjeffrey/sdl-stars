@@ -72,7 +72,7 @@ set_source_files_properties(${STARS_CPP_SDK_SHARED_HARNESSES} PROPERTIES
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
 # Error state and pending callback failures are shared by game and SDL runtime.
-add_library(stars_errors STATIC src/platform/errors.cpp)
+add_library(stars_errors STATIC src/platform/errors.cpp src/platform/callbackcontext.cpp)
 target_include_directories(stars_errors PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_errors PRIVATE stars_sanitizers)
 target_compile_options(stars_errors PRIVATE -Wall -Wextra -Werror)

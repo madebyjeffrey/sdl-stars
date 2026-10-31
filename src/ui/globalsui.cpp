@@ -105,12 +105,6 @@ APPUISTATE::APPUISTATE() noexcept {
 }
 
 namespace {
-enum class APPUISESSIONPHASE : uint8_t { ready, closing, closed };
-class APPUISESSION final : public APPSESSION {
-public:
-    APPUISTATE ui;
-    APPUISESSIONPHASE phase = APPUISESSIONPHASE::ready;
-};
 APPUISESSION &UiSession() { static APPUISESSION session; return session; }
 }
 APPSESSION &GetAppSession() { return UiSession(); }

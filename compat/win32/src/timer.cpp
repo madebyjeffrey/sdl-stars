@@ -10,6 +10,7 @@ typedef struct COMPATTIMER {
     UINT cMillis;
     uint64_t msDue;
     TIMERPROC lpfn;
+    void *lpvCallbackContext;
     BOOL fQueued;
     struct COMPATTIMER *lpNext;
 } COMPATTIMER;
@@ -49,6 +50,7 @@ UINT_PTR win32::SetTimer(HWND hwnd, UINT_PTR id, UINT cMillis, TIMERPROC lpfn) {
     lp->cMillis = (((win32::USER_TIMER_MINIMUM) > (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM))) ? (win32::USER_TIMER_MINIMUM) : (StarsMin(cMillis, win32::USER_TIMER_MAXIMUM)));
     lp->msDue = CompatTimeIO().pfnGetTicks() + lp->cMillis;
     lp->lpfn = lpfn;
+    lp->lpvCallbackContext = hwnd ? hwnd->lpvCallbackContext : PvCompatCallbackContext();
     return lp->id ? lp->id : 1;
 }
 
@@ -77,7 +79,7 @@ void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax) {
 
     for (lp = lpTimers; lp; lp = lp->lpNext) {
         if (lp->fQueued || !FTimerMatches(lp, hwnd, msgMin, msgMax) || msNow < lp->msDue) continue;
-        if (CompatQueueTimer(lp->hwnd, lp->id, lp->lpfn)) {
+        if (CompatQueueTimer(lp->hwnd, lp->id, lp->lpfn, lp->lpvCallbackContext)) {
             lp->fQueued = 1;
             lp->msDue = msNow + lp->cMillis;
         }

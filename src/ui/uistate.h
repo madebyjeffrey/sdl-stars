@@ -360,6 +360,13 @@ struct APPUISTATE {
     alignas(std::max_align_t) uint8_t        vrgbMachineConfig[11] = {};
 };
 
+enum class APPUISESSIONPHASE : uint8_t { ready, closing, closed };
+class APPUISESSION final : public APPSESSION {
+public:
+    APPUISTATE ui;
+    APPUISESSIONPHASE phase = APPUISESSIONPHASE::ready;
+};
+
 APPUISTATE &GetAppUiState();
 void BeginAppUiSession() noexcept;
 bool FBeginAppUiClose() noexcept;

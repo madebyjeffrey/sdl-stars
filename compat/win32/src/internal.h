@@ -1,6 +1,7 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
 #include <windows.h>
+#include <callbackcontext.h>
 #include "encoding.h"
 #include "errors.h"
 #include "fileio.h"
@@ -71,6 +72,7 @@ struct win32::HWND__ {
     SDL_WindowID id;
     uint64_t idInspect;
     WNDPROC lpfnWndProc;
+    void *lpvCallbackContext;
     LONG_PTR lUserData, idChild;
     HWND hwndParent, hwndOwner, hwndRestoreFocus;
     HMENU hmenu;
@@ -273,7 +275,7 @@ void CompatShutdownAccelerators(void);
 int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify);
 void CompatDestroyWindowMenu(HWND hwnd);
 BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain);
-BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn);
+BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext);
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax);
 void CompatTimerDequeued(HWND hwnd, UINT_PTR id);
 int CMillisCompatTimerWait(HWND hwnd, UINT msgMin, UINT msgMax);

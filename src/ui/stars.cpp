@@ -6,6 +6,7 @@
 #include "desktop_choice_io.h"
 #include "uistate.h"
 #include "ownership.h"
+#include <callbackcontext.h>
 #include <stars_compat.h>
 
 static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
@@ -169,6 +170,7 @@ void FreeStuff() noexcept {
 }
 
 int ui::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&GetAppSession());
     BeginAppUiSession();
     NATIVECLEANUPSCOPE close([]() noexcept { FreeStuff(); });
     int result = IStarsMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
@@ -184,6 +186,8 @@ int ui::WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 }
 
 INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPUISTATE &uiState = static_cast<APPUISESSION &>(app).ui;
     RECT    rc;
     HDC     hdc;
     int16_t i;
@@ -192,44 +196,44 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
     case win32::WM_INITDIALOG:
-        iAbout1st = -11;
-        iAboutPartial = 0;
+        uiState.iAbout1st = -11;
+        uiState.iAboutPartial = 0;
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_DEMO_TEXT), SzVersion());
-        uTimerId = win32::SetTimer(hwnd, 14, 50, NULL);
+        uiState.uTimerId = win32::SetTimer(hwnd, 14, 50, NULL);
         return 1;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
-        win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
+        win32::FillRect((HDC)wParam, &rc, uiState.hbrButtonFace);
         return 1;
     case win32::WM_TIMER:
         hwndCtl = ControlIO().pfnGetDlgItem(hwnd, IDC_ABOUT_CREDITS_TEXT);
-        iAboutPartial += 2;
-        if (iAboutPartial >= dyArial8) {
-            iAboutPartial = 0;
-            iAbout1st++;
-            if (iAbout1st > 78) {
-                iAbout1st = -11;
+        uiState.iAboutPartial += 2;
+        if (uiState.iAboutPartial >= app.state.dyArial8) {
+            uiState.iAboutPartial = 0;
+            uiState.iAbout1st++;
+            if (uiState.iAbout1st > 78) {
+                uiState.iAbout1st = -11;
             }
         }
         ControlIO().pfnGetClientRect(hwndCtl, &rc);
         hdc = win32::GetDC(hwndCtl);
-        win32::SelectObject(hdc, rghfontArial8[1]);
+        win32::SelectObject(hdc, uiState.rghfontArial8[1]);
         win32::SetBkMode(hdc, win32::OPAQUE);
-        win32::SetBkColor(hdc, crButtonFace);
-        win32::SetTextColor(hdc, crButtonText);
+        win32::SetBkColor(hdc, uiState.crButtonFace);
+        win32::SetTextColor(hdc, uiState.crButtonText);
         win32::IntersectClipRect(hdc, 0, 0, rc.right, rc.bottom);
-        rc.top -= iAboutPartial;
-        rc.bottom = rc.top + dyArial8;
-        for (i = iAbout1st; i < iAbout1st + 10; i++) {
+        rc.top -= uiState.iAboutPartial;
+        rc.bottom = rc.top + app.state.dyArial8;
+        for (i = uiState.iAbout1st; i < uiState.iAbout1st + 10; i++) {
             if (i >= 0 && i < 77) {
                 RcCtrTextOut(hdc, &rc, TextIO().pfnCompressed(static_cast<StringId>(idsDesignProgramming + i)), -1);
             } else if (i >= 77) {
                 break;
             }
-            win32::OffsetRect(&rc, 0, dyArial8);
+            win32::OffsetRect(&rc, 0, app.state.dyArial8);
         }
         rc.bottom = 1000;
-        win32::FillRect(hdc, &rc, hbrButtonFace);
+        win32::FillRect(hdc, &rc, uiState.hbrButtonFace);
         win32::SelectClipRgn(hdc, NULL);
         win32::ReleaseDC(hwnd, hdc);
         break;
@@ -241,16 +245,16 @@ INT_PTR  About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_CTLCOLORSCROLLBAR:
     case win32::WM_CTLCOLORSTATIC:
         if (message == win32::WM_CTLCOLORSTATIC) {
-            win32::SetBkColor((HDC)wParam, crButtonFace);
-            return (INT_PTR)hbrButtonFace;
+            win32::SetBkColor((HDC)wParam, uiState.crButtonFace);
+            return (INT_PTR)uiState.hbrButtonFace;
         }
         break;
     case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
-            win32::KillTimer(hwnd, uTimerId);
-            uTimerId = 0;
+            win32::KillTimer(hwnd, uiState.uTimerId);
+            uiState.uTimerId = 0;
             ControlIO().pfnEndDialog(hwnd, 1);
             return 1;
         }

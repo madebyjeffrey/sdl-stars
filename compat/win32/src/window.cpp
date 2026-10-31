@@ -546,6 +546,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     }
     lpwin->lpclass = lpclass;
     lpwin->lpfnWndProc = lpclass->wc.lpfnWndProc;
+    lpwin->lpvCallbackContext = lpparent ? lpparent->lpvCallbackContext : PvCompatCallbackContext();
     lpwin->dwStyle = dwStyle;
     lpwin->dwExStyle = dwExStyle;
     lpwin->idInspect = ++idInspectNext;

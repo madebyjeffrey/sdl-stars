@@ -2,6 +2,39 @@
 #include "appstate.h"
 #include "acutest.h"
 #include "stars_test.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#include <callbackcontext.h>
+
+static void TestCallbackApplicationOwners(void) {
+    APPUISESSION first, second;
+    HWND hwndFirst, hwndSecond;
+
+    {
+        COMPATCALLBACKCONTEXTSCOPE context(static_cast<APPSESSION *>(&first));
+        hwndFirst = ui::CreateDialog(nullptr, win32::MAKEINTRESOURCE(IDD_ABOUT), nullptr, About);
+    }
+    TEST_ASSERT(hwndFirst);
+    {
+        COMPATCALLBACKCONTEXTSCOPE context(static_cast<APPSESSION *>(&second));
+        hwndSecond = ui::CreateDialog(nullptr, win32::MAKEINTRESOURCE(IDD_ABOUT), nullptr, About);
+    }
+    TEST_ASSERT(hwndSecond);
+    TEST_CHECK(first.ui.iAbout1st == -11 && second.ui.iAbout1st == -11);
+    first.ui.iAboutPartial = 7;
+    second.ui.iAboutPartial = 19;
+    {
+        COMPATCALLBACKCONTEXTSCOPE context(static_cast<APPSESSION *>(&second));
+        ui::SendMessage(hwndFirst, win32::WM_INITDIALOG, 0, 0);
+        TEST_CHECK(first.ui.iAboutPartial == 0 && second.ui.iAboutPartial == 19);
+        TEST_CHECK(PvCompatCallbackContext() == static_cast<APPSESSION *>(&second));
+    }
+    TEST_CHECK(!PvCompatCallbackContext());
+    TEST_CHECK(ui::DestroyWindow(hwndSecond));
+    TEST_CHECK(ui::DestroyWindow(hwndFirst));
+    TEST_CHECK(!PvCompatCallbackContext());
+}
+#endif
 
 static void TestApplicationStateOwner(void) {
     APPSESSION &session = GetAppSession();
@@ -295,7 +328,11 @@ static void TestTypedHeapOwner(void) {
     mphtcbAlloc[htMisc] = cbAllocSav;
 }
 
-TEST_LIST = {{"application state aliases borrow one resettable session", TestApplicationStateOwner},{"typed heap ownership preserves spare bytes, reset and idempotent teardown", TestTypedHeapOwner},
+TEST_LIST = {
+#ifdef STARS_UI_SDL
+             {"foreign callbacks use the target application owner", TestCallbackApplicationOwners},
+#endif
+             {"application state aliases borrow one resettable session", TestApplicationStateOwner},{"typed heap ownership preserves spare bytes, reset and idempotent teardown", TestTypedHeapOwner},
              {"thing records retain partial, neighbor and physical spare copies", TestThingPhysicalCopies},
              {"AI history retains compaction, redistribution and RNG", TestAiHistoryBytes},
              {"legacy battle conversion retains exact header and kill bytes", TestLegacyBattleConversion},
