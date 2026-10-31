@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 #include "terraform_fixture.h"
 #include "appstate.h"
 #ifdef STARS_UI_SDL
@@ -17,6 +21,10 @@ int main(int argc, char **argv) {
     assert(argc == 3);
     FILE *file = argv[2][0] == '-' ? stdin : fopen(argv[2], argv[1][0] == 'e' ? "wb" : "rb");
     assert(file);
+#ifdef _WIN32
+    if (file == stdin)
+        assert(_setmode(_fileno(file), _O_BINARY) != -1);
+#endif
     if (argv[1][0] == 'e') {
         for (int i = 0; i < 20; i++) {
             int32_t r[8];

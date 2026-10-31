@@ -551,3 +551,14 @@ the 19 exact hash-pinned behavior/automation probes remain diagnostics tracked i
 issue #78, while the other 20 checks remain gates. Four policy tests reject hidden
 boundary failures or incomplete execution. Matrix results now retain
 both configuration results and do not prevent ordinary Windows qualification.
+
+The first full ordinary Windows registry passes 128/131 checks and exposes three
+linked-fixture portability gaps. Terraform/capability streams now explicitly use
+binary stdin under the Windows CRT (preserving byte 0x1a and CR/LF records); the
+publication fixture compares virtual path roles across native slash separators.
+All original cases, independent expected values and assertion receipts remain
+unchanged. Strict MinGW syntax checks pass for all three corrected fixtures;
+corrected Windows execution remains pending. Both fresh SDK configurations already
+record 20 passing contract checks and the same 19 diagnostics, with zero skipped
+checks or unexpected contract failures; registries are ordinary 131, SDK 41, both
+170 and neither zero.

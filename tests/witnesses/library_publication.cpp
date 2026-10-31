@@ -14,15 +14,22 @@ static char szLibraryRoot[256] = "root", szLibraryName[256] = "Copy", szLibraryP
 static int         objects[8], count, profile, variant, cleared;
 static unsigned    mask;
 static const char *names[8] = {"source", "target", "root/Game/Game.x1", "stage", "previous", "root/Game", "hold", "pending"};
+static bool FSamePath(const char *p, const char *q) {
+    for (; *p && *q; p++, q++) {
+        if (*p != *q && !((*p == '/' || *p == '\\') && (*q == '/' || *q == '\\')))
+            return false;
+    }
+    return *p == *q;
+}
 static int         role(const char *p) {
     if (strstr(p, ".previous."))
         return 4;
     if (strstr(p, ".importing."))
         return 3;
-    if (!strcmp(p, "root/Copy"))
+    if (FSamePath(p, "root/Copy"))
         return 1;
     for (int i = 0; i < 8; i++)
-        if (!strcmp(p, names[i]))
+        if (FSamePath(p, names[i]))
             return i;
     fprintf(stderr, "unmapped path %s\n", p);
     abort();
@@ -88,7 +95,7 @@ static int TestCchSnprintf(char *out, size_t cap, const char *format, ...) {
     else if (!strcmp(format, "%s.previous.%u"))
         tag = 3;
     else if (!strcmp(format, "%s%s%s"))
-        tag = (profile == 3 && !strcmp(out, "root/Copy")) ? 5 : 4;
+        tag = (profile == 3 && FSamePath(out, "root/Copy")) ? 5 : 4;
     // New-family stage formatting is unchecked in the source and is not a guard.
     if (tag) {
         int ok = decision();
