@@ -24,7 +24,7 @@ verification receipts below decide completion.
 | ID | Status | Evidence / remaining work |
 | --- | --- | --- |
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
-| C02 | Qualification active | Rename map and live consumers implemented; local builds/regressions/witnesses pass. Full local desktop/regression/witness gates pass; collection verification and Linux/Windows CI pending. |
+| C02 | Qualification active | Rename map/live consumers implemented; full local desktop/host/regression/witness gates pass. Collection verification and Linux/Windows CI pending. |
 | C03 | Pending | Remove 23 API interceptions with equivalent pending-error delivery. |
 | C04 | Pending | Introduce typed effect providers and remove test implementation routing/library clones together. |
 | C05 | Pending | Migrate all 27 current-source witness programs without losing their independent domains/oracles. |
@@ -137,13 +137,14 @@ Local results so far:
 | Wrapper API discovery | 178/178 local API definitions and 6/6 CRT helpers found; source positions regenerated |
 | Body / input integrity | All 201 bodies identical to B; frozen references, original/native baselines, data, text, resources and canonical Dafny files unchanged |
 
-Full Dafny verification at the existing 120-second limit reports timeouts in
+The full Dafny collection at the existing 120-second limit finishes with
+11,998 verified, zero errors and two timeouts in
 unchanged `S02Profile.ParsingVectors` (`spec/dafny/S02-profile.dfy:122`) and
 `M08NativeHabitat.AxisRefines` (`spec/dafny/M08-native-habitat.dfy:105`). Focused
 300-second retries of their complete include closures pass: 346 verified / zero
 errors for S02 and 986 verified / zero errors for M08. Audit of all 111 formal
-files completes with zero findings. The original collection verification run is
-still pending; its timeouts are not reported as a passing collection run.
+files completes with zero findings. A full 300-second collection retry with symbol progress is running;
+the 120-second run is not reported as a passing collection run.
 Canonical formal files remain unchanged.
 
 The first hand-written MinGW core probe enabled `-Wall -Wextra`, which the core's
