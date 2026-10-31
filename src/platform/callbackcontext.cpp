@@ -8,4 +8,3 @@ void *PBindCompatCallbackContext(void *lpv) noexcept {
     lpvCallbackContext = lpv;
     return lpvPrevious;
 }
-

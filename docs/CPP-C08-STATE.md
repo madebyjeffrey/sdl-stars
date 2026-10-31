@@ -24,8 +24,11 @@ the context of their parent/owner, or the creating entry for a root window.
 Dispatch binds the target window's context and restores the caller's context
 through nested dispatch and failure capture. Thread timers capture the registering
 context; queued callback messages retain it after dequeue and `KillTimer` until
-dispatch. The context is non-owning, and its existing application owner outlives
-its windows and timers. Public Win32 message/record layouts do not change.
+dispatch. Dequeued timer captures are matched by message time, then oldest first when
+ticks coincide, so rearming the same thread timer under another owner cannot
+swap two outstanding messages' owners.
+The context is non-owning, and its existing application owner outlives its
+windows and timers. Public Win32 message/record layouts do not change.
 
 The portable callback-binding service is independent of SDL. Its purpose is the
 fixed-signature callback boundary; owned call chains receive references
@@ -62,7 +65,8 @@ original names, instruction IDs and observation fields stay unchanged.
   callback/ownership guards, memory, cursor/type and ABI contracts. The new game test creates two temporary owners
   and real About dialogs: a message updates the target's fields and restores the
   caller's binding. The generic test also covers nested windows, captured
-  failure, queued thread-timer removal and destruction.
+  failure, queued thread-timer removal, two outstanding captures from a rearmed
+  timer in either dispatch order, and destruction.
 - All 27 witness receipts preserve every original case/count/exclusion line; all
   67 independent Python definitions retain identical AST hashes. Strict manifests
   cover 157 production sources / 158 variants and 160 standalone headers in both

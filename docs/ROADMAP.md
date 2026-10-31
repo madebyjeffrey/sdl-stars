@@ -48,6 +48,8 @@ all 14 enabled jobs and the manual Linux/Windows run. C07 replaces compatibility
 macros with typed values/direct calls; PR #74 passes all 14 enabled jobs and the
 manual Linux/Windows run. C08 removes the global state aliases/accessors through
 explicit callers and target-bound callbacks, with full local qualification.
+Its timer dispatch now preserves each dequeued owner's context when a
+thread timer is rearmed before both messages are dispatched.
 Permanent policy and final qualification follow, preserving
 game/file behavior.
 [Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
