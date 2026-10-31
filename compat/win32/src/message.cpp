@@ -32,18 +32,29 @@ static COMPATMESSAGE *lpPending, *lpDispatchPayload;
 
 static COMPATMESSAGEOWNER TakePayloadMessage(const win32::MSG &msg) noexcept {
     for (auto **first : {&lpPending, &lpFirst}) {
+        COMPATMESSAGE **lplpMatched = nullptr;
+        COMPATMESSAGE **lplpTimed = nullptr;
         for (auto **link = first; *link; link = &(*link)->lpNext) {
             auto *lp = *link;
             if ((lp->payload || (lp->fTimer && lp->lpvCallbackContext)) && lp->msg.hwnd == msg.hwnd && lp->msg.message == msg.message &&
                 lp->msg.wParam == msg.wParam && lp->msg.lParam == msg.lParam) {
-                *link = lp->lpNext;
-                if (lpLast == lp) {
-                    lpLast = lpFirst;
-                    if (lpLast) while (lpLast->lpNext) lpLast = lpLast->lpNext;
-                }
-                lp->lpNext = nullptr;
-                return COMPATMESSAGEOWNER(lp);
+                lplpMatched = link;
+                if (msg.message != win32::WM_TIMER) break;
+                // Dequeued timers are stored newest first. Prefer the capture for this tick,
+                // then the oldest capture if multiple timer messages share a tick.
+                if (lp->msg.time == msg.time) lplpTimed = link;
             }
+        }
+        if (lplpTimed) lplpMatched = lplpTimed;
+        if (lplpMatched) {
+            auto *lp = *lplpMatched;
+            *lplpMatched = lp->lpNext;
+            if (lpLast == lp) {
+                lpLast = lpFirst;
+                if (lpLast) while (lpLast->lpNext) lpLast = lpLast->lpNext;
+            }
+            lp->lpNext = nullptr;
+            return COMPATMESSAGEOWNER(lp);
         }
     }
     return {};

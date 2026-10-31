@@ -45,7 +45,8 @@ Seven inventory entries now have local implementations:
 - `CheckRadioButton`: check/uncheck immediate children within an inclusive ID range.
 
 A missing child yields zero for reads/messages and failure for text writes.
-`CheckDlgButton` still returns success for a missing ID, matching the SDK test.
+`CheckDlgButton` returns failure for a missing ID or invalid dialog handle,
+matching the shared SDL and SDK test.
 `CheckRadioButton` snapshots child handles before invoking procedures, so
 callbacks cannot invalidate the traversal by changing or destroying siblings.
 

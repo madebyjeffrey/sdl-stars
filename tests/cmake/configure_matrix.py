@@ -3,12 +3,37 @@ import argparse
 import json
 from pathlib import Path
 import platform
+import shlex
 import hashlib
 import xml.etree.ElementTree as ET
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def assert_sdk_registry(references, expected):
+    assert references == expected, f'SDK registry differs: missing={sorted(expected - references)}, unexpected={sorted(references - expected)}'
+
+
+def assert_sdk_compilation(rows, root, expected, compiler):
+    seen = []
+    for row in rows:
+        path = Path(row['file']).resolve()
+        try:
+            name = path.relative_to(root.resolve()).as_posix()
+        except ValueError:
+            continue
+        if not name.startswith('tests/reference/sdk/') or path.suffix != '.c':
+            continue
+        seen.append(name)
+        command = row.get('arguments') or shlex.split(row['command'], posix=platform.system() != 'Windows')
+        driver = Path(command[0].strip('"')).resolve()
+        assert driver == Path(compiler).resolve(), f'SDK C entry uses a different compiler: {name}: {driver}'
+        assert not any(arg in ('-xc++', '-xobjective-c++', '/TP') or
+                       (arg == '-x' and index + 1 < len(command) and command[index + 1] in ('c++', 'objective-c++'))
+                       for index, arg in enumerate(command)), f'SDK C entry forced to C++: {name}'
+    assert len(seen) == len(expected) and set(seen) == expected, f'SDK C compile inventory differs: missing={sorted(expected - set(seen))}, unexpected={sorted(set(seen) - expected)}, duplicates={len(seen) - len(set(seen))}'
 
 
 def sdk_outcome(report, diagnostics, expected):
@@ -39,6 +64,11 @@ def main():
     inventory = json.loads((ROOT / 'tests/reference/sdk/diagnostics.json').read_text())
     diagnostics = {row['test'] for row in inventory['diagnostics']}
     assert len(diagnostics) == len(inventory['diagnostics']), 'Duplicate SDK diagnostic name'
+    expected_references = {'test_' + path.stem + '_reference'
+                           for path in (ROOT / 'tests/reference/sdk').glob('*.c')}
+    expected_entries = {'tests/reference/sdk/' + path.stem + '.c'
+                        for path in (ROOT / 'tests/reference/sdk').glob('*.c')}
+    assert len(expected_references) == len(expected_entries) == 38, 'SDK source inventory differs'
     assert not diagnostics & {'test_sdk_type_isolation', 'test_win32_abi_reference', 'test_nativeui_points_reference',
                               'test_win32_toolbar_reference'}
     for row in inventory['diagnostics']:
@@ -64,14 +94,21 @@ def main():
         references = {n for n in names if n.endswith('_reference')}
         assert ('test_cpp_compilation_manifest' in names) == ordinary, (name, names)
         assert ('test_sdk_type_isolation' in names) == sdk, (name, names)
-        assert len(references) == (38 if sdk else 0), (name, references)
+        assert_sdk_registry(references, expected_references if sdk else set())
         if sdk:
             assert diagnostics <= references, 'SDK diagnostic inventory names an unregistered probe'
         if not ordinary and not sdk:
             assert not names, names
-        if ordinary:
+        if ordinary or sdk:
+            manifest = build / 'compile_commands.json'
             subprocess.run([sys.executable, str(ROOT / 'tests/cmake/check_cpp_manifest.py'),
-                            str(ROOT), str(build / 'compile_commands.json')], check=True)
+                            str(ROOT), str(manifest)], check=True)
+            if sdk:
+                cache = (build / 'CMakeCache.txt').read_text(encoding='utf-8')
+                compiler = next(line.split('=', 1)[1] for line in cache.splitlines()
+                                if line.startswith('CMAKE_C_COMPILER:'))
+                assert_sdk_compilation(json.loads(manifest.read_text(encoding='utf-8')),
+                                       ROOT, expected_entries, compiler)
         outcome = None
         if sdk and args.run_sdk:
             with (work / (name + '-build.log')).open('w') as output:
