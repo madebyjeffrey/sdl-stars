@@ -110,7 +110,7 @@ static const char *TestPszFormatIds(int id, void *p) {
     return "memory";
 }
 static void TestAlertSz(const char *s, int flags) {
-    assert(strcmp(s, "memory") == 0 && flags == MB_ICONHAND);
+    assert(strcmp(s, "memory") == 0 && flags == win32::MB_ICONHAND);
     event("Alert;");
 }
 static int TestGetDlgItem(HWND hwnd, int id) {
@@ -139,22 +139,22 @@ static void TestFillPlanetProdLB(HWND hwnd, PLPROD *p, void *unused) {
 }
 static intptr_t TestLUiSendMessage(HWND hwnd, int msg, intptr_t value, intptr_t param) {
     assert(!param);
-    if (msg == LB_SETCURSEL && WitnessValue<int>(hwnd) == IDC_PRODUCTION_AVAILABLE_ITEMS) {
+    if (msg == win32::LB_SETCURSEL && WitnessValue<int>(hwnd) == IDC_PRODUCTION_AVAILABLE_ITEMS) {
         sourceSelection = value;
         event("Src0;");
-    } else if (msg == LB_SETCURSEL && WitnessValue<int>(hwnd) == IDC_PRODUCTION_QUEUE) {
+    } else if (msg == win32::LB_SETCURSEL && WitnessValue<int>(hwnd) == IDC_PRODUCTION_QUEUE) {
         queueSelection = value;
         initialSelections++;
         event("QSel;");
     } else {
-        assert(msg == BM_SETCHECK && WitnessValue<int>(hwnd) == IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY);
+        assert(msg == win32::BM_SETCHECK && WitnessValue<int>(hwnd) == IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY);
         researchCheck = value;
         event("Check;");
     }
     return 0;
 }
 static int TestGetKeyState(int key) {
-    assert(key == VK_SHIFT);
+    assert(key == win32::VK_SHIFT);
     return shiftKey ? -1 : 0;
 }
 static void TestSelectAdjPlanet(int16_t delta, int16_t id) {
@@ -187,7 +187,7 @@ static void TestInvalidateRect(HWND hwnd, RECT *r, int erase) {
     } while (0)
 
 static intptr_t TestLUiDialogBox(HINSTANCE instance, LPCSTR resource, HWND parent, FARPROC proc) {
-    assert(instance == hInst && resource == MAKEINTRESOURCE(IDD_PRODUCTION) && parent == hwndFrame && proc == ProductionDlg && fDlgUp);
+    assert(instance == hInst && resource == win32::MAKEINTRESOURCE(IDD_PRODUCTION) && parent == hwndFrame && proc == ProductionDlg && fDlgUp);
     event("Make;Modal;");
     hwndProdDlg = HwndWitness(7);
     sel.pl.fNoResearch = 1;

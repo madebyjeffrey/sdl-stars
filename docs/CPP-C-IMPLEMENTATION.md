@@ -30,8 +30,8 @@ verification receipts below decide completion.
 | C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
 | C04 | Complete under current CI policy | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
 | C05 | Complete under current CI policy | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
-| C06 | Qualification active | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
-| C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
+| C06 | Complete under current CI policy | All 23 C03 names use `ui::` directly; raw operations and actual type tags use `win32::`. Generated names are deleted; [boundary/vector receipts](CPP-C06-BOUNDARIES.md) account for every entry and all 38 shared SDK inputs. |
+| C07 | Locally qualified; CI pending | All 2,101 parent macros have individual dispositions; typed helpers/constants, direct calls and shim removal pass full desktop/host/regression/sanitizer checks. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
 | C09 | Pending | Finalize compiler/reference policy and remove dead migration adapters. |
 | C10 | Pending | Full final-tree audit and Linux/macOS/Windows qualification. |
@@ -437,7 +437,7 @@ whole differential experiment does not. C09 will materialize matching immutable
 headers/data/generators at `precision_reference.REF`, preserving the independent
 C reference and its expected values rather than changing application headers.
 
-C06 remains the approved next checkpoint: use `ui::` operation basenames, replace
+The completed C06 checkpoint implements the approved contract: use `ui::` operation basenames, replace
 all 23 C03 prefixed APIs, remove redundant forwarding functions and preserve the
 cleanup-before-error-delivery and SDK isolation contracts. C07–C10 follow in
 focused, dependent PRs for review; no PR is merged by the agent.
@@ -456,11 +456,10 @@ coexists with SDL's native SDK hook. Windows process services are isolated from
 application records and wrapper headers. The archived observer remains C-compatible
 and uses explicit narrow SDK calls in its current C++ type-check entry.
 
-Local qualification passes all 149 current desktop checks across the final full
-collection and four unchanged-limit workflow retries. That full run times out
-four workflows during confirmed system sleep; all four isolated retries pass
-under a temporary process-scoped sleep assertion. The prior 148-check full run
-also passes. All 29 native leak checks, the available tutorial smoke checkpoint,
+The corrected head passes a clean full 149/149 desktop run. A preceding collection
+timed out four workflows during confirmed system sleep; unchanged-limit isolated
+retries and then the clean full rerun pass under process-scoped sleep assertions.
+The prior 148-check full run also passes. All 29 native leak checks, the available tutorial smoke checkpoint,
 34 final sanitizer checks and fresh SDL-free host tests (27/27) pass. Native/host
 regressions each match 519 baseline files through turn 150 with 25 accepted
 unused-storage warnings. Exact C04/C05 output comparisons match 519 files with
@@ -470,8 +469,8 @@ headers in both include orders. All 38 SDK C inputs and 29 representative C++
 application/provider/isolated SDK units compile; paired wrapper/SDK identity
 contracts pass compilation. Documentation checks pass 26 tests and 2,819 links /
 700 requirement IDs. No model, baseline, frozen C input, record-layout or catalog
-change is made. Full Windows/Linux runtime checks remain the manual platform
-gate, with automatic CI policy unchanged. Receipts: `dist/verification/c06/`.
+change is made. The corrected manual Windows/Linux runtime run is recorded below;
+automatic CI policy is unchanged. Receipts: `dist/verification/c06/`.
 
 
 C06's first manual Windows build identifies a `WINAPI` redefinition after SDL
@@ -480,4 +479,23 @@ intrinsics. Empty owned C++ calling-convention annotations (`WINAPI`, `WINAPIV`,
 The SDL-first type contract and a strict MinGW check with an inherited
 `WINAPI=__stdcall` now compile. Local builds and the full native regression
 (519 matches / 25 accepted warnings / zero differences/errors/skips) pass again;
-full desktop and corrected platform runs are pending.
+a clean full desktop rerun passes 149/149. All 14 enabled PR jobs and all five
+corrected [manual platform jobs](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41206840795)
+pass at `375538b0`: Windows probe 2/2, selected game units 13/13, platform
+checks 88/88, and Linux desktop 153/153. Independent SDK configuration combinations
+remain C09/C10 work. No automatic platform policy or baseline changes.
+
+
+## C07: typed compatibility values and direct operations
+
+The [macro audit](CPP-C07-MACROS.md) and per-definition JSON ledger account for
+all 2,101 original definitions, their exact parent expressions and concrete
+retention/removal purposes. Owned numeric values and conversion helpers are typed;
+A/W aliases, Win16 procedure instances and no-op shims are deleted. Generated UI
+resource payloads and manifests match C06 byte-for-byte. Local checks pass 150/150
+desktop, 27/27 host and 35/35 selected sanitizer tests. Native/host baseline and
+exact C06 comparisons each match 519 files (25 accepted warnings, zero differences/
+errors/skips). The 27 witness receipts and 67 independent Python ASTs match.
+The strict manifest covers 156 production sources / 157 variants / 160 headers;
+38 real SDK C and 29 representative C++ units compile. Documentation checks pass
+26 tests and 2,819 links / 700 IDs. Remote CI is pending; C08–C10 remain pending.

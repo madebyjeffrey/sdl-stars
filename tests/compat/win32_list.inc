@@ -23,7 +23,7 @@ static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_MEASUREITEM) {
         lpms = (MEASUREITEMSTRUCT *)l; cMeasure++;
         if (lpms->CtlType == ODT_LISTBOX) lpms->itemHeight = 20;
-        return TRUE;
+        return 1;
     }
     if (msg == WM_DRAWITEM) {
         lpds = (DRAWITEMSTRUCT *)l; cDraw++;
@@ -35,17 +35,17 @@ static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (lpds->itemAction & ODA_FOCUS) { cFocusDraw++; stateFocus = lpds->itemState; }
         if (lpds->itemID == (UINT)-1) { cEmptyDraw++; actionEmpty = lpds->itemAction; }
         if (lpds->itemID == 0) { dataDraw = lpds->itemData; stateDraw = lpds->itemState; }
-        if (fDestroyDraw) { fDestroyDraw = FALSE; DestroyWindow(lpds->hwndItem); return TRUE; }
-        if (fResetDraw) { fResetDraw = FALSE; SendMessageA(lpds->hwndItem, LB_RESETCONTENT, 0, 0); return TRUE; }
+        if (fDestroyDraw) { fDestroyDraw = 0; DestroyWindow(lpds->hwndItem); return 1; }
+        if (fResetDraw) { fResetDraw = 0; SendMessageA(lpds->hwndItem, LB_RESETCONTENT, 0, 0); return 1; }
         FillRect(lpds->hDC, &lpds->rcItem, (HBRUSH)GetStockObject(BLACK_BRUSH));
-        return TRUE;
+        return 1;
     }
     if (msg == WM_DELETEITEM) {
-        lpdel = (DELETEITEMSTRUCT *)l; cDelete++; dataDelete = lpdel->itemData; return TRUE;
+        lpdel = (DELETEITEMSTRUCT *)l; cDelete++; dataDelete = lpdel->itemData; return 1;
     }
     if (msg == WM_COMMAND && HIWORD(w) == LBN_SELCHANGE) {
         cChange++;
-        if (fDestroyChange) { fDestroyChange = FALSE; DestroyWindow((HWND)l); }
+        if (fDestroyChange) { fDestroyChange = 0; DestroyWindow((HWND)l); }
     }
     if (msg == WM_COMMAND && (HIWORD(w) == LBN_SETFOCUS || HIWORD(w) == LBN_KILLFOCUS)) {
         cFocusNotify++; cDrawAtFocusNotify = cFocusDraw;
@@ -53,7 +53,7 @@ static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return DefWindowProcA(hwnd, msg, w, l);
 }
 static HWND NewList(HWND hwnd, int id, DWORD style) {
-    return CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOINTEGRALHEIGHT | style,
+    return CreateWindowExA(0, "ListBox", "", WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOINTEGRALHEIGHT | style,
                         10 + (id % 3) * 130, 10, 120, 80, hwnd, (HMENU)(UINT_PTR)id, NULL, NULL);
 }
 static int TestOwnerSelection(HWND hwndParent) {
@@ -77,10 +77,10 @@ static int TestOwnerSelection(HWND hwndParent) {
     SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1);
     CHECK(grSelectedDraw == 2 && grDeselectedDraw == 1 && cChange == c + 1);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-    fResetDraw = TRUE; SendMessageA(hwnd, LB_SETCURSEL, 0, 0);
+    fResetDraw = 1; SendMessageA(hwnd, LB_SETCURSEL, 0, 0);
     CHECK(IsWindow(hwnd) && SendMessageA(hwnd, LB_GETCOUNT, 0, 0) == 0);
     CHECK(SendMessageA(hwnd, LB_ADDSTRING, 0, (LPARAM)"destroy") == 0);
-    fDestroyDraw = TRUE; SendMessageA(hwnd, LB_SETCURSEL, 0, 0);
+    fDestroyDraw = 1; SendMessageA(hwnd, LB_SETCURSEL, 0, 0);
     CHECK(!IsWindow(hwnd)); return 0;
 #endif
     CHECK(DestroyWindow(hwnd)); return 0;
@@ -97,7 +97,7 @@ static int TestOwnerFocus(HWND hwndParent) {
     CHECK(cFocusDraw > c && !(stateFocus & ODS_FOCUS));
     CHECK(cFocusNotify == 2 && cDrawAtFocusNotify == cFocusDraw);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-    fResetDraw = TRUE; SetFocus(hwnd);
+    fResetDraw = 1; SetFocus(hwnd);
     CHECK(IsWindow(hwnd) && SendMessageA(hwnd, LB_GETCOUNT, 0, 0) == 0);
     SetFocus(hwndParent);
 #endif
@@ -112,7 +112,7 @@ static int TestOwnerFocus(HWND hwndParent) {
         CHECK(hdc && GetPixel(hdc, 5, 5) == RGB(0, 0, 0) && GetPixel(hdc, 5, 30) == GetSysColor(COLOR_WINDOW));
         CHECK(ReleaseDC(hwnd, hdc));
     }
-    fDestroyDraw = TRUE; SetFocus(hwndParent);
+    fDestroyDraw = 1; SetFocus(hwndParent);
     CHECK(!IsWindow(hwnd));
 #else
     printf("Wine empty owner-draw callbacks: %d (documented native case checked separately)\n", cEmptyDraw);
@@ -160,7 +160,7 @@ static int TestCtrlDrag(HWND hwndParent) {
     int i, cy, c;
     CHECK(hwnd);
     for (i = 0; i < 4; i++) CHECK(SendMessageA(hwnd, LB_ADDSTRING, 0, (LPARAM)"item") == i);
-    SendMessageA(hwnd, LB_SETSEL, TRUE, 0); SendMessageA(hwnd, LB_SETSEL, TRUE, 3);
+    SendMessageA(hwnd, LB_SETSEL, 1, 0); SendMessageA(hwnd, LB_SETSEL, 1, 3);
     cy = (int)SendMessageA(hwnd, LB_GETITEMHEIGHT, 0, 0); c = cChange;
     SendMessageA(hwnd, WM_LBUTTONDOWN, MK_CONTROL, MAKELPARAM(3, cy + 1));
     SendMessageA(hwnd, WM_MOUSEMOVE, MK_CONTROL | MK_LBUTTON, MAKELPARAM(3, 3 * cy + 1));
@@ -178,7 +178,7 @@ static int TestCtrlDrag(HWND hwndParent) {
 #endif
 
 static int TestListScroll(HWND hwndParent) {
-    HWND hwnd = CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | LBS_NOINTEGRALHEIGHT,
+    HWND hwnd = CreateWindowExA(0, "ListBox", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | LBS_NOINTEGRALHEIGHT,
                              0, 110, 100, 64, hwndParent, NULL, NULL, NULL);
     SCROLLINFO si = {sizeof(si), SIF_ALL, 0, 0, 0, 0, 0};
     int i;
@@ -193,7 +193,7 @@ static int TestListScroll(HWND hwndParent) {
     CHECK(GetScrollPos(hwnd, SB_HORZ) > 0);
     SendMessageA(hwnd, LB_RESETCONTENT, 0, 0);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-    CHECK(!(GetWindowLongPtr(hwnd, GWL_STYLE) & WS_VSCROLL));
+    CHECK(!(GetWindowLongPtrA(hwnd, GWL_STYLE) & WS_VSCROLL));
 #endif
     CHECK(DestroyWindow(hwnd)); return 0;
 }
@@ -204,8 +204,8 @@ int main(void) {
     int rgi[3], c, i;
     RECT rc;
     wc.lpfnWndProc = ParentProc; wc.lpszClassName = "CompatListParent";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "List test", WS_POPUP | WS_VISIBLE, 30, 30, 420, 200, NULL, NULL, NULL, NULL);
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "List test", WS_POPUP | WS_VISIBLE, 30, 30, 420, 200, NULL, NULL, NULL, NULL);
     CHECK(hwnd);
     CHECK(TestOwnerSelection(hwnd) == 0);
     CHECK(TestOwnerFocus(hwnd) == 0);
@@ -238,8 +238,8 @@ int main(void) {
     CHECK(SendMessageA(hwndList, LB_GETSELCOUNT, 0, 0) == LB_ERR);
     for (i = 0; i < 3; i++) CHECK(SendMessageA(hwndMulti, LB_ADDSTRING, 0, (LPARAM)"Item") == i);
     CHECK(SendMessageA(hwndMulti, LB_SETCURSEL, 1, 0) == LB_ERR);
-    CHECK(SendMessageA(hwndMulti, LB_SETSEL, TRUE, -1) == 0);
-    CHECK(SendMessageA(hwndMulti, LB_SETSEL, FALSE, 1) == 0);
+    CHECK(SendMessageA(hwndMulti, LB_SETSEL, 1, -1) == 0);
+    CHECK(SendMessageA(hwndMulti, LB_SETSEL, 0, 1) == 0);
     CHECK(SendMessageA(hwndMulti, LB_GETSELCOUNT, 0, 0) == 2);
     CHECK(SendMessageA(hwndMulti, LB_GETSELITEMS, 3, (LPARAM)rgi) == 2 && rgi[0] == 0 && rgi[1] == 2);
     CHECK(SendMessageA(hwndMulti, LB_GETSEL, 1, 0) == 0);
@@ -257,7 +257,7 @@ int main(void) {
     CHECK(SendMessageA(hwndOwner, LB_ADDSTRING, 0, (LPARAM)"Drawn") == 0);
     CHECK(SendMessageA(hwndOwner, LB_SETITEMDATA, 0, 0x42) == 1);
     CHECK(SendMessageA(hwndOwner, LB_SETCURSEL, 0, 0) == 0);
-    InvalidateRect(hwndOwner, NULL, TRUE); CHECK(UpdateWindow(hwndOwner));
+    InvalidateRect(hwndOwner, NULL, 1); CHECK(UpdateWindow(hwndOwner));
     CHECK(cDraw != 0 && dataDraw == 0x42 && (stateDraw & ODS_SELECTED));
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
@@ -275,7 +275,7 @@ int main(void) {
     SendMessageA(hwndOwner, LB_RESETCONTENT, 0, 0);
     hwndKill = NewList(hwnd, 103, LBS_NOTIFY);
     CHECK(hwndKill && SendMessageA(hwndKill, LB_ADDSTRING, 0, (LPARAM)"Destroy") == 0);
-    fDestroyChange = TRUE; SendMessageA(hwndKill, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(5, 5));
+    fDestroyChange = 1; SendMessageA(hwndKill, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(5, 5));
     CHECK(IsWindow(hwndKill));
     SendMessageA(hwndKill, WM_LBUTTONUP, 0, MAKELPARAM(5, 5));
     CHECK(!IsWindow(hwndKill));
@@ -295,10 +295,10 @@ int main(void) {
         CHECK(!GetCapture() && cChange == cBefore + 1 && SendMessageA(hwndList, LB_GETCURSEL, 0, 0) == 0);
     }
     CHECK(SendMessageA(hwndOwner, LB_ADDSTRING, 0, (LPARAM)"Reset in draw") == 0);
-    fResetDraw = TRUE; InvalidateRect(hwndOwner, NULL, TRUE); CHECK(UpdateWindow(hwndOwner));
+    fResetDraw = 1; InvalidateRect(hwndOwner, NULL, 1); CHECK(UpdateWindow(hwndOwner));
     CHECK(SendMessageA(hwndOwner, LB_GETCOUNT, 0, 0) == 0);
     CHECK(SendMessageA(hwndOwner, LB_ADDSTRING, 0, (LPARAM)"Destroy in draw") == 0);
-    fDestroyDraw = TRUE; InvalidateRect(hwndOwner, NULL, TRUE); CHECK(UpdateWindow(hwndOwner));
+    fDestroyDraw = 1; InvalidateRect(hwndOwner, NULL, 1); CHECK(UpdateWindow(hwndOwner));
     CHECK(!IsWindow(hwndOwner));
 #endif
     CHECK(DestroyWindow(hwnd));

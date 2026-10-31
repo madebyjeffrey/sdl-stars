@@ -9,8 +9,8 @@ static char *PszCocoaLabelUtf8(LPCSTR psz) {
 static int FPumpCocoaChooser(void *lpv) {
     HWND hwndOwner = (HWND)(lpv);
     win32::MSG msg;
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
+        if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage((int)msg.wParam); return 0; }
         win32::TranslateMessage(&msg); win32::DispatchMessageA(&msg);
         if (FStarsErrorPending()) return 0;
         if (hwndOwner && !win32::IsWindow(hwndOwner)) return 0;

@@ -320,7 +320,7 @@ RetryAll:
                 rgi[i] = RandomIO().pfnRandom(cPlanMax);
                 pt = rgptPlan[rgi[i]];
                 if (pt.x >= dMin && pt.y >= dMin && pt.x <= dMax && pt.y <= dMax) {
-                    fFound = FALSE;
+                    fFound = 0;
                     for (k = 0; k < i; k++) {
                         dx = pt.x - rgptPlan[rgi[k]].x;
                         dy = pt.y - rgptPlan[rgi[k]].y;
@@ -328,7 +328,7 @@ RetryAll:
                         if (l <= 0 || l < lDistMin2)
                             break;
                         if (l <= lDistMax2) {
-                            fFound = TRUE;
+                            fFound = 1;
                         }
                     }
                     if (k == i && fFound)
@@ -345,7 +345,7 @@ RetryAll:
                     }
                     pt = rgptPlan[rgi[i]];
                     if (pt.x >= dMin && pt.y >= dMin && pt.x <= dMax && pt.y <= dMax) {
-                        fFound = FALSE;
+                        fFound = 0;
                         for (k = 0; k < i; k++) {
                             dx = pt.x - rgptPlan[rgi[k]].x;
                             dy = pt.y - rgptPlan[rgi[k]].y;
@@ -353,7 +353,7 @@ RetryAll:
                             if (l <= 0 || l < lDistMin2)
                                 break;
                             if (l <= lDistMax2) {
-                                fFound = TRUE;
+                                fFound = 1;
                             }
                         }
                         if (k == i && fFound)
@@ -375,8 +375,8 @@ RetryAll:
             if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceAIPlayer) != 0) {
                 CreateRandomRace(&rgplr[i]);
             }
-            rgplr[i].fDead = FALSE;
-            rgplr[i].fLearned = FALSE;
+            rgplr[i].fDead = 0;
+            rgplr[i].fLearned = 0;
             rgplr[i].grbitTrader = grbitTraderNone;
             for (j = 0; j < 6; j++) {
                 rgplr[i].rgTech[j] = 0;
@@ -438,13 +438,13 @@ RetryAll:
         for (i = 0; i < game.cPlayer; i++) {
             iMin = rgi[i];
             lpPlanets[iMin].iPlayer = i;
-            lpPlanets[iMin].fStarbase = TRUE;
+            lpPlanets[iMin].fStarbase = 1;
             lpPlanets[iMin].isb = 0;
-            lpPlanets[iMin].fArtifact = FALSE;
+            lpPlanets[iMin].fArtifact = 0;
             lpPlanets[iMin].cFactories = 10;
             lpPlanets[iMin].cMines = 10;
             lpPlanets[iMin].cDefenses = 10;
-            lpPlanets[iMin].fHomeworld = TRUE;
+            lpPlanets[iMin].fHomeworld = 1;
             if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceLowStartingPop) != 0) {
                 lpPlanets[iMin].rgwtMin[3] = 175;
             } else {
@@ -575,13 +575,13 @@ RetryAll:
             lpshdef->cExist = 1;
             rglpshdefSB[i] = lpshdef;
             for (j = 1; j < 10; j++) {
-                lpshdef[j].fFree = TRUE;
+                lpshdef[j].fFree = 1;
             }
             if (RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv) == raMassAccel) {
                 lpshdef->hul.rghs[0].iItem = ispecialSBMassDriver5;
                 lpshdef->hul.rghs[0].cItem = 1;
                 if ((int16_t)game.mdSize > sizeTiny) {
-                    lpshdef[1].fFree = FALSE;
+                    lpshdef[1].fFree = 0;
                     rgplr[i].cshdefSB++;
                     lpshdef[1].cExist = 1;
                     lpshdef[1].cBuilt = 1;
@@ -592,7 +592,7 @@ RetryAll:
                 if ((int16_t)game.mdSize > sizeTiny) {
                     lpshdef[1] = lpshdef[2];
                     lpshdef[1].ishdef = 17;
-                    lpshdef[1].fFree = FALSE;
+                    lpshdef[1].fFree = 0;
                     rgplr[i].cshdefSB++;
                     lpshdef[1].cExist = 1;
                     lpshdef[1].cBuilt = 1;
@@ -603,7 +603,7 @@ RetryAll:
                 lpshdef[1].ishdef = 17;
                 *lpshdef = lpshdef[3];
                 lpshdef->ishdef = 16;
-                lpshdef->fFree = FALSE;
+                lpshdef->fFree = 0;
                 rgplr[i].cshdefSB++;
                 lpshdef->cExist = 0;
                 lpshdef->cBuilt = 0;
@@ -617,60 +617,60 @@ RetryAll:
             lpshdef = LpAlloc<SHDEF>(16 * sizeof(SHDEF), htShips);
             memset(lpshdef, 0, 16 * sizeof(SHDEF));
             for (j = 0; j < 16; j++) {
-                lpshdef[j].fFree = TRUE;
+                lpshdef[j].fFree = 1;
             }
             rglpshdef[i] = lpshdef;
             idHome = rgplr[i].idPlanetHome;
             raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&rgplr[i], rsMajorAdv));
             switch (raMajor) {
             case raMassAccel:
-                CreateStartupShip(i, idHome, 4, TRUE);
+                CreateStartupShip(i, idHome, 4, 1);
                 lpPlanets[idHome].iWarpFling = 1;
                 break;
             case raAttack:
-                CreateStartupShip(i, idHome, 3, TRUE);
+                CreateStartupShip(i, idHome, 3, 1);
                 if (rgplr[i].rgTech[3] < 3)
                     break;
-                CreateStartupShip(i, idHome, 7, TRUE);
-                CreateStartupShip(i, idHome, 13, TRUE);
+                CreateStartupShip(i, idHome, 7, 1);
+                CreateStartupShip(i, idHome, 13, 1);
                 break;
             case raNone:
-                CreateStartupShip(i, idHome, 3, TRUE);
-                CreateStartupShip(i, idHome, 4, TRUE);
+                CreateStartupShip(i, idHome, 3, 1);
+                CreateStartupShip(i, idHome, 4, 1);
                 break;
             case raStealth:
-                CreateStartupShip(i, idHome, rgplr[i].rgTech[0] < 2 ? 2 : 5, TRUE);
+                CreateStartupShip(i, idHome, rgplr[i].rgTech[0] < 2 ? 2 : 5, 1);
                 if (rgplr[i].fAi)
                     break;
-                CreateStartupShip(i, idHome, 1, TRUE);
+                CreateStartupShip(i, idHome, 1, 1);
                 break;
             default:
-                CreateStartupShip(i, idHome, 2, TRUE);
+                CreateStartupShip(i, idHome, 2, 1);
             }
             switch (raMajor) {
             case raCheapCol:
-                ishRet = CreateStartupShip(i, idHome, 12, TRUE);
+                ishRet = CreateStartupShip(i, idHome, 12, 1);
                 for (j = 1; j < 3; j++) {
-                    CreateStartupShip(i, idHome, ishRet, FALSE);
+                    CreateStartupShip(i, idHome, ishRet, 0);
                 }
                 break;
             case raStargate:
-                CreateStartupShip(i, idHome, 11, TRUE);
+                CreateStartupShip(i, idHome, 11, 1);
                 break;
             case raMacintosh:
-                CreateStartupShip(i, idHome, 10, TRUE);
+                CreateStartupShip(i, idHome, 10, 1);
                 break;
             default:
-                ishRet = CreateStartupShip(i, idHome, 9, TRUE);
+                ishRet = CreateStartupShip(i, idHome, 9, 1);
             }
             if (raMajor == raMines) {
-                CreateStartupShip(i, idHome, 16, TRUE);
-                CreateStartupShip(i, idHome, 18, TRUE);
+                CreateStartupShip(i, idHome, 16, 1);
+                CreateStartupShip(i, idHome, 18, 1);
             } else if (raMajor == raTerra) {
-                CreateStartupShip(i, idHome, 17, TRUE);
+                CreateStartupShip(i, idHome, 17, 1);
             } else if (raMajor == raStargate) {
-                CreateStartupShip(i, idHome, 7, TRUE);
-                CreateStartupShip(i, idHome, 8, TRUE);
+                CreateStartupShip(i, idHome, 7, 1);
+                CreateStartupShip(i, idHome, 8, 1);
                 if ((int16_t)game.mdSize > sizeTiny)
                     goto LGive2ndPlanet;
             } else if (raMajor == raMassAccel && (int16_t)game.mdSize > sizeTiny) {
@@ -724,9 +724,9 @@ RetryAll:
                     }
                 }
                 lpplPicked->iPlayer = i;
-                lpplPicked->fStarbase = TRUE;
+                lpplPicked->fStarbase = 1;
                 lpplPicked->isb = 1;
-                lpplPicked->fArtifact = FALSE;
+                lpplPicked->fArtifact = 0;
                 lpplPicked->cFactories = 4;
                 lpplPicked->cMines = 10;
                 lpplPicked->rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 2) / 5;
@@ -737,15 +737,15 @@ RetryAll:
                 lpplPicked->iScanner = 0;
                 lpPlanets[idHome].rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 4) / 5;
                 lpPlanets[idHome].SetUGuesses((lpPlanets[idHome].uGuesses() & 0xf000) | ((uint32_t)LOWORD(lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff));
-                CreateStartupShip(i, lpplPicked->id, 0, FALSE);
+                CreateStartupShip(i, lpplPicked->id, 0, 0);
             } else if (raMajor == raNone) {
-                CreateStartupShip(i, idHome, rgplr[i].rgTech[3] < 4 ? 6 : 8, TRUE);
-                CreateStartupShip(i, idHome, 7, TRUE);
-                CreateStartupShip(i, idHome, 14, TRUE);
+                CreateStartupShip(i, idHome, rgplr[i].rgTech[3] < 4 ? 6 : 8, 1);
+                CreateStartupShip(i, idHome, 7, 1);
+                CreateStartupShip(i, idHome, 14, 1);
             }
             if (RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceOBRM) == 0 && RaceQueryIO().pfnGrbit(&rgplr[i], ibitRaceARM) != 0) {
-                ishRet = CreateStartupShip(i, idHome, 15, TRUE);
-                CreateStartupShip(i, idHome, ishRet, FALSE);
+                ishRet = CreateStartupShip(i, idHome, 15, 1);
+                CreateStartupShip(i, idHome, ishRet, 0);
             }
             for (j = 0; j < rgplr[i].cShDef; j++) {
                 chs = rglpshdef[i][j].hul.chs;
@@ -909,9 +909,9 @@ RetryAll:
         }
         CchSprintf(szWork, "%s.xy", szBase);
         if (!RecordIO().pfnFCreateFile(dtXY, iplrNone, NULL)) {
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateUniverseDefinitionFile, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateUniverseDefinitionFile, NULL), win32::MB_ICONHAND);
             DestroyCurGame();
-            return FALSE;
+            return 0;
         }
         FEncodeGame(game, rgbGame);
         RecordIO().pfnWriteRt(rtGame, cbWireGame, rgbGame);
@@ -929,17 +929,17 @@ RetryAll:
         WriteRtEof(i);
         RecordIO().pfnStreamClose();
         for (i = -1; i < game.cPlayer; i++) {
-            FWriteDataFile(szBase, i, FALSE);
+            FWriteDataFile(szBase, i, 0);
         }
         if (fBatchMode) {
-            return TRUE;
+            return 1;
         }
         if (game.fSinglePlr) {
             DestroyCurGame();
             CchSprintf(szExt, MPCTD, iplrSingle + 1);
             if (!FLoadGame(szBase, szExt)) {
-                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), MB_ICONHAND);
-                return FALSE;
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableOpenNewTurnFile, NULL), win32::MB_ICONHAND);
+                return 0;
             }
             idPlayer = iplrSingle;
             CreateChildWindows();
@@ -949,10 +949,10 @@ RetryAll:
             imemLogCur = 0;
             CreateChildWindows();
         }
-        return TRUE;
+        return 1;
     } catch (const StarsError &) {
         DestroyCurGame();
-        return FALSE;
+        return 0;
     }
 }
 
@@ -994,7 +994,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
     AiRace  idAi;
     int16_t lvlAi;
 
-    fSuccess = FALSE;
+    fSuccess = 0;
     strcpy(szWork, pszFile);
     StarsRecoveryScope scopeRecovery;
     try {
@@ -1028,7 +1028,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (cb >= 3 && !memcmp(lpb, "\xef\xbb\xbf", 3)) lpb += 3;
         lpbStart = PszGetLine(&lpb);
         if (*lpbStart == 0 || strlen(lpbStart) > 31) {
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsIllegalGameTitle, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsIllegalGameTitle, NULL), win32::MB_ICONHAND);
             goto LError;
         }
         if (CchCopyUtf8(game.szName, sizeof(game.szName), lpbStart, strlen(lpbStart)) < 0) {
@@ -1037,14 +1037,14 @@ int16_t GenNewGameFromFile(char *pszFile) {
         }
         if (lpb >= lpbDefMac) {
         LUniDefShort:
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUniverseDefinitionFileAppearsTooShort, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUniverseDefinitionFileAppearsTooShort, NULL), win32::MB_ICONHAND);
             goto LError;
         }
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 4);
         if (cNum == -1) {
         LUniDefError:
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine2HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine2HasBadUniverseDefinitionParameter, NULL), win32::MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1069,7 +1069,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         cNum = CParseNumbers(lpbStart, rgl, 7);
         if (cNum == -1) {
         LUniDefError3:
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine3HasBadUniverseDefinitionParameter, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine3HasBadUniverseDefinitionParameter, NULL), win32::MB_ICONHAND);
             goto LError;
         }
         for (i = 0; i < cNum; i++) {
@@ -1100,7 +1100,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         lpbStart = PszGetLine(&lpb);
         cNum = CParseNumbers(lpbStart, rgl, 1);
         if (cNum < 1 || rgl[0] < 1 || rgl[0] > 16) {
-            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine4HasImproperNumberPlayerFiles, NULL), MB_ICONHAND);
+            AlertIO().pfnAlertSz(TextIO().pfnFormat(idsLine4HasImproperNumberPlayerFiles, NULL), win32::MB_ICONHAND);
             goto LError;
         }
         if (lpb >= lpbDefMac)
@@ -1134,16 +1134,16 @@ int16_t GenNewGameFromFile(char *pszFile) {
                     idAi = static_cast<AiRace>(idAi - 1);
                 }
                 rgplr[i] = *LpplrComp(idAi, static_cast<AiLevel>(lvlAi));
-                rgplr[i].fAi = TRUE;
+                rgplr[i].fAi = 1;
                 rgplr[i].idAi = idAi;
                 rgplr[i].lvlAi = lvlAi;
             } else {
                 strcpy(szWork, lpbStart);
-                fReadRace = FWasRaceFile(szWork, FALSE);
+                fReadRace = FWasRaceFile(szWork, 0);
                 if (fReadRace != 1) {
                 LCantGetRace:
                     CchSprintf(szWork, TextIO().pfnCompressed(idsLineDUnableLoadRaceFileS), i + 5, lpbStart);
-                    AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+                    AlertIO().pfnAlertSz(szWork, win32::MB_ICONHAND);
                     goto LError;
                 }
                 rgplr[i] = vplr;
@@ -1158,13 +1158,13 @@ int16_t GenNewGameFromFile(char *pszFile) {
         LBadDefVc:
             i += cPlr + 5;
             CchSprintf(szWork, TextIO().pfnCompressed(idsLineDHasImproperVictoryConditionDefinition), i);
-            AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+            AlertIO().pfnAlertSz(szWork, win32::MB_ICONHAND);
             goto LError;
         }
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 100)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcOwnsPercentPlanets, TRUE);
+            SetVCCheck(&game, vcOwnsPercentPlanets, 1);
             SetVCVal(&game, vcOwnsPercentPlanets, (int16_t)(LOWORD(rgl[1]) - 20) / 5);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1177,8 +1177,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 3 || rgl[1] < 8 || rgl[1] > 26 || rgl[2] < 2 || rgl[2] > 6)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcAttainsTechLevel, TRUE);
-            SetVCCheck(&game, vcAttainsTechFields, TRUE);
+            SetVCCheck(&game, vcAttainsTechLevel, 1);
+            SetVCCheck(&game, vcAttainsTechFields, 1);
             SetVCVal(&game, vcAttainsTechLevel, LOWORD(rgl[1]) - 8);
             SetVCVal(&game, vcAttainsTechFields, LOWORD(rgl[2]) - 2);
         }
@@ -1192,7 +1192,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 1000 || rgl[1] > 20000)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcExceedsScore, TRUE);
+            SetVCCheck(&game, vcExceedsScore, 1);
             SetVCVal(&game, vcExceedsScore, (int16_t)(LOWORD(rgl[1]) - 1000) / 1000);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1205,7 +1205,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 20 || rgl[1] > 300)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcExceedsSecondPlaceBy, TRUE);
+            SetVCCheck(&game, vcExceedsSecondPlaceBy, 1);
             SetVCVal(&game, vcExceedsSecondPlaceBy, (int16_t)(LOWORD(rgl[1]) - 20) / 10);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1218,7 +1218,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 500)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcProductionCapacity, TRUE);
+            SetVCCheck(&game, vcProductionCapacity, 1);
             SetVCVal(&game, vcProductionCapacity, (int16_t)(LOWORD(rgl[1]) - 10) / 10);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1231,7 +1231,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 10 || rgl[1] > 300)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcOwnsCapitalShips, TRUE);
+            SetVCCheck(&game, vcOwnsCapitalShips, 1);
             SetVCVal(&game, vcOwnsCapitalShips, (int16_t)(LOWORD(rgl[1]) - 10) / 10);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1244,7 +1244,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         if (rgl[0] == 1) {
             if (cNum < 2 || rgl[1] < 30 || rgl[1] > 900)
                 goto LBadDefVc;
-            SetVCCheck(&game, vcHighestScoreAfterYears, TRUE);
+            SetVCCheck(&game, vcHighestScoreAfterYears, 1);
             SetVCVal(&game, vcHighestScoreAfterYears, (int16_t)(LOWORD(rgl[1]) - 30) / 10);
         }
         lpbStart = PszGetLine(&lpb);
@@ -1275,7 +1275,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
         for (i = 0; i < game.cPlayer; i++) {
             if (!rgplr[i].fAi && CAdvantagePoints(&rgplr[i]) < 0) {
                 rgplr[i] = vrgplrDef[0];
-                rgplr[i].fHacker = TRUE;
+                rgplr[i].fHacker = 1;
             }
             if (rgplr[i].szName[0] == 0) {
                 TextIO().pfnCchGetString(static_cast<StringId>(idsBerserker + RandomIO().pfnRandom(24)), rgplr[i].szName);
@@ -1335,8 +1335,8 @@ int16_t GenNewGameFromFile(char *pszFile) {
         for (i = 0; i < game.cPlayer; i++) {
             rgplr[i].iPlrBmp = rgplrbmp[i];
         }
-        GenerateWorld(TRUE);
-        fSuccess = TRUE;
+        GenerateWorld(1);
+        fSuccess = 1;
     } catch (const StarsError &) {
     }
 LError:
@@ -1351,13 +1351,13 @@ void CreateTutorWorld() {
 
     memset(&game, 0, sizeof(GAME));
     game.cPlayer = 2;
-    game.fTutorial = TRUE;
+    game.fTutorial = 1;
     game.mdDensity = densitySparse;
     game.mdSize = sizeTiny;
     game.mdStartDist = startDistModerate;
-    game.fBBSPlay = TRUE;
-    game.fVisScores = TRUE;
-    game.fNoRandom = TRUE;
+    game.fBBSPlay = 1;
+    game.fVisScores = 1;
+    game.fNoRandom = 1;
     game.lid = 9236297;
     game.rgvc[7] = 128;
     game.rgvc[8] = 129;
@@ -1366,7 +1366,7 @@ void CreateTutorWorld() {
     TextIO().pfnCchGetString(idsHumanoid, rgplr[0].szName);
     CchSprintf(rgplr[0].szNames, "%ss", rgplr[0].szName);
     rgplr[1] = *LpplrComp(idAiTurinDrone, lvlAiEasy);
-    rgplr[1].fAi = TRUE;
+    rgplr[1].fAi = 1;
     rgplr[1].lvlAi = lvlAiEasy;
     rgplr[1].idAi = idAiTurinDrone;
     TextIO().pfnCchGetString(idsBerserker, rgplr[1].szName);
@@ -1377,7 +1377,7 @@ void CreateTutorWorld() {
         CchSprintf(szWork, TextIO().pfnCompressed(idsSXD), szBase, i);
         RemoveNativeFile(szWork);
     }
-    GenerateWorld(FALSE);
+    GenerateWorld(0);
     return;
 }
 
@@ -1543,9 +1543,9 @@ void SetVCCheck(GAME *pgame, VictoryCondition vc, int16_t fChecked) {
 
 int16_t GetVCCheck(GAME *pgame, VictoryCondition vc) {
     if (pgame->rgvc[vc] & 0x80) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 int16_t SetVCVal(GAME *pgame, VictoryCondition vc, int16_t val) {
@@ -1558,7 +1558,7 @@ int16_t SetVCVal(GAME *pgame, VictoryCondition vc, int16_t val) {
     }
     pgame->rgvc[vc] = (pgame->rgvc[vc] & 0x80) | val;
     if (vc == vcMeetsNumCriteria) {
-        cur = GetVCVal(pgame, vcMeetsNumCriteria, FALSE);
+        cur = GetVCVal(pgame, vcMeetsNumCriteria, 0);
         if (cur != val) {
             val = cur;
             pgame->rgvc[8] = (pgame->rgvc[8] & 0x80) | cur;

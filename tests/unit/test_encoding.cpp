@@ -39,7 +39,7 @@ static void TestPasswords(void) {
     char szBad[] = "-p\xed\xa0\x80 game.hst";
     char szTooLong[] = "-p\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9 game.hst";
     char szPath[sizeof(szBase) + 4];
-    int16_t fSeed = FALSE;
+    int16_t fSeed = 0;
     uint32_t lSeed = 0;
     TEST_ASSERT(FStarsTestInit());
     TEST_CHECK(ParseCmdLine(szCmd, &fSeed, &lSeed));
@@ -59,7 +59,7 @@ static void TestPasswords(void) {
 }
 
 static void TestInvalidDefinition(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     char szPadding[1024];
     NATIVEFILE *pf;
     int i;

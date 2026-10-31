@@ -6,8 +6,8 @@
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "desktop line %d: %s (%s)\n", __LINE__, #f, SDL_GetError()); return 1; } } while (0)
 static int cMouse;
 static POINT ptMouse;
-static LRESULT CALLBACK DesktopProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg == WM_MOUSEMOVE) {
+static LRESULT  DesktopProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == win32::WM_MOUSEMOVE) {
         cMouse++;
         ptMouse = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)};
         return 0;
@@ -16,7 +16,7 @@ static LRESULT CALLBACK DesktopProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 static void Drain(void) {
     win32::MSG msg;
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) win32::DispatchMessageA(&msg);
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) win32::DispatchMessageA(&msg);
 }
 int main(void) {
     WNDCLASS wc = {};
@@ -30,31 +30,31 @@ int main(void) {
     int cxPixels, cyPixels;
     const char *pszRenderer = SDL_getenv("STARS_SDL_RENDERER");
     wc.lpszClassName = "StarsDesktopProbe"; wc.lpfnWndProc = DesktopProc;
-    wc.hInstance = win32::GetModuleHandle(NULL);
-    CHECK(win32::RegisterClass(&wc));
+    wc.hInstance = win32::GetModuleHandleA(NULL);
+    CHECK(win32::RegisterClassA(&wc));
     wc.lpszClassName = "StarsCompatToolbarTip";
-    CHECK(win32::RegisterClass(&wc));
-    hmenu = win32::CreateMenu(); CHECK(hmenu && win32::AppendMenu(hmenu, MF_STRING, 1, "&File"));
-    hwnd = win32::CreateWindow("StarsDesktopProbe", "Desktop probe", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    CHECK(win32::RegisterClassA(&wc));
+    hmenu = win32::CreateMenu(); CHECK(hmenu && win32::AppendMenuA(hmenu, win32::MF_STRING, 1, "&File"));
+    hwnd = win32::CreateWindowExA(0, "StarsDesktopProbe", "Desktop probe", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE,
                         150, 170, 400, 300, NULL, hmenu, wc.hInstance, NULL);
-    hwndSecond = win32::CreateWindow("StarsDesktopProbe", "Second surface", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    hwndSecond = win32::CreateWindowExA(0, "StarsDesktopProbe", "Second surface", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE,
                               600, 200, 320, 240, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd && hwndSecond && hwnd->lpWindow.get() != hwndSecond->lpWindow.get());
     CHECK(win32::GetWindowRect(hwnd, &rcOwner) && rcOwner.left == 0 && rcOwner.top == 0);
     // Toplevel movement is advisory on Wayland, while size and child placement work.
-    CHECK(win32::SetWindowPos(hwnd, NULL, 230, 270, 400, 300, SWP_NOZORDER | SWP_NOACTIVATE));
-    hwndChild = win32::CreateWindow("StarsDesktopProbe", "Child", WS_CHILD | WS_VISIBLE,
+    CHECK(win32::SetWindowPos(hwnd, NULL, 230, 270, 400, 300, win32::SWP_NOZORDER | win32::SWP_NOACTIVATE));
+    hwndChild = win32::CreateWindowExA(0, "StarsDesktopProbe", "Child", win32::WS_CHILD | win32::WS_VISIBLE,
                              30, 40, 100, 80, hwnd, (HMENU)(INT_PTR)10, wc.hInstance, NULL);
     CHECK(hwndChild && win32::GetWindowRect(hwndChild, &rc));
     pt = (POINT){0, 0}; CHECK(win32::ClientToScreen(hwndChild, &pt));
     CHECK(pt.x == rc.left && pt.y == rc.top && win32::ScreenToClient(hwndChild, &pt) && pt.x == 0 && pt.y == 0);
     pt = (POINT){5, 6}; CHECK(win32::MapWindowPoints(hwndChild, hwnd, &pt, 1) != 0 && pt.x == 35 && pt.y == 46);
-    hwndPopup = win32::CreateWindowExA(WS_EX_NOACTIVATE, "StarsCompatToolbarTip", "Tip", WS_POPUP | WS_VISIBLE,
+    hwndPopup = win32::CreateWindowExA(win32::WS_EX_NOACTIVATE, "StarsCompatToolbarTip", "Tip", win32::WS_POPUP | win32::WS_VISIBLE,
                                60, 70, 80, 30, hwnd, NULL, wc.hInstance, NULL);
     CHECK(hwndPopup && FCompatPresent(hwndPopup) && SDL_SyncWindow(hwndPopup->lpWindow.get()));
     CHECK(SDL_GetWindowParent(hwndPopup->lpWindow.get()) == hwnd->lpWindow.get());
     CHECK(win32::GetWindowRect(hwndPopup, &rc) && rc.left == 60 && rc.top == 70);
-    CHECK(win32::SetWindowPos(hwndPopup, NULL, 90, 100, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE));
+    CHECK(win32::SetWindowPos(hwndPopup, NULL, 90, 100, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE));
     CHECK(win32::GetWindowRect(hwndPopup, &rc) && rc.left == 90 && rc.top == 100);
     CHECK(win32::DestroyWindow(hwndPopup));
     win32::SetFocus(hwndChild); win32::SetCapture(hwndChild);
@@ -68,7 +68,7 @@ int main(void) {
     CHECK(SDL_PushEvent(&event)); Drain();
     CHECK(win32::GetFocus() == hwndSecond && win32::GetCursorPos(&ptCursor) && win32::WindowFromPoint(ptCursor) == hwndChild);
     CHECK(win32::GetClientRect(hwnd, &rc) && rc.right == 400 && rc.bottom == 300 - CyCompatMenuBar(hwnd));
-    hdc = win32::GetDC(hwnd); hbr = win32::CreateSolidBrush(RGB(30, 90, 150));
+    hdc = win32::GetDC(hwnd); hbr = win32::CreateSolidBrush(win32::RGB(30, 90, 150));
     CHECK(hdc && hbr && win32::FillRect(hdc, &rc, hbr) && win32::ReleaseDC(hwnd, hdc) && win32::DeleteObject(hbr));
     CHECK(FCompatPresent(hwnd) && FCompatPresent(hwndSecond));
     CHECK(SDL_GetWindowSizeInPixels(hwnd->lpWindow.get(), &cxPixels, &cyPixels));

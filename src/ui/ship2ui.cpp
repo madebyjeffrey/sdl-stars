@@ -4,7 +4,7 @@
 #include "control_io.h"
 #include "presentation_io.h"
 
-INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC            hdc;
     int16_t        i;
     PAINTSTRUCT    ps;
@@ -18,9 +18,9 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     FARPROC        lpProc;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(idsCustomizeZipOrders));
-        ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), SW_HIDE);
+        ui::ShowWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_QUEUE), win32::SW_HIDE);
         hwndZipOrderDlg = hwnd;
         win32::CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
         EnableZipBtns(hwnd, 0);
@@ -38,28 +38,28 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 psz = szWork;
             } else {
                 psz = TextIO().pfnCompressed(idsUnusedD);
-                win32::wsprintf(szWork, psz, i - 1072);
+                win32::wsprintfA(szWork, psz, i - 1072);
                 psz = szWork;
             }
             hwndRad = ControlIO().pfnGetDlgItem(hwnd, i);
             ControlIO().pfnSetWindowText(hwndRad, psz);
         }
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipOrderDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipOrderDlg, 1);
         if (gd.fTutorial) {
             PresentationIO().pfnTutor();
         }
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         for (i = 1073; i <= 1076 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 1076) {
@@ -67,7 +67,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_PRESET_1), &rcGBox);
@@ -81,7 +81,7 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         win32::SelectObject(hdc, rghfontArial8[1]);
         win32::SetBkColor(hdc, crButtonFace);
         cch = TextIO().pfnCchGetString(idsCustomOrders, szWork);
-        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
+        win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
         rcGBox.top = rcGBox.bottom + 8;
         if (vrgZip[iResTechNow].fValid) {
             xCtr = LOWORD(GetTextExtent(hdc, rgszMinerals[2], 9)) + 8;
@@ -90,26 +90,26 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 RightTextOut(hdc, xCtr, rcGBox.top, rgszMinerals[i], 0, 0);
                 win32::SetTextColor(hdc, 0);
                 FormatTransportPresetAction(i);
-                win32::TextOut(hdc, xCtr + 6, rcGBox.top, szWork, strlen(szWork));
+                win32::TextOutA(hdc, xCtr + 6, rcGBox.top, szWork, strlen(szWork));
                 rcGBox.top += dyArial8;
             }
         } else {
             cch = TextIO().pfnCchGetString(idsEmptyCustomSlot, szWork);
-            win32::TextOut(hdc, 12, rcGBox.top, szWork, cch);
+            win32::TextOutA(hdc, 12, rcGBox.top, szWork, cch);
         }
         win32::EndPaint(hwnd, &ps);
         return 1;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_ZIP_PROD_PRESET_1 && LOWORD(wParam) <= IDC_ZIP_PROD_PRESET_4) {
             iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
             EnableZipBtns(hwnd, iResTechNow);
-            ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
         } else {
             switch (LOWORD(wParam)) {
             case IDOK:
             case IDCANCEL:
                 hwndZipOrderDlg = 0;
-                ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipOrderDlg, FALSE);
+                ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipOrderDlg, 0);
                 ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
                 if (gd.fTutorial) {
                     PresentationIO().pfnTutor();
@@ -120,12 +120,12 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 if (vrgZip[iResTechNow].fValid) {
                     strcpy(szWork, vrgZip[iResTechNow].szName);
                 } else {
-                    win32::wsprintf(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
+                    win32::wsprintfA(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
                 }
-                lpProc = MakeProcInstance(RenameZipDlg, hInst);
-                if (ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0) != 0) {
+                lpProc = (RenameZipDlg);
+                if (ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0) != 0) {
                     if (szWork[0] == 0) {
-                        win32::wsprintf(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
+                        win32::wsprintfA(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
                     }
                     strcpy(vrgZip[iResTechNow].szName, szWork);
                     pszT = &szWork[64];
@@ -138,25 +138,24 @@ INT_PTR CALLBACK ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     *pszT = 0;
                     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
                     if (LOWORD(wParam) == IDC_IMPORT) {
-                        vrgZip[iResTechNow].fValid = TRUE;
+                        vrgZip[iResTechNow].fValid = 1;
                         vrgZip[iResTechNow].txp = sel.fl.lpplord->rgord()[sel.iwpAct].txp;
-                        ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
+                        ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
                     }
                     EnableZipBtns(hwnd, iResTechNow);
                 }
-                FreeProcInstance(lpProc);
                 ControlIO().pfnSetFocus(hwnd);
-                gd.fChgZipOrd = TRUE;
+                gd.fChgZipOrd = 1;
                 break;
             case IDC_DELETE:
-                vrgZip[iResTechNow].fValid = FALSE;
-                win32::wsprintf(szWork, TextIO().pfnCompressed(idsUnusedD), iResTechNow + 1);
+                vrgZip[iResTechNow].fValid = 0;
+                win32::wsprintfA(szWork, TextIO().pfnCompressed(idsUnusedD), iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, iResTechNow + 1073), szWork);
-                ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
-                gd.fChgZipOrd = TRUE;
+                ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
+                gd.fChgZipOrd = 1;
                 break;
             case IDC_HELP:
-                win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhCustomZipOrdersDialog);
+                win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhCustomZipOrdersDialog);
                 return 1;
             }
         }
@@ -173,112 +172,112 @@ void EnableZipBtns(HWND hwnd, int16_t iSel) {
     return;
 }
 
-INT_PTR CALLBACK RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     StringId ids;
     RECT     rc;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         if (hwndZipOrderDlg) {
             ids = idsRenameZipOrder;
         } else {
             ids = idsRenameProductionTemplate;
         }
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(ids));
-        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xc, 0);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xc, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szWork);
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, 1);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                win32::GetDlgItemText(hwnd, IDC_EDIT1, szWork, 14);
+                win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szWork, 14);
             }
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, FALSE);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, 0);
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, (uint32_t)(!hwndZipOrderDlg ? 1106 : 3103));
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, (uint32_t)(!hwndZipOrderDlg ? 1106 : 3103));
             return 1;
         }
     }
     return 0;
 }
 
-INT_PTR CALLBACK RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     RECT    rc;
     int32_t lSel;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(idsRenameFleet));
-        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyRenameDlg.x + 70, ptStickyRenameDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szWork);
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, 1);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                win32::GetDlgItemText(hwnd, IDC_EDIT1, szWork, 32);
+                win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szWork, 32);
                 FStringFitsScreen(szWork, 160);
             }
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, FALSE);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRenameDlg, 0);
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_EDIT1:
             if (HIWORD(wParam) == 0x400 && !fInEditUpdate) {
-                fInEditUpdate = TRUE;
+                fInEditUpdate = 1;
                 ControlIO().pfnGetWindowText((HWND)lParam, szWork, 250);
-                lSel = ControlIO().pfnSendMessage((HWND)lParam, EM_GETSEL, 0, 0);
+                lSel = ControlIO().pfnSendMessage((HWND)lParam, win32::EM_GETSEL, 0, 0);
                 if (!FStringFitsScreen(szWork, 160)) {
                     ControlIO().pfnSetWindowText((HWND)lParam, szWork);
-                    ControlIO().pfnSendMessage((HWND)lParam, EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
+                    ControlIO().pfnSendMessage((HWND)lParam, win32::EM_SETSEL, LOWORD(lSel), (int16_t)HIWORD(lSel));
                 }
-                fInEditUpdate = FALSE;
+                fInEditUpdate = 0;
                 break;
             }
             /* fallthrough */
         default:
             if (LOWORD(wParam) == IDC_HELP) {
-                win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhRenameFleetDialog);
+                win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhRenameFleetDialog);
                 return 1;
             }
         }
@@ -286,66 +285,66 @@ INT_PTR CALLBACK RenameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     return 0;
 }
 
-INT_PTR CALLBACK MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     int16_t i;
     RECT    rc;
     char    szT[80];
     char   *psz;
 
     switch (msg) {
-    case WM_INITDIALOG:
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyMergeFleetsDlg, TRUE);
+    case win32::WM_INITDIALOG:
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyMergeFleetsDlg, 1);
         for (i = 0; i < vcflMerge; i++) {
             psz = PszGetFleetName(rglpfl[vrgiflMerge[i]]->id);
             strcpy(szT, psz);
             if (rglpfl[vrgiflMerge[i]]->cord > 1) {
                 strcat(szT, " *");
             }
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_ADDSTRING, 0, (LPARAM)szT);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, vcflMerge == 2 || rglpfl[vrgiflMerge[i]]->id == sel.fl.id, i);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_ADDSTRING, 0, (LPARAM)szT);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_SETSEL, vcflMerge == 2 || rglpfl[vrgiflMerge[i]]->id == sel.fl.id, i);
         }
         if (gd.fTutorial) {
             PresentationIO().pfnTutor();
         }
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         if ((HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST)) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             for (i = 0; i < vcflMerge; i++) {
-                if (ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_GETSEL, i, 0) == 0) {
+                if (ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_GETSEL, i, 0) == 0) {
                     vrgiflMerge[i] = iflNone;
                 }
             }
             if (LOWORD(wParam) == IDOK && gd.fTutorial && !FOKMergeDialog()) {
                 return 1;
             }
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyMergeFleetsDlg, FALSE);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyMergeFleetsDlg, 0);
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhMergeFleetsDialog);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhMergeFleetsDialog);
             return 1;
         case IDC_MERGE_FLEETS_SELECT_ALL:
         case IDC_MERGE_FLEETS_UNSELECT_ALL:
             for (i = 0; i < vcflMerge; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), LB_SETSEL, LOWORD(wParam) == IDC_MERGE_FLEETS_SELECT_ALL, i);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_MERGE_FLEETS_LIST), win32::LB_SETSEL, LOWORD(wParam) == IDC_MERGE_FLEETS_SELECT_ALL, i);
             }
             return 1;
         }
@@ -359,6 +358,6 @@ void FormatTransportPresetAction(int16_t i) {
                 iAction = static_cast<XferActionType>(vrgZip[iResTechNow].txp.rgia[i].iAction());
                 cch = TextIO().pfnCchGetString(static_cast<StringId>(idsAction + static_cast<int>(iAction)), szWork);
                 if (szWork[cch - 1] == '.') {
-                    win32::wsprintf(&szWork[cch - 3], " %dkT", vrgZip[iResTechNow].txp.rgia[i].cQuan());
+                    win32::wsprintfA(&szWork[cch - 3], " %dkT", vrgZip[iResTechNow].txp.rgia[i].cQuan());
                 }
 }

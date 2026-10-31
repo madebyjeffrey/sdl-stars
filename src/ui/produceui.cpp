@@ -18,18 +18,17 @@ int16_t ChangeProduction(int16_t fClear) {
             goto LWriteProdQ;
         }
         ProductionIO().pfnInitialize(rgprod);
-        fDlgUp = TRUE;
-        lpProcProd = MakeProcInstance(ProductionDlg, hInst);
-        fSuccess = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd, 0);
-        FreeProcInstance(lpProcProd);
+        fDlgUp = 1;
+        lpProcProd = (ProductionDlg);
+        fSuccess = ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_PRODUCTION), hwndFrame, lpProcProd, 0);
         hwndProdDlg = 0;
-        fDlgUp = FALSE;
+        fDlgUp = 0;
 LWriteProdQ:
         FinishProduction(fSuccess);
         if (fSuccess && sel.grobj == grobjPlanet) {
             ControlIO().pfnDrawPlanShip(NULL, tilePlanetStats);
         }
-        return TRUE;
+        return 1;
     } catch (const StarsError &) {
         if (lpplProdGlob) {
             FreePl(lpplProdGlob);
@@ -39,13 +38,13 @@ LWriteProdQ:
             ControlIO().pfnEndDialog(hwndProdDlg, 0);
         }
         hwndProdDlg = 0;
-        fDlgUp = FALSE;
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsThereIsntEnoughFreeMemoryModifyProduction, NULL), MB_ICONHAND);
-        return FALSE;
+        fDlgUp = 0;
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsThereIsntEnoughFreeMemoryModifyProduction, NULL), win32::MB_ICONHAND);
+        return 0;
     }
 }
 
-INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC                hdc;
     PAINTSTRUCT        ps;
     RECT               rc;
@@ -66,7 +65,7 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     HCURSOR            hcs;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         rgidProdBtns[0] = 1070;
         rgidProdBtns[1] = 1071;
         rgidProdBtns[2] = 1;
@@ -79,8 +78,8 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         rgidProdBtns[9] = 118;
         hwndProdDlg = hwnd;
         if (rgplr[idPlayer].cPlanet <= 1) {
-            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), FALSE);
-            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), FALSE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_NEXT), 0);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BACK), 0);
         }
         if (gd.mdScreenSize >= 1) {
             dx = 760;
@@ -89,16 +88,16 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             dx = 610;
             dy = 24 * dyArial8 + 24;
         }
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, dx, dy, SWP_NOMOVE | SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, dx, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         xCtr = rc.right >> 1;
         dyLB = rc.bottom - (int16_t)(17 * dyArial8) / 2 - 24;
         rc.left = (int16_t)(11 * rc.right) / 20 + 16;
         dxPBtn = (int16_t)(rc.right - rc.left) / 4;
         rc.bottom -= (int16_t)(3 * dyArial8) / 2 + 6;
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), NULL, 6, rc.bottom, rc.left - 12, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), NULL, 6, rc.bottom, rc.left - 12, (int16_t)(3 * dyArial8) / 2, win32::SWP_NOZORDER);
         for (i = 0; i < 4; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.bottom, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, win32::SWP_NOZORDER);
             rc.left += dxPBtn;
         }
         dxPBtn += 24;
@@ -110,60 +109,60 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             dy = 50;
         }
         for (i = 4; i < 10; i++) {
-            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, SWP_NOZORDER);
+            ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, rgidProdBtns[i]), NULL, rc.left, rc.top, dxPBtn - 6, (int16_t)(3 * dyArial8) / 2, win32::SWP_NOZORDER);
             rc.top += dy;
         }
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), NULL, 6, 6, rc.left - 12, dyLB, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), NULL, 6, 6, rc.left - 12, dyLB, win32::SWP_NOZORDER);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), &rcT);
-        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), NULL, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), NULL, rc.left + dxPBtn, 6, rc.left - 12, rcT.bottom - rcT.top, win32::SWP_NOZORDER);
         win32::ScreenToClient(hwnd, (POINT *)&rcT.right);
         yTopFutureTech = rcT.bottom;
         InitializeProductionDlg(hwnd);
         if (gd.mdScreenSize == 1 && ptStickyProduceDlg.y == -1) {
             ptStickyProduceDlg.y = 0;
         }
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyProduceDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyProduceDlg, 1);
         return 1;
-    case WM_DRAWITEM:
+    case win32::WM_DRAWITEM:
         lpdis = (DRAWITEMSTRUCT *)lParam;
         if (lpdis->itemID == -1) {
             HandleFocusState(lpdis, -2);
         } else {
             switch (lpdis->itemAction) {
-            case ODA_DRAWENTIRE:
-            case ODA_SELECT:
-            case ODA_FOCUS:
+            case win32::ODA_DRAWENTIRE:
+            case win32::ODA_SELECT:
+            case win32::ODA_FOCUS:
                 DrawCBEntireItem(lpdis, 4);
             }
         }
         return 1;
-    case WM_MEASUREITEM:
+    case win32::WM_MEASUREITEM:
         lpmis = (MEASUREITEMSTRUCT *)lParam;
         lpmis->itemHeight = dyArial8 + 2;
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if ((HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY) || message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if ((HWND)lParam == ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY) || message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_LBUTTONDOWN:
-    case WM_RBUTTONDOWN:
+    case win32::WM_LBUTTONDOWN:
+    case win32::WM_RBUTTONDOWN:
         pt.x = LOWORD(lParam);
         pt.y = HIWORD(lParam);
         if (win32::PtInRect(&rcProdDiamond, PointFrom16(pt)) == 0)
             break;
-        if (message == WM_LBUTTONDOWN) {
+        if (message == win32::WM_LBUTTONDOWN) {
             GlobalPD.grPopup = grPopupString;
             GlobalPD.dxOut = 180;
             GlobalPD.psz = szPopupBuffer;
@@ -181,7 +180,7 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         }
         rgszZip[cMax++] = sz255;
         rgszZip[cMax++] = TextIO().pfnCompressed(idsCustomize);
-        i = ControlIO().pfnPopupMenu(hwnd, pt.x, pt.y, cMax, NULL, rgszZip, -1, TRUE);
+        i = ControlIO().pfnPopupMenu(hwnd, pt.x, pt.y, cMax, NULL, rgszZip, -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(hwnd);
             break;
@@ -191,7 +190,7 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         cMax = IProductionPresetSlot(i);
         ProdCommandHandler(hwnd, 0x816, cMax);
         break;
-    case WM_SETCURSOR:
+    case win32::WM_SETCURSOR:
         hcs = 0;
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
@@ -199,13 +198,13 @@ INT_PTR CALLBACK ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             break;
         win32::SetCursor(hcurArrowHelp);
         return 1;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         ControlIO().pfnDrawProductionDlg(hwnd, hdc, &rc, -1);
         win32::EndPaint(hwnd, &ps);
         return 1;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         ProdCommandHandler(hwnd, wParam, lParam);
     }
     return 0;
@@ -230,19 +229,19 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
     switch (LOWORD(wParam)) {
     case IDC_PRODUCTION_ADD:
     AddItem:
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_GETCURSEL, 0, 0);
         if (lSel < 0)
             break;
         for (iSrc = 0; iSrc < cProdGlob && (pProdGlob[iSrc].cItem == 0 || lSel-- != 0); iSrc++) {
         }
         prod = pProdGlob[iSrc];
-        if (ControlIO().pfnGetAsyncKeyState(VK_CONTROL) & 0xfffe) {
-            if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+        if (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe) {
+            if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
                 prod.cItem = LOWORD(prod.cItem < 1020 ? (uint32_t)prod.cItem : 1020);
             } else {
                 prod.cItem = LOWORD(prod.cItem < 100 ? (uint32_t)prod.cItem : 100);
             }
-        } else if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+        } else if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
             prod.cItem = LOWORD(prod.cItem < 10 ? (uint32_t)prod.cItem : 10);
         } else {
             prod.cItem = 1;
@@ -251,7 +250,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             pProdGlob[iSrc].cItem -= prod.cItem;
         }
         iMac = lpplProdGlob->iprodMac;
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_GETCURSEL, 0, 0);
         if (lSel < 0) {
             iDst = iMac - 1;
             if (iDst < 0) {
@@ -281,7 +280,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             }
         }
         if (iMac >= 40) {
-            ControlIO().pfnMessageBeep(MB_OK);
+            ControlIO().pfnMessageBeep(win32::MB_OK);
             goto RedrawText;
         }
         if (iMac == lpplProdGlob->iprodMax) {
@@ -294,14 +293,14 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->iprodMac++;
     FixedUp:
         ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iDst + 1, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, iDst + 1, 0);
         if (pProdGlob[iSrc].cItem != 0)
             goto RedrawText;
         ControlIO().pfnFillProdSrcLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
         goto RedrawText;
     case IDC_PRODUCTION_REMOVE:
     RemoveItem:
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_GETCURSEL, 0, 0);
         if (lSel <= 0)
             break;
         iMac = lpplProdGlob->iprodMac;
@@ -310,13 +309,13 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         for (iSrc = 0; iSrc < cProdGlob && ((uint32_t)pProdGlob[iSrc].grobj != prod.grobj || (uint32_t)pProdGlob[iSrc].iItem != prod.iItem); iSrc++) {
         }
         fRefillSrc = pProdGlob[iSrc].cItem == 0;
-        if (ControlIO().pfnGetAsyncKeyState(VK_CONTROL) & 0xfffe) {
-            if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+        if (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe) {
+            if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
                 c = 1020;
             } else {
                 c = 100;
             }
-        } else if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) & 0xfffe) {
+        } else if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) {
             c = 10;
         } else {
             c = 1;
@@ -339,7 +338,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         }
         ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
         if (lSel >= 0) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         }
         if (!fRefillSrc)
             goto RedrawText;
@@ -386,14 +385,14 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             FreePl(lpplProdGlob);
             lpplProdGlob = lpplprodT;
             sel.pl.fNoResearch = vrgZipProd[lParam].fNoResearch;
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_SETCHECK, sel.pl.fNoResearch, 0);
         } else {
             lpplProdGlob->iprodMac = 0;
         }
         ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, 0, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, 0, 0);
         ControlIO().pfnFillProdSrcLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_SETCURSEL, 0, 0);
         goto RedrawText;
     case IDC_PRODUCTION_AVAILABLE_ITEMS:
     case IDC_PRODUCTION_QUEUE:
@@ -403,7 +402,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             rc.top = yTopFutureTech;
             rc.bottom = 7 * dyArial8 + rc.top;
             rc.left += 130;
-            ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
+            ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
             ControlIO().pfnDrawProductionDlg(hwnd, NULL, &rc, -1);
         } else if (HIWORD(wParam) == 2) {
             if (LOWORD(wParam) == IDC_PRODUCTION_AVAILABLE_ITEMS)
@@ -413,22 +412,22 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         break;
     case IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY:
         hwndLB = ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE);
-        sel.pl.fNoResearch = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0));
-        lSel = ControlIO().pfnSendMessage(hwndLB, LB_GETCURSEL, 0, 0);
+        sel.pl.fNoResearch = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_GETCHECK, 0, 0));
+        lSel = ControlIO().pfnSendMessage(hwndLB, win32::LB_GETCURSEL, 0, 0);
         ControlIO().pfnFillPlanetProdLB(hwndLB, lpplProdGlob, NULL);
-        ControlIO().pfnSendMessage(hwndLB, LB_SETCURSEL, LOWORD(lSel), 0);
+        ControlIO().pfnSendMessage(hwndLB, win32::LB_SETCURSEL, LOWORD(lSel), 0);
         goto RedrawText;
     case IDOK:
     case IDCANCEL:
         hwndProdDlg = 0;
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyProduceDlg, FALSE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyProduceDlg, 0);
         ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
         break;
     case IDC_BACK:
     case IDC_NEXT:
         c = LOWORD(wParam) == IDC_NEXT ? 1 : -1;
-        FinishProduction(TRUE);
-        if (ControlIO().pfnGetKeyState(VK_SHIFT) < 0) {
+        FinishProduction(1);
+        if (ControlIO().pfnGetKeyState(win32::VK_SHIFT) < 0) {
             PresentationIO().pfnSelectPlanet(0, IdFindAdjStarbase(sel.pl.id, LOWORD(wParam) == IDC_NEXT));
         } else {
             PresentationIO().pfnSelectPlanet(c, 0);
@@ -438,10 +437,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         ControlIO().pfnGetClientRect(hwnd, &rc);
         rc.top = yTopFutureTech;
         rc.bottom = 9 * dyArial8 + rc.top;
-        ControlIO().pfnInvalidateRect(hwnd, &rc, TRUE);
+        ControlIO().pfnInvalidateRect(hwnd, &rc, 1);
         break;
     case IDC_PRODUCTION_ITEM_DOWN:
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_GETCURSEL, 0, 0);
         iMac = lpplProdGlob->iprodMac;
         if (lSel <= 0 || lSel >= iMac)
             break;
@@ -450,10 +449,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
         lpplProdGlob->rgprod()[lSel + 1] = prod;
         ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 2, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 2, 0);
         goto RedrawText;
     case IDC_PRODUCTION_ITEM_UP:
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_GETCURSEL, 0, 0);
         if (lSel <= 1)
             break;
         iMac = lpplProdGlob->iprodMac;
@@ -462,10 +461,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
         lpplProdGlob->rgprod()[lSel + 1] = prod;
         ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         goto RedrawText;
     case IDC_HELP:
-        win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhProductionDialog);
+        win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhProductionDialog);
     }
 }
 
@@ -476,10 +475,10 @@ void InitializeProductionDlg(HWND hwnd) {
     PROD   *lpprod;
 
     iSel = -1;
-    win32::wsprintf(rgch, TextIO().pfnCompressed(idsProductionQueueS), TextIO().pfnPlanetName(sel.pl.id));
+    win32::wsprintfA(rgch, TextIO().pfnCompressed(idsProductionQueueS), TextIO().pfnPlanetName(sel.pl.id));
     ControlIO().pfnSetWindowText(hwnd, rgch);
     ControlIO().pfnFillProdSrcLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
-    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
+    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_SETCURSEL, 0, 0);
     i = 0;
     lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
@@ -490,8 +489,8 @@ void InitializeProductionDlg(HWND hwnd) {
         lpprod++;
     }
     ControlIO().pfnFillPlanetProdLB(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
-    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, iSel + 1, 0);
-    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
+    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), win32::LB_SETCURSEL, iSel + 1, 0);
+    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_SETCHECK, sel.pl.fNoResearch, 0);
     return;
 }
 
@@ -509,9 +508,9 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
     PROD    prod;
     char    szT[100];
 
-    fCreatedDC = FALSE;
+    fCreatedDC = 0;
     if (!hdc) {
-        fCreatedDC = TRUE;
+        fCreatedDC = 1;
         hdc = win32::GetDC(hwnd);
     }
     win32::SelectObject(hdc, rghfontArial8[0]);
@@ -523,7 +522,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, idc), &rc);
         win32::ScreenToClient(hwnd, (POINT *)&rc);
         win32::ScreenToClient(hwnd, (POINT *)&rc.right);
-        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, idc), LB_GETCURSEL, 0, 0);
+        lSel = ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, idc), win32::LB_GETCURSEL, 0, 0);
         if (lSel >= 0 && (lSel != 0 || i != 1)) {
             if (i == 0) {
                 for (iSrc = 0; iSrc < cProdGlob && (pProdGlob[iSrc].cItem == 0 || lSel-- != 0); iSrc++) {
@@ -534,11 +533,11 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
                 lSel--;
                 prod = lpplProdGlob->rgprod()[lSel];
             }
-            ProductionIO().pfnQuote(&sel.pl, &prod, (uint32_t *)rgCost, idPlayer, FALSE);
+            ProductionIO().pfnQuote(&sel.pl, &prod, (uint32_t *)rgCost, idPlayer, 0);
             rc.bottom = yTopFutureTech + 4;
             win32::SelectObject(hdc, rghfontArial8[1]);
             c = TextIO().pfnCchGetString(idsRequiredMinerals, szWork);
-            win32::TextOut(hdc, rc.left, rc.bottom, szWork, c);
+            win32::TextOutA(hdc, rc.left, rc.bottom, szWork, c);
             rc.left += 20;
             rc.right -= 20;
             for (k = 0; k <= 3; k++) {
@@ -546,23 +545,23 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
                 rc.bottom += dyArial8;
                 win32::SelectObject(hdc, rghfontArial8[1]);
                 win32::SetTextColor(hdc, rgcrMinerals[c]);
-                win32::TextOut(hdc, rc.left, rc.bottom, rgszMinerals[c], win32::lstrlen(rgszMinerals[c]));
+                win32::TextOutA(hdc, rc.left, rc.bottom, rgszMinerals[c], win32::lstrlenA(rgszMinerals[c]));
                 win32::SelectObject(hdc, rghfontArial8[0]);
                 win32::SetTextColor(hdc, crWindowText);
-                c = win32::wsprintf(szWork, PCTLD, rgCost[k]);
+                c = win32::wsprintfA(szWork, PCTLD, rgCost[k]);
                 RightTextOut(hdc, rc.right - dxkT - 2, rc.bottom, szWork, c, dxMaxMineralQuan);
                 if (k <= 2) {
-                    win32::TextOut(hdc, rc.right - dxkT, rc.bottom, TextIO().pfnCompressed(idsKt), 2);
+                    win32::TextOutA(hdc, rc.right - dxkT, rc.bottom, TextIO().pfnCompressed(idsKt), 2);
                 }
             }
             if (i != 0) {
                 rc.bottom += (int16_t)(3 * dyArial8) / 2;
                 win32::SelectObject(hdc, rghfontArial8[1]);
-                c = win32::wsprintf(szT, TextIO().pfnCompressed(idsDDoneCompletion), prod.pct);
+                c = win32::wsprintfA(szT, TextIO().pfnCompressed(idsDDoneCompletion), prod.pct);
                 if (PszProductionETA(&sel.pl, lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)), NULL, NULL) != szWork) {
                 }
                 strcpy(&szT[c], szWork);
-                win32::TextOut(hdc, rc.left - 20, rc.bottom, szT, strlen(szT));
+                win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, strlen(szT));
                 win32::SelectObject(hdc, rghfontArial8[0]);
             }
         }
@@ -576,7 +575,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
     rcProdDiamond = rc;
     win32::SelectObject(hdc, rghfontArial8[1]);
     c = TextIO().pfnCchGetString(idsApplyDefineProductionTemplate, szWork);
-    win32::TextOut(hdc, rc.right + 4, rc.top, szWork, c);
+    win32::TextOutA(hdc, rc.right + 4, rc.top, szWork, c);
     if (fCreatedDC) {
         win32::ReleaseDC(hwnd, hdc);
     }
@@ -591,7 +590,7 @@ void FillProdSrcLB(HWND hwndLB, int16_t mdFill) {
     for (i = 0; i < 6; i++) {
         szT[i] = ' ';
     }
-    ControlIO().pfnSendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnSendMessage(hwndLB, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < cProdGlob; i++) {
         if (pProdGlob[i].cItem > 0) {
             psz = PszNameProdItem(pProdGlob + i);
@@ -604,13 +603,13 @@ void FillProdSrcLB(HWND hwndLB, int16_t mdFill) {
             } else {
                 szT[0] = ' ';
             }
-            ControlIO().pfnSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szT);
+            ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, (LPARAM)szT);
         }
     }
     return;
 }
 
-INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     PAINTSTRUCT ps;
     int16_t     i;
@@ -627,7 +626,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     int16_t     cpq;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(idsCustomizeProductionTemplates));
         win32::GetWindowRect(hwnd, &rc);
         ControlIO().pfnGetClientRect(hwnd, &rc2);
@@ -636,7 +635,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         win32::MapWindowPoints(NULL, hwnd, (POINT *)&rc2, 2);
         vyZPDStatic = rc2.bottom + 2;
         dy += rc2.bottom + dyArial8 + 6;
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, dy, SWP_NOMOVE | SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, dy, win32::SWP_NOMOVE | win32::SWP_NOZORDER);
         win32::CheckRadioButton(hwnd, IDC_ZIP_PROD_PRESET_1, IDC_ZIP_PROD_PRESET_4, IDC_ZIP_PROD_PRESET_1);
         ControlIO().pfnEnableZipProdBtns(hwnd, 0);
         iResTechNow = Energy;
@@ -655,28 +654,28 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 psz = szWork;
             } else {
                 psz = TextIO().pfnCompressed(idsUnusedD);
-                win32::wsprintf(szWork, psz, iBase + 1);
+                win32::wsprintfA(szWork, psz, iBase + 1);
                 psz = szWork;
             }
             hwndRad = ControlIO().pfnGetDlgItem(hwnd, i);
             ControlIO().pfnSetWindowText(hwndRad, psz);
         }
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipProdDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipProdDlg, 1);
         if (gd.fTutorial) {
             PresentationIO().pfnTutor();
         }
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         for (i = 1073; i <= 1076 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, i); i++) {
         }
         if (i <= 1076) {
@@ -684,7 +683,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_ZIP_PROD_PRESET_1), &rcGBox);
@@ -698,15 +697,15 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         win32::SelectObject(hdc, rghfontArial8[1]);
         win32::SetBkColor(hdc, crButtonFace);
         cch = TextIO().pfnCchGetString(idsCustomOrders, szWork);
-        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
+        win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, cch);
         rcGBox.top = rcGBox.bottom + 8;
         if (vrgZipProd[iResTechNow].fValid) {
             cch = TextIO().pfnCchGetString(static_cast<StringId>(idsContributeResearch + vrgZipProd[iResTechNow].fNoResearch), szWork);
-            win32::TextOut(hdc, rcGBox.left, vyZPDStatic, szWork, cch);
+            win32::TextOutA(hdc, rcGBox.left, vyZPDStatic, szWork, cch);
         }
         win32::EndPaint(hwnd, &ps);
         return 1;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if (HIWORD(wParam) == 0 && LOWORD(wParam) >= IDC_ZIP_PROD_PRESET_1 && LOWORD(wParam) <= IDC_ZIP_PROD_PRESET_4) {
             iResTechNow = static_cast<TechFieldType>(LOWORD(wParam) - 1073);
             ControlIO().pfnEnableZipProdBtns(hwnd, iResTechNow);
@@ -715,7 +714,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             switch (LOWORD(wParam)) {
             case IDOK:
             case IDCANCEL:
-                ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipProdDlg, FALSE);
+                ControlIO().pfnStickyDlgPos(hwnd, &ptStickyZipProdDlg, 0);
                 ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
                 vyZPDStatic = -1;
                 if (gd.fTutorial) {
@@ -727,14 +726,14 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 if (vrgZipProd[iResTechNow].fValid) {
                     strcpy(szWork, vrgZipProd[iResTechNow].szName);
                 } else {
-                    win32::wsprintf(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
+                    win32::wsprintfA(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
                 }
-                lpProc = MakeProcInstance(RenameZipDlg, hInst);
+                lpProc = (RenameZipDlg);
                 if (iResTechNow == Energy)
                     goto LDontRename;
-                if (ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0) != 0) {
+                if (ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0) != 0) {
                     if (szWork[0] == 0) {
-                        win32::wsprintf(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
+                        win32::wsprintfA(szWork, TextIO().pfnCompressed(idsCustomD), iResTechNow);
                     }
                     strcpy(vrgZipProd[iResTechNow].szName, szWork);
                     pszT = &szWork[64];
@@ -748,7 +747,7 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, iResTechNow + 1073), &szWork[64]);
                 LDontRename:
                     if (LOWORD(wParam) == IDC_IMPORT) {
-                        vrgZipProd[iResTechNow].fValid = TRUE;
+                        vrgZipProd[iResTechNow].fValid = 1;
                         cpq = 0;
                         for (i = 0; i < lpplProdGlob->iprodMac; i++) {
                             if (lpplProdGlob->rgprod()[i].grobj == grobjPlanet && lpplProdGlob->rgprod()[i].iItem < mdIdleFactory) {
@@ -765,19 +764,18 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     }
                     ControlIO().pfnEnableZipProdBtns(hwnd, iResTechNow);
                 }
-                FreeProcInstance(lpProc);
                 ControlIO().pfnSetFocus(hwnd);
-                gd.fChgZipProd = TRUE;
+                gd.fChgZipProd = 1;
                 break;
             case IDC_DELETE:
-                vrgZipProd[iResTechNow].fValid = FALSE;
-                win32::wsprintf(szWork, TextIO().pfnCompressed(idsUnusedD), iResTechNow + 1);
+                vrgZipProd[iResTechNow].fValid = 0;
+                win32::wsprintfA(szWork, TextIO().pfnCompressed(idsUnusedD), iResTechNow + 1);
                 ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, iResTechNow + 1073), szWork);
                 ControlIO().pfnFillZipProdLB(hwnd, &vrgZipProd[iResTechNow]);
-                gd.fChgZipProd = TRUE;
+                gd.fChgZipProd = 1;
                 break;
             case IDC_HELP:
-                win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhCustomizeProductionTemplatesDialog);
+                win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhCustomizeProductionTemplatesDialog);
                 return 1;
             }
         }
@@ -805,10 +803,10 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
     ControlIO().pfnGetClientRect(hwndDlg, &rc);
     rc.top = vyZPDStatic;
     rc.bottom = vyZPDStatic + dyArial8;
-    ControlIO().pfnInvalidateRect(hwndDlg, &rc, TRUE);
-    ControlIO().pfnSendMessage(hwndLB, LB_RESETCONTENT, 0, 0);
+    ControlIO().pfnInvalidateRect(hwndDlg, &rc, 1);
+    ControlIO().pfnSendMessage(hwndLB, win32::LB_RESETCONTENT, 0, 0);
     if (!pzpq->fValid || pzpq->cpq == 0) {
-        ControlIO().pfnSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsAutoBuildOrders));
+        ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsAutoBuildOrders));
     } else {
         TextIO().pfnCchGetString(idsSD2, szFormat);
         for (i = 0; i < pzpq->cpq; i++) {
@@ -816,9 +814,9 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
             if (pzpq->rgpq[i].cQuan() == 1 || pzpq->rgpq[i].mdIdle() == iobjAlchemy) {
                 strcpy(szWork, szAuto);
             } else {
-                win32::wsprintf(szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
+                win32::wsprintfA(szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
             }
-            ControlIO().pfnSendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szWork);
+            ControlIO().pfnSendMessage(hwndLB, win32::LB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
     return;
@@ -836,9 +834,8 @@ void CustomizeProductionPresets(HWND hwnd) {
     FARPROC lpProc;
     int16_t fRet;
             memcpy(rgzp, vrgZipProd, 160);
-            lpProc = MakeProcInstance(ZipProdDlg, hInst);
-            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc, 0);
-            FreeProcInstance(lpProc);
+            lpProc = (ZipProdDlg);
+            fRet = ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, lpProc, 0);
             if (fRet)
                 return;
             memcpy(vrgZipProd, rgzp, 160);

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <windows.h>
 
-INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen);
 int16_t          DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_t cLen, int16_t fPrint);
 void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, const char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint);
@@ -38,11 +38,11 @@ uint16_t PaletteSize(void *pv);
 int16_t  DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL hdib, int16_t x1, int16_t y1, int16_t dxSrc, int16_t dySrc, int32_t rop);
 HGLOBAL  DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE hpal);
 HGLOBAL  HdibLoadBigResource(BitmapId idb);
-INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             ShowProgressGauge();
 void             HideProgressGauge();
-INT_PTR CALLBACK ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly);
 HFONT            HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont);
 

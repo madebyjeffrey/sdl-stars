@@ -5,6 +5,9 @@
 
 namespace ui {
 
+// Preserve the legacy diagnostic/error result while posting the app exit code.
+BOOL RequestQuit(int nExit);
+
 // Owned callers deliver captured callback errors after the raw operation has
 // returned and finished its dispatch/modal cleanup. Runtime internals use the
 // raw APIs so an error cannot escape before their outer guards have unwound.

@@ -205,7 +205,7 @@ char *PszGetCompressedPlanet(int16_t id) {
     fHigh = (iNibble & 1) == 0;
     pszOut = szLastGet;
     iBuild = 0;
-    fCap = TRUE;
+    fCap = 1;
     while (iLen-- != 0) {
         if (fHigh) {
             i = *pch >> 4;
@@ -220,9 +220,9 @@ char *PszGetCompressedPlanet(int16_t id) {
                 *pszOut -= ' ';
             }
             if (*pszOut == ' ' || *pszOut == '-') {
-                fCap = TRUE;
+                fCap = 1;
             } else {
-                fCap = FALSE;
+                fCap = 0;
             }
             pszOut++;
             iBuild = 0;
@@ -260,7 +260,7 @@ void StarsCopyFile(const char *szSrc, const char *szDst) {
     StarsRestore<int16_t> restoreSilent(fFileErrSilent);
     StarsFileGuard closeDestination(hfDst);
     StarsRecoveryScope scopeRecovery;
-    fFileErrSilent = TRUE;
+    fFileErrSilent = 1;
     try {
         RecordIO().pfnStreamOpen(szSrc, mdRead);
         hfDst = HfOpenFile(szDst, 4114, &fMissing);
@@ -288,7 +288,7 @@ int16_t AlertSz(const char *sz, int16_t mbType) {
     if (ini.fValidate || (ini.fLogging && ini.fGen)) {
         CchSprintf(szT, "Error: %s", sz);
         OutputSz(!ini.fValidate ? 6 : 7, szT);
-        return IDYES;
+        return win32::IDYES;
     }
     return IdAlertBox(sz, mbType);
 }
@@ -415,7 +415,7 @@ int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
     char   *pchOut;
     int16_t cNyb;
 
-    fHalf = FALSE;
+    fHalf = 0;
     pchOut = szWork;
     for (; *szIn != 0; szIn++) {
         iNyb = NybbleFromCh(*szIn);
@@ -429,13 +429,13 @@ int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
         while (cNyb-- != 0) {
             if (!fHalf) {
                 *pchOut = (iNyb & 0xf) * 0x10;
-                fHalf = TRUE;
+                fHalf = 1;
             } else {
                 *pchOut |= iNyb & 0xf;
                 pchOut++;
-                fHalf = FALSE;
+                fHalf = 0;
                 if (pchOut - szWork >= 0x400) {
-                    return FALSE;
+                    return 0;
                 }
             }
             iNyb >>= 4;
@@ -446,11 +446,11 @@ int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
         pchOut++;
     }
     if (pchOut - szWork > *pcOut) {
-        return FALSE;
+        return 0;
     }
     *pcOut = pchOut - szWork;
     memcpy(szOut, szWork, *pcOut);
-    return TRUE;
+    return 1;
 }
 
 static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
@@ -459,7 +459,7 @@ static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char
     int16_t iNyb;
     char   *pchOut;
 
-    fHalf = FALSE;
+    fHalf = 0;
     pchOut = szWork;
     if (cIn < 0 || *pcOut < 0 || *pcOut >= (int16_t)sizeof(szWork)) goto invalid;
     while (cIn > 0) {
@@ -505,18 +505,18 @@ static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char
     if (memchr(szWork, 0, (size_t)(pchOut - szWork)) != NULL) goto invalid;
     if (fUtf8 && !FUtf8Valid(szWork, (size_t)(pchOut - szWork))) goto invalid;
     strcpy(szOut, szWork);
-    return TRUE;
+    return 1;
 invalid:
     szOut[0] = 0;
-    return FALSE;
+    return 0;
 }
 
 int16_t FDecompressUserString(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
-    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, TRUE);
+    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, 1);
 }
 
 int16_t FDecompressUserStringBytes(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
-    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, FALSE);
+    return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, 0);
 }
 
 int16_t NybbleFromCh(uint8_t ch) {
@@ -610,7 +610,7 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     dyI = yI - ptC.y;
     r2I = (uint32_t)(dxI * dxI) + (uint32_t)(dyI * dyI);
     if (r2 <= r2I) {
-        return FALSE;
+        return 0;
     }
     dxT = xI - ptL1.x;
     dyT = yI - ptL1.y;
@@ -618,7 +618,7 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     dCtr = LOWORD((int32_t)sqrt((double)lT));
     lT = r2 - r2I;
     if (lT <= 0) {
-        return FALSE;
+        return 0;
     }
     dOff = LOWORD((int32_t)sqrt((double)lT));
     if (ptL1.x < ptL2.x) {
@@ -639,9 +639,9 @@ int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, int32_t r2
     *pdStart = 0 <= dCtr - dOff ? dCtr - dOff : 0;
     *pdEnd = dMax >= dCtr + dOff ? dCtr + dOff : dMax;
     if (*pdEnd <= 0 || *pdStart >= dMax) {
-        return FALSE;
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
 void IntToRoman(int16_t i, char *pszOut) {
@@ -675,16 +675,16 @@ int16_t FCheckPassword() {
     int32_t lSaltDef;
 
     if (lSaltCur == 0 || lSaltLast == lSaltCur || fAi) {
-        return TRUE;
+        return 1;
     }
     if (vszDefPass[0] != 0) {
         lSaltDef = LSaltFromSz(vszDefPass);
         if (lSaltDef == lSaltCur) {
-            return TRUE;
+            return 1;
         }
     }
     if (ini.fValidate) {
-        return FALSE;
+        return 0;
     }
     return PlayerChoiceIO().pfnPromptPassword();
 }
@@ -745,18 +745,18 @@ int16_t CParseNumbers(char *psz, int32_t *pl, int16_t cMax) {
 
     iRead = 0;
     lNum = 0;
-    fValid = FALSE;
+    fValid = 0;
     for (; iRead < cMax && *psz != 0; psz++) {
         if (*psz != ' ' && (*psz < '0' || *psz > '9')) {
             return -1;
         }
         if (*psz != ' ') {
-            fValid = TRUE;
+            fValid = 1;
             lNum = (uint32_t)(lNum * 10) + (int16_t)(*psz - '0');
         } else if (fValid) {
             pl[iRead++] = lNum;
             lNum = 0;
-            fValid = FALSE;
+            fValid = 0;
         }
     }
     if (fValid) {

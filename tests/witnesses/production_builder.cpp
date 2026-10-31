@@ -71,7 +71,7 @@ static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t
     messages++;
     messageArg = c;
     calls = calls * 10 + 8;
-    return TRUE;
+    return 1;
 }
 
 int main(int argc, char **argv) {

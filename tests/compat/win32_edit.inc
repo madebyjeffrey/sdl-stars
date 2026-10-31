@@ -26,20 +26,20 @@ static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (HIWORD(w) == EN_MAXTEXT) cMax++;
         if (HIWORD(w) == EN_UPDATE) {
             cUpdate++;
-            if (fDestroy) { fDestroy = FALSE; DestroyWindow((HWND)l); }
+            if (fDestroy) { fDestroy = 0; DestroyWindow((HWND)l); }
         }
     }
     return DefWindowProcA(hwnd, msg, w, l);
 }
 static BOOL FText(HWND hwnd, LPCSTR psz) {
     char sz[128];
-    int cch = GetWindowText(hwnd, sz, sizeof(sz));
-    if (cch == (int)strlen(psz) && strcmp(sz, psz) == 0) return TRUE;
+    int cch = GetWindowTextA(hwnd, sz, sizeof(sz));
+    if (cch == (int)strlen(psz) && strcmp(sz, psz) == 0) return 1;
     fprintf(stderr, "edit text: expected [%s], got [%s]\n", psz, sz);
-    return FALSE;
+    return 0;
 }
 static int TestCaseStyles(HWND hwndParent, DWORD style) {
-    HWND hwnd = CreateWindow("Edit", "Abc dEF", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
+    HWND hwnd = CreateWindowExA(0, "Edit", "Abc dEF", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
                              0, 210, 180, style & ES_MULTILINE ? 80 : 25, hwndParent, (HMENU)(UINT_PTR)111, NULL, NULL);
     LPCSTR pszCase = style & ES_UPPERCASE ? "ABC DEF" : "abc def";
     CHECK(hwnd);
@@ -50,22 +50,22 @@ static int TestCaseStyles(HWND hwndParent, DWORD style) {
     CHECK(!SendMessageA(hwnd, EM_GETMODIFY, 0, 0) && !SendMessageA(hwnd, EM_CANUNDO, 0, 0));
     CHECK(cUpdate == (style & ES_MULTILINE ? 0u : 1u) && cChange == cUpdate);
     SendMessageA(hwnd, EM_LIMITTEXT, 100, 0); SendMessageA(hwnd, EM_SETSEL, 0, -1);
-    SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"GhI");
+    SendMessageA(hwnd, EM_REPLACESEL, 1, (LPARAM)"GhI");
     CHECK(FText(hwnd, style & ES_UPPERCASE ? "GHI" : "ghi"));
     CHECK(SendMessageA(hwnd, EM_UNDO, 0, 0) && FText(hwnd, pszCase));
-    CHECK(SendMessageA(hwnd, EM_SETREADONLY, TRUE, 0));
+    CHECK(SendMessageA(hwnd, EM_SETREADONLY, 1, 0));
     CHECK(SetWindowTextA(hwnd, "Abc dEF") && FText(hwnd, pszCase));
-    SendMessageA(hwnd, EM_SETSEL, 0, -1); SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"GhI");
+    SendMessageA(hwnd, EM_SETSEL, 0, -1); SendMessageA(hwnd, EM_REPLACESEL, 1, (LPARAM)"GhI");
     CHECK(FText(hwnd, style & ES_UPPERCASE ? "GHI" : "ghi"));
     CHECK(DestroyWindow(hwnd)); return 0;
 }
 static int TestEditBoundaries(HWND hwndParent, DWORD style) {
-    HWND hwnd = CreateWindow("Edit", "abc", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
+    HWND hwnd = CreateWindowExA(0, "Edit", "abc", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
                              0, 210, 180, style & ES_MULTILINE ? 80 : 25, hwndParent, (HMENU)(UINT_PTR)110, NULL, NULL);
     CHECK(hwnd);
     SetFocus(hwnd);
     SendMessageA(hwnd, EM_LIMITTEXT, 3, 0); SendMessageA(hwnd, EM_SETSEL, 3, 3);
-    SendMessageA(hwnd, EM_SETMODIFY, FALSE, 0); cChange = cUpdate = cMax = 0;
+    SendMessageA(hwnd, EM_SETMODIFY, 0, 0); cChange = cUpdate = cMax = 0;
     SendMessageA(hwnd, WM_CHAR, 'x', 1);
     CHECK(FText(hwnd, "abc") && cUpdate == 1 && cChange == 1 && cMax == 1);
     CHECK(SendMessageA(hwnd, EM_GETMODIFY, 0, 0) && !SendMessageA(hwnd, EM_CANUNDO, 0, 0));
@@ -92,7 +92,7 @@ static int TestEditBoundaries(HWND hwndParent, DWORD style) {
     CHECK(DestroyWindow(hwnd)); return 0;
 }
 static int TestMixedUndo(HWND hwndParent, DWORD style) {
-    HWND hwnd = CreateWindow("Edit", "abcde", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
+    HWND hwnd = CreateWindowExA(0, "Edit", "abcde", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
                              0, 210, 180, style & ES_MULTILINE ? 30 : 25, hwndParent, (HMENU)(UINT_PTR)113, NULL, NULL);
     CHECK(hwnd);
     SetFocus(hwnd); SendMessageA(hwnd, EM_SETSEL, 2, 2);
@@ -104,19 +104,19 @@ static int TestMixedUndo(HWND hwndParent, DWORD style) {
     SendMessageA(hwnd, WM_CHAR, '\b', 1); SendMessageA(hwnd, WM_KEYDOWN, VK_DELETE, 1);
     CHECK(FText(hwnd, "ade") && SendMessageA(hwnd, EM_UNDO, 0, 0) && FText(hwnd, "abcde"));
     CHECK(SetWindowTextA(hwnd, "abcde")); SendMessageA(hwnd, EM_SETSEL, 1, 3);
-    SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"XY");
+    SendMessageA(hwnd, EM_REPLACESEL, 1, (LPARAM)"XY");
     CHECK(FText(hwnd, "aXYde"));
     SendMessageA(hwnd, WM_CHAR, 'z', 1);
     CHECK(FText(hwnd, "aXYzde"));
     CHECK(SendMessageA(hwnd, EM_UNDO, 0, 0) && FText(hwnd, "abcde"));
     CHECK(SendMessageA(hwnd, EM_UNDO, 0, 0) && FText(hwnd, "aXYzde"));
     CHECK(SetWindowTextA(hwnd, "abcde")); SendMessageA(hwnd, EM_SETSEL, 1, 4);
-    SendMessageA(hwnd, EM_REPLACESEL, FALSE, (LPARAM)"X");
+    SendMessageA(hwnd, EM_REPLACESEL, 0, (LPARAM)"X");
     CHECK(FText(hwnd, "aXe") && !SendMessageA(hwnd, EM_CANUNDO, 0, 0));
     CHECK(DestroyWindow(hwnd)); return 0;
 }
 static int TestUndoNoops(HWND hwndParent, DWORD style) {
-    HWND hwnd = CreateWindow("Edit", "abcdef", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
+    HWND hwnd = CreateWindowExA(0, "Edit", "abcdef", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
                              0, 210, 180, style & ES_MULTILINE ? 80 : 25, hwndParent, (HMENU)(UINT_PTR)112, NULL, NULL);
     UINT rgmsg[] = {EM_UNDO, WM_UNDO};
     BYTE rgKeySav[256], rgKey[256];
@@ -126,7 +126,7 @@ static int TestUndoNoops(HWND hwndParent, DWORD style) {
     CHECK(hwnd);
     for (i = 0; i < sizeof(rgmsg) / sizeof(rgmsg[0]); i++) {
         CHECK(SetWindowTextA(hwnd, "abcdef"));
-        SendMessageA(hwnd, EM_SETSEL, 2, 4); SendMessageA(hwnd, EM_SETMODIFY, FALSE, 0);
+        SendMessageA(hwnd, EM_SETSEL, 2, 4); SendMessageA(hwnd, EM_SETMODIFY, 0, 0);
         cChange = cUpdate = cMax = 0;
         for (iKey = 0; iKey < 256; iKey++)
             rgKeySav[iKey] = ((GetKeyState(iKey) & 0x8000) ? 0x80 : 0) | (GetKeyState(iKey) & 1);
@@ -142,21 +142,21 @@ static int TestUndoNoops(HWND hwndParent, DWORD style) {
         CHECK(!SendMessageA(hwnd, EM_GETMODIFY, 0, 0) && !SendMessageA(hwnd, EM_CANUNDO, 0, 0));
         CHECK(cUpdate == 0 && cChange == 1 && cMax == 0);
         CHECK(FText(hwnd, "abcdef"));
-        CHECK(SendMessageA(hwnd, EM_SETREADONLY, TRUE, 0)); cChange = cUpdate = cMax = 0;
+        CHECK(SendMessageA(hwnd, EM_SETREADONLY, 1, 0)); cChange = cUpdate = cMax = 0;
         CHECK(!!SendMessageA(hwnd, rgmsg[i], 0, 0) == !(style & ES_MULTILINE));
         CHECK(!SendMessageA(hwnd, EM_CANUNDO, 0, 0) && !SendMessageA(hwnd, EM_GETMODIFY, 0, 0));
         CHECK(cUpdate == 0 && cChange == 0 && cMax == 0);
-        CHECK(SendMessageA(hwnd, EM_SETREADONLY, FALSE, 0));
+        CHECK(SendMessageA(hwnd, EM_SETREADONLY, 0, 0));
         SendMessageA(hwnd, EM_SETSEL, 6, 6); SendMessageA(hwnd, WM_CHAR, 'x', 1);
         CHECK(SendMessageA(hwnd, EM_CANUNDO, 0, 0));
-        SendMessageA(hwnd, EM_SETSEL, 1, 2); CHECK(SendMessageA(hwnd, EM_SETREADONLY, TRUE, 0));
+        SendMessageA(hwnd, EM_SETSEL, 1, 2); CHECK(SendMessageA(hwnd, EM_SETREADONLY, 1, 0));
         cChange = cUpdate = cMax = 0;
         result = SendMessageA(hwnd, rgmsg[i], 0, 0);
         CHECK(!!result == !(style & ES_MULTILINE));
         CHECK(SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(1, 2) && SendMessageA(hwnd, EM_GETMODIFY, 0, 0));
         CHECK(cUpdate == 0 && cChange == 0 && cMax == 0);
         CHECK(FText(hwnd, "abcdefx") && SendMessageA(hwnd, EM_CANUNDO, 0, 0));
-        CHECK(SendMessageA(hwnd, EM_SETREADONLY, FALSE, 0));
+        CHECK(SendMessageA(hwnd, EM_SETREADONLY, 0, 0));
         CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "abcdef"));
     }
     SendMessageA(hwnd, EM_EMPTYUNDOBUFFER, 0, 0); SendMessageA(hwnd, EM_SETSEL, 2, 4);
@@ -175,7 +175,7 @@ static BOOL FUndoNotices(DWORD dwCaret, DWORD dwSelection) {
            rgUndoModified[0] && rgUndoModified[1] && rgUndoModified[2];
 }
 static int TestUndoChanges(HWND hwndParent, DWORD style) {
-    HWND hwnd = CreateWindow("Edit", "abc", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
+    HWND hwnd = CreateWindowExA(0, "Edit", "abc", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL | style,
                              0, 210, 180, style & ES_MULTILINE ? 80 : 25, hwndParent, (HMENU)(UINT_PTR)113, NULL, NULL);
     UINT rgmsg[] = {EM_UNDO, WM_UNDO};
     size_t i;
@@ -183,25 +183,25 @@ static int TestUndoChanges(HWND hwndParent, DWORD style) {
     for (i = 0; i < sizeof(rgmsg) / sizeof(rgmsg[0]); i++) {
         CHECK(SetWindowTextA(hwnd, "abc")); SendMessageA(hwnd, EM_SETSEL, 3, 3);
         SendMessageA(hwnd, WM_CHAR, 'd', 1); CHECK(FText(hwnd, "abcd"));
-        SendMessageA(hwnd, EM_SETMODIFY, FALSE, 0); cChange = cUpdate = cMax = cUndoNotice = 0; fObserveUndo = TRUE;
-        CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "abc")); fObserveUndo = FALSE;
+        SendMessageA(hwnd, EM_SETMODIFY, 0, 0); cChange = cUpdate = cMax = cUndoNotice = 0; fObserveUndo = 1;
+        CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "abc")); fObserveUndo = 0;
         CHECK(SendMessageA(hwnd, EM_GETMODIFY, 0, 0) && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(3, 3));
         CHECK(cUpdate == 1 && cChange == 2 && cMax == 0 && FUndoNotices(MAKELONG(3, 3), MAKELONG(3, 3)));
-        SendMessageA(hwnd, EM_SETMODIFY, FALSE, 0); cChange = cUpdate = cMax = cUndoNotice = 0; fObserveUndo = TRUE;
-        CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "abcd")); fObserveUndo = FALSE;
+        SendMessageA(hwnd, EM_SETMODIFY, 0, 0); cChange = cUpdate = cMax = cUndoNotice = 0; fObserveUndo = 1;
+        CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "abcd")); fObserveUndo = 0;
         CHECK(SendMessageA(hwnd, EM_GETMODIFY, 0, 0) && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(3, 4));
         CHECK(cUpdate == 1 && cChange == 2 && cMax == 0 && FUndoNotices(MAKELONG(4, 4), MAKELONG(3, 4)));
         CHECK(SetWindowTextA(hwnd, "aaaa")); SendMessageA(hwnd, EM_SETSEL, 1, 3);
-        SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)"aa");
+        SendMessageA(hwnd, EM_REPLACESEL, 1, (LPARAM)"aa");
         CHECK(SendMessageA(hwnd, EM_CANUNDO, 0, 0));
         CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "aaaa") && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(1, 3));
         CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "aaaa") && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(1, 3));
         CHECK(SetWindowTextA(hwnd, "aaabbbccc")); SendMessageA(hwnd, EM_SETSEL, 3, 6);
-        SendMessageA(hwnd, EM_REPLACESEL, TRUE, (LPARAM)""); CHECK(FText(hwnd, "aaaccc"));
+        SendMessageA(hwnd, EM_REPLACESEL, 1, (LPARAM)""); CHECK(FText(hwnd, "aaaccc"));
         CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "aaabbbccc") && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(3, 6));
         CHECK(SendMessageA(hwnd, rgmsg[i], 0, 0) && FText(hwnd, "aaaccc") && SendMessageA(hwnd, EM_GETSEL, 0, 0) == MAKELONG(3, 3));
     }
-    fDestroy = TRUE;
+    fDestroy = 1;
     CHECK(SendMessageA(hwnd, EM_UNDO, 0, 0) && !IsWindow(hwnd) && !fDestroy);
     return 0;
 }
@@ -227,7 +227,7 @@ static int TestEditing(HWND hwndEdit, HWND hwndMulti) {
     CHECK(SendMessageA(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, "alpha betaalpha"));
     CHECK(SetWindowTextA(hwndEdit, "reset") && !SendMessageA(hwndEdit, EM_CANUNDO, 0, 0));
     SendMessageA(hwndEdit, EM_SETSEL, 0, -1);
-    SendMessageA(hwndEdit, EM_REPLACESEL, FALSE, (LPARAM)"replacement");
+    SendMessageA(hwndEdit, EM_REPLACESEL, 0, (LPARAM)"replacement");
     CHECK(!SendMessageA(hwndEdit, EM_CANUNDO, 0, 0));
     CHECK(SetWindowTextA(hwndMulti, "aaa\r\nbbb\r\nc"));
     CHECK(SendMessageA(hwndMulti, EM_GETLINECOUNT, 0, 0) == 3);
@@ -250,18 +250,18 @@ static int TestSelectionArrows(HWND hwnd, LPCSTR psz) {
         BOOL fShift;
         DWORD dwSel;
     } rgtest[] = {
-        {1, 4, VK_LEFT, FALSE, MAKELONG(1, 1)},
-        {1, 4, VK_RIGHT, FALSE, MAKELONG(4, 4)},
-        {4, 1, VK_LEFT, FALSE, MAKELONG(1, 1)},
-        {4, 1, VK_RIGHT, FALSE, MAKELONG(4, 4)},
-        {1, 4, VK_LEFT, TRUE, MAKELONG(1, 3)},
-        {1, 4, VK_RIGHT, TRUE, MAKELONG(1, 5)},
-        {4, 1, VK_LEFT, TRUE, MAKELONG(0, 4)},
-        {4, 1, VK_RIGHT, TRUE, MAKELONG(3, 4)},
-        {3, 3, VK_LEFT, FALSE, MAKELONG(1, 1)},
-        {3, 3, VK_RIGHT, FALSE, MAKELONG(4, 4)},
-        {0, 5, VK_LEFT, FALSE, MAKELONG(0, 0)},
-        {0, 5, VK_RIGHT, FALSE, MAKELONG(5, 5)}
+        {1, 4, VK_LEFT, 0, MAKELONG(1, 1)},
+        {1, 4, VK_RIGHT, 0, MAKELONG(4, 4)},
+        {4, 1, VK_LEFT, 0, MAKELONG(1, 1)},
+        {4, 1, VK_RIGHT, 0, MAKELONG(4, 4)},
+        {1, 4, VK_LEFT, 1, MAKELONG(1, 3)},
+        {1, 4, VK_RIGHT, 1, MAKELONG(1, 5)},
+        {4, 1, VK_LEFT, 1, MAKELONG(0, 4)},
+        {4, 1, VK_RIGHT, 1, MAKELONG(3, 4)},
+        {3, 3, VK_LEFT, 0, MAKELONG(1, 1)},
+        {3, 3, VK_RIGHT, 0, MAKELONG(4, 4)},
+        {0, 5, VK_LEFT, 0, MAKELONG(0, 0)},
+        {0, 5, VK_RIGHT, 0, MAKELONG(5, 5)}
     };
     BYTE rgbSav[256], rgb[256] = {0};
     int iKey;
@@ -283,7 +283,7 @@ static int TestSelectionArrows(HWND hwnd, LPCSTR psz) {
 }
 
 static int TestWrapping(HWND hwndParent) {
-    HWND hwnd = CreateWindow("Edit", "one two three four five six seven eight nine ten eleven twelve",
+    HWND hwnd = CreateWindowExA(0, "Edit", "one two three four five six seven eight nine ten eleven twelve",
                              WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL,
                              0, 160, 70, 45, hwndParent, NULL, NULL, NULL);
     RECT rc = {3, 3, 60, 35}, got;
@@ -319,16 +319,16 @@ static int TestWordNavigation(HWND hwndEdit, HWND hwndMulti) {
         UINT ichAnchor, ichCaret;
         DWORD dwSel;
     } rgkey[] = {
-        {SDL_SCANCODE_LEFT, FALSE, 6, 6, MAKELONG(4, 4)},
-        {SDL_SCANCODE_RIGHT, FALSE, 6, 6, MAKELONG(8, 8)},
-        {SDL_SCANCODE_LEFT, TRUE, 6, 6, MAKELONG(4, 6)},
-        {SDL_SCANCODE_RIGHT, TRUE, 6, 6, MAKELONG(6, 8)},
-        {SDL_SCANCODE_LEFT, TRUE, 6, 8, MAKELONG(4, 6)},
-        {SDL_SCANCODE_RIGHT, TRUE, 6, 4, MAKELONG(6, 8)},
-        {SDL_SCANCODE_LEFT, TRUE, 3, 3, MAKELONG(0, 3)},
-        {SDL_SCANCODE_RIGHT, TRUE, 0, 0, MAKELONG(0, 4)},
-        {SDL_SCANCODE_LEFT, FALSE, 0, 0, MAKELONG(0, 0)},
-        {SDL_SCANCODE_RIGHT, FALSE, 13, 13, MAKELONG(13, 13)}
+        {SDL_SCANCODE_LEFT, 0, 6, 6, MAKELONG(4, 4)},
+        {SDL_SCANCODE_RIGHT, 0, 6, 6, MAKELONG(8, 8)},
+        {SDL_SCANCODE_LEFT, 1, 6, 6, MAKELONG(4, 6)},
+        {SDL_SCANCODE_RIGHT, 1, 6, 6, MAKELONG(6, 8)},
+        {SDL_SCANCODE_LEFT, 1, 6, 8, MAKELONG(4, 6)},
+        {SDL_SCANCODE_RIGHT, 1, 6, 4, MAKELONG(6, 8)},
+        {SDL_SCANCODE_LEFT, 1, 3, 3, MAKELONG(0, 3)},
+        {SDL_SCANCODE_RIGHT, 1, 0, 0, MAKELONG(0, 4)},
+        {SDL_SCANCODE_LEFT, 0, 0, 0, MAKELONG(0, 0)},
+        {SDL_SCANCODE_RIGHT, 0, 13, 13, MAKELONG(13, 13)}
     };
     static const struct {
         SDL_Keymod mod;
@@ -445,8 +445,8 @@ int main(void) {
     DWORD ichFirst, ichLast;
     UINT c;
     wc.lpfnWndProc = ParentProc; wc.lpszClassName = "CompatEditParent";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Edit test", WS_POPUP | WS_VISIBLE, 50, 50, 400, 300, NULL, NULL, NULL, NULL);
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Edit test", WS_POPUP | WS_VISIBLE, 50, 50, 400, 300, NULL, NULL, NULL, NULL);
     CHECK(hwnd);
     CHECK(TestCaseStyles(hwnd, ES_UPPERCASE) == 0 && TestCaseStyles(hwnd, ES_LOWERCASE) == 0);
     CHECK(TestCaseStyles(hwnd, ES_UPPERCASE | ES_MULTILINE) == 0 && TestCaseStyles(hwnd, ES_LOWERCASE | ES_MULTILINE) == 0);
@@ -455,17 +455,17 @@ int main(void) {
     CHECK(TestEditBoundaries(hwnd, 0) == 0 && TestEditBoundaries(hwnd, ES_MULTILINE) == 0);
     CHECK(TestMixedUndo(hwnd, 0) == 0 && TestMixedUndo(hwnd, ES_MULTILINE | ES_AUTOVSCROLL) == 0);
     CHECK(TestWrapping(hwnd) == 0);
-    hwndEdit = CreateWindow("Edit", "abc", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
+    hwndEdit = CreateWindowExA(0, "Edit", "abc", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             10, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)100, NULL, NULL);
-    hwndMulti = CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL,
+    hwndMulti = CreateWindowExA(0, "Edit", "", WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL,
                              10, 50, 180, 100, hwnd, (HMENU)(UINT_PTR)101, NULL, NULL);
-    hwndRead = CreateWindow("Edit", "read", WS_CHILD | WS_VISIBLE | ES_READONLY | ES_PASSWORD,
+    hwndRead = CreateWindowExA(0, "Edit", "read", WS_CHILD | WS_VISIBLE | ES_READONLY | ES_PASSWORD,
                             210, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)102, NULL, NULL);
     CHECK(hwndEdit && hwndMulti && hwndRead);
     {
         HWND rghwnd[] = {hwndEdit, hwndMulti, hwndRead};
-        HCURSOR hcurArrow = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-        HCURSOR hcurText = LoadCursor(NULL, MAKEINTRESOURCE(32513));
+        HCURSOR hcurArrow = LoadCursorA(NULL, MAKEINTRESOURCE(32512));
+        HCURSOR hcurText = LoadCursorA(NULL, MAKEINTRESOURCE(32513));
         UINT i;
         CHECK(hcurArrow && hcurText);
         for (i = 0; i < sizeof(rghwnd) / sizeof(rghwnd[0]); i++) {
@@ -480,7 +480,7 @@ int main(void) {
             DWORD rgstyle[] = {BS_AUTOCHECKBOX, BS_AUTORADIOBUTTON, CBS_DROPDOWNLIST};
             HWND hwndControl;
             for (i = 0; i < sizeof(rgstyle) / sizeof(rgstyle[0]); i++) {
-                hwndControl = CreateWindow(rgpszClass[i], "", WS_CHILD | WS_VISIBLE | rgstyle[i],
+                hwndControl = CreateWindowExA(0, rgpszClass[i], "", WS_CHILD | WS_VISIBLE | rgstyle[i],
                                            0, 200, 100, 25, hwnd, NULL, NULL, NULL);
                 CHECK(hwndControl);
                 SendMessageA(hwndEdit, WM_SETCURSOR, (WPARAM)hwndEdit, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
@@ -508,7 +508,7 @@ int main(void) {
     CHECK(SendMessageA(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, ""));
     CHECK(SendMessageA(hwndEdit, EM_UNDO, 0, 0) && FText(hwndEdit, "abc"));
     {
-        HWND hwndCase = CreateWindow("Edit", "\xc3\xa9\xc3\xbf", WS_CHILD | ES_UPPERCASE, 0, 0, 100, 25, hwnd, NULL, NULL, NULL);
+        HWND hwndCase = CreateWindowExA(0, "Edit", "\xc3\xa9\xc3\xbf", WS_CHILD | ES_UPPERCASE, 0, 0, 100, 25, hwnd, NULL, NULL, NULL);
         CHECK(hwndCase && FText(hwndCase, "\xc3\xa9\xc3\xbf"));
         CHECK(SetWindowTextA(hwndCase, "a\xc3\xa9\xc3\xbf") && FText(hwndCase, "A\xc3\xa9\xc3\xbf"));
         CHECK(SetWindowTextA(hwndCase, ""));
@@ -528,7 +528,7 @@ int main(void) {
     }
     SendMessageA(hwndEdit, WM_TIMER, hwndEdit->idEditCaretTimer, 0); CHECK(!hwndEdit->fEditCaret);
     SendMessageA(hwndEdit, WM_TIMER, hwndEdit->idEditCaretTimer, 0); CHECK(hwndEdit->fEditCaret);
-    CHECK(PostMessage(hwndEdit, WM_KEYDOWN, VK_ESCAPE, 0));
+    CHECK(PostMessageA(hwndEdit, WM_KEYDOWN, VK_ESCAPE, 0));
     SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, -1);
     CHECK(FText(hwndEdit, "abc") && !GetCapture());
     SetFocus(hwndMulti); CHECK(!hwndEdit->idEditCaretTimer);
@@ -538,10 +538,10 @@ int main(void) {
     SendMessageA(hwndEdit, EM_SETSEL, 3, 1);
     CHECK(SendMessageA(hwndEdit, EM_GETSEL, (WPARAM)&ichFirst, (LPARAM)&ichLast) == MAKELONG(1, 3));
     CHECK(ichFirst == 1 && ichLast == 3);
-    SendMessageA(hwndEdit, EM_REPLACESEL, FALSE, (LPARAM)"XYZ");
+    SendMessageA(hwndEdit, EM_REPLACESEL, 0, (LPARAM)"XYZ");
     CHECK(FText(hwndEdit, "aXYZ") && SendMessageA(hwndEdit, EM_GETMODIFY, 0, 0));
     CHECK(SendMessageA(hwndEdit, EM_GETSEL, 0, 0) == MAKELONG(4, 4));
-    SendMessageA(hwndEdit, EM_SETMODIFY, FALSE, 0);
+    SendMessageA(hwndEdit, EM_SETMODIFY, 0, 0);
     CHECK(!SendMessageA(hwndEdit, EM_GETMODIFY, 0, 0));
     SendMessageA(hwndEdit, EM_LIMITTEXT, 5, 0);
     CHECK(SendMessageA(hwndEdit, EM_GETLIMITTEXT, 0, 0) == 5);
@@ -559,7 +559,7 @@ int main(void) {
     CHECK(FText(hwndEdit, ""));
     SendMessageA(hwndRead, WM_CHAR, 'X', 1);
     CHECK(FText(hwndRead, "read"));
-    CHECK(SendMessageA(hwndRead, EM_SETREADONLY, FALSE, 0));
+    CHECK(SendMessageA(hwndRead, EM_SETREADONLY, 0, 0));
     SendMessageA(hwndRead, EM_SETSEL, 0, -1); SendMessageA(hwndRead, WM_CHAR, 'X', 1);
     CHECK(FText(hwndRead, "X"));
     c = cChange; CHECK(SetWindowTextA(hwndMulti, "line1\r\nline2") && cChange == c);
@@ -578,7 +578,7 @@ int main(void) {
     {
         SDL_Event event = {0};
         APPMSG msg;
-        HWND hwndPass = CreateWindow("Edit", "Y", WS_CHILD | WS_VISIBLE | ES_PASSWORD,
+        HWND hwndPass = CreateWindowExA(0, "Edit", "Y", WS_CHILD | WS_VISIBLE | ES_PASSWORD,
                                     210, 50, 180, 30, hwnd, NULL, NULL, NULL);
         CHECK(hwndPass && UpdateWindow(hwndPass));
         CHECK(memcmp(hwndPass->lpCanvas->pixels, hwndRead->lpCanvas->pixels,
@@ -591,8 +591,8 @@ int main(void) {
         CHECK(FText(hwndEdit, "A\xe2\x82\xac"));
     }
 #endif
-    hwndKill = CreateWindow("Edit", "", WS_CHILD | ES_AUTOHSCROLL, 0, 0, 100, 25, hwnd, (HMENU)(UINT_PTR)103, NULL, NULL);
-    CHECK(hwndKill); fDestroy = TRUE;
+    hwndKill = CreateWindowExA(0, "Edit", "", WS_CHILD | ES_AUTOHSCROLL, 0, 0, 100, 25, hwnd, (HMENU)(UINT_PTR)103, NULL, NULL);
+    CHECK(hwndKill); fDestroy = 1;
     SetWindowTextA(hwndKill, "destroy during update");
     CHECK(!IsWindow(hwndKill));
     CHECK(DestroyWindow(hwnd));

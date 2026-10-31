@@ -20,13 +20,13 @@ void *StarsTest_malloc(size_t cb) noexcept {
 static std::atomic<int> cReleased;
 static int cDelivered, md;
 static bool fCallbackOk = true;
-static constexpr UINT wmPayload = WM_APP + 70, wmNested = WM_APP + 71;
+static constexpr UINT wmPayload = win32::WM_APP + 70, wmNested = win32::WM_APP + 71;
 static STARSCOMPATPAYLOAD MakePayload(int value) {
     auto *pv = static_cast<int *>(std::malloc(sizeof(int)));
     if (pv) *pv = value;
     return STARSCOMPATPAYLOAD(pv, {[](void *p) noexcept { ++cReleased; std::free(p); }});
 }
-static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+static LRESULT  Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg != wmPayload && msg != wmNested) return win32::DefWindowProcA(hwnd, msg, w, l);
     auto *value = static_cast<int *>(PvCompatMessagePayload(w));
     if (!value) return 0; // Repeated/stale copies have no owned payload.
@@ -36,7 +36,7 @@ static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (md == 1) {
         fCallbackOk &= StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),wmNested,MakePayload(22),0);
         win32::MSG nested{};
-        fCallbackOk &= win32::PeekMessageA(&nested,hwnd,wmNested,wmNested,PM_REMOVE);
+        fCallbackOk &= win32::PeekMessageA(&nested,hwnd,wmNested,wmNested,win32::PM_REMOVE);
         win32::DispatchMessageA(&nested);
         fCallbackOk &= PvCompatMessagePayload(w) == value && *value == 11;
     } else if (md == 2) {
@@ -50,9 +50,9 @@ static LRESULT CALLBACK Proc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 static HWND MakeWindow() {
     WNDCLASSA wc{}; wc.lpfnWndProc = Proc; wc.lpszClassName = "OwnedMessageProbe";
     win32::RegisterClassA(&wc);
-    return win32::CreateWindowExA(0,wc.lpszClassName,"payload",WS_OVERLAPPEDWINDOW,0,0,160,120,nullptr,nullptr,nullptr,nullptr);
+    return win32::CreateWindowExA(0,wc.lpszClassName,"payload",win32::WS_OVERLAPPEDWINDOW,0,0,160,120,nullptr,nullptr,nullptr,nullptr);
 }
-static bool Take(HWND hwnd, win32::MSG &msg) { return win32::PeekMessageA(&msg,hwnd,wmPayload,wmNested,PM_REMOVE); }
+static bool Take(HWND hwnd, win32::MSG &msg) { return win32::PeekMessageA(&msg,hwnd,wmPayload,wmNested,win32::PM_REMOVE); }
 int main() {
     HWND hwnd;
     uint64_t id;

@@ -3,7 +3,7 @@
 #include "stars_test.h"
 
 static void TestFileFailureUnwinds(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     int16_t fSilentSav;
 
     TEST_ASSERT(FStarsTestInit());
@@ -14,9 +14,9 @@ static void TestFileFailureUnwinds(void) {
         StarsRecoveryScope scopeRecovery;
         StarsRestore<int16_t> restoreSilent(fFileErrSilent);
         StarsFileGuard closeStream(hf);
-        fFileErrSilent = TRUE;
+        fFileErrSilent = 1;
         StreamOpen(szFile, mdRead);
-        TEST_CHECK(FALSE);
+        TEST_CHECK(0);
     } catch (const StarsError &error) {
         TEST_CHECK(error.mdError == starsErrorFile);
         TEST_CHECK(hf == -1);
@@ -26,7 +26,7 @@ static void TestFileFailureUnwinds(void) {
 }
 
 static void TestShortReadClosesStream(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     char rgb[2] = {42, 0};
     int16_t hfWrite, fMissing;
 
@@ -41,10 +41,10 @@ static void TestShortReadClosesStream(void) {
         StarsRecoveryScope scopeRecovery;
         StarsRestore<int16_t> restoreSilent(fFileErrSilent);
         StarsFileGuard closeStream(hf);
-        fFileErrSilent = TRUE;
+        fFileErrSilent = 1;
         StreamOpen(szFile, mdRead);
         RgFromStream(rgb, sizeof(rgb));
-        TEST_CHECK(FALSE);
+        TEST_CHECK(0);
     } catch (const StarsError &error) {
         TEST_CHECK(error.mdError == starsErrorFile);
         TEST_CHECK(error.ids == idsGameFileAppearsCorruptUnableLoadFile);
@@ -64,7 +64,7 @@ static void CaptureReadFailure() {
 }
 
 static void TestPartialRecordPublication() {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t rgbFile[] = {3, 0xfc, 0x37}; // unknown type 63, three-byte payload
     const int rgcb[] = {0, 1, 3};
     int16_t hfWrite, fMissing;
@@ -86,7 +86,7 @@ static void TestPartialRecordPublication() {
             StarsRestore<int16_t> restoreSilent(fFileErrSilent);
             StarsRestore<decltype(pfnStarsTestAlertObserver)> restoreObserver(pfnStarsTestAlertObserver);
             StarsFileGuard closeStream(hf);
-            fFileErrSilent = FALSE; gd.fGeneratingTurn = FALSE;
+            fFileErrSilent = 0; gd.fGeneratingTurn = 0;
             pfnStarsTestAlertObserver = CaptureReadFailure;
             StreamOpen(szFile, mdRead);
             ReadRt();
@@ -103,7 +103,7 @@ static void TestPartialRecordPublication() {
 }
 
 static void TestRecordFramingBytes() {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     uint8_t rgb[1024], written[1026], stream[] = {3, 0, 0x31, 0x32, 0x33};
     int16_t hfRead, fMissing;
 
@@ -144,7 +144,7 @@ static void TestBofSignedEncryptionFields() {
     TEST_ASSERT(FStarsTestInit());
     // These expectations are signed five-/eleven-bit fields, independent of
     // native bitfield layout and the stream decoder under test.
-    SetFileXorStream(-2147483647, -1024, -2, -16, TRUE);
+    SetFileXorStream(-2147483647, -1024, -2, -16, 1);
     GetFileSeeds(&expected1, &expected2);
     vlpMemStream = stream;
     ReadRt();

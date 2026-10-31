@@ -39,9 +39,9 @@ static int TestGetDlgItem(HWND hwnd, int id) {
 static void TestLUiSendMessage(HWND hwnd, int message, int value, LPARAM param) {
     (void)hwnd;
     (void)value;
-    if (message == LB_RESETCONTENT)
+    if (message == win32::LB_RESETCONTENT)
         labelCount = 0;
-    if (message == LB_ADDSTRING) {
+    if (message == win32::LB_ADDSTRING) {
         if (labelCount >= 12)
             abort();
         strcpy(labels[labelCount++], (const char *)param);
@@ -134,14 +134,14 @@ static uint16_t TestExtent(const void *p) { return extents.at(p); }
 static void     TestDrawProductionDlg(HWND, HDC, RECT *, int16_t) {}
 static void     apply(int cmd, int param) { ProdCommandHandler(HwndWitness(1), cmd, param); }
 static int      popupSlot(int i) { return IProductionPresetSlot((int16_t)i); }
-static void     edit(int cmd) { ZipProdDlg(HwndWitness(1), WM_COMMAND, cmd, 0); }
+static void     edit(int cmd) { ZipProdDlg(HwndWitness(1), win32::WM_COMMAND, cmd, 0); }
 static void     customize() { CustomizeProductionPresets(HwndWitness(1)); }
 static void     FailRecovery(PROD *) { StarsThrowError(starsErrorMemory, 0); }
 static int      recover() {
     PRODUCTIONIO io = ProductionIO();
     io.pfnInitialize = FailRecovery;
     PRODUCTIONIOSCOPE recoveryScope(io);
-    return ChangeProduction(FALSE);
+    return ChangeProduction(0);
 }
 
 static void reset(unsigned n) {

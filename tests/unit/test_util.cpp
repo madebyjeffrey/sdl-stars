@@ -3,7 +3,7 @@
 #include "stars_test.h"
 
 static void test_FleetName_utf8_boundary(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     FLEET *lpfl;
     const char *pszName = "AAAAAAAAAAAAAAAAAAAAAAAAAAA\xc3\xa9";
     const char *psz;
@@ -39,7 +39,7 @@ static SHDEF SpaceDockWithArmor(int16_t cArmor) {
 // LoadPlayer loads player 1's turn file of a new tiny game, with or without
 // Regenerating Shields.
 static void LoadPlayer(const char *pszTest, int16_t fRS) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir(pszTest, szDir, sizeof(szDir)));
@@ -51,7 +51,7 @@ static void LoadPlayer(const char *pszTest, int16_t fRS) {
 static void test_UpdateShdefCost_armor(void) {
     SHDEF shdef;
 
-    LoadPlayer("UpdateShdefCost_armor", FALSE);
+    LoadPlayer("UpdateShdefCost_armor", 0);
     shdef = SpaceDockWithArmor(20);
     UpdateShdefCost(&shdef);
     TEST_CHECK_(shdef.hul.dp == 250 + 30000, "dp %u", shdef.hul.dp);
@@ -66,7 +66,7 @@ static void test_UpdateShdefCost_armor(void) {
 static void test_UpdateShdefCost_rs_armor_overflow(void) {
     SHDEF shdef;
 
-    LoadPlayer("UpdateShdefCost_rs_armor_overflow", TRUE);
+    LoadPlayer("UpdateShdefCost_rs_armor_overflow", 1);
     shdef = SpaceDockWithArmor(20);
     UpdateShdefCost(&shdef);
     TEST_CHECK_(shdef.hul.dp == 250 + 15000, "dp %u", shdef.hul.dp);
@@ -101,7 +101,7 @@ static FLEET *AddPursuer(int16_t ish, POINT16 pt, int16_t idTarget, POINT16 ptTa
 // pieces of a split fleet; the jrc4 binary (0008:497a) dropped it again, so
 // every pursuer takes the heaviest matching fleet.
 static void test_ValidateWaypoints_pursuers_take_heaviest(void) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     int16_t ish0;
     int16_t ish1;
@@ -132,8 +132,8 @@ static void test_ValidateWaypoints_pursuers_take_heaviest(void) {
     lpflLight = LpflStarsTestAddFleet(1, idPlanetDeepSpace, ish1, 1);
     lpflHeavy->pt = lpflLight->pt = ptFled;
     // Target the AI design's category ("Any" never matches exactly).
-    mdTarget = FMatchTarget(lpflHeavy, mdTargetArmedShips, TRUE) ? mdTargetArmedShips : mdTargetUnarmedShips;
-    TEST_ASSERT(FMatchTarget(lpflHeavy, mdTarget, TRUE) && FMatchTarget(lpflLight, mdTarget, TRUE));
+    mdTarget = FMatchTarget(lpflHeavy, mdTargetArmedShips, 1) ? mdTargetArmedShips : mdTargetUnarmedShips;
+    TEST_ASSERT(FMatchTarget(lpflHeavy, mdTarget, 1) && FMatchTarget(lpflLight, mdTarget, 1));
     for (i = 0; i < rgcbtlplan[0]; i++)
         rglpbtlplan[0][i].mdTarget1 = mdTarget;
     lpflA = AddPursuer(ish0, ptStart, (1 << 9) | 400, ptFled);
@@ -188,7 +188,7 @@ static void test_FLookupPart_host(void) {
 // Lookup's Other/unknown fallback is THING; cargo's default is FLEET. The
 // shared frame must retain initialized cargo outside the eighteen-byte copy.
 static void test_Xfer_lookup_and_cargo_fallbacks(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     XFER xf{};
     THING *lpth;
     int16_t id;

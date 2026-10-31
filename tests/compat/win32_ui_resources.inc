@@ -13,7 +13,7 @@ static int cCommand, cInit, cPopup;
 static WPARAM wCommand;
 static BOOL fDisableInit, fDestroyInit, fInvalidCommand;
 static LRESULT CALLBACK ResourceProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg == WM_COMMAND) { cCommand++; wCommand = w; if (l) fInvalidCommand = TRUE; return 0; }
+    if (msg == WM_COMMAND) { cCommand++; wCommand = w; if (l) fInvalidCommand = 1; return 0; }
     if (msg == WM_INITMENU) {
         cInit++;
         if (fDisableInit) EnableMenuItem(GetMenu(hwnd), IDM_HELP_CONTENTS2, MF_BYCOMMAND | MF_GRAYED);
@@ -37,7 +37,7 @@ static int TestTranslate(HWND hwnd, HACCEL haccel, BYTE mod, UINT msg, WORD key,
     return 0;
 }
 int main(void) {
-    HINSTANCE hinst = GetModuleHandle(NULL);
+    HINSTANCE hinst = GetModuleHandleA(NULL);
     HRSRC hrsrc;
     const BYTE *rgb;
     DWORD cb, ib;
@@ -60,7 +60,7 @@ int main(void) {
 
     CHECK(hinst);
     for (i = 0; i < (int)(sizeof(rgUIManifest) / sizeof(rgUIManifest[0])); i++) {
-        hrsrc = FindResource(hinst, rgUIManifest[i].pszName, rgUIManifest[i].pszType);
+        hrsrc = FindResourceA(hinst, rgUIManifest[i].pszName, rgUIManifest[i].pszType);
         CHECK(hrsrc);
         cb = SizeofResource(hinst, hrsrc);
         rgb = (const BYTE*)(LockResource(LoadResource(hinst, hrsrc)));
@@ -97,37 +97,37 @@ int main(void) {
     CHECK(cDialogs == 38 && cControls == 338);
     CHECK(!FCompatDialogTemplate(rgbExtended, sizeof(rgbExtended), &dlg));
 #endif
-    CHECK(!LoadMenu(hinst, "missing"));
-    CHECK(!LoadAccelerators(hinst, MAKEINTRESOURCE(65000)));
-    hmenu = LoadMenu(hinst, "StarsMenu"); hsecond = LoadMenu(hinst, "STARSMENU");
+    CHECK(!LoadMenuA(hinst, "missing"));
+    CHECK(!LoadAcceleratorsA(hinst, MAKEINTRESOURCE(65000)));
+    hmenu = LoadMenuA(hinst, "StarsMenu"); hsecond = LoadMenuA(hinst, "STARSMENU");
     CHECK(hmenu && hsecond && hmenu != hsecond);
     CHECK(GetMenuItemCount(hmenu) == 6);
     hfile = GetSubMenu(hmenu, 0);
     CHECK(hfile && GetMenuItemID(hfile, 0) == IDM_TOOL_NEW_GAME);
-    CHECK(GetMenuString(hfile, 0, sz, sizeof(sz), MF_BYPOSITION) > 0);
+    CHECK(GetMenuStringA(hfile, 0, sz, sizeof(sz), MF_BYPOSITION) > 0);
     CHECK(strstr(sz, "New") != NULL);
     CHECK(EnableMenuItem(hmenu, IDM_TOOL_NEW_GAME, MF_BYCOMMAND | MF_GRAYED) != -1);
     CHECK(!(GetMenuState(hsecond, IDM_TOOL_NEW_GAME, MF_BYCOMMAND) & MF_GRAYED));
     CHECK(DestroyMenu(hmenu) && IsMenu(hsecond));
-    hmain = LoadAccelerators(hinst, MAKEINTRESOURCE(IDA_MAIN));
-    htitle = LoadAccelerators(hinst, MAKEINTRESOURCE(IDA_TITLE));
+    hmain = LoadAcceleratorsA(hinst, MAKEINTRESOURCE(IDA_MAIN));
+    htitle = LoadAcceleratorsA(hinst, MAKEINTRESOURCE(IDA_TITLE));
     CHECK(hmain && htitle);
-    CHECK(CopyAcceleratorTable(hmain, NULL, 0) == 18);
-    CHECK(CopyAcceleratorTable(hmain, rg, 32) == 18);
+    CHECK(CopyAcceleratorTableA(hmain, NULL, 0) == 18);
+    CHECK(CopyAcceleratorTableA(hmain, rg, 32) == 18);
     CHECK(rg[0].fVirt == (FVIRTKEY | FNOINVERT | FCONTROL) && rg[0].key == 'A' && rg[0].cmd == IDM_TURN_SAVE_SUBMIT);
     CHECK(rg[17].key == VK_F12 && rg[17].fVirt == (FVIRTKEY | FNOINVERT | FSHIFT));
-    CHECK(CopyAcceleratorTable(htitle, rg, 2) == 2 && rg[0].cmd == IDM_TITLE_NEW_GAME);
+    CHECK(CopyAcceleratorTableA(htitle, rg, 2) == 2 && rg[0].cmd == IDM_TITLE_NEW_GAME);
     wc.lpfnWndProc = ResourceProc; wc.hInstance = hinst; wc.lpszClassName = "ResourceContract"; wc.lpszMenuName = "StarsMenu";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Resources", WS_OVERLAPPEDWINDOW, 10, 10, 300, 180, NULL, NULL, hinst, NULL);
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Resources", WS_OVERLAPPEDWINDOW, 10, 10, 300, 180, NULL, NULL, hinst, NULL);
     CHECK(hwnd && GetMenu(hwnd) && GetMenuItemCount(GetMenu(hwnd)) == 6);
-    hwndExplicit = CreateWindow(wc.lpszClassName, "Explicit", WS_OVERLAPPEDWINDOW, 10, 10, 300, 180, NULL, hsecond, hinst, NULL);
+    hwndExplicit = CreateWindowExA(0, wc.lpszClassName, "Explicit", WS_OVERLAPPEDWINDOW, 10, 10, 300, 180, NULL, hsecond, hinst, NULL);
     CHECK(hwndExplicit && GetMenu(hwndExplicit) == hsecond);
-    hwndChild = CreateWindow(wc.lpszClassName, "Child", WS_CHILD, 0, 0, 20, 20, hwnd, (HMENU)(UINT_PTR)42, hinst, NULL);
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "Child", WS_CHILD, 0, 0, 20, 20, hwnd, (HMENU)(UINT_PTR)42, hinst, NULL);
     CHECK(hwndChild && GetDlgCtrlID(hwndChild) == 42);
-    CHECK(CopyAcceleratorTable(hmain, rg, 32) == 18);
+    CHECK(CopyAcceleratorTableA(hmain, rg, 32) == 18);
     for (i = 0; i < 18; i++) CHECK(TestTranslate(hwnd, hmain, rg[i].fVirt & (FSHIFT | FCONTROL | FALT), WM_KEYDOWN, rg[i].key, rg[i].cmd) == 0);
-    CHECK(CopyAcceleratorTable(htitle, rg, 32) == 4);
+    CHECK(CopyAcceleratorTableA(htitle, rg, 32) == 4);
     for (i = 0; i < 4; i++) CHECK(TestTranslate(hwnd, htitle, FALT, WM_SYSKEYDOWN, rg[i].key, rg[i].cmd) == 0);
     CHECK(TestTranslate(hwnd, hmain, FCONTROL, WM_KEYDOWN, 'A', IDM_TURN_SAVE_SUBMIT) == 0);
     CHECK(TestTranslate(hwnd, hmain, 0, WM_KEYDOWN, 'A', 0) == 0);
@@ -136,31 +136,31 @@ int main(void) {
     CHECK(TestTranslate(hwnd, hmain, FCONTROL, WM_KEYDOWN, VK_F12, IDM_DEBUG_GEN_100_TURNS) == 0);
     CHECK(TestTranslate(hwnd, hmain, FSHIFT, WM_KEYDOWN, VK_F12, IDM_DEBUG_GEN_1000_TURNS) == 0);
     CHECK(TestTranslate(hwnd, htitle, FALT, WM_SYSKEYDOWN, 'N', IDM_TITLE_NEW_GAME) == 0);
-    hcustom = CreateAcceleratorTable(&custom, 1); custom.cmd = 502;
-    CHECK(hcustom && CopyAcceleratorTable(hcustom, rg, 1) == 1 && rg[0].cmd == 501);
+    hcustom = CreateAcceleratorTableA(&custom, 1); custom.cmd = 502;
+    CHECK(hcustom && CopyAcceleratorTableA(hcustom, rg, 1) == 1 && rg[0].cmd == 501);
     CHECK(TestTranslate(hwnd, hcustom, 0, WM_CHAR, 'q', 501) == 0);
     CHECK(TestTranslate(hwnd, hcustom, 0, WM_KEYDOWN, 'q', 0) == 0);
     CHECK(SetKeyboardState(rgkey));
     msg.hwnd = hwnd; msg.message = WM_KEYDOWN; msg.wParam = VK_F1;
-    hmenuaccel = CreateAcceleratorTable(&menuaccel, 1);
+    hmenuaccel = CreateAcceleratorTableA(&menuaccel, 1);
     CHECK(hmenuaccel);
     cInit = cPopup = 0; cBefore = cCommand;
     CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg));
     CHECK(cCommand == cBefore + 1 && cInit == 1 && cPopup == 1);
-    fDisableInit = TRUE; cBefore = cCommand;
+    fDisableInit = 1; cBefore = cCommand;
     CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
-    fDisableInit = FALSE;
+    fDisableInit = 0;
     EnableMenuItem(GetMenu(hwnd), IDM_HELP_CONTENTS2, MF_BYCOMMAND | MF_ENABLED);
-    EnableWindow(hwnd, FALSE);
+    EnableWindow(hwnd, 0);
     CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
-    EnableWindow(hwnd, TRUE);
+    EnableWindow(hwnd, 1);
     SetCapture(hwnd);
     CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && cCommand == cBefore);
     CHECK(ReleaseCapture());
     ShowWindow(hwnd, SW_SHOWMINIMIZED);
 #ifndef _WIN32
     // The dummy SDL driver has no native minimization; exercise logical state.
-    if (!IsIconic(hwnd)) CompatWindowState(hwnd, SW_SHOWMINIMIZED, FALSE);
+    if (!IsIconic(hwnd)) CompatWindowState(hwnd, SW_SHOWMINIMIZED, 0);
 #endif
     CHECK(IsIconic(hwnd));
     cInit = cPopup = 0;
@@ -169,9 +169,9 @@ int main(void) {
     CHECK(TestTranslate(hwnd, hmain, 0, WM_KEYDOWN, VK_F12, IDM_DEBUG_GEN_10_TURNS) == 0);
     ShowWindow(hwnd, SW_RESTORE);
 #ifndef _WIN32
-    if (IsIconic(hwnd)) CompatWindowState(hwnd, SW_SHOWNORMAL, FALSE);
+    if (IsIconic(hwnd)) CompatWindowState(hwnd, SW_SHOWNORMAL, 0);
 #endif
-    fDestroyInit = TRUE;
+    fDestroyInit = 1;
     CHECK(TranslateAcceleratorA(hwnd, hmenuaccel, &msg) && !IsWindow(hwnd));
     CHECK(DestroyWindow(hwndExplicit));
     CHECK(!IsMenu(hsecond));

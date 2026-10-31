@@ -3,7 +3,7 @@
 #include "win.h"
 
 struct CONTROLIO {
-    decltype(&win32::GetWindowText)      pfnGetWindowText = win32::GetWindowText;
+    decltype(&win32::GetWindowTextA)      pfnGetWindowText = win32::GetWindowTextA;
     decltype(&PopupMenu)          pfnPopupMenu = PopupMenu;
     decltype(&win32::GetDlgItem)         pfnGetDlgItem = win32::GetDlgItem;
     decltype(&ui::SendMessage)     pfnSendMessage = ui::SendMessage;

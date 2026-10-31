@@ -18,8 +18,8 @@ typedef struct {
 
 static int16_t FCheckNativeEntry(void *lpv, const char *pszEntry) {
     NATIVEENTRYCHECK *lpnec = (NATIVEENTRYCHECK *)lpv;
-    if (!strcmp(pszEntry, lpnec->pszExpected)) lpnec->fFound = TRUE;
-    return TRUE;
+    if (!strcmp(pszEntry, lpnec->pszExpected)) lpnec->fFound = 1;
+    return 1;
 }
 
 static void TestNativeFiles(void) {
@@ -41,11 +41,11 @@ static void TestNativeFiles(void) {
     CloseFile(hfFile);
     TEST_CHECK(FFileExists(szFile) && !FFileReadOnly(szFile));
     TEST_CHECK(FNativeFileSize(szFile, &cbNativeFile) && cbNativeFile == 6);
-    nec.pszExpected = "\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin"; nec.fFound = FALSE;
+    nec.pszExpected = "\xe6\x9d\xb1\xe4\xba\xac-\xc3\xa9.bin"; nec.fFound = 0;
     TEST_CHECK(FNativeEnumerateDirectory(szDir, FCheckNativeEntry, &nec) && nec.fFound);
     TEST_CHECK(RenameNativeFile(szFile, szOther) == 0 && !FFileExists(szFile) && FFileExists(szOther));
     TEST_CHECK(FNativeFileSize(szOther, &cbNativeFile) && cbNativeFile == 6);
-    nec.pszExpected = "\xf0\x9f\x98\x80.bin"; nec.fFound = FALSE;
+    nec.pszExpected = "\xf0\x9f\x98\x80.bin"; nec.fFound = 0;
     TEST_CHECK(FNativeEnumerateDirectory(szDir, FCheckNativeEntry, &nec) && nec.fFound);
     snprintf(szMeta, sizeof(szMeta), "%s%s\xe6\x9d\xb1\xe4\xba\xac.meta", szDir, szDirSep);
     snprintf(szMetaTemp, sizeof(szMetaTemp), "%s%s\xce\xa9.tmp", szDir, szDirSep);

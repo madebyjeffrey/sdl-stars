@@ -58,18 +58,18 @@ int main(void) {
     SetRect(&rcVirt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN), 0, 0);
     rcVirt.right = rcVirt.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
     rcVirt.bottom = rcVirt.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-    CHECK(SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0));
+    CHECK(SystemParametersInfoA(SPI_GETWORKAREA, 0, &rc, 0));
     CHECK(rc.left >= rcVirt.left && rc.top >= rcVirt.top && rc.right <= rcVirt.right && rc.bottom <= rcVirt.bottom);
     CHECK(rc.right > rc.left && rc.bottom > rc.top);
-    CHECK(SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &cLines, 0));
+    CHECK(SystemParametersInfoA(SPI_GETWHEELSCROLLLINES, 0, &cLines, 0));
     CHECK(cLines <= INT_MAX || cLines == WHEEL_PAGESCROLL);
     CHECK(GetSystemMetrics(SM_CXFRAME) > 0 && GetSystemMetrics(SM_CYCAPTION) > 0);
     CHECK(GetSystemMetrics(-1) == 0);
     wc.lpfnWndProc = WndProc; wc.lpszClassName = "CompatDesktop";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Desktop", WS_POPUP, 70, 80, 400, 300, NULL, NULL, NULL, NULL);
-    hwndA = CreateWindow(wc.lpszClassName, "A", WS_CHILD, -10, 20, 50, 60, hwnd, NULL, NULL, NULL);
-    hwndB = CreateWindow(wc.lpszClassName, "B", WS_CHILD, 30, -15, 50, 60, hwnd, NULL, NULL, NULL);
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Desktop", WS_POPUP, 70, 80, 400, 300, NULL, NULL, NULL, NULL);
+    hwndA = CreateWindowExA(0, wc.lpszClassName, "A", WS_CHILD, -10, 20, 50, 60, hwnd, NULL, NULL, NULL);
+    hwndB = CreateWindowExA(0, wc.lpszClassName, "B", WS_CHILD, 30, -15, 50, 60, hwnd, NULL, NULL, NULL);
     CHECK(hwnd && hwndA && hwndB);
     CHECK(GetWindowThreadProcessId(hwndA, &dwProcess) == GetCurrentThreadId());
 #ifdef _WIN32
@@ -103,17 +103,17 @@ int main(void) {
         memcpy(rgBefore, rgOverflow, sizeof(rgBefore)); SetLastError(0);
         CHECK(MapWindowPoints(hwndB, NULL, rgOverflow, 2) == 0 && GetLastError() == ERROR_ARITHMETIC_OVERFLOW);
         CHECK(memcmp(rgOverflow, rgBefore, sizeof(rgBefore)) == 0);
-        SetLastError(0); CHECK(!SystemParametersInfo(SPI_GETWORKAREA, 0, NULL, 0) && GetLastError() == ERROR_INVALID_PARAMETER);
-        fFake = TRUE;
+        SetLastError(0); CHECK(!SystemParametersInfoA(SPI_GETWORKAREA, 0, NULL, 0) && GetLastError() == ERROR_INVALID_PARAMETER);
+        fFake = 1;
         CHECK(GetSystemMetrics(SM_CXSCREEN) == 800 && GetSystemMetrics(SM_CYSCREEN) == 600);
         CHECK(GetSystemMetrics(SM_CMONITORS) == 2);
         CHECK(GetSystemMetrics(SM_XVIRTUALSCREEN) == -640 && GetSystemMetrics(SM_YVIRTUALSCREEN) == -80);
         CHECK(GetSystemMetrics(SM_CXVIRTUALSCREEN) == 1440 && GetSystemMetrics(SM_CYVIRTUALSCREEN) == 680);
-        CHECK(SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0) && rc.top == 20 && rc.bottom == 580);
-        fFailDisplay = TRUE; CHECK(GetSystemMetrics(SM_CXSCREEN) == 0 && GetSystemMetrics(SM_CXVIRTUALSCREEN) == 0);
-        SetRect(&rc, 1, 2, 3, 4); CHECK(!SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0));
+        CHECK(SystemParametersInfoA(SPI_GETWORKAREA, 0, &rc, 0) && rc.top == 20 && rc.bottom == 580);
+        fFailDisplay = 1; CHECK(GetSystemMetrics(SM_CXSCREEN) == 0 && GetSystemMetrics(SM_CXVIRTUALSCREEN) == 0);
+        SetRect(&rc, 1, 2, 3, 4); CHECK(!SystemParametersInfoA(SPI_GETWORKAREA, 0, &rc, 0));
         CHECK(rc.left == 1 && rc.top == 2 && rc.right == 3 && rc.bottom == 4);
-        fFake = fFailDisplay = FALSE;
+        fFake = fFailDisplay = 0;
     }
 #endif
     CHECK(DestroyWindow(hwnd));

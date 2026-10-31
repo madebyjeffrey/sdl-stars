@@ -6,7 +6,7 @@
 #include "part_query_io.h"
 #include "race_query_io.h"
 
-LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     PAINTSTRUCT ps;
     RECT        rc;
@@ -22,33 +22,33 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     std::byte   rgbThing[cbWireLogThing];
 
     switch (message) {
-    case WM_CREATE:
-        hwndMineCB = ui::CreateWindowEx(0, szButton, TextIO().pfnCompressed(idsDetonateMineFieldYear), BS_AUTOCHECKBOX | WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
+    case win32::WM_CREATE:
+        hwndMineCB = ui::CreateWindowEx(0, szButton, TextIO().pfnCompressed(idsDetonateMineFieldYear), win32::BS_AUTOCHECKBOX | win32::WS_CHILD, 100, 100, 150, dyArial8, hwnd, NULL,
                                   hInst, NULL);
-        ControlIO().pfnSendMessage(hwndMineCB, WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
+        ControlIO().pfnSendMessage(hwndMineCB, win32::WM_SETFONT, (WPARAM)rghfontArial8[1], 0);
         SetMineralTitleBar(hwnd);
         break;
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONDBLCLK:
-    case WM_RBUTTONDOWN:
+    case win32::WM_LBUTTONDOWN:
+    case win32::WM_LBUTTONDBLCLK:
+    case win32::WM_RBUTTONDOWN:
         if (hwndPopup)
             break;
         MineClick(LOWORD(lParam), HIWORD(lParam), message, wParam);
         break;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         win32::SetBkColor((HDC)wParam, crButtonFace);
         return (LRESULT)hbrButtonFace;
-    case WM_SETCURSOR:
+    case win32::WM_SETCURSOR:
         GetCursorPos16(&pt);
         ScreenToClient16(hwnd, &pt);
         ControlIO().pfnGetClientRect(hwnd, &rc);
@@ -59,7 +59,7 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             goto Default;
         win32::SetCursor(ht == htMineScanSel ? hcurHand : hcurArrowHelp);
         return 1;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::SetRect(&rc2, 4, 4, rc.right - 4, dyArial8 * 2 - 4);
@@ -82,10 +82,10 @@ LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         DrawMineSurvey(hdc, &rc);
         win32::EndPaint(hwnd, &ps);
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if ((HWND)lParam != hwndMineCB || HIWORD(wParam) != 0)
             break;
-        fDetonate = LOWORD(ControlIO().pfnSendMessage(hwndMineCB, BM_GETCHECK, 0, 0));
+        fDetonate = LOWORD(ControlIO().pfnSendMessage(hwndMineCB, win32::BM_GETCHECK, 0, 0));
         rtlt.idFull = lpThings[sel.scan.ith].idFull();
         rtlt.fDetonate = fDetonate;
         FEncodeLogThing(rtlt, rgbThing);
@@ -127,12 +127,12 @@ void InvalidateMineralBars() {
     rcPop.bottom = rcPop.top + dyArial8;
     rcPop.right = rc.right;
     rcPop.left = rc.right - dxPop;
-    ControlIO().pfnInvalidateRect(hwndMine, &rcPop, TRUE);
+    ControlIO().pfnInvalidateRect(hwndMine, &rcPop, 1);
     dyRow = (int16_t)(rc.bottom - rc.top - dyArial8 * 4 - 2) / 6;
     dyRow = (dyRow + 1) & 0xfffe;
     rc.top += (5 * dyArial8 >> 1) + 3 * dyRow + 1;
     rc.bottom = 3 * dyRow + rc.top;
-    ControlIO().pfnInvalidateRect(hwndMine, &rc, FALSE);
+    ControlIO().pfnInvalidateRect(hwndMine, &rc, 0);
     return;
 }
 
@@ -208,7 +208,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
     hdcMem = win32::CreateCompatibleDC(hdc);
     crBack = win32::SetBkColor(hdc, crButtonFace);
     crFore = win32::SetTextColor(hdc, 0xffff);
-    bkMode = win32::SetBkMode(hdc, OPAQUE);
+    bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
     grobj = sel.scan.grobj;
     if (grobj == grobjOther) {
         if (sel.scan.grobjFull & grobjPlanet) {
@@ -230,25 +230,25 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         xLeft = prc->left + 6;
         yTop = prc->top + 6;
         hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
-        win32::PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
-        win32::PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 16, yTop + 68, 2, 38, PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop, 70, 2, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop + 2, 2, 68, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 16, yTop + 68, 2, 38, win32::PATCOPY);
         hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
-        win32::PatBlt(hdc, xLeft + 2, yTop + 68, 15, 1, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 1, yTop + 69, 15, 1, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 52, yTop + 68, 18, 2, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 17, yTop + 104, 37, 2, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 16, yTop + 105, 1, 1, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 52, yTop + 70, 2, 34, PATCOPY);
-        win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, BLACKNESS);
-        win32::PatBlt(hdc, xLeft + 18, yTop + 68, 34, 36, BLACKNESS);
+        win32::PatBlt(hdc, xLeft + 2, yTop + 68, 15, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 1, yTop + 69, 15, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 52, yTop + 68, 18, 2, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 17, yTop + 104, 37, 2, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 16, yTop + 105, 1, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 52, yTop + 70, 2, 34, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, win32::BLACKNESS);
+        win32::PatBlt(hdc, xLeft + 18, yTop + 68, 34, 36, win32::BLACKNESS);
         win32::SelectObject(hdc, hbrSav);
         lpfl = rglpfl[sel.scan.ifl];
-        DrawFleetBitmap(lpfl, hdc, xLeft + 2, yTop + 2, FALSE, -1, 0, FALSE, -1, 0);
+        DrawFleetBitmap(lpfl, hdc, xLeft + 2, yTop + 2, 0, -1, 0, 0, -1, 0);
         iOffset = rgplr[lpfl->iplr()].iPlrBmp;
-        win32::SelectPalette(hdc, vhpal, FALSE);
+        win32::SelectPalette(hdc, vhpal, 0);
         win32::RealizePalette(hdc);
         DibBlt(hdc, xLeft + 19, yTop + 71, 32, 32, hdibRaces, (iOffset & 7) * 0x20, (3 - (iOffset >> 3)) * 0x20, 32, 32, 13369376);
         win32::SetTextColor(hdc, crButtonText);
@@ -259,8 +259,8 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             cShip += lpfl->rgcsh[i];
         }
         TextIO().pfnCchGetString(idsShipCountLd, szT);
-        c = win32::wsprintf(szWork, szT, cShip);
-        win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, cShip);
+        win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpfl->det == detAll || lpfl->det == detMore) {
             cMass = WtFromLpfl(lpfl);
@@ -273,9 +273,9 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             win32::SetRect(&rcGauge, prc->left + 90 + LOWORD(l), yTop, prc->right - 4, yTop + dyArial8);
             if (rcGauge.left < rcGauge.right) {
-                win32::TextOut(hdc, prc->left + 86, yTop, szT, c);
+                win32::TextOutA(hdc, prc->left + 86, yTop, szT, c);
                 yTop += dyArial8 + 2;
-                win32::TextOut(hdc, prc->left + 86, yTop, szWork, c2);
+                win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c2);
                 DrawFleetGauge(hdc, &rcGauge, lpfl, 4);
                 OffsetRc(&rcGauge, 0, dyArial8 + 4);
                 DrawFleetGauge(hdc, &rcGauge, lpfl, 5);
@@ -285,8 +285,8 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             cMass = lpfl->wtFleet();
         }
         c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsFleetMassLdkt : idsMassLdkt, szT);
-        c = win32::wsprintf(szWork, szT, cMass);
-        win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, cMass);
+        win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpfl->det == detAll) {
             lpord = lpfl->lpplord->rgord();
@@ -295,34 +295,34 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWaypointS : idsWpS, szWP);
             if (lpfl->cord == 1) {
-                c = win32::wsprintf(szT, szWP, TextIO().pfnCompressed(idsNone));
+                c = win32::wsprintfA(szT, szWP, TextIO().pfnCompressed(idsNone));
             } else {
-                c = win32::wsprintf(szT, szWP, PszGetLocName(static_cast<GrobjClass>(lpord->grobj), lpord->id, lpord->pt.x, lpord->pt.y));
+                c = win32::wsprintfA(szT, szWP, PszGetLocName(static_cast<GrobjClass>(lpord->grobj), lpord->id, lpord->pt.x, lpord->pt.y));
             }
-            win32::TextOut(hdc, prc->left + 86, yTop, szT, c);
+            win32::TextOutA(hdc, prc->left + 86, yTop, szT, c);
             yTop += dyArial8 + 2;
             TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWaypointTaskS : idsTaskS, szT);
-            c = win32::wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(idsTaskHere + lpord->grTask)));
-            win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+            c = win32::wsprintfA(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(idsTaskHere + lpord->grTask)));
+            win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             if (lpfl->cord > 1) {
                 if (lpord->iWarp == 11) {
                     c = TextIO().pfnCchGetString(idsUseStargate, szWork);
                 } else {
                     TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
-                    c = win32::wsprintf(szWork, szT, lpord->iWarp);
+                    c = win32::wsprintfA(szWork, szT, lpord->iWarp);
                 }
             } else {
                 c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
             }
-            win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+            win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             l = CMineSweepFromLpfl(lpfl);
             if (l <= 0)
                 goto FinishUp;
             pszT = TextIO().pfnCompressed(idsFleetCanDestroyLdMinesPerYear);
-            c = win32::wsprintf(szWork, pszT, l);
-            win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+            c = win32::wsprintfA(szWork, pszT, l);
+            win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
             yTop += dyArial8 + 2;
             goto FinishUp;
         }
@@ -330,11 +330,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             goto FinishUp;
         if (lpfl->iwarpFlt() != 0) {
             TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedD : idsWarpD, szT);
-            c = win32::wsprintf(szWork, szT, lpfl->iwarpFlt());
+            c = win32::wsprintfA(szWork, szT, lpfl->iwarpFlt());
         } else {
             c = TextIO().pfnCchGetString(!gd.fSmallTileMode ? idsWarpSpeedStopped : idsWarpStopped, szWork);
         }
-        win32::TextOut(hdc, prc->left + 86, yTop, szWork, c);
+        win32::TextOutA(hdc, prc->left + 86, yTop, szWork, c);
         yTop += dyArial8 + 2;
         goto FinishUp;
     } else if (grobj == grobjThing) {
@@ -345,8 +345,8 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         xLeft = prc->left + 6;
         yTop = prc->top + 6;
         hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
-        win32::PatBlt(hdc, xLeft, yTop, 70, 2, PATCOPY);
-        win32::PatBlt(hdc, xLeft, yTop + 2, 2, 68, PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop, 70, 2, win32::PATCOPY);
+        win32::PatBlt(hdc, xLeft, yTop + 2, 2, 68, win32::PATCOPY);
         switch (lpth->ith()) {
         case ithMinefield:
             ibmp = lpth->thm().iType();
@@ -360,29 +360,29 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         default:
             ibmp = 5;
         }
-        win32::SelectPalette(hdc, vhpal, FALSE);
+        win32::SelectPalette(hdc, vhpal, 0);
         win32::RealizePalette(hdc);
         if (lpth->ith() != ithWormhole && lpth->ith() != ithMysteryTrader) {
-            win32::PatBlt(hdc, xLeft + 16, yTop + 68, 2, 38, PATCOPY);
+            win32::PatBlt(hdc, xLeft + 16, yTop + 68, 2, 38, win32::PATCOPY);
             win32::SelectObject(hdc, hbrButtonHilite);
-            win32::PatBlt(hdc, xLeft + 2, yTop + 68, 15, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 1, yTop + 69, 15, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 52, yTop + 68, 18, 2, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 17, yTop + 104, 37, 2, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 16, yTop + 105, 1, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 52, yTop + 70, 2, 34, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, BLACKNESS);
-            win32::PatBlt(hdc, xLeft + 18, yTop + 68, 34, 36, BLACKNESS);
+            win32::PatBlt(hdc, xLeft + 2, yTop + 68, 15, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 1, yTop + 69, 15, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 52, yTop + 68, 18, 2, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 17, yTop + 104, 37, 2, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 16, yTop + 105, 1, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 52, yTop + 70, 2, 34, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, win32::BLACKNESS);
+            win32::PatBlt(hdc, xLeft + 18, yTop + 68, 34, 36, win32::BLACKNESS);
             DibBlt(hdc, xLeft + 19, yTop + 71, 32, 32, hdibRaces, (iplrbmp & 7) * 0x20, (3 - (iplrbmp >> 3)) * 0x20, 32, 32, 13369376);
         } else {
             win32::SelectObject(hdc, hbrButtonHilite);
-            win32::PatBlt(hdc, xLeft + 2, yTop + 68, 68, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 1, yTop + 69, 69, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, PATCOPY);
-            win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, BLACKNESS);
+            win32::PatBlt(hdc, xLeft + 2, yTop + 68, 68, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 1, yTop + 69, 69, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 68, yTop + 2, 2, 66, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 69, yTop + 1, 1, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xLeft + 2, yTop + 2, 66, 66, win32::BLACKNESS);
         }
         win32::SelectObject(hdc, hbrSav);
         DibBlt(hdc, xLeft + 2, yTop + 2, 64, 64, hdibThings, ibmp * 64, 0, 64, 64, 13369376);
@@ -393,21 +393,21 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             win32::SelectObject(hdc, rghfontArial8[1]);
             if (lpth->thp().iWarp() != 0) {
                 TextIO().pfnCchGetString(idsTravelingWarpD, szT);
-                c = win32::wsprintf(szWork, szT, lpth->thp().iWarp() + 4);
-                win32::TextOut(hdc, xLeft, yTop, szWork, c);
+                c = win32::wsprintfA(szWork, szT, lpth->thp().iWarp() + 4);
+                win32::TextOutA(hdc, xLeft, yTop, szWork, c);
                 yTop += dyArial8 + 2;
                 TextIO().pfnCchGetString(idsDestination, szT);
                 psz = TextIO().pfnPlanetName(lpth->thp().idPlanet());
                 strcat(szT, psz);
-                win32::TextOut(hdc, xLeft, yTop, szT, strlen(szT));
+                win32::TextOutA(hdc, xLeft, yTop, szT, strlen(szT));
             }
             yTop += (int16_t)(3 * dyArial8) / 2;
             xLeft += LOWORD(GetTextExtent(hdc, rgszMinerals[2], strlen(rgszMinerals[2])));
             for (i = 0; i < 3; i++) {
-                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsS2), rgszMinerals[i]);
+                c = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsS2), rgszMinerals[i]);
                 RightTextOut(hdc, xLeft, yTop, szWork, c, 0);
-                c = win32::wsprintf(szWork, PCTDKT, lpth->thp().rgwtMin(i));
-                win32::TextOut(hdc, xLeft, yTop, szWork, c);
+                c = win32::wsprintfA(szWork, PCTDKT, lpth->thp().rgwtMin(i));
+                win32::TextOutA(hdc, xLeft, yTop, szWork, c);
                 yTop += dyArial8 + 2;
             }
             goto FinishUp;
@@ -420,22 +420,22 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             xLeft += LOWORD(GetTextExtent(hdc, szT, cch)) + 20;
             RightTextOut(hdc, xLeft - 4, yTop, szT, cch, 0);
             cch = TextIO().pfnCchGetString(idsDD5, szT);
-            c = win32::wsprintf(szWork, szT, lpth->pt().x(), lpth->pt().y());
-            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            c = win32::wsprintfA(szWork, szT, lpth->pt().x(), lpth->pt().y());
+            win32::TextOutA(hdc, xLeft, yTop, szWork, c);
             yTop += (int16_t)(3 * dyArial8) / 2;
             c = TextIO().pfnCchGetString(idsDestination2, szWork);
             RightTextOut(hdc, xLeft - 4, yTop, szWork, c, 0);
             if ((1 << idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(lpth->thw().idPartner())) != 0) {
-                c = win32::wsprintf(szWork, szT, lpthDest->pt().x(), lpthDest->pt().y());
+                c = win32::wsprintfA(szWork, szT, lpthDest->pt().x(), lpthDest->pt().y());
             } else {
                 c = TextIO().pfnCchGetString(idsUnknown2, szWork);
             }
-            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOutA(hdc, xLeft, yTop, szWork, c);
             yTop += (int16_t)(3 * dyArial8) / 2;
             c = TextIO().pfnCchGetString(idsStability, szWork);
             RightTextOut(hdc, xLeft - 4, yTop, szWork, c, 0);
             c = TextIO().pfnCchGetString(static_cast<StringId>(idsRockSolid + PctWormholeMoves(lpth)), szWork);
-            win32::TextOut(hdc, xLeft, yTop, szWork, c);
+            win32::TextOutA(hdc, xLeft, yTop, szWork, c);
             goto FinishUp;
         } else if (lpth->ith() == ithMysteryTrader) {
             xLeft += 80;
@@ -445,10 +445,10 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             win32::SetRect(&rc, xLeft, yTop, prc->right - 8, prc->bottom - 8);
             if (!(1 << idPlayer & lpth->tht().grbitPlr())) {
                 psz = TextIO().pfnCompressed(idsTraderRequestsInterestedPartiesSendFleetLeast);
-                yTop += win32::DrawText(hdc, psz, strlen(psz), &rc, DT_WORDBREAK | DT_NOPREFIX) + 8;
+                yTop += win32::DrawTextA(hdc, psz, strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX) + 8;
             }
-            cch = win32::wsprintf(szWork, TextIO().pfnCompressed(idsTraderTravelingWarpD), lpth->tht().iWarp());
-            win32::TextOut(hdc, xLeft, yTop, szWork, cch);
+            cch = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsTraderTravelingWarpD), lpth->tht().iWarp());
+            win32::TextOutA(hdc, xLeft, yTop, szWork, cch);
             goto FinishUp;
         }
         if (lpth->ith() != ithMinefield)
@@ -458,16 +458,16 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
         win32::SetBkColor(hdc, crButtonFace);
         win32::SelectObject(hdc, rghfontArial8[1]);
         TextIO().pfnCchGetString(idsLocationDD, szT);
-        c = win32::wsprintf(szWork, szT, lpth->pt().x(), lpth->pt().y());
-        win32::TextOut(hdc, xLeft, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, lpth->pt().x(), lpth->pt().y());
+        win32::TextOutA(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         TextIO().pfnCchGetString(idsFieldTypeS, szT);
-        c = win32::wsprintf(szWork, szT, rgszMineField[lpth->thm().iType()]);
-        win32::TextOut(hdc, xLeft, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, rgszMineField[lpth->thm().iType()]);
+        win32::TextOutA(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         TextIO().pfnCchGetString(idsFieldRadiusDLYLdMines, szT);
-        c = win32::wsprintf(szWork, szT, LOWORD((int32_t)sqrt((double)lpth->thm().cMines())), lpth->thm().cMines());
-        win32::TextOut(hdc, xLeft, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, LOWORD((int32_t)sqrt((double)lpth->thm().cMines())), lpth->thm().cMines());
+        win32::TextOutA(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         pctDecay = (int16_t)(((RaceQueryIO().pfnStat(&rgplr[lpth->iplr()], rsMajorAdv) != raMines) * 3 + 1) * CPlanetsInCircle(lpth->pt(), lpth->thm().cMines()) + 2);
         if (pctDecay > 50) {
@@ -484,20 +484,20 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             lDecay = 10 <= lDecay ? lDecay : 10;
         }
         TextIO().pfnCchGetString(idsDecayRateLdYear, szT);
-        c = win32::wsprintf(szWork, szT, lDecay);
-        win32::TextOut(hdc, xLeft, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, lDecay);
+        win32::TextOutA(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         if (lpth->iplr() != idPlayer)
             goto FinishUp;
         GetMineFieldCounts(lpth->idFull(), &i, &c2);
         TextIO().pfnCchGetString(idsFieldDD, szT);
-        c = win32::wsprintf(szWork, szT, i, c2);
-        win32::TextOut(hdc, xLeft, yTop, szWork, c);
+        c = win32::wsprintfA(szWork, szT, i, c2);
+        win32::TextOutA(hdc, xLeft, yTop, szWork, c);
         yTop += dyArial8 + 2;
         goto FinishUp;
     } else {
         if (sel.scan.idpl != idplNone && PlanetQueryIO().pfnLookup(sel.scan.idpl, &pl)) {
-            fShortLabels = FALSE;
+            fShortLabels = 0;
             plrSav = rgplr[idPlayer];
             rc = *prc;
             if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raTerra && pl.iPlayer != iplrNone &&
@@ -513,7 +513,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             win32::SelectObject(hdc, rghfontArial8[1]);
             dxLabels = LOWORD(GetTextExtent(hdc, rgszPlanetAttr[1], strlen(rgszPlanetAttr[1]))) + 6;
             if (dxLabels * 4 > rc.right) {
-                fShortLabels = TRUE;
+                fShortLabels = 1;
                 dxLabels = LOWORD(GetTextExtent(hdc, rgszPlanetAttr[1], 4)) + 6;
             }
             xL = rc.left + dxLabels;
@@ -526,10 +526,10 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpMono);
                 crTextSav = win32::SetTextColor(hdc, 0);
                 crBkSav = win32::SetBkColor(hdc, 0xffffff);
-                win32::BitBlt(hdc, rc.right - 22, yCur + 2, 13, 16, hdcMem, 0, 12, SRCAND);
+                win32::BitBlt(hdc, rc.right - 22, yCur + 2, 13, 16, hdcMem, 0, 12, win32::SRCAND);
                 win32::SetTextColor(hdc, 0xffff);
                 win32::SetBkColor(hdc, 0);
-                win32::BitBlt(hdc, rc.right - 22, yCur + 2, 13, 16, hdcMem, 0, 12, SRCPAINT);
+                win32::BitBlt(hdc, rc.right - 22, yCur + 2, 13, 16, hdcMem, 0, 12, win32::SRCPAINT);
                 win32::SetTextColor(hdc, crTextSav);
                 win32::SetBkColor(hdc, crBkSav);
                 win32::SelectObject(hdcMem, hbmpSav);
@@ -539,11 +539,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 c = TextIO().pfnCchGetString(static_cast<StringId>(idsVal + (fShortLabels == 0)), szWork);
                 dx = LOWORD(GetTextExtent(hdc, szWork, c));
                 win32::SetTextColor(hdc, crButtonText);
-                win32::TextOut(hdc, xL, yCur, szWork, c);
+                win32::TextOutA(hdc, xL, yCur, szWork, c);
                 dNum = PlanetQueryIO().pfnDesirability(&pl, idPlayer);
-                c = win32::wsprintf(szWork, PCTDPCTPCT, dNum);
+                c = win32::wsprintfA(szWork, PCTDPCTPCT, dNum);
                 win32::SetTextColor(hdc, dNum >= 0 ? 32512 : 0xff);
-                win32::TextOut(hdc, xL + dx, yCur, szWork, c);
+                win32::TextOutA(hdc, xL + dx, yCur, szWork, c);
                 if (!fShortLabels) {
                     dx += LOWORD(GetTextExtent(hdc, szWork, c));
                     dBest = PctPlanetOptValue(&pl, idPlayer);
@@ -551,8 +551,8 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                         if (dBest > 0) {
                             win32::SetTextColor(hdc, dBest > 10 ? 32512 : 32639);
                         }
-                        c = win32::wsprintf(szWork, " (%d%%)", dBest);
-                        win32::TextOut(hdc, xL + dx, yCur, szWork, c);
+                        c = win32::wsprintfA(szWork, " (%d%%)", dBest);
+                        win32::TextOutA(hdc, xL + dx, yCur, szWork, c);
                     }
                 }
             }
@@ -573,23 +573,23 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                     strcpy(szWork, szT);
                     c = strlen(szT);
                     if (l > 0) {
-                        c += win32::wsprintf(&szWork[c], TextIO().pfnCompressed(idsCLd00), 177, l);
+                        c += win32::wsprintfA(&szWork[c], TextIO().pfnCompressed(idsCLd00), 177, l);
                     } else {
                         c += TextIO().pfnCchGetString(idsMsg1264, &szWork[c]);
                     }
                     RightTextOut(hdc, xR, yCur, szWork, c, 0);
                 }
                 win32::SetTextColor(hdc, 0xff);
-                RightTextOut(hdc, xR, yCur + dyArial8 - 2, TextIO().pfnPlayerName(pl.iPlayer, FALSE, TRUE, FALSE, 0, NULL), 0, 0);
+                RightTextOut(hdc, xR, yCur + dyArial8 - 2, TextIO().pfnPlayerName(pl.iPlayer, 0, 1, 0, 0, NULL), 0, 0);
             }
             yCur += dyArial8 - 2;
             dNum = game.turn - pl.turn;
             if (dNum == 0) {
-                c = win32::wsprintf(szWork, TextIO().pfnCompressed(!fShortLabels ? idsReportCurrent : idsCurrent));
+                c = win32::wsprintfA(szWork, TextIO().pfnCompressed(!fShortLabels ? idsReportCurrent : idsCurrent));
             } else if (fShortLabels) {
-                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsOld2), dNum);
+                c = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsOld2), dNum);
             } else {
-                c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsReportDYear), dNum);
+                c = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsReportDYear), dNum);
                 if (dNum > 1) {
                     strcat(szWork, "s");
                     c++;
@@ -597,20 +597,20 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 c += TextIO().pfnCchGetString(idsOld, &szWork[c]);
             }
             win32::SetTextColor(hdc, dNum > 5 ? 0xff : 0);
-            win32::TextOut(hdc, xL, yCur, szWork, c);
+            win32::TextOutA(hdc, xL, yCur, szWork, c);
             yCur += dyArial8;
             hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonShadow);
-            win32::PatBlt(hdc, xL, yCur, xR - xL, 1, PATCOPY);
-            win32::PatBlt(hdc, xL + 1, yCur + 1, xR - xL - 2, 3 * dyRow - 1, BLACKNESS);
-            win32::PatBlt(hdc, xL, yCur, 1, 3 * dyRow, PATCOPY);
-            win32::PatBlt(hdc, xL + 2, yCur + dyRow, xR - xL - 4, 1, PATCOPY);
-            win32::PatBlt(hdc, xL + 2, dyRow * 2 + yCur, xR - xL - 4, 1, PATCOPY);
+            win32::PatBlt(hdc, xL, yCur, xR - xL, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xL + 1, yCur + 1, xR - xL - 2, 3 * dyRow - 1, win32::BLACKNESS);
+            win32::PatBlt(hdc, xL, yCur, 1, 3 * dyRow, win32::PATCOPY);
+            win32::PatBlt(hdc, xL + 2, yCur + dyRow, xR - xL - 4, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xL + 2, dyRow * 2 + yCur, xR - xL - 4, 1, win32::PATCOPY);
             win32::SelectObject(hdc, hbrButtonHilite);
-            win32::PatBlt(hdc, xR - 1, yCur + 1, 1, 3 * dyRow, PATCOPY);
-            win32::PatBlt(hdc, xL, 3 * dyRow + yCur, xR - xL, 1, PATCOPY);
+            win32::PatBlt(hdc, xR - 1, yCur + 1, 1, 3 * dyRow, win32::PATCOPY);
+            win32::PatBlt(hdc, xL, 3 * dyRow + yCur, xR - xL, 1, win32::PATCOPY);
             win32::SetTextColor(hdc, crButtonText);
-            win32::SetBkMode(hdc, TRANSPARENT);
-            fCanTerraform = ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, TRUE);
+            win32::SetBkMode(hdc, win32::TRANSPARENT);
+            fCanTerraform = ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, 1);
             dx = xR - xL - 4;
             dy = (dyRow - dyArial8) >> 1;
             i = 0;
@@ -623,11 +623,11 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                     psz = PszCalcEnvVar(static_cast<EnvType>(i), iCur);
                     c = strlen(psz);
                     win32::SelectObject(hdc, rghfontArial8[0]);
-                    win32::TextOut(hdc, xR + 2, yCur + dy, psz, c);
+                    win32::TextOutA(hdc, xR + 2, yCur + dy, psz, c);
                 }
                 win32::SelectObject(hdc, rghfontArial8[1]);
                 win32::SelectObject(hdc, rghbrPlanetAttr[i][0]);
-                win32::PatBlt(hdc, xL + 2 + win32::MulDiv(iMin, dx, 100), yCur + 2, win32::MulDiv(iMax - iMin, dx, 100), dyRow - 3, PATCOPY);
+                win32::PatBlt(hdc, xL + 2 + win32::MulDiv(iMin, dx, 100), yCur + 2, win32::MulDiv(iMax - iMin, dx, 100), dyRow - 3, win32::PATCOPY);
                 if (pl.det >= detSome) {
                     win32::SelectObject(hdc, rghbrPlanetAttr[i][1]);
                     pt.x = xL + 2 + win32::MulDiv(pl.rgEnvVarOrig[i], dx, 100);
@@ -636,19 +636,19 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                     if (c < 2) {
                         c = 2;
                     }
-                    win32::PatBlt(hdc, pt.x - c, pt.y, c * 2 + 1, 1, PATCOPY);
-                    win32::PatBlt(hdc, pt.x, pt.y - c, 1, c * 2 + 1, PATCOPY);
+                    win32::PatBlt(hdc, pt.x - c, pt.y, c * 2 + 1, 1, win32::PATCOPY);
+                    win32::PatBlt(hdc, pt.x, pt.y - c, 1, c * 2 + 1, win32::PATCOPY);
                     yTop = yCur + 3;
                     yBot = yCur + dyRow - 3;
                     c = 1;
                     xBeg = xL + 2 + win32::MulDiv(iCur, dx, 100);
                     while (1) {
-                        win32::PatBlt(hdc, xBeg, yTop, 1, 1, PATCOPY);
-                        win32::PatBlt(hdc, xBeg + c - 1, yTop++, 1, 1, PATCOPY);
+                        win32::PatBlt(hdc, xBeg, yTop, 1, 1, win32::PATCOPY);
+                        win32::PatBlt(hdc, xBeg + c - 1, yTop++, 1, 1, win32::PATCOPY);
                         if (yTop > yBot)
                             break;
-                        win32::PatBlt(hdc, xBeg, yBot, 1, 1, PATCOPY);
-                        win32::PatBlt(hdc, xBeg + c - 1, yBot--, 1, 1, PATCOPY);
+                        win32::PatBlt(hdc, xBeg, yBot, 1, 1, win32::PATCOPY);
+                        win32::PatBlt(hdc, xBeg + c - 1, yBot--, 1, 1, win32::PATCOPY);
                         xBeg--;
                         c += 2;
                     }
@@ -666,7 +666,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                             dxBar = 0;
                         }
                         xEnd = xL + 2 + win32::MulDiv(iCur + dxBar, dx, 100);
-                        win32::PatBlt(hdc, xBeg, yTop, xEnd - xBeg + 1, 1, PATCOPY);
+                        win32::PatBlt(hdc, xBeg, yTop, xEnd - xBeg + 1, 1, win32::PATCOPY);
                     }
                 }
                 i++;
@@ -674,14 +674,14 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             }
             yCur += dyArial8 >> 1;
             win32::SelectObject(hdc, hbrButtonShadow);
-            win32::PatBlt(hdc, xL, yCur, xR - xL, 1, PATCOPY);
-            win32::PatBlt(hdc, xL + 1, yCur + 1, xR - xL - 2, 3 * dyRow + 1, BLACKNESS);
-            win32::PatBlt(hdc, xL, yCur, 1, 3 * dyRow + 2, PATCOPY);
+            win32::PatBlt(hdc, xL, yCur, xR - xL, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, xL + 1, yCur + 1, xR - xL - 2, 3 * dyRow + 1, win32::BLACKNESS);
+            win32::PatBlt(hdc, xL, yCur, 1, 3 * dyRow + 2, win32::PATCOPY);
             win32::SelectObject(hdc, hbrButtonHilite);
-            win32::PatBlt(hdc, xR - 1, yCur + 1, 1, 3 * dyRow + 2, PATCOPY);
-            win32::PatBlt(hdc, xL, 3 * dyRow + yCur + 2, xR - xL, 1, PATCOPY);
+            win32::PatBlt(hdc, xR - 1, yCur + 1, 1, 3 * dyRow + 2, win32::PATCOPY);
+            win32::PatBlt(hdc, xL, 3 * dyRow + yCur + 2, xR - xL, 1, win32::PATCOPY);
             win32::SelectObject(hdc, rghfontArial7[0]);
-            c = win32::wsprintf(szWork, PCTD, cMinGrafMax);
+            c = win32::wsprintfA(szWork, PCTD, cMinGrafMax);
             dxNum = LOWORD(GetTextExtent(hdc, szWork, c));
             dxBar = xR - xL - 3;
             cNum = dxBar / ((dxNum >> 1) + dxNum);
@@ -704,13 +704,13 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
             dy = 3 * dyRow + yCur + 4;
             for (i = 0; i <= cNum; i++) {
                 xBeg = LOWORD((int32_t)((int32_t)((uint32_t)(i * dNum) * dxBar) / cMinGrafMax)) + xL;
-                win32::PatBlt(hdc, xBeg, yCur + 2, 1, 3 * dyRow - 1, PATCOPY);
-                c = win32::wsprintf(szWork, PCTD, i * dNum);
+                win32::PatBlt(hdc, xBeg, yCur + 2, 1, 3 * dyRow - 1, win32::PATCOPY);
+                c = win32::wsprintfA(szWork, PCTD, i * dNum);
                 CtrTextOut(hdc, xBeg, dy, szWork, c);
             }
             RightTextOut(hdc, xL - 4, dy, "kT", 2, 0);
             if (pl.iPlayer == idPlayer) {
-                ColonyIO().pfnEstimateMining(&pl, rgl, -1, FALSE);
+                ColonyIO().pfnEstimateMining(&pl, rgl, -1, 0);
             } else {
                 rgl[2] = 0;
                 rgl[1] = 0;
@@ -723,7 +723,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                         if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                             cMines = ColonyIO().pfnFleetMining(lpfl);
                             if (cMines > 0) {
-                                ColonyIO().pfnEstimateMining(&pl, rglT, cMines, FALSE);
+                                ColonyIO().pfnEstimateMining(&pl, rglT, cMines, 0);
                                 for (iT = 0; iT < 3; iT++) {
                                     rgl[iT] += rglT[iT];
                                 }
@@ -745,7 +745,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 }
                 if ((int32_t)(rgl[i] + pl.rgwtMin[i]) > cMinGrafMax) {
                     win32::SetTextColor(hdc, crButtonText);
-                    win32::TextOut(hdc, xR, yCur + dy, "+", 1);
+                    win32::TextOutA(hdc, xR, yCur + dy, "+", 1);
                 }
                 dx = LOWORD((int32_t)((int32_t)(dxBar * (cMinGrafMax < pl.rgwtMin[i] ? cMinGrafMax : pl.rgwtMin[i])) / cMinGrafMax));
                 win32::SetRect(&rcGauge, xL + 1, yCur + 4, xL + dx + 1, yCur + dyRow - 1);
@@ -760,10 +760,10 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                         c = 1;
                         xBeg = xL + 1 + iPass + win32::MulDiv(100 >= pl.rgMinConc[i] ? pl.rgMinConc[i] : 100, dxBar - 8, 100);
                         while (1) {
-                            win32::PatBlt(hdc, xBeg, yTop++, c, 1, PATCOPY);
+                            win32::PatBlt(hdc, xBeg, yTop++, c, 1, win32::PATCOPY);
                             if (yTop > yBot)
                                 break;
-                            win32::PatBlt(hdc, xBeg--, yBot--, c, 1, PATCOPY);
+                            win32::PatBlt(hdc, xBeg--, yBot--, c, 1, win32::PATCOPY);
                             c += 2;
                         }
                     }
@@ -771,7 +771,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 i++;
                 yCur += dyRow;
             }
-            win32::SetBkMode(hdc, OPAQUE);
+            win32::SetBkMode(hdc, win32::OPAQUE);
             win32::SelectObject(hdc, hbrSav);
             rgplr[idPlayer] = plrSav;
             goto FinishUp;
@@ -780,7 +780,7 @@ void DrawMineSurvey(HDC hdc, RECT *prc) {
                 goto FinishUp;
             hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpUnknownPlanet);
             win32::SetTextColor(hdc, 0);
-            win32::BitBlt(hdc, ((prc->right - prc->left - 0x40) >> 1) + prc->left, ((prc->bottom - prc->top - 0x40) >> 1) + prc->top, 64, 64, hdcMem, 0, 0, SRCCOPY);
+            win32::BitBlt(hdc, ((prc->right - prc->left - 0x40) >> 1) + prc->left, ((prc->bottom - prc->top - 0x40) >> 1) + prc->top, 64, 64, hdcMem, 0, 0, win32::SRCCOPY);
             win32::SelectObject(hdcMem, hbmpSav);
         }
     }
@@ -930,7 +930,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                     }
                 }
                 if (c > 1) {
-                    c = ControlIO().pfnPopupMenu(hwndMine, x, y, c, NULL, rgpsz, -1, TRUE);
+                    c = ControlIO().pfnPopupMenu(hwndMine, x, y, c, NULL, rgpsz, -1, 1);
                     if (c == -1)
                         break;
                 } else {
@@ -939,9 +939,9 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                 GlobalPD.grPopup = grPopupShdef;
                 GlobalPD.lpshdef = rglpshdef[lpfl->iPlayer] + rgid[c];
                 GlobalPD.fHideCounts = idPlayer != lpfl->iPlayer;
-                GlobalPD.fShowDamage = FALSE;
-                GlobalPD.SetFToken(FALSE);
-                GlobalPD.fSummary = TRUE;
+                GlobalPD.fShowDamage = 0;
+                GlobalPD.SetFToken(0);
+                GlobalPD.fSummary = 1;
             } else {
                 GlobalPD.grPopup = grPopupFleet;
                 GlobalPD.lpfl = rglpfl[sel.scan.ifl];
@@ -955,9 +955,9 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             lppl = LpplFromId(sel.scan.idpl);
             GlobalPD.lpshdef = rglpshdefSB[lppl->iPlayer] + lppl->isb;
             GlobalPD.fHideCounts = idPlayer != lppl->iPlayer;
-            GlobalPD.fShowDamage = TRUE;
-            GlobalPD.SetFToken(FALSE);
-            GlobalPD.fSummary = TRUE;
+            GlobalPD.fShowDamage = 1;
+            GlobalPD.SetFToken(0);
+            GlobalPD.fSummary = 1;
             Popup(hwndMine, x, y);
             break;
         case htMinePlanet:
@@ -977,7 +977,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             } else {
                 GlobalPD.iPlanVal = envNone;
             }
-            if (pl.det >= detSome && ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, TRUE)) {
+            if (pl.det >= detSome && ColonyIO().pfnCanTerraform(&pl, rgMin, rgMax, rgCost, 1)) {
                 GlobalPD.iPlanMin = rgMin[GlobalPD.iPlanetVar];
                 GlobalPD.SetIPlanMax(rgMax[GlobalPD.iPlanetVar]);
                 if (GlobalPD.iPlanMin == envNone) {
@@ -1016,7 +1016,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                     scan.ith = i;
                     scan.grobj = grobjThing;
                     idNew = lpThings[i].idFull();
-                    fOurs = FALSE;
+                    fOurs = 0;
                     goto ChangeIt;
                 }
                 if (scan.grobjFull & grobjPlanet)
@@ -1051,7 +1051,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                 idNew = scan.idpl;
                 lppl = LpplFromId(idNew);
                 if (!lppl) {
-                    fOurs = FALSE;
+                    fOurs = 0;
                 } else {
                     fOurs = lppl->iPlayer == idPlayer;
                 }
@@ -1095,20 +1095,20 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
             rgi[7] = 20000;
             rgi[8] = 30000;
             for (i = 0; i < 9; i++) {
-                win32::wsprintf(rgsz[i], PCTDKT, rgi[i]);
+                win32::wsprintfA(rgsz[i], PCTDKT, rgi[i]);
                 psz[i] = rgsz[i];
                 if (rgi[i] == cMinGrafMax) {
                     iChecked = i;
                 }
             }
-            i = ControlIO().pfnPopupMenu(hwndMine, x, y, 9, NULL, psz, iChecked, TRUE);
+            i = ControlIO().pfnPopupMenu(hwndMine, x, y, 9, NULL, psz, iChecked, 1);
             if (i == -1 || rgi[i] == cMinGrafMax)
                 break;
             cMinGrafMax = rgi[i];
-            ControlIO().pfnInvalidateRect(hwndMine, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndMine, NULL, 1);
             if ((grbitScan & grbitScanViewMask) != 1)
                 break;
-            ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
+            ControlIO().pfnInvalidateRect(hwndScanner, NULL, 1);
             break;
         case htMineMineralConc1:
         case htMineMineralConc2:
@@ -1125,7 +1125,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                 if (pl.det > detSome) {
                     lVal = 0;
                     GlobalPD.SetRgi(2, pl.rgwtMin[ht - 1]);
-                    ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, FALSE);
+                    ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, 0);
                     GlobalPD.SetRgi(4, rglQuan[ht - 1]);
                     if (pl.iPlayer == iplrNone) {
                         for (ifl = 0; ifl < cFleet; ifl++) {
@@ -1135,7 +1135,7 @@ void MineClick(int16_t x, int16_t y, int16_t msg, int16_t sks) {
                             if (lpfl->idPlanet == pl.id && lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                                 cMines = ColonyIO().pfnFleetMining(lpfl);
                                 if (cMines > 0) {
-                                    ColonyIO().pfnEstimateMining(&pl, rglT, cMines, FALSE);
+                                    ColonyIO().pfnEstimateMining(&pl, rglT, cMines, 0);
                                     lVal += rglT[ht - 1];
                                 }
                             }
@@ -1160,7 +1160,7 @@ void SetMineralTitleBar(HWND hwnd) {
     GrobjClass grobj;
     RECT       rc;
 
-    fVisCB = FALSE;
+    fVisCB = 0;
     TextIO().pfnCchGetString(idsDeepSpace, szDeepSpace);
     TextIO().pfnCchGetString(idsSummary, szSummary);
     grobj = sel.scan.grobj == grobjOther ? sel.scan.grobjFull : sel.scan.grobj;
@@ -1177,18 +1177,18 @@ void SetMineralTitleBar(HWND hwnd) {
     } else if (!(grobj & grobjThing)) {
         psz = szDeepSpace;
     } else if (sel.scan.ith != ithNone) {
-        fVisCB = TRUE;
+        fVisCB = 1;
         psz = PszGetThingName(lpThings[sel.scan.ith].idFull());
         strcat(psz, szSummary);
     }
     strcpy(szMineralTitle, psz);
-    ControlIO().pfnInvalidateRect(hwnd, NULL, TRUE);
+    ControlIO().pfnInvalidateRect(hwnd, NULL, 1);
     if (fVisCB) {
         fVisCB = lpThings[sel.scan.ith].ith() == ithMinefield && lpThings[sel.scan.ith].thm().iType() == mineStandard && lpThings[sel.scan.ith].iplr() == idPlayer &&
                  RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMines;
     }
     if (fVisCB) {
-        ControlIO().pfnSendMessage(hwndMineCB, BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
+        ControlIO().pfnSendMessage(hwndMineCB, win32::BM_SETCHECK, lpThings[sel.scan.ith].thm().fDetonate() != 0, 0);
     }
     ControlIO().pfnGetClientRect(hwnd, &rc);
     ControlIO().pfnSetWindowPos(hwndMineCB, NULL, 80, rc.bottom - dyArial8 * 2, rc.right - 88, dyArial8 + 4, (!fVisCB ? 0x80 : 0x40) | 4);
@@ -1203,8 +1203,8 @@ void DrawSelectionArrow(HDC hdc, RECT *prc, int16_t fEnabled) {
     hdcMem = win32::CreateCompatibleDC(hdc);
     hbmpSav = (HBITMAP)win32::SelectObject(hdcMem, hbmpScanner);
     xCtr = (int16_t)(prc->right - prc->left) / 2 + prc->left;
-    win32::BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, 35, 57, SRCAND);
-    win32::BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, !fEnabled ? 0 : 24, !fEnabled ? 45 : 57, SRCPAINT);
+    win32::BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, 35, 57, win32::SRCAND);
+    win32::BitBlt(hdc, xCtr - 5, ((prc->bottom - prc->top) >> 1) + prc->top - 5, 11, 12, hdcMem, !fEnabled ? 0 : 24, !fEnabled ? 45 : 57, win32::SRCPAINT);
     win32::SelectObject(hdcMem, hbmpSav);
     win32::DeleteDC(hdcMem);
     return;
@@ -1224,18 +1224,18 @@ void DrawDiamond(HDC hdc, RECT *prc, HBRUSH hbr) {
     xCur = xCtr - 1;
     hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
     while (yTop <= yBot) {
-        win32::PatBlt(hdc, xCur, yTop++, 2, 1, PATCOPY);
-        win32::PatBlt(hdc, xCur--, yBot--, 2, 1, PATCOPY);
+        win32::PatBlt(hdc, xCur, yTop++, 2, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xCur--, yBot--, 2, 1, win32::PATCOPY);
     }
     win32::SelectObject(hdc, hbrButtonShadow);
-    win32::PatBlt(hdc, xCtr, prc->top, 1, 1, PATCOPY);
-    win32::PatBlt(hdc, xCtr, prc->bottom - 1, 1, 1, PATCOPY);
+    win32::PatBlt(hdc, xCtr, prc->top, 1, 1, win32::PATCOPY);
+    win32::PatBlt(hdc, xCtr, prc->bottom - 1, 1, 1, win32::PATCOPY);
     yTop = prc->top + 1;
     yBot = prc->bottom - 2;
     xCur = xCtr;
     while (yTop <= yBot) {
-        win32::PatBlt(hdc, xCur, yTop++, 2, 1, PATCOPY);
-        win32::PatBlt(hdc, xCur++, yBot--, 2, 1, PATCOPY);
+        win32::PatBlt(hdc, xCur, yTop++, 2, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xCur++, yBot--, 2, 1, win32::PATCOPY);
     }
     yTop = prc->top + 4;
     yBot = prc->bottom - 5;
@@ -1243,8 +1243,8 @@ void DrawDiamond(HDC hdc, RECT *prc, HBRUSH hbr) {
     dx = 1;
     win32::SelectObject(hdc, hbr);
     while (yTop <= yBot) {
-        win32::PatBlt(hdc, xCur, yTop++, dx, 1, PATCOPY);
-        win32::PatBlt(hdc, xCur--, yBot--, dx, 1, PATCOPY);
+        win32::PatBlt(hdc, xCur, yTop++, dx, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, xCur--, yBot--, dx, 1, win32::PATCOPY);
         dx += 2;
     }
     win32::SelectObject(hdc, hbrSav);
@@ -1300,7 +1300,7 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
         if (sel.scan.pt.x == lpth->pt().x() && sel.scan.pt.y == lpth->pt().y()) {
             if (!fSep) {
                 rgid[c++] = -1;
-                fSep = TRUE;
+                fSep = 1;
             }
             if (sel.scan.grobj == grobjThing && (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18 == sel.scan.ith) {
                 iChecked = c;
@@ -1308,7 +1308,7 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
             rgid[c++] = (uint32_t)(uint16_t)lpth->idFull() | 0x20000000;
         }
     }
-    i = ControlIO().pfnPopupMenu(hwnd, x, y, c, rgid, NULL, iChecked, TRUE);
+    i = ControlIO().pfnPopupMenu(hwnd, x, y, c, rgid, NULL, iChecked, 1);
     if (i >= 0) {
         scan = sel.scan;
         if (rgid[i] & 0x80000000) {
@@ -1330,7 +1330,7 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
             }
             scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
             idNew = lpth->idFull();
-            fOurs = FALSE;
+            fOurs = 0;
         } else {
             scan.grobj = grobjPlanet;
             idNew = sel.scan.idpl;
@@ -1349,6 +1349,6 @@ void PopupMineralScanChoices(HWND hwnd, int16_t x, int16_t y) {
 
 // InvalidateMine redraws the mineral window.
 void InvalidateMine() {
-    ControlIO().pfnInvalidateRect(hwndMine, NULL, TRUE);
+    ControlIO().pfnInvalidateRect(hwndMine, NULL, 1);
     return;
 }

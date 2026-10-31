@@ -17,12 +17,12 @@ static LRESULT CALLBACK ParentProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_COMMAND && HIWORD(w) == BN_CLICKED) {
         cClick++; idClick = LOWORD(w); hwndClick = (HWND)l;
         checkAtClick = (UINT)SendMessageA((HWND)l, BM_GETCHECK, 0, 0);
-        if (fDestroyClick) { fDestroyClick = FALSE; DestroyWindow((HWND)l); }
-        if (fDestroyParent) { fDestroyParent = FALSE; DestroyWindow(hwnd); }
+        if (fDestroyClick) { fDestroyClick = 0; DestroyWindow((HWND)l); }
+        if (fDestroyParent) { fDestroyParent = 0; DestroyWindow(hwnd); }
         return 0;
     }
     if (msg == WM_CTLCOLORSTATIC || msg == WM_CTLCOLORBTN) {
-        if (fDestroyColor) { fDestroyColor = FALSE; DestroyWindow((HWND)l); return 0; }
+        if (fDestroyColor) { fDestroyColor = 0; DestroyWindow((HWND)l); return 0; }
         SetTextColor((HDC)w, RGB(0, 0, 0));
         SetBkColor((HDC)w, RGB(9, 70, 90));
         return (LRESULT)hbrColor;
@@ -34,7 +34,7 @@ static void Drain(void) {
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 }
 static HWND Button(HWND hwnd, HINSTANCE hInstance, int id, DWORD style, int y) {
-    return CreateWindow("Button", "&Button", WS_CHILD | WS_VISIBLE | style,
+    return CreateWindowExA(0, "Button", "&Button", WS_CHILD | WS_VISIBLE | style,
                         20, y, 150, 24, hwnd, (HMENU)(INT_PTR)id, hInstance, NULL);
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -61,17 +61,17 @@ static int TestFocusLabels(HWND hwnd, HINSTANCE hInstance) {
 
     lf.lfHeight = -13;
     strcpy(lf.lfFaceName, "Arial");
-    hfont = CreateFontIndirect(&lf);
+    hfont = CreateFontIndirectA(&lf);
     CHECK(hfont);
     for (i = 0; i < 3; i++) {
         for (j = 0; j < sizeof(rgfmt) / sizeof(rgfmt[0]); j++) {
             for (k = 0; k < 2; k++) {
                 dy = rgfmt[j].dy;
-                hwndButton = CreateWindow("Button", rgpszLabel[k], WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                hwndButton = CreateWindowExA(0, "Button", rgpszLabel[k], WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                           rgdwStyle[i] | rgfmt[j].dwStyle,
                                           200, 40, 100, dy, hwnd, (HMENU)(INT_PTR)500, hInstance, NULL);
                 CHECK(hwndButton);
-                SendMessageA(hwndButton, WM_SETFONT, (WPARAM)hfont, TRUE);
+                SendMessageA(hwndButton, WM_SETFONT, (WPARAM)hfont, 1);
                 SetFocus(hwnd);
                 CHECK(UpdateWindow(hwndButton));
                 hdc = GetDC(hwndButton);
@@ -119,7 +119,7 @@ static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic)
     size_t cb;
     HFONT hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
     CHECK(SendMessageA(hwndStatic, WM_GETFONT, 0, 0) == 0);
-    SendMessageA(hwndStatic, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessageA(hwndStatic, WM_SETFONT, (WPARAM)hfont, 1);
     CHECK((HFONT)SendMessageA(hwndStatic, WM_GETFONT, 0, 0) == hfont);
     CHECK(UpdateWindow(hwndStatic));
     hdc = GetDC(hwndStatic);
@@ -140,8 +140,8 @@ static int TestPaint(HWND hwnd, HWND hwndCheck, HWND hwndRadio, HWND hwndStatic)
     CHECK(hdc && GetPixel(hdc, 3, 8) == RGB(255, 255, 255));
     CHECK(GetPixel(hdc, 6, 11) == RGB(0, 0, 0));
     CHECK(ReleaseDC(hwndRadio, hdc));
-    fDestroyColor = TRUE;
-    InvalidateRect(hwndStatic, NULL, TRUE);
+    fDestroyColor = 1;
+    InvalidateRect(hwndStatic, NULL, 1);
     CHECK(UpdateWindow(hwndStatic) && !IsWindow(hwndStatic));
     return 0;
 }
@@ -155,15 +155,15 @@ int main(void) {
     POINT pt = {2, 2};
     int c, i;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     hbrColor = CreateSolidBrush(RGB(9, 70, 90));
     CHECK(hbrColor);
     wc.hInstance = hInstance; wc.lpszClassName = "StarsControlContracts"; wc.lpfnWndProc = ParentProc;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "controls", WS_POPUP | WS_VISIBLE, 40, 50, 400, 360,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "controls", WS_POPUP | WS_VISIBLE, 40, 50, 400, 360,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -176,23 +176,23 @@ int main(void) {
     hwndRadio2 = Button(hwnd, hInstance, 202, BS_AUTORADIOBUTTON, 130);
     hwndRadio3 = Button(hwnd, hInstance, 205, BS_AUTORADIOBUTTON | WS_GROUP, 160);
     hwndGroup = Button(hwnd, hInstance, 301, BS_GROUPBOX, 200);
-    hwndStatic = CreateWindow("Static", "Label", WS_CHILD | WS_VISIBLE | SS_LEFT,
+    hwndStatic = CreateWindowExA(0, "Static", "Label", WS_CHILD | WS_VISIBLE | SS_LEFT,
                              200, 10, 150, 24, hwnd, (HMENU)(INT_PTR)300, hInstance, NULL);
     CHECK(hwndPush && hwndCheck && hwndTri && hwndRadio1 && hwndRadio2 && hwndRadio3 && hwndStatic && hwndGroup);
     Drain();
-    CHECK(GetClassName(hwndCheck, sz, sizeof(sz)) && strcmp(sz, "Button") == 0);
+    CHECK(GetClassNameA(hwndCheck, sz, sizeof(sz)) && strcmp(sz, "Button") == 0);
     CHECK(SendMessageA(hwndPush, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON);
     CHECK(SendMessageA(hwndRadio1, WM_GETDLGCODE, 0, 0) & DLGC_RADIOBUTTON);
     CHECK(SendMessageA(hwndStatic, WM_GETDLGCODE, 0, 0) & DLGC_STATIC);
-    CHECK(GetDlgItemText(hwnd, 300, sz, sizeof(sz)) == 5 && strcmp(sz, "Label") == 0);
-    CHECK(SetDlgItemText(hwnd, 300, "Updated label"));
-    CHECK(GetDlgItemText(hwnd, 300, sz, 4) == 3 && strcmp(sz, "Upd") == 0);
-    CHECK(!GetDlgItemText(hwnd, 999, sz, sizeof(sz)));
-    CHECK(!SetDlgItemText(hwnd, 999, "missing"));
+    CHECK(GetDlgItemTextA(hwnd, 300, sz, sizeof(sz)) == 5 && strcmp(sz, "Label") == 0);
+    CHECK(SetDlgItemTextA(hwnd, 300, "Updated label"));
+    CHECK(GetDlgItemTextA(hwnd, 300, sz, 4) == 3 && strcmp(sz, "Upd") == 0);
+    CHECK(!GetDlgItemTextA(hwnd, 999, sz, sizeof(sz)));
+    CHECK(!SetDlgItemTextA(hwnd, 999, "missing"));
     CHECK(CheckDlgButton(hwnd, 999, BST_CHECKED));
     CHECK(SendDlgItemMessageA(hwnd, 999, BM_GETCHECK, 0, 0) == 0);
     hfont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-    SendMessageA(hwndPush, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessageA(hwndPush, WM_SETFONT, (WPARAM)hfont, 1);
     CHECK((HFONT)SendMessageA(hwndPush, WM_GETFONT, 0, 0) == hfont);
     CHECK(CheckDlgButton(hwnd, 101, BST_CHECKED) && IsDlgButtonChecked(hwnd, 101) == BST_CHECKED);
     CHECK(CheckDlgButton(hwnd, 101, BST_UNCHECKED));
@@ -211,14 +211,14 @@ int main(void) {
     CHECK(CheckDlgButton(hwnd, 205, BST_CHECKED));
     SendMessageA(hwndRadio2, BM_CLICK, 0, 0);
     CHECK(IsDlgButtonChecked(hwnd, 201) == BST_UNCHECKED && IsDlgButtonChecked(hwnd, 202) == BST_CHECKED);
-    CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED && (GetWindowLongPtr(hwndRadio2, GWL_STYLE) & WS_TABSTOP));
+    CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED && (GetWindowLongPtrA(hwndRadio2, GWL_STYLE) & WS_TABSTOP));
     CHECK(CheckRadioButton(hwnd, 201, 202, 201));
     CHECK(IsDlgButtonChecked(hwnd, 205) == BST_CHECKED);
     c = cClick;
-    EnableWindow(hwndPush, FALSE); SendMessageA(hwndPush, BM_CLICK, 0, 0);
+    EnableWindow(hwndPush, 0); SendMessageA(hwndPush, BM_CLICK, 0, 0);
     CHECK(cClick == c + 1 && idClick == 100);
     c = cClick;
-    EnableWindow(hwndPush, TRUE);
+    EnableWindow(hwndPush, 1);
     SendMessageA(hwndPush, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(2, 2));
     CHECK(GetCapture() == hwndPush && (SendMessageA(hwndPush, BM_GETSTATE, 0, 0) & BST_PUSHED));
     SendMessageA(hwndPush, WM_MOUSEMOVE, MK_LBUTTON, MAKELPARAM(-5, -5));
@@ -239,16 +239,16 @@ int main(void) {
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestFocusLabels(hwnd, hInstance) == 0);
     CHECK(TestPaint(hwnd, hwndCheck, hwndRadio1, hwndStatic) == 0);
-    CHECK(!CreateWindow("Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
+    CHECK(!CreateWindowExA(0, "Button", "unsupported", WS_CHILD | BS_ICON, 0, 0, 30, 30, hwnd, NULL, hInstance, NULL));
 #endif
     hwndKill = Button(hwnd, hInstance, 400, BS_PUSHBUTTON, 240);
     CHECK(hwndKill);
-    fDestroyClick = TRUE;
+    fDestroyClick = 1;
     SendMessageA(hwndKill, BM_CLICK, 0, 0);
     CHECK(!IsWindow(hwndKill));
     hwndKill = Button(hwnd, hInstance, 401, BS_PUSHBUTTON, 240);
     CHECK(hwndKill);
-    fDestroyParent = TRUE;
+    fDestroyParent = 1;
     SendMessageA(hwndKill, BM_CLICK, 0, 0);
     CHECK(!IsWindow(hwnd));
     CHECK(DeleteObject(hbrColor));

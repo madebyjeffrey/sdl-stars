@@ -16,7 +16,7 @@ int FTestCocoaAppIcon(void);
 static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 #endif
 
-static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
+static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
     STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd;
     SDL_Event event = {};
@@ -36,7 +36,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         if (fCheckIcon) fIconPassed = FTestCocoaAppIcon();
 #endif
         iStage = 1;
-        win32::PostMessage(hwndTitle, WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
+        win32::PostMessageA(hwndTitle, win32::WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
         return;
     }
     if (iStage == 0 || fQuit || !StarsCompatCaptureHierarchy(&snap)) return;
@@ -61,17 +61,17 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
                 if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
                 if (!pszRoot) { StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return; }
                 CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
-                if (!SDL_CreateDirectory(szCollision) || !win32::SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
+                if (!SDL_CreateDirectory(szCollision) || !win32::SetDlgItemTextA(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
                     StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return;
                 }
                 iStage = 2;
-                win32::PostMessage(hwnd, WM_COMMAND, IDC_FINISH, 0);
+                win32::PostMessageA(hwnd, win32::WM_COMMAND, IDC_FINISH, 0);
                 break;
-            } else if (iStage == 2 && win32::GetWindow(hwnd, GW_OWNER) == hwndNewGame) {
+            } else if (iStage == 2 && win32::GetWindow(hwnd, win32::GW_OWNER) == hwndNewGame) {
                 fOwnerPassed = win32::IsWindowVisible(hwndNewGame) && !win32::IsWindowEnabled(hwndNewGame) &&
                     !win32::IsWindowVisible(hwndFrame);
                 iStage = 3;
-                win32::PostMessage(hwnd, WM_COMMAND, IDCANCEL, 0);
+                win32::PostMessageA(hwnd, win32::WM_COMMAND, IDCANCEL, 0);
                 break;
             } else if (iStage == 3 && hwnd == hwndNewGame && win32::IsWindowEnabled(hwndNewGame)) {
                 event.type = SDL_EVENT_QUIT;
@@ -82,7 +82,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         }
         if (fPlayers && iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
             iStage = 2;
-            win32::PostMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
+            win32::PostMessageA(hwnd, win32::WM_COMMAND, IDC_NEXT, 0);
             break;
         }
         if ((!fPlayers && !fRace && hwnd->lpfnDlg == NewGameDlg) ||
@@ -113,12 +113,12 @@ int main(int argc, char **argv) {
     fSaveOwner = argc == 2 && !strcmp(argv[1], "save-owner");
 #ifdef __APPLE__
     fNativeSaveOwner = argc == 2 && !strcmp(argv[1], "native-save-owner");
-    if (fNativeSaveOwner) fSaveOwner = TRUE;
+    if (fNativeSaveOwner) fSaveOwner = 1;
     fCheckIcon = argc == 2 && !strcmp(argv[1], "icon");
 #endif
     idTimer = win32::SetTimer(NULL, 0, 25, CheckQuit);
     if (!idTimer) return 1;
-    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit();
     SDL_Quit();

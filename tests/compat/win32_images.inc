@@ -33,7 +33,7 @@ static void Drain(void) {
     while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessageA(&msg); }
 }
 int main(void) {
-    HINSTANCE hinst = GetModuleHandle(NULL);
+    HINSTANCE hinst = GetModuleHandleA(NULL);
     HRSRC hgroup, hrsrc;
     const BYTE *rgb;
     HICON hicon, hcopy;
@@ -62,18 +62,18 @@ int main(void) {
     CHECK(hscreen && hdc && hbmp); hold = SelectObject(hdc, hbmp);
     CHECK(ReleaseDC(NULL, hscreen)); hscreen = NULL;
     for (i = 0; i < (int)(sizeof(rgImageManifest) / sizeof(rgImageManifest[0])); i++) {
-        hgroup = FindResource(hinst, rgImageManifest[i].psz, rgImageManifest[i].fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
+        hgroup = FindResourceA(hinst, rgImageManifest[i].psz, rgImageManifest[i].fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON);
         CHECK(hgroup && SizeofResource(hinst, hgroup) == rgImageManifest[i].cbGroup);
         rgb = (const BYTE*)(LockResource(LoadResource(hinst, hgroup))); CHECK(rgb && WTest(rgb + 4) == 1);
-        hrsrc = FindResource(hinst, MAKEINTRESOURCE(WTest(rgb + 18)), rgImageManifest[i].fCursor ? RT_CURSOR : RT_ICON);
+        hrsrc = FindResourceA(hinst, MAKEINTRESOURCE(WTest(rgb + 18)), rgImageManifest[i].fCursor ? RT_CURSOR : RT_ICON);
         cb = SizeofResource(hinst, hrsrc); rgb = (const BYTE*)(LockResource(LoadResource(hinst, hrsrc)));
         CHECK(rgb && cb == rgImageManifest[i].cb && memcmp(rgb, rgImageManifest[i].rgb, cb) == 0);
-        hicon = rgImageManifest[i].fCursor ? (HICON)LoadCursor(hinst, rgImageManifest[i].psz) : LoadIcon(hinst, rgImageManifest[i].psz);
+        hicon = rgImageManifest[i].fCursor ? (HICON)LoadCursorA(hinst, rgImageManifest[i].psz) : LoadIconA(hinst, rgImageManifest[i].psz);
         CHECK(hicon && GetIconInfo(hicon, &ii));
         CHECK(ii.fIcon == !rgImageManifest[i].fCursor);
         CHECK(ii.xHotspot == (rgImageManifest[i].fCursor ? WTest(rgb) : 16));
         CHECK(ii.yHotspot == (rgImageManifest[i].fCursor ? WTest(rgb + 2) : 16));
-        CHECK(GetObject(ii.hbmMask, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 32);
+        CHECK(GetObjectA(ii.hbmMask, sizeof(bm), &bm) == sizeof(bm) && bm.bmWidth == 32);
         CHECK(bm.bmHeight == (rgImageManifest[i].fCursor ? 64 : 32));
         CHECK(DeleteObject(ii.hbmMask));
         if (ii.hbmColor) CHECK(DeleteObject(ii.hbmColor));
@@ -98,23 +98,23 @@ int main(void) {
             CHECK(!HiconCompatResource(rgb, cb, rgImageManifest[i].fCursor));
 #endif
     }
-    CHECK(!LoadIcon(hinst, "missing") && !LoadCursor(hinst, "missing"));
-    harrow = LoadCursor(NULL, MAKEINTRESOURCE(32512)); hwait = LoadCursor(NULL, MAKEINTRESOURCE(32514));
+    CHECK(!LoadIconA(hinst, "missing") && !LoadCursorA(hinst, "missing"));
+    harrow = LoadCursorA(NULL, MAKEINTRESOURCE(32512)); hwait = LoadCursorA(NULL, MAKEINTRESOURCE(32514));
     CHECK(harrow && hwait); SetCursor(harrow); CHECK(SetCursor(hwait) == harrow && GetCursor() == hwait);
     CHECK(SetCursor(NULL) == hwait && GetCursor() == NULL); CHECK(SetCursor(harrow) == NULL);
     wc.lpfnWndProc = ImageProc; wc.hInstance = hinst; wc.lpszClassName = "ImageContract";
-    wc.hCursor = harrow; wc.hIcon = LoadIcon(hinst, "StarsIco"); CHECK(wc.hIcon && RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Icons and cursors", WS_OVERLAPPEDWINDOW, 80, 80, 160, 120, NULL, NULL, hinst, NULL);
-    hwndOther = CreateWindow(wc.lpszClassName, "Other", WS_OVERLAPPEDWINDOW, 260, 80, 160, 120, NULL, NULL, hinst, NULL);
+    wc.hCursor = harrow; wc.hIcon = LoadIconA(hinst, "StarsIco"); CHECK(wc.hIcon && RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Icons and cursors", WS_OVERLAPPEDWINDOW, 80, 80, 160, 120, NULL, NULL, hinst, NULL);
+    hwndOther = CreateWindowExA(0, wc.lpszClassName, "Other", WS_OVERLAPPEDWINDOW, 260, 80, 160, 120, NULL, NULL, hinst, NULL);
     CHECK(hwnd && hwndOther); ShowWindow(hwnd, SW_SHOW); ShowWindow(hwndOther, SW_SHOW); Drain();
     SetCursor(hwait); SendMessageA(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
     CHECK(GetCursor() == harrow);
 #ifndef _WIN32
-    hcur = LoadCursor(hinst, "ScannerCur"); lp = LpCompatImage((HICON)hcur); CHECK(lp);
+    hcur = LoadCursorA(hinst, "ScannerCur"); lp = LpCompatImage((HICON)hcur); CHECK(lp);
     SetCursor(hcur); pszDriver = SDL_GetCurrentVideoDriver();
     if (pszDriver && strcmp(pszDriver, "dummy") != 0) CHECK(lp->lpCursor && SDL_GetCursor() == lp->lpCursor.get());
     // An inverted cursor is composed over the scene, never into client pixels.
-    hcur = LoadCursor(hinst, rgImageManifest[19].psz);
+    hcur = LoadCursorA(hinst, rgImageManifest[19].psz);
     lp = LpCompatImage((HICON)hcur); CHECK(lp && lp->fInvert);
     hbr = CreateSolidBrush(RGB(91, 47, 163)); CHECK(hbr);
     CHECK(GetClientRect(hwnd, &rc));
@@ -122,7 +122,7 @@ int main(void) {
     SetCursor(hcur); CompatCursorPoint(hwnd, 50, 50); CHECK(FCompatPresent(hwnd));
     lpComposite = hwnd->lpComposite.get(); CHECK(lpComposite);
     for (y = 0; y < 32; y++) for (x = 0; x < 32; x++) {
-        expected = CrExpected(rgImageManifest[19].rgb, TRUE, x, y, RGB(91, 47, 163));
+        expected = CrExpected(rgImageManifest[19].rgb, 1, x, y, RGB(91, 47, 163));
         pixel = (BYTE *)lpComposite->pixels + (50 - lp->yHot + y) * lpComposite->pitch + (50 - lp->xHot + x) * 4;
         CHECK(RGB(pixel[0], pixel[1], pixel[2]) == expected);
     }

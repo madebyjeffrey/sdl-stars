@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <windows.h>
 
-LRESULT CALLBACK MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             InvalidateMineralBars();
 void             DrawMineSurvey(HDC hdc, RECT *prc);
 HtMineType       HtMineWindow(HWND hwnd, int16_t x, int16_t y);

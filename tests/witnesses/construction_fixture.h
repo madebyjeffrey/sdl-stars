@@ -84,7 +84,7 @@ int16_t TestFSendPlrMsg(int16_t player, MessageId id, MsgGoto target, int16_t a,
     memcpy(messageArgs[messages], args, sizeof(args));
     messageScanner[messages] = planet.iScanner;
     messages++;
-    return TRUE;
+    return 1;
 }
 int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto target, int16_t a, int16_t b) {
     return TestFSendPlrMsg(player, id, target, a, b, 0, 0, 0, 0, 0);
@@ -154,7 +154,7 @@ int16_t TestFLookupPlanet(int16_t id, PLANET *out) {
     assert(id == planet.id);
     lookups++;
     *out = planet;
-    return TRUE;
+    return 1;
 }
 void   TestFillSelProdLB(void) { fills++; }
 FLEET *TestLpflNew(int16_t player, int16_t id) {

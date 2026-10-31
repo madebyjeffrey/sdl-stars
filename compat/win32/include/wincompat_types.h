@@ -8,13 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "windowtypes.h"
+#include "ui_values.h"
 // Match Win32 LLP64 on Linux LP64; never use native long for LONG/DWORD.
-#define _WINDEF_
-#define CALLBACK
-#define CONST const
-#define TRUE 1
-#define FALSE 0
-#define EWX_LOGOFF 0
 
 typedef int32_t BOOL, WINBOOL, LONG;
 typedef uint32_t DWORD, ULONG, UINT, COLORREF;
@@ -23,7 +18,6 @@ typedef uint16_t WORD, ATOM, WCHAR;
 typedef int16_t SHORT;
 typedef uint8_t BYTE;
 typedef char CHAR;
-typedef void VOID;
 typedef void *LPVOID, *PVOID, *HANDLE, *HGDIOBJ;
 typedef const void *LPCVOID;
 typedef char *LPSTR;
@@ -36,31 +30,43 @@ typedef uintptr_t UINT_PTR, ULONG_PTR, DWORD_PTR, WPARAM;
 typedef size_t SIZE_T;
 typedef int HFILE;
 
-#define STARS_DECLARE_HANDLE(name) namespace win32 { struct name##__; } typedef win32::name##__ *name
-STARS_DECLARE_HANDLE(HINSTANCE);
-STARS_DECLARE_HANDLE(HBITMAP);
-STARS_DECLARE_HANDLE(HBRUSH);
-STARS_DECLARE_HANDLE(HPEN);
-STARS_DECLARE_HANDLE(HFONT);
-STARS_DECLARE_HANDLE(HPALETTE);
-STARS_DECLARE_HANDLE(HRGN);
-STARS_DECLARE_HANDLE(HICON);
-STARS_DECLARE_HANDLE(HMENU);
-STARS_DECLARE_HANDLE(HACCEL);
-STARS_DECLARE_HANDLE(HRSRC);
-#undef STARS_DECLARE_HANDLE
+namespace win32 {
+struct HINSTANCE__;
+struct HBITMAP__;
+struct HBRUSH__;
+struct HPEN__;
+struct HFONT__;
+struct HPALETTE__;
+struct HRGN__;
+struct HICON__;
+struct HMENU__;
+struct HACCEL__;
+struct HRSRC__;
+}
+typedef win32::HINSTANCE__ *HINSTANCE;
+typedef win32::HBITMAP__ *HBITMAP;
+typedef win32::HBRUSH__ *HBRUSH;
+typedef win32::HPEN__ *HPEN;
+typedef win32::HFONT__ *HFONT;
+typedef win32::HPALETTE__ *HPALETTE;
+typedef win32::HRGN__ *HRGN;
+typedef win32::HICON__ *HICON;
+typedef win32::HMENU__ *HMENU;
+typedef win32::HACCEL__ *HACCEL;
+typedef win32::HRSRC__ *HRSRC;
+
 typedef HINSTANCE HMODULE;
 typedef HICON HCURSOR;
 typedef HANDLE HGLOBAL, HLOCAL;
 
-typedef LRESULT (CALLBACK *WNDPROC)(HWND, UINT, WPARAM, LPARAM);
-typedef INT_PTR (CALLBACK *DLGPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef LRESULT (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef INT_PTR (*DLGPROC)(HWND, UINT, WPARAM, LPARAM);
 // The remaining Win16 procedure instances all hold dialog callbacks.
 typedef DLGPROC FARPROC;
-typedef void (CALLBACK *TIMERPROC)(HWND, UINT, UINT_PTR, DWORD);
-typedef UINT_PTR (CALLBACK *LPOFNHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
-typedef UINT_PTR (CALLBACK *LPPRINTHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
-typedef UINT_PTR (CALLBACK *LPSETUPHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef void (*TIMERPROC)(HWND, UINT, UINT_PTR, DWORD);
+typedef UINT_PTR (*LPOFNHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef UINT_PTR (*LPPRINTHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef UINT_PTR (*LPSETUPHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 
 typedef RECT *LPRECT;
 typedef const RECT *LPCRECT;

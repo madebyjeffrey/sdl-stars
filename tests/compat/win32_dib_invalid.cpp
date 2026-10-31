@@ -87,9 +87,9 @@ int TestInvalidDibs(void) {
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
     info.bi.biHeight = 2; info.bi.biWidth = INT_MAX;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
-    info.bi.biWidth = 3; info.bi.biCompression = BI_RLE8;
+    info.bi.biWidth = 3; info.bi.biCompression = win32::BI_RLE8;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
-    info.bi.biCompression = BI_RGB; info.bi.biBitCount = 16;
+    info.bi.biCompression = win32::BI_RGB; info.bi.biBitCount = 16;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));
     info.bi.biBitCount = 1; info.bi.biSize = 12;
     CHECK(!FCompatDib(&info, sizeof(info), rgb, sizeof(rgb), &dib));

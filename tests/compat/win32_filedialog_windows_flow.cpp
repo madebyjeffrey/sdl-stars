@@ -57,14 +57,14 @@ int main(void) {
     lpfile = PfNativeOpen(szChosen, "wb"); CHECK(lpfile && ICloseNativeFile(lpfile) == 0);
     wc.lpfnWndProc = win32::DefWindowProcA; wc.lpszClassName = "WindowsNativePickerFlow";
     CHECK(win32::RegisterClassA(&wc));
-    hwndOwner = win32::CreateWindow(wc.lpszClassName, "Owner", WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);
+    hwndOwner = win32::CreateWindowExA(0, wc.lpszClassName, "Owner", win32::WS_OVERLAPPEDWINDOW, 0, 0, 400, 300, NULL, NULL, NULL, NULL);
     CHECK(hwndOwner);
     of.lStructSize = sizeof(of); of.hwndOwner = hwndOwner;
     of.lpstrFile = szFile; of.nMaxFile = sizeof(szFile);
     of.lpstrFileTitle = szTitle; of.nMaxFileTitle = sizeof(szTitle);
     of.lpstrInitialDir = szCwd; of.lpstrTitle = "Picker \xc3\xa9";
     of.lpstrFilter = "Game\0*.m?;*.hst\0All\0*.*\0";
-    of.Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST;
+    of.Flags = win32::OFN_NOCHANGEDIR | win32::OFN_FILEMUSTEXIST;
     for (i = 0; i < 2; i++) {
         fSaveExpected = i; szFile[0] = 0; of.nFilterIndex = 1;
         CHECK(i ? win32::GetSaveFileNameA(&of) : win32::GetOpenFileNameA(&of));
@@ -78,7 +78,7 @@ int main(void) {
         CHECK(!win32::GetOpenFileNameA(&of) && win32::CommDlgExtendedError() == 0);
         CHECK(strcmp(szFile, "unchanged.m1") == 0 && of.nFilterIndex == 1);
         if (iAction < 3) CHECK(win32::IsWindowEnabled(hwndOwner) && hwndOwner->cNativeFileDialogs == 0);
-        if (iAction == 2) CHECK(win32::PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) && msg.wParam == 73);
+        if (iAction == 2) CHECK(win32::PeekMessageA(&msg, NULL, win32::WM_QUIT, win32::WM_QUIT, win32::PM_REMOVE) && msg.wParam == 73);
     }
     CHECK(!win32::IsWindow(hwndOwner) && !fBad && cCalls == 5);
     CHECK(PszNativeCwd(szAfter, sizeof(szAfter)) && strcmp(szAfter, szCwd) == 0);

@@ -11,9 +11,9 @@
 static BOOL fCursor;
 static POINT ptCursor;
 static BOOL FTestGetCursorPos(LPPOINT lppt) {
-    if (!fCursor) return FALSE;
+    if (!fCursor) return 0;
     *lppt = ptCursor;
-    return TRUE;
+    return 1;
 }
 
 #ifdef STARS_UI_SDL
@@ -35,12 +35,12 @@ int main(void) {
     size_t i;
 
     CHECK(!FReadCursor16(&pt) && pt.x == 0 && pt.y == 0);
-    fCursor = TRUE;
+    fCursor = 1;
     for (i = 0; i < sizeof(rgpt) / sizeof(rgpt[0]); i++) {
         ptCursor = rgpt[i];
         CHECK(FReadCursor16(&pt) && pt.x == ptCursor.x && pt.y == ptCursor.y);
     }
-    fCursor = FALSE;
+    fCursor = 0;
     CHECK(!FReadCursor16(&pt) && pt.x == 0 && pt.y == 0);
     return 0;
 }

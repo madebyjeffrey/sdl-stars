@@ -6,19 +6,19 @@
 
 BOOL win32::SetRect(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom) {
     if (!lprc)
-        return FALSE;
+        return 0;
     lprc->left = xLeft;
     lprc->top = yTop;
     lprc->right = xRight;
     lprc->bottom = yBottom;
-    return TRUE;
+    return 1;
 }
 
 BOOL win32::CopyRect(LPRECT lprcDst, const RECT *lprcSrc) {
     if (!lprcDst || !lprcSrc)
-        return FALSE;
+        return 0;
     *lprcDst = *lprcSrc;
-    return TRUE;
+    return 1;
 }
 
 BOOL win32::EqualRect(const RECT *lprc1, const RECT *lprc2) {
@@ -30,7 +30,7 @@ BOOL win32::IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprc
     RECT rc;
 
     if (!lprcDst || !lprcSrc1 || !lprcSrc2)
-        return FALSE;
+        return 0;
     rc.left = StarsMax(lprcSrc1->left, lprcSrc2->left);
     rc.top = StarsMax(lprcSrc1->top, lprcSrc2->top);
     rc.right = StarsMin(lprcSrc1->right, lprcSrc2->right);
@@ -38,30 +38,30 @@ BOOL win32::IntersectRect(LPRECT lprcDst, const RECT *lprcSrc1, const RECT *lprc
     // Win32 clears empty intersections; upstream leaves inverted coordinates.
     if (rc.right <= rc.left || rc.bottom <= rc.top) {
         win32::SetRect(lprcDst, 0, 0, 0, 0);
-        return FALSE;
+        return 0;
     }
     *lprcDst = rc;
-    return TRUE;
+    return 1;
 }
 
 BOOL win32::OffsetRect(LPRECT lprc, int dx, int dy) {
     if (!lprc)
-        return FALSE;
+        return 0;
     lprc->left += dx;
     lprc->right += dx;
     lprc->top += dy;
     lprc->bottom += dy;
-    return TRUE;
+    return 1;
 }
 
 BOOL win32::InflateRect(LPRECT lprc, int dx, int dy) {
     if (!lprc)
-        return FALSE;
+        return 0;
     lprc->left -= dx;
     lprc->right += dx;
     lprc->top -= dy;
     lprc->bottom += dy;
-    return TRUE;
+    return 1;
 }
 
 BOOL win32::PtInRect(const RECT *lprc, POINT pt) {

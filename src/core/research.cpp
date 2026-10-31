@@ -68,7 +68,7 @@ int32_t CostOfDevelopingItem(char *rgTech) {
     int16_t i;
     int32_t lCur;
 
-    fUnreachable = FALSE;
+    fUnreachable = 0;
     lCost = 0;
     pTech = (char *)rgplr[idPlayer].rgTech;
     for (i = 0; i < 6 && rgTech[i] <= 26; i++) {
@@ -102,7 +102,7 @@ int16_t FShouldPartBeHidden(PART *ppart) {
     GrbitTrader grbitTrader;
 
     if (idPlayer == iplrNone) {
-        return FALSE;
+        return 0;
     }
     grbitTrader = grbitTraderNone;
     iItem = ppart->hs.iItem;
@@ -169,7 +169,7 @@ int16_t FShouldPartBeHidden(PART *ppart) {
         }
     }
     if (grbitTrader != grbitTraderNone && !(rgplr[idPlayer].grbitTrader & grbitTrader)) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }

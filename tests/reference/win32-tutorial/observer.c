@@ -93,7 +93,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     // Keep the previous complete observation until the input handler returns.
     if (fStateReading || cScannerInput != 0)
         return;
-    fStateReading = TRUE;
+    fStateReading = 1;
     stateLength = 0;
     memcpy(savedWork, szWork, sizeof(savedWork));
     StateAppend("version=1\nturn=%u\nyear=%u\nactive=%u\npage=%d\nbold=%d\nturnDone=%u\nautoComplete=%u\nerror=%d\nselection=%d|%d|%d\nmessage=%d\nfontHeight=%"
@@ -248,7 +248,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     }
     SetWindowTextA(stateEdit, stateText);
     memcpy(szWork, savedWork, sizeof(savedWork));
-    fStateReading = FALSE;
+    fStateReading = 0;
 }
 
 // StateWindowProc refreshes observations synchronously without changing game state.

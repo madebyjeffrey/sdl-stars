@@ -37,7 +37,7 @@ void ReadIniPresets(char *szIniFile) {
                     psz++;
                 }
                 strcpy(vrgZip[i].szName, psz);
-                vrgZip[i].fValid = TRUE;
+                vrgZip[i].fValid = 1;
             }
         }
     }
@@ -62,7 +62,7 @@ void ReadIniPresets(char *szIniFile) {
                     strcpy(vrgZipProd[i].szName, psz);
                     psz = szWork;
                     vrgZipProd[i].fNoResearch = *psz != 'a';
-                    vrgZipProd[i].fValid = TRUE;
+                    vrgZipProd[i].fValid = 1;
                     vrgZipProd[i].cpq = cpq;
                     psz += 2;
                     for (iPass = 0; iPass < cpq; iPass++) {
@@ -86,7 +86,7 @@ void ReadIniPresets(char *szIniFile) {
         }
     }
     TextIO().pfnCchGetString(idsDefault, vrgZipProd[0].szName);
-    vrgZipProd[0].fValid = TRUE;
+    vrgZipProd[0].fValid = 1;
     return;
 }
 
@@ -192,10 +192,10 @@ void ReadIniRecent(char *szSection, char *szEntry, char *szIniFile, int16_t cch)
     char   *psz;
 
     if (cch > 3) {
-        ini.fStartupFile = TRUE;
+        ini.fStartupFile = 1;
         strcpy(szBase, szWork);
     } else {
-        ini.fStartupFile = FALSE;
+        ini.fStartupFile = 0;
     }
     if (!vrgszMRU) {
         vrgszMRU = LpAlloc<char>(2304, htPerm);

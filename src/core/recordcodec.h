@@ -364,7 +364,7 @@ inline bool FDecodeRtFleet(std::span<const std::byte> rgb, FLEET &fl, bool fType
             if (fl.rgcsh[i] != 0) cish++;
         }
     }
-    if (cish == 0) fl.fDead = TRUE;
+    if (cish == 0) fl.fDead = 1;
     if (fl.det >= detMore) {
         if (!input.FReadU16Le(mask)) return false;
         for (i = 0; i < 5; i++, mask >>= 2) {

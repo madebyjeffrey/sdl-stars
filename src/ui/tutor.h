@@ -11,8 +11,8 @@ extern ITEMACTION rgiaQuikLoad[5];
 extern ITEMACTION rgiaLoadAllCol[5];
 extern ZIPPRODQ1  rgzpqTut[2];
 
-INT_PTR CALLBACK TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  TutorDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  PanicDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             ShowTutor(int16_t fShow);
 void             DrawTutorText(HWND hwnd);
 void             StartTutor(int16_t fRestart);

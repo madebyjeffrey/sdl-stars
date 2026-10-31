@@ -37,20 +37,20 @@ static intptr_t TestLUiSendMessage(HWND hwnd, int message, int value, LPARAM par
     int c = WitnessValue<int>(hwnd) - 10;
     if (c < 0 || c >= 3)
         abort();
-    if (message == CB_GETCURSEL)
+    if (message == win32::CB_GETCURSEL)
         return comboSelection[c];
-    if (message == CB_RESETCONTENT) {
+    if (message == win32::CB_RESETCONTENT) {
         comboCount[c] = 0;
         comboSelection[c] = -1;
         return 0;
     }
-    if (message == CB_ADDSTRING) {
+    if (message == win32::CB_ADDSTRING) {
         if (comboCount[c] >= 20)
             abort();
         strcpy(comboLabels[c][comboCount[c]], (const char *)param);
         return comboCount[c]++;
     }
-    if (message == CB_SETCURSEL) {
+    if (message == win32::CB_SETCURSEL) {
         comboSelection[c] = (value >= 0 && value < comboCount[c]) ? value : -1;
         return comboSelection[c];
     }
@@ -175,7 +175,7 @@ static int TestPopupMenu(HWND hwnd, int x, int y, int count, void *p, const char
             return 1;                                                                                                                                          \
         }                                                                                                                                                      \
     } while (0)
-static void edit(int cmd) { ZipOrderDlg(HwndWitness(1), WM_COMMAND, cmd, 0); }
+static void edit(int cmd) { ZipOrderDlg(HwndWitness(1), win32::WM_COMMAND, cmd, 0); }
 static void popup() { ApplyTransportPresetPopup(POINT16{0, 0}); }
 static void action() { ChangeTransportAction(); }
 static int  quantityControl(int l, int i, int *unit) {

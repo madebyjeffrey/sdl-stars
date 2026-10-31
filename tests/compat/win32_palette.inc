@@ -36,13 +36,13 @@ int main(void) {
     hbmOld = SelectObject(hdc, hbm); CHECK(hbmOld);
     hbmOtherOld = SelectObject(hdcOther, hbmOther); CHECK(hbmOtherOld);
     hpal = CreatePalette((const LOGPALETTE *)&pal); CHECK(hpal);
-    CHECK(GetObject(hpal, sizeof(c), &c) == sizeof(c) && c == 3);
+    CHECK(GetObjectA(hpal, sizeof(c), &c) == sizeof(c) && c == 3);
     CHECK(GetPaletteEntries(hpal, 0, 0, NULL) == 3);
     CHECK(GetPaletteEntries(hpal, 1, 4, rgpe) == 2 && rgpe[0].peRed == 210 && rgpe[1].peBlue == 120);
     pal.rgpe[0].peRed = 200;
     hpalOther = CreatePalette((const LOGPALETTE *)&pal); CHECK(hpalOther);
     CHECK(GetPaletteEntries(hpal, 0, 1, rgpe) == 1 && rgpe[0].peRed == 12);
-    hold = SelectPalette(hdc, hpal, FALSE); holdOther = SelectPalette(hdcOther, hpalOther, TRUE);
+    hold = SelectPalette(hdc, hpal, 0); holdOther = SelectPalette(hdcOther, hpalOther, 1);
     CHECK(hold && holdOther && hold == (HPALETTE)GetStockObject(DEFAULT_PALETTE));
     CHECK(GetPaletteEntries(hold, 0, 0, NULL) == 20);
     CHECK(GetPaletteEntries(hold, 0, 1, rgpe) == 1 && rgpe[0].peRed == 0 && rgpe[0].peGreen == 0 && rgpe[0].peBlue == 0);
@@ -51,9 +51,9 @@ int main(void) {
     CHECK(UnrealizeObject(hpal) && RealizePalette(hdc) == 0);
     hbr = CreateSolidBrush(PALETTEINDEX(0)); CHECK(hbr);
     CHECK(FillRect(hdc, &rc, hbr) && GetPixel(hdc, 0, 0) == RGB(12, 34, 56));
-    CHECK(SelectPalette(hdc, hpalOther, TRUE) == hpal);
+    CHECK(SelectPalette(hdc, hpalOther, 1) == hpal);
     CHECK(FillRect(hdc, &rc, hbr) && GetPixel(hdc, 0, 0) == RGB(200, 34, 56));
-    CHECK(SelectPalette(hdc, hpal, FALSE) == hpalOther);
+    CHECK(SelectPalette(hdc, hpal, 0) == hpalOther);
     CHECK(FillRect(hdcOther, &rc, hbr) && GetPixel(hdcOther, 0, 0) == RGB(200, 34, 56));
     CHECK(SetPixel(hdc, 0, 0, PALETTEINDEX(1)) == RGB(210, 180, 90));
     CHECK(SetPixel(hdc, 1, 0, PALETTERGB(17, 18, 19)) == RGB(17, 18, 19));
@@ -65,7 +65,7 @@ int main(void) {
     CHECK(UnrealizeObject(hbr) && FillRect(hdc, &rc, hbr));
     CHECK(SetBkColor(hdc, PALETTEINDEX(1)) != CLR_INVALID);
     CHECK(GetBkColor(hdc) == PALETTEINDEX(1));
-    CHECK(ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rc, "", 0, NULL));
+    CHECK(ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rc, "", 0, NULL));
     CHECK(GetPixel(hdc, 1, 1) == RGB(210, 180, 90));
     CHECK(StretchDIBits(hdc, 0, 0, 2, 1, 0, 0, 2, 1, rgbBits, (const BITMAPINFO *)&info, DIB_PAL_COLORS, SRCCOPY) == 1);
     CHECK(GetPixel(hdc, 0, 0) == RGB(210, 180, 90) && GetPixel(hdc, 1, 0) == RGB(12, 34, 56));
@@ -87,15 +87,15 @@ int main(void) {
     CHECK(GetPixel(hdcOther, 0, 0) == cr && DeleteObject(hbrPattern));
     info.bi.biBitCount = 1; info.bi.biHeight = 1; info.bi.biSizeImage = 4; rgbBits[0] = 0x40;
     // Changing the palette affects the next conversion, not already drawn RGB pixels.
-    CHECK(SelectPalette(hdc, hpalOther, FALSE) == hpal);
+    CHECK(SelectPalette(hdc, hpalOther, 0) == hpal);
     CHECK(GetPixel(hdc, 1, 0) == RGB(12, 34, 56));
     CHECK(StretchDIBits(hdc, 0, 0, 2, 1, 0, 0, 2, 1, rgbBits, (const BITMAPINFO *)&info, DIB_PAL_COLORS, SRCCOPY) == 1);
     CHECK(GetPixel(hdc, 1, 0) == RGB(200, 34, 56));
-    CHECK(SelectPalette(hdcOther, hpal, FALSE) == hpalOther);
-    CHECK(SelectPalette(hdc, hpal, FALSE) == hpalOther);
+    CHECK(SelectPalette(hdcOther, hpal, 0) == hpalOther);
+    CHECK(SelectPalette(hdc, hpal, 0) == hpalOther);
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!DeleteObject(hpal));
-    CHECK(!SelectPalette(hdc, (HPALETTE)hbr, FALSE));
+    CHECK(!SelectPalette(hdc, (HPALETTE)hbr, 0));
     CHECK(RealizePalette(NULL) == GDI_ERROR);
     CHECK(!CreatePalette(NULL));
     pal.version = 0x200; CHECK(!CreatePalette((const LOGPALETTE *)&pal)); pal.version = 0x300;
@@ -104,8 +104,8 @@ int main(void) {
     CHECK(!StretchDIBits(hdc, 0, 0, 2, 1, 0, 0, 2, 1, rgbBits, (const BITMAPINFO *)&info, DIB_PAL_COLORS, SRCCOPY));
     CHECK(GetPixel(hdc, 1, 0) == RGB(200, 34, 56));
 #endif
-    CHECK(SelectPalette(hdc, hold, FALSE) == hpal);
-    CHECK(SelectPalette(hdcOther, holdOther, FALSE) == hpal);
+    CHECK(SelectPalette(hdc, hold, 0) == hpal);
+    CHECK(SelectPalette(hdcOther, holdOther, 0) == hpal);
     CHECK(DeleteObject(hpal) && DeleteObject(hpalOther) && DeleteObject(hbr));
     CHECK(SelectObject(hdc, hbmOld) == hbm && DeleteObject(hbm));
     CHECK(SelectObject(hdcOther, hbmOtherOld) == hbmOther && DeleteObject(hbmOther));

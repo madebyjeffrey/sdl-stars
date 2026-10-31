@@ -8,13 +8,13 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    UINT uCommand = HELP_CONTEXT;
+    UINT uCommand = win32::HELP_CONTEXT;
     ULONG_PTR idh = 4501;
     unsigned long long ullContext;
     char *pszEnd;
 
     if (argc == 2 && !strcmp(argv[1], "--contents")) {
-        uCommand = HELP_INDEX;
+        uCommand = win32::HELP_INDEX;
         idh = 0;
     } else if (argc == 2 && argv[1][0] >= '0' && argv[1][0] <= '9') {
         errno = 0;

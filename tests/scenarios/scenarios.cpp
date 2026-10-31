@@ -43,11 +43,11 @@ static int16_t FBuildPopupOverload(const char *szDir) {
     int16_t i;
 
     if (!FStarsTestNewGame(szDir, 12345, NULL, 0) || !FStarsTestLoadHost())
-        return FALSE;
+        return 0;
     lppl = LpplStarsTestHomeworld(0);
     ish = IshFirstDesign(0);
     if (lppl == NULL || ish < 0)
-        return FALSE;
+        return 0;
     for (i = 0; i < 150; i++) {
         LpflStarsTestAddFleet(0, lppl->id, ish, 1);
     }
@@ -60,7 +60,7 @@ static const SCENARIO rgscen[] = {
 };
 
 int main(int argc, char **argv) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     char   *pch;
     size_t  i;
     int16_t iscen;

@@ -5,11 +5,11 @@
 #include "record_io.h"
 #include "desktop_choice_io.h"
 
-INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         return 1;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDC_SAVE:
         case IDC_NO_DON_T_SAVE:
@@ -20,11 +20,11 @@ INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             ControlIO().pfnEndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, 1090);
             return 1;
         }
         /* fallthrough */
-    case WM_DESTROY:
+    case win32::WM_DESTROY:
     default:
         return 0;
     }
@@ -34,9 +34,8 @@ void PromptSaveGame() {
     FARPROC lpProc;
     int16_t fRet;
 
-    lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
-    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
-    FreeProcInstance(lpProc);
+    lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
+    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
     if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
         FWriteLogFile(szBase, idPlayer);
@@ -50,24 +49,23 @@ int16_t FCanLeaveCurrentGame(void) {
     int16_t fRet;
     int16_t fSubmitSav;
 
-    if (idPlayer == iplrNone || !game.fDirty) return TRUE;
-    lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
-    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+    if (idPlayer == iplrNone || !game.fDirty) return 1;
+    lpProc = (DesktopChoiceIO().pfnAskSaveDialog);
+    fRet = ControlIO().pfnDialogBox(hInst, !game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2),
                      hwndFrame, lpProc, 0);
-    FreeProcInstance(lpProc);
-    if (fRet == 0 || fRet == -2) return FALSE;
+    if (fRet == 0 || fRet == -2) return 0;
     if (fRet == 1 || fRet == -1) {
         fSubmitSav = gd.fSubmit;
         gd.fSubmit = fRet == -1;
         if (!FWriteLogFile(szBase, idPlayer) || !FWriteHistFile(idPlayer)) {
             gd.fSubmit = fSubmitSav;
             /* The orders writer clears dirty before the history save. */
-            RecordIO().pfnDirtyGame(TRUE);
-            return FALSE;
+            RecordIO().pfnDirtyGame(1);
+            return 0;
         }
     }
-    game.fDirty = FALSE;
-    return TRUE;
+    game.fDirty = 0;
+    return 1;
 }
 
 // ShowTitleScreen brings back the title screen when FLoadGame fails.
@@ -78,23 +76,23 @@ void ShowTitleScreen() {
     int dx, dy, x, y;
 
     if (!hwndTitle) {
-        dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-        if (!win32::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0)) {
-            win32::SetRect(&rcWork, 0, 0, win32::GetSystemMetrics(SM_CXSCREEN), win32::GetSystemMetrics(SM_CYSCREEN));
+        dwStyle = win32::WS_OVERLAPPED | win32::WS_CAPTION | win32::WS_SYSMENU | win32::WS_MINIMIZEBOX;
+        if (!win32::SystemParametersInfoA(win32::SPI_GETWORKAREA, 0, &rcWork, 0)) {
+            win32::SetRect(&rcWork, 0, 0, win32::GetSystemMetrics(win32::SM_CXSCREEN), win32::GetSystemMetrics(win32::SM_CYSCREEN));
         }
         win32::SetRect(&rc, 0, 0, 800, 600);
-        dx = (((rc.right - rc.left) < (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(SM_CXDLGFRAME))) ? (rc.right - rc.left) : (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(SM_CXDLGFRAME)));
+        dx = (((rc.right - rc.left) < (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(win32::SM_CXDLGFRAME))) ? (rc.right - rc.left) : (rcWork.right - rcWork.left - 2 * win32::GetSystemMetrics(win32::SM_CXDLGFRAME)));
         dy = (((rc.bottom - rc.top) < (rcWork.bottom - rcWork.top -
-                 win32::GetSystemMetrics(SM_CYCAPTION) - 2 * win32::GetSystemMetrics(SM_CYDLGFRAME))) ? (rc.bottom - rc.top) : (rcWork.bottom - rcWork.top -
-                 win32::GetSystemMetrics(SM_CYCAPTION) - 2 * win32::GetSystemMetrics(SM_CYDLGFRAME)));
+                 win32::GetSystemMetrics(win32::SM_CYCAPTION) - 2 * win32::GetSystemMetrics(win32::SM_CYDLGFRAME))) ? (rc.bottom - rc.top) : (rcWork.bottom - rcWork.top -
+                 win32::GetSystemMetrics(win32::SM_CYCAPTION) - 2 * win32::GetSystemMetrics(win32::SM_CYDLGFRAME)));
         x = rcWork.left + (rcWork.right - rcWork.left - dx) / 2;
         y = rcWork.top + (rcWork.bottom - rcWork.top - dy) / 2;
-        hwndTitle = ui::CreateWindowEx(0, szTitle, "Stars!", dwStyle | WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
+        hwndTitle = ui::CreateWindowEx(0, szTitle, "Stars!", dwStyle | win32::WS_VISIBLE, x, y, dx, dy, hwndFrame, NULL, hInst, NULL);
         if (getenv("STARS_DEBUG_LIBRARY_STARTUP"))
             fprintf(stderr, "[DEBUG-library-startup] ShowTitleScreen CreateWindow returned title=%p valid=%d visible=%d\n",
                     (void *)hwndTitle, win32::IsWindow(hwndTitle), win32::IsWindowVisible(hwndTitle));
-        fFreeingTitle = FALSE;
-        ui::ShowWindow(hwndFrame, SW_HIDE);
+        fFreeingTitle = 0;
+        ui::ShowWindow(hwndFrame, win32::SW_HIDE);
     }
     return;
 }
@@ -151,7 +149,7 @@ void CloseGameWindows() {
         hwndPopup = 0;
     }
     hwndActive = 0;
-    fOrdersVis = FALSE;
+    fOrdersVis = 0;
     dxPlanetProdLB = 0;
     dxOrderED = 0;
     dxFleetCompLB = 0;

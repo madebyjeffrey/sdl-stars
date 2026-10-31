@@ -24,7 +24,7 @@ int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, cha
 
     TextIO().pfnCchGetString(idsSection, szSection);
     TextIO().pfnCchGetString(idsKey, szKey);
-    fInSection = FALSE;
+    fInSection = 0;
     for (pch = pszText; *pch != 0; pch = *pchEnd != 0 ? pchEnd + 1 : pchEnd) {
         pchEnd = strchr(pch, '\n');
         if (!pchEnd) {
@@ -59,10 +59,10 @@ int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, cha
             cch = CchUtf8Prefix(pchEq, cchValue - 1);
             memcpy(szValue, pchEq, cch);
             szValue[cch] = 0;
-            return TRUE;
+            return 1;
         }
     }
-    return FALSE;
+    return 0;
 }
 
 // LIniInt reads an INI key as GetPrivateProfileInt does: its leading

@@ -60,7 +60,7 @@ int main(void){
     CHECK(!FSaveProfile(&first,"unused",io) && unlinked==1 && !published);
     printf("S02 linked save-control witnesses: %d passed\n",checks);
 
-    CHECK(win32::GetLastError() == ERROR_WRITE_FAULT);
+    CHECK(win32::GetLastError() == win32::ERROR_WRITE_FAULT);
     CHECK(ProfileIO().pfnWrite == CWriteNative);
     {
         PROFILEIOSCOPE outer(io);

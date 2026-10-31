@@ -44,9 +44,9 @@ static LRESULT CALLBACK InputProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 static int TestPoints(HWND hwnd, HINSTANCE hInstance) {
     HWND hwndChild, hwndSibling;
     POINT pt = {5, 6};
-    hwndChild = CreateWindow("StarsInputContracts", "child", WS_CHILD | WS_VISIBLE,
+    hwndChild = CreateWindowExA(0, "StarsInputContracts", "child", WS_CHILD | WS_VISIBLE,
                             20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)101, hInstance, NULL);
-    hwndSibling = CreateWindow("StarsInputContracts", "sibling", WS_CHILD | WS_VISIBLE,
+    hwndSibling = CreateWindowExA(0, "StarsInputContracts", "sibling", WS_CHILD | WS_VISIBLE,
                               20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)102, hInstance, NULL);
     CHECK(hwndChild && hwndSibling && ClientToScreen(hwndChild, &pt));
     CHECK(SetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE));
@@ -60,9 +60,9 @@ static int TestPoints(HWND hwnd, HINSTANCE hInstance) {
     ShowWindow(hwndChild, SW_HIDE);
     CHECK(WindowFromPoint(pt) == hwndSibling);
     ShowWindow(hwndChild, SW_SHOW);
-    EnableWindow(hwndChild, FALSE);
+    EnableWindow(hwndChild, 0);
     CHECK(WindowFromPoint(pt) == hwndSibling);
-    EnableWindow(hwndChild, TRUE);
+    EnableWindow(hwndChild, 1);
     CHECK(WindowFromPoint(pt) == hwndChild);
     cWheel = 0;
     SendMessageA(hwndChild, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA), MAKELPARAM(pt.x, pt.y));
@@ -101,7 +101,7 @@ static int WaitKey(HWND hwnd, APPMSG *lpmsg, UINT flags) {
         SDL_Delay(5);
 #endif
     } while (GetTickCount() - ms < 2000);
-    CHECK(FALSE);
+    CHECK(0);
     return 1;
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
@@ -111,7 +111,7 @@ static int TestWheelClicks(HWND hwnd, HINSTANCE hInstance) {
     APPMSG msg;
     POINT pt = {28, 40};
     int i, total = 0;
-    hwndChild = CreateWindow("StarsInputContracts", "wheel child", WS_CHILD | WS_VISIBLE,
+    hwndChild = CreateWindowExA(0, "StarsInputContracts", "wheel child", WS_CHILD | WS_VISIBLE,
                             20, 30, 100, 80, hwnd, (HMENU)(INT_PTR)103, hInstance, NULL);
     CHECK(hwndChild);
     SetFocus(hwndChild); Drain();
@@ -162,7 +162,7 @@ static int TestPhysical(void) {
     SHORT w;
     POINT pt;
     const char *pszDriver = SDL_GetCurrentVideoDriver();
-    fMock = TRUE;
+    fMock = 1;
     rgfKeys[SDL_SCANCODE_A] = true;
     rgfKeys[SDL_SCANCODE_LSHIFT] = true;
     modMock = SDL_KMOD_RCTRL | SDL_KMOD_LSHIFT;
@@ -193,7 +193,7 @@ static int TestPhysical(void) {
     CHECK(!GetCursorPos(&pt) && GetLastError() == ERROR_NOT_SUPPORTED);
     pszDriverMock = NULL;
     CHECK(!GetCursorPos(NULL));
-    fMock = FALSE;
+    fMock = 0;
     return 0;
 }
 static int TestSnapshots(HWND hwnd) {
@@ -306,13 +306,13 @@ int main(void) {
 #endif
 
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.hInstance = hInstance; wc.lpszClassName = "StarsInputContracts"; wc.lpfnWndProc = InputProc; wc.style = CS_DBLCLKS;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "input", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "input", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
                         NULL, NULL, hInstance, NULL);
     CHECK(hwnd);
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
@@ -330,11 +330,11 @@ int main(void) {
     CHECK(WaitKey(hwnd, &msg, PM_REMOVE) == 0 && msg.message == WM_KEYUP);
     CHECK(!(GetKeyState(VK_SHIFT) & 0x8000));
     w = GetKeyState('Z');
-    CHECK(PostMessage(hwnd, WM_KEYDOWN, 'Z', 1));
+    CHECK(PostMessageA(hwnd, WM_KEYDOWN, 'Z', 1));
     CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
     CHECK(GetKeyState('Z') == w);
     for (i = 0; i < 4; i++) {
-        CHECK(PostMessage(hwnd, WM_KEYDOWN, rgControl[i], (rgScan[i] << 16) | 1));
+        CHECK(PostMessageA(hwnd, WM_KEYDOWN, rgControl[i], (rgScan[i] << 16) | 1));
         CHECK(PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
         CHECK(TranslateMessage(&msg));
         CHECK(PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE) && msg.wParam == rgControl[i]);

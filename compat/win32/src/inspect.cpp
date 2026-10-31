@@ -19,7 +19,8 @@ static void AppendStyle(char *psz, size_t cb, const char *pszName) {
     SDL_strlcat(psz, pszName, cb);
 }
 
-static void DecodeStyles(char *psz, size_t cb, DWORD *lpdw, const STYLEFIELD *rg, size_t c) {
+template<size_t c>
+static void DecodeStyles(char *psz, size_t cb, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
     size_t i;
     DWORD dwFields = 0, dwOriginal = *lpdw;
     for (i = 0; i < c; i++) {
@@ -35,34 +36,32 @@ static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, char *psz,
     DWORD dw = fExtended ? lp->dwExStyle : lp->dwStyle;
     char szUnknown[32];
     *psz = 0;
-#define DECODE(kind) DecodeStyles(psz, cb, &dw, rgstyle##kind, SDL_arraysize(rgstyle##kind))
     if (fExtended) {
-        DECODE(Extended);
+        DecodeStyles(psz, cb, &dw, rgstyleExtended);
     } else {
-        if (!(dw & (WS_CHILD | WS_POPUP))) AppendStyle(psz, cb, "WS_OVERLAPPED");
-        DECODE(Window);
-        if (dw & WS_GROUP) AppendStyle(psz, cb, lp->dwStyle & WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
-        if (dw & WS_TABSTOP) AppendStyle(psz, cb, lp->dwStyle & WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
-        dw &= ~(WS_GROUP | WS_TABSTOP);
-        if (lp->fDialog) { DECODE(Dialog); }
+        if (!(dw & (win32::WS_CHILD | win32::WS_POPUP))) AppendStyle(psz, cb, "WS_OVERLAPPED");
+        DecodeStyles(psz, cb, &dw, rgstyleWindow);
+        if (dw & win32::WS_GROUP) AppendStyle(psz, cb, lp->dwStyle & win32::WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
+        if (dw & win32::WS_TABSTOP) AppendStyle(psz, cb, lp->dwStyle & win32::WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
+        dw &= ~(win32::WS_GROUP | win32::WS_TABSTOP);
+        if (lp->fDialog) { DecodeStyles(psz, cb, &dw, rgstyleDialog); }
         else switch (lp->iControl) {
-        case 1: DECODE(Button); break;
-        case 2: DECODE(Static); break;
-        case 3: DECODE(Edit); break;
-        case 4: DECODE(List); break;
+        case 1: DecodeStyles(psz, cb, &dw, rgstyleButton); break;
+        case 2: DecodeStyles(psz, cb, &dw, rgstyleStatic); break;
+        case 3: DecodeStyles(psz, cb, &dw, rgstyleEdit); break;
+        case 4: DecodeStyles(psz, cb, &dw, rgstyleList); break;
         case 5:
-            DECODE(Scroll);
-            if (dw & SBS_TOPALIGN) AppendStyle(psz, cb, lp->dwStyle & SBS_SIZEBOX ?
-                "SBS_SIZEBOXTOPLEFTALIGN" : lp->dwStyle & SBS_VERT ? "SBS_LEFTALIGN" : "SBS_TOPALIGN");
-            if (dw & SBS_BOTTOMALIGN) AppendStyle(psz, cb, lp->dwStyle & SBS_SIZEBOX ?
-                "SBS_SIZEBOXBOTTOMRIGHTALIGN" : lp->dwStyle & SBS_VERT ? "SBS_RIGHTALIGN" : "SBS_BOTTOMALIGN");
-            dw &= ~(SBS_TOPALIGN | SBS_BOTTOMALIGN);
+            DecodeStyles(psz, cb, &dw, rgstyleScroll);
+            if (dw & win32::SBS_TOPALIGN) AppendStyle(psz, cb, lp->dwStyle & win32::SBS_SIZEBOX ?
+                "SBS_SIZEBOXTOPLEFTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_LEFTALIGN" : "SBS_TOPALIGN");
+            if (dw & win32::SBS_BOTTOMALIGN) AppendStyle(psz, cb, lp->dwStyle & win32::SBS_SIZEBOX ?
+                "SBS_SIZEBOXBOTTOMRIGHTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_RIGHTALIGN" : "SBS_BOTTOMALIGN");
+            dw &= ~(win32::SBS_TOPALIGN | win32::SBS_BOTTOMALIGN);
             break;
-        case 6: DECODE(Combo); break;
-        case 7: DECODE(Toolbar); break;
+        case 6: DecodeStyles(psz, cb, &dw, rgstyleCombo); break;
+        case 7: DecodeStyles(psz, cb, &dw, rgstyleToolbar); break;
         }
     }
-#undef DECODE
     if (dw) {
         snprintf(szUnknown, sizeof(szUnknown), "0x%08x", (unsigned)dw);
         AppendStyle(psz, cb, szUnknown);
@@ -118,13 +117,13 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
     HWND lpwin;
     STARSCOMPATWINDOW *lpitem;
     size_t c = 0, i;
-    if (!SDL_IsMainThread() || !lpsnap || lpsnap->rgWindow || lpsnap->cWindow != 0) return FALSE;
+    if (!SDL_IsMainThread() || !lpsnap || lpsnap->rgWindow || lpsnap->cWindow != 0) return 0;
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) c++;
-    if (c == 0) return TRUE;
-    if (c > SIZE_MAX / sizeof(*lpitem)) return FALSE;
+    if (c == 0) return 1;
+    if (c > SIZE_MAX / sizeof(*lpitem)) return 0;
     lpsnap->rgWindow = (STARSCOMPATWINDOW *)(SDL_calloc(c, sizeof(*lpitem)));
-    if (!lpsnap->rgWindow) return FALSE;
+    if (!lpsnap->rgWindow) return 0;
     lpsnap->cWindow = c;
     i = c;
     // No SendMessage, enumeration callbacks or event pumping: a capture cannot
@@ -140,17 +139,17 @@ BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
         lpitem->iControl = lpwin->iControl; lpitem->fDialog = lpwin->fDialog;
         lpitem->fVisible = win32::IsWindowVisible(lpwin); lpitem->fEnabled = win32::IsWindowEnabled(lpwin);
         lpitem->fFocused = win32::GetFocus() == lpwin; lpitem->fCaptured = win32::GetCapture() == lpwin;
-        lpitem->fUtf8Text = TRUE;
+        lpitem->fUtf8Text = 1;
         lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass.get());
-        lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & ES_PASSWORD) ?
+        lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & win32::ES_PASSWORD) ?
                                     "[password]" : lpwin->pszTitle);
         if (!lpitem->pszClass || !lpitem->pszText || !win32::GetWindowRect(lpwin, &lpitem->rcWindow) ||
             !win32::GetClientRect(lpwin, &lpitem->rcClient)) {
             StarsCompatFreeHierarchy(lpsnap);
-            return FALSE;
+            return 0;
         }
     }
-    return TRUE;
+    return 1;
 }
 
 static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
@@ -160,18 +159,18 @@ static BOOL FWriteString(NATIVEFILE *lpfile, const char *psz, BOOL fUtf8) {
     size_t cb = strlen(psz);
     int c;
     (void)fUtf8;
-    if (ChPutNativeFile('"', lpfile) == EOF) return FALSE;
+    if (ChPutNativeFile('"', lpfile) == EOF) return 0;
     while (*lpch) {
         c = CbUtf8Char((const char *)lpch, cb, &ch);
-        if (c == 0) return FALSE;
+        if (c == 0) return 0;
         lpch += c; cb -= c;
         if (ch == '"' || ch == '\\') {
-            if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile((int)ch, lpfile) == EOF) return FALSE;
+            if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile((int)ch, lpfile) == EOF) return 0;
         } else if (ch < 32) {
-            if (CchNativePrintf(lpfile, "\\u%04x", (unsigned)ch) < 0) return FALSE;
+            if (CchNativePrintf(lpfile, "\\u%04x", (unsigned)ch) < 0) return 0;
         } else {
             lpEnd = SDL_UCS4ToUTF8(ch, rgb);
-            if (CWriteNative(rgb, 1, (size_t)(lpEnd - rgb), lpfile) != (size_t)(lpEnd - rgb)) return FALSE;
+            if (CWriteNative(rgb, 1, (size_t)(lpEnd - rgb), lpfile) != (size_t)(lpEnd - rgb)) return 0;
         }
     }
     return ChPutNativeFile('"', lpfile) != EOF;
@@ -181,12 +180,12 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
     size_t i;
     const STARSCOMPATWINDOW *lp;
     char szStyle[2048], szExStyle[2048];
-    if (!lpsnap || !lpfile || (lpsnap->cWindow != 0 && !lpsnap->rgWindow)) return FALSE;
-    if (IPutNativeString("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return FALSE;
+    if (!lpsnap || !lpfile || (lpsnap->cWindow != 0 && !lpsnap->rgWindow)) return 0;
+    if (IPutNativeString("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return 0;
     for (i = 0; i < lpsnap->cWindow; i++) {
         lp = &lpsnap->rgWindow[i];
-        FormatStyles(lp, FALSE, szStyle, sizeof(szStyle));
-        FormatStyles(lp, TRUE, szExStyle, sizeof(szExStyle));
+        FormatStyles(lp, 0, szStyle, sizeof(szStyle));
+        FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
         if (CchNativePrintf(lpfile, "%s{\"id\":\"%" PRIu64 "\",\"parent\":\"%" PRIu64
                     "\",\"owner\":\"%" PRIu64 "\",\"controlId\":\"%" PRIdPTR
                     "\",\"style\":%u,\"exStyle\":%u,\"controlKind\":%u,\"dialog\":%s,"
@@ -198,29 +197,29 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
                     lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
                     lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom) < 0 ||
-            !FWriteString(lpfile, lp->pszClass, FALSE) || IPutNativeString(",\"text\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->pszClass, 0) || IPutNativeString(",\"text\":", lpfile) == EOF ||
             !FWriteString(lpfile, lp->pszText, lp->fUtf8Text) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szStyle, FALSE) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
-            !FWriteString(lpfile, szExStyle, FALSE) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
-            !FWriteString(lpfile, PszControlKind(lp->iControl), FALSE) || ChPutNativeFile('}', lpfile) == EOF) return FALSE;
+            !FWriteString(lpfile, szStyle, 0) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, szExStyle, 0) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
+            !FWriteString(lpfile, PszControlKind(lp->iControl), 0) || ChPutNativeFile('}', lpfile) == EOF) return 0;
     }
     return IPutNativeString("\n]}\n", lpfile) != EOF && !FNativeStreamError(lpfile);
 }
 
 static void InspectDetails(HWND hwnd) {
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
-    int i = (int)win32::SendMessageA(hwndList, LB_GETCURSEL, 0, 0);
+    int i = (int)win32::SendMessageA(hwndList, win32::LB_GETCURSEL, 0, 0);
     LRESULT iItem;
     const STARSCOMPATWINDOW *lp;
     char *psz;
     char szStyle[2048], szExStyle[2048];
     size_t cb;
-    if (i == LB_ERR) return;
-    iItem = win32::SendMessageA(hwndList, LB_GETITEMDATA, (WPARAM)i, 0);
+    if (i == win32::LB_ERR) return;
+    iItem = win32::SendMessageA(hwndList, win32::LB_GETITEMDATA, (WPARAM)i, 0);
     if (iItem < 0 || (size_t)iItem >= snapInspector.cWindow) return;
     lp = &snapInspector.rgWindow[iItem];
-    FormatStyles(lp, FALSE, szStyle, sizeof(szStyle));
-    FormatStyles(lp, TRUE, szExStyle, sizeof(szExStyle));
+    FormatStyles(lp, 0, szStyle, sizeof(szStyle));
+    FormatStyles(lp, 1, szExStyle, sizeof(szExStyle));
     cb = strlen(lp->pszClass) + strlen(lp->pszText) + strlen(szStyle) + strlen(szExStyle);
     if (cb > SIZE_MAX - 640 || !(psz = (char *)(SDL_malloc(cb + 640)))) return;
     snprintf(psz, cb + 640,
@@ -258,8 +257,8 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         snprintf(sz, sizeof(sz), "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, (intptr_t)lp->idControl, szText, lp->fVisible ? "" : " (hidden)");
-        iRow = (int)win32::SendMessageA(hwndList, LB_ADDSTRING, 0, (LPARAM)sz);
-        if (iRow >= 0) win32::SendMessageA(hwndList, LB_SETITEMDATA, (WPARAM)iRow, (LPARAM)i);
+        iRow = (int)win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, (LPARAM)sz);
+        if (iRow >= 0) win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, (WPARAM)iRow, (LPARAM)i);
         InspectRows(hwndList, lp->id, cDepth + 1);
     }
 }
@@ -267,48 +266,48 @@ static void InspectRows(HWND hwndList, uint64_t idParent, int cDepth) {
 static BOOL RefreshInspector(HWND hwnd) {
     STARSCOMPATSNAPSHOT snap = {};
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
-    if (!StarsCompatCaptureHierarchy(&snap)) return FALSE;
-    win32::SendMessageA(hwndList, LB_RESETCONTENT, 0, 0);
+    if (!StarsCompatCaptureHierarchy(&snap)) return 0;
+    win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
     StarsCompatFreeHierarchy(&snapInspector);
     snapInspector = snap;
     InspectRows(hwndList, 0, 0);
-    win32::SendMessageA(hwndList, LB_SETCURSEL, 0, 0);
+    win32::SendMessageA(hwndList, win32::LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);
-    return TRUE;
+    return 1;
 }
 
-static LRESULT CALLBACK InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+static LRESULT  InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     HBRUSH hbr;
     int cxList, fPainted;
     switch (msg) {
-    case WM_CREATE:
-        if (!win32::CreateWindow("ListBox", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY,
+    case win32::WM_CREATE:
+        if (!win32::CreateWindowExA(0, "ListBox", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP | win32::WS_VSCROLL | win32::LBS_NOTIFY,
                            8, 40, 400, 500, hwnd, (HMENU)(INT_PTR)1, NULL, NULL) ||
-            !win32::CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
-                           ES_READONLY | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL,
+            !win32::CreateWindowExA(0, "Edit", "", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_BORDER | win32::WS_TABSTOP |
+                           win32::ES_READONLY | win32::ES_MULTILINE | win32::ES_AUTOVSCROLL | win32::ES_AUTOHSCROLL,
                            420, 40, 360, 500, hwnd, (HMENU)(INT_PTR)2, NULL, NULL) ||
-            !win32::CreateWindow("Button", "Refresh", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+            !win32::CreateWindowExA(0, "Button", "Refresh", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP | win32::BS_PUSHBUTTON,
                            8, 8, 100, 24, hwnd, (HMENU)(INT_PTR)3, NULL, NULL)) return -1;
-        if (pfnObjectInspector) win32::CreateWindow("Button", "Map objects", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+        if (pfnObjectInspector) win32::CreateWindowExA(0, "Button", "Map objects", win32::WS_CHILD | win32::WS_VISIBLE | win32::WS_TABSTOP,
                                               120, 8, 110, 24, hwnd, (HMENU)(INT_PTR)4, NULL, NULL);
         return 0;
-    case WM_ERASEBKGND:
-        if (!win32::GetClientRect(hwnd, &rc) || !(hbr = win32::CreateSolidBrush(win32::GetSysColor(COLOR_BTNFACE)))) return 0;
+    case win32::WM_ERASEBKGND:
+        if (!win32::GetClientRect(hwnd, &rc) || !(hbr = win32::CreateSolidBrush(win32::GetSysColor(win32::COLOR_BTNFACE)))) return 0;
         fPainted = win32::FillRect((HDC)w, &rc, hbr);
         win32::DeleteObject(hbr);
         return fPainted;
-    case WM_SIZE:
+    case win32::WM_SIZE:
         win32::GetClientRect(hwnd, &rc); cxList = StarsMax(0, rc.right / 2 - 12);
-        win32::MoveWindow(win32::GetDlgItem(hwnd, 1), 8, 40, cxList, StarsMax(0, rc.bottom - 48), TRUE);
-        win32::MoveWindow(win32::GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), TRUE);
+        win32::MoveWindow(win32::GetDlgItem(hwnd, 1), 8, 40, cxList, StarsMax(0, rc.bottom - 48), 1);
+        win32::MoveWindow(win32::GetDlgItem(hwnd, 2), rc.right / 2, 40, StarsMax(0, rc.right / 2 - 8), StarsMax(0, rc.bottom - 48), 1);
         return 0;
-    case WM_COMMAND:
-        if (LOWORD(w) == 3 && HIWORD(w) == BN_CLICKED) RefreshInspector(hwnd);
-        else if (LOWORD(w) == 4 && HIWORD(w) == BN_CLICKED && pfnObjectInspector) CompatInvokeInspector(pfnObjectInspector, hwnd);
-        else if (LOWORD(w) == 1 && HIWORD(w) == LBN_SELCHANGE) InspectDetails(hwnd);
+    case win32::WM_COMMAND:
+        if (LOWORD(w) == 3 && HIWORD(w) == win32::BN_CLICKED) RefreshInspector(hwnd);
+        else if (LOWORD(w) == 4 && HIWORD(w) == win32::BN_CLICKED && pfnObjectInspector) CompatInvokeInspector(pfnObjectInspector, hwnd);
+        else if (LOWORD(w) == 1 && HIWORD(w) == win32::LBN_SELCHANGE) InspectDetails(hwnd);
         return 0;
-    case WM_DESTROY:
+    case win32::WM_DESTROY:
         idInspector = 0; StarsCompatFreeHierarchy(&snapInspector); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
@@ -323,20 +322,20 @@ HWND StarsCompatShowInspector(void) {
         wc.lpfnWndProc = InspectorProc; wc.lpszClassName = "StarsCompatInspector";
         if (!fInspectorClass) {
             if (!win32::RegisterClassA(&wc)) return NULL;
-            fInspectorClass = TRUE;
+            fInspectorClass = 1;
         }
-        hwnd = win32::CreateWindow(wc.lpszClassName, "Stars window inspector", WS_OVERLAPPEDWINDOW,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 900, 600, NULL, NULL, NULL, NULL);
+        hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Stars window inspector", win32::WS_OVERLAPPEDWINDOW,
+                             win32::CW_USEDEFAULT, win32::CW_USEDEFAULT, 900, 600, NULL, NULL, NULL, NULL);
         if (!hwnd) return NULL;
         idInspector = StarsCompatWindowId(hwnd);
     }
     if (!RefreshInspector(hwnd)) { win32::DestroyWindow(hwnd); return NULL; }
-    win32::ShowWindow(hwnd, SW_SHOWNORMAL);
+    win32::ShowWindow(hwnd, win32::SW_SHOWNORMAL);
     win32::SetFocus(win32::GetDlgItem(hwnd, 1));
     return hwnd;
 }
 
 void CompatShutdownInspector(void) {
-    idInspector = 0; fInspectorClass = FALSE; pfnObjectInspector = NULL;
+    idInspector = 0; fInspectorClass = 0; pfnObjectInspector = NULL;
     StarsCompatFreeHierarchy(&snapInspector);
 }

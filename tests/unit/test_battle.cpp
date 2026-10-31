@@ -7,14 +7,14 @@
 // OpenBattlePlans loads player 1's turn file and opens the real Battle Plans
 // dialog on its first plan.
 static HWND OpenBattlePlans(const char *pszTest) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     HWND hwnd;
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir(pszTest, szDir, sizeof(szDir)));
     TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
     TEST_ASSERT(FStarsTestLoadPlayer(0));
-    hwnd = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
+    hwnd = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_BATTLE_PLANS), NULL, BattlePlansDlg, 0);
     TEST_ASSERT(hwnd != NULL);
     return hwnd;
 }
@@ -22,7 +22,7 @@ static HWND OpenBattlePlans(const char *pszTest) {
 // Replay uses aligned runtime tokens while its borrowed records retain the
 // odd 29-byte wire stride. Exercise attack, round transition, seek and summary.
 static void test_battle_replay_bytes(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     uint8_t *lpb;
     TOK rgtok[2]{};
@@ -61,7 +61,7 @@ static void test_battle_replay_bytes(void) {
     TEST_CHECK(BtlDataGet(0) == lpb && BtlDataGet(1) == NULL);
     TEST_CHECK(CBattleUnits(lpb, static_cast<BattleUnitFlags>(grBuOurUnits | grBuClassAll)) == 10);
     TEST_CHECK(CBattleUnits(lpb, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuClassAll)) == 8);
-    TEST_CHECK(CBattleKills(lpb, TRUE) == 2 && CBattleKills(lpb, FALSE) == 0);
+    TEST_CHECK(CBattleKills(lpb, 1) == 2 && CBattleKills(lpb, 0) == 0);
     vrgtok = rgtok; vrgdpVCR = rgdp;
     vlpbdVCR = lpb; vlpbdVCRNext = lpb + 92;
     viStepVCRCur = -1; vcStepVCR = 1;
@@ -85,8 +85,8 @@ static void ChooseIn(HWND hwnd, int idc, int i) {
 
     hwndCtl = win32::GetDlgItem(hwnd, idc);
     TEST_ASSERT(hwndCtl != NULL);
-    TEST_ASSERT(ui::SendMessage(hwndCtl, CB_SETCURSEL, i, 0) == i);
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(idc, CBN_SELCHANGE), (LPARAM)hwndCtl);
+    TEST_ASSERT(ui::SendMessage(hwndCtl, win32::CB_SETCURSEL, i, 0) == i);
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(idc, win32::CBN_SELCHANGE), (LPARAM)hwndCtl);
 }
 
 // The Battle Plans drop-downs read their selection with the Win16 message
@@ -112,7 +112,7 @@ static void test_BattlePlansDlg_stores_choices(void) {
 // the starbase owner, its friend and its target, that the starbase attacks
 // only the target and nobody attacks the friend or is attacked by it.
 static void test_CplrBattle_starbase_attacks_only_its_target(void) {
-    char                 szDir[MAX_PATH];
+    char                 szDir[cbTestPath];
     const char          *rgszAi[] = {"#1 4", "#2 4"};
     static const int16_t rgrgiplr[6][3] = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
     PLANET              *lppl;
@@ -153,7 +153,7 @@ static void test_CplrBattle_starbase_attacks_only_its_target(void) {
             TEST_ASSERT(ish < 16);
             lpfl = LpflStarsTestAddFleet(i, lppl->id, ish, 1);
         }
-        LinkFleets(FALSE);
+        LinkFleets(0);
         lpfl = LpflFromId(lpfl->id);
         CplrBattle(lpfl, rggrfAttack, &grfPlayer, &grfSpectator);
         TEST_CHECK_(rggrfAttack[iplrSB] == 1 << iplrTarget, "the starbase attacks %#x", rggrfAttack[iplrSB]);

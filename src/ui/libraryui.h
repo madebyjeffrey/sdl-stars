@@ -2,47 +2,47 @@
 #define STARS_LIBRARYUI_H
 
 #include "win.h"
-#define IDD_LIBRARY_RACE_SAVE 2430
-#define IDC_LIBRARY_RACE_UPDATE 2431
-#define IDC_LIBRARY_RACE_VERSION 2432
-#define IDC_LIBRARY_RACE_SAVE_TEXT 2433
-#define IDD_LIBRARY_NAME 2400
-#define IDD_LIBRARY_GAME_REVISION 2440
-#define IDC_LIBRARY_GAME_REVISION_TEXT 2441
-#define IDC_LIBRARY_PLAYERS 2442
-#define IDC_LIBRARY_PLAYER_LABEL 2443
-#define IDC_LIBRARY_CONTINUE_DETAILS 2444
-#define IDC_LIBRARY_GAMES 2401
-#define IDC_LIBRARY_IMPORT 2402
-#define IDC_LIBRARY_IMPORT_FOLDER 2403
-#define IDC_LIBRARY_RACES 2404
-#define IDC_LIBRARY_RACE_NEW 2405
-#define IDC_LIBRARY_RACE_EDIT 2406
-#define IDC_LIBRARY_RACE_IMPORT 2407
-#define IDC_LIBRARY_RACE_DUPLICATE 2408
-#define IDC_LIBRARY_RACE_EXPORT 2409
-#define IDC_LIBRARY_RACE_DELETE 2410
-#define IDD_LIBRARY_TURN_TARGET 2411
-#define IDC_LIBRARY_TURN_TARGET_LIST 2412
-#define IDD_LIBRARY_TURN_CONFLICT 2420
-#define IDC_LIBRARY_TURN_REPLACE 2421
-#define IDC_LIBRARY_TURN_SEPARATE 2422
-#define IDM_LIBRARY_EXPORT_ORDERS 2413
-#define IDC_LIBRARY_DUPLICATE 2414
-#define IDC_LIBRARY_RENAME 2415
-#define IDC_LIBRARY_GAME_EXPORT 2416
-#define WM_STARS_IMPORT_FOLDER (WM_APP + 3)
-#define WM_STARS_EXPORT_FOLDER (WM_APP + 4)
-#define IDC_LIBRARY_HOST_GAMES 2417
-#define IDC_LIBRARY_GAMES_VIEW 2418
-#define IDC_LIBRARY_HOST_VIEW 2419
-#define IDC_LIBRARY_IMPORT_ORDERS 2420
-#define IDC_LIBRARY_GAME_DELETE 2421
-#define IDC_LIBRARY_TUTORIAL 2434
+inline constexpr auto IDD_LIBRARY_RACE_SAVE = 2430;
+inline constexpr auto IDC_LIBRARY_RACE_UPDATE = 2431;
+inline constexpr auto IDC_LIBRARY_RACE_VERSION = 2432;
+inline constexpr auto IDC_LIBRARY_RACE_SAVE_TEXT = 2433;
+inline constexpr auto IDD_LIBRARY_NAME = 2400;
+inline constexpr auto IDD_LIBRARY_GAME_REVISION = 2440;
+inline constexpr auto IDC_LIBRARY_GAME_REVISION_TEXT = 2441;
+inline constexpr auto IDC_LIBRARY_PLAYERS = 2442;
+inline constexpr auto IDC_LIBRARY_PLAYER_LABEL = 2443;
+inline constexpr auto IDC_LIBRARY_CONTINUE_DETAILS = 2444;
+inline constexpr auto IDC_LIBRARY_GAMES = 2401;
+inline constexpr auto IDC_LIBRARY_IMPORT = 2402;
+inline constexpr auto IDC_LIBRARY_IMPORT_FOLDER = 2403;
+inline constexpr auto IDC_LIBRARY_RACES = 2404;
+inline constexpr auto IDC_LIBRARY_RACE_NEW = 2405;
+inline constexpr auto IDC_LIBRARY_RACE_EDIT = 2406;
+inline constexpr auto IDC_LIBRARY_RACE_IMPORT = 2407;
+inline constexpr auto IDC_LIBRARY_RACE_DUPLICATE = 2408;
+inline constexpr auto IDC_LIBRARY_RACE_EXPORT = 2409;
+inline constexpr auto IDC_LIBRARY_RACE_DELETE = 2410;
+inline constexpr auto IDD_LIBRARY_TURN_TARGET = 2411;
+inline constexpr auto IDC_LIBRARY_TURN_TARGET_LIST = 2412;
+inline constexpr auto IDD_LIBRARY_TURN_CONFLICT = 2420;
+inline constexpr auto IDC_LIBRARY_TURN_REPLACE = 2421;
+inline constexpr auto IDC_LIBRARY_TURN_SEPARATE = 2422;
+inline constexpr auto IDM_LIBRARY_EXPORT_ORDERS = 2413;
+inline constexpr auto IDC_LIBRARY_DUPLICATE = 2414;
+inline constexpr auto IDC_LIBRARY_RENAME = 2415;
+inline constexpr auto IDC_LIBRARY_GAME_EXPORT = 2416;
+inline constexpr auto WM_STARS_IMPORT_FOLDER = (win32::WM_APP + 3);
+inline constexpr auto WM_STARS_EXPORT_FOLDER = (win32::WM_APP + 4);
+inline constexpr auto IDC_LIBRARY_HOST_GAMES = 2417;
+inline constexpr auto IDC_LIBRARY_GAMES_VIEW = 2418;
+inline constexpr auto IDC_LIBRARY_HOST_VIEW = 2419;
+inline constexpr auto IDC_LIBRARY_IMPORT_ORDERS = 2420;
+inline constexpr auto IDC_LIBRARY_GAME_DELETE = 2421;
+inline constexpr auto IDC_LIBRARY_TUTORIAL = 2434;
 
 /* New games pass their title; imports pass NULL to choose a library name. */
 int16_t FChooseLibraryGameName(HWND hwnd, char *pszFile, const char *pszName);
-INT_PTR CALLBACK LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 int16_t FFinishLibraryGame(HWND hwnd, int16_t fGenerated);
 void InitLibraryGames(HWND hwnd, const RECT *lprc);
 void RefreshLibraryGames(HWND hwnd);
@@ -86,9 +86,9 @@ void RefreshLibraryRaces(HWND hwnd);
 int16_t FSelectLibraryRace(HWND hwnd, char *pszName);
 int16_t FEnumerateLibraryRaces(FNativeDirectoryEntryProc pfnEntry, void *lpData);
 void ShowLibraryImportFolderPicker(HWND hwnd);
-INT_PTR CALLBACK LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  LibraryTurnTargetDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  LibraryTurnConflictDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 #endif

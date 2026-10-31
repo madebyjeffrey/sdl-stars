@@ -7,7 +7,7 @@
 
 extern BattleUnitFlags mpimdgrbitBU[8];
 
-LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 int16_t          FIsPopupHullType(int16_t ishdef);
 void             DrawPopup(HWND hwnd, HDC hdc);
 void             Popup(HWND hwnd, int16_t x, int16_t y);

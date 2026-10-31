@@ -61,10 +61,10 @@ int16_t FDestIsWP0(FLEET *lpfl) {
             case grTaskXfer:
                 for (i = 0; i < 5; i++) {
                     if (ord.txp.rgia[i].iAction() == iActionWaitPercent) {
-                        return TRUE;
+                        return 1;
                     }
                 }
-                return FALSE;
+                return 0;
             case grTaskColonize:
                 if (ord.grobj != grobjPlanet)
                     break;
@@ -72,12 +72,12 @@ int16_t FDestIsWP0(FLEET *lpfl) {
             case grTaskMerge:
             case grTaskScrap:
             case grTaskLayMines:
-                return TRUE;
+                return 1;
             }
         }
-        return FALSE;
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
 const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
@@ -110,8 +110,8 @@ const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
             }
         }
         ord = lpfl->lpplord->rgord()[1];
-        CchGetETA(hdc, lpfl, szWork, 1, TRUE);
-        if (hdc && EstFuelUse(lpfl, 0, ord.iWarp, -1, FALSE) > lpfl->rgwtMin[4]) {
+        CchGetETA(hdc, lpfl, szWork, 1, 1);
+        if (hdc && EstFuelUse(lpfl, 0, ord.iWarp, -1, 0) > lpfl->rgwtMin[4]) {
             SetHdcTextColor(hdc, 0xff);
         }
         if (pcYears) {
@@ -217,7 +217,7 @@ LShowTask:
             }
             opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
             *picr = icr;
-            fPercent = FALSE;
+            fPercent = 0;
             switch (opOrd) {
             case iActionLoadDunnage:
                 if (icr == 4) {
@@ -229,7 +229,7 @@ LShowTask:
                 return TextIO().pfnCompressed(ids);
             case iActionFillPercent:
             case iActionWaitPercent:
-                fPercent = TRUE;
+                fPercent = 1;
                 /* fallthrough */
             case iActionUnloadExact:
             case iActionSetAmount:
@@ -276,18 +276,18 @@ void DumpUniverse() {
     int16_t  cch;
 
     fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
+    fSuccess = 1;
+    fOpen = 0;
     if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
+            fFileErrSilent = 1;
             CchSprintf(szWork, "%s.map", szBase);
             RecordIO().pfnStreamOpen(szWork, mdCreate);
-            fOpen = TRUE;
+            fOpen = 1;
             RgToStream((void *)"#\tX\tY\tName\r\n", 12);
             for (i = 0; i < game.cPlanMax; i++) {
                 cch = CchSprintf(szWork, "%d\t%d\t%d\t%s\r\n", i + 1, rgptPlan[i].x, rgptPlan[i].y, PszGetCompressedPlanet(rgidPlan[i]));
@@ -299,7 +299,7 @@ void DumpUniverse() {
                 RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
@@ -307,9 +307,9 @@ DisplayStatus:
     ids = !fSuccess ? idsUnableWriteUniverseDefinitionSMapOperation : idsUniverseDefinitionHasSuccessfullyWrittenSMap;
     CchSprintf(szWork, TextIO().pfnCompressed(ids), szBase);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
@@ -334,22 +334,22 @@ void DumpPlanets() {
     PART     part;
 
     fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
+    fSuccess = 1;
+    fOpen = 0;
     if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
+            fFileErrSilent = 1;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.p%d", szBase, idPlayer + 1);
             } else {
                 CchSprintf(szFile, "%s.pla", szBase);
             }
             RecordIO().pfnStreamOpen(szFile, mdCreate);
-            fOpen = TRUE;
+            fOpen = 1;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
                 cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
@@ -372,7 +372,7 @@ void DumpPlanets() {
                 if (lppl->iPlayer == iplrNone) {
                     RgToStream(szForm, 1);
                 } else {
-                    strcpy(&szForm[1], TextIO().pfnPlayerName(lppl->iPlayer, TRUE, FALSE, FALSE, 0, NULL));
+                    strcpy(&szForm[1], TextIO().pfnPlayerName(lppl->iPlayer, 1, 0, 0, 0, NULL));
                     RgToStream(szForm, strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
@@ -430,7 +430,7 @@ void DumpPlanets() {
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
-                        ColonyIO().pfnEstimateMining(lppl, rgl, -1, FALSE);
+                        ColonyIO().pfnEstimateMining(lppl, rgl, -1, 0);
                         strcpy(&szForm[1], PszFromLong(rgl[i], NULL));
                     }
                     RgToStream(szForm, strlen(szForm));
@@ -524,7 +524,7 @@ void DumpPlanets() {
                 RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
@@ -532,9 +532,9 @@ DisplayStatus:
     ids = !fSuccess ? idsUnableWritePlanetInformationSOperationTerminated : idsKnownPlanetInformationHasSuccessfullyWrittenS;
     CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
@@ -557,23 +557,23 @@ void DumpFleets() {
     int32_t  l;
 
     fSilentSav = fFileErrSilent;
-    fSuccess = TRUE;
-    fOpen = FALSE;
+    fSuccess = 1;
+    fOpen = 0;
     iplr = idPlayer;
     if (game.lid == 0 || idPlayer == iplrNone) {
-        fSuccess = FALSE;
+        fSuccess = 0;
         goto DisplayStatus;
     } else {
         StarsRecoveryScope scopeRecovery;
         try {
-            fFileErrSilent = TRUE;
+            fFileErrSilent = 1;
             if (gd.fPerPlayerDumps) {
                 CchSprintf(szFile, "%s.f%d", szBase, idPlayer + 1);
             } else {
                 CchSprintf(szFile, "%s.fle", szBase);
             }
             RecordIO().pfnStreamOpen(szFile, mdCreate);
-            fOpen = TRUE;
+            fOpen = 1;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
                 cch = TextIO().pfnCchGetString(static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
@@ -710,7 +710,7 @@ void DumpFleets() {
                 RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
-            fSuccess = FALSE;
+            fSuccess = 0;
             goto DisplayStatus;
         }
     }
@@ -718,9 +718,9 @@ DisplayStatus:
     ids = !fSuccess ? idsUnableWriteFleetInformationSOperationTerminated : idsKnownFleetInformationHasSuccessfullyWrittenS;
     CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
     if (fSuccess) {
-        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONASTERISK);
     } else {
-        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, win32::MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
@@ -739,18 +739,18 @@ int16_t FDumpCmdLineGame() {
     pchDot = strrchr(szFile, '.');
     pchDir = strrchr(szFile, chDirSep);
     if (!pchDot || (pchDir && pchDir > pchDot)) {
-        return FALSE;
+        return 0;
     }
     *pchDot = 0;
     DestroyCurGame();
     strcpy(szBase, szFile);
-    fFileErrSilent = TRUE;
+    fFileErrSilent = 1;
     if (!FLoadGame(szFile, pchDot + 1)) {
-        return FALSE;
+        return 0;
     }
-    fFileErrSilent = FALSE;
+    fFileErrSilent = 0;
     if (game.lid == 0 || idPlayer == iplrNone) {
-        return FALSE;
+        return 0;
     }
     if (ini.fDumpMap) {
         DumpUniverse();
@@ -761,5 +761,5 @@ int16_t FDumpCmdLineGame() {
     if (ini.fDumpFleets) {
         DumpFleets();
     }
-    return TRUE;
+    return 1;
 }

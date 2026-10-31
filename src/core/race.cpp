@@ -31,9 +31,9 @@ int16_t SetRaceStat(PLAYER *pplr, RaceStat iStat, int16_t iVal) {
 
 int16_t GetRaceGrbit(PLAYER *pplr, RaceGrbit ibit) {
     if (UINT32_C(1) << ibit & pplr->grbitAttr) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 void SetRaceGrbit(PLAYER *pplr, RaceGrbit ibit, int16_t fSet) {
@@ -56,43 +56,43 @@ void BoundsCheckPlayer(PLAYER *pplr) {
             if (pplr->rgEnvVarMax[i] != envImmune || pplr->rgEnvVar[i] != envImmune) {
                 pplr->rgEnvVar[i] = envImmune;
                 pplr->rgEnvVarMax[i] = envImmune;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
         } else {
             if (pplr->rgEnvVarMin[i] < 0) {
                 pplr->rgEnvVarMin[i] = 0;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMin[i] > 100) {
                 pplr->rgEnvVarMin[i] = 100;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMax[i] > 100) {
                 pplr->rgEnvVarMax[i] = 100;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVarMax[i] < pplr->rgEnvVarMin[i]) {
                 pplr->rgEnvVarMax[i] = pplr->rgEnvVarMin[i];
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
             if (pplr->rgEnvVar[i] != pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2) {
                 pplr->rgEnvVar[i] = pplr->rgEnvVarMin[i] + (int16_t)(pplr->rgEnvVarMax[i] - pplr->rgEnvVarMin[i]) / 2;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
             }
         }
     }
     if (pplr->pctIdealGrowth > 20) {
         pplr->pctIdealGrowth = 20;
-        pplr->fHacker = TRUE;
+        pplr->fHacker = 1;
     }
     for (i = 0; i < 16; i++) {
         if (pplr->rgAttr[i] < rgRaceStatMin[i]) {
             pplr->rgAttr[i] = rgRaceStatMin[i];
-            pplr->fHacker = TRUE;
+            pplr->fHacker = 1;
         }
         if (pplr->rgAttr[i] > rgRaceStatMax[i]) {
             pplr->rgAttr[i] = rgRaceStatMax[i];
-            pplr->fHacker = TRUE;
+            pplr->fHacker = 1;
         }
     }
     return;
@@ -121,7 +121,7 @@ int16_t CAdvantagePoints(PLAYER *pplr) {
     if (iSpread != pplr->pctIdealGrowth) {
         iSpread = 1;
         pplr->pctIdealGrowth = 1;
-        pplr->fHacker = TRUE;
+        pplr->fHacker = 1;
     }
     pctGrowth = iSpread;
     if (iSpread <= 5) {
@@ -351,7 +351,7 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
                 pplr->rgEnvVarMax[i] = envImmune;
                 pplr->rgEnvVarMin[i] = envImmune;
                 pplr->rgEnvVar[i] = envImmune;
-                pplr->fHacker = TRUE;
+                pplr->fHacker = 1;
                 rgplr[0] = *pplr;
             }
             if (pplr->rgEnvVar[i] < 0) {
@@ -512,22 +512,22 @@ static int16_t FReadLegacyRaceString(const uint8_t *lpb, size_t cb, char *szRaw,
     int16_t cOut;
 
     szRaw[0] = 0;
-    if (cb == 0 || cchMax != 32) return FALSE;
+    if (cb == 0 || cchMax != 32) return 0;
     if (lpb[0] == 0) {
         lpbEnd = (const uint8_t *)memchr(lpb + 1, 0, cb - 1);
-        if (!lpbEnd) return FALSE;
+        if (!lpbEnd) return 0;
         cch = (size_t)(lpbEnd - lpb - 1);
-        if (cch >= cchMax) return FALSE;
+        if (cch >= cchMax) return 0;
         memcpy(szRaw, lpb + 1, cch);
         szRaw[cch] = 0;
         if (pcbRead) *pcbRead = cch + 2;
     } else {
-        if (lpb[0] > cb - 1) return FALSE;
+        if (lpb[0] > cb - 1) return 0;
         cOut = (int16_t)cchMax - 1;
-        if (!FDecompressUserStringBytes((char *)lpb + 1, lpb[0], szRaw, &cOut)) return FALSE;
+        if (!FDecompressUserStringBytes((char *)lpb + 1, lpb[0], szRaw, &cOut)) return 0;
         if (pcbRead) *pcbRead = (size_t)lpb[0] + 1;
     }
-    return TRUE;
+    return 1;
 }
 
 static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb, int16_t fPlural) {
@@ -535,11 +535,11 @@ static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb
     size_t cbRead;
 
     memset(pplr, 0, sizeof(PLAYER));
-    if (cb < cbWirePlayerPartial) return FALSE;
+    if (cb < cbWirePlayerPartial) return 0;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;
         if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
-            lpb[iOff] > cb - (size_t)iOff - 1) return FALSE;
+            lpb[iOff] > cb - (size_t)iOff - 1) return 0;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
         memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
@@ -547,15 +547,15 @@ static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb
         iOff = cbWirePlayerPartial;
         FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
-    if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return FALSE;
+    if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return 0;
     iOff += (int16_t)cbRead;
     if (fPlural) {
-        if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return FALSE;
+        if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szNames, sizeof(pplr->szNames), &cbRead)) return 0;
         iOff += (int16_t)cbRead;
     }
-    if ((size_t)iOff != cb) return FALSE;
-    pplr->fLearned = FALSE;
-    return TRUE;
+    if ((size_t)iOff != cb) return 0;
+    pplr->fLearned = 0;
+    return 1;
 }
 
 static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
@@ -566,12 +566,12 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
     size_t cbKeep;
     int16_t fShortened;
 
-    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return FALSE;
+    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return 0;
     if (fPlural) {
-        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return FALSE;
+        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return 0;
     } else {
         cbName = strlen(szName);
-        if (cbName + 1 >= sizeof(szNames)) return FALSE;
+        if (cbName + 1 >= sizeof(szNames)) return 0;
         memcpy(szNames, szName, cbName);
         szNames[cbName] = 's';
         szNames[cbName + 1] = 0;
@@ -591,7 +591,7 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
         memcpy(pplr->szName, szName, cbName + 1);
         memcpy(pplr->szNames, szNames, cbNames + 1);
     }
-    return TRUE;
+    return 1;
 }
 
 int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
@@ -611,7 +611,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
     idsError = -1;
     fRet = 0;
     fSav = fFileErrSilent;
-    fFileErrSilent = TRUE;
+    fFileErrSilent = 1;
     StarsRecoveryScope scopeRecovery;
     try {
         {
@@ -696,7 +696,7 @@ LBadFile:
         if (szFile != szWork) {
             strcpy(szWork, szFile);
         }
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(static_cast<StringId>(idsError), NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(static_cast<StringId>(idsError), NULL), win32::MB_ICONHAND);
     }
     return fRet;
 
@@ -778,7 +778,7 @@ void CreateRandomRace(PLAYER *pplr) {
     SetRaceStat(pplr, rsMajorAdv, RandomIO().pfnRandom(10));
     iVal = RandomIO().pfnRandom(4);
     for (i = 0; i <= 13; i++) {
-        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? RandomIO().pfnRandom(2) : FALSE);
+        SetRaceGrbit(pplr, static_cast<RaceGrbit>(i), iVal != 0 ? RandomIO().pfnRandom(2) : 0);
     }
     SetRaceGrbit(pplr, ibitRaceTech3, RandomIO().pfnRandom(2));
     SetRaceGrbit(pplr, ibitRaceCheapFact, RandomIO().pfnRandom(2));

@@ -3,9 +3,9 @@
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include <SDL3/SDL.h>
-#define Pause(ms) SDL_Delay(ms)
+static void Pause(DWORD ms) { SDL_Delay(ms); }
 #else
-#define Pause(ms) Sleep(ms)
+static void Pause(DWORD ms) { Sleep(ms); }
 #endif
 #include <stdio.h>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -29,9 +29,9 @@ int main(void) {
     UINT_PTR id;
 
     wc.lpfnWndProc = TimerProcWindow; wc.lpszClassName = "StarsTimerReference";
-    CHECK(RegisterClass(&wc));
-    h1 = CreateWindow(wc.lpszClassName, "Timer 1", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
-    h2 = CreateWindow(wc.lpszClassName, "Timer 2", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+    CHECK(RegisterClassA(&wc));
+    h1 = CreateWindowExA(0, wc.lpszClassName, "Timer 1", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+    h2 = CreateWindowExA(0, wc.lpszClassName, "Timer 2", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
     CHECK(h1 && h2);
     CHECK(SetTimer(h1, 55, 10, NULL) == 55 && SetTimer(h2, 55, 10, NULL) == 55);
     CHECK(GetMessageA(&msg, h1, WM_TIMER, WM_TIMER) > 0 && msg.hwnd == h1 && msg.wParam == 55);
@@ -62,7 +62,7 @@ int main(void) {
     CHECK(cCallbacks == 1 && idCallback == id);
     CHECK(!PeekMessageA(&again, NULL, WM_TIMER, WM_TIMER, PM_REMOVE));
     id = SetTimer(NULL, 0, 1000, TimerCallback);
-    CHECK(id && PostMessage(NULL, WM_TIMER, id, (LPARAM)TimerCallback));
+    CHECK(id && PostMessageA(NULL, WM_TIMER, id, (LPARAM)TimerCallback));
     CHECK(KillTimer(NULL, id));
     CHECK(PeekMessageA(&again, NULL, WM_TIMER, WM_TIMER, PM_REMOVE) && again.wParam == id);
     DispatchMessageA(&again);
@@ -70,7 +70,7 @@ int main(void) {
 
     CHECK(SetTimer(h2, 19, 10, NULL) == 19);
     Pause(30);
-    CHECK(PostMessage(h2, WM_APP, 77, 0));
+    CHECK(PostMessageA(h2, WM_APP, 77, 0));
     CHECK(PeekMessageA(&msg, h2, WM_APP, WM_APP, PM_REMOVE) && msg.wParam == 77);
     CHECK(PeekMessageA(&msg, h2, WM_TIMER, WM_TIMER, PM_REMOVE) && msg.wParam == 19);
     CHECK(DestroyWindow(h2) && !KillTimer(h2, 19));

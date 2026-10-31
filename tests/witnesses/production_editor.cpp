@@ -94,16 +94,16 @@ static int TestGetDlgItem(HWND hwnd, int id) {
 }
 static intptr_t TestLUiSendMessage(HWND hwnd, int message, int value, intptr_t param) {
     (void)param;
-    if (message == LB_GETCURSEL)
+    if (message == win32::LB_GETCURSEL)
         return hwnd == HwndWitness(IDC_PRODUCTION_QUEUE) ? queueSelection : sourceSelection;
-    if (message == LB_SETCURSEL) {
+    if (message == win32::LB_SETCURSEL) {
         setSelection = value;
         queueSelection = value;
         return value;
     }
     abort();
 }
-static int  TestGetAsyncKeyState(int key) { return (key == VK_SHIFT ? shift : ctrl) ? 0x8000 : 0; }
+static int  TestGetAsyncKeyState(int key) { return (key == win32::VK_SHIFT ? shift : ctrl) ? 0x8000 : 0; }
 static void TestFillPlanetProdLB(HWND hwnd, PLPROD *p, void *q) {
     (void)hwnd;
     (void)p;
@@ -132,7 +132,7 @@ static void     TestGetClientRect(HWND, RECT *r) { *r = RECT{}; }
 static void     TestInvalidateRect(HWND, const RECT *, BOOL) {}
 static void     TestDrawProductionDlg(HWND, HDC, RECT *, int16_t) { redraw++; }
 static void     command(int cmd) {
-    WPARAM value = cmd == 100 ? MAKEWPARAM(IDC_PRODUCTION_AVAILABLE_ITEMS, 2) : cmd == 101 ? MAKEWPARAM(IDC_PRODUCTION_QUEUE, 2) : static_cast<WPARAM>(cmd);
+    WPARAM value = cmd == 100 ? win32::MAKEWPARAM(IDC_PRODUCTION_AVAILABLE_ITEMS, 2) : cmd == 101 ? win32::MAKEWPARAM(IDC_PRODUCTION_QUEUE, 2) : static_cast<WPARAM>(cmd);
     ProdCommandHandler(HwndWitness(1), value, 0);
 }
 

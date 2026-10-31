@@ -39,13 +39,13 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
     int cSaves;
 
     if (hwndSave && hwndSave->lpfnDlg == DesktopChoiceIO().pfnAskSaveDialog) {
-        if (idGameExportSaveDialog == StarsCompatWindowId(hwndSave)) return TRUE;
+        if (idGameExportSaveDialog == StarsCompatWindowId(hwndSave)) return 1;
         idGameExportSaveDialog = StarsCompatWindowId(hwndSave);
         cGameExportSaves++;
         return FPushClick(win32::GetDlgItem(hwndSave, fDiscard ? IDC_NO_DON_T_SAVE : IDC_SAVE));
     }
-    if (fGameExportBusy || fPassed) return TRUE;
-    fGameExportBusy = TRUE;
+    if (fGameExportBusy || fPassed) return 1;
+    fGameExportBusy = 1;
     if (++cGameExportWait > 40) goto LFail;
     if (iStage == 0) {
         if (!win32::IsWindowVisible(hwndTitle) || (!pszParent && !pszZip)) goto LFail;
@@ -54,15 +54,15 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
             /* Verify this exported file through the real loader; Continue now
              * deliberately resumes the managed session instead of an MRU path. */
             CchSnprintf(szBase, sizeof(szBase), "%s", PszCompatEnvironment("STARS_CLIENT_CONTINUE"));
-            ini.fStartupFile = TRUE;
-            if (FOpenGame(hwndTitle, FALSE) <= 0) goto LFail;
-            fFreeingTitle = TRUE;
+            ini.fStartupFile = 1;
+            if (FOpenGame(hwndTitle, 0) <= 0) goto LFail;
+            fFreeingTitle = 1;
             win32::DestroyWindow(hwndTitle);
             hwndTitle = 0;
-            ini.fStartupFile = FALSE;
-            win32::ShowWindow(hwndFrame, SW_SHOW);
+            ini.fStartupFile = 0;
+            win32::ShowWindow(hwndFrame, win32::SW_SHOW);
             InitializeMenu(NULL);
-            win32::PostMessage(hwndFrame, WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
+            win32::PostMessageA(hwndFrame, win32::WM_COMMAND, IDM_FRAME_POST_OPEN, 0);
         } else if (!FSelectClientGameName(hwndTitle, pszGame)) goto LFail;
         else if (pszAction) {
             /* Choose the requested player through the same Open Game action. */
@@ -84,7 +84,7 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         if (rgplr[idPlayer].iTechNow() == iResearch) goto LFail;
         if (!FRunWorkflow(1, iResearch) || !game.fDirty || rgplr[idPlayer].iTechNow() != iResearch) goto LFail;
         if (!strcmp(pszAction, "submit")) {
-            win32::SendMessageA(hwndFrame, WM_COMMAND, IDM_TURN_SAVE_SUBMIT, 0);
+            win32::SendMessageA(hwndFrame, win32::WM_COMMAND, IDM_TURN_SAVE_SUBMIT, 0);
             if (game.fDirty || !gd.fSubmit) goto LFail;
         }
         fGameExportSubmitSav = gd.fSubmit;
@@ -112,18 +112,18 @@ static BOOL FCheckGameExportWorkflow(UINT_PTR idTimer) {
         goto LDone;
     }
 LWait:
-    fGameExportBusy = FALSE;
-    return TRUE;
+    fGameExportBusy = 0;
+    return 1;
 LDone:
-    fChecked = fPassed = TRUE;
-    fGameExportBusy = FALSE;
+    fChecked = fPassed = 1;
+    fGameExportBusy = 0;
     puts("Managed game export: button, destination callback, save choice and real files checked");
     win32::KillTimer(NULL, idTimer);
     win32::PostQuitMessage(0);
-    return TRUE;
+    return 1;
 LFail:
     fprintf(stderr, "Game export failed: stage %d pickers %d saves %d alerts %d dirty %d\n",
             iStage, cGameExportPickers, cGameExportSaves, cAlerts, game.fDirty);
-    fGameExportBusy = FALSE;
-    return FALSE;
+    fGameExportBusy = 0;
+    return 0;
 }

@@ -279,7 +279,7 @@ void DoThingInteractions(int16_t fPostMove) {
                             } else {
                                 lpth->tht().SetGrbitPlr(lpth->tht().grbitPlr() | (1 << iplr));
                                 TurnIO().pfnRemoveMessage(iplr, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
-                                lpfl->fDead = TRUE;
+                                lpfl->fDead = 1;
                                 if (lpth->tht().grbitTrader() == grbitTraderNone || (lpth->tht().grbitTrader() & grbitPlrTrader)) {
                                     if (fMaxTech) {
                                         if (RandomIO().pfnRandom(5) != 0)
@@ -340,7 +340,7 @@ void DoThingInteractions(int16_t fPostMove) {
                                                 lSpent += wtNext;
                                             }
                                             rgplr[iplr].rgResSpent[iLowest] = lSpent;
-                                            TurnIO().pfnResearch(FALSE);
+                                            TurnIO().pfnResearch(0);
                                         }
                                         continue;
                                     }
@@ -398,12 +398,12 @@ void DoThingInteractions(int16_t fPostMove) {
                                         }
                                         lpflNew->pt = lpfl->pt;
                                         lpflNew->lpplord->rgord()[0].pt = lpfl->pt;
-                                        lpflNew->fHereAllTurn = TRUE;
+                                        lpflNew->fHereAllTurn = 1;
                                         lpshdefDest = rglpshdef[iplr] + ish;
                                         if (lpshdefDest->fFree) {
                                             *lpshdefDest = shdef;
                                             lpshdefDest->ishdef = ish;
-                                            lpshdefDest->fGift = TRUE;
+                                            lpshdefDest->fGift = 1;
                                             lpshdefDest->cBuilt = 0;
                                             lpshdefDest->cExist = 0;
                                             rgplr[iplr].cShDef++;

@@ -222,31 +222,31 @@ int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(psz
 int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
     NATIVEDIR *pdir;
     const char *pszEntry;
-    if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return FALSE;
+    if (!pfnEntry || !(pdir = PdirNativeOpen(pszDir))) return 0;
     StarsNativeDirGuard closeDirectory(pdir);
     for (;;) {
         errno = 0;
         pszEntry = PszNativeReadDir(pdir);
         if (!pszEntry) return errno == 0;
-        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) { errno = EILSEQ; return FALSE; }
-        if (!pfnEntry(lpData, pszEntry)) return TRUE;
+        if (!FUtf8Valid(pszEntry, strlen(pszEntry))) { errno = EILSEQ; return 0; }
+        if (!pfnEntry(lpData, pszEntry)) return 1;
     }
 }
 int16_t FNativeFileSize(const char *pszFile, int64_t *pcbFile) {
     NATIVEFILEINFO info;
-    if (!pcbFile || IGetNativeFileInfo(pszFile, &info, TRUE) != 0 || !info.fRegular) return FALSE;
+    if (!pcbFile || IGetNativeFileInfo(pszFile, &info, 1) != 0 || !info.fRegular) return 0;
     *pcbFile = info.cb;
-    return TRUE;
+    return 1;
 }
 int16_t FNativeDirectoryExists(const char *pszDir) {
     NATIVEFILEINFO info;
-    return IGetNativeFileInfo(pszDir, &info, TRUE) == 0 && info.fDirectory;
+    return IGetNativeFileInfo(pszDir, &info, 1) == 0 && info.fDirectory;
 }
 int16_t FNativePathInfo(const char *psz, int16_t *pfDirectory, int16_t *pfLink) {
     NATIVEFILEINFO info;
-    if (IGetNativeFileInfo(psz, &info, FALSE) != 0) return FALSE;
+    if (IGetNativeFileInfo(psz, &info, 0) != 0) return 0;
     *pfDirectory = info.fDirectory;
     *pfLink = info.fLink;
-    return TRUE;
+    return 1;
 }
 NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode) { return PfNativeOpen(psz, pszMode); }

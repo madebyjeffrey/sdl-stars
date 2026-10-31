@@ -16,7 +16,7 @@ static int ICompatMain(int argc, char **argv) {
     char szCmdLine[1024];
     size_t cch = 0, cchArg;
     int i, nResult, cArgs = 0;
-    BOOL fHeadless = FALSE;
+    BOOL fHeadless = 0;
     HINSTANCE hInstance;
 
     if (argc == 2 && !strcmp(argv[1], "--version")) {
@@ -25,7 +25,7 @@ static int ICompatMain(int argc, char **argv) {
     }
     szCmdLine[0] = 0;
     for (i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--headless")) { fHeadless = TRUE; continue; }
+        if (!strcmp(argv[i], "--headless")) { fHeadless = 1; continue; }
         cchArg = strlen(argv[i]);
         // ParseCmdLine has no quoting, and its filename destination is 80 bytes.
         if (cchArg >= 80 || strpbrk(argv[i], " \t\r\n")) {
@@ -62,7 +62,7 @@ static int ICompatMain(int argc, char **argv) {
         StarsCompatProcessExit(); SDL_Quit();
         return 1;
     }
-    nResult = ui::WinMain(hInstance, NULL, szCmdLine, SW_SHOWNORMAL);
+    nResult = ui::WinMain(hInstance, NULL, szCmdLine, win32::SW_SHOWNORMAL);
     StarsCompatProcessExit();
     SDL_Quit();
     return nResult;

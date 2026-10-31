@@ -28,7 +28,7 @@ static int16_t IshColonyDesign(int16_t iPlr, int16_t *ihs) {
 // colonists, generates the turn, and reports whether player 0 owns the
 // planet afterwards.
 static int16_t FColonizeWith(const char *pszTest, int16_t cModule) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     int16_t ish;
     int16_t ishNew;
     int16_t ihs;
@@ -64,7 +64,7 @@ static int16_t FColonizeWith(const char *pszTest, int16_t cModule) {
     lpfl->rgwtMin[3] = 100;
     lpord = &lpfl->lpplord->rgord()[0];
     lpord->grTask = grTaskColonize;
-    lpord->fValidTask = TRUE;
+    lpord->fValidTask = 1;
     TEST_ASSERT(FStarsTestSaveHost());
 
     TEST_ASSERT(FStarsTestGenerate());
@@ -83,7 +83,7 @@ static void test_colonize_needs_module(void) { TEST_CHECK(!FColonizeWith("coloni
 // homeworld with an order to load 10 kT of item j there, generates the turn,
 // and returns what the ship carries of item j afterwards.
 static int32_t WtStealFromAiHomeworld(const char *pszTest, int16_t j) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     int16_t     ish;
     int16_t     ishNew;
@@ -123,7 +123,7 @@ static int32_t WtStealFromAiHomeworld(const char *pszTest, int16_t j) {
     idfl = lpfl->id;
     lpord = &lpfl->lpplord->rgord()[0];
     lpord->grTask = grTaskXfer;
-    lpord->fValidTask = TRUE;
+    lpord->fValidTask = 1;
     lpord->txp.rgia[j].SetIAction(iActionLoadExact);
     lpord->txp.rgia[j].SetCQuan(10);
     TEST_ASSERT(FStarsTestSaveHost());
@@ -134,7 +134,7 @@ static int32_t WtStealFromAiHomeworld(const char *pszTest, int16_t j) {
         if (rglpfl[ifl]->iPlayer == 0 && rglpfl[ifl]->id == idfl)
             return rglpfl[ifl]->rgwtMin[j];
     }
-    TEST_ASSERT_(FALSE, "stealing fleet is gone");
+    TEST_ASSERT_(0, "stealing fleet is gone");
     return -1;
 }
 

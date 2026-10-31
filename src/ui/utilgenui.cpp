@@ -7,37 +7,37 @@
 #include "resourcecodec.h"
 #include <stars_compat.h>
 
-INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char     szValue[33];
     char    *pch;
     uint32_t dw;
     RECT     rc;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ControlIO().pfnSetWindowPos(hwnd, NULL, 256, 256, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
+    case win32::WM_INITDIALOG:
+        ControlIO().pfnSetWindowPos(hwnd, NULL, 256, 256, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) {
             if (LOWORD(wParam) == IDOK) {
-                win32::GetDlgItemText(hwnd, IDC_EDIT1, szValue, 32);
+                win32::GetDlgItemTextA(hwnd, IDC_EDIT1, szValue, 32);
                 pch = szValue;
                 dw = 0;
                 for (; isdigit(*pch) != 0; pch++) {
@@ -60,10 +60,10 @@ void CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen) {
     int16_t dx;
 
     if (cLen == 0) {
-        cLen = win32::lstrlen(psz);
+        cLen = win32::lstrlenA(psz);
     }
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
-    win32::TextOut(hdc, x - (dx >> 1), y, psz, cLen);
+    win32::TextOutA(hdc, x - (dx >> 1), y, psz, cLen);
     return;
 }
 
@@ -71,11 +71,11 @@ int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_
     int16_t dx;
 
     if (cLen == 0) {
-        cLen = win32::lstrlen(psz);
+        cLen = win32::lstrlenA(psz);
     }
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
     if (fPrint) {
-        win32::TextOut(hdc, *px, y, psz, cLen);
+        win32::TextOutA(hdc, *px, y, psz, cLen);
     }
     *px += dx;
     return dx;
@@ -105,9 +105,9 @@ Top:
     pchEnd = pchStart + cLen;
     ChopTrailingSpaces(pch, &pchEnd);
     dx = LOWORD(GetTextExtent(hdc, pch, pchEnd - pch));
-    fItFit = TRUE;
+    fItFit = 1;
     for (; dx > dxRemain && pch < pchEnd && dx > 0; dx = LOWORD(GetTextExtent(hdc, pch, pchEnd - pch))) {
-        fItFit = FALSE;
+        fItFit = 0;
         ChopLastWord(pch, &pchEnd);
     }
     if (fItFit) {
@@ -121,7 +121,7 @@ Top:
         dx = LOWORD(GetTextExtent(hdc, pchStart, pchEnd - pchStart));
     }
     if (fPrint) {
-        win32::TextOut(hdc, *px, *py, pchStart, pchEnd - pchStart);
+        win32::TextOutA(hdc, *px, *py, pchStart, pchEnd - pchStart);
     }
     *px += dx;
     if (pxMax && *px > *pxMax) {
@@ -179,12 +179,12 @@ void RcCtrTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
         cLen = 0;
     }
     if (cLen == 0) {
-        cLen = win32::lstrlen(psz);
+        cLen = win32::lstrlenA(psz);
     }
     l = GetTextExtent(hdc, psz, cLen);
     x = (int16_t)(prc->right - prc->left - LOWORD(l)) / 2 + prc->left;
     y = (int16_t)(prc->bottom - prc->top - HIWORD(l)) / 2 + prc->top;
-    win32::TextOut(hdc, x, y, psz, cLen);
+    win32::TextOutA(hdc, x, y, psz, cLen);
     return;
 }
 
@@ -203,7 +203,7 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, 
         RightTextOut(hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
         return;
     } else if (cLen == 0) {
-        cLen = win32::lstrlen(psz);
+        cLen = win32::lstrlenA(psz);
     }
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
     if (dxErase > dx) {
@@ -211,10 +211,10 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, 
         win32::FillRect(hdc, &rc, hbrButtonFace);
     } else if (dxErase > 0 && dx > dxErase) {
         win32::SetRect(&rc, x - dxErase, y, x, y + dyArial8);
-        win32::ExtTextOut(hdc, x - dx, y, ETO_OPAQUE | ETO_CLIPPED, &rc, psz, cLen, NULL);
+        win32::ExtTextOutA(hdc, x - dx, y, win32::ETO_OPAQUE | win32::ETO_CLIPPED, &rc, psz, cLen, NULL);
         return;
     }
-    win32::TextOut(hdc, x - dx, y, psz, cLen);
+    win32::TextOutA(hdc, x - dx, y, psz, cLen);
     return;
 }
 
@@ -263,7 +263,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
         angle = (double)atan2((double)(int16_t)(dy - dyEstFont), (double)dx);
         rotate = (double)((double)angle / 3.141592654 * 1800.0 + 0.5);
         plf->lfEscapement = LOWORD((int32_t)rotate);
-        hfont = win32::CreateFontIndirect(plf);
+        hfont = win32::CreateFontIndirectA(plf);
         hfontSav = (HFONT)win32::SelectObject(hdc, hfont);
         l = GetTextExtent(hdc, psz, cLen);
         dxText = LOWORD(l);
@@ -292,7 +292,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
         }
         xStart = (int16_t)(dx - dxFlat) / 2 + prc->left;
         yStart = prc->bottom - (int16_t)(dy - dyFlat) / 2 - LOWORD((int32_t)((double)dcos * dyText));
-        win32::TextOut(hdc, xStart, yStart, psz, cLen);
+        win32::TextOutA(hdc, xStart, yStart, psz, cLen);
         win32::SelectObject(hdc, hfontSav);
         win32::DeleteObject(hfont);
 
@@ -327,8 +327,8 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
         ppt->x = rc.left;
         ppt->y = rc.top;
     } else {
-        ptScreenMax.x = win32::GetSystemMetrics(SM_CXSCREEN);
-        ptScreenMax.y = win32::GetSystemMetrics(SM_CYSCREEN);
+        ptScreenMax.x = win32::GetSystemMetrics(win32::SM_CXSCREEN);
+        ptScreenMax.y = win32::GetSystemMetrics(win32::SM_CYSCREEN);
         if (ppt->x == -1 && ppt->y == -1) {
             rc.left = (ptScreenMax.x - (rc.right - rc.left)) >> 1;
             rc.top = (ptScreenMax.y - (rc.bottom - rc.top)) >> 1;
@@ -347,7 +347,7 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
                 rc.top = 0;
             }
         }
-        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
     }
     return;
 }
@@ -406,24 +406,24 @@ void _Draw3dFrame(HDC hdc, RECT *prc, int16_t fErase) {
     dy = prc->bottom - prc->top;
     hbrSav = (HBRUSH)win32::SelectObject(hdc, hbrButtonHilite);
     if (fErase == -1 || fErase == -2) {
-        win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, PATCOPY);
-        win32::PatBlt(hdc, rc.right, rc.top, 1, dy, PATCOPY);
+        win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, rc.right, rc.top, 1, dy, win32::PATCOPY);
         win32::SelectObject(hdc, hbrButtonShadow);
-        win32::PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
-        win32::PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
+        win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
         ExpandRc(&rc, -1, -1);
         win32::SelectObject(hdc, hbrButtonHilite);
         dx -= 2;
         dy -= 2;
     }
-    win32::PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
-    win32::PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
     win32::SelectObject(hdc, hbrButtonShadow);
-    win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, PATCOPY);
-    win32::PatBlt(hdc, rc.right, rc.top, 1, dy, PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, win32::PATCOPY);
+    win32::PatBlt(hdc, rc.right, rc.top, 1, dy, win32::PATCOPY);
     if (fErase && fErase != -2) {
         win32::SelectObject(hdc, hbrButtonFace);
-        win32::PatBlt(hdc, rc.left + 1, rc.top + 1, dx - 1, dy - 1, PATCOPY);
+        win32::PatBlt(hdc, rc.left + 1, rc.top + 1, dx - 1, dy - 1, win32::PATCOPY);
     }
     win32::SelectObject(hdc, hbrSav);
     return;
@@ -440,10 +440,10 @@ void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16
     memcpy(&pbtnt->rc, prc, sizeof(pbtnt->rc));
     pbtnt->btf = btf;
     pbtnt->dTimer = dTimer;
-    pbtnt->fFirst = TRUE;
+    pbtnt->fFirst = 1;
     pbtnt->fInitDown = fInitDown;
     pbtnt->fNoEndRedraw = fNoEndRedraw;
-    pbtnt->fDown = TRUE;
+    pbtnt->fDown = 1;
     pbtnt->szText = szText;
     return;
 }
@@ -458,8 +458,8 @@ int16_t FTrackBtn(BTNT *pbtnt) {
         win32::SetCapture(pbtnt->hwnd);
         DrawBtn(pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
         pbtnt->lTicks = win32::GetTickCount() + (int16_t)(3 * pbtnt->dTimer);
-        pbtnt->fFirst = FALSE;
-        return TRUE;
+        pbtnt->fFirst = 0;
+        return 1;
     }
     pt.x = pbtnt->rc.left;
     pt.y = pbtnt->rc.top;
@@ -473,19 +473,19 @@ int16_t FTrackBtn(BTNT *pbtnt) {
         ticksNew = win32::GetTickCount();
         if (ticksNew >= pbtnt->lTicks && pbtnt->fDown) {
             pbtnt->lTicks = pbtnt->dTimer + ticksNew;
-            return TRUE;
+            return 1;
         }
     }
     if (pbtnt->fDown && !pbtnt->fNoEndRedraw) {
-        pbtnt->fDown = FALSE;
+        pbtnt->fDown = 0;
         DrawBtn(pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
-        pbtnt->fDown = TRUE;
+        pbtnt->fDown = 1;
     }
     win32::ReleaseCapture();
     if (pbtnt->fCreatedDC) {
         win32::ReleaseDC(pbtnt->hwnd, pbtnt->hdc);
     }
-    return FALSE;
+    return 0;
 }
 
 void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) {
@@ -525,16 +525,16 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
     dy = rc.bottom - rc.top - 1;
     dxFace = (int16_t)(prc->right - prc->left) - 5;
     win32::SelectObject(hdc, !fDown ? hbrButtonHilite : hbrButtonShadow);
-    win32::PatBlt(hdc, rc.left, rc.top, dx, 1, PATCOPY);
-    win32::PatBlt(hdc, rc.left, rc.top, 1, dy, PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.top, dx, 1, win32::PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.top, 1, dy, win32::PATCOPY);
     win32::SelectObject(hdc, !fDown ? hbrButtonShadow : hbrButtonFace);
-    win32::PatBlt(hdc, rc.left, rc.bottom - 1, dx + 1, 1, PATCOPY);
-    win32::PatBlt(hdc, rc.right - 1, rc.top, 1, dy, PATCOPY);
+    win32::PatBlt(hdc, rc.left, rc.bottom - 1, dx + 1, 1, win32::PATCOPY);
+    win32::PatBlt(hdc, rc.right - 1, rc.top, 1, dy, win32::PATCOPY);
     if (dx < 14 || dy < 14 || (bt & 0xc0)) {
         ExpandRc(&rc, -1, -1);
     } else {
-        win32::PatBlt(hdc, rc.left + 1, rc.bottom - 2, dx - 1, 1, PATCOPY);
-        win32::PatBlt(hdc, rc.right - 2, rc.top + 1, 1, dy - 2, PATCOPY);
+        win32::PatBlt(hdc, rc.left + 1, rc.bottom - 2, dx - 1, 1, win32::PATCOPY);
+        win32::PatBlt(hdc, rc.right - 2, rc.top + 1, 1, dy - 2, win32::PATCOPY);
         win32::SetRect(&rc, rc.left + 1, rc.top + 1, rc.right - 2, rc.bottom - 2);
     }
     win32::SelectObject(hdc, hbrButtonFace);
@@ -604,10 +604,10 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
             dx = rgptDraw[2].x - x + 1;
             y = rgptDraw[1].y;
             if (fBar) {
-                win32::PatBlt(hdc, x, rgptDraw[cpt - 1].y, dx, 1, PATCOPY);
+                win32::PatBlt(hdc, x, rgptDraw[cpt - 1].y, dx, 1, win32::PATCOPY);
             }
             while (dx > 0) {
-                win32::PatBlt(hdc, x, y, dx, 1, PATCOPY);
+                win32::PatBlt(hdc, x, y, dx, 1, win32::PATCOPY);
                 x++;
                 dx -= 2;
                 y += dy;
@@ -618,10 +618,10 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
             dy = rgptDraw[1].y - y + 1;
             x = rgptDraw[1].x;
             if (fBar) {
-                win32::PatBlt(hdc, rgptDraw[cpt - 1].x, y, 1, dy, PATCOPY);
+                win32::PatBlt(hdc, rgptDraw[cpt - 1].x, y, 1, dy, win32::PATCOPY);
             }
             while (dy > 0) {
-                win32::PatBlt(hdc, x, y, 1, dy, PATCOPY);
+                win32::PatBlt(hdc, x, y, 1, dy, win32::PATCOPY);
                 y++;
                 dy -= 2;
                 x += dx;
@@ -637,7 +637,7 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
                 rgptDraw[ipt].x--;
                 rgptDraw[ipt].y--;
             }
-            fDisabled = FALSE;
+            fDisabled = 0;
             hbrCur = hbrButtonShadow;
             win32::SelectObject(hdc, hbrButtonShadow);
             goto DrawAgain;
@@ -646,7 +646,7 @@ void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) 
     win32::SelectObject(hdc, hbrSav);
     if (szText) {
         hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[1]);
-        bkMode = win32::SetBkMode(hdc, TRANSPARENT);
+        bkMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
         crSav = win32::SetTextColor(hdc, !fDisabled ? crButtonText : crButtonHilite);
         rc = *prc;
         if (fDown) {
@@ -669,32 +669,32 @@ int16_t FGetMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, NULL, 0, 0, 1)) {
-        if (msg.message == WM_MOUSEMOVE || msg.message == WM_LBUTTONUP) {
+        if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_LBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
-            if (msg.message != WM_LBUTTONUP) {
-                return TRUE;
+            if (msg.message != win32::WM_LBUTTONUP) {
+                return 1;
             }
-            return FALSE;
+            return 0;
         }
     }
-    return TRUE;
+    return 1;
 }
 
 int16_t FGetRMouseMove(POINT16 *ppt) {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, NULL, 0, 0, 1)) {
-        if (msg.message == WM_MOUSEMOVE || msg.message == WM_RBUTTONUP) {
+        if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_RBUTTONUP) {
             ppt->x = LOWORD(msg.lParam);
             ppt->y = HIWORD(msg.lParam);
-            if (msg.message != WM_RBUTTONUP) {
-                return TRUE;
+            if (msg.message != win32::WM_RBUTTONUP) {
+                return 1;
             }
-            return FALSE;
+            return 0;
         }
     }
-    return TRUE;
+    return 1;
 }
 
 void DrawFuzzyBorder(HDC hdc, RECT *prc) {
@@ -709,10 +709,10 @@ void DrawFuzzyBorder(HDC hdc, RECT *prc) {
     hbrSav = (HBRUSH)win32::SelectObject(hdc, hbr50Screen);
     dx = prc->right - prc->left;
     dy = prc->bottom - prc->top;
-    win32::PatBlt(hdc, prc->left, prc->top, dx, 2, PATINVERT);
-    win32::PatBlt(hdc, prc->left, prc->bottom - 2, dx, 2, PATINVERT);
-    win32::PatBlt(hdc, prc->left, prc->top + 2, 2, dy - 4, PATINVERT);
-    win32::PatBlt(hdc, prc->right - 2, prc->top + 2, 2, dy - 4, PATINVERT);
+    win32::PatBlt(hdc, prc->left, prc->top, dx, 2, win32::PATINVERT);
+    win32::PatBlt(hdc, prc->left, prc->bottom - 2, dx, 2, win32::PATINVERT);
+    win32::PatBlt(hdc, prc->left, prc->top + 2, 2, dy - 4, win32::PATINVERT);
+    win32::PatBlt(hdc, prc->right - 2, prc->top + 2, 2, dy - 4, win32::PATINVERT);
     win32::SelectObject(hdc, hbrSav);
     win32::SetTextColor(hdc, crFore);
     win32::SetBkColor(hdc, crBack);
@@ -725,12 +725,12 @@ int16_t FStringFitsScreen(char *lpsz, int16_t dxMax) {
     int16_t fFit;
     HFONT   hfontSav;
 
-    fFit = TRUE;
+    fFit = 1;
     hdc = win32::GetDC(hwndFrame);
     c = strlen(lpsz);
     hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[0]);
     while (c > 0 && LOWORD(GetTextExtent(hdc, lpsz, c)) > (uint16_t)dxMax) {
-        fFit = FALSE;
+        fFit = 0;
         c = (int16_t)CchUtf8Prefix(lpsz, c - 1);
         lpsz[c] = 0;
     }
@@ -915,7 +915,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     BITMAPINFOHEADER *lpbi;
     NATIVECLEANUPSCOPE dc([&]() noexcept {
         if (hdc) {
-            win32::SelectPalette(hdc, hpal, FALSE);
+            win32::SelectPalette(hdc, hpal, 0);
             win32::ReleaseDC(NULL, hdc);
         }
     });
@@ -928,9 +928,9 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
         return NULL;
     }
     if (!hpal) {
-        hpal = (HPALETTE)win32::GetStockObject(DEFAULT_PALETTE);
+        hpal = (HPALETTE)win32::GetStockObject(win32::DEFAULT_PALETTE);
     }
-    win32::GetObject(hbm, sizeof(bm), &bm);
+    win32::GetObjectA(hbm, sizeof(bm), &bm);
     if (biBits == 0) {
         biBits = bm.bmPlanes * bm.bmBitsPixel;
     }
@@ -947,7 +947,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     bi.biClrImportant = 0;
     dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize;
     hdc = win32::GetDC(NULL);
-    hpal = win32::SelectPalette(hdc, hpal, FALSE);
+    hpal = win32::SelectPalette(hdc, hpal, 0);
     win32::RealizePalette(hdc);
     hdib = win32::GlobalAlloc(66, dwLen);
     dib.reset(hdib);
@@ -993,7 +993,7 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     BITMAPINFOHEADER bi;
     BITMAPCOREHEADER bc;
 
-    hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(idb), MAKEINTRESOURCE(2));
+    hrsrc = win32::FindResourceA(hInst, win32::MAKEINTRESOURCE(idb), win32::MAKEINTRESOURCE(2));
     if (hrsrc == 0) {
         return NULL;
     }
@@ -1007,7 +1007,7 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     }
     /* A writable copy: the original read the resource into its own block. */
     cb = win32::SizeofResource(hInst, hrsrc);
-    hdib = win32::GlobalAlloc(GMEM_FIXED, cb);
+    hdib = win32::GlobalAlloc(win32::GMEM_FIXED, cb);
     if (!hdib) {
         return NULL;
     }
@@ -1025,39 +1025,39 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     return hdib;
 }
 
-INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char    szPass[60];
     RECT    rc;
     int32_t lSalt;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
+    case win32::WM_INITDIALOG:
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xf, 0);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsEnterPassword));
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
-                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
@@ -1069,23 +1069,23 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 } else {
                     vcPasswordFailures++;
                     Delay(vcPasswordFailures < 10 ? 1000 : vcPasswordFailures < 100 ? 5000 : 10000);
-                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
+                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
-                    ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
+                    ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
                 }
             }
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1089);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, 1089);
             return 1;
         }
     }
     return 0;
 }
 
-INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     char    szPass[20];
     char    szPassConfirm[20];
     RECT    rc;
@@ -1093,10 +1093,10 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     int32_t lSalt;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
-        ui::SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
-        win32::SetWindowLongPtr(hwnd, DWLP_USER, lParam);
+    case win32::WM_INITDIALOG:
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0xf, 0);
+        ui::SendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, win32::EM_LIMITTEXT, 0xf, 0);
+        win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, lParam);
         if (lParam != 0) {
             ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsNativeLegacyRacePassword));
             ControlIO().pfnSetWindowText(hwnd, TextIO().pfnCompressed(idsNativeLegacyRacePassword));
@@ -1107,57 +1107,57 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsNoteNewPasswordWillTakeEffectUntil));
         }
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
-                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
                 if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
-                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), win32::MB_ICONHAND);
                     break;
                 }
                 lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
-                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);
+                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), win32::MB_ICONHAND);
                     ControlIO().pfnSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
-                    ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
+                    ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_SETSEL, 0, -1);
                     break;
                 }
-                if (win32::GetWindowLongPtr(hwnd, DWLP_USER) != 0) {
+                if (win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER) != 0) {
                     if (szPass[0] == 0) {
-                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeLegacyRacePasswordRequired), MB_ICONHAND);
+                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeLegacyRacePasswordRequired), win32::MB_ICONHAND);
                         break;
                     }
-                    strcpy((char *)win32::GetWindowLongPtr(hwnd, DWLP_USER), szPass);
+                    strcpy((char *)win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER), szPass);
                 } else if (idPlayer != iplrNone) {
                     WriteMemPassword(lSalt);
                 } else {
                     lSaltCur = lSalt;
-                    if (FWriteDataFile(szBase, idPlayer, FALSE)) {
+                    if (FWriteDataFile(szBase, idPlayer, 0)) {
                         lSaltLast = lSalt;
                     } else {
-                        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), MB_ICONHAND);
+                        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), win32::MB_ICONHAND);
                         lSaltCur = lSaltLast;
                     }
                 }
@@ -1165,7 +1165,7 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhChangePassword);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhChangePassword);
             return 1;
         }
     }
@@ -1176,15 +1176,14 @@ int16_t FPromptLegacyRacePassword(char *szPassword) {
     FARPROC lpProc;
     int16_t fRet;
 
-    lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-    fRet = (int16_t)ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
-    FreeProcInstance(lpProc);
+    lpProc = (NewPasswordDlg);
+    fRet = (int16_t)ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
     return fRet > 0;
 }
 
 void ShowProgressGauge() {
     if (!hwndProgressGauge) {
-        ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_Gauge), hwndFrame, lpfnGaugeDlgProc);
+        ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_Gauge), hwndFrame, lpfnGaugeDlgProc);
     } else {
         UpdateProgressGauge(static_cast<ProgressStep>(0));
     }
@@ -1199,7 +1198,7 @@ void HideProgressGauge() {
     return;
 }
 
-INT_PTR CALLBACK ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     PAINTSTRUCT ps;
     RECT        rc;
@@ -1208,35 +1207,35 @@ INT_PTR CALLBACK ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM
     int16_t     dx;
 
     switch (message) {
-    case WM_INITDIALOG:
+    case win32::WM_INITDIALOG:
         vpctProgressGauge = 0;
         hwndProgressGauge = hwnd;
-        dx = win32::GetSystemMetrics(SM_CXSCREEN);
-        dy = win32::GetSystemMetrics(SM_CYSCREEN);
+        dx = win32::GetSystemMetrics(win32::SM_CXSCREEN);
+        dy = win32::GetSystemMetrics(win32::SM_CYSCREEN);
         psz = TextIO().pfnCompressed(idsGeneratingDataYearD);
-        win32::wsprintf(szWork, psz, game.turn + 2401);
+        win32::wsprintfA(szWork, psz, game.turn + 2401);
         ControlIO().pfnSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_GAUGE_TEXT), szWork);
         win32::GetWindowRect(hwnd, &rc);
         rc.left = (dx - (rc.right - rc.left)) >> 1;
         rc.top = (dy - (rc.bottom - rc.top)) >> 1;
-        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ControlIO().pfnSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         win32::SetBkColor((HDC)wParam, crButtonFace);
         return (INT_PTR)hbrButtonFace;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
-        DrawProgressGauge(hdc, TRUE, 0);
+        DrawProgressGauge(hdc, 1, 0);
         win32::EndPaint(hwnd, &ps);
         return 1;
     }
@@ -1267,11 +1266,11 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
         dy = rc.bottom - rc.top;
         if (fFull) {
             win32::SelectObject(hdc, hbrButtonShadow);
-            win32::PatBlt(hdc, rc.left - 1, rc.top - 1, dx + 2, 1, PATCOPY);
-            win32::PatBlt(hdc, rc.left - 1, rc.top - 1, 1, dy + 2, PATCOPY);
+            win32::PatBlt(hdc, rc.left - 1, rc.top - 1, dx + 2, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, rc.left - 1, rc.top - 1, 1, dy + 2, win32::PATCOPY);
             win32::SelectObject(hdc, hbrButtonHilite);
-            win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, PATCOPY);
-            win32::PatBlt(hdc, rc.right, rc.top, 1, dy, PATCOPY);
+            win32::PatBlt(hdc, rc.left, rc.bottom, dx + 1, 1, win32::PATCOPY);
+            win32::PatBlt(hdc, rc.right, rc.top, 1, dy, win32::PATCOPY);
         }
         win32::InflateRect(&rc, -2, -2);
         dx -= 4;
@@ -1282,7 +1281,7 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
             if (iNumOnly <= 0) {
                 iNumOnly = vpctProgressGauge;
             }
-            c = win32::wsprintf(szT, PCTD, iNumOnly);
+            c = win32::wsprintfA(szT, PCTD, iNumOnly);
             RightTextOut(hdc, rc.right - 2, 1, szT, c, 80);
         }
         if (fNumOnly)
@@ -1295,7 +1294,7 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
             } else {
                 dx2 = dx;
             }
-            win32::PatBlt(hdc, rc.left, rc.top, dx2, dy, PATCOPY);
+            win32::PatBlt(hdc, rc.left, rc.top, dx2, dy, win32::PATCOPY);
             rc.left += dy;
         }
 
@@ -1317,12 +1316,12 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
     plf = (LOGFONT *)win32::LocalAlloc(64, sizeof(LOGFONT));
     plfOwner.reset(plf);
     memset(plf, 0, sizeof(LOGFONT));
-    plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     strcpy(plf->lfFaceName, rgszArial[1]);
-    hfontNew = win32::CreateFontIndirect(plf);
+    hfontNew = win32::CreateFontIndirectA(plf);
     if (pdyFont && hfontNew) {
         hfontSav = (HFONT)win32::SelectObject(hdc, hfontNew);
-        win32::GetTextMetrics(hdc, &tm);
+        win32::GetTextMetricsA(hdc, &tm);
         *pdyFont = tm.tmHeight + tm.tmExternalLeading;
         win32::SelectObject(hdc, hfontSav);
     }
@@ -1340,9 +1339,8 @@ int16_t PromptPassword() {
     FARPROC lpProc;
     int16_t fRet;
 
-    lpProc = MakeProcInstance(PasswordDlg, hInst);
-    fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc, 0);
-    FreeProcInstance(lpProc);
+    lpProc = (PasswordDlg);
+    fRet = ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc, 0);
     return fRet;
 }
 
@@ -1365,7 +1363,7 @@ void UpdateProgressGauge(ProgressStep pctX10) {
             pctX10 = static_cast<ProgressStep>(vpctProgressGauge);
         }
         vpctProgressGauge = pctX10;
-        DrawProgressGauge(NULL, FALSE, iNum);
+        DrawProgressGauge(NULL, 0, iNum);
     }
     return;
 }

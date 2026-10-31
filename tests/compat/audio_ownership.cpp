@@ -31,20 +31,20 @@ int main(int argc, char **argv) {
 
     CHECK(argc <= 2);
     if (!std::strcmp(pszMode, "failure")) {
-        CHECK(!win32::MessageBeep(MB_OK) && win32::GetLastError() == ERROR_NOT_SUPPORTED && cQueues == 0);
+        CHECK(!win32::MessageBeep(win32::MB_OK) && win32::GetLastError() == win32::ERROR_NOT_SUPPORTED && cQueues == 0);
         CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));
     } else if (!std::strcmp(pszMode, "muted")) {
-        CHECK(win32::MessageBeep(MB_OK) && cQueues == 0);
+        CHECK(win32::MessageBeep(win32::MB_OK) && cQueues == 0);
         CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));
     } else if (!std::strcmp(pszMode, "external")) {
-        CHECK(SDL_InitSubSystem(SDL_INIT_AUDIO) && win32::MessageBeep(MB_OK) && cQueues == 1);
+        CHECK(SDL_InitSubSystem(SDL_INIT_AUDIO) && win32::MessageBeep(win32::MB_OK) && cQueues == 1);
         CompatShutdownAudio(); CHECK(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO);
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
     } else {
         CHECK(!std::strcmp(pszMode, "owned"));
-        CHECK(win32::MessageBeep(MB_OK) && win32::MessageBeep(MB_ICONQUESTION) && cQueues == 2);
+        CHECK(win32::MessageBeep(win32::MB_OK) && win32::MessageBeep(win32::MB_ICONQUESTION) && cQueues == 2);
         CompatShutdownAudio(); CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));
-        CHECK(win32::MessageBeep(MB_ICONHAND) && cQueues == 3);
+        CHECK(win32::MessageBeep(win32::MB_ICONHAND) && cQueues == 3);
     }
     CompatShutdownAudio(); CompatShutdownAudio();
     CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) && cErrors == 0);

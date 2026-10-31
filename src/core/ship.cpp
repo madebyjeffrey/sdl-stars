@@ -8,22 +8,22 @@
 
 int16_t FCanSplit(int32_t cBoat) {
     if (rgplr[idPlayer].cFleet == 0x200) {
-        return FALSE;
+        return 0;
     }
     if (cBoat > 1) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 int16_t FCanSplitAll(int32_t cBoat) {
     if (cBoat - 1 + rgplr[idPlayer].cFleet > 0x200) {
-        return FALSE;
+        return 0;
     }
     if (cBoat > 1) {
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 int16_t FCanMerge(FLEET *pfl) {
@@ -47,9 +47,9 @@ int16_t FCanMerge(FLEET *pfl) {
         }
     }
     if (cfl == 1 || csh > (int32_t)(uint32_t)(32766 - (rgplr[pfl->iPlayer].cFleet - 1))) {
-        return FALSE;
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
 void SelectAdjFleet(int16_t dInc, int16_t idFleet) {
@@ -188,17 +188,17 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
         prtxfer = (uint8_t *)lprt;
         if (CxvFromPrefix(prtxfer, 5).grobj1() != grobjFleet || CxvFromPrefix(prtxfer, 5).grobj2() != grobjOther) {
-            return TRUE;
+            return 1;
         }
         if (!FleetQueryIO().pfnLookup(iFleet, &fl)) {
-            return TRUE;
+            return 1;
         }
         pt = fl.pt;
         if (!FleetQueryIO().pfnLookup(CxvFromPrefix(prtxfer, 2).id1(), &fl)) {
-            return TRUE;
+            return 1;
         }
         if (fl.pt.x != pt.x || fl.pt.y != pt.y) {
-            return TRUE;
+            return 1;
         }
         grbit = CxvFromPrefix(prtxfer, 6).grbitItems();
         if (rt == rtLogCargoXfer16) {
@@ -219,7 +219,7 @@ int16_t FEnumCalcJettison(void *lprt, RecordType rt, int16_t cb, PLANET *lppl, i
             grbit >>= 1;
         }
     }
-    return TRUE;
+    return 1;
 }
 
 int32_t GetCargoFree(FLEET *lpfl) {
@@ -367,7 +367,7 @@ void DeleteWpFar(FLEET *lpfl, int16_t iDel, int16_t fRecycle) {
         if (iDel == 86 || lpfl->cord == 2 ||
             (lpfl->lpplord->rgord()[lpfl->cord - 1].pt.x == lpfl->lpplord->rgord()[iDel].pt.x &&
              lpfl->lpplord->rgord()[lpfl->cord - 1].pt.y == lpfl->lpplord->rgord()[iDel].pt.y)) {
-            fRecycle = FALSE;
+            fRecycle = 0;
         } else {
             ord = lpfl->lpplord->rgord()[iDel];
         }
@@ -399,7 +399,7 @@ int32_t EstFuelUse(FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, in
     int32_t rgieff[16];
 
     iEffCur = 0;
-    gd.fRadiatingEngine = FALSE;
+    gd.fRadiatingEngine = 0;
     if (iWarp == -1) {
         iWarp = lpfl->lpplord->rgord()[iOrd + 1].iWarp;
     }
@@ -417,7 +417,7 @@ int32_t EstFuelUse(FLEET *lpfl, int16_t iOrd, int16_t iWarp, int32_t dTravel, in
                 rgieff[i] -= (int32_t)(rgieff[i] * 15) / 100;
             }
             if (lpshdef->hul.rghs[j].iItem == iengineRadiatingHydroRamScoop) {
-                gd.fRadiatingEngine = TRUE;
+                gd.fRadiatingEngine = 1;
             }
         }
     }
@@ -551,9 +551,9 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
     SCAN    scan;
 
     iWarpSav = lpord->iWarp;
-    iWarp = IFindIdealWarp(NULL, FALSE);
+    iWarp = IFindIdealWarp(NULL, 0);
     if (fAi) {
-        iWarpAi = IFindIdealWarp(NULL, TRUE);
+        iWarpAi = IFindIdealWarp(NULL, 1);
     }
     for (iwp = lpfl->cord - 1; iwp >= 0 && lpord != &lpfl->lpplord->rgord()[iwp]; iwp--) {
     }
@@ -561,16 +561,16 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
         return iWarp;
     }
     if (fFastest || lpord->grTask == grTaskColonize || lpord->grTask == grTaskScrap) {
-        fGoFlatOut = TRUE;
+        fGoFlatOut = 1;
     } else {
-        fGoFlatOut = FALSE;
+        fGoFlatOut = 0;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0) {
                 for (j = 0; j < rglpshdef[lpfl->iPlayer][i].hul.chs; j++) {
                     if (rglpshdef[lpfl->iPlayer][i].hul.rghs[j].grhst == hstSpecialM &&
                         (rglpshdef[lpfl->iPlayer][i].hul.rghs[j].iItem == ispecialMColonizationModule ||
                          rglpshdef[lpfl->iPlayer][i].hul.rghs[j].iItem == ispecialMOrbitalConstructionModule)) {
-                        fGoFlatOut = TRUE;
+                        fGoFlatOut = 1;
                         break;
                     }
                 }
@@ -578,10 +578,10 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
         }
     }
     if (!fGoFlatOut && fAi) {
-        fGoFlatOutAi = TRUE;
-        fGoFlatOut = TRUE;
+        fGoFlatOutAi = 1;
+        fGoFlatOut = 1;
     } else {
-        fGoFlatOutAi = FALSE;
+        fGoFlatOutAi = 0;
     }
     if (iWarp < 9) {
         iWarpOld = iWarp;
@@ -594,20 +594,20 @@ static int16_t IWarpForWaypoint(FLEET *lpfl, ORDER *lpord, int16_t fFastest) {
             if (iwp > 1 && lpord[-1].iWarp > (uint16_t)iWarp && lpord[-1].iWarp <= 10) {
                 iWarp = lpord[-1].iWarp;
             }
-            if (LFuelUseToWaypoint(lpfl, iwp, TRUE) >= (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) / 10) || lpfl->rgwtMin[4] < (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) * 7) / 10)
+            if (LFuelUseToWaypoint(lpfl, iwp, 1) >= (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) / 10) || lpfl->rgwtMin[4] < (int32_t)(ProductionIO().pfnFleetStat(lpfl, 1) * 7) / 10)
                 goto LOptimizeSpeed;
             iWarp++;
             goto LTryLimitedSpeed;
         } else {
             if (fGoFlatOutAi && lppl && lppl->iPlayer == idPlayer && rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef != ihuldefOrbitalFort) {
-                fGoFlatOutAi = FALSE;
+                fGoFlatOutAi = 0;
             }
             iWarp = 9;
         }
     LTryLimitedSpeed:
         while (iWarp > iWarpOld) {
             lpord->iWarp = iWarp;
-            lFuel = LFuelUseToWaypoint(lpfl, iwp, TRUE);
+            lFuel = LFuelUseToWaypoint(lpfl, iwp, 1);
             if (lFuel > lpfl->rgwtMin[4])
                 goto LDecWarp;
             if (((lppl && lppl->fStarbase && lppl->iPlayer == idPlayer && PartQueryIO().pfnHull(rglpshdefSB[idPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) ||
@@ -647,13 +647,13 @@ LOptimizeSpeed:
 
 // IWarpBestForWaypoint picks the warp for the leg to lpord, a waypoint of
 // lpfl's orders.
-int16_t IWarpBestForWaypoint(FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(lpfl, lpord, FALSE); }
+int16_t IWarpBestForWaypoint(FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(lpfl, lpord, 0); }
 
 // IWarpFastestForWaypoint picks the warp a colonizing fleet gets for the
 // leg to lpord: the fastest up to warp 9 whose fuel to lpord fits the
 // tank, then the slowest that arrives as soon. Players set colonize tasks
 // on scouts to get it; the scanner gives it to Alt+clicked waypoints.
-int16_t IWarpFastestForWaypoint(FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(lpfl, lpord, TRUE); }
+int16_t IWarpFastestForWaypoint(FLEET *lpfl, ORDER *lpord) { return IWarpForWaypoint(lpfl, lpord, 1); }
 
 int32_t LFuelUseToWaypoint(FLEET *lpfl, int16_t iwp, int16_t fMaxCargo) {
     int32_t lCur;
@@ -681,15 +681,15 @@ int32_t LFuelUseToWaypoint(FLEET *lpfl, int16_t iwp, int16_t fMaxCargo) {
             dist = LOWORD((int32_t)dbl);
             dbl = (double)((double)dbl / iWarp / iWarp);
             cYears = LOWORD((int32_t)((double)dbl + 0.9999));
-            l = EstFuelUse(lpfl, i, iWarp, -1, FALSE);
+            l = EstFuelUse(lpfl, i, iWarp, -1, 0);
         } else {
             cYears = 1;
             l = 0;
         }
         if (cYears > 1) {
-            lOneYearUse = EstFuelUse(lpfl, i, iWarp, (int16_t)(iWarp * iWarp), FALSE);
+            lOneYearUse = EstFuelUse(lpfl, i, iWarp, (int16_t)(iWarp * iWarp), 0);
             lFuelGain = (uint32_t)(lOneYearUse * (int16_t)(cYears - 1));
-            lFuelGain += EstFuelUse(lpfl, i, iWarp, (int16_t)(dist - iWarp * iWarp * (cYears - 1)), FALSE);
+            lFuelGain += EstFuelUse(lpfl, i, iWarp, (int16_t)(dist - iWarp * iWarp * (cYears - 1)), 0);
             if (lFuelGain > l) {
                 l = lFuelGain;
             }
@@ -754,13 +754,13 @@ void FleetTransferCargoBalance(FLEET *pflNew1, FLEET *pflNew2) {
     int32_t pctNew;
     int32_t cshDmgMoved;
 
-    fDeadFleet = FALSE;
+    fDeadFleet = 0;
     rgpflNew[0] = pflNew1;
     rgpflNew[1] = pflNew2;
     iplr = pflNew1->iPlayer;
     for (i = 0; i < 2; i++) {
         if (rgpflNew[i]->fDead) {
-            fDeadFleet = TRUE;
+            fDeadFleet = 1;
             memset(&rgflCur[i], 0, sizeof(FLEET));
             rgflCur[i].iPlayer = iplr;
         } else {
@@ -906,7 +906,7 @@ void DestroyAllIshdefSB(int16_t ishdefSB, int16_t iplr) {
     lpplMac = lpPlanets + cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iplr && lppl->fStarbase && lppl->isb == ishdefSB) {
-            lppl->fStarbase = FALSE;
+            lppl->fStarbase = 0;
             ProductionIO().pfnKillShips(lppl);
             ProductionIO().pfnKillPackets(lppl);
         }
@@ -943,7 +943,7 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
                 continue;
             }
             flDead.SetIplr(iplr);
-            flDead.fDead = TRUE;
+            flDead.fDead = 1;
             flDead.rgcsh[ishdef] = cKill;
             flNew = *lpfl;
             flNew.rgcsh[ishdef] = 0;
@@ -964,7 +964,7 @@ void DestroyAllIshdef(int16_t ishdef, int16_t iplr) {
         }
         PresentationIO().pfnInvalidateReport(rptFleets, 1);
     }
-    RemoveIshdefFromAllQueues(ishdef, FALSE);
+    RemoveIshdefFromAllQueues(ishdef, 0);
     return;
 }
 
@@ -1016,7 +1016,7 @@ int16_t CshQueued(int16_t ishdef, int16_t *pfProgress, int16_t fSpaceDocks) {
     PROD   *lpprod;
 
     csh = 0;
-    *pfProgress = FALSE;
+    *pfProgress = 0;
     lppl = lpPlanets;
     lpplMac = lpPlanets + cPlanet;
     for (; lppl < lpplMac; lppl++) {
@@ -1028,7 +1028,7 @@ int16_t CshQueued(int16_t ishdef, int16_t *pfProgress, int16_t fSpaceDocks) {
                 if (lpprod->grobj == grobjFleet && lpprod->iItem == (uint32_t)ishdef) {
                     csh += lpprod->cItem;
                     if (lpprod->pct != 0) {
-                        *pfProgress = TRUE;
+                        *pfProgress = 1;
                     }
                 }
                 iprod++;
@@ -1047,7 +1047,7 @@ void Merge2Fleets(FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDelete) {
 
     rgfl[0] = *lpflDst;
     rgfl[1] = *lpflDel;
-    fLeft = FALSE;
+    fLeft = 0;
     for (i = 0; i < 16; i++) {
         /* Ship counts are int16_t. The original added without a limit, so a
            merge past 32767 ships of a design went negative; the ships that
@@ -1059,14 +1059,14 @@ void Merge2Fleets(FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDelete) {
         rgfl[0].rgcsh[i] += csh;
         rgfl[1].rgcsh[i] -= csh;
         if (rgfl[1].rgcsh[i] != 0) {
-            fLeft = TRUE;
+            fLeft = 1;
         }
     }
     /* Ships that gated, fought or hit mines this turn can't heal, so the
        fleet they join can't either. The original dropped the merged fleet's
        fNoHeal before HealShips. */
     if (rgfl[1].fNoHeal) {
-        rgfl[0].fNoHeal = TRUE;
+        rgfl[0].fNoHeal = 1;
     }
     FleetTransferCargoBalance(rgfl, &rgfl[1]);
     for (i = 0; i < 2; i++) {
@@ -1075,7 +1075,7 @@ void Merge2Fleets(FLEET *lpflDst, FLEET *lpflDel, int16_t fNoDelete) {
     if (fLeft) {
         PresentationIO().pfnInvalidateReport(rptFleets, 2);
     } else if (fNoDelete) {
-        lpflDel->fDead = TRUE;
+        lpflDel->fDead = 1;
     } else {
         FDeleteFleet(rgfl[1].id, grobjFleet, rgfl[0].id);
         PresentationIO().pfnInvalidateReport(rptFleets, 2);
@@ -1093,7 +1093,7 @@ void FleetOrdersChangeTarget(FLEET *lpflOld) {
     SCAN       scan;
     GrobjClass grobj;
 
-    fChg = FALSE;
+    fChg = 0;
     for (iflMac = 0; iflMac < cFleet; iflMac++) {
         lpfl = rglpfl[iflMac];
         if (!rglpfl[iflMac])
@@ -1227,15 +1227,15 @@ void GetTruePartCost(int16_t iPlayer, PART *ppart, uint16_t *rgCost) {
             for (i = 0; i < 6 && lpcom.rgTech()[i] <= 0; i++) {
             }
             if (i < 6) {
-                gd.fBleedingEdge = TRUE;
+                gd.fBleedingEdge = 1;
                 for (i = 0; i < 4; i++) {
                     rgCost[i] *= 2;
                 }
             } else {
-                gd.fBleedingEdge = FALSE;
+                gd.fBleedingEdge = 0;
             }
         } else {
-            gd.fBleedingEdge = FALSE;
+            gd.fBleedingEdge = 0;
         }
     }
     return;

@@ -34,7 +34,8 @@ add_custom_command(
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/uigen.py"
         "${PROJECT_SOURCE_DIR}" "${STARS_BITMAP_GENERATED}"
     DEPENDS uigen.py "${PROJECT_SOURCE_DIR}/res/stars.rc" "${PROJECT_SOURCE_DIR}/res/resource.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_constants.h" ${STARS_CUSTOM_RESOURCE_FILES}
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/wincompat_constants.h"
+        "${PROJECT_SOURCE_DIR}/src/platform/ui_values.h" ${STARS_CUSTOM_RESOURCE_FILES}
     VERBATIM)
 
 file(GLOB STARS_IMAGE_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/res/icons/*.ico" "${PROJECT_SOURCE_DIR}/res/cursors/*.cur")

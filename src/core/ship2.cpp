@@ -45,23 +45,23 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             switch (MdCalcStargateDamage(isbsSrc, isbsDst, dDist, rglpshdef[flSrc.iPlayer][ishdef].hul.wtEmpty, &rgpct[ishdef])) {
             case -1:
                 TurnIO().pfnMessage(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
-                return FALSE;
+                return 0;
             case -2:
                 TurnIO().pfnMessage(flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseShips, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, ishdef, 0, 0, 0);
-                return FALSE;
+                return 0;
             case 0:
                 cshdef--;
                 break;
             case 1:
-                flSrc.fNoHeal = TRUE;
+                flSrc.fNoHeal = 1;
             }
         }
     }
     if (cshdef == 0) {
     LKilledEmAll:
-        lpfl->fDead = TRUE;
+        lpfl->fDead = 1;
         TurnIO().pfnMessage(flSrc.iPlayer, idmHeedlessDangerAttemptedUseStargateReachFleet, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
-        return FALSE;
+        return 0;
     }
     memset(&flDead, 0, sizeof(FLEET));
     for (ishdef = 0; ishdef < 16; ishdef++) {
@@ -151,12 +151,12 @@ int16_t FStargateJump(FLEET *lpfl, int16_t isbsSrc, int16_t isbsDst, int16_t dDi
             TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, id, LOWORD(cshKill), 0, 0, 0);
         }
         flDead.iPlayer = flSrc.iPlayer;
-        flDead.fDead = TRUE;
+        flDead.fDead = 1;
         flDead.det = detAll;
         FleetTransferCargoBalance(&flSrc, &flDead);
     }
     *lpfl = flSrc;
-    return TRUE;
+    return 1;
 }
 
 int16_t MdCalcStargateDamage(int16_t isbsSrc, int16_t isbsDst, int16_t dDist, int16_t wt, int16_t *ppctDmg) {
@@ -222,7 +222,7 @@ void KillUsedWaypoints() {
                 break;
             if (lpfl->cord > 1) {
                 if (lpfl->fMark) {
-                    DeleteWpFar(lpfl, 1, FALSE);
+                    DeleteWpFar(lpfl, 1, 0);
                     TurnIO().pfnMessage(lpfl->iPlayer, idmHasExecutedOrdersFollowFleetAwaitsFurther, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 } else {
                     for (j = 1; j < lpfl->cord; j++) {
@@ -258,7 +258,7 @@ void KillUsedWaypoints() {
                         if (lpfl->lpplord->rgord()[1].grTask != grTaskPatrol || lpfl->lpplord->rgord()[1].grobj != grobjFleet) {
                             fRep = lpfl->fRepOrders;
                         } else {
-                            fRep = FALSE;
+                            fRep = 0;
                         }
                         DeleteWpFar(lpfl, 1, fRep);
                         if (lpfl->cord == 1) {
@@ -308,7 +308,7 @@ void NoAutoTrackFleet(FLEET *lpflTarget) {
             i = 1;
             while (i < lpfl->cord) {
                 if (lpord->grobj == grobjFleet && lpord->id == idTarget) {
-                    lpord->fNoAutoTrack = TRUE;
+                    lpord->fNoAutoTrack = 1;
                     lpord->pt = lpflTarget->pt;
                 }
                 i++;
@@ -342,8 +342,8 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
     lpord->id = lppl->idRoute - 1;
     lpplRoute = LpplFromId(lppl->idRoute - 1);
     lpord->pt = rgptPlan[lppl->idRoute - 1];
-    lpord->fValidTask = TRUE;
-    iWarp = IFindIdealWarp(lpfl, FALSE);
+    lpord->fValidTask = 1;
+    iWarp = IFindIdealWarp(lpfl, 0);
     dTravel = (int32_t)((double)DGetDistance(lpfl->pt.x, lpfl->pt.y, lpord->pt.x, lpord->pt.y) + 0.999);
     if (lppl->iPlayer == lpplRoute->iPlayer && lppl->fStarbase && lpplRoute->fStarbase) {
         isbsDst = IStargateFromLppl(lpplRoute);
@@ -368,7 +368,7 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
             }
         }
         if (iWarp < 9 && PartQueryIO().pfnHull(rglpshdefSB[lpfl->iPlayer][lpplRoute->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
-            for (iWarp = 9; iWarp > 0 && EstFuelUse(lpfl, 0, iWarp, -1, TRUE) < dTravel; iWarp--) {
+            for (iWarp = 9; iWarp > 0 && EstFuelUse(lpfl, 0, iWarp, -1, 1) < dTravel; iWarp--) {
             }
             lpord->iWarp = iWarp;
         }
@@ -382,7 +382,7 @@ void AutoRouteFleet(FLEET *lpfl, PLANET *lppl) {
                 break;
             }
         }
-        for (; iWarp != 0 && EstFuelUse(lpfl, 0, iWarp, dTravel, FALSE) > lpfl->rgwtMin[4]; iWarp--) {
+        for (; iWarp != 0 && EstFuelUse(lpfl, 0, iWarp, dTravel, 0) > lpfl->rgwtMin[4]; iWarp--) {
         }
     }
     lpord->iWarp = iWarp;
@@ -397,11 +397,11 @@ int16_t FColonizer(FLEET *lpfl) {
         if (lpfl->rgcsh[i] != 0) {
             l = 1 << rglpshdef[lpfl->iPlayer][i].hul.ihuldef;
             if (l & 0xc000) {
-                return TRUE;
+                return 1;
             }
         }
     }
-    return FALSE;
+    return 0;
 }
 
 int16_t FScout(FLEET *lpfl) {
@@ -412,11 +412,11 @@ int16_t FScout(FLEET *lpfl) {
         if (lpfl->rgcsh[i] != 0) {
             l = 1 << rglpshdef[lpfl->iPlayer][i].hul.ihuldef;
             if (l & 0x70) {
-                return TRUE;
+                return 1;
             }
         }
     }
-    return FALSE;
+    return 0;
 }
 
 void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
@@ -426,7 +426,7 @@ void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
     FLEET  *lpflT;
     int16_t fFoundFleet;
 
-    fFoundFleet = FALSE;
+    fFoundFleet = 0;
     lpord = lpfl->lpplord->rgord();
     if ((lppl->iPlayer == iplrNone || (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh && lppl->iPlayer == lpfl->iPlayer)) &&
         ColonyIO().pfnFleetMining(lpfl) != 0) {
@@ -441,7 +441,7 @@ void AutoFleetOrder(FLEET *lpfl, PLANET *lppl) {
                     if (lpflT->pt.x == lpfl->pt.x && lpflT->pt.y == lpfl->pt.y) {
                         cMine = ColonyIO().pfnFleetMining(lpflT);
                         if (cMine > 0 && cMine < 4000) {
-                            fFoundFleet = TRUE;
+                            fFoundFleet = 1;
                             break;
                         }
                     }
@@ -661,7 +661,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
     cPts = 0;
     dwtFleet = 0.0;
     dcPts = 0.0;
-    fUseFloat = FALSE;
+    fUseFloat = 0;
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] > 0) {
             lphul = &rglpshdef[lpfl->iPlayer][i].hul;
@@ -682,7 +682,7 @@ int16_t PctCloakFromLpfl(FLEET *lpfl) {
                 if (!fUseFloat && (cPtsCur > 4000 || wtFleetCur > 500000 || cPts > 100000000 || wtFleet > 50000000)) {
                     dcPts = (double)cPts;
                     dwtFleet = (double)wtFleet;
-                    fUseFloat = TRUE;
+                    fUseFloat = 1;
                 }
                 if (fUseFloat) {
                     dcPts = (double)(dcPts + (double)cPtsCur * wtFleetCur);
