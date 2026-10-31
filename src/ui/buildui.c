@@ -709,7 +709,7 @@ void DrawSlotDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
             if (cItem > 0) {
                 part.hs = lpshdefBuild->hul.rghs[i];
                 FLookupPart(&part);
-                ibmp = part.pcom->ibmp;
+                ibmp = part.pcom().ibmp();
                 iInventSel = ibmp >> 5;
                 DibBlt(hdc, vrgrcSlot[i].left, vrgrcSlot[i].top, 64, 64, rghdibInventory[iInventSel], (ibmp & 7) * 0x40, (3 - (ibmp >> 3 & 3)) * 0x40, 64, 64,
                        13369376);
@@ -852,7 +852,7 @@ int16_t FTrackSlot(HWND hwnd, int16_t x, int16_t y, int16_t fkb, int16_t fListBo
         }
         part.hs = hs;
         FLookupPart(&part);
-        ibmp = part.pcom->ibmp;
+        ibmp = part.pcom().ibmp();
         rcStart = vrgrcSlot[iSrc];
     } else {
         iSel = LOWORD(SendMessage(hwnd, LB_GETCURSEL, 0, 0));
@@ -1119,7 +1119,7 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
         } else {
             wsprintf(szWord, "%d ", hsShip.cItem);
         }
-        strcat(szWord, part.pcom->szName);
+        strcat(szWord, part.pcom().szName());
         if (fPlural) {
             strcat(szWord, "s");
         }
@@ -1152,7 +1152,7 @@ void DrawBuildSelComp(HWND hwnd, HDC hdc, int16_t iDraw) {
             rc.left -= 8;
             rc.top += dyArial8;
             SelectObject(hdc, rghfontArial8[1]);
-            cch = wsprintf(szWork, PszGetCompressedString(idsMassLdkt), (uint32_t)(c * part.pcom->cMass));
+            cch = wsprintf(szWork, PszGetCompressedString(idsMassLdkt), (uint32_t)(c * part.pcom().cMass()));
             TextOut(hdc, rc.left, rc.top, szWork, cch);
         }
     }
@@ -1373,23 +1373,23 @@ void DrawBuildSelHull(HWND hwnd, HDC hdc, int16_t iDraw, RECT *prc) {
                 } else {
                     dv.dp = 0;
                     if (GlobalPD.fSummary) {
-                        dv.pctDp = LpplFromId(sel.scan.idpl)->pctDp;
+                        dv.SetPctDp(LpplFromId(sel.scan.idpl)->pctDp);
                     } else {
-                        dv.pctDp = sel.pl.pctDp;
+                        dv.SetPctDp(sel.pl.pctDp);
                     }
                     csh = 1;
-                    if (dv.pctDp != 0) {
-                        dv.pctSh = 100;
+                    if (dv.pctDp() != 0) {
+                        dv.SetPctSh(100);
                     }
                 }
             }
             if (dv.dp != 0) {
                 SetTextColor(hdc, 127);
-                pct = dv.pctDp / 5;
+                pct = dv.pctDp() / 5;
                 if (pct <= 0) {
                     pct = 1;
                 }
-                csh = LOWORD((int32_t)(csh * dv.pctSh) / 100);
+                csh = LOWORD((int32_t)(csh * dv.pctSh()) / 100);
                 if (csh <= 0) {
                     csh = 1;
                 }
@@ -1630,7 +1630,7 @@ void FillBuildDD(HWND hwndDD, MdBuild md) {
         for (i = 0; i < j; i++) {
             part.hs.iItem = i;
             if (FLookupPart(&part) == mdPartAvailAvailable) {
-                SendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)part.pcom->szName);
+                SendMessage(hwndDD, CB_ADDSTRING, 0, (LPARAM)part.pcom().szName());
             }
         }
         break;
@@ -1680,9 +1680,9 @@ void FillBuildPartsLB(HWND hwndLB, int16_t grbit) {
                 }
                 if (mdAvail == mdPartAvailAvailable) {
                     sz[1] = i + 'A';
-                    sz[2] = part.pcom->ibmp % 26 + 'A';
-                    sz[3] = part.pcom->ibmp / 26 + 'A';
-                    strcpy(&sz[4], part.pcom->szName);
+                    sz[2] = part.pcom().ibmp() % 26 + 'A';
+                    sz[3] = part.pcom().ibmp() / 26 + 'A';
+                    strcpy(&sz[4], part.pcom().szName());
                     SendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)sz);
                 }
                 i++;

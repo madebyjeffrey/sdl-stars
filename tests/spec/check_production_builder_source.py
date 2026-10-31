@@ -7,6 +7,7 @@ signed operations before C execution; no sanitizer failure is an expected pass.
 This checks bounded vectors, not a proof of C/Dafny refinement or host closure.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import random
 import shlex
@@ -210,6 +211,8 @@ def main():
     enums=enum_source(); types=(ROOT/'src/core/structs.h').read_text()
     declarations=r'''
 #include <assert.h>
+#include <array>
+#include <bit>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -225,7 +228,7 @@ def main():
         declarations+=enums[start:enums.index('\n};',start)+3]+'\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in (('_prod','PROD'),('PLPROD','PLPROD'),('_planet','PLANET')):
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)
@@ -286,7 +289,7 @@ int main(int argc,char **argv) {
         assert excluded.get('signed overflow',0)>0 and excluded.get('uninitialized need',0)>0
         print(f'Prepared {count} defined vectors; excluded before C execution: {excluded}',flush=True)
         source.write_text(declarations+body+harness)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 

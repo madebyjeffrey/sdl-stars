@@ -24,7 +24,7 @@ int16_t PctJammerFromHul(HUL *lphul) {
         if (part.hs.grhst == hstSpecialE) {
             if (part.hs.iItem >= ispecialEJammer10 && part.hs.iItem <= ispecialEJammer50) {
                 FLookupPart(&part);
-                pctJam = (int16_t)(100 - part.pspecial->grAbility);
+                pctJam = (int16_t)(100 - part.pspecial()->grAbility);
             } else if (part.hs.iItem == ispecialEMultiFunctionPod) {
                 pctJam = 90;
             } else {
@@ -114,11 +114,11 @@ void KillQueuedMassPackets(PLANET *lppl) {
     if (lppl->lpplprod && lppl->lpplprod->iprodMac != 0) {
         iDst = 0;
         iprod = 0;
-        lpprod = lppl->lpplprod->rgprod;
+        lpprod = lppl->lpplprod->rgprod();
         while (iprod < lppl->lpplprod->iprodMac) {
             if (lpprod->grobj != grobjPlanet || lpprod->iItem < iobjPacketIron || lpprod->iItem > iobjPacketMixed) {
                 if (iDst != iprod) {
-                    lppl->lpplprod->rgprod[iDst] = *lpprod;
+                    lppl->lpplprod->rgprod()[iDst] = *lpprod;
                 }
                 iDst++;
             }
@@ -126,7 +126,7 @@ void KillQueuedMassPackets(PLANET *lppl) {
             lpprod++;
         }
         if (iDst == 0) {
-            FreePl((PL *)lppl->lpplprod);
+            FreePl(lppl->lpplprod);
             lppl->lpplprod = NULL;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;
@@ -147,14 +147,14 @@ void KillQueuedShips(PLANET *lppl) {
     if (lppl->lpplprod && lppl->lpplprod->iprodMac != 0) {
         iDst = 0;
         iprod = 0;
-        lpprod = lppl->lpplprod->rgprod;
+        lpprod = lppl->lpplprod->rgprod();
         while (iprod < lppl->lpplprod->iprodMac) {
             if (lpprod->grobj != grobjFleet || lpprod->iItem >= iobjPacketGerm) {
                 if (lpprod->grobj == grobjFleet) {
                     lpprod->pct = 0;
                 }
                 if (iDst != iprod) {
-                    lppl->lpplprod->rgprod[iDst] = *lpprod;
+                    lppl->lpplprod->rgprod()[iDst] = *lpprod;
                 }
                 iDst++;
             }
@@ -162,7 +162,7 @@ void KillQueuedShips(PLANET *lppl) {
             lpprod++;
         }
         if (iDst == 0) {
-            FreePl((PL *)lppl->lpplprod);
+            FreePl(lppl->lpplprod);
             lppl->lpplprod = NULL;
         } else if (iDst != iprod) {
             lppl->lpplprod->iprodMac = iDst;

@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 // Messages and questions.
-int16_t IdAlertBox(char *sz, int16_t mbType);
+int16_t IdAlertBox(const char *sz, int16_t mbType);
 int16_t PromptPassword();
 int16_t FPromptLegacyRacePassword(char *szPassword);
 void    PromptSaveGame();
@@ -23,7 +23,7 @@ void    PostOpenGame();
 void    ShowTitleScreen();
 void    SetSzRaceFile(const char *pszFile);
 int16_t FConfirmLegacyRaceNames(char *szName, char *szNames);
-void    AddMRUFile(char *pszFileName, char *pszExt);
+void    AddMRUFile(const char *pszFileName, const char *pszExt);
 void    CloseGameWindows();
 int16_t FFinishPlrMsgEntry(int16_t dInc);
 

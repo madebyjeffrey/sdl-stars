@@ -381,7 +381,7 @@ int main(void){
     for old,new in {'NATIVEFILE':'FILE','CReadNative':'fread','CWriteNative':'fwrite','FNativeStreamError':'ferror','ICloseNativeFile':'fclose'}.items():
         body=body.replace(old,new)
     c.write_text(prelude+'\n'+body+'\n'+harness)
-    subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
+    subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],cwd=tmp,check=True)
 
 
@@ -389,7 +389,8 @@ def main():
     source=(ROOT/'src/ui/libraryui.c').read_text()
     for name in ('szLibraryRoot','szLibraryPending','szLibraryName'):
         assert f'static char {name}[256];' in source
-    assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/globals.c').read_text())
+    assert re.search(r'char\s+szBase\[256\]',(ROOT/'src/core/appstate.h').read_text())
+    assert 'decltype(APPGAMESTATE::szBase) &szBase = GetAppSession().state.szBase;' in (ROOT/'src/core/globals.c').read_text()
     assert 'char szUniverse[512], szTarget[512], szOrders[512], szStage[512], szPrevious[512], szMessage[1024];' in extract('FImportSubsequentTurn')
     # Enumerate every reached Boolean reply combination, including repeated
     # restore/cleanup calls, plus partial residue and stage/previous collisions.
@@ -403,7 +404,7 @@ def main():
         bodies = later()+'\n'+extract('FReplaceConflictingLibraryTurn')+'\n'+extract('FImportConflictingTurnAsCopy')+'\n'+family()
         c.write_text(DECLARATIONS+'\n'+bodies+'\n'+HARNESS)
         compiler = shlex.split(os.environ.get('CXX','c++'))
-        subprocess.run(compiler+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-O0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
+        subprocess.run(compiler+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-O0','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',str(c),'-o',str(binary)],check=True)
         with output.open('w') as stream:
             subprocess.run([str(binary)],input=inputs,text=True,stdout=stream,check=True)
         count=0;unique=[set() for _ in range(5)];witnesses={}

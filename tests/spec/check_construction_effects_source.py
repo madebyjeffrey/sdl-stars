@@ -6,6 +6,7 @@ Produce and RNG bodies. Catalog, economy, routing, message and low-level heap
 services remain explicit providers; generated IDs come from current generators.
 Undefined damage/axis inputs are guarded before native execution.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
 import os
 import shlex
@@ -18,6 +19,7 @@ from check_s02_source import ROOT, function
 def native_construction():
     declarations=r'''
 #include "common.h"
+#include "liststorage.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -67,9 +69,9 @@ HULDEF *LphuldefFromId(int16_t hull){(void)hull;catalogCalls++;return &catalogHu
 int16_t IWarpMAFromLppl(PLANET *p,int16_t *two){assert(p==&planet);int at=warpCalls<2 ? warpCalls:1;warpBase[at]=p->isb;warpCalls++;if(two)*two=twoValues[at];return warpValues[at];}
 int16_t FLookupPlanet(int16_t id,PLANET *out){assert(id==planet.id);lookups++;*out=planet;return TRUE;}
 void FillSelProdLB(void){fills++;}
-FLEET *LpflNew(int16_t player,int16_t id){assert(!player && id==planet.id);newFleets++;FLEET *f=&fleetBodies[3];f->iPlayer=player;f->idPlanet=id;f->lpplord=(PLORD *)orderStorage[3].data;rgplr[player].cFleet++;return f;}
+FLEET *LpflNew(int16_t player,int16_t id){assert(!player && id==planet.id);newFleets++;FLEET *f=&fleetBodies[3];f->iPlayer=player;f->idPlanet=id;f->lpplord=LpStartPl<PLORD,ORDER>(orderStorage[3].data,sizeof(orderStorage[3].data));rgplr[player].cFleet++;return f;}
 int32_t LGetFleetStat(FLEET *f,int16_t stat){assert(f && stat==1);return 12345;}
-void AutoRouteFleet(FLEET *f,PLANET *p){assert(f && p==&planet);routes++;f->lpplord->rgord[1].iWarp=1;}
+void AutoRouteFleet(FLEET *f,PLANET *p){assert(f && p==&planet);routes++;f->lpplord->rgord()[1].iWarp=1;}
 void AutoFleetOrder(FLEET *f,PLANET *p){assert(f && p==&planet);defaults++;}
 int16_t IBestTerraform(PLANET *p,int16_t help){assert(p==&planet && help);terraformCalls++;if(terraformChoice<-3 || terraformChoice>3)longjmp(boundary,1);return terraformChoice;}
 void LookupBestPlanetaryScanner(PART *part){assert(idPlayer==planet.iPlayer);part->hs.iItem=(uint8_t)partIndex;}
@@ -95,7 +97,7 @@ static void reset(void){
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);heaps=0;
     memset(&game,0,sizeof(game));memset(&gd,0,sizeof(gd));memset(&sel,0,sizeof(sel));memset(rgplr,0,sizeof(rgplr));
     memset(ships,0,sizeof(ships));memset(bases,0,sizeof(bases));memset(&planet,0,sizeof(planet));memset(fleetBodies,0,4*sizeof(fleetBodies[0]));memset(orderStorage,0,4*sizeof(orderStorage[0]));
-    for(int i=0;i<4;i++){fleetSlots[i]=&fleetBodies[i];fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;}
+    for(int i=0;i<4;i++){fleetSlots[i]=&fleetBodies[i];fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));}
     rglpshdef[0]=ships;rglpshdefSB[0]=bases;lpThings=NULL;cThing=cThingAlloc=cFleet=0;
     canBuild=1;catalogCalls=canCalls=lookups=fills=shipKills=packetKills=warpCalls=0;cap=operableCap=100;removed=0;gross=100;
     warpValues[0]=warpValues[1]=10;twoValues[0]=twoValues[1]=0;terraformChoice=1;terraformCalls=randomCalls=messages=newFleets=routes=defaults=0;
@@ -167,19 +169,19 @@ int main(void){
         int asked=configured+4;if(asked<5 || asked>abilities[w]+3)asked=s16(abilities[w]+two);
         unsigned decay=(uint16_t)(asked<=abilities[w]+two ? 0:asked-abilities[w]-two);
         if(primaries[t]==7 && s16((int)decay)<3)decay=(uint16_t)(decay+1);
-        CHECK(cThing==1 && lpThings[0].thp.iWarp==((unsigned)s16(asked-4)&15) && lpThings[0].thp.iDecayRate==(decay&3) && lpThings[0].thp.idPlanet==7);
-        unsigned weight=0;for(int i=0;i<3;i++){int ore=mixed || i==packets[item]-14 ? quantity:0;CHECK(lpThings[0].thp.rgwtMin[i]==ore);weight=(weight+s16(ore+9)/10)&16383;}
-        CHECK(lpThings[0].thp.wtMax==weight);
+        CHECK(cThing==1 && lpThings[0].thp().iWarp()==((unsigned)s16(asked-4)&15) && lpThings[0].thp().iDecayRate()==(decay&3) && lpThings[0].thp().idPlanet()==7);
+        unsigned weight=0;for(int i=0;i<3;i++){int ore=mixed || i==packets[item]-14 ? quantity:0;CHECK(lpThings[0].thp().rgwtMin(i)==ore);weight=(weight+s16(ore+9)/10)&16383;}
+        CHECK(lpThings[0].thp().wtMax()==weight);
     }
     // Packet quantity saturation and weight's signed-16 narrowing.
-    reset();CHECK(call(1,17,1000) && cThing==1);CHECK(lpThings[0].thp.rgwtMin[0]==32760 && lpThings[0].thp.wtMax==6556);
+    reset();CHECK(call(1,17,1000) && cThing==1);CHECK(lpThings[0].thp().rgwtMin(0)==32760 && lpThings[0].thp().wtMax()==6556);
     reset();warpValues[0]=0;CHECK(!call(1,6,1) && messageIds[0]==idmMineralPacketFormedHasDisintegratedBecausePlanet);
     reset();planet.idFling=0;CHECK(!call(1,6,1) && messageIds[0]==idmMineralPacketFormedHasDisintegratedBecauseDidnt);
-    reset();THING *p=LpthNew(0,ithMineralPacket);p->pt=rgptPlan[5];p->thp.iWarp=6;p->thp.idPlanet=7;p->thp.iDecayRate=0;p->thp.wtMax=1629;
-    for(int i=0;i<3;i++)p->thp.rgwtMin[i]=32760;CHECK(call(1,17,1) && cThing==1);CHECK(p->thp.rgwtMin[0]==32760 && p->thp.wtMax==6556 && messageIds[0]==idmHasProducedMineralPacketWhichHasCombined);
-    p->thp.wtMax=1630;CHECK(call(1,17,1) && cThing==2);
+    reset();THING *p=LpthNew(0,ithMineralPacket);p->pt().Set(rgptPlan[5]);p->thp().SetIWarp(6);p->thp().SetIdPlanet(7);p->thp().SetIDecayRate(0);p->thp().SetWtMax(1629);
+    for(int i=0;i<3;i++)p->thp().SetRgwtMin(i, 32760);CHECK(call(1,17,1) && cThing==1);CHECK(p->thp().rgwtMin(0)==32760 && p->thp().wtMax()==6556 && messageIds[0]==idmHasProducedMineralPacketWhichHasCombined);
+    p->thp().SetWtMax(1630);CHECK(call(1,17,1) && cThing==2);
     reset();cThing=cThingAlloc=512;lpThings=static_cast<THING *>(LpAlloc((uint16_t)(512*sizeof(THING)),htThings));
-    for(int i=0;i<512;i++){lpThings[i].ith=ithMineralPacket;lpThings[i].iplr=0;lpThings[i].id=i;lpThings[i].pt.x=99;}
+    for(int i=0;i<512;i++){lpThings[i].SetIth(ithMineralPacket);lpThings[i].SetIplr(0);lpThings[i].SetId(i);lpThings[i].pt().SetX(99);}
     CHECK(call(1,17,1) && cThing==512 && messageIds[0]==idmHasOrdersBuildMineralPacketEitherDoesnt);
     // Fleet limit uses first-order point, first null/greater owner and strict
     // 32766-built > prior count, independently of fleet point or dead flag.
@@ -195,11 +197,11 @@ int main(void){
     for(unsigned cargo=0;cargo<3;cargo++){reset();bases[0].hul.wtCargoMax=cargos[cargo];CHECK(call(2,16,1));
         CHECK(messageIds[0]==idmHasBuiltNew+(cargo==0 ? 0:cargo==2 ? 2:1) && messageArgs[0][2]==123 && catalogCalls==1);}
     reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetSlots[0]=NULL;CHECK(!call(2,0,1));
-    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=2;fleetBodies[0].iPlayer=1;fleetBodies[1].lpplord->rgord[0].pt=rgptPlan[5];CHECK(!call(2,0,1));
-    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=32765;CHECK(!call(2,0,1));
+    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=2;fleetBodies[0].iPlayer=1;fleetBodies[1].lpplord->rgord()[0].pt=rgptPlan[5];CHECK(!call(2,0,1));
+    reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord()[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=32765;CHECK(!call(2,0,1));
     fleetBodies[0].rgcsh[0]=32764;fleetBodies[0].fDead=1;CHECK(call(2,0,1) && fleetBodies[0].rgcsh[0]==32765);
     for(unsigned word=0;word<65536;word++){
-        reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=10;fleetBodies[0].rgdv[0].dp=(uint16_t)word;ships[0].hul.dp=100;
+        reset();planet.fStarbase=1;rgplr[0].cFleet=512;cFleet=1;fleetBodies[0].lpplord->rgord()[0].pt=rgptPlan[5];fleetBodies[0].rgcsh[0]=10;fleetBodies[0].rgdv[0].dp=(uint16_t)word;ships[0].hul.dp=100;
         unsigned expected;CHECK(damageExpected(10,1,word,100,&expected));CHECK(call(2,0,1));CHECK(fleetBodies[0].rgdv[0].dp==expected && fleetBodies[0].rgcsh[0]==11 && ships[0].cBuilt==1 && ships[0].cExist==1);
     }
     reset();fleetBodies[0].rgcsh[0]=32767;ships[0].cBuilt=ships[0].cExist=UINT32_MAX;CreateShip(0,&fleetBodies[0],0,1);
@@ -207,13 +209,13 @@ int main(void){
     // Actual base invalidators reset surviving base progress in both the
     // copied prefix and old physical source slot.
     reset();planet.fStarbase=1;planet.isb=0;bases[0].hul.ihuldef=static_cast<HulDef>(10);bases[1].hul.ihuldef=static_cast<HulDef>(5);bases[0].cExist=1;
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,3,htOrd);planet.lpplprod->iprodMac=3;
-    planet.lpplprod->rgprod[0]=row(1,0,2,50);planet.lpplprod->rgprod[1]=row(1,16,2,59);planet.lpplprod->rgprod[2]=row(1,14,1,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,3,htOrd);planet.lpplprod->iprodMac=3;
+    planet.lpplprod->rgprod()[0]=row(1,0,2,50);planet.lpplprod->rgprod()[1]=row(1,16,2,59);planet.lpplprod->rgprod()[2]=row(1,14,1,0);
     sel.grobj=grobjPlanet;sel.pl.id=planet.id;warpValues[0]=warpValues[1]=0;
     CHECK(call(2,17,100) && shipKills==1 && packetKills==1 && lookups==2 && fills==2);
     CHECK(planet.isb==1 && bases[0].cExist==0 && bases[1].cExist==1 && bases[1].cBuilt==1 && !planet.idFling && !planet.iWarpFling);
-    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod[0].iItem==16 && !planet.lpplprod->rgprod[0].pct);
-    CHECK(!planet.lpplprod->rgprod[1].pct && warpBase[0]==0 && warpBase[1]==1);
+    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod()[0].iItem==16 && !planet.lpplprod->rgprod()[0].pct);
+    CHECK(!planet.lpplprod->rgprod()[1].pct && warpBase[0]==0 && warpBase[1]==1);
     reset();planet.fStarbase=1;planet.isb=0;bases[0].cExist=0;bases[0].cBuilt=UINT32_MAX;CHECK(call(2,16,0));CHECK(bases[0].cExist==0 && bases[0].cBuilt==0);
     for(unsigned prior=0;prior<10;prior++)for(unsigned next=0;next<10;next++)for(int has=0;has<2;has++)for(int oldWarp=0;oldWarp<2;oldWarp++)for(int newWarp=0;newWarp<2;newWarp++){
         reset();planet.fStarbase=has;planet.isb=prior;planet.iWarpFling=9;
@@ -229,20 +231,20 @@ int main(void){
     reset();planet.id=0;rgptPlan[0]=(POINT16){10,20};game.cPlayer=1;game.cPlanMax=1;
     planet.fStarbase=1;bases[0].hul.ihuldef=ihuldefOrbitalFort;rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
-        fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
-        fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord[0].pt=fleetBodies[i].pt;}
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,0,2,0);
+        fleetBodies[i].SetIfl(i);fleetBodies[i].iPlayer=0;fleetBodies[i].SetIplr(0);fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
+        fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord()[0].pt=fleetBodies[i].pt;}
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(!planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10 && !newFleets);
-    reset();cap=2;operableCap=5;planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(5,7,1,0);
+    reset();cap=2;operableCap=5;planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(5,7,1,0);
     Produce();CHECK(planet.cFactories==2 && rgplr[0].lResLastYear==50 && !planet.lpplprod);
     // Genesis clears native planet stock directly; the caller's working stock
     // is later written back. Keep this distinction visible in the specification.
-    reset();planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,13,1,0);
+    reset();planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,13,1,0);
     Produce();CHECK(randomCalls==12 && planet.rgwtMin[0]==10 && planet.rgwtMin[1]==20 && planet.rgwtMin[2]==30 && rgplr[0].lResLastYear==90);
     reset();printf("Construction effects actual-source fixtures: %d assertions passed\n",checks);return 0;
 }
 '''
-    return declarations,bodies,witnesses
+    return declarations + storage_declarations(), bodies + storage_definitions('return heap[slot(const_cast<void *>(lp))].bytes;'), witnesses
 
 
 def main():
@@ -255,7 +257,7 @@ def main():
         # Existing reconstructed bodies have an unused resource parameter and
         # corresponding signed/unsigned cost-pointer convention; match project
         # warning exclusions while making other warnings and sanitizers fatal.
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all',
             '-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)

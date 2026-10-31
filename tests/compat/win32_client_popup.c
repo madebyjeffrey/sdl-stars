@@ -23,7 +23,7 @@ static BOOL FNativeFocus(HWND hwnd) {
     if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy")) return TRUE;
     do {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
-        if (SDL_GetKeyboardFocus() == hwnd->lpWindow) return TRUE;
+        if (SDL_GetKeyboardFocus() == hwnd->lpWindow.get()) return TRUE;
         SDL_Delay(10);
     } while (GetTickCount() < timeEnd);
     return FALSE;
@@ -52,10 +52,10 @@ static int TestBrowserAvailableTechnology(void) {
         CHECK(FLookupPart(&vpartBrowser) != mdPartAvailAvailable);
         SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(IsDlgButtonChecked(hwnd, IDC_BROWSER_AVAILABLE_ONLY));
-        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
         CHECK(SendDlgItemMessage(hwnd, IDC_BROWSER_COMPONENT_CATEGORY, CB_GETCURSEL, 0, 0) == iCategory);
         SendMessage(hwnd, WM_COMMAND, IDC_NEXT, 0);
-        CHECK(vpartBrowser.pcom && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
+        CHECK(vpartBrowser.pcom() && FLookupPart(&vpartBrowser) == mdPartAvailAvailable);
         hs = vpartBrowser.hs;
         SendMessage(GetDlgItem(hwnd, IDC_BROWSER_AVAILABLE_ONLY), BM_CLICK, 0, 0);
         CHECK(vpartBrowser.hs.grhst == hs.grhst && vpartBrowser.hs.iItem == hs.iItem);
@@ -71,7 +71,7 @@ static void CALLBACK CloseDesigner(HWND hwnd, UINT msg, UINT_PTR id, DWORD time)
     if (!IsWindowVisible(hwndSlotDlg)) return;
     fDesignerSeen = TRUE;
     fDesignerFocus = !strcmp(SDL_GetCurrentVideoDriver(), "dummy") ||
-        SDL_GetKeyboardFocus() == hwndSlotDlg->lpWindow;
+        SDL_GetKeyboardFocus() == hwndSlotDlg->lpWindow.get();
     if (!fDesignerFocus && ++cDesignerWait < 40) return;
     KillTimer(NULL, id);
     PostMessage(hwndSlotDlg, WM_COMMAND, IDCANCEL, 0);
@@ -200,44 +200,44 @@ int main(void) {
     CHECK(hwnd && hwndTooltip == hwnd && !IsWindowVisible(hwnd));
 #ifdef __APPLE__
     if (!strcmp(SDL_GetCurrentVideoDriver(), "cocoa")) {
-        CHECK(SDL_GetWindowFlags(hwnd->lpWindow) & SDL_WINDOW_TRANSPARENT);
-        CHECK(FTestCocoaPopupBackground(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow),
+        CHECK(SDL_GetWindowFlags(hwnd->lpWindow.get()) & SDL_WINDOW_TRANSPARENT);
+        CHECK(FTestCocoaPopupBackground(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()),
                   SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL)));
     }
 #endif
     CHECK(SetWindowPos(hwnd, HWND_TOPMOST, 200, 180, 0, 0,
                        SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER));
-    CHECK(UpdateWindow(hwnd) && hwnd->lpComposite);
-    CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite, 5 * hwnd->iCanvasScale, (dyArial8 + 3) * hwnd->iCanvasScale, &r, &g, &b, &a));
+    CHECK(UpdateWindow(hwnd) && hwnd->lpComposite.get());
+    CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite.get(), 5 * hwnd->iCanvasScale, (dyArial8 + 3) * hwnd->iCanvasScale, &r, &g, &b, &a));
     CHECK(RGB(r, g, b) == RGB(255, 255, 159) && a == 255);
     CHECK(GetFocus() == hwndFocus && DestroyWindow(hwnd) && !hwndTooltip);
     for (i = 0; i < 3; i++) {
         GlobalPD.grPopup = grPopupMineral;
-        GlobalPD.rgi[0] = 0; GlobalPD.rgi[1] = 0;
-        GlobalPD.rgi[2] = 2000; GlobalPD.rgi[3] = 68; GlobalPD.rgi[4] = 11;
+        GlobalPD.SetRgi(0, 0); GlobalPD.SetRgi(1, 0);
+        GlobalPD.SetRgi(2, 2000); GlobalPD.SetRgi(3, 68); GlobalPD.SetRgi(4, 11);
         Popup(hwndFrame, 200, 180);
         hwnd = LpCompatWindow(hwndPopup);
         CHECK(hwnd && hwnd->hwndOwner == hwndFrame && IsWindowVisible(hwnd));
         CHECK(hwnd->dwExStyle & WS_EX_NOACTIVATE);
-        flags = SDL_GetWindowFlags(hwnd->lpWindow);
+        flags = SDL_GetWindowFlags(hwnd->lpWindow.get());
         CHECK(flags & SDL_WINDOW_NOT_FOCUSABLE);
         CHECK(flags & SDL_WINDOW_BORDERLESS);
         if (strcmp(SDL_GetCurrentVideoDriver(), "dummy")) {
             CHECK(flags & SDL_WINDOW_TOOLTIP);
-            CHECK(SDL_GetWindowParent(hwnd->lpWindow) == hwndFrame->lpWindow);
+            CHECK(SDL_GetWindowParent(hwnd->lpWindow.get()) == hwndFrame->lpWindow.get());
         }
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
         CHECK(GetFocus() == hwndFocus && GetCapture() == hwnd);
         if (i == 0) {
             SDL_zero(event);
             event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
-            event.window.windowID = SDL_GetWindowID(hwnd->lpWindow);
+            event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
             CHECK(SDL_PushEvent(&event));
             while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
         } else if (i == 1) {
             SDL_zero(event);
             event.type = SDL_EVENT_MOUSE_BUTTON_UP;
-            event.button.windowID = SDL_GetWindowID(hwndFrame->lpWindow);
+            event.button.windowID = SDL_GetWindowID(hwndFrame->lpWindow.get());
             event.button.button = SDL_BUTTON_RIGHT;
             event.button.x = 200; event.button.y = 180;
             CHECK(SDL_PushEvent(&event));
@@ -253,11 +253,11 @@ int main(void) {
     GlobalPD.lpshdef = &shdef;
     Popup(hwndFrame, 200, 180);
     hwnd = LpCompatWindow(hwndPopup);
-    CHECK(hwnd && hwnd->lpComposite);
-    CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite, 330 * hwnd->iCanvasScale, 300 * hwnd->iCanvasScale, &r, &g, &b, &a));
+    CHECK(hwnd && hwnd->lpComposite.get());
+    CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite.get(), 330 * hwnd->iCanvasScale, 300 * hwnd->iCanvasScale, &r, &g, &b, &a));
     CHECK(RGB(r, g, b) == crButtonFace);
     CHECK(!hwnd->fUpdate && !hwnd->fPresentPending);
-    lpFirst = SDL_DuplicateSurface(hwnd->lpCanvas);
+    lpFirst = SDL_DuplicateSurface(hwnd->lpCanvas.get());
     CHECK(lpFirst);
     CHECK(InvalidateRect(hwnd, NULL, TRUE) && UpdateWindow(hwnd));
     CHECK(lpFirst->pitch == hwnd->lpCanvas->pitch &&

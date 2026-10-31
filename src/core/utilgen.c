@@ -5,8 +5,6 @@ int16_t rgPrimes[128] = {3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  
                          251, 257, 263, 279, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401,
                          409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571,
                          577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727};
-int32_t lFileSeed1 = 0;
-int32_t lFileSeed2 = 0;
 
 void PushRandom(int32_t lNew1, int32_t lNew2) {
     rglRandStack[cRandStack][0] = lRandSeed1;
@@ -139,16 +137,20 @@ int32_t LGetNextFileXor() {
 }
 
 void XorFileBuf(char *rgb, int16_t cb) {
-    int32_t *plMac;
-    int32_t *pl;
+    char    *plMac;
+    char    *pl;
     int32_t  lPrev;
+    uint32_t ul;
     char    *pch;
 
     lPrev = 0;
-    pl = (int32_t *)rgb;
-    plMac = pl + (cb >> 2);
-    for (; pl < plMac; pl++) {
-        *pl ^= LGetNextFileXor();
+    pl = rgb;
+    plMac = pl + (cb >> 2) * 4;
+    for (; pl < plMac; pl += 4) {
+        lPrev = LGetNextFileXor();
+        NATIVEBYTEREADER(std::as_bytes(std::span(pl, 4))).FReadU32Le(ul);
+        ul ^= static_cast<uint32_t>(lPrev);
+        NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pl, 4))).FWriteU32Le(ul);
     }
     cb &= 3;
     if (cb > 0) {
@@ -227,7 +229,7 @@ char *PszGetCompressedPlanet(int16_t id) {
     return szLastGet;
 }
 
-void OutputFileString(char *szFile, char *sz) {
+void OutputFileString(const char *szFile, const char *sz) {
     int16_t  fMissing;
     uint16_t w;
     int16_t  hf;
@@ -245,7 +247,7 @@ void OutputFileString(char *szFile, char *sz) {
     return;
 }
 
-void StarsCopyFile(char *szSrc, char *szDst) {
+void StarsCopyFile(const char *szSrc, const char *szDst) {
     char     rgb[2048];
     int16_t  fMissing;
     int16_t  hfDst;
@@ -277,7 +279,7 @@ LStreamError:
     return;
 }
 
-int16_t STARS_TEST_IMPL(AlertSz)(char *sz, int16_t mbType) {
+int16_t STARS_TEST_IMPL(AlertSz)(const char *sz, int16_t mbType) {
     char szT[256];
 
     if (ini.fValidate || (ini.fLogging && ini.fGen)) {
@@ -403,7 +405,7 @@ void BoundPoints(RECT *prc, POINT16 *rgpt, int16_t cpt) {
     return;
 }
 
-int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut) {
+int16_t FCompressUserString(const char *szIn, char *szOut, int16_t *pcOut) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -448,7 +450,7 @@ int16_t FCompressUserString(char *szIn, char *szOut, int16_t *pcOut) {
     return TRUE;
 }
 
-static int16_t FDecompressUserStringInternal(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
+static int16_t FDecompressUserStringInternal(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut, int16_t fUtf8) {
     int16_t fHalf;
     char    szWork[1024];
     int16_t iNyb;
@@ -506,11 +508,11 @@ invalid:
     return FALSE;
 }
 
-int16_t FDecompressUserString(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+int16_t FDecompressUserString(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
     return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, TRUE);
 }
 
-int16_t FDecompressUserStringBytes(char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
+int16_t FDecompressUserStringBytes(const char *szIn, int16_t cIn, char *szOut, int16_t *pcOut) {
     return FDecompressUserStringInternal(szIn, cIn, szOut, pcOut, FALSE);
 }
 
@@ -684,7 +686,7 @@ int16_t FCheckPassword() {
     return PromptPassword();
 }
 
-int32_t LSaltFromSz(char *psz) {
+int32_t LSaltFromSz(const char *psz) {
     int32_t lSalt;
 
     lSalt = 0;

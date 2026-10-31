@@ -18,9 +18,9 @@ void InitProduction(PROD *rgprod) {
     } else {
         i = 2;
     }
-    lpplProdGlob = (PLPROD *)LpplAlloc(4, i, htOrd);
+    lpplProdGlob = LpplAlloc<PLPROD>(4, i, htOrd);
     if (sel.pl.lpplprod) {
-        memcpy(lpplProdGlob->rgprod, sel.pl.lpplprod->rgprod, i * 4);
+        memcpy(lpplProdGlob->rgprod(), sel.pl.lpplprod->rgprod(), i * 4);
     } else {
         i = 0;
     }
@@ -114,7 +114,7 @@ void InitProduction(PROD *rgprod) {
         }
     }
     ipl = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (ipl < lpplProdGlob->iprodMac) {
         for (iSrc = 0; iSrc < cProdGlob && ((uint32_t)pProdGlob[iSrc].grobj != lpprod->grobj || (uint32_t)pProdGlob[iSrc].iItem != lpprod->iItem); iSrc++) {
         }
@@ -147,9 +147,9 @@ void InitProduction(PROD *rgprod) {
 
 void FinishProduction(int16_t fWrite) {
     if (fWrite) {
-        FreePl((PL *)sel.pl.lpplprod);
+        FreePl(sel.pl.lpplprod);
         if (lpplProdGlob && lpplProdGlob->iprodMac == 0) {
-            FreePl((PL *)lpplProdGlob);
+            FreePl(lpplProdGlob);
             lpplProdGlob = NULL;
         }
         sel.pl.lpplprod = lpplProdGlob;
@@ -162,7 +162,7 @@ void FinishProduction(int16_t fWrite) {
         }
     } else {
         sel.pl.fNoResearch = gd.fNoResearchSav;
-        FreePl((PL *)lpplProdGlob);
+        FreePl(lpplProdGlob);
     }
     lpplProdGlob = NULL;
     if (gd.fTutorial && idPlayer == 0) {
@@ -273,7 +273,7 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             } else {
                 lphulT = &LphuldefFromId(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
-                part.phul = lphulT;
+                part.SetPhul(lphulT);
                 GetTruePartCost(iplr, &part, (uint16_t *)rgCostsPartCur);
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
@@ -360,9 +360,9 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
             part.hs.iItem = iplanetarySDI;
             FLookupPart(&part);
             for (i = 0; i < 3; i++) {
-                rgCost[i] = part.pplanetary->rgwtOreCost[i];
+                rgCost[i] = part.pplanetary()->rgwtOreCost[i];
             }
-            rgCost[3] = (uint32_t)part.pplanetary->resCost;
+            rgCost[3] = (uint32_t)part.pplanetary()->resCost;
             if (GetRaceStat(&rgplr[iplr], rsMajorAdv) != raDefend)
                 break;
             for (i = 0; i < 4; i++) {
@@ -466,8 +466,8 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
         lpplprod = lppl->lpplprod;
     }
     pl = *lppl;
-    pl.lpplprod = (PLPROD *)LpplAlloc(4, lpplprod->iprodMax, htOrd);
-    memcpy(pl.lpplprod->rgprod, lpplprod->rgprod, lpplprod->iprodMac * 4);
+    pl.lpplprod = LpplAlloc<PLPROD>(4, lpplprod->iprodMax, htOrd);
+    memcpy(pl.lpplprod->rgprod(), lpplprod->rgprod(), lpplprod->iprodMac * 4);
     pl.lpplprod->iprodMac = lpplprod->iprodMac;
     iMac = lpplprod->iprodMac;
     prodPartial.cItem = 0;
@@ -490,7 +490,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
             if (i == -1) {
                 lpprod = &prodPartial;
             } else {
-                lpprod = &pl.lpplprod->rgprod[i];
+                lpprod = &pl.lpplprod->rgprod()[i];
             }
             if (lpprod->cItem != 0) {
                 if (lpprod->iItem == iobjAlchemy && lpprod->grobj == grobjPlanet) {
@@ -556,7 +556,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
     *piLast = 100;
 LCleanUp:
     if (pl.lpplprod) {
-        FreePl((PL *)pl.lpplprod);
+        FreePl(pl.lpplprod);
     }
     return;
 }

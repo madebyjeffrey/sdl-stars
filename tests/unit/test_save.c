@@ -32,7 +32,7 @@ static DetType DetScanCloakedStarbase(const char *pszTest, int16_t dScanRange2, 
     lpfl->idPlanet = idPlanetDeepSpace;
     lpfl->pt.x = rgptPlan[lppl1->id].x + 100;
     lpfl->pt.y = rgptPlan[lppl1->id].y;
-    rglpshdefSB[1][lppl1->isb].lVisible = lVis2;
+    rglpshdefSB[1][lppl1->isb].SetLVisible(lVis2);
 
     for (i = 0; i < cPlanet; i++) {
         lpPlanets[i].fInclude = FALSE;
@@ -106,7 +106,8 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
 // Format 2.85 is UTF-8; older and newer formats are refused.
 static int16_t FSetHostVersion(int16_t verMinor) {
     char  szFile[MAX_PATH];
-    VERS  vers;
+    uint8_t rgbVersion[2];
+    uint16_t wVersion;
     FILE *fp;
 
     snprintf(szFile, sizeof(szFile), "%s.hst", szBase);
@@ -114,18 +115,20 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     if (fp == NULL)
         return FALSE;
     // The RTBOF record follows its 2-byte header and isn't encrypted.
-    fseek(fp, 2 + offsetof(RTBOF, wVersion), SEEK_SET);
-    if (fread(&vers, sizeof(vers), 1, fp) != 1) {
+    fseek(fp, 2 + 8, SEEK_SET);
+    if (fread(rgbVersion, sizeof(rgbVersion), 1, fp) != 1) {
         fclose(fp);
         return FALSE;
     }
+    wVersion = rgbVersion[0] | (uint16_t(rgbVersion[1]) << 8);
     if (verMinor < 0) {
         fclose(fp);
-        return vers.verMajor == 2 && vers.verMinor == 85 && vers.verInc == 0;
+        return (wVersion >> 12) == 2 && ((wVersion >> 5) & 127) == 85 && (wVersion & 31) == 0;
     }
-    vers.verMinor = verMinor;
-    fseek(fp, 2 + offsetof(RTBOF, wVersion), SEEK_SET);
-    fwrite(&vers, sizeof(vers), 1, fp);
+    wVersion = (wVersion & 0xf01f) | ((uint16_t(verMinor) & 127) << 5);
+    rgbVersion[0] = (uint8_t)wVersion; rgbVersion[1] = (uint8_t)(wVersion >> 8);
+    fseek(fp, 2 + 8, SEEK_SET);
+    fwrite(rgbVersion, sizeof(rgbVersion), 1, fp);
     fclose(fp);
     return TRUE;
 }
@@ -186,7 +189,7 @@ static THING *LpthFind(ThingType ith, int16_t iplr) {
     int16_t i;
 
     for (i = 0; i < cThing; i++) {
-        if (lpThings[i].ith == ith && lpThings[i].iplr == iplr)
+        if (lpThings[i].ith() == ith && lpThings[i].iplr() == iplr)
             return &lpThings[i];
     }
     return NULL;
@@ -216,41 +219,41 @@ static void test_FWriteDataFile_masks_other_players_things(void) {
     while ((lpth = LpthFind(ithWormhole, 0)) != NULL)
         FreeLpth(lpth);
     lpth = LpthNew(1, ithMinefield);
-    lpth->pt = pt;
-    lpth->thm.cMines = 2500;
-    lpth->thm.iType = mineStandard;
-    lpth->thm.grbitPlr = 1 << 1;
-    lpth->thm.grbitPlrNow = 1 << 1;
+    lpth->pt().Set(pt);
+    lpth->thm().SetCMines(2500);
+    lpth->thm().SetIType(mineStandard);
+    lpth->thm().SetGrbitPlr(1 << 1);
+    lpth->thm().SetGrbitPlrNow(1 << 1);
     lpth = LpthNew(0, ithMysteryTrader);
-    lpth->pt = pt;
-    lpth->tht.ptDest = pt;
-    lpth->tht.grbitPlr = 1 << 1;
-    lpth->tht.grbitTrader = grbitTraderBeam;
+    lpth->pt().Set(pt);
+    lpth->tht().ptDest().Set(pt);
+    lpth->tht().SetGrbitPlr(1 << 1);
+    lpth->tht().SetGrbitTrader(grbitTraderBeam);
     lpth = LpthNew(0, ithWormhole);
-    lpth->pt = pt;
-    lpth->thw.grbitPlr = (1 << 0) | (1 << 1);
-    lpth->thw.grbitPlrTrav = 1 << 1;
-    idWorm1 = lpth->idFull;
+    lpth->pt().Set(pt);
+    { const auto grbitPlrForThing = ((1 << 0) | (1 << 1)); auto &thForThing = *(lpth); thForThing.thw().SetGrbitPlr(grbitPlrForThing); }
+    lpth->thw().SetGrbitPlrTrav(1 << 1);
+    idWorm1 = lpth->idFull();
     lpth = LpthNew(0, ithWormhole);
-    lpth->pt.x = pt.x + 200;
-    lpth->pt.y = pt.y;
-    lpth->thw.grbitPlr = 1 << 1;
-    lpth->thw.grbitPlrTrav = 1 << 1;
-    idWorm2 = lpth->idFull;
-    lpth->thw.idPartner = idWorm1;
-    LpthFromId(idWorm1)->thw.idPartner = idWorm2;
+    lpth->pt().SetX(pt.x + 200);
+    lpth->pt().SetY(pt.y);
+    lpth->thw().SetGrbitPlr(1 << 1);
+    lpth->thw().SetGrbitPlrTrav(1 << 1);
+    idWorm2 = lpth->idFull();
+    lpth->thw().SetIdPartner(idWorm1);
+    { const auto idPartnerForThing = (idWorm2); auto &thForThing = *(LpthFromId(idWorm1)); thForThing.thw().SetIdPartner(idPartnerForThing); }
     TEST_ASSERT(FWriteDataFile(szBase, 0, FALSE));
 
     TEST_ASSERT(FStarsTestLoadPlayer(0));
     lpth = LpthFind(ithMinefield, 1);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the minefield");
-    TEST_CHECK_(lpth->thm.grbitPlr == 1 && lpth->thm.grbitPlrNow == 1, "minefield seen by %#x, now %#x", lpth->thm.grbitPlr, lpth->thm.grbitPlrNow);
+    TEST_CHECK_(lpth->thm().grbitPlr() == 1 && lpth->thm().grbitPlrNow() == 1, "minefield seen by %#x, now %#x", lpth->thm().grbitPlr(), lpth->thm().grbitPlrNow());
     lpth = LpthFind(ithMysteryTrader, 0);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the trader");
-    TEST_CHECK_(lpth->tht.grbitPlr == 0 && lpth->tht.grbitTrader == 0, "trader met by %#x, carrying %#x", lpth->tht.grbitPlr, lpth->tht.grbitTrader);
+    TEST_CHECK_(lpth->tht().grbitPlr() == 0 && lpth->tht().grbitTrader() == 0, "trader met by %#x, carrying %#x", lpth->tht().grbitPlr(), lpth->tht().grbitTrader());
     lpth = LpthFind(ithWormhole, 0);
     TEST_ASSERT_(lpth != NULL, "player 0 doesn't see the wormhole");
-    TEST_CHECK_(lpth->thw.grbitPlr == 1 && lpth->thw.grbitPlrTrav == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw.grbitPlr, lpth->thw.grbitPlrTrav);
+    TEST_CHECK_(lpth->thw().grbitPlr() == 1 && lpth->thw().grbitPlrTrav() == 0, "wormhole seen by %#x, travelled by %#x", lpth->thw().grbitPlr(), lpth->thw().grbitPlrTrav());
 }
 
 static void test_SetVisPFInit_host(void) {
@@ -263,15 +266,15 @@ static void test_SetVisPFInit_host(void) {
     memset(rgshdefSB, 0, sizeof(rgshdefSB));
     rglpshdef[0] = rgshdef;
     rglpshdefSB[0] = rgshdefSB;
-    th.ith = ithMineralPacket;
-    th.iplr = 0;
+    th.SetIth(ithMineralPacket);
+    th.SetIplr(0);
     lpThings = &th;
     cThing = 1;
     game.cPlayer = 1;
     SetVisPFInit(iplrNone);
     TEST_CHECK(rgplr[0].fInclude);
     TEST_CHECK(rgplr[0].det == detAll);
-    TEST_CHECK(th.thp.fInclude);
+    TEST_CHECK(th.thp().fInclude());
     lpThings = NULL;
     cThing = 0;
     rglpshdef[0] = rglpshdefSB[0] = NULL;
@@ -327,16 +330,16 @@ static void test_utf8_design_and_plan_bounds(void) {
     uint8_t rgb[64];
     SHDEF rgshdefT[16];
     BTLPLAN btlplan;
-    RTSHDEF *lprt = (RTSHDEF *)rgb;
+    const uint8_t *lprt = rgb;
 
     TEST_ASSERT(FStarsTestInit());
     idPlayer = iplrNone;
     memset(rgb, 0, sizeof(rgb));
     memset(rgshdefT, 0, sizeof(rgshdefT));
-    lprt->det = detSome; lprt->ihuldef = ihuldefScout;
-    memcpy(rgb + offsetof(RTSHDEF, chs), "\0\xc3\xa9\0", 4);
-    TEST_CHECK(!FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 3));
-    TEST_CHECK(FReadShDef(lprt, rgshdefT, 0, offsetof(RTSHDEF, chs) + 4));
+    rgb[0] = detSome; rgb[2] = ihuldefScout;
+    memcpy(rgb + cbWireShDefPartial, "\0\xc3\xa9\0", 4);
+    TEST_CHECK(!FReadShDef(lprt, rgshdefT, 0, cbWireShDefPartial + 3));
+    TEST_CHECK(FReadShDef(lprt, rgshdefT, 0, cbWireShDefPartial + 4));
     TEST_CHECK(!strcmp(rgshdefT[0].hul.szClass, "\xc3\xa9"));
     memset(rgb, 0, sizeof(rgb));
     memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
@@ -351,7 +354,7 @@ static void test_utf8_design_and_plan_bounds(void) {
 }
 
 static void test_utf8_raw_battle_plan(void) {
-    BTLPLAN btlplan = {0};
+    BTLPLAN btlplan = {};
     BTLPLAN btlplanRead;
     HDR hdr;
     uint8_t rgb[64];
@@ -370,7 +373,345 @@ static void test_utf8_raw_battle_plan(void) {
     TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
 }
 
-TEST_LIST = {{"UTF-8 records require complete in-record text", test_utf8_record_bounds},
+
+
+// The file reader historically borrows the complete reusable scratch backing,
+// even when the current record declares zero bytes. Keep that admission and the
+// exact next-record consumption, including a full fleet with no orders.
+static void test_fleet_scratch_admission(void) {
+    const uint8_t partial[] = {0, 0, 0xff, 0xff, 1, 8, 0xff, 0xff, 0, 0x80, 0xff, 0x7f, 1, 0,
+                               0xff, 0x78, 0x56, 0x34, 0x12, 0xff, 0xff, 0xff, 0xff};
+    const uint8_t full[] = {0, 0, 0, 0, 7, 8, 0xff, 0xff, 0xe8, 3, 0xe8, 3, 0, 0,
+                            0, 0, 0, 0, 0xff, 0};
+    uint8_t eof[] = {0, 0};
+    FLEET fl;
+    bool fRead;
+
+    TEST_ASSERT(FStarsTestInit());
+    memset(rgbCur, 0xcc, sizeof(rgbCur));
+    memcpy(rgbCur, partial, sizeof(partial));
+    hdrCur.rt = rtFleetB; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof + 2);
+    vlpMemStream = NULL;
+    TEST_ASSERT(fRead);
+    TEST_CHECK(fl.id == 0 && fl.iPlayer == -1 && fl.rgcsh[0] == 255 && !fl.fDead && fl.fDone);
+    TEST_CHECK(fl.pt.x == -32768 && fl.pt.y == 32767 && fl.dirLong == 0x12345678 && fl.wtFleet() == -1);
+    TEST_CHECK(fl.lpplord == NULL && hdrCur.rt == rtEOF);
+    memcpy(rgbCur, full, sizeof(full));
+    hdrCur.rt = rtFleetA; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof + 2);
+    vlpMemStream = NULL;
+    TEST_ASSERT(fRead);
+    TEST_CHECK(fl.fDead && fl.fDone && fl.cord == 0 && fl.iplan == 255 && fl.lpplord != NULL);
+    TEST_CHECK(fl.lpplord->iordMac == 0 && fl.lpplord->iordMax == 1 && fl.lpplord->rgord()[0].grTask == 0);
+    FreePl(fl.lpplord);
+    // Wrong full-record tag fails after prefix/count/cargo publication, before
+    // order allocation or consuming a following record.
+    memcpy(rgbCur, full, sizeof(full));
+    hdrCur.rt = rtFleetB; hdrCur.cb = 0;
+    vlpMemStream = eof;
+    fRead = FReadFleet(&fl);
+    TEST_CHECK(vlpMemStream == eof);
+    vlpMemStream = NULL;
+    TEST_CHECK(!fRead && fl.det == detAll && fl.fDead && fl.lpplord == NULL && fl.iplan == 0);
+}
+
+// Fixed bytes are independent of the native metadata type. Failed import keeps
+// the installed roster; matching partial knowledge retains an existing full design.
+static void test_design_wire_admission(void) {
+    SHDEF rgshdefT[16] = {}, before[16];
+    uint8_t rgb[147] = {7, 8, ihuldefScout, 0xff, 0x34, 0x12, 0,
+                        0xff, 0xff, 0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0x80, 0, 0};
+    const char szName[] = "abcdefghijklmnopqrstuvwxyz01234";
+    char szPacked[64];
+    int16_t cOut = 63;
+    size_t cb;
+    int16_t ibmp;
+    uint8_t *pb;
+    uint8_t rgbWritten[147];
+
+    TEST_ASSERT(FStarsTestInit());
+    idPlayer = iplrNone;
+    memcpy(before, rgshdefT, sizeof(before));
+    TEST_CHECK(!FReadShDef(NULL, rgshdefT, 0, 0));
+    for (cb = 0; cb < sizeof(rgb); cb++) {
+        if (cb < 19) {
+            TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, cb));
+            TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+        }
+    }
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 19));
+    TEST_CHECK(rgshdefT[2].det == detAll && rgshdefT[2].ishdef == 2 && rgshdefT[2].hul.chs == 0);
+    TEST_CHECK(rgshdefT[2].turn == 0xffff && rgshdefT[2].cBuilt == 0x12345678 && rgshdefT[2].cExist == 0x80000000);
+    ibmp = (LphuldefFromId(ihuldefScout)->hul.ibmp | 3);
+    TEST_CHECK(rgshdefT[2].hul.ibmp == ibmp);
+    TEST_CHECK(rgshdefT[2].hul.wtEmpty == LphuldefFromId(ihuldefScout)->hul.wtEmpty);
+    strcpy(rgshdefT[2].hul.szClass, "kept full knowledge");
+    memcpy(before, rgshdefT, sizeof(before));
+    rgb[0] = detSome; rgb[3] = (uint8_t)ibmp;
+    memcpy(rgb + 6, "\0partial\0", 9);
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 15));
+    TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+    // Compressed partial names may have a marker above sixteen. It remains
+    // hul.chs, rather than becoming a full-design slot validation rule.
+    TEST_ASSERT(FCompressUserString(szName, szPacked, &cOut));
+    TEST_ASSERT(cOut > 16 && cOut < 32);
+    memset(rgshdefT, 0, sizeof(rgshdefT));
+    rgb[6] = cOut;
+    memcpy(rgb + 7, szPacked, cOut);
+    TEST_ASSERT(FReadShDef(rgb, rgshdefT, 0, 7 + cOut));
+    TEST_CHECK(rgshdefT[2].hul.chs == cOut && !strcmp(rgshdefT[2].hul.szClass, szName));
+    TEST_CHECK(rgshdefT[2].hul.wtEmpty == 0x1234);
+    // Partial export uses the catalog name and its six-byte prefix, ignoring
+    // custom text and the non-slot marker retained in hul.chs.
+    pb = rgbWritten;
+    WriteRtShDef(&rgshdefT[2], &pb);
+    memset(rgshdefT, 0, sizeof(rgshdefT));
+    TEST_ASSERT(FReadShDef(rgbWritten, rgshdefT, 0, pb - rgbWritten));
+    TEST_CHECK(!strcmp(rgshdefT[2].hul.szClass, LphuldefFromId(ihuldefScout)->hul.szClass));
+    // Existing full-design count/hull rejection remains before publication.
+    memcpy(before, rgshdefT, sizeof(before));
+    rgb[0] = detAll; rgb[6] = 17;
+    TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, sizeof(rgb)));
+    rgb[6] = 0; rgb[2] = 0xff;
+    TEST_CHECK(!FReadShDef(rgb, rgshdefT, 0, sizeof(rgb)));
+    TEST_CHECK(memcmp(rgshdefT, before, sizeof(before)) == 0);
+}
+
+// Exercise the real encrypted writer/reader with the original 34/35-token
+// boundaries and an event split at byte 1023, including its odd-byte DV words.
+static void test_battle_continuations(void) {
+    struct BATTLECASE { int16_t ctok, cKill; int16_t rgcb[5]; int16_t cRec; };
+    const BATTLECASE rgcase[] = {{34, 0, {1006}, 1}, {35, 0, {1000, 29, 6}, 3},
+                                {69, 0, {1000, 1015, 6}, 3}, {70, 128, {1000, 1015, 29, 1023, 7}, 5}};
+    char szDir[MAX_PATH], szFile[MAX_PATH];
+    uint8_t *lpb;
+    int16_t cb, i, j, ib;
+    TOK tok{};
+    BTLREC br{};
+    KILL kill{};
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("battle_continuations", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%cbattle.bin", szDir, chDirSep);
+    lpb = (uint8_t *)LpAlloc(0xffc8, htBattle);
+    game.cPlayer = 1;
+    for (const BATTLECASE &bcase : rgcase) {
+        TEST_CASE_("%d tokens, %d kills", bcase.ctok, bcase.cKill);
+        cb = 14 + bcase.ctok * 29 + 6 + bcase.cKill * 8;
+        memset(lpb, 0, cb + 2);
+        BdvFromLp(lpb).SetId(3);
+        BdvFromLp(lpb).SetCtok(bcase.ctok);
+        BdvFromLp(lpb).SetCplr(1);
+        BdvFromLp(lpb).SetGrfPlr(1);
+        BdvFromLp(lpb).SetCbData(cb);
+        BdvFromLp(lpb).SetIdPlanet(idPlanetNone);
+        BdvFromLp(lpb).SetPt({32767, -1});
+        for (i = 0; i < bcase.ctok; i++) {
+            tok.id = i; tok.iplr = 0; tok.csh = 0x1234 + i; tok.dpShield = 0x5678 + i;
+            tok.dv.dp = 0x9abc + i;
+            TEST_ASSERT(FEncodeTok(tok, std::as_writable_bytes(std::span(lpb + 14 + i * 29, 29))));
+        }
+        br.itok = 33; br.brcDest = 0xab; br.ctok = bcase.cKill; br.itokAttack = 34; br.iRound = 15; br.dzDis = 4;
+        ib = 14 + bcase.ctok * 29;
+        TEST_ASSERT(FEncodeBattleRecord(br, std::as_writable_bytes(std::span(lpb + ib, 6))));
+        for (i = 0; i < bcase.cKill; i++) {
+            kill.itok = i % bcase.ctok; kill.grfWeapon = i; kill.cshKill = 0x1234 + i;
+            kill.dpShield = 0x5678 + i; kill.dv.dp = 0x9abc + i;
+            TEST_ASSERT(FEncodeKill(kill, std::as_writable_bytes(std::span(lpb + ib + 6 + i * 8, 8))));
+        }
+        lpb[cb] = lpb[cb + 1] = 0xff;
+        lpbBattleLog = lpb; lpbBattleCur = lpb + cb;
+        StreamOpen(szFile, mdCreate);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        WriteBattles(0);
+        WriteRt(rtEOF, 0, NULL);
+        StreamClose();
+        StreamOpen(szFile, mdRead);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        ib = 0;
+        for (j = 0; j < bcase.cRec; j++) {
+            ReadRt();
+            TEST_ASSERT(hdrCur.rt == (j == 0 ? rtBtlData : rtContinue));
+            TEST_ASSERT(hdrCur.cb == bcase.rgcb[j]);
+            TEST_CHECK(memcmp(rgbCur, lpb + ib, hdrCur.cb) == 0);
+            ib += hdrCur.cb;
+        }
+        TEST_CHECK(ib == cb);
+        ReadRt();
+        TEST_CHECK(hdrCur.rt == rtEOF);
+        StreamClose();
+    }
+    FreeHb(rglphb[htBattle]);
+    rglphb[htBattle] = NULL;
+    lpbBattleLog = lpbBattleCur = NULL;
+}
+
+static void test_battle_plan_deletion_wire(void) {
+    BTLPLAN plan{};
+    HDR hdr;
+    uint8_t rgb[64];
+    const uint8_t deleted[] = {0xd3, 0xf2};
+
+    TEST_ASSERT(FStarsTestInit());
+    plan.iplr = 3; plan.iplan = 13; plan.mdTactic = 2; plan.unused1 = 3; plan.fDelete = 1; plan.fDumpCargo = 1;
+    plan.mdTarget1 = 8; plan.mdTarget2 = 7; plan.iplrAttack = 31; plan.unused2 = 7;
+    WriteBattlePlan(&plan, TRUE);
+    TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
+    TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == 2 && memcmp(rgb, deleted, sizeof(deleted)) == 0);
+}
+
+static void test_WriteRtScore_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xd3, 0xa5, 0xfe, 0xff, 1, 0, 0, 0x80, 0xff, 0xff, 0xff, 0x7f,
+        0xfe, 0xff, 0xff, 0x7f, 0xff, 0xff, 0, 0x80, 1, 0, 0, 0x80};
+    SCOREX sx{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("score-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sscore", szDir, szDirSep);
+    sx.iPlayer = 19; sx.fValid = 0; sx.grbitVC = 0x97; sx.fWinner = 0; sx.fHistory = 1; sx.turn = 65534;
+    sx.score.lScore = -2147483647; sx.score.cResources = 2147483647; sx.score.cPlanet = -2; sx.score.cStarbase = 32767;
+    sx.score.rgcsh[0] = 65535; sx.score.rgcsh[1] = 32768; sx.score.rgcsh[2] = 1; sx.score.cTechLevels = -32768;
+    StreamOpen(szFile, mdCreate);
+    SetFileSeeds(123456, 789012);
+    WriteRtScore(&sx);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
+    StreamClose();
+    StreamOpen(szFile, mdRead);
+    SetFileSeeds(123456, 789012);
+    ReadRt();
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(hdrCur.rt == rtScore && hdrCur.cb == 24 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
+    TEST_CHECK(FDecodeScoreX(std::as_bytes(std::span(rgbCur)), decoded) && decoded.wWord() == 0xa5d3 && decoded.turn == 65534 && decoded.iRank() == -2);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+static void test_WritePlanet_minimal_history_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xfe, 7, 0x81, 0x83, 9, 0xfe, 0xff};
+    PLANET pl{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("planet-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%splanet", szDir, szDirSep);
+    pl.id = -2; pl.iPlayer = 0; pl.det = detMinimal; pl.fHomeworld = 1; pl.fInclude = 1; pl.fStarbase = 1; pl.fFirstYear = 1;
+    pl.isb = 9; pl.turn = -2;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WritePlanet(&pl, rtPlanetB, TRUE);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 622877478 && lSeed2 == 1520895743);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtPlanetB && hdrCur.cb == 7 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE));
+    TEST_CHECK(decoded.id == -2 && decoded.iPlayer == 0 && decoded.det == detMinimal && decoded.fStarbase && decoded.isb == 9 && decoded.turn == -2);
+    StreamClose();
+    // detObscure's historical writer/reader thresholds differ: the writer
+    // includes environment bytes that this reader skips before the turn.
+    const uint8_t obscure[] = {0xfe, 0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0xfe, 0xff};
+    pl = PLANET{}; pl.id = -2; pl.iPlayer = iplrNone; pl.det = detObscure; pl.turn = -2;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WritePlanet(&pl, rtPlanetB, TRUE);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.cb == sizeof(obscure) && !memcmp(rgbCur, obscure, sizeof(obscure)));
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE) && decoded.det == detObscure && decoded.turn == 0);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+static void test_FReadPlanet_partial_publication(void) {
+    const uint8_t minimal[] = {0xfe, 0xff, 3, 0x81, 0, 1, 2, 3, 4, 5, 6, 0xfe, 0xff};
+    const uint8_t levelBad[] = {0xfe, 0xff, 3, 0x81, 9, 17};
+    const uint8_t envBad[] = {0xfe, 0xff, 3, 0x81, 0, 1, 2, 3, 20, 101};
+    const uint8_t evoBad[] = {0xfe, 0xff, 3, 0x85, 0, 1, 2, 3, 10, 20, 30, 40, 101};
+    PLANET pl{};
+
+    TEST_ASSERT(FStarsTestInit());
+    hdrCur.rt = rtPlanetB; hdrCur.cb = 0;
+    memset(rgbCur, 0, sizeof(rgbCur)); memcpy(rgbCur, minimal, sizeof(minimal));
+    TEST_CHECK(FReadPlanet(iplrNone, &pl, TRUE, FALSE));
+    TEST_CHECK(pl.id == -2 && pl.iPlayer == -1 && pl.det == detSome && pl.fInclude && pl.fFirstYear && pl.turn == -2);
+    TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 4 && pl.rgEnvVarOrig[2] == 6);
+    pl.rgpctMinLevel[0] = 90; pl.rgpctMinLevel[1] = 91; pl.rgpctMinLevel[2] = 92; pl.rgMinConc[0] = 93; pl.turn = 123;
+    memcpy(rgbCur, levelBad, sizeof(levelBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgpctMinLevel[0] == 17 && pl.rgpctMinLevel[1] == 91 && pl.rgpctMinLevel[2] == 92 && pl.rgMinConc[0] == 93 && pl.turn == 123);
+    pl.rgEnvVar[0] = 70; pl.rgEnvVar[1] = 71; pl.rgEnvVarOrig[0] = 80; pl.rgEnvVarOrig[1] = 81;
+    memcpy(rgbCur, envBad, sizeof(envBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 20 && pl.rgEnvVarOrig[0] == 20 && pl.rgEnvVar[1] == 71 && pl.rgEnvVarOrig[1] == 81);
+    memcpy(rgbCur, evoBad, sizeof(evoBad));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(pl.rgEnvVar[0] == 10 && pl.rgEnvVar[2] == 30 && pl.rgEnvVarOrig[0] == 40 && pl.rgEnvVarOrig[1] == 20);
+}
+
+static void test_WriteRtPlr_partial_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0xfe, 0xff, 0, 0x80, 0xff, 0xff, 0x89, 0xaf, 0, 0, 0, 0};
+    PLAYER plr{}, decoded{};
+    int32_t lSeed1, lSeed2;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("player-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%splayer", szDir, szDirSep);
+    plr.iPlayer = -2; plr.cShDef = -1; plr.cPlanet = -32768; plr.cFleet = 4095; plr.cshdefSB = 15;
+    plr.det = detMinimal; plr.iPlrBmp = 17; plr.fInclude = 1; plr.fAi = 1; plr.lvlAi = 3; plr.idAi = 5;
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
+    WriteRtPlr(&plr, NULL);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 125172514 && lSeed2 == 2112981774);
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtPlr && hdrCur.cb == 12 && !memcmp(rgbCur, golden, sizeof(golden)));
+    ReadRtPlr(&decoded, reinterpret_cast<uint8_t *>(rgbCur), hdrCur.cb);
+    TEST_CHECK(decoded.iPlayer == -2 && decoded.cShDef == -1 && decoded.cPlanet == -32768 && decoded.cFleet == 4095 && decoded.cshdefSB == 15);
+    TEST_CHECK(decoded.wMdPlr() == 0xaf89 && decoded.szName[0] == 0 && decoded.szNames[0] == 0 && !decoded.fLearned);
+    StreamClose();
+    TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+static void test_WriteRtThing_bytes(void) {
+    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    const uint8_t golden[] = {0x23, 0xe1, 0, 0x80, 0xff, 0x7f, 1, 0, 0, 0x80, 0xdc, 0xfe, 0xff, 0xa5, 0xab, 0x89, 0xfe, 0xff};
+    THING th{}, decoded{};
+    int32_t lSeed1, lSeed2;
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("thing-wire", szDir, sizeof(szDir)));
+    snprintf(szFile, sizeof(szFile), "%s%sthing", szDir, szDirSep);
+    TEST_ASSERT(FDecodeThing(std::as_bytes(std::span(golden)), th));
+    StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012); WriteRtThing(&th);
+    GetFileSeeds(&lSeed1, &lSeed2);
+    TEST_CHECK(lSeed1 == 170401200 && lSeed2 == 2097781771);
+    TEST_CHECK(!memcmp(th.RgbRecord().data(), golden, sizeof(golden)));
+    StreamClose();
+    StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
+    TEST_CHECK(hdrCur.rt == rtThing && hdrCur.cb == 18 && !memcmp(rgbCur, golden, sizeof(golden)));
+    TEST_CHECK(FDecodeThing(std::as_bytes(std::span(rgbCur)), decoded) && decoded.idFull() == 0xe123);
+    TEST_CHECK(decoded.pt().x() == -32768 && decoded.pt().y() == 32767 && decoded.turn() == 65534);
+    StreamClose(); TEST_CHECK(RemoveNativeFile(szFile) == 0);
+}
+
+TEST_LIST = {{"thing records retain exact encrypted bytes and seed consumption", test_WriteRtThing_bytes},
+             {"player partial record keeps exact bytes and seed consumption", test_WriteRtPlr_partial_bytes},
+             {"planet history preserves exact encrypted bytes", test_WritePlanet_minimal_history_bytes},
+             {"planet reads retain partial updates and physical scratch", test_FReadPlanet_partial_publication},
+             {"score records preserve encrypted bytes and seed consumption", test_WriteRtScore_bytes},
+             {"battle-plan deletion encodes only its two-byte header", test_battle_plan_deletion_wire},
+             {"battle continuation bytes and boundaries", test_battle_continuations},
+             {"fleet readers preserve scratch admission and incremental publication", test_fleet_scratch_admission},
+             {"ship-design bytes preserve import admission and knowledge", test_design_wire_admission},
+             {"UTF-8 records require complete in-record text", test_utf8_record_bounds},
              {"maximum raw UTF-8 battle-plan names round trip", test_utf8_raw_battle_plan},
              {"design and battle-plan readers respect text record boundaries", test_utf8_design_and_plan_bounds},
              {"UTF-8 saved names and byte capacities", test_utf8_saved_names},

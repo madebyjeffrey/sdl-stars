@@ -1,5 +1,6 @@
 /* Source-level message boxes use the same controls and modal queue as dialogs. */
-#include "internal.h"
+#include "cleanup.h"
+#include <new>
 #include <stars_compat.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,7 +52,7 @@ LRESULT CALLBACK CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     switch (msg) {
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps); if (!hdc) return 0;
-        rc = (RECT){0, 0, lp->cxText, lp->cyText};
+        rc = RECT{0, 0, lp->cxText, lp->cyText};
         hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
         if (hbr) { FillRect(hdc, &rc, hbr); DeleteObject(hbr); }
         hrgn = CreateRectRgn(0, 0, lp->cxText, lp->cyText);
@@ -113,7 +114,7 @@ static void PaintMessageIcon(HWND hwnd, COMPATMSGBOX *lp) {
         }
         holdFont = SelectObject(hdc, lp->hfontIcon);
         SetBkMode(hdc, TRANSPARENT); SetTextColor(hdc, icon == MB_ICONEXCLAMATION ? RGB(0, 0, 0) : RGB(255, 255, 255));
-        rc = (RECT){16, 16, 48, 48}; DrawTextA(hdc, psz, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        rc = RECT{16, 16, 48, 48}; DrawTextA(hdc, psz, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
         if (holdFont) SelectObject(hdc, holdFont);
     }
     EndPaint(hwnd, &ps);
@@ -171,7 +172,7 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
 
 int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     COMPATMSGBOX box = {};
-    HWND hwnd = NULL, hwndRoot, hwndFocus, lpwin, hwndButton;
+    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL, lpwin, hwndButton;
     HWND *rghwnd = NULL;
     size_t cDisabled = 0, iDisabled, cTop = 0;
     HDC hdc;
@@ -181,8 +182,16 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     MSG msg;
     int i, result, value = 0, cx, cy, cxButtons, xText, x, y, cyMax;
     DWORD ex;
-    BOOL fSound = TRUE;
+    BOOL fSound = TRUE, fRestoreFocus = FALSE;
     UINT allowed = 0x000f | 0x00f0 | 0x0300 | MB_TASKMODAL | MB_SYSTEMMODAL | MB_SETFOREGROUND | MB_TOPMOST | MB_RIGHT;
+    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus); }, hwndOwner);
+    std::unique_ptr<HWND[]> rghwndOwner;
+    COMPATCLEANUPSCOPE restoreOwners([&] {
+        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], TRUE);
+    }, hwndOwner);
+    COMPATCLEANUPSCOPE deleteIconFont([&] { if (box.hfontIcon) DeleteObject(box.hfontIcon); });
+    COMPATCLEANUPSCOPE destroyBox([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
+    if (FStarsErrorPending()) return 0;
     if (!SDL_IsMainThread() || !FCompatVideo()) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
     if ((type & ~allowed) || (type & 0xf) > 6 || (type & 0xf0) > MB_ICONASTERISK ||
         (type & 0x3000) == 0x3000) { SetLastError(ERROR_NOT_SUPPORTED); return 0; }
@@ -198,17 +207,20 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     if (box.cButtons == 1) box.idCancel = IDOK;
     box.iDefault = (type >> 8) & 3;
     if (box.iDefault >= box.cButtons) box.iDefault = 0;
-    hwndFocus = GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
+    hwndFocus = GetFocus(); hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL; fRestoreFocus = TRUE;
     if (!hwndRoot && (type & MB_TASKMODAL)) {
         for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT)) cTop++;
     } else if (hwndRoot) cTop = 1;
     if (cTop) {
-        rghwnd = (HWND *)(SDL_calloc(cTop, sizeof(*rghwnd)));
+        rghwndOwner.reset(new (std::nothrow) HWND[cTop]{}); rghwnd = rghwndOwner.get();
         if (!rghwnd) { SetLastError(ERROR_NOT_ENOUGH_MEMORY); return 0; }
         if (hwndRoot) { if (IsWindowEnabled(hwndRoot)) rghwnd[cDisabled++] = hwndRoot; }
         else for (lpwin = HwndCompatFirstTop(); lpwin; lpwin = GetWindow(lpwin, GW_HWNDNEXT))
             if (IsWindowEnabled(lpwin)) rghwnd[cDisabled++] = lpwin;
-        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], FALSE);
+        for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) {
+            if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], FALSE);
+            if (FStarsErrorPending()) goto done;
+        }
     }
     if (hwndRoot && !IsWindow(hwndRoot)) { SetLastError(ERROR_INVALID_WINDOW_HANDLE); goto done; }
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0)) goto done;
@@ -216,7 +228,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     cxButtons = box.cButtons * 88 + (box.cButtons - 1) * 8;
     cx = (((StarsMax(320, cxButtons + 32)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(320, cxButtons + 32)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
     cx = (((StarsMax(cx, 480)) < (StarsMax(160, rcWork.right - rcWork.left - 32))) ? (StarsMax(cx, 480)) : (StarsMax(160, rcWork.right - rcWork.left - 32)));
-    rc = (RECT){rcWork.left, rcWork.top, rcWork.left + cx, rcWork.top + 160};
+    rc = RECT{rcWork.left, rcWork.top, rcWork.left + cx, rcWork.top + 160};
     ex = (type & (MB_TOPMOST | MB_SYSTEMMODAL)) ? WS_EX_TOPMOST : 0;
     hwnd = HwndCompatDynamicDialog(pszCaption ? pszCaption : "Error", WS_POPUP | WS_CAPTION | WS_SYSMENU, ex, &rc, hwndRoot, MessageDialogProc);
     if (!hwnd) goto done;
@@ -224,11 +236,11 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     hdc = CreateCompatibleDC(NULL); if (!hdc) goto done;
     hold = SelectObject(hdc, box.hfont);
     box.cxText = StarsMax(32, cx - xText - 16);
-    rcText = (RECT){0, 0, box.cxText, 0};
+    rcText = RECT{0, 0, box.cxText, 0};
     result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
     cyMax = StarsMax(32, rcWork.bottom - rcWork.top - 128);
     if (rcText.bottom > cyMax) {
-        box.cxText -= 20; rcText = (RECT){0, 0, box.cxText, 0};
+        box.cxText -= 20; rcText = RECT{0, 0, box.cxText, 0};
         result = DrawTextA(hdc, pszText, -1, &rcText, box.format | DT_CALCRECT);
     }
     SelectObject(hdc, hold); DeleteDC(hdc);
@@ -264,7 +276,7 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     SendMessageA(hwnd, WM_INITDIALOG, (WPARAM)GetDlgItem(hwnd, box.rgid[box.iDefault]), (LPARAM)&box);
     box.hwndLastFocus = GetDlgItem(hwnd, box.rgid[box.iDefault]);
     ShowWindow(hwnd, SW_SHOW);
-    SDL_RaiseWindow(hwnd->lpWindow); SDL_SyncWindow(hwnd->lpWindow);
+    SDL_RaiseWindow(hwnd->lpWindow.get()); SDL_SyncWindow(hwnd->lpWindow.get());
     SetFocus(GetDlgItem(hwnd, box.rgid[box.iDefault]));
     if (fSound) MessageBeep(type & 0xf0);
     while (IsWindow(hwnd) && !hwnd->fEndDialog) {
@@ -278,10 +290,10 @@ int WINAPI STARS_TEST_IMPL(MessageBoxA)(HWND hwndOwner, LPCSTR pszText, LPCSTR p
     if (IsWindow(hwnd) && hwnd->fEndDialog) value = (int)hwnd->lDlgResult;
     if (value == 0) SetLastError(ERROR_CANCELLED);
 done:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
-    if (box.hfontIcon) DeleteObject(box.hfontIcon);
-    for (iDisabled = 0; iDisabled < cDisabled; iDisabled++) if (IsWindow(rghwnd[iDisabled])) EnableWindow(rghwnd[iDisabled], TRUE);
-    SDL_free(rghwnd);
-    if (IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+    destroyBox.Close();
+    deleteIconFont.Close();
+    restoreOwners.Close();
+    rghwndOwner.reset(); rghwnd = NULL;
+    restoreFocus.Close();
     return value;
 }

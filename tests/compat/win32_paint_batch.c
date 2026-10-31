@@ -3,9 +3,11 @@
 #include <stars_compat.h>
 #include <stdio.h>
 static unsigned cPresent;
+static BOOL fFailPresent, fFailSize, fDestroySize, fFailPaint, fFailShow, fDestroyShow;
 
 extern "C" bool SDLCALL StarsTest_SDL_RenderPresent(SDL_Renderer *lpRenderer) {
     cPresent++;
+    if (fFailPresent) { fFailPresent = FALSE; StarsThrowError(starsErrorFile, 731); }
     return SDL_RenderPresent(lpRenderer);
 }
 
@@ -21,8 +23,8 @@ static COLORREF CrComposite(HWND hwnd, int x, int y) {
     BYTE r, g, b, a;
     HWND lpwin = LpCompatWindow(hwnd);
 
-    if (!lpwin || !lpwin->lpComposite ||
-        !SDL_ReadSurfacePixel(lpwin->lpComposite, x * lpwin->iCanvasScale, y * lpwin->iCanvasScale, &r, &g, &b, &a))
+    if (!lpwin || !lpwin->lpComposite.get() ||
+        !SDL_ReadSurfacePixel(lpwin->lpComposite.get(), x * lpwin->iCanvasScale, y * lpwin->iCanvasScale, &r, &g, &b, &a))
         return CLR_INVALID;
     return RGB(r, g, b);
 }
@@ -32,13 +34,17 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     RECT rc;
     HBRUSH hbr;
     int i = (int)GetWindowLongPtr(hwnd, GWLP_ID);
-    SDL_Event event = {0};
+    SDL_Event event = {};
 
     if (msg == WM_APP) {
         event.type = SDL_EVENT_WINDOW_EXPOSED;
-        event.window.windowID = SDL_GetWindowID(hwnd->lpWindow);
+        event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
         SDL_PushEvent(&event);
         return 0;
+    }
+    if (msg == WM_SHOWWINDOW && w && !(hwnd->dwStyle & WS_CHILD)) {
+        if (fFailShow) StarsThrowError(starsErrorFile, 732);
+        if (fDestroyShow) { DestroyWindow(hwnd); return 0; }
     }
     if (msg == WM_SHOWWINDOW && w && fShowLayout && !(hwnd->dwStyle & WS_CHILD)) {
         rghwndPane[0] = CreateWindow("StarsPaintBatch", "Late pane", WS_CHILD | WS_VISIBLE,
@@ -46,6 +52,8 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     }
     if (msg == WM_SIZE && !(hwnd->dwStyle & WS_CHILD)) {
+        if (fFailSize) StarsThrowError(starsErrorFile, 730);
+        if (fDestroySize) { DestroyWindow(hwnd); return 0; }
         if (IsWindow(rghwndPane[0])) {
             MoveWindow(rghwndPane[0], 0, 0, LOWORD(l) / 2, HIWORD(l), FALSE);
             MoveWindow(rghwndPane[1], LOWORD(l) / 2, 0, LOWORD(l) - LOWORD(l) / 2, HIWORD(l), FALSE);
@@ -55,6 +63,7 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     }
     if (msg == WM_PAINT) {
+        if (fFailPaint) StarsThrowError(starsErrorFile, 733);
         cPaint++;
         BeginPaint(hwnd, &ps);
         GetClientRect(hwnd, &rc);
@@ -69,10 +78,10 @@ static LRESULT CALLBACK PaintProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd;
     MSG msg;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     HDC hdc;
     HBRUSH hbr;
     RECT rc;
@@ -121,9 +130,9 @@ int main(void) {
     PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE);
     rgcrPane[0] = RGB(50, 60, 200);
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
-    CHECK(SDL_SetWindowSize(hwnd->lpWindow, 400, 200) && SDL_SyncWindow(hwnd->lpWindow));
+    CHECK(SDL_SetWindowSize(hwnd->lpWindow.get(), 400, 200) && SDL_SyncWindow(hwnd->lpWindow.get()));
     event.type = SDL_EVENT_WINDOW_EXPOSED;
-    event.window.windowID = SDL_GetWindowID(hwnd->lpWindow);
+    event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
     event.window.data1 = 1;
     CHECK(SDL_PushEvent(&event));
     // The live-resize watcher lays out and paints at native size before the main loop resumes.
@@ -140,8 +149,60 @@ int main(void) {
     CHECK(IsWindow(rghwndPane[0]));
     CHECK(CrComposite(hwnd, 80, 80) == rgcrPane[0]);
     CHECK(!hwnd->fPresentPending && !rghwndPane[0]->fUpdate);
+    // A failed layout cannot paint or publish a subsequent frame. Retrying the
+    // same native exposure must work after its pending error is delivered.
+    event.window.windowID = SDL_GetWindowID(hwnd->lpWindow.get());
+    cPaintSav = cPaint; cPresentSav = cPresent;
+    fFailSize = TRUE;
+    CHECK(SDL_PushEvent(&event));
+    CHECK(FStarsErrorPending() && cPaint == cPaintSav && cPresent == cPresentSav && hwnd->cPresentDefer == 0);
+    try { StarsRethrowPendingError(); CHECK(FALSE); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 730); }
+    fFailSize = FALSE;
+    CHECK(SDL_PushEvent(&event) && !FStarsErrorPending() && cPaint > cPaintSav && hwnd->cPresentDefer == 0);
+    fFailPaint = TRUE;
+    cPaintSav = cPaint; cPresentSav = cPresent;
+    CHECK(SDL_PushEvent(&event));
+    CHECK(FStarsErrorPending() && cPaint == cPaintSav && cPresent == cPresentSav && hwnd->cPresentDefer == 0);
+    try { StarsRethrowPendingError(); CHECK(FALSE); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 733); }
+    fFailPaint = FALSE;
+    CHECK(SDL_PushEvent(&event) && !FStarsErrorPending() && cPaint > cPaintSav);
+    // A renderer failure must not cross SDL's event-watcher boundary or leave
+    // refresh/live-resize state latched for the next exposure.
+    for (int i = 0; i < 2; i++) {
+        event.window.data1 = i;
+        fFailPresent = TRUE;
+        try { CHECK(SDL_PushEvent(&event)); }
+        catch (...) { CHECK(FALSE); }
+        CHECK(FStarsErrorPending() && !fFailPresent && hwnd->cPresentDefer == 0);
+        try { StarsRethrowPendingError(); CHECK(FALSE); }
+        catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 731); }
+        cPresentSav = cPresent;
+        CHECK(SDL_PushEvent(&event) && !FStarsErrorPending() && cPresent > cPresentSav);
+    }
     printf("First frame, show-time controls, pane batching and native live-resize layout passed (density %d)\n",
            hwnd->iCanvasScale);
+    fDestroySize = TRUE;
+    CHECK(SDL_PushEvent(&event));
+    CHECK(!IsWindow(hwnd) && hwnd->cPresentDefer == 0 && !FStarsErrorPending());
+    fDestroySize = FALSE;
+    fShowLayout = FALSE;
+    for (int i = 0; i < 2; i++) {
+        hwnd = CreateWindow(wc.lpszClassName, "Interrupted show", WS_OVERLAPPEDWINDOW,
+                            0, 0, 320, 160, NULL, NULL, wc.hInstance, NULL);
+        CHECK(hwnd);
+        fFailShow = i == 0; fDestroyShow = i == 1;
+        cPaintSav = cPaint;
+        ShowWindow(hwnd, SW_SHOW);
+        CHECK(cPaint == cPaintSav && hwnd->cPresentDefer == 0);
+        if (fFailShow) {
+            CHECK(FStarsErrorPending() && IsWindow(hwnd));
+            try { StarsRethrowPendingError(); CHECK(FALSE); }
+            catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 732); }
+            CHECK(DestroyWindow(hwnd));
+        } else CHECK(!IsWindow(hwnd) && !FStarsErrorPending());
+    }
     StarsCompatShutdown();
     return 0;
 }

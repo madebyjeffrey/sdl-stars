@@ -1,5 +1,6 @@
 /* Stars' wildcard filters need a browser independent of SDL's extension-only API. */
 #include "filedialog_backend.h"
+#include "cleanup.h"
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -269,10 +270,10 @@ static INT_PTR CALLBACK FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l
 static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     char szName[PATH_MAX], szPath[PATH_MAX];
     RECT rc, work;
-    HWND hwndFolder, hwndFocus;
+    HWND hwndFolder, hwndFocus = NULL;
     MSG msg;
     int iRet;
-    BOOL fAccepted = FALSE;
+    BOOL fAccepted = FALSE, fDisabled = FALSE;
 
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) return;
     rc.left = work.left + (work.right - work.left - 360) / 2;
@@ -280,15 +281,21 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     rc.right = rc.left + 360; rc.bottom = rc.top + 156;
     hwndFolder = HwndCompatDynamicDialog("New folder", WS_POPUP | WS_CAPTION | WS_SYSMENU, 0, &rc, hwnd, FolderDialogProc);
     if (!hwndFolder) { FileError(hwnd, "The new folder dialog could not be opened."); return; }
+    COMPATCLEANUPSCOPE restoreParent([&] {
+        if (!fDisabled || !IsWindow(hwnd)) return;
+        EnableWindow(hwnd, TRUE);
+        if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
+    }, hwnd);
+    COMPATCLEANUPSCOPE destroyFolder([&] { if (IsWindow(hwndFolder)) DestroyWindow(hwndFolder); }, hwnd);
     if (!HwndFileControl(hwndFolder, "Static", "Folder &name:", 0, 12, 12, 320, 24, 0x441) ||
         !HwndFileControl(hwndFolder, "Edit", "New folder", WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 12, 40, 336, 26, ID_FILE_NAME) ||
         !HwndFileControl(hwndFolder, "Button", "&Create", WS_TABSTOP | BS_DEFPUSHBUTTON, 172, 96, 80, 28, IDOK) ||
         !HwndFileControl(hwndFolder, "Button", "Cancel", WS_TABSTOP, 268, 96, 80, 28, IDCANCEL)) {
-        DestroyWindow(hwndFolder); FileError(hwnd, "The new folder dialog could not be initialized."); return;
+        destroyFolder.Close(); FileError(hwnd, "The new folder dialog could not be initialized."); return;
     }
     SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_LIMITTEXT, PATH_MAX - 1, 0);
     SendMessageA(hwndFolder, WM_INITDIALOG, 0, (LPARAM)szName);
-    hwndFocus = GetFocus(); EnableWindow(hwnd, FALSE);
+    hwndFocus = GetFocus(); fDisabled = TRUE; EnableWindow(hwnd, FALSE);
     ShowWindow(hwndFolder, SW_SHOW); SetFocus(GetDlgItem(hwndFolder, ID_FILE_NAME));
     SendDlgItemMessageA(hwndFolder, ID_FILE_NAME, EM_SETSEL, 0, -1);
     while (IsWindow(hwndFolder) && !hwndFolder->fEndDialog) {
@@ -298,11 +305,10 @@ static void NewFileFolder(HWND hwnd, COMPATFILEDIALOG *lp) {
     }
     if (IsWindow(hwndFolder)) {
         fAccepted = hwndFolder->fEndDialog && hwndFolder->lDlgResult == IDOK;
-        DestroyWindow(hwndFolder);
     }
+    destroyFolder.Close();
     if (!IsWindow(hwnd)) return;
-    EnableWindow(hwnd, TRUE);
-    if (IsWindow(hwndFocus)) SetFocus(hwndFocus);
+    restoreParent.Close();
     if (!fAccepted) return;
     if (!FJoinFile(szPath, lp->szDir, szName)) { FileError(hwnd, "The folder name is too long."); return; }
     if (ICreateNativeDirectory(szPath, 0777) != 0) {
@@ -316,7 +322,7 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
     char szPath[PATH_MAX];
     const char *pszHome;
     if (msg == WM_GETMINMAXINFO) {
-        ((MINMAXINFO *)l)->ptMinTrackSize = (POINT){420, 320}; return TRUE;
+        ((MINMAXINFO *)l)->ptMinTrackSize = POINT{420, 320}; return TRUE;
     }
     if (msg == WM_INITDIALOG) { SetWindowLongPtrA(hwnd, DWLP_USER, l); return TRUE; }
     if (!lp) return FALSE;
@@ -339,9 +345,9 @@ static INT_PTR CALLBACK FileDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) 
         }
         return TRUE;
     case ID_FILE_HOME:
-        pszHome = getenv("HOME");
+        pszHome = PszCompatEnvironment("HOME");
 #ifdef _WIN32
-        pszHome = getenv("USERPROFILE");
+        pszHome = PszCompatEnvironment("USERPROFILE");
 #endif
         if (pszHome && *pszHome) FChangeFileDirectory(hwnd, lp, pszHome, TRUE);
         else FileError(hwnd, "The home directory is not available.");
@@ -397,15 +403,25 @@ static void RememberFileSelection(COMPATFILEDIALOG *lp, LPCSTR pszPath, char *ps
 static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     COMPATFILEDIALOG dlg = {};
     LPCSTR psz, pszPattern;
-    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus;
+    HWND hwnd = NULL, hwndRoot = NULL, hwndFocus = NULL;
     char szInitial[PATH_MAX], szCwd[PATH_MAX], szPath[PATH_MAX], *pch;
     RECT rc, work;
     MSG msg;
     int i, iRet, cx, cy;
-    BOOL fEnable = FALSE, fRet = FALSE, fNative = FALSE;
+    BOOL fEnable = FALSE, fRet = FALSE, fNative = FALSE, fRestoreFocus = FALSE;
     DWORD grFlagsAllowed = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT |
                     OFN_NOREADONLYRETURN | OFN_NOCHANGEDIR | OFN_EXPLORER | OFN_EXTENSIONDIFFERENT;
+    COMPATCLEANUPSCOPE freeBuffers([&] {
+        FreeFileEntries(&dlg);
+        for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
+        for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
+    });
+    COMPATCLEANUPSCOPE restoreFocus([&] { if (fRestoreFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus); });
+    COMPATCLEANUPSCOPE nativeCounter([&] { if (fNative && IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--; });
+    COMPATCLEANUPSCOPE restoreOwner([&] { if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE); });
+    COMPATCLEANUPSCOPE destroyPicker([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); });
     dwDialogError = 0;
+    if (FStarsErrorPending()) return FALSE;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = CDERR_STRUCTSIZE; return FALSE; }
     if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
         dwDialogError = FNERR_INVALIDFILENAME; return FALSE;
@@ -445,13 +461,14 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         }
     }
     if (!FUtf8Valid(dlg.szDir, strlen(dlg.szDir))) { dlg.dwError = FNERR_INVALIDFILENAME; goto done; }
-    hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL;
+    hwndFocus = GetFocus(); hwndRoot = lpof->hwndOwner ? HwndCompatRoot(lpof->hwndOwner) : NULL; fRestoreFocus = TRUE;
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
-    fNative = !getenv("STARS_FILE_DIALOG_BACKEND") || strcmp(getenv("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
+    fNative = !PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND") || strcmp(PszCompatEnvironment("STARS_FILE_DIALOG_BACKEND"), "compat") != 0;
     if (fNative && hwndRoot) hwndRoot->cNativeFileDialogs++;
 #endif
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
     if (fEnable) EnableWindow(hwndRoot, FALSE);
+    if (FStarsErrorPending()) goto restore;
     if (hwndRoot && !IsWindow(hwndRoot)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
 #if defined(STARS_FILE_DIALOG_PORTAL) || defined(STARS_FILE_DIALOG_COCOA) || defined(STARS_FILE_DIALOG_WINDOWS)
     /* Headless control tests opt into the compatibility browser explicitly. */
@@ -482,7 +499,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     if (!SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0)) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
     cx = StarsMin(640, work.right - work.left - 32); cy = StarsMin(440, work.bottom - work.top - 64);
     if (cx < 420 || cy < 320) { dlg.dwError = CDERR_INITIALIZATION; goto restore; }
-    rc = (RECT){work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
+    rc = RECT{work.left + (work.right - work.left - cx) / 2, work.top + (work.bottom - work.top - cy) / 2, 0, 0};
     rc.right = rc.left + cx; rc.bottom = rc.top + cy;
     hwnd = HwndCompatDynamicDialog(lpof->lpstrTitle ? lpof->lpstrTitle : fSave ? "Save As" : "Open", WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME, 0, &rc, hwndRoot, FileDialogProc);
     if (!hwnd) { dlg.dwError = CDERR_MEMALLOCFAILURE; goto restore; }
@@ -536,14 +553,12 @@ selected:
         fRet = TRUE;
     }
 restore:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
-    if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
-    if (fNative && IsWindow(hwndRoot)) hwndRoot->cNativeFileDialogs--;
-    if (IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
+    destroyPicker.Close();
+    restoreOwner.Close();
+    nativeCounter.Close();
+    restoreFocus.Close();
 done:
-    FreeFileEntries(&dlg);
-    for (i = 0; i < dlg.cHistory; i++) free(dlg.rgpszHistory[i]);
-    for (i = 0; i < dlg.cFilter; i++) { free(dlg.rgfilter[i].pszName); free(dlg.rgfilter[i].pszPattern); }
+    freeBuffers.Close();
     dwDialogError = dlg.dwError;
     return fRet;
 }

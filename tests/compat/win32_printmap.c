@@ -1,5 +1,6 @@
 /* Exercise the actual map dialog and printing command on a copied game. */
 #include "win.h"
+#include "ownership.h"
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
 #include <stdio.h>
@@ -15,7 +16,7 @@ static const char *pszTarget;
 static char szInstalledRace[] = "installed.r1";
 
 int16_t StarsTest_PromptPassword(void) { return TRUE; }
-int16_t StarsTest_AlertSz(char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
+int16_t StarsTest_AlertSz(const char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
 extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     FILE *lpFile;
     char rgb[5];
@@ -40,6 +41,22 @@ static void CALLBACK ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) 
         return;
     }
 }
+static BOOL FTextViewContracts(void) {
+    NATIVEOWNER<std::remove_pointer_t<HDC>, DeleteDC> hdc(CreateCompatibleDC(NULL));
+    char sz[sizeof(szLastStrGet)], szExpected[sizeof(szLastStrGet)];
+    const char *psz = sz;
+
+    if (!hdc) return FALSE;
+    CchGetString(idsNone2, szExpected);
+    strcpy(sz, "mutable");
+    RightTextOut(hdc.get(), 80, 0, sz, -1, 0);
+    if (strcmp(sz, szExpected)) return FALSE;
+    strcpy(sz, "borrowed");
+    RightTextOut(hdc.get(), 80, 0, psz, -1, 0);
+    if (strcmp(sz, "borrowed")) return FALSE;
+    RightTextOut(hdc.get(), 80, 0, "literal", 0, 0);
+    return TRUE;
+}
 static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     GAME gameSav;
     const char *pszOutput = getenv("STARS_PRINTMAP_OUTPUT");
@@ -51,7 +68,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     (void)hwnd; (void)msg; (void)ticks;
     if (fRunning || !IsWindow(hwndScanner) || idPlayer == iplrNone) return;
     fRunning = TRUE; KillTimer(NULL, id);
-    if (!pszOutput) goto done;
+    if (!pszOutput || !FTextViewContracts()) goto done;
     gameSav = game;
     snprintf(szManifest, sizeof(szManifest), "%s/map.json", pszOutput);
     lpFile = fopen(szManifest, "wb"); if (!lpFile) goto done;
@@ -87,7 +104,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
         fPassed = FCreateFile(dtRace, iplrNone, szInstalledRace);
         if (fPassed) {
             WriteRtPlr(&plr, NULL); icksum = IRaceChecksum(&plr);
-            WriteRt(rtEOF, 2, &icksum); StreamClose();
+            WriteRtEof(icksum); StreamClose();
         }
     }
 done:

@@ -15,7 +15,7 @@ static LRESULT CALLBACK MacShortcutProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l)
 }
 
 static BOOL FMacShortcutKey(HWND hwnd, HACCEL haccel, SDL_Scancode sc, SDL_Keymod mod, UINT idExpected) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
     MSG msg;
 
     cMacCommand = 0;
@@ -72,7 +72,7 @@ static BOOL FCheckMacShortcuts(void) {
         {IDM_VIEW_FIND, "\tCmd+F"}, {IDM_FILE_RETURN_TO_TITLE, "\tCmd+W"},
         {IDM_FILE_EXIT, "\tCmd+Q"}
     };
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd = NULL, hwndEdit;
     HMENU hmenu = GetMenu(hwndFrame);
     SDL_Keymod mod;

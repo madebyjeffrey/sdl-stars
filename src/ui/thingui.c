@@ -14,12 +14,12 @@ void DrawThingGauge(HDC hdc, RECT *prc, THING *lpth, int16_t md) {
     fDisabled = FALSE;
     SelectObject(hdc, rghfontArial8[1]);
     cSections = 1;
-    lMax = (uint32_t)(lpth->thp.wtMax * 10);
+    lMax = (uint32_t)(lpth->thp().wtMax() * 10);
     if (md < 0 || md > 4) {
         if (md == 5) {
             for (i = 0; i < 3; i++) {
                 rghbr[i] = rghbrMineral[i];
-                rgSize[i] = lpth->thp.rgwtMin[i];
+                rgSize[i] = lpth->thp().rgwtMin(i);
             }
             cSections = 3;
         }
@@ -29,7 +29,7 @@ void DrawThingGauge(HDC hdc, RECT *prc, THING *lpth, int16_t md) {
         fDisabled = TRUE;
     } else {
         rghbr[0] = rghbrMineral[md];
-        rgSize[0] = lpth->thp.rgwtMin[md];
+        rgSize[0] = lpth->thp().rgwtMin(md);
     }
     l = LDrawGauge(hdc, prc, cSections, rgSize, rghbr, lMax);
     iMode = SetBkMode(hdc, TRANSPARENT);

@@ -53,6 +53,7 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
 #define IRenameNativePath TestRename
 #define IUnlinkNativePath TestUnlink
 '''
+    stubs = f'#include "{ROOT / "src/platform/ownership.h"}"\n' + stubs
     # A function-like macro avoids rewriting the struct stat type.
     stubs=stubs.replace("#define stat TestStat", "#define stat(path,st) TestStat(path,st)")
     body=function("compat/win32/src/profile.c", "static BOOL FSaveProfile(")
@@ -60,7 +61,8 @@ static int TestUnlink(const char *p){(void)p;unlinked++;return cleanupOK?0:-1;}
 static int checks;
 #define CHECK(x) do {checks++;if(!(x)){fprintf(stderr,"stage %d witness %d failed: %s\n",failure,checks,#x);return 1;}}while(0)
 int main(void){
-    COMPATPROFILE second={const_cast<char *>("B\n"),NULL},first={const_cast<char *>("A"),&second};int ret;
+    char szSecond[]="B\n",szFirst[]="A";
+    COMPATPROFILE second={szSecond,NULL},first={szFirst,&second};int ret;
     for(failure=Ok;failure<=Rename;failure++){
         lastError=77;published=unlinked=opened=closed=syncCalled=renameCalled=0;used=0;cleanupOK=1;
         ret=FSaveProfile(&first,"unused");
@@ -82,7 +84,7 @@ int main(void){
         path=Path(work);source=path/"witness.cpp";binary=path/"witness"
         source.write_text(stubs+body+witnesses)
         subprocess.run(shlex.split(os.environ.get('CXX', 'c++'))+
-                       ["-std=gnu++20", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
+                       ["-std=gnu++20", "-DSTARS_TEST_STATE_DOUBLE", "-include", str(ROOT / "src/platform/value.h"), "-x", "c++","-D_POSIX_C_SOURCE=200809L","-Wall","-Wextra","-Werror", "-Wno-misleading-indentation",str(source),"-o",str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 
 

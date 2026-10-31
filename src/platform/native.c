@@ -3,6 +3,7 @@
 #endif
 
 #include "common.h"
+#include "ownership.h"
 
 #include <stdarg.h>
 #include <errno.h>
@@ -102,10 +103,12 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
     char       *pchOut;
     int         cch;
     va_list     args;
+    NATIVEOWNER<char, std::free> format;
 
     // Dropping l only shortens the format, so a copy its size holds it.
     cbFmt = strlen(szFormat) + 1;
     szFmt = cbFmt <= sizeof(szFmtSmall) ? szFmtSmall : (char *)malloc(cbFmt);
+    format.reset(szFmt == szFmtSmall ? nullptr : szFmt);
     if (!szFmt) {
         sz[0] = 0;
         return 0;
@@ -131,9 +134,7 @@ int CchSprintf(char *sz, const char *szFormat, ...) {
     va_start(args, szFormat);
     cch = vsnprintf(sz, 1024, szFmt, args);
     va_end(args);
-    if (szFmt != szFmtSmall) {
-        free(szFmt);
-    }
+    format.reset();
     if (cch < 0) {
         sz[0] = 0;
         return 0;
@@ -183,10 +184,11 @@ char *PszNativeCommandLine(void) {
     while (*pwsz == L' ' || *pwsz == L'\t') pwsz++;
     cb = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, NULL, 0, NULL, NULL);
     if (cb == 0 || !(psz = (char *)malloc(cb))) return NULL;
+    NATIVEOWNER<char, std::free> command(psz);
     if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, pwsz, -1, psz, cb, NULL, NULL)) {
-        free(psz); return NULL;
+        return NULL;
     }
-    return psz;
+    return command.release();
 }
 
 char **RgpszNativeArguments(int *lpc) {
@@ -194,15 +196,17 @@ char **RgpszNativeArguments(int *lpc) {
     char **rgpsz, *pch;
     size_t cb;
     int i, c;
+    NATIVEOWNER<WCHAR *, LocalFree> wideArguments(rgpwsz);
     if (!rgpwsz) return NULL;
     cb = ((size_t)*lpc + 1) * sizeof(*rgpsz);
     for (i = 0; i < *lpc; i++) {
         c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
-        if (c == 0) { LocalFree(rgpwsz); return NULL; }
+        if (c == 0) { wideArguments.reset(); return NULL; }
         cb += c;
     }
     rgpsz = (char **)malloc(cb);
-    if (!rgpsz) { LocalFree(rgpwsz); return NULL; }
+    if (!rgpsz) { wideArguments.reset(); return NULL; }
+    NATIVEOWNER<char *, std::free> arguments(rgpsz);
     pch = (char *)(rgpsz + *lpc + 1);
     for (i = 0; i < *lpc; i++) {
         c = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, NULL, 0, NULL, NULL);
@@ -210,8 +214,8 @@ char **RgpszNativeArguments(int *lpc) {
         WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, rgpwsz[i], -1, pch, c, NULL, NULL);
         pch += c;
     }
-    rgpsz[*lpc] = NULL; LocalFree(rgpwsz);
-    return rgpsz;
+    rgpsz[*lpc] = NULL; wideArguments.reset();
+    return arguments.release();
 }
 
 uint32_t DwTickCount() { return GetTickCount(); }
@@ -221,7 +225,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
     _strtime(szTime);
 }
 
-int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
+int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return _strnicmp(sz1, sz2, cch) == 0; }
 
 #else
 
@@ -242,7 +246,7 @@ void GetDateTimeSz(char *szDate, char *szTime) {
     strftime(szTime, 9, "%H:%M:%S", ptm);
 }
 
-int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
+int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch) { return strncasecmp(sz1, sz2, cch) == 0; }
 
 #endif
 int64_t LNativeTime(void) { return (int64_t)time(NULL); }
@@ -258,17 +262,17 @@ int CchSnprintf(char *psz, size_t cb, const char *pszFormat, ...) {
 
 // Legacy entrypoints retain their small handles and test-adapter symbols;
 // resource ownership, binary streams and native exceptions live in fileio.cpp.
-int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
+int16_t HfOpenFile(const char *szFile, uint16_t mdOpen, int16_t *pfMissing) {
     return HfNativeOpenLegacy(szFile, mdOpen, pfMissing);
 }
 int32_t CbReadFile(int16_t hf, void *rg, uint16_t cb) { return CbNativeReadLegacy(hf, rg, cb); }
-int32_t CbWriteFile(int16_t hf, void *rg, uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }
+int32_t CbWriteFile(int16_t hf, const void *rg, uint16_t cb) { return CbNativeWriteLegacy(hf, rg, cb); }
 int32_t LSeekFile(int16_t hf, int32_t l, int16_t iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
 int32_t CbFileSize(int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(int16_t hf) { CloseNativeLegacy(hf); }
-int16_t FFileExists(char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
-int16_t FFileReadOnly(char *szFile) { return IAccessNativePath(szFile, 2) != 0; }
-void MakeDir(char *szDir) { ICreateNativeDirectory(szDir, 0777); }
+int16_t FFileExists(const char *szFile) { return IAccessNativePath(szFile, 0) == 0; }
+int16_t FFileReadOnly(const char *szFile) { return IAccessNativePath(szFile, 2) != 0; }
+void MakeDir(const char *szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(const char *pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 int16_t FEnsureNativeDir(const char *pszDir) { return FEnsureNativeDirectory(pszDir); }
 int16_t FNativeEnumerateDirectory(const char *pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData) {

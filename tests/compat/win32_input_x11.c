@@ -9,7 +9,7 @@
 #include <string.h>
 #define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); iResult = 1; goto LExit; } } while (0)
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd = NULL;
     Display *lpDisplay = NULL;
     Window window;
@@ -28,7 +28,7 @@ int main(void) {
     CHECK(lpDisplay);
     key = XKeysymToKeycode(lpDisplay, XK_Shift_L);
     CHECK(key != 0);
-    window = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwnd->lpWindow), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+    window = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
     CHECK(window != 0);
     XSetInputFocus(lpDisplay, window, RevertToParent, CurrentTime);
     XSync(lpDisplay, False);

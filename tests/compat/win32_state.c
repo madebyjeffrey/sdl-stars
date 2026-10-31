@@ -98,7 +98,7 @@ int main(void) {
     CHECK(!GetWindowPlacement(hwndChild, NULL));
     wndpl.length = sizeof(wndpl);
     CHECK(GetWindowRect(hwnd, &rc));
-    idDisplay = SDL_GetDisplayForWindow(hwnd->lpWindow);
+    idDisplay = SDL_GetDisplayForWindow(hwnd->lpWindow.get());
     CHECK(SDL_GetDisplayBounds(idDisplay, &rcDisplay) && SDL_GetDisplayUsableBounds(idDisplay, &rcWork));
     OffsetRect(&rc, rcDisplay.x - rcWork.x, rcDisplay.y - rcWork.y);
     CHECK(GetWindowPlacement(hwnd, &wndpl) && EqualRect(&rc, &wndpl.rcNormalPosition));

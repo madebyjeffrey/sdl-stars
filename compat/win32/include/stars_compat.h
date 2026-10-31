@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "fileio.h"
+#include "messagepayload.h"
 /* Keep one native window and its completed frame across same-sized modal
  * wizard pages. Logical HWNDs and controls still have independent lifetimes.
  * End the sequence on every exit path; nested sequences are rejected without changing state.
@@ -55,12 +56,23 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void));
  * All handles and class atoms must be discarded before using the runtime again.
  */
 void StarsCompatShutdown(void);
-/* Post an application message from an SDL dialog callback, which may run off-thread. */
+BOOL StarsCompatCanShutdown() noexcept;
+/* Non-owning numeric messages: the caller keeps HWND valid until delivery.
+ * Delayed chooser results use the owned logical-ID handoff below. */
 BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-/* Final process cleanup after WinMain has released application state.
- * Unlike normal shutdown, no window procedure is called. All handles become
- * invalid; call only on the UI thread and outside a window procedure.
+/* Move-only one-shot payload. Ownership is consumed on entry, including failure.
+ * Capture a logical window ID on the UI thread before starting a foreign dialog.
+ * wParam is an opaque delivery token; borrow its payload only during dispatch.
+ * Destroying the target, dropping delivery or shutting down releases the payload.
+ */
+BOOL StarsCompatPostOwnedMessageAsync(uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam);
+void *PvCompatMessagePayload(WPARAM id) noexcept;
+
+/* Stop native callbacks, timers and windows without calling window procedures.
+ * Session teardown calls this before releasing game state; process entry also
+ * calls it as an idempotent fallback. Handles become invalid. UI thread only,
+ * outside a window procedure.
  */
 void StarsCompatProcessExit(void);
 

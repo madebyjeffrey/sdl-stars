@@ -3,8 +3,21 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
+#endif
+#ifdef _WIN32
+#ifdef STARS_UI_SDL
+#include "fileio.h"
+static BOOL FFixtureTruncate(const char *psz, int64_t cb) {
+    NATIVEFILE *pf = PfNativeOpenFlags(psz, 3, OF_SHARE_DENY_NONE, 0, 0, 0, 1);
+    BOOL fOkay;
+    if (!pf) return FALSE;
+    fOkay = ITruncateNativeFile(pf, cb) == 0;
+    return ICloseNativeFile(pf) == 0 && fOkay;
+}
+#endif
+#else
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -15,7 +28,7 @@ int main(void) {
     OFSTRUCT of, ofOther, ofReopen;
     HFILE hf, hfOther;
     DWORD dwHigh;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STARS_UI_SDL)
     LARGE_INTEGER li;
 #endif
 
@@ -56,14 +69,18 @@ int main(void) {
     CHECK(_lclose(hf) == 0);
     hf = OpenFile(szPath, &of, OF_READWRITE | OF_SHARE_DENY_NONE);
     CHECK(hf != HFILE_ERROR);
-#ifdef _WIN32
+#if defined(_WIN32) && defined(STARS_UI_SDL)
+    CHECK(FFixtureTruncate(szPath, ((int64_t)1 << 32) + 7));
+#elif defined(_WIN32)
     li.QuadPart = ((int64_t)1 << 32) + 7;
     CHECK(SetFilePointerEx((HANDLE)(INT_PTR)hf, li, NULL, FILE_BEGIN) && SetEndOfFile((HANDLE)(INT_PTR)hf));
 #else
     CHECK(truncate(szPath, ((off_t)1 << 32) + 7) == 0);
 #endif
     CHECK(GetFileSize((HANDLE)(INT_PTR)hf, &dwHigh) == 7 && dwHigh == 1);
-#ifdef _WIN32
+#if defined(_WIN32) && defined(STARS_UI_SDL)
+    CHECK(FFixtureTruncate(szPath, UINT32_MAX));
+#elif defined(_WIN32)
     li.QuadPart = UINT32_MAX;
     CHECK(SetFilePointerEx((HANDLE)(INT_PTR)hf, li, NULL, FILE_BEGIN) && SetEndOfFile((HANDLE)(INT_PTR)hf));
 #else
@@ -77,7 +94,7 @@ int main(void) {
     CHECK(OpenFile(szPath, &of, OF_DELETE) != HFILE_ERROR);
     CHECK(OpenFile(szPath, &of, OF_EXIST) == HFILE_ERROR && of.nErrCode == ERROR_FILE_NOT_FOUND);
     CHECK(_lread(HFILE_ERROR, rgb, 1) == (UINT)HFILE_ERROR && _lwrite(HFILE_ERROR, "x", 1) == (UINT)HFILE_ERROR);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(OpenFile(szPath, &of, OF_PROMPT) == HFILE_ERROR && of.nErrCode == ERROR_NOT_SUPPORTED);
     CHECK(_lclose(0) == HFILE_ERROR && GetLastError() == ERROR_INVALID_HANDLE);
     StarsCompatShutdown();

@@ -83,10 +83,10 @@ static FLEET *AddPursuer(int16_t ish, POINT16 pt, int16_t idTarget, POINT16 ptTa
 
     lpfl = LpflStarsTestAddFleet(0, idPlanetDeepSpace, ish, 1);
     lpfl->pt = pt;
-    lpfl->lpplord->rgord[0].pt = pt;
+    lpfl->lpplord->rgord()[0].pt = pt;
     lpfl->lpplord->iordMac = 2;
     lpfl->cord = 2;
-    lpord = &lpfl->lpplord->rgord[1];
+    lpord = &lpfl->lpplord->rgord()[1];
     memset(lpord, 0, sizeof(*lpord));
     lpord->pt = ptTarget;
     lpord->id = idTarget;
@@ -140,8 +140,8 @@ static void test_ValidateWaypoints_pursuers_take_heaviest(void) {
     lpflB = AddPursuer(ish0, ptStart, (1 << 9) | 401, ptFled);
 
     ValidateWaypoints();
-    TEST_CHECK_(lpflA->lpplord->rgord[1].id == lpflHeavy->id, "first pursuer took %#x, heavy %#x", lpflA->lpplord->rgord[1].id, lpflHeavy->id);
-    TEST_CHECK_(lpflB->lpplord->rgord[1].id == lpflHeavy->id, "second pursuer took %#x, heavy %#x light %#x", lpflB->lpplord->rgord[1].id, lpflHeavy->id,
+    TEST_CHECK_(lpflA->lpplord->rgord()[1].id == lpflHeavy->id, "first pursuer took %#x, heavy %#x", lpflA->lpplord->rgord()[1].id, lpflHeavy->id);
+    TEST_CHECK_(lpflB->lpplord->rgord()[1].id == lpflHeavy->id, "second pursuer took %#x, heavy %#x light %#x", lpflB->lpplord->rgord()[1].id, lpflHeavy->id,
                 lpflLight->id);
 }
 
@@ -161,16 +161,78 @@ static void test_PtToScan_negative(void) {
 
 static void test_FLookupPart_host(void) {
     PART part;
+    NATIVEPARTCOMMONVIEW comPrior;
+    ENGINE *pengine;
+    int16_t cMassSav;
     int16_t idPlayerSav = idPlayer;
 
     memset(&part, 0, sizeof(part));
     idPlayer = iplrNone;
     TEST_CHECK(FLookupPartX(&part, hstEngine, iengineSettlersDelight) == mdPartAvailAvailable);
-    TEST_CHECK(part.pengine == LpengineFromId(iengineSettlersDelight));
+    TEST_CHECK(part.pengine() == LpengineFromId(iengineSettlersDelight));
+    pengine = part.pengine();
+    comPrior = part.pcom();
+    part.hs.grhst = hstArmor;
+    part.hs.iItem = 255;
+    TEST_CHECK(FLookupPart(&part) == mdPartAvailInvalid);
+    TEST_CHECK(part.pcom() == pengine && part.pcom().cMass() == pengine->cMass);
+    TEST_CHECK(FLookupPartX(&part, hstArmor, 0) == mdPartAvailAvailable);
+    TEST_CHECK(part.parmor() == rgarmor && comPrior == pengine);
+    cMassSav = pengine->cMass;
+    pengine->cMass = -32768;
+    TEST_CHECK(comPrior.cMass() == -32768);
+    pengine->cMass = cMassSav;
     idPlayer = idPlayerSav;
 }
 
-TEST_LIST = {{"FLookupPart host sentinel", test_FLookupPart_host},
+// Lookup's Other/unknown fallback is THING; cargo's default is FLEET. The
+// shared frame must retain initialized cargo outside the eighteen-byte copy.
+static void test_Xfer_lookup_and_cargo_fallbacks(void) {
+    char szDir[MAX_PATH];
+    XFER xf{};
+    THING *lpth;
+    int16_t id;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("Xfer_fallbacks", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    while (cThing != 0) FreeLpth(lpThings);
+    lpth = LpthNew(0, ithMinefield);
+    TEST_ASSERT(lpth != NULL);
+    lpth->pt().Set({123, 456});
+    id = lpth->idFull();
+    xf.fl().rgwtMin[0] = 42;
+    TEST_ASSERT(FLookupObject(grobjOther, id, xf.LpvLookup(grobjOther)));
+    TEST_CHECK(xf.idObj() == id && xf.iPlayerObj() == 123);
+    TEST_CHECK(ChgCargo(static_cast<GrobjClass>(3), id, static_cast<MineralType>(0), 0,
+                        xf.LpvCargo(static_cast<GrobjClass>(3))) == 42);
+    TEST_CHECK(ChgCargo(grobjOther, id, static_cast<MineralType>(0), 0, xf.LpvCargo(grobjOther)) == 0);
+    TEST_CHECK(xf.th().idFull() == id && xf.th().pt().x() == 123 && xf.th().pt().y() == 456);
+}
+
+
+#ifdef STARS_UI_SDL
+static void test_TransferStuff_restores_borrowed_frame_on_lookup_failure(void) {
+    XFER rgSaved[2]{};
+    XFER *pxferSav;
+    MdXfer mdXferSav;
+
+    TEST_ASSERT(FStarsTestInit());
+    pxferSav = pxfer; mdXferSav = mdXferDlg;
+    pxfer = rgSaved; mdXferDlg = mdXferShips;
+    TEST_CHECK(!TransferStuff(INT16_MAX, grobjPlanet, 0, grobjOther, mdXferCargo));
+    TEST_CHECK(pxfer == rgSaved && mdXferDlg == mdXferShips);
+    pxfer = pxferSav; mdXferDlg = mdXferSav;
+}
+#endif
+
+TEST_LIST = {
+#ifdef STARS_UI_SDL
+    {"transfer lookup failure restores the outer borrowed frame", test_TransferStuff_restores_borrowed_frame_on_lookup_failure},
+#endif
+{"transfer lookup/cargo fallbacks retain prefix and tail", test_Xfer_lookup_and_cargo_fallbacks},
+             {"FLookupPart host sentinel", test_FLookupPart_host},
              {"generated fleet names preserve complete UTF-8", test_FleetName_utf8_boundary},
              {"PtToScan negative coordinates", test_PtToScan_negative},
              {"ValidateWaypoints pursuers take the heaviest fleet", test_ValidateWaypoints_pursuers_take_heaviest},

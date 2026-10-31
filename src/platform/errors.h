@@ -22,6 +22,17 @@ public:
     StarsRecoveryScope &operator=(const StarsRecoveryScope &) = delete;
 };
 
+// A caller already reporting a primary failure must not capture a secondary
+// callback error during cleanup, even after C++ unwinding has reached a handler.
+class StarsPrimaryErrorScope {
+    bool fPrimary;
+public:
+    explicit StarsPrimaryErrorScope(bool fPrimary = true) noexcept;
+    ~StarsPrimaryErrorScope() noexcept;
+    StarsPrimaryErrorScope(const StarsPrimaryErrorScope &) = delete;
+    StarsPrimaryErrorScope &operator=(const StarsPrimaryErrorScope &) = delete;
+};
+
 [[noreturn]] void StarsThrowError(StarsErrorKind mdError, uint16_t ids);
 void StarsCapturePendingError() noexcept;
 void StarsRethrowPendingError();

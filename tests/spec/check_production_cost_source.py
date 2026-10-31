@@ -6,6 +6,7 @@ Part lookup/pricing and hull-catalog access are explicit quote doubles; this
 checks the whole caller algorithm, not M11 miniaturization or pointer validity.
 """
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import re
 import shlex
@@ -21,6 +22,8 @@ def main():
     planetary_names=re.findall(r'^- name:\s*(\w+)\s*$',(ROOT/'data/parts/planetary.yaml').read_text(),re.MULTILINE)
     declarations=r'''
 #include <assert.h>
+#include <array>
+#include <bit>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,12 +40,19 @@ def main():
         declarations+=f'#define {name} {value}\n'
     declarations+='typedef uint16_t HulDef;\ntypedef struct PLPROD PLPROD;\n#pragma pack(push,1)\n'
     for tag,alias in [('_hs','HS'),('_hul','HUL'),('_shdef','SHDEF'),('_planetary','PLANETARY'),('_prod','PROD'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)
 typedef struct {int8_t rgAttr[16];uint32_t grbitAttr;} PLAYER;
-typedef struct {HS hs;union {HUL *phul;PLANETARY *pplanetary;void *pcom;};} PART;
+// Quote double: only the caller's concrete borrow operations are used here.
+struct PART {
+    HS hs;void *lpv;
+    HUL *phul() const {return static_cast<HUL *>(lpv);}
+    PLANETARY *pplanetary() const {return static_cast<PLANETARY *>(lpv);}
+    void SetPhul(HUL *p) {lpv=p;}
+    void SetPplanetary(PLANETARY *p) {lpv=p;}
+};
 typedef struct {HUL hul;} HULDEF;
 static PLAYER rgplr[16];
 static SHDEF ships[16],bases[10],otherShips[16],otherBases[10],*rglpshdef[16],*rglpshdefSB[16];
@@ -55,7 +65,7 @@ static uint16_t lookupKind[33],lookupItem[33],quoteKind[33],quoteItem[33];
 static int quotePlayer[33];
 static PLANET planet;
 static PROD prod;
-static int16_t FLookupPart(PART *p) {assert(lookups<33);lookupKind[lookups]=p->hs.grhst;lookupItem[lookups++]=p->hs.iItem;p->pplanetary=&planetary;return 2;}
+static int16_t FLookupPart(PART *p) {assert(lookups<33);lookupKind[lookups]=p->hs.grhst;lookupItem[lookups++]=p->hs.iItem;p->SetPplanetary(&planetary);return 2;}
 static HULDEF *LphuldefFromId(HulDef id) {lastHull=id;return &hull;}
 static void GetTruePartCost(int16_t player,PART *part,void *out) {
     assert(cursor<33);quoteKind[cursor]=part->hs.grhst;quoteItem[cursor]=(cursor==0 && part->hs.grhst==hstNone) ? 0:part->hs.iItem;quotePlayer[cursor]=player;memcpy(out,quotes[cursor++],8);
@@ -215,7 +225,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(prefix='m09-cost-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
         source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

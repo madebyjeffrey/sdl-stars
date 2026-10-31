@@ -140,13 +140,13 @@ int main(int argc,char **argv){
         if(accepted){
             int asked=configured+4;if(asked<5 || asked>warps[pattern]+3)asked=warps[pattern]+twos[pattern];
             int decay=asked<=warps[pattern]+twos[pattern]?0:asked-warps[pattern]-twos[pattern];
-            CHECK(cThing==1 && lpThings[0].thp.iWarp==asked-4 && lpThings[0].thp.iDecayRate==decay);
+            CHECK(cThing==1 && lpThings[0].thp().iWarp()==asked-4 && lpThings[0].thp().iDecayRate()==decay);
         }else CHECK(cThing==0);
         integrations++;
     }
     for(int pattern=0;pattern<6;pattern++){
-        reset();eligible();drivers(bases,pattern);planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);
-        planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,16,grobjFleet,0);
+        reset();eligible();drivers(bases,pattern);planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);
+        planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,16,grobjFleet,0);
         Produce();CHECK(planet.fStarbase && planet.isb==0 && !planet.lpplprod);
         CHECK(planet.iWarpFling==(warps[pattern]?warps[pattern]+twos[pattern]-4:0));
         CHECK(packetKills==!warps[pattern] && rgplr[0].lResLastYear==90);integrations++;
@@ -159,7 +159,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-o',str(binary)],check=True)
         vectors=path/'vectors.bin';count=0;excluded={}
         with vectors.open('wb') as stream:

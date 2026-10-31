@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -19,7 +19,7 @@ static_assert(sizeof(NMTOOLBARA) == (sizeof(void *) == 8 ? 96 : 60), "toolbar no
 static int cCommand, idCommand, cDrop, idDrop;
 static RECT rcDrop;
 static BOOL fDestroy;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static BOOL fCheckPaint, fPaintPassed;
 static COLORREF rgcrAction[2048];
 static BOOL FMenuPaint(HWND hwnd, const RECT *lprc, BOOL fCapture) {
@@ -48,7 +48,7 @@ static LRESULT CALLBACK Parent(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpnm = (NMTOOLBAR *)l;
         if (lpnm->hdr.code == TBN_DROPDOWN) {
             cDrop++; idDrop = lpnm->iItem; rcDrop = lpnm->rcButton;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
             if (fCheckPaint) fPaintPassed = FMenuPaint(lpnm->hdr.hwndFrom, &lpnm->rcButton, FALSE);
 #endif
             if (fDestroy) DestroyWindow(lpnm->hdr.hwndFrom);
@@ -77,7 +77,7 @@ int main(void) {
     char sz[64];
     int i, c;
     MSG msg;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     HWND hwndTip, hwndFocus;
     RECT rcTip;
     POINT ptScreen;
@@ -149,7 +149,7 @@ int main(void) {
     add.hInst = NULL; add.nID = (UINT_PTR)hbmp;
     CHECK(SendMessage(htb, TB_ADDBITMAP, 1, (LPARAM)&add) == 0);
     CHECK(UpdateWindow(htb));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     DeleteObject(hbmp); // Native adapter owns a copy, even for caller bitmaps.
     CHECK(SendMessage(htb, TB_GETRECT, 101, (LPARAM)&rc));
     hdc = GetDC(htb);
@@ -192,8 +192,8 @@ int main(void) {
     rc = rcSplit; MapWindowPoints(htb, NULL, (POINT *)&rc, 2);
     CHECK(rcTip.left == rc.left && rcTip.top == rc.bottom + 2 && GetFocus() == hwndFocus);
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy")) {
-        CHECK(SDL_GetWindowFlags(hwndTip->lpWindow) & SDL_WINDOW_TOOLTIP);
-        CHECK(SDL_GetWindowParent(hwndTip->lpWindow) == hwnd->lpWindow);
+        CHECK(SDL_GetWindowFlags(hwndTip->lpWindow.get()) & SDL_WINDOW_TOOLTIP);
+        CHECK(SDL_GetWindowParent(hwndTip->lpWindow.get()) == hwnd->lpWindow.get());
     }
     SendMessage(htb, TB_SETHOTITEM, 3, 0);
     CHECK(SendMessage(htb, TB_GETHOTITEM, 0, 0) == 3);
@@ -211,7 +211,7 @@ int main(void) {
     CHECK(!IsWindow(htb));
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     CHECK(DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     return 0;

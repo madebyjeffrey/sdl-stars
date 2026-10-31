@@ -25,7 +25,7 @@ LWriteProdQ:
         return TRUE;
     } catch (const StarsError &) {
         if (lpplProdGlob) {
-            FreePl((PL *)lpplProdGlob);
+            FreePl(lpplProdGlob);
         }
         lpplProdGlob = NULL;
         if (hwndProdDlg) {
@@ -265,20 +265,20 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         }
         if (iDst < iMac) {
             if (iDst >= 0) {
-                prodLast = lpplProdGlob->rgprod[iDst];
+                prodLast = lpplProdGlob->rgprod()[iDst];
                 if ((uint32_t)prodLast.iItem == prod.iItem && (uint32_t)prodLast.grobj == prod.grobj) {
                 RingItUp:
-                    lpplProdGlob->rgprod[iDst].cItem = StarsMin(1020, lpplProdGlob->rgprod[iDst].cItem + prod.cItem);
-                    if (lpplProdGlob->rgprod[iDst].cItem > 1 && lpplProdGlob->rgprod[iDst].iItem == iobjAlchemy &&
-                        lpplProdGlob->rgprod[iDst].grobj == grobjPlanet) {
-                        lpplProdGlob->rgprod[iDst].cItem = 1;
+                    lpplProdGlob->rgprod()[iDst].cItem = StarsMin(1020, lpplProdGlob->rgprod()[iDst].cItem + prod.cItem);
+                    if (lpplProdGlob->rgprod()[iDst].cItem > 1 && lpplProdGlob->rgprod()[iDst].iItem == iobjAlchemy &&
+                        lpplProdGlob->rgprod()[iDst].grobj == grobjPlanet) {
+                        lpplProdGlob->rgprod()[iDst].cItem = 1;
                     }
                     goto FixedUp;
                 }
             }
             iDst++;
             if (iDst < iMac) {
-                prodLast = lpplProdGlob->rgprod[iDst];
+                prodLast = lpplProdGlob->rgprod()[iDst];
                 if ((uint32_t)prodLast.iItem == prod.iItem && (uint32_t)prodLast.grobj == prod.grobj)
                     goto RingItUp;
             }
@@ -288,12 +288,12 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             goto RedrawText;
         }
         if (iMac == lpplProdGlob->iprodMax) {
-            lpplProdGlob = (PLPROD *)LpplReAlloc((PL *)lpplProdGlob, iMac + 4);
+            lpplProdGlob = LpplReAlloc(lpplProdGlob, iMac + 4);
         }
         if (iDst != iMac) {
-            memmove(lpplProdGlob + (1 + (iDst + 1)), &lpplProdGlob->rgprod[iDst], (iMac - iDst) * 4);
+            memmove(&lpplProdGlob->rgprod()[iDst + 1], &lpplProdGlob->rgprod()[iDst], (iMac - iDst) * 4);
         }
-        lpplProdGlob->rgprod[iDst] = prod;
+        lpplProdGlob->rgprod()[iDst] = prod;
         lpplProdGlob->iprodMac++;
     FixedUp:
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
@@ -309,7 +309,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             break;
         iMac = lpplProdGlob->iprodMac;
         lSel--;
-        prod = lpplProdGlob->rgprod[lSel];
+        prod = lpplProdGlob->rgprod()[lSel];
         for (iSrc = 0; iSrc < cProdGlob && ((uint32_t)pProdGlob[iSrc].grobj != prod.grobj || (uint32_t)pProdGlob[iSrc].iItem != prod.iItem); iSrc++) {
         }
         fRefillSrc = pProdGlob[iSrc].cItem == 0;
@@ -331,10 +331,10 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         if (pProdGlob[iSrc].cItem != 0x3ff) {
             pProdGlob[iSrc].cItem += c;
         }
-        lpplProdGlob->rgprod[lSel].cItem -= c;
-        if (lpplProdGlob->rgprod[lSel].cItem == 0) {
+        lpplProdGlob->rgprod()[lSel].cItem -= c;
+        if (lpplProdGlob->rgprod()[lSel].cItem == 0) {
             if ((int32_t)(lSel + 1) < iMac) {
-                memmove(&lpplProdGlob->rgprod[lSel], &lpplProdGlob->rgprod[lSel + 1], (iMac - LOWORD(lSel) - 1) * sizeof(PROD));
+                memmove(&lpplProdGlob->rgprod()[lSel], &lpplProdGlob->rgprod()[lSel + 1], (iMac - LOWORD(lSel) - 1) * sizeof(PROD));
             } else {
                 lSel--;
             }
@@ -351,7 +351,7 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
     case IDC_PRODUCTION_CLEAR:
     case IDC_IMPORT:
         ipl = 0;
-        lpprod = lpplProdGlob->rgprod;
+        lpprod = lpplProdGlob->rgprod();
         while (ipl < lpplProdGlob->iprodMac) {
             for (iSrc = 0; iSrc < cProdGlob && ((uint32_t)pProdGlob[iSrc].grobj != lpprod->grobj || (uint32_t)pProdGlob[iSrc].iItem != lpprod->iItem); iSrc++) {
             }
@@ -366,27 +366,27 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             if (cMax < 1) {
                 cMax = 1;
             }
-            lpplprodT = (PLPROD *)LpplAlloc(4, cMax, htOrd);
-            memset(lpplprodT->rgprod, 0, cMax * 4);
+            lpplprodT = LpplAlloc<PLPROD>(4, cMax, htOrd);
+            memset(lpplprodT->rgprod(), 0, cMax * 4);
             iDst = 0;
             for (iSrc = 0; iSrc < lpplProdGlob->iprodMac; iSrc++) {
-                if (lpplProdGlob->rgprod[iSrc].grobj != grobjPlanet || lpplProdGlob->rgprod[iSrc].iItem >= mdIdleFactory) {
-                    lpplprodT->rgprod[iDst] = lpplProdGlob->rgprod[iSrc];
+                if (lpplProdGlob->rgprod()[iSrc].grobj != grobjPlanet || lpplProdGlob->rgprod()[iSrc].iItem >= mdIdleFactory) {
+                    lpplprodT->rgprod()[iDst] = lpplProdGlob->rgprod()[iSrc];
                     iDst++;
                 }
             }
             for (iSrc = 0; iSrc < vrgZipProd[lParam].cpq; iSrc++) {
-                if ((GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh || vrgZipProd[lParam].rgpq[iSrc].mdIdle > iobjDefense) &&
+                if ((GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raMacintosh || vrgZipProd[lParam].rgpq[iSrc].mdIdle() > iobjDefense) &&
                     (GetRaceStat(&rgplr[idPlayer], rsMajorAdv) != raTerra ||
-                     (vrgZipProd[lParam].rgpq[iSrc].mdIdle != iobjMinTerraform && vrgZipProd[lParam].rgpq[iSrc].mdIdle != iobjMaxTerraform))) {
-                    lpplprodT->rgprod[iDst].grobj = grobjPlanet;
-                    lpplprodT->rgprod[iDst].iItem = vrgZipProd[lParam].rgpq[iSrc].mdIdle;
-                    lpplprodT->rgprod[iDst].cItem = vrgZipProd[lParam].rgpq[iSrc].cQuan;
+                     (vrgZipProd[lParam].rgpq[iSrc].mdIdle() != iobjMinTerraform && vrgZipProd[lParam].rgpq[iSrc].mdIdle() != iobjMaxTerraform))) {
+                    lpplprodT->rgprod()[iDst].grobj = grobjPlanet;
+                    lpplprodT->rgprod()[iDst].iItem = vrgZipProd[lParam].rgpq[iSrc].mdIdle();
+                    lpplprodT->rgprod()[iDst].cItem = vrgZipProd[lParam].rgpq[iSrc].cQuan();
                     iDst++;
                 }
             }
             lpplprodT->iprodMac = iDst;
-            FreePl((PL *)lpplProdGlob);
+            FreePl(lpplProdGlob);
             lpplProdGlob = lpplprodT;
             sel.pl.fNoResearch = vrgZipProd[lParam].fNoResearch;
             SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_SETCHECK, sel.pl.fNoResearch, 0);
@@ -449,9 +449,9 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
         if (lSel <= 0 || lSel >= iMac)
             break;
         lSel--;
-        prod = lpplProdGlob->rgprod[lSel];
-        lpplProdGlob->rgprod[lSel] = lpplProdGlob->rgprod[lSel + 1];
-        lpplProdGlob->rgprod[lSel + 1] = prod;
+        prod = lpplProdGlob->rgprod()[lSel];
+        lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
+        lpplProdGlob->rgprod()[lSel + 1] = prod;
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
         SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 2, 0);
         goto RedrawText;
@@ -461,9 +461,9 @@ void ProdCommandHandler(HWND hwnd, WPARAM wParam, LPARAM lParam) {
             break;
         iMac = lpplProdGlob->iprodMac;
         lSel -= 2;
-        prod = lpplProdGlob->rgprod[lSel];
-        lpplProdGlob->rgprod[lSel] = lpplProdGlob->rgprod[lSel + 1];
-        lpplProdGlob->rgprod[lSel + 1] = prod;
+        prod = lpplProdGlob->rgprod()[lSel];
+        lpplProdGlob->rgprod()[lSel] = lpplProdGlob->rgprod()[lSel + 1];
+        lpplProdGlob->rgprod()[lSel + 1] = prod;
         FillPlanetProdLB(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), lpplProdGlob, NULL);
         SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_QUEUE), LB_SETCURSEL, LOWORD(lSel) + 1, 0);
         goto RedrawText;
@@ -484,7 +484,7 @@ void InitializeProductionDlg(HWND hwnd) {
     FillProdSrcLB(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), -1);
     SendMessage(GetDlgItem(hwnd, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_SETCURSEL, 0, 0);
     i = 0;
-    lpprod = lpplProdGlob->rgprod;
+    lpprod = lpplProdGlob->rgprod();
     while (i < lpplProdGlob->iprodMac) {
         if (lpprod->grobj != grobjPlanet || lpprod->iItem >= mdIdleFactory) {
             iSel = i;
@@ -535,7 +535,7 @@ void DrawProductionDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t iDraw) {
                 prod.cItem = 1;
             } else {
                 lSel--;
-                prod = lpplProdGlob->rgprod[lSel];
+                prod = lpplProdGlob->rgprod()[lSel];
             }
             GetProductionCosts(&sel.pl, &prod, (uint32_t *)rgCost, idPlayer, FALSE);
             rc.bottom = yTopFutureTech + 4;
@@ -754,9 +754,9 @@ INT_PTR CALLBACK ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                         vrgZipProd[iResTechNow].fValid = TRUE;
                         cpq = 0;
                         for (i = 0; i < lpplProdGlob->iprodMac; i++) {
-                            if (lpplProdGlob->rgprod[i].grobj == grobjPlanet && lpplProdGlob->rgprod[i].iItem < mdIdleFactory) {
-                                vrgZipProd[iResTechNow].rgpq[cpq].mdIdle = lpplProdGlob->rgprod[i].iItem;
-                                vrgZipProd[iResTechNow].rgpq[cpq].cQuan = lpplProdGlob->rgprod[i].cItem;
+                            if (lpplProdGlob->rgprod()[i].grobj == grobjPlanet && lpplProdGlob->rgprod()[i].iItem < mdIdleFactory) {
+                                vrgZipProd[iResTechNow].rgpq[cpq].SetMdIdle(lpplProdGlob->rgprod()[i].iItem);
+                                vrgZipProd[iResTechNow].rgpq[cpq].SetCQuan(lpplProdGlob->rgprod()[i].cItem);
                                 cpq++;
                                 if (cpq >= 12)
                                     break;
@@ -815,11 +815,11 @@ void FillZipProdLB(HWND hwndDlg, ZIPPRODQ *pzpq) {
     } else {
         CchGetString(idsSD2, szFormat);
         for (i = 0; i < pzpq->cpq; i++) {
-            CchGetString(static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle), szAuto);
-            if (pzpq->rgpq[i].cQuan == 1 || pzpq->rgpq[i].mdIdle == iobjAlchemy) {
+            CchGetString(static_cast<StringId>(idsMines + pzpq->rgpq[i].mdIdle()), szAuto);
+            if (pzpq->rgpq[i].cQuan() == 1 || pzpq->rgpq[i].mdIdle() == iobjAlchemy) {
                 strcpy(szWork, szAuto);
             } else {
-                wsprintf(szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan);
+                wsprintf(szWork, szFormat, szAuto, pzpq->rgpq[i].cQuan());
             }
             SendMessage(hwndLB, LB_ADDSTRING, 0, (LPARAM)szWork);
         }

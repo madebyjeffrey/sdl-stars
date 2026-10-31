@@ -190,7 +190,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             /* Room for every fleet and thing here, a planet and a separator.
                The original stopped at 100 entries, so objects past them
                couldn't be picked (target list overload). */
-            rgid = (int32_t *)LpAlloc((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
+            rgid = LpAlloc<int32_t>((cFleet + cThing + 3) * sizeof(int32_t), htMisc);
             if (scan.grobjFull & grobjPlanet) {
                 rgid[0] = scan.idpl;
                 rgid[1] = -1;
@@ -219,12 +219,12 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (pt.x == lpth->pt.x && pt.y == lpth->pt.y) {
+                if (pt.x == lpth->pt().x() && pt.y == lpth->pt().y()) {
                     if (!fSep) {
                         rgid[c++] = -1;
                         fSep = TRUE;
                     }
-                    rgid[c++] = (uint32_t)(uint16_t)lpth->idFull | 0x20000000;
+                    rgid[c++] = (uint32_t)(uint16_t)lpth->idFull() | 0x20000000;
                 }
             }
             LogicalToScan(&pt);
@@ -246,7 +246,7 @@ LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                 scan.grobj = grobjThing;
                 lpth = lpThings;
                 lpthMac = lpThings + cThing;
-                for (; lpth < lpthMac && lpth->idFull != LOWORD(idSel); lpth++) {
+                for (; lpth < lpthMac && lpth->idFull() != LOWORD(idSel); lpth++) {
                 }
                 scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
             } else {
@@ -684,16 +684,16 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (lpth->ith == ithMineralPacket && lpth->iplr == idPlayer && lpth->thp.iWarp != 0) {
-                    dThingRange = lpth->thp.iWarp + 4;
+                if (lpth->ith() == ithMineralPacket && lpth->iplr() == idPlayer && lpth->thp().iWarp() != 0) {
+                    dThingRange = lpth->thp().iWarp() + 4;
                     dThingRange *= dThingRange;
                     if (vpctRadarView < 100) {
                         dThingRange = MulDiv(dThingRange, vpctRadarView, 100);
                     }
-                    rc.left = PtToScan(xOff + lpth->pt.x - dThingRange);
-                    rc.top = PtToScan(yOff - lpth->pt.y - dThingRange);
-                    rc.right = PtToScan(xOff + lpth->pt.x + dThingRange);
-                    rc.bottom = PtToScan(yOff - lpth->pt.y + dThingRange);
+                    rc.left = PtToScan(xOff + lpth->pt().x() - dThingRange);
+                    rc.top = PtToScan(yOff - lpth->pt().y() - dThingRange);
+                    rc.right = PtToScan(xOff + lpth->pt().x() + dThingRange);
+                    rc.bottom = PtToScan(yOff - lpth->pt().y() + dThingRange);
                     DrawRadarCircle(&dc, &rc);
                 }
             }
@@ -762,19 +762,19 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         lpth = lpThings;
                         lpthMac = lpThings + cThing;
                         for (; lpth < lpthMac; lpth++) {
-                            if (lpth->ith == ithMinefield && lpth->thm.iType == i && (j != 0 || lpth->iplr == idPlayer) &&
-                                (j < 1 || (lpth->iplr != idPlayer && (rgplr[idPlayer].rgmdRelation[lpth->iplr] == 1) != (j == 2)))) {
+                            if (lpth->ith() == ithMinefield && lpth->thm().iType() == i && (j != 0 || lpth->iplr() == idPlayer) &&
+                                (j < 1 || (lpth->iplr() != idPlayer && (rgplr[idPlayer].rgmdRelation[lpth->iplr()] == 1) != (j == 2)))) {
                                 if (j == 2 && (grbitScanMines & 0xc) != 0xc) {
-                                    if (rgplr[idPlayer].rgmdRelation[lpth->iplr] == 0) {
+                                    if (rgplr[idPlayer].rgmdRelation[lpth->iplr()] == 0) {
                                         if (!(grbitScanMines & 4))
                                             continue;
                                     } else if (!(grbitScanMines & 8)) {
                                         continue;
                                     }
                                 }
-                                if (lpth->thm.fDetonate == fDetonating) {
-                                    pt = lpth->pt;
-                                    dRange = LOWORD((int32_t)sqrt((double)lpth->thm.cMines));
+                                if (lpth->thm().fDetonate() == fDetonating) {
+                                    pt = lpth->pt();
+                                    dRange = LOWORD((int32_t)sqrt((double)lpth->thm().cMines()));
                                     rc.left = PtToScan(xOff + pt.x - dRange);
                                     rc.top = PtToScan(yOff - pt.y - dRange);
                                     rc.right = PtToScan(xOff + pt.x + dRange);
@@ -806,12 +806,12 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         }
         if (sel.scan.grobj == grobjThing) {
             lpth = lpThings + sel.scan.ith;
-            if (lpth->ith == ithMinefield) {
+            if (lpth->ith() == ithMinefield) {
                 SetBrushOrgEx(hdc, ptOrigin.x, ptOrigin.y, NULL);
-                SelectObject(hdc, rghbrPat[lpth->thm.iType]);
+                SelectObject(hdc, rghbrPat[lpth->thm().iType()]);
                 SetTextColor(hdc, 16776960);
-                pt = lpth->pt;
-                dRange = LOWORD((int32_t)sqrt((double)lpth->thm.cMines));
+                pt = lpth->pt();
+                dRange = LOWORD((int32_t)sqrt((double)lpth->thm().cMines()));
                 rc.left = PtToScan(xOff + pt.x - dRange);
                 rc.top = PtToScan(yOff - pt.y - dRange);
                 rc.right = PtToScan(xOff + pt.x + dRange);
@@ -831,30 +831,30 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            switch (lpth->ith) {
+            switch (lpth->ith()) {
             case ithMineralPacket:
             case ithWormhole:
             case ithMysteryTrader:
-                pt = lpth->pt;
+                pt = lpth->pt();
                 LogicalToScan(&pt);
-                if (lpth->ith == ithWormhole && lpth->idFull < lpth->thw.idPartner && (1 << idPlayer & lpth->thw.grbitPlrTrav)) {
-                    lpthDest = LpthFromId(lpth->thw.idPartner);
+                if (lpth->ith() == ithWormhole && lpth->idFull() < lpth->thw().idPartner() && (1 << idPlayer & lpth->thw().grbitPlrTrav())) {
+                    lpthDest = LpthFromId(lpth->thw().idPartner());
                     if (lpthDest) {
                         MoveToEx(hdc, pt.x, pt.y, NULL);
-                        pt2 = lpthDest->pt;
+                        pt2 = lpthDest->pt();
                         LogicalToScan(&pt2);
                         LineTo(hdc, pt2.x, pt2.y);
                         LineTo(hdc, pt2.x, pt2.y + 1);
                     }
                 }
-                if (lpth->ith == ithWormhole) {
+                if (lpth->ith() == ithWormhole) {
                     BitBlt(hdc, pt.x - 4, pt.y - 4, 9, 9, hdcMem, 9, 92, SRCAND);
                     BitBlt(hdc, pt.x - 4, pt.y - 4, 9, 9, hdcMem, 0, 92, SRCPAINT);
-                } else if (lpth->ith == ithMysteryTrader) {
+                } else if (lpth->ith() == ithMysteryTrader) {
                     hbmpTrSav = (HBITMAP)SelectObject(hdcMem, hbmpScanShip);
                     crFore = SetTextColor(hdc, 16776960);
                     crBack = SetBkColor(hdc, 0);
-                    GetDxDyOrientation(lpth->tht.ptDest.x - lpth->pt.x, lpth->tht.ptDest.y - lpth->pt.y, &ptO, &ptD);
+                    GetDxDyOrientation(lpth->tht().ptDest().x() - lpth->pt().x(), lpth->tht().ptDest().y() - lpth->pt().y(), &ptO, &ptD);
                     BitBlt(hdc, pt.x - ptD.x / 2, pt.y - ptD.y / 2, ptD.x, ptD.y, hdcMem, ptO.x, ptO.y, SRCPAINT);
                     SetTextColor(hdc, crFore);
                     SetBkColor(hdc, crBack);
@@ -862,7 +862,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                 } else {
                     dRange = iScanZoom <= zoom100 ? 2 : iScanZoom > zoom150 ? 5 : 3;
                     dx = dRange * 2 + 1;
-                    if (lpth->thp.iWarp == 0) {
+                    if (lpth->thp().iWarp() == 0) {
                         SelectObject(hdc, hpenYellow);
                         MoveToEx(hdc, pt.x, pt.y - dRange - 1, NULL);
                         LineTo(hdc, pt.x - dRange - 1, pt.y);
@@ -871,14 +871,14 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                         LineTo(hdc, pt.x, pt.y - dRange - 1);
                         SelectObject(hdc, hpenDkPurple);
                     } else {
-                        if (lpth->iplr != idPlayer) {
+                        if (lpth->iplr() != idPlayer) {
                             SelectObject(hdc, hbrRed);
                         }
                         PatBlt(hdc, pt.x - dRange, pt.y - dRange, dx, 1, PATCOPY);
                         PatBlt(hdc, pt.x - dRange, pt.y - dRange, 1, dx, PATCOPY);
                         PatBlt(hdc, pt.x - dRange, pt.y + dRange, dx, 1, PATCOPY);
                         PatBlt(hdc, pt.x + dRange, pt.y - dRange, 1, dx, PATCOPY);
-                        if (lpth->iplr != idPlayer) {
+                        if (lpth->iplr() != idPlayer) {
                             SelectObject(hdc, hbrShip);
                         }
                     }
@@ -898,7 +898,7 @@ int16_t DrawScanner(HDC hdc, RECT *prc) {
                 break;
             if (!lpfl->fDead && lpfl->det >= detAll && lpfl->cord > 1 && (CShipsScanVis(lpfl) > 0 || lpfl->id == id || lpfl->id == id2)) {
                 for (iord = 0; iord < lpfl->cord; iord++) {
-                    pt = lpfl->lpplord->rgord[iord].pt;
+                    pt = lpfl->lpplord->rgord()[iord].pt;
                     pt.x = PtToScan(xOff + pt.x);
                     pt.y = PtToScan(yOff - pt.y);
                     if (iord == 0) {
@@ -1376,11 +1376,11 @@ int32_t CShipsScanVis(FLEET *lpfl) {
     csh = 0;
     if (grbitScan & grbitScanIdleFleets) {
         if (lpfl->iPlayer == idPlayer &&
-            (lpfl->cord != 1 || lpfl->lpplord->rgord[0].grTask == grTaskLayMines || lpfl->lpplord->rgord[0].grTask == grTaskScrap ||
-             lpfl->lpplord->rgord[0].grTask == grTaskMine || lpfl->lpplord->rgord[0].grTask == grTaskPatrol)) {
+            (lpfl->cord != 1 || lpfl->lpplord->rgord()[0].grTask == grTaskLayMines || lpfl->lpplord->rgord()[0].grTask == grTaskScrap ||
+             lpfl->lpplord->rgord()[0].grTask == grTaskMine || lpfl->lpplord->rgord()[0].grTask == grTaskPatrol)) {
             return 0;
         }
-        if (lpfl->iPlayer != idPlayer && lpfl->iwarpFlt == 0) {
+        if (lpfl->iPlayer != idPlayer && lpfl->iwarpFlt() == 0) {
             return 0;
         }
     }
@@ -1574,7 +1574,7 @@ void SetScanPathWarp(int16_t iwp, int16_t iWarp) {
     if (fVis) {
         DrawShipScanPath(NULL, FALSE);
     }
-    sel.fl.lpplord->rgord[iwp].iWarp = iWarp;
+    sel.fl.lpplord->rgord()[iwp].iWarp = iWarp;
     if (fVis) {
         DrawShipScanPath(NULL, TRUE);
     }
@@ -1620,17 +1620,17 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
         }
         if (sel.scan.grobj == grobjThing && sel.scan.ith != ithNone) {
             lpth = lpThings + sel.scan.ith;
-            ptCur = lpth->pt;
-            if (lpth->ith == ithMysteryTrader) {
-                dx = lpth->tht.ptDest.x - ptCur.x;
-                dy = lpth->tht.ptDest.y - ptCur.y;
-                lWarp2 = lpth->tht.iWarp;
+            ptCur = lpth->pt();
+            if (lpth->ith() == ithMysteryTrader) {
+                dx = lpth->tht().ptDest().x() - ptCur.x;
+                dy = lpth->tht().ptDest().y() - ptCur.y;
+                lWarp2 = lpth->tht().iWarp();
             } else {
-                if (lpth->ith != ithMineralPacket || lpth->thp.iWarp == 0)
+                if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() == 0)
                     goto LNextCheck;
-                dx = rgptPlan[lpth->thp.idPlanet].x - ptCur.x;
-                dy = rgptPlan[lpth->thp.idPlanet].y - ptCur.y;
-                lWarp2 = (uint32_t)(lpth->thp.iWarp + 4);
+                dx = rgptPlan[lpth->thp().idPlanet()].x - ptCur.x;
+                dy = rgptPlan[lpth->thp().idPlanet()].y - ptCur.y;
+                lWarp2 = (uint32_t)(lpth->thp().iWarp() + 4);
             }
             if (dx != 0 || dy != 0) {
                 lWarp2 = (uint32_t)(lWarp2 * (uint32_t)(lWarp2 * 5));
@@ -1643,13 +1643,13 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             goto LNoObjPath;
         lpfl = rglpfl[sel.scan.ifl];
         ptCur = lpfl->pt;
-        if (!lpfl->fdirValid || lpfl->iwarpFlt <= 0)
+        if (!lpfl->fdirValid() || lpfl->iwarpFlt() <= 0)
             goto LNoObjPath;
-        dx = lpfl->dirFltX - 127;
-        dy = lpfl->dirFltY - 127;
+        dx = lpfl->dirFltX() - 127;
+        dy = lpfl->dirFltY() - 127;
         if (dx == 0 && dy == 0)
             goto LNoObjPath;
-        lWarp2 = (uint32_t)(lpfl->iwarpFlt * lpfl->iwarpFlt * 5);
+        lWarp2 = (uint32_t)(lpfl->iwarpFlt() * lpfl->iwarpFlt() * 5);
     LCommonLineCode:
         GetClientRect(hwndScanner, &rc);
         ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
@@ -1742,7 +1742,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
         }
         if (sel.grobj == grobjFleet && sel.fl.cord > 1) {
             memset(rgDup, 0, sel.fl.cord * 2);
-            lpord1 = sel.fl.lpplord->rgord;
+            lpord1 = sel.fl.lpplord->rgord();
             pt = lpord1->pt;
             i = 1;
             while (i < sel.fl.cord) {
@@ -1771,11 +1771,11 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             ExcludeClipRect(hdc, rc.left, rc.bottom - dySBar, rc.right, rc.bottom);
             if (fShow && (grbitScan & grbitScanFleetPaths)) {
                 hpenSav = (HPEN)SelectObject(hdc, hpenStarbase);
-                pt = sel.fl.lpplord->rgord[0].pt;
+                pt = sel.fl.lpplord->rgord()[0].pt;
                 LogicalToScan(&pt);
                 MoveToEx(hdc, pt.x, pt.y, NULL);
                 for (i = 1; i < sel.fl.cord; i++) {
-                    pt2 = sel.fl.lpplord->rgord[i].pt;
+                    pt2 = sel.fl.lpplord->rgord()[i].pt;
                     LogicalToScan(&pt2);
                     LineTo(hdc, pt2.x, pt2.y);
                     pt = pt2;
@@ -1784,13 +1784,13 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
             }
             hpenSav = (HPEN)SelectObject(hdc, hpenShip);
             iRopSav = SetROP2(hdc, R2_XORPEN);
-            pt = sel.fl.lpplord->rgord[0].pt;
+            pt = sel.fl.lpplord->rgord()[0].pt;
             dRad = pt.x == sel.pt.x && pt.y == sel.pt.y ? 5 : 5;
             LogicalToScan(&pt);
             ExcludeClipRect(hdc, pt.x - dRad, pt.y - dRad, pt.x + dRad + 1, pt.y + dRad + 1);
             MoveToEx(hdc, pt.x, pt.y, NULL);
             for (i = 1; i < sel.fl.cord; i++) {
-                pt2 = sel.fl.lpplord->rgord[i].pt;
+                pt2 = sel.fl.lpplord->rgord()[i].pt;
                 dRad = pt2.x == sel.pt.x && pt2.y == sel.pt.y ? 5 : 5;
                 LogicalToScan(&pt2);
                 ExcludeClipRect(hdc, pt2.x - dRad, pt2.y - dRad, pt2.x + dRad + 1, pt2.y + dRad + 1);
@@ -1804,7 +1804,7 @@ void DrawShipScanPath(HDC hdc, int16_t fShow) {
                     if (rgDup[i] == 1) {
                         SelectObject(hdc, hpenShip);
                     }
-                    DrawPathYearTicks(hdc, sel.fl.lpplord->rgord[i - 1].pt, sel.fl.lpplord->rgord[i].pt, sel.fl.lpplord->rgord[i].iWarp);
+                    DrawPathYearTicks(hdc, sel.fl.lpplord->rgord()[i - 1].pt, sel.fl.lpplord->rgord()[i].pt, sel.fl.lpplord->rgord()[i].iWarp);
                 }
                 pt = pt2;
             }
@@ -1945,7 +1945,7 @@ void DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw) {
         } else if (grReal & 2) {
             PszGetFleetName(!psbar ? rglpfl[sel.scan.ifl]->id : psbar->id);
         } else if (grReal & 8) {
-            PszGetThingName(!psbar ? lpThings[sel.scan.ith].idFull : psbar->id);
+            PszGetThingName(!psbar ? lpThings[sel.scan.ith].idFull() : psbar->id);
         } else if (grReal == 0 && grobj == grobjOther) {
             CchGetString(idsDeepSpaceWaypoint, szWork);
         } else {
@@ -2322,7 +2322,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
         rgpt[1] = pscan->pt;
         if (sel.iwpAct < sel.fl.cord - 1) {
             cpt = 3;
-            rgpt[2] = sel.fl.lpplord->rgord[sel.iwpAct + 1].pt;
+            rgpt[2] = sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt;
         } else {
             cpt = 2;
         }
@@ -2338,7 +2338,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
         pscan->iwp = sel.iwpAct + 1;
         pscan->pt = ptIn;
     }
-    lpord = &sel.fl.lpplord->rgord[sel.iwpAct];
+    lpord = &sel.fl.lpplord->rgord()[sel.iwpAct];
     if (pscan->pt.x == lpord->pt.x && pscan->pt.y == lpord->pt.y) {
         return FALSE;
     }
@@ -2348,8 +2348,8 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     hdc = GetDC(hwndScanner);
     DrawShipScanPath(hdc, FALSE);
     if (sel.fl.lpplord->iordMax == sel.fl.cord) {
-        sel.fl.lpplord = (PLORD *)LpplReAlloc((PL *)sel.fl.lpplord, sel.fl.cord + 3);
-        lpord = &sel.fl.lpplord->rgord[sel.iwpAct + 1];
+        sel.fl.lpplord = LpplReAlloc(sel.fl.lpplord, sel.fl.cord + 3);
+        lpord = &sel.fl.lpplord->rgord()[sel.iwpAct + 1];
     } else {
         lpord++;
     }
@@ -2371,7 +2371,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
         id = rglpfl[pscan->ifl]->id;
         break;
     case grobjThing:
-        id = lpThings[pscan->ith].idFull;
+        id = lpThings[pscan->ith].idFull();
     }
     lpord->id = id;
     lpord->grobj = pscan->grobj;
@@ -2383,7 +2383,7 @@ int16_t FAddWayPoint(POINT16 ptIn, SCAN *pscan) {
     pscan->iwp = sel.iwpAct + 1;
     RedrawScanSel(NULL, 0);
     FLookupFleet(idWriteBack, &sel.fl);
-    if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell.iPlrX == 5) {
+    if (lpord[-1].grTask == grTaskLayMines && lpord[-1].tsell().iPlrX == 5) {
         memset((uint8_t *)lpord - 10, 0, 10);
         lpord[-1].grTask = grTaskNone;
         FLookupFleet(idWriteBack, &sel.fl);
@@ -2416,7 +2416,7 @@ int16_t FNearAWayPoint(POINT16 pt, int16_t fLogical) {
     }
     if (scan.grobjFull & grobjOther) {
         if (scan.pt.x == sel.pt.x && scan.pt.y == sel.pt.y) {
-            lpord = &sel.fl.lpplord->rgord[1];
+            lpord = &sel.fl.lpplord->rgord()[1];
             i = 1;
             for (; i < sel.fl.cord && (lpord->pt.x != scan.pt.x || lpord->pt.y != scan.pt.y); lpord++) {
                 i++;
@@ -2458,23 +2458,23 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
     fMarker = FALSE;
     LogicalToScan(&pt);
     if (sel.iwpAct == 0) {
-        lpord = &sel.fl.lpplord->rgord[1];
+        lpord = &sel.fl.lpplord->rgord()[1];
         i = 1;
         for (; i < sel.fl.cord && (sel.fl.pt.x != lpord->pt.x || sel.fl.pt.y != lpord->pt.y); lpord++) {
             i++;
         }
         SetScanWp(i);
     }
-    rgpt[2] = sel.fl.lpplord->rgord[sel.iwpAct - 1].pt;
+    rgpt[2] = sel.fl.lpplord->rgord()[sel.iwpAct - 1].pt;
     ptPrev = rgpt[2];
     if (sel.iwpAct == sel.fl.cord - 1) {
         cpt = 3;
     } else {
         cpt = 4;
-        rgpt[3] = sel.fl.lpplord->rgord[sel.iwpAct + 1].pt;
+        rgpt[3] = sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt;
         ptNext = rgpt[3];
     }
-    rgpt[0] = sel.fl.lpplord->rgord[sel.iwpAct].pt;
+    rgpt[0] = sel.fl.lpplord->rgord()[sel.iwpAct].pt;
     rgpt[1] = rgpt[0];
     for (i = 0; i < cpt; i++) {
         LogicalToScan(&rgpt[i]);
@@ -2513,7 +2513,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
                     sbar.id = rglpfl[scan.ifl]->id;
                     break;
                 case grobjThing:
-                    sbar.id = lpThings[scan.ith].idFull;
+                    sbar.id = lpThings[scan.ith].idFull();
                     break;
                 default:
                     sbar.id = scan.iwp;
@@ -2540,7 +2540,7 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
         }
         fDup = scan.pt.x == ptPrev.x && scan.pt.y == ptPrev.y;
         if (!fDup && sel.iwpAct < sel.fl.cord - 1) {
-            fDup = (scan.pt.x == sel.fl.lpplord->rgord[sel.iwpAct + 1].pt.x && scan.pt.y == sel.fl.lpplord->rgord[sel.iwpAct + 1].pt.y) * 2;
+            fDup = (scan.pt.x == sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt.x && scan.pt.y == sel.fl.lpplord->rgord()[sel.iwpAct + 1].pt.y) * 2;
         }
         GetClientRect(hwndScanner, &rc);
         if (fDup) {
@@ -2605,12 +2605,12 @@ int16_t FHandleWayPointDrag(POINT16 pt) {
             i = rglpfl[scan.ifl]->id;
             break;
         case grobjThing:
-            i = lpThings[scan.ith].idFull;
+            i = lpThings[scan.ith].idFull();
             break;
         default:
             i = scan.iwp;
         }
-        lpord = &sel.fl.lpplord->rgord[sel.iwpAct];
+        lpord = &sel.fl.lpplord->rgord()[sel.iwpAct];
         lpord->grobj = scan.grobj;
         lpord->id = i;
         lpord->pt = scan.pt;
@@ -2674,7 +2674,7 @@ int16_t SetScanWp(int16_t iNew) {
     if (iNew == sel.iwpAct) {
         return iNew;
     }
-    FFindNearestObject(sel.fl.lpplord->rgord[iNew].pt, grobjOther, &scan);
+    FFindNearestObject(sel.fl.lpplord->rgord()[iNew].pt, grobjOther, &scan);
     scan.iwp = iNew;
     ChangeScanSel(&scan, 1);
     return iNew;
@@ -2854,18 +2854,18 @@ void GetScanFleetOrientation(FLEET *lpfl, POINT16 *ppt, POINT16 *pptD) {
     int16_t dx;
 
     if (lpfl->iPlayer == idPlayer) {
-        if (lpfl->cord <= 1 || lpfl->lpplord->rgord[1].iWarp == 0) {
+        if (lpfl->cord <= 1 || lpfl->lpplord->rgord()[1].iWarp == 0) {
         NoInfo:
             dx = dy = 0;
         } else {
-            dx = lpfl->lpplord->rgord[1].pt.x - lpfl->pt.x;
-            dy = lpfl->lpplord->rgord[1].pt.y - lpfl->pt.y;
+            dx = lpfl->lpplord->rgord()[1].pt.x - lpfl->pt.x;
+            dy = lpfl->lpplord->rgord()[1].pt.y - lpfl->pt.y;
         }
     } else {
-        if (!lpfl->fdirValid || lpfl->iwarpFlt == 0)
+        if (!lpfl->fdirValid() || lpfl->iwarpFlt() == 0)
             goto NoInfo;
-        dx = lpfl->dirFltX - 127;
-        dy = lpfl->dirFltY - 127;
+        dx = lpfl->dirFltX() - 127;
+        dy = lpfl->dirFltY() - 127;
     }
     GetDxDyOrientation(dx, dy, ppt, pptD);
     return;
@@ -2954,7 +2954,7 @@ int16_t FHandleMeasuringTape(SCAN *pscan, POINT16 pt) {
                 } else if (scan.grobj == grobjFleet) {
                     sbar.id = rglpfl[scan.ifl]->id;
                 } else if (scan.grobj == grobjThing) {
-                    sbar.id = lpThings[scan.ith].idFull;
+                    sbar.id = lpThings[scan.ith].idFull();
                 } else {
                     sbar.id = scan.iwp;
                 }
@@ -2999,11 +2999,11 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
     POINT16 ptTL; /* NATIVE: RECT corners are 32-bit; LogicalToScan takes POINT16 */
     POINT16 ptBR;
 
-    fMineFieldSel = pscanOld->grobj == grobjThing && lpThings[pscanOld->ith].ith == ithMinefield;
+    fMineFieldSel = pscanOld->grobj == grobjThing && lpThings[pscanOld->ith].ith() == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[pscanOld->ith].thm.cMines) + 1.0));
-        rcMine.left = lpThings[pscanOld->ith].pt.x;
-        rcMine.top = lpThings[pscanOld->ith].pt.y;
+        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[pscanOld->ith].thm().cMines()) + 1.0));
+        rcMine.left = lpThings[pscanOld->ith].pt().x();
+        rcMine.top = lpThings[pscanOld->ith].pt().y();
         rcMine.right = rcMine.left + iRad;
         rcMine.bottom = rcMine.top - iRad;
         rcMine.left -= iRad;
@@ -3039,11 +3039,11 @@ void ShowScanSelChange(SCAN *pscanOld, SCAN *pscan, int16_t fChgWp) {
         DrawScanner(hdc, &rcMine);
         ReleaseDC(hwndScanner, hdc);
     }
-    fMineFieldSel = sel.scan.grobj == grobjThing && lpThings[sel.scan.ith].ith == ithMinefield;
+    fMineFieldSel = sel.scan.grobj == grobjThing && lpThings[sel.scan.ith].ith() == ithMinefield;
     if (fMineFieldSel) {
-        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[sel.scan.ith].thm.cMines) + 1.0));
-        rcMine.left = lpThings[sel.scan.ith].pt.x;
-        rcMine.top = lpThings[sel.scan.ith].pt.y;
+        iRad = LOWORD((int32_t)((double)sqrt((double)lpThings[sel.scan.ith].thm().cMines()) + 1.0));
+        rcMine.left = lpThings[sel.scan.ith].pt().x();
+        rcMine.top = lpThings[sel.scan.ith].pt().y();
         rcMine.right = rcMine.left + iRad;
         rcMine.bottom = rcMine.top - iRad;
         rcMine.left -= iRad;
@@ -3084,3 +3084,5 @@ void ShowSelAt(POINT16 pt) {
     SetMineralTitleBar(hwndMine);
     return;
 }
+
+void ResetScannerInputSession() noexcept { dWheelZoom = dWheelScroll = fPanDown = fPanning = 0; ptPan = POINT16{}; xPanTop = yPanTop = 0; }

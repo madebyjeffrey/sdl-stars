@@ -130,7 +130,7 @@ static SDL_WindowID IdWindowWithTitle(const char *pszTitle) {
 }
 
 static int PushDelayedKey(void *lpId) {
-    SDL_Event event = {0};
+    SDL_Event event = {};
 
     SDL_zero(event);
     SDL_Delay(20);
@@ -144,10 +144,10 @@ static int PushDelayedKey(void *lpId) {
 static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hInstance) {
     MSG msg, stale;
     RECT rc;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     SDL_WindowID rgid[2];
     SDL_Thread *hThread;
-    WINDOWTEST winFailure = {0};
+    WINDOWTEST winFailure = {};
     HWND hwndDefault;
     LONG_PTR lProc, lOriginal;
     WNDPROC lpfn = SubclassProc;
@@ -332,8 +332,8 @@ static int TestWindows(HWND *rghwnd, WINDOWTEST *rgwin, ATOM atom, HINSTANCE hIn
 }
 
 int main(int argc, char **argv) {
-    WNDCLASS wc = {0};
-    WINDOWTEST rgwin[2] = {{0}, {0}};
+    WNDCLASS wc = {};
+    WINDOWTEST rgwin[2] = {};
     HWND rghwnd[2];
     ATOM atom;
     HINSTANCE hInstance = (HINSTANCE)(UINT_PTR)0x1234;

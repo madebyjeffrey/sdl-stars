@@ -23,17 +23,17 @@ int16_t FDupPlanet(PLANET *lppl, PLANET *ppl) {
     ppl->lpplprod = lpplprodT;
     if (!lppl->lpplprod) {
         if (ppl->lpplprod) {
-            FreePl((PL *)ppl->lpplprod);
+            FreePl(ppl->lpplprod);
             ppl->lpplprod = NULL;
         }
         return TRUE;
     }
     if (!ppl->lpplprod) {
-        ppl->lpplprod = (PLPROD *)LpplAlloc(4, lppl->lpplprod->iprodMax, htOrd);
+        ppl->lpplprod = LpplAlloc<PLPROD>(4, lppl->lpplprod->iprodMax, htOrd);
     } else if ((int16_t)ppl->lpplprod->iprodMax < lppl->lpplprod->iprodMac) {
-        ppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)ppl->lpplprod, lppl->lpplprod->iprodMax);
+        ppl->lpplprod = LpplReAlloc(ppl->lpplprod, lppl->lpplprod->iprodMax);
     }
-    memcpy(ppl->lpplprod->rgprod, lppl->lpplprod->rgprod, lppl->lpplprod->iprodMac * 4);
+    memcpy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
     ppl->lpplprod->iprodMac = lppl->lpplprod->iprodMac;
     return TRUE;
 }
@@ -45,7 +45,7 @@ THING *LpthFromId(int16_t idth) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->idFull == idth) {
+        if (lpth->idFull() == idth) {
             return lpth;
         }
     }
@@ -103,9 +103,9 @@ void CalcPctSurvive(PLANET *lppl, float *ppct, float *ppctSmart) {
             if (cMax < cDefenses) {
                 cDefenses = cMax;
             }
-            pct = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 1000.0), (double)cDefenses);
+            pct = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 1000.0), (double)cDefenses);
             if (ppctSmart) {
-                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary->grAbility / 2000.0), (double)cDefenses);
+                *ppctSmart = (float)pow((double)(1.0 - (double)part.pplanetary()->grAbility / 2000.0), (double)cDefenses);
             }
         } else {
             pct = (float)1.0;
@@ -142,17 +142,17 @@ int16_t FLookupPlanet(int16_t iPlanet, PLANET *ppl) {
             if (lpPl->lpplprod != ppl->lpplprod) {
                 if (!lpPl->lpplprod) {
                     if (ppl->lpplprod) {
-                        lpPl->lpplprod = (PLPROD *)LpplAlloc(4, ppl->lpplprod->iprodMac, htOrd);
+                        lpPl->lpplprod = LpplAlloc<PLPROD>(4, ppl->lpplprod->iprodMac, htOrd);
                     }
                 } else if (!ppl->lpplprod) {
-                    FreePl((PL *)lpPl->lpplprod);
+                    FreePl(lpPl->lpplprod);
                     lpPl->lpplprod = NULL;
                     goto FinishCopy;
                 }
                 if ((int16_t)lpPl->lpplprod->iprodMax < ppl->lpplprod->iprodMac) {
-                    lpPl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
+                    lpPl->lpplprod = LpplReAlloc(lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
                 }
-                memcpy(lpPl->lpplprod->rgprod, ppl->lpplprod->rgprod, ppl->lpplprod->iprodMac * 4);
+                memcpy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
                 lpPl->lpplprod->iprodMac = ppl->lpplprod->iprodMac;
             }
         FinishCopy:
@@ -177,7 +177,7 @@ int32_t DpOfLpflIshdef(FLEET *lpfl, int16_t ishdef) {
     int32_t dp;
 
     dpShdef = rglpshdef[lpfl->iPlayer][ishdef].hul.dp;
-    dp = (int32_t)(lpfl->rgcsh[ishdef] * (int16_t)((int16_t)(lpfl->rgdv[ishdef].pctSh * dpShdef) / 10 * lpfl->rgdv[ishdef].pctDp)) / 5000;
+    dp = (int32_t)(lpfl->rgcsh[ishdef] * (int16_t)((int16_t)(lpfl->rgdv[ishdef].pctSh() * dpShdef) / 10 * lpfl->rgdv[ishdef].pctDp())) / 5000;
     return dp;
 }
 
@@ -190,7 +190,7 @@ int16_t FLookupThing(int16_t idth, THING *pth) {
         return FALSE;
     }
     if (idth < 0) {
-        idth = pth->idFull;
+        idth = pth->idFull();
         fWrite = TRUE;
     }
     lpth = LpthFromId(idth);
@@ -235,22 +235,22 @@ int32_t LComputePower(SHDEF *lpshdef) {
             default:
                 break;
             case hstBeam:
-                dp = (int32_t)((uint32_t)(part.pbeam->dp * part.hs.cItem) * (int16_t)(part.pbeam->dRangeMax + 3)) / 4;
-                if (part.pbeam->grfAbilities & beamSapper) {
+                dp = (int32_t)((uint32_t)(part.pbeam()->dp * part.hs.cItem) * (int16_t)(part.pbeam()->dRangeMax + 3)) / 4;
+                if (part.pbeam()->grfAbilities & beamSapper) {
                     dp = (int32_t)(dp / 3);
                 }
                 dpBeams += dp;
                 break;
             case hstTorp:
-                dpTorps += (int32_t)((uint32_t)(part.ptorp->dp * part.hs.cItem) * (int16_t)(part.ptorp->dRangeMax - 2)) / 2;
+                dpTorps += (int32_t)((uint32_t)(part.ptorp()->dp * part.hs.cItem) * (int16_t)(part.ptorp()->dRangeMax - 2)) / 2;
                 break;
             case hstBomb:
-                dpBombs += (uint32_t)((part.pbomb->dDmgCol + part.pbomb->dDmgBldg) * part.hs.cItem * 2);
+                dpBombs += (uint32_t)((part.pbomb()->dDmgCol + part.pbomb()->dDmgBldg) * part.hs.cItem * 2);
                 break;
             case hstSpecialE:
                 if (part.hs.iItem == ispecialEEnergyCapacitor || part.hs.iItem == ispecialEFluxCapacitor) {
                     for (i = part.hs.cItem; i > 0; i--) {
-                        pctCap = (int32_t)(pctCap * (part.pspecial->grAbility + 100)) / 100;
+                        pctCap = (int32_t)(pctCap * (part.pspecial()->grAbility + 100)) / 100;
                     }
                 }
             }
@@ -301,7 +301,7 @@ int32_t DpShieldOfShdef(SHDEF *lpshdef, int16_t iplr) {
         if (lphs->grhst == hstShield && lphs->cItem > 0) {
             part.hs = *lphs;
             FLookupPart(&part);
-            dpShdef += (uint32_t)(part.pshield->dp * lphs->cItem);
+            dpShdef += (uint32_t)(part.pshield()->dp * lphs->cItem);
         } else if (lphs->grhst == hstArmor && lphs->cItem > 0 && lphs->iItem == iarmorFieldedKelarium) {
             dpShdef += (uint32_t)(lphs->cItem * 50);
         } else if (lphs->grhst == hstArmor && lphs->iItem == iarmorMegaPolyShell) {
@@ -433,15 +433,15 @@ int16_t FCalcFleetBombDamage(FLEET *lpfl, int32_t *pdmgPeople, int32_t *pdmgPeop
                         if (part.hs.iItem == ibombRetroBomb) {
                             *ppctTerra += (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
                         } else if (part.hs.cItem > 0) {
-                            if (part.pbomb->dDmgBldg == 0) {
+                            if (part.pbomb()->dDmgBldg == 0) {
                                 cIter = (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
-                                dmgT = (double)(1.0 - (double)part.pbomb->dDmgCol / 1000.0);
+                                dmgT = (double)(1.0 - (double)part.pbomb()->dDmgCol / 1000.0);
                                 while (cIter-- > 0) {
                                     dmgSmart = (double)((double)dmgSmart * dmgT);
                                 }
                             } else {
-                                *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb->dDmgCol);
-                                *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb->dDmgBldg);
+                                *pdmgPeople += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgCol);
+                                *pdmgBldg += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * part.pbomb()->dDmgBldg);
                                 if (part.hs.iItem >= ibombLadyFingerBomb && part.hs.iItem <= ibombCherryBomb) {
                                     dmgFloor = 3;
                                     *pdmgPeopleMin += (uint32_t)((uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]) * dmgFloor);
@@ -635,9 +635,9 @@ int16_t FLookupFleet(int16_t idFleet, FLEET *pfl) {
             LogChangeFleet(lpfl, pfl);
             if (lpfl->lpplord != pfl->lpplord) {
                 if (lpfl->lpplord->iordMax < pfl->cord) {
-                    lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, pfl->cord + 3);
+                    lpfl->lpplord = LpplReAlloc(lpfl->lpplord, pfl->cord + 3);
                 }
-                memcpy(lpfl->lpplord->rgord, pfl->lpplord->rgord, pfl->lpplord->iordMac * 18);
+                memcpy(lpfl->lpplord->rgord(), pfl->lpplord->rgord(), pfl->lpplord->iordMac * 18);
                 lpfl->lpplord->iordMac = pfl->lpplord->iordMac;
             }
             memcpy(lpfl, pfl, 100);
@@ -663,17 +663,17 @@ int16_t FDupFleet(FLEET *lpfl, FLEET *pfl) {
     *pfl = *lpfl;
     if (!lpfl->lpplord) {
         if (lpplordT) {
-            FreePl((PL *)lpplordT);
+            FreePl(lpplordT);
         }
         return TRUE;
     }
     pfl->lpplord = lpplordT;
     if (!pfl->lpplord) {
-        pfl->lpplord = (PLORD *)LpplAlloc(18, lpfl->lpplord->iordMax, htOrd);
+        pfl->lpplord = LpplAlloc<PLORD>(18, lpfl->lpplord->iordMax, htOrd);
     } else if ((int16_t)pfl->lpplord->iordMax < lpfl->lpplord->iordMac) {
-        pfl->lpplord = (PLORD *)LpplReAlloc((PL *)pfl->lpplord, lpfl->lpplord->iordMax);
+        pfl->lpplord = LpplReAlloc(pfl->lpplord, lpfl->lpplord->iordMax);
     }
-    memcpy(pfl->lpplord->rgord, lpfl->lpplord->rgord, lpfl->lpplord->iordMac * 18);
+    memcpy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
     pfl->lpplord->iordMac = lpfl->lpplord->iordMac;
     return TRUE;
 }
@@ -705,7 +705,7 @@ int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t i
             if (lpfl->idPlanet == idPlanet && lpfl->id != idSkip &&
                 ((idSkip == idflNone || (lpfl->pt.x == sel.pt.x && lpfl->pt.y == sel.pt.y)) && iNth-- == 0)) {
                 if (pxf) {
-                    pxf->fl = *lpfl;
+                    pxf->fl() = *lpfl;
                     pxf->grobj = grobjFleet;
                     pxf->id = lpfl->id;
                 }
@@ -716,11 +716,11 @@ int16_t FLookupOrbitingXfer(int16_t idPlanet, int16_t iNth, XFER *pxf, int16_t i
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket && lpth->pt.x == sel.pt.x && lpth->pt.y == sel.pt.y && iNth-- == 0) {
+        if (lpth->ith() == ithMineralPacket && lpth->pt().x() == sel.pt.x && lpth->pt().y() == sel.pt.y && iNth-- == 0) {
             if (pxf) {
-                pxf->th = *lpth;
+                pxf->th() = *lpth;
                 pxf->grobj = grobjThing;
-                pxf->id = lpth->idFull;
+                pxf->id = lpth->idFull();
             }
             return TRUE;
         }
@@ -737,22 +737,22 @@ char *PszGetThingName(int16_t id) {
         szWork[0] = 0;
         return szWork;
     }
-    switch (lpth->ith) {
+    switch (lpth->ith()) {
     case ithMinefield:
-        if (lpth->iplr != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr, FALSE, FALSE, FALSE, 0, NULL));
+        if (lpth->iplr() != idPlayer) {
+            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(szWork, PszGetCompressedString(idsSSMineField), szPlr, rgszMineField[lpth->thm.iType]);
+        CchSprintf(szWork, PszGetCompressedString(idsSSMineField), szPlr, rgszMineField[lpth->thm().iType()]);
         break;
     case ithMineralPacket:
-        if (lpth->thp.iWarp == 0) {
+        if (lpth->thp().iWarp() == 0) {
             CchGetString(idsSalvage, szWork);
             return szWork;
         }
-        if (lpth->iplr != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr, FALSE, FALSE, FALSE, 0, NULL));
+        if (lpth->iplr() != idPlayer) {
+            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
@@ -823,7 +823,7 @@ uint16_t WFromLpfl(FLEET *lpfl) {
     int16_t  ishdef;
 
     ishdef = IshdefPrimaryFromLpfl(lpfl, &cshdef);
-    w = ishdef << 9 | lpfl->ifl;
+    w = ishdef << 9 | lpfl->ifl();
     if (cshdef > 1) {
         w |= 0x2000;
     }
@@ -905,7 +905,7 @@ int16_t FDeleteFleet(int16_t idFleet, GrobjClass grobjSel, int16_t idSel) {
     }
     lpfl->fDead = TRUE;
     FleetOrdersChangeTarget(lpfl);
-    FreePl((PL *)lpfl->lpplord);
+    FreePl(lpfl->lpplord);
     if (lpfl->lpszName) {
         FreeLp(lpfl->lpszName, htString);
     }
@@ -993,22 +993,22 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
         if (!rglpfl[i])
             break;
         if (lpfl->iPlayer >= iPlr) {
-            if (lpfl->iPlayer > iPlr || lpfl->ifl != iflPrev + 1)
+            if (lpfl->iPlayer > iPlr || lpfl->ifl() != iflPrev + 1)
                 break;
-            iflPrev = lpfl->ifl;
+            iflPrev = lpfl->ifl();
         }
     }
-    rglpfl = (FLEET **)LpReAlloc(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
+    rglpfl = LpReAlloc<FLEET *>(rglpfl, (cFleet + 1) * sizeof(FLEET *), htMisc);
     if (cFleet != i) {
         memmove(rglpfl + (i + 1), rglpfl + i, (cFleet - i) * sizeof(FLEET *));
     }
-    rglpfl[i] = lpfl = (FLEET *)LpAlloc(sizeof(FLEET), htFleets);
+    rglpfl[i] = lpfl = LpAlloc<FLEET>(sizeof(FLEET), htFleets);
     cFleet++;
     rgplr[iPlr].cFleet++;
     memset(lpfl, 0, sizeof(FLEET));
-    lpfl->ifl = iflPrev + 1;
+    lpfl->SetIfl(iflPrev + 1);
     lpfl->iPlayer = iPlr;
-    lpfl->iplr = iPlr;
+    lpfl->SetIplr(iPlr);
     lpfl->det = detAll;
     lpfl->idPlanet = idPl;
     if (idPl != idPlanetDeepSpace) {
@@ -1016,10 +1016,10 @@ FLEET *LpflNew(int16_t iPlr, int16_t idPl) {
     }
     lpfl->cord = 1;
     lpfl->fRepOrders = FALSE;
-    lpfl->lpplord = (PLORD *)LpplAlloc(18, 3, htOrd);
+    lpfl->lpplord = LpplAlloc<PLORD>(18, 3, htOrd);
     lpfl->lpplord->iordMac = 1;
-    lpfl->fdirValid = 0;
-    lpord = lpfl->lpplord->rgord;
+    lpfl->SetFdirValid(0);
+    lpord = lpfl->lpplord->rgord();
     lpord->pt = lpfl->pt;
     lpord->id = lpfl->idPlanet;
     lpord->grobj = lpfl->idPlanet == idPlanetDeepSpace ? 4 : 1;
@@ -1046,9 +1046,9 @@ FLEET *LpflNewSplit(FLEET *pfl) {
     lpflNew->iplan = pfl->iplan;
     iordMac = pfl->lpplord->iordMac;
     if (lpflNew->lpplord->iordMax < iordMac) {
-        lpflNew->lpplord = (PLORD *)LpplReAlloc((PL *)lpflNew->lpplord, pfl->lpplord->iordMax);
+        lpflNew->lpplord = LpplReAlloc(lpflNew->lpplord, pfl->lpplord->iordMax);
     }
-    memcpy(lpflNew->lpplord->rgord, pfl->lpplord->rgord, iordMac * 18);
+    memcpy(lpflNew->lpplord->rgord(), pfl->lpplord->rgord(), iordMac * 18);
     lpflNew->lpplord->iordMac = iordMac;
     lpflNew->cord = pfl->cord;
     LogSplitFleet(pfl->id);
@@ -1081,7 +1081,7 @@ int16_t FFleetMergeAll(FLEET *pfl) {
             /* Ship counts are int16_t. The original clamped a count that
                passed 32767 to 32766 and lost the rest; a fleet that doesn't
                fit is left out of the merge. */
-            if (lpfl && lpfl->ifl != pfl->ifl) {
+            if (lpfl && lpfl->ifl() != pfl->ifl()) {
                 for (j = 0; j < 16 && (int32_t)pfl->rgcsh[j] + lpfl->rgcsh[j] <= 32767; j++) {
                 }
                 if (j < 16) {
@@ -1094,15 +1094,15 @@ int16_t FFleetMergeAll(FLEET *pfl) {
                 while (j < 16) {
                     if (lpfl->rgcsh[j] != 0) {
                         if (lpfl->rgdv[j].dp != 0) {
-                            cshT = LOWORD((int32_t)(lpfl->rgcsh[j] * (int16_t)lpfl->rgdv[j].pctSh) / 100);
+                            cshT = LOWORD((int32_t)(lpfl->rgcsh[j] * (int16_t)lpfl->rgdv[j].pctSh()) / 100);
                             if (cshT == 0) {
                                 cshT = 1;
                             }
                             rgcshDamaged[j] += cshT;
-                            dpT = (uint32_t)(lpfl->rgdv[j].pctDp * cshT);
+                            dpT = (uint32_t)(lpfl->rgdv[j].pctDp() * cshT);
                             rgdp[j] += dpT;
                         }
-                        if (lpfl->ifl != pfl->ifl) {
+                        if (lpfl->ifl() != pfl->ifl()) {
                             pfl->rgcsh[j] += lpfl->rgcsh[j];
                             lpfl->rgcsh[j] = 0;
                         }
@@ -1110,7 +1110,7 @@ int16_t FFleetMergeAll(FLEET *pfl) {
                     j++;
                     lpshdef++;
                 }
-                if (lpfl->ifl == pfl->ifl) {
+                if (lpfl->ifl() == pfl->ifl()) {
                     lpflMerge = lpfl;
                 } else {
                     for (j = 0; j < 5; j++) {
@@ -1129,9 +1129,8 @@ int16_t FFleetMergeAll(FLEET *pfl) {
         if (rgcshDamaged[j] == 0 || lpflMerge->rgcsh[j] == 0) {
             lpflMerge->rgdv[j].dp = 0;
         } else {
-            lpflMerge->rgdv[j].pctSh =
-                LOWORD((int32_t)((int32_t)((uint32_t)(rgcshDamaged[j] * 100) + (int16_t)(lpflMerge->rgcsh[j] - 1)) / lpflMerge->rgcsh[j]));
-            lpflMerge->rgdv[j].pctDp = LOWORD((int32_t)(rgdp[j] / rgcshDamaged[j]));
+            lpflMerge->rgdv[j].SetPctSh(LOWORD((int32_t)((int32_t)((uint32_t)(rgcshDamaged[j] * 100) + (int16_t)(lpflMerge->rgcsh[j] - 1)) / lpflMerge->rgcsh[j])));
+            lpflMerge->rgdv[j].SetPctDp(LOWORD((int32_t)(rgdp[j] / rgcshDamaged[j])));
         }
         j++;
         lpshdef++;
@@ -1341,13 +1340,13 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            dx = pt.x - lpth->pt.x;
-            dy = pt.y - lpth->pt.y;
+            dx = pt.x - lpth->pt().x();
+            dy = pt.y - lpth->pt().y();
             lTry = (uint32_t)(dx * dx);
             if ((int32_t)(uint32_t)(dx * dx) <= lSquare) {
                 lTry += (uint32_t)(dy * dy);
                 if (lTry <= lSquare) {
-                    if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet))) || (lpth->pt.x == scan.pt.x && lpth->pt.y == scan.pt.y)) {
+                    if ((lTry == lSquare && !(scan.grobj & (grobjPlanet | grobjFleet))) || (lpth->pt().x() == scan.pt.x && lpth->pt().y() == scan.pt.y)) {
                         if (scan.grobjFull & grobjThing)
                             continue;
                         scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
@@ -1361,7 +1360,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
                         lSquare = lTry;
                     }
                 SelectThing:
-                    scan.pt = lpth->pt;
+                    scan.pt = lpth->pt();
                     scan.ith = (int16_t)((uint8_t *)lpth - (uint8_t *)lpThings) / 18;
                     scan.idpl = idplNone;
                     scan.ifl = iflNone;
@@ -1373,7 +1372,7 @@ int16_t FFindNearestObject(POINT16 pt, GrobjClass grobj, SCAN *pscan) {
     }
     if ((grobj & grobjOther) && sel.grobj == grobjFleet) {
         for (i = sel.fl.cord - 1; i >= 0; i--) {
-            ptWp = sel.fl.lpplord->rgord[i].pt;
+            ptWp = sel.fl.lpplord->rgord()[i].pt;
             dx = pt.x - ptWp.x;
             dy = pt.y - ptWp.y;
             lTry = (uint32_t)(dx * dx);
@@ -1540,7 +1539,7 @@ void UpdateShdefCost(SHDEF *lpshdef) {
     }
     lphul = &LphuldefFromId(lpshdef->hul.ihuldef)->hul;
     part.hs.grhst = hstNone;
-    part.phul = lphul;
+    part.SetPhul(lphul);
     GetTruePartCost(idPlayer, &part, rgCosts);
     for (c = 0; c < 3; c++) {
         rgMin[c] = (uint32_t)rgCosts[c];
@@ -1558,14 +1557,14 @@ void UpdateShdefCost(SHDEF *lpshdef) {
                 rgMin[k] += (uint32_t)(lphul->rghs[c].cItem * rgCosts[k]);
             }
             resCost += (uint32_t)(lphul->rghs[c].cItem * rgCosts[3]);
-            wt += (uint32_t)(lphul->rghs[c].cItem * part.pcom->cMass);
+            wt += (uint32_t)(lphul->rghs[c].cItem * part.pcom().cMass());
             switch (lphul->rghs[c].grhst) {
             default:
                 break;
             case hstArmor:
                 /* 32-bit: the original's int16_t overflowed for large slots
                    (24 Superlatanium), and RS then halved the negative value. */
-                dpT = (int32_t)lphul->rghs[c].cItem * part.parmor->dp;
+                dpT = (int32_t)lphul->rghs[c].cItem * part.parmor()->dp;
                 if (fWeakArmor) {
                     dpT >>= 1;
                 }
@@ -1630,10 +1629,10 @@ int16_t GetPlanetScannerRange(PLANET *lppl, int16_t *pDeep) {
             return 0;
         }
         LookupBestPlanetaryScanner(&part);
-        if (pDeep && part.pplanetary->grAbility < 0) {
-            *pDeep = -part.pplanetary->grAbility >> 1;
+        if (pDeep && part.pplanetary()->grAbility < 0) {
+            *pDeep = -part.pplanetary()->grAbility >> 1;
         }
-        dRange = abs(part.pplanetary->grAbility);
+        dRange = abs(part.pplanetary()->grAbility);
         if (GetRaceGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;
         }
@@ -2124,51 +2123,51 @@ void ValidateWaypoints() {
         lpfl = rglpfl[ifl];
         if (!rglpfl[ifl])
             break;
-        if (lpfl->lpplord->rgord[0].grobj != grobjPlanet && lpfl->lpplord->rgord[0].grTask != grTaskXfer && lpfl->lpplord->rgord[0].grTask != grTaskMerge &&
+        if (lpfl->lpplord->rgord()[0].grobj != grobjPlanet && lpfl->lpplord->rgord()[0].grTask != grTaskXfer && lpfl->lpplord->rgord()[0].grTask != grTaskMerge &&
             !lpfl->fMark) {
             if (lpfl->idPlanet == idPlanetDeepSpace) {
-                lpfl->lpplord->rgord[0].grobj = grobjOther;
-                lpfl->lpplord->rgord[0].id = 0;
+                lpfl->lpplord->rgord()[0].grobj = grobjOther;
+                lpfl->lpplord->rgord()[0].id = 0;
             } else {
-                lpfl->lpplord->rgord[0].grobj = grobjPlanet;
-                lpfl->lpplord->rgord[0].id = lpfl->idPlanet;
+                lpfl->lpplord->rgord()[0].grobj = grobjPlanet;
+                lpfl->lpplord->rgord()[0].id = lpfl->idPlanet;
             }
         }
         if (!lpfl->fDead) {
             if (lpfl->pt.x < 1000) {
                 lpfl->pt.x = 1000;
-                lpfl->lpplord->rgord[0].pt.x = 1000;
+                lpfl->lpplord->rgord()[0].pt.x = 1000;
             } else if (lpfl->pt.x > dGal + 1000) {
                 lpfl->pt.x = dGal + 1000;
-                lpfl->lpplord->rgord[0].pt.x = dGal + 1000;
+                lpfl->lpplord->rgord()[0].pt.x = dGal + 1000;
             }
             if (lpfl->pt.y < 1000) {
                 lpfl->pt.y = 1000;
-                lpfl->lpplord->rgord[0].pt.y = 1000;
+                lpfl->lpplord->rgord()[0].pt.y = 1000;
             } else if (lpfl->pt.y > dGal + 1000) {
                 lpfl->pt.y = dGal + 1000;
-                lpfl->lpplord->rgord[0].pt.y = dGal + 1000;
+                lpfl->lpplord->rgord()[0].pt.y = dGal + 1000;
             }
             if (lpfl->cord > 1 || lpfl->fMark) {
                 iord = lpfl->fMark == 0;
-                lpord = &lpfl->lpplord->rgord[iord];
+                lpord = &lpfl->lpplord->rgord()[iord];
                 while (iord < lpfl->cord) {
                     if (lpord->grobj == grobjThing) {
                         lpth = LpthFromId(lpord->id);
-                        if (!lpth || (lpth->ith == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw.grbitPlr) &&
-                                      (lpth->pt.x != lpord->pt.x || lpth->pt.y != lpord->pt.y))) {
+                        if (!lpth || (lpth->ith() == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw().grbitPlr()) &&
+                                      (lpth->pt().x() != lpord->pt.x || lpth->pt().y() != lpord->pt.y))) {
                             if (lpth) {
                                 FSendPlrMsg(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                             lpord->grobj = grobjOther;
                             lpord->id = iord;
                         } else {
-                            lpord->pt = lpth->pt;
+                            lpord->pt = lpth->pt();
                         }
                     } else if (lpord->grobj == grobjFleet && !lpord->fNoAutoTrack) {
                         lpflTarget = LpflFromId(lpord->id);
                         if (!lpflTarget || lpflTarget->pt.x != lpord->pt.x || lpflTarget->pt.y != lpord->pt.y ||
-                            (lpflTarget->fCompChg && lpflTarget->iPlayer != lpfl->iPlayer)) {
+                            (lpflTarget->fCompChg() && lpflTarget->iPlayer != lpfl->iPlayer)) {
                             lpflTarget = NULL;
                             iplrHi = lpord->id & 0xfe00;
                             cFound = 0;
@@ -2191,7 +2190,7 @@ void ValidateWaypoints() {
                                         }
                                     }
                                     cFound++;
-                                    if (Random(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted || Random(2) != 0)) {
+                                    if (Random(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted() || Random(2) != 0)) {
                                         lpflTarget = lpfl2;
                                     }
                                 }
@@ -2202,10 +2201,10 @@ void ValidateWaypoints() {
                             if (lpflTarget) {
                                 lpord->id = lpflTarget->id;
                                 lpord->pt = lpflTarget->pt;
-                                lpflTarget->fTargeted = TRUE;
+                                lpflTarget->SetFTargeted(TRUE);
                             }
                         } else if (lpflTarget) {
-                            lpflTarget->fTargeted = TRUE;
+                            lpflTarget->SetFTargeted(TRUE);
                         }
                     }
                     iord++;
@@ -2494,7 +2493,7 @@ void ClearFile(int16_t dt) {
     return;
 }
 
-void OutputSz(int16_t dt, char *sz) {
+void OutputSz(int16_t dt, const char *sz) {
     char szTime[100];
     char szFile[256];
     char szDate[100];
@@ -2539,7 +2538,7 @@ int16_t CchGetETA(HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, int16_t fSmall) {
     StringId ids;
 
     cYears = 0;
-    lpord = lpfl->lpplord->rgord;
+    lpord = lpfl->lpplord->rgord();
     i = 0;
     while (i < iwp) {
         dbl = DGetDistance(lpord->pt.x, lpord->pt.y, lpord[1].pt.x, lpord[1].pt.y);

@@ -1,6 +1,6 @@
 # Native C++ application migration
 
-Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B remains proposed.
+Status: milestone A implemented in [PR #64](https://github.com/madebyjeffrey/sdl-stars/pull/64). Verification evidence is recorded below and in the PR. Milestone B is complete in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66); the [implementation ledger](CPP-B-IMPLEMENTATION.md#final-milestone-b-completion-receipt) records its final qualification (ticket #65).
 Recorded: 2026-10-28.
 Inspected: `develop` at `472c70ac7e2b4d2ceace3f06d838feea8a60aa9c`.
 Prerequisites: merged PRs [#57](https://github.com/madebyjeffrey/sdl-stars/pull/57),
@@ -211,9 +211,11 @@ C++ storage checks. Genuine foreign interfaces keep actual ABI tests.
 
 ## Milestone B: ownership, records and standard C++
 
-All B slots are proposed and follow A13 in order. Their changes use the same
-external behavior and file contract. Splitting a family into more PRs preserves
-this order and the same acceptance gates.
+B01–B14 are implemented as focused checkpoints in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66),
+as requested on 2026-10-29, following merged milestone A (#64). Their changes
+preserve the file contract and deterministic baseline. The
+[implementation ledger](CPP-B-IMPLEMENTATION.md) records completed checkpoints,
+separately committed fixes and final strict C++20/platform qualification.
 
 | Checkpoint | Bounded scope | Additional completion evidence |
 | --- | --- | --- |
@@ -225,9 +227,9 @@ this order and the same acceptance gates.
 | **B06 — waypoint/order payloads** | Replace order-list tails and casts with explicit storage/views. | Replay, transport presets, waypoint edits, growth/reallocation and failure receipts match. |
 | **B07 — hull/ship-design payloads** | Separate variable hull slots/design storage from wire prefixes. | Hull/part IDs, slot strides, design import/export and fixed serialized widths match. |
 | **B08 — fleet and identifier payloads** | Replace zero-prefix fleet-ID views and related variable record overlays. | Split/merge ordering, ID iteration, record prefixes and file bytes match; do not substitute C++ minimum object size for a wire length. |
-| **B09 — battle/AI payloads** | Replace battle/token tails and related heap views in independently reviewable record-family PRs. | Battle/replay, AI traversal, RNG consumption, rounded values and original tie ordering match; preserve battle-specific alignment requirements. |
-| **B10 — message/log payloads** | Replace variable message/log overlays and their borrowed-buffer lifetimes in family PRs. | Compression/encryption/framing, argument widths, message order, replay and incomplete-record behavior match. |
-| **B11 — remaining packed layouts** | Finish fixed entity-record and wrapper resource/DIB/icon codecs; replace anonymous aggregate overlays. Use one PR per independently encoded family. | Account for every packing directive, zero-length tail and alias in the inventory. Keep SDK-defined foreign layouts inside their SDK adapter. Production record correctness no longer depends on compiler packing or native bitfield layout. |
+| **B09 — battle/AI payloads** | Replace battle/token tails and related heap views in independently reviewable record-family commits. | Battle/replay, AI traversal, RNG consumption, rounded values and original tie ordering match; preserve battle-specific alignment requirements. |
+| **B10 — message/log payloads** | Replace variable message/log overlays and their borrowed-buffer lifetimes in family commits. | Compression/encryption/framing, argument widths, message order, replay and incomplete-record behavior match. |
+| **B11 — remaining packed layouts** | Finish fixed entity-record and wrapper resource/DIB/icon codecs; replace anonymous aggregate overlays. Use one focused commit per independently encoded family. | Account for every packing directive, zero-length tail and alias in the inventory. Keep SDK-defined foreign layouts inside their SDK adapter. Production record correctness no longer depends on compiler packing or native bitfield layout. |
 | **B12 — typed game arenas and cleanup** | Add typed allocation/lifetime operations and owners for the remaining game heaps; scope cleanup without jumps across constructed objects. | Preserve address stability, pointer/stride-derived identity, alias invalidation, bulk-reset semantics, initialization policy, free-list/capacity limits and failure behavior. Do not replace stable pooled addresses with reallocating containers without changing their users in the same PR. |
 | **B13 — application/session state owner** | Introduce one explicit owner for game, RNG, heaps, stream/session state and the corresponding UI lifetime. Move legacy globals incrementally, preserving original field/debug names and temporary accessors. | One source of truth; deterministic creation/reset/shutdown; callbacks/timers stop before referenced state is destroyed. Update the archived tutorial observer/parser with any affected globals/signatures/layouts. Multiple simultaneous games or new concurrency are separate features. |
 | **B14 — strict C++20 gate** | Disable extensions for owned production targets, enable strict diagnostics and remove migration-only compiler suppressions/shims. | Clean Linux/macOS/Windows production builds with `CXX_EXTENSIONS OFF` and strict diagnostics; standalone headers and the full functional/contract matrix pass, using `-Wpedantic -Werror` or compiler-equivalent enforcement. Any genuine platform ABI exception is named and isolated, not enabled project-wide. |

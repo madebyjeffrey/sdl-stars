@@ -3,7 +3,7 @@ static BOOL FCheckRaceVersionWorkflow(void) {
     static int iRun, iPage, iPhase, cPrompts;
     static const DLGPROC rglpfn[] = {RaceWizardDlg1, RaceWizardDlg4, RaceWizardDlg5, RaceWizardDlg2, RaceWizardDlg3, RaceWizardDlg6};
     static const char *rgszPlural[] = {"Versions A", "Versions A", "Versions B", "Versions C", "Versions C", "Versions D", "Versions E", "Versions F", "Versions G"};
-    const char *pszRoot = getenv("STARS_SETTINGS_DIR");
+    const char *pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
     const char *pszName = iRun == 8 ? "Legacy" : iRun == 6 ? "\xc3\xa9LAN/CON" : "\xc3\x89lan/CON";
     HWND hwnd, hwndDialog;
     PLAYER plr;

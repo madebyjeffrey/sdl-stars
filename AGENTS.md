@@ -39,9 +39,11 @@ When goals conflict, apply them in this order:
   `i` index, `f` flag, `lp` pointer, `rg` array, `h` handle, `psz`/`sz`
   strings, `id`/`ish`/`ipl` and the like. Check `structs.h` and nearby code
   for existing prefixes before you invent one.
-- Build owned production and ordinary test sources as C++20 (GNU extensions on),
-  and AppKit adapters as Objective-C++20. Independent C/SDK references and
-  third-party dependencies remain C. Application headers use native C++ linkage.
+- Build owned production as ISO C++20 and AppKit adapters as Objective-C++20.
+  Ordinary tests consume the C++ headers; independent C/SDK references and
+  third-party dependencies keep their own languages. Application headers use
+  native C++ linkage. For compiler-policy changes, keep `cmake/strict-cpp.cmake`
+  and `tests/cmake/check_cpp_manifest.py` consistent.
   Preserve explicit enum underlying widths/signedness and record layouts.
   Keep scalar locals at the top of a function and construct RAII guards at
   their operation boundary. Keep the

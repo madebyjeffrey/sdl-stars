@@ -1,5 +1,7 @@
 #include "path_utf8.h"
 #include "fileio.h"
+#include "filesession.h"
+#include <atomic>
 #include "encoding.h"
 
 #include <array>
@@ -40,7 +42,7 @@ namespace fs = std::filesystem;
 
 static bool FPath(const char *psz) {
     if (!psz) { errno = EINVAL; return false; }
-    if (!FUtf8Valid(psz, std::strlen(psz))) { errno = EILSEQ; return false; }
+    if (!FUtf8Valid(std::string_view(psz))) { errno = EILSEQ; return false; }
     return true;
 }
 static void SetError(const std::error_code &ec) {
@@ -672,12 +674,26 @@ NATIVEFILE *PfNativeTemporary(void) {
     });
 }
 
-struct LEGACYFILES {
-    std::mutex lock;
-    std::array<std::unique_ptr<NATIVEFILE>, INT16_MAX + 1> rg;
-};
-static LEGACYFILES &Files() { static LEGACYFILES files; return files; }
-static NATIVEFILE *LegacyFile(int16_t hf) {
+void NATIVEFILEDELETE::operator()(NATIVEFILE *pf) const noexcept { delete pf; }
+NATIVEFILESESSION::~NATIVEFILESESSION() noexcept { Close(); }
+void NATIVEFILESESSION::Close() noexcept {
+    try {
+        std::lock_guard<std::mutex> guard(lock);
+        for (auto &pf : rg) pf.reset();
+    } catch (...) {
+        // The member owners remain live if the platform lock itself fails.
+    }
+}
+static std::atomic<NATIVEFILESESSION *> sessionActive{nullptr};
+NATIVEFILESESSION *PBindNativeFileSession(NATIVEFILESESSION *session) noexcept {
+    return sessionActive.exchange(session);
+}
+static NATIVEFILESESSION &Files() {
+    if (auto *session = sessionActive.load()) return *session;
+    static NATIVEFILESESSION files;
+    return files;
+}
+NATIVEFILE *LegacyFile(int16_t hf) {
     if (hf < 0 || !Files().rg[static_cast<unsigned>(hf)]) { errno = EBADF; return nullptr; }
     return Files().rg[static_cast<unsigned>(hf)].get();
 }
@@ -688,7 +704,7 @@ int16_t HfNativeOpenLegacy(const char *psz, uint16_t md, int16_t *missing) {
     std::unique_ptr<NATIVEFILE> pf(PfNativeOpenFlags(psz, access, md & 0x70, md & 0x1000, md & 0x1000, 0, 0));
     if (!pf) { *missing = errno == ENOENT; return -1; }
     std::lock_guard<std::mutex> guard(Files().lock);
-    for (int i = 3; i <= INT16_MAX; ++i) if (!Files().rg[i]) { Files().rg[i] = std::move(pf); return static_cast<int16_t>(i); }
+    for (int i = 3; i <= INT16_MAX; ++i) if (!Files().rg[i]) { Files().rg[i].reset(pf.release()); return static_cast<int16_t>(i); }
     errno = EMFILE; return -1;
     });
 }

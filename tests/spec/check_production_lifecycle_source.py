@@ -7,7 +7,9 @@ Allocator, lookup, initializer, selection, modal and GUI callbacks are explicit
 bounded doubles. This checks call ordering and partial state, not their full
 implementation, persistent publication or rendering.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import shlex
 import subprocess
@@ -57,7 +59,7 @@ typedef int FARPROC;
 typedef struct { int32_t left,top,right,bottom; } RECT;
 '''
     for tag, alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL')]:
-        start = types.index('struct '+tag+' {')
+        start = struct_start(types, tag)
         declarations += types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations += r'''
 typedef struct { int16_t id,iPlayer;PLPROD *lpplprod;uint32_t fNoResearch:1,fStarbase:1,isb:4; } PLANET;
@@ -83,7 +85,7 @@ static unsigned storedCounts[8],storedResearch[8];
 static void *allocs[128];
 static void event(const char *s) { assert(strlen(trace)+strlen(s)<sizeof(trace));strcat(trace,s); }
 static PLPROD *queue(unsigned count) {
-    assert(allocations<128 && count<=255);PLPROD *p=(PLPROD *)calloc(1,4+count*4);assert(p);
+    assert(allocations<128 && count<=255);PLPROD *p=(PLPROD *)calloc(1,4+count*4);assert(p);p=LpStartPl<PLPROD,PROD>(p,4+count*4);
     p->cbItem=4;p->iprodMac=count;p->iprodMax=count;
     allocs[allocations]=p;alive[allocations++]=1;return p;
 }
@@ -96,7 +98,7 @@ static void InitProduction(PROD *rows) {
     fail(rows ? 1:5);
     unsigned n=sel.pl.lpplprod ? sel.pl.lpplprod->iprodMac:0;
     lpplProdGlob=queue(n);
-    if(n)memcpy(lpplProdGlob->rgprod,sel.pl.lpplprod->rgprod,n*4);
+    if(n)memcpy(lpplProdGlob->rgprod(),sel.pl.lpplprod->rgprod(),n*4);
 }
 static int FLookupPlanet(int id,PLANET *p) {
     if(id==idWriteBack) {
@@ -236,11 +238,11 @@ int main(void) {
     CHECK(ChangeProduction(0)==1 && sel.grobj==2 && !strstr(trace,"Stats;") && lpplProdGlob);
     for(int count=0;count<=8;count++)for(unsigned mask=0;mask<(1u<<count);mask++) {
         reset();lpplProdGlob=queue(count);int expected=0;
-        for(int i=0;i<count;i++){lpplProdGlob->rgprod[i].grobj=1;lpplProdGlob->rgprod[i].iItem=(mask&(1u<<i)) ? 7:0;if(mask&(1u<<i))expected=i+1;}
+        for(int i=0;i<count;i++){lpplProdGlob->rgprod()[i].grobj=1;lpplProdGlob->rgprod()[i].iItem=(mask&(1u<<i)) ? 7:0;if(mask&(1u<<i))expected=i+1;}
         sel.pl.fNoResearch=1;InitializeProductionDlg(7);
         CHECK(queueSelection==expected && sourceSelection==0 && researchCheck==1 && initialSelections==1);
     }
-    reset();lpplProdGlob=queue(2);lpplProdGlob->rgprod[0].grobj=2;lpplProdGlob->rgprod[1].grobj=1;
+    reset();lpplProdGlob=queue(2);lpplProdGlob->rgprod()[0].grobj=2;lpplProdGlob->rgprod()[1].grobj=1;
     InitializeProductionDlg(7);CHECK(queueSelection==1);
     const int orders[3][4]={{1,3,5,7},{7,1,5,3},{5,3,7,1}};
     for(int order=0;order<3;order++)for(unsigned mask=0;mask<256;mask++)for(int current=-1;current<=8;current++)for(int next=0;next<2;next++) {
@@ -258,8 +260,8 @@ int main(void) {
 '''
     with tempfile.TemporaryDirectory(prefix='m09-lifecycle-') as work:
         path=Path(work);source=path/'witness.cpp';binary=path/'witness'
-        source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-iquote',str(ROOT/'src/platform'),str(ROOT/'src/platform/errors.cpp'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        source.write_text('#include "' + str(ROOT/'src/core/liststorage.h') + '"\n' + declarations + storage_declarations(allocate=False, resize=False, free=True) + bodies + storage_definitions('', allocate=False, resize=False, free=True) + witnesses)
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-iquote',str(ROOT/'src/platform'),str(ROOT/'src/platform/errors.cpp'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

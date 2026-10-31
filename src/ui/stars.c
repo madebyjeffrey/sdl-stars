@@ -1,13 +1,16 @@
 #include "win.h"
+#include "uistate.h"
+#include "ownership.h"
+#include <stars_compat.h>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
+static int IStarsMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) try {
     MSG      msg;
     uint32_t lSeed;
     int16_t  fSeed;
 
     hInst = hInstance;
     szBase[0] = 0;
-    ini.wFlags = 0;
+    ini.SetWFlags(0);
     memset(&tutor, 0, sizeof(TUTOR));
     memset(&vtimer, 0, sizeof(TIMER));
     vtimer.fAutoGenWhenIn = TRUE;
@@ -57,6 +60,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     FreeStuff();
     return (int16_t)msg.wParam;
 } catch (const StarsError &error) {
+    StarsPrimaryErrorScope primary;
     try {
         AlertSz(PszFormatIds(static_cast<StringId>(error.ids ? error.ids : idsMemory), NULL), MB_ICONHAND);
         FreeStuff();
@@ -64,6 +68,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     return 2;
 } catch (...) {
+    StarsPrimaryErrorScope primary;
     try {
         AlertSz(PszFormatIds(idsUnableInitializeStars, NULL), MB_ICONHAND);
         FreeStuff();
@@ -137,174 +142,40 @@ int16_t FGetSystemColors() {
     return TRUE;
 }
 
-void FreeStuff() {
-    int16_t i;
-    int16_t j;
+void FreeStuff() noexcept {
+    if (!StarsCompatCanShutdown() || !FBeginAppUiClose()) return;
+    NATIVECLEANUPSCOPE rollback([]() noexcept { CancelAppUiClose(); });
+    try {
+        try { CloseScannerInspector(); } catch (...) { StarsCapturePendingError(); }
+        try { ClosePlanetPane(); } catch (...) { StarsCapturePendingError(); }
+        // All remaining native windows, timers and async payloads stop while
+        // their borrowed application values and stable heaps are still alive.
+        StarsCompatProcessExit();
+        ResetScannerInspectorSession();
+        CloseLibraryUiSession();
+        ResetRaceUiSession();
+        ResetScannerInputSession();
+        ResetMessageInputSession();
+        ResetReportInputSession();
+        EndAppUiClose();
+    } catch (...) {
+        StarsCapturePendingError();
+    }
+}
 
-    if (hbrButtonFace) {
-        FreeHbr(hbrButtonFace);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    BeginAppUiSession();
+    NATIVECLEANUPSCOPE close([]() noexcept { FreeStuff(); });
+    int result = IStarsMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    {
+        // The inner handlers report primary failures before native UI teardown.
+        StarsPrimaryErrorScope primary(result == 2);
+        FreeStuff();
     }
-    if (hbrButtonHilite) {
-        FreeHbr(hbrButtonHilite);
+    if (FStarsErrorPending()) {
+        try { StarsRethrowPendingError(); } catch (...) { result = 2; }
     }
-    if (hbrButtonShadow) {
-        FreeHbr(hbrButtonShadow);
-    }
-    if (hbrButtonText) {
-        FreeHbr(hbrButtonText);
-    }
-    if (hbrWindowText) {
-        FreeHbr(hbrWindowText);
-    }
-    if (hbrWindow) {
-        FreeHbr(hbrWindow);
-    }
-    if (hbrWindowFrame) {
-        FreeHbr(hbrWindowFrame);
-    }
-    if (hbrDesktop) {
-        FreeHbr(hbrDesktop);
-    }
-    if (hbrRed) {
-        FreeHbr(hbrRed);
-    }
-    if (hbrGreen) {
-        FreeHbr(hbrGreen);
-    }
-    if (hbrBlue) {
-        FreeHbr(hbrBlue);
-    }
-    if (hbrPurple) {
-        FreeHbr(hbrPurple);
-    }
-    if (hbrTooltip) {
-        FreeHbr(hbrTooltip);
-    }
-    for (i = 0; i <= 4; i++) {
-        if (rghbrMineral[i]) {
-            FreeHbr(rghbrMineral[i]);
-        }
-    }
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 2; j++) {
-            FreeHbr(rghbrPlanetAttr[i][j]);
-        }
-    }
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 2; j++) {
-            FreeHbr(rghbrMinSum[i][j]);
-        }
-    }
-    FreeProcInstance(lpfnFakeComboProc);
-    FreeProcInstance(lpfnFakeCEProc);
-    FreeProcInstance(lpfnFakeEditProc);
-    FreeProcInstance(lpfnFakeListProc);
-    FreeProcInstance(lpfnHostTimerProc);
-    FreeProcInstance(lpfnBrowserDlgProc);
-    if (lpfnTutorDlgProc) {
-        FreeProcInstance(lpfnTutorDlgProc);
-    }
-    DeleteObject(hrgnHuge);
-    DeleteObject(hrgnScratch);
-    SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(32512)));
-    DestroyCursor(hcurScanner);
-    DestroyCursor(hcurOpenGrab);
-    DestroyCursor(hcurCloseGrab);
-    DestroyCursor(hcurScanAdd);
-    DestroyCursor(hcurTrashCan);
-    DestroyCursor(hcurNoWay);
-    DestroyCursor(hcurResizeWE);
-    DestroyCursor(hcurResizeNS);
-    DestroyCursor(hcurResize4Way);
-    DestroyCursor(hcurArrowHelp);
-    DestroyCursor(hcurHand);
-    DeleteObject(hbmpScanner);
-    DeleteObject(hbmpNumbers);
-    DeleteObject(hbmpScanShip);
-    DeleteObject(hbmpUnknownPlanet);
-    DestroyIcon(hiconStars);
-    DestroyIcon(hiconHost);
-    DestroyIcon(hiconWait);
-    for (i = 0; i < 7; i++) {
-        DestroyIcon(rghiconVCR[i]);
-    }
-    GlobalUnlock(hdibPlanets);
-    FreeResource(hdibPlanets);
-    GlobalUnlock(hdibThings);
-    FreeResource(hdibThings);
-    GlobalUnlock(hdibToolbar);
-    FreeResource(hdibToolbar);
-    GlobalUnlock(hdibRaces);
-    FreeResource(hdibRaces);
-    GlobalUnlock(hdibRacesT);
-    FreeResource(hdibRacesT);
-    GlobalUnlock(hdibRacesX);
-    FreeResource(hdibRacesX);
-    DeleteObject(hbmpBackBld);
-    DeleteObject(hbmpMsg);
-    DeleteObject(hbmpMono);
-    FreeResource(hdibPlaque);
-    for (i = 0; i < 5; i++) {
-        GlobalUnlock(rghdibShips[i]);
-        FreeResource(rghdibShips[i]);
-        GlobalUnlock(rghdibShipsT[i]);
-        FreeResource(rghdibShipsT[i]);
-    }
-    for (i = 0; i < 7; i++) {
-        GlobalUnlock(rghdibInventory[i]);
-        FreeResource(rghdibInventory[i]);
-    }
-    FreeLp(lpLog, htLog);
-    lpLog = NULL;
-    FreeLp(lpMsg, htMsg);
-    lpMsg = NULL;
-    DeleteObject(vhpal);
-    if (vhpalSplash) {
-        DeleteObject(vhpalSplash);
-    }
-    FreeHbr(hbrShip);
-    FreeHbr(hbrStarbase);
-    FreeHbr(hbrBBlue);
-    FreeHbr(hbrEnemy);
-    FreeHbr(hbrSelect);
-    FreeHbr(hbrRadar);
-    if (hbrRadarNear) {
-        FreeHbr(hbrRadarNear);
-    }
-    FreeHbr(hbrLightGray);
-    FreeHbr(hbrGray);
-    FreeHbr(hbrYellow);
-    FreeHbr(hbrDkYellow);
-    DeleteObject(hbr50Screen);
-    for (i = 0; i < 3; i++) {
-        DeleteObject(rghbrPat[i]);
-    }
-    DeleteObject(hbrCargo);
-    DeleteObject(hbrDock);
-    DeleteObject(hpenShip);
-    DeleteObject(hpenDkGreen);
-    DeleteObject(hpenDkPurple);
-    DeleteObject(hpenStarbase);
-    DeleteObject(hpenEnemy);
-    DeleteObject(hpenMassPath);
-    DeleteObject(hpenRadar);
-    if (hpenRadarNear) {
-        DeleteObject(hpenRadarNear);
-    }
-    DeleteObject(hpenDkBlue);
-    DeleteObject(hpenYellow);
-    DeleteObject(hpenDkYellow);
-    DeleteObject(rghfontArial10[0]);
-    DeleteObject(rghfontArial10[1]);
-    for (i = 0; i < 5; i++) {
-        DeleteObject(rghfontArial8[i]);
-    }
-    DeleteObject(rghfontArial6[0]);
-    DeleteObject(rghfontArial7[0]);
-    for (i = 0; i < 12; i++) {
-        FreeHb(rglphb[i]);
-    }
-    return;
+    return result;
 }
 
 INT_PTR CALLBACK About(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -526,7 +397,7 @@ int16_t FHandleKey(HWND hwnd, int16_t iMsg, int16_t iKey, uint32_t dw) {
         case VK_OEM_PERIOD:
             if (sel.grobj == grobjFleet && (sel.iwpAct > 0 || sel.fl.cord > 1)) {
                 iwp = sel.iwpAct <= 0 ? 1 : sel.iwpAct;
-                iWarp = sel.fl.lpplord->rgord[iwp].iWarp;
+                iWarp = sel.fl.lpplord->rgord()[iwp].iWarp;
                 if (iKey == VK_OEM_COMMA) {
                     iWarp--;
                 } else {

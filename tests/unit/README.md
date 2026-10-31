@@ -39,11 +39,12 @@ ctest --test-dir dist/sdl-debug -L client --output-on-failure
 The `client` label also runs the real startup/race-wizard input tests on dummy
 and private X11/Openbox displays. See [client testing](../../docs/WIN32-CLIENT.md).
 
-`test_memory.c` and `test_exceptions.c` compile as C++ under their original
-filenames. Allocation overflow, missing files and short reads exercise typed
-failure handling and scoped cleanup. Other C harnesses continue through the C
-ABI. The separate `win32_exception_callbacks` test injects failures through real
-C dispatchers and checks modal cleanup before C++ delivery.
+Game and wrapper harnesses compile as C++20 under their original filenames.
+Allocation overflow, missing files and short reads exercise typed failure
+handling and scoped cleanup. Independent frozen-layout and real Windows SDK
+reference programs remain C. The separate `win32_exception_callbacks` test
+injects failures through wrapper dispatchers and checks modal cleanup before
+C++ delivery.
 
 ## Two kinds of test
 
@@ -93,6 +94,8 @@ Production libraries retain the original function names and code. No special
 linker, weak symbols, dynamic interposition or source rewriting is required.
 Private copies share completed platform settings and generated resources;
 identical hook sets reuse the same copies.
+Allocation fault hooks use explicit `STARS_TEST_ALLOC_*` call sites so that
+substitutions cannot rewrite standard-library declarations.
 
 When adding an internal adapter, add its default definition in
 `src/platform/test_impl.h` and its name to the implementation-hook list in the
@@ -108,8 +111,8 @@ settings. It can also be run directly with a chosen CMake generator/compiler:
 python3 tests/cmake/test_redirect.py
 ```
 
-The adapter mechanism uses standard C preprocessing and ordinary C symbols,
-including for MSVC. This does not complete the repository's broader MSVC port:
+The adapter mechanism uses standard preprocessing and ordinary function symbols
+in both C and C++, including for MSVC. This does not complete the repository's broader MSVC port:
 the product currently selects MinGW on Windows and retains other toolchain
 flags/dependencies that still need qualification. MSVC execution has not been
 verified on the Mac.

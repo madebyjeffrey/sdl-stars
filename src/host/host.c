@@ -1,5 +1,7 @@
 #include "common.h"
 #include "version.h"
+#include "ownership.h"
+#include "appstate.h"
 
 // stars-host: the game's host without its windows. It takes the Windows
 // game's host command line (-a, -g, -b, -t, -v, -s, -p, -l, and the -dm,
@@ -12,7 +14,7 @@
 // stderr and questions get the cautious answer. hostui.c has the rest of
 // ui.h.
 
-int16_t IdAlertBox(char *sz, int16_t mbType) {
+int16_t IdAlertBox(const char *sz, int16_t mbType) {
     fprintf(stderr, "stars-host: %s\n", sz);
     switch (mbType & 0x000f) {
     case MB_OKCANCEL:
@@ -36,12 +38,12 @@ static int16_t FSzEqNoCase(const char *sz1, const char *sz2) {
 
 // FIniValue copies key szKey's value in [szSection] of the INI text pszText
 // into szValue, as GetPrivateProfileString finds it.
-static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
+static int16_t FIniValue(const char *pszText, StringId idsSection, StringId idsKey, char *szValue, size_t cchValue) {
     char    szSection[32];
     char    szKey[32];
     char    szLine[256];
-    char   *pch;
-    char   *pchEnd;
+    const char   *pch;
+    const char   *pchEnd;
     char   *pchEq;
     size_t  cch;
     int16_t fInSection;
@@ -90,7 +92,7 @@ static int16_t FIniValue(char *pszText, StringId idsSection, StringId idsKey, ch
 
 // LIniInt reads an INI key as GetPrivateProfileInt does: its leading
 // number, or lDefault if the key is missing.
-static int32_t LIniInt(char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
+static int32_t LIniInt(const char *pszText, StringId idsSection, StringId idsKey, int32_t lDefault) {
     char szValue[32];
 
     if (!FIniValue(pszText, idsSection, idsKey, szValue, sizeof(szValue))) {
@@ -112,18 +114,18 @@ static int16_t FReadHostIni(const char *szFile) {
     if (!pf) {
         return FALSE;
     }
+    StarsNativeFileGuard file(pf);
     ISeekNativeFile(pf, 0, SEEK_END);
     cb = LNativePosition(pf);
     ISeekNativeFile(pf, 0, SEEK_SET);
-    pszText = (char *)malloc((size_t)cb + 1);
+    NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc((size_t)cb + 1)));
+    pszText = text.get();
     if (!pszText || CReadNative(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
-        free(pszText);
-        ICloseNativeFile(pf);
         return FALSE;
     }
-    ICloseNativeFile(pf);
+    ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, (size_t)cb)) { free(pszText); return FALSE; }
+    if (!FUtf8Valid(pszText, (size_t)cb)) return FALSE;
     if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
     ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(pszText, idsMisc, idsDefaultpassword, vszDefPass, 16)) {
@@ -135,11 +137,11 @@ static int16_t FReadHostIni(const char *szFile) {
     if (vcBackupDirs < 1 || vcBackupDirs > 999) {
         vcBackupDirs = 1;
     }
-    free(pszText);
     return TRUE;
 }
 
 int main(int argc, char *argv[]) try {
+    NATIVECLEANUPSCOPE session([]() noexcept { GetAppSession().Close(); });
     char     szCmdLine[1024];
     int16_t  fSeed;
     uint32_t lSeed;
@@ -149,16 +151,18 @@ int main(int argc, char *argv[]) try {
     char **rgpszNative;
 #endif
 
+    GetAppSession().BindFiles();
 #ifdef _WIN32
     rgpszNative = RgpszNativeArguments(&argc);
     if (!rgpszNative) { fprintf(stderr, "stars-host: invalid Windows command line\n"); return 2; }
+    NATIVEOWNER<char *, std::free> nativeArguments(rgpszNative);
     argv = rgpszNative;
 #endif
     // ParseCmdLine reads each letter after a '-' as a switch.
     if (argc == 2 && strcmp(argv[1], "--version") == 0) {
         printf("stars-host %s\n", STARS_VERSION_DISPLAY);
 #ifdef _WIN32
-        free(rgpszNative);
+        nativeArguments.reset();
 #endif
         return 0;
     }
@@ -182,7 +186,7 @@ int main(int argc, char *argv[]) try {
         if (strlen(szCmdLine) + strlen(argv[i]) + 2 > sizeof(szCmdLine)) {
             fprintf(stderr, "stars-host: command line too long\n");
 #ifdef _WIN32
-            free(rgpszNative);
+            nativeArguments.reset();
 #endif
             return 2;
         }
@@ -192,18 +196,18 @@ int main(int argc, char *argv[]) try {
         strcat(szCmdLine, argv[i]);
     }
     szBase[0] = 0;
-    ini.wFlags = 0;
+    ini.SetWFlags(0);
     ini.idPlayer = iplrNone;
     InitGameStuff();
     if (szIniPath && !FReadHostIni(szIniPath)) {
         fprintf(stderr, "stars-host: can't read %s\n", szIniPath);
 #ifdef _WIN32
-        free(rgpszNative);
+        nativeArguments.reset();
 #endif
         return 2;
     }
 #ifdef _WIN32
-    free(rgpszNative);
+    nativeArguments.reset();
 #endif
     fSeed = FALSE;
     lSeed = 0;

@@ -11,9 +11,9 @@ void GetMineFieldCounts(uint16_t id, int16_t *pithm, int16_t *pcthm) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMinefield && lpth->iplr == idPlayer) {
+        if (lpth->ith() == ithMinefield && lpth->iplr() == idPlayer) {
             cthTotal++;
-            if (lpth->idFull == id) {
+            if (lpth->idFull() == id) {
                 ithFound = cthTotal;
             }
         }
@@ -52,7 +52,7 @@ int16_t FOtherStuffAtScanSel() {
         lpth = lpThings;
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
-            if (lpth->pt.x == sel.scan.pt.x && lpth->pt.y == sel.scan.pt.y && c-- == 0) {
+            if (lpth->pt().x() == sel.scan.pt.x && lpth->pt().y() == sel.scan.pt.y && c-- == 0) {
                 return TRUE;
             }
         }
@@ -158,7 +158,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
             if (!rglpfl[ifl])
                 break;
             if (lpfl->idPlanet == lppl->id && lpfl->iPlayer == lppl->iPlayer && !lpfl->fDead && lpfl->cord <= 1 &&
-                lpfl->lpplord->rgord[0].grTask == grTaskMine) {
+                lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                 cMines = CMineFromLpfl(lpfl);
                 if (cMines > 0) {
                     EstMineralsMined(lppl, rglQuan, cMines, fApply);

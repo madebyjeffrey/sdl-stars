@@ -18,19 +18,15 @@ struct COMPATLIST {
     char szSearch[128];
     Uint64 msSearch;
     unsigned nMutation;
+    ~COMPATLIST() noexcept {
+        for (int i = 0; i < cItem; i++) SDL_free(rgitem[i].psz);
+        SDL_free(rgSelectedDrag);
+        SDL_free(rgitem);
+    }
 };
 unsigned NCompatListMutation(HWND hwnd) { return hwnd->lplist ? hwnd->lplist->nMutation : 0; }
 
-void CompatDestroyList(HWND hwnd) {
-    COMPATLIST *lp = hwnd->lplist;
-    int i;
-    if (!lp) return;
-    for (i = 0; i < lp->cItem; i++) SDL_free(lp->rgitem[i].psz);
-    SDL_free(lp->rgSelectedDrag);
-    SDL_free(lp->rgitem);
-    SDL_free(lp);
-    hwnd->lplist = NULL;
-}
+void CompatDestroyList(HWND hwnd) { hwnd->lplist.reset(); }
 
 static BOOL FMulti(HWND hwnd) { return !hwnd->lpcombo && (hwnd->dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) != 0; }
 static BOOL FOwnerList(HWND hwnd) { return (hwnd->dwStyle & (hwnd->lpcombo ? CBS_OWNERDRAWFIXED : LBS_OWNERDRAWFIXED)) != 0; }
@@ -45,12 +41,14 @@ static int CListPage(HWND hwnd) {
     return (((1) > ((hwnd->lpcombo ? hwnd->lpcombo->cyDrop : rc.bottom) / hwnd->lplist->cyItem)) ? (1) : ((hwnd->lpcombo ? hwnd->lpcombo->cyDrop : rc.bottom) / hwnd->lplist->cyItem));
 }
 static void ClampList(HWND hwnd) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     SCROLLINFO si = {sizeof(si), SIF_RANGE | SIF_PAGE | SIF_POS, 0, 0, 0, 0, 0};
     RECT rc;
     lp->iTop = (((StarsMax(0, lp->iTop)) < ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd))))) ? (StarsMax(0, lp->iTop)) : ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd)))));
     lp->iCaret = (((StarsMax(0, lp->iCaret)) < (StarsMax(0, lp->cItem - 1))) ? (StarsMax(0, lp->iCaret)) : (StarsMax(0, lp->cItem - 1)));
     if (!hwnd->lpcombo && !lp->fScrollSync && !hwnd->fDestroying) {
+        StarsRestore<BOOL> restoreSync(lp->fScrollSync);
         lp->fScrollSync = TRUE;
         if (hwnd->dwStyle & LBS_DISABLENOSCROLL) si.fMask |= SIF_DISABLENOSCROLL;
         si.nMax = StarsMax(0, lp->cItem - 1); si.nPage = (UINT)CListPage(hwnd); si.nPos = lp->iTop;
@@ -64,12 +62,12 @@ static void ClampList(HWND hwnd) {
         }
         lp->iTop = (((lp->iTop) < ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd))))) ? (lp->iTop) : ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd)))));
         if (lp->fScrollV) SetScrollPos(hwnd, SB_VERT, lp->iTop, TRUE);
-        lp->fScrollSync = FALSE;
     }
     InvalidateRect(hwnd, NULL, TRUE);
 }
 static void RevealList(HWND hwnd, int i) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     int cPage = CListPage(hwnd);
     if (i < lp->iTop) lp->iTop = i;
     else if (i >= lp->iTop + cPage) lp->iTop = i - cPage + 1;
@@ -84,19 +82,26 @@ static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
 }
 static void EndListDrag(HWND hwnd, BOOL fRelease);
 static void ResetList(HWND hwnd) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     COMPATLISTITEM *rg = lp->rgitem;
     int c = lp->cItem, i;
+    auto freeItems = [c](COMPATLISTITEM *rg) noexcept {
+        for (int i = 0; i < c; i++) SDL_free(rg[i].psz);
+        SDL_free(rg);
+    };
+    std::unique_ptr<COMPATLISTITEM[], decltype(freeItems)> rgKeep(rg, freeItems);
     lp->rgitem = NULL; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
     lp->iAnchor = -1; lp->szSearch[0] = 0;
     EndListDrag(hwnd, TRUE);
     InvalidateRect(hwnd, NULL, TRUE);
-    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
-    SDL_free(rg);
+    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = NULL; DeleteNotice(hwnd, (UINT)i, rg[i].lData); }
+    rgKeep.reset();
     if (IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
 }
 static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
@@ -112,7 +117,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
     memmove(lp->rgitem + i + 1, lp->rgitem + i, (size_t)(lp->cItem - i) * sizeof(*lp->rgitem));
-    lp->rgitem[i] = (COMPATLISTITEM){pszNew, 0, FALSE}; lp->cItem++; lp->nMutation++;
+    lp->rgitem[i] = COMPATLISTITEM{pszNew, 0, FALSE}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
     if (lp->iAnchor >= i) lp->iAnchor++;
@@ -121,7 +126,8 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
 }
 static void DrawListSelection(HWND hwnd, int iOld);
 static void UserSelectList(HWND hwnd, int i, BOOL fToggle, BOOL fNotify) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     int j, iOld = lp->iSel;
     if (i < 0 || i >= lp->cItem) return;
     lp->iCaret = i;
@@ -135,7 +141,8 @@ static void UserSelectList(HWND hwnd, int i, BOOL fToggle, BOOL fNotify) {
     if (fNotify && IsWindow(hwnd)) NotifyList(hwnd, LBN_SELCHANGE);
 }
 static void ExtendedSelectList(HWND hwnd, int i, BOOL fCtrl, BOOL fShift, BOOL fNotify) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     int j, iFirst, iLast;
     if (i < 0 || i >= lp->cItem) return;
     if (!(hwnd->dwStyle & LBS_EXTENDEDSEL)) {
@@ -158,7 +165,8 @@ static void ExtendedSelectList(HWND hwnd, int i, BOOL fCtrl, BOOL fShift, BOOL f
 }
 
 static void EndListDrag(HWND hwnd, BOOL fRelease) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     hwnd->fTracking = FALSE;
     if (lp->idDragTimer) KillTimer(hwnd, lp->idDragTimer);
     lp->idDragTimer = 0;
@@ -167,7 +175,8 @@ static void EndListDrag(HWND hwnd, BOOL fRelease) {
 }
 
 static void DragList(HWND hwnd, LPARAM l) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     RECT rc;
     int y = (int16_t)HIWORD(l), i, j, iFirst, iLast;
     if (lp->cItem == 0 || !GetClientRect(hwnd, &rc)) return;
@@ -186,7 +195,8 @@ static void DragList(HWND hwnd, LPARAM l) {
     else UserSelectList(hwnd, i, FMulti(hwnd), FALSE);
 }
 static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, const RECT *lprcItem) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     DRAWITEMSTRUCT ds = {};
     RECT rc;
     BOOL fItem = i >= 0 && i < lp->cItem;
@@ -202,7 +212,8 @@ static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, 
     return IsWindow(hwnd);
 }
 static void DrawListSelection(HWND hwnd, int iOld) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     HDC hdc;
     RECT rc, rcItem;
     int rgi[2] = {iOld, lp->iSel}, j, i;
@@ -228,7 +239,8 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     ReleaseDC(hwnd, hdc);
 }
 static void DrawListFocus(HWND hwnd, BOOL fFocus) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     HDC hdc;
     RECT rc, rcItem;
     int i = lp->cItem != 0 ? lp->iCaret : -1;
@@ -244,7 +256,8 @@ static void DrawListFocus(HWND hwnd, BOOL fFocus) {
     ReleaseDC(hwnd, hdc);
 }
 static void PaintList(HWND hwnd) {
-    COMPATLIST *lp = hwnd->lplist;
+    auto lplistKeep = hwnd->lplist;
+    COMPATLIST *lp = lplistKeep.get();
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwnd, &ps);
     HBRUSH hbr, hbrOwn = NULL, hbrSel;
@@ -299,6 +312,7 @@ static void PaintList(HWND hwnd) {
 
 LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND lpwin = LpCompatWindow(hwnd);
+    std::shared_ptr<COMPATLIST> lplistKeep;
     COMPATLIST *lp;
     HDC hdc;
     TEXTMETRICA tm;
@@ -309,10 +323,13 @@ LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     int64_t yItem;
     LPARAM lData;
     if (!lpwin) return 0;
-    lp = lpwin->lplist;
+    lplistKeep = lpwin->lplist;
+    lp = lplistKeep.get();
     if (msg == WM_NCCREATE) {
-        lp = (COMPATLIST *)(SDL_calloc(1, sizeof(*lp))); if (!lp) return FALSE;
-        lp->iSel = lp->iAnchor = -1; lp->cyItem = 16; lpwin->lplist = lp; lpwin->iControl = 4;
+        try { lplistKeep = std::make_shared<COMPATLIST>(); }
+        catch (const std::bad_alloc &) { return FALSE; }
+        lp = lplistKeep.get();
+        lp->iSel = lp->iAnchor = -1; lp->cyItem = 16; lpwin->lplist = lplistKeep; lpwin->iControl = 4;
         lp->fScrollV = (lpwin->dwStyle & WS_VSCROLL) != 0; lp->fScrollH = (lpwin->dwStyle & WS_HSCROLL) != 0;
         return TRUE;
     }

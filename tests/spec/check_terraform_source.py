@@ -198,7 +198,7 @@ int16_t FLookupPart(PART *part){
     if(part->hs.grhst!=hstTerra)return GateLookup(part);
     assert(terraCalls<128 && part->hs.iItem<20);terraItems[terraCalls++]=part->hs.iItem;
     if(!cfg[1])return NativeLookupPart(part);
-    part->pterra=scripted+part->hs.iItem;return (cfg[2]&(1<<part->hs.iItem))?1:0;
+    part->SetPterra(scripted+part->hs.iItem);return (cfg[2]&(1<<part->hs.iItem))?1:0;
 }
 '''+bodies[end:]
     bodies+='\n'+function('src/core/planet.c','int16_t FCanTerraformLppl(').replace('int16_t FCanTerraformLppl(','static int16_t NativeCan(',1)
@@ -264,7 +264,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);table=list(struct.iter_unpack('<8i',export.read_bytes()));assert len(table)==20
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)

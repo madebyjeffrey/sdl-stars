@@ -279,7 +279,7 @@ void DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj) {
     PLANET *ppl;
     RECT    rc;
 
-    ppl = obj.ppl;
+    ppl = obj.ppl();
     if (ptile->fFixCtls) {
         rgrcRef[6].top = -5;
         rgrcRef[6].bottom = -6;
@@ -447,7 +447,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             LookupBestPlanetaryScanner(&part);
-            strcpy(szWork, part.pcom->szName);
+            strcpy(szWork, part.pcom().szName());
             dRange = GetPlanetScannerRange(&sel.pl, &dRangeP);
         }
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);
@@ -500,7 +500,7 @@ void DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj) {
             dRange = 0;
         } else {
             FGetBestDefensePart(&part);
-            strcpy(szWork, part.pcom->szName);
+            strcpy(szWork, part.pcom().szName());
             dRange = 1;
         }
         RightTextOut(hdc, xRight, yTop, szWork, 0, dxRight);
@@ -735,7 +735,7 @@ void DrawPlanetProduction(HDC hdc, TILE *ptile, OBJ obj) {
     PLANET *ppl;
     RECT    rc;
 
-    ppl = obj.ppl;
+    ppl = obj.ppl();
     if (ptile->fFixCtls) {
         ShowWindow(hwndPlanetProdLB, SW_HIDE);
         ShowWindow(rghwndBtn[11], SW_HIDE);
@@ -832,12 +832,12 @@ void DrawPlanShipBitmap(HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
 
     if (sel.grobj == grobjPlanet) {
-        psz = PszGetPlanetName(obj.ppl->id);
-        i = obj.ppl->id;
+        psz = PszGetPlanetName(obj.ppl()->id);
+        i = obj.ppl()->id;
         i += 8;
         iOffset = i % 28;
     } else {
-        psz = PszGetFleetName(obj.pfl->id);
+        psz = PszGetFleetName(obj.pfl()->id);
     }
     if (ptile->fFixCtls) {
         for (i = 4; i <= 6; i++) {
@@ -917,7 +917,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
     int32_t l;
     RECT    rc;
 
-    pfl = obj.pfl;
+    pfl = obj.pfl();
     fDoneDrawing = FALSE;
     fObjIsThing = FALSE;
     if (ptile->fFixCtls) {
@@ -967,13 +967,13 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
             EnableWindow(rghwndBtn[1], FALSE);
         } else {
             fObjIsThing = xf.grobj == grobjThing;
-            EnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.fl.iPlayer == idPlayer);
+            EnableWindow(rghwndBtn[1], fObjIsThing == 0 && xf.iPlayerObj() == idPlayer);
         }
         rgrcRef[1].top = -5;
         rgrcRef[1].bottom = -6;
         rgrcRef[4].top = -5;
         rgrcRef[4].bottom = -6;
-        fUnknown = fObjIsThing == 0 && xf.fl.det != detAll;
+        fUnknown = fObjIsThing == 0 && xf.detObj() != detAll;
         if (!gd.fSmallTileMode) {
             if (!fDoneDrawing && !fUnknown) {
                 SelectObject(hdc, rghfontArial8[1]);
@@ -991,7 +991,7 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 if (idSkip != idflNone) {
                     rgrcRef[1] = rcGauge;
                 }
-                DrawFleetGauge(hdc, &rcGauge, &xf.fl, 4);
+                DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 4);
             } else if (ptile->fMinDraw || fUnknown != gd.fUnknownShip) {
                 SetRect(&rcGauge, xLeft, yTop, xRight, dyArial8 * 2 + yTop + 8);
                 FillRect(hdc, &rcGauge, hbrButtonFace);
@@ -1006,9 +1006,9 @@ void DrawPlanetShipList(HDC hdc, TILE *ptile, OBJ obj) {
                 SetRect(&rcGauge, xLeft + LOWORD(l), yTop, xRight, yTop + dyArial8);
                 rgrcRef[4] = rcGauge;
                 if (fObjIsThing) {
-                    DrawThingGauge(hdc, &rcGauge, &xf.th, 5);
+                    DrawThingGauge(hdc, &rcGauge, &xf.th(), 5);
                 } else {
-                    DrawFleetGauge(hdc, &rcGauge, &xf.fl, 5);
+                    DrawFleetGauge(hdc, &rcGauge, &xf.fl(), 5);
                 }
                 if (fObjIsThing) {
                     OffsetRect(&rcGauge, 0, dyArial8 + 4);
@@ -1192,12 +1192,12 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         i = (int16_t)(pt.y - rgrcRef[6].top) / dyArial8;
         GlobalPD.grPopup = grPopupMineral;
-        GlobalPD.rgi[0] = i;
-        GlobalPD.rgi[2] = sel.pl.rgwtMin[i];
-        GlobalPD.rgi[3] = (uint32_t)sel.pl.rgMinConc[i];
+        GlobalPD.SetRgi(0, i);
+        GlobalPD.SetRgi(2, sel.pl.rgwtMin[i]);
+        GlobalPD.SetRgi(3, (uint32_t)sel.pl.rgMinConc[i]);
         EstMineralsMined(&sel.pl, rglQuan, -1, FALSE);
-        GlobalPD.rgi[4] = rglQuan[i];
-        GlobalPD.rgi[1] = sel.pl.fHomeworld;
+        GlobalPD.SetRgi(4, rglQuan[i]);
+        GlobalPD.SetRgi(1, sel.pl.fHomeworld);
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[7], PointFrom16(pt)) != 0) {
         if (fCursor) {
@@ -1205,7 +1205,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         }
         GlobalPD.grPopup = grPopupPlanetIndustry;
         GlobalPD.idPlan = sel.pl.id;
-        GlobalPD.fFactory = pt.y >= rgrcRef[7].top + dyArial8;
+        GlobalPD.SetFFactory(pt.y >= rgrcRef[7].top + dyArial8);
         if (GlobalPD.fFactory) {
             GlobalPD.cMax = CMaxFactories(&sel.pl, idPlayer);
             GlobalPD.cCur = sel.pl.cFactories;
@@ -1281,7 +1281,7 @@ HCURSOR ClickInPlanetOrders(POINT16 pt, int16_t sks, int16_t fCursor, int16_t fR
         GlobalPD.lpshdef = rglpshdefSB[idPlayer] + sel.pl.isb;
         GlobalPD.fHideCounts = FALSE;
         GlobalPD.fShowDamage = TRUE;
-        GlobalPD.fToken = FALSE;
+        GlobalPD.SetFToken(FALSE);
         GlobalPD.fSummary = FALSE;
         Popup(hwndPlanet, pt.x, pt.y);
     } else if (PtInRect(&rgrcRef[16], PointFrom16(pt)) != 0) {
@@ -1617,7 +1617,7 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
     RECT     rc;
 
     fDC = FALSE;
-    objNull.pfl = 0;
+    objNull.SetPfl(0);
     if (sel.id == -1) {
         for (i = 0; i < 13; i++) {
             ShowWindow(rghwndBtn[i], SW_HIDE);
@@ -1647,11 +1647,11 @@ void DrawPlanShip(HDC hdc, TileBits grbit) {
         if (sel.grobj == grobjFleet) {
             ptile = rgtileShip;
             ctile = 7;
-            obj.pfl = &sel.fl;
+            obj.SetPfl(&sel.fl);
         } else {
             ptile = rgtilePlanet;
             ctile = 6;
-            obj.ppl = &sel.pl;
+            obj.SetPpl(&sel.pl);
         }
         if (!hdc) {
             fDC = TRUE;
@@ -1726,10 +1726,10 @@ void FillShipDD(int16_t idSkip) {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket && lpth->pt.x == ptSel.x && lpth->pt.y == ptSel.y) {
-            PszGetThingName(lpth->idFull);
+        if (lpth->ith() == ithMineralPacket && lpth->pt().x() == ptSel.x && lpth->pt().y() == ptSel.y) {
+            PszGetThingName(lpth->idFull());
             memmove(&szWork[1], szWork, 50);
-            szWork[0] = lpth->iplr == idPlayer ? 32 : 120;
+            szWork[0] = lpth->iplr() == idPlayer ? 32 : 120;
             SendMessage(hwndShipDD, CB_ADDSTRING, 0, (LPARAM)szWork);
         }
     }
@@ -1794,7 +1794,7 @@ void ShowFleetSel() {
     FillOrdersLB();
     FillFleetCompLB();
     FillBattleDD(sel.fl.iplan + 1);
-    SendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord[0].grTask, 0);
+    SendMessage(rghwndOrderDD[0], CB_SETCURSEL, sel.fl.lpplord->rgord()[0].grTask, 0);
     return;
 }
 

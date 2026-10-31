@@ -13,7 +13,8 @@
 
 static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const char *szName, const char *szNames,
                                        int16_t fPlural, int16_t fCompressed, int32_t lSalt) {
-    RTBOF rtbof = {0};
+    RTBOF rtbof = {};
+    std::byte rgbBof[cbWireBof];
     PLAYER plr;
     uint8_t rgb[sizeof(PLAYER) + 80];
     uint8_t *pb;
@@ -63,9 +64,10 @@ static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const cha
     rtbof.verMinor = verMinor;
     rtbof.dt = dtRace;
     StreamOpen(szFile, mdCreate);
-    WriteRt(rtBOF, sizeof(rtbof), &rtbof);
+    FEncodeBof(rtbof, rgbBof);
+    WriteRt(rtBOF, cbWireBof, rgbBof);
     WriteRt(rtPlr, (int16_t)(pb - rgb), rgb);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     return TRUE;
 }
@@ -125,7 +127,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
     WriteRtPlr(&vplr, NULL);
     icksum = IRaceChecksum(&vplr);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     TEST_CHECK(FWasRaceFile(szSaved, FALSE) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
@@ -205,7 +207,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szSaved));
     WriteRtPlr(&vplr, NULL);
     icksum = IRaceChecksum(&vplr);
-    WriteRt(rtEOF, sizeof(icksum), &icksum);
+    WriteRtEof(icksum);
     StreamClose();
     strcpy(vszDefPass, "Replacement");
     TEST_CHECK(FWasRaceFile(szSaved, TRUE) == 1);
@@ -272,7 +274,7 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
 }
 
 static void test_LInnateRaceHabitability_double_rounding(void) {
-    PLAYER plr = {0};
+    PLAYER plr = {};
     int8_t rgAttr[16] = {10, 10, 10, 10, 10, 5, 10, 0, 1, 1, 1, 1, 1, 1, 9, 0};
     int8_t rgLo[3] = {31, 61, 9};
     int8_t rgHi[3] = {71, 97, 73};
@@ -292,7 +294,7 @@ static void test_LInnateRaceHabitability_double_rounding(void) {
 }
 
 static void test_RaceGrbit_high_bit(void) {
-    PLAYER plr = {0};
+    PLAYER plr = {};
 
     SetRaceGrbit(&plr, (RaceGrbit)(0), TRUE);
     SetRaceGrbit(&plr, (RaceGrbit)(31), TRUE);
@@ -328,7 +330,7 @@ static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     TEST_ASSERT(FCreateFile(dtRace, iplrNone, szFile));
     WriteRtPlr(&plr, NULL);
     icksum = IRaceChecksum(&plr);
-    WriteRt(rtEOF, 2, &icksum);
+    WriteRtEof(icksum);
     StreamClose();
 
     TEST_CHECK(FWasRaceFile(szFile, FALSE));
@@ -351,8 +353,8 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
 
     // 40 relations, an uncompressed "Bob" and a 60-character plural name.
     memset(rgb, 0, sizeof(rgb));
-    ((PLAYER *)rgb)->det = detAll;
-    iOff = offsetof(PLAYER, rgmdRelation);
+    rgb[6] = detAll;
+    iOff = cbWirePlayerPrefix;
     rgb[iOff++] = 40;
     memset(&rgb[iOff], 1, 40);
     iOff += 40;
@@ -361,8 +363,7 @@ static void test_ReadRtPlr_bounds_record_lengths(void) {
     iOff += 4;
     memset(&rgb[iOff + 1], 'N', 60);
     wVersFile = 0;
-    ((VERS *)&wVersFile)->verMajor = 2;
-    ((VERS *)&wVersFile)->verMinor = 85;
+    wVersFile = (wVersFile & 31) | (85u << 5) | (2u << 12);
 
     memset(&buf, 0x55, sizeof(buf));
     ReadRtPlr(&buf.plr, rgb, sizeof(rgb));
@@ -552,7 +553,16 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
 }
 #endif
 
-TEST_LIST = {{"race attribute high bit", test_RaceGrbit_high_bit},
+static void test_IRaceChecksum_wire_image(void) {
+    std::byte rgb[192];
+    PLAYER plr{};
+    for (int i = 0; i < 192; i++) rgb[i] = static_cast<std::byte>((i * 73 + 11) & 255);
+    TEST_ASSERT(FDecodePlayer(rgb, plr));
+    TEST_CHECK(IRaceChecksum(&plr) == 0x80c0);
+}
+
+TEST_LIST = {{"race checksum uses the fixed 192-byte wire image", test_IRaceChecksum_wire_image},
+             {"race attribute high bit", test_RaceGrbit_high_bit},
              {"LInnateRaceHabitability binary64 rounding", test_LInnateRaceHabitability_double_rounding},
              {"FWasRaceFile imports unprotected legacy race designs", test_FWasRaceFile_imports_unprotected_legacy_designs},
              {"FWasRaceFile replaces protected legacy passwords and confirms name shortening", test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening},

@@ -33,7 +33,7 @@ static int FPumpNativeCheck(void *lpv) {
 
 int main(void) {
     WINDOWSFILEFILTER rg[] = {{"Game \xc3\xa9", "*.m?;*.hst"}, {"All", "*.*"}};
-    NATIVEPICKERCHECK check = {0};
+    NATIVEPICKERCHECK check = {};
     wchar_t wszCwd[32768], wszAfter[32768];
     char szFolder[32768], szPath[32768];
     int fSave, iFilter;

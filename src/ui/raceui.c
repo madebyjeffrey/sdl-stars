@@ -1,4 +1,5 @@
 #include "win.h"
+#include "ownership.h"
 #include <stars_compat.h>
 
 int16_t RaceCreationWizard(HWND hwndParent, int16_t fReadOnly, int16_t fDontWrite) {
@@ -160,7 +161,9 @@ INT_PTR CALLBACK RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         } else {
             for (i = 0; i < 7; i++) {
                 vplr.iPlrBmp = vrgplrDef[i].iPlrBmp;
-                if (memcmp(&vplr, &vrgplrDef[i], 128) == 0)
+                std::byte rgb[cbWirePlayer], rgbDef[cbWirePlayer];
+                FEncodePlayer(vplr, rgb); FEncodePlayer(vrgplrDef[i], rgbDef);
+                if (memcmp(rgb, rgbDef, ibWirePlayerNames) == 0)
                     break;
             }
             vplr.iPlrBmp = iPlrBmp;
@@ -671,7 +674,7 @@ int16_t FTrackRaceDlg2(HWND hwnd, POINT16 pt, int16_t kbd) {
     int16_t i;
     int16_t irc;
     int16_t iMod;
-    char   *psz;
+    const char *psz;
     int16_t dWidth;
     int16_t dx;
 
@@ -1288,6 +1291,7 @@ INT_PTR CALLBACK RaceWizardDlg6(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 }
 
 void InvalidateAdvPtsRect(HWND hwnd) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     HDC        hdc;
     TEXTMETRIC tm;
     LOGFONT   *plf;
@@ -1298,6 +1302,7 @@ void InvalidateAdvPtsRect(HWND hwnd) {
     HFONT      hfontSav;
 
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+    plfOwner.reset(plf);
     hdc = GetDC(hwnd);
     plf->lfHeight = -24;
     strcpy(plf->lfFaceName, rgszArial[1]);
@@ -1311,13 +1316,14 @@ void InvalidateAdvPtsRect(HWND hwnd) {
     rc.bottom = rc.top + dyBig + 4;
     SelectObject(hdc, hfontSav);
     DeleteObject(hfont);
-    LocalFree(plf);
+    plfOwner.reset();
     ReleaseDC(hwnd, hdc);
     InvalidateRect(hwnd, &rc, TRUE);
     return;
 }
 
 void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     TEXTMETRIC tm;
     LOGFONT   *plf;
     COLORREF   crBkSav;
@@ -1334,6 +1340,7 @@ void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
     HFONT      hfontSav;
 
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+    plfOwner.reset(plf);
     plf->lfHeight = -24;
     CchGetString(idsArialBold, plf->lfFaceName);
     hfont = CreateFontIndirect(plf);
@@ -1370,7 +1377,7 @@ void DrawRaceAdvantagePoints(HDC hdc, RECT *prc, PLAYER *pplr) {
     SetBkMode(hdc, bkMode);
     SelectObject(hdc, hfontSav);
     DeleteObject(hfont);
-    LocalFree(plf);
+    plfOwner.reset();
     return;
 }
 
@@ -1436,7 +1443,7 @@ int16_t FSaveRace(char *szFileSuggest, PLAYER *pplr) {
         }
         WriteRtPlr(pplr, NULL);
         icksum = IRaceChecksum(pplr);
-        WriteRt(rtEOF, 2, &icksum);
+        WriteRtEof(icksum);
         StreamClose();
         SetSzRaceFile(&szFile[ofn.nFileOffset]);
         return TRUE;
@@ -1453,3 +1460,5 @@ void SetRCWTitle(HWND hwnd, int16_t iStep) {
     SetWindowText(hwnd, szWork);
     return;
 }
+
+void ResetRaceUiSession() noexcept { szRaceFileSuggest[0] = 0; }

@@ -194,9 +194,9 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                                 13, 10);
                 if (lpmsgplr->cLen >= 0) {
                     i = 1000;
-                    FDecompressUserString((char *)lpmsgplr->rgbMsg, lpmsgplr->cLen, (char *)lpb2k + cch, &i);
+                    FDecompressUserString((char *)lpmsgplr->rgbMsg(), lpmsgplr->cLen, (char *)lpb2k + cch, &i);
                 } else {
-                    strcpy((char *)lpb2k + cch, (const char *)lpmsgplr->rgbMsg);
+                    strcpy((char *)lpb2k + cch, (const char *)lpmsgplr->rgbMsg());
                 }
                 lpsz = (char *)lpb2k;
             } else {
@@ -361,7 +361,7 @@ LRESULT CALLBACK MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     lpth = LpthFromId(vptMsg.x);
                     if (!lpth)
                         break;
-                    scan.pt = lpth->pt;
+                    scan.pt = lpth->pt();
                     scan.grobj = grobjThing;
                     ChangeScanSel(&scan, 0);
                     CtrPointScan(scan.pt, TRUE);
@@ -530,15 +530,15 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
     int16_t  cbNew;
     int16_t  iPlrTo;
     MSGPLR  *lpmpCur;
-    MSGPLR  *lpmpPrev;
+    MSGPLR **lpmpPrev;
     int16_t  cb;
 
-    lpmpPrev = (MSGPLR *)&vlpmsgplrOut;
+    lpmpPrev = &vlpmsgplrOut;
     i = iMsgSendCur;
     while (i-- > 0) {
-        lpmpPrev = lpmpPrev->lpmsgplrNext;
+        lpmpPrev = &(*lpmpPrev)->lpmsgplrNext;
     }
-    lpmpCur = lpmpPrev->lpmsgplrNext;
+    lpmpCur = *lpmpPrev;
     if (dInc == 1000) {
         cb = 0;
         dInc = 0;
@@ -548,7 +548,7 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
     if (cb == 0) {
         if (lpmpCur) {
             DirtyGame(TRUE);
-            lpmpPrev->lpmsgplrNext = lpmpCur->lpmsgplrNext;
+            *lpmpPrev = lpmpCur->lpmsgplrNext;
             FreeLp(lpmpCur, htPlrMsg);
             vcmsgplrOut--;
             if (iMsgSendCur > 0) {
@@ -573,22 +573,22 @@ int16_t FFinishPlrMsgEntry(int16_t dInc) {
     cbNew = abs(cb) + 12;
     iPlrTo = LOWORD(SendMessage(hwndMsgDrop, CB_GETCURSEL, 0, 0));
     if (lpmpCur) {
-        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg, lpbMsg, abs(cb)) != 0) {
+        if (cb != lpmpCur->cLen || lpmpCur->iPlrTo != iPlrTo || memcmp(lpmpCur->rgbMsg(), lpbMsg, abs(cb)) != 0) {
             DirtyGame(TRUE);
         }
-        lpmpCur = (MSGPLR *)LpReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
+        lpmpCur = LpmsgplrReAlloc(lpmpCur, cbNew + (sizeof(MSGPLR) - 12));
     } else {
         DirtyGame(TRUE);
-        lpmpCur = (MSGPLR *)LpAlloc(cbNew + (sizeof(MSGPLR) - 12), htPlrMsg);
+        lpmpCur = LpmsgplrAlloc(cbNew + (sizeof(MSGPLR) - 12));
         lpmpCur->lpmsgplrNext = NULL;
         vcmsgplrOut++;
         lpmpCur->iInRe = iMsgCur;
     }
-    lpmpPrev->lpmsgplrNext = lpmpCur;
+    *lpmpPrev = lpmpCur;
     lpmpCur->iPlrFrom = idPlayer;
     lpmpCur->iPlrTo = iPlrTo;
     lpmpCur->cLen = cb;
-    memmove(lpmpCur->rgbMsg, lpbMsg, abs(cb));
+    memmove(lpmpCur->rgbMsg(), lpbMsg, abs(cb));
     iMsgSendCur += dInc;
     if (iMsgSendCur < 0) {
         iMsgSendCur = 0;
@@ -641,11 +641,11 @@ void SetMsgTitle(HWND hwnd) {
             if (lpmp) {
                 SendMessage(hwndMsgDrop, CB_SETCURSEL, lpmp->iPlrTo, 0);
                 if (lpmp->cLen < 0) {
-                    SetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg);
+                    SetWindowText(hwndMsgEdit, (LPCSTR)lpmp->rgbMsg());
                     goto FinishUp;
                 } else {
                     i = 1000;
-                    FDecompressUserString((char *)lpmp->rgbMsg, lpmp->cLen, (char *)lpb2k, &i);
+                    FDecompressUserString((char *)lpmp->rgbMsg(), lpmp->cLen, (char *)lpb2k, &i);
                     SetWindowText(hwndMsgEdit, (LPCSTR)lpb2k);
                 }
                 goto FinishUp;
@@ -732,3 +732,5 @@ void UpdateMsgTitle() {
     SetMsgTitle(hwndMessage);
     return;
 }
+
+void ResetMessageInputSession() noexcept { dWheelMessages = 0; }

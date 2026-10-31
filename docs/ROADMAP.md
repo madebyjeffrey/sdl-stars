@@ -5,6 +5,36 @@ the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,
 and its builds count toward 2.9.1.
 
+B02 now scopes file/memory registry locks with the existing acquire/release spin
+policy. A native-operation fault test reproduces the previous retry deadlock;
+scoped unlocking, nested dispatch and primary-failure cleanup tests pass.
+The pending-error service also preserves an exception already unwinding rather
+than storing a later callback failure from its cleanup. Core and real-window
+fault cases distinguish this from standalone cleanup failure delivery.
+Native file selection and resource-backed modal dialogs now scope window,
+owner/focus and chooser-buffer cleanup. A chooser-adapter fault reproduces the
+old disabled-owner/stale-counter state and verifies restoration, cancellation
+and cleanup-failure delivery without opening a native picker.
+Popup teardown failure now prevents a queued command or selected-ID return;
+actual failure/capture tests also retain ordinary successful command delivery.
+Message-box, popup-tracking, folder and dialog-factory cleanup scopes are
+implemented. Modeless initialization failure now destroys the partial window
+before checked C++ delivery instead of publishing an unreachable live handle.
+Presentation batching now balances its counters on failure/destruction; refresh
+and live-resize flags restore during unwinding. The SDL watcher contains foreign
+callback failures and stops drawing after failed layout or paint. Lists, combos
+and toolbars now retire their window ownership immediately while active callback
+frames retain borrowed control storage; scoped flags restore before those leases
+end. Failed owner-disable callbacks now stop dialog/file-chooser/message-box
+initialization, and combo opening rolls back its own failed popup while retaining
+a reentrant replacement. Profile read/write locks and partial buffers/temporary
+files now unwind safely; injected read/load/save failures preserve the existing
+destination and permit retry. B02 local qualification and all 16 Linux/Windows
+checks pass for `d5de69e`. B03 adds const text/path/format/menu inputs and
+call-scoped UTF-8/output/byte views, retaining mutable scratch buffers and the
+legacy text-drawing output mode. Its full local matrix and all 16 Linux/Windows
+checks pass for `b799348`.
+
 ## C++ migration
 
 Milestone A of the [native C++ migration plan](CPP-MIGRATION.md) is implemented
@@ -15,8 +45,24 @@ Application headers have native C++ linkage and compile independently with
 standard headers in either order. Independent C storage and SDK references remain
 separate. The compilation audit reads sources and compiler manifests explicitly
 as UTF-8 so Windows locale settings do not affect qualification. Milestone B
-(ownership, wire codecs, state and ISO C++ storage) remains proposed; GNU storage
-extensions and manual heaps are retained for now.
+(ownership, wire codecs, state and ISO C++ storage) is implemented in one
+[PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66), tracked by
+[#65](https://github.com/madebyjeffrey/sdl-stars/issues/65). Owned production uses
+strict ISO C++20; typed stable arenas retain the original allocation geometry.
+One application session owns game/UI state, RNG, heaps and native streams.
+Final platform qualification is recorded in the implementation ledger.
+
+Native `leaks` checks now exercise image/font/print ownership and allocation
+failure. `LpNewFontRaster` no longer triggers a second, unowned configuration
+through default substitution on Fontconfig 2.17+; older versions retain their
+original entry point. See the [B implementation ledger](CPP-B-IMPLEMENTATION.md).
+
+The platform environment adapter now uses an explicit lookup helper instead of
+a `getenv` macro, preserving Windows SDL/POSIX CRT behavior without poisoning
+C++ standard-library declarations. Its private header joins the independent
+include-order compilation gate. Workflow harnesses that formerly inherited the
+macro call the helper explicitly so their Windows Unicode path/name fixtures
+continue to exercise UTF-8 rather than the CRT code page.
 
 The prerequisite steps below record the earlier migration checkpoints.
 

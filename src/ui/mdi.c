@@ -1,4 +1,6 @@
 #include "win.h"
+#include <stars_compat.h>
+#include "ownership.h"
 #include <SDL3/SDL.h>
 
 char rgTOWidth[2][2] = {{-3}, {2, 1}};
@@ -333,7 +335,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         fErrSav = fFileErrSilent;
         fFileErrSilent = TRUE;
         gd.fDontDoLogFiles = TRUE;
-        if (!FLoadGame(szBase, (char *)"m1")) {
+        if (!FLoadGame(szBase, "m1")) {
             fFileErrSilent = fErrSav;
             gd.fDontDoLogFiles = FALSE;
             return 0;
@@ -1037,6 +1039,15 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
             pd.lStructSize = sizeof(PRINTDLG);
             pd.Flags = PD_RETURNDC | PD_RETURNDEFAULT;
             if (PrintDlg(&pd) != 0) {
+                hfontPrint = NULL;
+                hfontPrintTiny = NULL;
+                NATIVECLEANUPSCOPE print([&]() noexcept {
+                    if (hfontPrint) DeleteObject(hfontPrint);
+                    if (hfontPrintTiny) DeleteObject(hfontPrintTiny);
+                    DeleteDC(pd.hDC);
+                    if (pd.hDevMode) GlobalFree(pd.hDevMode);
+                    if (pd.hDevNames) GlobalFree(pd.hDevNames);
+                });
                 dxMax = GetDeviceCaps(pd.hDC, HORZRES);
                 dyMax = GetDeviceCaps(pd.hDC, VERTRES);
                 dxDPI = GetDeviceCaps(pd.hDC, LOGPIXELSX);
@@ -1117,9 +1128,9 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                             if (hfontPrintTiny) {
                                 SelectObject(pd.hDC, hfontPrintTiny);
                             }
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"|", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, (char *)"+", 1);
-                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, (char *)"2", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(3 * dyPrint) / 2 + y - dyPrintTiny / 2, "|", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(5 * dyPrint) / 2 + y - dyPrintTiny / 2, "+", 1);
+                            CtrTextOut(pd.hDC, ptLegendB.x + xOff, (int16_t)(9 * dyPrint) / 2 + y + 8 - dyPrintTiny, "2", 1);
                             if (hfontPrint) {
                                 SelectObject(pd.hDC, hfontPrint);
                             }
@@ -1175,19 +1186,7 @@ void CommandHandler(HWND hwnd, WPARAM wParam) {
                 }
                 iPrintResult = Escape(pd.hDC, ENDDOC, 0, NULL, NULL);
 LPrintMapCleanup:
-                if (hfontPrint) {
-                    DeleteObject(hfontPrint);
-                }
-                if (hfontPrintTiny) {
-                    DeleteObject(hfontPrintTiny);
-                }
-                DeleteDC(pd.hDC);
-                if (pd.hDevMode) {
-                    GlobalFree(pd.hDevMode);
-                }
-                if (pd.hDevNames) {
-                    GlobalFree(pd.hDevNames);
-                }
+                print.Close();
                 if (iPrintResult <= 0 && iPrintResult != SP_APPABORT)
                     AlertSz(PszFormatIds(idsUnablePrintGameMapPrinterMayOff, NULL), MB_ICONHAND);
             } else {
@@ -1793,7 +1792,7 @@ LGotFileName:
     strcpy(szBase, szFile);
     if (!FLoadGame(szFile, &szFile[ofn.nFileExtension])) {
         if (ini.fStartupFile) {
-            ini.wFlags = 0;
+            ini.SetWFlags(0);
             fFileErrSilent = FALSE;
         }
         return 0;
@@ -2535,10 +2534,10 @@ void WriteIniSettings() {
             if (vrgZip[i].fValid) {
                 psz = szWork;
                 for (iPass = 0; iPass < 5; iPass++) {
-                    *psz++ = vrgZip[i].txp.rgia[iPass].iAction + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan & 0xf) + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan >> 4 & 0xf) + 'a';
-                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan >> 8 & 0xf) + 'a';
+                    *psz++ = vrgZip[i].txp.rgia[iPass].iAction() + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() & 0xf) + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() >> 4 & 0xf) + 'a';
+                    *psz++ = (vrgZip[i].txp.rgia[iPass].cQuan() >> 8 & 0xf) + 'a';
                 }
                 strcpy(psz, vrgZip[i].szName);
             } else {
@@ -2677,6 +2676,7 @@ void RefitFrameChildren() {
 }
 
 LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     HDC         hdc;
     int16_t     i;
     HPALETTE    hpalSav;
@@ -2903,18 +2903,16 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_STARS_IMPORT_FOLDER:
-        if ((char *)wParam) {
-            if (FImportLibraryGame(hwnd, (char *)wParam)) {
+        if (auto *pszPath = static_cast<char *>(PvCompatMessagePayload(wParam))) {
+            if (FImportLibraryGame(hwnd, pszPath)) {
                 RefreshLibraryGames(hwnd);
                 RefreshLibraryHostGames(hwnd);
             }
-            SDL_free((char *)wParam);
         }
         break;
     case WM_STARS_EXPORT_FOLDER:
-        if ((char *)wParam) {
-            FExportSelectedLibraryGame(hwnd, (char *)wParam);
-            SDL_free((char *)wParam);
+        if (auto *pszPath = static_cast<char *>(PvCompatMessagePayload(wParam))) {
+            FExportSelectedLibraryGame(hwnd, pszPath);
         }
         break;
     case WM_PAINT:
@@ -2925,6 +2923,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         }
         plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+        plfOwner.reset(plf);
         hdc = BeginPaint(hwnd, &ps);
         hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
         GetClientRect(hwnd, &rcWnd);
@@ -2951,7 +2950,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 SetBkMode(hdc, TRANSPARENT);
                 rcT = rcWnd;
                 rcT.bottom = (int16_t)(3 * rcT.bottom) / 4;
-                RcCtrTextOut(hdc, &rcT, (char *)"Stars!", 6);
+                RcCtrTextOut(hdc, &rcT, "Stars!", 6);
                 SelectObject(hdc, hfontSav);
                 DeleteObject(hfont);
             }
@@ -2965,7 +2964,7 @@ LRESULT CALLBACK TitleWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         rcWnd.bottom = (int16_t)(3 * dyArial8) / 2 + rcWnd.top;
         RcCtrTextOut(hdc, &rcWnd, szWork, strlen(szWork));
         EndPaint(hwnd, &ps);
-        LocalFree(plf);
+        plfOwner.reset();
         break;
     default:
     Default:

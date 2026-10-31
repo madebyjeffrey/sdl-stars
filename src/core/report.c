@@ -2,11 +2,11 @@
 
 uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
-char *PszGetDestName(FLEET *lpfl, HDC hdc) {
+const char *PszGetDestName(FLEET *lpfl, HDC hdc) {
     int16_t i;
     ORDER   ord;
 
-    ord = lpfl->lpplord->rgord[0];
+    ord = lpfl->lpplord->rgord()[0];
     if (lpfl->cord <= 1)
         goto LNoDest;
 
@@ -14,7 +14,7 @@ char *PszGetDestName(FLEET *lpfl, HDC hdc) {
         switch (ord.grTask) {
         case grTaskXfer:
             for (i = 0; i < 5; i++) {
-                if (ord.txp.rgia[i].iAction == iActionWaitPercent)
+                if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
                     goto LDelayed;
             }
             break;
@@ -35,7 +35,7 @@ char *PszGetDestName(FLEET *lpfl, HDC hdc) {
             break;
         }
     }
-    ord = lpfl->lpplord->rgord[1];
+    ord = lpfl->lpplord->rgord()[1];
     return PszGetLocName(static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
 
 LNoDest:
@@ -46,13 +46,13 @@ int16_t FDestIsWP0(FLEET *lpfl) {
     int16_t i;
     ORDER   ord;
 
-    ord = lpfl->lpplord->rgord[0];
+    ord = lpfl->lpplord->rgord()[0];
     if (lpfl->cord > 1) {
         if (ord.fValidTask) {
             switch (ord.grTask) {
             case grTaskXfer:
                 for (i = 0; i < 5; i++) {
-                    if (ord.txp.rgia[i].iAction == iActionWaitPercent) {
+                    if (ord.txp.rgia[i].iAction() == iActionWaitPercent) {
                         return TRUE;
                     }
                 }
@@ -72,21 +72,21 @@ int16_t FDestIsWP0(FLEET *lpfl) {
     return TRUE;
 }
 
-char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
+const char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
     POINT16 pt;
     int16_t c;
     int16_t i;
     ORDER   ord;
     char   *psz;
 
-    ord = lpfl->lpplord->rgord[0];
+    ord = lpfl->lpplord->rgord()[0];
     pt = ord.pt;
     if (lpfl->cord > 1) {
         if (ord.fValidTask) {
             switch (ord.grTask) {
             case grTaskXfer:
                 for (i = 0; i < 5; i++) {
-                    if (ord.txp.rgia[i].iAction == iActionWaitPercent)
+                    if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
                         goto LNoETA;
                 }
                 break;
@@ -101,7 +101,7 @@ char *PszGetETA(HDC hdc, FLEET *lpfl, int16_t *pcYears) {
                 goto LNoETA;
             }
         }
-        ord = lpfl->lpplord->rgord[1];
+        ord = lpfl->lpplord->rgord()[1];
         CchGetETA(hdc, lpfl, szWork, 1, TRUE);
         if (hdc && EstFuelUse(lpfl, 0, ord.iWarp, -1, FALSE) > lpfl->rgwtMin[4]) {
             SetHdcTextColor(hdc, 0xff);
@@ -126,7 +126,7 @@ LNoETA:
     return szDblDash;
 }
 
-char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
+const char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
     int16_t        icr;
     StringId       ids;
     XferActionType opOrd;
@@ -137,13 +137,13 @@ char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
     char          *psz;
 
     icr = -1;
-    ord = lpfl->lpplord->rgord[0];
+    ord = lpfl->lpplord->rgord()[0];
     *picr = -1;
     if (ord.fValidTask) {
         switch (ord.grTask) {
         case grTaskXfer:
             for (i = 0; i < 4; i++) {
-                if (ord.txp.rgia[i].iAction == iActionWaitPercent)
+                if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
                     goto LShowTask;
             }
             break;
@@ -156,7 +156,7 @@ char *PszGetTaskName(FLEET *lpfl, int16_t *picr) {
         }
     }
     if (lpfl->cord > 1) {
-        ord = lpfl->lpplord->rgord[1];
+        ord = lpfl->lpplord->rgord()[1];
     }
 LShowTask:
     if (ord.fValidTask) {
@@ -169,16 +169,16 @@ LShowTask:
             }
             ids = idsAction;
             iZip = -1;
-            if (ord.txp.rgia[4].iAction == iActionLoadDunnage &&
-                (ord.txp.rgia[3].iAction == iActionNone || (ord.txp.rgia[3].iAction == iActionUnloadAll && ord.txp.rgia[0].iAction == iActionUnloadAll))) {
-                opOrd = static_cast<XferActionType>(ord.txp.rgia[0].iAction);
+            if (ord.txp.rgia[4].iAction() == iActionLoadDunnage &&
+                (ord.txp.rgia[3].iAction() == iActionNone || (ord.txp.rgia[3].iAction() == iActionUnloadAll && ord.txp.rgia[0].iAction() == iActionUnloadAll))) {
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[0].iAction());
                 switch (opOrd) {
                 default:
                     break;
                 case iActionLoadAll:
                 case iActionUnloadAll:
                 case iActionWaitPercent:
-                    for (i = 1; i < 3 && ord.txp.rgia[i].iAction == opOrd; i++) {
+                    for (i = 1; i < 3 && ord.txp.rgia[i].iAction() == opOrd; i++) {
                     }
                     if (i == 3) {
                         switch (opOrd) {
@@ -198,7 +198,7 @@ LShowTask:
                 }
             }
             for (i = 4; i >= 0; i--) {
-                opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction);
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction());
                 if (idsAction + static_cast<int>(opOrd) > (int16_t)ids) {
                     ids = static_cast<StringId>(idsAction + static_cast<int>(opOrd));
                     icr = i;
@@ -207,7 +207,7 @@ LShowTask:
             if (ids == idsAction) {
                 return PszGetCompressedString(idsTransport);
             }
-            opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction);
+            opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
             *picr = icr;
             fPercent = FALSE;
             switch (opOrd) {
@@ -229,24 +229,24 @@ LShowTask:
                 psz = PszGetCompressedString(ids);
                 psz[strlen(psz) - 3] = 0;
                 if (fPercent) {
-                    CchSprintf(szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan);
+                    CchSprintf(szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
-                    CchSprintf(szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan);
+                    CchSprintf(szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
                 }
                 return szWork;
             default:
                 return szDblDash;
             }
         case grTaskLayMines:
-            if (ord.tlm.cTime < 5) {
-                CchSprintf(szWork, "%s  %dy", PszGetCompressedString(ids), ord.tlm.cTime + 1);
+            if (ord.tlm().cTime < 5) {
+                CchSprintf(szWork, "%s  %dy", PszGetCompressedString(ids), ord.tlm().cTime + 1);
             } else {
                 CchGetString(ids, szWork);
             }
             return szWork;
         case grTaskPatrol:
-            if (ord.tptl.iDist < 11) {
-                CchSprintf(szWork, "%s  %dly", PszGetCompressedString(ids), (ord.tptl.iDist + 1) * 50);
+            if (ord.tptl().iDist < 11) {
+                CchSprintf(szWork, "%s  %dly", PszGetCompressedString(ids), (ord.tptl().iDist + 1) * 50);
             } else {
                 CchGetString(ids, szWork);
             }
@@ -488,9 +488,9 @@ void DumpPlanets() {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
                                 FLookupPart(&part);
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb->grAbility2, NULL));
+                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility2, NULL));
                                 RgToStream(szForm, strlen(szForm));
-                                strcpy(&szForm[1], PszFromInt(part.pspecialsb->grAbility, NULL));
+                                strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility, NULL));
                                 RgToStream(szForm, strlen(szForm));
                             }
                         } else {
@@ -603,16 +603,16 @@ void DumpFleets() {
                 RgToStream(szForm, cch);
                 if (lpfl->det == detAll) {
                     strcpy(&szForm[1], PszGetDestName(lpfl, NULL));
-                } else if (gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid) {
-                    strcpy(&szForm[1], PszFromInt(lpfl->dirFltX, NULL));
+                } else if (gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
+                    strcpy(&szForm[1], PszFromInt(lpfl->dirFltX(), NULL));
                     strcat(szForm, ".");
-                    strcat(szForm, PszFromInt(lpfl->dirFltY, NULL));
+                    strcat(szForm, PszFromInt(lpfl->dirFltY(), NULL));
                 } else {
                     szForm[1] = 0;
                 }
                 RgToStream(szForm, strlen(szForm));
-                if (rglpbtlplan[lpfl->iplr] != 0) {
-                    strcpy(&szForm[1], rglpbtlplan[lpfl->iplr][lpfl->iplan].szName);
+                if (rglpbtlplan[lpfl->iplr()] != 0) {
+                    strcpy(&szForm[1], rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
                 } else {
                     szForm[1] = 0;
                 }
@@ -638,9 +638,9 @@ void DumpFleets() {
                     }
                     RgToStream(szForm, strlen(szForm));
                     if (lpfl->cord >= 2) {
-                        i = lpfl->lpplord->rgord[1].iWarp;
-                    } else if (lpfl->det < detAll && lpfl->fdirValid) {
-                        i = lpfl->iwarpFlt;
+                        i = lpfl->lpplord->rgord()[1].iWarp;
+                    } else if (lpfl->det < detAll && lpfl->fdirValid()) {
+                        i = lpfl->iwarpFlt();
                     } else {
                         i = 0;
                     }

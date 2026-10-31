@@ -93,7 +93,8 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
     int16_t *pi;
     int16_t  i;
     uint16_t grbit;
-    MSGTURN *lpmt;
+    uint8_t *lpmt;
+    MSGTURN mt{};
     uint8_t *lpb;
     uint8_t *lpbBase;
     int16_t  rgArgs[7];
@@ -116,11 +117,12 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
         return -1;
     }
     lpb = pb;
-    lpmt = (MSGTURN *)lpb;
-    lpmt->iPlr = iPlr & 0xf;
-    lpmt->msghdr.iMsg = iMsg;
-    lpmt->msghdr.grWord = 0;
-    lpmt->msghdr.wGoto = iObj;
+    lpmt = lpb;
+    mt.iPlr = iPlr & 0xf;
+    mt.msghdr.iMsg = iMsg;
+    mt.msghdr.grWord = 0;
+    mt.msghdr.wGoto = iObj;
+    FEncodeMsgTurn(mt, std::as_writable_bytes(std::span(lpb, cbWireMsgTurn)));
     lpb += 5;
     lpbBase = lpb;
     grbit = 1;
@@ -135,8 +137,8 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            lpmt->msghdr.grWord |= grbit;
-            RawStore16(lpb, *pi);
+            MtvFromPrefix(lpmt).msghdr().SetGrWord(MtvFromPrefix(lpmt).msghdr().grWord() | grbit);
+            SetMsgParam(lpb, *pi);
             lpb += 2;
         } else {
             *lpb = *pi;
@@ -146,7 +148,7 @@ int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, in
         pi++;
         grbit *= 2;
     }
-    lpmt->cbParams = (lpb - lpbBase) & 0xf;
+    MtvFromPrefix(lpmt).SetCbParams((lpb - lpbBase) & 0xf);
     return lpb - pb;
 }
 
@@ -157,18 +159,20 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     uint16_t grbit;
     uint8_t *pb;
     uint16_t cSize;
-    MSGHDR  *pmsghdr;
+    uint8_t *pmsghdr;
+    MSGHDR mh{};
     int16_t  rgArgs[2];
 
     if ((uint16_t)(imemMsgCur + 20) > 0xffc8) {
         return FALSE;
     }
     pb = rgb;
-    pmsghdr = (MSGHDR *)pb;
-    pmsghdr->iMsg = iMsg;
+    pmsghdr = pb;
+    mh.iMsg = iMsg;
     bitfMsgSent[iMsg >> 3] = (bitfMsgSent[iMsg >> 3] & ~(1 << (iMsg & 7))) | 1 << (iMsg & 7);
-    pmsghdr->grWord = 0;
-    pmsghdr->wGoto = iObj;
+    mh.grWord = 0;
+    mh.wGoto = iObj;
+    FEncodeMsgHdr(mh, std::as_writable_bytes(std::span(pb, cbWireMsgHdr)));
     pb += 4;
     grbit = 1;
     rgArgs[0] = p1;
@@ -177,8 +181,8 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            pmsghdr->grWord |= grbit;
-            RawStore16(pb, *pi);
+            MhvFromPrefix(pmsghdr).SetGrWord(MhvFromPrefix(pmsghdr).grWord() | grbit);
+            SetMsgParam(pb, *pi);
             pb += 2;
         } else {
             *pb = *pi;
@@ -214,7 +218,7 @@ int16_t IdmGetMessageN(int16_t iMsg) {
 int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
     uint8_t *lpbMax;
     int16_t  iMax;
-    MSGHDR  *lpmh;
+    uint8_t *lpmh;
     int16_t  i;
     uint8_t *lpb;
     uint16_t u;
@@ -225,17 +229,17 @@ int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
     while (lpb < lpbMax) {
-        lpmh = (MSGHDR *)lpb;
-        u = lpmh->grWord;
+        lpmh = lpb;
+        u = MhvFromLp(lpmh).grWord();
         lpb += 4;
         if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-            pmb->iMsg = lpmh->iMsg;
-            pmb->wGoto = lpmh->wGoto;
+            pmb->iMsg = MhvFromLp(lpmh).iMsg();
+            pmb->wGoto = MhvFromLp(lpmh).wGoto();
         }
-        iMax = rgcMsgArgs[lpmh->iMsg];
+        iMax = rgcMsgArgs[MhvFromLp(lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-                pmb->rgParam[i] = !(u & 1) ? *lpb : RawLoad16(lpb);
+                pmb->rgParam[i] = !(u & 1) ? *lpb : WMsgParam(lpb);
             }
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
@@ -262,20 +266,21 @@ char *PszGetMessageN(int16_t iMsg) {
 // Formatting may expand bounded names or paths beyond the message buffer.
 static char *PchAppendMessageText(char *pch, const char *psz) {
     size_t cch;
+    std::string_view szText(psz);
 
-    cch = CchUtf8Prefix(psz, (size_t)(szMsgBuf + sizeof(szMsgBuf) - 1 - pch));
+    cch = CchUtf8Prefix(szText, (size_t)(szMsgBuf + sizeof(szMsgBuf) - 1 - pch));
     memmove(pch, psz, cch);
     pch[cch] = 0;
     return pch + cch;
 }
 
-char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
+char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
     int16_t  iMineral;
     int16_t  cOut;
     int16_t  c;
     int16_t  i;
     int16_t *pParams;
-    char    *pchT;
+    const char *pchT;
     char     szBuf[480];
     uint16_t w;
     char    *pch;
@@ -427,7 +432,7 @@ char *PszFormatString(char *pszFormat, int16_t *pParamsReal) {
                 part.hs.iItem = *pParams;
                 if (FLookupPart(&part) <= mdPartAvailInvalid) {
                 }
-                pch = PchAppendMessageText(pch, part.pcom->szName);
+                pch = PchAppendMessageText(pch, part.pcom().szName());
                 pParams++;
                 break;
             case 'g':
@@ -523,10 +528,10 @@ int16_t FRemovePlayerMessage(int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     cDel = 0;
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlr && ((MSGTURN *)lpb)->msghdr.iMsg == iMsg && ((MSGTURN *)lpb)->msghdr.wGoto == iObj) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlr && MtvFromLp(lpb).msghdr().iMsg() == iMsg && MtvFromLp(lpb).msghdr().wGoto() == iObj) {
             cDel++;
-            ((MSGTURN *)lpb)->msghdr.iMsg = 0x1ff;
+            MtvFromLp(lpb).msghdr().SetIMsg(0x1ff);
         }
     }
     return cDel;
@@ -538,8 +543,8 @@ int16_t FFindPlayerMessage(int16_t iPlr, int16_t iMsg, MsgGoto iObj) {
 
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlr && ((MSGTURN *)lpb)->msghdr.iMsg == iMsg && ((MSGTURN *)lpb)->msghdr.wGoto == iObj) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlr && MtvFromLp(lpb).msghdr().iMsg() == iMsg && MtvFromLp(lpb).msghdr().wGoto() == iObj) {
             return TRUE;
         }
     }
@@ -555,18 +560,18 @@ void MarkPlanetsPlayerLost(int16_t iPlayer) {
 
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
-    for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
-        if (((MSGTURN *)lpb)->iPlr == iPlayer) {
-            switch (((MSGTURN *)lpb)->msghdr.iMsg) {
+    for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
+        if (MtvFromLp(lpb).iPlr() == iPlayer) {
+            switch (MtvFromLp(lpb).msghdr().iMsg()) {
             case 0x8f:
-                w = ((MSGTURN *)lpb)->msghdr.grWord;
+                w = MtvFromLp(lpb).msghdr().grWord();
                 lpbT = lpb + (((w & 1) == 1) + 6);
-                w = !(w & 2) ? *lpbT : RawLoad16(lpbT);
+                w = !(w & 2) ? *lpbT : WMsgParam(lpbT);
                 goto LLookupPlanet;
             case 7:
             case 0x23:
             case 0x40:
-                w = ((MSGTURN *)lpb)->msghdr.wGoto;
+                w = MtvFromLp(lpb).msghdr().wGoto();
             LLookupPlanet:
                 lppl = LpplFromId(w);
                 if (lppl) {
@@ -601,7 +606,7 @@ void MarkPlanetsPlayerLost(int16_t iPlayer) {
             case 0x114:
             case 0x115:
             case 0x116:
-                w = ((MSGTURN *)lpb)->msghdr.wGoto;
+                w = MtvFromLp(lpb).msghdr().wGoto();
             }
             continue;
         }
@@ -634,14 +639,14 @@ void WritePlayerMessages(int16_t iPlayer) {
     if (iPlayer != iplrNone) {
         lpb = (uint8_t *)lpMsg;
         lpbMax = lpb + imemMsgCur;
-        for (; lpb < lpbMax; lpb += sizeof(MSGTURN) + ((MSGTURN *)lpb)->cbParams) {
+        for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
             if (cbMsg + 20 >= 1024) {
                 WriteRt(rtMsg, cbMsg, rgb);
                 cbMsg = 0;
             }
-            if (((MSGTURN *)lpb)->iPlr == iPlayer && ((MSGTURN *)lpb)->msghdr.iMsg != 0x1ff) {
-                memmove(&rgb[cbMsg], &((MSGTURN *)lpb)->msghdr, sizeof(MSGHDR) + ((MSGTURN *)lpb)->cbParams);
-                cbMsg += sizeof(MSGHDR) + ((MSGTURN *)lpb)->cbParams;
+            if (MtvFromLp(lpb).iPlr() == iPlayer && MtvFromLp(lpb).msghdr().iMsg() != 0x1ff) {
+                memmove(&rgb[cbMsg], MtvFromLp(lpb).Header(), cbWireMsgHdr + MtvFromLp(lpb).cbParams());
+                cbMsg += cbWireMsgHdr + MtvFromLp(lpb).cbParams();
             }
         }
         if (cbMsg != 0) {
@@ -672,15 +677,21 @@ void ResetMessages() {
 
 void WriteRtPlrMsg(MSGPLR *lpmp) {
     uint8_t rgb[1024];
+    RTPLRMSG msg{};
 
-    ((RTPLRMSG *)rgb)->lpmsgplrNext = 0;
-    ((RTPLRMSG *)rgb)->iPlrFrom = lpmp->iPlrFrom;
-    ((RTPLRMSG *)rgb)->iPlrTo = lpmp->iPlrTo;
-    ((RTPLRMSG *)rgb)->iInRe = lpmp->iInRe;
-    ((RTPLRMSG *)rgb)->cLen = lpmp->cLen;
-    memcpy(((RTPLRMSG *)rgb)->rgbMsg, lpmp->rgbMsg, abs(lpmp->cLen));
-    WriteRt(rtPlrMsg, sizeof(RTPLRMSG) + abs(lpmp->cLen), rgb);
+    msg.lpmsgplrNext = 0;
+    msg.iPlrFrom = lpmp->iPlrFrom;
+    msg.iPlrTo = lpmp->iPlrTo;
+    msg.iInRe = lpmp->iInRe;
+    msg.cLen = lpmp->cLen;
+    FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgb)).first(cbWirePlrMsg));
+    memcpy(rgb + cbWirePlrMsg, lpmp->rgbMsg(), abs(lpmp->cLen));
+    WriteRt(rtPlrMsg, cbWirePlrMsg + abs(lpmp->cLen), rgb);
     return;
+}
+
+static NATIVEPLAYERMESSAGEVIEW PmvCur() noexcept {
+    return {std::as_writable_bytes(std::span(rgbCur)), 0};
 }
 
 // Returns the rtPlrMsg record in rgbCur as a new message, or NULL if the
@@ -693,24 +704,24 @@ MSGPLR *LpmsgplrFromRt() {
     const char *pszEnd;
 
     /* NATIVE: skip records too short for their header or text; see WIN16-PARITY.md. */
-    if (hdrCur.cb < sizeof(RTPLRMSG) || abs(((RTPLRMSG *)rgbCur)->cLen) + sizeof(RTPLRMSG) > hdrCur.cb)
+    if (hdrCur.cb < cbWirePlrMsg || abs(PmvCur().cLen()) + cbWirePlrMsg > hdrCur.cb)
         return NULL;
-    cLen = ((RTPLRMSG *)rgbCur)->cLen;
+    cLen = PmvCur().cLen();
     if (cLen >= 0) {
         cOut = sizeof(szText) - 1;
-        if (!FDecompressUserString((char *)((RTPLRMSG *)rgbCur)->rgbMsg, cLen, szText, &cOut)) return NULL;
+        if (!FDecompressUserString((char *)PmvCur().RgbMsg(), cLen, szText, &cOut)) return NULL;
     } else {
-        pszEnd = (const char *)memchr(((RTPLRMSG *)rgbCur)->rgbMsg, 0, -cLen);
-        if (!pszEnd || pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg >= (int)sizeof(szText) ||
-            !FUtf8Valid((char *)((RTPLRMSG *)rgbCur)->rgbMsg, (size_t)(pszEnd - (char *)((RTPLRMSG *)rgbCur)->rgbMsg))) return NULL;
+        pszEnd = (const char *)memchr(PmvCur().RgbMsg(), 0, -cLen);
+        if (!pszEnd || pszEnd - (char *)PmvCur().RgbMsg() >= (int)sizeof(szText) ||
+            !FUtf8Valid((char *)PmvCur().RgbMsg(), (size_t)(pszEnd - (char *)PmvCur().RgbMsg()))) return NULL;
     }
-    lpmp = (MSGPLR *)LpAlloc(offsetof(MSGPLR, rgbMsg) + hdrCur.cb - sizeof(RTPLRMSG), htPlrMsg);
+    lpmp = LpmsgplrAlloc(sizeof(MSGPLR) + hdrCur.cb - cbWirePlrMsg);
     lpmp->lpmsgplrNext = NULL;
-    lpmp->iPlrFrom = ((RTPLRMSG *)rgbCur)->iPlrFrom;
-    lpmp->iPlrTo = ((RTPLRMSG *)rgbCur)->iPlrTo;
-    lpmp->iInRe = ((RTPLRMSG *)rgbCur)->iInRe;
-    lpmp->cLen = ((RTPLRMSG *)rgbCur)->cLen;
-    memcpy(lpmp->rgbMsg, ((RTPLRMSG *)rgbCur)->rgbMsg, hdrCur.cb - sizeof(RTPLRMSG));
+    lpmp->iPlrFrom = PmvCur().iPlrFrom();
+    lpmp->iPlrTo = PmvCur().iPlrTo();
+    lpmp->iInRe = PmvCur().iInRe();
+    lpmp->cLen = PmvCur().cLen();
+    memcpy(lpmp->rgbMsg(), PmvCur().RgbMsg(), hdrCur.cb - cbWirePlrMsg);
     return lpmp;
 }
 
@@ -718,10 +729,11 @@ void ReadPlayerMessages() {
     uint8_t *lpbMax;
     int16_t  iMax;
     int16_t  fOOM;
-    MSGHDR  *lpmh;
+    uint8_t *lpmh;
     uint16_t imemMsgT;
     int16_t  i;
     MSGPLR  *lpmp;
+    MSGPLR **lppmp;
     uint8_t *lpb;
     uint16_t u;
 
@@ -738,26 +750,27 @@ void ReadPlayerMessages() {
     imemMsgCur += imemMsgT;
     lpbMax = lpb + imemMsgT;
     while (lpb < lpbMax) {
-        lpmh = (MSGHDR *)lpb;
-        bitfMsgSent[lpmh->iMsg >> 3] = (bitfMsgSent[lpmh->iMsg >> 3] & ~(1 << (lpmh->iMsg & 7))) | 1 << (lpmh->iMsg & 7);
+        lpmh = lpb;
+        bitfMsgSent[MhvFromLp(lpmh).iMsg() >> 3] = (bitfMsgSent[MhvFromLp(lpmh).iMsg() >> 3] & ~(1 << (MhvFromLp(lpmh).iMsg() & 7))) | 1 << (MhvFromLp(lpmh).iMsg() & 7);
         cMsg++;
-        u = lpmh->grWord;
+        u = MhvFromLp(lpmh).grWord();
         lpb += 4;
-        iMax = rgcMsgArgs[lpmh->iMsg];
+        iMax = rgcMsgArgs[MhvFromLp(lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
         }
     }
-    for (lpmp = (MSGPLR *)&vlpmsgplrIn; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
+    for (lppmp = &vlpmsgplrIn; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
     }
 
     while (hdrCur.rt == rtPlrMsg) {
         if (!fOOM) {
             try {
-                lpmp->lpmsgplrNext = LpmsgplrFromRt();
-                if (lpmp->lpmsgplrNext) {
-                    lpmp = lpmp->lpmsgplrNext;
+                *lppmp = LpmsgplrFromRt();
+                if (*lppmp) {
+                    lpmp = *lppmp;
+                    lppmp = &lpmp->lpmsgplrNext;
                     vcmsgplrIn++;
                 }
             } catch (const StarsError &error) {

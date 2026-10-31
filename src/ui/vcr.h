@@ -6,9 +6,9 @@
 #include <windows.h>
 
 void             BattleVCR(int16_t iBattle);
-BTLDATA         *BtlDataGet(int16_t i);
-int32_t          CBattleUnits(BTLDATA *lpbd, BattleUnitFlags grbitBU);
-int32_t          CBattleKills(BTLDATA *lpbd, int16_t fOurDead);
+uint8_t         *BtlDataGet(int16_t i);
+int32_t          CBattleUnits(uint8_t *lpbd, BattleUnitFlags grbitBU);
+int32_t          CBattleKills(uint8_t *lpbd, int16_t fOurDead);
 int32_t          LdpFromItokDv(int16_t itok, DV *lpdv);
 int16_t          SetVCRBoard(int16_t iStep);
 INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);

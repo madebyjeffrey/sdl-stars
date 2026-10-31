@@ -1,5 +1,6 @@
 /* Scroll state and child controls; standard nonclient bars use separate layout. */
 #include "internal.h"
+#include "cleanup.h"
 #include <limits.h>
 
 static HWND LpScrollWindow(HWND hwnd, int sb) {
@@ -22,6 +23,7 @@ void CompatLayoutScrollbars(HWND hwnd) {
     BOOL fShow;
     /* Combo scroll styles apply to the dropdown, not the closed field. */
     if (!IsWindow(hwnd) || hwnd->fDestroying || hwnd->fScrollLayout || hwnd->fNcScroll || hwnd->lpcombo || !hwnd->fCreated) return;
+    StarsRestore<BOOL> restoreLayout(hwnd->fScrollLayout);
     hwnd->fScrollLayout = TRUE;
     CompatGetSurfaceRect(hwnd, &rc); GetClientRect(hwnd, &client);
     for (i = 0; i < 2; i++) {
@@ -53,7 +55,6 @@ void CompatLayoutScrollbars(HWND hwnd) {
         if (!IsWindow(hwnd)) return;
         InvalidateRect(hbar, NULL, TRUE);
     }
-    hwnd->fScrollLayout = FALSE;
 }
 
 BOOL WINAPI ShowScrollBar(HWND hwnd, int sb, BOOL fShow) {
@@ -389,12 +390,12 @@ LRESULT CALLBACK CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         InvalidateRect(hwnd, NULL, FALSE);
         NotifyScroll(hwnd, sb, lpscr->iPos);
         return 0;
-    case WM_MOUSEMOVE:
+    case WM_MOUSEMOVE: {
         if (!lpwin->fTracking || GetCapture() != hwnd || !FScrollGeom(hwnd, &g)) return 0;
         /* Owner drawing may release several DCs and scroll exposed pixels.
            Present their completed map and the new thumb together once. */
         hwndRoot = HwndCompatRoot(hwnd);
-        hwndRoot->cPresentDefer++;
+        COMPATPRESENTSCOPE deferPresent(hwndRoot);
         lpwin->lScrollPoint = l;
         if (lpwin->sbScrollTrack == SB_THUMBTRACK) {
             iAxis = g.fVert ? (int16_t)HIWORD(l) : (int16_t)LOWORD(l);
@@ -409,12 +410,13 @@ LRESULT CALLBACK CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         }
         /* WM_PAINT is lower priority than mouse input; continuous dragging
            must not wait for the input queue to empty before moving the thumb. */
-        if (IsWindow(hwnd)) UpdateWindow(hwnd);
-        if (IsWindow(hwndRoot)) {
-            hwndRoot->cPresentDefer--;
+        if (IsWindow(hwnd) && !FStarsErrorPending()) UpdateWindow(hwnd);
+        deferPresent.Close();
+        if (IsWindow(hwndRoot) && !FStarsErrorPending()) {
             if (hwndRoot->cPresentDefer == 0) FCompatPresent(hwndRoot);
         }
         return 0;
+    }
     case WM_TIMER:
         if (!lpwin->idScrollTimer || w != lpwin->idScrollTimer ||
             !lpwin->fTracking || GetCapture() != hwnd) return 0;

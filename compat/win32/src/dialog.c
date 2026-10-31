@@ -1,5 +1,5 @@
 /* Resource-backed dialogs share the existing window, control and message paths. */
-#include "internal.h"
+#include "cleanup.h"
 #include <stars_compat.h>
 #include <string.h>
 
@@ -97,13 +97,14 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGCREATE dc = {};
     HWND hwnd;
+    COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) DeleteObject(dc.hfont); });
     dlg.cPoints = 8;
     dc.lpfn = lpfn; dc.fModal = TRUE;
-    if (!FDialogUnits(&dlg, &dc)) { if (dc.hfont) DeleteObject(dc.hfont); return NULL; }
+    if (!FDialogUnits(&dlg, &dc)) return NULL;
     hwnd = CreateWindowExA(dwExStyle, "#32770", pszTitle, dwStyle & ~WS_VISIBLE,
                          lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
                          hwndOwner, NULL, GetModuleHandleA(NULL), &dc);
-    if (dc.hfont) DeleteObject(dc.hfont);
+    deleteFont.Close();
     return hwnd;
 }
 static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
@@ -121,6 +122,11 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     WORD i;
     LPCSTR pszClass, pszTitle;
     BOOL fFocus;
+    COMPATCLEANUPSCOPE freeTemplate([&] { CompatFreeDialogTemplate(&dlg); });
+    COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) DeleteObject(dc.hfont); });
+    COMPATCLEANUPSCOPE destroyDialog([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndOwner);
+    // A checked caller cannot take ownership of a modeless window on failure.
+    if (!fModal && FStarsErrorPending()) return NULL;
     if (!SDL_IsMainThread() || (hwndOwner && !IsWindow(hwndOwner))) return NULL;
     if (!hinst) hinst = GetModuleHandleA(NULL);
     hrsrc = FindResourceA(hinst, psz, RT_DIALOG);
@@ -134,24 +140,27 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     // The dialog record owns the font after WM_NCCREATE, including failure cleanup.
     if (!hwnd) goto done;
     dc.hfont = NULL;
+    if (!fModal && FStarsErrorPending()) goto fail;
     SendMessageA(hwnd, WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
     if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!fModal && FStarsErrorPending()) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
         pszTitle = lpitem->pszTitle ? lpitem->pszTitle : MAKEINTRESOURCE(lpitem->idTitle);
         if (!pszClass || lpitem->cbCreate || (UINT_PTR)pszTitle <= UINT16_MAX) goto fail;
-        rc = (RECT){lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
+        rc = RECT{lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
         MapDialogRect(hwnd, &rc);
         hwndChild = CreateWindowExA(lpitem->dwExStyle, pszClass, pszTitle, lpitem->dwStyle,
                                    rc.left, rc.top, rc.right, rc.bottom,
                                    hwnd, (HMENU)(INT_PTR)(int16_t)lpitem->id, hinst, NULL);
-        if (!hwndChild || !IsWindow(hwnd)) goto fail;
+        if (!hwndChild || !IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
         SendMessageA(hwndChild, WM_SETFONT, (WPARAM)hwnd->hfontDialog, 0);
-        if (!IsWindow(hwnd)) goto fail;
+        if (!IsWindow(hwnd) || (!fModal && FStarsErrorPending())) goto fail;
     }
     hwndFocus = HwndDialogTab(hwnd, NULL, FALSE);
     fFocus = SendMessageA(hwnd, WM_INITDIALOG, (WPARAM)hwndFocus, param) != 0;
     if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+    if (!fModal && FStarsErrorPending()) goto fail;
     if (!hwnd->fEndDialog) {
         if (fModal || (dlg.dwStyle & WS_VISIBLE)) {
             // Prepare the initialized dialog before exposing its native window;
@@ -159,9 +168,11 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
             InvalidateRect(hwnd, NULL, TRUE);
             UpdateWindow(hwnd);
             if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+            if (!fModal && FStarsErrorPending()) goto fail;
             for (hwndChild = GetWindow(hwnd, GW_CHILD); hwndChild; hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
                 UpdateWindow(hwndChild);
                 if (!IsWindow(hwnd)) { hwnd = NULL; goto done; }
+                if (!fModal && FStarsErrorPending()) goto fail;
             }
             hwnd->fDeferPresent = FALSE;
             if (!FCompatPresent(hwnd)) goto fail;
@@ -172,13 +183,16 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
         if (fFocus && IsWindow(hwndFocus) && IsWindowEnabled(hwndFocus)) SetFocus(hwndFocus);
     }
     if (!IsWindow(hwnd)) hwnd = NULL;
+    if (!fModal && FStarsErrorPending()) goto fail;
     goto done;
 fail:
-    if (IsWindow(hwnd)) DestroyWindow(hwnd);
+    destroyDialog.Close();
     hwnd = NULL;
 done:
-    if (dc.hfont) DeleteObject(dc.hfont);
-    CompatFreeDialogTemplate(&dlg); return hwnd;
+    deleteFont.Close();
+    freeTemplate.Close();
+    destroyDialog.Release();
+    return hwnd;
 }
 HWND WINAPI CreateDialogParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
     return HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, FALSE);
@@ -217,18 +231,25 @@ BOOL WINAPI IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     return FALSE;
 }
 INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
-    HWND hwnd, hwndFocus = GetFocus(), hwndRoot;
+    HWND hwnd = NULL, hwndFocus = GetFocus(), hwndRoot;
     BOOL fEnable;
     MSG msg;
     int result;
     INT_PTR value = -1;
-    if (!SDL_IsMainThread()) return -1;
+    if (!SDL_IsMainThread() || FStarsErrorPending()) return -1;
     // Nested wizard loops must unwind without exposing another page after application quit.
     if (PeekMessageA(&msg, NULL, WM_QUIT, WM_QUIT, PM_NOREMOVE)) return -1;
     if (hwndOwner && !IsWindow(hwndOwner)) return 0;
     hwndRoot = hwndOwner ? HwndCompatRoot(hwndOwner) : NULL;
     fEnable = hwndRoot && IsWindowEnabled(hwndRoot);
+    COMPATCLEANUPSCOPE restoreOwner([&] {
+        if (FCompatPendingDialogSequence(hwndRoot)) return;
+        if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
+        CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
+    }, hwndRoot);
+    COMPATCLEANUPSCOPE destroyDialog([&] { if (IsWindow(hwnd)) DestroyWindow(hwnd); }, hwndRoot);
     if (fEnable) EnableWindow(hwndRoot, FALSE);
+    if (FStarsErrorPending()) return -1;
     hwnd = HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, TRUE);
     if (hwnd) {
         while (IsWindow(hwnd) && !hwnd->fEndDialog) {
@@ -241,19 +262,17 @@ INT_PTR WINAPI DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
             // A wizard's Back/Next results retain only native presentation;
             // callbacks, child HWNDs and page-local state still get destroyed.
             hwnd->fKeepNative = hwnd->fEndDialog && (value == 1 || value == 2);
-            DestroyWindow(hwnd);
         }
     }
-    if (FCompatPendingDialogSequence(hwndRoot)) return value;
-    if (fEnable && IsWindow(hwndRoot)) EnableWindow(hwndRoot, TRUE);
-    CompatRestoreOwnerFocus(hwndRoot, hwndFocus);
+    destroyDialog.Close();
+    restoreOwner.Close();
     return value;
 }
 
-// Abort the enclosing modal operation, allowing its C cleanup to run before
-// C++ rethrows at the game boundary. GetMessage stops modal and outer pumps
+// Abort the enclosing modal operation, completing its cleanup before the
+// exception is delivered at the game boundary. GetMessage stops modal and outer pumps
 // for unowned failures, including thread timers without an HWND.
-void CompatAbortCallback(HWND hwnd) {
+void CompatAbortCallback(HWND hwnd) noexcept {
     HWND lp;
     while ((lp = LpCompatWindow(hwnd)) != NULL) {
         if (lp->fDialog && lp->fModal) { EndDialog(hwnd, 0); return; }

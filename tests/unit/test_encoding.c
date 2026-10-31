@@ -114,15 +114,17 @@ static void TestFormattedTextBounds(void) {
 
 #ifdef STARS_UI_SDL
 static void TestScannerSnapshotUtf8(void) {
-    SCANOBJECT obj = {0};
-    SCANSNAPSHOT snap = {0};
+    SCANSNAPSHOT snap = {};
     char sz[2048];
     size_t cb;
     NATIVEFILE *pf;
     const char *psz = "\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80";
 
+    snap.rgobj.reset(static_cast<SCANOBJECT *>(calloc(1, sizeof(SCANOBJECT))));
+    TEST_ASSERT(snap.rgobj);
+    SCANOBJECT &obj = snap.rgobj[0];
     snprintf(obj.szName, sizeof(obj.szName), "Quoted \"%s\"\r\n", psz);
-    snap.rgobj = &obj; snap.cObject = 1;
+    snap.cObject = 1;
     pf = PfNativeTemporary(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
     ISeekNativeFile(pf, 0, 0); cb = CReadNative(sz, 1, sizeof(sz) - 1, pf); sz[cb] = 0;

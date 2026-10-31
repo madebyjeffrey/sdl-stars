@@ -9,8 +9,10 @@ if(STARS_BUILD_SDL_CLIENT)
     file(GLOB STARS_DESKTOP_CPP_HEADERS CONFIGURE_DEPENDS
         "${PROJECT_SOURCE_DIR}/src/ui/*.h" "${PROJECT_SOURCE_DIR}/compat/win32/include/*.h")
     list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_DESKTOP_CPP_HEADERS})
+    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/platform.h")
+    list(APPEND STARS_PUBLIC_CPP_HEADERS "${PROJECT_SOURCE_DIR}/compat/win32/src/cleanup.h")
 endif()
-set(STARS_CPP_STANDARD_HEADERS "#include <algorithm>\n#include <atomic>\n#include <bit>\n#include <filesystem>\n#include <limits>\n#include <span>\n#include <string>\n#include <vector>\n")
+set(STARS_CPP_STANDARD_HEADERS "#include <algorithm>\n#include <atomic>\n#include <bit>\n#include <filesystem>\n#include <limits>\n#include <span>\n#include <string>\n#include <vector>\n#include <stdlib.h>\n")
 set(STARS_CPP_HEADER_CHECK_SOURCES)
 foreach(STARS_CPP_HEADER IN LISTS STARS_PUBLIC_CPP_HEADERS)
     file(RELATIVE_PATH STARS_CPP_HEADER_NAME "${PROJECT_SOURCE_DIR}" "${STARS_CPP_HEADER}")
@@ -30,10 +32,20 @@ endforeach()
 add_library(stars-cpp-header-checks OBJECT ${STARS_CPP_HEADER_CHECK_SOURCES})
 target_link_libraries(stars-cpp-header-checks PRIVATE stars_options)
 if(STARS_BUILD_SDL_CLIENT)
-    target_link_libraries(stars-cpp-header-checks PRIVATE stars_win32_headers)
+    target_link_libraries(stars-cpp-header-checks PRIVATE stars_win32_headers SDL3::SDL3)
 endif()
-target_compile_options(stars-cpp-header-checks PRIVATE -Wall -Wextra -Werror)
+target_compile_options(stars-cpp-header-checks PRIVATE -Wall -Wextra -Wpedantic -Werror)
 add_test(NAME test_cpp_compilation_manifest COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/cmake/check_cpp_manifest.py"
     "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/compile_commands.json")
 set_tests_properties(test_cpp_compilation_manifest PROPERTIES LABELS build TIMEOUT 30)
+
+
+# The historical native observer is no longer runnable on the SDL backend. Keep
+# its original-name reads and payload accessors type-correct without linking a
+# native Win32 runtime or pretending this is a walkthrough execution.
+if(STARS_BUILD_SDL_CLIENT)
+    add_library(stars-archived-observer-types OBJECT tests/compat/archived_tutorial_types.cpp)
+    target_link_libraries(stars-archived-observer-types PRIVATE stars_options stars_win32_headers SDL3::SDL3)
+    target_compile_options(stars-archived-observer-types PRIVATE -Werror)
+endif()

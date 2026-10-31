@@ -124,7 +124,7 @@ static int TestCorner(void) {
         CHECK(FCompatPresent(hwnd));
         x = rc.right + 8; y = rc.bottom + 8;
         if (i != 0) { x += hwndChild->rcChild.left; y += hwndChild->rcChild.top; }
-        CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite, x, y, &r, &g, &b, NULL));
+        CHECK(SDL_ReadSurfacePixel(hwnd->lpComposite.get(), x, y, &r, &g, &b, NULL));
         CHECK(RGB(r, g, b) == cr);
     }
     CHECK(DestroyWindow(hwnd));

@@ -23,7 +23,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return DefWindowProc(hwnd, msg, w, l);
 }
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndChild, hwndOwned, hwndList, hwndCombo;
     HDC hdc;
     int i;

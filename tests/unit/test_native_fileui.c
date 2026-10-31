@@ -4,7 +4,7 @@
 
 static void TestTextBoundaries(void) {
     HWND hwnd, hwndEdit;
-    WNDCLASSA wc = {0};
+    WNDCLASSA wc = {};
     char sz[32];
     wc.lpfnWndProc = DefWindowProcA; wc.lpszClassName = "StarsNativeTitleProbe";
     wc.hInstance = GetModuleHandle(NULL); TEST_ASSERT(RegisterClassA(&wc));

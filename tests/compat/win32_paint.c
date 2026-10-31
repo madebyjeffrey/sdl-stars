@@ -170,14 +170,16 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
     TEXTMETRIC tm;
     PAINTSTRUCT ps, psOther;
     MSG msg;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     SDL_Window *lpSDL[2];
     SDL_Renderer *lpRenderer[2];
     int cPaint, x, y, cText;
     COLORREF color;
-    PAINTTEST winDestroy = {.fOk = TRUE, .fDestroyOnErase = TRUE};
+    PAINTTEST winDestroy = {};
     HWND hwndDestroy;
 
+    winDestroy.fOk = TRUE;
+    winDestroy.fDestroyOnErase = TRUE;
     Drain();
     CHECK(rgwin[0].fOk && rgwin[1].fOk && rgwin[0].cPaint > 0 && rgwin[1].cPaint > 0);
     lpSDL[0] = LpSDLWindow("Stars GDI first");
@@ -311,14 +313,18 @@ static int TestPaint(HWND *rghwnd, PAINTTEST *rgwin) {
 }
 
 int main(int argc, char **argv) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND rghwnd[2];
-    PAINTTEST rgwin[2] = {{.i = 0, .color = RGB(32, 64, 112), .fOk = TRUE},
-                         {.i = 1, .color = RGB(96, 48, 64), .fOk = TRUE}};
+    PAINTTEST rgwin[2] = {};
     MSG msg;
     BOOL fMessage;
     int result = 0, i;
 
+    rgwin[0].color = RGB(32, 64, 112);
+    rgwin[0].fOk = TRUE;
+    rgwin[1].i = 1;
+    rgwin[1].color = RGB(96, 48, 64);
+    rgwin[1].fOk = TRUE;
     fInteractive = argc == 1;
     if (!fInteractive && (argc != 2 || strcmp(argv[1], "--self-test") != 0)) {
         fprintf(stderr, "usage: %s [--self-test]\n", argv[0]);

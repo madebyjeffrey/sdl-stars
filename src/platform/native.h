@@ -100,17 +100,17 @@ void qsort16(void *base, size_t count, size_t width, int (*compare)(const void *
 
 // HfOpenFile opens szFile with Win16 OpenFile flags (mdRead and the like)
 // and returns its handle, or -1 with *pfMissing set if it does not exist.
-int16_t HfOpenFile(char *szFile, uint16_t mdOpen, int16_t *pfMissing);
+int16_t HfOpenFile(const char *szFile, uint16_t mdOpen, int16_t *pfMissing);
 int32_t CbReadFile(int16_t hf, void *rg, uint16_t cb);
-int32_t CbWriteFile(int16_t hf, void *rg, uint16_t cb);
+int32_t CbWriteFile(int16_t hf, const void *rg, uint16_t cb);
 // LSeekFile moves like _llseek: iOrigin 0 from the start, 1 from the
 // current position, 2 from the end. It returns the new position.
 int32_t LSeekFile(int16_t hf, int32_t l, int16_t iOrigin);
 int32_t CbFileSize(int16_t hf);
 void    CloseFile(int16_t hf);
-int16_t FFileExists(char *szFile);
-int16_t FFileReadOnly(char *szFile);
-void    MakeDir(char *szDir);
+int16_t FFileExists(const char *szFile);
+int16_t FFileReadOnly(const char *szFile);
+void    MakeDir(const char *szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(const char *pszDir);
 typedef int16_t (*FNativeDirectoryEntryProc)(void *lpData, const char *pszEntry);
@@ -147,7 +147,7 @@ uint32_t DwTickCount();
 // _strdate and _strtime did, for the turn log.
 void GetDateTimeSz(char *szDate, char *szTime);
 // FSzPrefixNoCase compares the first cch characters, ignoring case.
-int16_t FSzPrefixNoCase(char *sz1, char *sz2, int16_t cch);
+int16_t FSzPrefixNoCase(const char *sz1, const char *sz2, int16_t cch);
 
 /*
  * Formatting and arithmetic

@@ -35,6 +35,8 @@ static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
 typedef int (*QSORTCOMPARE)(const void *, const void *);
 
 #include "structs.h"
+#include "streamcodec.h"
+#include "streamviews.h"
 
 #include "ai.h"
 #include "ai2.h"
@@ -47,13 +49,22 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "file.h"
 #include "globals.h"
 #include "log.h"
+#include "logcodec.h"
+#include "logviews.h"
 #include "memory.h"
 #include "mine.h"
 #include "msg.h"
+#include "messagecodec.h"
+#include "messageviews.h"
 #include "parts.h"
 #include "planet.h"
 #include "produce.h"
 #include "race.h"
+#include "recordcodec.h"
+#include "battlecodec.h"
+#include "battleviews.h"
+#include "aiviews.h"
+#include <new>
 #include "report.h"
 #include "research.h"
 #include "save.h"

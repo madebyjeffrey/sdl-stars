@@ -26,6 +26,7 @@
 // waits for a click: compile-time AlertSz substitution in SDL clients and
 // IdAlertBox in host tests.
 extern int  cStarsTestAlert;
+extern void (*pfnStarsTestAlertObserver)();
 extern char szStarsTestAlert[512];
 extern int16_t iStarsTestAlertResponse;
 extern int16_t fStarsTestAcceptLegacyRacePassword;

@@ -79,7 +79,7 @@ function(stars_test_apply_redirect target)
     set(implementation_hooks AlertSz Random PctPlanetCapacity WriteRt FCreateFile RemoveNativeFile ReplaceNativeFile RenameNativeFile
         ReadRt StreamOpen StreamClose DirtyGame InitInstance PromptPassword AskSaveDialog
         NewGameWizard FNativeSaveFileName TrackPopupMenu MessageBoxA IChooseWindowsFile
-        FPromptLegacyRacePassword FNativeOpenFileName AskSaveDialog)
+        FPromptLegacyRacePassword FNativeOpenFileName AskSaveDialog ICompatChooseFile)
     get_target_property(hooks "${target}" STARS_TEST_HOOKS)
     set(STARS_TEST_CALL_DEFINITIONS)
     foreach(hook IN LISTS hooks)
@@ -87,7 +87,12 @@ function(stars_test_apply_redirect target)
         if(WIN32 AND hook MATCHES "^(TrackPopupMenu|MessageBoxA)$")
             set(symbol "StarsCompat_${hook}")
         endif()
-        list(APPEND STARS_TEST_CALL_DEFINITIONS "${symbol}=StarsTest_${hook}")
+        if(hook MATCHES "^(malloc|calloc)$")
+            # Redirect explicit allocation sites, never CRT/standard declarations.
+            list(APPEND STARS_TEST_CALL_DEFINITIONS "STARS_TEST_ALLOC_${hook}=StarsTest_${hook}")
+        else()
+            list(APPEND STARS_TEST_CALL_DEFINITIONS "${symbol}=StarsTest_${hook}")
+        endif()
         if(hook IN_LIST implementation_hooks)
             # Harness calls to an internal API must also reach its adapter.
             # External SDL calls stay real here so an adapter can delegate.

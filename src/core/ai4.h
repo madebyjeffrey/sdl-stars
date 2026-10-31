@@ -14,7 +14,7 @@ int16_t IdGetBestScannerDest(PLANET *lppl, CompassDir iDir);
 int16_t FAddPacketToQueue(PLANET *lppl);
 void    FillProductionQueue();
 int16_t FFillProdMinesAndFactories(PLANET *lppl);
-void    DoCyberFreighter(FLEET *lpfl, CYBERINFOTEMP *lpciPlanTemp);
+void    DoCyberFreighter(FLEET *lpfl, uint8_t *lpciPlanTemp);
 int16_t FEnumDropOffStage1(PLANET *lpplSrc, PLANET *lpplTest);
 int16_t FEnumDropOffStage2(PLANET *lpplSrc, PLANET *lpplTest);
 int16_t FEnumPickUp(PLANET *lpplSrc, PLANET *lpplTest);

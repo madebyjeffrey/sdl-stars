@@ -471,7 +471,8 @@ int32_t LInnateRaceHabitability(PLAYER *pplr) {
 
 uint16_t IRaceChecksum(PLAYER *pplr) {
     uint16_t  ick;
-    uint16_t *p;
+    std::byte rgb[cbWirePlayer];
+    uint16_t w;
     int16_t   i;
     int16_t   cs;
     size_t    cch;
@@ -487,11 +488,13 @@ uint16_t IRaceChecksum(PLAYER *pplr) {
     memset(plr.szName + cch, 0, sizeof(plr.szName) - cch);
     cch = strnlen(plr.szNames, sizeof(plr.szNames));
     memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch);
-    p = (uint16_t *)&plr;
+    FEncodePlayer(plr, rgb);
+    NATIVEBYTEREADER input(rgb);
     cs = 96;
     ick = 0;
     for (i = 0; i < cs; i++) {
-        ick ^= p[i];
+        input.FReadU16Le(w);
+        ick ^= w;
     }
     return ick;
 }
@@ -525,17 +528,17 @@ static int16_t FReadLegacyRacePlayer(PLAYER *pplr, const uint8_t *lpb, size_t cb
     size_t cbRead;
 
     memset(pplr, 0, sizeof(PLAYER));
-    if (cb < offsetof(PLAYER, idPlanetHome)) return FALSE;
-    if (((PLAYER *)lpb)->det == detAll) {
-        iOff = offsetof(PLAYER, rgmdRelation);
+    if (cb < cbWirePlayerPartial) return FALSE;
+    if ((lpb[6] & 7) == detAll) {
+        iOff = cbWirePlayerPrefix;
         if (cb <= (size_t)iOff || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
             lpb[iOff] > cb - (size_t)iOff - 1) return FALSE;
-        memmove(pplr, lpb, iOff);
+        FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
         memmove(pplr->rgmdRelation, lpb + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
     } else {
-        iOff = offsetof(PLAYER, idPlanetHome);
-        memmove(pplr, lpb, iOff);
+        iOff = cbWirePlayerPartial;
+        FDecodePlayer(std::as_bytes(std::span(lpb, cb)), *pplr, iOff);
     }
     if (!FReadLegacyRaceString(lpb + iOff, cb - (size_t)iOff, pplr->szName, sizeof(pplr->szName), &cbRead)) return FALSE;
     iOff += (int16_t)cbRead;
@@ -556,9 +559,9 @@ static int16_t FConvertLegacyRaceNames(PLAYER *pplr, int16_t fPlural) {
     size_t cbKeep;
     int16_t fShortened;
 
-    if (CchCp1252ToUtf8(szName, sizeof(szName), (const unsigned char *)pplr->szName, strlen(pplr->szName)) < 0) return FALSE;
+    if (CchCp1252ToUtf8(std::span(szName), std::as_bytes(std::span(pplr->szName, strlen(pplr->szName)))) < 0) return FALSE;
     if (fPlural) {
-        if (CchCp1252ToUtf8(szNames, sizeof(szNames), (const unsigned char *)pplr->szNames, strlen(pplr->szNames)) < 0) return FALSE;
+        if (CchCp1252ToUtf8(std::span(szNames), std::as_bytes(std::span(pplr->szNames, strlen(pplr->szNames)))) < 0) return FALSE;
     } else {
         cbName = strlen(szName);
         if (cbName + 1 >= sizeof(szNames)) return FALSE;
@@ -607,16 +610,16 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
         {
             StreamOpen(szFile, mdRead);
             ReadRt();
-            if (hdrCur.rt != rtBOF || hdrCur.cb != sizeof(RTBOF) || ((RTBOF *)rgbCur)->verMajor != 2 ||
-                ((RTBOF *)rgbCur)->verMinor < 49 || ((RTBOF *)rgbCur)->verMinor > 85) {
+            if (hdrCur.rt != rtBOF || hdrCur.cb != cbWireBof || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 ||
+                BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 49 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() > 85) {
                 idsError = idsFileDoesBelongVersionStars;
                 fRet = -1;
                 goto LBadFile;
             } else {
-                wVersFile = ((RTBOF *)rgbCur)->wVersion;
-                fLegacy = ((RTBOF *)rgbCur)->verMinor < 85;
-                fPlural = ((RTBOF *)rgbCur)->verMinor >= 55;
-                if (((RTBOF *)rgbCur)->dt == 5) {
+                wVersFile = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wVersion();
+                fLegacy = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() < 85;
+                fPlural = BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() >= 55;
+                if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).dt() == 5) {
                     ReadRt();
                     if (hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
@@ -627,7 +630,7 @@ int16_t FWasRaceFile(char *szFile, int16_t fChkPass) {
                         }
                         ReadRt();
                         icksum = IRaceChecksum(&plr);
-                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && RawLoad16(rgbCur) == icksum) {
+                        if (hdrCur.rt == rtEOF && hdrCur.cb == 2 && WFromStreamBytes(rgbCur) == icksum) {
                             fProtected = fLegacy && plr.lSalt != 0;
                             if (fLegacy && (fConvert = FConvertLegacyRaceNames(&plr, fPlural)) <= 0) {
                                 idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;

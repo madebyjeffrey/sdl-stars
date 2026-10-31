@@ -10,25 +10,33 @@
 #include <stdlib.h>
 
 #include "stars_test.h"
+#include "liststorage.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#include <stars_compat.h>
+#include <errno.h>
+#endif
 
 static uint8_t rgRecord[4][1024];
 static int16_t rgcbRecord[4];
+static RecordType rgrtRecord[4];
 static int     cRecord;
 static int     iRead;
 static int     fLogRead;
 static int     cDirty;
 
 void StarsTest_WriteRt(RecordType rt, int16_t cb, void *rg) {
-    if (rt != rtPlrMsg)
+    if (rt != rtPlrMsg && rt != rtMsg)
         return;
-    TEST_ASSERT(cRecord < 4 && cb >= 12 && cb <= 1023);
+    TEST_ASSERT(cRecord < 4 && cb >= (rt == rtPlrMsg ? 12 : 0) && cb <= 1023);
+    rgrtRecord[cRecord] = rt;
     rgcbRecord[cRecord] = cb;
     memcpy(rgRecord[cRecord++], rg, cb);
 }
 
 int16_t StarsTest_FCreateFile(DtFileType dt, int16_t iPlayer, char *psz) { return TRUE; }
 void    StarsTest_StreamClose(void) {}
-void    StarsTest_StreamOpen(char *szFile, MdOpenFlags mdOpen) {}
+void    StarsTest_StreamOpen(const char *szFile, MdOpenFlags mdOpen) {}
 void    StarsTest_DirtyGame(int16_t fDirty) { if (fDirty) cDirty++; }
 
 void StarsTest_ReadRt(void) {
@@ -44,7 +52,7 @@ void StarsTest_ReadRt(void) {
         hdrCur.rt = 9;
         hdrCur.cb = 17;
     } else if (iRead < cRecord) {
-        hdrCur.rt = rtPlrMsg;
+        hdrCur.rt = rgrtRecord[iRead];
         hdrCur.cb = rgcbRecord[iRead];
         memcpy(rgbCur, rgRecord[iRead], hdrCur.cb);
     } else {
@@ -58,16 +66,17 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
     MSGPLR *mp;
     int     i;
 
-    mp = (MSGPLR *)(malloc(sizeof(MSGPLR) + abs(len)));
+    mp = (MSGPLR *)malloc(sizeof(MSGPLR) + abs(len));
     TEST_ASSERT(mp != NULL);
+    mp = LpStartPl<MSGPLR, uint8_t>(mp, sizeof(MSGPLR) + abs(len));
     mp->lpmsgplrNext = NULL;
     mp->iPlrFrom = from;
     mp->iPlrTo = to;
     mp->iInRe = 123;
     mp->cLen = len;
     for (i = 0; i < abs(len); i++)
-        mp->rgbMsg[i] = len < 0 ? 'A' + from : 0;
-    if (len < 0) mp->rgbMsg[-len - 1] = 0;
+        mp->rgbMsg()[i] = len < 0 ? 'A' + from : 0;
+    if (len < 0) mp->rgbMsg()[-len - 1] = 0;
     return mp;
 }
 
@@ -75,7 +84,7 @@ static void CheckRecord(int i, MSGPLR *mp) {
     TEST_ASSERT(rgcbRecord[i] == abs(mp->cLen) + 12);
     TEST_ASSERT(RawLoad32(rgRecord[i]) == 0);
     TEST_ASSERT(memcmp(rgRecord[i] + 4, &mp->iPlrFrom, 8) == 0);
-    TEST_ASSERT(memcmp(rgRecord[i] + 12, mp->rgbMsg, abs(mp->cLen)) == 0);
+    TEST_ASSERT(memcmp(rgRecord[i] + 12, mp->rgbMsg(), abs(mp->cLen)) == 0);
 }
 
 static void CheckReadMessage(MSGPLR *actual, MSGPLR *expected) {
@@ -84,7 +93,7 @@ static void CheckReadMessage(MSGPLR *actual, MSGPLR *expected) {
     TEST_ASSERT(actual->iPlrTo == expected->iPlrTo);
     TEST_ASSERT(actual->iInRe == expected->iInRe);
     TEST_ASSERT(actual->cLen == expected->cLen);
-    TEST_ASSERT(memcmp(actual->rgbMsg, expected->rgbMsg, abs(expected->cLen)) == 0);
+    TEST_ASSERT(memcmp(actual->rgbMsg(), expected->rgbMsg(), abs(expected->cLen)) == 0);
 }
 
 static void TestMessages(void) {
@@ -95,14 +104,14 @@ static void TestMessages(void) {
 
     mp = MakeMessage(0, 0, 31);
     TEST_ASSERT(sizeof(mp->iPlrFrom) == 2 && sizeof(mp->cLen) == 2);
-    TEST_ASSERT((uint8_t *)mp->rgbMsg - (uint8_t *)&mp->iPlrFrom == 8);
+    TEST_ASSERT((uint8_t *)mp->rgbMsg() - (uint8_t *)&mp->iPlrFrom == 8);
     mp2 = MakeMessage(1, 2, -1000);
     mp3 = MakeMessage(2, 3, 7);
     mp->lpmsgplrNext = mp2;
     mp2->lpmsgplrNext = mp3;
     vlpmsgplrOut = mp;
     vcmsgplrOut = 3;
-    lpMsg = (int16_t *)rgbMsgBuffer;
+    lpMsg = rgbMsgBuffer;
     imemMsgCur = 0;
     imemLogCur = 0;
     idPlayer = -1;
@@ -152,6 +161,14 @@ static void TestMessages(void) {
     CheckReadMessage(vlpmsgplrOut->lpmsgplrNext, mp2);
     CheckReadMessage(vlpmsgplrOut->lpmsgplrNext->lpmsgplrNext, mp3);
     TEST_ASSERT(vlpmsgplrOut->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext == NULL);
+    // An invalid first record does not prevent later records from appending
+    // to an existing list, and the old tail remains the publication slot.
+    rgRecord[0][10] = 0xff; rgRecord[0][11] = 0x7f;
+    fLogRead = FALSE; iRead = 0; StarsTest_ReadRt();
+    ReadPlayerMessages();
+    TEST_CHECK(vcmsgplrIn == 5);
+    CheckReadMessage(vlpmsgplrIn->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext, mp2);
+    CheckReadMessage(vlpmsgplrIn->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext->lpmsgplrNext, mp3);
     free(mp);
     free(mp2);
     free(mp3);
@@ -161,20 +178,21 @@ static void TestMessages(void) {
 }
 
 static void TestMessageTextBounds(void) {
-    RTPLRMSG *lprt = (RTPLRMSG *)rgbCur;
+    RTPLRMSG msg{};
 
     TEST_ASSERT(FStarsTestInit());
     memset(rgbCur, 0, sizeof(rgbCur));
-    hdrCur.cb = sizeof(RTPLRMSG) + 3;
-    lprt->cLen = -3;
-    memcpy(lprt->rgbMsg, "\xc3\xa9\0", 3);
+    hdrCur.cb = cbWirePlrMsg + 3;
+    msg.cLen = -3;
+    FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgbCur)));
+    memcpy((rgbCur + cbWirePlrMsg), "\xc3\xa9\0", 3);
     TEST_CHECK(LpmsgplrFromRt() != NULL);
-    lprt->rgbMsg[2] = 'x';
+    (rgbCur + cbWirePlrMsg)[2] = 'x';
     TEST_CHECK(LpmsgplrFromRt() == NULL);
-    lprt->rgbMsg[2] = 0; lprt->rgbMsg[0] = 0xff;
+    (rgbCur + cbWirePlrMsg)[2] = 0; (rgbCur + cbWirePlrMsg)[0] = 0xff;
     TEST_CHECK(LpmsgplrFromRt() == NULL);
-    lprt->cLen = 1; lprt->rgbMsg[0] = 0x0b;
-    hdrCur.cb = sizeof(RTPLRMSG) + 1;
+    msg.cLen = 1; FEncodePlrMsgPrefix(msg, std::as_writable_bytes(std::span(rgbCur))); (rgbCur + cbWirePlrMsg)[0] = 0x0b;
+    hdrCur.cb = cbWirePlrMsg + 1;
     TEST_CHECK(LpmsgplrFromRt() == NULL);
 }
 
@@ -197,10 +215,18 @@ static void TestRawMessageEdit(void) {
     cDirty = 0;
     TEST_ASSERT(FFinishPlrMsgEntry(0));
     TEST_CHECK(cDirty == 0 && vcmsgplrOut == 1);
-    TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg, psz));
+    TEST_CHECK(!strcmp((char *)vlpmsgplrOut->rgbMsg(), psz));
     TEST_ASSERT(SetWindowText(hwndMsgEdit, "\xe4\xba\xac\xe6\x9d\xb1"));
     TEST_ASSERT(FFinishPlrMsgEntry(0));
-    TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg, "\xe4\xba\xac\xe6\x9d\xb1"));
+    TEST_CHECK(cDirty == 1 && !strcmp((char *)vlpmsgplrOut->rgbMsg(), "\xe4\xba\xac\xe6\x9d\xb1"));
+    iMsgSendCur = vcmsgplrOut;
+    TEST_ASSERT(SetWindowText(hwndMsgEdit, "Second"));
+    TEST_ASSERT(FFinishPlrMsgEntry(0));
+    TEST_CHECK(vcmsgplrOut == 2 && vlpmsgplrOut->lpmsgplrNext != NULL);
+    TEST_CHECK(!FFinishPlrMsgEntry(1000));
+    TEST_CHECK(vcmsgplrOut == 1 && vlpmsgplrOut->lpmsgplrNext == NULL && iMsgSendCur == 0);
+    TEST_CHECK(!FFinishPlrMsgEntry(1000));
+    TEST_CHECK(vcmsgplrOut == 0 && vlpmsgplrOut == NULL);
     DestroyWindow(hwnd); hwndMsgEdit = hwndMsgDrop = NULL;
 }
 
@@ -232,7 +258,7 @@ static void TestBattleRollover(void) {
     TEST_ASSERT(FDoCoolBattle(&fl, 0, grfAttack, 0, 0) == 1);
     TEST_ASSERT(lpbBattleT == lpbScratch);
     TEST_ASSERT(lpbBattleCur == lpbStart + 65462);
-    TEST_ASSERT(((BTLDATA *)(lpbStart + 65448))->cbData == 14);
+    TEST_ASSERT(BdvFromLp(lpbStart + 65448).cbData() == 14);
     TEST_ASSERT(FDoCoolBattle(&fl, 0, grfAttack, 0, 0) == 1);
     TEST_ASSERT(lpbBattleT == NULL);
     TEST_ASSERT(RawLoad16(lpbStart + 65462) == 0xffff);
@@ -246,29 +272,232 @@ static void TestBattleRollover(void) {
 // A fleet's goto has its high bit set, so it is negative as a MsgGoto. The
 // stored word was compared unsigned, so fleet messages never matched.
 static void TestFleetMessageGoto(void) {
-    MSGTURN rgmt[2];
-    MsgGoto iObj;
+    const uint8_t rgb[] = {1, (uint8_t)(idmHasCompletedAssignedOrders & 255), (uint8_t)(idmHasCompletedAssignedOrders >> 8), 5, 0x80,
+                          1, (uint8_t)(idmHasCompletedAssignedOrders & 255), (uint8_t)(idmHasCompletedAssignedOrders >> 8), 5, 0};
+    MsgGoto iObj = static_cast<MsgGoto>(static_cast<int16_t>(0x8005));
 
-    iObj = (MsgGoto)(5 | 0x8000);
-    memset(rgmt, 0, sizeof(rgmt));
-    rgmt[0].iPlr = 1;
-    rgmt[0].msghdr.iMsg = idmHasCompletedAssignedOrders;
-    rgmt[0].msghdr.wGoto = iObj;
-    rgmt[1] = rgmt[0];
-    rgmt[1].msghdr.wGoto = (MsgGoto)(5);
-    lpMsg = (int16_t *)rgmt;
-    imemMsgCur = sizeof(rgmt);
-
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(lpMsg, rgb, sizeof(rgb));
+    imemMsgCur = sizeof(rgb);
     TEST_CHECK(FFindPlayerMessage(1, idmHasCompletedAssignedOrders, iObj));
     TEST_CHECK(FRemovePlayerMessage(1, idmHasCompletedAssignedOrders, iObj) == 1);
-    TEST_CHECK(rgmt[0].msghdr.iMsg == 0x1ff);
-    TEST_CHECK(rgmt[1].msghdr.iMsg == idmHasCompletedAssignedOrders);
+    TEST_CHECK(MtvFromLp(lpMsg).msghdr().iMsg() == 0x1ff);
+    TEST_CHECK(MtvFromLp(lpMsg + 5).msghdr().iMsg() == idmHasCompletedAssignedOrders);
     TEST_CHECK(!FFindPlayerMessage(1, idmHasCompletedAssignedOrders, iObj));
-    lpMsg = NULL;
     imemMsgCur = 0;
 }
 
-TEST_LIST = {{"player messages", TestMessages},
+// A valid raw string may carry trailing record bytes beyond its first NUL;
+// the reader admits and retains those bytes, and ignores arbitrary link markers.
+static void TestPlayerMessagePrefixAndTail(void) {
+    const uint8_t wire[] = {0xef, 0xbe, 0xad, 0xde, 0, 0x80, 0xff, 0x7f, 0xff, 0xff, 0xfe, 0xff, 'A', 0, 0xff, 0x80};
+    MSGPLR *lpmp;
+
+    TEST_ASSERT(FStarsTestInit());
+    memcpy(rgbCur, wire, sizeof(wire)); hdrCur.cb = sizeof(wire);
+    lpmp = LpmsgplrFromRt();
+    TEST_ASSERT(lpmp != NULL);
+    TEST_CHECK(lpmp->lpmsgplrNext == NULL && lpmp->iPlrFrom == -32768 && lpmp->iPlrTo == 32767 && lpmp->iInRe == -1 && lpmp->cLen == -2);
+    TEST_CHECK(memcmp(lpmp->rgbMsg(), wire + 12, 4) == 0);
+    TEST_CHECK(CbPlSlot(lpmp) >= sizeof(MSGPLR) + 4);
+    FreeLp(lpmp, htPlrMsg);
+    hdrCur.cb = 11;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+    hdrCur.cb = 12; rgbCur[10] = 0; rgbCur[11] = (char)0x80;
+    TEST_CHECK(LpmsgplrFromRt() == NULL);
+}
+
+// Restart header/byte-array lifetimes without changing physical slot capacity,
+// the list link, retained spare bytes or the allocator's move/shrink policy.
+static void TestPlayerMessageStorage(void) {
+    MSGPLR *lpmp, *lpmpOld, *lpmpNext;
+    uint8_t rgb[128];
+    uint16_t cb, i;
+
+    TEST_ASSERT(FStarsTestInit());
+    lpmp = LpmsgplrAlloc(sizeof(MSGPLR) + 17);
+    lpmpNext = LpmsgplrAlloc(sizeof(MSGPLR) + 1);
+    lpmp->lpmsgplrNext = lpmpNext;
+    lpmp->iPlrFrom = 3; lpmp->iPlrTo = 4; lpmp->iInRe = -1; lpmp->cLen = -17;
+    cb = CbPlSlot(lpmp) - sizeof(MSGPLR);
+    TEST_ASSERT(cb <= sizeof(rgb));
+    for (i = 0; i < cb; i++) rgb[i] = lpmp->rgbMsg()[i] = (uint8_t)(i * 7);
+    lpmpOld = lpmp;
+    lpmp = LpmsgplrReAlloc(lpmp, sizeof(MSGPLR) + cb + 32);
+    TEST_CHECK(lpmp != lpmpOld && lpmp->lpmsgplrNext == lpmpNext);
+    TEST_CHECK(lpmp->iPlrFrom == 3 && lpmp->iPlrTo == 4 && lpmp->iInRe == -1 && lpmp->cLen == -17);
+    TEST_CHECK(memcmp(lpmp->rgbMsg(), rgb, cb) == 0);
+    lpmpOld = lpmp;
+    lpmp = LpmsgplrReAlloc(lpmp, sizeof(MSGPLR) + 1);
+    TEST_CHECK(lpmp == lpmpOld && lpmp->lpmsgplrNext == lpmpNext && memcmp(lpmp->rgbMsg(), rgb, cb) == 0);
+    FreeLp(lpmp, htPlrMsg); FreeLp(lpmpNext, htPlrMsg);
+}
+
+static void TestPackedMessageParameters(void) {
+    const uint8_t expected[] = {0x46, 0x78, 0xf9, 0xff, 0, 0xff, 0, 1, 0xff, 0xff, 0, 0x80, 0xff, 0x7f, 1,
+                                5, 4, 5, 0x80, 0xff, 0xff, 0xff};
+    const int16_t params[] = {0, 255, 256, -1, -32768, 32767, 1};
+    MSGBIG mb;
+    int16_t i;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(rgcMsgArgs[idmMultitudeEnemiesHaveMountedProngAttackResulting] == 2 && rgcMsgArgs[idmAttemptedTransferSuccessfullyReceived] == 7);
+    ResetMessages();
+    TEST_ASSERT(FSendPlrMsg(1, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(-32763), 255, -1, 0, 0, 0, 0, 0));
+    TEST_ASSERT(FSendPrependedPlrMsg(1, idmAttemptedTransferSuccessfullyReceived, gotoBattleReport, 0, 255, 256, -1, -32768, 32767, 1));
+    TEST_ASSERT(FSendPlrMsg(2, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, -32768, 7, 0, 0, 0, 0, 0));
+    TEST_CHECK(cMsg == 3 && imemMsgCur == 32 && lpMsg[0] == 0xb1 && lpMsg[16] == 0x31);
+    cRecord = 0;
+    WritePlayerMessages(1);
+    TEST_ASSERT(cRecord == 1 && rgrtRecord[0] == rtMsg && rgcbRecord[0] == sizeof(expected));
+    TEST_CHECK(memcmp(rgRecord[0], expected, sizeof(expected)) == 0);
+    ResetMessages(); fLogRead = FALSE; iRead = 0; StarsTest_ReadRt();
+    ReadPlayerMessages();
+    TEST_CHECK(cMsg == 2 && imemMsgCur == sizeof(expected) && memcmp(lpMsg, expected, sizeof(expected)) == 0);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.wGoto == gotoBattleReport);
+    for (i = 0; i < 7; i++) TEST_CHECK(mb.rgParam[i] == params[i]);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(1), &mb));
+    TEST_CHECK(mb.iMsg == idmMultitudeEnemiesHaveMountedProngAttackResulting && mb.wGoto == static_cast<MsgGoto>(-32763));
+    TEST_CHECK(mb.rgParam[0] == 255 && mb.rgParam[1] == -1);
+    // A one-byte record retains the rest of the previous physical backing;
+    // the existing reader still admits the first complete stale message there.
+    rgcbRecord[0] = 1;
+    ResetMessages(); iRead = 0; StarsTest_ReadRt(); ReadPlayerMessages();
+    TEST_CHECK(cMsg == 1 && imemMsgCur == 1);
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.rgParam[4] == -32768 && mb.rgParam[6] == 1);
+}
+
+static void TestMessagePackingAdmissionAndPrepend(void) {
+    const uint8_t expected[] = {5, 2, 0xff, 0xff, 0, 1, 1, 5, 4, 5, 0x80, 0xff, 0xff, 0xff};
+    uint8_t rgb[40];
+    int16_t cb;
+    int32_t seed1, seed2;
+    MSGBIG mb;
+
+    TEST_ASSERT(FStarsTestInit());
+    ResetMessages(); seed1 = lRandSeed1; seed2 = lRandSeed2;
+    memset(rgb, 0xa5, sizeof(rgb));
+    TEST_CHECK(PackageUpMsg(rgb, iplrNone, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == 0);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    rgplr[1].fAi = TRUE; rgplr[1].idAi = idAiRobotoid;
+    TEST_CHECK(PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == 0);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    rgplr[1].fAi = FALSE;
+    imemMsgCur = static_cast<int16_t>(0xffc8 - 20);
+    cb = PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0);
+    TEST_CHECK(cb == 8);
+    imemMsgCur++; memset(rgb, 0xa5, sizeof(rgb));
+    TEST_CHECK(PackageUpMsg(rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == -1);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
+    TEST_CHECK(lRandSeed1 == seed1 && lRandSeed2 == seed2);
+    ResetMessages();
+    TEST_ASSERT(FSendPlrMsg2XGen(FALSE, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(-32763), 255, -1));
+    TEST_ASSERT(FSendPlrMsg2XGen(TRUE, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 256, 1));
+    TEST_CHECK(imemMsgCur == sizeof(expected) && cMsg == 2 && memcmp(lpMsg, expected, sizeof(expected)) == 0);
+    TEST_CHECK(bitfMsgSent[0] & (1 << 5));
+    TEST_ASSERT(FGetNMsgbig(static_cast<MessageId>(0), &mb));
+    TEST_CHECK(mb.wGoto == gotoNone && mb.rgParam[0] == 256 && mb.rgParam[1] == 1);
+}
+
+
+#ifdef STARS_UI_SDL
+// Provided only by wrapper memory.c builds marked STARS_TEST_MEMORY_OBSERVE.
+size_t CCompatMemoryBlocks();
+static bool fCleanupKeptState;
+static int cSessionPayloadReleased;
+static LRESULT CALLBACK SessionCleanupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == WM_APP + 77) {
+        HB *lphb = rglphb[htPerm];
+        FreeStuff();
+        fCleanupKeptState = IsWindow(hwnd) && lphb && rglphb[htPerm] == lphb;
+        return 0;
+    }
+    return DefWindowProc(hwnd,msg,w,l);
+}
+static void TestApplicationUiSessionClose(void) {
+    char szDir[MAX_PATH], szPath[MAX_PATH + 64];
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("session-cleanup",szDir,sizeof(szDir)));
+    CchSnprintf(szPath,sizeof(szPath),"%s%ssession.dat",szDir,szDirSep);
+    NATIVEFILE *pf = PfNativeOpen(szPath,"wb");
+    TEST_ASSERT(pf);
+    TEST_ASSERT(CWriteNative("x",1,1,pf) == 1 && ICloseNativeFile(pf) == 0);
+    int16_t missing = 0;
+    int16_t hfSession = HfNativeOpenLegacy(szPath,0x40,&missing);
+    TEST_ASSERT(hfSession >= 3 && !missing);
+    WNDCLASS wc{};
+    wc.lpfnWndProc = SessionCleanupProc;
+    wc.hInstance = hInst;
+    wc.lpszClassName = "StarsSessionCleanupTest";
+    TEST_ASSERT(RegisterClass(&wc));
+    HWND hwnd = CreateWindow(wc.lpszClassName,"session",WS_OVERLAPPEDWINDOW,0,0,160,120,NULL,NULL,hInst,NULL);
+    TEST_ASSERT(hwnd);
+    STARSCOMPATPAYLOAD payload(std::malloc(8), {[](void *pv) noexcept { ++cSessionPayloadReleased; std::free(pv); }});
+    TEST_ASSERT(payload);
+    const int cReleased = cSessionPayloadReleased;
+    TEST_ASSERT(StarsCompatPostOwnedMessageAsync(StarsCompatWindowId(hwnd),WM_APP+78,std::move(payload),0));
+    SendMessage(hwnd,WM_APP+77,0,0);
+    TEST_ASSERT(fCleanupKeptState && cSessionPayloadReleased == cReleased);
+    FreeStuff();
+    TEST_CHECK(!IsWindow(hwnd) && !hwndFrame && !hwndPlanet && !hInst);
+    TEST_CHECK(cSessionPayloadReleased == cReleased+1 && CCompatMemoryBlocks() == 0);
+    for (auto *lphb : rglphb) TEST_CHECK(!lphb);
+    TEST_CHECK(!lpLog && !lpMsg && !lpPlanets && lFileSeed1 == 0 && lFileSeed2 == 0);
+    GetAppSession().BindFiles();
+    char ch = 0;
+    errno = 0;
+    TEST_CHECK(CbNativeReadLegacy(hfSession,&ch,1) == -1 && errno == EBADF);
+    FreeStuff();
+    TEST_CHECK(CCompatMemoryBlocks() == 0 && cSessionPayloadReleased == cReleased+1);
+    TEST_ASSERT(FStarsTestInit());
+    TEST_CHECK(hInst && rglphb[htPerm] && CCompatMemoryBlocks() != 0);
+    FreeStuff(); FreeStuff();
+    TEST_CHECK(CCompatMemoryBlocks() == 0 && !FStarsErrorPending());
+}
+
+static void TestDibFromBitmapNativeQuery(void) {
+    TEST_ASSERT(FStarsTestInit());
+    HDC hdc = GetDC(NULL);
+    TEST_ASSERT(hdc);
+    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    TEST_ASSERT(hbm);
+    HGLOBAL hdib = DibFromBitmap(hbm, BI_RGB, 32, NULL);
+    TEST_ASSERT(hdib);
+    auto *lpbi = static_cast<BITMAPINFOHEADER *>(GlobalLock(hdib));
+    TEST_ASSERT(lpbi);
+    TEST_CHECK(lpbi->biWidth == 2 && lpbi->biHeight == 2 && lpbi->biBitCount == 32 && lpbi->biSizeImage == 16);
+    GlobalUnlock(hdib);
+    GlobalFree(hdib);
+    DeleteObject(hbm);
+    ReleaseDC(NULL, hdc);
+}
+static void TestDibFromBitmapFailureReleasesStorage(void) {
+    TEST_ASSERT(FStarsTestInit());
+    HDC hdc = GetDC(NULL);
+    TEST_ASSERT(hdc);
+    HBITMAP hbm = CreateCompatibleBitmap(hdc, 2, 2);
+    TEST_ASSERT(hbm);
+    const size_t cMemory = CCompatMemoryBlocks();
+    TEST_CHECK(DibFromBitmap(hbm, BI_RLE8, 8, NULL) == NULL);
+    TEST_CHECK(CCompatMemoryBlocks() == cMemory);
+    DeleteObject(hbm);
+    ReleaseDC(NULL, hdc);
+}
+#endif
+
+TEST_LIST = {
+#ifdef STARS_UI_SDL
+    {"application session stops UI before releasing files and heaps", TestApplicationUiSessionClose},
+    {"bitmap converter queries the native BITMAP width", TestDibFromBitmapNativeQuery},
+    {"failed bitmap conversion releases temporary global storage", TestDibFromBitmapFailureReleasesStorage},
+#endif
+{"packed message parameters preserve framing and scratch admission", TestPackedMessageParameters},
+             {"message packing retains early returns, capacity, RNG and prepend", TestMessagePackingAdmissionAndPrepend},
+             {"player-message storage retains links, capacities and spare bytes", TestPlayerMessageStorage},
+             {"player-message prefix preserves signed fields and spare tail", TestPlayerMessagePrefixAndTail},
+             {"player messages", TestMessages},
              {"unchanged raw UTF-8 messages compare only their stored bytes", TestRawMessageEdit},
              {"player-message text is bounded and strictly UTF-8", TestMessageTextBounds},
              {"fleet message goto", TestFleetMessageGoto},

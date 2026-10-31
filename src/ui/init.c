@@ -1,4 +1,6 @@
 #include "win.h"
+#include "ownership.h"
+#include "uistate.h"
 #include <stars_compat.h>
 
 uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
@@ -10,6 +12,7 @@ int16_t FCreateStuff() {
     HBITMAP hbmp;
     int16_t dx;
 
+    BeginAppUiSession();
     fFailed = FALSE;
     dx = GetSystemMetrics(SM_CXSCREEN);
     dy = GetSystemMetrics(SM_CYSCREEN);
@@ -147,8 +150,8 @@ int16_t FCreateStuff() {
     lpfnBrowserDlgProc = MakeProcInstance(BrowserDlg, hInst);
     lpfnReportDlgProc = MakeProcInstance(ReportDlg, hInst);
     lpfnGaugeDlgProc = MakeProcInstance(ProgressGaugeDlg, hInst);
-    lpb2k = (uint8_t *)LpAlloc(0x800, htPerm);
-    vlprgidMisc = (uint16_t *)LpAlloc(0x800, htPerm);
+    lpb2k = LpAlloc<uint8_t>(0x800, htPerm);
+    vlprgidMisc = LpAlloc<uint16_t>(0x800, htPerm);
     InitGameStuff();
     if (fFailed || !hbmpScanner || !hbmpUnknownPlanet || !hbmpBackBld || !hdibRaces || !hdibRacesT || !hdibRacesX || !hbmpMono || !hbmpScanShip || !hbmpMsg ||
         !hiconHost || !hiconStars || !hiconWait) {
@@ -159,6 +162,7 @@ int16_t FCreateStuff() {
 }
 
 int16_t FCreateFonts(HDC hdc) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     int16_t    i;
     LOGFONT   *plf;
     HFONT      hfontSav;
@@ -166,6 +170,7 @@ int16_t FCreateFonts(HDC hdc) {
     int32_t    l;
 
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+    plfOwner.reset(plf);
     for (i = 0; i < 4; i++) {
         if (rgszArial[i][0] == 0) {
             CchGetString(static_cast<StringId>(idsArial2 + i), rgszArial[i]);
@@ -204,7 +209,7 @@ int16_t FCreateFonts(HDC hdc) {
     GetTextMetrics(hdc, &tm);
     dyArial10 = tm.tmHeight + tm.tmExternalLeading;
     SelectObject(hdc, hfontSav);
-    LocalFree(plf);
+    plfOwner.reset();
     return TRUE;
 }
 
@@ -589,7 +594,7 @@ void ReadIniSettings() {
         ini.fStartupFile = FALSE;
     }
     if (!vrgszMRU) {
-        vrgszMRU = (char *)LpAlloc(2304, htPerm);
+        vrgszMRU = LpAlloc<char>(2304, htPerm);
     }
     psz = &szEntry[strlen(szEntry) - 1];
     for (i = 0; i < 9; i++) {
@@ -701,15 +706,15 @@ void ReadIniSettings() {
             if (iPass >= 20) {
                 psz = szWork;
                 for (iPass = 0; iPass < 5; iPass++) {
-                    vrgZip[i].txp.rgia[iPass].iAction = *psz - 'a';
+                    vrgZip[i].txp.rgia[iPass].SetIAction(*psz - 'a');
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan = *psz - 'a';
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(*psz - 'a');
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan =
-                        ((uint32_t)(*psz - 'a') & 0xfff) << 4 | (vrgZip[i].txp.rgia[iPass].cQuan | vrgZip[i].txp.rgia[iPass].iAction << 0xc);
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(
+                        ((uint32_t)(*psz - 'a') & 0xfff) << 4 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
-                    vrgZip[i].txp.rgia[iPass].cQuan =
-                        ((uint32_t)(*psz - 'a') & 0xff) << 8 | (vrgZip[i].txp.rgia[iPass].cQuan | vrgZip[i].txp.rgia[iPass].iAction << 0xc);
+                    vrgZip[i].txp.rgia[iPass].SetCQuan(
+                        ((uint32_t)(*psz - 'a') & 0xff) << 8 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
                     psz++;
                 }
                 strcpy(vrgZip[i].szName, psz);
@@ -750,11 +755,11 @@ void ReadIniSettings() {
                         psz++;
                         vrgZipProd[i].rgpq[iPass].w |= (*psz - 'a') * 0x1000;
                         psz++;
-                        if (vrgZipProd[i].rgpq[iPass].cQuan > 1020) {
-                            vrgZipProd[i].rgpq[iPass].cQuan = 1;
+                        if (vrgZipProd[i].rgpq[iPass].cQuan() > 1020) {
+                            vrgZipProd[i].rgpq[iPass].SetCQuan(1);
                         }
-                        if (vrgZipProd[i].rgpq[iPass].mdIdle >= mdIdleFactory) {
-                            vrgZipProd[i].rgpq[iPass].mdIdle = iobjMine;
+                        if (vrgZipProd[i].rgpq[iPass].mdIdle() >= mdIdleFactory) {
+                            vrgZipProd[i].rgpq[iPass].SetMdIdle(iobjMine);
                         }
                     }
                 }

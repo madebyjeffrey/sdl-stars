@@ -1,10 +1,26 @@
 #include "common.h"
 
+void WriteMemResearch(int16_t wResearch) {
+    uint8_t rgb[cbWireResearch];
+
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI16Le(wResearch);
+    WriteMemRt(rtLogResearch, cbWireResearch, rgb);
+}
+
+void WriteMemPassword(int32_t lSalt) {
+    uint8_t rgb[cbWirePassword];
+
+    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgb))).FWriteI32Le(lSalt);
+    WriteMemRt(rtChgPassword, cbWirePassword, rgb);
+}
+
 void LogSplitFleet(int16_t id) {
+    std::byte rgb[cbWireFleetId];
     if (gd.fGeneratingTurn) {
-        LpflFromId(id)->fCompChg = TRUE;
+        LpflFromId(id)->SetFCompChg(TRUE);
     } else {
-        WriteMemRt(rtLogFleetSplit, 2, &id);
+        NATIVEBYTEWRITER(rgb).FWriteI16Le(id);
+        WriteMemRt(rtLogFleetSplit, cbWireFleetId, rgb);
     }
     return;
 }
@@ -13,6 +29,7 @@ void LogMergeFleet(int16_t id) {
     uint16_t idCur;
     int16_t  i;
     uint16_t rgid[512];
+    std::byte rgb[512 * cbWireFleetId];
     int16_t  j;
 
     if (!gd.fGeneratingTurn) {
@@ -28,7 +45,8 @@ void LogMergeFleet(int16_t id) {
                     }
                 }
             }
-            WriteMemRt(rtLogFleetMerge, j * 2, rgid);
+            FEncodeFleetIds(std::span(rgid, j), rgb);
+            WriteMemRt(rtLogFleetMerge, j * cbWireFleetId, rgb);
         }
     }
     return;
@@ -37,17 +55,20 @@ void LogMergeFleet(int16_t id) {
 void LogChangeShDef(SHDEF *lpshdefNew) {
     uint8_t  rgb[149];
     uint8_t *pb;
+    RTCHGSHDEF rtchg{};
 
     if (!gd.fGeneratingTurn) {
-        ((RTCHGSHDEF *)rgb)->ishdef = lpshdefNew->ishdef;
-        ((RTCHGSHDEF *)rgb)->iPlr = idPlayer;
+        rtchg.ishdef = lpshdefNew->ishdef;
+        rtchg.iPlr = idPlayer;
         if (lpshdefNew->fFree) {
-            ((RTCHGSHDEF *)rgb)->mdChg = 0;
-            WriteMemRt(rtLogShDef, 2, rgb);
+            rtchg.mdChg = 0;
+            FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
+            WriteMemRt(rtLogShDef, cbWireChgShDef, rgb);
         } else {
-            ((RTCHGSHDEF *)rgb)->mdChg = 1;
+            rtchg.mdChg = 1;
             lpshdefNew->det = detAll;
-            pb = (uint8_t *)&((RTCHGSHDEF *)rgb)->rtshdef;
+            FEncodeRtChgShDefPrefix(rtchg, std::as_writable_bytes(std::span(rgb)));
+            pb = rgb + cbWireChgShDef;
             WriteRtShDef(lpshdefNew, &pb);
             WriteMemRt(rtLogShDef, pb - rgb, rgb);
         }
@@ -63,6 +84,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
     FLEET    *lpfl;
     int16_t   cOut;
     RTCHGNAME rtchgname;
+    uint8_t rgbName[cbWireChangeName + 33];
 
     lpfl = LpflFromId(id);
     if (lpfl) {
@@ -76,7 +98,7 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
             lpfl->lpszName = NULL;
         } else {
             cOut = strlen(szName);
-            lpfl->lpszName = (char *)LpAlloc(strlen(szName) + 1, htString);
+            lpfl->lpszName = LpAlloc<char>(strlen(szName) + 1, htString);
             strcpy(lpfl->lpszName, szName);
             if (FCompressUserString(szName, (char *)&rtchgname.rgb[1], &cOut)) {
                 rtchgname.rgb[0] = cOut;
@@ -88,7 +110,9 @@ void LogChangeName(GrobjClass grobj, int16_t id, char *szName) {
         }
         rtchgname.grobj = grobj;
         rtchgname.id = id;
-        WriteMemRt(rtLogFleetName, cOut + 5, &rtchgname);
+        FEncodeChangeNamePrefix(rtchgname, std::as_writable_bytes(std::span(rgbName)).first(cbWireChangeName));
+        memcpy(rgbName + cbWireChangeName, rtchgname.rgb, cOut + 1);
+        WriteMemRt(rtLogFleetName, cOut + 5, rgbName);
         if (gd.fTutorial) {
             AdvanceTutor();
         }
@@ -109,6 +133,9 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
     int16_t   cbWp;
     char     *pbWp;
     HDR       hdr;
+    RTWAYPT rtwpPrev{};
+    std::byte rgbWp[cbWireWaypt + cbWireOrder];
+    std::byte rgbShipInt[cbWireShipInt];
 
     fChg = FALSE;
     if (gd.fGeneratingTurn)
@@ -152,16 +179,18 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
     if (pfl->iplan != pflNew->iplan) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->iplan;
-        WriteMemRt(rtLogFleetPlan, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetPlan, cbWireShipInt, rgbShipInt);
     }
     if (pfl->fRepOrders != pflNew->fRepOrders) {
         rtsi.id = pflNew->id;
         rtsi.i = pflNew->fRepOrders;
-        WriteMemRt(rtLogFleetFlagBit9, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetFlagBit9, cbWireShipInt, rgbShipInt);
     }
     d = pflNew->cord - pfl->cord;
     for (iordOld = 0;
-         iordOld < pfl->cord && iordOld < pflNew->cord && memcmp(&pfl->lpplord->rgord[iordOld], &pflNew->lpplord->rgord[iordOld], sizeof(ORDER)) == 0;
+         iordOld < pfl->cord && iordOld < pflNew->cord && memcmp(&pfl->lpplord->rgord()[iordOld], &pflNew->lpplord->rgord()[iordOld], sizeof(ORDER)) == 0;
          iordOld++) {
     }
     iordNew = iordOld;
@@ -173,32 +202,36 @@ void LogChangeFleet(FLEET *pfl, FLEET *pflNew) {
         if (d == -2) {
             rtsi.i |= 0x8000;
         }
-        WriteMemRt(rtLogFleetOrderDelete, 4, &rtsi);
+        FEncodeRtShipInt(rtsi, rgbShipInt);
+        WriteMemRt(rtLogFleetOrderDelete, cbWireShipInt, rgbShipInt);
         goto NextTest;
     } else if (d > 0) {
         cbWp = 22;
         rtwp.id = pflNew->id;
         rtwp.iWaypt = iordNew;
-        rtwp.order = pflNew->lpplord->rgord[iordNew];
-        pbWp = (char *)&rtwp;
+        rtwp.order = pflNew->lpplord->rgord()[iordNew];
+        FEncodeRtWaypt(rtwp, rgbWp);
+        pbWp = reinterpret_cast<char *>(rgbWp);
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(rtLogFleetOrderInsert, cbWp, &rtwp);
+        WriteMemRt(rtLogFleetOrderInsert, cbWp, rgbWp);
         goto NextTest;
     } else {
         cbWp = 22;
-        if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogFleetOrderUpdate && ((RTWAYPT *)rgbCur)->id == pflNew->id && ((RTWAYPT *)rgbCur)->iWaypt == iordNew) {
+        if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogFleetOrderUpdate &&
+            FDecodeRtWayptPrefix(std::as_bytes(std::span(rgbCur)), rtwpPrev) && rtwpPrev.id == pflNew->id && rtwpPrev.iWaypt == iordNew) {
             imemLogCur = imemLogPrev;
         }
         rtwp.id = pflNew->id;
         rtwp.iWaypt = iordNew;
-        rtwp.order = pflNew->lpplord->rgord[iordNew];
-        pbWp = (char *)&rtwp;
+        rtwp.order = pflNew->lpplord->rgord()[iordNew];
+        FEncodeRtWaypt(rtwp, rgbWp);
+        pbWp = reinterpret_cast<char *>(rgbWp);
         while (cbWp-- > 0 && pbWp[cbWp] == 0) {
         }
         cbWp++;
-        WriteMemRt(rtLogFleetOrderUpdate, cbWp, &rtwp);
+        WriteMemRt(rtLogFleetOrderUpdate, cbWp, rgbWp);
     }
 NextTest:
     return;
@@ -232,6 +265,9 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
     int16_t fChg;
     HDR     hdr;
     LOGXFER lxNew;
+    RTCHGPRODQ rtcpq{};
+    std::byte rgbProdId[cbWireChgProdQ];
+    RTCHGPLANETLONG routing{};
 
     fChg = FALSE;
     if (!gd.fGeneratingTurn) {
@@ -268,25 +304,28 @@ void LogChangePlanet(PLANET *ppl, PLANET *pplNew) {
         }
         if (ppl) {
             if (!pplNew->lpplprod && ppl->lpplprod) {
-                WriteMemRt(rtLogPlanetProdQ, 2, &lxNew);
+                NATIVEBYTEWRITER(rgbProdId).FWriteI16Le(lxNew.id);
+                WriteMemRt(rtLogPlanetProdQ, cbWireChgProdQ, rgbProdId);
             } else if (pplNew->lpplprod && (!ppl->lpplprod || ppl->lpplprod->iprodMac != pplNew->lpplprod->iprodMac ||
-                                            memcmp(ppl->lpplprod->rgprod, pplNew->lpplprod->rgprod, ppl->lpplprod->iprodMac * 4) != 0)) {
-                if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogPlanetProdQ && ((RTCHGPRODQ *)rgbCur)->id == ppl->id) {
+                                            memcmp(ppl->lpplprod->rgprod(), pplNew->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4) != 0)) {
+                if (FGetPrevLogRt(&hdr, (uint8_t *)rgbCur) && hdr.rt == rtLogPlanetProdQ &&
+                    FDecodeRtChgProdQ(std::as_bytes(std::span(rgbCur)), rtcpq) && rtcpq.id == ppl->id) {
                     imemLogCur = imemLogPrev;
                 }
-                ((RTCHGPRODQ *)rgbCur)->id = ppl->id;
-                memmove(&rgbCur[2], pplNew->lpplprod->rgprod, pplNew->lpplprod->iprodMac * 4);
+                NATIVEBYTEWRITER(std::as_writable_bytes(std::span(rgbCur))).FWriteI16Le(ppl->id);
+                FEncodeProdQueue(std::span(pplNew->lpplprod->rgprod(), pplNew->lpplprod->iprodMac),
+                                 std::as_writable_bytes(std::span(rgbCur)).subspan(cbWireChgProdQ));
                 WriteMemRt(rtLogPlanetProdQ, pplNew->lpplprod->iprodMac * 4 + 2, rgbCur);
             }
             if ((uint32_t)ppl->fNoResearch != pplNew->fNoResearch || ppl->idFling != pplNew->idFling || ppl->iWarpFling != pplNew->iWarpFling ||
                 ppl->idRoute != pplNew->idRoute) {
-                ((RTCHGPLANETLONG *)rgbCur)->id = pplNew->id;
-                ((RTCHGPLANETLONG *)rgbCur)->ul = 0;
-                ((RTCHGPLANETLONG *)rgbCur)->fNoResearch = pplNew->fNoResearch;
-                ((RTCHGPLANETLONG *)rgbCur)->idFling = pplNew->idFling;
-                ((RTCHGPLANETLONG *)rgbCur)->iWarpFling = pplNew->iWarpFling;
-                ((RTCHGPLANETLONG *)rgbCur)->idRoute = pplNew->idRoute;
-                WriteMemRt(rtLogPlanetRouting, 6, rgbCur);
+                routing.id = pplNew->id;
+                routing.fNoResearch = pplNew->fNoResearch;
+                routing.idFling = pplNew->idFling;
+                routing.iWarpFling = pplNew->iWarpFling;
+                routing.idRoute = pplNew->idRoute;
+                FEncodePlanetRouting(routing, std::as_writable_bytes(std::span(rgbCur)));
+                WriteMemRt(rtLogPlanetRouting, cbWirePlanetRouting, rgbCur);
             }
         }
     }
@@ -301,11 +340,11 @@ void LogChangeThing(THING *lpth, THING *pthNew) {
     fChg = FALSE;
     if (!gd.fGeneratingTurn) {
         memset(&lxNew, 0, sizeof(LOGXFER));
-        lxNew.id = pthNew->idFull;
+        lxNew.id = pthNew->idFull();
         lxNew.grobj = grobjThing;
         for (i = 0; i < 3; i++) {
-            lxNew.rgdItem[i] = (int16_t)(pthNew->thp.rgwtMin[i] - lpth->thp.rgwtMin[i]);
-            if ((int16_t)(pthNew->thp.rgwtMin[i] - lpth->thp.rgwtMin[i]) != 0) {
+            lxNew.rgdItem[i] = (int16_t)(pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i));
+            if ((int16_t)(pthNew->thp().rgwtMin(i) - lpth->thp().rgwtMin(i)) != 0) {
                 fChg = TRUE;
             }
         }
@@ -324,14 +363,15 @@ void LogChangeThing(THING *lpth, THING *pthNew) {
 
 void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
     int32_t  rgQuan[5];
-    RTXFER  *prt;
+    uint8_t  *prt;
     int16_t  iOff;
-    RTXFERL *prtl;
+    uint8_t *prtl;
     int16_t  rt;
     int16_t  i;
-    char     rgbuf[28];
+    uint8_t  rgbuf[28];
+    RTXFER transfer{};
     int16_t  grbit;
-    RTXFERX *prtx;
+    uint8_t *prtx;
     int16_t  grFlag;
     int32_t  iBiggest;
     int16_t  cb;
@@ -348,37 +388,37 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        prt = (RTXFER *)(lpLog + (imemLogCur + -hdrPrev.cb));
+        prt = (uint8_t *)(lpLog + (imemLogCur + -hdrPrev.cb));
         break;
     default:
         prt = NULL;
     }
-    if (prt && prt->grobj1 == (plx1->grobj & 0xff) && prt->grobj2 == (plx2->grobj & 0xff) && prt->id1 == plx1->id && prt->id2 == plx2->id) {
-        grbit = prt->grbitItems;
+    if (prt && CxvFromPrefix(prt, 5).grobj1() == (plx1->grobj & 0xff) && CxvFromPrefix(prt, 5).grobj2() == (plx2->grobj & 0xff) && CxvFromPrefix(prt, 2).id1() == plx1->id && CxvFromPrefix(prt, 4).id2() == plx2->id) {
+        grbit = CxvFromPrefix(prt, 6).grbitItems();
         iOff = 0;
         switch (hdrPrev.rt) {
         case rtLogCargoXfer8:
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = (int16_t)prt->rgcQuan[iOff];
+                    rgQuan[i] = (int16_t)CxvFromPrefix(prt, 6 + (iOff + 1) * 1).cQuan8(iOff);
                     iOff++;
                 }
             }
             break;
         case rtLogCargoXfer16:
-            prtx = (RTXFERX *)prt;
+            prtx = (uint8_t *)prt;
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = prtx->rgcQuan[iOff];
+                    rgQuan[i] = CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).cQuan16(iOff);
                     iOff++;
                 }
             }
             break;
         case rtLogCargoXfer32:
-            prtl = (RTXFERL *)prt;
+            prtl = (uint8_t *)prt;
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = prtl->rgcQuan[iOff];
+                    rgQuan[i] = CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).cQuan32(iOff);
                     iOff++;
                 }
             }
@@ -399,37 +439,38 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
         grFlag *= 2;
     }
     if (grbit != 0) {
-        prt = (RTXFER *)rgbuf;
-        prt->grobj1 = plx1->grobj & 0xf;
-        prt->grobj2 = plx2->grobj & 0xf;
-        prt->id1 = plx1->id;
-        prt->id2 = plx2->id;
-        prt->grbitItems = grbit;
+        prt = (uint8_t *)rgbuf;
+        transfer.grobj1 = plx1->grobj & 0xf;
+        transfer.grobj2 = plx2->grobj & 0xf;
+        transfer.id1 = plx1->id;
+        transfer.id2 = plx2->id;
+        transfer.grbitItems = grbit;
+        FEncodeCargoXferPrefix(transfer, std::as_writable_bytes(std::span(rgbuf)));
         cb = 6;
         iOff = 0;
         if (iBiggest <= 127) {
             rt = 1;
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    prt->rgcQuan[iOff++] = rgQuan[i];
+                    CxvFromPrefix(prt, 6 + (iOff + 1) * 1).SetCQuan8(iOff++, rgQuan[i]);
                     cb++;
                 }
             }
         } else if (iBiggest <= 32767) {
             rt = 2;
-            prtx = (RTXFERX *)rgbuf;
+            prtx = (uint8_t *)rgbuf;
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    prtx->rgcQuan[iOff++] = LOWORD(rgQuan[i]);
+                    CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).SetCQuan16(iOff++, LOWORD(rgQuan[i]));
                     cb += 2;
                 }
             }
         } else {
             rt = 25;
-            prtl = (RTXFERL *)rgbuf;
+            prtl = (uint8_t *)rgbuf;
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    prtl->rgcQuan[iOff++] = rgQuan[i];
+                    CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).SetCQuan32(iOff++, rgQuan[i]);
                     cb += 4;
                 }
             }
@@ -440,7 +481,7 @@ void LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2) {
 }
 
 void LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2) {
-    RTXFERF *prt;
+    RTXFERF rtxf{};
     int16_t  iOff;
     int16_t  i;
     char     rgbuf[41];
@@ -459,20 +500,22 @@ void LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2) {
         grFlag *= 2;
     }
     if (grbit != 0) {
-        prt = (RTXFERF *)&rgbuf;
-        prt->grobj1 = plxf1->grobj & 0xf;
-        prt->grobj2 = plxf2->grobj & 0xf;
-        prt->id1 = plxf1->id;
-        prt->id2 = plxf2->id;
-        prt->grbitItems = grbit;
-        cb = 7;
+        rtxf.grobj1 = plxf1->grobj & 0xf;
+        rtxf.grobj2 = plxf2->grobj & 0xf;
+        rtxf.id1 = plxf1->id;
+        rtxf.id2 = plxf2->id;
+        rtxf.grbitItems = grbit;
+        FEncodeRtXferFHeader(rtxf, std::as_writable_bytes(std::span(rgbuf)));
+        NATIVEBYTEWRITER output{std::as_writable_bytes(std::span(rgbuf)).subspan(cbWireXferF)};
+        cb = cbWireXferF;
         iOff = 0;
         for (i = 0; i < 16; i++) {
             if (plxf1->rgdItem[i] != 0) {
-                prt->rgcQuan[iOff++] = plxf1->rgdItem[i];
-                cb += 2;
+                output.FWriteI16Le(plxf1->rgdItem[i]);
+                iOff++;
             }
         }
+        cb = cbWireXferF + iOff * 2;
         WriteMemRt(rtLogFleetCargoXfer, cb, rgbuf);
     }
     return;
@@ -484,7 +527,7 @@ void CancelMemRt(RecordType rt) {
     return;
 }
 
-void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
+static void WriteMemRtCore(RecordType rt, int16_t cb, void *rg, bool fZipProd) {
     HDR      hdr;
     uint8_t *lpv;
 
@@ -498,9 +541,18 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
         hdr.rt = rt;
         lpv = lpLog;
         lpv += imemLogCur;
-        *(HDR *)lpv = hdr;
+        FEncodeHdr(hdr, std::as_writable_bytes(std::span(lpv, cbWireHdr)));
         if (cb > 0) {
-            memcpy(lpv + 2, rg, cb);
+            if (fZipProd) {
+                // Read live template state after the existing advisory/title
+                // callbacks, at the old global-source copy point.
+                std::byte rgb[5 * cbWireZipProdQ];
+                for (int i = 0; i < 5; i++) FEncodeZipProdQ(vrgZipProd[i], std::span(rgb).subspan(i * cbWireZipProdQ));
+                assert(static_cast<std::size_t>(cb) <= sizeof(rgb) - 14);
+                memcpy(lpv + 2, rgb + 14, cb);
+            } else {
+                memcpy(lpv + 2, rg, cb);
+            }
         }
         imemLogCur += cb + 2;
         if (rt != rtEOF) {
@@ -508,6 +560,14 @@ void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
         }
     }
     return;
+}
+
+void WriteMemRt(RecordType rt, int16_t cb, void *rg) {
+    WriteMemRtCore(rt, cb, rg, false);
+}
+
+void WriteMemZpqRt(int16_t cb) {
+    WriteMemRtCore(rtLogPlayerZpq1, cb, nullptr, true);
 }
 
 void STARS_TEST_IMPL(DirtyGame)(int16_t fDirty) {
@@ -527,7 +587,7 @@ int16_t FGetPrevLogRt(HDR *phdr, uint8_t *pb) {
         return FALSE;
     }
     lpv = lpLog + imemLogPrev;
-    *phdr = *(HDR *)lpv;
+    FDecodeHdr(std::as_bytes(std::span(lpv, cbWireHdr)), *phdr);
     if (phdr->cb > 0) {
         memcpy(pb, lpv + 2, phdr->cb);
     }
@@ -538,7 +598,7 @@ int16_t FRunLogFile() {
     int16_t fLogOld;
     int16_t fRet;
     int16_t iCur;
-    HDR    *lprts;
+    uint8_t *lprts;
 
     iCur = 0;
     fRet = TRUE;
@@ -547,9 +607,9 @@ int16_t FRunLogFile() {
         return TRUE;
     }
     fLogOff = TRUE;
-    for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-        lprts = (HDR *)(lpLog + iCur);
-        fRet &= FRunLogRecord(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
+    for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+        lprts = lpLog + iCur;
+        fRet &= FRunLogRecord(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
     }
     fLogOff = fLogOld;
     gd.fFleetLinkValid = FALSE;
@@ -581,6 +641,12 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     COLDROP  *lpcdT;
     XFERFULL *lpxfMax;
     MessageId idm;
+    RTCHGPRODQ rtcpq{};
+    PROD prod{};
+    int16_t iordLog, grTaskLog;
+    uint16_t wOrderLog;
+    RTCHGSHDEF rtchgshdef{};
+    int16_t idFleet, cShipXfer;
 
     lpxfCur = NULL;
     switch (rt) {
@@ -591,31 +657,37 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     case rtLogPlanetProdQ:
         lppl = lpPlanets;
         lpplMac = lpPlanets + cPlanet;
-        for (; lppl < lpplMac && lppl->id != ((RTCHGPRODQ *)lpb)->id; lppl++) {
+        // Existing log replay consumes the ID prefix even for a short logical
+        // record. Keep that admission policy while reading its bytes explicitly.
+        if (lppl < lpplMac) FDecodeRtChgProdQ(std::as_bytes(std::span(lpb, cbWireChgProdQ)), rtcpq);
+        for (; lppl < lpplMac && lppl->id != rtcpq.id; lppl++) {
         }
         if (lppl != lpplMac && lppl->iPlayer == idPlayer) {
             i = (uint32_t)(cb - 2) / 4;
             if (i > 0) {
                 if (!lppl->lpplprod) {
-                    lppl->lpplprod = (PLPROD *)LpplAlloc(4, i + 2, htOrd);
+                    lppl->lpplprod = LpplAlloc<PLPROD>(4, i + 2, htOrd);
                 } else if (lppl->lpplprod->iprodMax < i) {
-                    lppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lppl->lpplprod, i + 2);
+                    lppl->lpplprod = LpplReAlloc(lppl->lpplprod, i + 2);
                 }
                 for (iPass = 0; iPass < i; iPass++) {
-                    if (((RTCHGPRODQ *)lpb)->rgprod[iPass].pct != 0) {
+                    FDecodeProd(std::as_bytes(std::span(lpb + cbWireChgProdQ + iPass * cbWireProd, cbWireProd)), prod);
+                    if (prod.pct != 0) {
                         for (iLook = 0; iLook < lppl->lpplprod->iprodMac; iLook++) {
-                            if (lppl->lpplprod->rgprod[iLook].pct != 0 && lppl->lpplprod->rgprod[iLook].iItem == ((RTCHGPRODQ *)lpb)->rgprod[iPass].iItem &&
-                                lppl->lpplprod->rgprod[iLook].grobj == ((RTCHGPRODQ *)lpb)->rgprod[iPass].grobj) {
-                                lppl->lpplprod->rgprod[iLook].pct = 0;
+                            if (lppl->lpplprod->rgprod()[iLook].pct != 0 && lppl->lpplprod->rgprod()[iLook].iItem == prod.iItem &&
+                                lppl->lpplprod->rgprod()[iLook].grobj == prod.grobj) {
+                                lppl->lpplprod->rgprod()[iLook].pct = 0;
                                 break;
                             }
                         }
                         if (iLook == lppl->lpplprod->iprodMac) {
-                            ((RTCHGPRODQ *)lpb)->rgprod[iPass].pct = 0;
+                            prod.pct = 0;
+                            FEncodeProd(prod, std::as_writable_bytes(std::span(lpb + cbWireChgProdQ + iPass * cbWireProd, cbWireProd)));
                         }
                     }
                 }
-                memmove(lppl->lpplprod->rgprod, ((RTCHGPRODQ *)lpb)->rgprod, i * 4);
+                FDecodeProdBytes(std::as_bytes(std::span(lpb + cbWireChgProdQ, i * cbWireProd)),
+                                 std::span(lppl->lpplprod->rgprod(), i));
                 lppl->lpplprod->iprodMac = i;
             } else if (!lppl->lpplprod) {
                 return TRUE;
@@ -634,31 +706,36 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             if ((uint16_t)cb > 26) {
                 return FALSE;
             }
-            memcpy(&rgplr[idPlayer].zpq1, lpb, cb);
+            std::byte rgb[cbWireZipProdQ1];
+            FEncodeZipProdQ1(rgplr[idPlayer].zpq1, rgb);
+            if (cb != 0) memcpy(rgb, lpb, cb);
+            FDecodeZipProdQ1(rgb, rgplr[idPlayer].zpq1);
         }
         break;
     case rtLogFleetName:
-        if (cb < (int16_t)offsetof(RTCHGNAME, rgb) ||
-            !FReadUserString(((RTCHGNAME *)lpb)->rgb, cb - offsetof(RTCHGNAME, rgb), szT, 32, NULL)) return FALSE;
-        if ((lpfl = LpflFromId(((RTCHGNAME *)lpb)->id)) == 0) return FALSE;
+        if (cb < (int16_t)cbWireChangeName ||
+            !FReadUserString(lpb + cbWireChangeName, cb - cbWireChangeName, szT, 32, NULL)) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if ((lpfl = LpflFromId(id)) == 0) return FALSE;
         if (lpfl->lpszName) FreeLp(lpfl->lpszName, htString);
         lpfl->lpszName = NULL;
         if (*szT) {
-            lpfl->lpszName = (char *)LpAlloc(strlen(szT) + 1, htString);
+            lpfl->lpszName = LpAlloc<char>(strlen(szT) + 1, htString);
             strcpy(lpfl->lpszName, szT);
         }
         break;
     case rtThing:
-        lpth = LpthFromId(((RTLOGTHING *)lpb)->idFull);
-        if (!lpth || lpth->ith != ithMinefield) {
+        lpth = LpthFromId(LtvFromPrefix(lpb, 2).idFull());
+        if (!lpth || lpth->ith() != ithMinefield) {
             return FALSE;
         }
-        lpth->thm.fDetonate = ((RTLOGTHING *)lpb)->fDetonate;
+        { const auto fDetonateForThing = (LtvFromPrefix(lpb, 4).fDetonate()); auto &thForThing = *(lpth); thForThing.thm().SetFDetonate(fDetonateForThing); }
         break;
     case rtLogShDef:
-        if (cb < (int16_t)offsetof(RTCHGSHDEF, rtshdef)) return FALSE;
-        i = ((RTCHGSHDEF *)lpb)->ishdef;
-        iLook = ((RTCHGSHDEF *)lpb)->iPlr;
+        if (cb < (int16_t)cbWireChgShDef) return FALSE;
+        FDecodeRtChgShDefPrefix(std::as_bytes(std::span(lpb, cbWireChgShDef)), rtchgshdef);
+        i = rtchgshdef.ishdef;
+        iLook = rtchgshdef.iPlr;
         if (iLook >= game.cPlayer || iLook != idPlayer) {
             return FALSE;
         }
@@ -670,7 +747,7 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         } else {
             lpshdef = rglpshdef[iLook] + i;
         }
-        if (!lpshdef->fFree && lpshdef->cExist != 0 && ((RTCHGSHDEF *)lpb)->mdChg != 0) {
+        if (!lpshdef->fFree && lpshdef->cExist != 0 && rtchgshdef.mdChg != 0) {
             return FALSE;
         }
         /* Work done on queued ships or starbases of the old design doesn't
@@ -682,13 +759,13 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         for (; lppl < lpplMac; lppl++) {
             if (lppl->iPlayer == idPlayer && lppl->lpplprod) {
                 for (iPass = 0; iPass < lppl->lpplprod->iprodMac; iPass++) {
-                    if (lppl->lpplprod->rgprod[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod[iPass].iItem == (uint32_t)i) {
-                        lppl->lpplprod->rgprod[iPass].pct = 0;
+                    if (lppl->lpplprod->rgprod()[iPass].grobj == grobjFleet && lppl->lpplprod->rgprod()[iPass].iItem == (uint32_t)i) {
+                        lppl->lpplprod->rgprod()[iPass].pct = 0;
                     }
                 }
             }
         }
-        switch (((RTCHGSHDEF *)lpb)->mdChg) {
+        switch (rtchgshdef.mdChg) {
         case 0:
             if (lpshdef->fFree)
                 break;
@@ -709,12 +786,12 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 }
             }
             if (i >= 16) {
-                if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdefSB[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
+                if (FReadShDef(lpb + cbWireChgShDef, rglpshdefSB[iLook], idPlayer, cb - cbWireChgShDef))
                     break;
                 rgplr[iLook].cshdefSB += 15;
                 return FALSE;
             }
-            if (FReadShDef(&((RTCHGSHDEF *)lpb)->rtshdef, rglpshdef[iLook], idPlayer, cb - offsetof(RTCHGSHDEF, rtshdef)))
+            if (FReadShDef(lpb + cbWireChgShDef, rglpshdef[iLook], idPlayer, cb - cbWireChgShDef))
                 break;
             rgplr[iLook].cShDef--;
             return FALSE;
@@ -723,24 +800,24 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        if (!FLookupObject(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, &rgxf[0].fl)) {
+        if (!FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), rgxf[0].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())))) {
             return FALSE;
         }
-        rgxf[1].fl.id = idflNone;
-        if (((RTXFER *)lpb)->grobj2 != grobjOther && !FLookupObject(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj2), ((RTXFER *)lpb)->id2, &rgxf[1].fl)) {
-            if (((RTXFER *)lpb)->grobj2 == grobjFleet && (((RTXFER *)lpb)->id2 >> 9 & 0xf) != idPlayer)
+        rgxf[1].SetIdObj(idflNone);
+        if (CxvFromPrefix(lpb, 5).grobj2() != grobjOther && !FLookupObject(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), rgxf[1].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())))) {
+            if (CxvFromPrefix(lpb, 5).grobj2() == grobjFleet && (CxvFromPrefix(lpb, 4).id2() >> 9 & 0xf) != idPlayer)
                 break;
             return FALSE;
         }
-        grbit = ((RTXFER *)lpb)->grbitItems;
+        grbit = CxvFromPrefix(lpb, 6).grbitItems();
         for (i = 0, iLook = 0; i < 5; i++, grbit >>= 1) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    rgcXfer[i] = (int16_t)((RTXFER *)lpb)->rgcQuan[iLook];
+                    rgcXfer[i] = (int16_t)CxvFromPrefix(lpb, 6 + (iLook + 1) * 1).cQuan8(iLook);
                 } else if (rt == rtLogCargoXfer16) {
-                    rgcXfer[i] = ((RTXFERX *)lpb)->rgcQuan[iLook];
+                    rgcXfer[i] = CxvFromPrefix(lpb, 6 + (iLook + 1) * 2).cQuan16(iLook);
                 } else {
-                    rgcXfer[i] = ((RTXFERL *)lpb)->rgcQuan[iLook];
+                    rgcXfer[i] = CxvFromPrefix(lpb, 6 + (iLook + 1) * 4).cQuan32(iLook);
                 }
                 iLook++;
             } else {
@@ -752,22 +829,22 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 if (rgcXfer[i] != 0) {
                     cXfer = rgcXfer[i];
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        l = ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, static_cast<MineralType>(i), cXfer, &rgxf[0].fl);
+                        l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
                         if (l != cXfer) {
-                            id = ((RTXFER *)lpb)->grobj1 == grobjFleet ? -32768 : 0;
-                            id |= rgxf[0].fl.id;
-                            FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
+                            id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
+                            id |= rgxf[0].idObj();
+                            FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
                             rgcXfer[i] = l;
                         }
                     }
-                    if (((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) && ((RTXFER *)lpb)->grobj2 != grobjOther) {
-                        if (i == 3 && cXfer != 0 && gd.fGeneratingTurn && ((RTXFER *)lpb)->grobj2 == grobjPlanet && ((RTXFER *)lpb)->grobj1 == grobjFleet &&
-                            rgxf[0].fl.iPlayer != rgxf[1].fl.iPlayer) {
+                    if (((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) && CxvFromPrefix(lpb, 5).grobj2() != grobjOther) {
+                        if (i == 3 && cXfer != 0 && gd.fGeneratingTurn && CxvFromPrefix(lpb, 5).grobj2() == grobjPlanet && CxvFromPrefix(lpb, 5).grobj1() == grobjFleet &&
+                            rgxf[0].iPlayerObj() != rgxf[1].iPlayerObj()) {
                             lpcdT = lpcd;
                             iColDrop = 0;
                             if (cXfer > 0) {
                                 for (; iColDrop < cColDrop && cXfer > 0; iColDrop++) {
-                                    if (lpcdT->idPlanetDst == rgxf[1].pl.id && lpcdT->idPlr == rgxf[0].fl.iPlayer) {
+                                    if (lpcdT->idPlanetDst == rgxf[1].pl().id && lpcdT->idPlr == rgxf[0].iPlayerObj()) {
                                         l = cXfer < lpcdT->cColonist ? cXfer : lpcdT->cColonist;
                                         cXfer -= l;
                                         lpcdT->cColonist -= l;
@@ -775,26 +852,26 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                     lpcdT++;
                                 }
                             } else {
-                                for (; iColDrop < cColDrop && (lpcdT->idFleetSrc != rgxf[0].fl.id || lpcdT->idPlanetDst != rgxf[1].pl.id); iColDrop++) {
+                                for (; iColDrop < cColDrop && (lpcdT->idFleetSrc != rgxf[0].idObj() || lpcdT->idPlanetDst != rgxf[1].pl().id); iColDrop++) {
                                     lpcdT++;
                                 }
                                 if (iColDrop == cColDrop) {
-                                    lpcdT->idFleetSrc = rgxf[0].fl.id;
-                                    lpcdT->idPlr = rgxf[0].fl.iPlayer;
-                                    lpcdT->idPlanetDst = rgxf[1].fl.id;
+                                    lpcdT->idFleetSrc = rgxf[0].idObj();
+                                    lpcdT->idPlr = rgxf[0].iPlayerObj();
+                                    lpcdT->idPlanetDst = rgxf[1].idObj();
                                     lpcdT->cColonist = 0;
-                                    lpcdT->fCanColonize = rgxf[1].fl.iPlayer != iplrNone;
+                                    lpcdT->fCanColonize = rgxf[1].iPlayerObj() != iplrNone;
                                     cColDrop++;
                                 }
                                 lpcdT->cColonist -= cXfer;
                             }
                         } else {
-                            if (cXfer != 0 && gd.fGeneratingTurn && rgxf[1].fl.iPlayer != rgxf[0].fl.iPlayer && ((RTXFER *)lpb)->grobj2 != grobjThing) {
+                            if (cXfer != 0 && gd.fGeneratingTurn && rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj() && CxvFromPrefix(lpb, 5).grobj2() != grobjThing) {
                                 lpxfMax = lpxf + cXferFull;
                                 if (cXfer > 0) {
                                     for (lpxfCur = lpxf; lpxfCur < lpxfMax && cXfer > 0; lpxfCur++) {
-                                        if (lpxfCur->grobj2 == ((RTXFER *)lpb)->grobj2 && lpxfCur->id2 == ((RTXFER *)lpb)->id2 && lpxfCur->grobj1 == 2 &&
-                                            (lpxfCur->id1 & 0xfe00) == (((RTXFER *)lpb)->id1 & 0xfe00)) {
+                                        if (lpxfCur->grobj2 == CxvFromPrefix(lpb, 5).grobj2() && lpxfCur->id2 == CxvFromPrefix(lpb, 4).id2() && lpxfCur->grobj1 == 2 &&
+                                            (lpxfCur->id1 & 0xfe00) == (CxvFromPrefix(lpb, 2).id1() & 0xfe00)) {
                                             l = cXfer < lpxfCur->rgcQuan[i] ? cXfer : lpxfCur->rgcQuan[i];
                                             cXfer -= l;
                                             lpxfCur->rgcQuan[i] -= l;
@@ -813,15 +890,15 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                     if (lpxfCur == lpxfMax) {
                                         cXferFull++;
                                         memset(lpxfCur, 0, sizeof(XFERFULL));
-                                        lpxfCur->id1 = ((RTXFER *)lpb)->id1;
-                                        lpxfCur->id2 = ((RTXFER *)lpb)->id2;
+                                        lpxfCur->id1 = CxvFromPrefix(lpb, 2).id1();
+                                        lpxfCur->id2 = CxvFromPrefix(lpb, 4).id2();
                                     }
                                 }
                                 lpxfCur->rgcQuan[i] -= cXfer;
                                 goto DoNext;
                             }
                         StealCargo:
-                            l = ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj2), ((RTXFER *)lpb)->id2, static_cast<MineralType>(i), -cXfer, &rgxf[1].fl);
+                            l = ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())));
                             if (l != -cXfer) {
                                 rgcXfer[i] = -l;
                                 /* Cargo the destination can't hold goes back to
@@ -830,18 +907,18 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                                    another player's fleet beyond its free hold
                                    space were lost. */
                                 if (cXfer < 0) {
-                                    ChgCargo(static_cast<GrobjClass>(((RTXFER *)lpb)->grobj1), ((RTXFER *)lpb)->id1, static_cast<MineralType>(i), -cXfer - l, &rgxf[0].fl);
+                                    ChgCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
                                 }
-                                if (((RTXFER *)lpb)->grobj2 == grobjThing) {
+                                if (CxvFromPrefix(lpb, 5).grobj2() == grobjThing) {
                                     idm = idmDidntGetAttemptedTransferMineralPacketAnother;
                                     if (l == 0) {
                                         idm = static_cast<MessageId>(idm + 1);
                                     }
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(rgxf[0].fl.id | 0x8000), rgxf[0].fl.id, i, -LOWORD(l), i, 0, 0, 0);
+                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(rgxf[0].idObj() | 0x8000), rgxf[0].idObj(), i, -LOWORD(l), i, 0, 0, 0);
                                 } else {
-                                    id = ((RTXFER *)lpb)->grobj1 == grobjFleet ? -32768 : 0;
-                                    id |= rgxf[0].fl.id;
-                                    FSendPlrMsg(rgxf[0].fl.iPlayer, idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
+                                    id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
+                                    id |= rgxf[0].idObj();
+                                    FSendPlrMsg(rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
                                                 0);
                                 }
                             }
@@ -851,30 +928,31 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
             DoNext:;
             }
         }
-        if (((RTXFER *)lpb)->grobj1 == grobjFleet) {
-            FLookupFleet(idWriteBack, &rgxf[0].fl);
+        if (CxvFromPrefix(lpb, 5).grobj1() == grobjFleet) {
+            FLookupFleet(idWriteBack, &rgxf[0].fl());
         } else {
-            FLookupPlanet(idWriteBack, &rgxf[0].pl);
+            FLookupPlanet(idWriteBack, &rgxf[0].pl());
         }
-        switch (((RTXFER *)lpb)->grobj2) {
+        switch (CxvFromPrefix(lpb, 5).grobj2()) {
         case grobjFleet:
-            FLookupFleet(idWriteBack, &rgxf[1].fl);
+            FLookupFleet(idWriteBack, &rgxf[1].fl());
             break;
         case grobjPlanet:
         case grobjOther:
-            FLookupPlanet(idWriteBack, &rgxf[1].pl);
+            FLookupPlanet(idWriteBack, &rgxf[1].pl());
             break;
         case grobjThing:
-            FLookupThing(idWriteBack, &rgxf[1].th);
+            FLookupThing(idWriteBack, &rgxf[1].th());
         }
         break;
     case rtLogFleetSplit:
     case rtLogFleetMerge:
-        if (!FLookupObject(grobjFleet, ((RTFLEETIDS *)lpb)->rgid[0], &rgxf[0].fl)) {
+        FReadFleetId({std::as_bytes(std::span(lpb, cbWireFleetId))}, 0, idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
             return FALSE;
         }
         if (rt == rtLogFleetSplit) {
-            if (LpflNewSplit(&rgxf[0].fl) != 0)
+            if (LpflNewSplit(&rgxf[0].fl()) != 0)
                 break;
             return FALSE;
         }
@@ -885,9 +963,9 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 lpfl = rglpfl[ifl];
                 if (!rglpfl[ifl])
                     break;
-                if (lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->pt.x == rgxf[0].fl.pt.x && lpfl->pt.y == rgxf[0].fl.pt.y) {
+                if (lpfl->iPlayer == idPlayer && !lpfl->fDead && lpfl->pt.x == rgxf[0].fl().pt.x && lpfl->pt.y == rgxf[0].fl().pt.y) {
                     rgifl[vcflMerge++] = lpfl->id;
-                    lpfl->fCompChg = TRUE;
+                    lpfl->SetFCompChg(TRUE);
                 }
             }
         } else {
@@ -896,49 +974,53 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                     lpfl = rglpfl[ifl];
                     if (!rglpfl[ifl])
                         break;
-                    if (lpfl->id == ((RTFLEETIDS *)lpb)->rgid[i]) {
+                    FReadFleetId({std::as_bytes(std::span(lpb + i * cbWireFleetId, cbWireFleetId))}, 0, idFleet);
+                    if (lpfl->id == idFleet) {
                         rgifl[vcflMerge++] = lpfl->id;
-                        lpfl->fCompChg = TRUE;
+                        lpfl->SetFCompChg(TRUE);
                         break;
                     }
                 }
             }
         }
-        if (FFleetMergeAll(&rgxf[0].fl))
+        if (FFleetMergeAll(&rgxf[0].fl()))
             break;
         return FALSE;
     case rtLogFleetCargoXfer:
-        if (!FLookupObject(grobjFleet, ((RTXFERF *)lpb)->id1, &rgxf[0].fl)) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
             return FALSE;
         }
-        if (!FLookupObject(grobjFleet, ((RTXFERF *)lpb)->id2, &rgxf[1].fl)) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(idFleet);
+        if (!FLookupObject(grobjFleet, idFleet, rgxf[1].LpvLookup(grobjFleet))) {
             return FALSE;
         }
-        if (rgxf[1].fl.iPlayer != rgxf[0].fl.iPlayer) {
+        if (rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj()) {
             return FALSE;
         }
         for (iPass = 0; iPass < 2; iPass++) {
-            grbit = ((RTXFERF *)lpb)->grbitItems;
+            NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 5, 2))).FReadU16Le(grbit);
             i = 0;
             iLook = 0;
             while (i < 16) {
                 if (grbit & 1) {
-                    cXfer = ((RTXFERF *)lpb)->rgcQuan[iLook];
+                    NATIVEBYTEREADER(std::as_bytes(std::span(lpb + cbWireXferF + iLook * 2, 2))).FReadI16Le(cShipXfer);
+                    cXfer = cShipXfer;
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        if (rgxf[0].fl.rgcsh[i] + cXfer < 0) {
-                            cXfer = (int16_t)-rgxf[0].fl.rgcsh[i];
-                        } else if ((int16_t)(32766 - rgxf[0].fl.rgcsh[i]) <= cXfer) {
-                            cXfer = (int16_t)(32766 - rgxf[0].fl.rgcsh[i] - 1);
+                        if (rgxf[0].fl().rgcsh[i] + cXfer < 0) {
+                            cXfer = (int16_t)-rgxf[0].fl().rgcsh[i];
+                        } else if ((int16_t)(32766 - rgxf[0].fl().rgcsh[i]) <= cXfer) {
+                            cXfer = (int16_t)(32766 - rgxf[0].fl().rgcsh[i] - 1);
                         }
-                        rgxf[0].fl.rgcsh[i] += LOWORD(cXfer);
+                        rgxf[0].fl().rgcsh[i] += LOWORD(cXfer);
                     }
                     if ((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) {
-                        if (rgxf[1].fl.rgcsh[i] - cXfer < 0) {
-                            cXfer = rgxf[1].fl.rgcsh[i];
-                        } else if ((int16_t)(32766 - rgxf[1].fl.rgcsh[i]) <= -cXfer) {
-                            cXfer = (int16_t)-(32766 - rgxf[1].fl.rgcsh[i] - 1);
+                        if (rgxf[1].fl().rgcsh[i] - cXfer < 0) {
+                            cXfer = rgxf[1].fl().rgcsh[i];
+                        } else if ((int16_t)(32766 - rgxf[1].fl().rgcsh[i]) <= -cXfer) {
+                            cXfer = (int16_t)-(32766 - rgxf[1].fl().rgcsh[i] - 1);
                         }
-                        rgxf[1].fl.rgcsh[i] -= LOWORD(cXfer);
+                        rgxf[1].fl().rgcsh[i] -= LOWORD(cXfer);
                     }
                     iLook++;
                 }
@@ -946,73 +1028,67 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
                 grbit >>= 1;
             }
         }
-        FleetTransferCargoBalance(&rgxf[0].fl, &rgxf[1].fl);
+        FleetTransferCargoBalance(&rgxf[0].fl(), &rgxf[1].fl());
         for (iPass = 0; iPass < 2; iPass++) {
-            FLookupFleet(idWriteBack, &rgxf[iPass].fl);
-            lpfl = LpflFromId(rgxf[iPass].fl.id);
+            FLookupFleet(idWriteBack, &rgxf[iPass].fl());
+            lpfl = LpflFromId(rgxf[iPass].idObj());
             if (lpfl) {
-                lpfl->fCompChg = TRUE;
+                lpfl->SetFCompChg(TRUE);
             }
-            for (i = 0; i < 16 && rgxf[iPass].fl.rgcsh[i] == 0; i++) {
+            for (i = 0; i < 16 && rgxf[iPass].fl().rgcsh[i] == 0; i++) {
             }
             if (i == 16) {
-                FDeleteFleet(rgxf[iPass].fl.id, grobjNone, 0);
+                FDeleteFleet(rgxf[iPass].idObj(), grobjNone, 0);
             }
         }
         break;
     case rtLogFleetOrderDelete:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0 || lpfl->cord <= 0 || (iLook = ((RTSHIPINT *)lpb)->i & 0x7fff) >= lpfl->cord) {
-            return FALSE;
-        }
-        fExtra = (((RTSHIPINT *)lpb)->i & 0x8000) != 0;
-        if (fExtra && iLook + 1 >= lpfl->cord) {
-            return FALSE;
-        }
-        memmove(&lpfl->lpplord->rgord[iLook], &lpfl->lpplord->rgord[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id)) || lpfl->cord <= 0) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadU16Le(wOrderLog);
+        iLook = wOrderLog & 0x7fff;
+        if (iLook >= lpfl->cord) return FALSE;
+        fExtra = (wOrderLog & 0x8000) != 0;
+        if (fExtra && iLook + 1 >= lpfl->cord) return FALSE;
+        memmove(&lpfl->lpplord->rgord()[iLook], &lpfl->lpplord->rgord()[iLook + fExtra + 1], (lpfl->cord - iLook - fExtra - 1) * sizeof(ORDER));
         lpfl->cord -= fExtra + 1;
         lpfl->lpplord->iordMac -= fExtra + 1;
         break;
     case rtLogFleetOrderInsert:
-        if ((lpfl = LpflFromId(((RTWAYPT *)lpb)->id)) == 0 || ((RTWAYPT *)lpb)->iWaypt < 0 || ((RTWAYPT *)lpb)->iWaypt > lpfl->cord) {
-            return FALSE;
-        }
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iordLog);
+        if (iordLog < 0 || iordLog > lpfl->cord) return FALSE;
         if (lpfl->cord == lpfl->lpplord->iordMax) {
-            lpfl->lpplord = (PLORD *)LpplReAlloc((PL *)lpfl->lpplord, lpfl->cord + 3);
+            lpfl->lpplord = LpplReAlloc(lpfl->lpplord, lpfl->cord + 3);
         }
-        memmove(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt + 1], &lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt],
-                (lpfl->cord - ((RTWAYPT *)lpb)->iWaypt) * sizeof(ORDER));
-        if ((uint16_t)cb < 22) {
-            memset(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt], 0, sizeof(ORDER));
-        }
-        memmove(&lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt], &((RTWAYPT *)lpb)->order, cb - 4);
-        lpfl->lpplord->rgord[((RTWAYPT *)lpb)->iWaypt].fNoAutoTrack = FALSE;
+        memmove(&lpfl->lpplord->rgord()[iordLog + 1], &lpfl->lpplord->rgord()[iordLog], (lpfl->cord - iordLog) * sizeof(ORDER));
+        if (!FApplyOrderBytes(lpfl->lpplord, iordLog, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return FALSE;
         lpfl->cord++;
         lpfl->lpplord->iordMac++;
         break;
     case rtLogFleetOrderUpdate:
-        if ((lpfl = LpflFromId(((RTWAYPT *)lpb)->id)) == 0 || lpfl->cord < 0 || (iLook = ((RTWAYPT *)lpb)->iWaypt) >= lpfl->cord) {
-            return FALSE;
-        }
-        if ((uint16_t)cb < 22) {
-            memset(&lpfl->lpplord->rgord[iLook], 0, sizeof(ORDER));
-        }
-        memmove(&lpfl->lpplord->rgord[iLook], &((RTWAYPT *)lpb)->order, cb - 4);
-        lpfl->lpplord->rgord[iLook].fNoAutoTrack = FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id)) || lpfl->cord < 0) return FALSE;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
+        if (iLook >= lpfl->cord) return FALSE;
+        if (!FApplyOrderBytes(lpfl->lpplord, iLook, lpb + cbWireWaypt, cb, static_cast<uint16_t>(cb) < cbWireWaypt + cbWireOrder)) return FALSE;
         break;
     case rtBtlPlan:
         if (cb < 2) return FALSE;
-        i = ((BTLPLAN *)lpb)->iplan;
-        if (((BTLPLAN *)lpb)->iplr != idPlayer || i < 0 || i > rgcbtlplan[idPlayer]) {
-            if (((BTLPLAN *)lpb)->fDelete != 0)
+        // Deletions stop after the owner/plan word, before target/name bytes.
+        i = BpvFromPrefix(lpb, 2).iplan();
+        if (BpvFromPrefix(lpb, 2).iplr() != idPlayer || i < 0 || i > rgcbtlplan[idPlayer]) {
+            if (BpvFromPrefix(lpb, 2).fDelete() != 0)
                 break;
             goto BombOut;
         }
-        if (((BTLPLAN *)lpb)->fDelete != 0) {
+        if (BpvFromPrefix(lpb, 2).fDelete() != 0) {
             FDeleteBattlePlan(i, FALSE);
             break;
         }
         if (cb < 4) return FALSE;
-        if (((BTLPLAN *)lpb)->mdTactic > 6 || ((BTLPLAN *)lpb)->mdTarget1 > 8 || ((BTLPLAN *)lpb)->mdTarget2 > 8)
+        if (BpvFromPrefix(lpb, 4).mdTactic() > 6 || BpvFromPrefix(lpb, 4).mdTarget1() > 8 || BpvFromPrefix(lpb, 4).mdTarget2() > 8)
             goto BombOut;
         if (i == rgcbtlplan[idPlayer]) {
             if (i >= 16)
@@ -1022,46 +1098,51 @@ int16_t FRunLogRecord(RecordType rt, int16_t cb, uint8_t *lpb) {
         if (i == rgcbtlplan[idPlayer]) rgcbtlplan[idPlayer]++;
         break;
     case rtLogFleetPlan:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0)
-            goto BombOut;
-        lpfl->iplan = ((RTSHIPINT *)lpb)->i;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) goto BombOut;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iLook);
+        lpfl->iplan = iLook;
         break;
     case rtLogFleetFlagBit9:
     case rtLogFleetOrderAttrNib:
-        if ((lpfl = LpflFromId(((RTSHIPINT *)lpb)->id)) == 0) {
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(id);
+        if (!(lpfl = LpflFromId(id))) {
         BombOut:
             return FALSE;
         }
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(iordLog);
         if (rt == rtLogFleetFlagBit9) {
-            lpfl->fRepOrders = ((RTSHIPINT *)lpb)->i;
+            lpfl->fRepOrders = iordLog;
             break;
         }
-        if (lpfl->cord <= ((RTSHIPINT2 *)lpb)->i || ((RTSHIPINT2 *)lpb)->i2 >= 10)
-            goto BombOut;
-        lpfl->lpplord->rgord[((RTSHIPINT2 *)lpb)->i].grTask = ((RTSHIPINT2 *)lpb)->i2;
+        if (lpfl->cord <= iordLog) goto BombOut;
+        NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 4, 2))).FReadI16Le(grTaskLog);
+        if (grTaskLog >= 10) goto BombOut;
+        if (!FSetOrderTask(lpfl->lpplord, iordLog, grTaskLog)) return FALSE;
         break;
     case rtLogPlanetRouting:
-        lppl = LpplFromId(((RTCHGPLANETLONG *)lpb)->id);
+        lppl = LpplFromId(RlvFromPrefix(lpb, 2).id());
         if (!lppl || lppl->iPlayer != idPlayer)
             goto BombOut;
-        lppl->fNoResearch = ((RTCHGPLANETLONG *)lpb)->fNoResearch;
-        lppl->idFling = ((RTCHGPLANETLONG *)lpb)->idFling;
-        lppl->iWarpFling = ((RTCHGPLANETLONG *)lpb)->iWarpFling;
-        lppl->idRoute = ((RTCHGPLANETLONG *)lpb)->idRoute;
+        lppl->fNoResearch = RlvFromPrefix(lpb, 3).fNoResearch();
+        lppl->idFling = RlvFromPrefix(lpb, 4).idFling();
+        lppl->iWarpFling = RlvFromPrefix(lpb, 4).iWarpFling();
+        lppl->idRoute = RlvFromPrefix(lpb, 6).idRoute();
         break;
     case rtChgPassword:
         if (gd.fGeneratingTurn) {
-            rgplr[idPlayer].lSalt = RawLoad32(lpb);
+            NATIVEBYTEREADER(std::as_bytes(std::span(lpb, cbWirePassword))).FReadI32Le(l);
+            rgplr[idPlayer].lSalt = l;
         }
         break;
     case rtLogResearch:
-        ch = ((RTRESEARCH *)lpb)->pctResearch;
+        ch = RsvFromPrefix(lpb, 1).pctResearch();
         if (ch < 0 || ch > 100)
             goto BombOut;
         rgplr[idPlayer].pctResearch = ch;
-        if (((RTRESEARCH *)lpb)->iTechNow >= 6 || ((RTRESEARCH *)lpb)->iTechNext > 7)
+        if (RsvFromPrefix(lpb, 2).iTechNow() >= 6 || RsvFromPrefix(lpb, 2).iTechNext() > 7)
             goto BombOut;
-        rgplr[idPlayer].iTechCur = ((RTRESEARCH *)lpb)->iTechCur;
+        rgplr[idPlayer].iTechCur = RsvFromPrefix(lpb, 2).iTechCur();
         break;
     }
     return TRUE;
@@ -1072,6 +1153,7 @@ int16_t FLoadLogFile(char *pszLog) {
     int16_t  cbLog;
     int16_t  iCur;
     MSGPLR  *lpmp;
+    MSGPLR **lppmp;
     int16_t  cSkip;
 
     fRet = TRUE;
@@ -1092,8 +1174,8 @@ int16_t FLoadLogFile(char *pszLog) {
             vlpMemStream++;
             while (cSkip-- != 0) {
                 do {
-                    vlpMemStream += 2 + ((HDR *)vlpMemStream)->cb;
-                } while (((HDR *)vlpMemStream)->rt != rtBOF);
+                    vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
+                } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
             }
         } else {
         StrOpen:
@@ -1101,11 +1183,11 @@ int16_t FLoadLogFile(char *pszLog) {
         }
 
         ReadRt();
-        if (hdrCur.rt != rtBOF || ((RTBOF *)rgbCur)->verMajor != 2 || ((RTBOF *)rgbCur)->verMinor != 85) {
+        if (hdrCur.rt != rtBOF || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMajor() != 2 || BfvFromPrefix(rgbCur, sizeof(rgbCur)).verMinor() != 85) {
             FileError(idsFileDoesBelongVersionStars);
             goto FailSuccess;
         }
-        if (game.lid != ((RTBOF *)rgbCur)->lidGame || game.turn > ((RTBOF *)rgbCur)->turn) {
+        if (game.lid != BfvFromPrefix(rgbCur, sizeof(rgbCur)).lidGame() || game.turn > BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn()) {
         FailSuccess:
             if (vlpMemStream) {
                 vlpMemStream = NULL;
@@ -1114,33 +1196,34 @@ int16_t FLoadLogFile(char *pszLog) {
             }
             return TRUE;
         }
-        if (((RTBOF *)rgbCur)->turn != game.turn) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).turn() != game.turn) {
             FileError(idsLogFileRecentGameTryingLoadIgnoring);
             goto FailSuccess;
         }
-        if (((RTBOF *)rgbCur)->wGen != game.wGen) {
+        if (BfvFromPrefix(rgbCur, sizeof(rgbCur)).wGen() != game.wGen) {
             FileError(idsFileGame);
             goto FailSuccess;
         }
-        wVersFile = ((RTBOF *)rgbCur)->wVersion;
-        gd.fFileCrippled = ((RTBOF *)rgbCur)->fCrippled;
+        wVersFile = BfvFromPrefix(rgbCur, sizeof(rgbCur)).wVersion();
+        gd.fFileCrippled = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled();
         if (gd.fGeneratingTurn) {
-            rgplr[idPlayer].fCrippled = ((RTBOF *)rgbCur)->fCrippled;
+            rgplr[idPlayer].fCrippled = BfvFromPrefix(rgbCur, sizeof(rgbCur)).fCrippled();
         }
         ReadRt();
-        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
             ReadRt();
-            memmove(lpLog + iCur, &hdrCur, sizeof(HDR));
+            FEncodeHdr(hdrCur, std::as_writable_bytes(std::span(lpLog + iCur, cbWireHdr)));
             memmove(lpLog + (2 + iCur), rgbCur, hdrCur.cb);
         }
         ReadRt();
-        for (lpmp = (MSGPLR *)&vlpmsgplrOut; lpmp->lpmsgplrNext; lpmp = lpmp->lpmsgplrNext) {
+        for (lppmp = &vlpmsgplrOut; *lppmp; lppmp = &(*lppmp)->lpmsgplrNext) {
         }
         while (hdrCur.rt == rtPlrMsg) {
-            lpmp->lpmsgplrNext = LpmsgplrFromRt();
-            if (lpmp->lpmsgplrNext) {
-                lpmp = lpmp->lpmsgplrNext;
+            *lppmp = LpmsgplrFromRt();
+            if (*lppmp) {
+                lpmp = *lppmp;
+                lppmp = &lpmp->lpmsgplrNext;
                 vcmsgplrOut++;
             }
             ReadRt();
@@ -1188,7 +1271,7 @@ int16_t FCheckLogFile(int16_t iplr, int16_t *pfError) {
             return FALSE;
         }
         ReadRt();
-        cbLog = ((RTLOGHDR *)rgbCur)->cbLog;
+        NATIVEBYTEREADER(std::as_bytes(std::span(rgbCur)).first(2)).FReadI16Le(cbLog);
         for (iCur = 0; iCur < cbLog; iCur += hdrCur.cb + 2) {
             ReadRt();
         }
@@ -1217,16 +1300,24 @@ Done:
 
 int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
     int16_t  iCur;
-    HDR     *lprts;
+    uint8_t *lprts;
     RTLOGHDR rtlh;
+    uint8_t rgbLogHdr[cbWireLogHdr];
     MSGPLR  *lpmp;
     int16_t  cb;
 
     iCur = 0;
     if (iPlayer == idPlayer && !rgplr[iPlayer].fAi && hdrPrev.rt != rtLogPlayerZpq1) {
         cb = 26 - (12 - vrgZipProd[0].cpq) * 2;
-        if (memcmp(&rgplr[iPlayer].zpq1, (uint8_t *)(ZIPPRODQ *)vrgZipProd + 14, cb) != 0) {
-            WriteMemRt(rtLogPlayerZpq1, cb, (uint8_t *)(ZIPPRODQ *)vrgZipProd + 14);
+        std::byte rgbPlayer[16 * cbWirePlayer], rgbZip[5 * cbWireZipProdQ];
+        for (int i = 0; i < 16; i++) FEncodePlayer(rgplr[i], std::span(rgbPlayer).subspan(i * cbWirePlayer));
+        for (int i = 0; i < 5; i++) FEncodeZipProdQ(vrgZipProd[i], std::span(rgbZip).subspan(i * cbWireZipProdQ));
+        // Historical over-counts can compare into adjacent initialized template/
+        // player storage. Preserve that physical image rather than clamp to 26.
+        assert(static_cast<std::size_t>(cb) <= sizeof(rgbZip) - 14);
+        assert(static_cast<std::size_t>(iPlayer) * cbWirePlayer + 86 + cb <= sizeof(rgbPlayer));
+        if (memcmp(rgbPlayer + iPlayer * cbWirePlayer + 86, rgbZip + 14, cb) != 0) {
+            WriteMemZpqRt(cb);
         }
     }
     /* NATIVE: callers pass szBase itself, and strcpy onto itself is
@@ -1243,10 +1334,11 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer) {
         rtlh.cbLog = imemLogCur;
         /* Preserve the unused 15-byte metadata area in the orders-file header. */
         memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused));
-        WriteRt(static_cast<RecordType>(9), 17, &rtlh);
-        for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-            lprts = (HDR *)(lpLog + iCur);
-            WriteRt(static_cast<RecordType>(lprts->rt), lprts->cb, lpLog + (2 + iCur));
+        FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
+        WriteRt(static_cast<RecordType>(9), cbWireLogHdr, rgbLogHdr);
+        for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+            lprts = lpLog + iCur;
+            WriteRt(static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), lpLog + (2 + iCur));
         }
         iCur = vcmsgplrOut;
         lpmp = vlpmsgplrOut;
@@ -1272,6 +1364,7 @@ int16_t FWriteHistFile(int16_t iPlayer) {
     SHDEF    *lpshdef;
     int16_t   j;
     RTHISTHDR rthh;
+    std::byte rgbHistHdr[cbWireHistHdr];
     uint8_t  *lpb;
 
     if (!FCreateFile(dtHist, iPlayer, NULL)) {
@@ -1282,7 +1375,8 @@ int16_t FWriteHistFile(int16_t iPlayer) {
     try {
         rthh.cPlanet = cPlanet;
         rthh.cPlanetExtra = rgplr[iPlayer].cFleet;
-        WriteRt(rtHistHdr, 4, &rthh);
+        if (!FEncodeRtHistHdr(rthh, rgbHistHdr)) { StreamClose(); return FALSE; }
+        WriteRt(rtHistHdr, cbWireHistHdr, rgbHistHdr);
         i = 0;
         lppl = lpPlanets;
         while (i < cPlanet) {
@@ -1325,13 +1419,13 @@ int16_t FWriteHistFile(int16_t iPlayer) {
             if (rgsxPlr[i]) {
                 for (j = 0; j < rgcsxPlr[i]; j++) {
                     if (rgsxPlr[i][j].turn >= cTurnBase) {
-                        WriteRt(rtScore, 24, rgsxPlr[i] + j);
+                        WriteRtScore(rgsxPlr[i] + j);
                     }
                 }
             }
         }
-        if (vlpbAiData && ((AIHIST *)vlpbAiData)->cbAiHist > 2) {
-            i = ((AIHIST *)vlpbAiData)->cbAiHist;
+        if (vlpbAiData && AhvFromLp(vlpbAiData).cbAiHist() > 2) {
+            i = AhvFromLp(vlpbAiData).cbAiHist();
             lpb = vlpbAiData;
             for (; i >= 1024; i -= 1023) {
                 WriteRt(rtAiData, 1023, lpb);
@@ -1352,15 +1446,15 @@ void EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), void 
     int16_t fLogOld;
     int16_t fRet;
     int16_t iCur;
-    HDR    *lprts;
+    uint8_t *lprts;
 
     iCur = 0;
     fRet = TRUE;
     fLogOld = fLogOff;
     if (imemLogCur != 0) {
-        for (; iCur < imemLogCur; iCur += lprts->cb + 2) {
-            lprts = (HDR *)(lpLog + iCur);
-            if (pfn(lpLog + (2 + iCur), lprts->rt, lprts->cb, lpPass, iPass) == 0)
+        for (; iCur < imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+            lprts = lpLog + iCur;
+            if (pfn(lpLog + (2 + iCur), HdvFromPrefix(lprts).rt(), HdvFromPrefix(lprts).cb(), lpPass, iPass) == 0)
                 break;
         }
     }

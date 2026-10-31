@@ -3,8 +3,11 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include "resourcecodec.h"
+#include "ownership.h"
 #include <limits.h>
 #include <math.h>
+#include <new>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,22 +22,22 @@ typedef struct COMPATOBJECT {
     int iKind, cSelected, iPenStyle;
     COLORREF crColor;
     BOOL fNull, fStock, fAlive, fMono;
-    SDL_Surface *lpSurface;
-    COMPATFONT *lpFont;
+    NATIVEARRAYOWNER<PALETTEENTRY, std::free> rgpe;
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpFont;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpSurface;
     LOGFONTA lf;
-    PALETTEENTRY *rgpe;
     UINT cEntries;
     RECT rcRegion;
     struct COMPATOBJECT *lpNext;
 } COMPATOBJECT;
 
 struct HDC__ {
-    COMPATPRINT *lpprint;
+    NATIVEOWNER<COMPATPRINT, CompatDeletePrinter> lpprint;
     HDC hdcToken;
     HWND hwnd;
     RECT rcClip;
     POINT pt, ptOrg, ptBrush;
-    RECT *rgrcRegion, *rgrcPaint;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcRegion, rgrcPaint;
     size_t crcPaint;
     size_t crcRegion;
     BOOL fRegion;
@@ -59,6 +62,11 @@ static PALETTEENTRY rgpeDefault[] = {
     {0, 0, 255, 0}, {255, 0, 255, 0}, {0, 255, 255, 0}, {255, 255, 255, 0}
 };
 
+// The stock palette borrows static entries; custom palettes own their storage.
+static PALETTEENTRY *RgpeCompatPalette(COMPATOBJECT *lpobj) {
+    return lpobj->fStock ? rgpeDefault : lpobj->rgpe.get();
+}
+
 static BOOL FColor(COLORREF cr) {
     return (cr >> 24) <= 2;
 }
@@ -68,7 +76,7 @@ static COLORREF CrPalette(HDC lpdc, COLORREF cr) {
     if ((cr >> 24) != 1) return cr & UINT32_C(0x00ffffff);
     i = (WORD)cr;
     if (i >= lpdc->lppalette->cEntries) return RGB(0, 0, 0);
-    pe = lpdc->lppalette->rgpe[i];
+    pe = RgpeCompatPalette(lpdc->lppalette)[i];
     return RGB(pe.peRed, pe.peGreen, pe.peBlue);
 }
 
@@ -119,7 +127,6 @@ HGDIOBJ WINAPI GetStockObject(int i) {
                 rgStock[j].fAlive = TRUE;
             } else if (j == DEFAULT_PALETTE) {
                 rgStock[j].iKind = objPalette;
-                rgStock[j].rgpe = rgpeDefault;
                 rgStock[j].cEntries = sizeof(rgpeDefault) / sizeof(rgpeDefault[0]);
                 rgStock[j].fAlive = TRUE;
             } else if (j == SYSTEM_FONT || j == SYSTEM_FIXED_FONT ||
@@ -132,12 +139,12 @@ HGDIOBJ WINAPI GetStockObject(int i) {
         fStock = TRUE;
     }
     if (i < 0 || i >= 18 || !rgStock[i].fAlive) return NULL;
-    if (rgStock[i].iKind == objFont && !rgStock[i].lpFont) {
+    if (rgStock[i].iKind == objFont && !rgStock[i].lpFont.get()) {
         rgStock[i].lf.lfHeight = -12;
         strcpy(rgStock[i].lf.lfFaceName, i == SYSTEM_FIXED_FONT || i == ANSI_FIXED_FONT || i == OEM_FIXED_FONT ?
                "monospace" : "sans-serif");
-        rgStock[i].lpFont = LpNewCompatFont(&rgStock[i].lf);
-        if (!rgStock[i].lpFont) return NULL;
+        rgStock[i].lpFont.reset(LpNewCompatFont(&rgStock[i].lf));
+        if (!rgStock[i].lpFont.get()) return NULL;
     }
     return &rgStock[i];
 }
@@ -147,7 +154,7 @@ static COMPATOBJECT *LpNewObject(int iKind, COLORREF crColor, BOOL fNull) {
 
     if (!SDL_IsMainThread() || !FColor(crColor))
         return NULL;
-    lpobj = (COMPATOBJECT *)(calloc(1, sizeof(*lpobj)));
+    lpobj = new (std::nothrow) COMPATOBJECT{};
     if (!lpobj)
         return NULL;
     lpobj->iKind = iKind;
@@ -177,14 +184,15 @@ HBRUSH WINAPI CreateSolidBrush(COLORREF crColor) {
 HPALETTE WINAPI CreatePalette(const LOGPALETTE *lppal) {
     COMPATOBJECT *lpobj;
     PALETTEENTRY *rgpe;
+    NATIVEARRAYOWNER<PALETTEENTRY, std::free> rgpeOwner;
     if (!SDL_IsMainThread() || !lppal || lppal->palVersion != 0x300 || lppal->palNumEntries == 0)
         return NULL;
-    rgpe = (PALETTEENTRY *)(malloc((size_t)lppal->palNumEntries * sizeof(*rgpe)));
+    rgpeOwner.reset((PALETTEENTRY *)malloc((size_t)lppal->palNumEntries * sizeof(*rgpe))); rgpe = rgpeOwner.get();
     if (!rgpe) return NULL;
     memcpy(rgpe, lppal->palPalEntry, (size_t)lppal->palNumEntries * sizeof(*rgpe));
     lpobj = LpNewObject(objPalette, 0, FALSE);
-    if (!lpobj) { free(rgpe); return NULL; }
-    lpobj->rgpe = rgpe; lpobj->cEntries = lppal->palNumEntries;
+    if (!lpobj) return NULL;
+    lpobj->rgpe.reset(rgpeOwner.release()); lpobj->cEntries = lppal->palNumEntries;
     return (HPALETTE)lpobj;
 }
 
@@ -216,19 +224,20 @@ UINT WINAPI GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALET
     if (!rgpe) return lpobj->cEntries;
     if (iStart >= lpobj->cEntries) return 0;
     cEntries = StarsMin(cEntries, lpobj->cEntries - iStart);
-    memcpy(rgpe, lpobj->rgpe + iStart, (size_t)cEntries * sizeof(*rgpe));
+    memcpy(rgpe, RgpeCompatPalette(lpobj) + iStart, (size_t)cEntries * sizeof(*rgpe));
     return cEntries;
 }
 
 HFONT WINAPI CreateFontIndirectA(const LOGFONTA *lplf) {
     COMPATOBJECT *lpobj;
     COMPATFONT *lpfont;
+    NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfontOwner;
     if (!SDL_IsMainThread() || !lplf) return NULL;
-    lpfont = LpNewCompatFont(lplf);
+    lpfontOwner.reset(LpNewCompatFont(lplf)); lpfont = lpfontOwner.get();
     if (!lpfont) return NULL;
     lpobj = LpNewObject(objFont, 0, FALSE);
-    if (!lpobj) { FreeCompatFont(lpfont); return NULL; }
-    lpobj->lpFont = lpfont; lpobj->lf = *lplf;
+    if (!lpobj) return NULL;
+    lpobj->lpFont.reset(lpfontOwner.release()); lpobj->lf = *lplf;
     return (HFONT)lpobj;
 }
 
@@ -238,10 +247,9 @@ BOOL WINAPI DeleteObject(HGDIOBJ h) {
     if (!lpobj || lpobj->fStock || lpobj->cSelected != 0)
         return FALSE;
     // Tombstones prevent stale GDI handles from aliasing newly allocated objects.
-    SDL_DestroySurface(lpobj->lpSurface);
-    lpobj->lpSurface = NULL;
-    FreeCompatFont(lpobj->lpFont); lpobj->lpFont = NULL;
-    free(lpobj->rgpe); lpobj->rgpe = NULL; lpobj->cEntries = 0;
+    lpobj->lpSurface.reset();
+    lpobj->lpFont.reset();
+    lpobj->rgpe.reset(); lpobj->cEntries = 0;
     lpobj->fAlive = FALSE;
     return TRUE;
 }
@@ -278,9 +286,9 @@ int ICompatCanvasScale(HWND hwnd) {
     const char *pszDriver = SDL_GetCurrentVideoDriver();
 
     if (!lpRoot || !pszDriver || strcmp(pszDriver, "cocoa")) return 1;
-    if (hwnd != lpRoot && lpRoot->lpCanvas) return StarsMax(1, lpRoot->iCanvasScale);
-    if (!SDL_GetWindowSize(lpRoot->lpWindow, &cx, &cy) || cx <= 0 || cy <= 0 ||
-        !SDL_GetWindowSizeInPixels(lpRoot->lpWindow, &cxPixel, &cyPixel)) return 1;
+    if (hwnd != lpRoot && lpRoot->lpCanvas.get()) return StarsMax(1, lpRoot->iCanvasScale);
+    if (!SDL_GetWindowSize(lpRoot->lpWindow.get(), &cx, &cy) || cx <= 0 || cy <= 0 ||
+        !SDL_GetWindowSizeInPixels(lpRoot->lpWindow.get(), &cxPixel, &cyPixel)) return 1;
     iScale = cxPixel / cx;
     return iScale >= 1 && iScale <= 4 && cxPixel == cx * iScale && cyPixel == cy * iScale ? iScale : 1;
 }
@@ -306,6 +314,8 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale) {
 static BOOL FCanvas(HWND hwnd) {
     SDL_Surface *lpnew;
     SDL_Texture *lptex;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Texture, SDL_DestroyTexture> lptextureOwner;
     int dx, dy, cyMenu, iScale, iOld = StarsMax(1, hwnd->iCanvasScale);
     float cxTexture, cyTexture;
     RECT rc;
@@ -318,50 +328,50 @@ static BOOL FCanvas(HWND hwnd) {
     dx *= iScale; dy *= iScale;
     cyMenu = CyCompatMenuBar(hwnd) * iScale;
     dx = StarsMax(1, dx); dy = StarsMax(1, dy);
-    if (hwnd->lpCanvas && hwnd->iCanvasScale == iScale && hwnd->lpCanvas->w == dx && hwnd->lpCanvas->h == dy &&
-        (hwnd->hwndParent || (SDL_GetTextureSize(hwnd->lpTexture, &cxTexture, &cyTexture) &&
+    if (hwnd->lpCanvas.get() && hwnd->iCanvasScale == iScale && hwnd->lpCanvas->w == dx && hwnd->lpCanvas->h == dy &&
+        (hwnd->hwndParent || (SDL_GetTextureSize(hwnd->lpTexture.get(), &cxTexture, &cyTexture) &&
          cxTexture == dx && cyTexture == dy + cyMenu)))
         return TRUE;
-    if (!hwnd->hwndParent && !hwnd->lpRenderer) {
+    if (!hwnd->hwndParent && !hwnd->lpRenderer.get()) {
         pszMode = SDL_getenv("STARS_SDL_RENDERER");
         if (pszMode && strcmp(pszMode, "auto") != 0 && strcmp(pszMode, "software") != 0 && strcmp(pszMode, "opengl") != 0) {
             SDL_SetError("GDI STARS_SDL_RENDERER must be auto, software or opengl");
             return FALSE;
         }
-        hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow,
-                                             pszMode && strcmp(pszMode, "auto") != 0 ? pszMode : NULL);
-        if (!hwnd->lpRenderer && (!pszMode || strcmp(pszMode, "auto") == 0))
-            hwnd->lpRenderer = SDL_CreateRenderer(hwnd->lpWindow, "software");
-        if (!hwnd->lpRenderer)
+        hwnd->lpRenderer.reset(SDL_CreateRenderer(hwnd->lpWindow.get(),
+                                             pszMode && strcmp(pszMode, "auto") != 0 ? pszMode : NULL));
+        if (!hwnd->lpRenderer.get() && (!pszMode || strcmp(pszMode, "auto") == 0))
+            hwnd->lpRenderer.reset(SDL_CreateRenderer(hwnd->lpWindow.get(), "software"));
+        if (!hwnd->lpRenderer.get())
             return FALSE;
     }
-    lpnew = SDL_CreateSurface(dx, dy, SDL_PIXELFORMAT_RGBA32);
-    lptex = hwnd->hwndParent ? NULL :
-        SDL_CreateTexture(hwnd->lpRenderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu);
+    lpsurfaceOwner.reset(SDL_CreateSurface(dx, dy, SDL_PIXELFORMAT_RGBA32)); lpnew = lpsurfaceOwner.get();
+    lptextureOwner.reset(hwnd->hwndParent ? NULL :
+        SDL_CreateTexture(hwnd->lpRenderer.get(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, dx, dy + cyMenu));
+    lptex = lptextureOwner.get();
     if (!lpnew || (!hwnd->hwndParent && !lptex)) {
-        SDL_DestroySurface(lpnew);
-        SDL_DestroyTexture(lptex);
+        lpsurfaceOwner.reset();
+        lptextureOwner.reset();
         return FALSE;
     }
     SDL_FillSurfaceRect(lpnew, NULL, SDL_MapSurfaceRGB(lpnew, 0, 0, 0));
-    if (hwnd->lpCanvas) {
+    if (hwnd->lpCanvas.get()) {
         SDL_Rect src, dst;
-        src = (SDL_Rect){0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
+        src = SDL_Rect{0, 0, StarsMin(hwnd->lpCanvas->w / iOld, dx / iScale) * iOld,
                               StarsMin(hwnd->lpCanvas->h / iOld, dy / iScale) * iOld};
-        dst = (SDL_Rect){0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
-        SDL_BlitSurfaceScaled(hwnd->lpCanvas, &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
+        dst = SDL_Rect{0, 0, src.w / iOld * iScale, src.h / iOld * iScale};
+        SDL_BlitSurfaceScaled(hwnd->lpCanvas.get(), &src, lpnew, &dst, SDL_SCALEMODE_NEAREST);
     }
     SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
     if (lptex) {
         SDL_SetTextureBlendMode(lptex, SDL_BLENDMODE_NONE);
         SDL_SetTextureScaleMode(lptex, SDL_SCALEMODE_NEAREST);
     }
-    SDL_DestroyTexture(hwnd->lpTexture);
-    SDL_DestroySurface(hwnd->lpCanvas);
-    SDL_DestroySurface(hwnd->lpComposite);
-    hwnd->lpComposite = NULL;
-    hwnd->lpTexture = lptex;
-    hwnd->lpCanvas = lpnew;
+    hwnd->lpTexture.reset();
+    hwnd->lpCanvas.reset();
+    hwnd->lpComposite.reset();
+    hwnd->lpTexture.reset(lptextureOwner.release());
+    hwnd->lpCanvas.reset(lpsurfaceOwner.release());
     hwnd->iCanvasScale = iScale;
     if (iOld != iScale) InvalidateCompatCanvasTree(hwnd);
     return TRUE;
@@ -384,7 +394,7 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         right = ((((int64_t)lprcClip->right) < (x + rc.right)) ? ((int64_t)lprcClip->right) : (x + rc.right));
         bottom = ((((int64_t)lprcClip->bottom) < (y + rc.bottom)) ? ((int64_t)lprcClip->bottom) : (y + rc.bottom));
         if (right > left && bottom > top) {
-            dst = (SDL_Rect){(int)left * iScale, (int)top * iScale,
+            dst = SDL_Rect{(int)left * iScale, (int)top * iScale,
                              (int)(right - left) * iScale, (int)(bottom - top) * iScale};
             cr = GetSysColor(COLOR_BTNFACE);
             SDL_FillSurfaceRect(lpSurface, &dst, SDL_MapSurfaceRGB(lpSurface, cr & 255, (cr >> 8) & 255, (cr >> 16) & 255));
@@ -411,9 +421,9 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, int64_t x, int64
         rc.right = (LONG)(right < clip.right ? right : clip.right);
         rc.bottom = (LONG)(bottom < clip.bottom ? bottom : clip.bottom);
         if (!FCanvas(lp)) return FALSE;
-        dst = (SDL_Rect){rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
-        src = (SDL_Rect){(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
-        if (!SDL_BlitSurface(lp->lpCanvas, &src, lpSurface, &dst) ||
+        dst = SDL_Rect{rc.left * iScale, rc.top * iScale, (rc.right - rc.left) * iScale, (rc.bottom - rc.top) * iScale};
+        src = SDL_Rect{(int)(rc.left - left) * iScale, (int)(rc.top - top) * iScale, dst.w, dst.h};
+        if (!SDL_BlitSurface(lp->lpCanvas.get(), &src, lpSurface, &dst) ||
             !FComposeChildren(lp, lpSurface, left, top, &rc, iScale)) return FALSE;
     }
     return TRUE;
@@ -431,7 +441,7 @@ static BOOL FPendingPaintTree(HWND hwnd) {
 BOOL FCompatPaintTree(HWND hwnd) {
     HWND lp, lpNext;
 
-    if (!UpdateWindow(hwnd) || !IsWindow(hwnd)) return FALSE;
+    if (FStarsErrorPending() || !UpdateWindow(hwnd) || !IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
     for (lp = GetWindow(hwnd, GW_CHILD); lp; lp = lpNext) {
         lpNext = GetWindow(lp, GW_HWNDNEXT);
         if (lp->fVisible && !FCompatPaintTree(lp)) return FALSE;
@@ -445,18 +455,18 @@ BOOL FCompatRefreshPresent(HWND hwnd) {
     static BOOL fPresenting;
     BOOL fOk;
 
-    if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer || !lpwin->lpTexture ||
-        !lpwin->lpComposite || fPresenting) return FALSE;
+    if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer.get() || !lpwin->lpTexture.get() ||
+        !lpwin->lpComposite.get() || fPresenting) return FALSE;
     // Cocoa can clear its view during exposure after the initial show. Reuse
     // the last completed texture even if a new paint is pending; never reenter
     // application drawing from a native exposure callback.
+    StarsRestore<BOOL> restorePresenting(fPresenting);
     fPresenting = TRUE;
-    fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer, 0, 0, 0,
-                                SDL_GetWindowFlags(lpwin->lpWindow) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
-          SDL_RenderClear(lpwin->lpRenderer) &&
-          SDL_RenderTexture(lpwin->lpRenderer, lpwin->lpTexture, NULL, NULL) &&
-          SDL_RenderPresent(lpwin->lpRenderer);
-    fPresenting = FALSE;
+    fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer.get(), 0, 0, 0,
+                                SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
+          SDL_RenderClear(lpwin->lpRenderer.get()) &&
+          SDL_RenderTexture(lpwin->lpRenderer.get(), lpwin->lpTexture.get(), NULL, NULL) &&
+          SDL_RenderPresent(lpwin->lpRenderer.get());
     return fOk;
 }
 
@@ -475,23 +485,22 @@ BOOL FCompatPresent(HWND hwnd) {
     if (!FCanvas(lpwin)) return FALSE;
     iScale = lpwin->iCanvasScale;
     cyMenu = CyCompatMenuBar(lpwin);
-    if (!lpwin->lpComposite || lpwin->lpComposite->w != lpwin->lpCanvas->w ||
+    if (!lpwin->lpComposite.get() || lpwin->lpComposite->w != lpwin->lpCanvas->w ||
         lpwin->lpComposite->h != lpwin->lpCanvas->h + cyMenu * iScale) {
         lpnew = SDL_CreateSurface(lpwin->lpCanvas->w, lpwin->lpCanvas->h + cyMenu * iScale, SDL_PIXELFORMAT_RGBA32);
         if (!lpnew) return FALSE;
         SDL_SetSurfaceBlendMode(lpnew, SDL_BLENDMODE_NONE);
-        SDL_DestroySurface(lpwin->lpComposite);
-        lpwin->lpComposite = lpnew;
+        lpwin->lpComposite.reset(lpnew);
     }
-    dst = (SDL_Rect){0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
-    if (!SDL_BlitSurface(lpwin->lpCanvas, NULL, lpwin->lpComposite, &dst)) return FALSE;
+    dst = SDL_Rect{0, cyMenu * iScale, lpwin->lpCanvas->w, lpwin->lpCanvas->h};
+    if (!SDL_BlitSurface(lpwin->lpCanvas.get(), NULL, lpwin->lpComposite.get(), &dst)) return FALSE;
     CompatGetSurfaceRect(lpwin, &rc);
     OffsetRect(&rc, 0, cyMenu);
-    if (!FComposeChildren(lpwin, lpwin->lpComposite, 0, cyMenu, &rc, iScale) ||
-        !FCompatDrawMenuBar(lpwin, lpwin->lpComposite)) return FALSE;
-    CompatDrawCursor(lpwin, lpwin->lpComposite);
+    if (!FComposeChildren(lpwin, lpwin->lpComposite.get(), 0, cyMenu, &rc, iScale) ||
+        !FCompatDrawMenuBar(lpwin, lpwin->lpComposite.get())) return FALSE;
+    CompatDrawCursor(lpwin, lpwin->lpComposite.get());
     if (FPendingPaintTree(lpwin)) return TRUE;
-    fOk = SDL_UpdateTexture(lpwin->lpTexture, NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
+    fOk = SDL_UpdateTexture(lpwin->lpTexture.get(), NULL, lpwin->lpComposite->pixels, lpwin->lpComposite->pitch) &&
           FCompatRefreshPresent(lpwin);
     if (fOk) lpwin->fPresentPending = FALSE;
     return fOk;
@@ -511,7 +520,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     if (idDCNext > UINTPTR_MAX / 16 || !SDL_IsMainThread() ||
         (hwnd && (!LpCompatWindow(hwnd) || !FCanvas(hwnd))))
         return NULL;
-    lpdc = (HDC)(calloc(1, sizeof(*lpdc)));
+    lpdc = new (std::nothrow) HDC__{};
     if (!lpdc)
         return NULL;
     // Never dereference public HDC tokens. Monotonic IDs permit immediate release
@@ -524,7 +533,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     lpdc->lpbrush = (COMPATOBJECT *)(GetStockObject(WHITE_BRUSH));
     lpdc->lpfont = (COMPATOBJECT *)(GetStockObject(SYSTEM_FONT));
     lpdc->lppalette = (COMPATOBJECT *)(GetStockObject(DEFAULT_PALETTE));
-    if (!lpdc->lpfont) { free(lpdc); return NULL; }
+    if (!lpdc->lpfont) { delete lpdc; return NULL; }
     lpdc->lppen->cSelected++;
     lpdc->lpbrush->cSelected++;
     lpdc->lpfont->cSelected++;
@@ -542,18 +551,16 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
 static COMPATOBJECT *LpNewBitmap(int cx, int cy, BOOL fMono) {
     COMPATOBJECT *lpobj;
     SDL_Surface *lpsurface;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
 
     if (cx <= 0 || cy <= 0 || cx > INT_MAX / 4)
         return NULL;
-    lpsurface = SDL_CreateSurface(cx, cy, SDL_PIXELFORMAT_RGBA32);
+    lpsurfaceOwner.reset(SDL_CreateSurface(cx, cy, SDL_PIXELFORMAT_RGBA32)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
         return NULL;
     lpobj = LpNewObject(objBitmap, 0, FALSE);
-    if (!lpobj) {
-        SDL_DestroySurface(lpsurface);
-        return NULL;
-    }
-    lpobj->lpSurface = lpsurface;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface.reset(lpsurfaceOwner.release());
     lpobj->fMono = fMono;
     SDL_FillSurfaceRect(lpsurface, NULL, SDL_MapSurfaceRGB(lpsurface, 0, 0, 0));
     return lpobj;
@@ -614,8 +621,8 @@ int WINAPI GetObjectA(HANDLE h, int cb, LPVOID lpv) {
         return sizeof(bm);
     if (cb < (int)sizeof(bm))
         return 0;
-    bm.bmWidth = lpobj->lpSurface->w;
-    bm.bmHeight = lpobj->lpSurface->h;
+    bm.bmWidth = lpobj->lpSurface.get()->w;
+    bm.bmHeight = lpobj->lpSurface.get()->h;
     bm.bmPlanes = 1;
     bm.bmBitsPixel = lpobj->fMono ? 1 : 32;
     bm.bmWidthBytes = lpobj->fMono ? ((bm.bmWidth + 15) / 16) * 2 : bm.bmWidth * 4;
@@ -626,7 +633,7 @@ int WINAPI GetObjectA(HANDLE h, int cb, LPVOID lpv) {
 static void CloseDC(HDC lpdc) {
     HDC *lplp = &lpDCs;
 
-    CompatDeletePrinter(lpdc->lpprint);
+    lpdc->lpprint.reset();
     lpdc->lppen->cSelected--;
     lpdc->lpbrush->cSelected--;
     lpdc->lpfont->cSelected--;
@@ -634,16 +641,13 @@ static void CloseDC(HDC lpdc) {
     if (lpdc->lpbitmap)
         lpdc->lpbitmap->cSelected--;
     if (lpdc->lpbitmapDefault) {
-        SDL_DestroySurface(lpdc->lpbitmapDefault->lpSurface);
-        lpdc->lpbitmapDefault->lpSurface = NULL;
+        lpdc->lpbitmapDefault->lpSurface.reset();
         lpdc->lpbitmapDefault->fAlive = FALSE;
     }
     while (*lplp != lpdc)
         lplp = &(*lplp)->lpNext;
     *lplp = lpdc->lpNext;
-    free(lpdc->rgrcRegion);
-    free(lpdc->rgrcPaint);
-    free(lpdc);
+    delete lpdc;
 }
 
 BOOL WINAPI DeleteDC(HDC hdc) {
@@ -651,7 +655,7 @@ BOOL WINAPI DeleteDC(HDC hdc) {
 
     if (!lpdc || !lpdc->fMemory)
         return FALSE;
-    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint)) { SetLastError(ERROR_BUSY); return FALSE; }
+    if (lpdc->lpprint && FCompatPrinterBusy(lpdc->lpprint.get())) { SetLastError(ERROR_BUSY); return FALSE; }
     CloseDC(lpdc);
     return TRUE;
 }
@@ -663,20 +667,20 @@ HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy) {
     hdc = HdcNew(NULL, FALSE);
     if (!hdc) { DeleteObject(lpbitmap); return NULL; }
     lpdc = lpDCs;
-    lpdc->lpprint = lpprint;
+    lpdc->lpprint.reset(lpprint);
     lpdc->fMemory = TRUE;
     lpdc->lpbitmap = lpdc->lpbitmapDefault = lpbitmap;
     lpbitmap->fStock = TRUE; lpbitmap->cSelected = 1;
-    SDL_FillSurfaceRect(lpbitmap->lpSurface, NULL, SDL_MapSurfaceRGB(lpbitmap->lpSurface, 255, 255, 255));
+    SDL_FillSurfaceRect(lpbitmap->lpSurface.get(), NULL, SDL_MapSurfaceRGB(lpbitmap->lpSurface.get(), 255, 255, 255));
     return hdc;
 }
 COMPATPRINT *LpCompatPrinter(HDC hdc) {
     HDC lpdc = LpDC(hdc);
-    return lpdc ? lpdc->lpprint : NULL;
+    return lpdc ? lpdc->lpprint.get() : NULL;
 }
 SDL_Surface *LpCompatPrinterSurface(HDC hdc) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && lpdc->lpprint ? lpdc->lpbitmap->lpSurface : NULL;
+    return lpdc && lpdc->lpprint ? lpdc->lpbitmap->lpSurface.get() : NULL;
 }
 
 HDC WINAPI GetDC(HWND hwnd) {
@@ -713,16 +717,16 @@ static BOOL FAddUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc) {
 static BOOL FSubtractUpdate(RECT **lprgrc, size_t *lpcrc, RECT rc, const RECT *lprcCut) {
     RECT hit;
     if (!IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(lprgrc, lpcrc, rc);
-    return FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, rc.top, rc.right, hit.top}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, hit.bottom, rc.right, rc.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){rc.left, hit.top, hit.left, hit.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, (RECT){hit.right, hit.top, rc.right, hit.bottom});
+    return FAddUpdate(lprgrc, lpcrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.bottom, rc.right, rc.bottom}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.top, hit.left, hit.bottom}) &&
+           FAddUpdate(lprgrc, lpcrc, RECT{hit.right, hit.top, rc.right, hit.bottom});
 }
 
 static void SetUpdate(HWND hwnd, RECT *rgrc, size_t crc) {
     size_t i;
-    free(hwnd->rgrcUpdate); hwnd->rgrcUpdate = rgrc; hwnd->crcUpdate = crc;
-    hwnd->rcUpdate = (RECT){}; hwnd->fUpdate = crc != 0;
+    hwnd->rgrcUpdate.reset(rgrc); hwnd->crcUpdate = crc;
+    hwnd->rcUpdate = RECT{}; hwnd->fUpdate = crc != 0;
     for (i = 0; i < crc; i++) {
         if (i == 0) hwnd->rcUpdate = rgrc[i];
         else {
@@ -742,10 +746,10 @@ BOOL WINAPI InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     size_t crc;
     if (!lpwin || !GetClientRect(hwnd, &rcClient)) return FALSE;
     if (!IntersectRect(&rc, lprc ? lprc : &rcClient, &rcClient)) return TRUE;
-    rgrc = lpwin->rgrcUpdate; crc = lpwin->crcUpdate;
+    rgrc = lpwin->rgrcUpdate.get(); crc = lpwin->crcUpdate;
     if (!FAddUpdate(&rgrc, &crc, rc)) return FALSE;
     // FAddUpdate may have relocated the allocation; retain ownership before SetUpdate.
-    lpwin->rgrcUpdate = NULL;
+    (void)lpwin->rgrcUpdate.release();
     SetUpdate(lpwin, rgrc, crc); lpwin->fErase |= fErase;
     return TRUE;
 }
@@ -755,9 +759,9 @@ static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
     if (hwnd->crcUpdate != 0) {
         rgrc = (RECT *)(malloc(hwnd->crcUpdate * sizeof(*rgrc)));
         if (!rgrc) return FALSE;
-        memcpy(rgrc, hwnd->rgrcUpdate, hwnd->crcUpdate * sizeof(*rgrc));
+        memcpy(rgrc, hwnd->rgrcUpdate.get(), hwnd->crcUpdate * sizeof(*rgrc));
     }
-    lpdc->rgrcPaint = rgrc; lpdc->crcPaint = hwnd->crcUpdate;
+    lpdc->rgrcPaint.reset(rgrc); lpdc->crcPaint = hwnd->crcUpdate;
     lpdc->fPaint = TRUE; lpdc->fClip = TRUE; lpdc->rcClip = hwnd->rcUpdate;
     return TRUE;
 }
@@ -769,7 +773,7 @@ BOOL WINAPI GetUpdateRect(HWND hwnd, LPRECT lprc, BOOL fErase) {
     if (!lpwin)
         return FALSE;
     if (lprc)
-        *lprc = lpwin->fUpdate ? lpwin->rcUpdate : (RECT){};
+        *lprc = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     if (fErase && lpwin->fUpdate && lpwin->fErase) {
         hdc = GetDC(hwnd);
         if (hdc) {
@@ -795,10 +799,10 @@ HDC WINAPI BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
         return NULL;
     memset(lpps, 0, sizeof(*lpps));
     lpps->hdc = hdc;
-    lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : (RECT){};
+    lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     LpDC(hdc)->rcClip = lpps->rcPaint;
-    LpDC(hdc)->rgrcPaint = lpwin->rgrcUpdate; LpDC(hdc)->crcPaint = lpwin->crcUpdate;
-    lpwin->rgrcUpdate = NULL; lpwin->crcUpdate = 0;
+    LpDC(hdc)->rgrcPaint.reset(lpwin->rgrcUpdate.release()); LpDC(hdc)->crcPaint = lpwin->crcUpdate;
+    lpwin->crcUpdate = 0;
     fErase = lpwin->fErase;
     lpwin->fUpdate = FALSE;
     lpwin->fErase = FALSE;
@@ -845,8 +849,8 @@ BOOL WINAPI ValidateRect(HWND hwnd, const RECT *lprc) {
 static SDL_Surface *LpDCRasterSurface(HDC lpdc) {
     if (lpdc->fScreen) return NULL;
     if (lpdc->fMemory)
-        return lpdc->lpbitmap->lpSurface;
-    return lpdc->hwnd->lpCanvas;
+        return lpdc->lpbitmap->lpSurface.get();
+    return lpdc->hwnd->lpCanvas.get();
 }
 
 static SDL_Surface *LpDCSurface(HDC lpdc) {
@@ -859,7 +863,7 @@ static BOOL FClip(HDC lpdc, RECT *lprc) {
 
     if (!lpsurface)
         return FALSE;
-    rcClient = (RECT){0, 0, lpsurface->w / IDCScale(lpdc), lpsurface->h / IDCScale(lpdc)};
+    rcClient = RECT{0, 0, lpsurface->w / IDCScale(lpdc), lpsurface->h / IDCScale(lpdc)};
     if (lpdc->hwnd && !GetClientRect(lpdc->hwnd, &rcClient)) return FALSE;
     if (lpdc->fClip)
         IntersectRect(lprc, &lpdc->rcClip, &rcClient);
@@ -876,7 +880,7 @@ static LONG LCoord(int64_t l) {
 }
 
 static RECT RcDevice(HDC lpdc, RECT rc) {
-    return (RECT){LCoord((int64_t)rc.left - lpdc->ptOrg.x), LCoord((int64_t)rc.top - lpdc->ptOrg.y),
+    return RECT{LCoord((int64_t)rc.left - lpdc->ptOrg.x), LCoord((int64_t)rc.top - lpdc->ptOrg.y),
                   LCoord((int64_t)rc.right - lpdc->ptOrg.x), LCoord((int64_t)rc.bottom - lpdc->ptOrg.y)};
 }
 
@@ -884,7 +888,7 @@ BOOL WINAPI SetWindowOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptOrg;
-    lpdc->ptOrg = (POINT){x, y};
+    lpdc->ptOrg = POINT{x, y};
     return TRUE;
 }
 
@@ -892,7 +896,7 @@ BOOL WINAPI SetBrushOrgEx(HDC hdc, int x, int y, LPPOINT lppt) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc) return FALSE;
     if (lppt) *lppt = lpdc->ptBrush;
-    lpdc->ptBrush = (POINT){x, y};
+    lpdc->ptBrush = POINT{x, y};
     return TRUE;
 }
 
@@ -924,7 +928,7 @@ HRGN WINAPI CreateRectRgn(int left, int top, int right, int bottom) {
         return NULL;
     lpobj = LpNewObject(objRegion, 0, FALSE);
     if (!lpobj) return NULL;
-    lpobj->rcRegion = (RECT){StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
+    lpobj->rcRegion = RECT{StarsMin(left, right), StarsMin(top, bottom), StarsMax(left, right), StarsMax(top, bottom)};
     return (HRGN)lpobj;
 }
 
@@ -940,7 +944,7 @@ int WINAPI SelectClipRgn(HDC hdc, HRGN hrgn) {
         if (!rgrc) return ERROR;
         *rgrc = lpobj->rcRegion; crc = 1;
     }
-    free(lpdc->rgrcRegion); lpdc->rgrcRegion = rgrc; lpdc->crcRegion = crc;
+    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc;
     lpdc->fRegion = hrgn != NULL;
     return hrgn ? IRegionKind(crc) : SIMPLEREGION;
 }
@@ -977,7 +981,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
             if (!FClip(lpdc, &rcBase)) return ERROR;
         } else rcBase = rcCut;
         rgsrc = &rcBase; crcSrc = 1;
-    } else { rgsrc = lpdc->rgrcRegion; crcSrc = lpdc->crcRegion; }
+    } else { rgsrc = lpdc->rgrcRegion.get(); crcSrc = lpdc->crcRegion; }
     if (crcSrc > SIZE_MAX / (4 * sizeof(*rgrc))) return ERROR;
     rgrc = (RECT *)(crcSrc ? malloc(crcSrc * 4 * sizeof(*rgrc)) : NULL);
     if (crcSrc != 0 && !rgrc) return ERROR;
@@ -988,14 +992,14 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
             if (fExclude) rgrc[crc++] = rc;
         } else if (!fExclude) rgrc[crc++] = rcHit;
         else {
-            if (rc.top < rcHit.top) rgrc[crc++] = (RECT){rc.left, rc.top, rc.right, rcHit.top};
-            if (rcHit.bottom < rc.bottom) rgrc[crc++] = (RECT){rc.left, rcHit.bottom, rc.right, rc.bottom};
-            if (rc.left < rcHit.left) rgrc[crc++] = (RECT){rc.left, rcHit.top, rcHit.left, rcHit.bottom};
-            if (rcHit.right < rc.right) rgrc[crc++] = (RECT){rcHit.right, rcHit.top, rc.right, rcHit.bottom};
+            if (rc.top < rcHit.top) rgrc[crc++] = RECT{rc.left, rc.top, rc.right, rcHit.top};
+            if (rcHit.bottom < rc.bottom) rgrc[crc++] = RECT{rc.left, rcHit.bottom, rc.right, rc.bottom};
+            if (rc.left < rcHit.left) rgrc[crc++] = RECT{rc.left, rcHit.top, rcHit.left, rcHit.bottom};
+            if (rcHit.right < rc.right) rgrc[crc++] = RECT{rcHit.right, rcHit.top, rc.right, rcHit.bottom};
         }
     }
     MergeRegion(rgrc, &crc);
-    free(lpdc->rgrcRegion); lpdc->rgrcRegion = rgrc; lpdc->crcRegion = crc; lpdc->fRegion = TRUE;
+    lpdc->rgrcRegion.reset(rgrc); lpdc->crcRegion = crc; lpdc->fRegion = TRUE;
     return IRegionKind(crc);
 }
 
@@ -1015,8 +1019,8 @@ static BOOL FRectPixel(const RECT *rgrc, size_t crc, int64_t x, int64_t y) {
 }
 
 static BOOL FRegionPixel(HDC lpdc, int64_t x, int64_t y) {
-    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint, lpdc->crcPaint, x, y)) &&
-           (!lpdc->fRegion || FRectPixel(lpdc->rgrcRegion, lpdc->crcRegion, x, y));
+    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint.get(), lpdc->crcPaint, x, y)) &&
+           (!lpdc->fRegion || FRectPixel(lpdc->rgrcRegion.get(), lpdc->crcRegion, x, y));
 }
 
 static void DevicePixel(HDC lpdc, int64_t x, int64_t y, COLORREF crColor) {
@@ -1074,7 +1078,7 @@ COLORREF WINAPI SetPixel(HDC hdc, int x, int y, COLORREF cr) {
 }
 
 static COLORREF CrBrush(HDC lpdc, COMPATOBJECT *lpbrush, int64_t x, int64_t y) {
-    SDL_Surface *lpsurface = lpbrush->lpSurface;
+    SDL_Surface *lpsurface = lpbrush->lpSurface.get();
     BYTE *rgb;
     if (!lpsurface) return CrPalette(lpdc, lpbrush->crColor);
     x = (x - lpdc->ptBrush.x) % lpsurface->w; y = (y - lpdc->ptBrush.y) % lpsurface->h;
@@ -1090,11 +1094,12 @@ HBRUSH WINAPI CreatePatternBrush(HBITMAP hbmp) {
     COMPATOBJECT *lpbm = LpObject((HGDIOBJ)hbmp), *lpobj;
     SDL_Surface *lpsurface;
     if (!lpbm || lpbm->iKind != objBitmap) return NULL;
-    lpsurface = SDL_DuplicateSurface(lpbm->lpSurface);
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner(SDL_DuplicateSurface(lpbm->lpSurface.get()));
+    lpsurface = lpsurfaceOwner.get();
     if (!lpsurface) return NULL;
     lpobj = LpNewObject(objBrush, 0, FALSE);
-    if (!lpobj) { SDL_DestroySurface(lpsurface); return NULL; }
-    lpobj->lpSurface = lpsurface; lpobj->fMono = lpbm->fMono;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface.reset(lpsurfaceOwner.release()); lpobj->fMono = lpbm->fMono;
     return (HBRUSH)lpobj;
 }
 
@@ -1130,13 +1135,13 @@ void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, BOOL fSunken, BOOL fRight)
 int WINAPI FrameRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     RECT rc;
     if (!lprc || lprc->left >= lprc->right || lprc->top >= lprc->bottom) return 0;
-    rc = (RECT){lprc->left, lprc->top, lprc->right, lprc->top + 1};
+    rc = RECT{lprc->left, lprc->top, lprc->right, lprc->top + 1};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->left, lprc->bottom - 1, lprc->right, lprc->bottom};
+    rc = RECT{lprc->left, lprc->bottom - 1, lprc->right, lprc->bottom};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->left, lprc->top + 1, lprc->left + 1, lprc->bottom - 1};
+    rc = RECT{lprc->left, lprc->top + 1, lprc->left + 1, lprc->bottom - 1};
     if (!FillRect(hdc, &rc, hbr)) return 0;
-    rc = (RECT){lprc->right - 1, lprc->top + 1, lprc->right, lprc->bottom - 1};
+    rc = RECT{lprc->right - 1, lprc->top + 1, lprc->right, lprc->bottom - 1};
     return FillRect(hdc, &rc, hbr);
 }
 
@@ -1185,7 +1190,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
     if (!FClip(lpdc, &rcClip)) return FALSE;
     if (lpbrush->fNull || !IntersectRect(&rc, &rcFill, &rcClip)) return TRUE;
     // Solid copies are common for erase/paint and can fill entire clipped spans.
-    if (!lpbrush->lpSurface && (!fRop || lpdc->iRop2 == R2_COPYPEN)) {
+    if (!lpbrush->lpSurface.get() && (!fRop || lpdc->iRop2 == R2_COPYPEN)) {
         lpsurface = LpDCSurface(lpdc); cr = CrPalette(lpdc, lpbrush->crColor);
         if (lpdc->fMemory && lpdc->lpbitmap->fMono)
             cr = ((BYTE)cr + (BYTE)(cr >> 8) + (BYTE)(cr >> 16) >= 384) ? RGB(255, 255, 255) : 0;
@@ -1199,7 +1204,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
                 if (lpdc->fPaint) {
                     if (!IntersectRect(&rcPaint, &rcPart, &lpdc->rgrcPaint[j])) continue;
                 } else rcPaint = rcPart;
-                sdlrc = (SDL_Rect){rcPaint.left * iScale, rcPaint.top * iScale,
+                sdlrc = SDL_Rect{rcPaint.left * iScale, rcPaint.top * iScale,
                                    (rcPaint.right - rcPaint.left) * iScale, (rcPaint.bottom - rcPaint.top) * iScale};
                 if (!SDL_FillSurfaceRect(lpsurface, &sdlrc, SDL_MapSurfaceRGB(lpsurface,
                                         (BYTE)cr, (BYTE)(cr >> 8), (BYTE)(cr >> 16)))) return FALSE;
@@ -1330,7 +1335,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
         }
     }
     if (!fArea) goto MoveChildren;
-    rcMoved = (RECT){LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
+    rcMoved = RECT{LCoord((int64_t)rcArea.left + dx), LCoord((int64_t)rcArea.top + dy),
                      LCoord((int64_t)rcArea.right + dx), LCoord((int64_t)rcArea.bottom + dy)};
     fCopy = IntersectRect(&rcDest, &rcArea, &rcMoved);
     fErase = lpwin->fErase;
@@ -1340,7 +1345,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             // The whole-client variant moves pending damage with the pixels.
             if (!FSubtractUpdate(&rgrc, &crc, rc, &rcClip)) goto Fail;
             if (!IntersectRect(&rc, &rc, &rcClip)) continue;
-            rc = (RECT){LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
+            rc = RECT{LCoord((int64_t)rc.left + dx), LCoord((int64_t)rc.top + dy),
                         LCoord((int64_t)rc.right + dx), LCoord((int64_t)rc.bottom + dy)};
             if (!IntersectRect(&rc, &rc, &rcClip)) continue;
         }
@@ -1349,7 +1354,7 @@ BOOL WINAPI ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
     if (!FSubtractUpdate(&rgrc, &crc, rcArea, &rcDest)) goto Fail;
     if (fCopy) {
         if (!FCanvas(hwnd)) goto Fail;
-        lpsurface = lpwin->lpCanvas;
+        lpsurface = lpwin->lpCanvas.get();
         iScale = lpwin->iCanvasScale;
         cbRow = (size_t)(rcDest.right - rcDest.left) * iScale * 4;
         /* Window canvases are RGBA32. Copy overlapping rows in movement order,
@@ -1395,7 +1400,7 @@ BOOL WINAPI MoveToEx(HDC hdc, int x, int y, LPPOINT lppt) {
         return FALSE;
     if (lppt)
         *lppt = lpdc->pt;
-    lpdc->pt = (POINT){x, y};
+    lpdc->pt = POINT{x, y};
     return TRUE;
 }
 
@@ -1477,7 +1482,7 @@ BOOL WINAPI LineTo(HDC hdc, int x, int y) {
     if (!lpdc)
         return FALSE;
     pt = lpdc->pt;
-    lpdc->pt = (POINT){x, y};
+    lpdc->pt = POINT{x, y};
     if (!FClip(lpdc, &rc))
         return FALSE;
     Line(lpdc, rc, pt, lpdc->pt, TRUE, NULL);
@@ -1496,17 +1501,17 @@ BOOL WINAPI Rectangle(HDC hdc, int left, int top, int right, int bottom) {
         return FALSE;
     if (l == r || t == b)
         return TRUE;
-    rcFill = lpdc->lppen->fNull ? (RECT){l, t, r, b} : (RECT){l + 1, t + 1, r - 1, b - 1};
+    rcFill = lpdc->lppen->fNull ? RECT{l, t, r, b} : RECT{l + 1, t + 1, r - 1, b - 1};
     FFillDevice(lpdc, RcDevice(lpdc, rcFill), lpdc->lpbrush, TRUE);
     // Counterclockwise from top-right, sharing one dash phase and painting
     // each corner once, matches the default Win32 rectangle traversal.
-    if (r - (int64_t)l == 1) Line(lpdc, rc, (POINT){l, t}, (POINT){l, b - 1}, FALSE, &iPhase);
-    else if (b - (int64_t)t == 1) Line(lpdc, rc, (POINT){r - 1, t}, (POINT){l, t}, FALSE, &iPhase);
+    if (r - (int64_t)l == 1) Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, FALSE, &iPhase);
+    else if (b - (int64_t)t == 1) Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, FALSE, &iPhase);
     else {
-        Line(lpdc, rc, (POINT){r - 1, t}, (POINT){l, t}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){l, t}, (POINT){l, b - 1}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){l, b - 1}, (POINT){r - 1, b - 1}, TRUE, &iPhase);
-        Line(lpdc, rc, (POINT){r - 1, b - 1}, (POINT){r - 1, t}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{r - 1, t}, POINT{l, t}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{l, t}, POINT{l, b - 1}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{l, b - 1}, POINT{r - 1, b - 1}, TRUE, &iPhase);
+        Line(lpdc, rc, POINT{r - 1, b - 1}, POINT{r - 1, t}, TRUE, &iPhase);
     }
     return TRUE;
 }
@@ -1575,8 +1580,8 @@ BOOL WINAPI Ellipse(HDC hdc, int left, int top, int right, int bottom) {
         SDL_SetError("Ellipse currently supports solid or null cosmetic pens"); return FALSE;
     }
     if (lpdc->lppen->fNull && (r - l <= 2 || b - t <= 2))
-        return FFillDevice(lpdc, (RECT){LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, TRUE);
-    el.rc = (RECT){(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
+        return FFillDevice(lpdc, RECT{LCoord(l), LCoord(t), LCoord(r - 1), LCoord(b - 1)}, lpdc->lpbrush, TRUE);
+    el.rc = RECT{(LONG)StarsMax(l, rcClip.left), (LONG)StarsMax(t, rcClip.top),
                    (LONG)StarsMin(r, rcClip.right), (LONG)StarsMin(b, rcClip.bottom)};
     el.cx = el.rc.right - el.rc.left;
     if ((size_t)el.cx > SIZE_MAX / (size_t)(el.rc.bottom - el.rc.top)) return FALSE;
@@ -1639,7 +1644,7 @@ typedef struct COMPATTEXTDRAW {
 } COMPATTEXTDRAW;
 
 static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
-    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont, psz, cch, lpsize);
+    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), psz, cch, lpsize);
 }
 
 BOOL WINAPI GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
@@ -1649,7 +1654,7 @@ BOOL WINAPI GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
 
 BOOL WINAPI GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && FCompatFontMetrics(lpdc->lpfont->lpFont, lptm);
+    return lpdc && FCompatFontMetrics(lpdc->lpfont->lpFont.get(), lptm);
 }
 
 COLORREF WINAPI GetBkColor(HDC hdc) {
@@ -1662,12 +1667,12 @@ int WINAPI GetDeviceCaps(HDC hdc, int index) {
     const SDL_DisplayMode *lpMode;
     SDL_DisplayID id;
     if (!lpdc) return 0;
-    if (lpdc->lpprint) return ICompatPrinterCaps(lpdc->lpprint, index);
+    if (lpdc->lpprint) return ICompatPrinterCaps(lpdc->lpprint.get(), index);
     if (index == LOGPIXELSX || index == LOGPIXELSY) return 96;
     if (index == PLANES) return 1;
     if (index == BITSPIXEL) return 32;
     if (index != HORZRES && index != VERTRES) return 0;
-    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow) : SDL_GetPrimaryDisplay();
+    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow.get()) : SDL_GetPrimaryDisplay();
     lpMode = SDL_GetCurrentDisplayMode(id);
     return lpMode ? index == HORZRES ? lpMode->w : lpMode->h : 0;
 }
@@ -1742,9 +1747,9 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     draw.cs = cos(angle); draw.sn = sin(angle);
     dx = size.cx;
     if (rgdx) { dx = 0; for (i = 0; i < cch; i++) dx += rgdx[i]; }
-    FCompatFontMetrics(lpdc->lpfont->lpFont, &tm);
+    FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
     if (lpdc->iBkMode == OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);
-    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont, psz, cch, rgdx, IDCScale(lpdc),
+    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont.get(), psz, cch, rgdx, IDCScale(lpdc),
                                DrawFontPixel, &draw)) return FALSE;
     if (tm.tmUnderlined) DrawFontRect(&draw, dx, tm.tmAscent + 1, tm.tmAscent + 2, lpdc->crText);
     if (tm.tmStruckOut) DrawFontRect(&draw, dx, tm.tmAscent * 2 / 3, tm.tmAscent * 2 / 3 + 1, lpdc->crText);
@@ -1803,7 +1808,7 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
         fUnderline = FALSE;
     }
     sz[c] = 0;
-    FCompatFontMetrics(lpdc->lpfont->lpFont, &tm);
+    FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
     dyLine = tm.tmHeight + (flags & DT_EXTERNALLEADING ? tm.tmExternalLeading : 0);
     dxAvail = (int64_t)lprc->right - lprc->left;
     i = 0;
@@ -1817,14 +1822,14 @@ int WINAPI DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
             dx += size.cx;
             if (dx > INT_MAX) goto LReturn;
             if ((flags & DT_WORDBREAK) && !(flags & DT_SINGLELINE) && dx > dxAvail && iBreak > iStart) {
-                rgline[cLines++] = (COMPATTEXTLINE){iStart, iBreak - iStart, dxBreak};
+                rgline[cLines++] = COMPATTEXTLINE{iStart, iBreak - iStart, dxBreak};
                 i = iBreak + 1;
                 while (i < c && sz[i] == ' ') i++;
                 goto LNextLine;
             }
             i += cStep;
         }
-        rgline[cLines++] = (COMPATTEXTLINE){iStart, i - iStart, (int)dx};
+        rgline[cLines++] = COMPATTEXTLINE{iStart, i - iStart, (int)dx};
         if (i < c && sz[i++] == '\r' && i < c && sz[i] == '\n') i++;
 LNextLine:
         if (rgline[cLines - 1].dx > dxMax) dxMax = rgline[cLines - 1].dx;
@@ -1881,26 +1886,24 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb) {
     COMPATDIB dib;
     COMPATOBJECT *lpobj;
     SDL_Surface *lpsurface;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     size_t cbInfo, cColors;
 
-    if (!rgb || cb < sizeof(bi))
+    if (!rgb || cb < cbWireDibHeader)
         return NULL;
-    memcpy(&bi, rgb, sizeof(bi));
+    FDecodeDibHeader(std::as_bytes(std::span(rgb, cbWireDibHeader)), bi);
     cColors = bi.biClrUsed ? bi.biClrUsed : (bi.biBitCount <= 8 ? 1u << bi.biBitCount : 0);
     if (cColors > 256)
         return NULL;
-    cbInfo = sizeof(bi) + cColors * sizeof(RGBQUAD);
+    cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
     if (cbInfo > cb || !FCompatDib(rgb, cbInfo, rgb + cbInfo, cb - cbInfo, &dib))
         return NULL;
-    lpsurface = LpCompatDibSurface(&dib);
+    lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
         return NULL;
     lpobj = LpNewObject(objBitmap, 0, FALSE);
-    if (!lpobj) {
-        SDL_DestroySurface(lpsurface);
-        return NULL;
-    }
-    lpobj->lpSurface = lpsurface;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface.reset(lpsurfaceOwner.release());
     lpobj->fMono = dib.cBits == 1;
     return (HBITMAP)lpobj;
 }
@@ -1920,7 +1923,7 @@ int WINAPI GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     if (!lpdc || !lpobj || lpobj->iKind != objBitmap || lpobj->cSelected != 0 ||
         !lpbmi || usage != DIB_RGB_COLORS || lpbmi->bmiHeader.biSize != sizeof(bi))
         return 0;
-    lpsurface = lpobj->lpSurface;
+    lpsurface = lpobj->lpSurface.get();
     bi = lpbmi->bmiHeader;
     fQuery = bi.biBitCount == 0;
     if (fQuery && lpBits)
@@ -1944,8 +1947,8 @@ int WINAPI GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     lpbmi->bmiHeader = bi;
     // A format query may supply only the 40-byte header, with no palette storage.
     if (bi.biBitCount == 1 && !fQuery) {
-        lpbmi->bmiColors[0] = (RGBQUAD){0, 0, 0, 0};
-        lpbmi->bmiColors[1] = (RGBQUAD){255, 255, 255, 0};
+        lpbmi->bmiColors[0] = RGBQUAD{0, 0, 0, 0};
+        lpbmi->bmiColors[1] = RGBQUAD{255, 255, 255, 0};
     }
     if (!lpBits)
         return lpsurface->h;
@@ -1977,7 +1980,7 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     WORD index;
     PALETTEENTRY pe;
     const BYTE *rgb = (const BYTE *)lpbmi;
-    if (usage == DIB_RGB_COLORS) return FCompatDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
+    if (usage == DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, SIZE_MAX, lpBits, SIZE_MAX, lpdib);
     if (usage != DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return FALSE;
     info.bi = lpbmi->bmiHeader;
     if (info.bi.biBitCount != 1 && info.bi.biBitCount != 4 && info.bi.biBitCount != 8) return FALSE;
@@ -1986,11 +1989,11 @@ static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     for (i = 0; i < c; i++) {
         memcpy(&index, rgb + sizeof(info.bi) + i * sizeof(index), sizeof(index));
         if (index >= lpdc->lppalette->cEntries) return FALSE;
-        pe = lpdc->lppalette->rgpe[index];
-        info.rgq[i] = (RGBQUAD){pe.peBlue, pe.peGreen, pe.peRed, 0};
+        pe = RgpeCompatPalette(lpdc->lppalette)[index];
+        info.rgq[i] = RGBQUAD{pe.peBlue, pe.peGreen, pe.peRed, 0};
     }
     // The decoder copies the color table; only the caller's bits remain borrowed.
-    return FCompatDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
+    return FCompatNativeDib(&info, sizeof(info), lpBits, SIZE_MAX, lpdib);
 }
 
 int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
@@ -1999,6 +2002,7 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     HDC lpdc = LpDC(hdc);
     COMPATDIB dib;
     SDL_Surface *lpsrc;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     RECT rcClip;
     BYTE rop = (BYTE)(dwRop >> 16);
     int64_t px, py;
@@ -2013,7 +2017,7 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     if (xSrc < 0 || yTop < 0 || (int64_t)xSrc + cxSrc > dib.cx || yTop + cySrc > dib.cy ||
         (FUsesPattern(rop) && lpdc->lpbrush->fNull) || !FClip(lpdc, &rcClip))
         return 0;
-    lpsrc = LpCompatDibSurface(&dib);
+    lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsrc = lpsurfaceOwner.get();
     if (!lpsrc)
         return 0;
     px = (int64_t)xDest - lpdc->ptOrg.x; py = (int64_t)yDest - lpdc->ptOrg.y;
@@ -2032,7 +2036,6 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
                   CrRop(rop, crPattern, crSource, crDest));
         }
     }
-    SDL_DestroySurface(lpsrc);
     return cySrc;
 }
 
@@ -2044,14 +2047,10 @@ void CompatDestroyPaint(HWND hwnd) {
         if (lpdc->hwnd == hwnd)
             CloseDC(lpdc);
     }
-    SDL_DestroyTexture(hwnd->lpTexture);
-    SDL_DestroyRenderer(hwnd->lpRenderer);
-    SDL_DestroySurface(hwnd->lpCanvas);
-    SDL_DestroySurface(hwnd->lpComposite);
-    hwnd->lpComposite = NULL;
-    hwnd->lpTexture = NULL;
-    hwnd->lpRenderer = NULL;
-    hwnd->lpCanvas = NULL;
+    hwnd->lpTexture.reset();
+    hwnd->lpRenderer.reset();
+    hwnd->lpCanvas.reset();
+    hwnd->lpComposite.reset();
     hwnd->hdcPaint = NULL;
     SetUpdate(hwnd, NULL, 0);
 }
@@ -2066,29 +2065,27 @@ void CompatShutdownGdi(void) {
     }
     while (lpObjects) {
         lpobj = lpObjects; lpObjects = lpobj->lpNext;
-        SDL_DestroySurface(lpobj->lpSurface);
-        FreeCompatFont(lpobj->lpFont);
-        free(lpobj->rgpe);
-        free(lpobj);
+        delete lpobj;
     }
-    for (i = 0; i < 18; i++) FreeCompatFont(rgStock[i].lpFont);
+    for (i = 0; i < 18; i++) rgStock[i] = COMPATOBJECT{};
     CompatShutdownFonts();
-    memset(rgStock, 0, sizeof(rgStock));
     fStock = FALSE;
 }
 
 SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp) {
     COMPATOBJECT *lpobj = LpObject(hbmp);
-    return lpobj && lpobj->iKind == objBitmap ? lpobj->lpSurface : NULL;
+    return lpobj && lpobj->iKind == objBitmap ? lpobj->lpSurface.get() : NULL;
 }
 
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
     COMPATOBJECT *lpobj;
-    SDL_Surface *lpCopy;
-    if (!lpSurface || !(lpCopy = SDL_DuplicateSurface(lpSurface))) return NULL;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    if (!lpSurface) return NULL;
+    lpsurfaceOwner.reset(SDL_DuplicateSurface(lpSurface));
+    if (!lpsurfaceOwner) return NULL;
     lpobj = LpNewObject(objBitmap, 0, FALSE);
-    if (!lpobj) { SDL_DestroySurface(lpCopy); return NULL; }
-    lpobj->lpSurface = lpCopy; lpobj->fMono = fMono;
+    if (!lpobj) return NULL;
+    lpobj->lpSurface.reset(lpsurfaceOwner.release()); lpobj->fMono = fMono;
     return (HBITMAP)lpobj;
 }
 BOOL WINAPI DrawIcon(HDC hdc, int x, int y, HICON hicon) {
@@ -2103,7 +2100,7 @@ BOOL WINAPI DrawIcon(HDC hdc, int x, int y, HICON hicon) {
         dx = (int64_t)x - lpdc->ptOrg.x + ix; dy = (int64_t)y - lpdc->ptOrg.y + iy;
         if (dx < rc.left || dy < rc.top || dx >= rc.right || dy >= rc.bottom || !FRegionPixel(lpdc, dx, dy)) continue;
         sx = ix * lp->lpXor->w / 32; sy = iy * lp->lpXor->h / 32;
-        crDst = CrDCPixel(lpdc, (int)dx, (int)dy); crSrc = CrSurfacePixel(lp->lpXor, sx, sy);
+        crDst = CrDCPixel(lpdc, (int)dx, (int)dy); crSrc = CrSurfacePixel(lp->lpXor.get(), sx, sy);
         Pixel(lpdc, &rc, dx, dy, (lp->rgbAnd[sy * lp->lpXor->w + sx] ? crDst : 0) ^ crSrc);
     }
     return lpdc->fMemory || lpdc->fScreen || FCompatPresent(lpdc->hwnd);

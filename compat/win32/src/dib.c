@@ -1,20 +1,13 @@
 /* Bounded DIB decoding, shared by embedded resources and GDI input. */
 #include "internal.h"
+#include "resourcecodec.h"
 #include <limits.h>
 #include <string.h>
 
-BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
-    BITMAPINFOHEADER bi;
-    DWORD cbHeader;
+static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, size_t cbInfo,
+                           const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
     size_t i;
-    const BYTE *rgb = (const BYTE *)(lpInfo);
 
-    if (!rgb || !lpdib || cbInfo < sizeof(cbHeader))
-        return FALSE;
-    memcpy(&cbHeader, rgb, sizeof(cbHeader));
-    if (cbHeader != sizeof(bi) || cbInfo < sizeof(bi))
-        return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
-    memcpy(&bi, rgb, sizeof(bi));
     if (bi.biPlanes != 1 || bi.biCompression != BI_RGB || bi.biWidth <= 0 ||
         bi.biHeight == 0 || bi.biHeight == INT_MIN ||
         (bi.biBitCount != 1 && bi.biBitCount != 4 && bi.biBitCount != 8 &&
@@ -33,26 +26,55 @@ BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cb
     if (bi.biClrUsed > 256 || (lpdib->cColors != 0 && lpdib->cColors > (1 << bi.biBitCount)) ||
         (bi.biBitCount > 8 && bi.biClrUsed != 0))
         return SDL_SetError("Invalid DIB color table");
-    lpdib->cbInfo = sizeof(bi) + (size_t)lpdib->cColors * sizeof(RGBQUAD);
+    lpdib->cbInfo = cbWireDibHeader + (size_t)lpdib->cColors * cbWireRgbQuad;
     lpdib->cbRow = (((size_t)lpdib->cx * lpdib->cBits + 31) / 32) * 4;
     lpdib->cbBits = lpdib->cbRow * (size_t)lpdib->cy;
     if (cbInfo < lpdib->cbInfo || cbBits < lpdib->cbBits || !lpBits ||
         (bi.biSizeImage != 0 && bi.biSizeImage < lpdib->cbBits))
         return SDL_SetError("Truncated DIB color table or pixel buffer");
     for (i = 0; i < (size_t)lpdib->cColors; i++)
-        lpdib->rgcr[i] = RGB(rgb[sizeof(bi) + i * 4 + 2], rgb[sizeof(bi) + i * 4 + 1], rgb[sizeof(bi) + i * 4]);
+        lpdib->rgcr[i] = RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
     lpdib->lpBits = (const BYTE *)(lpBits);
     return TRUE;
 }
 
+BOOL FCompatDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
+    BITMAPINFOHEADER bi;
+    std::uint32_t cbHeader;
+    const auto *rgb = static_cast<const std::byte *>(lpInfo);
+
+    if (!rgb || !lpdib || cbInfo < 4) return FALSE;
+    NATIVEBYTEREADER(std::span(rgb, 4)).FReadU32Le(cbHeader);
+    if (cbHeader != cbWireDibHeader || cbInfo < cbWireDibHeader)
+        return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
+    FDecodeDibHeader(std::span(rgb, cbWireDibHeader), bi);
+    return FCompatDibInfo(bi, static_cast<const BYTE *>(lpInfo), cbInfo, lpBits, cbBits, lpdib);
+}
+
+// Genuine GDI callers supply native SDK headers/palette storage. Keep this
+// native-layout seam separate from embedded-resource decoding.
+BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, size_t cbBits, COMPATDIB *lpdib) {
+    BITMAPINFOHEADER bi;
+    DWORD cbHeader;
+
+    static_assert(sizeof(BITMAPINFOHEADER) == cbWireDibHeader && sizeof(RGBQUAD) == cbWireRgbQuad);
+    if (!lpInfo || !lpdib || cbInfo < sizeof(cbHeader)) return FALSE;
+    memcpy(&cbHeader, lpInfo, sizeof(cbHeader));
+    if (cbHeader != sizeof(bi) || cbInfo < sizeof(bi))
+        return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
+    memcpy(&bi, lpInfo, sizeof(bi));
+    return FCompatDibInfo(bi, static_cast<const BYTE *>(lpInfo), cbInfo, lpBits, cbBits, lpdib);
+}
+
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
     SDL_Surface *lpsurface;
+    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
     int x, y, iColor;
     COLORREF cr;
     const BYTE *rgb;
     BYTE *lpout;
 
-    lpsurface = SDL_CreateSurface(lpdib->cx, lpdib->cy, SDL_PIXELFORMAT_RGBA32);
+    lpsurfaceOwner.reset(SDL_CreateSurface(lpdib->cx, lpdib->cy, SDL_PIXELFORMAT_RGBA32)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)
         return NULL;
     for (y = 0; y < lpdib->cy; y++) {
@@ -63,7 +85,7 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
                 iColor = lpdib->cBits == 1 ? (rgb[x / 8] >> (7 - x % 8)) & 1 :
                          lpdib->cBits == 4 ? (rgb[x / 2] >> (x % 2 == 0 ? 4 : 0)) & 15 : rgb[x];
                 if (iColor >= lpdib->cColors) {
-                    SDL_DestroySurface(lpsurface);
+                    lpsurfaceOwner.reset();
                     SDL_SetError("DIB pixel index is outside its color table");
                     return NULL;
                 }
@@ -77,5 +99,5 @@ SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
             lpout[x * 4 + 3] = 255;
         }
     }
-    return lpsurface;
+    return lpsurfaceOwner.release();
 }

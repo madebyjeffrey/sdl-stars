@@ -17,9 +17,9 @@ static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 #endif
 
 static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd;
-    SDL_Event event = {0};
+    SDL_Event event = {};
     size_t i;
     const char *pszRoot;
     char szCollision[512];
@@ -28,7 +28,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
     if (iStage == 0 && IsWindowVisible(hwndTitle)) {
         if (fLaunchFocus) {
             hwnd = LpCompatWindow(hwndTitle);
-            fLaunchFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow &&
+            fLaunchFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() &&
                 HwndCompatRoot(GetFocus()) == hwndTitle;
             if (!fLaunchFocusPassed && ++cFocusWait < 20) return;
         }
@@ -43,7 +43,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
 #ifdef __APPLE__
     if (fNativeSaveOwner && iStage == 2 && IsWindow(hwndNewGame)) {
         hwnd = LpCompatWindow(hwndNewGame);
-        if (FTestCocoaSaveOwner(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow),
+        if (FTestCocoaSaveOwner(SDL_GetPointerProperty(SDL_GetWindowProperties(hwnd->lpWindow.get()),
                 SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL))) {
             fOwnerPassed = IsWindowVisible(hwndNewGame) && !IsWindowEnabled(hwndNewGame) &&
                 !IsWindowVisible(hwndFrame);
@@ -57,8 +57,8 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
         if (fSaveOwner) {
             if (iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
                 hwndNewGame = hwnd;
-                pszRoot = getenv("STARS_LIBRARY_DIR");
-                if (!pszRoot) pszRoot = getenv("STARS_SETTINGS_DIR");
+                pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
+                if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
                 if (!pszRoot) { StarsCompatFreeHierarchy(&snap); PostQuitMessage(1); return; }
                 CchSnprintf(szCollision, sizeof(szCollision), "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
                 if (!SDL_CreateDirectory(szCollision) || !SetDlgItemText(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
@@ -90,7 +90,7 @@ static void CALLBACK CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time
             (fRace && hwnd->lpfnDlg == RaceWizardDlg1)) {
             // Optional real-desktop check; dummy video cannot grant native keyboard focus.
             if (fCheckFocus) {
-                fFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow && IsChild(hwnd, GetFocus());
+                fFocusPassed = SDL_GetKeyboardFocus() == hwnd->lpWindow.get() && IsChild(hwnd, GetFocus());
                 if (!fFocusPassed && ++cFocusWait < 20) break;
             }
             event.type = SDL_EVENT_QUIT;

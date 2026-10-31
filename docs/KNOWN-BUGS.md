@@ -17,6 +17,78 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Late library folder results — fixed on main
+
+`libraryui.c`/`mdi.c`: import/export chooser callbacks copied a path and posted
+it through a borrowed HWND; only the receiving handler freed it. Window closure,
+dropped messages or handler failure could retain the allocation, and HWND reuse
+could route a late result into a new runtime. The callbacks now capture monotonic
+logical IDs on the UI thread and transfer one-shot payloads whose dispatch owns
+the path through nested dialogs. Generic cancellation/restart fixtures and the
+actual library import workflows pass; no file-format or host results move.
+
+## Abandoned asynchronous post records — fixed on main
+
+`message.c`/`input.c`: a worker allocated its SDL user-event record and only the
+main-thread consumer released it. Shutdown could discard the event before that
+consumer ran. The registry now owns accepted records, with a separate producer
+reference while SDL filters run; cancellation releases them without dereferencing
+stale event pointers. Owned payloads survive nested dispatch and release on
+rejection, dropped delivery or shutdown. Permanent allocation/filter/race/stale-ID
+fixtures pass functionally, under native leaks and with sanitizers. This changes
+no game files or host results.
+
+## Cleanup while handling a primary exception — fixed on main
+
+`errors.cpp`: checking only `std::uncaught_exceptions()` prevented replacement
+while a C++ exception unwound, but a catch handler has no uncaught exception.
+Its cleanup callback could therefore leave a secondary error pending. A named
+primary-error scope now covers those handlers and final failure cleanup. The
+real exception fixture checks both suppressed secondary capture and preservation
+of the first already-pending error. Both regression baselines remain unchanged.
+
+## Failed bitmap conversion storage — fixed on main
+
+`utilgenui.c`: after successful reallocation, a rejected `GetDIBits` conversion
+returned without releasing its global-memory block. The wrapper registry kept
+the block reachable, so a leak detector alone could miss it. Scoped owners now
+release the block and restore native drawing state on failure or unwinding.
+An unsupported RLE conversion checks the registry count before and after; a
+controlled build that releases ownership on that return fails this assertion.
+Both regressions retain 519 matches, 25 accepted warnings and no differences
+through turn 150.
+
+## Native bitmap query size — fixed on main
+
+`utilgenui.c`: `DibFromBitmap` requested a 14-byte Win16 `BITMAP` from the
+native wrapper, which requires the full native structure. The rejected query
+left dimensions uninitialized. It now requests `sizeof(bm)`; the actual
+converter fixture checks a 2-by-2, 32-bit image and its sixteen pixel bytes.
+Desktop and host each retain all 519 baseline matches through turn 150, with
+25 accepted warnings and no differences, errors or skipped inputs.
+
+## Transfer dialog borrowed frame — fixed on main
+
+`shipui.c`: `TransferStuff` published its stack `xfer` through `pxfer` but did
+not restore the old pointer on return. Failed object lookup also left
+`mdXferDlg` installed; nested calls could overwrite the outer frame/mode.
+A scoped restoration now covers every return and exception. A real rejected
+lookup fixture checks both outer values, while desktop/host regressions remain
+519 matches with the same 25 accepted warnings and no differences or skips.
+
+## Mystery Trader movement message state — fixed on main
+
+`turn.c`: `MoveThings` previously tested `idm` after the no-course-change branch
+without first assigning it. The THING view migration exposed this undefined
+read in optimized macOS builds: the first native checkpoint difference was
+`noai`, turn 50, `game.hst`, record 156, with the trader's position changed while
+its destination and speed matched. Initializing the movement pass to `idmNone`
+restores the existing baseline: desktop and host each match all 519 files through
+turn 150, with the same 25 accepted unused-storage warnings and no differences.
+A movement fixture covers
+an unchanged course with a fixed random seed. Full migration qualification is
+recorded in [the implementation ledger](CPP-B-IMPLEMENTATION.md).
+
 ## Production editor queue sanitization — located on main
 
 `produce.c`: `InitProduction` removes an unavailable copied queue row with

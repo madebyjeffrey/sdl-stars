@@ -135,8 +135,8 @@ int16_t FLookupPart(PART *part){
     assert(extraCalls<16 && ((mask==hstSpecialSB && item<16) || (mask==hstPlanetary && item<15)));
     int quantity=capcfg[0]==3?-1:part->hs.cItem,status;extraPlayer=idPlayer;
     if(!cfg[1])status=NativeLookupPart(part);
-    else{if(mask==hstSpecialSB)part->pspecialsb=fakeSpecial+item;else part->pplanetary=rgplanetary+item;status=(cfg[2]&(1<<item))?1:-1;}
-    assert(part->pcom==(COMPART *)(mask==hstSpecialSB?(void *)(cfg[1]?fakeSpecial+item:rgspecialSB+item):(void *)(rgplanetary+item)));
+    else{if(mask==hstSpecialSB)part->SetPspecialsb(fakeSpecial+item);else part->SetPplanetary(rgplanetary+item);status=(cfg[2]&(1<<item))?1:-1;}
+    assert(part->pcom()==(COMPART *)(mask==hstSpecialSB?(void *)(cfg[1]?fakeSpecial+item:rgspecialSB+item):(void *)(rgplanetary+item)));
     extraTrace[extraCalls][0]=mask;extraTrace[extraCalls][1]=item;extraTrace[extraCalls][2]=status;extraTrace[extraCalls++][3]=quantity;return status;
 }
 '''+bodies[end:]
@@ -154,7 +154,7 @@ static void ready(void){
     for(int p=0;p<16;p++){
         int fields=p==1?23:14,levels=p==1?38:32;
         rgplr[p].grbitAttr=static_cast<RaceTraitBits>(((p==1?cfg[45]:cfg[44])?UINT32_C(1)<<ibitRaceTT:0)|((capcfg[0]!=0 && cfg[52])?UINT32_C(1)<<ibitRaceNoAdvScanner:0));
-        rgplr[p].rgAttr[rsMajorAdv]=capcfg[0]==0?0:(int8_t)(p==1?cfg[51]:cfg[50]);rgplr[p].iTechNow=capcfg[0]==0?0:cfg[53];
+        rgplr[p].rgAttr[rsMajorAdv]=capcfg[0]==0?0:(int8_t)(p==1?cfg[51]:cfg[50]);rgplr[p].SetITechNow(capcfg[0]==0?0:cfg[53]);
         rgplr[p].wScore=100+p;rgplr[p].lSalt=10000+p;rgplr[p].idPlanetHome=p;
         for(int i=0;i<3;i++){rgplr[p].rgEnvVar[i]=(int8_t)cfg[fields+i];rgplr[p].rgEnvVarMin[i]=(int8_t)cfg[fields+3+i];rgplr[p].rgEnvVarMax[i]=(int8_t)cfg[fields+6+i];}
         for(int f=0;f<6;f++)rgplr[p].rgTech[f]=(int8_t)cfg[levels+f];rglpshdefSB[p]=NULL;
@@ -175,10 +175,10 @@ int main(int argc,char **argv){
     while(fread(data,sizeof(data),1,file)==1){
         memcpy(capcfg,data,sizeof(capcfg));ready();PLAYER expectedPlayers[16];PLANET expectedPlanet=planet;GAME expectedGame=game;SHDEF expectedBases[10];
         memcpy(expectedPlayers,rgplr,sizeof(rgplr));memcpy(expectedBases,bases,sizeof(bases));
-        int result;PART part={};part.hs.cItem=capcfg[61];part.pplanetary=rgplanetary+14;
+        int result;PART part={};part.hs.cItem=capcfg[61];part.SetPplanetary(rgplanetary+14);
         if(cfg[0]==0)result=IpctCanTerraformLppl(&planet);
         else if(cfg[0]==1)result=StargateRangeFromLppl(capcfg[54]?NULL:&planet,(int16_t)cfg[4],(int16_t)capcfg[56]);
-        else if(cfg[0]==2){LookupBestPlanetaryScanner(&part);result=part.hs.iItem;CHECK(part.hs.grhst==hstPlanetary && part.hs.cItem==capcfg[61] && part.pplanetary==rgplanetary+part.hs.iItem);}
+        else if(cfg[0]==2){LookupBestPlanetaryScanner(&part);result=part.hs.iItem;CHECK(part.hs.grhst==hstPlanetary && part.hs.cItem==capcfg[61] && part.pplanetary()==rgplanetary+part.hs.iItem);}
         else result=call(grobjPlanet,iobjPlanetaryScanner,1);
         int actual[278];actual[0]=result;actual[1]=idPlayer;
         for(int i=0;i<3;i++){actual[2+i]=planet.rgEnvVar[i];actual[5+i]=observedLow[i];actual[8+i]=observedHigh[i];actual[11+i]=observedCost[i];}
@@ -196,12 +196,12 @@ int main(int argc,char **argv){
         memset(capcfg,0,sizeof(capcfg));capcfg[3]=0;capcfg[4]=0;capcfg[44]=capcfg[45]=1;capcfg[46]=-1;capcfg[57]=1;
         for(int i=0;i<3;i++){capcfg[8+i]=capcfg[11+i]=50+(i==0?distance:0);capcfg[14+i]=50;capcfg[17+i]=25;capcfg[20+i]=75;}
         for(int i=0;i<6;i++)capcfg[32+i]=26;ready();
-        planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(3,mdIdleTerraform,grobjPlanet,0);
+        planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(3,mdIdleTerraform,grobjPlanet,0);
         Produce();CHECK(!planet.lpplprod && planet.rgEnvVar[0]==50 && rgplr[0].lResLastYear==100-distance*10);CHECK(terraformCalls==distance);
     }
     for(int i=0;i<4;i++)CHECK(modes[i]>0);
     capcfg[8]=capcfg[11]=-23;capcfg[14]=-50;capcfg[17]=-75;capcfg[20]=-25;ready();CHECK(IpctCanTerraformLppl(&planet)==-24);
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(3,mdIdleTerraform,grobjPlanet,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(3,mdIdleTerraform,grobjPlanet,0);
     Produce();CHECK(!planet.lpplprod && !terraformCalls && rgplr[0].lResLastYear==100);
     reset();printf("Colony capabilities: %lu cases (count %lu, gate %lu, scanner %lu, generic %lu) plus four Produce clipping/application cases; %d assertions passed\n",cases,modes[0],modes[1],modes[2],modes[3],checks);return 0;
 }
@@ -210,7 +210,7 @@ int main(int argc,char **argv){
         path=Path(work)
         for generator in ('text/textgen.py','data/datagen.py'):subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter','-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True);raw=export.read_bytes();table=list(struct.iter_unpack('<8i',raw[:640]));special=list(struct.iter_unpack('<7i',raw[640:1088]));planetary=list(struct.iter_unpack('<7i',raw[1088:]));assert (len(table),len(special),len(planetary))==(20,16,15)
         count=0;excluded={};process=subprocess.Popen([str(binary),'verify','-'],stdin=subprocess.PIPE)
         try:

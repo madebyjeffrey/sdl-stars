@@ -2,9 +2,17 @@
 #define STARS_DECOMPILED_STRUCTS_H
 
 #include <stdint.h>
+#include <cstddef>
+#include <array>
+#include <bit>
+#include <span>
+#include "taskviews.h"
 
 #include "enums.h"
 #include "native.h"
+#include "thingviews.h"
+#include "nativeobject.h"
+#include <algorithm>
 
 typedef struct _aipart          AIPART;
 typedef struct _aistarbase      AISTARBASE;
@@ -124,7 +132,10 @@ typedef struct _zipprodq        ZIPPRODQ;
 typedef void (*TILEDRAWPROC)(HDC hdc, TILE *ptile, OBJ obj);
 
 // Win16 structs are byte-packed; keep the original field offsets.
+// The codec harness also compiles these types with natural runtime alignment.
+#ifndef STARS_TEST_NATURAL_RECORD_LAYOUT
 #pragma pack(push, 1)
+#endif
 
 struct _aipart {
     uint16_t ibit : 4, /* +0x0000 (2) @bit0 */
@@ -217,45 +228,41 @@ struct _compart {
 }; /* size=0x34 */
 
 struct _cyberinfo {
-    union {
-        struct {
-            uint16_t iLstPktDir : 3, /* +0x0000 (2) @bit0 */
-                fBltColony : 1,      /* @bit3 */
-                fLaunchedPkt : 1,    /* @bit4 */
-                iPktTarget : 2,      /* @bit5 */
-                fNeedScanPkt : 1,    /* @bit7 */
-                unused : 8;          /* @bit8 */
-        };
-        uint16_t wInfo; /* +0x0000 (2) */
-    };
+    uint16_t wInfo;
+    constexpr uint16_t iLstPktDir() const noexcept { return (wInfo >> 0) & 0x7; }
+    constexpr uint16_t fBltColony() const noexcept { return (wInfo >> 3) & 0x1; }
+    constexpr uint16_t fLaunchedPkt() const noexcept { return (wInfo >> 4) & 0x1; }
+    constexpr uint16_t iPktTarget() const noexcept { return (wInfo >> 5) & 0x3; }
+    constexpr uint16_t fNeedScanPkt() const noexcept { return (wInfo >> 7) & 0x1; }
+    constexpr uint16_t unused() const noexcept { return (wInfo >> 8) & 0xff; }
 }; /* size=0x2 */
 
 struct _cyberinfotemp {
-    union {
-        struct {
-            uint16_t fIdleColonizers : 1, /* +0x0000 (2) @bit0 */
-                cIdleFreighters : 2,      /* @bit1 */
-                cFreightersDst : 2,       /* @bit3 */
-                fNeedDefenders : 1,       /* @bit5 */
-                fDefended : 1,            /* @bit6 */
-                fUnderAttack : 1,         /* @bit7 */
-                fNeedsMin1 : 1,           /* @bit8 */
-                fNeedsMin2 : 1,           /* @bit9 */
-                fNeedsMin3 : 1,           /* @bit10 */
-                unused : 5;               /* @bit11 */
-        };
-        uint16_t wInfo1; /* +0x0000 (2) */
-    };
+    uint16_t wInfo1;
+    constexpr uint16_t fIdleColonizers() const noexcept { return (wInfo1 >> 0) & 0x1; }
+    constexpr uint16_t cIdleFreighters() const noexcept { return (wInfo1 >> 1) & 0x3; }
+    constexpr uint16_t cFreightersDst() const noexcept { return (wInfo1 >> 3) & 0x3; }
+    constexpr uint16_t fNeedDefenders() const noexcept { return (wInfo1 >> 5) & 0x1; }
+    constexpr uint16_t fDefended() const noexcept { return (wInfo1 >> 6) & 0x1; }
+    constexpr uint16_t fUnderAttack() const noexcept { return (wInfo1 >> 7) & 0x1; }
+    constexpr uint16_t fNeedsMin1() const noexcept { return (wInfo1 >> 8) & 0x1; }
+    constexpr uint16_t fNeedsMin2() const noexcept { return (wInfo1 >> 9) & 0x1; }
+    constexpr uint16_t fNeedsMin3() const noexcept { return (wInfo1 >> 10) & 0x1; }
+    constexpr uint16_t unused() const noexcept { return (wInfo1 >> 11) & 0x1f; }
 }; /* size=0x2 */
 
 struct _dv {
-    union {
-        uint16_t dp; /* +0x0000 (2) */
-        struct {
-            uint16_t pctSh : 7, /* +0x0000 (2) @bit0 */
-                pctDp : 9;      /* @bit7 */
-        };
-    };
+    uint16_t dp;
+    constexpr uint16_t pctSh() const noexcept { return dp & 0x7f; }
+    constexpr uint16_t pctDp() const noexcept { return dp >> 7; }
+    constexpr uint16_t SetPctSh(uint16_t pctShNew) noexcept {
+        dp = static_cast<uint16_t>((dp & 0xff80) | (pctShNew & 0x7f));
+        return pctSh();
+    }
+    constexpr uint16_t SetPctDp(uint16_t pctDpNew) noexcept {
+        dp = static_cast<uint16_t>((dp & 0x7f) | ((pctDpNew & 0x1ff) << 7));
+        return pctDp();
+    }
 }; /* size=0x2 */
 
 struct _engine {
@@ -298,85 +305,151 @@ struct _game {
     int16_t         cPlanMax;    /* +0x000A (2) */
     StartDistance   mdStartDist; /* +0x000C (2) */
     int16_t         fDirty;      /* +0x000E (2) */
-    union {
-        struct {
-            uint16_t fExtraFuel : 1, /* +0x0010 (2) @bit0 */
-                fSlowTech : 1,       /* @bit1 */
-                fSinglePlr : 1,      /* @bit2 */
-                fTutorial : 1,       /* @bit3 */
-                fAisBand : 1,        /* @bit4 */
-                fBBSPlay : 1,        /* @bit5 */
-                fVisScores : 1,      /* @bit6 */
-                fNoRandom : 1,       /* @bit7 */
-                fClumping : 1,       /* @bit8 */
-                wGen : 3,            /* @bit9 */
-                unused : 4;          /* @bit12 */
-        };
-        uint16_t wCrap; /* +0x0010 (2) */
-    };
+    uint16_t fExtraFuel : 1, /* +0x0010 (2) @bit0 */
+        fSlowTech : 1,       /* @bit1 */
+        fSinglePlr : 1,      /* @bit2 */
+        fTutorial : 1,       /* @bit3 */
+        fAisBand : 1,        /* @bit4 */
+        fBBSPlay : 1,        /* @bit5 */
+        fVisScores : 1,      /* @bit6 */
+        fNoRandom : 1,       /* @bit7 */
+        fClumping : 1,       /* @bit8 */
+        wGen : 3,            /* @bit9 */
+        unused : 4;          /* @bit12 */
+    uint16_t wCrap() const noexcept {
+        return static_cast<uint16_t>(fExtraFuel | (fSlowTech << 1) | (fSinglePlr << 2) | (fTutorial << 3) | (fAisBand << 4) |
+            (fBBSPlay << 5) | (fVisScores << 6) | (fNoRandom << 7) | (fClumping << 8) | (wGen << 9) | (unused << 12));
+    }
     uint16_t turn;       /* +0x0012 (2) */
     uint8_t  rgvc[12];   /* +0x0014 (12) */
     char     szName[32]; /* +0x0020 (32) */
 }; /* size=0x40 */
 
 struct _gdata {
-    union {
-        int32_t grBits; /* +0x0000 (4) */
-        struct {
-            uint16_t fUnknownShip : 1, /* +0x0000 (2) @bit0 */
-                fGeneratingTurn : 1,   /* @bit1 */
-                fForceTurn : 1,        /* @bit2 */
-                fHostMode : 1,         /* @bit3 */
-                fSubmit : 1,           /* @bit4 */
-                fNoResearchSav : 1,    /* @bit5 */
-                fRadiatingEngine : 1,  /* @bit6 */
-                fNoIdleChecks : 1,     /* @bit7 */
-                fSendMsgMode : 1,      /* @bit8 */
-                fRetryOpens : 1,       /* @bit9 */
-                fAisDone : 1,          /* @bit10 */
-                fTutorial : 1,         /* @bit11 */
-                fGotoVCR : 1,          /* @bit12 */
-                fVCRTimer : 1,         /* @bit13 */
-                mdScreenSize : 2;      /* @bit14 */
-            uint16_t fGameOverMan : 1, /* +0x0002 (2) @bit0 */
-                fDontDoLogFiles : 1,   /* @bit1 */
-                fFileCrippled : 1,     /* @bit2 */
-                fSmallTileMode : 1,    /* @bit3 */
-                fAllAis : 1,           /* @bit4 */
-                fReadOnly : 1,         /* @bit5 */
-                fExitWindows : 1,      /* @bit6 */
-                fPartialTurn : 1,      /* @bit7 */
-                fSetMassMode : 1,      /* @bit8 */
-                fRptSafeDraw : 1,      /* @bit9 */
-                fProgressTxt : 1,      /* @bit10 */
-                fSoundFX : 1,          /* @bit11 */
-                fNoSound : 1,          /* @bit12 */
-                fSetRouteMode : 1,     /* @bit13 */
-                fBleedingEdge : 1,     /* @bit14 */
-                fToolbar : 1;          /* @bit15 */
-        };
-    };
-    union {
-        int32_t grBits2; /* +0x0004 (4) */
-        struct {
-            uint16_t fNoScannerDraw : 1, /* +0x0004 (2) @bit0 */
-                fTrialPeriodOver : 1,    /* @bit1 */
-                fClose : 1,              /* @bit2 */
-                fDontCalcBleed : 1,      /* @bit3 */
-                fChgZipOrd : 1,          /* @bit4 */
-                fChgZipProd : 1,         /* @bit5 */
-                fChgScanner : 1,         /* @bit6 */
-                fChgReports : 1,         /* @bit7 */
-                fWriteTurnNum : 1,       /* @bit8 */
-                fHotSeat : 1,            /* @bit9 */
-                fFleetLinkValid : 1,     /* @bit10 */
-                fScoreVictory : 2;       /* @bit11 */
-            uint16_t iCurGraph : 4,      /* +0x0006 (2) @bit0 */
-                fMusic : 1,              /* @bit4 */
-                fPerPlayerDumps : 1,     /* @bit5 */
-                fNoHostNames : 1;        /* @bit6 */
-        };
-    };
+    uint16_t fUnknownShip : 1, /* +0x0000 (2) @bit0 */
+        fGeneratingTurn : 1,   /* @bit1 */
+        fForceTurn : 1,        /* @bit2 */
+        fHostMode : 1,         /* @bit3 */
+        fSubmit : 1,           /* @bit4 */
+        fNoResearchSav : 1,    /* @bit5 */
+        fRadiatingEngine : 1,  /* @bit6 */
+        fNoIdleChecks : 1,     /* @bit7 */
+        fSendMsgMode : 1,      /* @bit8 */
+        fRetryOpens : 1,       /* @bit9 */
+        fAisDone : 1,          /* @bit10 */
+        fTutorial : 1,         /* @bit11 */
+        fGotoVCR : 1,          /* @bit12 */
+        fVCRTimer : 1,         /* @bit13 */
+        mdScreenSize : 2;      /* @bit14 */
+    uint16_t fGameOverMan : 1, /* +0x0002 (2) @bit0 */
+        fDontDoLogFiles : 1,   /* @bit1 */
+        fFileCrippled : 1,     /* @bit2 */
+        fSmallTileMode : 1,    /* @bit3 */
+        fAllAis : 1,           /* @bit4 */
+        fReadOnly : 1,         /* @bit5 */
+        fExitWindows : 1,      /* @bit6 */
+        fPartialTurn : 1,      /* @bit7 */
+        fSetMassMode : 1,      /* @bit8 */
+        fRptSafeDraw : 1,      /* @bit9 */
+        fProgressTxt : 1,      /* @bit10 */
+        fSoundFX : 1,          /* @bit11 */
+        fNoSound : 1,          /* @bit12 */
+        fSetRouteMode : 1,     /* @bit13 */
+        fBleedingEdge : 1,     /* @bit14 */
+        fToolbar : 1;          /* @bit15 */
+    int32_t grBits() const noexcept {
+        const uint32_t w = uint32_t(fUnknownShip) | uint32_t(fGeneratingTurn) << 1 | uint32_t(fForceTurn) << 2 |
+            uint32_t(fHostMode) << 3 | uint32_t(fSubmit) << 4 | uint32_t(fNoResearchSav) << 5 | uint32_t(fRadiatingEngine) << 6 |
+            uint32_t(fNoIdleChecks) << 7 | uint32_t(fSendMsgMode) << 8 | uint32_t(fRetryOpens) << 9 | uint32_t(fAisDone) << 10 |
+            uint32_t(fTutorial) << 11 | uint32_t(fGotoVCR) << 12 | uint32_t(fVCRTimer) << 13 | uint32_t(mdScreenSize) << 14 |
+            uint32_t(fGameOverMan) << 16 | uint32_t(fDontDoLogFiles) << 17 | uint32_t(fFileCrippled) << 18 |
+            uint32_t(fSmallTileMode) << 19 | uint32_t(fAllAis) << 20 | uint32_t(fReadOnly) << 21 | uint32_t(fExitWindows) << 22 |
+            uint32_t(fPartialTurn) << 23 | uint32_t(fSetMassMode) << 24 | uint32_t(fRptSafeDraw) << 25 | uint32_t(fProgressTxt) << 26 |
+            uint32_t(fSoundFX) << 27 | uint32_t(fNoSound) << 28 | uint32_t(fSetRouteMode) << 29 | uint32_t(fBleedingEdge) << 30 |
+            uint32_t(fToolbar) << 31;
+        return std::bit_cast<int32_t>(w);
+    }
+    void SetGrBits(int32_t grBits) noexcept {
+        const uint32_t w = std::bit_cast<uint32_t>(grBits);
+        fUnknownShip = w & 1u;
+        fGeneratingTurn = (w >> 1) & 1u;
+        fForceTurn = (w >> 2) & 1u;
+        fHostMode = (w >> 3) & 1u;
+        fSubmit = (w >> 4) & 1u;
+        fNoResearchSav = (w >> 5) & 1u;
+        fRadiatingEngine = (w >> 6) & 1u;
+        fNoIdleChecks = (w >> 7) & 1u;
+        fSendMsgMode = (w >> 8) & 1u;
+        fRetryOpens = (w >> 9) & 1u;
+        fAisDone = (w >> 10) & 1u;
+        fTutorial = (w >> 11) & 1u;
+        fGotoVCR = (w >> 12) & 1u;
+        fVCRTimer = (w >> 13) & 1u;
+        mdScreenSize = (w >> 14) & 3u;
+        fGameOverMan = (w >> 16) & 1u;
+        fDontDoLogFiles = (w >> 17) & 1u;
+        fFileCrippled = (w >> 18) & 1u;
+        fSmallTileMode = (w >> 19) & 1u;
+        fAllAis = (w >> 20) & 1u;
+        fReadOnly = (w >> 21) & 1u;
+        fExitWindows = (w >> 22) & 1u;
+        fPartialTurn = (w >> 23) & 1u;
+        fSetMassMode = (w >> 24) & 1u;
+        fRptSafeDraw = (w >> 25) & 1u;
+        fProgressTxt = (w >> 26) & 1u;
+        fSoundFX = (w >> 27) & 1u;
+        fNoSound = (w >> 28) & 1u;
+        fSetRouteMode = (w >> 29) & 1u;
+        fBleedingEdge = (w >> 30) & 1u;
+        fToolbar = (w >> 31) & 1u;
+    }
+    uint16_t fNoScannerDraw : 1, /* +0x0004 (2) @bit0 */
+        fTrialPeriodOver : 1,    /* @bit1 */
+        fClose : 1,              /* @bit2 */
+        fDontCalcBleed : 1,      /* @bit3 */
+        fChgZipOrd : 1,          /* @bit4 */
+        fChgZipProd : 1,         /* @bit5 */
+        fChgScanner : 1,         /* @bit6 */
+        fChgReports : 1,         /* @bit7 */
+        fWriteTurnNum : 1,       /* @bit8 */
+        fHotSeat : 1,            /* @bit9 */
+        fFleetLinkValid : 1,     /* @bit10 */
+        fScoreVictory : 2,       /* @bit11 */
+        unused3 : 3;             /* @bit13 */
+    uint16_t iCurGraph : 4,      /* +0x0006 (2) @bit0 */
+        fMusic : 1,              /* @bit4 */
+        fPerPlayerDumps : 1,     /* @bit5 */
+        fNoHostNames : 1,        /* @bit6 */
+        unused4 : 9;             /* @bit7 */
+    int32_t grBits2() const noexcept {
+        const uint32_t w = uint32_t(fNoScannerDraw) | uint32_t(fTrialPeriodOver) << 1 | uint32_t(fClose) << 2 |
+            uint32_t(fDontCalcBleed) << 3 | uint32_t(fChgZipOrd) << 4 | uint32_t(fChgZipProd) << 5 | uint32_t(fChgScanner) << 6 |
+            uint32_t(fChgReports) << 7 | uint32_t(fWriteTurnNum) << 8 | uint32_t(fHotSeat) << 9 | uint32_t(fFleetLinkValid) << 10 |
+            uint32_t(fScoreVictory) << 11 | uint32_t(unused3) << 13 | uint32_t(iCurGraph) << 16 | uint32_t(fMusic) << 20 |
+            uint32_t(fPerPlayerDumps) << 21 | uint32_t(fNoHostNames) << 22 | uint32_t(unused4) << 23;
+        return std::bit_cast<int32_t>(w);
+    }
+    void SetGrBits2(int32_t grBits2) noexcept {
+        const uint32_t w = std::bit_cast<uint32_t>(grBits2);
+        fNoScannerDraw = w & 1u;
+        fTrialPeriodOver = (w >> 1) & 1u;
+        fClose = (w >> 2) & 1u;
+        fDontCalcBleed = (w >> 3) & 1u;
+        fChgZipOrd = (w >> 4) & 1u;
+        fChgZipProd = (w >> 5) & 1u;
+        fChgScanner = (w >> 6) & 1u;
+        fChgReports = (w >> 7) & 1u;
+        fWriteTurnNum = (w >> 8) & 1u;
+        fHotSeat = (w >> 9) & 1u;
+        fFleetLinkValid = (w >> 10) & 1u;
+        fScoreVictory = (w >> 11) & 3u;
+        unused3 = (w >> 13) & 7u;
+        iCurGraph = (w >> 16) & 15u;
+        fMusic = (w >> 20) & 1u;
+        fPerPlayerDumps = (w >> 21) & 1u;
+        fNoHostNames = (w >> 22) & 1u;
+        unused4 = (w >> 23) & 511u;
+    }
     uint16_t fUnused2 : 14; /* +0x0008 (2) @bit0 */
 }; /* size=0xa */
 
@@ -427,10 +500,24 @@ struct _huldef {
     uint8_t  rgbrc[16];  /* +0x007F (16) */
 }; /* size=0x8f */
 
-struct _itemaction {
-    uint16_t cQuan : 12, /* +0x0000 (2) @bit0 */
-        iAction : 4;     /* @bit12 */
+struct alignas(2) _itemaction {
+    uint16_t w;
+
+    constexpr uint16_t cQuan() const noexcept { return w & 0x0fff; }
+    constexpr uint16_t iAction() const noexcept { return w >> 12; }
+    constexpr uint16_t SetCQuan(uint16_t cQuanNew) noexcept {
+        w = static_cast<uint16_t>((w & 0xf000) | (cQuanNew & 0x0fff));
+        return cQuan();
+    }
+    constexpr uint16_t SetIAction(uint16_t iActionNew) noexcept {
+        w = static_cast<uint16_t>((w & 0x0fff) | ((iActionNew & 0x0f) << 12));
+        return iAction();
+    }
 }; /* size=0x2 */
+
+inline constexpr ITEMACTION IaMake(uint16_t cQuan, uint16_t iAction) noexcept {
+    return {static_cast<uint16_t>((cQuan & 0x0fff) | ((iAction & 0x0f) << 12))};
+}
 
 struct _kill {
     uint8_t  itok;      /* +0x0000 (1) */
@@ -447,7 +534,6 @@ struct _btlrec {
     uint16_t iRound : 4, /* +0x0004 (2) @bit0 */
         dzDis : 4,       /* @bit4 */
         itokAttack : 8;  /* @bit8 */
-    KILL rgkill[0];      /* +0x0006 (0) */
 }; /* size=0x6 */
 
 struct _btlrec26 {
@@ -458,7 +544,6 @@ struct _btlrec26 {
     uint16_t iRound : 4, /* +0x0004 (2) @bit0 */
         dzDis : 4,       /* @bit4 */
         unused : 8;      /* @bit8 */
-    KILL rgkill[0];      /* +0x0006 (0) */
 }; /* size=0x6 */
 
 struct _logxfer {
@@ -486,6 +571,12 @@ struct _mdplr {
         fAi : 1,           /* @bit9 */
         lvlAi : 3,         /* @bit10 */
         idAi : 3;          /* @bit13 */
+    uint16_t wMdPlr() const noexcept {
+        return static_cast<uint16_t>(reserved | (fAi << 9) | (lvlAi << 10) | (idAi << 13));
+    }
+    void SetWMdPlr(uint16_t wMdPlr) noexcept {
+        reserved = wMdPlr & 511; fAi = (wMdPlr >> 9) & 1; lvlAi = (wMdPlr >> 10) & 7; idAi = wMdPlr >> 13;
+    }
 }; /* size=0x2 */
 
 struct _mines {
@@ -528,7 +619,9 @@ struct _msgplr {
     int16_t iPlrTo;       /* +0x0006 (2) */
     int16_t iInRe;        /* +0x0008 (2) */
     int16_t cLen;         /* +0x000A (2) */
-    uint8_t rgbMsg[0];    /* +0x000C (0) */
+    // The typed allocator starts an adjacent byte array with its own lifetime.
+    uint8_t *rgbMsg() noexcept { return reinterpret_cast<uint8_t *>(this) + sizeof(*this); }
+    const uint8_t *rgbMsg() const noexcept { return reinterpret_cast<const uint8_t *>(this) + sizeof(*this); }
 }; /* size=0xc */
 
 struct _msgturn {
@@ -538,33 +631,60 @@ struct _msgturn {
 }; /* size=0x5 */
 
 struct _obj {
-    union {
-        PLANET *ppl; /* +0x0000 (2) */
-        FLEET  *pfl; /* +0x0000 (2) */
-        THING  *pth; /* +0x0000 (2) */
-    };
-}; /* size=0x2 */
+    // Drawing callbacks borrow the object chosen by their tile group.
+    // Converting through void preserves that pointer without an inactive union.
+    void *lpv;
+    PLANET *ppl() const noexcept { return static_cast<PLANET *>(lpv); }
+    FLEET *pfl() const noexcept { return static_cast<FLEET *>(lpv); }
+    THING *pth() const noexcept { return static_cast<THING *>(lpv); }
+    void SetPpl(PLANET *ppl) noexcept { lpv = ppl; }
+    void SetPfl(FLEET *pfl) noexcept { lpv = pfl; }
+    void SetPth(THING *pth) noexcept { lpv = pth; }
+}; /* Runtime borrow; never serialized. */
+
+enum PartPointerKind : uint8_t { ppkCommon, ppkArmor, ppkHull, ppkEngine, ppkScanner, ppkBeam, ppkTorp, ppkBomb, ppkShield, ppkSpecial, ppkSpecialSB, ppkMines, ppkMining, ppkPlanetary, ppkTerra };
+class NATIVEPARTCOMMONVIEW;
 
 struct _part {
-    HS hs; /* +0x0000 (4) */
-    union {
-        COMPART   *pcom;       /* +0x0004 (4) */
-        ARMOR     *parmor;     /* +0x0004 (4) */
-        HUL       *phul;       /* +0x0004 (4) */
-        ENGINE    *pengine;    /* +0x0004 (4) */
-        SCANNER   *pscanner;   /* +0x0004 (4) */
-        BEAM      *pbeam;      /* +0x0004 (4) */
-        TORP      *ptorp;      /* +0x0004 (4) */
-        BOMB      *pbomb;      /* +0x0004 (4) */
-        SHIELD    *pshield;    /* +0x0004 (4) */
-        SPECIAL   *pspecial;   /* +0x0004 (4) */
-        SPECIALSB *pspecialsb; /* +0x0004 (4) */
-        MINES     *pmines;     /* +0x0004 (4) */
-        MINING    *pmining;    /* +0x0004 (4) */
-        PLANETARY *pplanetary; /* +0x0004 (4) */
-        TERRA     *pterra;     /* +0x0004 (4) */
-    };
-}; /* size=0x8 */
+    HS hs;
+private:
+    void *lpv;
+    PartPointerKind ppk;
+public:
+    // Retain the pointer kind independently of hs: a failed lookup leaves the
+    // previous catalog borrow installed even after the caller changes hs.
+    NATIVEPARTCOMMONVIEW pcom() const noexcept;
+    void SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept;
+    void SetPcom(COMPART *pcom) noexcept { lpv = pcom; ppk = ppkCommon; }
+    ARMOR *parmor() const noexcept { return static_cast<ARMOR *>(lpv); }
+    void SetParmor(ARMOR *parmor) noexcept { lpv = parmor; ppk = ppkArmor; }
+    HUL *phul() const noexcept { return static_cast<HUL *>(lpv); }
+    void SetPhul(HUL *phul) noexcept { lpv = phul; ppk = ppkHull; }
+    ENGINE *pengine() const noexcept { return static_cast<ENGINE *>(lpv); }
+    void SetPengine(ENGINE *pengine) noexcept { lpv = pengine; ppk = ppkEngine; }
+    SCANNER *pscanner() const noexcept { return static_cast<SCANNER *>(lpv); }
+    void SetPscanner(SCANNER *pscanner) noexcept { lpv = pscanner; ppk = ppkScanner; }
+    BEAM *pbeam() const noexcept { return static_cast<BEAM *>(lpv); }
+    void SetPbeam(BEAM *pbeam) noexcept { lpv = pbeam; ppk = ppkBeam; }
+    TORP *ptorp() const noexcept { return static_cast<TORP *>(lpv); }
+    void SetPtorp(TORP *ptorp) noexcept { lpv = ptorp; ppk = ppkTorp; }
+    BOMB *pbomb() const noexcept { return static_cast<BOMB *>(lpv); }
+    void SetPbomb(BOMB *pbomb) noexcept { lpv = pbomb; ppk = ppkBomb; }
+    SHIELD *pshield() const noexcept { return static_cast<SHIELD *>(lpv); }
+    void SetPshield(SHIELD *pshield) noexcept { lpv = pshield; ppk = ppkShield; }
+    SPECIAL *pspecial() const noexcept { return static_cast<SPECIAL *>(lpv); }
+    void SetPspecial(SPECIAL *pspecial) noexcept { lpv = pspecial; ppk = ppkSpecial; }
+    SPECIALSB *pspecialsb() const noexcept { return static_cast<SPECIALSB *>(lpv); }
+    void SetPspecialsb(SPECIALSB *pspecialsb) noexcept { lpv = pspecialsb; ppk = ppkSpecialSB; }
+    MINES *pmines() const noexcept { return static_cast<MINES *>(lpv); }
+    void SetPmines(MINES *pmines) noexcept { lpv = pmines; ppk = ppkMines; }
+    MINING *pmining() const noexcept { return static_cast<MINING *>(lpv); }
+    void SetPmining(MINING *pmining) noexcept { lpv = pmining; ppk = ppkMining; }
+    PLANETARY *pplanetary() const noexcept { return static_cast<PLANETARY *>(lpv); }
+    void SetPplanetary(PLANETARY *pplanetary) noexcept { lpv = pplanetary; ppk = ppkPlanetary; }
+    TERRA *pterra() const noexcept { return static_cast<TERRA *>(lpv); }
+    void SetPterra(TERRA *pterra) noexcept { lpv = pterra; ppk = ppkTerra; }
+}; /* Runtime catalog borrow; never serialized. */
 
 struct _pl {
     uint16_t cbItem : 8, /* +0x0000 (2) @bit0 */
@@ -573,7 +693,6 @@ struct _pl {
         cAlloc : 4;      /* @bit12 */
     uint8_t iMax;        /* +0x0002 (1) */
     uint8_t iMac;        /* +0x0003 (1) */
-    uint8_t rgb[0];      /* +0x0004 (0) */
 }; /* size=0x4 */
 
 struct _planet {
@@ -591,46 +710,54 @@ struct _planet {
     uint8_t rgMinConc[3];     /* +0x0009 (3) */
     int8_t  rgEnvVar[3];      /* +0x000C (3) */
     int8_t  rgEnvVarOrig[3];  /* +0x000F (3) */
-    union {
-        struct {
-            uint16_t uPopGuess : 12, /* +0x0012 (2) @bit0 */
-                uDefGuess : 4;       /* @bit12 */
-        };
-        uint16_t uGuesses; /* +0x0012 (2) */
-    };
-    union {
-        struct {
-            uint32_t iDeltaPop : 8,  /* +0x0014 (4) @bit0 */
-                cMines : 12,         /* @bit8 */
-                cFactories : 12;     /* @bit20 */
-            uint32_t cDefenses : 12, /* +0x0018 (4) @bit0 */
-                iScanner : 5,        /* @bit12 */
-                unused5 : 5,         /* @bit17 */
-                fArtifact : 1,       /* @bit22 */
-                fNoResearch : 1,     /* @bit23 */
-                unused2 : 8;         /* @bit24 */
-        };
-        uint8_t rgbImp[8]; /* +0x0014 (8) */
-    };
+    uint16_t uPopGuess : 12, /* +0x0012 (2) @bit0 */
+        uDefGuess : 4;       /* @bit12 */
+    uint16_t uGuesses() const noexcept { return static_cast<uint16_t>(uPopGuess | (uDefGuess << 12)); }
+    void SetUGuesses(uint16_t uGuesses) noexcept { uPopGuess = uGuesses & 4095; uDefGuess = uGuesses >> 12; }
+    uint32_t iDeltaPop : 8,  /* +0x0014 (4) @bit0 */
+        cMines : 12,         /* @bit8 */
+        cFactories : 12;     /* @bit20 */
+    uint32_t cDefenses : 12, /* +0x0018 (4) @bit0 */
+        iScanner : 5,        /* @bit12 */
+        unused5 : 5,         /* @bit17 */
+        fArtifact : 1,       /* @bit22 */
+        fNoResearch : 1,     /* @bit23 */
+        unused2 : 8;         /* @bit24 */
+    std::array<uint8_t, 8> rgbImp() const noexcept {
+        const uint32_t ul1 = uint32_t(iDeltaPop) | (uint32_t(cMines) << 8) | (uint32_t(cFactories) << 20);
+        const uint32_t ul2 = uint32_t(cDefenses) | (uint32_t(iScanner) << 12) | (uint32_t(unused5) << 17) |
+            (uint32_t(fArtifact) << 22) | (uint32_t(fNoResearch) << 23) | (uint32_t(unused2) << 24);
+        return {uint8_t(ul1), uint8_t(ul1 >> 8), uint8_t(ul1 >> 16), uint8_t(ul1 >> 24),
+                uint8_t(ul2), uint8_t(ul2 >> 8), uint8_t(ul2 >> 16), uint8_t(ul2 >> 24)};
+    }
+    void SetRgbImp(const std::array<uint8_t, 8> &rgbImp) noexcept {
+        const uint32_t ul1 = uint32_t(rgbImp[0]) | (uint32_t(rgbImp[1]) << 8) | (uint32_t(rgbImp[2]) << 16) | (uint32_t(rgbImp[3]) << 24);
+        const uint32_t ul2 = uint32_t(rgbImp[4]) | (uint32_t(rgbImp[5]) << 8) | (uint32_t(rgbImp[6]) << 16) | (uint32_t(rgbImp[7]) << 24);
+        iDeltaPop = ul1 & 255; cMines = (ul1 >> 8) & 4095; cFactories = ul1 >> 20;
+        cDefenses = ul2 & 4095; iScanner = (ul2 >> 12) & 31; unused5 = (ul2 >> 17) & 31;
+        fArtifact = (ul2 >> 22) & 1; fNoResearch = (ul2 >> 23) & 1; unused2 = ul2 >> 24;
+    }
     int32_t rgwtMin[4]; /* +0x001C (16) */
-    union {
-        struct {
-            uint16_t isb : 4,      /* +0x002C (2) @bit0 */
-                pctDp : 12;        /* @bit4 */
-            uint16_t idFling : 10, /* +0x002E (2) @bit0 */
-                iWarpFling : 4,    /* @bit10 */
-                fNoHeal : 1,       /* @bit14 */
-                unused3 : 1;       /* @bit15 */
-        };
-        int32_t lStarbase; /* +0x002C (4) */
-    };
-    union {
-        struct {
-            uint16_t idRoute : 10, /* +0x0030 (2) @bit0 */
-                unused4 : 6;       /* @bit10 */
-        };
-        uint16_t wRouting; /* +0x0030 (2) */
-    };
+    uint16_t isb : 4,      /* +0x002C (2) @bit0 */
+        pctDp : 12;        /* @bit4 */
+    uint16_t idFling : 10, /* +0x002E (2) @bit0 */
+        iWarpFling : 4,    /* @bit10 */
+        fNoHeal : 1,       /* @bit14 */
+        unused3 : 1;       /* @bit15 */
+    int32_t lStarbase() const noexcept {
+        const uint32_t ul = uint32_t(isb) | (uint32_t(pctDp) << 4) | (uint32_t(idFling) << 16) |
+            (uint32_t(iWarpFling) << 26) | (uint32_t(fNoHeal) << 30) | (uint32_t(unused3) << 31);
+        return std::bit_cast<int32_t>(ul);
+    }
+    void SetLStarbase(int32_t lStarbase) noexcept {
+        const uint32_t ul = std::bit_cast<uint32_t>(lStarbase);
+        isb = ul & 15; pctDp = (ul >> 4) & 4095; idFling = (ul >> 16) & 1023;
+        iWarpFling = (ul >> 26) & 15; fNoHeal = (ul >> 30) & 1; unused3 = ul >> 31;
+    }
+    uint16_t idRoute : 10, /* +0x0030 (2) @bit0 */
+        unused4 : 6;       /* @bit10 */
+    uint16_t wRouting() const noexcept { return static_cast<uint16_t>(idRoute | (unused4 << 10)); }
+    void SetWRouting(uint16_t wRouting) noexcept { idRoute = wRouting & 1023; unused4 = wRouting >> 10; }
     int16_t turn;     /* +0x0032 (2) */
     PLPROD *lpplprod; /* +0x0034 (4) */
 }; /* size=0x38 */
@@ -670,24 +797,29 @@ struct _planetsome {
     int8_t   rgMinConc[3];     /* +0x000C (3) */
     int8_t   rgEnvVar[3];      /* +0x000F (3) */
     int8_t   rgEnvVarOrig[3];  /* +0x0012 (3) */
-    union {
-        struct {
-            uint16_t uPopGuess : 12, /* +0x0015 (2) @bit0 */
-                uDefGuess : 4;       /* @bit12 */
-        };
-        uint16_t uGuesses; /* +0x0015 (2) */
-    };
+    uint16_t uPopGuess : 12,
+        uDefGuess : 4;
+    uint16_t uGuesses() const noexcept { return static_cast<uint16_t>(uPopGuess | (uDefGuess << 12)); }
+    void SetUGuesses(uint16_t uGuesses) noexcept { uPopGuess = uGuesses & 4095; uDefGuess = uGuesses >> 12; }
 }; /* size=0x17 */
 
 struct _fleet {
-    union {
-        int16_t id; /* +0x0000 (2) */
-        struct {
-            uint16_t ifl : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,     /* @bit9 */
-                junk : 3;     /* @bit13 */
-        };
-    };
+    int16_t id;
+    constexpr uint16_t ifl() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 0) & 0x1ff); }
+    constexpr uint16_t SetIfl(uint16_t iflNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xfe00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(iflNew)) & 0x1ffu) << 0));
+        return ifl();
+    }
+    constexpr uint16_t iplr() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 9) & 0xf); }
+    constexpr uint16_t SetIplr(uint16_t iplrNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xe1ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iplrNew)) & 0xfu) << 9));
+        return iplr();
+    }
+    constexpr uint16_t junk() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 13) & 0x7); }
+    constexpr uint16_t SetJunk(uint16_t junkNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0x1fffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(junkNew)) & 0x7u) << 13));
+        return junk();
+    }
     int16_t  iPlayer;     /* +0x0002 (2) */
     uint16_t det : 8,     /* +0x0004 (2) @bit0 */
         fInclude : 1,     /* @bit8 */
@@ -701,37 +833,73 @@ struct _fleet {
     int16_t idPlanet;     /* +0x0006 (2) */
     POINT16 pt;           /* +0x0008 (4) */
     int16_t rgcsh[16];    /* +0x000C (32) */
-    union {
-        DV      rgdv[16]; /* +0x002C (32) */
-        int32_t wtFleet;  /* +0x002C (4) */
-    };
+    DV rgdv[16];
+    int32_t wtFleet() const noexcept {
+        return static_cast<int32_t>(static_cast<uint32_t>(rgdv[0].dp) | (static_cast<uint32_t>(rgdv[1].dp) << 16));
+    }
+    void SetWtFleet(int32_t wtFleetNew) noexcept {
+        rgdv[0].dp = static_cast<uint16_t>(wtFleetNew);
+        rgdv[1].dp = static_cast<uint16_t>(static_cast<uint32_t>(wtFleetNew) >> 16);
+    }
     int32_t rgwtMin[5]; /* +0x004C (20) */
     uint8_t iplan;      /* +0x0060 (1) */
     uint8_t bUnused;    /* +0x0061 (1) */
     int16_t cord;       /* +0x0062 (2) */
     PLORD  *lpplord;    /* +0x0064 (4) */
     FLEET  *lpflNext;   /* +0x0068 (4) */
-    union {
-        int32_t lPower; /* +0x006C (4) */
-        struct {
-            int16_t dMoveLeft; /* +0x006C (2) */
-            int16_t dMoveUsed; /* +0x006E (2) */
-        };
-    };
+    int32_t lPower;
+    constexpr int16_t dMoveLeft() const noexcept { return static_cast<int16_t>((static_cast<uint32_t>(lPower) >> 0) & 0xffff); }
+    constexpr int16_t SetDMoveLeft(int16_t dMoveLeftNew) noexcept {
+        lPower = static_cast<int32_t>((static_cast<uint32_t>(lPower) & 0xffff0000u) | ((static_cast<uint32_t>(static_cast<uint16_t>(dMoveLeftNew)) & 0xffffu) << 0));
+        return dMoveLeft();
+    }
+    constexpr int16_t dMoveUsed() const noexcept { return static_cast<int16_t>((static_cast<uint32_t>(lPower) >> 16) & 0xffff); }
+    constexpr int16_t SetDMoveUsed(int16_t dMoveUsedNew) noexcept {
+        lPower = static_cast<int32_t>((static_cast<uint32_t>(lPower) & 0xffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(dMoveUsedNew)) & 0xffffu) << 16));
+        return dMoveUsed();
+    }
     int32_t lFuelUsed; /* +0x0070 (4) */
-    union {
-        int32_t dirLong; /* +0x0074 (4) */
-        struct {
-            uint16_t dirFltX : 8,  /* +0x0074 (2) @bit0 */
-                dirFltY : 8;       /* @bit8 */
-            uint16_t iwarpFlt : 4, /* +0x0076 (2) @bit0 */
-                fdirValid : 1,     /* @bit4 */
-                fCompChg : 1,      /* @bit5 */
-                fTargeted : 1,     /* @bit6 */
-                fSkipped : 1,      /* @bit7 */
-                fUnused : 8;       /* @bit8 */
-        };
-    };
+    int32_t dirLong;
+    constexpr uint16_t dirFltX() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 0) & 0xff); }
+    constexpr uint16_t SetDirFltX(uint16_t dirFltXNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffffff00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(dirFltXNew)) & 0xffu) << 0));
+        return dirFltX();
+    }
+    constexpr uint16_t dirFltY() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 8) & 0xff); }
+    constexpr uint16_t SetDirFltY(uint16_t dirFltYNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffff00ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(dirFltYNew)) & 0xffu) << 8));
+        return dirFltY();
+    }
+    constexpr uint16_t iwarpFlt() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 16) & 0xf); }
+    constexpr uint16_t SetIwarpFlt(uint16_t iwarpFltNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xfff0ffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iwarpFltNew)) & 0xfu) << 16));
+        return iwarpFlt();
+    }
+    constexpr uint16_t fdirValid() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 20) & 0x1); }
+    constexpr uint16_t SetFdirValid(uint16_t fdirValidNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffefffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fdirValidNew)) & 0x1u) << 20));
+        return fdirValid();
+    }
+    constexpr uint16_t fCompChg() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 21) & 0x1); }
+    constexpr uint16_t SetFCompChg(uint16_t fCompChgNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffdfffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fCompChgNew)) & 0x1u) << 21));
+        return fCompChg();
+    }
+    constexpr uint16_t fTargeted() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 22) & 0x1); }
+    constexpr uint16_t SetFTargeted(uint16_t fTargetedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffbfffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fTargetedNew)) & 0x1u) << 22));
+        return fTargeted();
+    }
+    constexpr uint16_t fSkipped() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 23) & 0x1); }
+    constexpr uint16_t SetFSkipped(uint16_t fSkippedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xff7fffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fSkippedNew)) & 0x1u) << 23));
+        return fSkipped();
+    }
+    constexpr uint16_t fUnused() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(dirLong) >> 24) & 0xff); }
+    constexpr uint16_t SetFUnused(uint16_t fUnusedNew) noexcept {
+        dirLong = static_cast<int32_t>((static_cast<uint32_t>(dirLong) & 0xffffffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(fUnusedNew)) & 0xffu) << 24));
+        return fUnused();
+    }
     char *lpszName; /* +0x0078 (4) */
 }; /* size=0x7c */
 
@@ -749,48 +917,41 @@ struct _fleetsome {
 }; /* size=0xc */
 
 struct _popupdata {
-    GrPopupType grPopup; /* +0x0000 (2) */
-    union {
-        int32_t rgi[5]; /* +0x0002 (20) */
-        struct {
-            int16_t idPlanet;   /* +0x0002 (2) */
-            int16_t iPlanetVar; /* +0x0004 (2) */
-            int16_t iPlanVal;   /* +0x0006 (2) */
-            int16_t iPlanMin;   /* +0x0008 (2) */
-            int16_t iPlanMax;   /* +0x000A (2) */
-            int16_t iPlrVal;    /* +0x000C (2) */
-            int16_t iPlrMin;    /* +0x000E (2) */
-            int16_t iPlrMax;    /* +0x0010 (2) */
-        };
-        struct {
-            int16_t idPlan;   /* +0x0002 (2) */
-            int16_t cMax;     /* +0x0004 (2) */
-            int16_t cCur;     /* +0x0006 (2) */
-            int16_t cOperate; /* +0x0008 (2) */
-            int16_t fFactory; /* +0x000A (2) */
-        };
-        struct {
-            int16_t dxOut; /* +0x0002 (2) */
-            char   *psz;   /* +0x0004 (2) */
-        };
-        int16_t iPlayer; /* +0x0002 (2) */
-        struct {
-            FLEET   *lpfl;       /* +0x0002 (4) */
-            int16_t  fRedDamage; /* +0x0006 (2) */
-            int16_t  dxDamage;   /* +0x0008 (2) */
-            uint16_t grbit;      /* +0x000A (2) */
-        };
-        PART part; /* +0x0002 (8) */
-        struct {
-            SHDEF  *lpshdef;     /* +0x0002 (4) */
-            int16_t fShowDamage; /* +0x0006 (2) */
-            int16_t fHideCounts; /* +0x0008 (2) */
-            int16_t fToken;      /* +0x000A (2) */
-            int16_t fSummary;    /* +0x000C (2) */
-            int16_t itok;        /* +0x000E (2) */
-        };
-    };
-}; /* size=0x16 */
+    GrPopupType grPopup;
+    int32_t rgi[5];
+    int16_t idPlanet, iPlanetVar, iPlanVal, iPlanMin, iPlanMax, iPlrVal, iPlrMin, iPlrMax;
+    int16_t idPlan, cMax, cCur, cOperate, fFactory;
+    int16_t dxOut;
+    char *psz;
+    int16_t iPlayer;
+    FLEET *lpfl;
+    int16_t fRedDamage, dxDamage;
+    uint16_t grbit;
+    PART part;
+    SHDEF *lpshdef;
+    int16_t fShowDamage, fHideCounts, fToken, fSummary, itok;
+
+    // The factory/mine display reads the old shared grbit word. Preserve its
+    // numeric carry between popup kinds without overlaying borrowed pointers.
+    // Other payloads are actual fields; their original scalar widths stay.
+    void SetRgi(int i, int32_t value) noexcept {
+        rgi[i] = value;
+        if (i == static_cast<int>((sizeof(void *) + 4) / 4)) grbit = static_cast<uint16_t>(value);
+    }
+    void SetIPlrMin(int16_t value) noexcept {
+        iPlrMin = value;
+        if constexpr (sizeof(void *) == 8) grbit = static_cast<uint16_t>(value);
+    }
+    void SetIPlanMax(int16_t value) noexcept {
+        iPlanMax = value;
+        if constexpr (sizeof(void *) == 4) grbit = static_cast<uint16_t>(value);
+    }
+    void SetFFactory(int16_t value) noexcept {
+        fFactory = value;
+        if constexpr (sizeof(void *) == 4) grbit = static_cast<uint16_t>(value);
+    }
+    void SetFToken(int16_t value) noexcept { fToken = value; grbit = static_cast<uint16_t>(value); }
+}; /* Runtime popup state, never serialized. */
 
 struct _prod {
     uint32_t cItem : 10, /* +0x0000 (4) @bit0 */
@@ -807,18 +968,23 @@ struct PLPROD {
         cAlloc : 4;      /* @bit12 */
     uint8_t iprodMax;    /* +0x0002 (1) */
     uint8_t iprodMac;    /* +0x0003 (1) */
-    PROD    rgprod[0];   /* +0x0004 (0) */
+    // The adjacent PROD array has a separate lifetime, started by the typed
+    // pooled allocator. Keep the four-byte header and original slot stride.
+    PROD *rgprod() noexcept { return reinterpret_cast<PROD *>(reinterpret_cast<uint8_t *>(this) + 4); }
+    const PROD *rgprod() const noexcept { return reinterpret_cast<const PROD *>(reinterpret_cast<const uint8_t *>(this) + 4); }
 }; /* size=0x4 */
 
 struct _prodq1 {
-    union {
-        uint16_t w; /* +0x0000 (2) */
-        struct {
-            uint16_t mdIdle : 6, /* +0x0000 (2) @bit0 */
-                cQuan : 10;      /* @bit6 */
-        };
-    };
+    uint16_t w; /* +0x0000 (2) */
+    uint16_t mdIdle() const noexcept { return w & 63; }
+    uint16_t cQuan() const noexcept { return w >> 6; }
+    void SetMdIdle(uint16_t mdIdle) noexcept { w = (w & 0xffc0u) | (mdIdle & 63); }
+    void SetCQuan(uint16_t cQuan) noexcept { w = (w & 63u) | ((cQuan & 1023) << 6); }
 }; /* size=0x2 */
+
+inline constexpr PRODQ1 PqMake(uint16_t mdIdle, uint16_t cQuan) noexcept {
+    return {static_cast<uint16_t>((mdIdle & 63) | ((cQuan & 1023) << 6))};
+}
 
 struct _btn {
     RECT     rc;           /* +0x0000 (8) */
@@ -836,7 +1002,7 @@ struct _btnt {
     RECT     rc;          /* +0x0004 (8) */
     int16_t  dTimer;      /* +0x000C (2) */
     int16_t  btf;         /* +0x000E (2) */
-    char    *szText;      /* +0x0010 (2) */
+    const char *szText;   /* +0x0010 (2) */
     int32_t  lTicks;      /* +0x0012 (4) */
     uint16_t fFirst : 1,  /* +0x0016 (2) @bit0 */
         fDown : 1,        /* @bit1 */
@@ -881,14 +1047,10 @@ struct _rpt {
 struct _rtbof {
     char    rgid[4]; /* +0x0000 (4) */
     int32_t lidGame; /* +0x0004 (4) */
-    union {
-        struct {
-            uint16_t verInc : 5, /* +0x0008 (2) @bit0 */
-                verMinor : 7,    /* @bit5 */
-                verMajor : 4;    /* @bit12 */
-        };
-        uint16_t wVersion; /* +0x0008 (2) */
-    };
+    uint16_t verInc : 5, /* +0x0008 (2) @bit0 */
+        verMinor : 7,    /* @bit5 */
+        verMajor : 4;    /* @bit12 */
+    uint16_t wVersion() const noexcept { return static_cast<uint16_t>(verInc | (verMinor << 5) | (verMajor << 12)); }
     uint16_t turn;        /* +0x000A (2) */
     int16_t  iPlayer : 5, /* +0x000C (2) @bit0 */
         lSaltTime : 11;   /* @bit5 */
@@ -909,21 +1071,20 @@ struct _rtchgname {
 
 struct _rtChgPlanetLong {
     int16_t id; /* +0x0000 (2) */
-    union {
-        uint32_t ul; /* +0x0002 (4) */
-        struct {
-            uint32_t fNoResearch : 1, /* +0x0002 (4) @bit0 */
-                idFling : 10,         /* @bit1 */
-                iWarpFling : 4,       /* @bit11 */
-                idRoute : 10,         /* @bit15 */
-                unused : 7;           /* @bit25 */
-        };
-    };
+    uint32_t fNoResearch : 1, /* +0x0002 (4) @bit0 */
+        idFling : 10,         /* @bit1 */
+        iWarpFling : 4,       /* @bit11 */
+        idRoute : 10,         /* @bit15 */
+        unused : 7;           /* @bit25 */
+    uint32_t ul() const noexcept {
+        return uint32_t(fNoResearch) | (uint32_t(idFling) << 1) | (uint32_t(iWarpFling) << 11) |
+            (uint32_t(idRoute) << 15) | (uint32_t(unused) << 25);
+    }
 }; /* size=0x6 */
 
 struct _rtChgProdQ {
     int16_t id;        /* +0x0000 (2) */
-    PROD    rgprod[0]; /* +0x0002 (0) */
+    // Queue items are decoded from the following bytes; they are not members.
 }; /* size=0x2 */
 
 struct _rthisthdr {
@@ -957,27 +1118,22 @@ struct _rtplanet {
 }; /* size=0x4 */
 
 struct _rtshdef {
-    union {
-        struct {
-            uint16_t det : 8, /* +0x0000 (2) @bit0 */
-                fInclude : 1, /* @bit8 */
-                fFree : 1,    /* @bit9 */
-                ishdef : 5,   /* @bit10 */
-                fGift : 1;    /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x0000 (2) */
-    };
+    uint16_t det : 8, /* Detail byte; encoded independently of native bitfield layout. */
+        fInclude : 1,
+        fFree : 1,
+        ishdef : 5,
+        fGift : 1;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(det | (fInclude << 8) | (fFree << 9) | (ishdef << 10) | (fGift << 15));
+    }
     uint8_t ihuldef; /* +0x0002 (1) */
     uint8_t ibmp;    /* +0x0003 (1) */
-    union {
-        uint16_t wtEmpty; /* +0x0004 (2) */
-        uint16_t dp;      /* +0x0004 (2) */
-    };
+    uint16_t dp; /* Full armor / partial empty mass, decoded explicitly. */
+    constexpr uint16_t wtEmpty() const noexcept { return dp; }
     uint8_t  chs;     /* +0x0006 (1) */
     uint16_t turn;    /* +0x0007 (2) */
     uint32_t cBuilt;  /* +0x0009 (4) */
     uint32_t cExist;  /* +0x000D (4) */
-    HS       rghs[0]; /* +0x0011 (0) */
 }; /* size=0x11 */
 
 struct _rtchgshdef {
@@ -991,14 +1147,22 @@ struct _rtchgshdef {
 // rtFleetA/rtFleetB: the first 12 bytes of FLEET, then the ship counts named
 // by grbitCsh (bytes or words, per fByteCsh) and further packed fields.
 struct _rtfleet {
-    union {
-        int16_t id; /* +0x0000 (2) */
-        struct {
-            uint16_t ifl : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,     /* @bit9 */
-                junk : 3;     /* @bit13 */
-        };
-    };
+    int16_t id;
+    constexpr uint16_t ifl() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 0) & 0x1ff); }
+    constexpr uint16_t SetIfl(uint16_t iflNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xfe00u) | ((static_cast<uint32_t>(static_cast<uint16_t>(iflNew)) & 0x1ffu) << 0));
+        return ifl();
+    }
+    constexpr uint16_t iplr() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 9) & 0xf); }
+    constexpr uint16_t SetIplr(uint16_t iplrNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0xe1ffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(iplrNew)) & 0xfu) << 9));
+        return iplr();
+    }
+    constexpr uint16_t junk() const noexcept { return static_cast<uint16_t>((static_cast<uint32_t>(id) >> 13) & 0x7); }
+    constexpr uint16_t SetJunk(uint16_t junkNew) noexcept {
+        id = static_cast<int16_t>((static_cast<uint32_t>(id) & 0x1fffu) | ((static_cast<uint32_t>(static_cast<uint16_t>(junkNew)) & 0x7u) << 13));
+        return junk();
+    }
     int16_t  iPlayer;     /* +0x0002 (2) */
     uint16_t det : 8,     /* +0x0004 (2) @bit0 */
         fInclude : 1,     /* @bit8 */
@@ -1012,22 +1176,15 @@ struct _rtfleet {
     int16_t  idPlanet;    /* +0x0006 (2) */
     POINT16  pt;          /* +0x0008 (4) */
     uint16_t grbitCsh;    /* +0x000C (2) */
-    uint8_t  rgb[0];      /* +0x000E (0) */
 }; /* size=0xe */
 
 // rtLogFleetSplit holds the fleet split from; rtLogFleetMerge holds the fleet
 // merged into, then the fleets merged into it.
-// A zero-prefix record view: only offsetof(rgid), never sizeof, reaches disk.
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wextern-c-compat"
-#endif
-struct _rtfleetids {
-    int16_t rgid[0]; /* +0x0000 (0) */
-}; /* size=0x0 in C; C++ class size is not a record length. */
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+// The borrowed bytes have a zero-byte wire prefix. This runtime view's size
+// is never a record length, and no int16_t array is invented over wire storage.
+struct alignas(alignof(std::span<const std::byte>)) _rtfleetids {
+    std::span<const std::byte> rgid;
+};
 
 // MSGPLR as written to disk: the Win16 lpmsgplrNext far pointer is written as
 // zero and ignored on read.
@@ -1037,18 +1194,13 @@ struct _rtplrmsg {
     int16_t  iPlrTo;       /* +0x0006 (2) */
     int16_t  iInRe;        /* +0x0008 (2) */
     int16_t  cLen;         /* +0x000A (2) */
-    uint8_t  rgbMsg[0];    /* +0x000C (0) */
 }; /* size=0xc */
 
 struct _rtresearch {
-    int8_t pctResearch; /* +0x0000 (1) */
-    union {
-        int8_t iTechCur; /* +0x0001 (1) */
-        struct {
-            uint8_t iTechNow : 4, /* +0x0001 (1) @bit0 */
-                iTechNext : 4;    /* @bit4 */
-        };
-    };
+    int8_t pctResearch;
+    int8_t iTechCur;
+    constexpr uint8_t iTechNow() const noexcept { return static_cast<uint8_t>(iTechCur) & 15; }
+    constexpr uint8_t iTechNext() const noexcept { return static_cast<uint8_t>(iTechCur) >> 4; }
 }; /* size=0x2 */
 
 struct _rtshipint {
@@ -1138,20 +1290,17 @@ struct _score {
 }; /* size=0x14 */
 
 struct _scorex {
-    union {
-        uint16_t wWord; /* +0x0000 (2) */
-        struct {
-            uint16_t iPlayer : 5, /* +0x0000 (2) @bit0 */
-                fValid : 1,       /* @bit5 */
-                grbitVC : 8,      /* @bit6 */
-                fWinner : 1,      /* @bit14 */
-                fHistory : 1;     /* @bit15 */
-        };
-    };
-    union {
-        int16_t  iRank; /* +0x0002 (2) */
-        uint16_t turn;  /* +0x0002 (2) */
-    };
+    uint16_t iPlayer : 5, /* +0x0000 (2) @bit0 */
+        fValid : 1,       /* @bit5 */
+        grbitVC : 8,      /* @bit6 */
+        fWinner : 1,      /* @bit14 */
+        fHistory : 1;     /* @bit15 */
+    uint16_t wWord() const noexcept {
+        return static_cast<uint16_t>(iPlayer | (fValid << 5) | (grbitVC << 6) | (fWinner << 14) | (fHistory << 15));
+    }
+    uint16_t turn; /* +0x0002 (2) */
+    int16_t iRank() const noexcept { return std::bit_cast<int16_t>(uint16_t{turn}); }
+    void SetIRank(int16_t iRank) noexcept { turn = std::bit_cast<uint16_t>(iRank); }
     SCORE score; /* +0x0004 (20) */
 }; /* size=0x18 */
 
@@ -1166,23 +1315,20 @@ struct _selSome {
 
 struct _shdef {
     HUL hul; /* +0x0000 (123) */
-    union {
-        struct {
-            uint16_t det : 8, /* +0x007B (2) @bit0 */
-                fInclude : 1, /* @bit8 */
-                fFree : 1,    /* @bit9 */
-                ishdef : 5,   /* @bit10 */
-                fGift : 1;    /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x007B (2) */
-    };
+    uint16_t det : 8, /* Detail byte; encoded independently of native bitfield layout. */
+        fInclude : 1,
+        fFree : 1,
+        ishdef : 5,
+        fGift : 1;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(det | (fInclude << 8) | (fFree << 9) | (ishdef << 10) | (fGift << 15));
+    }
     uint16_t turn;   /* +0x007D (2) */
     uint32_t cBuilt; /* +0x007F (4) */
     uint32_t cExist; /* +0x0083 (4) */
-    union {
-        int32_t lPower;   /* +0x0087 (4) */
-        int32_t lVisible; /* +0x0087 (4) */
-    };
+    int32_t lPower; /* Combat power or squared starbase visibility. */
+    int32_t lVisible() const noexcept { return lPower; }
+    void SetLVisible(int32_t lVisibleNew) noexcept { lPower = lVisibleNew; }
     uint16_t grbitPlr;    /* +0x008B (2) */
     uint16_t dScanRange;  /* +0x008D (2) */
     uint16_t dScanRange2; /* +0x008F (2) */
@@ -1244,11 +1390,11 @@ struct _tasksell {
     uint16_t iPlrX; /* +0x0000 (2) */
 }; /* size=0x2 */
 
-struct _taskxport {
+struct alignas(2) _taskxport {
     ITEMACTION rgia[5]; /* +0x0000 (10) */
 }; /* size=0xa */
 
-struct _order {
+struct alignas(2) _order {
     POINT16  pt;          /* +0x0000 (4) */
     int16_t  id;          /* +0x0004 (2) */
     uint16_t grTask : 4,  /* +0x0006 (2) @bit0 */
@@ -1257,25 +1403,28 @@ struct _order {
         fValidTask : 1,   /* @bit12 */
         fNoAutoTrack : 1, /* @bit13 */
         fUnused : 2;      /* @bit14 */
-    union {
-        TASKXPORT    txp;   /* +0x0008 (10) */
-        TASKLAYMINES tlm;   /* +0x0008 (4) */
-        TASKPATROL   tptl;  /* +0x0008 (4) */
-        TASKSELL     tsell; /* +0x0008 (2) */
-    };
+    TASKXPORT txp;
+
+    NATIVETASKLAYMINESVIEW<uint16_t> tlm() noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKLAYMINESVIEW<const uint16_t> tlm() const noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKPATROLVIEW<uint16_t> tptl() noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKPATROLVIEW<const uint16_t> tptl() const noexcept { return {txp.rgia[0].w, txp.rgia[1].w}; }
+    NATIVETASKSELLVIEW<uint16_t> tsell() noexcept { return {txp.rgia[0].w}; }
+    NATIVETASKSELLVIEW<const uint16_t> tsell() const noexcept { return {txp.rgia[0].w}; }
 }; /* size=0x12 */
 
-struct PLORD {
+struct alignas(2) PLORD {
     uint16_t cbItem : 8, /* +0x0000 (2) @bit0 */
         fMark : 1,       /* @bit8 */
         ht : 3,          /* @bit9 */
         cAlloc : 4;      /* @bit12 */
     uint8_t iordMax;     /* +0x0002 (1) */
     uint8_t iordMac;     /* +0x0003 (1) */
-    ORDER   rgord[0];    /* +0x0004 (0) */
+    ORDER *rgord() noexcept { return reinterpret_cast<ORDER *>(reinterpret_cast<uint8_t *>(this) + 4); }
+    const ORDER *rgord() const noexcept { return reinterpret_cast<const ORDER *>(reinterpret_cast<const uint8_t *>(this) + 4); }
 }; /* size=0x4 */
 
-struct _rtwaypt {
+struct alignas(2) _rtwaypt {
     int16_t id;     /* +0x0000 (2) */
     int16_t iWaypt; /* +0x0002 (2) */
     ORDER   order;  /* +0x0004 (18) */
@@ -1330,24 +1479,38 @@ struct _thworm {
 }; /* size=0x8 */
 
 struct _thing {
-    union {
-        uint16_t idFull; /* +0x0000 (2) */
-        struct {
-            uint16_t id : 9, /* +0x0000 (2) @bit0 */
-                iplr : 4,    /* @bit9 */
-                ith : 3;     /* @bit13 */
-        };
-    };
-    POINT16 pt; /* +0x0002 (4) */
-    union {
-        uint8_t  rgb[10]; /* +0x0006 (10) */
-        THMINE   thm;     /* +0x0006 (10) */
-        THPACK   thp;     /* +0x0006 (10) */
-        THWORM   thw;     /* +0x0006 (8) */
-        THTRADER tht;     /* +0x0006 (10) */
-    };
-    uint16_t turn; /* +0x0010 (2) */
-}; /* size=0x12 */
+    // Actual byte storage, not a native overlay. Partial/neighbor file copies
+    // retain their physical eighteen-byte image and every opaque payload bit.
+    std::byte rgbThing[18];
+    std::span<std::byte, 18> RgbRecord() noexcept { return rgbThing; }
+    std::span<const std::byte, 18> RgbRecord() const noexcept { return rgbThing; }
+private:
+    std::span<std::byte, 18> RgbBorrowed() const noexcept { return std::span<std::byte, 18>(const_cast<std::byte *>(rgbThing), 18); }
+public:
+    uint16_t idFull() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).idFull(); }
+    void SetIdFull(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIdFull(value); }
+    uint16_t id() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).id(); }
+    void SetId(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetId(value); }
+    uint16_t iplr() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).iplr(); }
+    void SetIplr(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIplr(value); }
+    uint16_t ith() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).ith(); }
+    void SetIth(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetIth(value); }
+    uint16_t turn() const noexcept { return NATIVETHINGHEADERVIEW<false>(RgbBorrowed()).turn(); }
+    void SetTurn(uint16_t value) noexcept { NATIVETHINGHEADERVIEW<true>(RgbRecord()).SetTurn(value); }
+    NATIVETHINGPOINTVIEW<true> pt() noexcept { return {RgbRecord(), 2}; }
+    NATIVETHINGPOINTVIEW<false> pt() const noexcept { return {RgbBorrowed(), 2}; }
+    std::span<std::byte, 10> rgb() noexcept { return RgbRecord().subspan<6, 10>(); }
+    std::span<const std::byte, 10> rgb() const noexcept { return RgbRecord().subspan<6, 10>(); }
+    NATIVETHINGMINEVIEW<true> thm() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGMINEVIEW<false> thm() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGPACKVIEW<true> thp() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGPACKVIEW<false> thp() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGWORMVIEW<true> thw() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGWORMVIEW<false> thw() const noexcept { return {RgbBorrowed(), 6}; }
+    NATIVETHINGTRADERVIEW<true> tht() noexcept { return {RgbRecord(), 6}; }
+    NATIVETHINGTRADERVIEW<false> tht() const noexcept { return {RgbBorrowed(), 6}; }
+};
+static_assert(sizeof(THING) == 18 && alignof(THING) == 1); /* size=0x12 */
 
 struct _sel {
     POINT16    pt;        /* +0x0000 (4) */
@@ -1385,13 +1548,17 @@ struct _tile {
 struct _timer {
     int16_t mdForce;        /* +0x0000 (2) */
     int16_t fAutoGenWhenIn; /* +0x0002 (2) */
-    union {
-        int16_t hrsForce; /* +0x0004 (2) */
-        struct {
-            uint16_t minForce : 12, /* +0x0004 (2) @bit0 */
-                cPlr : 4;           /* @bit12 */
-        };
-    };
+    int16_t hrsForce; /* +0x0004 (2) */
+    uint16_t minForce() const noexcept { return static_cast<uint16_t>(hrsForce) & 4095; }
+    uint16_t cPlr() const noexcept { return static_cast<uint16_t>(hrsForce) >> 12; }
+    void SetMinForce(uint16_t minForce) noexcept {
+        const uint16_t w = static_cast<uint16_t>((static_cast<uint16_t>(hrsForce) & 0xf000u) | (minForce & 4095));
+        hrsForce = std::bit_cast<int16_t>(w);
+    }
+    void SetCPlr(uint16_t cPlr) noexcept {
+        const uint16_t w = static_cast<uint16_t>((static_cast<uint16_t>(hrsForce) & 4095u) | ((cPlr & 15) << 12));
+        hrsForce = std::bit_cast<int16_t>(w);
+    }
     int32_t tickcount; /* +0x0006 (4) */
 }; /* size=0xa */
 
@@ -1422,19 +1589,18 @@ struct _tok {
         dxyMax : 4,         /* @bit4 */
         spd : 4,            /* @bit8 */
         cTarget : 4;        /* @bit12 */
-    union {
-        struct {
-            uint16_t fActive : 1, /* +0x001B (2) @bit0 */
-                fDetector : 1,    /* @bit1 */
-                fTorp : 1,        /* @bit2 */
-                fRegen : 1,       /* @bit3 */
-                fMoved : 1,       /* @bit4 */
-                dzDis : 5,        /* @bit5 */
-                dwt : 4,          /* @bit10 */
-                dMovesLeft : 2;   /* @bit14 */
-        };
-        uint16_t wFlags; /* +0x001B (2) */
-    };
+    uint16_t fActive : 1,
+        fDetector : 1,
+        fTorp : 1,
+        fRegen : 1,
+        fMoved : 1,
+        dzDis : 5,
+        dwt : 4,
+        dMovesLeft : 2;
+    constexpr uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(fActive | (fDetector << 1) | (fTorp << 2) | (fRegen << 3) |
+                                     (fMoved << 4) | (dzDis << 5) | (dwt << 10) | (dMovesLeft << 14));
+    }
 }; /* size=0x1d */
 
 struct _btldata {
@@ -1445,7 +1611,6 @@ struct _btldata {
     uint16_t cbData;   /* +0x0006 (2) */
     uint16_t idPlanet; /* +0x0008 (2) */
     POINT16  pt;       /* +0x000A (4) */
-    TOK      rgtok[0]; /* +0x000E (0) */
 }; /* size=0xe */
 
 struct _torp {
@@ -1478,24 +1643,42 @@ struct _wn {
 
 struct _ini {
     WN wnFrame; /* +0x0000 (10) */
-    union {
-        struct {
-            uint16_t fStartupFile : 1, /* +0x000A (2) @bit0 */
-                fCmdLine : 1,          /* @bit1 */
-                fWait : 1,             /* @bit2 */
-                fGen : 1,              /* @bit3 */
-                fTry : 1,              /* @bit4 */
-                grobjSel : 4,          /* @bit5 */
-                fBatch : 1,            /* @bit9 */
-                fNewGame : 1,          /* @bit10 */
-                fDumpFleets : 1,       /* @bit11 */
-                fDumpPlanets : 1,      /* @bit12 */
-                fDumpMap : 1,          /* @bit13 */
-                fValidate : 1,         /* @bit14 */
-                fLogging : 1;          /* @bit15 */
-        };
-        uint16_t wFlags; /* +0x000A (2) */
-    };
+    uint16_t fStartupFile : 1, /* +0x000A (2) @bit0 */
+        fCmdLine : 1,          /* @bit1 */
+        fWait : 1,             /* @bit2 */
+        fGen : 1,              /* @bit3 */
+        fTry : 1,              /* @bit4 */
+        grobjSel : 4,          /* @bit5 */
+        fBatch : 1,            /* @bit9 */
+        fNewGame : 1,          /* @bit10 */
+        fDumpFleets : 1,       /* @bit11 */
+        fDumpPlanets : 1,      /* @bit12 */
+        fDumpMap : 1,          /* @bit13 */
+        fValidate : 1,         /* @bit14 */
+        fLogging : 1;          /* @bit15 */
+    uint16_t wFlags() const noexcept {
+        const uint16_t w = uint16_t(fStartupFile) | uint16_t(fCmdLine) << 1 | uint16_t(fWait) << 2 | uint16_t(fGen) << 3 |
+            uint16_t(fTry) << 4 | uint16_t(grobjSel) << 5 | uint16_t(fBatch) << 9 | uint16_t(fNewGame) << 10 |
+            uint16_t(fDumpFleets) << 11 | uint16_t(fDumpPlanets) << 12 | uint16_t(fDumpMap) << 13 | uint16_t(fValidate) << 14 |
+            uint16_t(fLogging) << 15;
+        return w;
+    }
+    void SetWFlags(uint16_t wFlags) noexcept {
+        const uint16_t w = wFlags;
+        fStartupFile = w & 1u;
+        fCmdLine = (w >> 1) & 1u;
+        fWait = (w >> 2) & 1u;
+        fGen = (w >> 3) & 1u;
+        fTry = (w >> 4) & 1u;
+        grobjSel = (w >> 5) & 15u;
+        fBatch = (w >> 9) & 1u;
+        fNewGame = (w >> 10) & 1u;
+        fDumpFleets = (w >> 11) & 1u;
+        fDumpPlanets = (w >> 12) & 1u;
+        fDumpMap = (w >> 13) & 1u;
+        fValidate = (w >> 14) & 1u;
+        fLogging = (w >> 15) & 1u;
+    }
     uint16_t turn;     /* +0x000C (2) */
     int16_t  iObjSel;  /* +0x000E (2) */
     int16_t  idPlayer; /* +0x0010 (2) */
@@ -1504,15 +1687,39 @@ struct _ini {
     int16_t  iMsg;     /* +0x0018 (2) */
 }; /* size=0x1a */
 
+// Runtime scratch follows its native payload alignment when root packing is
+// retained for private allocation geometry. No file codec consumes this storage.
+inline constexpr std::size_t cbXferPayload = (std::max)({sizeof(FLEET), sizeof(PLANET), sizeof(THING)});
+inline constexpr std::size_t cbXferAlign = (std::max)({alignof(FLEET), alignof(PLANET), alignof(THING)});
 struct _xfer {
-    int16_t    id;    /* +0x0000 (2) */
-    GrobjClass grobj; /* +0x0002 (2) */
-    union {
-        FLEET  fl; /* +0x0004 (124) */
-        PLANET pl; /* +0x0004 (56) */
-        THING  th; /* +0x0004 (18) */
-    };
-}; /* size=0x80 */
+    int16_t id;
+    GrobjClass grobj;
+    NATIVEOBJECTSTORAGE<cbXferPayload, cbXferAlign> storage;
+    FLEET &fl() noexcept { return storage.As<FLEET>(); }
+    const FLEET &fl() const noexcept { return storage.As<FLEET>(); }
+    PLANET &pl() noexcept { return storage.As<PLANET>(); }
+    const PLANET &pl() const noexcept { return storage.As<PLANET>(); }
+    THING &th() noexcept { return storage.As<THING>(); }
+    const THING &th() const noexcept { return storage.As<THING>(); }
+    int16_t idObj() const noexcept { return storage.ReadPrefix<int16_t>(0); }
+    void SetIdObj(int16_t value) noexcept { storage.WritePrefix(0, value); }
+    int16_t iPlayerObj() const noexcept { return storage.ReadPrefix<int16_t>(2); }
+    void SetIPlayerObj(int16_t value) noexcept { storage.WritePrefix(2, value); }
+    uint16_t detObj() const noexcept { return storage.ReadPrefix<uint8_t>(4); }
+    // Lookup defaults to THING; cargo defaults to FLEET. Keep both old domains.
+    void *LpvLookup(GrobjClass kind) noexcept {
+        if (kind == grobjFleet) return &fl();
+        if (kind == grobjPlanet) return &pl();
+        return &th();
+    }
+    void *LpvCargo(GrobjClass kind) noexcept {
+        if (kind == grobjPlanet || kind == grobjOther) return &pl();
+        if (kind == grobjThing) return &th();
+        return &fl();
+    }
+};
+static_assert(std::is_trivially_copyable_v<XFER> && std::is_standard_layout_v<XFER>);
+static_assert(alignof(XFER) >= cbXferAlign && offsetof(XFER, storage) % cbXferAlign == 0);
 
 struct _xferfull {
     uint16_t id1;        /* +0x0000 (2) */
@@ -1522,7 +1729,7 @@ struct _xferfull {
     int32_t rgcQuan[5];  /* +0x0005 (20) */
 }; /* size=0x19 */
 
-struct _ziporder {
+struct alignas(2) _ziporder {
     TASKXPORT txp;        /* +0x0000 (10) */
     char      szName[13]; /* +0x000A (13) */
     uint8_t   fValid;     /* +0x0017 (1) */
@@ -1540,21 +1747,21 @@ struct _player {
     int16_t  cPlanet;     /* +0x0002 (2) */
     uint16_t cFleet : 12, /* +0x0004 (2) @bit0 */
         cshdefSB : 4;     /* @bit12 */
-    union {
-        struct {
-            uint16_t det : 3, /* +0x0006 (2) @bit0 */
-                iPlrBmp : 5,  /* @bit3 */
-                fInclude : 1, /* @bit8 */
-                mdPlayer : 7; /* @bit9 */
-        };
-        struct {
-            uint16_t reserved : 9, /* +0x0006 (2) @bit0 */
-                fAi : 1,           /* @bit9 */
-                lvlAi : 3,         /* @bit10 */
-                idAi : 3;          /* @bit13 */
-        };
-        uint16_t wMdPlr; /* +0x0006 (2) */
-    };
+    uint16_t det : 3, /* +0x0006 (2) @bit0 */
+        iPlrBmp : 5,  /* @bit3 */
+        fInclude : 1, /* @bit8 */
+        fAi : 1,      /* @bit9 */
+        lvlAi : 3,    /* @bit10 */
+        idAi : 3;     /* @bit13 */
+    uint16_t wMdPlr() const noexcept {
+        return static_cast<uint16_t>(det | (iPlrBmp << 3) | (fInclude << 8) | (fAi << 9) | (lvlAi << 10) | (idAi << 13));
+    }
+    void SetWMdPlr(uint16_t wMdPlr) noexcept {
+        det = wMdPlr & 7; iPlrBmp = (wMdPlr >> 3) & 31; fInclude = (wMdPlr >> 8) & 1;
+        fAi = (wMdPlr >> 9) & 1; lvlAi = (wMdPlr >> 10) & 7; idAi = wMdPlr >> 13;
+    }
+    uint16_t mdPlayer() const noexcept { return wMdPlr() >> 9; }
+    uint16_t reserved() const noexcept { return wMdPlr() & 511; }
     int16_t  idPlanetHome;   /* +0x0008 (2) */
     uint16_t wScore;         /* +0x000A (2) */
     int32_t  lSalt;          /* +0x000C (4) */
@@ -1565,30 +1772,36 @@ struct _player {
     int8_t   rgTech[6];      /* +0x001A (6) */
     uint32_t rgResSpent[6];  /* +0x0020 (24) */
     int8_t   pctResearch;    /* +0x0038 (1) */
-    union {
-        int8_t iTechCur; /* +0x0039 (1) */
-        struct {
-            // iTechNext is signed, as iTechCur >> 4 was: 6 means the
-            // same field, 7 the lowest.
-            uint8_t iTechNow : 4;  /* +0x0039 (1) @bit0 */
-            int8_t  iTechNext : 4; /* @bit4 */
-        };
-    };
+    int8_t iTechCur; /* +0x0039 (1) */
+    uint8_t iTechNow() const noexcept { return static_cast<uint8_t>(iTechCur) & 15; }
+    // Keep the signed high nibble of the historical iTechCur >> 4.
+    int8_t iTechNext() const noexcept {
+        const int16_t iTech = static_cast<uint8_t>(iTechCur) >> 4;
+        return static_cast<int8_t>(iTech < 8 ? iTech : iTech - 16);
+    }
+    void SetITechNow(uint8_t iTechNow) noexcept {
+        iTechCur = std::bit_cast<int8_t>(uint8_t((static_cast<uint8_t>(iTechCur) & 0xf0u) | (iTechNow & 15)));
+    }
+    void SetITechNext(int8_t iTechNext) noexcept {
+        iTechCur = std::bit_cast<int8_t>(uint8_t((static_cast<uint8_t>(iTechCur) & 15u) | ((static_cast<uint8_t>(iTechNext) & 15) << 4)));
+    }
     int32_t       lResLastYear; /* +0x003A (4) */
     int8_t        rgAttr[16];   /* +0x003E (16) */
     RaceTraitBits grbitAttr;    /* +0x004E (4) */
     GrbitTrader   grbitTrader;  /* +0x0052 (2) */
-    union {
-        struct {
-            uint16_t fDead : 1, /* +0x0054 (2) @bit0 */
-                fCrippled : 1,  /* @bit1 */
-                fUnused : 1,    /* @bit2 */
-                fLearned : 1,   /* @bit3 */
-                fHacker : 1,    /* @bit4 */
-                unused : 11;    /* @bit5 */
-        };
-        uint16_t wFlags; /* +0x0054 (2) */
-    };
+    uint16_t fDead : 1, /* +0x0054 (2) @bit0 */
+        fCrippled : 1,  /* @bit1 */
+        fUnused : 1,    /* @bit2 */
+        fLearned : 1,   /* @bit3 */
+        fHacker : 1,    /* @bit4 */
+        unused : 11;    /* @bit5 */
+    uint16_t wFlags() const noexcept {
+        return static_cast<uint16_t>(fDead | (fCrippled << 1) | (fUnused << 2) | (fLearned << 3) | (fHacker << 4) | (unused << 5));
+    }
+    void SetWFlags(uint16_t wFlags) noexcept {
+        fDead = wFlags & 1; fCrippled = (wFlags >> 1) & 1; fUnused = (wFlags >> 2) & 1;
+        fLearned = (wFlags >> 3) & 1; fHacker = (wFlags >> 4) & 1; unused = wFlags >> 5;
+    }
     ZIPPRODQ1 zpq1;             /* +0x0056 (26) */
     int8_t    rgmdRelation[16]; /* +0x0070 (16) */
     char      szName[32];       /* +0x0080 (32) */
@@ -1596,25 +1809,44 @@ struct _player {
 }; /* size=0xc0 */
 
 struct _tutor {
-    union {
-        int16_t wFlags; /* +0x0000 (2) */
-        struct {
-            uint16_t fVisible : 1, /* +0x0000 (2) @bit0 */
-                fGameSaved : 1,    /* @bit1 */
-                fChange : 1,       /* @bit2 */
-                fTurnDone : 1,     /* @bit3 */
-                fTutorDone : 1,    /* @bit4 */
-                fNoErrors : 1,     /* @bit5 */
-                cError : 3,        /* @bit6 */
-                fAutoComplete : 1, /* @bit9 */
-                fProgress : 1,     /* @bit10 */
-                fTBVis : 1,        /* @bit11 */
-                fValidQ : 1,       /* @bit12 */
-                fFreeing : 1,      /* @bit13 */
-                fShowHidMsg : 1,   /* @bit14 */
-                unused : 1;        /* @bit15 */
-        };
-    };
+    uint16_t fVisible : 1, /* +0x0000 (2) @bit0 */
+        fGameSaved : 1,    /* @bit1 */
+        fChange : 1,       /* @bit2 */
+        fTurnDone : 1,     /* @bit3 */
+        fTutorDone : 1,    /* @bit4 */
+        fNoErrors : 1,     /* @bit5 */
+        cError : 3,        /* @bit6 */
+        fAutoComplete : 1, /* @bit9 */
+        fProgress : 1,     /* @bit10 */
+        fTBVis : 1,        /* @bit11 */
+        fValidQ : 1,       /* @bit12 */
+        fFreeing : 1,      /* @bit13 */
+        fShowHidMsg : 1,   /* @bit14 */
+        unused : 1;        /* @bit15 */
+    int16_t wFlags() const noexcept {
+        const uint16_t w = uint16_t(fVisible) | uint16_t(fGameSaved) << 1 | uint16_t(fChange) << 2 | uint16_t(fTurnDone) << 3 |
+            uint16_t(fTutorDone) << 4 | uint16_t(fNoErrors) << 5 | uint16_t(cError) << 6 | uint16_t(fAutoComplete) << 9 |
+            uint16_t(fProgress) << 10 | uint16_t(fTBVis) << 11 | uint16_t(fValidQ) << 12 | uint16_t(fFreeing) << 13 |
+            uint16_t(fShowHidMsg) << 14 | uint16_t(unused) << 15;
+        return std::bit_cast<int16_t>(w);
+    }
+    void SetWFlags(int16_t wFlags) noexcept {
+        const uint16_t w = std::bit_cast<uint16_t>(wFlags);
+        fVisible = w & 1u;
+        fGameSaved = (w >> 1) & 1u;
+        fChange = (w >> 2) & 1u;
+        fTurnDone = (w >> 3) & 1u;
+        fTutorDone = (w >> 4) & 1u;
+        fNoErrors = (w >> 5) & 1u;
+        cError = (w >> 6) & 7u;
+        fAutoComplete = (w >> 9) & 1u;
+        fProgress = (w >> 10) & 1u;
+        fTBVis = (w >> 11) & 1u;
+        fValidQ = (w >> 12) & 1u;
+        fFreeing = (w >> 13) & 1u;
+        fShowHidMsg = (w >> 14) & 1u;
+        unused = (w >> 15) & 1u;
+    }
     TutorId       idt;       /* +0x0002 (2) */
     TutorId       idtBold;   /* +0x0004 (2) */
     HelpContextId idh;       /* +0x0006 (2) */
@@ -1629,16 +1861,25 @@ struct _tutor {
 struct _zipprodq {
     char    szName[13]; /* +0x0000 (13) */
     uint8_t fValid;     /* +0x000D (1) */
-    union {
-        ZIPPRODQ1 zpq1; /* +0x000E (26) */
-        struct {
-            uint8_t fNoResearch; /* +0x000E (1) */
-            uint8_t cpq;         /* +0x000F (1) */
-            PRODQ1  rgpq[12];    /* +0x0010 (24) */
-        };
-    };
+    uint8_t fNoResearch; /* +0x000E (1) */
+    uint8_t cpq;         /* +0x000F (1) */
+    PRODQ1  rgpq[12];    /* +0x0010 (24) */
+    ZIPPRODQ1 zpq1() const noexcept {
+        ZIPPRODQ1 zpq{};
+        zpq.fNoResearch = fNoResearch; zpq.cpq = cpq;
+        for (int i = 0; i < 12; i++) zpq.rgpq[i] = rgpq[i];
+        return zpq;
+    }
+    void SetZpq1(const ZIPPRODQ1 &zpq1) noexcept {
+        fNoResearch = zpq1.fNoResearch; cpq = zpq1.cpq;
+        for (int i = 0; i < 12; i++) rgpq[i] = zpq1.rgpq[i];
+    }
 }; /* size=0x28 */
 
+#ifndef STARS_TEST_NATURAL_RECORD_LAYOUT
 #pragma pack(pop)
+#endif
+
+#include "partviews.h"
 
 #endif

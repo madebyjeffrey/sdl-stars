@@ -123,7 +123,10 @@ foreach(STARS_QUIT_PAGE setup players race save-owner)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat;STARS_SETTINGS_DIR=${CMAKE_BINARY_DIR}/test-client/quit-${STARS_QUIT_PAGE}"
         TIMEOUT 20)
 endforeach()
+include("${CMAKE_CURRENT_LIST_DIR}/desktop-ownership-tests.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/desktop-guard-tests.cmake")
 if(APPLE OR WIN32)
+    include("${CMAKE_CURRENT_LIST_DIR}/desktop-resource-tests.cmake")
     if(APPLE)
         add_executable(stars-compat-filedialog-cocoa tests/compat/win32_filedialog_cocoa.c
             compat/win32/src/filedialog_cocoa.c)

@@ -39,8 +39,8 @@ void SelectOursAtObject(POINT16 *ppt) {
         }
     }
     scan.iwp = iwpNone;
-    if (FFindNearestObject(pt, grobjThing, &scan) && scan.grobj == grobjThing && scan.ith != ithNone && lpThings[scan.ith].ith == ithMineralPacket &&
-        lpThings[scan.ith].thp.iWarp == 0) {
+    if (FFindNearestObject(pt, grobjThing, &scan) && scan.grobj == grobjThing && scan.ith != ithNone && lpThings[scan.ith].ith() == ithMineralPacket &&
+        lpThings[scan.ith].thp().iWarp() == 0) {
         ChangeScanSel(&scan, 1);
         FEnsurePointOnScreen(scan.pt, TRUE);
         UpdateWindow(hwndScanner);

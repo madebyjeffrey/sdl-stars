@@ -40,6 +40,45 @@ jobs:
           cmake --build --preset sdl-debug --parallel 2 -- -k 0
           ctest --preset sdl-headless -LE tutorial-partial
 
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/sdl-debug/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  resource-sanitizers:
+    name: Resource ownership (ASan/UBSan/LSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Install SDL build and test dependencies
+        run: |
+          sudo apt-get update
+          # Keep SDL's optional desktop backends buildable; see docs/SDL3-DEVELOPMENT.md.
+          sudo apt-get install -y cmake ninja-build pkg-config python3-pip python3-venv python3-yaml \
+            libfreetype-dev libfontconfig-dev libcairo2-dev zlib1g-dev libwmf-bin \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libwayland-dev wayland-protocols libdecor-0-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libvulkan-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
+            libasound2-dev libpulse-dev libpipewire-0.3-dev \
+            xvfb xauth openbox x11-utils poppler-utils cups-client
+      - name: Qualify native resource ownership with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: |
+          cmake --preset sdl-sanitize
+          cmake --build --preset sdl-sanitize --target sdl_test_util sdl_test_utilgen sdl_test_exceptions sdl_test_native_ports sdl_test_log sdl_test_save sdl_test_race sdl_test_ship sdl_test_battle sdl_test_memory stars-test-wire-codecs stars-test-wire-codecs-natural stars-test-encoding-views stars-compat-images stars-compat-dib stars-compat-font stars-compat-print stars-resource-faults stars-resource-glyphs stars-resource-audio stars-resource-guards stars-resource-messages stars-resource-modal stars-resource-messagebox stars-compat-exceptions stars-compat-paint-batch stars-resource-list stars-resource-combo stars-resource-toolbar stars-resource-controls stars-resource-profile stars-compat-bitmap stars-compat-drawing-state stars-compat-palette stars-compat-menu stars-compat-popup stars-compat-menubar stars-compat-file stars-compat-memory --parallel 2 -- -k 0
+          ctest --test-dir dist/sdl-sanitize -R '^(sdl_test_util|sdl_test_utilgen|sdl_test_exceptions|sdl_test_native_ports|sdl_test_log|sdl_test_save|sdl_test_race|sdl_test_ship|sdl_test_battle|sdl_test_memory|test_wire_codecs(_natural)?|test_encoding_views|win32_(images|dib|font|print|print_pdf|bitmap|drawing_state|palette|menu|popup|menubar|file|memory|exception_callbacks|sdl_paint_batch|sdl_resource_(faults|glyphs|guards|messages|modal|messagebox|list|combo|toolbar|controls|profile|audio_.*)))$' --output-on-failure
+
   source-witnesses:
     name: Source witnesses (C++20)
     runs-on: ubuntu-24.04
@@ -114,3 +153,11 @@ jobs:
           cmake --build --preset windows-sdl-debug --parallel 2 -- -k 0
           ctest --test-dir dist/windows-sdl-debug -R '^test_' --output-on-failure
           ctest --preset windows-sdl-headless
+      - name: Retain wire and storage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-inventory-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/windows-sdl-debug/wire-inventory.json
+          if-no-files-found: warn
+          retention-days: 30

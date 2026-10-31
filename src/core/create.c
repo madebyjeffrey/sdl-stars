@@ -26,6 +26,8 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     int16_t       fFound;
     int16_t       iMax;
     STARPACK      starpack;
+    std::byte     rgbGame[cbWireGame];
+    std::byte     rgbStarpack[cbWireStarpack];
     int16_t       dy;
     int16_t       dGalMinSq;
     int16_t       iLow;
@@ -174,7 +176,7 @@ int16_t GenerateWorld(int16_t fBatchMode) {
     cPlanet = cPlanMax;
     StarsRecoveryScope scopeRecovery;
     try {
-        lpPlanets = (PLANET *)LpAlloc(cPlanMax * sizeof(PLANET), htPlanets);
+        lpPlanets = LpAlloc<PLANET>(cPlanMax * sizeof(PLANET), htPlanets);
         memset(lpPlanets, 0, cPlanMax * sizeof(PLANET));
         i = 0;
         lppl = lpPlanets;
@@ -439,7 +441,7 @@ RetryAll:
             } else {
                 lpPlanets[iMin].rgwtMin[3] = 250;
             }
-            lpPlanets[iMin].uGuesses = (lpPlanets[iMin].uGuesses & 0xf000) | ((uint32_t)LOWORD(lpPlanets[iMin].rgwtMin[3]) / 4 & 0xfff);
+            lpPlanets[iMin].SetUGuesses((lpPlanets[iMin].uGuesses() & 0xf000) | ((uint32_t)LOWORD(lpPlanets[iMin].rgwtMin[3]) / 4 & 0xfff));
             for (j = 0; j < 3; j++) {
                 lpPlanets[iMin].rgwtMin[j] = lpPlanets->rgwtMin[j];
                 if (gd.fTutorial) {
@@ -549,15 +551,15 @@ RetryAll:
             if (!rgplr[i].fAi) {
                 rgplr[i].pctResearch = 15;
             }
-            rgplr[i].iTechNow = 0;
-            rgplr[i].iTechNext = 6;
+            rgplr[i].SetITechNow(0);
+            rgplr[i].SetITechNext(6);
             rgplr[i].lResLastYear = 0;
             rgplr[i].wScore = 0;
             for (j = 0; j < game.cPlayer; j++) {
                 rgplr[i].rgmdRelation[j] = 0;
             }
             rgplr[i].cshdefSB = 1;
-            lpshdef = (SHDEF *)LpAlloc(10 * sizeof(SHDEF), htShips);
+            lpshdef = LpAlloc<SHDEF>(10 * sizeof(SHDEF), htShips);
             memmove(lpshdef, LpshdefSBT(), 4 * sizeof(SHDEF));
             memset(lpshdef + 4, 0, 6 * sizeof(SHDEF));
             lpshdef->cBuilt = 1;
@@ -600,10 +602,10 @@ RetryAll:
             }
         }
         cFleet = 0;
-        rglpfl = (FLEET **)LpAlloc(sizeof(FLEET *), htMisc);
+        rglpfl = LpAlloc<FLEET *>(sizeof(FLEET *), htMisc);
         for (i = 0; i < game.cPlayer; i++) {
             idPlayer = i;
-            lpshdef = (SHDEF *)LpAlloc(16 * sizeof(SHDEF), htShips);
+            lpshdef = LpAlloc<SHDEF>(16 * sizeof(SHDEF), htShips);
             memset(lpshdef, 0, 16 * sizeof(SHDEF));
             for (j = 0; j < 16; j++) {
                 lpshdef[j].fFree = TRUE;
@@ -725,7 +727,7 @@ RetryAll:
                 }
                 lpplPicked->iScanner = 0;
                 lpPlanets[idHome].rgwtMin[3] = (int32_t)(lpPlanets[idHome].rgwtMin[3] * 4) / 5;
-                lpPlanets[idHome].uGuesses = (lpPlanets[idHome].uGuesses & 0xf000) | ((uint32_t)LOWORD(lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff);
+                lpPlanets[idHome].SetUGuesses((lpPlanets[idHome].uGuesses() & 0xf000) | ((uint32_t)LOWORD(lpPlanets[idHome].rgwtMin[3]) / 4 & 0xfff));
                 CreateStartupShip(i, lpplPicked->id, 0, FALSE);
             } else if (raMajor == raNone) {
                 CreateStartupShip(i, idHome, rgplr[i].rgTech[3] < 4 ? 6 : 8, TRUE);
@@ -821,7 +823,7 @@ RetryAll:
         }
         for (i = 0; i < game.cPlayer; i++) {
             rgcbtlplan[i] = 5;
-            rglpbtlplan[i] = (BTLPLAN *)LpAlloc(16 * sizeof(BTLPLAN), htShips);
+            rglpbtlplan[i] = LpAlloc<BTLPLAN>(16 * sizeof(BTLPLAN), htShips);
             for (j = 0; j < 5; j++) {
                 InitBattlePlan(rglpbtlplan[i] + j, j, i);
             }
@@ -836,29 +838,29 @@ RetryAll:
             for (i = 0; i < iBest; i++) {
                 for (j = 0; j < 2; j++) {
                     lpth = LpthNew(0, ithWormhole);
-                    lpth->thw.iStable = Random(3);
+                    { const auto iStableForThing = (Random(3)); auto &thForThing = *(lpth); thForThing.thw().SetIStable(iStableForThing); }
                     if (j == 1) {
                         lpthLast = LpthFromId(idLast);
-                        lpth->thw.idPartner = lpthLast->idFull;
-                        lpthLast->thw.idPartner = lpth->idFull;
+                        { const auto idPartnerForThing = (lpthLast->idFull()); auto &thForThing = *(lpth); thForThing.thw().SetIdPartner(idPartnerForThing); }
+                        { const auto idPartnerForThing = (lpth->idFull()); auto &thForThing = *(lpthLast); thForThing.thw().SetIdPartner(idPartnerForThing); }
                     } else {
-                        idLast = lpth->idFull;
+                        idLast = lpth->idFull();
                     }
                     k = 0;
                     iMax = 16;
                     while (k++ < 100) {
-                        lpth->pt.x = Random(dGal) + 1000;
-                        lpth->pt.y = Random(dGal) + 1000;
+                        { const auto xForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                        { const auto yForThing = (Random(dGal) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                         iLow = IValidateWormholePos(lpth);
                         if (iLow == 0)
                             break;
                         if (iLow < iMax) {
                             iMax = iLow;
-                            pt = lpth->pt;
+                            pt = lpth->pt();
                         }
                     }
                     if (iLow != 0) {
-                        lpth->pt = pt;
+                        lpth->pt().Set(pt);
                     }
                 }
             }
@@ -902,18 +904,20 @@ RetryAll:
             DestroyCurGame();
             return FALSE;
         }
-        WriteRt(rtGame, 64, &game);
+        FEncodeGame(game, rgbGame);
+        WriteRt(rtGame, cbWireGame, rgbGame);
         xOld = 1000;
         for (i = 0; i < cPlanMax; i++) {
             starpack.y = LOWORD(rgptPlan[i].y);
             starpack.id = LOWORD(rgidPlan[i]);
             dx = rgptPlan[i].x - xOld;
             starpack.dx = dx;
-            RgToStream(&starpack, 4);
+            FEncodeStarpack(starpack, rgbStarpack);
+            RgToStream(rgbStarpack, cbWireStarpack);
             xOld = rgptPlan[i].x;
         }
         i = game.cPlayer;
-        WriteRt(rtEOF, 2, &i);
+        WriteRtEof(i);
         StreamClose();
         for (i = -1; i < game.cPlayer; i++) {
             FWriteDataFile(szBase, i, FALSE);
@@ -1002,7 +1006,7 @@ int16_t GenNewGameFromFile(char *pszFile) {
             goto LError;
         }
         cb = (int16_t)cbFile;
-        lpbDef = (char *)LpAlloc(cb + 1, htPerm);
+        lpbDef = LpAlloc<char>(cb + 1, htPerm);
         lpbDefMac = lpbDef + cb;
         RgFromStream(lpbDef, cb);
         StreamClose();

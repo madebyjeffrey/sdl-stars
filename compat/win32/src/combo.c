@@ -1,13 +1,15 @@
 /* Editable and fixed-height string combos, with independent owned popup windows. */
 #include "internal.h"
+#include "cleanup.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
-static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return IsWindow(hwnd) && hwnd->lpcombo == lp; }
+static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser);
 static void HighlightCombo(HWND hwnd, int i) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     int iTop, cVisible, cyItem;
     if (i < 0 || i >= CompatListProc(hwnd, LB_GETCOUNT, 0, 0) || i == lp->iHot) return;
     lp->iHot = i;
@@ -31,48 +33,53 @@ static char *PszComboItem(HWND hwnd, int i) {
     return psz;
 }
 static void SyncCombo(HWND hwnd) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     char *psz;
     int i = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
     if (lp->hwndEdit && !lp->fSync) {
+        StarsRestore<BOOL> restoreSync(lp->fSync);
         psz = PszComboItem(hwnd, i); lp->fSync = TRUE;
         SetWindowTextA(lp->hwndEdit, psz ? psz : ""); SDL_free(psz);
         if (!FCombo(hwnd, lp)) return;
         if (i >= 0) SendMessageA(lp->hwndEdit, EM_SETSEL, 0, -1);
         if (!FCombo(hwnd, lp)) return;
-        lp->fSync = FALSE;
     }
     InvalidateRect(hwnd, NULL, TRUE);
     if (lp->hwndPopup) InvalidateRect(lp->hwndPopup, NULL, TRUE);
 }
 static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     HWND hwndPopup, hwndCapture;
     if (!lp || !lp->fDropped || lp->fClosing) return;
     // CBN_SELCHANGE can move focus to the frame. Its WM_KILLFOCUS must not
     // reenter cancellation and restore the old row while accepting this one.
-    lp->fClosing = TRUE;
-    if (fAccept && lp->iHot >= 0) {
-        SelectCombo(hwnd, lp->iHot, TRUE);
-        if (!FCombo(hwnd, lp) || !lp->fDropped) return;
+    {
+        StarsRestore<BOOL> restoreClosing(lp->fClosing);
+        lp->fClosing = TRUE;
+        if (fAccept && lp->iHot >= 0) {
+            SelectCombo(hwnd, lp->iHot, TRUE);
+            if (!FCombo(hwnd, lp) || !lp->fDropped) return;
+        }
+        lp->fDropped = FALSE; hwndPopup = lp->hwndPopup; lp->hwndPopup = NULL;
+        hwndCapture = lp->hwndCapture; lp->hwndCapture = NULL;
+        if (!fAccept && !hwnd->fDestroying) {
+            CompatListProc(hwnd, LB_SETCURSEL, lp->iSave, 0); SyncCombo(hwnd);
+        }
+        if (GetCapture() == hwnd) { ReleaseCapture(); if (!GetCapture() && IsWindow(hwndCapture)) SetCapture(hwndCapture); }
+        if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup);
+        if (!FCombo(hwnd, lp)) return;
+        InvalidateRect(hwnd, NULL, TRUE);
     }
-    lp->fDropped = FALSE; hwndPopup = lp->hwndPopup; lp->hwndPopup = NULL;
-    hwndCapture = lp->hwndCapture; lp->hwndCapture = NULL;
-    if (!fAccept && !hwnd->fDestroying) {
-        CompatListProc(hwnd, LB_SETCURSEL, lp->iSave, 0); SyncCombo(hwnd);
-    }
-    if (GetCapture() == hwnd) { ReleaseCapture(); if (!GetCapture() && IsWindow(hwndCapture)) SetCapture(hwndCapture); }
-    if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup);
-    if (!FCombo(hwnd, lp)) return;
-    InvalidateRect(hwnd, NULL, TRUE);
-    lp->fClosing = FALSE;
     if (fNotify) {
         NotifyCombo(hwnd, fAccept ? CBN_SELENDOK : CBN_SELENDCANCEL);
         if (FCombo(hwnd, lp)) NotifyCombo(hwnd, CBN_CLOSEUP);
     }
 }
 static BOOL FComboDropRect(HWND hwnd, RECT *lprc) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     int cyItem, c, cxScreen, cyScreen, cy;
     if (!GetWindowRect(hwnd, &rc)) return FALSE;
@@ -86,33 +93,41 @@ static BOOL FComboDropRect(HWND hwnd, RECT *lprc) {
     return TRUE;
 }
 static void OpenCombo(HWND hwnd) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     HWND hwndPopup;
-    if (!lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
-    lp->fOpening = TRUE; NotifyCombo(hwnd, CBN_DROPDOWN);
-    if (!FCombo(hwnd, lp)) return;
-    lp->fOpening = FALSE;
+    if (FStarsErrorPending() || !lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !IsWindowEnabled(hwnd)) return;
+    {
+        StarsRestore<BOOL> restoreOpening(lp->fOpening);
+        lp->fOpening = TRUE; NotifyCombo(hwnd, CBN_DROPDOWN);
+        if (!FCombo(hwnd, lp) || FStarsErrorPending()) return;
+    }
     if (!FComboDropRect(hwnd, &rc)) return;
     lp->iSave = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
     lp->iHot = lp->iSave;
     hwndPopup = CreateWindowExA(WS_EX_NOACTIVATE, "StarsComboPopup", "", WS_POPUP,
                                rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                                HwndCompatRoot(hwnd), NULL, hwnd->lpclass->wc.hInstance, hwnd);
-    if (!hwndPopup || !FCombo(hwnd, lp)) { if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup); return; }
+    if (!hwndPopup || !FCombo(hwnd, lp) || FStarsErrorPending()) { if (IsWindow(hwndPopup)) DestroyWindow(hwndPopup); return; }
     lp->hwndPopup = hwndPopup; lp->fDropped = TRUE; lp->hwndCapture = GetCapture();
+    COMPATCLEANUPSCOPE closeFailedPopup([&] {
+        if (FCombo(hwnd, lp) && lp->hwndPopup == hwndPopup) CloseCombo(hwnd, FALSE, FALSE);
+    }, hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
     SetCapture(hwnd);
-    if (!FCombo(hwnd, lp) || !lp->fDropped) return;
+    if (!FCombo(hwnd, lp) || !lp->fDropped || FStarsErrorPending()) return;
     // Populate the hidden surface before the compositor maps the list. Owner
     // drawing can destroy or close the combo, so revalidate after painting.
     InvalidateRect(hwndPopup, NULL, TRUE); UpdateWindow(hwndPopup);
-    if (!FCombo(hwnd, lp) || !lp->fDropped || lp->hwndPopup != hwndPopup) return;
-    SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    if (!FCombo(hwnd, lp) || !lp->fDropped || lp->hwndPopup != hwndPopup || FStarsErrorPending()) return;
+    if (!SetWindowPos(hwndPopup, HWND_TOP, 0, 0, 0, 0,
+                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW) || FStarsErrorPending()) return;
+    closeFailedPopup.Release();
 }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     int iOld = (int)CompatListProc(hwnd, LB_GETCURSEL, 0, 0);
     CompatListProc(hwnd, LB_SETCURSEL, i, 0); SyncCombo(hwnd);
     if (!FCombo(hwnd, lp) || !fUser || i == iOld || i < 0) return;
@@ -120,23 +135,27 @@ static void SelectCombo(HWND hwnd, int i, BOOL fUser) {
     if (FCombo(hwnd, lp)) NotifyCombo(hwnd, CBN_SELCHANGE);
 }
 static void LayoutCombo(HWND hwnd, BOOL fRequested) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;
     POINT pt;
     int cy;
     if (lp->fSizing || !GetWindowRect(hwnd, &rc)) return;
     cy = lp->cyField + 6;
     if (fRequested && rc.bottom - rc.top > cy) lp->cyDrop = StarsMax(3 * cy, rc.bottom - rc.top - cy);
-    pt = (POINT){rc.left, rc.top};
+    pt = POINT{rc.left, rc.top};
     if (hwnd->hwndParent) ScreenToClient(hwnd->hwndParent, &pt);
-    lp->fSizing = TRUE;
-    if (rc.bottom - rc.top != cy) MoveWindow(hwnd, pt.x, pt.y, rc.right - rc.left, cy, TRUE);
-    if (!FCombo(hwnd, lp)) return;
-    lp->fSizing = FALSE;
+    {
+        StarsRestore<BOOL> restoreSizing(lp->fSizing);
+        lp->fSizing = TRUE;
+        if (rc.bottom - rc.top != cy) MoveWindow(hwnd, pt.x, pt.y, rc.right - rc.left, cy, TRUE);
+        if (!FCombo(hwnd, lp)) return;
+    }
     if (lp->hwndEdit) MoveWindow(lp->hwndEdit, 2, 2, StarsMax(0, rc.right - rc.left - 22), StarsMax(1, cy - 4), TRUE);
 }
 static void ComboFont(HWND hwnd) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     HDC hdc = CreateCompatibleDC(NULL);
     HGDIOBJ hold;
     TEXTMETRICA tm;
@@ -151,7 +170,8 @@ static void ComboFont(HWND hwnd) {
     if (FCombo(hwnd, lp)) LayoutCombo(hwnd, FALSE);
 }
 static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSelection, BOOL fSelected) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     DRAWITEMSTRUCT ds = {};
     RECT rc = *lprc;
     char *psz;
@@ -174,7 +194,8 @@ static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSel
     return TRUE;
 }
 static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
-    COMPATCOMBO *lp = hwnd->lpcombo;
+    auto lpcomboKeep = hwnd->lpcombo;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwndPaint, &ps);
     HGDIOBJ hold = NULL;
@@ -193,21 +214,21 @@ static void PaintCombo(HWND hwnd, HWND hwndPaint, BOOL fPopup) {
         cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0); c = (int)CompatListProc(hwnd, LB_GETCOUNT, 0, 0);
         n = NCompatListMutation(hwnd);
         for (i = iTop, y = 1; i < c && y < rc.bottom - 1; i++, y += cyItem) {
-            item = (RECT){1, y, rc.right - 1, StarsMin(rc.bottom - 1, y + cyItem)};
+            item = RECT{1, y, rc.right - 1, StarsMin(rc.bottom - 1, y + cyItem)};
             if (!DrawComboItem(hwnd, hdc, &item, i, FALSE, i == iSel) || !IsWindow(hwndPaint)) return;
             if (NCompatListMutation(hwnd) != n) { InvalidateRect(hwndPaint, NULL, TRUE); break; }
         }
     } else {
         // Keep the complete raised button inside the field's two-pixel sunken
         // frame; painting on that frame would overwrite its top/right bevel.
-        arrow = (RECT){StarsMax(2, rc.right - 19), 2, rc.right - 2, rc.bottom - 2};
-        item = (RECT){2, 2, arrow.left, rc.bottom - 2};
+        arrow = RECT{StarsMax(2, rc.right - 19), 2, rc.right - 2, rc.bottom - 2};
+        item = RECT{2, 2, arrow.left, rc.bottom - 2};
         if (!lp->hwndEdit && !DrawComboItem(hwnd, hdc, &item, iSel, TRUE, GetFocus() == hwnd)) return;
         hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
         if (hbr) { FillRect(hdc, &arrow, hbr); DeleteObject(hbr); }
         CompatDrawClassicEdge(hdc, &arrow, lp->fDropped, TRUE);
         for (j = 0; j < 4; j++) {
-            item = (RECT){arrow.left + 5 + j, (rc.bottom - 4) / 2 + j, arrow.right - 5 - j, (rc.bottom - 4) / 2 + j + 1};
+            item = RECT{arrow.left + 5 + j, (rc.bottom - 4) / 2 + j, arrow.right - 5 - j, (rc.bottom - 4) / 2 + j + 1};
             if (lp->fDropped) OffsetRect(&item, 1, 1);
             FillRect(hdc, &item, (HBRUSH)GetStockObject(IsWindowEnabled(hwnd) ? BLACK_BRUSH : GRAY_BRUSH));
         }
@@ -229,7 +250,8 @@ LRESULT CALLBACK CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 static LRESULT CALLBACK ComboEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND hwndCombo = GetParent(hwnd);
-    COMPATCOMBO *lp = IsWindow(hwndCombo) ? hwndCombo->lpcombo : NULL;
+    auto lpcomboKeep = IsWindow(hwndCombo) ? hwndCombo->lpcombo : nullptr;
+    COMPATCOMBO *lp = lpcomboKeep.get();
     if (!lp) return DefWindowProcA(hwnd, msg, w, l);
     if (msg == WM_GETDLGCODE && lp->fDropped) return DLGC_WANTALLKEYS | DLGC_WANTCHARS;
     if (((msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && (w == VK_UP || w == VK_DOWN || w == VK_F4 ||
@@ -257,6 +279,7 @@ static UINT ListMessage(UINT msg) {
 }
 LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND lpwin = LpCompatWindow(hwnd);
+    std::shared_ptr<COMPATCOMBO> lpcomboKeep;
     COMPATCOMBO *lp;
     UINT mapped;
     int i, c, cyItem, y, iTop;
@@ -269,13 +292,15 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     MEASUREITEMSTRUCT ms = {};
     HWND hwndEdit;
     if (!lpwin) return 0;
-    lp = lpwin->lpcombo;
+    lpcomboKeep = lpwin->lpcombo;
+    lp = lpcomboKeep.get();
     if (msg == WM_NCCREATE) {
         if (!CompatListProc(hwnd, msg, w, l)) return FALSE;
-        lp = (COMPATCOMBO *)(SDL_calloc(1, sizeof(*lp)));
-        if (!lp) { CompatListProc(hwnd, WM_NCDESTROY, 0, 0); return FALSE; }
+        try { lpcomboKeep = std::make_shared<COMPATCOMBO>(); }
+        catch (const std::bad_alloc &) { CompatListProc(hwnd, WM_NCDESTROY, 0, 0); return FALSE; }
+        lp = lpcomboKeep.get();
         lp->cyField = 16; lp->cyDrop = 100; lp->iSave = -1;
-        lpwin->lpcombo = lp; lpwin->iControl = 6; return TRUE;
+        lpwin->lpcombo = lpcomboKeep; lpwin->iControl = 6; return TRUE;
     }
     if (!lp) return DefWindowProcA(hwnd, msg, w, l);
     mapped = ListMessage(msg);
@@ -319,7 +344,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_DESTROY: CloseCombo(hwnd, FALSE, FALSE); return CompatListProc(hwnd, WM_DESTROY, w, l);
     case WM_NCDESTROY:
-        CompatListProc(hwnd, WM_NCDESTROY, w, l); SDL_free(lp); lpwin->lpcombo = NULL; return 0;
+        CompatListProc(hwnd, WM_NCDESTROY, w, l); lpwin->lpcombo.reset(); return 0;
     case WM_GETFONT: return (LRESULT)lpwin->hfontControl;
     case WM_SETFONT: lpwin->hfontControl = (HFONT)w; ComboFont(hwnd); if (l && IsWindow(hwnd)) InvalidateRect(hwnd, NULL, TRUE); return 0;
     case WM_SIZE: LayoutCombo(hwnd, TRUE); return 0;
@@ -332,11 +357,12 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         result = psz ? (LRESULT)SDL_strlen(psz) : 0;
         if (msg == WM_GETTEXT) { result = w && l && psz ? (LRESULT)CchUtf8Prefix(psz, (size_t)w - 1) : 0; if (w && l) { if (result) memcpy((char *)l, psz, (size_t)result); ((char *)l)[result] = 0; } }
         SDL_free(psz); return result;
-    case WM_SETTEXT:
+    case WM_SETTEXT: {
         if (!lp->hwndEdit) return FALSE;
+        StarsRestore<BOOL> restoreSync(lp->fSync);
         lp->fSync = TRUE; result = SetWindowTextA(lp->hwndEdit, (LPCSTR)l);
-        if (FCombo(hwnd, lp)) lp->fSync = FALSE;
         return result;
+    }
     case WM_COMMAND:
         if ((HWND)l != lp->hwndEdit) return 0;
         if (HIWORD(w) == EN_SETFOCUS) NotifyCombo(hwnd, CBN_SETFOCUS);
@@ -379,7 +405,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!FCombo(hwnd, lp)) return 0;
         if (!lp->fDropped) OpenCombo(hwnd);
         else {
-            pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+            pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
             if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
                 cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
                 i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
@@ -390,7 +416,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_LBUTTONUP:
         if (!lp->fDropped) return 0;
-        pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
         if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             i = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0) + (pt.y - rc.top - 1) / cyItem;
@@ -401,7 +427,7 @@ LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case WM_MOUSEMOVE:
         if (!lp->fDropped) return 0;
-        pt = (POINT){(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
+        pt = POINT{(SHORT)LOWORD(l), (SHORT)HIWORD(l)}; ClientToScreen(hwnd, &pt);
         if (GetWindowRect(lp->hwndPopup, &rc) && PtInRect(&rc, pt)) {
             cyItem = (int)CompatListProc(hwnd, LB_GETITEMHEIGHT, 0, 0);
             iTop = (int)CompatListProc(hwnd, LB_GETTOPINDEX, 0, 0); i = iTop + (pt.y - rc.top - 1) / cyItem;

@@ -29,7 +29,7 @@ use these headers with generated `StarsCompat_` symbol aliases. The host never
 includes these headers. Do not add this directory to global include paths or define
 `_WIN32` for a native build.
 
-The initial supported ABI is 64-bit, narrow-character C, with Win32 LLP64
+The supported source interface is 64-bit, narrow-character C++20, with Win32 LLP64
 widths: `LONG`, `DWORD` and `BOOL` are 32 bits; handles and message parameters
 are pointer-sized. Structures use SDK packing, including packed bitmap file
 headers. Callback functions use the C calling convention on every platform. This is
@@ -51,6 +51,18 @@ cmake --preset sdl-debug
 cmake --build --preset sdl-debug
 ctest --test-dir dist/sdl-debug -L compat --output-on-failure
 ```
+
+On macOS, build with `macos-sdl-debug` and run the native allocator checks with:
+
+```sh
+ctest --test-dir dist/macos-sdl-debug -L leaks --output-on-failure
+```
+
+These checks use `/usr/bin/leaks --quiet --noContent --atExit` on native test
+executables and fail on leaks. They run separately from ASan/UBSan, whose allocator
+differs from the native allocator. Linux sanitizer CI enables leak detection too.
+The [milestone B ledger](../../docs/CPP-B-IMPLEMENTATION.md) records measured
+coverage, including separate desktop and host turn-generation runs.
 
 The preset builds `stars-compat-runtime` for runtime tests and `stars-ui-compat-check`, an object library that compiles
 all existing UI sources and generated tutorial text against these headers,

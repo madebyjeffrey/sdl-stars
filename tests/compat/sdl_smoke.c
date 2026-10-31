@@ -171,7 +171,7 @@ static bool FSmokeSelfTest(SMOKEWINDOW *rgwin) {
 }
 
 int main(int argc, char **argv) {
-    SMOKEWINDOW    rgwin[cWindows] = {0};
+    SMOKEWINDOW    rgwin[cWindows] = {};
     SDL_GPUDevice *lpDevice = NULL;
     const char    *pszRenderer;
     char           szTitle[64];

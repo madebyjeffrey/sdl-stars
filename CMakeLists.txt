@@ -13,10 +13,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OBJCXX_STANDARD 20)
 set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
-set(CMAKE_OBJCXX_EXTENSIONS ON)
+set(CMAKE_OBJCXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STARS_BUILD_SDL_CLIENT "Build the SDL3 desktop client and wrapper" ON)
@@ -24,11 +24,11 @@ if(STARS_BUILD_SDL_CLIENT AND NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin|Wind
     message(FATAL_ERROR "The SDL compatibility targets require Linux, macOS or Windows")
 endif()
 
-option(STARS_ENABLE_SANITIZERS "Instrument native Linux code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(STARS_ENABLE_SANITIZERS "Instrument native Linux/macOS code with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 add_library(stars_sanitizers INTERFACE)
 if(STARS_ENABLE_SANITIZERS)
-    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-        message(FATAL_ERROR "STARS_ENABLE_SANITIZERS requires a native Linux GCC or Clang compiler")
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$" OR NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "STARS_ENABLE_SANITIZERS requires a native Linux/macOS GCC or Clang compiler")
     endif()
     target_compile_options(stars_sanitizers INTERFACE
         -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
@@ -63,8 +63,23 @@ file(GLOB STARS_CPP_HARNESSES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/tests/unit/*.c" "${PROJECT_SOURCE_DIR}/tests/compat/*.c"
     "${PROJECT_SOURCE_DIR}/tests/scenarios/*.c" "${PROJECT_SOURCE_DIR}/tests/scaffold/*.c")
 list(REMOVE_ITEM STARS_CPP_HARNESSES
-    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c")
-set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX
+    "${PROJECT_SOURCE_DIR}/tests/compat/record_layout.c"
+    "${PROJECT_SOURCE_DIR}/tests/compat/popup_payload_reference.c")
+set_source_files_properties(${STARS_CPP_HARNESSES} PROPERTIES LANGUAGE CXX)
+
+# These unchanged C vectors also compile independently against the real SDK.
+# Their C11 zero-initializer spelling is intentional; isolate only its C++
+# missing-field/braces diagnostics from ordinary C++ harnesses and production.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake")
+file(READ "${PROJECT_SOURCE_DIR}/cmake/win32-reference-tests.cmake" STARS_CPP_SDK_REFERENCE_CMAKE)
+string(REGEX MATCHALL "tests/compat/[A-Za-z0-9_]+\\.c" STARS_CPP_SDK_REFERENCE_NAMES "${STARS_CPP_SDK_REFERENCE_CMAKE}")
+list(REMOVE_DUPLICATES STARS_CPP_SDK_REFERENCE_NAMES)
+set(STARS_CPP_SDK_SHARED_HARNESSES)
+foreach(STARS_CPP_SDK_REFERENCE_NAME IN LISTS STARS_CPP_SDK_REFERENCE_NAMES)
+    list(APPEND STARS_CPP_SDK_SHARED_HARNESSES "${PROJECT_SOURCE_DIR}/${STARS_CPP_SDK_REFERENCE_NAME}")
+endforeach()
+set_source_files_properties(${STARS_CPP_SDK_SHARED_HARNESSES} PROPERTIES
     COMPILE_OPTIONS "-Wno-missing-field-initializers;-Wno-missing-braces")
 
 # Source language belongs in the parent scope so private test clones inherit it.
@@ -300,6 +315,10 @@ endif()
 target_link_libraries(stars_options INTERFACE m)
 option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
+if(STARS_BUILD_TESTS AND STARS_BUILD_SDL_CLIENT)
+    set_source_files_properties(compat/win32/src/memory.c PROPERTIES
+        COMPILE_DEFINITIONS STARS_TEST_MEMORY_OBSERVE=1)
+endif()
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
     add_executable(stars-test-enum-abi tests/compat/enum_abi.cpp)
@@ -314,6 +333,26 @@ if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     set_tests_properties(test_fileio_contract PROPERTIES TIMEOUT 30)
 endif()
 if(STARS_BUILD_TESTS)
+    add_executable(stars-test-encoding-views tests/compat/encoding_views.cpp)
+    target_link_libraries(stars-test-encoding-views PRIVATE stars_encoding stars_sanitizers)
+    target_compile_options(stars-test-encoding-views PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME test_encoding_views COMMAND stars-test-encoding-views)
+    set_tests_properties(test_encoding_views PROPERTIES LABELS "build;encoding" TIMEOUT 30)
+    add_executable(stars-test-wire-codecs tests/compat/wire_codecs.cpp tests/compat/popup_payload_reference.c)
+    target_link_libraries(stars-test-wire-codecs PRIVATE stars_options)
+    target_compile_options(stars-test-wire-codecs PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME test_wire_codecs COMMAND stars-test-wire-codecs)
+    set_tests_properties(test_wire_codecs PROPERTIES LABELS "build;wire" TIMEOUT 30)
+    add_executable(stars-test-wire-codecs-natural tests/compat/wire_codecs.cpp tests/compat/popup_payload_reference.c)
+    target_link_libraries(stars-test-wire-codecs-natural PRIVATE stars_options)
+    target_compile_definitions(stars-test-wire-codecs-natural PRIVATE STARS_TEST_NATURAL_RECORD_LAYOUT=1)
+    target_compile_options(stars-test-wire-codecs-natural PRIVATE -Wall -Wextra -Werror)
+    add_test(NAME test_wire_codecs_natural COMMAND stars-test-wire-codecs-natural)
+    set_tests_properties(test_wire_codecs_natural PROPERTIES LABELS "build;wire" TIMEOUT 30)
+    add_test(NAME test_wire_inventory COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/cmake/check_wire_inventory.py"
+        "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/wire-inventory.json")
+    set_tests_properties(test_wire_inventory PROPERTIES LABELS "build;wire" TIMEOUT 30)
     add_executable(stars-catalog-dump tests/compat/catalog_dump.cpp)
     target_link_libraries(stars-catalog-dump PRIVATE stars_options)
     add_test(NAME test_catalog_bytes COMMAND "${Python3_EXECUTABLE}"
@@ -386,4 +425,5 @@ if(STARS_BUILD_WIN32_REFERENCE_TESTS)
     include(cmake/win32-reference-tests.cmake)
 endif()
 
+include(cmake/strict-cpp.cmake)
 include(cmake/cpp-interface-checks.cmake)

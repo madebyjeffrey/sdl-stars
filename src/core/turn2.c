@@ -59,7 +59,7 @@ void Produce() {
                 fPrevProdIsAlch = FALSE;
                 iprodCur = 0;
                 while (lppl->lpplprod && iprodCur < lppl->lpplprod->iprodMac) {
-                    lpprod = &lppl->lpplprod->rgprod[iprodCur];
+                    lpprod = &lppl->lpplprod->rgprod()[iprodCur];
                     if (lpprod->cItem <= 0)
                         goto RemoveFromQueue;
                     if (lpprod->grobj == grobjPlanet) {
@@ -136,12 +136,12 @@ void Produce() {
                     if (mdStatus == mdProdStatComplete) {
                     RemoveFromQueue:
                         if (lppl->lpplprod->iprodMac == fPrevProdIsAlch + 1) {
-                            FreePl((PL *)lppl->lpplprod);
+                            FreePl(lppl->lpplprod);
                             lppl->lpplprod = NULL;
                             break;
                         }
                         if (iprodCur < lppl->lpplprod->iprodMac - 1) {
-                            memmove(lppl->lpplprod + (1 + (iprodCur - fPrevProdIsAlch)), lppl->lpplprod + (1 + (iprodCur + 1)),
+                            memmove(lppl->lpplprod->rgprod() + (iprodCur - fPrevProdIsAlch), lppl->lpplprod->rgprod() + (iprodCur + 1),
                                     (lppl->lpplprod->iprodMac - iprodCur - 1) * 4);
                         }
                         lppl->lpplprod->iprodMac -= fPrevProdIsAlch + 1;
@@ -149,10 +149,10 @@ void Produce() {
                     } else if ((int16_t)mdStatus >= mdProdStatSome) {
                         if (prodPartial.cItem > 0) {
                             if (lppl->lpplprod->iprodMac == lppl->lpplprod->iprodMax) {
-                                lppl->lpplprod = (PLPROD *)LpplReAlloc((PL *)lppl->lpplprod, lppl->lpplprod->iprodMac + 1);
+                                lppl->lpplprod = LpplReAlloc(lppl->lpplprod, lppl->lpplprod->iprodMac + 1);
                             }
-                            memmove(&lppl->lpplprod->rgprod[1], lppl->lpplprod->rgprod, lppl->lpplprod->iprodMac * sizeof(PROD));
-                            lppl->lpplprod->rgprod[0] = prodPartial;
+                            memmove(&lppl->lpplprod->rgprod()[1], lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * sizeof(PROD));
+                            lppl->lpplprod->rgprod()[0] = prodPartial;
                             lppl->lpplprod->iprodMac++;
                         }
                         break;
@@ -446,25 +446,25 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                 lpfl = rglpfl[i];
                 if (!rglpfl[i] || lpfl->iPlayer > lppl->iPlayer)
                     break;
-                if (lpfl->iPlayer >= lppl->iPlayer && lpfl->lpplord->rgord[0].pt.x == rgptPlan[lppl->id].x &&
-                    lpfl->lpplord->rgord[0].pt.y == rgptPlan[lppl->id].y && 32766 - cBuilt > lpfl->rgcsh[iItem]) {
-                    if (lpfl->rgcsh[iItem] != 0 && lpfl->rgdv[iItem].pctDp != 0) {
+                if (lpfl->iPlayer >= lppl->iPlayer && lpfl->lpplord->rgord()[0].pt.x == rgptPlan[lppl->id].x &&
+                    lpfl->lpplord->rgord()[0].pt.y == rgptPlan[lppl->id].y && 32766 - cBuilt > lpfl->rgcsh[iItem]) {
+                    if (lpfl->rgcsh[iItem] != 0 && lpfl->rgdv[iItem].pctDp() != 0) {
                         dpShdef = rglpshdef[lpfl->iPlayer][iItem].hul.dp;
                         cshOrig = lpfl->rgcsh[iItem];
-                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh * cshOrig) / 100);
+                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh() * cshOrig) / 100);
                         if (cshDamaged == 0) {
                             cshDamaged = 1;
                         }
-                        dpOrig = (int32_t)((int32_t)((uint32_t)dpShdef * lpfl->rgdv[iItem].pctDp) / 10 * cshDamaged) / 50;
-                        lpfl->rgdv[iItem].pctSh = LOWORD((int32_t)(cshDamaged * 100) / (int16_t)(cshOrig + cBuilt));
-                        if (lpfl->rgdv[iItem].pctSh == 0) {
-                            lpfl->rgdv[iItem].pctSh = 1;
+                        dpOrig = (int32_t)((int32_t)((uint32_t)dpShdef * lpfl->rgdv[iItem].pctDp()) / 10 * cshDamaged) / 50;
+                        lpfl->rgdv[iItem].SetPctSh(LOWORD((int32_t)(cshDamaged * 100) / (int16_t)(cshOrig + cBuilt)));
+                        if (lpfl->rgdv[iItem].pctSh() == 0) {
+                            lpfl->rgdv[iItem].SetPctSh(1);
                         }
-                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh * (int16_t)(cshOrig + cBuilt)) / 100);
+                        cshDamaged = LOWORD((int32_t)(lpfl->rgdv[iItem].pctSh() * (int16_t)(cshOrig + cBuilt)) / 100);
                         if (cshDamaged == 0) {
                             cshDamaged = 1;
                         }
-                        lpfl->rgdv[iItem].pctDp = LOWORD((int32_t)((int32_t)(dpOrig * 5) / cshDamaged) * 100 / (int32_t)dpShdef);
+                        lpfl->rgdv[iItem].SetPctDp(LOWORD((int32_t)((int32_t)(dpOrig * 5) / cshDamaged) * 100 / (int32_t)dpShdef));
                     } else {
                         lpfl->rgdv[iItem].dp = 0;
                     }
@@ -483,10 +483,10 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
         if (lppl->idRoute != 0) {
             AutoRouteFleet(lpfl, lppl);
             if (cBuilt == 1) {
-                idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewWhichWillRouted : idmStarbaseHasBuiltNewWhichRouted;
+                idm = lpfl->lpplord->rgord()[1].iWarp == 0 ? idmStarbaseHasBuiltNewWhichWillRouted : idmStarbaseHasBuiltNewWhichRouted;
                 FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0, 0);
             } else {
-                idm = lpfl->lpplord->rgord[1].iWarp == 0 ? idmStarbaseHasBuiltNewShipsWhichWill : idmStarbaseHasBuiltNewShipsWhichRouted;
+                idm = lpfl->lpplord->rgord()[1].iWarp == 0 ? idmStarbaseHasBuiltNewShipsWhichWill : idmStarbaseHasBuiltNewShipsWhichRouted;
                 FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lppl->id, cBuilt, lppl->iPlayer << 5 | iItem, lppl->idRoute - 1, 0, 0, 0);
             }
         } else {
@@ -596,18 +596,18 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac &&
-                   (lpth->iplr != lppl->iPlayer || lpth->ith != ithMineralPacket || lpth->pt.x != rgptPlan[lppl->id].x || lpth->pt.y != rgptPlan[lppl->id].y ||
-                    lpth->thp.iWarp != iWarp || lpth->thp.idPlanet != lppl->idFling - 1 || lpth->thp.iDecayRate != iDecayRate || lpth->thp.wtMax >= 1630);
+                   (lpth->iplr() != lppl->iPlayer || lpth->ith() != ithMineralPacket || lpth->pt().x() != rgptPlan[lppl->id].x || lpth->pt().y() != rgptPlan[lppl->id].y ||
+                    lpth->thp().iWarp() != iWarp || lpth->thp().idPlanet() != lppl->idFling - 1 || lpth->thp().iDecayRate() != iDecayRate || lpth->thp().wtMax() >= 1630);
                  lpth++) {
             }
             if (lpth != lpthMac) {
-                lpth->thp.wtMax = 0;
+                lpth->thp().SetWtMax(0);
                 for (i = 0; i < 3; i++) {
-                    lpth->thp.rgwtMin[i] += rgwt[i];
-                    if (lpth->thp.rgwtMin[i] < 0) {
-                        lpth->thp.rgwtMin[i] = 32760;
+                    lpth->thp().SetRgwtMin(i, lpth->thp().rgwtMin(i) + (rgwt[i]));
+                    if (lpth->thp().rgwtMin(i) < 0) {
+                        lpth->thp().SetRgwtMin(i, 32760);
                     }
-                    lpth->thp.wtMax += (int16_t)(lpth->thp.rgwtMin[i] + 9) / 10;
+                    { const auto wtMaxForThing = +((int16_t)(lpth->thp().rgwtMin(i) + 9) / 10); auto &thForThing = *(lpth); thForThing.thp().SetWtMax(thForThing.thp().wtMax() + wtMaxForThing); }
                 }
                 FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasCombined, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->idFling - 1);
                 return TRUE;
@@ -618,13 +618,13 @@ int16_t FBuildObject(PLANET *lppl, GrobjClass grobj, int16_t iItem, int16_t cBui
                 return TRUE;
             }
             for (i = 0; i < 3; i++) {
-                lpth->thp.rgwtMin[i] = rgwt[i];
-                lpth->thp.wtMax += (int16_t)(rgwt[i] + 9) / 10;
+                lpth->thp().SetRgwtMin(i, rgwt[i]);
+                { const auto wtMaxForThing = +((int16_t)(rgwt[i] + 9) / 10); auto &thForThing = *(lpth); thForThing.thp().SetWtMax(thForThing.thp().wtMax() + wtMaxForThing); }
             }
-            lpth->thp.iWarp = iWarp;
-            lpth->thp.iDecayRate = iDecayRate;
-            lpth->thp.idPlanet = lppl->idFling - 1;
-            lpth->pt = rgptPlan[lppl->id];
+            lpth->thp().SetIWarp(iWarp);
+            lpth->thp().SetIDecayRate(iDecayRate);
+            lpth->thp().SetIdPlanet(lppl->idFling - 1);
+            lpth->pt().Set(rgptPlan[lppl->id]);
             FSendPlrMsg2(lppl->iPlayer, idmHasProducedMineralPacketWhichHasDestination, static_cast<MsgGoto>(lppl->id), lppl->id, lppl->idFling - 1);
             return TRUE;
         case iobjGenesis:
@@ -714,12 +714,12 @@ void TransferToOthers() {
         lpxfCur = lpxf;
         lpxfMax = lpxf + cXferFull;
         for (; lpxfCur < lpxfMax; lpxfCur++) {
-            if (!FLookupObject(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, &rgxf[1].fl))
+            if (!FLookupObject(static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, rgxf[1].LpvLookup(static_cast<GrobjClass>(lpxfCur->grobj2))))
                 goto DoNext;
             if (lpxfCur->grobj1 == 1) {
-                rgxf[0].fl.iPlayer = LpplFromId(lpxfCur->id1)->iPlayer;
+                rgxf[0].SetIPlayerObj(LpplFromId(lpxfCur->id1)->iPlayer);
             } else {
-                rgxf[0].fl.iPlayer = lpxfCur->id1 >> 9 & 0xf;
+                rgxf[0].SetIPlayerObj(lpxfCur->id1 >> 9 & 0xf);
             }
             for (i = 0; i < 5; i++) {
                 l2 = lpxfCur->rgcQuan[i];
@@ -732,20 +732,20 @@ void TransferToOthers() {
                         if (l == 0) {
                             idm = static_cast<MessageId>(idm + 4);
                         }
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
+                        FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l2), HIWORD(l2), i, idDst, LOWORD(l), HIWORD(l));
                         idm = i == 4 ? idmReceivedHoweverColonistsSentRemainsOtherColonist : idmReceivedHoweverSentRemainderLostSpace;
                         if (l == 0) {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, static_cast<MessageId>(idm + 4), static_cast<MsgGoto>(idDst), idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
+                            FSendPlrMsg(rgxf[1].iPlayerObj(), static_cast<MessageId>(idm + 4), static_cast<MsgGoto>(idDst), idDst, LOWORD(l2), HIWORD(l2), i, idSrc, 0, 0);
                         } else {
-                            FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
+                            FSendPlrMsg(rgxf[1].iPlayerObj(), idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, LOWORD(l2), HIWORD(l2));
                         }
                     } else {
                         idm = i == 4 ? idmSuccessfullyTransferred2 : idmSuccessfullyTransferred;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
                         idDst = lpxfCur->id2 | (lpxfCur->grobj2 == 2 ? 0x8000 : 0);
-                        FSendPlrMsg(rgxf[0].fl.iPlayer, idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
+                        FSendPlrMsg(rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(idSrc), idSrc, LOWORD(l), HIWORD(l), i, idDst, 0, 0);
                         idm = i == 4 ? idmSuccessfullyReceived2 : idmSuccessfullyReceived;
-                        FSendPlrMsg(rgxf[1].fl.iPlayer, idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
+                        FSendPlrMsg(rgxf[1].iPlayerObj(), idm, static_cast<MsgGoto>(idDst), idDst, LOWORD(l), HIWORD(l), i, idSrc, 0, 0);
                     }
                 }
             }
@@ -924,17 +924,17 @@ void DropColonists() {
                         cpq = rgplr[iMax].zpq1.cpq;
                         pl.fNoResearch = rgplr[iMax].zpq1.fNoResearch;
                         if (cpq > 0) {
-                            pl.lpplprod = (PLPROD *)LpplAlloc(4, rgplr[iMax].zpq1.cpq, htOrd);
+                            pl.lpplprod = LpplAlloc<PLPROD>(4, rgplr[iMax].zpq1.cpq, htOrd);
                             memset(&prod, 0, sizeof(PROD));
                             prod.grobj = grobjPlanet;
                             iDst = 0;
                             for (ipq = 0; ipq < cpq; ipq++) {
-                                if ((GetRaceStat(&rgplr[iMax], rsMajorAdv) != raMacintosh || rgplr[iMax].zpq1.rgpq[ipq].mdIdle > iobjDefense) &&
+                                if ((GetRaceStat(&rgplr[iMax], rsMajorAdv) != raMacintosh || rgplr[iMax].zpq1.rgpq[ipq].mdIdle() > iobjDefense) &&
                                     (GetRaceStat(&rgplr[iMax], rsMajorAdv) != raTerra ||
-                                     (rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMinTerraform && rgplr[iMax].zpq1.rgpq[ipq].mdIdle != iobjMaxTerraform))) {
-                                    prod.iItem = rgplr[iMax].zpq1.rgpq[ipq].mdIdle;
-                                    prod.cItem = rgplr[iMax].zpq1.rgpq[ipq].cQuan;
-                                    pl.lpplprod->rgprod[iDst] = prod;
+                                     (rgplr[iMax].zpq1.rgpq[ipq].mdIdle() != iobjMinTerraform && rgplr[iMax].zpq1.rgpq[ipq].mdIdle() != iobjMaxTerraform))) {
+                                    prod.iItem = rgplr[iMax].zpq1.rgpq[ipq].mdIdle();
+                                    prod.cItem = rgplr[iMax].zpq1.rgpq[ipq].cQuan();
+                                    pl.lpplprod->rgprod()[iDst] = prod;
                                     iDst++;
                                 }
                             }
@@ -942,7 +942,7 @@ void DropColonists() {
                                 pl.lpplprod->iprodMac = iDst;
                                 LpplFromId(pl.id)->lpplprod = pl.lpplprod;
                             } else {
-                                FreePl((PL *)pl.lpplprod);
+                                FreePl(pl.lpplprod);
                                 pl.lpplprod = NULL;
                             }
                         }
@@ -1053,8 +1053,8 @@ void HealShips() {
                 pct += pctShipHeal;
                 for (ishdef = 0; ishdef < 16; ishdef++) {
                     if (lpfl->rgdv[ishdef].dp != 0) {
-                        if (lpfl->rgdv[ishdef].pctDp > (uint16_t)pct) {
-                            lpfl->rgdv[ishdef].pctDp -= pct;
+                        if (lpfl->rgdv[ishdef].pctDp() > (uint16_t)pct) {
+                            lpfl->rgdv[ishdef].SetPctDp(lpfl->rgdv[ishdef].pctDp() - (pct));
                         } else {
                             lpfl->rgdv[ishdef].dp = 0;
                         }
@@ -1291,7 +1291,7 @@ void UpdateGuesses() {
                 lppl->uDefGuess = LOWORD(l);
             }
         } else {
-            lppl->uGuesses = 0;
+            lppl->SetUGuesses(0);
         }
     }
     return;
@@ -1405,9 +1405,9 @@ void TossNonAutoBuildItems(PLANET *lppl) {
     if (lppl->lpplprod) {
         iDst = 0;
         for (iSrc = 0; iSrc < lppl->lpplprod->iprodMac; iSrc++) {
-            if (lppl->lpplprod->rgprod[iSrc].grobj == grobjPlanet && lppl->lpplprod->rgprod[iSrc].iItem < mdIdleFactory) {
+            if (lppl->lpplprod->rgprod()[iSrc].grobj == grobjPlanet && lppl->lpplprod->rgprod()[iSrc].iItem < mdIdleFactory) {
                 if (iSrc > iDst) {
-                    lppl->lpplprod->rgprod[iDst] = lppl->lpplprod->rgprod[iSrc];
+                    lppl->lpplprod->rgprod()[iDst] = lppl->lpplprod->rgprod()[iSrc];
                 }
                 iDst++;
             }
@@ -1415,7 +1415,7 @@ void TossNonAutoBuildItems(PLANET *lppl) {
         if (iDst > 0) {
             lppl->lpplprod->iprodMac = iDst;
         } else {
-            FreePl((PL *)lppl->lpplprod);
+            FreePl(lppl->lpplprod);
             lppl->lpplprod = NULL;
         }
     }
@@ -1505,7 +1505,7 @@ void MysteryTrader() {
         if (Random(cRand) == 0) {
             lpth = LpthNew(0, ithMysteryTrader);
             if (lpth) {
-                lpth->tht.iWarp = Random(5) + 8;
+                { const auto iWarpForThing = (Random(5) + 8); auto &thForThing = *(lpth); thForThing.tht().SetIWarp(iWarpForThing); }
                 for (i = 0; i < 4; i += 2) {
                     rgC[i] = Random(400 * game.mdSize + 361) + 1020;
                 }
@@ -1517,10 +1517,10 @@ void MysteryTrader() {
                     rgC[3] = 1020;
                 }
                 iSrc = Random(2);
-                lpth->pt.x = rgC[iSrc];
-                lpth->pt.y = rgC[iSrc == 0];
-                lpth->tht.ptDest.x = rgC[iSrc + 2];
-                lpth->tht.ptDest.y = rgC[(iSrc == 0) + 2];
+                lpth->pt().SetX(rgC[iSrc]);
+                lpth->pt().SetY(rgC[iSrc == 0]);
+                lpth->tht().ptDest().SetX(rgC[iSrc + 2]);
+                { const auto yForThing = (rgC[(iSrc == 0) + 2]); auto &thForThing = *(lpth); thForThing.tht().ptDest().SetY(yForThing); }
                 if (game.turn < 100) {
                     cRand = 5;
                 } else if (game.turn < 250) {
@@ -1528,16 +1528,16 @@ void MysteryTrader() {
                 } else {
                     cRand = 2;
                 }
-                if (lpth->tht.iWarp <= 9) {
+                if (lpth->tht().iWarp() <= 9) {
                     cRand++;
-                } else if (lpth->tht.iWarp >= 11) {
+                } else if (lpth->tht().iWarp() >= 11) {
                     cRand--;
                 }
                 if (Random(10) < cRand) {
                     if (Random(6) == 0) {
-                        lpth->tht.grbitTrader = grbitTraderLifeboat;
+                        lpth->tht().SetGrbitTrader(grbitTraderLifeboat);
                     } else {
-                        lpth->tht.grbitTrader = grbitTraderNone;
+                        lpth->tht().SetGrbitTrader(grbitTraderNone);
                     }
                 } else {
                     grbitTrader = static_cast<GrbitTrader>(1 << Random(13));
@@ -1555,10 +1555,10 @@ void MysteryTrader() {
                             grbitTrader = grbitTraderNone;
                         }
                     }
-                    lpth->tht.grbitTrader = grbitTrader;
+                    lpth->tht().SetGrbitTrader(grbitTrader);
                 }
                 for (i = 0; i < game.cPlayer; i++) {
-                    FSendPlrMsg2(i, idmMysteriousTradingVesselBroadcastingProposalHasDe, gotoThing, lpth->idFull, 0);
+                    FSendPlrMsg2(i, idmMysteriousTradingVesselBroadcastingProposalHasDe, gotoThing, lpth->idFull(), 0);
                 }
             }
         }
@@ -1643,7 +1643,7 @@ void UpdatePlayerScores() {
         }
     }
     if (game.cPlayer == 1) {
-        vlprgScoreX->iRank = 1;
+        vlprgScoreX->SetIRank(1);
     } else {
         for (i = 0; i < game.cPlayer; i++) {
             if (rgplr[i].fDead) {
@@ -1763,10 +1763,10 @@ int16_t FPacketDecay(THING *lpth, int16_t pctRate) {
     uint16_t wDecay;
     int32_t  lDecay;
 
-    if (lpth->thp.iDecayRate <= decayNone) {
+    if (lpth->thp().iDecayRate() <= decayNone) {
         return FALSE;
     }
-    switch (lpth->thp.iDecayRate) {
+    switch (lpth->thp().iDecayRate()) {
     case decay10Pct:
         iRate = 10;
         break;
@@ -1776,7 +1776,7 @@ int16_t FPacketDecay(THING *lpth, int16_t pctRate) {
     case decay50Pct:
         iRate = 50;
     }
-    if (GetRaceStat(&rgplr[lpth->iplr], rsMajorAdv) == raMassAccel) {
+    if (GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel) {
         iRate /= 2;
         iRateMin = 5;
     } else {
@@ -1784,21 +1784,21 @@ int16_t FPacketDecay(THING *lpth, int16_t pctRate) {
     }
     lDecay = 0;
     for (i = 0; i < 3; i++) {
-        if (lpth->thp.rgwtMin[i] != 0) {
-            wDecay = LOWORD((int32_t)((uint32_t)(lpth->thp.rgwtMin[i] * iRate) * pctRate) / 10000);
+        if (lpth->thp().rgwtMin(i) != 0) {
+            wDecay = LOWORD((int32_t)((uint32_t)(lpth->thp().rgwtMin(i) * iRate) * pctRate) / 10000);
             wDecay = iRateMin <= wDecay ? wDecay : iRateMin;
-            if (lpth->thp.rgwtMin[i] <= (int16_t)wDecay) {
-                wDecay = lpth->thp.rgwtMin[i];
+            if (lpth->thp().rgwtMin(i) <= (int16_t)wDecay) {
+                wDecay = lpth->thp().rgwtMin(i);
             }
-            lpth->thp.rgwtMin[i] -= wDecay;
-            lDecay += lpth->thp.rgwtMin[i];
+            lpth->thp().SetRgwtMin(i, lpth->thp().rgwtMin(i) - wDecay);
+            lDecay += lpth->thp().rgwtMin(i);
         }
     }
     if (lDecay == 0) {
         FreeLpth(lpth);
         return TRUE;
     }
-    lpth->thp.wtMax = LOWORD((int32_t)((lDecay + 9) / 10));
+    { const auto wtMaxForThing = (LOWORD((int32_t)((lDecay + 9) / 10))); auto &thForThing = *(lpth); thForThing.thp().SetWtMax(wtMaxForThing); }
     return FALSE;
 }
 
@@ -1824,21 +1824,21 @@ void ThingDecay() {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMineralPacket) {
-            if (lpth->thp.iWarp == 0) {
-                if (lpth->thp.fMoved) {
-                    lpth->thp.fMoved = FALSE;
+        if (lpth->ith() == ithMineralPacket) {
+            if (lpth->thp().iWarp() == 0) {
+                if (lpth->thp().fMoved()) {
+                    lpth->thp().SetFMoved(FALSE);
                     continue;
                 }
                 lDecay = 0;
                 for (i = 0; i < 3; i++) {
-                    if (lpth->thp.rgwtMin[i] != 0) {
-                        wDecay = 10 <= lpth->thp.rgwtMin[i] / 10 ? lpth->thp.rgwtMin[i] / 10 : 10;
-                        lpth->thp.rgwtMin[i] -= wDecay;
-                        if (lpth->thp.rgwtMin[i] < 0) {
-                            lpth->thp.rgwtMin[i] = 0;
+                    if (lpth->thp().rgwtMin(i) != 0) {
+                        wDecay = 10 <= lpth->thp().rgwtMin(i) / 10 ? lpth->thp().rgwtMin(i) / 10 : 10;
+                        lpth->thp().SetRgwtMin(i, lpth->thp().rgwtMin(i) - wDecay);
+                        if (lpth->thp().rgwtMin(i) < 0) {
+                            lpth->thp().SetRgwtMin(i, 0);
                         }
-                        lDecay += lpth->thp.rgwtMin[i];
+                        lDecay += lpth->thp().rgwtMin(i);
                     }
                 }
                 if (lDecay == 0) {
@@ -1848,24 +1848,24 @@ void ThingDecay() {
                     lpthMac--;
                     continue;
                 } else {
-                    lpth->thp.wtMax = LOWORD((int32_t)((lDecay + 9) / 10));
+                    { const auto wtMaxForThing = (LOWORD((int32_t)((lDecay + 9) / 10))); auto &thForThing = *(lpth); thForThing.thp().SetWtMax(wtMaxForThing); }
                     continue;
                 }
             } else if (FPacketDecay(lpth, 100)) {
                 goto LFixUpLpth;
             }
             continue;
-        } else if (lpth->ith == ithMinefield) {
-            fMineExpert = GetRaceStat(&rgplr[lpth->iplr], rsMajorAdv) == raMines;
-            if (lpth->thm.fDetonate) {
-                lDecay = lpth->thm.cMines;
+        } else if (lpth->ith() == ithMinefield) {
+            fMineExpert = GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMines;
+            if (lpth->thm().fDetonate()) {
+                lDecay = lpth->thm().cMines();
                 for (ifl = 0; ifl < cFleet; ifl++) {
                     lpfl = rglpfl[ifl];
                     if (!rglpfl[ifl])
                         break;
                     if (!lpfl->fDead) {
-                        dx = (int16_t)(lpfl->pt.x - lpth->pt.x);
-                        dy = (int16_t)(lpfl->pt.y - lpth->pt.y);
+                        dx = (int16_t)(lpfl->pt.x - lpth->pt().x());
+                        dy = (int16_t)(lpfl->pt.y - lpth->pt().y());
                         /* The original set fBombed even when the fleet was
                            immune to this field, sparing it from every other
                            detonating field. */
@@ -1875,26 +1875,26 @@ void ThingDecay() {
                     }
                 }
             }
-            pctDecay = (int16_t)(((fMineExpert == 0) * 3 + 1) * CPlanetsInCircle(lpth->pt, lpth->thm.cMines) + 2);
+            pctDecay = (int16_t)(((fMineExpert == 0) * 3 + 1) * CPlanetsInCircle(lpth->pt(), lpth->thm().cMines()) + 2);
             if (pctDecay > 50) {
                 pctDecay = 50;
             }
-            if (lpth->thm.fDetonate) {
+            if (lpth->thm().fDetonate()) {
                 pctDecay += 25;
             }
-            lDecay = (int32_t)(lpth->thm.cMines * pctDecay) / 100;
+            lDecay = (int32_t)(lpth->thm().cMines() * pctDecay) / 100;
             if (lDecay < pctDecay) {
                 lDecay = pctDecay;
             }
-            if (lpth->thm.iType != mineSpeedBump) {
+            if (lpth->thm().iType() != mineSpeedBump) {
                 lDecay = 10 <= lDecay ? lDecay : 10;
             }
-            if (lDecay >= lpth->thm.cMines) {
+            if (lDecay >= lpth->thm().cMines()) {
                 FreeLpth(lpth);
                 lpth--;
                 lpthMac--;
             } else {
-                lpth->thm.cMines -= lDecay;
+                lpth->thm().SetCMines(lpth->thm().cMines() - lDecay);
             }
         }
     }
@@ -1908,8 +1908,8 @@ void UnmarkMineFields() {
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
-        if (lpth->ith == ithMinefield) {
-            lpth->thm.grbitPlrNow = 0;
+        if (lpth->ith() == ithMinefield) {
+            lpth->thm().SetGrbitPlrNow(0);
         }
     }
     return;
@@ -1937,18 +1937,18 @@ void SweepForMines() {
             break;
         cMine = CMineSweepFromLpfl(lpfl);
         if (cMine > 0 && !lpfl->fDead) {
-            iplr = lpfl->iplr;
-            grbitPlr = 1 << lpfl->iplr;
+            iplr = lpfl->iplr();
+            grbitPlr = 1 << lpfl->iplr();
             pt = lpfl->pt;
             lpth = lpThings;
             lpthMac = lpThings + cThing;
             for (; lpth < lpthMac; lpth++) {
-                if (lpth->ith == ithMinefield && lpth->iplr != iplr && FAttackPlayer(lpfl, lpth->iplr)) {
-                    dx = (int16_t)(pt.x - lpth->pt.x);
-                    dy = (int16_t)(pt.y - lpth->pt.y);
+                if (lpth->ith() == ithMinefield && lpth->iplr() != iplr && FAttackPlayer(lpfl, lpth->iplr())) {
+                    dx = (int16_t)(pt.x - lpth->pt().x());
+                    dy = (int16_t)(pt.y - lpth->pt().y());
                     lCur = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                    if (lpth->thm.cMines >= (uint32_t)(dx * dx) + (uint32_t)(dy * dy)) {
-                        if (lpth->thm.iType == mineSpeedBump) {
+                    if (lpth->thm().cMines() >= (uint32_t)(dx * dx) + (uint32_t)(dy * dy)) {
+                        if (lpth->thm().iType() == mineSpeedBump) {
                             cMineCur = (int32_t)(cMine / 3);
                         } else {
                             cMineCur = cMine;
@@ -1956,23 +1956,23 @@ void SweepForMines() {
                         if (cMineCur < 2) {
                             cMineCur = 2;
                         }
-                        if (lpth->thm.cMines - cMineCur < lCur - 1) {
-                            cMineCur = lpth->thm.cMines - lCur + 1;
+                        if (lpth->thm().cMines() - cMineCur < lCur - 1) {
+                            cMineCur = lpth->thm().cMines() - lCur + 1;
                         }
-                        if (cMineCur > lpth->thm.cMines) {
-                            cMineCur = lpth->thm.cMines;
+                        if (cMineCur > lpth->thm().cMines()) {
+                            cMineCur = lpth->thm().cMines();
                         }
-                        FSendPlrMsg(lpfl->iPlayer, idmHasSweptMinesMineField, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
-                                    lpth->thm.iType, lpth->pt.x, lpth->pt.y);
-                        FSendPlrMsg(lpth->iplr, idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull, LOWORD(cMineCur), HIWORD(cMineCur), lpth->thm.iType,
-                                    lpth->pt.x, lpth->pt.y, 0);
-                        lpth->thm.cMines -= cMineCur;
-                        if (lpth->thm.cMines <= 0) {
+                        FSendPlrMsg(lpfl->iPlayer, idmHasSweptMinesMineField, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr(),
+                                    lpth->thm().iType(), lpth->pt().x(), lpth->pt().y());
+                        FSendPlrMsg(lpth->iplr(), idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull(), LOWORD(cMineCur), HIWORD(cMineCur), lpth->thm().iType(),
+                                    lpth->pt().x(), lpth->pt().y(), 0);
+                        lpth->thm().SetCMines(lpth->thm().cMines() - cMineCur);
+                        if (lpth->thm().cMines() <= 0) {
                             FreeLpth(lpth);
                             lpth--;
                             lpthMac--;
                         } else {
-                            lpth->thm.grbitPlr |= 1 << lpfl->iPlayer;
+                            lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | (1 << lpfl->iPlayer));
                         }
                     }
                 }
@@ -1991,12 +1991,12 @@ void SweepForMines() {
                 lpth = lpThings;
                 lpthMac = lpThings + cThing;
                 for (; lpth < lpthMac; lpth++) {
-                    if (lpth->ith == ithMinefield && lpth->iplr != iplr && iplr != lpth->iplr && rgplr[iplr].rgmdRelation[lpth->iplr] != 1) {
-                        dx = (int16_t)(pt.x - lpth->pt.x);
-                        dy = (int16_t)(pt.y - lpth->pt.y);
+                    if (lpth->ith() == ithMinefield && lpth->iplr() != iplr && iplr != lpth->iplr() && rgplr[iplr].rgmdRelation[lpth->iplr()] != 1) {
+                        dx = (int16_t)(pt.x - lpth->pt().x());
+                        dy = (int16_t)(pt.y - lpth->pt().y());
                         lCur = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
-                        if (lpth->thm.cMines >= (uint32_t)(dx * dx) + (uint32_t)(dy * dy)) {
-                            if (lpth->thm.iType == mineSpeedBump) {
+                        if (lpth->thm().cMines() >= (uint32_t)(dx * dx) + (uint32_t)(dy * dy)) {
+                            if (lpth->thm().iType() == mineSpeedBump) {
                                 cMineCur = (int32_t)(cMine / 3);
                             } else {
                                 cMineCur = cMine;
@@ -2004,23 +2004,23 @@ void SweepForMines() {
                             if (cMineCur < 2) {
                                 cMineCur = 2;
                             }
-                            if (lpth->thm.cMines - cMineCur < lCur - 1) {
-                                cMineCur = lpth->thm.cMines - lCur + 1;
+                            if (lpth->thm().cMines() - cMineCur < lCur - 1) {
+                                cMineCur = lpth->thm().cMines() - lCur + 1;
                             }
-                            if (cMineCur > lpth->thm.cMines) {
-                                cMineCur = lpth->thm.cMines;
+                            if (cMineCur > lpth->thm().cMines()) {
+                                cMineCur = lpth->thm().cMines();
                             }
-                            FSendPlrMsg(iplr, idmStarbaseHasSweptMinesMineField, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr,
-                                        lpth->thm.iType, lpth->pt.x, lpth->pt.y);
-                            FSendPlrMsg(lpth->iplr, idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull, LOWORD(cMineCur), HIWORD(cMineCur),
-                                        lpth->thm.iType, lpth->pt.x, lpth->pt.y, 0);
-                            lpth->thm.cMines -= cMineCur;
-                            if (lpth->thm.cMines <= 0) {
+                            FSendPlrMsg(iplr, idmStarbaseHasSweptMinesMineField, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(cMineCur), HIWORD(cMineCur), lpth->iplr(),
+                                        lpth->thm().iType(), lpth->pt().x(), lpth->pt().y());
+                            FSendPlrMsg(lpth->iplr(), idmSomeoneHasSweptMinesMineField, gotoThing, lpth->idFull(), LOWORD(cMineCur), HIWORD(cMineCur),
+                                        lpth->thm().iType(), lpth->pt().x(), lpth->pt().y(), 0);
+                            lpth->thm().SetCMines(lpth->thm().cMines() - cMineCur);
+                            if (lpth->thm().cMines() <= 0) {
                                 FreeLpth(lpth);
                                 lpth--;
                                 lpthMac--;
                             } else {
-                                lpth->thm.grbitPlr |= 1 << lppl->iPlayer;
+                                lpth->thm().SetGrbitPlr(lpth->thm().grbitPlr() | (1 << lppl->iPlayer));
                             }
                         }
                     }
@@ -2114,8 +2114,8 @@ void UpdateResearchStatus(int16_t fUsePool) {
     for (i = 0; i < game.cPlayer; i++) {
         fUsePool = fUsePoolOrig;
         fGeneral = GetRaceGrbit(&rgplr[i], ibitRaceGeneralizedResearch);
-        iTechCur = rgplr[i].iTechNow;
-        iTechNext = rgplr[i].iTechNext;
+        iTechCur = rgplr[i].iTechNow();
+        iTechNext = rgplr[i].iTechNext();
         idPlayer = i;
         if (!rgplr[i].fDead) {
             cPlrAlive++;
@@ -2189,7 +2189,7 @@ void UpdateResearchStatus(int16_t fUsePool) {
                                 if (mdAvail == mdPartAvailInvalid)
                                     break;
                                 if (mdAvail == mdPartAvailAvailable &&
-                                    rgplr[i].rgTech[iT] == LOBYTE((int16_t)(((uint16_t)iT & 0xff00) | ((uint16_t)part.pcom->rgTech[iT] & 0xff)))) {
+                                    rgplr[i].rgTech[iT] == LOBYTE((int16_t)(((uint16_t)iT & 0xff00) | ((uint16_t)part.pcom().rgTech()[iT] & 0xff)))) {
                                     if (grbitCur == hstSBHull) {
                                         idm = idmRecentBreakthroughHasAlsoGivenHullDesign;
                                         iGoto = -3;
@@ -2226,13 +2226,13 @@ void UpdateResearchStatus(int16_t fUsePool) {
                                     iTechNext = jj;
                                 }
                             }
-                            rgplr[idPlayer].iTechNow = iTechNext;
+                            rgplr[idPlayer].SetITechNow(iTechNext);
                             rgplr[i].rgResSpent[iT] = 0;
                             iTechCur = iTechNext;
                             iTechNext = 7;
                         } else {
-                            rgplr[idPlayer].iTechNext = 6;
-                            rgplr[idPlayer].iTechNow = iTechNext;
+                            rgplr[idPlayer].SetITechNext(6);
+                            rgplr[idPlayer].SetITechNow(iTechNext);
                             rgplr[i].rgResSpent[iT] = 0;
                             iTechCur = iTechNext;
                             iTechNext = 6;

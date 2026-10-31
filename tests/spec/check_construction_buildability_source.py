@@ -117,7 +117,7 @@ int16_t FLookupPart(PART *part){
     assert(fInCheck && cGateLookups<17);int at=cGateLookups;unsigned mask=part->hs.grhst,item=part->hs.iItem;
     rgGateRequests[at][0]=idPlayer;rgGateRequests[at][1]=mask;rgGateRequests[at][2]=item;rgGateRequests[at][3]=at==0?-1:part->hs.cItem;rgGateRequests[at][5]=cQueries;
     int16_t status=NativeLookupPart(part);rgGateRequests[at][4]=status;
-    if(status!=0){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;assert(kind<16 && part->pcom==LpcomRow(kind,item));}
+    if(status!=0){unsigned kind=16;for(unsigned k=0;k<16;k++)if(mask==(UINT32_C(1)<<k))kind=k;assert(kind<16 && part->pcom()==LpcomRow(kind,item));}
     cGateLookups++;return status;
 }
 '''
@@ -139,8 +139,8 @@ int main(int argc,char **argv){
     if(argv[1][0]=='e'){
         for(unsigned k=0;k<16;k++){
             for(unsigned item=0;item<rgcRows[k];item++){
-                int32_t data[9];COMPART *p=LpcomRow(k,item);data[0]=k;data[1]=item;
-                for(int f=0;f<6;f++)data[2+f]=p->rgTech[f];data[8]=k==15?rgplanetary[item].grAbility:0;
+                int32_t data[9];NATIVEPARTCOMMONVIEW p=LpcomRow(k,item);data[0]=k;data[1]=item;
+                for(int f=0;f<6;f++)data[2+f]=p.rgTech()[f];data[8]=k==15?rgplanetary[item].grAbility:0;
                 assert(fwrite(data,sizeof(data),1,file)==1);
             }
         }
@@ -153,7 +153,7 @@ int main(int argc,char **argv){
         planet.fStarbase=data[1];planet.iPlayer=(int16_t)owner;planet.isb=data[21];
         if(owner>=0 && owner<16){
             rglpshdef[owner]=data[3]?ships:NULL;rglpshdefSB[owner]=data[4]?bases:NULL;
-            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=static_cast<RaceTraitBits>((uint32_t)data[13]);rgplr[owner].grbitTrader=static_cast<GrbitTrader>((uint16_t)data[14]);rgplr[owner].iTechNow=data[16];
+            rgplr[owner].rgAttr[rsMajorAdv]=(int8_t)data[12];rgplr[owner].grbitAttr=static_cast<RaceTraitBits>((uint32_t)data[13]);rgplr[owner].grbitTrader=static_cast<GrbitTrader>((uint16_t)data[14]);rgplr[owner].SetITechNow(data[16]);
             for(int f=0;f<6;f++)rgplr[owner].rgTech[f]=(int8_t)data[15];rgplr[owner].cFleet=data[18]?512:0;
         }
         for(int i=0;i<16;i++){ships[i].cBuilt=100+i;ships[i].cExist=50+i;}
@@ -192,11 +192,11 @@ int main(int argc,char **argv){
     rgplr[0].cFleet=512;cFleet=512;ships[0].cBuilt=ships[0].cExist=512;
     for(int i=0;i<512;i++){
         memset(&fleetBodies[i],0,sizeof(FLEET));memset(orderStorage[i].data,0,sizeof(orderStorage[i].data));fleetSlots[i]=&fleetBodies[i];
-        fleetBodies[i].ifl=i;fleetBodies[i].iPlayer=0;fleetBodies[i].iplr=0;fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
-        fleetBodies[i].lpplord=(PLORD *)orderStorage[i].data;fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord[0].pt=fleetBodies[i].pt;
+        fleetBodies[i].SetIfl(i);fleetBodies[i].iPlayer=0;fleetBodies[i].SetIplr(0);fleetBodies[i].idPlanet=idPlanetDeepSpace;fleetBodies[i].rgcsh[0]=1;fleetBodies[i].pt=(POINT16){99,99};
+        fleetBodies[i].lpplord=LpStartPl<PLORD,ORDER>(orderStorage[i].data,sizeof(orderStorage[i].data));fleetBodies[i].cord=1;fleetBodies[i].lpplord->iordMac=1;fleetBodies[i].lpplord->rgord()[0].pt=fleetBodies[i].pt;
     }
     cQueries=cGateLookups=mdCheckResult=fInCheck=0;memset(rgQueries,-1,sizeof(rgQueries));memset(rgGateRequests,-1,sizeof(rgGateRequests));
-    planet.lpplprod=(PLPROD *)LpplAlloc(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod[0]=row(1,0,2,0);
+    planet.lpplprod=LpplAlloc<PLPROD>(4,1,htOrd);planet.lpplprod->iprodMac=1;planet.lpplprod->rgprod()[0]=row(1,0,2,0);
     Produce();CHECK(canCalls==1 && mdCheckResult==1 && !newFleets && !planet.lpplprod && ships[0].cBuilt==512 && ships[0].cExist==512 && rgplr[0].lResLastYear==90 && planet.rgwtMin[0]==10);
     reset();printf("Construction actual eligibility integration: %lu cases plus post-charge Produce/fleet-limit case; %d assertions passed\n",cases,checks);return 0;
 }
@@ -206,7 +206,7 @@ int main(int argc,char **argv){
         for generator in ('text/textgen.py','data/datagen.py'):
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+helpers+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-parameter',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),str(path/'data_tables.cpp'),'-lm','-o',str(binary)],check=True)
         export=path/'catalog.bin';subprocess.run([str(binary),'export',str(export)],check=True)
         table={r[:2]:(r[2:8],r[8]) for r in struct.iter_unpack('<9i',export.read_bytes())};assert len(table)==sum(LIMITS)

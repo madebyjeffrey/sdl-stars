@@ -17,6 +17,7 @@ void    LogMakeValidXfer(LOGXFER *plx1, LOGXFER *plx2);
 void    LogMakeValidXferf(LOGXFERF *plxf1, LOGXFERF *plxf2);
 void    CancelMemRt(RecordType rt);
 void    WriteMemRt(RecordType rt, int16_t cb, void *rg);
+void    WriteMemZpqRt(int16_t cb);
 void    DirtyGame(int16_t fDirty);
 int16_t FGetPrevLogRt(HDR *phdr, uint8_t *pb);
 int16_t FRunLogFile();
@@ -28,5 +29,8 @@ int16_t FWriteHistFile(int16_t iPlayer);
 void    EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), void *lpPass, int16_t iPass);
 
 decltype(DirtyGame) STARS_TEST_IMPL(DirtyGame);
+
+void WriteMemResearch(int16_t wResearch);
+void WriteMemPassword(int32_t lSalt);
 
 #endif

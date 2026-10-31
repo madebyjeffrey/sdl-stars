@@ -5,7 +5,9 @@ Scripted builder words isolate caller control. Separate cases execute the actual
 builder before a controlled object rejection. Native packet/fleet creation and
 whole-host state are not replaced by claims about these providers.
 """
+from cpp_production_storage import declarations as storage_declarations, definitions as storage_definitions
 from pathlib import Path
+from check_s02_source import struct_start
 import os
 import re
 import shlex
@@ -27,6 +29,8 @@ def main():
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <array>
+#include <bit>
 #define TRUE 1
 #define FALSE 0
 #define LOWORD(x) ((uint16_t)(x))
@@ -41,7 +45,7 @@ def main():
     start=enums.index('enum HeapType : uint16_t {');declarations+=enums[start:enums.index(';',start)+1]+'\ntypedef enum HeapType HeapType;\n'
     declarations+='#pragma pack(push,1)\n'
     for tag,alias in [('_prod','PROD'),('PLPROD','PLPROD'),('_pl','PL'),('_planet','PLANET')]:
-        start=types.index('struct '+tag+' {')
+        start=struct_start(types, tag)
         declarations+=types[start:types.index('\n};',start)+3]+f'\ntypedef struct {tag} {alias};\n'
     declarations+=r'''
 #pragma pack(pop)
@@ -80,7 +84,7 @@ static void RandomEvents(void){event('E');planet.rgwtMin[3]+=20;}
 static void FSendPlrMsg2(int16_t player,int id,int a,int b,int c){
     (void)a;(void)b;(void)c;if(player<0 || player>=16)longjmp(env,10);assert(messages<16);
     notice[messages]=id;noticePlayer[messages]=player;noticeCount[messages]=planet.lpplprod ? planet.lpplprod->iprodMac:-1;
-    noticeRowCount[messages]=planet.lpplprod && planet.lpplprod->iprodMac ? (int)planet.lpplprod->rgprod[0].cItem:-1;messages++;
+    noticeRowCount[messages]=planet.lpplprod && planet.lpplprod->iprodMac ? (int)planet.lpplprod->rgprod()[0].cItem:-1;messages++;
 }
 static int16_t CResourcesAtPlanet(PLANET *p,int16_t player){
     assert(p==&planet && !player);queries++;event('Q');if(mutateQuery){p->fNoResearch=!p->fNoResearch;p->rgwtMin[0]=999;}
@@ -111,7 +115,7 @@ static int16_t FBuildObject(PLANET *p,GrobjClass kind,int16_t item,int16_t count
     bodies+=r'''
 static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *resources,int16_t alchemy,int16_t *status,int16_t calc){
     assert(p==&planet && partial && !partial->cItem && status && !calc && builds<260);
-    traceIndex[builds]=(int)(row-p->lpplprod->rgprod);traceAlchemy[builds]=alchemy;traceCount[builds]=row->cItem;builds++;event('B');
+    traceIndex[builds]=(int)(row-p->lpplprod->rgprod());traceAlchemy[builds]=alchemy;traceCount[builds]=row->cItem;builds++;event('B');
     if(!script)return NativeCBuildProdItem(p,row,partial,resources,alchemy,status,calc);
     *status=(int16_t)forcedStatus;resources[3]=scriptResources;
     if(partialCount){memset(partial,0,sizeof(*partial));partial->cItem=partialCount;partial->iItem=11;partial->grobj=1;partial->pct=59;partial->unused=31;}
@@ -122,10 +126,10 @@ static int16_t CBuildProdItem(PLANET *p,PROD *row,PROD *partial,int32_t *resourc
     witnesses=r'''
 static PROD row(unsigned count,unsigned item,unsigned kind){PROD r={};r.cItem=count;r.iItem=item;r.grobj=kind;r.unused=7;return r;}
 static PLPROD *queue(unsigned maximum,unsigned count,unsigned physical){
-    assert(heaps<8);size_t n=4+4*physical;PLPROD *p=static_cast<PLPROD *>(malloc(n));assert(p);memset(p,0,n);
+    assert(heaps<8);size_t n=4+4*physical;PLPROD *p=static_cast<PLPROD *>(malloc(n));assert(p);memset(p,0,n);p=LpStartPl<PLPROD,PROD>(p,n);
     heap[heaps].p=p;heap[heaps].bytes=n;heap[heaps++].live=1;allocations++;
     p->cbItem=4;p->ht=htOrd;p->iprodMax=maximum;p->iprodMac=count;
-    for(unsigned i=0;i<physical;i++)p->rgprod[i]=row(1,7,3);return p;
+    for(unsigned i=0;i<physical;i++)p->rgprod()[i]=row(1,7,3);return p;
 }
 static void reset(void){
     for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);
@@ -161,16 +165,16 @@ int main(void){
         reset();gross=(int16_t)raw;extras[0]=(uint16_t)extra;Produce();CHECK(rgplr[0].lResLastYear==expected && !builds && queries==1);
     }
     CHECK(undefinedExtra==4);
-    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(1,7,3);rgplr[0].pctResearch=20;applied=0;resourceDelta=7;Produce();
+    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(1,7,3);rgplr[0].pctResearch=20;applied=0;resourceDelta=7;Produce();
     CHECK(builds==1 && applications==1 && !planet.lpplprod && seenResources[3]==70 && rgplr[0].lResLastYear==90);
     CHECK(planet.rgwtMin[0]==17 && frees==1 && has(idmHasCompletedOrdersProductionQueueEmpty));
-    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(2,7,3);gross=15;applied=0;Produce();
-    CHECK(builds==1 && applications==1 && planet.lpplprod && planet.lpplprod->rgprod[0].cItem==0 && planet.lpplprod->rgprod[0].pct==59 && rgplr[0].lResLastYear==0);
+    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(2,7,3);gross=15;applied=0;Produce();
+    CHECK(builds==1 && applications==1 && planet.lpplprod && planet.lpplprod->rgprod()[0].cItem==0 && planet.lpplprod->rgprod()[0].pct==59 && rgplr[0].lResLastYear==0);
     rgplr[0].lResLastYear=1234;builds=applications=0;phases[0]=0;Produce();CHECK(!builds && !planet.lpplprod && rgplr[0].lResLastYear==15);
     for(unsigned automatic=0;automatic<7;automatic++){
-        reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(3,automatic,1);gross=15;applied=0;Produce();
+        reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(3,automatic,1);gross=15;applied=0;Produce();
         CHECK(builds==1 && applications==1 && planet.lpplprod && planet.lpplprod->iprodMac==2);
-        CHECK(planet.lpplprod->rgprod[1].iItem==automatic && planet.lpplprod->rgprod[1].cItem==3 && planet.lpplprod->rgprod[0].pct==59);
+        CHECK(planet.lpplprod->rgprod()[1].iItem==automatic && planet.lpplprod->rgprod()[1].cItem==3 && planet.lpplprod->rgprod()[0].pct==59);
         CHECK(rgplr[0].lResLastYear==0);
     }
     reset();planet.lpplprod=queue(1,1,1);rgplr[0].pctResearch=20;mutateQuery=1;script=1;forcedBuilt=0;forcedStatus=5;Produce();
@@ -186,14 +190,14 @@ int main(void){
         if(status==0){CHECK(!planet.lpplprod && frees==1);}
         else{
             CHECK(planet.lpplprod && planet.lpplprod->iprodMac==1+stop*partial && reallocations==stop*partial);
-            PROD *r=planet.lpplprod->rgprod;CHECK(r[stop*partial].cItem==(unsigned)success);
+            PROD *r=planet.lpplprod->rgprod();CHECK(r[stop*partial].cItem==(unsigned)success);
             if(stop && partial)CHECK(r[0].cItem==1 && r[0].iItem==11 && r[0].pct==59 && r[0].unused==31);
         }
     }
     // Manual validation, including signed cap narrowing and nonplanet bypass.
     for(unsigned kind=0;kind<8;kind++)for(unsigned item=0;item<128;item++)for(int scanner=0;scanner<2;scanner++)
     for(int mass=0;mass<2;mass++)for(int destination=0;destination<2;destination++)for(int cap=-1;cap<=4;cap++){
-        reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(3,item,kind);planet.iScanner=scanner ? 31:0;
+        reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(3,item,kind);planet.iScanner=scanner ? 31:0;
         warp=mass;planet.idFling=destination;capAbsolute=(int16_t)(cap-1);capOperable=capTerraform=(int16_t)cap;
         planet.cFactories=1;planet.cMines=2;planet.cDefenses=3;script=1;forcedBuilt=0;forcedStatus=5;
         int clipped=3,drop=0,msg=0;
@@ -213,7 +217,7 @@ int main(void){
     const unsigned installedCounts[]={0,1,4095},manualItems[]={7,8,9,12},requestedCounts[]={3,1023};
     for(unsigned a=0;a<6;a++)for(unsigned o=0;o<6;o++)for(unsigned c=0;c<3;c++)for(unsigned m=0;m<4;m++)for(unsigned r=0;r<2;r++){
         reset();unsigned item=manualItems[m],installed=installedCounts[c],requested=requestedCounts[r];
-        planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(requested,item,1);
+        planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(requested,item,1);
         capAbsolute=capacities[a];capOperable=capTerraform=capacities[o];
         if(item==7)planet.cFactories=installed;else if(item==8)planet.cMines=installed;else planet.cDefenses=installed;
         script=1;forcedBuilt=0;forcedStatus=5;
@@ -223,26 +227,26 @@ int main(void){
         if(builds)CHECK(traceCount[0]==(reduced ? maximum:(int)requested));
         if(reduced)CHECK(messages>=1 && noticeRowCount[0]==(int)requested);
     }
-    reset();planet.lpplprod=queue(3,3,3);planet.lpplprod->rgprod[0]=row(1,3,1);planet.lpplprod->rgprod[1]=row(1,7,3);script=1;forcedBuilt=0;Produce();
+    reset();planet.lpplprod=queue(3,3,3);planet.lpplprod->rgprod()[0]=row(1,3,1);planet.lpplprod->rgprod()[1]=row(1,7,3);script=1;forcedBuilt=0;Produce();
     CHECK(builds==2 && traceIndex[0]==1 && traceAlchemy[0] && traceIndex[1]==0 && !traceAlchemy[1] && !planet.lpplprod && moves==1);
-    reset();planet.lpplprod=queue(3,3,3);planet.lpplprod->rgprod[0]=planet.lpplprod->rgprod[1]=row(1,3,1);script=1;forcedBuilt=0;Produce();
-    CHECK(builds==1 && traceIndex[0]==2 && traceAlchemy[0] && planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod[0].iItem==3);
+    reset();planet.lpplprod=queue(3,3,3);planet.lpplprod->rgprod()[0]=planet.lpplprod->rgprod()[1]=row(1,3,1);script=1;forcedBuilt=0;Produce();
+    CHECK(builds==1 && traceIndex[0]==2 && traceAlchemy[0] && planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod()[0].iItem==3);
     for(unsigned used=1;used<=255;used++){
         reset();planet.lpplprod=queue(used,used,used);script=1;forcedStatus=5;partialCount=1;Produce();
         CHECK(reallocations==1 && planet.lpplprod->iprodMax==(used+1)%256 && planet.lpplprod->iprodMac==(used+1)%256);
-        CHECK(planet.lpplprod->rgprod[0].pct==59 && planet.lpplprod->rgprod[used].unused==7);
+        CHECK(planet.lpplprod->rgprod()[0].pct==59 && planet.lpplprod->rgprod()[used].unused==7);
     }
     reset();planet.lpplprod=queue(0,255,255);script=1;forcedStatus=5;partialCount=1;
     int escaped=setjmp(env);if(!escaped){Produce();CHECK(0);}CHECK(escaped==7 && reallocations==0 && planet.lpplprod->iprodMac==255);
     reset();planet.lpplprod=queue(0,255,256);script=1;forcedStatus=5;partialCount=1;Produce();CHECK(!reallocations && planet.lpplprod->iprodMac==0);
     reset();planet.lpplprod=queue(1,1,1);script=1;forcedStatus=5;partialCount=1;failResize=1;applied=0;rgplr[0].pctResearch=20;
-    escaped=setjmp(env);if(!escaped){Produce();CHECK(0);}CHECK(escaped==8 && applications==1 && !frees && planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod[0].cItem==0);
+    escaped=setjmp(env);if(!escaped){Produce();CHECK(0);}CHECK(escaped==8 && applications==1 && !frees && planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod()[0].cItem==0);
     CHECK(rgplr[0].lResLastYear==20 && planet.rgwtMin[0]==10 && !strcmp(phases,"MQBA"));
-    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod[0]=row(3,1,1);gross=15;
+    reset();planet.lpplprod=queue(1,1,1);planet.lpplprod->rgprod()[0]=row(3,1,1);gross=15;
     failResize=1;applied=0;rgplr[0].pctResearch=20;
     escaped=setjmp(env);if(!escaped){Produce();CHECK(0);}
     CHECK(escaped==8 && builds==1 && applications==1 && seenResources[3]==0 && !frees);
-    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod[0].cItem==3 && rgplr[0].lResLastYear==3);
+    CHECK(planet.lpplprod->iprodMac==1 && planet.lpplprod->rgprod()[0].cItem==3 && rgplr[0].lResLastYear==3);
     CHECK(planet.rgwtMin[0]==10 && !strcmp(phases,"MQBA"));
     reset();for(int i=0;i<heaps;i++)if(heap[i].live)free(heap[i].p);
     printf("M09 host production source: %d assertions passed\n",checks);return 0;
@@ -250,8 +254,8 @@ int main(void){
 '''
     with tempfile.TemporaryDirectory(prefix='m09-host-production-') as work:
         path=Path(work); source=path/'witness.cpp'; binary=path/'witness'
-        source.write_text(declarations+bodies+witnesses)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        source.write_text(declarations + storage_declarations(allocate=False, resize=True, free=True) + bodies + storage_definitions('return heap[slot(lp)].bytes;', allocate=False, resize=True, free=True) + witnesses)
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all',str(source),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True)
 

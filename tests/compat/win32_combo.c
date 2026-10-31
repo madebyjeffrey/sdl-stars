@@ -167,12 +167,12 @@ int main(void) {
     CHECK(FComboButtonPainted(hcb, TRUE));
     CHECK(FPopupTextPainted(hcb->lpcombo->hwndPopup, (int)SendMessage(hcb, CB_GETITEMHEIGHT, 0, 0)));
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0) {
-        CHECK(SDL_GetWindowFlags(hcb->lpcombo->hwndPopup->lpWindow) & SDL_WINDOW_POPUP_MENU);
-        CHECK(SDL_GetWindowParent(hcb->lpcombo->hwndPopup->lpWindow) == hwnd->lpWindow);
+        CHECK(SDL_GetWindowFlags(hcb->lpcombo->hwndPopup->lpWindow.get()) & SDL_WINDOW_POPUP_MENU);
+        CHECK(SDL_GetWindowParent(hcb->lpcombo->hwndPopup->lpWindow.get()) == hwnd->lpWindow.get());
     }
     // X11 maps a shown popup asynchronously. Route synthetic mouse input only
     // after the window manager has established its native screen coordinates.
-    CHECK(SDL_SyncWindow(hcb->lpcombo->hwndPopup->lpWindow));
+    CHECK(SDL_SyncWindow(hcb->lpcombo->hwndPopup->lpWindow.get()));
     msPopup = SDL_GetTicks();
     do {
         SDL_PumpEvents(); CHECK(GetWindowRect(hcb->lpcombo->hwndPopup, &rc));
@@ -185,7 +185,7 @@ int main(void) {
     CHECK(GetWindowRect(hcb, &rcField) && rc.left == rcField.left && rc.top == rcField.bottom);
     Drain();
     CHECK(hcb->lpcombo->hwndPopup && GetCapture() == hcb);
-    CHECK(GetFocus() == hcb && hcb->lpcombo->hwndPopup->lpCanvas);
+    CHECK(GetFocus() == hcb && hcb->lpcombo->hwndPopup->lpCanvas.get());
     cBefore = cSel;
     CHECK(SendMessage(hcb, CB_GETCURSEL, 0, 0) == 1);
     event.type = SDL_EVENT_MOUSE_MOTION; event.motion.windowID = hcb->lpcombo->hwndPopup->id;

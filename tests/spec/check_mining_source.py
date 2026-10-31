@@ -187,6 +187,7 @@ def cases():
 def main():
     declarations=r'''
 #include "common.h"
+#include "liststorage.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -196,7 +197,7 @@ static union {max_align_t align;uint8_t bytes[sizeof(PLORD)+sizeof(ORDER)];} ord
 static SHDEF designs[16];SHDEF *rglpshdef[16];static MINING mining[8];
 int32_t lRandSeed1,lRandSeed2;static int draws,mineCalls,partCalls,operCalls;
 static int16_t NativeRandom(int16_t bound);static int32_t NativeCMineFromLpfl(FLEET *fleet);
-int16_t FLookupPart(PART *part){assert(part->hs.grhst==hstMining && part->hs.iItem<=iminingAlienMiner);partCalls++;part->pmining=&mining[part->hs.iItem];return TRUE;}
+int16_t FLookupPart(PART *part){assert(part->hs.grhst==hstMining && part->hs.iItem<=iminingAlienMiner);partCalls++;part->SetPmining(&mining[part->hs.iItem]);return TRUE;}
 int32_t CMineFromLpfl(FLEET *fleet){mineCalls++;int i=(int)(fleet-fleets);assert(0<=i && i<4);return cfg[29+8*i+7] ? NativeCMineFromLpfl(fleet):cfg[29+8*i+5];}
 int16_t CMaxOperableMines(PLANET *p,int16_t player,int16_t next){(void)p;assert(player==cfg[4] && !next);return (int16_t)cfg[2];}
 int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? NativeRandom(bound):(int16_t)cfg[11];}
@@ -209,14 +210,14 @@ int16_t Random(int16_t bound){assert(bound==100);draws++;return cfg[10] ? Native
     harness=r'''
 static void setup(void){
     memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(&gd,0,sizeof(gd));memset(designs,0,sizeof(designs));
-    memset(fleets,0,sizeof(fleets));memset(orderStorage,0,sizeof(orderStorage));for(int i=0;i<4;i++)orders[i]=(PLORD *)orderStorage[i].bytes;draws=mineCalls=partCalls=operCalls=0;lRandSeed1=7;lRandSeed2=11;
+    memset(fleets,0,sizeof(fleets));memset(orderStorage,0,sizeof(orderStorage));for(int i=0;i<4;i++)orders[i]=LpStartPl<PLORD,ORDER>(orderStorage[i].bytes,sizeof(orderStorage[i].bytes));draws=mineCalls=partCalls=operCalls=0;lRandSeed1=7;lRandSeed2=11;
     planet.iPlayer=(int16_t)cfg[4];planet.rgwtMin[3]=cfg[5];planet.cMines=4095;planet.fHomeworld=cfg[7];gd.fGeneratingTurn=cfg[9];cFleet=(int16_t)cfg[21];
     for(int i=0;i<16;i++){rgplr[i].rgAttr[rsMajorAdv]=(int8_t)cfg[6];rgplr[i].rgAttr[rsMineProd]=(int8_t)cfg[3];rglpshdef[i]=designs;
         designs[i].hul.chs=(uint8_t)cfg[24];for(int j=0;j<16;j++){designs[i].hul.rghs[j].grhst=(HullSlotType)cfg[25];designs[i].hul.rghs[j].iItem=cfg[26];designs[i].hul.rghs[j].cItem=cfg[27];}}
     for(int i=0;i<8;i++)mining[i].grAbility=(int16_t)cfg[28];
     for(int i=0;i<3;i++){planet.rgwtMin[i]=cfg[12+i];planet.rgMinConc[i]=(uint8_t)cfg[15+i];planet.rgpctMinLevel[i]=(uint8_t)cfg[18+i];}
     for(int i=0;i<4;i++){int at=29+8*i;fleets[i].idPlanet=(int16_t)cfg[at];fleets[i].iPlayer=(int16_t)cfg[at+1];fleets[i].fDead=cfg[at+2];
-        fleets[i].cord=(int16_t)cfg[at+3];fleets[i].lpplord=cfg[at+4]<0 ? NULL:orders[i];orders[i]->rgord[0].grTask=cfg[at+4]<0 ? 0:cfg[at+4];fleets[i].fHereAllTurn=cfg[at+6];
+        fleets[i].cord=(int16_t)cfg[at+3];fleets[i].lpplord=cfg[at+4]<0 ? NULL:orders[i];orders[i]->rgord()[0].grTask=cfg[at+4]<0 ? 0:cfg[at+4];fleets[i].fHereAllTurn=cfg[at+6];
         for(int j=0;j<16;j++)fleets[i].rgcsh[j]=(int16_t)((j==0 || cfg[0]==2) ? cfg[23]:0);rglpfl[i]=i==cfg[22] ? NULL:&fleets[i];}
 }
 int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");assert(f);unsigned long cases=0,checks=0;int64_t expected[22];
@@ -245,7 +246,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *f=fopen(argv[1],"rb");asser
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-ffp-contract=off','-fno-fast-math',
             '-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)

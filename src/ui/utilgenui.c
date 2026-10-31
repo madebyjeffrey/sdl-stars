@@ -1,4 +1,6 @@
 #include "win.h"
+#include "ownership.h"
+#include "resourcecodec.h"
 #include <stars_compat.h>
 
 INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -50,7 +52,7 @@ INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     return 0;
 }
 
-void CtrTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen) {
+void CtrTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen) {
     int16_t dx;
 
     if (cLen == 0) {
@@ -61,7 +63,7 @@ void CtrTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen) {
     return;
 }
 
-int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, char *psz, int16_t cLen, int16_t fPrint) {
+int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, const char *psz, int16_t cLen, int16_t fPrint) {
     int16_t dx;
 
     if (cLen == 0) {
@@ -75,14 +77,14 @@ int16_t DxStreamTextOut(HDC hdc, int16_t *px, int16_t y, char *psz, int16_t cLen
     return dx;
 }
 
-void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint) {
+void WrapTextOut(HDC hdc, int16_t *px, int16_t *py, const char *psz, int16_t cLen, int16_t xLeft, int16_t dxWidth, int16_t *pxMax, int16_t fNewLine, int16_t fPrint) {
     int16_t dxRemain;
-    char   *pchEnd;
+    const char   *pchEnd;
     int16_t fItFit;
     int16_t xRight;
     int16_t dx;
-    char   *pchStart;
-    char   *pch;
+    const char   *pchStart;
+    const char   *pch;
 
     xRight = xLeft + dxWidth;
     dxRemain = dxWidth - (*px - xLeft);
@@ -136,14 +138,14 @@ Done:
     return;
 }
 
-void AddBackTrailingSpaces(char **ppch, char *pchEnd) {
+void AddBackTrailingSpaces(const char **ppch, const char *pchEnd) {
     while (*ppch < pchEnd && **ppch == ' ') {
         (*ppch)++;
     }
     return;
 }
 
-void ChopLastWord(char *pBeg, char **ppEnd) {
+void ChopLastWord(const char *pBeg, const char **ppEnd) {
     while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
         (*ppEnd)--;
     }
@@ -156,14 +158,14 @@ void ChopLastWord(char *pBeg, char **ppEnd) {
     return;
 }
 
-void ChopTrailingSpaces(char *pBeg, char **ppEnd) {
+void ChopTrailingSpaces(const char *pBeg, const char **ppEnd) {
     while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
         (*ppEnd)--;
     }
     return;
 }
 
-void RcCtrTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
+void RcCtrTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
     int16_t y;
     int16_t x;
     int32_t l;
@@ -183,11 +185,19 @@ void RcCtrTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
 }
 
 void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_t dxErase) {
+    if (cLen == -1) cLen = CchGetString(idsNone2, psz);
+    RightTextOut(hdc, x, y, static_cast<const char *>(psz), cLen, dxErase);
+}
+
+void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, int16_t dxErase) {
     int16_t dx;
     RECT    rc;
 
     if (cLen == -1) {
-        cLen = CchGetString(idsNone2, psz);
+        char szNone[sizeof(szLastStrGet)];
+        cLen = CchGetString(idsNone2, szNone);
+        RightTextOut(hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
+        return;
     } else if (cLen == 0) {
         cLen = lstrlen(psz);
     }
@@ -204,7 +214,8 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_
     return;
 }
 
-void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
+void DiaganolTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     double   angle;
     HFONT    hfont;
     int16_t  dxFlat;
@@ -232,6 +243,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
     dy = prc->bottom - prc->top;
     if (dx >= 10 && dy >= 10) {
         plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+        plfOwner.reset(plf);
         plf->lfWeight = 900;
         strcpy(plf->lfFaceName, rgszArial[1]);
         plf->lfHeight = -(dx <= dy ? dy : dx);
@@ -281,7 +293,7 @@ void DiaganolTextOut(HDC hdc, RECT *prc, char *psz, int16_t cLen) {
         DeleteObject(hfont);
 
     FreeLF:
-        LocalFree(plf);
+        plfOwner.reset();
     }
     return;
 }
@@ -413,7 +425,7 @@ void _Draw3dFrame(HDC hdc, RECT *prc, int16_t fErase) {
     return;
 }
 
-void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, char *szText) {
+void InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, int16_t btf, int16_t dTimer, int16_t fInitDown, int16_t fNoEndRedraw, const char *szText) {
     pbtnt->hwnd = hwnd;
     pbtnt->fCreatedDC = hdc == NULL;
     if (!hdc) {
@@ -472,7 +484,7 @@ int16_t FTrackBtn(BTNT *pbtnt) {
     return FALSE;
 }
 
-void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, char *szText) {
+void DrawBtn(HDC hdc, RECT *prc, int16_t bt, int16_t fDown, const char *szText) {
     int32_t  dxFace;
     int16_t  ipt;
     int16_t  dyOffset;
@@ -774,15 +786,19 @@ uint16_t DibNumColors(void *pv) {
     int16_t           bits;
     BITMAPCOREHEADER *lpbc;
     BITMAPINFOHEADER *lpbi;
+    BITMAPINFOHEADER bi;
+    BITMAPCOREHEADER bc;
 
-    lpbi = (BITMAPINFOHEADER *)pv;
-    lpbc = (BITMAPCOREHEADER *)pv;
-    if (lpbi->biSize != 12) {
+    lpbi = &bi;
+    lpbc = &bc;
+    if (RawLoad32(pv) != 12) {
+        memcpy(lpbi, pv, sizeof(bi));
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
         }
         bits = lpbi->biBitCount;
     } else {
+        memcpy(lpbc, pv, sizeof(bc));
         bits = lpbc->bcBitCount;
     }
     switch (bits) {
@@ -798,6 +814,7 @@ uint16_t DibNumColors(void *pv) {
 }
 
 HPALETTE HpalFromDib(HGLOBAL hdib) {
+    NATIVEOWNER<LOGPALETTE, LocalFree> ppalOwner;
     HPALETTE          hpal;
     int16_t           cColors;
     int16_t           i;
@@ -817,6 +834,7 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
         return NULL;
     }
     ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
+    ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     memcpy(ppal->palPalEntry, lpb + 40, cColors * 4);
@@ -826,12 +844,13 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
         ppal->palPalEntry[i].peBlue = bT;
     }
     hpal = CreatePalette(ppal);
-    LocalFree(ppal);
+    ppalOwner.reset();
     GlobalUnlock(hdib);
     return hpal;
 }
 
 HPALETTE HpalBlackReserved() {
+    NATIVEOWNER<LOGPALETTE, LocalFree> ppalOwner;
     HPALETTE    hpal;
     int16_t     cColors;
     int16_t     i;
@@ -839,6 +858,7 @@ HPALETTE HpalBlackReserved() {
 
     cColors = 256;
     ppal = (LOGPALETTE *)LocalAlloc(64, cColors * 4 + 8);
+    ppalOwner.reset(ppal);
     ppal->palNumEntries = cColors;
     ppal->palVersion = 768;
     for (i = 0; i < cColors; i++) {
@@ -848,7 +868,7 @@ HPALETTE HpalBlackReserved() {
         ppal->palPalEntry[i].peFlags = 1;
     }
     hpal = CreatePalette(ppal);
-    LocalFree(ppal);
+    ppalOwner.reset();
     return hpal;
 }
 
@@ -858,7 +878,7 @@ uint16_t PaletteSize(void *pv) {
 
     lpbi = (BITMAPINFOHEADER *)pv;
     NumColors = DibNumColors(lpbi);
-    if (lpbi->biSize == 12) {
+    if (RawLoad32(lpbi) == 12) {
         return 3 * NumColors;
     }
     return NumColors * 4;
@@ -875,20 +895,30 @@ int16_t DibBlt(HDC hdc, int16_t x0, int16_t y0, int16_t dx, int16_t dy, HGLOBAL 
     if (!lpbi) {
         return 0;
     }
-    pBuf = (char *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi);
+    pBuf = (char *)lpbi + LOWORD(RawLoad32(lpbi)) + PaletteSize(lpbi);
     StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, (LPBITMAPINFO)lpbi, 0, rop);
     GlobalUnlock(hdib);
     return 1;
 }
 
 HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE hpal) {
-    HDC               hdc;
+    HDC               hdc = NULL;
     HGLOBAL           h;
     uint32_t          dwLen;
     BITMAP            bm;
     BITMAPINFOHEADER  bi;
     HGLOBAL           hdib;
     BITMAPINFOHEADER *lpbi;
+    NATIVECLEANUPSCOPE dc([&]() noexcept {
+        if (hdc) {
+            SelectPalette(hdc, hpal, FALSE);
+            ReleaseDC(NULL, hdc);
+        }
+    });
+    NATIVEOWNER<void, GlobalFree> dib;
+    bool fLocked = false;
+    NATIVECLEANUPSCOPE unlock([&]() noexcept { if (fLocked) GlobalUnlock(hdib); });
+
 
     if (!hbm) {
         return NULL;
@@ -896,7 +926,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     if (!hpal) {
         hpal = (HPALETTE)GetStockObject(DEFAULT_PALETTE);
     }
-    GetObject(hbm, 14, &bm);
+    GetObject(hbm, sizeof(bm), &bm);
     if (biBits == 0) {
         biBits = bm.bmPlanes * bm.bmBitsPixel;
     }
@@ -916,16 +946,15 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     hpal = SelectPalette(hdc, hpal, FALSE);
     RealizePalette(hdc);
     hdib = GlobalAlloc(66, dwLen);
+    dib.reset(hdib);
     if (!hdib) {
-        SelectPalette(hdc, hpal, FALSE);
-        ReleaseDC(NULL, hdc);
         return NULL;
     }
-    lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib);
+    lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib); fLocked = lpbi != NULL;
     *lpbi = bi;
     GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), NULL, (BITMAPINFO *)lpbi, 0);
     bi = *lpbi;
-    GlobalUnlock(hdib);
+    GlobalUnlock(hdib); fLocked = false;
     if (bi.biSizeImage == 0) {
         bi.biSizeImage = (uint32_t)((int32_t)((uint32_t)(((uint32_t)(bm.bmWidth * (uint32_t)biBits) + 31) / 32) * 4) * bm.bmHeight);
         if (biStyle != 0) {
@@ -935,26 +964,19 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, uint32_t biStyle, uint16_t biBits, HPALETTE h
     dwLen = (uint32_t)PaletteSize(&bi) + bi.biSize + bi.biSizeImage;
     h = GlobalReAlloc(hdib, dwLen, 0);
     if (h) {
+        dib.release();
         hdib = h;
-        lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib);
+        dib.reset(hdib);
+        lpbi = (BITMAPINFOHEADER *)GlobalLock(hdib); fLocked = lpbi != NULL;
         if (GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), (uint8_t *)lpbi + LOWORD(lpbi->biSize) + PaletteSize(lpbi), (BITMAPINFO *)lpbi, 0) == 0) {
-            GlobalUnlock(hdib);
-            hdib = 0;
-            SelectPalette(hdc, hpal, FALSE);
-            ReleaseDC(NULL, hdc);
+            GlobalUnlock(hdib); fLocked = false;
             return NULL;
         }
         bi = *lpbi;
-        GlobalUnlock(hdib);
-        SelectPalette(hdc, hpal, FALSE);
-        ReleaseDC(NULL, hdc);
-        return hdib;
+        GlobalUnlock(hdib); fLocked = false;
+        return dib.release();
     }
-    GlobalFree(hdib);
-    hdib = 0;
-    SelectPalette(hdc, hpal, FALSE);
-    ReleaseDC(NULL, hdc);
-    return hdib;
+    return NULL;
 }
 
 HGLOBAL HdibLoadBigResource(BitmapId idb) {
@@ -963,6 +985,9 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
     char    *lpstr;
     HGLOBAL  hdib;
     uint32_t cb;
+    uint32_t cbHeader;
+    BITMAPINFOHEADER bi;
+    BITMAPCOREHEADER bc;
 
     hrsrc = FindResource(hInst, MAKEINTRESOURCE(idb), MAKEINTRESOURCE(2));
     if (hrsrc == 0) {
@@ -983,6 +1008,16 @@ HGLOBAL HdibLoadBigResource(BitmapId idb) {
         return NULL;
     }
     memcpy((char *)hdib, lpstr, cb);
+    // Embedded bytes become actual native GDI headers in the writable copy.
+    // Incomplete/unknown resource prefixes retain their prior copied bytes.
+    const auto rgb = std::as_bytes(std::span(lpstr, cb));
+    if (NATIVEBYTEREADER(rgb).FReadU32Le(cbHeader)) {
+        if (cbHeader == cbWireDibCoreHeader) {
+            if (FDecodeDibCoreHeader(rgb, bc)) memcpy(hdib, &bc, sizeof(bc));
+        } else if (FDecodeDibHeader(rgb, bi)) {
+            memcpy(hdib, &bi, sizeof(bi));
+        }
+    }
     return hdib;
 }
 
@@ -1112,7 +1147,7 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     }
                     strcpy((char *)GetWindowLongPtr(hwnd, DWLP_USER), szPass);
                 } else if (idPlayer != iplrNone) {
-                    WriteMemRt(rtChgPassword, 4, &lSalt);
+                    WriteMemPassword(lSalt);
                 } else {
                     lSaltCur = lSalt;
                     if (FWriteDataFile(szBase, idPlayer, FALSE)) {
@@ -1269,12 +1304,14 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
 }
 
 HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
+    NATIVEOWNER<LOGFONT, LocalFree> plfOwner;
     HFONT      hfontNew;
     LOGFONT   *plf;
     TEXTMETRIC tm;
     HFONT      hfontSav;
 
     plf = (LOGFONT *)LocalAlloc(64, sizeof(LOGFONT));
+    plfOwner.reset(plf);
     memset(plf, 0, sizeof(LOGFONT));
     plf->lfHeight = -MulDiv(iSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
     strcpy(plf->lfFaceName, rgszArial[1]);
@@ -1285,13 +1322,13 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
         *pdyFont = tm.tmHeight + tm.tmExternalLeading;
         SelectObject(hdc, hfontSav);
     }
-    LocalFree(plf);
+    plfOwner.reset();
     return hfontNew;
 }
 
 // IdAlertBox shows an AlertSz message in a message box and returns the
 // button the player chose.
-int16_t IdAlertBox(char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz, "Stars!", mbType); }
+int16_t IdAlertBox(const char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz, "Stars!", mbType); }
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.

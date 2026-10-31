@@ -153,7 +153,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     x = 4;
     for (i = 0; i < 29; i++) {
         int button = (int8_t)vrgTBBtn[i];
-        int width = DxOfBtn(button);
+        int width = DxOfBtn(static_cast<ToolbarButton>(button));
         if (button >= 0) {
             SetRect(&rect, x, 0, x + width, 28);
             StateRect("toolbarButton", button, hwndTb, &rect);
@@ -192,7 +192,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
             StateAppend("planetSettings.%d=%d|%u\n", planet->id, planet->iPlayer, planet->fNoResearch);
             if (planet->lpplprod != NULL) {
                 for (j = 0; j < planet->lpplprod->iprodMac; j++) {
-                    PROD *prod = &planet->lpplprod->rgprod[j];
+                    PROD *prod = &planet->lpplprod->rgprod()[j];
                     StateAppend("production.%d.%d=%u|%u|%u\n", planet->id, j, prod->grobj, prod->iItem, prod->cItem);
                 }
             }
@@ -207,7 +207,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
             StateAppend("fleet.%d=%s|%d|%d|%ld|%ld|%ld|%ld|%ld|%u\n", fleet->id, PszGetFleetName(fleet->id), point.x, point.y, (long)fleet->rgwtMin[0],
                         (long)fleet->rgwtMin[1], (long)fleet->rgwtMin[2], (long)fleet->rgwtMin[3], (long)fleet->rgwtMin[4], fleet->fRepOrders);
             for (j = 0; j < fleet->cord; j++) {
-                order = &fleet->lpplord->rgord[j];
+                order = &fleet->lpplord->rgord()[j];
                 point = order->pt;
                 LogicalToScan(&point);
                 StateAppend("waypoint.%d.%d=%d|%d|%u|%u|%d|%d\n", fleet->id, j, order->grobj, order->id, order->grTask, order->iWarp, point.x, point.y);
@@ -226,8 +226,9 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
         StateAppend("transferMode=%d\n", mdXferDlg);
         for (i = 0; i < 2; i++) {
             if (pxfer[i].grobj == grobjFleet) {
-                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, pxfer[i].fl.id, (long)pxfer[i].fl.rgwtMin[3], (long)pxfer[i].fl.rgwtMin[4],
-                            (long)LGetFleetStat(&pxfer[i].fl, 1));
+                FLEET &fl = pxfer[i].fl();
+                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, fl.id, (long)fl.rgwtMin[3], (long)fl.rgwtMin[4],
+                            (long)LGetFleetStat(&fl, 1));
             }
         }
         for (i = 0; i < crgbtnXfer; i++) {

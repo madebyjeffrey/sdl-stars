@@ -83,7 +83,7 @@ static int TestComposition(HWND hwnd, HWND hwndChild, HWND hwndNested, HWND hwnd
     CHECK(FillWindow(hwndSibling, RGB(70, 80, 90)) == 0);
     rglp = SDL_GetWindows(&cWindows);
     SDL_free(rglp);
-    CHECK(cWindows == 1 && !hwndChild->lpWindow && !hwndNested->lpRenderer);
+    CHECK(cWindows == 1 && !hwndChild->lpWindow.get() && !hwndNested->lpRenderer.get());
     CHECK(CrComposite(hwnd, 5, 5) == RGB(1, 2, 3));
     CHECK(CrComposite(hwnd, 21, 31) == RGB(10, 20, 30));
     CHECK(CrComposite(hwnd, 28, 40) == RGB(40, 50, 60));

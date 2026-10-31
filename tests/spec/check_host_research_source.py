@@ -224,10 +224,10 @@ static int kind(uint16_t mask){for(int i=0;i<16;i++)if(mask==(UINT32_C(1)<<i))re
 int16_t FLookupPart(PART *part){int k=kind(part->hs.grhst),item=part->hs.iItem,at=typeCalls[k]++;hv(50);hv(idPlayer);hv(k);hv(item);lookups++;
     if((int)lookups-1==cfg[5])longjmp(escaped,1);
     int limit=cfg[3]==0 ? 0:(cfg[3]==1 || cfg[3]==2 || cfg[3]==6) ? 18:cfg[3]==3 ? k%3+1:cfg[3]==5 ? 32769:258;
-    if(at>=limit){part->pcom=NULL;return mdPartAvailInvalid;}assert(cfg[3]!=6);
+    if(at>=limit){part->SetPcom(NULL);return mdPartAvailInvalid;}assert(cfg[3]!=6);
     int avail=mdPartAvailAvailable,requirement=lastLevel;
     if(cfg[3]==1){static const int states[]={1,-1,2,99,1};avail=states[item%5];if(item%5)requirement=(int8_t)(lastLevel-1);}
-    memset(&supplied,0,sizeof(supplied));for(int i=0;i<6;i++)supplied.rgTech[i]=(int8_t)requirement;part->pcom=&supplied;return (int16_t)avail;
+    memset(&supplied,0,sizeof(supplied));for(int i=0;i<6;i++)supplied.rgTech[i]=(int8_t)requirement;part->SetPcom(&supplied);return (int16_t)avail;
 }
 int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t b,int16_t d,int16_t p4,int16_t p5,int16_t p6,int16_t p7){
     assert(!p4 && !p5 && !p6 && !p7);int tag;
@@ -246,7 +246,7 @@ int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t
     harness=r'''
 static void setup(void){memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));hash=costs=lookups=messages=generals=tts=primaries=entries=0;lastField=lastLevel=0;memset(typeCalls,0,sizeof(typeCalls));game.cPlayer=(int16_t)cfg[0];game.fSlowTech=cfg[2];idPlayer=(int16_t)cfg[6];
     for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=static_cast<RaceTraitBits>((cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0));
-        p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->iTechNow=cfg[at+5];p->iTechNext=cfg[at+6];p->lResLastYear=cfg[at+7];
+        p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->SetITechNow(cfg[at+5]);p->SetITechNext(cfg[at+6]);p->lResLastYear=cfg[at+7];
         for(int f=0;f<6;f++){p->rgTech[f]=(int8_t)cfg[at+8+f];p->rgAttr[8+f]=(int8_t)cfg[at+14+f];p->rgResSpent[f]=(uint32_t)cfg[at+20+f];}}
 }
 int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");assert(file);unsigned long cases=0,checks=0;int64_t expected[234];
@@ -273,7 +273,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
         for generator in ['text/textgen.py','data/datagen.py']:
             subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
         source=path/'witness.cpp';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
@@ -304,7 +304,7 @@ int main(void){
     for(unsigned k=0;k<16;k++){assert(counts[k]<256);checks++;assert(counts[k]==rgcModelLimits[k]);checks++;idPlayer=iplrNone;
         for(unsigned item=0;item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
             int available=FLookupPart(&part);if((available==mdPartAvailInvalid)!=(item>=counts[k])){fprintf(stderr,"catalog kind %u item %u count %u status %d\n",k,item,counts[k],available);return 1;}checks++;
-            if(item<counts[k]){assert(part.pcom);checks++;}}
+            if(item<counts[k]){assert(part.pcom());checks++;}}
         idPlayer=0;for(int trait=-128;trait<128;trait++){rgplr[0].rgAttr[rsMajorAdv]=(int8_t)trait;
             for(unsigned item=counts[k];item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
                 assert(FLookupPart(&part)==mdPartAvailInvalid);checks++;}}}
@@ -312,7 +312,7 @@ int main(void){
 }
 '''
         catalog=path/'catalog.cpp';catalog.write_text(catalog_declarations+catalog_bodies+catalog_harness);catalog_binary=path/'catalog'
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
+        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-x','c++','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-Wno-unused-variable','-Wno-unused-but-set-variable',
             '-fsanitize=address,undefined','-fno-sanitize-recover=all','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(catalog),str(path/'data_tables.cpp'),'-lm','-o',str(catalog_binary)],check=True)
         subprocess.run([str(catalog_binary)],check=True)
 

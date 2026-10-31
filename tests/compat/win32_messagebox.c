@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -12,7 +12,8 @@
 static HWND hwndOwner, hwndOther, hwndDisabled, hwndExpectedOwner;
 static int mode, idChoose, idDefault, stage, cErrors, cSeen;
 static BOOL fTask, fDone;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+static BOOL fDisableFailure;
 static int cAudioQueues;
 bool SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb);
 extern "C" bool SDLCALL StarsTest_SDL_PutAudioStreamData(SDL_AudioStream *lp, const void *lpv, int cb) {
@@ -45,6 +46,9 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     MSG message;
     char sz[64] = {0};
     int nested;
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    if (msg == WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 836);
+#endif
     if (msg == WM_TIMER && !fDone && (hbox = HwndBox())) {
         if (!stage) {
             cSeen++;
@@ -69,7 +73,7 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             fDone = FALSE; idChoose = IDYES;
         }
         fDone = TRUE;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
         if (mode == 10) { EXPECT(DestroyWindow(hwndOwner)); return 0; }
         if (mode == 9) {
             hbody = GetDlgItem(hbox, 0xffff); hscroll = GetDlgItem(hbody, 1);
@@ -114,7 +118,7 @@ int main(int argc, char **argv) {
     HWND hwndEdit;
     MSG msg;
     int before;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     char szLong[8192];
     HWND hwndSave;
     int i;
@@ -146,7 +150,7 @@ int main(int argc, char **argv) {
     hwndEdit = CreateWindow("Edit", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP, 4, 4, 100, 22, hwndOwner, (HMENU)20, NULL, NULL); CHECK(hwndEdit);
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
     SetFocus(hwndEdit);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(StarsCompatSetWindowAlertSounds(hwndOwner, FALSE));
     CHECK(IdRun(MB_YESNO | MB_ICONQUESTION, IDYES, IDYES, 11, FALSE) == IDYES);
     CHECK(IdRun(MB_YESNO | MB_ICONQUESTION, IDYES, IDYES, 6, FALSE) == IDYES);
@@ -159,7 +163,7 @@ int main(int argc, char **argv) {
     cSeen = 0;
 #endif
     CHECK(IdRun(MB_OK | MB_ICONASTERISK, IDOK, IDOK, 0, FALSE) == IDOK);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(GetFocus() == hwndEdit);
 #else
     printf("SDK focus restored to original edit: %s\n", GetFocus() == hwndEdit ? "yes" : "no");
@@ -167,14 +171,14 @@ int main(int argc, char **argv) {
     CHECK(IdRun(MB_OKCANCEL, IDCANCEL, IDOK, 0, FALSE) == IDCANCEL);
     CHECK(IdRun(MB_YESNO | MB_ICONQUESTION | MB_TASKMODAL | MB_DEFBUTTON2, IDNO, IDNO, 1, FALSE) == IDNO);
     CHECK(IdRun(MB_YESNOCANCEL | MB_ICONEXCLAMATION, IDCANCEL, IDYES, 2, FALSE) == IDCANCEL);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(IdRun(MB_OK, IDOK, IDOK, 2, FALSE) == IDOK);
 #else
     before = IdRun(MB_OK, IDOK, IDOK, 2, FALSE);
     printf("SDK OK-only Escape result: %d (documented IDOK=%d)\n", before, IDOK);
     CHECK(before == IDOK || before == IDCANCEL);
 #endif
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(IdRun(MB_YESNO, IDNO, IDYES, 3, FALSE) == IDNO);
 #else
     before = IdRun(MB_YESNO, IDNO, IDYES, 3, FALSE);
@@ -190,7 +194,7 @@ int main(int argc, char **argv) {
     CHECK(IdRun(MB_YESNO, IDYES, IDYES, 6, FALSE) == IDYES);
     CHECK(cErrors == 0 && cSeen == 14);
     CHECK(IdRun(MB_YESNO, IDNO, IDYES, 8, FALSE) == IDNO);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     before = cAudioQueues;
     CHECK(MessageBeep(MB_OK) && MessageBeep(MB_ICONHAND) && MessageBeep(MB_ICONQUESTION) &&
           MessageBeep(MB_ICONEXCLAMATION) && MessageBeep(MB_ICONASTERISK) && MessageBeep(UINT32_MAX));
@@ -209,6 +213,14 @@ int main(int argc, char **argv) {
     CHECK(SetTimer(hwndOwner, 91, 20, NULL));
     CHECK(MessageBox(hwndOwner, "Initially disabled owner", "Stars Message Contract", MB_OK) == IDOK);
     KillTimer(hwndOwner, 91); CHECK(!IsWindowEnabled(hwndOwner)); EnableWindow(hwndOwner, TRUE);
+    before = cAudioQueues; fDisableFailure = TRUE;
+    CHECK(!MessageBox(hwndOwner, "Failed owner disable", "Stars Message Contract", MB_OK | MB_ICONHAND));
+    CHECK(FStarsErrorPending() && IsWindowEnabled(hwndOwner) && cAudioQueues == before);
+    CHECK(!MessageBox(hwndOwner, "Failure already pending", "Stars Message Contract", MB_OK | MB_ICONHAND));
+    CHECK(IsWindowEnabled(hwndOwner) && cAudioQueues == before);
+    try { StarsRethrowPendingError(); CHECK(FALSE); }
+    catch (const StarsError &error) { CHECK(error.mdError == starsErrorFile && error.ids == 836); }
+    fDisableFailure = FALSE;
     hwndSave = hwndOwner;
     hwndOwner = CreateWindow(wc.lpszClassName, "Destroyed owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               40, 40, 300, 200, NULL, NULL, NULL, NULL); CHECK(hwndOwner);
@@ -220,7 +232,7 @@ int main(int argc, char **argv) {
     (void)before; (void)msg;
 #endif
     CHECK(cErrors == 0 && DestroyWindow(hwndOwner) && DestroyWindow(hwndOther) && DestroyWindow(hwndDisabled));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown(); CHECK(!(SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO));
 #endif
     puts("Message-box buttons, keyboard, modality, nesting and owner restoration passed"); return 0;

@@ -68,7 +68,7 @@ static int TestPicker(HWND hwnd) {
 }
 
 int main(void) {
-    WNDCLASS wc = {0};
+    WNDCLASS wc = {};
     HWND hwnd, hwndEdit, hwndOrdinary, hwndPassword, hwndList;
     HMENU hmenu;
     HDC hdc, hdcOrdinary;
@@ -78,7 +78,7 @@ int main(void) {
     char szSnapshotDir[4096], szSnapshotPath[8192];
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     NATIVEFILE *pf;
-    STARSCOMPATSNAPSHOT snap = {0};
+    STARSCOMPATSNAPSHOT snap = {};
     OFSTRUCT ofs;
     size_t cb, i;
     BOOL fFound = FALSE;
@@ -101,7 +101,7 @@ int main(void) {
     CHECK(SendMessage(hwndList, LB_GETCOUNT, 0, 0) == 0);
     CHECK(OpenFile("/tmp/stars-\xff", &ofs, OF_READ) == HFILE_ERROR);
     CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
-    CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow), psz) == 0);
+    CHECK(strcmp(SDL_GetWindowTitle(hwnd->lpWindow.get()), psz) == 0);
     hwndEdit = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             8, 8, 500, 30, hwnd, (HMENU)(INT_PTR)100, wc.hInstance, NULL);
     hwndOrdinary = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE, 8, 48, 500, 30,

@@ -1,4 +1,5 @@
 #include "fileio.h"
+#include "filesession.h"
 #include "filesystem.h"
 #include <errno.h>
 #include <stdio.h>
@@ -14,6 +15,22 @@ int main(void) {
     NATIVEFILE *temp = PfNativeCreateTemp(path);
     CHECK(temp && CWriteNative(rgb, 1, sizeof(rgb), temp) == sizeof(rgb));
     CHECK(ISyncNativeFile(temp) == 0 && ICloseNativeFile(temp) == 0);
+    // The bound owner closes every legacy stream and retains token reuse.
+    {
+        NATIVEFILESESSION session;
+        auto *previous = PBindNativeFileSession(&session);
+        int16_t missing = 0;
+        int16_t hf = HfNativeOpenLegacy(path, 0x40, &missing);
+        CHECK(hf == 3 && !missing);
+        unsigned char ch = 1;
+        CHECK(CbNativeReadLegacy(hf, &ch, 1) == 1 && ch == 0);
+        session.Close(); session.Close();
+        errno = 0;
+        CHECK(CbNativeReadLegacy(hf, &ch, 1) == -1 && errno == EBADF);
+        CHECK(HfNativeOpenLegacy(path, 0x40, &missing) == 3 && !missing);
+        CHECK(PBindNativeFileSession(previous) == &session);
+        // The remaining token is released by the actual session destructor.
+    }
     NATIVEFILE *pf = PfNativeOpen(path,"r+b");
     CHECK(pf && CbNativeFile(pf) == 6 && LNativePosition(pf) == 0);
     CHECK(CReadNative(out,2,4,pf) == 3 && !memcmp(out,rgb,6) && FNativeStreamEof(pf) && !FNativeStreamError(pf));

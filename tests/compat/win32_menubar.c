@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -10,7 +10,7 @@
 static UINT idCommand;
 static int cEnter, cExit, iAction, iStep;
 static BOOL fWrongLoop, fDestroyInit, fDemo;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static BOOL fPopupContract;
 #endif
 static LRESULT CALLBACK BarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -27,15 +27,15 @@ static void CALLBACK InputTimer(HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) {
     if (iAction == 1) { key = iStep == 0 ? VK_HOME : VK_RETURN; }
     else if (iAction == 2) { key = iStep == 0 ? VK_RIGHT : iStep == 1 ? VK_HOME : VK_RETURN; }
     else if (iAction == 3) { EndMenu(); }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     else if (iAction == 5) {
         HWND hp;
         RECT rcPopup, rcBar;
         SDL_Event event = {0};
         for (hp = GetWindow(hwnd, GW_HWNDFIRST); hp; hp = GetWindow(hp, GW_HWNDNEXT)) {
-            if (GetParent(hp) != hwnd || !IsWindowVisible(hp) || !hp->lpWindow ||
-                !(SDL_GetWindowFlags(hp->lpWindow) & SDL_WINDOW_POPUP_MENU)) continue;
-            fPopupContract = SDL_GetWindowParent(hp->lpWindow) == hwnd->lpWindow &&
+            if (GetParent(hp) != hwnd || !IsWindowVisible(hp) || !hp->lpWindow.get() ||
+                !(SDL_GetWindowFlags(hp->lpWindow.get()) & SDL_WINDOW_POPUP_MENU)) continue;
+            fPopupContract = SDL_GetWindowParent(hp->lpWindow.get()) == hwnd->lpWindow.get() &&
                 GetWindowRect(hp, &rcPopup) && GetMenuItemRect(hwnd, GetMenu(hwnd), 0, &rcBar) &&
                 rcPopup.left == rcBar.left && rcPopup.top == rcBar.bottom;
             event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hp->id;
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     HMENU hmenu, hfile, hedit;
     RECT rcBefore, rcAfter, rcFile, rcEdit, rcWindow, rcWindowAfter;
     POINT ptBefore = {0, 0}, ptAfter = {0, 0}, ptChild = {0, 0};
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     HDC hdc;
     SDL_Surface *lpComposite;
     SDL_Event event = {0};
@@ -114,10 +114,10 @@ int main(int argc, char **argv) {
     CHECK(hchild && ClientToScreen(hchild, &ptChild) && ptChild.x == ptAfter.x && ptChild.y == ptAfter.y);
     CHECK(!GetMenuItemRect(hwnd, hmenu, 9, &rcEdit));
     CHECK(UpdateWindow(hchild));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     hdc = GetDC(hwnd); CHECK(hdc);
     SetPixel(hdc, 30, 10, RGB(220, 30, 10)); CHECK(ReleaseDC(hwnd, hdc));
-    lpComposite = hwnd->lpComposite; CHECK(lpComposite && lpComposite->h == 220);
+    lpComposite = hwnd->lpComposite.get(); CHECK(lpComposite && lpComposite->h == 220);
     rgb = (BYTE *)lpComposite->pixels + (ptAfter.y - ptBefore.y + 10) * lpComposite->pitch + 30 * 4;
     memcpy(&pixel, rgb, sizeof(pixel)); SDL_GetRGBA(pixel, SDL_GetPixelFormatDetails(lpComposite->format), NULL, &r, &g, &b, &a);
     CHECK(r == 220 && g == 30 && b == 10);
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
     CHECK(OpenBar(hwnd, 1) == 0 && idCommand == 701);
     CHECK(OpenBar(hwnd, 2) == 0 && idCommand == 702);
     CHECK(OpenBar(hwnd, 3) == 0 && idCommand == 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(OpenBar(hwnd, 4) == 0 && idCommand == 702);
     if (strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0)
         CHECK(OpenBar(hwnd, 5) == 0 && fPopupContract && idCommand == 701);
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
         while (IsWindow(hwnd) && GetMessage(&msg, NULL, 0, 0) > 0) { TranslateMessage(&msg); DispatchMessage(&msg); }
     }
     if (fDemo) {
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
         StarsCompatShutdown();
 #endif
         return 0;
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     CHECK(hwnd && AppendMenu(hfile, MF_STRING, 701, "&Open") && AppendMenu(hmenu, MF_POPUP, (UINT_PTR)hfile, "&File") && SetMenu(hwnd, hmenu));
     fDestroyInit = TRUE; SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, 'f');
     CHECK(!IsWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Menu bar contracts passed");

@@ -2,6 +2,7 @@
 #define STARS_SCAN_INSPECT_H
 
 #include "win.h"
+#include "ownership.h"
 #include <windows.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,7 +23,7 @@ typedef struct SCANSNAPSHOT {
     uint16_t turn;
     int16_t idPlayer, iZoom;
     RECT rcViewport;
-    SCANOBJECT *rgobj;
+    NATIVEARRAYOWNER<SCANOBJECT, std::free> rgobj;
     size_t cObject;
 } SCANSNAPSHOT;
 BOOL FCaptureScanner(SCANSNAPSHOT *lpsnap);

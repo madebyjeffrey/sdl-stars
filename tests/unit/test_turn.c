@@ -66,7 +66,7 @@ static void SetFleetDest(FLEET *lpfl, FLEET *lpflTarget, int16_t dx) {
     lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
     lpfl->cord = 2;
     lpfl->lpplord->iordMac = 2;
-    lpord = &lpfl->lpplord->rgord[1];
+    lpord = &lpfl->lpplord->rgord()[1];
     memset(lpord, 0, sizeof(ORDER));
     lpord->iWarp = 9;
     lpord->fValidTask = TRUE;
@@ -157,14 +157,14 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
         lpfl = LpflStarsTestAddFleet(0, lppl->id, ish, 1);
         pt = lpfl->pt;
         SetFleetDest(lpfl, NULL, 0);
-        lpfl->lpplord->rgord[1].pt.x = pt.x + 81 * rgdxy[idir][0];
-        lpfl->lpplord->rgord[1].pt.y = pt.y + 81 * rgdxy[idir][1];
+        lpfl->lpplord->rgord()[1].pt.x = pt.x + 81 * rgdxy[idir][0];
+        lpfl->lpplord->rgord()[1].pt.y = pt.y + 81 * rgdxy[idir][1];
         lpth = LpthNew(1, ithMinefield);
-        lpth->pt.x = pt.x + 40 * rgdxy[idir][0];
-        lpth->pt.y = pt.y + 40 * rgdxy[idir][1];
-        lpth->thm.cMines = 10000;
-        lpth->thm.iType = mineSpeedBump;
-        lpth->thm.grbitPlr = 1 << 1;
+        lpth->pt().SetX(pt.x + 40 * rgdxy[idir][0]);
+        lpth->pt().SetY(pt.y + 40 * rgdxy[idir][1]);
+        lpth->thm().SetCMines(10000);
+        lpth->thm().SetIType(mineSpeedBump);
+        lpth->thm().SetGrbitPlr(1 << 1);
 
         dTravel = 81;
         TEST_CHECK_(!FTravelThroughMineFields(lpfl, &dTravel, NULL), "the fleet crossed the field");
@@ -172,7 +172,34 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
     }
 }
 
-TEST_LIST = {{"generate one turn", test_generate_one_turn},
+// With a seed that does not select a course change, a trader sends no messages.
+// It must still move when no retargeting message was selected this pass.
+static void test_MoveThings_trader_without_retargeting_moves(void) {
+    char szDir[MAX_PATH];
+    THING *lpth;
+
+    TEST_ASSERT(FStarsTestInit());
+    TEST_ASSERT(FStarsTestDir("MoveThings_trader", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
+    TEST_ASSERT(FStarsTestLoadHost());
+    while (cThing != 0) FreeLpth(lpThings);
+    lpth = LpthNew(0, ithMysteryTrader);
+    TEST_ASSERT(lpth != NULL);
+    lpth->pt().Set({1200, 1200});
+    lpth->tht().ptDest().Set({2000, 1200});
+    lpth->tht().SetIWarp(9);
+    PushRandom(123456, 789012);
+    TEST_ASSERT(Random(25) != 0);
+    PopRandom();
+    PushRandom(123456, 789012);
+    MoveThings(FALSE);
+    PopRandom();
+    TEST_CHECK(lpth->pt().x() == 1281 && lpth->pt().y() == 1200);
+    TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);
+}
+
+TEST_LIST = {{"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+             {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},
              {"FTravelThroughMineFields speed bump stops a fleet any direction", test_FTravelThroughMineFields_speed_bump_any_direction},

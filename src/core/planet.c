@@ -35,7 +35,7 @@ char *PszProductionETA(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, int16
     }
     EstimateItemProdSched(lppl, lpplprod, iItem, &iTurnBegin, &iTurnEnd);
     if (iTurnBegin == 100) {
-        if (lpplprod && lpplprod->iprodMac > (int16_t)iItem && lpplprod->rgprod[iItem].grobj == grobjPlanet && lpplprod->rgprod[iItem].iItem < mdIdleFactory) {
+        if (lpplprod && lpplprod->iprodMac > (int16_t)iItem && lpplprod->rgprod()[iItem].grobj == grobjPlanet && lpplprod->rgprod()[iItem].iItem < mdIdleFactory) {
             ids = idsUnknown2;
         } else {
             ids = idsNever;
@@ -704,10 +704,10 @@ int16_t StargateRangeFromLppl(PLANET *lppl, int16_t iplr, int16_t ish) {
             lphul->rghs[i].iItem <= ispecialSBStargateAnyAny) {
             part.hs = lphul->rghs[i];
             FLookupPart(&part);
-            if (part.pspecialsb->grAbility2 == -1) {
+            if (part.pspecialsb()->grAbility2 == -1) {
                 return 10000;
             }
-            return part.pspecialsb->grAbility2;
+            return part.pspecialsb()->grAbility2;
         }
     }
     return 0;
@@ -771,8 +771,8 @@ int16_t FCanTerraformLppl(PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, in
     if (i >= 0) {
         fRet = TRUE;
         for (i = 0; i < 3; i++) {
-            rgMove[i] = part.pterra->grAbility;
-            rgEnvCost[i] = part.pterra->resCost;
+            rgMove[i] = part.pterra()->grAbility;
+            rgEnvCost[i] = part.pterra()->resCost;
         }
     } else {
         fRet = FALSE;
@@ -785,30 +785,30 @@ int16_t FCanTerraformLppl(PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, in
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[0]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[0]) {
         fRet = TRUE;
-        rgMove[0] = part.pterra->grAbility;
-        *rgEnvCost = part.pterra->resCost;
+        rgMove[0] = part.pterra()->grAbility;
+        *rgEnvCost = part.pterra()->resCost;
     }
     for (i = 3; i >= 0; i--) {
         part.hs.iItem = i + 12;
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[1]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[1]) {
         fRet = TRUE;
-        rgMove[1] = part.pterra->grAbility;
-        rgEnvCost[1] = part.pterra->resCost;
+        rgMove[1] = part.pterra()->grAbility;
+        rgEnvCost[1] = part.pterra()->resCost;
     }
     for (i = 3; i >= 0; i--) {
         part.hs.iItem = i + 16;
         if (FLookupPart(&part) == mdPartAvailAvailable)
             break;
     }
-    if (i >= 0 && part.pterra->grAbility > rgMove[2]) {
+    if (i >= 0 && part.pterra()->grAbility > rgMove[2]) {
         fRet = TRUE;
-        rgMove[2] = part.pterra->grAbility;
-        rgEnvCost[2] = part.pterra->resCost;
+        rgMove[2] = part.pterra()->grAbility;
+        rgEnvCost[2] = part.pterra()->resCost;
     }
     if (!fRet) {
         idPlayer = iPlrSav;
@@ -890,7 +890,7 @@ void UninhabitPlanet(PLANET *lppl) {
     lppl->iPlayer = iplrNone;
     lppl->rgwtMin[3] = 0;
     if (lppl->lpplprod) {
-        FreePl((PL *)lpPlanets[lppl->id].lpplprod);
+        FreePl(lpPlanets[lppl->id].lpplprod);
         lpPlanets[lppl->id].lpplprod = NULL;
         lppl->lpplprod = NULL;
     }
@@ -898,7 +898,7 @@ void UninhabitPlanet(PLANET *lppl) {
     lppl->fStarbase = FALSE;
     lppl->cDefenses = 0;
     lppl->iScanner = 31;
-    lppl->lStarbase = 0;
+    lppl->SetLStarbase(0);
     return;
 }
 
@@ -978,7 +978,7 @@ int16_t FProdItemLine(PLANET *lppl, PLPROD *lpplprod, int16_t iprod, int16_t fSh
     int16_t etaLast;
     int16_t etaFirst;
 
-    lpprod = &lpplprod->rgprod[iprod];
+    lpprod = &lpplprod->rgprod()[iprod];
     psz = PszNameProdItem(lpprod);
     EstimateItemProdSched(lppl, lpplprod, static_cast<ProdItemType>(iprod), &etaFirst, &etaLast);
     if ((etaFirst == 0 && etaLast == 0) || (etaFirst == -1 && etaLast == -1)) {

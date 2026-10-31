@@ -6,6 +6,117 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `WinMain` and the command-line host close their application session on every
+  exit. `FreeStuff` stops native callbacks, timers and windows before releasing
+  game streams/heaps, then clears borrowed UI state and private caches. Repeated
+  close is safe; reentrant close from a window procedure keeps its active frame
+  alive. A new initialization after close restores the original defaults. This
+  ownership change preserves game files and all native host results.
+
+- Library folder callbacks capture logical window IDs and transfer their UTF-8
+  paths through owned messages. Previously a late result could retain its path
+  after a window closed, or target a recycled HWND after runtime restart.
+  Nested dialogs borrow the path until dispatch returns; cancellation and failed
+  callbacks release it. Game files and host results are unchanged.
+
+- `StarsCompatPostMessageAsync` owns pending worker-post records through delivery
+  or shutdown. Previously records left in SDL's event queue could be abandoned.
+  Owned one-shot payloads now also release on target destruction, allocation
+  failure, callback failure, cancellation and runtime restart. MSG layout and
+  successful numeric-post behavior are unchanged.
+
+- `StarsCapturePendingError` preserves a primary failure already being handled
+  while UI cleanup runs. Previously a cleanup callback inside a catch handler
+  could leave its secondary error pending for the next operation. A scoped
+  primary-error guard suppresses that secondary capture and retains any first
+  already-pending error. Host results and regression checkpoints are unchanged.
+
+- `DibFromBitmap` releases its temporary global-memory block when pixel
+  conversion fails. Previously it discarded the handle and retained the block
+  in the wrapper registry. Scoped cleanup also restores the selected palette
+  and device context during unwinding. A resource-count fixture detects the
+  old retained handle; host results and regression checkpoints stay unchanged.
+
+- `DibFromBitmap` queries the native `BITMAP` size instead of the original
+  14-byte Win16 size, which left dimensions uninitialized when the native query
+  rejected it. A 2-by-2 bitmap now converts with its actual dimensions and size.
+  This UI repair changes no host results or regression checkpoints.
+
+- `TransferStuff` restores the previous transfer frame and dialog mode on every
+  return or exception. A failed lookup previously left `pxfer` pointing at a
+  returned stack frame and left its dialog mode installed. Nested transfers now
+  restore the outer frame. This UI cleanup does not change host results or files.
+
+- `MoveThings` initializes its retargeting message ID before processing things.
+  Previously a trader could compare an uninitialized ID when it kept its course;
+  the THING view migration exposed an optimized-build movement difference.
+  The initialization retains the existing native regression results.
+
+- `GetPrivateProfileStringA` and `WritePrivateProfileStringA` release their
+  registry lock and partial profile storage when a C++ I/O operation throws.
+  Fault injection previously deadlocked a retry. Failed profile saves now also
+  close/remove their temporary file during unwinding; publication stays checked
+  and the existing destination remains unchanged.
+
+- `OpenCombo` stops on dropdown notification failure and closes a partial popup
+  when owner drawing fails. Previously failed initialization could leave the
+  combo dropped with capture held. Rollback restores capture and selection;
+  reentrant callbacks that replace the popup retain their replacement.
+
+- `MessageBoxA` stops modal setup when an owner-disable callback fails. It
+  previously continued creating a prompt and queued its alert sound with the
+  error pending. Owners restore before the first error reaches its caller.
+
+- `FFileDialog` stops before launching a chooser if disabling its owner fails.
+  Previously it still called the native adapter. Restoration preserves owner,
+  focus, native-dialog count, filename bytes and the original callback error.
+
+- `DialogBoxParamA` stops before dialog initialization if disabling its owner
+  fails. Previously the dialog still received initialization callbacks despite
+  the pending exception. Owner restoration completes before error delivery.
+
+- `FWatchLiveResize` stops painting/presentation after a failed layout or paint
+  callback. Previously it continued drawing after layout failure. Presentation
+  counters and refresh/resize flags now restore during failure or window
+  destruction, and renderer exceptions are contained before returning to SDL.
+
+- `HwndCreateDialog` destroys a modeless dialog when its creation callbacks fail.
+  Previously it returned a live window while the checked C++ caller received an
+  exception and could not take ownership. Initialization stops at the first
+  pending failure; successful creation and modal return values are unchanged.
+
+- `TrackMenu` suppresses command delivery and selected-ID returns when popup
+  teardown fails. Previously a failing `WM_UNINITMENUPOPUP` callback still queued
+  `WM_COMMAND` after selection. Capture and popup cleanup finish before failure
+  delivery; normal menu selection is unchanged.
+
+- `FFileDialog` restores its owner, focus and native-dialog counter and frees
+  chooser buffers when a C++ adapter throws. Manual cleanup previously left the
+  owner disabled with a native dialog still counted after unwinding. Callback
+  failures during cleanup preserve the primary error.
+
+- `StarsCapturePendingError` keeps a C++ exception already unwinding as the
+  primary failure. A callback failing during cleanup previously left a secondary
+  error pending after the primary had been caught. Standalone cleanup failures
+  and the first already-pending error remain deliverable.
+
+- `_lread` and the other wrapper registry operations release their locks during
+  C++ exception unwinding. Manual release could leave the file registry locked
+  and deadlock a retry. Fault injection reproduces the old hang; the scoped-lock
+  implementation retries successfully. File bytes and gameplay are unchanged.
+
+- The SDL platform environment helper preserves UTF-8 Windows lookup without a
+  `getenv` macro. That macro rewrote C++ standard-library declarations and
+  broke Windows builds after ownership headers included `<cstdlib>`.
+  Workflow harnesses that inherited the macro now call the helper explicitly,
+  retaining Unicode paths and names when the Windows CRT code page differs.
+
+- `LpNewFontRaster` and fallback glyph matching use their owned Fontconfig
+  configuration for default substitution on Fontconfig 2.17 and newer. The older
+  default entry point initialized a second configuration outside the wrapper's
+  ownership; native macOS `leaks` found three leaked allocations (416 bytes).
+  Font contracts pass and game behavior/regression baselines are unchanged.
+
 - The C++ compilation audit explicitly reads UTF-8 sources and compiler manifests,
   fixing a decoding failure on Windows systems using the default CP1252 locale.
   Game behavior and regression baselines are unchanged.

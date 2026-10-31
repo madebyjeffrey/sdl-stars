@@ -1,9 +1,6 @@
 // Contain exceptions before returning through foreign SDL/native callbacks.
-#include <windows.h>
-#include "errors.h"
+#include "internal.h"
 #include <new>
-
-void CompatAbortCallback(HWND hwnd);
 
 static void CaptureCallbackError(HWND hwnd) noexcept {
     StarsCapturePendingError();
@@ -37,4 +34,12 @@ HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept {
     try { return pfn(); }
     catch (...) { CaptureCallbackError(hwnd); }
     return nullptr;
+}
+
+void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept {
+    try { lpfn(lpv); }
+    catch (const std::bad_alloc &) {
+        try { StarsThrowError(starsErrorMemory, 0); }
+        catch (...) { CaptureCallbackError(hwnd); }
+    } catch (...) { CaptureCallbackError(hwnd); }
 }

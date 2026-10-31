@@ -23,7 +23,7 @@ previous metadata. The command-line host never resolves or requires this library
 
 The desktop client uses the SDL-backed Win32 wrapper on every supported platform.
 The shared game also builds as `stars-host`, independently of SDL. Owned production
-and ordinary test translation units compile as GNU C++20 under their original
+and ordinary test translation units compile as ISO C++20 under their original
 source filenames; AppKit glue compiles as Objective-C++20. Independent C storage
 fixtures, real SDK contract tests and third-party libraries remain separate.
 
@@ -37,7 +37,10 @@ on failure. Canonical paths use forward slashes. Temporary directories are
 claimed atomically. Native adapters still supply exclusive creation, sharing,
 exact private modes, durable writes and live-handle identity/truncation.
 CMake preserves signed `char`, binary64 operation boundaries and contraction/
-fast-math settings. GNU storage extensions remain until milestone B.
+fast-math settings. Owned production disables language extensions and enforces
+strict diagnostics. Explicit record codecs preserve wire layouts independently
+of the inventoried private runtime packing and physical arena geometry; the
+[B ledger](CPP-B-IMPLEMENTATION.md) records final platform qualification.
 
 Stored enums have explicit C++ underlying types (`uint16_t`, `int16_t` or
 `uint32_t`) with their original constant and type names. Text/data generators
@@ -52,10 +55,12 @@ explicit no-op defaults; splitter masks switch on their underlying integer.
 checks C/C++ argument/return values, callbacks and pointer writes for all 145
 stored types using six boundary inputs each. The fixed underlying type admits
 all of its storage bit patterns, including legacy sentinels and combined flags.
-`test_record_layout` compares C and C++ sizes/alignment for the shared structs
-and integer aliases. `RTFLEETIDS` remains a zero-prefix record view: its `rgid`
-offset is zero in both languages; the C++ minimum class size is never used as
-a record length. The full native and host regressions check serialized results.
+`test_record_layout` retains all 259 frozen C size/prefix measurements.
+Codecs now separate migrated file bytes from runtime storage: six task/order
+types retain their widths while requiring explicitly checked two-byte runtime
+alignment. All remaining alignment comparisons stay exact. `RTFLEETIDS` is an aligned call-scoped byte-span view; its `rgid`
+offset still matches the frozen zero-prefix measurement. The wire prefix is
+explicitly zero, independently of the runtime view size. The full native and host regressions check serialized results.
 
 Memory and stream failures use `StarsError` and normal C++ stack unwinding.
 The 24 former jump-recovery sites now have operation-specific catches; the
@@ -113,7 +118,7 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   paths with `chDirSep`. The adapters forward to `fileio.h`/`fileio.cpp`, shared
   with profiles, help, PDF output, inspection and managed-library operations.
   `std::fstream` owns ordinary binary streams and `std::filesystem` owns paths,
-  directory enumeration and publication. C-compatible opaque streams contain
+  directory enumeration and publication. Opaque stream adapters contain
   exceptions and expose errors through return values and `errno`. Small owned
   tokens retain the game's `int16_t` handle storage.
   C++20 cannot express exclusive creation, exact private modes, sharing,
@@ -124,7 +129,8 @@ detail in [WIN16-PARITY.md](WIN16-PARITY.md).
   Raw game writes flush before returning to preserve immediate error reporting
   through the legacy void close interface. Process logging and third-party
   libraries' internally owned files remain outside this service. The game's
-  heaps (`memory.c`) come from `calloc` and `realloc`.
+  heaps (`memory.c`) retain their `calloc`/`realloc` allocation geometry under an
+  explicit chain owner and C++20 typed lifetime operations.
 - **Formatting and rounding** (`native.c`): the game code formats with
   `CchSprintf`, which reads `%ld` as 32 bits like Win32 `wsprintf` (the
   string table passes `int32_t` to `%ld`; `long` is 64 bits on 64-bit POSIX)

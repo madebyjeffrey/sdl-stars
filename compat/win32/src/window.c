@@ -3,8 +3,10 @@
  * Stars adaptation: retained class data, independent handles and reentrant teardown.
  */
 #include "internal.h"
+#include "cleanup.h"
 #include <stars_compat.h>
 #include <stdlib.h>
+#include <new>
 #include <string.h>
 
 static COMPATCLASS *lpClasses;
@@ -14,15 +16,15 @@ static uint64_t idInspectNext;
 static BOOL fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
 static BOOL fDialogSequence;
 static HWND hwndSequenceOwner;
-static SDL_Window *lpSequenceWindow;
-static SDL_Renderer *lpSequenceRenderer;
-static SDL_Texture *lpSequenceTexture;
-static SDL_Surface *lpSequenceCanvas, *lpSequenceComposite;
+static NATIVEOWNER<SDL_Window, FreeCompatWindow> lpSequenceWindow;
+static NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpSequenceRenderer;
+static NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpSequenceTexture;
+static NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpSequenceCanvas, lpSequenceComposite;
 static int iSequenceScale;
 static BOOL fSequenceOwnerEnabled;
 static HWND hwndSequenceFocus;
 
-static void DestroyNativeWindow(SDL_Window *lpWindow) {
+void FreeCompatWindow(SDL_Window *lpWindow) noexcept {
     // Cocoa can expose hidden application windows when an attached dialog is
     // destroyed. HWND teardown already handles owned windows and focus.
     if (lpWindow && SDL_GetWindowParent(lpWindow) &&
@@ -31,16 +33,15 @@ static void DestroyNativeWindow(SDL_Window *lpWindow) {
     SDL_DestroyWindow(lpWindow);
 }
 
+void FreeCompatRenderer(SDL_Renderer *lp) noexcept { SDL_DestroyRenderer(lp); }
+void FreeCompatTexture(SDL_Texture *lp) noexcept { SDL_DestroyTexture(lp); }
+
 static void DestroySequenceWindow(void) {
-    SDL_DestroyTexture(lpSequenceTexture);
-    SDL_DestroySurface(lpSequenceCanvas);
-    SDL_DestroySurface(lpSequenceComposite);
-    SDL_DestroyRenderer(lpSequenceRenderer);
-    DestroyNativeWindow(lpSequenceWindow);
-    lpSequenceTexture = NULL;
-    lpSequenceCanvas = lpSequenceComposite = NULL;
-    lpSequenceRenderer = NULL;
-    lpSequenceWindow = NULL;
+    lpSequenceTexture.reset();
+    lpSequenceCanvas.reset();
+    lpSequenceComposite.reset();
+    lpSequenceRenderer.reset();
+    lpSequenceWindow.reset();
     iSequenceScale = 0;
 }
 
@@ -98,7 +99,7 @@ void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved) {
     if (hwndCurrent != hwndRoot && HwndCompatRoot(hwndCurrent) == hwndRoot) hwnd = hwndCurrent;
     // SetFocus updates wrapper state; Cocoa also needs native activation after
     // the modal owner becomes focusable again.
-    SDL_RaiseWindow(hwndRoot->lpWindow);
+    SDL_RaiseWindow(hwndRoot->lpWindow.get());
     if (IsWindow(hwnd) && IsWindowEnabled(hwnd)) SetFocus(hwnd);
 }
 
@@ -112,7 +113,7 @@ BOOL StarsCompatBeginDialogSequence(HWND hwndOwner) {
 }
 
 BOOL FCompatPendingDialogSequence(HWND hwndOwner) {
-    return fDialogSequence && lpSequenceWindow && hwndOwner == hwndSequenceOwner;
+    return fDialogSequence && lpSequenceWindow.get() && hwndOwner == hwndSequenceOwner;
 }
 
 void StarsCompatEndDialogSequence(void) {
@@ -133,40 +134,44 @@ void StarsCompatEndDialogSequence(void) {
     }
 }
 
-static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) {
+static void UpdateCompatLiveResize(SDL_Event *lpevent) {
     HWND lpwin;
     RECT rc;
 
-    (void)lpv;
     if (!SDL_IsMainThread() || fShutdown || fLiveResize ||
-        lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return true;
+        lpevent->type != SDL_EVENT_WINDOW_EXPOSED) return;
     lpwin = LpCompatWindowFromId(lpevent->window.windowID);
-    if (!lpwin || !lpwin->fCreated || !GetClientRect(lpwin, &rc)) return true;
+    if (!lpwin || !lpwin->fCreated || !GetClientRect(lpwin, &rc)) return;
     if (!lpwin->fVisible) {
         // A reused wizard window stays native-visible while its next logical
         // page initializes. Exposure must restore the retained completed frame.
-        if (lpwin->fDeferPresent && !(SDL_GetWindowFlags(lpwin->lpWindow) & SDL_WINDOW_HIDDEN))
+        if (lpwin->fDeferPresent && !(SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_HIDDEN))
             FCompatRefreshPresent(lpwin);
-        return true;
+        return;
     }
     if (lpevent->window.data1 != 1 || CCompatDispatch() != 0) {
         FCompatRefreshPresent(lpwin);
-        return true;
+        return;
     }
     // SDL permits application drawing from a watcher during native live resize.
+    StarsRestore<BOOL> restoreResize(fLiveResize);
+    COMPATPRESENTSCOPE deferPresent(lpwin);
     fLiveResize = TRUE;
-    lpwin->cPresentDefer++;
     SendMessageA(lpwin, WM_SIZE, IsZoomed(lpwin) ? SIZE_MAXIMIZED : SIZE_RESTORED,
                  MAKELPARAM(rc.right, rc.bottom));
-    if (IsWindow(lpwin)) {
+    if (IsWindow(lpwin) && !FStarsErrorPending()) {
         InvalidateRect(lpwin, NULL, TRUE);
         FCompatPaintTree(lpwin);
-        if (IsWindow(lpwin)) {
-            lpwin->cPresentDefer--;
+        if (IsWindow(lpwin) && !FStarsErrorPending()) {
+            deferPresent.Close();
             FCompatPresent(lpwin);
         }
     }
-    fLiveResize = FALSE;
+}
+
+static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) noexcept {
+    (void)lpv;
+    CompatInvokeCleanup([](void *lpvEvent) { UpdateCompatLiveResize(static_cast<SDL_Event *>(lpvEvent)); }, lpevent, NULL);
     return true;
 }
 
@@ -180,6 +185,7 @@ BOOL FCompatVideo(void) {
         if (!SDL_AddEventWatch(FWatchLiveResize, NULL)) return FALSE;
         fResizeWatch = TRUE;
     }
+    CompatStartAsyncMessages();
     return TRUE;
 }
 
@@ -200,7 +206,7 @@ HWND LpCompatWindowFromId(SDL_WindowID id) {
     HWND lpwin;
 
     for (lpwin = lpWindows; lpwin; lpwin = lpwin->lpNext)
-        if (lpwin->fAlive && lpwin->lpWindow && lpwin->id == id)
+        if (lpwin->fAlive && lpwin->lpWindow.get() && lpwin->id == id)
             return lpwin;
     return NULL;
 }
@@ -233,7 +239,7 @@ static COMPATCLASS *LpFindClass(LPCSTR pszClass, HINSTANCE hInstance) {
     for (lpclass = lpClasses; lpclass; lpclass = lpclass->lpNext)
         if (lpclass->wc.hInstance == hInstance &&
             ((idClass <= UINT16_MAX && lpclass->atom == idClass) ||
-             (idClass > UINT16_MAX && SDL_strcasecmp(lpclass->pszClass, pszClass) == 0)))
+             (idClass > UINT16_MAX && SDL_strcasecmp(lpclass->pszClass.get(), pszClass) == 0)))
             return lpclass;
     return NULL;
 }
@@ -250,26 +256,23 @@ ATOM WINAPI RegisterClassA(const WNDCLASSA *lpwc) {
         SDL_SetError("Win32 class already registered");
         return 0;
     }
-    lpclass = (COMPATCLASS *)(calloc(1, sizeof(*lpclass)));
+    lpclass = new (std::nothrow) COMPATCLASS{};
     if (!lpclass)
         return 0;
     lpclass->wc = *lpwc;
-    lpclass->pszClass = SDL_strdup(lpwc->lpszClassName);
+    lpclass->pszClass.reset(SDL_strdup(lpwc->lpszClassName));
     if ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX)
-        lpclass->pszMenu = SDL_strdup(lpwc->lpszMenuName);
+        lpclass->pszMenu.reset(SDL_strdup(lpwc->lpszMenuName));
     if (lpwc->cbClsExtra != 0)
-        lpclass->rgbExtra = (BYTE *)(calloc(1, (size_t)lpwc->cbClsExtra));
+        lpclass->rgbExtra.reset((BYTE *)calloc(1, (size_t)lpwc->cbClsExtra));
     if (!lpclass->pszClass || ((UINT_PTR)lpwc->lpszMenuName > UINT16_MAX && !lpclass->pszMenu) ||
         (lpwc->cbClsExtra != 0 && !lpclass->rgbExtra)) {
-        SDL_free(lpclass->pszClass);
-        SDL_free(lpclass->pszMenu);
-        free(lpclass->rgbExtra);
-        free(lpclass);
+        delete lpclass;
         return 0;
     }
-    lpclass->wc.lpszClassName = lpclass->pszClass;
+    lpclass->wc.lpszClassName = lpclass->pszClass.get();
     if (lpclass->pszMenu)
-        lpclass->wc.lpszMenuName = lpclass->pszMenu;
+        lpclass->wc.lpszMenuName = lpclass->pszMenu.get();
     lpclass->atom = (ATOM)atomNext++;
     lpclass->lpNext = lpClasses;
     lpClasses = lpclass;
@@ -303,7 +306,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     HWND hwndParent = lpwin->hwndParent;
     HWND hwndOwner = lpwin->hwndOwner, hwndSaved = lpwin->hwndRestoreFocus;
     BOOL fRestore = fNotify && !hwndParent && lpwin->fVisible && !(lpwin->dwExStyle & WS_EX_NOACTIVATE) &&
-        (GetActiveWindow() == lpwin || (lpwin->lpWindow && SDL_GetKeyboardFocus() == lpwin->lpWindow));
+        (GetActiveWindow() == lpwin || (lpwin->lpWindow.get() && SDL_GetKeyboardFocus() == lpwin->lpWindow.get()));
 
     lpwin->fDestroying = TRUE;
     if (fNotify && (GetCapture() == lpwin || IsChild(lpwin, GetCapture()))) ReleaseCapture();
@@ -329,36 +332,28 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
         hwndActive = NULL;
     CompatDestroyWindowMenu(lpwin);
     if (lpwin->fKeepNative && fDialogSequence && lpwin->hwndOwner == hwndSequenceOwner &&
-        lpwin->lpWindow && !lpSequenceWindow) {
-        SDL_StopTextInput(lpwin->lpWindow);
-        lpSequenceWindow = lpwin->lpWindow;
-        lpSequenceRenderer = lpwin->lpRenderer;
+        lpwin->lpWindow.get() && !lpSequenceWindow.get()) {
+        SDL_StopTextInput(lpwin->lpWindow.get());
+        lpSequenceWindow.reset(lpwin->lpWindow.release());
+        lpSequenceRenderer.reset(lpwin->lpRenderer.release());
         // Keep the completed frame available while the next page is built.
-        lpSequenceTexture = lpwin->lpTexture;
-        lpSequenceCanvas = lpwin->lpCanvas;
-        lpSequenceComposite = lpwin->lpComposite;
+        lpSequenceTexture.reset(lpwin->lpTexture.release());
+        lpSequenceCanvas.reset(lpwin->lpCanvas.release());
+        lpSequenceComposite.reset(lpwin->lpComposite.release());
         iSequenceScale = lpwin->iCanvasScale;
-        lpwin->lpWindow = NULL;
-        lpwin->lpRenderer = NULL;
-        lpwin->lpTexture = NULL;
-        lpwin->lpCanvas = lpwin->lpComposite = NULL;
     }
     CompatDestroyPaint(lpwin);
     CompatDestroyDialog(lpwin);
-    // Process exit skips application callbacks after game heaps are freed.
+    // Silent shutdown skips application callbacks; control storage still closes.
     // Control-owned storage must still be released on that silent path.
     CompatDestroyList(lpwin);
     CompatDestroyToolbar(lpwin);
-    SDL_free(lpwin->lpcombo);
-    lpwin->lpcombo = NULL;
+    lpwin->lpcombo.reset();
     SDL_free(lpwin->pszEditComposition); lpwin->pszEditComposition = NULL;
     SDL_free(lpwin->pszEditUndo);
     lpwin->pszEditUndo = NULL;
-    if (lpwin->lpWindow) {
-        SDL_StopTextInput(lpwin->lpWindow);
-        DestroyNativeWindow(lpwin->lpWindow);
-    }
-    lpwin->lpWindow = NULL;
+    if (lpwin->lpWindow) SDL_StopTextInput(lpwin->lpWindow.get());
+    lpwin->lpWindow.reset();
     free(lpwin->rgbExtra);
     lpwin->rgbExtra = NULL;
     SDL_free(lpwin->pszTitle);
@@ -443,26 +438,26 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     // WS_CAPTION combines WS_BORDER and WS_DLGFRAME; a border alone has no title bar.
     if ((dwStyle & WS_POPUP) && (dwStyle & WS_CAPTION) != WS_CAPTION)
         flags |= SDL_WINDOW_BORDERLESS;
-    lpwin = (HWND)(calloc(1, sizeof(*lpwin)));
+    lpwin = new (std::nothrow) HWND__{};
     if (!lpwin)
         return NULL;
     if (lpclass->wc.cbWndExtra != 0)
         lpwin->rgbExtra = (BYTE *)(calloc(1, (size_t)lpclass->wc.cbWndExtra));
     if (lpclass->wc.cbWndExtra != 0 && !lpwin->rgbExtra) {
-        free(lpwin);
+        delete lpwin;
         return NULL;
     }
     lpwin->pszTitle = SDL_strdup(pszTitle ? pszTitle : "");
     if (!lpwin->pszTitle) {
         free(lpwin->rgbExtra);
-        free(lpwin);
+        delete lpwin;
         return NULL;
     }
     if (fChild) {
         if ((int64_t)x + dx > INT32_MAX || (int64_t)y + dy > INT32_MAX) {
             SDL_free(lpwin->pszTitle);
             free(lpwin->rgbExtra);
-            free(lpwin);
+            delete lpwin;
             return NULL;
         }
         lpwin->hwndParent = lpparent;
@@ -475,26 +470,22 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         if (lpwin->hwndOwner && (lpwin->hwndOwner->dwExStyle & WS_EX_TOPMOST)) dwExStyle |= WS_EX_TOPMOST;
         if (dwExStyle & WS_EX_TOPMOST) flags |= SDL_WINDOW_ALWAYS_ON_TOP;
         if ((dwExStyle & WS_EX_NOACTIVATE) || (dwStyle & WS_DISABLED)) flags |= SDL_WINDOW_NOT_FOCUSABLE;
-        if (fDialogSequence && lpSequenceWindow && lpwin->hwndOwner == hwndSequenceOwner &&
+        if (fDialogSequence && lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
             (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770") &&
-            SDL_GetWindowSize(lpSequenceWindow, &cxReuse, &cyReuse) && cxReuse == dx && cyReuse == dy &&
-            (SDL_GetWindowFlags(lpSequenceWindow) & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE |
+            SDL_GetWindowSize(lpSequenceWindow.get(), &cxReuse, &cyReuse) && cxReuse == dx && cyReuse == dy &&
+            (SDL_GetWindowFlags(lpSequenceWindow.get()) & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE |
              SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE)) ==
             (flags & (SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_NOT_FOCUSABLE))) {
-            lpwin->lpWindow = lpSequenceWindow;
-            lpwin->lpRenderer = lpSequenceRenderer;
-            lpwin->lpTexture = lpSequenceTexture;
-            lpwin->lpCanvas = lpSequenceCanvas;
-            lpwin->lpComposite = lpSequenceComposite;
+            lpwin->lpWindow.reset(lpSequenceWindow.release());
+            lpwin->lpRenderer.reset(lpSequenceRenderer.release());
+            lpwin->lpTexture.reset(lpSequenceTexture.release());
+            lpwin->lpCanvas.reset(lpSequenceCanvas.release());
+            lpwin->lpComposite.reset(lpSequenceComposite.release());
             lpwin->iCanvasScale = iSequenceScale;
-            lpSequenceWindow = NULL;
-            lpSequenceRenderer = NULL;
-            lpSequenceTexture = NULL;
-            lpSequenceCanvas = lpSequenceComposite = NULL;
             iSequenceScale = 0;
             lpwin->fDeferPresent = fReuse = TRUE;
         } else {
-            if (lpSequenceWindow && lpwin->hwndOwner == hwndSequenceOwner &&
+            if (lpSequenceWindow.get() && lpwin->hwndOwner == hwndSequenceOwner &&
                 (UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770")) {
                 DestroySequenceWindow();
             }
@@ -514,40 +505,40 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
-                lpwin->lpWindow = SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow,
-                    x - rcOwner.left, y - rcOwner.top, StarsMax(1, dx), StarsMax(1, dy), flags);
+                lpwin->lpWindow.reset(SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow.get(),
+                    x - rcOwner.left, y - rcOwner.top, StarsMax(1, dx), StarsMax(1, dy), flags));
             else if (pszNative && !fNativePopup)
-                lpwin->lpWindow = SDL_CreateWindow(pszNative, StarsMax(1, dx), StarsMax(1, dy), flags);
+                lpwin->lpWindow.reset(SDL_CreateWindow(pszNative, StarsMax(1, dx), StarsMax(1, dy), flags));
             SDL_free(pszNative);
         }
-        if (!lpwin->lpWindow ||
-            (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow) && !SDL_SetWindowPosition(lpwin->lpWindow,
+        if (!lpwin->lpWindow.get() ||
+            (!fReuse && !fNativePopup && FNativePositionable(lpwin->lpWindow.get()) && !SDL_SetWindowPosition(lpwin->lpWindow.get(),
                                   x == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : x,
                                   y == CW_USEDEFAULT ? (int)SDL_WINDOWPOS_CENTERED : y)) ||
-            (!fReuse && !SDL_SyncWindow(lpwin->lpWindow)) ||
+            (!fReuse && !SDL_SyncWindow(lpwin->lpWindow.get())) ||
             // Cocoa can expose an owned popup during creation despite SDL_WINDOW_HIDDEN.
-            (!fReuse && !SDL_HideWindow(lpwin->lpWindow)) ||
+            (!fReuse && !SDL_HideWindow(lpwin->lpWindow.get())) ||
             // A screen-covering borderless popup must be native fullscreen so
             // desktop panels cannot cover its controls. Dialogs stay windowed.
             (FFullscreenPopup(dwStyle, dwExStyle, hMenu, x, y, dx, dy) &&
-             !SDL_SetWindowFullscreen(lpwin->lpWindow, true)) ||
-            (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow &&
-             ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow) & SDL_WINDOW_FULLSCREEN) ||
+             !SDL_SetWindowFullscreen(lpwin->lpWindow.get(), true)) ||
+            (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow.get() &&
+             ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN) ||
               ((UINT_PTR)pszClass > UINT16_MAX && !strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
              strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
-             !SDL_SetWindowParent(lpwin->lpWindow, lpwin->hwndOwner->lpWindow))) {
+             !SDL_SetWindowParent(lpwin->lpWindow.get(), lpwin->hwndOwner->lpWindow.get()))) {
             CompatDestroyPaint(lpwin);
-            DestroyNativeWindow(lpwin->lpWindow);
+            lpwin->lpWindow.reset();
             SDL_free(lpwin->pszTitle);
             free(lpwin->rgbExtra);
-            free(lpwin);
+            delete lpwin;
             return NULL;
         }
-        if (!fReuse) CompatSetWindowIcon(lpwin->lpWindow, lpclass->wc.hIcon);
-        lpwin->id = SDL_GetWindowID(lpwin->lpWindow);
+        if (!fReuse) CompatSetWindowIcon(lpwin->lpWindow.get(), lpclass->wc.hIcon);
+        lpwin->id = SDL_GetWindowID(lpwin->lpWindow.get());
         lpwin->fZeroX = dx == 0; lpwin->fZeroY = dy == 0;
     }
     lpwin->lpclass = lpclass;
@@ -606,7 +597,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     }
     lpwin->fCreated = TRUE;
     // Register the new page before a native caption update can expose it.
-    if (fReuse && !FCompatNativeTitle(lpwin->lpWindow, lpwin->pszTitle)) {
+    if (fReuse && !FCompatNativeTitle(lpwin->lpWindow.get(), lpwin->pszTitle)) {
         DestroyWindow(lpwin);
         return NULL;
     }
@@ -631,8 +622,8 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             SendMessageA(lpwin, WM_SIZE, SIZE_RESTORED, MAKELPARAM(rcClient.right, rcClient.bottom));
         if (!lpwin->fAlive) return NULL;
     }
-    if (lpwin->lpWindow)
-        SDL_StartTextInput(lpwin->lpWindow);
+    if (lpwin->lpWindow.get())
+        SDL_StartTextInput(lpwin->lpWindow.get());
     if (dwStyle & WS_VISIBLE)
         ShowWindow(lpwin, dwStyle & WS_MINIMIZE ? SW_SHOWMINIMIZED :
                    dwStyle & WS_MAXIMIZE ? SW_SHOWMAXIMIZED : SW_SHOW);
@@ -721,7 +712,7 @@ void CompatRememberNormal(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
     if (!lpwin || lpwin->swState != SW_SHOWNORMAL) return;
     if (lpwin->hwndParent) lpwin->rcNormal = lpwin->rcChild;
-    else if (!(SDL_GetWindowFlags(lpwin->lpWindow) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED)))
+    else if (!(SDL_GetWindowFlags(lpwin->lpWindow.get()) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED)))
         GetWindowRect(hwnd, &lpwin->rcNormal);
 }
 
@@ -773,7 +764,7 @@ BOOL WINAPI GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     wndpl.ptMaxPosition.x = wndpl.ptMaxPosition.y = -1;
     wndpl.rcNormalPosition = lpwin->rcNormal;
     if (!lpwin->hwndParent) {
-        idDisplay = SDL_GetDisplayForWindow(lpwin->lpWindow);
+        idDisplay = SDL_GetDisplayForWindow(lpwin->lpWindow.get());
         if (!idDisplay || !SDL_GetDisplayBounds(idDisplay, &rcDisplay) ||
             !SDL_GetDisplayUsableBounds(idDisplay, &rcWork)) return FALSE;
         dx = (int64_t)rcWork.x - rcDisplay.x;
@@ -830,19 +821,19 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     rcSaved = lpwin->rcNormal;
     // Renderer setup can recreate SDL's native window. Do it while hidden so
     // an owner's first paint during a modal loop cannot steal native focus.
-    if (!lpwin->hwndParent && fVisible && !lpwin->lpRenderer && !FCompatCanvas(hwnd)) return FALSE;
+    if (!lpwin->hwndParent && fVisible && !lpwin->lpRenderer.get() && !FCompatCanvas(hwnd)) return FALSE;
     if (fPrepare) {
         // Show-time layout must see logical visibility, while the native window
         // stays hidden until its background and visible descendants are painted.
-        lpwin->cPresentDefer++;
+        COMPATPRESENTSCOPE deferPresent(lpwin);
         lpwin->fVisible = TRUE;
         lpwin->dwStyle |= WS_VISIBLE;
         if (fNotify) SendMessageA(hwnd, WM_SHOWWINDOW, TRUE, 0);
-        if (!IsWindow(hwnd)) return FALSE;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
         InvalidateRect(hwnd, NULL, TRUE);
         fOk = FCompatPaintTree(hwnd);
-        if (!IsWindow(hwnd)) return FALSE;
-        lpwin->cPresentDefer--;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return FALSE;
+        deferPresent.Close();
         if (!fOk || !FCompatPresent(hwnd)) {
             lpwin->fVisible = FALSE;
             lpwin->dwStyle &= ~WS_VISIBLE;
@@ -852,16 +843,16 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     if (lpwin->hwndParent)
         fOk = TRUE;
     else if (sw == SW_HIDE)
-        fOk = SDL_HideWindow(lpwin->lpWindow);
+        fOk = SDL_HideWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOW || (sw == SW_SHOWNORMAL && swOld == SW_SHOWNORMAL))
-        fOk = SDL_ShowWindow(lpwin->lpWindow);
+        fOk = SDL_ShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_RESTORE || sw == SW_SHOWNORMAL)
-        fOk = SDL_RestoreWindow(lpwin->lpWindow) &&
-              (swNew != SW_SHOWMAXIMIZED || SDL_MaximizeWindow(lpwin->lpWindow)) && SDL_ShowWindow(lpwin->lpWindow);
+        fOk = SDL_RestoreWindow(lpwin->lpWindow.get()) &&
+              (swNew != SW_SHOWMAXIMIZED || SDL_MaximizeWindow(lpwin->lpWindow.get())) && SDL_ShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOWMINIMIZED)
-        fOk = SDL_MinimizeWindow(lpwin->lpWindow) && SDL_ShowWindow(lpwin->lpWindow);
+        fOk = SDL_MinimizeWindow(lpwin->lpWindow.get()) && SDL_ShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOWMAXIMIZED)
-        fOk = SDL_MaximizeWindow(lpwin->lpWindow) && SDL_ShowWindow(lpwin->lpWindow);
+        fOk = SDL_MaximizeWindow(lpwin->lpWindow.get()) && SDL_ShowWindow(lpwin->lpWindow.get());
     else {
         SDL_SetError("Unsupported ShowWindow command");
         return FALSE;
@@ -909,10 +900,10 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     // A native renderer can acquire a new drawable when the hidden window is
     // shown. Submit the completed frame there without waiting for queued exposure.
     if (fPrepare && lpwin->fAlive) {
-        lpwin->cPresentDefer++;
+        COMPATPRESENTSCOPE deferPresent(lpwin);
         FCompatPaintTree(hwnd);
-        if (!IsWindow(hwnd)) return fWasVisible;
-        lpwin->cPresentDefer--;
+        if (!IsWindow(hwnd) || FStarsErrorPending()) return fWasVisible;
+        deferPresent.Close();
         FCompatPresent(hwnd);
     }
     if (lpwin->fAlive && fVisible && !lpwin->hwndParent && fNotify &&
@@ -921,7 +912,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
             lpwin->hwndRestoreFocus = GetFocus();
         // Showing a Cocoa window alone does not grant native keyboard focus.
         // ShowWindow activates ordinary windows, including modeless dialogs.
-        if (SDL_RaiseWindow(lpwin->lpWindow)) {
+        if (SDL_RaiseWindow(lpwin->lpWindow.get())) {
             if (HwndCompatRoot(GetFocus()) != hwnd) SetFocus(hwnd);
         }
     }
@@ -949,7 +940,7 @@ BOOL CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
     if (lpwin->hwndParent) {
         dx = lpwin->rcChild.right - lpwin->rcChild.left;
         dy = lpwin->rcChild.bottom - lpwin->rcChild.top;
-    } else if (!SDL_GetWindowSize(lpwin->lpWindow, &dx, &dy))
+    } else if (!SDL_GetWindowSize(lpwin->lpWindow.get(), &dx, &dy))
         return FALSE;
     if (!lpwin->hwndParent) {
         if (lpwin->fZeroX && dx == 1) dx = 0;
@@ -969,7 +960,7 @@ static BOOL FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
         lpwp->x = hwnd->rcChild.left; lpwp->y = hwnd->rcChild.top;
         return TRUE;
     }
-    return FNativePosition(hwnd->lpWindow, &lpwp->x, &lpwp->y);
+    return FNativePosition(hwnd->lpWindow.get(), &lpwp->x, &lpwp->y);
 }
 
 static void MarkCompatTopmost(HWND hwnd, BOOL fTopmost) {
@@ -977,7 +968,7 @@ static void MarkCompatTopmost(HWND hwnd, BOOL fTopmost) {
     BOOL fWasTopmost = (hwnd->dwExStyle & WS_EX_TOPMOST) != 0;
     if (fTopmost) hwnd->dwExStyle |= WS_EX_TOPMOST;
     else hwnd->dwExStyle &= ~WS_EX_TOPMOST;
-    if (hwnd->lpWindow && fTopmost != fWasTopmost) SDL_SetWindowAlwaysOnTop(hwnd->lpWindow, fTopmost);
+    if (hwnd->lpWindow.get() && fTopmost != fWasTopmost) SDL_SetWindowAlwaysOnTop(hwnd->lpWindow.get(), fTopmost);
     for (lp = lpWindows; lp; lp = lp->lpNext)
         if (lp->fAlive && lp->hwndOwner == hwnd) MarkCompatTopmost(lp, fTopmost);
 }
@@ -1062,7 +1053,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    wp = (WINDOWPOS){hwnd, hwndAfter, x, y, dx, dy, flags};
+    wp = WINDOWPOS{hwnd, hwndAfter, x, y, dx, dy, flags};
     wpOld = wp;
     if (!FCompatPosition(lpwin, &wpOld)) return FALSE;
     if (!(flags & SWP_NOSENDCHANGING)) SendMessageA(hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
@@ -1093,16 +1084,16 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     else {
         if (!(wp.flags & SWP_NOMOVE)) {
             xNative = yNative = 0;
-            if ((SDL_GetWindowFlags(lpwin->lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) &&
-                !FNativePosition(SDL_GetWindowParent(lpwin->lpWindow), &xNative, &yNative)) return FALSE;
-            if (FNativePositionable(lpwin->lpWindow) &&
-                !SDL_SetWindowPosition(lpwin->lpWindow, wp.x - xNative, wp.y - yNative)) return FALSE;
+            if ((SDL_GetWindowFlags(lpwin->lpWindow.get()) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) &&
+                !FNativePosition(SDL_GetWindowParent(lpwin->lpWindow.get()), &xNative, &yNative)) return FALSE;
+            if (FNativePositionable(lpwin->lpWindow.get()) &&
+                !SDL_SetWindowPosition(lpwin->lpWindow.get(), wp.x - xNative, wp.y - yNative)) return FALSE;
         }
         if (!(wp.flags & SWP_NOSIZE)) {
-            if (!SDL_SetWindowSize(lpwin->lpWindow, StarsMax(1, wp.cx), StarsMax(1, wp.cy))) return FALSE;
+            if (!SDL_SetWindowSize(lpwin->lpWindow.get(), StarsMax(1, wp.cx), StarsMax(1, wp.cy))) return FALSE;
             lpwin->fZeroX = wp.cx == 0; lpwin->fZeroY = wp.cy == 0;
         }
-        if (!SDL_SyncWindow(lpwin->lpWindow)) return FALSE;
+        if (!SDL_SyncWindow(lpwin->lpWindow.get())) return FALSE;
         FCompatPosition(lpwin, &wp);
     }
     CompatRememberNormal(hwnd);
@@ -1113,7 +1104,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
         lpwin->swState != SW_SHOWMINIMIZED && !(lpwin->dwExStyle & WS_EX_NOACTIVATE)) {
         if (lpwin->hwndOwner && HwndCompatRoot(GetFocus()) == lpwin->hwndOwner)
             lpwin->hwndRestoreFocus = GetFocus();
-        SDL_RaiseWindow(lpwin->lpWindow);
+        SDL_RaiseWindow(lpwin->lpWindow.get());
         SetFocus(hwnd);
         if (!lpwin->fAlive) return TRUE;
     }
@@ -1149,8 +1140,8 @@ int WINAPI GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
 
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
-    cch = CchUtf8Prefix(lpwin->lpclass->pszClass, (size_t)cchMax - 1);
-    memcpy(psz, lpwin->lpclass->pszClass, cch); psz[cch] = 0;
+    cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), (size_t)cchMax - 1);
+    memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
     return (int)cch;
 }
 
@@ -1222,7 +1213,7 @@ static BOOL FClientOrigin(HWND hwnd, int64_t *lpx, int64_t *lpy) {
         *lpy += lpwin->rcChild.top;
         lpwin = lpwin->hwndParent;
     }
-    if (!FNativePosition(lpwin->lpWindow, &x, &y)) return FALSE;
+    if (!FNativePosition(lpwin->lpWindow.get(), &x, &y)) return FALSE;
     *lpx += x; *lpy += y + CyCompatMenuBar(lpwin);
     return TRUE;
 }
@@ -1298,7 +1289,7 @@ BOOL WINAPI FlashWindow(HWND hwnd, BOOL fInvert) {
     fWasActive = lpwin->fCaptionActive;
     fCaptionActive = fInvert ? !fWasActive : GetActiveWindow() == hwnd;
     operation = fCaptionActive && GetActiveWindow() != hwnd ? SDL_FLASH_BRIEFLY : SDL_FLASH_CANCEL;
-    if (!SDL_FlashWindow(lpwin->lpWindow, operation)) {
+    if (!SDL_FlashWindow(lpwin->lpWindow.get(), operation)) {
         SetLastError(ERROR_NOT_SUPPORTED); return FALSE;
     }
     lpwin->fCaptionActive = fCaptionActive;
@@ -1338,8 +1329,8 @@ BOOL WINAPI EnableWindow(HWND hwnd, BOOL fEnable) {
     } else lpwin->dwStyle &= ~WS_DISABLED;
     /* External modal pickers own focus. Changing native focusability here can
        make a compositor withdraw the fullscreen title while the picker opens. */
-    if (lpwin->fAlive && lpwin->lpWindow && lpwin->cNativeFileDialogs == 0)
-        SDL_SetWindowFocusable(lpwin->lpWindow, fEnable && !(lpwin->dwExStyle & WS_EX_NOACTIVATE));
+    if (lpwin->fAlive && lpwin->lpWindow.get() && lpwin->cNativeFileDialogs == 0)
+        SDL_SetWindowFocusable(lpwin->lpWindow.get(), fEnable && !(lpwin->dwExStyle & WS_EX_NOACTIVATE));
     if (lpwin->fAlive) SendMessageA(hwnd, WM_ENABLE, (WPARAM)fEnable, 0);
     return fWasDisabled;
 }
@@ -1423,6 +1414,7 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
         return;
     }
     fShutdown = TRUE;
+    CompatStopAsyncMessages();
     if (fResizeWatch) SDL_RemoveEventWatch(FWatchLiveResize, NULL);
     fResizeWatch = FALSE;
     StarsCompatEndDialogSequence();
@@ -1438,14 +1430,11 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     CompatShutdownImages();
     for (lpwin = lpWindows; lpwin; lpwin = lpwinNext) {
         lpwinNext = lpwin->lpNext;
-        free(lpwin);
+        delete lpwin;
     }
     for (lpclass = lpClasses; lpclass; lpclass = lpclassNext) {
         lpclassNext = lpclass->lpNext;
-        SDL_free(lpclass->pszClass);
-        SDL_free(lpclass->pszMenu);
-        free(lpclass->rgbExtra);
-        free(lpclass);
+        delete lpclass;
     }
     CompatShutdownGdi();
     CompatShutdownMemory();
@@ -1464,6 +1453,8 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     fVideoOwned = FALSE;
     fShutdown = FALSE;
 }
+
+BOOL StarsCompatCanShutdown() noexcept { return SDL_IsMainThread() && CCompatDispatch() == 0; }
 
 void StarsCompatShutdown(void) { ShutdownCompatRuntime(TRUE); }
 void StarsCompatProcessExit(void) { ShutdownCompatRuntime(FALSE); }

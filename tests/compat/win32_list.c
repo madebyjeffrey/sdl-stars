@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 #include <stars_compat.h>
 #include "internal.h"
 #endif
@@ -76,7 +76,7 @@ static int TestOwnerSelection(HWND hwndParent) {
     grSelectedDraw = grDeselectedDraw = 0; c = cChange;
     SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1);
     CHECK(grSelectedDraw == 2 && grDeselectedDraw == 1 && cChange == c + 1);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     fResetDraw = TRUE; SendMessage(hwnd, LB_SETCURSEL, 0, 0);
     CHECK(IsWindow(hwnd) && SendMessage(hwnd, LB_GETCOUNT, 0, 0) == 0);
     CHECK(SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)"destroy") == 0);
@@ -96,14 +96,14 @@ static int TestOwnerFocus(HWND hwndParent) {
     c = cFocusDraw; SetFocus(hwndParent);
     CHECK(cFocusDraw > c && !(stateFocus & ODS_FOCUS));
     CHECK(cFocusNotify == 2 && cDrawAtFocusNotify == cFocusDraw);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     fResetDraw = TRUE; SetFocus(hwnd);
     CHECK(IsWindow(hwnd) && SendMessage(hwnd, LB_GETCOUNT, 0, 0) == 0);
     SetFocus(hwndParent);
 #endif
     SendMessage(hwnd, LB_RESETCONTENT, 0, 0); UpdateWindow(hwnd);
     cEmptyDraw = 0; SetFocus(hwnd); UpdateWindow(hwnd);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     // The SDK documents itemID == -1 for empty owner-drawn focus. Wine draws
     // the empty focus rectangle itself instead of notifying the owner.
     CHECK(cEmptyDraw != 0 && (actionEmpty & ODA_FOCUS));
@@ -136,7 +136,7 @@ static int TestExtendedList(HWND hwndParent) {
     SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1);
     SendMessage(hwnd, WM_KEYDOWN, VK_DOWN, 1);
     CHECK(SendMessage(hwnd, LB_GETSELCOUNT, 0, 0) == 3);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     // Wine's list implementation does not handle Ctrl keyboard selection or
     // multi-character type-ahead; qualify these native behaviors separately.
     rgbKeys[VK_SHIFT] = 0; rgbKeys[VK_CONTROL] = 0x80; CHECK(SetKeyboardState(rgbKeys));
@@ -154,7 +154,7 @@ static int TestExtendedList(HWND hwndParent) {
     DestroyWindow(hwnd);
     return 0;
 }
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
 static int TestCtrlDrag(HWND hwndParent) {
     HWND hwnd = NewList(hwndParent, 107, LBS_NOTIFY | LBS_EXTENDEDSEL);
     int i, cy, c;
@@ -192,7 +192,7 @@ static int TestListScroll(HWND hwndParent) {
     SendMessage(hwnd, WM_HSCROLL, SB_PAGERIGHT, 0);
     CHECK(GetScrollPos(hwnd, SB_HORZ) > 0);
     SendMessage(hwnd, LB_RESETCONTENT, 0, 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(!(GetWindowLongPtr(hwnd, GWL_STYLE) & WS_VSCROLL));
 #endif
     CHECK(DestroyWindow(hwnd)); return 0;
@@ -211,7 +211,7 @@ int main(void) {
     CHECK(TestOwnerFocus(hwnd) == 0);
     CHECK(TestExtendedList(hwnd) == 0);
     CHECK(TestListScroll(hwnd) == 0);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     CHECK(TestCtrlDrag(hwnd) == 0);
 #endif
     hwndList = NewList(hwnd, 100, LBS_NOTIFY);
@@ -259,7 +259,7 @@ int main(void) {
     CHECK(SendMessage(hwndOwner, LB_SETCURSEL, 0, 0) == 0);
     InvalidateRect(hwndOwner, NULL, TRUE); CHECK(UpdateWindow(hwndOwner));
     CHECK(cDraw != 0 && dataDraw == 0x42 && (stateDraw & ODS_SELECTED));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         HDC hdc = GetDC(hwndOwner);
         CHECK(hdc && GetPixel(hdc, 5, 5) == RGB(0, 0, 0));
@@ -279,7 +279,7 @@ int main(void) {
     CHECK(IsWindow(hwndKill));
     SendMessage(hwndKill, WM_LBUTTONUP, 0, MAKELPARAM(5, 5));
     CHECK(!IsWindow(hwndKill));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     {
         SDL_Event event = {0};
         MSG msg;
@@ -302,7 +302,7 @@ int main(void) {
     CHECK(!IsWindow(hwndOwner));
 #endif
     CHECK(DestroyWindow(hwnd));
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
     StarsCompatShutdown();
 #endif
     puts("Win32 list boxes passed");
