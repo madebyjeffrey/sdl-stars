@@ -1,7 +1,7 @@
 # C06: runtime namespaces and error boundaries
 
-Parent: `c6940721a3ec258fc182b6d5cfa3192c52b08e6c` (C04/C05 PR #72). Qualification is active on
-`codex/cpp-c06-namespaces`.
+Parent: `c6940721a3ec258fc182b6d5cfa3192c52b08e6c` (C04/C05 PR #72). Qualified in draft [PR #73](https://github.com/madebyjeffrey/sdl-stars/pull/73)
+at `375538b0`; no merge performed.
 
 ## Operations
 
@@ -75,10 +75,10 @@ calls; its current C++ type-check entry imports the raw namespace explicitly.
 
 ## Qualification
 
-All 149 current desktop checks have passing receipts: the final full collection
-passes 145 and times out four workflows during logged macOS idle/maintenance
-sleep; the four isolated retries pass unchanged limits with a temporary
-process-scoped sleep assertion. The preceding complete 148-check run also passes.
+The corrected head passes a clean full 149/149 desktop collection. A preceding
+run timed out four workflows during logged macOS idle/maintenance sleep; isolated
+retries passed unchanged limits with a process-scoped sleep assertion before the
+clean full rerun. The earlier complete 148-check collection also passed.
 All 29 native leak checks and the available tutorial smoke checkpoint pass.
 The final 34-check ASan/UBSan selection passes all linked witnesses, save/profile,
 callback guards and the cursor/type contracts; macOS uses native leak inspection.
@@ -94,7 +94,7 @@ tests and 2,819 links / 700 requirement IDs.
 All 38 independent SDK C entries and 29 representative C++ application/provider/
 isolated SDK translation units compile, including ordinary wrapper ABI assertions;
 the paired SDK identity contract separately compiles. This is compile evidence.
-Native Windows and full Linux desktop execution remain the manual platform gate;
+The subsequent corrected manual Windows/Linux run is recorded below;
 automatic CI defaults stay unchanged. Canonical model files, record layouts,
 catalog IDs, frozen C inputs and baselines are unchanged. C05's full unchanged
 model receipt remains 12,000 verified / zero errors and zero audit findings;
@@ -109,5 +109,10 @@ SDK declarations and callback annotations retain their real conventions. The
 C++ ABI assertion explicitly uses the same native C++ function type; its SDK C
 branch is unchanged. The type contract includes SDL first, checks native SDK
 `MSG` separation, and compiles with an inherited `WINAPI=__stdcall` definition.
-The corrected local build and strict MinGW regression compile checks pass;
-full local/runtime and manual platform reruns are pending.
+The corrected revision passes a clean full local run (149/149), the full native
+regression (519 matches, 25 accepted warnings, zero differences/errors/skips),
+and all 14 enabled PR jobs. The corrected [manual platform run](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41206840795)
+passes all five jobs: Windows probe 2/2, selected game units 13/13, platform
+checks 88/88, and Linux desktop 153/153. These Windows checks do not replace
+the separate SDK-only/both/neither configuration matrix reserved for C09/C10.
+The two slow automatic platform jobs remain opt-in.

@@ -9,7 +9,7 @@ int16_t FStarsTestPromptLegacyRacePassword(char *szPassword);
 #endif
 
 // PromptPassword refuses: a host takes a file's password with -p.
-int16_t PromptPassword() { return FALSE; }
+int16_t PromptPassword() { return 0; }
 
 // The host has no interactive UI for replacing a legacy race password.
 int16_t FPromptLegacyRacePassword(char *szPassword) {
@@ -17,7 +17,7 @@ int16_t FPromptLegacyRacePassword(char *szPassword) {
     return FStarsTestPromptLegacyRacePassword(szPassword);
 #else
     (void)szPassword;
-    return FALSE;
+    return 0;
 #endif
 }
 
@@ -36,7 +36,7 @@ void AddMRUFile(const char *pszFileName, const char *pszExt) { return; }
 
 void CloseGameWindows() { return; }
 
-int16_t FFinishPlrMsgEntry(int16_t dInc) { return TRUE; }
+int16_t FFinishPlrMsgEntry(int16_t dInc) { return 1; }
 
 void InvalidateReport(ReportType irpt, int16_t fReload) { return; }
 
@@ -82,7 +82,7 @@ void SetSzRaceFile(const char *pszFile) {
 int16_t FConfirmLegacyRaceNames(char *szName, char *szNames) {
     char szPrompt[512];
     CchSprintf(szPrompt, PszGetCompressedString(idsNativeLegacyRaceNameShortened), szName, szNames);
-    return IdAlertBox(szPrompt, MB_YESNO | MB_ICONQUESTION) == IDYES;
+    return IdAlertBox(szPrompt, win32::MB_YESNO | win32::MB_ICONQUESTION) == win32::IDYES;
 }
 
 #include "appstate.h"

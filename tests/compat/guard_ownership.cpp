@@ -30,18 +30,18 @@ size_t CWriteGuardProfile(const void *rgb, size_t cb, size_t c, NATIVEFILE *pf) 
     if (fFailProfileWrite) { fFailProfileWrite = false; StarsThrowError(starsErrorFile, 417); }
     return CWriteNative(rgb, cb, c, pf);
 }
-static LRESULT CALLBACK GuardProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg == WM_APP + 1) {
+static LRESULT  GuardProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == win32::WM_APP + 1) {
         if (CCompatDispatch() != 1) cDepthErrors++;
-        win32::SendMessageA(hwnd, WM_APP + 2, 0, 0);
+        win32::SendMessageA(hwnd, win32::WM_APP + 2, 0, 0);
         StarsThrowError(starsErrorFile, 417);
     }
-    if (msg == WM_APP + 2) {
+    if (msg == win32::WM_APP + 2) {
         if (CCompatDispatch() != 2) cDepthErrors++;
         cNested++;
     }
-    if (msg == WM_DESTROY && fCleanupFailure) StarsThrowError(starsErrorMemory, 418);
-    if (msg == WM_UNINITMENUPOPUP && fMenuFailure) StarsThrowError(starsErrorFile, 417);
+    if (msg == win32::WM_DESTROY && fCleanupFailure) StarsThrowError(starsErrorMemory, 418);
+    if (msg == win32::WM_UNINITMENUPOPUP && fMenuFailure) StarsThrowError(starsErrorFile, 417);
     return win32::DefWindowProcA(hwnd, msg, w, l);
 }
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
@@ -54,13 +54,13 @@ int main(int argc, char **argv) {
     HWND hwnd, hwndChild;
     HMENU hmenu;
     win32::MSG msg = {};
-    UINT rgflags[2] = {0, TPM_RETURNCMD};
+    UINT rgflags[2] = {0, win32::TPM_RETURNCMD};
     int i;
     CHECK(argc == 2 && !FStarsErrorPending());
     // Build the Unicode suffix as UTF-8 here; Windows CRT argv may use an ACP.
     std::string szPath = std::string(argv[1]) + "-Ω.dat";
-    hf = win32::OpenFile(szPath.c_str(), &of, OF_CREATE | OF_READWRITE | OF_SHARE_DENY_NONE);
-    CHECK(hf != HFILE_ERROR && win32::_lwrite(hf, "wire", 4) == 4 && win32::_llseek(hf, 0, 0) == 0);
+    hf = win32::OpenFile(szPath.c_str(), &of, win32::OF_CREATE | win32::OF_READWRITE | win32::OF_SHARE_DENY_NONE);
+    CHECK(hf != win32::HFILE_ERROR && win32::_lwrite(hf, "wire", 4) == 4 && win32::_llseek(hf, 0, 0) == 0);
     {
         COMPATFILEREADSCOPE readScope(CbReadGuardFile);
         fFailRead = true;
@@ -101,9 +101,9 @@ int main(int argc, char **argv) {
 
     wc.lpfnWndProc = GuardProc; wc.lpszClassName = "GuardOwnership";
     CHECK(win32::RegisterClassA(&wc));
-    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Guard", WS_OVERLAPPEDWINDOW, 0, 0, 120, 80, NULL, NULL, NULL, NULL);
+    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Guard", win32::WS_OVERLAPPEDWINDOW, 0, 0, 120, 80, NULL, NULL, NULL, NULL);
     CHECK(hwnd && CCompatDispatch() == 0);
-    win32::SendMessageA(hwnd, WM_APP + 1, 0, 0);
+    win32::SendMessageA(hwnd, win32::WM_APP + 1, 0, 0);
     CHECK(FStarsErrorPending() && CCompatDispatch() == 0 && cNested == 1 && cDepthErrors == 0);
     fCleanupFailure = true;
     CHECK(win32::DestroyWindow(hwnd) && !win32::IsWindow(hwnd) && CCompatDispatch() == 0);
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     try { StarsRethrowPendingError(); }
     catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
     CHECK(fCaught && !FStarsErrorPending());
-    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Unwinding", WS_OVERLAPPEDWINDOW, 0, 0, 120, 80, NULL, NULL, NULL, NULL);
+    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Unwinding", win32::WS_OVERLAPPEDWINDOW, 0, 0, 120, 80, NULL, NULL, NULL, NULL);
     CHECK(hwnd);
     fCaught = false;
     try {
@@ -123,26 +123,26 @@ int main(int argc, char **argv) {
     } catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
     CHECK(fCaught && !win32::IsWindow(hwnd) && !FStarsErrorPending() && CCompatDispatch() == 0);
     fCleanupFailure = false;
-    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Popup failure", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 240, 160, NULL, NULL, NULL, NULL);
+    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Popup failure", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE, 0, 0, 240, 160, NULL, NULL, NULL, NULL);
     CHECK(hwnd);
-    hwndChild = win32::CreateWindowExA(0, wc.lpszClassName, "Saved capture", WS_CHILD | WS_VISIBLE, 0, 0, 80, 24, hwnd, (HMENU)(UINT_PTR)74, NULL, NULL);
-    hmenu = win32::CreatePopupMenu(); CHECK(hwndChild && hmenu && win32::AppendMenuA(hmenu, MF_STRING, 73, "Choose"));
+    hwndChild = win32::CreateWindowExA(0, wc.lpszClassName, "Saved capture", win32::WS_CHILD | win32::WS_VISIBLE, 0, 0, 80, 24, hwnd, (HMENU)(UINT_PTR)74, NULL, NULL);
+    hmenu = win32::CreatePopupMenu(); CHECK(hwndChild && hmenu && win32::AppendMenuA(hmenu, win32::MF_STRING, 73, "Choose"));
     win32::SetCapture(hwndChild); CHECK(win32::GetCapture() == hwndChild);
     fMenuFailure = true;
     for (i = 0; i < 2; i++) {
-        win32::PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1); win32::PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 1);
+        win32::PostMessageA(hwnd, win32::WM_KEYDOWN, win32::VK_DOWN, 1); win32::PostMessageA(hwnd, win32::WM_KEYDOWN, win32::VK_RETURN, 1);
         CHECK(!win32::TrackPopupMenu(hmenu, rgflags[i], 0, 0, 0, hwnd, NULL));
         CHECK(FStarsErrorPending() && CCompatDispatch() == 0 && win32::GetCapture() == hwndChild);
-        CHECK(!win32::PeekMessageA(&msg, hwnd, WM_COMMAND, WM_COMMAND, PM_REMOVE));
+        CHECK(!win32::PeekMessageA(&msg, hwnd, win32::WM_COMMAND, win32::WM_COMMAND, win32::PM_REMOVE));
         fCaught = false;
         try { StarsRethrowPendingError(); }
         catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
         CHECK(fCaught && !FStarsErrorPending());
     }
     fMenuFailure = false;
-    win32::PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 1); win32::PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 1);
+    win32::PostMessageA(hwnd, win32::WM_KEYDOWN, win32::VK_DOWN, 1); win32::PostMessageA(hwnd, win32::WM_KEYDOWN, win32::VK_RETURN, 1);
     CHECK(win32::TrackPopupMenu(hmenu, 0, 0, 0, 0, hwnd, NULL));
-    CHECK(win32::PeekMessageA(&msg, hwnd, WM_COMMAND, WM_COMMAND, PM_REMOVE) && LOWORD(msg.wParam) == 73);
+    CHECK(win32::PeekMessageA(&msg, hwnd, win32::WM_COMMAND, win32::WM_COMMAND, win32::PM_REMOVE) && LOWORD(msg.wParam) == 73);
     CHECK(win32::GetCapture() == hwndChild && !FStarsErrorPending());
     win32::ReleaseCapture(); CHECK(win32::DestroyMenu(hmenu) && win32::DestroyWindow(hwnd));
     StarsCompatShutdown();

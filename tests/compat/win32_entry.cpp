@@ -14,15 +14,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pszCommand, int 
     RECT rc;
     if (!SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING) ||
         strcmp(SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_IDENTIFIER_STRING), "org.starsgame.Stars") ||
-        !hInstance || hPrevInstance || nCmdShow != SW_SHOWNORMAL ||
+        !hInstance || hPrevInstance || nCmdShow != win32::SW_SHOWNORMAL ||
         !pszExpected || strcmp(pszCommand, pszExpected)) {
         fprintf(stderr, "Unexpected WinMain entry arguments\n");
         return 90;
     }
     if (pszHeadless) {
         wc.hInstance = hInstance; wc.lpszClassName = "HeadlessEntry"; wc.lpfnWndProc = win32::DefWindowProcA;
-        if (!win32::RegisterClass(&wc)) return 91;
-        hwnd = win32::CreateWindow(wc.lpszClassName, "Invisible UI", WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+        if (!win32::RegisterClassA(&wc)) return 91;
+        hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "Invisible UI", win32::WS_VISIBLE | win32::WS_OVERLAPPEDWINDOW,
                             0, 0, 120, 80, NULL, NULL, hInstance, NULL);
         if (!hwnd || !SDL_GetCurrentVideoDriver() || strcmp(SDL_GetCurrentVideoDriver(), "dummy") ||
             strcmp(SDL_getenv("SDL_AUDIODRIVER"), "dummy") || strcmp(SDL_getenv("STARS_SDL_RENDERER"), "software") ||

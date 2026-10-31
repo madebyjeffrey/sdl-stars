@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define cWindows 2
-#define dxSurface 320
-#define dySurface 240
+constexpr auto cWindows = 2;
+constexpr auto dxSurface = 320;
+constexpr auto dySurface = 240;
 
 typedef struct SMOKEWINDOW {
     SDL_Window   *hwnd;

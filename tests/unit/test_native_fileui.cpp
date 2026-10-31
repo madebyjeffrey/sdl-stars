@@ -7,14 +7,14 @@ static void TestTextBoundaries(void) {
     WNDCLASSA wc = {};
     char sz[32];
     wc.lpfnWndProc = ui::DefWindowProc; wc.lpszClassName = "StarsNativeTitleProbe";
-    wc.hInstance = win32::GetModuleHandle(NULL); TEST_ASSERT(win32::RegisterClassA(&wc));
-    hwnd = ui::CreateWindowEx(0, wc.lpszClassName, "Native title", WS_OVERLAPPED, 0, 0, 200, 100, NULL, NULL, win32::GetModuleHandle(NULL), NULL);
+    wc.hInstance = win32::GetModuleHandleA(NULL); TEST_ASSERT(win32::RegisterClassA(&wc));
+    hwnd = ui::CreateWindowEx(0, wc.lpszClassName, "Native title", win32::WS_OVERLAPPED, 0, 0, 200, 100, NULL, NULL, win32::GetModuleHandleA(NULL), NULL);
     TEST_ASSERT(hwnd);
-    hwndEdit = ui::CreateWindowEx(0, "EDIT", "", WS_CHILD, 0, 0, 180, 24, hwnd, NULL, win32::GetModuleHandle(NULL), NULL);
+    hwndEdit = ui::CreateWindowEx(0, "EDIT", "", win32::WS_CHILD, 0, 0, 180, 24, hwnd, NULL, win32::GetModuleHandleA(NULL), NULL);
     TEST_ASSERT(hwndEdit && FSetUtf8WindowText(hwndEdit, "\xc3\xa9\xe2\x82\xac"));
     TEST_CHECK(CchGetUtf8WindowText(hwndEdit, sz, sizeof(sz)) == 5 && strcmp(sz, "\xc3\xa9\xe2\x82\xac") == 0);
     TEST_ASSERT(FSetNativeWindowTitle(hwnd, "caf\xc3\xa9-\xce\xa9"));
-    TEST_CHECK(win32::GetWindowText(hwnd, sz, sizeof(sz)) == 8 && strcmp(sz, "caf\xc3\xa9-\xce\xa9") == 0);
+    TEST_CHECK(win32::GetWindowTextA(hwnd, sz, sizeof(sz)) == 8 && strcmp(sz, "caf\xc3\xa9-\xce\xa9") == 0);
     TEST_CHECK(ui::DestroyWindow(hwnd));
     StarsCompatProcessExit();
 }

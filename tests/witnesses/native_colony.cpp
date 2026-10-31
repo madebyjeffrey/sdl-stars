@@ -16,7 +16,7 @@ static int16_t  LookupPlanet(int16_t id, PLANET *out) {
     assert(id == 0);
     lookups++;
     *out = stored;
-    return TRUE;
+    return 1;
 }
 static int16_t Habitat(PLANET *p, int16_t player) {
     assert(player == 0 || player == 1);

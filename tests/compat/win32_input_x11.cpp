@@ -14,14 +14,14 @@ int main(void) {
     Display *lpDisplay = NULL;
     Window window;
     KeyCode key = 0;
-    BOOL fPressed = FALSE;
+    BOOL fPressed = 0;
     win32::MSG msg;
     DWORD ms;
     int iResult = 0;
     wc.lpszClassName = "StarsPhysicalInput"; wc.lpfnWndProc = win32::DefWindowProcA;
     wc.hInstance = (HINSTANCE)(UINT_PTR)1;
-    CHECK(win32::RegisterClass(&wc));
-    hwnd = win32::CreateWindow(wc.lpszClassName, "physical input", WS_POPUP | WS_VISIBLE,
+    CHECK(win32::RegisterClassA(&wc));
+    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "physical input", win32::WS_POPUP | win32::WS_VISIBLE,
                         40, 50, 320, 240, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd && strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0);
     lpDisplay = XOpenDisplay(NULL);
@@ -33,27 +33,27 @@ int main(void) {
     XSetInputFocus(lpDisplay, window, RevertToParent, CurrentTime);
     XSync(lpDisplay, False);
     win32::SetFocus(hwnd);
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) win32::DispatchMessageA(&msg);
-    CHECK(!(win32::GetKeyState(VK_SHIFT) & 0x8000));
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) win32::DispatchMessageA(&msg);
+    CHECK(!(win32::GetKeyState(win32::VK_SHIFT) & 0x8000));
     CHECK(XTestFakeKeyEvent(lpDisplay, key, True, CurrentTime));
-    fPressed = TRUE;
+    fPressed = 1;
     XSync(lpDisplay, False);
     ms = win32::GetTickCount();
-    while (!(win32::GetAsyncKeyState(VK_SHIFT) & 0x8000) && win32::GetTickCount() - ms < 2000) SDL_Delay(5);
-    CHECK(win32::GetAsyncKeyState(VK_SHIFT) < 0 && win32::GetAsyncKeyState(VK_LSHIFT) < 0);
-    CHECK(!(win32::GetKeyState(VK_SHIFT) & 0x8000));
-    CHECK(win32::PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_NOREMOVE));
-    CHECK(!(win32::GetKeyState(VK_SHIFT) & 0x8000));
-    CHECK(win32::PeekMessageA(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE));
-    CHECK(msg.wParam == VK_SHIFT && win32::GetKeyState(VK_SHIFT) < 0);
+    while (!(win32::GetAsyncKeyState(win32::VK_SHIFT) & 0x8000) && win32::GetTickCount() - ms < 2000) SDL_Delay(5);
+    CHECK(win32::GetAsyncKeyState(win32::VK_SHIFT) < 0 && win32::GetAsyncKeyState(win32::VK_LSHIFT) < 0);
+    CHECK(!(win32::GetKeyState(win32::VK_SHIFT) & 0x8000));
+    CHECK(win32::PeekMessageA(&msg, hwnd, win32::WM_KEYDOWN, win32::WM_KEYDOWN, win32::PM_NOREMOVE));
+    CHECK(!(win32::GetKeyState(win32::VK_SHIFT) & 0x8000));
+    CHECK(win32::PeekMessageA(&msg, hwnd, win32::WM_KEYDOWN, win32::WM_KEYDOWN, win32::PM_REMOVE));
+    CHECK(msg.wParam == win32::VK_SHIFT && win32::GetKeyState(win32::VK_SHIFT) < 0);
     CHECK(XTestFakeKeyEvent(lpDisplay, key, False, CurrentTime));
-    fPressed = FALSE;
+    fPressed = 0;
     XSync(lpDisplay, False);
     ms = win32::GetTickCount();
-    while ((win32::GetAsyncKeyState(VK_SHIFT) & 0x8000) && win32::GetTickCount() - ms < 2000) SDL_Delay(5);
-    CHECK(!(win32::GetAsyncKeyState(VK_SHIFT) & 0x8000) && win32::GetKeyState(VK_SHIFT) < 0);
-    CHECK(win32::PeekMessageA(&msg, hwnd, WM_KEYUP, WM_KEYUP, PM_REMOVE));
-    CHECK(!(win32::GetKeyState(VK_SHIFT) & 0x8000));
+    while ((win32::GetAsyncKeyState(win32::VK_SHIFT) & 0x8000) && win32::GetTickCount() - ms < 2000) SDL_Delay(5);
+    CHECK(!(win32::GetAsyncKeyState(win32::VK_SHIFT) & 0x8000) && win32::GetKeyState(win32::VK_SHIFT) < 0);
+    CHECK(win32::PeekMessageA(&msg, hwnd, win32::WM_KEYUP, win32::WM_KEYUP, win32::PM_REMOVE));
+    CHECK(!(win32::GetKeyState(win32::VK_SHIFT) & 0x8000));
     puts("X11 physical keyboard contracts passed");
 LExit:
     if (lpDisplay) {

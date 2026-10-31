@@ -22,9 +22,9 @@ char szStarsTestLegacyRacePassword[16];
 int16_t FStarsTestPromptLegacyRacePassword(char *szPassword) {
     cStarsTestLegacyRacePasswordPrompt++;
     if (!fStarsTestAcceptLegacyRacePassword)
-        return FALSE;
+        return 0;
     strcpy(szPassword, szStarsTestLegacyRacePassword);
-    return TRUE;
+    return 1;
 }
 
 // FStarsTestAlert records a message box and gives the answer that lets the
@@ -33,9 +33,9 @@ static int16_t FStarsTestAlert(const char *sz, int16_t mbType) {
     if (pfnStarsTestAlertObserver) pfnStarsTestAlertObserver();
     cStarsTestAlert++;
     snprintf(szStarsTestAlert, sizeof(szStarsTestAlert), "%s", sz);
-    if (((mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)
+    if (((mbType & 0x000f) == win32::MB_YESNO || (mbType & 0x000f) == win32::MB_YESNOCANCEL) && iStarsTestAlertResponse != 0)
         return iStarsTestAlertResponse;
-    return (mbType & 0x000f) == MB_YESNO || (mbType & 0x000f) == MB_YESNOCANCEL ? IDYES : IDOK;
+    return (mbType & 0x000f) == win32::MB_YESNO || (mbType & 0x000f) == win32::MB_YESNOCANCEL ? win32::IDYES : IDOK;
 }
 
 #ifdef STARS_UI_SDL
@@ -47,30 +47,30 @@ int16_t IdAlertBox(const char *sz, int16_t mbType) { return FStarsTestAlert(sz, 
 
 int16_t FStarsTestInit(void) {
     iStarsTestAlertResponse = 0;
-    fStarsTestAcceptLegacyRacePassword = FALSE;
+    fStarsTestAcceptLegacyRacePassword = 0;
     cStarsTestLegacyRacePasswordPrompt = 0;
     szStarsTestLegacyRacePassword[0] = 0;
 #ifdef STARS_UI_SDL
-    hInst = win32::GetModuleHandle(NULL);
+    hInst = win32::GetModuleHandleA(NULL);
     memset(&vtimer, 0, sizeof(TIMER));
 #endif
     szBase[0] = 0;
     ini.SetWFlags(0);
     memset(&tutor, 0, sizeof(TUTOR));
     Randomize2(12345);
-    fFileErrSilent = TRUE;
+    fFileErrSilent = 1;
     idPlayer = iplrNone;
 #ifdef STARS_UI_SDL
     return FCreateStuff();
 #else
     InitGameStuff();
-    return TRUE;
+    return 1;
 #endif
 }
 
 // DeleteGameFiles removes szDir's game.* files from an earlier run.
 static void DeleteGameFiles(const char *szDir) {
-    char          szFile[MAX_PATH];
+    char          szFile[cbTestPath];
 #ifdef _WIN32
     struct _finddata_t fd;
     intptr_t hFind;
@@ -103,34 +103,36 @@ static void DeleteGameFiles(const char *szDir) {
 }
 
 int16_t FStarsTestDir(const char *pszName, char *szDir, size_t cchDir) {
-    char szCwd[MAX_PATH];
+    char szCwd[cbTestPath];
 
-    if (getcwd(szCwd, sizeof(szCwd)) == NULL)
-        return FALSE;
+    if (PszStarsTestCwd(szCwd, sizeof(szCwd)) == NULL)
+        return 0;
     snprintf(szDir, cchDir, "%s%swork", szCwd, szDirSep);
     MakeDir(szDir);
     snprintf(szDir, cchDir, "%s%swork%s%s", szCwd, szDirSep, szDirSep, pszName);
     MakeDir(szDir);
     DeleteGameFiles(szDir);
-    return TRUE;
+    return 1;
 }
 
 // FCopyRace copies the test race, which CMake places in data/, next to the game.
 static int16_t FCopyRace(const char *szDir) {
-    char   szDst[MAX_PATH];
+    char   szDst[cbTestPath];
+    char   szSrc[] = "data/humanoid.r1";
     char   rgb[4096];
     size_t cb;
     FILE  *pfSrc;
     FILE  *pfDst;
 
     snprintf(szDst, sizeof(szDst), "%s%shuman.r1", szDir, szDirSep);
-    pfSrc = fopen("data" szDirSep "humanoid.r1", "rb");
+    szSrc[4] = chDirSep;
+    pfSrc = fopen(szSrc, "rb");
     if (pfSrc == NULL)
-        return FALSE;
+        return 0;
     pfDst = fopen(szDst, "wb");
     if (pfDst == NULL) {
         fclose(pfSrc);
-        return FALSE;
+        return 0;
     }
     while ((cb = fread(rgb, 1, sizeof(rgb), pfSrc)) > 0)
         fwrite(rgb, 1, cb, pfDst);
@@ -139,16 +141,16 @@ static int16_t FCopyRace(const char *szDir) {
 }
 
 int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi, int16_t cAi) {
-    char    szDef[MAX_PATH];
+    char    szDef[cbTestPath];
     FILE   *fp;
     int16_t i;
 
     if (!FCopyRace(szDir))
-        return FALSE;
+        return 0;
     snprintf(szDef, sizeof(szDef), "%s%sgame.def", szDir, szDirSep);
     fp = fopen(szDef, "wb");
     if (fp == NULL)
-        return FALSE;
+        return 0;
     // Tiny universe, sparse, distant positions; all game options off.
     fprintf(fp, "Unit Test\r\n0 0 1 %lu\r\n0 0 0 0 0 1 0\r\n%d\r\n%s%shuman.r1\r\n", (unsigned long)lSeed, 1 + cAi, szDir, szDirSep);
     for (i = 0; i < cAi; i++)
@@ -160,10 +162,10 @@ int16_t FStarsTestNewGame(const char *szDir, uint32_t lSeed, const char **rgszAi
     fclose(fp);
 
     if (!GenNewGameFromFile(szDef))
-        return FALSE;
+        return 0;
     DestroyCurGame();
     snprintf(szBase, sizeof(szBase), "%s%sgame", szDir, szDirSep);
-    return TRUE;
+    return 1;
 }
 
 int16_t FStarsTestLoadHost(void) {
@@ -203,7 +205,7 @@ FLEET *LpflStarsTestAddFleet(int16_t iPlr, int16_t idPlanet, int16_t ishdef, int
 
 int16_t FStarsTestSaveHost(void) {
     idPlayer = iplrNone;
-    return FWriteDataFile(szBase, -1, FALSE);
+    return FWriteDataFile(szBase, -1, 0);
 }
 
 int16_t FStarsTestSaveGame(void) {
@@ -211,8 +213,8 @@ int16_t FStarsTestSaveGame(void) {
 
     for (i = 0; i < game.cPlayer; i++) {
         idPlayer = iplrNone;
-        if (!FWriteDataFile(szBase, i, FALSE))
-            return FALSE;
+        if (!FWriteDataFile(szBase, i, 0))
+            return 0;
     }
     return FStarsTestSaveHost();
 }

@@ -34,7 +34,7 @@ uint16_t CbHeapItem(uint16_t cb, HeapType ht) {
     uint32_t cbItem = ((uint32_t)cb + 2 + cbAlign - 1) / cbAlign * cbAlign;
 
     if (cbItem > static_cast<uint32_t>(UINT16_MAX - CbHbHeader(ht))) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     return cbItem;
@@ -52,7 +52,7 @@ HB *LphbAlloc(uint16_t cb, HeapType ht) {
     /* NATIVE: the original locked a zero-filled GlobalAlloc block. */
     hmem = calloc(1, cb);
     if (!hmem) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     // The lifetime operation retains calloc's initialized representation.
@@ -100,7 +100,7 @@ HB *LphbReAlloc(HB *lphb) {
     hmem = realloc(hmem, (size_t)(lphb->cbBlock + cbGrow));
     if (!hmem) {
     LReAllocOOM:
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), win32::MB_ICONHAND);
         StarsThrowError(starsErrorMemory, idsMemory);
     }
     hmem = std::memmove(hmem, hmem, static_cast<std::size_t>(cbCur) + cbGrow);
@@ -276,7 +276,7 @@ PL *LpplAlloc(uint16_t cbItem, uint16_t cAlloc, HeapType ht) {
     lppl = LpAlloc<PL>(cbItem * cAlloc + 4, ht);
     lppl->iMax = cAlloc;
     lppl->iMac = 0;
-    lppl->fMark = FALSE;
+    lppl->fMark = 0;
     lppl->cbItem = cbItem;
     lppl->ht = ht;
     return lppl;
@@ -383,7 +383,7 @@ bool FApplyOrderBytes(PLORD *lpplord, int16_t iord, const uint8_t *rgb, int16_t 
         std::memcpy(&ord, storage.data() + ib, cbNative);
         cbChunk = (std::min)(cbWireOrder, cbCopy - ib);
         FDecodeOrderPrefix(std::as_bytes(std::span(rgb + ib, cbChunk)), ord);
-        if (ib == 0) ord.fNoAutoTrack = FALSE;
+        if (ib == 0) ord.fNoAutoTrack = 0;
         std::memcpy(storage.data() + ib, &ord, cbNative);
         ib += cbChunk;
     } while (ib < cbCopy);

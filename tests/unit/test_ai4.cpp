@@ -2,8 +2,8 @@
 
 #include "stars_test.h"
 
-#define iplrCyber   1
-#define ishSBDefend 14
+constexpr auto iplrCyber = 1;
+constexpr auto ishSBDefend = 14;
 
 // CshDesign counts iPlr's ships of design ishdef in the loaded game.
 static int32_t CshDesign(int16_t iPlr, int16_t ishdef) {
@@ -23,7 +23,7 @@ static int32_t CshDesign(int16_t iPlr, int16_t ishdef) {
 // old but newest defender design was marked for recycling and its fleets at
 // a starbase were scrapped.
 static void test_cyber_keeps_latest_sb_defender(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#5 4"};
     PLANET     *lppl;
     SHDEF      *lpshdef;
@@ -49,7 +49,7 @@ static void test_cyber_keeps_latest_sb_defender(void) {
     lpshdef->turn = (uint16_t)(game.turn - 60);
     lpshdef->cExist = 0;
     lpshdef->cBuilt = 0;
-    rglpshdef[iplrCyber][ishSBDefend + 1].fFree = TRUE;
+    rglpshdef[iplrCyber][ishSBDefend + 1].fFree = 1;
     LpflStarsTestAddFleet(iplrCyber, lppl->id, ishSBDefend, 1);
     TEST_ASSERT(FStarsTestSaveHost());
 

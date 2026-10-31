@@ -64,15 +64,15 @@ int16_t FSendPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int1
     cbMsg = PackageUpMsg(rgbWork, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
     if (cbMsg <= 0) {
         if (cbMsg == 0) {
-            return TRUE;
+            return 1;
         }
-        return FALSE;
+        return 0;
     }
     lpb = (uint8_t *)lpMsg + imemMsgCur;
     memmove(lpb, rgbWork, cbMsg);
     imemMsgCur += cbMsg;
     cMsg++;
-    return TRUE;
+    return 1;
 }
 
 int16_t FSendPrependedPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7) {
@@ -82,15 +82,15 @@ int16_t FSendPrependedPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t
     cbMsg = PackageUpMsg(rgbWork, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
     if (cbMsg <= 0) {
         if (cbMsg == 0) {
-            return TRUE;
+            return 1;
         }
-        return FALSE;
+        return 0;
     }
     memmove((uint8_t *)lpMsg + cbMsg, lpMsg, imemMsgCur);
     memmove(lpMsg, rgbWork, cbMsg);
     imemMsgCur += cbMsg;
     cMsg++;
-    return TRUE;
+    return 1;
 }
 
 int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6,
@@ -169,7 +169,7 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     int16_t  rgArgs[2];
 
     if ((uint16_t)(imemMsgCur + 20) > 0xffc8) {
-        return FALSE;
+        return 0;
     }
     pb = rgb;
     pmsghdr = pb;
@@ -207,8 +207,8 @@ int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t
     imemMsgCur += cSize;
     cMsg++;
     iMsgCur = imsgNone;
-    iMsgCur = IMsgNext(FALSE);
-    return TRUE;
+    iMsgCur = IMsgNext(0);
+    return 1;
 }
 
 int16_t IdmGetMessageN(int16_t iMsg) {
@@ -229,7 +229,7 @@ int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
     uint16_t u;
 
     if ((int16_t)iMsg < idmColonistsDroppedMassacredGroundTroops || (int16_t)iMsg >= cMsg) {
-        return FALSE;
+        return 0;
     }
     lpb = (uint8_t *)lpMsg;
     lpbMax = lpb + imemMsgCur;
@@ -253,7 +253,7 @@ int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb) {
             break;
         iMsg = static_cast<MessageId>(iMsg - 1);
     }
-    return TRUE;
+    return 1;
 }
 
 char *PszGetMessageN(int16_t iMsg) {
@@ -363,7 +363,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                     for (; (w & 1) == 0; w >>= 1) {
                         c++;
                     }
-                    pchT = TextIO().pfnPlayerName(c, FALSE, TRUE, TRUE, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(c, 0, 1, 1, 0, NULL);
                     goto FinishString;
                 }
                 cOut = 0;
@@ -377,7 +377,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                                 pch = PchAppendMessageText(pch, TextIO().pfnCompressed(idsAnd));
                             }
                         }
-                        pchT = TextIO().pfnPlayerName(i, FALSE, TRUE, TRUE, 0, NULL);
+                        pchT = TextIO().pfnPlayerName(i, 0, 1, 1, 0, NULL);
                         pch = PchAppendMessageText(pch, pchT);
                         cOut++;
                     }
@@ -389,7 +389,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 if (*pParams == idPlayer)
                     goto DoNothing;
                 TextIO().pfnCchGetString(idsOf2, szBuf);
-                pchT = TextIO().pfnPlayerName(*pParams, FALSE, FALSE, FALSE, 0, NULL);
+                pchT = TextIO().pfnPlayerName(*pParams, 0, 0, 0, 0, NULL);
                 strcat(szBuf, pchT);
                 strcat(szBuf, TextIO().pfnCompressed(idsOrigin));
                 pchT = szBuf;
@@ -468,7 +468,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                 goto DoPlanet;
             case 'O':
                 w = (uint16_t)*pParams >> 9 & 0xf;
-                pchT = TextIO().pfnPlayerName(w, FALSE, FALSE, FALSE, 0, NULL);
+                pchT = TextIO().pfnPlayerName(w, 0, 0, 0, 0, NULL);
                 goto FinishString;
             case 'u':
                 c = CchSprintf(szBuf, "%u", *pParams);
@@ -502,7 +502,7 @@ char *PszFormatString(const char *pszFormat, int16_t *pParamsReal) {
                     lpshdef = rglpshdef[c] + w;
                 }
                 if (c != idPlayer) {
-                    pchT = TextIO().pfnPlayerName(c, FALSE, FALSE, TRUE, 0, NULL);
+                    pchT = TextIO().pfnPlayerName(c, 0, 0, 1, 0, NULL);
                     CchSprintf(szBuf, "%s %s", pchT, lpshdef->hul.szClass);
                 } else {
                     strcpy(szBuf, lpshdef->hul.szClass);
@@ -550,10 +550,10 @@ int16_t FFindPlayerMessage(int16_t iPlr, int16_t iMsg, MsgGoto iObj) {
     lpbMax = lpb + imemMsgCur;
     for (; lpb < lpbMax; lpb += cbWireMsgTurn + MtvFromLp(lpb).cbParams()) {
         if (MtvFromLp(lpb).iPlr() == iPlr && MtvFromLp(lpb).msghdr().iMsg() == iMsg && MtvFromLp(lpb).msghdr().wGoto() == iObj) {
-            return TRUE;
+            return 1;
         }
     }
-    return FALSE;
+    return 0;
 }
 
 void MarkPlanetsPlayerLost(int16_t iPlayer) {
@@ -625,7 +625,7 @@ void MarkPlayersThatSentMsgs(int16_t iPlayer) {
     if (iPlayer != iplrNone) {
         for (lpmp = vlpmsgplrOut; lpmp; lpmp = lpmp->lpmsgplrNext) {
             if ((lpmp->iPlrTo == 0 && lpmp->iPlrFrom != iPlayer) || (lpmp->iPlrTo - 1 == iPlayer && !rgplr[lpmp->iPlrFrom].fInclude)) {
-                rgplr[lpmp->iPlrFrom].fInclude = TRUE;
+                rgplr[lpmp->iPlrFrom].fInclude = 1;
                 rgplr[lpmp->iPlrFrom].det = detSome;
             }
         }
@@ -743,7 +743,7 @@ void ReadPlayerMessages() {
     uint16_t u;
 
     imemMsgT = 0;
-    fOOM = FALSE;
+    fOOM = 0;
     lpb = (uint8_t *)lpMsg + imemMsgCur;
     while (hdrCur.rt == rtMsg) {
         if (hdrCur.cb != 0 && (uint16_t)(imemMsgCur + imemMsgT) < (uint16_t)(0xffc8 - hdrCur.cb)) {
@@ -780,13 +780,13 @@ void ReadPlayerMessages() {
                 }
             } catch (const StarsError &error) {
                 if (error.mdError != starsErrorMemory) throw;
-                fOOM = TRUE;
+                fOOM = 1;
             }
         }
         RecordIO().pfnReadRt();
     }
     iMsgCur = imsgNone;
-    iMsgCur = IMsgNext(FALSE);
+    iMsgCur = IMsgNext(0);
     return;
 }
 

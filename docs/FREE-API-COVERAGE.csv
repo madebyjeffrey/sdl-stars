@@ -2,7 +2,7 @@ category,source_symbol,calls,upstream_symbol,upstream_definition,upstream_declar
 Menus and accelerators,AppendMenu,23,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:115
 Painting and device contexts,BeginPaint,37,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:793
 GDI drawing text and state,BitBlt,52,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1238
-Windows and message dispatch,CallWindowProc,6,,,,implemented as local C++20 extension,compat/win32/src/message.cpp:366
+Windows and message dispatch,CallWindowProc,6,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:6
 Dialogs and controls,CheckDlgButton,1,,,,implemented as local C++20 extension,compat/win32/src/control.cpp:35
 Menus and accelerators,CheckMenuItem,18,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:148
 Dialogs and controls,CheckRadioButton,16,,,,implemented as local C++20 extension,compat/win32/src/control.cpp:45
@@ -19,7 +19,7 @@ Menus and accelerators,CreatePopupMenu,8,,,,implemented as local C++20 extension
 GDI objects and palettes,CreateRectRgn,2,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:926
 GDI objects and palettes,CreateSolidBrush,1,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:183
 Windows and message dispatch,CreateWindow,32,CreateWindowA,src/winuser_window.cpp:156,PARTIAL,adapted in local C++20 runtime,compat/win32/src/window.cpp:383
-Windows and message dispatch,DefWindowProc,12,DefWindowProcA,src/winuser_message.cpp:221,PARTIAL,adapted in local C++20 runtime,compat/win32/src/message.cpp:409
+Windows and message dispatch,DefWindowProc,12,DefWindowProcA,src/winuser_message.cpp:221,PARTIAL,adapted in local C++20 runtime,compat/win32/src/calls.cpp:126
 Painting and device contexts,DeleteDC,14,DeleteDC,src/wingdi_dc.cpp:117,PARTIAL,implemented as local C++20 extension,compat/win32/src/paint.cpp:656
 Menus and accelerators,DeleteMenu,1,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:146
 GDI objects and palettes,DeleteObject,48,DeleteObject,src/wingdi_bitmap.cpp:88,PARTIAL,implemented as local C++20 extension,compat/win32/src/paint.cpp:247
@@ -28,7 +28,7 @@ Resources and movable memory,DestroyIcon,4,,,,implemented as local C++20 extensi
 Menus and accelerators,DestroyMenu,5,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:118
 Windows and message dispatch,DestroyWindow,22,DestroyWindow,src/winuser_window.cpp:182,PARTIAL,adapted in local C++20 runtime,compat/win32/src/window.cpp:636
 Dialogs and controls,DialogBox,36,,,,implemented as local C++20 extension,compat/win32/src/dialog.cpp:233
-Windows and message dispatch,DispatchMessage,2,DispatchMessageA,src/winuser_message.cpp:180,PARTIAL,adapted in local C++20 runtime,compat/win32/src/message.cpp:383
+Windows and message dispatch,DispatchMessage,2,DispatchMessageA,src/winuser_message.cpp:180,PARTIAL,adapted in local C++20 runtime,compat/win32/src/calls.cpp:36
 GDI drawing text and state,DrawIcon,6,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:2094
 Menus and accelerators,DrawMenuBar,2,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:287
 GDI drawing text and state,DrawText,26,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1776
@@ -40,13 +40,13 @@ Painting and device contexts,EndPaint,37,,,,implemented as local C++20 extension
 Rectangle operations,EqualRect,1,,,,implemented as local C++20 extension,compat/win32/src/rect.cpp:24
 GDI drawing text and state,Escape,3,,,,implemented as local C++20 extension,compat/win32/src/print.cpp:280
 GDI drawing text and state,ExcludeClipRect,14,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1013
-Legacy compatibility macros,ExitWindows,4,,,,platform difference; rejects desktop logoff and exits Stars only,
+Legacy compatibility macros,ExitWindows,4,,,,retired Win16 name; ui::RequestQuit preserves rejection diagnostics and app exit,compat/win32/src/session.cpp:12
 GDI drawing text and state,ExtTextOut,23,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1767
 GDI drawing text and state,FillRect,84,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1111
 Resources and movable memory,FindResource,4,FindResourceA,src/winbase_file.cpp:179,STUB,implemented as local C++20 extension,compat/win32/src/resource.cpp:37
 Windows and message dispatch,FlashWindow,2,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1284
 GDI drawing text and state,FrameRect,6,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1138
-Legacy compatibility macros,FreeProcInstance,44,,,,local header macro; no separate implementation,
+Legacy compatibility macros,FreeProcInstance,44,,,,retired Win16 name; consumers use explicit C++ operations,
 Resources and movable memory,FreeResource,14,FreeResource,src/winbase_file.cpp:212,STUB,implemented as local C++20 extension,compat/win32/src/resource.cpp:75
 Windows and message dispatch,GetActiveWindow,1,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1388
 Input coordinates and scrolling,GetAsyncKeyState,24,,,,implemented as local C++20 extension,compat/win32/src/input.cpp:259
@@ -54,7 +54,7 @@ GDI drawing text and state,GetBkColor,1,,,,implemented as local C++20 extension,
 Windows and message dispatch,GetClassNameA,1,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1140
 Windows and message dispatch,GetClientRect,143,GetClientRect,src/winuser_window.cpp:343,PARTIAL,adapted in local C++20 runtime,compat/win32/src/window.cpp:1201
 Files configuration and time,GetCurrentThreadId,1,,,,implemented as local C++20 extension,compat/win32/src/services.cpp:41
-Legacy compatibility macros,GetCurrentTime,2,,,,local header macro; no separate implementation,
+Legacy compatibility macros,GetCurrentTime,2,,,,retired Win16 name; consumers use explicit C++ operations,
 Input coordinates and scrolling,GetCursorPos,1,GetCursorPos,src/winuser_cursor.cpp:11,PARTIAL,implemented as local C++20 extension,compat/win32/src/input.cpp:92
 Painting and device contexts,GetDC,52,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:689
 GDI drawing text and state,GetDIBits,2,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1914
@@ -66,14 +66,14 @@ Windows and message dispatch,GetFocus,8,,,,implemented as local C++20 extension,
 Input coordinates and scrolling,GetKeyState,5,,,,implemented as local C++20 extension,compat/win32/src/input.cpp:37
 Menus and accelerators,GetMenu,4,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:198
 Menus and accelerators,GetMenuItemCount,1,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:69
-Windows and message dispatch,GetMessage,1,GetMessageA,src/winuser_message.cpp:126,PARTIAL,adapted in local C++20 runtime,compat/win32/src/message.cpp:323
+Windows and message dispatch,GetMessage,1,GetMessageA,src/winuser_message.cpp:126,PARTIAL,adapted in local C++20 runtime,compat/win32/src/calls.cpp:42
 GDI objects and palettes,GetObject,1,GetObjectA,src/wingdi_bitmap.cpp:59,PARTIAL,implemented as local C++20 extension,compat/win32/src/paint.cpp:605
-File dialogs and printing,GetOpenFileName,1,,,,implemented as local C++20 extension,compat/win32/src/filedialog.cpp:567
+File dialogs and printing,GetOpenFileName,1,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:132
 Windows and message dispatch,GetParent,6,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1168
 Files configuration and time,GetPrivateProfileInt,35,,,,implemented as local C++20 extension,compat/win32/src/profile.cpp:244
 Files configuration and time,GetPrivateProfileString,11,,,,implemented as local C++20 extension,compat/win32/src/profile.cpp:189
 GDI drawing text and state,GetROP2,1,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:906
-File dialogs and printing,GetSaveFileName,2,,,,implemented as local C++20 extension,compat/win32/src/filedialog.cpp:568
+File dialogs and printing,GetSaveFileName,2,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:138
 Input coordinates and scrolling,GetScrollPos,7,,,,implemented as local C++20 extension,compat/win32/src/scroll.cpp:145
 GDI objects and palettes,GetStockObject,21,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:112
 Menus and accelerators,GetSubMenu,5,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:73
@@ -113,7 +113,7 @@ Resources and movable memory,LoadResource,3,LoadResource,src/winbase_file.cpp:18
 Resources and movable memory,LocalAlloc,8,,,,implemented as local C++20 extension,compat/win32/src/memory.cpp:215
 Resources and movable memory,LocalFree,8,,,,implemented as local C++20 extension,compat/win32/src/memory.cpp:216
 Resources and movable memory,LockResource,4,LockResource,src/winbase_file.cpp:201,STUB,implemented as local C++20 extension,compat/win32/src/resource.cpp:64
-Legacy compatibility macros,MakeProcInstance,45,,,,local header macro; no separate implementation,
+Legacy compatibility macros,MakeProcInstance,45,,,,retired Win16 name; consumers use explicit C++ operations,
 Input coordinates and scrolling,MapWindowPoints,10,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1237
 System settings help and sound,MessageBeep,11,,,,implemented as local C++20 extension,compat/win32/src/audio.cpp:20
 Dialogs and controls,MessageBox,4,MessageBoxA,src/winuser_misc.cpp:9,STUB,implemented as local C++20 extension,compat/win32/src/messagebox.cpp:173
@@ -123,7 +123,7 @@ Files configuration and time,MulDiv,34,,,,implemented as local C++20 extension,c
 Rectangle operations,OffsetRect,17,,,,implemented as local C++20 extension,compat/win32/src/rect.cpp:47
 Files configuration and time,OpenFile,1,,,,implemented as local C++20 extension,compat/win32/src/file.cpp:49
 GDI drawing text and state,PatBlt,289,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1393
-Windows and message dispatch,PeekMessage,5,PeekMessageA,src/winuser_message.cpp:30,IMPLEMENTED,adapted in local C++20 runtime,compat/win32/src/message.cpp:309
+Windows and message dispatch,PeekMessage,5,PeekMessageA,src/winuser_message.cpp:30,IMPLEMENTED,adapted in local C++20 runtime,compat/win32/src/calls.cpp:48
 Windows and message dispatch,PostMessage,25,PostMessageA,src/winuser_message.cpp:24,IMPLEMENTED,adapted in local C++20 runtime,compat/win32/src/message.cpp:67
 Windows and message dispatch,PostQuitMessage,6,PostQuitMessage,src/winuser_message.cpp:251,IMPLEMENTED,adapted in local C++20 runtime,compat/win32/src/message.cpp:362
 File dialogs and printing,PrintDlg,1,,,,implemented as local C++20 extension,compat/win32/src/print.cpp:64
@@ -138,8 +138,8 @@ Input coordinates and scrolling,ScrollWindow,2,,,,implemented as local C++20 ext
 GDI drawing text and state,SelectClipRgn,5,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:938
 GDI objects and palettes,SelectObject,591,SelectObject,src/wingdi_dc.cpp:101,PARTIAL,implemented as local C++20 extension,compat/win32/src/paint.cpp:260
 GDI objects and palettes,SelectPalette,23,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:202
-Dialogs and controls,SendDlgItemMessage,16,,,,implemented as local C++20 extension,compat/win32/src/control.cpp:19
-Windows and message dispatch,SendMessage,266,,,,implemented as local C++20 extension,compat/win32/src/message.cpp:373
+Dialogs and controls,SendDlgItemMessage,16,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:60
+Windows and message dispatch,SendMessage,266,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:54
 GDI drawing text and state,SetBkColor,126,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1622
 GDI drawing text and state,SetBkMode,62,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1632
 GDI drawing text and state,SetBrushOrgEx,3,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:898
@@ -157,14 +157,14 @@ Input coordinates and scrolling,SetTimer,9,SetTimer,src/winuser_timer.cpp:11,PAR
 Windows and message dispatch,SetWindowLongPtr,4,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:676
 GDI drawing text and state,SetWindowOrgEx,2,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:890
 Windows and message dispatch,SetWindowPos,82,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1046
-Windows and message dispatch,SetWindowText,52,SetWindowTextA,src/winuser_window.cpp:332,PARTIAL,adapted in local C++20 runtime,compat/win32/src/window.cpp:1130
+Windows and message dispatch,SetWindowText,52,SetWindowTextA,src/winuser_window.cpp:332,PARTIAL,adapted in local C++20 runtime,compat/win32/src/calls.cpp:102
 Windows and message dispatch,ShowWindow,104,ShowWindow,src/winuser_window.cpp:230,PARTIAL,adapted in local C++20 runtime,compat/win32/src/window.cpp:927
 Resources and movable memory,SizeofResource,1,SizeofResource,src/winbase_file.cpp:194,STUB,implemented as local C++20 extension,compat/win32/src/resource.cpp:54
 GDI drawing text and state,StretchDIBits,1,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:2002
 System settings help and sound,SystemParametersInfo,1,,,,implemented as local C++20 extension,compat/win32/src/system.cpp:64
 GDI drawing text and state,TextOut,212,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:1762
 Menus and accelerators,TrackPopupMenu,3,,,,implemented as local C++20 extension,compat/win32/src/menu.cpp:733
-Menus and accelerators,TranslateAccelerator,2,,,,implemented as local C++20 extension,compat/win32/src/accelerator.cpp:75
+Menus and accelerators,TranslateAccelerator,2,,,,implemented as local C++20 extension,compat/win32/src/calls.cpp:114
 Windows and message dispatch,TranslateMessage,2,TranslateMessage,src/winuser_message.cpp:175,PARTIAL,adapted in local C++20 runtime,compat/win32/src/message.cpp:398
 GDI objects and palettes,UnrealizeObject,1,,,,implemented as local C++20 extension,compat/win32/src/paint.cpp:218
 Windows and message dispatch,UpdateWindow,12,UpdateWindow,src/winuser_window.cpp:318,PARTIAL,implemented as local C++20 extension,compat/win32/src/paint.cpp:831
@@ -172,7 +172,7 @@ Windows and message dispatch,ValidateRect,3,,,,implemented as local C++20 extens
 System settings help and sound,WinHelp,35,,,,implemented as local C++20 extension,compat/win32/src/help.cpp:106
 Windows and message dispatch,WindowFromPoint,2,,,,implemented as local C++20 extension,compat/win32/src/window.cpp:1362
 Files configuration and time,WritePrivateProfileString,42,,,,implemented as local C++20 extension,compat/win32/src/profile.cpp:265
-Legacy compatibility macros,Yield,1,,,,local header macro; no separate implementation,
+Legacy compatibility macros,Yield,1,,,,retired Win16 name; consumers use explicit C++ operations,
 Microsoft CRT dependencies,_access,2,,,,implemented as local C++20 extension,compat/win32/src/services.cpp:114
 Files configuration and time,_lclose,1,_lclose,src/winbase_file.cpp:86,PARTIAL,implemented as local C++20 extension,compat/win32/src/file.cpp:131
 Files configuration and time,_llseek,1,,,,implemented as local C++20 extension,compat/win32/src/file.cpp:151

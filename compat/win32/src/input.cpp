@@ -22,14 +22,14 @@ void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
 }
 void CompatReadInput(const BYTE *rgb) { memcpy(rgbRead, rgb, sizeof(rgbRead)); }
 BOOL win32::SetKeyboardState(BYTE *rgb) {
-    if (!SDL_IsMainThread() || !rgb) return FALSE;
+    if (!SDL_IsMainThread() || !rgb) return 0;
     CompatReadInput(rgb);
-    return TRUE;
+    return 1;
 }
 void CompatResetInput(void) {
     memset(rgbInput, 0, sizeof(rgbInput)); memset(rgbRead, 0, sizeof(rgbRead));
     memset(rgbRecent, 0, sizeof(rgbRecent)); memset(rgbAsync, 0, sizeof(rgbAsync));
-    fCursor = fInputKeys = FALSE;
+    fCursor = fInputKeys = 0;
     hwndCursor = NULL;
     memset(rghwndClick, 0, sizeof(rghwndClick)); memset(rgcClick, 0, sizeof(rgcClick));
 }
@@ -47,39 +47,39 @@ static void SetKeyDown(UINT vk, BOOL fDown) {
 }
 
 static void InputModifiers(SDL_Keymod mod) {
-    SetKeyDown(VK_LSHIFT, mod & SDL_KMOD_LSHIFT); SetKeyDown(VK_RSHIFT, mod & SDL_KMOD_RSHIFT);
-    SetKeyDown(VK_LCONTROL, mod & SDL_KMOD_LCTRL); SetKeyDown(VK_RCONTROL, mod & SDL_KMOD_RCTRL);
-    SetKeyDown(VK_LMENU, mod & SDL_KMOD_LALT); SetKeyDown(VK_RMENU, mod & SDL_KMOD_RALT);
+    SetKeyDown(win32::VK_LSHIFT, mod & SDL_KMOD_LSHIFT); SetKeyDown(win32::VK_RSHIFT, mod & SDL_KMOD_RSHIFT);
+    SetKeyDown(win32::VK_LCONTROL, mod & SDL_KMOD_LCTRL); SetKeyDown(win32::VK_RCONTROL, mod & SDL_KMOD_RCTRL);
+    SetKeyDown(win32::VK_LMENU, mod & SDL_KMOD_LALT); SetKeyDown(win32::VK_RMENU, mod & SDL_KMOD_RALT);
 #ifdef __APPLE__
-    SetKeyDown(VK_LWIN, mod & SDL_KMOD_LGUI); SetKeyDown(VK_RWIN, mod & SDL_KMOD_RGUI);
+    SetKeyDown(win32::VK_LWIN, mod & SDL_KMOD_LGUI); SetKeyDown(win32::VK_RWIN, mod & SDL_KMOD_RGUI);
 #endif
-    SetKeyDown(VK_SHIFT, mod & SDL_KMOD_SHIFT); SetKeyDown(VK_CONTROL, mod & SDL_KMOD_CTRL);
-    SetKeyDown(VK_MENU, mod & SDL_KMOD_ALT);
-    rgbInput[VK_CAPITAL] = (BYTE)((rgbInput[VK_CAPITAL] & 0x80) | !!(mod & SDL_KMOD_CAPS));
-    rgbInput[VK_NUMLOCK] = (BYTE)((rgbInput[VK_NUMLOCK] & 0x80) | !!(mod & SDL_KMOD_NUM));
-    rgbInput[VK_SCROLL] = (BYTE)((rgbInput[VK_SCROLL] & 0x80) | !!(mod & SDL_KMOD_SCROLL));
+    SetKeyDown(win32::VK_SHIFT, mod & SDL_KMOD_SHIFT); SetKeyDown(win32::VK_CONTROL, mod & SDL_KMOD_CTRL);
+    SetKeyDown(win32::VK_MENU, mod & SDL_KMOD_ALT);
+    rgbInput[win32::VK_CAPITAL] = (BYTE)((rgbInput[win32::VK_CAPITAL] & 0x80) | !!(mod & SDL_KMOD_CAPS));
+    rgbInput[win32::VK_NUMLOCK] = (BYTE)((rgbInput[win32::VK_NUMLOCK] & 0x80) | !!(mod & SDL_KMOD_NUM));
+    rgbInput[win32::VK_SCROLL] = (BYTE)((rgbInput[win32::VK_SCROLL] & 0x80) | !!(mod & SDL_KMOD_SCROLL));
 }
 
 static BOOL FInputPoint(float fx, float fy, int *lpx, int *lpy) {
     if (!isfinite(fx) || !isfinite(fy) || (double)fx < INT32_MIN || (double)fx > INT32_MAX ||
-        (double)fy < INT32_MIN || (double)fy > INT32_MAX) return FALSE;
+        (double)fy < INT32_MIN || (double)fy > INT32_MAX) return 0;
     *lpx = (int)fx; *lpy = (int)fy;
-    return TRUE;
+    return 1;
 }
 
 static WPARAM WInputButtons(void) {
-    return (rgbInput[VK_LBUTTON] & 0x80 ? MK_LBUTTON : 0) |
-           (rgbInput[VK_RBUTTON] & 0x80 ? MK_RBUTTON : 0) |
-           (rgbInput[VK_MBUTTON] & 0x80 ? MK_MBUTTON : 0);
+    return (rgbInput[win32::VK_LBUTTON] & 0x80 ? win32::MK_LBUTTON : 0) |
+           (rgbInput[win32::VK_RBUTTON] & 0x80 ? win32::MK_RBUTTON : 0) |
+           (rgbInput[win32::VK_MBUTTON] & 0x80 ? win32::MK_MBUTTON : 0);
 }
 
 static void InputMouse(HWND hwnd, int x, int y, WPARAM buttons) {
     POINT pt = {x, y - CyCompatMenuBar(hwnd)};
     if (!fInputKeys) InputModifiers(CompatInputIO().pfnGetModState());
-    SetKeyDown(VK_LBUTTON, buttons & MK_LBUTTON);
-    SetKeyDown(VK_RBUTTON, buttons & MK_RBUTTON);
-    SetKeyDown(VK_MBUTTON, buttons & MK_MBUTTON);
-    if (win32::ClientToScreen(hwnd, &pt)) { ptCursor = pt; hwndCursor = hwnd; fCursor = TRUE; }
+    SetKeyDown(win32::VK_LBUTTON, buttons & win32::MK_LBUTTON);
+    SetKeyDown(win32::VK_RBUTTON, buttons & win32::MK_RBUTTON);
+    SetKeyDown(win32::VK_MBUTTON, buttons & win32::MK_MBUTTON);
+    if (win32::ClientToScreen(hwnd, &pt)) { ptCursor = pt; hwndCursor = hwnd; fCursor = 1; }
     CompatCursorPoint(hwnd, x, y);
 }
 
@@ -96,39 +96,39 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
     SDL_Window *lpWindow;
     POINT pt;
     if (!SDL_IsMainThread() || !lppt || !(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
-        win32::SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
+        win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
+        return 0;
     }
     pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     if (pszDriver && strcmp(pszDriver, "dummy") == 0) {
-        if (!fCursor) { win32::SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+        if (!fCursor) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
         *lppt = ptCursor;
-        return TRUE;
+        return 1;
     }
     if (pszDriver && strcmp(pszDriver, "wayland") == 0) {
         lpWindow = SDL_GetMouseFocus();
         hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : NULL;
         if (hwnd) {
             SDL_GetMouseState(&x, &y);
-            if (!FInputPoint(x, y, &pt.x, &pt.y)) return FALSE;
+            if (!FInputPoint(x, y, &pt.x, &pt.y)) return 0;
             pt.y -= CyCompatMenuBar(hwnd);
-            if (!win32::ClientToScreen(hwnd, &pt)) return FALSE;
+            if (!win32::ClientToScreen(hwnd, &pt)) return 0;
             *lppt = pt;
-            return TRUE;
+            return 1;
         }
         // Retain the last delivered point during captured or queued input;
         // no global position outside our surfaces exists on Wayland.
-        if (fCursor && win32::IsWindow(hwndCursor)) { *lppt = ptCursor; return TRUE; }
-        win32::SetLastError(ERROR_NOT_SUPPORTED);
-        return FALSE;
+        if (fCursor && win32::IsWindow(hwndCursor)) { *lppt = ptCursor; return 1; }
+        win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
+        return 0;
     }
     if (!pszDriver || (strcmp(pszDriver, "x11") != 0 && strcmp(pszDriver, "cocoa") != 0 &&
-                       strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(ERROR_NOT_SUPPORTED); return FALSE; }
+                       strcmp(pszDriver, "windows") != 0)) { win32::SetLastError(win32::ERROR_NOT_SUPPORTED); return 0; }
     CompatInputIO().pfnGetGlobalMouseState(&x, &y);
     if (!isfinite(x) || !isfinite(y) || (double)x < INT32_MIN || (double)x > INT32_MAX ||
-        (double)y < INT32_MIN || (double)y > INT32_MAX) return FALSE;
+        (double)y < INT32_MIN || (double)y > INT32_MAX) return 0;
     lppt->x = (LONG)x; lppt->y = (LONG)y;
-    return TRUE;
+    return 1;
 }
 
 HWND win32::GetCapture(void) { return LpCompatWindow(hwndCapture); }
@@ -139,7 +139,7 @@ static BOOL FCaptureForeground(HWND hwnd) {
 
     // A nonactivating detail card captures on behalf of its focused owner.
     return hwndRoot && hwndFocusRoot && (hwndRoot == hwndFocusRoot ||
-        ((hwndRoot->dwExStyle & WS_EX_NOACTIVATE) && hwndRoot->hwndOwner == hwndFocusRoot));
+        ((hwndRoot->dwExStyle & win32::WS_EX_NOACTIVATE) && hwndRoot->hwndOwner == hwndFocusRoot));
 }
 
 HWND win32::SetCapture(HWND hwnd) {
@@ -151,14 +151,14 @@ HWND win32::SetCapture(HWND hwnd) {
     hwndCapture = hwnd;
     // SDL capture is optional on headless backends; logical child routing still works.
     SDL_CaptureMouse(hwnd && FCaptureForeground(hwnd));
-    if (hwndOld) win32::SendMessageA(hwndOld, WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
+    if (hwndOld) win32::SendMessageA(hwndOld, win32::WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
     return hwndOld;
 }
 
 BOOL win32::ReleaseCapture(void) {
-    if (!SDL_IsMainThread()) return FALSE;
+    if (!SDL_IsMainThread()) return 0;
     win32::SetCapture(NULL);
-    return TRUE;
+    return 1;
 }
 
 static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
@@ -185,13 +185,13 @@ void CompatTextInput(HWND hwnd, const char *pszText) {
     DWORD ch;
     if (!win32::IsWindow(hwnd)) return;
     if (!FUtf8Valid(pszText, strlen(pszText))) {
-        hwnd->fEditInputRejected = TRUE;
+        hwnd->fEditInputRejected = 1;
         SDL_SetError("Text input is malformed UTF-8");
         return;
     }
     while (*psz) {
         ch = SDL_StepUTF8(&psz, NULL);
-        CompatPostInput(hwnd, WM_CHAR, ch, 1);
+        CompatPostInput(hwnd, win32::WM_CHAR, ch, 1);
     }
 }
 
@@ -201,44 +201,44 @@ static UINT VkFromScancode(SDL_Scancode sc) {
     if (sc >= SDL_SCANCODE_1 && sc <= SDL_SCANCODE_9)
         return (UINT)('1' + sc - SDL_SCANCODE_1);
     if (sc >= SDL_SCANCODE_F1 && sc <= SDL_SCANCODE_F12)
-        return (UINT)(VK_F1 + sc - SDL_SCANCODE_F1);
+        return (UINT)(win32::VK_F1 + sc - SDL_SCANCODE_F1);
     switch (sc) {
     case SDL_SCANCODE_0: return '0';
-    case SDL_SCANCODE_RETURN: return VK_RETURN;
-    case SDL_SCANCODE_ESCAPE: return VK_ESCAPE;
-    case SDL_SCANCODE_BACKSPACE: return VK_BACK;
-    case SDL_SCANCODE_TAB: return VK_TAB;
-    case SDL_SCANCODE_SPACE: return VK_SPACE;
-    case SDL_SCANCODE_LEFT: return VK_LEFT;
-    case SDL_SCANCODE_RIGHT: return VK_RIGHT;
-    case SDL_SCANCODE_UP: return VK_UP;
-    case SDL_SCANCODE_DOWN: return VK_DOWN;
-    case SDL_SCANCODE_HOME: return VK_HOME;
-    case SDL_SCANCODE_END: return VK_END;
-    case SDL_SCANCODE_PAGEUP: return VK_PRIOR;
-    case SDL_SCANCODE_PAGEDOWN: return VK_NEXT;
-    case SDL_SCANCODE_INSERT: return VK_INSERT;
-    case SDL_SCANCODE_DELETE: return VK_DELETE;
-    case SDL_SCANCODE_CAPSLOCK: return VK_CAPITAL;
-    case SDL_SCANCODE_NUMLOCKCLEAR: return VK_NUMLOCK;
-    case SDL_SCANCODE_SCROLLLOCK: return VK_SCROLL;
-    case SDL_SCANCODE_COMMA: return VK_OEM_COMMA;
-    case SDL_SCANCODE_PERIOD: return VK_OEM_PERIOD;
-    case SDL_SCANCODE_LEFTBRACKET: return VK_OEM_4;
-    case SDL_SCANCODE_RIGHTBRACKET: return VK_OEM_6;
-    case SDL_SCANCODE_SEMICOLON: return VK_OEM_1;
-    case SDL_SCANCODE_EQUALS: return VK_OEM_PLUS;
-    case SDL_SCANCODE_MINUS: return VK_OEM_MINUS;
-    case SDL_SCANCODE_SLASH: return VK_OEM_2;
-    case SDL_SCANCODE_GRAVE: return VK_OEM_3;
-    case SDL_SCANCODE_BACKSLASH: return VK_OEM_5;
-    case SDL_SCANCODE_APOSTROPHE: return VK_OEM_7;
-    case SDL_SCANCODE_LSHIFT: case SDL_SCANCODE_RSHIFT: return VK_SHIFT;
-    case SDL_SCANCODE_LCTRL: case SDL_SCANCODE_RCTRL: return VK_CONTROL;
-    case SDL_SCANCODE_LALT: case SDL_SCANCODE_RALT: return VK_MENU;
+    case SDL_SCANCODE_RETURN: return win32::VK_RETURN;
+    case SDL_SCANCODE_ESCAPE: return win32::VK_ESCAPE;
+    case SDL_SCANCODE_BACKSPACE: return win32::VK_BACK;
+    case SDL_SCANCODE_TAB: return win32::VK_TAB;
+    case SDL_SCANCODE_SPACE: return win32::VK_SPACE;
+    case SDL_SCANCODE_LEFT: return win32::VK_LEFT;
+    case SDL_SCANCODE_RIGHT: return win32::VK_RIGHT;
+    case SDL_SCANCODE_UP: return win32::VK_UP;
+    case SDL_SCANCODE_DOWN: return win32::VK_DOWN;
+    case SDL_SCANCODE_HOME: return win32::VK_HOME;
+    case SDL_SCANCODE_END: return win32::VK_END;
+    case SDL_SCANCODE_PAGEUP: return win32::VK_PRIOR;
+    case SDL_SCANCODE_PAGEDOWN: return win32::VK_NEXT;
+    case SDL_SCANCODE_INSERT: return win32::VK_INSERT;
+    case SDL_SCANCODE_DELETE: return win32::VK_DELETE;
+    case SDL_SCANCODE_CAPSLOCK: return win32::VK_CAPITAL;
+    case SDL_SCANCODE_NUMLOCKCLEAR: return win32::VK_NUMLOCK;
+    case SDL_SCANCODE_SCROLLLOCK: return win32::VK_SCROLL;
+    case SDL_SCANCODE_COMMA: return win32::VK_OEM_COMMA;
+    case SDL_SCANCODE_PERIOD: return win32::VK_OEM_PERIOD;
+    case SDL_SCANCODE_LEFTBRACKET: return win32::VK_OEM_4;
+    case SDL_SCANCODE_RIGHTBRACKET: return win32::VK_OEM_6;
+    case SDL_SCANCODE_SEMICOLON: return win32::VK_OEM_1;
+    case SDL_SCANCODE_EQUALS: return win32::VK_OEM_PLUS;
+    case SDL_SCANCODE_MINUS: return win32::VK_OEM_MINUS;
+    case SDL_SCANCODE_SLASH: return win32::VK_OEM_2;
+    case SDL_SCANCODE_GRAVE: return win32::VK_OEM_3;
+    case SDL_SCANCODE_BACKSLASH: return win32::VK_OEM_5;
+    case SDL_SCANCODE_APOSTROPHE: return win32::VK_OEM_7;
+    case SDL_SCANCODE_LSHIFT: case SDL_SCANCODE_RSHIFT: return win32::VK_SHIFT;
+    case SDL_SCANCODE_LCTRL: case SDL_SCANCODE_RCTRL: return win32::VK_CONTROL;
+    case SDL_SCANCODE_LALT: case SDL_SCANCODE_RALT: return win32::VK_MENU;
 #ifdef __APPLE__
-    case SDL_SCANCODE_LGUI: return VK_LWIN;
-    case SDL_SCANCODE_RGUI: return VK_RWIN;
+    case SDL_SCANCODE_LGUI: return win32::VK_LWIN;
+    case SDL_SCANCODE_RGUI: return win32::VK_RWIN;
 #endif
     default: return 0;
     }
@@ -246,12 +246,12 @@ static UINT VkFromScancode(SDL_Scancode sc) {
 
 static UINT VkSideFromScancode(SDL_Scancode sc) {
     switch (sc) {
-    case SDL_SCANCODE_LSHIFT: return VK_LSHIFT;
-    case SDL_SCANCODE_RSHIFT: return VK_RSHIFT;
-    case SDL_SCANCODE_LCTRL: return VK_LCONTROL;
-    case SDL_SCANCODE_RCTRL: return VK_RCONTROL;
-    case SDL_SCANCODE_LALT: return VK_LMENU;
-    case SDL_SCANCODE_RALT: return VK_RMENU;
+    case SDL_SCANCODE_LSHIFT: return win32::VK_LSHIFT;
+    case SDL_SCANCODE_RSHIFT: return win32::VK_RSHIFT;
+    case SDL_SCANCODE_LCTRL: return win32::VK_LCONTROL;
+    case SDL_SCANCODE_RCTRL: return win32::VK_RCONTROL;
+    case SDL_SCANCODE_LALT: return win32::VK_LMENU;
+    case SDL_SCANCODE_RALT: return win32::VK_RMENU;
     default: return 0;
     }
 }
@@ -275,20 +275,20 @@ SHORT win32::GetAsyncKeyState(int vk) {
         if (key != 0 && rgf[i]) rgb[key] = 0x80;
     }
     mod = CompatInputIO().pfnGetModState();
-    rgb[VK_LSHIFT] |= (mod & SDL_KMOD_LSHIFT) ? 0x80 : 0;
-    rgb[VK_RSHIFT] |= (mod & SDL_KMOD_RSHIFT) ? 0x80 : 0;
-    rgb[VK_LCONTROL] |= (mod & SDL_KMOD_LCTRL) ? 0x80 : 0;
-    rgb[VK_RCONTROL] |= (mod & SDL_KMOD_RCTRL) ? 0x80 : 0;
-    rgb[VK_LMENU] |= (mod & SDL_KMOD_LALT) ? 0x80 : 0;
-    rgb[VK_RMENU] |= (mod & SDL_KMOD_RALT) ? 0x80 : 0;
-    rgb[VK_SHIFT] |= rgb[VK_LSHIFT] | rgb[VK_RSHIFT];
-    rgb[VK_CONTROL] |= rgb[VK_LCONTROL] | rgb[VK_RCONTROL];
-    rgb[VK_MENU] |= rgb[VK_LMENU] | rgb[VK_RMENU];
+    rgb[win32::VK_LSHIFT] |= (mod & SDL_KMOD_LSHIFT) ? 0x80 : 0;
+    rgb[win32::VK_RSHIFT] |= (mod & SDL_KMOD_RSHIFT) ? 0x80 : 0;
+    rgb[win32::VK_LCONTROL] |= (mod & SDL_KMOD_LCTRL) ? 0x80 : 0;
+    rgb[win32::VK_RCONTROL] |= (mod & SDL_KMOD_RCTRL) ? 0x80 : 0;
+    rgb[win32::VK_LMENU] |= (mod & SDL_KMOD_LALT) ? 0x80 : 0;
+    rgb[win32::VK_RMENU] |= (mod & SDL_KMOD_RALT) ? 0x80 : 0;
+    rgb[win32::VK_SHIFT] |= rgb[win32::VK_LSHIFT] | rgb[win32::VK_RSHIFT];
+    rgb[win32::VK_CONTROL] |= rgb[win32::VK_LCONTROL] | rgb[win32::VK_RCONTROL];
+    rgb[win32::VK_MENU] |= rgb[win32::VK_LMENU] | rgb[win32::VK_RMENU];
     buttons = CompatInputIO().pfnGetCurrentVideoDriver() && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") ?
               SDL_GetMouseState(NULL, NULL) : CompatInputIO().pfnGetGlobalMouseState(NULL, NULL);
-    rgb[VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
-    rgb[VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
-    rgb[VK_MBUTTON] = (buttons & SDL_BUTTON_MMASK) ? 0x80 : 0;
+    rgb[win32::VK_LBUTTON] = (buttons & SDL_BUTTON_LMASK) ? 0x80 : 0;
+    rgb[win32::VK_RBUTTON] = (buttons & SDL_BUTTON_RMASK) ? 0x80 : 0;
+    rgb[win32::VK_MBUTTON] = (buttons & SDL_BUTTON_MMASK) ? 0x80 : 0;
     for (i = 0; i < 256; i++) {
         if (rgb[i] && !rgbAsync[i]) rgbRecent[i] = 1;
         rgbAsync[i] = rgb[i];
@@ -299,24 +299,24 @@ SHORT win32::GetAsyncKeyState(int vk) {
 }
 
 static WPARAM WMouseModifiers(WPARAM buttons) {
-    if (rgbInput[VK_SHIFT] & 0x80)
-        buttons |= MK_SHIFT;
-    if (rgbInput[VK_CONTROL] & 0x80)
-        buttons |= MK_CONTROL;
+    if (rgbInput[win32::VK_SHIFT] & 0x80)
+        buttons |= win32::MK_SHIFT;
+    if (rgbInput[win32::VK_CONTROL] & 0x80)
+        buttons |= win32::MK_CONTROL;
     return buttons;
 }
 
 static void PostCompatWheel(HWND hwnd, UINT msg, float dWheel, double *lpdRem, WPARAM buttons) {
     int d, delta;
-    if (!isfinite(dWheel) || fabs((double)dWheel) > INT32_MAX / (double)WHEEL_DELTA) return;
-    *lpdRem += (double)dWheel * WHEEL_DELTA;
+    if (!isfinite(dWheel) || fabs((double)dWheel) > INT32_MAX / (double)win32::WHEEL_DELTA) return;
+    *lpdRem += (double)dWheel * win32::WHEEL_DELTA;
     if (*lpdRem < INT32_MIN || *lpdRem > INT32_MAX) { *lpdRem = 0; return; }
     d = (int)*lpdRem;
     *lpdRem -= d;
     while (d != 0) {
         delta = (((INT16_MIN) > (StarsMin(INT16_MAX, d))) ? (INT16_MIN) : (StarsMin(INT16_MAX, d)));
-        CompatPostInput(hwnd, msg, MAKEWPARAM(WMouseModifiers(buttons), (WORD)delta),
-                        MAKELPARAM(ptCursor.x, ptCursor.y));
+        CompatPostInput(hwnd, msg, win32::MAKEWPARAM(WMouseModifiers(buttons), (WORD)delta),
+                        win32::MAKELPARAM(ptCursor.x, ptCursor.y));
         d -= delta;
     }
 }
@@ -419,28 +419,28 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             FCompatMenuFocus(hwnd, lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED)) return;
         if (!hwnd)
             return;
-        if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED && (hwnd->dwExStyle & WS_EX_NOACTIVATE)) return;
+        if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED && (hwnd->dwExStyle & win32::WS_EX_NOACTIVATE)) return;
         if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_LOST) {
             SDL_Window *lpFocus = SDL_GetKeyboardFocus();
             HWND hwndNativeFocus = lpFocus ? LpCompatWindowFromId(SDL_GetWindowID(lpFocus)) : NULL;
             // The dummy backend can focus a nonactivating popup despite its
             // SDL flags. Preserve logical focus/capture when it belongs to us;
             // an actual switch away still follows the normal cancellation path.
-            if (hwndNativeFocus && (hwndNativeFocus->dwExStyle & WS_EX_NOACTIVATE) &&
+            if (hwndNativeFocus && (hwndNativeFocus->dwExStyle & win32::WS_EX_NOACTIVATE) &&
                 hwndNativeFocus->hwndOwner == hwnd) return;
         }
         if (lpevent->type == SDL_EVENT_WINDOW_MINIMIZED ||
             lpevent->type == SDL_EVENT_WINDOW_MAXIMIZED || lpevent->type == SDL_EVENT_WINDOW_RESTORED) {
-            CompatWindowState(hwnd, lpevent->type == SDL_EVENT_WINDOW_MINIMIZED ? SW_SHOWMINIMIZED :
-                              lpevent->type == SDL_EVENT_WINDOW_MAXIMIZED ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL, TRUE);
+            CompatWindowState(hwnd, lpevent->type == SDL_EVENT_WINDOW_MINIMIZED ? win32::SW_SHOWMINIMIZED :
+                              lpevent->type == SDL_EVENT_WINDOW_MAXIMIZED ? win32::SW_SHOWMAXIMIZED : win32::SW_SHOWNORMAL, 1);
         } else if (lpevent->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            win32::PostMessageA(hwnd, WM_CLOSE, 0, 0);
+            win32::PostMessageA(hwnd, win32::WM_CLOSE, 0, 0);
         else if (lpevent->type == SDL_EVENT_WINDOW_MOVED) {
             CompatRememberNormal(hwnd);
-            win32::PostMessageA(hwnd, WM_MOVE, 0, MAKELPARAM(lpevent->window.data1, lpevent->window.data2));
+            win32::PostMessageA(hwnd, win32::WM_MOVE, 0, win32::MAKELPARAM(lpevent->window.data1, lpevent->window.data2));
         } else if (lpevent->type == SDL_EVENT_WINDOW_RESIZED) {
             CompatRememberNormal(hwnd);
-            win32::InvalidateRect(hwnd, NULL, TRUE);
+            win32::InvalidateRect(hwnd, NULL, 1);
             x = lpevent->window.data1; y = lpevent->window.data2;
             if (hwnd->fZeroX || hwnd->fZeroY) {
                 RECT rc;
@@ -451,19 +451,19 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
                 }
             }
             if (!hwnd->fZeroY) y = (((0) > (y - CyCompatMenuBar(hwnd))) ? (0) : (y - CyCompatMenuBar(hwnd)));
-            if (!hwnd->fZeroX && (hwnd->dwStyle & WS_VSCROLL)) x = (((0) > (x - win32::GetSystemMetrics(SM_CXVSCROLL))) ? (0) : (x - win32::GetSystemMetrics(SM_CXVSCROLL)));
-            if (!hwnd->fZeroY && (hwnd->dwStyle & WS_HSCROLL)) y = (((0) > (y - win32::GetSystemMetrics(SM_CYHSCROLL))) ? (0) : (y - win32::GetSystemMetrics(SM_CYHSCROLL)));
+            if (!hwnd->fZeroX && (hwnd->dwStyle & win32::WS_VSCROLL)) x = (((0) > (x - win32::GetSystemMetrics(win32::SM_CXVSCROLL))) ? (0) : (x - win32::GetSystemMetrics(win32::SM_CXVSCROLL)));
+            if (!hwnd->fZeroY && (hwnd->dwStyle & win32::WS_HSCROLL)) y = (((0) > (y - win32::GetSystemMetrics(win32::SM_CYHSCROLL))) ? (0) : (y - win32::GetSystemMetrics(win32::SM_CYHSCROLL)));
             if (win32::IsIconic(hwnd)) x = y = 0;
-            win32::PostMessageA(hwnd, WM_SIZE, win32::IsIconic(hwnd) ? SIZE_MINIMIZED :
-                         win32::IsZoomed(hwnd) ? SIZE_MAXIMIZED : SIZE_RESTORED, MAKELPARAM(x, y));
+            win32::PostMessageA(hwnd, win32::WM_SIZE, win32::IsIconic(hwnd) ? win32::SIZE_MINIMIZED :
+                         win32::IsZoomed(hwnd) ? win32::SIZE_MAXIMIZED : win32::SIZE_RESTORED, win32::MAKELPARAM(x, y));
         } else if (lpevent->type == SDL_EVENT_WINDOW_EXPOSED ||
                    lpevent->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
-            win32::InvalidateRect(hwnd, NULL, TRUE);
+            win32::InvalidateRect(hwnd, NULL, 1);
         else if (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             if (HwndCompatRoot(win32::GetFocus()) != hwnd || win32::GetActiveWindow() != hwnd) CompatFocusWindow(hwnd);
         } else {
             for (i = 0; i < 256; i++) rgbInput[i] &= 1;
-            fInputKeys = FALSE;
+            fInputKeys = 0;
             hwnd->wMouseButtons = 0;
             if (HwndCompatRoot(win32::GetCapture()) == hwnd) win32::ReleaseCapture();
             if (HwndCompatRoot(win32::GetFocus()) == hwnd || win32::GetActiveWindow() == hwnd) CompatFocusWindow(NULL);
@@ -483,25 +483,25 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         vk = VkFromScancode(lpevent->key.scancode);
         if (!hwnd || vk == 0)
             return;
-        fAlt = vk == VK_MENU ? !!(rgbInput[VK_MENU] & 0x80) : !!(lpevent->key.mod & SDL_KMOD_ALT);
+        fAlt = vk == win32::VK_MENU ? !!(rgbInput[win32::VK_MENU] & 0x80) : !!(lpevent->key.mod & SDL_KMOD_ALT);
         InputModifiers(lpevent->key.mod);
-        fInputKeys = TRUE;
+        fInputKeys = 1;
         fDown = lpevent->type == SDL_EVENT_KEY_DOWN;
         vkSide = VkSideFromScancode(lpevent->key.scancode);
         if (vkSide != 0) SetKeyDown(vkSide, fDown);
-        if (vk == VK_SHIFT) SetKeyDown(vk, (rgbInput[VK_LSHIFT] | rgbInput[VK_RSHIFT]) & 0x80);
-        else if (vk == VK_CONTROL) SetKeyDown(vk, (rgbInput[VK_LCONTROL] | rgbInput[VK_RCONTROL]) & 0x80);
-        else if (vk == VK_MENU) SetKeyDown(vk, (rgbInput[VK_LMENU] | rgbInput[VK_RMENU]) & 0x80);
+        if (vk == win32::VK_SHIFT) SetKeyDown(vk, (rgbInput[win32::VK_LSHIFT] | rgbInput[win32::VK_RSHIFT]) & 0x80);
+        else if (vk == win32::VK_CONTROL) SetKeyDown(vk, (rgbInput[win32::VK_LCONTROL] | rgbInput[win32::VK_RCONTROL]) & 0x80);
+        else if (vk == win32::VK_MENU) SetKeyDown(vk, (rgbInput[win32::VK_LMENU] | rgbInput[win32::VK_RMENU]) & 0x80);
         else SetKeyDown(vk, fDown);
-        msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_KEYDOWN : WM_KEYUP;
+        msg = lpevent->type == SDL_EVENT_KEY_DOWN ? win32::WM_KEYDOWN : win32::WM_KEYUP;
         // SDL scancodes are USB usages; Win32 lParam needs PC/AT scan codes.
         dwKey = 1 | DwKeyScan(lpevent->key.scancode);
-        if ((lpevent->key.mod & SDL_KMOD_ALT) || vk == VK_F10 || vk == VK_MENU)
-            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_SYSKEYDOWN : WM_SYSKEYUP;
+        if ((lpevent->key.mod & SDL_KMOD_ALT) || vk == win32::VK_F10 || vk == win32::VK_MENU)
+            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? win32::WM_SYSKEYDOWN : win32::WM_SYSKEYUP;
 #ifdef __APPLE__
         /* Option arrows edit words; the Option key must not activate Alt menus. */
-        if (hwnd->iControl == 3 && (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_MENU))
-            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? WM_KEYDOWN : WM_KEYUP;
+        if (hwnd->iControl == 3 && (vk == win32::VK_LEFT || vk == win32::VK_RIGHT || vk == win32::VK_MENU))
+            msg = lpevent->type == SDL_EVENT_KEY_DOWN ? win32::WM_KEYDOWN : win32::WM_KEYUP;
 #endif
         if (fAlt)
             dwKey |= UINT32_C(1) << 29;
@@ -540,21 +540,21 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             InputMouse(hwndRoot, x, y, 0);
-            CompatPostInput(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTMENU, WM_NCMOUSEMOVE));
-            if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, WM_NCMOUSEMOVE, HTMENU, MAKELPARAM(pt.x, pt.y));
+            CompatPostInput(hwnd, win32::WM_SETCURSOR, (WPARAM)hwnd, win32::MAKELPARAM(win32::HTMENU, win32::WM_NCMOUSEMOVE));
+            if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, win32::WM_NCMOUSEMOVE, win32::HTMENU, win32::MAKELPARAM(pt.x, pt.y));
             return;
         }
         hwnd = HwndMouseTarget(hwnd, &x, &y);
         if (!hwnd) return;
         buttons = 0;
-        if (lpevent->motion.state & SDL_BUTTON_LMASK) buttons |= MK_LBUTTON;
-        if (lpevent->motion.state & SDL_BUTTON_RMASK) buttons |= MK_RBUTTON;
-        if (lpevent->motion.state & SDL_BUTTON_MMASK) buttons |= MK_MBUTTON;
+        if (lpevent->motion.state & SDL_BUTTON_LMASK) buttons |= win32::MK_LBUTTON;
+        if (lpevent->motion.state & SDL_BUTTON_RMASK) buttons |= win32::MK_RBUTTON;
+        if (lpevent->motion.state & SDL_BUTTON_MMASK) buttons |= win32::MK_MBUTTON;
         InputMouse(hwndRoot, (int)lpevent->motion.x, (int)lpevent->motion.y, buttons);
         hwndRoot->wMouseButtons = buttons;
-        if (!win32::GetCapture()) CompatPostInput(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
-        CompatPostInput(hwnd, WM_MOUSEMOVE, WMouseModifiers(buttons),
-                     MAKELPARAM(x, y));
+        if (!win32::GetCapture()) CompatPostInput(hwnd, win32::WM_SETCURSOR, (WPARAM)hwnd, win32::MAKELPARAM(win32::HTCLIENT, win32::WM_MOUSEMOVE));
+        CompatPostInput(hwnd, win32::WM_MOUSEMOVE, WMouseModifiers(buttons),
+                     win32::MAKELPARAM(x, y));
         return;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
@@ -566,10 +566,10 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             if (lpevent->button.button == SDL_BUTTON_LEFT) {
-                hwndRoot->wMouseButtons = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? MK_LBUTTON : 0;
+                hwndRoot->wMouseButtons = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? win32::MK_LBUTTON : 0;
                 InputMouse(hwndRoot, x, y, hwndRoot->wMouseButtons);
-                if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_NCLBUTTONDOWN : WM_NCLBUTTONUP,
-                                                            HTMENU, MAKELPARAM(pt.x, pt.y));
+                if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? win32::WM_NCLBUTTONDOWN : win32::WM_NCLBUTTONUP,
+                                                            win32::HTMENU, win32::MAKELPARAM(pt.x, pt.y));
             }
             return;
         }
@@ -577,16 +577,16 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (!hwnd) return;
         if (lpevent->button.button == SDL_BUTTON_LEFT) {
             iButton = 0;
-            buttons = MK_LBUTTON;
-            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_LBUTTONDOWN : WM_LBUTTONUP;
+            buttons = win32::MK_LBUTTON;
+            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? win32::WM_LBUTTONDOWN : win32::WM_LBUTTONUP;
         } else if (lpevent->button.button == SDL_BUTTON_RIGHT) {
             iButton = 1;
-            buttons = MK_RBUTTON;
-            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_RBUTTONDOWN : WM_RBUTTONUP;
+            buttons = win32::MK_RBUTTON;
+            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? win32::WM_RBUTTONDOWN : win32::WM_RBUTTONUP;
         } else if (lpevent->button.button == SDL_BUTTON_MIDDLE) {
             iButton = 2;
-            buttons = MK_MBUTTON;
-            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? WM_MBUTTONDOWN : WM_MBUTTONUP;
+            buttons = win32::MK_MBUTTON;
+            msg = lpevent->type == SDL_EVENT_MOUSE_BUTTON_DOWN ? win32::WM_MBUTTONDOWN : win32::WM_MBUTTONUP;
         } else
             return;
         hwndRoot->wMouseButtons = WInputButtons();
@@ -594,15 +594,15 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             if (lpevent->button.clicks <= 1 || rghwndClick[iButton] != hwnd) rgcClick[iButton] = 1;
             else rgcClick[iButton]++;
             rghwndClick[iButton] = hwnd;
-            if ((hwnd->lpclass->wc.style & CS_DBLCLKS) && !(rgcClick[iButton] & 1))
-                msg = iButton == 0 ? WM_LBUTTONDBLCLK : iButton == 1 ? WM_RBUTTONDBLCLK : WM_MBUTTONDBLCLK;
+            if ((hwnd->lpclass->wc.style & win32::CS_DBLCLKS) && !(rgcClick[iButton] & 1))
+                msg = iButton == 0 ? win32::WM_LBUTTONDBLCLK : iButton == 1 ? win32::WM_RBUTTONDBLCLK : win32::WM_MBUTTONDBLCLK;
             hwndRoot->wMouseButtons |= buttons;
         }
         else
             hwndRoot->wMouseButtons &= ~buttons;
         InputMouse(hwndRoot, (int)lpevent->button.x, (int)lpevent->button.y, hwndRoot->wMouseButtons);
         CompatPostInput(hwnd, msg, WMouseModifiers(hwndRoot->wMouseButtons),
-                     MAKELPARAM(x, y));
+                     win32::MAKELPARAM(x, y));
         return;
     case SDL_EVENT_MOUSE_WHEEL:
         hwndRoot = LpCompatWindowFromId(lpevent->wheel.windowID);
@@ -615,8 +615,8 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         InputMouse(hwndRoot, x, y, buttons);
         dx = lpevent->wheel.x; dy = lpevent->wheel.y;
         if (lpevent->wheel.direction == SDL_MOUSEWHEEL_FLIPPED) { dx = -dx; dy = -dy; }
-        PostCompatWheel(hwnd, WM_MOUSEWHEEL, dy, &hwndRoot->dWheelY, buttons);
-        PostCompatWheel(hwnd, WM_MOUSEHWHEEL, dx, &hwndRoot->dWheelX, buttons);
+        PostCompatWheel(hwnd, win32::WM_MOUSEWHEEL, dy, &hwndRoot->dWheelY, buttons);
+        PostCompatWheel(hwnd, win32::WM_MOUSEHWHEEL, dx, &hwndRoot->dWheelX, buttons);
         return;
     default:
         return;

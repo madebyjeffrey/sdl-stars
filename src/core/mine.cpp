@@ -34,11 +34,11 @@ int16_t FOtherStuffAtScanSel() {
     THING  *lpthMac;
 
     if (sel.scan.idpl != idplNone && (sel.scan.ifl != iflNone || sel.scan.ith != ithNone)) {
-        return TRUE;
+        return 1;
     }
     if (sel.scan.ifl != iflNone) {
         if (sel.scan.ith != ithNone) {
-            return TRUE;
+            return 1;
         }
         c = 1;
         for (i = 0; i < cFleet; i++) {
@@ -46,7 +46,7 @@ int16_t FOtherStuffAtScanSel() {
             if (!rglpfl[i])
                 break;
             if (lpfl->pt.x == sel.scan.pt.x && lpfl->pt.y == sel.scan.pt.y && c-- == 0) {
-                return TRUE;
+                return 1;
             }
         }
     }
@@ -56,11 +56,11 @@ int16_t FOtherStuffAtScanSel() {
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
             if (lpth->pt().x() == sel.scan.pt.x && lpth->pt().y() == sel.scan.pt.y && c-- == 0) {
-                return TRUE;
+                return 1;
             }
         }
     }
-    return FALSE;
+    return 0;
 }
 
 void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fApply) {
@@ -169,7 +169,7 @@ void EstMineralsMined(PLANET *lppl, int32_t *plQuan, int32_t cMines, int16_t fAp
                         plQuan[i] += rglQuan[i];
                     }
                     if (fApply) {
-                        lpfl->fHereAllTurn = FALSE;
+                        lpfl->fHereAllTurn = 0;
                     }
                 }
             }

@@ -28,26 +28,26 @@ static BOOL FChooseWorkflowFile(OPENFILENAME *lpof, BOOL fSave) {
     cFileChoices++;
     if ((fSave && cFileChoices != 3 && cFileChoices != 4 && cFileChoices != 6 &&
                   cFileChoices != 7 && cFileChoices != 8 && cFileChoices != 9) ||
-        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return FALSE;
-    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return FALSE;
-    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return FALSE;
+        (!fSave && cFileChoices != 1 && cFileChoices != 2 && cFileChoices != 5)) return 0;
+    if (cFileChoices >= 7 && strcmp(lpof->lpstrFile, "café-Ω.x1")) return 0;
+    if (cFileChoices == 1 || cFileChoices == 3 || cFileChoices == 7) return 0;
     pszFile = PszCompatEnvironment(cFileChoices == 2 ? "STARS_TEST_GAME_PATH" :
                      cFileChoices == 6 ? "STARS_TEST_RACE_REPEAT_PATH" :
                      cFileChoices >= 8 ? "STARS_TEST_EXPORT_CHOICE" : "STARS_TEST_RACE_PATH");
-    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return FALSE;
+    if (!pszFile || strlen(pszFile) >= lpof->nMaxFile) return 0;
     strcpy(lpof->lpstrFile, pszFile);
     lpof->nFileOffset = (WORD)(PszWorkflowFilename(pszFile) - pszFile);
     pchExtension = strrchr(PszWorkflowFilename(pszFile), '.');
     lpof->nFileExtension = pchExtension ? (WORD)(pchExtension - pszFile + 1) : 0;
-    return TRUE;
+    return 1;
 }
 
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, FALSE) : FNativeOpenFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 0) : FNativeOpenFileName(lpof);
 }
 
 BOOL StarsTest_FNativeSaveFileName(OPENFILENAME *lpof) {
-    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, TRUE) : FNativeSaveFileName(lpof);
+    return PszCompatEnvironment("STARS_TEST_FILE_WORKFLOW_COMPAT") ? FChooseWorkflowFile(lpof, 1) : FNativeSaveFileName(lpof);
 }
 
 static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
@@ -59,7 +59,7 @@ static BOOL FEqualFiles(const char *pszLeft, const char *pszRight) {
     do {
         cbLeft = CReadNative(rgbLeft, 1, sizeof(rgbLeft), pfLeft);
         cbRight = CReadNative(rgbRight, 1, sizeof(rgbRight), pfRight);
-        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = FALSE; break; }
+        if (cbLeft != cbRight || memcmp(rgbLeft, rgbRight, cbLeft)) { fEqual = 0; break; }
     } while (cbLeft != 0);
 LDone:
     if (pfLeft) ICloseNativeFile(pfLeft);
@@ -73,28 +73,28 @@ static BOOL FCopyFile(const char *pszSource, const char *pszTarget) {
     BOOL fCopied = pfSource && pfTarget;
     if (!fCopied) goto LDone;
     while ((cb = CReadNative(rgb, 1, sizeof(rgb), pfSource)) != 0) {
-        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = FALSE; break; }
+        if (CWriteNative(rgb, 1, cb, pfTarget) != cb) { fCopied = 0; break; }
     }
-    if (FNativeStreamError(pfSource)) fCopied = FALSE;
+    if (FNativeStreamError(pfSource)) fCopied = 0;
 LDone:
     if (pfSource) ICloseNativeFile(pfSource);
-    if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = FALSE;
+    if (pfTarget && ICloseNativeFile(pfTarget) != 0) fCopied = 0;
     return fCopied;
 }
 int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     const char *pszExport = PszCompatEnvironment("STARS_TEST_EXPORT_EXPECTED");
-    if ((type & MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
-        if (!(type & MB_DEFBUTTON2)) return IDNO;
-        return ++cReplaceChoices == 1 ? IDNO : IDYES;
+    if ((type & win32::MB_YESNO) && pszExport && strstr(pszText, pszExport)) {
+        if (!(type & win32::MB_DEFBUTTON2)) return win32::IDNO;
+        return ++cReplaceChoices == 1 ? win32::IDNO : win32::IDYES;
     }
     return win32::MessageBoxA(hwnd, pszText, pszCaption, type);
 }
-int16_t StarsTest_PromptPassword(void) { return TRUE; }
+int16_t StarsTest_PromptPassword(void) { return 1; }
 int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     (void)mbType; fprintf(stderr, "File workflow alert: %s\n", sz); cAlerts++;
     return IDOK;
 }
-static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
+static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
     HWND hwndDialog;
     HWND hwndParentSav;
     PLAYER plrSav;
@@ -117,39 +117,39 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     int32_t lid;
     (void)hwnd; (void)msg; (void)dwTime;
     if (fRunning) {
-        for (hwndDialog = win32::GetWindow(hwndTitle, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+        for (hwndDialog = win32::GetWindow(hwndTitle, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
             if (hwndDialog->fDialog && hwndDialog->lpfnDlg == LibraryNameDlg && win32::IsWindowVisible(hwndDialog)) {
-                ui::SendMessage(hwndDialog, WM_COMMAND, IDOK, 0);
+                ui::SendMessage(hwndDialog, win32::WM_COMMAND, IDOK, 0);
                 return;
             }
         }
         return;
     }
-    fRunning = TRUE;
+    fRunning = 1;
     CHECK(pszRace && pszRaceRepeat && win32::IsWindow(hwndTitle));
-    CHECK(FOpenGame(hwndTitle, FALSE) == 0 && win32::IsWindowVisible(hwndTitle) && win32::IsWindowEnabled(hwndTitle));
+    CHECK(FOpenGame(hwndTitle, 0) == 0 && win32::IsWindowVisible(hwndTitle) && win32::IsWindowEnabled(hwndTitle));
     CHECK(!(SDL_GetWindowFlags(hwndTitle->lpWindow.get()) & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_NOT_FOCUSABLE)));
-    CHECK(FOpenGame(hwndTitle, FALSE) > 0 && game.lid != 0 && lpPlanets && idPlayer != iplrNone);
+    CHECK(FOpenGame(hwndTitle, 0) > 0 && game.lid != 0 && lpPlanets && idPlayer != iplrNone);
     lid = game.lid; plrSav = rgplr[idPlayer]; memcpy(szRaceSav, szRaceFile, sizeof(szRaceSav));
     hwndParentSav = hwndRaceParent; hwndRaceParent = hwndTitle;
     CHECK(!FSaveRace(NULL, &plrSav) && memcmp(szRaceSav, szRaceFile, sizeof(szRaceSav)) == 0);
     CHECK(FSaveRace(NULL, &plrSav));
     CHECK(szRaceFile[sizeof(szRaceFile) - 1] == 0 &&
           strncmp(szRaceFile, PszWorkflowFilename(pszRace), strlen(szRaceFile)) == 0);
-    CHECK(FWasRaceFile((char *)pszRace, FALSE) > 0);
+    CHECK(FWasRaceFile((char *)pszRace, 0) > 0);
     CHECK(CchSnprintf(szRaceOriginal, sizeof(szRaceOriginal), "%s.before-import", pszRace) > 0 &&
           FCopyFile(pszRace, szRaceOriginal));
-    CHECK(FOpenGame(hwndTitle, TRUE) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
+    CHECK(FOpenGame(hwndTitle, 1) > 0 && szRaceFile[sizeof(szRaceFile) - 1] == 0);
     CHECK(CchSnprintf(szImportedRace, sizeof(szImportedRace), "%s%sRace Designs%srace-long-ΩΩΩΩ-native-filename.r1",
                       PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep, szDirSep) > 0);
-    CHECK(FWasRaceFile(szImportedRace, FALSE) > 0 && FEqualFiles(pszRace, szImportedRace) &&
+    CHECK(FWasRaceFile(szImportedRace, 0) > 0 && FEqualFiles(pszRace, szImportedRace) &&
           FEqualFiles(pszRace, szRaceOriginal));
-    CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, FALSE) > 0);
+    CHECK(FSaveRace(szRaceFile, &plrSav) && FWasRaceFile((char *)pszRaceRepeat, 0) > 0);
     CHECK(IRaceChecksum(&vplr) == IRaceChecksum(&plrSav));
     CHECK(FSaveLibraryRace(hwndTitle, "Managed.r1", &plrSav));
     CHECK(CchSnprintf(szRaceLibrary, sizeof(szRaceLibrary), "%s%sRace Designs", PszCompatEnvironment("STARS_SETTINGS_DIR"), szDirSep) > 0);
     CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sManaged.r1", szRaceLibrary, szDirSep) > 0);
-    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0);
+    CHECK(FWasRaceFile(szManagedRace, 0) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0);
     strcpy(szPassLast, "managed-pass");
     lSaltLast = LSaltFromSz(szPassLast);
@@ -160,7 +160,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(FLoadLibraryRace(hwndTitle, "Managed.r1"));
     CHECK(vplr.lSalt == lSaltLast && IRaceChecksum(&vplr) == IRaceChecksum(&plrManaged));
     CHECK(!FSaveLibraryRace(hwndTitle, "bad/name.r1", &plrManaged));
-    CHECK(FWasRaceFile(szManagedRace, FALSE) > 0 && vplr.lSalt == lSaltLast);
+    CHECK(FWasRaceFile(szManagedRace, 0) > 0 && vplr.lSalt == lSaltLast);
     CHECK(FImportLibraryRaceAs(hwndTitle, pszRace, "Imported.r2"));
     CHECK(CchSnprintf(szManagedRace, sizeof(szManagedRace), "%s%sImported.r2", szRaceLibrary, szDirSep) > 0);
     CHECK(FNativeFileSize(szManagedRace, &cbRaceLibrary) && cbRaceLibrary > 0 && FEqualFiles(pszRace, szManagedRace));
@@ -172,7 +172,7 @@ static void CALLBACK FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime
     CHECK(pszExport && pszManagedOrders && pszManagedTurn && pszExportFailure && !FExportLibraryOrders(hwndTitle, NULL));
     CHECK(gd.fSubmit == fSubmitSav && game.lid == lid);
     CHECK(!FNativeFileSize((char *)pszManagedOrders, &cbExport) && FNativeFileSize((char *)pszManagedTurn, &cbExport));
-    DirtyGame(TRUE);
+    DirtyGame(1);
     CHECK(pszPreviousExport && !FExportLibraryOrders(hwndTitle, NULL));
     CHECK(cReplaceChoices == 1 && game.fDirty && gd.fSubmit == fSubmitSav && game.lid == lid);
     CHECK(FEqualFiles(pszExport, pszPreviousExport));
@@ -196,7 +196,7 @@ done:
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idTimer = win32::SetTimer(NULL, 0, 50, FileWorkflow);
-    return fResult && idTimer ? fResult : FALSE;
+    return fResult && idTimer ? fResult : 0;
 }
 int main(void) {
     char szCommand[] = "";
@@ -216,7 +216,7 @@ int main(void) {
     io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
     COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
 
-    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     if (idTimer) win32::KillTimer(NULL, idTimer);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;

@@ -25,7 +25,7 @@ static int16_t LookupMining(PART *part) {
     assert(part->hs.grhst == hstMining && part->hs.iItem <= iminingAlienMiner);
     partCalls++;
     part->SetPmining(&mining[part->hs.iItem]);
-    return TRUE;
+    return 1;
 }
 static int32_t FleetMining(FLEET *fleet) {
     mineCalls++;

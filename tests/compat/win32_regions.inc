@@ -53,7 +53,7 @@ int main(void) {
     CHECK(ExcludeClipRect(hdc, 8, 8, 16, 16) == COMPLEXREGION);
     CHECK(BitBlt(hdc, 0, 0, 32, 32, hcopy, 0, 0, SRCCOPY));
     CHECK(MoveToEx(hdc, 0, 12, NULL) && LineTo(hdc, 32, 12));
-    CHECK(SetBkMode(hdc, OPAQUE) && TextOut(hdc, 4, 4, "WW", 2));
+    CHECK(SetBkMode(hdc, OPAQUE) && TextOutA(hdc, 4, 4, "WW", 2));
     CHECK(SelectClipRgn(hdc, NULL) == SIMPLEREGION && GetPixel(hdc, 12, 12) == RGB(0, 0, 0));
     hrgn = CreateRectRgn(0, 0, 0, 10); CHECK(hrgn);
     CHECK(SelectClipRgn(hdc, hrgn) == NULLREGION && DeleteObject(hrgn));

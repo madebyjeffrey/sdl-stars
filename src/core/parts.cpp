@@ -409,14 +409,14 @@ int16_t TechStatus(char *rgTech) {
     int16_t cMiss;
 
     cMiss = 0;
-    fAlmost = FALSE;
-    fInAWhile = FALSE;
+    fAlmost = 0;
+    fInAWhile = 0;
     for (i = 0; i < 6; i++) {
         if (rgplr[idPlayer].rgTech[i] < rgTech[i]) {
             cMiss++;
             if (i == rgplr[idPlayer].iTechNow()) {
                 if (rgplr[idPlayer].rgTech[i] + 1 == rgTech[i]) {
-                    fAlmost = TRUE;
+                    fAlmost = 1;
                 } else {
                     fInAWhile = i + 1;
                 }

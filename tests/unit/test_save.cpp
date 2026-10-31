@@ -7,7 +7,7 @@
 // scanner 100 ly from player 1's homeworld, whose starbase design has
 // lVisible lVis2, and returns what SetVisPFFleets lets player 0 see of it.
 static DetType DetScanCloakedStarbase(const char *pszTest, int16_t dScanRange2, int32_t lVis2) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     PLANET     *lppl0;
     PLANET     *lppl1;
@@ -35,10 +35,10 @@ static DetType DetScanCloakedStarbase(const char *pszTest, int16_t dScanRange2, 
     rglpshdefSB[1][lppl1->isb].SetLVisible(lVis2);
 
     for (i = 0; i < cPlanet; i++) {
-        lpPlanets[i].fInclude = FALSE;
+        lpPlanets[i].fInclude = 0;
         lpPlanets[i].det = detNone;
     }
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     SetVisPFFleets(0);
     return lppl1->fInclude ? (DetType)lppl1->det : detNone;
 }
@@ -68,7 +68,7 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
     const int8_t rgAttrZero[16] = {}, rgTechZero[6] = {};
     const uint32_t rgResZero[6] = {};
 
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     PLANET     *lppl1;
     PLAYER      plrAi;
@@ -105,7 +105,7 @@ static void test_FWriteDataFile_claim_adjuster_sees_only_habitat(void) {
 
 // Format 2.85 is UTF-8; older and newer formats are refused.
 static int16_t FSetHostVersion(int16_t verMinor) {
-    char  szFile[MAX_PATH];
+    char  szFile[cbTestPath];
     uint8_t rgbVersion[2];
     uint16_t wVersion;
     FILE *fp;
@@ -113,12 +113,12 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     snprintf(szFile, sizeof(szFile), "%s.hst", szBase);
     fp = fopen(szFile, "r+b");
     if (fp == NULL)
-        return FALSE;
+        return 0;
     // The RTBOF record follows its 2-byte header and isn't encrypted.
     fseek(fp, 2 + 8, SEEK_SET);
     if (fread(rgbVersion, sizeof(rgbVersion), 1, fp) != 1) {
         fclose(fp);
-        return FALSE;
+        return 0;
     }
     wVersion = rgbVersion[0] | (uint16_t(rgbVersion[1]) << 8);
     if (verMinor < 0) {
@@ -130,11 +130,11 @@ static int16_t FSetHostVersion(int16_t verMinor) {
     fseek(fp, 2 + 8, SEEK_SET);
     fwrite(rgbVersion, sizeof(rgbVersion), 1, fp);
     fclose(fp);
-    return TRUE;
+    return 1;
 }
 
 static void test_WriteBOF_writes_version_2_85(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("WriteBOF_version", szDir, sizeof(szDir)));
@@ -148,8 +148,8 @@ static void test_WriteBOF_writes_version_2_85(void) {
 }
 
 static void test_FOpenFile_reports_unsupported_versions_and_corruption(void) {
-    char  szDir[MAX_PATH];
-    char  szFile[MAX_PATH];
+    char  szDir[cbTestPath];
+    char  szFile[cbTestPath];
     FILE *fp;
     HDR   hdr;
 
@@ -200,7 +200,7 @@ static THING *LpthFind(ThingType ith, int16_t iplr) {
 // Mystery Trader or a wormhole, who had travelled through the wormhole,
 // and the part the trader carries.
 static void test_FWriteDataFile_masks_other_players_things(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     PLANET     *lppl;
     THING      *lpth;
@@ -242,7 +242,7 @@ static void test_FWriteDataFile_masks_other_players_things(void) {
     idWorm2 = lpth->idFull();
     lpth->thw().SetIdPartner(idWorm1);
     { const auto idPartnerForThing = (idWorm2); auto &thForThing = *(LpthFromId(idWorm1)); thForThing.thw().SetIdPartner(idPartnerForThing); }
-    TEST_ASSERT(FWriteDataFile(szBase, 0, FALSE));
+    TEST_ASSERT(FWriteDataFile(szBase, 0, 0));
 
     TEST_ASSERT(FStarsTestLoadPlayer(0));
     lpth = LpthFind(ithMinefield, 1);
@@ -281,7 +281,7 @@ static void test_SetVisPFInit_host(void) {
 }
 
 static void test_utf8_saved_names(void) {
-    char szDir[MAX_PATH], szExpected[32], szPacked[64], szRound[32];
+    char szDir[cbTestPath], szExpected[32], szPacked[64], szRound[32];
     int16_t cPacked = sizeof(szPacked), cRound = 31;
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("utf8_saved_names", szDir, sizeof(szDir)));
@@ -366,7 +366,7 @@ static void test_utf8_raw_battle_plan(void) {
     for (i = 0; i < 10; i++) memcpy(btlplan.szName + i * 3, "\xe6\x9d\xb1", 3);
     btlplan.szName[30] = 'X'; btlplan.szName[31] = 0;
     TEST_ASSERT(!FCompressUserString(btlplan.szName, szPacked, &cOut));
-    WriteBattlePlan(&btlplan, TRUE);
+    WriteBattlePlan(&btlplan, 1);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
     TEST_ASSERT(UnpackBattlePlan(rgb, &btlplanRead, 0, hdr.cb));
@@ -488,7 +488,7 @@ static void test_battle_continuations(void) {
     struct BATTLECASE { int16_t ctok, cKill; int16_t rgcb[5]; int16_t cRec; };
     const BATTLECASE rgcase[] = {{34, 0, {1006}, 1}, {35, 0, {1000, 29, 6}, 3},
                                 {69, 0, {1000, 1015, 6}, 3}, {70, 128, {1000, 1015, 29, 1023, 7}, 5}};
-    char szDir[MAX_PATH], szFile[MAX_PATH];
+    char szDir[cbTestPath], szFile[cbTestPath];
     uint8_t *lpb;
     int16_t cb, i, j, ib;
     TOK tok{};
@@ -527,12 +527,12 @@ static void test_battle_continuations(void) {
         lpb[cb] = lpb[cb + 1] = 0xff;
         lpbBattleLog = lpb; lpbBattleCur = lpb + cb;
         StreamOpen(szFile, mdCreate);
-        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, 0);
         WriteBattles(0);
         WriteRt(rtEOF, 0, NULL);
         StreamClose();
         StreamOpen(szFile, mdRead);
-        SetFileXorStream(0x12345678, 0x4321, 123, 0, FALSE);
+        SetFileXorStream(0x12345678, 0x4321, 123, 0, 0);
         ib = 0;
         for (j = 0; j < bcase.cRec; j++) {
             ReadRt();
@@ -560,13 +560,13 @@ static void test_battle_plan_deletion_wire(void) {
     TEST_ASSERT(FStarsTestInit());
     plan.iplr = 3; plan.iplan = 13; plan.mdTactic = 2; plan.unused1 = 3; plan.fDelete = 1; plan.fDumpCargo = 1;
     plan.mdTarget1 = 8; plan.mdTarget2 = 7; plan.iplrAttack = 31; plan.unused2 = 7;
-    WriteBattlePlan(&plan, TRUE);
+    WriteBattlePlan(&plan, 1);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == 2 && memcmp(rgb, deleted, sizeof(deleted)) == 0);
 }
 
 static void test_WriteRtScore_bytes(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t golden[] = {0xd3, 0xa5, 0xfe, 0xff, 1, 0, 0, 0x80, 0xff, 0xff, 0xff, 0x7f,
         0xfe, 0xff, 0xff, 0x7f, 0xff, 0xff, 0, 0x80, 1, 0, 0, 0x80};
     SCOREX sx{}, decoded{};
@@ -596,7 +596,7 @@ static void test_WriteRtScore_bytes(void) {
 }
 
 static void test_WritePlanet_minimal_history_bytes(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t golden[] = {0xfe, 7, 0x81, 0x83, 9, 0xfe, 0xff};
     PLANET pl{}, decoded{};
     int32_t lSeed1, lSeed2;
@@ -607,13 +607,13 @@ static void test_WritePlanet_minimal_history_bytes(void) {
     pl.id = -2; pl.iPlayer = 0; pl.det = detMinimal; pl.fHomeworld = 1; pl.fInclude = 1; pl.fStarbase = 1; pl.fFirstYear = 1;
     pl.isb = 9; pl.turn = -2;
     StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
-    WritePlanet(&pl, rtPlanetB, TRUE);
+    WritePlanet(&pl, rtPlanetB, 1);
     GetFileSeeds(&lSeed1, &lSeed2);
     TEST_CHECK(lSeed1 == 622877478 && lSeed2 == 1520895743);
     StreamClose();
     StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
     TEST_CHECK(hdrCur.rt == rtPlanetB && hdrCur.cb == 7 && !memcmp(rgbCur, golden, sizeof(golden)));
-    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE));
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, 1, 0));
     TEST_CHECK(decoded.id == -2 && decoded.iPlayer == 0 && decoded.det == detMinimal && decoded.fStarbase && decoded.isb == 9 && decoded.turn == -2);
     StreamClose();
     // detObscure's historical writer/reader thresholds differ: the writer
@@ -621,11 +621,11 @@ static void test_WritePlanet_minimal_history_bytes(void) {
     const uint8_t obscure[] = {0xfe, 0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0xfe, 0xff};
     pl = PLANET{}; pl.id = -2; pl.iPlayer = iplrNone; pl.det = detObscure; pl.turn = -2;
     StreamOpen(szFile, mdCreate); SetFileSeeds(123456, 789012);
-    WritePlanet(&pl, rtPlanetB, TRUE);
+    WritePlanet(&pl, rtPlanetB, 1);
     StreamClose();
     StreamOpen(szFile, mdRead); SetFileSeeds(123456, 789012); ReadRt();
     TEST_CHECK(hdrCur.cb == sizeof(obscure) && !memcmp(rgbCur, obscure, sizeof(obscure)));
-    TEST_CHECK(FReadPlanet(iplrNone, &decoded, TRUE, FALSE) && decoded.det == detObscure && decoded.turn == 0);
+    TEST_CHECK(FReadPlanet(iplrNone, &decoded, 1, 0) && decoded.det == detObscure && decoded.turn == 0);
     StreamClose();
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
@@ -640,24 +640,24 @@ static void test_FReadPlanet_partial_publication(void) {
     TEST_ASSERT(FStarsTestInit());
     hdrCur.rt = rtPlanetB; hdrCur.cb = 0;
     memset(rgbCur, 0, sizeof(rgbCur)); memcpy(rgbCur, minimal, sizeof(minimal));
-    TEST_CHECK(FReadPlanet(iplrNone, &pl, TRUE, FALSE));
+    TEST_CHECK(FReadPlanet(iplrNone, &pl, 1, 0));
     TEST_CHECK(pl.id == -2 && pl.iPlayer == -1 && pl.det == detSome && pl.fInclude && pl.fFirstYear && pl.turn == -2);
     TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 4 && pl.rgEnvVarOrig[2] == 6);
     pl.rgpctMinLevel[0] = 90; pl.rgpctMinLevel[1] = 91; pl.rgpctMinLevel[2] = 92; pl.rgMinConc[0] = 93; pl.turn = 123;
     memcpy(rgbCur, levelBad, sizeof(levelBad));
-    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, 1, 1));
     TEST_CHECK(pl.rgpctMinLevel[0] == 17 && pl.rgpctMinLevel[1] == 91 && pl.rgpctMinLevel[2] == 92 && pl.rgMinConc[0] == 93 && pl.turn == 123);
     pl.rgEnvVar[0] = 70; pl.rgEnvVar[1] = 71; pl.rgEnvVarOrig[0] = 80; pl.rgEnvVarOrig[1] = 81;
     memcpy(rgbCur, envBad, sizeof(envBad));
-    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, 1, 1));
     TEST_CHECK(pl.rgMinConc[2] == 3 && pl.rgEnvVar[0] == 20 && pl.rgEnvVarOrig[0] == 20 && pl.rgEnvVar[1] == 71 && pl.rgEnvVarOrig[1] == 81);
     memcpy(rgbCur, evoBad, sizeof(evoBad));
-    TEST_CHECK(!FReadPlanet(iplrNone, &pl, TRUE, TRUE));
+    TEST_CHECK(!FReadPlanet(iplrNone, &pl, 1, 1));
     TEST_CHECK(pl.rgEnvVar[0] == 10 && pl.rgEnvVar[2] == 30 && pl.rgEnvVarOrig[0] == 40 && pl.rgEnvVarOrig[1] == 20);
 }
 
 static void test_WriteRtPlr_partial_bytes(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t golden[] = {0xfe, 0xff, 0, 0x80, 0xff, 0xff, 0x89, 0xaf, 0, 0, 0, 0};
     PLAYER plr{}, decoded{};
     int32_t lSeed1, lSeed2;
@@ -682,7 +682,7 @@ static void test_WriteRtPlr_partial_bytes(void) {
 }
 
 static void test_WriteRtThing_bytes(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     const uint8_t golden[] = {0x23, 0xe1, 0, 0x80, 0xff, 0x7f, 1, 0, 0, 0x80, 0xdc, 0xfe, 0xff, 0xa5, 0xab, 0x89, 0xfe, 0xff};
     THING th{}, decoded{};
     int32_t lSeed1, lSeed2;

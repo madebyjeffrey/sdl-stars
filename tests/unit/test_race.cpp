@@ -1,10 +1,15 @@
 #include "acutest.h"
+#include <array>
 [[maybe_unused]] static char szTestLiteral2[] = "New-race-pass";
 [[maybe_unused]] static char szTestLiteral3[] = "Replacement";
 [[maybe_unused]] static char szTestLiteral4[] = "Shortened-race";
 
 #include "stars_test.h"
-[[maybe_unused]] static char szTestLiteral1[] = "data" szDirSep "humanoid.r1";
+[[maybe_unused]] static auto szTestLiteral1 = [] {
+    auto sz = std::to_array("data/humanoid.r1");
+    sz[4] = chDirSep;
+    return sz;
+}();
 
 #ifdef STARS_UI_SDL
 #include <stars_compat.h>
@@ -69,7 +74,7 @@ static int16_t FWriteLegacyRaceFixture(char *szFile, int16_t verMinor, const cha
     WriteRt(rtPlr, (int16_t)(pb - rgb), rgb);
     WriteRtEof(icksum);
     StreamClose();
-    return TRUE;
+    return 1;
 }
 
 static size_t CbReadFixture(const char *szFile, uint8_t *rgb, size_t cbMax) {
@@ -84,7 +89,7 @@ static size_t CbReadFixture(const char *szFile, uint8_t *rgb, size_t cbMax) {
 }
 
 static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64], szNewGameRace[MAX_PATH + 64], szDef[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64], szSaved[cbTestPath + 64], szNewGameRace[cbTestPath + 64], szDef[cbTestPath + 64];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
     PLAYER plrExpected;
@@ -94,13 +99,13 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("legacy_race_import", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1.data(), 0));
     plrExpected = vplr;
     snprintf(szFile, sizeof(szFile), "%s%srace249.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 49, "R\xe9", "", FALSE, FALSE, 0));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 49, "R\xe9", "", 0, 0, 0));
     cbBefore = CbReadFixture(szFile, rgbBefore, sizeof(rgbBefore));
     TEST_ASSERT(cbBefore > 0);
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0);
     TEST_CHECK(strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
     TEST_CHECK(memcmp(vplr.rgAttr, plrExpected.rgAttr, sizeof(vplr.rgAttr)) == 0);
@@ -108,19 +113,19 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     TEST_CHECK(CbReadFixture(szFile, rgbAfter, sizeof(rgbAfter)) == cbBefore && memcmp(rgbBefore, rgbAfter, cbBefore) == 0);
 
     snprintf(szFile, sizeof(szFile), "%s%srace254.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 54, "R\xe9", "", FALSE, TRUE, 0));
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 54, "R\xe9", "", 0, 1, 0));
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
 
     snprintf(szFile, sizeof(szFile), "%s%srace255.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 55, "R\xe9", "R\xe9s", TRUE, TRUE, 0));
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 55, "R\xe9", "R\xe9s", 1, 1, 0));
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
 
     snprintf(szFile, sizeof(szFile), "%s%srace284.r1", szDir, szDirSep);
     strcpy(szNewGameRace, szFile);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "R\xe9", "R\xe9s", TRUE, FALSE, 0));
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "R\xe9", "R\xe9s", 1, 0, 0));
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
 
     snprintf(szSaved, sizeof(szSaved), "%s%ssaved.r1", szDir, szDirSep);
@@ -129,7 +134,7 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
     icksum = IRaceChecksum(&vplr);
     WriteRtEof(icksum);
     StreamClose();
-    TEST_CHECK(FWasRaceFile(szSaved, FALSE) == 1);
+    TEST_CHECK(FWasRaceFile(szSaved, 0) == 1);
     TEST_CHECK(strcmp(vplr.szName, "R\xc3\xa9") == 0 && strcmp(vplr.szNames, "R\xc3\xa9s") == 0);
 
     snprintf(szDef, sizeof(szDef), "%s%slegacy.def", szDir, szDirSep);
@@ -147,35 +152,35 @@ static void test_FWasRaceFile_imports_unprotected_legacy_designs(void) {
         char szLongName[21];
         memset(szLongName, (char)0xe9, 20);
         szLongName[20] = 0;
-        TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szLongName, "Expanded", TRUE, FALSE, 0));
+        TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szLongName, "Expanded", 1, 0, 0));
     }
     pf = fopen(szDef, "wb"); TEST_ASSERT(pf);
     fprintf(pf, "Legacy Race\r\n0 0 1 12345\r\n0 0 0 0 0 0 0\r\n1\r\n%s\r\n1 60\r\n1 26 4\r\n", szFile);
     for (i = 0; i < 8; i++) fprintf(pf, "0\r\n");
     fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
     fclose(pf);
-    iStarsTestAlertResponse = IDNO;
+    iStarsTestAlertResponse = win32::IDNO;
     TEST_CHECK(!GenNewGameFromFile(szDef));
 
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", 1, 0, 1234));
     pf = fopen(szDef, "wb"); TEST_ASSERT(pf);
     fprintf(pf, "Legacy Race\r\n0 0 1 12345\r\n0 0 0 0 0 0 0\r\n1\r\n%s\r\n1 60\r\n1 26 4\r\n", szFile);
     for (i = 0; i < 8; i++) fprintf(pf, "0\r\n");
     fprintf(pf, "%s%slegacy.xy\r\n", szDir, szDirSep);
     fclose(pf);
     iStarsTestAlertResponse = 0;
-    fStarsTestAcceptLegacyRacePassword = TRUE;
+    fStarsTestAcceptLegacyRacePassword = 1;
     strcpy(szStarsTestLegacyRacePassword, "New-race-pass");
     TEST_CHECK(GenNewGameFromFile(szDef));
     TEST_CHECK(rgplr[0].lSalt == LSaltFromSz(szTestLiteral2));
     TEST_CHECK(rgplr[0].lSalt != 1234);
-    fStarsTestAcceptLegacyRacePassword = FALSE;
+    fStarsTestAcceptLegacyRacePassword = 0;
     TEST_CHECK(!GenNewGameFromFile(szDef));
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 2);
 }
 
 static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_shortening(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64], szSaved[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64], szSaved[cbTestPath + 64];
     char szName[32], szNames[32];
     uint8_t rgbBefore[512], rgbAfter[512];
     size_t cbBefore;
@@ -187,18 +192,18 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("legacy_race_decisions", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
-    fFileErrSilent = FALSE;
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1.data(), 0));
+    fFileErrSilent = 0;
     snprintf(szFile, sizeof(szFile), "%s%sprotected.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", TRUE, FALSE, 1234));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Protected", "Protecteds", 1, 0, 1234));
     cbBefore = CbReadFixture(szFile, rgbBefore, sizeof(rgbBefore));
     TEST_ASSERT(cbBefore > 0);
-    fFileErrSilent = TRUE;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+    fFileErrSilent = 1;
+    TEST_CHECK(FWasRaceFile(szFile, 0) == -1);
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 1);
-    fStarsTestAcceptLegacyRacePassword = TRUE;
+    fStarsTestAcceptLegacyRacePassword = 1;
     strcpy(szStarsTestLegacyRacePassword, "Replacement");
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral3) && vplr.lSalt != 1234);
     TEST_CHECK(strcmp(szRacePass, "Replacement") == 0);
     TEST_CHECK(CbReadFixture(szFile, rgbAfter, sizeof(rgbAfter)) == cbBefore);
@@ -210,12 +215,12 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     WriteRtEof(icksum);
     StreamClose();
     strcpy(vszDefPass, "Replacement");
-    TEST_CHECK(FWasRaceFile(szSaved, TRUE) == 1);
+    TEST_CHECK(FWasRaceFile(szSaved, 1) == 1);
     TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral3));
     vszDefPass[0] = 0;
 
     snprintf(szFile, sizeof(szFile), "%s%sbadsum.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "BadSum", "BadSums", TRUE, FALSE, 1234));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "BadSum", "BadSums", 1, 0, 1234));
     pf = fopen(szFile, "r+b"); TEST_ASSERT(pf);
     TEST_ASSERT(fseek(pf, -1, SEEK_END) == 0);
     ch = fgetc(pf); TEST_ASSERT(ch != EOF);
@@ -223,11 +228,11 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     TEST_ASSERT(fputc(ch ^ 1, pf) != EOF);
     fclose(pf);
     cStarsTestLegacyRacePasswordPrompt = 0;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 0);
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 0);
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 0);
 
     snprintf(szFile, sizeof(szFile), "%s%struncated.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Truncated", "Truncateds", TRUE, TRUE, 0));
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, "Truncated", "Truncateds", 1, 1, 0));
     pf = fopen(szFile, "r+b"); TEST_ASSERT(pf);
     memset(&hdr, 0, sizeof(hdr));
     hdr.cb = 3;
@@ -235,16 +240,16 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
     TEST_ASSERT(fseek(pf, -4, SEEK_END) == 0);
     TEST_ASSERT(fwrite(&hdr, sizeof(hdr), 1, pf) == 1);
     fclose(pf);
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 0);
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 0);
 
     for (i = 0; i < 20; i++) szName[i] = (char)0xe9;
     szName[20] = 0;
     for (i = 0; i < 21; i++) szNames[i] = (char)0xe9;
     szNames[21] = 0;
     snprintf(szFile, sizeof(szFile), "%s%sexpand.r1", szDir, szDirSep);
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 0));
-    iStarsTestAlertResponse = IDYES;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, 1, 0, 0));
+    iStarsTestAlertResponse = win32::IDYES;
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(strlen(vplr.szName) <= 31 && strlen(vplr.szNames) <= 31);
     TEST_CHECK(FUtf8Valid(vplr.szName, strlen(vplr.szName)) && FUtf8Valid(vplr.szNames, strlen(vplr.szNames)));
     TEST_CHECK(strlen(vplr.szName) == 30 && strlen(vplr.szNames) == 30);
@@ -252,25 +257,25 @@ static void test_FWasRaceFile_legacy_replaces_protected_password_and_confirms_sh
 
     // When both decisions are needed, accept the shortened names before
     // accepting the password; cancelling the names stops before that prompt.
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 1234));
-    iStarsTestAlertResponse = IDYES;
-    fStarsTestAcceptLegacyRacePassword = TRUE;
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, 1, 0, 1234));
+    iStarsTestAlertResponse = win32::IDYES;
+    fStarsTestAcceptLegacyRacePassword = 1;
     strcpy(szStarsTestLegacyRacePassword, "Shortened-race");
     cStarsTestLegacyRacePasswordPrompt = 0;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == 1);
+    TEST_CHECK(FWasRaceFile(szFile, 0) == 1);
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 1);
     TEST_CHECK(vplr.lSalt == LSaltFromSz(szTestLiteral4));
 
-    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, TRUE, FALSE, 1234));
-    iStarsTestAlertResponse = IDNO;
+    TEST_ASSERT(FWriteLegacyRaceFixture(szFile, 84, szName, szNames, 1, 0, 1234));
+    iStarsTestAlertResponse = win32::IDNO;
     cStarsTestLegacyRacePasswordPrompt = 0;
-    fStarsTestAcceptLegacyRacePassword = FALSE;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+    fStarsTestAcceptLegacyRacePassword = 0;
+    TEST_CHECK(FWasRaceFile(szFile, 0) == -1);
     TEST_CHECK(cStarsTestLegacyRacePasswordPrompt == 0);
 
-    iStarsTestAlertResponse = IDNO;
-    fStarsTestAcceptLegacyRacePassword = FALSE;
-    TEST_CHECK(FWasRaceFile(szFile, FALSE) == -1);
+    iStarsTestAlertResponse = win32::IDNO;
+    fStarsTestAcceptLegacyRacePassword = 0;
+    TEST_CHECK(FWasRaceFile(szFile, 0) == -1);
 }
 
 static void test_LInnateRaceHabitability_double_rounding(void) {
@@ -296,11 +301,11 @@ static void test_LInnateRaceHabitability_double_rounding(void) {
 static void test_RaceGrbit_high_bit(void) {
     PLAYER plr = {};
 
-    SetRaceGrbit(&plr, (RaceGrbit)(0), TRUE);
-    SetRaceGrbit(&plr, (RaceGrbit)(31), TRUE);
+    SetRaceGrbit(&plr, (RaceGrbit)(0), 1);
+    SetRaceGrbit(&plr, (RaceGrbit)(31), 1);
     TEST_CHECK(plr.grbitAttr == UINT32_C(0x80000001));
     TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(31)));
-    SetRaceGrbit(&plr, (RaceGrbit)(31), FALSE);
+    SetRaceGrbit(&plr, (RaceGrbit)(31), 0);
     TEST_CHECK(plr.grbitAttr == 1);
     TEST_CHECK(!GetRaceGrbit(&plr, (RaceGrbit)(31)));
     TEST_CHECK(GetRaceGrbit(&plr, (RaceGrbit)(0)));
@@ -310,14 +315,14 @@ static void test_RaceGrbit_high_bit(void) {
 // holds a longer one, and IRaceChecksum included the stale bytes after the
 // terminator. They aren't saved, so the file failed its checksum on load.
 static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
-    char     szDir[MAX_PATH];
-    char     szFile[MAX_PATH + 64];
+    char     szDir[cbTestPath];
+    char     szFile[cbTestPath + 64];
     PLAYER   plr;
     uint16_t icksum;
 
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("IRaceChecksum_stale_name", szDir, sizeof(szDir)));
-    TEST_ASSERT(FWasRaceFile(szTestLiteral1, FALSE));
+    TEST_ASSERT(FWasRaceFile(szTestLiteral1.data(), 0));
     plr = vplr;
     strcpy(plr.szName, "Longname");
     strcpy(plr.szNames, "Longnames");
@@ -333,7 +338,7 @@ static void test_IRaceChecksum_ignores_stale_name_bytes(void) {
     WriteRtEof(icksum);
     StreamClose();
 
-    TEST_CHECK(FWasRaceFile(szFile, FALSE));
+    TEST_CHECK(FWasRaceFile(szFile, 0));
     TEST_CHECK(strcmp(vplr.szNames, "Bos") == 0);
 }
 
@@ -407,80 +412,80 @@ static void test_NewPasswordDlg_utf8_limit(void) {
     idPlayerSave = idPlayer;
     fLogOffSave = fLogOff;
     idPlayer = 0;
-    fLogOff = TRUE;
-    hwnd = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
+    fLogOff = 1;
+    hwnd = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg, 0);
     TEST_ASSERT(hwnd != NULL);
     hwndEdit = win32::GetDlgItem(hwnd, IDC_EDIT1);
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
-    ui::SendMessage(hwndEdit, WM_PASTE, 0, 0);
-    TEST_CHECK(win32::GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
+    ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
+    TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    ui::SendMessage(hwndEdit, WM_CHAR, '\b', 0);
-    ui::SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    ui::SendMessage(hwndEdit, win32::WM_CHAR, '\b', 0);
+    ui::SendMessage(hwndEdit, win32::WM_KEYDOWN, win32::VK_DELETE, 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
     cStarsTestAlert = 0;
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 1);
     TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
     TEST_CHECK(win32::IsWindow(hwnd));
 
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
-    ui::SendMessage(hwndEdit, WM_PASTE, 0, 0);
-    TEST_CHECK(win32::GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
+    ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
+    TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
 
     hwndEdit = win32::GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM);
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(SDL_SetClipboardText(pszUnicodeTooLong));
-    ui::SendMessage(hwndEdit, WM_PASTE, 0, 0);
-    TEST_CHECK(win32::GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 0);
+    ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
+    TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    ui::SendMessage(hwndEdit, WM_CHAR, '\b', 0);
-    ui::SendMessage(hwndEdit, WM_KEYDOWN, VK_DELETE, 0);
+    ui::SendMessage(hwndEdit, win32::WM_CHAR, '\b', 0);
+    ui::SendMessage(hwndEdit, win32::WM_KEYDOWN, win32::VK_DELETE, 0);
     TEST_CHECK(StarsCompatTextInputRejected(hwndEdit));
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 2);
     TEST_CHECK(strstr(szStarsTestAlert, "enter it again") != NULL);
     TEST_CHECK(win32::IsWindow(hwnd));
 
     TEST_ASSERT(SDL_SetClipboardText(pszExact));
-    ui::SendMessage(hwndEdit, WM_PASTE, 0, 0);
-    TEST_CHECK(win32::GetWindowText(hwndEdit, szPass, sizeof(szPass)) == 15);
+    ui::SendMessage(hwndEdit, win32::WM_PASTE, 0, 0);
+    TEST_CHECK(win32::GetWindowTextA(hwndEdit, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(FUtf8Valid(szPass, strlen(szPass)));
     TEST_CHECK(!StarsCompatTextInputRejected(hwndEdit));
 
     TEST_ASSERT(ui::SetWindowText(hwndEdit, "different"));
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 3);
     TEST_CHECK(strstr(szStarsTestAlert, "not the same") != NULL);
     TEST_CHECK(win32::IsWindow(hwnd));
     TEST_ASSERT(ui::SetWindowText(hwndEdit, pszExact));
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDOK));
     TEST_CHECK(cStarsTestAlert == 3);
     TEST_CHECK(win32::IsWindow(hwnd));
-    hwndOrdinary = ui::CreateWindowEx(0, "EDIT", "", WS_CHILD, 0, 0, 100, 24, hwnd, NULL, hInst, NULL);
+    hwndOrdinary = ui::CreateWindowEx(0, "EDIT", "", win32::WS_CHILD, 0, 0, 100, 24, hwnd, NULL, hInst, NULL);
     TEST_ASSERT(hwndOrdinary != NULL);
-    ui::SendMessage(hwndOrdinary, EM_LIMITTEXT, 15, 0);
+    ui::SendMessage(hwndOrdinary, win32::EM_LIMITTEXT, 15, 0);
     TEST_ASSERT(SDL_SetClipboardText(pszTooLong));
-    ui::SendMessage(hwndOrdinary, WM_PASTE, 0, 0);
-    TEST_CHECK(win32::GetWindowText(hwndOrdinary, szPass, sizeof(szPass)) == 15);
+    ui::SendMessage(hwndOrdinary, win32::WM_PASTE, 0, 0);
+    TEST_CHECK(win32::GetWindowTextA(hwndOrdinary, szPass, sizeof(szPass)) == 15);
     TEST_CHECK(!StarsCompatTextInputRejected(hwndOrdinary));
-    hwndEdit = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+    hwndEdit = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
                                   (LPARAM)szReplacement);
     TEST_ASSERT(hwndEdit != NULL);
     TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwndEdit, IDC_EDIT1), pszExact));
     TEST_ASSERT(ui::SetWindowText(win32::GetDlgItem(hwndEdit, IDC_PASSWORD_CONFIRM), pszExact));
-    ui::SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
+    ui::SendMessage(hwndEdit, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
     TEST_CHECK(strcmp(szReplacement, pszExact) == 0);
     ui::DestroyWindow(hwndEdit);
     szReplacement[0] = 0;
-    hwndEdit = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
+    hwndEdit = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_NEW_PASSWORD), NULL, NewPasswordDlg,
                                   (LPARAM)szReplacement);
     TEST_ASSERT(hwndEdit != NULL);
     cStarsTestAlert = 0;
-    ui::SendMessage(hwndEdit, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
+    ui::SendMessage(hwndEdit, win32::WM_COMMAND, win32::MAKEWPARAM(IDOK, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwndEdit, IDOK));
     TEST_CHECK(cStarsTestAlert == 1);
     TEST_CHECK(strstr(szStarsTestAlert, "replacement password is required") != NULL);
     TEST_CHECK(win32::IsWindow(hwndEdit));
@@ -503,12 +508,12 @@ static void test_RaceWizardDlg1_custom_clears_random(void) {
     TEST_ASSERT(GetRaceGrbit(&vplr, ibitRaceAIPlayer) != 0);
     strcpy(vplr.szName, "Randomite");
     strcpy(vplr.szNames, "Randomites");
-    hwnd = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_1), NULL, RaceWizardDlg1, 0);
+    hwnd = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_1), NULL, RaceWizardDlg1, 0);
     TEST_ASSERT(hwnd != NULL);
     win32::CheckRadioButton(hwnd, IDC_RACE_HUMANOID, IDC_RACE_CUSTOM, IDC_RACE_CUSTOM);
     hwndCtl = win32::GetDlgItem(hwnd, IDC_RACE_CUSTOM);
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_RACE_CUSTOM, BN_CLICKED), (LPARAM)hwndCtl);
-    ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_NEXT, BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDC_NEXT));
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_RACE_CUSTOM, win32::BN_CLICKED), (LPARAM)hwndCtl);
+    ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_NEXT, win32::BN_CLICKED), (LPARAM)win32::GetDlgItem(hwnd, IDC_NEXT));
     ui::DestroyWindow(hwnd);
     TEST_CHECK_(GetRaceGrbit(&vplr, ibitRaceAIPlayer) == 0, "the custom race is still random");
 }
@@ -527,26 +532,26 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
     vplr = vrgplrDef[0];
     vrgrcRCW = rgrc;
     iPanelActive = rwPageHabitability;
-    fRCWReadOnly = FALSE;
-    hwnd = ui::CreateDialog(hInst, MAKEINTRESOURCE(IDD_RACE_WIZARD_2), NULL, RaceWizardDlg2, 0);
+    fRCWReadOnly = 0;
+    hwnd = ui::CreateDialog(hInst, win32::MAKEINTRESOURCE(IDD_RACE_WIZARD_2), NULL, RaceWizardDlg2, 0);
     TEST_ASSERT(hwnd != NULL);
     TEST_CHECK(crcRCW == 17);
-    ui::ShowWindow(hwnd, SW_SHOW);
+    ui::ShowWindow(hwnd, win32::SW_SHOW);
     TEST_CHECK(ui::UpdateWindow(hwnd));
     for (i = 0; i < 3; i++) {
-        win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_CHECKED);
-        ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+        win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, win32::BST_CHECKED);
+        ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, win32::BN_CLICKED),
                     (LPARAM)win32::GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
         TEST_CHECK(vplr.rgEnvVarMax[i] == envImmune);
     }
     DrawRace2(hwnd, NULL, -1);
     for (i = 0; i < 3; i++) {
-        win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, BST_UNCHECKED);
-        ui::SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, BN_CLICKED),
+        win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, win32::BST_UNCHECKED);
+        ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, win32::BN_CLICKED),
                     (LPARAM)win32::GetDlgItem(hwnd, IDC_IMMUNE_TO_GRAVITY + i));
         TEST_CHECK(vplr.rgEnvVarMin[i] == 20 && vplr.rgEnvVarMax[i] == 80);
     }
-    win32::InvalidateRect(hwnd, NULL, TRUE);
+    win32::InvalidateRect(hwnd, NULL, 1);
     TEST_CHECK(ui::UpdateWindow(hwnd));
     ui::DestroyWindow(hwnd);
     vrgrcRCW = NULL;

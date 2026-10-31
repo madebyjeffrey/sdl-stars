@@ -147,7 +147,7 @@ def CValue(key, value, where, asserts, path):
     if isinstance(value, bool):
         if not key.startswith("f"):
             raise DataError("{}: {} is true/false; only f keys are flags (quote a name like 'no')".format(where, key))
-        return "TRUE" if value else "FALSE"
+        return "1" if value else "0"
     if isinstance(value, int):
         return str(value)
     if isinstance(value, str):

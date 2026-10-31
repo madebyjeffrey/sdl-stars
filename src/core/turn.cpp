@@ -20,15 +20,15 @@ int16_t rgrgdmgMine[3][2] = {{100, 125}, {500, 600}};
 // production template, which ReadIniSettings also sets when stars.ini has
 // none. FCreateStuff calls it for the Windows game.
 void InitGameStuff() {
-    gd.fNoIdleChecks = FALSE;
-    gd.fAisDone = FALSE;
+    gd.fNoIdleChecks = 0;
+    gd.fAisDone = 0;
     vplr = vrgplrDef[0];
     lpLog = LpAlloc<uint8_t>(32000, htLog);
     lpMsg = LpAlloc<uint8_t>(0xffc8, htMsg);
     vlprgidPlanet = LpAlloc<uint16_t>(0x800, htPerm);
     vlprgidFleet = LpAlloc<uint16_t>(0x800, htPerm);
     TextIO().pfnCchGetString(idsDefault, vrgZipProd[0].szName);
-    vrgZipProd[0].fValid = TRUE;
+    vrgZipProd[0].fValid = 1;
     return;
 }
 
@@ -60,18 +60,18 @@ int16_t FGenerateTurn() {
     int16_t  pctDetect;
 
     idCur = idPlayer;
-    fSuccess = FALSE;
+    fSuccess = 0;
     DestroyCurGame();
     if (gd.fTutorial) {
         Randomize(1234567890);
     }
     fErrSav = fFileErrSilent;
-    fFileErrSilent = TRUE;
+    fFileErrSilent = 1;
     UpdateProgressGauge(static_cast<ProgressStep>(360));
     if (!FLoadGame(szBase, "hst")) {
         fFileErrSilent = fErrSav;
         TurnLog(idsCantFindHostFile);
-        return FALSE;
+        return 0;
     }
     TurnLog(idsGeneratingYearD);
     fFileErrSilent = fErrSav;
@@ -96,8 +96,8 @@ int16_t FGenerateTurn() {
         UpdateProgressGauge(static_cast<ProgressStep>(370));
         cColDrop = 0;
         cXferFull = 0;
-        gd.fGeneratingTurn = TRUE;
-        gd.fRetryOpens = TRUE;
+        gd.fGeneratingTurn = 1;
+        gd.fRetryOpens = 1;
         imemMsgCur = 0;
         for (i = 0; i < game.cPlayer; i++) {
             mpiplr2[i] = i;
@@ -115,7 +115,7 @@ int16_t FGenerateTurn() {
             CchSprintf(szWork, "%s.x%d", szBase, j + 1);
             idPlayer = j;
             if (FLoadLogFile(szWork) && !FRunLogFile()) {
-                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), MB_ICONHAND);
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), win32::MB_ICONHAND);
                 goto FreeStuffUp;
             }
             UpdateProgressGauge(static_cast<ProgressStep>(LMulDiv(60, i + 1, game.cPlayer) + 370));
@@ -132,27 +132,27 @@ int16_t FGenerateTurn() {
                 }
             }
         }
-        fFollow = FALSE;
+        fFollow = 0;
         for (ifl = 0; ifl < cFleet; ifl++) {
             lpfl = rglpfl[ifl];
             if (!rglpfl[ifl])
                 break;
-            lpfl->fNoHeal = FALSE;
+            lpfl->fNoHeal = 0;
             if (lpfl->cord == 1 && lpfl->lpplord->rgord()[0].grobj == grobjFleet) {
-                fFollow = TRUE;
-                lpfl->fMark = TRUE;
+                fFollow = 1;
+                lpfl->fMark = 1;
             } else {
                 if (lpfl->lpplord->rgord()[0].grobj == grobjFleet && lpfl->cord == 1) {
                     TurnIO().pfnMessage(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 }
-                lpfl->fMark = FALSE;
+                lpfl->fMark = 0;
             }
         }
         ValidateWaypoints();
         if (fFollow) {
-            fFollow = TRUE;
+            fFollow = 1;
             for (i = 0; i < 8 && fFollow != 0; i++) {
-                fFollow = FALSE;
+                fFollow = 0;
                 for (ifl = 0; ifl < cFleet; ifl++) {
                     lpfl = rglpfl[ifl];
                     if (!rglpfl[ifl])
@@ -161,7 +161,7 @@ int16_t FGenerateTurn() {
                         ord = lpfl->lpplord->rgord()[0];
                         if (ord.grobj != grobjFleet) {
                         LUnmark:
-                            lpfl->fMark = FALSE;
+                            lpfl->fMark = 0;
                             continue;
                         }
                         lpflTarget = LpflFromId(ord.id);
@@ -171,7 +171,7 @@ int16_t FGenerateTurn() {
                         }
                         if (lpflTarget->cord == 1)
                             continue;
-                        fFollow = TRUE;
+                        fFollow = 1;
                         if (lpfl->lpplord->iordMax <= 1) {
                             lpfl->lpplord = LpplReAlloc(lpfl->lpplord, 2);
                         }
@@ -184,7 +184,7 @@ int16_t FGenerateTurn() {
             }
         }
         UpdateProgressGauge(static_cast<ProgressStep>(440));
-        DoOrders(FALSE);
+        DoOrders(0);
         UpdateProgressGauge(static_cast<ProgressStep>(530));
         for (i = 0; i < game.cPlayer; i++) {
             for (j = 0; j < 16; j++) {
@@ -208,7 +208,7 @@ int16_t FGenerateTurn() {
                         TurnIO().pfnMessage2(j, idmHackedRaceDiscoveredRaceStatisticsHaveAltered, gotoNone, i, 0);
                     }
                 }
-                rgplr[i].fHacker = TRUE;
+                rgplr[i].fHacker = 1;
                 if (cAdv < 500) {
                     while (rgplr[i].rgAttr[0] < 25) {
                         rgplr[i].rgAttr[0]++;
@@ -236,16 +236,16 @@ int16_t FGenerateTurn() {
             }
         }
         UnmarkMineFields();
-        MoveThings(FALSE);
+        MoveThings(0);
         UpdateProgressGauge(static_cast<ProgressStep>(550));
         MoveFleets();
         lppl = lpPlanets;
         lpplMac = lpPlanets + cPlanet;
         for (; lppl < lpplMac; lppl++) {
-            lppl->fHomeworld = FALSE;
+            lppl->fHomeworld = 0;
         }
         for (i = 0; i < game.cPlayer; i++) {
-            lpPlanets[rgplr[i].idPlanetHome].fHomeworld = TRUE;
+            lpPlanets[rgplr[i].idPlanetHome].fHomeworld = 1;
         }
         UpdateProgressGauge(static_cast<ProgressStep>(650));
         ThingDecay();
@@ -253,10 +253,10 @@ int16_t FGenerateTurn() {
         UpdateProgressGauge(static_cast<ProgressStep>(700));
         Produce();
         UpdateProgressGauge(static_cast<ProgressStep>(750));
-        MoveThings(TRUE);
+        MoveThings(1);
         UpdateProgressGauge(static_cast<ProgressStep>(770));
         FuelFleets();
-        DoOrders(TRUE);
+        DoOrders(1);
         SweepForMines();
         HealShips();
         AutoTerraform();
@@ -265,7 +265,7 @@ int16_t FGenerateTurn() {
         ValidateWaypoints();
         UpdateGuesses();
         UpdateProgressGauge(static_cast<ProgressStep>(852));
-        FMarkFile(dtHost, iplrNone, mdMarkInUse, FALSE);
+        FMarkFile(dtHost, iplrNone, mdMarkInUse, 0);
         CreateBackupDir();
         game.turn++;
         pchCur = &szBase[strlen(szBase)];
@@ -294,13 +294,13 @@ int16_t FGenerateTurn() {
                     rglpshdef[i][j].pctDetect = pctDetect;
                     rglpshdef[i][j].iSteal = iSteal;
                     if (!ProductionIO().pfnBuildable(rglpshdef[i] + j, i)) {
-                        rglpshdef[i][j].fGift = TRUE;
+                        rglpshdef[i][j].fGift = 1;
                     }
                 }
             }
         }
         j = 856;
-        fDone = FALSE;
+        fDone = 0;
         memset(rgfNoXFile, 0, 16);
         i = 0;
         while (!fDone) {
@@ -308,14 +308,14 @@ int16_t FGenerateTurn() {
             j += 17 / (game.cPlayer + 1);
             if (i >= game.cPlayer) {
                 i = -1;
-                fDone = TRUE;
+                fDone = 1;
             }
             if (i >= 0) {
                 CchSprintf(pchCur, ".x%d", i + 1);
                 strcpy(pchBak, pchCur);
                 RemoveNativeFile(szT);
                 if (!FFileExists(szBase)) {
-                    rgfNoXFile[i] = TRUE;
+                    rgfNoXFile[i] = 1;
                 } else {
                     RenameNativeFile(szBase, szT);
                 }
@@ -335,7 +335,7 @@ int16_t FGenerateTurn() {
             i++;
         }
         j = 875;
-        fDone = FALSE;
+        fDone = 0;
         game.wGen = (uint16_t)RandomIO().pfnRandom(8);
         i = 0;
         while (!fDone) {
@@ -343,14 +343,14 @@ int16_t FGenerateTurn() {
             j += 122 / (game.cPlayer + 1);
             if (i >= game.cPlayer) {
                 i = -1;
-                fDone = TRUE;
+                fDone = 1;
             }
             FWriteDataFile(szBase, i, i != -1 && rgfNoXFile[i]);
             i++;
         }
         UpdateProgressGauge(static_cast<ProgressStep>(998));
         imemLogCur = 0;
-        fSuccess = TRUE;
+        fSuccess = 1;
     } catch (const StarsError &) {
     }
 FreeStuffUp:
@@ -365,8 +365,8 @@ FreeStuffUp:
     lpcd = NULL;
     HeapIO().pfnFree(lpxf, htMisc);
     lpxf = NULL;
-    gd.fGeneratingTurn = FALSE;
-    gd.fRetryOpens = FALSE;
+    gd.fGeneratingTurn = 0;
+    gd.fRetryOpens = 0;
     idPlayer = iplrNone;
     if (fSuccess && ini.fGen) {
         vretExitValue = 1;
@@ -385,7 +385,7 @@ void EnsureAis() {
     MDPLR   rgmdplr[16];
 
     fSubmitSav = gd.fSubmit;
-    fWorkDone = FALSE;
+    fWorkDone = 0;
     if (!gd.fAisDone) {
         fHostSav = gd.fHostMode;
         if (!gd.fHostMode) {
@@ -395,17 +395,17 @@ void EnsureAis() {
         for (iPlayer = 0; iPlayer < game.cPlayer; iPlayer++) {
             rgmdplr[iPlayer].SetWMdPlr(rgplr[iPlayer].wMdPlr());
         }
-        gd.fSubmit = TRUE;
+        gd.fSubmit = 1;
         fErrSav = fFileErrSilent;
-        fFileErrSilent = TRUE;
+        fFileErrSilent = 1;
         for (iPlayer = 0; iPlayer < game.cPlayer; iPlayer++) {
             UpdateProgressGauge(static_cast<ProgressStep>(LMulDiv(340, iPlayer + 1, game.cPlayer)));
             if (rgmdplr[iPlayer].fAi) {
-                fWorkDone = TRUE;
-                gd.fGeneratingTurn = TRUE;
-                gd.fHostMode = TRUE;
+                fWorkDone = 1;
+                gd.fGeneratingTurn = 1;
+                gd.fHostMode = 1;
                 fOpened = FOpenFile(dtLog, iPlayer, 32);
-                gd.fGeneratingTurn = FALSE;
+                gd.fGeneratingTurn = 0;
                 gd.fHostMode = fHostSav;
                 if (fOpened) {
                     RecordIO().pfnStreamClose();
@@ -420,7 +420,7 @@ void EnsureAis() {
             FLoadGame(szBase, "hst");
         }
         fFileErrSilent = fErrSav;
-        gd.fAisDone = TRUE;
+        gd.fAisDone = 1;
     }
     return;
 }
@@ -505,8 +505,8 @@ int16_t CTurnsOutSafe() {
     fGenSav = gd.fGeneratingTurn;
     idPlayerSav = idPlayer;
     idPlayer = iplrNone;
-    gd.fHostMode = TRUE;
-    gd.fGeneratingTurn = FALSE;
+    gd.fHostMode = 1;
+    gd.fGeneratingTurn = 0;
     cturn = CFindTurnsOutstanding();
     gd.fGeneratingTurn = fGenSav;
     gd.fHostMode = fHostModeSav;
@@ -525,8 +525,8 @@ int16_t CFindTurnsOutstanding() {
     cOut = 0;
     cAi = 0;
     fSav = fFileErrSilent;
-    fFileErrSilent = TRUE;
-    gd.fGeneratingTurn = TRUE;
+    fFileErrSilent = 1;
+    gd.fGeneratingTurn = 1;
     for (i = 0; i < game.cPlayer; i++) {
         fOut = rgOut[i];
         idsError = 0;
@@ -561,9 +561,9 @@ int16_t CFindTurnsOutstanding() {
             ctickLast = DwTickCount();
         }
     }
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     gd.fAllAis = cAi == game.cPlayer;
-    fFileErrSilent = FALSE;
+    fFileErrSilent = 0;
     return cOut;
 }
 
@@ -572,7 +572,7 @@ int16_t FSetUpBatchProcessing() {
     int16_t fSuccess;
     int16_t cb;
 
-    fSuccess = FALSE;
+    fSuccess = 0;
     StarsRecoveryScope scopeRecovery;
     try {
         RecordIO().pfnStreamOpen(szBase, mdRead);
@@ -588,7 +588,7 @@ int16_t FSetUpBatchProcessing() {
         }
         lpchBatch++;
         pch[-1] = 0;
-        fSuccess = TRUE;
+        fSuccess = 1;
     } catch (const StarsError &) {
     }
 LError:
@@ -601,17 +601,17 @@ LError:
 
 static int16_t FCopyCmdPath(const char *psz, size_t cb) {
     if (!FUtf8Valid(psz, cb)) {
-        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameEncoding), MB_ICONHAND);
-        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
-        return FALSE;
+        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameEncoding), win32::MB_ICONHAND);
+        szBase[0] = 0; ini.fCmdLine = 0; ini.fStartupFile = 0;
+        return 0;
     }
     if (cb >= sizeof(szBase)) {
-        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameTooLong), MB_ICONHAND);
-        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
-        return FALSE;
+        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameTooLong), win32::MB_ICONHAND);
+        szBase[0] = 0; ini.fCmdLine = 0; ini.fStartupFile = 0;
+        return 0;
     }
     memcpy(szBase, psz, cb); szBase[cb] = 0;
-    return TRUE;
+    return 1;
 }
 
 // ParseCmdLine reads the command line's switches into ini and gd and its
@@ -636,7 +636,7 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                 switch (*lpT) {
                 case 'W':
                 case 'w':
-                    ini.fWait = TRUE;
+                    ini.fWait = 1;
                     break;
                 case 'D':
                 case 'd':
@@ -644,22 +644,22 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                         switch (*lpT) {
                         case 'F':
                         case 'f':
-                            ini.fDumpFleets = TRUE;
+                            ini.fDumpFleets = 1;
                             break;
                         case 'P':
                         case 'p':
-                            ini.fDumpPlanets = TRUE;
+                            ini.fDumpPlanets = 1;
                             break;
                         case 'M':
                         case 'm':
-                            ini.fDumpMap = TRUE;
+                            ini.fDumpMap = 1;
                         }
                     }
                     lpT--;
                     break;
                 case 'G':
                 case 'g':
-                    ini.fGen = TRUE;
+                    ini.fGen = 1;
                     i = 0;
                     while (lpT[1] >= '0' && lpT[1] <= '9') {
                         lpT++;
@@ -677,15 +677,15 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                     break;
                 case 'A':
                 case 'a':
-                    ini.fNewGame = TRUE;
+                    ini.fNewGame = 1;
                     break;
                 case 'H':
                 case 'h':
-                    gd.fHotSeat = TRUE;
+                    gd.fHotSeat = 1;
                     break;
                 case 'X':
                 case 'x':
-                    gd.fExitWindows = TRUE;
+                    gd.fExitWindows = 1;
                     break;
                 case 'B':
                 case 'b':
@@ -693,26 +693,26 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                     }
                     pch = lpT;
                     while (*lpT != 0 && *lpT != ' ') lpT++;
-                    if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return FALSE;
+                    if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return 0;
                     lpT--;
                     if (!FSetUpBatchProcessing())
                         break;
-                    ini.fBatch = TRUE;
-                    ini.fGen = TRUE;
-                    ini.fStartupFile = TRUE;
-                    ini.fCmdLine = TRUE;
+                    ini.fBatch = 1;
+                    ini.fGen = 1;
+                    ini.fStartupFile = 1;
+                    ini.fCmdLine = 1;
                     break;
                 case 'V':
                 case 'v':
-                    ini.fValidate = TRUE;
+                    ini.fValidate = 1;
                     break;
                 case 'L':
                 case 'l':
-                    ini.fLogging = TRUE;
+                    ini.fLogging = 1;
                     break;
                 case 'T':
                 case 't':
-                    ini.fTry = TRUE;
+                    ini.fTry = 1;
                     break;
                 case 'C':
                 case 'c':
@@ -722,7 +722,7 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                 case 's':
                     /* -s<seed>: a fixed startup seed instead of the clock, so
                        regression runs repeat exactly. Not in the original. */
-                    *pfSeed = TRUE;
+                    *pfSeed = 1;
                     *plSeed = 0;
                     while (lpT[1] >= '0' && lpT[1] <= '9') {
                         lpT++;
@@ -738,9 +738,9 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                     cbPass = (size_t)(lpT - pch);
                     cchPass = CchCopyUtf8(szPassLast, sizeof(szPassLast), pch, cbPass);
                     if (cchPass < 0) {
-                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), MB_ICONHAND);
-                        szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
-                        return FALSE;
+                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), win32::MB_ICONHAND);
+                        szBase[0] = 0; ini.fCmdLine = 0; ini.fStartupFile = 0;
+                        return 0;
                     }
                     lpT--;
                     lSaltLast = LSaltFromSz(szPassLast);
@@ -749,12 +749,12 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
         } else {
             pch = lpT;
             while (*lpT != 0 && *lpT != ' ') lpT++;
-            if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return FALSE;
-            ini.fStartupFile = TRUE;
-            ini.fCmdLine = TRUE;
+            if (!FCopyCmdPath(pch, (size_t)(lpT - pch))) return 0;
+            ini.fStartupFile = 1;
+            ini.fCmdLine = 1;
         }
     }
-    return TRUE;
+    return 1;
 }
 
 // FRunCmdLine carries out a command line's host work: validating the host
@@ -770,7 +770,7 @@ int16_t FRunCmdLine() {
     int16_t i;
 
     if (ini.fValidate) {
-        fFileErrSilent = TRUE;
+        fFileErrSilent = 1;
         ClearFile(7);
         if (FLoadGame(szBase, "hst")) {
             VerifyTurns();
@@ -785,7 +785,7 @@ int16_t FRunCmdLine() {
                     ich = CchSprintf(szTemp, "%d: ", i + 1);
                 }
                 if (!gd.fNoHostNames) {
-                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL));
+                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", TextIO().pfnPlayerName(i, 1, 1, 1, 0, NULL));
                 }
                 strcat(szTemp, TextIO().pfnCompressed(static_cast<StringId>(idsTurned + rgOut[i])));
                 if (rgplr[i].fHacker) {
@@ -794,14 +794,14 @@ int16_t FRunCmdLine() {
                 OutputSz(7, szTemp);
             }
         }
-        return TRUE;
+        return 1;
     }
     if (ini.fNewGame) {
         GenNewGameFromFile(szBase);
-        return TRUE;
+        return 1;
     }
     if (!ini.fGen) {
-        return FALSE;
+        return 0;
     }
 LBatchNext:
     if ((!ini.fWait && !ini.fTry) || CTurnsOutSafe() == 0) {
@@ -818,20 +818,20 @@ LBatchNext:
             }
             lpchBatch++;
             pch[-1] = 0;
-            ini.fStartupFile = TRUE;
+            ini.fStartupFile = 1;
             goto LBatchNext;
         }
         if (ini.cTurnGen == 0)
-            return TRUE;
+            return 1;
         ini.cTurnGen--;
         goto LBatchNext;
     }
     if (ini.fTry) {
         if (ini.fBatch && lpchBatch < lpchBatchMac)
             goto LTryNextBatch;
-        return TRUE;
+        return 1;
     }
-    return FALSE;
+    return 0;
 }
 
 void DoOrders(int16_t fPostMovement) {
@@ -857,7 +857,7 @@ void DoOrders(int16_t fPostMovement) {
     }
     SatisfyOrders(!fPostMovement ? 1 : 3);
     DropColonists();
-    TurnIO().pfnResearch(FALSE);
+    TurnIO().pfnResearch(0);
     SatisfyOrders(!fPostMovement ? 2 : 4);
     if (!fPostMovement) {
         TransferToOthers();
@@ -916,7 +916,7 @@ void MoveThings(int16_t fPostProd) {
 
     // No retargeting message has been selected when this movement pass starts.
     idm = static_cast<MessageId>(idmNone);
-    fAnythingMoved = FALSE;
+    fAnythingMoved = 0;
     lpth = lpThings;
     lpthMac = lpThings + cThing;
     for (; lpth < lpthMac; lpth++) {
@@ -979,7 +979,7 @@ void MoveThings(int16_t fPostProd) {
             dRange = lpth->tht().iWarp();
             dRange *= dRange;
             ptDst = lpth->tht().ptDest();
-            fAnythingMoved = TRUE;
+            fAnythingMoved = 1;
             if (idm == idmMysteryTraderHasDecidedMakeAnotherPass)
                 continue;
             goto MoveTh;
@@ -988,8 +988,8 @@ void MoveThings(int16_t fPostProd) {
                 continue;
             if (lpth->thp().rgwtMin(0) == 0 && lpth->thp().rgwtMin(1) == 0 && lpth->thp().rgwtMin(2) == 0)
                 goto LFreeThePacket;
-            lpth->thp().SetFMoved(TRUE);
-            fAnythingMoved = TRUE;
+            lpth->thp().SetFMoved(1);
+            fAnythingMoved = 1;
             dRange = lpth->thp().iWarp() + 4;
             dRange *= dRange;
             if (fPostProd) {
@@ -1112,7 +1112,7 @@ void MoveThings(int16_t fPostProd) {
                         }
                         if (cTerraTemp > 0) {
                             idPlayer = iplr;
-                            if (!ColonyIO().pfnCanTerraform(lppl, rgMin, rgMax, rgCost, TRUE)) {
+                            if (!ColonyIO().pfnCanTerraform(lppl, rgMin, rgMax, rgCost, 1)) {
                                 idPlayer = iplrNone;
                             } else {
                                 idPlayer = iplrNone;
@@ -1323,17 +1323,17 @@ void MoveFleets() {
     cPass = 0;
     if (cFleet > 0) {
     MoveUnfinishedFleets:
-        fDone = TRUE;
+        fDone = 1;
         for (ifl = 0; ifl < cFleet; ifl++) {
             lpfl = rglpfl[ifl];
             if (!rglpfl[ifl])
                 break;
             if (cPass == 0) {
                 lpfl->dirLong = 0;
-                lpfl->fHereAllTurn = TRUE;
+                lpfl->fHereAllTurn = 1;
             }
             if (!lpfl->fDead && (cPass <= 0 || !lpfl->fDone)) {
-                lpfl->fDone = TRUE;
+                lpfl->fDone = 1;
                 lpord = lpfl->lpplord->rgord();
                 if (lpord->grTask != grTaskXfer && lpord->grTask != grTaskLayMines && lpfl->cord > 1 && lpord[1].iWarp != 0) {
                     if (cPass == 0 && lpord[1].iWarp > 6 && lpord[1].iWarp != 11 && RaceQueryIO().pfnGrbit(&rgplr[lpfl->iPlayer], ibitRaceCheapEngines) != 0 &&
@@ -1341,8 +1341,8 @@ void MoveFleets() {
                         TurnIO().pfnMessage2(lpfl->iPlayer, idmUnableEngageEnginesDueBalkyEquipmentEngineers, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                     } else {
                         if (lpord[1].iWarp >= 11) {
-                            fJumpgate = FALSE;
-                            gd.fRadiatingEngine = FALSE;
+                            fJumpgate = 0;
+                            gd.fRadiatingEngine = 0;
                             ptMsg = lpord->pt;
                             ptBeg = lpord->pt;
                             if (lpord->grobj == grobjPlanet) {
@@ -1398,7 +1398,7 @@ void MoveFleets() {
                                 continue;
                             }
                             if (isbsSrc == -1) {
-                                fJumpgate = TRUE;
+                                fJumpgate = 1;
                                 isbsSrc = isbsDst;
                             }
                             if (!fJumpgate && RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStargate) {
@@ -1445,7 +1445,7 @@ void MoveFleets() {
                             dTravel = (int32_t)DGetDistance(ptBeg.x, ptBeg.y, ptEnd.x, ptEnd.y);
                             if (!FStargateJump(lpfl, isbsSrc, isbsDst, LOWORD(dTravel)))
                                 continue;
-                            lpfl->fHereAllTurn = FALSE;
+                            lpfl->fHereAllTurn = 0;
                             NoAutoTrackFleet(lpfl);
                             goto LMakeItToDest;
                         } else {
@@ -1454,10 +1454,10 @@ void MoveFleets() {
                                 lpord[1].pt = lpfl->lpflNext->pt;
                             }
                             ptEnd = lpord[1].pt;
-                            dRange = EstFuelUse(lpfl, 0, -1, -1, TRUE);
-                            wtFuel2Dest = EstFuelUse(lpfl, 0, -1, -1, FALSE);
+                            dRange = EstFuelUse(lpfl, 0, -1, -1, 1);
+                            wtFuel2Dest = EstFuelUse(lpfl, 0, -1, -1, 0);
                             fGotEnufFuel = wtFuel2Dest <= lpfl->rgwtMin[4];
-                            fRanOutOfFuel = FALSE;
+                            fRanOutOfFuel = 0;
                             if (fGotEnufFuel) {
                                 dRange = dRange <= (int32_t)(uint32_t)(lpord[1].iWarp * lpord[1].iWarp) ? (uint32_t)(lpord[1].iWarp * lpord[1].iWarp) : dRange;
                             }
@@ -1472,7 +1472,7 @@ void MoveFleets() {
                                 }
                                 if (lpord[1].iWarp == 10) {
                                     flSrc = *lpfl;
-                                    fDead = TRUE;
+                                    fDead = 1;
                                     cKillTot = 0;
                                     memset(&flDead, 0, sizeof(FLEET));
                                     for (ish = 0; ish < 16; ish++) {
@@ -1497,18 +1497,18 @@ void MoveFleets() {
                                             }
                                         LWarp10Kill:
                                             if (flSrc.rgcsh[ish] > 0) {
-                                                fDead = FALSE;
+                                                fDead = 0;
                                             }
                                         }
                                     }
                                     if (fDead) {
-                                        lpfl->fDead = TRUE;
+                                        lpfl->fDead = 1;
                                         TurnIO().pfnMessage2(lpfl->iPlayer, idmDestroyedMassiveReactorAccidentDueUnsafeOperatin, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                         continue;
                                     }
                                     if (cKillTot > 0) {
                                         flDead.iPlayer = flSrc.iPlayer;
-                                        flDead.fDead = TRUE;
+                                        flDead.fDead = 1;
                                         flDead.det = detAll;
                                         FleetTransferCargoBalance(&flSrc, &flDead);
                                         *lpfl = flSrc;
@@ -1523,8 +1523,8 @@ void MoveFleets() {
                                 if (lpord[1].grobj == grobjFleet) {
                                     lpfl->lpflNext = LpflFromId(lpord[1].id);
                                     if (lpfl->lpflNext) {
-                                        fDone = FALSE;
-                                        lpfl->fDone = FALSE;
+                                        fDone = 0;
+                                        lpfl->fDone = 0;
                                         lpfl->lPower = (uint32_t)LOWORD(dTravel);
                                         lpfl->lFuelUsed = 0;
                                         continue;
@@ -1555,7 +1555,7 @@ void MoveFleets() {
                                     lpfl->rgwtMin[4] += lpfl->lFuelUsed;
                                     dTravel += lpfl->dMoveUsed();
                                 }
-                                wtFuelUsed = EstFuelUse(lpfl, 0, -1, dTravel, FALSE);
+                                wtFuelUsed = EstFuelUse(lpfl, 0, -1, dTravel, 0);
                                 if (cPass > 0) {
                                     lpfl->lFuelUsed = wtFuelUsed;
                                     dTravel -= lpfl->dMoveUsed();
@@ -1567,18 +1567,18 @@ void MoveFleets() {
                                 i = 0;
                                 do {
                                     i++;
-                                } while (EstFuelUse(lpfl, 0, i, -1, FALSE) == 0 && i < 10);
+                                } while (EstFuelUse(lpfl, 0, i, -1, 0) == 0 && i < 10);
                                 if (i > 1) {
                                     lpfl->lpplord->rgord()[1].iWarp = i - 1;
                                     TurnIO().pfnMessage2(lpfl->iPlayer, idmHasRunFuelFleetsSpeedHasDecreased, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, i - 1);
                                 } else {
                                     TurnIO().pfnMessage2(lpfl->iPlayer, idmHasRunFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                 }
-                                fRanOutOfFuel = TRUE;
+                                fRanOutOfFuel = 1;
                             }
                             if (dRange == 0)
                                 continue;
-                            lpfl->fHereAllTurn = FALSE;
+                            lpfl->fHereAllTurn = 0;
                             dx = ptEnd.x - ptBeg.x;
                             dy = ptEnd.y - ptBeg.y;
                             if (dx != 0 || dy != 0) {
@@ -1626,8 +1626,8 @@ void MoveFleets() {
                                     lpfl->SetDMoveUsed(lpfl->dMoveUsed() + (LOWORD(dTravel)));
                                     lpfl->SetDMoveLeft(lpfl->dMoveLeft() - (LOWORD(dTravel)));
                                     if (lpfl->dMoveLeft() > 0 && !fRanOutOfFuel) {
-                                        fDone = FALSE;
-                                        lpfl->fDone = FALSE;
+                                        fDone = 0;
+                                        lpfl->fDone = 0;
                                     }
                                 }
                             } else {
@@ -1643,8 +1643,8 @@ void MoveFleets() {
                                     lpfl->SetDMoveUsed(lpfl->dMoveUsed() + (LOWORD(dTravel)));
                                     lpfl->SetDMoveLeft(lpfl->dMoveLeft() - (LOWORD(dTravel)));
                                     if (lpfl->dMoveLeft() > 0 && !fRanOutOfFuel) {
-                                        fDone = FALSE;
-                                        lpfl->fDone = FALSE;
+                                        fDone = 0;
+                                        lpfl->fDone = 0;
                                     }
                                 }
                             }
@@ -1683,7 +1683,7 @@ void MoveFleets() {
                         lpord->id = lpfl->idPlanet;
                         lpord->grobj = lpfl->idPlanet == idPlanetDeepSpace ? 4 : 1;
                         if (fGotEnufFuel) {
-                            wtFuel2Dest = EstFuelUse(lpfl, 0, -1, -1, FALSE);
+                            wtFuel2Dest = EstFuelUse(lpfl, 0, -1, -1, 0);
                             if (wtFuel2Dest > lpfl->rgwtMin[4]) {
                                 if (ProductionIO().pfnFleetStat(lpfl, 1) > wtFuel2Dest) {
                                     lpfl->rgwtMin[4] = wtFuel2Dest;
@@ -1772,7 +1772,7 @@ int16_t FTravelThroughMineFields(FLEET *lpfl, int16_t *pdTravel, THING *lpthHit)
     for (iWarp = 3; iWarp < 10 && iWarp * iWarp < dTravel - 1; iWarp++) {
     }
     if (iWarp <= fMineExpert + 3 || (ptSrc.x == ptDst.x && ptSrc.y == ptDst.y)) {
-        return TRUE;
+        return 1;
     }
     for (i = 0; i < 3; i++) {
         rgcField[i] = 0;
@@ -1825,17 +1825,17 @@ int16_t FTravelThroughMineFields(FLEET *lpfl, int16_t *pdTravel, THING *lpthHit)
     }
     cFields = rgcField[0] + rgcField[1] + rgcField[2];
     if (cFields == 0) {
-        return TRUE;
+        return 1;
     }
 LHitSkip1:
-    fHasRamScoop = FALSE;
+    fHasRamScoop = 0;
     csh = 0;
     for (i = 0; i < 16; i++) {
         if (lpfl->rgcsh[i] > 0) {
             csh += lpfl->rgcsh[i];
             j = rglpshdef[iPlayer][i].hul.rghs[0].iItem;
             if (LpengineFromId(j)->rgcFuelUsed[4] == 0) {
-                fHasRamScoop = TRUE;
+                fHasRamScoop = 1;
             }
         }
     }
@@ -1879,7 +1879,7 @@ LHitSkip1:
         flSrc = *lpfl;
         memset(&flDead, 0, sizeof(FLEET));
         flDead.iPlayer = flSrc.iPlayer;
-        flDead.fDead = TRUE;
+        flDead.fDead = 1;
         flDead.det = detAll;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] > 0 &&
@@ -1917,14 +1917,14 @@ LHitSkip1:
            in its own field). TRUE leaves ThingDecay free to check the fleet
            against other detonating fields. */
         if (lpthHit && dmgTot == 0) {
-            return TRUE;
+            return 1;
         }
         if (cshDead != csh) {
             FleetTransferCargoBalance(&flSrc, &flDead);
         }
         *lpfl = flSrc;
         if (cshDead == csh) {
-            lpfl->fDead = TRUE;
+            lpfl->fDead = 1;
         }
     LFinishHit:
         if (!lpthHit) {
@@ -2036,11 +2036,11 @@ LHitSkip1:
             }
             *pdTravel = dEnd;
         }
-        lpfl->fNoHeal = TRUE;
-        return FALSE;
+        lpfl->fNoHeal = 1;
+        return 0;
     LDoNext:
         rgi[iType]++;
         cFields--;
     }
-    return TRUE;
+    return 1;
 }

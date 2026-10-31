@@ -19,7 +19,7 @@ static int cPageX = 1, cPageY = 1;
 static const char *pszTarget;
 static char szInstalledRace[] = "installed.r1";
 
-int16_t StarsTest_PromptPassword(void) { return TRUE; }
+int16_t StarsTest_PromptPassword(void) { return 1; }
 int16_t StarsTest_AlertSz(const char *sz, int16_t mb) { (void)mb; fprintf(stderr, "Print alert: %s\n", sz); cAlert++; return IDOK; }
 extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     FILE *lpFile;
@@ -32,16 +32,16 @@ extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     fclose(lpFile);
     return true;
 }
-static void CALLBACK ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
+static void  ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     HWND hwndDialog, hwndEdit;
     char sz[2];
     (void)hwnd; (void)msg; (void)id; (void)ticks;
-    for (hwndDialog = win32::GetWindow(hwndFrame, GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, GW_HWNDNEXT)) {
+    for (hwndDialog = win32::GetWindow(hwndFrame, win32::GW_HWNDFIRST); hwndDialog; hwndDialog = win32::GetWindow(hwndDialog, win32::GW_HWNDNEXT)) {
         hwndEdit = win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_X);
         if (!hwndEdit || !win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y)) continue;
         sz[0] = '0' + cPageX; sz[1] = 0; ui::SetWindowText(hwndEdit, sz);
         sz[0] = '0' + cPageY; ui::SetWindowText(win32::GetDlgItem(hwndDialog, IDC_PRINT_MAP_PAGES_Y), sz);
-        win32::PostMessage(hwndDialog, WM_COMMAND, fCancel ? IDCANCEL : IDOK, 0);
+        win32::PostMessageA(hwndDialog, win32::WM_COMMAND, fCancel ? IDCANCEL : IDOK, 0);
         return;
     }
 }
@@ -50,18 +50,18 @@ static BOOL FTextViewContracts(void) {
     char sz[sizeof(szLastStrGet)], szExpected[sizeof(szLastStrGet)];
     const char *psz = sz;
 
-    if (!hdc) return FALSE;
+    if (!hdc) return 0;
     CchGetString(idsNone2, szExpected);
     strcpy(sz, "mutable");
     RightTextOut(hdc.get(), 80, 0, sz, -1, 0);
-    if (strcmp(sz, szExpected)) return FALSE;
+    if (strcmp(sz, szExpected)) return 0;
     strcpy(sz, "borrowed");
     RightTextOut(hdc.get(), 80, 0, psz, -1, 0);
-    if (strcmp(sz, "borrowed")) return FALSE;
+    if (strcmp(sz, "borrowed")) return 0;
     RightTextOut(hdc.get(), 80, 0, "literal", 0, 0);
-    return TRUE;
+    return 1;
 }
-static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
+static void  PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     GAME gameSav;
     const char *pszOutput = getenv("STARS_PRINTMAP_OUTPUT");
     char szTarget[4096], szManifest[4096];
@@ -71,7 +71,7 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     int i;
     (void)hwnd; (void)msg; (void)ticks;
     if (fRunning || !win32::IsWindow(hwndScanner) || idPlayer == iplrNone) return;
-    fRunning = TRUE; win32::KillTimer(NULL, id);
+    fRunning = 1; win32::KillTimer(NULL, id);
     if (!pszOutput || !FTextViewContracts()) goto done;
     gameSav = game;
     snprintf(szManifest, sizeof(szManifest), "%s/map.json", pszOutput);
@@ -84,22 +84,22 @@ static void CALLBACK PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
     grbitScan = static_cast<GrbitScan>(grbitScan | grbitScanPlanetNames);
     snprintf(szTarget, sizeof(szTarget), "%s/single.pdf", pszOutput); pszTarget = szTarget;
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 1 || cAlert != 0) goto done;
     cPageX = cPageY = 2;
     snprintf(szTarget, sizeof(szTarget), "%s/tiled.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 2 || cAlert != 0) goto done;
     cPageX = cPageY = 1;
     SDL_setenv_unsafe("STARS_SDL_PRINT_PAPER", "a4", 1);
     SDL_setenv_unsafe("STARS_SDL_PRINT_ORIENTATION", "landscape", 1);
     snprintf(szTarget, sizeof(szTarget), "%s/a4.pdf", pszOutput);
     SDL_setenv_unsafe("STARS_SDL_PRINT_FILE", szTarget, 1);
-    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     if (cLaunch != 3 || cAlert != 0) goto done;
-    fCancel = TRUE;
-    ui::SendMessage(hwndFrame, WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
+    fCancel = 1;
+    ui::SendMessage(hwndFrame, win32::WM_COMMAND, IDM_FILE_PRINT_MAP, 0);
     fPassed = cLaunch == 3 && cAlert == 0 && !memcmp(&game, &gameSav, sizeof(game));
     if (fPassed) {
         // Use the normal race serializer to prepare an unprotected predefined
@@ -119,7 +119,7 @@ done:
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idDriver = win32::SetTimer(NULL, 0, 50, PrintGame);
-    return fResult && idDriver ? fResult : FALSE;
+    return fResult && idDriver ? fResult : 0;
 }
 int main(int argc, char **argv) {
     char szCommand[1024];
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 
     if (argc != 2 || strlen(argv[1]) >= sizeof(szCommand)) return 2;
     strcpy(szCommand, argv[1]);
-    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     if (idDriver) win32::KillTimer(NULL, idDriver);
     StarsCompatProcessExit(); SDL_Quit();
     return nResult == 0 && fPassed ? 0 : 1;

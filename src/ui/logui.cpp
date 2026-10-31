@@ -13,9 +13,9 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
     StarsRecoveryScope scopeRecovery;
     try {
         if (iTurn < 32) {
-            hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10003), MAKEINTRESOURCE(10002));
+            hrsrc = win32::FindResourceA(hInst, win32::MAKEINTRESOURCE(10003), win32::MAKEINTRESOURCE(10002));
         } else {
-            hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10005), MAKEINTRESOURCE(10004));
+            hrsrc = win32::FindResourceA(hInst, win32::MAKEINTRESOURCE(10005), win32::MAKEINTRESOURCE(10004));
             cSkip -= 32;
         }
         hres = win32::LoadResource(hInst, hrsrc);
@@ -71,7 +71,7 @@ uint8_t *LpbLoadTutorLog() {
     HRSRC   hrsrc;
     HGLOBAL hres;
 
-    hrsrc = win32::FindResource(hInst, MAKEINTRESOURCE(10001), MAKEINTRESOURCE(10000));
+    hrsrc = win32::FindResourceA(hInst, win32::MAKEINTRESOURCE(10001), win32::MAKEINTRESOURCE(10000));
     hres = win32::LoadResource(hInst, hrsrc);
     if (!hres) {
         return NULL;

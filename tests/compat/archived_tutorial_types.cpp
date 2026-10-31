@@ -15,4 +15,5 @@ HWND FindWindowA(LPCSTR,LPCSTR);
 
 // Compile the historical observer against current named values and payloads.
 // Native-window/process functions above are declarations, never an SDL runtime.
+#include "shared_sdk.h"
 #include "../reference/win32-tutorial/observer.c"

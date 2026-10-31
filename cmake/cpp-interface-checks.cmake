@@ -6,6 +6,10 @@ endif()
 file(GLOB STARS_PUBLIC_CPP_HEADERS CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/src/core/*.h" "${PROJECT_SOURCE_DIR}/src/platform/*.h")
 if(STARS_BUILD_SDL_CLIENT)
+    if(NOT TEST win32_abi AND NOT TEST win32_sdl_abi)
+        add_test(NAME win32_sdl_abi COMMAND stars-compat-abi)
+        set_tests_properties(win32_sdl_abi PROPERTIES LABELS "compat" TIMEOUT 30)
+    endif()
     file(GLOB STARS_DESKTOP_CPP_HEADERS CONFIGURE_DEPENDS
         "${PROJECT_SOURCE_DIR}/src/ui/*.h" "${PROJECT_SOURCE_DIR}/compat/win32/include/*.h")
     list(APPEND STARS_PUBLIC_CPP_HEADERS ${STARS_DESKTOP_CPP_HEADERS})

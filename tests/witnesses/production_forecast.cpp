@@ -124,7 +124,7 @@ static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t
     (void)c;
     assert(id == idmScientistsHaveTransmutedCommonMaterialsKtEach);
     messages++;
-    return TRUE;
+    return 1;
 }
 static void TestGetProductionCosts(PLANET *p, PROD *row, uint32_t *out, int16_t player, int16_t one) {
     (void)p;

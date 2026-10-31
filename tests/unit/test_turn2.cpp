@@ -11,7 +11,7 @@ static void AddDetonatingField(int16_t iplr, POINT16 pt) {
     lpth->pt().Set(pt);
     lpth->thm().SetCMines(10000);
     lpth->thm().SetIType(mineStandard);
-    lpth->thm().SetFDetonate(TRUE);
+    lpth->thm().SetFDetonate(1);
     lpth->thm().SetGrbitPlr(1 << iplr);
 }
 
@@ -40,7 +40,7 @@ static int16_t IdflAddScout(int16_t *pish) {
 // NULL pointer, which Win16 read harmlessly from the start of its data
 // segment.
 static void test_ThingDecay_detonation_damages_fleet(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     FLEET      *lpfl;
     int16_t     ish;
@@ -66,7 +66,7 @@ static void test_ThingDecay_detonation_damages_fleet(void) {
 // (its owner's own field, for mine layers), so another player's field
 // detonating over it did no damage.
 static void test_ThingDecay_immune_field_keeps_check(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     FLEET      *lpfl;
     int16_t     ish;
@@ -95,7 +95,7 @@ static void test_ThingDecay_immune_field_keeps_check(void) {
 // cargo ships arrive at its homeworld, loading all the colonists they can
 // there if fLoad, and returns the resources player 0's score shows.
 static int32_t LResourceScoreAfterLoading(const char *pszTest, int16_t fLoad, int32_t *pwtLoaded) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     PLANET *lppl;
     FLEET  *lpfl;
     ORDER  *lpord;
@@ -122,7 +122,7 @@ static int32_t LResourceScoreAfterLoading(const char *pszTest, int16_t fLoad, in
     lpord[1].grobj = grobjPlanet;
     lpord[1].id = lppl->id;
     lpord[1].iWarp = 5;
-    lpord[1].fValidTask = TRUE;
+    lpord[1].fValidTask = 1;
     lpord[1].grTask = fLoad ? grTaskXfer : grTaskNone;
     lpord[1].txp.rgia[3].SetIAction(iActionLoadAll);
     idfl = lpfl->id;
@@ -143,10 +143,10 @@ static void test_UpdatePlayerScores_ignores_loading_after_production(void) {
     int32_t cResLoaded;
     int32_t wtLoaded;
 
-    cResPlain = LResourceScoreAfterLoading("UpdatePlayerScores_plain", FALSE, &wtLoaded);
+    cResPlain = LResourceScoreAfterLoading("UpdatePlayerScores_plain", 0, &wtLoaded);
     TEST_ASSERT(cResPlain > 0);
     TEST_ASSERT(wtLoaded == 0);
-    cResLoaded = LResourceScoreAfterLoading("UpdatePlayerScores_loaded", TRUE, &wtLoaded);
+    cResLoaded = LResourceScoreAfterLoading("UpdatePlayerScores_loaded", 1, &wtLoaded);
     TEST_ASSERT_(wtLoaded > 0, "the ships loaded no colonists");
     TEST_CHECK_(cResLoaded == cResPlain, "score shows %ld resources after loading %ld, %ld without", (long)cResLoaded, (long)wtLoaded, (long)cResPlain);
 }

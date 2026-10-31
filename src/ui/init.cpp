@@ -17,9 +17,9 @@ int16_t FCreateStuff() {
     int16_t dx;
 
     BeginAppUiSession();
-    fFailed = FALSE;
-    dx = win32::GetSystemMetrics(SM_CXSCREEN);
-    dy = win32::GetSystemMetrics(SM_CYSCREEN);
+    fFailed = 0;
+    dx = win32::GetSystemMetrics(win32::SM_CXSCREEN);
+    dy = win32::GetSystemMetrics(win32::SM_CYSCREEN);
     if (dx < 800 || dy < 600) {
         gd.mdScreenSize = 0;
     } else if (dx < 1024 || dy < 768) {
@@ -77,92 +77,92 @@ int16_t FCreateStuff() {
     hpenYellow = win32::CreatePen(0, 1, 0xffff);
     hpenDkYellow = win32::CreatePen(0, 1, 32639);
     hpenDkPurple = win32::CreatePen(0, 1, 8323199);
-    hbmp = win32::LoadBitmap(hInst, "Screen50Bmp");
+    hbmp = win32::LoadBitmapA(hInst, "Screen50Bmp");
     hbr50Screen = win32::CreatePatternBrush(hbmp);
     win32::DeleteObject(hbmp);
     for (i = 0; i < 3; i++) {
-        hbmp = win32::LoadBitmap(hInst, MAKEINTRESOURCE(i + 460));
+        hbmp = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(i + 460));
         rghbrPat[i] = win32::CreatePatternBrush(hbmp);
         win32::DeleteObject(hbmp);
     }
-    hbmp = win32::LoadBitmap(hInst, "CargoBmp");
+    hbmp = win32::LoadBitmapA(hInst, "CargoBmp");
     hbrCargo = win32::CreatePatternBrush(hbmp);
     win32::DeleteObject(hbmp);
-    hbmp = win32::LoadBitmap(hInst, "DockBmp");
+    hbmp = win32::LoadBitmapA(hInst, "DockBmp");
     hbrDock = win32::CreatePatternBrush(hbmp);
     win32::DeleteObject(hbmp);
-    hcurScanner = win32::LoadCursor(hInst, "ScannerCur");
-    hcurScanAdd = win32::LoadCursor(hInst, "ScannerAdd");
-    hcurOpenGrab = win32::LoadCursor(hInst, "OpenGrabCur");
-    hcurCloseGrab = win32::LoadCursor(hInst, "CloseGrabCur");
-    hcurTrashCan = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_TRASH_CAN));
-    hcurNoWay = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_NO_WAY));
-    hcurResizeWE = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_RESIZE_WE));
-    hcurResizeNS = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_RESIZE_NS));
-    hcurResize4Way = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_RESIZE_4WAY));
-    hcurArrowHelp = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_ARROW_HELP));
-    hcurHand = win32::LoadCursor(hInst, MAKEINTRESOURCE(IDC_HAND));
-    hbmpScanner = win32::LoadBitmap(hInst, "ScannerBmp");
-    hbmpScanShip = win32::LoadBitmap(hInst, MAKEINTRESOURCE(IDDIB_SCANNER_TOOLBAR));
-    hbmpUnknownPlanet = win32::LoadBitmap(hInst, "UnknownPlanetBmp");
-    hbmpNumbers = win32::LoadBitmap(hInst, MAKEINTRESOURCE(IDB_FONT_DIGITS));
+    hcurScanner = win32::LoadCursorA(hInst, "ScannerCur");
+    hcurScanAdd = win32::LoadCursorA(hInst, "ScannerAdd");
+    hcurOpenGrab = win32::LoadCursorA(hInst, "OpenGrabCur");
+    hcurCloseGrab = win32::LoadCursorA(hInst, "CloseGrabCur");
+    hcurTrashCan = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_TRASH_CAN));
+    hcurNoWay = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_NO_WAY));
+    hcurResizeWE = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_RESIZE_WE));
+    hcurResizeNS = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_RESIZE_NS));
+    hcurResize4Way = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_RESIZE_4WAY));
+    hcurArrowHelp = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_ARROW_HELP));
+    hcurHand = win32::LoadCursorA(hInst, win32::MAKEINTRESOURCE(IDC_HAND));
+    hbmpScanner = win32::LoadBitmapA(hInst, "ScannerBmp");
+    hbmpScanShip = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(IDDIB_SCANNER_TOOLBAR));
+    hbmpUnknownPlanet = win32::LoadBitmapA(hInst, "UnknownPlanetBmp");
+    hbmpNumbers = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(IDB_FONT_DIGITS));
     hdibPlanets = HdibLoadBigResource(IDDIB_PLANET_ICONS);
     hdibThings = HdibLoadBigResource(IDDIB_THING_ICONS);
     hdibToolbar = HdibLoadBigResource(IDB_TOOLBAR);
     if (!hdibPlanets || !hdibThings || !hdibToolbar) {
-        fFailed = TRUE;
+        fFailed = 1;
     }
     for (i = 0; i < 5; i++) {
         rghdibShips[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 552));
         if (!rghdibShips[i]) {
-            fFailed = TRUE;
+            fFailed = 1;
         }
         rghdibShipsT[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 557));
         if (!rghdibShipsT[i]) {
-            fFailed = TRUE;
+            fFailed = 1;
         }
     }
     for (i = 0; i < 7; i++) {
         rghdibInventory[i] = HdibLoadBigResource(static_cast<BitmapId>(i + 500));
         if (!rghdibInventory[i]) {
-            fFailed = TRUE;
+            fFailed = 1;
         }
     }
     vhpal = HpalFromDib(rghdibShips[3]);
     hdibRaces = HdibLoadBigResource(IDDIB_PLAYER_ICONS);
     hdibRacesT = HdibLoadBigResource(IDDIB_PLAYER_ICONS_SMALL);
     hdibRacesX = HdibLoadBigResource(IDDIB_PLAYER_ICONS_TINY);
-    hbmpBackBld = win32::LoadBitmap(hInst, MAKEINTRESOURCE(IDB_EMPTY_HULL_SLOT));
-    hbmpMsg = win32::LoadBitmap(hInst, MAKEINTRESOURCE(IDB_MSGFILTER_CHECKBOX));
-    hbmpMono = win32::LoadBitmap(hInst, MAKEINTRESOURCE(IDB_FILTER_CHECKBOX_MONO));
+    hbmpBackBld = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(IDB_EMPTY_HULL_SLOT));
+    hbmpMsg = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(IDB_MSGFILTER_CHECKBOX));
+    hbmpMono = win32::LoadBitmapA(hInst, win32::MAKEINTRESOURCE(IDB_FILTER_CHECKBOX_MONO));
     hdibPlaque = HdibLoadBigResource(IDDIB_NUM_DESIGNS_PLATE);
-    hiconStars = win32::LoadIcon(hInst, "StarsIco");
-    hiconHost = win32::LoadIcon(hInst, "HostIco");
-    hiconWait = win32::LoadIcon(hInst, "WaitIco");
-    rghiconVCR[0] = win32::LoadIcon(hInst, "Bang1Ico");
-    rghiconVCR[1] = win32::LoadIcon(hInst, "Bang2Ico");
-    rghiconVCR[2] = win32::LoadIcon(hInst, "Bang3Ico");
-    rghiconVCR[3] = win32::LoadIcon(hInst, "Torp1Ico");
-    rghiconVCR[4] = win32::LoadIcon(hInst, "Torp2Ico");
-    rghiconVCR[5] = win32::LoadIcon(hInst, "Torp3Ico");
-    rghiconVCR[6] = win32::LoadIcon(hInst, "Torp4Ico");
-    lpfnFakeComboProc = MakeProcInstance(FakeComboProc, hInst);
-    lpfnFakeCEProc = MakeProcInstance(FakeCEProc, hInst);
-    lpfnFakeEditProc = MakeProcInstance(FakeEditProc, hInst);
-    lpfnFakeListProc = MakeProcInstance(FakeListProc, hInst);
-    lpfnHostTimerProc = MakeProcInstance(HostTimerProc, hInst);
-    lpfnBrowserDlgProc = MakeProcInstance(BrowserDlg, hInst);
-    lpfnReportDlgProc = MakeProcInstance(ReportDlg, hInst);
-    lpfnGaugeDlgProc = MakeProcInstance(ProgressGaugeDlg, hInst);
+    hiconStars = win32::LoadIconA(hInst, "StarsIco");
+    hiconHost = win32::LoadIconA(hInst, "HostIco");
+    hiconWait = win32::LoadIconA(hInst, "WaitIco");
+    rghiconVCR[0] = win32::LoadIconA(hInst, "Bang1Ico");
+    rghiconVCR[1] = win32::LoadIconA(hInst, "Bang2Ico");
+    rghiconVCR[2] = win32::LoadIconA(hInst, "Bang3Ico");
+    rghiconVCR[3] = win32::LoadIconA(hInst, "Torp1Ico");
+    rghiconVCR[4] = win32::LoadIconA(hInst, "Torp2Ico");
+    rghiconVCR[5] = win32::LoadIconA(hInst, "Torp3Ico");
+    rghiconVCR[6] = win32::LoadIconA(hInst, "Torp4Ico");
+    lpfnFakeComboProc = (FakeComboProc);
+    lpfnFakeCEProc = (FakeCEProc);
+    lpfnFakeEditProc = (FakeEditProc);
+    lpfnFakeListProc = (FakeListProc);
+    lpfnHostTimerProc = (HostTimerProc);
+    lpfnBrowserDlgProc = (BrowserDlg);
+    lpfnReportDlgProc = (ReportDlg);
+    lpfnGaugeDlgProc = (ProgressGaugeDlg);
     lpb2k = LpAlloc<uint8_t>(0x800, htPerm);
     vlprgidMisc = LpAlloc<uint16_t>(0x800, htPerm);
     InitGameStuff();
     if (fFailed || !hbmpScanner || !hbmpUnknownPlanet || !hbmpBackBld || !hdibRaces || !hdibRacesT || !hdibRacesX || !hbmpMono || !hbmpScanShip || !hbmpMsg ||
         !hiconHost || !hiconStars || !hiconWait) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableLoadBitmaps, NULL), MB_ICONHAND);
-        return FALSE;
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableLoadBitmaps, NULL), win32::MB_ICONHAND);
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
 int16_t FCreateFonts(HDC hdc) {
@@ -180,41 +180,41 @@ int16_t FCreateFonts(HDC hdc) {
             TextIO().pfnCchGetString(static_cast<StringId>(idsArial2 + i), rgszArial[i]);
         }
     }
-    plf->lfHeight = -win32::MulDiv(10, win32::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    plf->lfHeight = -win32::MulDiv(10, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 2; i++) {
         strcpy(plf->lfFaceName, rgszArial[i]);
-        rghfontArial10[i] = win32::CreateFontIndirect(plf);
+        rghfontArial10[i] = win32::CreateFontIndirectA(plf);
     }
     strcpy(plf->lfFaceName, rgszArial[0]);
-    plf->lfHeight = -win32::MulDiv(6, win32::GetDeviceCaps(hdc, LOGPIXELSY), 72);
-    rghfontArial6[0] = win32::CreateFontIndirect(plf);
-    plf->lfHeight = -win32::MulDiv(7, win32::GetDeviceCaps(hdc, LOGPIXELSY), 72);
-    rghfontArial7[0] = win32::CreateFontIndirect(plf);
-    plf->lfHeight = -win32::MulDiv(8, win32::GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    plf->lfHeight = -win32::MulDiv(6, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
+    rghfontArial6[0] = win32::CreateFontIndirectA(plf);
+    plf->lfHeight = -win32::MulDiv(7, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
+    rghfontArial7[0] = win32::CreateFontIndirectA(plf);
+    plf->lfHeight = -win32::MulDiv(8, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     for (i = 0; i < 4; i++) {
         strcpy(plf->lfFaceName, rgszArial[i]);
-        rghfontArial8[i] = win32::CreateFontIndirect(plf);
+        rghfontArial8[i] = win32::CreateFontIndirectA(plf);
     }
     strcpy(plf->lfFaceName, rgszArial[1]);
     plf->lfEscapement = 3150;
-    rghfontArial8[4] = win32::CreateFontIndirect(plf);
+    rghfontArial8[4] = win32::CreateFontIndirectA(plf);
     hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[0]);
-    win32::GetTextMetrics(hdc, &tm);
+    win32::GetTextMetricsA(hdc, &tm);
     dyArial8 = tm.tmHeight + tm.tmExternalLeading;
     l = GetTextExtent(hdc, "88888888kT", 10);
     dxMaxMineralQuan = LOWORD(l);
     win32::SelectObject(hdc, rghfontArial7[0]);
-    win32::GetTextMetrics(hdc, &tm);
+    win32::GetTextMetricsA(hdc, &tm);
     dyArial7 = tm.tmHeight + tm.tmExternalLeading;
     win32::SelectObject(hdc, rghfontArial6[0]);
-    win32::GetTextMetrics(hdc, &tm);
+    win32::GetTextMetricsA(hdc, &tm);
     dyArial6 = tm.tmHeight + tm.tmExternalLeading;
     win32::SelectObject(hdc, rghfontArial10[0]);
-    win32::GetTextMetrics(hdc, &tm);
+    win32::GetTextMetricsA(hdc, &tm);
     dyArial10 = tm.tmHeight + tm.tmExternalLeading;
     win32::SelectObject(hdc, hfontSav);
     plfOwner.reset();
-    return TRUE;
+    return 1;
 }
 
 #ifdef __APPLE__
@@ -226,18 +226,18 @@ static int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
 
     for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
         if (win32::GetMenuItemID(hmenu, i) != id) continue;
-        if (win32::GetMenuString(hmenu, i, NULL, 0, MF_BYPOSITION) >= (int)sizeof(szItem)) return FALSE;
-        if (win32::GetMenuString(hmenu, i, szItem, sizeof(szItem), MF_BYPOSITION) == 0) return FALSE;
+        if (win32::GetMenuStringA(hmenu, i, NULL, 0, win32::MF_BYPOSITION) >= (int)sizeof(szItem)) return 0;
+        if (win32::GetMenuStringA(hmenu, i, szItem, sizeof(szItem), win32::MF_BYPOSITION) == 0) return 0;
         pszTab = strchr(szItem, '\t');
         if (pszTab) *pszTab = 0;
         cch = CchSnprintf(szLabel, sizeof(szLabel), "%s\tCmd+%s%c", szItem,
-                         lpaccel->fVirt & FSHIFT ? "Shift+" : "", lpaccel->key);
-        if (cch <= 0 || (size_t)cch >= sizeof(szLabel)) return FALSE;
-        mf = win32::GetMenuState(hmenu, i, MF_BYPOSITION) & (MF_CHECKED | MF_DISABLED | MF_GRAYED);
-        if (!win32::InsertMenu(hmenu, i, MF_BYPOSITION | mf, id, szLabel)) return FALSE;
-        return win32::RemoveMenu(hmenu, i + 1, MF_BYPOSITION);
+                         lpaccel->fVirt & win32::FSHIFT ? "Shift+" : "", lpaccel->key);
+        if (cch <= 0 || (size_t)cch >= sizeof(szLabel)) return 0;
+        mf = win32::GetMenuState(hmenu, i, win32::MF_BYPOSITION) & (win32::MF_CHECKED | win32::MF_DISABLED | win32::MF_GRAYED);
+        if (!win32::InsertMenuA(hmenu, i, win32::MF_BYPOSITION | mf, id, szLabel)) return 0;
+        return win32::RemoveMenu(hmenu, i + 1, win32::MF_BYPOSITION);
     }
-    return FALSE;
+    return 0;
 }
 
 static int16_t FInitMacShortcuts(HWND hwnd) {
@@ -245,48 +245,48 @@ static int16_t FInitMacShortcuts(HWND hwnd) {
         UINT idMenu;
         ACCEL accel;
     } rgkey[] = {
-        {IDM_TOOL_NEW_GAME, {FVIRTKEY | FCONTROL, 'N', IDM_FILE_NEW_GAME}},
-        {IDM_TOOL_OPEN_GAME, {FVIRTKEY | FCONTROL, 'O', IDM_FILE_OPEN_GAME}},
-        {IDM_TURN_END_A, {FVIRTKEY | FCONTROL, 'S', IDM_FILE_SAVE}},
-        {IDM_TURN_END_B, {FVIRTKEY | FCONTROL | FSHIFT, 'S', IDM_TURN_SAVE_SUBMIT}},
-        {IDM_VIEW_FIND, {FVIRTKEY | FCONTROL, 'F', IDM_VIEW_FIND2}},
-        {IDM_FILE_RETURN_TO_TITLE, {FVIRTKEY | FCONTROL, 'W', IDM_FILE_RETURN_TO_TITLE}},
-        {IDM_FILE_EXIT, {FVIRTKEY | FCONTROL, 'Q', IDM_FILE_EXIT}}
+        {IDM_TOOL_NEW_GAME, {win32::FVIRTKEY | win32::FCONTROL, 'N', IDM_FILE_NEW_GAME}},
+        {IDM_TOOL_OPEN_GAME, {win32::FVIRTKEY | win32::FCONTROL, 'O', IDM_FILE_OPEN_GAME}},
+        {IDM_TURN_END_A, {win32::FVIRTKEY | win32::FCONTROL, 'S', IDM_FILE_SAVE}},
+        {IDM_TURN_END_B, {win32::FVIRTKEY | win32::FCONTROL | win32::FSHIFT, 'S', IDM_TURN_SAVE_SUBMIT}},
+        {IDM_VIEW_FIND, {win32::FVIRTKEY | win32::FCONTROL, 'F', IDM_VIEW_FIND2}},
+        {IDM_FILE_RETURN_TO_TITLE, {win32::FVIRTKEY | win32::FCONTROL, 'W', IDM_FILE_RETURN_TO_TITLE}},
+        {IDM_FILE_EXIT, {win32::FVIRTKEY | win32::FCONTROL, 'Q', IDM_FILE_EXIT}}
     };
     ACCEL rgaccel[32];
     ACCEL rgtitle[] = {
-        {FVIRTKEY | FCONTROL, 'N', IDM_TITLE_NEW_GAME},
-        {FVIRTKEY | FCONTROL, 'O', IDM_TITLE_OPEN_GAME},
-        {FVIRTKEY | FCONTROL, 'R', IDM_TITLE_CONTINUE},
-        {FVIRTKEY | FCONTROL, 'Q', IDM_TITLE_EXIT}
+        {win32::FVIRTKEY | win32::FCONTROL, 'N', IDM_TITLE_NEW_GAME},
+        {win32::FVIRTKEY | win32::FCONTROL, 'O', IDM_TITLE_OPEN_GAME},
+        {win32::FVIRTKEY | win32::FCONTROL, 'R', IDM_TITLE_CONTINUE},
+        {win32::FVIRTKEY | win32::FCONTROL, 'Q', IDM_TITLE_EXIT}
     };
     HACCEL hmain, htitle;
     HMENU hmenu, hsub;
     int c, i, j;
     size_t ikey;
 
-    c = win32::CopyAcceleratorTable(hAccel, NULL, 0);
+    c = win32::CopyAcceleratorTableA(hAccel, NULL, 0);
     if (c <= 0 || (size_t)c + sizeof(rgkey) / sizeof(rgkey[0]) > sizeof(rgaccel) / sizeof(rgaccel[0]) ||
-        win32::CopyAcceleratorTable(hAccel, rgaccel, c) != c) return FALSE;
+        win32::CopyAcceleratorTableA(hAccel, rgaccel, c) != c) return 0;
     hmenu = win32::GetMenu(hwnd);
-    if (!hmenu || win32::GetMenuItemCount(hmenu) <= 0) return FALSE;
+    if (!hmenu || win32::GetMenuItemCount(hmenu) <= 0) return 0;
     for (ikey = 0; ikey < sizeof(rgkey) / sizeof(rgkey[0]); ikey++) {
         for (i = 0; i < c && rgaccel[i].cmd != rgkey[ikey].accel.cmd; i++) {}
         rgaccel[i] = rgkey[ikey].accel;
         if (i == c) c++;
         for (j = 0; j < win32::GetMenuItemCount(hmenu); j++) {
             hsub = win32::GetSubMenu(hmenu, j);
-            if (hsub && win32::GetMenuState(hsub, rgkey[ikey].idMenu, MF_BYCOMMAND) != UINT_MAX) break;
+            if (hsub && win32::GetMenuState(hsub, rgkey[ikey].idMenu, win32::MF_BYCOMMAND) != UINT_MAX) break;
         }
-        if (j == win32::GetMenuItemCount(hmenu) || !FSetMacMenuShortcut(hsub, rgkey[ikey].idMenu, &rgkey[ikey].accel)) return FALSE;
+        if (j == win32::GetMenuItemCount(hmenu) || !FSetMacMenuShortcut(hsub, rgkey[ikey].idMenu, &rgkey[ikey].accel)) return 0;
     }
-    hmain = win32::CreateAcceleratorTable(rgaccel, c);
-    if (!hmain) return FALSE;
-    htitle = win32::CreateAcceleratorTable(rgtitle, sizeof(rgtitle) / sizeof(rgtitle[0]));
-    if (!htitle) { win32::DestroyAcceleratorTable(hmain); return FALSE; }
+    hmain = win32::CreateAcceleratorTableA(rgaccel, c);
+    if (!hmain) return 0;
+    htitle = win32::CreateAcceleratorTableA(rgtitle, sizeof(rgtitle) / sizeof(rgtitle[0]));
+    if (!htitle) { win32::DestroyAcceleratorTable(hmain); return 0; }
     hAccel = hmain;
     hAccelTitle = htitle;
-    return TRUE;
+    return 1;
 }
 #endif
 
@@ -296,31 +296,31 @@ int16_t InitInstance(int16_t nCmdShow) {
 
 
     StarsCompatSetObjectInspector(ShowScannerInspector);
-    ini.fWait = FALSE;
-    ini.fStartupFile = FALSE;
+    ini.fWait = 0;
+    ini.fStartupFile = 0;
     ini.grobjSel = 0;
     ini.idPlayer = iplrNone;
     ReadIniSettings();
     rc = ini.wnFrame.rc;
     /* Stars.ini holds -32768, the Win16 CW_USEDEFAULT, when it has no frame position. */
     if (rc.left == -32768)
-        rc.left = CW_USEDEFAULT;
+        rc.left = win32::CW_USEDEFAULT;
     if (rc.right == -32768)
-        rc.right = CW_USEDEFAULT;
-    hwndFrame = ui::CreateWindowEx(0, szFrame, "Stars!", WS_OVERLAPPEDWINDOW, rc.left, rc.top, rc.right, rc.bottom, NULL, NULL, hInst, NULL);
+        rc.right = win32::CW_USEDEFAULT;
+    hwndFrame = ui::CreateWindowEx(0, szFrame, "Stars!", win32::WS_OVERLAPPEDWINDOW, rc.left, rc.top, rc.right, rc.bottom, NULL, NULL, hInst, NULL);
     if (!hwndFrame) {
-        return FALSE;
+        return 0;
     }
-    hAccel = win32::LoadAccelerators(hInst, MAKEINTRESOURCE(IDA_MAIN));
+    hAccel = win32::LoadAcceleratorsA(hInst, win32::MAKEINTRESOURCE(IDA_MAIN));
     if (!hAccel) {
-        return FALSE;
+        return 0;
     }
-    hAccelTitle = win32::LoadAccelerators(hInst, MAKEINTRESOURCE(IDA_TITLE));
+    hAccelTitle = win32::LoadAcceleratorsA(hInst, win32::MAKEINTRESOURCE(IDA_TITLE));
     if (!hAccelTitle) {
-        return FALSE;
+        return 0;
     }
 #ifdef __APPLE__
-    if (!FInitMacShortcuts(hwndFrame)) return FALSE;
+    if (!FInitMacShortcuts(hwndFrame)) return 0;
 #endif
     if (nCmdShow != 1) {
         sw = nCmdShow;
@@ -329,7 +329,7 @@ int16_t InitInstance(int16_t nCmdShow) {
     }
     // Showing then hiding the frame exposes the native maximize animation before the title screen.
     StarsCompatSetInitialShowCommand(hwndFrame, sw);
-    return TRUE;
+    return 1;
 }
 
 void InitTiles() {
@@ -353,8 +353,8 @@ void InitTiles() {
             }
             rgtile[i].dyFull += rgtile[i].yTop * dyArial8;
             rgtile[i].yTop = yTop;
-            rgtile[i].fFixCtls = FALSE;
-            rgtile[i].fMinDraw = FALSE;
+            rgtile[i].fFixCtls = 0;
+            rgtile[i].fMinDraw = 0;
             if (rgtile[i].fPopped) {
                 yTop += rgtile[i].dyFull + 4;
             } else {
@@ -389,16 +389,16 @@ void GetIniWinRc(char *szSection, char *szIniFile, StringId ids, WN *pwn) {
         rc.bottom = 0;
         rc.top = 0;
         fMaximized = ids == idsMain;
-        fMinimized = FALSE;
-        fInitalized = FALSE;
+        fMinimized = 0;
+        fInitalized = 0;
     } else {
         pch = &szWork[1];
         for (i = 0; i < 4; i++) {
             rg[i] = 0;
-            fNeg = FALSE;
+            fNeg = 0;
             for (j = 0; j < 4; j++, pch++) {
                 if (*pch == '-') {
-                    fNeg = TRUE;
+                    fNeg = 1;
                     continue;
                 }
                 if (*pch < '0' || *pch > '9')
@@ -415,7 +415,7 @@ void GetIniWinRc(char *szSection, char *szIniFile, StringId ids, WN *pwn) {
         rc.bottom = rg[3];
         fMaximized = szWork[0] == 'M';
         fMinimized = szWork[0] == 'I';
-        fInitalized = TRUE;
+        fInitalized = 1;
     }
     pwn->rc = rc;
     pwn->fMaximized = fMaximized;
@@ -434,9 +434,9 @@ void ReadIniSettings() {
     char     szSection[16];
     int16_t  cch;
 
-    ini.fGen = FALSE;
-    ini.fTry = FALSE;
-    ini.fWait = FALSE;
+    ini.fGen = 0;
+    ini.fTry = 0;
+    ini.fWait = 0;
     TextIO().pfnCchGetString(idsWindows, szSection);
     TextIO().pfnCchGetString(idsStarsIni, szIniFile);
     GetIniWinRc(szSection, szIniFile, idsMain, &ini.wnFrame);
@@ -469,35 +469,35 @@ void ReadIniSettings() {
         vrptPlanet.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
     TextIO().pfnCchGetString(idsResolution, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     if (i == 0 && (vcScreenColors <= 4 || gd.mdScreenSize == 0)) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNoteStarsPrefersScreenResolutionLeast800x600, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNoteStarsPrefersScreenResolutionLeast800x600, NULL), win32::MB_ICONHAND);
     }
     TextIO().pfnCchGetString(idsLayout, szEntry);
-    iWindowLayout = static_cast<WindowLayout>(win32::GetPrivateProfileInt(szSection, szEntry, 1, szIniFile));
+    iWindowLayout = static_cast<WindowLayout>(win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile));
     iWindowLayout = 2 < (layoutLarge <= (int16_t)iWindowLayout ? iWindowLayout : 0) ? layoutSmall
                     : layoutLarge > (int16_t)iWindowLayout                          ? layoutLarge
                                                                                     : iWindowLayout;
     TextIO().pfnCchGetString(idsStyle1width, szEntry);
-    vfs.dxPlanWant = win32::GetPrivateProfileInt(szSection, szEntry, 396, szIniFile);
+    vfs.dxPlanWant = win32::GetPrivateProfileIntA(szSection, szEntry, 396, szIniFile);
     vfs.dxPlanWant = (vfs.dxPlanWant <= 10 ? 10 : vfs.dxPlanWant) >= 2000 ? 2000 : vfs.dxPlanWant > 10 ? vfs.dxPlanWant : 10;
     TextIO().pfnCchGetString(idsStyle1height, szEntry);
-    vfs.dyMsgWant = win32::GetPrivateProfileInt(szSection, szEntry, 110, szIniFile);
+    vfs.dyMsgWant = win32::GetPrivateProfileIntA(szSection, szEntry, 110, szIniFile);
     vfs.dyMsgWant = (vfs.dyMsgWant <= 10 ? 10 : vfs.dyMsgWant) >= 2000 ? 2000 : vfs.dyMsgWant > 10 ? vfs.dyMsgWant : 10;
     TextIO().pfnCchGetString(idsStyle1height2, szEntry);
-    vfs.dyMinWant = win32::GetPrivateProfileInt(szSection, szEntry, 192, szIniFile);
+    vfs.dyMinWant = win32::GetPrivateProfileIntA(szSection, szEntry, 192, szIniFile);
     vfs.dyMinWant = (vfs.dyMinWant <= 10 ? 10 : vfs.dyMinWant) >= 2000 ? 2000 : vfs.dyMinWant > 10 ? vfs.dyMinWant : 10;
     TextIO().pfnCchGetString(idsStyle2width, szEntry);
-    vfs.dx2PlanWant = win32::GetPrivateProfileInt(szSection, szEntry, 396, szIniFile);
+    vfs.dx2PlanWant = win32::GetPrivateProfileIntA(szSection, szEntry, 396, szIniFile);
     vfs.dx2PlanWant = (vfs.dx2PlanWant <= 10 ? 10 : vfs.dx2PlanWant) >= 2000 ? 2000 : vfs.dx2PlanWant > 10 ? vfs.dx2PlanWant : 10;
     TextIO().pfnCchGetString(idsStyle2height, szEntry);
-    vfs.dy2MsgWant = win32::GetPrivateProfileInt(szSection, szEntry, 110, szIniFile);
+    vfs.dy2MsgWant = win32::GetPrivateProfileIntA(szSection, szEntry, 110, szIniFile);
     vfs.dy2MsgWant = (vfs.dy2MsgWant <= 10 ? 10 : vfs.dy2MsgWant) >= 2000 ? 2000 : vfs.dy2MsgWant > 10 ? vfs.dy2MsgWant : 10;
     TextIO().pfnCchGetString(idsStyle2height2, szEntry);
-    vfs.dy2MinWant = win32::GetPrivateProfileInt(szSection, szEntry, 192, szIniFile);
+    vfs.dy2MinWant = win32::GetPrivateProfileIntA(szSection, szEntry, 192, szIniFile);
     vfs.dy2MinWant = (vfs.dy2MinWant <= 10 ? 10 : vfs.dy2MinWant) >= 2000 ? 2000 : vfs.dy2MinWant > 10 ? vfs.dy2MinWant : 10;
     TextIO().pfnCchGetString(idsToolbar, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     gd.fToolbar = i != 0;
     TextIO().pfnCchGetString(idsPlanettiles, szEntry);
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", szWork, 20, szIniFile);
@@ -509,33 +509,33 @@ void ReadIniSettings() {
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", szWork, 20, szIniFile);
     ReadIniSelection(szWork, cch);
     TextIO().pfnCchGetString(idsMessage, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     ini.iMsg = i;
     TextIO().pfnCchGetString(idsGameid, szEntry);
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "0", szWork, 10, szIniFile);
     ReadIniIdentity(szWork, cch);
     TextIO().pfnCchGetString(idsScanzoom, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 4, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 4, szIniFile);
     if (w >= 1 && w <= 9) {
         iScanZoom = static_cast<ScanZoom>(w - 5);
     }
     TextIO().pfnCchGetString(idsScanfilterv25, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     grbitScanShip = w;
     TextIO().pfnCchGetString(idsScanefilterv25, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     grbitScanEShip = w;
     TextIO().pfnCchGetString(idsScanmines, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 15, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 15, szIniFile);
     grbitScanMines = w & 0xf;
     TextIO().pfnCchGetString(idsScanradar, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 100, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 100, szIniFile);
     if (w < 0 || w > 100) {
         w = 100;
     }
     vpctRadarView = w;
     TextIO().pfnCchGetString(idsScanmodev25, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 224, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 224, szIniFile);
     grbitScan = static_cast<GrbitScan>(w & 0xc00f);
     if (grbitScan >= 6) {
         grbitScan = static_cast<GrbitScan>(0);
@@ -544,79 +544,79 @@ void ReadIniSettings() {
         grbitScan = static_cast<GrbitScan>(grbitScan | w & 0x3ff0);
     }
     TextIO().pfnCchGetString(idsMineralscale, szEntry);
-    cMinGrafMax = win32::GetPrivateProfileInt(szSection, szEntry, cMinGrafMax, szIniFile);
+    cMinGrafMax = win32::GetPrivateProfileIntA(szSection, szEntry, cMinGrafMax, szIniFile);
     if (cMinGrafMax < 100 || cMinGrafMax > 30000) {
         cMinGrafMax = 5000;
     }
     TextIO().pfnCchGetString(idsFiles, szSection);
     TextIO().pfnCchGetString(idsLogging, szEntry);
-    ini.fLogging = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    ini.fLogging = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     TextIO().pfnCchGetString(idsWait2, szEntry);
-    ini.fWait = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    ini.fWait = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     TextIO().pfnCchGetString(idsFile1, szEntry);
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, ".", szWork, 256, szIniFile);
     ReadIniRecent(szSection, szEntry, szIniFile, cch);
     TextIO().pfnCchGetString(idsTurn, szEntry);
-    ini.turn = win32::GetPrivateProfileInt(szSection, szEntry, game.turn, szIniFile);
+    ini.turn = win32::GetPrivateProfileIntA(szSection, szEntry, game.turn, szIniFile);
     TextIO().pfnCchGetString(idsMisc, szSection);
     TextIO().pfnCchGetString(idsDefaultpassword, szEntry);
     ProfileTextIO().pfnReadString(szSection, szEntry, "", vszDefPass, 16, szIniFile);
     TextIO().pfnCchGetString(idsProgress, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     gd.fProgressTxt = w != 0;
     TextIO().pfnCchGetString(idsNewreports, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     gd.fPerPlayerDumps = w != 0;
     TextIO().pfnCchGetString(idsNohostnames, szEntry);
-    w = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    w = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     gd.fNoHostNames = w != 0;
     TextIO().pfnCchGetString(idsBackups, szEntry);
-    vcBackupDirs = win32::GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
+    vcBackupDirs = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     if (vcBackupDirs < 1 || vcBackupDirs > 999) {
         vcBackupDirs = 1;
     }
     TextIO().pfnCchGetString(idsReportplanfld, szEntry);
-    vrptPlanet.grbitVisible = (uint32_t)win32::GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
+    vrptPlanet.grbitVisible = (uint32_t)win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     TextIO().pfnCchGetString(idsReportplansort, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     vrptPlanet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptPlanet.icolSort = i;
     TextIO().pfnCchGetString(idsReportfleetfld, szEntry);
-    vrptFleet.grbitVisible = (uint32_t)win32::GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
+    vrptFleet.grbitVisible = (uint32_t)win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     TextIO().pfnCchGetString(idsReportfleetsort, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     vrptFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptFleet.icolSort = i;
     TextIO().pfnCchGetString(idsReportefleetfld, szEntry);
-    vrptEFleet.grbitVisible = (uint32_t)win32::GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
+    vrptEFleet.grbitVisible = (uint32_t)win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     TextIO().pfnCchGetString(idsReportefltsort, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     vrptEFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptEFleet.icolSort = i;
     TextIO().pfnCchGetString(idsReportbtlfld, szEntry);
-    vrptBattle.grbitVisible = (uint32_t)win32::GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
+    vrptBattle.grbitVisible = (uint32_t)win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     TextIO().pfnCchGetString(idsReportbtlsort, szEntry);
-    i = win32::GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
+    i = win32::GetPrivateProfileIntA(szSection, szEntry, 0, szIniFile);
     vrptBattle.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptBattle.icolSort = i;
     TextIO().pfnCchGetString(idsReportdefgraph, szEntry);
-    gd.iCurGraph = win32::GetPrivateProfileInt(szSection, szEntry, 7, szIniFile);
+    gd.iCurGraph = win32::GetPrivateProfileIntA(szSection, szEntry, 7, szIniFile);
     TextIO().pfnCchGetString(idsReportefltsort, szEntry);
     if (gd.iCurGraph > 7) {
         gd.iCurGraph = 7;
     }
     TextIO().pfnCchGetString(idsVcrspeed, szEntry);
-    viSpeedVCR = win32::GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
+    viSpeedVCR = win32::GetPrivateProfileIntA(szSection, szEntry, 1, szIniFile);
     _strdate(szWork);
     szWork[5] = 0;
     szWork[2] = 0;
     uDateCur = atoi(&szWork[3]) + atoi(szWork) * 31 + atoi(&szWork[6]) * 31 * 12;
     TextIO().pfnCchGetString(idsHistoryinfo, szEntry);
-    uDateInstalled = win32::GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
+    uDateInstalled = win32::GetPrivateProfileIntA(szSection, szEntry, -1, szIniFile);
     if (uDateCur < uDateInstalled) {
         uDateInstalled = uDateCur;
     }

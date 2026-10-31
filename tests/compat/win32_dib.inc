@@ -33,7 +33,7 @@ static COLORREF CrDib(const BITMAPINFOHEADER *lpbi, const BYTE *rgb, int x, int 
 }
 
 static int TestResources(HDC hdc) {
-    HMODULE hModule = GetModuleHandle(NULL);
+    HMODULE hModule = GetModuleHandleA(NULL);
     HRSRC hrsrc;
     HGLOBAL hres;
     HBITMAP hbm, hbmOther;
@@ -49,21 +49,21 @@ static int TestResources(HDC hdc) {
     int x, y, ix, iy;
 
     CHECK(hModule && hmem && sizeof(rgResources) / sizeof(rgResources[0]) == 38);
-    CHECK(!FindResource(hModule, "missing-bitmap", RT_BITMAP));
-    CHECK(!LoadBitmap(hModule, MAKEINTRESOURCE(65535)));
-    CHECK(FindResource(hModule, "Screen50Bmp", RT_BITMAP) == FindResource(hModule, "SCREEN50BMP", RT_BITMAP));
+    CHECK(!FindResourceA(hModule, "missing-bitmap", RT_BITMAP));
+    CHECK(!LoadBitmapA(hModule, MAKEINTRESOURCE(65535)));
+    CHECK(FindResourceA(hModule, "Screen50Bmp", RT_BITMAP) == FindResourceA(hModule, "SCREEN50BMP", RT_BITMAP));
     for (i = 0; i < sizeof(rgResources) / sizeof(rgResources[0]); i++) {
-        hrsrc = FindResource(hModule, rgResources[i].psz, RT_BITMAP);
+        hrsrc = FindResourceA(hModule, rgResources[i].psz, RT_BITMAP);
         CHECK(hrsrc && SizeofResource(hModule, hrsrc) == rgResources[i].cb);
         hres = LoadResource(hModule, hrsrc);
         lpbi = (const BITMAPINFOHEADER*)(LockResource(hres));
         CHECK(lpbi && lpbi->biSize == sizeof(*lpbi) && lpbi->biCompression == BI_RGB);
         cColors = lpbi->biClrUsed ? lpbi->biClrUsed : 1u << lpbi->biBitCount;
         rgb = (const BYTE *)(lpbi + 1) + cColors * sizeof(RGBQUAD);
-        hbm = LoadBitmap(hModule, rgResources[i].psz);
-        hbmOther = LoadBitmap(hModule, rgResources[i].psz);
+        hbm = LoadBitmapA(hModule, rgResources[i].psz);
+        hbmOther = LoadBitmapA(hModule, rgResources[i].psz);
         CHECK(hbm && hbmOther && hbm != hbmOther);
-        CHECK(GetObject(hbm, sizeof(bm), &bm) == sizeof(bm));
+        CHECK(GetObjectA(hbm, sizeof(bm), &bm) == sizeof(bm));
         CHECK(bm.bmWidth == lpbi->biWidth && bm.bmHeight == lpbi->biHeight);
         hOld = SelectObject(hmem, hbm);
         CHECK(hOld);
@@ -87,10 +87,10 @@ static int TestResources(HDC hdc) {
         CHECK(!FreeResource(hres) && LockResource(hres) == lpbi);
     }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
-    CHECK(!FindResource(NULL, MAKEINTRESOURCE(249), MAKEINTRESOURCE(3)));
+    CHECK(!FindResourceA(NULL, MAKEINTRESOURCE(249), MAKEINTRESOURCE(3)));
     CHECK(!SizeofResource(NULL, (HRSRC)(UINT_PTR)123));
     CHECK(!LoadResource(NULL, (HRSRC)(UINT_PTR)123) && !LockResource((HGLOBAL)(UINT_PTR)123));
-    CHECK(!GetModuleHandle("other-module") && !LoadBitmap((HINSTANCE)(UINT_PTR)123, "CargoBmp"));
+    CHECK(!GetModuleHandleA("other-module") && !LoadBitmapA((HINSTANCE)(UINT_PTR)123, "CargoBmp"));
 #endif
     CHECK(DeleteDC(hmem));
     return 0;
@@ -206,8 +206,8 @@ int main(void) {
     int result;
 
     wc.lpfnWndProc = DibProc; wc.lpszClassName = "StarsDibReference";
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "Stars DIB contracts", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "Stars DIB contracts", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         20, 20, 200, 160, NULL, NULL, NULL, NULL);
     CHECK(hwnd && (hdc = GetDC(hwnd)));
     result = TestResources(hdc);

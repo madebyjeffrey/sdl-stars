@@ -3,7 +3,7 @@
 #include "control_io.h"
 #include "presentation_io.h"
 
-INT_PTR CALLBACK RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     int16_t     i;
     RECT        rc;
     HDC         hdc;
@@ -12,22 +12,22 @@ INT_PTR CALLBACK RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
     ScanView    mdSBase;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRelationsDlg, TRUE);
+    case win32::WM_INITDIALOG:
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRelationsDlg, 1);
         win32::CheckRadioButton(hwnd, IDC_RELATIONS_NEUTRAL, IDC_RELATIONS_ENEMY, rgplr[idPlayer].rgmdRelation[idPlayer == 0] + 2004);
         for (i = 0; i < game.cPlayer; i++) {
             if (i != idPlayer) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), LB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(i, FALSE, FALSE, FALSE, 0, NULL));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(i, 0, 0, 0, 0, NULL));
             }
         }
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), LB_SETCURSEL, 0, 0);
-        fDirtyPlan = FALSE;
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_SETCURSEL, 0, 0);
+        fDirtyPlan = 0;
         /* fallthrough */
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         win32::GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_FRIEND), &rcGBox);
         win32::ScreenToClient(hwnd, (POINT *)&rcGBox);
@@ -40,26 +40,26 @@ INT_PTR CALLBACK RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         win32::SetBkColor(hdc, crButtonFace);
         win32::SelectObject(hdc, rghfontArial8[1]);
         i = TextIO().pfnCchGetString(idsRelation, szWork);
-        win32::TextOut(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, i);
+        win32::TextOutA(hdc, rcGBox.left + 8, rcGBox.top - (dyArial8 >> 1), szWork, i);
         win32::SelectObject(hdc, rghfontArial8[0]);
         win32::EndPaint(hwnd, &ps);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         if ((HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST)) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         if (LOWORD(wParam) == IDCANCEL) {
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRelationsDlg, FALSE);
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), LB_GETCURSEL, 0, 0));
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyRelationsDlg, 0);
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_GETCURSEL, 0, 0));
             if (i >= idPlayer) {
                 i++;
             }
@@ -67,71 +67,71 @@ INT_PTR CALLBACK RelationsDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
             return 1;
         }
         if (LOWORD(wParam) >= IDC_RELATIONS_NEUTRAL && LOWORD(wParam) <= IDC_RELATIONS_ENEMY) {
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), LB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_GETCURSEL, 0, 0));
             if (i >= idPlayer) {
                 i++;
             }
             rgplr[idPlayer].rgmdRelation[i] = LOWORD(wParam) - 2004;
-            fDirtyPlan = TRUE;
+            fDirtyPlan = 1;
         } else if (LOWORD(wParam) == IDC_RELATIONS_PLAYER_LIST) {
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), LB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_RELATIONS_PLAYER_LIST), win32::LB_GETCURSEL, 0, 0));
             if (i >= idPlayer) {
                 i++;
             }
             win32::CheckRadioButton(hwnd, IDC_RELATIONS_NEUTRAL, IDC_RELATIONS_ENEMY, rgplr[idPlayer].rgmdRelation[i] + 2004);
         } else if (LOWORD(wParam) == IDC_HELP) {
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhPlayerRelationsDialog);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhPlayerRelationsDialog);
             return 1;
         }
         break;
-    case WM_DESTROY:
+    case win32::WM_DESTROY:
         if (!fDirtyPlan)
             break;
         mdSBase = static_cast<ScanView>(grbitScan & grbitScanViewMask);
         LogChangeRelations();
-        ControlIO().pfnInvalidateRect(hwndScanner, NULL, TRUE);
+        ControlIO().pfnInvalidateRect(hwndScanner, NULL, 1);
         break;
     }
     return 0;
 }
 
-INT_PTR CALLBACK NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     RECT rc;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyBattlePlansDlg.x + 70, ptStickyBattlePlansDlg.y + 70, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
-        win32::SetDlgItemText(hwnd, IDC_EDIT1, btlplan.szName);
+    case win32::WM_INITDIALOG:
+        ControlIO().pfnSetWindowPos(hwnd, NULL, ptStickyBattlePlansDlg.x + 70, ptStickyBattlePlansDlg.y + 70, 0, 0, win32::SWP_NOSIZE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE);
+        ui::SendDlgItemMessage(hwnd, IDC_EDIT1, win32::EM_LIMITTEXT, 0x1f, 0);
+        win32::SetDlgItemTextA(hwnd, IDC_EDIT1, btlplan.szName);
         return 1;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
-        if (message == WM_CTLCOLORSTATIC) {
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
+        if (message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                win32::GetDlgItemText(hwnd, IDC_EDIT1, btlplan.szName, 32);
-                fDirtyPlan = TRUE;
+                win32::GetDlgItemTextA(hwnd, IDC_EDIT1, btlplan.szName, 32);
+                fDirtyPlan = 1;
             }
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhBattlePlansDialog);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhBattlePlansDialog);
             return 1;
         }
         break;
@@ -139,7 +139,7 @@ INT_PTR CALLBACK NewPlanNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
-INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     FARPROC lpProc;
     int16_t idc;
     int16_t i;
@@ -148,75 +148,75 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     int16_t cLen;
 
     switch (message) {
-    case WM_INITDIALOG:
-        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, TRUE);
+    case win32::WM_INITDIALOG:
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, 1);
         iPlanSelDlg = 0;
         if (sel.grobj == grobjFleet) {
             iPlanSelDlg = sel.fl.iplan;
         }
         btlplan = rglpbtlplan[idPlayer][iPlanSelDlg];
         for (i = 0; i < rgcbtlplan[idPlayer]; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
         }
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_SETCURSEL, iPlanSelDlg, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, iPlanSelDlg, 0);
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), iPlanSelDlg > 0);
         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), iPlanSelDlg > 0);
         for (i = idsDisengage; i <= idsMaximizeDamage; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
         }
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_SETCURSEL, btlplan.mdTactic, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, btlplan.mdTactic, 0);
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
         }
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_SETCURSEL, btlplan.mdTarget1, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget1, 0);
         if (!game.fSinglePlr) {
             for (i = idsNobody; i <= idsEveryone; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
             }
             for (i = 0; i < game.cPlayer; i++) {
                 if (i != idPlayer) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(i, FALSE, TRUE, FALSE, 0, NULL));
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnPlayerName(i, 0, 1, 0, 0, NULL));
                 }
             }
             i = btlplan.iplrAttack;
             if (i >= idPlayer + 4) {
                 i--;
             }
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_SETCURSEL, i, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, i, 0);
         } else {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEveryone));
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_SETCURSEL, 0, 0);
-            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), FALSE);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(idsEveryone));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, 0, 0);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), 0);
         }
         for (i = idsNoneDisengage; i <= idsFreighters; i++) {
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_ADDSTRING, 0, (LPARAM)TextIO().pfnCompressed(static_cast<StringId>(i)));
         }
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_SETCURSEL, btlplan.mdTarget2, 0);
-        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), BM_SETCHECK, btlplan.fDumpCargo, 0);
-        fDirtyPlan = FALSE;
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget2, 0);
+        ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), win32::BM_SETCHECK, btlplan.fDumpCargo, 0);
+        fDirtyPlan = 0;
         if (gd.fTutorial) {
             PresentationIO().pfnTutor();
         }
         return 1;
-    case WM_CTLCOLORMSGBOX:
-    case WM_CTLCOLOREDIT:
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORSCROLLBAR:
-    case WM_CTLCOLORSTATIC:
+    case win32::WM_CTLCOLORMSGBOX:
+    case win32::WM_CTLCOLOREDIT:
+    case win32::WM_CTLCOLORLISTBOX:
+    case win32::WM_CTLCOLORBTN:
+    case win32::WM_CTLCOLORDLG:
+    case win32::WM_CTLCOLORSCROLLBAR:
+    case win32::WM_CTLCOLORSTATIC:
         for (idc = 1053; idc <= 1058 && (HWND)lParam != ControlIO().pfnGetDlgItem(hwnd, idc); idc++) {
         }
-        if (idc >= 1053 || message == WM_CTLCOLORSTATIC) {
+        if (idc >= 1053 || message == win32::WM_CTLCOLORSTATIC) {
             win32::SetBkColor((HDC)wParam, crButtonFace);
             return (INT_PTR)hbrButtonFace;
         }
         break;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);
         win32::FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
-    case WM_COMMAND:
+    case win32::WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
         case IDCANCEL:
@@ -224,7 +224,7 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
                 LogChangeBtlplan(&btlplan);
             }
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, FALSE);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, 0);
             ControlIO().pfnEndDialog(hwnd, iPlanSelDlg);
             if (sel.grobj == grobjFleet) {
                 FillBattleDD(sel.fl.iplan + 1);
@@ -232,70 +232,69 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             iPlanSelDlg = -1;
             return 1;
         case IDC_BATTLE_PLAN_DUMP_CARGO:
-            btlplan.fDumpCargo = LOWORD(ui::SendDlgItemMessage(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO, BM_GETCHECK, 0, 0));
-            fDirtyPlan = TRUE;
+            btlplan.fDumpCargo = LOWORD(ui::SendDlgItemMessage(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO, win32::BM_GETCHECK, 0, 0));
+            fDirtyPlan = 1;
             break;
         case IDC_DELETE:
             if (fDirtyPlan) {
                 rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
                 LogChangeBtlplan(&btlplan);
-                fDirtyPlan = FALSE;
+                fDirtyPlan = 0;
             }
-            btlplan.fDelete = TRUE;
+            btlplan.fDelete = 1;
             rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
             btlplan.iplan = iPlanSelDlg;
-            if (FDeleteBattlePlan(iPlanSelDlg, TRUE)) {
+            if (FDeleteBattlePlan(iPlanSelDlg, 1)) {
                 LogChangeBtlplan(&btlplan);
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_SETCURSEL, iPlanSelDlg - 1, 0);
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_RESETCONTENT, 0, 0);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, iPlanSelDlg - 1, 0);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
                 for (i = 0; i < rgcbtlplan[idPlayer]; i++) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
                 }
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_SETCURSEL, iPlanSelDlg - 1, 0);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, iPlanSelDlg - 1, 0);
                 goto LSelectName;
             }
-            btlplan.fDelete = FALSE;
+            btlplan.fDelete = 0;
             rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
             break;
         case IDC_BATTLE_PLAN_PRIMARY_TARGET:
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), CB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), win32::CB_GETCURSEL, 0, 0));
             btlplan.mdTarget1 = i;
-            fDirtyPlan = TRUE;
+            fDirtyPlan = 1;
             break;
         case IDC_BATTLE_PLAN_SECONDARY_TARGET:
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), CB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), win32::CB_GETCURSEL, 0, 0));
             btlplan.mdTarget2 = i;
-            fDirtyPlan = TRUE;
+            fDirtyPlan = 1;
             break;
         case IDC_BATTLE_PLAN_ATTACK_WHO:
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), CB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), win32::CB_GETCURSEL, 0, 0));
             if (game.fSinglePlr) {
                 i = 3;
             } else if (i >= idPlayer + 4) {
                 i++;
             }
             btlplan.iplrAttack = i;
-            fDirtyPlan = TRUE;
+            fDirtyPlan = 1;
             break;
         case IDC_BATTLE_PLAN_TACTIC:
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), CB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, LOWORD(wParam)), win32::CB_GETCURSEL, 0, 0));
             btlplan.mdTactic = i;
-            fDirtyPlan = TRUE;
+            fDirtyPlan = 1;
             break;
         case IDC_RENAME:
         LRename:
-            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, FALSE);
-            lpProc = MakeProcInstance(NewPlanNameDlg, hInst);
-            fRet = ControlIO().pfnDialogBox(hInst, MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0);
-            FreeProcInstance(lpProc);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyBattlePlansDlg, 0);
+            lpProc = (NewPlanNameDlg);
+            fRet = ControlIO().pfnDialogBox(hInst, win32::MAKEINTRESOURCE(IDD_RENAME), hwndFrame, lpProc, 0);
             ControlIO().pfnSetFocus(hwnd);
             if (fRet) {
                 rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_RESETCONTENT, 0, 0);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
                 for (i = 0; i < rgcbtlplan[idPlayer]; i++) {
-                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
+                    ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
                 }
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_SETCURSEL, iPlanSelDlg, 0);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, iPlanSelDlg, 0);
             }
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), iPlanSelDlg > 0);
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), iPlanSelDlg > 0);
@@ -307,7 +306,7 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             if (fDirtyPlan) {
                 rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
                 LogChangeBtlplan(&btlplan);
-                fDirtyPlan = FALSE;
+                fDirtyPlan = 0;
             }
             iPlanSelDlg = rgcbtlplan[idPlayer]++;
             cLen = strlen(btlplan.szName);
@@ -322,51 +321,51 @@ INT_PTR CALLBACK BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             }
             btlplan.iplan = iPlanSelDlg;
             rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_SETCURSEL, btlplan.mdTactic, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_RESETCONTENT, 0, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, btlplan.mdTactic, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_RESETCONTENT, 0, 0);
             for (i = 0; i < rgcbtlplan[idPlayer]; i++) {
-                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
+                ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_ADDSTRING, 0, (LPARAM)rglpbtlplan[idPlayer][i].szName);
             }
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_SETCURSEL, iPlanSelDlg, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_SETCURSEL, btlplan.mdTarget1, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_SETCURSEL, btlplan.mdTarget2, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), BM_SETCHECK, btlplan.fDumpCargo, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_SETCURSEL, iPlanSelDlg, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget1, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget2, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), win32::BM_SETCHECK, btlplan.fDumpCargo, 0);
             i = btlplan.iplrAttack;
             if (i >= idPlayer + 4) {
                 i--;
             }
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_SETCURSEL, i, 0);
-            fDirtyPlan = TRUE;
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, i, 0);
+            fDirtyPlan = 1;
             wParam = IDC_BATTLE_PLAN_PRIMARY_TARGET;
-            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), TRUE);
+            ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), 1);
             goto LRename;
         case IDC_BATTLE_PLAN_SELECT:
         LSelectName:
-            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), CB_GETCURSEL, 0, 0));
+            i = LOWORD(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SELECT), win32::CB_GETCURSEL, 0, 0));
             if (i == iPlanSelDlg)
                 break;
             if (fDirtyPlan) {
                 rglpbtlplan[idPlayer][iPlanSelDlg] = btlplan;
                 LogChangeBtlplan(&btlplan);
-                fDirtyPlan = FALSE;
+                fDirtyPlan = 0;
             }
             iPlanSelDlg = i;
             btlplan = rglpbtlplan[idPlayer][iPlanSelDlg];
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), CB_SETCURSEL, btlplan.mdTarget1, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), CB_SETCURSEL, btlplan.mdTarget2, 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), BM_SETCHECK, btlplan.fDumpCargo, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_PRIMARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget1, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_SECONDARY_TARGET), win32::CB_SETCURSEL, btlplan.mdTarget2, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_DUMP_CARGO), win32::BM_SETCHECK, btlplan.fDumpCargo, 0);
             wParam = IDC_BATTLE_PLAN_PRIMARY_TARGET;
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_RENAME), iPlanSelDlg > 0);
             ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_DELETE), iPlanSelDlg > 0);
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), CB_SETCURSEL, btlplan.mdTactic, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_TACTIC), win32::CB_SETCURSEL, btlplan.mdTactic, 0);
             i = btlplan.iplrAttack;
             if (i >= idPlayer + 4) {
                 i--;
             }
-            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), CB_SETCURSEL, i, 0);
+            ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, IDC_BATTLE_PLAN_ATTACK_WHO), win32::CB_SETCURSEL, i, 0);
             break;
         case IDC_HELP:
-            win32::WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhBattlePlansDialog);
+            win32::WinHelpA(hwnd, szHelpFile, win32::HELP_CONTEXT, idhBattlePlansDialog);
             return 1;
         }
         break;

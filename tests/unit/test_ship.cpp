@@ -5,24 +5,24 @@
 // FAddScoutPair loads a new one-player game and adds two fleets of one ship
 // each of player 0's first design, orbiting its homeworld.
 static int16_t FAddScoutPair(const char *pszTest, FLEET **plpflDst, FLEET **plpflSrc, int16_t *pishdef) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     PLANET *lppl;
     int16_t ish;
 
     if (!FStarsTestInit() || !FStarsTestDir(pszTest, szDir, sizeof(szDir)) || !FStarsTestNewGame(szDir, 12345, NULL, 0) ||
         !FStarsTestLoadHost())
-        return FALSE;
+        return 0;
     lppl = LpplStarsTestHomeworld(0);
     if (lppl == NULL)
-        return FALSE;
+        return 0;
     for (ish = 0; ish < 16 && rglpshdef[0][ish].fFree; ish++) {
     }
     if (ish == 16)
-        return FALSE;
+        return 0;
     *plpflDst = LpflStarsTestAddFleet(0, lppl->id, ish, 1);
     *plpflSrc = LpflStarsTestAddFleet(0, lppl->id, ish, 1);
     *pishdef = ish;
-    return TRUE;
+    return 1;
 }
 
 
@@ -41,7 +41,7 @@ static void test_fleet_id_log_bytes(void) {
     idDst = lpflDst->id; idSrc = lpflSrc->id;
     rgifl[0] = idDst; rgifl[1] = idSrc; rgifl[2] = iflNone; rgifl[3] = idSrc; rgifl[4] = idDst;
     vrgiflMerge = rgifl; vcflMerge = 5;
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     LogMergeFleet(idDst);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtLogFleetMerge && hdr.cb == 6);
@@ -49,7 +49,7 @@ static void test_fleet_id_log_bytes(void) {
     TEST_CHECK(rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
     TEST_CHECK(rgb[4] == rgb[2] && rgb[5] == rgb[3]);
     rgb[6] = 0xa5;
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     fReplay = FRunLogRecord(rtLogFleetMerge, 7, rgb);
     // FRunLogRecord temporarily installs its stack ID array in this global.
     vrgiflMerge = NULL; vcflMerge = 0;
@@ -57,11 +57,11 @@ static void test_fleet_id_log_bytes(void) {
     lpflDst = LpflFromId(idDst);
     TEST_ASSERT(lpflDst != NULL);
     TEST_CHECK(lpflDst->rgcsh[ishdef] == 2 && LpflFromId(idSrc) == NULL && lpflDst->fCompChg());
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     LogSplitFleet(idDst);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtLogFleetSplit && hdr.cb == 2 && rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8));
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     TEST_ASSERT(FRunLogRecord(rtLogFleetSplit, 2, rgb));
 }
 
@@ -80,13 +80,13 @@ static void test_ship_transfer_log_bytes(void) {
     lxf1.grobj = grobjFleet; lxf1.id = idDst;
     lxf2.grobj = grobjFleet; lxf2.id = idSrc;
     lxf1.rgdItem[ishdef] = 2;
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     LogMakeValidXferf(&lxf1, &lxf2);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtLogFleetCargoXfer && hdr.cb == 9 && rgb[4] == 0x22);
     TEST_CHECK(rgb[0] == (uint8_t)idDst && rgb[1] == (uint8_t)((uint16_t)idDst >> 8) && rgb[2] == (uint8_t)idSrc && rgb[3] == (uint8_t)((uint16_t)idSrc >> 8));
     TEST_CHECK(rgb[5] == (uint8_t)(1u << ishdef) && rgb[6] == (uint8_t)((1u << ishdef) >> 8) && rgb[7] == 2 && rgb[8] == 0);
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     TEST_ASSERT(LpflFromId(0x1ff) == NULL);
     TEST_CHECK(!FRunLogRecord(rtLogFleetCargoXfer, 2, missing));
     TEST_CHECK(!FRunLogRecord(rtLogFleetMerge, 2, missing));
@@ -105,10 +105,10 @@ static void test_Merge2Fleets_keeps_no_heal(void) {
     TEST_ASSERT(FAddScoutPair("Merge2Fleets_no_heal", &lpflDst, &lpflSrc, &ishdef));
     lpflSrc->rgdv[ishdef].SetPctSh(100);
     lpflSrc->rgdv[ishdef].SetPctDp(100);
-    lpflSrc->fNoHeal = TRUE;
-    lpflDst->fHereAllTurn = TRUE;
+    lpflSrc->fNoHeal = 1;
+    lpflDst->fHereAllTurn = 1;
 
-    Merge2Fleets(lpflDst, lpflSrc, TRUE);
+    Merge2Fleets(lpflDst, lpflSrc, 1);
     TEST_ASSERT(lpflDst->rgcsh[ishdef] == 2);
     TEST_CHECK(lpflDst->fNoHeal);
     HealShips();
@@ -126,7 +126,7 @@ static void test_Merge2Fleets_caps_ship_count(void) {
     lpflDst->rgcsh[ishdef] = 32000;
     lpflSrc->rgcsh[ishdef] = 1000;
 
-    Merge2Fleets(lpflDst, lpflSrc, TRUE);
+    Merge2Fleets(lpflDst, lpflSrc, 1);
     TEST_CHECK_(lpflDst->rgcsh[ishdef] == 32767, "destination has %d", lpflDst->rgcsh[ishdef]);
     TEST_CHECK_(lpflSrc->rgcsh[ishdef] == 233, "source kept %d", lpflSrc->rgcsh[ishdef]);
     TEST_CHECK(!lpflSrc->fDead);
@@ -150,7 +150,7 @@ static void test_FFleetMergeAll_keeps_overflow_fleet(void) {
     rgifl[1] = idSrc;
     vrgiflMerge = rgifl;
     vcflMerge = 2;
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     fl = *lpflDst;
 
     FFleetMergeAll(&fl);
@@ -172,7 +172,7 @@ static int16_t FAddScoutLeg(const char *pszTest, int16_t dx, int32_t lFuel) {
     int16_t ishdef;
 
     if (!FAddScoutPair(pszTest, &lpflDst, &lpflSrc, &ishdef))
-        return FALSE;
+        return 0;
     idPlayer = 0;
     sel.fl = *lpflDst;
     sel.fl.rgwtMin[4] = lFuel;
@@ -183,13 +183,13 @@ static int16_t FAddScoutLeg(const char *pszTest, int16_t dx, int32_t lFuel) {
     lpord->id = 1;
     sel.fl.cord = 2;
     sel.fl.lpplord->iordMac = 2;
-    return TRUE;
+    return 1;
 }
 
 // LFuelAtWarp returns the fuel sel.fl uses to reach waypoint 1 at iWarp.
 static int32_t LFuelAtWarp(int16_t iWarp) {
     sel.fl.lpplord->rgord()[1].iWarp = iWarp;
-    return LFuelUseToWaypoint(&sel.fl, 1, TRUE);
+    return LFuelUseToWaypoint(&sel.fl, 1, 1);
 }
 
 // CYearsAtWarp returns the years sel.fl takes to reach waypoint 1 at iWarp.
@@ -245,7 +245,7 @@ static void test_IWarpFastestForWaypoint_low_fuel(void) {
     int16_t iWarp;
 
     TEST_ASSERT(FAddScoutLeg("IWarpFastest_low_fuel", 300, 0));
-    iWarpIdeal = IFindIdealWarp(NULL, FALSE);
+    iWarpIdeal = IFindIdealWarp(NULL, 0);
     TEST_ASSERT_(iWarpIdeal <= 7, "ideal warp %d", iWarpIdeal);
     sel.fl.rgwtMin[4] = LFuelAtWarp(iWarpIdeal + 2) - 1;
     iWarp = IWarpCheckFastest(iWarpIdeal);

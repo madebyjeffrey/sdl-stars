@@ -113,7 +113,7 @@ static void TestAllocationOverflow(void) {
     TEST_ASSERT(FStarsTestInit());
     try {
         LpAlloc(UINT16_MAX, htMisc);
-        TEST_CHECK(FALSE);
+        TEST_CHECK(0);
     } catch (const StarsError &error) {
         TEST_CHECK(error.mdError == starsErrorMemory);
         TEST_CHECK(cStarsTestAlert == 1);
@@ -196,7 +196,7 @@ static void TestAiHistoryBytes(void) {
     idPlayer = 0; rgplr[0].idAi = idAiRobotoid;
     lpplSav = lpPlanets; cPlanetSav = cPlanet; cPlanMaxSav = game.cPlanMax;
     lpPlanets = rgpl; cPlanet = game.cPlanMax = 4;
-    for (i = 0; i < 4; i++) { rgpl[i].id = i; rgpl[i].iPlayer = i == 3 ? 1 : 0; rgpl[i].fStarbase = TRUE; }
+    for (i = 0; i < 4; i++) { rgpl[i].id = i; rgpl[i].iPlayer = i == 3 ? 1 : 0; rgpl[i].fStarbase = 1; }
     seed1 = lRandSeed1; seed2 = lRandSeed2;
     AhvFromLp(vlpbAiData).SetCbAiHist(2); AhvFromLp(vlpbAiData).SetCStarbase(-1);
     game.turn = 19;

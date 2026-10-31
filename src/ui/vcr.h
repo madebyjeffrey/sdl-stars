@@ -11,7 +11,7 @@ int32_t          CBattleUnits(uint8_t *lpbd, BattleUnitFlags grbitBU);
 int32_t          CBattleKills(uint8_t *lpbd, int16_t fOurDead);
 int32_t          LdpFromItokDv(int16_t itok, DV *lpdv);
 int16_t          SetVCRBoard(int16_t iStep);
-INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             GetVCRStats(int16_t itok, int32_t *pdpArmor, DV *pdv, int32_t *pdpShields, int16_t *pcsh);
 void             DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd);
 void             Delay(int16_t ctick);

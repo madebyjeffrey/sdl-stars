@@ -74,16 +74,16 @@ int main() {
     CHECK(!win32::DestroyIcon(hCopy) && cDestroyed == 2);
     CHECK(win32::DestroyIcon(hSource) && LpCompatImage(hSource) == lpSource && cDestroyed == 2);
     hmenu = win32::CreateMenu(); hsub = win32::CreatePopupMenu(); hother = win32::CreateMenu();
-    CHECK(hmenu && hsub && hother && win32::AppendMenuA(hmenu, MF_STRING, 41, "Retained"));
+    CHECK(hmenu && hsub && hother && win32::AppendMenuA(hmenu, win32::MF_STRING, 41, "Retained"));
     fFailArray = true;
-    CHECK(!win32::InsertMenuA(hmenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hsub, "Not installed") && !fFailArray);
+    CHECK(!win32::InsertMenuA(hmenu, 0, win32::MF_BYPOSITION | win32::MF_POPUP, (UINT_PTR)hsub, "Not installed") && !fFailArray);
     CHECK(win32::GetMenuItemCount(hmenu) == 1 && win32::GetMenuItemID(hmenu, 0) == 41);
-    CHECK(win32::GetMenuStringA(hmenu, 41, sz, sizeof(sz), MF_BYCOMMAND) == 8 && !SDL_strcmp(sz, "Retained"));
-    CHECK(win32::AppendMenuA(hother, MF_POPUP, (UINT_PTR)hsub, "Still unattached"));
-    CHECK(win32::RemoveMenu(hother, 0, MF_BYPOSITION) && win32::IsMenu(hsub));
-    CHECK(win32::InsertMenuA(hmenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hsub, "Retry"));
+    CHECK(win32::GetMenuStringA(hmenu, 41, sz, sizeof(sz), win32::MF_BYCOMMAND) == 8 && !SDL_strcmp(sz, "Retained"));
+    CHECK(win32::AppendMenuA(hother, win32::MF_POPUP, (UINT_PTR)hsub, "Still unattached"));
+    CHECK(win32::RemoveMenu(hother, 0, win32::MF_BYPOSITION) && win32::IsMenu(hsub));
+    CHECK(win32::InsertMenuA(hmenu, 0, win32::MF_BYPOSITION | win32::MF_POPUP, (UINT_PTR)hsub, "Retry"));
     CHECK(win32::GetSubMenu(hmenu, 0) == hsub && win32::GetMenuItemID(hmenu, 1) == 41);
-    CHECK(win32::DeleteMenu(hmenu, 0, MF_BYPOSITION) && !win32::IsMenu(hsub));
+    CHECK(win32::DeleteMenu(hmenu, 0, win32::MF_BYPOSITION) && !win32::IsMenu(hsub));
     CHECK(win32::DestroyMenu(hmenu) && win32::DestroyMenu(hother));
     // FreeType has already allocated its library when the shared owner fails.
     CompatShutdownFonts(); lf.lfHeight = -12;

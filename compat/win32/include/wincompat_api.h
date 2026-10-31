@@ -16,15 +16,15 @@ WINBOOL CheckDlgButton(HWND hDlg,int nIDButton,UINT uCheck);
 DWORD CheckMenuItem(HMENU hMenu,UINT uIDCheckItem,UINT uCheck);
 WINBOOL CheckRadioButton(HWND hDlg,int nIDFirstButton,int nIDLastButton,int nIDCheckButton);
 WINBOOL ClientToScreen(HWND hWnd,LPPOINT lpPoint);
-WINBOOL CopyRect(LPRECT lprcDst,CONST RECT *lprcSrc);
+WINBOOL CopyRect(LPRECT lprcDst,const RECT *lprcSrc);
 HBITMAP CreateCompatibleBitmap(HDC hdc,int cx,int cy);
 HDC CreateCompatibleDC(HDC hdc);
 HWND CreateDialogParamA(HINSTANCE hInstance,LPCSTR lpTemplateName,HWND hWndParent,DLGPROC lpDialogFunc,LPARAM dwInitParam);
-HFONT CreateFontIndirectA(CONST LOGFONTA *lplf);
-HPALETTE CreatePalette(CONST LOGPALETTE *plpal);
+HFONT CreateFontIndirectA(const LOGFONTA *lplf);
+HPALETTE CreatePalette(const LOGPALETTE *plpal);
 HBRUSH CreatePatternBrush(HBITMAP hbm);
 HPEN CreatePen(int iStyle,int cWidth,COLORREF color);
-HMENU CreatePopupMenu(VOID);
+HMENU CreatePopupMenu(void);
 HRGN CreateRectRgn(int x1,int y1,int x2,int y2);
 HBRUSH CreateSolidBrush(COLORREF color);
 HWND CreateWindowExA(DWORD dwExStyle,LPCSTR lpClassName,LPCSTR lpWindowName,DWORD dwStyle,int X,int Y,int nWidth,int nHeight,HWND hWndParent,HMENU hMenu,HINSTANCE hInstance,LPVOID lpParam);
@@ -37,7 +37,7 @@ WINBOOL DestroyIcon(HICON hIcon);
 WINBOOL DestroyMenu(HMENU hMenu);
 WINBOOL DestroyWindow(HWND hWnd);
 INT_PTR DialogBoxParamA(HINSTANCE hInstance,LPCSTR lpTemplateName,HWND hWndParent,DLGPROC lpDialogFunc,LPARAM dwInitParam);
-LRESULT DispatchMessageA(CONST win32::MSG *lpMsg);
+LRESULT DispatchMessageA(const win32::MSG *lpMsg);
 WINBOOL DrawIcon(HDC hDC,int X,int Y,HICON hIcon);
 WINBOOL DrawMenuBar(HWND hWnd);
 int DrawTextA(HDC hdc,LPCSTR lpchText,int cchText,LPRECT lprc,UINT format);
@@ -45,23 +45,23 @@ WINBOOL Ellipse(HDC hdc,int left,int top,int right,int bottom);
 WINBOOL EnableMenuItem(HMENU hMenu,UINT uIDEnableItem,UINT uEnable);
 WINBOOL EnableWindow(HWND hWnd,WINBOOL bEnable);
 WINBOOL EndDialog(HWND hDlg,INT_PTR nResult);
-WINBOOL EndPaint(HWND hWnd,CONST PAINTSTRUCT *lpPaint);
-WINBOOL EqualRect(CONST RECT *lprc1,CONST RECT *lprc2);
+WINBOOL EndPaint(HWND hWnd,const PAINTSTRUCT *lpPaint);
+WINBOOL EqualRect(const RECT *lprc1,const RECT *lprc2);
 int Escape(HDC hdc,int iEscape,int cjIn,LPCSTR pvIn,LPVOID pvOut);
 int ExcludeClipRect(HDC hdc,int left,int top,int right,int bottom);
 WINBOOL ExitWindowsEx(UINT uFlags,DWORD dwReason);
-WINBOOL ExtTextOutA(HDC hdc,int x,int y,UINT options,CONST RECT *lprect,LPCSTR lpString,UINT c,CONST INT *lpDx);
-int FillRect(HDC hDC,CONST RECT *lprc,HBRUSH hbr);
+WINBOOL ExtTextOutA(HDC hdc,int x,int y,UINT options,const RECT *lprect,LPCSTR lpString,UINT c,const INT *lpDx);
+int FillRect(HDC hDC,const RECT *lprc,HBRUSH hbr);
 HRSRC FindResourceA (HMODULE hModule, LPCSTR lpName, LPCSTR lpType);
 WINBOOL FlashWindow (HWND hWnd, WINBOOL bInvert);
-int FrameRect(HDC hDC,CONST RECT *lprc,HBRUSH hbr);
+int FrameRect(HDC hDC,const RECT *lprc,HBRUSH hbr);
 WINBOOL FreeResource (HGLOBAL hResData);
-HWND GetActiveWindow(VOID);
+HWND GetActiveWindow(void);
 SHORT GetAsyncKeyState(int vKey);
 COLORREF GetBkColor(HDC hdc);
 int GetClassNameA(HWND hWnd,LPSTR lpClassName,int nMaxCount);
 WINBOOL GetClientRect(HWND hWnd,LPRECT lpRect);
-DWORD GetCurrentThreadId (VOID);
+DWORD GetCurrentThreadId (void);
 WINBOOL GetCursorPos(LPPOINT lpPoint);
 HDC GetDC(HWND hWnd);
 COLORREF GetPixel(HDC hdc,int x,int y);
@@ -70,7 +70,7 @@ int GetDeviceCaps(HDC hdc,int index);
 HWND GetDlgItem(HWND hDlg,int nIDDlgItem);
 UINT GetDlgItemTextA(HWND hDlg,int nIDDlgItem,LPSTR lpString,int cchMax);
 DWORD GetFileSize (HANDLE hFile, LPDWORD lpFileSizeHigh);
-HWND GetFocus(VOID);
+HWND GetFocus(void);
 SHORT GetKeyState(int nVirtKey);
 HMENU GetMenu(HWND hWnd);
 int GetMenuItemCount(HMENU hMenu);
@@ -96,7 +96,7 @@ DWORD GetSysColor(int nIndex);
 int GetSystemMetrics(int nIndex);
 WINBOOL GetTextExtentPoint32A(HDC hdc,LPCSTR lpString,int c,LPSIZE psizl);
 WINBOOL GetTextMetricsA(HDC hdc,LPTEXTMETRICA lptm);
-DWORD GetTickCount (VOID);
+DWORD GetTickCount (void);
 WINBOOL GetUpdateRect(HWND hWnd,LPRECT lpRect,WINBOOL bErase);
 HWND GetWindow(HWND hWnd,UINT uCmd);
 LONG_PTR GetWindowLongPtrA(HWND hWnd,int nIndex);
@@ -117,8 +117,8 @@ void SetLastError(DWORD dwError);
 WINBOOL InflateRect(LPRECT lprc,int dx,int dy);
 WINBOOL InsertMenuA(HMENU hMenu,UINT uPosition,UINT uFlags,UINT_PTR uIDNewItem,LPCSTR lpNewItem);
 int IntersectClipRect(HDC hdc,int left,int top,int right,int bottom);
-WINBOOL IntersectRect(LPRECT lprcDst,CONST RECT *lprcSrc1,CONST RECT *lprcSrc2);
-WINBOOL InvalidateRect(HWND hWnd,CONST RECT *lpRect,WINBOOL bErase);
+WINBOOL IntersectRect(LPRECT lprcDst,const RECT *lprcSrc1,const RECT *lprcSrc2);
+WINBOOL InvalidateRect(HWND hWnd,const RECT *lpRect,WINBOOL bErase);
 UINT IsDlgButtonChecked(HWND hDlg,int nIDButton);
 WINBOOL IsIconic (HWND hWnd);
 WINBOOL IsWindowVisible (HWND hWnd);
@@ -150,17 +150,17 @@ HFILE OpenFile (LPCSTR lpFileName, LPOFSTRUCT lpReOpenBuff, UINT uStyle);
 WINBOOL PatBlt(HDC hdc,int x,int y,int w,int h,DWORD rop);
 WINBOOL PeekMessageA(LPMSG lpMsg,HWND hWnd,UINT wMsgFilterMin,UINT wMsgFilterMax,UINT wRemoveMsg);
 WINBOOL PostMessageA (HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-VOID PostQuitMessage (int nExitCode);
+void PostQuitMessage (int nExitCode);
 WINBOOL PrintDlgA(LPPRINTDLGA);
-WINBOOL PtInRect(CONST RECT *lprc,POINT pt);
+WINBOOL PtInRect(const RECT *lprc,POINT pt);
 UINT RealizePalette(HDC hdc);
 UINT GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALETTEENTRY rgpe);
 WINBOOL Rectangle(HDC hdc,int left,int top,int right,int bottom);
-ATOM RegisterClassA (CONST WNDCLASSA *lpWndClass);
-WINBOOL ReleaseCapture(VOID);
+ATOM RegisterClassA (const WNDCLASSA *lpWndClass);
+WINBOOL ReleaseCapture(void);
 int ReleaseDC(HWND hWnd,HDC hDC);
 WINBOOL ScreenToClient(HWND hWnd,LPPOINT lpPoint);
-WINBOOL ScrollWindow(HWND hWnd,int XAmount,int YAmount,CONST RECT *lpRect,CONST RECT *lpClipRect);
+WINBOOL ScrollWindow(HWND hWnd,int XAmount,int YAmount,const RECT *lpRect,const RECT *lpClipRect);
 int SelectClipRgn(HDC hdc,HRGN hrgn);
 HGDIOBJ SelectObject(HDC hdc,HGDIOBJ h);
 HPALETTE SelectPalette(HDC hdc,HPALETTE hPal,WINBOOL bForceBkgd);
@@ -170,7 +170,7 @@ COLORREF SetBkColor(HDC hdc,COLORREF color);
 int SetBkMode(HDC hdc,int mode);
 WINBOOL SetBrushOrgEx(HDC hdc,int x,int y,LPPOINT lppt);
 HWND SetCapture(HWND hWnd);
-HWND GetCapture(VOID);
+HWND GetCapture(void);
 HCURSOR SetCursor(HCURSOR hCursor);
 WINBOOL SetDlgItemTextA(HWND hDlg,int nIDDlgItem,LPCSTR lpString);
 HWND SetFocus(HWND hWnd);
@@ -187,16 +187,16 @@ WINBOOL SetWindowPos (HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int
 WINBOOL SetWindowTextA(HWND hWnd,LPCSTR lpString);
 WINBOOL ShowWindow(HWND hWnd,int nCmdShow);
 DWORD SizeofResource (HMODULE hModule, HRSRC hResInfo);
-int StretchDIBits(HDC hdc,int xDest,int yDest,int DestWidth,int DestHeight,int xSrc,int ySrc,int SrcWidth,int SrcHeight,CONST VOID *lpBits,CONST BITMAPINFO *lpbmi,UINT iUsage,DWORD rop);
+int StretchDIBits(HDC hdc,int xDest,int yDest,int DestWidth,int DestHeight,int xSrc,int ySrc,int SrcWidth,int SrcHeight,const void *lpBits,const BITMAPINFO *lpbmi,UINT iUsage,DWORD rop);
 WINBOOL SystemParametersInfoA(UINT uiAction,UINT uiParam,PVOID pvParam,UINT fWinIni);
 WINBOOL TextOutA(HDC hdc,int x,int y,LPCSTR lpString,int c);
-WINBOOL TrackPopupMenu(HMENU hMenu,UINT uFlags,int x,int y,int nReserved,HWND hWnd,CONST RECT *prcRect);
+WINBOOL TrackPopupMenu(HMENU hMenu,UINT uFlags,int x,int y,int nReserved,HWND hWnd,const RECT *prcRect);
 int TranslateAcceleratorA(HWND hWnd,HACCEL hAccTable,LPMSG lpMsg);
-WINBOOL TranslateMessage(CONST win32::MSG *lpMsg);
-WINBOOL WaitMessage(VOID);
+WINBOOL TranslateMessage(const win32::MSG *lpMsg);
+WINBOOL WaitMessage(void);
 WINBOOL UnrealizeObject(HGDIOBJ h);
 WINBOOL UpdateWindow(HWND hWnd);
-WINBOOL ValidateRect(HWND hWnd,CONST RECT *lpRect);
+WINBOOL ValidateRect(HWND hWnd,const RECT *lpRect);
 WINBOOL WinHelpA(HWND hWndMain,LPCSTR lpszHelp,UINT uCommand,ULONG_PTR dwData);
 HWND WindowFromPoint(POINT Point);
 WINBOOL WritePrivateProfileStringA (LPCSTR lpAppName, LPCSTR lpKeyName, LPCSTR lpString, LPCSTR lpFileName);
@@ -210,47 +210,10 @@ LPSTR lstrcpyA (LPSTR lpString1, LPCSTR lpString2);
 int lstrlenA (LPCSTR lpString);
 int wsprintfA(LPSTR,LPCSTR,...);
 
-#define AppendMenu AppendMenuA
-#define CreateFontIndirect CreateFontIndirectA
-#define DrawText DrawTextA
-#define ExtTextOut ExtTextOutA
-#define FindResource FindResourceA
-#define GetDlgItemText GetDlgItemTextA
-#define GetClassName GetClassNameA
-#define GetModuleHandle GetModuleHandleA
-#define GetObject GetObjectA
-#define GetPrivateProfileInt GetPrivateProfileIntA
-#define GetPrivateProfileString GetPrivateProfileStringA
-#define GetTextExtentPoint32 GetTextExtentPoint32A
-#define GetTextMetrics GetTextMetricsA
-#define GetWindowLongPtr GetWindowLongPtrA
-#define GetWindowText GetWindowTextA
-#define InsertMenu InsertMenuA
-#define LoadMenu LoadMenuA
-#define LoadAccelerators LoadAcceleratorsA
-#define LoadBitmap LoadBitmapA
-#define LoadCursor LoadCursorA
-#define LoadIcon LoadIconA
-#define MessageBox MessageBoxA
-#define PostMessage PostMessageA
-#define PrintDlg PrintDlgA
-#define RegisterClass RegisterClassA
-#define SetDlgItemText SetDlgItemTextA
-#define SetWindowLongPtr SetWindowLongPtrA
-#define SystemParametersInfo SystemParametersInfoA
-#define TextOut TextOutA
-#define WinHelp WinHelpA
-#define WritePrivateProfileString WritePrivateProfileStringA
-#define lstrcat lstrcatA
-#define lstrcpy lstrcpyA
-#define lstrlen lstrlenA
-#define wsprintf wsprintfA
 BOOL SetKeyboardState(BYTE *rgb);
 HACCEL CreateAcceleratorTableA(LPACCEL rgaccel, int c);
 int CopyAcceleratorTableA(HACCEL haccel, LPACCEL rgaccel, int c);
 BOOL DestroyAcceleratorTable(HACCEL haccel);
-#define CreateAcceleratorTable CreateAcceleratorTableA
-#define CopyAcceleratorTable CopyAcceleratorTableA
 HMENU LoadMenuA(HINSTANCE hInstance, LPCSTR pszName);
 BOOL GetMenuItemRect(HWND hwnd, HMENU hmenu, UINT i, LPRECT lprc);
 HICON CopyIcon(HICON hicon);
@@ -266,7 +229,6 @@ BOOL RemoveMenu(HMENU hMenu, UINT pos, UINT flags);
 UINT GetMenuState(HMENU hMenu, UINT id, UINT flags);
 UINT GetMenuItemID(HMENU hMenu, int i);
 int GetMenuStringA(HMENU hMenu, UINT id, LPSTR psz, int cch, UINT flags);
-#define GetMenuString GetMenuStringA
 int SetScrollInfo(HWND hwnd, int sb, LPCSCROLLINFO lpsi, BOOL fRedraw);
 BOOL GetScrollInfo(HWND hwnd, int sb, LPSCROLLINFO lpsi);
 BOOL ShowScrollBar(HWND hwnd, int sb, BOOL fShow);

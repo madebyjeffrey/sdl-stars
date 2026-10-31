@@ -118,7 +118,7 @@ static int16_t TestFSendPlrMsg2(int16_t player, MessageId id, MsgGoto a, int16_t
     noticeCount[messages] = planet.lpplprod ? planet.lpplprod->iprodMac : -1;
     noticeRowCount[messages] = planet.lpplprod && planet.lpplprod->iprodMac ? (int)planet.lpplprod->rgprod()[0].cItem : -1;
     messages++;
-    return TRUE;
+    return 1;
 }
 static int16_t TestCResourcesAtPlanet(PLANET *p, int16_t player) {
     assert(p == &planet && !player);

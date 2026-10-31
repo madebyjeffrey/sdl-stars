@@ -18,37 +18,11 @@
  *
  * The game code keeps the Win32 names it was written with. These define
  * them where windows.h is not included; the UI files include windows.h
- * first (win.h), and its definitions are the same.
+ * first (win.h); shared numeric values live in ui_values.h.
  */
 
-#ifndef TRUE
-#define TRUE  1
-#define FALSE 0
-#endif
-#ifndef LOWORD
-#define LOWORD(l)      ((uint16_t)(((uintptr_t)(l)) & 0xffff))
-#define HIWORD(l)      ((uint16_t)((((uintptr_t)(l)) >> 16) & 0xffff))
-#define LOBYTE(w)      ((uint8_t)(((uintptr_t)(w)) & 0xff))
-#define MAKELONG(a, b) ((int32_t)(((uint16_t)(((uintptr_t)(a)) & 0xffff)) | ((uint32_t)((uint16_t)(((uintptr_t)(b)) & 0xffff))) << 16))
-#endif
+#include "ui_values.h"
 #include "value.h"
-
-// AlertSz's message box types and answers (IdAlertBox).
-#ifndef MB_OK
-#define MB_OK              0x0000
-#define MB_OKCANCEL        0x0001
-#define MB_YESNOCANCEL     0x0003
-#define MB_YESNO           0x0004
-#define MB_ICONHAND        0x0010
-#define MB_ICONQUESTION    0x0020
-#define MB_ICONEXCLAMATION 0x0030
-#define MB_ICONASTERISK    0x0040
-#define MB_TASKMODAL       0x2000
-#define IDOK               1
-#define IDCANCEL           2
-#define IDYES              6
-#define IDNO               7
-#endif
 
 /*
  * Win16 points
@@ -108,11 +82,11 @@ NATIVEFILE *PfOpenNativeFile(const char *psz, const char *pszMode);
 
 // File names: the directory separator.
 #ifdef _WIN32
-#define chDirSep '\\'
-#define szDirSep "\\"
+inline constexpr char chDirSep = '\\';
+inline constexpr char szDirSep[] = "\\";
 #else
-#define chDirSep '/'
-#define szDirSep "/"
+inline constexpr char chDirSep = '/';
+inline constexpr char szDirSep[] = "/";
 #endif
 
 // GetDateTimeSz writes the date as MM/DD/YY and the time as HH:MM:SS, as

@@ -64,16 +64,16 @@ static void test_PszFromLong(void) {
 // the copy open with exclusive sharing, and its failed-open return skipped
 // restoring recovery state and fFileErrSilent.
 static void test_StarsCopyFile(void) {
-    char    szCwd[MAX_PATH];
-    char    szSrc[MAX_PATH];
-    char    szDst[MAX_PATH];
-    char    szBad[MAX_PATH];
+    char    szCwd[cbTestPath];
+    char    szSrc[cbTestPath];
+    char    szDst[cbTestPath];
+    char    szBad[cbTestPath];
     char    rgb[16];
     FILE   *fp;
     int16_t fSilentSav;
 
     TEST_ASSERT(FStarsTestInit());
-    TEST_ASSERT(getcwd(szCwd, sizeof(szCwd)) != NULL);
+    TEST_ASSERT(PszStarsTestCwd(szCwd, sizeof(szCwd)) != NULL);
     snprintf(szSrc, sizeof(szSrc), "%s%scopy-src.txt", szCwd, szDirSep);
     snprintf(szDst, sizeof(szDst), "%s%scopy-dst.txt", szCwd, szDirSep);
     snprintf(szBad, sizeof(szBad), "%s%sno-such-dir%scopy-dst.txt", szCwd, szDirSep, szDirSep);

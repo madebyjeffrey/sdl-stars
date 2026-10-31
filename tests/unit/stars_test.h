@@ -3,7 +3,7 @@
 
 // Helpers for unit tests that link the game code. Acutest runs every test
 // in its own process, so each test starts from the game's initial globals
-// and calls FStarsTestInit first. Helpers return FALSE on failure.
+// and calls FStarsTestInit first. Helpers return zero on failure.
 
 #ifdef STARS_UI_SDL
 #include "win.h"
@@ -11,17 +11,21 @@
 #include "common.h"
 #endif
 
-#ifndef MAX_PATH
-#define MAX_PATH 260
-#endif
+inline constexpr int cbTestPath = 260;
 
-// getcwd names the working directory on either platform.
+// Match the platform CRT used by the independent file fixtures.
 #ifdef _WIN32
 #include <direct.h>
-#define getcwd _getcwd
 #else
 #include <unistd.h>
 #endif
+inline char *PszStarsTestCwd(char *szPath, int cchPath) {
+#ifdef _WIN32
+    return _getcwd(szPath, cchPath);
+#else
+    return getcwd(szPath, static_cast<size_t>(cchPath));
+#endif
+}
 // The game's message boxes are recorded here instead of shown, so nothing
 // waits for a click: compile-time AlertSz substitution in SDL clients and
 // IdAlertBox in host tests.

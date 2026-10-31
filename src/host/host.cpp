@@ -18,11 +18,11 @@
 int16_t IdAlertBox(const char *sz, int16_t mbType) {
     fprintf(stderr, "stars-host: %s\n", sz);
     switch (mbType & 0x000f) {
-    case MB_OKCANCEL:
+    case win32::MB_OKCANCEL:
         return IDCANCEL;
-    case MB_YESNOCANCEL:
-    case MB_YESNO:
-        return IDNO;
+    case win32::MB_YESNOCANCEL:
+    case win32::MB_YESNO:
+        return win32::IDNO;
     default:
         return IDOK;
     }
@@ -39,7 +39,7 @@ static int16_t FReadHostIni(const char *szFile) {
 
     pf = PfOpenNativeFile(szFile, "rb");
     if (!pf) {
-        return FALSE;
+        return 0;
     }
     StarsNativeFileGuard file(pf);
     ISeekNativeFile(pf, 0, SEEK_END);
@@ -48,11 +48,11 @@ static int16_t FReadHostIni(const char *szFile) {
     NATIVEOWNER<char, std::free> text(static_cast<char *>(malloc((size_t)cb + 1)));
     pszText = text.get();
     if (!pszText || CReadNative(pszText, 1, (size_t)cb, pf) != (size_t)cb) {
-        return FALSE;
+        return 0;
     }
     ICloseNativeFile(file.Release());
     pszText[cb] = 0;
-    if (!FUtf8Valid(pszText, (size_t)cb)) return FALSE;
+    if (!FUtf8Valid(pszText, (size_t)cb)) return 0;
     if (cb >= 3 && !memcmp(pszText, "\xef\xbb\xbf", 3)) memmove(pszText, pszText + 3, (size_t)cb - 2);
     ini.fLogging = LIniInt(pszText, idsFiles, idsLogging, 0) != 0;
     if (!FIniValue(pszText, idsMisc, idsDefaultpassword, vszDefPass, 16)) {
@@ -64,7 +64,7 @@ static int16_t FReadHostIni(const char *szFile) {
     if (vcBackupDirs < 1 || vcBackupDirs > 999) {
         vcBackupDirs = 1;
     }
-    return TRUE;
+    return 1;
 }
 
 int main(int argc, char *argv[]) try {
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) try {
 #ifdef _WIN32
     nativeArguments.reset();
 #endif
-    fSeed = FALSE;
+    fSeed = 0;
     lSeed = 0;
     if (!ParseCmdLine(szCmdLine, &fSeed, &lSeed)) return 2;
     Randomize2(fSeed ? lSeed : DwTickCount());
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) try {
         return 2;
     }
     idPlayer = iplrNone;
-    ini.fCmdLine = FALSE;
+    ini.fCmdLine = 0;
     if (!FRunCmdLine()) {
         if (ini.fDumpMap || ini.fDumpPlanets || ini.fDumpFleets) {
             if (!FDumpCmdLineGame()) {

@@ -10,10 +10,10 @@
 static HWND hwndOwner;
 static int cTicks, iAction, cPrompts;
 static BOOL fPromptPending;
-static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+static LRESULT  OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND hwndPrompt;
     char szCaption[64];
-    if (msg == WM_TIMER) {
+    if (msg == win32::WM_TIMER) {
         cTicks++;
         if (win32::IsWindowEnabled(hwnd)) { fputs("Portal owner was not modal\n", stderr); exit(2); }
         if (SDL_GetWindowFlags(hwnd->lpWindow.get()) & (SDL_WINDOW_NOT_FOCUSABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) {
@@ -22,11 +22,11 @@ static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (iAction == 1) { iAction = 0; win32::PostQuitMessage(73); }
         else if (iAction == 2) { iAction = 0; win32::DestroyWindow(hwnd); }
         else if (!fPromptPending) {
-            for (hwndPrompt = win32::GetWindow(hwnd, GW_HWNDFIRST); hwndPrompt; hwndPrompt = win32::GetWindow(hwndPrompt, GW_HWNDNEXT)) {
+            for (hwndPrompt = win32::GetWindow(hwnd, win32::GW_HWNDFIRST); hwndPrompt; hwndPrompt = win32::GetWindow(hwndPrompt, win32::GW_HWNDNEXT)) {
                 win32::GetWindowTextA(hwndPrompt, szCaption, sizeof(szCaption));
                 if (win32::IsWindowVisible(hwndPrompt) && strcmp(szCaption, iAction == 4 ? "Confirm save" : "File selection") == 0) {
-                    cPrompts++; win32::PostMessageA(hwndPrompt, WM_COMMAND, iAction == 4 ? IDNO : IDOK, 0);
-                    fPromptPending = TRUE;
+                    cPrompts++; win32::PostMessageA(hwndPrompt, win32::WM_COMMAND, iAction == 4 ? win32::IDNO : win32::IDOK, 0);
+                    fPromptPending = 1;
                     iAction = 0; break;
                 }
             }
@@ -41,8 +41,8 @@ static void Init(OPENFILENAMEA *lp, char *pszFile, const char *pszTitle, const c
     lp->lStructSize = sizeof(*lp); lp->hwndOwner = hwndOwner;
     lp->lpstrFile = pszFile; lp->nMaxFile = 4096; lp->lpstrTitle = pszTitle;
     lp->lpstrInitialDir = pszDir; lp->lpstrFilter = szFilter; lp->nFilterIndex = 1;
-    lp->Flags = OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST;
-    pszFile[0] = 0; cTicks = 0; cPrompts = 0; fPromptPending = FALSE;
+    lp->Flags = win32::OFN_NOCHANGEDIR | win32::OFN_FILEMUSTEXIST;
+    pszFile[0] = 0; cTicks = 0; cPrompts = 0; fPromptPending = 0;
 }
 int main(int argc, char **argv) {
     WNDCLASSA wc = {};
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     CHECK(argc == 2 && getcwd(szCwd, sizeof(szCwd)));
     wc.lpszClassName = "PortalOwner"; wc.lpfnWndProc = OwnerProc; wc.hInstance = win32::GetModuleHandleA(NULL);
     CHECK(win32::RegisterClassA(&wc));
-    hwndOwner = win32::CreateWindow(wc.lpszClassName, "Portal owner", WS_POPUP | WS_VISIBLE, 10, 10, 200, 150, NULL, NULL, wc.hInstance, NULL);
+    hwndOwner = win32::CreateWindowExA(0, wc.lpszClassName, "Portal owner", win32::WS_POPUP | win32::WS_VISIBLE, 10, 10, 200, 150, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwndOwner && win32::SetTimer(hwndOwner, 1, 10, NULL));
     CHECK(SDL_SetWindowFullscreen(hwndOwner->lpWindow.get(), true));
     Init(&ofn, szFile, "Portal unicode", argv[1]);
@@ -78,25 +78,25 @@ int main(int argc, char **argv) {
     CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == 0 && strcmp(szFile, "unchanged") == 0 && cPrompts == 0);
     CHECK(hwndOwner->cNativeFileDialogs == 0 && win32::IsWindowEnabled(hwndOwner) &&
           (SDL_GetWindowFlags(hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN));
-    Init(&ofn, szFile, "Portal save", argv[1]); ofn.Flags = OFN_NOCHANGEDIR; ofn.lpstrDefExt = "r1";
+    Init(&ofn, szFile, "Portal save", argv[1]); ofn.Flags = win32::OFN_NOCHANGEDIR; ofn.lpstrDefExt = "r1";
     CHECK(win32::GetSaveFileNameA(&ofn) && strcmp(szFile + ofn.nFileOffset, "new race.r1") == 0 && access(szFile, F_OK) != 0);
     Init(&ofn, szFile, "Portal retry", argv[1]); iAction = 3; cPrompts = 0;
     CHECK(win32::GetOpenFileNameA(&ofn) && cPrompts == 1 && strstr(szFile, "/retry/caf") && ofn.nFilterIndex == 2);
     Init(&ofn, szFile, "Portal directory", argv[1]); iAction = 3; cPrompts = 0;
     CHECK(win32::GetOpenFileNameA(&ofn) && cPrompts == 1 && strstr(szFile, "/retry/caf"));
-    Init(&ofn, szFile, "Portal overwrite", argv[1]); ofn.Flags = OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
+    Init(&ofn, szFile, "Portal overwrite", argv[1]); ofn.Flags = win32::OFN_NOCHANGEDIR | win32::OFN_OVERWRITEPROMPT;
     iAction = 4; cPrompts = 0;
     CHECK(win32::GetSaveFileNameA(&ofn) && cPrompts == 1 && strcmp(szFile + ofn.nFileOffset, "another.r1") == 0);
     Init(&ofn, szFile, "Portal buffer", argv[1]); ofn.nMaxFile = 8;
-    CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == FNERR_BUFFERTOOSMALL && cPrompts == 1);
+    CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == win32::FNERR_BUFFERTOOSMALL && cPrompts == 1);
     memcpy(&cbRequired, szFile, sizeof(cbRequired)); CHECK(cbRequired > 8);
     for (i = 0; i < sizeof(rgInvalid) / sizeof(rgInvalid[0]); i++) {
         Init(&ofn, szFile, rgInvalid[i], argv[1]);
-        CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == CDERR_INITIALIZATION && szFile[0] == 0 && win32::IsWindowEnabled(hwndOwner) && cPrompts == 1);
+        CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == win32::CDERR_INITIALIZATION && szFile[0] == 0 && win32::IsWindowEnabled(hwndOwner) && cPrompts == 1);
     }
     Init(&ofn, szFile, "Portal quit", argv[1]); iAction = 1;
     CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == 0);
-    CHECK(win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_QUIT && msg.wParam == 73);
+    CHECK(win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE) && msg.message == win32::WM_QUIT && msg.wParam == 73);
     Init(&ofn, szFile, "Portal destroy", argv[1]); iAction = 2;
     CHECK(!win32::GetOpenFileNameA(&ofn) && win32::CommDlgExtendedError() == 0 && !win32::IsWindow(hwndOwner));
     StarsCompatShutdown();

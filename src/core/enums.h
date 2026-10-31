@@ -559,11 +559,6 @@ enum DialogId : uint16_t {
     IDD_PRINT_MAP = 214, /* PrintMapDlg */
 };
 
-#undef IDOK
-#undef IDCANCEL
-#undef IDHELP
-#undef IDC_HELP
-
 // AboutControl names the controls of the About dialog.
 enum AboutControl : uint16_t {
     IDC_ABOUT_ORDER_INFO = 118,
@@ -997,7 +992,6 @@ enum ControlId : uint16_t {
 
 /* Numeric cursor resources, named after the hcur globals they load into;
  * the others are named (SCANNERCUR, ...). */
-#undef IDC_HAND
 enum CursorId : uint16_t {
     IDC_NO_WAY = 121,
     IDC_TRASH_CAN = 122,

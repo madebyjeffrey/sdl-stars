@@ -13,7 +13,7 @@ typedef struct COMPATPRINT COMPATPRINT;
 void CompatConsumeAsyncMessage(const SDL_Event *event);
 void CompatStartAsyncMessages() noexcept;
 void CompatStopAsyncMessages() noexcept;
-#define COMPAT_ASYNC_POST_CODE 0x53544152
+inline constexpr auto COMPAT_ASYNC_POST_CODE = 0x53544152;
 HDC HdcCompatPrinter(COMPATPRINT *lpprint, int cx, int cy);
 COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);
@@ -26,8 +26,8 @@ typedef struct COMPATFONT COMPATFONT;
 typedef struct COMPATLIST COMPATLIST;
 typedef struct COMPATTOOLBAR COMPATTOOLBAR;
 void CompatDestroyToolbar(HWND hwnd);
-LRESULT CALLBACK CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatToolbarTipProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 typedef struct COMPATCOMBO {
     HWND hwndPopup, hwndEdit, hwndCapture;
     WNDPROC lpfnEdit;
@@ -196,7 +196,7 @@ typedef struct COMPATDLGTEMPLATE {
 } COMPATDLGTEMPLATE;
 BOOL FCompatDialogTemplate(const BYTE *rgb, size_t cb, COMPATDLGTEMPLATE *lpdlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
-LRESULT CALLBACK CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);
 void CompatDestroyList(HWND hwnd);
 HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, const RECT *lprc,
@@ -204,7 +204,7 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
 HWND HwndCompatFirstTop(void);
 HWND HwndCompatRegistry(void);
 void CompatShutdownInspector(void);
-LRESULT CALLBACK CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatMessageTextProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatShutdownAudio(void) noexcept;
 
 typedef struct COMPATDIB {
@@ -225,12 +225,12 @@ BOOL FCompatVideo(void);
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle);
 void CompatRememberNormal(HWND hwnd);
 void CompatWindowState(HWND hwnd, UINT sw, BOOL fNotify);
-LRESULT CALLBACK CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 unsigned NCompatListMutation(HWND hwnd);
-LRESULT CALLBACK CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-LRESULT CALLBACK CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatComboPopupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+LRESULT  CompatScrollProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 HWND LpCompatWindow(HWND hwnd);
 HWND LpCompatWindowFromId(SDL_WindowID id);
 void CompatFocusWindow(HWND hwnd);

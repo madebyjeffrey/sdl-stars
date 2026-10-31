@@ -40,11 +40,11 @@ BOOL FCompatOpenDocument(const char *pszPath) {
     char *pszUri = PszCompatFileUri(pszPath);
     BOOL fOpened, fEventsOwned;
 
-    if (!pszUri) return FALSE;
+    if (!pszUri) return 0;
     // A standalone help launch has no windows yet. Initialize SDL's platform
     // services so its Linux OpenFile portal is available before SDL_OpenURL.
     fEventsOwned = !(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS);
-    if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) { free(pszUri); return FALSE; }
+    if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) { free(pszUri); return 0; }
     fOpened = CompatExternalIO().pfnOpenURL(pszUri);
     if (fEventsOwned) SDL_QuitSubSystem(SDL_INIT_EVENTS);
     free(pszUri);

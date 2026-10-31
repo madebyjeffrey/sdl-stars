@@ -80,7 +80,7 @@ The SDL runtime calls application window/dialog/timer/inspector callbacks
 through C++ containment adapters. A thrown failure becomes pending state, an
 active modal dialog ends, and the dispatcher finishes its counters, window
 and owner cleanup. Owned UI callers explicitly use the typed functions in
-`wincompat_calls.h` (`LUiSendMessage`, `LUiDialogBox`, `FUiDestroyWindow`, etc.).
+`wincompat_calls.h` (`ui::SendMessage`, `ui::DialogBox`, `ui::DestroyWindow`, etc.).
 These deliver pending failures after the raw operation returns; internal runtime
 calls keep the raw APIs so their outer cleanup finishes before delivery.
 API macros no longer insert error delivery into application calls. Native
@@ -89,6 +89,14 @@ contain remaining failures; foreign entrypoints and callbacks contain exceptions
 The callback fault test exercises nested dialogs, owner re-enabling, allocation
 exceptions, timers, synchronous delivery, text/position/enable notifications and
 automatic destruction.
+
+Compatibility numeric values now live in typed `win32::` declarations; word/byte,
+message and color conversions use typed functions with the original scalar widths.
+The core shares only the SDL-independent values and word helpers. Procedure
+instances and `Yield` no-ops are removed after checking their argument effects.
+`ui::RequestQuit` directly preserves the old unsupported-logoff diagnostic and
+application-quit behavior. The [C07 macro ledger](CPP-C07-MACROS.md) records each
+retained preprocessing role and conversion contract.
 
 Each native-port shim is marked `NATIVE` in the source and described in
 detail in [WIN16-PARITY.md](WIN16-PARITY.md).

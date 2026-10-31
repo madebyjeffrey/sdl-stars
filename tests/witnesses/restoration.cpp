@@ -132,7 +132,7 @@ static int16_t TestFind() {
     return FFindSomethingAndSelectIt();
 }
 static void TestSend(HWND hwnd, int message, int command, int param) {
-    assert(hwnd == hwndFrame && message == WM_COMMAND && command == IDM_FRAME_POST_OPEN && param == 0);
+    assert(hwnd == hwndFrame && message == win32::WM_COMMAND && command == IDM_FRAME_POST_OPEN && param == 0);
     RestoreGameWindows();
 }
 
@@ -259,9 +259,9 @@ int main(void) {
     memset(bitfMsgFiltered, 0, sizeof(bitfMsgFiltered));
     bitfMsgFiltered[ids[0] >> 3] = 1 << (ids[0] & 7);
     iMsgCur = -1;
-    CHECK(IMsgNext(FALSE) == 2 && IMsgNext(TRUE) == 0);
+    CHECK(IMsgNext(0) == 2 && IMsgNext(1) == 0);
     iMsgCur = 0;
-    CHECK(IMsgNext(TRUE) == 1);
+    CHECK(IMsgNext(1) == 1);
     reset();
     RestoreGameWindows();
     CHECK(strcmp(trace, "L0;T;I;A;R;S;U;") == 0 && !gd.fNoScannerDraw);

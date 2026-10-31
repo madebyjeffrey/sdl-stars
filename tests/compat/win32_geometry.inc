@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
             for (x = 2; x < 4 + cx; x++) { cr = GetPixel(hdc, x, y); putchar(cr == RGB(255, 0, 0) ? 'R' : cr == RGB(0, 0, 255) ? 'B' : '.'); }
             putchar('\n');
         }
-        fDump = TRUE;
+        fDump = 1;
     } else if (fDump) {
         for (i = 0; i < 3; i++) {
             CHECK(SelectObject(hdc, i == 1 ? GetStockObject(NULL_PEN) : hpen));

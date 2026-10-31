@@ -96,16 +96,16 @@ int main(void) {
     // Opaque text rectangles and DrawText clipping follow the origin too.
     CHECK(SetBkColor(hdc, crDest) != CLR_INVALID && SetWindowOrgEx(hdc, 10, 20, NULL));
     rcFrame = (RECT){30, 40, 34, 44};
-    CHECK(ExtTextOut(hdc, 30, 40, ETO_OPAQUE, &rcFrame, "", 0, NULL));
+    CHECK(ExtTextOutA(hdc, 30, 40, ETO_OPAQUE, &rcFrame, "", 0, NULL));
     CHECK(SetWindowOrgEx(hdc, 0, 0, NULL) && GetPixel(hdc, 20, 20) == crDest);
     CHECK(PatBlt(hdc, 0, 0, 40, 40, BLACKNESS) && PatBlt(hsrc, 0, 0, 40, 40, BLACKNESS));
     CHECK(SetBkColor(hsrc, crDest) != CLR_INVALID && SetTextColor(hdc, crPen) != CLR_INVALID);
     CHECK(SetTextColor(hsrc, crPen) != CLR_INVALID && SetWindowOrgEx(hdc, 10, 20, NULL));
-    CHECK(TextOut(hsrc, 2, 2, "WW", 2) && TextOut(hdc, 12, 22, "WW", 2));
+    CHECK(TextOutA(hsrc, 2, 2, "WW", 2) && TextOutA(hdc, 12, 22, "WW", 2));
     rcFrame = (RECT){2, 20, 20, 38};
-    CHECK(DrawText(hsrc, "W", 1, &rcFrame, DT_SINGLELINE));
+    CHECK(DrawTextA(hsrc, "W", 1, &rcFrame, DT_SINGLELINE));
     rcFrame = (RECT){12, 40, 30, 58};
-    CHECK(DrawText(hdc, "W", 1, &rcFrame, DT_SINGLELINE));
+    CHECK(DrawTextA(hdc, "W", 1, &rcFrame, DT_SINGLELINE));
     CHECK(SetWindowOrgEx(hdc, 0, 0, NULL));
     for (y = 0; y < 40; y++) for (x = 0; x < 40; x++) CHECK(GetPixel(hdc, x, y) == GetPixel(hsrc, x, y));
     // Pattern brush owns a copy, so deleting the source bitmap is safe.

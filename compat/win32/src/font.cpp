@@ -63,7 +63,7 @@ static COMPATGLYPH *LpLoadGlyph(COMPATFONT *lpfont, FT_Face face, DWORD ch, COMP
                     lpbm->pixel_mode == FT_PIXEL_MODE_BGRA ? rgbRow[x * 4 + 3] : rgbRow[x];
         }
     }
-    lp->fLoaded = TRUE;
+    lp->fLoaded = 1;
     return lp;
 }
 
@@ -72,13 +72,13 @@ static COMPATGLYPH *LpGlyph(COMPATFONT *lpfont, BYTE ch) {
 }
 
 static BOOL FFontConfig(void) {
-    if (lpConfig) return TRUE;
+    if (lpConfig) return 1;
     lpConfig.reset(FcConfigCreate());
     if (!lpConfig || !FcConfigParseAndLoad(lpConfig.get(), NULL, FcTrue) || !FcConfigBuildFonts(lpConfig.get())) {
         lpConfig.reset();
-        return FALSE;
+        return 0;
     }
-    return TRUE;
+    return 1;
 }
 
 static void SetCompatFontDefaults(FcPattern *lppattern) {
@@ -162,7 +162,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     FcPattern *pattern, *match;
     FcResult result;
     FcChar8 *pszFile;
-    char szFamily[LF_FACESIZE];
+    char szFamily[win32::LF_FACESIZE];
     char *psz;
     int index = 0, cHeight, i, cWidth = 0, dxMax = 0, iFaceError;
     FT_Face face = NULL;
@@ -188,14 +188,14 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     lpfontOwner.reset(new (std::nothrow) COMPATFONT{}); lpfont = lpfontOwner.get();
     if (!lpfont) return NULL;
     lpfont->library = library;
-    lpfont->lf = *lplf; lpfont->lf.lfFaceName[LF_FACESIZE - 1] = 0;
+    lpfont->lf = *lplf; lpfont->lf.lfFaceName[win32::LF_FACESIZE - 1] = 0;
     strcpy(szFamily, lpfont->lf.lfFaceName);
     fBold = lplf->lfWeight >= 600;
     fItalic = lplf->lfItalic;
     // The game stores styled face names rather than setting LOGFONT style flags.
     psz = strstr(szFamily, " Bold");
-    if (psz) { *psz = 0; fBold = TRUE; fItalic |= strstr(psz + 1, "Italic") != NULL; }
-    else if ((psz = strstr(szFamily, " Italic"))) { *psz = 0; fItalic = TRUE; }
+    if (psz) { *psz = 0; fBold = 1; fItalic |= strstr(psz + 1, "Italic") != NULL; }
+    else if ((psz = strstr(szFamily, " Italic"))) { *psz = 0; fItalic = 1; }
     i = -1;
     if (!*szFamily || !strcasecmp(szFamily, "Arial") || !strcasecmp(szFamily, "Liberation Sans") ||
         !strcasecmp(szFamily, "sans-serif") || !strcasecmp(szFamily, "Tahoma") || !strcasecmp(szFamily, "MS Sans Serif")) i = 0;
@@ -272,9 +272,9 @@ BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize) {
 }
 
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm) {
-    if (!lpfont || !lptm) return FALSE;
+    if (!lpfont || !lptm) return 0;
     *lptm = lpfont->tm;
-    return TRUE;
+    return 1;
 }
 
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
@@ -287,16 +287,16 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize)
     uint32_t ch;
     int64_t dx = 0;
     COMPATGLYPH *lp;
-    if (!lpfont || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return FALSE;
+    if (!lpfont || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
     while (i < cch) {
         c = CbUtf8Char(psz + i, (size_t)(cch - i), &ch);
-        if (c == 0) return FALSE;
-        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return FALSE;
+        if (c == 0) return 0;
+        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
         dx += lp->dx; i += c;
     }
-    if (dx > INT_MAX) return FALSE;
+    if (dx > INT_MAX) return 0;
     *lpsize = SIZE{(LONG)dx, lpfont->tm.tmHeight};
-    return TRUE;
+    return 1;
 }
 
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
@@ -306,16 +306,16 @@ BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
     int64_t dx = 0;
     SIZE size;
     COMPATGLYPH *lp;
-    if (!FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return FALSE;
+    if (!FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
     while (i < cch) {
         c = CbUtf8Char(psz + i, (size_t)(cch - i), &ch);
-        if (c == 0) return FALSE;
-        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return FALSE;
+        if (c == 0) return 0;
+        lp = LpGlyphUtf8(lpfont, ch); if (!lp) return 0;
         for (y = 0; y < lp->cy; y++) for (x = 0; x < lp->cx; x++)
             if (lp->rgb[(size_t)y * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[(size_t)y * lp->cx + x]);
         dx += lp->dx; i += c;
     }
-    return TRUE;
+    return 1;
 }
 
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
@@ -327,8 +327,8 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
     DWORD ch;
     int64_t dx = 0;
 
-    if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return FALSE;
-    if (cch == 0) return TRUE;
+    if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, psz, cch, &size)) return 0;
+    if (cch == 0) return 1;
     if (iScale != 1 && lpfont->iScale != iScale) {
         lf = lpfont->lf;
         lf.lfHeight = -(int)lpfont->face->size->metrics.y_ppem * iScale;
@@ -336,14 +336,14 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         lpfont->lpScaled.reset();
         lpfont->lpScaled.reset(LpNewFontRaster(&lf, 2048));
         lpfont->iScale = lpfont->lpScaled ? iScale : 0;
-        if (!lpfont->lpScaled) return FALSE;
+        if (!lpfont->lpScaled) return 0;
     }
     while (i < cch) {
         c = CbUtf8Char(psz + i, (size_t)(cch - i), &ch);
-        if (c == 0) return FALSE;
+        if (c == 0) return 0;
         lp = LpGlyphUtf8(lpfont, ch);
         lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), ch);
-        if (!lp || !lpRaster) return FALSE;
+        if (!lp || !lpRaster) return 0;
         for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
             if (lpRaster->rgb[(size_t)y * lpRaster->cx + x])
                 pfn(lpv, dx * iScale + lpRaster->x + x,
@@ -354,7 +354,7 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         else dx += lp->dx;
         i += c;
     }
-    return TRUE;
+    return 1;
 }
 
 void CompatShutdownFonts(void) {

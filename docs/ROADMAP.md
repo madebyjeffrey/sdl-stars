@@ -43,8 +43,11 @@ inventory and source filename migration merged in PR #68. C03's explicit typed
 callback calls merged in PR #69 with all enabled CI passing. C04/C05 replace test
 redirects/clones and all 27 extraction programs with typed effects and linked
 production tests; PR #72 passes all 15 enabled jobs. C06 replaces generated wrapper
-names and the 23 prefixed UI entry names with actual namespaces; local
-qualification is active. Macro and state-access cleanup follow, preserving
+names and the 23 prefixed UI entry names with actual namespaces; PR #73 passes
+all 14 enabled jobs and the manual Linux/Windows run. C07 replaces compatibility
+macros with typed values/direct calls and passes full local qualification; remote
+CI is pending. State-access
+cleanup and final policy/qualification follow, preserving
 game/file behavior.
 [Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
 status and verification; later C checkpoints remain pending.

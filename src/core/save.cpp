@@ -149,7 +149,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
     PLANET   pl;
     std::byte rgbProd[1024];
 
-    fRet = TRUE;
+    fRet = 1;
     SetVisiblePlanFleet(iPlayer);
     if (gd.fGeneratingTurn && iPlayer != iplrNone) {
         for (i = 0; i < cFleet; i++) {
@@ -160,7 +160,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                 for (j = 0; j < 16 && lpfl->rgcsh[j] == 0; j++) {
                 }
                 if (j == 16) {
-                    lpfl->fDead = TRUE;
+                    lpfl->fDead = 1;
                 } else {
                     lpord = lpfl->lpplord->rgord();
                     if (lpord->grobj == grobjFleet) {
@@ -180,7 +180,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                     if (lpord->grTask == grTaskPatrol && (lpfl->cord <= 1 || lpord[1].grobj != grobjFleet)) {
                         lpflBest = NULL;
                         lBest = 100000000;
-                        fFoundIdeal = FALSE;
+                        fFoundIdeal = 0;
                         if (lpfl->idPlanet == idPlanetDeepSpace && lpfl->cord >= 2 && lpfl->fRepOrders) {
                             pt = lpord[1].pt;
                         } else {
@@ -197,17 +197,17 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                                 dy = (int16_t)(lpflTarget->pt.y - pt.y);
                                 l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                 if (((!fFoundIdeal && !lpflTarget->fMark) || (l < lBest && (!fFoundIdeal || !lpflTarget->fMark))) &&
-                                    (FMatchTarget(lpflTarget, mdTarget, FALSE) && FAttackPlayer(lpfl, lpflTarget->iPlayer))) {
+                                    (FMatchTarget(lpflTarget, mdTarget, 0) && FAttackPlayer(lpfl, lpflTarget->iPlayer))) {
                                     lpflBest = lpflTarget;
                                     lBest = l;
                                     if (!lpflTarget->fMark) {
-                                        fFoundIdeal = TRUE;
+                                        fFoundIdeal = 1;
                                     }
                                 }
                             }
                         }
                         if (fFoundIdeal && !gd.fTutorial) {
-                            lpflBest->fMark = TRUE;
+                            lpflBest->fMark = 1;
                         }
                         j = 50 * lpord->tptl().iDist + 50;
                         if (j == 550) {
@@ -223,22 +223,22 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                             }
                             if (lpfl->cord == 1) {
                                 memset(lpord + 1, 0, sizeof(ORDER));
-                                lpord[1].fValidTask = TRUE;
+                                lpord[1].fValidTask = 1;
                                 lpord[1].grTask = grTaskPatrol;
                                 lpord[1].tptl() = lpord->tptl();
                                 if (lpord[1].tptl().iWarp == 0) {
-                                    lpord[1].iWarp = IFindIdealWarp(lpfl, FALSE);
+                                    lpord[1].iWarp = IFindIdealWarp(lpfl, 0);
                                 } else {
                                     lpord[1].iWarp = lpord[1].tsell().iPlrX;
                                 }
                                 if (lpfl->fRepOrders) {
                                     lpord[2] = *lpord;
-                                    lpord[2].iWarp = IFindIdealWarp(lpfl, FALSE);
+                                    lpord[2].iWarp = IFindIdealWarp(lpfl, 0);
                                     lpfl->cord++;
                                     lpfl->lpplord->iordMac++;
                                 }
                             } else if (lpord[1].tsell().iPlrX == 0) {
-                                lpord[1].iWarp = IFindIdealWarp(lpfl, FALSE);
+                                lpord[1].iWarp = IFindIdealWarp(lpfl, 0);
                             } else {
                                 lpord[1].iWarp = lpord[1].tsell().iPlrX;
                             }
@@ -270,7 +270,7 @@ int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend) {
                             } else if (lpord[iord].grobj == grobjFleet) {
                                 fNoAutoTrack = lpord[iord].fNoAutoTrack;
                                 if (fNoAutoTrack) {
-                                    lpord[iord].fNoAutoTrack = FALSE;
+                                    lpord[iord].fNoAutoTrack = 0;
                                 }
                                 lpflT = LpflFromId(lpord[iord].id);
                                 if (!lpflT || lpflT->fDead) {
@@ -347,19 +347,19 @@ LAppend:
         while (i < cPlanet) {
             if (lpplT->fInclude) {
                 if (lpplT->det == detAll) {
-                    WritePlanet(lpplT, rtPlanet, FALSE);
+                    WritePlanet(lpplT, rtPlanet, 0);
                     if (lpplT->lpplprod) {
                         if (!FEncodeProdQueue(std::span(lpplT->lpplprod->rgprod(), lpplT->lpplprod->iprodMac), rgbProd)) goto LFail;
                         RecordIO().pfnWriteRt(rtProdQ, lpplT->lpplprod->iprodMac * cbWireProd, rgbProd);
                     }
                 } else if (lpplT->det == detObscure) {
                     pl = *lpplT;
-                    lpplT->fStarbase = FALSE;
+                    lpplT->fStarbase = 0;
                     lpplT->det = detSome;
-                    WritePlanet(lpplT, rtPlanetB, FALSE);
+                    WritePlanet(lpplT, rtPlanetB, 0);
                     *lpplT = pl;
                 } else {
-                    WritePlanet(lpplT, rtPlanetB, FALSE);
+                    WritePlanet(lpplT, rtPlanetB, 0);
                 }
             }
             i++;
@@ -458,7 +458,7 @@ LAppend:
             lpbtlplan = rglpbtlplan[i];
             j = 0;
             while (j < rgcbtlplan[i]) {
-                WriteBattlePlan(lpbtlplan, FALSE);
+                WriteBattlePlan(lpbtlplan, 0);
                 j++;
                 lpbtlplan++;
             }
@@ -472,15 +472,15 @@ LAppend:
 LFail:
     idPlayer = iPlayer;
     if (fAppend) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableUpdateTurnFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableUpdateTurnFile, NULL), win32::MB_ICONHAND);
     } else if (iPlayer != iplrNone) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateNewTurnFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateNewTurnFile, NULL), win32::MB_ICONHAND);
     } else {
         idPlayer = iplrNone;
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), win32::MB_ICONHAND);
     }
     idPlayer = iplrNone;
-    fRet = FALSE;
+    fRet = 0;
     goto FreeUp;
 
 FreeUp:
@@ -489,11 +489,11 @@ FreeUp:
 }
 
 int16_t FAppendFile(int16_t iPlayer) {
-    if (!FMarkFile(static_cast<DtFileType>(8195), iPlayer, mdMarkMulti, TRUE)) {
-        return FALSE;
+    if (!FMarkFile(static_cast<DtFileType>(8195), iPlayer, mdMarkMulti, 1)) {
+        return 0;
     }
-    WriteBOF(iPlayer, 3, TRUE);
-    return TRUE;
+    WriteBOF(iPlayer, 3, 1);
+    return 1;
 }
 
 void WriteBattles(int16_t iPlayer) {
@@ -527,7 +527,7 @@ void WriteBattles(int16_t iPlayer) {
             if (BdvFromLp(lpbtldata).grfPlr() & fPlayerCur) {
                 for (i = 0; i < game.cPlayer; i++) {
                     if (i != iPlayer && !rgplr[i].fInclude && (1 << i & BdvFromLp(lpbtldata).grfPlr())) {
-                        rgplr[i].fInclude = TRUE;
+                        rgplr[i].fInclude = 1;
                         rgplr[i].det = detSome;
                     }
                 }
@@ -537,25 +537,25 @@ void WriteBattles(int16_t iPlayer) {
                             iplr = BdvFromLp(lpbtldata).rgtok(i).iplr();
                             lppl = LpplFromId(BdvFromLp(lpbtldata).rgtok(i).id());
                             if (!rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].fInclude) {
-                                rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].fInclude = TRUE;
+                                rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].fInclude = 1;
                                 rgplr[iplr].cshdefSB++;
                             }
                             rglpshdefSB[iplr][BdvFromLp(lpbtldata).rgtok(i).ishdef() - 16].det = detAll;
                         } else {
                             lpfl = LpflFromId(BdvFromLp(lpbtldata).rgtok(i).id());
                             if (lpfl->iPlayer != iPlayer && !rgplr[lpfl->iPlayer].fInclude) {
-                                rgplr[lpfl->iPlayer].fInclude = TRUE;
+                                rgplr[lpfl->iPlayer].fInclude = 1;
                                 rgplr[lpfl->iPlayer].det = detSome;
                             }
                             if (!rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].fInclude) {
-                                rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].fInclude = TRUE;
+                                rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].fInclude = 1;
                                 rgplr[lpfl->iPlayer].cShDef = rgplr[lpfl->iPlayer].cShDef + 1;
                             }
                             rglpshdef[lpfl->iPlayer][BdvFromLp(lpbtldata).rgtok(i).ishdef()].det = detAll;
                             if (!lpfl->fDead) {
                                 if (!lpfl->fInclude) {
                                     rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
-                                    lpfl->fInclude = TRUE;
+                                    lpfl->fInclude = 1;
                                     lpfl->det = detNone;
                                 }
                                 if (lpfl->det < detSome) {
@@ -684,7 +684,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
     for (i = 0; i < 3; i++) {
         *pb++ = lppl->rgEnvVar[i];
         if (lppl->rgEnvVar[i] != lppl->rgEnvVarOrig[i]) {
-            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncEVO(TRUE);
+            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncEVO(1);
         }
     }
     if (PpvFromPrefix(rgb, sizeof(rgb)).fIncEVO() != 0) {
@@ -724,7 +724,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
     if (*pbBase == 0) {
         pb = pbBase;
     } else {
-        PpvFromPrefix(rgb, sizeof(rgb)).SetFIncSurfMin(TRUE);
+        PpvFromPrefix(rgb, sizeof(rgb)).SetFIncSurfMin(1);
     }
     if (rt == rtPlanetB) {
     LFinishBRecord:
@@ -741,7 +741,7 @@ void WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory) {
         PpvFromPrefix(rgb, sizeof(rgb)).SetFIsArtifact(lppl->fArtifact);
         if ((lppl->iPlayer != iplrNone && (lppl->iDeltaPop != 0 || lppl->fNoResearch)) ||
             (lppl->cMines != 0 || lppl->cFactories != 0 || lppl->cDefenses != 0 || lppl->iScanner != 31)) {
-            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncImp(TRUE);
+            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncImp(1);
             const auto rgbImp = lppl->rgbImp();
             memmove(pb, rgbImp.data(), 8);
             pb += 8;
@@ -817,13 +817,13 @@ void MarkFleet(FLEET *lpfl, DetType det) {
 
     if (!lpfl->fInclude) {
         lpshdef = rglpshdef[lpfl->iPlayer];
-        lpfl->fInclude = TRUE;
+        lpfl->fInclude = 1;
         lpfl->det = detNone;
         lpfl->SetFdirValid(1);
         rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
         for (i = 0; i < 16; i++) {
             if (lpfl->rgcsh[i] != 0) {
-                lpshdef[i].fInclude = TRUE;
+                lpshdef[i].fInclude = 1;
             }
         }
     }
@@ -868,7 +868,7 @@ void MarkPlanet(PLANET *lppl, int16_t iPlr, DetType det) {
     SHDEF *lpshdef;
 
     if (!lppl->fInclude) {
-        lppl->fInclude = TRUE;
+        lppl->fInclude = 1;
         lppl->det = detNone;
         rgplr[iPlr].cPlanet++;
     }
@@ -876,13 +876,13 @@ void MarkPlanet(PLANET *lppl, int16_t iPlr, DetType det) {
         lppl->det = det;
     }
     if (lppl->iPlayer != iplrNone && !rgplr[lppl->iPlayer].fInclude) {
-        rgplr[lppl->iPlayer].fInclude = TRUE;
+        rgplr[lppl->iPlayer].fInclude = 1;
         rgplr[lppl->iPlayer].det = detSome;
     }
     if (det != detObscure && lppl->iPlayer != iplrNone && lppl->fStarbase) {
         lpshdef = rglpshdefSB[lppl->iPlayer] + lppl->isb;
         if (!lpshdef->fInclude) {
-            lpshdef->fInclude = TRUE;
+            lpshdef->fInclude = 1;
             lpshdef->det = detNone;
             rgplr[lppl->iPlayer].cshdefSB = rgplr[lppl->iPlayer].cshdefSB + 1;
         }
@@ -935,11 +935,11 @@ int16_t FCreateFile(DtFileType dt, int16_t iPlayer, char *szForceName) {
     try {
         StarsFileGuard closeStream(hf);
         RecordIO().pfnStreamOpen(psz, mdCreate);
-        WriteBOF(iPlayer, dt, FALSE);
+        WriteBOF(iPlayer, dt, 0);
         closeStream.Release();
-        return TRUE;
+        return 1;
     } catch (const StarsError &) {
-        return FALSE;
+        return 0;
     }
 }
 
@@ -962,7 +962,7 @@ void WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti) {
     rtbof.verMinor = 85;
     rtbof.verMajor = 2;
     rtbof.turn = game.turn;
-    rtbof.fCrippled = FALSE;
+    rtbof.fCrippled = 0;
     rtbof.iPlayer = iPlayer;
     rtbof.lSaltTime = (int16_t)(LOWORD(DwTickCount()) + RandomIO().pfnRandom(2000));
     rtbof.dt = dt;
@@ -983,12 +983,12 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
     int32_t  lSeedSav1;
 
     fSilentSav = fFileErrSilent;
-    fSuccess = FALSE;
+    fSuccess = 0;
     ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
     SetSzWorkFromDt(static_cast<DtFileType>(dt & 0xff), iPlayer);
     StarsRecoveryScope scopeRecovery;
     try {
-        fFileErrSilent = TRUE;
+        fFileErrSilent = 1;
         RecordIO().pfnStreamOpen(szWork, mdReadWrite);
         fFileErrSilent = fSilentSav;
         ids = idsGameFileAppearsCorruptUnableLoadFile;
@@ -1012,24 +1012,24 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
             FileError(idsFileGame);
             goto LBadFile;
         }
-        fChange = FALSE;
+        fChange = 0;
         switch (mdMark) {
         case mdMarkInUse:
             if (rtbof.fInUse != f) {
                 rtbof.fInUse = f;
-                fChange = TRUE;
+                fChange = 1;
             }
             break;
         case mdMarkDone:
             if (rtbof.fDone != f) {
                 rtbof.fDone = f;
-                fChange = TRUE;
+                fChange = 1;
             }
             break;
         case mdMarkMulti:
             if (rtbof.fMulti != f) {
                 rtbof.fMulti = f;
-                fChange = TRUE;
+                fChange = 1;
             }
             break;
         case mdMarkAi:
@@ -1041,9 +1041,9 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
                 if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).fAi() != 0) {
                     if (PlvFromPrefix(rgbCur, sizeof(rgbCur)).idAi() != idAiMaid)
                         goto LBadFile;
-                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(FALSE);
+                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(0);
                 } else {
-                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(TRUE);
+                    PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetFAi(1);
                     PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetIdAi(idAiMaid);
                 }
                 PlvFromPrefix(rgbCur, sizeof(rgbCur)).SetLSalt(~PlvFromPrefix(rgbCur, sizeof(rgbCur)).lSalt());
@@ -1051,7 +1051,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
                 SetFileSeeds(lSeedSav1, lSeedSav2);
                 RecordIO().pfnWriteRt(rtPlr, hdrCur.cb, rgbCur);
                 fChange = dt == dtTurn;
-                rtbof.fDone = FALSE;
+                rtbof.fDone = 0;
             }
             break;
         }
@@ -1059,7 +1059,7 @@ int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f) {
             LSeekFile(hf, 0, 0);
             WriteRtBof(rtbof);
         }
-        fSuccess = TRUE;
+        fSuccess = 1;
 LBadFile:
         if ((dt & 0x2000) && fSuccess) {
             LSeekFile(hf, 0, 2);
@@ -1073,7 +1073,7 @@ LBadFile:
             FileError(ids);
         }
         RecordIO().pfnStreamClose();
-        return FALSE;
+        return 0;
     }
 }
 
@@ -1119,7 +1119,7 @@ void WriteRt(RecordType rt, int16_t cb, void *rg) {
 
 void RgToStream(const void *rg, uint16_t cb) {
     if (cb != 0 && CbWriteFile(hf, rg, cb) != cb) {
-        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsErrorWritingFile, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsErrorWritingFile, NULL), win32::MB_ICONHAND);
         StarsThrowError(starsErrorFile, idsErrorWritingFile);
     }
     return;
@@ -1169,32 +1169,32 @@ void SetVisPFInit(int16_t iPlr) {
     }
     for (i = 0; i < game.cPlayer; i++) {
         if (iPlr == iplrNone || iPlr == i || rgplr[i].fDead) {
-            rgplr[i].fInclude = TRUE;
+            rgplr[i].fInclude = 1;
             rgplr[i].det = detAll;
         } else {
-            rgplr[i].fInclude = FALSE;
+            rgplr[i].fInclude = 0;
         }
         rgplr[i].cFleet = 0;
         rgplr[i].cShDef = 0;
         rgplr[i].cshdefSB = 0;
         for (j = 0; j < 16; j++) {
             if ((iPlr == iplrNone || iPlr == i) && !rglpshdef[i][j].fFree) {
-                rglpshdef[i][j].fInclude = TRUE;
+                rglpshdef[i][j].fInclude = 1;
                 rglpshdef[i][j].det = detAll;
                 rglpshdef[i][j].cExist = 0;
                 rgplr[i].cShDef++;
             } else {
-                rglpshdef[i][j].fInclude = FALSE;
+                rglpshdef[i][j].fInclude = 0;
             }
         }
         for (j = 0; j < 10; j++) {
             if ((iPlr == iplrNone || iPlr == i) && !rglpshdefSB[i][j].fFree) {
-                rglpshdefSB[i][j].fInclude = TRUE;
+                rglpshdefSB[i][j].fInclude = 1;
                 rglpshdefSB[i][j].det = detAll;
                 rglpshdefSB[i][j].cExist = 0;
                 rgplr[i].cshdefSB++;
             } else {
-                rglpshdefSB[i][j].fInclude = FALSE;
+                rglpshdefSB[i][j].fInclude = 0;
             }
         }
     }
@@ -1202,7 +1202,7 @@ void SetVisPFInit(int16_t iPlr) {
     lpplMac = lpPlanets + cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (iPlr == iplrNone || iPlr == lppl->iPlayer) {
-            lppl->fInclude = TRUE;
+            lppl->fInclude = 1;
             lppl->det = detAll;
             if (iPlr != iplrNone) {
                 rgplr[iPlr].cPlanet++;
@@ -1211,7 +1211,7 @@ void SetVisPFInit(int16_t iPlr) {
                 rglpshdefSB[lppl->iPlayer][lppl->isb].cExist = rglpshdefSB[lppl->iPlayer][lppl->isb].cExist + 1;
             }
         } else {
-            lppl->fInclude = FALSE;
+            lppl->fInclude = 0;
         }
     }
     for (ifl = 0; ifl < cFleet; ifl++) {
@@ -1219,9 +1219,9 @@ void SetVisPFInit(int16_t iPlr) {
         if (!rglpfl[ifl])
             break;
         lpfl->SetFdirValid(0);
-        lpfl->fMark = FALSE;
+        lpfl->fMark = 0;
         if ((iPlr == iplrNone || iPlr == lpfl->iPlayer) && !lpfl->fDead) {
-            lpfl->fInclude = TRUE;
+            lpfl->fInclude = 1;
             lpfl->det = detAll;
             rgplr[lpfl->iPlayer].cFleet = rgplr[lpfl->iPlayer].cFleet + 1;
             for (j = 0; j < 16; j++) {
@@ -1241,7 +1241,7 @@ void SetVisPFInit(int16_t iPlr) {
                 MarkPlanet(lppl, iPlr, static_cast<DetType>(detNew));
             }
         } else {
-            lpfl->fInclude = FALSE;
+            lpfl->fInclude = 0;
         }
     }
     lpth = lpThings;
@@ -1250,24 +1250,24 @@ void SetVisPFInit(int16_t iPlr) {
         switch (lpth->ith()) {
         case ithMineralPacket:
             if (iPlr == iplrNone || raMajor == raMassAccel) {
-                lpth->thp().SetFInclude(TRUE);
+                lpth->thp().SetFInclude(1);
                 if (rgplr[lpth->iplr()].fInclude)
                     break;
-                rgplr[lpth->iplr()].fInclude = TRUE;
+                rgplr[lpth->iplr()].fInclude = 1;
                 rgplr[lpth->iplr()].det = detSome;
                 break;
             }
-            lpth->thp().SetFInclude(FALSE);
+            lpth->thp().SetFInclude(0);
             break;
         case ithWormhole:
             lpth->thw().SetFInclude(iPlr == iplrNone);
             break;
         case ithMysteryTrader:
-            lpth->tht().SetFInclude(TRUE);
+            lpth->tht().SetFInclude(1);
             break;
         case ithMinefield:
             if ((lpth->thm().grbitPlrNow() & grbitPlr) && !rgplr[lpth->iplr()].fInclude) {
-                rgplr[lpth->iplr()].fInclude = TRUE;
+                rgplr[lpth->iplr()].fInclude = 1;
                 rgplr[lpth->iplr()].det = detSome;
             }
         }
@@ -1366,20 +1366,20 @@ void SetVisPFFleets(int16_t iPlr) {
                                 l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                 if (l <= lRadius2 || lpth->ith() == ithMinefield) {
                                     if (lpth->ith() == ithMineralPacket) {
-                                        lpth->thp().SetFInclude(TRUE);
+                                        lpth->thp().SetFInclude(1);
                                     LThIncPlr:
                                         if (!rgplr[lpth->iplr()].fInclude) {
-                                            rgplr[lpth->iplr()].fInclude = TRUE;
+                                            rgplr[lpth->iplr()].fInclude = 1;
                                             rgplr[lpth->iplr()].det = detSome;
                                         }
                                     } else if (lpth->ith() == ithMysteryTrader) {
-                                        lpth->tht().SetFInclude(TRUE);
+                                        lpth->tht().SetFInclude(1);
 
                                     } else if (lpth->ith() == ithWormhole) {
                                         if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
                                             continue;
                                         lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
-                                        lpth->thw().SetFInclude(TRUE);
+                                        lpth->thw().SetFInclude(1);
 
                                     } else {
                                         if (((lpth->thm().grbitPlr() & grbitPlr) && l <= lRadius2) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4) ||
@@ -1460,14 +1460,14 @@ void SetVisPFPlanets(int16_t iPlr) {
     int32_t  lVis2;
 
     grbitPlr = iPlr == iplrNone ? 0 : 1 << iPlr;
-    fStargateView = FALSE;
+    fStargateView = 0;
     if (RaceQueryIO().pfnStat(&rgplr[iPlr], rsMajorAdv) == raStargate) {
         for (i = 0; i < 10; i++) {
             rgStargateRange[i] = 0;
             if (!rglpshdefSB[iPlr][i].fFree) {
                 rgStargateRange[i] = StargateRangeFromLppl(NULL, iPlr, i);
                 if (rgStargateRange[i] > 0) {
-                    fStargateView = TRUE;
+                    fStargateView = 1;
                 }
             }
         }
@@ -1538,20 +1538,20 @@ void SetVisPFPlanets(int16_t iPlr) {
                                     l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                     if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
                                         if (lpth->ith() == ithMineralPacket) {
-                                            lpth->thp().SetFInclude(TRUE);
+                                            lpth->thp().SetFInclude(1);
                                         LThIncPlr2:
                                             if (!rgplr[lpth->iplr()].fInclude) {
-                                                rgplr[lpth->iplr()].fInclude = TRUE;
+                                                rgplr[lpth->iplr()].fInclude = 1;
                                                 rgplr[lpth->iplr()].det = detSome;
                                             }
                                         } else if (lpth->ith() == ithMysteryTrader) {
-                                            lpth->tht().SetFInclude(TRUE);
+                                            lpth->tht().SetFInclude(1);
 
                                         } else if (lpth->ith() == ithWormhole) {
                                             if (!(lpth->thw().grbitPlr() & grbitPlr) && l > (int32_t)(lRadius2 >> 4) && l > lRadPlanet2)
                                                 continue;
                                             lpth->thw().SetGrbitPlr(lpth->thw().grbitPlr() | grbitPlr);
-                                            lpth->thw().SetFInclude(TRUE);
+                                            lpth->thw().SetFInclude(1);
 
                                         } else {
                                             if ((lpth->thm().grbitPlr() & grbitPlr) || l <= lRadPlanet2 || l <= (int32_t)(lRadius2 >> 4)) {
@@ -1682,7 +1682,7 @@ void SetVisPFThings(int16_t iPlr) {
         lpthMac = lpThings + cThing;
         for (; lpth < lpthMac; lpth++) {
             if (lpth->ith() == ithMineralPacket && lpth->iplr() == iPlr && lpth->thp().iWarp() != 0) {
-                lpth->thp().SetFInclude(TRUE);
+                lpth->thp().SetFInclude(1);
                 iRadius = lpth->thp().iWarp() + 4;
                 iRadius *= iRadius;
                 lRadius2 = (uint32_t)(iRadius * iRadius);
@@ -1728,20 +1728,20 @@ void SetVisPFThings(int16_t iPlr) {
                                         l = (uint32_t)(dx * dx) + (uint32_t)(dy * dy);
                                         if ((uint32_t)(dx * dx) + (uint32_t)(dy * dy) <= lRadius2) {
                                             if (lpth2->ith() == ithMineralPacket) {
-                                                lpth2->thp().SetFInclude(TRUE);
+                                                lpth2->thp().SetFInclude(1);
                                             LThIncPlr3:
                                                 if (!rgplr[lpth2->iplr()].fInclude) {
-                                                    rgplr[lpth2->iplr()].fInclude = TRUE;
+                                                    rgplr[lpth2->iplr()].fInclude = 1;
                                                     rgplr[lpth2->iplr()].det = detSome;
                                                 }
                                             } else if (lpth2->ith() == ithMysteryTrader) {
-                                                lpth2->tht().SetFInclude(TRUE);
+                                                lpth2->tht().SetFInclude(1);
 
                                             } else if (lpth2->ith() == ithWormhole) {
                                                 if (!(lpth2->thw().grbitPlr() & grbitPlr) && l > lRadius2)
                                                     continue;
                                                 lpth2->thw().SetGrbitPlr(lpth2->thw().grbitPlr() | grbitPlr);
-                                                lpth2->thw().SetFInclude(TRUE);
+                                                lpth2->thw().SetFInclude(1);
 
                                             } else {
                                                 lpth2->thm().SetGrbitPlr(lpth2->thm().grbitPlr() | grbitPlr);
@@ -1827,7 +1827,7 @@ void SetVisPFFinish(int16_t iPlr) {
             rgplr[i].cShDef = 0;
             for (j = 0; j < 16; j++) {
                 if (1 << iPlr & rglpshdef[i][j].grbitPlr) {
-                    rglpshdef[i][j].fInclude = TRUE;
+                    rglpshdef[i][j].fInclude = 1;
                     rglpshdef[i][j].det = detAll;
                     goto LFinShdef;
                 } else {
@@ -1837,13 +1837,13 @@ void SetVisPFFinish(int16_t iPlr) {
                 }
             LFinShdef:
                 rgplr[i].det = detSome;
-                rgplr[i].fInclude = TRUE;
+                rgplr[i].fInclude = 1;
                 rgplr[i].cShDef++;
             }
             rgplr[i].cshdefSB = 0;
             for (j = 0; j < 10; j++) {
                 if (1 << iPlr & rglpshdefSB[i][j].grbitPlr) {
-                    rglpshdefSB[i][j].fInclude = TRUE;
+                    rglpshdefSB[i][j].fInclude = 1;
                     rglpshdefSB[i][j].det = detAll;
                     goto LFinShdefSB;
                 } else {
@@ -1852,7 +1852,7 @@ void SetVisPFFinish(int16_t iPlr) {
                     rglpshdefSB[i][j].det = detMajor;
                 }
             LFinShdefSB:
-                rgplr[i].fInclude = TRUE;
+                rgplr[i].fInclude = 1;
                 rgplr[i].det = detSome;
                 rgplr[i].cshdefSB++;
             }

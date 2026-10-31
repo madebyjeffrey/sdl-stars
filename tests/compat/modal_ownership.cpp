@@ -21,9 +21,9 @@ int StarsTest_ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPC
     if (mdFailure == 2) throw std::bad_alloc();
     return 0;
 }
-static LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg == WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 419);
-    if (msg == WM_ENABLE && w && fCleanupFailure) {
+static LRESULT  OwnerProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == win32::WM_ENABLE && !w && fDisableFailure) StarsThrowError(starsErrorFile, 419);
+    if (msg == win32::WM_ENABLE && w && fCleanupFailure) {
         cCleanupFailures++; StarsThrowError(starsErrorMemory, 418);
     }
     return win32::DefWindowProcA(hwnd, msg, w, l);
@@ -41,17 +41,17 @@ int main() {
 
     wc.lpfnWndProc = OwnerProc; wc.lpszClassName = "ModalOwnership";
     CHECK(win32::RegisterClassA(&wc));
-    hwndRoot = win32::CreateWindowExA(0, wc.lpszClassName, "Modal owner", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    hwndRoot = win32::CreateWindowExA(0, wc.lpszClassName, "Modal owner", win32::WS_OVERLAPPEDWINDOW | win32::WS_VISIBLE,
                                0, 0, 240, 160, NULL, NULL, NULL, NULL);
     CHECK(hwndRoot);
-    hwndEdit = win32::CreateWindowExA(0, "Edit", "Saved focus", WS_CHILD | WS_VISIBLE, 4, 4, 100, 24,
+    hwndEdit = win32::CreateWindowExA(0, "Edit", "Saved focus", win32::WS_CHILD | win32::WS_VISIBLE, 4, 4, 100, 24,
                               hwndRoot, (HMENU)(UINT_PTR)73, NULL, NULL);
     CHECK(hwndEdit);
     win32::SetFocus(hwndEdit); CHECK(win32::GetFocus() == hwndEdit);
     of.lStructSize = sizeof(of); of.hwndOwner = hwndRoot;
     of.lpstrFile = szFile; of.nMaxFile = sizeof(szFile);
     of.lpstrFilter = "Stars\0*.m1;*.hst\0All files\0*.*\0";
-    of.Flags = OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER;
+    of.Flags = win32::OFN_PATHMUSTEXIST | win32::OFN_NOCHANGEDIR | win32::OFN_EXPLORER;
     fCleanupFailure = true;
     try { (void)win32::GetOpenFileNameA(&of); }
     catch (const StarsError &error) { fCaught = error.mdError == starsErrorFile && error.ids == 417; }
@@ -75,10 +75,10 @@ int main() {
     fCleanupFailure = false;
     CHECK(!win32::GetOpenFileNameA(&of) && win32::CommDlgExtendedError() == 0 && cCalls == 4 && cErrors == 0);
     CHECK(win32::IsWindowEnabled(hwndRoot) && hwndRoot->cNativeFileDialogs == 0 && win32::GetFocus() == hwndEdit);
-    win32::EnableWindow(hwndRoot, FALSE);
+    win32::EnableWindow(hwndRoot, 0);
     CHECK(!win32::GetOpenFileNameA(&of) && cCalls == 5 && cErrors == 0);
     CHECK(!win32::IsWindowEnabled(hwndRoot) && hwndRoot->cNativeFileDialogs == 0);
-    win32::EnableWindow(hwndRoot, TRUE);
+    win32::EnableWindow(hwndRoot, 1);
     win32::SetFocus(hwndEdit); CHECK(win32::GetFocus() == hwndEdit);
     fDisableFailure = true; fCleanupFailure = true;
     CHECK(!win32::GetOpenFileNameA(&of) && cCalls == 5 && FStarsErrorPending());

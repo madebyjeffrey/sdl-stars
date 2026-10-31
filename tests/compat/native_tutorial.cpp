@@ -46,28 +46,28 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     /* PopupMenu sends commands to the frame even when a modal owns the input. */
     if (hwndRoot && !win32::IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
     for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
-        if (win32::GetMenuState(hmenu, i, MF_BYPOSITION) & MF_SEPARATOR) continue;
-        win32::GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
+        if (win32::GetMenuState(hmenu, i, win32::MF_BYPOSITION) & win32::MF_SEPARATOR) continue;
+        win32::GetMenuStringA(hmenu, i, szText, sizeof(szText), win32::MF_BYPOSITION);
         if (!strcmp(szText, pszMenu)) { iItem = cSteps; break; }
         cSteps++;
     }
     if (iItem < 0) {
         fprintf(stderr, "Requested scanner menu item '%s' was absent; entries:\n", pszMenu);
         for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
-            win32::GetMenuString(hmenu, i, szText, sizeof(szText), MF_BYPOSITION);
+            win32::GetMenuStringA(hmenu, i, szText, sizeof(szText), win32::MF_BYPOSITION);
             fprintf(stderr, "  %d: '%s'\n", i, szText);
         }
         FSaveState("missing-menu");
     }
     pszMenu = NULL;
-    if (iItem < 0 || !hwndRoot) { pszFailure = "requested scanner menu item was absent"; win32::PostQuitMessage(93); return FALSE; }
+    if (iItem < 0 || !hwndRoot) { pszFailure = "requested scanner menu item was absent"; win32::PostQuitMessage(93); return 0; }
     for (j = 0; j < iItem + 2; j++) {
         event.type = SDL_EVENT_KEY_DOWN; event.key.windowID = hwndRoot->id;
         event.key.scancode = j == 0 ? SDL_SCANCODE_HOME : j == iItem + 1 ? SDL_SCANCODE_RETURN : SDL_SCANCODE_DOWN;
         event.key.key = SDL_GetKeyFromScancode(event.key.scancode, SDL_KMOD_NONE, false); event.key.down = true;
-        if (!SDL_PushEvent(&event)) return FALSE;
+        if (!SDL_PushEvent(&event)) return 0;
         event.type = SDL_EVENT_KEY_UP; event.key.down = false;
-        if (!SDL_PushEvent(&event)) return FALSE;
+        if (!SDL_PushEvent(&event)) return 0;
     }
     return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
 }
@@ -87,7 +87,7 @@ static void LogState(const char *pszEvent) {
     CchNativePrintf(lpEvents, "{\"event\":\"%s\",\"stage\":%d,\"turn\":%u,\"page\":%d,\"instruction\":%d,\"active\":%d,\"autoComplete\":%d,\"actions\":%d,\"elapsedMs\":%llu,\"selection\":[%d,%d],\"turnDone\":%d,\"scannerMode\":%u,\"productionSelection\":%ld}\n",
             pszEvent, iStage, game.turn, tutor.idt / 8 + 1, tutor.idtBold, gd.fTutorial, tutor.fAutoComplete, cActions, (unsigned long long)SDL_GetTicks(),
             sel.grobj, sel.id, tutor.fTurnDone, grbitScan & grbitScanViewMask,
-            win32::IsWindow(hwndPlanetProdLB) ? (long)ui::SendMessage(hwndPlanetProdLB, LB_GETCURSEL, 0, 0) : -1L);
+            win32::IsWindow(hwndPlanetProdLB) ? (long)ui::SendMessage(hwndPlanetProdLB, win32::LB_GETCURSEL, 0, 0) : -1L);
     IFlushNativeFile(lpEvents);
 }
 
@@ -99,17 +99,17 @@ static BOOL FSaveState(const char *pszName) {
     BOOL fResult;
 
     snprintf(szPath, sizeof(szPath), "%s-hierarchy.json", pszName);
-    if (!StarsCompatCaptureHierarchy(&snap)) return FALSE;
+    if (!StarsCompatCaptureHierarchy(&snap)) return 0;
     lpfile = PfNativeOpen(szPath, "w");
     fResult = lpfile && StarsCompatWriteHierarchy(&snap, lpfile);
-    if (lpfile && ICloseNativeFile(lpfile)) fResult = FALSE;
+    if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
     StarsCompatFreeHierarchy(&snap);
     if (!fResult || !win32::IsWindow(hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
-    if (!FCaptureScanner(&scan)) return FALSE;
+    if (!FCaptureScanner(&scan)) return 0;
     lpfile = PfNativeOpen(szPath, "w");
     fResult = lpfile && FWriteScannerSnapshot(&scan, lpfile);
-    if (lpfile && ICloseNativeFile(lpfile)) fResult = FALSE;
+    if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
     FreeScannerSnapshot(&scan);
     return fResult;
 }
@@ -119,7 +119,7 @@ static BOOL FPushKey(HWND hwnd, SDL_Scancode sc, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     // SDL_Event is a union; zero all bytes, including inactive-member fields.
     SDL_zero(event);
-    if (!hwndRoot) return FALSE;
+    if (!hwndRoot) return 0;
     event.type = fDown ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
     event.key.windowID = hwndRoot->id;
     event.key.scancode = sc;
@@ -132,19 +132,19 @@ static BOOL FPushTextKey(SDL_Scancode sc, const char *pszText) {
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwndFrame);
     SDL_zero(event);
-    if (!hwndRoot || !FPushKey(hwndFrame, sc, TRUE)) return FALSE;
+    if (!hwndRoot || !FPushKey(hwndFrame, sc, 1)) return 0;
     /* SDL supplies printable characters separately from physical key events. */
     event.type = SDL_EVENT_TEXT_INPUT;
     event.text.windowID = hwndRoot->id;
     event.text.text = pszText;
-    return SDL_PushEvent(&event) && FPushKey(hwndFrame, sc, FALSE);
+    return SDL_PushEvent(&event) && FPushKey(hwndFrame, sc, 0);
 }
 
 static BOOL FMousePoint(HWND hwnd, POINT pt, Uint8 iButton, BOOL fDown) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
     SDL_zero(event);
-    if (!hwndRoot || !win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd)) return FALSE;
+    if (!hwndRoot || !win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd)) return 0;
     win32::ClientToScreen(hwnd, &pt);
     win32::ScreenToClient(hwndRoot, &pt);
     event.type = fDown ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
@@ -157,15 +157,15 @@ static BOOL FMousePoint(HWND hwnd, POINT pt, Uint8 iButton, BOOL fDown) {
 }
 
 static BOOL FClickPoint(HWND hwnd, POINT pt, Uint8 iButton) {
-    if (!FMousePoint(hwnd, pt, iButton, TRUE)) return FALSE;
+    if (!FMousePoint(hwnd, pt, iButton, 1)) return 0;
     cActions++;
-    return FMousePoint(hwnd, pt, iButton, FALSE);
+    return FMousePoint(hwnd, pt, iButton, 0);
 }
 
 static BOOL FClick(HWND hwnd) {
     RECT rc;
     POINT pt;
-    if (!win32::IsWindow(hwnd) || !win32::GetClientRect(hwnd, &rc)) return FALSE;
+    if (!win32::IsWindow(hwnd) || !win32::GetClientRect(hwnd, &rc)) return 0;
     pt.x = (rc.right - rc.left) / 2;
     pt.y = (rc.bottom - rc.top) / 2;
     return FClickPoint(hwnd, pt, SDL_BUTTON_LEFT);
@@ -176,9 +176,9 @@ static BOOL FClickComboRow(HWND hwndCombo, int iRow) {
     RECT rc;
     POINT pt;
     int cy, iTop;
-    if (!hwndDrop || !win32::GetClientRect(hwndDrop, &rc)) return FALSE;
-    cy = (int)CompatListProc(hwndCombo, LB_GETITEMHEIGHT, 0, 0);
-    iTop = (int)CompatListProc(hwndCombo, LB_GETTOPINDEX, 0, 0);
+    if (!hwndDrop || !win32::GetClientRect(hwndDrop, &rc)) return 0;
+    cy = (int)CompatListProc(hwndCombo, win32::LB_GETITEMHEIGHT, 0, 0);
+    iTop = (int)CompatListProc(hwndCombo, win32::LB_GETTOPINDEX, 0, 0);
     pt = (POINT){rc.right / 2, 1 + (iRow - iTop) * cy + cy / 2};
     return cy > 0 && pt.y >= 1 && pt.y < rc.bottom - 1 && FClickPoint(hwndDrop, pt, SDL_BUTTON_LEFT);
 }
@@ -186,32 +186,32 @@ static BOOL FClickComboRow(HWND hwndCombo, int iRow) {
 static BOOL FChooseCombo(HWND hwndCombo, const char *pszName) {
     char szItem[256];
     int i;
-    for (i = 0; i < ui::SendMessage(hwndCombo, CB_GETCOUNT, 0, 0); i++) {
-        if (ui::SendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) return FALSE;
-        ui::SendMessage(hwndCombo, CB_GETLBTEXT, i, (LPARAM)szItem);
+    for (i = 0; i < ui::SendMessage(hwndCombo, win32::CB_GETCOUNT, 0, 0); i++) {
+        if (ui::SendMessage(hwndCombo, win32::CB_GETLBTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) return 0;
+        ui::SendMessage(hwndCombo, win32::CB_GETLBTEXT, i, (LPARAM)szItem);
         if (!strcmp(szItem, pszName)) break;
     }
-    if (i == ui::SendMessage(hwndCombo, CB_GETCOUNT, 0, 0) || !FClick(hwndCombo)) return FALSE;
+    if (i == ui::SendMessage(hwndCombo, win32::CB_GETCOUNT, 0, 0) || !FClick(hwndCombo)) return 0;
     // Commit by mouse after focus and keyboard navigation have settled.
     hwndDesignCombo = hwndCombo;
     iDesignCombo = i;
-    return TRUE;
+    return 1;
 }
 
 static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     SDL_Event event = {};
     if (!hwndRoot || !win32::ClientToScreen(hwnd, &ptFrom) || !win32::ScreenToClient(hwndRoot, &ptFrom) ||
-        !win32::ClientToScreen(hwnd, &ptTo) || !win32::ScreenToClient(hwndRoot, &ptTo)) return FALSE;
+        !win32::ClientToScreen(hwnd, &ptTo) || !win32::ScreenToClient(hwndRoot, &ptTo)) return 0;
     ptFrom.y += CyCompatMenuBar(hwndRoot); ptTo.y += CyCompatMenuBar(hwndRoot);
     event.type = SDL_EVENT_MOUSE_BUTTON_DOWN; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.down = true;
     event.button.x = ptFrom.x; event.button.y = ptFrom.y;
-    if (!SDL_PushEvent(&event)) return FALSE;
+    if (!SDL_PushEvent(&event)) return 0;
     event = (SDL_Event){0};
     event.type = SDL_EVENT_MOUSE_MOTION; event.motion.windowID = hwndRoot->id;
     event.motion.state = SDL_BUTTON_LMASK; event.motion.x = ptTo.x; event.motion.y = ptTo.y;
-    if (!SDL_PushEvent(&event)) return FALSE;
+    if (!SDL_PushEvent(&event)) return 0;
     event = (SDL_Event){0};
     event.type = SDL_EVENT_MOUSE_BUTTON_UP; event.button.windowID = hwndRoot->id;
     event.button.button = SDL_BUTTON_LEFT; event.button.x = ptTo.x; event.button.y = ptTo.y;
@@ -237,27 +237,27 @@ static HWND HwndModal(void) {
 static BOOL FFindMapObject(uint16_t grType, uint16_t idObject, const char *pszName) {
     SCANSNAPSHOT snap = {};
     size_t i;
-    BOOL fFound = FALSE, fReveal = FALSE;
-    if (!FCaptureScanner(&snap)) return FALSE;
+    BOOL fFound = 0, fReveal = 0;
+    if (!FCaptureScanner(&snap)) return 0;
     for (i = 0; i < snap.cObject; i++) {
         if (snap.rgobj[i].grType == grType && (pszName ? !strcmp(snap.rgobj[i].szName, pszName) : snap.rgobj[i].id == idObject) && !snap.rgobj[i].fFiltered) {
             objTarget = snap.rgobj[i];
             if (!objTarget.fOnScreen) {
-                fReveal = FSelectScannerObject(&snap, grType, objTarget.id, TRUE);
+                fReveal = FSelectScannerObject(&snap, grType, objTarget.id, 1);
                 break;
             }
-            fFound = TRUE;
+            fFound = 1;
             break;
         }
     }
     FreeScannerSnapshot(&snap);
     if (fReveal) {
         LogState("map-reveal");
-        if (!FCaptureScanner(&snap)) return FALSE;
+        if (!FCaptureScanner(&snap)) return 0;
         for (i = 0; i < snap.cObject; i++) {
             if (snap.rgobj[i].grType == grType && snap.rgobj[i].id == objTarget.id && snap.rgobj[i].fOnScreen) {
                 objTarget = snap.rgobj[i];
-                fFound = TRUE;
+                fFound = 1;
                 break;
             }
         }
@@ -275,15 +275,15 @@ static BOOL FFindSalvageHere(void) {
     POINT pt = objTarget.ptUniverse;
     char szName[64];
     size_t i;
-    BOOL fFound = FALSE;
+    BOOL fFound = 0;
 
     CchGetString(idsSalvage, szName);
-    if (!FCaptureScanner(&snap)) return FALSE;
+    if (!FCaptureScanner(&snap)) return 0;
     for (i = 0; i < snap.cObject; i++) {
         if (snap.rgobj[i].grType == grobjThing && snap.rgobj[i].ith == ithMineralPacket &&
             !snap.rgobj[i].fFiltered && snap.rgobj[i].ptUniverse.x == pt.x && snap.rgobj[i].ptUniverse.y == pt.y &&
             !strcmp(snap.rgobj[i].szName, szName)) {
-            objTarget = snap.rgobj[i]; fFound = TRUE; break;
+            objTarget = snap.rgobj[i]; fFound = 1; break;
         }
     }
     FreeScannerSnapshot(&snap);
@@ -294,15 +294,15 @@ static BOOL FPushControlKey(HWND hwnd, SDL_Scancode sc) {
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
 
-    if (!hwndRoot || !FPushKey(hwnd, SDL_SCANCODE_LCTRL, TRUE)) return FALSE;
+    if (!hwndRoot || !FPushKey(hwnd, SDL_SCANCODE_LCTRL, 1)) return 0;
     event.type = SDL_EVENT_KEY_DOWN; event.key.windowID = hwndRoot->id;
     event.key.scancode = sc; event.key.mod = SDL_KMOD_LCTRL;
     event.key.key = SDL_GetKeyFromScancode(sc, event.key.mod, false); event.key.down = true;
-    if (!SDL_PushEvent(&event)) return FALSE;
+    if (!SDL_PushEvent(&event)) return 0;
     event.type = SDL_EVENT_KEY_UP; event.key.down = false;
-    if (!SDL_PushEvent(&event) || !FPushKey(hwnd, SDL_SCANCODE_LCTRL, FALSE)) return FALSE;
+    if (!SDL_PushEvent(&event) || !FPushKey(hwnd, SDL_SCANCODE_LCTRL, 0)) return 0;
     cActions++;
-    return TRUE;
+    return 1;
 }
 
 static BOOL FSaveOrders(const char *pszPath) {
@@ -314,9 +314,9 @@ static BOOL FSaveOrders(const char *pszPath) {
     SHDEF *lpshdef;
     int i, j, k, cWritten = 0;
     lpfile = PfNativeOpen(pszPath, "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"schema\":1,\"turn\":%u,\"turnDone\":%d,\"research\":[%u,%u,%d],\"scannerMode\":%u,\"nextMessage\":%d,\"filteredFactories\":%s,\"filteredMines\":%s,\"filteredUnloads\":%s,\"filteredMiningLoads\":%s,\"filteredDismantles\":%s,\"ownedFleetCount\":%u,\"fleets\":[",
-            game.turn, tutor.fTurnDone, rgplr[0].iTechNow(), rgplr[0].iTechNext(), rgplr[0].pctResearch, grbitScan & grbitScanViewMask, IMsgNext(FALSE),
+            game.turn, tutor.fTurnDone, rgplr[0].iTechNow(), rgplr[0].iTechNext(), rgplr[0].pctResearch, grbitScan & grbitScanViewMask, IMsgNext(0),
             bitfMsgFiltered[idmHaveBuiltFactories >> 3] & (1 << (idmHaveBuiltFactories & 7)) ? "true" : "false",
             bitfMsgFiltered[idmHaveBuiltMines >> 3] & (1 << (idmHaveBuiltMines & 7)) ? "true" : "false",
             bitfMsgFiltered[idmHasUnloaded >> 3] & (1 << (idmHasUnloaded & 7)) ? "true" : "false",
@@ -389,13 +389,13 @@ static BOOL FSaveEnemyDesign(void) {
     int ishdef, fError;
 
     if (sel.scan.grobj != grobjFleet || sel.scan.ifl == iflNone ||
-        GlobalPD.grPopup != grPopupShdef || !GlobalPD.lpshdef) return FALSE;
+        GlobalPD.grPopup != grPopupShdef || !GlobalPD.lpshdef) return 0;
     lpfl = rglpfl[sel.scan.ifl];
     for (ishdef = 0; ishdef < 16; ishdef++)
         if (lpfl->rgcsh[ishdef] != 0 && &rglpshdef[lpfl->iPlayer][ishdef] == GlobalPD.lpshdef) break;
-    if (ishdef == 16) return FALSE;
+    if (ishdef == 16) return 0;
     lpfile = PfNativeOpen("enemy-design.json", "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"fleet\":%d,\"player\":%u,\"design\":%d,\"hideCounts\":%s,\"summary\":%s,\"showDamage\":%s,\"token\":%s}\n",
             lpfl->id, lpfl->iPlayer, ishdef, GlobalPD.fHideCounts ? "true" : "false",
             GlobalPD.fSummary ? "true" : "false", GlobalPD.fShowDamage ? "true" : "false", GlobalPD.fToken ? "true" : "false");
@@ -407,13 +407,13 @@ static BOOL FSaveTutorialPopup(const char *pszPath, BOOL fResearch) {
     NATIVEFILE *lpfile;
     int fError;
 
-    if (!win32::IsWindowVisible(hwndPopup) || win32::GetCapture() != hwndPopup) return FALSE;
+    if (!win32::IsWindowVisible(hwndPopup) || win32::GetCapture() != hwndPopup) return 0;
     if (fResearch) {
         if (GlobalPD.grPopup != grPopupComponent || GlobalPD.part.hs.grhst != hstTerra ||
-            GlobalPD.part.hs.iItem != iterraRadiationTerraform7) return FALSE;
-    } else if (GlobalPD.grPopup != grPopupPlanetEnv || GlobalPD.idPlanet != 5 || GlobalPD.iPlanetVar != 2) return FALSE;
+            GlobalPD.part.hs.iItem != iterraRadiationTerraform7) return 0;
+    } else if (GlobalPD.grPopup != grPopupPlanetEnv || GlobalPD.idPlanet != 5 || GlobalPD.iPlanetVar != 2) return 0;
     lpfile = PfNativeOpen(pszPath, "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     if (fResearch) CchNativePrintf(lpfile, "{\"type\":%d,\"kind\":%u,\"item\":%u}\n",
                            GlobalPD.grPopup, GlobalPD.part.hs.grhst, GlobalPD.part.hs.iItem);
     else CchNativePrintf(lpfile, "{\"type\":%d,\"planet\":%d,\"environment\":%d}\n",
@@ -425,9 +425,9 @@ static BOOL FSaveTutorialPopup(const char *pszPath, BOOL fResearch) {
 static BOOL FSaveBattle(const char *pszPath) {
     NATIVEFILE *lpfile;
     int fError;
-    if (!vlpbdVCR || !vrgtok) return FALSE;
+    if (!vlpbdVCR || !vrgtok) return 0;
     lpfile = PfNativeOpen(pszPath, "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"battle\":%u,\"tokens\":%u,\"step\":%d,\"lastStep\":%d,\"playing\":%s}\n",
             BdvFromLp(vlpbdVCR).id(), BdvFromLp(vlpbdVCR).ctok(), viStepVCRCur, vcStepVCR, gd.fVCRTimer ? "true" : "false");
     fError = FNativeStreamError(lpfile);
@@ -438,11 +438,11 @@ static BOOL FSaveSalvage(void) {
     THING *lpth;
     NATIVEFILE *lpfile;
     int fError;
-    if (sel.scan.grobj != grobjThing || sel.scan.ith < 0 || sel.scan.ith >= cThing) return FALSE;
+    if (sel.scan.grobj != grobjThing || sel.scan.ith < 0 || sel.scan.ith >= cThing) return 0;
     lpth = &lpThings[sel.scan.ith];
-    if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() != 0) return FALSE;
+    if (lpth->ith() != ithMineralPacket || lpth->thp().iWarp() != 0) return 0;
     lpfile = PfNativeOpen("salvage.json", "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"id\":%u,\"position\":[%d,%d],\"minerals\":[%d,%d,%d]}\n",
             lpth->idFull(), lpth->pt().x(), lpth->pt().y(), lpth->thp().rgwtMin(0), lpth->thp().rgwtMin(1), lpth->thp().rgwtMin(2));
     fError = FNativeStreamError(lpfile);
@@ -452,9 +452,9 @@ static BOOL FSaveSalvage(void) {
 static BOOL FSaveReport(const char *pszPath) {
     NATIVEFILE *lpfile;
     int i, fError;
-    if (!win32::IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return FALSE;
+    if (!win32::IsWindow(hwndReportDlg) || !vprptCur || vprptCur->irpt != rptPlanets) return 0;
     lpfile = PfNativeOpen(pszPath, "w");
-    if (!lpfile) return FALSE;
+    if (!lpfile) return 0;
     CchNativePrintf(lpfile, "{\"turn\":%u,\"type\":%u,\"column\":%d,\"subsort\":%d,\"ascending\":%s,\"planetIds\":[",
             game.turn, vprptCur->irpt, vprptCur->icolSort, vprptCur->iSubsort, vprptCur->fAscending ? "true" : "false");
     for (i = 0; i < vprptCur->cRows; i++) CchNativePrintf(lpfile, "%s%u", i ? "," : "", lpPlanets[vlprgidRep[i]].id);
@@ -463,7 +463,7 @@ static BOOL FSaveReport(const char *pszPath) {
     return ICloseNativeFile(lpfile) == 0 && !fError;
 }
 
-static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWORD tick) {
+static void  RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWORD tick) {
     HWND hwndModal;
     FLEET *lpfl;
     int iPage, i;
@@ -479,32 +479,32 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         {64, "Shaggy Dog"}, {65, "Sea Squared"}, {66, "Red Storm"}, {67, "Bloop"}, {68, "Kalamazoo"}
     };
     static const struct { const char *pszName; int iItem, cGoal, iQueue, grobj; BOOL fShift, fLeftovers; } rgProduction[] = {
-        {"Factories (Auto Build)", iobjFactory, 30, 0, grobjPlanet, TRUE, FALSE},
-        {"Factory", mdIdleFactory, 3, 0, grobjPlanet, FALSE, TRUE},
-        {"Mine", mdIdleMine, 3, 1, grobjPlanet, FALSE, TRUE},
-        {"Santa Maria", 2, 1, 1, grobjFleet, FALSE, FALSE},
-        {"Santa Maria", 2, 3, 1, grobjFleet, FALSE, FALSE},
-        {"Factories (Auto Build)", iobjFactory, 10, 0, grobjPlanet, TRUE, TRUE},
-        {"Mines (Auto Build)", iobjMine, 10, 1, grobjPlanet, TRUE, TRUE},
-        {"Armed Probe", 0, 2, 2, grobjFleet, FALSE, FALSE},
-        {"Factories (Auto Build)", iobjFactory, 3, 0, grobjPlanet, FALSE, TRUE},
-        {"Mines (Auto Build)", iobjMine, 3, 1, grobjPlanet, FALSE, TRUE},
-        {"Teamster", 3, 1, 2, grobjFleet, FALSE, FALSE},
-        {"Mine", mdIdleMine, 70, 0, grobjPlanet, TRUE, FALSE},
-        {"Terraform Environment", mdIdleTerraform, 2, 0, grobjPlanet, FALSE, TRUE},
-        {"Teamster", 3, 2, 1, grobjFleet, FALSE, FALSE},
-        {"Mini-Miner", 6, 1, 1, grobjFleet, FALSE, FALSE},
-        {"Mine", mdIdleMine, 100, 0, grobjPlanet, FALSE, FALSE},
-        {"Min Terraform (Auto Build)", iobjMinTerraform, 2, 0, grobjPlanet, FALSE, TRUE},
-        {"Factories (Auto Build)", iobjFactory, 60, 0, grobjPlanet, TRUE, FALSE},
-        {"Mines (Auto Build)", iobjMine, 60, 1, grobjPlanet, TRUE, FALSE}
+        {"Factories (Auto Build)", iobjFactory, 30, 0, grobjPlanet, 1, 0},
+        {"Factory", mdIdleFactory, 3, 0, grobjPlanet, 0, 1},
+        {"Mine", mdIdleMine, 3, 1, grobjPlanet, 0, 1},
+        {"Santa Maria", 2, 1, 1, grobjFleet, 0, 0},
+        {"Santa Maria", 2, 3, 1, grobjFleet, 0, 0},
+        {"Factories (Auto Build)", iobjFactory, 10, 0, grobjPlanet, 1, 1},
+        {"Mines (Auto Build)", iobjMine, 10, 1, grobjPlanet, 1, 1},
+        {"Armed Probe", 0, 2, 2, grobjFleet, 0, 0},
+        {"Factories (Auto Build)", iobjFactory, 3, 0, grobjPlanet, 0, 1},
+        {"Mines (Auto Build)", iobjMine, 3, 1, grobjPlanet, 0, 1},
+        {"Teamster", 3, 1, 2, grobjFleet, 0, 0},
+        {"Mine", mdIdleMine, 70, 0, grobjPlanet, 1, 0},
+        {"Terraform Environment", mdIdleTerraform, 2, 0, grobjPlanet, 0, 1},
+        {"Teamster", 3, 2, 1, grobjFleet, 0, 0},
+        {"Mini-Miner", 6, 1, 1, grobjFleet, 0, 0},
+        {"Mine", mdIdleMine, 100, 0, grobjPlanet, 0, 0},
+        {"Min Terraform (Auto Build)", iobjMinTerraform, 2, 0, grobjPlanet, 0, 1},
+        {"Factories (Auto Build)", iobjFactory, 60, 0, grobjPlanet, 1, 0},
+        {"Mines (Auto Build)", iobjMine, 60, 1, grobjPlanet, 1, 0}
     };
     (void)hwndTimer; (void)message; (void)tick;
 
     if (++cWait > 300) { pszFailure = "bounded tutorial action timed out"; goto LFail; }
     if (tutor.fAutoComplete) { pszFailure = "tutorial auto-completion was used"; goto LFail; }
     iPage = tutor.idt / 8;
-    if (gd.fTutorial && iPage >= 0 && iPage < 80 && !rgfPage[iPage]) { rgfPage[iPage] = TRUE; cPage++; }
+    if (gd.fTutorial && iPage >= 0 && iPage < 80 && !rgfPage[iPage]) { rgfPage[iPage] = 1; cPage++; }
     hwndModal = HwndModal();
     switch (iStage) {
     case 0:
@@ -518,7 +518,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!gd.fTutorial || tutor.idtBold != 5 || !win32::IsWindow(hwndScanner) || hwndModal) return;
         if (game.turn != 0 || tutor.fTurnDone) { pszFailure = "unexpected initial tutorial state"; goto LFail; }
         if (!FSaveState("start")) goto LArtifact;
-        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
         cActions++;
         break;
     case 3:
@@ -528,7 +528,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             goto LFail;
         }
         if (!FSaveState("rejected") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
-        fRejected = TRUE;
+        fRejected = 1;
         break;
     case 4:
         if (hwndModal) return;
@@ -549,8 +549,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal) { pszFailure = "unexpected dialog after Goto"; goto LFail; }
         if (tutor.idtBold != 15 || sel.grobj != grobjFleet || sel.id != 0) return;
         if (!FFindPlanet("Prune")) { pszFailure = "Prune missing from visible map inspection"; goto LFail; }
-        if (!FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) ||
-            !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+        if (!FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) ||
+            !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
         break;
     case 6:
         if (hwndModal) { pszFailure = "unexpected dialog after map order"; goto LFail; }
@@ -583,12 +583,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (sel.grobj != grobjFleet || sel.id != (tutor.idtBold == 21 ? 1 : 4)) {
                 pszFailure = "tutorial map instruction selected the wrong fleet"; goto LFail;
             }
-            if (!FFindPlanet(pszPlanet) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet(pszPlanet) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 11;
             goto LQueued;
         case 37:
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, 0)) goto LInput;
             cActions++;
             break;
         case 39:
@@ -597,7 +597,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             }
             if (!FSaveOrders("year-2400-orders.json") || !FSaveState("before-generate")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++;
             iStage = 12;
             goto LQueued;
@@ -653,26 +653,26 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob || tutor.idtBold != 43) { pszFailure = "unexpected production dialog"; goto LFail; }
         hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
         iFactoryRow = -1;
-        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, win32::LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) >= 6 && !strcmp(szItem + 6, "Factory")) { iFactoryRow = i; break; }
         }
-        if (iFactoryRow < 0 || ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (iFactoryRow < 0 || ui::SendMessage(hwndList, win32::LB_GETITEMRECT, ui::SendMessage(hwndList, win32::LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
         ptRow.x = (rcRow.left + rcRow.right) / 2; ptRow.y = (rcRow.top + rcRow.bottom) / 2;
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
-        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, 1) || !FPushKey(hwndList, SDL_SCANCODE_HOME, 0)) goto LInput;
         for (i = 0; i < iFactoryRow; i++) {
-            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, 1) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, 0)) goto LInput;
         }
         break;
     case 16:
         if (!hwndModal || hwndModal->lpfnDlg != ProductionDlg) goto LInput;
-        if (ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
+        if (ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_GETCURSEL, 0, 0) != iFactoryRow) return;
         /* Pushed SDL events do not change device state read by GetAsyncKeyState.
          * Hold the test modifier until the real Add callbacks have completed. */
         SDL_SetModState(SDL_KMOD_LSHIFT);
-        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, TRUE) || !FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
+        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, 1) || !FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         break;
     case 17:
         if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 10) return;
@@ -682,7 +682,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!lpplProdGlob || lpplProdGlob->iprodMac != 1 || lpplProdGlob->rgprod()[0].cItem != 20) return;
         if (lpplProdGlob->rgprod()[0].grobj != grobjPlanet || lpplProdGlob->rgprod()[0].iItem != mdIdleFactory) goto LInput;
         SDL_SetModState(SDL_KMOD_NONE);
-        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, FALSE) || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
+        if (!FPushKey(hwndModal, SDL_SCANCODE_LSHIFT, 0) || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         break;
     case 19:
         if (hwndModal || tutor.idtBold != 47 || !tutor.fTurnDone) return;
@@ -690,7 +690,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             LpplFromId(13)->lpplprod->rgprod()[0].cItem != 20) goto LInput;
         if (!FSaveOrders("year-2401-orders.json") || !FSaveState("before-generate-2401")) goto LArtifact;
         LogState("generate-ready");
-        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
         cActions++;
         break;
     case 20:
@@ -723,8 +723,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         for (i = 0; i < (int)(sizeof(rgScout) / sizeof(rgScout[0])); i++) {
             if (tutor.idtBold != rgScout[i].idt) continue;
-            if (!FFindPlanet(rgScout[i].pszName) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet(rgScout[i].pszName) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 24; goto LQueued;
         }
         pszFailure = "unimplemented scouting instruction"; goto LFail;
@@ -733,7 +733,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         /* A private window manager may already have maximized the frame;
          * requesting a smaller SDL size then fails while maximized. */
         if (rcRow.bottom < 650 && !ui::SetWindowPos(hwndFrame, NULL, 0, 0, 900, 700,
-                                               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)) {
+                                               win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOACTIVATE)) {
             pszFailure = "unable to resize tutorial frame"; goto LFail;
         }
         iStage = 25; goto LQueued;
@@ -753,19 +753,19 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 26:
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 5 || tutor.idtBold != 77) return;
-        if (!FFindPlanet("Prune") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+        if (!FFindPlanet("Prune") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
         break;
     case 27:
         if (tutor.idtBold != 79) return;
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 28:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskMine)) goto LInput;
         break;
     case 29:
-        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idt != 80 || tutor.idtBold != 80) return;
+        if (ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0) || tutor.idt != 80 || tutor.idtBold != 80) return;
         lpfl = LpflFromId(5);
         if (!lpfl || lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet ||
             lpfl->lpplord->rgord()[1].id != 12 || lpfl->lpplord->rgord()[1].grTask != grTaskMine) goto LInput;
@@ -784,7 +784,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 83) {
             ptRow = (POINT){30, 65};
-            if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_LEFT, TRUE)) goto LInput;
+            if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_LEFT, 1)) goto LInput;
             cActions++;
             iStage = 41; goto LQueued;
         }
@@ -830,22 +830,22 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal || tutor.idtBold != 92) return;
         lpfl = LpflFromId(2);
         if (!lpfl || lpfl->rgwtMin[0] != 0 || lpfl->rgwtMin[1] != 0 || lpfl->rgwtMin[2] != 0 || lpfl->rgwtMin[3] != 25) goto LInput;
-        if (!FFindPlanet("90210") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+        if (!FFindPlanet("90210") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
         break;
     case 37:
         if (tutor.idtBold != 93) return;
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 38:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 39:
         if (hwndModal || !tutor.fTurnDone || tutor.idtBold != 95) return;
         if (!FSaveOrders("year-2402-orders.json") || !FSaveState("before-generate-2402")) goto LArtifact;
         LogState("generate-ready");
-        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+        if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
         cActions++;
         break;
     case 40:
@@ -868,7 +868,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveState("summary-popup")) goto LArtifact;
         LogState("summary-popup");
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
-        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, FALSE)) goto LInput;
+        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, 0)) goto LInput;
         iStage = 32; goto LQueued;
     case 42:
         if (hwndModal || game.turn != 3) { pszFailure = "unexpected logistics state or dialog"; goto LFail; }
@@ -902,7 +902,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 44; goto LQueued;
         }
         if (tutor.idtBold == 123) {
-            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, win32::LB_GETITEMRECT, 1, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 59; goto LQueued;
@@ -910,7 +910,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 127) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2403-orders.json") || !FSaveState("before-generate-2403")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 61; goto LQueued;
         }
         pszFailure = "unimplemented logistics instruction"; goto LFail;
@@ -925,16 +925,16 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 45:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LInput;
-        if (rgProduction[iProdPass].fLeftovers && ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) != BST_CHECKED &&
+        if (rgProduction[iProdPass].fLeftovers && ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_GETCHECK, 0, 0) != win32::BST_CHECKED &&
             !FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY))) goto LInput;
         hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
         iFactoryRow = -1;
-        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, win32::LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) >= 6 && !strcmp(szItem + 6, rgProduction[iProdPass].pszName)) { iFactoryRow = i; break; }
         }
-        if (iFactoryRow < 0 || ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (iFactoryRow < 0 || ui::SendMessage(hwndList, win32::LB_GETITEMRECT, ui::SendMessage(hwndList, win32::LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
         ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         iStage = 49; goto LQueued;
@@ -943,15 +943,15 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS);
         if (win32::GetFocus() != hwndList) return;
         /* Keyboard events must be translated after the click changes focus. */
-        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, 1) || !FPushKey(hwndList, SDL_SCANCODE_HOME, 0)) goto LInput;
         for (i = 0; i < iFactoryRow; i++) {
-            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, 1) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, 0)) goto LInput;
         }
         iStage = 46; goto LQueued;
     case 46:
         if (hwndModal && cWait == 20) fprintf(stderr, "Production item %s: selected %ld, expected row %d\n", rgProduction[iProdPass].pszName,
-            (long)ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0), iFactoryRow);
-        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), LB_GETCURSEL, 0, 0) != iFactoryRow) return;
+            (long)ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_GETCURSEL, 0, 0), iFactoryRow);
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_AVAILABLE_ITEMS), win32::LB_GETCURSEL, 0, 0) != iFactoryRow) return;
         SDL_SetModState(iProdPass == 15 ? SDL_KMOD_LCTRL : rgProduction[iProdPass].fShift ? SDL_KMOD_LSHIFT : SDL_KMOD_NONE);
         if (!FClick(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_ADD))) goto LInput;
         cProdAdded += iProdPass == 15 ? 100 : rgProduction[iProdPass].fShift ? 10 : 1;
@@ -967,11 +967,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (iProdPass == 1) { iProdPass = 2; cProdAdded = 0; iStage = 45; goto LQueued; }
         if (iProdPass == 5 || iProdPass == 8) { iProdPass++; cProdAdded = 0; iStage = 68; goto LQueued; }
         hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY);
-        if (ui::SendMessage(hwndList, BM_GETCHECK, 0, 0) != (rgProduction[iProdPass].fLeftovers ? BST_CHECKED : BST_UNCHECKED) && !FClick(hwndList)) goto LInput;
+        if (ui::SendMessage(hwndList, win32::BM_GETCHECK, 0, 0) != (rgProduction[iProdPass].fLeftovers ? win32::BST_CHECKED : win32::BST_UNCHECKED) && !FClick(hwndList)) goto LInput;
         break;
     case 48:
-        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), BM_GETCHECK, 0, 0) !=
-            (rgProduction[iProdPass].fLeftovers ? BST_CHECKED : BST_UNCHECKED)) return;
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_RESEARCH_LEFTOVERS_ONLY), win32::BM_GETCHECK, 0, 0) !=
+            (rgProduction[iProdPass].fLeftovers ? win32::BST_CHECKED : win32::BST_UNCHECKED)) return;
         if (!FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         iStage = iProdReturn; goto LQueued;
     case 50:
@@ -995,19 +995,19 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 53:
         if (hwndModal || tutor.idtBold != 112) return;
-        if (!FFindPlanet("90210") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+        if (!FFindPlanet("90210") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
         break;
     case 54:
         if (tutor.idtBold != 113) return;
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 55:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskXfer)) goto LInput;
         break;
     case 56:
-        if (tutor.idtBold != 114 || ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (tutor.idtBold != 114 || ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         ptRow = (POINT){(rgrcRef[5].left + rgrcRef[5].right) / 2, (rgrcRef[5].top + rgrcRef[5].bottom) / 2};
         pszMenu = "QuikDrop";
         if (!FClickPoint(hwndPlanet, ptRow, SDL_BUTTON_RIGHT)) goto LInput;
@@ -1019,8 +1019,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 0) return;
         iStage = 42; goto LQueued;
     case 59:
-        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
-        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, win32::LB_GETCURSEL, 0, 0) != 1) return;
+        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 1) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 0)) goto LInput;
         cActions++;
         break;
     case 60:
@@ -1053,7 +1053,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 65; goto LQueued;
         }
         if (tutor.idtBold == 131 || tutor.idtBold == 132) {
-            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, win32::LB_GETITEMRECT, 1, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 66; goto LQueued;
@@ -1076,7 +1076,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 143) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2404-orders.json") || !FSaveState("before-generate-2404")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 69; goto LQueued;
         }
         pszFailure = "unimplemented colonizer-production instruction"; goto LFail;
@@ -1091,20 +1091,20 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 4) return;
         iStage = 62; goto LQueued;
     case 66:
-        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
-        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, win32::LB_GETCURSEL, 0, 0) != 1) return;
+        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 1) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 0)) goto LInput;
         cActions++; iStage = 64; goto LQueued;
     case 68:
         if (!hwndModal) return;
         if (hwndModal->lpfnDlg != ProductionDlg || !lpplProdGlob) goto LInput;
         /* Add inserts before the selected queue row. */
         hwndList = win32::GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE);
-        if (ui::SendMessage(hwndList, LB_GETITEMRECT, rgProduction[iProdPass].iQueue, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (ui::SendMessage(hwndList, win32::LB_GETITEMRECT, rgProduction[iProdPass].iQueue, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
         ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         iStage = 70; goto LQueued;
     case 70:
-        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE), LB_GETCURSEL, 0, 0) != rgProduction[iProdPass].iQueue) return;
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_PRODUCTION_QUEUE), win32::LB_GETCURSEL, 0, 0) != rgProduction[iProdPass].iQueue) return;
         iStage = 45; goto LQueued;
     case 69:
         if (hwndModal) { pszFailure = "unexpected fifth-generation dialog"; goto LFail; }
@@ -1136,7 +1136,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 150 || tutor.idtBold == 153) {
             hwndList = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
             i = tutor.idtBold == 150 ? tbPlanetValueView : tbNormalView;
-            if (!ui::SendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
+            if (!ui::SendMessage(hwndList, win32::TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 72; goto LQueued;
@@ -1150,8 +1150,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 LogState("scanner-normal");
             }
             if (!FFindPlanet(tutor.idtBold == 151 ? "Shaggy Dog" : "Stove Top") ||
-                !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 72; goto LQueued;
         }
         if (tutor.idtBold == 152) {
@@ -1167,7 +1167,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 72; goto LQueued;
         }
         if (tutor.idtBold == 156) {
-            if (IMsgNext(FALSE) != imsgNone) {
+            if (IMsgNext(0) != imsgNone) {
                 if (!FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 78; goto LQueued;
             }
@@ -1183,11 +1183,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
                 iStage = 79; goto LQueued;
             }
-            if (IMsgNext(FALSE) != imsgNone) {
+            if (IMsgNext(0) != imsgNone) {
                 if (!FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 78; goto LQueued;
             }
-            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, win32::LB_GETITEMRECT, 1, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 80; goto LQueued;
@@ -1195,7 +1195,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 159) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2405-orders.json") || !FSaveState("before-generate-2405")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 81; goto LQueued;
         }
         pszFailure = "unimplemented second-colonization instruction"; goto LFail;
@@ -1222,7 +1222,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveOrders("year-2405-cargo.json")) goto LArtifact;
         iStage = 71; goto LQueued;
     case 76:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         iStage = 72; goto LQueued;
     case 78:
@@ -1232,8 +1232,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu) return;
         iStage = 71; goto LQueued;
     case 80:
-        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1) return;
-        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, TRUE) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, FALSE)) goto LInput;
+        if (win32::GetFocus() != hwndShipLB || ui::SendMessage(hwndShipLB, win32::LB_GETCURSEL, 0, 0) != 1) return;
+        if (!FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 1) || !FPushKey(hwndShipLB, SDL_SCANCODE_DELETE, 0)) goto LInput;
         cActions++; iStage = 72; goto LQueued;
     case 81:
         if (hwndModal) { pszFailure = "unexpected sixth-generation dialog"; goto LFail; }
@@ -1258,8 +1258,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 86; goto LQueued;
         }
         if (tutor.idtBold == 163) {
-            if (!FFindPlanet("Prune") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet("Prune") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 83; goto LQueued;
         }
         if (tutor.idtBold == 164) {
@@ -1274,7 +1274,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 83; goto LQueued;
         }
         if (tutor.idtBold == 166) {
-            if (ui::SendMessage(hwndShipLB, LB_GETITEMRECT, 1, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (ui::SendMessage(hwndShipLB, win32::LB_GETITEMRECT, 1, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndShipLB, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 87; goto LQueued;
@@ -1297,7 +1297,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 175) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2406-orders.json") || !FSaveState("before-generate-2406")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 90; goto LQueued;
         }
         pszFailure = "unimplemented transport-cycle instruction"; goto LFail;
@@ -1305,16 +1305,16 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (pszMenu || tutor.idtBold == idtBefore) return;
         iStage = 82; goto LQueued;
     case 84:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskXfer)) goto LInput;
         iStage = 83; goto LQueued;
     case 86:
         if (pszMenu || sel.grobj != grobjFleet || sel.id != 3) return;
         iStage = 82; goto LQueued;
     case 87:
-        if (ui::SendMessage(hwndShipLB, LB_GETCURSEL, 0, 0) != 1 || sel.iwpAct != 1) return;
-        if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+        if (ui::SendMessage(hwndShipLB, win32::LB_GETCURSEL, 0, 0) != 1 || sel.iwpAct != 1) return;
+        if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+            !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
         iStage = 83; goto LQueued;
     case 90:
         if (hwndModal) { pszFailure = "unexpected seventh-generation dialog"; goto LFail; }
@@ -1345,7 +1345,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 177 || tutor.idtBold == 182) {
             hwndList = win32::GetDlgItem(hwndTb, IDC_STARS_TOOLBAR);
             i = tutor.idtBold == 177 ? tbPlanetValueView : tbNormalView;
-            if (!ui::SendMessage(hwndList, TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
+            if (!ui::SendMessage(hwndList, win32::TB_GETRECT, IDC_STARS_TOOLBUTTON_FIRST + i, (LPARAM)&rcRow)) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             iStage = 92; goto LQueued;
@@ -1353,8 +1353,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 179) {
             if ((grbitScan & grbitScanViewMask) != 3 || !FSaveState("red-storm-view")) goto LArtifact;
             LogState("expansion-habitability");
-            if (!FFindPlanet("Red Storm") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet("Red Storm") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 98; goto LQueued;
         }
         if (tutor.idtBold == 181 || tutor.idtBold == 188 || tutor.idtBold == 196) {
@@ -1389,7 +1389,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 198) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2407-orders.json") || !FSaveState("before-generate-2407")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 105; goto LQueued;
         }
         pszFailure = "unimplemented expansion instruction"; goto LFail;
@@ -1423,7 +1423,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 99:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         iStage = 92; goto LQueued;
     case 101:
@@ -1433,7 +1433,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (sel.scan.grobj != grobjFleet || sel.scan.ifl == iflNone || rglpfl[sel.scan.ifl]->id != 512) return;
         if (!FSaveState("enemy-summary")) goto LArtifact;
         ptRow = (POINT){30, 2 * dyArial8 + 25};
-        if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_RIGHT, TRUE)) goto LInput;
+        if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_RIGHT, 1)) goto LInput;
         cActions++; break;
     case 103:
         if (!win32::IsWindow(hwndPopup)) return;
@@ -1441,7 +1441,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveState("enemy-design-popup") || !FSaveEnemyDesign()) goto LArtifact;
         LogState("enemy-design-popup");
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
-        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_RIGHT, FALSE)) goto LInput;
+        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_RIGHT, 0)) goto LInput;
         break;
     case 104:
         if (win32::IsWindow(hwndPopup)) return;
@@ -1487,8 +1487,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 iStage = 111; goto LQueued;
             }
             if (lpfl->cord == 1) {
-                if (!FFindPlanet("Slime") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                if (!FFindPlanet("Slime") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
                 iStage = 114; goto LQueued;
             }
             if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].id != 8) goto LInput;
@@ -1546,11 +1546,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (sel.grobj != grobjFleet || sel.id != 7 || sel.fl.cord != 2) return;
         iStage = 106; goto LQueued;
     case 115:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 116:
-        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
+        if (ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
         iStage = 106; goto LQueued;
     case 117:
         if (tutor.idt != 208 || rgplr[idPlayer].cFleet != 11) return;
@@ -1579,8 +1579,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 120; goto LQueued;
         }
         if (tutor.idtBold == 214) {
-            if (!FFindPlanet("Hiho") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet("Hiho") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 121; goto LQueued;
         }
         if (tutor.idtBold == 216 || tutor.idtBold == 217) {
@@ -1590,7 +1590,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FClickPoint(hwndMessage, ptRow, SDL_BUTTON_LEFT)) goto LInput;
                 iStage = 123; goto LQueued;
             }
-            if (tutor.idtBold == 216 || IMsgNext(FALSE) != imsgNone) {
+            if (tutor.idtBold == 216 || IMsgNext(0) != imsgNone) {
                 if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 122; goto LQueued;
             }
@@ -1601,11 +1601,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (!win32::GetClientRect(hwndMine, &rcRow)) goto LInput;
             i = ((rcRow.bottom - (2 * dyArial8 - 4) - 4 * dyArial8 - 2) / 6 + 1) & ~1;
             ptRow = (POINT){30, 4 * dyArial8 - 4 + 2 * i + i / 2};
-            if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_LEFT, TRUE)) goto LInput;
+            if (!FMousePoint(hwndMine, ptRow, SDL_BUTTON_LEFT, 1)) goto LInput;
             cActions++; iStage = 125; goto LQueued;
         }
         if (tutor.idtBold == 221) {
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, 0)) goto LInput;
             cActions++; iStage = 127; goto LQueued;
         }
         if (tutor.idtBold == 226) {
@@ -1615,7 +1615,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             }
             if (i == cFutureTech) { pszFailure = "Radiation Terraform 7 benefit is absent"; goto LFail; }
             ptRow = (POINT){dxResLeft / 2, yTopFutureTech + i * dyArial8 + dyArial8 / 2};
-            if (!FMousePoint(hwndModal, ptRow, SDL_BUTTON_LEFT, TRUE)) goto LInput;
+            if (!FMousePoint(hwndModal, ptRow, SDL_BUTTON_LEFT, 1)) goto LInput;
             cActions++; iStage = 128; goto LQueued;
         }
         if (tutor.idtBold == 228) {
@@ -1633,7 +1633,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 230) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2408-orders.json") || !FSaveState("before-generate-2408")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 132; goto LQueued;
         }
         pszFailure = "unimplemented research cycle instruction"; goto LFail;
@@ -1661,11 +1661,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 118; goto LQueued;
     case 125:
         if (!win32::IsWindow(hwndPopup)) return;
-        if (!FSaveTutorialPopup("wallaby-radiation.json", FALSE) || !FSaveState("wallaby-radiation")) goto LArtifact;
+        if (!FSaveTutorialPopup("wallaby-radiation.json", 0) || !FSaveState("wallaby-radiation")) goto LArtifact;
         LogState("environment-popup");
         if (!win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
-        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, FALSE)) goto LInput;
+        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, 0)) goto LInput;
         break;
     case 126:
         if (win32::IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
@@ -1676,11 +1676,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 118; goto LQueued;
     case 128:
         if (!win32::IsWindow(hwndPopup)) return;
-        if (!FSaveTutorialPopup("radiation-benefit.json", TRUE) || !FSaveState("radiation-benefit")) goto LArtifact;
+        if (!FSaveTutorialPopup("radiation-benefit.json", 1) || !FSaveState("radiation-benefit")) goto LArtifact;
         LogState("research-benefit-popup");
         if (!win32::GetClientRect(hwndPopup, &rcRow)) goto LInput;
         ptRow = (POINT){rcRow.right / 2, rcRow.bottom / 2};
-        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, FALSE)) goto LInput;
+        if (!FMousePoint(hwndPopup, ptRow, SDL_BUTTON_LEFT, 0)) goto LInput;
         break;
     case 129:
         if (win32::IsWindow(hwndPopup) || tutor.idtBold == idtBefore) return;
@@ -1758,14 +1758,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 243) {
             lpfl = LpflFromId(9);
-            if (!lpfl || lpfl->cord != 1 || !FFindPlanet("Oxygen") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!lpfl || lpfl->cord != 1 || !FFindPlanet("Oxygen") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 145; goto LQueued;
         }
         if (tutor.idtBold == 247) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2409-orders.json") || !FSaveState("before-generate-2409")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 149; goto LQueued;
         }
         pszFailure = "unimplemented Oxygen colonization instruction"; goto LFail;
@@ -1775,13 +1775,13 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 135:
         if (!hwndModal) return;
         hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (!ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(hwndList, win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(hwndList, Construction + 1)) goto LInput;
         break;
     case 136:
         if (!hwndModal) return;
         hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, CB_GETCURSEL, 0, 0) != Construction + 1) return;
+        if (ui::SendMessage(hwndList, win32::CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, win32::CB_GETCURSEL, 0, 0) != Construction + 1) return;
         if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 137:
@@ -1826,11 +1826,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClick(rghwndOrderDD[0])) goto LInput;
         break;
     case 146:
-        if (!ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[0], grTaskColonize)) goto LInput;
         break;
     case 147:
-        if (ui::SendMessage(rghwndOrderDD[0], CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
+        if (ui::SendMessage(rghwndOrderDD[0], win32::CB_GETDROPPEDSTATE, 0, 0) || tutor.idtBold == idtBefore) return;
         iStage = 133; goto LQueued;
     case 148:
         lpfl = LpflFromId(0);
@@ -1905,7 +1905,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 263) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2410-orders.json") || !FSaveState("before-generate-2410")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 162; goto LQueued;
         }
         pszFailure = "unimplemented production template instruction"; goto LFail;
@@ -2026,8 +2026,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (idflAction == 8) {
                     if (!FFindMapObject(grobjFleet, 512, NULL)) goto LInput;
                 } else if (!FFindPlanet(idflAction == 0 ? "Hacker" : idflAction == 2 ? "Mozart" : idflAction == 11 ? "Wallaby" : "Stove Top")) goto LInput;
-                if (!FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                if (!FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
                 iStage = 168; goto LQueued;
             }
             if (idflAction != 1 && idflAction != 2) { pszFailure = "route did not advance battle cycle instruction"; goto LFail; }
@@ -2092,7 +2092,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 295) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2411-orders.json") || !FSaveState("before-generate-2411")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             cActions++; iStage = 190; goto LQueued;
         }
         pszFailure = "unimplemented battle cycle instruction"; goto LFail;
@@ -2126,11 +2126,11 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveOrders(idflAction == 2 ? "year-2411-colonizer-cargo.json" : "year-2411-troop-cargo.json")) goto LArtifact;
         iStage = 165; goto LQueued;
     case 173:
-        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[iOrderCombo], iOrderRow)) goto LInput;
         break;
     case 174:
-        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETCURSEL, 0, 0) != iOrderRow) return;
+        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], win32::CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(rghwndOrderDD[iOrderCombo], win32::CB_GETCURSEL, 0, 0) != iOrderRow) return;
         iStage = 165; goto LQueued;
     case 175:
         if (sel.grobj != grobjPlanet || sel.id != 13) return;
@@ -2145,13 +2145,13 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 178:
         if (!hwndModal) return;
         hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (!ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(hwndList, win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(hwndList, Biotechnology + 1)) goto LInput;
         break;
     case 179:
         if (!hwndModal) return;
         hwndList = win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD);
-        if (ui::SendMessage(hwndList, CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, CB_GETCURSEL, 0, 0) != Biotechnology + 1) return;
+        if (ui::SendMessage(hwndList, win32::CB_GETDROPPEDSTATE, 0, 0) || ui::SendMessage(hwndList, win32::CB_GETCURSEL, 0, 0) != Biotechnology + 1) return;
         if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 180:
@@ -2276,7 +2276,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 319) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2412-orders.json") || !FSaveState("before-generate-2412")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             iStage = 200; goto LQueued;
         }
         pszFailure = "unimplemented terraforming cycle instruction"; goto LFail;
@@ -2319,7 +2319,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         break;
     case 198:
         if (!hwndModal || hwndModal->lpfnDlg != FindDlg) goto LInput;
-        win32::GetDlgItemText(hwndModal, IDC_EDIT1, szItem, sizeof(szItem));
+        win32::GetDlgItemTextA(hwndModal, IDC_EDIT1, szItem, sizeof(szItem));
         if (strcmp(szItem, "Teamster #4")) return;
         if (!FSaveState("find-teamster-entered") || !FClick(win32::GetDlgItem(hwndModal, IDOK))) goto LInput;
         iStage = 201; goto LQueued;
@@ -2376,8 +2376,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             lpfl = LpflFromId(0);
             if (!lpfl || sel.grobj != grobjFleet || sel.id != 0) goto LInput;
             if (lpfl->cord == 1) {
-                if (!FFindPlanet("Slime") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                if (!FFindPlanet("Slime") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
                 iStage = 204; goto LQueued;
             }
             iOrderCombo = sel.fl.lpplord->rgord()[1].grTask != grTaskXfer ? 0 :
@@ -2405,7 +2405,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FClick(win32::GetDlgItem(hwndBrowser, IDCANCEL))) goto LInput;
                 iStage = 204; goto LQueued;
             }
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F4, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F4, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F4, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F4, 0)) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 328 || tutor.idtBold == 329 || tutor.idtBold == 330) {
@@ -2444,7 +2444,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 344) {
             hwndList = hwndPlanetProdLB;
-            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, win32::LB_GETITEMRECT, 0, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             iProductionInspect = 0;
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
@@ -2459,14 +2459,14 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FFindMapObject(grobjFleet, 8, NULL)) goto LInput;
                 pszMenu = objTarget.szName;
                 if (!FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_RIGHT)) goto LInput;
-            } else if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            } else if (!FFindPlanet("Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 204; goto LQueued;
         }
         if (tutor.idtBold == 350) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2413-orders.json") || !FSaveState("before-generate-2413")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             iStage = 220; goto LQueued;
         }
         pszFailure = "unimplemented design cycle instruction"; goto LFail;
@@ -2492,16 +2492,16 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (hwndModal) return;
         if (!FSaveOrders(pszCargoSnapshot)) goto LArtifact;
         if (iCargoReturn == 235) {
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F3, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, 0)) goto LInput;
             iStage = 237; goto LQueued;
         }
         iStage = iCargoReturn; goto LQueued;
     case 209:
-        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!ui::SendMessage(rghwndOrderDD[iOrderCombo], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (!FClickComboRow(rghwndOrderDD[iOrderCombo], iOrderRow)) goto LInput;
         break;
     case 210:
-        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (ui::SendMessage(rghwndOrderDD[iOrderCombo], win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (iOrderCombo == 1) {
             iOrderCombo = 2; iOrderRow = iActionUnloadAll;
             if (!FClick(rghwndOrderDD[2])) goto LInput;
@@ -2510,7 +2510,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FSaveOrders(pszOrderSnapshot)) goto LArtifact;
         iStage = iOrderReturn; goto LQueued;
     case 211:
-        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), CB_GETCURSEL, 0, 0) != iResearchNext + 1) return;
+        if (!hwndModal || ui::SendMessage(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), win32::CB_GETCURSEL, 0, 0) != iResearchNext + 1) return;
         if (!FClick(win32::GetDlgItem(hwndModal, IDCANCEL))) goto LInput;
         break;
     case 212:
@@ -2521,28 +2521,28 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!win32::IsWindow(hwndSlotDlg)) goto LInput;
         hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
         iDesignRow = -1;
-        for (i = 0; i < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0); i++) {
-            if (ui::SendMessage(hwndList, LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
-            ui::SendMessage(hwndList, LB_GETTEXT, i, (LPARAM)szItem);
+        for (i = 0; i < ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0); i++) {
+            if (ui::SendMessage(hwndList, win32::LB_GETTEXTLEN, i, 0) >= (LRESULT)sizeof(szItem)) goto LInput;
+            ui::SendMessage(hwndList, win32::LB_GETTEXT, i, (LPARAM)szItem);
             if (strlen(szItem) > 4 && !strcmp(szItem + 4, pszDesignPart)) { iDesignRow = i; break; }
         }
         if (iDesignRow < 0) return;
-        if (ui::SendMessage(hwndList, LB_GETITEMRECT, ui::SendMessage(hwndList, LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (ui::SendMessage(hwndList, win32::LB_GETITEMRECT, ui::SendMessage(hwndList, win32::LB_GETTOPINDEX, 0, 0), (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
         ptRow = (POINT){rcRow.right - 4, (rcRow.top + rcRow.bottom) / 2};
         if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
         break;
     case 214:
         hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
         if (win32::GetFocus() != hwndList) return;
-        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        if (!FPushKey(hwndList, SDL_SCANCODE_HOME, 1) || !FPushKey(hwndList, SDL_SCANCODE_HOME, 0)) goto LInput;
         for (i = 0; i < iDesignRow; i++) {
-            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+            if (!FPushKey(hwndList, SDL_SCANCODE_DOWN, 1) || !FPushKey(hwndList, SDL_SCANCODE_DOWN, 0)) goto LInput;
         }
         break;
     case 215:
         hwndList = win32::GetDlgItem(hwndSlotDlg, IDC_DESIGNER_COMPONENT_LIST);
-        if (ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iDesignRow) return;
-        if (ui::SendMessage(hwndList, LB_GETITEMRECT, iDesignRow, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (ui::SendMessage(hwndList, win32::LB_GETCURSEL, 0, 0) != iDesignRow) return;
+        if (ui::SendMessage(hwndList, win32::LB_GETITEMRECT, iDesignRow, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
         ptRow = (POINT){32, (rcRow.top + rcRow.bottom) / 2};
         ptTo = (POINT){(vrgrcSlot[iDesignSlot].left + vrgrcSlot[iDesignSlot].right) / 2,
                        (vrgrcSlot[iDesignSlot].top + vrgrcSlot[iDesignSlot].bottom) / 2};
@@ -2559,7 +2559,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (iProdPass == 15) {
             // A progress flag can skip the prompt; still inspect the real item.
             hwndList = hwndPlanetProdLB;
-            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, LB_GETITEMRECT, 0, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+            if (!win32::IsWindow(hwndList) || ui::SendMessage(hwndList, win32::LB_GETITEMRECT, 0, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             iProductionInspect = 0;
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
@@ -2568,10 +2568,10 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         iStage = 203; goto LQueued;
     case 219:
         hwndList = hwndPlanetProdLB;
-        if (ui::SendMessage(hwndList, LB_GETCURSEL, 0, 0) != iProductionInspect) return;
+        if (ui::SendMessage(hwndList, win32::LB_GETCURSEL, 0, 0) != iProductionInspect) return;
         LogState("production-item-inspected");
-        if (++iProductionInspect < ui::SendMessage(hwndList, LB_GETCOUNT, 0, 0)) {
-            if (ui::SendMessage(hwndList, LB_GETITEMRECT, iProductionInspect, (LPARAM)&rcRow) == LB_ERR) goto LInput;
+        if (++iProductionInspect < ui::SendMessage(hwndList, win32::LB_GETCOUNT, 0, 0)) {
+            if (ui::SendMessage(hwndList, win32::LB_GETITEMRECT, iProductionInspect, (LPARAM)&rcRow) == win32::LB_ERR) goto LInput;
             ptRow = (POINT){(rcRow.left + rcRow.right) / 2, (rcRow.top + rcRow.bottom) / 2};
             if (!FClickPoint(hwndList, ptRow, SDL_BUTTON_LEFT)) goto LInput;
             goto LQueued;
@@ -2591,13 +2591,13 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         LogState("design-cycle-partial");
         win32::KillTimer(NULL, id); win32::PostQuitMessage(fPassed ? 0 : 93); return;
     case 221:
-        if (!win32::IsWindow(hwndDesignCombo) || !ui::SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (!win32::IsWindow(hwndDesignCombo) || !ui::SendMessage(hwndDesignCombo, win32::CB_GETDROPPEDSTATE, 0, 0)) return;
         if (win32::GetFocus() != hwndDesignCombo) return;
         // SDL assigns keyboard targets when translating the event batch.
         // Translate these only after the preceding click establishes focus.
-        if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, TRUE) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, FALSE)) goto LInput;
+        if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, 1) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_HOME, 0)) goto LInput;
         for (i = 0; i < iDesignCombo; i++) {
-            if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, TRUE) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, FALSE)) goto LInput;
+            if (!FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, 1) || !FPushKey(hwndDesignCombo, SDL_SCANCODE_DOWN, 0)) goto LInput;
         }
         iStage = 223; goto LQueued;
     case 223:
@@ -2605,8 +2605,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (!FClickComboRow(hwndDesignCombo, iDesignCombo)) goto LInput;
         iStage = 222; goto LQueued;
     case 222:
-        if (ui::SendMessage(hwndDesignCombo, CB_GETDROPPEDSTATE, 0, 0)) return;
-        if (ui::SendMessage(hwndDesignCombo, CB_GETCURSEL, 0, 0) != iDesignCombo) goto LInput;
+        if (ui::SendMessage(hwndDesignCombo, win32::CB_GETDROPPEDSTATE, 0, 0)) return;
+        if (ui::SendMessage(hwndDesignCombo, win32::CB_GETCURSEL, 0, 0) != iDesignCombo) goto LInput;
         iStage = iDesignReturn; goto LQueued;
     case 224:
         if (game.turn != 14) { pszFailure = "unexpected automation year"; goto LFail; }
@@ -2614,7 +2614,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         LogState("automation-cycle-instruction");
         if (tutor.idtBold == 352 || tutor.idtBold == 354) {
             i = tutor.idtBold == 352 ? 17 : 2;
-            if (mdMsgObj != mdMsgObjPlanet || idMsgObj != i || (i == 2 && IMsgNext(FALSE) != imsgNone)) {
+            if (mdMsgObj != mdMsgObjPlanet || idMsgObj != i || (i == 2 && IMsgNext(0) != imsgNone)) {
                 if (!win32::IsWindowEnabled(rghwndMsgBtn[2]) || !FClick(rghwndMsgBtn[2])) goto LInput;
             } else if (!FClick(rghwndMsgBtn[1])) goto LInput;
             iStage = 225; goto LQueued;
@@ -2628,7 +2628,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 358) {
             if (!tutor.fTurnDone || !FSaveOrders("year-2414-orders.json") || !FSaveState("before-generate-2414")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             iStage = 234; goto LQueued;
         }
         pszFailure = "unimplemented automation instruction"; goto LFail;
@@ -2686,7 +2686,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         LogState("report-cycle-instruction");
         if (tutor.idtBold == 360 || tutor.idtBold == 361 || tutor.idtBold == 372) {
             idflAction = tutor.idtBold == 360 ? 8 : tutor.idtBold == 361 ? 6 : 11;
-            if (tutor.idtBold == 372 && IMsgNext(FALSE) != imsgNone) {
+            if (tutor.idtBold == 372 && IMsgNext(0) != imsgNone) {
                 if (!FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 236; goto LQueued;
             }
@@ -2705,24 +2705,24 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
                 if (!FClick(rghwndBtn[7])) goto LInput;
                 iStage = 205; goto LQueued;
             }
-            if (!FFindPlanet(idflAction == 8 ? "Neil" : "Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+            if (!FFindPlanet(idflAction == 8 ? "Neil" : "Stove Top") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
             iStage = 236; goto LQueued;
         }
         if (tutor.idtBold == 363 || tutor.idtBold == 364) {
-            if (!win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndFrame, SDL_SCANCODE_F3, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, FALSE))) goto LInput;
+            if (!win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndFrame, SDL_SCANCODE_F3, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F3, 0))) goto LInput;
             iStage = 237; goto LQueued;
         }
         if (tutor.idtBold == 366) {
-            if (win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE))) goto LInput;
+            if (win32::IsWindow(hwndReportDlg) && (!FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, 1) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, 0))) goto LInput;
             iStage = 240; goto LQueued;
         }
         if (tutor.idtBold == 367) {
             lpfl = LpflFromId(6);
             if (!lpfl || sel.grobj != grobjFleet || sel.id != 6) goto LInput;
             if (lpfl->cord == 1) {
-                if (!FFindPlanet("Wallaby") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) ||
-                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                if (!FFindPlanet("Wallaby") || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) ||
+                    !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) || !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
                 iStage = 236; goto LQueued;
             }
             iOrderCombo = lpfl->lpplord->rgord()[1].grTask != grTaskXfer ? 0 : 1;
@@ -2731,7 +2731,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iStage = 209; goto LQueued;
         }
         if (tutor.idtBold == 368) {
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, 0)) goto LInput;
             iStage = 241; goto LQueued;
         }
         if (tutor.idtBold == 371) {
@@ -2741,7 +2741,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (tutor.idtBold == 374) {
             if (!fValueReportChecked || !tutor.fTurnDone || !FSaveOrders("year-2415-orders.json") || !FSaveState("before-generate-2415")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             iStage = 243; goto LQueued;
         }
         pszFailure = "unimplemented report cycle instruction"; goto LFail;
@@ -2753,7 +2753,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         if (vprptCur->irpt != rptPlanets) goto LInput;
         if (!win32::GetClientRect(hwndReportDlg, &rcRow)) goto LInput;
         if (rcRow.right < 1000) {
-            if (!ui::SetWindowPos(hwndReportDlg, NULL, 0, 0, 1280, 700, SWP_NOZORDER)) goto LInput;
+            if (!ui::SetWindowPos(hwndReportDlg, NULL, 0, 0, 1280, 700, win32::SWP_NOZORDER)) goto LInput;
             return;
         }
         if (!FSaveState("value-report-open")) goto LArtifact;
@@ -2768,12 +2768,12 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
     case 238:
         if (pszMenu || !vprptCur || vprptCur->icolSort != 4) return;
         if (!FSaveReport("value-report.json") || !FSaveState("value-report-sorted") ||
-            !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, TRUE) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, FALSE)) goto LInput;
+            !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, 1) || !FPushKey(hwndReportDlg, SDL_SCANCODE_ESCAPE, 0)) goto LInput;
         iStage = 240; goto LQueued;
     case 240:
         if (win32::IsWindow(hwndReportDlg) || vprptCur) return;
         if (!FSaveState("value-report-closed")) goto LArtifact;
-        fValueReportChecked = TRUE;
+        fValueReportChecked = 1;
         iStage = 235; goto LQueued;
     case 241:
         if (!hwndModal) return;
@@ -2815,8 +2815,8 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (!lpfl) goto LInput;
             if (lpfl->cord == 1) {
                 if (!FFindPlanet(idflAction == 4 ? "Wallaby" : idflAction == 0 ? "Stove Top" : "Prune") ||
-                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, TRUE) || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) ||
-                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, FALSE)) goto LInput;
+                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 1) || !FClickPoint(hwndScanner, objTarget.ptClient, SDL_BUTTON_LEFT) ||
+                    !FPushKey(hwndScanner, SDL_SCANCODE_LSHIFT, 0)) goto LInput;
                 iStage = 245; goto LQueued;
             }
             if (idflAction == 7) {
@@ -2850,7 +2850,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
         }
         if (tutor.idtBold == 382) {
             if (!hwndModal) {
-                if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, FALSE)) goto LInput;
+                if (!FPushKey(hwndFrame, SDL_SCANCODE_F5, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F5, 0)) goto LInput;
                 iStage = 245; goto LQueued;
             }
             if (hwndModal->lpfnDlg != ResearchDlg || !FChooseCombo(win32::GetDlgItem(hwndModal, IDC_RESEARCH_NEXT_FIELD), "Construction")) goto LInput;
@@ -2858,7 +2858,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             iDesignReturn = 211; iStage = 221; goto LQueued;
         }
         if (tutor.idtBold == 384 || tutor.idtBold == 383 || tutor.idtBold == 387) {
-            if (IMsgNext(FALSE) != imsgNone) {
+            if (IMsgNext(0) != imsgNone) {
                 if (!FClick(rghwndMsgBtn[2])) goto LInput;
                 iStage = 245; goto LQueued;
             }
@@ -2867,7 +2867,7 @@ static void CALLBACK RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWOR
             if (!FSaveOrders(game.turn == 16 ? "year-2416-orders.json" : "year-2417-orders.json") ||
                 !FSaveState(game.turn == 16 ? "before-generate-2416" : "before-generate-2417")) goto LArtifact;
             LogState("generate-ready");
-            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, TRUE) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, FALSE)) goto LInput;
+            if (!FPushKey(hwndFrame, SDL_SCANCODE_F9, 1) || !FPushKey(hwndFrame, SDL_SCANCODE_F9, 0)) goto LInput;
             iStage = game.turn == 16 ? 247 : 248; goto LQueued;
         }
         pszFailure = "unimplemented merge cycle instruction"; goto LFail;
@@ -2922,7 +2922,7 @@ LFail:
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
     int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idTimer = win32::SetTimer(NULL, 0, 50, RunTutorial);
-    return fResult && idTimer ? fResult : FALSE;
+    return fResult && idTimer ? fResult : 0;
 }
 
 int main(int argc, char **argv) {
@@ -2964,7 +2964,7 @@ int main(int argc, char **argv) {
     lpEvents = PfNativeOpen("events.jsonl", "w");
     if (!lpEvents) return 1;
     setvbuf(stdout, NULL, _IONBF, 0);
-    nResult = ui::WinMain(win32::GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);
+    nResult = ui::WinMain(win32::GetModuleHandleA(NULL), NULL, szCommand, win32::SW_SHOWNORMAL);
     if (idTimer) win32::KillTimer(NULL, idTimer);
     lpfile = PfNativeOpen("result.json", "w");
     if (lpfile) {
@@ -2972,8 +2972,8 @@ int main(int argc, char **argv) {
                 fMergeCycle ? "merge-cycle" : fReportCycle ? "report-cycle" : fAutomationCycle ? "automation-cycle" : fDesignCycle ? "design-cycle" : fTerraformCycle ? "terraform-cycle" : fBattleCycle ? "battle-cycle" : fProdTemplates ? "production-templates" : fOxygenColony ? "oxygen-colonization" : fResearchCycle ? "research-cycle" : fFleetSplit ? "fleet-split" : fExpansion ? "expansion" : fTransportCycle ? "transport-cycle" : fSecondColonization ? "second-colonization" : fColonizerProduction ? "colonizer-production" : fLogistics ? "logistics" : fColonization ? "colonization" : fMining ? "mining" : fScouting ? "scouting" : fTwoYears ? "two-years" : fFirstYear ? "first-year" : "smoke", fPassed && nResult == 0 ? (fFirstYear ? "partial" : "passed") : "failed",
                 cActions, cPage, fRejected ? "true" : "false",
                 fPassed ? "bounded scenario; complete tutorial remains unverified" : pszFailure);
-        if (ICloseNativeFile(lpfile)) fPassed = FALSE;
-    } else fPassed = FALSE;
+        if (ICloseNativeFile(lpfile)) fPassed = 0;
+    } else fPassed = 0;
     ICloseNativeFile(lpEvents);
     SDL_SetModState(SDL_KMOD_NONE);
     StarsCompatProcessExit();

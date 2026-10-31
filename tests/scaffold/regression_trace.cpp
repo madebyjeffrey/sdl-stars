@@ -50,7 +50,7 @@ static void TraceCall(char chTag, int32_t lArg, int32_t lResult, void *pvReturn,
     pfile = TraceFile();
     if (pfile != NULL) {
         fprintf(pfile, "%c %u %d %d %ld %ld %llx%s\n", chTag, game.turn, idPlayer, fAi, (long)lArg, (long)lResult,
-                (unsigned long long)((uintptr_t)pvReturn - (uintptr_t)GetModuleHandle(NULL)), pszExtra);
+                (unsigned long long)((uintptr_t)pvReturn - (uintptr_t)GetModuleHandleA(NULL)), pszExtra);
     }
 }
 

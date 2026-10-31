@@ -5,7 +5,7 @@
 #include "stars_test.h"
 
 static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     RTCHGNAME rt;
     FLEET *lpfl;
     int16_t cOut;
@@ -35,7 +35,7 @@ static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
 // were taken from the planet, but only what fit in the fleet's hold was
 // delivered and the rest was destroyed.
 static void test_FRunLogRecord_refunds_undelivered_cargo(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
     PLANET     *lppl;
     FLEET      *lpfl;
@@ -64,7 +64,7 @@ static void test_FRunLogRecord_refunds_undelivered_cargo(void) {
     TEST_ASSERT(wtPlanet >= 100);
 
     // Player 0's order: 100 kT of ironium from the planet to the fleet.
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     idPlayer = 0;
     memset(rgb, 0, sizeof(rgb));
     rgb[0] = (uint8_t)lppl->id; rgb[1] = (uint8_t)((uint16_t)lppl->id >> 8);
@@ -83,7 +83,7 @@ static void test_FRunLogRecord_refunds_undelivered_cargo(void) {
 // player could build most of a cheap starbase design, then edit the design
 // into an expensive one and finish it for the rest of the cheap one's cost.
 static void test_FRunLogRecord_design_change_clears_progress(void) {
-    char     szDir[MAX_PATH];
+    char     szDir[cbTestPath];
     PLANET  *lppl;
     SHDEF    shdef;
     int16_t  isb;
@@ -118,7 +118,7 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
     lppl->lpplprod->rgprod()[0].pct = 50;
 
     // Player 0's order: replace the design.
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     idPlayer = 0;
     shdef = rglpshdefSB[0][isb];
     shdef.det = detAll;
@@ -137,7 +137,7 @@ static void test_FRunLogRecord_design_change_clears_progress(void) {
 // receipts. In particular, failed replacement can clear progress and decrement
 // the roster count; decoding must not turn the workflow into a transaction.
 static void test_FRunLogRecord_design_partial_effects(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     PLANET *lppl;
     SHDEF shdef, shdefBefore;
     uint8_t rgb[] = {1, 0xe0}; // mode=1, player=0, slot=0; all junk bits set.
@@ -152,7 +152,7 @@ static void test_FRunLogRecord_design_partial_effects(void) {
     TEST_ASSERT(FStarsTestNewGame(szDir, 12345, NULL, 0));
     TEST_ASSERT(FStarsTestLoadHost());
     idPlayer = 0;
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     for (i = 0; i < cPlanet && lpPlanets[i].iPlayer != 0; i++) {}
     TEST_ASSERT(i < cPlanet);
     lppl = &lpPlanets[i];
@@ -163,7 +163,7 @@ static void test_FRunLogRecord_design_partial_effects(void) {
     lppl->lpplprod->rgprod()[0].grobj = grobjFleet;
     lppl->lpplprod->rgprod()[0].iItem = 0;
     lppl->lpplprod->rgprod()[0].pct = 37;
-    rglpshdef[0][0].fFree = FALSE;
+    rglpshdef[0][0].fFree = 0;
     rglpshdef[0][0].cExist = 1;
     cBefore = rgplr[0].cShDef;
     TEST_CHECK(!FRunLogRecord(rtLogShDef, 1, rgbShort));
@@ -184,7 +184,7 @@ static void test_FRunLogRecord_design_partial_effects(void) {
     // previously indeterminate junk bits are now initialized to zero.
     shdef = shdefBefore;
     shdef.det = detSome;
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     LogChangeShDef(&shdef);
     TEST_CHECK(shdef.det == detAll);
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgbWritten));
@@ -195,7 +195,7 @@ static void test_FRunLogRecord_design_partial_effects(void) {
 // Trimmed insert/update records keep the old byte-prefix and neighboring-row
 // effects, while the signed index and task-value admission remain unchanged.
 static void test_FRunLogRecord_order_bytes(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     FLEET *lpfl;
     PLORD *lpplord;
     ORDER ordLast, ordNeighbor;
@@ -224,7 +224,7 @@ static void test_FRunLogRecord_order_bytes(void) {
     lpplord->rgord()[1].pt = {102, 202};
     lpplord->rgord()[1].id = 18;
     lpplord->rgord()[1].txp.rgia[4].w = 0xbeef;
-    lpplord->rgord()[1].fNoAutoTrack = TRUE;
+    lpplord->rgord()[1].fNoAutoTrack = 1;
     ordLast = lpplord->rgord()[1];
     id = static_cast<uint16_t>(lpfl->id);
     rgb[0] = static_cast<uint8_t>(id % 256);
@@ -291,7 +291,7 @@ static void test_FRunLogRecord_order_bytes(void) {
 // Queue log replay preserves matched partial progress, clears unmatched input
 // progress in place, retains reserved bits and ignores a trailing partial row.
 static void test_FRunLogRecord_production_bytes(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     PLANET *lppl;
     uint8_t rgb[] = {0, 0, 2, 0x1c, 0x72, 0xfb, 3, 0x20, 0xf2, 0x39, 0xa5};
     int16_t cPlanetSav;
@@ -343,7 +343,7 @@ static void test_order_storage_lifetime(void) {
     lpplord = LpplAlloc<PLORD>(18, 3, htOrd);
     lpplord->iordMac = 3;
     lpplord->cAlloc = 9;
-    lpplord->fMark = TRUE;
+    lpplord->fMark = 1;
     lpord = lpplord->rgord();
     cbSlot = CbPlSlot(lpplord);
     for (i = 0; i < 3; i++) {
@@ -391,7 +391,7 @@ static void test_production_storage_lifetime(void) {
     lpplprod = LpplAlloc<PLPROD>(4, 3, htOrd);
     lpplprod->iprodMac = 3;
     lpplprod->cAlloc = 11;
-    lpplprod->fMark = TRUE;
+    lpplprod->fMark = 1;
     lpprod = lpplprod->rgprod();
     cbSlot = CbPlSlot(lpplprod);
     TEST_CHECK(cbSlot >= 16);
@@ -480,12 +480,12 @@ static void test_control_record_partial_effects(void) {
     TEST_CHECK(rgplr[0].pctResearch == 50 && rgplr[0].iTechCur == 0x12);
     TEST_CHECK(FRunLogRecord(rtLogResearch, 0, valid)); // Declared length never became the old field-read bound.
     TEST_CHECK(rgplr[0].pctResearch == 100 && rgplr[0].iTechCur == 0x75);
-    gd.fGeneratingTurn = FALSE; rgplr[0].lSalt = 42;
+    gd.fGeneratingTurn = 0; rgplr[0].lSalt = 42;
     TEST_CHECK(FRunLogRecord(rtChgPassword, 0, NULL) && rgplr[0].lSalt == 42);
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     TEST_CHECK(FRunLogRecord(rtChgPassword, 0, password) && rgplr[0].lSalt == 0x12345678);
     TEST_CHECK(FRunLogRecord(rtChgPassword, 4, minusOne) && rgplr[0].lSalt == -1);
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     WriteMemResearch(static_cast<int16_t>(0x7319));
     TEST_ASSERT(FGetPrevLogRt(&hdr, rgb));
     TEST_CHECK(hdr.rt == rtLogResearch && hdr.cb == 2 && rgb[0] == 25 && rgb[1] == 0x73);
@@ -540,7 +540,7 @@ static void test_cargo_log_wire_widths(void) {
 }
 
 static void test_cargo_lookup_prefixes(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     FLEET *lpfl;
     PLANET *lppl;
     uint8_t missing[] = {0xff, 1, 0, 0, 0x42};
@@ -574,7 +574,7 @@ static int16_t FEnumHeaderMutation(void *lp, int16_t rt, int16_t cb, void *lpPas
         TEST_CHECK(rt == 62 && cb == 0 && lp == lpLog + 6);
     }
     (*pc)++;
-    return TRUE;
+    return 1;
 }
 
 static void test_log_header_bytes_and_callback(void) {
@@ -584,7 +584,7 @@ static void test_log_header_bytes_and_callback(void) {
     int c = 0;
 
     TEST_ASSERT(FStarsTestInit());
-    fAi = TRUE; fLogOff = FALSE; imemLogCur = 0; imemLogPrev = -1;
+    fAi = 1; fLogOff = 0; imemLogCur = 0; imemLogPrev = -1;
     WriteMemRt(static_cast<RecordType>(63), 3, (void *)rgb);
     TEST_CHECK(imemLogCur == 5 && lpLog[0] == 3 && lpLog[1] == 0xfc && !memcmp(lpLog + 2, rgb, 3));
     TEST_ASSERT(FGetPrevLogRt(&hdr, readback));
@@ -603,7 +603,7 @@ static void test_routing_writer_bytes(void) {
     HDR hdr;
 
     TEST_ASSERT(FStarsTestInit());
-    fAi = TRUE; fLogOff = FALSE; gd.fGeneratingTurn = FALSE; fValidLx = FALSE;
+    fAi = 1; fLogOff = 0; gd.fGeneratingTurn = 0; fValidLx = 0;
     imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
     pl.id = plNew.id = 0x2345;
     plNew.fNoResearch = 1; plNew.idFling = 0x155; plNew.iWarpFling = 15; plNew.idRoute = 0x2aa;
@@ -613,7 +613,7 @@ static void test_routing_writer_bytes(void) {
 }
 
 static void test_routing_replay_read_boundaries(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     uint8_t missing[] = {0xff, 1};
     uint8_t routing[] = {0, 0, 0xab, 0x7a, 0x55, 1};
     uint8_t noThing[] = {0xff, 0x7f};
@@ -662,7 +662,7 @@ static void test_zipprod_replay_and_callback_order(void) {
     for (int i = 0; i < 5; i++) rgZipSav[i] = vrgZipProd[i];
     fDirtySav = game.fDirty; fLogOffSav = fLogOff;
     for (int i = 0; i < 26; i++) incoming[i] = static_cast<uint8_t>(i * 7 + 5);
-    gd.fGeneratingTurn = TRUE;
+    gd.fGeneratingTurn = 1;
     for (int cb = 0; cb <= 26; cb++) {
         rgplr[0].zpq1.fNoResearch = 0x11; rgplr[0].zpq1.cpq = 0x22;
         expected[0] = 0x11; expected[1] = 0x22;
@@ -677,10 +677,10 @@ static void test_zipprod_replay_and_callback_order(void) {
     }
     TEST_CHECK(!FRunLogRecord(rtLogPlayerZpq1, -1, nullptr));
     TEST_CHECK(!FRunLogRecord(rtLogPlayerZpq1, 27, nullptr));
-    gd.fGeneratingTurn = FALSE;
+    gd.fGeneratingTurn = 0;
     TEST_CHECK(FRunLogRecord(rtLogPlayerZpq1, -1, nullptr));
     lpLogSav = lpLog; imemSav = imemLogCur; imemPrevSav = imemLogPrev; hdrSav = hdrPrev;
-    lpLog = rgbLog.data(); imemLogCur = 31999; fLogOff = FALSE; game.fDirty = TRUE;
+    lpLog = rgbLog.data(); imemLogCur = 31999; fLogOff = 0; game.fDirty = 1;
     vrgZipProd[0].fNoResearch = 1; vrgZipProd[0].cpq = 0;
     pfnStarsTestAlertObserver = ChangeZipProdDuringAlert;
     WriteMemZpqRt(2);
@@ -713,7 +713,7 @@ static void test_zipprod_replay_and_callback_order(void) {
 }
 
 static void test_zipprod_comparison_physical_tail(void) {
-    char szDir[MAX_PATH], szFile[MAX_PATH + 64];
+    char szDir[cbTestPath], szFile[cbTestPath + 64];
     PLAYER plrSav;
     ZIPPRODQ rgZipSav[5];
     GAME gameSav;
@@ -731,7 +731,7 @@ static void test_zipprod_comparison_physical_tail(void) {
     strcpy(vrgZipProd[1].szName, "QR");
     rgplr[0] = PLAYER{}; rgplr[0].zpq1 = vrgZipProd[0].zpq1();
     rgplr[0].rgmdRelation[0] = 'Q'; rgplr[0].rgmdRelation[1] = 'R';
-    idPlayer = 0; game.cPlayer = 1; fLogOff = FALSE; vcmsgplrOut = 0;
+    idPlayer = 0; game.cPlayer = 1; fLogOff = 0; vcmsgplrOut = 0;
     imemLogCur = 0; imemLogPrev = -1; hdrPrev.rt = rtEOF;
     TEST_CHECK(FWriteLogFile(szFile, 0));
     TEST_CHECK(imemLogCur == 0);
@@ -749,7 +749,7 @@ static void test_zipprod_comparison_physical_tail(void) {
 }
 
 static void test_minefield_log_replay_bytes(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     uint8_t rgb[4];
     TEST_ASSERT(FStarsTestInit());
     TEST_ASSERT(FStarsTestDir("minefield-log-wire", szDir, sizeof(szDir)));

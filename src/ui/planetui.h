@@ -5,13 +5,13 @@
 #include <stdint.h>
 #include <windows.h>
 
-LRESULT CALLBACK PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 HWND             CreatePlanetPane(HWND hwndParent);
 void             MovePlanetPane(int x, int y, int dx, int dy);
 void             QueuePlanetPaneLayout(void);
 void             ClosePlanetPane(void);
 
-LRESULT CALLBACK PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 int16_t          FDrawTileNC(HDC hdc, TILE *ptile, RECT *prc, char *pszTitle);
 void             DrawPlanetMinSum(HDC hdc, TILE *ptile, OBJ obj);
 void             DrawPlanetStats(HDC hdc, TILE *ptile, OBJ obj);

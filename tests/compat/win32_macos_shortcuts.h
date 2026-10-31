@@ -4,11 +4,11 @@ static UINT idMacCommand;
 static int cMacCommand;
 static BOOL fMacCommandInvalid;
 
-static LRESULT CALLBACK MacShortcutProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    if (msg == WM_COMMAND && HIWORD(w) == 1) {
+static LRESULT  MacShortcutProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+    if (msg == win32::WM_COMMAND && HIWORD(w) == 1) {
         idMacCommand = LOWORD(w);
         cMacCommand++;
-        if (l) fMacCommandInvalid = TRUE;
+        if (l) fMacCommandInvalid = 1;
         return 0;
     }
     return win32::DefWindowProcA(hwnd, msg, w, l);
@@ -24,11 +24,11 @@ static BOOL FMacShortcutKey(HWND hwnd, HACCEL haccel, SDL_Scancode sc, SDL_Keymo
     event.key.windowID = hwnd->id;
     event.key.scancode = sc;
     event.key.mod = mod;
-    if (!SDL_PushEvent(&event)) return FALSE;
+    if (!SDL_PushEvent(&event)) return 0;
     event.type = SDL_EVENT_KEY_UP;
     event.key.mod = SDL_KMOD_NONE;
-    if (!SDL_PushEvent(&event)) return FALSE;
-    while (win32::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+    if (!SDL_PushEvent(&event)) return 0;
+    while (win32::PeekMessageA(&msg, NULL, 0, 0, win32::PM_REMOVE)) {
         if (!win32::TranslateAcceleratorA(hwnd, haccel, &msg)) {
             win32::TranslateMessage(&msg);
             win32::DispatchMessageA(&msg);
@@ -37,9 +37,9 @@ static BOOL FMacShortcutKey(HWND hwnd, HACCEL haccel, SDL_Scancode sc, SDL_Keymo
     if (cMacCommand != (idExpected != 0) || idMacCommand != idExpected || fMacCommandInvalid) {
         fprintf(stderr, "Mac shortcut %d mod %u: command %u (%d times), expected %u\n",
                 sc, (unsigned)mod, idMacCommand, cMacCommand, idExpected);
-        return FALSE;
+        return 0;
     }
-    return !(win32::GetKeyState(VK_CONTROL) & 0x8000);
+    return !(win32::GetKeyState(win32::VK_CONTROL) & 0x8000);
 }
 
 static BOOL FCheckMacShortcuts(void) {
@@ -79,22 +79,22 @@ static BOOL FCheckMacShortcuts(void) {
     char sz[160];
     size_t i;
     int j;
-    BOOL fOkay = FALSE;
+    BOOL fOkay = 0;
 
     for (i = 0; i < sizeof(rglabel) / sizeof(rglabel[0]); i++) {
-        if (!win32::GetMenuString(hmenu, rglabel[i].id, sz, sizeof(sz), MF_BYCOMMAND) ||
+        if (!win32::GetMenuStringA(hmenu, rglabel[i].id, sz, sizeof(sz), win32::MF_BYCOMMAND) ||
             !strstr(sz, rglabel[i].psz) || strstr(sz, "Ctrl+")) {
             fprintf(stderr, "Mac menu hint %u: [%s], expected [%s]\n", rglabel[i].id, sz, rglabel[i].psz);
-            return FALSE;
+            return 0;
         }
     }
     wc.hInstance = hInst;
     wc.lpfnWndProc = MacShortcutProc;
     wc.lpszClassName = "MacShortcutContracts";
-    if (!win32::RegisterClass(&wc)) return FALSE;
-    hwnd = win32::CreateWindow(wc.lpszClassName, "", WS_POPUP, 0, 0, 220, 60, NULL, NULL, hInst, NULL);
-    if (!hwnd) return FALSE;
-    hwndEdit = win32::CreateWindow("Edit", "alpha beta", WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+    if (!win32::RegisterClassA(&wc)) return 0;
+    hwnd = win32::CreateWindowExA(0, wc.lpszClassName, "", win32::WS_POPUP, 0, 0, 220, 60, NULL, NULL, hInst, NULL);
+    if (!hwnd) return 0;
+    hwndEdit = win32::CreateWindowExA(0, "Edit", "alpha beta", win32::WS_CHILD | win32::WS_VISIBLE | win32::ES_AUTOHSCROLL,
                             0, 0, 180, 25, hwnd, NULL, hInst, NULL);
     if (!hwndEdit) goto LDone;
     win32::SetFocus(hwndEdit);
@@ -108,16 +108,16 @@ static BOOL FCheckMacShortcuts(void) {
         }
         if (!win32::SetWindowTextA(hwndEdit, "alpha beta")) goto LDone;
         if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_A, mod, 0) ||
-            win32::SendMessageA(hwndEdit, EM_GETSEL, 0, 0) != MAKELONG(0, 10)) goto LDone;
+            win32::SendMessageA(hwndEdit, win32::EM_GETSEL, 0, 0) != MAKELONG(0, 10)) goto LDone;
         if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_C, mod, 0)) goto LDone;
-        if (!FMacShortcutKey(hwnd, hAccelTitle, SDL_SCANCODE_X, mod, 0) || win32::SendMessageA(hwndEdit, WM_GETTEXTLENGTH, 0, 0) != 0) goto LDone;
+        if (!FMacShortcutKey(hwnd, hAccelTitle, SDL_SCANCODE_X, mod, 0) || win32::SendMessageA(hwndEdit, win32::WM_GETTEXTLENGTH, 0, 0) != 0) goto LDone;
         if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_V, mod, 0) ||
-            !win32::GetWindowText(hwndEdit, sz, sizeof(sz)) || strcmp(sz, "alpha beta")) goto LDone;
-        if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_Z, mod, 0) || win32::SendMessageA(hwndEdit, WM_GETTEXTLENGTH, 0, 0) != 0) goto LDone;
+            !win32::GetWindowTextA(hwndEdit, sz, sizeof(sz)) || strcmp(sz, "alpha beta")) goto LDone;
+        if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_Z, mod, 0) || win32::SendMessageA(hwndEdit, win32::WM_GETTEXTLENGTH, 0, 0) != 0) goto LDone;
     }
     if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_F12, 0, IDM_DEBUG_GEN_10_TURNS)) goto LDone;
     if (!FMacShortcutKey(hwnd, hAccel, SDL_SCANCODE_N, 0, 0)) goto LDone;
-    fOkay = TRUE;
+    fOkay = 1;
 LDone:
     if (!fOkay) fprintf(stderr, "Mac menu/edit shortcut check failed\n");
     win32::DestroyWindow(hwnd);

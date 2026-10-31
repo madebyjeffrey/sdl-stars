@@ -63,7 +63,7 @@ DWORD GetTextExtent(HDC hdc, LPCSTR str, int len);
 
 // FrameWndProcDeferred is the frame window class's procedure; it wraps
 // FrameWndProc (see nativeui.c).
-LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // FRouteMouseWheel sends wheel messages to the window under the cursor,
 // CWheelNotches gathers wheel deltas into notches and CWheelLines gives the

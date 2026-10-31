@@ -5,7 +5,7 @@
 // test_generate_one_turn checks the turn-test plumbing: create a game, load
 // its host file, generate a turn, and load the result.
 static void test_generate_one_turn(void) {
-    char        szDir[MAX_PATH];
+    char        szDir[cbTestPath];
     const char *rgszAi[] = {"#1 4"};
 
     TEST_ASSERT(FStarsTestInit());
@@ -29,18 +29,18 @@ static int16_t FReadFile(const char *szFile, uint8_t *rgb, size_t cbMax, size_t 
 
     fp = fopen(szFile, "rb");
     if (fp == NULL)
-        return FALSE;
+        return 0;
     *pcb = fread(rgb, 1, cbMax, fp);
     fclose(fp);
-    return TRUE;
+    return 1;
 }
 
 // When a player submits no turn, generation keeps a backup of the turn file
 // the player last received. The copy's arguments were reversed (backup to
 // live file, after the backup had been removed), so no backup was kept.
 static void test_generate_backs_up_unsubmitted_turn(void) {
-    char    szDir[MAX_PATH];
-    char    szFile[MAX_PATH];
+    char    szDir[cbTestPath];
+    char    szFile[cbTestPath];
     uint8_t rgbBefore[16384];
     uint8_t rgbBackup[16384];
     size_t  cbBefore;
@@ -69,7 +69,7 @@ static void SetFleetDest(FLEET *lpfl, FLEET *lpflTarget, int16_t dx) {
     lpord = &lpfl->lpplord->rgord()[1];
     memset(lpord, 0, sizeof(ORDER));
     lpord->iWarp = 9;
-    lpord->fValidTask = TRUE;
+    lpord->fValidTask = 1;
     lpord->grTask = grTaskNone;
     if (lpflTarget) {
         lpord->grobj = grobjFleet;
@@ -87,7 +87,7 @@ static void SetFleetDest(FLEET *lpfl, FLEET *lpflTarget, int16_t dx) {
 // MoveFleets marked B done although it hadn't finished its own pursuit, so
 // B stopped where A caught it.
 static void test_MoveFleets_caught_pursuer_keeps_moving(void) {
-    char    szDir[MAX_PATH];
+    char    szDir[cbTestPath];
     PLANET *lppl;
     FLEET  *lpflA;
     FLEET  *lpflB;
@@ -132,7 +132,7 @@ static void test_MoveFleets_caught_pursuer_keeps_moving(void) {
 // way it travels. With a 14% chance per light-year, 80 light-years inside
 // the field all but guarantee a hit.
 static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
-    char                 szDir[MAX_PATH];
+    char                 szDir[cbTestPath];
     const char          *rgszAi[] = {"#1 4"};
     static const int16_t rgdxy[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
     PLANET              *lppl;
@@ -175,7 +175,7 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
 // With a seed that does not select a course change, a trader sends no messages.
 // It must still move when no retargeting message was selected this pass.
 static void test_MoveThings_trader_without_retargeting_moves(void) {
-    char szDir[MAX_PATH];
+    char szDir[cbTestPath];
     THING *lpth;
 
     TEST_ASSERT(FStarsTestInit());
@@ -192,7 +192,7 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
     TEST_ASSERT(Random(25) != 0);
     PopRandom();
     PushRandom(123456, 789012);
-    MoveThings(FALSE);
+    MoveThings(0);
     PopRandom();
     TEST_CHECK(lpth->pt().x() == 1281 && lpth->pt().y() == 1200);
     TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);

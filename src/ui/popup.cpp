@@ -9,22 +9,22 @@
 BattleUnitFlags mpimdgrbitBU[8] = {grBuClassUnarmed, grBuClassUnarmed, grBuClassScout,   grBuClassWarship,
                                    grBuClassUtility, grBuClassBomber,  grBuClassUnarmed, grBuClassUnarmed};
 
-LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     PAINTSTRUCT ps;
     RECT        rc;
 
     switch (message) {
-    case WM_CREATE:
+    case win32::WM_CREATE:
         return 0;
-    case WM_DESTROY:
+    case win32::WM_DESTROY:
         // Native close paths do not pass through the mouse-release handler.
         if (hwndPopup == hwnd) {
             hwndPopup = 0;
             GlobalPD.grPopup = static_cast<GrPopupType>(0);
         }
         return 0;
-    case WM_ERASEBKGND:
+    case win32::WM_ERASEBKGND:
         switch (GlobalPD.grPopup) {
         case grPopupComponent:
         case grPopupShdef:
@@ -35,13 +35,13 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         default:
             goto Default;
         }
-    case WM_PAINT:
+    case win32::WM_PAINT:
         hdc = win32::BeginPaint(hwnd, &ps);
         DrawPopup(hwnd, hdc);
         win32::EndPaint(hwnd, &ps);
         return 0;
-    case WM_LBUTTONUP:
-    case WM_RBUTTONUP:
+    case win32::WM_LBUTTONUP:
+    case win32::WM_RBUTTONUP:
         if (!hwndPopup) {
             return 0;
         }
@@ -52,7 +52,7 @@ LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
         if (!gd.fTutorial) {
             return 0;
         }
-        tutor.fProgress = TRUE;
+        tutor.fProgress = 1;
         PresentationIO().pfnTutor();
         return 0;
     default:
@@ -65,7 +65,7 @@ int16_t FIsPopupHullType(int16_t ishdef) {
     HullCategory imd;
 
     if (GlobalPD.grbit == 0 || GlobalPD.grbit == 0xff) {
-        return TRUE;
+        return 1;
     }
     imd = static_cast<HullCategory>(PartQueryIO().pfnHull(rglpshdef[GlobalPD.lpfl->iPlayer][ishdef].hul.ihuldef)->imdCategory);
     return mpimdgrbitBU[imd] & GlobalPD.grbit;
@@ -90,7 +90,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
 
     crBack = win32::SetBkColor(hdc, 0xffffff);
     crFore = win32::SetTextColor(hdc, 0);
-    bkMode = win32::SetBkMode(hdc, OPAQUE);
+    bkMode = win32::SetBkMode(hdc, win32::OPAQUE);
     hfontSav = (HFONT)win32::SelectObject(hdc, rghfontArial8[1]);
     ControlIO().pfnGetClientRect(hwnd, &rc);
     switch (GlobalPD.grPopup) {
@@ -103,49 +103,49 @@ void DrawPopup(HWND hwnd, HDC hdc) {
         dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 4;
         RightTextOut(hdc, dx, dyArial8 + 4, TextIO().pfnCompressed(idsSurface), 0, 0);
         if (GlobalPD.rgi[2] >= 0) {
-            c = win32::wsprintf(szWork, "%ldkT", GlobalPD.rgi[2]);
+            c = win32::wsprintfA(szWork, "%ldkT", GlobalPD.rgi[2]);
         } else {
             strcpy(szWork, TextIO().pfnCompressed(idsUnknown2));
             c = strlen(szWork);
         }
-        win32::TextOut(hdc, dx, dyArial8 + 4, szWork, c);
+        win32::TextOutA(hdc, dx, dyArial8 + 4, szWork, c);
         RightTextOut(hdc, dx, dyArial8 * 2 + 4, TextIO().pfnCompressed(idsMineralConcentration), 0, 0);
         if (GlobalPD.rgi[3] > 0) {
-            c = win32::wsprintf(szWork, PCTLD, GlobalPD.rgi[3]);
+            c = win32::wsprintfA(szWork, PCTLD, GlobalPD.rgi[3]);
             if (GlobalPD.rgi[1] != 0) {
-                c += win32::wsprintf(&szWork[c], TextIO().pfnCompressed(GlobalPD.rgi[3] < 30 ? idsN30 : idsHw));
+                c += win32::wsprintfA(&szWork[c], TextIO().pfnCompressed(GlobalPD.rgi[3] < 30 ? idsN30 : idsHw));
             }
         } else {
-            c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsUnknown2));
+            c = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsUnknown2));
         }
-        win32::TextOut(hdc, dx, dyArial8 * 2 + 4, szWork, c);
+        win32::TextOutA(hdc, dx, dyArial8 * 2 + 4, szWork, c);
         if (GlobalPD.rgi[4] < 0)
             break;
         RightTextOut(hdc, dx, 3 * dyArial8 + 4, TextIO().pfnCompressed(idsMiningRate), 0, 0);
         TextIO().pfnCchGetString(idsLdktYr, szT);
-        c = win32::wsprintf(szWork, szT, GlobalPD.rgi[4]);
-        win32::TextOut(hdc, dx, 3 * dyArial8 + 4, szWork, c);
+        c = win32::wsprintfA(szWork, szT, GlobalPD.rgi[4]);
+        win32::TextOutA(hdc, dx, 3 * dyArial8 + 4, szWork, c);
         break;
     case grPopupPlayer:
-        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(GlobalPD.iPlayer, TRUE, TRUE, TRUE, 0, NULL), 0);
-        c = win32::wsprintf(szWork, TextIO().pfnCompressed(idsPlayerD), GlobalPD.iPlayer + 1);
+        CtrTextOut(hdc, rc.right >> 1, 4, TextIO().pfnPlayerName(GlobalPD.iPlayer, 1, 1, 1, 0, NULL), 0);
+        c = win32::wsprintfA(szWork, TextIO().pfnCompressed(idsPlayerD), GlobalPD.iPlayer + 1);
         CtrTextOut(hdc, rc.right >> 1, dyArial8 + 4, szWork, c);
         break;
     case grPopupFleet:
         if (rc.bottom - rc.top < dyArial8 * 2) {
             c = TextIO().pfnCchGetString(idsNone2, szWork);
-            win32::TextOut(hdc, 4, 4, szWork, c);
+            win32::TextOutA(hdc, 4, 4, szWork, c);
             win32::SelectObject(hdc, rghfontArial8[0]);
             break;
         }
         win32::SelectObject(hdc, rghfontArial8[1]);
         c = TextIO().pfnCchGetString(idsShipName, szWork);
-        win32::TextOut(hdc, 4, 4, szWork, c);
+        win32::TextOutA(hdc, 4, 4, szWork, c);
         RightTextOut(hdc, rc.right - 4 - GlobalPD.dxDamage, 4, "#", 1, 0);
         if (GlobalPD.dxDamage != 0) {
             c = TextIO().pfnCchGetString(idsDamage2, szWork);
             RightTextOut(hdc, rc.right - 4, 4, szWork, c, 0);
-            win32::PatBlt(hdc, 4, dyArial8 + 2, rc.right - 8, 1, BLACKNESS);
+            win32::PatBlt(hdc, 4, dyArial8 + 2, rc.right - 8, 1, win32::BLACKNESS);
         }
         win32::SelectObject(hdc, rghfontArial8[0]);
         yCur = dyArial8 + 4;
@@ -160,8 +160,8 @@ void DrawPopup(HWND hwnd, HDC hdc) {
                 }
                 DecorateHullName(GlobalPD.lpfl->iplr(), i, szTB);
                 lpsz = szTB;
-                win32::TextOut(hdc, 4, yCur, lpsz, strlen(lpsz));
-                c = win32::wsprintf(szWork, PCTD, GlobalPD.lpfl->rgcsh[i]);
+                win32::TextOutA(hdc, 4, yCur, lpsz, strlen(lpsz));
+                c = win32::wsprintfA(szWork, PCTD, GlobalPD.lpfl->rgcsh[i]);
                 RightTextOut(hdc, rc.right - 4 - GlobalPD.dxDamage, yCur, szWork, c, 0);
                 if (GlobalPD.fRedDamage && GlobalPD.lpfl->rgdv[i].dp != 0) {
                     csh = GlobalPD.lpfl->rgcsh[i];
@@ -173,7 +173,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
                     if (dpT == 0) {
                         dpT = 1;
                     }
-                    c = win32::wsprintf(szWork, "%d@%d%%", csh, dpT);
+                    c = win32::wsprintfA(szWork, "%d@%d%%", csh, dpT);
                     RightTextOut(hdc, rc.right - 4, yCur, szWork, c, 0);
                 }
                 yCur += dyArial8;
@@ -193,34 +193,34 @@ void DrawPopup(HWND hwnd, HDC hdc) {
         RightTextOut(hdc, dx, 3 * dyArial8 + 4, TextIO().pfnCompressed(idsY), 0, 0);
         psz = TextIO().pfnPlanetName(sel.scan.idpl);
         win32::SelectObject(hdc, rghfontArial8[0]);
-        win32::TextOut(hdc, dx, 4, psz, strlen(psz));
-        c = win32::wsprintf(szWork, PCTD, sel.scan.idpl + 1);
-        win32::TextOut(hdc, dx, dyArial8 + 4, szWork, c);
-        c = win32::wsprintf(szWork, PCTD, sel.scan.pt.x);
-        win32::TextOut(hdc, dx, dyArial8 * 2 + 4, szWork, c);
-        c = win32::wsprintf(szWork, PCTD, sel.scan.pt.y);
-        win32::TextOut(hdc, dx, 3 * dyArial8 + 4, szWork, c);
+        win32::TextOutA(hdc, dx, 4, psz, strlen(psz));
+        c = win32::wsprintfA(szWork, PCTD, sel.scan.idpl + 1);
+        win32::TextOutA(hdc, dx, dyArial8 + 4, szWork, c);
+        c = win32::wsprintfA(szWork, PCTD, sel.scan.pt.x);
+        win32::TextOutA(hdc, dx, dyArial8 * 2 + 4, szWork, c);
+        c = win32::wsprintfA(szWork, PCTD, sel.scan.pt.y);
+        win32::TextOutA(hdc, dx, 3 * dyArial8 + 4, szWork, c);
         break;
     case grPopupPlanetEnv:
-        PtDisplayPlanetStateInfo(hdc, TRUE);
+        PtDisplayPlanetStateInfo(hdc, 1);
         break;
     case grPopupShipOrders:
-        PtDisplayZipOrdInfo(hdc, rc.right >> 1, TRUE);
+        PtDisplayZipOrdInfo(hdc, rc.right >> 1, 1);
         break;
     case grPopupPlanet:
-        PtDisplayPlanetPopInfo(hdc, TRUE);
+        PtDisplayPlanetPopInfo(hdc, 1);
         break;
     case grPopupPlanetIndustry:
-        PtDisplayFactoryMineInfo(hdc, rc.right, TRUE);
+        PtDisplayFactoryMineInfo(hdc, rc.right, 1);
         break;
     case grPopupResources:
-        PtDisplayResourceInfo(hdc, rc.right, TRUE);
+        PtDisplayResourceInfo(hdc, rc.right, 1);
         break;
     case grPopupComponent:
         DisplayComponentInfo(hdc, rc.right, rc.bottom, &GlobalPD.part);
         break;
     case grPopupString:
-        PtDisplayString(hdc, rc.right, TRUE);
+        PtDisplayString(hdc, rc.right, 1);
         break;
     case grPopupShdef:
     case grPopupShdefSB:
@@ -229,7 +229,7 @@ void DrawPopup(HWND hwnd, HDC hdc) {
         rc.top = dyArial8 + 306;
         rc.left += 6;
         win32::SelectObject(hdc, rghfontArial8[1]);
-        win32::SetBkMode(hdc, TRANSPARENT);
+        win32::SetBkMode(hdc, win32::TRANSPARENT);
         strcpy(szWork, GlobalPD.lpshdef->hul.szClass);
         CtrTextOut(hdc, ((rc.right - 0x4c) >> 1) + 0x4c, 6, szWork, 0);
         DrawBuildSelHull(hwnd, hdc, -1, &rc);
@@ -278,7 +278,7 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
         break;
     case grPopupPlayer:
         win32::SelectObject(hdc, rghfontArial8[1]);
-        psz = TextIO().pfnPlayerName(GlobalPD.iPlayer, TRUE, TRUE, TRUE, 0, NULL);
+        psz = TextIO().pfnPlayerName(GlobalPD.iPlayer, 1, 1, 1, 0, NULL);
         dx = LOWORD(GetTextExtent(hdc, psz, strlen(psz))) + 8;
         dx2 = LOWORD(GetTextExtent(hdc, "Player #16", 10)) + 8;
         if (dx2 > dx) {
@@ -301,7 +301,7 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
                 lpsz = szTB;
                 dx = LOWORD(GetTextExtent(hdc, lpsz, strlen(lpsz)));
                 dxL = dxL <= dx ? dx : dxL;
-                c = win32::wsprintf(szWork, PCTD, GlobalPD.lpfl->rgcsh[i]);
+                c = win32::wsprintfA(szWork, PCTD, GlobalPD.lpfl->rgcsh[i]);
                 dx = LOWORD(GetTextExtent(hdc, szWork, c));
                 dxR = dxR <= dx ? dx : dxR;
                 if (GlobalPD.fRedDamage && (GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff) && dxDamage == 0) {
@@ -329,19 +329,19 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
         dx += dxName <= dxCoord ? dxCoord : dxName;
         break;
     case grPopupPlanetEnv:
-        ptT = PtDisplayPlanetStateInfo(hdc, FALSE);
+        ptT = PtDisplayPlanetStateInfo(hdc, 0);
         goto SetDxDy;
     case grPopupShipOrders:
-        ptT = PtDisplayZipOrdInfo(hdc, 0, FALSE);
+        ptT = PtDisplayZipOrdInfo(hdc, 0, 0);
         goto SetDxDy;
     case grPopupPlanet:
-        ptT = PtDisplayPlanetPopInfo(hdc, FALSE);
+        ptT = PtDisplayPlanetPopInfo(hdc, 0);
         goto SetDxDy;
     case grPopupResources:
-        ptT = PtDisplayResourceInfo(hdc, 200, FALSE);
+        ptT = PtDisplayResourceInfo(hdc, 200, 0);
         goto SetDxDy;
     case grPopupPlanetIndustry:
-        ptT = PtDisplayFactoryMineInfo(hdc, 200, FALSE);
+        ptT = PtDisplayFactoryMineInfo(hdc, 200, 0);
     SetDxDy:
         dx = ptT.x + 2;
         dy = ptT.y + 2;
@@ -351,7 +351,7 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
         dy = dyArial10 + 72 + 12 * dyArial8 + 6;
         break;
     case grPopupString:
-        ptT = PtDisplayString(hdc, GlobalPD.dxOut, FALSE);
+        ptT = PtDisplayString(hdc, GlobalPD.dxOut, 0);
         goto SetDxDy;
     case grPopupShdef:
     case grPopupShdefSB:
@@ -372,13 +372,13 @@ void Popup(HWND hwnd, int16_t x, int16_t y) {
     win32::ReleaseDC(hwnd, hdc);
     pt.x -= dx;
     pt.y -= dy;
-    pt.x = (((0) > ((((pt.x) < (win32::GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(SM_CXSCREEN) - dx)))) ? (0) : ((((pt.x) < (win32::GetSystemMetrics(SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(SM_CXSCREEN) - dx))));
-    pt.y = (((0) > ((((pt.y) < (win32::GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(SM_CYSCREEN) - dy)))) ? (0) : ((((pt.y) < (win32::GetSystemMetrics(SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(SM_CYSCREEN) - dy))));
+    pt.x = (((0) > ((((pt.x) < (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)))) ? (0) : ((((pt.x) < (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx)) ? (pt.x) : (win32::GetSystemMetrics(win32::SM_CXSCREEN) - dx))));
+    pt.y = (((0) > ((((pt.y) < (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)))) ? (0) : ((((pt.y) < (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy)) ? (pt.y) : (win32::GetSystemMetrics(win32::SM_CYSCREEN) - dy))));
     // Popup drawing reads hwndPopup, so publish the handle before the first paint.
-    hwndPopup = ui::CreateWindowEx(WS_EX_NOACTIVATE, szPopup, NULL, WS_POPUP | WS_BORDER,
+    hwndPopup = ui::CreateWindowEx(win32::WS_EX_NOACTIVATE, szPopup, NULL, win32::WS_POPUP | win32::WS_BORDER,
                                pt.x, pt.y, dx, dy, hwnd, NULL, hInst, NULL);
-    ControlIO().pfnSendMessage(hwndPopup, WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
-    ui::ShowWindow(hwndPopup, SW_SHOW);
+    ControlIO().pfnSendMessage(hwndPopup, win32::WM_SETFONT, (WPARAM)rghfontArial8[0], 0);
+    ui::ShowWindow(hwndPopup, win32::SW_SHOW);
     win32::SetCapture(hwndPopup);
     return;
 }
@@ -406,7 +406,7 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
     for (i = 0; i < cString; i++) {
         if (rgids && (iChecked != -2 || !rgsz)) {
             if (rgids[i] == -1) {
-                win32::AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
+                win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, NULL);
             } else {
                 if (rgids[i] & 0x10000000) {
                     psz = "Deep Space";
@@ -426,11 +426,11 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                     }
                 }
                 *pszT = 0;
-                win32::AppendMenu(hmenuPopup, i == iChecked ? MF_CHECKED : MF_BYCOMMAND, i + 15000, szTemp);
+                win32::AppendMenuA(hmenuPopup, i == iChecked ? win32::MF_CHECKED : win32::MF_BYCOMMAND, i + 15000, szTemp);
             }
         } else if (!rgsz[i]) {
             pszTitle = rgsz[i + 1];
-            fChecked = !rgids ? FALSE : LOWORD(rgids[i + 1]);
+            fChecked = !rgids ? 0 : LOWORD(rgids[i + 1]);
             hmenuSub = win32::CreatePopupMenu();
             for (i += 2; i < cString && rgsz[i]; i++) {
                 if (!rgids) {
@@ -440,7 +440,7 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                     fCheckedCur = LOWORD(rgids[i]);
                 }
                 if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
-                    win32::AppendMenu(hmenuSub, MF_SEPARATOR, 0, NULL);
+                    win32::AppendMenuA(hmenuSub, win32::MF_SEPARATOR, 0, NULL);
                 } else {
                     pszT = szTemp;
                     psz = rgsz[i];
@@ -450,12 +450,12 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                         }
                     }
                     *pszT = 0;
-                    win32::AppendMenu(hmenuSub, !fCheckedCur ? MF_BYCOMMAND : MF_CHECKED, i + 15000, szTemp);
+                    win32::AppendMenuA(hmenuSub, !fCheckedCur ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp);
                 }
             }
-            win32::AppendMenu(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, (UINT_PTR)hmenuSub, pszTitle);
+            win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, (UINT_PTR)hmenuSub, pszTitle);
         } else if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
-            win32::AppendMenu(hmenuPopup, MF_SEPARATOR, 0, NULL);
+            win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, NULL);
         } else {
             pszT = szTemp;
             psz = rgsz[i];
@@ -465,13 +465,13 @@ int16_t PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgi
                 }
             }
             *pszT = 0;
-            win32::AppendMenu(hmenuPopup, (iChecked == -2 ? rgids[i] : i == iChecked) == 0 ? MF_BYCOMMAND : MF_CHECKED, i + 15000, szTemp);
+            win32::AppendMenuA(hmenuPopup, (iChecked == -2 ? rgids[i] : i == iChecked) == 0 ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp);
         }
     }
     if (fRightBtn) {
-        tpm = TPM_RIGHTBUTTON;
+        tpm = win32::TPM_RIGHTBUTTON;
     } else {
-        tpm = TPM_LEFTBUTTON;
+        tpm = win32::TPM_LEFTBUTTON;
     }
     ui::TrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, hwndFrame, NULL);
     win32::DestroyMenu(hmenuPopup);
@@ -605,19 +605,19 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
             lppl->rgEnvVar[GlobalPD.iPlanetVar] = iValSav;
             if (pctDesireOld < pctDesire) {
                 cch = TextIO().pfnCchGetString(idsIfTerraform, szWork);
-                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
                 win32::SelectObject(hdc, rghfontArial8[1]);
-                WrapTextOut(hdc, &x, &y, rgszPlanetAttr[GlobalPD.iPlanetVar], 0, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, rgszPlanetAttr[GlobalPD.iPlanetVar], 0, 4, xMax - 4, NULL, 0, fPrint);
                 win32::SelectObject(hdc, rghfontArial8[0]);
-                WrapTextOut(hdc, &x, &y, TextIO().pfnCompressed(idsTo), 0, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, TextIO().pfnCompressed(idsTo), 0, 4, xMax - 4, NULL, 0, fPrint);
                 win32::SelectObject(hdc, rghfontArial8[1]);
-                WrapTextOut(hdc, &x, &y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, PszCalcEnvVar(static_cast<EnvType>(GlobalPD.iPlanetVar), iNewVal), 0, 4, xMax - 4, NULL, 0, fPrint);
                 win32::SelectObject(hdc, rghfontArial8[0]);
                 cch = TextIO().pfnCchGetString(idsPlanetsValueWouldImprove, szWork);
-                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, FALSE, fPrint);
+                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
                 win32::SelectObject(hdc, rghfontArial8[1]);
-                cch = win32::wsprintf(szWork, "%d%%.  ", pctDesire);
-                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, FALSE, fPrint);
+                cch = win32::wsprintfA(szWork, "%d%%.  ", pctDesire);
+                WrapTextOut(hdc, &x, &y, szWork, cch, 4, xMax - 4, NULL, 0, fPrint);
             }
         }
     }
@@ -636,9 +636,9 @@ POINT16 PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint) {
             ids = idsValueDOutsideHabitableRangeRace;
         }
         TextIO().pfnCchGetString(ids, szWork);
-        cch = win32::wsprintf(szOut, szWork, dChg);
+        cch = win32::wsprintfA(szOut, szWork, dChg);
         win32::SelectObject(hdc, rghfontArial8[0]);
-        WrapTextOut(hdc, &x, &y, szOut, cch, 4, xMax - 4, NULL, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, szOut, cch, 4, xMax - 4, NULL, 0, fPrint);
     }
     if (x > 4) {
         y += dyArial8;
@@ -673,7 +673,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         win32::SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsIs), 0, fPrint);
         win32::SelectObject(hdc, rghfontArial8[1]);
-        win32::wsprintf(szWork, PCTLD00, pl.rgwtMin[3]);
+        win32::wsprintfA(szWork, PCTLD00, pl.rgwtMin[3]);
         if (pl.rgwtMin[3] == 0) {
             szWork[1] = 0;
         }
@@ -688,7 +688,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         if (pl.det >= detSome) {
             DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsApproximately), 0, fPrint);
             win32::SelectObject(hdc, rghfontArial8[1]);
-            win32::wsprintf(szWork, "%d00", pl.uPopGuess * 4);
+            win32::wsprintfA(szWork, "%d00", pl.uPopGuess * 4);
             if (pl.uPopGuess == 0) {
                 szWork[1] = 0;
             }
@@ -719,7 +719,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         win32::SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsWillKillOffApproximately), 0, fPrint);
         win32::SelectObject(hdc, rghfontArial8[1]);
-        c = win32::wsprintf(szWork, PCTDXPCTDPCTPCT, (int16_t)-pctDesire / 10, (int16_t)-pctDesire % 10);
+        c = win32::wsprintfA(szWork, PCTDXPCTDPCTPCT, (int16_t)-pctDesire / 10, (int16_t)-pctDesire % 10);
         DxStreamTextOut(hdc, &x, y, szWork, c, fPrint);
         win32::SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsOf), 0, fPrint);
@@ -744,7 +744,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         x = 4;
         y += dyArial8;
         win32::SelectObject(hdc, rghfontArial8[1]);
-        c = win32::wsprintf(szWork, PCTLD00, lMax);
+        c = win32::wsprintfA(szWork, PCTLD00, lMax);
         DxStreamTextOut(hdc, &x, y, szWork, c, fPrint);
         win32::SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsColonists3), 0, fPrint);
@@ -762,7 +762,7 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         y += dyArial8;
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsSupport), 0, fPrint);
         win32::SelectObject(hdc, rghfontArial8[1]);
-        c = win32::wsprintf(szWork, PCTLD00, lMax);
+        c = win32::wsprintfA(szWork, PCTLD00, lMax);
         DxStreamTextOut(hdc, &x, y, szWork, c, fPrint);
         win32::SelectObject(hdc, rghfontArial8[0]);
         DxStreamTextOut(hdc, &x, y, TextIO().pfnCompressed(idsColonists3), 0, fPrint);
@@ -776,19 +776,19 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
     y += dyArial8;
     if (pl.iPlayer == idPlayer && pctDesire >= 0 && pl.rgwtMin[3] < lMax) {
         c = TextIO().pfnCchGetString(idsPopulation, szT);
-        WrapTextOut(hdc, &x, &y, szT, c, 4, xMax, NULL, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, szT, c, 4, xMax, NULL, 0, fPrint);
         win32::SelectObject(hdc, rghfontArial8[1]);
         psz = TextIO().pfnPlanetName(pl.id);
-        WrapTextOut(hdc, &x, &y, psz, 0, 4, xMax, NULL, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, psz, 0, 4, xMax, NULL, 0, fPrint);
         win32::SelectObject(hdc, rghfontArial8[0]);
-        lPopChg = PlanetQueryIO().pfnGrowth(&pl, FALSE);
+        lPopChg = PlanetQueryIO().pfnGrowth(&pl, 0);
         if (pctDesire == 0 || lPopChg <= 0) {
             c = TextIO().pfnCchGetString(idsWillGrowYear, szT);
         } else {
             psz = TextIO().pfnCompressed(idsWillGrowLd00Ld00Year);
-            c = win32::wsprintf(szT, psz, lPopChg, pl.rgwtMin[3] + lPopChg);
+            c = win32::wsprintfA(szT, psz, lPopChg, pl.rgwtMin[3] + lPopChg);
         }
-        WrapTextOut(hdc, &x, &y, szT, c, 4, xMax, NULL, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, szT, c, 4, xMax, NULL, 0, fPrint);
         x = 4;
         y += dyArial8;
         goto AfterDesire;
@@ -797,16 +797,16 @@ POINT16 PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint) {
         goto AfterDesire;
     win32::SelectObject(hdc, rghfontArial8[1]);
     psz = TextIO().pfnPlanetName(pl.id);
-    WrapTextOut(hdc, &x, &y, psz, 0, 4, xMax, NULL, FALSE, fPrint);
+    WrapTextOut(hdc, &x, &y, psz, 0, 4, xMax, NULL, 0, fPrint);
     win32::SelectObject(hdc, rghfontArial8[0]);
     if (pl.uDefGuess == 0) {
         c = TextIO().pfnCchGetString(idsAppearsHavePlanetaryDefenses, szWork);
     } else {
         psz = TextIO().pfnCompressed(idsHasPlanetaryDefensesApproximatelyDCoverage);
-        c = win32::wsprintf(szT, psz, pl.uDefGuess * 6 + 3);
+        c = win32::wsprintfA(szT, psz, pl.uDefGuess * 6 + 3);
         psz = szT;
     }
-    WrapTextOut(hdc, &x, &y, psz, c, 4, xMax, NULL, FALSE, fPrint);
+    WrapTextOut(hdc, &x, &y, psz, c, 4, xMax, NULL, 0, fPrint);
     x = 4;
     y += dyArial8;
 AfterDesire:
@@ -926,14 +926,14 @@ POINT16 PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint) {
     win32::SelectObject(hdc, rghfontArial8[1]);
     if (fPrint) {
         TextIO().pfnCchGetString(idsSInfo, szT);
-        c = win32::wsprintf(szWork, szT, pszType);
+        c = win32::wsprintfA(szWork, szT, pszType);
         CtrTextOut(hdc, dx >> 1, y, szWork, c);
     }
     y += dyArial8 + 4;
     if (RaceQueryIO().pfnStat(&rgplr[idPlayer], rsMajorAdv) == raMacintosh) {
         win32::SelectObject(hdc, rghfontArial8[0]);
         psz = TextIO().pfnCompressed(GlobalPD.grbit == 0 ? idsRaceIncapableBuildingMinesHoweverColonistsHave : idsRaceIncapableBuildingFactories);
-        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
         goto LDone;
     }
     for (i = 0; i <= 8; i++) {
@@ -951,7 +951,7 @@ POINT16 PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint) {
         case 1:
             cnt = GlobalPD.cCur;
         SetQuan:
-            win32::wsprintf(szWork, "%d %s", cnt, cnt == 1 ? pszType : pszTypes);
+            win32::wsprintfA(szWork, "%d %s", cnt, cnt == 1 ? pszType : pszTypes);
             psz = szWork;
             break;
         case 3:
@@ -961,11 +961,11 @@ POINT16 PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint) {
             cnt = GlobalPD.cMax;
             goto SetQuan;
         case 7:
-            win32::wsprintf(szWork, PCTD, GlobalPD.cOperate);
+            win32::wsprintfA(szWork, PCTD, GlobalPD.cOperate);
             psz = szWork;
             break;
         }
-        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
     }
 LDone:
     pt.x = xMax + 4;
@@ -1015,7 +1015,7 @@ POINT16 PtDisplayResourceInfo(HDC hdc, int16_t dx, int16_t fPrint) {
         case 2:
             cnt = GlobalPD.iPlanetVar;
         SetQuan:
-            win32::wsprintf(szWork, PCTD, cnt);
+            win32::wsprintfA(szWork, PCTD, cnt);
             psz = szWork;
             break;
         case 0:
@@ -1031,7 +1031,7 @@ POINT16 PtDisplayResourceInfo(HDC hdc, int16_t dx, int16_t fPrint) {
             cnt = GlobalPD.iPlanVal;
             goto SetQuan;
         }
-        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, FALSE, fPrint);
+        WrapTextOut(hdc, &x, &y, psz, 0, 4, dx, &xMax, 0, fPrint);
     }
 OutOfFor:
     pt.x = xMax + 4;
@@ -1050,7 +1050,7 @@ POINT16 PtDisplayString(HDC hdc, int16_t dx, int16_t fPrint) {
     x = 4;
     y = 2;
     win32::SelectObject(hdc, rghfontArial8[0]);
-    WrapTextOut(hdc, &x, &y, GlobalPD.psz, 0, 4, dx, &xMax, FALSE, fPrint);
+    WrapTextOut(hdc, &x, &y, GlobalPD.psz, 0, 4, dx, &xMax, 0, fPrint);
     pt.x = xMax + 4;
     pt.y = y + dyArial8 + 2;
     return pt;

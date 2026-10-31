@@ -15,7 +15,7 @@ static LRESULT CALLBACK CaptureProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     if (msg == WM_CAPTURECHANGED) {
         hwndLost = hwnd; hwndGained = (HWND)l; hwndObserved = GetCapture();
         cChanged++;
-        if (fDestroyOnChange) { fDestroyOnChange = FALSE; DestroyWindow((HWND)l); }
+        if (fDestroyOnChange) { fDestroyOnChange = 0; DestroyWindow((HWND)l); }
         return 0;
     }
     return DefWindowProcA(hwnd, msg, w, l);
@@ -89,17 +89,17 @@ int main(void) {
     HINSTANCE hInstance;
     int c;
 #if defined(_WIN32) && !defined(STARS_UI_SDL)
-    hInstance = GetModuleHandle(NULL);
+    hInstance = GetModuleHandleA(NULL);
 #else
     hInstance = (HINSTANCE)(UINT_PTR)1;
 #endif
     wc.hInstance = hInstance; wc.lpszClassName = "StarsCaptureContracts"; wc.lpfnWndProc = CaptureProc;
-    CHECK(RegisterClass(&wc));
-    hwnd = CreateWindow(wc.lpszClassName, "capture", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
+    CHECK(RegisterClassA(&wc));
+    hwnd = CreateWindowExA(0, wc.lpszClassName, "capture", WS_POPUP | WS_VISIBLE, 40, 50, 320, 240,
                         NULL, NULL, hInstance, NULL);
-    hwndChild = CreateWindow(wc.lpszClassName, "child", WS_CHILD | WS_VISIBLE, 20, 30, 100, 80,
+    hwndChild = CreateWindowExA(0, wc.lpszClassName, "child", WS_CHILD | WS_VISIBLE, 20, 30, 100, 80,
                              hwnd, (HMENU)(INT_PTR)101, hInstance, NULL);
-    hwndOther = CreateWindow(wc.lpszClassName, "other", WS_POPUP | WS_VISIBLE, 440, 50, 320, 240,
+    hwndOther = CreateWindowExA(0, wc.lpszClassName, "other", WS_POPUP | WS_VISIBLE, 440, 50, 320, 240,
                              NULL, NULL, hInstance, NULL);
     CHECK(hwnd && hwndChild && hwndOther);
     Drain();
@@ -120,7 +120,7 @@ int main(void) {
     CHECK(TestRouting(hwnd, hwndChild, hwndOther) == 0);
 #endif
     CHECK(SetCapture(hwndChild) == NULL);
-    fDestroyOnChange = TRUE;
+    fDestroyOnChange = 1;
     CHECK(SetCapture(hwndOther) == hwndChild && !IsWindow(hwndOther) && !GetCapture());
     CHECK(SetCapture(hwndChild) == NULL);
     CHECK(DestroyWindow(hwnd) && !GetCapture());

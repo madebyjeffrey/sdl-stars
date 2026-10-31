@@ -174,7 +174,7 @@ void FinishProduction(int16_t fWrite) {
     }
     lpplProdGlob = NULL;
     if (gd.fTutorial && idPlayer == 0) {
-        tutor.fProgress = TRUE;
+        tutor.fProgress = 1;
         PresentationIO().pfnTutor();
     }
     return;
@@ -246,14 +246,14 @@ void GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t ip
     int16_t       rgCostsPartNew[4];
 
     raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv));
-    fStarbase = FALSE;
+    fStarbase = 0;
     iItem = lpprod->iItem;
     cItem = lpprod->cItem;
     if (lpprod->grobj == grobjFleet) {
         if (iItem >= iobjPacketGerm) {
             lpshdef = rglpshdefSB[iplr];
             iItem -= 16;
-            fStarbase = TRUE;
+            fStarbase = 1;
         } else {
             lpshdef = rglpshdef[iplr];
         }
@@ -482,7 +482,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
     *piLast = 0;
     *piFirst = 0;
     for (iPass = 1; iPass < 100; iPass++) {
-        ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, TRUE);
+        ColonyIO().pfnEstimateMining(&pl, rglQuan, -1, 1);
         for (j = 0; j < 3; j++) {
             rgRes[j] = pl.rgwtMin[j];
         }
@@ -493,7 +493,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
         } else {
             cResearch = 0;
         }
-        fAlchemy = FALSE;
+        fAlchemy = 0;
         for (i = -1; i < iMac; i++) {
             if (i == -1) {
                 lpprod = &prodPartial;
@@ -508,12 +508,12 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
                             *piFirst = -1;
                             goto LCleanUp;
                         }
-                        fAlchemy = TRUE;
+                        fAlchemy = 1;
                         continue;
                     }
                     lpprod->cItem = 1020;
                 }
-                cBuilt = ProductionIO().pfnBuild(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, FALSE);
+                cBuilt = ProductionIO().pfnBuild(&pl, lpprod, i == -1 ? NULL : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, 0);
                 mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
                     if (cBuilt > 0 && *piFirst == 0) {
@@ -530,7 +530,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
                         goto LCleanUp;
                     }
                 }
-                fAlchemy = FALSE;
+                fAlchemy = 0;
                 if (lpprod->grobj == grobjPlanet) {
                     switch (lpprod->iItem) {
                     case iobjMine:
@@ -556,7 +556,7 @@ void EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, i
         for (j = 0; j < 3; j++) {
             pl.rgwtMin[j] = rgRes[j];
         }
-        PlanetQueryIO().pfnGrowth(&pl, TRUE);
+        PlanetQueryIO().pfnGrowth(&pl, 1);
     }
     if (*piFirst == 0) {
         *piFirst = 100;

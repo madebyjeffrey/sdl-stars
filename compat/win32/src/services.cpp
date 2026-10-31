@@ -106,7 +106,7 @@ int win32::wsprintfA(LPSTR pszDest, LPCSTR pszFormat, ...) {
     return cchResult;
 LInvalid:
     pszDest[0] = 0;
-    win32::SetLastError(ERROR_INVALID_PARAMETER);
+    win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
     return 0;
 }
 
