@@ -45,7 +45,12 @@ It checks ordinary-only, SDK-only, both and neither configurations with distinct
 CMake caches and verifies exact registry membership (38 SDK vector tests plus SDK
 type isolation). Non-Windows toolchains must reject SDK configurations explicitly.
 On native Windows add `--run-sdk` to build and run all SDK vectors in both eligible
-configurations. The manual Windows job then builds and runs the entire ordinary
+configurations. The [native SDK findings](CPP-C09-SDK-FINDINGS.md) record 19
+individually named, hash-pinned pre-existing behavior/automation probes as
+diagnostics. All original assertions execute, with raw results/JUnit retained;
+the other 20 SDK checks remain gates. Skipped/missing checks, modified diagnostic
+inputs or unexpected failures remain errors. This classification does not weaken
+the ordinary SDL counterparts' assertions. The manual Windows job then builds and runs the entire ordinary
 registry, including the standalone headers, owner/callback checks and witnesses.
 The Linux and Windows full platform jobs remain opt-in; other automatic CI stays
 active. Matrix logs/manifests are uploaded by the manual Windows job.

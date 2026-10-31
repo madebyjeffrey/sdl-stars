@@ -39,3 +39,5 @@ for file, command, reason in [
                                  str(root), str(candidate)], capture_output=True, text=True)
         assert result.returncode and reason in result.stderr, result.stdout + result.stderr
 print('Rejected GNU mode, language overrides, weakened diagnostics, symbol substitution, state doubles, private production clones, owned C and generated/converted SDK entries')
+
+subprocess.run([sys.executable, str(root / 'tests/cmake/test_sdk_probe_policy.py')], check=True)

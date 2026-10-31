@@ -170,10 +170,14 @@ jobs:
             mingw-w64-ucrt-x86_64-sdl3 mingw-w64-ucrt-x86_64-freetype
             mingw-w64-ucrt-x86_64-fontconfig mingw-w64-ucrt-x86_64-cairo
             mingw-w64-ucrt-x86_64-libwmf
-      - name: Build and test the Windows SDL client
+      - name: Qualify the fresh SDK configuration matrix
         shell: msys2 {0}
         run: |
           python tests/cmake/configure_matrix.py --preset windows-sdl-debug --work dist/windows-cpp-matrix --run-sdk
+      - name: Build and test the Windows SDL client
+        if: always()
+        shell: msys2 {0}
+        run: |
           cmake --build dist/windows-cpp-matrix/ordinary --parallel 2 -- -k 0
           SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy STARS_SDL_RENDERER=software STARS_FILE_DIALOG_BACKEND=compat \
             ctest --test-dir dist/windows-cpp-matrix/ordinary --output-on-failure --no-tests=error -j 1
@@ -184,6 +188,7 @@ jobs:
           name: cpp-matrix-windows-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             dist/windows-cpp-matrix/*.log
+            dist/windows-cpp-matrix/*.xml
             dist/windows-cpp-matrix/matrix.json
             dist/windows-cpp-matrix/*/compile_commands.json
           if-no-files-found: warn

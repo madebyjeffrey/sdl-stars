@@ -235,5 +235,11 @@
       "path": "tests/scaffold/precision_race.c",
       "sha256": "89ffb35d41559a258b41e9baf8afadadb9158423f9ddc86aa03bfc930d35f584"
     }
-  ]
+  ],
+  "native_sdk_diagnostics": {
+    "inventory": "tests/reference/sdk/diagnostics.json",
+    "findings": "docs/CPP-C09-SDK-FINDINGS.md",
+    "follow_up": "https://github.com/madebyjeffrey/sdl-stars/issues/78",
+    "policy": "Execute all original assertions; retain raw results; only 19 exact unchanged/hash-pinned behavior or automation probes are diagnostic. All other checks and missing/skipped execution remain gates."
+  }
 }

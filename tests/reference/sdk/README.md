@@ -10,3 +10,8 @@ The entry inventory and exact include/type preambles are checked by
 changes their language. See `docs/CPP-POLICY.md` for the configuration matrix and
 precise reference exceptions. Shared case bodies and expected values stay in the
 `.inc` inputs.
+
+`diagnostics.json` pins the 19 unchanged native behavior/automation probes tracked
+in issue #78. Their original assertions still execute and report their actual
+results; other SDK checks, missing/skipped execution and changed diagnostic inputs
+remain errors. See `docs/CPP-C09-SDK-FINDINGS.md` for the exact observed failures.

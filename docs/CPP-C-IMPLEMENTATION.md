@@ -542,3 +542,12 @@ comparisons also match 519 files for each backend. The fresh desktop suite passe
 the available tutorial smoke checkpoint; the host passes 27/27. The final policy
 checks and native-point contract also pass after the compiler cleanup. The updated
 Windows matrix and C09 remote CI remain pending. Receipts: `dist/verification/c09/`.
+
+C09's expanded SDK-only execution at `6e547f05` passes 20/39 checks and finds
+19 failures in unchanged C07 probe inputs. [Exact first failures](CPP-C09-SDK-FINDINGS.md)
+and retained logs distinguish observations from diagnoses. Existing ABI/native-point
+checks and SDK isolation pass. No expectations or application behavior are changed;
+the 19 exact hash-pinned behavior/automation probes remain diagnostics tracked in
+issue #78, while the other 20 checks remain gates. Four policy tests reject hidden
+boundary failures or incomplete execution. Matrix results now retain
+both configuration results and do not prevent ordinary Windows qualification.
