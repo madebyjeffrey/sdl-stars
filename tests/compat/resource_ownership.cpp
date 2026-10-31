@@ -1,5 +1,7 @@
 /* Exercise allocation failure after CopyIcon has allocated its pixel planes. */
 #include "internal.h"
+#include "../../compat/win32/src/render_io.h"
+
 #include <stars_compat.h>
 #include <cstdlib>
 #include <new>
@@ -50,6 +52,10 @@ int main() {
     HMENU hmenu, hsub, hother;
     char sz[32];
     LOGFONTA lf = {};
+    COMPATRENDERIO io_compatrenderio;
+    io_compatrenderio.pfnDestroySurface = StarsTest_SDL_DestroySurface;
+    COMPATRENDERIOSCOPE scope_compatrenderio(io_compatrenderio);
+
     NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont;
 
     CHECK(FCompatVideo());

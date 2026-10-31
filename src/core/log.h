@@ -28,7 +28,6 @@ int16_t FWriteLogFile(char *pszFileBase, int16_t iPlayer);
 int16_t FWriteHistFile(int16_t iPlayer);
 void    EnumLogRts(int16_t (*pfn)(void *, int16_t, int16_t, void *, int16_t), void *lpPass, int16_t iPass);
 
-decltype(DirtyGame) STARS_TEST_IMPL(DirtyGame);
 
 void WriteMemResearch(int16_t wResearch);
 void WriteMemPassword(int32_t lSalt);

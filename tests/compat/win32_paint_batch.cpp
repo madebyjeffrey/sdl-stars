@@ -1,5 +1,7 @@
 /* Completed panes must reach the renderer together, including native live resize. */
 #include "internal.h"
+#include "../../compat/win32/src/render_io.h"
+
 #include <stars_compat.h>
 #include <stdio.h>
 static unsigned cPresent;
@@ -87,6 +89,10 @@ int main(void) {
     RECT rc;
     unsigned cPaintSav;
     unsigned cPresentSav;
+
+    COMPATRENDERIO io_compatrenderio;
+    io_compatrenderio.pfnRenderPresent = StarsTest_SDL_RenderPresent;
+    COMPATRENDERIOSCOPE scope_compatrenderio(io_compatrenderio);
 
     wc.lpfnWndProc = PaintProc;
     wc.hInstance = GetModuleHandle(NULL);

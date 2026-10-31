@@ -1,4 +1,5 @@
 #include "filedialog_backend.h"
+#include "windows_chooser_io.h"
 #include "filedialog_windows_bridge.h"
 #include <stdlib.h>
 
@@ -15,7 +16,7 @@ static int FPumpWindowsChooser(void *lpv) {
     return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
 
-int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
     WINDOWSFILEFILTER *rg = NULL;
@@ -32,7 +33,7 @@ int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTit
     }
     if (hwndOwner && hwndOwner->lpWindow.get())
         lpWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(hwndOwner->lpWindow.get()), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-    iResult = IChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
+    iResult = WindowsChooserIO().pfnIChooseWindowsFile(lpWindow, fSave, pszTitle, pszFolder, pszName, rg, cFilter,
                                 lpiFilter, pszPath, cbPath, FPumpWindowsChooser, hwndOwner);
     free(rg);
     return iResult;

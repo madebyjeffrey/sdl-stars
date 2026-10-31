@@ -1,4 +1,8 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "choice_io.h"
+#include "alert_io.h"
 #include "ownership.h"
 #include "resourcecodec.h"
 #include <stars_compat.h>
@@ -11,11 +15,11 @@ INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
     switch (message) {
     case WM_INITDIALOG:
-        FUiSetWindowPos(hwnd, NULL, 256, 256, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 256, 256, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0x1f, 0);
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -44,7 +48,7 @@ INT_PTR CALLBACK RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
                 }
                 Randomize(dw);
             }
-            EndDialog(hwnd, LOWORD(wParam) == IDOK);
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         }
         break;
@@ -185,7 +189,7 @@ void RcCtrTextOut(HDC hdc, RECT *prc, const char *psz, int16_t cLen) {
 }
 
 void RightTextOut(HDC hdc, int16_t x, int16_t y, char *psz, int16_t cLen, int16_t dxErase) {
-    if (cLen == -1) cLen = CchGetString(idsNone2, psz);
+    if (cLen == -1) cLen = TextIO().pfnCchGetString(idsNone2, psz);
     RightTextOut(hdc, x, y, static_cast<const char *>(psz), cLen, dxErase);
 }
 
@@ -195,7 +199,7 @@ void RightTextOut(HDC hdc, int16_t x, int16_t y, const char *psz, int16_t cLen, 
 
     if (cLen == -1) {
         char szNone[sizeof(szLastStrGet)];
-        cLen = CchGetString(idsNone2, szNone);
+        cLen = TextIO().pfnCchGetString(idsNone2, szNone);
         RightTextOut(hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
         return;
     } else if (cLen == 0) {
@@ -343,7 +347,7 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, int16_t fInit) {
                 rc.top = 0;
             }
         }
-        FUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
     return;
 }
@@ -1029,10 +1033,10 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     switch (message) {
     case WM_INITDIALOG:
         LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_LIMITTEXT, 0xf, 0);
-        FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsEnterPassword));
+        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsEnterPassword));
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -1052,8 +1056,8 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
+                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 60) < 0) {
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
@@ -1065,13 +1069,13 @@ INT_PTR CALLBACK PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 } else {
                     vcPasswordFailures++;
                     Delay(vcPasswordFailures < 10 ? 1000 : vcPasswordFailures < 100 ? 5000 : 10000);
-                    AlertSz(PszFormatIds(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
-                    HwndUiSetFocus(GetDlgItem(hwnd, IDC_EDIT1));
+                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordHaveEnteredIncorrectPleaseTry, NULL), MB_ICONHAND);
+                    ControlIO().pfnHwndUiSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     break;
                 }
             }
-            EndDialog(hwnd, LOWORD(wParam) == IDOK);
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1089);
@@ -1094,17 +1098,17 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         LUiSendDlgItemMessage(hwnd, IDC_PASSWORD_CONFIRM, EM_LIMITTEXT, 0xf, 0);
         SetWindowLongPtr(hwnd, DWLP_USER, lParam);
         if (lParam != 0) {
-            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNativeLegacyRacePassword));
-            FUiSetWindowText(hwnd, PszGetCompressedString(idsNativeLegacyRacePassword));
+            ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsNativeLegacyRacePassword));
+            ControlIO().pfnFUiSetWindowText(hwnd, TextIO().pfnCompressed(idsNativeLegacyRacePassword));
         } else if (idPlayer == iplrNone) {
-            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNotePasswordEffectiveImmediately));
-            FUiSetWindowText(hwnd, PszGetCompressedString(idsChangeHostPassword));
+            ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsNotePasswordEffectiveImmediately));
+            ControlIO().pfnFUiSetWindowText(hwnd, TextIO().pfnCompressed(idsChangeHostPassword));
         } else {
-            FUiSetWindowText(GetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), PszGetCompressedString(idsNoteNewPasswordWillTakeEffectUntil));
+            ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_STATUS_TEXT), TextIO().pfnCompressed(idsNoteNewPasswordWillTakeEffectUntil));
         }
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -1124,25 +1128,25 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         case IDOK:
         case IDCANCEL:
             if (LOWORD(wParam) == IDOK) {
-                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
+                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1), szPass, 18) < 0) {
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt = LSaltFromSz(szPass);
-                if (CchGetUtf8WindowText(GetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
-                    AlertSz(PszGetCompressedString(idsNativePasswordReenter), MB_ICONHAND);
+                if (CchGetUtf8WindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_PASSWORD_CONFIRM), szPassConfirm, 18) < 0) {
+                    AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativePasswordReenter), MB_ICONHAND);
                     break;
                 }
                 lSalt2 = LSaltFromSz(szPassConfirm);
                 if (lSalt != lSalt2) {
-                    AlertSz(PszFormatIds(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);
-                    HwndUiSetFocus(GetDlgItem(hwnd, IDC_EDIT1));
+                    AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPasswordsTypedTwoFieldsSamePleaseReenter, NULL), MB_ICONHAND);
+                    ControlIO().pfnHwndUiSetFocus(ControlIO().pfnGetDlgItem(hwnd, IDC_EDIT1));
                     LUiSendDlgItemMessage(hwnd, IDC_EDIT1, EM_SETSEL, 0, -1);
                     break;
                 }
                 if (GetWindowLongPtr(hwnd, DWLP_USER) != 0) {
                     if (szPass[0] == 0) {
-                        AlertSz(PszGetCompressedString(idsNativeLegacyRacePasswordRequired), MB_ICONHAND);
+                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeLegacyRacePasswordRequired), MB_ICONHAND);
                         break;
                     }
                     strcpy((char *)GetWindowLongPtr(hwnd, DWLP_USER), szPass);
@@ -1153,12 +1157,12 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                     if (FWriteDataFile(szBase, idPlayer, FALSE)) {
                         lSaltLast = lSalt;
                     } else {
-                        AlertSz(PszFormatIds(idsUnableCreateHostFile, NULL), MB_ICONHAND);
+                        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableCreateHostFile, NULL), MB_ICONHAND);
                         lSaltCur = lSaltLast;
                     }
                 }
             }
-            EndDialog(hwnd, LOWORD(wParam) == IDOK);
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhChangePassword);
@@ -1168,12 +1172,12 @@ INT_PTR CALLBACK NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
-int16_t STARS_TEST_IMPL(FPromptLegacyRacePassword)(char *szPassword) {
+int16_t FPromptLegacyRacePassword(char *szPassword) {
     FARPROC lpProc;
     int16_t fRet;
 
     lpProc = MakeProcInstance(NewPasswordDlg, hInst);
-    fRet = (int16_t)LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
+    fRet = (int16_t)ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_NEW_PASSWORD), hwndFrame, lpProc, (LPARAM)szPassword);
     FreeProcInstance(lpProc);
     return fRet > 0;
 }
@@ -1189,7 +1193,7 @@ void ShowProgressGauge() {
 
 void HideProgressGauge() {
     if (hwndProgressGauge) {
-        FUiDestroyWindow(hwndProgressGauge);
+        ControlIO().pfnFUiDestroyWindow(hwndProgressGauge);
         hwndProgressGauge = 0;
     }
     return;
@@ -1209,16 +1213,16 @@ INT_PTR CALLBACK ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM
         hwndProgressGauge = hwnd;
         dx = GetSystemMetrics(SM_CXSCREEN);
         dy = GetSystemMetrics(SM_CYSCREEN);
-        psz = PszGetCompressedString(idsGeneratingDataYearD);
+        psz = TextIO().pfnCompressed(idsGeneratingDataYearD);
         wsprintf(szWork, psz, game.turn + 2401);
-        FUiSetWindowText(GetDlgItem(hwnd, IDC_GAUGE_TEXT), szWork);
+        ControlIO().pfnFUiSetWindowText(ControlIO().pfnGetDlgItem(hwnd, IDC_GAUGE_TEXT), szWork);
         GetWindowRect(hwnd, &rc);
         rc.left = (dx - (rc.right - rc.left)) >> 1;
         rc.top = (dy - (rc.bottom - rc.top)) >> 1;
-        FUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_CTLCOLORMSGBOX:
@@ -1256,7 +1260,7 @@ void DrawProgressGauge(HDC hdcOrig, int16_t fFull, int16_t iNumOnly) {
         } else {
             hdc = hdcOrig;
         }
-        GetClientRect(hwndProgressGauge, &rc);
+        ControlIO().pfnGetClientRect(hwndProgressGauge, &rc);
         rc.top = rc.bottom >> 1;
         InflateRect(&rc, -8, -8);
         dx = rc.right - rc.left;
@@ -1328,16 +1332,16 @@ HFONT HfontPrinterCreate(HDC hdc, int16_t iSize, int16_t *pdyFont) {
 
 // IdAlertBox shows an AlertSz message in a message box and returns the
 // button the player chose.
-int16_t IdAlertBox(const char *sz, int16_t mbType) { return MessageBox(GetFocus(), sz, "Stars!", mbType); }
+int16_t IdAlertBox(const char *sz, int16_t mbType) { return CompatChoiceIO().pfnMessageBoxA(GetFocus(), sz, "Stars!", mbType); }
 
 // PromptPassword asks for the password of the file FCheckPassword is
 // checking.
-int16_t STARS_TEST_IMPL(PromptPassword)() {
+int16_t PromptPassword() {
     FARPROC lpProc;
     int16_t fRet;
 
     lpProc = MakeProcInstance(PasswordDlg, hInst);
-    fRet = LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc);
+    fRet = ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_PASSWORD), !hwndTitle ? hwndFrame : hwndTitle, lpProc, 0);
     FreeProcInstance(lpProc);
     return fRet;
 }

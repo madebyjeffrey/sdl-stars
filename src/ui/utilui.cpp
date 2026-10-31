@@ -1,4 +1,7 @@
 #include "win.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "random_io.h"
 
 void SelectOursAtObject(POINT16 *ppt) {
     int16_t id;
@@ -10,7 +13,7 @@ void SelectOursAtObject(POINT16 *ppt) {
 
     if (ppt->x == -1) {
         if (ppt->y & 0x8000) {
-            SelectAdjFleet(0, ppt->y & 0x7fff);
+            PresentationIO().pfnSelectFleet(0, ppt->y & 0x7fff);
             return;
         }
         pt = rgptPlan[ppt->y];
@@ -24,7 +27,7 @@ void SelectOursAtObject(POINT16 *ppt) {
             break;
         if (pt.x == lpfl->pt.x && pt.y == lpfl->pt.y) {
             if (lpfl->iPlayer == idPlayer) {
-                SelectAdjFleet(0, lpfl->id);
+                PresentationIO().pfnSelectFleet(0, lpfl->id);
                 return;
             }
             if (id == idflNone) {
@@ -34,7 +37,7 @@ void SelectOursAtObject(POINT16 *ppt) {
     }
     for (i = 0; i < game.cPlanMax; i++) {
         if (rgptPlan[i].x == pt.x && rgptPlan[i].y == pt.y) {
-            SelectAdjPlanet(0, i);
+            PresentationIO().pfnSelectPlanet(0, i);
             return;
         }
     }
@@ -43,10 +46,10 @@ void SelectOursAtObject(POINT16 *ppt) {
         lpThings[scan.ith].thp().iWarp() == 0) {
         ChangeScanSel(&scan, 1);
         FEnsurePointOnScreen(scan.pt, TRUE);
-        FUiUpdateWindow(hwndScanner);
-        LUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
+        ControlIO().pfnFUiUpdateWindow(hwndScanner);
+        ControlIO().pfnLUiSendMessage(hwndScanner, WM_CHAR, 'v', 0);
     } else if (id != idflNone) {
-        SelectAdjFleet(0, id);
+        PresentationIO().pfnSelectFleet(0, id);
     }
     return;
 }
@@ -70,8 +73,8 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
     for (iClr = 0; iClr < 5; iClr++) {
         iMax = LOWORD((int32_t)(lPixTot / rgDSDivCnt[iClr]));
         for (i = 0; i < iMax; i++) {
-            rcOut.left = Random(dx) + rc.left;
-            rcOut.top = Random(dy) + rc.top;
+            rcOut.left = RandomIO().pfnRandom(dx) + rc.left;
+            rcOut.top = RandomIO().pfnRandom(dy) + rc.top;
             rcOut.right = rcOut.left + 1;
             rcOut.bottom = rcOut.top + 1;
             SetBkColor(hdc, rgcrDrawStars[iClr]);
@@ -81,8 +84,8 @@ void DrawABunchOfStars(HDC hdc, RECT *prc) {
     for (iClr = 0; iClr < 4; iClr++) {
         iMax = LOWORD((int32_t)(lPixTot / rgDSDivCnt2[iClr])) + 1;
         for (i = 0; i < iMax; i++) {
-            rcOut.left = Random(dx) + rc.left;
-            rcOut.top = Random(dy) + rc.top;
+            rcOut.left = RandomIO().pfnRandom(dx) + rc.left;
+            rcOut.top = RandomIO().pfnRandom(dy) + rc.top;
             rcOut.right = rcOut.left + 3;
             rcOut.bottom = rcOut.top + 3;
             SetBkColor(hdc, rgcrDrawStars2b[iClr]);

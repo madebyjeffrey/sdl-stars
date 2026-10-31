@@ -574,3 +574,9 @@ TEST_LIST = {{"race checksum uses the fixed 192-byte wire image", test_IRaceChec
              {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},
 #endif
              {NULL, NULL}};
+
+#ifdef STARS_UI_SDL
+#include "player_choice_io.h"
+static const PLAYERCHOICEIO ioRace = [] { PLAYERCHOICEIO io; io.pfnFPromptLegacyRacePassword = FStarsTestPromptLegacyRacePassword; return io; }();
+static PLAYERCHOICEIOSCOPE raceChoiceScope(ioRace);
+#endif

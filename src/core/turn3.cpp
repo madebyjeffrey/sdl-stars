@@ -1,4 +1,10 @@
 #include "common.h"
+#include "turn_io.h"
+#include "production_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "race_query_io.h"
 
 void SatisfyOrders(int16_t iPass) {
     int16_t        fMining;
@@ -87,7 +93,7 @@ void SatisfyOrders(int16_t iPass) {
                     fDunnage = 0;
                     lpflWP = NULL;
                     lpthWP = NULL;
-                    fAtPlanet = lpfl->idPlanet != idPlanetDeepSpace && FLookupPlanet(lpfl->idPlanet, &pl) != 0;
+                    fAtPlanet = lpfl->idPlanet != idPlanetDeepSpace && PlanetQueryIO().pfnLookup(lpfl->idPlanet, &pl) != 0;
                     idWP = ord.id;
                     switch (ord.grobj) {
                     case grobjFleet:
@@ -104,13 +110,13 @@ void SatisfyOrders(int16_t iPass) {
                         }
                         if (!lpflWP->fHereAllTurn || !fAtPlanet)
                             break;
-                        if (CMineFromLpfl(lpflWP) > 0 && (pl.iPlayer == iplrNone || pl.iPlayer == lpfl->iPlayer)) {
+                        if (ColonyIO().pfnFleetMining(lpflWP) > 0 && (pl.iPlayer == iplrNone || pl.iPlayer == lpfl->iPlayer)) {
                             fMining = 1;
                             xWP = 0xffff;
                             idWP = lpflWP->id | 0x8000;
                             break;
                         }
-                        if (LGetFleetStat(lpflWP, 2) != 0 || pl.iPlayer != lpfl->iPlayer)
+                        if (ProductionIO().pfnFleetStat(lpflWP, 2) != 0 || pl.iPlayer != lpfl->iPlayer)
                             break;
                         fFueling = TRUE;
                         xWP = 0xffff;
@@ -139,7 +145,7 @@ void SatisfyOrders(int16_t iPass) {
                             if (!rglpfl[iflWP])
                                 break;
                             if (!lpflWP->fDead && lpflWP->iPlayer == lpfl->iPlayer && lpfl->idPlanet == lpflWP->idPlanet && lpflWP != lpfl &&
-                                lpflWP->fHereAllTurn && CMineFromLpfl(lpflWP) > 0) {
+                                lpflWP->fHereAllTurn && ColonyIO().pfnFleetMining(lpflWP) > 0) {
                                 fMining = 2;
                                 fHasPermission = TRUE;
                                 ord.grobj = grobjFleet;
@@ -158,7 +164,7 @@ void SatisfyOrders(int16_t iPass) {
                     fOptFuel = FALSE;
                     if (ord.grobj == grobjThing && (!lpthWP || lpthWP->ith() != ithMineralPacket)) {
                         if (lpthWP) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmHadOrdersTransferCargoFutilePursuit, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpthWP->ith());
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmHadOrdersTransferCargoFutilePursuit, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpthWP->ith());
                         }
                         goto CancelOrder;
                     }
@@ -193,9 +199,9 @@ void SatisfyOrders(int16_t iPass) {
                                 if (iLoad == 0)
                                     continue;
                                 if (j == 4) {
-                                    amount = LGetFleetStat(lpfl, 1);
+                                    amount = ProductionIO().pfnFleetStat(lpfl, 1);
                                 } else {
-                                    amount = LGetFleetStat(lpfl, 2);
+                                    amount = ProductionIO().pfnFleetStat(lpfl, 2);
                                 }
                                 amount = StarsMin(2000000, amount);
                                 if (amount < 65536) {
@@ -260,7 +266,7 @@ void SatisfyOrders(int16_t iPass) {
                                     if (iPass != 4)
                                         goto Load;
                                     idm = j == 3 ? idmAttemptedSetNumberBoardUnfortunatelyCouldntProvi : idmAttemptedSetAmountBoardUnfortunatelyCouldntProvi;
-                                    FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, j, ord.txp.rgia[j].cQuan(), 0, xWP, idWP, 0);
+                                    TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, j, ord.txp.rgia[j].cQuan(), 0, xWP, idWP, 0);
                                     goto Load;
                                 }
                                 if (iLoad != 0)
@@ -315,7 +321,7 @@ void SatisfyOrders(int16_t iPass) {
                                         case grobjOther:
                                             idm = idmAttemptedLoadDeepSpaceAttemptUnsuccessful;
                                         }
-                                        FSendPlrMsg2(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, j);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, j);
                                         goto CancelOrder;
                                     }
                                     fDone = FALSE;
@@ -325,7 +331,7 @@ void SatisfyOrders(int16_t iPass) {
                                     /* A thief can't take colonists or fuel. The original marked
                                        the item done but loaded it anyway; its unused messages
                                        report the attempt as unsuccessful. */
-                                    FSendPlrMsg(lpfl->iPlayer,
+                                    TurnIO().pfnMessage(lpfl->iPlayer,
                                                 j == 3 ? idmAttemptedShanghaiColonistsAttemptUnsuccessful : idmAttemptedStealMgFuelAttemptUnsuccessful,
                                                 static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(amount), HIWORD(amount), xWP, idWP, 0, 0);
                                     fDone = TRUE;
@@ -338,10 +344,10 @@ void SatisfyOrders(int16_t iPass) {
                                         l = ChgCargo(grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, NULL);
                                         if (l != 0) {
                                             if (ord.grobj == grobjFleet && lpfl->iPlayer != lpflWP->iPlayer) {
-                                                FSendPlrMsg(lpfl->iPlayer, idmHasStolen, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), j, idWP & 0x7fff, 0,
+                                                TurnIO().pfnMessage(lpfl->iPlayer, idmHasStolen, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), j, idWP & 0x7fff, 0,
                                                             0);
                                             } else {
-                                                FSendPlrMsg(lpfl->iPlayer, j == 3 ? idmHasBeamed : idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
+                                                TurnIO().pfnMessage(lpfl->iPlayer, j == 3 ? idmHasBeamed : idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
                                                             HIWORD(l), j, xWP, idWP, 0);
                                             }
                                         }
@@ -352,10 +358,10 @@ void SatisfyOrders(int16_t iPass) {
                                         if (l2 != 0) {
                                             l = ChgCargo(grobjFleet, lpfl->id, static_cast<MineralType>(j), -l2, NULL);
                                             if (fMining) {
-                                                FSendPlrMsg(lpfl->iPlayer, idmHasLoadedMiningRobotsWorking, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
+                                                TurnIO().pfnMessage(lpfl->iPlayer, idmHasLoadedMiningRobotsWorking, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
                                                             j, lpflWP->id, pl.id, 0);
                                             } else {
-                                                FSendPlrMsg(lpfl->iPlayer, j == 3 ? idmHasBeamed : idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
+                                                TurnIO().pfnMessage(lpfl->iPlayer, j == 3 ? idmHasBeamed : idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
                                                             HIWORD(l), j, xWP, pl.id, 0);
                                             }
                                         } else {
@@ -387,10 +393,10 @@ void SatisfyOrders(int16_t iPass) {
                                     if (pl.iPlayer == iplrNone && !pl.fWasInhabited) {
                                         idm = idmHasTriedBeamColonistsPlanetUninhabitedMust;
                                     LCantDrop:
-                                        FSendPlrMsg2(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id);
                                         goto CancelOrder;
                                     }
-                                    if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh) {
+                                    if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh) {
                                         idm = idmCaptainHasAttemptedBeamColonistsOverruledBridge;
                                         goto LCantDrop;
                                     }
@@ -405,17 +411,17 @@ void SatisfyOrders(int16_t iPass) {
                                 } else if (ord.grobj == grobjFleet && rgplr[lpflWP->iPlayer].rgmdRelation[lpfl->iPlayer] == 2) {
                                     amount = 0;
                                 } else if (j == 3 && ord.grobj == grobjOther) {
-                                    FSendPlrMsg2(lpfl->iPlayer, idmHasTriedBeamColonistsDeepSpaceOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmHasTriedBeamColonistsDeepSpaceOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                     goto CancelOrder;
                                 } else if (amount != 0) {
                                     if (fFueling && j != 4) {
                                         l = ChgCargo(grobjPlanet, pl.id, static_cast<MineralType>(j), amount, NULL);
-                                        FSendPlrMsg(lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
+                                        TurnIO().pfnMessage(lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l),
                                                     j, xWP, pl.id, 0);
                                     } else {
                                         l = ChgCargo(static_cast<GrobjClass>(ord.grobj), ord.id, static_cast<MineralType>(j), amount, NULL);
                                         if (l > 0) {
-                                            FSendPlrMsg(lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
+                                            TurnIO().pfnMessage(lpfl->iPlayer, j == 3 ? idmHasBeamed2 : idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l),
                                                         HIWORD(l), j, xWP, idWP, 0);
                                         }
                                         amount = l;
@@ -439,18 +445,18 @@ void SatisfyOrders(int16_t iPass) {
                         if (amount > lpfl->rgwtMin[4]) {
                             fDone = FALSE;
                             if (wtOptimalFuel != 0) {
-                                FSendPlrMsg(lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(wtOptimalFuel), HIWORD(wtOptimalFuel), 4, xWP,
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(wtOptimalFuel), HIWORD(wtOptimalFuel), 4, xWP,
                                             idWP, 0);
                             }
                             if (iPass == 4 && !fHasPermission) {
-                                FSendPlrMsg(lpfl->iPlayer, idmFailedLoadFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, xWP, idWP, 0, 0, 0, 0);
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmFailedLoadFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, xWP, idWP, 0, 0, 0, 0);
                                 goto FinishFleet;
                             }
                             if (iPass != 2)
                                 goto FinishFleet;
-                            lMaxFuel = LGetFleetStat(lpfl, 1);
+                            lMaxFuel = ProductionIO().pfnFleetStat(lpfl, 1);
                             if (lMaxFuel < amount) {
-                                FSendPlrMsg(lpfl->iPlayer, idmWillNeverMakeWaypointFuelCapacityMg, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lMaxFuel),
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmWillNeverMakeWaypointFuelCapacityMg, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lMaxFuel),
                                             HIWORD(lMaxFuel), LOWORD(amount), HIWORD(amount), 0, 0);
                                 goto FinishFleet;
                             }
@@ -458,7 +464,7 @@ void SatisfyOrders(int16_t iPass) {
                             if (fMining == 2) {
                                 idWP = pl.id;
                             }
-                            FSendPlrMsg(lpfl->iPlayer, idmThereIsntEnoughFuelAvailableAllowGet, static_cast<MsgGoto>(lpfl->id | 0x8000), xWP, idWP, lpfl->id, LOWORD(cFuel2),
+                            TurnIO().pfnMessage(lpfl->iPlayer, idmThereIsntEnoughFuelAvailableAllowGet, static_cast<MsgGoto>(lpfl->id | 0x8000), xWP, idWP, lpfl->id, LOWORD(cFuel2),
                                         HIWORD(cFuel2), 0, 0);
                             goto FinishFleet;
                         }
@@ -482,9 +488,9 @@ void SatisfyOrders(int16_t iPass) {
                             if (l2 != 0) {
                                 l += wtOptimalFuel;
                                 if (l > 0) {
-                                    FSendPlrMsg(lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), 4, xWP, idWP, 0);
+                                    TurnIO().pfnMessage(lpfl->iPlayer, idmHasLoaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(l), HIWORD(l), 4, xWP, idWP, 0);
                                 } else if (l < 0) {
-                                    FSendPlrMsg(lpfl->iPlayer, idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, -LOWORD(l),
+                                    TurnIO().pfnMessage(lpfl->iPlayer, idmHasUnloaded, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, -LOWORD(l),
                                                 LOWORD((uint32_t)((uint32_t)-l >> 0x10)), 4, xWP, idWP, 0);
                                 }
                             }
@@ -513,7 +519,7 @@ void SatisfyOrders(int16_t iPass) {
                 } else if ((ord.grTask == grTaskScrap && iPass == 1) || ord.grTask == grTaskColonize) {
                     if (lpfl->idPlanet == idPlanetDeepSpace) {
                         if (ord.grTask == grTaskColonize) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmHasOrderColonizeCurrentlyOrbitPlanetOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmHasOrderColonizeCurrentlyOrbitPlanetOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             goto CancelOrder;
                         }
                         pl.id = idplNone;
@@ -521,17 +527,17 @@ void SatisfyOrders(int16_t iPass) {
                         pl.fStarbase = FALSE;
                         goto LScrap;
                     }
-                    if (!FLookupPlanet(lpfl->idPlanet, &pl) && ord.grTask == grTaskColonize)
+                    if (!PlanetQueryIO().pfnLookup(lpfl->idPlanet, &pl) && ord.grTask == grTaskColonize)
                         goto CancelOrder;
                 LScrap:
                     if (ord.grTask == grTaskColonize) {
                         if (pl.iPlayer != iplrNone) {
-                            FSendPlrMsg(lpfl->iPlayer, idmHasOrdersColonizeAlreadyPopulatedColonizeOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id, pl.id, 0, 0, 0,
+                            TurnIO().pfnMessage(lpfl->iPlayer, idmHasOrdersColonizeAlreadyPopulatedColonizeOrder, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id, pl.id, 0, 0, 0,
                                         0);
                             goto CancelOrder;
                         }
                         if (lpfl->rgwtMin[3] == 0) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmHasOrdersColonizeHaveFailedBringAlong, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmHasOrdersColonizeHaveFailedBringAlong, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id);
                             goto CancelOrder;
                         }
                     }
@@ -557,11 +563,11 @@ void SatisfyOrders(int16_t iPass) {
                         }
                     }
                     if (ord.grTask == grTaskColonize && !fColonize) {
-                        FSendPlrMsg(lpfl->iPlayer, idmHasOrdersColonizeNoneShipsHaveColonization, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id, lpfl->id, 0, 0, 0, 0);
+                        TurnIO().pfnMessage(lpfl->iPlayer, idmHasOrdersColonizeNoneShipsHaveColonization, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, pl.id, lpfl->id, 0, 0, 0, 0);
                     } else {
                         lXferMinerals = 0;
-                        fUltimate = ord.grTask == grTaskScrap && pl.iPlayer != iplrNone && GetRaceGrbit(&rgplr[pl.iPlayer], ibitRaceUltimateRecycling) != 0;
-                        fBleeding = GetRaceGrbit(&rgplr[lpfl->iPlayer], ibitRaceBleedingEdgeTech);
+                        fUltimate = ord.grTask == grTaskScrap && pl.iPlayer != iplrNone && RaceQueryIO().pfnGrbit(&rgplr[pl.iPlayer], ibitRaceUltimateRecycling) != 0;
+                        fBleeding = RaceQueryIO().pfnGrbit(&rgplr[lpfl->iPlayer], ibitRaceBleedingEdgeTech);
                         gd.fDontCalcBleed = TRUE;
                         idPlayer = lpfl->iPlayer;
                         for (i = 0; i <= 2; i++) {
@@ -629,11 +635,11 @@ void SatisfyOrders(int16_t iPass) {
                             }
                             vrgPlanResExtra[pl.id] = vrgPlanResExtra[pl.id] + LOWORD(lResUltimate);
                             if (lResUltimate > 0 && pl.iPlayer != iplrNone) {
-                                lAmt = CResourcesAtPlanet(&pl, pl.iPlayer);
+                                lAmt = ResearchIO().pfnResources(&pl, pl.iPlayer);
                                 lResUltimate = (int32_t)((int32_t)(lResUltimate * lAmt) / (lResUltimate + lAmt));
                             }
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited2 + pl.fStarbase);
-                            FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
+                            TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
                                         HIWORD(lResUltimate), 0);
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited5 + pl.fStarbase);
                             if (pl.fStarbase) {
@@ -652,15 +658,15 @@ void SatisfyOrders(int16_t iPass) {
                             } else {
                                 iGoto = pl.id;
                             }
-                            FSendPlrMsg(pl.iPlayer, idm, static_cast<MsgGoto>(iGoto), lpfl->id, LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
+                            TurnIO().pfnMessage(pl.iPlayer, idm, static_cast<MsgGoto>(iGoto), lpfl->id, LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, LOWORD(lResUltimate),
                                         HIWORD(lResUltimate), i);
                         } else if (pl.id == idplNone) {
                             lpthWP = NULL;
                             DropSalvage(&lpthWP, pl.rgwtMin, lpfl->iplr(), &ord.pt);
-                            FSendPlrMsg2(lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull(), WFromLpfl(lpfl));
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull(), WFromLpfl(lpfl));
                         } else {
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited + pl.fStarbase);
-                            FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, 0, 0, 0);
+                            TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, 0, 0, 0);
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited4 + pl.fStarbase);
                             if (pl.fStarbase) {
                                 i = ITechLearnATech(pl.iPlayer, 0, 0, static_cast<MessageId>(idmNone), &iGoto);
@@ -676,11 +682,11 @@ void SatisfyOrders(int16_t iPass) {
                                     iGoto = pl.id;
                                 }
                             }
-                            FSendPlrMsg(pl.iPlayer, idm, static_cast<MsgGoto>(iGoto), lpfl->id, LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, i, 0, 0);
+                            TurnIO().pfnMessage(pl.iPlayer, idm, static_cast<MsgGoto>(iGoto), lpfl->id, LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, i, 0, 0);
                         }
                         idPlayer = iplrNone;
                         gd.fDontCalcBleed = FALSE;
-                        FRemovePlayerMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
+                        TurnIO().pfnRemoveMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
                         lpfl->fDead = TRUE;
                         if (ord.grTask == grTaskColonize) {
                             FQueueColonistDrop(lpfl, &pl, lpfl->rgwtMin[3]);
@@ -690,8 +696,8 @@ void SatisfyOrders(int16_t iPass) {
                     }
                 CancelOrder:
                     if (lpfl->cord == 1 && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask != grTaskNone) {
-                        FRemovePlayerMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
-                        FSendPlrMsg2(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                        TurnIO().pfnRemoveMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                     }
                     lpfl->lpplord->rgord()[0].grTask = grTaskNone;
                 } else if (ord.grTask == grTaskMine) {
@@ -699,37 +705,37 @@ void SatisfyOrders(int16_t iPass) {
                     if (iPass != 3 || !lpfl->fHereAllTurn)
                         continue;
                     if (lpfl->idPlanet == idPlanetDeepSpace) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmRemoteMiningRobotsHadOrdersMineDeep, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmRemoteMiningRobotsHadOrdersMineDeep, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                         goto CancelOrder;
                     }
                     lppl = LpplFromId(lpfl->idPlanet);
                     if (!lppl)
                         goto CancelOrder;
-                    cMine = CMineFromLpfl(lpfl);
+                    cMine = ColonyIO().pfnFleetMining(lpfl);
                     if (cMine == 0) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmHadOrdersMineFleetDoesntHaveAny, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmHadOrdersMineFleetDoesntHaveAny, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id);
                         goto CancelOrder;
                     }
                     if (lppl->iPlayer != iplrNone) {
-                        if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh)
+                        if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh)
                             continue;
-                        FSendPlrMsg2(lpfl->iPlayer, idmRemoteMiningRobotsHadOrdersMinePlanet, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmRemoteMiningRobotsHadOrdersMinePlanet, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id);
                         goto CancelOrder;
                     }
-                    EstMineralsMined(lppl, rglQuan, cMine, TRUE);
+                    ColonyIO().pfnEstimateMining(lppl, rglQuan, cMine, TRUE);
                 } else if (ord.grTask == grTaskAutoRoute) {
                     if (lpfl->cord != 1 || lpfl->idPlanet == idPlanetDeepSpace)
                         continue;
                     lppl = LpplFromId(lpfl->idPlanet);
                     if (lppl->iPlayer == lpfl->iPlayer && lppl->idRoute != 0) {
-                        AutoRouteFleet(lpfl, lppl);
-                        FSendPlrMsg(lpfl->iPlayer, lpfl->lpplord->rgord()[1].iWarp == 0 ? idmHasReroutedUnfortuentlyDoesHaveEnoughFuel : idmHasRerouted,
+                        ProductionIO().pfnRoute(lpfl, lppl);
+                        TurnIO().pfnMessage(lpfl->iPlayer, lpfl->lpplord->rgord()[1].iWarp == 0 ? idmHasReroutedUnfortuentlyDoesHaveEnoughFuel : idmHasRerouted,
                                     static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->idPlanet, lppl->idRoute - 1, 0, 0, 0, 0);
                         continue;
                     }
                     if (iPass != 4)
                         continue;
-                    AutoFleetOrder(lpfl, lppl);
+                    ProductionIO().pfnDefaultOrder(lpfl, lppl);
                     ord = lpfl->lpplord->rgord()[0];
                     if (ord.grTask == grTaskMerge)
                         goto LDoMerge;
@@ -738,7 +744,7 @@ void SatisfyOrders(int16_t iPass) {
                     LDoMerge:
                         if (ord.grobj != grobjFleet) {
                         NMNF:
-                            FSendPlrMsg2(lpfl->iPlayer, idmUnableCompleteMergeOrdersWaypointDestinationWasn, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmUnableCompleteMergeOrdersWaypointDestinationWasn, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             goto CancelOrder;
                         }
                         lpflDest = LpflFromId(ord.id);
@@ -747,11 +753,11 @@ void SatisfyOrders(int16_t iPass) {
                         if (lpfl == lpflDest)
                             goto CancelOrder;
                         if (lpflDest->iPlayer != lpfl->iPlayer) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmUnableCompleteMergeOrdersDestinationFleetWasnt, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmUnableCompleteMergeOrdersDestinationFleetWasnt, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             goto CancelOrder;
                         }
-                        FSendPlrMsg2(lpfl->iPlayer, idmHasMerged, static_cast<MsgGoto>(lpflDest->id | 0x8000), WFromLpfl(lpfl), lpflDest->id);
-                        FRemovePlayerMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmHasMerged, static_cast<MsgGoto>(lpflDest->id | 0x8000), WFromLpfl(lpfl), lpflDest->id);
+                        TurnIO().pfnRemoveMessage(lpfl->iPlayer, idmHasCompletedAssignedOrders, static_cast<MsgGoto>(lpfl->id | 0x8000));
                         Merge2Fleets(lpflDest, lpfl, TRUE);
                         goto CancelOrder;
                     }
@@ -763,15 +769,15 @@ void SatisfyOrders(int16_t iPass) {
                         iplrDest++;
                     }
                     if (iplrDest < 0 || iplrDest >= game.cPlayer || rgplr[iplrDest].fDead) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmCouldntGiveAwayBecausePlayerDead, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmCouldntGiveAwayBecausePlayerDead, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                         goto CancelOrder;
                     }
                     if (rgplr[iplrDest].fAi || rgplr[iplrDest].rgmdRelation[lpfl->iPlayer] == 2) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmSnubAttemptedGiftRefuseFleet, static_cast<MsgGoto>(lpfl->id | 0x8000), 0x30 | iplrDest, 0);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmSnubAttemptedGiftRefuseFleet, static_cast<MsgGoto>(lpfl->id | 0x8000), 0x30 | iplrDest, 0);
                         goto CancelOrder;
                     }
                     if (lpfl->rgwtMin[3] > 0) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmCouldntGiveAwayBecauseThereColonistsBoard, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmCouldntGiveAwayBecauseThereColonistsBoard, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                         goto CancelOrder;
                     }
                     ishLastFree = -1;
@@ -788,8 +794,8 @@ void SatisfyOrders(int16_t iPass) {
                                 } while (ishLastFree < 16 && !rglpshdef[iplrDest][ishLastFree].fFree);
                                 if (ishLastFree >= 16) {
                                 SellNoCap:
-                                    FSendPlrMsg2(lpfl->iPlayer, idmCouldntGiveAwayBecauseDidntHaveAdministrative, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0x30 | iplrDest);
-                                    FSendPlrMsg2(iplrDest, idmAttemptedGiveFleetDontHaveEnoughExcess, gotoNone, 0x30 | lpfl->iPlayer, 0);
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmCouldntGiveAwayBecauseDidntHaveAdministrative, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0x30 | iplrDest);
+                                    TurnIO().pfnMessage2(iplrDest, idmAttemptedGiveFleetDontHaveEnoughExcess, gotoNone, 0x30 | lpfl->iPlayer, 0);
                                     goto CancelOrder;
                                 }
                                 rgishMap[ish] = ishLastFree;
@@ -798,7 +804,7 @@ void SatisfyOrders(int16_t iPass) {
                     }
                     if (rgplr[iplrDest].cFleet >= 0x200)
                         goto SellNoCap;
-                    lpflNew = LpflNew(iplrDest, lpfl->idPlanet);
+                    lpflNew = ProductionIO().pfnNewFleet(iplrDest, lpfl->idPlanet);
                     if (!lpflNew)
                         goto SellNoCap;
                     if (iplrDest < lpfl->iPlayer) {
@@ -827,17 +833,17 @@ void SatisfyOrders(int16_t iPass) {
                         }
                     }
                     lpfl->fDead = TRUE;
-                    FSendPlrMsg2(lpfl->iPlayer, idmHasSuccessfullyGiven, static_cast<MsgGoto>(lpflNew->id | 0x8000), WFromLpfl(lpfl), 0x30 | iplrDest);
-                    FSendPlrMsg2(iplrDest, idmHaveGiven, static_cast<MsgGoto>(lpflNew->id | 0x8000), 0x30 | lpfl->iPlayer, WFromLpfl(lpflNew));
+                    TurnIO().pfnMessage2(lpfl->iPlayer, idmHasSuccessfullyGiven, static_cast<MsgGoto>(lpflNew->id | 0x8000), WFromLpfl(lpfl), 0x30 | iplrDest);
+                    TurnIO().pfnMessage2(iplrDest, idmHaveGiven, static_cast<MsgGoto>(lpflNew->id | 0x8000), 0x30 | lpfl->iPlayer, WFromLpfl(lpflNew));
                     lpfl->fDead = TRUE;
                 } else if (ord.grTask == grTaskLayMines ||
-                           (ord.grTask == grTaskNone && lpfl->cord > 1 && GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMines &&
+                           (ord.grTask == grTaskNone && lpfl->cord > 1 && RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMines &&
                             lpfl->lpplord->rgord()[1].grTask == grTaskLayMines)) {
                     idm = idmHasDispersedMines;
-                    if (iPass == 3 && (lpfl->fHereAllTurn || GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMines)) {
+                    if (iPass == 3 && (lpfl->fHereAllTurn || RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMines)) {
                         cMine = CLayMinesFromLpfl(lpfl, mineAll, ishdefAll);
                         if (cMine == 0) {
-                            FSendPlrMsg2(lpfl->iPlayer, idmHasAttemptedLayMinesOrderHasCanceled, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmHasAttemptedLayMinesOrderHasCanceled, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                             goto CancelOrder;
                         }
                         if (ord.grTask == grTaskLayMines) {
@@ -878,14 +884,14 @@ void SatisfyOrders(int16_t iPass) {
                                 } else {
                                     lpth = LpthNew(lpfl->iPlayer, ithMinefield);
                                     if (!lpth) {
-                                        FSendPlrMsg2(lpfl->iPlayer, idmFailedLayMinesYearDueTechnicalDifficulties, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idmFailedLayMinesYearDueTechnicalDifficulties, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                         continue;
                                     }
                                     lpth->pt().Set(lpfl->pt);
                                     lpth->thm().SetCMines(cMine);
                                     lpth->thm().SetIType(j);
                                 }
-                                FSendPlrMsg(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(cMine), HIWORD(cMine), 0, 0, 0, 0);
+                                TurnIO().pfnMessage(lpfl->iPlayer, idm, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(cMine), HIWORD(cMine), 0, 0, 0, 0);
                             }
                         }
                     }

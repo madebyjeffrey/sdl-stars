@@ -1,3 +1,4 @@
+#include "choice_io.h"
 #include <wincompat_calls.h>
 #include "errors.h"
 #include <type_traits>
@@ -117,7 +118,7 @@ int IUiTranslateAccelerator(HWND hwnd, HACCEL haccel, LPMSG lpmsg) {
 }
 
 BOOL FUiTrackPopupMenu(HMENU hmenu, UINT grbit, int x, int y, int nReserved, HWND hwnd, const RECT *lprc) {
-    BOOL fResult = TrackPopupMenu(hmenu, grbit, x, y, nReserved, hwnd, lprc);
+    BOOL fResult = CompatChoiceIO().pfnTrackPopupMenu(hmenu, grbit, x, y, nReserved, hwnd, lprc);
     StarsRethrowPendingError();
     return fResult;
 }

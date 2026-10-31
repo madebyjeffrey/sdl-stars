@@ -32,7 +32,5 @@ void    SetVisPFPlanets(int16_t iPlr);
 void    SetVisPFThings(int16_t iPlr);
 void    SetVisPFFinish(int16_t iPlr);
 
-decltype(WriteRt) STARS_TEST_IMPL(WriteRt);
-decltype(FCreateFile) STARS_TEST_IMPL(FCreateFile);
 
 #endif

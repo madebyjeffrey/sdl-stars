@@ -1,5 +1,6 @@
 /* Bounded DIB decoding, shared by embedded resources and GDI input. */
 #include "internal.h"
+#include "render_io.h"
 #include "resourcecodec.h"
 #include <limits.h>
 #include <string.h>
@@ -68,7 +69,7 @@ BOOL FCompatNativeDib(const void *lpInfo, size_t cbInfo, const void *lpBits, siz
 
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {
     SDL_Surface *lpsurface;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     int x, y, iColor;
     COLORREF cr;
     const BYTE *rgb;

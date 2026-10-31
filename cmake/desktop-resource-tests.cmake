@@ -16,7 +16,7 @@ target_sources(stars-resource-dib PRIVATE tests/compat/win32_dib_invalid.cpp)
 add_dependencies(stars-resource-dib stars_bitmap_resources)
 set(STARS_RESOURCE_PRINT_DIR "${CMAKE_BINARY_DIR}/resource-print-output")
 target_compile_definitions(stars-resource-print PRIVATE STARS_TEST_PRINT_OUTPUT="${STARS_RESOURCE_PRINT_DIR}")
-stars_test_redirect(stars-resource-print SDL_OpenURL SDL_ShowSimpleMessageBox)
+
 set_tests_properties(win32_sdl_resource_print PROPERTIES FIXTURES_SETUP resource_print_document)
 find_program(STARS_RESOURCE_PDFINFO pdfinfo)
 find_program(STARS_RESOURCE_PDFTOPPM pdftoppm)

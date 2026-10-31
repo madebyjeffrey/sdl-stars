@@ -3,6 +3,9 @@
  * Stars adaptation: retained class data, independent handles and reentrant teardown.
  */
 #include "internal.h"
+#include "display_io.h"
+#include "input_io.h"
+#include "window_io.h"
 #include "cleanup.h"
 #include <stars_compat.h>
 #include <stdlib.h>
@@ -52,7 +55,7 @@ static char *PszNativeTitle(LPCSTR pszTitle) {
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     if (!FUtf8Valid(pszTitle, strlen(pszTitle))) return FALSE;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return TRUE;
-    return SDL_SetWindowTitle(lpWindow, pszTitle);
+    return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
 }
 
 BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
@@ -60,7 +63,7 @@ BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, const char *psz) {
 }
 
 static BOOL FNativePositionable(SDL_Window *lpWindow) {
-    const char *pszDriver = SDL_GetCurrentVideoDriver();
+    const char *pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     return !pszDriver || strcmp(pszDriver, "wayland") ||
            (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP));
 }
@@ -495,13 +498,13 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
                 (!strcmp(pszClass, "StarsCompatPopup") || !strcmp(pszClass, "StarsComboPopup") ||
                  !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
                  !strcmp(pszClass, "StarsCompatToolbarTip")) &&
-                strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0;
+                strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0;
             if (fNativePopup) flags |= !strcmp(pszClass, "starstt") || !strcmp(pszClass, "starspopup") ||
                 !strcmp(pszClass, "StarsCompatToolbarTip") ?
                 SDL_WINDOW_TOOLTIP : SDL_WINDOW_POPUP_MENU;
             // Cocoa otherwise gives the unpainted popup view an opaque black
             // backing before the renderer's first drawable reaches the screen.
-            if (fNativePopup && !strcmp(SDL_GetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
+            if (fNativePopup && !strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
             // Native captions and control text share the same UTF-8 representation.
             pszNative = fNativePopup ? NULL : PszNativeTitle(lpwin->pszTitle);
             if (fNativePopup && GetWindowRect(lpwin->hwndOwner, &rcOwner))
@@ -528,7 +531,7 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
              // Native dialogs need a transient parent even when the owner is windowed.
              // The dummy driver has no native window hierarchy; HWND ownership
              // still applies there, but SDL_SetWindowParent is unsupported.
-             strcmp(SDL_GetCurrentVideoDriver(), "dummy") != 0 &&
+             strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") != 0 &&
              !SDL_SetWindowParent(lpwin->lpWindow.get(), lpwin->hwndOwner->lpWindow.get()))) {
             CompatDestroyPaint(lpwin);
             lpwin->lpWindow.reset();
@@ -765,8 +768,8 @@ BOOL WINAPI GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     wndpl.rcNormalPosition = lpwin->rcNormal;
     if (!lpwin->hwndParent) {
         idDisplay = SDL_GetDisplayForWindow(lpwin->lpWindow.get());
-        if (!idDisplay || !SDL_GetDisplayBounds(idDisplay, &rcDisplay) ||
-            !SDL_GetDisplayUsableBounds(idDisplay, &rcWork)) return FALSE;
+        if (!idDisplay || !CompatDisplayIO().pfnGetDisplayBounds(idDisplay, &rcDisplay) ||
+            !CompatDisplayIO().pfnGetDisplayUsableBounds(idDisplay, &rcWork)) return FALSE;
         dx = (int64_t)rcWork.x - rcDisplay.x;
         dy = (int64_t)rcWork.y - rcDisplay.y;
         xLeft = (int64_t)wndpl.rcNormalPosition.left - dx;
@@ -810,7 +813,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         sw = (int)lpwin->swInitial;
         // The headless driver cannot maximize/minimize a native window. Keep
         // the deferred startup show visible so client workflows can run there.
-        if (!strcmp(SDL_GetCurrentVideoDriver(), "dummy") &&
+        if (!strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "dummy") &&
             (sw == SW_SHOWMAXIMIZED || sw == SW_SHOWMINIMIZED)) sw = SW_SHOWNORMAL;
     }
     swOld = lpwin->swState;
@@ -845,14 +848,14 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     else if (sw == SW_HIDE)
         fOk = SDL_HideWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOW || (sw == SW_SHOWNORMAL && swOld == SW_SHOWNORMAL))
-        fOk = SDL_ShowWindow(lpwin->lpWindow.get());
+        fOk = CompatWindowIO().pfnShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_RESTORE || sw == SW_SHOWNORMAL)
         fOk = SDL_RestoreWindow(lpwin->lpWindow.get()) &&
-              (swNew != SW_SHOWMAXIMIZED || SDL_MaximizeWindow(lpwin->lpWindow.get())) && SDL_ShowWindow(lpwin->lpWindow.get());
+              (swNew != SW_SHOWMAXIMIZED || SDL_MaximizeWindow(lpwin->lpWindow.get())) && CompatWindowIO().pfnShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOWMINIMIZED)
-        fOk = SDL_MinimizeWindow(lpwin->lpWindow.get()) && SDL_ShowWindow(lpwin->lpWindow.get());
+        fOk = SDL_MinimizeWindow(lpwin->lpWindow.get()) && CompatWindowIO().pfnShowWindow(lpwin->lpWindow.get());
     else if (sw == SW_SHOWMAXIMIZED)
-        fOk = SDL_MaximizeWindow(lpwin->lpWindow.get()) && SDL_ShowWindow(lpwin->lpWindow.get());
+        fOk = SDL_MaximizeWindow(lpwin->lpWindow.get()) && CompatWindowIO().pfnShowWindow(lpwin->lpWindow.get());
     else {
         SDL_SetError("Unsupported ShowWindow command");
         return FALSE;
@@ -1289,7 +1292,7 @@ BOOL WINAPI FlashWindow(HWND hwnd, BOOL fInvert) {
     fWasActive = lpwin->fCaptionActive;
     fCaptionActive = fInvert ? !fWasActive : GetActiveWindow() == hwnd;
     operation = fCaptionActive && GetActiveWindow() != hwnd ? SDL_FLASH_BRIEFLY : SDL_FLASH_CANCEL;
-    if (!SDL_FlashWindow(lpwin->lpWindow.get(), operation)) {
+    if (!CompatWindowIO().pfnFlashWindow(lpwin->lpWindow.get(), operation)) {
         SetLastError(ERROR_NOT_SUPPORTED); return FALSE;
     }
     lpwin->fCaptionActive = fCaptionActive;
@@ -1362,7 +1365,7 @@ HWND WINAPI WindowFromPoint(POINT pt) {
     RECT rc;
     POINT ptClient;
     if (!SDL_IsMainThread()) return NULL;
-    pszDriver = SDL_GetCurrentVideoDriver();
+    pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     if (pszDriver && !strcmp(pszDriver, "wayland")) hwndPointer = HwndCompatPointerRoot();
     for (hwnd = hwndFirstTop; hwnd; hwnd = hwnd->hwndZNext) {
         // Owner-local coordinates cannot distinguish independent Wayland roots.

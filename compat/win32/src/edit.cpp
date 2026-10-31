@@ -1,5 +1,6 @@
 /* UTF-8 edit controls retain byte offsets at the game-to-UI boundary. */
 #include "internal.h"
+#include "choice_io.h"
 #include <stars_compat.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -525,7 +526,7 @@ static void EditContextMenu(HWND hwnd, LPARAM l) {
     AppendMenuA(hmenu, MF_STRING | (fSelection && fWrite ? 0 : MF_GRAYED), WM_CLEAR, "&Delete");
     AppendMenuA(hmenu, MF_SEPARATOR, 0, NULL);
     AppendMenuA(hmenu, MF_STRING | (CchEdit(hwnd) != 0 ? 0 : MF_GRAYED), 0xff00, "Select &All");
-    id = (UINT)TrackPopupMenu(hmenu, TPM_RETURNCMD | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
+    id = (UINT)CompatChoiceIO().pfnTrackPopupMenu(hmenu, TPM_RETURNCMD | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
     DestroyMenu(hmenu);
     if (!IsWindow(hwnd)) return;
     if (id == 0xff00) SendMessageA(hwnd, EM_SETSEL, 0, -1);

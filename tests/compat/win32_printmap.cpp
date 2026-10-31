@@ -1,5 +1,10 @@
 /* Exercise the actual map dialog and printing command on a copied game. */
 #include "win.h"
+#include "../../src/core/alert_io.h"
+#include "../../src/core/player_choice_io.h"
+#include "../../src/ui/desktop_choice_io.h"
+#include "../../compat/win32/src/external_io.h"
+
 #include "ownership.h"
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
@@ -7,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int16_t StarsTestReal_InitInstance(int16_t);
 static BOOL fRunning, fPassed, fCancel;
 static int cLaunch, cAlert;
 static UINT_PTR idDriver, idDialog;
@@ -113,13 +117,26 @@ done:
     PostQuitMessage(fPassed ? 0 : 92);
 }
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
+    int16_t fResult = InitInstance(nCmdShow);
     if (fResult) idDriver = SetTimer(NULL, 0, 50, PrintGame);
     return fResult && idDriver ? fResult : FALSE;
 }
 int main(int argc, char **argv) {
     char szCommand[1024];
     int nResult;
+    ALERTIO io_alertio;
+    io_alertio.pfnAlertSz = StarsTest_AlertSz;
+    ALERTIOSCOPE scope_alertio(io_alertio);
+    PLAYERCHOICEIO io_playerchoiceio;
+    io_playerchoiceio.pfnPromptPassword = StarsTest_PromptPassword;
+    PLAYERCHOICEIOSCOPE scope_playerchoiceio(io_playerchoiceio);
+    DESKTOPCHOICEIO io_desktopchoiceio;
+    io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
+    DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
+    COMPATEXTERNALIO io_compatexternalio;
+    io_compatexternalio.pfnOpenURL = StarsTest_SDL_OpenURL;
+    COMPATEXTERNALIOSCOPE scope_compatexternalio(io_compatexternalio);
+
     if (argc != 2 || strlen(argv[1]) >= sizeof(szCommand)) return 2;
     strcpy(szCommand, argv[1]);
     nResult = WinMain(GetModuleHandle(NULL), NULL, szCommand, SW_SHOWNORMAL);

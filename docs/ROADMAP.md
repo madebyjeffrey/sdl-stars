@@ -40,9 +40,10 @@ checks pass for `b799348`.
 Milestone B is qualified and merged in [PR #66](https://github.com/madebyjeffrey/sdl-stars/pull/66).
 [Milestone C](CPP-MILESTONE-C.md) is active from merge `62bb854`. The removal
 inventory and source filename migration merged in PR #68. C03's explicit typed
-callback calls merged in PR #69 with all enabled CI passing. C04 begins with
-typed profile/file effects and the first linked C05 witness. Remaining test,
-namespace and state-access scaffolding follow while preserving game/file behavior.
+callback calls merged in PR #69 with all enabled CI passing. C04/C05 now replace test redirects/clones and all 27 extraction programs with
+typed effects and linked production tests; local qualification passes with enabled
+PR CI pending. Namespace
+and state-access scaffolding follow while preserving game/file behavior.
 [Implementation evidence](CPP-C-IMPLEMENTATION.md) records actual checkpoint
 status and verification; later C checkpoints remain pending.
 

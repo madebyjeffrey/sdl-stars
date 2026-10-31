@@ -1,4 +1,8 @@
 #include "win.h"
+#include "text_io.h"
+#include "preferencesui.h"
+#include "profile_text_io.h"
+#include "alert_io.h"
 #include "ownership.h"
 #include "uistate.h"
 #include <stars_compat.h>
@@ -155,7 +159,7 @@ int16_t FCreateStuff() {
     InitGameStuff();
     if (fFailed || !hbmpScanner || !hbmpUnknownPlanet || !hbmpBackBld || !hdibRaces || !hdibRacesT || !hdibRacesX || !hbmpMono || !hbmpScanShip || !hbmpMsg ||
         !hiconHost || !hiconStars || !hiconWait) {
-        AlertSz(PszFormatIds(idsUnableLoadBitmaps, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsUnableLoadBitmaps, NULL), MB_ICONHAND);
         return FALSE;
     }
     return TRUE;
@@ -173,7 +177,7 @@ int16_t FCreateFonts(HDC hdc) {
     plfOwner.reset(plf);
     for (i = 0; i < 4; i++) {
         if (rgszArial[i][0] == 0) {
-            CchGetString(static_cast<StringId>(idsArial2 + i), rgszArial[i]);
+            TextIO().pfnCchGetString(static_cast<StringId>(idsArial2 + i), rgszArial[i]);
         }
     }
     plf->lfHeight = -MulDiv(10, GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -286,7 +290,7 @@ static int16_t FInitMacShortcuts(HWND hwnd) {
 }
 #endif
 
-int16_t STARS_TEST_IMPL(InitInstance)(int16_t nCmdShow) {
+int16_t InitInstance(int16_t nCmdShow) {
     int16_t sw;
     RECT    rc;
 
@@ -376,8 +380,8 @@ void GetIniWinRc(char *szSection, char *szIniFile, StringId ids, WN *pwn) {
     int16_t fNeg;
     int16_t rg[4];
 
-    CchGetString(ids, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, "X", szWork, 20, szIniFile);
+    TextIO().pfnCchGetString(ids, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", szWork, 20, szIniFile);
     if (cch != 17 || (szWork[0] != 'M' && szWork[0] != 'R' && szWork[0] != 'I')) {
     NoRc:
         rc.left = -32768;
@@ -423,21 +427,18 @@ void GetIniWinRc(char *szSection, char *szIniFile, StringId ids, WN *pwn) {
 void ReadIniSettings() {
     uint16_t uDateCur;
     int16_t  i;
-    int16_t  iPass;
     char     szEntry[16];
     WN       wnT;
     char     szIniFile[16];
     uint16_t w;
-    char    *psz;
     char     szSection[16];
     int16_t  cch;
-    int16_t  cpq;
 
     ini.fGen = FALSE;
     ini.fTry = FALSE;
     ini.fWait = FALSE;
-    CchGetString(idsWindows, szSection);
-    CchGetString(idsStarsIni, szIniFile);
+    TextIO().pfnCchGetString(idsWindows, szSection);
+    TextIO().pfnCchGetString(idsStarsIni, szIniFile);
     GetIniWinRc(szSection, szIniFile, idsMain, &ini.wnFrame);
     GetIniWinRc(szSection, szIniFile, idsReportfleetwin, &wnT);
     if (wnT.rc.left != -32768) {
@@ -467,106 +468,73 @@ void ReadIniSettings() {
         vrptPlanet.ptSize.x = wnT.rc.right - wnT.rc.left;
         vrptPlanet.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
-    CchGetString(idsResolution, szEntry);
+    TextIO().pfnCchGetString(idsResolution, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     if (i == 0 && (vcScreenColors <= 4 || gd.mdScreenSize == 0)) {
-        AlertSz(PszFormatIds(idsNoteStarsPrefersScreenResolutionLeast800x600, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsNoteStarsPrefersScreenResolutionLeast800x600, NULL), MB_ICONHAND);
     }
-    CchGetString(idsLayout, szEntry);
+    TextIO().pfnCchGetString(idsLayout, szEntry);
     iWindowLayout = static_cast<WindowLayout>(GetPrivateProfileInt(szSection, szEntry, 1, szIniFile));
     iWindowLayout = 2 < (layoutLarge <= (int16_t)iWindowLayout ? iWindowLayout : 0) ? layoutSmall
                     : layoutLarge > (int16_t)iWindowLayout                          ? layoutLarge
                                                                                     : iWindowLayout;
-    CchGetString(idsStyle1width, szEntry);
+    TextIO().pfnCchGetString(idsStyle1width, szEntry);
     vfs.dxPlanWant = GetPrivateProfileInt(szSection, szEntry, 396, szIniFile);
     vfs.dxPlanWant = (vfs.dxPlanWant <= 10 ? 10 : vfs.dxPlanWant) >= 2000 ? 2000 : vfs.dxPlanWant > 10 ? vfs.dxPlanWant : 10;
-    CchGetString(idsStyle1height, szEntry);
+    TextIO().pfnCchGetString(idsStyle1height, szEntry);
     vfs.dyMsgWant = GetPrivateProfileInt(szSection, szEntry, 110, szIniFile);
     vfs.dyMsgWant = (vfs.dyMsgWant <= 10 ? 10 : vfs.dyMsgWant) >= 2000 ? 2000 : vfs.dyMsgWant > 10 ? vfs.dyMsgWant : 10;
-    CchGetString(idsStyle1height2, szEntry);
+    TextIO().pfnCchGetString(idsStyle1height2, szEntry);
     vfs.dyMinWant = GetPrivateProfileInt(szSection, szEntry, 192, szIniFile);
     vfs.dyMinWant = (vfs.dyMinWant <= 10 ? 10 : vfs.dyMinWant) >= 2000 ? 2000 : vfs.dyMinWant > 10 ? vfs.dyMinWant : 10;
-    CchGetString(idsStyle2width, szEntry);
+    TextIO().pfnCchGetString(idsStyle2width, szEntry);
     vfs.dx2PlanWant = GetPrivateProfileInt(szSection, szEntry, 396, szIniFile);
     vfs.dx2PlanWant = (vfs.dx2PlanWant <= 10 ? 10 : vfs.dx2PlanWant) >= 2000 ? 2000 : vfs.dx2PlanWant > 10 ? vfs.dx2PlanWant : 10;
-    CchGetString(idsStyle2height, szEntry);
+    TextIO().pfnCchGetString(idsStyle2height, szEntry);
     vfs.dy2MsgWant = GetPrivateProfileInt(szSection, szEntry, 110, szIniFile);
     vfs.dy2MsgWant = (vfs.dy2MsgWant <= 10 ? 10 : vfs.dy2MsgWant) >= 2000 ? 2000 : vfs.dy2MsgWant > 10 ? vfs.dy2MsgWant : 10;
-    CchGetString(idsStyle2height2, szEntry);
+    TextIO().pfnCchGetString(idsStyle2height2, szEntry);
     vfs.dy2MinWant = GetPrivateProfileInt(szSection, szEntry, 192, szIniFile);
     vfs.dy2MinWant = (vfs.dy2MinWant <= 10 ? 10 : vfs.dy2MinWant) >= 2000 ? 2000 : vfs.dy2MinWant > 10 ? vfs.dy2MinWant : 10;
-    CchGetString(idsToolbar, szEntry);
+    TextIO().pfnCchGetString(idsToolbar, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
     gd.fToolbar = i != 0;
-    CchGetString(idsPlanettiles, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, "X", szWork, 20, szIniFile);
+    TextIO().pfnCchGetString(idsPlanettiles, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", szWork, 20, szIniFile);
     ReadIniTileSettings(szWork, rgtilePlanet, 6);
-    CchGetString(idsShiptiles, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, "X", szWork, 20, szIniFile);
+    TextIO().pfnCchGetString(idsShiptiles, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", szWork, 20, szIniFile);
     ReadIniTileSettings(szWork, rgtileShip, 7);
-    CchGetString(idsSelection, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, "N", szWork, 20, szIniFile);
-    if (cch < 3) {
-        ini.grobjSel = 0;
-    } else {
-        switch (szWork[0]) {
-        case 'N':
-        default:
-            ini.grobjSel = 0;
-            break;
-        case 'P':
-            ini.grobjSel = 1;
-            break;
-        case 'S':
-            ini.grobjSel = 2;
-            break;
-        case 'E':
-            ini.grobjSel = 4;
-        }
-        if (szWork[1] >= 'B' && szWork[1] <= 'Q') {
-            ini.idPlayer = szWork[1] - 'B';
-        } else {
-            ini.grobjSel = 0;
-        }
-        if (ini.grobjSel != 0) {
-            ini.iObjSel = atoi(&szWork[2]);
-        }
-    }
-    CchGetString(idsMessage, szEntry);
+    TextIO().pfnCchGetString(idsSelection, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", szWork, 20, szIniFile);
+    ReadIniSelection(szWork, cch);
+    TextIO().pfnCchGetString(idsMessage, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     ini.iMsg = i;
-    CchGetString(idsGameid, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, "0", szWork, 10, szIniFile);
-    ini.lid = 0;
-    for (i = 0; i < cch; i++) {
-        ini.lid = (int32_t)(ini.lid * 16);
-        if (szWork[i] >= '0' && szWork[i] <= '9') {
-            ini.lid += (int16_t)(szWork[i] - '0');
-        } else if (szWork[i] >= 'a' && szWork[i] <= 'f') {
-            ini.lid += (int16_t)(szWork[i] - 'W');
-        }
-    }
-    CchGetString(idsScanzoom, szEntry);
+    TextIO().pfnCchGetString(idsGameid, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "0", szWork, 10, szIniFile);
+    ReadIniIdentity(szWork, cch);
+    TextIO().pfnCchGetString(idsScanzoom, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 4, szIniFile);
     if (w >= 1 && w <= 9) {
         iScanZoom = static_cast<ScanZoom>(w - 5);
     }
-    CchGetString(idsScanfilterv25, szEntry);
+    TextIO().pfnCchGetString(idsScanfilterv25, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     grbitScanShip = w;
-    CchGetString(idsScanefilterv25, szEntry);
+    TextIO().pfnCchGetString(idsScanefilterv25, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     grbitScanEShip = w;
-    CchGetString(idsScanmines, szEntry);
+    TextIO().pfnCchGetString(idsScanmines, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 15, szIniFile);
     grbitScanMines = w & 0xf;
-    CchGetString(idsScanradar, szEntry);
+    TextIO().pfnCchGetString(idsScanradar, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 100, szIniFile);
     if (w < 0 || w > 100) {
         w = 100;
     }
     vpctRadarView = w;
-    CchGetString(idsScanmodev25, szEntry);
+    TextIO().pfnCchGetString(idsScanmodev25, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 224, szIniFile);
     grbitScan = static_cast<GrbitScan>(w & 0xc00f);
     if (grbitScan >= 6) {
@@ -575,199 +543,94 @@ void ReadIniSettings() {
     } else {
         grbitScan = static_cast<GrbitScan>(grbitScan | w & 0x3ff0);
     }
-    CchGetString(idsMineralscale, szEntry);
+    TextIO().pfnCchGetString(idsMineralscale, szEntry);
     cMinGrafMax = GetPrivateProfileInt(szSection, szEntry, cMinGrafMax, szIniFile);
     if (cMinGrafMax < 100 || cMinGrafMax > 30000) {
         cMinGrafMax = 5000;
     }
-    CchGetString(idsFiles, szSection);
-    CchGetString(idsLogging, szEntry);
+    TextIO().pfnCchGetString(idsFiles, szSection);
+    TextIO().pfnCchGetString(idsLogging, szEntry);
     ini.fLogging = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
-    CchGetString(idsWait2, szEntry);
+    TextIO().pfnCchGetString(idsWait2, szEntry);
     ini.fWait = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
-    CchGetString(idsFile1, szEntry);
-    cch = GetPrivateProfileString(szSection, szEntry, ".", szWork, 256, szIniFile);
-    if (cch > 3) {
-        ini.fStartupFile = TRUE;
-        strcpy(szBase, szWork);
-    } else {
-        ini.fStartupFile = FALSE;
-    }
-    if (!vrgszMRU) {
-        vrgszMRU = LpAlloc<char>(2304, htPerm);
-    }
-    psz = &szEntry[strlen(szEntry) - 1];
-    for (i = 0; i < 9; i++) {
-        *psz = i + '1';
-        cch = GetPrivateProfileString(szSection, szEntry, ".", vrgszMRU + 256 * i, 256, szIniFile);
-        if (cch < 4) {
-            vrgszMRU[i * 256] = 0;
-        }
-    }
-    iPass = 0;
-    for (i = 0; i < 9; i++) {
-        if (vrgszMRU[i * 256] != 0) {
-            if (i != iPass) {
-                strcpy(vrgszMRU + 256 * iPass, vrgszMRU + 256 * i);
-                vrgszMRU[i * 256] = 0;
-            }
-            iPass++;
-        }
-    }
-    CchGetString(idsTurn, szEntry);
+    TextIO().pfnCchGetString(idsFile1, szEntry);
+    cch = ProfileTextIO().pfnReadString(szSection, szEntry, ".", szWork, 256, szIniFile);
+    ReadIniRecent(szSection, szEntry, szIniFile, cch);
+    TextIO().pfnCchGetString(idsTurn, szEntry);
     ini.turn = GetPrivateProfileInt(szSection, szEntry, game.turn, szIniFile);
-    CchGetString(idsMisc, szSection);
-    CchGetString(idsDefaultpassword, szEntry);
-    GetPrivateProfileString(szSection, szEntry, "", vszDefPass, 16, szIniFile);
-    CchGetString(idsProgress, szEntry);
+    TextIO().pfnCchGetString(idsMisc, szSection);
+    TextIO().pfnCchGetString(idsDefaultpassword, szEntry);
+    ProfileTextIO().pfnReadString(szSection, szEntry, "", vszDefPass, 16, szIniFile);
+    TextIO().pfnCchGetString(idsProgress, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     gd.fProgressTxt = w != 0;
-    CchGetString(idsNewreports, szEntry);
+    TextIO().pfnCchGetString(idsNewreports, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     gd.fPerPlayerDumps = w != 0;
-    CchGetString(idsNohostnames, szEntry);
+    TextIO().pfnCchGetString(idsNohostnames, szEntry);
     w = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     gd.fNoHostNames = w != 0;
-    CchGetString(idsBackups, szEntry);
+    TextIO().pfnCchGetString(idsBackups, szEntry);
     vcBackupDirs = GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
     if (vcBackupDirs < 1 || vcBackupDirs > 999) {
         vcBackupDirs = 1;
     }
-    CchGetString(idsReportplanfld, szEntry);
+    TextIO().pfnCchGetString(idsReportplanfld, szEntry);
     vrptPlanet.grbitVisible = (uint32_t)GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
-    CchGetString(idsReportplansort, szEntry);
+    TextIO().pfnCchGetString(idsReportplansort, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     vrptPlanet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptPlanet.icolSort = i;
-    CchGetString(idsReportfleetfld, szEntry);
+    TextIO().pfnCchGetString(idsReportfleetfld, szEntry);
     vrptFleet.grbitVisible = (uint32_t)GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
-    CchGetString(idsReportfleetsort, szEntry);
+    TextIO().pfnCchGetString(idsReportfleetsort, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     vrptFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptFleet.icolSort = i;
-    CchGetString(idsReportefleetfld, szEntry);
+    TextIO().pfnCchGetString(idsReportefleetfld, szEntry);
     vrptEFleet.grbitVisible = (uint32_t)GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
-    CchGetString(idsReportefltsort, szEntry);
+    TextIO().pfnCchGetString(idsReportefltsort, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     vrptEFleet.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptEFleet.icolSort = i;
-    CchGetString(idsReportbtlfld, szEntry);
+    TextIO().pfnCchGetString(idsReportbtlfld, szEntry);
     vrptBattle.grbitVisible = (uint32_t)GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
-    CchGetString(idsReportbtlsort, szEntry);
+    TextIO().pfnCchGetString(idsReportbtlsort, szEntry);
     i = GetPrivateProfileInt(szSection, szEntry, 0, szIniFile);
     vrptBattle.fAscending = (i & 0x100) != 0;
     i &= 0xff;
     vrptBattle.icolSort = i;
-    CchGetString(idsReportdefgraph, szEntry);
+    TextIO().pfnCchGetString(idsReportdefgraph, szEntry);
     gd.iCurGraph = GetPrivateProfileInt(szSection, szEntry, 7, szIniFile);
-    CchGetString(idsReportefltsort, szEntry);
+    TextIO().pfnCchGetString(idsReportefltsort, szEntry);
     if (gd.iCurGraph > 7) {
         gd.iCurGraph = 7;
     }
-    CchGetString(idsVcrspeed, szEntry);
+    TextIO().pfnCchGetString(idsVcrspeed, szEntry);
     viSpeedVCR = GetPrivateProfileInt(szSection, szEntry, 1, szIniFile);
     _strdate(szWork);
     szWork[5] = 0;
     szWork[2] = 0;
     uDateCur = atoi(&szWork[3]) + atoi(szWork) * 31 + atoi(&szWork[6]) * 31 * 12;
-    CchGetString(idsHistoryinfo, szEntry);
+    TextIO().pfnCchGetString(idsHistoryinfo, szEntry);
     uDateInstalled = GetPrivateProfileInt(szSection, szEntry, -1, szIniFile);
     if (uDateCur < uDateInstalled) {
         uDateInstalled = uDateCur;
     }
     gd.fTrialPeriodOver = uDateCur >= (uint16_t)(uDateInstalled + 21);
-    CchGetString(idsFonts, szSection);
+    TextIO().pfnCchGetString(idsFonts, szSection);
     for (i = 0; i < 4; i++) {
-        CchGetString(static_cast<StringId>(idsArial + i), szEntry);
-        GetPrivateProfileString(szSection, szEntry, "", szWork, 80, szIniFile);
+        TextIO().pfnCchGetString(static_cast<StringId>(idsArial + i), szEntry);
+        ProfileTextIO().pfnReadString(szSection, szEntry, "", szWork, 80, szIniFile);
         cch = strlen(szWork);
         if (cch >= 5 && cch <= 31) {
             strcpy(rgszArial[i], szWork);
         }
     }
-    CchGetString(idsZiporders, szSection);
-    memset(vrgZip, 0, 96);
-    for (i = 0; i < 4; i++) {
-        strcpy(szEntry, szSection);
-        psz = &szEntry[strlen(szEntry)];
-        *psz = i + '1';
-        psz[1] = 0;
-        GetPrivateProfileString(szSection, szEntry, "", szWork, 80, szIniFile);
-        cch = strlen(szWork);
-        if (cch >= 20 && cch <= 32) {
-            psz = szWork;
-            iPass = 0;
-            for (; iPass < 20 && *psz >= 'a' && *psz <= 'p'; psz++) {
-                iPass++;
-            }
-            if (iPass >= 20) {
-                psz = szWork;
-                for (iPass = 0; iPass < 5; iPass++) {
-                    vrgZip[i].txp.rgia[iPass].SetIAction(*psz - 'a');
-                    psz++;
-                    vrgZip[i].txp.rgia[iPass].SetCQuan(*psz - 'a');
-                    psz++;
-                    vrgZip[i].txp.rgia[iPass].SetCQuan(
-                        ((uint32_t)(*psz - 'a') & 0xfff) << 4 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
-                    psz++;
-                    vrgZip[i].txp.rgia[iPass].SetCQuan(
-                        ((uint32_t)(*psz - 'a') & 0xff) << 8 | (vrgZip[i].txp.rgia[iPass].cQuan() | vrgZip[i].txp.rgia[iPass].iAction() << 0xc));
-                    psz++;
-                }
-                strcpy(vrgZip[i].szName, psz);
-                vrgZip[i].fValid = TRUE;
-            }
-        }
-    }
-    memset(vrgZipProd, 0, 200);
-    for (i = 0; i < 5; i++) {
-        strcpy(szEntry, szSection);
-        psz = &szEntry[strlen(szEntry)];
-        *psz++ = 'P';
-        *psz = i + '1';
-        psz[1] = 0;
-        GetPrivateProfileString(szSection, szEntry, "", szWork, 80, szIniFile);
-        cch = strlen(szWork);
-        if (cch >= 3 && cch <= 64) {
-            psz = szWork;
-            cpq = psz[1] - 'a';
-            if (cpq >= 0 && cpq <= 12) {
-                iPass = 0;
-                for (; iPass < cpq * 4 + 2 && *psz >= 'a' && *psz <= 'p'; psz++) {
-                    iPass++;
-                }
-                if (iPass >= cpq * 4 + 2 && strlen(psz) <= 12) {
-                    strcpy(vrgZipProd[i].szName, psz);
-                    psz = szWork;
-                    vrgZipProd[i].fNoResearch = *psz != 'a';
-                    vrgZipProd[i].fValid = TRUE;
-                    vrgZipProd[i].cpq = cpq;
-                    psz += 2;
-                    for (iPass = 0; iPass < cpq; iPass++) {
-                        vrgZipProd[i].rgpq[iPass].w = *psz - 'a';
-                        psz++;
-                        vrgZipProd[i].rgpq[iPass].w |= (*psz - 'a') * 0x10;
-                        psz++;
-                        vrgZipProd[i].rgpq[iPass].w |= (*psz - 'a') * 0x100;
-                        psz++;
-                        vrgZipProd[i].rgpq[iPass].w |= (*psz - 'a') * 0x1000;
-                        psz++;
-                        if (vrgZipProd[i].rgpq[iPass].cQuan() > 1020) {
-                            vrgZipProd[i].rgpq[iPass].SetCQuan(1);
-                        }
-                        if (vrgZipProd[i].rgpq[iPass].mdIdle() >= mdIdleFactory) {
-                            vrgZipProd[i].rgpq[iPass].SetMdIdle(iobjMine);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    CchGetString(idsDefault, vrgZipProd[0].szName);
-    vrgZipProd[0].fValid = TRUE;
+    ReadIniPresets(szIniFile);
     return;
 }
 

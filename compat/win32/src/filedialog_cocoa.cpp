@@ -17,7 +17,7 @@ static int FPumpCocoaChooser(void *lpv) {
     }
     return !FStarsErrorPending() && (!hwndOwner || IsWindow(hwndOwner));
 }
-int STARS_TEST_IMPL(ICompatChooseFile)(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
+int ICompatChooseFile(HWND hwndOwner, BOOL fSave, LPCSTR pszTitle, LPCSTR pszFolder,
                      LPCSTR pszName, const COMPATFILEFILTER *rgfilter, int cFilter,
                      int *lpiFilter, char *pszPath, size_t cbPath) {
     COCOAFILEFILTER *rg = NULL;

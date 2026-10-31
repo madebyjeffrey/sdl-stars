@@ -1,5 +1,16 @@
 /* Exercise the shared WinMain, embedded resources and actual title painting. */
 #include "win.h"
+#include "../../src/core/alert_io.h"
+#include "../../src/core/player_choice_io.h"
+#include "../../src/ui/desktop_choice_io.h"
+#include "../../compat/win32/src/choice_io.h"
+#include "../../compat/win32/src/render_io.h"
+#include "../../compat/win32/src/window_io.h"
+#include "../../compat/win32/src/path_io.h"
+#include "../../compat/win32/src/folder_io.h"
+#include "../../src/core/record_io.h"
+
+#include "native_publish.h"
 #include <stars_compat.h>
 #include "internal.h"
 #include <SDL3/SDL.h>
@@ -106,7 +117,6 @@ static BOOL FTestLibraryTimestamp(long long *plPlayed) {
     return iVersion == 2 && iPlayer == idPlayer;
 }
 
-int16_t StarsTestReal_InitInstance(int16_t nCmdShow);
 static BOOL fChecked, fPassed;
 static BOOL fSwitchCancelSent;
 static int cSwitchLogWrites, cSwitchHistoryWrites;
@@ -265,7 +275,6 @@ static BOOL FCheckScannerDrag(void) {
 }
 
 static int iTransportPreset = -1, cTransportMenus;
-BOOL StarsTestReal_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc);
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
     if (iRosterMenu >= 0) {
         HMENU hmenuLibrary = GetSubMenu(hmenu, 1);
@@ -316,11 +325,11 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
             event.type = SDL_EVENT_KEY_UP; event.key.down = false;
             if (!SDL_PushEvent(&event)) return FALSE;
         }
-        fResult = StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+        fResult = TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
         iTransportPreset = -1;
         return fResult;
     }
-    if (!fToolbarMenu) return StarsTestReal_TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
+    if (!fToolbarMenu) return TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
     cToolbarMenu++;
     fToolbarAnchor = x == xToolbarMenu && y == yToolbarMenu && !(flags & TPM_CENTERALIGN);
     return FALSE;
@@ -510,25 +519,22 @@ static BOOL fRejectRacePassword;
 static BOOL fTestLegacyRaceImport, fAcceptLegacyRacePassword;
 static int cLegacyRacePasswords;
 
-int16_t StarsTestReal_PromptPassword(void);
 int16_t StarsTest_PromptPassword(void) {
     if (fRejectRacePassword) return FALSE;
     // The frozen regression race is password protected. These tests qualify
     // file loading and client creation; password validation is outside scope.
     return pszContinue || PszCompatEnvironment("STARS_CLIENT_EXPECT_PLAYER") || PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") || PszCompatEnvironment("STARS_CLIENT_STARTUP_MANAGED") ||
-           PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? TRUE : StarsTestReal_PromptPassword();
+           PszCompatEnvironment("STARS_CLIENT_EXPORT_GAME") ? TRUE : PromptPassword();
 }
 
-int16_t StarsTestReal_FPromptLegacyRacePassword(char *szPassword);
 int16_t StarsTest_FPromptLegacyRacePassword(char *szPassword) {
-    if (!fTestLegacyRaceImport) return StarsTestReal_FPromptLegacyRacePassword(szPassword);
+    if (!fTestLegacyRaceImport) return FPromptLegacyRacePassword(szPassword);
     cLegacyRacePasswords++;
     if (!fAcceptLegacyRacePassword) return FALSE;
     strcpy(szPassword, "new-\xc3\xa9");
     return TRUE;
 }
 
-BOOL StarsTestReal_FNativeOpenFileName(OPENFILENAMEA *lpof);
 BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
     const char *pszSource = PszCompatEnvironment("STARS_CLIENT_RACE_IMPORT_SOURCE");
     const char *pszExternalGame = PszCompatEnvironment("STARS_CLIENT_EXTERNAL_OPEN_GAME");
@@ -565,9 +571,9 @@ BOOL StarsTest_FNativeOpenFileName(OPENFILENAMEA *lpof) {
             memcpy(lpof->lpstrFile, pszHostOrderPicker, cchHostOrderPicker + 1);
             return TRUE;
         }
-        return StarsTestReal_FNativeOpenFileName(lpof);
+        return FNativeOpenFileName(lpof);
     }
-    return StarsTestReal_FNativeOpenFileName(lpof);
+    return FNativeOpenFileName(lpof);
 }
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
@@ -1490,7 +1496,6 @@ static BOOL FCheckGameplayWorkflows(void) {
     return TRUE;
 }
 
-INT_PTR StarsTestReal_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == WM_INITDIALOG) {
@@ -1506,7 +1511,7 @@ INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         EndDialog(hwnd, -2);
         return 1;
     }
-    INT_PTR fRet = StarsTestReal_AskSaveDialog(hwnd, message, wParam, lParam);
+    INT_PTR fRet = AskSaveDialog(hwnd, message, wParam, lParam);
     if (message == WM_INITDIALOG && PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) {
         HWND hwndSave = GetDlgItem(hwnd, IDC_SAVE);
         HWND hwndSubmit = GetDlgItem(hwnd, IDC_SAVESUBMIT);
@@ -1563,7 +1568,6 @@ int16_t StarsTest_AlertSz(const char *sz, int16_t mbType) {
     return IDOK;
 }
 
-int WINAPI StarsTestReal_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type);
 int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT type) {
     (void)hwnd; (void)pszCaption;
     if (pszText && strstr(pszText, "Import games from your recent files")) {
@@ -1588,11 +1592,12 @@ int WINAPI StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, U
     }
     if (pszText && strstr(pszText, "The selected managed game could not be completely deleted."))
         fLibraryGameDeleteFailureAlert = TRUE;
-    return StarsTestReal_MessageBoxA(hwnd, pszText, pszCaption, type);
+    return MessageBoxA(hwnd, pszText, pszCaption, type);
 }
 
-int StarsTestReal_RemoveNativeFile(const char *pszFile);
-int StarsTest_RemoveNativeFile(const char *pszFile) {
+static const NATIVEPUBLISHIO publishNative;
+static int IRemoveClientFile(const char *pszFile, int fDirectory) {
+    if (fDirectory) return publishNative.pfnRemove(pszFile, fDirectory);
     static int fFailImportOrdersRemove;
     if (!fFailLibraryGameDelete && PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
         strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") == 0 && strstr(pszFile, "selected-game")) {
@@ -1608,47 +1613,43 @@ int StarsTest_RemoveNativeFile(const char *pszFile) {
         fFailImportOrdersRemove = TRUE;
         return -1;
     }
-    return StarsTestReal_RemoveNativeFile(pszFile);
+    return publishNative.pfnRemove(pszFile, fDirectory);
 }
 
-int StarsTestReal_ReplaceNativeFile(const char *pszOld, const char *pszNew);
-int StarsTest_ReplaceNativeFile(const char *pszOld, const char *pszNew) {
-    static int fFailImportReplace;
-    if (fFailRaceVersionSave && strstr(pszOld, ".stars-race-stage-")) {
-        fFailRaceVersionSave = FALSE;
-        return -1;
+static int IRenameClientFile(const char *pszOld, const char *pszNew, int fReplace, int fSync) {
+    static int fFailImportReplace, fFailConflictPublish, fFailConflictRestore;
+    if (!fSync && fReplace) {
+        if (fFailRaceVersionSave && strstr(pszOld, ".stars-race-stage-")) {
+            fFailRaceVersionSave = FALSE;
+            return -1;
+        }
+        if (!fFailImportReplace && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
+            fFailImportReplace = TRUE;
+            return -1;
+        }
+        if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
+            strstr(pszNew, ".m1")) return -1;
+        if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
+            fFailRaceExportReplace = FALSE;
+            return -1;
+        }
+    } else if (!fSync) {
+        if (!fFailConflictPublish && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
+            strstr(pszOld, ".stars-game-stage-") && strstr(pszNew, "managed-copy-duplicate")) {
+            fFailConflictPublish = TRUE;
+            return -1;
+        }
+        if (!fFailConflictRestore && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
+            strstr(pszOld, ".stars-game-old-") && strstr(pszNew, "managed-copy-duplicate")) {
+            fFailConflictRestore = TRUE;
+            return -1;
+        }
+        if (fFailGameRenamePublish && !SDL_strcasecmp(pszNew, szGameRenameFailTarget)) {
+            fFailGameRenamePublish = FALSE;
+            return -1;
+        }
     }
-    if (!fFailImportReplace && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_REPLACE") && strstr(pszNew, ".m1")) {
-        fFailImportReplace = TRUE;
-        return -1;
-    }
-    if (PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_ROLLBACK") && strstr(pszOld, ".previous.") &&
-        strstr(pszNew, ".m1")) return -1;
-    if (fFailRaceExportReplace && !SDL_strcasecmp(pszNew, szRaceExportFailTarget)) {
-        fFailRaceExportReplace = FALSE;
-        return -1;
-    }
-    return StarsTestReal_ReplaceNativeFile(pszOld, pszNew);
-}
-
-int StarsTestReal_RenameNativeFile(const char *pszOld, const char *pszNew);
-int StarsTest_RenameNativeFile(const char *pszOld, const char *pszNew) {
-    static int fFailConflictPublish, fFailConflictRestore;
-    if (!fFailConflictPublish && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_PUBLISH") &&
-        strstr(pszOld, ".stars-game-stage-") && strstr(pszNew, "managed-copy-duplicate")) {
-        fFailConflictPublish = TRUE;
-        return -1;
-    }
-    if (!fFailConflictRestore && PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_FAIL_CONFLICT_RESTORE") &&
-        strstr(pszOld, ".stars-game-old-") && strstr(pszNew, "managed-copy-duplicate")) {
-        fFailConflictRestore = TRUE;
-        return -1;
-    }
-    if (fFailGameRenamePublish && !SDL_strcasecmp(pszNew, szGameRenameFailTarget)) {
-        fFailGameRenamePublish = FALSE;
-        return -1;
-    }
-    return StarsTestReal_RenameNativeFile(pszOld, pszNew);
+    return publishNative.pfnRename(pszOld, pszNew, fReplace, fSync);
 }
 
 #include "win32_raceversion_workflow.h"
@@ -3147,7 +3148,7 @@ LDone:
 }
 
 int16_t StarsTest_InitInstance(int16_t nCmdShow) {
-    int16_t fResult = StarsTestReal_InitInstance(nCmdShow);
+    int16_t fResult = InitInstance(nCmdShow);
     fInitComplete = TRUE;
     if (fResult) idTimer = SetTimer(NULL, 0, 250, CheckStartup);
     return fResult && idTimer ? fResult : FALSE;
@@ -3156,6 +3157,45 @@ int16_t StarsTest_InitInstance(int16_t nCmdShow) {
 int main(void) {
     char szCommand[256] = "";
     int nResult;
+    ALERTIO io_alertio;
+    io_alertio.pfnAlertSz = StarsTest_AlertSz;
+    ALERTIOSCOPE scope_alertio(io_alertio);
+    PLAYERCHOICEIO io_playerchoiceio;
+    io_playerchoiceio.pfnPromptPassword = StarsTest_PromptPassword;
+    io_playerchoiceio.pfnFPromptLegacyRacePassword = StarsTest_FPromptLegacyRacePassword;
+    PLAYERCHOICEIOSCOPE scope_playerchoiceio(io_playerchoiceio);
+    DESKTOPCHOICEIO io_desktopchoiceio;
+    io_desktopchoiceio.pfnInitInstance = StarsTest_InitInstance;
+    io_desktopchoiceio.pfnAskSaveDialog = StarsTest_AskSaveDialog;
+    io_desktopchoiceio.pfnFNativeOpenFileName = StarsTest_FNativeOpenFileName;
+    DESKTOPCHOICEIOSCOPE scope_desktopchoiceio(io_desktopchoiceio);
+    COMPATCHOICEIO io_compatchoiceio;
+    io_compatchoiceio.pfnTrackPopupMenu = StarsTest_TrackPopupMenu;
+    io_compatchoiceio.pfnMessageBoxA = StarsTest_MessageBoxA;
+    COMPATCHOICEIOSCOPE scope_compatchoiceio(io_compatchoiceio);
+    COMPATRENDERIO io_compatrenderio;
+    io_compatrenderio.pfnRenderPresent = StarsTest_SDL_RenderPresent;
+    COMPATRENDERIOSCOPE scope_compatrenderio(io_compatrenderio);
+    COMPATWINDOWIO io_compatwindowio;
+    io_compatwindowio.pfnShowWindow = StarsTest_SDL_ShowWindow;
+    io_compatwindowio.pfnSetWindowTitle = StarsTest_SDL_SetWindowTitle;
+    COMPATWINDOWIOSCOPE scope_compatwindowio(io_compatwindowio);
+    COMPATPATHIO io_compatpathio;
+    io_compatpathio.pfnGetPrefPath = StarsTest_SDL_GetPrefPath;
+    COMPATPATHIOSCOPE scope_compatpathio(io_compatpathio);
+    COMPATFOLDERIO io_folder;
+    io_folder.pfnShowOpenFolderDialog = StarsTest_SDL_ShowOpenFolderDialog;
+    COMPATFOLDERIOSCOPE folderScope(io_folder);
+    DESKTOPCHOICEIO io_workflow = DesktopChoiceIO();
+    io_workflow.pfnNewGameWizard = StarsTest_NewGameWizard;
+    DESKTOPCHOICEIOSCOPE workflowScope(io_workflow);
+    RECORDIO io_newgame;
+    io_newgame.pfnFCreateFile = StarsTest_FCreateFile;
+    RECORDIOSCOPE newGameScope(io_newgame);
+
+    NATIVEPUBLISHIO io;
+    io.pfnRemove = IRemoveClientFile; io.pfnRename = IRenameClientFile;
+    NATIVEPUBLISHIOSCOPE publicationScope(io);
     if (PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"))
         CchSnprintf(szCommand, sizeof(szCommand), "%s", PszCompatEnvironment("STARS_CLIENT_STARTUP_SOURCE"));
     pszNewGame = PszCompatEnvironment("STARS_CLIENT_NEW_GAME");

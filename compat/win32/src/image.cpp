@@ -1,12 +1,14 @@
 /* Immutable module images and owned copies; resource reads stay bounded. */
 #include "internal.h"
+#include "input_io.h"
+#include "render_io.h"
 #include "resourcecodec.h"
 #include "ownership.h"
 #include <new>
 #include <stdlib.h>
 #include <string.h>
 
-void FreeCompatSurface(SDL_Surface *lp) noexcept { SDL_DestroySurface(lp); }
+void FreeCompatSurface(SDL_Surface *lp) noexcept { CompatRenderIO().pfnDestroySurface(lp); }
 void FreeCompatCursor(SDL_Cursor *lp) noexcept { SDL_DestroyCursor(lp); }
 
 static COMPATIMAGE *lpImages, *lpCursor;
@@ -40,7 +42,7 @@ HICON HiconCompatResource(const BYTE *rgb, size_t cb, BOOL fCursor) {
     BYTE *lpPixel;
     BOOL fInvert = FALSE;
     NATIVEOWNER<BYTE, free> rgbAndOwner;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
     if (!SDL_IsMainThread() || !rgb) return NULL;
     if (fCursor) {
@@ -140,7 +142,7 @@ HICON WINAPI CopyIcon(HICON hicon) {
     BYTE *rgAnd;
     size_t cb;
     NATIVEOWNER<BYTE, free> rgbAndOwner;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     if (!lp || !lp->lpXor) return NULL;
     cb = (size_t)lp->lpXor->w * lp->lpXor->h;
     lpsurfaceOwner.reset(SDL_DuplicateSurface(lp->lpXor.get())); lpXor = lpsurfaceOwner.get();
@@ -169,7 +171,7 @@ BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO lpii) {
     SDL_Surface *lpMask;
     BYTE *rgb, *src;
     int x, y, dy;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpmaskOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpmaskOwner;
     if (!lp || !lp->lpXor || !lpii) return FALSE;
     dy = lp->lpXor->h;
     lpmaskOwner.reset(SDL_CreateSurface(lp->lpXor->w, dy * (lp->fMono ? 2 : 1), SDL_PIXELFORMAT_RGBA32)); lpMask = lpmaskOwner.get();
@@ -198,7 +200,7 @@ static BOOL FNativeCursor(COMPATIMAGE *lp) {
     int x, y;
     BOOL fAnd, fWhite;
     NATIVEOWNER<BYTE, free> lpmaskOwner;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpcolorOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpcolorOwner;
     if (lp->lpCursor) return TRUE;
     if (lp->idSystem) lp->lpCursor.reset(SDL_CreateSystemCursor(IdSystemCursor(lp->idSystem)));
     else if (lp->fMono && lp->lpXor->w % 8 == 0) {
@@ -230,7 +232,7 @@ HCURSOR WINAPI SetCursor(HCURSOR hcursor) {
     COMPATIMAGE *lp = LpCompatImage((HICON)hcursor), *lpOld = lpCursor;
     const char *pszDriver;
     if (!SDL_IsMainThread() || (hcursor && (!lp || !lp->fCursor)) || !FCompatVideo()) return NULL;
-    pszDriver = SDL_GetCurrentVideoDriver();
+    pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     if (!lp || lp->fInvert) SDL_HideCursor();
     else {
         if (!FNativeCursor(lp) && (!pszDriver || strcmp(pszDriver, "dummy") != 0)) return NULL;
@@ -285,7 +287,7 @@ void CompatSetWindowIcon(SDL_Window *lpWindow, HICON hicon) {
     SDL_Surface *lpIcon;
     SDL_IOStream *lpStream;
     int x, y;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpiconOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpiconOwner;
     if (!lp || !lp->lpXor) return;
     // The desktop uses the high-resolution artwork; DrawIcon keeps the original game pixels.
     if (lp->fAppIcon) {

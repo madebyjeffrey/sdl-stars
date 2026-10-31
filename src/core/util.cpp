@@ -1,4 +1,16 @@
 #include "common.h"
+#include "text_io.h"
+#include "fleet_query_io.h"
+#include "presentation_io.h"
+#include "turn_io.h"
+#include "production_io.h"
+#include "heap_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "random_io.h"
 #include "version.h"
 
 uint32_t rgcrDrawStars2b[5] = {8355711, 127, 32512, 8323072};
@@ -12,7 +24,7 @@ int16_t FLookupSelPlanet(PLANET *ppl) {
     if (sel.scan.grobj != grobjPlanet) {
         return FALSE;
     }
-    return FLookupPlanet(sel.scan.idpl, ppl);
+    return PlanetQueryIO().pfnLookup(sel.scan.idpl, ppl);
 }
 
 int16_t FDupPlanet(PLANET *lppl, PLANET *ppl) {
@@ -33,7 +45,7 @@ int16_t FDupPlanet(PLANET *lppl, PLANET *ppl) {
     } else if ((int16_t)ppl->lpplprod->iprodMax < lppl->lpplprod->iprodMac) {
         ppl->lpplprod = LpplReAlloc(ppl->lpplprod, lppl->lpplprod->iprodMax);
     }
-    memcpy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
+    HeapIO().pfnCopy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
     ppl->lpplprod->iprodMac = lppl->lpplprod->iprodMac;
     return TRUE;
 }
@@ -99,7 +111,7 @@ void CalcPctSurvive(PLANET *lppl, float *ppct, float *ppctSmart) {
         idPlayer = lppl->iPlayer;
         if (FGetBestDefensePart(&part)) {
             cDefenses = lppl->cDefenses;
-            cMax = CMaxOperableDefenses(lppl, lppl->iPlayer, FALSE);
+            cMax = ColonyIO().pfnOperableDefenses(lppl, lppl->iPlayer, FALSE);
             if (cMax < cDefenses) {
                 cDefenses = cMax;
             }
@@ -129,7 +141,7 @@ int16_t FLookupPlanet(int16_t iPlanet, PLANET *ppl) {
     if (iPlanet < 0) {
         iPlanet = ppl->id;
         if (iPlanet == idplNone) {
-            LogChangePlanet(NULL, ppl);
+            PresentationIO().pfnLogPlanet(NULL, ppl);
             return TRUE;
         }
         fWrite = TRUE;
@@ -137,8 +149,8 @@ int16_t FLookupPlanet(int16_t iPlanet, PLANET *ppl) {
     lpPl = LpplFromId(iPlanet);
     if (lpPl && ppl) {
         if (fWrite) {
-            InvalidateReport(rptPlanets, 0);
-            LogChangePlanet(lpPl, ppl);
+            PresentationIO().pfnInvalidateReport(rptPlanets, 0);
+            PresentationIO().pfnLogPlanet(lpPl, ppl);
             if (lpPl->lpplprod != ppl->lpplprod) {
                 if (!lpPl->lpplprod) {
                     if (ppl->lpplprod) {
@@ -152,13 +164,13 @@ int16_t FLookupPlanet(int16_t iPlanet, PLANET *ppl) {
                 if ((int16_t)lpPl->lpplprod->iprodMax < ppl->lpplprod->iprodMac) {
                     lpPl->lpplprod = LpplReAlloc(lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
                 }
-                memcpy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
+                HeapIO().pfnCopy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
                 lpPl->lpplprod->iprodMac = ppl->lpplprod->iprodMac;
             }
         FinishCopy:
-            memcpy(lpPl, ppl, 52);
+            HeapIO().pfnCopy(lpPl, ppl, 52);
             if (gd.fTutorial && idPlayer == 0) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
         } else if (ppl == &sel.pl) {
             FDupPlanet(lpPl, ppl);
@@ -197,9 +209,9 @@ int16_t FLookupThing(int16_t idth, THING *pth) {
     if (lpth && pth) {
         if (fWrite) {
             LogChangeThing(lpth, pth);
-            memcpy(lpth, pth, sizeof(THING));
+            HeapIO().pfnCopy(lpth, pth, sizeof(THING));
             if (gd.fTutorial && idPlayer == 0) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
         } else {
             *pth = *lpth;
@@ -230,7 +242,7 @@ int32_t LComputePower(SHDEF *lpshdef) {
     pctCap = 1000;
     for (ihs = 0; ihs < lpshdef->hul.chs; ihs++) {
         part.hs = lpshdef->hul.rghs[ihs];
-        if (part.hs.cItem != 0 && FLookupPart(&part)) {
+        if (part.hs.cItem != 0 && PartQueryIO().pfnLookup(&part)) {
             switch (part.hs.grhst) {
             default:
                 break;
@@ -300,7 +312,7 @@ int32_t DpShieldOfShdef(SHDEF *lpshdef, int16_t iplr) {
     while (ihs < chs) {
         if (lphs->grhst == hstShield && lphs->cItem > 0) {
             part.hs = *lphs;
-            FLookupPart(&part);
+            PartQueryIO().pfnLookup(&part);
             dpShdef += (uint32_t)(part.pshield()->dp * lphs->cItem);
         } else if (lphs->grhst == hstArmor && lphs->cItem > 0 && lphs->iItem == iarmorFieldedKelarium) {
             dpShdef += (uint32_t)(lphs->cItem * 50);
@@ -310,7 +322,7 @@ int32_t DpShieldOfShdef(SHDEF *lpshdef, int16_t iplr) {
         ihs++;
         lphs++;
     }
-    if (GetRaceGrbit(&rgplr[iplr], ibitRaceRegeneratingShields) != 0) {
+    if (RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceRegeneratingShields) != 0) {
         dpShdef += (int32_t)(dpShdef * 2) / 5;
     }
     if (dpShdef & 0xffff0000) {
@@ -368,7 +380,7 @@ char *PszPlayerName(int16_t iPlayer, int16_t fCapital, int16_t fPlural, int16_t 
             *pchEnd-- = 0;
         }
         if (pchEnd < szName) {
-            CchGetString(idsName, szName);
+            TextIO().pfnCchGetString(idsName, szName);
         }
         if (fPlural && pplr->szNames[0] == 0) {
             pchEnd = &szName[strlen(szName) - 1];
@@ -377,19 +389,19 @@ char *PszPlayerName(int16_t iPlayer, int16_t fCapital, int16_t fPlural, int16_t 
             }
         }
         if (grWord == 1) {
-            CchGetString(idsHave2, &szName[strlen(szName)]);
+            TextIO().pfnCchGetString(idsHave2, &szName[strlen(szName)]);
         } else if (grWord == 2) {
-            CchGetString(idsAre, &szName[strlen(szName)]);
+            TextIO().pfnCchGetString(idsAre, &szName[strlen(szName)]);
         }
     } else {
-        CchSprintf(szName, PszGetCompressedString(idsPlayerD2), iPlayer + 1);
+        CchSprintf(szName, TextIO().pfnCompressed(idsPlayerD2), iPlayer + 1);
         if (!fPlural) {
             strcat(szName, "'s");
         }
         if (grWord == 1) {
-            CchGetString(idsHas, &szName[strlen(szName)]);
+            TextIO().pfnCchGetString(idsHas, &szName[strlen(szName)]);
         } else if (grWord == 2) {
-            CchGetString(idsIs2, &szName[strlen(szName)]);
+            TextIO().pfnCchGetString(idsIs2, &szName[strlen(szName)]);
         }
     }
     strcpy(szWork, szName);
@@ -428,7 +440,7 @@ int16_t FCalcFleetBombDamage(FLEET *lpfl, int32_t *pdmgPeople, int32_t *pdmgPeop
                 for (j = 0; j < rglpshdef[iplr][ishdef].hul.chs; j++) {
                     if (rglpshdef[iplr][ishdef].hul.rghs[j].grhst == hstBomb) {
                         part.hs = rglpshdef[iplr][ishdef].hul.rghs[j];
-                        FLookupPart(&part);
+                        PartQueryIO().pfnLookup(&part);
                         fBomber = TRUE;
                         if (part.hs.iItem == ibombRetroBomb) {
                             *ppctTerra += (uint32_t)(part.hs.cItem * lpfl->rgcsh[ishdef]);
@@ -579,7 +591,7 @@ int16_t FLookupSelShip(FLEET *pfl) {
     if (sel.scan.grobj != grobjFleet) {
         return FALSE;
     }
-    return FLookupFleet(rglpfl[sel.scan.ifl]->id, pfl);
+    return FleetQueryIO().pfnLookup(rglpfl[sel.scan.ifl]->id, pfl);
 }
 
 FLEET *LpflFromId(int16_t idFleet) {
@@ -631,18 +643,18 @@ int16_t FLookupFleet(int16_t idFleet, FLEET *pfl) {
     lpfl = LpflFromId(idFleet);
     if (lpfl && pfl) {
         if (fWrite) {
-            InvalidateReport(rptFleets, 0);
+            PresentationIO().pfnInvalidateReport(rptFleets, 0);
             LogChangeFleet(lpfl, pfl);
             if (lpfl->lpplord != pfl->lpplord) {
                 if (lpfl->lpplord->iordMax < pfl->cord) {
                     lpfl->lpplord = LpplReAlloc(lpfl->lpplord, pfl->cord + 3);
                 }
-                memcpy(lpfl->lpplord->rgord(), pfl->lpplord->rgord(), pfl->lpplord->iordMac * 18);
+                HeapIO().pfnCopy(lpfl->lpplord->rgord(), pfl->lpplord->rgord(), pfl->lpplord->iordMac * 18);
                 lpfl->lpplord->iordMac = pfl->lpplord->iordMac;
             }
-            memcpy(lpfl, pfl, 100);
+            HeapIO().pfnCopy(lpfl, pfl, 100);
             if (gd.fTutorial && idPlayer == 0) {
-                AdvanceTutor();
+                PresentationIO().pfnTutor();
             }
         } else if (pfl == &sel.fl) {
             FDupFleet(lpfl, pfl);
@@ -673,17 +685,17 @@ int16_t FDupFleet(FLEET *lpfl, FLEET *pfl) {
     } else if ((int16_t)pfl->lpplord->iordMax < lpfl->lpplord->iordMac) {
         pfl->lpplord = LpplReAlloc(pfl->lpplord, lpfl->lpplord->iordMax);
     }
-    memcpy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
+    HeapIO().pfnCopy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
     pfl->lpplord->iordMac = lpfl->lpplord->iordMac;
     return TRUE;
 }
 
 int16_t FLookupObject(GrobjClass grobj, int16_t id, void *pobj) {
     if (grobj == grobjFleet) {
-        return FLookupFleet(id, (FLEET *)pobj);
+        return FleetQueryIO().pfnLookup(id, (FLEET *)pobj);
     }
     if (grobj == grobjPlanet) {
-        return FLookupPlanet(id, (PLANET *)pobj);
+        return PlanetQueryIO().pfnLookup(id, (PLANET *)pobj);
     }
     return FLookupThing(id, (THING *)pobj);
 }
@@ -740,32 +752,32 @@ char *PszGetThingName(int16_t id) {
     switch (lpth->ith()) {
     case ithMinefield:
         if (lpth->iplr() != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
+            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(szWork, PszGetCompressedString(idsSSMineField), szPlr, rgszMineField[lpth->thm().iType()]);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsSSMineField), szPlr, rgszMineField[lpth->thm().iType()]);
         break;
     case ithMineralPacket:
         if (lpth->thp().iWarp() == 0) {
-            CchGetString(idsSalvage, szWork);
+            TextIO().pfnCchGetString(idsSalvage, szWork);
             return szWork;
         }
         if (lpth->iplr() != idPlayer) {
-            CchSprintf(szPlr, "%s ", PszPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
+            CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(lpth->iplr(), FALSE, FALSE, FALSE, 0, NULL));
         } else {
             szPlr[0] = 0;
         }
-        CchSprintf(szWork, PszGetCompressedString(idsSmineralPacket), szPlr);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsSmineralPacket), szPlr);
         break;
     case ithWormhole:
-        strcpy(szWork, PszGetCompressedString(idsWormhole));
+        strcpy(szWork, TextIO().pfnCompressed(idsWormhole));
         break;
     case ithMysteryTrader:
-        strcpy(szWork, PszGetCompressedString(idsMysteryTrader));
+        strcpy(szWork, TextIO().pfnCompressed(idsMysteryTrader));
         break;
     default:
-        strcpy(szWork, PszGetCompressedString(idsMysteryObject));
+        strcpy(szWork, TextIO().pfnCompressed(idsMysteryObject));
     }
     return szWork;
 }
@@ -786,7 +798,7 @@ char *PszGetFleetName(int16_t id) {
     iplr = (uint16_t)id >> 9 & 0xf;
     ifl = id & 0x1ff;
     if (iplr != idPlayer) {
-        CchSprintf(szPlr, "%s ", PszPlayerName(iplr, FALSE, FALSE, FALSE, 0, NULL));
+        CchSprintf(szPlr, "%s ", TextIO().pfnPlayerName(iplr, FALSE, FALSE, FALSE, 0, NULL));
     } else {
         szPlr[0] = 0;
     }
@@ -796,7 +808,7 @@ char *PszGetFleetName(int16_t id) {
         if (lpfl) {
             ishdef = IshdefPrimaryFromLpfl(lpfl, &cshdef);
             if (ishdef == 16) {
-                lpsz = PszGetCompressedString(idsFleet);
+                lpsz = TextIO().pfnCompressed(idsFleet);
             } else {
                 strcpy(szShdef, rglpshdef[iplr][ishdef].hul.szClass);
                 cch = strlen(szShdef);
@@ -810,7 +822,7 @@ char *PszGetFleetName(int16_t id) {
                 lpsz = szShdef;
             }
         } else {
-            lpsz = PszGetCompressedString(idsFleet);
+            lpsz = TextIO().pfnCompressed(idsFleet);
         }
         CchSprintf(szWork, "%s%s #%d", szPlr, lpsz, ifl + 1);
     }
@@ -838,7 +850,7 @@ char *PszFleetNameFromWord(uint16_t w) {
 
     ishdef = w >> 9 & 0xf;
     if (rglpshdef[idPlayer][ishdef].fFree) {
-        lpsz = PszGetCompressedString(idsFleet);
+        lpsz = TextIO().pfnCompressed(idsFleet);
     } else {
         strcpy(szShdef, rglpshdef[idPlayer][ishdef].hul.szClass);
         cch = strlen(szShdef);
@@ -864,7 +876,7 @@ char *PszGetPlanetName(int16_t id) {
     id = rgidPlan[id];
     psz = PszGetCompressedPlanet(id);
     if (fInOrbit) {
-        CchSprintf(szWork, PszGetCompressedString(idsOrbitingS), psz);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsOrbitingS), psz);
     } else {
         strcpy(szWork, psz);
     }
@@ -907,7 +919,7 @@ int16_t FDeleteFleet(int16_t idFleet, GrobjClass grobjSel, int16_t idSel) {
     FleetOrdersChangeTarget(lpfl);
     FreePl(lpfl->lpplord);
     if (lpfl->lpszName) {
-        FreeLp(lpfl->lpszName, htString);
+        HeapIO().pfnFree(lpfl->lpszName, htString);
     }
     cFleet--;
     iPlr = lpfl->iPlayer;
@@ -923,7 +935,7 @@ int16_t FDeleteFleet(int16_t idFleet, GrobjClass grobjSel, int16_t idSel) {
     if (cFleet != i) {
         memmove(rglpfl + i, rglpfl + (i + 1), (cFleet - i) * sizeof(FLEET *));
     }
-    FreeLp(lpfl, htFleets);
+    HeapIO().pfnFree(lpfl, htFleets);
     gd.fFleetLinkValid = FALSE;
     if (sel.fl.id != idflNone) {
         if (i < sel.scan.ifl) {
@@ -932,14 +944,14 @@ int16_t FDeleteFleet(int16_t idFleet, GrobjClass grobjSel, int16_t idSel) {
             if (grobjSel == grobjNone) {
                 sel.grobj = grobjNone;
                 sel.scan.grobj = grobjNone;
-                FFindSomethingAndSelectIt();
+                PresentationIO().pfnFindSelection();
                 return TRUE;
             }
             sel.grobj = grobjNone;
             if (grobjSel == grobjFleet) {
-                SelectAdjFleet(0, idSel);
+                PresentationIO().pfnSelectFleet(0, idSel);
             } else {
-                SelectAdjPlanet(0, idSel);
+                PresentationIO().pfnSelectPlanet(0, idSel);
             }
         }
     }
@@ -966,7 +978,7 @@ int16_t FFindSomethingAndSelectIt() {
         }
     }
     if (lppl) {
-        SelectAdjPlanet(0, lppl->id);
+        PresentationIO().pfnSelectPlanet(0, lppl->id);
         return TRUE;
     }
     for (i = 0; i < cFleet; i++) {
@@ -974,7 +986,7 @@ int16_t FFindSomethingAndSelectIt() {
         if (!rglpfl[i])
             break;
         if (lpfl->iPlayer == idPlayer) {
-            SelectAdjFleet(0, lpfl->id);
+            PresentationIO().pfnSelectFleet(0, lpfl->id);
             return TRUE;
         }
     }
@@ -1037,7 +1049,7 @@ FLEET *LpflNewSplit(FLEET *pfl) {
     int16_t iordMac;
     FLEET  *lpflNew;
 
-    lpflNew = LpflNew(pfl->iPlayer, pfl->idPlanet);
+    lpflNew = ProductionIO().pfnNewFleet(pfl->iPlayer, pfl->idPlanet);
     if (pfl->idPlanet == idPlanetDeepSpace) {
         lpflNew->pt = pfl->pt;
     }
@@ -1048,7 +1060,7 @@ FLEET *LpflNewSplit(FLEET *pfl) {
     if (lpflNew->lpplord->iordMax < iordMac) {
         lpflNew->lpplord = LpplReAlloc(lpflNew->lpplord, pfl->lpplord->iordMax);
     }
-    memcpy(lpflNew->lpplord->rgord(), pfl->lpplord->rgord(), iordMac * 18);
+    HeapIO().pfnCopy(lpflNew->lpplord->rgord(), pfl->lpplord->rgord(), iordMac * 18);
     lpflNew->lpplord->iordMac = iordMac;
     lpflNew->cord = pfl->cord;
     LogSplitFleet(pfl->id);
@@ -1139,7 +1151,7 @@ int16_t FFleetMergeAll(FLEET *pfl) {
         lpflMerge->rgwtMin[j] = pfl->rgwtMin[j];
     }
     LogMergeFleet(pfl->id);
-    InvalidateReport(rptFleets, 2);
+    PresentationIO().pfnInvalidateReport(rptFleets, 2);
     if (cflMerge != 0) {
         return TRUE;
     }
@@ -1163,12 +1175,12 @@ int16_t FFleetSplitAll(FLEET *pfl) {
                 pfl->rgcsh[i]--;
                 flNew.rgcsh[i]++;
                 FleetTransferCargoBalance(pfl, &flNew);
-                FLookupFleet(idWriteBack, pfl);
-                FLookupFleet(idWriteBack, &flNew);
+                FleetQueryIO().pfnLookup(idWriteBack, pfl);
+                FleetQueryIO().pfnLookup(idWriteBack, &flNew);
             }
         }
     }
-    InvalidateReport(rptFleets, 2);
+    PresentationIO().pfnInvalidateReport(rptFleets, 2);
     if (cSplit > 1) {
         return TRUE;
     }
@@ -1179,16 +1191,16 @@ char *PszGetLocName(GrobjClass grobj, int16_t id, int16_t x, int16_t y) {
     if (id == -1)
         goto NoObj;
     if (grobj == grobjPlanet)
-        return PszGetPlanetName(id);
+        return TextIO().pfnPlanetName(id);
     if (grobj == grobjFleet)
         return PszGetFleetName(id);
     if (grobj == grobjThing)
         return PszGetThingName(id);
 NoObj:
     if (x == -1 && y == -1) {
-        strcpy(szWork, PszGetCompressedString(idsDeepSpace));
+        strcpy(szWork, TextIO().pfnCompressed(idsDeepSpace));
     } else {
-        CchSprintf(szWork, PszGetCompressedString(idsSpaceDD), x, y);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsSpaceDD), x, y);
     }
     return szWork;
 }
@@ -1232,9 +1244,9 @@ char *PszGetDistance(int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
     d2 = (int32_t)(d / 100);
     d -= (uint32_t)(d2 * 100);
     if (dyArial8 <= 14) {
-        CchSprintf(szWork, PszGetCompressedString(idsLdLdLightYears), d2, d);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsLdLdLightYears), d2, d);
     } else {
-        CchSprintf(szWork, PszGetCompressedString(idsLdLdLY), d2, d);
+        CchSprintf(szWork, TextIO().pfnCompressed(idsLdLdLY), d2, d);
     }
     return szWork;
 }
@@ -1533,14 +1545,14 @@ void UpdateShdefCost(SHDEF *lpshdef) {
     PART     part;
 
     if (lpshdef->det == detAll) {
-        fWeakArmor = GetRaceGrbit(&rgplr[idPlayer], ibitRaceRegeneratingShields) != 0;
+        fWeakArmor = RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceRegeneratingShields) != 0;
     } else {
         fWeakArmor = FALSE;
     }
-    lphul = &LphuldefFromId(lpshdef->hul.ihuldef)->hul;
+    lphul = &PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul;
     part.hs.grhst = hstNone;
     part.SetPhul(lphul);
-    GetTruePartCost(idPlayer, &part, rgCosts);
+    PartQueryIO().pfnTrueCost(idPlayer, &part, rgCosts);
     for (c = 0; c < 3; c++) {
         rgMin[c] = (uint32_t)rgCosts[c];
     }
@@ -1551,8 +1563,8 @@ void UpdateShdefCost(SHDEF *lpshdef) {
     for (c = 0; c < lphul->chs; c++) {
         if (lphul->rghs[c].cItem > 0) {
             part.hs = lphul->rghs[c];
-            FLookupPart(&part);
-            GetTruePartCost(idPlayer, &part, rgCosts);
+            PartQueryIO().pfnLookup(&part);
+            PartQueryIO().pfnTrueCost(idPlayer, &part, rgCosts);
             for (k = 0; k < 3; k++) {
                 rgMin[k] += (uint32_t)(lphul->rghs[c].cItem * rgCosts[k]);
             }
@@ -1612,9 +1624,9 @@ int16_t GetPlanetScannerRange(PLANET *lppl, int16_t *pDeep) {
     if (pDeep) {
         *pDeep = 0;
     }
-    if (GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
+    if (RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
         dRange = LOWORD((int32_t)sqrt((double)(uint32_t)(lppl->rgwtMin[3] * 10)));
-        if (GetRaceGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
+        if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
             dRange = LOWORD((int32_t)(dRange * 1412) / 1000);
             if (pDeep) {
                 *pDeep = 0;
@@ -1628,12 +1640,12 @@ int16_t GetPlanetScannerRange(PLANET *lppl, int16_t *pDeep) {
             idPlayer = iPlrSav;
             return 0;
         }
-        LookupBestPlanetaryScanner(&part);
+        ProductionIO().pfnScanner(&part);
         if (pDeep && part.pplanetary()->grAbility < 0) {
             *pDeep = -part.pplanetary()->grAbility >> 1;
         }
         dRange = abs(part.pplanetary()->grAbility);
-        if (GetRaceGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
+        if (RaceQueryIO().pfnGrbit(&rgplr[idPlayer], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;
         }
     }
@@ -1749,7 +1761,7 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
     fHasScanner = FALSE;
     iSteal = 0;
     cDetectors = 0;
-    fBuiltIn = iplr != iplrNone && GetRaceStat(&rgplr[iplr], rsMajorAdv) == raNone;
+    fBuiltIn = iplr != iplrNone && RaceQueryIO().pfnStat(&rgplr[iplr], rsMajorAdv) == raNone;
     lBIR4 = -1.0;
     lBIPR4 = -1.0;
     if (ppctDetect) {
@@ -1839,7 +1851,7 @@ int16_t GetShdefScannerRange(SHDEF *lpshdef, int16_t iplr, int16_t *pdPlanRange,
     }
     if ((double)lRange4 > (double)0 || fHasScanner) {
         dRange = LOWORD((int32_t)sqrt((double)sqrt(lRange4)));
-        if (iplr != iplrNone && GetRaceGrbit(&rgplr[iplr], ibitRaceNoAdvScanner) != 0) {
+        if (iplr != iplrNone && RaceQueryIO().pfnGrbit(&rgplr[iplr], ibitRaceNoAdvScanner) != 0) {
             dRange *= 2;
         }
     } else {
@@ -1931,10 +1943,10 @@ int32_t CalcPlayerScore(int16_t iPlr, SCORE *pscore) {
                 lTemp = 6;
             }
             score.lScore += lTemp;
-            if (lppl->fStarbase && LphuldefFromId(rglpshdefSB[iPlr][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
+            if (lppl->fStarbase && PartQueryIO().pfnHull(rglpshdefSB[iPlr][lppl->isb].hul.ihuldef)->hul.wtCargoMax != 0) {
                 score.cStarbase++;
             }
-            score.cResources += CResourcesAtPlanet(&pl, iPlr);
+            score.cResources += ResearchIO().pfnResources(&pl, iPlr);
         }
     }
     score.lScore += (int32_t)(score.cResources / 30);
@@ -2053,7 +2065,7 @@ int16_t FMatchTarget(FLEET *lpflTarget, MdTarget mdTarget, int16_t fExact) {
     case mdTargetUnarmedShips:
         for (ish = 0; ish < 16; ish++) {
             if (lpflTarget->rgcsh[ish] != 0) {
-                imd = LphuldefFromId(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
+                imd = PartQueryIO().pfnHull(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
                 if (imd >= 2 && imd <= 4)
                     break;
             }
@@ -2069,7 +2081,7 @@ int16_t FMatchTarget(FLEET *lpflTarget, MdTarget mdTarget, int16_t fExact) {
     case mdTargetBombersFreighters:
         for (ish = 0; ish < 16; ish++) {
             if (lpflTarget->rgcsh[ish] != 0) {
-                imd = LphuldefFromId(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
+                imd = PartQueryIO().pfnHull(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
                 if (imd == 1 || imd == 5)
                     break;
             }
@@ -2080,7 +2092,7 @@ int16_t FMatchTarget(FLEET *lpflTarget, MdTarget mdTarget, int16_t fExact) {
     case mdTargetFuelTransports:
         for (ish = 0; ish < 16; ish++) {
             if (lpflTarget->rgcsh[ish] != 0) {
-                imd = LphuldefFromId(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
+                imd = PartQueryIO().pfnHull(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
                 if (imd == 7)
                     break;
             }
@@ -2091,7 +2103,7 @@ int16_t FMatchTarget(FLEET *lpflTarget, MdTarget mdTarget, int16_t fExact) {
     case mdTargetFreighters:
         for (ish = 0; ish < 16; ish++) {
             if (lpflTarget->rgcsh[ish] != 0) {
-                imd = LphuldefFromId(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
+                imd = PartQueryIO().pfnHull(rglpshdef[lpflTarget->iPlayer][ish].hul.ihuldef)->imdCategory;
                 if (imd == 1)
                     break;
             }
@@ -2157,7 +2169,7 @@ void ValidateWaypoints() {
                         if (!lpth || (lpth->ith() == ithWormhole && !(1 << lpfl->iPlayer & lpth->thw().grbitPlr()) &&
                                       (lpth->pt().x() != lpord->pt.x || lpth->pt().y() != lpord->pt.y))) {
                             if (lpth) {
-                                FSendPlrMsg(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, 0, 0, 0, 0, 0, 0);
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmWormholeHeadingHasVanishedOrdersHaveChanged, static_cast<MsgGoto>(0x8000 | lpfl->id), lpfl->id, 0, 0, 0, 0, 0, 0);
                             }
                             lpord->grobj = grobjOther;
                             lpord->id = iord;
@@ -2184,13 +2196,13 @@ void ValidateWaypoints() {
                                 if (lpfl2->pt.x == lpord->pt.x && lpfl2->pt.y == lpord->pt.y && iplrHi == (lpfl2->id & 0xfe00)) {
                                     if (FMatchTarget(lpfl2, mdTarget, TRUE)) {
                                         wt = WtFromLpfl(lpfl2);
-                                        if (wt > wtMatch || (wt == wtMatch && Random(2) == 0)) {
+                                        if (wt > wtMatch || (wt == wtMatch && RandomIO().pfnRandom(2) == 0)) {
                                             wtMatch = wt;
                                             lpflMatch = lpfl2;
                                         }
                                     }
                                     cFound++;
-                                    if (Random(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted() || Random(2) != 0)) {
+                                    if (RandomIO().pfnRandom(cFound) == 0 && (cFound == 1 || !lpfl2->fTargeted() || RandomIO().pfnRandom(2) != 0)) {
                                         lpflTarget = lpfl2;
                                     }
                                 }
@@ -2233,7 +2245,7 @@ int32_t ChgPopFromPlanet(PLANET *lppl, int16_t fUpdate) {
     if (lppl->iPlayer == iplrNone || lppl->rgwtMin[3] == 0) {
         return 0;
     }
-    pctDesire = PctPlanetDesirability(lppl, lppl->iPlayer);
+    pctDesire = PlanetQueryIO().pfnDesirability(lppl, lppl->iPlayer);
     lPopOld = lppl->rgwtMin[3];
     fPopDied = TRUE;
     if (pctDesire < 0) {
@@ -2359,7 +2371,7 @@ LSrcChk:
         }
     }
     fCargo = FALSE;
-    if (GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStargate) {
+    if (RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStargate) {
         for (i = 0; i <= 3; i++) {
             if (lpfl->rgwtMin[i] > 0) {
                 fCargo = TRUE;
@@ -2437,7 +2449,7 @@ int16_t FCanBuildShdef(SHDEF *lpshdef, int16_t iplr) {
         part.hs.iItem = lpshdef->hul.ihuldef;
     }
     idPlayer = iplr;
-    if (FLookupPart(&part) != mdPartAvailAvailable) {
+    if (PartQueryIO().pfnLookup(&part) != mdPartAvailAvailable) {
     LFail:
         idPlayer = iplrSav;
         return FALSE;
@@ -2445,7 +2457,7 @@ int16_t FCanBuildShdef(SHDEF *lpshdef, int16_t iplr) {
     for (j = 0; j < lpshdef->hul.chs; j++) {
         if (lpshdef->hul.rghs[j].cItem > 0) {
             part.hs = lpshdef->hul.rghs[j];
-            if (FLookupPart(&part) != mdPartAvailAvailable)
+            if (PartQueryIO().pfnLookup(&part) != mdPartAvailAvailable)
                 goto LFail;
         }
     }
@@ -2514,7 +2526,7 @@ void TurnLog(StringId ids) {
     char szTemp[256];
 
     if (ini.fLogging) {
-        CchSprintf(szTemp, PszFormatIds(ids, NULL), game.turn + 2401);
+        CchSprintf(szTemp, TextIO().pfnFormat(ids, NULL), game.turn + 2401);
         OutputSz(6, szTemp);
     }
     return;
@@ -2569,7 +2581,7 @@ int16_t CchGetETA(HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, int16_t fSmall) {
             if (hdc) {
                 SetHdcTextColor(hdc, 0xff);
             }
-            c = CchGetString(idsNever, sz);
+            c = TextIO().pfnCchGetString(idsNever, sz);
             return c;
         }
         if (iSpeed < 0) {
@@ -2583,7 +2595,7 @@ int16_t CchGetETA(HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, int16_t fSmall) {
             } else {
                 ids = idsUncertain;
             }
-            c = CchGetString(ids, sz);
+            c = TextIO().pfnCchGetString(ids, sz);
             return c;
         }
         if (iSpeed >= (int16_t)LOWORD((int32_t)dbl)) {
@@ -2595,7 +2607,7 @@ int16_t CchGetETA(HDC hdc, FLEET *lpfl, char *sz, int16_t iwp, int16_t fSmall) {
         i++;
         lpord++;
     }
-    c = CchSprintf(sz, PszGetCompressedString(!fSmall ? idsDYear : idsDy), cYears);
+    c = CchSprintf(sz, TextIO().pfnCompressed(!fSmall ? idsDYear : idsDy), cYears);
     if (cYears != 1 && !fSmall) {
         sz[c++] = 's';
     }

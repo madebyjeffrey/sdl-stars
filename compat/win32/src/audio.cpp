@@ -1,5 +1,6 @@
 /* Asynchronous alert tones; the SDL device supplies desktop audio routing. */
 #include "internal.h"
+#include "audio_io.h"
 #include <math.h>
 
 struct COMPATAUDIO {
@@ -41,7 +42,7 @@ BOOL WINAPI MessageBeep(UINT type) {
         rgSamples[i] = (float)(0.15 * envelope * sin(i * hz * (6.283185307179586 / 22050)));
     }
     // A new alert replaces the previous one instead of accumulating stale sounds.
-    if (!SDL_ClearAudioStream(audio.lpAlert.get()) || !SDL_PutAudioStreamData(audio.lpAlert.get(), rgSamples, sizeof(rgSamples)) ||
+    if (!SDL_ClearAudioStream(audio.lpAlert.get()) || !CompatAudioIO().pfnPutAudioStreamData(audio.lpAlert.get(), rgSamples, sizeof(rgSamples)) ||
         !SDL_FlushAudioStream(audio.lpAlert.get()) || !SDL_ResumeAudioStreamDevice(audio.lpAlert.get())) {
         CompatShutdownAudio(); SetLastError(ERROR_NOT_SUPPORTED); return FALSE;
     }

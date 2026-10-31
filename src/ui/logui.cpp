@@ -1,4 +1,6 @@
 #include "win.h"
+#include "text_io.h"
+#include "record_io.h"
 
 int16_t FWriteTutorialMFile(int16_t iTurn) {
     HRSRC    hrsrc;
@@ -36,14 +38,14 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
                 vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
             } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
         }
-        cch = CchGetString(idsTutorial, szT);
+        cch = TextIO().pfnCchGetString(idsTutorial, szT);
         strcpy(&szT[cch], iTurn == 37 ? ".hst" : ".m1");
-        StreamOpen(szT, mdCreate);
+        RecordIO().pfnStreamOpen(szT, mdCreate);
         do {
             RgToStream(vlpMemStream, HdvFromPrefix(vlpMemStream).cb() + 2);
             vlpMemStream += 2 + HdvFromPrefix(vlpMemStream).cb();
         } while (HdvFromPrefix(vlpMemStream).rt() != rtBOF);
-        StreamClose();
+        RecordIO().pfnStreamClose();
         vlpMemStream = NULL;
         GlobalUnlock(hres);
         FreeResource(hres);
@@ -57,7 +59,7 @@ int16_t FWriteTutorialMFile(int16_t iTurn) {
         if (hf == -1) {
             return 1;
         }
-        StreamClose();
+        RecordIO().pfnStreamClose();
         return 0;
     }
 }

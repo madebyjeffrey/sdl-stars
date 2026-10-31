@@ -1,4 +1,10 @@
 #include "win.h"
+#include "text_io.h"
+#include "control_io.h"
+#include "presentation_io.h"
+#include "heap_io.h"
+#include "part_query_io.h"
+#include "alert_io.h"
 
 void BattleVCR(int16_t iBattle) {
     FARPROC  lpProc;
@@ -39,23 +45,23 @@ void BattleVCR(int16_t iBattle) {
         vcRound = viRound;
         SetVCRBoard(-1);
         if (gd.fTutorial) {
-            AdvanceTutor();
+            PresentationIO().pfnTutor();
         }
         lpProc = MakeProcInstance(VCRDlg, hInst);
-        LUiDialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc);
+        ControlIO().pfnLUiDialogBox(hInst, MAKEINTRESOURCE(IDD_VCR), hwndFrame, lpProc, 0);
 
     } catch (const StarsError &) {
-        AlertSz(PszFormatIds(idsMemory, NULL), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnFormat(idsMemory, NULL), MB_ICONHAND);
     }
 LCleanup:
     if (lpProc) {
         FreeProcInstance(lpProc);
     }
     if (vrgtok) {
-        FreeLp(vrgtok, htMisc);
+        HeapIO().pfnFree(vrgtok, htMisc);
     }
     if (vrgdpVCR) {
-        FreeLp(vrgdpVCR, htMisc);
+        HeapIO().pfnFree(vrgdpVCR, htMisc);
     }
     vrgtok = NULL;
     vrgdpVCR = NULL;
@@ -110,7 +116,7 @@ int32_t CBattleUnits(uint8_t *lpbd, BattleUnitFlags grbitBU) {
         if (!(grbitBU & grBuIncludeSb) && BtvFromLp(lptok).ishdef() >= 16)
             continue;
         if ((grbitBU & grBuClassAll) != 0xf8 && BtvFromLp(lptok).ishdef() < 16) {
-            imd = static_cast<HullCategory>(LphuldefFromId(rglpshdef[BtvFromLp(lptok).iplr()][BtvFromLp(lptok).ishdef()].hul.ihuldef)->imdCategory);
+            imd = static_cast<HullCategory>(PartQueryIO().pfnHull(rglpshdef[BtvFromLp(lptok).iplr()][BtvFromLp(lptok).ishdef()].hul.ihuldef)->imdCategory);
             if ((int16_t)imd <= hullCatFreighter || (int16_t)imd >= hullCatMiner) {
                 if (!(grbitBU & grBuClassUnarmed))
                     continue;
@@ -279,10 +285,10 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_INITDIALOG:
         hwndVCRDlg = hwnd;
         GetWindowRect(hwnd, &rcWindow);
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         dyFrame = rcWindow.bottom - rcWindow.top - rc.bottom;
-        GetWindowRect(GetDlgItem(hwnd, IDC_VCR_REW_ALL), &rc);
-        FUiSetWindowPos(hwnd, NULL, 0, 0, dxyVCRBoard + 250, dyFrame + 24 + dxyVCRBoard + (rc.bottom - rc.top), SWP_NOMOVE | SWP_NOZORDER);
+        GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, IDC_VCR_REW_ALL), &rc);
+        ControlIO().pfnFUiSetWindowPos(hwnd, NULL, 0, 0, dxyVCRBoard + 250, dyFrame + 24 + dxyVCRBoard + (rc.bottom - rc.top), SWP_NOMOVE | SWP_NOZORDER);
         for (i = 0; i < 7; i++) {
             if (i < 5) {
                 ibtn = i + 161;
@@ -291,7 +297,7 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             } else if (i == 6) {
                 ibtn = 118;
             }
-            GetWindowRect(GetDlgItem(hwnd, ibtn), &rc);
+            GetWindowRect(ControlIO().pfnGetDlgItem(hwnd, ibtn), &rc);
             MapWindowPoints(NULL, hwnd, (POINT *)&rc, 2);
             if (dxyVCRSquare >= 64) {
                 dx = rc.right - rc.left;
@@ -301,14 +307,14 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 dx = 0;
             }
             OffsetRect(&rc, dx, dxyVCRBoard + 16 - rc.top);
-            FUiSetWindowPos(GetDlgItem(hwnd, ibtn), NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+            ControlIO().pfnFUiSetWindowPos(ControlIO().pfnGetDlgItem(hwnd, ibtn), NULL, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
         }
         EnableVCRButtons();
-        StickyDlgPos(hwnd, &ptStickyVCRDlg, TRUE);
+        ControlIO().pfnStickyDlgPos(hwnd, &ptStickyVCRDlg, TRUE);
         fAnimate = TRUE;
         return 1;
     case WM_ERASEBKGND:
-        GetClientRect(hwnd, &rc);
+        ControlIO().pfnGetClientRect(hwnd, &rc);
         FillRect((HDC)wParam, &rc, hbrButtonFace);
         return 1;
     case WM_SETCURSOR:
@@ -347,7 +353,7 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             while (FTrackBtn(&btnt)) {
                 if ((iDir == -1 && iCur > 0) || (iDir == 1 && iCur < 4)) {
                     iCur += iDir;
-                    bt = wsprintf(szWork, PszGetCompressedString(idsPlaybackSpeedD), iCur + 1);
+                    bt = wsprintf(szWork, TextIO().pfnCompressed(idsPlaybackSpeedD), iCur + 1);
                     TextOut(hdc, ptSpeedVCR.x, ptSpeedVCR.y, szWork, bt);
                 }
             }
@@ -432,9 +438,9 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     return 0;
                 }
             }
-            if (GetAsyncKeyState(VK_CONTROL) < 0) {
+            if (ControlIO().pfnGetAsyncKeyState(VK_CONTROL) < 0) {
                 dStep = 100;
-            } else if (GetAsyncKeyState(VK_SHIFT) < 0) {
+            } else if (ControlIO().pfnGetAsyncKeyState(VK_SHIFT) < 0) {
                 dStep = 10;
             } else {
                 dStep = 1;
@@ -479,8 +485,8 @@ INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if (gd.fTutorial) {
                 tutor.fProgress = TRUE;
             }
-            StickyDlgPos(hwnd, &ptStickyVCRDlg, FALSE);
-            EndDialog(hwnd, i);
+            ControlIO().pfnStickyDlgPos(hwnd, &ptStickyVCRDlg, FALSE);
+            ControlIO().pfnEndDialog(hwnd, i);
             return 1;
         } else if (LOWORD(wParam) == IDC_HELP) {
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, idhBattleVCR);
@@ -589,7 +595,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
     hbrSav = (HBRUSH)SelectObject(hdc, hbrButtonFace);
     bkMode = SetBkMode(hdc, TRANSPARENT);
     memset(rgfSeen, 0, 0x100);
-    GetClientRect(hwndVCRDlg, &rc);
+    ControlIO().pfnGetClientRect(hwndVCRDlg, &rc);
     if (iStart == -2) {
         PatBlt(hdc, dxyVCRBoard + 10, 0, rc.right - dxyVCRBoard - 10, dxyVCRBoard + 8, PATCOPY);
         iStart = -1;
@@ -611,10 +617,10 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
         x = dxyVCRBoard + 14;
         y = 8;
         SelectObject(hdc, rghfontArial8[1]);
-        c = wsprintf(szWork, PszGetCompressedString(idsPhaseDDRoundDD), viStepVCRCur + 2, vcStepVCR + 2, viRound + 1, vcRound + 1);
+        c = wsprintf(szWork, TextIO().pfnCompressed(idsPhaseDDRoundDD), viStepVCRCur + 2, vcStepVCR + 2, viRound + 1, vcRound + 1);
         TextOut(hdc, x, y, szWork, c);
         y += dyArial8 + 4;
-        c = wsprintf(szWork, PszGetCompressedString(idsPlaybackSpeedD), viSpeedVCR + 1);
+        c = wsprintf(szWork, TextIO().pfnCompressed(idsPlaybackSpeedD), viSpeedVCR + 1);
         dx = LOWORD(GetTextExtent(hdc, szWork, c));
         TextOut(hdc, x, y, szWork, c);
         ptSpeedVCR.x = x;
@@ -627,7 +633,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
         }
         if (viStepVCRCur >= 0) {
             y += dyArial8 + 4;
-            psz = PszPlayerName(vrgtok[BevFromLp(vlpbrVCR).itok()].iplr, TRUE, TRUE, TRUE, 0, NULL);
+            psz = TextIO().pfnPlayerName(vrgtok[BevFromLp(vlpbrVCR).itok()].iplr, TRUE, TRUE, TRUE, 0, NULL);
             TextOut(hdc, x, y, szWork, strlen(psz));
             y += dyArial8;
             if (BevFromLp(vlpbrVCR).itok() == viVCRFocus) {
@@ -640,7 +646,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
             }
             csh = vrgtok[BevFromLp(vlpbrVCR).itok()].csh;
             if (csh > 1) {
-                c = wsprintf(szWork, PszGetCompressedString(idsSD), lpshdef->hul.szClass, csh);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsSD), lpshdef->hul.szClass, csh);
             } else {
                 strcpy(szWork, lpshdef->hul.szClass);
                 c = strlen(szWork);
@@ -650,8 +656,8 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
             SetTextColor(hdc, crButtonText);
             fJam = 0;
             if (BevFromLp(vlpbrVCR).ctok() > 0) {
-                psz = PszPlayerName(vrgtok[BevFromLp(vlpbrVCR).itokAttack()].iplr, FALSE, TRUE, TRUE, 0, NULL);
-                c = wsprintf(szT, PszGetCompressedString(idsAttacksS), psz);
+                psz = TextIO().pfnPlayerName(vrgtok[BevFromLp(vlpbrVCR).itokAttack()].iplr, FALSE, TRUE, TRUE, 0, NULL);
+                c = wsprintf(szT, TextIO().pfnCompressed(idsAttacksS), psz);
                 TextOut(hdc, x, y, szT, c);
                 y += dyArial8;
                 if (BevFromLp(vlpbrVCR).rgkill(0).dv().dp() != 0) {
@@ -664,7 +670,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                 }
                 csh = vrgtok[BevFromLp(vlpbrVCR).itokAttack()].csh;
                 if (csh > 1) {
-                    c = wsprintf(szWork, PszGetCompressedString(idsSD), lpshdef->hul.szClass, csh);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsSD), lpshdef->hul.szClass, csh);
                 } else {
                     strcpy(szWork, lpshdef->hul.szClass);
                     c = strlen(szWork);
@@ -689,27 +695,27 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                         dpShields += dpShT;
                     }
                 }
-                c = wsprintf(szWork, PszGetCompressedString(idsDDDoing), brcT & 0xf, brcT >> 4);
+                c = wsprintf(szWork, TextIO().pfnCompressed(idsDDDoing), brcT & 0xf, brcT >> 4);
                 TextOut(hdc, x, y, szWork, c);
                 y += dyArial8;
                 if (dpShields != 0) {
-                    CchGetString(idsAnd, szT);
-                    c = wsprintf(szWork, PszGetCompressedString(idsLdDamageShieldsS), dpShields, dpArmor > 0 ? szT : j > 0 ? "," : ".");
+                    TextIO().pfnCchGetString(idsAnd, szT);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsLdDamageShieldsS), dpShields, dpArmor > 0 ? szT : j > 0 ? "," : ".");
                     TextOut(hdc, x, y, szWork, c);
                     y += dyArial8;
                 }
                 if (dpArmor != 0) {
-                    c = wsprintf(szWork, PszGetCompressedString(idsLdDamageArmorC), dpArmor, j <= 0 ? 46 : 44);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsLdDamageArmorC), dpArmor, j <= 0 ? 46 : 44);
                     TextOut(hdc, x, y, szWork, c);
                     y += dyArial8;
                 }
                 if ((fJam & 0x40) && dpShields == 0 && dpArmor == 0) {
-                    psz = PszGetCompressedString(idsDamage3);
+                    psz = TextIO().pfnCompressed(idsDamage3);
                     TextOut(hdc, x, y, psz, strlen(psz));
                     y += dyArial8;
                 }
                 if (j > 0) {
-                    c = wsprintf(szWork, PszGetCompressedString(idsDestroyingDShip), j);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsDestroyingDShip), j);
                     if (j == 1) {
                         strcpy(&szWork[c], ".");
                         c++;
@@ -723,7 +729,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
             }
             if (fJam) {
                 SetTextColor(hdc, 127);
-                c = CchGetString((fJam & 0x40) && dpArmor == 0 ? idsTorpedoesDeflected2 : idsTorpedoesDeflected, szWork);
+                c = TextIO().pfnCchGetString((fJam & 0x40) && dpArmor == 0 ? idsTorpedoesDeflected2 : idsTorpedoesDeflected, szWork);
                 TextOut(hdc, x, y, szWork, c);
                 y += dyArial8;
                 SetTextColor(hdc, crButtonText);
@@ -731,12 +737,12 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
         }
         if (vbrcVCRFocus != 0xff) {
             y = 200;
-            c = wsprintf(szWork, PszGetCompressedString(idsSelectionDD), vbrcVCRFocus & 0xf, vbrcVCRFocus >> 4);
+            c = wsprintf(szWork, TextIO().pfnCompressed(idsSelectionDD), vbrcVCRFocus & 0xf, vbrcVCRFocus >> 4);
             TextOut(hdc, x, y, szWork, c);
             y += dyArial8;
             if (viVCRFocus >= 0) {
                 csh = 0;
-                psz = PszPlayerName(vrgtok[viVCRFocus].iplr, TRUE, TRUE, TRUE, 0, NULL);
+                psz = TextIO().pfnPlayerName(vrgtok[viVCRFocus].iplr, TRUE, TRUE, TRUE, 0, NULL);
                 c = strlen(psz);
                 TextOut(hdc, x, y, szWork, c);
                 y += dyArial8;
@@ -750,7 +756,7 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                 cshNew = cshT;
                 cshT = csh - cshT;
                 if (csh > 1 || cshT != 0) {
-                    c = wsprintf(szWork, PszGetCompressedString(idsSD), lpshdef->hul.szClass, csh);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsSD), lpshdef->hul.szClass, csh);
                 } else {
                     strcpy(szWork, lpshdef->hul.szClass);
                     c = strlen(szWork);
@@ -769,15 +775,15 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                     } else {
                         i = vrgtok[viVCRFocus].spd + 1;
                     }
-                    c = wsprintf(szWork, PszGetCompressedString(idsInitiativeD), vrgtok[viVCRFocus].initMin >= 0xff ? 0 : vrgtok[viVCRFocus].initMin);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsInitiativeD), vrgtok[viVCRFocus].initMin >= 0xff ? 0 : vrgtok[viVCRFocus].initMin);
                     TextOut(hdc, x, y, szWork, c);
-                    c = wsprintf(szWork, PszGetCompressedString(idsMovementS), &rgszSpeed[i * 3]);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsMovementS), &rgszSpeed[i * 3]);
                     TextOut(hdc, xT, y, szWork, c);
                     y += dyArial8;
-                    c = wsprintf(szWork, PszGetCompressedString(idsArmorLd), dpT);
+                    c = wsprintf(szWork, TextIO().pfnCompressed(idsArmorLd), dpT);
                     TextOut(hdc, x, y, szWork, c);
                     if (dv.dp == 0) {
-                        c = CchGetString(idsDamageNone, szWork);
+                        c = TextIO().pfnCchGetString(idsDamageNone, szWork);
                     } else {
                         csh -= cshT;
                         csh = LOWORD((int32_t)(dv.pctSh() * csh) / 100);
@@ -790,23 +796,23 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                         }
                         SetTextColor(hdc, 127);
                         if (vrgtok[viVCRFocus].grobj == grobjPlanet) {
-                            c = wsprintf(szWork, PszGetCompressedString(idsDamageD), LOWORD(dpT));
+                            c = wsprintf(szWork, TextIO().pfnCompressed(idsDamageD), LOWORD(dpT));
                         } else {
-                            c = wsprintf(szWork, PszGetCompressedString(idsDamageLdD), csh, LOWORD(dpT));
+                            c = wsprintf(szWork, TextIO().pfnCompressed(idsDamageLdD), csh, LOWORD(dpT));
                         }
                     }
                     TextOut(hdc, xT, y, szWork, c);
                     SetTextColor(hdc, crButtonText);
                     y += dyArial8;
                     if ((uint32_t)((uint32_t)vrgtok[viVCRFocus].dpShield * cshNew) - dpShields <= 0) {
-                        c = CchGetString(idsShieldsNone, szWork);
+                        c = TextIO().pfnCchGetString(idsShieldsNone, szWork);
                     } else {
-                        c = wsprintf(szWork, PszGetCompressedString(idsShieldsLd), (uint32_t)((uint32_t)vrgtok[viVCRFocus].dpShield * cshNew) - dpShields);
+                        c = wsprintf(szWork, TextIO().pfnCompressed(idsShieldsLd), (uint32_t)((uint32_t)vrgtok[viVCRFocus].dpShield * cshNew) - dpShields);
                     }
                     TextOut(hdc, x, y, szWork, c);
                     y += dyArial8;
                     if (vrgtok[viVCRFocus].pctJam != 0) {
-                        c = wsprintf(szWork, PszGetCompressedString(idsJammingD), vrgtok[viVCRFocus].pctJam);
+                        c = wsprintf(szWork, TextIO().pfnCompressed(idsJammingD), vrgtok[viVCRFocus].pctJam);
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
                     }
@@ -817,29 +823,29 @@ void DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd) {
                             i = idsDisengage2;
                         }
                         if (i == idsDisengage) {
-                            CchGetString(idsTacticSDMoves, szT);
-                            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)), vrgtok[viVCRFocus].dzDis);
+                            TextIO().pfnCchGetString(idsTacticSDMoves, szT);
+                            c = wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(i)), vrgtok[viVCRFocus].dzDis);
                         } else {
-                            CchGetString(idsTacticS, szT);
-                            c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
+                            TextIO().pfnCchGetString(idsTacticS, szT);
+                            c = wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(i)));
                         }
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
                     }
                     if (i != idsDisengage2) {
-                        CchGetString(idsPrimayTargetS, szT);
+                        TextIO().pfnCchGetString(idsPrimayTargetS, szT);
                         i = idsNoneDisengage + vrgtok[viVCRFocus].mdTarget1;
-                        c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
+                        c = wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(i)));
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
-                        CchGetString(idsSecondaryTargetS, szT);
+                        TextIO().pfnCchGetString(idsSecondaryTargetS, szT);
                         i = idsNoneDisengage + vrgtok[viVCRFocus].mdTarget2;
-                        c = wsprintf(szWork, szT, PszGetCompressedString(static_cast<StringId>(i)));
+                        c = wsprintf(szWork, szT, TextIO().pfnCompressed(static_cast<StringId>(i)));
                         TextOut(hdc, x, y, szWork, c);
                         y += dyArial8;
                     }
                 } else {
-                    c = CchGetString(idsDead3, szWork);
+                    c = TextIO().pfnCchGetString(idsDead3, szWork);
                     TextOut(hdc, x, y, szWork, c);
                     y += 5 * dyArial8;
                 }
@@ -1140,7 +1146,7 @@ int16_t PopupVCRMenu(HWND hwnd, int16_t x, int16_t y, uint8_t brc) {
     fAttack = brc == vrgtok[BevFromLp(vlpbrVCR).itokAttack()].brc;
     for (i = 0; i < BdvFromLp(vlpbdVCR).ctok(); i++) {
         if (vrgtok[i].brc == brc && vrgtok[i].csh > 0) {
-            if (PszPlayerName(vrgtok[i].iplr, FALSE, FALSE, FALSE, 0, NULL) != szWork) {
+            if (TextIO().pfnPlayerName(vrgtok[i].iplr, FALSE, FALSE, FALSE, 0, NULL) != szWork) {
             }
             cch = strlen(szWork);
             if (vrgtok[i].grobj == grobjPlanet) {
@@ -1175,7 +1181,7 @@ int16_t PopupVCRMenu(HWND hwnd, int16_t x, int16_t y, uint8_t brc) {
     if (c == 0) {
         return -1;
     }
-    iSel = PopupMenu(hwnd, x, y, c, NULL, rgsz, iChecked, TRUE);
+    iSel = ControlIO().pfnPopupMenu(hwnd, x, y, c, NULL, rgsz, iChecked, TRUE);
     if (iSel == -1) {
         return -1;
     }
@@ -1186,15 +1192,15 @@ void EnableVCRButtons() {
     int16_t i;
 
     for (i = 161; i < 163; i++) {
-        FUiEnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur > -1);
+        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndVCRDlg, i), viStepVCRCur > -1);
     }
     for (i = 163; i < 166; i++) {
-        FUiEnableWindow(GetDlgItem(hwndVCRDlg, i), viStepVCRCur < vcStepVCR);
+        ControlIO().pfnFUiEnableWindow(ControlIO().pfnGetDlgItem(hwndVCRDlg, i), viStepVCRCur < vcStepVCR);
     }
     if (viStepVCRCur == -1) {
-        HwndUiSetFocus(GetDlgItem(hwndVCRDlg, IDC_VCR_PLAY_PAUSE));
+        ControlIO().pfnHwndUiSetFocus(ControlIO().pfnGetDlgItem(hwndVCRDlg, IDC_VCR_PLAY_PAUSE));
     } else if (viStepVCRCur == vcStepVCR) {
-        HwndUiSetFocus(GetDlgItem(hwndVCRDlg, IDOK));
+        ControlIO().pfnHwndUiSetFocus(ControlIO().pfnGetDlgItem(hwndVCRDlg, IDOK));
     }
     return;
 }

@@ -1,3 +1,4 @@
+#include "../../compat/win32/src/external_io.h"
 /* Printer DC lifetime, raster pages, atomic PDF output and real process spooling. */
 #include <windows.h>
 #include <stars_compat.h>
@@ -86,6 +87,11 @@ int main(int argc, char **argv) {
     POINT pt;
     RECT rc;
     int query = NEWFRAME;
+    COMPATEXTERNALIO io_compatexternalio;
+    io_compatexternalio.pfnOpenURL = StarsTest_SDL_OpenURL;
+    io_compatexternalio.pfnShowSimpleMessageBox = StarsTest_SDL_ShowSimpleMessageBox;
+    COMPATEXTERNALIOSCOPE scope_compatexternalio(io_compatexternalio);
+
     CHECK(argc <= 2 && strlen(pszDir) < 2000);
     CHECK(ICreateNativeDirectory(pszDir, 0700) == 0 || IAccessNativePath(pszDir, 0) == 0);
     snprintf(szPages, sizeof(szPages), "%s/pages.pdf", pszDir);

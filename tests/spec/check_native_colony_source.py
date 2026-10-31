@@ -8,15 +8,10 @@ Undefined vectors are filtered before C, not counted as native error returns.
 """
 from pathlib import Path
 import math
-import os
 import random
-import re
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT, function
 
 
 class Boundary(Exception):
@@ -271,91 +266,9 @@ def cases():
 
 
 def main():
-    declarations=r'''
-#include "common.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <inttypes.h>
-PLAYER rgplr[16];static PLANET planet,stored;static SHDEF bases[2][10];SHDEF *rglpshdefSB[16];int16_t idPlayer;
-/* SOURCE_POPULATION_TABLE */
-static int32_t cfg[37];static int stats,lookups,growths,grbits;static uint64_t floatBits;
-static int16_t NativeHabitat(PLANET *p,int16_t player);
-static int32_t NativeGrowth(PLANET *p,int16_t update);
-static double RecordFloat(double x){memcpy(&floatBits,&x,8);return x;}
-int16_t FLookupPlanet(int16_t id,PLANET *out){assert(id==0);lookups++;*out=stored;return TRUE;}
-int16_t PctPlanetDesirability(PLANET *p,int16_t player){assert(player==0 || player==1);return cfg[17] ? (int16_t)cfg[16]:NativeHabitat(p,player);}
-int32_t ChgPopFromPlanet(PLANET *p,int16_t update){growths++;if(cfg[25]){assert(!update);return cfg[26];}return NativeGrowth(p,update);}
-'''
-    population_match=re.search(r'\bint32_t\s+rglPopMac\[5\]\s*=\s*\{[^}]+\};',
-                               (ROOT/'src/core/appstate.h').read_text())
-    assert population_match
-    population_table=population_match.group(0)
-    declarations=declarations.replace('/* SOURCE_POPULATION_TABLE */',population_table)
-    getter=next(line for line in (ROOT/'src/core/race.cpp').read_text().splitlines() if line.startswith('int16_t GetRaceStat('))
-    getter=getter.replace('return pplr->rgAttr[iStat];','stats++; return pplr->rgAttr[iStat];')
-    grbit=function('src/core/race.cpp','int16_t GetRaceGrbit(').replace('    if (UINT32_C(1)', '    grbits++;\n    if (UINT32_C(1)',1)
-    bodies=getter+'\n'+grbit+'\n'+function('src/core/race.cpp','int16_t PctTrueMaxGrowth(')+'\n'
-    bodies+=function('src/core/planet.cpp','int16_t PctPlanetDesirability(').replace('int16_t PctPlanetDesirability(', 'static int16_t NativeHabitat(',1)+'\n'
-    for signature in ['int32_t CalcPlanetMaxPop(','int16_t CMaxMines(','int16_t CMaxFactories(',
-                      'int16_t CMaxOperableMines(','int16_t CMaxOperableFactories(','int16_t CMaxDefenses(',
-                      'int16_t CMaxOperableDefenses(','int16_t CFactoriesOperating(','int16_t CMinesOperating(',
-                      'int16_t CResourcesAtPlanet(','int16_t STARS_TEST_IMPL(PctPlanetCapacity)(']:
-        body=function('src/core/planet.cpp',signature)
-        if signature.startswith('int16_t CMinesOperating'):
-            body=body.replace('(int32_t)sqrt((double)lppl->rgwtMin[3])','(int32_t)RecordFloat(sqrt((double)lppl->rgwtMin[3]))')
-        if signature.startswith('int16_t CResourcesAtPlanet'):
-            expression='(double)sqrt((double)((double)lPop * iEnergy / iEff)) * pctVal / 10 + 0.999'
-            assert body.count(expression)==1
-            body=body.replace('(int32_t)('+expression+')','(int32_t)RecordFloat('+expression+')')
-        bodies+=body+'\n'
-    bodies+=function('src/core/util.cpp','int32_t ChgPopFromPlanet(').replace('int32_t ChgPopFromPlanet(', 'static int32_t NativeGrowth(',1)
-    harness=r'''
-static void setup(void){
-    memset(&planet,0,sizeof(planet));memset(rgplr,0,sizeof(rgplr));memset(bases,0,sizeof(bases));
-    for(int player=0;player<2;player++){
-        int at=player ? 29:8;rgplr[player].rgAttr[rsMajorAdv]=(int8_t)cfg[at];rgplr[player].rgAttr[rsResGen]=(int8_t)cfg[at+1];
-        rgplr[player].rgAttr[rsFactProd]=(int8_t)cfg[at+2];rgplr[player].rgAttr[rsFactOperate]=(int8_t)cfg[at+3];rgplr[player].rgAttr[rsMineOperate]=(int8_t)cfg[at+4];
-        rgplr[player].pctIdealGrowth=(int8_t)cfg[at+5];rgplr[player].rgTech[0]=(int8_t)cfg[at+6];rgplr[player].grbitAttr=static_cast<RaceTraitBits>(cfg[at+7] ? static_cast<uint32_t>(grbitRaceOBRM):0);
-        for(int axis=0;axis<3;axis++){rgplr[player].rgEnvVarMin[axis]=0;rgplr[player].rgEnvVar[axis]=50;rgplr[player].rgEnvVarMax[axis]=100;}
-        rglpshdefSB[player]=bases[player];for(int i=0;i<10;i++)bases[player][i].hul.ihuldef=(HulDef)(ihuldefOrbitalFort+cfg[22]);
-    }
-    planet.rgwtMin[3]=cfg[1];planet.iDeltaPop=cfg[2];planet.cMines=cfg[3];planet.cFactories=cfg[4];planet.cDefenses=cfg[5];planet.iPlayer=(int16_t)cfg[6];
-    planet.fStarbase=cfg[20];planet.isb=cfg[21];for(int i=0;i<3;i++)planet.rgEnvVar[i]=(int8_t)cfg[18];
-    stored=planet;stored.iPlayer=(int16_t)cfg[27];stored.fStarbase=cfg[28];for(int i=0;i<3;i++)stored.rgEnvVar[i]=(int8_t)cfg[19];
-    stats=lookups=growths=grbits=0;floatBits=0;idPlayer=(int16_t)cfg[7];
-}
-int main(int argc,char **argv){
-    assert(argc==2 && sizeof(double)==8);FILE *f=fopen(argv[1],"rb");assert(f);int64_t expected[3];uint64_t bits;unsigned long cases=0,checks=0;
-    while(fread(cfg,sizeof(cfg),1,f)==1){assert(fread(expected,sizeof(expected),1,f)==1 && fread(&bits,sizeof(bits),1,f)==1);setup();int64_t result;
-        switch(cfg[0]){
-        case 0:result=CalcPlanetMaxPop(0,(int16_t)cfg[7]);break;
-        case 1:result=CMaxMines(&planet,(int16_t)cfg[7]);break;
-        case 2:result=CMaxFactories(&planet,(int16_t)cfg[7]);break;
-        case 3:result=CMaxOperableMines(&planet,(int16_t)cfg[7],(int16_t)cfg[23]);break;
-        case 4:result=CMaxOperableFactories(&planet,(int16_t)cfg[7],(int16_t)cfg[23]);break;
-        case 5:result=CMinesOperating(&planet);break;
-        case 6:result=CFactoriesOperating(&planet);break;
-        case 7:result=CMaxDefenses(&planet,(int16_t)cfg[7]);break;
-        case 8:result=CMaxOperableDefenses(&planet,(int16_t)cfg[7],(int16_t)cfg[23]);break;
-        case 9:result=CResourcesAtPlanet(&planet,(int16_t)cfg[7]);break;
-        case 10:result=PctPlanetCapacity(&planet);break;
-        default:result=ChgPopFromPlanet(&planet,(int16_t)cfg[24]);break;
-        }
-        int64_t actual[]={result,planet.rgwtMin[3],planet.iDeltaPop};
-        for(int i=0;i<3;i++){checks++;if(actual[i]!=expected[i]){fprintf(stderr,"case %lu op %d field %d actual %lld expected %lld (pop %d, rate %d)\n",cases,cfg[0],i,(long long)actual[i],(long long)expected[i],cfg[1],cfg[12]);return 1;}}
-        checks++;if(floatBits!=bits){fprintf(stderr,"case %lu op %d float bits %" PRIu64 " expected %" PRIu64 "\n",cases,cfg[0],floatBits,bits);return 1;}
-        assert(growths==(cfg[0]==11 || ((cfg[0]==3 || cfg[0]==4 || cfg[0]==8) && cfg[23])));checks++;
-        if(cfg[0]==9 && cfg[1]==0){assert(!stats && !lookups && !growths);checks++;}
-        if(cfg[0]==0){int primary=rgplr[cfg[7]].rgAttr[rsMajorAdv];
-            assert(stats==(primary==8 ? 1:primary==0 ? 2:3) && lookups==1);
-            assert(grbits==(primary!=8 || (stored.iPlayer==cfg[7] && stored.fStarbase)));checks+=2;}
-        cases++;
-    }
-    assert(feof(f));fclose(f);printf("Native colony source differential: %lu cases, %lu assertions passed\n",cases,checks);return 0;
-}
-'''
     with tempfile.TemporaryDirectory(prefix='native-colony-') as work:
-        path=Path(work);source=path/'witness.cpp';binary=path/'witness';data=path/'vectors.bin';excluded={};count=0
+        from linked_witness import binary as linked_binary
+        binary=linked_binary('native-colony');path=Path(work);data=path/'vectors.bin';excluded={};count=0
         with data.open('wb') as stream:
             for c in cases():
                 assert len(c)==37
@@ -366,14 +279,7 @@ int main(int argc,char **argv){
                     continue
                 stream.write(struct.pack('<37i3qQ',*c,*result));count+=1
         print(f'Prepared {count} defined native colony vectors; excluded before C: {excluded}',flush=True)
-        for generator in ['text/textgen.py','data/datagen.py']:
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source.write_text(declarations+bodies+harness)
-        subprocess.run(shlex.split(os.environ.get('CXX','c++'))+['-std=gnu++20','-DSTARS_TEST_STATE_DOUBLE','-include',str(ROOT/'src/platform/value.h'),'-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
-            '-Wno-unused-variable','-Wno-unused-but-set-variable','-fsanitize=address,undefined','-fno-sanitize-recover=all',
-            '-ffp-contract=off','-fno-fast-math','-iquote',str(ROOT/'src/core'),'-iquote',str(ROOT/'src/platform'),'-iquote',str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
 
 
-if __name__=='__main__':
-    main()
+if __name__=="__main__":main()

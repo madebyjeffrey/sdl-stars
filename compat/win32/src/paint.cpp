@@ -3,6 +3,9 @@
  * No native-sized state in this module reaches game files.
  */
 #include "internal.h"
+#include "display_io.h"
+#include "input_io.h"
+#include "render_io.h"
 #include "resourcecodec.h"
 #include "ownership.h"
 #include <limits.h>
@@ -283,7 +286,7 @@ HGDIOBJ WINAPI SelectObject(HDC hdc, HGDIOBJ h) {
 int ICompatCanvasScale(HWND hwnd) {
     HWND lpRoot = HwndCompatRoot(hwnd);
     int cx, cy, cxPixel, cyPixel, iScale;
-    const char *pszDriver = SDL_GetCurrentVideoDriver();
+    const char *pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
 
     if (!lpRoot || !pszDriver || strcmp(pszDriver, "cocoa")) return 1;
     if (hwnd != lpRoot && lpRoot->lpCanvas.get()) return StarsMax(1, lpRoot->iCanvasScale);
@@ -314,7 +317,7 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale) {
 static BOOL FCanvas(HWND hwnd) {
     SDL_Surface *lpnew;
     SDL_Texture *lptex;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     NATIVEOWNER<SDL_Texture, SDL_DestroyTexture> lptextureOwner;
     int dx, dy, cyMenu, iScale, iOld = StarsMax(1, hwnd->iCanvasScale);
     float cxTexture, cyTexture;
@@ -466,7 +469,7 @@ BOOL FCompatRefreshPresent(HWND hwnd) {
                                 SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
           SDL_RenderClear(lpwin->lpRenderer.get()) &&
           SDL_RenderTexture(lpwin->lpRenderer.get(), lpwin->lpTexture.get(), NULL, NULL) &&
-          SDL_RenderPresent(lpwin->lpRenderer.get());
+          CompatRenderIO().pfnRenderPresent(lpwin->lpRenderer.get());
     return fOk;
 }
 
@@ -551,7 +554,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
 static COMPATOBJECT *LpNewBitmap(int cx, int cy, BOOL fMono) {
     COMPATOBJECT *lpobj;
     SDL_Surface *lpsurface;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
     if (cx <= 0 || cy <= 0 || cx > INT_MAX / 4)
         return NULL;
@@ -1094,7 +1097,7 @@ HBRUSH WINAPI CreatePatternBrush(HBITMAP hbmp) {
     COMPATOBJECT *lpbm = LpObject((HGDIOBJ)hbmp), *lpobj;
     SDL_Surface *lpsurface;
     if (!lpbm || lpbm->iKind != objBitmap) return NULL;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner(SDL_DuplicateSurface(lpbm->lpSurface.get()));
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner(SDL_DuplicateSurface(lpbm->lpSurface.get()));
     lpsurface = lpsurfaceOwner.get();
     if (!lpsurface) return NULL;
     lpobj = LpNewObject(objBrush, 0, FALSE);
@@ -1672,7 +1675,7 @@ int WINAPI GetDeviceCaps(HDC hdc, int index) {
     if (index == PLANES) return 1;
     if (index == BITSPIXEL) return 32;
     if (index != HORZRES && index != VERTRES) return 0;
-    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow.get()) : SDL_GetPrimaryDisplay();
+    id = lpdc->hwnd ? SDL_GetDisplayForWindow(HwndCompatRoot(lpdc->hwnd)->lpWindow.get()) : CompatDisplayIO().pfnGetPrimaryDisplay();
     lpMode = SDL_GetCurrentDisplayMode(id);
     return lpMode ? index == HORZRES ? lpMode->w : lpMode->h : 0;
 }
@@ -1886,7 +1889,7 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, size_t cb) {
     COMPATDIB dib;
     COMPATOBJECT *lpobj;
     SDL_Surface *lpsurface;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     size_t cbInfo, cColors;
 
     if (!rgb || cb < cbWireDibHeader)
@@ -2002,7 +2005,7 @@ int WINAPI StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,
     HDC lpdc = LpDC(hdc);
     COMPATDIB dib;
     SDL_Surface *lpsrc;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     RECT rcClip;
     BYTE rop = (BYTE)(dwRop >> 16);
     int64_t px, py;
@@ -2079,7 +2082,7 @@ SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp) {
 
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
     COMPATOBJECT *lpobj;
-    NATIVEOWNER<SDL_Surface, SDL_DestroySurface> lpsurfaceOwner;
+    NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     if (!lpSurface) return NULL;
     lpsurfaceOwner.reset(SDL_DuplicateSurface(lpSurface));
     if (!lpsurfaceOwner) return NULL;

@@ -1,6 +1,11 @@
 #include "win.h"
+#include "control_io.h"
+#include "profile_text_io.h"
+#include "text_io.h"
+#include "record_io.h"
+#include "desktop_choice_io.h"
 
-INT_PTR CALLBACK STARS_TEST_IMPL(AskSaveDialog)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR CALLBACK AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_INITDIALOG:
         return 1;
@@ -9,10 +14,10 @@ INT_PTR CALLBACK STARS_TEST_IMPL(AskSaveDialog)(HWND hwnd, UINT message, WPARAM 
         case IDC_SAVE:
         case IDC_NO_DON_T_SAVE:
         case IDC_SAVESUBMIT:
-            EndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 2 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
+            ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDC_NO_DON_T_SAVE ? 2 : LOWORD(wParam) == IDC_SAVESUBMIT ? -1 : 1);
             return 1;
         case IDCANCEL:
-            EndDialog(hwnd, -2);
+            ControlIO().pfnEndDialog(hwnd, -2);
             return 1;
         case IDC_HELP:
             WinHelp(hwnd, szHelpFile, HELP_CONTEXT, 1090);
@@ -29,8 +34,8 @@ void PromptSaveGame() {
     FARPROC lpProc;
     int16_t fRet;
 
-    lpProc = MakeProcInstance(AskSaveDialog, hInst);
-    fRet = LUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc);
+    lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
+    fRet = ControlIO().pfnLUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2), hwndFrame, lpProc, 0);
     FreeProcInstance(lpProc);
     if (fRet == 1 || fRet == -1) {
         gd.fSubmit = fRet == -1;
@@ -46,9 +51,9 @@ int16_t FCanLeaveCurrentGame(void) {
     int16_t fSubmitSav;
 
     if (idPlayer == iplrNone || !game.fDirty) return TRUE;
-    lpProc = MakeProcInstance(AskSaveDialog, hInst);
-    fRet = LUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
-                     hwndFrame, lpProc);
+    lpProc = MakeProcInstance(DesktopChoiceIO().pfnAskSaveDialog, hInst);
+    fRet = ControlIO().pfnLUiDialogBox(hInst, !game.fSinglePlr ? MAKEINTRESOURCE(IDD_SAVE_TURN1) : MAKEINTRESOURCE(IDD_SAVE_TURN2),
+                     hwndFrame, lpProc, 0);
     FreeProcInstance(lpProc);
     if (fRet == 0 || fRet == -2) return FALSE;
     if (fRet == 1 || fRet == -1) {
@@ -57,7 +62,7 @@ int16_t FCanLeaveCurrentGame(void) {
         if (!FWriteLogFile(szBase, idPlayer) || !FWriteHistFile(idPlayer)) {
             gd.fSubmit = fSubmitSav;
             /* The orders writer clears dirty before the history save. */
-            DirtyGame(TRUE);
+            RecordIO().pfnDirtyGame(TRUE);
             return FALSE;
         }
     }
@@ -117,14 +122,14 @@ void AddMRUFile(const char *pszFileName, const char *pszExt) {
             strcpy(vrgszMRU + 256 * i, vrgszMRU + 256 * (i - 1));
         }
         strcpy(vrgszMRU, szT);
-        CchGetString(idsStarsIni, szIniFile);
-        CchGetString(idsFiles, szSection);
-        CchGetString(idsFile1, szEntry);
+        TextIO().pfnCchGetString(idsStarsIni, szIniFile);
+        TextIO().pfnCchGetString(idsFiles, szSection);
+        TextIO().pfnCchGetString(idsFile1, szEntry);
         psz = &szEntry[strlen(szEntry) - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';
             strcpy(szT, vrgszMRU + 256 * i);
-            WritePrivateProfileString(szSection, szEntry, szT, szIniFile);
+            ProfileTextIO().pfnWriteString(szSection, szEntry, szT, szIniFile);
         }
     }
     return;
@@ -136,13 +141,13 @@ void CloseGameWindows() {
     int16_t i;
 
     if (hwndBrowser) {
-        FUiDestroyWindow(hwndBrowser);
+        ControlIO().pfnFUiDestroyWindow(hwndBrowser);
     }
     if (hwndReportDlg) {
-        FUiDestroyWindow(hwndReportDlg);
+        ControlIO().pfnFUiDestroyWindow(hwndReportDlg);
     }
     if (hwndPopup) {
-        FUiDestroyWindow(hwndPopup);
+        ControlIO().pfnFUiDestroyWindow(hwndPopup);
         hwndPopup = 0;
     }
     hwndActive = 0;

@@ -27,8 +27,5 @@ void    StreamOpen(const char *szFile, MdOpenFlags mdOpen);
 void    StreamClose();
 void    RgFromStream(void *rg, uint16_t cb);
 
-decltype(ReadRt) STARS_TEST_IMPL(ReadRt);
-decltype(StreamOpen) STARS_TEST_IMPL(StreamOpen);
-decltype(StreamClose) STARS_TEST_IMPL(StreamClose);
 
 #endif

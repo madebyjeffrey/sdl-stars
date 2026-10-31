@@ -1,5 +1,6 @@
 /* File URLs are UTF-8 and independent of the application's working directory. */
 #include "internal.h"
+#include "external_io.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,7 +45,7 @@ BOOL FCompatOpenDocument(const char *pszPath) {
     // services so its Linux OpenFile portal is available before SDL_OpenURL.
     fEventsOwned = !(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS);
     if (fEventsOwned && !SDL_InitSubSystem(SDL_INIT_EVENTS)) { free(pszUri); return FALSE; }
-    fOpened = SDL_OpenURL(pszUri);
+    fOpened = CompatExternalIO().pfnOpenURL(pszUri);
     if (fEventsOwned) SDL_QuitSubSystem(SDL_INIT_EVENTS);
     free(pszUri);
     return fOpened;

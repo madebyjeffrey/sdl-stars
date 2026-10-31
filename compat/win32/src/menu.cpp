@@ -1,3 +1,4 @@
+#include "display_io.h"
 #include "cleanup.h"
 #include "ownership.h"
 #include <limits.h>
@@ -472,7 +473,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
         if (lpt->flags & TPM_BOTTOMALIGN) yWide -= cy;
         else if (lpt->flags & TPM_VCENTERALIGN) yWide -= cy / 2;
     }
-    if (SDL_GetDisplayUsableBounds(SDL_GetDisplayForPoint(&point), &bounds)) {
+    if (CompatDisplayIO().pfnGetDisplayUsableBounds(SDL_GetDisplayForPoint(&point), &bounds)) {
         if (lpt->cLevel > 0 && xWide + cx > (int64_t)bounds.x + bounds.w &&
             GetWindowRect(lpt->rgpopup[lpt->cLevel - 1].hwnd, &rcParent)) xWide = (int64_t)rcParent.left - cx + 2;
         xWide = ((((int64_t)bounds.x) > ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))))) ? ((int64_t)bounds.x) : ((((xWide) < ((int64_t)bounds.x + StarsMax(0, bounds.w - cx))) ? (xWide) : ((int64_t)bounds.x + StarsMax(0, bounds.w - cx)))));
@@ -729,7 +730,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
     return flags & TPM_RETURNCMD ? (BOOL)track.id : !track.fFailed;
 }
 
-BOOL WINAPI STARS_TEST_IMPL(TrackPopupMenu)(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
+BOOL WINAPI TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
     return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, NULL, -1, FALSE);
 }
 BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {

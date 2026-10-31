@@ -51,6 +51,7 @@ set(STARS_UI_SOURCES
     src/ui/mineui.cpp src/ui/msgui.cpp src/ui/nativeui.cpp src/ui/planetui.cpp src/ui/planetpaneui.cpp src/ui/popup.cpp src/ui/produceui.cpp src/ui/raceui.cpp
     src/ui/reportui.cpp src/ui/researchui.cpp src/ui/scan.cpp src/ui/scaninspect.cpp src/ui/ship2ui.cpp src/ui/shipui.cpp src/ui/stars.cpp src/ui/tb.cpp src/ui/thingui.cpp
     src/ui/tutor.cpp src/ui/tutor2.cpp src/ui/utilgenui.cpp src/ui/utilui.cpp src/ui/vcr.cpp
+    src/ui/library_publication_io.cpp src/ui/library_file_io.cpp src/ui/control_io.cpp src/ui/desktop_choice_io.cpp src/ui/preferencesui.cpp src/ui/library_path_io.cpp
 )
 
 # These unchanged shared vectors compile as C through independent SDK entries.
@@ -86,7 +87,7 @@ target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHE
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
 
-add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp)
+add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp src/platform/native_publish.cpp)
 set_target_properties(stars_filesystem PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON CXX_EXTENSIONS OFF)
 target_include_directories(stars_filesystem PUBLIC "${PROJECT_SOURCE_DIR}/src/platform")
 target_link_libraries(stars_filesystem PRIVATE stars_encoding stars_sanitizers)
@@ -94,7 +95,25 @@ target_compile_options(stars_filesystem PRIVATE -Wall -Wextra -Wpedantic -Werror
 target_link_libraries(stars_filesystem PRIVATE "$<$<PLATFORM_ID:Windows>:bcrypt>")
 
 # The core is shared by the SDL client, host and unit tests.
-add_library(stars_core OBJECT ${STARS_CORE_SOURCES})
+add_library(stars_core OBJECT ${STARS_CORE_SOURCES}
+    src/core/record_io.cpp
+    src/core/random_io.cpp
+    src/core/capacity_io.cpp
+    src/core/alert_io.cpp
+    src/core/player_choice_io.cpp
+    src/core/text_io.cpp
+    src/core/host_profile.cpp
+    src/core/race_query_io.cpp
+    src/core/part_query_io.cpp
+    src/core/research_io.cpp
+    src/core/planet_query_io.cpp
+    src/core/heap_io.cpp
+    src/core/production_io.cpp
+    src/core/turn_io.cpp
+    src/core/presentation_io.cpp
+    src/core/fleet_query_io.cpp
+    src/core/colony_io.cpp
+)
 target_link_libraries(stars_core PUBLIC stars_options stars_encoding stars_filesystem "$<$<PLATFORM_ID:Windows>:shell32>")
 
 # The command-line host: the game code and src/host/host.cpp, no windows.
@@ -283,10 +302,6 @@ endif()
 target_link_libraries(stars_options INTERFACE m)
 option(STARS_BUILD_TESTS "Build game and wrapper tests" ON)
 option(STARS_BUILD_WIN32_REFERENCE_TESTS "Build independent Windows SDK contract tests" OFF)
-if(STARS_BUILD_TESTS AND STARS_BUILD_SDL_CLIENT)
-    set_source_files_properties(compat/win32/src/memory.cpp PROPERTIES
-        COMPILE_DEFINITIONS STARS_TEST_MEMORY_OBSERVE=1)
-endif()
 if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     enable_testing()
     add_executable(stars-test-enum-abi tests/compat/enum_abi.cpp)
@@ -301,6 +316,11 @@ if(STARS_BUILD_TESTS OR STARS_BUILD_WIN32_REFERENCE_TESTS)
     set_tests_properties(test_fileio_contract PROPERTIES TIMEOUT 30)
 endif()
 if(STARS_BUILD_TESTS)
+    add_executable(stars-test-native-publication tests/compat/native_publication.cpp)
+    target_link_libraries(stars-test-native-publication PRIVATE stars_filesystem)
+    target_compile_options(stars-test-native-publication PRIVATE -Wall -Wextra -Wpedantic -Werror -UNDEBUG)
+    add_test(NAME test_native_publication COMMAND stars-test-native-publication)
+    set_tests_properties(test_native_publication PROPERTIES LABELS "ownership;lifetime" TIMEOUT 30)
     add_executable(stars-test-encoding-views tests/compat/encoding_views.cpp)
     target_link_libraries(stars-test-encoding-views PRIVATE stars_encoding stars_sanitizers)
     target_compile_options(stars-test-encoding-views PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -336,19 +356,6 @@ if(STARS_BUILD_TESTS)
     set_tests_properties(test_record_layout PROPERTIES LABELS "build" TIMEOUT 30)
 endif()
 
-include(cmake/test-redirect.cmake)
-if(STARS_BUILD_TESTS)
-    set(STARS_TEST_COMPILER_ARGS -G "${CMAKE_GENERATOR}" "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
-    if(CMAKE_GENERATOR_PLATFORM)
-        list(APPEND STARS_TEST_COMPILER_ARGS -A "${CMAKE_GENERATOR_PLATFORM}")
-    endif()
-    if(CMAKE_GENERATOR_TOOLSET)
-        list(APPEND STARS_TEST_COMPILER_ARGS -T "${CMAKE_GENERATOR_TOOLSET}")
-    endif()
-    add_test(NAME test_redirect_contract COMMAND "${Python3_EXECUTABLE}"
-        "${PROJECT_SOURCE_DIR}/tests/cmake/test_redirect.py" ${STARS_TEST_COMPILER_ARGS})
-    set_tests_properties(test_redirect_contract PROPERTIES LABELS "build" TIMEOUT 120)
-endif()
 if(STARS_BUILD_SDL_CLIENT)
     if(STARS_BUILD_TESTS)
         add_executable(stars-test-filesystem tests/compat/filesystem.cpp)

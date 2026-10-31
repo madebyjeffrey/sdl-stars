@@ -15,9 +15,9 @@ if(STARS_BUILD_TESTS)
         target_include_directories(${STARS_CLIENT_TEST_TARGET} PRIVATE "${PROJECT_SOURCE_DIR}/tests/unit")
         target_compile_definitions(${STARS_CLIENT_TEST_TARGET} PRIVATE
             STARS_TEST_GOLDEN_DIR="${PROJECT_SOURCE_DIR}/tests/unit/golden")
-        stars_test_redirect(${STARS_CLIENT_TEST_TARGET} AlertSz)
+
         if(STARS_CLIENT_TEST_NAME STREQUAL "test_race")
-            stars_test_redirect(${STARS_CLIENT_TEST_TARGET} FPromptLegacyRacePassword)
+
         endif()
         set_target_properties(${STARS_CLIENT_TEST_TARGET} PROPERTIES
             RUNTIME_OUTPUT_DIRECTORY "${STARS_CLIENT_TEST_DIR}")
@@ -35,11 +35,11 @@ if(STARS_BUILD_TESTS)
             ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat"
             TIMEOUT 60)
     endforeach()
-    stars_test_redirect(sdl_test_native_ports WriteRt ReadRt FCreateFile StreamOpen StreamClose DirtyGame)
+
     add_custom_target(stars-sdl-unit-tests DEPENDS ${STARS_CLIENT_TEST_TARGETS})
     add_executable(stars_scenario tests/scenarios/scenarios.cpp tests/unit/stars_test.cpp)
     target_link_libraries(stars_scenario PRIVATE stars_core stars-ui-compat-check stars_options stars_win32 SDL3::SDL3)
     target_include_directories(stars_scenario PRIVATE "${PROJECT_SOURCE_DIR}/tests/unit")
-    stars_test_redirect(stars_scenario AlertSz)
+
     set_target_properties(stars_scenario PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${STARS_CLIENT_TEST_DIR}")
 endif()

@@ -1,4 +1,6 @@
 #include "common.h"
+#include "research_io.h"
+#include "race_query_io.h"
 
 uint16_t rggrbitBrParts[17] = {6655, 8, 16, 64, 2048, 1, 4096, 256, 128, 512, 32768, 2, 4, 16384, 1024, 8192, 32};
 int32_t  rglTechCost[27] = {0,     50,    80,    130,   210,   340,   550,   890,   1440,  2330,  3770,  6100,  9870, 13850,
@@ -14,7 +16,7 @@ int32_t GetTechLevelCost(TechFieldType iTech, int16_t iLevel, int16_t iplr) {
         cTech += rgplr[iplr].rgTech[i];
     }
     lCost = (int16_t)(10 * cTech) + rglTechCost[iLevel];
-    i = GetRaceStat(&rgplr[iplr], static_cast<RaceStat>(iTech + 8)) - 1;
+    i = RaceQueryIO().pfnStat(&rgplr[iplr], static_cast<RaceStat>(iTech + 8)) - 1;
     if (i != 0) {
         if (i < 0) {
             lCost += lCost - (int32_t)(lCost >> 2);
@@ -44,11 +46,11 @@ int32_t ProjectedResearchSpending(int32_t pct) {
     lpplMac = lpPlanets + cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == idPlayer) {
-            lRes = CResourcesAtPlanet(lppl, idPlayer);
+            lRes = ResearchIO().pfnResources(lppl, idPlayer);
             if (!lppl->lpplprod || lppl->lpplprod->iprodMac == 0) {
                 lSpend += lRes;
             } else {
-                EstimateItemProdSched(lppl, NULL, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
+                ResearchIO().pfnEstimate(lppl, NULL, static_cast<ProdItemType>(iprodEstimateResearchResources), &cRes, &cBogus);
                 lSpend += cRes;
             }
         }
@@ -83,7 +85,7 @@ int32_t CostOfDevelopingItem(char *rgTech) {
             }
             lCur = -lSpent;
             while (rgTech[i] > pTech[i]) {
-                lCur += GetTechLevelCost(static_cast<TechFieldType>(i), pTech[i] + 1, idPlayer);
+                lCur += ResearchIO().pfnTechCost(static_cast<TechFieldType>(i), pTech[i] + 1, idPlayer);
                 pTech[i]++;
             }
             lCost += StarsMax(0, lCur);

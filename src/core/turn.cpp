@@ -1,4 +1,14 @@
 #include "common.h"
+#include "text_io.h"
+#include "colony_io.h"
+#include "turn_io.h"
+#include "production_io.h"
+#include "heap_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "alert_io.h"
+#include "random_io.h"
+#include "record_io.h"
 
 int16_t rgpctMineHit[3] = {3, 10, 35};
 int16_t rgiWarpSafe[3] = {4, 6, 5};
@@ -17,7 +27,7 @@ void InitGameStuff() {
     lpMsg = LpAlloc<uint8_t>(0xffc8, htMsg);
     vlprgidPlanet = LpAlloc<uint16_t>(0x800, htPerm);
     vlprgidFleet = LpAlloc<uint16_t>(0x800, htPerm);
-    CchGetString(idsDefault, vrgZipProd[0].szName);
+    TextIO().pfnCchGetString(idsDefault, vrgZipProd[0].szName);
     vrgZipProd[0].fValid = TRUE;
     return;
 }
@@ -93,7 +103,7 @@ int16_t FGenerateTurn() {
             mpiplr2[i] = i;
         }
         for (i = 0; i < game.cPlayer; i++) {
-            j = Random(game.cPlayer - i) + i;
+            j = RandomIO().pfnRandom(game.cPlayer - i) + i;
             if (j != i) {
                 idCur = mpiplr2[j];
                 mpiplr2[j] = mpiplr2[i];
@@ -105,7 +115,7 @@ int16_t FGenerateTurn() {
             CchSprintf(szWork, "%s.x%d", szBase, j + 1);
             idPlayer = j;
             if (FLoadLogFile(szWork) && !FRunLogFile()) {
-                AlertSz(PszFormatIds(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), MB_ICONHAND);
+                AlertIO().pfnAlertSz(TextIO().pfnFormat(idsPlayerLogFileAppearsCorruptUnableLoad, NULL), MB_ICONHAND);
                 goto FreeStuffUp;
             }
             UpdateProgressGauge(static_cast<ProgressStep>(LMulDiv(60, i + 1, game.cPlayer) + 370));
@@ -133,7 +143,7 @@ int16_t FGenerateTurn() {
                 lpfl->fMark = TRUE;
             } else {
                 if (lpfl->lpplord->rgord()[0].grobj == grobjFleet && lpfl->cord == 1) {
-                    FSendPlrMsg(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
+                    TurnIO().pfnMessage(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                 }
                 lpfl->fMark = FALSE;
             }
@@ -156,7 +166,7 @@ int16_t FGenerateTurn() {
                         }
                         lpflTarget = LpflFromId(ord.id);
                         if (!lpflTarget || (lpflTarget->cord == 1 && lpflTarget->lpplord->rgord()[0].grobj != grobjFleet)) {
-                            FSendPlrMsg(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
+                            TurnIO().pfnMessage(lpfl->iPlayer, idmHadOrdersFollowFleetWhichDidntMove, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0, 0, 0, 0, 0, 0);
                             goto LUnmark;
                         }
                         if (lpflTarget->cord == 1)
@@ -178,7 +188,7 @@ int16_t FGenerateTurn() {
         UpdateProgressGauge(static_cast<ProgressStep>(530));
         for (i = 0; i < game.cPlayer; i++) {
             for (j = 0; j < 16; j++) {
-                SetRaceStat(&rgplr[i], static_cast<RaceStat>(j), GetRaceStat(&rgplr[i], static_cast<RaceStat>(j)));
+                SetRaceStat(&rgplr[i], static_cast<RaceStat>(j), RaceQueryIO().pfnStat(&rgplr[i], static_cast<RaceStat>(j)));
             }
             if (rgplr[i].pctResearch < 0 || rgplr[i].pctResearch > 100) {
                 rgplr[i].pctResearch = 15;
@@ -192,10 +202,10 @@ int16_t FGenerateTurn() {
             j = rgplr[i].fHacker;
             cAdv = CAdvantagePoints(&rgplr[i]);
             if ((cAdv < 0 || j != rgplr[i].fHacker) && !rgplr[i].fAi) {
-                FSendPlrMsg2(i, idmRaceDefinitionHasTamperedStatisticsHaveAltered, gotoNone, 0, 0);
+                TurnIO().pfnMessage2(i, idmRaceDefinitionHasTamperedStatisticsHaveAltered, gotoNone, 0, 0);
                 for (j = 0; j < game.cPlayer; j++) {
                     if (i != j && !rgplr[i].fAi) {
-                        FSendPlrMsg2(j, idmHackedRaceDiscoveredRaceStatisticsHaveAltered, gotoNone, i, 0);
+                        TurnIO().pfnMessage2(j, idmHackedRaceDiscoveredRaceStatisticsHaveAltered, gotoNone, i, 0);
                     }
                 }
                 rgplr[i].fHacker = TRUE;
@@ -283,7 +293,7 @@ int16_t FGenerateTurn() {
                     rglpshdef[i][j].dScanRange2 = dPlanRange;
                     rglpshdef[i][j].pctDetect = pctDetect;
                     rglpshdef[i][j].iSteal = iSteal;
-                    if (!FCanBuildShdef(rglpshdef[i] + j, i)) {
+                    if (!ProductionIO().pfnBuildable(rglpshdef[i] + j, i)) {
                         rglpshdef[i][j].fGift = TRUE;
                     }
                 }
@@ -326,7 +336,7 @@ int16_t FGenerateTurn() {
         }
         j = 875;
         fDone = FALSE;
-        game.wGen = (uint16_t)Random(8);
+        game.wGen = (uint16_t)RandomIO().pfnRandom(8);
         i = 0;
         while (!fDone) {
             UpdateProgressGauge(static_cast<ProgressStep>(j));
@@ -345,15 +355,15 @@ int16_t FGenerateTurn() {
     }
 FreeStuffUp:
     UpdateProgressGauge(static_cast<ProgressStep>(1000));
-    FreeLp(vrgPlanResExtra, htMisc);
+    HeapIO().pfnFree(vrgPlanResExtra, htMisc);
     vrgPlanResExtra = NULL;
-    FreeLp(vrgwtPopScore, htMisc);
+    HeapIO().pfnFree(vrgwtPopScore, htMisc);
     vrgwtPopScore = NULL;
-    FreeLp(vrgiplrPopScore, htMisc);
+    HeapIO().pfnFree(vrgiplrPopScore, htMisc);
     vrgiplrPopScore = NULL;
-    FreeLp(lpcd, htMisc);
+    HeapIO().pfnFree(lpcd, htMisc);
     lpcd = NULL;
-    FreeLp(lpxf, htMisc);
+    HeapIO().pfnFree(lpxf, htMisc);
     lpxf = NULL;
     gd.fGeneratingTurn = FALSE;
     gd.fRetryOpens = FALSE;
@@ -398,7 +408,7 @@ void EnsureAis() {
                 gd.fGeneratingTurn = FALSE;
                 gd.fHostMode = fHostSav;
                 if (fOpened) {
-                    StreamClose();
+                    RecordIO().pfnStreamClose();
                 } else {
                     DoAiTurn(iPlayer, rgmdplr[iPlayer].wMdPlr());
                 }
@@ -475,11 +485,11 @@ void VerifyTurns() {
             ctickLast = DwTickCount();
         }
     }
-    FreeLp(vrgPlanResExtra, htMisc);
+    HeapIO().pfnFree(vrgPlanResExtra, htMisc);
     vrgPlanResExtra = NULL;
-    FreeLp(lpcd, htMisc);
+    HeapIO().pfnFree(lpcd, htMisc);
     lpcd = NULL;
-    FreeLp(lpxf, htMisc);
+    HeapIO().pfnFree(lpxf, htMisc);
     lpxf = NULL;
     idPlayer = idCur;
     return;
@@ -565,7 +575,7 @@ int16_t FSetUpBatchProcessing() {
     fSuccess = FALSE;
     StarsRecoveryScope scopeRecovery;
     try {
-        StreamOpen(szBase, mdRead);
+        RecordIO().pfnStreamOpen(szBase, mdRead);
         cb = LOWORD(CbFileSize(hf));
         lpchBatch = LpAlloc<char>(cb, htPerm);
         RgFromStream(lpchBatch, cb);
@@ -582,7 +592,7 @@ int16_t FSetUpBatchProcessing() {
     } catch (const StarsError &) {
     }
 LError:
-    StreamClose();
+    RecordIO().pfnStreamClose();
     if (!fSuccess) {
         szBase[0] = 0;
     }
@@ -591,12 +601,12 @@ LError:
 
 static int16_t FCopyCmdPath(const char *psz, size_t cb) {
     if (!FUtf8Valid(psz, cb)) {
-        AlertSz(PszGetCompressedString(idsNativeFilenameEncoding), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameEncoding), MB_ICONHAND);
         szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
         return FALSE;
     }
     if (cb >= sizeof(szBase)) {
-        AlertSz(PszGetCompressedString(idsNativeFilenameTooLong), MB_ICONHAND);
+        AlertIO().pfnAlertSz(TextIO().pfnCompressed(idsNativeFilenameTooLong), MB_ICONHAND);
         szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
         return FALSE;
     }
@@ -728,7 +738,7 @@ int16_t ParseCmdLine(char *lpCmdLine, int16_t *pfSeed, uint32_t *plSeed) {
                     cbPass = (size_t)(lpT - pch);
                     cchPass = CchCopyUtf8(szPassLast, sizeof(szPassLast), pch, cbPass);
                     if (cchPass < 0) {
-                        AlertSz(PszGetCompressedString(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), MB_ICONHAND);
+                        AlertIO().pfnAlertSz(TextIO().pfnCompressed(cchPass == -3 ? idsNativeCommandPasswordTooLong : idsNativeCommandPasswordEncoding), MB_ICONHAND);
                         szBase[0] = 0; ini.fCmdLine = FALSE; ini.fStartupFile = FALSE;
                         return FALSE;
                     }
@@ -775,9 +785,9 @@ int16_t FRunCmdLine() {
                     ich = CchSprintf(szTemp, "%d: ", i + 1);
                 }
                 if (!gd.fNoHostNames) {
-                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", PszPlayerName(i, TRUE, TRUE, TRUE, 0, NULL));
+                    ich += CchSprintf(&szTemp[ich], "\"%s\" ", TextIO().pfnPlayerName(i, TRUE, TRUE, TRUE, 0, NULL));
                 }
-                strcat(szTemp, PszGetCompressedString(static_cast<StringId>(idsTurned + rgOut[i])));
+                strcat(szTemp, TextIO().pfnCompressed(static_cast<StringId>(idsTurned + rgOut[i])));
                 if (rgplr[i].fHacker) {
                     strcat(szTemp, " - HACKER");
                 }
@@ -847,7 +857,7 @@ void DoOrders(int16_t fPostMovement) {
     }
     SatisfyOrders(!fPostMovement ? 1 : 3);
     DropColonists();
-    UpdateResearchStatus(FALSE);
+    TurnIO().pfnResearch(FALSE);
     SatisfyOrders(!fPostMovement ? 2 : 4);
     if (!fPostMovement) {
         TransferToOthers();
@@ -913,7 +923,7 @@ void MoveThings(int16_t fPostProd) {
         if (lpth->ith() == ithWormhole && fPostProd) {
             k = 0;
             ptBase = lpth->pt();
-            fMajorMove = Random(100) < PctWormholeMoves(lpth);
+            fMajorMove = RandomIO().pfnRandom(100) < PctWormholeMoves(lpth);
             if (fMajorMove) {
                 lpth->thw().SetGrbitPlr(0);
                 dUni = 400 * game.mdSize + 400;
@@ -924,11 +934,11 @@ void MoveThings(int16_t fPostProd) {
             iMax = 16;
             while (k++ < 100) {
                 if (fMajorMove) {
-                    { const auto xForThing = (Random(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
-                    { const auto yForThing = (Random(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
+                    { const auto xForThing = (RandomIO().pfnRandom(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                    { const auto yForThing = (RandomIO().pfnRandom(dUni) + 1000); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                 } else {
-                    { const auto xForThing = (Random(25) + ptBase.x - 12); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
-                    { const auto yForThing = (Random(25) + ptBase.y - 12); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
+                    { const auto xForThing = (RandomIO().pfnRandom(25) + ptBase.x - 12); auto &thForThing = *(lpth); thForThing.pt().SetX(xForThing); }
+                    { const auto yForThing = (RandomIO().pfnRandom(25) + ptBase.y - 12); auto &thForThing = *(lpth); thForThing.pt().SetY(yForThing); }
                 }
                 if (lpth->pt().x() != ptBase.x || lpth->pt().y() != ptBase.y) {
                     iLow = IValidateWormholePos(lpth);
@@ -945,25 +955,25 @@ void MoveThings(int16_t fPostProd) {
             }
         } else if (lpth->ith() == ithMysteryTrader && !fPostProd) {
             dRange = lpth->tht().iWarp();
-            if (dRange < 13 && Random(25) == 0) {
+            if (dRange < 13 && RandomIO().pfnRandom(25) == 0) {
                 idm = idmMysteryTraderHasUnexplicablyChangedHisCourse;
-                if (Random(3) != 0)
+                if (RandomIO().pfnRandom(3) != 0)
                     goto LSpeedUpOnly;
             LRetargetFreighter:
-                if (Random(2) == 0) {
+                if (RandomIO().pfnRandom(2) == 0) {
                     rgC[0] = 400 * game.mdSize + 1380;
                 } else {
                     rgC[0] = 1020;
                 }
-                rgC[1] = Random(400 * game.mdSize + 361) + 1020;
-                iX = Random(2);
+                rgC[1] = RandomIO().pfnRandom(400 * game.mdSize + 361) + 1020;
+                iX = RandomIO().pfnRandom(2);
                 lpth->tht().ptDest().SetX(rgC[iX]);
                 lpth->tht().ptDest().SetY(rgC[iX == 0]);
             LSpeedUpOnly:
                 dRange++;
                 lpth->tht().SetIWarp(dRange);
                 for (k = 0; k < game.cPlayer; k++) {
-                    FSendPlrMsg2(k, idm, gotoThing, lpth->idFull(), 0);
+                    TurnIO().pfnMessage2(k, idm, gotoThing, lpth->idFull(), 0);
                 }
             }
             dRange = lpth->tht().iWarp();
@@ -997,7 +1007,7 @@ void MoveThings(int16_t fPostProd) {
                     lpth2Mac = lpThings + cThing;
                     for (; lpth2 < lpth2Mac && (lpth2->ith() != ithMysteryTrader || lpth2 == lpth); lpth2++) {
                     }
-                    if (lpth2 != lpth2Mac || Random(2) == 0)
+                    if (lpth2 != lpth2Mac || RandomIO().pfnRandom(2) == 0)
                         goto LFreeThePacket;
                     { const POINT16 ptForThing = (lpth->tht().ptDest()); auto &thForThing = *(lpth); thForThing.pt().Set(ptForThing); }
                     dRange = lpth->tht().iWarp() - 2;
@@ -1022,17 +1032,17 @@ void MoveThings(int16_t fPostProd) {
                 }
                 lppl = lpPlanets + lpth->thp().idPlanet();
                 iWarpPacket = lpth->thp().iWarp() + 4;
-                iWarp = IWarpMAFromLppl(lppl, &fTwoMAs);
+                iWarp = ColonyIO().pfnWarp(lppl, &fTwoMAs);
                 if (fTwoMAs) {
                     iWarp++;
                 }
-                if (iWarp > 0 && GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel) {
+                if (iWarp > 0 && RaceQueryIO().pfnStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel) {
                     rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr = rglpshdefSB[lppl->iPlayer][lppl->isb].grbitPlr | 1 << lpth->iplr();
                 }
-                fTerra = GetRaceStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel;
+                fTerra = RaceQueryIO().pfnStat(&rgplr[lpth->iplr()], rsMajorAdv) == raMassAccel;
                 iWarp2 = iWarp * iWarp;
                 iWarpPacket2 = iWarpPacket * iWarpPacket;
-                if (lppl->iPlayer != iplrNone && GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raStargate) {
+                if (lppl->iPlayer != iplrNone && RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raStargate) {
                     iWarp2 /= 2;
                 }
                 if (iWarp2 >= iWarpPacket2) {
@@ -1066,9 +1076,9 @@ void MoveThings(int16_t fPostProd) {
                         cTerraPerm = 0;
                         while (rgwtTerra[i] > 0) {
                             wtCur = rgwtTerra[i] >= 100 ? 100 : rgwtTerra[i];
-                            if (Random(200) < wtCur) {
+                            if (RandomIO().pfnRandom(200) < wtCur) {
                                 cTerraTemp++;
-                                if (Random(10) == 0) {
+                                if (RandomIO().pfnRandom(10) == 0) {
                                     cTerraPerm++;
                                 }
                             }
@@ -1093,16 +1103,16 @@ void MoveThings(int16_t fPostProd) {
                                 cTerraPerm = -cTerraPerm;
                             }
                             if (cTerraPerm != 0) {
-                                FSendPlrMsg(iplr, idmMineralPacketHasPermanentlyDefault, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, abs(cTerraPerm), 0, 0, 0);
+                                TurnIO().pfnMessage(iplr, idmMineralPacketHasPermanentlyDefault, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, abs(cTerraPerm), 0, 0, 0);
                                 if (lppl->iPlayer != iplrNone && lppl->iPlayer != iplr) {
-                                    FSendPlrMsg(iplr, idmMineralPacketHasPermanentlyDefault2, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, abs(cTerraPerm), 0, 0, 0);
+                                    TurnIO().pfnMessage(iplr, idmMineralPacketHasPermanentlyDefault2, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, abs(cTerraPerm), 0, 0, 0);
                                 }
                                 lppl->rgEnvVarOrig[i] += cTerraPerm;
                             }
                         }
                         if (cTerraTemp > 0) {
                             idPlayer = iplr;
-                            if (!FCanTerraformLppl(lppl, rgMin, rgMax, rgCost, TRUE)) {
+                            if (!ColonyIO().pfnCanTerraform(lppl, rgMin, rgMax, rgCost, TRUE)) {
                                 idPlayer = iplrNone;
                             } else {
                                 idPlayer = iplrNone;
@@ -1126,9 +1136,9 @@ void MoveThings(int16_t fPostProd) {
                                 }
                                 if (cTerraTemp != 0) {
                                     lppl->rgEnvVar[i] += cTerraTemp;
-                                    FSendPlrMsg(iplr, idmMineralPacketHas, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
+                                    TurnIO().pfnMessage(iplr, idmMineralPacketHas, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
                                     if (lppl->iPlayer != iplrNone && lppl->iPlayer != iplr) {
-                                        FSendPlrMsg(iplr, idmMineralPacketHas2, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
+                                        TurnIO().pfnMessage(iplr, idmMineralPacketHas2, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
                                     }
                                 }
                             }
@@ -1139,9 +1149,9 @@ void MoveThings(int16_t fPostProd) {
                     goto LFreeThePacket;
                 CalcPctSurvive(lppl, &pct, NULL);
                 dmgRaw = (int32_t)((double)pct * dmgRaw);
-                if (dmgRaw == 0 || GetRaceStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
+                if (dmgRaw == 0 || RaceQueryIO().pfnStat(&rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
                 LAllSafe:
-                    FSendPlrMsg(lppl->iPlayer,
+                    TurnIO().pfnMessage(lppl->iPlayer,
                                 iWarp <= 0 ? idmBombardedPacketContainingKtMineralsHoweverPacket : idmMassAcceleratorHasSuccessfullyCapturedPacketCont,
                                 static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr(), LOWORD(wtTot), HIWORD(wtTot), 0, 0, 0);
                     goto LFreeThePacket;
@@ -1153,13 +1163,13 @@ void MoveThings(int16_t fPostProd) {
                         lColKilled = dmgRaw;
                     }
                     if (lppl->rgwtMin[3] > 0 && (lColKilled >= lppl->rgwtMin[3] || lColKilled < 0)) {
-                        FSendPlrMsg2(lppl->iPlayer, idmAnnihilatedMineralPacketColonistsKilled, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
+                        TurnIO().pfnMessage2(lppl->iPlayer, idmAnnihilatedMineralPacketColonistsKilled, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
                         UninhabitPlanet(lppl);
                         goto LFreeThePacket;
                     }
                     lDefKilled = (int32_t)(lppl->cDefenses * dmgRaw) / 1000;
                     if (lDefKilled == 0 && lppl->cDefenses != 0) {
-                        lDefKilled = (uint32_t)(Random(20) < dmgRaw);
+                        lDefKilled = (uint32_t)(RandomIO().pfnRandom(20) < dmgRaw);
                     }
                     if (lDefKilled < (int32_t)(dmgRaw / 20)) {
                         lDefKilled = (int32_t)(dmgRaw / 20);
@@ -1169,15 +1179,15 @@ void MoveThings(int16_t fPostProd) {
                     }
                     if (lDefKilled == 0) {
                         idm = iWarp == 0 ? idmBombardedKtMineralPacketColonistsKilledCollision : idmMassAcceleratorPartiallySuccessfullyCapturingKtM;
-                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), 0, 0);
+                        TurnIO().pfnMessage(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), 0, 0);
                     } else {
                         idm = iWarp == 0 ? idmBombardedKtMineralPacketColonistsDefensesDestroy : idmMassAcceleratorPartiallySuccessfullyCapturingKtM2;
-                        FSendPlrMsg(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), LOWORD(lDefKilled),
+                        TurnIO().pfnMessage(lppl->iPlayer, idm, static_cast<MsgGoto>(lppl->id), lppl->id, LOWORD(wtTot), HIWORD(wtTot), lpth->iplr(), LOWORD(lColKilled), LOWORD(lDefKilled),
                                     0);
                         lppl->cDefenses -= LOWORD(lDefKilled);
                     }
                 } else {
-                    FSendPlrMsg2(lppl->iPlayer, idmBombardedKtMineralPacketFortunatelyOneHome, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
+                    TurnIO().pfnMessage2(lppl->iPlayer, idmBombardedKtMineralPacketFortunatelyOneHome, static_cast<MsgGoto>(lppl->id), lppl->id, lpth->iplr());
                     lDefKilled = lppl->cDefenses;
                     lColKilled = 0;
                 }
@@ -1233,9 +1243,9 @@ void FuelFleets() {
             goto LChkFuelTransport;
         if (lpfl->iPlayer != lppl->iPlayer && rgplr[lppl->iPlayer].rgmdRelation[lpfl->iPlayer] != 1)
             goto LChkFuelTransport;
-        if (LphuldefFromId(rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax == 0)
+        if (PartQueryIO().pfnHull(rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef)->hul.wtCargoMax == 0)
             goto LChkFuelTransport;
-        lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
+        lpfl->rgwtMin[4] = ProductionIO().pfnFleetStat(lpfl, 1);
         continue;
 
     LChkFuelTransport:
@@ -1256,7 +1266,7 @@ void FuelFleets() {
             }
         }
         if (csh != 0 || cPods != 0) {
-            lpfl->rgwtMin[4] = (((LGetFleetStat(lpfl, 1)) < (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50))) ? (LGetFleetStat(lpfl, 1)) : (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50)));
+            lpfl->rgwtMin[4] = (((ProductionIO().pfnFleetStat(lpfl, 1)) < (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50))) ? (ProductionIO().pfnFleetStat(lpfl, 1)) : (lpfl->rgwtMin[4] + csh + (uint32_t)(cPods * 50)));
         }
     }
     return;
@@ -1326,9 +1336,9 @@ void MoveFleets() {
                 lpfl->fDone = TRUE;
                 lpord = lpfl->lpplord->rgord();
                 if (lpord->grTask != grTaskXfer && lpord->grTask != grTaskLayMines && lpfl->cord > 1 && lpord[1].iWarp != 0) {
-                    if (cPass == 0 && lpord[1].iWarp > 6 && lpord[1].iWarp != 11 && GetRaceGrbit(&rgplr[lpfl->iPlayer], ibitRaceCheapEngines) != 0 &&
-                        Random(10) == 0) {
-                        FSendPlrMsg2(lpfl->iPlayer, idmUnableEngageEnginesDueBalkyEquipmentEngineers, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                    if (cPass == 0 && lpord[1].iWarp > 6 && lpord[1].iWarp != 11 && RaceQueryIO().pfnGrbit(&rgplr[lpfl->iPlayer], ibitRaceCheapEngines) != 0 &&
+                        RandomIO().pfnRandom(10) == 0) {
+                        TurnIO().pfnMessage2(lpfl->iPlayer, idmUnableEngageEnginesDueBalkyEquipmentEngineers, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                     } else {
                         if (lpord[1].iWarp >= 11) {
                             fJumpgate = FALSE;
@@ -1346,12 +1356,12 @@ void MoveFleets() {
                             if (isbsSrc == -1) {
                                 if (FFleetCanJumpgate(lpfl))
                                     goto LNoGateNeeded;
-                                FSendPlrMsg(lpfl->iPlayer, idmAttemptedUseStargateStargateExistsThere, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, ptMsg.x, ptMsg.y, 0, 0, 0,
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmAttemptedUseStargateStargateExistsThere, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, ptMsg.x, ptMsg.y, 0, 0, 0,
                                             0);
                                 continue;
                             }
                             if (lpplSrc->iPlayer != lpfl->iPlayer && rgplr[lpplSrc->iPlayer].rgmdRelation[lpfl->iPlayer] != 1) {
-                                FSendPlrMsg(lpfl->iPlayer, idmAttemptedUseStargateCouldBecauseStarbaseOwned, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplSrc->id,
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmAttemptedUseStargateCouldBecauseStarbaseOwned, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplSrc->id,
                                             lpplSrc->id, 0, 0, 0, 0);
                                 continue;
                             }
@@ -1372,18 +1382,18 @@ void MoveFleets() {
                                     lpplDst = LpplFromId(i);
                                     isbsDst = IStargateFromLppl(lpplDst);
                                 } else {
-                                    FSendPlrMsg(lpfl->iPlayer, idmAttemptedReachViaStargateCouldBecauseStargate, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, ptEnd.x, ptEnd.y,
+                                    TurnIO().pfnMessage(lpfl->iPlayer, idmAttemptedReachViaStargateCouldBecauseStargate, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, ptEnd.x, ptEnd.y,
                                                 0, 0, 0, 0);
                                     continue;
                                 }
                             }
                             if (isbsDst == -1) {
-                                FSendPlrMsg(lpfl->iPlayer, idmAttemptedUseStargateReachCouldBecauseStargate, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplDst->id, ptMsg.x,
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmAttemptedUseStargateReachCouldBecauseStargate, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplDst->id, ptMsg.x,
                                             ptMsg.y, 0, 0, 0);
                                 continue;
                             }
                             if (lpplDst->iPlayer != lpfl->iPlayer && rgplr[lpplDst->iPlayer].rgmdRelation[lpfl->iPlayer] != 1) {
-                                FSendPlrMsg(lpfl->iPlayer, idmAttemptedUseStargateReachCouldBecauseStarbase, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplDst->id,
+                                TurnIO().pfnMessage(lpfl->iPlayer, idmAttemptedUseStargateReachCouldBecauseStarbase, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplDst->id,
                                             lpplDst->id, lpplDst->id, 0, 0, 0);
                                 continue;
                             }
@@ -1391,9 +1401,9 @@ void MoveFleets() {
                                 fJumpgate = TRUE;
                                 isbsSrc = isbsDst;
                             }
-                            if (!fJumpgate && GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStargate) {
+                            if (!fJumpgate && RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) != raStargate) {
                                 if (lpfl->rgwtMin[3] > 0 && lpplSrc->iPlayer != lpfl->iPlayer) {
-                                    FSendPlrMsg2(lpfl->iPlayer, idmUnableUseStargateBecauseHadColonistsBoard, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplSrc->id);
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmUnableUseStargateBecauseHadColonistsBoard, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpplSrc->id);
                                     continue;
                                 }
                                 wtMinerals = 0;
@@ -1409,25 +1419,25 @@ void MoveFleets() {
                                 lpfl->rgwtMin[3] = 0;
                                 if (wtColonists != 0) {
                                     if (wtMinerals != 0) {
-                                        FSendPlrMsg(lpfl->iPlayer, idmHasUnloadedColonistsKtMineralsPreparationJumping, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
+                                        TurnIO().pfnMessage(lpfl->iPlayer, idmHasUnloadedColonistsKtMineralsPreparationJumping, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
                                                     LOWORD(wtColonists), HIWORD(wtColonists), LOWORD(wtMinerals), HIWORD(wtMinerals), lpplSrc->id, 0);
                                         if (lpfl->iPlayer != lpplSrc->iPlayer) {
-                                            FSendPlrMsg(lpplSrc->iPlayer, idmHasUnloadedColonistsKtMineralsPreparationJumping, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
+                                            TurnIO().pfnMessage(lpplSrc->iPlayer, idmHasUnloadedColonistsKtMineralsPreparationJumping, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
                                                         LOWORD(wtColonists), HIWORD(wtColonists), LOWORD(wtMinerals), HIWORD(wtMinerals), lpplSrc->id, 0);
                                         }
                                     } else {
-                                        FSendPlrMsg(lpfl->iPlayer, idmHasUnloadedColonistsPreparationJumpingThroughSta, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
+                                        TurnIO().pfnMessage(lpfl->iPlayer, idmHasUnloadedColonistsPreparationJumpingThroughSta, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
                                                     LOWORD(wtColonists), HIWORD(wtColonists), lpplSrc->id, 0, 0, 0);
                                         if (lpfl->iPlayer != lpplSrc->iPlayer) {
-                                            FSendPlrMsg(lpplSrc->iPlayer, idmHasUnloadedColonistsPreparationJumpingThroughSta, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
+                                            TurnIO().pfnMessage(lpplSrc->iPlayer, idmHasUnloadedColonistsPreparationJumpingThroughSta, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
                                                         LOWORD(wtColonists), HIWORD(wtColonists), lpplSrc->id, 0, 0, 0);
                                         }
                                     }
                                 } else if (wtMinerals != 0) {
-                                    FSendPlrMsg(lpfl->iPlayer, idmHasUnloadedKtMineralsPreparationJumpingThrough, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
+                                    TurnIO().pfnMessage(lpfl->iPlayer, idmHasUnloadedKtMineralsPreparationJumpingThrough, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id,
                                                 LOWORD(wtMinerals), HIWORD(wtMinerals), lpplSrc->id, 0, 0, 0);
                                     if (lpfl->iPlayer != lpplSrc->iPlayer) {
-                                        FSendPlrMsg(lpplSrc->iPlayer, idmHasUnloadedKtMineralsPreparationJumpingThrough, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
+                                        TurnIO().pfnMessage(lpplSrc->iPlayer, idmHasUnloadedKtMineralsPreparationJumpingThrough, static_cast<MsgGoto>(lpplSrc->id), lpfl->id,
                                                     LOWORD(wtMinerals), HIWORD(wtMinerals), lpplSrc->id, 0, 0, 0);
                                     }
                                 }
@@ -1452,11 +1462,11 @@ void MoveFleets() {
                                 dRange = dRange <= (int32_t)(uint32_t)(lpord[1].iWarp * lpord[1].iWarp) ? (uint32_t)(lpord[1].iWarp * lpord[1].iWarp) : dRange;
                             }
                             if (cPass == 0) {
-                                if (lpfl->rgwtMin[3] > 10 && GetRaceStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh) {
+                                if (lpfl->rgwtMin[3] > 10 && RaceQueryIO().pfnStat(&rgplr[lpfl->iPlayer], rsMajorAdv) == raMacintosh) {
                                     cDie = (int32_t)((uint32_t)(lpfl->rgwtMin[3] * 3) + 33) / 100;
                                     if (cDie > 0) {
                                         lpfl->rgwtMin[3] -= cDie;
-                                        FSendPlrMsg(lpfl->iPlayer, idmDueRigorsWarpAccelerationColonistsHaveDied, static_cast<MsgGoto>(lpfl->id | 0x8000), LOWORD(cDie), HIWORD(cDie),
+                                        TurnIO().pfnMessage(lpfl->iPlayer, idmDueRigorsWarpAccelerationColonistsHaveDied, static_cast<MsgGoto>(lpfl->id | 0x8000), LOWORD(cDie), HIWORD(cDie),
                                                     lpfl->id, 0, 0, 0, 0);
                                     }
                                 }
@@ -1476,7 +1486,7 @@ void MoveFleets() {
                                             cKill = 0;
                                             cTry = flSrc.rgcsh[ish];
                                             while (cTry-- != 0) {
-                                                if (Random(10) == 0) {
+                                                if (RandomIO().pfnRandom(10) == 0) {
                                                     cKill++;
                                                 }
                                             }
@@ -1493,7 +1503,7 @@ void MoveFleets() {
                                     }
                                     if (fDead) {
                                         lpfl->fDead = TRUE;
-                                        FSendPlrMsg2(lpfl->iPlayer, idmDestroyedMassiveReactorAccidentDueUnsafeOperatin, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                        TurnIO().pfnMessage2(lpfl->iPlayer, idmDestroyedMassiveReactorAccidentDueUnsafeOperatin, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                         continue;
                                     }
                                     if (cKillTot > 0) {
@@ -1503,9 +1513,9 @@ void MoveFleets() {
                                         FleetTransferCargoBalance(&flSrc, &flDead);
                                         *lpfl = flSrc;
                                         if (cKillTot == 1) {
-                                            FSendPlrMsg2(lpfl->iPlayer, idmOneShipsDestroyedWhenEnginesReactedTrying, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                            TurnIO().pfnMessage2(lpfl->iPlayer, idmOneShipsDestroyedWhenEnginesReactedTrying, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                         } else {
-                                            FSendPlrMsg2(lpfl->iPlayer, idmShipsDestroyedDueEngineStrain, static_cast<MsgGoto>(lpfl->id | 0x8000), cKillTot, lpfl->id);
+                                            TurnIO().pfnMessage2(lpfl->iPlayer, idmShipsDestroyedDueEngineStrain, static_cast<MsgGoto>(lpfl->id | 0x8000), cKillTot, lpfl->id);
                                         }
                                     }
                                 }
@@ -1560,9 +1570,9 @@ void MoveFleets() {
                                 } while (EstFuelUse(lpfl, 0, i, -1, FALSE) == 0 && i < 10);
                                 if (i > 1) {
                                     lpfl->lpplord->rgord()[1].iWarp = i - 1;
-                                    FSendPlrMsg2(lpfl->iPlayer, idmHasRunFuelFleetsSpeedHasDecreased, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, i - 1);
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmHasRunFuelFleetsSpeedHasDecreased, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, i - 1);
                                 } else {
-                                    FSendPlrMsg2(lpfl->iPlayer, idmHasRunFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmHasRunFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, 0);
                                 }
                                 fRanOutOfFuel = TRUE;
                             }
@@ -1596,7 +1606,7 @@ void MoveFleets() {
                                     if (lFuelGain > 32500) {
                                         lFuelGain = 32500;
                                     }
-                                    FSendPlrMsg2(lpfl->iPlayer, idmSRamScoopsHaveProducedMgFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lFuelGain));
+                                    TurnIO().pfnMessage2(lpfl->iPlayer, idmSRamScoopsHaveProducedMgFuel, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lFuelGain));
                                 }
                             }
                             if (dActTravel < dTravel || dActTravel <= 0) {
@@ -1650,7 +1660,7 @@ void MoveFleets() {
                             } else if (1 > pct) {
                                 pct = 1;
                             }
-                            FSendPlrMsg2(lpfl->iPlayer, idmEngineRadiationHasKilledColonistsTraveling, static_cast<MsgGoto>(lpfl->id | 0x8000), LOWORD(pct), lpfl->id);
+                            TurnIO().pfnMessage2(lpfl->iPlayer, idmEngineRadiationHasKilledColonistsTraveling, static_cast<MsgGoto>(lpfl->id | 0x8000), LOWORD(pct), lpfl->id);
                             lpfl->rgwtMin[3] -= pct;
                         }
                         if (ptEnd.x == lpfl->pt.x && ptEnd.y == lpfl->pt.y && lpord[1].grobj == grobjThing) {
@@ -1675,10 +1685,10 @@ void MoveFleets() {
                         if (fGotEnufFuel) {
                             wtFuel2Dest = EstFuelUse(lpfl, 0, -1, -1, FALSE);
                             if (wtFuel2Dest > lpfl->rgwtMin[4]) {
-                                if (LGetFleetStat(lpfl, 1) > wtFuel2Dest) {
+                                if (ProductionIO().pfnFleetStat(lpfl, 1) > wtFuel2Dest) {
                                     lpfl->rgwtMin[4] = wtFuel2Dest;
                                 } else {
-                                    lpfl->rgwtMin[4] = LGetFleetStat(lpfl, 1);
+                                    lpfl->rgwtMin[4] = ProductionIO().pfnFleetStat(lpfl, 1);
                                 }
                             }
                         }
@@ -1751,7 +1761,7 @@ int16_t FTravelThroughMineFields(FLEET *lpfl, int16_t *pdTravel, THING *lpthHit)
     dTravel = lpthHit ? 0 : *pdTravel;
     cishInc = 0;
     iPlayer = lpfl->iPlayer;
-    raMajor = static_cast<RaceAttribute>(GetRaceStat(&rgplr[iPlayer], rsMajorAdv));
+    raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&rgplr[iPlayer], rsMajorAdv));
     fMineExpert = (raMajor == raMines) * 2 + (raMajor == raStealth);
     if (lpthHit) {
         iWarp = 0;
@@ -1850,7 +1860,7 @@ LHitSkip1:
             goto LDoNext;
         pct = (iWarp - rgiWarpSafe[iType] - fMineExpert) * rgpctMineHit[iType];
         for (i = 0; i < dEnd; i++) {
-            if (Random(1000) < pct)
+            if (RandomIO().pfnRandom(1000) < pct)
                 break;
         }
         if (i == dEnd)
@@ -1962,7 +1972,7 @@ LHitSkip1:
             ptAct = lpthHit->pt();
             lpthClosest = lpthHit;
         }
-        if (GetRaceStat(&rgplr[lpthClosest->iplr()], rsMajorAdv) == raMines) {
+        if (RaceQueryIO().pfnStat(&rgplr[lpthClosest->iplr()], rsMajorAdv) == raMines) {
             ibit = 1 << lpthClosest->iplr();
             if (cishInc == 0) {
                 for (i = 0; i < 16; i++) {
@@ -1981,39 +1991,39 @@ LHitSkip1:
         }
         if (dmgTot == 0) {
             if (iPlayer != lpthClosest->iplr()) {
-                FSendPlrMsg(iPlayer, idmHasStoppedMineField, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
+                TurnIO().pfnMessage(iPlayer, idmHasStoppedMineField, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
             }
-            FSendPlrMsg(lpthClosest->iplr(), idmHasStoppedMineField2, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, 0, 0, 0);
+            TurnIO().pfnMessage(lpthClosest->iplr(), idmHasStoppedMineField2, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, 0, 0, 0);
         } else if (cshDead == 0) {
             if (iPlayer != lpthClosest->iplr()) {
-                FSendPlrMsg(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken : idmHasDamagedDetonatingMineFieldFleetHas, static_cast<MsgGoto>(lpfl->id | 0x8000),
+                TurnIO().pfnMessage(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken : idmHasDamagedDetonatingMineFieldFleetHas, static_cast<MsgGoto>(lpfl->id | 0x8000),
                             lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, LOWORD(dmgTot), 0);
             }
-            FSendPlrMsg(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted : idmHasDamagedDetonatingMineFieldMinesHave, static_cast<MsgGoto>(lpfl->id | 0x8000),
+            TurnIO().pfnMessage(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted : idmHasDamagedDetonatingMineFieldMinesHave, static_cast<MsgGoto>(lpfl->id | 0x8000),
                         lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), 0, 0);
         } else if (cshDead < csh) {
             if (iPlayer != lpthClosest->iplr()) {
-                FSendPlrMsg(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken2 : idmHasTakenDamageDetonatingMineFieldFleet, static_cast<MsgGoto>(lpfl->id | 0x8000),
+                TurnIO().pfnMessage(iPlayer, !lpthHit ? idmHasStoppedMineFieldFleetHasTaken2 : idmHasTakenDamageDetonatingMineFieldFleet, static_cast<MsgGoto>(lpfl->id | 0x8000),
                             lpfl->id | 0x8000, lpthClosest->iplr(), iType, ptAct.x, ptAct.y, LOWORD(dmgTot), cshDead);
             }
-            FSendPlrMsg(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted2 : idmHasDamagedDetonatingMineFieldMinesHave2, static_cast<MsgGoto>(lpfl->id | 0x8000),
+            TurnIO().pfnMessage(lpthClosest->iplr(), !lpthHit ? idmHasStoppedMineFieldMinesHaveInflicted2 : idmHasDamagedDetonatingMineFieldMinesHave2, static_cast<MsgGoto>(lpfl->id | 0x8000),
                         lpfl->id | 0x8000, iType, ptAct.x, ptAct.y, LOWORD(dmgTot), cshDead, 0);
         } else if (lpthSalvage) {
             flDead.id = lpfl->id;
             if (iPlayer != lpthClosest->iplr()) {
-                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField, gotoThing, lpthSalvage->idFull(), WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y,
+                TurnIO().pfnMessage(iPlayer, idmHasAnnihilatedMineField, gotoThing, lpthSalvage->idFull(), WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y,
                             0);
             }
-            FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthSalvage->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
+            TurnIO().pfnMessage(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthSalvage->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
         } else {
             flDead.id = lpfl->id;
             if (iPlayer != lpthClosest->iplr()) {
-                FSendPlrMsg(iPlayer, idmHasAnnihilatedMineField3, gotoNone, WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
+                TurnIO().pfnMessage(iPlayer, idmHasAnnihilatedMineField3, gotoNone, WFromLpfl(&flDead), lpthClosest->iplr(), iType, ptAct.x, ptAct.y, 0, 0);
             }
             if (lpfl->iPlayer == lpthClosest->iplr()) {
-                FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField4, gotoNone, WFromLpfl(&flDead), iType, ptAct.x, ptAct.y, 0, 0, 0);
+                TurnIO().pfnMessage(lpthClosest->iplr(), idmHasAnnihilatedMineField4, gotoNone, WFromLpfl(&flDead), iType, ptAct.x, ptAct.y, 0, 0, 0);
             } else {
-                FSendPlrMsg(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthClosest->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
+                TurnIO().pfnMessage(lpthClosest->iplr(), idmHasAnnihilatedMineField2, gotoThing, lpthClosest->idFull(), lpfl->id, iType, ptAct.x, ptAct.y, 0, 0);
             }
         }
         if (!lpthHit) {

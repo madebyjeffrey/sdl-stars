@@ -194,7 +194,7 @@ further decomposition; it is not a claim that their algorithms are proved.
 | Boundary | Scope and limitation | Owner / next evidence or decision |
 | --- | --- | --- |
 | E04-1 | Actual filesystem/open modes, path canonicalization, OS errors, temp randomness/races, permissions, handles and cleanup are native adapters. The predicates classify supplied outcomes, not external effects. | S04/S01/S02; filesystem tests and platform/fault matrix. |
-| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and source-extracted witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
+| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and linked production witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
 | E04-3 | qsort16 implementation refinement, extreme native integer domains, binary64 rounding, actual clocks and wrap handling by each caller remain external obligations. | S04/S06/gameplay; arithmetic/sort tests, cross-platform regression and clock-boundary qualification. |
 
 ## 7. Evidence and verification

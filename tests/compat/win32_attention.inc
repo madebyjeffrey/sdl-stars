@@ -1,3 +1,6 @@
+#ifndef _WIN32
+#include "../../compat/win32/src/window_io.h"
+#endif
 /* Caption-state messaging and nonactivating attention requests. */
 #include <windows.h>
 #include <stdio.h>
@@ -107,6 +110,12 @@ int main(int argc, char **argv) {
 #ifndef _WIN32
     int cOld;
 #endif
+#ifndef _WIN32
+    COMPATWINDOWIO io_compatwindowio;
+    io_compatwindowio.pfnFlashWindow = StarsTest_SDL_FlashWindow;
+    COMPATWINDOWIOSCOPE scope_compatwindowio(io_compatwindowio);
+#endif
+
 #ifdef _WIN32
     hInstance = GetModuleHandle(NULL);
     (void)argc; (void)argv;

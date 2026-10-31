@@ -60,8 +60,6 @@ output = []
 local_functions = {}
 for path in sorted(p for p in (ROOT / 'compat/win32/src').iterdir() if p.suffix in ('.cpp', '.mm')):
     clean = strip(path.read_text())
-    # Test redirection retains the original API spelling inside this macro.
-    clean = re.sub(r'\bSTARS_TEST_IMPL\((\w+)\)', r'\1', clean)
     for match in re.finditer(r'\bWINAPIV?\s+(\w+)\s*\([^;{}]*\)\s*\{', clean):
         local_functions[match[1]] = f'{path.relative_to(ROOT)}:{clean.count(chr(10), 0, match.start()) + 1}'
     for symbol in counts:

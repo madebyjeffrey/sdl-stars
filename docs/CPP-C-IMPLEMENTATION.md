@@ -2,7 +2,8 @@
 
 Tracking: [#67](https://github.com/madebyjeffrey/sdl-stars/issues/67).
 Started: 2026-10-31. Initial branch: `codex/cpp-milestone-c`, targeting `develop`.
-Current continuation: `codex/cpp-c04-typed-effects` from merged C03.
+Current continuation: `codex/cpp-c04-c05-linked-tests` from PR #70 (`b12e172`),
+merged into `develop` at `caf8d27`.
 Plan: [CPP-MILESTONE-C.md](CPP-MILESTONE-C.md).
 
 ## Parent and scope
@@ -27,8 +28,8 @@ verification receipts below decide completion.
 | C01 | Complete | Parent pinned; source/mechanism/consumer inventory and fresh local parent matrix pass. Cross-platform B receipts remain historical. |
 | C02 | Complete under current CI policy | PR #68 merged at a65e653; all 15 enabled CI jobs pass. The full Linux desktop and Windows SDL jobs remain explicitly deferred. |
 | C03 | Complete under current CI policy | PR #69 merged at ab62fef; all enabled CI passed. Local 119 desktop / 26 host tests, callback ASan/UBSan faults, regressions and 27 unchanged witness receipts pass. |
-| C04 | In progress: first family locally qualified | Profile/file providers replace three guard-test hooks and their wrapper clone. All 120 desktop tests, focused ASan/UBSan checks and regression pass; enabled CI pending. Other effect families remain pending. |
-| C05 | In progress: integration witness locally qualified | Save-control witness links production code with the same 42 assertions; all 27 receipts retain their original counts/domains/exclusions. The other 26 programs remain extracted. |
+| C04 | Locally complete; enabled CI pending | Every implementation/call redirect, allocator hook and private library clone is replaced by typed module effects. Desktop/host workflows, regressions and full formal verification/audit pass. |
+| C05 | Locally complete; enabled CI pending | All 27 commands use normal linked production targets; every parent case/assertion/exclusion receipt matches. The 67 retained independent Python definitions have identical parent ASTs. See the [per-program inventory](CPP-C05-WITNESSES.md). |
 | C06 | Pending | Replace generated wrapper names and all 23 C03 prefixed entry names with `ui::EnableWindow`-style calls; remove redundant forwarding functions while preserving cleanup-before-error-delivery and Windows SDK isolation. |
 | C07 | Pending | Audit all 2,101 parent macro definitions; replace compatibility helpers and record specific retained purposes. |
 | C08 | Pending | Remove 156 game-state and 346 UI-state aliases through explicit caller dependencies. |
@@ -341,5 +342,101 @@ The initial sandboxed desktop run timed out at macOS leak inspection with
 the complete rerun with process-inspection access passes all 120 tests.
 
 Receipts are retained in `dist/verification/c04/profile/`; enabled CI is pending.
-Remaining C04 work includes record streams, application/UI choices, publication,
-RNG observation and SDL/allocation effects; C05 retains 26 extracted programs.
+Those families remained after PR #70; the combined continuation below replaces
+them and all 26 remaining extracted programs.
+
+
+## C04/C05 combined continuation
+
+Scope: finish both checkpoints together on `codex/cpp-c04-c05-linked-tests`.
+The original `STARS_TEST_IMPL` implementation-name markers, alternate declarations,
+`stars_test_redirect`, allocation call macros, private library clones and their
+contract fixture are deleted. Test callback names remain ordinary callback
+functions. Typed module providers default to original functions; scopes own
+snapshots, restore through nesting/unwinding and isolate threads. Worker-message
+fixtures explicitly transfer their provider to worker scopes.
+
+Effects cover native publication; record streams/writes/create/dirty state;
+alerts, password/wizard/startup choices; RNG/capacity observation; SDL render,
+window, display, input, paths, help/external, audio, ticks and folder selection;
+message allocation and both chooser backends. SDK chooser types remain isolated
+from wrapper headers. The publication fixture checks exact native flags/results,
+snapshots, nesting, failure/retry, thread isolation and real UTF-8 filesystem
+operations. POSIX rename behavior is preserved; no new no-replace guarantee is
+claimed.
+
+The [C05 inventory](CPP-C05-WITNESSES.md) and its JSON sidecar account for every
+original witness, domain, exclusion, assertion, independent oracle and canonical
+specification owner. CMake adds 26 witness tests and reuses `win32_profile_save`;
+`stars-linked-witnesses` builds all normal targets plus the copy companion.
+All 27 program receipts match the parent after presentation-label normalization;
+67 retained independent Python functions/classes have identical ASTs. List/heap
+lifetime helpers, real owned state and actual record types are linked. Small
+private blocks move once to preference, transport, production-preset, restoration
+and library-publication helpers called by the real workflows. There is no copied
+production algorithm, reconstructed implementation record or stdio rewrite.
+`cpp_production_storage.py`, extraction utilities and `STARS_TEST_STATE_DOUBLE`
+branches are removed. Binary64 conversion observations retain the original
+expression grouping and representability domain, with no replacement result.
+Canonical Dafny files, baselines, frozen inputs and `structs.h` are unchanged.
+
+The manifest rejects test symbol routing, state-double compiler flags and cloned
+production targets; negative cases exercise those rejections. It accounts for
+156 production sources / 157 compiled variants and 156 standalone headers in
+both include orders. Assertion macros stay active in Release witness fixtures.
+The automatic linked-witness job installs the normal SDL dependencies, builds the
+normal sanitized targets once and runs the original 27 commands with ASan/UBSan/
+LSan. Only the two previously deferred full platform jobs remain opt-in.
+
+Qualification artifacts are in local `dist/verification/c04-c05/`:
+
+- Fresh macOS Debug build and standalone interfaces pass without compiler diagnostics.
+  The complete desktop suite passes 147/147, including 29 native leak checks,
+  17 game unit programs and the available tutorial smoke checkpoint. The final
+  portable CRT pointer declarations pass a rebuild and 29 affected checks.
+- Fresh SDL-free Release host passes 27/27 tests, including the routing policy.
+- Native and host regressions each match all 519 unchanged baseline files and
+  exact PR #70 outputs through turn 150: 25 accepted unused-storage warnings,
+  zero differences/errors and zero skipped inputs.
+- All 26 new witness CTests, save/profile, publication and selected callback/
+  allocation guards pass 32 ASan/UBSan checks. A broader native selection passes
+  45 unique sanitizer checks across the selection and a focused font retry. The
+  initial selection reported that font test Not Run until its target was built.
+  macOS uses native `leaks` for leak qualification; Linux CI enables LSan.
+- Choosers disabled plus optional real RNG/capacity trace builds and links. A
+  `smallai4` run through turn 10 matches all 31 files, with 773 trace receipts.
+- MinGW strict C++20 syntax checks pass the new provider surfaces and representative
+  real UI witnesses. The chooser SDK adapter, native publication and native file
+  service separately compile against genuine Windows SDK headers. This is compile
+  evidence; full Windows runtime checks remain under the existing opt-in policy.
+- Documentation checks pass 26 tests and 2,819 spec links / 700 requirement IDs.
+  Dafny 4.11.0 collection verification passes with 12,000 verified / zero errors;
+  audit reports zero findings. The unchanged `AxisRefines` proof first reached the
+  60-second limit; the complete collection passes the documented 120-second retry.
+  A focused habitat include closure also passes 986 verified / zero errors.
+
+Qualification caught two missed effects hidden by the old compiler substitutions:
+the shared export header's folder-choice callback and a dialog identity comparison.
+The former now binds the folder service; the latter compares the active typed
+callback. The complete export/save workflow passes after both corrections.
+All previous callback names were audited for a typed binding reference. Moved-only
+unused locals were removed; existing unrelated warnings remain unchanged.
+
+The first enabled Linux CI run passes all native/host regression jobs, host
+units and resource sanitizers. The witness/tutorial builds both reject the same
+fixture-only `snprintf` truncation warning under GCC. The fixture now formats
+into a full-size temporary and explicitly retains the original 14-byte text
+limit; its linked witness and strict GCC syntax check pass. The corrected CI
+run remains pending; no production behavior or independent expectation changes.
+
+An additional historical precision experiment exposed a pre-existing reference
+adapter issue: its frozen C bodies include current C++ headers. The arm64 run
+also requires an x86 extended-precision oracle. Source discovery passes; the
+whole differential experiment does not. C09 will materialize matching immutable
+headers/data/generators at `precision_reference.REF`, preserving the independent
+C reference and its expected values rather than changing application headers.
+
+C06 remains the approved next checkpoint: use `ui::` operation basenames, replace
+all 23 C03 prefixed APIs, remove redundant forwarding functions and preserve the
+cleanup-before-error-delivery and SDK isolation contracts. C07–C10 follow in
+focused, dependent PRs for review; no PR is merged by the agent.

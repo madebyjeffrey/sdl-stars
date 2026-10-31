@@ -1,4 +1,12 @@
 #include "common.h"
+#include "text_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "alert_io.h"
+#include "capacity_io.h"
+#include "record_io.h"
 
 uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
 
@@ -30,7 +38,7 @@ const char *PszGetDestName(FLEET *lpfl, HDC hdc) {
             if (hdc) {
                 SetHdcTextColor(hdc, 127);
             }
-            return PszGetCompressedString(idsDelayed);
+            return TextIO().pfnCompressed(idsDelayed);
         default:
             break;
         }
@@ -205,7 +213,7 @@ LShowTask:
                 }
             }
             if (ids == idsAction) {
-                return PszGetCompressedString(idsTransport);
+                return TextIO().pfnCompressed(idsTransport);
             }
             opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
             *picr = icr;
@@ -218,7 +226,7 @@ LShowTask:
                 /* fallthrough */
             case iActionLoadAll:
             case iActionUnloadAll:
-                return PszGetCompressedString(ids);
+                return TextIO().pfnCompressed(ids);
             case iActionFillPercent:
             case iActionWaitPercent:
                 fPercent = TRUE;
@@ -226,7 +234,7 @@ LShowTask:
             case iActionUnloadExact:
             case iActionSetAmount:
             case iActionSetWaypoint:
-                psz = PszGetCompressedString(ids);
+                psz = TextIO().pfnCompressed(ids);
                 psz[strlen(psz) - 3] = 0;
                 if (fPercent) {
                     CchSprintf(szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
@@ -239,21 +247,21 @@ LShowTask:
             }
         case grTaskLayMines:
             if (ord.tlm().cTime < 5) {
-                CchSprintf(szWork, "%s  %dy", PszGetCompressedString(ids), ord.tlm().cTime + 1);
+                CchSprintf(szWork, "%s  %dy", TextIO().pfnCompressed(ids), ord.tlm().cTime + 1);
             } else {
-                CchGetString(ids, szWork);
+                TextIO().pfnCchGetString(ids, szWork);
             }
             return szWork;
         case grTaskPatrol:
             if (ord.tptl().iDist < 11) {
-                CchSprintf(szWork, "%s  %dly", PszGetCompressedString(ids), (ord.tptl().iDist + 1) * 50);
+                CchSprintf(szWork, "%s  %dly", TextIO().pfnCompressed(ids), (ord.tptl().iDist + 1) * 50);
             } else {
-                CchGetString(ids, szWork);
+                TextIO().pfnCchGetString(ids, szWork);
             }
             return szWork;
         case grTaskAutoRoute:
         default:
-            return PszGetCompressedString(ids);
+            return TextIO().pfnCompressed(ids);
         }
     }
     return szDblDash;
@@ -278,17 +286,17 @@ void DumpUniverse() {
         try {
             fFileErrSilent = TRUE;
             CchSprintf(szWork, "%s.map", szBase);
-            StreamOpen(szWork, mdCreate);
+            RecordIO().pfnStreamOpen(szWork, mdCreate);
             fOpen = TRUE;
             RgToStream((void *)"#\tX\tY\tName\r\n", 12);
             for (i = 0; i < game.cPlanMax; i++) {
                 cch = CchSprintf(szWork, "%d\t%d\t%d\t%s\r\n", i + 1, rgptPlan[i].x, rgptPlan[i].y, PszGetCompressedPlanet(rgidPlan[i]));
                 RgToStream(szWork, cch);
             }
-            StreamClose();
+            RecordIO().pfnStreamClose();
         } catch (const StarsError &) {
             if (fOpen) {
-                StreamClose();
+                RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
             fSuccess = FALSE;
@@ -297,11 +305,11 @@ void DumpUniverse() {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteUniverseDefinitionSMapOperation : idsUniverseDefinitionHasSuccessfullyWrittenSMap;
-    CchSprintf(szWork, PszGetCompressedString(ids), szBase);
+    CchSprintf(szWork, TextIO().pfnCompressed(ids), szBase);
     if (fSuccess) {
-        AlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
     } else {
-        AlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
@@ -340,11 +348,11 @@ void DumpPlanets() {
             } else {
                 CchSprintf(szFile, "%s.pla", szBase);
             }
-            StreamOpen(szFile, mdCreate);
+            RecordIO().pfnStreamOpen(szFile, mdCreate);
             fOpen = TRUE;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = CchGetString(static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
+                cch = TextIO().pfnCchGetString(static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
@@ -364,7 +372,7 @@ void DumpPlanets() {
                 if (lppl->iPlayer == iplrNone) {
                     RgToStream(szForm, 1);
                 } else {
-                    strcpy(&szForm[1], PszPlayerName(lppl->iPlayer, TRUE, FALSE, FALSE, 0, NULL));
+                    strcpy(&szForm[1], TextIO().pfnPlayerName(lppl->iPlayer, TRUE, FALSE, FALSE, 0, NULL));
                     RgToStream(szForm, strlen(szForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
@@ -387,7 +395,7 @@ void DumpPlanets() {
                 if (lppl->det < detSome) {
                     szForm[1] = 0;
                 } else {
-                    i = PctPlanetDesirability(lppl, idPlayer);
+                    i = PlanetQueryIO().pfnDesirability(lppl, idPlayer);
                     CchSprintf(&szForm[1], PCTDPCTPCT, i);
                 }
                 RgToStream(szForm, strlen(szForm));
@@ -422,7 +430,7 @@ void DumpPlanets() {
                 szForm[1] = 0;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
-                        EstMineralsMined(lppl, rgl, -1, FALSE);
+                        ColonyIO().pfnEstimateMining(lppl, rgl, -1, FALSE);
                         strcpy(&szForm[1], PszFromLong(rgl[i], NULL));
                     }
                     RgToStream(szForm, strlen(szForm));
@@ -435,7 +443,7 @@ void DumpPlanets() {
                     RgToStream(szForm, strlen(szForm));
                 }
                 if (lppl->det == detAll) {
-                    strcpy(&szForm[1], PszFromInt(CResourcesAtPlanet(lppl, idPlayer), NULL));
+                    strcpy(&szForm[1], PszFromInt(ResearchIO().pfnResources(lppl, idPlayer), NULL));
                 } else {
                     szForm[1] = 0;
                 }
@@ -460,7 +468,7 @@ void DumpPlanets() {
                         }
                     }
                     if (lppl->det == detAll) {
-                        strcpy(&szForm[1], PszFromInt(PctPlanetCapacity(lppl), NULL));
+                        strcpy(&szForm[1], PszFromInt(CapacityIO().pfnPctPlanetCapacity(lppl), NULL));
                         RgToStream(szForm, strlen(szForm));
                         strcpy(&szForm[1], PszFromInt(GetPlanetScannerRange(lppl, &i), NULL));
                         RgToStream(szForm, strlen(szForm));
@@ -471,7 +479,7 @@ void DumpPlanets() {
                             szForm[1] = 0;
                         } else {
                             i = lppl->iWarpFling + 4;
-                            strcpy(&szForm[1], PszGetPlanetName(lppl->idFling - 1));
+                            strcpy(&szForm[1], TextIO().pfnPlanetName(lppl->idFling - 1));
                         }
                         RgToStream(szForm, strlen(szForm));
                         strcpy(&szForm[1], PszFromInt(i, NULL));
@@ -479,7 +487,7 @@ void DumpPlanets() {
                         if (lppl->idRoute == 0) {
                             szForm[1] = 0;
                         } else {
-                            strcpy(&szForm[1], PszGetPlanetName(lppl->idRoute - 1));
+                            strcpy(&szForm[1], TextIO().pfnPlanetName(lppl->idRoute - 1));
                         }
                         RgToStream(szForm, strlen(szForm));
                         if (lppl->fStarbase) {
@@ -487,7 +495,7 @@ void DumpPlanets() {
                             if (i != -1) {
                                 part.hs.grhst = hstSpecialSB;
                                 part.hs.iItem = i;
-                                FLookupPart(&part);
+                                PartQueryIO().pfnLookup(&part);
                                 strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility2, NULL));
                                 RgToStream(szForm, strlen(szForm));
                                 strcpy(&szForm[1], PszFromInt(part.pspecialsb()->grAbility, NULL));
@@ -510,10 +518,10 @@ void DumpPlanets() {
                 }
                 RgToStream(szCRLF, 2);
             }
-            StreamClose();
+            RecordIO().pfnStreamClose();
         } catch (const StarsError &) {
             if (fOpen) {
-                StreamClose();
+                RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
             fSuccess = FALSE;
@@ -522,11 +530,11 @@ void DumpPlanets() {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWritePlanetInformationSOperationTerminated : idsKnownPlanetInformationHasSuccessfullyWrittenS;
-    CchSprintf(szWork, PszGetCompressedString(ids), szFile);
+    CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
     if (fSuccess) {
-        AlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
     } else {
-        AlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
@@ -564,11 +572,11 @@ void DumpFleets() {
             } else {
                 CchSprintf(szFile, "%s.fle", szBase);
             }
-            StreamOpen(szFile, mdCreate);
+            RecordIO().pfnStreamOpen(szFile, mdCreate);
             fOpen = TRUE;
             j = gd.fPerPlayerDumps + 2;
             for (i = 0; i < j; i++) {
-                cch = CchGetString(static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
+                cch = TextIO().pfnCchGetString(static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), szForm);
                 for (psz = szForm; *psz != 0; psz++) {
                     if (*psz == '*') {
                         *psz = '\t';
@@ -596,7 +604,7 @@ void DumpFleets() {
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cch = 1;
                 } else {
-                    psz = PszGetPlanetName(lpfl->idPlanet);
+                    psz = TextIO().pfnPlanetName(lpfl->idPlanet);
                     strcpy(&szForm[1], psz);
                     cch = strlen(psz) + 1;
                 }
@@ -664,7 +672,7 @@ void DumpFleets() {
                         szForm[1] = 0;
                     }
                     RgToStream(szForm, strlen(szForm));
-                    strcpy(&szForm[1], PszFromLong(CMineFromLpfl(lpfl), NULL));
+                    strcpy(&szForm[1], PszFromLong(ColonyIO().pfnFleetMining(lpfl), NULL));
                     RgToStream(szForm, strlen(szForm));
                     strcpy(&szForm[1], PszFromLong(CMineSweepFromLpfl(lpfl), NULL));
                     RgToStream(szForm, strlen(szForm));
@@ -675,7 +683,7 @@ void DumpFleets() {
                     l = 0;
                     for (i = 0; i < 16; i++) {
                         if (lpfl->rgcsh[i] != 0) {
-                            j = LphuldefFromId(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
+                            j = PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
                             if (j <= 1 || j >= 6) {
                                 l += lpfl->rgcsh[i];
                             }
@@ -686,7 +694,7 @@ void DumpFleets() {
                     for (j = 2; j < 6; j++) {
                         l = 0;
                         for (i = 0; i < 16; i++) {
-                            if (lpfl->rgcsh[i] != 0 && LphuldefFromId(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                            if (lpfl->rgcsh[i] != 0 && PartQueryIO().pfnHull(rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
                                 l += lpfl->rgcsh[i];
                             }
                         }
@@ -696,10 +704,10 @@ void DumpFleets() {
                 }
                 RgToStream(szCRLF, 2);
             }
-            StreamClose();
+            RecordIO().pfnStreamClose();
         } catch (const StarsError &) {
             if (fOpen) {
-                StreamClose();
+                RecordIO().pfnStreamClose();
             }
             fFileErrSilent = fSilentSav;
             fSuccess = FALSE;
@@ -708,11 +716,11 @@ void DumpFleets() {
     }
 DisplayStatus:
     ids = !fSuccess ? idsUnableWriteFleetInformationSOperationTerminated : idsKnownFleetInformationHasSuccessfullyWrittenS;
-    CchSprintf(szWork, PszGetCompressedString(ids), szFile);
+    CchSprintf(szWork, TextIO().pfnCompressed(ids), szFile);
     if (fSuccess) {
-        AlertSz(szWork, MB_ICONASTERISK);
+        AlertIO().pfnAlertSz(szWork, MB_ICONASTERISK);
     } else {
-        AlertSz(szWork, MB_ICONHAND);
+        AlertIO().pfnAlertSz(szWork, MB_ICONHAND);
     }
     fFileErrSilent = fSilentSav;
     return;
