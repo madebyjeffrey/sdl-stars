@@ -456,12 +456,12 @@ coexists with SDL's native SDK hook. Windows process services are isolated from
 application records and wrapper headers. The archived observer remains C-compatible
 and uses explicit narrow SDK calls in its current C++ type-check entry.
 
-Local qualification passes all 149 current desktop checks across the final full
-collection and four unchanged-limit workflow retries. That full run times out
-four workflows during confirmed system sleep; all four isolated retries pass
-under a temporary process-scoped sleep assertion. The prior 148-check full run
-also passes. All 29 native leak checks, the available tutorial smoke checkpoint,
-34 final sanitizer checks and fresh SDL-free host tests (27/27) pass. Native/host
+The corrected head passes a clean full 149/149 desktop run. An earlier full
+collection timed out four workflows during confirmed system sleep; all four
+isolated retries passed unchanged limits under a temporary process-scoped sleep
+assertion. The prior 148-check full run also passed. All 29 native leak checks,
+the available tutorial smoke checkpoint, 34 final sanitizer checks and fresh
+SDL-free host tests (27/27) pass. Native/host
 regressions each match 519 baseline files through turn 150 with 25 accepted
 unused-storage warnings. Exact C04/C05 output comparisons match 519 files with
 25 native / 23 host accepted warnings; no differences/errors or skipped inputs.
@@ -470,8 +470,10 @@ headers in both include orders. All 38 SDK C inputs and 29 representative C++
 application/provider/isolated SDK units compile; paired wrapper/SDK identity
 contracts pass compilation. Documentation checks pass 26 tests and 2,819 links /
 700 requirement IDs. No model, baseline, frozen C input, record-layout or catalog
-change is made. Full Windows/Linux runtime checks remain the manual platform
-gate, with automatic CI policy unchanged. Receipts: `dist/verification/c06/`.
+change is made. The corrected manual platform workflow passes all five jobs:
+Linux desktop 153/153; Windows probe 2/2, selected game units 13/13 and
+platform checks 88/88. Automatic CI policy is unchanged. Receipts:
+`dist/verification/c06/` and the [manual workflow](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41206840795).
 
 
 C06's first manual Windows build identifies a `WINAPI` redefinition after SDL
@@ -479,5 +481,5 @@ intrinsics. Empty owned C++ calling-convention annotations (`WINAPI`, `WINAPIV`,
 `APIENTRY`) are removed rather than masked; genuine SDK conventions stay native.
 The SDL-first type contract and a strict MinGW check with an inherited
 `WINAPI=__stdcall` now compile. Local builds and the full native regression
-(519 matches / 25 accepted warnings / zero differences/errors/skips) pass again;
-full desktop and corrected platform runs are pending.
+(519 matches / 25 accepted warnings / zero differences/errors/skips) pass again.
+The clean desktop run and corrected platform workflow above complete the reruns.

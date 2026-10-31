@@ -75,10 +75,10 @@ calls; its current C++ type-check entry imports the raw namespace explicitly.
 
 ## Qualification
 
-All 149 current desktop checks have passing receipts: the final full collection
-passes 145 and times out four workflows during logged macOS idle/maintenance
-sleep; the four isolated retries pass unchanged limits with a temporary
-process-scoped sleep assertion. The preceding complete 148-check run also passes.
+The corrected head passes a clean full 149/149 desktop run. An earlier full
+collection passed 145 checks and timed out four workflows during logged macOS
+idle/maintenance sleep; all four isolated retries passed unchanged limits with
+a temporary process-scoped sleep assertion. The preceding 148-check run passed.
 All 29 native leak checks and the available tutorial smoke checkpoint pass.
 The final 34-check ASan/UBSan selection passes all linked witnesses, save/profile,
 callback guards and the cursor/type contracts; macOS uses native leak inspection.
@@ -94,11 +94,13 @@ tests and 2,819 links / 700 requirement IDs.
 All 38 independent SDK C entries and 29 representative C++ application/provider/
 isolated SDK translation units compile, including ordinary wrapper ABI assertions;
 the paired SDK identity contract separately compiles. This is compile evidence.
-Native Windows and full Linux desktop execution remain the manual platform gate;
-automatic CI defaults stay unchanged. Canonical model files, record layouts,
-catalog IDs, frozen C inputs and baselines are unchanged. C05's full unchanged
-model receipt remains 12,000 verified / zero errors and zero audit findings;
-no new proof run or whole-program refinement is claimed here. Local logs and
+The corrected head passes all five jobs in the manually enabled platform
+workflow: Linux desktop 153/153, Windows probe 2/2, selected game units 13/13
+and platform checks 88/88. Automatic CI defaults stay unchanged. Canonical
+model files, record layouts, catalog IDs, frozen C inputs and baselines are
+unchanged. C05's full unchanged model receipt remains 12,000 verified / zero
+errors and zero audit findings; no new proof run or whole-program refinement
+is claimed here. Local logs and
 comparison reports are retained in `dist/verification/c06/`.
 
 
@@ -109,5 +111,6 @@ SDK declarations and callback annotations retain their real conventions. The
 C++ ABI assertion explicitly uses the same native C++ function type; its SDK C
 branch is unchanged. The type contract includes SDL first, checks native SDK
 `MSG` separation, and compiles with an inherited `WINAPI=__stdcall` definition.
-The corrected local build and strict MinGW regression compile checks pass;
-full local/runtime and manual platform reruns are pending.
+The corrected local build and strict MinGW regression compile checks pass.
+The clean desktop run and corrected platform workflow above complete the reruns.
+See the [manual workflow](https://github.com/madebyjeffrey/sdl-stars/actions/runs/41206840795).
